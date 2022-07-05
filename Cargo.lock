@@ -223,8 +223,8 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-blockchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -235,7 +235,7 @@ dependencies = [
  "composable-traits",
  "parity-scale-codec",
  "sp-api",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -609,14 +609,14 @@ dependencies = [
  "sc-network-gossip",
  "sc-utils",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-arithmetic",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-keystore",
  "sp-mmr-primitives",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "thiserror",
  "wasm-timer",
@@ -637,8 +637,8 @@ dependencies = [
  "sc-rpc",
  "sc-utils",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
  "thiserror",
 ]
 
@@ -654,12 +654,12 @@ dependencies = [
  "pallet-mmr",
  "parity-scale-codec",
  "rs_merkle",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core-hashing 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-core-hashing",
+ "sp-io",
  "sp-mmr-primitives",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -675,10 +675,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -755,9 +755,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitvec"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1489fcb93a5bb47da0462ca93ad252ad6af2145cce58d10d46a83931ba9f016b"
+checksum = "1bc2832c24239b0141d5674bb9174f9d68a8b5b3f2753311927c172ca46f7e9c"
 dependencies = [
  "funty",
  "radium",
@@ -960,10 +960,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-finality-grandpa",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -975,7 +975,7 @@ dependencies = [
  "frame-support",
  "parity-scale-codec",
  "scale-info",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -991,8 +991,8 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-std",
 ]
 
 [[package]]
@@ -1007,9 +1007,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
  "sp-version",
 ]
 
@@ -1025,8 +1025,8 @@ dependencies = [
  "parity-scale-codec",
  "smallvec 1.9.0",
  "sp-api",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "sp-version",
 ]
 
@@ -1040,12 +1040,12 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -1057,10 +1057,10 @@ dependencies = [
  "ed25519-dalek",
  "finality-grandpa",
  "parity-scale-codec",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-finality-grandpa",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -1074,8 +1074,8 @@ dependencies = [
  "bp-runtime",
  "parity-scale-codec",
  "sp-api",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -1096,11 +1096,11 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -1511,10 +1511,10 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-consensus-aura",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
  "xcm-builder",
  "xcm-executor",
@@ -1539,9 +1539,9 @@ dependencies = [
  "parity-scale-codec",
  "rust_decimal",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -1614,17 +1614,17 @@ dependencies = [
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-aura",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-state-machine",
+ "sp-storage",
  "sp-timestamp",
  "sp-transaction-pool",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-trie",
  "substrate-build-script-utils",
  "substrate-frame-rpc-system",
  "substrate-prometheus-endpoint",
@@ -1698,12 +1698,12 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
@@ -1728,10 +1728,10 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -1745,9 +1745,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -1764,9 +1764,9 @@ dependencies = [
  "proptest",
  "scale-info",
  "serde",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -2088,8 +2088,8 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-blockchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -2121,9 +2121,9 @@ dependencies = [
 
 [[package]]
 name = "crypto-common"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5999502d32b9c48d492abe66392408144895020ec4709e549e840799f3bb74c0"
+checksum = "2ccfd8c0ee4cce11e45b3fd6f9d5e69e0cc62912aa6a0cb1bf4617b0eba5a12f"
 dependencies = [
  "generic-array 0.14.5",
  "typenum",
@@ -2228,8 +2228,8 @@ dependencies = [
  "sc-client-api",
  "sp-api",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
  "tracing",
 ]
 
@@ -2249,15 +2249,15 @@ dependencies = [
  "sc-consensus-slots",
  "sc-telemetry",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-aura",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "tracing",
 ]
@@ -2278,8 +2278,8 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-trie",
  "tracing",
 ]
 
@@ -2302,9 +2302,9 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
  "tracing",
 ]
 
@@ -2328,7 +2328,7 @@ dependencies = [
  "sp-api",
  "sp-consensus",
  "sp-maybe-compressed-blob",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "tracing",
 ]
 
@@ -2357,8 +2357,8 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
  "tracing",
 ]
 
@@ -2374,10 +2374,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-consensus-aura",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -2391,9 +2391,9 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
  "xcm-executor",
 ]
@@ -2416,14 +2416,14 @@ dependencies = [
  "polkadot-parachain",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-externalities",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
  "sp-version",
  "xcm",
 ]
@@ -2449,8 +2449,8 @@ dependencies = [
  "frame-system",
  "pallet-session",
  "parity-scale-codec",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -2464,9 +2464,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -2483,8 +2483,8 @@ dependencies = [
  "parity-scale-codec",
  "rand_chacha 0.3.1",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "xcm",
  "xcm-executor",
 ]
@@ -2501,8 +2501,8 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -2517,9 +2517,9 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "sp-api",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -2535,13 +2535,13 @@ dependencies = [
  "sc-client-api",
  "scale-info",
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-storage",
+ "sp-trie",
  "tracing",
 ]
 
@@ -2554,7 +2554,7 @@ dependencies = [
  "futures 0.3.21",
  "parity-scale-codec",
  "sp-inherents",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "sp-timestamp",
 ]
 
@@ -2569,9 +2569,9 @@ dependencies = [
  "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-primitives",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
  "xcm",
 ]
 
@@ -2594,15 +2594,15 @@ dependencies = [
  "sc-consensus-babe",
  "sc-network",
  "sc-service",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sc-sysinfo",
  "sc-telemetry",
  "sc-tracing",
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
  "tracing",
 ]
 
@@ -2624,9 +2624,9 @@ dependencies = [
  "sc-service",
  "sp-api",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
  "thiserror",
 ]
 
@@ -2648,10 +2648,10 @@ dependencies = [
  "sc-client-api",
  "sc-rpc-api",
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-storage",
  "tracing",
  "url 2.2.2",
 ]
@@ -2664,9 +2664,9 @@ dependencies = [
  "cumulus-primitives-core",
  "parity-scale-codec",
  "polkadot-primitives",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
 ]
 
 [[package]]
@@ -2816,12 +2816,12 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
@@ -3557,12 +3557,12 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-io",
+ "sp-runtime",
+ "sp-runtime-interface",
+ "sp-std",
+ "sp-storage",
 ]
 
 [[package]]
@@ -3595,21 +3595,21 @@ dependencies = [
  "sc-client-db",
  "sc-executor",
  "sc-service",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sc-sysinfo",
  "serde",
  "serde_json",
  "serde_nanos",
  "sp-api",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-database",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-externalities",
  "sp-inherents",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-storage",
+ "sp-trie",
  "tempfile",
  "thiserror",
  "thousands",
@@ -3636,10 +3636,10 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
  "sp-npos-elections",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -3651,11 +3651,11 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-tracing",
 ]
 
 [[package]]
@@ -3687,16 +3687,16 @@ dependencies = [
  "scale-info",
  "serde",
  "smallvec 1.9.0",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
  "sp-core-hashing-proc-macro",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
  "sp-staking",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-state-machine",
+ "sp-std",
+ "sp-tracing",
  "tt-call",
 ]
 
@@ -3744,10 +3744,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "sp-version",
 ]
 
@@ -3761,9 +3761,9 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -3782,8 +3782,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "frame-support",
  "sp-api",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -4205,9 +4205,9 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db0d4cf898abf0081f964436dc980e96670a0f36863e4b83aaacdb65c9d7ccc3"
+checksum = "607c8a29735385251a339424dd462993c0fed8fa09d378f259377df08c126022"
 dependencies = [
  "ahash",
 ]
@@ -4512,12 +4512,12 @@ dependencies = [
  "serde_json",
  "sha2 0.10.2",
  "sha3 0.10.1",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
  "sp-mmr-primitives",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
  "subtle-encoding",
  "tendermint",
  "tendermint-light-client-verifier",
@@ -4540,12 +4540,12 @@ dependencies = [
  "serde",
  "sha2 0.10.2",
  "sha3 0.10.1",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-runtime-interface",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -4580,9 +4580,9 @@ dependencies = [
  "serde_json",
  "sp-api",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-trie",
  "tendermint-proto",
 ]
 
@@ -4593,7 +4593,7 @@ dependencies = [
  "ibc-primitives",
  "pallet-ibc",
  "sp-api",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -4607,8 +4607,8 @@ dependencies = [
  "ibc-primitives",
  "parity-scale-codec",
  "scale-info",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-std",
  "xcm",
 ]
 
@@ -4630,9 +4630,9 @@ dependencies = [
  "primitives",
  "scale-info",
  "serde_json",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -4647,7 +4647,7 @@ dependencies = [
  "ripemd160",
  "sha2 0.9.9",
  "sha3 0.9.1",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core",
 ]
 
 [[package]]
@@ -4764,7 +4764,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10a35a97730320ffe8e2d410b5d3b69279b98d2c14bdb8b70ea89ecf7888d41e"
 dependencies = [
  "autocfg 1.1.0",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.2",
  "serde",
 ]
 
@@ -5315,20 +5315,20 @@ dependencies = [
  "serde_derive",
  "smallvec 1.9.0",
  "sp-api",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
  "sp-authority-discovery",
  "sp-block-builder",
  "sp-consensus-babe",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
  "sp-mmr-primitives",
  "sp-npos-elections",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "static_assertions",
@@ -5347,7 +5347,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-common",
  "smallvec 1.9.0",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -5428,8 +5428,8 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-blockchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -6218,13 +6218,13 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "statemine-runtime",
@@ -6397,9 +6397,9 @@ dependencies = [
 
 [[package]]
 name = "memmap2"
-version = "0.5.4"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d5172b50c23043ff43dd53e51392f36519d9b35a8f3a410d30ece5d1aedd58ae"
+checksum = "3a79b39c93a7a5a27eeaf9a23b5ff43f1b9e0ad6b1cdd441140ae53c35613fc7"
 dependencies = [
  "libc",
 ]
@@ -6420,7 +6420,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6566c70c1016f525ced45d7b7f97730a2bafb037c788211d0c186ef5b2189f0a"
 dependencies = [
  "hash-db",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.2",
  "parity-util-mem",
 ]
 
@@ -6981,9 +6981,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "openssl"
-version = "0.10.40"
+version = "0.10.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb81a6430ac911acb25fe5ac8f1d2af1b4ea8a4fdfda0f1ee4292af2e2d8eb0e"
+checksum = "618febf65336490dfcf20b73f885f5651a0c89c64c2d4a8c3662585a70bf5bd0"
 dependencies = [
  "bitflags",
  "cfg-if 1.0.0",
@@ -7013,9 +7013,9 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.74"
+version = "0.9.75"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "835363342df5fba8354c5b453325b110ffd54044e588c539cf2f20a8014e4cb1"
+checksum = "e5f9bd0c2710541a3cda73d6f9ac4f1b240de4ae261065d309dbe73d9dceb42f"
 dependencies = [
  "autocfg 1.1.0",
  "cc",
@@ -7073,10 +7073,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7090,8 +7090,8 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7106,9 +7106,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -7123,7 +7123,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "xcm",
 ]
 
@@ -7136,9 +7136,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7149,8 +7149,8 @@ dependencies = [
  "frame-support",
  "orml-traits",
  "parity-scale-codec",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "xcm",
  "xcm-executor",
 ]
@@ -7169,9 +7169,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
  "xcm-executor",
 ]
@@ -7221,8 +7221,8 @@ dependencies = [
  "scale-info",
  "sp-api",
  "sp-blockchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7233,7 +7233,7 @@ dependencies = [
  "composable-traits",
  "parity-scale-codec",
  "sp-api",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -7260,13 +7260,13 @@ dependencies = [
  "rustc-hex",
  "scale-info",
  "serde",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7280,10 +7280,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7306,11 +7306,11 @@ dependencies = [
  "proptest",
  "scale-info",
  "sp-api",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7323,8 +7323,8 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7341,10 +7341,10 @@ dependencies = [
  "pallet-currency-factory",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -7358,10 +7358,10 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-consensus-aura",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7374,10 +7374,10 @@ dependencies = [
  "pallet-session",
  "parity-scale-codec",
  "scale-info",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-authority-discovery",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7391,8 +7391,8 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-authorship",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7409,14 +7409,14 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-consensus-babe",
  "sp-consensus-vrf",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -7432,11 +7432,11 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "sp-tracing",
 ]
 
 [[package]]
@@ -7450,8 +7450,8 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7466,8 +7466,8 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7487,10 +7487,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7512,11 +7512,11 @@ dependencies = [
  "proptest-derive",
  "scale-info",
  "serde",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7531,10 +7531,10 @@ dependencies = [
  "pallet-treasury",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7549,9 +7549,9 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7571,9 +7571,9 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-finality-grandpa",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -7592,9 +7592,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7609,10 +7609,10 @@ dependencies = [
  "scale-info",
  "serde",
  "smallvec 1.9.0",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7628,10 +7628,10 @@ dependencies = [
  "pallet-treasury",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7649,9 +7649,9 @@ dependencies = [
  "rand 0.8.5",
  "scale-info",
  "serde",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -7665,10 +7665,10 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7687,13 +7687,13 @@ dependencies = [
  "rustc-hex",
  "scale-info",
  "serde",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7709,11 +7709,11 @@ dependencies = [
  "parity-scale-codec",
  "proptest",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7733,10 +7733,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7750,9 +7750,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7774,11 +7774,11 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7809,11 +7809,11 @@ dependencies = [
  "scale-info",
  "serde",
  "smallvec 1.9.0",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -7830,12 +7830,12 @@ dependencies = [
  "parity-scale-codec",
  "rand 0.7.3",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
  "sp-npos-elections",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "static_assertions",
  "strum 0.23.0",
 ]
@@ -7850,7 +7850,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "sp-npos-elections",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -7864,11 +7864,11 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
  "sp-npos-elections",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7881,9 +7881,9 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7897,11 +7897,11 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7917,14 +7917,14 @@ dependencies = [
  "pallet-session",
  "parity-scale-codec",
  "scale-info",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-core",
  "sp-finality-grandpa",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -7962,13 +7962,13 @@ dependencies = [
  "serde_json",
  "sha2 0.10.2",
  "simple-iavl",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
  "sp-keyring",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-runtime-interface",
+ "sp-std",
+ "sp-trie",
  "tendermint",
  "tendermint-proto",
  "xcm",
@@ -7989,10 +7989,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "tendermint-proto",
 ]
 
@@ -8007,9 +8007,9 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8024,12 +8024,12 @@ dependencies = [
  "pallet-authorship",
  "parity-scale-codec",
  "scale-info",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -8042,11 +8042,11 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
  "sp-keyring",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8082,13 +8082,13 @@ dependencies = [
  "scale-info",
  "serde",
  "smallvec 1.9.0",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -8118,11 +8118,11 @@ dependencies = [
  "proptest",
  "scale-info",
  "smallvec 1.9.0",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -8137,10 +8137,10 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8154,11 +8154,11 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
  "sp-mmr-primitives",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8171,9 +8171,9 @@ dependencies = [
  "serde",
  "sp-api",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-mmr-primitives",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -8195,10 +8195,10 @@ dependencies = [
  "plotters",
  "proptest",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -8212,9 +8212,9 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8229,11 +8229,11 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8245,9 +8245,9 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8260,10 +8260,10 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -8280,9 +8280,9 @@ dependencies = [
  "pallet-staking",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -8297,9 +8297,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -8320,9 +8320,9 @@ dependencies = [
  "pallet-staking",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -8344,11 +8344,11 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8371,11 +8371,11 @@ dependencies = [
  "proptest",
  "rust_decimal",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8389,8 +8389,8 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -8404,10 +8404,10 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8421,11 +8421,11 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8438,9 +8438,9 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8453,8 +8453,8 @@ dependencies = [
  "parity-scale-codec",
  "safe-mix",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8467,9 +8467,9 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8483,9 +8483,9 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8500,13 +8500,13 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -8520,9 +8520,9 @@ dependencies = [
  "pallet-session",
  "pallet-staking",
  "rand 0.7.3",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -8535,8 +8535,8 @@ dependencies = [
  "parity-scale-codec",
  "rand_chacha 0.2.2",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8555,11 +8555,11 @@ dependencies = [
  "rand_chacha 0.2.2",
  "scale-info",
  "serde",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-io",
+ "sp-runtime",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -8579,7 +8579,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "log 0.4.17",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
 ]
 
 [[package]]
@@ -8606,11 +8606,11 @@ dependencies = [
  "primitives",
  "proptest",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8622,9 +8622,9 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8639,9 +8639,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "sp-timestamp",
 ]
 
@@ -8658,10 +8658,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8674,10 +8674,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8690,9 +8690,9 @@ dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-rpc",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -8703,7 +8703,7 @@ dependencies = [
  "pallet-transaction-payment",
  "parity-scale-codec",
  "sp-api",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -8719,8 +8719,8 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8734,8 +8734,8 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8748,10 +8748,10 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8775,11 +8775,11 @@ dependencies = [
  "proptest",
  "scale-info",
  "serde",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8796,10 +8796,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8813,8 +8813,8 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8828,9 +8828,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
  "xcm",
  "xcm-executor",
 ]
@@ -8846,8 +8846,8 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "xcm",
  "xcm-executor",
 ]
@@ -8883,10 +8883,10 @@ dependencies = [
  "polkadot-runtime-common",
  "scale-info",
  "sp-consensus-aura",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "substrate-wasm-builder",
  "xcm",
  "xcm-executor",
@@ -8913,8 +8913,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.1.2"
-source = "git+https://github.com/paritytech/parity-scale-codec?tag=parity-scale-codec-3.1.2#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
+version = "3.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9182e4a71cae089267ab03e67c99368db7cd877baf50f931e5d6d4b71e195ac0"
 dependencies = [
  "arrayvec 0.7.2",
  "bitvec",
@@ -8926,8 +8927,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "3.1.2"
-source = "git+https://github.com/paritytech/parity-scale-codec?tag=parity-scale-codec-3.1.2#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
+version = "3.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9299338969a3d2f491d65f140b00ddec470858402f888af98e8642fb5e8965cd"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2 1.0.40",
@@ -8948,7 +8950,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c32561d248d352148124f036cac253a644685a21dc9fea383eb4907d7bd35a8f"
 dependencies = [
  "cfg-if 1.0.0",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.2",
  "impl-trait-for-tuples",
  "parity-util-mem-derive",
  "parking_lot 0.12.1",
@@ -9292,12 +9294,12 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
@@ -9491,8 +9493,8 @@ dependencies = [
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
  "rand 0.8.5",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-keystore",
  "thiserror",
  "tracing-gum",
 ]
@@ -9534,10 +9536,10 @@ dependencies = [
  "polkadot-service",
  "sc-cli",
  "sc-service",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sc-sysinfo",
  "sc-tracing",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-trie",
  "substrate-build-script-utils",
  "thiserror",
  "try-runtime-cli",
@@ -9571,15 +9573,15 @@ dependencies = [
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-babe",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
  "sp-keyring",
  "sp-mmr-primitives",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-storage",
  "sp-timestamp",
  "sp-transaction-pool",
 ]
@@ -9598,9 +9600,9 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-keystore",
+ "sp-runtime",
  "thiserror",
  "tracing-gum",
 ]
@@ -9613,9 +9615,9 @@ dependencies = [
  "parity-scale-codec",
  "parity-util-mem",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -9635,8 +9637,8 @@ dependencies = [
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
  "sc-network",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-keystore",
  "thiserror",
  "tracing-gum",
 ]
@@ -9650,8 +9652,8 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-primitives",
  "reed-solomon-novelpoly",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-trie",
  "thiserror",
 ]
 
@@ -9669,9 +9671,9 @@ dependencies = [
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "sc-network",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-keystore",
  "tracing-gum",
 ]
 
@@ -9708,7 +9710,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-maybe-compressed-blob",
  "thiserror",
  "tracing-gum",
@@ -9735,10 +9737,10 @@ dependencies = [
  "polkadot-primitives",
  "sc-keystore",
  "schnorrkel",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-consensus",
  "sp-consensus-slots",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "thiserror",
  "tracing-gum",
 ]
@@ -9777,7 +9779,7 @@ dependencies = [
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
  "polkadot-statement-table",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
  "thiserror",
  "tracing-gum",
 ]
@@ -9791,7 +9793,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
  "thiserror",
  "tracing-gum",
  "wasm-timer",
@@ -9878,7 +9880,7 @@ dependencies = [
  "polkadot-primitives",
  "sp-blockchain",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "thiserror",
  "tracing-gum",
 ]
@@ -9922,12 +9924,12 @@ dependencies = [
  "sc-executor-common",
  "sc-executor-wasmtime",
  "slotmap",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-externalities",
+ "sp-io",
  "sp-maybe-compressed-blob",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-tracing",
+ "sp-wasm-interface",
  "tempfile",
  "tracing-gum",
 ]
@@ -9943,7 +9945,7 @@ dependencies = [
  "polkadot-node-subsystem-util",
  "polkadot-overseer",
  "polkadot-primitives",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
  "thiserror",
  "tracing-gum",
 ]
@@ -9979,7 +9981,7 @@ dependencies = [
  "polkadot-node-primitives",
  "polkadot-primitives",
  "sc-network",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "thiserror",
 ]
 
@@ -10035,11 +10037,11 @@ dependencies = [
  "polkadot-primitives",
  "schnorrkel",
  "serde",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-consensus-babe",
  "sp-consensus-vrf",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-keystore",
  "sp-maybe-compressed-blob",
  "thiserror",
  "zstd",
@@ -10100,9 +10102,9 @@ dependencies = [
  "polkadot-primitives",
  "prioritized-metered-channel",
  "rand 0.8.5",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-keystore",
  "thiserror",
  "tracing-gum",
 ]
@@ -10125,7 +10127,7 @@ dependencies = [
  "polkadot-primitives",
  "sc-client-api",
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "tracing-gum",
 ]
 
@@ -10141,9 +10143,9 @@ dependencies = [
  "polkadot-core-primitives",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -10176,18 +10178,18 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-arithmetic",
  "sp-authority-discovery",
  "sp-consensus-slots",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
+ "sp-trie",
  "sp-version",
 ]
 
@@ -10217,8 +10219,8 @@ dependencies = [
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-babe",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
+ "sp-runtime",
  "substrate-frame-rpc-system",
  "substrate-state-trie-migration-rpc",
 ]
@@ -10290,16 +10292,16 @@ dependencies = [
  "sp-authority-discovery",
  "sp-block-builder",
  "sp-consensus-babe",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
  "sp-mmr-primitives",
  "sp-npos-elections",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "static_assertions",
@@ -10344,14 +10346,14 @@ dependencies = [
  "serde_derive",
  "slot-range-helper",
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
  "sp-npos-elections",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "static_assertions",
  "xcm",
 ]
@@ -10365,7 +10367,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-common",
  "smallvec 1.9.0",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -10376,8 +10378,8 @@ dependencies = [
  "bs58",
  "parity-scale-codec",
  "polkadot-primitives",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
+ "sp-tracing",
 ]
 
 [[package]]
@@ -10409,15 +10411,15 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-core",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "static_assertions",
  "xcm",
  "xcm-executor",
@@ -10497,7 +10499,7 @@ dependencies = [
  "sc-offchain",
  "sc-service",
  "sc-sync-state-rpc",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sc-sysinfo",
  "sc-telemetry",
  "sc-transaction-pool",
  "serde",
@@ -10508,19 +10510,19 @@ dependencies = [
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-babe",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-keystore",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-state-machine",
+ "sp-storage",
  "sp-timestamp",
  "sp-transaction-pool",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-trie",
  "substrate-prometheus-endpoint",
  "thiserror",
  "tracing-gum",
@@ -10542,7 +10544,7 @@ dependencies = [
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
  "polkadot-primitives",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
  "sp-staking",
  "thiserror",
  "tracing-gum",
@@ -10555,7 +10557,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#2283
 dependencies = [
  "parity-scale-codec",
  "polkadot-primitives",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
 ]
 
 [[package]]
@@ -10659,8 +10661,8 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -11364,9 +11366,9 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "serde_json",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-version",
 ]
 
@@ -11548,15 +11550,15 @@ dependencies = [
  "sp-authority-discovery",
  "sp-block-builder",
  "sp-consensus-babe",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
  "sp-mmr-primitives",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
@@ -11574,7 +11576,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-common",
  "smallvec 1.9.0",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -11856,8 +11858,8 @@ version = "4.1.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "log 0.4.17",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-wasm-interface",
  "thiserror",
 ]
 
@@ -11881,9 +11883,9 @@ dependencies = [
  "sp-api",
  "sp-authority-discovery",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-keystore",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -11905,9 +11907,9 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
 ]
 
@@ -11921,10 +11923,10 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-state-machine",
 ]
 
 [[package]]
@@ -11933,15 +11935,15 @@ version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "impl-trait-for-tuples",
- "memmap2 0.5.4",
+ "memmap2 0.5.5",
  "parity-scale-codec",
  "sc-chain-spec-derive",
  "sc-network",
  "sc-telemetry",
  "serde",
  "serde_json",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -11983,11 +11985,11 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-keyring",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-panic-handler 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
+ "sp-panic-handler",
+ "sp-runtime",
  "sp-version",
  "thiserror",
  "tiny-bip39",
@@ -12011,14 +12013,14 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-database",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-externalities",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-storage",
+ "sp-trie",
  "substrate-prometheus-endpoint",
 ]
 
@@ -12038,13 +12040,13 @@ dependencies = [
  "parking_lot 0.12.1",
  "sc-client-api",
  "sc-state-db",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-database",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-trie",
 ]
 
 [[package]]
@@ -12064,9 +12066,9 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -12086,16 +12088,16 @@ dependencies = [
  "sc-consensus-slots",
  "sc-telemetry",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-aura",
  "sp-consensus-slots",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -12126,18 +12128,18 @@ dependencies = [
  "schnorrkel",
  "serde",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-babe",
  "sp-consensus-slots",
  "sp-consensus-vrf",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
  "sp-version",
  "substrate-prometheus-endpoint",
  "thiserror",
@@ -12155,13 +12157,13 @@ dependencies = [
  "sc-rpc-api",
  "serde",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-babe",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-keystore",
+ "sp-runtime",
  "thiserror",
 ]
 
@@ -12175,7 +12177,7 @@ dependencies = [
  "sc-client-api",
  "sc-consensus",
  "sp-blockchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -12203,10 +12205,10 @@ dependencies = [
  "sp-consensus-aura",
  "sp-consensus-babe",
  "sp-consensus-slots",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
+ "sp-runtime",
  "sp-timestamp",
  "substrate-prometheus-endpoint",
  "thiserror",
@@ -12225,14 +12227,14 @@ dependencies = [
  "sc-client-api",
  "sc-consensus",
  "sc-telemetry",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
  "sp-blockchain",
  "sp-consensus",
  "sp-consensus-slots",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-state-machine",
  "sp-timestamp",
  "thiserror",
 ]
@@ -12244,7 +12246,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "sc-client-api",
  "sp-authorship",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "thiserror",
 ]
 
@@ -12261,16 +12263,16 @@ dependencies = [
  "sc-executor-wasmi",
  "sc-executor-wasmtime",
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-core-hashing-proc-macro",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-panic-handler 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-externalities",
+ "sp-io",
+ "sp-panic-handler",
+ "sp-runtime-interface",
  "sp-tasks",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-trie",
  "sp-version",
- "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-wasm-interface",
  "tracing",
  "wasmi",
 ]
@@ -12286,7 +12288,7 @@ dependencies = [
  "sp-maybe-compressed-blob",
  "sp-sandbox",
  "sp-serializer",
- "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-wasm-interface",
  "thiserror",
  "wasm-instrument",
  "wasmi",
@@ -12301,9 +12303,9 @@ dependencies = [
  "parity-scale-codec",
  "sc-allocator",
  "sc-executor-common",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime-interface",
  "sp-sandbox",
- "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-wasm-interface",
  "wasmi",
 ]
 
@@ -12319,9 +12321,9 @@ dependencies = [
  "parity-wasm 0.42.2",
  "sc-allocator",
  "sc-executor-common",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime-interface",
  "sp-sandbox",
- "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-wasm-interface",
  "wasmtime",
 ]
 
@@ -12353,14 +12355,14 @@ dependencies = [
  "sc-utils",
  "serde_json",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-arithmetic",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-finality-grandpa",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "thiserror",
 ]
@@ -12381,8 +12383,8 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
  "thiserror",
 ]
 
@@ -12400,7 +12402,7 @@ dependencies = [
  "sc-network",
  "sc-transaction-pool-api",
  "sp-blockchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -12412,9 +12414,9 @@ dependencies = [
  "hex",
  "parking_lot 0.12.1",
  "serde_json",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-keystore",
  "thiserror",
 ]
 
@@ -12457,12 +12459,12 @@ dependencies = [
  "serde",
  "serde_json",
  "smallvec 1.9.0",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-finality-grandpa",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "thiserror",
  "unsigned-varint",
@@ -12495,7 +12497,7 @@ dependencies = [
  "log 0.4.17",
  "lru 0.7.7",
  "sc-network",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "substrate-prometheus-endpoint",
  "tracing",
 ]
@@ -12515,8 +12517,8 @@ dependencies = [
  "sc-network-common",
  "sc-peerset",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
  "thiserror",
 ]
 
@@ -12540,12 +12542,12 @@ dependencies = [
  "sc-network-common",
  "sc-peerset",
  "smallvec 1.9.0",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-finality-grandpa",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "thiserror",
 ]
 
@@ -12570,9 +12572,9 @@ dependencies = [
  "sc-network",
  "sc-utils",
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "threadpool",
  "tracing",
 ]
@@ -12620,11 +12622,11 @@ dependencies = [
  "serde_json",
  "sp-api",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-keystore",
  "sp-offchain",
  "sp-rpc",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
  "sp-version",
 ]
@@ -12644,10 +12646,10 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-rpc",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-tracing",
  "sp-version",
  "thiserror",
 ]
@@ -12696,7 +12698,7 @@ dependencies = [
  "sc-offchain",
  "sc-rpc",
  "sc-rpc-server",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sc-sysinfo",
  "sc-telemetry",
  "sc-tracing",
  "sc-transaction-pool",
@@ -12705,22 +12707,22 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-block-builder",
  "sp-blockchain",
  "sp-consensus",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-externalities",
  "sp-inherents",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
+ "sp-runtime",
  "sp-session",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-state-machine",
+ "sp-storage",
+ "sp-tracing",
  "sp-transaction-pool",
  "sp-transaction-storage-proof",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-trie",
  "sp-version",
  "substrate-prometheus-endpoint",
  "tempfile",
@@ -12741,7 +12743,7 @@ dependencies = [
  "parity-util-mem-derive",
  "parking_lot 0.12.1",
  "sc-client-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
 ]
 
 [[package]]
@@ -12759,7 +12761,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sp-blockchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "thiserror",
 ]
 
@@ -12777,28 +12779,9 @@ dependencies = [
  "sc-telemetry",
  "serde",
  "serde_json",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "sc-sysinfo"
-version = "6.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
-dependencies = [
- "futures 0.3.21",
- "libc",
- "log 0.4.17",
- "rand 0.7.3",
- "rand_pcg 0.2.1",
- "regex",
- "sc-telemetry",
- "serde",
- "serde_json",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-std",
 ]
 
 [[package]]
@@ -12840,10 +12823,10 @@ dependencies = [
  "serde",
  "sp-api",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-rpc",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-tracing",
  "thiserror",
  "tracing",
  "tracing-log",
@@ -12880,9 +12863,9 @@ dependencies = [
  "serde",
  "sp-api",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-tracing",
  "sp-transaction-pool",
  "substrate-prometheus-endpoint",
  "thiserror",
@@ -12897,7 +12880,7 @@ dependencies = [
  "log 0.4.17",
  "serde",
  "sp-blockchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "thiserror",
 ]
 
@@ -13106,9 +13089,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.138"
+version = "1.0.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1578c6245786b9d168c5447eeacfb96856573ca56c9d68fdcf394be134882a47"
+checksum = "0171ebb889e45aa68b44aee0859b3eede84c6f5f5c228e6f140c0b2a0a46cad6"
 dependencies = [
  "serde_derive",
 ]
@@ -13124,9 +13107,9 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.138"
+version = "1.0.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "023e9b1467aef8a10fb88f25611870ada9800ef7e22afce356bb0d2387b6f27c"
+checksum = "dc1d3230c1de7932af58ad8ffbe1d784bd55efd5a9d84ac24f69c72d83543dfb"
 dependencies = [
  "proc-macro2 1.0.40",
  "quote 1.0.20",
@@ -13397,7 +13380,7 @@ dependencies = [
  "simnode-runtime-apis",
  "sp-api",
  "sp-consensus-aura",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-transaction-pool",
  "substrate-simnode",
 ]
@@ -13419,7 +13402,7 @@ source = "git+https://github.com/polytope-labs/substrate-simnode?rev=eed85119358
 dependencies = [
  "parity-scale-codec",
  "sp-api",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -13450,7 +13433,7 @@ dependencies = [
  "sp-api",
  "sp-blockchain",
  "sp-keyring",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "substrate-simnode",
 ]
 
@@ -13494,8 +13477,8 @@ dependencies = [
  "enumn",
  "parity-scale-codec",
  "paste 1.0.7",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -13598,10 +13581,10 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "sp-api-proc-macro",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
  "sp-version",
  "thiserror",
 ]
@@ -13621,44 +13604,14 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acb4490364cb3b097a6755343e552495b0013778152300714be4647d107e9a2e"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-io 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "sp-application-crypto"
-version = "6.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "sp-arithmetic"
-version = "5.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31ef21f82cc10f75ed046b65e2f8048080ee76e59f1b8aed55c7150daebfd35b"
-dependencies = [
- "integer-sqrt",
- "num-traits",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-debug-derive 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "static_assertions",
+ "sp-core",
+ "sp-io",
+ "sp-std",
 ]
 
 [[package]]
@@ -13671,8 +13624,8 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-debug-derive 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-debug-derive",
+ "sp-std",
  "static_assertions",
 ]
 
@@ -13684,9 +13637,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -13697,8 +13650,8 @@ dependencies = [
  "async-trait",
  "parity-scale-codec",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -13709,8 +13662,8 @@ dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -13726,8 +13679,8 @@ dependencies = [
  "sp-api",
  "sp-consensus",
  "sp-database",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-state-machine",
  "thiserror",
 ]
 
@@ -13741,11 +13694,11 @@ dependencies = [
  "futures-timer",
  "log 0.4.17",
  "parity-scale-codec",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
  "sp-version",
  "thiserror",
 ]
@@ -13759,12 +13712,12 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-consensus",
  "sp-consensus-slots",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "sp-timestamp",
 ]
 
@@ -13779,15 +13732,15 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
  "sp-consensus",
  "sp-consensus-slots",
  "sp-consensus-vrf",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
  "sp-timestamp",
 ]
 
@@ -13799,9 +13752,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-runtime",
+ "sp-std",
  "sp-timestamp",
 ]
 
@@ -13813,56 +13766,9 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "schnorrkel",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "sp-core"
-version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77963e2aa8fadb589118c3aede2e78b6c4bcf1c01d588fbf33e915b390825fbd"
-dependencies = [
- "base58",
- "bitflags",
- "blake2-rfc",
- "byteorder",
- "dyn-clonable",
- "ed25519-dalek",
- "futures 0.3.21",
- "hash-db",
- "hash256-std-hasher",
- "hex",
- "impl-serde",
- "lazy_static",
- "libsecp256k1",
- "log 0.4.17",
- "merlin",
- "num-traits",
- "parity-scale-codec",
- "parity-util-mem",
- "parking_lot 0.12.1",
- "primitive-types",
- "rand 0.7.3",
- "regex",
- "scale-info",
- "schnorrkel",
- "secp256k1",
- "secrecy",
- "serde",
- "sp-core-hashing 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-debug-derive 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime-interface 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-storage 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ss58-registry",
- "substrate-bip39",
- "thiserror",
- "tiny-bip39",
- "wasmi",
- "zeroize",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -13897,32 +13803,18 @@ dependencies = [
  "secp256k1",
  "secrecy",
  "serde",
- "sp-core-hashing 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-debug-derive 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core-hashing",
+ "sp-debug-derive",
+ "sp-externalities",
+ "sp-runtime-interface",
+ "sp-std",
+ "sp-storage",
  "ss58-registry",
  "substrate-bip39",
  "thiserror",
  "tiny-bip39",
  "wasmi",
  "zeroize",
-]
-
-[[package]]
-name = "sp-core-hashing"
-version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec864a6a67249f0c8dd3d5acab43623a61677e85ff4f2f9b04b802d2fe780e83"
-dependencies = [
- "blake2-rfc",
- "byteorder",
- "sha2 0.9.9",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "tiny-keccak",
- "twox-hash",
 ]
 
 [[package]]
@@ -13935,7 +13827,7 @@ dependencies = [
  "digest 0.10.3",
  "sha2 0.10.2",
  "sha3 0.10.1",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "twox-hash",
 ]
 
@@ -13946,7 +13838,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "proc-macro2 1.0.40",
  "quote 1.0.20",
- "sp-core-hashing 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core-hashing",
  "syn 1.0.98",
 ]
 
@@ -13962,17 +13854,6 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d676664972e22a0796176e81e7bec41df461d1edf52090955cdab55f2c956ff2"
-dependencies = [
- "proc-macro2 1.0.40",
- "quote 1.0.20",
- "syn 1.0.98",
-]
-
-[[package]]
-name = "sp-debug-derive"
-version = "4.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "proc-macro2 1.0.40",
@@ -13983,24 +13864,12 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fcfd91f92a2a59224230a77c4a5d6f51709620c0aab4e51f108ccece6adc56f"
-dependencies = [
- "environmental",
- "parity-scale-codec",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-storage 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "sp-externalities"
-version = "0.12.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "environmental",
  "parity-scale-codec",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
+ "sp-storage",
 ]
 
 [[package]]
@@ -14014,11 +13883,11 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-api",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-application-crypto",
+ "sp-core",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -14029,36 +13898,10 @@ dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
  "parity-scale-codec",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
  "thiserror",
-]
-
-[[package]]
-name = "sp-io"
-version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "935fd3c71bad6811a7984cabb74d323b8ca3107024024c3eabb610e0182ba8d3"
-dependencies = [
- "futures 0.3.21",
- "hash-db",
- "libsecp256k1",
- "log 0.4.17",
- "parity-scale-codec",
- "parking_lot 0.12.1",
- "secp256k1",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-keystore 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime-interface 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-state-machine 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-tracing 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-trie 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-wasm-interface 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "tracing",
- "tracing-core",
 ]
 
 [[package]]
@@ -14073,15 +13916,15 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "secp256k1",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-externalities",
+ "sp-keystore",
+ "sp-runtime-interface",
+ "sp-state-machine",
+ "sp-std",
+ "sp-tracing",
+ "sp-trie",
+ "sp-wasm-interface",
  "tracing",
  "tracing-core",
 ]
@@ -14092,26 +13935,9 @@ version = "6.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "lazy_static",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
  "strum 0.23.0",
-]
-
-[[package]]
-name = "sp-keystore"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3261eddca8c8926e3e1de136a7980cb3afc3455247d9d6f3119d9b292f73aaee"
-dependencies = [
- "async-trait",
- "futures 0.3.21",
- "merlin",
- "parity-scale-codec",
- "parking_lot 0.12.1",
- "schnorrkel",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "thiserror",
 ]
 
 [[package]]
@@ -14126,8 +13952,8 @@ dependencies = [
  "parking_lot 0.12.1",
  "schnorrkel",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-externalities",
  "thiserror",
 ]
 
@@ -14149,10 +13975,10 @@ dependencies = [
  "parity-scale-codec",
  "serde",
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-debug-derive 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-debug-derive",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -14163,10 +13989,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -14175,19 +14001,8 @@ version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "sp-panic-handler"
-version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2101f3c555fceafcfcfb0e61c55ea9ed80dc60bd77d54d9f25b369edb029e9a4"
-dependencies = [
- "backtrace",
- "lazy_static",
- "regex",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -14207,30 +14022,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "rustc-hash",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "sp-runtime"
-version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb7d8a8d5ab5d349c6cf9300af1721b7b6446ba63401dbb11c10a1d65197aa5f"
-dependencies = [
- "either",
- "hash256-std-hasher",
- "impl-trait-for-tuples",
- "log 0.4.17",
- "parity-scale-codec",
- "parity-util-mem",
- "paste 1.0.7",
- "rand 0.7.3",
- "scale-info",
- "serde",
- "sp-application-crypto 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-arithmetic 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-io 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core",
 ]
 
 [[package]]
@@ -14248,29 +14040,11 @@ dependencies = [
  "rand 0.7.3",
  "scale-info",
  "serde",
- "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "sp-runtime-interface"
-version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "158bf0305c75a50fc0e334b889568f519a126e32b87900c3f4251202dece7b4b"
-dependencies = [
- "impl-trait-for-tuples",
- "parity-scale-codec",
- "primitive-types",
- "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime-interface-proc-macro 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-storage 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-tracing 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-wasm-interface 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "static_assertions",
+ "sp-application-crypto",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-std",
 ]
 
 [[package]]
@@ -14281,26 +14055,13 @@ dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "primitive-types",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime-interface-proc-macro 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-externalities",
+ "sp-runtime-interface-proc-macro",
+ "sp-std",
+ "sp-storage",
+ "sp-tracing",
+ "sp-wasm-interface",
  "static_assertions",
-]
-
-[[package]]
-name = "sp-runtime-interface-proc-macro"
-version = "5.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22ecb916b9664ed9f90abef0ff5a3e61454c1efea5861b2997e03f39b59b955f"
-dependencies = [
- "Inflector",
- "proc-macro-crate 1.1.3",
- "proc-macro2 1.0.40",
- "quote 1.0.20",
- "syn 1.0.98",
 ]
 
 [[package]]
@@ -14322,10 +14083,10 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-std",
+ "sp-wasm-interface",
  "wasmi",
 ]
 
@@ -14346,10 +14107,10 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-api",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
 ]
 
 [[package]]
@@ -14359,32 +14120,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "parity-scale-codec",
  "scale-info",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "sp-state-machine"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecee3b33eb78c99997676a571656bcc35db6886abecfddd13e76a73b5871c6c1"
-dependencies = [
- "hash-db",
- "log 0.4.17",
- "num-traits",
- "parity-scale-codec",
- "parking_lot 0.12.1",
- "rand 0.7.3",
- "smallvec 1.9.0",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-panic-handler 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-trie 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "thiserror",
- "tracing",
- "trie-db",
- "trie-root",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -14399,11 +14136,11 @@ dependencies = [
  "parking_lot 0.12.1",
  "rand 0.7.3",
  "smallvec 1.9.0",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-panic-handler 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-externalities",
+ "sp-panic-handler",
+ "sp-std",
+ "sp-trie",
  "thiserror",
  "tracing",
  "trie-root",
@@ -14412,27 +14149,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14804d6069ee7a388240b665f17908d98386ffb0b5d39f89a4099fc7a2a4c03f"
-
-[[package]]
-name = "sp-std"
-version = "4.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
-
-[[package]]
-name = "sp-storage"
-version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dab53af846068e3e0716d3ccc70ea0db44035c79b2ed5821aaa6635039efa37"
-dependencies = [
- "impl-serde",
- "parity-scale-codec",
- "ref-cast",
- "serde",
- "sp-debug-derive 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "sp-storage"
@@ -14443,8 +14160,8 @@ dependencies = [
  "parity-scale-codec",
  "ref-cast",
  "serde",
- "sp-debug-derive 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-debug-derive",
+ "sp-std",
 ]
 
 [[package]]
@@ -14453,11 +14170,11 @@ version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "log 0.4.17",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-externalities",
+ "sp-io",
+ "sp-runtime-interface",
+ "sp-std",
 ]
 
 [[package]]
@@ -14471,22 +14188,9 @@ dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "thiserror",
-]
-
-[[package]]
-name = "sp-tracing"
-version = "5.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69a67e555d171c4238bd223393cda747dd20ec7d4f5fe5c042c056cb7fde9eda"
-dependencies = [
- "parity-scale-codec",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "tracing",
- "tracing-core",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -14495,7 +14199,7 @@ version = "5.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "parity-scale-codec",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "tracing",
  "tracing-core",
  "tracing-subscriber",
@@ -14507,7 +14211,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "sp-api",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -14519,27 +14223,11 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "sp-trie"
-version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6fc34f4f291886914733e083b62708d829f3e6b8d7a7ca7fa8a55a3d7640b0b"
-dependencies = [
- "hash-db",
- "memory-db",
- "parity-scale-codec",
- "scale-info",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "trie-db",
- "trie-root",
+ "sp-runtime",
+ "sp-std",
+ "sp-trie",
 ]
 
 [[package]]
@@ -14551,8 +14239,8 @@ dependencies = [
  "memory-db",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-std",
  "thiserror",
  "trie-db",
  "trie-root",
@@ -14569,8 +14257,8 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-core-hashing-proc-macro",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-std",
  "sp-version-proc-macro",
  "thiserror",
 ]
@@ -14589,25 +14277,12 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10d88debe690c2b24eaa9536a150334fcef2ae184c21a0e5b3e80135407a7d52"
-dependencies = [
- "impl-trait-for-tuples",
- "log 0.4.17",
- "parity-scale-codec",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "wasmi",
-]
-
-[[package]]
-name = "sp-wasm-interface"
-version = "6.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "impl-trait-for-tuples",
  "log 0.4.17",
  "parity-scale-codec",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "wasmi",
  "wasmtime",
 ]
@@ -14709,13 +14384,13 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-consensus-aura",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
@@ -14935,8 +14610,8 @@ dependencies = [
  "sp-api",
  "sp-block-builder",
  "sp-blockchain",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -14992,18 +14667,18 @@ dependencies = [
  "sp-consensus",
  "sp-consensus-aura",
  "sp-consensus-babe",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-externalities",
  "sp-finality-grandpa",
  "sp-inherents",
  "sp-keyring",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
+ "sp-runtime-interface",
  "sp-session",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-state-machine",
  "sp-transaction-pool",
- "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-wasm-interface",
  "tokio",
 ]
 
@@ -15019,12 +14694,12 @@ dependencies = [
  "sc-rpc-api",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-state-machine",
+ "sp-std",
+ "sp-trie",
  "trie-db",
 ]
 
@@ -15082,8 +14757,8 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core",
+ "sp-runtime",
  "subxt-macro",
  "subxt-metadata",
  "thiserror",
@@ -15125,7 +14800,7 @@ dependencies = [
  "frame-metadata",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core",
 ]
 
 [[package]]
@@ -15529,15 +15204,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tiny-keccak"
-version = "2.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c9d3793400a45f954c52e73d068316d76b6f4e36977e3fcebb13a2721e80237"
-dependencies = [
- "crunchy",
-]
-
-[[package]]
 name = "tinyvec"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15884,7 +15550,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d32d034c0d3db64b43c31de38e945f15b40cd4ca6d2dcfc26d4798ce8de4ab83"
 dependencies = [
  "hash-db",
- "hashbrown 0.12.1",
+ "hashbrown 0.12.2",
  "log 0.4.17",
  "rustc-hex",
  "smallvec 1.9.0",
@@ -15963,12 +15629,12 @@ dependencies = [
  "sc-executor",
  "sc-service",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-externalities",
+ "sp-io",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-state-machine",
  "sp-version",
  "zstd",
 ]
@@ -16206,8 +15872,8 @@ dependencies = [
  "frame-system",
  "pallet-transaction-payment",
  "picasso-runtime",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -16674,9 +16340,9 @@ dependencies = [
 
 [[package]]
 name = "webpki-roots"
-version = "0.22.3"
+version = "0.22.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44d8de8415c823c8abd270ad483c6feeac771fad964890779f9a8cb24fbbc1bf"
+checksum = "f1c760f0d366a6c24a02ed7816e23e691f5d92291f94d15e836006fd11b04daf"
 dependencies = [
  "webpki",
 ]
@@ -16724,9 +16390,9 @@ dependencies = [
 
 [[package]]
 name = "weezl"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c97e489d8f836838d497091de568cf16b117486d529ec5579233521065bd5e4"
+checksum = "9193164d4de03a926d909d3bc7c30543cecb35400c02114792c2cae20d5e2dbb"
 
 [[package]]
 name = "wepoll-ffi"
@@ -16807,16 +16473,16 @@ dependencies = [
  "sp-authority-discovery",
  "sp-block-builder",
  "sp-consensus-babe",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
  "sp-inherents",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
  "sp-mmr-primitives",
  "sp-npos-elections",
  "sp-offchain",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
  "sp-session",
  "sp-staking",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std",
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
@@ -16835,7 +16501,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-common",
  "smallvec 1.9.0",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime",
 ]
 
 [[package]]
@@ -17066,10 +16732,10 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-parachain",
  "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
  "xcm-executor",
 ]
@@ -17092,8 +16758,8 @@ dependencies = [
  "paste 1.0.7",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io",
+ "sp-std",
  "xcm",
  "xcm-executor",
 ]
@@ -17108,11 +16774,11 @@ dependencies = [
  "impl-trait-for-tuples",
  "log 0.4.17",
  "parity-scale-codec",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 
@@ -17137,12 +16803,12 @@ dependencies = [
  "hex",
  "parity-scale-codec",
  "sc-rpc",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core",
+ "sp-externalities",
+ "sp-io",
  "sp-keyring",
- "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime-interface",
+ "sp-std",
  "subxt",
  "tokio",
 ]

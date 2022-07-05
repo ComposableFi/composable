@@ -60,9 +60,13 @@ inherits = "release"
 lto = true
 
 [patch.crates-io]
-# https://github.com/paritytech/parity-scale-codec/issues/348
-parity-scale-codec = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-3.1.2" }
-# parity-scale-codec-derive = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-derive-3.1.2" }
+sp-application-crypto = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-arithmetic = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-core = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-debug-derive = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-externalities = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-io = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-runtime = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
 
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
@@ -132,6 +136,7 @@ pallet-uniques = { git = "https://github.com/composableFi/substrate", branch = "
 pallet-utility = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
 pallet-vesting = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
 remote-externalities = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sc-sysinfo = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
 sc-allocator = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
 sc-authority-discovery = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
 sc-basic-authorship = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
