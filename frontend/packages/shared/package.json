@@ -5,6 +5,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "bn.js": "^5.2.1",
     "tokens": "*"
   },
   "devDependencies": {
