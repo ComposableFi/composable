@@ -122,7 +122,8 @@ pub mod pallet {
 	pub struct AmmSwapInfo<N, R> {
 		pub destination_token_out_address: EthereumAddress,
 		pub destination_amm: RemoteAmm<N, R>,
-		pub minimum_amount_out: u128, // Hardcoded to u128 is intentional, as this is what the Relayer expects.
+		pub minimum_amount_out: u128, /* Hardcoded to u128 is intentional, as this is what the
+		                               * Relayer expects. */
 	}
 
 	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq)]
@@ -1043,9 +1044,8 @@ pub mod pallet {
 				let lock_at = current_block.saturating_add(lock_time);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
-					Some((balance, _)) => {
-						*prev = Some(((*balance).saturating_add(amount), lock_at))
-					},
+					Some((balance, _)) =>
+						*prev = Some(((*balance).saturating_add(amount), lock_at)),
 					_ => *prev = Some((amount, lock_at)),
 				});
 
