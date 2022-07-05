@@ -21,7 +21,7 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
-  build:
+  Test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
