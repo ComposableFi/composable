@@ -33,7 +33,7 @@ import {
 import { randomUUID } from "crypto";
 import Big from "big.js";
 import { Fee } from "../src/types/v2300";
-import { createAccount, createCtx } from "./common";
+import { createAccount, createCtx, encodeAccount } from "../src/utils";
 
 const UNIT = 1_000_000_000_000;
 
@@ -186,10 +186,6 @@ function createSwappedEvent(
   when(eventMock.asLatest).thenReturn(evt);
   let event = instance(eventMock);
   return { who, event };
-}
-
-function encodeAccount(owner: Uint8Array) {
-  return ss58.codec("picasso").encode(owner);
 }
 
 function createZeroAsset(id: string, assetId: bigint) {

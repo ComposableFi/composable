@@ -14,11 +14,12 @@ import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
 } from "../src/types/events";
-import { createAccount, createCtx } from "./common";
+import { createAccount, createCtx } from "../src/utils";
 import {
   processNewBondEvent,
   processNewOfferEvent,
 } from "../src/bondedFinanceProcessor";
+import { encodeAccount } from "./common";
 
 const OFFER_ID_1 = "1";
 const OFFER_ID_2 = "2";
@@ -26,7 +27,7 @@ const NB_OF_BONDS_FIRST = BigInt(100);
 const NB_OF_BONDS_SECOND = BigInt(20);
 const NB_OF_BONDS_THIRD = BigInt(50);
 const WHO = createAccount();
-const ALICE_ADDRESS = "5uzszPDrKoxi7NnBQV33uv4ifshHwU3ieySqQppZmfNUrfVV";
+const MOCK_ADDRESS = createAccount();
 const MOCK_NEW_OFFER_EXTRINSIC = {
   id: "0000000029-000002-3a0b2",
   name: "bondedFinance.offer",
@@ -45,7 +46,7 @@ const MOCK_NEW_OFFER_EXTRINSIC = {
         maturity: [Object],
         bondPrice: "0x0000000000000000016345785d8a0000",
         nbOfBonds: 15,
-        beneficiary: ALICE_ADDRESS,
+        beneficiary: MOCK_ADDRESS,
       },
     },
     { name: "keepAlive", type: "bool", value: true },
@@ -59,6 +60,7 @@ function createNewOfferEvent(offerId: string) {
   let eventMock = mock(BondedFinanceNewOfferEvent);
   let evt = {
     offerId: BigInt(OFFER_ID_1),
+    beneficiary: MOCK_ADDRESS,
   };
   when(eventMock.asV2300).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
@@ -121,7 +123,7 @@ async function assertNewOfferEvent(
     arg as unknown as BondedFinanceBondOffer,
     offerId,
     BigInt(0),
-    ALICE_ADDRESS
+    encodeAccount(MOCK_ADDRESS)
   );
 }
 
@@ -142,7 +144,7 @@ async function assertNewBondEvent(
     arg as unknown as BondedFinanceBondOffer,
     offerId,
     totalPurchased[offerId].totalPurchased,
-    ALICE_ADDRESS
+    encodeAccount(MOCK_ADDRESS)
   );
 }
 
@@ -196,12 +198,12 @@ describe("Bonded finance events", () => {
       [OFFER_ID_1]: new BondedFinanceBondOffer({
         id: OFFER_ID_1,
         totalPurchased: BigInt(0),
-        beneficiary: ALICE_ADDRESS,
+        beneficiary: encodeAccount(MOCK_ADDRESS),
       }),
       [OFFER_ID_2]: new BondedFinanceBondOffer({
         id: OFFER_ID_2,
         totalPurchased: BigInt(0),
-        beneficiary: ALICE_ADDRESS,
+        beneficiary: encodeAccount(MOCK_ADDRESS),
       }),
     };
 
