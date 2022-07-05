@@ -6,4 +6,4 @@ Therefore, we are creating other bridges to connect the IBC protocol to more blo
 
 The first steps have been taken to see this vision true in collaboration with NEAR’s core team. Our joint effort with the NEAR core team in delivering the bridging infrastructure that connects NEAR and Polkadot will further add to DeFi’s continued growth and interoperability between two innovative ecosystems.
 
-Ecosystems such as Polygon and Zksync are examples of 2 mature ecosystems that could greatly benefit from IBC and already have the required infrastructure needed to support a light client. In the future, we plan to build within such ecosystems, ultimately working towards a future where all light client-enabled blockchains are interconnected through IBC.
+Ecosystems such as Polygon and other Ethereum scaling ecosystems that could greatly benefit from IBC and already have the required infrastructure needed to support a light client. In the future, we plan to build within such ecosystems, ultimately working towards a future where all light client-enabled blockchains are interconnected through IBC.
