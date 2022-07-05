@@ -26,10 +26,16 @@
       in with pkgs; rec {
         packages.composable = rustPlatform.buildRustPackage rec {
           pname = "composable";
-          version = "2.1.6";
+          version = "2.1.8";
+          nativeBuildInputs = [ rust-nightly clang ]
+            ++ lib.optional stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
+              Security
+              SystemConfiguration
+            ]);
           src = let
             customFilter = name: type:
-              !(type == "directory" && baseNameOf name == "nix");
+              !(type == "directory" && (baseNameOf name == "nix"
+                || baseNameOf name == "nix-crate"));
           in lib.cleanSourceWith {
             filter = lib.cleanSourceFilter;
             src = lib.cleanSourceWith {
@@ -39,9 +45,26 @@
               src = ../.;
             };
           };
-          nativeBuildInputs = [ rust-nightly clang ];
+          outputs = [ "out" "runtimes" ];
+          doCheck = false;
+          buildType = "release";
+          # TODO: fix hardcoded path for target
+          installPhase = ''
+            local TARGET=$(rustc -vV | sed -n 's|host: ||p')
+            mkdir -p $runtimes
+            ${lib.strings.concatStringsSep "\n" (map (runtime:
+              let
+                name = "${runtime}_runtime.compact.compressed.wasm";
+                path = "target/$TARGET/${buildType}/wbuild/${runtime}-runtime/";
+              in ''
+                cp ${path}/${name} $runtimes/${runtime}.wasm
+              '') [ "dali" "picasso" "composable" ])}
+            mkdir -p $out/bin
+            cp target/$TARGET/${buildType}/composable $out/bin/composable
+          '';
           cargoLock = {
             lockFile = ../Cargo.lock;
+            # Required for git dependencies.
             outputHashes = {
               "parity-scale-codec-3.1.2" =
                 "sha256-GVonCdlCgrU/GVOL750BBeJBOdNVbUNcDKkigO+Sc/8=";
@@ -71,7 +94,9 @@
                 "sha256-eGPNpuC5VKbLfRSkL0rTB4Tuww6ubIV9pcsf+p2E5EM=";
             };
           };
+          # Required as we are sandboxed, forward a --offline flag to cargo operations.
           CARGO_NET_OFFLINE = "1";
+          # Avoid building those runtimes.
           SKIP_POLKADOT_RUNTIME_WASM_BUILD = "1";
           SKIP_KUSAMA_RUNTIME_WASM_BUILD = "1";
           SKIP_ROCOCO_RUNTIME_WASM_BUILD = "1";

@@ -1,0 +1,32 @@
+name: "Compile via Nix"
+on:
+  pull_request:
+  push:
+jobs:
+  tests:
+    # strategy:
+    #   matrix:
+    #     os: [ubuntu-latest, macos-latest]
+    # runs-on: ${{ matrix.os }}
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+    - uses: actions/checkout@v3.0.2
+    - uses: actions/setup-python@v4
+      id: cp310
+      with:
+        python-version: "3.10"
+    - uses: cachix/install-nix-action@v17
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    - uses: cachix/cachix-action@v10
+      with:
+        name: composable-community
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+        extraPullNames: composable-community
+    - run: |
+        cd nix-crane
+        nix build -L
