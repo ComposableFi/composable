@@ -11,6 +11,7 @@ import {
   ComposableTraitsStakingRewardConfig
 } from "@composable/types/interfaces";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 
 /**
  * Extrinsic Tests for Staking Rewards Pallet
@@ -43,6 +44,7 @@ describe.only("tx.stakingRewards Tests", function () {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
     it("Wallet balance check should be >0", async function () {
+      this.timeout(2 * 60 * 1000);
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
 
       // Here we make our request
@@ -50,12 +52,13 @@ describe.only("tx.stakingRewards Tests", function () {
         data: [result]
       } = await QuerySystemAccountTests.createRewardPool(
         api,
+        poolOwnerWallet,
         poolOwnerWallet.publicKey,
         1,
         10,
-        api.createType("BTreeMap<u128, ComposableTraitsStakingRewardConfig", null),
+        api.createType("BTreeMap<u128, ComposableTraitsStakingRewardConfig>", null),
         api.createType("ComposableTraitsStakingLockLockConfig", {
-          durationPresets: api.createType("BTreeMap<u64, Perbill", null)
+          durationPresets: api.createType("BTreeMap<u64, Perbill>", null)
         })
       );
       console.log("res", result);
@@ -81,6 +84,7 @@ export class QuerySystemAccountTests {
    */
   public static async createRewardPool(
     api: ApiPromise,
+    wallet: KeyringPair,
     owner: AccountId32 | Uint8Array,
     assetId: AnyNumber,
     endBlock: AnyNumber,
@@ -88,11 +92,18 @@ export class QuerySystemAccountTests {
     lock: ComposableTraitsStakingLockLockConfig
   ) {
     const poolConfig = api.createType("ComposableTraitsStakingRewardPoolConfiguration", {
-      owner: owner,
-      assetId: assetId,
-      endBlock: endBlock,
-      rewardConfigs: rewardConfigs
+      RewardRateBasedIncentive: {
+        owner: owner,
+        assetId: assetId,
+        endBlock: endBlock,
+        rewardConfigs: rewardConfigs
+      }
     });
-    return await api.tx.stakingRewards.createRewardPool(poolConfig);
+    return await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.stakingRewards.RewardPoolCreated.is,
+      api.tx.stakingRewards.createRewardPool(poolConfig)
+    );
   }
 }
