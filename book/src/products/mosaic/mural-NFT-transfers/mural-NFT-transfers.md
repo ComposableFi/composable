@@ -1,12 +1,17 @@
 # Mural: NFT Transfers on Mosaic via the Summoner Vault
 
+
 ---
 
-![cross-layer-nfts](./mural-nft-transfers-on-mosaic-via-the-summoner-vault/cross-layer-nfts.png)
+
+![mural_interface](./mural-interface.png)
+
 
 Composable understands that non-fungible tokens (NFTs) are an exponentially growing part of the DeFi ecosystem. Thus we have built full compatibility for these unique tokens into our Mosaic cross-layer asset transferal system, facilitated by our Summoner Vault.
 
+
 ---
+
 
 ## NFT Transfer Overview
 
