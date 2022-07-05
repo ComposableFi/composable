@@ -23,8 +23,10 @@ mod runtime;
 fn test_create_reward_pool() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
+		assert_eq!(StakingRewards::pool_count(), 0);
 		let mut pool_init_config = get_default_reward_pool();
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_eq!(StakingRewards::pool_count(), 1);
 
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
@@ -46,7 +48,14 @@ fn test_create_reward_pool() {
 #[test]
 fn test_stake() {
 	new_test_ext().execute_with(|| {
+		assert_eq!(StakingRewards::stake_count(), 0);
 
+		let mut pool_init_config = get_default_reward_pool();
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+
+		let (pool_id, amount, duration_preset) = (StakingRewards::pool_count(), 100_500, 30);
+		assert_ok!(StakingRewards::stake(Origin::signed(ALICE), pool_id, amount, duration_preset));
+		assert_eq!(StakingRewards::stake_count(), 1);
 	});
 }
 

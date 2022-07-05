@@ -44,6 +44,8 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use core::time::Duration;
+
 	use composable_support::{
 		abstractions::{
 			nonce::Nonce,
@@ -284,6 +286,30 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
 			Ok(())
 		}
+
+		#[pallet::weight(10_000)]
+		pub fn stake(
+			origin: OriginFor<T>,
+			pool_id: T::RewardPoolId,
+			amount: T::Balance,
+			duration_preset: DurationSeconds,
+		) -> DispatchResult {
+			let owner = ensure_signed(origin)?;
+			let keep_alive = true;
+			let position_id =
+				<Self as Staking>::stake(&owner, &pool_id, amount, duration_preset, keep_alive)?;
+
+			Self::deposit_event(Event::<T>::StakeCreated {
+				pool_id,
+				owner,
+				amount,
+				duration_preset,
+				position_id,
+				keep_alive,
+			});
+
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Staking for Pallet<T> {
@@ -319,12 +345,16 @@ pub mod pallet {
 			let mut inner_rewards = rewards_pool.rewards.into_inner();
 
 			for (asset_id, reward) in inner_rewards.iter_mut() {
-				let inflation = reward
-					.total_rewards
-					.safe_mul(&new_pool_shares)
-					.map_err(|_| ArithmeticError::Overflow)?
-					.safe_div(&rewards_pool.total_shares)
-					.map_err(|_| ArithmeticError::Overflow)?;
+				let inflation = if &rewards_pool.total_shares == &Self::Balance::from(0u32) {
+					Self::Balance::from(0u32)
+				} else {
+					reward
+						.total_rewards
+						.safe_mul(&new_pool_shares)
+						.map_err(|_| ArithmeticError::Overflow)?
+						.safe_div(&rewards_pool.total_shares)
+						.map_err(|_| ArithmeticError::Overflow)?
+				};
 
 				reward.total_rewards = reward
 					.total_rewards
@@ -362,15 +392,6 @@ pub mod pallet {
 			RewardPools::<T>::insert(pool_id, rewards_pool);
 			Stakes::<T>::insert(position_id, new_position);
 			StakeCount::<T>::increment()?;
-
-			Self::deposit_event(Event::<T>::StakeCreated {
-				pool_id: pool_id.clone(),
-				owner: who.clone(),
-				amount,
-				duration_preset,
-				position_id,
-				keep_alive,
-			});
 
 			Ok(position_id)
 		}
