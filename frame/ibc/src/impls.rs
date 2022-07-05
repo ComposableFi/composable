@@ -1,5 +1,5 @@
 use super::*;
-use crate::routing::Context;
+use crate::{events::IbcEvent, routing::Context};
 use codec::{Decode, Encode};
 use composable_traits::{
 	defi::DeFiComposableConfig,
@@ -702,6 +702,7 @@ where
 				.map_err(|_| IbcHandlerError::SendPacketError)?;
 		ctx.store_packet_result(send_packet_result.result)
 			.map_err(|_| IbcHandlerError::SendPacketError)?;
+		Self::deposit_event(send_packet_result.events.into());
 		Ok(())
 	}
 
@@ -724,10 +725,12 @@ where
 			type_url: CHANNEL_OPEN_INIT_TYPE_URL.to_string(),
 			value,
 		};
-		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions>(
-			&mut ctx, msg,
-		)
+		let res = ibc::core::ics26_routing::handler::deliver::<
+			_,
+			crate::host_functions::HostFunctions,
+		>(&mut ctx, msg)
 		.map_err(|_| IbcHandlerError::ChannelInitError)?;
+		Self::deposit_event(res.events.into());
 		Ok(channel_id)
 	}
 
@@ -740,6 +743,8 @@ where
 		let mut ctx = Context::<T>::default();
 		send_transfer::<_, _>(&mut ctx, &mut handler_output, msg)
 			.map_err(|_| IbcHandlerError::SendTransferError)?;
+		let result = handler_output.with_result(());
+		Self::deposit_event(result.events.into());
 		Ok(())
 	}
 
@@ -794,7 +799,19 @@ where
 			(packet.source_port.clone(), packet.source_channel, packet.sequence),
 			ack,
 		)
-		.map_err(|_| IbcHandlerError::WriteAcknowledgementError)
+		.map_err(|_| IbcHandlerError::WriteAcknowledgementError)?;
+		let host_height = ctx.host_height();
+		let event = IbcEvent::WriteAcknowledgement {
+			revision_height: host_height.revision_height,
+			revision_number: host_height.revision_number,
+			port_id: packet.source_port.as_bytes().to_vec(),
+			channel_id: packet.source_channel.to_string().as_bytes().to_vec(),
+			dest_port: packet.destination_port.as_bytes().to_vec(),
+			dest_channel: packet.destination_channel.to_string().as_bytes().to_vec(),
+			sequence: packet.sequence.into(),
+		};
+		Self::deposit_event(Event::<T>::IbcEvents { events: vec![event] });
+		Ok(())
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]

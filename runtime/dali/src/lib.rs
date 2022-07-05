@@ -1668,7 +1668,7 @@ impl_runtime_apis! {
 			});
 
 			events.fold(vec![], |mut events, ev| {
-				events.extend_from_slice(&ev);
+				events.extend(ev);
 				events
 			})
 		}
