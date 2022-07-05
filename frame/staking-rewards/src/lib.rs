@@ -38,8 +38,8 @@ mod benchmarking;
 mod prelude;
 #[cfg(test)]
 mod test;
-pub mod weights;
 mod validation;
+pub mod weights;
 
 pub use pallet::*;
 
@@ -55,7 +55,7 @@ pub mod pallet {
 			},
 		},
 		math::safe::SafeArithmetic,
-        validation::Validated,
+		validation::Validated,
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
@@ -94,8 +94,8 @@ pub mod pallet {
 		EndBlockMustBeInTheFuture,
 		/// Unimplemented reward pool type.
 		UnimplementedRewardPoolConfiguration,
-        /// No position found for given id.
-        NoPositionFound,
+		/// No position found for given id.
+		NoPositionFound,
 	}
 
 	#[pallet::config]
@@ -121,14 +121,7 @@ pub mod pallet {
 			+ SafeArithmetic;
 
 		/// The position id type.
-		type PositionId: Parameter
-            + Member
-            + Clone
-            + FullCodec
-            + Zero
-            + One
-			+ Copy
-            + SafeArithmetic;
+		type PositionId: Parameter + Member + Clone + FullCodec + Zero + One + Copy + SafeArithmetic;
 
 		type AssetId: Parameter
 			+ Member
@@ -192,16 +185,16 @@ pub mod pallet {
 		>,
 	>;
 
-    /// Abstraction over Stake type
-    type StakeOf<T> = Stake<
-        <T as Config>::RewardPoolId,
-        <T as Config>::Balance,
-        Rewards<
-            <T as Config>::AssetId,
-            <T as Config>::Balance,
-            <T as Config>::MaxRewardConfigsPerPool,
-            >,
-            >;
+	/// Abstraction over Stake type
+	type StakeOf<T> = Stake<
+		<T as Config>::RewardPoolId,
+		<T as Config>::Balance,
+		Rewards<
+			<T as Config>::AssetId,
+			<T as Config>::Balance,
+			<T as Config>::MaxRewardConfigsPerPool,
+		>,
+	>;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub (super) trait Store)]
@@ -225,10 +218,10 @@ pub mod pallet {
 	pub type StakeCount<T: Config> =
 		StorageValue<_, T::PositionId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
-    #[pallet::storage]
-    #[pallet::getter(fn stakes)]
-    pub type Stakes<T: Config> =
-        StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>, OptionQuery>;
+	#[pallet::storage]
+	#[pallet::getter(fn stakes)]
+	pub type Stakes<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>, OptionQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -283,16 +276,16 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(T::WeightInfo::create_reward_pool())]
-        pub fn split(
-            origin: OriginFor<T>,
-            position: T::PositionId,
-            ratio: Validated<Permill, ValidSplitRatio>,
-        ) -> DispatchResult {
-            let who = ensure_signed(origin)?;
-            <Self as Staking>::split(&who, &position, ratio.value())?;
-            Ok(())
-        }
+		#[pallet::weight(T::WeightInfo::split())]
+		pub fn split(
+			origin: OriginFor<T>,
+			position: T::PositionId,
+			ratio: Validated<Permill, ValidSplitRatio>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			<Self as Staking>::split(&who, &position, ratio.value())?;
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Staking for Pallet<T> {
@@ -337,26 +330,24 @@ pub mod pallet {
 			position: &Self::PositionId,
 			ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
-            let old_position = Stakes::<T>::try_mutate(position, |old_stake| {
-                match old_stake {
-                    Some(stake) => {
-                        let old_value = stake.clone();
-                        stake.stake = ratio.mul_floor(stake.stake);
-                        stake.share = ratio.mul_floor(stake.share);
-                        Ok(old_value)
-                    },
-                    None => {Err(Error::<T>::NoPositionFound)}
-                }
-            })?; 
-            let left_from_one_ratio = ratio.left_from_one();
-            let new_stake = StakeOf::<T> {
-                stake: left_from_one_ratio.mul_floor(old_position.stake),
-                share: left_from_one_ratio.mul_floor(old_position.share),
-                ..old_position
-            };
-            let new_position = StakeCount::<T>::increment()?;
-            Stakes::<T>::insert(new_position, new_stake);
-            Ok([*position, new_position])
+			let old_position = Stakes::<T>::try_mutate(position, |old_stake| match old_stake {
+				Some(stake) => {
+					let old_value = stake.clone();
+					stake.stake = ratio.mul_floor(stake.stake);
+					stake.share = ratio.mul_floor(stake.share);
+					Ok(old_value)
+				},
+				None => Err(Error::<T>::NoPositionFound),
+			})?;
+			let left_from_one_ratio = ratio.left_from_one();
+			let new_stake = StakeOf::<T> {
+				stake: left_from_one_ratio.mul_floor(old_position.stake),
+				share: left_from_one_ratio.mul_floor(old_position.share),
+				..old_position
+			};
+			let new_position = StakeCount::<T>::increment()?;
+			Stakes::<T>::insert(new_position, new_stake);
+			Ok([*position, new_position])
+		}
 	}
-}
 }

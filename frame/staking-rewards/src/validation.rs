@@ -7,10 +7,10 @@ use sp_runtime::Permill;
 pub struct ValidSplitRatio;
 
 impl Validate<Permill, ValidSplitRatio> for ValidSplitRatio {
-    fn validate(input: Permill) -> Result<Permill, &'static str> {
-        if input.is_zero() || input.is_one() {
-            return Err("INVALID_SPLIT_RATIO")
-        }
-        Ok(input)
-    }
+	fn validate(input: Permill) -> Result<Permill, &'static str> {
+		if input.is_zero() || input.is_one() {
+			return Err("INVALID_SPLIT_RATIO")
+		}
+		Ok(input)
+	}
 }
