@@ -2301,16 +2301,16 @@ pub mod pallet {
 			if oracle_price.is_positive() {
 				// Clip the current price to within 10bps of the last oracle price
 				// Use the current oracle price if first time querying it for this market
-				let last_oracle = if market.last_oracle_price.is_positive() {
+				let last_oracle_price = if market.last_oracle_price.is_positive() {
 					market.last_oracle_price
 				} else {
 					oracle_price
 				};
 				let last_oracle_10bp =
-					last_oracle.try_div(&T::Decimal::saturating_from_integer(1000))?;
+					last_oracle_price.try_div(&T::Decimal::saturating_from_integer(1000))?;
 				oracle_price = oracle_price.clamp(
-					last_oracle.try_sub(&last_oracle_10bp)?,
-					last_oracle.try_add(&last_oracle_10bp)?,
+					last_oracle_price.try_sub(&last_oracle_10bp)?,
+					last_oracle_price.try_add(&last_oracle_10bp)?,
 				);
 
 				// TODO(0xangelo): consider further guard rails
