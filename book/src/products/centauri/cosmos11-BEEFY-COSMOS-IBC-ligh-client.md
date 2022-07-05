@@ -9,12 +9,12 @@ We are also developing a BEEFY light client implementation for Cosmos-IBC (11-BE
 
 With the [BEEFY protocol](https://www.youtube.com/watch?v=ZmIa_4hPRZ8&t=2378s), the authority set produces an extra finality proof for light clients which consists of the MMR root hash of all blocks finalized by [GRANDPA](https://polkadot.network/tag/grandpa/) (the finality gadget implemented for the Polkadot relay chain) at a given height. With the introduction of this protocol, light clients no longer need to be aware of all the headers in a chain for them to be convinced about finality. This drastically reduces the size of the data that light clients must store to follow the chain’s consensus to exactly 124 bytes.
 
-A preliminary [specification](https://github.com/paritytech/grandpa-bridge-gadget/blob/td-docs/docs/beefy.md) for BEEFY is already available and is largely implemented, barring a few kinks that need ironing out. At a high level, this is a new protocol that will be added to Polkadot without the need for a hard fork. Thanks to the[ WebAssembly (Wasm)](https://webassembly.org/) runtime and the on-chain governance protocol, this new protocol will produce significantly lighter finality proofs for light clients for both on-chain and off-chain uses. It will achieve this by having the existing GRANDPA authority set periodically vote on the Merkle Mountain Range root hash of all blocks that have been considered final by the network.
+A preliminary [specification](https://github.com/paritytech/grandpa-bridge-gadget/blob/td-docs/docs/beefy.md) for BEEFY is already available and is largely implemented, barring a few kinks that need ironing out. At a high level, this is a new protocol that will be added to Polkadot without the need for a hard fork. Thanks to the[WebAssembly (Wasm)](https://webassembly.org/) runtime and the on-chain governance protocol, this new protocol will produce significantly lighter finality proofs for light clients for both on-chain and off-chain uses. It will achieve this by having the existing GRANDPA authority set periodically vote on the Merkle Mountain Range root hash of all blocks that have been considered final by the network.
 
 This proof is shown below:
 
 
-```markdown
+```rust
 pub struct BEEFYNextAuthoritySet {
 	/// Id of the next set.
 	///
@@ -37,7 +37,7 @@ pub struct BEEFYNextAuthoritySet {
 	}
 ```
 
-```markdown
+```rust
 /// Data that light clients need to follow relay chain consensus
 pub struct BEEFYLightClient{
 	pub latest_BEEFY_height: u32, // 4bytes
@@ -52,7 +52,7 @@ Composable is performing a total [of 8 PRs to core BEEFY subsystems](https://git
 
 
 
-* [https://github.com/paritytech/substrate/pull/10669](https://github.com/paritytech/substrate/pull/10669) : Introduces a runtime API to the BEEFY finalization gadget for fetching the block number where the current session began.
+* [https://github.com/paritytech/substrate/pull/10669](https://github.com/paritytech/substrate/pull/10669): Introduces a runtime API to the BEEFY finalization gadget for fetching the block number where the current session began.
 * [https://github.com/paritytech/substrate/pull/10727](https://github.com/paritytech/substrate/pull/10727): Implements an algorithm for deterministic block selection for finalization by the BEEFY gadget.
 * [https://github.com/paritytech/substrate/pull/10705](https://github.com/paritytech/substrate/pull/10705): Prevents the finalization gadget from starting while block syncing is still in progress.
 * [https://github.com/paritytech/substrate/pull/10684](https://github.com/paritytech/substrate/pull/10684): De-duplicates BEEFY finalization notifications sent to RPC subscribers.
