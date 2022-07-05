@@ -50,11 +50,12 @@ async fn main() {
 	.await
 	.expect("unable to start binance feed");
 
-    let composable = ComposableFeed::start(
-            opts.composable_node,
-            &[(Asset::PICA, Asset::USDC)].iter().copied().collect(),
-    ).await
-    .expect("unable to start composable feed");
+	let composable = ComposableFeed::start(
+		opts.composable_node,
+		&[(Asset::PICA, Asset::USDC)].iter().copied().collect(),
+	)
+	.await
+	.expect("unable to start composable feed");
 
 	let merge = |feeds: Vec<(FeedHandle, FeedStream<FeedIdentifier, Asset, TimeStampedPrice>)>| {
 		let (handles, sources) = feeds.into_iter().unzip::<_, _, Vec<_>, Vec<_>>();
