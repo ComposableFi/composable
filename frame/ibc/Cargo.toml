@@ -34,8 +34,8 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24" }
 
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", default-features = false, features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d7bef572268f3508292f9d3a6256d347ad49296d", default-features = false, features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d7bef572268f3508292f9d3a6256d347ad49296d", default-features = false }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", default-features = false }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", optional = true, default-features = false }
 hex-literal = { version = "0.3.4", optional = true }
@@ -56,7 +56,7 @@ sha2 = { version = "0.10.2", default-features = false }
 chrono = "0.4.19"
 serde = { version = "1.0" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", features = ["mocks"] }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d7bef572268f3508292f9d3a6256d347ad49296d", features = ["mocks"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 prost = { version = "0.10" }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }

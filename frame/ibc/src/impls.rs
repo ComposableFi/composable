@@ -322,7 +322,7 @@ where
 					.find(|(.., connection_ids)| connection_ids.contains(&connection_id))
 				{
 					let client_state = ClientStates::<T>::get(client_id.clone());
-					return Ok(IdentifiedClientState { client_id, client_state });
+					return Ok(IdentifiedClientState { client_id, client_state })
 				}
 			}
 		}

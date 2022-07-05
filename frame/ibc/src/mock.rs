@@ -157,6 +157,8 @@ impl orml_tokens::Config for Test {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
+	type OnKilledTokenAccount = ();
+	type OnNewTokenAccount = ();
 }
 
 impl governance_registry::Config for Test {
@@ -201,7 +203,7 @@ pub struct IbcAccount<T: pallet_ibc::Config>(T::AccountId);
 
 impl<T: pallet_ibc::Config> IdentifyAccount for IbcAccount<T> {
 	type AccountId = T::AccountId;
-	fn .into_account_truncating(self) -> Self::AccountId {
+	fn into_account(self) -> Self::AccountId {
 		self.0
 	}
 }
