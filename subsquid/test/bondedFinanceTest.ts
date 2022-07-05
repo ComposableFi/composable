@@ -222,7 +222,7 @@ describe("Bonded finance events", () => {
       ctx,
       storeMock,
       OFFER_ID_1,
-      NB_OF_BONDS_FIRST + NB_OF_BONDS_SECOND + 1n
+      NB_OF_BONDS_FIRST + NB_OF_BONDS_SECOND
     );
 
     // The store should have saved twice in the database
