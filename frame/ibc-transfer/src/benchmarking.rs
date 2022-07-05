@@ -249,7 +249,7 @@ benchmarks! {
 		let denom = "transfer/channel-1/PICA";
 		let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
 		let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
-		let channel_escrow_address: T::AccountId = channel_escrow_address.into_account_truncating();
+		let channel_escrow_address: T::AccountId = channel_escrow_address.into_account();
 
 		<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
 			CurrencyId::PICA.into(),
@@ -333,7 +333,7 @@ benchmarks! {
 		let denom = "PICA";
 		let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
 		let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
-		let channel_escrow_address: T::AccountId = channel_escrow_address.into_account_truncating();
+		let channel_escrow_address: T::AccountId = channel_escrow_address.into_account();
 
 		<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
 			CurrencyId::PICA.into(),
@@ -410,7 +410,7 @@ benchmarks! {
 		let denom = "PICA";
 		let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
 		let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
-		let channel_escrow_address: T::AccountId = channel_escrow_address.into_account_truncating();
+		let channel_escrow_address: T::AccountId = channel_escrow_address.into_account();
 
 		<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
 			CurrencyId::PICA.into(),

@@ -21,7 +21,7 @@ serde_json = { version = "1.0.45", default-features = false }
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false, optional = true }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false, optional = true }
-simple-iavl = { git = "https://github.com/ComposableFi/simple-avl", rev = "a725ecd9386b017a3470bb0b5f1f821fbad3de9b", default-features = false, optional = true }
+simple-iavl = { git = "https://github.com/ComposableFi/simple-avl", rev = "452a1126bfb8a861354b413755ac3c8fda3da4ec", default-features = false, optional = true }
 prost = { version = "0.10", default-features = false, optional = true }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
@@ -34,12 +34,12 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24" }
 
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d7bef572268f3508292f9d3a6256d347ad49296d", default-features = false, features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d7bef572268f3508292f9d3a6256d347ad49296d", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "2d652ef6f379451d24b744ce9c5447fd39423f5b", default-features = false, features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "2d652ef6f379451d24b744ce9c5447fd39423f5b", default-features = false }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", default-features = false }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", optional = true, default-features = false }
 hex-literal = { version = "0.3.4", optional = true }
-ics23 = { git = "https://github.com/composablefi/ics23", rev = "86e970a4f22973946a0faf472b56951691d40874", default-features = false, optional = true }
+ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false, optional = true }
 
 # local deps
 ibc-primitives = { path = "ibc-primitives", default-features = false }
@@ -56,11 +56,11 @@ sha2 = { version = "0.10.2", default-features = false }
 chrono = "0.4.19"
 serde = { version = "1.0" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d7bef572268f3508292f9d3a6256d347ad49296d", features = ["mocks"] }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "2d652ef6f379451d24b744ce9c5447fd39423f5b", features = ["mocks"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 prost = { version = "0.10" }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
-simple-iavl = { git = "https://github.com/ComposableFi/simple-avl", rev = "a725ecd9386b017a3470bb0b5f1f821fbad3de9b" }
+simple-iavl = { git = "https://github.com/ComposableFi/simple-avl", rev = "452a1126bfb8a861354b413755ac3c8fda3da4ec" }
 hex-literal = { version = "0.3.4" }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5" }
