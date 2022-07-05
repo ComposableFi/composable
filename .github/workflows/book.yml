@@ -12,7 +12,7 @@ jobs:
   build-and-deploy-book:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy 
+      - name: Checkout 
         uses: actions/checkout@v2
         with:
           fetch-depth: 1
@@ -22,12 +22,23 @@ jobs:
           node-version: '16.x'
 
       - name: Setup mdBook
-        uses: peaceiris/actions-mdbook@v1
-        with:
-          mdbook-version: '0.4.10'
-          mdbook-version: 'latest'
+        run: |
+          wget "https://github.com/rust-lang/mdBook/releases/download/v0.4.18/mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz" 
+          tar -xzf mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz 
+          chmod +x mdbook
+          sudo cp ./mdbook /usr/bin 
 
-      - run: mdbook build
+      - name: Upload to Bucket
+        working-directory: 'book'
+        run: |
+          mdbook build --dest-dir html/
+          
+
+      - name: 'upload-folder'
+        uses: 'google-github-actions/upload-cloud-storage@v0'
+        with:
+          path: 'book/html/'
+          destination: 'docs.composable.finance'
 
       - name: Deploy to CLoud Storage Website
         uses: abinmn/gcp-storage-bucket-action@v1.0
