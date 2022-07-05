@@ -1,0 +1,38 @@
+name: GCS Bucket deploy 
+on:
+  push: 
+    branches: 
+      - main
+
+env:
+  CI_SERVICE_ACCOUNT_KEY: ${{ secrets.CI_SERVICE_ACCOUNT_KEY }}
+
+jobs:
+  build-and-deploy-book:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy 
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.x'
+
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v1
+        with:
+          mdbook-version: '0.4.10'
+          # mdbook-version: 'latest'
+
+      - run: mdbook build
+
+      - name: Deploy to CLoud Storage Website
+        uses: abinmn/gcp-storage-bucket-action@v1.0
+        with:
+          service_key: ${{ secrets.CI_SERVICE_ACCOUNT_KEY }}
+          project: "composable-ci"
+          home_page_path: "/"
+          error_page_path: # Path of the 404 page to be shown
+          build_folder: "/"
