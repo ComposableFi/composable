@@ -1,6 +1,6 @@
 import React from "react";
 import { BigNumber } from "bignumber.js";
-import { FLOAT_NUMBER, NUMBERS_ONE_DOT } from "@/utils/number";
+import { FLOAT_NUMBER, NUMBERS_ONE_DOT } from "shared";
 
 type UseValidationType = {
   initialValue: BigNumber;

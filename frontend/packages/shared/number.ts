@@ -19,7 +19,9 @@ export const nFormatter = (num: number, digits: number = 1) => {
 }
 
 
-export const percentageToNumber = (percentString: string): number => Number(percentString.replaceAll("%", ""));
+export const percentageToNumber = (percentString: string): number => {
+  return Number(percentString.replaceAll("%", ""));
+};
 
 export const validNumber = (value: number | string, min?: number, max?: number) => {
   const numberValue = Number(value);

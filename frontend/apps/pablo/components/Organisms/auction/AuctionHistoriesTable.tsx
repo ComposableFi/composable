@@ -19,7 +19,7 @@ import { Link } from "@/components/Molecules";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
 import { getAssetById } from "@/defi/polkadot/Assets";
-import { getShortAddress } from "@/utils/string";
+import { getShortAddress } from "shared";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 

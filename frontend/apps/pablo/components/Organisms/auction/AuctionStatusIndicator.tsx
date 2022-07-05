@@ -6,7 +6,7 @@ import {
   useTheme, 
 } from "@mui/material";
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
-import { getHumanizedDateDiff } from "@/utils/date";
+import { getHumanizedDateDiff } from "shared";
 import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
 
 export type AuctionStatusIndicatorProps = {

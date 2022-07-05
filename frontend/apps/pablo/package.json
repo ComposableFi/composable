@@ -48,6 +48,8 @@
     "react-redux": "^7.2.6",
     "redux-localstorage-simple": "^2.4.1",
     "substrate-react": "*",
+    "shared": "*",
+    "tokens": "*",
     "urql": "^2.2.0",
     "uuid": "^8.3.2"
   },

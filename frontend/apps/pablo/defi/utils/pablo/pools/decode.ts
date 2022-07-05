@@ -1,6 +1,6 @@
 import { getAssetById } from "@/defi/polkadot/Assets";
 import { LiquidityBootstrappingPool, ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
-import { percentageToNumber } from "@/utils/number";
+import { percentageToNumber } from "shared";
 import BigNumber from "bignumber.js";
 import moment from "moment";
 import { AVERAGE_BLOCK_TIME, DAYS, DEFAULT_NETWORK_ID, DUMMY_LAUNCH_DESCRIPTION } from "../../constants";

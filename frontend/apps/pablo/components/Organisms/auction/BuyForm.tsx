@@ -14,7 +14,7 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useAppDispatch } from "@/hooks/store";
 import { openPolkadotModal } from "@/stores/ui/uiSlice";
-import { getFullHumanizedDateDiff } from "@/utils/date";
+import { getFullHumanizedDateDiff } from "shared";
 import {
   useDotSamaContext,
   useExecutor,

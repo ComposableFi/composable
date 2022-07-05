@@ -4,10 +4,10 @@ import {
   RelayChainId,
   RelaychainNetwork,
 } from './types';
-
-export const ParachainNetworks: {
+export type ParachainNetworks = {
   [parachainId in ParachainId]: ParachainNetwork;
-} = {
+}
+export const ParachainNetworks: ParachainNetworks = {
   picasso: {
     name: 'Picasso',
     wsUrl: 'wss://picasso-rpc.composable.finance',

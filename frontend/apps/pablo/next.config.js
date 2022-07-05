@@ -3,6 +3,8 @@ const withPWA = require('next-pwa')
 
 const withTM = require("next-transpile-modules")([
   "substrate-react",
+  "shared",
+  "tokens"
 ]);
 
 const nextConfig = {

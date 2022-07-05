@@ -1,11 +1,11 @@
 import { Box, BoxProps, Typography, useTheme, Grid } from "@mui/material";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
-import { getFullHumanizedDateDiff } from "@/utils/date";
+import { getFullHumanizedDateDiff } from "shared";
 import {
   LiquidityBootstrappingPool,
   LiquidityBootstrappingPoolStats,
 } from "@/store/pools/pools.types";
-import { nFormatter } from "@/utils/number";
+import { nFormatter } from "shared";
 import BigNumber from "bignumber.js";
 import { getAssetById } from "@/defi/polkadot/Assets";
 import { useMemo } from "react";

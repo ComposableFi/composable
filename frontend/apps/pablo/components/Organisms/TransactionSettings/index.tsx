@@ -3,7 +3,7 @@ import { Modal, ModalProps } from "@/components/Molecules";
 import { useAppDispatch, useAppSelector } from "@/hooks/store";
 import { setTransactionSettings } from "@/stores/defi/settings";
 import { closeTransactionSettingsModal } from "@/stores/ui/uiSlice";
-import { validNumber } from "@/utils/number";
+import { validNumber } from "shared";
 import { CloseOutlined } from "@mui/icons-material";
 import {
   useTheme,
