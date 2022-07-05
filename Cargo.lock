@@ -14577,7 +14577,7 @@ dependencies = [
 [[package]]
 name = "simnode-runtime-apis"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?rev=920d5d7a0329f2791e11930d2c4f96d9ce50b160#920d5d7a0329f2791e11930d2c4f96d9ce50b160"
+source = "git+https://github.com/polytope-labs/substrate-simnode?rev=eed85119358bc80bbb1aedd98778f370d4932dee#eed85119358bc80bbb1aedd98778f370d4932dee"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
@@ -15972,20 +15972,20 @@ dependencies = [
 [[package]]
 name = "substrate-simnode"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?rev=920d5d7a0329f2791e11930d2c4f96d9ce50b160#920d5d7a0329f2791e11930d2c4f96d9ce50b160"
+source = "git+https://github.com/polytope-labs/substrate-simnode?rev=eed85119358bc80bbb1aedd98778f370d4932dee#eed85119358bc80bbb1aedd98778f370d4932dee"
 dependencies = [
  "clap 3.2.8",
- "cumulus-pallet-parachain-system 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.22)",
- "cumulus-primitives-parachain-inherent 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.22)",
- "cumulus-test-relay-sproof-builder 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.22)",
+ "cumulus-pallet-parachain-system 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.24)",
+ "cumulus-primitives-parachain-inherent 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.24)",
+ "cumulus-test-relay-sproof-builder 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.24)",
  "frame-system",
  "futures 0.3.21",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
  "num-traits",
- "parachain-info 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.22)",
+ "parachain-info 0.1.0 (git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.24)",
  "parity-scale-codec",
- "polkadot-primitives 0.9.22",
+ "polkadot-primitives 0.9.24",
  "sc-basic-authorship",
  "sc-cli",
  "sc-client-api",
