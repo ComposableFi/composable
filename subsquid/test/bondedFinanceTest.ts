@@ -19,7 +19,7 @@ import {
   processNewBondEvent,
   processNewOfferEvent,
 } from "../src/bondedFinanceProcessor";
-import { encodeAccount } from "./common";
+import { encodeAccount } from "../src/utils";
 
 const OFFER_ID_1 = "1";
 const OFFER_ID_2 = "2";
@@ -89,17 +89,17 @@ function createNewBondEvent(offerId: string, nbOfBonds: bigint) {
  * Check if bond offer has expected values
  * @param bondArg
  * @param id - Offer id
- * @param totalPurchased - Amount of purchased bonds
+ * @param purchased - Amount of purchased bonds
  * @param beneficiary - Bond beneficiary
  */
 function assertBondedFinanceBondOffer(
   bondArg: BondedFinanceBondOffer,
   id: string,
-  totalPurchased: bigint,
+  purchased: bigint,
   beneficiary: string
 ) {
   expect(bondArg.id).to.equal(id);
-  expect(bondArg.totalPurchased).to.equal(totalPurchased);
+  expect(bondArg.totalPurchased).to.equal(purchased);
   expect(bondArg.beneficiary).to.equal(beneficiary);
 }
 
@@ -130,20 +130,15 @@ async function assertNewOfferEvent(
 async function assertNewBondEvent(
   ctx: EventHandlerContext,
   storeMock: Store,
-  totalPurchased: Record<string, BondedFinanceBondOffer>,
-  totalPurchasedStored: Record<string, BondedFinanceBondOffer>,
   offerId: string,
   purchased: bigint
 ) {
-  // The database should have the actual total purchased bonds
-  expect(totalPurchased[offerId]).to.deep.equal(totalPurchasedStored[offerId]);
-
   // Assert last save
   const [arg] = capture(storeMock.save).last();
   assertBondedFinanceBondOffer(
     arg as unknown as BondedFinanceBondOffer,
     offerId,
-    totalPurchased[offerId].totalPurchased,
+    purchased,
     encodeAccount(MOCK_ADDRESS)
   );
 }
@@ -193,8 +188,8 @@ describe("Bonded finance events", () => {
   });
 
   it("Should create new bond events correctly", async () => {
-    // Actual total bonds purchased for each offer
-    totalPurchased = {
+    // Total bonds purchased for each offer, as stored in the database
+    totalPurchasedStored = {
       [OFFER_ID_1]: new BondedFinanceBondOffer({
         id: OFFER_ID_1,
         totalPurchased: BigInt(0),
@@ -207,26 +202,11 @@ describe("Bonded finance events", () => {
       }),
     };
 
-    // Total bonds purchased for each offer, as stored in the database
-    totalPurchasedStored = {
-      ...totalPurchased,
-    };
-
     const { event: event1 } = createNewBondEvent(OFFER_ID_1, NB_OF_BONDS_FIRST);
-
-    // Update the total purchased bonds
-    totalPurchased[OFFER_ID_1].totalPurchased += NB_OF_BONDS_FIRST;
 
     await processNewBondEvent(ctx, event1);
 
-    await assertNewBondEvent(
-      ctx,
-      storeMock,
-      totalPurchased,
-      totalPurchasedStored,
-      OFFER_ID_1,
-      NB_OF_BONDS_FIRST
-    );
+    await assertNewBondEvent(ctx, storeMock, OFFER_ID_1, NB_OF_BONDS_FIRST);
 
     // The store should have saved twice in the database
     verify(storeMock.save(anyOfClass(BondedFinanceBondOffer))).times(1);
@@ -236,18 +216,13 @@ describe("Bonded finance events", () => {
       NB_OF_BONDS_SECOND
     );
 
-    // Update the total purchased bonds
-    totalPurchased[OFFER_ID_1].totalPurchased += NB_OF_BONDS_SECOND;
-
     await processNewBondEvent(ctx, event2);
 
     await assertNewBondEvent(
       ctx,
       storeMock,
-      totalPurchased,
-      totalPurchasedStored,
       OFFER_ID_1,
-      NB_OF_BONDS_SECOND
+      NB_OF_BONDS_FIRST + NB_OF_BONDS_SECOND
     );
 
     // The store should have saved twice in the database
@@ -255,19 +230,9 @@ describe("Bonded finance events", () => {
 
     const { event: event3 } = createNewBondEvent(OFFER_ID_2, NB_OF_BONDS_THIRD);
 
-    // Update the total purchased bonds
-    totalPurchased[OFFER_ID_2].totalPurchased += NB_OF_BONDS_THIRD;
-
     await processNewBondEvent(ctx, event3);
 
-    await assertNewBondEvent(
-      ctx,
-      storeMock,
-      totalPurchased,
-      totalPurchasedStored,
-      OFFER_ID_2,
-      NB_OF_BONDS_THIRD
-    );
+    await assertNewBondEvent(ctx, storeMock, OFFER_ID_2, NB_OF_BONDS_THIRD);
 
     // The store should have saved three times in the database
     verify(storeMock.save(anyOfClass(BondedFinanceBondOffer))).times(3);
