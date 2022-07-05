@@ -15,6 +15,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0" }
 jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
 log = "0.4.14"
 serde = { version = "1.0.136", features = ["derive"] }
+tracing-core = "=0.1.26"                                            # https://substrate.stackexchange.com/questions/3147/node-startup-message-missing-after-upgrade-to-polkadot-v0-9-23
 
 # Local Dependencies
 common = { path = "../runtime/common" }
