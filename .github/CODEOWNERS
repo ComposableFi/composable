@@ -60,3 +60,12 @@ docs/ @ComposableFi/developers @ComposableFi/technical-writers
 scripts/ @ComposableFi/developers @ComposableFi/sre
 utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
 .config/spellcheck.dic @ComposableFi/developers @ComposableFi/technical-writers
+# Oracle Setup Script
+scripts/oracle-setup @ComposableFi/parachain
+
+# Repository 
+README.md @ComposableFi/technical-writing-reviewers @ComposableFi/core
+SECURITY.md @ComposableFi/security
+REVIEWERS.md @ComposableFi/core
+ARCHITECTURE.md @ComposableFi/core
+LICENSE @ComposableFi/technical-writing-reviewers @ComposableFi/core
