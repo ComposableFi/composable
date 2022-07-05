@@ -24,7 +24,7 @@ use ibc::core::{
 	ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 };
 
-use std::{str::FromStr, sync::Arc};
+use std::{collections::HashMap, fmt::Display, str::FromStr, sync::Arc};
 
 use ibc_proto::{
 	cosmos::base::v1beta1::Coin,
@@ -63,6 +63,8 @@ use sp_runtime::{
 };
 use sp_trie::TrieMut;
 use tendermint_proto::Protobuf;
+pub mod events;
+use events::{filter_map_pallet_event, IbcRelayerEvent};
 
 /// Connection handshake proof
 #[derive(Serialize, Deserialize)]
@@ -73,6 +75,24 @@ pub struct ConnHandshakeProof {
 	pub proof: Vec<u8>,
 	/// Proof height
 	pub height: ibc_proto::ibc::core::client::v1::Height,
+}
+
+/// A type that could be a block number or a block hash
+#[derive(Clone, Hash, Debug, PartialEq, Eq, Copy, Serialize, Deserialize)]
+pub enum BlockNumberOrHash<Hash> {
+	/// Block hash
+	Hash(Hash),
+	/// Block number
+	Number(u32),
+}
+
+impl<Hash: std::fmt::Debug> Display for BlockNumberOrHash<Hash> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			BlockNumberOrHash::Hash(hash) => write!(f, "{:?}", hash),
+			BlockNumberOrHash::Number(block_num) => write!(f, "{}", block_num),
+		}
+	}
 }
 
 /// Proof for a set of keys
@@ -106,7 +126,10 @@ pub fn generate_raw_proof(inputs: Vec<(Vec<u8>, Vec<u8>)>, keys: Vec<Vec<u8>>) -
 
 /// IBC RPC methods.
 #[rpc(client, server)]
-pub trait IbcApi<BlockNumber, Hash> {
+pub trait IbcApi<BlockNumber, Hash>
+where
+	Hash: PartialEq + Eq + std::hash::Hash,
+{
 	/// Query packet data
 	#[method(name = "ibc_queryPackets")]
 	fn query_packets(
@@ -314,6 +337,14 @@ pub trait IbcApi<BlockNumber, Hash> {
 	/// Query newly created clients in block
 	#[method(name = "ibc_queryNewlyCreatedClients")]
 	fn query_newly_created_clients(&self, block_hash: Hash) -> Result<Vec<IdentifiedClientState>>;
+
+	/// Query Ibc Events that were deposited in a series of blocks
+	/// Using String keys because HashMap fails to deserialize when key is not a String
+	#[method(name = "ibc_queryIbcEvents")]
+	fn query_ibc_events(
+		&self,
+		block_numbers: Vec<BlockNumberOrHash<Hash>>,
+	) -> Result<HashMap<String, Vec<IbcRelayerEvent>>>;
 }
 
 /// Converts a runtime trap into an RPC error.
@@ -1276,5 +1307,28 @@ where
 		}
 
 		Ok(identified_clients)
+	}
+
+	fn query_ibc_events(
+		&self,
+		block_numbers: Vec<BlockNumberOrHash<Block::Hash>>,
+	) -> Result<HashMap<String, Vec<IbcRelayerEvent>>> {
+		let api = self.client.runtime_api();
+		let mut events = HashMap::new();
+		for block_number_or_hash in block_numbers {
+			let at = match block_number_or_hash {
+				BlockNumberOrHash::Hash(block_hash) => BlockId::Hash(block_hash),
+				BlockNumberOrHash::Number(block_number) => BlockId::Number(block_number.into()),
+			};
+
+			let temp = api
+				.block_events(&at)
+				.map(|events| events.into_iter().filter_map(filter_map_pallet_event).collect())
+				.map_err(|_| {
+					runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events")
+				})?;
+			events.insert(block_number_or_hash.to_string(), temp);
+		}
+		Ok(events)
 	}
 }
