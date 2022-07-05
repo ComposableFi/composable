@@ -116,8 +116,6 @@ processor.addEventHandler("balances.Transfer", async (ctx) => {
 processor.addEventHandler("bondedFinance.NewOffer", async (ctx) => {
   const event = new BondedFinanceNewOfferEvent(ctx);
 
-  console.log(ctx.event.extrinsic?.args);
-
   await processNewOfferEvent(ctx, event);
 });
 

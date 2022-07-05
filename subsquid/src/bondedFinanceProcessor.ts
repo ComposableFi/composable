@@ -4,9 +4,11 @@ import {
   BondedFinanceNewOfferEvent,
 } from "./types/events";
 import { BondedFinanceBondOffer } from "./model";
+import { encodeAccount } from "./utils";
 
 interface NewOfferEvent {
   offerId: bigint;
+  beneficiary: Uint8Array;
 }
 
 interface NewBondEvent {
@@ -30,41 +32,26 @@ function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent {
 
 function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
   if (event.isV2300) {
-    const { offerId } = event.asV2300;
+    const { offerId, beneficiary } = event.asV2300;
 
-    return { offerId };
+    return { offerId, beneficiary };
   }
 
-  const { offerId } = event.asLatest;
-  return { offerId };
-}
-
-/**
- * Extracts beneficiary from a bond offer
- * @param ctx
- */
-function getBeneficiary(ctx: EventHandlerContext): string {
-  const { beneficiary } = ctx.event.extrinsic?.args[0]?.value as Record<
-    string,
-    unknown
-  >;
-
-  return beneficiary as string;
+  const { offerId, beneficiary } = event.asLatest;
+  return { offerId, beneficiary };
 }
 
 export async function processNewOfferEvent(
   ctx: EventHandlerContext,
   event: BondedFinanceNewOfferEvent
 ) {
-  const { offerId } = getNewOfferEvent(event);
-
-  const beneficiary = getBeneficiary(ctx);
+  const { offerId, beneficiary } = getNewOfferEvent(event);
 
   await ctx.store.save(
     new BondedFinanceBondOffer({
       id: offerId.toString(),
       totalPurchased: BigInt(0),
-      beneficiary,
+      beneficiary: encodeAccount(beneficiary),
     })
   );
 }
@@ -85,19 +72,11 @@ export async function processNewBondEvent(
     where: { id: offerId.toString() },
   });
 
-  if (stored?.id) {
-    // If offerId is already stored, add to total amount purchased
-    stored.totalPurchased += nbOfBonds;
-    await ctx.store.save(stored);
-  } else {
-    // Otherwise, initialize new total amount purchased
-    const beneficiary = getBeneficiary(ctx);
-    await ctx.store.save(
-      new BondedFinanceBondOffer({
-        id: offerId.toString(),
-        totalPurchased: nbOfBonds,
-        beneficiary,
-      })
-    );
+  if (!stored?.id) {
+    return;
   }
+
+  // If offerId is already stored, add to total amount purchased
+  stored.totalPurchased += nbOfBonds;
+  await ctx.store.save(stored);
 }
