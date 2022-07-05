@@ -6,6 +6,7 @@ import {
 } from "@subsquid/substrate-processor";
 import { instance, mock } from "ts-mockito";
 import { randomFill, randomUUID } from "crypto";
+import * as ss58 from "@subsquid/ss58";
 
 export function createCtx(storeMock: Store, blockHeight: number) {
   let blockMock: SubstrateBlock = mock<SubstrateBlock>();
@@ -25,4 +26,8 @@ export function createAccount() {
   let acc = Uint8Array.of(...new Array<any>(32));
   randomFill(acc, (err) => (err != null ? console.log(err) : ""));
   return acc;
+}
+
+export function encodeAccount(account: Uint8Array) {
+  return ss58.codec("picasso").encode(account);
 }
