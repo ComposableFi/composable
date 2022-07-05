@@ -1,3 +1,6 @@
+//! Test runtime.
+//! Consider to set minimal values (duration, times, and limits) to be easy to test within day of
+//! work. Example, use several hours, instead of several days.
 #![cfg_attr(
 	not(test),
 	warn(
@@ -1039,7 +1042,7 @@ impl lending::Config for Runtime {
 
 parameter_types! {
   pub PabloId: PalletId = PalletId(*b"pall_pab");
-  pub LbpMinSaleDuration: BlockNumber = DAYS;
+  pub LbpMinSaleDuration: BlockNumber = 3 * HOURS;
   pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
   pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
   pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
