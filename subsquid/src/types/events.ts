@@ -73,13 +73,13 @@ export class BondedFinanceNewOfferEvent {
    * A new offer has been created.
    */
   get isV2300(): boolean {
-    return this.ctx._chain.getEventHash('bondedFinance.NewOffer') === 'a31df34b423037e305dbc2946d691428051e98fb362268dc0e78aff52ab30840'
+    return this.ctx._chain.getEventHash('bondedFinance.NewOffer') === '68b798e0fb8f433f37ecc5a1efa5af84a146a217c123fba86d358fdc60508217'
   }
 
   /**
    * A new offer has been created.
    */
-  get asV2300(): {offerId: bigint} {
+  get asV2300(): {offerId: bigint, beneficiary: v2300.AccountId32} {
     assert(this.isV2300)
     return this.ctx._chain.decodeEvent(this.ctx.event)
   }
@@ -89,7 +89,7 @@ export class BondedFinanceNewOfferEvent {
     return this.isV2300
   }
 
-  get asLatest(): {offerId: bigint} {
+  get asLatest(): {offerId: bigint, beneficiary: v2300.AccountId32} {
     deprecateLatest()
     return this.asV2300
   }
