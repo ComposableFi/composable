@@ -52,7 +52,7 @@ async fn main() {
 
     let composable = ComposableFeed::start(
             opts.composable_node,
-            &[(Asset::KSM, Asset::USDC)].iter().copied().collect(),
+            &[(Asset::PICA, Asset::USDC)].iter().copied().collect(),
     ).await
     .expect("unable to start composable feed");
 
