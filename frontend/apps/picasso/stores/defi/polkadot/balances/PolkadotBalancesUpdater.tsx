@@ -5,7 +5,7 @@ import {
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { SubstrateNetwork, SubstrateNetworkId } from "@/defi/polkadot/types";
-import { toTokenUnitsBN } from "@/utils/BN";
+import { toTokenUnitsBN } from "shared";
 
 import { useContext, useEffect } from "react";
 

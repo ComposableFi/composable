@@ -11,14 +11,13 @@ import {
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useStore } from "@/stores/root";
-
 import { alpha, Grid, Typography, useTheme } from "@mui/material";
 import { ApiPromise } from "@polkadot/api";
 import { stringToHex } from "@polkadot/util";
 import { useContext, useEffect, useState } from "react";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
-import { toBaseUnitBN, toTokenUnitsBN } from "@/utils/BN";
+import { toBaseUnitBN, toTokenUnitsBN } from "shared";
 import { useRouter } from "next/router";
 import { useBlockchainProvider, useConnector } from "@integrations-lib/core";
 import { updateBalances } from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
