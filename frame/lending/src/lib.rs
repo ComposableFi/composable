@@ -83,6 +83,7 @@ pub mod pallet {
 		time::Timestamp,
 		vault::StrategicVault,
 	};
+	use frame_support::weights::WeightToFee;
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -218,7 +219,8 @@ pub mod pallet {
 		type MaxLiquidationBatchSize: Get<u32>;
 
 		/// Convert a weight value into a deductible fee based on the currency type.
-		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
+		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>
+			+ WeightToFee<Balance = Self::Balance>;
 	}
 
 	#[pallet::pallet]
@@ -234,17 +236,17 @@ pub mod pallet {
 			let one_read = T::DbWeight::get().reads(1);
 			weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
 			weight += u64::from(call_counters.read_markets) * one_read;
-			weight += u64::from(call_counters.accrue_interest) *
-				<T as Config>::WeightInfo::accrue_interest(1);
+			weight += u64::from(call_counters.accrue_interest)
+				* <T as Config>::WeightInfo::accrue_interest(1);
 			weight += u64::from(call_counters.account_id) * <T as Config>::WeightInfo::account_id();
-			weight += u64::from(call_counters.available_funds) *
-				<T as Config>::WeightInfo::available_funds();
-			weight += u64::from(call_counters.handle_withdrawable) *
-				<T as Config>::WeightInfo::handle_withdrawable();
-			weight += u64::from(call_counters.handle_depositable) *
-				<T as Config>::WeightInfo::handle_depositable();
-			weight += u64::from(call_counters.handle_must_liquidate) *
-				<T as Config>::WeightInfo::handle_must_liquidate();
+			weight += u64::from(call_counters.available_funds)
+				* <T as Config>::WeightInfo::available_funds();
+			weight += u64::from(call_counters.handle_withdrawable)
+				* <T as Config>::WeightInfo::handle_withdrawable();
+			weight += u64::from(call_counters.handle_depositable)
+				* <T as Config>::WeightInfo::handle_depositable();
+			weight += u64::from(call_counters.handle_must_liquidate)
+				* <T as Config>::WeightInfo::handle_must_liquidate();
 			weight
 		}
 
@@ -253,7 +255,7 @@ pub mod pallet {
 			let signer = Signer::<T, <T as Config>::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
 				log::warn!("No signer");
-				return
+				return;
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
 				//Check that it should liquidate before liquidations
@@ -267,7 +269,7 @@ pub mod pallet {
 						},
 					};
 				if !should_be_liquidated {
-					continue
+					continue;
 				}
 				let results = signer.send_signed_transaction(|_account| Call::liquidate {
 					market_id,

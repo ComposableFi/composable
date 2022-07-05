@@ -128,7 +128,7 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
 	balances::GenesisConfig::<Runtime> {
 		balances: vec![
 			(AccountId::from(ALICE), ALICE_RELAY_BALANCE),
-			(ParaId::from(THIS_PARA_ID).into_account(), PICASSO_RELAY_BALANCE),
+			(ParaId::from(THIS_PARA_ID).into_account_truncating(), PICASSO_RELAY_BALANCE),
 		],
 	}
 	.assimilate_storage(&mut storage)

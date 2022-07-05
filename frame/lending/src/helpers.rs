@@ -28,7 +28,7 @@ use frame_support::{
 		fungibles::{Inspect, Transfer},
 		UnixTime,
 	},
-	weights::WeightToFeePolynomial,
+	weights::WeightToFee,
 };
 use sp_runtime::{
 	traits::{One, Saturating, Zero},
@@ -204,7 +204,7 @@ impl<T: Config> Pallet<T> {
 		// this check prevents free flash loans
 		if let Some(latest_borrow_timestamp) = BorrowTimestamp::<T>::get(market_id, debt_owner) {
 			if latest_borrow_timestamp >= LastBlockTimestamp::<T>::get() {
-				return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
+				return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into());
 			}
 		}
 
@@ -225,7 +225,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		if !BorrowRent::<T>::contains_key(market_id, debt_owner) {
-			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(1));
+			let deposit = T::WeightToFee::weight_to_fee(&T::WeightInfo::liquidate(1));
 			// See note 1
 			ensure!(
 				<T as Config>::NativeCurrency::can_withdraw(debt_owner, deposit)
@@ -414,7 +414,7 @@ impl<T: Config> Pallet<T> {
 						market_id,
 						account,
 						error );
-						return TransactionOutcome::Rollback(liquidation_response_result)
+						return TransactionOutcome::Rollback(liquidation_response_result);
 					}
 					TransactionOutcome::Commit(Ok(()))
 				});

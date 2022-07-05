@@ -53,8 +53,8 @@ fn transfer_native_from_relay_chain_to_statemine() {
 
 	Statemine::execute_with(|| {
 		assert!(
-			bob_on_statemine_original <
-				statemine_runtime::Balances::free_balance(&AccountId::from(BOB)),
+			bob_on_statemine_original
+				< statemine_runtime::Balances::free_balance(&AccountId::from(BOB)),
 			"balance increased"
 		);
 		assert!(
@@ -69,9 +69,9 @@ fn transfer_native_from_relay_chain_to_statemine() {
 fn this_chain_statemine_transfers_back_and_forth_work() {
 	simtest();
 	let this_parachain_account: AccountId =
-		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account();
-	let this_para_id: AccountId = ParaId::from(THIS_PARA_ID).into_account();
-	let state_mine_para_id: AccountId = ParaId::from(STATEMINE_PARA_ID).into_account();
+		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
+	let this_para_id: AccountId = ParaId::from(THIS_PARA_ID).into_account_truncating();
+	let state_mine_para_id: AccountId = ParaId::from(STATEMINE_PARA_ID).into_account_truncating();
 
 	// minimum asset should be: FEE_WEIGHT+FEE_KUSAMA+max(KUSAMA_ED,STATEMINE_ED+FEE_STATEMINE).
 	// but due to current half fee, sender asset should at lease: FEE_WEIGHT + 2 * FEE_KUSAMA
@@ -170,7 +170,7 @@ fn statemine_side(
 ) -> Balance {
 	use statemine_runtime::*;
 	let target_parachain: AccountId =
-		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account();
+		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
 
 	Statemine::execute_with(|| {
 		let origin = Origin::signed(ALICE.into());

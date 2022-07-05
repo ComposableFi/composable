@@ -264,7 +264,7 @@ fn transfer_to_sibling() {
 
 	fn this_native_reserve_account() -> AccountId {
 		use sp_runtime::traits::AccountIdConversion;
-		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account()
+		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating()
 	}
 
 	let alice_original = This::execute_with(|| {
@@ -491,8 +491,9 @@ fn xcm_transfer_execution_barrier_trader_works() {
 
 #[test]
 fn unspent_xcm_fee_is_returned_correctly() {
-	let parachain_account: AccountId =
-		This::execute_with(|| this_runtime::ParachainInfo::parachain_id().into_account());
+	let parachain_account: AccountId = This::execute_with(|| {
+		this_runtime::ParachainInfo::parachain_id().into_account_truncating()
+	});
 	let some_account: AccountId = AccountId::from(CHARLIE);
 
 	KusamaRelay::execute_with(|| {
@@ -661,8 +662,8 @@ fn trap_assets_larger_than_ed_works() {
 		log::error!("{:?}", &this_runtime::TreasuryAccount::get());
 		assert_eq!(
 			native_asset_amount,
-			this_runtime::Balances::free_balance(&this_runtime::TreasuryAccount::get()) -
-				7 * CurrencyId::unit::<Balance>(),
+			this_runtime::Balances::free_balance(&this_runtime::TreasuryAccount::get())
+				- 7 * CurrencyId::unit::<Balance>(),
 		);
 	});
 }

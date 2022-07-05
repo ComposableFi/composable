@@ -561,14 +561,14 @@ impl collator_selection::Config for Runtime {
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
-		let account: AccountId = TreasuryPalletId::get().into_account();
-		let account2: AccountId = PotId::get().into_account();
+		let account: AccountId = TreasuryPalletId::get().into_account_truncating();
+		let account2: AccountId = PotId::get().into_account_truncating();
 		vec![&account, &account2].contains(&a)
 	}
 }
 
 parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 type ReserveIdentifier = [u8; 8];
@@ -584,6 +584,8 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 parameter_types! {
@@ -889,7 +891,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
+			return false;
 		}
 		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
 	}

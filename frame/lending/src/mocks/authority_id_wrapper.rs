@@ -130,7 +130,7 @@ impl BoundToRuntimeAppPublic for UintAuthorityIdWrapper {
 impl IdentifyAccount for UintAuthorityIdWrapper {
 	type AccountId = <UintAuthorityId as IdentifyAccount>::AccountId;
 
-	fn into_account(self) -> Self::AccountId {
+	fn .into_account_truncating(self) -> Self::AccountId {
 		self.0 .0
 	}
 }

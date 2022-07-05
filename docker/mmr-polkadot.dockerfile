@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends apt-utils build
 	rustup update && \
 	rustup update ${NIGHTLY_VERSION} && \
 	rustup target add wasm32-unknown-unknown --toolchain ${NIGHTLY_VERSION} && \
-	git clone -b mmr-polkadot-v0.9.22 https://github.com/composableFi/polkadot
+	git clone -b mmr-polkadot-v0.9.24 https://github.com/composableFi/polkadot
 
 WORKDIR /polkadot
 

@@ -16,7 +16,7 @@ pub fn simtest() {
 
 /// create account ids from test paraid
 pub fn para_account_id(id: u32) -> AccountId {
-	ParaId::from(id).into_account()
+	ParaId::from(id).into_account_truncating()
 }
 
 /// under ED, but above Weight
@@ -25,8 +25,8 @@ pub fn under_existential_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Cur
 	_instruction_count: usize,
 ) -> Balance {
 	PriceConverter::<AssetsRegistry>::get_price_inverse(asset_id, NativeExistentialDeposit::get())
-		.unwrap() /
-		Balance::from(2_u128)
+		.unwrap()
+		/ Balance::from(2_u128)
 }
 
 /// dumps events for debugging
@@ -46,7 +46,7 @@ pub fn relay_dump_events() {
 }
 
 pub fn sibling_account() -> AccountId {
-	polkadot_parachain::primitives::Sibling::from(SIBLING_PARA_ID).into_account()
+	polkadot_parachain::primitives::Sibling::from(SIBLING_PARA_ID).into_account_truncating()
 }
 
 /// assert amount is supported deposit amount and is above it
@@ -66,7 +66,7 @@ pub fn assert_above_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Currency
 
 /// weigh enough to handle any XCMP message
 pub fn enough_weight() -> u128 {
-	let this_liveness_native_amount = BaseXcmWeight::get() as u128 +
-		100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance;
+	let this_liveness_native_amount = BaseXcmWeight::get() as u128
+		+ 100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance;
 	this_liveness_native_amount
 }

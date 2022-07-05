@@ -9,7 +9,7 @@ use frame_support::{
 	dispatch::Weight,
 	ensure, log, parameter_types,
 	traits::{Contains, Get},
-	weights::WeightToFeePolynomial,
+	weights::{WeightToFee, WeightToFeePolynomial},
 };
 use num_traits::Zero;
 use orml_traits::location::{AbsoluteReserveProvider, Reserve};
@@ -97,13 +97,14 @@ impl<
 		AssetConverter: Convert<MultiLocation, Option<CurrencyId>>,
 		PriceConverter: MinimalOracle<AssetId = CurrencyId, Balance = Balance>,
 		Treasury: TakeRevenue,
-		WeightToFee: WeightToFeePolynomial<Balance = Balance>,
-	> WeightTrader for TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFee>
+		WeightToFeeConverter: WeightToFeePolynomial<Balance = Balance> + WeightToFee<Balance = Balance>,
+	> WeightTrader
+	for TransactionFeePoolTrader<AssetConverter, PriceConverter, Treasury, WeightToFeeConverter>
 {
 	fn new() -> Self {
 		Self {
 			_marker:
-				PhantomData::<(AssetConverter, PriceConverter, Treasury, WeightToFee)>::default(),
+				PhantomData::<(AssetConverter, PriceConverter, Treasury, WeightToFeeConverter)>::default(),
 			fee: 0,
 			price: 0,
 			asset_location: None,
@@ -114,7 +115,7 @@ impl<
 		// this is for trusted chains origin, see `f` if any
 		// TODO: dicuss if we need payments from Relay chain or common goods chains?
 		if weight.is_zero() {
-			return Ok(payment)
+			return Ok(payment);
 		}
 
 		// only support first fungible assets now.
@@ -129,7 +130,7 @@ impl<
 				// NOTE: we have som many traces cause TooExpensive (as in Acala)
 				// NOTE: no suitable error for now. Could repurpose Trap(u64), but that will violate
 				// documentation
-				let fee = WeightToFee::calc(&weight);
+				let fee = WeightToFeeConverter::weight_to_fee(&weight);
 				log::trace!(target : "xcmp::buy_weight", "required payment in native token is: {:?}", fee );
 				let price = PriceConverter::get_price_inverse(asset_id, fee)
 					.map_err(|_| XcmError::TooExpensive)?;
@@ -144,7 +145,7 @@ impl<
 				self.fee = self.fee.saturating_add(fee);
 				self.price = self.price.saturating_add(price);
 				self.asset_location = Some(multi_location.clone());
-				return Ok(unused)
+				return Ok(unused);
 			}
 		}
 
@@ -154,13 +155,13 @@ impl<
 
 	fn refund_weight(&mut self, weight: Weight) -> Option<MultiAsset> {
 		if let Some(ref asset_location) = self.asset_location {
-			let fee = WeightToFee::calc(&weight);
+			let fee = WeightToFeeConverter::weight_to_fee(&weight);
 			let fee = self.fee.min(fee);
 			let price = fee.saturating_mul(self.price) / self.fee;
 			self.price = self.price.saturating_sub(price);
 			self.fee = self.fee.saturating_sub(fee);
 			if price > 0 {
-				return Some((asset_location.clone(), price).into())
+				return Some((asset_location.clone(), price).into());
 			}
 		}
 
@@ -302,7 +303,7 @@ impl<
 				}
 			},
 			// delegate to asset-registry
-			_ =>
+			_ => {
 				if let Some(currency_id) = WellKnownXcmpAssets::remote_to_local(location.clone()) {
 					Some(currency_id)
 				} else {
@@ -313,7 +314,8 @@ impl<
 						log::error!(target: "xcmp", "failed converting currency");
 					}
 					result
-				},
+				}
+			},
 		}
 	}
 }

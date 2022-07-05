@@ -201,7 +201,7 @@ pub struct IbcAccount<T: pallet_ibc::Config>(T::AccountId);
 
 impl<T: pallet_ibc::Config> IdentifyAccount for IbcAccount<T> {
 	type AccountId = T::AccountId;
-	fn into_account(self) -> Self::AccountId {
+	fn .into_account_truncating(self) -> Self::AccountId {
 		self.0
 	}
 }

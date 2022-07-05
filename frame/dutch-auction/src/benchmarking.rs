@@ -46,7 +46,7 @@ where
 		Mutate<T::AccountId, Balance = T::Balance, AssetId = T::MayBeAssetId>,
 	<T as Config>::NativeCurrency: frame_support::traits::tokens::currency::Currency<T::AccountId>,
 {
-	let treasury = &T::PalletId::get().into_account();
+	let treasury = &T::PalletId::get().into_account_truncating();
 	let native_token_amount = <T as pallet::Config>::NativeCurrency::minimum_balance()
 		.saturating_mul(1_000_000_000u32.into());
 	<T as pallet::Config>::NativeCurrency::make_free_balance_be(&treasury, native_token_amount);

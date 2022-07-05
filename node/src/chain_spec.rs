@@ -52,7 +52,7 @@ pub fn account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
 where
 	MultiSigner: From<<TPublic::Pair as Pair>::Public>,
 {
-	MultiSigner::from(from_seed::<TPublic>(seed)).into_account()
+	MultiSigner::from(from_seed::<TPublic>(seed)).into_account_truncating()
 }
 
 #[cfg(feature = "composable")]

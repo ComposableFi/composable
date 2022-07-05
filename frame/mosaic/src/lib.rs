@@ -726,7 +726,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// AccountId of the pallet, used to store all funds before actually moving them.
 		pub(crate) fn sub_account_id(sub_account: SubAccount<T>) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account(sub_account.to_id())
+			T::PalletId::get().into_sub_account_truncating(sub_account.to_id())
 		}
 
 		/// Queries storage, returning the account_id of the current relayer.
@@ -938,8 +938,9 @@ pub mod pallet {
 				let lock_at = current_block.saturating_add(lock_time);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
-					Some((balance, _)) =>
-						*prev = Some(((*balance).saturating_add(amount), lock_at)),
+					Some((balance, _)) => {
+						*prev = Some(((*balance).saturating_add(amount), lock_at))
+					},
 					_ => *prev = Some((amount, lock_at)),
 				});
 
