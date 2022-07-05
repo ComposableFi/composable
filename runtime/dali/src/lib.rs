@@ -30,9 +30,9 @@ use orml_traits::parameter_type_with_key;
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
-	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
-	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
-	Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, Signature,
+	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, AirdropId,
+	Amount, AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil,
+	Hash, Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -848,6 +848,27 @@ impl assets::Config for Runtime {
 }
 
 parameter_types! {
+	pub const AirdropPalletId: PalletId = PalletId(*b"pairdrop");
+	pub AirdropStake: Balance = 10 * CurrencyId::unit::<Balance>();
+	pub const AirdropPrefix: &'static [u8] = b"picasso-";
+}
+
+impl airdrop::Config for Runtime {
+	type Event = Event;
+	type AirdropId = AirdropId;
+	type Balance = Balance;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type Moment = Moment;
+	type RelayChainAccountId = sp_runtime::AccountId32;
+	type RecipientFundAsset = Assets;
+	type Time = Timestamp;
+	type PalletId = AirdropPalletId;
+	type Prefix = AirdropPrefix;
+	type Stake = AirdropStake;
+	type WeightInfo = weights::airdrop::WeightInfo<Runtime>;
+}
+
+parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
 	  pub const VestingStep: Moment = 1;
@@ -1230,6 +1251,7 @@ construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
+		Airdrop: airdrop::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 68,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 

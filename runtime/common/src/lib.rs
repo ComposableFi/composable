@@ -35,6 +35,9 @@ mod types {
 	// todo move it into more shared directory so it can be shared with
 	// tests, integration, benchmark, (simnode?)
 
+	/// ID for airdrops managed by the Airdrop Pallet
+	pub type AirdropId = u128;
+
 	pub type BondOfferId = u128;
 
 	/// Pablo pool ID

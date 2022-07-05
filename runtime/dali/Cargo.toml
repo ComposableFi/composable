@@ -256,6 +256,7 @@ std = [
   "orml-xtokens/std",
   "orml-xcm-support/std",
   "orml-unknown-tokens/std",
+  "airdrop/std",
   "assets-registry/std",
   "assets/std",
   "composable-traits/std",

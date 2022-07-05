@@ -1,4 +1,5 @@
 #![allow(clippy::unnecessary_cast)]
+pub mod airdrop;
 pub mod assets_registry;
 pub mod balances;
 pub mod bonded_finance;
