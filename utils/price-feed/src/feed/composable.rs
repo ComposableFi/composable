@@ -63,11 +63,11 @@ impl ComposableFeed {
 					let event: TwapUpdated = twap_updated.event;
 					let base = &event.twaps[0];
 					let quote = &event.twaps[1];
-					let base_asset = (primitives::currency::CurrencyId(base.0 .0))
+					let base_asset = primitives::currency::CurrencyId(base.0 .0)
 						.try_into()
 						.map_err(|_| FeedError::NetworkFailure)?;
 
-					let quote_asset = (primitives::currency::CurrencyId(quote.0 .0))
+					let quote_asset = primitives::currency::CurrencyId(quote.0 .0)
 						.try_into()
 						.map_err(|_| FeedError::NetworkFailure)?;
 					if assets.contains(&(base_asset, quote_asset)) {
