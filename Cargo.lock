@@ -4499,7 +4499,7 @@ dependencies = [
  "derive_more",
  "flex-error",
  "ibc-proto",
- "ics23 0.8.0-alpha (git+https://github.com/composablefi/ics23?rev=86e970a4f22973946a0faf472b56951691d40874)",
+ "ics23",
  "num-traits",
  "parity-scale-codec",
  "primitive-types",
@@ -4649,21 +4649,6 @@ dependencies = [
  "sha3 0.9.1",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "ics23"
-version = "0.8.0-alpha"
-source = "git+https://github.com/composablefi/ics23?rev=b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927#b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927"
-dependencies = [
- "anyhow",
- "bytes 1.1.0",
- "hex",
- "prost 0.10.4",
- "ripemd160",
- "sha2 0.9.9",
- "sha3 0.9.1",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -7958,7 +7943,7 @@ dependencies = [
  "ibc-proto",
  "ibc-trait",
  "ibc-transfer",
- "ics23 0.8.0-alpha (git+https://github.com/composablefi/ics23?rev=86e970a4f22973946a0faf472b56951691d40874)",
+ "ics23",
  "log 0.4.17",
  "orml-tokens",
  "orml-traits",
@@ -13478,10 +13463,10 @@ checksum = "cc47a29ce97772ca5c927f75bac34866b16d64e07f330c3248e2d7226623901b"
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/simple-avl?rev=452a1126bfb8a861354b413755ac3c8fda3da4ec#452a1126bfb8a861354b413755ac3c8fda3da4ec"
+source = "git+https://github.com/ComposableFi/simple-avl?rev=a725ecd9386b017a3470bb0b5f1f821fbad3de9b#a725ecd9386b017a3470bb0b5f1f821fbad3de9b"
 dependencies = [
  "bytes 1.1.0",
- "ics23 0.8.0-alpha (git+https://github.com/composablefi/ics23?rev=b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927)",
+ "ics23",
  "sha2 0.10.2",
  "tendermint",
 ]
