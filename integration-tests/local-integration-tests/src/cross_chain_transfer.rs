@@ -417,10 +417,10 @@ fn xcm_transfer_execution_barrier_trader_works() {
 		assert!(this_runtime::System::events().iter().any(|r| {
 			matches!(
 				r.event,
-				this_runtime::Event::DmpQueue(cumulus_pallet_dmp_queue::Event::ExecutedDownward(
-					_,
-					Outcome::Error(XcmError::Barrier)
-				))
+				this_runtime::Event::DmpQueue(cumulus_pallet_dmp_queue::Event::ExecutedDownward {
+					message_id: _,
+					outcome: Outcome::Error(XcmError::Barrier)
+				})
 			)
 		}));
 	});
