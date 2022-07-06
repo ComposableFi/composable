@@ -5,7 +5,7 @@
 use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;
 
-/// Weight functions for `bonded_finance`.
+/// Weight functions for `airdrop`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> airdrop::weights::WeightInfo for WeightInfo<T> {
 	fn create_airdrop() -> Weight {
