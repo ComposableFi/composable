@@ -61,11 +61,16 @@
           "wsPort": 9989,
           "port": 31201,
           "flags": ["--bob", "--rpc-cors=all", "--", "--execution=wasm"]
+        },
+        {
+          "wsPort": 9990,
+          "port": 31202,
+          "flags": ["--charlie", "--rpc-cors=all", "--", "--execution=wasm"]
         }
       ]
     },
     {
-      "bin": "../../../Acala/target/debug/acala",
+      "bin": "../../../Acala/target/production/acala",
       "id": "2000",
       "chain": "karura-dev",
       "balance": "1000000000000000000000",
@@ -74,8 +79,7 @@
           "wsPort": 9998,
           "port": 31300,
           "name": "alice",
-          "flags": [
-            "--alice",
+          "flags": [            
             "--unsafe-ws-external",
             "--unsafe-rpc-external",
             "--rpc-external",
@@ -93,7 +97,23 @@
           "port": 31301,
           "name": "bob",
           "flags": [
-            "--bob",
+            "--unsafe-ws-external",
+            "--unsafe-rpc-external",
+            "--rpc-external",
+            "--ws-external",
+            "--rpc-cors=all",
+            "--rpc-methods=Unsafe",
+            "--force-authoring",
+            "--log=xcm=trace",
+            "--",
+            "--execution=wasm"
+          ]
+        },
+        {
+          "wsPort": 10001,
+          "port": 31302,
+          "name": "charlie",
+          "flags": [
             "--unsafe-ws-external",
             "--unsafe-rpc-external",
             "--rpc-external",
@@ -113,14 +133,14 @@
     {
       "sender": 2000,
       "recipient": 2087,
-      "maxCapacity": 1024,
-      "maxMessageSize": 32768
+      "maxCapacity": 8,
+      "maxMessageSize": 2048
     },
     {
       "sender": 2087,
       "recipient": 2000,
-      "maxCapacity": 1024,
-      "maxMessageSize": 32768
+      "maxCapacity": 8,
+      "maxMessageSize": 2048
     }
   ],
   "types": {},
