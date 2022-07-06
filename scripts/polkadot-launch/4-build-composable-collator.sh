@@ -2,6 +2,7 @@
 		cd ../../..
 		# git clone https://github.com/AcalaNetwork/Acala.git
 		cd Acala
-		make init
-		make build-full
+		#make init
+		#make build-full
+		./target/debug/acala --version
 	)
