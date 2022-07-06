@@ -3,41 +3,32 @@ on:
   pull_request:
   push:
 jobs:
-  # Hack: https://github.com/actions/checkout/issues/211#issuecomment-801043540
-  cleanup:
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    container:
-      image: ubuntu:latest
-    steps:
-      - name: Cleaning up the $GITHUB_WORKSPACE as root from a Docker image
-        # Volume auto mounted by gh actions pointing to the current working-directory
-        run: find /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}/. -name . -o -prune -exec rm -rf -- {} + || true
-
   tests:
-    needs: cleanup
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v4
-      id: cp310
-      with:
-        python-version: "3.10"
-    - uses: cachix/install-nix-action@v17
-      with:
-        nix_path: nixpkgs=channel:nixos-unstable
-    - uses: cachix/cachix-action@v10
-      with:
-        name: composable-community
-        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-        extraPullNames: composable-community
-    - run: |
-        cd nix-crane
-        nix build -L
+      - name: Cleanup
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+          sudo rm /etc/bash.bashrc.backup-before-nix
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v4
+        id: cp310
+        with:
+          python-version: "3.10"
+      - uses: cachix/install-nix-action@v17
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+      - uses: cachix/cachix-action@v10
+        with:
+          name: composable-community
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          extraPullNames: composable-community
+      - run: |
+          cd nix-crane
+          nix build -L

@@ -1713,6 +1713,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "composable-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "composable-runtime",
+]
+
+[[package]]
 name = "composable-support"
 version = "0.0.1"
 dependencies = [
@@ -2828,6 +2835,13 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "dali-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "dali-runtime",
 ]
 
 [[package]]
@@ -9306,6 +9320,13 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "picasso-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "picasso-runtime",
 ]
 
 [[package]]
