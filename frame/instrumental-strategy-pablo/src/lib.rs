@@ -259,10 +259,7 @@ pub mod pallet {
 			vault_id: T::VaultId,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as InstrumentalStrategy>::caller_has_rights(
-				who,
-				AccessRights::AssociateVaultId,
-			)?;
+			<Self as InstrumentalStrategy>::caller_has_rights(who, AccessRights::AssociateVaultId)?;
 			<Self as InstrumentalStrategy>::associate_vault(&vault_id)?;
 			Ok(().into())
 		}
@@ -278,10 +275,7 @@ pub mod pallet {
 			pool_id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as InstrumentalStrategy>::caller_has_rights(
-				who,
-				AccessRights::SetPoolId,
-			)?;
+			<Self as InstrumentalStrategy>::caller_has_rights(who, AccessRights::SetPoolId)?;
 			ensure!(T::Pablo::pool_exists(pool_id), Error::<T>::PoolIdDoesNotExist);
 			<Self as InstrumentalStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
 			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
@@ -294,10 +288,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
 		pub fn liquidity_rebalance(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as InstrumentalStrategy>::caller_has_rights(
-				who,
-				AccessRights::Rebalance,
-			)?;
+			<Self as InstrumentalStrategy>::caller_has_rights(who, AccessRights::Rebalance)?;
 			<Self as InstrumentalStrategy>::rebalance()?;
 			Ok(().into())
 		}
@@ -312,10 +303,7 @@ pub mod pallet {
 			access: AccessRights,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as InstrumentalStrategy>::caller_has_rights(
-				who,
-				AccessRights::SetAccess,
-			)?;
+			<Self as InstrumentalStrategy>::caller_has_rights(who, AccessRights::SetAccess)?;
 			<Self as InstrumentalStrategy>::set_access(&account_id, access)?;
 			Self::deposit_event(Event::AssociatedAccountId { account_id, access });
 			Ok(().into())

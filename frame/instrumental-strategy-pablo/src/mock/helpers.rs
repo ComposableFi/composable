@@ -1,7 +1,7 @@
 use composable_traits::{
 	defi::CurrencyPair,
 	dex::Amm,
-	instrumental::{Instrumental as InstrumentalTrait, InstrumentalVaultConfig},
+	instrumental::{AccessRights, Instrumental as InstrumentalTrait, InstrumentalVaultConfig},
 };
 
 use frame_support::{assert_ok, traits::fungibles::Mutate};
@@ -12,8 +12,10 @@ use sp_runtime::{Permill, Perquintill};
 use super::runtime::{Instrumental, VaultId};
 use crate::mock::{
 	account_id::{AccountId, ALICE, BOB},
-	runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
+	runtime::{Balance, BlockNumber, MockRuntime, Pablo, PoolId, Tokens},
 };
+#[allow(unused_imports)]
+use crate::{pallet, pallet::Error};
 
 pub fn create_pool<BAS, BAM, QAS, QAM, F, BW>(
 	base_asset: BAS,
@@ -72,10 +74,10 @@ where
 	pool_id
 }
 
-
 pub fn set_admin_account_access(account_id: AccountId, access: AccessRights) -> Result<(), ()> {
 	pallet::AdminAccountIds::<MockRuntime>::insert(account_id, access);
 	Ok(())
+}
 
 pub fn create_vault<A, P>(asset_id: A, percent_deployable: P) -> VaultId
 where

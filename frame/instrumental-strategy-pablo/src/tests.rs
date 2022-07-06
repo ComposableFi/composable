@@ -1,24 +1,10 @@
-use crate::{
-	mock::{
-		account_id::{ADMIN, ALICE},
-		helpers::{create_layr_crowd_loan_pool, set_admin_account_access},
-		runtime::{
-			Event, ExtBuilder, Instrumental, MockRuntime, Origin, PabloStrategy, System, VaultId,
-			MAX_ASSOCIATED_VAULTS,
-		},
-	},
-	pallet,
-	pallet::Error,
-};
-use composable_traits::instrumental::{
-	AccessRights, Instrumental as InstrumentalTrait, InstrumentalVaultConfig, State,
-};
+use composable_traits::instrumental::{AccessRights, State};
 use frame_support::{assert_noop, assert_ok};
 use primitives::currency::CurrencyId;
 
 use crate::mock::{
-	account_id::ADMIN,
-	helpers::{create_pool, create_vault},
+	account_id::{ADMIN, ALICE},
+	helpers::{create_pool, create_vault, set_admin_account_access},
 	runtime::{
 		Balance, Event, ExtBuilder, MockRuntime, Origin, PabloStrategy, System, VaultId,
 		MAX_ASSOCIATED_VAULTS,
@@ -37,7 +23,14 @@ mod associate_vault {
 	#[test]
 	fn add_an_associated_vault() {
 		ExtBuilder::default().build().execute_with(|| {
-			let vault_id: VaultId = 1;
+			let base_asset = CurrencyId::LAYR;
+			let quote_asset = CurrencyId::CROWD_LOAN;
+			let amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
+
+			// Create Vault (LAYR)
+			let vault_id = create_vault(base_asset, None);
+			// Create Pool (LAYR/CROWD_LOAN)
+			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
 			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 		});
@@ -46,7 +39,14 @@ mod associate_vault {
 	#[test]
 	fn adding_an_associated_vault_twice_throws_an_error() {
 		ExtBuilder::default().build().execute_with(|| {
-			let vault_id: VaultId = 1;
+			let base_asset = CurrencyId::LAYR;
+			let quote_asset = CurrencyId::CROWD_LOAN;
+			let amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
+
+			// Create Vault (LAYR)
+			let vault_id = create_vault(base_asset, None);
+			// Create Pool (LAYR/CROWD_LOAN)
+			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
 			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 			assert_noop!(
@@ -87,21 +87,19 @@ mod liquidity_rebalance {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
-			let asset_id = CurrencyId::LAYR;
-			// Create Vault (LAYR)
-			let config =
-				InstrumentalVaultConfig { asset_id, percent_deployable: Perquintill::zero() };
-			let vault_id = <Instrumental as InstrumentalTrait>::create(config);
-			assert_ok!(vault_id);
-			let vault_id = vault_id.unwrap() as VaultId;
+			let base_asset = CurrencyId::LAYR;
+			let quote_asset = CurrencyId::CROWD_LOAN;
+			let amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
 
+			// Create Vault (LAYR)
+			let vault_id = create_vault(base_asset, None);
 			// Create Pool (LAYR/CROWD_LOAN)
-			let pool_id = create_layr_crowd_loan_pool();
+			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
 
 			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::set_pool_id_for_asset(
 				Origin::signed(ADMIN),
-				asset_id,
+				base_asset,
 				pool_id
 			));
 
@@ -128,25 +126,28 @@ mod set_pool_id_for_asset {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
-			let asset_id = CurrencyId::LAYR;
+			let base_asset = CurrencyId::LAYR;
+			let quote_asset = CurrencyId::CROWD_LOAN;
+			let amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
+
 			// Create Pool (LAYR/CROWD_LOAN)
-			let pool_id = create_layr_crowd_loan_pool();
+			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
 
 			pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Rebalance);
 			assert_noop!(
-				PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id),
+				PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), base_asset, pool_id),
 				Error::<MockRuntime>::UserDoesNotHaveCorrectAccessRight
 			);
 
 			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::set_pool_id_for_asset(
 				Origin::signed(ADMIN),
-				asset_id,
+				base_asset,
 				pool_id
 			));
 
 			assert_noop!(
-				PabloStrategy::set_pool_id_for_asset(Origin::signed(ALICE), asset_id, pool_id),
+				PabloStrategy::set_pool_id_for_asset(Origin::signed(ALICE), base_asset, pool_id),
 				Error::<MockRuntime>::NotAdminAccount
 			);
 		})
@@ -178,21 +179,24 @@ mod set_pool_id_for_asset {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
-			let asset_id = CurrencyId::LAYR;
+			let base_asset = CurrencyId::LAYR;
+			let quote_asset = CurrencyId::CROWD_LOAN;
+			let amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
+
 			// Create Pool (LAYR/CROWD_LOAN)
-			let pool_id = create_layr_crowd_loan_pool();
+			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
 			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::set_pool_id_for_asset(
 				Origin::signed(ADMIN),
-				asset_id,
+				base_asset,
 				pool_id
 			));
 			assert_eq!(
-				PabloStrategy::pools(asset_id).unwrap(),
+				PabloStrategy::pools(base_asset).unwrap(),
 				pallet::PoolState { pool_id, state: State::Normal }
 			);
 			System::assert_last_event(Event::PabloStrategy(
-				pallet::Event::AssociatedPoolWithAsset { asset_id, pool_id },
+				pallet::Event::AssociatedPoolWithAsset { asset_id: base_asset, pool_id },
 			));
 		})
 	}
@@ -202,33 +206,35 @@ mod set_pool_id_for_asset {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
-			let asset_id = CurrencyId::LAYR;
-			// Create Pool (LAYR/CROWD_LOAN)
-			let pool_id = create_layr_crowd_loan_pool();
-			set_admin_account_access(ADMIN, AccessRights::Full).ok();
+			let base_asset = CurrencyId::LAYR;
+			let quote_asset = CurrencyId::CROWD_LOAN;
+			let amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
+
 			// Create Vault (LAYR)
-			let config =
-				InstrumentalVaultConfig { asset_id, percent_deployable: Perquintill::zero() };
-			let vault_id = <Instrumental as InstrumentalTrait>::create(config);
-			assert_ok!(vault_id);
-			let vault_id = vault_id.unwrap() as VaultId;
+			let vault_id = create_vault(base_asset, None);
+			// Create Pool (LAYR/CROWD_LOAN)
+			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			// Add Vault to AssociatedVaults
 			assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 			// Set first pool_id corresponding to CurrencyId::LAYR
 			assert_ok!(PabloStrategy::set_pool_id_for_asset(
 				Origin::signed(ADMIN),
-				asset_id,
+				base_asset,
 				pool_id
 			));
-			let new_pool_id = create_layr_crowd_loan_pool();
+			let new_pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
 			// Set new pool_id corresponding to CurrencyId::LAYR
 			assert_ok!(PabloStrategy::set_pool_id_for_asset(
 				Origin::signed(ADMIN),
-				asset_id,
+				base_asset,
 				new_pool_id
 			));
 			System::assert_last_event(Event::PabloStrategy(
-				pallet::Event::AssociatedPoolWithAsset { asset_id, pool_id: new_pool_id },
+				pallet::Event::AssociatedPoolWithAsset {
+					asset_id: base_asset,
+					pool_id: new_pool_id,
+				},
 			));
 			let mut occured_funds_transferring_flag = false;
 			let mut transffered_funds_corresponded_to_vault_flag = false;
