@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { alpha, Box, Typography, useTheme } from "@mui/material";
@@ -11,7 +11,8 @@ const NoSSRChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 export type AuctionPriceChartProps = {
   baseAsset: AssetMetadata | null;
   quoteAsset: AssetMetadata | null;
-  data: [number, number][];
+  priceSeries: [number, number][];
+  predictedPriceSeries: [number, number][];
   height: number | string;
   dateFormat: (timestamp: number | string) => string;
   pastCount?: number;
@@ -20,8 +21,8 @@ export type AuctionPriceChartProps = {
 
 export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
   baseAsset,
-  quoteAsset,
-  data,
+  priceSeries,
+  predictedPriceSeries,
   height,
   dateFormat,
   pastCount = 0,
@@ -29,129 +30,128 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
 }) => {
   const theme = useTheme();
 
-  const dates = data
+  const dates = priceSeries
     .map((item) => {
       return moment(item[0]).utc().format("D MMM");
     })
     .filter((v, i, self) => self.indexOf(v) === i);
 
-  const chartOptions = (
+  const chartOptions = useCallback((
     color: string,
-    dateFormat: (n: number) => string
-  ): ApexCharts.ApexOptions => ({
-    grid: {
-      show: false,
-      padding: {
-        left: 0,
-        right: 0,
+    dateFormat: (n: number) => string): ApexCharts.ApexOptions => { 
+    return {
+      grid: {
+        show: false,
+        padding: {
+          left: 0,
+          right: 0,
+        },
       },
-    },
-    legend: {
-      show: false,
-    },
-    chart: {
-      type: "area",
-      toolbar: {
+      legend: {
         show: false,
       },
-      fontFamily: "'Konnect', serif",
-      zoom: {
-        enabled: false,
+      chart: {
+        type: "area",
+        toolbar: {
+          show: false,
+        },
+        fontFamily: "'Konnect', serif",
+        zoom: {
+          enabled: false,
+        },
       },
-    },
-    fill: {
-      type: "gradient",
-      gradient: {
-        opacityFrom: 0,
-        opacityTo: 0,
+      fill: {
+        type: "gradient",
+        gradient: {
+          opacityFrom: 0,
+          opacityTo: 0,
+        },
       },
-    },
-    stroke: {
-      width: [2, 2],
-      colors: [color, theme.palette.common.white],
-      curve: "smooth",
-    },
-    colors: [color],
-    markers: {
+      stroke: {
+        width: [2, 2],
+        colors: [color, theme.palette.common.white],
+        curve: "smooth",
+      },
       colors: [color],
-      strokeColors: [color],
-      strokeWidth: 1,
-    },
-    tooltip: {
-      theme: "dark",
-      shared: false,
-      custom: (options: any) => {
-        return (
-          "<div class='y-label'>$" +
-          options.series[options.seriesIndex][options.dataPointIndex] +
-          "</div>" +
-          "<div class='x-label'>" +
-          dateFormat(options.w.globals.labels[options.dataPointIndex]) +
-          "</div>"
-        );
-      },
-      x: {
-        show: false,
-      },
-      y: {
-        formatter: (v: number) => v?.toFixed(),
-      },
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    xaxis: {
-      labels: {
-        show: false,
-        offsetY: 0,
-      },
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
+      markers: {
+        colors: [color],
+        strokeColors: [color],
+        strokeWidth: 1,
       },
       tooltip: {
+        theme: "dark",
+        shared: false,
+        custom: (options: any) => {
+          return (
+            "<div class='y-label'>$" +
+            options.series[options.seriesIndex][options.dataPointIndex] +
+            "</div>" +
+            "<div class='x-label'>" +
+            dateFormat(options.w.globals.labels[options.dataPointIndex]) +
+            "</div>"
+          );
+        },
+        x: {
+          show: false,
+        },
+        y: {
+          formatter: (v: number) => v?.toFixed(),
+        },
+      },
+      dataLabels: {
         enabled: false,
       },
-    },
-    yaxis: {
-      show: true,
-      axisBorder: {
-        show: false,
-      },
-      labels: {
-        offsetX: -15,
-        style: {
-          fontSize: "16px",
-          fontFamily: theme.custom.fontFamily.primary,
-          fontWeight: 300,
-          colors: [theme.palette.common.white],
+      xaxis: {
+        labels: {
+          show: false,
+          offsetY: 0,
         },
-        formatter: (val: number, opts?: any) => {
-          return "$" + val?.toFixed();
+        axisBorder: {
+          show: false,
+        },
+        axisTicks: {
+          show: false,
+        },
+        tooltip: {
+          enabled: false,
         },
       },
-      tooltip: {
-        enabled: false,
+      yaxis: {
+        show: true,
+        axisBorder: {
+          show: false,
+        },
+        labels: {
+          offsetX: -15,
+          style: {
+            fontSize: "16px",
+            fontFamily: theme.custom.fontFamily.primary,
+            fontWeight: 300,
+            colors: [theme.palette.common.white],
+          },
+          formatter: (val: number, opts?: any) => {
+            return "$" + val?.toFixed();
+          },
+        },
+        tooltip: {
+          enabled: false,
+        },
       },
-    },
-  });
+    }
+  }, [theme]);
 
   const [options, setOptions] = useState<ApexCharts.ApexOptions>(
     chartOptions(color || theme.palette.primary.main, dateFormat)
   );
 
   useEffect(() => {
-    setOptions(chartOptions(color || theme.palette.primary.main, dateFormat));
-  }, []);
-
-  useEffect(() => {
-    setOptions({
-      ...options,
-      ...chartOptions(color || theme.palette.primary.main, dateFormat),
+    setOptions((options) => {
+      return {
+          ...options,
+          ...chartOptions(color || theme.palette.primary.main, dateFormat),
+      }
     });
-  }, [dateFormat, color]);
+  }, [dateFormat, color, chartOptions, theme.palette.primary.main]);
 
   return (
     <Box height={height}>
@@ -160,17 +160,10 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
           options={options}
           series={[
             {
-              data: data,
+              data: priceSeries,
             },
             {
-              data: data.slice(
-                0,
-                pastCount == 1
-                  ? 0
-                  : pastCount == data.length - 1
-                  ? data.length
-                  : pastCount
-              ),
+              data: predictedPriceSeries
             },
           ]}
           type="area"
@@ -195,14 +188,14 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
         <Typography variant="body2" pl={1} pr={2}>
           {baseAsset?.symbol}
         </Typography>
-        {/* <FiberManualRecordIcon color="primary"/>
+        <FiberManualRecordIcon color="inherit" />
         <Typography
           variant="body2"
           pl={1}
           whiteSpace="nowrap"
         >
           {baseAsset?.symbol} predicted price (without new buyers)
-        </Typography> */}
+        </Typography>
       </Box>
     </Box>
   );

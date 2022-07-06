@@ -34,9 +34,9 @@ You can find them under the `frame` directory. We try to give them a meaningful 
 
 The `oracle` off-chain worker is fetching prices from a server. We provide a reference implementation named `price-feed` that fetches and caches prices from different, configurable sources.
 
-## Subxt clients
+## Rust clients
 
-We do our best to maintain generated subxt clients for our runtimes.
+You may run `subxt` agains our runtimes to get Rust clients.
 
 # Scripts
 

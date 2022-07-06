@@ -16,7 +16,6 @@ export const DEFI_CONFIG = {
     "chaos",
   ] as const, // important
   ammIds: ["uniswap", "curve", "balancer"] as const,
-
   swapChartIntervals: [
     {
       symbol: "24h",
@@ -51,24 +50,6 @@ export const DEFI_CONFIG = {
     {
       symbol: "1y",
       name: "1 year",
-    },
-  ],
-  poolChartIntervals: [
-    {
-      symbol: "1w",
-      name: "1 week",
-    },
-    {
-      symbol: "1m",
-      name: "1 month",
-    },
-    {
-      symbol: "1y",
-      name: "1 year",
-    },
-    {
-      symbol: "All",
-      name: "all",
     },
   ],
 };

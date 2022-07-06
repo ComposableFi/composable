@@ -1,11 +1,8 @@
 import { Box, useTheme } from "@mui/material";
 import { Chart, FeaturedBox } from "@/components/Molecules";
-import { useAppSelector, useAppDispatch } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 import { formatNumber, formatNumberCompact } from "@/utils/formatters";
-import {
-  setMemPoolInterval,
-  TelemetryDataProps,
-} from "@/stores/defi/stats/telemetry";
+import { TelemetryDataProps } from "@/stores/defi/stats/telemetry";
 
 function formatTelemetryTitleValue(index: number, info: TelemetryDataProps) {
   switch (index) {
@@ -18,16 +15,13 @@ function formatTelemetryTitleValue(index: number, info: TelemetryDataProps) {
 
 export const StatsTelemetryTab: React.FC<{}> = ({}) => {
   const theme = useTheme();
-  const dispatch = useAppDispatch();
-  const { telemetryData, telemetryChartData } = useAppSelector(
-    (state) => state.statsTelemetry
+  const { telemetryData, telemetryChartData, setMemPoolInterval } = useStore(
+    ({ statsTelemetry }) => statsTelemetry
   );
 
   function dispatchMemPoolInterval(selectedInterval: string) {
-    dispatch(
-      setMemPoolInterval(
-        telemetryChartData.data[0].data.interval.indexOf(selectedInterval)
-      )
+    setMemPoolInterval(
+      telemetryChartData.data[0].data.interval.indexOf(selectedInterval)
     );
   }
 

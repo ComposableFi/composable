@@ -1,11 +1,24 @@
-import { RootState } from "@/stores/root";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { NamedSet } from "zustand/middleware";
+import { StoreSlice } from "../../../types";
 
 interface CrowdloanRewards {
   netVestedPICA: string;
   claimablePICA: string;
   claimedPICA: string;
   contribution: string;
+}
+
+interface CrowdloanRewardsState {
+  user: CrowdloanRewards;
+  ui: {
+    useAssociationMode: AssociationMode;
+    isEligible: boolean;
+  };
+  constants: {
+    initialPayment: string;
+  };
+  associatedWith: AssociationMode | null;
+  evmAlreadyAssociated: boolean;
 }
 
 export type AssociationMode = "relayChain" | "ethereum";
@@ -39,126 +52,109 @@ const initialState: {
   evmAlreadyAssociated: false,
 };
 
-export const crowdloanRewardsSlice = createSlice({
-  name: "crowdloanRewards",
-  initialState,
-  reducers: {
-    setUseAssociationMode: (
-      state,
-      action: PayloadAction<{ useAssociationMode: AssociationMode }>
-    ) => {
-      const { useAssociationMode } = action.payload;
-      state.ui.useAssociationMode = useAssociationMode;
+export interface CrowdloanRewardsSlice {
+  crowdloanRewards: CrowdloanRewardsState & {
+    setUseAssociationMode: (useAssociationMode: AssociationMode) => void;
+    setUserClaimEligibility: (isEligible: boolean) => void;
+    setUserCrowdloanData: (
+      netVestedPICA: string,
+      claimablePICA: string,
+      claimedPICA: string
+    ) => void;
+    setUserClaimablePICA: (claimablePICA: string) => void;
+    setUserClaimedPICA: (claimedPICA: string) => void;
+    setUserNetVestedPICA: (etVestedPICA: string) => void;
+    setUserAssociatedWith: (
+      associatedWith: "relayChain" | "ethereum" | null
+    ) => void;
+    setInitialPayment: (initialPayment: string) => void;
+    setUserContribution: (contribution: string) => void;
+    setEvmAlreadyAssociated: (evmAlreadyAssociated: boolean) => void;
+  };
+}
+
+export const createCrowdloanRewardsSlice: StoreSlice<CrowdloanRewardsSlice> = (
+  set: NamedSet<CrowdloanRewardsSlice>
+) => ({
+  crowdloanRewards: {
+    ...initialState,
+    setUseAssociationMode: (useAssociationMode: AssociationMode) => {
+      set((state) => {
+        state.crowdloanRewards.ui.useAssociationMode = useAssociationMode;
+
+        return state;
+      });
     },
-    setUserClaimEigibility: (
-      state,
-      action: PayloadAction<{ isEligible: boolean }>
-    ) => {
-      const { isEligible } = action.payload;
-      state.ui.isEligible = isEligible;
+    setUserClaimEligibility: (isEligible: boolean) => {
+      set((state) => {
+        state.crowdloanRewards.ui.isEligible = isEligible;
+
+        return state;
+      });
     },
     setUserCrowdloanData: (
-      state,
-      action: PayloadAction<{
-        netVestedPICA: string;
-        claimablePICA: string;
-        claimedPICA: string;
-      }>
+      netVestedPICA: string,
+      claimablePICA: string,
+      claimedPICA: string
     ) => {
-      const { netVestedPICA, claimablePICA, claimedPICA } = action.payload;
-      state.user.claimablePICA = claimablePICA;
-      state.user.netVestedPICA = netVestedPICA;
-      state.user.claimedPICA = claimedPICA;
+      set((state) => {
+        state.crowdloanRewards.user.claimablePICA = claimablePICA;
+        state.crowdloanRewards.user.netVestedPICA = netVestedPICA;
+        state.crowdloanRewards.user.claimedPICA = claimedPICA;
+
+        return state;
+      });
     },
-    setUserClaimablePICA: (
-      state,
-      action: PayloadAction<{
-        claimablePICA: string;
-      }>
-    ) => {
-      const { claimablePICA } = action.payload;
-      state.user.claimablePICA = claimablePICA;
+    setUserClaimablePICA: (claimablePICA: string) => {
+      set((state) => {
+        state.crowdloanRewards.user.claimablePICA = claimablePICA;
+
+        return state;
+      });
     },
-    setUserClaimedPICA: (
-      state,
-      action: PayloadAction<{
-        claimedPICA: string;
-      }>
-    ) => {
-      const { claimedPICA } = action.payload;
-      state.user.claimedPICA = claimedPICA;
+    setUserClaimedPICA: (claimedPICA: string) => {
+      set((state) => {
+        state.crowdloanRewards.user.claimedPICA = claimedPICA;
+
+        return state;
+      });
     },
-    setUserNetVestedPICA: (
-      state,
-      action: PayloadAction<{
-        netVestedPICA: string;
-      }>
-    ) => {
-      const { netVestedPICA } = action.payload;
-      state.user.netVestedPICA = netVestedPICA;
+    setUserNetVestedPICA: (netVestedPICA: string) => {
+      set((state) => {
+        state.crowdloanRewards.user.netVestedPICA = netVestedPICA;
+
+        return state;
+      });
     },
     setUserAssociatedWith: (
-      state,
-      action: PayloadAction<{
-        associatedWith: "relayChain" | "ethereum" | null;
-      }>
+      associatedWith: "relayChain" | "ethereum" | null
     ) => {
-      const { associatedWith } = action.payload;
-      state.associatedWith = associatedWith;
+      set((state) => {
+        state.crowdloanRewards.associatedWith = associatedWith;
+
+        return state;
+      });
     },
-    setInitialPayment: (
-      state,
-      action: PayloadAction<{
-        initialPayment: string;
-      }>
-    ) => {
-      const { initialPayment } = action.payload;
-      state.constants.initialPayment = initialPayment;
+    setInitialPayment: (initialPayment: string) => {
+      set((state) => {
+        state.crowdloanRewards.constants.initialPayment = initialPayment;
+
+        return state;
+      });
     },
-    setUserContribution: (
-      state,
-      action: PayloadAction<{
-        contribution: string;
-      }>
-    ) => {
-      const { contribution } = action.payload;
-      state.user.contribution = contribution;
+    setUserContribution: (contribution: string) => {
+      set((state) => {
+        state.crowdloanRewards.user.contribution = contribution;
+
+        return state;
+      });
     },
-    setEvmAlreadyAssociated: (
-      state,
-      action: PayloadAction<{
-        evmAlreadyAssociated: boolean;
-      }>
-    ) => {
-      const { evmAlreadyAssociated } = action.payload;
-      state.evmAlreadyAssociated = evmAlreadyAssociated;
+    setEvmAlreadyAssociated: (evmAlreadyAssociated: boolean) => {
+      set((state) => {
+        state.crowdloanRewards.evmAlreadyAssociated = evmAlreadyAssociated;
+
+        return state;
+      });
     },
   },
 });
-
-export const {
-  setUseAssociationMode,
-  setUserCrowdloanData,
-  setUserAssociatedWith,
-  setUserClaimEigibility,
-  setUserClaimablePICA,
-  setUserClaimedPICA,
-  setUserNetVestedPICA,
-  setUserContribution,
-  setInitialPayment,
-  setEvmAlreadyAssociated,
-} = crowdloanRewardsSlice.actions;
-
-export const selectCrowdloadRewardsUserInfo = (state: RootState) =>
-  state.crowdloanRewards.user;
-export const selectCrowdloanRewardsUIHelper = (state: RootState) =>
-  state.crowdloanRewards.ui;
-export const selectCrowdloanRewardsUserAssociation = (state: RootState) =>
-  state.crowdloanRewards.associatedWith;
-export const selectCrowdloanRewardsinitialPayment = (state: RootState) =>
-  state.crowdloanRewards.constants.initialPayment;
-
-export const selectIsEvmAlreadyAssociated = (state: RootState) =>
-  state.crowdloanRewards.evmAlreadyAssociated;
-
-export default crowdloanRewardsSlice.reducer;

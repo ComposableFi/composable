@@ -33,20 +33,34 @@ pub trait Amm {
 	fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError>;
 
 	/// Returns the amount of base & quote asset redeemable for given amount of lp token.
-	fn redeemable_assets_for_given_lp_tokens(
+	fn redeemable_assets_for_lp_tokens(
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
+		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
 
-	/// Returns the amount of LP tokens that would be recieved by adding the given amounts of base
-	/// and quote.
-	fn amount_of_lp_token_for_added_liquidity(
+	/// Simulate add_liquidity computations, on success returns the amount of LP tokens
+	/// that would be recieved by adding the given amounts of base and quote.
+	fn simulate_add_liquidity(
+		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		base_amount: Self::Balance,
-		quote_amount: Self::Balance,
-	) -> Result<Self::Balance, DispatchError>;
+		amounts: BTreeMap<Self::AssetId, Self::Balance>,
+	) -> Result<Self::Balance, DispatchError>
+	where
+		Self::AssetId: sp_std::cmp::Ord;
+
+	/// Simulate remove_liquidity computations, on success returns the amount of base/quote assets
+	/// that would be recieved by removing the given amounts of lp tokens.
+	fn simulate_remove_liquidity(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		lp_amount: Self::Balance,
+		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
+	) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError>
+	where
+		Self::AssetId: sp_std::cmp::Ord;
 
 	/// Get pure exchange value for given units of given asset. (Note this does not include fees.)
 	/// `pool_id` the pool containing the `asset_id`.
@@ -387,6 +401,16 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 #[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct RedeemableAssets<AssetId, Balance>
+where
+	AssetId: Ord,
+{
+	pub assets: BTreeMap<AssetId, Balance>,
+}
+
+/// RemoveLiquiditySimulationResult for given amount of lp tokens.
+#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct RemoveLiquiditySimulationResult<AssetId, Balance>
 where
 	AssetId: Ord,
 {
