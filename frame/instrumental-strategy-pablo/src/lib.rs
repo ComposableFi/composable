@@ -40,9 +40,10 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::{DispatchError, DispatchResult},
 		pallet_prelude::*,
+		require_transactional,
 		storage::bounded_btree_set::BoundedBTreeSet,
 		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
-		transactional, Blake2_128Concat, PalletId, require_transactional,
+		transactional, Blake2_128Concat, PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::traits::{
@@ -385,6 +386,7 @@ pub mod pallet {
 			Ok(())
 		}
 		/// Called when an existing asset_id-pool_id pair is replaced by new pool_id.
+		///
 		/// Occurs a withdrawal of all funds from the old pool to the Vault, and then from the Vault
 		/// to the new pool.
 		#[require_transactional]
@@ -412,9 +414,8 @@ pub mod pallet {
 						}
 					}
 				}
-				Pools::<T>::mutate(asset_id, |_| PoolState {
-					pool_id: new_pool_id,
-					state: State::Normal,
+				Pools::<T>::mutate(asset_id, |pool| {
+					*pool = Some(PoolState { pool_id: new_pool_id, state: State::Normal });
 				});
 				Ok(())
 			})
