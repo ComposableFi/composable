@@ -84,7 +84,7 @@
 
 # ❓ FAQS
 - [FAQs](./faqs/faqs.md)
-
+- [Risks & Disclosures](./faqs/risks-disclosures.md)
 
 # 💻 Codespaces
 
