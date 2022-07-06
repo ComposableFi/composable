@@ -231,7 +231,7 @@ pub fn client_type_from_bytes(client_type: Vec<u8>) -> Result<ClientType, Error>
 pub fn apply_prefix_and_encode(prefix: &[u8], path: Vec<String>) -> Result<Vec<u8>, Error> {
 	let mut key_path = vec![prefix];
 	let path = path.iter().map(|val| val.as_bytes()).collect::<Vec<_>>();
-	key_path.extend_from_slice(&path);
+	key_path.extend(path);
 	Ok(key_path.encode())
 }
 
