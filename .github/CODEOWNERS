@@ -27,6 +27,7 @@ frame/*/runtime-api @ComposableFi/parachain-rpc
 
 # Gitbook
 book/ @ComposableFi/technical-writing-reviewers
+README.md @ComposableFi/technical-writing-reviewers
 
 # Frontend and Blockchain Integration 
 frontend/ @ComposableFi/blockchain-integrations
