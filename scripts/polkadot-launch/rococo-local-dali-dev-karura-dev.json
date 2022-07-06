@@ -65,20 +65,46 @@
       ]
     },
     {
-      "bin": "../../../Acala/target/release/acala",
-      "chain":"kaura-local",
+      "bin": "../../../Acala/target/debug/acala",
       "id": "2000",
+      "chain": "karura-dev",
       "balance": "1000000000000000000000",
       "nodes": [
         {
           "wsPort": 9998,
           "port": 31300,
-          "flags": ["--alice", "--rpc-cors=all", "--", "--execution=wasm"]
+          "name": "alice",
+          "flags": [
+            "--alice",
+            "--unsafe-ws-external",
+            "--unsafe-rpc-external",
+            "--rpc-external",
+            "--ws-external",
+            "--rpc-cors=all",
+            "--rpc-methods=Unsafe",
+            "--force-authoring",
+            "--log=xcm=trace",
+            "--",
+            "--execution=wasm"
+          ]
         },
         {
           "wsPort": 9999,
           "port": 31301,
-          "flags": ["--bob", "--rpc-cors=all", "--", "--execution=wasm"]
+          "name": "bob",
+          "flags": [
+            "--bob",
+            "--unsafe-ws-external",
+            "--unsafe-rpc-external",
+            "--rpc-external",
+            "--ws-external",
+            "--rpc-cors=all",
+            "--rpc-methods=Unsafe",
+            "--force-authoring",
+            "--log=xcm=trace",
+            "--",
+            "--execution=wasm"
+          ]
         }
       ]
     }
