@@ -1,5 +1,5 @@
-// use crate::mock::strategies::*;
-use composable_traits::instrumental::InstrumentalStrategy;
+use crate::mock::strategies::*;
+use composable_traits::instrumental::InstrumentalStrategy as InstrumentalStrategyTrait;
 use frame_support::{assert_noop, assert_ok};
 
 use crate::mock::runtime::{
@@ -17,7 +17,10 @@ fn test_get_apy() {
 	ExtBuilder::default().build().execute_with(|| {
 		let asset_id = primitives::currency::CurrencyId::PICA;
 
-		assert_eq!(InstrumentalStrategy::get_apy(asset_id), PabloStrategy::get_apy(asset_id));
+		assert_eq!(
+			InstrumentalStrategy::get_apy(asset_id),
+			<PabloStrategy as InstrumentalStrategyTrait>::get_apy(asset_id)
+		);
 	});
 }
 

@@ -121,8 +121,7 @@ pub mod pallet {
 
 		// TODO: (Nevin)
 		//  - try to make the connection to substrategies a vec of InstrumentalStrategy
-		//  - ideally something like: type WhitelistedStrategies: Get<[dyn
-		//    InstrumentalStrategy]>;
+		//  - ideally something like: type WhitelistedStrategies: Get<[dyn InstrumentalStrategy]>;
 
 		type PabloStrategy: InstrumentalStrategy<
 			AccountId = Self::AccountId,
