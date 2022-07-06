@@ -57,8 +57,8 @@ fn setup_sell() {
 			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account_truncating());
 		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
 		let treasury_added =
-			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account_truncating())
-				- treasury;
+			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account_truncating()) -
+				treasury;
 		assert!(treasury_added > 0);
 		let ask_gas = <Runtime as pallet_dutch_auction::Config>::WeightInfo::ask() as u128;
 		assert!(treasury_added >= ask_gas);
@@ -68,8 +68,8 @@ fn setup_sell() {
 		assert_ne!(invalid, order_id);
 		let remaining_gas = Assets::balance(PICA, &ALICE);
 		assert!(
-			gas < remaining_gas
-				+ <Runtime as pallet_dutch_auction::Config>::PositionExistentialDeposit::get()
+			gas < remaining_gas +
+				<Runtime as pallet_dutch_auction::Config>::PositionExistentialDeposit::get()
 					as u128 + treasury_added
 		);
 	});

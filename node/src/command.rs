@@ -271,12 +271,11 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(cmd)?;
 
 			match cmd {
-				BenchmarkCmd::Pallet(cmd) => {
+				BenchmarkCmd::Pallet(cmd) =>
 					if cfg!(feature = "runtime-benchmarks") {
 						runner.sync_run(|config| match config.chain_spec.id() {
-							id if id.contains("picasso") => {
-								cmd.run::<Block, PicassoExecutor>(config)
-							},
+							id if id.contains("picasso") =>
+								cmd.run::<Block, PicassoExecutor>(config),
 							#[cfg(feature = "dali")]
 							id if id.contains("dali") => cmd.run::<Block, DaliExecutor>(config),
 							#[cfg(feature = "composable")]
@@ -287,9 +286,8 @@ pub fn run() -> Result<()> {
 						Err("Benchmarking wasn't enabled when building the node. \
 						     You can enable it with `--features runtime-benchmarks`."
 							.into())
-					}
-				},
-				BenchmarkCmd::Block(cmd) => {
+					},
+				BenchmarkCmd::Block(cmd) =>
 					runner.sync_run(|config| match config.chain_spec.id() {
 						id if id.contains("picasso") => {
 							let partials = new_partial::<
@@ -313,9 +311,8 @@ pub fn run() -> Result<()> {
 							cmd.run(partials.client)
 						},
 						id => panic!("Unknown Chain: {}", id),
-					})
-				},
-				BenchmarkCmd::Storage(cmd) => {
+					}),
+				BenchmarkCmd::Storage(cmd) =>
 					runner.sync_run(|config| match config.chain_spec.id() {
 						id if id.contains("picasso") => {
 							let partials = new_partial::<
@@ -345,11 +342,9 @@ pub fn run() -> Result<()> {
 							cmd.run(config, partials.client, db, storage)
 						},
 						id => panic!("Unknown Chain: {}", id),
-					})
-				},
-				BenchmarkCmd::Overhead(_) | BenchmarkCmd::Machine(_) => {
-					Err("Unsupported benchmarking command".into())
-				},
+					}),
+				BenchmarkCmd::Overhead(_) | BenchmarkCmd::Machine(_) =>
+					Err("Unsupported benchmarking command".into()),
 			}
 		},
 		None => {

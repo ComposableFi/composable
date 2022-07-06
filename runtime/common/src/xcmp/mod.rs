@@ -115,7 +115,7 @@ impl<
 		// this is for trusted chains origin, see `f` if any
 		// TODO: dicuss if we need payments from Relay chain or common goods chains?
 		if weight.is_zero() {
-			return Ok(payment);
+			return Ok(payment)
 		}
 
 		// only support first fungible assets now.
@@ -145,7 +145,7 @@ impl<
 				self.fee = self.fee.saturating_add(fee);
 				self.price = self.price.saturating_add(price);
 				self.asset_location = Some(multi_location.clone());
-				return Ok(unused);
+				return Ok(unused)
 			}
 		}
 
@@ -161,7 +161,7 @@ impl<
 			self.price = self.price.saturating_sub(price);
 			self.fee = self.fee.saturating_sub(fee);
 			if price > 0 {
-				return Some((asset_location.clone(), price).into());
+				return Some((asset_location.clone(), price).into())
 			}
 		}
 
@@ -303,7 +303,7 @@ impl<
 				}
 			},
 			// delegate to asset-registry
-			_ => {
+			_ =>
 				if let Some(currency_id) = WellKnownXcmpAssets::remote_to_local(location.clone()) {
 					Some(currency_id)
 				} else {
@@ -314,8 +314,7 @@ impl<
 						log::error!(target: "xcmp", "failed converting currency");
 					}
 					result
-				}
-			},
+				},
 		}
 	}
 }

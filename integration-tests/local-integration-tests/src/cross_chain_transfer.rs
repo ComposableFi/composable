@@ -662,8 +662,8 @@ fn trap_assets_larger_than_ed_works() {
 		log::error!("{:?}", &this_runtime::TreasuryAccount::get());
 		assert_eq!(
 			native_asset_amount,
-			this_runtime::Balances::free_balance(&this_runtime::TreasuryAccount::get())
-				- 7 * CurrencyId::unit::<Balance>(),
+			this_runtime::Balances::free_balance(&this_runtime::TreasuryAccount::get()) -
+				7 * CurrencyId::unit::<Balance>(),
 		);
 	});
 }

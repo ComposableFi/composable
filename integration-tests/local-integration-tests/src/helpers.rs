@@ -25,8 +25,8 @@ pub fn under_existential_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Cur
 	_instruction_count: usize,
 ) -> Balance {
 	PriceConverter::<AssetsRegistry>::get_price_inverse(asset_id, NativeExistentialDeposit::get())
-		.unwrap()
-		/ Balance::from(2_u128)
+		.unwrap() /
+		Balance::from(2_u128)
 }
 
 /// dumps events for debugging
@@ -66,7 +66,7 @@ pub fn assert_above_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Currency
 
 /// weigh enough to handle any XCMP message
 pub fn enough_weight() -> u128 {
-	let this_liveness_native_amount = BaseXcmWeight::get() as u128
-		+ 100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance;
+	let this_liveness_native_amount = BaseXcmWeight::get() as u128 +
+		100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance;
 	this_liveness_native_amount
 }

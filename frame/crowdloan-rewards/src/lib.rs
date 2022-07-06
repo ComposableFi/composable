@@ -434,8 +434,8 @@ pub mod pallet {
 			// amount until this window point.
 			let vested_reward = reward.total.saturating_sub(upfront_payment);
 			Ok(upfront_payment.saturating_add(
-				vested_reward.saturating_mul(T::Convert::convert(vesting_window))
-					/ T::Convert::convert(reward.vesting_period),
+				vested_reward.saturating_mul(T::Convert::convert(vesting_window)) /
+					T::Convert::convert(reward.vesting_period),
 			))
 		}
 	}
@@ -536,15 +536,14 @@ pub mod pallet {
 			if let Call::associate { reward_account, proof } = call {
 				let now = T::Time::now();
 				let enabled = VestingTimeStart::<T>::get()
-					.ok_or(InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8))?
-					<= now;
+					.ok_or(InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8))? <=
+					now;
 				if !enabled {
-					return InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8).into();
+					return InvalidTransaction::Custom(ValidityError::NotClaimableYet as u8).into()
 				}
 
 				if Associations::<T>::get(reward_account).is_some() {
-					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8)
-						.into();
+					return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8).into()
 				}
 				let remote_account =
 					get_remote_account::<T>(proof.clone(), reward_account, T::Prefix::get())
@@ -555,14 +554,12 @@ pub mod pallet {
 						})?;
 				match Rewards::<T>::get(remote_account.clone()) {
 					None => InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
-					Some(reward) if reward.total.is_zero() => {
-						InvalidTransaction::Custom(ValidityError::NoReward as u8).into()
-					},
-					Some(_) => {
+					Some(reward) if reward.total.is_zero() =>
+						InvalidTransaction::Custom(ValidityError::NoReward as u8).into(),
+					Some(_) =>
 						ValidTransaction::with_tag_prefix("CrowdloanRewardsAssociationCheck")
 							.and_provides(remote_account)
-							.build()
-					},
+							.build(),
 				}
 			} else {
 				Err(InvalidTransaction::Call.into())

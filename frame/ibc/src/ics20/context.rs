@@ -169,7 +169,7 @@ where
 		{
 			asset_id
 		} else {
-			return Err(Ics20Error::invalid_token());
+			return Err(Ics20Error::invalid_token())
 		};
 		<<T as transfer::Config>::MultiCurrency as Mutate<T::AccountId>>::burn_from(
 			asset_id.into(),
@@ -212,7 +212,7 @@ where
 				true,
 			)
 			.map(|_| ())
-			.map_err(|_| Ics20Error::invalid_token());
+			.map_err(|_| Ics20Error::invalid_token())
 		}
 		let denom = amt.denom.to_string();
 		let foreign_asset_id = ibc_denom_to_foreign_asset_id(&denom);
@@ -222,7 +222,7 @@ where
 		{
 			asset_id
 		} else {
-			return Err(Ics20Error::invalid_token());
+			return Err(Ics20Error::invalid_token())
 		};
 		<<T as transfer::Config>::MultiCurrency as Transfer<T::AccountId>>::transfer(
 			asset_id.into(),

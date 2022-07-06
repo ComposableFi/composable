@@ -53,8 +53,8 @@ fn transfer_native_from_relay_chain_to_statemine() {
 
 	Statemine::execute_with(|| {
 		assert!(
-			bob_on_statemine_original
-				< statemine_runtime::Balances::free_balance(&AccountId::from(BOB)),
+			bob_on_statemine_original <
+				statemine_runtime::Balances::free_balance(&AccountId::from(BOB)),
 			"balance increased"
 		);
 		assert!(

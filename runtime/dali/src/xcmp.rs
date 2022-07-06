@@ -132,14 +132,12 @@ pub mod parachains {
 impl XcmpAssets for StaticAssetsMap {
 	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
 		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } => {
+			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
 				match (para_id, &key[..]) {
-					(parachains::karura::ID, parachains::karura::KUSD_KEY) => {
-						Some(CurrencyId::kUSD)
-					},
+					(parachains::karura::ID, parachains::karura::KUSD_KEY) =>
+						Some(CurrencyId::kUSD),
 					_ => None,
-				}
-			},
+				},
 			_ => None,
 		}
 	}
@@ -161,8 +159,8 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		// NOTE: In Acala there is not such thing
 		// if asset is KSM and send from some parachain then allow for  that
-		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent())
-			&& matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
+		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
+			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
 	}
 }
 

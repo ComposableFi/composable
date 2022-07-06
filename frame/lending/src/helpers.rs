@@ -204,7 +204,7 @@ impl<T: Config> Pallet<T> {
 		// this check prevents free flash loans
 		if let Some(latest_borrow_timestamp) = BorrowTimestamp::<T>::get(market_id, debt_owner) {
 			if latest_borrow_timestamp >= LastBlockTimestamp::<T>::get() {
-				return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into());
+				return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
 			}
 		}
 
@@ -414,7 +414,7 @@ impl<T: Config> Pallet<T> {
 						market_id,
 						account,
 						error );
-						return TransactionOutcome::Rollback(liquidation_response_result);
+						return TransactionOutcome::Rollback(liquidation_response_result)
 					}
 					TransactionOutcome::Commit(Ok(()))
 				});

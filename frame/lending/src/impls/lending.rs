@@ -255,9 +255,8 @@ impl<T: Config> Lending for Pallet<T> {
 		let beneficiary_total_debt_with_interest =
 			match Self::total_debt_with_interest(market_id, beneficiary)? {
 				TotalDebtWithInterest::Amount(amount) => amount,
-				TotalDebtWithInterest::NoDebt => {
-					return Err(Error::<T>::CannotRepayZeroBalance.into())
-				},
+				TotalDebtWithInterest::NoDebt =>
+					return Err(Error::<T>::CannotRepayZeroBalance.into()),
 			};
 
 		let market_account = Self::account_id(market_id);
