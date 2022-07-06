@@ -69,9 +69,10 @@ sp_api::decl_runtime_apis! {
 
 		fn packet_receipt(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<QueryPacketReceiptResponse>;
 
-		fn denom_trace(denom: Vec<u8>) -> Option<QueryDenomTraceResponse>;
+		fn denom_trace(asset_id: u128) -> Option<QueryDenomTraceResponse>;
 
-		fn denom_traces(offset: Vec<u8>, limit: u64, height: u32) -> Option<QueryDenomTracesResponse>;
+		/// Key is the asset id from which to start looking up results
+		fn denom_traces(key: Option<u128>, offset: Option<u32>, limit: u64, count_total: bool) -> QueryDenomTracesResponse;
 
 		fn block_events() -> Vec<pallet_ibc::events::IbcEvent>;
 	}

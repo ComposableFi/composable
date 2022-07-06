@@ -1648,12 +1648,12 @@ impl_runtime_apis! {
 			Ibc::packet_receipt(channel_id, port_id, seq).ok()
 		}
 
-		fn denom_trace(_denom: Vec<u8>) -> Option<ibc_primitives::QueryDenomTraceResponse> {
-			None
+		fn denom_trace(asset_id: u128) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+			Transfer::get_denom_trace(asset_id)
 		}
 
-		fn denom_traces(_offset: Vec<u8>, _limit: u64, _height: u32) -> Option<ibc_primitives::QueryDenomTracesResponse> {
-			None
+		fn denom_traces(key: Option<u128>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
+			Transfer::get_denom_traces(key, offset, limit, count_total)
 		}
 
 		fn block_events() -> Vec<pallet_ibc::events::IbcEvent> {
