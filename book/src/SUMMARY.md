@@ -31,8 +31,7 @@
     - [Mosaic Phase 1 Result](./products/mosaic/mosaic-phase1-result.md)
     - [Mural: NFT Transfers on Mosaic via the Summoner Vault](./products/mosaic/mural-NFT-transfers/mural-NFT-transfers.md)
         - [NFT Transfer Flow](./products/mosaic/mural-NFT-transfers/NFT-transfer-flow.md)
-        - [NFT Contract Details](./products/mosaic/mural-NFT-transfers/NFT-contract-details.md
-    - [The Composable SDK](./products/mosaic/the-composable-sdk.md)
+        - [NFT Contract Details](./products/mosaic/mural-NFT-transfers/NFT-contract-details.md)
 - [Cubic](./products/cubic/cubic.md)
   - [Additional Details](./products/cubic/addtional-details.md)
 - [Parachain Vault Strategy](./products/parachain-vault-strategy.md)
