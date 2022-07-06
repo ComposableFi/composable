@@ -104,7 +104,7 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	fn clear_prime(m: u32, ) -> Weight {
 		(3_926_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((3_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((2_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 }
