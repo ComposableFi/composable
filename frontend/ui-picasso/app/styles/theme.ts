@@ -460,7 +460,8 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          background: "transparent",
+          backgroundImage:
+            "linear-gradient(to bottom, #0c0600 50%, rgba(0, 0, 0, 0.15) 134%)",
         },
       },
     },
@@ -501,18 +502,10 @@ export const getDesignTokens = (mode: PaletteMode): ThemeOptions => ({
     MuiDialog: {
       styleOverrides: {
         paper: {
-          backgroundColor: "transparent",
-          backgroundImage: "none",
-          boxShadow: "none",
-        },
-      },
-    },
-    MuiBackdrop: {
-      styleOverrides: {
-        root: {
-          backdropFilter: "blur(32px)",
-          background:
+          backgroundColor: "rgba(7, 1, 5, 0.8)",
+          backgroundImage:
             "linear-gradient(180deg, rgba(12, 6, 0, 0.8) 0%, rgba(21, 11, 0, 0.8) 82.99%)",
+          boxShadow: "none",
         },
       },
     },
