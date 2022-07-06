@@ -15,7 +15,7 @@ Picasso is our custom built Kusama parachain, based on the substrate framework.
 ## Documentation
 
 To learn more about our ecosystem, vision, and product specifics - visit our 
-[mdbook](https://book.composable.finance/).
+[mdbook](https://docs.composable.finance/).
 
 You can also find our cargo docs [here](https://dali.devnets.composablefinance.ninja/doc).
 
@@ -56,3 +56,4 @@ and several others you can find in the frame folder.
 
 
 Read more specific information in [our docs folder](docs/).
+
