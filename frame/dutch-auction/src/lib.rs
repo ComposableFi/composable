@@ -83,7 +83,11 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
-	use crate::{prelude::*, types::*, validation::XcmSellRequestValid};
+	use crate::{
+		prelude::*,
+		types::*,
+		validation::{SellValid, XcmSellRequestValid},
+	};
 	use composable_support::{
 		abstractions::{
 			nonce::Nonce,
@@ -288,6 +292,9 @@ pub mod pallet {
 			configuration: TimeReleaseFunction,
 		) -> DispatchResultWithPostInfo {
 			let who = &(ensure_signed(origin)?);
+
+			let order = SellValid::validate(order)?;
+
 			let order_id =
 				<Self as SellEngine<TimeReleaseFunction>>::ask(who, order, configuration)?;
 
