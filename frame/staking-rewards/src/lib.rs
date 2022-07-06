@@ -331,7 +331,6 @@ pub mod pallet {
 			let mut reductions: BoundedBTreeMap<
 				T::AssetId,
 				T::Balance,
-				// Reward<T::AssetId, T::Balance>,
 				<T as Config>::MaxRewardConfigsPerPool,
 			> = BoundedBTreeMap::new();
 
