@@ -189,7 +189,7 @@ pub mod pallet {
 	type StakeOf<T> = Stake<
 		<T as Config>::RewardPoolId,
 		<T as Config>::Balance,
-		Rewards<
+		Reductions<
 			<T as Config>::AssetId,
 			<T as Config>::Balance,
 			<T as Config>::MaxRewardConfigsPerPool,
@@ -268,10 +268,10 @@ pub mod pallet {
 							lock,
 						},
 					);
-					(owner, pool_id, end_block)
+					Ok((owner, pool_id, end_block))
 				},
-				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration)?,
-			};
+				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
+			}?;
 			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
 			Ok(())
 		}
@@ -335,6 +335,13 @@ pub mod pallet {
 					let old_value = stake.clone();
 					stake.stake = ratio.mul_floor(stake.stake);
 					stake.share = ratio.mul_floor(stake.share);
+					let assets: Vec<T::AssetId> = stake.reductions.keys().cloned().collect();
+					for asset in assets {
+						let reduction = stake.reductions.get_mut(&asset);
+						if let Some(value) = reduction {
+							*value = ratio.mul_floor(*value);
+						}
+					}
 					Ok(old_value)
 				},
 				None => Err(Error::<T>::NoPositionFound),

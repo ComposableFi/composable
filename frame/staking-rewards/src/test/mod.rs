@@ -7,9 +7,9 @@ use composable_tests_helpers::test::currency::{CurrencyId, PICA, USDT};
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
-		RewardConfig, RewardPoolConfiguration,
+		Reductions, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		Rewards, Stake, Staking,
+		Stake, Staking,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -55,18 +55,21 @@ fn test_split_postion() {
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
 		let new_position = StakeCount::<Test>::increment();
 		assert_ok!(new_position);
-		let stake =
-			Stake::<RewardPoolId, Balance, Rewards<CurrencyId, Balance, MaxRewardConfigsPerPool>> {
-				reward_pool_id: 1,
-				stake: 1000_000_000_000_000_u128,
-				share: 1000_000_000_000_000_u128,
-				reductions: Rewards::<_, _, _>::new(),
-				lock: Lock {
-					started_at: 10000_u64,
-					duration: 10000000_u64,
-					unlock_penalty: Perbill::from_percent(2),
-				},
-			};
+		let stake = Stake::<
+			RewardPoolId,
+			Balance,
+			Reductions<CurrencyId, Balance, MaxRewardConfigsPerPool>,
+		> {
+			reward_pool_id: 1,
+			stake: 1000_000_000_000_000_u128,
+			share: 1000_000_000_000_000_u128,
+			reductions: Reductions::<_, _, _>::new(),
+			lock: Lock {
+				started_at: 10000_u64,
+				duration: 10000000_u64,
+				unlock_penalty: Perbill::from_percent(2),
+			},
+		};
 		Stakes::<Test>::insert(1, stake.clone());
 		let ratio = Permill::from_rational(1_u32, 7_u32);
 		let left_from_one_ratio = ratio.left_from_one();
