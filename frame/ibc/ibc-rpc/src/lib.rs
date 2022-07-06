@@ -164,9 +164,15 @@ where
 	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
 
 	/// Query client consensus state
+	/// If the light client is a beefy light client, the revision height and revision number must be
+	/// specified And the `latest_consensus_state` field should be set to false, if not an error
+	/// will be returned because the consenssus state will not be found
+	/// For a beefy light client revision number should be the para id and the revision height the
+	/// block height.
 	#[method(name = "ibc_queryClientConsensusState")]
 	fn query_client_consensus_state(
 		&self,
+		height: Option<u32>,
 		client_id: String,
 		revision_height: u64,
 		revision_number: u64,
@@ -431,13 +437,7 @@ where
 
 	fn query_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -483,14 +483,8 @@ where
 		client_id: String,
 	) -> Result<QueryClientStateResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -518,14 +512,8 @@ where
 
 	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let result: Vec<u8> =
 			api.host_consensus_state(&at, height).ok().flatten().ok_or_else(|| {
 				runtime_error_into_rpc_error("Error querying host consensus state")
@@ -542,13 +530,18 @@ where
 
 	fn query_client_consensus_state(
 		&self,
+		height: Option<u32>,
 		client_id: String,
 		revision_height: u64,
 		revision_number: u64,
 		latest_cs: bool,
 	) -> Result<QueryConsensusStateResponse> {
 		let api = self.client.runtime_api();
-		let at = BlockId::Hash(self.client.info().best_hash);
+		let at = if let Some(height) = height {
+			BlockId::Number(height.into())
+		} else {
+			BlockId::Hash(self.client.info().best_hash)
+		};
 		let client_height = ibc::Height::new(revision_number, revision_height);
 		let height = client_height.encode_vec();
 		let para_id = api
@@ -614,14 +607,8 @@ where
 		connection_id: String,
 	) -> Result<QueryConnectionResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -697,14 +684,8 @@ where
 		client_id: String,
 	) -> Result<Vec<IdentifiedConnection>> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let result: Vec<ibc_primitives::IdentifiedConnection> = api
 			.connection_using_client(&at, client_id.as_bytes().to_vec())
 			.ok()
@@ -737,14 +718,8 @@ where
 		conn_id: String,
 	) -> Result<ConnHandshakeProof> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -781,14 +756,8 @@ where
 		port_id: String,
 	) -> Result<QueryChannelResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -821,14 +790,8 @@ where
 		port_id: String,
 	) -> Result<IdentifiedClientState> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let result: ibc_primitives::IdentifiedClientState = api
 			.channel_client(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
@@ -850,14 +813,8 @@ where
 		connection_id: String,
 	) -> Result<QueryChannelsResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -954,14 +911,8 @@ where
 		port_id: String,
 	) -> Result<QueryPacketCommitmentsResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1003,14 +954,8 @@ where
 		port_id: String,
 	) -> Result<QueryPacketAcknowledgementsResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1057,13 +1002,7 @@ where
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 
 		api.unreceived_packets(
 			&at,
@@ -1084,13 +1023,7 @@ where
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 
 		api.unreceived_acknowledgements(
 			&at,
@@ -1110,14 +1043,8 @@ where
 		port_id: String,
 	) -> Result<QueryNextSequenceReceiveResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1149,14 +1076,8 @@ where
 		seq: u64,
 	) -> Result<QueryPacketCommitmentResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1193,14 +1114,8 @@ where
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1237,14 +1152,8 @@ where
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
