@@ -12,7 +12,6 @@ jobs:
       - self-hosted
       - linux
       - x64
-      - sre
     steps:
     - uses: actions/checkout@v3.0.2
     - uses: actions/setup-python@v4
