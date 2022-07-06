@@ -27,7 +27,7 @@ use ibc::core::{
 use std::{collections::HashMap, fmt::Display, str::FromStr, sync::Arc};
 
 use ibc_proto::{
-	cosmos::base::v1beta1::Coin,
+	cosmos::base::{query::v1beta1::PageResponse, v1beta1::Coin},
 	ibc::{
 		applications::transfer::v1::{QueryDenomTraceResponse, QueryDenomTracesResponse},
 		core::{
@@ -164,9 +164,15 @@ where
 	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
 
 	/// Query client consensus state
+	/// If the light client is a beefy light client, the revision height and revision number must be
+	/// specified And the `latest_consensus_state` field should be set to false, if not an error
+	/// will be returned because the consenssus state will not be found
+	/// For a beefy light client revision number should be the para id and the revision height the
+	/// block height.
 	#[method(name = "ibc_queryClientConsensusState")]
 	fn query_client_consensus_state(
 		&self,
+		height: Option<u32>,
 		client_id: String,
 		revision_height: u64,
 		revision_number: u64,
@@ -321,17 +327,26 @@ where
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse>;
 
-	/// Query the denom trace for an ibc denom
+	/// Query the denom trace for an ibc denom from the asset Id
+	// In ibc-go this method accepts a string which is the hash of the ibc denom
+	// that is because ibc denoms are stored as hashes in ibc-go, but in our implementation here
+	// ibc denoms are mapped to a local currency id which  is a u128 under the hood,
+	// hence, why we require a u128 in this method
 	#[method(name = "ibc_queryDenomTrace")]
-	fn query_denom_trace(&self, denom: String) -> Result<QueryDenomTraceResponse>;
+	fn query_denom_trace(&self, asset_id: u128) -> Result<QueryDenomTraceResponse>;
 
-	/// Query the denom traces for ibc denoms matching offset
+	/// Query the denom traces for ibc denoms
+	/// key is the asset id from which to start paginating results
+	/// The next_key value in the pagination field of the returned result is a scale encoded u128
+	/// value
+	/// Only one of offset or key should be set, if both are set, key is used instead
 	#[method(name = "ibc_queryDenomTraces")]
 	fn query_denom_traces(
 		&self,
-		offset: String,
-		limit: u64,
-		height: u32,
+		key: Option<u128>,
+		offset: Option<u32>,
+		limit: Option<u64>,
+		count_total: bool,
 	) -> Result<QueryDenomTracesResponse>;
 
 	/// Query newly created clients in block
@@ -422,13 +437,7 @@ where
 
 	fn query_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -474,14 +483,8 @@ where
 		client_id: String,
 	) -> Result<QueryClientStateResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -509,14 +512,8 @@ where
 
 	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let result: Vec<u8> =
 			api.host_consensus_state(&at, height).ok().flatten().ok_or_else(|| {
 				runtime_error_into_rpc_error("Error querying host consensus state")
@@ -533,13 +530,18 @@ where
 
 	fn query_client_consensus_state(
 		&self,
+		height: Option<u32>,
 		client_id: String,
 		revision_height: u64,
 		revision_number: u64,
 		latest_cs: bool,
 	) -> Result<QueryConsensusStateResponse> {
 		let api = self.client.runtime_api();
-		let at = BlockId::Hash(self.client.info().best_hash);
+		let at = if let Some(height) = height {
+			BlockId::Number(height.into())
+		} else {
+			BlockId::Hash(self.client.info().best_hash)
+		};
 		let client_height = ibc::Height::new(revision_number, revision_height);
 		let height = client_height.encode_vec();
 		let para_id = api
@@ -605,14 +607,8 @@ where
 		connection_id: String,
 	) -> Result<QueryConnectionResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -688,14 +684,8 @@ where
 		client_id: String,
 	) -> Result<Vec<IdentifiedConnection>> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let result: Vec<ibc_primitives::IdentifiedConnection> = api
 			.connection_using_client(&at, client_id.as_bytes().to_vec())
 			.ok()
@@ -728,14 +718,8 @@ where
 		conn_id: String,
 	) -> Result<ConnHandshakeProof> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -772,14 +756,8 @@ where
 		port_id: String,
 	) -> Result<QueryChannelResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -812,14 +790,8 @@ where
 		port_id: String,
 	) -> Result<IdentifiedClientState> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let result: ibc_primitives::IdentifiedClientState = api
 			.channel_client(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
@@ -841,14 +813,8 @@ where
 		connection_id: String,
 	) -> Result<QueryChannelsResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -945,14 +911,8 @@ where
 		port_id: String,
 	) -> Result<QueryPacketCommitmentsResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -994,14 +954,8 @@ where
 		port_id: String,
 	) -> Result<QueryPacketAcknowledgementsResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1048,13 +1002,7 @@ where
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 
 		api.unreceived_packets(
 			&at,
@@ -1075,13 +1023,7 @@ where
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 
 		api.unreceived_acknowledgements(
 			&at,
@@ -1101,14 +1043,8 @@ where
 		port_id: String,
 	) -> Result<QueryNextSequenceReceiveResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1140,14 +1076,8 @@ where
 		seq: u64,
 	) -> Result<QueryPacketCommitmentResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1184,14 +1114,8 @@ where
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1228,14 +1152,8 @@ where
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse> {
 		let api = self.client.runtime_api();
-		let block_hash = self
-			.client
-			.hash(height.into())
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
-		let at = BlockId::Hash(block_hash);
+		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1259,17 +1177,91 @@ where
 		})
 	}
 
-	fn query_denom_trace(&self, _denom: String) -> Result<QueryDenomTraceResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+	fn query_denom_trace(&self, asset_id: u128) -> Result<QueryDenomTraceResponse> {
+		let api = self.client.runtime_api();
+		let block_hash = self.client.info().best_hash;
+
+		let at = BlockId::Hash(block_hash);
+
+		let denom_trace = api.denom_trace(&at, asset_id).ok().flatten().ok_or_else(|| {
+			runtime_error_into_rpc_error(
+				"[ibc_rpc]: Could not find a denom trace for asset id provided",
+			)
+		})?;
+
+		let denom_str = String::from_utf8(denom_trace.denom).map_err(|_| {
+			runtime_error_into_rpc_error(
+				"[ibc_rpc]: Could not decode ibc denom into a valid string",
+			)
+		})?;
+		let denom_trace = ibc::applications::transfer::PrefixedDenom::from_str(&denom_str)
+			.map_err(|_| {
+				runtime_error_into_rpc_error(
+					"[ibc_rpc]: Could not derive a valid ibc denom from string",
+				)
+			})?;
+		let denom_trace: ibc_proto::ibc::applications::transfer::v1::DenomTrace =
+			denom_trace.try_into().map_err(|_| {
+				runtime_error_into_rpc_error(
+					"[ibc_rpc]: Could not derive a valid ibc denom from string",
+				)
+			})?;
+
+		Ok(QueryDenomTraceResponse { denom_trace: Some(denom_trace) })
 	}
 
 	fn query_denom_traces(
 		&self,
-		_offset: String,
-		_limit: u64,
-		_height: u32,
+		key: Option<u128>,
+		offset: Option<u32>,
+		limit: Option<u64>,
+		count_total: bool,
 	) -> Result<QueryDenomTracesResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self.client.info().best_hash;
+
+		let at = BlockId::Hash(block_hash);
+		// Set default limit to 20 items
+		let limit = limit.unwrap_or(20);
+		let result =
+			api.denom_traces(&at, key, offset, limit, count_total).ok().ok_or_else(|| {
+				runtime_error_into_rpc_error(
+					"[ibc_rpc]: Could not find a denom trace for asset id provided",
+				)
+			})?;
+
+		let denom_traces = result
+			.denoms
+			.into_iter()
+			.map(|denom| {
+				let denom_str = String::from_utf8(denom).map_err(|_| {
+					runtime_error_into_rpc_error(
+						"[ibc_rpc]: Could not decode ibc denom into a valid string",
+					)
+				})?;
+				let denom_trace = ibc::applications::transfer::PrefixedDenom::from_str(&denom_str)
+					.map_err(|_| {
+						runtime_error_into_rpc_error(
+							"[ibc_rpc]: Could not derive a valid ibc denom from string",
+						)
+					})?;
+				let denom_trace: ibc_proto::ibc::applications::transfer::v1::DenomTrace =
+					denom_trace.try_into().map_err(|_| {
+						runtime_error_into_rpc_error(
+							"[ibc_rpc]: Could not derive a valid ibc denom from string",
+						)
+					})?;
+				Ok(denom_trace)
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		Ok(QueryDenomTracesResponse {
+			denom_traces,
+			pagination: result.next_key.map(|key| PageResponse {
+				next_key: key.encode(),
+				total: result.total.unwrap_or_default(),
+			}),
+		})
 	}
 
 	fn query_newly_created_clients(
