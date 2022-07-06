@@ -205,7 +205,7 @@ impl<T: FixedPointNumber> FixedPointMath for T {
 		//       1           1 | Overflow
 		//    -1/1           0 | DivisionByZero
 		if other.into_inner().is_zero() {
-			return Err(DivisionByZero);
+			return Err(DivisionByZero)
 		}
 		let error = || match self.is_negative() ^ other.is_negative() {
 			true => Underflow,
@@ -223,7 +223,7 @@ impl<T: FixedPointNumber> FixedPointMath for T {
 
 	fn try_div_rem(&self, other: &Self) -> Result<(Self, Self), ArithmeticError> {
 		if other.into_inner().is_zero() {
-			return Err(DivisionByZero);
+			return Err(DivisionByZero)
 		}
 
 		let lhs: I129 = self.into_inner().into();
@@ -349,10 +349,10 @@ pub fn multiply_by_rational(
 	mut c: u128,
 ) -> Result<u128, ArithmeticError> {
 	if a.is_zero() || b.is_zero() {
-		return Ok(0);
+		return Ok(0)
 	}
 	if c.is_zero() {
-		return Err(DivisionByZero);
+		return Err(DivisionByZero)
 	}
 
 	// a and b are interchangeable by definition in this function. It always helps to assume the
@@ -394,10 +394,10 @@ pub fn div_mod_with_acc(
 	mut acc: u128,
 ) -> Result<(u128, u128), ArithmeticError> {
 	if a.is_zero() || acc.is_zero() {
-		return Ok((Zero::zero(), Zero::zero()));
+		return Ok((Zero::zero(), Zero::zero()))
 	}
 	if b.is_zero() {
-		return Err(DivisionByZero);
+		return Err(DivisionByZero)
 	}
 
 	// Attempt to perform the division first
