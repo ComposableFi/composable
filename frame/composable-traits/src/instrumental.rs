@@ -20,17 +20,17 @@ pub enum AccessRights {
 	/// Account has full access rights.
 	Full,
 	/// Account has access only to `rebalance` function
-	/// Account has access only to [`rebalance`](InstrumentalProtocolStrategy::rebalance())
+	/// Account has access only to [`rebalance`](InstrumentalStrategy::rebalance())
 	/// function.
 	Rebalance,
 	/// Account has access only to `set_pool_id_for_asset` function
-	/// [`set_pool_id_for_asset`](InstrumentalProtocolStrategy::set_pool_id_for_asset()) function.
+	/// [`set_pool_id_for_asset`](InstrumentalStrategy::set_pool_id_for_asset()) function.
 	SetPoolId,
 	/// Account has access only to `add_vault_id` function
-	/// [`associate_vault`](InstrumentalProtocolStrategy::associate_vault()) function.
+	/// [`associate_vault`](InstrumentalStrategy::associate_vault()) function.
 	AssociateVaultId,
 	/// Account has access only to `set_access` function
-	/// [`associate_vault`](InstrumentalProtocolStrategy::associate_vault()) function.
+	/// [`associate_vault`](InstrumentalStrategy::associate_vault()) function.
 	SetAccess,
 }
 
@@ -72,7 +72,7 @@ pub trait InstrumentalDynamicStrategy {
 	fn get_optimum_strategy_for(asset: Self::AssetId) -> Result<Self::AccountId, DispatchError>;
 }
 
-pub trait InstrumentalProtocolStrategy {
+pub trait InstrumentalStrategy {
 	type AccountId: core::cmp::Ord;
 	type AssetId;
 	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;

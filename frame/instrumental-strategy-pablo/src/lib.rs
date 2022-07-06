@@ -34,7 +34,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		dex::Amm,
-		instrumental::{AccessRights, InstrumentalProtocolStrategy, State},
+		instrumental::{AccessRights, InstrumentalStrategy, State},
 		vault::{FundsAvailability, StrategicVault, Vault},
 	};
 	use frame_support::{
@@ -259,11 +259,11 @@ pub mod pallet {
 			vault_id: T::VaultId,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as InstrumentalProtocolStrategy>::caller_has_rights(
+			<Self as InstrumentalStrategy>::caller_has_rights(
 				who,
 				AccessRights::AssociateVaultId,
 			)?;
-			<Self as InstrumentalProtocolStrategy>::associate_vault(&vault_id)?;
+			<Self as InstrumentalStrategy>::associate_vault(&vault_id)?;
 			Ok(().into())
 		}
 		/// Store a mapping of [`AssetId`](Config::AssetId) -> [`AssetId`](Config::AssetId) in the
@@ -278,12 +278,12 @@ pub mod pallet {
 			pool_id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as InstrumentalProtocolStrategy>::caller_has_rights(
+			<Self as InstrumentalStrategy>::caller_has_rights(
 				who,
 				AccessRights::SetPoolId,
 			)?;
 			ensure!(T::Pablo::pool_exists(pool_id), Error::<T>::PoolIdDoesNotExist);
-			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
+			<Self as InstrumentalStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
 			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
 			Ok(().into())
 		}
@@ -294,11 +294,11 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
 		pub fn liquidity_rebalance(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as InstrumentalProtocolStrategy>::caller_has_rights(
+			<Self as InstrumentalStrategy>::caller_has_rights(
 				who,
 				AccessRights::Rebalance,
 			)?;
-			<Self as InstrumentalProtocolStrategy>::rebalance()?;
+			<Self as InstrumentalStrategy>::rebalance()?;
 			Ok(().into())
 		}
 		/// Occur set access to Account and add it to [`AdminAccountIds`](AdminAccountIds) storage.
@@ -312,11 +312,11 @@ pub mod pallet {
 			access: AccessRights,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as InstrumentalProtocolStrategy>::caller_has_rights(
+			<Self as InstrumentalStrategy>::caller_has_rights(
 				who,
 				AccessRights::SetAccess,
 			)?;
-			<Self as InstrumentalProtocolStrategy>::set_access(&account_id, access)?;
+			<Self as InstrumentalStrategy>::set_access(&account_id, access)?;
 			Self::deposit_event(Event::AssociatedAccountId { account_id, access });
 			Ok(().into())
 		}
@@ -326,7 +326,7 @@ pub mod pallet {
 	//                                         Protocol Strategy
 	// ---------------------------------------------------------------------------------------------
 
-	impl<T: Config> InstrumentalProtocolStrategy for Pallet<T> {
+	impl<T: Config> InstrumentalStrategy for Pallet<T> {
 		type AccountId = T::AccountId;
 		type AssetId = T::AssetId;
 		type VaultId = T::VaultId;

@@ -1,5 +1,5 @@
 // use crate::mock::strategies::*;
-use composable_traits::instrumental::InstrumentalProtocolStrategy;
+use composable_traits::instrumental::InstrumentalStrategy;
 use frame_support::{assert_noop, assert_ok};
 
 use crate::mock::runtime::{

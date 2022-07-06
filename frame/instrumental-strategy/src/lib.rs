@@ -33,7 +33,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		instrumental::{AccessRights, InstrumentalDynamicStrategy, InstrumentalProtocolStrategy},
+		instrumental::{AccessRights, InstrumentalDynamicStrategy, InstrumentalStrategy},
 		vault::StrategicVault,
 	};
 	use frame_support::{
@@ -120,11 +120,11 @@ pub mod pallet {
 			+ Copy;
 
 		// TODO: (Nevin)
-		//  - try to make the connection to substrategies a vec of InstrumentalProtocolStrategy
+		//  - try to make the connection to substrategies a vec of InstrumentalStrategy
 		//  - ideally something like: type WhitelistedStrategies: Get<[dyn
-		//    InstrumentalProtocolStrategy]>;
+		//    InstrumentalStrategy]>;
 
-		type PabloStrategy: InstrumentalProtocolStrategy<
+		type PabloStrategy: InstrumentalStrategy<
 			AccountId = Self::AccountId,
 			AssetId = Self::AssetId,
 			VaultId = Self::VaultId,
@@ -211,7 +211,7 @@ pub mod pallet {
 		// TODO: (Nevin)
 		//  - we need a way to store a vector of all strategies that are whitelisted
 
-		// fn get_strategies() -> [dyn InstrumentalProtocolStrategy<
+		// fn get_strategies() -> [dyn InstrumentalStrategy<
 		// 	AssetId = T::AssetId,
 		// 	VaultId = T::VaultId
 		// >] {
@@ -227,7 +227,7 @@ pub mod pallet {
 	//                                         Protocol Strategy
 	// ---------------------------------------------------------------------------------------------
 
-	impl<T: Config> InstrumentalProtocolStrategy for Pallet<T> {
+	impl<T: Config> InstrumentalStrategy for Pallet<T> {
 		type AccountId = T::AccountId;
 		type AssetId = T::AssetId;
 		type VaultId = T::VaultId;

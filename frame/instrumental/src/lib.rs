@@ -94,7 +94,7 @@ pub mod pallet {
 	use composable_support::validation::Validated;
 	use composable_traits::{
 		instrumental::{
-			Instrumental, InstrumentalDynamicStrategy, InstrumentalProtocolStrategy,
+			Instrumental, InstrumentalDynamicStrategy, InstrumentalStrategy,
 			InstrumentalVaultConfig,
 		},
 		vault::{Deposit as Duration, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -171,7 +171,7 @@ pub mod pallet {
 		>;
 
 		type InstrumentalStrategy: InstrumentalDynamicStrategy<AssetId = Self::AssetId, AccountId = Self::AccountId>
-			+ InstrumentalProtocolStrategy<
+			+ InstrumentalStrategy<
 				AssetId = Self::AssetId,
 				AccountId = Self::AccountId,
 				VaultId = Self::VaultId,
