@@ -1,59 +1,52 @@
-use crate::mock::{
-	account_id::{AccountId, ALICE, BOB},
-	runtime::{Balance, BlockNumber, MockRuntime, Pablo, PoolId, Tokens},
+use composable_traits::{
+	defi::CurrencyPair,
+	dex::Amm,
+	instrumental::{Instrumental as InstrumentalTrait, InstrumentalVaultConfig},
 };
-use composable_traits::{defi::CurrencyPair, dex::Amm, instrumental::AccessRights};
+
 use frame_support::{assert_ok, traits::fungibles::Mutate};
 use pallet_pablo::PoolInitConfiguration;
 use primitives::currency::CurrencyId;
-use sp_runtime::Permill;
+use sp_runtime::{Permill, Perquintill};
 
-use crate::pallet;
+use super::runtime::{Instrumental, VaultId};
+use crate::mock::{
+	account_id::{AccountId, ALICE, BOB},
+	runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
+};
 
-// TODO(saruman9): will be used in the future
-#[allow(dead_code)]
-pub fn create_usdt_usdc_pool() -> PoolId {
-	let usdt_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
-	let usdc_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
-	let assets = CurrencyPair::new(CurrencyId::USDT, CurrencyId::USDC);
-	let amounts = vec![usdt_amount, usdc_amount];
-	create_pool(assets, amounts, Permill::zero(), Permill::from_percent(50))
-}
+pub fn create_pool<BAS, BAM, QAS, QAM, F, BW>(
+	base_asset: BAS,
+	base_amount: BAM,
+	quote_asset: QAS,
+	quote_amount: QAM,
+	fee: F,
+	base_weight: BW,
+) -> PoolId
+where
+	BAS: Into<Option<CurrencyId>>,
+	QAS: Into<Option<CurrencyId>>,
+	BAM: Into<Option<Balance>>,
+	QAM: Into<Option<Balance>>,
+	F: Into<Option<Permill>>,
+	BW: Into<Option<Permill>>,
+{
+	let default_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
+	let base_asset = base_asset.into().unwrap_or(CurrencyId::LAYR);
+	let base_amount = base_amount.into().unwrap_or(default_amount);
+	let quote_asset = quote_asset.into().unwrap_or(CurrencyId::CROWD_LOAN);
+	let quote_amount = quote_amount.into().unwrap_or(default_amount);
+	let fee = fee.into().unwrap_or_else(Permill::zero);
+	let base_weight = base_weight.into().unwrap_or_else(|| Permill::from_percent(50));
 
-// TODO(saruman9): doesn't work, because PICA is a native token in the runtime
-#[allow(dead_code)]
-pub fn create_pica_ksm_pool() -> PoolId {
-	let pica_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
-	let ksm_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
-	let assets = CurrencyPair::new(CurrencyId::PICA, CurrencyId::KSM);
-	let amounts = vec![pica_amount, ksm_amount];
-	create_pool(assets, amounts, Permill::zero(), Permill::from_percent(50))
-}
-
-pub fn create_layr_crowd_loan_pool() -> PoolId {
-	let layr_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
-	let crowd_loan_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
-	let assets = CurrencyPair::new(CurrencyId::LAYR, CurrencyId::CROWD_LOAN);
-	let amounts = vec![layr_amount, crowd_loan_amount];
-	create_pool(assets, amounts, Permill::zero(), Permill::from_percent(50))
-}
-
-fn create_pool(
-	assets: CurrencyPair<CurrencyId>,
-	amounts: Vec<Balance>,
-	fee: Permill,
-	base_weight: Permill,
-) -> PoolId {
-	let base = assets.base;
-	let quote = assets.quote;
-	assert_ok!(Tokens::mint_into(base, &ALICE, amounts[0]));
-	assert_ok!(Tokens::mint_into(quote, &ALICE, amounts[1]));
-	assert_ok!(Tokens::mint_into(base, &BOB, amounts[0]));
-	assert_ok!(Tokens::mint_into(quote, &BOB, amounts[1]));
+	assert_ok!(Tokens::mint_into(base_asset, &ALICE, base_amount));
+	assert_ok!(Tokens::mint_into(quote_asset, &ALICE, quote_amount));
+	assert_ok!(Tokens::mint_into(base_asset, &BOB, base_amount));
+	assert_ok!(Tokens::mint_into(quote_asset, &BOB, quote_amount));
 
 	let config = PoolInitConfiguration::<AccountId, CurrencyId, BlockNumber>::ConstantProduct {
 		owner: ALICE,
-		pair: assets,
+		pair: CurrencyPair { base: base_asset, quote: quote_asset },
 		fee,
 		base_weight,
 	};
@@ -61,13 +54,38 @@ fn create_pool(
 	assert_ok!(pool_id);
 	let pool_id = pool_id.unwrap();
 	assert_ok!(<Pablo as Amm>::add_liquidity(
-		&ALICE, pool_id, amounts[0], amounts[1], 0_u128, true
+		&ALICE,
+		pool_id,
+		base_amount,
+		quote_amount,
+		0_u128,
+		true
 	));
-	assert_ok!(<Pablo as Amm>::add_liquidity(&BOB, pool_id, amounts[0], amounts[1], 0_u128, true));
+	assert_ok!(<Pablo as Amm>::add_liquidity(
+		&BOB,
+		pool_id,
+		base_amount,
+		quote_amount,
+		0_u128,
+		true
+	));
 	pool_id
 }
+
 
 pub fn set_admin_account_access(account_id: AccountId, access: AccessRights) -> Result<(), ()> {
 	pallet::AdminAccountIds::<MockRuntime>::insert(account_id, access);
 	Ok(())
+
+pub fn create_vault<A, P>(asset_id: A, percent_deployable: P) -> VaultId
+where
+	A: Into<Option<CurrencyId>>,
+	P: Into<Option<Perquintill>>,
+{
+	let asset_id = asset_id.into().unwrap_or(CurrencyId::LAYR);
+	let percent_deployable = percent_deployable.into().unwrap_or_else(Perquintill::zero);
+	let config = InstrumentalVaultConfig { asset_id, percent_deployable };
+	let vault_id = <Instrumental as InstrumentalTrait>::create(config);
+	assert_ok!(vault_id);
+	vault_id.unwrap()
 }

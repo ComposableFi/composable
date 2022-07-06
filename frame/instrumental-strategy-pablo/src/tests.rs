@@ -15,7 +15,17 @@ use composable_traits::instrumental::{
 };
 use frame_support::{assert_noop, assert_ok};
 use primitives::currency::CurrencyId;
-use sp_runtime::Perquintill;
+
+use crate::mock::{
+	account_id::ADMIN,
+	helpers::{create_pool, create_vault},
+	runtime::{
+		Balance, Event, ExtBuilder, MockRuntime, Origin, PabloStrategy, System, VaultId,
+		MAX_ASSOCIATED_VAULTS,
+	},
+};
+#[allow(unused_imports)]
+use crate::{pallet, pallet::Error};
 
 // -------------------------------------------------------------------------------------------------
 //                                          Associate Vault
