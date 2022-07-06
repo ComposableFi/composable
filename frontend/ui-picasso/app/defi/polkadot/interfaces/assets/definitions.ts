@@ -1,16 +1,15 @@
 export default {
   rpc: {
     balanceOf: {
-      description:
-        "Balance available for the specified account for the specified asset.",
+      description: "Balance available for the specified account for the specified asset.",
       params: [
         {
           name: "asset",
-          type: "CustomRpcCurrencyId",
+          type: "CustomRpcCurrencyId"
         },
         {
           name: "account",
-          type: "AccountId32",
+          type: "AccountId32"
         },
         {
           name: "at",
@@ -18,24 +17,8 @@ export default {
           isOptional: true,
         },
       ],
-      type: "CustomRpcBalance",
-    },
-    listAssets: {
-      description: "Lists the available recognized assets for the runtime.",
-      params: [
-        {
-          name: "at",
-          type: "Hash",
-          isOptional: true,
-        },
-      ],
-      type: "Vec<Asset>",
+      type: "CustomRpcBalance"
     },
   },
-  types: {
-    Asset: {
-      name: "Vec<u8>",
-      id: "u64",
-    },
-  },
+  types: {}
 };

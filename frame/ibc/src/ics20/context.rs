@@ -187,14 +187,25 @@ where
 		amt: &ibc::applications::transfer::PrefixedCoin,
 	) -> Result<(), Ics20Error> {
 		let amount: <T as DeFiComposableConfig>::Balance = amt.amount.as_u256().low_u128().into();
-		// Token should be a native asset when the trace path is empty
-		let is_native_asset = amt.denom.trace_path().is_empty();
-		if is_native_asset {
-			let native_asset_id = CurrencyId::to_native_id(amt.denom.base_denom().as_str())
-				.map_err(|_| Ics20Error::invalid_token())?;
+		// Token should be a native or local asset when the trace path is empty
+		let is_local_asset = amt.denom.trace_path().is_empty();
+		if is_local_asset {
+			let local_asset_id =
+				if let Ok(asset_id) = CurrencyId::to_native_id(amt.denom.base_denom().as_str()) {
+					asset_id
+				} else {
+					let asset_id: CurrencyId = amt
+						.denom
+						.base_denom()
+						.as_str()
+						.parse::<u128>()
+						.map_err(|_| Ics20Error::invalid_token())?
+						.into();
+					asset_id
+				};
 
 			return <<T as transfer::Config>::MultiCurrency as Transfer<T::AccountId>>::transfer(
-				native_asset_id.into(),
+				local_asset_id.into(),
 				&from.clone().into_account(),
 				&to.clone().into_account(),
 				amount,

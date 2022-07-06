@@ -276,14 +276,3 @@ fn general_index_asset() {
 	let asset_id = hex::encode(asset_id.encode());
 	assert_eq!(&asset_id, "0b000000000000000000000000000000");
 }
-
-/// just have chain at hand
-/// https://substrate.stackexchange.com/questions/1200/how-to-calculate-sovereignaccount-for-parachain/1210#1210
-#[test]
-fn parachain_account_id() {
-	use base58::*;
-	let account_id =
-		hex::decode("7061726127080000000000000000000000000000000000000000000000000000").unwrap();
-	let account_id = account_id.to_base58();
-	assert_eq!(&account_id, "8ZgqzCPXjjjavhJpqifQEsfGAG69F7yPe3XH3D7XJUqD");
-}

@@ -32,7 +32,8 @@ export const Default = Template.bind({});
 Default.args = {
   baseAsset: null,
   quoteAsset: null,
-  data: dummyAuctionPrices,
+  priceSeries: dummyAuctionPrices,
+  predictedPriceSeries: [],
   height: "100%",
   dateFormat: (
     (timestamp: number | string) => {

@@ -7,10 +7,10 @@ export const useAllLpTokenRewardingPools = (): any[] => {
   } = useStore();
 
   return useMemo(() => {
-    const allSS = stableSwapPools.unVerified.concat(stableSwapPools.verified);
-    const allCp = constantProductPools.unVerified.concat(
+    const allSS = [...stableSwapPools.verified];
+    const allCp = [
       constantProductPools.verified
-    );
+    ]
 
     return allSS.concat(allCp as any[]);
   }, [stableSwapPools, constantProductPools]);

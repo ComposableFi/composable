@@ -8,10 +8,8 @@ import { BoxProps } from "@mui/system";
 import { DEFI_CONFIG } from "@/defi/config";
 import useStore from "@/store/useStore";
 import { getAsset } from "@/defi/polkadot/Assets";
-import { SwapsChartRange } from "@/store/swaps/swaps.types";
 import BigNumber from "bignumber.js";
 import { useSwapsChart } from "@/store/hooks/useSwapsChart";
-import { ChartRange } from "@/store/hooks/usePoolTvlChart/helpers";
 
 const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();

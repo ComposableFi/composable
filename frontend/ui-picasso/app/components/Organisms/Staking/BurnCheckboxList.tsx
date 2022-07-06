@@ -9,7 +9,7 @@ import {
 import { AlertBox, TokenAsset } from "@/components";
 import { formatNumberWithSymbol } from "@/utils/formatters";
 import { WarningAmberRounded } from "@mui/icons-material";
-import { useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 import { FC } from "react";
 
 export const BurnCheckboxList: FC<{
@@ -23,7 +23,7 @@ export const BurnCheckboxList: FC<{
   onSelectUnstakeToken,
   unstakeTokenId,
 }) => {
-  const openPositions = useAppSelector((state) => state.staking.openPositions);
+  const openPositions = useStore(({ staking }) => staking.openPositions);
   const theme = useTheme();
   return (
     <Stack gap={4} marginTop={9}>

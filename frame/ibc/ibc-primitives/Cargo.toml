@@ -24,17 +24,17 @@ ripemd = { version = "0.1.1", default-features = false }
 [features]
 default = ['std']
 std = [
-    "codec/std",
-    "serde",
-    "ibc/std",
-    "scale-info/std",
-    "sp-std/std",
-    "sp-core/std",
-    "sp-runtime/std",
-    "sp-runtime-interface/std",
-    "sp-io/std",
-    "sp-trie/std",
-    "sha2/std",
-    "sha3/std",
-    "ripemd/std"
+  "codec/std",
+  "serde",
+  "ibc/std",
+  "scale-info/std",
+  "sp-std/std",
+  "sp-core/std",
+  "sp-runtime/std",
+  "sp-runtime-interface/std",
+  "sp-io/std",
+  "sp-trie/std",
+  "sha2/std",
+  "sha3/std",
+  "ripemd/std",
 ]

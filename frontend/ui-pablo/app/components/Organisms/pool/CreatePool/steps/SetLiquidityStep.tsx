@@ -1,7 +1,15 @@
 import { Label } from "@/components/Atoms";
 import { DropdownCombinedBigNumberInput } from "@/components/Molecules";
 import { FormTitle } from "@/components/Organisms/FormTitle";
-import { Box, Button, useTheme, BoxProps, Typography, Theme, IconButton } from "@mui/material";
+import {
+  Box,
+  Button,
+  useTheme,
+  BoxProps,
+  Typography,
+  Theme,
+  IconButton,
+} from "@mui/material";
 import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { useDispatch } from "react-redux";
@@ -11,131 +19,151 @@ import { useMobile } from "@/hooks/responsive";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
 import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import useStore from "@/store/useStore";
-import { Assets } from "@/defi/polkadot/Assets";
+import { Assets, getAssetOnChainId } from "@/defi/polkadot/Assets";
 import { AssetId } from "@/defi/polkadot/types";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 
-const selectLabelProps = (valid: boolean, label: string, balance: string) => ({
-  label: label,
-  BalanceProps:
-    valid
+const selectLabelProps = (valid: boolean, label: string, balance: string) =>
+  ({
+    label: label,
+    BalanceProps: valid
       ? {
           title: <AccountBalanceWalletIcon color="primary" />,
           balance: balance,
         }
       : undefined,
-} as const);
+  } as const);
 
-const priceBoxProps = (theme: Theme) => ({
-  mt: 4,
-  p: 2,
-  borderRadius: 0.66,
-  sx: {
-    background: theme.palette.gradient.secondary,
-  }
-} as const);
+const priceBoxProps = (theme: Theme) =>
+  ({
+    mt: 4,
+    p: 2,
+    borderRadius: 0.66,
+    sx: {
+      background: theme.palette.gradient.secondary,
+    },
+  } as const);
 
-const priceLabelProps = (label: string, balance?: string) => ({
-  label: label,
-  mb: 0,
-  TypographyProps: {
-    variant: "body1",
-    fontWeight: 600
-  },
-  BalanceProps: {
-    balance: balance,
-    BalanceTypographyProps: {
+const priceLabelProps = (label: string, balance?: string) =>
+  ({
+    label: label,
+    mb: 0,
+    TypographyProps: {
       variant: "body1",
       fontWeight: 600,
     },
-  },
-} as const);
+    BalanceProps: {
+      balance: balance,
+      BalanceTypographyProps: {
+        variant: "body1",
+        fontWeight: 600,
+      },
+    },
+  } as const);
 
-const combinedSelectProps = (
-  assetId: AssetId | "none",
-  isMobile?: boolean
-) => ({
-  value: assetId,
-  dropdownModal: true,
-  forceHiddenLabel: isMobile ? true : false,
-  options: 
-    assetId !== "none" ? [{
-      value: Assets[assetId].assetId,
-      label: Assets[assetId].name,
-      shortLabel: Assets[assetId].symbol,
-      icon: Assets[assetId].icon,
-    }] : []
-  ,
-  borderLeft: false,
-  minWidth: isMobile ? undefined : 150,
-  searchable: true,
-  renderShortLabel: true,
-} as const);
+const combinedSelectProps = (assetId: AssetId | "none", isMobile?: boolean) =>
+  ({
+    value: assetId,
+    dropdownModal: true,
+    forceHiddenLabel: isMobile ? true : false,
+    options:
+      assetId !== "none"
+        ? [
+            {
+              value: Assets[assetId].assetId,
+              label: Assets[assetId].name,
+              shortLabel: Assets[assetId].symbol,
+              icon: Assets[assetId].icon,
+            },
+          ]
+        : [],
+    borderLeft: false,
+    minWidth: isMobile ? undefined : 150,
+    searchable: true,
+    renderShortLabel: true,
+  } as const);
 
-const SetLiquidityStep: React.FC<BoxProps> = ({
-  ...boxProps
-}) => {
-
+const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
   const isMobile = useMobile();
   const dispatch = useDispatch();
 
-  const {
-    createPool,
-    assetBalances
-  } = useStore();
+  const { createPool, balances, apollo } = useStore();
 
   const baseAmount = useMemo(() => {
-    return new BigNumber(createPool.liquidity.baseAmount)
+    return new BigNumber(createPool.liquidity.baseAmount);
   }, [createPool.liquidity.baseAmount]);
 
   const quoteAmount = useMemo(() => {
-    return new BigNumber(createPool.liquidity.quoteAmount)
+    return new BigNumber(createPool.liquidity.quoteAmount);
   }, [createPool.liquidity.quoteAmount]);
 
   const balance1 = useMemo(() => {
     if (createPool.baseAsset !== "none") {
-      return new BigNumber(assetBalances[createPool.baseAsset].picasso)
-    }  else {
-      return new BigNumber(0)
+      return new BigNumber(balances[createPool.baseAsset].picasso);
+    } else {
+      return new BigNumber(0);
     }
-  }, [assetBalances, createPool.baseAsset])
+  }, [balances, createPool.baseAsset]);
 
   const balance2 = useMemo(() => {
     if (createPool.quoteAsset !== "none") {
-      return new BigNumber(assetBalances[createPool.quoteAsset].picasso)
-    }  else {
-      return new BigNumber(0)
+      return new BigNumber(balances[createPool.quoteAsset].picasso);
+    } else {
+      return new BigNumber(0);
     }
-  }, [assetBalances, createPool.quoteAsset])
-
-  const [availableBalance] = useState<BigNumber>(new BigNumber(340));
+  }, [balances, createPool.quoteAsset]);
 
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
-  
-  const [tokenToUSD1] = useState<BigNumber>(new BigNumber(1.6));
-  const [tokenToUSD2] = useState<BigNumber>(new BigNumber(1.3));
+
+  const tokenToUSD1 = useMemo(() => {
+    if (createPool.baseAsset !== "none") {
+      const onChainId = getAssetOnChainId(
+        DEFAULT_NETWORK_ID,
+        createPool.baseAsset
+      );
+      if (onChainId && apollo[onChainId.toString()]) {
+        return new BigNumber(apollo[onChainId.toString()]);
+      }
+    }
+    return new BigNumber(0);
+  }, [createPool.baseAsset, apollo]);
+
+  const tokenToUSD2 = useMemo(() => {
+    if (createPool.quoteAsset !== "none") {
+      const onChainId = getAssetOnChainId(
+        DEFAULT_NETWORK_ID,
+        createPool.quoteAsset
+      );
+      if (onChainId && apollo[onChainId.toString()]) {
+        return new BigNumber(apollo[onChainId.toString()]);
+      }
+    }
+    return new BigNumber(0);
+  }, [createPool.quoteAsset, apollo]);
 
   const validToken1 = createPool.baseAsset !== "none";
   const validToken2 = createPool.quoteAsset !== "none";
 
-  const usdAmount1 = baseAmount.multipliedBy(tokenToUSD1)
-  const usdAmount2 = quoteAmount.multipliedBy(tokenToUSD2)
+  const usdAmount1 = baseAmount.multipliedBy(tokenToUSD1);
+  const usdAmount2 = quoteAmount.multipliedBy(tokenToUSD2);
 
-  const setLiquidity = (side: "baseAmount" | "quoteAmount") => (v: BigNumber) => {
-    createPool.setLiquidity({ [side]: v.toString() })
-  }
+  const setLiquidity =
+    (side: "baseAmount" | "quoteAmount") => (v: BigNumber) => {
+      createPool.setLiquidity({ [side]: v.toString() });
+    };
 
   const onNextClickHandler = () => {
     createPool.setSelectable({
-      currentStep: createPool.currentStep + 1
-    })
+      currentStep: createPool.currentStep + 1,
+    });
   };
 
   const onBackHandler = () => {
     createPool.setSelectable({
-      currentStep: createPool.currentStep - 1
-    })
+      currentStep: createPool.currentStep - 1,
+    });
   };
 
   const onSettingHandler = () => {
@@ -167,9 +195,10 @@ const SetLiquidityStep: React.FC<BoxProps> = ({
               padding: theme.spacing(1),
             },
           }}
-          CombinedSelectProps={
-            combinedSelectProps(createPool.baseAsset, isMobile)
-          }
+          CombinedSelectProps={combinedSelectProps(
+            createPool.baseAsset,
+            isMobile
+          )}
           LabelProps={selectLabelProps(validToken1, "Token 1", `${balance1}`)}
         />
         {valid1 && (
@@ -184,7 +213,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({
           sx={{
             width: 56,
             height: 56,
-            border: `2px solid ${theme.palette.primary.main}`
+            border: `2px solid ${theme.palette.primary.main}`,
           }}
         >
           <Typography variant="h5">+</Typography>
@@ -208,9 +237,10 @@ const SetLiquidityStep: React.FC<BoxProps> = ({
               padding: theme.spacing(1),
             },
           }}
-          CombinedSelectProps={
-            combinedSelectProps(createPool.quoteAsset, isMobile)
-          }
+          CombinedSelectProps={combinedSelectProps(
+            createPool.quoteAsset,
+            isMobile
+          )}
           LabelProps={selectLabelProps(validToken2, "Token 2", `${balance2}`)}
         />
         {valid2 && (
@@ -225,7 +255,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({
           {...priceLabelProps("Total", `$${usdAmount1.plus(usdAmount2)}`)}
         />
         <Label
-          {...priceLabelProps(`Available balance: $${availableBalance}`)}
+          {...priceLabelProps(`Available balance: $${tokenToUSD1.times(balance1).plus(tokenToUSD2.times(balance2)).toFixed(2)}`)}
           mt={0.5}
         />
       </Box>
@@ -243,7 +273,6 @@ const SetLiquidityStep: React.FC<BoxProps> = ({
       </Box>
       <TransactionSettings />
     </FormWrapper>
-
   );
 };
 

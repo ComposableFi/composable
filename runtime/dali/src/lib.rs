@@ -37,7 +37,7 @@ use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
 	defi::{CurrencyPair, Rate},
-	dex::{Amm, PriceAggregate, RedeemableAssets},
+	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
 };
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
@@ -81,7 +81,7 @@ use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
+use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -869,20 +869,24 @@ impl crowdloan_rewards::Config for Runtime {
 
 parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
+	pub const MaxStakingDurationPresets : u32 = 10;
+	pub const MaxRewardConfigsPerPool : u32 = 10;
 }
 
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
-	type Share = Balance;
 	type Balance = Balance;
-	type PoolId = u16;
+	type RewardPoolId = u16;
 	type PositionId = u128;
-	type MayBeAssetId = CurrencyId;
+	type AssetId = CurrencyId;
 	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
-	type WeightInfo = ();
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type RewardPoolCreationOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -986,6 +990,7 @@ impl mosaic::Config for Runtime {
 	type RemoteAssetId = MosaicRemoteAssetId;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
+	type RemoteAmmId = u128; // TODO: Swap to U256?
 }
 
 pub type LiquidationStrategyId = u32;
@@ -1218,7 +1223,7 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
-		StakingRewards: pallet_staking_rewards = 67,
+		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 
@@ -1297,6 +1302,7 @@ mod benches {
 		[lending, Lending]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
+		[pallet_staking_rewards, StakingRewards]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
 		[ibc_transfer, Transfer]
@@ -1334,7 +1340,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance> for Runtime {
+	impl pablo_runtime_api::PabloRuntimeApi<Block, AccountId, PoolId, CurrencyId, Balance> for Runtime {
 		fn prices_for(
 			pool_id: PoolId,
 			base_asset_id: CurrencyId,
@@ -1361,44 +1367,50 @@ impl_runtime_apis! {
 			})
 		}
 
-		fn expected_lp_tokens_given_liquidity(
+		fn simulate_add_liquidity(
+			who: SafeRpcWrapper<AccountId>,
 			pool_id: SafeRpcWrapper<PoolId>,
-			base_asset_amount: SafeRpcWrapper<Balance>,
-			quote_asset_amount: SafeRpcWrapper<Balance>,
+			amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> SafeRpcWrapper<Balance> {
+			let amounts: BTreeMap<CurrencyId, Balance> = amounts.iter().map(|(k, v)| (k.0,v.0)).collect();
 			SafeRpcWrapper(
-				<Pablo as Amm>::amount_of_lp_token_for_added_liquidity(
+				<Pablo as Amm>::simulate_add_liquidity(
+					&who.0,
 					pool_id.0,
-					base_asset_amount.0,
-					quote_asset_amount.0,
+					amounts,
 				)
 				.unwrap_or_else(|_| Zero::zero())
 			)
 		}
 
-	fn redeemable_assets_for_given_lp_tokens(
-		pool_id: SafeRpcWrapper<PoolId>,
-		lp_amount: SafeRpcWrapper<Balance>
-	) -> RedeemableAssets<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+		fn simulate_remove_liquidity(
+			who: SafeRpcWrapper<AccountId>,
+			pool_id: SafeRpcWrapper<PoolId>,
+			lp_amount: SafeRpcWrapper<Balance>,
+			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
 			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
-			let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id.0, lp_amount.0)
-			.unwrap_or_else(|_|
-			RedeemableAssets {
-				assets: BTreeMap::from([
-							(currency_pair.base, Zero::zero()),
-							(currency_pair.quote, Zero::zero())
-				])
-			}
-			);
+			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
+			let simulte_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
+				.unwrap_or_else(|_|
+					RemoveLiquiditySimulationResult{
+						assets: BTreeMap::from([
+									(currency_pair.base, Zero::zero()),
+									(currency_pair.quote, Zero::zero()),
+									(lp_token, Zero::zero())
+						])
+					}
+				);
 			let mut new_map = BTreeMap::new();
-			for (k,v) in redeemable_assets.assets.iter() {
+			for (k,v) in simulte_remove_liquidity_result.assets.iter() {
 				new_map.insert(SafeRpcWrapper(*k), SafeRpcWrapper(*v));
 			}
-			RedeemableAssets{
+			RemoveLiquiditySimulationResult{
 				assets: new_map
 			}
-	}
 
+		}
 	}
 
 	impl sp_api::Core<Block> for Runtime {
@@ -1658,7 +1670,7 @@ impl_runtime_apis! {
 			});
 
 			events.fold(vec![], |mut events, ev| {
-				events.extend_from_slice(&ev);
+				events.extend(ev);
 				events
 			})
 		}

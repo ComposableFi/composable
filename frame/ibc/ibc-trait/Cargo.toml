@@ -30,7 +30,7 @@ std = [
   "sp-io/std",
   "composable-traits/std",
   "xcm/std",
-  "hex/std"
+  "hex/std",
 ]
 
 runtime-benchmarks = []

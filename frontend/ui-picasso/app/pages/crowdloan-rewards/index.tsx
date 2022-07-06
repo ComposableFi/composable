@@ -4,16 +4,17 @@ import { Box, Grid, Link, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { useContext, useEffect } from "react";
+import { useStore } from "@/stores/root";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
 import { useConnector } from "@integrations-lib/core";
-import { selectCrowdloanRewardsUserAssociation } from "@/stores/defi/polkadot/crowdloanRewards/slice";
-import { useSelector } from "react-redux";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
-  const userAssociation = useSelector(selectCrowdloanRewardsUserAssociation);
+  const userAssociation = useStore(
+    ({ crowdloanRewards }) => crowdloanRewards.associatedWith
+  );
 
   const breadcrumbs = [
     <Link key="Overview" underline="none" color="primary" href="/">
@@ -36,6 +37,8 @@ const CrowdloanRewards: NextPage = () => {
         ? router.push("crowdloan-rewards/stablecoin")
         : router.push("crowdloan-rewards/ksm");
     }
+    // Only to be called on page load therefore we can omit dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -72,6 +75,7 @@ const CrowdloanRewards: NextPage = () => {
                   }}
                 >
                   <Image
+                    alt="polkadot"
                     src="/tokens/dotsama-kusama.svg"
                     width="64"
                     height="64"
@@ -102,15 +106,26 @@ const CrowdloanRewards: NextPage = () => {
                   }}
                 >
                   <Image
+                    alt="stablecoin"
                     src="/tokens/usd-coin-usdc.svg"
                     width="64"
                     height="64"
                   />
                   <Box sx={{ width: 64, height: 64, marginLeft: "-8px" }}>
-                    <Image src="/tokens/dai.svg" width="64" height="64" />
+                    <Image
+                      alt="dai"
+                      src="/tokens/dai.svg"
+                      width="64"
+                      height="64"
+                    />
                   </Box>
                   <Box sx={{ width: 64, height: 64, marginLeft: "-8px" }}>
-                    <Image src="/tokens/tether.svg" width="64" height="64" />
+                    <Image
+                      alt="tether"
+                      src="/tokens/tether.svg"
+                      width="64"
+                      height="64"
+                    />
                   </Box>
                 </Box>
               }

@@ -1,59 +1,56 @@
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { useEffect } from "react";
 import { usePicassoProvider } from "@/defi/polkadot/hooks/index";
 import { ApiPromise } from "@polkadot/api";
-import { updateOpenPositions } from "@/stores/defi/polkadot/bonds/slice";
 import { unwrapNumberOrHex } from "@/utils/hexStrings";
+import { useStore } from "@/stores/root";
+import { Codec } from "@polkadot/types-codec/types";
 
 type VestingAccount = { name: string; address: string };
 
 const bondedVestingSchedule =
   (bond: BondOffer) => (address: string) => (api: ApiPromise) => {
     return async () => {
-      const vestingScheduleResponse = await api.query.vesting.vestingSchedules(
-        address,
-        bond.reward.assetId
-      );
+      const vestingScheduleResponse: Codec =
+        await api.query.vesting.vestingSchedules(address, bond.reward.assetId);
 
-      return vestingScheduleResponse
-        ? vestingScheduleResponse.flatMap((vs) => {
-            const jsonVestingSchedule: any = vs?.toJSON() ?? null;
-            if (jsonVestingSchedule) {
-              const perPeriod = unwrapNumberOrHex(
-                (jsonVestingSchedule as any).perPeriod
-              );
-              const periodCount = unwrapNumberOrHex(
-                (jsonVestingSchedule as any).periodCount
-              );
-              const window = {
-                blockNumberBased: {
-                  start: unwrapNumberOrHex(
-                    (jsonVestingSchedule as any).window.blockNumberBased.start
-                  ),
-                  period: unwrapNumberOrHex(
-                    (jsonVestingSchedule as any).window.blockNumberBased.period
-                  ),
-                },
-              };
-              return {
-                bond,
-                perPeriod,
-                periodCount,
-                window,
-                type: window.blockNumberBased ? "block" : "time",
-              };
-            }
-            return null;
-          })
-        : [];
+      if (vestingScheduleResponse.isEmpty) {
+        return null;
+      }
+      const fromCodec: Array<any> = vestingScheduleResponse.toJSON() as any;
+
+      return fromCodec.flatMap((vs) => {
+        if (vs) {
+          const perPeriod = unwrapNumberOrHex((vs as any).perPeriod);
+          const periodCount = unwrapNumberOrHex((vs as any).periodCount);
+          const window = {
+            blockNumberBased: {
+              start: unwrapNumberOrHex(
+                (vs as any).window.blockNumberBased.start
+              ),
+              period: unwrapNumberOrHex(
+                (vs as any).window.blockNumberBased.period
+              ),
+            },
+          };
+          return {
+            bond,
+            perPeriod,
+            periodCount,
+            window,
+            type: window.blockNumberBased ? "block" : "time",
+          };
+        }
+      });
     };
   };
 
 export function useOpenPositions(account: VestingAccount | undefined) {
-  const bonds = useAppSelector<BondOffer[]>((state) => state.bonding.bonds);
+  const bonds = useStore<BondOffer[]>((state) => state.bonds.bonds);
+  const updateOpenPositions = useStore(
+    (state) => state.bonds.updateOpenPositions
+  );
   const { parachainApi } = usePicassoProvider();
-  const dispatch = useAppDispatch();
 
   // traverse to all bonds
   // get all reward assets
@@ -69,7 +66,7 @@ export function useOpenPositions(account: VestingAccount | undefined) {
 
   async function fetchAndStore(factoryFn: () => Promise<unknown>) {
     const result: any = await factoryFn();
-    dispatch(updateOpenPositions(result.filter(Boolean).flat()));
+    updateOpenPositions(result.filter(Boolean).flat());
   }
 
   useEffect(() => {
@@ -79,5 +76,5 @@ export function useOpenPositions(account: VestingAccount | undefined) {
     }
 
     return () => unsub();
-  }, [parachainApi, bonds, account]);
+  }, [parachainApi, bonds, account]); // eslint-disable-line react-hooks/exhaustive-deps
 }

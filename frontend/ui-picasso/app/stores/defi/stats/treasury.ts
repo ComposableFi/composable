@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { RootState } from "@/stores/root";
+import { NamedSet } from "zustand/middleware";
+import { StoreSlice } from "../../types";
 import StatsDummyData from "./dummyData";
 
 export type TreasuryDataProps = {
@@ -47,129 +47,143 @@ const initialState: TreasuryState = {
   },
 };
 
-export const statsTreasurySlice = createSlice({
-  name: "statsTreasury",
-  initialState,
-  reducers: {
-    setFeaturedMarketCap: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryData["data"][0]>
-    ) => {
-      state.treasuryData.data[0] = action.payload;
+export interface StatsTreasurySlice {
+  statsTreasury: TreasuryState & {
+    setFeaturedMarketCap: (data: TreasuryData["data"][0]) => void;
+    setFeaturedChaosPriceAndDiscount: (data: TreasuryData["data"][1]) => void;
+    setFeaturedCirculatingSupply: (data: TreasuryData["data"][2]) => void;
+    setFeaturedTreasuryBalance: (data: TreasuryData["data"][3]) => void;
+    setFeaturedChaosApyAndRunway: (data: TreasuryData["data"][4]) => void;
+    setFeaturedSchaos: (data: TreasuryData["data"][5]) => void;
+    setChartMarketCap: (data: TreasuryChartData["data"][0]) => void;
+    setChartTreasuryAssetValue: (data: TreasuryChartData["data"][1]) => void;
+    setChaosStaked: (data: TreasuryChartData["data"][2]) => void;
+    setTreasuryProportions: (data: TreasuryChartData["data"][3]) => void;
+    setChartChaosApy: (data: TreasuryChartData["data"][4]) => void;
+    setChartRevenue: (data: TreasuryChartData["data"][5]) => void;
+    setChartBondProcess: (data: TreasuryChartData["data"][6]) => void;
+    setChartTotalLiquidityOwned: (data: TreasuryChartData["data"][7]) => void;
+    setTreasuryData: (data: TreasuryData) => void;
+    setTreasuryChartData: (data: TreasuryChartData) => void;
+  };
+}
+
+export const createStatsTreasurySlice: StoreSlice<StatsTreasurySlice> = (
+  set: NamedSet<StatsTreasurySlice>
+) => ({
+  statsTreasury: {
+    ...initialState,
+    setFeaturedMarketCap: (data: TreasuryData["data"][0]) => {
+      set((state) => {
+        state.statsTreasury.treasuryData.data[0] = data;
+
+        return state;
+      });
     },
-    setFeaturedChaosPriceAndDiscount: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryData["data"][1]>
-    ) => {
-      state.treasuryData.data[1] = action.payload;
+    setFeaturedChaosPriceAndDiscount: (data: TreasuryData["data"][1]) => {
+      set((state) => {
+        state.statsTreasury.treasuryData.data[1] = data;
+
+        return state;
+      });
     },
-    setFeaturedCirculatingSupply: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryData["data"][2]>
-    ) => {
-      state.treasuryData.data[2] = action.payload;
+    setFeaturedCirculatingSupply: (data: TreasuryData["data"][2]) => {
+      set((state) => {
+        state.statsTreasury.treasuryData.data[2] = data;
+
+        return state;
+      });
     },
-    setFeaturedTreasuryBalance: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryData["data"][3]>
-    ) => {
-      state.treasuryData.data[3] = action.payload;
+    setFeaturedTreasuryBalance: (data: TreasuryData["data"][3]) => {
+      set((state) => {
+        state.statsTreasury.treasuryData.data[3] = data;
+
+        return state;
+      });
     },
-    setFeaturedChaosApyAndRunway: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryData["data"][4]>
-    ) => {
-      state.treasuryData.data[4] = action.payload;
+    setFeaturedChaosApyAndRunway: (data: TreasuryData["data"][4]) => {
+      set((state) => {
+        state.statsTreasury.treasuryData.data[4] = data;
+
+        return state;
+      });
     },
-    setFeaturedSchaos: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryData["data"][5]>
-    ) => {
-      state.treasuryData.data[5] = action.payload;
+    setFeaturedSchaos: (data: TreasuryData["data"][5]) => {
+      set((state) => {
+        state.statsTreasury.treasuryData.data[5] = data;
+
+        return state;
+      });
     },
-    setChartMarketCap: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryChartData["data"][0]>
-    ) => {
-      state.treasuryChartData.data[0] = action.payload;
+    setChartMarketCap: (data: TreasuryChartData["data"][0]) => {
+      set((state) => {
+        state.statsTreasury.treasuryChartData.data[0] = data;
+
+        return state;
+      });
     },
-    setChartTreasuryAssetValue: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryChartData["data"][1]>
-    ) => {
-      state.treasuryChartData.data[1] = action.payload;
+    setChartTreasuryAssetValue: (data: TreasuryChartData["data"][1]) => {
+      set((state) => {
+        state.statsTreasury.treasuryChartData.data[1] = data;
+
+        return state;
+      });
     },
-    setChaosStaked: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryChartData["data"][2]>
-    ) => {
-      state.treasuryChartData.data[2] = action.payload;
+    setChaosStaked: (data: TreasuryChartData["data"][2]) => {
+      set((state) => {
+        state.statsTreasury.treasuryChartData.data[2] = data;
+
+        return state;
+      });
     },
-    setTreasuryProportions: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryChartData["data"][3]>
-    ) => {
-      state.treasuryChartData.data[3] = action.payload;
+    setTreasuryProportions: (data: TreasuryChartData["data"][3]) => {
+      set((state) => {
+        state.statsTreasury.treasuryChartData.data[3] = data;
+
+        return state;
+      });
     },
-    setChartChaosApy: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryChartData["data"][4]>
-    ) => {
-      state.treasuryChartData.data[4] = action.payload;
+    setChartChaosApy: (data: TreasuryChartData["data"][4]) => {
+      set((state) => {
+        state.statsTreasury.treasuryChartData.data[4] = data;
+
+        return state;
+      });
     },
-    setChartRevenue: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryChartData["data"][5]>
-    ) => {
-      state.treasuryChartData.data[5] = action.payload;
+    setChartRevenue: (data: TreasuryChartData["data"][5]) => {
+      set((state) => {
+        state.statsTreasury.treasuryChartData.data[5] = data;
+
+        return state;
+      });
     },
-    setChartBondProcess: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryChartData["data"][6]>
-    ) => {
-      state.treasuryChartData.data[6] = action.payload;
+    setChartBondProcess: (data: TreasuryChartData["data"][6]) => {
+      set((state) => {
+        state.statsTreasury.treasuryChartData.data[6] = data;
+
+        return state;
+      });
     },
-    setChartTotalLiquidityOwned: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryChartData["data"][7]>
-    ) => {
-      state.treasuryChartData.data[7] = action.payload;
+    setChartTotalLiquidityOwned: (data: TreasuryChartData["data"][7]) => {
+      set((state) => {
+        state.statsTreasury.treasuryChartData.data[7] = data;
+
+        return state;
+      });
     },
-    setTreasuryData: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryData>
-    ) => {
-      state.treasuryData = action.payload;
+    setTreasuryData: (data: TreasuryData) => {
+      set((state) => {
+        state.statsTreasury.treasuryData = data;
+
+        return state;
+      });
     },
-    setTreasuryChartData: (
-      state: TreasuryState,
-      action: PayloadAction<TreasuryChartData>
-    ) => {
-      state.treasuryChartData = action.payload;
+    setTreasuryChartData: (data: TreasuryChartData) => {
+      set((state) => {
+        state.statsTreasury.treasuryChartData = data;
+
+        return state;
+      });
     },
   },
 });
-
-export const {
-  setFeaturedChaosApyAndRunway,
-  setFeaturedChaosPriceAndDiscount,
-  setFeaturedCirculatingSupply,
-  setFeaturedMarketCap,
-  setFeaturedSchaos,
-  setFeaturedTreasuryBalance,
-  setChartBondProcess,
-  setChartChaosApy,
-  setChartMarketCap,
-  setChartRevenue,
-  setChartTotalLiquidityOwned,
-  setChartTreasuryAssetValue,
-  setTreasuryData,
-  setTreasuryChartData,
-} = statsTreasurySlice.actions;
-
-export const selectTreasuryFeaturedData = (state: RootState) =>
-  state.statsTreasury.treasuryData;
-export const selectTreasuryChartData = (state: RootState) =>
-  state.statsTreasury.treasuryChartData;
-
-export default statsTreasurySlice.reducer;

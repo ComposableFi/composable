@@ -14,9 +14,4 @@ pallet-ibc = { path = "../", default-features = false }
 
 [features]
 default = ['std']
-std = [
-  'sp-api/std',
-  'sp-std/std',
-  'ibc-primitives/std',
-  'pallet-ibc/std'
-]
+std = ['sp-api/std', 'sp-std/std', 'ibc-primitives/std', 'pallet-ibc/std']

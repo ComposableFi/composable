@@ -27,11 +27,11 @@ export const putPoolStats = (
   poolStats: Partial<PoolStats>
 ) => {
   return produce(poolStatsSlice, (draft) => {
-    let fallbackState = defaultState;
+    let fallbackState = { ... defaultState };
     if (poolStatsSlice[poolId]) {
-      fallbackState = poolStatsSlice[poolId];
+      fallbackState = { ... poolStatsSlice[poolId] };
     } else {
-      poolStatsSlice[poolId] = defaultState;
+      draft[poolId] = { ... defaultState };
     }
 
     draft[poolId].totalVolume =
@@ -55,9 +55,9 @@ export const putPoolStatsValue = (
   return produce(poolStatsSlice, (draft) => {
     let fallbackState = defaultStatsValue;
     if (poolStatsSlice[poolId]) {
-      fallbackState = poolStatsSlice[poolId];
+      fallbackState = { ... poolStatsSlice[poolId] };
     } else {
-      poolStatsSlice[poolId] = defaultStatsValue;
+      draft[poolId] = { ... defaultStatsValue };
     }
 
     draft[poolId]._24HrFeeValue =
