@@ -404,6 +404,7 @@ pub mod pallet {
 			rewards_pool.total_shares += boosted_amount;
 			rewards_pool.rewards = rewards;
 
+			let position_id = StakeCount::<T>::increment()?;
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				who,
@@ -411,8 +412,6 @@ pub mod pallet {
 				amount,
 				keep_alive,
 			)?;
-
-			let position_id = StakeCount::<T>::increment()?;
 			RewardPools::<T>::insert(pool_id, rewards_pool);
 			Stakes::<T>::insert(position_id, new_position);
 
