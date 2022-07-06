@@ -30,7 +30,7 @@ Oracle operators are required to put down stakes to provide price feeds. They wi
 
 ### Liquidity provisioning
 
-Users can provide liquidity for LAYR-USDC, LAYR-KSM pairs on the Pablo DEX for yield. 
+Users can provide liquidity for yield through LAYR LP pairs on the Pablo DEX. 
 
 
 ## Total supply and genesis token distribution
