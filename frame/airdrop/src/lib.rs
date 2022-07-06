@@ -424,14 +424,14 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// The AccountId of this pallet.
 		pub fn account_id() -> T::AccountId {
-			T::PalletId::get().into_account()
+			T::PalletId::get().into_account_truncating()
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
 		/// Gets the account ID to be used by the Airdrop.
 		pub(crate) fn get_airdrop_account_id(airdrop_id: T::AirdropId) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account(airdrop_id)
+			T::PalletId::get().into_sub_account_truncating(airdrop_id)
 		}
 
 		/// Gets the [`Airdrop`](crate::models::Airdrop) associated with the `airdrop_id`
