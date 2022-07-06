@@ -1,5 +1,3 @@
-use sp_runtime::generic::Era;
-
 /// Concrete event type for verbose event asserts in tests.
 #[allow(clippy::large_enum_variant)]
 #[derive(derive_more::From)]
@@ -18,9 +16,9 @@ macro_rules! match_event {
 	($ev:expr, $event:ident, $sub_ev:pat) => {{
 		matches!(
 			$ev,
-			AllRuntimeEvents::Picasso(picasso_runtime::Event::$event($sub_ev)) |
-				AllRuntimeEvents::Dali(dali_runtime::Event::$event($sub_ev)) |
-				AllRuntimeEvents::Composable(composable_runtime::Event::$event($sub_ev))
+			AllRuntimeEvents::Picasso(picasso_runtime::Event::$event($sub_ev))
+				| AllRuntimeEvents::Dali(dali_runtime::Event::$event($sub_ev))
+				| AllRuntimeEvents::Composable(composable_runtime::Event::$event($sub_ev))
 		)
 	}};
 }
