@@ -60,7 +60,13 @@ pub mod pallet {
 		time::DurationSeconds,
 	};
 	use frame_support::{
-		pallet_prelude::*, traits::UnixTime, transactional, BoundedBTreeMap, PalletId,
+		pallet_prelude::*,
+		traits::{
+			fungibles::{Inspect, Mutate, Transfer},
+			tokens::WithdrawConsequence,
+			UnixTime,
+		},
+		transactional, BoundedBTreeMap, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_arithmetic::{traits::One, Permill};
@@ -110,7 +116,13 @@ pub mod pallet {
 		RewardsPoolNotFound,
 		/// Error when creating reduction configs.
 		ReductionConfigProblem,
+		/// Not enough assets for a stake.
+		NotEnoughAssets,
 	}
+
+	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
+	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
+	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -147,6 +159,11 @@ pub mod pallet {
 
 		/// Is used to create staked asset per `Self::RewardPoolId`
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
+
+		/// Dependency allowing this pallet to transfer funds from one account to another.
+		type Assets: Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
+			+ Mutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
+			+ Inspect<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>;
 
 		/// is used for rate based rewarding and position lock timing
 		type UnixTime: UnixTime;
@@ -203,7 +220,7 @@ pub mod pallet {
 	type StakeOf<T> = Stake<
 		<T as Config>::RewardPoolId,
 		<T as Config>::Balance,
-		BoundedBTreeMap<
+		Reductions<
 			<T as Config>::AssetId,
 			<T as Config>::Balance,
 			<T as Config>::MaxRewardConfigsPerPool,
@@ -327,8 +344,16 @@ pub mod pallet {
 				.get(&duration_preset)
 				.ok_or(Error::<T>::RewardConfigProblem)?;
 
+			ensure!(
+				matches!(
+					T::Assets::can_withdraw(rewards_pool.asset_id, who, amount),
+					WithdrawConsequence::Success
+				),
+				Error::<T>::NotEnoughAssets
+			);
+
 			let boosted_amount = *reward_multiplier * amount;
-			let mut reductions: BoundedBTreeMap<
+			let mut reductions: Reductions<
 				T::AssetId,
 				T::Balance,
 				<T as Config>::MaxRewardConfigsPerPool,
@@ -379,6 +404,14 @@ pub mod pallet {
 			rewards_pool.total_shares += boosted_amount;
 			rewards_pool.rewards = rewards;
 
+			T::Assets::transfer(
+				rewards_pool.asset_id,
+				who,
+				&Self::pool_account_id(pool_id),
+				amount,
+				keep_alive,
+			)?;
+
 			let position_id = StakeCount::<T>::increment()?;
 			RewardPools::<T>::insert(pool_id, rewards_pool);
 			Stakes::<T>::insert(position_id, new_position);
@@ -425,7 +458,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn pool_account_id(pool_id: T::RewardPoolId) -> T::AccountId {
+		pub fn pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
 			T::PalletId::get().into_sub_account(("po", pool_id))
 		}
 	}

@@ -39,6 +39,9 @@ pub struct Reward<AssetId, Balance> {
 	pub reward_rate: Perbill,
 }
 
+/// Abstraction over the asset to reduction map stored for staking.
+pub type Reductions<AssetId, Balance, Limit> = BoundedBTreeMap<AssetId, Balance, Limit>;
+
 /// Abstraction over the asset to rewards map stored for staking.
 pub type Rewards<AssetId, Balance, Limit> =
 	BoundedBTreeMap<AssetId, Reward<AssetId, Balance>, Limit>;

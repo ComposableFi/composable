@@ -10,7 +10,7 @@ use composable_traits::{
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
-use frame_support::{assert_err, assert_ok, BoundedBTreeMap};
+use frame_support::{assert_err, assert_ok, traits::fungibles::Mutate, BoundedBTreeMap};
 use frame_system::EventRecord;
 use sp_arithmetic::Perbill;
 use sp_core::sr25519::Public;
@@ -24,7 +24,7 @@ fn test_create_reward_pool() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		assert_eq!(StakingRewards::pool_count(), 0);
-		let mut pool_init_config = get_default_reward_pool();
+		let pool_init_config = get_default_reward_pool();
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
 		assert_eq!(StakingRewards::pool_count(), 1);
 
@@ -50,11 +50,14 @@ fn test_stake() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(StakingRewards::stake_count(), 0);
 
-		let mut pool_init_config = get_default_reward_pool();
+		let pool_init_config = get_default_reward_pool();
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
 
-		let (pool_id, amount, duration_preset) = (StakingRewards::pool_count(), 100_500, ONE_HOUR);
-		assert_ok!(StakingRewards::stake(Origin::signed(ALICE), pool_id, amount, duration_preset));
+		let (staker, pool_id, amount, duration_preset) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
+		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).unwrap().asset_id;
+		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 2);
+
+		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		assert_eq!(StakingRewards::stake_count(), 1);
 	});
 }
