@@ -4,10 +4,6 @@ on:
   push:
 jobs:
   tests:
-    # strategy:
-    #   matrix:
-    #     os: [ubuntu-latest, macos-latest]
-    # runs-on: ${{ matrix.os }}
     runs-on:
       - self-hosted
       - linux
