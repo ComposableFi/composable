@@ -50,6 +50,7 @@
       "bin": "../../target/release/composable",
       "chain":"dali-dev",
       "balance": "1000000000000000000000",
+      "id" : "2087",
       "nodes": [
         {
           "wsPort": 9988,
@@ -64,8 +65,9 @@
       ]
     },
     {
-      "bin": "../../../basilisk-node/target/release/basilisk",
-      "chain":"local",
+      "bin": "../../../Acala/target/release/acala",
+      "chain":"kaura-local",
+      "id": "2000",
       "balance": "1000000000000000000000",
       "nodes": [
         {
@@ -84,15 +86,15 @@
   "hrmpChannels": [
     {
       "sender": 2000,
-      "recipient": 2090,
-      "maxCapacity": 8,
-      "maxMessageSize": 512
+      "recipient": 2087,
+      "maxCapacity": 1024,
+      "maxMessageSize": 32768
     },
     {
-      "sender": 2090,
+      "sender": 2087,
       "recipient": 2000,
-      "maxCapacity": 8,
-      "maxMessageSize": 512
+      "maxCapacity": 1024,
+      "maxMessageSize": 32768
     }
   ],
   "types": {},
