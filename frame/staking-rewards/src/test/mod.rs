@@ -53,44 +53,9 @@ fn test_stake() {
 		let mut pool_init_config = get_default_reward_pool();
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
 
-		let (pool_id, amount, duration_preset) = (StakingRewards::pool_count(), 100_500, 30);
+		let (pool_id, amount, duration_preset) = (StakingRewards::pool_count(), 100_500, ONE_HOUR);
 		assert_ok!(StakingRewards::stake(Origin::signed(ALICE), pool_id, amount, duration_preset));
 		assert_eq!(StakingRewards::stake_count(), 1);
-	});
-}
-
-#[test]
-fn find_nearest_duration_preset() {
-	new_test_ext().execute_with(|| {
-		let empty_duration_presets = BoundedBTreeMap::try_from(BTreeMap::new()).unwrap();
-		assert_eq!(StakingRewards::find_nearest_duration_preset(&empty_duration_presets, 1), None);
-
-		let not_empty_duration_presets = BoundedBTreeMap::try_from({
-			let map =
-				BTreeMap::from([(2, Perbill::from_percent(20)), (4, Perbill::from_percent(40))]);
-			map
-		})
-		.unwrap();
-		assert_eq!(
-			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 1),
-			Some((2, Perbill::from_percent(20)))
-		);
-		assert_eq!(
-			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 2),
-			Some((2, Perbill::from_percent(20)))
-		);
-		assert_eq!(
-			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 3),
-			Some((4, Perbill::from_percent(40)))
-		);
-		assert_eq!(
-			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 4),
-			Some((4, Perbill::from_percent(40)))
-		);
-		assert_eq!(
-			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 5),
-			None
-		);
 	});
 }
 

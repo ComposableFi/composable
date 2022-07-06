@@ -44,8 +44,6 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use core::time::Duration;
-
 	use composable_support::{
 		abstractions::{
 			nonce::Nonce,
@@ -65,8 +63,11 @@ pub mod pallet {
 		pallet_prelude::*, traits::UnixTime, transactional, BoundedBTreeMap, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_arithmetic::{traits::One, Perbill, Permill};
-	use sp_runtime::{traits::BlockNumberProvider, ArithmeticError};
+	use sp_arithmetic::{traits::One, Permill};
+	use sp_runtime::{
+		traits::{AccountIdConversion, BlockNumberProvider},
+		ArithmeticError,
+	};
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
 
 	use crate::{prelude::*, weights::WeightInfo};
@@ -83,7 +84,7 @@ pub mod pallet {
 			/// End block
 			end_block: T::BlockNumber,
 		},
-		StakeCreated {
+		Staked {
 			/// Id of newly created stake.
 			pool_id: T::RewardPoolId,
 			/// Owner of the stake.
@@ -198,10 +199,11 @@ pub mod pallet {
 		>,
 	>;
 
+	/// Abstraction over Stake type
 	type StakeOf<T> = Stake<
 		<T as Config>::RewardPoolId,
 		<T as Config>::Balance,
-		Rewards<
+		BoundedBTreeMap<
 			<T as Config>::AssetId,
 			<T as Config>::Balance,
 			<T as Config>::MaxRewardConfigsPerPool,
@@ -296,17 +298,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
 			let keep_alive = true;
-			let position_id =
+			let _position_id =
 				<Self as Staking>::stake(&owner, &pool_id, amount, duration_preset, keep_alive)?;
-
-			Self::deposit_event(Event::<T>::StakeCreated {
-				pool_id,
-				owner,
-				amount,
-				duration_preset,
-				position_id,
-				keep_alive,
-			});
 
 			Ok(())
 		}
@@ -328,17 +321,17 @@ pub mod pallet {
 		) -> Result<Self::PositionId, DispatchError> {
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+			let reward_multiplier = rewards_pool
+				.lock
+				.duration_presets
+				.get(&duration_preset)
+				.ok_or(Error::<T>::RewardConfigProblem)?;
 
-			let (_duration, reward_multiplier) = Self::find_nearest_duration_preset(
-				&rewards_pool.lock.duration_presets,
-				duration_preset,
-			)
-			.ok_or(Error::<T>::RewardConfigProblem)?;
-			let boosted_amount = reward_multiplier * amount;
-			let new_pool_shares = boosted_amount;
+			let boosted_amount = *reward_multiplier * amount;
 			let mut reductions: BoundedBTreeMap<
 				T::AssetId,
-				Reward<T::AssetId, T::Balance>,
+				T::Balance,
+				// Reward<T::AssetId, T::Balance>,
 				<T as Config>::MaxRewardConfigsPerPool,
 			> = BoundedBTreeMap::new();
 
@@ -350,7 +343,7 @@ pub mod pallet {
 				} else {
 					reward
 						.total_rewards
-						.safe_mul(&new_pool_shares)
+						.safe_mul(&boosted_amount)
 						.map_err(|_| ArithmeticError::Overflow)?
 						.safe_div(&rewards_pool.total_shares)
 						.map_err(|_| ArithmeticError::Overflow)?
@@ -366,7 +359,7 @@ pub mod pallet {
 					.map_err(|_| ArithmeticError::Overflow)?;
 
 				reductions
-					.try_insert(asset_id.clone(), reward.clone())
+					.try_insert(asset_id.clone(), inflation.clone())
 					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
 			}
 			let rewards =
@@ -387,11 +380,18 @@ pub mod pallet {
 			rewards_pool.total_shares += boosted_amount;
 			rewards_pool.rewards = rewards;
 
-			let position_id = StakeCount::<T>::get();
-
+			let position_id = StakeCount::<T>::increment()?;
 			RewardPools::<T>::insert(pool_id, rewards_pool);
 			Stakes::<T>::insert(position_id, new_position);
-			StakeCount::<T>::increment()?;
+
+			Self::deposit_event(Event::<T>::Staked {
+				pool_id: pool_id.clone(),
+				owner: who.clone(),
+				amount,
+				duration_preset,
+				position_id,
+				keep_alive,
+			});
 
 			Ok(position_id)
 		}
@@ -426,25 +426,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn find_nearest_duration_preset(
-			duration_presets: &StakingDurationToRewardsMultiplierConfig<
-				<T as Config>::MaxStakingDurationPresets,
-			>,
-			duration: DurationSeconds,
-		) -> Option<(DurationSeconds, Perbill)> {
-			if let Some(max_duration) = duration_presets.keys().rev().next() {
-				if max_duration < &duration {
-					return None
-				}
-			} else {
-				return None
-			}
-
-			duration_presets
-				.iter()
-				.rev()
-				.reduce(|acc, (dur, mul)| if duration <= *dur { (dur, mul) } else { acc })
-				.map(|(dur, mul)| (dur.clone(), *mul))
+		pub fn pool_account_id(pool_id: T::RewardPoolId) -> T::AccountId {
+			T::PalletId::get().into_sub_account(("po", pool_id))
 		}
 	}
 }
