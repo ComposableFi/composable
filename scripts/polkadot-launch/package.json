@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "composable": "rm -rf /tmp/polkadot-launch && polkadot-launch composable.json",
+    "composable_docker": "(touch 9988.log && tail -f 9988.log > /dev/fd/2 &) && polkadot-launch composable.json",
     "composable_and_basilisk": "polkadot-launch composable_and_basilisk.json"
   },
   "keywords": [],
