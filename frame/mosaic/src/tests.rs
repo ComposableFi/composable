@@ -1526,6 +1526,7 @@ mod do_transfer_with_remote_amm_swap {
 			amm_id in 0..u128::max_value(),
 			amount in 100..u128::max_value(),
 			start_block in 1..10_000u64,
+			minimum_amount_out in 0..u128::max_value(),
 			// ethereum_address in ethereum_address()
 		) {
 			new_test_ext().execute_with(|| {
@@ -1568,8 +1569,9 @@ mod do_transfer_with_remote_amm_swap {
 					destination_token_out_address: ethereum_address,
 					destination_amm: RemoteAmm {
 						network_id,
-						amm_id
+						amm_id,
 					},
+					minimum_amount_out,
 				};
 
 				prop_assert_ok!(Mosaic::transfer_to(
@@ -1596,6 +1598,7 @@ mod do_transfer_with_remote_amm_swap {
 			amm_id in 0..u128::max_value(),
 			amount in 100..u128::max_value(),
 			start_block in 1..10_000u64,
+			minimum_amount_out in 0..u128::max_value(),
 			// ethereum_address in ethereum_address()
 		) {
 			new_test_ext().execute_with(|| {
@@ -1639,7 +1642,8 @@ mod do_transfer_with_remote_amm_swap {
 					destination_amm: RemoteAmm {
 						network_id,
 						amm_id,
-					}
+					},
+					minimum_amount_out,
 				};
 
 				prop_assert_noop!(Mosaic::transfer_to(
