@@ -457,7 +457,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub fn pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
+		pub(crate) fn pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
 			T::PalletId::get().into_sub_account(("po", pool_id))
 		}
 	}
