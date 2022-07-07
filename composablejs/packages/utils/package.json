@@ -2,7 +2,6 @@
   "name": "@composable/utils",
   "private": true,
   "version": "0.1.0",
-  "author": "@Dom-Roth",
   "license": "Public Domain",
   "main": "dist/index.js",
   "scripts": {

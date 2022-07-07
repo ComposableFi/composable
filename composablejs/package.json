@@ -1,8 +1,7 @@
 {
-  "name": "composable",
+  "name": "@composable",
   "version": "0.1.0",
   "private": true,
-  "author": "@Dom-Roth",
   "license": "Public Domain",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

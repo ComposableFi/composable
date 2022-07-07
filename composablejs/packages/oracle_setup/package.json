@@ -17,8 +17,7 @@
     "price-feed",
     "composable"
   ],
-  "author": "@Dom-Roth",
-  "license": "Unlicense",
+  "license": "Public Domain",
   "dependencies": {
     "@composable/types": "*",
     "@composable/utils": "*",
