@@ -10,7 +10,9 @@ use composable_traits::{
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
-use frame_support::{assert_err, assert_ok, traits::fungibles::Mutate, BoundedBTreeMap};
+use frame_support::{
+	assert_err, assert_noop, assert_ok, traits::fungibles::Mutate, BoundedBTreeMap,
+};
 use frame_system::EventRecord;
 use sp_arithmetic::Perbill;
 use sp_core::sr25519::Public;
@@ -52,10 +54,12 @@ fn test_stake() {
 
 		let pool_init_config = get_default_reward_pool();
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
-
 		let (staker, pool_id, amount, duration_preset) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
-		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).unwrap().asset_id;
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 2);
+
+		assert_noop!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset), crate::Error::<Test>::NotEnoughAssets);
+
+		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
+		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 2).expect("an asset minting expected");
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		assert_eq!(StakingRewards::stake_count(), 1);
