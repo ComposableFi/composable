@@ -156,7 +156,8 @@ pub mod pallet {
 	};
 	use crate::{
 		math::{
-			self, FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath,
+			self, FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, TryClamp,
+			UnsignedMath,
 		},
 		types::{
 			AccountSummary, OracleStatus, PositionInfo, TradeResponse, TraderPositionState,
@@ -1357,7 +1358,7 @@ pub mod pallet {
 
 			if let Some(max_divergence) = Self::max_twap_divergence() {
 				let max_price_spread = max_divergence.try_mul(&market.last_oracle_twap)?;
-				price_spread = price_spread.clamp(max_price_spread.neg(), max_price_spread);
+				price_spread = price_spread.try_clamp(max_price_spread.neg(), max_price_spread)?;
 			}
 
 			let period_adjustment = Self::Decimal::checked_from_rational(
@@ -2339,10 +2340,10 @@ pub mod pallet {
 				};
 				let last_oracle_10bp =
 					last_oracle_price.try_div(&T::Decimal::saturating_from_integer(1000))?;
-				oracle_price = oracle_price.clamp(
+				oracle_price = oracle_price.try_clamp(
 					last_oracle_price.try_sub(&last_oracle_10bp)?,
 					last_oracle_price.try_add(&last_oracle_10bp)?,
-				);
+				)?;
 
 				// TODO(0xangelo): consider further guard rails
 				// - what to do if last_oracle_twap timestamp is earlier that the last last mark
