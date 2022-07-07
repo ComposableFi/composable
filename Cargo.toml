@@ -19,7 +19,8 @@ composable-node = { path = "node", features = ["composable", "dali"] }
 # https://github.com/paritytech/substrate/pull/11707
 
 [features]
-dali = []
+composable = ["composable-node/composable"]
+dali = ["composable-node/dali"]
 local-integration-tests = []
 picasso = []
 runtime-benchmarks = ["composable-node/runtime-benchmarks"]
