@@ -18,6 +18,9 @@
     - [Merkle Mountain Ranges](./products/centauri/merkle-mountain-ranges.md)
     - [The 11-BEEFY COSMOS-IBC Light Client](./products/centauri/cosmos11-BEEFY-COSMOS-IBC-ligh-client.md)
     - [Expanding the IBC Protocol](./products/centauri/expanding-ibc-protocol.md)
+- [Apollo](./products/apollo-overview.md)
+    - [How it Works](./products/apollo/apollo-how-it-works.md)
+    - [Apollo Deployment](./products/apollo/apollo-deployment.md)
 - [Mosaic](./products/mosaic-overview.md)
     - [The Dynamic Fee Model](./products/mosaic/dynamic-fee-model.md)
     - [Liquidity Forecasting](./products/mosaic/liquidity-forecasting.md)
@@ -34,6 +37,13 @@
         - [NFT Contract Details](./products/mosaic/mural-NFT-transfers/NFT-contract-details.md)
 - [Cubic](./products/cubic/cubic.md)
   - [Additional Details](./products/cubic/addtional-details.md)
+- [Pablo](./products/pablo-overview.md)
+    - [Swaps/Trading](./products/pablo/swaps-trading.md)
+    - [Liquidity provision](./products/pablo/liquidity-provision.md)
+    - [Auctions & Bonding](./products/pablo/auctions-bonding.md)
+    - [xPBLO fNFTs (staking)](./products/pablo/xPBLO-fNFT-staking.md)
+    - [Cross-chain DEX](./products/pablo/cross-chain-DEX.md)
+    - [Governance & Tokenomics](./products/pablo/governance-tokenomics.md) 
 - [Parachain Vault Strategy](./products/parachain-vault-strategy.md)
     - [Vault Process in Detail](./products/parachain-vault-strategy/vault-process-in-detail/vault-process-in-detail.md)
     - [Contracts - Technical Details](./products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details.md)
@@ -45,7 +55,7 @@
         - [Apollo: The Oracle Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/apollo.md)
         - [Cubic: The Vaults Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/cubic.md)
         - [Angular Finance: The Isolated Lending Pair Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/angular.md)
-        
+
 # 🪙  GOVERNANCE AND TOKENOMICS
 - [The Picasso (PICA) Network Token](./governance-and-tokenomics/the-picasso-pica-network-token.md)
 - [LAYR Tokens](./governance-and-tokenomics/layr-tokens.md)
