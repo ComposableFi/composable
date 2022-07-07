@@ -1331,6 +1331,7 @@ mod benches {
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[pallet_staking_rewards, StakingRewards]
+		[airdrop, Airdrop]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
 		[ibc_transfer, Transfer]
