@@ -25,7 +25,6 @@ export default function useBondOffers(): OfferRow[] {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
 
   useEffect(() => {
-    console.log(`Update Bond Offers`);
     if (parachainApi) {
       fetchBondOffers(parachainApi).then((decodedOffers) => {
         putBondOffers(decodedOffers);

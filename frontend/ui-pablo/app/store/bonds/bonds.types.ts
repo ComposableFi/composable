@@ -4,8 +4,10 @@ import { Token } from "../../defi/types";
 
 export interface BondSlice {
   bondOffers: {
-    list: BondOffer[]
+    list: BondOffer[];
+    totalPurchased: Record<string, BigNumber>;
   };
+  puttotalPurchased: (totalPurchasedBonds: Record<string, BigNumber>) => void;
   putBondOffers: (bondsOffers: BondOffer[]) => void;
   putBondOffer: (bondsOffers: BondOffer) => void;
   reset: () => void;

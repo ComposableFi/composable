@@ -1,4 +1,5 @@
 import { BondOffer } from "@/defi/types";
+import BigNumber from "bignumber.js";
 import produce from "immer";
 import { BondSlice } from "./bonds.types";
 
@@ -94,5 +95,14 @@ export const putBondOffers = (
 ) => {
   return produce(bondOffersState, (draft) => {
     draft.list = [...bondOffers]
+  })
+}
+
+export const putTotalPurchased = (
+  bondOffersState: BondSlice["bondOffers"],
+  totalPurchasedBonds: Record<string, BigNumber>
+) => {
+  return produce(bondOffersState, (draft) => {
+    draft.totalPurchased = totalPurchasedBonds;
   })
 }
