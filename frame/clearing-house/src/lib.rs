@@ -1130,7 +1130,7 @@ pub mod pallet {
 				Self::outstanding_profits(account_id, market_id).unwrap_or_else(Zero::zero);
 			let TradeResponse {
 				mut collateral,
-				market,
+				mut market,
 				position,
 				outstanding_profits,
 				base_swapped,
@@ -1173,7 +1173,8 @@ pub mod pallet {
 				);
 			}
 
-			// TODO(0xangelo): attempt funding rate update at end
+			// Attempt funding rate update at end
+			Self::try_update_funding(market_id, &mut market, &oracle_status)?;
 
 			// Update storage
 			Collateral::<T>::insert(account_id, collateral);
