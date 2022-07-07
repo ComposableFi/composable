@@ -261,7 +261,9 @@ impl<T: Config> Market<T> {
 
 /// Contains the index price and its validity.
 pub struct OracleStatus<T: Config> {
+	/// Whether the index price is valid.
 	pub is_valid: bool,
+	/// The index price.
 	pub price: T::Decimal,
 }
 
