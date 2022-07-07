@@ -145,7 +145,10 @@ fn should_block_risk_decreasing_trade_if_it_pushes_index_mark_divergence_above_t
 		set_maximum_oracle_mark_divergence((10, 100).into());
 
 		let vamm_id = &get_market(&market_id).vamm_id;
-		OraclePallet::set_price(Some(100)); // 1 in cents
+		OraclePallet::set_price(Some(100 /* 1 in cents */));
+		// HACK: set previous oracle price and TWAP equal to current one to avoid an invalid oracle
+		// status
+		set_oracle_twap(&market_id, 1.into());
 		VammPallet::set_price_of(vamm_id, Some(1.into()));
 
 		// Alice opens a position (no price impact)
@@ -222,7 +225,10 @@ fn should_block_risk_increasing_trade_if_it_pushes_index_mark_divergence_above_t
 		set_maximum_oracle_mark_divergence((10, 100).into());
 
 		let vamm_id = &get_market(&market_id).vamm_id;
-		OraclePallet::set_price(Some(100)); // 1 in cents
+		OraclePallet::set_price(Some(100 /* 1 in cents */));
+		// HACK: set previous oracle price and TWAP equal to current one to avoid an invalid oracle
+		// status
+		set_oracle_twap(&market_id, 1.into());
 		VammPallet::set_price_of(vamm_id, Some(1.into()));
 
 		// Alice tries to open a new long, but it fails because it pushes the mark price too

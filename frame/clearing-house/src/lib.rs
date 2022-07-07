@@ -159,7 +159,7 @@ pub mod pallet {
 			self, FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath,
 		},
 		types::{
-			AccountSummary, PositionInfo, TradeResponse, TraderPositionState,
+			AccountSummary, OracleStatus, PositionInfo, TradeResponse, TraderPositionState,
 			BASIS_POINT_DENOMINATOR,
 		},
 		weights::WeightInfo,
@@ -1123,7 +1123,8 @@ pub mod pallet {
 			}
 
 			// For checking oracle guard rails afterwards
-			let mark_index_divergence_before = Self::mark_index_divergence(&market)?;
+			let mark_index_divergence_before =
+				Self::mark_index_divergence(&market, &oracle_status.price)?;
 
 			let outstanding_profits =
 				Self::outstanding_profits(account_id, market_id).unwrap_or_else(Zero::zero);
@@ -1143,6 +1144,7 @@ pub mod pallet {
 
 			Self::check_oracle_guard_rails(
 				&market,
+				&oracle_status,
 				mark_index_divergence_before,
 				is_risk_increasing,
 			)?;
@@ -1208,7 +1210,8 @@ pub mod pallet {
 				}
 
 				// For checking oracle guard rails afterwards
-				let mark_index_divergence_before = Self::mark_index_divergence(&market)?;
+				let mark_index_divergence_before =
+					Self::mark_index_divergence(&market, &oracle_status.price)?;
 
 				let (base_swapped, entry_value, exit_value) = Self::do_close_position(
 					&mut positions,
@@ -1218,7 +1221,12 @@ pub mod pallet {
 					Zero::zero(),
 				)?;
 
-				Self::check_oracle_guard_rails(&market, mark_index_divergence_before, false)?;
+				Self::check_oracle_guard_rails(
+					&market,
+					&oracle_status,
+					mark_index_divergence_before,
+					false,
+				)?;
 
 				// Realize PnL
 				let mut outstanding_profits =
@@ -1242,7 +1250,7 @@ pub mod pallet {
 				)?;
 
 				// Attempt funding rate update at the end
-				Self::try_update_funding(market_id, &mut market)?;
+				Self::try_update_funding(market_id, &mut market, &oracle_status)?;
 
 				Collateral::<T>::insert(account_id, collateral);
 				OutstandingProfits::<T>::insert(account_id, market_id, outstanding_profits);
@@ -1274,14 +1282,16 @@ pub mod pallet {
 				Self::is_funding_update_time(&market, now)?,
 				Error::<T>::UpdatingFundingTooEarly
 			);
+			let oracle_status = market.get_oracle_status()?;
+			ensure!(oracle_status.is_valid, Error::<T>::InvalidOracleReading);
 			ensure!(
-				!Self::is_mark_index_too_divergent(&market)?,
+				!Self::is_mark_index_too_divergent(&market, &oracle_status.price)?,
 				Error::<T>::OracleMarkTooDivergent
 			);
 
 			// TODO(0xangelo): move this to do_update_funding?
 			// Update TWAPs *before* funding rate calculations
-			Self::update_oracle_twap(&mut market)?;
+			Self::update_oracle_twap_with_price(&mut market, oracle_status.price)?;
 			T::Vamm::update_twap(market.vamm_id, None, None)?;
 
 			Self::do_update_funding(market_id, &mut market, now)?;
@@ -1382,11 +1392,17 @@ pub mod pallet {
 		fn try_update_funding(
 			market_id: &T::MarketId,
 			market: &mut Market<T>,
+			oracle_status: &OracleStatus<T>,
 		) -> Result<(), DispatchError> {
+			if !oracle_status.is_valid {
+				return Ok(())
+			}
+
 			let now = T::UnixTime::now().as_secs();
 			if Self::is_funding_update_time(market, now)? {
 				Self::do_update_funding(market_id, market, now)?;
 			}
+
 			Ok(())
 		}
 
@@ -1713,23 +1729,26 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn check_oracle_guard_rails(
 			market: &Market<T>,
+			oracle_status: &OracleStatus<T>,
 			mark_index_divergence_before: T::Decimal,
 			is_risk_increasing: bool,
 		) -> Result<(), DispatchError> {
 			let was_mark_index_too_divergent =
 				Self::exceeds_max_price_divergence(mark_index_divergence_before);
-			let divergence = Self::mark_index_divergence(market)?;
+			let divergence = Self::mark_index_divergence(market, &oracle_status.price)?;
 			let is_mark_index_too_divergent = Self::exceeds_max_price_divergence(divergence);
 
 			// Block if mark-index divergence was pushed too far
 			ensure!(
-				was_mark_index_too_divergent || !is_mark_index_too_divergent,
+				!oracle_status.is_valid ||
+					was_mark_index_too_divergent ||
+					!is_mark_index_too_divergent,
 				Error::<T>::OracleMarkTooDivergent
 			);
 
 			ensure!(
-				!is_risk_increasing ||
-					!is_mark_index_too_divergent ||
+				!oracle_status.is_valid ||
+					!is_risk_increasing || !is_mark_index_too_divergent ||
 					divergence <= mark_index_divergence_before,
 				Error::<T>::OracleMarkTooDivergent
 			);
@@ -1737,15 +1756,14 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn mark_index_divergence(market: &Market<T>) -> Result<T::Decimal, DispatchError> {
-			let index_price_in_cents =
-				T::Oracle::get_price(market.asset_id, T::Decimal::one().into_balance()?)?.price;
-			let index_price = T::Decimal::checked_from_rational(index_price_in_cents, 100)
-				.ok_or(ArithmeticError::Overflow)?;
+		fn mark_index_divergence(
+			market: &Market<T>,
+			index_price: &T::Decimal,
+		) -> Result<T::Decimal, DispatchError> {
 			let mark_price: T::Decimal =
 				T::Vamm::get_price(market.vamm_id, AssetType::Base)?.into_signed()?;
 
-			let divergence = mark_price.try_sub(&index_price)?.try_div(&index_price)?;
+			let divergence = mark_price.try_sub(index_price)?.try_div(index_price)?;
 			Ok(divergence)
 		}
 
@@ -1753,8 +1771,14 @@ pub mod pallet {
 			divergence.saturating_abs() > Self::max_price_divergence()
 		}
 
-		fn is_mark_index_too_divergent(market: &Market<T>) -> Result<bool, DispatchError> {
-			Ok(Self::exceeds_max_price_divergence(Self::mark_index_divergence(market)?))
+		fn is_mark_index_too_divergent(
+			market: &Market<T>,
+			index_price: &T::Decimal,
+		) -> Result<bool, DispatchError> {
+			Ok(Self::exceeds_max_price_divergence(Self::mark_index_divergence(
+				market,
+				index_price,
+			)?))
 		}
 
 		fn is_funding_update_time(
@@ -2290,13 +2314,6 @@ pub mod pallet {
 
 	// Oracle update helpers
 	impl<T: Config> Pallet<T> {
-		fn update_oracle_twap(market: &mut Market<T>) -> Result<(), DispatchError> {
-			let oracle_status = market.get_oracle_status()?;
-			ensure!(oracle_status.is_valid, Error::<T>::InvalidOracleReading);
-
-			Self::update_oracle_twap_with_price(market, oracle_status.price)
-		}
-
 		fn update_oracle_twap_with_price(
 			market: &mut Market<T>,
 			mut oracle_price: T::Decimal,
