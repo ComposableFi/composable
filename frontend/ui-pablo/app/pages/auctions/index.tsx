@@ -43,7 +43,10 @@ const Auctions: NextPage = () => {
         ) {
           fetchSpotPrice(
             parachainApi,
-            liquidityBootstrappingPools.verified[pool].pair,
+            {
+              base:liquidityBootstrappingPools.verified[pool].pair.base.toString(),
+              quote: liquidityBootstrappingPools.verified[pool].pair.quote.toString(),
+            },
             liquidityBootstrappingPools.verified[pool].poolId
           ).then((spotPrice) => {
             setLiquidityBootstrappingPoolSpotPrice(
@@ -56,8 +59,7 @@ const Auctions: NextPage = () => {
 
       return () => clearInterval(interval);
     }
-
-  }, [parachainApi, liquidityBootstrappingPools.verified, setLiquidityBootstrappingPoolSpotPrice]);
+  }, [parachainApi, liquidityBootstrappingPools, setLiquidityBootstrappingPoolSpotPrice]);
 
   return (
     <Default>

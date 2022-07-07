@@ -21,29 +21,44 @@ import { BuyForm } from "@/components/Organisms/auction/BuyForm";
 import { AuctionHistoriesTable } from "@/components/Organisms/auction/AuctionHistoriesTable";
 import { AuctionPriceChart } from "@/components/Organisms/auction/AuctionPriceChart";
 import { useEffect, useState } from "react";
-import { getAssetById } from "@/defi/polkadot/Assets";
-import { fetchSpotPrice } from "@/defi/utils";
-import { useParachainApi } from "substrate-react";
+import { DEFAULT_NETWORK_ID, fetchSpotPrice } from "@/defi/utils";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { useAuctionsChart } from "@/store/hooks/useAuctionsChart";
 import moment from "moment-timezone";
 import useLiquidityBootstrappingPoolStore from "@/store/useStore";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
+import { useRouter } from "next/router";
 
 const Auction: NextPage = () => {
   const theme = useTheme();
+  const router = useRouter();
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const {
     pools: {
       setLiquidityBootstrappingPoolSpotPrice,
     },
     resetActiveLBP,
-    auctions: { activeLBP, activeLBPStats },
+    auctions: { activeLBP, activeLBPStats }
   } = useLiquidityBootstrappingPoolStore();
-  const { parachainApi } = useParachainApi("picasso");
+
+  const baseAsset = useAsset(activeLBP.pair.base.toString())
+  const quoteAsset = useAsset(activeLBP.pair.quote.toString())
+
+  useEffect(() => {
+    if (!selectedAccount) {
+      router.push('/auctions');
+    }
+  }, [router, selectedAccount]);
 
   useEffect(() => {
     if (parachainApi && activeLBP.poolId !== -1) {
       const interval = setInterval(() => {
-        console.log("SP Interval");
-        fetchSpotPrice(parachainApi, activeLBP.pair, activeLBP.poolId).then(
+        const pair = {
+          base: activeLBP.pair.base.toString(),
+          quote: activeLBP.pair.quote.toString()
+        }
+        fetchSpotPrice(parachainApi, pair, activeLBP.poolId).then(
           (spotPrice) => {
             setLiquidityBootstrappingPoolSpotPrice(
               activeLBP.poolId,
@@ -55,10 +70,9 @@ const Auction: NextPage = () => {
 
       return () => clearInterval(interval);
     }
-  }, [parachainApi, activeLBP, setLiquidityBootstrappingPoolSpotPrice]);
+  }, [parachainApi, activeLBP.poolId, activeLBP.pair, setLiquidityBootstrappingPoolSpotPrice]);
 
-  const baseAsset = getAssetById("picasso", activeLBP.pair.base);
-  const quoteAsset = getAssetById("picasso", activeLBP.pair.quote);
+
   const [currentTimestamp] = useState<number>(Date.now());
 
   const isActive: boolean =
@@ -104,9 +118,7 @@ const Auction: NextPage = () => {
     return () => {
       resetActiveLBP();
     };
-    // We can omit dependencies because it's a cleanup case and it only runs on destruction of pages by React.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [resetActiveLBP]);
 
   return (
     <Default breadcrumbs={breadcrumbs}>
@@ -147,6 +159,8 @@ const Auction: NextPage = () => {
             </Box>
 
             <AuctionInformation
+              baseAsset={baseAsset}
+              quoteAsset={quoteAsset}
               stats={activeLBPStats}
               auction={activeLBP}
               mt={6}
@@ -163,7 +177,6 @@ const Auction: NextPage = () => {
                   dateFormat={(timestamp: number | string) => {
                     return moment(timestamp).utc().format("MMM D, h:mm:ss A");
                   }}
-                  pastCount={1}
                   color={theme.palette.primary.main}
                 />
               </Grid>
@@ -176,10 +189,10 @@ const Auction: NextPage = () => {
           <Box mt={8}>
             <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
             <TabPanel value={tab} index={0}>
-              <AuctionDetails stats={activeLBPStats} auction={activeLBP} />
+              <AuctionDetails stats={activeLBPStats} auction={activeLBP} baseAsset={baseAsset} quoteAsset={quoteAsset} />
             </TabPanel>
             <TabPanel value={tab} index={1}>
-              <AuctionHistoriesTable auction={activeLBP} />
+              <AuctionHistoriesTable auction={activeLBP} baseAsset={baseAsset} quoteAsset={quoteAsset} />
             </TabPanel>
           </Box>
         </Box>

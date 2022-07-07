@@ -1,32 +1,27 @@
-import {
-  Assets,
-  AssetsValidForNow,
-  getAsset,
-  getAssetOnChainId,
-} from "@/defi/polkadot/Assets";
 import { AssetId } from "@/defi/polkadot/types";
-import { getPairDecimals } from "@/defi/polkadot/utils";
 import { setSelection, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
-import useStore from "@/store/useStore";
-import { DEFAULT_NETWORK_ID, DEFAULT_DECIMALS } from "@/defi/utils/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import BigNumber from "bignumber.js";
 import { useState, useMemo, useEffect } from "react";
 import { useParachainApi } from "substrate-react";
 import { useLiquidityByPool } from "./useLiquidityByPool";
+import { useAssetBalance } from "../assets/hooks";
+import { fromChainUnits, toChainUnits } from "@/defi/utils";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
+import { useFilteredAssetListDropdownOptions } from "@/defi/hooks/assets/useFilteredAssetListDropdownOptions";
 
 export const useAddLiquidity = () => {
-  const {
-    balances,
-    poolStats
-  } = useStore();
   const [valid, setValid] = useState<boolean>(false);
-  const { parachainApi } = useParachainApi("picasso");
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
 
   const {
     ui: { assetOne, assetTwo, assetOneAmount, assetTwoAmount },
     pool,
     findPoolManually
   } = useAddLiquiditySlice();
+
+  const _assetOne = useAsset(assetOne);
+  const _assetTwo = useAsset(assetTwo);
 
   const {
     tokenAmounts: {
@@ -44,47 +39,11 @@ export const useAddLiquidity = () => {
     [assetTwoAmount]
   );
 
-  const assetList1 = useMemo(() => {
-    return Object.values(Assets)
-      .filter((i) => {
-        return AssetsValidForNow.includes(i.assetId) && i.assetId !== assetTwo;
-      })
-      .map((asset) => ({
-        value: asset.assetId,
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [assetTwo]);
+  const assetList1 = useFilteredAssetListDropdownOptions(assetTwo);
+  const assetList2 = useFilteredAssetListDropdownOptions(assetOne);
 
-  const assetList2 = useMemo(() => {
-    return Object.values(Assets)
-      .filter((i) => {
-        return AssetsValidForNow.includes(i.assetId) && i.assetId !== assetOne;
-      })
-      .map((asset) => ({
-        value: asset.assetId,
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [assetOne]);
-
-  const balanceOne = useMemo(() => {
-    if (assetOne !== "none") {
-      return new BigNumber(balances[assetOne as AssetId].picasso);
-    } else {
-      return new BigNumber(0);
-    }
-  }, [assetOne, balances]);
-
-  const balanceTwo = useMemo(() => {
-    if (assetTwo !== "none") {
-      return new BigNumber(balances[assetTwo as AssetId].picasso);
-    } else {
-      return new BigNumber(0);
-    }
-  }, [assetTwo, balances]);
+  const balanceOne = useAssetBalance(DEFAULT_NETWORK_ID, assetOne);
+  const balanceTwo = useAssetBalance(DEFAULT_NETWORK_ID, assetTwo);
 
   const setAmount =
     (key: "assetOneAmount" | "assetTwoAmount") => (v: BigNumber) => {
@@ -134,52 +93,8 @@ export const useAddLiquidity = () => {
     pool,
   ]);
 
-  const assetOneMeta = useMemo(() => {
-    return assetOne === "none" ? null : getAsset(assetOne);
-  }, [assetOne]);
-
-  const assetTwoMeta = useMemo(() => {
-    return assetTwo === "none" ? null : getAsset(assetTwo);
-  }, [assetTwo]);
-
-  const assetOneReserve = useMemo(() => {
-    if (
-      pool &&
-      pool.poolId !== -1 &&
-      poolStats[pool.poolId] &&
-      assetOne !== "none"
-    ) {
-      const assetOneOnChainId = getAssetOnChainId(DEFAULT_NETWORK_ID, assetOne);
-      if (assetOneOnChainId && assetOneOnChainId === pool.pair.base) {
-        return new BigNumber(baseAmount);
-      } else {
-        return new BigNumber(quoteAmount);
-      }
-    } else {
-      return new BigNumber(0);
-    }
-  }, [pool, poolStats, assetOne]);
-
-  const assetTwoReserve = useMemo(() => {
-    if (
-      pool &&
-      pool.poolId !== -1 &&
-      poolStats[pool.poolId] &&
-      assetTwo !== "none"
-    ) {
-      const assetTwoOnChainId = getAssetOnChainId(DEFAULT_NETWORK_ID, assetTwo);
-      if (assetTwoOnChainId && assetTwoOnChainId === pool.pair.quote) {
-        return new BigNumber(quoteAmount);
-      } else {
-        return new BigNumber(baseAmount);
-      }
-    } else {
-      return new BigNumber(0);
-    }
-  }, [pool, poolStats, assetTwo]);
-
   const share = useMemo(() => {
-    let netAum = new BigNumber(assetOneReserve).plus(assetTwoReserve);
+    let netAum = new BigNumber(baseAmount).plus(quoteAmount);
     let netUser = new BigNumber(assetOneAmountBn).plus(assetTwoAmountBn);
 
     if (netAum.eq(0)) {
@@ -189,25 +104,20 @@ export const useAddLiquidity = () => {
         .div(new BigNumber(netAum).plus(netUser))
         .times(100);
     }
-  }, [pool, assetOneAmountBn, assetTwoAmountBn]);
+  }, [
+    baseAmount,
+    quoteAmount,
+    assetOneAmountBn,
+    assetTwoAmountBn
+  ]);
 
   const [lpReceiveAmount, setLpReceiveAmount] = useState(new BigNumber(0));
 
   useEffect(() => {
     if (parachainApi && assetOne !== "none" && assetTwo !== "none" && pool) {
-      const { baseDecimals, quoteDecimals } = getPairDecimals(
-        assetOne,
-        assetTwo
-      );
-
-      let isReverse =
-        pool.pair.base !== getAsset(assetOne).supportedNetwork.picasso;
-      const bnBase = new BigNumber(
-        isReverse ? assetTwoAmount : assetOneAmount
-      ).times(isReverse ? quoteDecimals : baseDecimals);
-      const bnQuote = new BigNumber(
-        isReverse ? assetOneAmount : assetTwoAmount
-      ).times(isReverse ? baseDecimals : quoteDecimals);
+      let isReverse = pool.pair.base.toString() !== assetOne;
+      const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount)
+      const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
 
       if (bnBase.gte(0) && bnQuote.gte(0)) {
         (parachainApi.rpc as any).pablo
@@ -218,7 +128,7 @@ export const useAddLiquidity = () => {
           )
           .then((expectedLP: any) => {
             setLpReceiveAmount(
-              new BigNumber(expectedLP.toString()).div(DEFAULT_DECIMALS)
+              fromChainUnits(expectedLP.toString())
             );
           })
           .catch((err: any) => {
@@ -226,11 +136,11 @@ export const useAddLiquidity = () => {
           });
       }
     }
-  }, [parachainApi, assetOneAmount, assetTwoAmount]);
+  }, [parachainApi, assetOneAmount, assetTwoAmount, assetOne, assetTwo, pool]);
 
   return {
-    assetOne,
-    assetTwo,
+    assetOne: _assetOne,
+    assetTwo: _assetTwo,
     balanceOne,
     balanceTwo,
     assetOneAmountBn,
@@ -239,8 +149,6 @@ export const useAddLiquidity = () => {
     assetList2,
     share,
     lpReceiveAmount,
-    assetOneMeta,
-    assetTwoMeta,
     valid,
     isValidToken1,
     isValidToken2,

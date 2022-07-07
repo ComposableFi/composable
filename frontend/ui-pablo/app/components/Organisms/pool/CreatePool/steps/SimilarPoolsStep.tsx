@@ -11,14 +11,14 @@ import {
   Theme,
 } from "@mui/material";
 import { useState } from "react";
-import BigNumber from "bignumber.js";
 import { useDispatch } from "react-redux";
-import FormWrapper from "../FormWrapper";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
 import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
+import BigNumber from "bignumber.js";
+import FormWrapper from "../FormWrapper";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import useStore from "@/store/useStore";
-import { getAsset } from "@/defi/polkadot/Assets";
 
 const itemBoxProps = (theme: Theme) =>
   ({
@@ -49,6 +49,7 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
       similarPool,
       setSelectable,
     },
+    supportedAssets
   } = useStore();
 
   const [isSettingOnFlow, setIsSettingOnFlow] = useState<boolean>(false);
@@ -78,8 +79,8 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
     }
   };
 
-  const token1 = baseAsset !== "none" ? getAsset(baseAsset) : null;
-  const token2 = quoteAsset !== "none" ? getAsset(quoteAsset) : null;
+  const _baseAsset = useAsset(baseAsset);
+  const _quoteAsset = useAsset(quoteAsset);
 
   return (
     <FormWrapper {...boxProps}>
@@ -90,11 +91,11 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
       />
 
       <Box mt={6} display="flex" justifyContent="center">
-        {token1 && token2 && (
+        {_baseAsset && _quoteAsset && (
           <PairAsset
             assets={[
-              { icon: token1.icon, label: token1.symbol },
-              { icon: token2.icon, label: token2.symbol },
+              { icon: _baseAsset.icon, label: _baseAsset.symbol },
+              { icon: _quoteAsset.icon, label: _quoteAsset.symbol },
             ]}
             iconSize={32}
             LabelProps={{ variant: "body1" }}

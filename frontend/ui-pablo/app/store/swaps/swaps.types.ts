@@ -1,75 +1,25 @@
-import { AssetId } from "@/defi/polkadot/types";
-import { LiquidityPoolType } from "../pools/pools.types";
+import { ConstantProductPool, PoolFeeConfig, StableSwapPool } from "@/defi/types";
+import BigNumber from "bignumber.js";
 
 export type SwapsChartRange = "24h" | "1w" | "1m";
 export type SwapSide = "base" | "quote";
 export interface SwapsSlice {
   swaps: {
-    dexRouter: {
-      dexRoute: number[];
-    };
-    poolConstants: {
-      poolAccountId: string;
-      poolIndex: number;
-      fee: string;
-      poolType: LiquidityPoolType | "none";
-      pair: {
-        base: number;
-        quote: number;
-      }
-      lbpConstants:
-        | {
-            start: number;
-            end: number;
-            initialWeight: string;
-            finalWeight: string;
-          }
-        | undefined;
+    tokenAmounts: {
+      assetOneAmount: BigNumber;
+      assetTwoAmount: BigNumber;
     },
-    poolVariables: {
-      spotPrice: string;
-      quoteAssetReserve: string;
-      baseAssetReserve: string;
-    };
-    userAccount: {
-      baseAssetBalance: string;
-      quoteAssetBalance: string;
-    };
-    ui: {
-      quoteAssetSelected: AssetId | "none";
-      baseAssetSelected: AssetId | "none";
-    };
-  };
-  setDexRouteSwaps: (dexRoute: number[]) => void;
-  setUiAssetSelectionSwaps: (
-    side: "base" | "quote",
-    assetId: AssetId | "none"
-  ) => void;
-  invertAssetSelectionSwaps: () => void;
-  setPoolConstantsSwaps: (
-    poolConstants: {
-      poolAccountId: string;
-      poolIndex: number;
-      fee: string;
-      poolType: LiquidityPoolType | "none";
-      pair: { base: number; quote: number; }
-      lbpConstants:
-        | {
-            start: number;
-            end: number;
-            initialWeight: string;
-            finalWeight: string;
-          }
-        | undefined;
-    }
-  ) => void;
-  setUserAccountBalanceSwaps: (
-    side: "base" | "quote",
-    balance: string
-  ) => void;
-  setPoolVariablesSwaps: (key: {
-    spotPrice: string;
-    quoteAssetReserve: string | undefined;
-    baseAssetReserve: string | undefined;
-  }) => void;
+    spotPrice: BigNumber;
+    selectedAssets: {
+      base: string | "none";
+      quote: string | "none";
+    },
+    selectedPool: ConstantProductPool | StableSwapPool | undefined;
+    setTokenAmounts: (tokeAmounts: {assetOneAmount: BigNumber; assetTwoAmount: BigNumber}) => void;
+    setSelectedPool: (pool: ConstantProductPool | StableSwapPool | undefined) => void;
+    flipAssetSelection: () => void;
+    setSelectedAsset: (assetId: string | "none", side: SwapSide) => void;
+    setSpotPrice: (spotPrice: BigNumber) => void;
+    resetSwaps: () => void;
+  },
 }

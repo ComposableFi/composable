@@ -1,103 +1,108 @@
-import { getAssetById } from "@/defi/polkadot/Assets";
-import { LiquidityBootstrappingPool, ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
-import { percentageToNumber } from "@/utils/number";
+import {
+  LiquidityBootstrappingPool,
+  ConstantProductPool,
+  StableSwapPool,
+  PoolFeeConfig,
+} from "@/defi/types";
+import { humanizedBnToBn, humanizedPermillToBigNumber } from "@/utils/number";
 import BigNumber from "bignumber.js";
-import moment from "moment";
-import { AVERAGE_BLOCK_TIME, DAYS, DEFAULT_NETWORK_ID, DUMMY_LAUNCH_DESCRIPTION } from "../../constants";
-import { stringToBigNumber } from "../../misc";
+import {
+  AVERAGE_BLOCK_TIME,
+  DAYS,
+  DEFAULT_NETWORK_ID,
+  DUMMY_LAUNCH_DESCRIPTION,
+} from "@/defi/utils/constants";
+
+export function decodeFeeConfig(poolItem: any): PoolFeeConfig {
+  return {
+    feeRate: humanizedPermillToBigNumber(poolItem.feeConfig.feeRate).toString(),
+    ownerFeeRate: humanizedPermillToBigNumber(
+      poolItem.feeConfig.ownerFeeRate
+    ).toString(),
+    protocolFeeRate: humanizedPermillToBigNumber(
+      poolItem.feeConfig.protocolFeeRate
+    ).toString(),
+  };
+}
+
+export function decodePoolPair(poolItem: any): { base: number; quote: number } {
+  const base =
+    poolItem.pair && poolItem.pair.base
+      ? Number(humanizedBnToBn(poolItem.pair.base))
+      : -1;
+  const quote =
+    poolItem.pair && poolItem.pair.quote
+      ? Number(humanizedBnToBn(poolItem.pair.quote))
+      : -1;
+  return { base, quote };
+}
 
 export const decodeLbp = (
-    poolItem: any,
-    poolIndex: number,
-    currentBlock: BigNumber
-  ): LiquidityBootstrappingPool => {
-    const startBlock = stringToBigNumber(poolItem.sale.start as string);
-    const endBlock = stringToBigNumber(poolItem.sale.end as string);
-  
-    const start = currentBlock.gt(startBlock)
-      ? Date.now() - ((currentBlock.minus(startBlock).toNumber()) * AVERAGE_BLOCK_TIME)
-      : Date.now() + ((startBlock.minus(currentBlock)).toNumber() * AVERAGE_BLOCK_TIME);
-    const end = currentBlock.gt(endBlock)
-      ? Date.now() - (currentBlock.minus(endBlock).toNumber()) * AVERAGE_BLOCK_TIME
-      : Date.now() + (endBlock.minus(currentBlock).toNumber()) * AVERAGE_BLOCK_TIME;
-    const duration = Math.round((end - start) / DAYS);
-  
-    const baseAssetId = Number(
-      (poolItem.pair.base as string).replaceAll(",", "")
-    );
-    const quoteAssetId = Number(
-      (poolItem.pair.quote as string).replaceAll(",", "")
-    );
-  
-    const baseAsset = getAssetById("picasso", baseAssetId);
-    const quoteAsset = getAssetById("picasso", quoteAssetId);
-    let poolId = `${baseAsset?.symbol.toLowerCase()}-${quoteAsset?.symbol.toLowerCase()}-${poolIndex}`;
-    const icon = baseAsset ? baseAsset.icon : quoteAsset ? quoteAsset.icon : "-";
-  
-    return {
-      id: poolId,
-      poolId: poolIndex,
-      networkId: DEFAULT_NETWORK_ID,
-      icon,
-      owner: poolItem.owner,
-      pair: {
-        base: baseAssetId,
-        quote: quoteAssetId,
-      },
-      sale: {
-        startBlock: startBlock.toString(),
-        endBlock: endBlock.toString(),
-        start,
-        end,
-        duration,
-        initialWeight: percentageToNumber(poolItem.sale.initialWeight),
-        finalWeight: percentageToNumber(poolItem.sale.finalWeight),
-      },
-      spotPrice: "0",
-      feeConfig: {
-        feeRate: poolItem.feeConfig.feeRate.replace("%", ""),
-        ownerFeeRate: poolItem.feeConfig.ownerFeeRate.replace("%", ""),
-        protocolFeeRate: poolItem.feeConfig.protocolFeeRate.replace("%", ""),
-      },
-      history: [],
-      auctionDescription: DUMMY_LAUNCH_DESCRIPTION(),
-    } as LiquidityBootstrappingPool;
+  poolItem: any,
+  poolIndex: number,
+  currentBlock: BigNumber
+): LiquidityBootstrappingPool => {
+  const startBlock = humanizedBnToBn(poolItem.sale.start as string);
+  const endBlock = humanizedBnToBn(poolItem.sale.end as string);
+
+  const start = currentBlock.gt(startBlock)
+    ? Date.now() -
+      currentBlock.minus(startBlock).toNumber() * AVERAGE_BLOCK_TIME
+    : Date.now() +
+      startBlock.minus(currentBlock).toNumber() * AVERAGE_BLOCK_TIME;
+  const end = currentBlock.gt(endBlock)
+    ? Date.now() - currentBlock.minus(endBlock).toNumber() * AVERAGE_BLOCK_TIME
+    : Date.now() + endBlock.minus(currentBlock).toNumber() * AVERAGE_BLOCK_TIME;
+  const duration = Math.round((end - start) / DAYS);
+
+  return {
+    id: poolIndex.toString(),
+    poolId: poolIndex,
+    networkId: DEFAULT_NETWORK_ID,
+    owner: poolItem.owner,
+    pair: decodePoolPair(poolItem),
+    sale: {
+      startBlock: startBlock.toString(),
+      endBlock: endBlock.toString(),
+      start,
+      end,
+      duration,
+      initialWeight: humanizedPermillToBigNumber(
+        poolItem.sale.initialWeight
+      ).toNumber(),
+      finalWeight: humanizedPermillToBigNumber(
+        poolItem.sale.finalWeight
+      ).toNumber(),
+    },
+    feeConfig: decodeFeeConfig(poolItem),
+    history: [],
+    auctionDescription: DUMMY_LAUNCH_DESCRIPTION(),
+  } as LiquidityBootstrappingPool;
+};
+
+export const decodeCpp = (
+  poolItem: any,
+  poolId: number
+): ConstantProductPool => {
+  return {
+    poolId,
+    owner: poolItem.owner,
+    pair: decodePoolPair(poolItem),
+    lpToken: humanizedBnToBn(poolItem.lpToken).toString(),
+    feeConfig: decodeFeeConfig(poolItem),
+    baseWeight: humanizedPermillToBigNumber(poolItem.baseWeight).toString(),
   };
-  
-  export const decodeCpp = (pool: any, poolId: number): ConstantProductPool => {
-    return {
-      poolId,
-      owner: pool.owner,
-      pair: {
-        base: stringToBigNumber(pool.pair.base).toNumber(),
-        quote: stringToBigNumber(pool.pair.quote).toNumber(),
-      },
-      lpToken: stringToBigNumber(pool.lpToken).toString(),
-      feeConfig: {
-        feeRate: pool.feeConfig.feeRate.replace("%", ""),
-        ownerFeeRate: pool.feeConfig.ownerFeeRate.replace("%", ""),
-        protocolFeeRate: pool.feeConfig.protocolFeeRate.replace("%", ""),
-      },
-      baseWeight: pool.baseWeight.replace("%", ""),
-    };
+};
+
+export const decodeSsp = (poolItem: any, poolId: number): StableSwapPool => {
+  return {
+    poolId,
+    owner: poolItem.owner,
+    pair: decodePoolPair(poolItem),
+    lpToken: humanizedBnToBn(poolItem.lpToken).toString(),
+    amplificationCoefficient: humanizedBnToBn(
+      poolItem.amplificationCoefficient
+    ).toString(),
+    feeConfig: decodeFeeConfig(poolItem),
   };
-  
-  export const decodeSsp = (pool: any, poolId: number): StableSwapPool => {
-    return {
-      poolId,
-      owner: pool.owner,
-      pair: {
-        base: stringToBigNumber(pool.pair.base).toNumber(),
-        quote: stringToBigNumber(pool.pair.quote).toNumber(),
-      },
-      lpToken: stringToBigNumber(pool.lpToken).toString(),
-      amplificationCoefficient: stringToBigNumber(
-        pool.amplificationCoefficient
-      ).toString(),
-      feeConfig: {
-        feeRate: pool.feeConfig.feeRate.replace("%", ""),
-        ownerFeeRate: pool.feeConfig.ownerFeeRate.replace("%", ""),
-        protocolFeeRate: pool.feeConfig.protocolFeeRate.replace("%", ""),
-      },
-    };
-  };
+};

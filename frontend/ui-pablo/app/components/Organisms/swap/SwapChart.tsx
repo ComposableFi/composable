@@ -7,9 +7,9 @@ import { useMemo } from "react";
 import { BoxProps } from "@mui/system";
 import { DEFI_CONFIG } from "@/defi/config";
 import useStore from "@/store/useStore";
-import { getAsset } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
 import { useSwapsChart } from "@/store/hooks/useSwapsChart";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
 
 const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
@@ -17,25 +17,14 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const { swaps } = useStore();
   const {selectedInterval, chartSeries, seriesIntervals, _24hourOldPrice, setSelectedInterval} = useSwapsChart();
 
-  const baseAsset = useMemo(() => {
-    if (swaps.ui.baseAssetSelected !== "none") {
-      return getAsset(swaps.ui.baseAssetSelected)
-    }
-    return null;
-  }, [swaps.ui])
-
-  const quoteAsset = useMemo(() => {
-    if (swaps.ui.quoteAssetSelected !== "none") {
-      return getAsset(swaps.ui.quoteAssetSelected)
-    }
-    return null;
-  }, [swaps.ui])
+  const baseAsset = useAsset(swaps.selectedAssets.base);
+  const quoteAsset = useAsset(swaps.selectedAssets.quote);
 
   const changePercent = useMemo(() => {
-    if (swaps.poolVariables.spotPrice === "0") return 0 
+    if (swaps.spotPrice.eq(0)) return 0 
     if (_24hourOldPrice.eq(0)) return 100
-    return new BigNumber(_24hourOldPrice).div(swaps.poolVariables.spotPrice).toNumber()
-  }, [swaps.poolVariables.spotPrice, _24hourOldPrice]);
+    return new BigNumber(_24hourOldPrice).div(swaps.spotPrice).toNumber()
+  }, [swaps.spotPrice, _24hourOldPrice]);
 
   const intervals = DEFI_CONFIG.swapChartIntervals;
 
@@ -90,7 +79,7 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
             </Box>
           </Box>
         }
-        totalText={`${swaps.poolVariables.spotPrice} ${baseAsset ? baseAsset.symbol : ""}`}
+        totalText={`${swaps.spotPrice} ${baseAsset ? baseAsset.symbol : ""}`}
         changeTextColor={
           changePercent > 0
             ? theme.palette.featured.main

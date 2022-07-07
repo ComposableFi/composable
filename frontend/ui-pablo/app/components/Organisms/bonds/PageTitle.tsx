@@ -1,47 +1,69 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { TokenId } from "@/defi/types";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
-import { Box, Typography, useTheme, BoxProps } from "@mui/material";
+import { Box, Typography, BoxProps } from "@mui/material";
+import { MockedAsset } from "@/store/assets/assets.types";
+import { BondPrincipalAsset } from "@/defi/hooks/bonds/useBondOffers";
+import { useCallback } from "react";
 
-export type PageTitleProps ={
-  tokenId1: TokenId;
-  tokenId2: TokenId;
+export type PageTitleProps = {
+  principalAsset: BondPrincipalAsset;
+  rewardAsset: MockedAsset | undefined;
   iconSize?: number;
 } & BoxProps;
 export const PageTitle: React.FC<PageTitleProps> = ({
-  tokenId1,
-  tokenId2,
+  principalAsset,
+  rewardAsset,
   iconSize = 67,
   ...boxProps
 }) => {
-  const token1 = getToken(tokenId1);
-  const token2 = getToken(tokenId2);
-  const pablo = getToken('pablo');
-  return (
-    <Box width="100%" {...boxProps}>
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        gap={3.5}
-      >
+  const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
+  const { baseAsset, quoteAsset } = lpPrincipalAsset;
+
+  const renderIcons = useCallback(() => {
+    if (baseAsset && quoteAsset) {
+      return (
         <PairAsset
           assets={[
-            {icon: token1.icon, label: token1.symbol},
-            {icon: token2.icon, label: token2.symbol},
+            {
+              icon: baseAsset.icon,
+              label: baseAsset.symbol,
+            },
+            {
+              icon: quoteAsset.icon,
+              label: quoteAsset.symbol,
+            },
           ]}
-          label={`LP ${token1.symbol}-${token2.symbol}`}
-          LabelProps={{variant: "h4"}}
+          label={`LP ${baseAsset.symbol}-${quoteAsset.symbol}`}
+          LabelProps={{ variant: "h4" }}
           iconSize={iconSize}
         />
-        <ArrowRightAltIcon sx={{color: "text.secondary"}} />
+      );
+    } else if (simplePrincipalAsset) {
+      return (
         <BaseAsset
-          icon={`/tokens/pablo_dark.svg`}
-          iconSize={67}
-          label={pablo.symbol}
-          LabelProps={{variant: "h4"}}
+          label={simplePrincipalAsset.symbol}
+          icon={simplePrincipalAsset.icon}
+          LabelProps={{ variant: "h4" }}
+          iconSize={iconSize}
         />
+      );
+    }
+    return null;
+  }, [simplePrincipalAsset, baseAsset, quoteAsset, iconSize]);
+
+  return (
+    <Box width="100%" {...boxProps}>
+      <Box display="flex" justifyContent="center" alignItems="center" gap={3.5}>
+        {renderIcons()}
+        <ArrowRightAltIcon sx={{ color: "text.secondary" }} />
+        {rewardAsset && (
+          <BaseAsset
+            icon={rewardAsset.icon}
+            iconSize={67}
+            label={rewardAsset.symbol}
+            LabelProps={{ variant: "h4" }}
+          />
+        )}
       </Box>
       <Typography
         mt={3}
@@ -50,7 +72,7 @@ export const PageTitle: React.FC<PageTitleProps> = ({
         textAlign="center"
         fontWeight="normal"
       >
-        Buy {pablo.name} while supplying tokens
+        {rewardAsset ? `Buy ${rewardAsset.name} while supplying tokens` : "-"}
       </Typography>
     </Box>
   );

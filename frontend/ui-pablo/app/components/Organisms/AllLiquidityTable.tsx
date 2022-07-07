@@ -68,19 +68,16 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
 
   const handleRowClick = (e: React.MouseEvent, poolId: number) => {
     e.preventDefault();
-    // if (flow === "user") {
-      router.push(`/pool/select/${poolId}`);
-    // }
+    router.push(`/pool/select/${poolId}`);
   };
 
   const handleSeeMore = () => {
     setStartIndex(startIndex + 4);
   };
 
-
   useEffect(() => {
     if (!userPools.length) {
-        setShowNoPools(true);
+      setShowNoPools(true);
     } else {
       setShowNoPools(false);
     }
@@ -113,31 +110,44 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
                     <Typography variant="body1">{th.header}</Typography>
                     {th.tooltip && (
                       <Tooltip arrow title={th.tooltip}>
-                        <InfoOutlined color="primary" fontSize="small"/>
+                        <InfoOutlined color="primary" fontSize="small" />
                       </Tooltip>
                     )}
                   </Box>
                 </TableCell>
-                )
-              )}
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>
             {pools.map((row, index) => (
-              <TableRow onClick={e => {
-                handleRowClick(e, row.poolId)
-              }} key={index} sx={{cursor: "pointer"}}>
+              <TableRow
+                onClick={(e) => {
+                  handleRowClick(e, row.poolId);
+                }}
+                key={index}
+                sx={{ cursor: "pointer" }}
+              >
                 <TableCell align="left">
-                  <PairAsset
-                    assets={[
-                      { icon: row.baseAsset.icon, label: row.baseAsset.symbol },
-                      { icon: row.quoteAsset.icon, label: row.quoteAsset.symbol },
-                    ]}
-                    separator="/"
-                  />
+                  {row.baseAsset && row.quoteAsset && (
+                    <PairAsset
+                      assets={[
+                        {
+                          icon: row.baseAsset.icon,
+                          label: row.baseAsset.symbol,
+                        },
+                        {
+                          icon: row.quoteAsset.icon,
+                          label: row.quoteAsset.symbol,
+                        },
+                      ]}
+                      separator="/"
+                    />
+                  )}
                 </TableCell>
                 <TableCell align="left">
-                  <Typography variant="body2">${row.totalValueLocked.toFixed(2)}</Typography>
+                  <Typography variant="body2">
+                    ${row.totalValueLocked.toFixed(2)}
+                  </Typography>
                 </TableCell>
                 <TableCell align="left">
                   <Typography variant="body2">{row.apr.toFixed(2)}%</Typography>

@@ -1,6 +1,4 @@
-import { useEffect } from "react";
-import { Assets } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
+import { useCallback, useEffect } from "react";
 import {
   useExtrinsics,
   useParachainApi,
@@ -13,29 +11,31 @@ import _ from "lodash";
 
 const processedTransactions: string[] = [];
 const Updater = () => {
-  const { updateAssetBalance } = useStore();
+  const { putAssetBalance, supportedAssets } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const extrinsicCalls = useExtrinsics();
 
-  useEffect(() => {
+  const updateAllBalances = useCallback(async () => {
     if (parachainApi && selectedAccount) {
-      Object.keys(Assets).forEach((asset) => {
-        let assetID: string | number | null =
-          Assets[asset as AssetId].supportedNetwork[DEFAULT_NETWORK_ID];
-        if (assetID) {
-          assetID = assetID.toString();
-          fetchBalanceByAssetId(
-            parachainApi,
-            selectedAccount.address,
-            assetID
-          ).then((balance) => {
-            updateAssetBalance(asset as AssetId, DEFAULT_NETWORK_ID, balance);
-          });
-        }
-      });
+      let assets = [];
+      for (let index = 0; index < supportedAssets.length; index++) {
+        assets.push(supportedAssets[index].network[DEFAULT_NETWORK_ID])
+        const balance = await fetchBalanceByAssetId(
+          parachainApi,
+          selectedAccount.address,
+          supportedAssets[index].network[DEFAULT_NETWORK_ID]
+        )
+        putAssetBalance(DEFAULT_NETWORK_ID, supportedAssets[index].network[DEFAULT_NETWORK_ID], balance);
+      }
     }
-  }, [parachainApi, selectedAccount, updateAssetBalance]);
+  }, [parachainApi, selectedAccount, supportedAssets, putAssetBalance])
+
+  useEffect(() => {
+    if (updateAllBalances && typeof updateAllBalances === "function") {
+      updateAllBalances();
+    }
+  }, [updateAllBalances]);
 
   useEffect(() => {
     if (
@@ -58,32 +58,12 @@ const Updater = () => {
       });
 
       if (shouldUpdate !== null) {
-        const allPromises = Object.keys(Assets).map((asset) => {
-          return new Promise((res, rej) => {
-            let assetID: string | number | null =
-              Assets[asset as AssetId].supportedNetwork[DEFAULT_NETWORK_ID];
-            if (assetID) {
-              assetID = assetID.toString();
-              fetchBalanceByAssetId(
-                parachainApi,
-                selectedAccount.address,
-                assetID
-              ).then((balance) => {
-                updateAssetBalance(asset as AssetId, DEFAULT_NETWORK_ID, balance);
-                res(asset);
-              });
-            } else {
-              res(asset);
-            }
-          });
-        });
-
-        Promise.all(allPromises).then((updatedBalancesAssetList) => {
+        updateAllBalances().then((updatedBalancesAssetList) => {
           processedTransactions.push(shouldUpdate as string);
         });
       }
     }
-  }, [extrinsicCalls, parachainApi, selectedAccount, updateAssetBalance]);
+  }, [extrinsicCalls, parachainApi, selectedAccount, updateAllBalances]);
 
   return null;
 };

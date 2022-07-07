@@ -1,8 +1,6 @@
-import React, { useEffect, useMemo } from "react";
+import React from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Label, BaseAsset } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { TokenId } from "@/defi/types";
 import {
   alpha,
   Box,
@@ -15,146 +13,45 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
 import {
-  closeConfirmingModal,
   closeSwapPreviewModal,
   openConfirmingModal,
 } from "@/stores/ui/uiSlice";
-import {
-  useParachainApi,
-  useExtrinsics,
-  useSelectedAccount,
-  useExecutor,
-  getSigner,
-} from "substrate-react";
 import { SwapSummary } from "./SwapSummary";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { AssetId } from "@/defi/polkadot/types";
-import { Assets } from "@/defi/polkadot/Assets";
-import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
-import { APP_NAME } from "@/defi/polkadot/constants";
-import { useSnackbar } from "notistack";
 import { useAppSelector } from "@/hooks/store";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 export type PreviewModalProps = {
   setConfirmed?: (confirmed: boolean) => any;
-  baseAssetId: AssetId | "none";
-  quoteAssetId: AssetId | "none";
-  quoteAssetAmount: BigNumber;
+  baseAsset: MockedAsset | undefined;
+  quoteAsset: MockedAsset | undefined;
   baseAssetAmount: BigNumber;
+  quoteAmount: BigNumber;
+  feeCharged: BigNumber;
   minimumReceived: BigNumber;
+  spotPrice: BigNumber;
+  onConfirmSwap: () => void;
 } & ModalProps;
 
 export const PreviewModal: React.FC<PreviewModalProps> = ({
   setConfirmed,
-  baseAssetId,
-  quoteAssetId,
-  quoteAssetAmount,
+  baseAsset,
+  quoteAsset,
+  quoteAmount,
   baseAssetAmount,
   minimumReceived,
+  feeCharged,
+  spotPrice,
+  onConfirmSwap,
   ...modalProps
 }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
-  const { enqueueSnackbar } = useSnackbar();
-  const connectedAccount = useSelectedAccount("picasso");
-  const executor = useExecutor();
-  const { parachainApi } = useParachainApi("picasso");
-  const { swaps } = useStore();
-
-  const priceImpact = 0;
-
-  const baseAsset = baseAssetId === "none" ? null : Assets[baseAssetId];
-  const quoteAsset = quoteAssetId === "none" ? null : Assets[quoteAssetId];
-
-  const spotPrice = useMemo(() => {
-    return new BigNumber(swaps.poolVariables.spotPrice);
-  }, [swaps.poolVariables]);
-
-  const onConfirmSwap = async () => {
-    const { ui } = swaps;
-    const {baseAssetSelected, quoteAssetSelected} = ui;
-    if (
-      parachainApi &&
-      connectedAccount &&
-      executor &&
-      baseAssetSelected !== "none" &&
-      quoteAssetSelected !== "none"
-    ) {
-      try {
-        const decimalsBase = new BigNumber(10).pow(
-          Assets[quoteAssetSelected].decimals
-        );
-
-        const base = Assets[baseAssetSelected].supportedNetwork.picasso;
-        const quote = Assets[quoteAssetSelected].supportedNetwork.picasso;
-
-        const qtAmont = baseAssetAmount.times(decimalsBase);
-        const minRec = minimumReceived.times(decimalsBase);
-
-        const signer = await getSigner(APP_NAME, connectedAccount.address);
-
-        let pair = {
-          base,
-          quote,
-        };
-
-        console.log('Minimum Recieve: ', minRec.toFixed(0))
-        console.log('Quote Amount: ', qtAmont .toFixed(0))
-        console.log('Exchange: ', quote === swaps.poolConstants.pair.quote, pair)
-
-        executor.execute(
-          parachainApi.tx.dexRouter.exchange(
-            pair,
-            parachainApi.createType("u128", qtAmont.toFixed(0)),
-            parachainApi.createType("u128", minRec.toFixed(0))
-          ),
-          connectedAccount.address,
-          parachainApi,
-          signer,
-          (txHash: string) => {
-            console.log("TX Started: ", txHash);
-          },
-          (txHash: string, events) => {
-            console.log("TX Finalized: ", txHash);
-            enqueueSnackbar('Transaction Finalized');
-            setConfirmed && setConfirmed(true);
-            dispatch(closeConfirmingModal());
-          },
-          (txError: string) => {
-            enqueueSnackbar('Transaction Failed', {
-              description: txError,
-              isClosable: true,
-              url: '',
-            });
-            console.error(txError);
-            dispatch(closeConfirmingModal());
-          }
-        ).catch(err => {
-          enqueueSnackbar('Transaction Failed', {
-            description: err.message,
-            isClosable: true,
-            url: '',
-          });
-          dispatch(closeConfirmingModal());
-          console.log(err);
-        });
-      } catch (err: any) {
-        enqueueSnackbar('Transaction Failed', {
-          description: err.message,
-          isClosable: true,
-          url: '',
-        });
-        dispatch(closeConfirmingModal());
-        console.log(err);
-      }
-    }
-  };
 
   const confirmSwap = () => {
     dispatch(closeSwapPreviewModal());
     dispatch(openConfirmingModal());
-
     onConfirmSwap();
   };
 
@@ -198,7 +95,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         >
           <BaseAsset
             icon={quoteAsset?.icon}
-            label={quoteAssetAmount.toFixed()}
+            label={quoteAmount.toFixed()}
             LabelProps={{ variant: "body1" }}
           />
         </Label>
@@ -249,18 +146,13 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
 
         <SwapSummary
           mt={4}
-          quoteAssetAmount={quoteAssetAmount}
-          poolType={swaps.poolConstants.poolType}
-          baseAssetId={baseAssetId}
-          quoteAssetId={quoteAssetId}
+          quoteAssetAmount={quoteAmount}
+          baseAsset={baseAsset}
+          quoteAsset={quoteAsset}
           minimumReceived={minimumReceived}
-          priceImpact={priceImpact}
-          PriceImpactProps={{
-            color: "success.main",
-          }}
           baseAssetAmount={baseAssetAmount}
-          fee={new BigNumber(swaps.poolConstants.fee).div(100)}
-          price={spotPrice}
+          feeCharged={feeCharged}
+          spotPrice={spotPrice}
         />
 
         <Box mt={4}>

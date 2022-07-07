@@ -4,8 +4,8 @@ import { AmmId } from "@/defi/types";
 export interface CreatePoolSlice {
     createPool: {
         currentStep: number;
-        baseAsset: AssetId | "none";
-        quoteAsset: AssetId | "none";
+        baseAsset: string | "none";
+        quoteAsset: string | "none";
         ammId: AmmId | "none";
         swapFee: string;
         liquidity: {
@@ -26,8 +26,8 @@ export interface CreatePoolSlice {
         setWeights: (weights: Partial<CreatePoolSlice["createPool"]["weights"]>) => void;
         setSimilarPool: (similarPool: Partial<CreatePoolSlice["createPool"]["similarPool"]>) => void;
         setSelectable: (items: Partial<{
-            baseAsset: AssetId | "none";
-            quoteAsset: AssetId | "none";
+            baseAsset: string | "none";
+            quoteAsset: string | "none";
             ammId: AmmId | "none";
             swapFee: string;
             currentStep: number;

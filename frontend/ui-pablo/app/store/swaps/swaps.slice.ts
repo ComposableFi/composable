@@ -1,76 +1,42 @@
-import { AssetId } from "@/defi/polkadot/types";
+import { DEFAULT_SWAP_BASE, DEFAULT_SWAP_QUOTE } from "@/defi/utils";
+import BigNumber from "bignumber.js";
 import { StoreSlice } from "../types";
 import { SwapsSlice } from "./swaps.types";
 import {
-  putDexRoute,
-  putPoolConstants,
-  putUiAssetSelection,
-  putUserAccountBalance,
-  putPoolVariables,
-  invertAssetSelection,
+  putAssetId, putSelectedPool, putSpotPrice, resetSwapsSlice, flipAssetSelection, putTokenAmounts
 } from "./swaps.utils";
 
 const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
   swaps: {
-    dexRouter: {
-      dexRoute: [],
+    tokenAmounts: {
+      assetOneAmount: new BigNumber(0),
+      assetTwoAmount: new BigNumber(0)
     },
-    poolVariables: {
-      spotPrice: "0",
-      quoteAssetReserve: "0",
-      baseAssetReserve: "0",
+    spotPrice: new BigNumber(0),
+    selectedAssets: {
+      base: DEFAULT_SWAP_BASE,
+      quote: DEFAULT_SWAP_QUOTE,
     },
-    poolConstants: {
-      poolAccountId: "",
-      poolIndex: -1,
-      fee: "0",
-      lbpConstants: undefined,
-      poolType: "none",
-      pair: {
-        quote: -1,
-        base: -1,
-      },
-    },
-    userAccount: {
-      baseAssetBalance: "0",
-      quoteAssetBalance: "0",
-    },
-    ui: {
-      quoteAssetSelected: "none",
-      baseAssetSelected: "none",
-    },
-  },
-  setDexRouteSwaps: (dexRoute: number[]) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putDexRoute(prev.swaps, dexRoute),
+    selectedPool: undefined,
+    setSelectedAsset: (id, side) => set((prev: SwapsSlice) => ({
+      swaps: putAssetId(prev.swaps, id, side)
     })),
-  setUiAssetSelectionSwaps: (
-    side: "base" | "quote",
-    assetId: AssetId | "none"
-  ) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putUiAssetSelection(prev.swaps, side, assetId),
+    setSelectedPool: (pool) => set((prev: SwapsSlice) => ({
+      swaps: putSelectedPool(prev.swaps, pool)
     })),
-  setPoolConstantsSwaps: (poolConstants) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putPoolConstants(prev.swaps, poolConstants),
+    setSpotPrice: (price) => set((prev: SwapsSlice) => ({
+      swaps: putSpotPrice(prev.swaps, price)
     })),
-  setUserAccountBalanceSwaps: (side: "base" | "quote", balance: string) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putUserAccountBalance(prev.swaps, side, balance),
+    resetSwaps: () => set((prev: SwapsSlice) => ({
+      swaps: resetSwapsSlice(prev.swaps)
     })),
-  setPoolVariablesSwaps: (key: {
-    spotPrice: string;
-    quoteAssetReserve: string | undefined;
-    baseAssetReserve: string | undefined;
-  }) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putPoolVariables(prev.swaps, key),
+    flipAssetSelection: () => set((prev: SwapsSlice) => ({
+      swaps: flipAssetSelection(prev.swaps)
     })),
-  invertAssetSelectionSwaps: () =>
-    set((prev: SwapsSlice) => ({
-      swaps: invertAssetSelection(prev.swaps),
+    setTokenAmounts: (amounts) => set((prev: SwapsSlice) => ({
+      swaps: putTokenAmounts(prev.swaps, amounts)
     })),
+  }
 });
 
 export default createSwapsSlice;

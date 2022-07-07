@@ -149,7 +149,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
         ),
       }
     });
-  }, [data, color, min, max, labelFormat, theme]);
+  }, [color, labelFormat, min, max, theme]);
 
   return (
     <Box mt={marginTop} height={height} overflow="hidden">

@@ -1,4 +1,3 @@
-import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { calcaulateProvidedLiquidity } from "@/defi/utils";
 import { liquidityTransactionsByAddressAndPool } from "@/updaters/pools/subsquid";
 import { useEffect, useMemo, useState } from "react";
@@ -7,6 +6,7 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 /**
  * Provides the amount of liquidity
  * added by the user, and its value in
@@ -30,11 +30,6 @@ export const useUserProvidedLiquidityByPool = (
   const {
     apollo,
     /**
-     * prices of assets within the
-     * pool
-     */
-    assets,
-    /**
      * acutal provided liquidity from zustand
      */
     userProvidedLiquidity,
@@ -54,7 +49,7 @@ export const useUserProvidedLiquidityByPool = (
    */
   const pool = useMemo<StableSwapPool | ConstantProductPool | undefined>(() => {
     return allPools.find((i) => i.poolId === poolId);
-  }, [poolId]);
+  }, [poolId, allPools]);
   /**
    * hook defaults
    */
@@ -90,7 +85,7 @@ export const useUserProvidedLiquidityByPool = (
         });
       });
     }
-  }, [pool, selectedAccount]);
+  }, [pool, selectedAccount, setUserProvidedTokenAmountInLiquidityPool]);
   /**
    * use amount of liquity tokens
    * from zustand store and pass it
