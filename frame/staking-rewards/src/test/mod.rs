@@ -1,4 +1,5 @@
 use crate::{
+	prelude::{lock, Reductions, Stake},
 	test::{prelude::H256, runtime::*},
 	Config,
 };
@@ -66,6 +67,23 @@ fn test_stake() {
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		assert_eq!(StakingRewards::stake_count(), 1);
+		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
+		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset).expect("reward_multiplier expected");
+		let reductions = Reductions::try_from(rewards_pool.rewards.into_inner().iter().map(|(asset_id, _reward)| (*asset_id, 0)).collect::<BTreeMap<_,_>>()).expect("reductions expected");
+		assert_eq!(
+			StakingRewards::stakes(StakingRewards::stake_count()),
+			Some(Stake {
+				reward_pool_id: pool_id,
+				stake: amount,
+				share: StakingRewards::boosted_amount(reward_multiplier, amount),
+				reductions,
+				lock: lock::Lock {
+					started_at: <Test as crate::Config>::UnixTime::now(),
+					duration: duration_preset,
+					unlock_penalty: rewards_pool.lock.unlock_penalty,
+				},
+			})
+		);
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
 	});

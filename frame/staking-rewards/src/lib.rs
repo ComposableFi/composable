@@ -72,7 +72,7 @@ pub mod pallet {
 	use sp_arithmetic::{traits::One, Permill};
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider},
-		ArithmeticError,
+		ArithmeticError, Perbill,
 	};
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
 
@@ -161,7 +161,11 @@ pub mod pallet {
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.
-		type Assets: Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>;
+		type Assets: Transfer<
+			AccountIdOf<Self>,
+			Balance = BalanceOf<Self>,
+			AssetId = AssetIdOf<Self>,
+		>;
 
 		/// is used for rate based rewarding and position lock timing
 		type UnixTime: UnixTime;
@@ -336,10 +340,8 @@ pub mod pallet {
 		) -> Result<Self::PositionId, DispatchError> {
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
-			let reward_multiplier = rewards_pool
-				.lock
-				.duration_presets
-				.get(&duration_preset)
+
+			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
 				.ok_or(Error::<T>::RewardConfigProblem)?;
 
 			ensure!(
@@ -350,15 +352,10 @@ pub mod pallet {
 				Error::<T>::NotEnoughAssets
 			);
 
-			let boosted_amount = reward_multiplier.mul_ceil(amount);
-			let mut reductions: Reductions<
-				T::AssetId,
-				T::Balance,
-				<T as Config>::MaxRewardConfigsPerPool,
-			> = BoundedBTreeMap::new();
+			let boosted_amount = Self::boosted_amount(reward_multiplier, amount);
+			let mut reductions = Reductions::new();
 
 			let mut inner_rewards = rewards_pool.rewards.into_inner();
-
 			for (asset_id, reward) in inner_rewards.iter_mut() {
 				let inflation = if rewards_pool.total_shares == Self::Balance::from(0_u32) {
 					Self::Balance::from(0_u32)
@@ -457,6 +454,17 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
 			T::PalletId::get().into_sub_account(("po", pool_id))
+		}
+
+		pub(crate) fn reward_multiplier(
+			rewards_pool: &RewardPoolOf<T>,
+			duration_preset: DurationSeconds,
+		) -> Option<Perbill> {
+			rewards_pool.lock.duration_presets.get(&duration_preset).cloned()
+		}
+
+		pub(crate) fn boosted_amount(reward_multiplier: Perbill, amount: T::Balance) -> T::Balance {
+			reward_multiplier.mul_ceil(amount)
 		}
 	}
 }
