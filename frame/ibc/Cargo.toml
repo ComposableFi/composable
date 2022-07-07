@@ -62,7 +62,7 @@ currency-factory = { package = "pallet-currency-factory", path = "../currency-fa
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 hex-literal = { version = "0.3.4" }
 ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", features = [
-  "ics11_beefy",
+  "mocks"
 ] }
 
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
