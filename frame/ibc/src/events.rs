@@ -443,7 +443,7 @@ impl<T: Config> From<Vec<RawIbcEvent>> for Event<T> {
 	}
 }
 
-const ERROR_STR: &'static str = "Error converting ibc event";
+const ERROR_STR: &str = "Error converting ibc event";
 impl TryFrom<IbcEvent> for RawIbcEvent {
 	type Error = &'static str;
 	fn try_from(ev: IbcEvent) -> Result<Self, Self::Error> {
@@ -855,7 +855,8 @@ impl TryFrom<IbcEvent> for RawIbcEvent {
 				}),
 			})),
 			// For Packet events the full packet that contains the data and will be fetched from
-			// offchain db in the rpc interface Same goes for acknowledgement
+			// offchain db in the rpc interface, Same goes for acknowledgement
+			// So we can omit packet data here
 			IbcEvent::ReceivePacket {
 				revision_height,
 				revision_number,

@@ -17,11 +17,14 @@
 //! IBC RPC Implementation.
 
 use codec::Encode;
-use ibc::core::{
-	ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
-	ics03_connection::connection::ConnectionEnd,
-	ics04_channel::channel::{ChannelEnd, IdentifiedChannelEnd},
-	ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+use ibc::{
+	core::{
+		ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
+		ics03_connection::connection::ConnectionEnd,
+		ics04_channel::channel::{ChannelEnd, IdentifiedChannelEnd},
+		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
+	},
+	events::IbcEvent as RawIbcEvent,
 };
 
 use std::{collections::HashMap, fmt::Display, str::FromStr, sync::Arc};
@@ -64,7 +67,7 @@ use sp_runtime::{
 use sp_trie::TrieMut;
 use tendermint_proto::Protobuf;
 pub mod events;
-use events::{filter_map_pallet_event, IbcRelayerEvent};
+use events::filter_map_pallet_event;
 
 /// Connection handshake proof
 #[derive(Serialize, Deserialize)]
@@ -138,6 +141,14 @@ where
 		port_id: String,
 		seqs: Vec<u64>,
 	) -> Result<Vec<Packet>>;
+	/// Query raw acknowledgement data
+	#[method(name = "ibc_queryAcknowledgements")]
+	fn query_acknowledgements(
+		&self,
+		channel_id: String,
+		port_id: String,
+		seqs: Vec<u64>,
+	) -> Result<Vec<Vec<u8>>>;
 	/// Generate proof for given key
 	#[method(name = "ibc_queryProof")]
 	fn query_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof>;
@@ -359,7 +370,7 @@ where
 	fn query_ibc_events(
 		&self,
 		block_numbers: Vec<BlockNumberOrHash<Hash>>,
-	) -> Result<HashMap<String, Vec<IbcRelayerEvent>>>;
+	) -> Result<HashMap<String, Vec<RawIbcEvent>>>;
 }
 
 /// Converts a runtime trap into an RPC error.
@@ -433,6 +444,25 @@ where
 				})
 			})
 			.collect()
+	}
+
+	fn query_acknowledgements(
+		&self,
+		channel_id: String,
+		port_id: String,
+		seqs: Vec<u64>,
+	) -> Result<Vec<Vec<u8>>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(self.client.info().best_hash);
+		api.query_acknowledgements(
+			&at,
+			channel_id.as_bytes().to_vec(),
+			port_id.as_bytes().to_vec(),
+			seqs,
+		)
+		.ok()
+		.flatten()
+		.ok_or_else(|| runtime_error_into_rpc_error("Error fetching packets"))
 	}
 
 	fn query_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof> {
@@ -1304,7 +1334,7 @@ where
 	fn query_ibc_events(
 		&self,
 		block_numbers: Vec<BlockNumberOrHash<Block::Hash>>,
-	) -> Result<HashMap<String, Vec<IbcRelayerEvent>>> {
+	) -> Result<HashMap<String, Vec<RawIbcEvent>>> {
 		let api = self.client.runtime_api();
 		let mut events = HashMap::new();
 		for block_number_or_hash in block_numbers {
@@ -1315,7 +1345,12 @@ where
 
 			let temp = api
 				.block_events(&at)
-				.map(|events| events.into_iter().filter_map(filter_map_pallet_event).collect())
+				.map(|events| {
+					events
+						.into_iter()
+						.filter_map(|event| filter_map_pallet_event::<C, Block>(&at, &api, event))
+						.collect()
+				})
 				.map_err(|_| {
 					runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events")
 				})?;
