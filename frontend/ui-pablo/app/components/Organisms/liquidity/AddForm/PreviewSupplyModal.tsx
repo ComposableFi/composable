@@ -190,8 +190,8 @@ export const PreviewSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
         {assetTwo && assetOne ? (
           <YourPosition
             noTitle={false}
-            tokenId1={assetTwo.assetId}
-            tokenId2={assetOne.assetId}
+            token1={assetOne}
+            token2={assetTwo}
             pooledAmount1={assetTwoAmount}
             pooledAmount2={assetOneAmount}
             amount={lpReceiveAmount}

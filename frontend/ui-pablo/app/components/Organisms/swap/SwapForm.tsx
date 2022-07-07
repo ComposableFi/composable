@@ -1,4 +1,4 @@
-import { DropdownCombinedBigNumberInput, BigNumberInput } from "@/components";
+import { DropdownCombinedBigNumberInput } from "@/components";
 import { useMobile } from "@/hooks/responsive";
 import {
   Box,
@@ -9,8 +9,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import BigNumber from "bignumber.js";
+import { useEffect, useMemo, useState } from "react";
 import { BoxProps } from "@mui/system";
 import { useAppSelector } from "@/hooks/store";
 import { useDispatch } from "react-redux";
@@ -27,100 +26,67 @@ import { SwapSummary } from "./SwapSummary";
 import { SwapRoute } from "./SwapRoute";
 import { PreviewModal } from "./PreviewModal";
 import { ConfirmingModal } from "./ConfirmingModal";
-import { useDotSamaContext, useParachainApi } from "substrate-react";
-import { Assets, AssetsValidForNow, getAssetOnChainId } from "@/defi/polkadot/Assets";
-import useStore from "@/store/useStore";
-import { AssetId } from "@/defi/polkadot/types";
-import { debounce } from "lodash";
-import { calculateSwap } from "@/defi/utils/pablo/swaps";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { useDotSamaContext } from "substrate-react";
+import { useSwaps } from "@/defi/hooks/swaps/useSwaps";
+import BigNumber from "bignumber.js";
+import _ from "lodash";
+import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
   const theme = useTheme();
   const dispatch = useDispatch();
-  
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+
   const { extensionStatus } = useDotSamaContext();
-  
-  const { swaps, setUiAssetSelectionSwaps, apollo, invertAssetSelectionSwaps } = useStore();
-  const [valid1, setValid1] = useState<boolean>(false);
-  const [valid2, setValid2] = useState<boolean>(false);
 
-  const token1PriceInUSD = useUSDPriceByAssetId(swaps.ui.baseAssetSelected);
-  const token2PriceInUSD = useUSDPriceByAssetId(swaps.ui.quoteAssetSelected);
+  const {
+    balance1,
+    balance2,
+    changeAsset,
+    selectedAssetOneId,
+    selectedAssetTwoId,
+    selectedAssetOne,
+    selectedAssetTwo,
+    assetListOne,
+    assetListTwo,
+    assetOneAmount,
+    assetTwoAmount,
+    onChangeTokenAmount,
+    updateSpotPrice,
+    minimumReceived,
+    feeCharged,
+    spotPrice,
+    valid,
+    asset1PriceUsd,
+    asset2PriceUsd,
+    setAssetOneInputValid,
+    setAssetTwoInputValid,
+    assetOneInputValid,
+    assetTwoInputValid,
+    flipAssetSelection,
+  } = useSwaps();
 
-  const balance1 = useMemo(() => {
-    return new BigNumber(swaps.userAccount.quoteAssetBalance);
-  }, [swaps.userAccount.quoteAssetBalance]);
+  const initiateSwapTx = usePabloSwap({
+    baseAssetId: selectedAssetTwoId,
+    quoteAssetId: selectedAssetOneId,
+    quoteAmount: assetOneAmount,
+    minimumReceived,
+  });
 
-  const balance2 = useMemo(() => {
-    return new BigNumber(swaps.userAccount.baseAssetBalance);
-  }, [swaps.userAccount.baseAssetBalance]);
-
-  const assetList1 = useMemo(() => {
-    return Object.values(Assets)
-      .filter((i) => {
-        return (
-          AssetsValidForNow.includes(i.assetId) &&
-          i.assetId !== swaps.ui.baseAssetSelected
-        );
+  const onConfirmSwap = async () => {
+    initiateSwapTx()
+      .then(() => {
+        dispatch(closeConfirmingModal());
       })
-      .map((asset) => ({
-        value: asset.assetId,
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [swaps.ui]);
-
-  const assetList2 = useMemo(() => {
-    return Object.values(Assets)
-      .filter((i) => {
-        return (
-          AssetsValidForNow.includes(i.assetId) &&
-          i.assetId !== swaps.ui.quoteAssetSelected
-        );
-      })
-      .map((asset) => ({
-        value: asset.assetId,
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [swaps.ui]);
+      .catch((err) => {
+        console.error(err)
+        dispatch(closeConfirmingModal());
+      });
+  };
 
   const percentageToSwap = useAppSelector(
     (state) => state.swap.percentageToSwap
   );
-
-  const slippage = useAppSelector(
-    (state) => state.settings.transactionSettings.tolerance
-  );
-
-  const spotPriceBn = useMemo(() => {
-    return new BigNumber(swaps.poolVariables.spotPrice);
-  }, [swaps.poolVariables]);
-
-  const [baseAssetAmount, setBaseAssetAmount] = useState(new BigNumber(0));
-  const [quoteAssetAmount, setQuoteAssetAmount] = useState(new BigNumber(0));
-  const [minimumReceived, setMinimumReceived] = useState(new BigNumber(0));
-  const [priceImpact, setPriceImpact] = useState(new BigNumber(0));
-
-  const revertSwap = useCallback(() => {
-      invertAssetSelectionSwaps();
-  }, [invertAssetSelectionSwaps])
-
-  useEffect(() => {
-    setIsProcessing(true);
-
-    if (swaps.dexRouter.dexRoute.length === 0) {
-      setQuoteAssetAmount(new BigNumber(0));
-      setBaseAssetAmount(new BigNumber(0));
-    }
-  }, [swaps.dexRouter.dexRoute]);
-
   const isSwapPreviewModalOpen = useAppSelector(
     (state) => state.ui.isSwapPreviewModalOpen
   );
@@ -129,33 +95,11 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   );
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
 
-  const setAssetId = (side: "base" | "quote") => (
-    assetId: AssetId | "none"
-  ) => {
-    setUiAssetSelectionSwaps(side, assetId);
-  };
-
-  const onSettingHandler = () => {
-    dispatch(openTransactionSettingsModal());
-  };
-
-  const validToken1 = swaps.ui.quoteAssetSelected !== "none";
-  const validToken2 = swaps.ui.baseAssetSelected !== "none";
-  const validTokens = validToken1 && validToken2;
-
-  const handleSwap = () => {
-    dispatch(closeConfirmingModal());
-    dispatch(openSwapPreviewModal());
-  };
-
-  const valid =
-    valid1 && valid2 && validTokens && swaps.dexRouter.dexRoute.length >= 1;
-
   const handleButtonClick = () => {
     if (extensionStatus !== "connected") {
       dispatch(openPolkadotModal());
     } else {
-      handleSwap();
+      dispatch(openSwapPreviewModal());
     }
   };
 
@@ -163,7 +107,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     if (extensionStatus !== "connected") {
       return "Connect wallet";
     }
-
     return "Swap";
   }, [extensionStatus]);
 
@@ -179,61 +122,23 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       setIsConfirmed(false);
       dispatch(closeConfirmingModal());
     }
-    // Dispatch doesn't need to be added to the dependency list. 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConfirmed]);
+  }, [isConfirmed, dispatch]);
 
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const onSwapAmountInput = (swapAmount: {
-    value: BigNumber;
-    side: "quote" | "base";
-  }) => {
-    setIsProcessing(true);
-    const { ui, dexRouter } = swaps;
-    
-    if (
-      parachainApi &&
-      ui.baseAssetSelected !== "none" &&
-      ui.quoteAssetSelected !== "none" &&
-      dexRouter.dexRoute.length
-    ) {
-      const { value, side } = swapAmount;
-      if (side === "base") {
-        setBaseAssetAmount(swapAmount.value);
-      } else {
-        setQuoteAssetAmount(swapAmount.value);
-      }
-
-      const { baseAssetSelected, quoteAssetSelected } = ui;
-
-      const exchangeParams = {
-        quoteAmount: value,
-        baseAssetId: baseAssetSelected,
-        quoteAssetId: quoteAssetSelected,
-        side: side,
-        slippage,
-      };
-
-      calculateSwap(
-        parachainApi,
-        exchangeParams,
-        swaps.poolConstants
-      ).then((impact) => {
-        swapAmount.side === "base"
-          ? setQuoteAssetAmount(new BigNumber(impact.tokenOutAmount))
-          : setBaseAssetAmount(new BigNumber(impact.tokenOutAmount));
-        setMinimumReceived(new BigNumber(impact.minimumRecieved));
-        setPriceImpact(new BigNumber(impact.priceImpact));
-
-        setTimeout(() => {
-          setIsProcessing(false);
-        }, 500);
-      });
-    }
+  const onSettingHandler = () => {
+    dispatch(openTransactionSettingsModal());
   };
 
-  const handler = debounce(onSwapAmountInput, 1000);
+  const handleDebounceFn = async (side: "base" | "quote", value: BigNumber) => {
+    setIsProcessing(true);
+    await onChangeTokenAmount(side, value);
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 500);
+  };
+
+  const debouncedTokenAmountUpdate = _.debounce(handleDebounceFn, 1000);
 
   return (
     <Box
@@ -276,28 +181,23 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         <DropdownCombinedBigNumberInput
           isAnchorable
           maxValue={balance1.multipliedBy(percentageToSwap / 100)}
-          setValid={setValid1}
+          setValid={setAssetOneInputValid}
           noBorder
-          value={quoteAssetAmount}
+          value={assetOneAmount}
           onMouseDown={(evt) => setIsProcessing(false)}
           setValue={(val) => {
             if (isProcessing) return;
-            handler({
-              value: val,
-              side: "quote",
-            });
+            debouncedTokenAmountUpdate("quote", val);
           }}
           InputProps={{
-            disabled: !validToken1,
+            disabled: isProcessing,
           }}
-          buttonLabel={validToken1 ? "Max" : undefined}
-          referenceText={validToken1 ? `${percentageToSwap}%` : undefined}
+          buttonLabel={assetOneInputValid ? "Max" : undefined}
+          referenceText={
+            assetOneInputValid ? `${percentageToSwap}%` : undefined
+          }
           ReferenceTextProps={{
-            onClick: () =>
-            handler({
-              value: balance1.multipliedBy(0.5),
-              side: "quote"
-            }),
+            onClick: () => {},
             sx: {
               cursor: "pointer",
               "&:hover": {
@@ -306,16 +206,17 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
           ButtonProps={{
-            onClick: () => {
-              handler({
-                value: balance1,
-                side: "quote"
-              })
-            },
+            onClick: () => {},
           }}
           CombinedSelectProps={{
-            value: swaps.ui.quoteAssetSelected,
-            setValue: setAssetId("quote"),
+            value: selectedAssetOneId,
+            setValue: (val) => {
+              setIsProcessing(true);
+              changeAsset("quote", val);
+              setTimeout(() => {
+                setIsProcessing(false);
+              }, 500);
+            },
             dropdownModal: true,
             dropdownForceWidth: 320,
             forceHiddenLabel: isMobile ? true : false,
@@ -328,7 +229,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
                 disabled: true,
                 hidden: true,
               },
-              ...assetList1,
+              ...assetListOne,
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
@@ -336,7 +237,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           }}
           LabelProps={{
             label: "From",
-            BalanceProps: validToken1
+            BalanceProps: selectedAssetOne
               ? {
                   title: <AccountBalanceWalletIcon color="primary" />,
                   balance: balance1.toFixed(4),
@@ -346,9 +247,9 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         />
       </Box>
 
-      {valid1 && (
+      {valid && (
         <Typography variant="body2" mt={1.5}>
-          {`≈$${quoteAssetAmount.multipliedBy(token1PriceInUSD)}`}
+          {`≈$${assetOneAmount.multipliedBy(asset1PriceUsd)}`}
         </Typography>
       )}
 
@@ -369,7 +270,12 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
         >
-          <SwapVertRounded onClick={revertSwap} />
+          <SwapVertRounded
+            onClick={() => {
+              setIsProcessing(true);
+              flipAssetSelection();
+            }}
+          />
         </Box>
       </Box>
 
@@ -377,31 +283,29 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         <DropdownCombinedBigNumberInput
           isAnchorable
           maxValue={balance2}
-          setValid={setValid2}
+          setValid={setAssetTwoInputValid}
           noBorder
-          value={baseAssetAmount}
+          value={assetTwoAmount}
           onMouseDown={(evt) => setIsProcessing(false)}
           setValue={(val) => {
             if (isProcessing) return;
-            handler({
-              value: val,
-              side: "base",
-            });
+            debouncedTokenAmountUpdate("base", val);
           }}
           InputProps={{
-            disabled: !validToken2,
+            disabled: isProcessing,
           }}
           ButtonProps={{
-            onClick: () => {
-              handler({
-                value: balance2,
-                side: "base"
-              })
-            },
+            onClick: () => {},
           }}
           CombinedSelectProps={{
-            value: swaps.ui.baseAssetSelected,
-            setValue: setAssetId("base"),
+            value: selectedAssetTwoId,
+            setValue: (val) => {
+              setIsProcessing(true);
+              changeAsset("base", val);
+              setTimeout(() => {
+                setIsProcessing(false);
+              }, 500);
+            },
             dropdownModal: true,
             dropdownForceWidth: 320,
             forceHiddenLabel: isMobile ? true : false,
@@ -414,7 +318,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
                 disabled: true,
                 hidden: true,
               },
-              ...assetList2,
+              ...assetListTwo,
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
@@ -422,7 +326,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           }}
           LabelProps={{
             label: "To",
-            BalanceProps: validToken2
+            BalanceProps: selectedAssetTwo
               ? {
                   title: <AccountBalanceWalletIcon color="primary" />,
                   balance: balance2.toFixed(4),
@@ -432,9 +336,9 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         />
       </Box>
 
-      {valid2 && (
+      {valid && (
         <Typography variant="body2" mt={1.5}>
-          {`≈$${baseAssetAmount.multipliedBy(token2PriceInUSD)}`}
+          {`≈$${assetTwoAmount.multipliedBy(asset2PriceUsd)}`}
         </Typography>
       )}
 
@@ -446,16 +350,16 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         gap={2}
         height={26}
       >
-        {validTokens && (
+        {valid && selectedAssetOne && selectedAssetTwo && (
           <>
             <Typography variant="body2">
-              1 {swaps.ui.quoteAssetSelected} = {spotPriceBn.toFixed()}{" "}
-              {swaps.ui.baseAssetSelected}
+              1 {selectedAssetOne.symbol} = {spotPrice.toFixed()}{" "}
+              {selectedAssetTwo.symbol}
             </Typography>
             <Tooltip
-              title={`1 ${
-                swaps.ui.quoteAssetSelected
-              } = ${spotPriceBn.toFixed()} ${swaps.ui.baseAssetSelected}`}
+              title={`1 ${selectedAssetOne?.symbol} = ${spotPrice.toFixed()} ${
+                selectedAssetTwo.symbol
+              }`}
               placement="top"
             >
               <InfoOutlined sx={{ color: theme.palette.primary.main }} />
@@ -478,14 +382,13 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       {valid && (
         <SwapSummary
           mt={4}
-          poolType={swaps.poolConstants.poolType}
-          quoteAssetId={swaps.ui.quoteAssetSelected}
-          baseAssetAmount={baseAssetAmount}
-          baseAssetId={swaps.ui.baseAssetSelected}
-          quoteAssetAmount={quoteAssetAmount}
+          spotPrice={spotPrice}
+          baseAssetAmount={assetTwoAmount}
+          quoteAsset={selectedAssetOne}
+          baseAsset={selectedAssetTwo}
+          quoteAssetAmount={assetOneAmount}
           minimumReceived={minimumReceived}
-          priceImpact={priceImpact.toNumber()}
-          fee={new BigNumber(swaps.poolConstants.fee).div(100)}
+          feeCharged={feeCharged}
         />
       )}
 
@@ -493,17 +396,20 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         <>
           <SwapRoute
             mt={4}
-            quoteAssetId={swaps.ui.quoteAssetSelected}
-            baseAssetId={swaps.ui.baseAssetSelected}
+            quoteAsset={selectedAssetOne}
+            baseAsset={selectedAssetTwo}
           />
           <PreviewModal
+            onConfirmSwap={onConfirmSwap}
             minimumReceived={minimumReceived}
-            baseAssetAmount={baseAssetAmount}
-            quoteAssetAmount={quoteAssetAmount}
-            baseAssetId={swaps.ui.baseAssetSelected}
-            quoteAssetId={swaps.ui.quoteAssetSelected}
+            baseAssetAmount={assetTwoAmount}
+            quoteAmount={assetOneAmount}
+            quoteAsset={selectedAssetOne}
+            baseAsset={selectedAssetTwo}
             open={isSwapPreviewModalOpen}
             setConfirmed={setIsConfirmed}
+            spotPrice={spotPrice}
+            feeCharged={feeCharged}
           />
           <ConfirmingModal open={isConfirmingModalOpen} />
         </>

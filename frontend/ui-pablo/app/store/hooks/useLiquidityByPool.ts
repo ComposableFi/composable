@@ -2,7 +2,7 @@ import {
   ConstantProductPool,
   LiquidityBootstrappingPool,
   StableSwapPool,
-} from "@/store/pools/pools.types";
+} from "@/defi/types";
 import useStore from "@/store/useStore";
 import { fetchAndUpdatePoolLiquidity } from "@/defi/utils";
 import BigNumber from "bignumber.js";
@@ -39,7 +39,7 @@ export const useLiquidityByPool = (
     if (pool && parachainApi) {
       fetchAndUpdatePoolLiquidity(pool as any, setTokenAmountInLiquidityPool, parachainApi)
     }
-  }, [pool, parachainApi])
+  }, [pool, parachainApi, setTokenAmountInLiquidityPool])
   /**
    * Use Updated balance of pool
    * from the zustand store

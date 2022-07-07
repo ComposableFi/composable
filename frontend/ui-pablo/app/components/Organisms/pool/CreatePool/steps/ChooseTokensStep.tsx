@@ -18,7 +18,7 @@ import { TransactionSettings } from "@/components/Organisms/TransactionSettings"
 import useStore from "@/store/useStore";
 import { AssetId } from "@/defi/polkadot/types";
 import { LiquidityPoolType } from "@/store/pools/pools.types";
-import { Assets, AssetsValidForNow } from "@/defi/polkadot/Assets";
+import { useFilteredAssetListDropdownOptions } from "@/defi/hooks/assets/useFilteredAssetListDropdownOptions";
 
 const labelProps = (label: string, disabled: boolean = false) => ({
   label: label,
@@ -66,33 +66,8 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const { baseAsset, quoteAsset, ammId, setSelectable, currentStep } = createPool;
 
-  const baseAssetList = useMemo(() => {
-    return Object.values(Assets)
-      .filter((i) => {
-        return (
-          AssetsValidForNow.includes(i.assetId) && i.assetId !== quoteAsset
-        );
-      })
-      .map((asset) => ({
-        value: asset.assetId,
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [quoteAsset]);
-
-  const quoteAssetList = useMemo(() => {
-    return Object.values(Assets)
-      .filter((i) => {
-        return AssetsValidForNow.includes(i.assetId) && i.assetId !== baseAsset;
-      })
-      .map((asset) => ({
-        value: asset.assetId,
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [baseAsset]);
+  const baseAssetList = useFilteredAssetListDropdownOptions(quoteAsset);
+  const quoteAssetList = useFilteredAssetListDropdownOptions(baseAsset);
 
   const isUnverifiedPoolWarningOpen = useAppSelector(
     (state) => state.ui.isConfirmingModalOpen

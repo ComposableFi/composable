@@ -37,14 +37,16 @@ export const BigNumberInput: React.FC<BigNumberInputProps> = ({
 
   React.useEffect(() => {
     setter && setter(bignrValue);
-  }, [bignrValue, setter]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bignrValue]);
 
   React.useEffect(() => {
     if (!(value as BigNumber).eq(bignrValue)) {
       setValue(value as BigNumber);
       setStringValue((value as BigNumber).toFixed());
     }
-  }, [value, setValue, setStringValue, bignrValue]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   return (
     <Input

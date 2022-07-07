@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import { Container, Box, Grid, Typography, useTheme } from "@mui/material";
+import { Container, Box, Grid, Typography } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { useAppSelector } from "@/hooks/store";
 import { PageTitle } from "@/components/Organisms/bonds/PageTitle";
@@ -9,10 +9,10 @@ import { DepositForm } from "@/components/Organisms/bonds/DepositForm";
 import { ClaimForm } from "@/components/Organisms/bonds/ClaimForm";
 import { useDotSamaContext } from "substrate-react";
 import { Link } from "@/components";
-import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
+import useBondOffer from "@/defi/hooks/bonds/useBondOffer";
 
 const standardPageSize = {
   xs: 12,
@@ -24,23 +24,24 @@ const twoColumnPageSize = {
 };
 
 const SelectBond: NextPage = () => {
-  const theme = useTheme();
-  const drawerWidth = theme.custom.drawerWidth.desktop;
   const router = useRouter();
-  const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const { extensionStatus } = useDotSamaContext();
-  const bond = useAppSelector((state) => state.bonds.selectedBond);
 
-  const claimable = !bond.claimable_amount.eq(0) || !bond.pending_amount.eq(0);
+  const offerId = router.query.offerId || "";
+  const bondOfferSelected = useBondOffer(offerId as string);
 
+  const claimable = false;
   const message = useAppSelector((state) => state.ui.message);
 
-  useEffect(() => {
-    if (extensionStatus !== "connected") {
-      router.push("/bond");
-    }
-  }, [extensionStatus, router]);
+  useEffect(
+    () => {
+      if (extensionStatus !== "connected") {
+        router.push("/bond");
+      }
+    },
+    [extensionStatus, router]
+  );
 
   useEffect(() => {
     if (message.text) {
@@ -68,20 +69,30 @@ const SelectBond: NextPage = () => {
     <Default breadcrumbs={breadcrumbs}>
       <Container maxWidth="lg">
         <Box display="flex" flexDirection="column" alignItems="center">
-          <PageTitle tokenId1={bond.tokenId1} tokenId2={bond.tokenId2} />
+          <PageTitle
+            rewardAsset={bondOfferSelected.rewardAsset}
+            principalAsset={bondOfferSelected.principalAsset}
+          />
         </Box>
 
-        <BuyButtons mt={8} bond={bond} />
+        <BuyButtons mt={8} bond={bondOfferSelected} />
 
-        <SupplySummary mt={8} bond={bond} />
+          <SupplySummary
+            bond={bondOfferSelected}
+            mt={8}
+          />
+
         <Box position="relative" mt={8} mb={25}>
           <Grid container columnSpacing={4}>
             <Grid item {...(claimable ? twoColumnPageSize : standardPageSize)}>
-              <DepositForm bond={bond} />
+                <DepositForm
+                  bond={bondOfferSelected}
+                  offerId={offerId as string}
+                />
             </Grid>
             {claimable && (
               <Grid item {...twoColumnPageSize}>
-                <ClaimForm bond={bond} />
+                <ClaimForm bond={bondOfferSelected} />
               </Grid>
             )}
           </Grid>

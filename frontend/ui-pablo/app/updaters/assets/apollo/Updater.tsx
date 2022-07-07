@@ -4,8 +4,8 @@ import { useParachainApi } from "substrate-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
-import _ from "lodash";
 import { fetchApolloPriceByAssetId } from "@/defi/utils";
+import _ from "lodash";
 
 const Updater = () => {
   const { updateApolloPrice } = useStore();
@@ -19,12 +19,16 @@ const Updater = () => {
     if (parachainApi) {
       Array.from(onChainAssetIds).map(onChainAssetId => {
         fetchApolloPriceByAssetId(parachainApi, onChainAssetId).then(price => {
+          if (onChainAssetId === "201") {
+            updateApolloPrice(onChainAssetId, "1.5");
+          } else {
+            updateApolloPrice(onChainAssetId, "1");
+          }
           // updateApolloPrice(onChainAssetId.toString(), price);
-          updateApolloPrice(onChainAssetId.toString(), "1");
         })
       })
     }
-  }, [onChainAssetIds, updateApolloPrice, parachainApi])
+  }, [onChainAssetIds, parachainApi, updateApolloPrice])
 
   useEffect(() => {
     if (parachainApi) {

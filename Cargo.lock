@@ -8105,6 +8105,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "log 0.4.17",
  "num-traits",
  "orml-tokens",
  "orml-traits",

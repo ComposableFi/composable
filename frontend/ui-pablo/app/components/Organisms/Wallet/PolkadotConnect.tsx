@@ -12,22 +12,26 @@ import {
   useTheme,
 } from "@mui/material";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useStore from "@/store/useStore";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
-import { AssetId } from "@/defi/polkadot/types";
-import BigNumber from "bignumber.js";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useAssetsWithBalance } from "@/defi/hooks";
 
 const Status = () => {
   const theme = useTheme();
-  const { assets, balances } = useStore();
+  const assetsWithBalance = useAssetsWithBalance(DEFAULT_NETWORK_ID)
 
   const { openPolkadotModal } = useStore();
   const { extensionStatus, selectedAccount } = useDotSamaContext();
   const { accounts } = useParachainApi("picasso");
-  const [selectedAsset, setSelectedAsset] = useState<AssetId>(
-    "pica"
-  );
+  const [selectedAsset, setSelectedAsset] = useState<string>("");
+
+  useEffect(() => {
+    if (assetsWithBalance.length > 0) {
+      setSelectedAsset(assetsWithBalance[0].symbol)
+    }
+  }, [assetsWithBalance])
 
   if (extensionStatus === 'connected') {
     return (
@@ -42,15 +46,14 @@ const Status = () => {
         <Select
           value={selectedAsset}
           setValue={setSelectedAsset}
-          options={Object.values(assets).map((asset) => {
-            let balance = new BigNumber(balances[asset.assetId].picasso);
+          options={assetsWithBalance.map((asset) => {
 
             return {
-              value: asset.assetId,
+              value: asset.symbol,
               label:
-              balance.lte(1000)
-                  ? balance.toString()
-                  : (balance.div(1000)).toFixed(1) + "K",
+              asset.balance.lte(1000)
+                  ? asset.balance.toString()
+                  : (asset.balance.div(1000)).toFixed(1) + "K",
               icon: asset.icon,
             }
           })}

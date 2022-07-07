@@ -1,5 +1,4 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { DefinitionRpc } from "@polkadot/types/types";
 
 export default {
   rpc: {
@@ -185,6 +184,11 @@ export default {
     PalletIbcAny: "Null",
     PalletIbcIbcConsensusState: "Null",
     PalletIbcEventsIbcEvent: "Null",
-    PalletIbcErrorsIbcError: "Null"
+    PalletIbcErrorsIbcError: "Null",
+    IbcTransferTransferParams: "Null",
+    IbcTransferPalletParams: "Null",
+    ComposableTraitsStakingRewardPool: "Null",
+    ComposableTraitsStakingRewardPoolConfiguration: "Null",
+    PalletMosaicAmmSwapInfo: "Null"
   }
 };

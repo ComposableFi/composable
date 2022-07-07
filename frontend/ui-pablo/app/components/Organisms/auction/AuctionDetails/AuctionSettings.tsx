@@ -5,23 +5,26 @@ import {
   Typography, 
   useTheme, 
 } from "@mui/material";
-import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
-import { getAssetById } from "@/defi/polkadot/Assets";
+import { LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
+import { MockedAsset } from "@/store/assets/assets.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export type AuctionSettingsProps = {
   auction: LiquidityBootstrappingPool,
   stats: LiquidityBootstrappingPoolStats,
+  baseAsset: MockedAsset | undefined,
+  quoteAsset: MockedAsset | undefined,
 } & BoxProps;
 
 export const AuctionSettings: React.FC<AuctionSettingsProps> = ({
   auction,
+  baseAsset,
+  quoteAsset,
   stats,
   ...rest
 }) => {
 
   const theme = useTheme();
-  const baseAsset = getAssetById("picasso", auction.pair.base);
-  const quoteAsset = getAssetById("picasso", auction.pair.quote);
 
   return (
     <Box {...rest}>

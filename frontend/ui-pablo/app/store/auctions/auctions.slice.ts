@@ -1,4 +1,5 @@
-import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "../pools/pools.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
+import { LiquidityBootstrappingPoolStats } from "../pools/pools.types";
 import { StoreSlice } from "../types";
 import { AuctionsSlice, PoolTradeHistory } from "./auctions.types";
 import {
@@ -25,7 +26,6 @@ const PLACEHOLDER_STATS: LiquidityBootstrappingPoolStats = {
 const PLACEHOLDER_POOL: LiquidityBootstrappingPool = {
   id: "-",
   poolId: -1,
-  icon: "",
   owner: "-",
   pair: {
     base: 129,
@@ -45,7 +45,6 @@ const PLACEHOLDER_POOL: LiquidityBootstrappingPool = {
     protocolFeeRate: "1",
     ownerFeeRate: "1"
   },
-  spotPrice: "0",
   networkId: "picasso",
   auctionDescription: [],
 };

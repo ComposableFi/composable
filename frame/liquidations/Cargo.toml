@@ -31,6 +31,11 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
+log = "0.4"
+orml-tokens = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5" }
+pallet-assets = { default-features = false, path = "../assets" }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+pallet-dutch-auction = { default-features = false, path = "../dutch-auction" }
 
 cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.24", optional = true }
 num-traits = { version = "0.2.14", default-features = false }
@@ -69,6 +74,7 @@ std = [
   "scale-info/std",
   "xcm/std",
   "cumulus-pallet-xcm/std",
+  "frame-benchmarking/std",
 ]
 
 runtime-benchmarks = [
@@ -76,4 +82,6 @@ runtime-benchmarks = [
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
+  "pallet-assets/runtime-benchmarks",
+  "pallet-dutch-auction/runtime-benchmarks",
 ]

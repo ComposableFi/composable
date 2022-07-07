@@ -29,6 +29,7 @@ frame-support = { default-features = false, git = "https://github.com/paritytech
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
+orml-tokens = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5", default-features = false }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.24" }
 scale-info = { version = "2.1.1", default-features = false, features = [
