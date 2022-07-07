@@ -12,6 +12,24 @@ export type __AugmentedError<ApiType extends ApiTypes> =
 
 declare module "@polkadot/api-base/types/errors" {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
+    airdrop: {
+      AirdropAlreadyStarted: AugmentedError<ApiType>;
+      AirdropDoesNotExist: AugmentedError<ApiType>;
+      AirdropIsNotEnabled: AugmentedError<ApiType>;
+      ArithmiticError: AugmentedError<ApiType>;
+      AssociatedWithAnohterAccount: AugmentedError<ApiType>;
+      BackToTheFuture: AugmentedError<ApiType>;
+      InvalidProof: AugmentedError<ApiType>;
+      NotAirdropCreator: AugmentedError<ApiType>;
+      NothingToClaim: AugmentedError<ApiType>;
+      RecipientAlreadyClaimed: AugmentedError<ApiType>;
+      RecipientNotFound: AugmentedError<ApiType>;
+      UnclaimedFundsRemaining: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
       InvalidCurrency: AugmentedError<ApiType>;

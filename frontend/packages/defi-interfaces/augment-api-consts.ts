@@ -39,6 +39,28 @@ export type __AugmentedConst<ApiType extends ApiTypes> =
 
 declare module "@polkadot/api-base/types/consts" {
   export interface AugmentedConsts<ApiType extends ApiTypes> {
+    airdrop: {
+      /**
+       * The AccountId of this pallet.
+       **/
+      accountId: AccountId32 & AugmentedConst<ApiType>;
+      /**
+       * The pallet ID required for creating sub-accounts used by Airdrops.
+       **/
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * The prefix used in proofs
+       **/
+      prefix: Bytes & AugmentedConst<ApiType>;
+      /**
+       * The stake required to craete an Airdrop
+       **/
+      stake: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     assets: {
       nativeAssetId: u128 & AugmentedConst<ApiType>;
       /**
