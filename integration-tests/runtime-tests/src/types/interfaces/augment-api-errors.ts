@@ -1,9 +1,9 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from "@polkadot/api-base/types";
+import type { ApiTypes } from '@polkadot/api-base/types';
 
-declare module "@polkadot/api-base/types/errors" {
+declare module '@polkadot/api-base/types/errors' {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
@@ -915,9 +915,12 @@ declare module "@polkadot/api-base/types/errors" {
       InvalidPair: AugmentedError<ApiType>;
       InvalidSaleState: AugmentedError<ApiType>;
       MissingAmount: AugmentedError<ApiType>;
+      MissingMinExpectedAmount: AugmentedError<ApiType>;
+      MoreThanTwoAssetsNotYetSupported: AugmentedError<ApiType>;
       MustBeOwner: AugmentedError<ApiType>;
       NoLpTokenForLbp: AugmentedError<ApiType>;
       NotEnoughLiquidity: AugmentedError<ApiType>;
+      NotEnoughLpToken: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
       WeightsMustBeNonZero: AugmentedError<ApiType>;
@@ -1145,6 +1148,18 @@ declare module "@polkadot/api-base/types/errors" {
     };
     stakingRewards: {
       /**
+       * Invalid end block number provided for creating a pool.
+       **/
+      EndBlockMustBeInTheFuture: AugmentedError<ApiType>;
+      /**
+       * Error when creating reward configs.
+       **/
+      RewardConfigProblem: AugmentedError<ApiType>;
+      /**
+       * Unimplemented reward pool type.
+       **/
+      UnimplementedRewardPoolConfiguration: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -1166,7 +1181,7 @@ declare module "@polkadot/api-base/types/errors" {
       CallFiltered: AugmentedError<ApiType>;
       /**
        * Failed to extract the runtime version from the new runtime.
-       *
+       * 
        * Either calling `Core_version` or decoding `RuntimeVersion` failed.
        **/
       FailedToExtractRuntimeVersion: AugmentedError<ApiType>;

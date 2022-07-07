@@ -10,6 +10,7 @@
     "compile": "tsc -p . --declaration",
     "live_compile": "tsc -p . -w",
     "lint": "eslint 'test/**/*.ts' 'src/**/*.ts' --fix-dry-run ",
+    "prettier": "prettier 'test/**/*.ts' 'src/**/*.ts' --write",
     "test": "ts-mocha --paths -p tsconfig.json",
     "gen": "npm run gen:defs && npm run gen:meta",
     "gen:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package @composable/types/interfaces --input ./src/types/interfaces",

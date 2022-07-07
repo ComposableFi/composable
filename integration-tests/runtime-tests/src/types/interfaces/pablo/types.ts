@@ -1,14 +1,9 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type {
-  ComposableTraitsDefiCurrencyPairCurrencyId,
-  CustomRpcBalance,
-  CustomRpcCurrencyId,
-  SafeRpcWrapper
-} from "@composable/types/interfaces/common";
-import type { Enum, Null, Struct, u128, u16 } from "@polkadot/types-codec";
-import type { AccountId32, BlockNumber, Permill } from "@polkadot/types/interfaces/runtime";
+import type { ComposableTraitsDefiCurrencyPairCurrencyId, CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from '@composable/types/interfaces/common';
+import type { Enum, Null, Struct, u128, u16 } from '@polkadot/types-codec';
+import type { AccountId32, BlockNumber, Permill } from '@polkadot/types/interfaces/runtime';
 
 /** @name ComposableTraitsDexFee */
 export interface ComposableTraitsDexFee extends Struct {
@@ -40,18 +35,18 @@ export interface PalletPabloPoolConfiguration extends Enum {
     readonly owner: AccountId32;
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
     readonly sale: {
-      readonly start: BlockNumber;
-      readonly end: BlockNumber;
-      readonly initial_weight: Permill;
-      readonly final_weight: Permill;
-    } & Struct;
-    readonly feeConfig: {
-      readonly feeRate: Permill;
-      readonly ownerFeeRate: Permill;
-      readonly protocolFeeRate: Permill;
-    } & Struct;
+    readonly start: BlockNumber;
+    readonly end: BlockNumber;
+    readonly initial_weight: Permill;
+    readonly final_weight: Permill;
   } & Struct;
-  readonly type: "StableSwap" | "ConstantProduct" | "LiquidityBootstrapping";
+    readonly feeConfig: {
+    readonly feeRate: Permill;
+    readonly ownerFeeRate: Permill;
+    readonly protocolFeeRate: Permill;
+  } & Struct;
+  } & Struct;
+  readonly type: 'StableSwap' | 'ConstantProduct' | 'LiquidityBootstrapping';
 }
 
 /** @name PalletPabloPoolId */
@@ -74,4 +69,4 @@ export interface PalletPabloPriceCumulative extends Null {}
 /** @name PalletPabloTimeWeightedAveragePrice */
 export interface PalletPabloTimeWeightedAveragePrice extends Null {}
 
-export type PHANTOM_PABLO = "pablo";
+export type PHANTOM_PABLO = 'pablo';
