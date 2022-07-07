@@ -182,7 +182,7 @@ impl<T: Config + DeFiComposableConfig> SellEngine<TimeReleaseFunction> for Palle
 	) -> Result<Self::OrderId, DispatchError> {
 		ensure!(order.is_valid(), Error::<T>::OrderParametersIsInvalid,);
 		let order_id = <OrdersIndex<T>>::increment();
-		let treasury = &T::PalletId::get().into_account();
+		let treasury = &T::PalletId::get().into_account_truncating();
 		let deposit = T::PositionExistentialDeposit::get();
 		<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(
 			from_to, treasury, deposit, true,
