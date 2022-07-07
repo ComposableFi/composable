@@ -362,8 +362,8 @@ pub mod pallet {
 			let mut inner_rewards = rewards_pool.rewards.into_inner();
 
 			for (asset_id, reward) in inner_rewards.iter_mut() {
-				let inflation = if &rewards_pool.total_shares == &Self::Balance::from(0u32) {
-					Self::Balance::from(0u32)
+				let inflation = if rewards_pool.total_shares == Self::Balance::from(0_u32) {
+					Self::Balance::from(0_u32)
 				} else {
 					reward
 						.total_rewards
@@ -383,14 +383,14 @@ pub mod pallet {
 					.map_err(|_| ArithmeticError::Overflow)?;
 
 				reductions
-					.try_insert(asset_id.clone(), inflation.clone())
+					.try_insert(*asset_id, inflation)
 					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
 			}
 			let rewards =
 				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
 
 			let new_position = Stake {
-				reward_pool_id: pool_id.clone(),
+				reward_pool_id: *pool_id,
 				stake: amount,
 				share: boosted_amount,
 				reductions,
@@ -416,7 +416,7 @@ pub mod pallet {
 			Stakes::<T>::insert(position_id, new_position);
 
 			Self::deposit_event(Event::<T>::Staked {
-				pool_id: pool_id.clone(),
+				pool_id: *pool_id,
 				owner: who.clone(),
 				amount,
 				duration_preset,
