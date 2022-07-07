@@ -352,7 +352,7 @@ pub mod pallet {
 				Error::<T>::NotEnoughAssets
 			);
 
-			let boosted_amount = *reward_multiplier * amount;
+			let boosted_amount = reward_multiplier.mul_ceil(amount);
 			let mut reductions: Reductions<
 				T::AssetId,
 				T::Balance,
