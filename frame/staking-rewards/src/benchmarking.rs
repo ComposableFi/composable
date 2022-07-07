@@ -60,7 +60,7 @@ fn reward_config<T: Config>(
 
 benchmarks! {
   where_clause {
-		where T::BlockNumber: From<u32>, T::Balance: From<u128>, T::AssetId: From<u128>, T::RewardPoolId: From<u128>, T::PositionId: From<u128>
+		where T::BlockNumber: From<u32>, T::Balance: From<u128>, T::AssetId: From<u128>, T::RewardPoolId: From<u16>, T::PositionId: From<u128>
 	}
 	create_reward_pool {
 		let owner: T::AccountId = account("owner", 0, 0);
@@ -71,7 +71,7 @@ benchmarks! {
 		let _res = Pallet::<T>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(user.clone()));
 		let _res = StakeCount::<T>::increment();
 		let stake = Stake::<T::RewardPoolId, T::Balance, Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>> {
-			reward_pool_id: 1_u128.into(),
+			reward_pool_id: 1_u16.into(),
 			stake: 1000_000_000_000_000_u128.into(),
 			share: 1000_000_000_000_000_u128.into(),
 			reductions: Reductions::<_,_,_>::new(),
