@@ -1008,6 +1008,7 @@ impl liquidations::Config for Runtime {
 	type PalletId = LiquidationsPalletId;
 	type CanModifyStrategies = EnsureRootOrHalfCouncil;
 	type XcmSender = XcmRouter;
+	type MaxLiquidationStrategiesAmount = frame_support::traits::ConstU32<10>;
 }
 
 parameter_types! {

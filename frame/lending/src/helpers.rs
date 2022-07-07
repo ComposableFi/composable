@@ -8,13 +8,19 @@ use crate::{
 	},
 };
 use composable_support::{
-	math::safe::{SafeAdd, SafeDiv, SafeMul},
+	math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
 	validation::{TryIntoValidated, Validated},
 };
 use composable_traits::{
 	currency::CurrencyFactory,
-	defi::{DeFiComposableConfig, *},
-	lending::{math::*, BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig, UpdateInput},
+	defi::{
+		CurrencyPair, DeFiComposableConfig, DeFiEngine, LiftedFixedBalance, MoreThanOneFixedU128,
+		OneOrMoreFixedU128, Sell,
+	},
+	lending::{
+		math::InterestRate, BorrowAmountOf, CollateralLpAmountOf, Lending, MarketConfig,
+		UpdateInput,
+	},
 	liquidation::Liquidation,
 	oracle::Oracle,
 	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
@@ -26,6 +32,7 @@ use frame_support::{
 	traits::{
 		fungible::{Inspect as NativeInspect, Transfer as NativeTransfer},
 		fungibles::{Inspect, Transfer},
+		tokens::DepositConsequence,
 		UnixTime,
 	},
 	weights::WeightToFeePolynomial,
@@ -140,6 +147,87 @@ impl<T: Config> Pallet<T> {
 			amount,
 			keep_alive,
 		)?;
+		Ok(())
+	}
+
+	pub(crate) fn do_withdraw_collateral(
+		market_id: &<Self as Lending>::MarketId,
+		account: &T::AccountId,
+		amount: Validated<CollateralLpAmountOf<Self>, BalanceGreaterThenZero>,
+	) -> Result<(), DispatchError> {
+		let amount = amount.value();
+		let (_, market) = Self::get_market(market_id)?;
+
+		let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
+			// REVIEW: Perhaps don't default to zero
+			// REVIEW: What is expected behaviour if there is no collateral?
+			.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero());
+
+		ensure!(amount <= collateral_balance, Error::<T>::NotEnoughCollateralToWithdraw);
+
+		let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
+		let borrower_balance_with_interest =
+			Self::total_debt_with_interest(market_id, account)?.unwrap_or_zero();
+
+		let borrow_balance_value = Self::get_price(borrow_asset, borrower_balance_with_interest)?;
+
+		let collateral_balance_after_withdrawal_value =
+			Self::get_price(market.collateral_asset, collateral_balance.safe_sub(&amount)?)?;
+
+		let borrower_after_withdrawal = BorrowerData::new(
+			collateral_balance_after_withdrawal_value,
+			borrow_balance_value,
+			market
+				.collateral_factor
+				.try_into_validated()
+				.map_err(|_| Error::<T>::Overflow)?, // TODO: Use a proper error mesage?
+			market.under_collateralized_warn_percent,
+		);
+
+		ensure!(
+			!borrower_after_withdrawal.should_liquidate()?,
+			Error::<T>::WouldGoUnderCollateralized
+		);
+
+		let market_account = Self::account_id(market_id);
+
+		ensure!(
+			<T as Config>::MultiCurrency::can_deposit(
+				market.collateral_asset,
+				account,
+				amount,
+				false
+			) == DepositConsequence::Success,
+			Error::<T>::TransferFailed
+		);
+		ensure!(
+			<T as Config>::MultiCurrency::can_withdraw(
+				market.collateral_asset,
+				&market_account,
+				amount
+			)
+			.into_result()
+			.is_ok(),
+			Error::<T>::TransferFailed
+		);
+
+		AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+			let new_collateral_balance =
+				// REVIEW: Should we default if there's no collateral? Or should an error (something like "NoCollateralToWithdraw") be returned instead?
+				collateral_balance.unwrap_or_default().safe_sub(&amount)?;
+
+			collateral_balance.replace(new_collateral_balance);
+
+			Result::<(), DispatchError>::Ok(())
+		})?;
+		<T as Config>::MultiCurrency::transfer(
+			market.collateral_asset,
+			&market_account,
+			account,
+			amount,
+			true,
+		)
+		.expect("impossible; qed;");
 		Ok(())
 	}
 
@@ -613,7 +701,9 @@ pub(crate) fn accrue_interest_internal<T: Config, I: InterestRate>(
 
 /// Retrieve the current interest rate for the given `market_id`.
 #[cfg(test)]
-pub fn current_interest_rate<T: Config>(market_id: MarketId) -> Result<Rate, DispatchError> {
+pub fn current_interest_rate<T: Config>(
+	market_id: MarketId,
+) -> Result<composable_traits::defi::Rate, DispatchError> {
 	let market_id = MarketIndex::new(market_id);
 	let total_borrowed_from_market_excluding_interest =
 		Pallet::<T>::total_borrowed_from_market_excluding_interest(&market_id)?;

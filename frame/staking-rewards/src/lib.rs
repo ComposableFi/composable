@@ -44,6 +44,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	pub use crate::weights::WeightInfo;
 	use composable_support::{
 		abstractions::{
 			nonce::Nonce,
@@ -67,7 +68,7 @@ pub mod pallet {
 	use sp_runtime::traits::BlockNumberProvider;
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
 
-	use crate::{prelude::*, weights::WeightInfo};
+	use crate::prelude::*;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
