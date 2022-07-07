@@ -68,7 +68,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use sp_arithmetic::{traits::One, Permill};
 	use sp_runtime::{traits::BlockNumberProvider, PerThing};
-	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
+	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
 
 	use crate::{prelude::*, validation::ValidSplitRatio};
 
@@ -330,23 +330,32 @@ pub mod pallet {
 			position: &Self::PositionId,
 			ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
-			let old_position = Stakes::<T>::try_mutate(position, |old_stake| match old_stake {
-				Some(stake) => {
-					let old_value = stake.clone();
-					stake.stake = ratio.mul_floor(stake.stake);
-					stake.share = ratio.mul_floor(stake.share);
-					let assets: Vec<T::AssetId> = stake.reductions.keys().cloned().collect();
-					for asset in assets {
-						let reduction = stake.reductions.get_mut(&asset);
-						if let Some(value) = reduction {
-							*value = ratio.mul_floor(*value);
+			let mut old_position =
+				Stakes::<T>::try_mutate(position, |old_stake| match old_stake {
+					Some(stake) => {
+						let old_value = stake.clone();
+						stake.stake = ratio.mul_floor(stake.stake);
+						stake.share = ratio.mul_floor(stake.share);
+						let assets: Vec<T::AssetId> = stake.reductions.keys().cloned().collect();
+						for asset in assets {
+							let reduction = stake.reductions.get_mut(&asset);
+							if let Some(value) = reduction {
+								*value = ratio.mul_floor(*value);
+							}
 						}
-					}
-					Ok(old_value)
-				},
-				None => Err(Error::<T>::NoPositionFound),
-			})?;
+						Ok(old_value)
+					},
+					None => Err(Error::<T>::NoPositionFound),
+				})?;
 			let left_from_one_ratio = ratio.left_from_one();
+			let assets: Vec<T::AssetId> = old_position.reductions.keys().cloned().collect();
+			for asset in assets {
+				let reduction = old_position.reductions.get_mut(&asset);
+				if let Some(value) = reduction {
+					*value = left_from_one_ratio.mul_floor(*value);
+				}
+			}
+
 			let new_stake = StakeOf::<T> {
 				stake: left_from_one_ratio.mul_floor(old_position.stake),
 				share: left_from_one_ratio.mul_floor(old_position.share),

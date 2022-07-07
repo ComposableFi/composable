@@ -55,6 +55,7 @@ fn test_split_postion() {
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
 		let new_position = StakeCount::<Test>::increment();
 		assert_ok!(new_position);
+		let reduction = 10_000_000_000_000_u128;
 		let stake = Stake::<
 			RewardPoolId,
 			Balance,
@@ -63,7 +64,8 @@ fn test_split_postion() {
 			reward_pool_id: 1,
 			stake: 1000_000_000_000_000_u128,
 			share: 1000_000_000_000_000_u128,
-			reductions: Reductions::<_, _, _>::new(),
+			reductions: Reductions::<_, _, _>::try_from(BTreeMap::from([(USDT::ID, reduction)]))
+				.expect("BoundedBTreeMap creation failed"),
 			lock: Lock {
 				started_at: 10000_u64,
 				duration: 10000000_u64,
@@ -84,8 +86,13 @@ fn test_split_postion() {
 		// validate stake and share as per ratio
 		assert_eq!(stake1.stake, ratio.mul_floor(stake.stake));
 		assert_eq!(stake1.share, ratio.mul_floor(stake.share));
+		assert_eq!(stake1.reductions.get(&USDT::ID), Some(&ratio.mul_floor(reduction)));
 		assert_eq!(stake2.stake, left_from_one_ratio.mul_floor(stake.stake));
 		assert_eq!(stake2.share, left_from_one_ratio.mul_floor(stake.share));
+		assert_eq!(
+			stake2.reductions.get(&USDT::ID),
+			Some(&left_from_one_ratio.mul_floor(reduction))
+		);
 	});
 }
 
