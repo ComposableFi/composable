@@ -9,7 +9,7 @@ Transaction fees (or gas) are payable in LAYR.
 
 ### Governance
 
-PICA will be used in voting to decide on key governance decisions, including: 
+LAYR will be used in voting to decide on key governance decisions, including: 
 
 
 
