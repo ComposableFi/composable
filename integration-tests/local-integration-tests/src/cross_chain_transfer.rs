@@ -225,6 +225,7 @@ fn transfer_from_sibling_to_this() {
 
 // from: Hydra
 #[test]
+#[ignore = "#CU-363g6rf"]
 fn transfer_insufficient_amount_should_fail() {
 	simtest();
 	Sibling::execute_with(|| {

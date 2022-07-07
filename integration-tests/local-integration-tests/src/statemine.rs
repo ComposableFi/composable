@@ -58,6 +58,7 @@ fn transfer_native_from_relay_chain_to_statemine() {
 
 /// Statemine issues custom token
 #[test]
+#[ignore = "#CU-363g6rf"]
 fn this_chain_statemine_transfers_back_and_forth_work() {
 	simtest();
 	let this_parachain_account: AccountId =
