@@ -1,19 +1,20 @@
 import { Assets } from "@/defi/polkadot/Assets";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useEffect, useState } from "react";
+import useStore from "../useStore";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 
 export const useOnChainAssetIds = (): Set<string> => {
+    const { supportedAssets } = useStore();
+
     const [assetIds, setAssetIds] = useState(new Set<string>());
 
     useEffect(() => {
-        let defaultIds = new Set<string>();
-        Object.values(Assets).forEach((asset) => {
-            if (asset.supportedNetwork.picasso) {
-                defaultIds.add(asset.supportedNetwork.picasso.toString());
-            }
-        });
-        setAssetIds(defaultIds);
-    }, []);
+        let assetIds = supportedAssets.map(i => {
+            return i.network[DEFAULT_NETWORK_ID]
+        }).filter(Boolean);
+        setAssetIds(new Set(assetIds))
+    }, [supportedAssets]);
 
     const pools = useAllLpTokenRewardingPools();
 

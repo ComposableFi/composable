@@ -14,9 +14,10 @@ import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import createEmotionCache from "@/styles/createEmotionCache";
 
+import PoolsUpdater from "@/updaters/pools/Updater";
 import LiquidityUpdater from "@/updaters/liquidity/Updater";
 import LiquidityBootstrappingUpdater from "@/updaters/pools/Updater";
-import SwapsUpdater from "@/updaters/swaps/Updater";
+
 import PoolStatsUpdater from "@/updaters/poolStats/Updater";
 import BalancesUpdater from "@/updaters/assets/balances/Updater";
 import ApolloUpdater from "@/updaters/assets/apollo/Updater";
@@ -137,12 +138,12 @@ export default function MyApp(props: MyAppProps) {
               >
                 <>
                   <AuctionsUpdater />
-                  <SwapsUpdater />
                   <LiquidityBootstrappingUpdater />
                   <BalancesUpdater />
                   <LiquidityUpdater />
                   <PoolStatsUpdater />
                   <ApolloUpdater />
+                  <PoolsUpdater />
                 </>
                 <ExecutorProvider>
                   <Component {...pageProps} />

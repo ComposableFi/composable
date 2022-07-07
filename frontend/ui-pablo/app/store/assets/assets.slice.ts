@@ -1,56 +1,61 @@
-import { Assets } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
 import { StoreSlice } from "../types";
-import { AssetsSlice } from "./assets.types";
-import { ParachainId } from "substrate-react/dist/dotsama/types";
-import { ParachainNetworks, RelayChainNetworks } from "substrate-react";
-import { setApolloPrice, updateBalance } from "./assets.utils";
+import { AssetsSlice, MockedAsset } from "./assets.types";
+import { putAssetBalance, setApolloPrice } from "./assets.utils";
 
-const EMPTY_ASSETS_MAP: AssetsSlice["assets"] = Object.entries(Assets)
-  .map(([assetId, metadata]) => {
-    return {
-      assetId: assetId,
-      decimals: metadata.decimals,
-      symbol: metadata.symbol,
-      icon: metadata.icon,
-    };
-  })
-  .reduce((prev, curr) => {
-    return {
-      ...prev,
-      [curr.assetId]: curr,
-    };
-  }, {} as AssetsSlice["assets"]);
-
-const EMPTY_BALANCES_MAP: AssetsSlice["balances"] = Object.keys(Assets).reduce((p, c) => {
-  let zeroBalance = Object.keys(RelayChainNetworks).concat(Object.keys(ParachainNetworks)).reduce((p, c) => {
-    return {
-      ...p,
-      [c]: "0"
-    }
-  }, {})
-  return {
-    ...p,
-    [c]: zeroBalance
+export const SUPPORTED_ASSETS: MockedAsset[] = [
+  {
+    decimals: 12,
+    symbol: "PICA",
+    icon: "/tokens/picasso.svg",
+    name: "Picasso",
+    network: {
+      karura: "none",
+      picasso: "1",
+    },
+  },
+  {
+    decimals: 12,
+    symbol: "KSM",
+    icon: "/networks/kusama.svg",
+    name: "Kusama",
+    network: {
+      karura: "none",
+      picasso: "4",
+    },
+  },
+  {
+    decimals: 12,
+    symbol: "KUSD",
+    icon: "/tokens/usd-coin-usdc.svg",
+    name: "K-USD",
+    network: {
+      karura: "none",
+      picasso: "129",
+    },
+  },
+  {
+    decimals: 12,
+    symbol: "PBLO",
+    icon: "/tokens/pablo.svg",
+    name: "Pablo",
+    network: {
+      karura: "none",
+      picasso: "201",
+    },
   }
-}, {} as any)
+]
 
 const createAssetsSlice: StoreSlice<AssetsSlice> = (set) => ({
-  assets: EMPTY_ASSETS_MAP,
-  balances: EMPTY_BALANCES_MAP,
+  supportedAssets: SUPPORTED_ASSETS,
+  assetBalances: {},
   apollo: {},
   updateApolloPrice: (assetId: string, price: string) =>
     set((prev: AssetsSlice) => ({
       apollo: setApolloPrice(prev.apollo, assetId, price),
     })),
-  updateAssetBalance: (
-    assetId: AssetId,
-    parachainId: ParachainId,
-    balance: string
-  ) =>
-    set((prev: AssetsSlice) => ({
-      balances: updateBalance(prev.balances, assetId, parachainId, balance),
-    })),
+  putAssetBalance: (networkId, assetId, balance) => set((prevSlice: AssetsSlice) => ({
+    assetBalances: putAssetBalance(prevSlice.assetBalances, networkId, assetId, balance)
+  }))
 });
 
 export default createAssetsSlice;

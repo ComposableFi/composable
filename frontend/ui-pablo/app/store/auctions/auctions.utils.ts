@@ -1,6 +1,7 @@
 import produce from "immer";
-import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
+import { LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
 import { AuctionsSlice, PoolTradeHistory } from "./auctions.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export const setActivePool = (
   lbpState: AuctionsSlice["auctions"],

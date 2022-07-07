@@ -1,4 +1,5 @@
-import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
+
+import { LiquidityBootstrappingPool } from "@/defi/types";
 import BigNumber from "bignumber.js";
 import { DAYS } from "../constants";
 import { caluclateWeightAt } from "../pablo/auctions";

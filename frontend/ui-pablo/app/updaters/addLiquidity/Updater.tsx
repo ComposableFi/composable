@@ -1,9 +1,6 @@
 import { useEffect } from "react";
 import { useParachainApi } from "substrate-react";
-import { getAsset, getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { isValidAssetPair } from "@/defi/utils";
-import { AssetId } from "@/defi/polkadot/types";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAddLiquiditySlice, setPool, setSelection } from "@/store/addLiquidity/addLiquidity.slice";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 
@@ -22,17 +19,13 @@ const Updater = () => {
       isValidAssetPair(ui.assetOne, ui.assetTwo) &&
       findPoolManually
       ) {
-      const onChainBaseAssetId = getAsset(ui.assetOne as AssetId)
-        .supportedNetwork.picasso as number;
-      const onChainQuoteAssetId = getAsset(ui.assetTwo as AssetId)
-        .supportedNetwork.picasso as number;
 
       const pool = pools.find((i) => {
         return (
-          (i.pair.base === onChainBaseAssetId &&
-            i.pair.quote === onChainQuoteAssetId) ||
-          (i.pair.base === onChainQuoteAssetId &&
-            i.pair.quote === onChainBaseAssetId)
+          (i.pair.base.toString() === ui.assetOne &&
+            i.pair.quote.toString() === ui.assetTwo) ||
+          (i.pair.base.toString() === ui.assetTwo &&
+            i.pair.quote.toString() === ui.assetOne)
         );
       });
 
@@ -43,6 +36,7 @@ const Updater = () => {
       }
     }
   }, [
+    pools,
     parachainApi,
     ui.assetOne,
     ui.assetTwo,
@@ -51,18 +45,9 @@ const Updater = () => {
 
   useEffect(() => {
     if (parachainApi && !findPoolManually && pool && pool.poolId !== -1) {
-      const onChainBaseAssetId = getAssetByOnChainId(
-        DEFAULT_NETWORK_ID,
-        pool.pair.base
-      );
-      const onChainQuoteAssetId = getAssetByOnChainId(
-        DEFAULT_NETWORK_ID,
-        pool.pair.quote
-      );
-
       setSelection({
-        assetOne: onChainBaseAssetId.assetId,
-        assetTwo: onChainQuoteAssetId.assetId
+        assetOne: pool.pair.base.toString(),
+        assetTwo: pool.pair.quote.toString()
       })
     }
   }, [parachainApi, findPoolManually, pool]);

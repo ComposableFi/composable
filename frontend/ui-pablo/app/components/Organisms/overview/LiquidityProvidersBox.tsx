@@ -13,6 +13,8 @@ import React from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "../BoxWrapper";
 import { usePoolsWithLpBalance } from "@/store/hooks/overview/usePoolsWithLpBalance";
+import { NoPositionsPlaceholder } from "./NoPositionsPlaceholder";
+import { OVERVIEW_ERRORS } from "./errors";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -42,7 +44,11 @@ export const LiquidityProvidersBox: React.FC<BoxProps> = ({
       title="Liquidity provider positions"
       {...boxProps}
     >
-      <TableContainer>
+      {liquidityProvided.length === 0 && (
+        <NoPositionsPlaceholder text={OVERVIEW_ERRORS.NO_BOND} />
+      )}
+
+      {liquidityProvided.length > 0 && <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
@@ -85,7 +91,7 @@ export const LiquidityProvidersBox: React.FC<BoxProps> = ({
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
+      </TableContainer>}
     </BoxWrapper>
   );
 };

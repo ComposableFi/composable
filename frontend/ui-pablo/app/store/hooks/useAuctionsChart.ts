@@ -1,3 +1,4 @@
+import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
 import {
   createPabloPoolAccountId,
   DEFAULT_NETWORK_ID,
@@ -5,12 +6,12 @@ import {
 } from "@/defi/utils";
 import { calculatePredictedChartSeries } from "@/defi/utils/charts/auctions";
 import { transformAuctionsTransaction } from "@/defi/utils/pablo/auctions";
-import { LiquidityBootstrappingPoolTrade } from "@/defi/utils/pablo/auctions/types";
+
 import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
 import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { useParachainApi } from "substrate-react";
-import { LiquidityBootstrappingPool } from "../pools/pools.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export function useAuctionsChart(
   pool: LiquidityBootstrappingPool | undefined
@@ -55,7 +56,7 @@ export function useAuctionsChart(
               const baseBal = await fetchBalanceByAssetId(
                 parachainApi,
                 poolAccount,
-                pool.pair.quote.toString()
+                pool.pair.base.toString()
               );
 
               const series = calculatePredictedChartSeries(

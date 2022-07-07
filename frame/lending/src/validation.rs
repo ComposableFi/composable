@@ -93,7 +93,8 @@ where
 	B: Zero + PartialOrd,
 {
 	fn validate(balance: B) -> Result<B, &'static str> {
-		ensure!(balance > B::zero(), "Can not deposit zero collateral");
+		ensure!(balance > B::zero(), "Can not deposit or withdraw zero collateral");
+
 		Ok(balance)
 	}
 }

@@ -1,12 +1,11 @@
-import { AssetId } from "@/defi/polkadot/types";
 import create from "zustand";
-import { ConstantProductPool, StableSwapPool } from "../pools/pools.types";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 
 export interface AddLiquiditySlice {
   pool: StableSwapPool | ConstantProductPool | undefined;
   ui: {
-    assetOne: AssetId | "none";
-    assetTwo: AssetId | "none";
+    assetOne: string | "none";
+    assetTwo: string | "none";
     assetOneAmount: string;
     assetTwoAmount: string;
   };

@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
 export function fromChainUnits(
-  amount: string | number,
+  amount: string | number | BigNumber,
   decimals: number = 12
 ): BigNumber {
   const base = new BigNumber(10);

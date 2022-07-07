@@ -1,3 +1,5 @@
+import BigNumber from "bignumber.js";
+
 export const FLOAT_NUMBER: RegExp = /^\d+(\.\d+)?$/;
 export const NUMBERS_ONE_DOT: RegExp = /^\d+\.$/;
 
@@ -19,11 +21,12 @@ export const nFormatter = (num: number, digits: number = 1) => {
 }
 
 
-export const percentageToNumber = (percentString: string): number => Number(percentString.replaceAll("%", ""));
-
 export const validNumber = (value: number | string, min?: number, max?: number) => {
   const numberValue = Number(value);
   return !isNaN(numberValue)
             && !(min && numberValue < min)
             && !(max && numberValue > max);
 }
+
+export const humanizedBnToBn = (bn: string) => new BigNumber(bn.replaceAll(",", ""));
+export const humanizedPermillToBigNumber = (permill: string) => new BigNumber(permill.replaceAll("%", ""));

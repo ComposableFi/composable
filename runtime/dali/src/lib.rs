@@ -989,6 +989,7 @@ impl mosaic::Config for Runtime {
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
 	type RemoteAmmId = u128; // TODO: Swap to U256?
+	type AmmMinimumAmountOut = u128;
 }
 
 pub type LiquidationStrategyId = u32;
@@ -1008,6 +1009,7 @@ impl liquidations::Config for Runtime {
 	type PalletId = LiquidationsPalletId;
 	type CanModifyStrategies = EnsureRootOrHalfCouncil;
 	type XcmSender = XcmRouter;
+	type MaxLiquidationStrategiesAmount = frame_support::traits::ConstU32<10>;
 }
 
 parameter_types! {

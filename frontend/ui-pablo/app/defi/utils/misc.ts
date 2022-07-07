@@ -7,7 +7,7 @@ import { AssetId } from "@/defi/polkadot/types";
  * @param asset2 Asset id | "none"
  * @returns boolean
  */
-export function isValidAssetPair(asset1: AssetId | "none", asset2: AssetId | "none"): boolean {
+export function isValidAssetPair(asset1: string | "none", asset2: string | "none"): boolean {
     return asset1 !== "none" && asset2 !== "none";
 }
 
@@ -17,6 +17,3 @@ export function concatU8a (a: Uint8Array, b: Uint8Array): Uint8Array {
     c.set(b, a.length);
     return c;
   }
-
-export const stringToBigNumber = (value: string): BigNumber =>
-  new BigNumber(value.replaceAll(",", ""));
