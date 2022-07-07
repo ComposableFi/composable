@@ -53,9 +53,11 @@ fn should_update_oracle_and_vamm_twaps() {
 	let ext_builder = ExtBuilder { oracle_price: Some(100) /* 1.0 */, ..Default::default() };
 	with_market_context(ext_builder, config, |market_id| {
 		// Get variables before update (timestamp should be 0)
-		let Market { vamm_id, last_oracle_price, last_oracle_twap, .. } = get_market(&market_id);
-		assert_eq!(last_oracle_price, 0.into());
-		assert_eq!(last_oracle_twap, 0.into());
+		let Market { vamm_id, last_oracle_ts, last_oracle_price, last_oracle_twap, .. } =
+			get_market(&market_id);
+		assert_eq!(last_oracle_ts, 0);
+		assert_eq!(last_oracle_price, 1.into());
+		assert_eq!(last_oracle_twap, 1.into());
 
 		// Run to next available update time
 		run_to_time(ONE_HOUR);
@@ -64,7 +66,7 @@ fn should_update_oracle_and_vamm_twaps() {
 		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
 
 		let market = get_market(&market_id);
-		// First update since market creation, so TWAP should be the same as current price
+		// Check that oracle price and twap were updated; in this case the price stayed the same
 		assert_eq!(market.last_oracle_price, 1.into());
 		assert_eq!(market.last_oracle_twap, market.last_oracle_price);
 		assert_eq!(market.last_oracle_ts, ONE_HOUR);

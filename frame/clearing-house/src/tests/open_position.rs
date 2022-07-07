@@ -16,8 +16,8 @@ use crate::{
 	tests::{
 		any_direction, any_price, as_balance, get_collateral, get_market, get_market_fee_pool,
 		get_outstanding_gains, get_position, run_for_seconds, run_to_time, set_fee_pool_depth,
-		set_maximum_oracle_mark_divergence, set_oracle_twap, with_markets_context,
-		with_trading_context, Market, MarketConfig,
+		set_maximum_oracle_mark_divergence, set_oracle_price, set_oracle_twap,
+		with_markets_context, with_trading_context, Market, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -376,15 +376,25 @@ proptest! {
 		let config = MarketConfig { twap_period: 60, ..Default::default() };
 		let collateral = as_balance(100);
 
-		with_trading_context(config.clone(), collateral, |market_id| {
-			// Ensure last_oracle_ts is 0 (market creation timestamp)
+		ExtBuilder {
+			oracle_price: Some(500), // 5 in cents
+			..Default::default()
+		}.trading_context(config.clone(), collateral, |market_id| {
+			// Ensure market initializes as expected
 			let Market { last_oracle_ts, last_oracle_price, last_oracle_twap, .. } = get_market(&market_id);
 			assert_eq!(last_oracle_ts, 0);
+			assert_eq!(last_oracle_price, 5.into());
+			assert_eq!(last_oracle_twap, 5.into());
 
-			// Time passes and ALICE opens a position
+			// Time passes
 			let now = config.twap_period / 2;
 			run_to_time(now);
+
 			VammPallet::set_price(Some(5.into()));
+			// Index price moved
+			set_oracle_price(&market_id, 6.into());
+
+			// Alice opens a position
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,

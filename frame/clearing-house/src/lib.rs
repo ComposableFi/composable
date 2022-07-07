@@ -1117,7 +1117,10 @@ pub mod pallet {
 			Self::settle_funding(&mut position, &market, &mut collateral)?;
 
 			// Update oracle TWAP *before* swapping
-			Self::update_oracle_twap(&mut market)?;
+			let oracle_status = market.get_oracle_status()?;
+			if oracle_status.is_valid {
+				Self::update_oracle_twap_with_price(&mut market, oracle_status.price)?;
+			}
 
 			// For checking oracle guard rails afterwards
 			let mark_index_divergence_before = Self::mark_index_divergence(&market)?;
@@ -1199,7 +1202,10 @@ pub mod pallet {
 				Self::settle_funding(position, &market, &mut collateral)?;
 
 				// Update oracle TWAP *before* swapping
-				Self::update_oracle_twap(&mut market)?;
+				let oracle_status = market.get_oracle_status()?;
+				if oracle_status.is_valid {
+					Self::update_oracle_twap_with_price(&mut market, oracle_status.price)?;
+				}
 
 				// For checking oracle guard rails afterwards
 				let mark_index_divergence_before = Self::mark_index_divergence(&market)?;
@@ -2285,9 +2291,16 @@ pub mod pallet {
 	// Oracle update helpers
 	impl<T: Config> Pallet<T> {
 		fn update_oracle_twap(market: &mut Market<T>) -> Result<(), DispatchError> {
-			let mut oracle_price = Self::oracle_price(market.asset_id)?;
-			ensure!(oracle_price.is_positive(), Error::<T>::InvalidOracleReading);
+			let oracle_status = market.get_oracle_status()?;
+			ensure!(oracle_status.is_valid, Error::<T>::InvalidOracleReading);
 
+			Self::update_oracle_twap_with_price(market, oracle_status.price)
+		}
+
+		fn update_oracle_twap_with_price(
+			market: &mut Market<T>,
+			mut oracle_price: T::Decimal,
+		) -> Result<(), DispatchError> {
 			// Use the current oracle price as TWAP if it is the first time querying it for this
 			// market
 			let last_oracle_twap = if market.last_oracle_twap.is_positive() {
@@ -2334,14 +2347,6 @@ pub mod pallet {
 				market.last_oracle_ts = now;
 			}
 			Ok(())
-		}
-
-		fn oracle_price(asset_id: AssetIdOf<T>) -> Result<T::Decimal, DispatchError> {
-			// Oracle returns prices in USDT cents
-			let price_cents =
-				T::Oracle::get_price(asset_id, T::Decimal::one().into_balance()?)?.price;
-			T::Decimal::checked_from_rational(price_cents, 100)
-				.ok_or_else(|| ArithmeticError::Overflow.into())
 		}
 
 		fn clip_around_twap(

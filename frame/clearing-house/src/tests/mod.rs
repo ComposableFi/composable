@@ -184,6 +184,26 @@ fn set_oracle_twap(market_id: &MarketId, twap: FixedI128) {
 //                                        Execution Contexts
 // ----------------------------------------------------------------------------------------------------
 
+impl ExtBuilder {
+	fn trading_context<R>(
+		self,
+		config: MarketConfig,
+		margin: Balance,
+		execute: impl FnOnce(MarketId) -> R,
+	) -> R {
+		let mut ext = self.build();
+
+		ext.execute_with(|| {
+			run_to_time(0);
+			let id =
+				<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(config));
+			AssetsPallet::set_balance(USDC, &ALICE, margin);
+			TestPallet::deposit_collateral(Origin::signed(ALICE), USDC, margin);
+			execute(id)
+		})
+	}
+}
+
 fn with_market_context<R>(
 	ext_builder: ExtBuilder,
 	config: MarketConfig,
