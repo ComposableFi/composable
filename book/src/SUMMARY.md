@@ -140,7 +140,6 @@
 # 🩺 AUDITS AND FIXES
 - [Audit Results, Recommendations, and Remediations](./audits/audit-results-recommendations-and-remediations.md)
 
-
 # ❓ FAQS
 - [FAQs](./faqs/faqs.md)
 - [Risks & Disclosures](./faqs/risks-disclosures.md)
@@ -154,5 +153,3 @@
   - [Substrate](./codespaces/substrate.md)
   - [Frontend](./codespaces/frontend.md)
   - [Runtime Tests](./codespaces/runtime-tests.md)
-
-# 🎨 PALLETS AND INTEGRATION GUIDES
