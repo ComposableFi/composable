@@ -1,5 +1,7 @@
 # Additional Use Cases
 
+---
+
 ## Powering Asset Swaps Through Mosaic
 
 Mosaic connects with external systems, such as AMMs, to allow users to directly swap tokens for whatever token they desire within the realm of supported tokens. Mosaic also allows users to receive part of the transfer in the native token of the destination layer. This will enable users to immediately start working in the network they are swapping into via their newly acquired native tokens.

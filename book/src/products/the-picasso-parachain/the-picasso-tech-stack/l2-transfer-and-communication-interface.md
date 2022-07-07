@@ -1,5 +1,7 @@
 # L2 Transfer and Communication Interface
 
+---
+
 The core consists of a network of bridges, operated by relayers interacting with 
 smart contracts on (blockchain where the cross-chain transfer originates from) 
 and .

@@ -1,8 +1,6 @@
 # Technical Stack Overview
 
-
 ---
-
 
 ## Simplicity at Our Core: Our Guiding Principle
 

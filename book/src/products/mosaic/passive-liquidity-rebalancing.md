@@ -1,5 +1,7 @@
 # Passive Liquidity Rebalancing
 
+---
+
 
 ![passive_liquidity_allocation](./passive-liquidity-allocation.png)
 

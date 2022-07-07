@@ -1,5 +1,7 @@
 # Apollo
 
+---
+
 ## An overview of Apollo
 
 Apollo is a primary pallet built on the Picasso parachain that functions as the ecosystem’s native oracle. An oracle provides up-to-date information on assets and transactions that occur outside of an ecosystem. Oracles provide pricing data, verify proof of payments, and authenticate real-world events. They are critical to the function of any smart contract that needs to interact with real-world data, and form a core part of any DeFi ecosystem.

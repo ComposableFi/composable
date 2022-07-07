@@ -1,5 +1,7 @@
 # Council
 
+---
+
 Upon launch, governance on Picasso parachain will be done by a Sudo account then 
 transition to Council when core pallets have been onboarded. The council is an 
 on-chain entity made up of 7 senior team members from Composable Finance and our 

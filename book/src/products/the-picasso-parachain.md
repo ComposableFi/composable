@@ -1,6 +1,8 @@
 # The Picasso Parachain
 
-The Picasso Parachain is realized!
+*The Picasso Parachain is realized!*
+
+---
 
 ## Picasso has been Procured
 

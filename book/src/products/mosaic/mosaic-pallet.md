@@ -1,5 +1,7 @@
 # The Mosaic Pallet
 
+---
+
 Adding Mosaic as a primary [pallet](https://composablefi.medium.com/the-pallet-revolution-powered-by-picasso-481377738836) on Picasso will bridge assets from the EVM chains that are supported. This enables compatibility with EVM assets for applications built on Picasso and would open up opportunities for a range of functionalities such as the following actions:
 
 * Users holding USDC on Polygon can bridge it to Picasso, participate in the Picasso liquidity bootstrapping pool (LBP) and get $PICA. 

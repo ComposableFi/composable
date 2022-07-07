@@ -1,5 +1,7 @@
 # Chains and Assets Supported on Day One
 
+---
+
 The chains/layers supported by Mosaic Phase 2 are as follows, enabling for active liquidity provisioning across these platforms:
 
 * [Ethereum Mainnet](https://ethereum.org/en/)

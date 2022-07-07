@@ -1,5 +1,6 @@
 # Writing Smart Contracts with CosmWasm
 
+---
 
 ## CosmWasm’s Advantages
 

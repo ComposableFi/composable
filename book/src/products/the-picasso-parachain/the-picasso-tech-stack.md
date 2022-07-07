@@ -1,5 +1,6 @@
 # The Picasso Tech Stack
 
+---
 
 ## 1. Pallets to Power Defi Functionalities
 
