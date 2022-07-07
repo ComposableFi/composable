@@ -1,7 +1,7 @@
 use super::prelude::*;
 use crate::tests::borrow;
 use codec::Decode;
-use composable_traits::vault::Vault as VaultTrate;
+use composable_traits::{lending::TotalDebtWithInterest, vault::Vault as VaultTrate};
 use frame_support::traits::{fungible::Mutate as FungibleMutateTrate, fungibles::Mutate};
 use sp_runtime::{traits::TrailingZeroInput, Perquintill};
 
@@ -158,6 +158,15 @@ proptest! {
 			//Now vault is unbalanced and should restore equilibrium state.
 			 while Lending::ensure_can_borrow_from_vault(&vault_id, &market_account).is_err() {
 				for borrower in &borrowers {
+					// Sometimes return_amount can exceed total debt.
+					// In such cases we have to repay actual debt balance.
+					let borrower_total_debt = <Lending as LendingTrait>::total_debt_with_interest(&market_id, &borrower).unwrap();
+					let mut return_amount = return_amount;
+					match borrower_total_debt {
+						TotalDebtWithInterest::Amount(debt) if debt.div(USDT::ONE) < return_amount  => return_amount = debt.div(USDT::ONE),
+						TotalDebtWithInterest::Amount(_) => (),
+						TotalDebtWithInterest::NoDebt => continue,
+					}
 					<Lending as LendingTrait>::repay_borrow(
 						&market_id,
 						borrower,
