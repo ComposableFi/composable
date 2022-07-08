@@ -31,7 +31,7 @@ Using bonds to accumulate protocol-owned-liquidity will be a significant benefit
 * As well as trading fees, the initial benefits of increased liquidity will therefore also mean network activity increases, with network fees also generating revenue that can be distributed back as yield to CHAOS holders.
 * The Picasso treasury will be holding tokens of our incubated protocols, with these tokens offering a multitude of opportunities to provide liquidity and generate more revenue, or even distribute the tokens themselves back to CHAOS holders.
 
-User rewards from holding fNFTs
+## User rewards from holding fNFTs
 
 CHAOS holders receive returns from multiple different streams. They earn yield directly in the form of PICA returns, earn revenue from the Picasso treasury, and earn yield from transaction fees on the Picasso network.
 

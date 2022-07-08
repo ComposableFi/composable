@@ -8,7 +8,7 @@ Users can stake PBLO by locking their tokens for different durations. In return,
 
 
 ![pablo_architecture](./pablo-architecture.png)
-_High level overview of Pablo _
+_High level overview of Pablo_
 
 
 The above exhibit captures the basic flow of assets and yield that undergirds Pablo. The bottom right represents users. Users provide their assets to liquidity pools (LPs) to gain LP tokens, and then bond those LP tokens in order to buy PBLO at a discounted rate. The LP tokens are then owned by the Picasso treasury, which will use its assets, bolstered by PICA liquidity incentives, to provide and incentivise liquidity and trading on Pablo. Users will stake their PBLO tokens in order to make governance decisions, and generate yield from Pablo’s DEX transaction fees, via its AMM functionality.

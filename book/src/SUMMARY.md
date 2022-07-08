@@ -2,7 +2,7 @@
 
 - [👋 Introduction](introduction.md)
 - [💻 Developer Guides](./developer-guides.md)
-    - [Pallets & Integration](./developer-guides/pallet-overviews.md)
+    - [Pallets & Integration](./developer-guides/pallets-overview.md)
         - [airdrop](./pallets/airdrop.md)
             - [Extrinsics](./pallets/airdrop/extrinsics.md)
             - [Integration Guide](./pallets/airdrop/integration-guide.md)
@@ -124,7 +124,6 @@
     - [Polkadot - A Brief Overview](./products/the-picasso-parachain/polkadot-a-brief-overview.md)
     - [Council](./products/the-picasso-parachain/council.md)
     - [The Picasso Tech Stack](./products/the-picasso-parachain/the-picasso-tech-stack.md)
-        - [L2 Transfer and Communication Interface](./products/the-picasso-parachain/the-picasso-tech-stack/l2-transfer-and-communication-interface.md)
         - [Apollo: The Oracle Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/apollo.md)
         - [Cubic: The Vaults Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/cubic.md)
         - [Angular Finance: The Isolated Lending Pair Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/angular.md)
