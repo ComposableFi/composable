@@ -5,15 +5,14 @@ on:
     branches:
       - main
   pull_request:
-    types: [labeled, synchronize, opened, reopened]
+    types: [ labeled, synchronize, opened, reopened ]
     branches:
       - main
-      - andor0/add-runtime-tests-in-ci # tmp
 
 
 jobs:
   runtime-tests:
-    runs-on: 
+    runs-on:
       - self-hosted
       - linux
       - x64
@@ -21,9 +20,9 @@ jobs:
     concurrency:
       group: runtime-tests-${{ github.ref }}
       cancel-in-progress: true
-    strategy: 
+    strategy:
       fail-fast: true
-      
+
     steps:
       - name: Clean up
         continue-on-error: true
