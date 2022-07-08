@@ -1,3 +1,6 @@
+//! Test runtime.
+//! Consider to set minimal values (duration, times, and limits) to be easy to test within day of
+//! work. Example, use several hours, instead of several days.
 #![cfg_attr(
 	not(test),
 	warn(
@@ -1041,7 +1044,7 @@ impl lending::Config for Runtime {
 
 parameter_types! {
   pub PabloId: PalletId = PalletId(*b"pall_pab");
-  pub LbpMinSaleDuration: BlockNumber = DAYS;
+  pub LbpMinSaleDuration: BlockNumber = 3 * HOURS;
   pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
   pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
   pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
@@ -1568,6 +1571,10 @@ impl_runtime_apis! {
 
 		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
 			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
+		}
+
+		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>> {
+			Ibc::get_offchain_acks(channel_id, port_id, seqs).ok()
 		}
 
 		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {

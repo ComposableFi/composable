@@ -19,6 +19,9 @@ sp_api::decl_runtime_apis! {
 		/// Quuery offchain packets
 		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<OffchainPacketType>>;
 
+		/// Quuery offchain acks
+		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>>;
+
 		/// Returns client state at height
 		fn client_state(client_id: Vec<u8>) -> Option<QueryClientStateResponse>;
 
