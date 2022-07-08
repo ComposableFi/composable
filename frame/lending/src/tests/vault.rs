@@ -161,12 +161,15 @@ proptest! {
 					// Sometimes return_amount can exceed total debt.
 					// In such cases we have to repay actual debt balance.
 					let borrower_total_debt = <Lending as LendingTrait>::total_debt_with_interest(&market_id, &borrower).unwrap();
-					let mut return_amount = return_amount;
-					match borrower_total_debt {
-						TotalDebtWithInterest::Amount(debt) if debt.div(USDT::ONE) < return_amount  => return_amount = debt.div(USDT::ONE),
-						TotalDebtWithInterest::Amount(_) => (),
-						TotalDebtWithInterest::NoDebt => continue,
-					}
+					let return_amount = if let TotalDebtWithInterest::Amount(debt) = borrower_total_debt {
+						if debt.div(USDT::ONE) < return_amount {
+							debt.div(USDT::ONE)
+						} else {
+							return_amount
+						}
+					} else {
+						return_amount
+					};
 					<Lending as LendingTrait>::repay_borrow(
 						&market_id,
 						borrower,
