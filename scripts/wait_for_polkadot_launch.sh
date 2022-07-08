@@ -8,4 +8,4 @@ while IFS="" read -r string; do
     else
         exit 0
     fi
-done < <(docker-compose logs --follow)
+done < <(./docker-compose logs --follow)
