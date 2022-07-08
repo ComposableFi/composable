@@ -1,6 +1,6 @@
 # Overview
 
-This is a guide on how to run things locally or in isolated environment with your own stuff.
+This is a guide on how to run things locally or in an isolated environment with your own machine.
 
 After starting local nodes wait up to 2 minutes until all will be wired.
 
