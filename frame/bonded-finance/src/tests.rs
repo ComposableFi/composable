@@ -98,8 +98,6 @@ proptest! {
 	  #[test]
 	  fn generate_vesting_schedule(offer in simple_offer(1)) {
 		ExtBuilder::build().execute_with(|| {
-			let mut offer = offer.clone();
-			offer.beneficiary = BOB;
 			System::set_block_number(1);
 			prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
 			prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
@@ -107,28 +105,30 @@ proptest! {
 			prop_assert_ok!(offer_id);
 			let offer_id = offer_id.expect("impossible; qed");
 
-			prop_assert_ok!(BondedFinance::do_bond(offer_id, &BOB, 1, false));
+			let nb_of_bonds = 1;
 
-			let schedule = VestingSchedule {
-				window: BlockNumberBased { start: 1_u64, period: 1_u64 },
-				 period_count: 1_u32,
-				   per_period: 1000000_u128,
-			};
+			prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, nb_of_bonds * offer.bond_price));
+			prop_assert_ok!(BondedFinance::do_bond(offer_id, &BOB, nb_of_bonds, false));
 
-			println!("{:?}", System::events());
-
-			println!("event: {:?}", Event::Vesting(pallet_vesting::Event::<Runtime>::VestingScheduleAdded {
-				 from: 111847873086112544514399039341,
-				 to: BOB,
-				 asset: offer.reward.asset,
-				 schedule: schedule.clone(),
-			}));
-
-			System::assert_has_event(Event::Vesting(pallet_vesting::Event::<Runtime>::VestingScheduleAdded {
-				 from: 111847873086112544514399039341,
-				 to: BOB,
-				 asset: offer.reward.asset,
-				 schedule,
+			assert!(System::events().iter().any(|record| {
+				let _period: u64 = offer.reward.maturity;
+				let _asset = offer.reward.asset;
+				matches!(
+					record.event,
+					Event::Vesting(
+						pallet_vesting::Event::<Runtime>::VestingScheduleAdded {
+							// from: 111847873086112544514399039341,
+							to: BOB,
+							asset: _asset,
+							schedule: VestingSchedule {
+								window: BlockNumberBased { start: 1_u64, period: _period },
+								period_count: 1_u32,
+								..
+							},
+							..
+						}
+					)
+				)
 			}));
 
 			Ok(())
