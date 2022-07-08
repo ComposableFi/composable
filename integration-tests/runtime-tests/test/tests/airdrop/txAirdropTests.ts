@@ -9,6 +9,7 @@ import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import { Moment } from "@polkadot/types/interfaces/runtime";
 import BN from "bn.js";
 import { expect } from "chai";
+import { AnyString } from "@polkadot/types-codec/types";
 
 /**
  * Airdrop Tests
@@ -50,7 +51,7 @@ describe.only("tx.airdrop Tests", function() {
   describe("tx.airdrop.createAirdrop Tests", function() {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
-    it.only("Any user can create a new AirDrop with defined start", async function() {
+    it("Any user can create a new AirDrop with defined start", async function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
       this.timeout(2 * 60 * 1000);
 
@@ -64,14 +65,7 @@ describe.only("tx.airdrop Tests", function() {
       expect(airdropCountAfterCreation).to.be.bignumber.greaterThan(airdropCountBeforeCreation);
       airdrop1_id = airdropCountAfterCreation;
 
-      const airdropInformation = await api.query.airdrop.airdrops(airdrop1_id);
-      expect(airdropInformation.unwrap().creator).to.be.eql(api.createType("AccountId", airdrop1Maintainer.publicKey));
-      expect(airdropInformation.unwrap().total_funds).to.be.eql(undefined);
-      expect(airdropInformation.unwrap().total_recipients).to.be.eql(undefined);
-      expect(airdropInformation.unwrap().start.isNone).to.be.true;
-      expect(airdropInformation.unwrap().schedule).to.be.bignumber.equal(api.createType("Moment", DEFAULT_VESTING_PERIOD));
-      expect(airdropInformation.unwrap().disabled).to.be.eql(api.createType("bool", false));
-
+      await TxAirdropTests.verifyAirdropCreation(api, airdrop2_id, airdrop2Maintainer.publicKey, startAt, vestingSchedule);
     });
 
     it("Any user can create a new AirDrop with defined start", async function() {
@@ -82,19 +76,13 @@ describe.only("tx.airdrop Tests", function() {
 
       const startAt: Option<u64> = null;
       const vestingSchedule = api.createType("u64", DEFAULT_VESTING_PERIOD);
-      const { data: [result] } = await TxAirdropTests.createAirdrop(api, airdrop1Maintainer, startAt, vestingSchedule);
+      const { data: [result] } = await TxAirdropTests.createAirdrop(api, airdrop2Maintainer, startAt, vestingSchedule);
 
       const airdropCountAfterCreation = new BN(await api.query.airdrop.airdropCount());
       expect(airdropCountAfterCreation).to.be.bignumber.greaterThan(airdropCountBeforeCreation);
       airdrop2_id = airdropCountAfterCreation;
 
-      const airdropInformation = await api.query.airdrop.airdrops(airdrop2_id);
-      expect(airdropInformation.unwrap().creator).to.be.eql(api.createType("AccountId", airdrop1Maintainer.publicKey));
-      expect(airdropInformation.unwrap().total_funds).to.be.eql(undefined);
-      expect(airdropInformation.unwrap().total_recipients).to.be.eql(undefined);
-      expect(airdropInformation.unwrap().start.isNone).to.be.true;
-      expect(airdropInformation.unwrap().schedule).to.be.bignumber.equal(api.createType("Moment", DEFAULT_VESTING_PERIOD));
-      expect(airdropInformation.unwrap().disabled).to.be.eql(api.createType("bool", false));
+      await TxAirdropTests.verifyAirdropCreation(api, airdrop2_id, airdrop2Maintainer.publicKey, startAt, vestingSchedule);
     });
   });
 
@@ -104,12 +92,12 @@ describe.only("tx.airdrop Tests", function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
       this.timeout(2 * 60 * 1000);
 
-      const recipientList = api.createType('Vec<(PalletAirdropModelsIdentity, u128, u64, bool)>', [
+      const recipientList = api.createType("Vec<(PalletAirdropModelsIdentity, u128, u64, bool)>", [
         {
           // ToDo
-        },
+        }
       ]);
-      const airdropId = api.createType('u128', airdrop1_id);
+      const airdropId = api.createType("u128", airdrop1_id);
 
       const { data: [result] } = await TxAirdropTests.addRecipient(api, airdrop1Maintainer, airdropId, recipientList);
 
@@ -138,7 +126,20 @@ export class TxAirdropTests {
     );
   }
 
-  public static async addRecipient(api: ApiPromise, wallet: KeyringPair, airdropId: u128, recipients: VecAny<any>) { // ToDo: Check
+  public static async verifyAirdropCreation(api: ApiPromise, airdrop_id: u128 | BN, airdropMaintainerPublicKey: Uint8Array | AnyString, startAt: any, vesting_period: Moment | u64) {
+    /*
+    ToDo: Update for different airdrops!
+     */
+    const airdropInformation = await api.query.airdrop.airdrops(airdrop_id);
+    expect(airdropInformation.unwrap().creator).to.be.eql(api.createType("AccountId", airdropMaintainerPublicKey));
+    expect(airdropInformation.unwrap().total_funds).to.be.eql(undefined);
+    expect(airdropInformation.unwrap().total_recipients).to.be.eql(undefined);
+    expect(airdropInformation.unwrap().start.isNone).to.be.true;
+    expect(airdropInformation.unwrap().schedule).to.be.bignumber.equal(vesting_period);
+    expect(airdropInformation.unwrap().disabled).to.be.eql(api.createType("bool", false));
+  }
+
+  public static async addRecipient(api: ApiPromise, wallet: KeyringPair, airdropId: u128 | BN, recipients: VecAny<any>) { // ToDo: Check
     return await sendAndWaitForSuccess(
       api,
       wallet,
@@ -146,4 +147,6 @@ export class TxAirdropTests {
       api.tx.airdrop.addRecipient(airdropId, recipients)
     );
   }
+
+
 }
