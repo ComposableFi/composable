@@ -9,7 +9,7 @@ supporters. The council members also control Picasso’s multi-sig wallet.
 
 When the Picasso parachain is live, each member will be represented as an 
 on-chain account on [Polkadot.js](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/council) 
-- select the Picasso parachain, then Governance, Council. 
+- Select the Picasso parachain, then Governance, Council. 
 
 As the Picasso community strengthens, community members will play a bigger role 
 in governance and Picasso will transition into full democracy. In the meantime, 
