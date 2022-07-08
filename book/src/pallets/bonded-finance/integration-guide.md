@@ -1,6 +1,6 @@
 # [name] Integration Guide
 
-[Pallet Overview & Workflow](../bonded-finance.md)
+[**Pallet Overview & Workflow**](../bonded-finance.md)
 
 ## Integration Status
 
@@ -14,6 +14,10 @@ Offers are created and managed by users and can be canceled via admin interventi
 During the created state all configuration operations can be conducted. During the enabled state, all transactional operations can be conducted. During the disabled state the offer account and its relevant information in pallet storage will be deleted.
 
 Automatic state transitions can occur under two conditions. 1) The number of bonds offered has been bought and reward maturity has been reached 2) The offer was canceled by admin intervention.
+
+
+![states_diagram](./states-diagram.png)
+
 ## RPC & Data Retrieval
 
 *RPCs w/ links to cargo docs?*
