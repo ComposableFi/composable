@@ -42,7 +42,7 @@ In the future, Picasso liquidity gauges will be established that direct liquidit
 * Minting the CHAOS position as an fNFT opens up significant opportunities for further utility of financial NFTs whilst ensuring the underlying tokens are locked, namely through collateralisation and secondary market trading.
 * Holding the CHAOS fNFTs will initially entitle users to rewards, but most importantly will play a key role in the management and direction of treasury assets.
 
-## Rough Notes
+## Rough Notes?
 
 
 ## What is CHAOS?
