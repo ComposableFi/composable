@@ -35,7 +35,7 @@ pub mod pallet {
 		dispatch::PostDispatchInfo,
 		pallet_prelude::*,
 		traits::{
-			fungible::{Inspect, Transfer},
+			fungible::{Inspect, Transfer, Mutate, MutateHold},
 			Time,
 		},
 		transactional, Blake2_128Concat, PalletId, Parameter,
@@ -165,7 +165,9 @@ pub mod pallet {
 
 		/// The asset type Recipients will claim from the Airdrops.
 		type RecipientFundAsset: Inspect<Self::AccountId, Balance = Self::Balance>
-			+ Transfer<Self::AccountId, Balance = Self::Balance>;
+			+ Transfer<Self::AccountId, Balance = Self::Balance>
+			+ Mutate<Self::AccountId, Balance = Self::Balance>
+			+ MutateHold<Self::AccountId, Balance = Self::Balance>;
 
 		/// Time provider
 		type Time: Time<Moment = Self::Moment>;
