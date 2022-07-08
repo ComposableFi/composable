@@ -1735,12 +1735,14 @@ pub mod pallet {
 			mark_index_divergence_before: T::Decimal,
 			is_risk_increasing: bool,
 		) -> Result<(), DispatchError> {
-			let was_mark_index_too_divergent =
-				Self::exceeds_max_price_divergence(mark_index_divergence_before);
-			let divergence = Self::mark_index_divergence(market, &oracle_status.price)?;
-			let is_mark_index_too_divergent = Self::exceeds_max_price_divergence(divergence);
+			if !oracle_status.is_valid {
+				return Ok(())
+			}
 
-			if oracle_status.is_valid && is_mark_index_too_divergent {
+			let divergence = Self::mark_index_divergence(market, &oracle_status.price)?;
+			if Self::exceeds_max_price_divergence(divergence) {
+				let was_mark_index_too_divergent =
+					Self::exceeds_max_price_divergence(mark_index_divergence_before);
 				// Block trade if it pushed the mark-index divergence from an acceptable to an
 				// unacceptable value
 				// Block a risk-increasing trade if mark-index is too divergent and increased from
