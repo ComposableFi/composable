@@ -9,10 +9,11 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    crane.url = "github:ipetkov/crane";
-    crane.inputs.nixpkgs.follows = "nixpkgs";
+    crane = {
+      url = "github:ipetkov/crane";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
-
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay }:
     flake-utils.lib.eachDefaultSystem (system:
       let
@@ -22,17 +23,25 @@
         };
       in with pkgs;
       let
+        # Stable rust for anything except wasm runtime
         rust-stable = rust-bin.stable.latest.default;
+
+        # Nightly rust used for wasm runtime compilation
         rust-nightly = rust-bin.selectLatestNightlyWith (toolchain:
           toolchain.default.override {
             extensions = [ "rust-src" ];
             targets = [ "wasm32-unknown-unknown" ];
           });
+
+        # Crane lib instantiated with current nixpkgs
         crane-lib = crane.mkLib pkgs;
+
         # Crane pinned to stable Rust
         crane-stable = crane-lib.overrideToolchain rust-stable;
+
         # Crane pinned to nightly Rust
         crane-nightly = crane-lib.overrideToolchain rust-nightly;
+
         # Wasm optimizer, used to replicate build.rs behavior in an explicit fashion
         wasm-optimizer = crane-stable.buildPackage {
           cargoCheckCommand = "true";
@@ -47,29 +56,54 @@
             };
           };
         };
+
+        src = let
+          blacklist = [
+            "nix"
+            "nix-crane"
+            ".config"
+            ".devcontainer"
+            ".github"
+            ".log"
+            ".maintain"
+            ".tools"
+            ".vscode"
+            "audits"
+            "book"
+            "devnet-stage"
+            "devnet"
+            "docker"
+            "docs"
+            "frontend"
+            "rfcs"
+            "scripts"
+            "setup"
+            "subsquid"
+            "runtime-tests"
+          ];
+          customFilter = name: type:
+            !(type == "directory" && builtins.elem (baseNameOf name) blacklist);
+        in lib.cleanSourceWith {
+          filter = lib.cleanSourceFilter;
+          src = lib.cleanSourceWith {
+            filter =
+              nix-gitignore.gitignoreFilterPure customFilter [ ../.gitignore ]
+              ../.;
+            src = ../.;
+          };
+        };
+
         # Common env required to build the node
         common-args = {
-          cargoCheckCommand = "true";
-          doCheck = false;
-          src = let
-            customFilter = name: type:
-              !(type == "directory" && (baseNameOf name == "nix"
-                || baseNameOf name == "nix-crane"));
-          in lib.cleanSourceWith {
-            filter = lib.cleanSourceFilter;
-            src = lib.cleanSourceWith {
-              filter =
-                nix-gitignore.gitignoreFilterPure customFilter [ ../.gitignore ]
-                ../.;
-              src = ../.;
-            };
-          };
+          inherit src;
           buildInputs = [ openssl zstd ];
           nativeBuildInputs = [ clang pkg-config ]
             ++ lib.optional stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
               Security
               SystemConfiguration
             ]);
+          doCheck = false;
+          cargoCheckCommand = "true";
           # Don't build any wasm as we do it ourselves
           SKIP_WASM_BUILD = "1";
           LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
@@ -80,7 +114,10 @@
           PROTOC = "${protobuf}/bin/protoc";
           ROCKSDB_LIB_DIR = "${rocksdb}/lib";
         };
+
+        # Common dependencies, all dependencies listed that are out of this repo
         common-deps = crane-stable.buildDepsOnly (common-args // { });
+
         # Build a wasm runtime, unoptimized
         mk-runtime = name:
           let file-name = "${name}_runtime.wasm";
@@ -88,10 +125,12 @@
             pname = "${name}-runtime";
             cargoBuildCommand =
               "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown";
+            # From parity/wasm-builder
             RUSTFLAGS =
               "-Clink-arg=--export=__heap_base -Clink-arg=--import-memory";
           });
-        # Optimize a pre-built wasm runtime
+
+        # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
         mk-optimized-runtime = name:
           let runtime = mk-runtime name;
           in stdenv.mkDerivation {
@@ -104,38 +143,55 @@
                 --output $out/lib/runtime.optimized.wasm
             '';
           };
-        mk-package = name:
-          crane-stable.buildPackage (common-args // {
-            pname = name;
-            cargoArtifacts = common-deps;
-            cargoBuildCommand = "cargo build --release -p ${name}";
-          });
-        mk-node = runtimes:
-          crane-stable.buildPackage (common-args // {
-            pname = "composable-node";
-            cargoArtifacts = common-deps;
-            cargoBuildCommand = "cargo build --release -p composable";
-            DALI_RUNTIME = "${runtimes.dali}/lib/runtime.optimized.wasm";
-            PICASSO_RUNTIME = "${runtimes.picasso}/lib/runtime.optimized.wasm";
-            COMPOSABLE_RUNTIME =
-              "${runtimes.composable}/lib/runtime.optimized.wasm";
-          });
       in rec {
-        packages.wasm-optimizer = wasm-optimizer;
-        packages.runtimes = {
-          dali = mk-optimized-runtime "dali";
-          picasso = mk-optimized-runtime "picasso";
-          composable = mk-optimized-runtime "composable";
+        packages = {
+          inherit wasm-optimizer;
+          inherit common-deps;
+          dali-runtime = mk-optimized-runtime "dali";
+          picasso-runtime = mk-optimized-runtime "picasso";
+          composable-runtime = mk-optimized-runtime "composable";
+          price-feed = crane-stable.buildPackage (common-args // {
+            pnameSuffix = "-price-feed";
+            cargoArtifacts = common-deps;
+            cargoBuildCommand = "cargo build --release -p price-feed";
+          });
+          composable-node = with packages;
+            crane-stable.buildPackage (common-args // {
+              pnameSuffix = "-node";
+              cargoArtifacts = common-deps;
+              cargoBuildCommand =
+                "cargo build --release -p composable --features builtin-wasm";
+              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+              COMPOSABLE_RUNTIME =
+                "${composable-runtime}/lib/runtime.optimized.wasm";
+              installPhase = ''
+                mkdir -p $out/bin
+                cp target/release/composable $out/bin/composable
+              '';
+            });
+          default = packages.composable-node;
         };
-        packages.price-feed = mk-package "price-feed";
-        packages.composable-node = mk-node packages.runtimes;
-        packages.default = packages.composable-node;
-        devShell = mkShell {
-          buildInputs = with packages; [
-            rust-stable
-            wasm-optimizer
-            composable-node
-          ];
+
+        # Derivations built when running `nix flake check`
+        checks = {
+          tests = crane-stable.cargoBuild (common-args // {
+            pnameSuffix = "-tests";
+            cargoArtifacts = common-deps;
+            cargoBuildCommand = "cargo test --workspace --release";
+          });
+        };
+
+        # Shell env a user can enter with `nix develop`
+        devShells = {
+          default = mkShell {
+            buildInputs = with packages; [
+              rust-stable
+              wasm-optimizer
+              composable-node
+            ];
+            NIX_PATH = "nixpkgs=${pkgs.path}";
+          };
         };
       });
 }

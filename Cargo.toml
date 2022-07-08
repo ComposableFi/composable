@@ -15,10 +15,9 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 color-eyre = { version = "0.5.11", default-features = false }
 composable-node = { path = "node", features = ["composable", "dali"] }
-# NOTE: Remove once we've upgraded to polkadot-v0.9.24
-# https://github.com/paritytech/substrate/pull/11707
 
 [features]
+builtin-wasm = ["composable-node/builtin-wasm"]
 composable = ["composable-node/composable"]
 dali = ["composable-node/dali"]
 local-integration-tests = []
@@ -70,6 +69,7 @@ sp-debug-derive = { git = "https://github.com/composableFi/substrate", branch = 
 sp-externalities = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
 sp-io = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
 sp-runtime = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+parity-scale-codec = { git = "https://github.com/paritytech/parity-scale-codec", rev = "5aab13d31634beb3768d77c6e24f5f879d0ffc14" }
 
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }

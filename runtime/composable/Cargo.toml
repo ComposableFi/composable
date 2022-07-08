@@ -123,7 +123,7 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, rev = "eed85119358bc80bbb1aedd98778f370d4932dee" }
 
 [features]
-default = ["std", "builtin-wasm"]
+default = ["std"]
 builtin-wasm = []
 std = [
   "codec/std",

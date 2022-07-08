@@ -1,34 +1,106 @@
-name: "Compile via Nix"
+name: "Nix pipeline"
 on:
-  pull_request:
   push:
 jobs:
-  tests:
+  common-deps:
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
-      - name: Cleanup
-        continue-on-error: true
-        run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-          docker system prune --force --all --volumes
-          sudo rm /etc/bash.bashrc.backup-before-nix
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v4
-        id: cp310
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
-          python-version: "3.10"
-      - uses: cachix/install-nix-action@v17
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-      - uses: cachix/cachix-action@v10
-        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
           name: composable-community
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-          extraPullNames: composable-community
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: |
           cd nix-crane
-          nix build -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps -L
+
+  tests:
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cd nix-crane
+          nix flake check -L --keep-going
+
+  package-node:
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cd nix-crane
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node -L
+
+  package-price-feed:
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cd nix-crane
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed -L
