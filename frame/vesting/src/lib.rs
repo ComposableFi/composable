@@ -148,7 +148,7 @@ pub mod module {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(pub fn deposit_event)]
+	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Added new vesting schedule. \[from, to, schedule\]
 		VestingScheduleAdded {
@@ -322,7 +322,12 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 		<VestingSchedules<T>>::try_append(to, asset, &schedule)
 			.map_err(|_| Error::<T>::MaxVestingSchedulesExceeded)?;
 
-		Self::deposit_event(Event::VestingScheduleAdded { from: from.clone(), to: to.clone(), asset, schedule });
+		Self::deposit_event(Event::VestingScheduleAdded {
+			from: from.clone(),
+			to: to.clone(),
+			asset,
+			schedule,
+		});
 
 		Ok(())
 	}
