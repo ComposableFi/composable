@@ -16,8 +16,10 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+#[cfg(all(feature = "std", feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("COMPOSABLE_RUNTIME")));
+#[cfg(not(feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 mod weights;
 mod xcmp;

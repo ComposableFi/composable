@@ -101,7 +101,7 @@
               mkdir -p $out/lib
               ${wasm-optimizer}/bin/wasm-optimizer \
                 --input ${runtime}/lib/${name}_runtime.wasm \
-                --output $out/lib/${name}_runtime.optimized.wasm
+                --output $out/lib/runtime.optimized.wasm
             '';
           };
         mk-package = name:
@@ -109,6 +109,16 @@
             pname = name;
             cargoArtifacts = common-deps;
             cargoBuildCommand = "cargo build --release -p ${name}";
+          });
+        mk-node = runtimes:
+          crane-stable.buildPackage (common-args // {
+            pname = "composable-node";
+            cargoArtifacts = common-deps;
+            cargoBuildCommand = "cargo build --release -p composable";
+            DALI_RUNTIME = "${runtimes.dali}/lib/runtime.optimized.wasm";
+            PICASSO_RUNTIME = "${runtimes.picasso}/lib/runtime.optimized.wasm";
+            COMPOSABLE_RUNTIME =
+              "${runtimes.composable}/lib/runtime.optimized.wasm";
           });
       in rec {
         packages.wasm-optimizer = wasm-optimizer;
@@ -118,14 +128,13 @@
           composable = mk-optimized-runtime "composable";
         };
         packages.price-feed = mk-package "price-feed";
-        packages.composable-node = mk-package "composable";
+        packages.composable-node = mk-node packages.runtimes;
         packages.default = packages.composable-node;
         devShell = mkShell {
           buildInputs = with packages; [
             rust-stable
             wasm-optimizer
             composable-node
-            price-feed
           ];
         };
       });
