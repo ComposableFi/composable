@@ -291,7 +291,7 @@ impl identity::Config for Runtime {
 parameter_types! {
 	pub DepositBase: u64 = CurrencyId::unit();
 	pub DepositFactor: u64 = 32 * CurrencyId::milli::<u64>();
-	pub const MaxSignatories: u16 = 5;
+	pub const MaxSignatories: u16 = 100;
 }
 
 impl multisig::Config for Runtime {
