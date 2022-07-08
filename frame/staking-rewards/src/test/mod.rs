@@ -1,3 +1,4 @@
+pub(crate) use crate::test::runtime::{new_test_ext, Test}; // for benchmarks
 use crate::{
 	prelude::{lock, Reductions, Stake},
 	test::{prelude::H256, runtime::*},

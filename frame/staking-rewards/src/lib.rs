@@ -62,7 +62,7 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
-			fungibles::{Inspect, Transfer},
+			fungibles::{Inspect, Mutate, Transfer},
 			tokens::WithdrawConsequence,
 			UnixTime,
 		},
@@ -161,11 +161,8 @@ pub mod pallet {
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.
-		type Assets: Transfer<
-			AccountIdOf<Self>,
-			Balance = BalanceOf<Self>,
-			AssetId = AssetIdOf<Self>,
-		>;
+		type Assets: Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
+			+ Mutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>;
 
 		/// is used for rate based rewarding and position lock timing
 		type UnixTime: UnixTime;
@@ -308,7 +305,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(10_000)]
+		/// Create a new stake.
+		///
+		/// Emits `Staked` event when successful.
+		#[pallet::weight(T::WeightInfo::stake())]
 		pub fn stake(
 			origin: OriginFor<T>,
 			pool_id: T::RewardPoolId,
