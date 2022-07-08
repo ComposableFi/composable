@@ -20,6 +20,8 @@ This proposal does not covers `paper work` around tech stuff as it is described 
 
 Ensure have at least 100 KAR on Karura and 20 KSM on Kusama and can do democracy on Picasso.
 
+Create identity on Kusama and Picasso.
+
 **Rococo**
 
 Root is `5D2cjLGNWibiSsEh4oPXo8MmBTkeptrpuiUdEKRMauUn1TkZ` and make sure it has 20 ROC.
@@ -30,9 +32,9 @@ Transfer to [dali-rococo] accounts some amounts.
 
 ## Picasso to Karura
 
-That to be executed https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c00d0070000e803000000900100 on behalf of  parachain via
+That to be executed https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c00d0070000e803000000900100 on behalf of  parachain via next
 
-Run https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x2900010100020c0004000000000b00a0724e180913000000000b00a0724e180900060102286bee383c00d0070000e803000000900100 
+run https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x2900010100020c0004000000000b00a0724e180913000000000b00a0724e180900060102286bee383c00d0070000e803000000900100 
 
 ## Accept Picasso to Karura
 
@@ -44,6 +46,12 @@ on behalf of
 
 https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-2.aca-api.network%2Fws#/extrinsics/decode/0x3300010100020c000400000000070010a5d4e81300000000070010a5d4e80006010700e8764817183c0127080000
 
+**Democracy**
+
+Encode above preimage via `Submit preimage` via https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura.api.onfinality.io%2Fpublic-ws#/democracy 
+
+Then `Submit proposal`.
+
 ## Karura to Picasso
 
 This should be executed
@@ -53,6 +61,12 @@ https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama.api.onfinality.io%2Fpublic-
 On behalf of 
 
 https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-0.aca-api.network#/extrinsics/decode/0x3300010100020c000400000000070010a5d4e81300000000070010a5d4e80006010700e8764817383c0027080000e803000000900100
+
+**Democracy**
+
+Encode above preimage via `Submit preimage` via https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura.api.onfinality.io%2Fpublic-ws#/democracy 
+
+Then `Submit proposal`.
 
 ## Accept Karura on Picasso
 
@@ -124,7 +138,7 @@ Create preimage and submit proposal via https://polkadot.js.org/apps/?rpc=wss%3A
 
 to enact https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-1.aca-api.network#/extrinsics/decode/0x7a000001019d20105049434110504943410c00ca9a3b000000000000000000000000
 
-for PICA token.
+for `PICA` token.
 
 ## Reference
 
@@ -135,6 +149,8 @@ https://wiki.acala.network/build/development-guide/composable-chains/open-hrmp-c
 https://acala.notion.site/Acala-Karura-Token-Listing-Playbook-c6b97e022ac6402cb15ce3cb419c48e5
 
 https://wiki.acala.network/integrate/integration-1/token-transfer
+
+https://acala.discourse.group/t/open-hrmp-channel-between-composable-picasso-and-karura/918
 
 [kusama]: https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode
 [rococo]: https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frococo-rpc.polkadot.io#/explorer
