@@ -18,6 +18,7 @@ const nextConfig = {
     RPC_URL_43114: process.env.RPC_URL_43114,
     RPC_URL_1285: process.env.RPC_URL_1285,
     RPC_URL_250: process.env.RPC_URL_250,
+    SUBSQUID_URL: process.env.SUBSQUID_URL,
   },
   pwa: {
     dest: "public",

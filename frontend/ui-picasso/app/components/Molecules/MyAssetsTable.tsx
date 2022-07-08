@@ -34,53 +34,63 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ assets }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {assets.map((row) => (
-              <TableRow key={row.symbol}>
-                <TableCell align="left">
-                  <TokenAsset tokenId={row.tokenId} />
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">
-                    ${new BigNumber(row.price).toFormat(row.decimalsToDisplay)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Box sx={{ display: "flex" }}>
-                    <TokenAsset
-                      tokenId={row.tokenId}
-                      iconOnly
-                      sx={{ width: 36 }}
-                    />
-                    <Typography variant="body2">
-                      {new BigNumber(row.balance).toFormat(
-                        row.decimalsToDisplay
-                      )}
-                      &nbsp;
-                      {row.symbol}
-                    </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">
-                    ${new BigNumber(row.value).toFormat(row.decimalsToDisplay)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography
-                    variant="body2"
-                    color={
-                      row.change_24hr < 0 ? "error.main" : "featured.lemon"
-                    }
-                  >
-                    {row.change_24hr > 0 ? "+" : ""}
-                    {new BigNumber(row.change_24hr * 100).toFormat(
-                      row.decimalsToDisplay
-                    )}
-                    %
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ))}
+            {assets.map((row) => {
+              if (row.symbol) {
+                return (
+                  <TableRow key={row.symbol}>
+                    <TableCell align="left">
+                      <TokenAsset tokenId={row.tokenId} />
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography variant="body2">
+                        $
+                        {new BigNumber(row.price).toFormat(
+                          row.decimalsToDisplay
+                        )}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Box sx={{ display: "flex" }}>
+                        <TokenAsset
+                          tokenId={row.tokenId}
+                          iconOnly
+                          sx={{ width: 36 }}
+                        />
+                        <Typography variant="body2">
+                          {new BigNumber(row.balance).toFormat(
+                            row.decimalsToDisplay
+                          )}
+                          &nbsp;
+                          {row.symbol}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography variant="body2">
+                        $
+                        {new BigNumber(row.value).toFormat(
+                          row.decimalsToDisplay
+                        )}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography
+                        variant="body2"
+                        color={
+                          row.change_24hr < 0 ? "error.main" : "featured.lemon"
+                        }
+                      >
+                        {row.change_24hr > 0 ? "+" : ""}
+                        {new BigNumber(row.change_24hr * 100).toFormat(
+                          row.decimalsToDisplay
+                        )}
+                        %
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                );
+              }
+            })}
           </TableBody>
         </Table>
       </TableContainer>

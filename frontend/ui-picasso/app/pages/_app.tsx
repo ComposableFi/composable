@@ -18,6 +18,8 @@ import { NETWORKS } from "@/defi/Networks";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components/Molecules/Snackbar";
 import { ExecutorProvider } from "substrate-react";
+import { ApolloProvider } from "@apollo/client";
+import { client as apolloClient } from "@/apollo/apolloGraphql";
 // Client-side cache, shared for the whole session of the user in the browser.
 const clientSideEmotionCache = createEmotionCache();
 
@@ -86,29 +88,31 @@ export default function MyApp(props: MyAppProps) {
               supportedChains={Object.values(SUBSTRATE_NETWORKS)}
             >
               <PalletsContextProvider>
-                <SubstrateBalancesUpdater
-                  substrateChains={Object.values(SUBSTRATE_NETWORKS)}
-                />
-                <CrowdloanRewardsUpdater />
-                <SnackbarProvider
-                  Components={{
-                    info: ThemeResponsiveSnackbar,
-                    success: ThemeResponsiveSnackbar,
-                    error: ThemeResponsiveSnackbar,
-                    warning: ThemeResponsiveSnackbar,
-                  }}
-                  autoHideDuration={null}
-                  maxSnack={4}
-                  disableWindowBlurListener={true}
-                  anchorOrigin={{
-                    vertical: "bottom",
-                    horizontal: "center",
-                  }}
-                >
-                  <ExecutorProvider>
-                    <Component {...pageProps} />
-                  </ExecutorProvider>
-                </SnackbarProvider>
+                <ApolloProvider client={apolloClient}>
+                  <SubstrateBalancesUpdater
+                    substrateChains={Object.values(SUBSTRATE_NETWORKS)}
+                  />
+                  <CrowdloanRewardsUpdater />
+                  <SnackbarProvider
+                    Components={{
+                      info: ThemeResponsiveSnackbar,
+                      success: ThemeResponsiveSnackbar,
+                      error: ThemeResponsiveSnackbar,
+                      warning: ThemeResponsiveSnackbar,
+                    }}
+                    autoHideDuration={null}
+                    maxSnack={4}
+                    disableWindowBlurListener={true}
+                    anchorOrigin={{
+                      vertical: "bottom",
+                      horizontal: "center",
+                    }}
+                  >
+                    <ExecutorProvider>
+                      <Component {...pageProps} />
+                    </ExecutorProvider>
+                  </SnackbarProvider>
+                </ApolloProvider>
               </PalletsContextProvider>
             </ParachainContextProvider>
           </ThemeProvider>
