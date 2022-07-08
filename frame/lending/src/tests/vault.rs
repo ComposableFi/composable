@@ -112,7 +112,7 @@ proptest! {
 			let lender = *CHARLIE;
 			// Individual borrow's part which is going to be returned each block
 			let return_factor = FixedU128::saturating_from_rational(25, 100);
-			let return_amount:u128 =
+			let partial_return_amount:u128 =
 				(FixedU128::from_inner(borrowed_amount_per_borrower) * return_factor).into_inner();
 			// Total amount which should be minterd onto lender account
 			let total_amount =
@@ -158,23 +158,23 @@ proptest! {
 			//Now vault is unbalanced and should restore equilibrium state.
 			 while Lending::ensure_can_borrow_from_vault(&vault_id, &market_account).is_err() {
 				for borrower in &borrowers {
-					// Sometimes return_amount can exceed total debt.
+					// Sometimes partial_return_amount can exceed total debt.
 					// In such cases we have to repay actual debt balance.
 					let borrower_total_debt = <Lending as LendingTrait>::total_debt_with_interest(&market_id, &borrower).unwrap();
-					let return_amount = if let TotalDebtWithInterest::Amount(debt) = borrower_total_debt {
-						if debt.div(USDT::ONE) < return_amount {
+					let partial_return_amount = if let TotalDebtWithInterest::Amount(debt) = borrower_total_debt {
+						if debt.div(USDT::ONE) < partial_return_amount {
 							debt.div(USDT::ONE)
 						} else {
-							return_amount
+							partial_return_amount
 						}
 					} else {
-						return_amount
+						partial_return_amount
 					};
 					<Lending as LendingTrait>::repay_borrow(
 						&market_id,
 						borrower,
 						borrower,
-						RepayStrategy::PartialAmount(USDT::units(return_amount)),
+						RepayStrategy::PartialAmount(USDT::units(partial_return_amount)),
 						false,
 					)
 					.unwrap();
