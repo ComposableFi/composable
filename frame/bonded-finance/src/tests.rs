@@ -4,7 +4,10 @@
 
 use super::*;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
-use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
+use composable_traits::{
+	bonded_finance::{BondDuration, BondOffer, BondOfferReward},
+	vesting::{VestingSchedule, VestingWindow::BlockNumberBased},
+};
 use frame_support::{
 	error::BadOrigin,
 	traits::{
@@ -90,6 +93,46 @@ proptest! {
 						prop_assert_eq!(Tokens::balance(offer.reward.asset, &ALICE), 0);
 					  Ok(())
 			  })?;
+	  }
+
+	  #[test]
+	  fn generate_vesting_schedule(offer in simple_offer(1)) {
+		ExtBuilder::build().execute_with(|| {
+			let mut offer = offer.clone();
+			offer.beneficiary = BOB;
+			System::set_block_number(1);
+			prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+			prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+			let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(), false);
+			prop_assert_ok!(offer_id);
+			let offer_id = offer_id.expect("impossible; qed");
+
+			prop_assert_ok!(BondedFinance::do_bond(offer_id, &BOB, 1, false));
+
+			let schedule = VestingSchedule {
+				window: BlockNumberBased { start: 1_u64, period: 1_u64 },
+				 period_count: 1_u32,
+				   per_period: 1000000_u128,
+			};
+
+			println!("{:?}", System::events());
+
+			println!("event: {:?}", Event::Vesting(pallet_vesting::Event::<Runtime>::VestingScheduleAdded {
+				 from: 111847873086112544514399039341,
+				 to: BOB,
+				 asset: offer.reward.asset,
+				 schedule: schedule.clone(),
+			}));
+
+			System::assert_has_event(Event::Vesting(pallet_vesting::Event::<Runtime>::VestingScheduleAdded {
+				 from: 111847873086112544514399039341,
+				 to: BOB,
+				 asset: offer.reward.asset,
+				 schedule,
+			}));
+
+			Ok(())
+		})?;
 	  }
 
 	  #[test]
