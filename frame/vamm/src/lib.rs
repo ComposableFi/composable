@@ -46,16 +46,21 @@
 //!
 //! * [`create`](pallet/struct.Pallet.html#method.create): Creates a new vamm,
 //! returning it's Id.
-//! * [`swap`](pallet/struct.Pallet.html#method.swap): Performs swap of a
-//! * [`move_price`](pallet/struct.Pallet.html#method.move_price): Changes
-//! amount of [`base`](VammState::base_asset_reserves) and
-//! [`quote`](VammState::quote_asset_reserves) assets in reserve, essentially
-//! changing the invariant.
 //! * [`get_price`](pallet/struct.Pallet.html#method.get_price): Gets the
 //! current price of the [`base`](VammState::base_asset_reserves) or
 //! [`quote`](VammState::quote_asset_reserves) asset in a vamm.
 //! * [`get_twap`](pallet/struct.Pallet.html#method.get_twap): Gets the time
 //! weighted average price of the desired asset.
+//! * [`move_price`](pallet/struct.Pallet.html#method.move_price): Changes
+//! amount of [`base`](VammState::base_asset_reserves) and
+//! [`quote`](VammState::quote_asset_reserves) assets in reserve, essentially
+//! changing the invariant.
+//! * [`swap`](pallet/struct.Pallet.html#method.swap): Performs the swap of the
+//! desired asset against the vamm.
+//! * [`swap_simulation`](pallet/struct.Pallet.html#method.swap_simulation):
+//! Performs the *simulation* of the swap operation for the desired asset
+//! against the vamm, returning the computed asset price if the swap were in
+//! fact executed.
 //! * [`update_twap`](pallet/struct.Pallet.html#method.update_twap): Updates the
 //! time weighted average price of the desired asset.
 //!
@@ -853,7 +858,54 @@ pub mod pallet {
 			Ok(amount_swapped)
 		}
 
-		#[allow(unused_variables)]
+		/// Performs the *simulation* of the swap operation for the desired
+		/// asset against the vamm, returning the computed asset price if the
+		/// swap were in fact executed.
+		///
+		/// # Overview
+		/// The Vamm Pallet has a function to retrieve the current price:
+		/// [`get_price`](Self::get_price), but it only returns the 'current'
+		/// price of an infinitesimal trade, not taking into account price move
+		/// due to possibly large operations of opening or closing positions.
+		/// [`swap_simulation`](Self::swap_simulation) has the purpose of taking
+		/// into account possible price moves due to trade size, hence being the
+		/// recommended option to estimate the price of an asset in case of
+		/// swaps.
+		///
+		/// ![](http://www.plantuml.com/plantuml/svg/FSuzZi90343XVa-nN23kgI8XSOt8cJYPaMpFo3_a-WGAggUlUxC7MgJmtwrfuTmeZVzhnF0xWE4v7IrghkbafMkGnbIwmAFBw8uhqxD1-G78IoM3tL08NYW2MyFZaiEUMg9rNVp4iNYJPFnu6epwNPX9jwjl)
+		///
+		/// ## Parameters
+		///  - `config`: Specification for swaps.
+		///
+		/// ## Returns
+		/// The asset price taking into account slippage and price move due to
+		/// trade size.
+		///
+		/// ## Assumptions or Requirements
+		/// * The requested [`VammId`](Config::VammId) must exists.
+		/// * The requested Vamm must be open.
+		/// * The desired swap amount can not exceed the maximum supported value
+		/// for the Vamm.
+		///
+		/// ## Emits
+		/// No event is emitted for this function.
+		///
+		/// ## State Changes
+		/// This function does not mutate runtime storage.
+		///
+		/// ## Errors
+		/// * [`Error::<T>::VammDoesNotExist`]
+		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`Error::<T>::VammIsClosed`]
+		/// * [`Error::<T>::InsufficientFundsForTrade`]
+		/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
+		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
+		/// * [`ArithmeticError::Underflow`](sp_runtime::ArithmeticError)
+		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
+		///
+		/// # Runtime
+		/// `O(1)`
+		#[transactional]
 		fn swap_simulation(
 			config: &SwapSimulationConfigOf<T>,
 		) -> Result<BalanceOf<T>, DispatchError> {
