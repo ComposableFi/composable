@@ -1,4 +1,4 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-export type PHANTOM_LENDING = 'lending';
+export type PHANTOM_LENDING = "lending";

@@ -1,9 +1,9 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+import type { ApiTypes } from "@polkadot/api-base/types";
 
-declare module '@polkadot/api-base/types/errors' {
+declare module "@polkadot/api-base/types/errors" {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
@@ -1181,7 +1181,7 @@ declare module '@polkadot/api-base/types/errors' {
       CallFiltered: AugmentedError<ApiType>;
       /**
        * Failed to extract the runtime version from the new runtime.
-       * 
+       *
        * Either calling `Core_version` or decoding `RuntimeVersion` failed.
        **/
       FailedToExtractRuntimeVersion: AugmentedError<ApiType>;
