@@ -61,7 +61,7 @@ message U128 {
   // using `bytes` - 1 byte type + 1 byte length + 1 byte value, but not 7 bit encoded, so always 2+ bytes (more than 65535 tokens) - 4 bytes total
   // high << 64 + low - 2 byte types + 2 bytes values - 4 bytes
   uint64 high = 1;
-  uint64 low = 2;  
+  uint64 low = 2;
 }
 
 message Amount {
