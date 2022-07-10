@@ -258,7 +258,6 @@ pub mod module {
 			let to = T::Lookup::lookup(beneficiary)?;
 			<Self as VestedTransfer>::vested_transfer(asset, &from, &to, schedule.clone())?;
 
-			Self::deposit_event(Event::VestingScheduleAdded { from, to, asset, schedule });
 			Ok(())
 		}
 
