@@ -256,7 +256,7 @@ pub mod module {
 			T::VestedTransferOrigin::ensure_origin(origin)?;
 			let from = T::Lookup::lookup(from)?;
 			let to = T::Lookup::lookup(beneficiary)?;
-			<Self as VestedTransfer>::vested_transfer(asset, &from, &to, schedule.clone())?;
+			<Self as VestedTransfer>::vested_transfer(asset, &from, &to, schedule)?;
 
 			Ok(())
 		}
