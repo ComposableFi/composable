@@ -117,7 +117,6 @@ proptest! {
 					record.event,
 					Event::Vesting(
 						pallet_vesting::Event::<Runtime>::VestingScheduleAdded {
-							// from: 111847873086112544514399039341,
 							to: BOB,
 							asset: _asset,
 							schedule: VestingSchedule {
