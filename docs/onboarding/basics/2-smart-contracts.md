@@ -25,7 +25,7 @@ Webassembly provides these guarantees and is thus a popular runtime.
 
 [![How does WebAssembly work?](https://img.youtube.com/vi/zcADuXro-GQ/maxresdefault.jpg)](https://youtu.be/zcADuXro-GQ)
 
-## Takeaways
+### Takeaways
 
 - Realize that smart contracts are just programs, but that they can be used as a building block for [dapps](https://www.youtube.com/watch?v=KkZ6iYnSDRw).
 - That if we treat smart contracts as regular technology, we can discuss which tradeoffs each technology makes.

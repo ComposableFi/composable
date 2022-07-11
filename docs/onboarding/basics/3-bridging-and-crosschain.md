@@ -17,11 +17,12 @@ How we orchestrate this synchronization will be discussed later. For now, it is 
 - [What Are Blockchain Bridges And How Can We Classify Them?
 ](https://blog.li.fi/what-are-blockchain-bridges-and-how-can-we-classify-them-560dc6ec05fa)
 
-## Takeaways
+### Takeaways
 
 The above article makes clear distinctions, although we consider atomic swaps to be a synchronization primitive, and not a way to manage liquidity. Atomic swaps can enable burn & mint or lock & release style liquidity management.
 
-### Further Reading
+## Further Reading
 
 - [BEEFY](https://github.com/paritytech/grandpa-bridge-gadget/blob/master/docs/beefy.md)
 - [Nomad](https://docs.nomad.xyz/)
+- [Polkadot - Learn Bridges (good for beginners)](https://wiki.polkadot.network/docs/learn-bridges)
