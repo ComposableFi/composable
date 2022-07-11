@@ -1302,6 +1302,7 @@ fn historic_pricing() {
 }
 
 #[test]
+#[ignore = "The behaviour of `Oracle::get_price` needs to be reviewed (will be updated with PR/ docs link once available)"]
 fn price_of_amount() {
 	new_test_ext().execute_with(|| {
 		let value = NORMALIZED::units(50_000);
