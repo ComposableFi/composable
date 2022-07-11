@@ -11,6 +11,7 @@
     "live_compile": "tsc -p . -w",
     "lint": "eslint 'test/**/*.ts' 'src/**/*.ts' --fix-dry-run ",
     "test": "ts-mocha --paths -p tsconfig.json",
+    "test_short": "time ts-mocha --paths -p tsconfig.json --grep 'SHORT'",
     "gen": "npm run gen:defs && npm run gen:meta",
     "gen:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package @composable/types/interfaces --input ./src/types/interfaces",
     "gen:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package @composable/types/interfaces --endpoint ws://localhost:9988 --output src/types/interfaces/",

@@ -1,3 +1,3 @@
 #!/bin/bash
 npm install -q
-npm run test
+npm run test_short
