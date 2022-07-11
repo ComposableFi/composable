@@ -6,6 +6,18 @@
     - [Oracle Set-Up Guide](./developer-guides/oracle-set-up-guide/oracle-set-up-guide.md)
     - [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)
 
+# Parachains
+- [Picasso](./parachains/picasso-parachain-overview.md)
+    - [Picasso Crowdloan](./parachains/picasso/picasso-crowdloan.md)
+        - [KSM Purchase Log](./parachains/picasso/KSM-purchase-log.md)
+    - [Governance](./parachains/picasso/picasso-governance.md)
+    - [Tokenomics](./parachains/picasso/picasso-tokenomics.md)
+  
+- [Composable](./parachains/composable-parachain-overview.md)
+    - [Composable Crowdloan](./parachains/composable/composable-crowdloan.md)
+        - [DOT Purchase Log](./parachains/composable/DOT-purchase-log.md)
+    - [LAYR Tokenomics](./parachains/composable/LAYR-tokenomics.md)
+  
 # 💿 PRODUCTS
 - [Technical Stack Overview](./products/technical-stack-overview.md)
 - [Composable's Cross-Chain Virtual Machine](./products/cross-chain-virtual-machine.md)
@@ -37,20 +49,7 @@
 - [Parachain Vault Strategy](./products/parachain-vault-strategy.md)
     - [Vault Process in Detail](./products/parachain-vault-strategy/vault-process-in-detail/vault-process-in-detail.md)
     - [Contracts - Technical Details](./products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details.md)
-- [The Picasso Parachain](./products/the-picasso-parachain.md)
-    - [Polkadot - A Brief Overview](./products/the-picasso-parachain/polkadot-a-brief-overview.md)
-    - [Council](./products/the-picasso-parachain/council.md)
-    - [The Picasso Tech Stack](./products/the-picasso-parachain/the-picasso-tech-stack.md)
-        - [L2 Transfer and Communication Interface](./products/the-picasso-parachain/the-picasso-tech-stack/l2-transfer-and-communication-interface.md)
-        - [Apollo: The Oracle Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/apollo.md)
-        - [Cubic: The Vaults Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/cubic.md)
-        - [Angular Finance: The Isolated Lending Pair Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/angular.md)
         
-# 🪙  GOVERNANCE AND TOKENOMICS
-- [The Picasso (PICA) Network Token](./governance-and-tokenomics/the-picasso-pica-network-token.md)
-- [LAYR Tokens](./governance-and-tokenomics/layr-tokens.md)
-
-
 # 🌎 ECOSYSTEM
 - [Build on Composable: Ecosystem Development](./ecosystem/build-on-composable-ecosystem-development.md)
   - [Composable Grants](./ecosystem/build-on-composable-ecosystem-development/composable-grants.md)
