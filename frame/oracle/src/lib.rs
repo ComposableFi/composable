@@ -445,21 +445,21 @@ pub mod pallet {
 			// assume the following parameters:
 			//
 			// asset A has 3 decimal places
-			// 1 unit of asset ACOIN costs 4 units of normalized asset (4_000_000_000_000)
+			// 1 unit of asset ACOIN costs 4 units of default quote asset (4_000_000_000_000)
 			// the price for 1/1_000th of asset ACOIN (the smallest unit possible, we'll call it
 			// ACENT) is then: 4_000_000_000_000/1_000 == 4_000_000_000; or 4/1000ths (1/250th) of 1
-			// unit of normalized asset.
+			// unit of default quote asset.
 			//
-			// if we want 10 units of normalized asset:
+			// if we want 10 units of default quote asset:
 			// 10_000_000_000_000 * (1_000 / 4_000_000_000_000) = 2_500
 			// 10^12 * (10^3 / 4^12) = 2_500
 			//
-			// 2_500 ACENTS are needed to pay for 10 normalized asset.
+			// 2_500 ACENTS are needed to pay for 10 default quote asset.
 			let unit = T::LocalAssets::unit(asset_id)?;
-			let price_asset_for_unit: u128 = Self::get_price(asset_id, unit)?.price.into();
+			let asset_price_per_unit: u128 = Self::get_price(asset_id, unit)?.price.into();
 
 			let amount: u128 = amount.into();
-			let result = multiply_by_rational(amount, unit.into(), price_asset_for_unit)?;
+			let result = multiply_by_rational(amount, unit.into(), asset_price_per_unit)?;
 			let result: u64 = result.try_into().map_err(|_| ArithmeticError::Overflow)?;
 
 			Ok(result.into())
