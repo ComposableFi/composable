@@ -27,7 +27,7 @@ frame/*/runtime-api @ComposableFi/parachain-rpc
 
 # Gitbook
 book/ @ComposableFi/technical-writing-reviewers
-README.md @ComposableFi/technical-writing-reviewers
+README.md @ComposableFi/technical-writing-reviewers @ComposableFi/core @ComposableFi/parachain-leads
 
 # Frontend and Blockchain Integration 
 frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
@@ -40,3 +40,9 @@ integration-tests/runtime-tests/ @ComposableFi/testers
 
 # Oracle Setup Script
 scripts/oracle-setup @ComposableFi/parachain
+
+## Dev stuff
+
+rfcs/ @ComposableFi/developers
+docs/ @ComposableFi/developers @ComposableFi/technical-writers
+scripts/ @ComposableFi/developers @ComposableFi/sre
