@@ -76,7 +76,7 @@
     - [Oracle Set-Up Guide](./developer-guides/oracle-set-up-guide/oracle-set-up-guide.md)
     - [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)
 
-# Parachains
+# ⛓️ Parachains
 - [Picasso](./parachains/picasso-parachain-overview.md)
     - [Picasso Crowdloan](./parachains/picasso/picasso-crowdloan.md)
         - [KSM Purchase Log](./parachains/picasso/KSM-purchase-log.md)
@@ -106,7 +106,6 @@
     - [Passive Liquidity Rebalancing](./products/mosaic/passive-liquidity-rebalancing.md)
     - [Active Liquidity Management](./products/mosaic/active-liquidity-management.md)
     - [Single Sided Liquidity Staking](./products/mosaic/single-sided-staking.md)
-    - [Chains Supported on Day One](./products/mosaic/chains-supported-day-one.md)
     - [Additional Use Cases](./products/mosaic/additional-use-cases.md)
     - [Mosaic integrations](./products/mosaic/mosaic-integrations.md)
     - [The Mosaic Pallet](./products/mosaic/mosaic-pallet.md)
