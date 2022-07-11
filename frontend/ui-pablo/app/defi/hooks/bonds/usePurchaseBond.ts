@@ -24,7 +24,7 @@ export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
             const signer = await getSigner(APP_NAME, selectedAccount.address);
             await executor
               .execute(
-                parachainApi.tx.bondedFinance.bond(offerId.toNumber(), amount.toString(), true),
+                parachainApi.tx.bondedFinance.bond(offerId.toNumber(), amount.toString(), false),
                 selectedAccount.address,
                 parachainApi,
                 signer,

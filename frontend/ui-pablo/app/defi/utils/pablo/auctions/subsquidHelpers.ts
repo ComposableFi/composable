@@ -1,8 +1,8 @@
 import { LiquidityBootstrappingPool, LiquidityPoolTransactionType } from "@/defi/types";
 import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
-import { queryAuctionStats } from "@/updaters/auctions/subsquid";
-import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
+import { queryAuctionStats } from "@/subsquid/queries/auctions";
+import { queryPoolTransactionsByType } from "@/subsquid/queries/pools";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { fetchBalanceByAssetId } from "../../assets";

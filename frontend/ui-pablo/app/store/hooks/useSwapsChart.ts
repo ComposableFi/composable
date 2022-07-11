@@ -1,6 +1,6 @@
 import { DEFI_CONFIG } from "@/defi/config";
-import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
-import { query24hOldTransactionByPoolQuoteAsset } from "@/updaters/swaps/subsquid";
+import { queryPoolTransactionsByType } from "@/subsquid/queries/pools";
+import { query24hOldTransactionByPoolQuoteAsset } from "@/subsquid/queries/swaps";
 import { useState, useEffect } from "react";
 import BigNumber from "bignumber.js";
 

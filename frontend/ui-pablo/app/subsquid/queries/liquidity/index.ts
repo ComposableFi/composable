@@ -1,4 +1,4 @@
-import { subsquidClient } from "@/subsquid";
+import { subsquidClient } from "../../";
 
 export const queryLiquidityByPoolId = (poolId: number, limit: number = 500) => subsquidClient.query(`
 query MyQuery {

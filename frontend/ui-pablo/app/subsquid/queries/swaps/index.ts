@@ -1,4 +1,4 @@
-import { subsquidClient } from "@/subsquid";
+import { subsquidClient } from "../..";
 
 export const query24hOldTransactionByPoolQuoteAsset = (
     poolId: number,
