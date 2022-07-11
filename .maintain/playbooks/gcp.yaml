@@ -1,7 +1,7 @@
 ---
 plugin: gcp_compute
 projects:
-  - composable-ops-5568
+  - dali-rococo
 hostname:
   - name
 keyed_groups:
