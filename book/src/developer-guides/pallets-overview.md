@@ -1,3 +1,7 @@
+# Pallet Overviews
+
+---
+
 # Pallets & Integration
 
 The world of DeFi (primitives, core and applications) continues to edge towards interoperability and Polkadot comfortably sits at the epicenter of this natural progression. To natively deploy dApps in the DotSama ecosystem, developers need pallets. Substrate-based pallets are modular frameworks that enable anyone to create purpose-built blockchains (as well as dApps) by composing custom or pre-built components. Think of pallets as stackable building blocks that any developer can use to easily build protocols and dApps.
@@ -7,10 +11,10 @@ In general, pallets provide a robust and powerful framework to help propel more 
 Developers and projects hold the ability to deploy as pallets on our chain, with governance having the ability to upgrade these pallets into the runtime of our chains:
 
 
-![pallets_integration_overview](./pallets-integration-overview.png)
+![pallet_integrations](./pallet-integrations.png)
 
 
-### Advantages:
+## Advantages:
 
 **Higher performance**: The cost of calling a pallet extrinsic is known beforehand through bench-marking.
 

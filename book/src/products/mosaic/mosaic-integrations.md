@@ -1,5 +1,7 @@
 # Integrating with Mosaic using the Composable SDK
 
+---
+
 Composable SDK allows developers to embed the Mosaic infrastructure in the dApps they are building. This enables new functions, such as:
 
 * Providing unused capital to Mosaic’s vaults for additional yield. For example, the integration of Mosaic with Crocswap will provide Crocswap additional access to liquidity transfer across various L2s. By virtue of Mosaic’s design, its collaboration with Crocswap will enable access to greater TVL for single-sided liquidity provision. Hence users who provide liquidity in single-sided vaults, especially stablecoins and wETH, can earn attractive yields.

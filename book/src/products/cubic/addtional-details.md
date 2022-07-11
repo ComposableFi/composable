@@ -1,5 +1,6 @@
 # Additional Vault Pallet Details
 
+---
 
 ## Vault Features
 

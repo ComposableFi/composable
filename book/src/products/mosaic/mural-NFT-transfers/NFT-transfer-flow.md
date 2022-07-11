@@ -1,8 +1,8 @@
-# [NFT Transfer Flow]
+# NFT Transfer Flow
 
 ---
 
-## [General Transfer Flow]
+## General Transfer Flow
 
 The transferal of an NFT from the source to destination locations involves the following steps, referencing the blow screenshot of Composable's Mural NFT transferal interface:
 
