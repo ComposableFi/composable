@@ -82,10 +82,12 @@ fn setup_sell() {
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		let not_reserved = Assets::reserved_balance(BTC, &ALICE);
 		let gas = Assets::balance(PICA, &ALICE);
-		let treasury = Assets::balance(PICA, &DutchAuctionPalletId::get().into_account());
+		let treasury =
+			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account_truncating());
 		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
 		let treasury_added =
-			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account()) - treasury;
+			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account_truncating()) -
+				treasury;
 		assert!(treasury_added > 0);
 		let ask_gas = <Runtime as pallet_dutch_auction::Config>::WeightInfo::ask() as u128;
 		assert!(treasury_added >= ask_gas);

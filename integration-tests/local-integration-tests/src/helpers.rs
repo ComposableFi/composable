@@ -16,7 +16,7 @@ pub fn simtest() {
 
 /// create account ids from test paraid
 pub fn para_account_id(id: u32) -> AccountId {
-	ParaId::from(id).into_account()
+	ParaId::from(id).into_account_truncating()
 }
 
 /// under ED, but above Weight
@@ -46,7 +46,7 @@ pub fn relay_dump_events() {
 }
 
 pub fn sibling_account() -> AccountId {
-	polkadot_parachain::primitives::Sibling::from(SIBLING_PARA_ID).into_account()
+	polkadot_parachain::primitives::Sibling::from(SIBLING_PARA_ID).into_account_truncating()
 }
 
 /// assert amount is supported deposit amount and is above it

@@ -30,7 +30,7 @@ pub(crate) fn success() {
 
 		// class attribute check
 		assert_eq!(
-			Pallet::<MockRuntime>::class_attribute(&NftClass::STAKING, &1_u32.encode()),
+			Pallet::<MockRuntime>::collection_attribute(&NftClass::STAKING, &1_u32.encode()),
 			None,
 			"staking class should have no attributes"
 		);
@@ -64,7 +64,7 @@ pub(crate) fn failure() {
 
 		// class attribute check
 		assert_eq!(
-			Pallet::<MockRuntime>::class_attribute(&NftClass::new(255), &1_u32.encode()),
+			Pallet::<MockRuntime>::collection_attribute(&NftClass::new(255), &1_u32.encode()),
 			None,
 			"class does not exist, there should be no attributes"
 		);

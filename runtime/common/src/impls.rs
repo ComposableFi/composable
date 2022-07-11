@@ -200,6 +200,8 @@ mod tests {
 		type ReserveIdentifier = ReserveIdentifier;
 		type MaxReserves = frame_support::traits::ConstU32<2>;
 		type DustRemovalWhitelist = Everything;
+		type OnKilledTokenAccount = ();
+		type OnNewTokenAccount = ();
 	}
 
 	ord_parameter_types! {
