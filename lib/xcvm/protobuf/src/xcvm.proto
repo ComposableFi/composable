@@ -31,7 +31,14 @@ message Transfer {
 }
 
 message Assets {
-  map<uint32, Amount> assets = 1;
+  // really it could be fixed5 (32 assets), now it is min 2 bytes with second 7 bit encoded
+  // `assets` entries are variable size, so total size does no predict count
+  // so for linear parser with fow slow metered or fast weighted consensuses are predicatable only with
+  // explicit counter
+  uint32 count = 1;
+  // NOTE: protobuf specs tells that interpreter will retain on latest key, but not enforces unique key
+  // NOTE: in our case we are more strict and require one and only one key because interpreters are linear(not buffering)
+  map<uint32, Amount> assets = 2;
 }
 
 message Call {
@@ -51,23 +58,22 @@ message Account {
 
 message U128 {
   // minimums:
-  // bytes - 1 byte type + 1 byte length + 1 byte value, but not 7 bit encoded, so always 2+ bytes (more than 65535 tokens)
-  // low + high - 2 byte types + 2 bytes values
-  uint64 low = 1;
-  uint64 high = 2;
+  // using `bytes` - 1 byte type + 1 byte length + 1 byte value, but not 7 bit encoded, so always 2+ bytes (more than 65535 tokens) - 4 bytes total
+  // high << 64 + low - 2 byte types + 2 bytes values - 4 bytes
+  uint64 high = 1;
+  uint64 low = 2;
 }
 
 message Amount {
   oneof amount {
-    Fixed fixed = 1;
+    U128 fixed = 1;
     Ratio ratio = 2;
   }
 }
 
-message Fixed {
-  U128 amount = 1;
-}
-
 message Ratio {  
+  // having only enumerator leads to 3+ bytes to encode any fraction of 10000 precision which may be more than half of value
+  // so having denumerator adds one byte only, but allows to encode 100 USD of 1B USD ratio if needed
   uint32 numerator = 1;
+  uint32 denumerator = 2;
 }
