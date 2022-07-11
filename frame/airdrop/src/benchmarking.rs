@@ -15,6 +15,7 @@ use frame_system::{Pallet as System, RawOrigin};
 use multihash::{Hasher, Keccak256, Sha2_256};
 use p256::ecdsa::{signature::Signer, SigningKey, VerifyingKey};
 use sp_runtime::traits::One;
+use sp_std::prelude::*;
 
 pub type EthereumKey = libsecp256k1::SecretKey;
 pub type CosmosKey = SigningKey;
