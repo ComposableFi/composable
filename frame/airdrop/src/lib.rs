@@ -35,7 +35,7 @@ pub mod pallet {
 		dispatch::PostDispatchInfo,
 		pallet_prelude::*,
 		traits::{
-			fungible::{Inspect, Transfer, Mutate, MutateHold},
+			fungible::{Inspect, Mutate, MutateHold, Transfer},
 			Time,
 		},
 		transactional, Blake2_128Concat, PalletId, Parameter,

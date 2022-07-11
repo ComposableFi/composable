@@ -2,7 +2,7 @@
 
 use super::*;
 use crate::{
-	models::Proof, AccountIdOf, Call, Config, IdentityOf, Pallet as Airdrop, Pallet, ProofOf, RecipientFundOf,
+	models::Proof, AccountIdOf, Call, Config, IdentityOf, Pallet as Airdrop, Pallet, ProofOf,
 };
 use composable_support::{
 	signature_verification,
@@ -180,8 +180,7 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		// BalanceOf::<T>::make_free_balance_be(creator, STAKE + ACCOUNT_FUND_AMOUNT * (x as u128));
-        T::RecipientFundAsset::mint_into(creator, STAKE + ACCOUNT_FUND_AMOUNT * (x as u128));
+		T::RecipientFundAsset::mint_into(&creator, (STAKE + ACCOUNT_FUND_AMOUNT * (x as u128)).into())?;
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 	}: add_recipient(RawOrigin::Signed(creator), airdrop_id, accounts)
 
@@ -190,6 +189,7 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
+		T::RecipientFundAsset::mint_into(&creator, (STAKE + ACCOUNT_FUND_AMOUNT * (x as u128)).into())?;
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts.clone())?;
 	}: remove_recipient(RawOrigin::Signed(creator), airdrop_id, accounts[0].0.clone())
@@ -199,6 +199,7 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
+		T::RecipientFundAsset::mint_into(&creator, (STAKE + ACCOUNT_FUND_AMOUNT * (x as u128)).into())?;
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts)?;
 	}: enable_airdrop(RawOrigin::Signed(creator), airdrop_id)
@@ -208,6 +209,7 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
+		T::RecipientFundAsset::mint_into(&creator, (STAKE + ACCOUNT_FUND_AMOUNT * (x as u128)).into())?;
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts)?;
 	}: disable_airdrop(RawOrigin::Signed(creator), airdrop_id)
@@ -218,6 +220,7 @@ benchmarks! {
 		let remote_accounts = accounts.clone().into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
+		T::RecipientFundAsset::mint_into(&creator, (STAKE + ACCOUNT_FUND_AMOUNT * (x as u128)).into())?;
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator, airdrop_id, remote_accounts)?;
 		let reward_account = accounts[0].0.clone();
