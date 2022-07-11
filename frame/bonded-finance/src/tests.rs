@@ -96,45 +96,6 @@ proptest! {
 	  }
 
 	  #[test]
-	  fn generate_vesting_schedule(offer in simple_offer(1)) {
-		ExtBuilder::build().execute_with(|| {
-			System::set_block_number(1);
-			prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
-			prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
-			let offer_id = BondedFinance::do_offer(&ALICE, offer.clone(), false);
-			prop_assert_ok!(offer_id);
-			let offer_id = offer_id.expect("impossible; qed");
-
-			let nb_of_bonds = 1;
-
-			prop_assert_ok!(Tokens::mint_into(offer.asset, &BOB, nb_of_bonds * offer.bond_price));
-			prop_assert_ok!(BondedFinance::do_bond(offer_id, &BOB, nb_of_bonds, false));
-
-			assert!(System::events().iter().any(|record| {
-				let _period: u64 = offer.reward.maturity;
-				let _asset = offer.reward.asset;
-				matches!(
-					record.event,
-					Event::Vesting(
-						pallet_vesting::Event::<Runtime>::VestingScheduleAdded {
-							to: BOB,
-							asset: _asset,
-							schedule: VestingSchedule {
-								window: BlockNumberBased { start: 1_u64, period: _period },
-								period_count: 1_u32,
-								..
-							},
-							..
-						}
-					)
-				)
-			}));
-
-			Ok(())
-		})?;
-	  }
-
-	  #[test]
 	  fn cancel_refund_reward(offer in simple_offer(2)) {
 			  ExtBuilder::build().execute_with(|| {
 						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
