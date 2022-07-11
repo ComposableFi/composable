@@ -224,5 +224,17 @@ export class TxAirdropTests {
     );
   }
 
-
+  public static async removeRecipient(
+    api: ApiPromise,
+    wallet: KeyringPair,
+    airdropId: u128 | BN,
+    recipient: PalletAirdropModelsIdentity
+  ) {
+    return await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.airdrop.RecipientRemoved.is,
+      api.tx.airdrop.removeRecipient(airdropId, recipient)
+    );
+  }
 }
