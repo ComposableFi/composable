@@ -4,7 +4,10 @@
 
 use super::*;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
-use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
+use composable_traits::{
+	bonded_finance::{BondDuration, BondOffer, BondOfferReward},
+	vesting::{VestingSchedule, VestingWindow::BlockNumberBased},
+};
 use frame_support::{
 	error::BadOrigin,
 	traits::{
