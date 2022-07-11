@@ -22,3 +22,13 @@ We use AMMs and liquidity pools because order book-based DEXes cannot be properl
 AMMs can be used to trade any asset, however, we can optimize the Constant Product AMM algorithm with knowledge of the underlying assets `real` value. For example, stablecoins should always have similar values. Stableswap is an adaptation of the algorithm:
 
 [![Curve - Math | DeFi](https://img.youtube.com/vi/GuD3jkPgPgU/maxresdefault.jpg)](https://youtu.be/GuD3jkPgPgU)
+
+
+### Takeaways
+
+- We can 'manipulate' the AMM algorithms to better suit the intended assets. Curve adds weights to attempt to always have stablecoins be priced around $1.
+
+## Further Reading
+
+- [Uniswap v2 Core](https://uniswap.org/whitepaper.pdf)
+- [Uniswap v3 Core](https://uniswap.org/whitepaper-v3.pdf): Very cool, very complicated.
