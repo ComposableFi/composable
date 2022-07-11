@@ -105,6 +105,8 @@ pub mod pallet {
 			position_id: T::PositionId,
 			keep_alive: bool,
 		},
+		/// Split stake position into two positions
+		SplitPosition { positions: Vec<T::PositionId> },
 	}
 
 	#[pallet::error]
@@ -123,6 +125,10 @@ pub mod pallet {
 		NotEnoughAssets,
 		/// No position found for given id.
 		NoPositionFound,
+		/// Reward's max limit reached.
+		MaxRewardLimitReached,
+		/// Only pool owner can add new reward asset.
+		OnlyPoolOwnerCanAddNewReward,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -161,6 +167,8 @@ pub mod pallet {
 			+ Ord
 			+ From<u128>
 			+ Into<u128>;
+
+		type Assets: Transfer<Self::AccountId, AssetId = Self::AssetId, Balance = Self::Balance>;
 
 		/// Is used to create staked asset per `Self::RewardPoolId`
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
@@ -341,6 +349,12 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> Pallet<T> {
+		pub(crate) fn account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
+			T::PalletId::get().into_sub_account(pool_id)
+		}
+	}
+
 	impl<T: Config> Staking for Pallet<T> {
 		type AccountId = T::AccountId;
 		type RewardPoolId = T::RewardPoolId;
@@ -497,6 +511,9 @@ pub mod pallet {
 			};
 			let new_position = StakeCount::<T>::increment()?;
 			Stakes::<T>::insert(new_position, new_stake);
+			Self::deposit_event(Event::<T>::SplitPosition {
+				positions: vec![*position, new_position],
+			});
 			Ok([*position, new_position])
 		}
 	}
@@ -515,6 +532,83 @@ pub mod pallet {
 
 		pub(crate) fn boosted_amount(reward_multiplier: Perbill, amount: T::Balance) -> T::Balance {
 			reward_multiplier.mul_ceil(amount)
+        }
+    }
+
+	impl<T: Config> ProtocolStaking for Pallet<T> {
+		type AssetId = T::AssetId;
+		type AccountId = T::AccountId;
+		type RewardPoolId = T::RewardPoolId;
+		type Balance = T::Balance;
+
+		fn accumulate_reward(
+			_pool: &Self::RewardPoolId,
+			_reward_currency: Self::AssetId,
+			_reward_increment: Self::Balance,
+		) -> DispatchResult {
+			Ok(())
+		}
+
+		#[transactional]
+		fn transfer_reward(
+			from: &Self::AccountId,
+			pool: &Self::RewardPoolId,
+			reward_currency: Self::AssetId,
+			reward_increment: Self::Balance,
+		) -> DispatchResult {
+			RewardPools::<T>::try_mutate(pool, |reward_pool| {
+				match reward_pool {
+					Some(reward_pool) => {
+						match reward_pool.rewards.get_mut(&reward_currency) {
+							Some(mut reward) => {
+								let new_total_reward = reward.total_rewards + reward_increment;
+								ensure!(
+									(new_total_reward - reward.total_dilution_adjustment) <=
+										reward.max_rewards,
+									Error::<T>::MaxRewardLimitReached
+								);
+								reward.total_rewards = new_total_reward;
+								let pool_account = Self::account_id(pool);
+								T::Assets::transfer(
+									reward_currency,
+									from,
+									&pool_account,
+									reward_increment,
+									false,
+								)?;
+							},
+							None => {
+								// new reward asset so only pool owner is allowd to add.
+								ensure!(
+									*from == reward_pool.owner,
+									Error::<T>::OnlyPoolOwnerCanAddNewReward
+								);
+								let reward = Reward {
+									asset_id: reward_currency,
+									total_rewards: reward_increment,
+									total_dilution_adjustment: T::Balance::zero(),
+									max_rewards: reward_increment,
+									reward_rate: Perbill::zero(),
+								};
+								reward_pool
+									.rewards
+									.try_insert(reward_currency, reward)
+									.map_err(|_| Error::<T>::RewardConfigProblem)?;
+								let pool_account = Self::account_id(pool);
+								T::Assets::transfer(
+									reward_currency,
+									from,
+									&pool_account,
+									reward_increment,
+									false,
+								)?;
+							},
+						}
+						Ok(())
+					},
+					None => Err(Error::<T>::UnimplementedRewardPoolConfiguration.into()),
+				}
+			})
 		}
 	}
 }
