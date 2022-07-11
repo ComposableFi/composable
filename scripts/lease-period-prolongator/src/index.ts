@@ -7,9 +7,7 @@ async function main() {
     const url = process.env.NODE_URL ?? "ws://localhost:9944";
     const paraId = Number(process.env.PARA_ID ?? 2000);
     const leaseCount = Number(process.env.LEASE_PERIOD ?? 365);
-    console.log(
-        `node url: ${url}, para id: ${paraId}, lease period: ${leaseCount} days`
-    );
+    console.log(`node url: ${url}, para id: ${paraId}, lease period: ${leaseCount} days`);
 
     const api = await createApi(url, {});
 
