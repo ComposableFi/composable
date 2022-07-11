@@ -1,10 +1,10 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import { ClaimForm } from "pablo/components/Organisms/bonds/ClaimForm";
-import { useAppSelector } from "pablo/hooks/store";
+import useBondOffer from "pablo/defi/hooks/bonds/useBondOffer";
 
 const ClaimFormStories = () => {
-  const bond = useAppSelector((state) => state.bonds.selectedBond);
+  const bond = useBondOffer("0");
   return (
     <Box>
       <ClaimForm bond={bond} />

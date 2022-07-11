@@ -1,23 +1,14 @@
-import { AssetId } from "@/defi/polkadot/types";
-import { ParachainId, RelayChainId } from "substrate-react/dist/dotsama/types";
-export interface AssetStore {
-    assetId: AssetId;
-    price: number;
+export interface MockedAsset {
+    name: string;
     decimals: number;
     symbol: string;
     icon: string;
+    network: Record<string, string>
 }
 
-type AnyChain = ParachainId | RelayChainId
 export interface AssetsSlice {
-    assets: {
-        [assetId in AssetId]: AssetStore
-    },
-    balances: {
-        [id in AssetId]: {
-            [id in AnyChain]: string
-        }
-    },
+    supportedAssets: MockedAsset[];
+    assetBalances: Record<string, Record<string, string>>,
     apollo: {
         [id: string]: string;
     }
@@ -25,9 +16,9 @@ export interface AssetsSlice {
         assetId: string,
         price: string
     ) => void;
-    updateAssetBalance: (
-        assetId: AssetId,
-        parachainId: ParachainId,
+    putAssetBalance: (
+        networkId: string,
+        assetId: string,
         balance: string
     ) => void;
 }

@@ -2,23 +2,27 @@ import { Box, BoxProps, Typography, useTheme, Grid } from "@mui/material";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import { getFullHumanizedDateDiff } from "shared";
 import {
-  LiquidityBootstrappingPool,
   LiquidityBootstrappingPoolStats,
 } from "@/store/pools/pools.types";
 import { nFormatter } from "shared";
 import BigNumber from "bignumber.js";
-import { getAssetById } from "@/defi/polkadot/Assets";
 import { useMemo } from "react";
-import { useAuctionSpotPrice } from "@/store/auctions/hooks";
-import { useUSDAssetPrice } from "@/store/assets/hooks";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { useAuctionSpotPrice } from "@/defi/hooks/auctions";
+import { MockedAsset } from "@/store/assets/assets.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export type AuctionInformationProps = {
   auction: LiquidityBootstrappingPool;
+  baseAsset?: MockedAsset;
+  quoteAsset?: MockedAsset;
   stats: LiquidityBootstrappingPoolStats;
 } & BoxProps;
 
 export const AuctionInformation: React.FC<AuctionInformationProps> = ({
   auction,
+  baseAsset,
+  quoteAsset,
   stats,
   ...rest
 }) => {
@@ -50,7 +54,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
   };
 
   const spotPrice = useAuctionSpotPrice(auction.poolId);
-  const quoteAssetPrice = useUSDAssetPrice(auction.pair.quote);
+  const quoteAssetPrice = useUSDPriceByAssetId(auction.pair.quote.toString());
 
   let tokenRaised = useMemo(() => {
     return new BigNumber(stats.currentBalances.quote).minus(
@@ -149,7 +153,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
             <Typography variant="h6">{tokenRaised.toFixed(4)}</Typography>
           </Box>
           <Typography variant="body1" color="text.secondary" fontWeight="bold">
-            {getAssetById("picasso", auction.pair.quote)?.symbol}
+            {quoteAsset?.symbol}
           </Typography>
         </Grid>
       </Grid>

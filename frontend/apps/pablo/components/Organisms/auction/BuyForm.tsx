@@ -6,7 +6,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import BigNumber from "bignumber.js";
 import { DropdownCombinedBigNumberInput, BigNumberInput } from "@/components";
 import { useMobile } from "@/hooks/responsive";
@@ -15,193 +15,67 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useAppDispatch } from "@/hooks/store";
 import { openPolkadotModal } from "@/stores/ui/uiSlice";
 import { getFullHumanizedDateDiff } from "shared";
-import {
-  useDotSamaContext,
-  useExecutor,
-  useParachainApi,
-  usePendingExtrinsic,
-  useSelectedAccount,
-} from "substrate-react";
-import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
-import { getAssetById } from "@/defi/polkadot/Assets";
-import { getSigner } from "substrate-react";
-import { APP_NAME } from "@/defi/polkadot/constants";
-import useStore from "@/store/useStore";
-import { debounce } from "lodash";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
-import { useSnackbar } from "notistack";
-import { toChainUnits } from "@/defi/utils";
-import { calculateSwap } from "@/defi/utils/pablo/swaps";
-import { fetchAuctions, fetchTrades } from "@/defi/utils/pablo/auctions";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useBuyForm } from "@/defi/hooks/auctions/useBuyForm";
+import _ from "lodash";
+import { useDotSamaContext } from "substrate-react";
+import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
 } & BoxProps;
 
 export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
-  const { balances, auctions: { activeLBP }, putHistoryActiveLBP, putStatsActiveLBP } = useStore();
   const { extensionStatus } = useDotSamaContext();
-  const { parachainApi } = useParachainApi("picasso");
-  const selectedAccount = useSelectedAccount("picasso");
-  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMobile();
-  const executor = useExecutor();
   const currentTimestamp = Date.now();
 
-
-  const updateState = useCallback(async () => {
-    const { poolId } = activeLBP;
-    if (parachainApi && poolId !== -1) {
-      const stats = await fetchAuctions(parachainApi, activeLBP);
-      const trades = await fetchTrades(activeLBP);
-      putStatsActiveLBP(stats);
-      putHistoryActiveLBP(trades);
-    }
-  }, [activeLBP, putHistoryActiveLBP, putStatsActiveLBP, parachainApi])
+  const {
+    balanceBase,
+    balanceQuote,
+    baseAmount,
+    quoteAmount,
+    baseAsset,
+    quoteAsset,
+    onChangeTokenAmount,
+    isPendingBuy,
+    setIsValidBaseInput,
+    setIsValidQuoteInput,
+    isBuyButtonDisabled,
+    selectedAuction,
+    minimumReceived
+  } = useBuyForm();
 
   const isActive: boolean =
     auction.sale.start <= currentTimestamp &&
     auction.sale.end >= currentTimestamp;
   const isEnded: boolean = auction.sale.end < currentTimestamp;
 
-  const isPendingBuy = usePendingExtrinsic(
-    "exchange",
-    "dexRouter",
-    selectedAccount ? selectedAccount.address : ""
-  );
-
-  const baseAsset = useMemo(() => {
-    return getAssetById(auction.networkId, auction.pair.base);
-  }, [auction]);
-  const quoteAsset = useMemo(() => {
-    return getAssetById(auction.networkId, auction.pair.quote);
-  }, [auction]);
-
-  const [balanceQuote, setBalanceQuote] = useState(new BigNumber(0));
-  useEffect(() => {
-    const asset = getAssetById("picasso", auction.pair.quote);
-    if (asset) {
-      setBalanceQuote(new BigNumber(balances[asset.assetId].picasso));
-    } else {
-      setBalanceQuote(new BigNumber(0));
-    }
-  }, [balances, auction.pair.quote]);
-
-  const [balanceBase, setBalanceBase] = useState(new BigNumber(0));
-  useEffect(() => {
-    const asset = getAssetById("picasso", auction.pair.base);
-    if (asset) {
-      setBalanceBase(new BigNumber(balances[asset.assetId].picasso));
-    } else {
-      setBalanceBase(new BigNumber(0));
-    }
-  }, [balances, auction.pair.base]);
-
-  const [valid1, setValid1] = useState<boolean>(false);
-  const [valid2, setValid2] = useState<boolean>(false);
-
   const dispatch = useAppDispatch();
 
-  const buttonDisabled = useMemo(() => {
-    return extensionStatus !== "connected" || !valid1 || !valid2;
-  }, [extensionStatus, valid1, valid2]);
-
-  const [baseAssetAmount, setBaseAmount] = useState(new BigNumber(0));
-  const [quoteAssetAmount, setQuoteAmount] = useState(new BigNumber(0));
-  const [minReceive, setMinReceive] = useState(new BigNumber(0));
-  const [disableHandler, setDisableHandler] = useState(false);
-
-  const onSwapAmountInput = (swapAmount: {
-    value: BigNumber;
-    side: "quote" | "base";
-  }) => {
-    setDisableHandler(true);
-
-    if (parachainApi && baseAsset && quoteAsset) {
-      const { value, side } = swapAmount;
-      if (side === "base") {
-        setBaseAmount(swapAmount.value);
-      } else {
-        setQuoteAmount(swapAmount.value);
-      }
-
-      const exchangeParams = {
-        quoteAmount: value,
-        baseAssetId: baseAsset.assetId,
-        quoteAssetId: quoteAsset.assetId,
-        side: side,
-        slippage: 0.1,
-      };
-
-      calculateSwap(parachainApi, exchangeParams, {
-        poolAccountId: "",
-        poolIndex: auction.poolId,
-        fee: auction.feeConfig.feeRate.toString(),
-        poolType: "LiquidityBootstrapping",
-        pair: auction.pair,
-        lbpConstants: undefined,
-      }).then((impact) => {
-        swapAmount.side === "base"
-          ? setQuoteAmount(new BigNumber(impact.tokenOutAmount))
-          : setBaseAmount(new BigNumber(impact.tokenOutAmount));
-        setMinReceive(new BigNumber(impact.minimumRecieved));
-        setTimeout(() => setDisableHandler(false), 1000);
-      });
-    }
+  const [isProcessing, setIsProcessing] = useState(false);
+  const handleDebounceFn = async (side: "base" | "quote", value: BigNumber) => {
+    setIsProcessing(true);
+    await onChangeTokenAmount(side, value);
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 1000);
   };
-  const handler = debounce(onSwapAmountInput, 1000);
+  const debouncedTokenAmountUpdate = _.debounce(handleDebounceFn, 1000);
+
+  const initiateBuyTx = usePabloSwap({
+    baseAssetId: selectedAuction.pair.base.toString(),
+    quoteAssetId: selectedAuction.pair.quote.toString(),
+    quoteAmount,
+    minimumReceived,
+  });
 
   const handleBuy = useCallback(async () => {
-    if (parachainApi && selectedAccount && executor) {
-
-      const minRec = parachainApi.createType(
-        "u128",
-        toChainUnits(minReceive).toString()
-      );
-      const amountParam = parachainApi.createType(
-        "u128",
-        toChainUnits(baseAssetAmount).toString()
-      );
-
-      try {
-        const signer = await getSigner(APP_NAME, selectedAccount.address);
-
-        await executor
-          .execute(
-            parachainApi.tx.dexRouter.exchange(
-              auction.pair,
-              amountParam,
-              minRec
-            ),
-            selectedAccount.address,
-            parachainApi,
-            signer,
-            (txHash: string) => {
-              enqueueSnackbar("Initiating Transaction");
-            },
-            (txHash: string, events) => {
-              enqueueSnackbar('Transaction Finalized');
-              updateState();
-            }
-          )
-          .catch((err) => {
-            enqueueSnackbar(err.message);
-          });
-      } catch (err: any) {
-        enqueueSnackbar(err.message);
-      }
-    }
-  }, [
-    parachainApi,
-    executor,
-    selectedAccount,
-    baseAssetAmount,
-    updateState,
-    enqueueSnackbar,
-    minReceive,
-    auction.pair
-  ]);
+    await initiateBuyTx();
+  }, [initiateBuyTx])
 
   return (
     <Box
@@ -218,18 +92,15 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     >
       <Box visibility={isActive ? undefined : "hidden"}>
         <DropdownCombinedBigNumberInput
-          onMouseDown={(evt) => setDisableHandler(false)}
+          onMouseDown={(evt) => setIsProcessing(false)}
           maxValue={balanceQuote}
-          setValid={setValid1}
+          setValid={setIsValidQuoteInput}
           noBorder
-          value={quoteAssetAmount}
+          disabled={isProcessing}
+          value={quoteAmount}
           setValue={(value) => {
-            if (disableHandler) return;
-            handler({
-              value,
-              side: "quote",
-            });
-            // set Value
+            if (isProcessing) return;
+            debouncedTokenAmountUpdate("quote", value);
           }}
           buttonLabel={"Max"}
           ButtonProps={{
@@ -239,7 +110,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             },
           }}
           CombinedSelectProps={{
-            value: quoteAsset,
+            value: quoteAsset ? quoteAsset.network[DEFAULT_NETWORK_ID] : "",
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
             options: [
@@ -250,13 +121,13 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
                 disabled: true,
                 hidden: true,
               },
-              ...[
+              ... quoteAsset ? [
                 {
-                  value: quoteAsset,
-                  icon: quoteAsset ? quoteAsset.icon : "",
-                  label: quoteAsset ? quoteAsset.symbol : "",
+                  value: quoteAsset.network[DEFAULT_NETWORK_ID],
+                  icon: quoteAsset.icon,
+                  label: quoteAsset.symbol,
                 },
-              ],
+              ] : [],
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
@@ -296,24 +167,22 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
       </Box>
       <Box mt={4} visibility={isActive ? undefined : "hidden"}>
         <BigNumberInput
-          onMouseDown={(evt) => setDisableHandler(false)}
-          value={baseAssetAmount}
+          disabled={isProcessing}
+          onMouseDown={(evt) => setIsProcessing(false)}
+          value={baseAmount}
           setValue={(value) => {
-            if (disableHandler) return;
-            handler({
-              value,
-              side: "base",
-            });
+            if (isProcessing) return;
+            debouncedTokenAmountUpdate("base", value);
           }}
           maxValue={balanceBase}
-          setValid={setValid2}
+          setValid={setIsValidBaseInput}
           EndAdornmentAssetProps={{
-            assets: [
+            assets: baseAsset ? [
               {
-                icon: baseAsset ? baseAsset.icon : "",
-                label: baseAsset ? baseAsset.symbol : "",
+                icon: baseAsset.icon,
+                label: baseAsset.symbol,
               },
-            ],
+            ] : [],
           }}
           LabelProps={{
             label: "Launch token",
@@ -330,22 +199,12 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
           <Button
             variant="contained"
             fullWidth
-            disabled={isPendingBuy || buttonDisabled}
+            disabled={isPendingBuy || isBuyButtonDisabled || isProcessing}
             onClick={() => handleBuy()}
           >
             Buy {baseAsset ? baseAsset.symbol : ""}
           </Button>
         )}
-
-        {/* {extensionStatus === "connected" && !approved && (
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={() => setApproved(true)}
-          >
-            {!isActive ? `Buy ${getToken(tokenId2).symbol}` : `Approve ${getToken(tokenId1).symbol} usage`}
-          </Button>
-        )} */}
 
         {extensionStatus !== "connected" && (
           <Button

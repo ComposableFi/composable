@@ -1,4 +1,4 @@
-import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 import { 
   Box, 
   BoxProps, 

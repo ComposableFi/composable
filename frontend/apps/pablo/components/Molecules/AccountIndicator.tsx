@@ -46,7 +46,7 @@ export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
       }}
     >
       <Box sx={{ width: theme.spacing(3), height: theme.spacing(3) }}>
-        <Image src={icon} width="24" height="24" alt={"Account"} />
+        <Image alt={"Account"} src={icon} width="24" height="24" />
       </Box>
       {isMobile ? (
         <Circle fontSize="large" sx={{ fontSize: 28 }} />

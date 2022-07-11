@@ -1,10 +1,8 @@
 import {
   Box,
   useTheme,
-  BoxProps,
   Button,
 } from "@mui/material";
-import { useAppSelector } from "@/hooks/store";
 import { BigNumberInput } from "@/components/Atoms";
 import { useState } from "react";
 import BigNumber from "bignumber.js";

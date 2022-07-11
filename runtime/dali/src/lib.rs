@@ -1,3 +1,6 @@
+//! Test runtime.
+//! Consider to set minimal values (duration, times, and limits) to be easy to test within day of
+//! work. Example, use several hours, instead of several days.
 #![cfg_attr(
 	not(test),
 	warn(
@@ -989,6 +992,7 @@ impl mosaic::Config for Runtime {
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
 	type RemoteAmmId = u128; // TODO: Swap to U256?
+	type AmmMinimumAmountOut = u128;
 }
 
 pub type LiquidationStrategyId = u32;
@@ -1008,6 +1012,7 @@ impl liquidations::Config for Runtime {
 	type PalletId = LiquidationsPalletId;
 	type CanModifyStrategies = EnsureRootOrHalfCouncil;
 	type XcmSender = XcmRouter;
+	type MaxLiquidationStrategiesAmount = frame_support::traits::ConstU32<10>;
 }
 
 parameter_types! {
@@ -1039,7 +1044,7 @@ impl lending::Config for Runtime {
 
 parameter_types! {
   pub PabloId: PalletId = PalletId(*b"pall_pab");
-  pub LbpMinSaleDuration: BlockNumber = DAYS;
+  pub LbpMinSaleDuration: BlockNumber = 3 * HOURS;
   pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
   pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
   pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
@@ -1568,6 +1573,10 @@ impl_runtime_apis! {
 			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
 		}
 
+		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>> {
+			Ibc::get_offchain_acks(channel_id, port_id, seqs).ok()
+		}
+
 		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
 			Ibc::client(client_id).ok()
 		}
@@ -1648,12 +1657,12 @@ impl_runtime_apis! {
 			Ibc::packet_receipt(channel_id, port_id, seq).ok()
 		}
 
-		fn denom_trace(_denom: Vec<u8>) -> Option<ibc_primitives::QueryDenomTraceResponse> {
-			None
+		fn denom_trace(asset_id: u128) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+			Transfer::get_denom_trace(asset_id)
 		}
 
-		fn denom_traces(_offset: Vec<u8>, _limit: u64, _height: u32) -> Option<ibc_primitives::QueryDenomTracesResponse> {
-			None
+		fn denom_traces(key: Option<u128>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
+			Transfer::get_denom_traces(key, offset, limit, count_total)
 		}
 
 		fn block_events() -> Vec<pallet_ibc::events::IbcEvent> {
@@ -1668,7 +1677,7 @@ impl_runtime_apis! {
 			});
 
 			events.fold(vec![], |mut events, ev| {
-				events.extend_from_slice(&ev);
+				events.extend(ev);
 				events
 			})
 		}

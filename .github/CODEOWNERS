@@ -27,9 +27,10 @@ frame/*/runtime-api @ComposableFi/parachain-rpc
 
 # Gitbook
 book/ @ComposableFi/technical-writing-reviewers
+README.md @ComposableFi/technical-writing-reviewers
 
-# Frontend and Blockchain Integration 
-frontend/ @ComposableFi/blockchain-integrations
+# Frontend and Blockchain Integration
+frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
 .github/workflows/frontend-pablo-eslint.yml @ComposableFi/sre @ComposableFi/blockchain-integrations
 .github/workflows/frontend-pablo-tests.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations
 .github/workflows/frontend-picasso-eslint.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations

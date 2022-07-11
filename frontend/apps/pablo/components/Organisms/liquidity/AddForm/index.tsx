@@ -11,8 +11,6 @@ import {
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useRouter } from "next/router";
 import { FormTitle } from "../../FormTitle";
-import { useEffect, useMemo, useState } from "react";
-import BigNumber from "bignumber.js";
 import { useAppSelector } from "@/hooks/store";
 import { useDispatch } from "react-redux";
 import {
@@ -20,13 +18,12 @@ import {
   openTransactionSettingsModal,
 } from "@/stores/ui/uiSlice";
 import { ConfirmSupplyModal } from "./ConfirmSupplyModal";
-// import { PreviewSupplyModal } from "./PreviewSupplyModal";
 import { ConfirmingSupplyModal } from "./ConfirmingSupplyModal";
 import { TransactionSettings } from "../../TransactionSettings";
-import { AssetId } from "@/defi/polkadot/types";
 import { YourPosition } from "../YourPosition";
 import { PoolShare } from "./PoolShare";
 import {useAddLiquidity} from "@/store/hooks/useAddLiquidity";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const isMobile = useMobile();
@@ -42,8 +39,6 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     share,
     assetOneAmountBn,
     assetTwoAmountBn,
-    assetOneMeta,
-    assetTwoMeta,
     assetOne,
     assetTwo,
     balanceOne,
@@ -122,7 +117,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           }}
           CombinedSelectProps={{
             disabled: !findPoolManually,
-            value: assetOne,
+            value: assetOne?.network?.[DEFAULT_NETWORK_ID] || "",
             setValue: setToken("assetOne"),
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
@@ -186,7 +181,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           }}
           CombinedSelectProps={{
             disabled: !findPoolManually,
-            value: assetTwo,
+            value: assetTwo?.network?.[DEFAULT_NETWORK_ID] || "",
             setValue: setToken("assetTwo"),
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
@@ -218,8 +213,8 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
       {valid && !invalidTokenPair() && canSupply() && (
         <PoolShare
-          baseAsset={assetOne as AssetId}
-          quoteAsset={assetTwo as AssetId}
+          baseAsset={assetOne}
+          quoteAsset={assetTwo}
           price={assetOneAmountBn.div(assetTwoAmountBn)}
           revertPrice={assetTwoAmountBn.div(assetOneAmountBn)}
           share={share.toNumber()}
@@ -255,8 +250,8 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       {valid && !invalidTokenPair() && canSupply() && (
         <YourPosition
           noTitle={false}
-          tokenId1={assetOne as AssetId}
-          tokenId2={assetTwo as AssetId}
+          token1={assetOne}
+          token2={assetTwo}
           pooledAmount1={assetOneAmountBn}
           pooledAmount2={assetTwoAmountBn}
           amount={lpReceiveAmount}
@@ -271,8 +266,8 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         priceTwoInOne={assetTwoAmountBn.div(assetOneAmountBn)}
         assetOneAmount={assetOneAmountBn}
         assetTwoAmount={assetTwoAmountBn}
-        assetOne={assetOneMeta}
-        assetTwo={assetTwoMeta}
+        assetOne={assetOne}
+        assetTwo={assetTwo}
         share={share}
         open={isConfirmSupplyModalOpen}
       />
@@ -296,8 +291,8 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         priceTwoInOne={assetTwoAmountBn.div(assetOneAmountBn)}
         assetOneAmount={assetOneAmountBn}
         assetTwoAmount={assetTwoAmountBn}
-        assetOne={assetOneMeta}
-        assetTwo={assetTwoMeta}
+        assetOne={assetOne}
+        assetTwo={assetTwo}
         share={share}
       />
 

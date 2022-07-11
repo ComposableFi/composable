@@ -10,7 +10,7 @@ use composable_traits::{
 };
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{Everything, GenesisBuild, OnRuntimeUpgrade},
+	traits::{ConstU32, Everything, GenesisBuild, OnRuntimeUpgrade},
 	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
@@ -127,7 +127,7 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -219,7 +219,7 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = ();
 	type MaxLocks = ();
 	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
 }
 
@@ -357,9 +357,10 @@ impl pallet_liquidations::Config for Runtime {
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type OrderId = OrderId;
 	type PalletId = LiquidationsPalletId;
-	type WeightInfo = ();
+	type WeightInfo = pallet_liquidations::weights::SubstrateWeight<Self>;
 	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
 	type XcmSender = XcmFake;
+	type MaxLiquidationStrategiesAmount = ConstU32<3>;
 }
 
 pub type Extrinsic = TestExtrinsic;

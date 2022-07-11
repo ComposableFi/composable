@@ -1,8 +1,8 @@
-import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
-import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { queryPabloPoolById } from "@/updaters/pools/subsquid";
-import { DAYS, DEFAULT_NETWORK_ID } from "../../constants";
+import { DAYS } from "../../constants";
 import BigNumber from "bignumber.js";
+import { fromChainUnits } from "../../units";
+import { StableSwapPool, ConstantProductPool } from "@/defi/types";
 
 export interface PabloPoolQueryResponse {
     totalLiquidity: BigNumber;
@@ -17,21 +17,19 @@ export interface PabloPoolQueryResponse {
 export async function fetchPoolStats(pool: ConstantProductPool | StableSwapPool): Promise<PabloPoolQueryResponse[]> {
     try {
         const response = await queryPabloPoolById(pool.poolId);
-        const quoteAsset = getAssetByOnChainId(DEFAULT_NETWORK_ID, pool.pair.quote);
 
         if (!response.data) throw new Error("Unable to Fetch Data");
 
         let { pabloPools } = response.data;
         if (!pabloPools) throw new Error("[fetchPoolStats] Unable to retreive data from query");
 
-        const decimals = new BigNumber(10).pow(quoteAsset.decimals);
         pabloPools = pabloPools.map((poolState: any) => {
             return {
-                totalLiquidity: new BigNumber(poolState.totalLiquidity).div(decimals),
-                totalVolume: new BigNumber(poolState.totalVolume).div(decimals),
-                totalFees: new BigNumber(poolState.totalFees).div(decimals),
-                transactionCount: Number(poolState.transactionCount),
+                totalLiquidity: fromChainUnits(poolState.totalLiquidity),
+                totalVolume: fromChainUnits(poolState.totalVolume),
+                totalFees: fromChainUnits(poolState.totalFees),
                 calculatedTimestamp: Number(poolState.calculatedTimestamp),
+                transactionCount: Number(poolState.transactionCount),
                 quoteAssetId: Number(poolState.quoteAssetId),
                 poolId: Number(poolState.poolId),
             };

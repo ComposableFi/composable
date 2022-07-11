@@ -1,5 +1,4 @@
-import { getAsset } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
+import { MockedAsset } from "@/store/assets/assets.types";
 import { 
   alpha, 
   Box, 
@@ -10,8 +9,8 @@ import {
 import BigNumber from "bignumber.js";
 
 type PoolShareProps = {
-  baseAsset: AssetId;
-  quoteAsset: AssetId;
+  baseAsset: MockedAsset | undefined;
+  quoteAsset: MockedAsset | undefined;
   price: BigNumber;
   revertPrice: BigNumber;
   share: number;
@@ -26,8 +25,6 @@ export const PoolShare: React.FC<PoolShareProps> = ({
   ...rest
 }) => {
   const theme = useTheme();
-  const bAsset = getAsset(baseAsset);
-  const qAsset = getAsset(quoteAsset);
 
   return (
     <Box mt={4} {...rest}>
@@ -60,7 +57,7 @@ export const PoolShare: React.FC<PoolShareProps> = ({
             color="text.secondary"
             whiteSpace="nowrap"
           >
-            {bAsset?.symbol} per {qAsset?.symbol}
+            {baseAsset?.symbol} per {quoteAsset?.symbol}
           </Typography>
         </Box>
       
@@ -81,7 +78,7 @@ export const PoolShare: React.FC<PoolShareProps> = ({
             color="text.secondary"
             whiteSpace="nowrap"
           >
-            {qAsset?.symbol} per {bAsset?.symbol}
+            {quoteAsset?.symbol} per {baseAsset?.symbol}
           </Typography>
         </Box>
       

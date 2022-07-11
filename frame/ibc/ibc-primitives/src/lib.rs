@@ -210,12 +210,14 @@ pub struct QueryPacketReceiptResponse {
 
 #[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryDenomTraceResponse {
-	pub trace: Vec<u8>,
+	pub denom: Vec<u8>,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]
 pub struct QueryDenomTracesResponse {
-	pub trace: Vec<Vec<u8>>,
+	pub denoms: Vec<Vec<u8>>,
+	pub next_key: Option<u128>,
+	pub total: Option<u64>,
 }
 
 #[derive(Clone, codec::Encode, codec::Decode, PartialEq, Eq, Ord, PartialOrd)]

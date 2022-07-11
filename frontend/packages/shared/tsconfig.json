@@ -1,6 +1,10 @@
 {
   "extends": "tsconfig/base.json",
   "compilerOptions": {
-    "module": "ESNext"
+    "module": "ESNext",
+    "lib": [
+      "esnext",
+      "dom"
+    ],
   }
 }

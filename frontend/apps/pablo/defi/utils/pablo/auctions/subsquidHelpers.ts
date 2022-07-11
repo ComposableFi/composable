@@ -1,6 +1,6 @@
-import { LiquidityPoolTransactionType } from "@/defi/types";
+import { LiquidityBootstrappingPool, LiquidityPoolTransactionType } from "@/defi/types";
+import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
-import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
 import { queryAuctionStats } from "@/updaters/auctions/subsquid";
 import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
 import { ApiPromise } from "@polkadot/api";
@@ -8,7 +8,6 @@ import BigNumber from "bignumber.js";
 import { fetchBalanceByAssetId } from "../../assets";
 import { fromChainUnits } from "../../units";
 import { createPabloPoolAccountId } from "../misc";
-import { LiquidityBootstrappingPoolTrade } from "./types";
 
 export function transformAuctionsTransaction(
   transaction: {

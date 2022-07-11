@@ -30,8 +30,8 @@ const Template: ComponentStory<typeof AuctionPriceChart> = (args) => (
 
 export const Default = Template.bind({});
 Default.args = {
-  baseAsset: null,
-  quoteAsset: null,
+  baseAsset: undefined,
+  quoteAsset: undefined,
   priceSeries: dummyAuctionPrices,
   predictedPriceSeries: [],
   height: "100%",
@@ -40,5 +40,4 @@ Default.args = {
       return moment(timestamp).utc().format("MMM D, h:mm:ss A");
     }
   ),
-  pastCount: 3,
 };

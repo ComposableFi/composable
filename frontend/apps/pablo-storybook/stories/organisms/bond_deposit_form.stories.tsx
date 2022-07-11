@@ -1,13 +1,17 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import { DepositForm } from "pablo/components/Organisms/bonds/DepositForm";
-import { useAppSelector } from "pablo/hooks/store";
+import useBondOffer from "pablo/defi/hooks/bonds/useBondOffer";
 
 const DepositFormStories = () => {
-  const bond = useAppSelector((state) => state.bonds.selectedBond);
+  const bond = useBondOffer("0")
+
   return (
     <Box>
-      <DepositForm bond={bond} />
+      <DepositForm
+      bond={bond}
+        offerId={"0"}
+      />
     </Box>
   );
 };

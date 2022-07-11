@@ -21,6 +21,8 @@ const A_DAY = new BN(24 * 60 * 60 * 1000);
 
 function calcInterval(api: ApiPromise | undefined): BN | undefined {
   if (!api) return undefined;
+  // @ts-ignore
+  // @ts-ignore
   const time =
     // Babe, e.g. Relay chains (Substrate defaults)
     api.consts.babe?.expectedBlockTime ||
