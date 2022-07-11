@@ -1,27 +1,26 @@
 import { BondOffer } from "@/defi/types";
-import { humanizedBnToBn } from "shared";
-import BigNumber from "bignumber.js";
 import { fromChainUnits } from "../units";
+import BigNumber from "bignumber.js";
 
 export function decodeBondOffer(offer: any, index: number): BondOffer {
-  const [beneficiary, bondOffer] = offer;
+  const [beneficiary, bondOffer] = offer.toJSON();
   return {
     offerId: new BigNumber(index),
-    asset: humanizedBnToBn(bondOffer.asset).toString(),
+    asset: new BigNumber(bondOffer.asset).toString(),
     beneficiary,
-    bondPrice: fromChainUnits(humanizedBnToBn(bondOffer.bondPrice)),
-    nbOfBonds: humanizedBnToBn(bondOffer.nbOfBonds),
-    maturity: bondOffer.maturity.Finite
+    bondPrice: fromChainUnits(bondOffer.bondPrice),
+    nbOfBonds: new BigNumber(bondOffer.nbOfBonds),
+    maturity: bondOffer.maturity.finite
       ? {
           Finite: {
-            returnIn: humanizedBnToBn(bondOffer.maturity.Finite.returnIn),
+            returnIn: new BigNumber(bondOffer.maturity.finite.returnIn),
           },
         }
       : "Infinite",
     reward: {
-      amount: fromChainUnits(humanizedBnToBn(bondOffer.reward.amount)),
-      asset: humanizedBnToBn(bondOffer.reward.asset).toString(), // assetid
-      maturity: new BigNumber(humanizedBnToBn(bondOffer.reward.maturity)),
+      amount: fromChainUnits(bondOffer.reward.amount),
+      asset: new BigNumber(bondOffer.reward.asset).toString(), // assetid
+      maturity: new BigNumber(bondOffer.reward.maturity),
     },
   };
 }

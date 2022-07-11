@@ -2,7 +2,7 @@ import { BaseAsset, PairAsset } from "@/components/Atoms";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { Box, Typography, BoxProps } from "@mui/material";
 import { MockedAsset } from "@/store/assets/assets.types";
-import { BondPrincipalAsset } from "@/defi/hooks/bonds/useBondOffers";
+import { BondPrincipalAsset } from "@/defi/types";
 import { useCallback } from "react";
 
 export type PageTitleProps = {

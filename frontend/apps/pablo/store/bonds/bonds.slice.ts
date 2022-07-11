@@ -3,15 +3,17 @@ import BigNumber from "bignumber.js";
 import { StoreSlice } from "../types";
 import {
   putBondOffer,
+  putBondOfferROI,
   putBondOffers,
-  putTotalPurchased,
-} from "./bonds.reducers";
+  putBondOfferTotalPurchased,
+} from "./bonds.utils";
 import { BondSlice } from "./bonds.types";
 
 const createBondsSlice: StoreSlice<BondSlice> = (set) => ({
   bondOffers: {
     list: [],
     totalPurchased: {},
+    roi: {},
   },
   putBondOffers: (bondOffers: BondOffer[]) =>
     set((prev: BondSlice) => ({
@@ -21,9 +23,18 @@ const createBondsSlice: StoreSlice<BondSlice> = (set) => ({
     set((prev: BondSlice) => ({
       bondOffers: putBondOffer(prev.bondOffers, bondOffer),
     })),
-  puttotalPurchased: (totalPurchasedBonds: Record<string, BigNumber>) =>
+  putBondOfferROI: (roi: Record<string, BigNumber>) =>
     set((prev: BondSlice) => ({
-      bondOffers: putTotalPurchased(prev.bondOffers, totalPurchasedBonds),
+      bondOffers: putBondOfferROI(prev.bondOffers, roi),
+    })),
+  putBondOfferTotalPurchased: (
+    totalPurchasedBonds: Record<string, BigNumber>
+  ) =>
+    set((prev: BondSlice) => ({
+      bondOffers: putBondOfferTotalPurchased(
+        prev.bondOffers,
+        totalPurchasedBonds
+      ),
     })),
   reset: () =>
     set(() => ({

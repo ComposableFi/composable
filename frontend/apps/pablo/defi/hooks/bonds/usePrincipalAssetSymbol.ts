@@ -1,5 +1,5 @@
+import { BondPrincipalAsset } from "@/defi/types";
 import { useMemo } from "react";
-import { BondPrincipalAsset } from "./useBondOffers";
 
 export function usePrincipalAssetSymbol(
   principalAsset: BondPrincipalAsset
