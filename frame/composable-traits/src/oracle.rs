@@ -12,22 +12,19 @@ pub struct Price<PriceValue, BlockNumber> {
 	pub block: BlockNumber,
 }
 
+/// Statistics useful for oracle rewarding and tracking.
 #[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
-pub struct OracleRewardHistory<Balance, Timestamp> {
+pub struct RewardTracker<Balance, Timestamp> {
+	/// Period which rewarding resets. Most likely a year.
+	pub period: Timestamp,
+	/// Start of the current rewarding period.
+	pub start: Timestamp,
+	/// Total already rewarded during the current rewarding period.
 	pub total_already_rewarded: Balance,
-	pub rewarding_start_timestamp: Timestamp,
-}
-
-/// Oracle reward model defined for the runtime.
-pub trait OracleRewardModel<Balance, Timestamp> {
-	/// Allocation required to start rewarding oracles.
-	fn allocation() -> Balance;
-
-	/// Get the maximum reward possible to be distributed among oracles for the current block.
-	fn get_current_block_reward(
-		oracle_reward_tracker: OracleRewardHistory<Balance, Timestamp>,
-		current_timestamp: Timestamp,
-	) -> Balance;
+	/// Pre-calculated current reward rate per block.
+	pub current_block_reward: Balance,
+	/// total asset weight rewarded.
+	pub total_reward_weight: Balance,
 }
 
 /// oracle that only works with single asset to some normalized asset at latest block in local

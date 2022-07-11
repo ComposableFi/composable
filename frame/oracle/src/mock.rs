@@ -1,7 +1,7 @@
 use crate as pallet_oracle;
 use crate::*;
 use composable_traits::{
-	oracle::{OracleRewardHistory, OracleRewardModel},
+	oracle::RewardTracker,
 	time::{MS_PER_YEAR_NAIVE, SECONDS_PER_YEAR_NAIVE},
 };
 use frame_support::{
@@ -78,7 +78,7 @@ impl system::Config for Test {
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
-	type AccountData = pallet_balances::AccountData<u64>;
+	type AccountData = pallet_balances::AccountData<u128>;
 	type OnNewAccount = ();
 	type OnKilledAccount = ();
 	type SystemWeightInfo = ();
@@ -91,7 +91,7 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 
-pub type Balance = u64;
+pub type Balance = u128;
 impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type Event = Event;
@@ -106,7 +106,7 @@ impl pallet_balances::Config for Test {
 
 parameter_types! {
 	pub const StakeLock: u64 = 1;
-	pub const MinStake: u64 = 1;
+	pub const MinStake: Balance = 1;
 	pub const StalePrice: u64 = 2;
 	pub const MaxAnswerBound: u32 = 5;
 	pub const MaxAssetsCount: u32 = 2;
@@ -152,35 +152,9 @@ where
 pub type AssetId = u128;
 pub type PriceValue = u128;
 parameter_types! {
-	 pub const TreasuryAccountId : AccountId= sr25519::Public([10u8; 32]);
+	pub const TreasuryAccountId : AccountId= sr25519::Public([10u8; 32]);
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
-}
-
-pub struct MockRewardModel();
-impl OracleRewardModel<Balance, Moment> for MockRewardModel {
-	fn allocation() -> Balance {
-		800_000_000
-	}
-
-	fn get_current_block_reward(
-		oracle_reward_tracker: OracleRewardHistory<Balance, Moment>,
-		current_timestamp: Moment,
-	) -> Balance {
-		if oracle_reward_tracker.rewarding_start_timestamp == 0 ||
-			oracle_reward_tracker.total_already_rewarded >= 800_000_000
-		{
-			return 0
-		}
-		let time_elapsed_since_start =
-			current_timestamp - oracle_reward_tracker.rewarding_start_timestamp;
-		let annual_reward: Balance = if time_elapsed_since_start < MS_PER_YEAR_NAIVE {
-			// first year
-			120_000_000
-		} else {
-			80_000_000
-		};
-		annual_reward / MS_PER_YEAR_NAIVE * MILLISECS_PER_BLOCK
-	}
+	pub const MsPerBlock: u64 = 12000;
 }
 
 impl pallet_oracle::Config for Test {
@@ -201,12 +175,13 @@ impl pallet_oracle::Config for Test {
 	type WeightInfo = ();
 	type LocalAssets = ();
 	type TreasuryAccount = TreasuryAccountId;
-	type RewardModel = MockRewardModel;
 	type Moment = Moment;
 	type Time = Timestamp;
 	type TwapWindow = TwapWindow;
 	type RewardOrigin = EnsureRoot<AccountId>;
 	type PalletId = OraclePalletId;
+	type MsPerBlock = MsPerBlock;
+	type Balance = Balance;
 }
 
 // Build genesis storage according to the mock runtime.

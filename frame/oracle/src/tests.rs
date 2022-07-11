@@ -35,8 +35,8 @@ prop_compose! {
 			max_answers in 1..MaxAnswerBound::get(),
 			block_interval in (StalePrice::get()+1)..(BlockNumber::MAX/16),
 			threshold in 0..100u8,
-			reward in 0..u64::MAX,
-			slash in 0..u64::MAX,
+			reward in 0..u128::MAX,
+			slash in 0..u128::MAX,
 		) -> AssetInfo<Percent, BlockNumber, Balance> {
 			let min_answers = max_answers.saturating_sub(min_answers) + 1;
 			let threshold: Percent = Percent::from_percent(threshold);
@@ -46,7 +46,7 @@ prop_compose! {
 				min_answers,
 				max_answers,
 				block_interval,
-				reward_per_oracle: reward,
+				reward_weight: reward,
 				slash,
 			}
 		}
@@ -95,7 +95,7 @@ mod add_asset_and_info {
 					Validated::new(asset_info.min_answers).unwrap(),
 					Validated::new(asset_info.max_answers).unwrap(),
 					Validated::new(asset_info.block_interval).unwrap(),
-					asset_info.reward_per_oracle,
+					asset_info.reward_weight,
 					asset_info.slash,
 				));
 
@@ -119,7 +119,7 @@ mod add_asset_and_info {
 					Validated::new(asset_info_1.min_answers).unwrap(),
 					Validated::new(asset_info_1.max_answers).unwrap(),
 					Validated::new(asset_info_1.block_interval).unwrap(),
-					asset_info_1.reward_per_oracle,
+					asset_info_1.reward_weight,
 					asset_info_1.slash,
 				));
 
@@ -131,7 +131,7 @@ mod add_asset_and_info {
 					Validated::new(asset_info_2.min_answers).unwrap(),
 					Validated::new(asset_info_2.max_answers).unwrap(),
 					Validated::new(asset_info_2.block_interval).unwrap(),
-					asset_info_2.reward_per_oracle,
+					asset_info_2.reward_weight,
 					asset_info_2.slash,
 				));
 				prop_assert_eq!(Oracle::assets_count(), 1);
@@ -158,7 +158,7 @@ mod add_asset_and_info {
 						Validated::new(asset_info.min_answers).unwrap(),
 						Validated::new(asset_info.max_answers).unwrap(),
 						Validated::new(asset_info.block_interval).unwrap(),
-						asset_info.reward_per_oracle,
+						asset_info.reward_weight,
 						asset_info.slash,
 					),
 					BadOrigin
@@ -185,7 +185,7 @@ mod add_asset_and_info {
 					Validated::new(asset_info_1.min_answers).unwrap(),
 					Validated::new(asset_info_1.max_answers).unwrap(),
 					Validated::new(asset_info_1.block_interval).unwrap(),
-					asset_info_1.reward_per_oracle,
+					asset_info_1.reward_weight,
 					asset_info_1.slash,
 				));
 
@@ -196,7 +196,7 @@ mod add_asset_and_info {
 					Validated::new(asset_info_2.min_answers).unwrap(),
 					Validated::new(asset_info_2.max_answers).unwrap(),
 					Validated::new(asset_info_2.block_interval).unwrap(),
-					asset_info_2.reward_per_oracle,
+					asset_info_2.reward_weight,
 					asset_info_2.slash,
 				));
 
@@ -226,7 +226,7 @@ mod add_asset_and_info {
 						Validated::new(asset_info.max_answers).unwrap(),     // MIN
 						Validated::new(asset_info.min_answers - 1).unwrap(), // MAX
 						Validated::new(asset_info.block_interval).unwrap(),
-						asset_info.reward_per_oracle,
+						asset_info.reward_weight,
 						asset_info.slash,
 					),
 					Error::<Test>::MaxAnswersLessThanMinAnswers
@@ -264,7 +264,7 @@ mod add_asset_and_info {
 					Validated::new(asset_info_1.min_answers).unwrap(),
 					Validated::new(asset_info_1.max_answers).unwrap(),
 					Validated::new(asset_info_1.block_interval).unwrap(),
-					asset_info_1.reward_per_oracle,
+					asset_info_1.reward_weight,
 					asset_info_1.slash,
 				));
 
@@ -275,7 +275,7 @@ mod add_asset_and_info {
 					Validated::new(asset_info_2.min_answers).unwrap(),
 					Validated::new(asset_info_2.max_answers).unwrap(),
 					Validated::new(asset_info_2.block_interval).unwrap(),
-					asset_info_2.reward_per_oracle,
+					asset_info_2.reward_weight,
 					asset_info_2.slash,
 				));
 
@@ -291,7 +291,7 @@ mod add_asset_and_info {
 					Validated::new(asset_info_3.min_answers).unwrap(),
 					Validated::new(asset_info_3.max_answers).unwrap(),
 					Validated::new(asset_info_3.block_interval).unwrap(),
-					asset_info_3.reward_per_oracle,
+					asset_info_3.reward_weight,
 					asset_info_3.slash,
 				),
 				Error::<Test>::ExceedAssetsCount);
@@ -701,7 +701,7 @@ mod submit_price {
 					Validated::new(asset_info.min_answers).unwrap(),
 					Validated::new(asset_info.max_answers).unwrap(),
 					Validated::new(asset_info.block_interval).unwrap(),
-					asset_info.reward_per_oracle,
+					asset_info.reward_weight,
 					asset_info.slash,
 				));
 
@@ -860,8 +860,8 @@ fn halborm_test_price_manipulation() {
 		const MAX_ANSWERS: u32 = 5;
 		const THRESHOLD: Percent = Percent::from_percent(80);
 		const BLOCK_INTERVAL: u64 = 5;
-		const REWARD: u64 = 5;
-		const SLASH: u64 = 5;
+		const REWARD: u128 = 5;
+		const SLASH: u128 = 5;
 
 		let root_account = get_root_account();
 		let account_1 = get_account_1();
@@ -1004,7 +1004,7 @@ fn test_payout_slash() {
 			min_answers: 0,
 			max_answers: 0,
 			block_interval: 0,
-			reward_per_oracle: 0,
+			reward_weight: 0,
 			slash: 0,
 		};
 		// doesn't panic when percent not set
@@ -1108,8 +1108,8 @@ fn halborn_test_bypass_slashing() {
 		const MAX_ANSWERS: u32 = 5;
 		const THRESHOLD: Percent = Percent::from_percent(80);
 		const BLOCK_INTERVAL: u64 = 5;
-		const REWARD: u64 = 5;
-		const SLASH: u64 = 5;
+		const REWARD: u128 = 5;
+		const SLASH: u128 = 5;
 		const REWARD_RATE: Perbill = Perbill::from_percent(20);
 
 		//assert_ok!(Oracle::set_reward_rate(Origin::root(), REWARD_RATE));
@@ -1196,8 +1196,8 @@ fn halborn_test_bypass_slashing() {
 		println!("TreasuryAccount Balance: {}", balance_treasury);
 		// account4 (signer) with controller account5 has reported skewed price.
 		// So account5 's stake is slashed and slashed amount is transferred to treasury_account
-		assert_eq!(balance5, 95_u64);
-		assert_eq!(balance_treasury, 105_u64);
+		assert_eq!(balance5, 95_u128);
+		assert_eq!(balance_treasury, 105_u128);
 		assert_eq!(Balances::free_balance(account_1), 54);
 		assert_eq!(Balances::free_balance(account_4), 0);
 	});
@@ -1550,7 +1550,7 @@ fn prune_old_pre_prices_edgecase() {
 			min_answers: 3,
 			max_answers: 5,
 			block_interval: 5,
-			reward_per_oracle: 5,
+			reward_weight: 5,
 			slash: 5,
 		};
 		Oracle::prune_old_pre_prices(&asset_info, vec![], 0);
@@ -1671,7 +1671,7 @@ fn should_check_oracles_max_answer() {
 		min_answers: 0,
 		max_answers: 0,
 		block_interval: 0,
-		reward_per_oracle: 0,
+		reward_weight: 0,
 		slash: 0,
 	};
 	t.execute_with(|| {
