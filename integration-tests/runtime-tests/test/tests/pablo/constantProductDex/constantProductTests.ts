@@ -120,7 +120,7 @@ describe("tx.constantProductDex Tests", function() {
     }
     this.timeout(2 * 60 * 1000);
 
-    it("[SHORT] Given that users has sufficient balance, User1 can send funds to pool", async function() {
+    it("Given that users has sufficient balance, User1 can send funds to pool", async function() {
       const result = await addFundstoThePool(api, poolId, walletId1, baseAmount, quoteAmount);
       expect(BigInt(result.baseAdded.toString(10))).to.be.equal(baseAmount);
       expect(BigInt(result.quoteAdded.toString(10))).to.be.equal(quoteAmount);
@@ -185,7 +185,7 @@ describe("tx.constantProductDex Tests", function() {
     }
     this.timeout(2 * 60 * 1000);
 
-    it("[SHORT] Given the pool has sufficient funds, User1 can't completely drain the funds", async function() {
+    it("Given the pool has sufficient funds, User1 can't completely drain the funds", async function() {
       await buyFromPool(api, poolId, walletId1, baseAssetId, Pica(2530)).catch(error =>
         expect(error.message).to.contain("arithmetic")
       );

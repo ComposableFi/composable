@@ -120,7 +120,7 @@ describe("StableSwapDex Test Suite", function() {
     }
     this.timeout(3 * 60 * 1000);
 
-    it("[SHORT] Given that users have sufficient funds, User1 can addLiquidity to StableSwapPool", async function() {
+    it("Given that users have sufficient funds, User1 can addLiquidity to StableSwapPool", async function() {
       const result = await addFundstoThePool(api, poolId1, walletId1, baseAssetAmount, quoteAssetAmount);
       lpTokens = result.returnedLPTokens.toBigInt();
       expect(result.quoteAdded.toBigInt()).to.be.equal(quoteAssetAmount);
@@ -168,7 +168,7 @@ describe("StableSwapDex Test Suite", function() {
     }
     this.timeout(3 * 60 * 1000);
 
-    it("[SHORT] Given that users have sufficient funds, User1 can buy from StableSwapPool", async function() {
+    it("Given that users have sufficient funds, User1 can buy from StableSwapPool", async function() {
       const result = await buyFromPool(api, poolId1, walletId1, quoteStableAssetId, Pica(25000));
       await buyFromPool(api, poolId1, walletId1, quoteStableAssetId, Pica(25000));
       const rpcRes = await rpcPriceFor(
@@ -227,7 +227,7 @@ describe("StableSwapDex Test Suite", function() {
       expect(result.returnedQuoteAmount.toBigInt()).to.be.equal(Pica(150));
     });
 
-    it("[SHORT] Given that users have sufficient funds, User1 can sell to the pool", async function() {
+    it("Given that users have sufficient funds, User1 can sell to the pool", async function() {
       const result = await sellToPool(api, poolId1, walletId2, baseStableAssetId, Pica(30));
       expect(result.toString()).to.be.equal(api.createType("AccountId32", walletId2.address).toString());
     });

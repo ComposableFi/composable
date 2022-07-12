@@ -98,7 +98,7 @@ describe("tx.oracle Tests", function() {
     if (!testConfiguration.enabledTests.setSigner__success.enabled) return;
     // Timeout set to 4 minutes
     this.timeout(4 * 60 * 1000);
-    it("[SHORT] Can set signer", async function() {
+    it("Can set signer", async function() {
       if (!testConfiguration.enabledTests.setSigner__success.set1) this.skip();
       await runBeforeTxOracleSetSigner(api, controllerWallet, signedWallet); // Making sure we have funds.
 
@@ -154,7 +154,7 @@ describe("tx.oracle Tests", function() {
     if (!testConfiguration.enabledTests.submitPrice__success.enabled) return;
     // Timeout set to 4 minutes
     this.timeout(4 * 60 * 1000);
-    it("[SHORT] Can submit new price by signer", async function() {
+    it("Can submit new price by signer", async function() {
       if (!testConfiguration.enabledTests.submitPrice__success.submit1) this.skip();
       const price = api.createType("u128", 10000);
       const assetId = api.createType("u128", newAsset1);
