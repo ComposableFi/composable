@@ -27,6 +27,7 @@ use proptest::prelude::*;
 
 use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 use sp_core::H256;
+const UNIT: Balance = 1_000_000_000_000;
 
 prop_compose! {
 	fn asset_info()
@@ -1085,19 +1086,45 @@ fn test_payout_slash() {
 }
 
 #[test]
-fn test_max_reward_per_block() {
+fn test_adjust_rewards() {
 	new_test_ext().execute_with(|| {
 		let total_issuance = <Test as Config>::Currency::total_issuance();
-		let reward_rate: Perbill = Perbill::from_percent(20);
-		const BLOCKS_PER_YEAR: u64 = 365 * 24 * 60 * 60 * 1000 / MILLISECS_PER_BLOCK;
+		let annual_cost_per_oracle: Balance = 100_000 * UNIT;
+		let mut num_ideal_oracles: u8 = 10;
+		const MS_PER_YEAR: u64 = 365 * 24 * 60 * 60 * 1000;
+		const BLOCKS_PER_YEAR: u64 = MS_PER_YEAR / MILLISECS_PER_BLOCK;
+		Timestamp::set_timestamp(1);
 
-		//assert_ok!(Oracle::set_reward_rate(Origin::root(), reward_rate));
+		// first time
+		assert_ok!(Oracle::adjust_rewards(Origin::root(), annual_cost_per_oracle, num_ideal_oracles));
+		assert_reward_tracker(annual_cost_per_oracle, num_ideal_oracles, (BLOCKS_PER_YEAR as Balance));
 
-		// assert_ok!(default_acceptable_computation_error(
-		// 	Oracle::max_reward_per_block().into(),
-		// 	(total_issuance * 20 / 100 / BLOCKS_PER_YEAR).into()
-		// ));
+		// second time after quarter of the year has passed. Increase the ideal number of Oracles.
+		// Rewards have not been issued yet so the .
+		Timestamp::set_timestamp(MS_PER_YEAR / 4);
+		num_ideal_oracles = 12;
+		assert_ok!(Oracle::adjust_rewards(Origin::root(), annual_cost_per_oracle, num_ideal_oracles));
+		let remaining_blocks_per_year = (BLOCKS_PER_YEAR * 3 / 4) as Balance;
+		assert_reward_tracker(annual_cost_per_oracle, num_ideal_oracles, remaining_blocks_per_year);
+
+		// third time after half of the year has passed. Decrease the ideal number of Oracles.
+		// set the total already rewarded to be half of the annual reward.
+		Timestamp::set_timestamp(MS_PER_YEAR / 2);
+		num_ideal_oracles = 10;
+		let mut reward_tracker = Oracle::reward_tracker_store().unwrap();
+		reward_tracker.total_already_rewarded = annual_cost_per_oracle * (num_ideal_oracles as Balance)  / 2;
+		RewardTrackerStore::<Test>::set(Option::from(reward_tracker));
+		assert_ok!(Oracle::adjust_rewards(Origin::root(), annual_cost_per_oracle, num_ideal_oracles));
+		let remaining_blocks_per_year = (BLOCKS_PER_YEAR / 2) as Balance;
+		// dividing the annual cost per oracle by 2 because the total already rewarded is half of the annual cost per oracle.
+		assert_reward_tracker(annual_cost_per_oracle / 2, num_ideal_oracles, remaining_blocks_per_year);
 	});
+}
+
+fn assert_reward_tracker(annual_cost_per_oracle: Balance, mut num_ideal_oracles: u8, remaining_blocks_per_year: Balance) {
+	let mut reward_tracker = Oracle::reward_tracker_store().unwrap();
+	assert_eq!(reward_tracker.current_block_reward,
+			   annual_cost_per_oracle * (num_ideal_oracles as Balance) / remaining_blocks_per_year);
 }
 
 #[test]

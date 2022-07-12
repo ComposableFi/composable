@@ -1,9 +1,6 @@
 use crate as pallet_oracle;
 use crate::*;
-use composable_traits::{
-	oracle::RewardTracker,
-	time::{MS_PER_YEAR_NAIVE, SECONDS_PER_YEAR_NAIVE},
-};
+
 use frame_support::{
 	ord_parameter_types,
 	pallet_prelude::ConstU32,
@@ -154,7 +151,7 @@ pub type PriceValue = u128;
 parameter_types! {
 	pub const TreasuryAccountId : AccountId= sr25519::Public([10u8; 32]);
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
-	pub const MsPerBlock: u64 = 12000;
+	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
 }
 
 impl pallet_oracle::Config for Test {

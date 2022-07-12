@@ -237,7 +237,7 @@ pub mod pallet {
 		StorageValue<_, u32, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn reward_history)]
+	#[pallet::getter(fn reward_tracker_store)]
 	#[allow(clippy::disallowed_types)]
 	/// Rewarding history for Oracles. Used for calculating the current block reward.
 	pub type RewardTrackerStore<T: Config> =
@@ -426,8 +426,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Oracle for Pallet<T> {
-		type Balance = T::PriceValue;
 		type AssetId = T::AssetId;
+		type Balance = T::PriceValue;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 		type LocalAssets = T::LocalAssets;
 		type MaxAnswerBound = T::MaxAnswerBound;
@@ -601,16 +601,17 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::RewardOrigin::ensure_origin(origin)?;
 			let now = T::Time::now();
-			let period = MS_PER_YEAR_NAIVE;
+			let period: T::Moment = MS_PER_YEAR_NAIVE.unique_saturated_into();
 			let mut reward_tracker =
 				RewardTrackerStore::<T>::get().unwrap_or_default();
 			if reward_tracker.start == Zero::zero() {
 				reward_tracker.start = now;
-				reward_tracker.period = period.unique_saturated_into();
+				reward_tracker.period = period;
 			}
 			// calculate the current block reward by dividing the total possible reward by the remaining number of blocks in the year.
-			let elapsed_period: u64 = (now - reward_tracker.start).unique_saturated_into();
-			let remaining_blocks_in_year: T::Balance = (period - elapsed_period)
+			let elapsed_period = (now - reward_tracker.start) % period;
+			let period_left: u64 = (period - elapsed_period).unique_saturated_into();
+			let remaining_blocks_in_year: T::Balance = period_left
 				.checked_div(T::MsPerBlock::get())
 				.ok_or(ArithmeticError::DivisionByZero)?
 				.unique_saturated_into();
