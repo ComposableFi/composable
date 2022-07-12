@@ -1,6 +1,5 @@
 pub(crate) use crate::test::runtime::{new_test_ext, Test}; // for benchmarks
 use crate::{
-	prelude::{lock, Reductions, Stake},
 	test::{prelude::H256, runtime::*},
 	Config, StakeCount, Stakes,
 };
@@ -82,7 +81,7 @@ fn test_stake() {
 				stake: amount,
 				share: StakingRewards::boosted_amount(reward_multiplier, amount),
 				reductions,
-				lock: lock::Lock {
+				lock: Lock {
 					started_at: <Test as crate::Config>::UnixTime::now(),
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
