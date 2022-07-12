@@ -20,6 +20,7 @@ jobs:
       - name: Clean up
         continue-on-error: true
         run: |
+          whoami
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
 
