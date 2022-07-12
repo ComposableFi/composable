@@ -190,7 +190,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 			(get_root_account(), 100),
 			(get_account_4(), 100),
 			(get_account_3(), 100),
-			(get_account_inflater(), 1_000_000_000),
 			(get_account_5(), 100),
 			(get_treasury_account(), 100),
 		],
@@ -221,8 +220,4 @@ pub fn get_account_5() -> AccountId {
 
 pub fn get_treasury_account() -> AccountId {
 	sr25519::Public([10u8; 32])
-}
-
-pub const fn get_account_inflater() -> AccountId {
-	sr25519::Public([11u8; 32])
 }
