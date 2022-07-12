@@ -3,7 +3,7 @@ import { setSelection, useAddLiquiditySlice } from "@/store/addLiquidity/addLiqu
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import BigNumber from "bignumber.js";
 import { useState, useMemo, useEffect } from "react";
-import { useParachainApi } from "substrate-react";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 import { useAssetBalance } from "../assets/hooks";
 import { fromChainUnits, toChainUnits } from "@/defi/utils";
@@ -13,6 +13,7 @@ import { useFilteredAssetListDropdownOptions } from "@/defi/hooks/assets/useFilt
 export const useAddLiquidity = () => {
   const [valid, setValid] = useState<boolean>(false);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
   const {
     ui: { assetOne, assetTwo, assetOneAmount, assetTwoAmount },
@@ -114,17 +115,26 @@ export const useAddLiquidity = () => {
   const [lpReceiveAmount, setLpReceiveAmount] = useState(new BigNumber(0));
 
   useEffect(() => {
-    if (parachainApi && assetOne !== "none" && assetTwo !== "none" && pool) {
+    if (parachainApi && assetOne !== "none" && assetTwo !== "none" && pool && selectedAccount) {
       let isReverse = pool.pair.base.toString() !== assetOne;
       const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount)
       const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
 
       if (bnBase.gte(0) && bnQuote.gte(0)) {
         (parachainApi.rpc as any).pablo
-          .expectedLpTokensGivenLiquidity(
+          .simulateAddLiquidity(
+            parachainApi.createType("AccountId32", selectedAccount.address),
             parachainApi.createType("PalletPabloPoolId", pool.poolId),
-            parachainApi.createType("CustomRpcBalance", bnBase.toString()),
-            parachainApi.createType("CustomRpcBalance", bnBase.toString())
+            parachainApi.createType(
+              "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>", 
+              [[
+                parachainApi.createType('SafeRpcWrapper<AssetId>', isReverse ? pool.pair.quote : pool.pair.base),
+                parachainApi.createType('SafeRpcWrapper<Balance>', bnBase.toString())
+              ], [
+                parachainApi.createType('SafeRpcWrapper<AssetId>', isReverse ? pool.pair.base : pool.pair.quote),
+                parachainApi.createType('SafeRpcWrapper<Balance>', bnQuote.toString())
+              ]]
+            )
           )
           .then((expectedLP: any) => {
             setLpReceiveAmount(
@@ -136,7 +146,7 @@ export const useAddLiquidity = () => {
           });
       }
     }
-  }, [parachainApi, assetOneAmount, assetTwoAmount, assetOne, assetTwo, pool]);
+  }, [parachainApi, assetOneAmount, assetTwoAmount, assetOne, assetTwo, pool, selectedAccount]);
 
   return {
     assetOne: _assetOne,
