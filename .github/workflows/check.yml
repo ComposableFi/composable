@@ -203,23 +203,13 @@ jobs:
         with:
           node-version: 14.x
 
-      - name: Cargo format (Rust)
+      - name: Make Style
         run: |
-          cargo +nightly fmt --all -- --check
+          make style-check
 
       - name: Work around permission issue (https://github.com/actions/checkout/issues/760)
         run: |
           git config --global --add safe.directory /__w/composable/composable
-
-      - name: Taplo format (Toml)
-        run: |
-          taplo lint --warn-as-error
-          taplo fmt --warn-as-error
-          if ! git diff-index HEAD; then
-            exit 1
-          else
-            echo "Everything is fine!"
-          fi
       
       - name: Hadolint
         continue-on-error: true # this step is such a pita
