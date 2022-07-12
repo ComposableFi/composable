@@ -538,14 +538,13 @@ pub mod pallet {
 			};
 			// track reward total weight for all assets
 			let mut reward_tracker = RewardTrackerStore::<T>::get().unwrap_or_default();
-			let current_asset_info = Self::asset_info(asset_id);
-			if current_asset_info.is_none() {
-				AssetsCount::<T>::increment()?;
-				reward_tracker.total_reward_weight += reward_weight;
-			} else {
+			if let Some(current_asset_info) = Self::asset_info(asset_id) {
 				reward_tracker.total_reward_weight =
 					reward_tracker.total_reward_weight + reward_weight -
-						current_asset_info.unwrap().reward_weight;
+						current_asset_info.reward_weight;
+			} else {
+				AssetsCount::<T>::increment()?;
+				reward_tracker.total_reward_weight += reward_weight;
 			}
 			RewardTrackerStore::<T>::set(Option::from(reward_tracker));
 
@@ -822,7 +821,7 @@ pub mod pallet {
 				}
 				Self::remove_price_in_transit(&answer.who, asset_info)
 			}
-			if let Some(reward_tracker) = Self::get_reward_tracker_if_enabled() {
+			if let Some(mut reward_tracker) = Self::get_reward_tracker_if_enabled() {
 				// divide the per asset reward(by weight) by the number of oracles
 				let reward_amount_per_oracle: T::Balance = safe_multiply_by_rational(
 					reward_tracker.current_block_reward.unique_saturated_into(),
@@ -833,7 +832,6 @@ pub mod pallet {
 				.ok_or(ArithmeticError::DivisionByZero)?
 				.into();
 				if !reward_amount_per_oracle.is_zero() {
-					let mut reward_tracker = reward_tracker.clone();
 					for accounts in rewarded_oracles {
 						Self::transfer_reward(
 							accounts.0,
@@ -875,17 +873,16 @@ pub mod pallet {
 			if result.is_err() {
 				log::warn!("Failed to deposit {:?}", controller);
 			}
-			Self::deposit_event(Event::OracleRewarded(who.clone(), asset_id, reward_amount));
+			Self::deposit_event(Event::OracleRewarded(who, asset_id, reward_amount));
 		}
 
 		pub fn reset_reward_tracker_if_expired() {
-			if let Some(reward_tracker) = RewardTrackerStore::<T>::get() {
+			if let Some(mut reward_tracker) = RewardTrackerStore::<T>::get() {
 				let now = T::Time::now();
 				if now - reward_tracker.start >= reward_tracker.period {
-					let mut new_reward_tracker = reward_tracker.clone();
-					new_reward_tracker.start = now;
-					new_reward_tracker.total_already_rewarded = Zero::zero();
-					RewardTrackerStore::<T>::set(Option::from(new_reward_tracker));
+					reward_tracker.start = now;
+					reward_tracker.total_already_rewarded = Zero::zero();
+					RewardTrackerStore::<T>::set(Option::from(reward_tracker));
 				}
 			}
 		}
