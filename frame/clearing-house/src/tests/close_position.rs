@@ -235,7 +235,10 @@ fn should_fail_if_pushes_index_mark_divergence_above_threshold() {
 		set_maximum_oracle_mark_divergence((10, 100).into());
 
 		let vamm_id = &get_market(&market_id).vamm_id;
-		OraclePallet::set_price(Some(100)); // 1 in cents
+		OraclePallet::set_price(Some(100 /* 1 in cents */));
+		// HACK: set the last oracle price and TWAP equal to the current one to avoid an invalid
+		// oracle status
+		set_oracle_twap(&market_id, 1.into());
 		VammPallet::set_price_of(vamm_id, Some(1.into()));
 
 		// Alice opens a position (no price impact)
@@ -248,7 +251,7 @@ fn should_fail_if_pushes_index_mark_divergence_above_threshold() {
 		));
 
 		// Alice tries to close her position, but it fails because it pushes the mark price too
-		// below the index Closing tanks mark to 89% of previous price
+		// below the index. Closing tanks the mark price to 89% of the previous one.
 		// Relative index-mark spread:
 		// (mark - index) / index = (0.89 - 1.00) / 1.00 = -0.11
 		VammPallet::set_price_impact_of(vamm_id, Some((89, 100).into()));

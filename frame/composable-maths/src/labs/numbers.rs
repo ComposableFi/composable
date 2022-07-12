@@ -26,6 +26,22 @@ where
 //                                             Traits
 // -------------------------------------------------------------------------------------------------
 
+pub trait TryClamp: Ord + Sized {
+	fn try_clamp(self, min: Self, max: Self) -> Result<Self, &'static str> {
+		if min > max {
+			return Err("min must be less than or equal to max")
+		}
+
+		Ok(if self < min {
+			min
+		} else if self > max {
+			max
+		} else {
+			self
+		})
+	}
+}
+
 pub trait UnsignedMath: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + Unsigned {
 	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError>;
 
@@ -123,6 +139,8 @@ pub trait IntoSigned<S> {
 // -------------------------------------------------------------------------------------------------
 //                                              Impls
 // -------------------------------------------------------------------------------------------------
+
+impl<T: Ord> TryClamp for T {}
 
 impl<T> UnsignedMath for T
 where
