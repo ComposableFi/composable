@@ -17,6 +17,7 @@ color-eyre = { version = "0.5.11", default-features = false }
 composable-node = { path = "node", features = ["composable", "dali"] }
 
 [features]
+builtin-wasm = ["composable-node/builtin-wasm"]
 composable = ["composable-node/composable"]
 dali = ["composable-node/dali"]
 local-integration-tests = []
@@ -37,8 +38,11 @@ members = [
   "runtime/common",
   "runtime/primitives",
   "runtime/picasso",
+  "runtime/picasso-wasm",
   "runtime/dali",
+  "runtime/dali-wasm",
   "runtime/composable",
+  "runtime/composable-wasm",
   "utils/common",
   "utils/price-feed",
   "utils/collator-sidecar",
@@ -62,9 +66,14 @@ lto = true
 # - commment why patch was made and when can removed with reference to trackable issue
 # - in case of not official release from trusted soruce, use exact git commit (`rev`) to avoid catching up new version in # case of lock update from less trusted source than our main
 [patch.crates-io]
-# https://github.com/paritytech/parity-scale-codec/issues/348
-parity-scale-codec = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-3.1.2" }
-# parity-scale-codec-derive = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-derive-3.1.2" }
+sp-application-crypto = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-arithmetic = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-core = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-debug-derive = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-externalities = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-io = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+sp-runtime = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.24" }
+parity-scale-codec = { git = "https://github.com/paritytech/parity-scale-codec", rev = "5aab13d31634beb3768d77c6e24f5f879d0ffc14" }
 
 # https://github.com/paritytech/substrate/pull/11843
 [patch."https://github.com/paritytech/substrate"]

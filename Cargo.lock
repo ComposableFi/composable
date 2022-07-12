@@ -1706,10 +1706,16 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "composable-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "composable-runtime",
 ]
 
 [[package]]
@@ -2818,10 +2824,16 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "dali-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "dali-runtime",
 ]
 
 [[package]]
@@ -4643,7 +4655,7 @@ dependencies = [
  "ripemd160",
  "sha2 0.9.9",
  "sha3 0.9.1",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
 [[package]]
@@ -8999,7 +9011,7 @@ dependencies = [
 [[package]]
 name = "parity-scale-codec"
 version = "3.1.2"
-source = "git+https://github.com/paritytech/parity-scale-codec?tag=parity-scale-codec-3.1.2#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
+source = "git+https://github.com/paritytech/parity-scale-codec?rev=5aab13d31634beb3768d77c6e24f5f879d0ffc14#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
 dependencies = [
  "arrayvec 0.7.2",
  "bitvec",
@@ -9012,7 +9024,7 @@ dependencies = [
 [[package]]
 name = "parity-scale-codec-derive"
 version = "3.1.2"
-source = "git+https://github.com/paritytech/parity-scale-codec?tag=parity-scale-codec-3.1.2#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
+source = "git+https://github.com/paritytech/parity-scale-codec?rev=5aab13d31634beb3768d77c6e24f5f879d0ffc14#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2 1.0.40",
@@ -9385,10 +9397,16 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "picasso-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "picasso-runtime",
 ]
 
 [[package]]
@@ -13711,15 +13729,14 @@ dependencies = [
 [[package]]
 name = "sp-application-crypto"
 version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "acb4490364cb3b097a6755343e552495b0013778152300714be4647d107e9a2e"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-io 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
 [[package]]
@@ -13738,16 +13755,15 @@ dependencies = [
 [[package]]
 name = "sp-arithmetic"
 version = "5.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31ef21f82cc10f75ed046b65e2f8048080ee76e59f1b8aed55c7150daebfd35b"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "integer-sqrt",
  "num-traits",
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-debug-derive 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-debug-derive 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "static_assertions",
 ]
 
@@ -13911,8 +13927,7 @@ dependencies = [
 [[package]]
 name = "sp-core"
 version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77963e2aa8fadb589118c3aede2e78b6c4bcf1c01d588fbf33e915b390825fbd"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "base58",
  "bitflags",
@@ -13941,12 +13956,12 @@ dependencies = [
  "secp256k1",
  "secrecy",
  "serde",
- "sp-core-hashing 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-debug-derive 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime-interface 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-storage 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core-hashing 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-debug-derive 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "ss58-registry",
  "substrate-bip39",
  "thiserror",
@@ -14004,14 +14019,14 @@ dependencies = [
 [[package]]
 name = "sp-core-hashing"
 version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec864a6a67249f0c8dd3d5acab43623a61677e85ff4f2f9b04b802d2fe780e83"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "blake2-rfc",
+ "blake2",
  "byteorder",
- "sha2 0.9.9",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "tiny-keccak",
+ "digest 0.10.3",
+ "sha2 0.10.2",
+ "sha3 0.10.1",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "twox-hash",
 ]
 
@@ -14052,8 +14067,7 @@ dependencies = [
 [[package]]
 name = "sp-debug-derive"
 version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d676664972e22a0796176e81e7bec41df461d1edf52090955cdab55f2c956ff2"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "proc-macro2 1.0.40",
  "quote 1.0.20",
@@ -14073,13 +14087,12 @@ dependencies = [
 [[package]]
 name = "sp-externalities"
 version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fcfd91f92a2a59224230a77c4a5d6f51709620c0aab4e51f108ccece6adc56f"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "environmental",
  "parity-scale-codec",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-storage 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
 [[package]]
@@ -14128,8 +14141,7 @@ dependencies = [
 [[package]]
 name = "sp-io"
 version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "935fd3c71bad6811a7984cabb74d323b8ca3107024024c3eabb610e0182ba8d3"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "futures 0.3.21",
  "hash-db",
@@ -14138,15 +14150,15 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "secp256k1",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-keystore 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime-interface 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-state-machine 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-tracing 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-trie 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-wasm-interface 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "tracing",
  "tracing-core",
 ]
@@ -14190,8 +14202,7 @@ dependencies = [
 [[package]]
 name = "sp-keystore"
 version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3261eddca8c8926e3e1de136a7980cb3afc3455247d9d6f3119d9b292f73aaee"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "async-trait",
  "futures 0.3.21",
@@ -14199,8 +14210,8 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "schnorrkel",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "thiserror",
 ]
 
@@ -14272,8 +14283,7 @@ dependencies = [
 [[package]]
 name = "sp-panic-handler"
 version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2101f3c555fceafcfcfb0e61c55ea9ed80dc60bd77d54d9f25b369edb029e9a4"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "backtrace",
  "lazy_static",
@@ -14303,8 +14313,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime"
 version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb7d8a8d5ab5d349c6cf9300af1721b7b6446ba63401dbb11c10a1d65197aa5f"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "either",
  "hash256-std-hasher",
@@ -14316,11 +14325,11 @@ dependencies = [
  "rand 0.7.3",
  "scale-info",
  "serde",
- "sp-application-crypto 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-arithmetic 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-io 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
 [[package]]
@@ -14348,18 +14357,17 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface"
 version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "158bf0305c75a50fc0e334b889568f519a126e32b87900c3f4251202dece7b4b"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
  "primitive-types",
- "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime-interface-proc-macro 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-storage 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-tracing 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-wasm-interface 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime-interface-proc-macro 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "static_assertions",
 ]
 
@@ -14383,8 +14391,7 @@ dependencies = [
 [[package]]
 name = "sp-runtime-interface-proc-macro"
 version = "5.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22ecb916b9664ed9f90abef0ff5a3e61454c1efea5861b2997e03f39b59b955f"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "Inflector",
  "proc-macro-crate 1.1.3",
@@ -14456,8 +14463,7 @@ dependencies = [
 [[package]]
 name = "sp-state-machine"
 version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecee3b33eb78c99997676a571656bcc35db6886abecfddd13e76a73b5871c6c1"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "hash-db",
  "log 0.4.17",
@@ -14466,14 +14472,13 @@ dependencies = [
  "parking_lot 0.12.1",
  "rand 0.7.3",
  "smallvec 1.8.0",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-panic-handler 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-trie 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-panic-handler 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "thiserror",
  "tracing",
- "trie-db",
  "trie-root",
 ]
 
@@ -14502,8 +14507,7 @@ dependencies = [
 [[package]]
 name = "sp-std"
 version = "4.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14804d6069ee7a388240b665f17908d98386ffb0b5d39f89a4099fc7a2a4c03f"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 
 [[package]]
 name = "sp-std"
@@ -14513,15 +14517,14 @@ source = "git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b6
 [[package]]
 name = "sp-storage"
 version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dab53af846068e3e0716d3ccc70ea0db44035c79b2ed5821aaa6635039efa37"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "impl-serde",
  "parity-scale-codec",
  "ref-cast",
  "serde",
- "sp-debug-derive 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-debug-derive 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
 [[package]]
@@ -14569,11 +14572,10 @@ dependencies = [
 [[package]]
 name = "sp-tracing"
 version = "5.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69a67e555d171c4238bd223393cda747dd20ec7d4f5fe5c042c056cb7fde9eda"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "parity-scale-codec",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "tracing",
  "tracing-core",
  "tracing-subscriber",
@@ -14619,15 +14621,15 @@ dependencies = [
 [[package]]
 name = "sp-trie"
 version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6fc34f4f291886914733e083b62708d829f3e6b8d7a7ca7fa8a55a3d7640b0b"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "hash-db",
  "memory-db",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "thiserror",
  "trie-db",
  "trie-root",
 ]
@@ -14679,13 +14681,12 @@ dependencies = [
 [[package]]
 name = "sp-wasm-interface"
 version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10d88debe690c2b24eaa9536a150334fcef2ae184c21a0e5b3e80135407a7d52"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "impl-trait-for-tuples",
  "log 0.4.17",
  "parity-scale-codec",
- "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "wasmi",
 ]
 
@@ -15172,8 +15173,8 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "subxt-macro 0.21.0",
  "subxt-metadata 0.21.0",
  "thiserror",
@@ -15196,8 +15197,8 @@ dependencies = [
  "scale-info",
  "serde",
  "serde_json",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "subxt-macro 0.22.0",
  "subxt-metadata 0.22.0",
  "thiserror",
@@ -15270,7 +15271,7 @@ dependencies = [
  "frame-metadata",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
 [[package]]
@@ -15282,7 +15283,7 @@ dependencies = [
  "frame-metadata",
  "parity-scale-codec",
  "scale-info",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
 [[package]]
@@ -15683,15 +15684,6 @@ dependencies = [
  "unicode-normalization",
  "wasm-bindgen",
  "zeroize",
-]
-
-[[package]]
-name = "tiny-keccak"
-version = "2.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c9d3793400a45f954c52e73d068316d76b6f4e36977e3fcebb13a2721e80237"
-dependencies = [
- "crunchy",
 ]
 
 [[package]]
