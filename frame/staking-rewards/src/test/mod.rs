@@ -70,7 +70,7 @@ fn test_stake() {
 		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 3).expect("an asset minting expected");
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount * 3);
 
-		// case #1, rewards_pool.total_shares == 0 && rewards_pool.rewards[].total_rewards == 0, inflation == 0
+		// case #1, rewards_pool.total_shares == 0 && rewards_pool.rewards[].total_rewards == 0 && inflation == 0
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		assert_eq!(StakingRewards::stake_count(), 1);
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
@@ -93,7 +93,7 @@ fn test_stake() {
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount * 2);
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
 
-		// case #2, rewards_pool.total_shares != 0 && rewards_pool.rewards[].total_rewards != 0, inflation != 0
+		// case #2, rewards_pool.total_shares != 0 && rewards_pool.rewards[].total_rewards != 0 && inflation != 0
 		let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 		let mut inner_rewards = rewards_pool.rewards.into_inner();
 		for (_asset_id, reward) in inner_rewards.iter_mut() {
