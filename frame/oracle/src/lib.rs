@@ -832,7 +832,7 @@ pub mod pallet {
 				.checked_div(rewarded_oracles.len() as u128)
 				.ok_or(ArithmeticError::DivisionByZero)?
 				.into();
-				if (!reward_amount_per_oracle.is_zero()) {
+				if !reward_amount_per_oracle.is_zero() {
 					let mut reward_tracker = reward_tracker.clone();
 					for accounts in rewarded_oracles {
 						Self::transfer_reward(
