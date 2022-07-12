@@ -587,7 +587,10 @@ pub mod pallet {
 									asset_id: reward_currency,
 									total_rewards: reward_increment,
 									total_dilution_adjustment: T::Balance::zero(),
-									max_rewards: reward_increment,
+									max_rewards: max(
+										reward_increment,
+										1_000_000_000_000_000_000_u128.into(),
+									),
 									reward_rate: Perbill::zero(),
 								};
 								reward_pool
