@@ -101,9 +101,6 @@ export const useBuyForm = (): {
         if (changedSide === "base" && tokenOutAmount.gt(balanceQuote)) {
           throw new Error('Insufficient Balance');
         }
-        if (changedSide === "quote" && tokenOutAmount.gt(balanceBase)) {
-          throw new Error('Insufficient Balance');
-        }
   
         setTokenAmounts({
           quoteAmount: changedSide === "base" ? tokenOutAmount : amount,
