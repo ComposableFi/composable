@@ -1216,7 +1216,12 @@ fn halborn_test_bypass_slashing() {
 		const BLOCK_INTERVAL: u64 = 5;
 		const REWARD: u128 = 5;
 		const SLASH: u128 = 5;
-		const REWARD_RATE: Perbill = Perbill::from_percent(20);
+		Timestamp::set_timestamp(10);
+		let mut reward_tracker = RewardTracker::default();
+		reward_tracker.start = 1;
+		reward_tracker.current_block_reward = 100;
+		reward_tracker.total_reward_weight = 100;
+		RewardTrackerStore::<Test>::set(Option::from(reward_tracker));
 
 		//assert_ok!(Oracle::set_reward_rate(Origin::root(), REWARD_RATE));
 		let account_1 = get_account_1();
@@ -1304,7 +1309,7 @@ fn halborn_test_bypass_slashing() {
 		// So account5 's stake is slashed and slashed amount is transferred to treasury_account
 		assert_eq!(balance5, 95_u128);
 		assert_eq!(balance_treasury, 105_u128);
-		assert_eq!(Balances::free_balance(account_1), 54);
+		assert_eq!(Balances::free_balance(account_1), 51);
 		assert_eq!(Balances::free_balance(account_4), 0);
 	});
 }
