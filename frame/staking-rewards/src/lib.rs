@@ -55,6 +55,7 @@ pub mod pallet {
 			},
 		},
 		math::safe::{SafeArithmetic, SafeDiv, SafeMul},
+		validation::Validated,
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
@@ -74,7 +75,7 @@ pub mod pallet {
 	use sp_arithmetic::{traits::One, Permill};
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider},
-		ArithmeticError, Perbill, PerThing,
+		ArithmeticError, PerThing, Perbill,
 	};
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
 
@@ -502,7 +503,7 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
-			T::PalletId::get().into_sub_account(("po", pool_id))
+			T::PalletId::get().into_sub_account_truncating(("po", pool_id))
 		}
 
 		pub(crate) fn reward_multiplier(

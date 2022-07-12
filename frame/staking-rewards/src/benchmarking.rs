@@ -6,7 +6,7 @@ use composable_traits::{
 		lock::{Lock, LockConfig},
 		Reductions, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		Rewards, Stake,
+		Stake,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -79,7 +79,7 @@ benchmarks! {
 		let (asset_id, pool_id, amount, duration_preset, position_id, keep_alive) = (100.into(), 1_u16.into(), 100_500_u128.into(), ONE_HOUR, 1_u128.into(), true);
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
-		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner));
+		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner))?;
 		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into()).expect("an asset minting expected");
 	}: _(RawOrigin::Signed(staker.clone()), pool_id, amount, duration_preset)
 	verify {
@@ -91,7 +91,7 @@ benchmarks! {
 		let user: T::AccountId = account("user", 0, 0);
 		let _res = Pallet::<T>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(user.clone()));
 		let _res = StakeCount::<T>::increment();
-		let stake = Stake::<T::RewardPoolId, T::Balance, Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>> {
+		let new_stake = Stake::<T::RewardPoolId, T::Balance, Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>> {
 			reward_pool_id: 1_u16.into(),
 			stake: 1000_000_000_000_000_u128.into(),
 			share: 1000_000_000_000_000_u128.into(),
@@ -103,7 +103,7 @@ benchmarks! {
 			}
 		};
 		let position_id : T::PositionId = 1_u128.into();
-		Stakes::<T>::insert(position_id, stake.clone());
+		Stakes::<T>::insert(position_id, new_stake);
 		let ratio =  Permill::from_rational(1_u32,7_u32);
 		let validated_ratio = Validated::<Permill, ValidSplitRatio>::new(ratio).unwrap();
 
