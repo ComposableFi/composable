@@ -10,7 +10,9 @@ import { Moment } from "@polkadot/types/interfaces/runtime";
 import BN from "bn.js";
 import { expect } from "chai";
 import { AnyString, ITuple } from "@polkadot/types-codec/types";
-import { PalletAirdropModelsIdentity } from "@composable/types/interfaces";
+import { PalletAirdropModelsIdentity, PalletAirdropModelsProof } from "@composable/types/interfaces";
+import { IKeyringPair } from "@polkadot/types/types";
+import { AccountId32 } from "@polkadot/types/interfaces";
 
 /**
  * Airdrop Tests
@@ -22,8 +24,10 @@ describe.only("tx.airdrop Tests", function() {
   let api: ApiPromise;
   let airdrop1Maintainer: KeyringPair,
     airdrop2Maintainer: KeyringPair,
+    airdrop1Recipient2RelayChain: KeyringPair,
     airdrop1Recipient1: KeyringPair,
-    airdrop1Recipient2: KeyringPair,
+    airdrop1Recipient3Eth: KeyringPair,
+    airdrop1Recipient4Cosmos: KeyringPair,
     airdrop2Recipient1: KeyringPair,
     airdrop2Recipient2: KeyringPair,
     sudoKey: KeyringPair;
@@ -43,7 +47,9 @@ describe.only("tx.airdrop Tests", function() {
     airdrop2Maintainer = devWalletBob.derive("/tests/airdrop/2/maintainer");
 
     airdrop1Recipient1 = devWalletAlice.derive("/tests/airdrop/1/recipient/1");
-    airdrop1Recipient2 = devWalletAlice.derive("/tests/airdrop/1/recipient/2");
+    airdrop1Recipient2RelayChain = devWalletAlice.derive("/tests/airdrop/2/recipient/1");
+    airdrop1Recipient3Eth = devWalletAlice.derive("/tests/airdrop/1/recipient/3");
+    airdrop1Recipient4Cosmos = devWalletAlice.derive("/tests/airdrop/1/recipient/4");
     airdrop2Recipient1 = devWalletBob.derive("/tests/airdrop/1/recipient/1");
     airdrop2Recipient2 = devWalletBob.derive("/tests/airdrop/1/recipient/2");
 
@@ -54,6 +60,7 @@ describe.only("tx.airdrop Tests", function() {
     this.timeout(2 * 60 * 1000);
     await mintAssetsToWallet(api, airdrop1Maintainer, sudoKey, [1]);
     await mintAssetsToWallet(api, airdrop2Maintainer, sudoKey, [1]);
+    await mintAssetsToWallet(api, airdrop1Recipient2RelayChain, sudoKey, [1]);
   });
 
   after("Closing the connection", async function() {
@@ -116,11 +123,28 @@ describe.only("tx.airdrop Tests", function() {
           BalanceOf: api.createType("u128", 100000000000),
           MomentOf: api.createType("u64", 0),
           bool: api.createType("bool", false)
+        },
+        {
+          IdentityOf: { RelayChain: api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey) },
+          BalanceOf: api.createType("u128", 100000000000),
+          MomentOf: api.createType("u64", 0),
+          bool: api.createType("bool", false)
+        },
+        {
+          IdentityOf: { RelayChain: api.createType("AccountId32", airdrop1Recipient3Eth.publicKey) },
+          BalanceOf: api.createType("u128", 100000000000),
+          MomentOf: api.createType("u64", 0),
+          bool: api.createType("bool", false)
+        },
+        {
+          IdentityOf: { RelayChain: api.createType("AccountId32", airdrop1Recipient4Cosmos.publicKey) },
+          BalanceOf: api.createType("u128", 100000000000),
+          MomentOf: api.createType("u64", 0),
+          bool: api.createType("bool", false)
         }
       ]);
       const airdropId = api.createType("u128", airdrop1_id);
 
-      console.debug("Recipient List[0]:", recipientList[0].toString());
       const { data: [result] } = await TxAirdropTests.addRecipient(api, airdrop1Maintainer, airdropId, recipientList);
       // ToDo: Result check!
 
@@ -140,6 +164,12 @@ describe.only("tx.airdrop Tests", function() {
           BalanceOf: api.createType("u128", 100000000000),
           MomentOf: api.createType("u64", 0),
           bool: api.createType("bool", false)
+        },
+        {
+          IdentityOf: { RelayChain: api.createType("AccountId32", airdrop2Recipient2.publicKey) },
+          BalanceOf: api.createType("u128", 100000000000),
+          MomentOf: api.createType("u64", 0),
+          bool: api.createType("bool", false)
         }
       ]);
       const airdropId = api.createType("u128", airdrop2_id);
@@ -150,9 +180,175 @@ describe.only("tx.airdrop Tests", function() {
 
     });
   });
+
+  describe("tx.airdrop.removeRecipient Tests", function() {
+
+    it("Airdrop [#1] Maintainer can remove recipients", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const recipient = api.createType("PalletAirdropModelsIdentity",
+        {
+          RelayChain: api.createType("AccountId32", airdrop1Recipient1.publicKey)
+        });
+      const airdropId = api.createType("u128", airdrop1_id);
+
+      const { data: [result] } = await TxAirdropTests.removeRecipient(api, airdrop1Maintainer, airdropId, recipient);
+      // ToDo: Result check!
+
+
+      console.debug(result);
+
+    });
+
+    it("Airdrop [#2] Maintainer can remove recipients", async function() {
+      this.skip();
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const recipient = api.createType("PalletAirdropModelsIdentity",
+        {
+          RelayChain: api.createType("AccountId32", airdrop2Recipient2.publicKey)
+        });
+      const airdropId = api.createType("u128", airdrop2_id);
+
+      const { data: [result] } = await TxAirdropTests.removeRecipient(api, airdrop1Maintainer, airdropId, recipient);
+
+      console.debug(result);
+
+    });
+  });
+
+  describe("tx.airdrop.enableAirdrop Tests", function() {
+    it("Airdrop [#1] can be enabled by maintainer", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const recipient = api.createType("PalletAirdropModelsIdentity",
+        {
+          RelayChain: api.createType("AccountId32", airdrop1Recipient1.publicKey)
+        });
+      const airdropId = api.createType("u128", airdrop1_id);
+
+      const { data: [result] } = await TxAirdropTests.enableAirdrop(api, airdrop1Maintainer, airdropId);
+      // ToDo: Result check!
+
+
+      console.debug(result);
+
+    });
+
+    it("Airdrop [#2] can be enabled by maintainer", async function() {
+      this.skip();
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const recipient = api.createType("PalletAirdropModelsIdentity",
+        {
+          RelayChain: api.createType("AccountId32", airdrop2Recipient2.publicKey)
+        });
+      const airdropId = api.createType("u128", airdrop2_id);
+
+      const { data: [result] } = await TxAirdropTests.enableAirdrop(api, airdrop1Maintainer, airdropId);
+
+      console.debug(result);
+
+    });
+  });
+
+  describe("tx.airdrop.claim Tests", function() {
+    it("Airdrop [#1] can be claimed by RelayChain contributor with correct proof", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const airdropId = api.createType("u128", airdrop1_id);
+      const rewardAccount = api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey);
+      const proof = api.createType("PalletAirdropModelsProof", {
+        RelayChain:
+          api.createType("(AccountId32, SpRuntimeMultiSignature)", [
+            api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey),
+            api.createType("SpRuntimeMultiSignature", {
+              Sr25519: api.createType("SpCoreSr25519Signature", airdrop1Recipient2RelayChain.sign(proofMessage(airdrop1Recipient2RelayChain)))
+            })
+          ])
+      });
+
+      const { data: [result] } = await TxAirdropTests.claimAirdrop(
+        api,
+        airdrop1Recipient2RelayChain,
+        airdropId,
+        rewardAccount,
+        proof
+      );
+      // ToDo: Result check!
+
+
+      console.debug(result);
+
+    });
+
+    it("Airdrop [#2] can be claimed with correct proof", async function() {
+      this.skip();
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const recipient = api.createType("PalletAirdropModelsIdentity", {
+        RelayChain: api.createType("AccountId32", airdrop2Recipient2.publicKey)
+      });
+      const airdropId = api.createType("u128", airdrop2_id);
+
+      const { data: [result] } = await TxAirdropTests.disableAirdrop(api, airdrop1Maintainer, airdropId);
+
+      console.debug(result);
+
+    });
+  });
+
+  describe("tx.airdrop.disableAirdrop Tests", function() {
+    it("Airdrop [#1] can be disabled by maintainer", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const recipient = api.createType("PalletAirdropModelsIdentity",
+        {
+          RelayChain: api.createType("AccountId32", airdrop1Recipient1.publicKey)
+        });
+      const airdropId = api.createType("u128", airdrop1_id);
+
+      const { data: [result] } = await TxAirdropTests.disableAirdrop(api, airdrop1Maintainer, airdropId);
+      // ToDo: Result check!
+
+
+      console.debug(result);
+
+    });
+
+    it("Airdrop [#2] can be disabled by maintainer", async function() {
+      this.skip();
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const recipient = api.createType("PalletAirdropModelsIdentity",
+        {
+          RelayChain: api.createType("AccountId32", airdrop2Recipient2.publicKey)
+        });
+      const airdropId = api.createType("u128", airdrop2_id);
+
+      const { data: [result] } = await TxAirdropTests.disableAirdrop(api, airdrop1Maintainer, airdropId);
+
+      console.debug(result);
+
+    });
+  });
 });
 
+const toHexString = bytes => Array.prototype.map.call(bytes, x => ("0" + (x & 0xff).toString(16)).slice(-2)).join("");
+
+const proofMessage = (account: IKeyringPair, isEth = false) =>
+  (isEth ? "picasso-" : "<Bytes>picasso-") + toHexString(account.publicKey) + (isEth ? "" : "</Bytes>");
+
 export class TxAirdropTests {
+
   /**
    * ToDo
    *
@@ -235,6 +431,47 @@ export class TxAirdropTests {
       wallet,
       api.events.airdrop.RecipientRemoved.is,
       api.tx.airdrop.removeRecipient(airdropId, recipient)
+    );
+  }
+
+  public static async enableAirdrop(
+    api: ApiPromise,
+    wallet: KeyringPair,
+    airdropId: u128 | BN
+  ) {
+    return await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.airdrop.AirdropStarted.is,
+      api.tx.airdrop.enableAirdrop(airdropId)
+    );
+  }
+
+  public static async disableAirdrop(
+    api: ApiPromise,
+    wallet: KeyringPair,
+    airdropId: u128 | BN
+  ) {
+    return await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.airdrop.AirdropEnded.is,
+      api.tx.airdrop.disableAirdrop(airdropId)
+    );
+  }
+
+  public static async claimAirdrop(
+    api: ApiPromise,
+    wallet: KeyringPair,
+    airdropId: u128 | BN,
+    rewardAccount: AccountId32,
+    proof: PalletAirdropModelsProof
+  ) {
+    return await sendAndWaitForSuccess(
+      api,
+      wallet,
+      api.events.airdrop.Claimed.is,
+      api.tx.airdrop.claim(airdropId, rewardAccount, proof)
     );
   }
 }
