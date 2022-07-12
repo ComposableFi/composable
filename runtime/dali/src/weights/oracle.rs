@@ -45,6 +45,13 @@ impl<T: frame_system::Config> oracle::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+
+	fn adjust_rewards() -> Weight {
+		(116_881_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
+
 	// Storage: Oracle ControllerToSigner (r:1 w:0)
 	// Storage: Oracle OracleStake (r:1 w:1)
 	// Storage: System Account (r:1 w:1)

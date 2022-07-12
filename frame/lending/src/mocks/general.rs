@@ -37,6 +37,7 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
 pub type VaultId = u64;
+pub type Moment = u64;
 
 pub type LiquidationStrategyId = u32;
 pub type OrderId = u32;
@@ -137,7 +138,7 @@ parameter_types! {
 }
 
 impl pallet_timestamp::Config for Runtime {
-	type Moment = u64;
+	type Moment = Moment;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
@@ -250,6 +251,8 @@ parameter_types! {
 	pub const MinU32: u32 = 0;
 	pub const MinU64: u64 = 0;
 	pub const TwapWindow: u16 = 3;
+	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
+	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
 }
 
 pub struct Decimals;
@@ -277,6 +280,12 @@ impl pallet_oracle::Config for Runtime {
 	type LocalAssets = Decimals;
 	type TreasuryAccount = RootAccount;
 	type TwapWindow = TwapWindow;
+	type Balance = Balance;
+	type RewardOrigin = EnsureRoot<AccountId>;
+	type MsPerBlock = MsPerBlock;
+	type Moment = Moment;
+	type Time = Timestamp;
+	type PalletId = OraclePalletId;
 }
 
 impl DeFiComposableConfig for Runtime {
