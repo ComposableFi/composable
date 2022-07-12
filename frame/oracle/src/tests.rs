@@ -16,7 +16,7 @@ use sp_io::TestExternalities;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
 	traits::{BadOrigin, Zero},
-	FixedPointNumber, FixedU128, Perbill, Percent, RuntimeAppPublic,
+	FixedPointNumber, FixedU128, Percent, RuntimeAppPublic,
 };
 use std::sync::Arc;
 
@@ -1012,7 +1012,7 @@ fn test_payout_slash() {
 			slash: 0,
 		};
 		// doesn't panic when percent not set
-		Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0, &asset_info);
+		assert_ok!(Oracle::handle_payout(&vec![one, two, three, four, five], 100, 0, &asset_info));
 		assert_eq!(Balances::free_balance(account_1), 100);
 
 		assert_ok!(Oracle::add_asset_and_info(
@@ -1039,12 +1039,12 @@ fn test_payout_slash() {
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(5));
 		assert_eq!(Balances::free_balance(treasury_account), 100);
 
-		Oracle::handle_payout(
+		assert_ok!(Oracle::handle_payout(
 			&vec![one, two, three, four, five],
 			100,
 			0,
 			&Oracle::asset_info(0).unwrap(),
-		);
+		));
 
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(0));
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(0));
@@ -1074,12 +1074,12 @@ fn test_payout_slash() {
 		));
 		let reward_tracker = RewardTrackerStore::<Test>::get().unwrap();
 		assert_eq!(reward_tracker.total_reward_weight, 100);
-		Oracle::handle_payout(
+		assert_ok!(Oracle::handle_payout(
 			&vec![one, two, three, four, five],
 			100,
 			0,
 			&Oracle::asset_info(0).unwrap(),
-		);
+		));
 
 		// account 4 gets slashed 2 5 and 1 gets rewarded
 		assert_eq!(Balances::free_balance(account_1), 99);

@@ -56,6 +56,11 @@ benchmarks! {
 		assert_last_event::<T>(Event::AssetInfoChange(asset_id.into(), *threshold, *min_answers, *max_answers, *block_interval, reward, slash).into());
 	}
 
+	adjust_rewards {
+		let annual_cost_per_oracle: T::Balance = 100_000_u128.into();
+		let num_ideal_oracles: u8 = 10;
+	}: _(RawOrigin::Root, annual_cost_per_oracle, num_ideal_oracles)
+
 	set_signer {
 		let caller: T::AccountId = whitelisted_caller();
 		let signer: T::AccountId = account("candidate", 0, SEED);
