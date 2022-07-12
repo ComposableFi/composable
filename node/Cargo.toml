@@ -116,6 +116,7 @@ substrate-build-script-utils = { git = "https://github.com/paritytech/substrate"
 hex = "0.4.3"
 
 [features]
+builtin-wasm = ["picasso-runtime/builtin-wasm", "composable-runtime/builtin-wasm", "dali-runtime/builtin-wasm"]
 composable = ["composable-runtime"]
 dali = ["dali-runtime"]
 default = []

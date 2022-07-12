@@ -23,7 +23,7 @@ pub fn genesis_config(
 ) -> picasso_runtime::GenesisConfig {
 	picasso_runtime::GenesisConfig {
 		system: picasso_runtime::SystemConfig {
-			code: picasso_runtime::WASM_BINARY
+			code: picasso_runtime::WASM_BINARY_V2
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
