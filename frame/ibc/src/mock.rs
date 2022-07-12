@@ -157,6 +157,8 @@ impl orml_tokens::Config for Test {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
+	type OnKilledTokenAccount = ();
+	type OnNewTokenAccount = ();
 }
 
 impl governance_registry::Config for Test {

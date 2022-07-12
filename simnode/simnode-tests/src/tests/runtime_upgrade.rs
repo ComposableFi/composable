@@ -69,7 +69,7 @@ where
 		match_event!(
 			event.event.into(),
 			ParachainSystem,
-			parachain_system::Event::ValidationFunctionApplied(_)
+			parachain_system::Event::ValidationFunctionApplied { .. }
 		)
 	});
 	// make sure event was emitted

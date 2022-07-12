@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 NIGHTLY_VERSION="2022-04-18"
 

@@ -1,20 +1,5 @@
-import { AssetId } from "@/defi/polkadot/types";
 import produce from "immer";
-import { ParachainId, RelayChainId } from "substrate-react/dist/dotsama/types";
-import { AssetsSlice } from "./assets.types";
-
-export const updateBalance = (
-  tokens: AssetsSlice["balances"],
-  assetId: AssetId,
-  chainId: ParachainId | RelayChainId,
-  balance: string
-) => {
-  return produce(tokens, (draft) => {
-    if (draft[assetId] && draft[assetId][chainId]) {
-      draft[assetId][chainId] = balance;
-    }
-  })
-}
+import { AssetsSlice, MockedAsset } from "./assets.types";
 
 export const setApolloPrice = (
   assets: AssetsSlice["apollo"],
@@ -25,3 +10,27 @@ export const setApolloPrice = (
       draft[assetId] = price
   });
 };
+
+export const putSupportedAssets = (
+  assets: AssetsSlice["supportedAssets"],
+  assetsList: MockedAsset[]
+) => {
+  return produce(assets, (draft) => {
+    draft = [...assetsList]
+  });
+}
+
+export const putAssetBalance = (
+  assets: AssetsSlice["assetBalances"],
+  network: string,
+  assetId: string,
+  balance: string
+) => {
+  return produce(assets, (draft) => {
+    if (!assets[network]) {
+      draft[network] = {};
+    }
+
+    draft[network][assetId] = balance;
+  });
+}

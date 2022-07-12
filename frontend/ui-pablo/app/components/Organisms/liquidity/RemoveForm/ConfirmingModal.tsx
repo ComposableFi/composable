@@ -14,21 +14,21 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
 import {
-  closeConfirmingModal, openConfirmingModal, setMessage,
+  closeConfirmingModal
 } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
 import { CircularProgress } from "@/components/Atoms";
-import { AssetMetadata } from "@/defi/polkadot/Assets";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
-import { DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useParachainApi, useSelectedAccount, useExecutor, getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
-import { getPairDecimals } from "@/defi/polkadot/utils";
 import { useRouter } from "next/router";
+import { MockedAsset } from "@/store/assets/assets.types";
+import { toChainUnits } from "@/defi/utils";
 
 export type ConfirmingModalProps = {
-  baseAsset: AssetMetadata,
-  quoteAsset: AssetMetadata,
+  baseAsset: MockedAsset,
+  quoteAsset: MockedAsset,
   price1: BigNumber,
   price2: BigNumber,
   amount1: BigNumber,
@@ -70,13 +70,8 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
   const confirmRemoveHandler = async () => {
     // WIP
     if (parachainApi && executor && baseAsset && quoteAsset && selectedAccount) {
-      const { baseDecimals, quoteDecimals } = getPairDecimals(
-        baseAsset.assetId,
-        quoteAsset.assetId
-      );
-  
       try {
-        const lpRemoveAmount = lpBalance.times(DEFAULT_DECIMALS).times(percentage);
+        const lpRemoveAmount = toChainUnits(lpBalance).times(percentage);
         const signer = await getSigner(APP_NAME, selectedAccount.address);
         executor.execute(
           parachainApi.tx.pablo.removeLiquidity(

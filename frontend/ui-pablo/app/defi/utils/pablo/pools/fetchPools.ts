@@ -2,7 +2,7 @@ import {
   StableSwapPool,
   ConstantProductPool,
   LiquidityBootstrappingPool,
-} from "@/store/pools/pools.types";
+} from "@/defi/types";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { decodeLbp, decodeCpp, decodeSsp } from "../pools";
@@ -39,6 +39,7 @@ export async function fetchPool(
 
     return null;
   } catch (err) {
+    console.error(err)
     return null;
   }
 }
@@ -137,26 +138,40 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
     pools.liquidityBootstrapping.verified = lbpool.filter((p) =>
       allVerifiedPoolIds.includes(p.poolId)
     );
-    pools.liquidityBootstrapping.unVerified = lbpool.filter(
-      (p) => !allVerifiedPoolIds.includes(p.poolId)
-    );
+    // these might be needed in future so not removing
+    // pools.liquidityBootstrapping.unVerified = lbpool.filter(
+    //   (p) => !allVerifiedPoolIds.includes(p.poolId)
+    // );
 
     pools.constantProduct.verified = cpPool.filter((p) =>
       allVerifiedPoolIds.includes(p.poolId)
     );
-    pools.constantProduct.unVerified = cpPool.filter(
-      (p) => !allVerifiedPoolIds.includes(p.poolId)
-    );
+    // these might be needed in future so not removing
+    // pools.constantProduct.unVerified = cpPool.filter(
+    //   (p) => !allVerifiedPoolIds.includes(p.poolId)
+    // );
 
     pools.stableSwap.verified = ssPool.filter((p) =>
       allVerifiedPoolIds.includes(p.poolId)
     );
-    pools.stableSwap.unVerified = ssPool.filter(
-      (p) => !allVerifiedPoolIds.includes(p.poolId)
-    );
+    // these might be needed in future so not removing    
+    // pools.stableSwap.unVerified = ssPool.filter(
+    //   (p) => !allVerifiedPoolIds.includes(p.poolId)
+    // );
 
     return pools;
   } catch (err) {
+    console.error(err)
     return pools;
   }
+}
+
+export function getLPTokenPair(
+  constantProductPool: Array<ConstantProductPool | StableSwapPool>,
+  currencyId: string
+) {
+  const constantProduct = constantProductPool.find(
+    (constantProduct) => constantProduct.lpToken === currencyId
+  );
+  return constantProduct ? constantProduct.pair : null;
 }

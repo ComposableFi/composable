@@ -293,10 +293,6 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T> {
-		/// Processed incoming ibc messages
-		ProcessedIBCMessages,
-		/// Initiated a new connection
-		ConnectionInitiated,
 		/// Raw Ibc events
 		IbcEvents { events: Vec<crate::events::IbcEvent> },
 		/// Ibc errors
@@ -413,8 +409,8 @@ pub mod pallet {
 						&mut ctx, msg,
 					) {
 						Ok(MsgReceipt { events: temp_events, log: temp_logs }) => {
-							events.extend_from_slice(&temp_events);
-							logs.extend_from_slice(&temp_logs);
+							events.extend(temp_events);
+							logs.extend(temp_logs);
 						},
 						Err(e) => errors.push(e),
 					}
@@ -493,9 +489,10 @@ pub mod pallet {
 				value,
 			};
 			let mut ctx = routing::Context::<T>::new();
-			ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
-				.map_err(|_| Error::<T>::ProcessingError)?;
-			Self::deposit_event(Event::<T>::ConnectionInitiated);
+			let result =
+				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
+					.map_err(|_| Error::<T>::ProcessingError)?;
+			Self::deposit_event(result.events.into());
 			Ok(())
 		}
 	}

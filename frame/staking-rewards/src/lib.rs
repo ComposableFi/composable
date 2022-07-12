@@ -38,12 +38,14 @@ mod benchmarking;
 mod prelude;
 #[cfg(test)]
 mod test;
+mod validation;
 pub mod weights;
 
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	pub use crate::weights::WeightInfo;
 	use composable_support::{
 		abstractions::{
 			nonce::Nonce,
@@ -72,11 +74,11 @@ pub mod pallet {
 	use sp_arithmetic::{traits::One, Permill};
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider},
-		ArithmeticError, Perbill,
+		ArithmeticError, Perbill, PerThing,
 	};
-	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
+	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
 
-	use crate::{prelude::*, weights::WeightInfo};
+	use crate::{prelude::*, validation::ValidSplitRatio};
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
@@ -118,6 +120,8 @@ pub mod pallet {
 		ReductionConfigProblem,
 		/// Not enough assets for a stake.
 		NotEnoughAssets,
+		/// No position found for given id.
+		NoPositionFound,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -250,7 +254,8 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn stakes)]
-	pub type Stakes<T: Config> = StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>>;
+	pub type Stakes<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>, OptionQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -297,10 +302,10 @@ pub mod pallet {
 							lock,
 						},
 					);
-					(owner, pool_id, end_block)
+					Ok((owner, pool_id, end_block))
 				},
-				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration)?,
-			};
+				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
+			}?;
 			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
 			Ok(())
 		}
@@ -320,6 +325,17 @@ pub mod pallet {
 			let _position_id =
 				<Self as Staking>::stake(&owner, &pool_id, amount, duration_preset, keep_alive)?;
 
+			Ok(())
+		}
+
+		#[pallet::weight(T::WeightInfo::split())]
+		pub fn split(
+			origin: OriginFor<T>,
+			position: T::PositionId,
+			ratio: Validated<Permill, ValidSplitRatio>,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			<Self as Staking>::split(&who, &position, ratio.value())?;
 			Ok(())
 		}
 	}
@@ -444,10 +460,43 @@ pub mod pallet {
 		#[transactional]
 		fn split(
 			_who: &Self::AccountId,
-			_position: &Self::PositionId,
-			_ratio: Permill,
+			position: &Self::PositionId,
+			ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
-			Err("Not implemented".into())
+			let mut old_position =
+				Stakes::<T>::try_mutate(position, |old_stake| match old_stake {
+					Some(stake) => {
+						let old_value = stake.clone();
+						stake.stake = ratio.mul_floor(stake.stake);
+						stake.share = ratio.mul_floor(stake.share);
+						let assets: Vec<T::AssetId> = stake.reductions.keys().cloned().collect();
+						for asset in assets {
+							let reduction = stake.reductions.get_mut(&asset);
+							if let Some(value) = reduction {
+								*value = ratio.mul_floor(*value);
+							}
+						}
+						Ok(old_value)
+					},
+					None => Err(Error::<T>::NoPositionFound),
+				})?;
+			let left_from_one_ratio = ratio.left_from_one();
+			let assets: Vec<T::AssetId> = old_position.reductions.keys().cloned().collect();
+			for asset in assets {
+				let reduction = old_position.reductions.get_mut(&asset);
+				if let Some(value) = reduction {
+					*value = left_from_one_ratio.mul_floor(*value);
+				}
+			}
+
+			let new_stake = StakeOf::<T> {
+				stake: left_from_one_ratio.mul_floor(old_position.stake),
+				share: left_from_one_ratio.mul_floor(old_position.share),
+				..old_position
+			};
+			let new_position = StakeCount::<T>::increment()?;
+			Stakes::<T>::insert(new_position, new_stake);
+			Ok([*position, new_position])
 		}
 	}
 

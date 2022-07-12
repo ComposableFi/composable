@@ -226,7 +226,7 @@ pub mod pallet {
 	#[pallet::storage]
 	/// Map of asset id to ibc denom pairs (T::AssetId, Vec<u8>)
 	/// ibc denoms represented as utf8 string bytes
-	pub type IbcAssetIds<T: Config> = StorageMap<
+	pub type IbcAssetIds<T: Config> = CountedStorageMap<
 		_,
 		Twox64Concat,
 		<T as DeFiComposableConfig>::MayBeAssetId,
@@ -257,15 +257,15 @@ pub mod pallet {
 			amount: <T as DeFiComposableConfig>::Balance,
 		) -> DispatchResult {
 			let origin = ensure_signed(origin)?;
-			// Check if the asset id is one of the native assets or an ibc asset id
-			// If native, get the string representation of the asset
+			// Check if it's a local asset id, native asset or an ibc asset id
+			// If native or local asset, get the string representation of the asset
 			let denom = if let Some(denom) = IbcAssetIds::<T>::get(&asset_id) {
 				String::from_utf8(denom).map_err(|_| Error::<T>::Utf8Error)?
 			} else {
 				let asset_id: CurrencyId = asset_id.into();
 				CurrencyId::native_asset_name(asset_id.0)
-					.map_err(|_| Error::<T>::InvalidAssetId)?
-					.to_string()
+					.map(|val| val.to_string())
+					.unwrap_or_else(|_| asset_id.to_string())
 			};
 
 			let account_id_32: AccountId32 = origin.clone().into();
@@ -373,6 +373,53 @@ pub mod pallet {
 			denom: Vec<u8>,
 		) {
 			IbcAssetIds::<T>::insert(asset_id, denom)
+		}
+	}
+
+	impl<T: Config> Pallet<T>
+	where
+		<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
+		CurrencyId: From<<T as DeFiComposableConfig>::MayBeAssetId>,
+	{
+		pub fn get_denom_trace(asset_id: u128) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+			let asset_id: <T as DeFiComposableConfig>::MayBeAssetId = CurrencyId(asset_id).into();
+			IbcAssetIds::<T>::get(asset_id)
+				.map(|denom| ibc_primitives::QueryDenomTraceResponse { denom })
+		}
+
+		pub fn get_denom_traces(
+			key: Option<u128>,
+			offset: Option<u32>,
+			mut limit: u64,
+			count_total: bool,
+		) -> ibc_primitives::QueryDenomTracesResponse {
+			let mut iterator = if let Some(key) = key {
+				let asset_id: <T as DeFiComposableConfig>::MayBeAssetId = CurrencyId(key).into();
+				let raw_key = asset_id.encode();
+				IbcAssetIds::<T>::iter_from(raw_key).skip(0)
+			} else if let Some(offset) = offset {
+				IbcAssetIds::<T>::iter().skip(offset as usize)
+			} else {
+				IbcAssetIds::<T>::iter().skip(0)
+			};
+
+			let mut denoms = vec![];
+			for (_, denom) in iterator.by_ref() {
+				denoms.push(denom);
+				limit -= 1;
+				if limit == 0 {
+					break
+				}
+			}
+
+			ibc_primitives::QueryDenomTracesResponse {
+				denoms,
+				total: count_total.then(|| IbcAssetIds::<T>::count() as u64),
+				next_key: iterator.next().map(|(key, _)| {
+					let asset_id: CurrencyId = key.into();
+					asset_id.0
+				}),
+			}
 		}
 	}
 }

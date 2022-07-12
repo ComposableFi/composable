@@ -17,18 +17,23 @@ import { useAppSelector } from "@/hooks/store";
 import moment from "moment-timezone";
 import { Link } from "@/components/Molecules";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
-import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
-import { getAssetById } from "@/defi/polkadot/Assets";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 import { getShortAddress } from "@/utils/string";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
+import { MockedAsset } from "@/store/assets/assets.types";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 export type AuctionHistoriesTableProps = {
   auction: LiquidityBootstrappingPool,
+  baseAsset?: MockedAsset,
+  quoteAsset?: MockedAsset,
 } & TableContainerProps;
 
 export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
   auction,
+  baseAsset,
+  quoteAsset,
   ...rest
 }) => {
   const theme = useTheme();
@@ -78,7 +83,7 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
             </TableCell>
             <TableCell align="center">
               <Typography variant="body1">
-                {`${getAssetById(auction.networkId, auction.pair.base)?.symbol} Price`}
+                {`${baseAsset?.symbol} Price`}
               </Typography>  
             </TableCell>
             <TableCell align="right" sx={{paddingRight: theme.spacing(4)}}>
@@ -89,47 +94,59 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {activeLBPHistory.slice(0, count).map((history, index) => (
-            <TableRow
-              key={index}
-            >
-              <TableCell align="left" sx={{p: 4}}>
-                <Box display="flex" alignItems="center" gap={1.5}>
+          {activeLBPHistory.slice(0, count).map((history, index) => {
+            let historyBase = undefined, historyQuote = undefined;
+            if (baseAsset && quoteAsset) {
+              if(history.quoteAssetId.toString() === quoteAsset.network[DEFAULT_NETWORK_ID]) {
+                historyBase = baseAsset;
+                historyQuote = quoteAsset;
+              } else {
+                historyBase = quoteAsset;
+                historyQuote = baseAsset;
+              }
+            }
+            return (
+              <TableRow
+                key={index}
+              >
+                <TableCell align="left" sx={{p: 4}}>
+                  <Box display="flex" alignItems="center" gap={1.5}>
+                    <Typography variant="body1">
+                      {moment(history.receivedTimestamp).utc().format("MMM DD, YYYY, h:mm A")}
+                    </Typography>
+                    <Link href={getHistoryLink(history.walletAddress)} target="_blank">
+                      <OpenInNewRoundedIcon />
+                    </Link>
+                  </Box>
+                </TableCell>
+                <TableCell align="right">
                   <Typography variant="body1">
-                    {moment(history.receivedTimestamp).utc().format("MMM DD, YYYY, h:mm A")}
+                    {history.side}
+                  </Typography>  
+                </TableCell>
+                <TableCell align="center">
+                  <Typography variant="body1">
+                    {`${history.quoteAssetAmount} ${historyQuote?.symbol}`}
+                  </Typography>  
+                </TableCell>
+                <TableCell align="center">
+                  <Typography variant="body1">
+                    {`${history.baseAssetAmount} ${historyBase?.symbol}`}
+                  </Typography>  
+                </TableCell>
+                <TableCell align="center">
+                  <Typography variant="body1">
+                    ${new BigNumber(history.spotPrice).toFixed(4)}
+                  </Typography>  
+                </TableCell>
+                <TableCell align="right" sx={{padding: theme.spacing(4)}}>
+                  <Typography variant="body1">
+                    {getShortAddress(history.walletAddress)}
                   </Typography>
-                  <Link href={getHistoryLink(history.walletAddress)} target="_blank">
-                    <OpenInNewRoundedIcon />
-                  </Link>
-                </Box>
-              </TableCell>
-              <TableCell align="right">
-                <Typography variant="body1">
-                  {history.side}
-                </Typography>  
-              </TableCell>
-              <TableCell align="center">
-                <Typography variant="body1">
-                  {`${history.quoteAssetAmount} ${getAssetById(auction.networkId, history.quoteAssetId)?.symbol}`}
-                </Typography>  
-              </TableCell>
-              <TableCell align="center">
-                <Typography variant="body1">
-                  {`${history.baseAssetAmount} ${getAssetById(auction.networkId, history.baseAssetId)?.symbol}`}
-                </Typography>  
-              </TableCell>
-              <TableCell align="center">
-                <Typography variant="body1">
-                  ${new BigNumber(history.spotPrice).toFixed(4)}
-                </Typography>  
-              </TableCell>
-              <TableCell align="right" sx={{padding: theme.spacing(4)}}>
-                <Typography variant="body1">
-                  {getShortAddress(history.walletAddress)}
-                </Typography>
-              </TableCell>
-            </TableRow>
-          ))}
+                </TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
 

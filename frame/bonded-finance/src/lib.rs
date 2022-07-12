@@ -94,7 +94,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A new offer has been created.
-		NewOffer { offer_id: T::BondOfferId },
+		NewOffer { offer_id: T::BondOfferId, beneficiary: AccountIdOf<T> },
 		/// A new bond has been registered.
 		NewBond { offer_id: T::BondOfferId, who: AccountIdOf<T>, nb_of_bonds: BalanceOf<T> },
 		/// An offer has been cancelled by the `AdminOrigin`.
@@ -300,6 +300,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
 			let offer_id = BondOfferCount::<T>::increment()?;
+			let beneficiary = offer.beneficiary.clone();
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
 			T::Currency::transfer(
@@ -310,7 +311,7 @@ pub mod pallet {
 				keep_alive,
 			)?;
 			BondOffers::<T>::insert(offer_id, (from.clone(), offer));
-			Self::deposit_event(Event::<T>::NewOffer { offer_id });
+			Self::deposit_event(Event::<T>::NewOffer { offer_id, beneficiary });
 			Ok(offer_id)
 		}
 
@@ -423,7 +424,7 @@ pub mod pallet {
 		}
 
 		pub(crate) fn account_id(offer_id: T::BondOfferId) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account(offer_id)
+			T::PalletId::get().into_sub_account_truncating(offer_id)
 		}
 	}
 

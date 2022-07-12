@@ -8,7 +8,9 @@
     "pablo.PoolDeleted",
     "pablo.LiquidityAdded",
     "pablo.LiquidityRemoved",
-    "pablo.Swapped"
+    "pablo.Swapped",
+    "bondedFinance.NewOffer",
+    "bondedFinance.NewBond"
   ],
   "calls": []
 }

@@ -60,6 +60,7 @@ pub mod pallet {
 	pub(crate) type NetworkIdOf<T> = <T as Config>::NetworkId;
 	pub(crate) type RemoteAssetIdOf<T> = <T as Config>::RemoteAssetId;
 	pub(crate) type RemoteAmmIdOf<T> = <T as Config>::RemoteAmmId;
+	pub(crate) type AmmMinimumAmountOutOf<T> = <T as Config>::AmmMinimumAmountOut;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -96,6 +97,15 @@ pub mod pallet {
 		/// A type representing a remote AMM ID.
 		type RemoteAmmId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
 
+		// A type representing the type of the minimum amount out after a AMM Swap.
+		type AmmMinimumAmountOut: IsType<u128>
+			+ FullCodec
+			+ MaxEncodedLen
+			+ TypeInfo
+			+ Clone
+			+ Debug
+			+ PartialEq;
+
 		/// Origin capable of setting the relayer and AMM IDs. Intended to be RootOrHalfCouncil, as
 		/// it is also used as the origin capable of stopping attackers.
 		type ControlOrigin: EnsureOrigin<Self::Origin>;
@@ -119,9 +129,10 @@ pub mod pallet {
 	}
 
 	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq)]
-	pub struct AmmSwapInfo<N, R> {
+	pub struct AmmSwapInfo<N, R, M> {
 		pub destination_token_out_address: EthereumAddress,
 		pub destination_amm: RemoteAmm<N, R>,
+		pub minimum_amount_out: M,
 	}
 
 	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq)]
@@ -294,7 +305,8 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			swap_to_native: bool,
 			source_user_account: AccountIdOf<T>,
-			amm_swap_info: Option<AmmSwapInfo<NetworkIdOf<T>, RemoteAmmIdOf<T>>>,
+			amm_swap_info:
+				Option<AmmSwapInfo<NetworkIdOf<T>, RemoteAmmIdOf<T>, AmmMinimumAmountOutOf<T>>>,
 		},
 		/// User claimed outgoing tx that was not (yet) picked up by the relayer
 		StaleTxClaimed {
@@ -498,7 +510,9 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			swap_to_native: bool,
 			source_user_account: AccountIdOf<T>,
-			amm_swap_info: Option<AmmSwapInfo<NetworkIdOf<T>, RemoteAmmIdOf<T>>>,
+			amm_swap_info: Option<
+				AmmSwapInfo<NetworkIdOf<T>, RemoteAmmIdOf<T>, AmmMinimumAmountOutOf<T>>,
+			>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
@@ -830,7 +844,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// AccountId of the pallet, used to store all funds before actually moving them.
 		pub(crate) fn sub_account_id(sub_account: SubAccount<T>) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account(sub_account.to_id())
+			T::PalletId::get().into_sub_account_truncating(sub_account.to_id())
 		}
 
 		/// Queries storage, returning the account_id of the current relayer.

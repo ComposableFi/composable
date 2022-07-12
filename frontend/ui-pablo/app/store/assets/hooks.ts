@@ -1,47 +1,29 @@
-import { getAssetOnChainId } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import BigNumber from "bignumber.js";
+import { useMemo } from "react";
 import useStore from "../useStore";
 /**
  * Get price from Apollo in USD
- * @param assetId string on chain asset id but in string
- * @returns string
+ * @param assetId asset id from chain e.g "1" for PICA
+ * @returns BigNumber
  */
-export function useUSDAssetPrice(assetId: number): BigNumber {
+ export function useUSDPriceByAssetId(assetId: string | "none"): BigNumber {
     const {
         apollo
     } = useStore();
-    let assetIdStr = assetId.toString();
 
-    if (apollo[assetIdStr]) {
-        return new BigNumber(apollo[assetIdStr])
+    if (apollo[assetId]) {
+        return new BigNumber(apollo[assetId])
     }
 
     return new BigNumber(0)
 }
 
-/**
- * Get price from Apollo in USD
- * @param assetId hardcoded asset ids on FE or "none"
- * @returns BigNumber
- */
- export function useUSDPriceByAssetId(assetId: AssetId | "none"): BigNumber {
-    const {
-        apollo
-    } = useStore();
+export function useAssetBalance(chainId: string, assetId: string): BigNumber {
+    const { assetBalances } = useStore();
 
-    if (assetId === "none") return new BigNumber(0)
+    const balance = useMemo(() => {
+        return new BigNumber(assetBalances?.[chainId]?.[assetId] || 0);
+    }, [assetBalances, chainId, assetId])
 
-    let assetOnChainId: number | null | string = getAssetOnChainId(DEFAULT_NETWORK_ID, assetId);
-
-    if (assetOnChainId) {
-        assetOnChainId = assetOnChainId.toString();
-    
-        if (apollo[assetOnChainId]) {
-            return new BigNumber(apollo[assetOnChainId])
-        }
-    }
-
-    return new BigNumber(0)
+    return balance;
 }

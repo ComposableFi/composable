@@ -1,5 +1,5 @@
 use super::*;
-use crate::routing::Context;
+use crate::{events::IbcEvent, routing::Context};
 use codec::{Decode, Encode};
 use composable_traits::{
 	defi::DeFiComposableConfig,
@@ -552,9 +552,34 @@ where
 		pair.encode()
 	}
 
+	pub fn acknowledgements_offchain_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
+		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id, b"ACK");
+		pair.encode()
+	}
+
+	fn store_raw_acknowledgement(
+		key: (PortId, ChannelId, Sequence),
+		ack: Vec<u8>,
+	) -> Result<(), Error<T>> {
+		// store packet offchain
+		let channel_id = key.1.to_string().as_bytes().to_vec();
+		let port_id = key.0.as_bytes().to_vec();
+		let seq = u64::from(key.2);
+		let key = Pallet::<T>::acknowledgements_offchain_key(channel_id, port_id);
+		let mut acks: BTreeMap<u64, Vec<u8>> =
+			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
+				.unwrap_or_default();
+		acks.insert(seq, ack);
+		sp_io::offchain_index::set(&key, acks.encode().as_slice());
+		Ok(())
+	}
+
 	pub(crate) fn packet_cleanup() {
 		for (port_id, channel_id) in Channels::<T>::iter_keys() {
 			let key = Pallet::<T>::offchain_key(channel_id.clone(), port_id.clone());
+			let ack_key = Pallet::<T>::offchain_key(channel_id.clone(), port_id.clone());
+			// Clean up offchain packets
 			if let Some(mut offchain_packets) =
 				sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
 					.and_then(|v| BTreeMap::<u64, OffchainPacketType>::decode(&mut &*v).ok())
@@ -570,6 +595,26 @@ where
 					}
 				}
 				sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
+			}
+
+			// Clean up offchain acknowledgements
+			if let Some(mut acks) = sp_io::offchain::local_storage_get(
+				sp_core::offchain::StorageKind::PERSISTENT,
+				&ack_key,
+			)
+			.and_then(|v| BTreeMap::<u64, Vec<u8>>::decode(&mut &*v).ok())
+			{
+				let keys: Vec<u64> = acks.clone().into_keys().collect();
+				for key in keys {
+					if !Acknowledgements::<T>::contains_key((
+						port_id.clone(),
+						channel_id.clone(),
+						key,
+					)) {
+						let _ = acks.remove(&key);
+					}
+				}
+				sp_io::offchain_index::set(&key, acks.encode().as_slice());
 			}
 		}
 	}
@@ -587,6 +632,22 @@ where
 		sequences
 			.into_iter()
 			.map(|seq| offchain_packets.get(&seq).cloned().ok_or(Error::<T>::Other))
+			.collect()
+	}
+
+	pub fn get_offchain_acks(
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
+		sequences: Vec<u64>,
+	) -> Result<Vec<Vec<u8>>, Error<T>> {
+		let key = Pallet::<T>::acknowledgements_offchain_key(channel_id, port_id);
+		let acks: BTreeMap<u64, Vec<u8>> =
+			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
+				.unwrap_or_default();
+		sequences
+			.into_iter()
+			.map(|seq| acks.get(&seq).cloned().ok_or(Error::<T>::Other))
 			.collect()
 	}
 
@@ -702,6 +763,7 @@ where
 				.map_err(|_| IbcHandlerError::SendPacketError)?;
 		ctx.store_packet_result(send_packet_result.result)
 			.map_err(|_| IbcHandlerError::SendPacketError)?;
+		Self::deposit_event(send_packet_result.events.into());
 		Ok(())
 	}
 
@@ -724,10 +786,12 @@ where
 			type_url: CHANNEL_OPEN_INIT_TYPE_URL.to_string(),
 			value,
 		};
-		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions>(
-			&mut ctx, msg,
-		)
+		let res = ibc::core::ics26_routing::handler::deliver::<
+			_,
+			crate::host_functions::HostFunctions,
+		>(&mut ctx, msg)
 		.map_err(|_| IbcHandlerError::ChannelInitError)?;
+		Self::deposit_event(res.events.into());
 		Ok(channel_id)
 	}
 
@@ -740,6 +804,8 @@ where
 		let mut ctx = Context::<T>::default();
 		send_transfer::<_, _>(&mut ctx, &mut handler_output, msg)
 			.map_err(|_| IbcHandlerError::SendTransferError)?;
+		let result = handler_output.with_result(());
+		Self::deposit_event(result.events.into());
 		Ok(())
 	}
 
@@ -789,12 +855,29 @@ where
 
 	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
 		let mut ctx = Context::<T>::default();
+		Self::store_raw_acknowledgement(
+			(packet.source_port.clone(), packet.source_channel, packet.sequence),
+			ack.clone(),
+		)
+		.map_err(|_| IbcHandlerError::AcknowledgementError)?;
 		let ack = ctx.ack_commitment(ack.into());
 		ctx.store_packet_acknowledgement(
 			(packet.source_port.clone(), packet.source_channel, packet.sequence),
 			ack,
 		)
-		.map_err(|_| IbcHandlerError::WriteAcknowledgementError)
+		.map_err(|_| IbcHandlerError::WriteAcknowledgementError)?;
+		let host_height = ctx.host_height();
+		let event = IbcEvent::WriteAcknowledgement {
+			revision_height: host_height.revision_height,
+			revision_number: host_height.revision_number,
+			port_id: packet.source_port.as_bytes().to_vec(),
+			channel_id: packet.source_channel.to_string().as_bytes().to_vec(),
+			dest_port: packet.destination_port.as_bytes().to_vec(),
+			dest_channel: packet.destination_channel.to_string().as_bytes().to_vec(),
+			sequence: packet.sequence.into(),
+		};
+		Self::deposit_event(Event::<T>::IbcEvents { events: vec![event] });
+		Ok(())
 	}
 
 	#[cfg(feature = "runtime-benchmarks")]

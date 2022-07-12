@@ -1,21 +1,20 @@
 import React, { useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { alpha, Box, Typography, useTheme } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import moment from "moment-timezone";
-import { AssetMetadata } from "@/defi/polkadot/Assets";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 const NoSSRChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 export type AuctionPriceChartProps = {
-  baseAsset: AssetMetadata | null;
-  quoteAsset: AssetMetadata | null;
+  baseAsset: MockedAsset | undefined;
+  quoteAsset: MockedAsset | undefined;
   priceSeries: [number, number][];
   predictedPriceSeries: [number, number][];
   height: number | string;
   dateFormat: (timestamp: number | string) => string;
-  pastCount?: number;
   color?: string;
 };
 
@@ -25,7 +24,6 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
   predictedPriceSeries,
   height,
   dateFormat,
-  pastCount = 0,
   color,
 }) => {
   const theme = useTheme();
@@ -38,7 +36,8 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
 
   const chartOptions = useCallback((
     color: string,
-    dateFormat: (n: number) => string): ApexCharts.ApexOptions => { 
+    dateFormat: (n: number) => string
+  ): ApexCharts.ApexOptions => {
     return {
       grid: {
         show: false,
@@ -138,20 +137,21 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
         },
       },
     }
-  }, [theme]);
+  }, [theme])
 
   const [options, setOptions] = useState<ApexCharts.ApexOptions>(
     chartOptions(color || theme.palette.primary.main, dateFormat)
   );
 
   useEffect(() => {
-    setOptions((options) => {
+    setOptions(options => {
       return {
-          ...options,
-          ...chartOptions(color || theme.palette.primary.main, dateFormat),
+        ...options,
+        ...chartOptions(color || theme.palette.primary.main, dateFormat),
       }
     });
-  }, [dateFormat, color, chartOptions, theme.palette.primary.main]);
+
+  }, [dateFormat, color, theme, chartOptions]);
 
   return (
     <Box height={height}>

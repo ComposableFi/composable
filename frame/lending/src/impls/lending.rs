@@ -1,6 +1,4 @@
-use crate::{
-	helpers::accrue_interest_internal, models::borrower_data::BorrowerData, weights::WeightInfo, *,
-};
+use crate::{helpers::accrue_interest_internal, weights::WeightInfo, *};
 
 use composable_support::{
 	math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
@@ -21,9 +19,8 @@ use frame_support::{
 	traits::{
 		fungible::Transfer as NativeTransfer,
 		fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
-		tokens::DepositConsequence,
 	},
-	weights::WeightToFeePolynomial,
+	weights::WeightToFee,
 };
 use sp_runtime::{
 	traits::{AccountIdConversion, Zero},
@@ -55,7 +52,7 @@ impl<T: Config> Lending for Pallet<T> {
 	}
 
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
-		T::PalletId::get().into_sub_account(market_id)
+		T::PalletId::get().into_sub_account_truncating(market_id)
 	}
 
 	fn deposit_collateral(
@@ -72,79 +69,7 @@ impl<T: Config> Lending for Pallet<T> {
 		account: &Self::AccountId,
 		amount: CollateralLpAmountOf<Self>,
 	) -> Result<(), DispatchError> {
-		let (_, market) = Self::get_market(market_id)?;
-
-		let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
-			// REVIEW: Perhaps don't default to zero
-			// REVIEW: What is expected behaviour if there is no collateral?
-			.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero());
-
-		ensure!(amount <= collateral_balance, Error::<T>::NotEnoughCollateralToWithdraw);
-
-		let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
-		let borrower_balance_with_interest =
-			Self::total_debt_with_interest(market_id, account)?.unwrap_or_zero();
-
-		let borrow_balance_value = Self::get_price(borrow_asset, borrower_balance_with_interest)?;
-
-		let collateral_balance_after_withdrawal_value =
-			Self::get_price(market.collateral_asset, collateral_balance.safe_sub(&amount)?)?;
-
-		let borrower_after_withdrawal = BorrowerData::new(
-			collateral_balance_after_withdrawal_value,
-			borrow_balance_value,
-			market
-				.collateral_factor
-				.try_into_validated()
-				.map_err(|_| Error::<T>::Overflow)?, // TODO: Use a proper error mesage?
-			market.under_collateralized_warn_percent,
-		);
-
-		ensure!(
-			!borrower_after_withdrawal.should_liquidate()?,
-			Error::<T>::WouldGoUnderCollateralized
-		);
-
-		let market_account = Self::account_id(market_id);
-
-		ensure!(
-			<T as Config>::MultiCurrency::can_deposit(
-				market.collateral_asset,
-				account,
-				amount,
-				false
-			) == DepositConsequence::Success,
-			Error::<T>::TransferFailed
-		);
-		ensure!(
-			<T as Config>::MultiCurrency::can_withdraw(
-				market.collateral_asset,
-				&market_account,
-				amount
-			)
-			.into_result()
-			.is_ok(),
-			Error::<T>::TransferFailed
-		);
-
-		AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
-			let new_collateral_balance =
-				// REVIEW: Should we default if there's no collateral? Or should an error (something like "NoCollateralToWithdraw") be returned instead?
-				collateral_balance.unwrap_or_default().safe_sub(&amount)?;
-
-			collateral_balance.replace(new_collateral_balance);
-
-			Result::<(), DispatchError>::Ok(())
-		})?;
-		<T as Config>::MultiCurrency::transfer(
-			market.collateral_asset,
-			&market_account,
-			account,
-			amount,
-			true,
-		)
-		.expect("impossible; qed;");
-		Ok(())
+		Self::do_withdraw_collateral(market_id, account, amount.try_into_validated()?)
 	}
 
 	fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
@@ -218,7 +143,7 @@ impl<T: Config> Lending for Pallet<T> {
 		BorrowTimestamp::<T>::insert(market_id, borrowing_account, LastBlockTimestamp::<T>::get());
 
 		if !BorrowRent::<T>::contains_key(market_id, borrowing_account) {
-			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(2));
+			let deposit = T::WeightToFee::weight_to_fee(&T::WeightInfo::liquidate(2));
 			<T as Config>::NativeCurrency::transfer(
 				borrowing_account,
 				&market_account,

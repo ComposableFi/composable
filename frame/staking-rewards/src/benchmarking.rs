@@ -1,16 +1,19 @@
 //! Benchmarks
-use crate::*;
+use crate::{validation::ValidSplitRatio, *};
+use composable_support::{abstractions::utils::increment::Increment, validation::Validated};
 use composable_traits::{
 	staking::{
-		lock::LockConfig, RewardConfig, RewardPoolConfiguration,
+		lock::{Lock, LockConfig},
+		Reductions, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
+		Rewards, Stake,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::{traits::fungibles::Mutate, BoundedBTreeMap};
 use frame_system::{EventRecord, RawOrigin};
-use sp_arithmetic::{traits::SaturatedConversion, Perbill};
+use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
 use sp_std::collections::btree_map::BTreeMap;
 
 fn get_reward_pool<T: Config>(
@@ -65,7 +68,7 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 
 benchmarks! {
 	where_clause {
-		where T::BlockNumber: From<u32>, T::Balance: From<u128>, T::AssetId: From<u128>, T::RewardPoolId: From<u16>, T::PositionId: From<u32>,
+		where T::BlockNumber: From<u32>, T::Balance: From<u128>, T::AssetId: From<u128>, T::RewardPoolId: From<u16>, T::PositionId: From<u128>,
 	}
 
 	create_reward_pool {
@@ -73,7 +76,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, get_reward_pool::<T>(owner))
 
 	stake {
-		let (asset_id, pool_id, amount, duration_preset, position_id, keep_alive) = (100.into(), 1_u16.into(), 100_500_u128.into(), ONE_HOUR, 1_u32.into(), true);
+		let (asset_id, pool_id, amount, duration_preset, position_id, keep_alive) = (100.into(), 1_u16.into(), 100_500_u128.into(), ONE_HOUR, 1_u128.into(), true);
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
 		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner));
@@ -82,6 +85,29 @@ benchmarks! {
 	verify {
 		assert_last_event::<T>(Event::Staked { pool_id, owner: staker, amount, duration_preset, position_id, keep_alive }.into());
 	}
+
+	split {
+		frame_system::Pallet::<T>::set_block_number(1.into());
+		let user: T::AccountId = account("user", 0, 0);
+		let _res = Pallet::<T>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(user.clone()));
+		let _res = StakeCount::<T>::increment();
+		let stake = Stake::<T::RewardPoolId, T::Balance, Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>> {
+			reward_pool_id: 1_u16.into(),
+			stake: 1000_000_000_000_000_u128.into(),
+			share: 1000_000_000_000_000_u128.into(),
+			reductions: Reductions::<_,_,_>::new(),
+			lock: Lock {
+				started_at: 10000_u64,
+				duration: 10000000_u64,
+				unlock_penalty: Perbill::from_percent(2)
+			}
+		};
+		let position_id : T::PositionId = 1_u128.into();
+		Stakes::<T>::insert(position_id, stake.clone());
+		let ratio =  Permill::from_rational(1_u32,7_u32);
+		let validated_ratio = Validated::<Permill, ValidSplitRatio>::new(ratio).unwrap();
+
+	}: _(RawOrigin::Signed(user), position_id, validated_ratio)
 
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
 }

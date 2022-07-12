@@ -45,8 +45,8 @@ const createPoolSlice: StoreSlice<CreatePoolSlice> = (set) => ({
           })),
         setSelectable: (
           selectables: Partial<{
-            baseAsset: AssetId | "none";
-            quoteAsset: AssetId | "none";
+            baseAsset: string | "none";
+            quoteAsset: string | "none";
             ammId: AmmId | "none";
             swapFee: string;
           }>

@@ -1,98 +1,64 @@
 import React from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Label } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { BondDetails, TokenId } from "@/defi/types";
-import {
-  Box,
-  Typography,
-  useTheme,
-  Button,
-} from "@mui/material";
-
+import { Box, Typography, useTheme, Button } from "@mui/material";
 import { useDispatch } from "react-redux";
-import {
-  closeConfirmingModal, setMessage,
-} from "@/stores/ui/uiSlice";
-import { useAppSelector } from "@/hooks/store";
-import { setSelectedBond } from "@/stores/defi/bonds";
+import { closeConfirmingModal } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
+import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
 
-const defaultLabelProps = (label: string, balance: string) => ({
-  label: label,
-  TypographyProps: {variant: "body1"},
-  BalanceProps: {
-    balance: balance,
-    BalanceTypographyProps: {
-      variant: "body1",
-    }
-  }
-} as const);
+const defaultLabelProps = (label: string, balance: string) =>
+  ({
+    label: label,
+    TypographyProps: { variant: "body1" },
+    BalanceProps: {
+      balance: balance,
+      BalanceTypographyProps: {
+        variant: "body1",
+      },
+    },
+  } as const);
 
 export type PreviewPurchaseModalProps = {
-  bond: BondDetails,
-  amount: BigNumber,
-  setAmount: (v: BigNumber) => any
+  bond: SelectedBondOffer,
+  amount: BigNumber;
+  rewardableTokens: string;
+  onPurchaseBond: () => Promise<any>;
+  setAmount: (v: BigNumber) => any;
 } & ModalProps;
 
 export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
   bond,
   amount,
+  rewardableTokens,
+  onPurchaseBond,
   setAmount,
   ...modalProps
 }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const {
-    tokenId1,
-    tokenId2,
-    balance,
-    discount_price,
-    market_price,
-  } = useAppSelector((state) => state.bonds.selectedBond);
-
-  const token1 = getToken(tokenId1 as TokenId);
-  const token2 = getToken(tokenId2 as TokenId);
-  const bondPrice = amount.multipliedBy(discount_price);
-  const marketPrice = amount.multipliedBy(market_price);
-  const discountPercent = market_price.minus(discount_price).dividedBy(market_price).multipliedBy(100);
-
-  const handlePurchaseBond = () => {
-    dispatch(setSelectedBond({
-      balance: balance.minus(amount),
-      pending_amount: amount,
-    }));
-
-    dispatch(setMessage(
-      {
-        title: "Transaction successfull",
-        text: "Bond",
-        link: "/",
-        severity: "success",
-      }
-    ));
-
-    setAmount(new BigNumber(0));
-
+  const { principalAsset, roi } = bond;
+  const handleCancelBond = async () => {
     dispatch(closeConfirmingModal());
   };
 
-  const handleCancelBond = () => {
-    dispatch(closeConfirmingModal());
-  };
+  let principalSymbol = usePrincipalAssetSymbol(bond.principalAsset);
+  const principalPriceUSD = useUSDPriceByAssetId(bond.selectedBondOffer ?  bond.selectedBondOffer.asset : "none")
+  const bondMarketPrice = principalPriceUSD.times(bond.principalAssetPerBond);
+  const rewardPriceUSD = useUSDPriceByAssetId(bond.selectedBondOffer ?  bond.selectedBondOffer.reward.asset : "none");
+  const totalRewardsPrice = rewardPriceUSD.times(bond.rewardAssetPerBond);
 
   return (
-    <Modal
-      onClose={handleCancelBond}
-      {...modalProps}
-    >
+    <Modal onClose={handleCancelBond} {...modalProps}>
       <Box
         sx={{
           width: 480,
           margin: "auto",
-          [theme.breakpoints.down('sm')]: {
-            width: '100%',
+          [theme.breakpoints.down("sm")]: {
+            width: "100%",
             p: 2,
           },
         }}
@@ -100,16 +66,36 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
         <Typography variant="h5" textAlign="center">
           Purchase bond
         </Typography>
-        <Typography variant="subtitle1" textAlign="center" color="text.secondary" mt={2}>
-          Are you sure you want to bond for a negative discount? You will lose money if you do this...
+        <Typography
+          variant="subtitle1"
+          textAlign="center"
+          color="text.secondary"
+          mt={2}
+        >
+          Are you sure you want to bond for a negative discount? You will lose
+          money if you do this...
         </Typography>
 
         <Box mt={8}>
-          <Label {...defaultLabelProps("Bonding", `${amount} ${token1.symbol}-${token2.symbol}`)} />
-          <Label mt={2} {...defaultLabelProps("You will get", `0 PAB`)} />
-          <Label mt={2} {...defaultLabelProps("Bond Price", `$${bondPrice}`)} />
-          <Label mt={2} {...defaultLabelProps("Market Price", `$${marketPrice}`)} />
-          <Label mt={2} {...defaultLabelProps("Discount", `${discountPercent.toFormat(2)}%`)} />
+          <Label
+            {...defaultLabelProps(
+              "Bonding",
+              `${amount} ${[principalSymbol]}`
+            )}
+          />
+          <Label
+            mt={2}
+            {...defaultLabelProps("You will get", `${rewardableTokens} ${bond.rewardAsset?.symbol}`)}
+          />
+          <Label mt={2} {...defaultLabelProps("Bond Price", `$${bondMarketPrice.toFixed(2)}`)} />
+          <Label
+            mt={2}
+            {...defaultLabelProps("Market Price", `$${totalRewardsPrice.toFixed(2)}`)}
+          />
+          <Label
+            mt={2}
+            {...defaultLabelProps("Discount", `${roi.toFormat(2)}%`)}
+          />
         </Box>
 
         <Box mt={8}>
@@ -117,7 +103,7 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
             variant="contained"
             fullWidth
             size="large"
-            onClick={handlePurchaseBond}
+            onClick={onPurchaseBond}
           >
             Purchase bond
           </Button>
@@ -130,11 +116,10 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
             size="large"
             onClick={handleCancelBond}
           >
-            Cancel bond
+            Cancel
           </Button>
         </Box>
       </Box>
     </Modal>
   );
 };
-

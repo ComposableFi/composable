@@ -6,11 +6,11 @@ import {
 } from "@mui/material";
 
 import BigNumber from "bignumber.js";
-import { AssetMetadata } from "@/defi/polkadot/Assets";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 export type PreviewDetailsProps = {
-  tokenId1: AssetMetadata,
-  tokenId2: AssetMetadata,
+  token1: MockedAsset | undefined,
+  token2: MockedAsset | undefined,
   lpToRemove: BigNumber,
   expectedRecieveAmountToken1: BigNumber,
   expectedRecieveAmountToken2: BigNumber,
@@ -19,8 +19,8 @@ export type PreviewDetailsProps = {
 } & BoxProps;
 
 export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
-  tokenId1,
-  tokenId2,
+  token1,
+  token2,
   lpToRemove,
   expectedRecieveAmountToken1,
   expectedRecieveAmountToken2,
@@ -33,25 +33,28 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
     <Box {...rest}>
 
       <Label BalanceProps={{
-          balance: `${lpToRemove.eq(0) ? '-' : lpToRemove}`,
-          BalanceTypographyProps: {
-            variant: "body1",
-          },
-        }}
+        balance: `${lpToRemove.eq(0) ? '-' : lpToRemove}`,
+        BalanceTypographyProps: {
+          variant: "body1",
+        },
+      }}
       >
-        <PairAsset
+        {token1 && token2 &&
+          <PairAsset
             assets={[
               {
-                icon: tokenId1?.icon,
-                label: tokenId1?.symbol,
+                icon: token1.icon,
+                label: token1.symbol,
               },
               {
-                icon: tokenId2?.icon,
-                label: tokenId2?.symbol,
+                icon: token2.icon,
+                label: token2.symbol,
               },
             ]}
             separator="/"
-        />
+          />
+
+        }
       </Label>
 
       <Label mt={3}
@@ -62,7 +65,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
           },
         }}
       >
-        <BaseAsset icon={tokenId1.icon} label={`Expected ` + tokenId1?.symbol} />
+        <BaseAsset icon={token1?.icon} label={`Expected ` + token1?.symbol} />
       </Label>
 
       <Label
@@ -74,14 +77,14 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
           },
         }}
       >
-        <BaseAsset icon={tokenId2?.icon} label={`Expected ` + tokenId2?.symbol} />
+        <BaseAsset icon={token2?.icon} label={`Expected ` + token2?.symbol} />
       </Label>
 
       <Label
         mt={4}
         label={`Price`}
         BalanceProps={{
-          balance: `1 ${tokenId2?.symbol} = ${price2} ${tokenId1?.symbol}`,
+          balance: `1 ${token2?.symbol} = ${price2} ${token1?.symbol}`,
           BalanceTypographyProps: {
             variant: "body2",
           },
@@ -92,7 +95,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
         mt={2}
         label=""
         BalanceProps={{
-          balance: `1 ${tokenId1?.symbol} = ${price1} ${tokenId2?.symbol}`,
+          balance: `1 ${token1?.symbol} = ${price1} ${token2?.symbol}`,
           BalanceTypographyProps: {
             variant: "body2",
           },

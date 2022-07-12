@@ -3,6 +3,5 @@
 ---
 
 Here are the articles in this section:
-
+- [Pallets & Integration](./developer-guides/pallets-overview.md)
 - [Composable SDK](./developer-guides/composable-sdk.md)
-- [Pallet Overviews](./developer-guides/pallet-overviews.md)

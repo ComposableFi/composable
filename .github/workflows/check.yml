@@ -143,6 +143,7 @@ jobs:
             --chain="${{ matrix.runtime }}" \
             --execution=wasm \
             --wasm-execution=compiled \
+            --wasm-instantiation-strategy=legacy-instance-reuse \
             --pallet="*" \
             --extrinsic='*' \
             --steps=1 \
