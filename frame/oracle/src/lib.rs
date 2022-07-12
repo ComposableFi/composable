@@ -64,7 +64,6 @@ pub mod pallet {
 			SigningTypes,
 		},
 		pallet_prelude::*,
-		Config as SystemConfig,
 	};
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
@@ -77,15 +76,14 @@ pub mod pallet {
 			UniqueSaturatedInto as _, Zero,
 		},
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
-		PerThing, Percent, RuntimeDebug, SaturatedConversion,
+		PerThing, Percent, RuntimeDebug,
 	};
-	use sp_runtime::traits::AccountIdConversion;
 	use sp_std::{
 		borrow::ToOwned, collections::btree_set::BTreeSet, fmt::Debug, str, vec, vec::Vec,
 	};
 	use composable_support::math::safe::safe_multiply_by_rational;
 	use composable_traits::currency::BalanceLike;
-	use composable_traits::time::{MS_PER_YEAR_NAIVE, SECONDS_PER_YEAR_NAIVE};
+	use composable_traits::time::MS_PER_YEAR_NAIVE;
 
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
@@ -416,6 +414,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(block: T::BlockNumber) -> Weight {
+			Self::reset_reward_tracker_if_expired();
 			Self::update_prices(block)
 		}
 
@@ -864,6 +863,18 @@ pub mod pallet {
 				log::warn!("Failed to deposit {:?}", controller);
 			}
 			Self::deposit_event(Event::OracleRewarded(who.clone(), asset_id, reward_amount));
+		}
+
+		pub fn reset_reward_tracker_if_expired() {
+			RewardTrackerStore::<T>::get().map(|reward_tracker| {
+				let now = T::Time::now();
+				if now - reward_tracker.start > reward_tracker.period {
+					let mut new_reward_tracker = reward_tracker.clone();
+					new_reward_tracker.start = now;
+					new_reward_tracker.total_already_rewarded = Zero::zero();
+					RewardTrackerStore::<T>::set(Option::from(new_reward_tracker));
+				}
+			});
 		}
 
 		pub fn update_prices(block: T::BlockNumber) -> Weight {
