@@ -19,7 +19,6 @@ jobs:
       - name: Clean up
         continue-on-error: true
         run: |
-          whoami
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
 
@@ -40,7 +39,7 @@ jobs:
       - name: Runtime wasm builds
         id: runtime_release
         run: |
-          .maintain/runtime_release.sh
+          sudo .maintain/runtime_release.sh
 
       # This would draft a release note presenting a list of new prs that have been added
       # in between this commit and the previous tag.
