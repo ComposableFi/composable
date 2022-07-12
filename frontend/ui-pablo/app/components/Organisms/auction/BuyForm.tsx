@@ -104,7 +104,9 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
           }}
           buttonLabel={"Max"}
           ButtonProps={{
-            onClick: () => {},
+            onClick: () => {
+              debouncedTokenAmountUpdate("quote", balanceQuote);
+            },
             sx: {
               padding: theme.spacing(1),
             },
