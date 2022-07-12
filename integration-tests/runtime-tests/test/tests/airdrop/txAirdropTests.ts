@@ -3,16 +3,13 @@ import testConfiguration from "./test_configuration.json";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
-import { Bool, Option, u128, u64, Vec } from "@polkadot/types-codec";
-import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { Option, u64 } from "@polkadot/types-codec";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import { Moment } from "@polkadot/types/interfaces/runtime";
 import BN from "bn.js";
 import { expect } from "chai";
-import { AnyString, ITuple } from "@polkadot/types-codec/types";
 import { PalletAirdropModelsIdentity, PalletAirdropModelsProof } from "@composable/types/interfaces";
-import { IKeyringPair } from "@polkadot/types/types";
-import { AccountId32 } from "@polkadot/types/interfaces";
+import { ethAccount, proofMessage, TxAirdropTests } from "@composabletests/tests/airdrop/airdropTestHandler";
 
 /**
  * Airdrop Tests
@@ -122,25 +119,29 @@ describe.only("tx.airdrop Tests", function() {
           IdentityOf: { RelayChain: api.createType("AccountId32", airdrop1Recipient1.publicKey) },
           BalanceOf: api.createType("u128", 100000000000),
           MomentOf: api.createType("u64", 0),
-          bool: api.createType("bool", false)
+          bool: api.createType("bool", true)
         },
         {
           IdentityOf: { RelayChain: api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey) },
           BalanceOf: api.createType("u128", 100000000000),
           MomentOf: api.createType("u64", 0),
-          bool: api.createType("bool", false)
+          bool: api.createType("bool", true)
         },
         {
-          IdentityOf: { RelayChain: api.createType("AccountId32", airdrop1Recipient3Eth.publicKey) },
+          IdentityOf: {
+            Ethereum: api.createType("ComposableSupportEthereumAddress",
+              ethAccount(1).address)
+          },
           BalanceOf: api.createType("u128", 100000000000),
           MomentOf: api.createType("u64", 0),
-          bool: api.createType("bool", false)
+          bool: api.createType("bool", true)
         },
         {
+          // ToDo: Add Cosmos support
           IdentityOf: { RelayChain: api.createType("AccountId32", airdrop1Recipient4Cosmos.publicKey) },
           BalanceOf: api.createType("u128", 100000000000),
           MomentOf: api.createType("u64", 0),
-          bool: api.createType("bool", false)
+          bool: api.createType("bool", true)
         }
       ]);
       const airdropId = api.createType("u128", airdrop1_id);
@@ -240,6 +241,7 @@ describe.only("tx.airdrop Tests", function() {
         rewardAccount,
         proof
       ).catch(function(error) {
+        // ToDo: Check!
         expect(error.message).to.contain("Custom error: 3");
         return { data: [error] };
       });
@@ -315,8 +317,8 @@ describe.only("tx.airdrop Tests", function() {
       this.timeout(2 * 60 * 1000);
 
       const airdropId = api.createType("u128", airdrop1_id);
-      const rewardAccount = api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey);
-      const proofSignature: any = airdrop1Recipient2RelayChain.sign(proofMessage(airdrop1Recipient2RelayChain, true));
+      const rewardAccount = api.createType("AccountId32", airdrop1Recipient3Eth.publicKey);
+      const proofSignature: any = airdrop1Recipient3Eth.sign(proofMessage(airdrop1Recipient3Eth, true));
       const proof = api.createType("PalletAirdropModelsProof", {
         Ethereum: api.createType("ComposableSupportEcdsaSignature", proofSignature.signature)
       });
@@ -413,135 +415,3 @@ describe.only("tx.airdrop Tests", function() {
     });
   });
 });
-
-const toHexString = bytes => Array.prototype.map.call(bytes, x => ("0" + (x & 0xff).toString(16)).slice(-2)).join("");
-
-const proofMessage = (account: IKeyringPair, isEth = false) =>
-  (isEth ? "picasso-" : "<Bytes>picasso-") + toHexString(account.publicKey) + (isEth ? "" : "</Bytes>");
-
-export class TxAirdropTests {
-
-  /**
-   * ToDo
-   *
-   * @param {ApiPromise} api Connected API Promise.
-   * @param wallet
-   * @param startAt
-   * @param vestingSchedule
-   */
-  public static async createAirdrop(
-    api: ApiPromise,
-    wallet: KeyringPair,
-    startAt: Option<u64>,
-    vestingSchedule: u64
-  ) {
-    return await sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.airdrop.AirdropCreated.is,
-      api.tx.airdrop.createAirdrop(startAt, vestingSchedule)
-    );
-  }
-
-  /**
-   * ToDo
-   *
-   * @param api
-   * @param airdrop_id
-   * @param airdropMaintainerPublicKey
-   * @param startAt
-   * @param vesting_period
-   */
-  public static async verifyAirdropCreation(
-    api: ApiPromise,
-    airdrop_id: u128 | BN,
-    airdropMaintainerPublicKey: Uint8Array | AnyString,
-    startAt: any, vesting_period: Moment | u64
-  ) {
-    /*
-    ToDo: Update for different airdrops!
-     */
-    const airdropInformation = await api.query.airdrop.airdrops(airdrop_id);
-    expect(airdropInformation.unwrap().creator).to.be.eql(api.createType("AccountId", airdropMaintainerPublicKey));
-    expect(airdropInformation.unwrap().total_funds).to.be.eql(undefined);
-    expect(airdropInformation.unwrap().total_recipients).to.be.eql(undefined);
-    expect(airdropInformation.unwrap().start.isNone).to.be.true;
-    expect(airdropInformation.unwrap().schedule).to.be.bignumber.equal(vesting_period);
-    expect(airdropInformation.unwrap().disabled).to.be.eql(api.createType("bool", false));
-  }
-
-  /**
-   * ToDo
-   *
-   * @param api
-   * @param wallet
-   * @param airdropId
-   * @param recipients
-   */
-  public static async addRecipient(
-    api: ApiPromise,
-    wallet: KeyringPair,
-    airdropId: u128 | BN,
-    recipients: Vec<ITuple<[PalletAirdropModelsIdentity, u128, u64, Bool]>>
-  ) {
-    return await sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.airdrop.RecipientsAdded.is,
-      api.tx.airdrop.addRecipient(airdropId, recipients)
-    );
-  }
-
-  public static async removeRecipient(
-    api: ApiPromise,
-    wallet: KeyringPair,
-    airdropId: u128 | BN,
-    recipient: PalletAirdropModelsIdentity
-  ) {
-    return await sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.airdrop.RecipientRemoved.is,
-      api.tx.airdrop.removeRecipient(airdropId, recipient)
-    );
-  }
-
-  public static async enableAirdrop(
-    api: ApiPromise,
-    wallet: KeyringPair,
-    airdropId: u128 | BN
-  ) {
-    return await sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.airdrop.AirdropStarted.is,
-      api.tx.airdrop.enableAirdrop(airdropId)
-    );
-  }
-
-  public static async disableAirdrop(
-    api: ApiPromise,
-    wallet: KeyringPair,
-    airdropId: u128 | BN
-  ) {
-    return await sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.airdrop.AirdropEnded.is,
-      api.tx.airdrop.disableAirdrop(airdropId)
-    );
-  }
-
-  public static async claimAirdrop(
-    api: ApiPromise,
-    airdropId: u128 | BN,
-    rewardAccount: AccountId32,
-    proof: PalletAirdropModelsProof
-  ) {
-    return await sendUnsignedAndWaitForSuccess(
-      api,
-      api.events.airdrop.Claimed.is,
-      api.tx.airdrop.claim(airdropId, rewardAccount, proof)
-    );
-  }
-}
