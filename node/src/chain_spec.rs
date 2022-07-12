@@ -113,7 +113,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 				dev_accounts(),
 				PARA_ID,
 				common::NativeExistentialDeposit::get(),
-				picasso_runtime::TreasuryAccount::get(),
+				picasso_runtime::governance::TreasuryAccount::get(),
 			)
 		},
 		vec![],
