@@ -1706,10 +1706,16 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "composable-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "composable-runtime",
 ]
 
 [[package]]
@@ -2818,10 +2824,16 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "dali-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "dali-runtime",
 ]
 
 [[package]]
@@ -9388,10 +9400,16 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "picasso-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "picasso-runtime",
 ]
 
 [[package]]
