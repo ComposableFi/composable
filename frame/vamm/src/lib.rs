@@ -909,7 +909,13 @@ pub mod pallet {
 		fn swap_simulation(
 			config: &SwapSimulationConfigOf<T>,
 		) -> Result<BalanceOf<T>, DispatchError> {
-			todo!()
+			// Get Vamm state.
+			let vamm_state = Self::get_vamm_state(&config.vamm_id)?;
+
+			// Sanity checks.
+			Self::swap_sanity_check(config.into(), &vamm_state);
+
+			todo!();
 		}
 
 		/// Moves the price of a vamm to the desired values of
@@ -1204,6 +1210,7 @@ pub mod pallet {
 
 			Ok(())
 		}
+
 		fn swap_sanity_check(
 			config: &SwapConfigOf<T>,
 			vamm_state: &VammStateOf<T>,
@@ -1216,11 +1223,11 @@ pub mod pallet {
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
-						config.input_amount <= vamm_state.base_asset_reserves,
+						config.input_amount < vamm_state.base_asset_reserves,
 						Error::<T>::InsufficientFundsForTrade
 					),
 					AssetType::Quote => ensure!(
-						config.input_amount <= vamm_state.quote_asset_reserves,
+						config.input_amount < vamm_state.quote_asset_reserves,
 						Error::<T>::InsufficientFundsForTrade
 					),
 				},
