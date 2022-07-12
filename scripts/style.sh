@@ -49,22 +49,30 @@ taplo_fmt() {
 }
 
 prettier_fmt() {
-    cd integration-tests/runtime-tests
+    # cd integration-tests/runtime-tests
     prettier_verbose=""
 
     if [[ ${verbose} = "verbose" ]]; then
-        prettier_verbose="--loglevel=log"
+        prettier_verbose="--loglevel=debug"
     else
         prettier_verbose="--loglevel=warn"
     fi
 
     if [[ ${check} = "check" ]]; then
-        npx prettier --check ${prettier_verbose} .
+        npx prettier \
+            --config="integration-tests/runtime-tests/.prettierrc" \
+            --ignore-path="integration-tests/runtime-tests/.prettierignore" \
+            --check ${prettier_verbose} \
+            "integration-tests/runtime-tests/"
     else
-        npx prettier --write ${prettier_verbose} .
+        npx prettier \
+            --config="integration-tests/runtime-tests/.prettierrc" \
+            --ignore-path="integration-tests/runtime-tests/.prettierignore" \
+            --write ${prettier_verbose} \
+            "integration-tests/runtime-tests/"
     fi
 
-    cd ../..
+    # cd ../..
 }
 
 # install taplo if it isn't already
