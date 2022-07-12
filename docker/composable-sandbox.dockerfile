@@ -36,4 +36,4 @@ RUN chown -R service /apps/composable/scripts/polkadot-launch && \
 
 USER service
 EXPOSE 9945 9988
-ENTRYPOINT ["yarn", "composable"]
+ENTRYPOINT ["yarn", "composable_docker"]
