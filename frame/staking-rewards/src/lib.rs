@@ -77,7 +77,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider},
 		ArithmeticError, PerThing, Perbill,
 	};
-	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec, vec};
+	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, vec, vec::Vec};
 
 	use crate::{prelude::*, validation::ValidSplitRatio};
 
@@ -587,7 +587,10 @@ pub mod pallet {
 									asset_id: reward_currency,
 									total_rewards: reward_increment,
 									total_dilution_adjustment: T::Balance::zero(),
-									max_rewards: reward_increment,
+									max_rewards: max(
+										reward_increment,
+										1_000_000_000_000_000_000_u128.into(),
+									),
 									reward_rate: Perbill::zero(),
 								};
 								reward_pool
