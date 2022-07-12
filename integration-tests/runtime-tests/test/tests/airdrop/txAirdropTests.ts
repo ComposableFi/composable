@@ -187,10 +187,9 @@ describe.only("tx.airdrop Tests", function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
       this.timeout(2 * 60 * 1000);
 
-      const recipient = api.createType("PalletAirdropModelsIdentity",
-        {
-          RelayChain: api.createType("AccountId32", airdrop1Recipient1.publicKey)
-        });
+      const recipient = api.createType("PalletAirdropModelsIdentity", {
+        RelayChain: api.createType("AccountId32", airdrop1Recipient1.publicKey)
+      });
       const airdropId = api.createType("u128", airdrop1_id);
 
       const { data: [result] } = await TxAirdropTests.removeRecipient(api, airdrop1Maintainer, airdropId, recipient);
@@ -206,10 +205,9 @@ describe.only("tx.airdrop Tests", function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
       this.timeout(2 * 60 * 1000);
 
-      const recipient = api.createType("PalletAirdropModelsIdentity",
-        {
-          RelayChain: api.createType("AccountId32", airdrop2Recipient2.publicKey)
-        });
+      const recipient = api.createType("PalletAirdropModelsIdentity", {
+        RelayChain: api.createType("AccountId32", airdrop2Recipient2.publicKey)
+      });
       const airdropId = api.createType("u128", airdrop2_id);
 
       const { data: [result] } = await TxAirdropTests.removeRecipient(api, airdrop1Maintainer, airdropId, recipient);
@@ -219,15 +217,43 @@ describe.only("tx.airdrop Tests", function() {
     });
   });
 
+  describe("tx.airdrop.claim Failure Tests", function() {
+    it("Airdrop [#1] can not be claimed before the start", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const airdropId = api.createType("u128", airdrop1_id);
+      const rewardAccount = api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey);
+      const proof = api.createType("PalletAirdropModelsProof", {
+        RelayChain:
+          api.createType("(AccountId32, SpRuntimeMultiSignature)", [
+            api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey),
+            api.createType("SpRuntimeMultiSignature", {
+              Sr25519: api.createType("SpCoreSr25519Signature", airdrop1Recipient2RelayChain.sign(proofMessage(airdrop1Recipient2RelayChain)))
+            })
+          ])
+      });
+
+      const { data: [result] } = await TxAirdropTests.claimAirdrop(
+        api,
+        airdropId,
+        rewardAccount,
+        proof
+      ).catch(function(error) {
+        expect(error.message).to.contain("Custom error: 3");
+        return { data: [error] };
+      });
+    });
+  });
+
   describe("tx.airdrop.enableAirdrop Tests", function() {
     it("Airdrop [#1] can be enabled by maintainer", async function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
       this.timeout(2 * 60 * 1000);
 
-      const recipient = api.createType("PalletAirdropModelsIdentity",
-        {
-          RelayChain: api.createType("AccountId32", airdrop1Recipient1.publicKey)
-        });
+      const recipient = api.createType("PalletAirdropModelsIdentity", {
+        RelayChain: api.createType("AccountId32", airdrop1Recipient1.publicKey)
+      });
       const airdropId = api.createType("u128", airdrop1_id);
 
       const { data: [result] } = await TxAirdropTests.enableAirdrop(api, airdrop1Maintainer, airdropId);
@@ -275,7 +301,6 @@ describe.only("tx.airdrop Tests", function() {
 
       const { data: [result] } = await TxAirdropTests.claimAirdrop(
         api,
-        airdrop1Recipient2RelayChain,
         airdropId,
         rewardAccount,
         proof
@@ -291,19 +316,40 @@ describe.only("tx.airdrop Tests", function() {
 
       const airdropId = api.createType("u128", airdrop1_id);
       const rewardAccount = api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey);
+      const proofSignature: any = airdrop1Recipient2RelayChain.sign(proofMessage(airdrop1Recipient2RelayChain, true));
+      const proof = api.createType("PalletAirdropModelsProof", {
+        Ethereum: api.createType("ComposableSupportEcdsaSignature", proofSignature.signature)
+      });
+
+      const { data: [result] } = await TxAirdropTests.claimAirdrop(
+        api,
+        airdropId,
+        rewardAccount,
+        proof
+      );
+      // ToDo: Result check!
+
+      console.debug(result);
+    });
+
+    it("Airdrop [#1] can not be claimed by removed contributor with correct proof", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const airdropId = api.createType("u128", airdrop1_id);
+      const rewardAccount = api.createType("AccountId32", airdrop1Recipient1.publicKey);
       const proof = api.createType("PalletAirdropModelsProof", {
         RelayChain:
           api.createType("(AccountId32, SpRuntimeMultiSignature)", [
-            api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey),
+            api.createType("AccountId32", airdrop1Recipient1.publicKey),
             api.createType("SpRuntimeMultiSignature", {
-              Ed25519: api.createType("SpCoreEd25519Signature", airdrop1Recipient2RelayChain.sign(proofMessage(airdrop1Recipient2RelayChain, true)))
+              Sr25519: api.createType("SpCoreSr25519Signature", airdrop1Recipient1.sign(proofMessage(airdrop1Recipient1)))
             })
           ])
       });
 
       const { data: [result] } = await TxAirdropTests.claimAirdrop(
         api,
-        airdrop1Recipient2RelayChain,
         airdropId,
         rewardAccount,
         proof
@@ -488,7 +534,6 @@ export class TxAirdropTests {
 
   public static async claimAirdrop(
     api: ApiPromise,
-    wallet: KeyringPair,
     airdropId: u128 | BN,
     rewardAccount: AccountId32,
     proof: PalletAirdropModelsProof
