@@ -866,15 +866,15 @@ pub mod pallet {
 		}
 
 		pub fn reset_reward_tracker_if_expired() {
-			RewardTrackerStore::<T>::get().map(|reward_tracker| {
+			if let Some(reward_tracker) = RewardTrackerStore::<T>::get() {
 				let now = T::Time::now();
-				if now - reward_tracker.start > reward_tracker.period {
+				if now - reward_tracker.start >= reward_tracker.period {
 					let mut new_reward_tracker = reward_tracker.clone();
 					new_reward_tracker.start = now;
 					new_reward_tracker.total_already_rewarded = Zero::zero();
 					RewardTrackerStore::<T>::set(Option::from(new_reward_tracker));
 				}
-			});
+			}
 		}
 
 		pub fn update_prices(block: T::BlockNumber) -> Weight {
