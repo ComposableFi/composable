@@ -539,9 +539,9 @@ pub mod pallet {
 			// track reward total weight for all assets
 			let mut reward_tracker = RewardTrackerStore::<T>::get().unwrap_or_default();
 			if let Some(current_asset_info) = Self::asset_info(asset_id) {
-				reward_tracker.total_reward_weight =
-					reward_tracker.total_reward_weight + reward_weight -
-						current_asset_info.reward_weight;
+				reward_tracker.total_reward_weight = reward_tracker.total_reward_weight +
+					reward_weight - current_asset_info
+					.reward_weight;
 			} else {
 				AssetsCount::<T>::increment()?;
 				reward_tracker.total_reward_weight += reward_weight;
@@ -877,14 +877,16 @@ pub mod pallet {
 		}
 
 		pub fn reset_reward_tracker_if_expired() {
-			if let Some(mut reward_tracker) = RewardTrackerStore::<T>::get() {
-				let now = T::Time::now();
-				if now - reward_tracker.start >= reward_tracker.period {
-					reward_tracker.start = now;
-					reward_tracker.total_already_rewarded = Zero::zero();
-					RewardTrackerStore::<T>::set(Option::from(reward_tracker));
-				}
-			}
+			RewardTrackerStore::<T>::mutate(|reward_tracker_opt| match reward_tracker_opt {
+				Some(reward_tracker) => {
+					let now = T::Time::now();
+					if now - reward_tracker.start >= reward_tracker.period {
+						reward_tracker.start = now;
+						reward_tracker.total_already_rewarded = Zero::zero();
+					}
+				},
+				None => {},
+			});
 		}
 
 		pub fn update_prices(block: T::BlockNumber) -> Weight {
