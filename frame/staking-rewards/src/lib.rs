@@ -77,7 +77,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider},
 		ArithmeticError, PerThing, Perbill,
 	};
-	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
+	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec, vec};
 
 	use crate::{prelude::*, validation::ValidSplitRatio};
 
@@ -351,7 +351,7 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
-			T::PalletId::get().into_sub_account(pool_id)
+			T::PalletId::get().into_sub_account_truncating(pool_id)
 		}
 	}
 
