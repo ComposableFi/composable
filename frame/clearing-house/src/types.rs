@@ -1,6 +1,7 @@
 use crate::Config;
-use composable_maths::labs::numbers::{FixedPointMath, IntoDecimal};
+use composable_maths::labs::numbers::{FixedPointMath, IntoBalance, IntoDecimal};
 use composable_traits::{
+	oracle::Oracle,
 	time::DurationSeconds,
 	vamm::{Direction as VammDirection, Vamm},
 };
@@ -9,7 +10,7 @@ use frame_support::{
 	traits::UnixTime,
 };
 use num_traits::Zero;
-use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber};
+use sp_runtime::{traits::One, ArithmeticError, DispatchError, FixedPointNumber};
 use Direction::{Long, Short};
 
 pub const BASIS_POINT_DENOMINATOR: u32 = 10_000;
@@ -161,6 +162,9 @@ impl<T: Config> Market<T> {
 	pub fn new(
 		config: MarketConfig<T::MayBeAssetId, T::Balance, T::Decimal, T::VammConfig>,
 	) -> Result<Self, DispatchError> {
+		// TODO(0xangelo): should we consider querying the oracle's TWAP here so that the initial
+		// price is not one that's too volatile?
+		let oracle_price = Self::get_oracle_price(config.asset)?;
 		Ok(Self {
 			vamm_id: T::Vamm::create(&config.vamm_config)?,
 			asset_id: config.asset,
@@ -178,8 +182,8 @@ impl<T: Config> Market<T> {
 			cum_funding_rate_long: Zero::zero(),
 			cum_funding_rate_short: Zero::zero(),
 			funding_rate_ts: T::UnixTime::now().as_secs(),
-			last_oracle_price: Zero::zero(),
-			last_oracle_twap: Zero::zero(),
+			last_oracle_price: oracle_price,
+			last_oracle_twap: oracle_price,
 			last_oracle_ts: T::UnixTime::now().as_secs(),
 		})
 	}
@@ -225,10 +229,44 @@ impl<T: Config> Market<T> {
 		};
 		Ok(())
 	}
+
+	/// Returns the current oracle status, including the index price and its validity.
+	///
+	/// Reasons for invalidity:
+	/// - The index price is nonpositive
+	/// - The index price is too volatile, i.e., too far from its last twap, i.e., `index / max(1,
+	///   twap) > 5` OR `twap / max(1, index) > 5`
+	pub fn get_oracle_status(&self) -> Result<OracleStatus<T>, DispatchError> {
+		let price = Self::get_oracle_price(self.asset_id)?;
+
+		let is_positive = price.is_positive();
+		let is_too_volatile = price.try_div(&self.last_oracle_twap.max(One::one()))? >
+			T::Decimal::saturating_from_integer(5) ||
+			self.last_oracle_twap.try_div(&price.max(One::one()))? >
+				T::Decimal::saturating_from_integer(5);
+
+		Ok(OracleStatus::<T> { price, is_valid: !is_too_volatile && is_positive })
+	}
+
+	/// Returns the current oracle price as a decimal.
+	pub fn get_oracle_price(asset_id: T::MayBeAssetId) -> Result<T::Decimal, DispatchError> {
+		// Oracle returns prices in USDT cents
+		let price_cents = T::Oracle::get_price(asset_id, T::Decimal::one().into_balance()?)?.price;
+		T::Decimal::checked_from_rational(price_cents, 100)
+			.ok_or_else(|| ArithmeticError::Overflow.into())
+	}
+}
+
+/// Contains the index price and its validity.
+pub struct OracleStatus<T: Config> {
+	/// Whether the index price is valid.
+	pub is_valid: bool,
+	/// The index price.
+	pub price: T::Decimal,
 }
 
 /// Specifications for market creation
-#[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
+#[derive(Encode, Decode, PartialEq, Eq, Clone, Debug, TypeInfo)]
 pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
 	/// Asset id of the underlying for the derivatives market.
 	pub asset: AssetId,
