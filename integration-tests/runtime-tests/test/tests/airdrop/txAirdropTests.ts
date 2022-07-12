@@ -4,7 +4,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { Bool, Option, u128, u64, Vec } from "@polkadot/types-codec";
-import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import { Moment } from "@polkadot/types/interfaces/runtime";
 import BN from "bn.js";
@@ -282,9 +282,35 @@ describe.only("tx.airdrop Tests", function() {
       );
       // ToDo: Result check!
 
+      console.debug(result);
+    });
+
+    it("Airdrop [#1] can be claimed by Ethereum contributor with correct proof", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const airdropId = api.createType("u128", airdrop1_id);
+      const rewardAccount = api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey);
+      const proof = api.createType("PalletAirdropModelsProof", {
+        RelayChain:
+          api.createType("(AccountId32, SpRuntimeMultiSignature)", [
+            api.createType("AccountId32", airdrop1Recipient2RelayChain.publicKey),
+            api.createType("SpRuntimeMultiSignature", {
+              Ed25519: api.createType("SpCoreEd25519Signature", airdrop1Recipient2RelayChain.sign(proofMessage(airdrop1Recipient2RelayChain, true)))
+            })
+          ])
+      });
+
+      const { data: [result] } = await TxAirdropTests.claimAirdrop(
+        api,
+        airdrop1Recipient2RelayChain,
+        airdropId,
+        rewardAccount,
+        proof
+      );
+      // ToDo: Result check!
 
       console.debug(result);
-
     });
 
     it("Airdrop [#2] can be claimed with correct proof", async function() {
@@ -467,9 +493,8 @@ export class TxAirdropTests {
     rewardAccount: AccountId32,
     proof: PalletAirdropModelsProof
   ) {
-    return await sendAndWaitForSuccess(
+    return await sendUnsignedAndWaitForSuccess(
       api,
-      wallet,
       api.events.airdrop.Claimed.is,
       api.tx.airdrop.claim(airdropId, rewardAccount, proof)
     );
