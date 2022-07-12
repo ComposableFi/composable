@@ -1,5 +1,7 @@
 import * as React from "react";
 import {
+  Box,
+  Button,
   Skeleton,
   Table,
   TableBody,
@@ -31,10 +33,7 @@ function getTotalPurchasedInFormat(
   bondPrice: BigNumber,
   price: BigNumber
 ) {
-  let totalPurchased: number | string = 0;
-  if (currentBond) {
-    totalPurchased = currentBond.totalPurchased;
-  }
+  let totalPurchased: number | string = currentBond?.totalPurchased || 0;
   return humanBalance(
     new BigNumber(totalPurchased)
       .multipliedBy(bondPrice)
@@ -50,7 +49,17 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
 }) => {
   const { loading, data, error } = useQuery(GET_BONDED_FINANCE);
 
-  if (loading || error) {
+  if (error) {
+    console.error(error);
+    return (
+      <Box>
+        <Typography textAlign="center">An error occurred.</Typography>
+        <Button onClick={() => window.location.reload()}>Reload</Button>
+      </Box>
+    );
+  }
+
+  if (loading) {
     return <Skeleton width={200} height={50} />;
   }
 
@@ -75,16 +84,16 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                   asset,
                   price,
                   rewardPrice,
-                  reward: { amount, asset: rewardAsset },
-                  nbOfBonds,
                   bondOfferId,
                 },
-                index
               ) => {
                 const roi = getROI(rewardPrice, price);
                 let currentBond = bondedFinanceBondOffers.find(
                   (offer: any) => offer.id === bondOfferId.toString()
                 );
+                if (!currentBond) {
+                  return null;
+                }
                 let totalPurchased = getTotalPurchasedInFormat(
                   currentBond,
                   bondPrice,
