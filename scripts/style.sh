@@ -20,6 +20,12 @@ EOF
 check=""
 verbose=""
 
+check_return_code() {
+    if [ $? -eq 0 ]; then
+        echo "OK"
+    fi
+}
+
 cargo_fmt() {
     rustfmt_check=""
     rustfmt_verbose=""
@@ -32,7 +38,11 @@ cargo_fmt() {
         rustfmt_verbose="--verbose"
     fi
 
+    echo "Running rustfmt..."
+
     cargo +nightly-${NIGHTLY_VERSION} fmt --all ${rustfmt_verbose} ${rustfmt_check}
+
+    check_return_code
 }
 
 taplo_fmt() {
@@ -41,11 +51,15 @@ taplo_fmt() {
         taplo_verbose="--verbose"
     fi
 
+    echo "Running taplo..."
+
     if [[ ${check} = "check" ]]; then
         taplo check ${taplo_verbose}
     else
         taplo fmt ${taplo_verbose}
     fi
+
+    check_return_code
 }
 
 prettier_fmt() {
@@ -57,6 +71,8 @@ prettier_fmt() {
     else
         prettier_verbose="--loglevel=warn"
     fi
+
+    echo "Running Prettier on integration-tests/runtime-tests..."
 
     if [[ ${check} = "check" ]]; then
         npx prettier \
@@ -72,7 +88,7 @@ prettier_fmt() {
             "integration-tests/runtime-tests/"
     fi
 
-    # cd ../..
+    check_return_code
 }
 
 # install taplo if it isn't already
@@ -101,6 +117,6 @@ for arg in "$@"; do
     esac
 done
 
-cargo_fmt ${check} ${verbose}
-taplo_fmt ${check} ${verbose}
-prettier_fmt ${check} ${verbose}
+cargo_fmt
+taplo_fmt
+prettier_fmt
