@@ -91,25 +91,6 @@ pub struct VammConfig<Balance, Moment> {
 	pub twap_period: Moment,
 }
 
-/// Specify a common encapsulation layer for the swap function.
-#[derive(Clone, Debug)]
-pub struct SwapConfig<VammId, Balance> {
-	pub vamm_id: VammId,
-	pub asset: AssetType,
-	pub input_amount: Balance,
-	pub direction: Direction,
-	pub output_amount_limit: Balance,
-}
-
-/// Specify a common encapsulation layer for the swap simulation function.
-#[derive(Clone, Debug)]
-pub struct SwapSimulationConfig<VammId, Balance> {
-	pub vamm_id: VammId,
-	pub asset: AssetType,
-	pub input_amount: Balance,
-	pub direction: Direction,
-}
-
 /// Distinguish between asset types present in the vamm.
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
@@ -144,3 +125,51 @@ pub struct SwapOutput<Balance> {
 
 /// The minimum allowed value for [`twap_period`](VammState::twap_period).
 pub const MINIMUM_TWAP_PERIOD: u32 = 10;
+
+// ----------------------------------------------------------------------------------------------------
+//                                                 Swap
+// ----------------------------------------------------------------------------------------------------
+
+/// Specify a common encapsulation layer for the swap function.
+#[derive(Clone, Debug)]
+pub struct SwapConfig<VammId, Balance> {
+	pub vamm_id: VammId,
+	pub asset: AssetType,
+	pub input_amount: Balance,
+	pub direction: Direction,
+	pub output_amount_limit: Balance,
+}
+
+/// Specify a common encapsulation layer for the swap simulation function.
+#[derive(Clone, Debug)]
+pub struct SwapSimulationConfig<VammId, Balance> {
+	pub vamm_id: VammId,
+	pub asset: AssetType,
+	pub input_amount: Balance,
+	pub direction: Direction,
+}
+
+impl<VammId, Balance> From<SwapConfig<VammId, Balance>> for SwapSimulationConfig<VammId, Balance> {
+	fn from(c: SwapConfig<VammId, Balance>) -> Self {
+		Self {
+			vamm_id: c.vamm_id,
+			asset: c.asset,
+			input_amount: c.input_amount,
+			direction: c.direction,
+		}
+	}
+}
+
+impl<VammId, Balance: Default> From<SwapSimulationConfig<VammId, Balance>>
+	for SwapConfig<VammId, Balance>
+{
+	fn from(c: SwapSimulationConfig<VammId, Balance>) -> Self {
+		Self {
+			vamm_id: c.vamm_id,
+			asset: c.asset,
+			input_amount: c.input_amount,
+			direction: c.direction,
+			output_amount_limit: Default::default(),
+		}
+	}
+}
