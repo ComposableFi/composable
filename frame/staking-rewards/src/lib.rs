@@ -59,7 +59,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
-		staking::RewardPoolConfiguration::RewardRateBasedIncentive,
+		staking::{RewardPoolConfiguration::RewardRateBasedIncentive, DEFAULT_MAX_REWARDS},
 		time::DurationSeconds,
 	};
 	use frame_support::{
@@ -587,10 +587,7 @@ pub mod pallet {
 									asset_id: reward_currency,
 									total_rewards: reward_increment,
 									total_dilution_adjustment: T::Balance::zero(),
-									max_rewards: max(
-										reward_increment,
-										1_000_000_000_000_000_000_u128.into(),
-									),
+									max_rewards: max(reward_increment, DEFAULT_MAX_REWARDS.into()),
 									reward_rate: Perbill::zero(),
 								};
 								reward_pool
