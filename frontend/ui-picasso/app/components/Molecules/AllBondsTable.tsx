@@ -78,15 +78,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
           </TableHead>
           <TableBody>
             {bonds.map(
-              (
-                {
-                  bondPrice,
-                  asset,
-                  price,
-                  rewardPrice,
-                  bondOfferId,
-                },
-              ) => {
+              ({ bondPrice, asset, price, rewardPrice, bondOfferId }) => {
                 const roi = getROI(rewardPrice, price);
                 let currentBond = bondedFinanceBondOffers.find(
                   (offer: any) => offer.id === bondOfferId.toString()
