@@ -938,6 +938,56 @@ pub mod pallet {
 			<Self as ClearingHouse>::liquidate(&liquidator_id, &user_id)?;
 			Ok(())
 		}
+
+		/// Set a time for market closure.
+		///
+		/// # Overview
+		///
+		/// If successful, all trading calls to this market are blocked after the timestamp `when`
+		/// passed to this extrinsic.
+		///
+		/// This should allow time for users to close their positions normally before the market
+		/// closes.
+		///
+		/// TODO(0xangelo):
+		/// - describe who's allowed to call this extrinsic
+		/// - describe any limitations on what the `when` value is allowed to be
+		/// - describe how remaining positions can be settled after the market is closed (which
+		///   extrinsic traders should use)
+		///
+		/// ## Parameters
+		///
+		/// TODO(0xangelo):
+		///
+		/// ## Assumptions or Requirements
+		///
+		/// TODO(0xangelo):
+		///
+		/// ## Emits
+		///
+		/// TODO(0xangelo):
+		///
+		/// ## State Changes
+		///
+		/// TODO(0xangelo):
+		///
+		/// ## Errors
+		///
+		/// TODO(0xangelo):
+		///
+		/// ## Weight/Runtime
+		///
+		/// TODO(0xangelo):
+		#[pallet::weight(<T as Config>::WeightInfo::close_market())]
+		pub fn close_market(
+			origin: OriginFor<T>,
+			market_id: T::MarketId,
+			when: DurationSeconds,
+		) -> DispatchResult {
+			ensure_signed(origin)?;
+			<Self as ClearingHouse>::close_market(market_id, when)?;
+			Ok(())
+		}
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -951,6 +1001,7 @@ pub mod pallet {
 		type Direction = Direction;
 		type MarketId = T::MarketId;
 		type MarketConfig = MarketConfigOf<T>;
+		type Timestamp = DurationSeconds;
 
 		fn deposit_collateral(
 			account_id: &Self::AccountId,
@@ -1336,6 +1387,14 @@ pub mod pallet {
 			}
 
 			Self::deposit_event(event);
+			Ok(())
+		}
+
+		fn close_market(
+			market_id: Self::MarketId,
+			when: Self::Timestamp,
+		) -> Result<(), DispatchError> {
+			let market = Self::try_get_market(&market_id)?;
 			Ok(())
 		}
 	}
