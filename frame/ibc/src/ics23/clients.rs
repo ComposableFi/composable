@@ -13,7 +13,7 @@ impl<T: Config> Clients<T> {
 		let client_type_path = format!("{}", ClientTypePath(client_id));
 		let client_type_key =
 			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_type_path]).ok()?;
-		child::get(&T::CHILD_INFO, &client_type_key)
+		child::get_raw(&T::CHILD_INFO, &client_type_key)
 	}
 
 	pub fn insert(client_id: Vec<u8>, client_type: Vec<u8>) {
@@ -21,7 +21,7 @@ impl<T: Config> Clients<T> {
 		let client_type_path = format!("{}", ClientTypePath(client_id));
 		let client_type_key =
 			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_type_path]).ok()?;
-		child::put(&T::CHILD_INFO, &client_type_key, &client_type);
+		child::put_raw(&T::CHILD_INFO, &client_type_key, &client_type);
 	}
 
 	pub fn contains_key(client_id: Vec<u8>) -> bool {

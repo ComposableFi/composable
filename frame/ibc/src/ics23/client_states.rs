@@ -14,7 +14,7 @@ impl<T: Config> ClientStates<T> {
 		let client_state_path = format!("{}", ClientStatePath(client_id.clone()));
 		let client_state_key =
 			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path]).ok()?;
-		child::get(&T::CHILD_INFO, &client_state_key)
+		child::get_raw(&T::CHILD_INFO, &client_state_key)
 	}
 
 	pub fn insert(client_id: Vec<u8>, client_state: Vec<u8>) {
@@ -22,7 +22,7 @@ impl<T: Config> ClientStates<T> {
 		let client_state_path = format!("{}", ClientStatePath(client_id.clone()));
 		let client_state_key =
 			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path]).ok()?;
-		child::put(&T::CHILD_INFO, &client_state_key, &client_state);
+		child::put_raw(&T::CHILD_INFO, &client_state_key, &client_state);
 	}
 
 	pub fn contains_key(client_id: Vec<u8>) -> bool {

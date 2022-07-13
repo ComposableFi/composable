@@ -12,7 +12,6 @@ use crate::Config;
 /// todo: only store up to 250 (height => consensus_state) per client_id
 pub struct ConsensusStates<T>(PhantomData<T>);
 
-
 impl<T: Config> ConsensusStates<T> {
 	pub fn get(client_id: Vec<u8>, height: Vec<u8>) -> Option<Vec<u8>> {
 		let client_id = ClientId::from_str(&String::from_utf8(client_id).ok()?).ok()?;
@@ -24,7 +23,7 @@ impl<T: Config> ConsensusStates<T> {
 		};
 		let path = format!("{}", consensus_path);
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path]).ok()?;
-        child::get(&T::CHILD_INFO, &key)
+        child::get_raw(&T::CHILD_INFO, &key)
 	}
 
     pub fn insert(client_id: Vec<u8>, height: Height, consensus_state: Vec<u8>) {
@@ -36,7 +35,7 @@ impl<T: Config> ConsensusStates<T> {
         };
         let path = format!("{}", consensus_path);
         let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path]).ok()?;
-        child::put(&T::CHILD_INFO, &key, &consensus_state)
+        child::put_raw(&T::CHILD_INFO, &key, &consensus_state)
     }
 
     pub fn iter_key_prefix(client_id: Vec<u8>) -> ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)> {
