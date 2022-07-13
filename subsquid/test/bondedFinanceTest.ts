@@ -9,17 +9,27 @@ import {
   verify,
   when,
 } from "ts-mockito";
-import { BondedFinanceBondOffer } from "../src/model";
+import {
+  BondedFinanceBondOffer,
+  Schedule,
+  VestingSchedule,
+} from "../src/model";
 import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
+  VestingVestingScheduleAddedEvent,
 } from "../src/types/events";
 import { createAccount, createCtx } from "../src/utils";
 import {
   processNewBondEvent,
   processNewOfferEvent,
 } from "../src/bondedFinanceProcessor";
+import {
+  createVestingSchedule,
+  processVestingScheduleAddedEvent,
+} from "../src/vestingProcessor";
 import { encodeAccount } from "../src/utils";
+import { VestingSchedule as VestingScheduleType } from "../src/types/v2300";
 
 const OFFER_ID_1 = "1";
 const OFFER_ID_2 = "2";
@@ -56,6 +66,16 @@ const MOCK_NEW_OFFER_EXTRINSIC = {
   indexInBlock: 2,
 };
 
+const MOCK_VESTING_SCHEDULE: VestingScheduleType = {
+  window: {
+    start: 1,
+    period: 10,
+    __kind: "BlockNumberBased",
+  },
+  periodCount: 1,
+  perPeriod: BigInt(100),
+};
+
 function createNewOfferEvent(offerId: string) {
   let eventMock = mock(BondedFinanceNewOfferEvent);
   let evt = {
@@ -85,6 +105,28 @@ function createNewBondEvent(offerId: string, nbOfBonds: bigint) {
   return { event };
 }
 
+function createVestingScheduleAddedEvent(
+  from: Uint8Array,
+  to: Uint8Array,
+  asset: bigint,
+  schedule: VestingScheduleType
+) {
+  let eventMock = mock(VestingVestingScheduleAddedEvent);
+  let evt = {
+    from,
+    to,
+    asset,
+    schedule,
+  };
+
+  when(eventMock.asV2300).thenReturn(evt);
+  when(eventMock.asLatest).thenReturn(evt);
+
+  let event = instance(eventMock);
+
+  return { event };
+}
+
 /**
  * Check if bond offer has expected values
  * @param bondArg
@@ -101,6 +143,15 @@ function assertBondedFinanceBondOffer(
   expect(bondArg.id).to.equal(id);
   expect(bondArg.totalPurchased).to.equal(purchased);
   expect(bondArg.beneficiary).to.equal(beneficiary);
+}
+
+function assertVestingSchedule(
+  vestingSchedule: VestingSchedule,
+  beneficiary: string,
+  schedule: Schedule
+) {
+  expect(vestingSchedule.beneficiary).to.equal(beneficiary);
+  expect(vestingSchedule.schedule).to.deep.equal(schedule);
 }
 
 /**
@@ -140,6 +191,21 @@ async function assertNewBondEvent(
     offerId,
     purchased,
     encodeAccount(MOCK_ADDRESS)
+  );
+}
+
+async function assertVestingScheduleAddedEvent(
+  ctx: EventHandlerContext,
+  storeMock: Store,
+  beneficiary: Uint8Array,
+  schedule: Schedule
+) {
+  // Assert last save
+  const [arg] = capture(storeMock.save).last();
+  assertVestingSchedule(
+    arg as unknown as VestingSchedule,
+    encodeAccount(beneficiary),
+    schedule
   );
 }
 
@@ -236,5 +302,55 @@ describe("Bonded finance events", () => {
 
     // The store should have saved three times in the database
     verify(storeMock.save(anyOfClass(BondedFinanceBondOffer))).times(3);
+  });
+});
+
+describe("Vesting schedule added", () => {
+  let storeMock: Store;
+  let ctx: EventHandlerContext;
+  let vestingSchedulesStored: VestingSchedule[];
+
+  beforeEach(() => {
+    storeMock = mock<Store>();
+    ctx = createCtx(storeMock, 1);
+    vestingSchedulesStored = [];
+
+    // Stub store.get() to return the vesting schedules in the database
+    when(storeMock.get<VestingSchedule>(VestingSchedule, anything())).thenCall(
+      () => {
+        return Promise.resolve(vestingSchedulesStored);
+      }
+    );
+
+    // Stub store.save() to update the total purchased bonds in the database
+    when(storeMock.save<VestingSchedule>(anything())).thenCall(
+      (vestingSchedule) => {
+        vestingSchedulesStored.push(vestingSchedule);
+      }
+    );
+  });
+
+  it("Should add vesting schedule events correctly", async () => {
+    const vestingSchedule = MOCK_VESTING_SCHEDULE;
+
+    const { event } = createVestingScheduleAddedEvent(
+      WHO,
+      MOCK_ADDRESS,
+      BigInt(2),
+      vestingSchedule
+    );
+
+    await processVestingScheduleAddedEvent(ctx, event);
+
+    const schedule = createVestingSchedule(vestingSchedule);
+
+    await assertVestingScheduleAddedEvent(
+      ctx,
+      storeMock,
+      MOCK_ADDRESS,
+      schedule
+    );
+
+    verify(storeMock.save(anyOfClass(VestingSchedule))).times(1);
   });
 });
