@@ -3,8 +3,6 @@ name: "Docker Release"
 on:
   workflow_dispatch:
   push:
-    branches:
-      - update-release
     tags: 
       - '*'
       

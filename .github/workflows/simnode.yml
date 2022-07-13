@@ -2,6 +2,8 @@ name: Run Simnode
 
 on:
   workflow_dispatch:
+  push:
+    - update-release
   pull_request:
     types: [ labeled, synchronize, opened, reopened ]
     branches:
@@ -23,6 +25,7 @@ jobs:
       - name: Clean up
         continue-on-error: true
         run: |
+          git config --global --add safe.directory /home/runner/_work/composable/composable
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
 
