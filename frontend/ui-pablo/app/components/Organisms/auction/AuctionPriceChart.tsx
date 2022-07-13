@@ -28,11 +28,12 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
 }) => {
   const theme = useTheme();
 
-  const dates = priceSeries
-    .map((item) => {
-      return moment(item[0]).utc().format("D MMM");
-    })
-    .filter((v, i, self) => self.indexOf(v) === i);
+  // const dates = priceSeries
+  //   .map((item) => {
+  //     return moment(item[0]).utc().format("D MMM");
+  //   })
+  //   .filter((v, i, self) => self.indexOf(v) === i);
+  const dates: string[] = [];
 
   const chartOptions = useCallback((
     color: string,

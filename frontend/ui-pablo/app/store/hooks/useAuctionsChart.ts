@@ -12,6 +12,7 @@ import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { useParachainApi } from "substrate-react";
 import { LiquidityBootstrappingPool } from "@/defi/types";
+import moment from "moment";
 
 export function useAuctionsChart(
   pool: LiquidityBootstrappingPool | undefined

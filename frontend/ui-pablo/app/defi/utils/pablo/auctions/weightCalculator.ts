@@ -9,9 +9,9 @@ export function caluclateWeightAt(
     quoteWeight = new BigNumber(0);
 
   let one = new BigNumber(1);
-  let pointInSale = new BigNumber(current_block).div(
-    new BigNumber(pool.sale.endBlock).minus(pool.sale.startBlock)
-  );
+
+  let normalized_current_block = new BigNumber(current_block).minus(pool.sale.startBlock);
+  let pointInSale = normalized_current_block.div(new BigNumber(pool.sale.endBlock).minus(pool.sale.startBlock))
   let weightRange = new BigNumber(pool.sale.initialWeight)
     .div(100)
     .minus(new BigNumber(pool.sale.finalWeight).div(100));
