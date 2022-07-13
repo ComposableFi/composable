@@ -253,11 +253,11 @@ pub mod pallet {
 	// pub type NextSequenceRecv<T: Config> =
 	// 	StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// (port_identifier, channel_identifier) = Sequence
-	pub type NextSequenceAck<T: Config> =
-		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
+	// #[pallet::storage]
+	// #[allow(clippy::disallowed_types)]
+	// /// (port_identifier, channel_identifier) = Sequence
+	// pub type NextSequenceAck<T: Config> =
+	// 	StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]

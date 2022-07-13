@@ -3,7 +3,7 @@ use crate::{
 	events::IbcEvent,
 	ics23::{
 		connections::Connections, consensus_states::ConsensusStates,
-		next_seq_send::NextSequenceSend,
+		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
 	},
 	routing::Context,
 };
@@ -70,7 +70,6 @@ use ics23::client_states::ClientStates;
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;
-use crate::ics23::next_seq_recv::NextSequenceRecv;
 
 impl<T: Config> Pallet<T>
 where
