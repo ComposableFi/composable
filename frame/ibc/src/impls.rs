@@ -1,7 +1,10 @@
 use super::*;
 use crate::{
 	events::IbcEvent,
-	ics23::{connections::Connections, consensus_states::ConsensusStates},
+	ics23::{
+		connections::Connections, consensus_states::ConsensusStates,
+		next_seq_send::NextSequenceSend,
+	},
 	routing::Context,
 };
 use codec::{Decode, Encode};
@@ -41,8 +44,7 @@ use ibc::{
 			identifier::*,
 			path::{
 				AcksPath, ChannelEndsPath, ClientConsensusStatePath, ClientStatePath,
-				CommitmentsPath, ConnectionsPath, ReceiptsPath, SeqAcksPath, SeqRecvsPath,
-				SeqSendsPath,
+				CommitmentsPath, ConnectionsPath, ReceiptsPath, SeqRecvsPath,
 			},
 		},
 		ics26_routing::context::ModuleOutputBuilder,
@@ -127,29 +129,29 @@ where
 		// }
 
 		// Insert channel ends and sequences in trie
-		for (port, channel, channel_end) in Channels::<T>::iter() {
-			let next_seq_send = NextSequenceSend::<T>::get(&port, &channel);
-			let next_seq_recv = NextSequenceRecv::<T>::get(&port, &channel);
-			let next_seq_ack = NextSequenceAck::<T>::get(&port, &channel);
-			let channel_id =
-				channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
-			let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-			let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id));
-			let next_seq_send_path = format!("{}", SeqSendsPath(port_id.clone(), channel_id));
-			let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id.clone(), channel_id));
-			let next_seq_ack_path = format!("{}", SeqAcksPath(port_id.clone(), channel_id));
-			let next_seq_send_key =
-				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_send_path]);
-			let next_seq_recv_key =
-				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_recv_path]);
-			let next_seq_ack_key =
-				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_ack_path]);
-			let channel_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path]);
-			inputs.push((channel_key, channel_end));
-			inputs.push((next_seq_ack_key, next_seq_ack.encode()));
-			inputs.push((next_seq_send_key, next_seq_send.encode()));
-			inputs.push((next_seq_recv_key, next_seq_recv.encode()));
-		}
+		// for (port, channel, channel_end) in Channels::<T>::iter() {
+		// 	let next_seq_send = NextSequenceSend::<T>::get(&port, &channel);
+		// 	let next_seq_recv = NextSequenceRecv::<T>::get(&port, &channel);
+		// 	let next_seq_ack = NextSequenceAck::<T>::get(&port, &channel);
+		// 	let channel_id =
+		// 		channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
+		// 	let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
+		// 	let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id));
+		// 	let next_seq_send_path = format!("{}", SeqSendsPath(port_id.clone(), channel_id));
+		// 	let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id.clone(), channel_id));
+		// 	let next_seq_ack_path = format!("{}", SeqAcksPath(port_id.clone(), channel_id));
+		// 	let next_seq_send_key =
+		// 		apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_send_path]);
+		// 	let next_seq_recv_key =
+		// 		apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_recv_path]);
+		// 	let next_seq_ack_key =
+		// 		apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_ack_path]);
+		// 	let channel_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path]);
+		// 	inputs.push((channel_key, channel_end));
+		// 	inputs.push((next_seq_ack_key, next_seq_ack.encode()));
+		// 	inputs.push((next_seq_send_key, next_seq_send.encode()));
+		// 	inputs.push((next_seq_recv_key, next_seq_recv.encode()));
+		// }
 
 		// Insert packet commitments in trie
 		for ((port, channel, sequence), commitment) in PacketCommitment::<T>::iter() {
@@ -734,12 +736,13 @@ where
 			Self::client_revision_number(port_id.clone(), channel_id.clone())?
 		};
 		let mut ctx = crate::routing::Context::<T>::new();
-		let next_seq_send = NextSequenceSend::<T>::get(port_id.clone(), channel_id.clone());
-		let sequence = Sequence::from(next_seq_send);
 		let source_port =
 			port_id_from_bytes(port_id).map_err(|_| IbcHandlerError::ChannelOrPortError)?;
 		let source_channel =
 			channel_id_from_bytes(channel_id).map_err(|_| IbcHandlerError::ChannelOrPortError)?;
+		let next_seq_send = NextSequenceSend::<T>::get(source_port.clone(), source_channel.clone())
+			.ok_or_else(|| IbcHandlerError::SendPacketError)?;
+		let sequence = Sequence::from(next_seq_send);
 		let source_channel_end = ctx
 			.channel_end(&(source_port.clone(), source_channel))
 			.map_err(|_| IbcHandlerError::ChannelOrPortError)?;

@@ -4,7 +4,7 @@ use frame_support::traits::Get;
 use ibc_primitives::OffchainPacketType;
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 
-use crate::routing::Context;
+use crate::{ics23::next_seq_send::NextSequenceSend, routing::Context};
 use ibc::{
 	core::{
 		ics04_channel::{
@@ -96,10 +96,8 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		let seq = <NextSequenceSend<T>>::get(
-			port_channel_id.0.as_bytes(),
-			port_channel_id.1.to_string().as_bytes(),
-		);
+		let seq = <NextSequenceSend<T>>::get(port_channel_id.0.clone(), port_channel_id.1.clone())
+			.ok_or_else(|| ICS04Error::missing_next_send_seq(port_channel_id.clone()))?;
 		log::trace!("in channel : [get_next_sequence] >> sequence  = {:?}", seq);
 		Ok(Sequence::from(seq))
 	}
@@ -416,11 +414,7 @@ where
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
 
-		<NextSequenceSend<T>>::insert(
-			port_channel_id.0.as_bytes().to_vec(),
-			port_channel_id.1.to_string().as_bytes().to_vec(),
-			seq,
-		);
+		<NextSequenceSend<T>>::insert(port_channel_id.0.clone(), port_channel_id.1.clone(), seq);
 
 		Ok(())
 	}
