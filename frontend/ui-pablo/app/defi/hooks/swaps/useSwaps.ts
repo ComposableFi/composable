@@ -278,10 +278,10 @@ export function useSwaps(): {
       } else {
         throw new Error('Pool not found.');
       }
-    } catch (err) {
+    } catch (err: any) {
       resetTokenAmounts();
-      console.error(`Registered Pool not found`);
-      enqueueSnackbar(`Registered Pool not found`);
+      console.error(err.message);
+      enqueueSnackbar(err.message);
     } finally {
       unsetProcessingDelayed();
     }

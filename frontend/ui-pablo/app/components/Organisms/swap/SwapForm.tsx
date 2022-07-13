@@ -61,6 +61,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     setAssetOneInputValid,
     setAssetTwoInputValid,
     assetOneInputValid,
+    assetTwoInputValid,
     flipAssetSelection,
     isProcessing
   } = useSwaps();
@@ -331,8 +332,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         {valid && selectedAssetOne && selectedAssetTwo && (
           <>
             <Typography variant="body2">
-              1 {selectedAssetOne.symbol} = {spotPrice.toFixed()}{" "}
-              {selectedAssetTwo.symbol}
+              1 {selectedAssetTwo.symbol} = {spotPrice.toFixed()}{" "}
+              {selectedAssetOne.symbol}
             </Typography>
             <Tooltip
               title={`1 ${selectedAssetOne?.symbol} = ${spotPrice.toFixed()} ${
