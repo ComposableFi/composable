@@ -3,7 +3,8 @@ name: Run Simnode
 on:
   workflow_dispatch:
   push:
-    - update-release
+    branches:
+      - update-release
   pull_request:
     types: [ labeled, synchronize, opened, reopened ]
     branches:
