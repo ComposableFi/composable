@@ -70,6 +70,7 @@ use ics23::client_states::ClientStates;
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;
+use crate::ics23::next_seq_recv::NextSequenceRecv;
 
 impl<T: Config> Pallet<T>
 where
@@ -450,10 +451,11 @@ where
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 	) -> Result<QueryNextSequenceReceiveResponse, Error<T>> {
-		let sequence = NextSequenceRecv::<T>::get(port_id.clone(), channel_id.clone());
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
+		let sequence = NextSequenceRecv::<T>::get(port_id.clone(), channel_id.clone())
+			.ok_or_else(|| Error::<T>::SendPacketError)?;
 		let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id, channel_id));
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_recv_path]);
 
