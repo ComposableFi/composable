@@ -61,12 +61,21 @@ fn stake_in_case_of_low_balance_should_not_work() {
 
 		let pool_init_config = get_default_reward_pool();
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
-		let (staker, pool_id, amount, duration_preset) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
+		let (staker, pool_id, amount, duration_preset) =
+			(ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
 
 		let asset_id = StakingRewards::pools(pool_id).expect("asset_id expected").asset_id;
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), 0);
+		assert_eq!(
+			<<Test as crate::Config>::Assets as Inspect<
+				<Test as frame_system::Config>::AccountId,
+			>>::balance(asset_id, &staker),
+			0
+		);
 
-		assert_noop!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset), crate::Error::<Test>::NotEnoughAssets);
+		assert_noop!(
+			StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset),
+			crate::Error::<Test>::NotEnoughAssets
+		);
 
 		assert_eq!(StakingRewards::stake_count(), 0);
 	});
