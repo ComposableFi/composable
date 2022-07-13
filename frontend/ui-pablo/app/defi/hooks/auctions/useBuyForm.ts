@@ -1,5 +1,5 @@
 import { LiquidityBootstrappingPool } from "@/defi/types";
-import { DEFAULT_NETWORK_ID, fetchSpotPrice, uniswapCalculator } from "@/defi/utils";
+import { calculator, DEFAULT_NETWORK_ID, fetchSpotPrice } from "@/defi/utils";
 import { fetchAuctions, fetchTrades } from "@/defi/utils/pablo/auctions";
 import { useAppSelector } from "@/hooks/store";
 import { MockedAsset } from "@/store/assets/assets.types";
@@ -98,9 +98,8 @@ export const useBuyForm = (): {
           activeLBP.poolId
         );
         const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
-          uniswapCalculator(
+          calculator(
             changedSide,
-            false,
             amount,
             oneBaseInQuote,
             slippage,

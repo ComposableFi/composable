@@ -77,6 +77,10 @@ jest.mock("@/store/hooks/useUserProvidedLiquidityByPool.ts", () => {
   }))}
 })
 
+jest.mock("@/defi/utils/bonds/fetchTotalPurchased.ts", () => {
+  return { fetchTotalPurchasedBondsByOfferIds: jest.fn().mockImplementation(() => (Promise.resolve({})))}
+})
+
 jest.mock("@/store/hooks/usePoolTvlChart", () => ({
     usePoolTvlChart: jest.fn().mockImplementation(() => ({
       seriesIntervals: [],

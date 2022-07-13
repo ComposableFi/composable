@@ -95,7 +95,7 @@ export function calculator(
   if (sideUpdated === "base") {
     minReceive = tokenOutAmount.minus(
       slippageAmount.plus(feeChargedAmount)
-    ).times(oneBaseInQuote);
+    ).times(oneQuoteInBase);
   } else {
     minReceive = tokenAmount.minus(
       slippageAmount.plus(feeChargedAmount)
