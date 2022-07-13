@@ -44,7 +44,7 @@ export function stableSwapCalculator(
   } else {
     minReceive = tokenAmount
       .minus(slippageAmount)
-      .times(oneBaseInQuote).minus(feeChargedAmount);
+      .times(oneQuoteInBase).minus(feeChargedAmount);
   }
 
   return {
