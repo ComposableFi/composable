@@ -50,6 +50,7 @@ mod errors;
 pub mod events;
 mod host_functions;
 pub mod ics20;
+mod ics23;
 mod port;
 pub mod routing;
 
@@ -130,10 +131,14 @@ pub mod pallet {
 		ics26_routing::handler::MsgReceipt,
 	};
 
-	use crate::host_functions::HostFunctions;
+	use crate::{
+		host_functions::HostFunctions,
+		ics23::{client_states::ClientStates, clients::Clients},
+	};
 	use composable_traits::defi::DeFiComposableConfig;
 	pub use ibc::signer::Signer;
 	use ibc_trait::client_id_from_bytes;
+	use sp_core::storage::ChildInfo;
 	use sp_runtime::{generic::DigestItem, SaturatedConversion};
 	use tendermint_proto::Protobuf;
 
@@ -157,6 +162,10 @@ pub mod pallet {
 		const INDEXING_PREFIX: &'static [u8];
 		/// Prefix for ibc connection, should be valid utf8 string bytes
 		const CONNECTION_PREFIX: &'static [u8];
+		/// This is the key under the global state trie, where this pallet will
+		/// incrementally build the ICS23 commitment trie
+		const CHILD_INFO: ChildInfo;
+		/// Expected blocktime
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
 		type WeightInfo: WeightInfo;
@@ -169,11 +178,11 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// client_id => ClientState
-	pub type ClientStates<T: Config> =
-		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
+	// #[pallet::storage]
+	// #[allow(clippy::disallowed_types)]
+	// /// client_id => ClientState
+	// pub type ClientStates<T: Config> =
+	// 	StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -262,9 +271,8 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
-	/// clientId => ClientType
-	pub type Clients<T: Config> =
-		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
+	/// counter for clients
+	pub type ClientCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -294,9 +302,9 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T> {
 		/// Raw Ibc events
-		IbcEvents { events: Vec<crate::events::IbcEvent> },
+		IbcEvents { events: Vec<events::IbcEvent> },
 		/// Ibc errors
-		IbcErrors { errors: Vec<crate::errors::IbcError> },
+		IbcErrors { errors: Vec<errors::IbcError> },
 	}
 
 	/// Errors inform users that something went wrong.
@@ -363,7 +371,7 @@ pub mod pallet {
 
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			<T as Config>::WeightInfo::on_finalize(
-				Clients::<T>::count(),
+				ClientCounter::<T>::get(),
 				Connections::<T>::count(),
 				ChannelCounter::<T>::get(),
 				PacketCommitment::<T>::count(),

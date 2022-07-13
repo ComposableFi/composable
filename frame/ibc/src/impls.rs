@@ -5,7 +5,7 @@ use composable_traits::{
 	defi::DeFiComposableConfig,
 	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
 };
-use frame_support::traits::Currency;
+use frame_support::{storage::child, traits::Currency};
 use ibc::{
 	applications::transfer::{
 		acknowledgement::{Acknowledgement as Ics20Acknowledgement, ACK_SUCCESS_B64},
@@ -57,6 +57,7 @@ use ibc_trait::{
 	apply_prefix_and_encode, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
 	port_id_from_bytes, Error as IbcHandlerError, IbcTrait,
 };
+use ics23::client_states::ClientStates;
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;
@@ -70,7 +71,7 @@ where
 		let mut inputs = Vec::new();
 
 		// Insert client state in trie
-		for (client_id, client_state) in ClientStates::<T>::iter() {
+		for (client_id, client_state) in Clients::<T>::iter() {
 			let client_type = Clients::<T>::get(&client_id);
 			let id = ClientId::from_str(
 				&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?,
@@ -199,8 +200,9 @@ where
 	}
 
 	pub(crate) fn build_ibc_state_root() -> Result<sp_core::H256, Error<T>> {
-		let inputs = Self::build_trie_inputs()?;
-		Ok(sp_io::trie::blake2_256_root(inputs, sp_core::storage::StateVersion::V0))
+		let root: sp_core::H256 =
+			child::root(&T::CHILD_INFO, sp_core::storage::StateVersion::V0).into();
+		Ok(root)
 	}
 
 	pub(crate) fn extract_ibc_state_root() -> Result<Vec<u8>, Error<T>> {
@@ -241,7 +243,8 @@ where
 
 	/// Get a client state
 	pub fn client(client_id: Vec<u8>) -> Result<QueryClientStateResponse, Error<T>> {
-		let client_state = ClientStates::<T>::get(client_id.clone());
+		let client_state = ClientStates::<T>::get(client_id.clone())
+			.ok_or_else(|| Error::<T>::ClientStateNotFound)?;
 		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
 
 		let client_state_path = format!("{}", ClientStatePath(client_id));
@@ -267,7 +270,8 @@ where
 		latest_cs: bool,
 	) -> Result<QueryConsensusStateResponse, Error<T>> {
 		let height = if latest_cs {
-			let client_state = ClientStates::<T>::get(client_id.clone());
+			let client_state = ClientStates::<T>::get(client_id.clone())
+				.ok_or_else(|| Error::<T>::ClientStateNotFound)?;
 			let client_state =
 				AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
 			client_state.latest_height().encode_vec()
@@ -321,7 +325,8 @@ where
 				if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
 					.find(|(.., connection_ids)| connection_ids.contains(&connection_id))
 				{
-					let client_state = ClientStates::<T>::get(client_id.clone());
+					let client_state = ClientStates::<T>::get(client_id.clone())
+						.ok_or_else(|| Error::<T>::ClientStateNotFound)?;
 					return Ok(IdentifiedClientState { client_id, client_state })
 				}
 			}
@@ -507,7 +512,8 @@ where
 		client_id: Vec<u8>,
 		connection_id: Vec<u8>,
 	) -> Result<ConnectionHandshake, Error<T>> {
-		let client_state = ClientStates::<T>::get(client_id.clone());
+		let client_state = ClientStates::<T>::get(client_id.clone())
+			.ok_or_else(|| Error::<T>::ClientStateNotFound)?;
 		let client_state_decoded =
 			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
 		let height = client_state_decoded.latest_height();
@@ -714,7 +720,8 @@ where
 				},
 			)
 			.ok_or(IbcHandlerError::ClientIdError)?;
-		let client_state = ClientStates::<T>::get(client_id);
+		let client_state =
+			ClientStates::<T>::get(client_id).ok_or_else(|| Error::<T>::ClientStateNotFound)?;
 		let client_state = AnyClientState::decode_vec(&client_state)
 			.map_err(|_| IbcHandlerError::ClientStateError)?;
 		Ok(client_state.chain_id().version())
