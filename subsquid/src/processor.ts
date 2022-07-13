@@ -43,7 +43,7 @@ const chain = (): string => {
 };
 
 const chain_connection_string = chain();
-const archive_connection_string = "http://localhost:4010/v1/graphql";
+const archive_connection_string = "http://localhost:8080/v1/graphql";
 
 console.log(`Chain ${chain_connection_string}`);
 console.log(`Archive ${archive_connection_string}`);
