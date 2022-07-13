@@ -1,4 +1,7 @@
-import { LiquidityBootstrappingPool, LiquidityPoolTransactionType } from "@/defi/types";
+import {
+  LiquidityBootstrappingPool,
+  LiquidityPoolTransactionType,
+} from "@/defi/types";
 import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
 import { queryAuctionStats } from "@/subsquid/queries/auctions";
@@ -6,8 +9,10 @@ import { queryPoolTransactionsByType } from "@/subsquid/queries/pools";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { fetchBalanceByAssetId } from "../../assets";
+import { AVERAGE_BLOCK_TIME } from "../../constants";
 import { fromChainUnits } from "../../units";
 import { createPabloPoolAccountId } from "../misc";
+import { lbpCalculatePriceAtBlock } from "./weightCalculator";
 
 export function transformAuctionsTransaction(
   transaction: {
@@ -16,6 +21,7 @@ export function transformAuctionsTransaction(
     quoteAssetAmount: string;
     baseAssetAmount: string;
     quoteAssetId: string;
+    blockNumber: string;
     baseAssetId: string;
     spotPrice: string;
     who: string;
@@ -30,6 +36,7 @@ export function transformAuctionsTransaction(
   let baseAssetAmount: BigNumber | string = new BigNumber(0);
   let quoteAssetAmount: BigNumber | string = new BigNumber(0);
   let receivedTimestamp = Number(transaction.receivedTimestamp);
+  let blockNumber = new BigNumber(transaction.blockNumber);
   let id = transaction.id;
   let walletAddress = transaction.who;
   let side: any = "SELL";
@@ -54,6 +61,7 @@ export function transformAuctionsTransaction(
     spotPrice: spotPrice,
     side,
     walletAddress,
+    blockNumber,
   };
 }
 
@@ -155,7 +163,6 @@ export async function fetchLbpStats(pool: LiquidityBootstrappingPool): Promise<{
         "[fetchInitialBalance] Unable to retreive data from query"
       );
 
-
     if (pabloPools.length) {
       totalLiquidity = fromChainUnits(pabloPools[0].totalLiquidity);
       totalVolume = fromChainUnits(pabloPools[0].totalVolume);
@@ -185,8 +192,8 @@ export async function fetchAuctions(
   liquidity: string;
   totalVolume: string;
 }> {
-  let startBalances = { base: "0", quote: "0" }
-  let currentBalances = { base: "0", quote: "0" }
+  let startBalances = { base: "0", quote: "0" };
+  let currentBalances = { base: "0", quote: "0" };
   let liquidity = "0";
   let totalVolume = "0";
   const { base, quote } = pool.pair;
@@ -212,22 +219,98 @@ export async function fetchAuctions(
      * Query amount of base tokens in
      * the pool
      */
-    const baseCurrBalance = await fetchBalanceByAssetId(api, poolAccountId, base.toString());
+    const baseCurrBalance = await fetchBalanceByAssetId(
+      api,
+      poolAccountId,
+      base.toString()
+    );
     currentBalances.base = baseCurrBalance;
     /**
      * Query amount of quote tokens in
      * the pool
      */
-     const quoteCurrBalance = await fetchBalanceByAssetId(api, poolAccountId, quote.toString());
+    const quoteCurrBalance = await fetchBalanceByAssetId(
+      api,
+      poolAccountId,
+      quote.toString()
+    );
     currentBalances.quote = quoteCurrBalance;
   } catch (err) {
-    console.error(err)
+    console.error(err);
   }
   return {
     startBalances,
     currentBalances,
     liquidity,
     totalVolume,
-  }
+  };
+}
 
+export async function fetchAuctionChartSeries(
+  parachainApi: ApiPromise,
+  auction: LiquidityBootstrappingPool
+): Promise<{
+  chartSeries: [number, number][];
+  predictedSeries: [number, number][];
+}> {
+  let chartSeries: [number, number][] = [];
+  let predictedSeries: [number, number][] = [];
+  try {
+    const subsquidResponse = await queryPoolTransactionsByType(
+      auction.poolId,
+      "SWAP",
+      100,
+      "ASC"
+    );
+
+    const { error, data } = subsquidResponse;
+
+    if (error) throw new Error(error.message);
+    if (!data || !data.pabloTransactions)
+      throw new Error("Unable to retrieve chart data.");
+
+    const { pabloTransactions } = data;
+
+    chartSeries = pabloTransactions
+      .map((t: any) => transformAuctionsTransaction(t, auction.pair.quote))
+      .map((i: LiquidityBootstrappingPoolTrade) => {
+        return [i.receivedTimestamp, Number(i.spotPrice)];
+      }) as [number, number][];
+
+    const accountId = createPabloPoolAccountId(parachainApi, auction.poolId);
+    const baseBalance = await fetchBalanceByAssetId(
+      parachainApi,
+      accountId,
+      auction.pair.base.toString()
+    );
+    const quoteBalance = await fetchBalanceByAssetId(
+      parachainApi,
+      accountId,
+      auction.pair.quote.toString()
+    );
+
+    const block = await parachainApi.query.system.number();
+
+    let blockIter = new BigNumber(block.toString());
+    let lastTimeStamp = chartSeries[chartSeries.length - 1][0];
+
+    while (lastTimeStamp < auction.sale.end) {
+      const price = lbpCalculatePriceAtBlock(
+        auction,
+        new BigNumber(baseBalance),
+        new BigNumber(quoteBalance),
+        blockIter
+      );
+
+      predictedSeries.push([lastTimeStamp, price.toNumber()]);
+      lastTimeStamp += AVERAGE_BLOCK_TIME * 1000;
+      blockIter = blockIter.plus(1000);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+  return {
+    chartSeries,
+    predictedSeries,
+  };
 }

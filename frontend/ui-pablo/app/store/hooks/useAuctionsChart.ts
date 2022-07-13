@@ -5,7 +5,7 @@ import {
   fetchBalanceByAssetId,
 } from "@/defi/utils";
 import { calculatePredictedChartSeries } from "@/defi/utils/charts/auctions";
-import { transformAuctionsTransaction } from "@/defi/utils/pablo/auctions";
+import { fetchAuctionChartSeries, transformAuctionsTransaction } from "@/defi/utils/pablo/auctions";
 
 import { queryPoolTransactionsByType } from "@/subsquid/queries/pools";
 import BigNumber from "bignumber.js";
@@ -29,48 +29,10 @@ export function useAuctionsChart(
 
   useEffect(() => {
     if (pool && parachainApi) {
-      queryPoolTransactionsByType(pool.poolId, "SWAP").then((res) => {
-        let swapTxs: LiquidityBootstrappingPoolTrade[] = [];
-        if ((res as any).data && (res as any).data.pabloTransactions) {
-          swapTxs = (res as any).data.pabloTransactions.map((t: any) =>
-            transformAuctionsTransaction(t, pool.pair.quote)
-          );
-
-          let currentPrices = swapTxs.map((i) => {
-            return [i.receivedTimestamp, Number(i.spotPrice)];
-          }) as [number, number][];
-
-          setCurrentPriceSeries(currentPrices);
-
-          if (currentPrices.length) {
-            parachainApi.query.system.number().then(async (blockNo) => {
-              const poolAccount = createPabloPoolAccountId(
-                parachainApi,
-                pool.poolId
-              );
-              const quoteBal = await fetchBalanceByAssetId(
-                parachainApi,
-                poolAccount,
-                pool.pair.quote.toString()
-              );
-              const baseBal = await fetchBalanceByAssetId(
-                parachainApi,
-                poolAccount,
-                pool.pair.base.toString()
-              );
-
-              const series = calculatePredictedChartSeries(
-                currentPrices[0][0],
-                new BigNumber(baseBal),
-                new BigNumber(quoteBal),
-                pool,
-                new BigNumber(blockNo.toString())
-              );
-              setPredictedPriceSeries(series);
-            });
-          }
-        }
-      });
+      fetchAuctionChartSeries(parachainApi, pool).then(response => {
+        setCurrentPriceSeries(response.chartSeries);
+        setPredictedPriceSeries(response.predictedSeries);
+      })
     } else {
       setCurrentPriceSeries([]);
       setPredictedPriceSeries([]);

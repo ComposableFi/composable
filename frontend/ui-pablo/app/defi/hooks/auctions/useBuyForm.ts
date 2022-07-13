@@ -7,7 +7,7 @@ import { useAssetBalance } from "@/store/assets/hooks";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js"
 import { useSnackbar } from "notistack";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDotSamaContext, useParachainApi, usePendingExtrinsic, useSelectedAccount } from "substrate-react";
 import { useAsset } from "../assets/useAsset";
 
@@ -27,14 +27,10 @@ export const useBuyForm = (): {
   slippageAmount: BigNumber;
   selectedAuction: LiquidityBootstrappingPool;
   isBuyButtonDisabled: boolean;
+  isProcessing: boolean;
   refreshAuctionData: () => void;
   isPendingBuy: boolean;
-  onChangeTokenAmount: (changedSide: "quote" | "base", amount: BigNumber) => Promise<{
-    minReceive: BigNumber;
-    tokenOutAmount: BigNumber;
-    feeCharged: BigNumber;
-    slippageAmount: BigNumber;
-  }>
+  onChangeTokenAmount: (changedSide: "quote" | "base", amount: BigNumber) => Promise<void>
 } => {
   const { enqueueSnackbar } = useSnackbar();
   const { extensionStatus } = useDotSamaContext();
@@ -68,11 +64,24 @@ export const useBuyForm = (): {
     quoteAmount: new BigNumber(0)
   })
 
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (selectedAccount) {
+      setIsProcessing(true);
+      resetTokenAmounts();
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 500);
+    }
+  }, [selectedAccount])
+
   const onChangeTokenAmount = async (
     changedSide: "base" | "quote",
     amount: BigNumber
   ) => {
     try {
+      setIsProcessing(true);
       if (
         parachainApi &&
         activeLBP
@@ -109,12 +118,6 @@ export const useBuyForm = (): {
         setMinimumReceived(minReceive);
         setFeeCharged(feeChargedAmount);
         setSlippageAmount(slippageAmount);
-        return {
-          minReceive,
-          tokenOutAmount,
-          feeCharged,
-          slippageAmount,
-        };
       } else {
         throw new Error('Invalid LBP');
       }
@@ -122,12 +125,10 @@ export const useBuyForm = (): {
       console.error(err.message);
       enqueueSnackbar(err.message);
       resetTokenAmounts();
-      return {
-        minReceive: new BigNumber(0),
-        tokenOutAmount: new BigNumber(0),
-        feeCharged: new BigNumber(0),
-        slippageAmount: new BigNumber(0),
-      };
+    } finally {
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 500);
     }
   };
 
@@ -153,7 +154,6 @@ export const useBuyForm = (): {
     return extensionStatus !== "connected" || !isValidBaseInput || !isValidQuoteInput || isPendingBuy
   }, [isValidBaseInput, isValidQuoteInput, extensionStatus, isPendingBuy])
 
-
   return {
     balanceBase,
     balanceQuote,
@@ -172,6 +172,7 @@ export const useBuyForm = (): {
     selectedAuction: activeLBP,
     refreshAuctionData,
     onChangeTokenAmount,
-    isPendingBuy
+    isPendingBuy,
+    isProcessing
   }
 }

@@ -6,7 +6,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import BigNumber from "bignumber.js";
 import { DropdownCombinedBigNumberInput, BigNumberInput } from "@/components";
 import { useMobile } from "@/hooks/responsive";
@@ -20,7 +20,7 @@ import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useBuyForm } from "@/defi/hooks/auctions/useBuyForm";
 import _ from "lodash";
-import { useDotSamaContext } from "substrate-react";
+import { useDotSamaContext, useSelectedAccount } from "substrate-react";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
 
 export type BuyFormProps = {
@@ -46,7 +46,8 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     setIsValidQuoteInput,
     isBuyButtonDisabled,
     selectedAuction,
-    minimumReceived
+    minimumReceived,
+    isProcessing
   } = useBuyForm();
 
   const isActive: boolean =
@@ -55,16 +56,8 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   const isEnded: boolean = auction.sale.end < currentTimestamp;
 
   const dispatch = useAppDispatch();
-
-  const [isProcessing, setIsProcessing] = useState(false);
-  const handleDebounceFn = async (side: "base" | "quote", value: BigNumber) => {
-    setIsProcessing(true);
-    await onChangeTokenAmount(side, value);
-    setTimeout(() => {
-      setIsProcessing(false);
-    }, 1000);
-  };
-  const debouncedTokenAmountUpdate = _.debounce(handleDebounceFn, 1000);
+  
+  const debouncedTokenAmountUpdate = _.debounce(onChangeTokenAmount, 1000);
 
   const initiateBuyTx = usePabloSwap({
     baseAssetId: selectedAuction.pair.base.toString(),
@@ -92,7 +85,6 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     >
       <Box visibility={isActive ? undefined : "hidden"}>
         <DropdownCombinedBigNumberInput
-          onMouseDown={(evt) => setIsProcessing(false)}
           maxValue={balanceQuote}
           setValid={setIsValidQuoteInput}
           noBorder
@@ -170,7 +162,6 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
       <Box mt={4} visibility={isActive ? undefined : "hidden"}>
         <BigNumberInput
           disabled={isProcessing}
-          onMouseDown={(evt) => setIsProcessing(false)}
           value={baseAmount}
           setValue={(value) => {
             if (isProcessing) return;

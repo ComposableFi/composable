@@ -4,6 +4,7 @@ import {
   DEFAULT_NETWORK_ID,
   fetchSpotPrice,
   isValidAssetPair,
+  stableSwapCalculator,
   uniswapCalculator,
 } from "@/defi/utils";
 import { useAppSelector } from "@/hooks/store";
@@ -146,17 +147,19 @@ export function useSwaps(): {
   useAsyncEffect(async () => {
     const dexRoute = await fetchDexRoute();
     if (selectedPool && dexRoute) {
-        if (selectedPool.poolId === dexRoute.toNumber()) {
-           // no need to set the route again if it's the same
-            return;
-        }
-        setDexRoute(dexRoute);
+      if (selectedPool.poolId === dexRoute.toNumber()) {
+        // no need to set the route again if it's the same
+        return;
+      }
+      setDexRoute(dexRoute);
     }
     setDexRoute(dexRoute);
   }, [fetchDexRoute, selectedPool]);
 
   useEffect(() => {
-    if (!dexRoute) { return setSelectedPool(undefined); }
+    if (!dexRoute) {
+      return setSelectedPool(undefined);
+    }
 
     const verifiedConstantProductPools = constantProductPools.verified;
     const verifiedStableSwapPools = stableSwapPools.verified;
@@ -204,11 +207,11 @@ export function useSwaps(): {
   const [feeCharged, setFeeCharged] = useState(new BigNumber(0));
 
   const resetTokenAmounts = useCallback(() => {
-        setTokenAmounts({
-            assetOneAmount:  new BigNumber(0),
-            assetTwoAmount: new BigNumber(0)
-        })
-}, [setTokenAmounts])
+    setTokenAmounts({
+      assetOneAmount: new BigNumber(0),
+      assetTwoAmount: new BigNumber(0),
+    });
+  }, [setTokenAmounts]);
 
   const onChangeTokenAmount = async (
     changedSide: "base" | "quote",
@@ -230,15 +233,25 @@ export function useSwaps(): {
         pair,
         selectedPool.poolId
       );
+
       const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
-        uniswapCalculator(
-          changedSide,
-          isInverse,
-          amount,
-          oneBaseInQuote,
-          slippage,
-          feePercentage
-        );
+        "baseWeight" in selectedPool
+          ? uniswapCalculator(
+              changedSide,
+              isInverse,
+              amount,
+              oneBaseInQuote,
+              slippage,
+              feePercentage
+            )
+          : stableSwapCalculator(
+              changedSide,
+              isInverse,
+              amount,
+              oneBaseInQuote,
+              slippage,
+              feePercentage
+            );
 
       setTokenAmounts({
         assetOneAmount: changedSide === "base" ? amount : tokenOutAmount,
@@ -254,7 +267,7 @@ export function useSwaps(): {
         slippageAmount,
       };
     } else {
-        resetTokenAmounts();
+      resetTokenAmounts();
       console.error(`Registered Pool not found`);
       enqueueSnackbar(`Registered Pool not found`);
       return {
