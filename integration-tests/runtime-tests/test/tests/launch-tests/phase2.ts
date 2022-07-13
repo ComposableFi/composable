@@ -4,7 +4,7 @@ import testConfiguration from "./test_configuration.json";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
-import { createConsProdPool } from "@composabletests/tests/pablo/testHandlers/pabloTestHelper";
+import { addFundstoThePool, createConsProdPool } from "@composabletests/tests/pablo/testHandlers/pabloTestHelper";
 
 /**
  * Test suite for verifying phase 2 of the launch process.
@@ -38,7 +38,8 @@ describe("Picasso/Pablo Launch Plan - Phase 2", function() {
   if (!testConfiguration.enabledTests.query.enabled) return;
 
   let api: ApiPromise;
-  let composableManagerWallet: KeyringPair;
+  let composableManagerWallet: KeyringPair,
+    liquidityProviderWallet1: KeyringPair;
   let ksmUsdcPoolId: number;
 
   before("Setting up the tests", async function() {
@@ -48,6 +49,7 @@ describe("Picasso/Pablo Launch Plan - Phase 2", function() {
 
     const { devWalletAlice } = getDevWallets(newKeyring);
     composableManagerWallet = devWalletAlice;
+    liquidityProviderWallet1 = devWalletAlice.derive("/test/launch/lp1");
   });
 
   after("Closing the connection", async function() {
@@ -57,14 +59,65 @@ describe("Picasso/Pablo Launch Plan - Phase 2", function() {
   describe("Picasso/Pablo Launch Plan - Phase 2A", function() {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
-    it("Users can not create a pablo pool.", async function() {
-      const result = await createConsProdPool(api, composableManagerWallet, walletId1, baseAssetId, quoteAssetId, fee, baseWeight);
+    describe("Test 2A pool creation", function() {
+      it("Users can not create a pablo pool.", async function() {
+      });
+
+      it.only("Create KSM/USDC Pool by root.", async function() {
+        this.timeout(2 * 60 * 1000);
+
+        const ksmAssetId = 4;
+        const usdcAssetId = 131;
+        const fee = 150000;
+        const baseWeight = 500000;
+        ksmUsdcPoolId = await createConsProdPool(
+          api,
+          composableManagerWallet,
+          composableManagerWallet,
+          ksmAssetId,
+          usdcAssetId,
+          fee,
+          baseWeight
+        );
+        //verify if the pool is created
+        expect(ksmUsdcPoolId).to.be.a("number");
+      });
     });
 
-    it("Create KSM/USDC Pool by root.", async function() {
-      ksmUsdcPoolId = await createConsProdPool(api, composableManagerWallet, walletId1, baseAssetId, quoteAssetId, fee, baseWeight);
-      //verify if the pool is created
-      expect(poolId).to.be.a("number");
+    describe("Test 2A pool liquidity", function() {
+      describe("Test 2A pool add liquidity", function() {
+        it("Users can add liquidity to the pool", async function() {
+          const result = await addFundstoThePool(api, ksmUsdcPoolId, walletId1, baseAmount, quoteAmount);
+          expect(BigInt(result.baseAdded.toString(10))).to.be.equal(baseAmount);
+          expect(BigInt(result.quoteAdded.toString(10))).to.be.equal(quoteAmount);
+          expect(result.walletIdResult.toString()).to.be.equal(walletId1Account);
+        });
+
+        it("Pool owner can add liquidity to the pool", async function() {
+          const result = await addFundstoThePool(api, ksmUsdcPoolId, composableManagerWallet, baseAmount, quoteAmount);
+          expect(BigInt(result.baseAdded.toString(10))).to.be.equal(baseAmount);
+          expect(BigInt(result.quoteAdded.toString(10))).to.be.equal(quoteAmount);
+          expect(result.walletIdResult.toString()).to.be.equal(walletId1Account);
+        });
+      });
+
+      describe("Test 2A pool remove liquidity", function() {
+
+      });
+    });
+
+    describe("Test 2A pool stake", function() {
+      describe("Test 2A pool stake", function() {
+
+      });
+
+      describe("Test 2A pool unstake", function() {
+
+      });
+    });
+
+    describe("Test 2A pool farming rewards", function() {
+
     });
   });
 
@@ -74,9 +127,6 @@ describe("Picasso/Pablo Launch Plan - Phase 2", function() {
     it("Wallet balance check should be >0", async function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
 
-      const balance = await Phase2.checkBalance(api, walletAlice.address);
-
-      expect(balance.free.toBigInt() > 0).to.be.true; // .to.be.greater(0) didn't work for some reason.
     });
   });
 
@@ -86,9 +136,6 @@ describe("Picasso/Pablo Launch Plan - Phase 2", function() {
     it("Wallet balance check should be >0", async function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
 
-      const balance = await Phase2.checkBalance(api, walletAlice.address);
-
-      expect(balance.free.toBigInt() > 0).to.be.true; // .to.be.greater(0) didn't work for some reason.
     });
   });
 
@@ -98,9 +145,6 @@ describe("Picasso/Pablo Launch Plan - Phase 2", function() {
     it("Wallet balance check should be >0", async function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
 
-      const balance = await Phase2.checkBalance(api, walletAlice.address);
-
-      expect(balance.free.toBigInt() > 0).to.be.true; // .to.be.greater(0) didn't work for some reason.
     });
   });
 });
@@ -120,5 +164,17 @@ export class Phase2 {
   public static async checkBalance(api: ApiPromise, walletAddress: Uint8Array | string) {
     const { data: balance } = await api.query.system.account(walletAddress);
     return balance;
+  }
+
+  public static async verifyPoolCreation() {
+
+  }
+
+  public static async verifyPoolLiquidityAdded() {
+
+  }
+
+  public static async verifyPoolLiquidityRemoved() {
+
   }
 }
