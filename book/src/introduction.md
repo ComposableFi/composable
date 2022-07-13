@@ -1,11 +1,11 @@
 # **👋** Introduction
 
-*Composable Finance: The interoperable infrastructure for Moular DeFi*
+*Composable Finance: The interoperable infrastructure for Modular DeFi*
 
 ---
 
 ![composable_finance](./composable-face-banner.png)
-*Composable Finance: The interoperable infrastructure for Moular DeFi*
+*Composable Finance: The interoperable infrastructure for Modular DeFi*
 
 ---
 

@@ -1,5 +1,7 @@
 # The Composable Parachain
 
+---
+
 ## What is the Composable Parachain?
 
 The Composable Parachain is a Polkadot parachain bolstered by the Polkadot relay chain and thus, leverages Polkadot’s value proposition for the Composable ecosystem. As such, the Composable Parachain is highly secure, robust and efficient and can handle institutional scale throughput. The Composable Parachain provides a solution to several issues that currently plague the industry. Instead of splintered cross-chain communication hubs, Composable brings a clear pathway for adaptive and scalable cross-chain communication across new and existing ecosystems. 
@@ -21,8 +23,7 @@ The Composable Parachain does not use a traditional bridge. Instead, Mosaic serv
 The Composable Parachain will also integrate Centauri, our Substrate–IBC bridge to support cross-ecosystem communication between IBC-enabled blockchains and the Dotsama ecosystem.
 
 
-![composable_parachain_architecture](./composable-parachain-architecture.png)
-
+![composable_parachain_architecture](./composable-parachain-architecture.jpg)
 
 
 ## How the Composable Parachain synergizes with Picasso?
