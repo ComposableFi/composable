@@ -1,6 +1,6 @@
 use super::*;
 
-use crate::routing::Context;
+use crate::{ics23::connections::Connections, routing::Context};
 use frame_support::traits::Get;
 use ibc::{
 	core::{
@@ -23,7 +23,8 @@ where
 	fn connection_end(&self, conn_id: &ConnectionId) -> Result<ConnectionEnd, ICS03Error> {
 		log::trace!("in connection : [connection_end] >> connection_id = {:?}", conn_id);
 
-		let data = <Connections<T>>::get(conn_id.as_bytes());
+		let data = <Connections<T>>::get(conn_id)
+			.ok_or_else(|| ICS03Error::connection_not_found(conn_id.clone()))?;
 		let ret = ConnectionEnd::decode_vec(&*data)
 			.map_err(|_| ICS03Error::connection_mismatch(conn_id.clone()))?;
 		log::trace!("in connection : [connection_end] >>  connection_end = {:?}", ret);
@@ -45,7 +46,7 @@ where
 	}
 
 	fn connection_counter(&self) -> Result<u64, ICS03Error> {
-		let count = Connections::<T>::count();
+		let count = ConnectionCounter::<T>::get();
 		log::trace!("in connection : [connection_counter] >> Connection_counter = {:?}", count);
 
 		Ok(count as u64)
@@ -78,8 +79,7 @@ where
 			connection_end
 		);
 
-		let data = connection_end.encode_vec();
-		<Connections<T>>::insert(connection_id.as_bytes().to_vec(), data);
+		<Connections<T>>::insert(&connection_id, connection_end);
 
 		let temp = ConnectionReader::connection_end(self, &connection_id);
 		log::trace!("in connection : [store_connection] >> read store after: {:?}", temp);
@@ -110,5 +110,6 @@ where
 	fn increase_connection_counter(&mut self) {
 		log::trace!("in connection : [increase_connection_counter]");
 		// connections uses a counted storage map
+		<ConnectionCounter<T>>::put(<ConnectionCounter<T>>::get() + 1);
 	}
 }

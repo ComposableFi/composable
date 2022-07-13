@@ -1,7 +1,11 @@
 use super::*;
 use core::str::FromStr;
 
-use crate::{impls::host_height, routing::Context};
+use crate::{
+	ics23::{client_states::ClientStates, clients::Clients, consensus_states::ConsensusStates},
+	impls::host_height,
+	routing::Context,
+};
 use frame_support::traits::Get;
 use ibc::{
 	core::{
@@ -26,8 +30,9 @@ where
 	fn client_type(&self, client_id: &ClientId) -> Result<ClientType, ICS02Error> {
 		log::trace!("in client : [client_type] >> client_id = {:?}", client_id);
 
-		if <Clients<T>>::contains_key(client_id.as_bytes()) {
-			let data = <Clients<T>>::get(client_id.as_bytes());
+		if <Clients<T>>::contains_key(client_id) {
+			let data = <Clients<T>>::get(client_id)
+				.ok_or_else(|| ICS02Error::client_not_found(client_id.clone()))?;
 			let data = String::from_utf8(data).map_err(|e| {
 				ICS02Error::implementation_specific(format!(
 					"[client_type]: error decoding client type bytes to string {}",
@@ -49,7 +54,8 @@ where
 
 	fn client_state(&self, client_id: &ClientId) -> Result<AnyClientState, ICS02Error> {
 		log::trace!("in client : [client_state] >> client_id = {:?}", client_id);
-		let data = <ClientStates<T>>::get(client_id.as_bytes());
+		let data = <ClientStates<T>>::get(client_id)
+			.ok_or_else(|| ICS02Error::client_not_found(client_id.clone()))?;
 		let state = AnyClientState::decode_vec(&*data)
 			.map_err(|_| ICS02Error::client_not_found(client_id.clone()))?;
 		log::trace!("in client : [client_state] >> any client_state: {:?}", state);
@@ -68,8 +74,9 @@ where
 		);
 
 		let native_height = height;
-		let height = height.encode_vec();
-		let value = <ConsensusStates<T>>::get(client_id.as_bytes(), height);
+		let value = <ConsensusStates<T>>::get(client_id.clone(), height).ok_or_else(|| {
+			ICS02Error::consensus_state_not_found(client_id.clone(), height.clone())
+		})?;
 
 		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
 			.map_err(|_| ICS02Error::consensus_state_not_found(client_id.clone(), native_height))?;
@@ -85,16 +92,8 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Option<AnyConsensusState>, ICS02Error> {
-		let client_id = client_id.as_bytes().to_vec();
-		let mut cs_states = ConsensusStates::<T>::iter_key_prefix(client_id.clone())
-			.map(|height| {
-				let cs_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
-				let height = Height::decode_vec(&height).map_err(|e| {
-					ICS02Error::implementation_specific(format!(
-						"[next_consensus_state]: error decoding height from bytes {}",
-						e
-					))
-				})?;
+		let mut cs_states = ConsensusStates::<T>::iter_key_prefix(client_id)
+			.map(|(height, cs_state)| {
 				let cs = AnyConsensusState::decode_vec(&cs_state).map_err(|e| {
 					ICS02Error::implementation_specific(format!(
 						"[next_consensus_state]: error decoding consensus state from bytes {}",
@@ -121,19 +120,11 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Option<AnyConsensusState>, ICS02Error> {
-		let client_id = client_id.as_bytes().to_vec();
-		let mut cs_states = ConsensusStates::<T>::iter_key_prefix(client_id.clone())
-			.map(|height| {
-				let cs_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
-				let height = Height::decode_vec(&height).map_err(|e| {
-					ICS02Error::implementation_specific(format!(
-						"[prev_consensus_state]: error decoding height: {}",
-						e
-					))
-				})?;
+		let mut cs_states = ConsensusStates::<T>::iter_key_prefix(client_id)
+			.map(|(height, cs_state)| {
 				let cs = AnyConsensusState::decode_vec(&cs_state).map_err(|e| {
 					ICS02Error::implementation_specific(format!(
-						"[prev_consensus_state]: error decoding consensus state: {}",
+						"[next_consensus_state]: error decoding consensus state from bytes {}",
 						e
 					))
 				})?;
@@ -201,7 +192,7 @@ where
 	}
 
 	fn client_counter(&self) -> Result<u64, ICS02Error> {
-		let count = Clients::<T>::count();
+		let count = ClientCounter::<T>::get();
 		log::trace!("in client : [client_counter] >> client_counter: {:?}", count);
 
 		Ok(count as u64)
@@ -220,15 +211,15 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 			client_type
 		);
 
-		let client_id = client_id.as_bytes().to_vec();
 		let client_type = client_type.as_str().as_bytes().to_vec();
-		<Clients<T>>::insert(client_id, client_type);
+		<Clients<T>>::insert(&client_id, client_type);
 		Ok(())
 	}
 
 	fn increase_client_counter(&mut self) {
 		log::trace!("in client : [increase_client_counter]");
-		// Clients uses a counted storage map
+		// increment counter
+		<ClientCounter<T>>::put(<ClientCounter<T>>::get() + 1);
 	}
 
 	fn store_client_state(
@@ -244,7 +235,7 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 
 		let data = client_state.encode_vec();
 		// store client states key-value
-		<ClientStates<T>>::insert(client_id.as_bytes().to_vec(), data);
+		<ClientStates<T>>::insert(&client_id, data);
 
 		Ok(())
 	}
@@ -258,9 +249,9 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		log::trace!("in client : [store_consensus_state] >> client_id: {:?}, height = {:?}, consensus_state = {:?}",
 			client_id, height, consensus_state);
 
-		let height = height.encode_vec();
 		let data = consensus_state.encode_vec();
-		ConsensusStates::<T>::insert(client_id.as_bytes().to_vec(), height, data);
+		// todo: pruning
+		ConsensusStates::<T>::insert(client_id, height, data);
 		Ok(())
 	}
 

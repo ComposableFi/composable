@@ -131,14 +131,10 @@ pub mod pallet {
 		ics26_routing::handler::MsgReceipt,
 	};
 
-	use crate::{
-		host_functions::HostFunctions,
-		ics23::{client_states::ClientStates, clients::Clients},
-	};
+	use crate::{host_functions::HostFunctions, ics23::client_states::ClientStates};
 	use composable_traits::defi::DeFiComposableConfig;
 	pub use ibc::signer::Signer;
 	use ibc_trait::client_id_from_bytes;
-	use sp_core::storage::ChildInfo;
 	use sp_runtime::{generic::DigestItem, SaturatedConversion};
 	use tendermint_proto::Protobuf;
 
@@ -164,7 +160,7 @@ pub mod pallet {
 		const CONNECTION_PREFIX: &'static [u8];
 		/// This is the key under the global state trie, where this pallet will
 		/// incrementally build the ICS23 commitment trie
-		const CHILD_INFO: ChildInfo;
+		const CHILD_INFO_KEY: &'static [u8];
 		/// Expected blocktime
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
@@ -184,18 +180,18 @@ pub mod pallet {
 	// pub type ClientStates<T: Config> =
 	// 	StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// client_id, height => ConsensusState
-	pub type ConsensusStates<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		Vec<u8>,
-		Blake2_128Concat,
-		Vec<u8>,
-		Vec<u8>,
-		ValueQuery,
-	>;
+	// #[pallet::storage]
+	// #[allow(clippy::disallowed_types)]
+	// /// client_id, height => ConsensusState
+	// pub type ConsensusStates<T: Config> = StorageDoubleMap<
+	// 	_,
+	// 	Blake2_128Concat,
+	// 	Vec<u8>,
+	// 	Blake2_128Concat,
+	// 	Vec<u8>,
+	// 	Vec<u8>,
+	// 	ValueQuery,
+	// >;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -216,11 +212,11 @@ pub mod pallet {
 	pub type ClientUpdateTime<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// connection_id => ConnectionEnd
-	pub type Connections<T: Config> =
-		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
+	// #[pallet::storage]
+	// #[allow(clippy::disallowed_types)]
+	// /// connection_id => ConnectionEnd
+	// pub type Connections<T: Config> =
+	// 	CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -276,6 +272,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
+	/// counter for clients
+	pub type ConnectionCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
+
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// client_id => Vec<Connection_id>
 	pub type ConnectionClient<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<Vec<u8>>, ValueQuery>;
@@ -322,6 +323,8 @@ pub mod pallet {
 		ConsensusStateNotFound,
 		/// Client state not found
 		ClientStateNotFound,
+		/// Connection not found
+		ConnectionNotFound,
 		/// Error constructing packet
 		SendPacketError,
 		/// Other forms of errors
@@ -372,7 +375,7 @@ pub mod pallet {
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			<T as Config>::WeightInfo::on_finalize(
 				ClientCounter::<T>::get(),
-				Connections::<T>::count(),
+				ConnectionCounter::<T>::get(),
 				ChannelCounter::<T>::get(),
 				PacketCommitment::<T>::count(),
 				Acknowledgements::<T>::count(),
@@ -460,11 +463,12 @@ pub mod pallet {
 			params: ConnectionParams,
 		) -> DispatchResult {
 			<T as Config>::AdminOrigin::ensure_origin(origin)?;
-			if !ClientStates::<T>::contains_key(params.client_id.clone()) {
-				return Err(Error::<T>::ClientStateNotFound.into())
-			}
 			let client_id =
 				client_id_from_bytes(params.client_id).map_err(|_| Error::<T>::DecodingError)?;
+			if !ClientStates::<T>::contains_key(&client_id) {
+				return Err(Error::<T>::ClientStateNotFound.into())
+			}
+
 			let counterparty_client_id = client_id_from_bytes(params.counterparty_client_id)
 				.map_err(|_| Error::<T>::DecodingError)?;
 			let identifier = params.version.0;
