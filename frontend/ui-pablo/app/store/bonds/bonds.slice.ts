@@ -15,7 +15,7 @@ const createBondsSlice: StoreSlice<BondSlice> = (set) => ({
     totalPurchased: {},
     roi: {},
   },
-  putBondOffers: (bondOffers: BondOffer[]) =>
+  setBondOffers: (bondOffers: BondOffer[]) =>
     set((prev: BondSlice) => ({
       bondOffers: putBondOffers(prev.bondOffers, bondOffers),
     })),
@@ -27,7 +27,7 @@ const createBondsSlice: StoreSlice<BondSlice> = (set) => ({
     set((prev: BondSlice) => ({
       bondOffers: putBondOfferROI(prev.bondOffers, roi),
     })),
-  putBondOfferTotalPurchased: (
+  setBondOfferTotalPurchased: (
     totalPurchasedBonds: Record<string, BigNumber>
   ) =>
     set((prev: BondSlice) => ({
