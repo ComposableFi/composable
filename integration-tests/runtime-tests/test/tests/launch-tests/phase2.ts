@@ -4,13 +4,9 @@ import testConfiguration from "./test_configuration.json";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
-import {
-  addFundstoThePool,
-  createConsProdPool,
-  createLBPool,
-  removeLiquidityFromPool
-} from "@composabletests/tests/pablo/testHandlers/pabloTestHelper";
+import { createLBPool, removeLiquidityFromPool } from "@composabletests/tests/pablo/testHandlers/pabloTestHelper";
 import { mintAssetsToWallet, Pica } from "@composable/utils/mintingHelper";
+import * as uniswap from "@composable/utils/pablo/uniswap";
 
 /**
  * Test suite for verifying phase 2 of the launch process.
@@ -53,8 +49,9 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
   const picaAssetId = 1,
     ksmAssetId = 4,
     usdcAssetId = 131;
-  const baseAmount = Pica(250000);
-  const quoteAmount = Pica(250000);
+  const baseAmount = 250000000000;
+  const quoteAmount = 250000000000;
+  const minMintAmount = 0;
 
   before("Setting up the tests", async function() {
     this.timeout(60 * 1000);
@@ -98,15 +95,16 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
         const fee = 150000;
         const baseWeight = 500000;
         // ToDo (D. Roth): Update to use `root`.
-        ksmUsdcPoolId = await createConsProdPool(
+        const { data: [result] } = await uniswap.sudo.sudoCreateMarket(
           api,
-          composableManagerWallet,
-          composableManagerWallet,
+          sudoKey,
+          composableManagerWallet.publicKey,
           ksmAssetId,
           usdcAssetId,
           fee,
           baseWeight
         );
+        ksmUsdcPoolId = result.toNumber();
         //verify if the pool is created
         expect(ksmUsdcPoolId).to.be.a("number");
       });
@@ -116,18 +114,12 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
       describe("Test 2A pool add liquidity", function() {
         it("Users can add liquidity to the pool", async function() {
           this.timeout(2 * 60 * 1000);
-          const result = await addFundstoThePool(api, ksmUsdcPoolId, liquidityProviderWallet1, baseAmount, quoteAmount);
-          expect(BigInt(result.baseAdded.toString(10))).to.be.equal(baseAmount);
-          expect(BigInt(result.quoteAdded.toString(10))).to.be.equal(quoteAmount);
-          expect(result.walletIdResult.toString()).to.be.equal(liquidityProviderWallet1.address.toString());
+          const { data: [result] } = await uniswap.addLiquidity(api, liquidityProviderWallet1, ksmUsdcPoolId, baseAmount, quoteAmount, minMintAmount, true);
         });
 
         it("Pool owner can add liquidity to the pool", async function() {
           this.timeout(2 * 60 * 1000);
-          const result = await addFundstoThePool(api, ksmUsdcPoolId, composableManagerWallet, baseAmount, quoteAmount);
-          expect(BigInt(result.baseAdded.toString(10))).to.be.equal(baseAmount);
-          expect(BigInt(result.quoteAdded.toString(10))).to.be.equal(quoteAmount);
-          expect(result.walletIdResult.toString()).to.be.equal(composableManagerWallet.address.toString());
+          const { data: [result] } = await uniswap.sudo.sudoAddLiquidity(api, sudoKey, ksmUsdcPoolId, baseAmount, quoteAmount, minMintAmount, true);
         });
       });
 
@@ -231,22 +223,8 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
   });
 });
 
-/**
- * If the test file is quite small like this one, we often have the request functions within the same file.
- * Though for big files, like `txOracleTests.ts`, we outsource the tests handlers into an extra subdirectory
- * called `testHandlers`.
- */
+
 export class Phase2 {
-  /**
-   * Sends a requests for `query.system.account` using the provided `walletAddress`
-   *
-   * @param {ApiPromise} api Connected API Promise.
-   * @param {Uint8Array|string} walletAddress wallet public key
-   */
-  public static async checkBalance(api: ApiPromise, walletAddress: Uint8Array | string) {
-    const { data: balance } = await api.query.system.account(walletAddress);
-    return balance;
-  }
 
   public static async verifyPoolCreation() {
 
