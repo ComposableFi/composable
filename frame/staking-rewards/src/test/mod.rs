@@ -191,7 +191,7 @@ fn test_transfer_reward() {
 			USDT::ID,
 			10_u128
 		));
-		// con't transfer more than max_rewards set in the rewards config
+		// can't transfer more than max_rewards set in the rewards config
 		assert_noop!(
 			<StakingRewards as ProtocolStaking>::transfer_reward(&ALICE, &1, USDT::ID, 10_000_u128),
 			crate::Error::<Test>::MaxRewardLimitReached

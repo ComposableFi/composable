@@ -532,8 +532,8 @@ pub mod pallet {
 
 		pub(crate) fn boosted_amount(reward_multiplier: Perbill, amount: T::Balance) -> T::Balance {
 			reward_multiplier.mul_ceil(amount)
-        }
-    }
+		}
+	}
 
 	impl<T: Config> ProtocolStaking for Pallet<T> {
 		type AssetId = T::AssetId;
@@ -578,7 +578,7 @@ pub mod pallet {
 								)?;
 							},
 							None => {
-								// new reward asset so only pool owner is allowd to add.
+								// new reward asset so only pool owner is allowed to add.
 								ensure!(
 									*from == reward_pool.owner,
 									Error::<T>::OnlyPoolOwnerCanAddNewReward
