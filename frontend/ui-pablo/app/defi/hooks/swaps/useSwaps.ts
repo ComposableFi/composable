@@ -1,11 +1,11 @@
 import { Option } from "@/components/types";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import {
+  calculator,
   DEFAULT_NETWORK_ID,
   fetchSpotPrice,
   isValidAssetPair,
-  stableSwapCalculator,
-  uniswapCalculator,
+  stableSwapCalculator
 } from "@/defi/utils";
 import { useAppSelector } from "@/hooks/store";
 import { useAsyncEffect } from "@/hooks/useAsyncEffect";
@@ -220,7 +220,7 @@ export function useSwaps(): {
     setTimeout(() => {
       setIsProcessing(false);
     }, 500);
-  }
+  };
 
   const onChangeTokenAmount = async (
     changedSide: "base" | "quote",
@@ -233,39 +233,28 @@ export function useSwaps(): {
         selectedPool &&
         isValidAssetPair(selectedAssetOneId, selectedAssetTwoId)
       ) {
-        const { base, quote } = selectedPool.pair;
         const { feeRate } = selectedPool.feeConfig;
         let feePercentage = new BigNumber(feeRate).toNumber();
-        const isInverse = selectedAssetOneId === base.toString();
-        let pair = { base: base.toString(), quote: quote.toString() };
-  
-        const oneBaseInQuote = await fetchSpotPrice(
-          parachainApi,
-          pair,
-          selectedPool.poolId
-        );
-  
+
         const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
           "baseWeight" in selectedPool
-            ? uniswapCalculator(
+            ? calculator(
                 changedSide,
-                isInverse,
                 amount,
-                oneBaseInQuote,
+                spotPrice,
                 slippage,
                 feePercentage
               )
             : stableSwapCalculator(
                 changedSide,
-                isInverse,
                 amount,
-                oneBaseInQuote,
+                spotPrice,
                 slippage,
                 feePercentage
               );
-  
+
         if (changedSide === "base" && tokenOutAmount.gt(balance1)) {
-          throw new Error('Insufficient balance.');
+          throw new Error("Insufficient balance.");
         }
 
         setTokenAmounts({
@@ -276,7 +265,7 @@ export function useSwaps(): {
         setFeeCharged(feeChargedAmount);
         setSlippageAmount(slippageAmount);
       } else {
-        throw new Error('Pool not found.');
+        throw new Error("Pool not found.");
       }
     } catch (err: any) {
       resetTokenAmounts();
@@ -291,7 +280,7 @@ export function useSwaps(): {
     setIsProcessing(true);
     flipAssetSelection();
     unsetProcessingDelayed();
-  }
+  };
 
   const changeAsset = (
     changedSide: "quote" | "base",
@@ -339,6 +328,6 @@ export function useSwaps(): {
     assetOneInputValid,
     assetTwoInputValid,
     flipAssetSelection: flipAssets,
-    isProcessing
+    isProcessing,
   };
 }
