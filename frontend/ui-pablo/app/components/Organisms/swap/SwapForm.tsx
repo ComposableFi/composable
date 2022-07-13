@@ -52,7 +52,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     assetOneAmount,
     assetTwoAmount,
     onChangeTokenAmount,
-    updateSpotPrice,
     minimumReceived,
     feeCharged,
     spotPrice,
@@ -62,8 +61,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     setAssetOneInputValid,
     setAssetTwoInputValid,
     assetOneInputValid,
-    assetTwoInputValid,
     flipAssetSelection,
+    isProcessing
   } = useSwaps();
 
   const initiateSwapTx = usePabloSwap({
@@ -124,21 +123,11 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     }
   }, [isConfirmed, dispatch]);
 
-  const [isProcessing, setIsProcessing] = useState(false);
-
   const onSettingHandler = () => {
     dispatch(openTransactionSettingsModal());
   };
 
-  const handleDebounceFn = async (side: "base" | "quote", value: BigNumber) => {
-    setIsProcessing(true);
-    await onChangeTokenAmount(side, value);
-    setTimeout(() => {
-      setIsProcessing(false);
-    }, 500);
-  };
-
-  const debouncedTokenAmountUpdate = _.debounce(handleDebounceFn, 1000);
+  const debouncedTokenAmountUpdate = _.debounce(onChangeTokenAmount, 1000);
 
   return (
     <Box
@@ -184,7 +173,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           setValid={setAssetOneInputValid}
           noBorder
           value={assetOneAmount}
-          onMouseDown={(evt) => setIsProcessing(false)}
           setValue={(val) => {
             if (isProcessing) return;
             debouncedTokenAmountUpdate("quote", val);
@@ -211,11 +199,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           CombinedSelectProps={{
             value: selectedAssetOneId,
             setValue: (val) => {
-              setIsProcessing(true);
               changeAsset("quote", val);
-              setTimeout(() => {
-                setIsProcessing(false);
-              }, 500);
             },
             dropdownModal: true,
             dropdownForceWidth: 320,
@@ -272,7 +256,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         >
           <SwapVertRounded
             onClick={() => {
-              setIsProcessing(true);
               flipAssetSelection();
             }}
           />
@@ -286,7 +269,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           setValid={setAssetTwoInputValid}
           noBorder
           value={assetTwoAmount}
-          onMouseDown={(evt) => setIsProcessing(false)}
           setValue={(val) => {
             if (isProcessing) return;
             debouncedTokenAmountUpdate("base", val);
@@ -300,11 +282,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           CombinedSelectProps={{
             value: selectedAssetTwoId,
             setValue: (val) => {
-              setIsProcessing(true);
               changeAsset("base", val);
-              setTimeout(() => {
-                setIsProcessing(false);
-              }, 500);
             },
             dropdownModal: true,
             dropdownForceWidth: 320,
