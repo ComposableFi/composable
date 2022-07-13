@@ -91,8 +91,7 @@ export const useBuyForm = (): {
         let feePercentage = new BigNumber(feeRate).toNumber();
   
         let pair = { base: base.toString(), quote: quote.toString() };
-  
-        const oneBaseInQuote = await fetchSpotPrice(
+        const spotPrice = await fetchSpotPrice(
           parachainApi,
           pair,
           activeLBP.poolId
@@ -101,7 +100,7 @@ export const useBuyForm = (): {
           calculator(
             changedSide,
             amount,
-            oneBaseInQuote,
+            spotPrice,
             slippage,
             feePercentage
           );

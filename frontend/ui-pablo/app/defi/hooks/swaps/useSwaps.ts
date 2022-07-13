@@ -5,7 +5,7 @@ import {
   DEFAULT_NETWORK_ID,
   fetchSpotPrice,
   isValidAssetPair,
-  stableSwapCalculator
+  stableSwapCalculator,
 } from "@/defi/utils";
 import { useAppSelector } from "@/hooks/store";
 import { useAsyncEffect } from "@/hooks/useAsyncEffect";
@@ -233,6 +233,12 @@ export function useSwaps(): {
         selectedPool &&
         isValidAssetPair(selectedAssetOneId, selectedAssetTwoId)
       ) {
+        const spotPrice = await fetchSpotPrice(
+          parachainApi,
+          { base: selectedAssetTwoId, quote: selectedAssetOneId },
+          selectedPool.poolId
+        );
+
         const { feeRate } = selectedPool.feeConfig;
         let feePercentage = new BigNumber(feeRate).toNumber();
 
