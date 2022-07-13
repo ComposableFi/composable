@@ -12,7 +12,7 @@ export function getBondPrincipalAsset(
   supportedAssets: MockedAsset[],
   lpRewardingPools: Array<StableSwapPool | ConstantProductPool>
 ): BondPrincipalAsset {
-  const isLpBasedBond: ConstantProductPool | StableSwapPool | undefined =
+  const lpBasedBond: ConstantProductPool | StableSwapPool | undefined =
     lpRewardingPools.find(
       (pool: ConstantProductPool | StableSwapPool) =>
         pool.lpToken === bondOffer.asset
@@ -24,12 +24,12 @@ export function getBondPrincipalAsset(
     },
     simplePrincipalAsset: undefined,
   };
-  if (isLpBasedBond) {
+  if (lpBasedBond !== undefined) {
     const baseAsset = supportedAssets.find((asset) =>
-      matchAssetByPicassoId(asset, isLpBasedBond.pair.base.toString())
+      matchAssetByPicassoId(asset, lpBasedBond.pair.base.toString())
     );
     const quoteAsset = supportedAssets.find((asset) =>
-      matchAssetByPicassoId(asset, isLpBasedBond.pair.quote.toString())
+      matchAssetByPicassoId(asset, lpBasedBond.pair.quote.toString())
     );
 
     principalAsset.lpPrincipalAsset = { baseAsset, quoteAsset };

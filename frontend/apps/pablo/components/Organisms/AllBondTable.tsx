@@ -127,25 +127,25 @@ export const AllBondTable: React.FC = () => {
 
   const {
     bondOffers: { list },
-    putBondOffers,
-    putBondOfferTotalPurchased,
+    setBondOffers,
+    setBondOfferTotalPurchased,
   } = useStore();
 
   useEffect(() => {
     if (parachainApi) {
       fetchBondOffers(parachainApi).then((decodedOffers) => {
-        putBondOffers(decodedOffers);
+        setBondOffers(decodedOffers);
       });
     }
-  }, [parachainApi, putBondOffers]);
+  }, [parachainApi, setBondOffers]);
 
   useEffect(() => {
     fetchTotalPurchasedBondsByOfferIds().then(
       (totalPurchasedByOfferIds) => {
-        putBondOfferTotalPurchased(totalPurchasedByOfferIds);
+        setBondOfferTotalPurchased(totalPurchasedByOfferIds);
       }
     );
-  }, [putBondOfferTotalPurchased]);
+  }, [setBondOfferTotalPurchased]);
 
   const [count, setCount] = useState(BOND_LIMIT_TO_SHOW);
   const handleSeeMore = () => {
