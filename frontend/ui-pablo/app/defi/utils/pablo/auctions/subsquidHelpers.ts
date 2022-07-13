@@ -289,12 +289,17 @@ export async function fetchAuctionChartSeries(
       auction.pair.quote.toString()
     );
 
+    if (chartSeries.length > 0) {
+      let lastTimeStamp = chartSeries[chartSeries.length - 1][0];
+      let lastPrice = chartSeries[chartSeries.length - 1][1];
+      predictedSeries.push([lastTimeStamp, lastPrice])
+    }
+  
     const block = await parachainApi.query.system.number();
-
     let blockIter = new BigNumber(block.toString());
-    let lastTimeStamp = chartSeries[chartSeries.length - 1][0];
+    let ts = Date.now();
 
-    while (lastTimeStamp < auction.sale.end) {
+    while (ts < auction.sale.end) {
       const price = lbpCalculatePriceAtBlock(
         auction,
         new BigNumber(baseBalance),
@@ -302,8 +307,8 @@ export async function fetchAuctionChartSeries(
         blockIter
       );
 
-      predictedSeries.push([lastTimeStamp, price.toNumber()]);
-      lastTimeStamp += AVERAGE_BLOCK_TIME * 1000;
+      predictedSeries.push([ts, price.toNumber()]);
+      ts += AVERAGE_BLOCK_TIME * 1000;
       blockIter = blockIter.plus(1000);
     }
   } catch (err) {
