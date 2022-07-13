@@ -322,7 +322,7 @@ describe("Vesting schedule added", () => {
       }
     );
 
-    // Stub store.save() to update the total purchased bonds in the database
+    // Stub store.save() to update the vesting schedules in the database
     when(storeMock.save<VestingSchedule>(anything())).thenCall(
       (vestingSchedule) => {
         vestingSchedulesStored.push(vestingSchedule);
