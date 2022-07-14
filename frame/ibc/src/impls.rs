@@ -79,7 +79,7 @@ where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
 	pub(crate) fn extract_ibc_commitment_root() -> Vec<u8> {
-		child::root(&ChildInfo::new_default(T::CHILD_INFO_KEY), sp_core::storage::StateVersion::V0)
+		child::root(&ChildInfo::new_default(T::CHILD_TRIE_KEY), sp_core::storage::StateVersion::V0)
 	}
 
 	// IBC Runtime Api helper methods

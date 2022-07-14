@@ -24,7 +24,7 @@ impl<T: Config> PacketCommitment<T> {
 		let commitment_path = format!("{}", commitment_path);
 		let commitment_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path]);
 		child::put(
-			&ChildInfo::new_default(T::CHILD_INFO_KEY),
+			&ChildInfo::new_default(T::CHILD_TRIE_KEY),
 			&commitment_key,
 			&commitment.into_vec(),
 		)
@@ -34,28 +34,28 @@ impl<T: Config> PacketCommitment<T> {
 		let commitment_path = CommitmentsPath { port_id, channel_id, sequence };
 		let commitment_path = format!("{}", commitment_path);
 		let commitment_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path]);
-		child::get(&ChildInfo::new_default(T::CHILD_INFO_KEY), &commitment_key)
+		child::get(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &commitment_key)
 	}
 
 	pub fn remove((port_id, channel_id, sequence): (PortId, ChannelId, Sequence)) {
 		let commitment_path = CommitmentsPath { port_id, channel_id, sequence };
 		let commitment_path = format!("{}", commitment_path);
 		let commitment_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path]);
-		child::kill(&ChildInfo::new_default(T::CHILD_INFO_KEY), &commitment_key)
+		child::kill(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &commitment_key)
 	}
 
 	pub fn contains_key((port_id, channel_id, sequence): (PortId, ChannelId, Sequence)) -> bool {
 		let commitment_path = CommitmentsPath { port_id, channel_id, sequence };
 		let commitment_path = format!("{}", commitment_path);
 		let commitment_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path]);
-		child::exists(&ChildInfo::new_default(T::CHILD_INFO_KEY), &commitment_key)
+		child::exists(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &commitment_key)
 	}
 
 	pub fn iter() -> impl Iterator<Item = ((PortId, ChannelId, Sequence), Vec<u8>)> {
 		let prefix = format!("commitments/ports/");
 		let prefix_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![prefix.clone()]);
 		ChildTriePrefixIterator::with_prefix(
-			&ChildInfo::new_default(T::CHILD_INFO_KEY),
+			&ChildInfo::new_default(T::CHILD_TRIE_KEY),
 			&prefix_key,
 		)
 		.filter_map(move |(remaining_key, value)| {

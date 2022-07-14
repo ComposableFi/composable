@@ -162,10 +162,11 @@ pub mod pallet {
 		const CONNECTION_PREFIX: &'static [u8];
 		/// This is the key under the global state trie, where this pallet will
 		/// incrementally build the ICS23 commitment trie
-		const CHILD_INFO_KEY: &'static [u8];
+		const CHILD_TRIE_KEY: &'static [u8];
 		/// Expected blocktime
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
+		/// benchmarking weight info
 		type WeightInfo: WeightInfo;
 		/// Origin allowed to create light clients and initiate connections
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
@@ -175,25 +176,6 @@ pub mod pallet {
 	#[pallet::generate_store(pub (super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
-
-	// #[pallet::storage]
-	// #[allow(clippy::disallowed_types)]
-	// /// client_id => ClientState
-	// pub type ClientStates<T: Config> =
-	// 	StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
-
-	// #[pallet::storage]
-	// #[allow(clippy::disallowed_types)]
-	// /// client_id, height => ConsensusState
-	// pub type ConsensusStates<T: Config> = StorageDoubleMap<
-	// 	_,
-	// 	Blake2_128Concat,
-	// 	Vec<u8>,
-	// 	Blake2_128Concat,
-	// 	Vec<u8>,
-	// 	Vec<u8>,
-	// 	ValueQuery,
-	// >;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -213,12 +195,6 @@ pub mod pallet {
 	/// client_id , Height => Timestamp
 	pub type ClientUpdateTime<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
-
-	// #[pallet::storage]
-	// #[allow(clippy::disallowed_types)]
-	// /// connection_id => ConnectionEnd
-	// pub type Connections<T: Config> =
-	// 	CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -247,30 +223,6 @@ pub mod pallet {
 	pub type ChannelsConnection<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<(Vec<u8>, Vec<u8>)>, ValueQuery>;
 
-	// #[pallet::storage]
-	// #[allow(clippy::disallowed_types)]
-	// /// (port_identifier, channel_identifier) => Sequence
-	// pub type NextSequenceSend<T: Config> =
-	// 	StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
-
-	// #[pallet::storage]
-	// #[allow(clippy::disallowed_types)]
-	// /// (port_identifier, channel_identifier) => Sequence
-	// pub type NextSequenceRecv<T: Config> =
-	// 	StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
-
-	// #[pallet::storage]
-	// #[allow(clippy::disallowed_types)]
-	// /// (port_identifier, channel_identifier) = Sequence
-	// pub type NextSequenceAck<T: Config> =
-	// 	StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
-
-	// #[pallet::storage]
-	// #[allow(clippy::disallowed_types)]
-	// /// (port_identifier, channel_identifier, Sequence) => Hash
-	// pub type Acknowledgements<T: Config> =
-	// 	CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
-
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// counter for clients
@@ -286,18 +238,6 @@ pub mod pallet {
 	/// client_id => Vec<Connection_id>
 	pub type ConnectionClient<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<Vec<u8>>, ValueQuery>;
-
-	// #[pallet::storage]
-	// #[allow(clippy::disallowed_types)]
-	// /// (port_id, channel_id, sequence) => receipt
-	// pub type PacketReceipt<T: Config> =
-	// 	CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
-
-	// #[pallet::storage]
-	// #[allow(clippy::disallowed_types)]
-	// /// (port_id, channel_id, sequence) => hash
-	// pub type PacketCommitment<T: Config> =
-	// 	CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]

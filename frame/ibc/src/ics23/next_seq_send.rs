@@ -7,6 +7,7 @@ use ibc::core::ics24_host::{
 use ibc_trait::apply_prefix_and_encode;
 use sp_std::marker::PhantomData;
 
+// todo: pruning
 /// (port_identifier, channel_identifier) => Sequence
 pub struct NextSequenceSend<T>(PhantomData<T>);
 
@@ -15,13 +16,13 @@ impl<T: Config> NextSequenceSend<T> {
 		let next_seq_send_path = format!("{}", SeqSendsPath(port_id.clone(), channel_id));
 		let next_seq_send_key =
 			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_send_path]);
-		child::get(&ChildInfo::new_default(T::CHILD_INFO_KEY), &next_seq_send_key)
+		child::get(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &next_seq_send_key)
 	}
 
 	pub fn insert(port_id: PortId, channel_id: ChannelId, seq: u64) {
 		let next_seq_send_path = format!("{}", SeqSendsPath(port_id.clone(), channel_id));
 		let next_seq_send_key =
 			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_send_path]);
-		child::put(&ChildInfo::new_default(T::CHILD_INFO_KEY), &next_seq_send_key, &seq)
+		child::put(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &next_seq_send_key, &seq)
 	}
 }

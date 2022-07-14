@@ -221,7 +221,7 @@ impl pallet_ibc::Config for Test {
 	type Currency = Balances;
 	const INDEXING_PREFIX: &'static [u8] = b"ibc";
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
-	const CHILD_INFO_KEY: &'static [u8] = b"IBC";
+	const CHILD_TRIE_KEY: &'static [u8] = b"IBC";
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type WeightInfo = ();
 
