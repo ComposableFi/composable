@@ -219,7 +219,9 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 	fn increase_client_counter(&mut self) {
 		log::trace!("in client : [increase_client_counter]");
 		// increment counter
-		<ClientCounter<T>>::put(<ClientCounter<T>>::get() + 1);
+		if let Some(val) = <ClientCounter<T>>::get().checked_add(1) {
+			<ClientCounter<T>>::put(val);
+		}
 	}
 
 	fn store_client_state(

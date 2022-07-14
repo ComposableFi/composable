@@ -224,6 +224,10 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
+	pub type PacketCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
+
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// (port_identifier, channel_identifier) => ChannelEnd
 	pub type Channels<T: Config> = StorageDoubleMap<
 		_,
@@ -287,11 +291,11 @@ pub mod pallet {
 	pub type PacketReceipt<T: Config> =
 		CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// (port_id, channel_id, sequence) => hash
-	pub type PacketCommitment<T: Config> =
-		CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
+	// #[pallet::storage]
+	// #[allow(clippy::disallowed_types)]
+	// /// (port_id, channel_id, sequence) => hash
+	// pub type PacketCommitment<T: Config> =
+	// 	CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -325,6 +329,8 @@ pub mod pallet {
 		ClientStateNotFound,
 		/// Connection not found
 		ConnectionNotFound,
+		/// Packet commitment wasn't found
+		PacketCommitmentNotFound,
 		/// Error constructing packet
 		SendPacketError,
 		/// Other forms of errors
@@ -377,14 +383,14 @@ pub mod pallet {
 				ClientCounter::<T>::get(),
 				ConnectionCounter::<T>::get(),
 				ChannelCounter::<T>::get(),
-				PacketCommitment::<T>::count(),
+				PacketCounter::<T>::get(),
 				Acknowledgements::<T>::count(),
 				PacketReceipt::<T>::count(),
 			)
 		}
 
 		fn offchain_worker(_n: BlockNumberFor<T>) {
-			Pallet::<T>::packet_cleanup();
+			let _ = Pallet::<T>::packet_cleanup();
 		}
 	}
 

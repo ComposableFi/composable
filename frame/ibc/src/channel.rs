@@ -7,7 +7,7 @@ use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use crate::{
 	ics23::{
 		next_seq_ack::NextSequenceAck, next_seq_recv::NextSequenceRecv,
-		next_seq_send::NextSequenceSend,
+		next_seq_send::NextSequenceSend, packet_commitments::PacketCommitment,
 	},
 	routing::Context,
 };
@@ -136,12 +136,13 @@ where
 		let seq = u64::from(key.2);
 
 		if <PacketCommitment<T>>::contains_key((
-			key.0.as_bytes(),
-			key.1.to_string().as_bytes(),
-			seq,
+			key.0.clone(),
+			key.1.clone(),
+			key.2.clone(),
 		)) {
 			let data =
-				<PacketCommitment<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
+				<PacketCommitment<T>>::get((key.0.clone(), key.1.clone(), key.2.clone()))
+					.ok_or_else(|| ICS04Error::missing_packet())?;
 			log::trace!("in channel : [get_packet_commitment] >> packet_commitment = {:?}", data);
 			Ok(data.into())
 		} else {
@@ -268,11 +269,13 @@ where
 		key: (PortId, ChannelId, Sequence),
 		commitment: PacketCommitmentType,
 	) -> Result<(), ICS04Error> {
-		let seq = u64::from(key.2);
 		<PacketCommitment<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
-			commitment.into_vec(),
+			(key.0.clone(), key.1.clone(), key.2.clone()),
+			commitment,
 		);
+		if let Some(val) = PacketCounter::<T>::get().checked_add(1) {
+			PacketCounter::<T>::put(val);
+		}
 
 		Ok(())
 	}
@@ -305,10 +308,14 @@ where
 
 		// delete packet commitment
 		<PacketCommitment<T>>::remove((
-			key.0.as_bytes().to_vec(),
-			key.1.to_string().as_bytes().to_vec(),
-			seq,
+			key.0.clone(),
+			key.1.clone(),
+			key.2.clone(),
 		));
+
+		if let Some(val)  = PacketCounter::<T>::get().checked_sub(1) {
+			PacketCounter::<T>::put(val);
+		}
 
 		Ok(())
 	}
@@ -441,11 +448,7 @@ where
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
 
-		<NextSequenceAck<T>>::insert(
-			port_channel_id.0.clone(),
-			port_channel_id.1.clone(),
-			seq,
-		);
+		<NextSequenceAck<T>>::insert(port_channel_id.0.clone(), port_channel_id.1.clone(), seq);
 
 		Ok(())
 	}

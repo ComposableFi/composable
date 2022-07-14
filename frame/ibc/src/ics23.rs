@@ -8,3 +8,4 @@ pub mod consensus_states;
 pub mod next_seq_ack;
 pub mod next_seq_recv;
 pub mod next_seq_send;
+pub mod packet_commitments;

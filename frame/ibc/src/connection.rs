@@ -110,6 +110,8 @@ where
 	fn increase_connection_counter(&mut self) {
 		log::trace!("in connection : [increase_connection_counter]");
 		// connections uses a counted storage map
-		<ConnectionCounter<T>>::put(<ConnectionCounter<T>>::get() + 1);
+		if let Some(val) = <ConnectionCounter<T>>::get().checked_add(1) {
+			<ConnectionCounter<T>>::put(val);
+		}
 	}
 }
