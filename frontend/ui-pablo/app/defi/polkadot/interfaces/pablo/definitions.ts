@@ -40,15 +40,43 @@ export default {
         },
         {
           name: "amounts",
-          type: "BTreeMap<AssetId, Balance>"
+          type: "BTreeMap<AssetId, CustomRpcBalance>"
         },
         {
           name: "at",
           type: "Hash",
           isOptional: true,
         }
-      ]
+      ],
+      type: "Balance"
     },
+    simulateRemoveLiquidity: {
+      description: "Get the amount of tokens that user will get in return for removing n lp tokens.",
+      params: [
+        {
+          name: "who",
+          type: "AccountId32"
+        },
+        {
+          name: "poolId",
+          type: "PalletPabloPoolId"
+        },
+        {
+          name: "lpAmount",
+          type: "CustomRpcBalance"
+        },
+        {
+          name: "min_expected_amounts",
+          type: "BTreeMap<AssetId, CustomRpcBalance>"
+        },
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true,
+        }
+      ],
+      type: "RemoveLiquiditySimulationResult"
+    }
   },
   types: {
     PalletPabloPoolInitConfiguration: "PalletPabloPoolConfiguration",

@@ -122,35 +122,18 @@ export const useAddLiquidity = () => {
       const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
 
       if (bnBase.gte(0) && bnQuote.gte(0)) {
+        
+        let b = isReverse ? pool.pair.quote.toString() : pool.pair.base.toString();
+        let q = isReverse ? pool.pair.base.toString() : pool.pair.quote.toString();
+
         (parachainApi.rpc as any).pablo
           .simulateAddLiquidity(
             parachainApi.createType("AccountId32", selectedAccount.address),
             parachainApi.createType("PalletPabloPoolId", pool.poolId),
-            parachainApi.createType(
-              "BTreeMap<AssetId, Balance>",
-              [
-                [
-                  parachainApi.createType(
-                    "AssetId",
-                    isReverse ? pool.pair.quote : pool.pair.base
-                  ),
-                  parachainApi.createType(
-                    "Balance",
-                    bnBase.toString()
-                  ),
-                ],
-                [
-                  parachainApi.createType(
-                    "AssetId",
-                    isReverse ? pool.pair.base : pool.pair.quote
-                  ),
-                  parachainApi.createType(
-                    "Balance",
-                    bnQuote.toString()
-                  ),
-                ],
-              ]
-            )
+            {
+              [b]: bnBase.toString(),
+              [q]: bnQuote.toString()
+            }
           )
           .then((expectedLP: any) => {
             setLpReceiveAmount(fromChainUnits(expectedLP.toString()));

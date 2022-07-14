@@ -79,7 +79,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
 
   const totalValueLocked = poolDetails.tokensLocked.value.baseValue.plus(
     poolDetails.tokensLocked.value.quoteValue
-  );
+    );
 
   const remaining = totalValueLocked.minus(totalValueProvided);
 
@@ -154,7 +154,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
                 </Item>
               )}
               <Item value={`${
-                totalValueProvided.eq(0) ? "0" : totalValueLocked.div(totalValueProvided).times(100).toFixed(2)
+                totalValueProvided.eq(0) ? "0" : totalValueProvided.div(totalValueLocked).times(100).toFixed(2)
               }%`} mt={4}>
                 <Typography variant="body1">Pool share</Typography>
               </Item>
