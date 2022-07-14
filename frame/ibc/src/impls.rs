@@ -5,6 +5,7 @@ use crate::{
 		acknowledgements::Acknowledgements, connections::Connections,
 		consensus_states::ConsensusStates, next_seq_recv::NextSequenceRecv,
 		next_seq_send::NextSequenceSend, packet_commitments::PacketCommitment,
+		reciepts::PacketReceipt,
 	},
 	routing::Context,
 };
@@ -77,129 +78,6 @@ where
 	T: Send + Sync,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
-	pub fn build_trie_inputs() -> Result<Vec<(Vec<u8>, Vec<u8>)>, Error<T>> {
-		let mut inputs = Vec::new();
-
-		// Insert client state in trie
-		// for (client_id, client_state) in Clients::<T>::iter() {
-		// 	let client_type = Clients::<T>::get(&client_id);
-		// 	let id = ClientId::from_str(
-		// 		&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?,
-		// 	)
-		// 	.map_err(|_| Error::<T>::DecodingError)?;
-		// 	let client_state_path = format!("{}", ClientStatePath(id.clone()));
-		// 	let client_type_path = format!("{}", ClientTypePath(id.clone()));
-		// 	let client_type_key =
-		// 		apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_type_path])
-		// 			.map_err(|_| Error::<T>::DecodingError)?;
-		// 	let client_state_key =
-		// 		apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path])
-		// 			.map_err(|_| Error::<T>::DecodingError)?;
-		// 	inputs.push((client_state_key, client_state));
-		// 	inputs.push((client_type_key, client_type))
-		// }
-
-		// Insert consensus states in trie
-		// let consensus_states = ConsensusStates::<T>::iter();
-		// for (client_id, height, consensus_state) in consensus_states {
-		// 	let client_id = ClientId::from_str(
-		// 		&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?,
-		// 	)
-		// 	.map_err(|_| Error::<T>::DecodingError)?;
-		// 	let height =
-		// 		ibc::Height::decode(&mut &*height).map_err(|_| Error::<T>::DecodingError)?;
-		// 	let consensus_path = ClientConsensusStatePath {
-		// 		client_id,
-		// 		epoch: height.revision_number,
-		// 		height: height.revision_height,
-		// 	};
-		// 	let path = format!("{}", consensus_path);
-		// 	let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path]);
-		// 	inputs.push((key, consensus_state));
-		// }
-
-		// Insert connection ends in trie
-		// for (connection, connection_end) in Connections::<T>::iter() {
-		// 	let connection_id = ConnectionId::from_str(
-		// 		&String::from_utf8(connection).map_err(|_| Error::<T>::DecodingError)?,
-		// 	)
-		// 	.map_err(|_| Error::<T>::DecodingError)?;
-		// 	let path = format!("{}", ConnectionsPath(connection_id));
-		// 	let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path]);
-		// 	inputs.push((key, connection_end))
-		// }
-
-		// Insert channel ends and sequences in trie
-		// for (port, channel, channel_end) in Channels::<T>::iter() {
-		// 	let next_seq_send = NextSequenceSend::<T>::get(&port, &channel);
-		// 	let next_seq_recv = NextSequenceRecv::<T>::get(&port, &channel);
-		// 	let next_seq_ack = NextSequenceAck::<T>::get(&port, &channel);
-		// 	let channel_id =
-		// 		channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
-		// 	let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-		// 	let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id));
-		// 	let next_seq_send_path = format!("{}", SeqSendsPath(port_id.clone(), channel_id));
-		// 	let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id.clone(), channel_id));
-		// 	let next_seq_ack_path = format!("{}", SeqAcksPath(port_id.clone(), channel_id));
-		// 	let next_seq_send_key =
-		// 		apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_send_path]);
-		// 	let next_seq_recv_key =
-		// 		apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_recv_path]);
-		// 	let next_seq_ack_key =
-		// 		apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_ack_path]);
-		// 	let channel_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path]);
-		// 	inputs.push((channel_key, channel_end));
-		// 	inputs.push((next_seq_ack_key, next_seq_ack.encode()));
-		// 	inputs.push((next_seq_send_key, next_seq_send.encode()));
-		// 	inputs.push((next_seq_recv_key, next_seq_recv.encode()));
-		// }
-
-		// Insert packet commitments in trie
-		// for ((port_id, channel, sequence), commitment) in PacketCommitment::<T>::iter() {
-		// 	let channel_id =
-		// 		channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
-		// 	let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-		// 	let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
-		//
-		// 	let commitment_path = CommitmentsPath { port_id, channel_id, sequence };
-		//
-		// 	let commitment_path = format!("{}", commitment_path);
-		// 	let commitment_key =
-		// 		apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path]);
-		// 	inputs.push((commitment_key, commitment))
-		// }
-
-		// Insert packet acknowledgements in trie
-		// for ((port, channel, sequence), ack) in Acknowledgements::<T>::iter() {
-		// 	let channel_id =
-		// 		channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
-		// 	let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-		// 	let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
-		//
-		// 	let ack_path = AcksPath { port_id, channel_id, sequence };
-		//
-		// 	let ack_path = format!("{}", ack_path);
-		// 	let ack_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![ack_path]);
-		// 	inputs.push((ack_key, ack));
-		// }
-
-		// Insert packet receipts in trie
-		for ((port, channel, sequence), receipt) in PacketReceipt::<T>::iter() {
-			let channel_id =
-				channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
-			let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-			let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
-
-			let receipt_path = ReceiptsPath { port_id, channel_id, sequence };
-
-			let receipt_path = format!("{}", receipt_path);
-			let receipt_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path]);
-			inputs.push((receipt_key, receipt))
-		}
-
-		Ok(inputs)
-	}
-
 	pub(crate) fn extract_ibc_commitment_root() -> Vec<u8> {
 		child::root(&ChildInfo::new_default(T::CHILD_INFO_KEY), sp_core::storage::StateVersion::V0)
 	}
@@ -425,10 +303,17 @@ where
 		port_id: Vec<u8>,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Error<T>> {
+		let channel_id =
+			channel_id_from_bytes(channel_id.clone()).map_err(|_| Error::<T>::DecodingError)?;
+		let port_id = port_id_from_bytes(port_id.clone()).map_err(|_| Error::<T>::DecodingError)?;
 		Ok(seqs
 			.into_iter()
 			.filter(|s| {
-				!PacketReceipt::<T>::contains_key((port_id.clone(), channel_id.clone(), *s))
+				!PacketReceipt::<T>::contains_key((
+					port_id.clone(),
+					channel_id.clone(),
+					(*s).into(),
+				))
 			})
 			.collect())
 	}
@@ -510,12 +395,14 @@ where
 		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse, Error<T>> {
-		let receipt = PacketReceipt::<T>::get((port_id.clone(), channel_id.clone(), seq));
-		let receipt = String::from_utf8(receipt).map_err(|_| Error::<T>::DecodingError)?;
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
+		let receipt =
+			PacketReceipt::<T>::get((port_id.clone(), channel_id.clone(), sequence.clone()))
+				.ok_or_else(|| Error::<T>::PacketReceiptNotFound)?;
+		let receipt = String::from_utf8(receipt).map_err(|_| Error::<T>::DecodingError)?;
 		let receipt_path = format!("{}", ReceiptsPath { port_id, channel_id, sequence });
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path]);
 		let receipt = &receipt == "Ok";
@@ -678,7 +565,7 @@ where
 	pub fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
 		let ctx = Context::<T>::new();
 		// revision number is not used in this case so it's fine to use zero
-		let height = ibc::Height::new(0, height as u64);
+		let height = Height::new(0, height as u64);
 		ctx.host_consensus_state(height).ok().map(|cs_state| cs_state.encode_vec())
 	}
 }

@@ -287,11 +287,11 @@ pub mod pallet {
 	pub type ConnectionClient<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<Vec<u8>>, ValueQuery>;
 
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// (port_id, channel_id, sequence) => receipt
-	pub type PacketReceipt<T: Config> =
-		CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
+	// #[pallet::storage]
+	// #[allow(clippy::disallowed_types)]
+	// /// (port_id, channel_id, sequence) => receipt
+	// pub type PacketReceipt<T: Config> =
+	// 	CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	// #[pallet::storage]
 	// #[allow(clippy::disallowed_types)]
@@ -333,6 +333,8 @@ pub mod pallet {
 		ConnectionNotFound,
 		/// Packet commitment wasn't found
 		PacketCommitmentNotFound,
+		/// Packet receipt wasn't found
+		PacketReceiptNotFound,
 		/// Packet Acknowledgment wasn't found
 		PacketAcknowledgmentNotFound,
 		/// Error constructing packet

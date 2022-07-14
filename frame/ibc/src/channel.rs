@@ -8,7 +8,7 @@ use crate::{
 	ics23::{
 		acknowledgements::Acknowledgements, next_seq_ack::NextSequenceAck,
 		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
-		packet_commitments::PacketCommitment,
+		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
 	},
 	routing::Context,
 };
@@ -134,8 +134,6 @@ where
 		&self,
 		key: &(PortId, ChannelId, Sequence),
 	) -> Result<PacketCommitmentType, ICS04Error> {
-		let seq = u64::from(key.2);
-
 		if <PacketCommitment<T>>::contains_key((key.0.clone(), key.1.clone(), key.2.clone())) {
 			let data = <PacketCommitment<T>>::get((key.0.clone(), key.1.clone(), key.2.clone()))
 				.ok_or_else(|| ICS04Error::missing_packet())?;
@@ -155,9 +153,9 @@ where
 	) -> Result<Receipt, ICS04Error> {
 		let seq = u64::from(key.2);
 
-		if <PacketReceipt<T>>::contains_key((key.0.as_bytes(), key.1.to_string().as_bytes(), seq)) {
-			let data =
-				<PacketReceipt<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
+		if <PacketReceipt<T>>::contains_key((key.0.clone(), key.1.clone(), key.2.clone())) {
+			let data = <PacketReceipt<T>>::get((key.0.clone(), key.1.clone(), key.2.clone()))
+				.ok_or_else(|| ICS04Error::packet_receipt_not_found(key.2.clone()))?;
 			let data = String::from_utf8(data).map_err(|e| {
 				ICS04Error::implementation_specific(format!(
 					"[get_packet_receipt]: error decoding packet receipt: {}",
@@ -311,15 +309,10 @@ where
 		receipt: Receipt,
 	) -> Result<(), ICS04Error> {
 		let receipt = match receipt {
-			Receipt::Ok => "Ok".as_bytes(),
+			Receipt::Ok => b"Ok".to_vec(),
 		};
 
-		let seq = u64::from(key.2);
-
-		<PacketReceipt<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
-			receipt,
-		);
+		<PacketReceipt<T>>::insert((key.0.clone(), key.1.clone(), key.2.clone()), receipt);
 
 		Ok(())
 	}
