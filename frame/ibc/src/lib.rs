@@ -64,6 +64,7 @@ pub struct Any {
 }
 
 pub(crate) type RawVersion = (Vec<u8>, Vec<Vec<u8>>);
+
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ConnectionParams {
 	/// A vector of (identifer, features) all encoded as Utf8 string bytes
@@ -110,6 +111,7 @@ mod tests;
 
 mod impls;
 pub mod weight;
+
 pub use weight::WeightInfo;
 
 #[frame_support::pallet]
@@ -170,7 +172,7 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::generate_store(pub (super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
@@ -304,7 +306,7 @@ pub mod pallet {
 		StorageValue<_, BoundedBTreeMap<u64, IbcConsensusState, ConstU32<250>>, ValueQuery>;
 
 	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	#[pallet::generate_deposit(pub (super) fn deposit_event)]
 	pub enum Event<T> {
 		/// Raw Ibc events
 		IbcEvents { events: Vec<events::IbcEvent> },
@@ -348,37 +350,36 @@ pub mod pallet {
 		T: Send + Sync,
 	{
 		fn on_finalize(_n: BlockNumberFor<T>) {
-			let root = Pallet::<T>::extract_ibc_state_root();
-			if let Ok(root) = root {
-				let height = impls::host_height::<T>();
-				let timestamp = T::TimeProvider::now().as_nanos().saturated_into::<u64>();
-				let ibc_cs = IbcConsensusState { timestamp, commitment_root: root.clone() };
-				let res = HostConsensusStates::<T>::try_mutate::<_, &'static str, _>(|val| {
-					// Try inserting the new consensus state, if the bounded map has reached it's
-					// limit this operation is a noop and just returns an error containing the
-					// values that we tried inserting if not the value is inserted successfully
-					// without any error
-					if let Err((height, ibc_cs)) = val.try_insert(height, ibc_cs) {
-						// If map is full, remove the oldest consensus state
-						// Get the key to the oldest state
-						let key = val.keys().cloned().next().ok_or("No keys in map")?;
-						// Prune the oldest consensus state.
-						val.remove(&key).ok_or("Unable to prune map")?;
-						// Insert the new consensus state.
-						val.try_insert(height, ibc_cs)
-							.map_err(|_| "Failed to insert new consensus state")?;
-					}
-					Ok(())
-				});
-				if res.is_err() {
-					log::error!("[pallet_ibc_on_finalize]: Failed to insert new consensus state");
+			let root = Pallet::<T>::extract_ibc_commitment_root();
+			let height = impls::host_height::<T>();
+			let timestamp = T::TimeProvider::now().as_nanos().saturated_into::<u64>();
+			let ibc_cs = IbcConsensusState { timestamp, commitment_root: root.clone() };
+			let res = HostConsensusStates::<T>::try_mutate::<_, &'static str, _>(|val| {
+				// Try inserting the new consensus state, if the bounded map has reached it's
+				// limit this operation is a noop and just returns an error containing the
+				// values that we tried inserting if not the value is inserted successfully
+				// without any error
+				if let Err((height, ibc_cs)) = val.try_insert(height, ibc_cs) {
+					// If map is full, remove the oldest consensus state
+					// Get the key to the oldest state
+					let key = val.keys().cloned().next().ok_or("No keys in map")?;
+					// Prune the oldest consensus state.
+					val.remove(&key).ok_or("Unable to prune map")?;
+					// Insert the new consensus state.
+					val.try_insert(height, ibc_cs)
+						.map_err(|_| "Failed to insert new consensus state")?;
 				}
-				let log = DigestItem::Consensus(IBC_DIGEST_ID, root);
-				<frame_system::Pallet<T>>::deposit_log(log);
+				Ok(())
+			});
+			if res.is_err() {
+				log::error!("[pallet_ibc_on_finalize]: Failed to insert new consensus state");
 			}
+			let log = DigestItem::Consensus(IBC_DIGEST_ID, root);
+			<frame_system::Pallet<T>>::deposit_log(log);
 		}
 
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+            // todo: is this still needed?
 			<T as Config>::WeightInfo::on_finalize(
 				ClientCounter::<T>::get(),
 				ConnectionCounter::<T>::get(),
@@ -403,7 +404,7 @@ pub mod pallet {
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 		T: Send + Sync,
 	{
-		#[pallet::weight(crate::weight::deliver::<T>(messages))]
+		#[pallet::weight(crate::weight::deliver::< T > (messages))]
 		#[frame_support::transactional]
 		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
 			let _sender = ensure_signed(origin)?;
@@ -441,7 +442,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::create_client())]
+		#[pallet::weight(< T as Config >::WeightInfo::create_client())]
 		#[frame_support::transactional]
 		pub fn create_client(origin: OriginFor<T>, msg: Any) -> DispatchResult {
 			<T as Config>::AdminOrigin::ensure_origin(origin)?;
@@ -462,7 +463,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(<T as Config>::WeightInfo::initiate_connection())]
+		#[pallet::weight(< T as Config >::WeightInfo::initiate_connection())]
 		#[frame_support::transactional]
 		pub fn initiate_connection(
 			origin: OriginFor<T>,

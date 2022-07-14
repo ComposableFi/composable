@@ -135,14 +135,9 @@ where
 	) -> Result<PacketCommitmentType, ICS04Error> {
 		let seq = u64::from(key.2);
 
-		if <PacketCommitment<T>>::contains_key((
-			key.0.clone(),
-			key.1.clone(),
-			key.2.clone(),
-		)) {
-			let data =
-				<PacketCommitment<T>>::get((key.0.clone(), key.1.clone(), key.2.clone()))
-					.ok_or_else(|| ICS04Error::missing_packet())?;
+		if <PacketCommitment<T>>::contains_key((key.0.clone(), key.1.clone(), key.2.clone())) {
+			let data = <PacketCommitment<T>>::get((key.0.clone(), key.1.clone(), key.2.clone()))
+				.ok_or_else(|| ICS04Error::missing_packet())?;
 			log::trace!("in channel : [get_packet_commitment] >> packet_commitment = {:?}", data);
 			Ok(data.into())
 		} else {
@@ -269,10 +264,7 @@ where
 		key: (PortId, ChannelId, Sequence),
 		commitment: PacketCommitmentType,
 	) -> Result<(), ICS04Error> {
-		<PacketCommitment<T>>::insert(
-			(key.0.clone(), key.1.clone(), key.2.clone()),
-			commitment,
-		);
+		<PacketCommitment<T>>::insert((key.0.clone(), key.1.clone(), key.2.clone()), commitment);
 		if let Some(val) = PacketCounter::<T>::get().checked_add(1) {
 			PacketCounter::<T>::put(val);
 		}
@@ -307,13 +299,9 @@ where
 		let seq = u64::from(key.2);
 
 		// delete packet commitment
-		<PacketCommitment<T>>::remove((
-			key.0.clone(),
-			key.1.clone(),
-			key.2.clone(),
-		));
+		<PacketCommitment<T>>::remove((key.0.clone(), key.1.clone(), key.2.clone()));
 
-		if let Some(val)  = PacketCounter::<T>::get().checked_sub(1) {
+		if let Some(val) = PacketCounter::<T>::get().checked_sub(1) {
 			PacketCounter::<T>::put(val);
 		}
 

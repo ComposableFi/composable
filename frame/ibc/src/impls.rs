@@ -4,6 +4,7 @@ use crate::{
 	ics23::{
 		connections::Connections, consensus_states::ConsensusStates,
 		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
+		packet_commitments::PacketCommitment,
 	},
 	routing::Context,
 };
@@ -70,7 +71,6 @@ use ics23::client_states::ClientStates;
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;
-use crate::ics23::packet_commitments::PacketCommitment;
 
 impl<T: Config> Pallet<T>
 where
@@ -200,17 +200,8 @@ where
 		Ok(inputs)
 	}
 
-	pub(crate) fn build_ibc_state_root() -> Result<sp_core::H256, Error<T>> {
-		let root = child::root(
-			&ChildInfo::new_default(T::CHILD_INFO_KEY),
-			sp_core::storage::StateVersion::V0,
-		);
-		Ok(sp_core::H256::from_slice(&root))
-	}
-
-	pub(crate) fn extract_ibc_state_root() -> Result<Vec<u8>, Error<T>> {
-		let root = Self::build_ibc_state_root()?;
-		Ok(root.as_bytes().to_vec())
+	pub(crate) fn extract_ibc_commitment_root() -> Vec<u8> {
+		child::root(&ChildInfo::new_default(T::CHILD_INFO_KEY), sp_core::storage::StateVersion::V0)
 	}
 
 	// IBC Runtime Api helper methods
@@ -380,8 +371,10 @@ where
 		channel_id_bytes: Vec<u8>,
 		port_id_bytes: Vec<u8>,
 	) -> Result<QueryPacketCommitmentsResponse, Error<T>> {
-		let channel_id = channel_id_from_bytes(channel_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
-		let port_id = port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
+		let channel_id = channel_id_from_bytes(channel_id_bytes.clone())
+			.map_err(|_| Error::<T>::DecodingError)?;
+		let port_id =
+			port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
 		let commitments = PacketCommitment::<T>::iter()
 			.filter_map(|((p, c, s), commitment)| {
 				if p == port_id && c == channel_id {
@@ -441,12 +434,18 @@ where
 		port_id_bytes: Vec<u8>,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Error<T>> {
-		let channel_id = channel_id_from_bytes(channel_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
-		let port_id = port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
+		let channel_id = channel_id_from_bytes(channel_id_bytes.clone())
+			.map_err(|_| Error::<T>::DecodingError)?;
+		let port_id =
+			port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
 		Ok(seqs
 			.into_iter()
 			.filter(|s| {
-				PacketCommitment::<T>::contains_key((port_id.clone(), channel_id.clone(), (*s).into()))
+				PacketCommitment::<T>::contains_key((
+					port_id.clone(),
+					channel_id.clone(),
+					(*s).into(),
+				))
 			})
 			.collect())
 	}
@@ -474,8 +473,9 @@ where
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
-		let commitment = PacketCommitment::<T>::get((port_id.clone(), channel_id.clone(), seq.into()))
-			.ok_or_else(|| Error::<T>::PacketCommitmentNotFound)?;
+		let commitment =
+			PacketCommitment::<T>::get((port_id.clone(), channel_id.clone(), seq.into()))
+				.ok_or_else(|| Error::<T>::PacketCommitmentNotFound)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
 		let commitment_path = format!("{}", CommitmentsPath { port_id, channel_id, sequence });
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path]);
@@ -587,11 +587,14 @@ where
 
 	pub(crate) fn packet_cleanup() -> Result<(), Error<T>> {
 		for (port_id_bytes, channel_id_bytes) in Channels::<T>::iter_keys() {
-			let channel_id = channel_id_from_bytes(channel_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
-			let port_id = port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
+			let channel_id = channel_id_from_bytes(channel_id_bytes.clone())
+				.map_err(|_| Error::<T>::DecodingError)?;
+			let port_id =
+				port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
 
 			let key = Pallet::<T>::offchain_key(channel_id_bytes.clone(), port_id_bytes.clone());
-			let ack_key = Pallet::<T>::offchain_key(channel_id_bytes.clone(), port_id_bytes.clone());
+			let ack_key =
+				Pallet::<T>::offchain_key(channel_id_bytes.clone(), port_id_bytes.clone());
 			// Clean up offchain packets
 			if let Some(mut offchain_packets) =
 				sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)

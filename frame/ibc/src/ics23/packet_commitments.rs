@@ -12,6 +12,7 @@ use ibc_trait::apply_prefix_and_encode;
 use sp_std::marker::PhantomData;
 use std::str::FromStr;
 
+/// (port_id, channel_id, sequence) => hash
 pub struct PacketCommitment<T>(PhantomData<T>);
 
 impl<T: Config> PacketCommitment<T> {
