@@ -33,8 +33,10 @@ lazy_static! {
 	]
 	.into_iter()
 	.collect();
+
 	pub static ref ASSET_TO_INDEX: HashMap<Asset, CurrencyId> =
 		INDEX_TO_ASSET.iter().map(|(&i, &a)| (a, i)).collect();
+
 	pub static ref VALID_ASSETS: HashSet<Asset> =
 		INDEX_TO_ASSET.values().copied().collect();
 }
