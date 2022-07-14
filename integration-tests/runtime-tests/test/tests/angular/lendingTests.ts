@@ -20,6 +20,7 @@ import { createLendingMarketHandler } from "@composabletests/tests/angular/testH
 import { depositCollateralHandler } from "@composabletests/tests/angular/testHandlers/depositCollateralHandler";
 import { borrowHandler } from "@composabletests/tests/angular/testHandlers/borrowHandler";
 import { withdrawCollateralHandler } from "@composabletests/tests/angular/testHandlers/withdrawCollateralHandler";
+import BN from "bn.js";
 
 
 describe.only("[Angular] tx.lending Tests", function() {
@@ -54,9 +55,7 @@ describe.only("[Angular] tx.lending Tests", function() {
       return;
     // Timeout set to 2 minutes.
     this.timeout(15 * 60 * 1000);
-    await mintAssetsToWallet(api, lenderWallet, sudoKey, [1, 4, 1000]);
-    //await mintAssetsToWallet(api, borrowerWallet, sudoKey, [1, 4, 1000]);
-    //await mintAssetsToWallet(api, oracleSignerWallet, sudoKey, [1, 4, 1000]);
+    await mintAssetsToWallet(api, lenderWallet, sudoKey, [1, 4, 1000], 10000000000000000n);
     //await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_USDT, ASSET_ID_PICA], walletAlice, mintingAmount);
   });
 
@@ -255,14 +254,13 @@ describe.only("[Angular] tx.lending Tests", function() {
       // Transaction | ToDo (D. Roth): Cleanup!
       const result = await createLendingMarketHandler(
         api,
-        oracleSignerWallet,
+        sudoKey, // ToDo: Change!
         input,
         keepAlive
       );
 
       // ToDo (D. Roth): Verification!
       console.debug(result.toString());
-      await waitForBlocks(api, 3);
     });
 
     it("Can create lending market (Curve Interest Rate Model)", async function() {

@@ -13,7 +13,7 @@ export async function createLendingMarketHandler(
   return await sendAndWaitForSuccess(
     api,
     wallet,
-    api.events.treasury.Deposit.is,
+    api.events.lending.MarketCreated.is,
     api.tx.lending.createMarket(input, keepAlive),
     false
   );
