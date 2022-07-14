@@ -5,7 +5,7 @@ use ibc::core::ics24_host::{
 	path::SeqAcksPath,
 };
 use ibc_trait::apply_prefix_and_encode;
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::{marker::PhantomData};
 
 // todo: pruning
 /// (port_id, channel_id) => Sequence
@@ -14,14 +14,14 @@ pub struct NextSequenceAck<T>(PhantomData<T>);
 
 impl<T: Config> NextSequenceAck<T> {
 	pub fn get(port_id: PortId, channel_id: ChannelId) -> Option<u64> {
-		let next_seq_ack_path = format!("{}", SeqAcksPath(port_id.clone(), channel_id));
+		let next_seq_ack_path = format!("{}", SeqAcksPath(port_id, channel_id));
 		let next_seq_ack_key =
 			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_ack_path]);
 		child::get(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &next_seq_ack_key)
 	}
 
 	pub fn insert(port_id: PortId, channel_id: ChannelId, seq: u64) {
-		let next_seq_ack_path = format!("{}", SeqAcksPath(port_id.clone(), channel_id));
+		let next_seq_ack_path = format!("{}", SeqAcksPath(port_id, channel_id));
 		let next_seq_ack_key =
 			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_ack_path]);
 		child::put(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &next_seq_ack_key, &seq)

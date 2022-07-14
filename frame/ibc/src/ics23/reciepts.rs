@@ -8,7 +8,7 @@ use ibc::core::{
 	},
 };
 use ibc_trait::apply_prefix_and_encode;
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::marker::PhantomData;
 
 // todo: pruning
 /// (port_id, channel_id, sequence) => hash
@@ -33,12 +33,12 @@ impl<T: Config> PacketReceipt<T> {
 		child::get(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &receipt_key)
 	}
 
-	pub fn remove((port_id, channel_id, sequence): (PortId, ChannelId, Sequence)) {
-		let receipt_path = ReceiptsPath { port_id, channel_id, sequence };
-		let receipt_path = format!("{}", receipt_path);
-		let receipt_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path]);
-		child::kill(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &receipt_key)
-	}
+	// pub fn remove((port_id, channel_id, sequence): (PortId, ChannelId, Sequence)) {
+	// 	let receipt_path = ReceiptsPath { port_id, channel_id, sequence };
+	// 	let receipt_path = format!("{}", receipt_path);
+	// 	let receipt_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path]);
+	// 	child::kill(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &receipt_key)
+	// }
 
 	pub fn contains_key((port_id, channel_id, sequence): (PortId, ChannelId, Sequence)) -> bool {
 		let receipt_path = ReceiptsPath { port_id, channel_id, sequence };

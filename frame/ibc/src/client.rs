@@ -75,7 +75,7 @@ where
 
 		let native_height = height;
 		let value = <ConsensusStates<T>>::get(client_id.clone(), height).ok_or_else(|| {
-			ICS02Error::consensus_state_not_found(client_id.clone(), height.clone())
+			ICS02Error::consensus_state_not_found(client_id.clone(), height)
 		})?;
 
 		let any_consensus_state = AnyConsensusState::decode_vec(&*value)

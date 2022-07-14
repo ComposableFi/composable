@@ -281,7 +281,7 @@ benchmarks! {
 		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), None);
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id, None);
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Init,
 			ibc::core::ics04_channel::channel::Order::Unordered,
@@ -291,7 +291,7 @@ benchmarks! {
 		);
 
 		let value = MsgChannelOpenInit {
-			port_id: port_id.clone(),
+			port_id: port_id,
 			channel: channel_end,
 			signer: Signer::from_str(MODULE_ID).unwrap()
 		}.encode_vec();
@@ -334,7 +334,7 @@ benchmarks! {
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id, Some(ChannelId::new(0)));
 		// Create a channel end with a INIT state
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Init,
@@ -398,7 +398,7 @@ benchmarks! {
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id, Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Init,
 			ibc::core::ics04_channel::channel::Order::Unordered,
@@ -460,7 +460,7 @@ benchmarks! {
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id, Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::TryOpen,
 			ibc::core::ics04_channel::channel::Order::Unordered,
@@ -469,7 +469,7 @@ benchmarks! {
 			ibc::core::ics04_channel::Version::default()
 		);
 
-		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
+		ctx.store_channel((port_id, ChannelId::new(0)), &channel_end).unwrap();
 		ctx.store_connection_channels(ConnectionId::new(0), &(port_id, ChannelId::new(0))).unwrap();
 
 		let (cs_state, value) = create_chan_open_confirm();
@@ -515,7 +515,7 @@ benchmarks! {
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id, Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Open,
 			ibc::core::ics04_channel::channel::Order::Unordered,
@@ -524,7 +524,7 @@ benchmarks! {
 			ibc::core::ics04_channel::Version::default()
 		);
 
-		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
+		ctx.store_channel((port_id, ChannelId::new(0)), &channel_end).unwrap();
 		ctx.store_connection_channels(ConnectionId::new(0), &(port_id, ChannelId::new(0))).unwrap();
 
 		let value = create_chan_close_init();
@@ -569,7 +569,7 @@ benchmarks! {
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id, Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Open,
 			ibc::core::ics04_channel::channel::Order::Unordered,
@@ -578,7 +578,7 @@ benchmarks! {
 			ibc::core::ics04_channel::Version::default()
 		);
 
-		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
+		ctx.store_channel((port_id, ChannelId::new(0)), &channel_end).unwrap();
 		ctx.store_connection_channels(ConnectionId::new(0), &(port_id, ChannelId::new(0))).unwrap();
 
 		let (cs_state, value) = create_chan_close_confirm();
@@ -626,7 +626,7 @@ benchmarks! {
 
 		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id, Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Open,
 			ibc::core::ics04_channel::channel::Order::Unordered,
@@ -635,8 +635,8 @@ benchmarks! {
 			ibc::core::ics04_channel::Version::default()
 		);
 
-		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
-		ctx.store_connection_channels(ConnectionId::new(0), &(port_id.clone(), ChannelId::new(0))).unwrap();
+		ctx.store_channel((port_id, ChannelId::new(0)), &channel_end).unwrap();
+		ctx.store_connection_channels(ConnectionId::new(0), &(port_id, ChannelId::new(0))).unwrap();
 		ctx.store_next_sequence_recv((port_id, ChannelId::new(0)), 1u64.into()).unwrap();
 
 		let (cs_state, value) = create_recv_packet::<T>(data);
@@ -689,7 +689,7 @@ benchmarks! {
 		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id, Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Open,
 			ibc::core::ics04_channel::channel::Order::Unordered,
@@ -698,8 +698,8 @@ benchmarks! {
 			ibc::core::ics04_channel::Version::default()
 		);
 
-		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
-		ctx.store_connection_channels(ConnectionId::new(0), &(port_id.clone(), ChannelId::new(0))).unwrap();
+		ctx.store_channel((port_id, ChannelId::new(0)), &channel_end).unwrap();
+		ctx.store_connection_channels(ConnectionId::new(0), &(port_id, ChannelId::new(0))).unwrap();
 		ctx.store_next_sequence_recv((port_id, ChannelId::new(0)), 1u64.into()).unwrap();
 
 		let (cs_state, value) = create_ack_packet::<T>(data, ack);
@@ -749,7 +749,7 @@ benchmarks! {
 		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id, Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Open,
 			ibc::core::ics04_channel::channel::Order::Ordered,
@@ -758,9 +758,9 @@ benchmarks! {
 			ibc::core::ics04_channel::Version::default()
 		);
 
-		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
-		ctx.store_connection_channels(ConnectionId::new(0), &(port_id.clone(), ChannelId::new(0))).unwrap();
-		ctx.store_next_sequence_recv((port_id.clone(), ChannelId::new(0)), 1u64.into()).unwrap();
+		ctx.store_channel((port_id, ChannelId::new(0)), &channel_end).unwrap();
+		ctx.store_connection_channels(ConnectionId::new(0), &(port_id, ChannelId::new(0))).unwrap();
+		ctx.store_next_sequence_recv((port_id, ChannelId::new(0)), 1u64.into()).unwrap();
 		ctx.store_next_sequence_send((port_id, ChannelId::new(0)), 1u64.into()).unwrap();
 
 		let (cs_state, value) = create_timeout_packet::<T>(data);
@@ -817,7 +817,7 @@ benchmarks! {
 
 		for k in 1..c {
 			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-			let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(k.into())));
+			let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id, Some(ChannelId::new(k.into())));
 			let channel_end = ChannelEnd::new(
 				ibc::core::ics04_channel::channel::State::Open,
 				ibc::core::ics04_channel::channel::Order::Unordered,
@@ -826,27 +826,27 @@ benchmarks! {
 				ibc::core::ics04_channel::Version::default()
 			);
 
-			ctx.store_channel((port_id.clone(), ChannelId::new(k.into())), &channel_end).unwrap();
+			ctx.store_channel((port_id, ChannelId::new(k.into())), &channel_end).unwrap();
 		}
 
 		for l in 1..d {
 			let commitment = vec![0;32];
 			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 			let channel_id = ChannelId::new(0);
-			PacketCommitment::<T>::insert((port_id.clone(), channel_id.clone(), (l as u64).into()), commitment.into())
+			PacketCommitment::<T>::insert((port_id, channel_id, (l as u64).into()), commitment.into())
 		}
 
 		for m in 1..e {
 			let ack = vec![0;32];
 			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 			let channel_id = ChannelId::new(0);
-			Acknowledgements::<T>::insert((port_id.clone(), channel_id.clone(), (m as u64).into()), ack.into())
+			Acknowledgements::<T>::insert((port_id, channel_id, (m as u64).into()), ack.into())
 		}
 
 		for n in 1..f {
 			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 			let channel_id = ChannelId::new(0);
-			PacketReceipt::<T>::insert((port_id.clone(), channel_id.clone(), (n as u64).into()), b"Ok".to_vec())
+			PacketReceipt::<T>::insert((port_id, channel_id, (n as u64).into()), b"Ok".to_vec())
 		}
 
 	}: { PalletIbc::<T>::on_finalize(0u32.into())}

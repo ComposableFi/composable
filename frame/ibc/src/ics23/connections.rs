@@ -5,7 +5,7 @@ use ibc::core::{
 	ics24_host::{identifier::ConnectionId, path::ConnectionsPath},
 };
 use ibc_trait::apply_prefix_and_encode;
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::marker::PhantomData;
 use tendermint_proto::Protobuf;
 
 // todo: pruning
@@ -31,7 +31,7 @@ impl<T: Config> Connections<T> {
 	}
 
 	pub fn iter() -> ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)> {
-		let prefix_path = format!("connections/");
+		let prefix_path = "connections/".to_string();
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![prefix_path]);
 		ChildTriePrefixIterator::with_prefix(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &key)
 	}

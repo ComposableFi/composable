@@ -49,7 +49,7 @@ impl<T: Config> Acknowledgements<T> {
 	}
 
 	pub fn iter() -> impl Iterator<Item = ((PortId, ChannelId, Sequence), Vec<u8>)> {
-		let prefix = format!("acks/ports/");
+		let prefix = "acks/ports/".to_string();
 		let prefix_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![prefix.clone()]);
 		ChildTriePrefixIterator::with_prefix(
 			&ChildInfo::new_default(T::CHILD_TRIE_KEY),

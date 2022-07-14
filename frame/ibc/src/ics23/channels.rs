@@ -36,7 +36,7 @@ impl<T: Config> Channels<T> {
 	}
 
 	pub fn iter() -> impl Iterator<Item = (Vec<u8>, Vec<u8>, Vec<u8>)> {
-		let prefix = format!("channelEnds/ports/");
+		let prefix = "channelEnds/ports/".to_string();
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![prefix.clone()]);
 		ChildTriePrefixIterator::with_prefix(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &key)
 			.filter_map(move |(key, value)| {

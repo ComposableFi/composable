@@ -482,7 +482,7 @@ where
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
-			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.map_err(runtime_error_into_rpc_error)?
 			.iter_nodes()
 			.collect::<Vec<_>>()
 			.encode();
@@ -538,7 +538,7 @@ where
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
-			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.map_err(runtime_error_into_rpc_error)?
 			.iter_nodes()
 			.collect::<Vec<_>>()
 			.encode();
@@ -603,7 +603,7 @@ where
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
-			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.map_err(runtime_error_into_rpc_error)?
 			.iter_nodes()
 			.collect::<Vec<_>>()
 			.encode();
@@ -673,7 +673,7 @@ where
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
-			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.map_err(runtime_error_into_rpc_error)?
 			.iter_nodes()
 			.collect::<Vec<_>>()
 			.encode();
@@ -788,7 +788,7 @@ where
 				&child_info,
 				&mut result.trie_keys.iter_mut().map(|nodes| &nodes[..]),
 			)
-			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.map_err(runtime_error_into_rpc_error)?
 			.iter_nodes()
 			.collect::<Vec<_>>()
 			.encode();
@@ -832,7 +832,7 @@ where
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
-			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.map_err(runtime_error_into_rpc_error)?
 			.iter_nodes()
 			.collect::<Vec<_>>()
 			.encode();
@@ -1121,7 +1121,7 @@ where
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
-			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.map_err(runtime_error_into_rpc_error)?
 			.iter_nodes()
 			.collect::<Vec<_>>()
 			.encode();
@@ -1163,7 +1163,7 @@ where
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
-			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.map_err(runtime_error_into_rpc_error)?
 			.iter_nodes()
 			.collect::<Vec<_>>()
 			.encode();
@@ -1205,7 +1205,7 @@ where
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
-			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.map_err(runtime_error_into_rpc_error)?
 			.iter_nodes()
 			.collect::<Vec<_>>()
 			.encode();
@@ -1242,7 +1242,7 @@ where
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
-			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.map_err(runtime_error_into_rpc_error)?
 			.iter_nodes()
 			.collect::<Vec<_>>()
 			.encode();

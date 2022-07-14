@@ -34,7 +34,7 @@ impl<T: Config> ClientStates<T> {
 	// WARNING: too expensive to be called from an on-chain context, only here for rpc layer.
 	// client_id => client_state
 	pub fn iter() -> impl Iterator<Item = (ClientId, Vec<u8>)> {
-		let prefix_path = format!("clients/");
+		let prefix_path = "clients/".to_string();
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![prefix_path.clone()]);
 		ChildTriePrefixIterator::with_prefix(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &key)
 			.filter_map(move |(remaining_key, value)| {

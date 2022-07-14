@@ -39,8 +39,8 @@ where
 			port_channel_id.0,
 			port_channel_id.1
 		);
-		let data = <Channels<T>>::get(port_channel_id.0.clone(), port_channel_id.1.clone())
-			.ok_or_else(|| ICS04Error::missing_channel())?;
+		let data = <Channels<T>>::get(port_channel_id.0.clone(), port_channel_id.1)
+			.ok_or_else(ICS04Error::missing_channel)?;
 		let channel_end = ChannelEnd::decode_vec(&*data).map_err(|_| {
 			ICS04Error::channel_not_found(port_channel_id.clone().0, port_channel_id.clone().1)
 		})?;
@@ -101,7 +101,7 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		let seq = <NextSequenceSend<T>>::get(port_channel_id.0.clone(), port_channel_id.1.clone())
+		let seq = <NextSequenceSend<T>>::get(port_channel_id.0.clone(), port_channel_id.1)
 			.ok_or_else(|| ICS04Error::missing_next_send_seq(port_channel_id.clone()))?;
 		log::trace!("in channel : [get_next_sequence] >> sequence  = {:?}", seq);
 		Ok(Sequence::from(seq))
@@ -111,7 +111,7 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		let seq = <NextSequenceRecv<T>>::get(port_channel_id.0.clone(), port_channel_id.1.clone())
+		let seq = <NextSequenceRecv<T>>::get(port_channel_id.0.clone(), port_channel_id.1)
 			.ok_or_else(|| ICS04Error::missing_next_recv_seq(port_channel_id.clone()))?;
 
 		log::trace!("in channel : [get_next_sequence_recv] >> sequence = {:?}", seq);
@@ -122,7 +122,7 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		let seq = <NextSequenceAck<T>>::get(port_channel_id.0.clone(), port_channel_id.1.clone())
+		let seq = <NextSequenceAck<T>>::get(port_channel_id.0.clone(), port_channel_id.1)
 			.ok_or_else(|| ICS04Error::missing_next_ack_seq(port_channel_id.clone()))?;
 		log::trace!("in channel : [get_next_sequence_ack] >> sequence = {:?}", seq);
 		Ok(Sequence::from(seq))
@@ -132,9 +132,9 @@ where
 		&self,
 		key: &(PortId, ChannelId, Sequence),
 	) -> Result<PacketCommitmentType, ICS04Error> {
-		if <PacketCommitment<T>>::contains_key((key.0.clone(), key.1.clone(), key.2.clone())) {
-			let data = <PacketCommitment<T>>::get((key.0.clone(), key.1.clone(), key.2.clone()))
-				.ok_or_else(|| ICS04Error::missing_packet())?;
+		if <PacketCommitment<T>>::contains_key((key.0.clone(), key.1, key.2)) {
+			let data = <PacketCommitment<T>>::get((key.0.clone(), key.1, key.2))
+				.ok_or_else(ICS04Error::missing_packet)?;
 			log::trace!("in channel : [get_packet_commitment] >> packet_commitment = {:?}", data);
 			Ok(data.into())
 		} else {
@@ -151,9 +151,9 @@ where
 	) -> Result<Receipt, ICS04Error> {
 		let seq = u64::from(key.2);
 
-		if <PacketReceipt<T>>::contains_key((key.0.clone(), key.1.clone(), key.2.clone())) {
-			let data = <PacketReceipt<T>>::get((key.0.clone(), key.1.clone(), key.2.clone()))
-				.ok_or_else(|| ICS04Error::packet_receipt_not_found(key.2.clone()))?;
+		if <PacketReceipt<T>>::contains_key((key.0.clone(), key.1, key.2)) {
+			let data = <PacketReceipt<T>>::get((key.0.clone(), key.1, key.2))
+				.ok_or_else(|| ICS04Error::packet_receipt_not_found(key.2))?;
 			let data = String::from_utf8(data).map_err(|e| {
 				ICS04Error::implementation_specific(format!(
 					"[get_packet_receipt]: error decoding packet receipt: {}",
@@ -176,9 +176,9 @@ where
 		&self,
 		key: &(PortId, ChannelId, Sequence),
 	) -> Result<AcknowledgementCommitment, ICS04Error> {
-		if <Acknowledgements<T>>::contains_key((key.0.clone(), key.1.clone(), key.2.clone())) {
-			let ack = <Acknowledgements<T>>::get((key.0.clone(), key.1.clone(), key.2.clone()))
-				.ok_or_else(|| ICS04Error::packet_acknowledgement_not_found(key.2.clone()))?;
+		if <Acknowledgements<T>>::contains_key((key.0.clone(), key.1, key.2)) {
+			let ack = <Acknowledgements<T>>::get((key.0.clone(), key.1, key.2))
+				.ok_or_else(|| ICS04Error::packet_acknowledgement_not_found(key.2))?;
 			log::trace!(
 				"in channel : [get_packet_acknowledgement] >> packet_acknowledgement = {:?}",
 				ack
@@ -255,7 +255,7 @@ where
 		key: (PortId, ChannelId, Sequence),
 		commitment: PacketCommitmentType,
 	) -> Result<(), ICS04Error> {
-		<PacketCommitment<T>>::insert((key.0.clone(), key.1.clone(), key.2.clone()), commitment);
+		<PacketCommitment<T>>::insert((key.0.clone(), key.1, key.2), commitment);
 		if let Some(val) = PacketCounter::<T>::get().checked_add(1) {
 			PacketCounter::<T>::put(val);
 		}
@@ -288,7 +288,7 @@ where
 		key: (PortId, ChannelId, Sequence),
 	) -> Result<(), ICS04Error> {
 		// delete packet commitment
-		<PacketCommitment<T>>::remove((key.0.clone(), key.1.clone(), key.2.clone()));
+		<PacketCommitment<T>>::remove((key.0.clone(), key.1, key.2));
 
 		if let Some(val) = PacketCounter::<T>::get().checked_sub(1) {
 			PacketCounter::<T>::put(val);
@@ -306,7 +306,7 @@ where
 			Receipt::Ok => b"Ok".to_vec(),
 		};
 
-		<PacketReceipt<T>>::insert((key.0.clone(), key.1.clone(), key.2.clone()), receipt);
+		<PacketReceipt<T>>::insert((key.0.clone(), key.1, key.2), receipt);
 
 		if let Some(val) = <PacketReceiptCounter<T>>::get().checked_add(1) {
 			<PacketReceiptCounter<T>>::put(val)
@@ -322,7 +322,7 @@ where
 	) -> Result<(), ICS04Error> {
 		// store packet acknowledgement key-value
 		<Acknowledgements<T>>::insert(
-			(key.0.clone(), key.1.clone(), key.2.clone()),
+			(key.0.clone(), key.1, key.2),
 			ack_commitment,
 		);
 
@@ -338,7 +338,7 @@ where
 		key: (PortId, ChannelId, Sequence),
 	) -> Result<(), ICS04Error> {
 		// remove acknowledgements
-		<Acknowledgements<T>>::remove((key.0.clone(), key.1.clone(), key.2.clone()));
+		<Acknowledgements<T>>::remove((key.0.clone(), key.1, key.2));
 
 		if let Some(val) = AcknowledgementCounter::<T>::get().checked_sub(1) {
 			AcknowledgementCounter::<T>::put(val)
@@ -381,7 +381,7 @@ where
 		channel_end: &ChannelEnd,
 	) -> Result<(), ICS04Error> {
 		// store channels key-value
-		<Channels<T>>::insert(port_channel_id.0.clone(), port_channel_id.1.clone(), channel_end);
+		<Channels<T>>::insert(port_channel_id.0.clone(), port_channel_id.1, channel_end);
 
 		Ok(())
 	}
@@ -393,7 +393,7 @@ where
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
 
-		<NextSequenceSend<T>>::insert(port_channel_id.0.clone(), port_channel_id.1.clone(), seq);
+		<NextSequenceSend<T>>::insert(port_channel_id.0.clone(), port_channel_id.1, seq);
 
 		Ok(())
 	}
@@ -405,7 +405,7 @@ where
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
 
-		<NextSequenceRecv<T>>::insert(port_channel_id.0.clone(), port_channel_id.1.clone(), seq);
+		<NextSequenceRecv<T>>::insert(port_channel_id.0.clone(), port_channel_id.1, seq);
 
 		Ok(())
 	}
@@ -417,7 +417,7 @@ where
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
 
-		<NextSequenceAck<T>>::insert(port_channel_id.0.clone(), port_channel_id.1.clone(), seq);
+		<NextSequenceAck<T>>::insert(port_channel_id.0.clone(), port_channel_id.1, seq);
 
 		Ok(())
 	}
