@@ -168,8 +168,6 @@ pub mod pallet {
 			+ From<u128>
 			+ Into<u128>;
 
-		type Assets: Transfer<Self::AccountId, AssetId = Self::AssetId, Balance = Self::Balance>;
-
 		/// Is used to create staked asset per `Self::RewardPoolId`
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
 
