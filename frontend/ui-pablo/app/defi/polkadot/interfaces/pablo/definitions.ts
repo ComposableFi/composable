@@ -40,34 +40,7 @@ export default {
         },
         {
           name: "amounts",
-          type: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
-        },
-        {
-          name: "at",
-          type: "Hash",
-          isOptional: true,
-        }
-      ],
-      type: "CustomRpcBalance"
-    },
-    simulateRemoveLiquidity: {
-      description: "Get the price(in quote asset) for the given asset pair in the given pool for the given amount",
-      params: [
-        {
-          name: "who",
-          type: "AccountId32"
-        },
-        {
-          name: "poolId",
-          type: "PalletPabloPoolId"
-        },
-        {
-          name: "lpAmount",
-          type: "CustomRpcBalance"
-        },
-        {
-          name: "minExpectedAmounts",
-          type: "any"
+          type: "BTreeMap<AssetId, Balance>"
         },
         {
           name: "at",
