@@ -16,7 +16,7 @@ If you're being onboarded right now as an employee of Composable finance, we exp
 - Cosmos
 - NEAR
 - IBC
-- XVCM
+- XCVM
 
 Some of the other stuff you'll be learning, but not necessarily in your first week, include:
 
