@@ -62,7 +62,7 @@ benchmarks! {
 		let connection_id = ConnectionId::new(0);
 		<T as Config>::IbcHandler::create_connection(client_id, connection_id.clone()).unwrap();
 		let port_id = PortId::transfer();
-		let counterparty = Counterparty::new(port_id, Some(ChannelId::new(1)));
+		let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
 		let channel_end = ChannelEnd::new(
 			State::Init,
 			Order::Unordered,
@@ -72,7 +72,7 @@ benchmarks! {
 		);
 
 		let balance = 100000 * CurrencyId::milli::<u128>();
-		let channel_id = <T as Config>::IbcHandler::open_channel(port_id, channel_end).unwrap();
+		let channel_id = <T as Config>::IbcHandler::open_channel(port_id.clone(), channel_end).unwrap();
 		let denom = "transfer/channel-15/uatom";
 		let foreign_asset_id = ibc_denom_to_foreign_asset_id(denom);
 		let asset_id = <T as Config>::CurrencyFactory::create(
@@ -152,7 +152,7 @@ benchmarks! {
 	on_chan_open_init {
 		let mut output = HandlerOutputBuilder::new();
 		let port_id = PortId::transfer();
-		let counterparty = Counterparty::new(port_id, Some(ChannelId::new(1)));
+		let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
 		let connection_hops = vec![ConnectionId::new(0)];
 		let version = Version::new(VERSION.to_string());
 		let order = Order::Unordered;
@@ -165,7 +165,7 @@ benchmarks! {
 	on_chan_open_try {
 		let mut output = HandlerOutputBuilder::new();
 		let port_id = PortId::transfer();
-		let counterparty = Counterparty::new(port_id, Some(ChannelId::new(1)));
+		let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
 		let connection_hops = vec![ConnectionId::new(0)];
 		let version = Version::new(VERSION.to_string());
 		let order = Order::Unordered;
@@ -234,7 +234,7 @@ benchmarks! {
 		let connection_id = ConnectionId::new(0);
 		<T as Config>::IbcHandler::create_connection(client_id, connection_id.clone()).unwrap();
 		let port_id = PortId::transfer();
-		let counterparty = Counterparty::new(port_id, Some(ChannelId::new(1)));
+		let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
 		let channel_end = ChannelEnd::new(
 			State::Init,
 			Order::Unordered,
@@ -245,7 +245,7 @@ benchmarks! {
 
 
 		let balance = 100000 * CurrencyId::milli::<u128>();
-		let channel_id = <T as Config>::IbcHandler::open_channel(port_id, channel_end).unwrap();
+		let channel_id = <T as Config>::IbcHandler::open_channel(port_id.clone(), channel_end).unwrap();
 		let denom = "transfer/channel-1/PICA";
 		let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
 		let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
@@ -282,7 +282,7 @@ benchmarks! {
 		let data = serde_json::to_vec(&packet_data).unwrap();
 		let packet = Packet {
 			sequence: 0u64.into(),
-			source_port: port_id,
+			source_port: port_id.clone(),
 			source_channel: ChannelId::new(1),
 			destination_port: port_id,
 			destination_channel: ChannelId::new(0),
@@ -318,7 +318,7 @@ benchmarks! {
 		let connection_id = ConnectionId::new(0);
 		<T as Config>::IbcHandler::create_connection(client_id, connection_id.clone()).unwrap();
 		let port_id = PortId::transfer();
-		let counterparty = Counterparty::new(port_id, Some(ChannelId::new(1)));
+		let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
 		let channel_end = ChannelEnd::new(
 			State::Init,
 			Order::Unordered,
@@ -329,7 +329,7 @@ benchmarks! {
 
 
 		let balance = 100000 * CurrencyId::milli::<u128>();
-		let channel_id = <T as Config>::IbcHandler::open_channel(port_id, channel_end).unwrap();
+		let channel_id = <T as Config>::IbcHandler::open_channel(port_id.clone(), channel_end).unwrap();
 		let denom = "PICA";
 		let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
 		let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
@@ -366,7 +366,7 @@ benchmarks! {
 		let data = serde_json::to_vec(&packet_data).unwrap();
 		let packet = Packet {
 			sequence: 0u64.into(),
-			source_port: port_id,
+			source_port: port_id.clone(),
 			source_channel: ChannelId::new(0),
 			destination_port: port_id,
 			destination_channel: ChannelId::new(1),
@@ -395,7 +395,7 @@ benchmarks! {
 		let connection_id = ConnectionId::new(0);
 		<T as Config>::IbcHandler::create_connection(client_id, connection_id.clone()).unwrap();
 		let port_id = PortId::transfer();
-		let counterparty = Counterparty::new(port_id, Some(ChannelId::new(1)));
+		let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
 		let channel_end = ChannelEnd::new(
 			State::Init,
 			Order::Unordered,
@@ -406,7 +406,7 @@ benchmarks! {
 
 
 		let balance = 100000 * CurrencyId::milli::<u128>();
-		let channel_id = <T as Config>::IbcHandler::open_channel(port_id, channel_end).unwrap();
+		let channel_id = <T as Config>::IbcHandler::open_channel(port_id.clone(), channel_end).unwrap();
 		let denom = "PICA";
 		let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
 		let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
@@ -443,7 +443,7 @@ benchmarks! {
 		let data = serde_json::to_vec(&packet_data).unwrap();
 		let packet = Packet {
 			sequence: 0u64.into(),
-			source_port: port_id,
+			source_port: port_id.clone(),
 			source_channel: ChannelId::new(0),
 			destination_port: port_id,
 			destination_channel: ChannelId::new(1),
