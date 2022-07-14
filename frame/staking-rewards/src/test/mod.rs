@@ -4,11 +4,11 @@ use crate::{
 	Config, RewardPools, StakeCount, Stakes,
 };
 use composable_support::abstractions::utils::increment::Increment;
-use composable_tests_helpers::test::currency::{CurrencyId, PICA, USDT};
+use composable_tests_helpers::test::currency::{CurrencyId, BTC, PICA, USDT};
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
-		Reductions, RewardConfig, RewardPoolConfiguration,
+		ProtocolStaking, Reductions, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
 		Rewards, Stake, Staking,
 	},
@@ -162,6 +162,52 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		);
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
+	});
+}
+
+fn test_transfer_reward() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let pool_init_config = get_default_reward_pool();
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_ok!(<Tokens as Mutate<<StakingRewards as ProtocolStaking>::AccountId>>::mint_into(
+			USDT::ID,
+			&ALICE,
+			20_000_u128
+		));
+		assert_ok!(<Tokens as Mutate<<StakingRewards as ProtocolStaking>::AccountId>>::mint_into(
+			BTC::ID,
+			&ALICE,
+			20_000_u128
+		));
+		assert_ok!(<Tokens as Mutate<<StakingRewards as ProtocolStaking>::AccountId>>::mint_into(
+			BTC::ID,
+			&BOB,
+			20_000_u128
+		));
+		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_reward(
+			&ALICE,
+			&1,
+			USDT::ID,
+			10_u128
+		));
+		// can't transfer more than max_rewards set in the rewards config
+		assert_noop!(
+			<StakingRewards as ProtocolStaking>::transfer_reward(&ALICE, &1, USDT::ID, 10_000_u128),
+			crate::Error::<Test>::MaxRewardLimitReached
+		);
+		// only pool owner can add new reward
+		assert_noop!(
+			<StakingRewards as ProtocolStaking>::transfer_reward(&BOB, &1, BTC::ID, 10_000_u128),
+			crate::Error::<Test>::OnlyPoolOwnerCanAddNewReward
+		);
+
+		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_reward(
+			&ALICE,
+			&1,
+			BTC::ID,
+			10_000_u128
+		));
 	});
 }
 

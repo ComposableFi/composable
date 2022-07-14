@@ -81,6 +81,9 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 	pub lock: LockConfig<DurationPresets>,
 }
 
+/// Default transfer limit on new asset added as rewards.
+pub const DEFAULT_MAX_REWARDS: u128 = 1_000_000_000_000_000_000_u128;
+
 /// Reward configurations for a given asset type.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
 pub struct RewardConfig<AssetId, Balance> {

@@ -882,8 +882,8 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolId = u16;
 	type PositionId = u128;
 	type AssetId = CurrencyId;
-	type CurrencyFactory = CurrencyFactory;
 	type Assets = Assets;
+	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
