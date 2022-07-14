@@ -2,7 +2,7 @@
 
 Polkadot is a blockchain of blockchains. Instead of executing smart contracts directly, it allows other chains to connect and verifies the integrity of the connected chains. We refer to this as 'shared security'.
 
-- [What is Polkadot? A Brief Introduction]https://polkadot.network/blog/what-is-polkadot-a-brief-introduction/
+- [What is Polkadot? A Brief Introduction](https://polkadot.network/blog/what-is-polkadot-a-brief-introduction/)
 
 [![What is Polkadot? - Video](https://img.youtube.com/vi/BQ60bTU1bPg/maxresdefault.jpg)](https://youtu.be/BQ60bTU1bPg)
 
@@ -14,10 +14,12 @@ Parachains are a part of our product. We use these as bridging hubs for our `XCV
 
 Some products that we are building and deploying on Picasso and Composable include:
 
-- [Pablo](https://github.com/ComposableFi/composable/tree/main/frame/pablo)
-- [Centauri](https://composablefi.medium.com/centauri-bridge-powering-defis-interoperable-future-between-picasso-and-ibc-c9474bc985db)
-- [CosmwasmVM]()
-- [Pallet-XCVM]()
+- [Pablo](https://dali.devnets.composablefinance.ninja/products/pablo-overview.html)
+- [Centauri](https://dali.devnets.composablefinance.ninja/products/centauri-overview.html)
+- [Composable's-XCVM](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine.html)
+- [CosmwasmVM](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine/writing-smart-contracts-with-cosmwasm.html)
+
+
 
 > **Note**
 > While writing this document, links to these products were not available yet. Please ask your lead if they already are, and if so, file a PR with the documentation of each.
