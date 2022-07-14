@@ -347,12 +347,6 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Pallet<T> {
-		pub(crate) fn account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
-			T::PalletId::get().into_sub_account_truncating(pool_id)
-		}
-	}
-
 	impl<T: Config> Staking for Pallet<T> {
 		type AccountId = T::AccountId;
 		type RewardPoolId = T::RewardPoolId;
@@ -382,36 +376,38 @@ pub mod pallet {
 			);
 
 			let boosted_amount = Self::boosted_amount(reward_multiplier, amount);
-			let mut reductions = Reductions::new();
+			let (rewards, reductions) =
+				Self::compute_rewards_and_reductions(boosted_amount, &rewards_pool)?;
+			// let mut reductions = Reductions::new();
 
-			let mut inner_rewards = rewards_pool.rewards.into_inner();
-			for (asset_id, reward) in inner_rewards.iter_mut() {
-				let inflation = if rewards_pool.total_shares == Self::Balance::from(0_u32) {
-					Self::Balance::from(0_u32)
-				} else {
-					reward
-						.total_rewards
-						.safe_mul(&boosted_amount)
-						.map_err(|_| ArithmeticError::Overflow)?
-						.safe_div(&rewards_pool.total_shares)
-						.map_err(|_| ArithmeticError::Overflow)?
-				};
+			// let mut inner_rewards = rewards_pool.rewards.into_inner();
+			// for (asset_id, reward) in inner_rewards.iter_mut() {
+			// 	let inflation = if rewards_pool.total_shares == Self::Balance::from(0_u32) {
+			// 		Self::Balance::from(0_u32)
+			// 	} else {
+			// 		reward
+			// 			.total_rewards
+			// 			.safe_mul(&boosted_amount)
+			// 			.map_err(|_| ArithmeticError::Overflow)?
+			// 			.safe_div(&rewards_pool.total_shares)
+			// 			.map_err(|_| ArithmeticError::Overflow)?
+			// 	};
 
-				reward.total_rewards = reward
-					.total_rewards
-					.safe_add(&inflation)
-					.map_err(|_| ArithmeticError::Overflow)?;
-				reward.total_dilution_adjustment = reward
-					.total_dilution_adjustment
-					.safe_add(&inflation)
-					.map_err(|_| ArithmeticError::Overflow)?;
+			// 	reward.total_rewards = reward
+			// 		.total_rewards
+			// 		.safe_add(&inflation)
+			// 		.map_err(|_| ArithmeticError::Overflow)?;
+			// 	reward.total_dilution_adjustment = reward
+			// 		.total_dilution_adjustment
+			// 		.safe_add(&inflation)
+			// 		.map_err(|_| ArithmeticError::Overflow)?;
 
-				reductions
-					.try_insert(*asset_id, inflation)
-					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
-			}
-			let rewards =
-				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+			// 	reductions
+			// 		.try_insert(*asset_id, inflation)
+			// 		.map_err(|_| Error::<T>::ReductionConfigProblem)?;
+			// }
+			// let rewards =
+			// 	Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
 
 			let new_position = Stake {
 				reward_pool_id: *pool_id,
@@ -453,12 +449,43 @@ pub mod pallet {
 
 		#[transactional]
 		fn extend(
-			_who: &Self::AccountId,
-			_position: Self::PositionId,
-			_amount: Self::Balance,
-			_keep_alive: bool,
+			who: &Self::AccountId,
+			position: Self::PositionId,
+			amount: Self::Balance,
+			keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
-			Err("Not implemented".into())
+			let mut stake = Stakes::<T>::get(position).ok_or(Error::<T>::NoPositionFound)?;
+			let mut rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
+				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+			let reward_multiplier = Perbill::one();
+
+			ensure!(
+				matches!(
+					T::Assets::can_withdraw(rewards_pool.asset_id, who, amount),
+					WithdrawConsequence::Success
+				),
+				Error::<T>::NotEnoughAssets
+			);
+
+			let boosted_amount = Self::boosted_amount(reward_multiplier, amount);
+
+			let (rewards, reductions) =
+				Self::compute_rewards_and_reductions(boosted_amount, &rewards_pool)?;
+			rewards_pool.total_shares += boosted_amount;
+			rewards_pool.rewards = rewards;
+			stake.stake += boosted_amount;
+			stake.share += boosted_amount;
+			stake.reductions = reductions;
+			T::Assets::transfer(
+				rewards_pool.asset_id,
+				who,
+				&Self::pool_account_id(&stake.reward_pool_id),
+				amount,
+				keep_alive,
+			)?;
+			RewardPools::<T>::insert(stake.reward_pool_id, rewards_pool);
+			Stakes::<T>::insert(position, stake);
+			Ok(position)
 		}
 
 		#[transactional]
@@ -518,7 +545,7 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
-			T::PalletId::get().into_sub_account_truncating(("po", pool_id))
+			T::PalletId::get().into_sub_account_truncating(pool_id)
 		}
 
 		pub(crate) fn reward_multiplier(
@@ -530,6 +557,53 @@ pub mod pallet {
 
 		pub(crate) fn boosted_amount(reward_multiplier: Perbill, amount: T::Balance) -> T::Balance {
 			reward_multiplier.mul_ceil(amount)
+		}
+
+		fn compute_rewards_and_reductions(
+			boosted_amount: T::Balance,
+			rewards_pool: &RewardPoolOf<T>,
+		) -> Result<
+			(
+				Rewards<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>,
+				Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>,
+			),
+			DispatchError,
+		> {
+			let mut reductions = Reductions::new();
+			let mut rewards_btree_map = Rewards::new();
+
+			// let mut inner_rewards = rewards_pool.rewards.into_inner();
+			for (asset_id, reward) in rewards_pool.rewards.iter() {
+				let reward = reward.clone();
+				let inflation = if rewards_pool.total_shares == T::Balance::from(0_u32) {
+					T::Balance::from(0_u32)
+				} else {
+					reward
+						.total_rewards
+						.safe_mul(&boosted_amount)
+						.map_err(|_| ArithmeticError::Overflow)?
+						.safe_div(&rewards_pool.total_shares)
+						.map_err(|_| ArithmeticError::Overflow)?
+				};
+
+				let total_rewards = reward
+					.total_rewards
+					.safe_add(&inflation)
+					.map_err(|_| ArithmeticError::Overflow)?;
+				let total_dilution_adjustment = reward
+					.total_dilution_adjustment
+					.safe_add(&inflation)
+					.map_err(|_| ArithmeticError::Overflow)?;
+				let updated_reward = Reward { total_rewards, total_dilution_adjustment, ..reward };
+				rewards_btree_map
+					.try_insert(*asset_id, updated_reward)
+					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
+
+				reductions
+					.try_insert(*asset_id, inflation)
+					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
+			}
+			Ok((rewards_btree_map, reductions))
 		}
 	}
 
@@ -566,7 +640,7 @@ pub mod pallet {
 									Error::<T>::MaxRewardLimitReached
 								);
 								reward.total_rewards = new_total_reward;
-								let pool_account = Self::account_id(pool);
+								let pool_account = Self::pool_account_id(pool);
 								T::Assets::transfer(
 									reward_currency,
 									from,
@@ -592,7 +666,7 @@ pub mod pallet {
 									.rewards
 									.try_insert(reward_currency, reward)
 									.map_err(|_| Error::<T>::RewardConfigProblem)?;
-								let pool_account = Self::account_id(pool);
+								let pool_account = Self::pool_account_id(pool);
 								T::Assets::transfer(
 									reward_currency,
 									from,
