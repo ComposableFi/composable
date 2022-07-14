@@ -49,8 +49,8 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
   const picaAssetId = 1,
     ksmAssetId = 4,
     usdcAssetId = 131;
-  const baseAmount = 250000000000;
-  const quoteAmount = 250000000000;
+  const baseAmount = 25000000000;
+  const quoteAmount = 25000000000;
   const minMintAmount = 0;
 
   before("Setting up the tests", async function() {
