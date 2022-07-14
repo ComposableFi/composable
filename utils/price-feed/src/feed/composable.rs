@@ -8,9 +8,11 @@ use crate::{
 	},
 };
 use futures::StreamExt;
-use sp_arithmetic::{FixedPointNumber, FixedU128};
 use std::collections::HashSet;
-use subxt::{ClientBuilder, DefaultConfig, PolkadotExtrinsicParams};
+use subxt::{
+	events::FilteredEventDetails, sp_core::H256, ClientBuilder, DefaultConfig,
+	PolkadotExtrinsicParams,
+};
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 
@@ -18,6 +20,7 @@ pub struct ComposableFeed;
 
 impl ComposableFeed {
 	pub async fn start(
+		mut shutdown_message: tokio::sync::watch::Receiver<bool>,
 		composable_node_url: String,
 		assets: &HashSet<(Asset, Asset)>,
 	) -> FeedResult<Feed<FeedIdentifier, Asset, TimeStampedPrice>> {
@@ -45,6 +48,7 @@ impl ComposableFeed {
 			.await
 			.map_err(|_| FeedError::ChannelIsBroken)?;
 		}
+
 		let sink = sink.clone();
 		let assets = assets.clone();
 		let api_clone = api.clone();
@@ -55,43 +59,76 @@ impl ComposableFeed {
 				.subscribe()
 				.await
 				.map_err(|_| FeedError::NetworkFailure)?
-				.filter_events::<(TwapUpdated,)>();
-			// process all twap_updated event
-			while let Some(twap_updated) = twap_updated_events.next().await {
-				println!("TwapUpdated Event : {twap_updated:?}");
-				if let Ok(twap_updated) = twap_updated {
-					let event: TwapUpdated = twap_updated.event;
-					let base = &event.twaps[0];
-					let quote = &event.twaps[1];
-					let base_asset = primitives::currency::CurrencyId(base.0 .0)
-						.try_into()
-						.map_err(|_| FeedError::NetworkFailure)?;
+				.filter_events::<(TwapUpdated,)>()
+				.fuse();
+			// process all twap_updated events
 
-					let quote_asset = primitives::currency::CurrencyId(quote.0 .0)
-						.try_into()
-						.map_err(|_| FeedError::NetworkFailure)?;
-					if assets.contains(&(base_asset, quote_asset)) {
-						let _ = sink
-							.send(FeedNotification::AssetPriceUpdated {
-								feed: FeedIdentifier::Composable,
-								asset: base_asset,
-								price: TimeStamped {
-									value: (
-										Price(
-											FixedU128::from_inner(base.1 .0)
-												.saturating_mul_int(1_u64),
-										),
-										Exponent(0),
-									),
-									timestamp: TimeStamp::now(),
-								},
-							})
-							.await;
+			loop {
+				tokio::select! {
+					biased;
+
+					_ = shutdown_message.changed() => {
+						println!("changed");
+						if *shutdown_message.borrow() {
+							break;
+						}
+					}
+
+					twap_updated_details = twap_updated_events.select_next_some() => {
+						if let Ok(twap_updated_details) = twap_updated_details {
+							handle_twap_updated_event(twap_updated_details, &assets, &sink).await?;
+						}
 					}
 				}
 			}
+
+			for &(base, _quote) in assets.iter() {
+				sink.send(FeedNotification::AssetClosed {
+					feed: FeedIdentifier::Composable,
+					asset: base,
+				})
+				.await
+				.map_err(|_| FeedError::ChannelIsBroken)?;
+			}
+
+			sink.send(FeedNotification::Stopped { feed: FeedIdentifier::Composable })
+				.await
+				.map_err(|_| FeedError::ChannelIsBroken)?;
+
 			Ok(())
 		});
 		Ok((handle, ReceiverStream::new(source)))
 	}
+}
+
+async fn handle_twap_updated_event(
+	twap_updated_details: FilteredEventDetails<H256, TwapUpdated>,
+	assets: &HashSet<(Asset, Asset)>,
+	sink: &mpsc::Sender<FeedNotification<FeedIdentifier, Asset, TimeStamped<(Price, Exponent)>>>,
+) -> Result<(), FeedError> {
+	println!("TwapUpdated Event : {twap_updated_details:?}");
+	let event: TwapUpdated = twap_updated_details.event;
+	let (base_asset, base_price) = &event.twaps[0];
+	let (quote_asset, quote_price) = &event.twaps[1];
+	let base_asset = primitives::currency::CurrencyId(base_asset.0)
+		.try_into()
+		.map_err(|_| FeedError::NetworkFailure)?;
+	let quote_asset = primitives::currency::CurrencyId(quote_asset.0)
+		.try_into()
+		.map_err(|_| FeedError::NetworkFailure)?;
+	Ok(if assets.contains(&(base_asset, quote_asset)) {
+		if let Err(why) = sink
+			.send(FeedNotification::AssetPriceUpdated {
+				feed: FeedIdentifier::Composable,
+				asset: base_asset,
+				price: TimeStamped {
+					value: (Price(base_price.0.try_into().unwrap()), Exponent(12)),
+					timestamp: TimeStamp::now(),
+				},
+			})
+			.await
+		{
+			log::error!("{:#?}", why)
+		};
+	})
 }

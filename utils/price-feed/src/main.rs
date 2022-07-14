@@ -56,6 +56,8 @@ async fn main() {
 	let (feed_shutdown_sender, feed_shutdown_receiver) = watch::channel(false);
 
 	// used for binance feed
+	// TODO(benluelo): Use the AtomicBool internally in the binance feed but use the watch channel
+	// created above to send the shutdown message
 	let keep_running = Arc::new(AtomicBool::new(true));
 
 	let binance = BinanceFeed::start(
