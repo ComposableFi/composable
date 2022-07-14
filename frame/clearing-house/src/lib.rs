@@ -954,6 +954,7 @@ pub mod pallet {
 		/// - describe any limitations on what the `when` value is allowed to be
 		/// - describe how remaining positions can be settled after the market is closed (which
 		///   extrinsic traders should use)
+		/// - add sequence diagram
 		///
 		/// ## Parameters
 		///
