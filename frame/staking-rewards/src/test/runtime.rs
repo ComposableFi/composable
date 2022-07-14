@@ -199,6 +199,7 @@ impl pallet_staking_rewards::Config for Test {
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type CurrencyFactory = CurrencyFactory;
+	type Assets = Assets;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;

@@ -307,6 +307,7 @@ pub mod pallet {
 			source_user_account: AccountIdOf<T>,
 			amm_swap_info:
 				Option<AmmSwapInfo<NetworkIdOf<T>, RemoteAmmIdOf<T>, AmmMinimumAmountOutOf<T>>>,
+			minimum_amount_out: BalanceOf<T>,
 		},
 		/// User claimed outgoing tx that was not (yet) picked up by the relayer
 		StaleTxClaimed {
@@ -508,6 +509,7 @@ pub mod pallet {
 			asset_id: AssetIdOf<T>,
 			address: EthereumAddress,
 			amount: BalanceOf<T>,
+			minimum_amount_out: BalanceOf<T>,
 			swap_to_native: bool,
 			source_user_account: AccountIdOf<T>,
 			amm_swap_info: Option<
@@ -556,6 +558,7 @@ pub mod pallet {
 				swap_to_native,
 				source_user_account,
 				amm_swap_info,
+				minimum_amount_out,
 			});
 
 			Ok(().into())
