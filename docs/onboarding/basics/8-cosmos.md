@@ -1,6 +1,6 @@
 # Cosmos
 
-Another technology looking to become the 'blockchain of blockchains' is Cosmos, based on the Tendermind consensus algorithm.
+Another technology looking to become the 'blockchain of blockchains' is Cosmos, based on the Tendermint consensus algorithm.
 
 [![Cosmos blockchain (ATOM) explained by lead researcher Sunny Aggarwal – Deep Dive](https://img.youtube.com/vi/IzWpZ1fEcsY/maxresdefault.jpg)](https://youtu.be/IzWpZ1fEcsY)
 
