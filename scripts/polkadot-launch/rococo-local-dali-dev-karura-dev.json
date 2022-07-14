@@ -50,6 +50,7 @@
       "bin": "../../target/release/composable",
       "chain":"dali-dev",
       "balance": "1000000000000000000000",
+      "id" : "2087",
       "nodes": [
         {
           "wsPort": 9988,
@@ -60,23 +61,70 @@
           "wsPort": 9989,
           "port": 31201,
           "flags": ["--bob", "--rpc-cors=all", "--", "--execution=wasm"]
+        },
+        {
+          "wsPort": 9990,
+          "port": 31202,
+          "flags": ["--charlie", "--rpc-cors=all", "--", "--execution=wasm"]
         }
       ]
     },
     {
-      "bin": "../../../basilisk-node/target/release/basilisk",
-      "chain":"local",
+      "bin": "../../../Acala/target/production/acala",
+      "id": "2000",
+      "chain": "karura-dev",
       "balance": "1000000000000000000000",
       "nodes": [
         {
           "wsPort": 9998,
           "port": 31300,
-          "flags": ["--alice", "--rpc-cors=all", "--", "--execution=wasm"]
+          "name": "alice",
+          "flags": [            
+            "--unsafe-ws-external",
+            "--unsafe-rpc-external",
+            "--rpc-external",
+            "--ws-external",
+            "--rpc-cors=all",
+            "--rpc-methods=Unsafe",
+            "--force-authoring",
+            "--log=xcm=trace",
+            "--",
+            "--execution=wasm"
+          ]
         },
         {
           "wsPort": 9999,
           "port": 31301,
-          "flags": ["--bob", "--rpc-cors=all", "--", "--execution=wasm"]
+          "name": "bob",
+          "flags": [
+            "--unsafe-ws-external",
+            "--unsafe-rpc-external",
+            "--rpc-external",
+            "--ws-external",
+            "--rpc-cors=all",
+            "--rpc-methods=Unsafe",
+            "--force-authoring",
+            "--log=xcm=trace",
+            "--",
+            "--execution=wasm"
+          ]
+        },
+        {
+          "wsPort": 10001,
+          "port": 31302,
+          "name": "charlie",
+          "flags": [
+            "--unsafe-ws-external",
+            "--unsafe-rpc-external",
+            "--rpc-external",
+            "--ws-external",
+            "--rpc-cors=all",
+            "--rpc-methods=Unsafe",
+            "--force-authoring",
+            "--log=xcm=trace",
+            "--",
+            "--execution=wasm"
+          ]
         }
       ]
     }
@@ -84,15 +132,15 @@
   "hrmpChannels": [
     {
       "sender": 2000,
-      "recipient": 2090,
+      "recipient": 2087,
       "maxCapacity": 8,
-      "maxMessageSize": 512
+      "maxMessageSize": 2048
     },
     {
-      "sender": 2090,
+      "sender": 2087,
       "recipient": 2000,
       "maxCapacity": 8,
-      "maxMessageSize": 512
+      "maxMessageSize": 2048
     }
   ],
   "types": {},
