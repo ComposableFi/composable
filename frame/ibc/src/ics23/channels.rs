@@ -1,4 +1,5 @@
-use crate::Config;
+use crate::{format, Config};
+use ::alloc::string::{String, ToString};
 use frame_support::storage::{child, child::ChildInfo, ChildTriePrefixIterator};
 use ibc::core::{
 	ics04_channel::channel::ChannelEnd,
@@ -9,12 +10,12 @@ use ibc::core::{
 	},
 };
 use ibc_trait::apply_prefix_and_encode;
-use sp_std::marker::PhantomData;
-use std::str::FromStr;
+use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 use tendermint_proto::Protobuf;
 
 // todo: pruning
-/// (port_identifier, channel_identifier) => ChannelEnd
+/// (port_id, channel_id) => ChannelEnd
+/// trie key path: "channelEnds/ports/{port_id}/channels/{channel_id}"
 pub struct Channels<T>(PhantomData<T>);
 
 impl<T: Config> Channels<T> {

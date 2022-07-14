@@ -1155,8 +1155,9 @@ impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type Event = Event;
 	type Currency = Balances;
-	const INDEXING_PREFIX: &'static [u8] = b"ibc";
-	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
+	const INDEXING_PREFIX: &'static [u8] = b"ibc/";
+	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
+	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
 	type AdminOrigin = EnsureRoot<AccountId>;
@@ -1563,10 +1564,6 @@ impl_runtime_apis! {
 			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
 		}
 
-		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
-			Ibc::build_trie_inputs().ok()
-		}
-
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
 			Ibc::query_balance_with_address(addr).ok()
 		}
@@ -1592,7 +1589,7 @@ impl_runtime_apis! {
 		}
 
 		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
-			Ibc::clients().ok()
+			Some(Ibc::clients())
 		}
 
 		fn connection(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryConnectionResponse>{

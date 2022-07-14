@@ -1,14 +1,15 @@
-use crate::Config;
+use crate::{format, Config};
+use ::alloc::string::String;
 use frame_support::storage::{child, child::ChildInfo, ChildTriePrefixIterator};
 use ibc::{
 	core::ics24_host::{identifier::ClientId, path::ClientConsensusStatePath},
 	Height,
 };
 use ibc_trait::apply_prefix_and_encode;
-use sp_std::marker::PhantomData;
-use std::str::FromStr;
+use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 
 /// client_id, height => consensus_state
+/// trie key path: "clients/{client_id}/consensusStates/{height}"
 /// todo: only store up to 250 (height => consensus_state) per client_id
 pub struct ConsensusStates<T>(PhantomData<T>);
 

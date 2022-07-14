@@ -1,4 +1,8 @@
-//! Uses a child trie for ICS23 vector commitment.
+//! Uses substrate's child trie api for ICS23 vector commitment.
+//! This allows us to progressively mutate the trie and recalculate its root in O(log n).
+//!
+//! A much better approach than having to reconstruct the trie everytime its changed
+//! just to recalculate its root hash.
 
 pub mod acknowledgements;
 pub mod channels;

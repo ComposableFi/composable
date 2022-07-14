@@ -1,4 +1,5 @@
-use crate::Config;
+use crate::{format, Config};
+use ::alloc::string::String;
 use frame_support::storage::{child, child::ChildInfo, ChildTriePrefixIterator};
 use ibc::core::{
 	ics04_channel::{commitment::PacketCommitment as PacketCommitmentType, packet::Sequence},
@@ -9,10 +10,10 @@ use ibc::core::{
 	},
 };
 use ibc_trait::apply_prefix_and_encode;
-use sp_std::marker::PhantomData;
-use std::str::FromStr;
+use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 
 /// (port_id, channel_id, sequence) => hash
+/// trie key path: "commitments/ports/{port_id}/channels/{channel_id}/sequences/{sequence}"
 pub struct PacketCommitment<T>(PhantomData<T>);
 
 impl<T: Config> PacketCommitment<T> {

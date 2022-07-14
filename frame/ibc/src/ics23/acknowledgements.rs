@@ -1,4 +1,5 @@
-use crate::Config;
+use crate::{format, Config};
+use ::alloc::string::String;
 use frame_support::storage::{child, child::ChildInfo, ChildTriePrefixIterator};
 use ibc::core::{
 	ics04_channel::{commitment::AcknowledgementCommitment, packet::Sequence},
@@ -9,10 +10,10 @@ use ibc::core::{
 	},
 };
 use ibc_trait::apply_prefix_and_encode;
-use sp_std::marker::PhantomData;
-use std::str::FromStr;
+use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 
 /// (port_id, channel_id, sequence) => hash
+/// trie key path: "acks/ports/{port_id}/channels/{channel_id}/sequences/{sequence}"
 pub struct Acknowledgements<T>(PhantomData<T>);
 
 impl<T: Config> Acknowledgements<T> {
@@ -51,8 +52,8 @@ impl<T: Config> Acknowledgements<T> {
 		let prefix = format!("acks/ports/");
 		let prefix_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![prefix.clone()]);
 		ChildTriePrefixIterator::with_prefix(
-            &ChildInfo::new_default(T::CHILD_TRIE_KEY),
-            &prefix_key,
+			&ChildInfo::new_default(T::CHILD_TRIE_KEY),
+			&prefix_key,
 		)
 		.filter_map(move |(remaining_key, value)| {
 			let path = format!("{prefix}{}", String::from_utf8(remaining_key).ok()?);

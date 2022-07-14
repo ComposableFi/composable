@@ -1,4 +1,4 @@
-use crate::Config;
+use crate::{format, Config};
 use frame_support::storage::{child, child::ChildInfo};
 use ibc::core::{
 	ics04_channel::packet::Sequence,
@@ -8,10 +8,11 @@ use ibc::core::{
 	},
 };
 use ibc_trait::apply_prefix_and_encode;
-use sp_std::marker::PhantomData;
+use sp_std::{marker::PhantomData, prelude::*};
 
 // todo: pruning
 /// (port_id, channel_id, sequence) => hash
+/// trie key path: "receipts/ports/{port_id}/channels/{channel_id}/sequences/{sequence}"
 pub struct PacketReceipt<T>(PhantomData<T>);
 
 impl<T: Config> PacketReceipt<T> {

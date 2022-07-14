@@ -57,9 +57,11 @@ use jsonrpsee::{
 };
 use pallet_ibc::events::IbcEvent;
 use sc_chain_spec::Properties;
+use sc_client_api::ProofProvider;
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
+use sp_core::storage::ChildInfo;
 use sp_runtime::{
 	generic::BlockId,
 	traits::{BlakeTwo256, Block as BlockT, Header as HeaderT},
@@ -401,7 +403,12 @@ impl<C, Block> IbcApiServer<<<Block as BlockT>::Header as HeaderT>::Number, Bloc
 	for IbcRpcHandler<C, Block>
 where
 	Block: BlockT,
-	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+	C: Send
+		+ Sync
+		+ 'static
+		+ ProvideRuntimeApi<Block>
+		+ HeaderBackend<Block>
+		+ ProofProvider<Block>,
 	C::Api: IbcRuntimeApi<Block>,
 {
 	fn query_packets(
@@ -465,19 +472,22 @@ where
 		.ok_or_else(|| runtime_error_into_rpc_error("Error fetching packets"))
 	}
 
-	fn query_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof> {
+	fn query_proof(&self, height: u32, mut keys: Vec<Vec<u8>>) -> Result<Proof> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Number(height.into());
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
-		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
-			.get_trie_inputs(&at)
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
+		let child_info = ChildInfo::new_default(b"ibc/");
+		let proof = self
+			.client
+			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
+			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.iter_nodes()
+			.collect::<Vec<_>>()
+			.encode();
 		Ok(Proof {
-			proof: generate_raw_proof(inputs, keys)?,
+			proof,
 			height: ibc_proto::ibc::core::client::v1::Height {
 				revision_number: para_id.into(),
 				revision_height: height as u64,
@@ -523,16 +533,20 @@ where
 			.ok()
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error querying client state"))?;
-		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
-			.get_trie_inputs(&at)
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
+		let mut keys = vec![result.trie_key];
+		let child_info = ChildInfo::new_default(b"ibc/");
+		let proof = self
+			.client
+			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
+			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.iter_nodes()
+			.collect::<Vec<_>>()
+			.encode();
 		let client_state = AnyClientState::decode_vec(&result.client_state)
 			.map_err(|_| runtime_error_into_rpc_error("Error querying client state"))?;
 		Ok(QueryClientStateResponse {
 			client_state: Some(client_state.into()),
-			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
+			proof,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
 				revision_number: para_id.into(),
 				revision_height: result.height,
@@ -584,14 +598,18 @@ where
 			.ok_or_else(|| runtime_error_into_rpc_error("Error querying client consensus state"))?;
 		let consensus_state = AnyConsensusState::decode_vec(&result.consensus_state)
 			.map_err(|_| runtime_error_into_rpc_error("Error querying client consensus state"))?;
-		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
-			.get_trie_inputs(&at)
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
+		let mut keys = vec![result.trie_key];
+		let child_info = ChildInfo::new_default(b"ibc/");
+		let proof = self
+			.client
+			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
+			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.iter_nodes()
+			.collect::<Vec<_>>()
+			.encode();
 		Ok(QueryConsensusStateResponse {
 			consensus_state: Some(consensus_state.into()),
-			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
+			proof,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
 				revision_number: para_id.into(),
 				revision_height: result.height,
@@ -650,14 +668,18 @@ where
 		let connection_end =
 			ibc::core::ics03_connection::connection::ConnectionEnd::decode_vec(&result.connection)
 				.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection end"))?;
-		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
-			.get_trie_inputs(&at)
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
+		let mut keys = vec![result.trie_key];
+		let child_info = ChildInfo::new_default(b"ibc/");
+		let proof = self
+			.client
+			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
+			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.iter_nodes()
+			.collect::<Vec<_>>()
+			.encode();
 		Ok(QueryConnectionResponse {
 			connection: Some(connection_end.into()),
-			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
+			proof,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
 				revision_number: para_id.into(),
 				revision_height: result.height,
@@ -753,16 +775,23 @@ where
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
-		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
-			.get_trie_inputs(&at)
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
-		let result: ibc_primitives::ConnectionHandshake = api
+		let mut result: ibc_primitives::ConnectionHandshake = api
 			.connection_handshake(&at, client_id.as_bytes().to_vec(), conn_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
+		let child_info = ChildInfo::new_default(b"ibc/");
+		let proof = self
+			.client
+			.read_child_proof(
+				&at,
+				&child_info,
+				&mut result.trie_keys.iter_mut().map(|nodes| &nodes[..]),
+			)
+			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.iter_nodes()
+			.collect::<Vec<_>>()
+			.encode();
 
 		let client_state = AnyClientState::decode_vec(&result.client_state)
 			.map_err(|_| runtime_error_into_rpc_error("Failed to decode client state"))?;
@@ -771,7 +800,7 @@ where
 				client_id,
 				client_state: Some(client_state.into()),
 			},
-			proof: generate_raw_proof(inputs, result.trie_keys)?,
+			proof,
 			height: ibc_proto::ibc::core::client::v1::Height {
 				revision_number: para_id.into(),
 				revision_height: result.height,
@@ -798,14 +827,18 @@ where
 			.ok_or_else(|| runtime_error_into_rpc_error("Failed to fetch channel state"))?;
 		let channel = ibc::core::ics04_channel::channel::ChannelEnd::decode_vec(&result.channel)
 			.map_err(|_| runtime_error_into_rpc_error("Failed to decode channel state"))?;
-		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
-			.get_trie_inputs(&at)
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
+		let mut keys = vec![result.trie_key];
+		let child_info = ChildInfo::new_default(b"ibc/");
+		let proof = self
+			.client
+			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
+			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.iter_nodes()
+			.collect::<Vec<_>>()
+			.encode();
 		Ok(QueryChannelResponse {
 			channel: Some(channel.into()),
-			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
+			proof,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
 				revision_number: para_id.into(),
 				revision_height: result.height,
@@ -1083,14 +1116,18 @@ where
 			.ok()
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
-		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
-			.get_trie_inputs(&at)
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
+		let mut keys = vec![result.trie_key];
+		let child_info = ChildInfo::new_default(b"ibc/");
+		let proof = self
+			.client
+			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
+			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.iter_nodes()
+			.collect::<Vec<_>>()
+			.encode();
 		Ok(QueryNextSequenceReceiveResponse {
 			next_sequence_receive: result.sequence,
-			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
+			proof,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
 				revision_number: para_id.into(),
 				revision_height: result.height,
@@ -1121,14 +1158,18 @@ where
 			.ok()
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
-		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
-			.get_trie_inputs(&at)
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
+		let mut keys = vec![result.trie_key];
+		let child_info = ChildInfo::new_default(b"ibc/");
+		let proof = self
+			.client
+			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
+			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.iter_nodes()
+			.collect::<Vec<_>>()
+			.encode();
 		Ok(QueryPacketCommitmentResponse {
 			commitment: result.commitment,
-			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
+			proof,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
 				revision_number: para_id.into(),
 				revision_height: result.height,
@@ -1159,14 +1200,18 @@ where
 			.ok()
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
-		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
-			.get_trie_inputs(&at)
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
+		let mut keys = vec![result.trie_key];
+		let child_info = ChildInfo::new_default(b"ibc/");
+		let proof = self
+			.client
+			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
+			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.iter_nodes()
+			.collect::<Vec<_>>()
+			.encode();
 		Ok(QueryPacketAcknowledgementResponse {
 			acknowledgement: result.ack,
-			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
+			proof,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
 				revision_number: para_id.into(),
 				revision_height: result.height,
@@ -1192,14 +1237,18 @@ where
 			.ok()
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
-		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
-			.get_trie_inputs(&at)
-			.ok()
-			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
+		let mut keys = vec![result.trie_key];
+		let child_info = ChildInfo::new_default(b"ibc/");
+		let proof = self
+			.client
+			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
+			.map_err(|err| runtime_error_into_rpc_error(err))?
+			.iter_nodes()
+			.collect::<Vec<_>>()
+			.encode();
 		Ok(QueryPacketReceiptResponse {
 			received: result.receipt,
-			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
+			proof,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
 				revision_number: para_id.into(),
 				revision_height: result.height,

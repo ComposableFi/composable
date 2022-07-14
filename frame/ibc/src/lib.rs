@@ -27,6 +27,7 @@
 
 //! Pallet IBC
 //! Implements the core ibc features for substrate runtimes.
+extern crate alloc;
 
 use codec::{Decode, Encode};
 use frame_system::ensure_signed;
@@ -206,19 +207,6 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
-	/// (port_identifier, channel_identifier) => ChannelEnd
-	pub type Channels<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		Vec<u8>,
-		Blake2_128Concat,
-		Vec<u8>,
-		Vec<u8>,
-		ValueQuery,
-	>;
-
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
 	/// connection_identifier => Vec<(port_id, channel_id)>
 	pub type ChannelsConnection<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<(Vec<u8>, Vec<u8>)>, ValueQuery>;
@@ -267,6 +255,8 @@ pub mod pallet {
 		ProofGenerationError,
 		/// Client consensus state not found for height
 		ConsensusStateNotFound,
+		/// Channel not found
+		ChannelNotFound,
 		/// Client state not found
 		ClientStateNotFound,
 		/// Connection not found

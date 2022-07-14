@@ -1,14 +1,15 @@
-use crate::Config;
+use crate::{format, Config};
 use frame_support::storage::{child, child::ChildInfo};
 use ibc::core::ics24_host::{
 	identifier::{ChannelId, PortId},
 	path::SeqRecvsPath,
 };
 use ibc_trait::apply_prefix_and_encode;
-use sp_std::marker::PhantomData;
+use sp_std::{marker::PhantomData, prelude::*};
 
 // todo: pruning
-/// (port_identifier, channel_identifier) => Sequence
+/// (port_id, channel_id) => Sequence
+/// trie key path: "nextSequenceRecv/ports/{port_id}/channels/{channel_id}"
 pub struct NextSequenceRecv<T>(PhantomData<T>);
 
 impl<T: Config> NextSequenceRecv<T> {

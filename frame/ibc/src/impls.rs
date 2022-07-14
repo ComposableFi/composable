@@ -2,7 +2,7 @@ use super::*;
 use crate::{
 	events::IbcEvent,
 	ics23::{
-		acknowledgements::Acknowledgements, connections::Connections,
+		acknowledgements::Acknowledgements, channels::Channels, connections::Connections,
 		consensus_states::ConsensusStates, next_seq_recv::NextSequenceRecv,
 		next_seq_send::NextSequenceSend, packet_commitments::PacketCommitment,
 		reciepts::PacketReceipt,
@@ -78,6 +78,8 @@ where
 	T: Send + Sync,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
+	/// WARNING: Pretty expensive function. Only call this after all changes to the ics23 key store
+	/// have been made. This recalculates the root hash of the ics23 key store.
 	pub(crate) fn extract_ibc_commitment_root() -> Vec<u8> {
 		child::root(&ChildInfo::new_default(T::CHILD_TRIE_KEY), sp_core::storage::StateVersion::V0)
 	}
@@ -88,11 +90,11 @@ where
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 	) -> Result<QueryChannelResponse, Error<T>> {
-		let channel = Channels::<T>::get(port_id.clone(), channel_id.clone());
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
-
+		let channel = Channels::<T>::get(port_id.clone(), channel_id.clone())
+			.ok_or_else(|| Error::<T>::ChannelNotFound)?;
 		let channel_path = format!("{}", ChannelEndsPath(port_id, channel_id));
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path]);
 
@@ -126,11 +128,10 @@ where
 
 	/// Get all client states
 	/// Returns a Vec of (client_id, client_state)
-	pub fn clients() -> Result<Vec<(Vec<u8>, Vec<u8>)>, Error<T>> {
-		// let client_states = ClientStates::<T>::iter().collect::<Vec<_>>();
-		//
-		// Ok(client_states)
-		unimplemented!()
+	pub fn clients() -> Vec<(Vec<u8>, Vec<u8>)> {
+		ClientStates::<T>::iter()
+			.map(|(client_id, client_state)| (client_id.as_bytes().to_vec(), client_state))
+			.collect::<Vec<_>>()
 	}
 
 	/// Get a consensus state for client
@@ -237,9 +238,19 @@ where
 
 		let channels = identifiers
 			.into_iter()
-			.map(|(port_id, channel_id)| {
-				let channel_end = Channels::<T>::get(port_id.clone(), channel_id.clone());
-				Ok(IdentifiedChannel { channel_id, port_id, channel_end })
+			.map(|(port_id_bytes, channel_id_bytes)| {
+				let channel_id = channel_id_from_bytes(channel_id_bytes.clone())
+					.map_err(|_| Error::<T>::DecodingError)?;
+				let port_id = port_id_from_bytes(port_id_bytes.clone())
+					.map_err(|_| Error::<T>::DecodingError)?;
+
+				let channel_end = Channels::<T>::get(port_id, channel_id)
+					.ok_or_else(|| Error::<T>::ChannelNotFound)?;
+				Ok(IdentifiedChannel {
+					channel_id: channel_id_bytes,
+					port_id: port_id_bytes,
+					channel_end,
+				})
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 		Ok(QueryChannelsResponse { channels, height: host_height::<T>() })
@@ -479,15 +490,17 @@ where
 	}
 
 	pub(crate) fn packet_cleanup() -> Result<(), Error<T>> {
-		for (port_id_bytes, channel_id_bytes) in Channels::<T>::iter_keys() {
+		for (port_id_bytes, channel_id_bytes, _) in Channels::<T>::iter() {
 			let channel_id = channel_id_from_bytes(channel_id_bytes.clone())
 				.map_err(|_| Error::<T>::DecodingError)?;
 			let port_id =
 				port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
 
 			let key = Pallet::<T>::offchain_key(channel_id_bytes.clone(), port_id_bytes.clone());
-			let ack_key =
-				Pallet::<T>::offchain_key(channel_id_bytes.clone(), port_id_bytes.clone());
+			let ack_key = Pallet::<T>::acknowledgements_offchain_key(
+				channel_id_bytes.clone(),
+				port_id_bytes.clone(),
+			);
 			// Clean up offchain packets
 			if let Some(mut offchain_packets) =
 				sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)

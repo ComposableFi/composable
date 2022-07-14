@@ -6,7 +6,7 @@ use scale_info::prelude::{collections::BTreeMap, string::ToString};
 
 use crate::{
 	ics23::{
-		acknowledgements::Acknowledgements, next_seq_ack::NextSequenceAck,
+		acknowledgements::Acknowledgements, channels::Channels, next_seq_ack::NextSequenceAck,
 		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
 		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
 	},
@@ -39,10 +39,8 @@ where
 			port_channel_id.0,
 			port_channel_id.1
 		);
-		let data = <Channels<T>>::get(
-			port_channel_id.0.as_bytes(),
-			port_channel_id.1.to_string().as_bytes(),
-		);
+		let data = <Channels<T>>::get(port_channel_id.0.clone(), port_channel_id.1.clone())
+			.ok_or_else(|| ICS04Error::missing_channel())?;
 		let channel_end = ChannelEnd::decode_vec(&*data).map_err(|_| {
 			ICS04Error::channel_not_found(port_channel_id.clone().0, port_channel_id.clone().1)
 		})?;
@@ -178,8 +176,6 @@ where
 		&self,
 		key: &(PortId, ChannelId, Sequence),
 	) -> Result<AcknowledgementCommitment, ICS04Error> {
-		let seq = u64::from(key.2);
-
 		if <Acknowledgements<T>>::contains_key((key.0.clone(), key.1.clone(), key.2.clone())) {
 			let ack = <Acknowledgements<T>>::get((key.0.clone(), key.1.clone(), key.2.clone()))
 				.ok_or_else(|| ICS04Error::packet_acknowledgement_not_found(key.2.clone()))?;
@@ -291,8 +287,6 @@ where
 		&mut self,
 		key: (PortId, ChannelId, Sequence),
 	) -> Result<(), ICS04Error> {
-		let seq = u64::from(key.2);
-
 		// delete packet commitment
 		<PacketCommitment<T>>::remove((key.0.clone(), key.1.clone(), key.2.clone()));
 
@@ -335,8 +329,6 @@ where
 		&mut self,
 		key: (PortId, ChannelId, Sequence),
 	) -> Result<(), ICS04Error> {
-		let seq = u64::from(key.2);
-
 		// remove acknowledgements
 		<Acknowledgements<T>>::remove((key.0.clone(), key.1.clone(), key.2.clone()));
 
@@ -377,14 +369,8 @@ where
 		port_channel_id: (PortId, ChannelId),
 		channel_end: &ChannelEnd,
 	) -> Result<(), ICS04Error> {
-		let channel_end = channel_end.encode_vec();
-
 		// store channels key-value
-		<Channels<T>>::insert(
-			port_channel_id.0.as_bytes().to_vec(),
-			port_channel_id.1.to_string().as_bytes().to_vec(),
-			channel_end,
-		);
+		<Channels<T>>::insert(port_channel_id.0.clone(), port_channel_id.1.clone(), channel_end);
 
 		Ok(())
 	}
