@@ -23,7 +23,7 @@ import { withdrawCollateralHandler } from "@composabletests/tests/angular/testHa
 import BN from "bn.js";
 
 
-describe.only("[Angular] tx.lending Tests", function() {
+describe.only("[Angular][SHORT] tx.lending Tests", function() {
   if (!testConfiguration.enabled)
     return;
   let oracleId: number,
@@ -67,7 +67,7 @@ describe.only("[Angular] tx.lending Tests", function() {
    * Angular requires a set-up and working Oracle.
    * We do this within this test block
    */
-  describe.only("Lending Tests - Oracle Setup", function() {
+  describe("Lending Tests - Oracle Setup", function() {
     describe("Before Lending Tests: Create Oracles", function() {
 
       it("Before Lending Tests: Create Oracle for borrow asset", async function() {
