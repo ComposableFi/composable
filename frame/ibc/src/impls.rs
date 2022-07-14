@@ -2,9 +2,9 @@ use super::*;
 use crate::{
 	events::IbcEvent,
 	ics23::{
-		connections::Connections, consensus_states::ConsensusStates,
-		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
-		packet_commitments::PacketCommitment,
+		acknowledgements::Acknowledgements, connections::Connections,
+		consensus_states::ConsensusStates, next_seq_recv::NextSequenceRecv,
+		next_seq_send::NextSequenceSend, packet_commitments::PacketCommitment,
 	},
 	routing::Context,
 };
@@ -170,18 +170,18 @@ where
 		// }
 
 		// Insert packet acknowledgements in trie
-		for ((port, channel, sequence), ack) in Acknowledgements::<T>::iter() {
-			let channel_id =
-				channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
-			let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-			let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
-
-			let ack_path = AcksPath { port_id, channel_id, sequence };
-
-			let ack_path = format!("{}", ack_path);
-			let ack_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![ack_path]);
-			inputs.push((ack_key, ack));
-		}
+		// for ((port, channel, sequence), ack) in Acknowledgements::<T>::iter() {
+		// 	let channel_id =
+		// 		channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
+		// 	let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
+		// 	let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
+		//
+		// 	let ack_path = AcksPath { port_id, channel_id, sequence };
+		//
+		// 	let ack_path = format!("{}", ack_path);
+		// 	let ack_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![ack_path]);
+		// 	inputs.push((ack_key, ack));
+		// }
 
 		// Insert packet receipts in trie
 		for ((port, channel, sequence), receipt) in PacketReceipt::<T>::iter() {
@@ -395,16 +395,20 @@ where
 	}
 
 	pub fn packet_acknowledgements(
-		channel_id: Vec<u8>,
-		port_id: Vec<u8>,
+		channel_id_bytes: Vec<u8>,
+		port_id_bytes: Vec<u8>,
 	) -> Result<QueryPacketAcknowledgementsResponse, Error<T>> {
+		let channel_id = channel_id_from_bytes(channel_id_bytes.clone())
+			.map_err(|_| Error::<T>::DecodingError)?;
+		let port_id =
+			port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
 		let acks = Acknowledgements::<T>::iter()
 			.filter_map(|((p, c, s), ack)| {
 				if p == port_id && c == channel_id {
 					let packet_state = PacketState {
-						port_id: port_id.clone(),
-						channel_id: channel_id.clone(),
-						sequence: s,
+						port_id: port_id_bytes.clone(),
+						channel_id: channel_id_bytes.clone(),
+						sequence: s.into(),
 						data: ack,
 					};
 					Some(packet_state)
@@ -488,11 +492,13 @@ where
 		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse, Error<T>> {
-		let ack = Acknowledgements::<T>::get((port_id.clone(), channel_id.clone(), seq));
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
+		let ack =
+			Acknowledgements::<T>::get((port_id.clone(), channel_id.clone(), sequence.clone()))
+				.ok_or_else(|| Error::<T>::PacketCommitmentNotFound)?;
 		let acks_path = format!("{}", AcksPath { port_id, channel_id, sequence });
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![acks_path]);
 
@@ -623,9 +629,9 @@ where
 				let keys: Vec<u64> = acks.clone().into_keys().collect();
 				for key in keys {
 					if !Acknowledgements::<T>::contains_key((
-						port_id_bytes.clone(),
-						channel_id_bytes.clone(),
-						key,
+						port_id.clone(),
+						channel_id.clone(),
+						key.into(),
 					)) {
 						let _ = acks.remove(&key);
 					}

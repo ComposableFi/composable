@@ -6,8 +6,9 @@ use scale_info::prelude::{collections::BTreeMap, string::ToString};
 
 use crate::{
 	ics23::{
-		next_seq_ack::NextSequenceAck, next_seq_recv::NextSequenceRecv,
-		next_seq_send::NextSequenceSend, packet_commitments::PacketCommitment,
+		acknowledgements::Acknowledgements, next_seq_ack::NextSequenceAck,
+		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
+		packet_commitments::PacketCommitment,
 	},
 	routing::Context,
 };
@@ -181,13 +182,9 @@ where
 	) -> Result<AcknowledgementCommitment, ICS04Error> {
 		let seq = u64::from(key.2);
 
-		if <Acknowledgements<T>>::contains_key((
-			key.0.as_bytes(),
-			key.1.to_string().as_bytes(),
-			seq,
-		)) {
-			let ack =
-				<Acknowledgements<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
+		if <Acknowledgements<T>>::contains_key((key.0.clone(), key.1.clone(), key.2.clone())) {
+			let ack = <Acknowledgements<T>>::get((key.0.clone(), key.1.clone(), key.2.clone()))
+				.ok_or_else(|| ICS04Error::packet_acknowledgement_not_found(key.2.clone()))?;
 			log::trace!(
 				"in channel : [get_packet_acknowledgement] >> packet_acknowledgement = {:?}",
 				ack
@@ -332,12 +329,10 @@ where
 		key: (PortId, ChannelId, Sequence),
 		ack_commitment: AcknowledgementCommitment,
 	) -> Result<(), ICS04Error> {
-		let seq = u64::from(key.2);
-
 		// store packet acknowledgement key-value
 		<Acknowledgements<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
-			ack_commitment.into_vec(),
+			(key.0.clone(), key.1.clone(), key.2.clone()),
+			ack_commitment,
 		);
 
 		Ok(())
@@ -350,11 +345,7 @@ where
 		let seq = u64::from(key.2);
 
 		// remove acknowledgements
-		<Acknowledgements<T>>::remove((
-			key.0.as_bytes().to_vec(),
-			key.1.to_string().as_bytes().to_vec(),
-			seq,
-		));
+		<Acknowledgements<T>>::remove((key.0.clone(), key.1.clone(), key.2.clone()));
 
 		Ok(())
 	}

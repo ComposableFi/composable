@@ -1,5 +1,6 @@
 //! Uses a child trie for ICS23 vector commitment.
 
+pub mod acknowledgements;
 pub mod channels;
 pub mod client_states;
 pub mod clients;

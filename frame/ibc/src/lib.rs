@@ -265,11 +265,11 @@ pub mod pallet {
 	// pub type NextSequenceAck<T: Config> =
 	// 	StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// (port_identifier, channel_identifier, Sequence) => Hash
-	pub type Acknowledgements<T: Config> =
-		CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
+	// #[pallet::storage]
+	// #[allow(clippy::disallowed_types)]
+	// /// (port_identifier, channel_identifier, Sequence) => Hash
+	// pub type Acknowledgements<T: Config> =
+	// 	CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -333,6 +333,8 @@ pub mod pallet {
 		ConnectionNotFound,
 		/// Packet commitment wasn't found
 		PacketCommitmentNotFound,
+		/// Packet Acknowledgment wasn't found
+		PacketAcknowledgmentNotFound,
 		/// Error constructing packet
 		SendPacketError,
 		/// Other forms of errors
@@ -379,15 +381,16 @@ pub mod pallet {
 		}
 
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
-            // todo: is this still needed?
-			<T as Config>::WeightInfo::on_finalize(
-				ClientCounter::<T>::get(),
-				ConnectionCounter::<T>::get(),
-				ChannelCounter::<T>::get(),
-				PacketCounter::<T>::get(),
-				Acknowledgements::<T>::count(),
-				PacketReceipt::<T>::count(),
-			)
+			// todo: is this still needed?
+			// <T as Config>::WeightInfo::on_finalize(
+			// 	ClientCounter::<T>::get(),
+			// 	ConnectionCounter::<T>::get(),
+			// 	ChannelCounter::<T>::get(),
+			// 	PacketCounter::<T>::get(),
+			// 	Acknowledgements::<T>::count(),
+			// 	PacketReceipt::<T>::count(),
+			// )
+			0
 		}
 
 		fn offchain_worker(_n: BlockNumberFor<T>) {
