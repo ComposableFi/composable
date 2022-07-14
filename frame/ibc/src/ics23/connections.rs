@@ -7,6 +7,9 @@ use ibc::core::{
 use ibc_trait::apply_prefix_and_encode;
 use sp_std::marker::PhantomData;
 use tendermint_proto::Protobuf;
+use alloc::string::ToString;
+use sp_std::prelude::*;
+
 
 // todo: pruning
 /// connection_id => ConnectionEnd

@@ -3,6 +3,7 @@ use frame_support::storage::{child, child::ChildInfo};
 use ibc::core::ics24_host::{identifier::ClientId, path::ClientTypePath};
 use ibc_trait::apply_prefix_and_encode;
 use sp_std::marker::PhantomData;
+use sp_std::prelude::*;
 
 /// client_id => client_type
 /// trie key path: "clients/{}/clientType"

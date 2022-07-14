@@ -9,6 +9,7 @@ use ibc::core::{
 		Path,
 	},
 };
+use alloc::string::ToString;
 use ibc_trait::apply_prefix_and_encode;
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 

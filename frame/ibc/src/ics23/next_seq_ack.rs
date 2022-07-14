@@ -6,6 +6,7 @@ use ibc::core::ics24_host::{
 };
 use ibc_trait::apply_prefix_and_encode;
 use sp_std::{marker::PhantomData};
+use alloc::vec;
 
 // todo: pruning
 /// (port_id, channel_id) => Sequence

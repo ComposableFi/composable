@@ -11,6 +11,7 @@ use ibc::core::{
 };
 use ibc_trait::apply_prefix_and_encode;
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
+use alloc::string::ToString;
 
 /// (port_id, channel_id, sequence) => hash
 /// trie key path: "commitments/ports/{port_id}/channels/{channel_id}/sequences/{sequence}"

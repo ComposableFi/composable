@@ -4,6 +4,7 @@ use frame_support::storage::{child, child::ChildInfo, ChildTriePrefixIterator};
 use ibc::core::ics24_host::{identifier::ClientId, path::ClientStatePath, Path};
 use ibc_trait::apply_prefix_and_encode;
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
+use alloc::string::ToString;
 
 /// client_id => client_states
 /// trie key path: "clients/{client_id}/clientState"
