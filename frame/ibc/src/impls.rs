@@ -2,10 +2,10 @@ use super::*;
 use crate::{
 	events::IbcEvent,
 	ics23::{
-		acknowledgements::Acknowledgements, channels::Channels, connections::Connections,
-		consensus_states::ConsensusStates, next_seq_recv::NextSequenceRecv,
-		next_seq_send::NextSequenceSend, packet_commitments::PacketCommitment,
-		reciepts::PacketReceipt,
+		acknowledgements::Acknowledgements, channels::Channels, client_states::ClientStates,
+		connections::Connections, consensus_states::ConsensusStates,
+		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
+		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
 	},
 	routing::Context,
 };
@@ -68,7 +68,6 @@ use ibc_trait::{
 	apply_prefix_and_encode, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
 	port_id_from_bytes, Error as IbcHandlerError, IbcTrait,
 };
-use ics23::client_states::ClientStates;
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;

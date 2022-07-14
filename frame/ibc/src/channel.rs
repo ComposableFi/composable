@@ -308,6 +308,10 @@ where
 
 		<PacketReceipt<T>>::insert((key.0.clone(), key.1.clone(), key.2.clone()), receipt);
 
+		if let Some(val) = <PacketReceiptCounter<T>>::get().checked_add(1) {
+			<PacketReceiptCounter<T>>::put(val)
+		}
+
 		Ok(())
 	}
 
@@ -322,6 +326,10 @@ where
 			ack_commitment,
 		);
 
+		if let Some(val) = AcknowledgementCounter::<T>::get().checked_add(1) {
+			AcknowledgementCounter::<T>::put(val)
+		}
+
 		Ok(())
 	}
 
@@ -332,6 +340,9 @@ where
 		// remove acknowledgements
 		<Acknowledgements<T>>::remove((key.0.clone(), key.1.clone(), key.2.clone()));
 
+		if let Some(val) = AcknowledgementCounter::<T>::get().checked_sub(1) {
+			AcknowledgementCounter::<T>::put(val)
+		}
 		Ok(())
 	}
 

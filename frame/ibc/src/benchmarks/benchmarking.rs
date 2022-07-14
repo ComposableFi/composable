@@ -3,8 +3,14 @@
 #[allow(unused)]
 use super::super::*;
 use crate::{
-	benchmarks::tendermint_benchmark_utils::*, host_functions::HostFunctions,
-	pallet::Pallet as PalletIbc, Any, Config, HostConsensusStates,
+	benchmarks::tendermint_benchmark_utils::*,
+	host_functions::HostFunctions,
+	ics23::{
+		acknowledgements::Acknowledgements, client_states::ClientStates,
+		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+	},
+	pallet::Pallet as PalletIbc,
+	Any, Config, HostConsensusStates,
 };
 use core::str::FromStr;
 use frame_benchmarking::{benchmarks, whitelisted_caller};
@@ -90,7 +96,7 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
-		let client_state = ClientStates::<T>::get(client_id.as_bytes().to_vec());
+		let client_state = ClientStates::<T>::get(&client_id).unwrap();
 		let client_state = AnyClientState::decode_vec(&*client_state).unwrap();
 		assert_eq!(client_state.latest_height(), Height::new(0, 2));
 	}
@@ -827,20 +833,20 @@ benchmarks! {
 			let commitment = vec![0;32];
 			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 			let channel_id = ChannelId::new(0);
-			PacketCommitment::<T>::insert((port_id.as_bytes(), channel_id.to_string().as_bytes(), l as u64), commitment)
+			PacketCommitment::<T>::insert((port_id.clone(), channel_id.clone(), (l as u64).into()), commitment.into())
 		}
 
 		for m in 1..e {
 			let ack = vec![0;32];
 			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 			let channel_id = ChannelId::new(0);
-			Acknowledgements::<T>::insert((port_id.as_bytes(), channel_id.to_string().as_bytes(), m as u64), ack)
+			Acknowledgements::<T>::insert((port_id.clone(), channel_id.clone(), (m as u64).into()), ack.into())
 		}
 
 		for n in 1..f {
 			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 			let channel_id = ChannelId::new(0);
-			PacketReceipt::<T>::insert((port_id.as_bytes(), channel_id.to_string().as_bytes(), n as u64), "Ok".as_bytes())
+			PacketReceipt::<T>::insert((port_id.clone(), channel_id.clone(), (n as u64).into()), b"Ok".to_vec())
 		}
 
 	}: { PalletIbc::<T>::on_finalize(0u32.into())}
@@ -896,6 +902,6 @@ benchmarks! {
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 	}: _(RawOrigin::Root, msg)
 	verify {
-		assert_eq!(Clients::<T>::count(), 1)
+		assert_eq!(ClientCounter::<T>::get(), 1)
 	}
 }

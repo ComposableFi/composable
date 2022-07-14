@@ -223,6 +223,16 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
+	/// counter for acknowledgments
+	pub type AcknowledgementCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
+
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	/// counter for packet reciepts
+	pub type PacketReceiptCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
+
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// client_id => Vec<Connection_id>
 	pub type ConnectionClient<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<Vec<u8>>, ValueQuery>;
@@ -313,16 +323,14 @@ pub mod pallet {
 		}
 
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
-			// todo: is this still needed?
-			// <T as Config>::WeightInfo::on_finalize(
-			// 	ClientCounter::<T>::get(),
-			// 	ConnectionCounter::<T>::get(),
-			// 	ChannelCounter::<T>::get(),
-			// 	PacketCounter::<T>::get(),
-			// 	Acknowledgements::<T>::count(),
-			// 	PacketReceipt::<T>::count(),
-			// )
-			0
+			<T as Config>::WeightInfo::on_finalize(
+				ClientCounter::<T>::get(),
+				ConnectionCounter::<T>::get(),
+				ChannelCounter::<T>::get(),
+				PacketCounter::<T>::get(),
+				AcknowledgementCounter::<T>::get(),
+				PacketReceiptCounter::<T>::get(),
+			)
 		}
 
 		fn offchain_worker(_n: BlockNumberFor<T>) {
