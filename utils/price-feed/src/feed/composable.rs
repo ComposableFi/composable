@@ -106,7 +106,6 @@ async fn handle_twap_updated_event(
 	assets: &HashSet<(Asset, Asset)>,
 	sink: &mpsc::Sender<FeedNotification<FeedIdentifier, Asset, TimeStamped<(Price, Exponent)>>>,
 ) -> Result<(), FeedError> {
-	println!("TwapUpdated Event : {twap_updated_details:?}");
 	let event: TwapUpdated = twap_updated_details.event;
 	let (base_asset, base_price) = &event.twaps[0];
 	let (quote_asset, quote_price) = &event.twaps[1];
