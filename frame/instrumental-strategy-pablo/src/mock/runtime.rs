@@ -1,6 +1,6 @@
 use frame_support::{
 	parameter_types,
-	traits::{Everything, GenesisBuild},
+	traits::{Everything, GenesisBuild, ConstU32, ConstU64},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSigned};
@@ -12,7 +12,7 @@ use sp_runtime::{
 	traits::{ConvertInto, IdentityLookup},
 	Permill,
 };
-
+use pallet_collective::PrimeDefaultVote;
 use crate as pallet_pablo_strategy;
 use crate::mock::account_id::AccountId;
 
@@ -23,6 +23,7 @@ pub type PoolId = u128;
 pub type Moment = composable_traits::time::Timestamp;
 pub type VaultId = u64;
 
+pub type MaxMembers = ConstU32<100>;
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
 const NATIVE_ASSET: CurrencyId = CurrencyId::PICA;
@@ -80,6 +81,26 @@ impl pallet_balances::Config for MockRuntime {
 	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                             Collective
+// -------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MotionDuration: u64 = 3;
+	pub const MaxProposals: u32 = 100;
+}
+
+impl pallet_collective::Config for MockRuntime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = ConstU64<3>;
+	type MaxProposals = MaxProposals;
+	type MaxMembers = MaxMembers;
+	type DefaultVote = PrimeDefaultVote;
+	type WeightInfo = ();
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -320,6 +341,7 @@ frame_support::construct_runtime!(
 		Assets: pallet_assets::{Pallet, Call, Storage},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Pablo: pallet_pablo::{Pallet, Call, Storage, Event<T>},
+		Collective: pallet_collective::{Pallet, Call, Event<T>, Origin<T>, Config<T>},
 
 		InstrumentalStrategy: instrumental_strategy::{Pallet, Call, Storage, Event<T>},
 		Instrumental: pallet_instrumental::{Pallet, Call, Storage, Event<T>},
