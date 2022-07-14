@@ -5,7 +5,7 @@ To understand how AMMs work, we'll first take a brief detour to tradfi. To under
 - [Order Book](https://www.investopedia.com/terms/o/order-book.asp)
 - [Spread](https://www.investopedia.com/terms/s/spread.asp)
 
-[![What is a Market Maker and How do They Make Money?](https://img.youtube.com/vi/zTHKcJEGe8/maxresdefault.jpg)](https://youtu.be/zTHKcJEGe8)
+[![What is a Market Maker and How do They Make Money?](https://img.youtube.com/vi/-zTHKcJEGe8/maxresdefault.jpg)](https://youtu.be/-zTHKcJEGe8)
 
 ## Constant Product Market Makers
 
