@@ -8,7 +8,7 @@ pub struct Opts {
 	pub pythd_host: String,
 
 	/// Host address of the composable node.
-	#[clap(long, default_value = "http://127.0.0.1:8910")]
+	#[clap(long, default_value = "ws://127.0.0.1:9988")]
 	pub composable_node: String,
 
 	/// Listening address for the frontend.
@@ -25,9 +25,5 @@ pub struct Opts {
 
 	/// Duration, in seconds, before a price is evicted from the cache.
 	#[clap(short, long, default_value = "10")]
-	pub cache_duration: u64,
-}
-
-pub fn get_opts() -> Opts {
-	Opts::parse()
+	pub cache_duration: u32,
 }
