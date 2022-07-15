@@ -54,7 +54,7 @@ export class PabloPool {
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   calculatedTimestamp!: bigint
 
-  @OneToMany_(() => PabloPoolAsset, e => e.pool, {eager: true})
+  @OneToMany_(() => PabloPoolAsset, e => e.pool, { eager: true })
   poolAssets!: PabloPoolAsset[]
 
   @OneToMany_(() => PabloTransaction, e => e.pool)

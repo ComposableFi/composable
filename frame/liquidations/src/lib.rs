@@ -38,7 +38,7 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
-mod weights;
+pub mod weights;
 
 pub use crate::weights::WeightInfo;
 
@@ -50,8 +50,12 @@ pub mod pallet {
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_support::{
 		abstractions::{
-			nonce::{Increment, Nonce, ValueQuery},
-			utils::{increment::WrappingIncrement, start_at::DefaultInit},
+			nonce::Nonce,
+			utils::{
+				increment::{Increment, WrappingIncrement},
+				start_at::DefaultInit,
+				ValueQuery,
+			},
 		},
 		math::wrapping_next::WrappingNext,
 	};
@@ -64,7 +68,7 @@ pub mod pallet {
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue},
 		traits::{EnsureOrigin, Get, IsType, UnixTime},
-		PalletId, Parameter, Twox64Concat,
+		BoundedVec, PalletId, Parameter, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
@@ -96,7 +100,8 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ WrappingNext
 			+ Parameter
-			+ Copy;
+			+ Copy
+			+ From<u32>;
 
 		type OrderId: Default + FullCodec + MaxEncodedLen + sp_std::fmt::Debug;
 
@@ -111,6 +116,7 @@ pub mod pallet {
 		type XcmSender: xcm::latest::SendXcm;
 
 		type CanModifyStrategies: EnsureOrigin<Self::Origin>;
+		type MaxLiquidationStrategiesAmount: Get<u32>;
 	}
 
 	#[pallet::event]
@@ -122,6 +128,8 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		NoLiquidationEngineFound,
+		InvalidLiquidationStrategiesVector,
+		OnlyDutchAuctionStrategyIsImplemented,
 	}
 
 	#[pallet::pallet]
@@ -144,7 +152,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::sell())]
+		#[pallet::weight(T::WeightInfo::sell(configuration.len().max(1) as u32))]
 		pub fn sell(
 			origin: OriginFor<T>,
 			order: Sell<T::MayBeAssetId, T::Balance>,
@@ -243,9 +251,23 @@ pub mod pallet {
 			order: Sell<Self::MayBeAssetId, Self::Balance>,
 			configuration: Vec<Self::LiquidationStrategyId>,
 		) -> Result<T::OrderId, DispatchError> {
+			let configuration = BoundedVec::try_from(configuration)
+				.map_err(|()| Error::<T>::InvalidLiquidationStrategiesVector)?;
+			Self::do_liquidate(from_to, order, configuration)
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		fn do_liquidate(
+			from_to: &T::AccountId,
+			order: Sell<T::MayBeAssetId, T::Balance>,
+			configuration: BoundedVec<T::LiquidationStrategyId, T::MaxLiquidationStrategiesAmount>,
+		) -> Result<T::OrderId, DispatchError> {
 			let mut configuration = configuration;
 			if configuration.is_empty() {
-				configuration.push(DefaultStrategyIndex::<T>::get())
+				configuration
+					.try_push(DefaultStrategyIndex::<T>::get())
+					.map_err(|()| Error::<T>::InvalidLiquidationStrategiesVector)?;
 			};
 			for id in configuration {
 				let configuration = Strategies::<T>::get(id);
@@ -253,10 +275,7 @@ pub mod pallet {
 					let result = match configuration {
 						LiquidationStrategyConfiguration::DutchAuction(configuration) =>
 							T::DutchAuction::ask(from_to, order.clone(), configuration),
-						_ =>
-							return Err(DispatchError::Other(
-								"as for now, only auction liquidators implemented",
-							)),
+						_ => return Err(Error::<T>::OnlyDutchAuctionStrategyIsImplemented.into()),
 					};
 					if let Ok(order_id) = result {
 						Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});

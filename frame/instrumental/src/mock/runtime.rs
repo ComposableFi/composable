@@ -6,7 +6,7 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
 use orml_traits::parameter_type_with_key;
 use pallet_instrumental::mock::account_id::{AccountId, ADMIN};
-use primitives::currency::CurrencyId;
+use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -105,6 +105,8 @@ impl orml_tokens::Config for MockRuntime {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -149,8 +151,9 @@ impl pallet_assets::Config for MockRuntime {
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
-	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>; // TODO(saruman9): or EnsureRoot<AccountId>?
+	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 // -------------------------------------------------------------------------------------------------

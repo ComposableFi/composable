@@ -26,6 +26,7 @@ use frame_support::{
 };
 use proptest::prelude::*;
 use sp_runtime::{traits::IntegerSquareRoot, DispatchError, Permill};
+use sp_std::collections::btree_map::BTreeMap;
 
 fn create_pool(
 	base_asset: AssetId,
@@ -164,6 +165,59 @@ fn test() {
 		let alice_usdt = Tokens::balance(USDT, &ALICE);
 		assert_ok!(default_acceptable_computation_error(alice_btc, initial_btc));
 		assert_ok!(default_acceptable_computation_error(alice_usdt, initial_usdt));
+	});
+}
+
+#[test]
+fn test_redeemable_assets() {
+	new_test_ext().execute_with(|| {
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
+			pair: CurrencyPair::new(BTC, USDT),
+			fee: Permill::zero(),
+			base_weight: Permill::from_percent(50),
+		};
+		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
+
+		let pool = get_pool(pool_id);
+
+		let unit = 1_000_000_000_000;
+
+		let btc_price = 45_000;
+
+		let nb_of_btc = 100;
+
+		// 100 BTC/4.5M USDT
+		let initial_btc = nb_of_btc * unit;
+		let initial_usdt = nb_of_btc * btc_price * unit;
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+		assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+
+		// Add the liquidity
+		assert_ok!(<Pablo as Amm>::add_liquidity(
+			&ALICE,
+			pool_id,
+			initial_btc,
+			initial_usdt,
+			0,
+			false
+		));
+
+		let lp = Tokens::balance(pool.lp_token, &ALICE);
+		// if we want to redeem all lp token, it must give same values as used for add_liquidity
+		let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_lp_tokens(
+			pool_id,
+			lp,
+			BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
+		)
+		.expect("redeemable_assets failed");
+		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
+		let quote_amount = *redeemable_assets.assets.get(&USDT).expect("Invalid asset");
+
+		assert_ok!(default_acceptable_computation_error(base_amount, initial_btc));
+		assert_ok!(default_acceptable_computation_error(quote_amount, initial_usdt));
 	});
 }
 
@@ -730,7 +784,7 @@ mod twap {
 			let unit = 1_000_000_000_000_u128;
 			let initial_btc = 100_u128 * unit;
 			let initial_usdt = 100_u128 * unit;
-			let pool_id =
+			let pool_identifier =
 				create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
 
 			let mut min_base_price = Rate::from_float(99999999.0);
@@ -739,10 +793,11 @@ mod twap {
 			let mut max_quote_price = Rate::from_float(0.0);
 			let mut update_min_max_price = || {
 				let base_price =
-					Pablo::do_get_exchange_rate(pool_id, crate::PriceRatio::NotSwapped);
+					Pablo::do_get_exchange_rate(pool_identifier, crate::PriceRatio::NotSwapped);
 				assert_ok!(base_price);
 				let base_price = base_price.unwrap();
-				let quote_price = Pablo::do_get_exchange_rate(pool_id, crate::PriceRatio::Swapped);
+				let quote_price =
+					Pablo::do_get_exchange_rate(pool_identifier, crate::PriceRatio::Swapped);
 				assert_ok!(quote_price);
 				let quote_price = quote_price.unwrap();
 				min_base_price = sp_std::cmp::min(base_price, min_base_price);
@@ -751,12 +806,12 @@ mod twap {
 				max_quote_price = sp_std::cmp::max(quote_price, max_quote_price);
 			};
 			System::set_block_number(0);
-			assert_eq!(Pablo::twap(pool_id), None);
-			assert_ok!(Pablo::enable_twap(Origin::root(), pool_id));
+			assert_eq!(Pablo::twap(pool_identifier), None);
+			assert_ok!(Pablo::enable_twap(Origin::root(), pool_identifier));
 			run_to_block(1);
 
 			assert_eq!(
-				Pablo::twap(pool_id),
+				Pablo::twap(pool_identifier),
 				Some(TimeWeightedAveragePrice {
 					base_price_cumulative: 1,
 					quote_price_cumulative: 1,
@@ -772,7 +827,7 @@ mod twap {
 				assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 				assert_ok!(Pablo::swap(
 					Origin::signed(BOB),
-					pool_id,
+					pool_identifier,
 					CurrencyPair::new(BTC, USDT),
 					usdt_value,
 					0,
@@ -781,7 +836,7 @@ mod twap {
 			};
 			run_to_block_and_swap(5);
 			let price_cumulative =
-				Pablo::price_cumulative(pool_id).expect("price_cumulative not found");
+				Pablo::price_cumulative(pool_identifier).expect("price_cumulative not found");
 			assert_eq!(price_cumulative.timestamp, 5 * MILLISECS_PER_BLOCK);
 			assert_eq!(price_cumulative.base_price_cumulative, 58818);
 			assert_eq!(price_cumulative.quote_price_cumulative, 61206);
@@ -789,21 +844,27 @@ mod twap {
 
 			run_to_block_and_swap(8);
 			let price_cumulative =
-				Pablo::price_cumulative(pool_id).expect("price_cumulative not found");
+				Pablo::price_cumulative(pool_identifier).expect("price_cumulative not found");
 			assert_eq!(price_cumulative.timestamp, 8 * MILLISECS_PER_BLOCK);
 			assert_eq!(price_cumulative.base_price_cumulative, 93420);
 			assert_eq!(price_cumulative.quote_price_cumulative, 98660);
 			update_min_max_price();
 
 			run_to_block_and_swap(TWAP_INTERVAL + 1);
+			assert_has_event::<Test, _>(|e| {
+				matches!(e.event,
+				mock::Event::Pablo(crate::Event::TwapUpdated { pool_id, ..})
+				if pool_id == pool_identifier
+				)
+			});
 			let price_cumulative =
-				Pablo::price_cumulative(pool_id).expect("price_cumulative not found");
+				Pablo::price_cumulative(pool_identifier).expect("price_cumulative not found");
 			assert_eq!(price_cumulative.timestamp, (TWAP_INTERVAL + 1) * MILLISECS_PER_BLOCK);
 			assert_eq!(price_cumulative.base_price_cumulative, 127799);
 			assert_eq!(price_cumulative.quote_price_cumulative, 136359);
 			update_min_max_price();
 			let elapsed = (TWAP_INTERVAL) * MILLISECS_PER_BLOCK;
-			let twap = Pablo::twap(pool_id).expect("twap not found");
+			let twap = Pablo::twap(pool_identifier).expect("twap not found");
 			assert_eq!(twap.timestamp, elapsed);
 			assert!(twap.base_twap > min_base_price);
 			assert!(twap.quote_twap > min_quote_price);

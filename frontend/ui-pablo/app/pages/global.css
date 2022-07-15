@@ -1,0 +1,22 @@
+.apexcharts-tooltip.apexcharts-theme-dark.apexcharts-active {
+  color: #fff;
+  background: rgba(30, 30, 30, 0.8);
+  border-radius: 99999px;
+  padding: 20px;
+  background: linear-gradient(113deg, rgba(255, 255, 255, 0.04) -5%, rgba(255, 255, 255, 0.02) 143%);
+  box-shadow: none;
+  font-size: 16px;
+}
+
+.apexcharts-tooltip.apexcharts-theme-dark .apexcharts-tooltip-title{
+  background: transparent !important;
+  text-align: center;
+}
+
+.apexcharts-tooltip.apexcharts-theme-dark.apexcharts-active .x-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.apexcharts-tooltip.apexcharts-theme-dark.apexcharts-active .y-label {
+  font-weight: bold;
+}

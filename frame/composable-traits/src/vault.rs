@@ -104,6 +104,21 @@ pub trait Vault {
 
 	/// Return the current rate representing the stock dilution of the vault.
 	fn stock_dilution_rate(vault_id: &Self::VaultId) -> Result<Rate, DispatchError>;
+
+	fn calculate_lp_tokens_to_mint(
+		vault_id: &Self::VaultId,
+		amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
+
+	fn lp_share_value(
+		vault_id: &Self::VaultId,
+		lp_amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
+
+	fn amount_of_lp_token_for_added_liquidity(
+		vault_id: &Self::VaultId,
+		asset_amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
 }
 
 /// CapabilityVault exposes functionalities for stopping and limiting vault functionality.

@@ -89,6 +89,7 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
+	#[derive(PartialEqNoBound)]
 	pub enum Error<T> {
 		ZeroInit_IncrementToMax_ValueTooLarge,
 		OneInit_IncrementToMax_ValueTooLarge,
@@ -165,7 +166,7 @@ pub mod pallet {
 			ZeroInit,
 			IncrementToMax<
 				T::ZeroInit_IncrementToMax_MaximumValue,
-				ZeroInit_IncrementToMax_Error,
+				ZeroInit_IncrementToMax_ValueTooLarge,
 				Error<T>,
 			>,
 		>,
@@ -181,7 +182,7 @@ pub mod pallet {
 			OneInit,
 			IncrementToMax<
 				T::OneInit_IncrementToMax_MaximumValue,
-				OneInit_IncrementToMax_Error,
+				OneInit_IncrementToMax_ValueTooLarge,
 				Error<T>,
 			>,
 		>,
@@ -197,16 +198,16 @@ pub mod pallet {
 			DefaultInit,
 			IncrementToMax<
 				T::DefaultInit_IncrementToMax_MaximumValue,
-				DefaultInit_IncrementToMax_Error,
+				DefaultInit_IncrementToMax_ValueTooLarge,
 				Error<T>,
 			>,
 		>,
 	>;
 
 	error_to_pallet_error!(
-		ZeroInit_IncrementToMax_Error -> ZeroInit_IncrementToMax_ValueTooLarge;
-		OneInit_IncrementToMax_Error -> OneInit_IncrementToMax_ValueTooLarge;
-		DefaultInit_IncrementToMax_Error -> DefaultInit_IncrementToMax_ValueTooLarge;
+		ZeroInit_IncrementToMax_ValueTooLarge,
+		OneInit_IncrementToMax_ValueTooLarge,
+		DefaultInit_IncrementToMax_ValueTooLarge,
 	);
 }
 
@@ -463,13 +464,13 @@ mod increment_to_max {
 
 			assert_noop!(
 				pallet::Nonce_OneInit_IncrementToMax::<Test>::increment(),
-				pallet::OneInit_IncrementToMax_Error,
+				pallet::Error::<Test>::OneInit_IncrementToMax_ValueTooLarge,
 			);
 
 			// once more for good measure
 			assert_noop!(
 				pallet::Nonce_OneInit_IncrementToMax::<Test>::increment(),
-				pallet::OneInit_IncrementToMax_Error,
+				pallet::Error::<Test>::OneInit_IncrementToMax_ValueTooLarge,
 			);
 		})
 	}
@@ -486,13 +487,13 @@ mod increment_to_max {
 
 			assert_noop!(
 				pallet::Nonce_ZeroInit_IncrementToMax::<Test>::increment(),
-				pallet::ZeroInit_IncrementToMax_Error
+				pallet::Error::<Test>::ZeroInit_IncrementToMax_ValueTooLarge
 			);
 
 			// once more for good measure
 			assert_noop!(
 				pallet::Nonce_ZeroInit_IncrementToMax::<Test>::increment(),
-				pallet::ZeroInit_IncrementToMax_Error
+				pallet::Error::<Test>::ZeroInit_IncrementToMax_ValueTooLarge
 			);
 		})
 	}
@@ -510,13 +511,13 @@ mod increment_to_max {
 
 			assert_noop!(
 				pallet::Nonce_DefaultInit_IncrementToMax::<Test>::increment(),
-				pallet::DefaultInit_IncrementToMax_Error
+				pallet::Error::<Test>::DefaultInit_IncrementToMax_ValueTooLarge
 			);
 
 			// once more for good measure
 			assert_noop!(
 				pallet::Nonce_DefaultInit_IncrementToMax::<Test>::increment(),
-				pallet::DefaultInit_IncrementToMax_Error
+				pallet::Error::<Test>::DefaultInit_IncrementToMax_ValueTooLarge
 			);
 		})
 	}

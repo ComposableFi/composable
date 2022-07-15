@@ -91,6 +91,7 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
+			+ Ord
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
@@ -283,7 +284,7 @@ pub mod pallet {
 		type PoolId = T::PoolId;
 
 		fn account_id() -> Self::AccountId {
-			T::PalletId::get().into_account()
+			T::PalletId::get().into_account_truncating()
 		}
 
 		#[transactional]
@@ -364,17 +365,12 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			balance: T::Balance,
 		) -> DispatchResult {
-			let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
-				pool_id,
-				balance,
-				T::Balance::zero(),
-			)?;
 			T::Pablo::add_liquidity(
 				&vault_account,
 				pool_id,
 				balance,
 				T::Balance::zero(),
-				lp_token_amount,
+				T::Balance::zero(),
 				true,
 			)
 		}
@@ -383,17 +379,12 @@ pub mod pallet {
 		fn deposit(
 			vault_account: T::AccountId,
 			pool_id: T::PoolId,
-			balance: T::Balance,
+			_balance: T::Balance,
 		) -> DispatchResult {
-			let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
-				pool_id,
-				T::Balance::zero(),
-				balance,
-			)?;
 			T::Pablo::remove_liquidity(
 				&vault_account,
 				pool_id,
-				lp_token_amount,
+				T::Balance::zero(), // FIXME(saruman9): Amount of LP's tokens should be not zero
 				T::Balance::zero(),
 				T::Balance::zero(),
 			)

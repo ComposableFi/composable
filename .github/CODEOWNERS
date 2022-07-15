@@ -1,12 +1,59 @@
-# Composable Github Action Workflow Code Owners
+# Note, this file is sorted by precedence. Later patterns take precedence over earlier ones
 
-# These owners will be the default owners for everything in the repo
-# Any change inside this directory will require approval from @haroldsphinx and @seunlanlege
+## Default reviewers.
 
-# .github/ @haroldsphinx @seunlanlege
-docker/ @haroldsphinx @seunlanlege
-runtime/ @seunlanlege
-node/ @seunlanlege
-book/ @0xbrainjar2
+* @ComposableFi/core  # For anything not owned by a specific team, a core member needs to review or delegate
 
-Makefile @haroldsphinx
+*.nix @ComposableFi/developers # until under specific folder, *.nix stuff is developers' stuff
+
+## CI and deployment related files
+
+.github/ @ComposableFi/sre
+.github/CODEOWNERS @ComposableFi/core
+docker/ @ComposableFi/sre
+Makefile @ComposableFi/sre
+
+## Parachain related files
+
+runtime/ @ComposableFi/parachain-leads
+node/ @ComposableFi/parachain-leads
+frame/ @ComposableFi/parachain
+integration-tests/ @ComposableFi/parachain @ComposableFi/testers
+
+frame/composable-traits/ @ComposableFi/parachain-finance
+frame/pablo/ @ComposableFi/parachain-finance
+frame/dex-router/ @ComposableFi/parachain-finance
+frame/nft/ @ComposableFi/parachain-finance
+frame/staking-rewards/ @ComposableFi/parachain-finance
+frame/oracle/ @ComposableFi/parachain-finance
+subsquid/ @ComposableFi/parachain-finance
+frame/*/rpc/ @ComposableFi/parachain-rpc
+frame/*/runtime-api @ComposableFi/parachain-rpc
+
+## Public Gitbook
+
+book/ @ComposableFi/technical-writing-reviewers
+README.md @ComposableFi/technical-writing-reviewers @ComposableFi/core @ComposableFi/parachain-leads
+
+## Frontend and Blockchain Integration
+
+frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
+
+## Runtime Integration Tests
+
+integration-tests/runtime-tests/ @ComposableFi/testers
+
+## Codespaces
+
+.devcontainer/ @ComposableFi/codespacers @ComposableFi/parachain-leads
+
+# ComposableJS
+composablejs/ @ComposableFi/parachain
+
+## Dev stuff
+
+rfcs/ @ComposableFi/developers
+docs/ @ComposableFi/developers @ComposableFi/technical-writers
+scripts/ @ComposableFi/developers @ComposableFi/sre
+utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
+.config/spellcheck.dic @ComposableFi/developers @ComposableFi/technical-writers

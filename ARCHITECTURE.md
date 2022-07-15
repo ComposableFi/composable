@@ -15,7 +15,7 @@ When building the chain, we use different names to target different [relay chain
 | Dali              | Devnet(own Relay) | KSM                     | https://polkadot.js.org/apps/?rpc=wss://dali.devnets.composablefinance.ninja/parachain/alice#/explorer    | https://dali.devnets.composablefinance.ninja/ |
 | Picasso           | Devnet(own Relay) | KSM                     | https://polkadot.js.org/apps/?rpc=wss://picasso.devnets.composablefinance.ninja/parachain/alice#/explorer |
 | Dali              | Westend           | WND(DOT)                     |
-| Dali              | Rococo            |                         | https://polkadot.js.org/apps/?rpc=wss://rpc.composablefinance.ninja                                       |
+| Dali              | Rococo            |  ROT(KSM)                       | https://polkadot.js.org/apps/?rpc=wss://rpc.composablefinance.ninja                                       |
 | Dali              | Chachacha         |                         |
 | Picasso           | Kusama            | KSM                     | https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/explorer                    |
 | Composable        | Polkadot          | DOT                     |
@@ -34,9 +34,9 @@ You can find them under the `frame` directory. We try to give them a meaningful 
 
 The `oracle` off-chain worker is fetching prices from a server. We provide a reference implementation named `price-feed` that fetches and caches prices from different, configurable sources.
 
-## Subxt clients
+## Rust clients
 
-We do our best to maintain generated subxt clients for our runtimes.
+You may run `subxt` agains our runtimes to get Rust clients.
 
 # Scripts
 

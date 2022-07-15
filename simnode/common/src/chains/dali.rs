@@ -1,5 +1,4 @@
 use crate::cli::ComposableCli;
-use node::service::DaliExecutor;
 use parachain_inherent::ParachainInherentData;
 use sc_consensus_manual_seal::consensus::timestamp::SlotTimestampProvider;
 use sc_service::TFullBackend;
@@ -47,6 +46,7 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 			client: deps.client,
 			pool: deps.pool,
 			deny_unsafe: deps.deny_unsafe,
+			chain_props: Default::default(),
 		};
 		node::rpc::create::<dali_runtime::RuntimeApi, _>(full_deps).expect("Rpc to be initialized")
 	}

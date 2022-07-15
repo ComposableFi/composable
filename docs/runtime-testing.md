@@ -1,7 +1,7 @@
 # Overview
 
 Runtime testing involves running parachain code to ensure quality.
-Unlike type system or static analysis (unluding basic linting).
+Unlike type system or static analysis (excluding basic linting).
 Here is hierarchy of testing you may find in this parachain
 
 | Name          | Runtime   | Warp | Start from real state | Serde |

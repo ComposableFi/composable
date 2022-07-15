@@ -31,7 +31,8 @@ use crate::{
 	rpc,
 	runtime::{
 		assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+		ibc::ExtendWithIbcApi, lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		BaseHostRuntimeApis,
 	},
 };
 
@@ -70,7 +71,10 @@ pub struct DaliExecutor;
 
 #[cfg(feature = "dali")]
 impl sc_executor::NativeExecutionDispatch for DaliExecutor {
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	type ExtendHostFunctions = (
+		frame_benchmarking::benchmarking::HostFunctions,
+		ibc_primitives::runtime_interface::ibc::HostFunctions,
+	);
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		dali_runtime::api::dispatch(method, data)
@@ -282,7 +286,8 @@ where
 		+ ExtendWithAssetsApi<RuntimeApi, Executor>
 		+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
 		+ ExtendWithPabloApi<RuntimeApi, Executor>
-		+ ExtendWithLendingApi<RuntimeApi, Executor>,
+		+ ExtendWithLendingApi<RuntimeApi, Executor>
+		+ ExtendWithIbcApi<RuntimeApi, Executor>,
 	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
 	Executor: NativeExecutionDispatch + 'static,
 {
@@ -364,11 +369,13 @@ where
 	let rpc_builder = {
 		let client = client.clone();
 		let transaction_pool = transaction_pool.clone();
+		let chain_props = parachain_config.chain_spec.properties();
 		Box::new(move |deny_unsafe, _| {
 			let deps = rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				deny_unsafe,
+				chain_props: chain_props.clone(),
 			};
 
 			Ok(rpc::create(deps).expect("RPC failed to initialize"))

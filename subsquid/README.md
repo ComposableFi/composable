@@ -148,7 +148,7 @@ npx sqd db create
 This is an optional part, but it is very advisable. 
 
 Event, call and runtime storage data comes to mapping handlers as a raw untyped json. 
-While it is possible to work with raw untyped json data, it's extemely error-prone and moreover the json structure may change over time due to runtime upgrades.
+While it is possible to work with raw untyped json data, it's extremely error-prone and moreover the json structure may change over time due to runtime upgrades.
 
 Squid framework provides tools for generation of type-safe, spec version aware wrappers around events, calls and runtime storage items. Typegen generates type-safe classes in `types/events.ts`, `types/calls.ts` and `types/storage.ts` respectively, with constructors taking `XXXContext` interfaces as the only argument. All historical runtime upgrades are accounted out of the box. A typical usage is as follows (see `src/processor.ts`):
 

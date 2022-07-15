@@ -1,5 +1,7 @@
 # The Picasso Crowdloan
 
+---
+
 Our strategy that lead to successful parachain procurement.
 
 As a parachain for Picasso has been successfully procured at auction, we are 

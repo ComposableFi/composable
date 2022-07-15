@@ -287,7 +287,7 @@ describe("tx.mosaic Tests", function () {
     it("User should be able to reclaim the stale funds not accepted by the relayer and locked in outgoing transactions pool", async function () {
       // Check if this test is enabled.
       if (!testConfiguration.enabledTests.userCanClaimStaleFunds) this.skip();
-      this.timeout(2 * 60 * 1000);
+      this.timeout(5 * 60 * 1000);
       const wallet = startRelayerWallet;
       const initialTokens = await api.query.tokens.accounts(wallet.address, assetId);
       let retry = true;

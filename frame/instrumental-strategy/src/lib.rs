@@ -234,7 +234,7 @@ pub mod pallet {
 		type PoolId = T::PoolId;
 
 		fn account_id() -> Self::AccountId {
-			T::PalletId::get().into_account()
+			T::PalletId::get().into_account_truncating()
 		}
 
 		#[transactional]
