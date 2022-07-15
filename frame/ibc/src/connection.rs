@@ -21,13 +21,13 @@ where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
 	fn connection_end(&self, conn_id: &ConnectionId) -> Result<ConnectionEnd, ICS03Error> {
-		log::trace!("in connection : [connection_end] >> connection_id = {:?}", conn_id);
+		log::trace!(target: "pallet_ibc", "in connection : [connection_end] >> connection_id = {:?}", conn_id);
 
 		let data = <Connections<T>>::get(conn_id)
 			.ok_or_else(|| ICS03Error::connection_not_found(conn_id.clone()))?;
 		let ret = ConnectionEnd::decode_vec(&*data)
 			.map_err(|_| ICS03Error::connection_mismatch(conn_id.clone()))?;
-		log::trace!("in connection : [connection_end] >>  connection_end = {:?}", ret);
+		log::trace!(target: "pallet_ibc", "in connection : [connection_end] >>  connection_end = {:?}", ret);
 		Ok(ret)
 	}
 
@@ -38,7 +38,7 @@ where
 		let block_number = format!("{:?}", block_number);
 		let height = block_number.parse().unwrap_or_default();
 		let para_id: u32 = parachain_info::Pallet::<T>::get().into();
-		log::trace!(
+		log::trace!(target: "pallet_ibc",
 			"in connection : [host_oldest_height] >> Host oldest height = {:?}",
 			Height::new(para_id.into(), height)
 		);
@@ -47,14 +47,14 @@ where
 
 	fn connection_counter(&self) -> Result<u64, ICS03Error> {
 		let count = ConnectionCounter::<T>::get();
-		log::trace!("in connection : [connection_counter] >> Connection_counter = {:?}", count);
+		log::trace!(target: "pallet_ibc", "in connection : [connection_counter] >> Connection_counter = {:?}", count);
 
 		Ok(count as u64)
 	}
 
 	#[allow(clippy::disallowed_methods)]
 	fn commitment_prefix(&self) -> CommitmentPrefix {
-		log::trace!("in connection : [commitment_prefix] >> CommitmentPrefix = {:?}", "ibc");
+		log::trace!(target: "pallet_ibc", "in connection : [commitment_prefix] >> CommitmentPrefix = {:?}", "ibc");
 		// If this conversion fails it means the runtime was not configured well
 		T::CONNECTION_PREFIX
 			.to_vec()
@@ -73,7 +73,7 @@ where
 		connection_id: ConnectionId,
 		connection_end: &ConnectionEnd,
 	) -> Result<(), ICS03Error> {
-		log::trace!(
+		log::trace!(target: "pallet_ibc",
 			"in connection : [store_connection] >> connection_id: {:?}, connection_end: {:?}",
 			connection_id,
 			connection_end
@@ -82,7 +82,7 @@ where
 		<Connections<T>>::insert(&connection_id, connection_end);
 
 		let temp = ConnectionReader::connection_end(self, &connection_id);
-		log::trace!("in connection : [store_connection] >> read store after: {:?}", temp);
+		log::trace!(target: "pallet_ibc", "in connection : [store_connection] >> read store after: {:?}", temp);
 		Ok(())
 	}
 
@@ -91,7 +91,7 @@ where
 		connection_id: ConnectionId,
 		client_id: &ClientId,
 	) -> Result<(), ICS03Error> {
-		log::trace!(
+		log::trace!(target: "pallet_ibc",
 			"in connection : [store_connection_to_client] >> connection_id = {:?},\
 		 client_id = {:?}",
 			connection_id,
@@ -108,7 +108,7 @@ where
 	}
 
 	fn increase_connection_counter(&mut self) {
-		log::trace!("in connection : [increase_connection_counter]");
+		log::trace!(target: "pallet_ibc", "in connection : [increase_connection_counter]");
 		// connections uses a counted storage map
 		if let Some(val) = <ConnectionCounter<T>>::get().checked_add(1) {
 			<ConnectionCounter<T>>::put(val);
