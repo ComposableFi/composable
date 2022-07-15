@@ -1,5 +1,7 @@
 # Mosaic Phase 1 Result
 
+---
+
 The following information in this section is related to the design of Mosaic v1 and outdated. Composable’s data team extracted Proof of Concept (PoC) preprocessed on-chain data and ran the following analyses:
 
 
@@ -76,5 +78,3 @@ Composable compared Mosaic’s fee model with the fee landscape of the general c
 
 
 Using these parameters, Composable found that the optimized fee model ensured that LPs earned 10% APY when contributing USDC and 10.7% when contributing wETH.
-
-— — — — —

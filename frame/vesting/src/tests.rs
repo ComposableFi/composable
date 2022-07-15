@@ -7,7 +7,7 @@ use composable_traits::vesting::{
 	VestingSchedule,
 	VestingWindow::{BlockNumberBased, MomentBased},
 };
-use frame_support::{assert_noop, assert_ok, error::BadOrigin};
+use frame_support::{assert_noop, assert_ok, error::BadOrigin, traits::fungibles::Mutate};
 use mock::{Event, *};
 use orml_tokens::BalanceLock;
 
@@ -150,6 +150,35 @@ fn vested_transfer_works() {
 			from: ALICE,
 			to: BOB,
 			asset: MockCurrencyId::BTC,
+			schedule,
+		}));
+	});
+}
+
+#[test]
+fn vested_transfer_trait_emits_vesting_schedule_added_event() {
+	ExtBuilder::build().execute_with(|| {
+		System::set_block_number(1);
+
+		assert_ok!(Tokens::mint_into(MockCurrencyId::ETH, &ALICE, 100));
+
+		let schedule = VestingSchedule {
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
+			period_count: 1_u32,
+			per_period: 100_u64,
+		};
+
+		assert_ok!(<Vesting as VestedTransfer>::vested_transfer(
+			MockCurrencyId::ETH,
+			&ALICE,
+			&BOB,
+			schedule.clone(),
+		));
+
+		System::assert_last_event(Event::Vesting(crate::Event::VestingScheduleAdded {
+			from: ALICE,
+			to: BOB,
+			asset: MockCurrencyId::ETH,
 			schedule,
 		}));
 	});

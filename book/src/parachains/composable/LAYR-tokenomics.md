@@ -1,5 +1,7 @@
 # LAYR Tokenomics 
 
+---
+
 ## LAYR use cases 
 
 ### Gas fees 

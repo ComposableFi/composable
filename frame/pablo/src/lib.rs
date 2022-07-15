@@ -624,7 +624,7 @@ pub mod pallet {
 		}
 
 		pub(crate) fn account_id(pool_id: &T::PoolId) -> T::AccountId {
-			T::PalletId::get().into_sub_account(pool_id)
+			T::PalletId::get().into_sub_account_truncating(pool_id)
 		}
 
 		pub(crate) fn do_get_exchange_rate(

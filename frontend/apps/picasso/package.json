@@ -15,6 +15,7 @@
     "lint:report": "eslint --output-file eslint_report.json --format json ."
   },
   "dependencies": {
+    "@apollo/client": "^3.6.9",
     "@emotion/cache": "^11.7.1",
     "@emotion/react": "^11.8.2",
     "@emotion/server": "^11.4.0",
@@ -34,6 +35,9 @@
     "bn.js": "^5.2.0",
     "contentful": "^9.1.5",
     "next": "^12.2.0",
+    "graphql": "^16.5.0",
+    "imagemin-svgo": "^10.0.1",
+    "immer": "^9.0.14",
     "next-pwa": "^5.4.4",
     "next-transpile-modules": "^9.0.0",
     "notistack": "3.0.0-alpha.2",
@@ -42,7 +46,6 @@
     "react-dom": "17.0.2",
     "react-hotjar": "^4.0.0",
     "substrate-react": "*",
-    "immer": "^9.0.14",
     "zustand": "^4.0.0-beta.2",
     "shared": "*",
     "tokens": "*"

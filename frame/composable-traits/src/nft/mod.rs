@@ -68,17 +68,17 @@ pub trait ReferenceNft<AccountId>:
 	// `who` is owner of NFT in case of reference NFT is reported burn (so owner is lost), it is
 	// auctioned
 	fn reference_mint_into<NFTProvider, NFT>(
-		_class: &Self::ClassId,
-		_instance: &Self::InstanceId,
+		_class: &Self::CollectionId,
+		_instance: &Self::ItemId,
 		_who: &AccountId,
 		reference: Reference,
 	) -> DispatchResult;
 
 	fn mint_new_into(
-		class: &Self::ClassId,
+		class: &Self::CollectionId,
 		who: &AccountId,
 		properties: Properties<Self::MaxProperties>,
-	) -> Result<Self::InstanceId, DispatchError>;
+	) -> Result<Self::ItemId, DispatchError>;
 }
 
 /// Default ClassId type used for NFTs.

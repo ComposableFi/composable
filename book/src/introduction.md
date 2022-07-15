@@ -1,11 +1,11 @@
 # **👋** Introduction
 
-*Composable Finance: The Face of DeFi's Future*
+*Composable Finance: The interoperable infrastructure for Modular DeFi*
 
 ---
 
-![composable-finance](./composable-face.png)
-*Composable Finance: The Face of DeFi's Future*
+![composable_finance](./composable-face-banner.png)
+*Composable Finance: The interoperable infrastructure for Modular DeFi*
 
 ---
 
@@ -94,24 +94,19 @@ parameters that determine a cascade of automated cross-chain transactions to
 achieve their objectives instead of requiring users to navigate each step in the 
 process themselves:
 
-![routing](./users-desired-parameters.png)
-*An example of a user's desired parameters and the optimal route being selected 
-and completed by Composable's technology.*
 
-Our vision of **hyper liquidity** and **composability** abstract the underlying 
-technology into a single interface, unlocking the potential for new DeFi 
-primitives and higher level applications to be developed at an unprecedented 
-pace. With Composable Finance, creativity, communication, and community will be 
-reimagined and reconciled for a more inclusive and composable future. We believe 
-technological advancements in this growing domain will create new opportunities 
-to build innovative protocols and applications that were previously impossible.
+![routing](./XCVM-flow.png)
+
+
+Together with our interoperable infrastructure, we will usher in an era of modular DeFi functionality, unlike anything before it. The basis of modular functionality is that a program, or in this case a decentralized application, can be separated into interchangeable modules capable of functioning independently. This environment will enable a new host of services to be offered to users that abstract complexity away to focus on needs: users will be able to get the best interest rates across lending pools, the best swaps across chains, and allow for a range of other possibilities across new pool types, arbitrage opportunities, and onboarding portals to DeFi. In concise terms, Composable Finance is orchestrating interoperability for modular functionality, to enable composability. 
 
 We are accomplishing these goals through a multifaceted [technical stack](./products/technical-stack-overview.md) 
+
 where we begin by bridging gaps between today’s isolated blockchains and layer 2 
 scaling solutions in order to create a single and unified access point that is 
 the [Composable Cross-Chain VM (XCVM)](https://medium.com/composable-finance/composable-finance-emerging-as-the-first-cross-chain-smart-contracting-l1-4e837b8bd57e) 
 — that serves to orchestrate and compute smart contract functions across the 
-array of XCM and IBC chains autonomously, with the purpose of optimizing for 
+array of EVM, Polkadot and IBC ecosystems autonomously, with the purpose of optimizing for 
 best execution and mitigating all user experience constraints for developers and 
 end-users. 
 

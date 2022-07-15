@@ -1,5 +1,7 @@
 # The Picasso Parachain 
 
+---
+
 ## What is Picasso?
 
 Picasso is a custom-built Layer 1 blockchain, with a native token $PICA. It is built on the Kusama network, and as such exists within the wider DotSama ecosystem. As a result of its use of a parachain, Picasso is both highly secure and efficient, and as an outcome of its proprietary technology stack, it is natively interoperable.
@@ -16,10 +18,8 @@ In addition, Picasso maintains the Centauri IBC-Substrate bridge, which enables 
 
 The vision for Picasso is to become a cross-chain hub with a robust set of novel DeFi primitive pallets that attract liquidity from the larger DeFi landscape. Picasso, through its native interoperability, aims to become an ecosystem flush with liquidity from multiple different blockchain networks. These include EVM-compatible Layer 1s and 2s, and the Cosmos network of blockchains. As part of this vision, Picasso will act as an incubator parachain for applications, developers, and users. It will provide an interoperable ecosystem where different parties can easily interact and deploy different projects on an efficient and well-maintained blockchain infrastructure.
 
-Within Picasso, the ultimate vision is for pallets to cover all major components of DeFi, including primitives, core/secondary functions, and application/tertiary infrastructures. Primitives are the essential elements underpinning all of DeFi, ranging from oracles, smart contracts, transaction execution, keepers, and governance. Core functions build on these primitives to deliver valuable functions such as DeFi lending. Finally, tertiary applications mould these core functions into even more complex and valuable opportunities such as yield aggregation. 
+Within Picasso, the ultimate vision is for pallets to cover all major components of DeFi, including primitives, core/secondary functions, and application/tertiary infrastructures. Primitives are the essential elements underpinning all of DeFi, ranging from oracles, smart contracts, transaction execution, keepers, and governance. Core functions build on these primitives to deliver valuable functions such as DeFi lending. Finally, tertiary applications mould these core functions into even more complex and valuable opportunities such as yield aggregation.
 
-
-![picasso_architecture](./picasso-architecture.png)
 
 
 Using this framework, to assist in and stimulate the development process for building on Picasso, we have developed a building base-level infrastructure from which other pallets can be created. Initially, we will be deploying our Oracle (Apollo), Vaults (Cubic), Mosaic and Centauri pallets, in order to provide a foundation for Picasso. Picasso helps achieve this by creating a natively interoperable platform, and a modularly composable Substrate pallet ecosystem, and helping move DeFi further along [the spectrum of interoperability](https://medium.com/composable-finance/the-philosophy-of-the-cross-chain-ecosystem-a-continuum-of-interoperability-33ed81350190).

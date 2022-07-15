@@ -1,19 +1,24 @@
-# Note, this file is sorted by precedence. Later patterns take precedence over earlier ones.
+# Note, this file is sorted by precedence. Later patterns take precedence over earlier ones
 
-# Default reviewers. For anything not owned by a specific team, a core member needs to review or delegate.
-* @ComposableFi/core
+## Default reviewers.
 
-# CI and deployment related files
+* @ComposableFi/core  # For anything not owned by a specific team, a core member needs to review or delegate
+
+*.nix @ComposableFi/developers # until under specific folder, *.nix stuff is developers' stuff
+
+## CI and deployment related files
+
 .github/ @ComposableFi/sre
 .github/CODEOWNERS @ComposableFi/core
 docker/ @ComposableFi/sre
 Makefile @ComposableFi/sre
 
-# Parachain related files
+## Parachain related files
+
 runtime/ @ComposableFi/parachain-leads
 node/ @ComposableFi/parachain-leads
 frame/ @ComposableFi/parachain
-integration-tests/ @ComposableFi/parachain
+integration-tests/ @ComposableFi/parachain @ComposableFi/testers
 
 frame/composable-traits/ @ComposableFi/parachain-finance
 frame/pablo/ @ComposableFi/parachain-finance
@@ -25,22 +30,33 @@ subsquid/ @ComposableFi/parachain-finance
 frame/*/rpc/ @ComposableFi/parachain-rpc
 frame/*/runtime-api @ComposableFi/parachain-rpc
 
-# Gitbook
-book/ @ComposableFi/technical-writing-reviewers
-README.md @ComposableFi/technical-writing-reviewers
+## Public Gitbook
 
-# Frontend and Blockchain Integration
+book/ @ComposableFi/technical-writing-reviewers
+README.md @ComposableFi/technical-writing-reviewers @ComposableFi/core @ComposableFi/parachain-leads
+
+## Frontend and Blockchain Integration
 frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
 .github/workflows/frontend-pablo-eslint.yml @ComposableFi/sre @ComposableFi/blockchain-integrations
 .github/workflows/frontend-pablo-tests.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations
 .github/workflows/frontend-picasso-eslint.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations
 .github/workflows/frontend-picasso-tests.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations
 
-# Runtime Integration Tests
+## Runtime Integration Tests
+
 integration-tests/runtime-tests/ @ComposableFi/testers
 
-# Codespaces
-.devcontainer/ @ComposableFi/codespacers
+## Codespaces
 
-# Oracle Setup Script
-scripts/oracle-setup @ComposableFi/parachain
+.devcontainer/ @ComposableFi/codespacers @ComposableFi/parachain-leads
+
+# ComposableJS
+composablejs/ @ComposableFi/parachain
+
+## Dev stuff
+
+rfcs/ @ComposableFi/developers
+docs/ @ComposableFi/developers @ComposableFi/technical-writers
+scripts/ @ComposableFi/developers @ComposableFi/sre
+utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
+.config/spellcheck.dic @ComposableFi/developers @ComposableFi/technical-writers

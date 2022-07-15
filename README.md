@@ -33,27 +33,25 @@ sh scripts/init.sh
 cargo build --release
 ```
 
-or you can simply install it with this one liner:    
+or you can simply install it with this one-liner:
 
 ```sh
 curl https://get.composable.finance | sh
-```     
+```
 
 
 ## Run  
 
-Since Composable is now a parachain, you need to run a full relaychain in addition to running Composable.
-In order to do so, install [yarn](https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable) and use the [polkadot-launch](scripts/polkadot-launch) script.
+You may run [Composable parachain with relay chain](scripts/polkadot-launch).
 
-
+Or via `nix develop .#devnet`.
 
 ## Pallets
+
 Picasso ships with multiple custom made pallets such as:
 [Cubic Vault](frame/vault/README.md)
 [Apollo](frame/oracle/README.md)
 
 and several others you can find in the frame folder.
 
-
 Read more specific information in [our docs folder](docs/).
-

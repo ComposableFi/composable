@@ -1,7 +1,8 @@
 # The Picasso Crowdloan
 
-Our strategy that lead to a successful parachain procurement.
+*Our strategy that lead to a successful parachain procurement.*
 
+---
 
 ## Picasso Crowdloan Details
 

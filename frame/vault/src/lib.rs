@@ -708,12 +708,14 @@ pub mod pallet {
 
 		fn rent_account(vault_id: T::VaultId) -> T::AccountId {
 			let vault_id: u128 = vault_id.into();
-			T::PalletId::get().into_sub_account(&[b"rent_account____", &vault_id.to_le_bytes()])
+			T::PalletId::get()
+				.into_sub_account_truncating(&[b"rent_account____", &vault_id.to_le_bytes()])
 		}
 
 		fn deletion_reward_account(vault_id: T::VaultId) -> T::AccountId {
 			let vault_id: u128 = vault_id.into();
-			T::PalletId::get().into_sub_account(&[b"deletion_account", &vault_id.to_le_bytes()])
+			T::PalletId::get()
+				.into_sub_account_truncating(&[b"deletion_account", &vault_id.to_le_bytes()])
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
@@ -899,7 +901,7 @@ pub mod pallet {
 		}
 
 		fn account_id(vault: &Self::VaultId) -> Self::AccountId {
-			T::PalletId::get().into_sub_account(vault)
+			T::PalletId::get().into_sub_account_truncating(vault)
 		}
 
 		fn create(

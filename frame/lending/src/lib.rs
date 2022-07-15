@@ -91,7 +91,7 @@ pub mod pallet {
 			UnixTime,
 		},
 		transactional,
-		weights::WeightToFeePolynomial,
+		weights::{WeightToFee, WeightToFeePolynomial},
 		PalletId,
 	};
 	use frame_system::{
@@ -218,7 +218,8 @@ pub mod pallet {
 		type MaxLiquidationBatchSize: Get<u32>;
 
 		/// Convert a weight value into a deductible fee based on the currency type.
-		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
+		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>
+			+ WeightToFee<Balance = Self::Balance>;
 	}
 
 	#[pallet::pallet]

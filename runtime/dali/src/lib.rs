@@ -129,7 +129,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2300,
+	spec_version: 2301,
 	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -275,7 +275,7 @@ impl identity::Config for Runtime {
 parameter_types! {
 	pub DepositBase: u64 = CurrencyId::unit();
 	pub DepositFactor: u64 = 32 * CurrencyId::milli::<u64>();
-	pub const MaxSignatories: u16 = 5;
+	pub const MaxSignatories: u16 = 100;
 }
 
 impl multisig::Config for Runtime {
@@ -459,26 +459,34 @@ parameter_types! {
 	pub const MaxHistory: u32 = 20;
 	pub const MaxPrePrices: u32 = 40;
 	pub const TwapWindow: u16 = 3;
+	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
+	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
 }
 
 impl oracle::Config for Runtime {
-	type Currency = Balances;
 	type Event = Event;
-	type AuthorityId = oracle::crypto::BathurstStId;
+	type Balance = Balance;
+	type Currency = Balances;
 	type AssetId = CurrencyId;
 	type PriceValue = Balance;
-	type StakeLock = StakeLock;
+	type AuthorityId = oracle::crypto::BathurstStId;
 	type MinStake = MinStake;
+	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfCouncil;
+	type RewardOrigin = EnsureRootOrHalfCouncil;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
+	type TreasuryAccount = TreasuryAccount;
 	type MaxHistory = MaxHistory;
+	type TwapWindow = TwapWindow;
 	type MaxPrePrices = MaxPrePrices;
+	type MsPerBlock = MsPerBlock;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
-	type TreasuryAccount = TreasuryAccount;
-	type TwapWindow = TwapWindow;
+	type Moment = Moment;
+	type Time = Timestamp;
+	type PalletId = OraclePalletId;
 }
 
 // Parachain stuff.
@@ -564,14 +572,14 @@ impl collator_selection::Config for Runtime {
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
-		let account: AccountId = TreasuryPalletId::get().into_account();
-		let account2: AccountId = PotId::get().into_account();
+		let account: AccountId = TreasuryPalletId::get().into_account_truncating();
+		let account2: AccountId = PotId::get().into_account_truncating();
 		vec![&account, &account2].contains(&a)
 	}
 }
 
 parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 type ReserveIdentifier = [u8; 8];
@@ -587,6 +595,8 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 parameter_types! {
@@ -880,6 +890,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolId = u16;
 	type PositionId = u128;
 	type AssetId = CurrencyId;
+	type Assets = Assets;
 	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
@@ -1212,7 +1223,7 @@ construct_runtime!(
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
-		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
+		CurrencyFactory: currency_factory = 53,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
