@@ -67,12 +67,11 @@ pub trait Vamm {
 		asset_type: AssetType,
 	) -> Result<Self::Decimal, DispatchError>;
 
-	/// Updates the twap for the desired asset, returning it if successful.
+	/// Updates the twap for the base asset, returning it if successful.
 	fn update_twap(
 		vamm_id: Self::VammId,
 		base_twap: Option<Self::Decimal>,
-		quote_twap: Option<Self::Decimal>,
-	) -> Result<(Self::Decimal, Self::Decimal), DispatchError>;
+	) -> Result<Self::Decimal, DispatchError>;
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.
@@ -100,7 +99,7 @@ pub struct SwapConfig<VammId, Balance> {
 }
 
 /// Distinguish between asset types present in the vamm.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum AssetType {
 	Base,
@@ -108,7 +107,7 @@ pub enum AssetType {
 }
 
 /// The two possible directions to go when opening/closing a position in the vamm.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Direction {
 	Add,
@@ -124,12 +123,12 @@ pub struct MovePriceConfig<VammId, Balance> {
 }
 
 /// Specify the return type for [`Vamm::swap`].
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct SwapOutput<Balance> {
 	pub output: Balance,
 	pub negative: bool,
 }
 
-/// The minimum allowed value for [`twap_period`](VammState::twap_period).
+/// The minimum allowed value for [`twap_period`](VammConfig::twap_period).
 pub const MINIMUM_TWAP_PERIOD: u32 = 10;

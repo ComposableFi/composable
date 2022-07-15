@@ -4,8 +4,8 @@ use crate::{
 	mock::{Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error, VammMap, VammState},
 	tests::{
-		any_sane_asset_amount, loop_times, valid_twap_period, Balance, Decimal, Timestamp,
-		RUN_CASES,
+		any_sane_asset_amount, default_vamm_config, loop_times, valid_twap_period, Balance,
+		Decimal, Timestamp, RUN_CASES,
 	},
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig, MINIMUM_TWAP_PERIOD};
@@ -72,6 +72,13 @@ fn should_fail_if_twap_period_is_less_than_minimum() {
 	})
 }
 
+#[test]
+fn should_succeed_returning_vamm_id() {
+	ExtBuilder::default()
+		.build()
+		.execute_with(|| assert_ok!(TestPallet::create(&default_vamm_config()), 0));
+}
+
 // -------------------------------------------------------------------------------------------------
 //                                             Proptests
 // -------------------------------------------------------------------------------------------------
@@ -99,7 +106,6 @@ proptest! {
 			};
 
 			let base_asset_twap = TestPallet::do_get_price(&tmp_vamm_expected, AssetType::Base).unwrap();
-			let quote_asset_twap = TestPallet::do_get_price(&tmp_vamm_expected, AssetType::Quote).unwrap();
 
 			let vamm_expected = VammState::<Balance, Timestamp, Decimal> {
 				base_asset_reserves: vamm_config.base_asset_reserves,
@@ -107,7 +113,6 @@ proptest! {
 				peg_multiplier: vamm_config.peg_multiplier,
 				twap_period: vamm_config.twap_period,
 				base_asset_twap,
-				quote_asset_twap,
 				invariant,
 				..Default::default()
 			};
