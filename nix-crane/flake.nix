@@ -273,11 +273,15 @@
           codespace-container = dockerTools.buildLayeredImage {
             name = "composable-codespace-container";
             fromImage = packages.codespace-base-container;
+            fakeRootCommands = ''
+              ${pkgs.cachix} use composable-community
+            '';
             contents = [
               neovim
               nix                           
               rust-stable
               rust-nightly  
+              cachix
               ];
           };
           default = packages.composable-node;

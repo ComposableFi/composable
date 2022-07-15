@@ -1,5 +1,6 @@
 # See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.233.0/containers/rust/.devcontainer/base.Dockerfile
 
+# TODO: replace base with output of nix ci
 ARG VARIANT="bullseye"
 FROM mcr.microsoft.com/vscode/devcontainers/rust:0-${VARIANT}
 
