@@ -1,7 +1,7 @@
 # See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.233.0/containers/rust/.devcontainer/base.Dockerfile
 
 ARG VARIANT="bullseye"
-FROM mcr.microsoft.com/vscode/devcontainers/rust:0-bullseye
+FROM mcr.microsoft.com/vscode/devcontainers/rust:0-${VARIANT}
 
 # [Optional] Uncomment this section to install additional packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
