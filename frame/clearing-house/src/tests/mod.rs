@@ -183,6 +183,45 @@ fn set_oracle_twap(market_id: &MarketId, twap: FixedI128) {
 //                                        Execution Contexts
 // ----------------------------------------------------------------------------------------------------
 
+impl ExtBuilder {
+	fn trading_context<R>(
+		self,
+		config: MarketConfig,
+		margin: Balance,
+		execute: impl FnOnce(MarketId) -> R,
+	) -> R {
+		self.multi_market_and_trader_context(vec![config], vec![(ALICE, margin)], |market_ids| {
+			execute(market_ids[0])
+		})
+	}
+
+	fn multi_market_and_trader_context<R>(
+		self,
+		configs: Vec<MarketConfig>,
+		margins: Vec<(AccountId, Balance)>,
+		execute: impl FnOnce(Vec<MarketId>) -> R,
+	) -> R {
+		let mut ext = self.build();
+
+		ext.execute_with(|| {
+			run_to_time(0);
+			let ids = configs
+				.into_iter()
+				.map(|config| {
+					<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(
+						config,
+					))
+				})
+				.collect::<Vec<_>>();
+			for (account, margin) in margins.into_iter() {
+				AssetsPallet::set_balance(USDC, &account, margin);
+				TestPallet::deposit_collateral(Origin::signed(account), USDC, margin);
+			}
+			execute(ids)
+		})
+	}
+}
+
 fn with_market_context<R>(
 	ext_builder: ExtBuilder,
 	config: MarketConfig,
@@ -234,17 +273,7 @@ fn multi_market_and_trader_context<R>(
 	margins: Vec<(AccountId, Balance)>,
 	execute: impl FnOnce(Vec<MarketId>) -> R,
 ) -> R {
-	let balances: Vec<(AccountId, AssetId, Balance)> =
-		margins.iter().map(|&(a, m)| (a, USDC, m)).collect();
-	let ext_builder = ExtBuilder { balances, ..Default::default() };
-
-	with_markets_context(ext_builder, configs, |market_ids| {
-		for (acc, margin) in margins {
-			TestPallet::deposit_collateral(Origin::signed(acc), USDC, margin);
-		}
-
-		execute(market_ids)
-	})
+	ExtBuilder::default().multi_market_and_trader_context(configs, margins, execute)
 }
 
 // ----------------------------------------------------------------------------------------------------

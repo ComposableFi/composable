@@ -16,8 +16,8 @@ use crate::{
 	tests::{
 		any_direction, any_price, as_balance, get_collateral, get_market, get_market_fee_pool,
 		get_outstanding_gains, get_position, run_for_seconds, run_to_time, set_fee_pool_depth,
-		set_maximum_oracle_mark_divergence, set_oracle_twap, with_markets_context,
-		with_trading_context, Market, MarketConfig,
+		set_maximum_oracle_mark_divergence, set_oracle_price, set_oracle_twap,
+		with_markets_context, with_trading_context, Market, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -145,7 +145,10 @@ fn should_block_risk_decreasing_trade_if_it_pushes_index_mark_divergence_above_t
 		set_maximum_oracle_mark_divergence((10, 100).into());
 
 		let vamm_id = &get_market(&market_id).vamm_id;
-		OraclePallet::set_price(Some(100)); // 1 in cents
+		OraclePallet::set_price(Some(100 /* 1 in cents */));
+		// HACK: set previous oracle price and TWAP equal to current one to avoid an invalid oracle
+		// status
+		set_oracle_twap(&market_id, 1.into());
 		VammPallet::set_price_of(vamm_id, Some(1.into()));
 
 		// Alice opens a position (no price impact)
@@ -158,7 +161,7 @@ fn should_block_risk_decreasing_trade_if_it_pushes_index_mark_divergence_above_t
 		));
 
 		// Alice tries to close her position, but it fails because it pushes the mark price too
-		// below the index. Closing tanks the mark price to 89% of previous one.
+		// below the index. Closing tanks the mark price to 89% of the previous one.
 		// Relative index-mark spread:
 		// (mark - index) / index = (0.89 - 1.00) / 1.00 = -0.11
 		VammPallet::set_price_impact_of(vamm_id, Some((89, 100).into()));
@@ -222,7 +225,10 @@ fn should_block_risk_increasing_trade_if_it_pushes_index_mark_divergence_above_t
 		set_maximum_oracle_mark_divergence((10, 100).into());
 
 		let vamm_id = &get_market(&market_id).vamm_id;
-		OraclePallet::set_price(Some(100)); // 1 in cents
+		OraclePallet::set_price(Some(100 /* 1 in cents */));
+		// HACK: set previous oracle price and TWAP equal to current one to avoid an invalid oracle
+		// status
+		set_oracle_twap(&market_id, 1.into());
 		VammPallet::set_price_of(vamm_id, Some(1.into()));
 
 		// Alice tries to open a new long, but it fails because it pushes the mark price too
@@ -376,15 +382,25 @@ proptest! {
 		let config = MarketConfig { twap_period: 60, ..Default::default() };
 		let collateral = as_balance(100);
 
-		with_trading_context(config.clone(), collateral, |market_id| {
-			// Ensure last_oracle_ts is 0 (market creation timestamp)
+		ExtBuilder {
+			oracle_price: Some(500), // 5 in cents
+			..Default::default()
+		}.trading_context(config.clone(), collateral, |market_id| {
+			// Ensure market initializes as expected
 			let Market { last_oracle_ts, last_oracle_price, last_oracle_twap, .. } = get_market(&market_id);
 			assert_eq!(last_oracle_ts, 0);
+			assert_eq!(last_oracle_price, 5.into());
+			assert_eq!(last_oracle_twap, 5.into());
 
-			// Time passes and ALICE opens a position
+			// Time passes
 			let now = config.twap_period / 2;
 			run_to_time(now);
+
 			VammPallet::set_price(Some(5.into()));
+			// Index price moved
+			set_oracle_price(&market_id, 6.into());
+
+			// Alice opens a position
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,
@@ -950,6 +966,47 @@ proptest! {
 				),
 				base_amount
 			);
+		});
+	}
+
+	#[test]
+	fn should_update_market_funding_if_possible(direction in any_direction()) {
+		let config = MarketConfig {
+			funding_frequency: 60,
+			funding_period: 60,
+			..Default::default()
+		};
+		let size = as_balance(100);
+
+		with_trading_context(config.clone(), size, |market_id| {
+			// Ensure last funding update is at time 0
+			assert_eq!(get_market(&market_id).funding_rate_ts, 0);
+
+			VammPallet::set_price(Some(10.into()));
+
+			// Not enough time passes for a funding update to be possible
+			run_for_seconds(config.funding_frequency / 2);
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				size / 2,
+				size / 20,
+			));
+			// Last funding update should be at time 0
+			assert_eq!(get_market(&market_id).funding_rate_ts, 0);
+
+			// Enough time passes for a funding update to be possible
+			run_to_time(config.funding_frequency);
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				size / 2,
+				size / 20,
+			));
+			// Last funding update should be at time 60
+			assert_eq!(get_market(&market_id).funding_rate_ts, config.funding_frequency);
 		});
 	}
 }
