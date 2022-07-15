@@ -212,8 +212,6 @@
             distPhase = "true";
             postInstall = ''
               chmod +x $out/bin/polkadot-launch
-              # Dangling ref doubling closure size :)
-              rm -rf $out/libexec/polkadot-launch/deps
             '';
           };
           devnet = let
@@ -239,8 +237,14 @@
             name = "composable-devnet-container";
             config = { Cmd = [ "${packages.devnet}/bin/composable-devnet" ]; };
             contents = [
-              coreutils # added so we can into it and do some debug
+              # added so we can into it and do some debug
+              coreutils 
               bash
+              findutils
+
+              # just allow to bash into it and run with custom entries
+              packages.devnet
+              packages.polkadot-launch
               ];
           };
           default = packages.composable-node;
