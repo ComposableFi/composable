@@ -251,12 +251,17 @@
               packages.polkadot-launch
               ];
           };
+
+          # nix-prefetch-docker --image-name mcr.microsoft.com/vscode/devcontainers/rust" --image-tag 0-bulleye
+          # image which will be base for remote development
           codespace-base-container = dockerTools.pullImage {
-            imageName = "mcr.microsoft.com/vscode/devcontainers/rust:0-bullseye";
+            imageName = "mcr.microsoft.com/vscode/devcontainers/rust";
+            finalImageTag = "0-bulleye";
             imageDigest =
               "sha256:a660657d12af73bca492b28dc40994d19818fb9b729c7d4aba252b0b87fa8874";
-            sha256 = "0mqjy3zq2v6rrhizgb9nvhczl87lcfphq9601wcprdika2jz7qh8";
+            sha256 = "sha256-j3zRLfOlg2Ukpzkmz+LVm+b5a2zyxYoWykopR60CrkY=";
           };
+          
           default = packages.composable-node;
         };
 
