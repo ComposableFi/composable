@@ -240,6 +240,7 @@
             config = { Cmd = [ "${packages.devnet}/bin/composable-devnet" ]; };
             contents = [
               coreutils # added so we can into it and do some debug
+              bash
               ];
           };
           default = packages.composable-node;
