@@ -238,6 +238,9 @@
           devnet-container = dockerTools.buildLayeredImage {
             name = "composable-devnet-container";
             config = { Cmd = [ "${packages.devnet}/bin/composable-devnet" ]; };
+            contents = [
+              pkgs.coreutils # added so we can into it and do some debug
+              ];
           };
           default = packages.composable-node;
         };
@@ -254,34 +257,8 @@
         # Applications runnable with `nix run`
         apps = {
           # nix run .#devnet
-<<<<<<< HEAD
-          devnet = let
-            config = stdenv.mkDerivation {
-              name = "devnet-config";
-              src = ./../scripts/polkadot-launch/composable.json;
-              phases = [ "installPhase" ];
-              installPhase = ''
-                mkdir $out
-                substitute $src $out/config.json \
-                    --replace ../../../polkadot/target/release/polkadot ${packages.polkadot-node}/bin/polkadot \
-                    --replace ../../target/release/composable ${packages.composable-node}/bin/composable
-              '';
-            };
-            program = writeShellApplication {
-              name = "composable-devnet";
-              text = ''
-                rm -rf /tmp/polkadot-launch
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config}/config.json --verbose
-              '';
-            };
-          in {
-            type = "app";
-            program = "${program}/bin/composable-devnet";
-          };
-=======
           type = "app";
           program = "${packages.devnet}/bin/composable-devnet";
->>>>>>> 01d44dfc27f12d918e26b75961ec4e8e062b3955
         };
 
         # Shell env a user can enter with `nix develop`
