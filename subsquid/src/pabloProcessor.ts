@@ -6,10 +6,8 @@ import {
   PabloSwappedEvent,
 } from "./types/events";
 import { EventHandlerContext } from "@subsquid/substrate-processor";
-import * as ss58 from "@subsquid/ss58";
 import { get, getLatestPoolByPoolId, getOrCreate } from "./dbHelper";
 import {
-  Account,
   PabloPool,
   PabloPoolAsset,
   PabloTransaction,
@@ -17,6 +15,7 @@ import {
 } from "./model";
 import Big from "big.js";
 import { CurrencyPair, Fee } from "./types/v2300";
+import { encodeAccount } from "./utils";
 
 function createTransaction(
   ctx: EventHandlerContext,
@@ -78,10 +77,6 @@ function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
     const { owner, poolId, assets } = event.asLatest;
     return { owner, poolId, assets };
   }
-}
-
-function encodeAccount(account: Uint8Array) {
-  return ss58.codec("picasso").encode(account);
 }
 
 export async function processPoolCreatedEvent(
