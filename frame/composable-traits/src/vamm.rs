@@ -83,7 +83,7 @@ pub struct VammConfig<Balance, Moment> {
 	pub quote_asset_reserves: Balance,
 	/// The magnitude of the quote asset reserve.
 	pub peg_multiplier: Balance,
-	/// The frequency with which the vamm must have it's funding rebalance.
+	/// The frequency with which the vamm must have its funding rebalanced.
 	/// (Used only for twap calculations.)
 	pub twap_period: Moment,
 }

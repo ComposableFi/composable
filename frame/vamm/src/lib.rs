@@ -263,7 +263,9 @@ pub mod pallet {
 	}
 
 	/// Data relating to the state of a virtual market.
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug, Default)]
+	#[derive(
+		Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug, Default,
+	)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub struct VammState<Balance, Moment, Decimal> {
 		/// The total amount of base asset present in the vamm.
@@ -302,7 +304,7 @@ pub mod pallet {
 		/// [`base_asset_twap`](VammState::base_asset_twap).
 		pub twap_timestamp: Moment,
 
-		/// The frequency with which the vamm must have it's funding rebalance.
+		/// The frequency with which the vamm must have its funding rebalanced.
 		/// (Used only for twap calculations.)
 		pub twap_period: Moment,
 	}
@@ -811,7 +813,19 @@ pub mod pallet {
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
 			// Perform twap update before swapping assets.
-			Self::update_twap(config.vamm_id, None).ok();
+			//
+			// HACK: Find a better way to extract and match this message value
+			// from `Result`.
+			match Self::update_twap(config.vamm_id, None) {
+				Ok(_) => Ok(()),
+				Err(e) => match e {
+					DispatchError::Module(m) => match m.message {
+						Some("AssetTwapTimestampIsMoreRecent") => Ok(()),
+						_ => Err(e),
+					},
+					_ => Err(e),
+				},
+			}?;
 
 			// Perform required sanity checks.
 			Self::sanity_check_before_swap(config, &vamm_state)?;

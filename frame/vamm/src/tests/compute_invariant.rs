@@ -1,11 +1,12 @@
 use crate::{
 	mock::{MockRuntime, TestPallet},
 	pallet::Error,
-	tests::{balance_range, RUN_CASES},
+	tests::{helpers::as_decimal, helpers_propcompose::balance_range, RUN_CASES},
 };
 use frame_support::{assert_err, assert_ok};
 use proptest::prelude::*;
 use sp_core::U256;
+use sp_runtime::FixedPointNumber;
 
 // -------------------------------------------------------------------------------------------------
 //                                            Unit Tests
@@ -14,8 +15,8 @@ use sp_core::U256;
 #[test]
 fn should_succeed_computing_correct_invariant() {
 	assert_ok!(
-		TestPallet::compute_invariant(10_u128.pow(18) * 2, 10_u128.pow(18) * 50),
-		U256::from(10_u128.pow(18).pow(2) * 100)
+		TestPallet::compute_invariant(as_decimal(2).into_inner(), as_decimal(50).into_inner()),
+		U256::from(as_decimal(1).into_inner().pow(2) * 100)
 	);
 }
 
