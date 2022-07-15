@@ -8,6 +8,7 @@
       "outputs": []
     },
     "test": {
+      "dependsOn": ["^build"],
       "outputs": [],
       "cache": false
     },
