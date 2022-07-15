@@ -29,8 +29,7 @@ export default {
     }
   },
   types: {
-    PalletPabloPoolInitConfiguration: "PalletPabloPoolConfiguration",
-    PalletPabloPoolConfiguration: {
+    PalletPabloPoolInitConfiguration: {
       _enum: {
         StableSwap: {
           owner: "AccountId32",
@@ -43,6 +42,43 @@ export default {
           pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
           fee: "Permill",
           baseWeight: "Permill"
+        },
+        LiquidityBootstrapping: {
+          owner: "AccountId32",
+          pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
+          sale: {
+            start: "BlockNumber",
+            end: "BlockNumber",
+            initial_weight: "Permill",
+            final_weight: "Permill"
+          },
+          feeConfig: {
+            feeRate: "Permill",
+            ownerFeeRate: "Permill",
+            protocolFeeRate: "Permill"
+          }
+        }
+      }
+    },
+    PalletPabloPoolConfiguration: {
+      _enum: {
+        StableSwap: {
+          owner: "AccountId32",
+          pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
+          amplification_coefficient: "u16",
+          fee: "Permill"
+        },
+        ConstantProduct: {
+          owner: "AccountId32",
+          pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
+          lpToken: "u128",
+          feeConfig: {
+            feeRate: "Permill",
+            ownerFeeRate: "Permill",
+            protocolFeeRate: "Permill"
+          },
+          baseWeight: "Permill",
+          quoteWeight: "Permill"
         },
         LiquidityBootstrapping: {
           owner: "AccountId32",

@@ -4,9 +4,10 @@ import testConfiguration from "./test_configuration.json";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
-import { createLBPool, removeLiquidityFromPool } from "@composabletests/tests/pablo/testHandlers/pabloTestHelper";
+import { removeLiquidityFromPool } from "@composabletests/tests/pablo/testHandlers/pabloTestHelper";
 import { mintAssetsToWallet, Pica } from "@composable/utils/mintingHelper";
-import * as uniswap from "@composable/utils/pablo/uniswap";
+import * as pablo from "@composable/utils/pablo";
+import { Phase2 } from "@composabletests/tests/launch-tests/testHelper";
 
 /**
  * Test suite for verifying phase 2 of the launch process.
@@ -45,12 +46,14 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
     composableManagerWallet: KeyringPair,
     liquidityProviderWallet1: KeyringPair;
   let ksmUsdcPoolId: number,
-    picaLBPPoolId: number;
+    picaLBPPoolId: number,
+    picaUsdcPoolId: number,
+    picaKsmPoolId: number;
   const picaAssetId = 1,
     ksmAssetId = 4,
     usdcAssetId = 131;
-  const baseAmount = 25000000000;
-  const quoteAmount = 25000000000;
+  const baseAmount = 250000000000000000n;
+  const quoteAmount = 250000000000000000n;
   const minMintAmount = 0;
 
   before("Setting up the tests", async function() {
@@ -85,28 +88,58 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
   describe("Picasso/Pablo Launch Plan - Phase 2A", function() {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
-    describe("Test 2A pool creation", function() {
-      it("Users can not create a pablo pool.", async function() {
-      });
-
-      it("Create KSM/USDC Pool by root.", async function() {
+    describe.only("Test 2A pool creation", function() {
+      it.only("Users can not create a pablo pool.", async function() {
         this.timeout(2 * 60 * 1000);
 
         const fee = 150000;
         const baseWeight = 500000;
-        // ToDo (D. Roth): Update to use `root`.
-        const { data: [result] } = await uniswap.sudo.sudoCreateMarket(
+        const baseAsset = ksmAssetId;
+        const quoteAsset = usdcAssetId;
+        const { data: [result] } = await pablo.uniswap.createMarket(
           api,
           sudoKey,
           composableManagerWallet.publicKey,
-          ksmAssetId,
-          usdcAssetId,
+          baseAsset,
+          quoteAsset,
           fee,
           baseWeight
         );
-        ksmUsdcPoolId = result.toNumber();
-        //verify if the pool is created
-        expect(ksmUsdcPoolId).to.be.a("number");
+        // ToDo: Update to expect error!
+        await Phase2.verifyLastPoolCreation(
+          api,
+          {
+            base: baseAsset,
+            quote: quoteAsset
+          },
+          {
+            feeRate: fee,
+            ownerFeeRate: 200000,
+            protocolFeeRate: 1000000
+          },
+          baseWeight,
+          baseWeight
+        );
+      });
+
+      it("Create KSM/USDC uniswap pool by root.", async function() {
+        this.timeout(2 * 60 * 1000);
+
+        const fee = 150000;
+        const baseWeight = 500000;
+        const baseAsset = ksmAssetId;
+        const quoteAsset = usdcAssetId;
+
+        const { data: [result] } = await pablo.uniswap.sudo.sudoCreateMarket(
+          api,
+          sudoKey,
+          composableManagerWallet.publicKey,
+          baseAsset,
+          quoteAsset,
+          fee,
+          baseWeight
+        );
+        expect(result.isOk).to.be.true;
       });
     });
 
@@ -114,12 +147,12 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
       describe("Test 2A pool add liquidity", function() {
         it("Users can add liquidity to the pool", async function() {
           this.timeout(2 * 60 * 1000);
-          const { data: [result] } = await uniswap.addLiquidity(api, liquidityProviderWallet1, ksmUsdcPoolId, baseAmount, quoteAmount, minMintAmount, true);
+          const { data: [result] } = await pablo.addLiquidity(api, liquidityProviderWallet1, ksmUsdcPoolId, baseAmount, quoteAmount, minMintAmount, true);
         });
 
         it("Pool owner can add liquidity to the pool", async function() {
           this.timeout(2 * 60 * 1000);
-          const { data: [result] } = await uniswap.sudo.sudoAddLiquidity(api, sudoKey, ksmUsdcPoolId, baseAmount, quoteAmount, minMintAmount, true);
+          const { data: [result] } = await pablo.sudo.sudoAddLiquidity(api, sudoKey, ksmUsdcPoolId, baseAmount, quoteAmount, minMintAmount, true);
         });
       });
 
@@ -140,11 +173,13 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
 
     describe("Test 2A pool stake", function() {
       describe("Test 2A pool stake", function() {
-
+        it("Users can stake LP tokens", async function() {
+        });
       });
 
       describe("Test 2A pool unstake", function() {
-
+        it("Users can unstake LP tokens", async function() {
+        });
       });
     });
 
@@ -163,26 +198,23 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
 
     it("Create PICA LBP w/ USDC", async function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
-      it("User1 can create a LBP", async function() {
-        const currentBlock = await api.query.system.number();
+      this.timeout(2 * 60 * 1000);
+      const currentBlock = await api.query.system.number();
 
-        const result = await createLBPool(
-          api,
-          composableManagerWallet,
-          composableManagerWallet,
-          picaAssetId,
-          usdcAssetId,
-          currentBlock.toNumber() + 5,
-          currentBlock.toNumber() + 50,
-          980000,
-          500000,
-          0,
-          0,
-          0
-        );
-        picaLBPPoolId = result.resultPoolId;
-        expect(picaLBPPoolId).to.be.a("number");
-      });
+      const result = await pablo.liquidityBootstrapping.createMarket(
+        api,
+        composableManagerWallet,
+        composableManagerWallet.publicKey,
+        picaAssetId,
+        usdcAssetId,
+        currentBlock.toNumber() + 5,
+        currentBlock.toNumber() + 50,
+        980000,
+        500000,
+        0,
+        0,
+        0
+      );
     });
   });
 
@@ -196,9 +228,38 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
   describe("Picasso/Pablo Launch Plan - Phase 2C", function() {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
-    it("Wallet balance check should be >0", async function() {
+    it("Create PICA/USDC pool", async function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+      const fee = 200000;
+      const baseWeight = 500000;
+      const { data: [result] } = await pablo.uniswap.sudo.sudoCreateMarket(
+        api,
+        sudoKey,
+        composableManagerWallet.publicKey,
+        picaAssetId,
+        usdcAssetId,
+        fee,
+        baseWeight
+      );
+      expect(result.isOk).to.be.true;
+    });
 
+    it("Create PICA/KSM pool", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const fee = 200000;
+      const baseWeight = 500000;
+      const { data: [result] } = await pablo.uniswap.sudo.sudoCreateMarket(
+        api,
+        sudoKey,
+        composableManagerWallet.publicKey,
+        picaAssetId,
+        usdcAssetId,
+        fee,
+        baseWeight
+      );
     });
   });
 
@@ -216,25 +277,74 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
   describe("Picasso/Pablo Launch Plan - Phase 2D", function() {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
-    it("Wallet balance check should be >0", async function() {
+    it("Create USDC/aUSD stableswap pool", async function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+      const amplificationCoefficient = 24; // ToDo: Update!
+      const fee = 100000; // ToDo: Update!
+      const { data: [result] } = await pablo.stableswap.sudo.sudoCreateMarket(
+        api,
+        sudoKey,
+        composableManagerWallet.publicKey,
+        picaAssetId,
+        usdcAssetId,
+        amplificationCoefficient,
+        fee
+      );
+      expect(result.isOk).to.be.true;
+    });
 
+    it("Create wETH/KSM uniswap pool", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const fee = 150000;
+      const baseWeight = 500000;
+      const { data: [result] } = await pablo.uniswap.sudo.sudoCreateMarket(
+        api,
+        sudoKey,
+        composableManagerWallet.publicKey,
+        picaAssetId,
+        usdcAssetId,
+        fee,
+        baseWeight
+      );
+      expect(result.isOk).to.be.true;
+    });
+
+    it("Create wBTC/KSM uniswap pool", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+      const fee = 150000;
+      const baseWeight = 500000;
+      const { data: [result] } = await pablo.uniswap.sudo.sudoCreateMarket(
+        api,
+        sudoKey,
+        composableManagerWallet.publicKey,
+        picaAssetId,
+        usdcAssetId,
+        fee,
+        baseWeight
+      );
+      expect(result.isOk).to.be.true;
+    });
+
+    it("Create USDC/USDT stableswap pool", async function() {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      const amplificationCoefficient = 24; // ToDo: Update!
+      const fee = 100000; // ToDo: Update!
+      const { data: [result] } = await pablo.uniswap.sudo.sudoCreateMarket(
+        api,
+        sudoKey,
+        composableManagerWallet.publicKey,
+        picaAssetId,
+        usdcAssetId,
+        amplificationCoefficient,
+        fee
+      );
+      expect(result.isOk).to.be.true;
     });
   });
 });
-
-
-export class Phase2 {
-
-  public static async verifyPoolCreation() {
-
-  }
-
-  public static async verifyPoolLiquidityAdded() {
-
-  }
-
-  public static async verifyPoolLiquidityRemoved() {
-
-  }
-}
