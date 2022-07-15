@@ -1,7 +1,5 @@
-use crate::{
-	math::{FixedPointMath, IntoBalance, IntoDecimal},
-	Config,
-};
+use crate::Config;
+use composable_maths::labs::numbers::{FixedPointMath, IntoBalance, IntoDecimal};
 use composable_traits::{
 	oracle::Oracle,
 	time::DurationSeconds,

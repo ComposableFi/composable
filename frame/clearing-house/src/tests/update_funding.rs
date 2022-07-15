@@ -1,5 +1,4 @@
 use crate::{
-	math::{FixedPointMath, FromBalance, FromUnsigned, IntoDecimal},
 	mock::{
 		accounts::{AccountId, ALICE, BOB},
 		runtime::{
@@ -16,6 +15,7 @@ use crate::{
 	},
 	Direction, Error, Event,
 };
+use composable_maths::labs::numbers::{FixedPointMath, FromBalance, FromUnsigned, IntoDecimal};
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
 	time::{DurationSeconds, ONE_HOUR},

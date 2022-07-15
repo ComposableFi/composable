@@ -10,6 +10,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
+composable-maths = { version = "0.0.1", path = "../composable-maths", default-features = false }
 
 frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.22' }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
@@ -36,17 +37,17 @@ proptest = "1.0"
 [features]
 default = ["std"]
 std = [
+    "frame-benchmarking/std",
     "frame-support/std",
     "frame-system/std",
-    "frame-benchmarking/std",
-    "sp-runtime/std",
     "sp-arithmetic/std",
-    "sp-io/std",
     "sp-core/std",
+    "sp-io/std",
+    "sp-runtime/std",
     "sp-std/std",
     "codec/std",
-    "scale-info/std",
     "log/std",
+    "scale-info/std",
     "serde/std",
 ]
 

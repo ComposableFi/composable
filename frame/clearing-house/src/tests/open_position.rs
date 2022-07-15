@@ -1,5 +1,4 @@
 use crate::{
-	math::{IntoBalance, IntoSigned},
 	mock::{
 		accounts::ALICE,
 		assets::USDC,
@@ -20,6 +19,7 @@ use crate::{
 		with_markets_context, with_trading_context, Market, MarketConfig,
 	},
 };
+use composable_maths::labs::numbers::{IntoBalance, IntoSigned};
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
