@@ -227,7 +227,7 @@ pub fn client_type_from_bytes(client_type: Vec<u8>) -> Result<ClientType, Error>
 		.map_err(|_| Error::DecodingError)
 }
 
-/// Get trie key by applying the commitment prefix to the path and scale encoding the result
+/// Get trie key by applying the commitment prefix to the path
 pub fn apply_prefix(prefix: &[u8], path: Vec<String>) -> Vec<u8> {
 	let mut key_path = prefix.to_vec();
 	let path = path.iter().flat_map(|val| val.as_bytes()).collect::<Vec<_>>();
