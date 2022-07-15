@@ -459,26 +459,34 @@ parameter_types! {
 	pub const MaxHistory: u32 = 20;
 	pub const MaxPrePrices: u32 = 40;
 	pub const TwapWindow: u16 = 3;
+	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
+	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
 }
 
 impl oracle::Config for Runtime {
-	type Currency = Balances;
 	type Event = Event;
-	type AuthorityId = oracle::crypto::BathurstStId;
+	type Balance = Balance;
+	type Currency = Balances;
 	type AssetId = CurrencyId;
 	type PriceValue = Balance;
-	type StakeLock = StakeLock;
+	type AuthorityId = oracle::crypto::BathurstStId;
 	type MinStake = MinStake;
+	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfCouncil;
+	type RewardOrigin = EnsureRootOrHalfCouncil;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
+	type TreasuryAccount = TreasuryAccount;
 	type MaxHistory = MaxHistory;
+	type TwapWindow = TwapWindow;
 	type MaxPrePrices = MaxPrePrices;
+	type MsPerBlock = MsPerBlock;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
-	type TreasuryAccount = TreasuryAccount;
-	type TwapWindow = TwapWindow;
+	type Moment = Moment;
+	type Time = Timestamp;
+	type PalletId = OraclePalletId;
 }
 
 // Parachain stuff.
@@ -882,6 +890,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolId = u16;
 	type PositionId = u128;
 	type AssetId = CurrencyId;
+	type Assets = Assets;
 	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;

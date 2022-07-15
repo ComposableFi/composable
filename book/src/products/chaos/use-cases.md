@@ -29,11 +29,7 @@ Once governance on Picasso is live, CHAOS holders will be able vote on governanc
 In the future, Picasso liquidity gauges will be established that direct liquidity incentives from the Picasso treasury. This will establish where liquidity is allocated, and establish additional governance utility for the CHAOS fNFTs. New protocols being established on Picasso, for example, will be incentivized to bribe CHAOS holders in order to direct liquidity to bootstrap their protocol.
 
 
----
-
-# Overview of CHAOS for a user
-
----
+## Overview of CHAOS for a user
 
 * Users will lock PICA for varying lengths of time to receive CHAOS, with longer locks receiving proportionally more rewards.
 * Users holding CHAOS will earn yield in the form of PICA, incubated tokens, and from various other streams such as collator staking, protocol revenue, and treasury revenue.

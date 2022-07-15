@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "composable": "rm -rf /tmp/polkadot-launch && polkadot-launch composable.json --verbose",
-    "composable_and_basilisk": "polkadot-launch composable_and_basilisk.json"
+    "rococo-dali-karura": "polkadot-launch rococo-local-dali-dev-karura-dev.json"
   },
   "keywords": [],
   "author": "",

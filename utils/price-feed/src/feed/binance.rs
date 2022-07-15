@@ -51,8 +51,7 @@ impl BinanceFeed {
 			.map(|symbol| format!("{}@{}", symbol.to_ascii_lowercase(), TOPIC_AGGREGATE_TRADE))
 			.collect::<Vec<_>>();
 
-		let sink = sink.clone();
-		let sink1 = sink.clone();
+		let sink_clone = sink.clone();
 		let keep_running_clone = keep_running.clone();
 		let assets = assets.clone();
 
@@ -68,6 +67,7 @@ impl BinanceFeed {
 			*/
 			let event_loop_handle: JoinHandle<Result<(), FeedError>> =
 				tokio::task::spawn_blocking(move || {
+					let sink = sink_clone.clone();
 					let mut ws = WebSockets::new(|event: WebsocketEvent| {
 						log::trace!("event: {:?}", event);
 						if let WebsocketEvent::AggrTrades(trades) = event {
@@ -75,11 +75,11 @@ impl BinanceFeed {
 							let price = str::parse::<f64>(trades.price.as_str())
 								.expect("couldn't parse price");
 							// Binance send a f64 price in USD. We normalize it to USD cent.
-							let usd_cent_price = (price * 100.) as u64;
+							let usd_cent_price = (price * 100.0) as u64;
 							// Find back the asset from the symbol.
 							if let Some(&asset) = symbol_asset.get(&trades.symbol) {
 								// Trigger a price update in USD cent
-								let _ = sink1.blocking_send(FeedNotification::AssetPriceUpdated {
+								let _ = sink.blocking_send(FeedNotification::AssetPriceUpdated {
 									feed: FeedIdentifier::Binance,
 									asset,
 									price: TimeStamped {

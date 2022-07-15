@@ -1,6 +1,6 @@
 # Note, this file is sorted by precedence. Later patterns take precedence over earlier ones
 
-## Default reviewers. 
+## Default reviewers.
 
 * @ComposableFi/core  # For anything not owned by a specific team, a core member needs to review or delegate
 
@@ -47,9 +47,8 @@ integration-tests/runtime-tests/ @ComposableFi/testers
 
 .devcontainer/ @ComposableFi/codespacers @ComposableFi/parachain-leads
 
-## Oracle Setup Script
-
-scripts/oracle-setup @ComposableFi/parachain
+# ComposableJS
+composablejs/ @ComposableFi/parachain
 
 ## Dev stuff
 
