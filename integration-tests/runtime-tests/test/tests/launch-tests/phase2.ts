@@ -44,15 +44,19 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
   let api: ApiPromise;
   let sudoKey: KeyringPair,
     composableManagerWallet: KeyringPair,
-    liquidityProviderWallet1: KeyringPair;
+    liquidityProviderWallet1: KeyringPair,
+    traderWallet1: KeyringPair;
+  let ksmUsdcLpTokenId: BN;
   let ksmUsdcPoolId: BN,
-    ksmUsdcLpTokenId: BN,
-    picaLBPPoolId: number,
-    picaUsdcPoolId: number,
-    picaKsmPoolId: number;
+    picaLBPPoolId: BN,
+    picaUsdcPoolId: BN,
+    picaKsmPoolId: BN;
   const picaAssetId = 1,
     ksmAssetId = 4,
-    usdcAssetId = 131;
+    usdcAssetId = 131,
+    btcAssetId = 1000,
+    wethAssetId = null, // ToDo: Update to wETH assetId.
+    ausdAssetId = null; // ToDo: Update to wETH assetId.
   const baseAmount = 250000000000000000n;
   const quoteAmount = 250000000000000000n;
   const minMintAmount = 0;
@@ -66,6 +70,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
     sudoKey = devWalletAlice;
     composableManagerWallet = devWalletAlice;
     liquidityProviderWallet1 = devWalletAlice.derive("/test/launch/lp1");
+    traderWallet1 = devWalletAlice.derive("/test/launch/trader1");
   });
 
   before("Minting assets", async function() {
@@ -201,20 +206,59 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
 
     describe("Test 2A trading", function() {
       describe("Test 2A buy", function() {
-        it("Users can buy from pool", async function() {
-          // ToDo: Implement when pablo staking is done.
+        it.only("Users can buy from pool", async function() {
+          this.timeout(2 * 60 * 1000);
+          const assetIdToBuy = ksmAssetId;
+          const amount = 100_000_000_000n;
+          const minReceive = 0;
+          const keepAlive = true;
+          const { data: [result] } = await pablo.buyTokens(
+            api,
+            liquidityProviderWallet1,
+            ksmUsdcPoolId,
+            assetIdToBuy,
+            amount,
+            minReceive,
+            keepAlive
+          );
         });
       });
 
       describe("Test 2A sell", function() {
-        it("Users can sell to pool", async function() {
-          // ToDo: Implement when pablo staking is done.
+        it.only("Users can sell to pool", async function() {
+          this.timeout(2 * 60 * 1000);
+          const assetIdToSell = ksmAssetId;
+          const amount = 100_000_000_000n;
+          const minReceive = 0;
+          const keepAlive = true;
+          const { data: [result] } = await pablo.sellTokens(
+            api,
+            liquidityProviderWallet1,
+            ksmUsdcPoolId,
+            assetIdToSell,
+            amount,
+            minReceive,
+            keepAlive
+          );
         });
       });
 
       describe("Test 2A swap", function() {
-        it("Users can swap in the pool", async function() {
-          // ToDo: Implement when pablo staking is done.
+        it.only("Users can swap in the pool", async function() {
+          this.timeout(2 * 60 * 1000);
+          const pair = { base: ksmAssetId, quote: usdcAssetId };
+          const amount = 100_000_000_000n;
+          const minReceive = 0;
+          const keepAlive = true;
+          const { data: [result] } = await pablo.swapTokens(
+            api,
+            liquidityProviderWallet1,
+            ksmUsdcPoolId,
+            pair,
+            amount,
+            minReceive,
+            keepAlive
+          );
         });
       });
     });
@@ -259,9 +303,9 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
       const feeRate = 0;
       const ownerFeeRate = 0;
       const protocolFeeRate = 0;
-      const result = await pablo.liquidityBootstrapping.createMarket(
+      const result = await pablo.liquidityBootstrapping.sudo.sudoCreateMarket(
         api,
-        composableManagerWallet,
+        sudoKey,
         composableManagerWallet.publicKey,
         picaAssetId,
         usdcAssetId,
@@ -273,7 +317,11 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
         ownerFeeRate,
         protocolFeeRate
       );
-      await Phase2.verifyLastPoolCreation(api, api.createType("PalletPabloPoolConfiguration", {
+
+      const {
+        poolId,
+        lpTokenId
+      } = await Phase2.verifyLastPoolCreation(api, api.createType("PalletPabloPoolConfiguration", {
         LiquidityBootstrapping: {
           owner: api.createType("AccountId32", composableManagerWallet.publicKey),
           pair: api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
@@ -293,6 +341,66 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
           })
         }
       }));
+      picaLBPPoolId = poolId;
+    });
+
+    describe("Test 2A trading", function() {
+      describe("Test 2A buy", function() {
+        it.only("Users can buy from pool", async function() {
+          this.timeout(2 * 60 * 1000);
+          const assetIdToBuy = picaAssetId;
+          const amount = 100_000_000_000n;
+          const minReceive = 0;
+          const keepAlive = true;
+          const { data: [result] } = await pablo.buyTokens(
+            api,
+            liquidityProviderWallet1,
+            picaLBPPoolId,
+            assetIdToBuy,
+            amount,
+            minReceive,
+            keepAlive
+          );
+        });
+      });
+
+      describe("Test 2A sell", function() {
+        it.only("Users can sell to pool", async function() {
+          this.timeout(2 * 60 * 1000);
+          const assetIdToSell = picaAssetId;
+          const amount = 100_000_000_000n;
+          const minReceive = 0;
+          const keepAlive = true;
+          const { data: [result] } = await pablo.sellTokens(
+            api,
+            liquidityProviderWallet1,
+            picaLBPPoolId,
+            assetIdToSell,
+            amount,
+            minReceive,
+            keepAlive
+          );
+        });
+      });
+
+      describe("Test 2A swap", function() {
+        it.only("Users can swap in the pool", async function() {
+          this.timeout(2 * 60 * 1000);
+          const pair = { base: picaAssetId, quote: usdcAssetId };
+          const amount = 100_000_000_000n;
+          const minReceive = 0;
+          const keepAlive = true;
+          const { data: [result] } = await pablo.swapTokens(
+            api,
+            liquidityProviderWallet1,
+            picaLBPPoolId,
+            pair,
+            amount,
+            minReceive,
+            keepAlive
+          );
+        });
+      });
     });
   });
 
@@ -309,18 +417,39 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
     it("Create PICA/USDC pool", async function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
       this.timeout(2 * 60 * 1000);
+      const baseAsset = picaAssetId;
+      const quoteAsset = usdcAssetId;
       const fee = 200000;
       const baseWeight = 500000;
       const { data: [result] } = await pablo.uniswap.sudo.sudoCreateMarket(
         api,
         sudoKey,
         composableManagerWallet.publicKey,
-        picaAssetId,
-        usdcAssetId,
+        baseAsset,
+        quoteAsset,
         fee,
         baseWeight
       );
-      expect(result.isOk).to.be.true;
+      const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
+        api,
+        api.createType("PalletPabloPoolConfiguration", {
+          ConstantProduct: {
+            owner: composableManagerWallet.publicKey,
+            pair: {
+              base: baseAsset,
+              quote: quoteAsset
+            },
+            lpToken: 100_000_000_000n,
+            feeConfig: {
+              feeRate: fee,
+              ownerFeeRate: 200000,
+              protocolFeeRate: 1000000
+            },
+            baseWeight: baseWeight,
+            quoteWeight: baseWeight
+          }
+        })
+      );
     });
 
     it("Create PICA/KSM pool", async function() {
@@ -329,14 +458,36 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
 
       const fee = 200000;
       const baseWeight = 500000;
+      const baseAsset = picaAssetId;
+      const quoteAsset = ksmAssetId;
       const { data: [result] } = await pablo.uniswap.sudo.sudoCreateMarket(
         api,
         sudoKey,
         composableManagerWallet.publicKey,
-        picaAssetId,
-        usdcAssetId,
+        baseAsset,
+        quoteAsset,
         fee,
         baseWeight
+      );
+      const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
+        api,
+        api.createType("PalletPabloPoolConfiguration", {
+          ConstantProduct: {
+            owner: composableManagerWallet.publicKey,
+            pair: {
+              base: baseAsset,
+              quote: quoteAsset
+            },
+            lpToken: 100_000_000_000n,
+            feeConfig: {
+              feeRate: fee,
+              ownerFeeRate: 200000,
+              protocolFeeRate: 1000000
+            },
+            baseWeight: baseWeight,
+            quoteWeight: baseWeight
+          }
+        })
       );
     });
   });
@@ -360,6 +511,8 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
       this.timeout(2 * 60 * 1000);
       const amplificationCoefficient = 24; // ToDo: Update!
       const fee = 100000; // ToDo: Update!
+      const baseAsset = usdcAssetId;
+      const quoteAsset = ausdAssetId;
       const { data: [result] } = await pablo.stableswap.sudo.sudoCreateMarket(
         api,
         sudoKey,
@@ -378,6 +531,8 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
 
       const fee = 150000;
       const baseWeight = 500000;
+      const baseAsset = wethAssetId;
+      const quoteAsset = ksmAssetId;
       const { data: [result] } = await pablo.uniswap.sudo.sudoCreateMarket(
         api,
         sudoKey,
@@ -387,7 +542,26 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
         fee,
         baseWeight
       );
-      expect(result.isOk).to.be.true;
+      const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
+        api,
+        api.createType("PalletPabloPoolConfiguration", {
+          ConstantProduct: {
+            owner: composableManagerWallet.publicKey,
+            pair: {
+              base: baseAsset,
+              quote: quoteAsset
+            },
+            lpToken: 100_000_000_000n,
+            feeConfig: {
+              feeRate: fee,
+              ownerFeeRate: 200000,
+              protocolFeeRate: 1000000
+            },
+            baseWeight: baseWeight,
+            quoteWeight: baseWeight
+          }
+        })
+      );
     });
 
     it("Create wBTC/KSM uniswap pool", async function() {
@@ -395,6 +569,8 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function() {
       this.timeout(2 * 60 * 1000);
       const fee = 150000;
       const baseWeight = 500000;
+      const baseAsset = btcAssetId;
+      const quoteAsset = ksmAssetId;
       const { data: [result] } = await pablo.uniswap.sudo.sudoCreateMarket(
         api,
         sudoKey,

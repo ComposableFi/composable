@@ -13,11 +13,11 @@ export class Phase2 {
     const poolId = poolAmount.sub(new BN(1));
     const pools = await api.query.pablo.pools(poolId);
     console.log(pools.toString());
-    if (poolConfig.isConstantProduct) {
+    if (poolConfig.isConstantProduct == true) {
       return this.verifyConstantProductPool(poolConfig, pools, poolId, poolAmount);
-    } else if (poolConfig.isLiquidityBootstrapping) {
-      // ToDo!
-    } else if (poolConfig.isStableSwap) {
+    } else if (poolConfig.isLiquidityBootstrapping == true) {
+      return this.verifyLiquidityBootstrappingPool(poolConfig, pools, poolId, poolAmount);
+    } else if (poolConfig.isStableSwap == true) {
       // ToDo!
     }
   }
@@ -45,6 +45,34 @@ export class Phase2 {
       .equal(new BN(poolConfig.asConstantProduct.quoteWeight));
     expect(pools.unwrap().asConstantProduct.lpToken).to.be.bignumber
       .equal(lpTokenId);
+    return { poolId, lpTokenId };
+  }
+
+  static verifyLiquidityBootstrappingPool(
+    poolConfig: PalletPabloPoolConfiguration,
+    pools: Option<PalletPabloPoolConfiguration>,
+    poolId: BN,
+    poolAmount: u128
+  ) {
+    expect(pools.unwrap().asLiquidityBootstrapping.pair.base).to.be.bignumber
+      .equal(new BN(poolConfig.asLiquidityBootstrapping.pair.base));
+    expect(pools.unwrap().asLiquidityBootstrapping.pair.quote).to.be.bignumber
+      .equal(new BN(poolConfig.asLiquidityBootstrapping.pair.quote));
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.ownerFeeRate).to.be.bignumber
+      .equal(new BN(poolConfig.asLiquidityBootstrapping.feeConfig.ownerFeeRate));
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.protocolFeeRate).to.be.bignumber
+      .equal(new BN(poolConfig.asLiquidityBootstrapping.feeConfig.protocolFeeRate));
+    expect(pools.unwrap().asLiquidityBootstrapping.sale.start).to.be.bignumber
+      .equal(new BN(poolConfig.asLiquidityBootstrapping.sale.start));
+    expect(pools.unwrap().asLiquidityBootstrapping.sale.end).to.be.bignumber
+      .equal(new BN(poolConfig.asLiquidityBootstrapping.sale.end));
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.feeRate).to.be.bignumber
+      .equal(new BN(poolConfig.asLiquidityBootstrapping.feeConfig.feeRate));
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.ownerFeeRate).to.be.bignumber
+      .equal(new BN(poolConfig.asLiquidityBootstrapping.feeConfig.ownerFeeRate));
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.protocolFeeRate).to.be.bignumber
+      .equal(new BN(poolConfig.asLiquidityBootstrapping.feeConfig.protocolFeeRate));
+    const lpTokenId = new BN(0);
     return { poolId, lpTokenId };
   }
 
