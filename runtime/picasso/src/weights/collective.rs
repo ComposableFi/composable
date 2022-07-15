@@ -37,10 +37,10 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	// Storage: Council Prime (r:0 w:1)
 	fn set_members(m: u32, _n: u32, p: u32, ) -> Weight {
 		(0 as Weight)
-			// Standard Error: 59_000
-			.saturating_add((20_422_000 as Weight).saturating_mul(m as Weight))
-			// Standard Error: 59_000
-			.saturating_add((27_498_000 as Weight).saturating_mul(p as Weight))
+			// Standard Error: 80_000
+			.saturating_add((20_601_000 as Weight).saturating_mul(m as Weight))
+			// Standard Error: 80_000
+			.saturating_add((26_984_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(p as Weight)))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
@@ -48,21 +48,21 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: Council Members (r:1 w:0)
 	fn execute(b: u32, m: u32, ) -> Weight {
-		(29_938_000 as Weight)
+		(28_729_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((3_000 as Weight).saturating_mul(b as Weight))
 			// Standard Error: 0
-			.saturating_add((53_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((51_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	// Storage: Council Members (r:1 w:0)
 	// Storage: Council ProposalOf (r:1 w:0)
 	fn propose_execute(b: u32, m: u32, ) -> Weight {
-		(34_839_000 as Weight)
+		(33_966_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((3_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((4_000 as Weight).saturating_mul(b as Weight))
 			// Standard Error: 0
-			.saturating_add((96_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((86_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 	}
 	// Storage: Council Members (r:1 w:0)
@@ -71,22 +71,22 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	// Storage: Council ProposalCount (r:1 w:1)
 	// Storage: Council Voting (r:0 w:1)
 	fn propose_proposed(b: u32, m: u32, p: u32, ) -> Weight {
-		(45_641_000 as Weight)
+		(42_527_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((13_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((15_000 as Weight).saturating_mul(b as Weight))
 			// Standard Error: 3_000
-			.saturating_add((69_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((60_000 as Weight).saturating_mul(m as Weight))
 			// Standard Error: 3_000
-			.saturating_add((473_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add((466_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	// Storage: Council Members (r:1 w:0)
 	// Storage: Council Voting (r:1 w:1)
 	fn vote(m: u32, ) -> Weight {
-		(63_286_000 as Weight)
-			// Standard Error: 4_000
-			.saturating_add((168_000 as Weight).saturating_mul(m as Weight))
+		(58_620_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((197_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -95,11 +95,11 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	// Storage: Council Proposals (r:1 w:1)
 	// Storage: Council ProposalOf (r:0 w:1)
 	fn close_early_disapproved(m: u32, p: u32, ) -> Weight {
-		(59_688_000 as Weight)
+		(56_633_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((95_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((111_000 as Weight).saturating_mul(m as Weight))
 			// Standard Error: 3_000
-			.saturating_add((371_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add((360_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -108,13 +108,13 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	// Storage: Council ProposalOf (r:1 w:1)
 	// Storage: Council Proposals (r:1 w:1)
 	fn close_early_approved(b: u32, m: u32, p: u32, ) -> Weight {
-		(61_427_000 as Weight)
+		(24_958_000 as Weight)
 			// Standard Error: 1_000
-			.saturating_add((17_000 as Weight).saturating_mul(b as Weight))
-			// Standard Error: 12_000
-			.saturating_add((206_000 as Weight).saturating_mul(m as Weight))
-			// Standard Error: 12_000
-			.saturating_add((459_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add((29_000 as Weight).saturating_mul(b as Weight))
+			// Standard Error: 16_000
+			.saturating_add((292_000 as Weight).saturating_mul(m as Weight))
+			// Standard Error: 15_000
+			.saturating_add((681_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -124,11 +124,11 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	// Storage: Council Proposals (r:1 w:1)
 	// Storage: Council ProposalOf (r:0 w:1)
 	fn close_disapproved(m: u32, p: u32, ) -> Weight {
-		(62_572_000 as Weight)
+		(62_664_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((128_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((116_000 as Weight).saturating_mul(m as Weight))
 			// Standard Error: 3_000
-			.saturating_add((392_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add((366_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -138,13 +138,13 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	// Storage: Council ProposalOf (r:1 w:1)
 	// Storage: Council Proposals (r:1 w:1)
 	fn close_approved(b: u32, m: u32, p: u32, ) -> Weight {
-		(68_062_000 as Weight)
+		(58_298_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((12_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((17_000 as Weight).saturating_mul(b as Weight))
 			// Standard Error: 4_000
-			.saturating_add((171_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((189_000 as Weight).saturating_mul(m as Weight))
 			// Standard Error: 4_000
-			.saturating_add((538_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add((513_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -152,9 +152,9 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	// Storage: Council Voting (r:0 w:1)
 	// Storage: Council ProposalOf (r:0 w:1)
 	fn disapprove_proposal(p: u32, ) -> Weight {
-		(35_039_000 as Weight)
+		(34_627_000 as Weight)
 			// Standard Error: 2_000
-			.saturating_add((440_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add((424_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}

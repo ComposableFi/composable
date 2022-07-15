@@ -36,14 +36,14 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: CurrencyFactory AssetEd (r:0 w:1)
 	// Storage: Pablo Pools (r:0 w:1)
 	fn create() -> Weight {
-		(47_260_000 as Weight)
+		(47_082_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	// Storage: Pablo PoolCount (r:1 w:1)
 	// Storage: Pablo Pools (r:0 w:1)
 	fn create_lbp() -> Weight {
-		(35_695_000 as Weight)
+		(35_538_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -53,7 +53,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn add_liquidity() -> Weight {
-		(239_691_000 as Weight)
+		(240_880_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
@@ -62,7 +62,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn add_liquidity_lbp() -> Weight {
-		(154_936_000 as Weight)
+		(150_149_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -72,7 +72,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:0)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn remove_liquidity() -> Weight {
-		(186_043_000 as Weight)
+		(182_369_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -81,7 +81,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn remove_liquidity_lbp() -> Weight {
-		(154_998_000 as Weight)
+		(154_756_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -90,7 +90,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn buy() -> Weight {
-		(349_482_000 as Weight)
+		(351_465_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
@@ -99,7 +99,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn sell() -> Weight {
-		(271_379_000 as Weight)
+		(257_283_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
@@ -108,7 +108,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn swap() -> Weight {
-		(247_053_000 as Weight)
+		(252_010_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}

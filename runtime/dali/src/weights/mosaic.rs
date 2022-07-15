@@ -33,25 +33,25 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic Relayer (r:0 w:1)
 	fn set_relayer() -> Weight {
-		(28_709_000 as Weight)
+		(28_093_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Mosaic Relayer (r:1 w:1)
 	fn rotate_relayer() -> Weight {
-		(35_738_000 as Weight)
+		(34_042_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Mosaic Relayer (r:1 w:0)
 	// Storage: Mosaic NetworkInfos (r:0 w:1)
 	fn set_network() -> Weight {
-		(36_468_000 as Weight)
+		(35_197_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Mosaic AssetsInfo (r:1 w:1)
 	fn set_budget() -> Weight {
-		(34_896_000 as Weight)
+		(33_689_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -63,7 +63,7 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: Mosaic Nonce (r:1 w:1)
 	fn transfer_to() -> Weight {
-		(135_521_000 as Weight)
+		(131_515_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -72,14 +72,14 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn accept_transfer() -> Weight {
-		(92_954_000 as Weight)
+		(93_580_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn claim_stale_to() -> Weight {
-		(108_168_000 as Weight)
+		(104_964_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -89,13 +89,13 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	fn timelocked_mint() -> Weight {
-		(106_660_000 as Weight)
+		(107_480_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 	// Storage: Mosaic TimeLockPeriod (r:0 w:1)
 	fn set_timelock_duration() -> Weight {
-		(8_854_000 as Weight)
+		(8_723_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Mosaic Relayer (r:1 w:0)
@@ -103,14 +103,14 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn rescind_timelocked_mint() -> Weight {
-		(91_723_000 as Weight)
+		(90_492_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn claim_to() -> Weight {
-		(104_451_000 as Weight)
+		(102_359_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -118,19 +118,19 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic LocalToRemoteAsset (r:1 w:1)
 	// Storage: Mosaic RemoteToLocalAsset (r:0 w:1)
 	fn update_asset_mapping() -> Weight {
-		(46_279_000 as Weight)
+		(45_400_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Mosaic RemoteAmmWhitelist (r:1 w:1)
 	fn add_remote_amm_id() -> Weight {
-		(15_791_000 as Weight)
+		(15_770_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Mosaic RemoteAmmWhitelist (r:1 w:1)
 	fn remove_remote_amm_id() -> Weight {
-		(16_961_000 as Weight)
+		(16_449_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}

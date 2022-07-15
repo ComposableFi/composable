@@ -33,7 +33,7 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: DutchAuction Configurations (r:0 w:1)
 	fn add_configuration() -> Weight {
-		(23_063_000 as Weight)
+		(22_245_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: DutchAuction OrdersIndex (r:1 w:1)
@@ -42,7 +42,7 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
 	fn ask() -> Weight {
-		(96_339_000 as Weight)
+		(95_592_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -51,7 +51,7 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction Takes (r:1 w:1)
 	fn take() -> Weight {
-		(56_236_000 as Weight)
+		(56_175_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -59,7 +59,7 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn liquidate() -> Weight {
-		(86_176_000 as Weight)
+		(85_219_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -71,7 +71,7 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: DutchAuction LocalOrderIdToRemote (r:0 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
 	fn xcm_sell() -> Weight {
-		(115_277_000 as Weight)
+		(114_714_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -80,7 +80,7 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: DutchAuction LocalOrderIdToRemote (r:1 w:1)
 	fn known_overhead_for_on_finalize() -> Weight {
-		(99_237_000 as Weight)
+		(98_456_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
