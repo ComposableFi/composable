@@ -102,7 +102,7 @@ fn default_swap_config(asset: AssetType, direction: Direction) -> SwapConfig<Vam
 		asset,
 		input_amount: 10_u128.pow(18),
 		direction,
-		output_amount_limit: 0,
+		output_amount_limit: Some(0),
 	}
 }
 
@@ -366,9 +366,9 @@ prop_compose! {
 			direction: config
 				.direction
 				.unwrap_or(direction),
-			output_amount_limit: config
+			output_amount_limit: Some(config
 				.output_amount_limit
-				.unwrap_or(output_amount_limit),
+				.unwrap_or(output_amount_limit)),
 		}
 	}
 }
@@ -386,7 +386,7 @@ fn swap_config() -> BoxedStrategy<SwapConfig<VammId, Balance>> {
 			asset,
 			input_amount,
 			direction,
-			output_amount_limit,
+			output_amount_limit: Some(output_amount_limit),
 		})
 		.boxed()
 }

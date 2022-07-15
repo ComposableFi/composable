@@ -217,19 +217,18 @@ pub mod pallet {
 		}
 
 		fn swap_simulation(
-			config: &Self::SwapSimulationConfig,
-		) -> Result<Self::Balance, DispatchError> {
-			let Self::SwapSimulationConfig { vamm_id, asset, input_amount, direction } =
-				config.clone();
+			config: &Self::SwapConfig,
+		) -> Result<SwapOutput<Self::Balance>, DispatchError> {
+			let Self::SwapConfig { vamm_id, asset, input_amount, direction, .. } = config.clone();
 			let swap_output = <Self as Vamm>::swap(&Self::SwapConfig {
 				vamm_id,
 				asset,
 				input_amount,
 				direction,
-				output_amount_limit: 0_u32.into(),
+				output_amount_limit: None,
 			})
 			.map_err(|_| Error::<T>::FailedToSimulateSwap)?;
-			Ok(swap_output.output)
+			Ok(swap_output)
 		}
 
 		fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError> {

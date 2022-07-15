@@ -223,7 +223,7 @@ proptest! {
 		// `Overflow`, `Underflow`, etc.
 		swap_config.input_amount = 0;
 
-		swap_config.output_amount_limit = limit;
+		swap_config.output_amount_limit = Some(limit);
 		swap_config.vamm_id = VammId::zero();
 
 		ExtBuilder {
@@ -246,7 +246,7 @@ proptest! {
 		vamm_state.closed = None;
 
 		// Disable output limit check
-		swap_config.output_amount_limit = Balance::zero();
+		swap_config.output_amount_limit = Some(Balance::zero());
 
 		swap_config.vamm_id = VammId::zero();
 
@@ -352,7 +352,7 @@ proptest! {
 		swap_config.input_amount = 0;
 
 		// Disable output limit check
-		swap_config.output_amount_limit = 0;
+		swap_config.output_amount_limit = Some(0);
 
 		ExtBuilder {
 			vamm_count: 1,
@@ -380,7 +380,7 @@ proptest! {
 		swap_config.input_amount = 0;
 
 		// Disable output limit check
-		swap_config.output_amount_limit = 0;
+		swap_config.output_amount_limit = Some(0);
 
 		ExtBuilder {
 			vamm_count: 1,

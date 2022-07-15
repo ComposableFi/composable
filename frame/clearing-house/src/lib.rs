@@ -1835,7 +1835,7 @@ pub mod pallet {
 				asset: AssetType::Base,
 				input_amount: base_amount,
 				direction: direction.into(),
-				output_amount_limit: quote_limit,
+				output_amount_limit: Some(quote_limit),
 			})?
 			.output)
 		}
@@ -1851,7 +1851,7 @@ pub mod pallet {
 				asset: AssetType::Quote,
 				input_amount: quote_abs_decimal.into_balance()?,
 				direction: direction.into(),
-				output_amount_limit: base_limit,
+				output_amount_limit: Some(base_limit),
 			})?
 			.output)
 		}
@@ -1902,14 +1902,15 @@ pub mod pallet {
 			position: &Position<T>,
 			position_direction: Direction,
 		) -> Result<T::Decimal, DispatchError> {
-			let sim_swapped = T::Vamm::swap_simulation(&SwapSimulationConfigOf::<T> {
+			let sim_swapped = T::Vamm::swap_simulation(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
 				input_amount: position.base_asset_amount.into_balance()?,
 				direction: position_direction.into(),
+				output_amount_limit: None,
 			})?;
 
-			Self::decimal_from_swapped(sim_swapped, position_direction)
+			Self::decimal_from_swapped(sim_swapped.output, position_direction)
 		}
 
 		/// Compute how much to withdraw from the collateral and insurance accounts.

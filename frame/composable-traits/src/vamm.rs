@@ -47,8 +47,9 @@ pub trait Vamm {
 	fn swap(config: &Self::SwapConfig) -> Result<SwapOutput<Self::Balance>, DispatchError>;
 
 	/// Performs swap simulation.
-	fn swap_simulation(config: &Self::SwapSimulationConfig)
-		-> Result<Self::Balance, DispatchError>;
+	fn swap_simulation(
+		config: &Self::SwapConfig,
+	) -> Result<SwapOutput<Self::Balance>, DispatchError>;
 
 	/// Sets the amount of base and quote asset reserves, modifying the
 	/// invariant of the desired vamm.

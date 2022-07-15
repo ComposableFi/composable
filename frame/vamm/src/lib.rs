@@ -813,37 +813,15 @@ pub mod pallet {
 			let _ = Self::update_vamm_twap(config.vamm_id, &mut vamm_state, &None);
 
 			// Perform required sanity checks.
-			Self::swap_sanity_check(config, &vamm_state)?;
+			Self::sanity_check_before_swap(config, &vamm_state)?;
 
-			// Delegate swap to helper functions.
-			let amount_swapped = match config.asset {
-				AssetType::Quote => Self::swap_quote_asset(config, &mut vamm_state),
-				AssetType::Base => Self::swap_base_asset(config, &mut vamm_state),
-			}?;
+			// Delegate swap to helper function.
+			let amount_swapped = Self::do_swap(config, &mut vamm_state)?;
 
-			// Ensure swapped amount is valid.
-			ensure!(
-				amount_swapped.output >= config.output_amount_limit,
-				Error::<T>::SwappedAmountLessThanMinimumLimit
-			);
-
-			// Ensure both quote and base assets weren't completely drained from vamm.
-			ensure!(
-				!vamm_state.base_asset_reserves.is_zero(),
-				Error::<T>::BaseAssetReservesWouldBeCompletelyDrained
-			);
-			ensure!(
-				!vamm_state.quote_asset_reserves.is_zero(),
-				Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained
-			);
-
-			// TODO(Cardosaum): Write one more `ensure!` block regarding
-			// amount_swapped negative or positive?
-
-			// Update runtime storage
+			// Update runtime storage.
 			VammMap::<T>::insert(&config.vamm_id, vamm_state);
 
-			// Deposit swap event into blockchain
+			// Deposit swap event into blockchain.
 			Self::deposit_event(Event::<T>::Swapped {
 				vamm_id: config.vamm_id,
 				input_amount: config.input_amount,
@@ -852,10 +830,11 @@ pub mod pallet {
 				direction: config.direction,
 			});
 
-			// Return total swapped asset
+			// Return total swapped asset.
 			Ok(amount_swapped)
 		}
 
+		// TODO(Cardosaum): Rewrite specification
 		/// Performs the *simulation* of the swap operation for the desired
 		/// asset against the vamm, returning the computed asset price if the
 		/// swap were in fact executed.
@@ -904,16 +883,15 @@ pub mod pallet {
 		/// # Runtime
 		/// `O(1)`
 		#[transactional]
-		fn swap_simulation(
-			config: &SwapSimulationConfigOf<T>,
-		) -> Result<BalanceOf<T>, DispatchError> {
+		fn swap_simulation(config: &SwapConfigOf<T>) -> Result<SwapOutputOf<T>, DispatchError> {
 			// Get Vamm state.
-			let vamm_state = Self::get_vamm_state(&config.vamm_id)?;
+			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
 			// Sanity checks.
-			Self::swap_sanity_check(config.into(), &vamm_state);
+			Self::sanity_check_before_swap(config, &vamm_state)?;
 
-			todo!();
+			// Delegate swap to helper function.
+			Self::do_swap(config, &mut vamm_state)
 		}
 
 		/// Moves the price of a vamm to the desired values of
@@ -1065,6 +1043,25 @@ pub mod pallet {
 			Ok((base_twap, quote_twap))
 		}
 
+		fn do_swap(
+			config: &SwapConfigOf<T>,
+			vamm_state: &mut VammStateOf<T>,
+		) -> Result<SwapOutputOf<T>, DispatchError> {
+			// Delegate swap to helper functions.
+			let amount_swapped = match config.asset {
+				AssetType::Quote => Self::swap_quote_asset(config, vamm_state),
+				AssetType::Base => Self::swap_base_asset(config, vamm_state),
+			}?;
+
+			// Check if swap doesn't violate Vamm properties and swap requirements.
+			Self::sanity_check_after_swap(vamm_state, config, &amount_swapped)?;
+
+			// TODO(Cardosaum): Write one more `ensure!` block regarding
+			// amount_swapped negative or positive?
+
+			Ok(amount_swapped)
+		}
+
 		fn swap_quote_asset(
 			config: &SwapConfigOf<T>,
 			vamm_state: &mut VammStateOf<T>,
@@ -1209,7 +1206,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn swap_sanity_check(
+		fn sanity_check_before_swap(
 			config: &SwapConfigOf<T>,
 			vamm_state: &VammStateOf<T>,
 		) -> Result<(), DispatchError> {
@@ -1243,6 +1240,35 @@ pub mod pallet {
 					),
 				},
 			};
+
+			Ok(())
+		}
+
+		fn sanity_check_after_swap(
+			vamm_state: &VammStateOf<T>,
+			config: &SwapConfigOf<T>,
+			amount_swapped: &SwapOutputOf<T>,
+		) -> Result<(), DispatchError> {
+			// Ensure swapped amount is valid.
+			if let Some(limit) = config.output_amount_limit {
+				ensure!(
+					amount_swapped.output >= limit,
+					Error::<T>::SwappedAmountLessThanMinimumLimit
+				);
+			}
+
+			// Ensure both quote and base assets weren't completely drained from vamm.
+			ensure!(
+				!vamm_state.base_asset_reserves.is_zero(),
+				Error::<T>::BaseAssetReservesWouldBeCompletelyDrained
+			);
+			ensure!(
+				!vamm_state.quote_asset_reserves.is_zero(),
+				Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained
+			);
+
+			// TODO(Cardosaum): Write one more `ensure!` block regarding
+			// amount_swapped negative or positive?
 
 			Ok(())
 		}
