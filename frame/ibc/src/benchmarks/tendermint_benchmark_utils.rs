@@ -161,7 +161,7 @@ pub fn create_client_update() -> MsgUpdateAnyClient {
 pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTry) {
 	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
 	let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
-	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+	let commitment_prefix: CommitmentPrefix = "ibc/".as_bytes().to_vec().try_into().unwrap();
 	let chain_a_counterparty = Counterparty::new(
 		counterparty_client_id.clone(),
 		Some(ConnectionId::new(1)),
@@ -203,12 +203,12 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 	let proof = avl_tree.get_proof(&*path).unwrap();
 	let consensus_proof = avl_tree.get_proof(&*consensus_path).unwrap();
 	let client_proof = avl_tree.get_proof(&*client_path).unwrap();
-	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	avl_tree.insert("ibc/".as_bytes().to_vec(), root);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
 	};
-	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let proof_0 = avl_tree.get_proof("ibc/".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
@@ -267,7 +267,7 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAck) {
 	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
 	let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
-	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+	let commitment_prefix: CommitmentPrefix = "ibc/".as_bytes().to_vec().try_into().unwrap();
 	let delay_period = core::time::Duration::from_nanos(1000);
 	let chain_b_connection_counterparty =
 		Counterparty::new(client_id.clone(), Some(ConnectionId::new(0)), commitment_prefix.clone());
@@ -304,12 +304,12 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 	let proof = avl_tree.get_proof(&*path).unwrap();
 	let consensus_proof = avl_tree.get_proof(&*consensus_path).unwrap();
 	let client_proof = avl_tree.get_proof(&*client_path).unwrap();
-	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	avl_tree.insert("ibc/".as_bytes().to_vec(), root);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
 	};
-	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let proof_0 = avl_tree.get_proof("ibc/".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
@@ -366,7 +366,7 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOpenConfirm) {
 	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
 	let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
-	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+	let commitment_prefix: CommitmentPrefix = "ibc/".as_bytes().to_vec().try_into().unwrap();
 	let delay_period = core::time::Duration::from_nanos(1000);
 	let chain_b_connection_counterparty =
 		Counterparty::new(client_id.clone(), Some(ConnectionId::new(0)), commitment_prefix.clone());
@@ -400,12 +400,12 @@ pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOp
 	};
 	let proof = avl_tree.get_proof(&*path).unwrap();
 	let consensus_proof = avl_tree.get_proof(&*consensus_path).unwrap();
-	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	avl_tree.insert("ibc/".as_bytes().to_vec(), root);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
 	};
-	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let proof_0 = avl_tree.get_proof("ibc/".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
@@ -470,12 +470,12 @@ pub fn create_chan_open_try() -> (ConsensusState, MsgChannelOpenTry) {
 		Hash::None => panic!("Failed to generate root hash"),
 	};
 	let proof = avl_tree.get_proof(&*path).unwrap();
-	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	avl_tree.insert("ibc/".as_bytes().to_vec(), root);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
 	};
-	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let proof_0 = avl_tree.get_proof("ibc/".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
@@ -533,12 +533,12 @@ pub fn create_chan_open_ack() -> (ConsensusState, MsgChannelOpenAck) {
 		Hash::None => panic!("Failed to generate root hash"),
 	};
 	let proof = avl_tree.get_proof(&*path).unwrap();
-	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	avl_tree.insert("ibc/".as_bytes().to_vec(), root);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
 	};
-	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let proof_0 = avl_tree.get_proof("ibc/".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
@@ -589,12 +589,12 @@ pub fn create_chan_open_confirm() -> (ConsensusState, MsgChannelOpenConfirm) {
 		Hash::None => panic!("Failed to generate root hash"),
 	};
 	let proof = avl_tree.get_proof(&*path).unwrap();
-	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	avl_tree.insert("ibc/".as_bytes().to_vec(), root);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
 	};
-	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let proof_0 = avl_tree.get_proof("ibc/".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
@@ -652,12 +652,12 @@ pub fn create_chan_close_confirm() -> (ConsensusState, MsgChannelCloseConfirm) {
 		Hash::None => panic!("Failed to generate root hash"),
 	};
 	let proof = avl_tree.get_proof(&*path).unwrap();
-	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	avl_tree.insert("ibc/".as_bytes().to_vec(), root);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
 	};
-	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let proof_0 = avl_tree.get_proof("ibc/".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
@@ -718,12 +718,12 @@ where
 		Hash::None => panic!("Failed to generate root hash"),
 	};
 	let proof = avl_tree.get_proof(&*path).unwrap();
-	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	avl_tree.insert("ibc/".as_bytes().to_vec(), root);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
 	};
-	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let proof_0 = avl_tree.get_proof("ibc/".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
@@ -787,12 +787,12 @@ where
 		Hash::None => panic!("Failed to generate root hash"),
 	};
 	let proof = avl_tree.get_proof(&*path).unwrap();
-	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	avl_tree.insert("ibc/".as_bytes().to_vec(), root);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
 	};
-	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let proof_0 = avl_tree.get_proof("ibc/".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
@@ -854,12 +854,12 @@ where
 		Hash::None => panic!("Failed to generate root hash"),
 	};
 	let proof = avl_tree.get_proof(&*path).unwrap();
-	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	avl_tree.insert("ibc/".as_bytes().to_vec(), root);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
 	};
-	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let proof_0 = avl_tree.get_proof("ibc/".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
