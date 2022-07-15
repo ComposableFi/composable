@@ -62,7 +62,7 @@ export async function processVestingScheduleAddedEvent(
   const { to, schedule } = getVestingScheduleAddedEvent(event);
 
   const vestingSchedule = new VestingSchedule({
-    id: randomUUID(),
+    id: ctx.event.id,
     beneficiary: encodeAccount(to),
     schedule: createVestingSchedule(schedule),
   });
