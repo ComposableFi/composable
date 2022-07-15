@@ -1,4 +1,4 @@
-import { makeClient } from "../../";
+import { makeClient } from "../..";
 
 export const queryAuctionStats = (
   poolId: number

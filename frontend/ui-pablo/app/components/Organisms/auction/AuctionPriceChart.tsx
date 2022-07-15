@@ -3,7 +3,6 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
-import moment from "moment-timezone";
 import { MockedAsset } from "@/store/assets/assets.types";
 
 const NoSSRChart = dynamic(() => import("react-apexcharts"), { ssr: false });
@@ -20,6 +19,7 @@ export type AuctionPriceChartProps = {
 
 export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
   baseAsset,
+  quoteAsset,
   priceSeries,
   predictedPriceSeries,
   height,
@@ -28,13 +28,7 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
 }) => {
   const theme = useTheme();
 
-  // const dates = priceSeries
-  //   .map((item) => {
-  //     return moment(item[0]).utc().format("D MMM");
-  //   })
-  //   .filter((v, i, self) => self.indexOf(v) === i);
   const dates: string[] = [];
-
   const chartOptions = useCallback((
     color: string,
     dateFormat: (n: number) => string

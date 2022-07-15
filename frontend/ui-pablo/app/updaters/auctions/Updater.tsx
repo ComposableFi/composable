@@ -3,7 +3,8 @@ import { useParachainApi } from "substrate-react";
 import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { fetchSpotPrice } from "@/defi/utils";
-import { fetchAuctions, fetchTrades } from "@/defi/utils/pablo/auctions";
+import { fetchAuctions } from "@/defi/utils/pablo/auctions";
+import { fetchAuctionTrades } from "@/defi/subsquid/queries/auctions";
 
 const Updater = () => {
   const {
@@ -41,7 +42,7 @@ const Updater = () => {
   useEffect(() => {
     const { poolId } = auctions.activeLBP;
     if (poolId !== -1) {
-      fetchTrades(auctions.activeLBP)
+      fetchAuctionTrades(auctions.activeLBP)
         .then((trades) => {
           putHistoryActiveLBP(trades);
         })

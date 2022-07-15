@@ -117,5 +117,8 @@ export default {
       quoteAssetId: "CustomRpcCurrencyId",
       spotPrice: "CustomRpcBalance",
     },
+    RemoveLiquiditySimulationResult: {
+      assets: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
+    }
   },
 };

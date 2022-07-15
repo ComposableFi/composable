@@ -25,7 +25,7 @@ import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
-import { fetchSpotPrice, toChainUnits } from "@/defi/utils";
+import { fetchSpotPrice, fromRemoveLiquiditySimulationResult, toChainUnits } from "@/defi/utils";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 
@@ -75,7 +75,14 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
   }, [poolId, baseAsset, quoteAsset, parachainApi]);
 
   useEffect(() => {
-    if (parachainApi && debouncedPercentage > 0 && lpBalance.gt(0) && selectedAccount && baseAsset && quoteAsset) {
+    if (
+      parachainApi &&
+      debouncedPercentage > 0 &&
+      lpBalance.gt(0) &&
+      selectedAccount &&
+      baseAsset &&
+      quoteAsset
+    ) {
       const selectedLpAmount = toChainUnits(
         lpBalance.times(debouncedPercentage / 100)
       );
@@ -83,26 +90,38 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
       const b = baseAsset.network[DEFAULT_NETWORK_ID].toString();
       const q = quoteAsset.network[DEFAULT_NETWORK_ID].toString();
 
-      (parachainApi.rpc as any).pablo
-      .simulateRemoveLiquidity(
-        parachainApi.createType("AccountId32", selectedAccount.address),
-        parachainApi.createType("PalletPabloPoolId", poolId.toString()),
-        selectedLpAmount.toString(),
-        {
-          [b]: "0",
-          [q]: "0"
-        }
-      )
+      // @ts-ignore
+      parachainApi.rpc.pablo
+        .simulateRemoveLiquidity(
+          parachainApi.createType("AccountId32", selectedAccount.address),
+          parachainApi.createType("PalletPabloPoolId", poolId.toString()),
+          selectedLpAmount.toString(),
+          {
+            [b]: "0",
+            [q]: "0",
+          }
+        )
         .then((response: any) => {
-          console.log(response);
-        }).catch((err: any) => {
-          console.error(err)
+          const remove = fromRemoveLiquiditySimulationResult(response.toJSON())
+          setExpectedRemoveAmountBase(remove[b])
+          setExpectedRemoveAmountQuote(remove[q])
+        })
+        .catch((err: any) => {
+          console.error(err);
         });
     } else {
       setExpectedRemoveAmountBase(new BigNumber(0));
       setExpectedRemoveAmountQuote(new BigNumber(0));
     }
-  }, [parachainApi, debouncedPercentage, lpBalance, poolId, selectedAccount, baseAsset, quoteAsset]);
+  }, [
+    parachainApi,
+    debouncedPercentage,
+    lpBalance,
+    poolId,
+    selectedAccount,
+    baseAsset,
+    quoteAsset,
+  ]);
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -127,7 +146,7 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
 
   useEffect(() => {
     dispatch(setMessage({}));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -7,6 +7,7 @@ import {
 
 import BigNumber from "bignumber.js";
 import { MockedAsset } from "@/store/assets/assets.types";
+import millify from "millify";
 
 export type PreviewDetailsProps = {
   token1: MockedAsset | undefined,
@@ -31,9 +32,8 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
 
   return (
     <Box {...rest}>
-
       <Label BalanceProps={{
-        balance: `${lpToRemove.eq(0) ? '-' : lpToRemove}`,
+        balance: `${lpToRemove.eq(0) ? '-' : millify(lpToRemove.toNumber())}`,
         BalanceTypographyProps: {
           variant: "body1",
         },
@@ -59,7 +59,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
 
       <Label mt={3}
         BalanceProps={{
-          balance: `${expectedRecieveAmountToken1.toFormat()}`,
+          balance: `${millify(expectedRecieveAmountToken1.toNumber())}`,
           BalanceTypographyProps: {
             variant: "body1",
           },
@@ -71,7 +71,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
       <Label
         mt={3}
         BalanceProps={{
-          balance: `${expectedRecieveAmountToken2.toFormat()}`,
+          balance: `${millify(expectedRecieveAmountToken2.toNumber())}`,
           BalanceTypographyProps: {
             variant: "body1",
           },
