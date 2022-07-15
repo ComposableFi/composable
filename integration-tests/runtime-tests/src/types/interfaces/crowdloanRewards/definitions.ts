@@ -185,10 +185,10 @@ export default {
     PalletIbcIbcConsensusState: "Null",
     PalletIbcEventsIbcEvent: "Null",
     PalletIbcErrorsIbcError: "Null",
-    IbcTransferTransferParams: "Null",
-    IbcTransferPalletParams: "Null",
+    PalletMosaicAmmSwapInfo: "Null",
     ComposableTraitsStakingRewardPool: "Null",
     ComposableTraitsStakingRewardPoolConfiguration: "Null",
-    PalletMosaicAmmSwapInfo: "Null"
+    IbcTransferPalletParams: "Null",
+    IbcTransferTransferParams: "Null"
   }
 };

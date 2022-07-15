@@ -1,5 +1,8 @@
 import * as React from "react";
 import {
+  Box,
+  Button,
+  Skeleton,
   Table,
   TableBody,
   TableCell,
@@ -14,17 +17,53 @@ import { TokenAsset, TokenPairAsset } from "@/components";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
 import { humanBalance } from "@/utils/formatters";
+import { useQuery } from "@apollo/client";
+import { GET_BONDED_FINANCE } from "@/apollo/queries";
+import BigNumber from "bignumber.js";
 
 export type AllBondsTableProps = TableContainerProps & {
   bonds?: BondOffer[];
   onRowClick: (offerId: string) => void;
 };
 
+function getTotalPurchasedInFormat(
+  currentBond: {
+    totalPurchased: string;
+  },
+  bondPrice: BigNumber,
+  price: BigNumber
+) {
+  let totalPurchased: number | string = currentBond?.totalPurchased || 0;
+  return humanBalance(
+    new BigNumber(totalPurchased)
+      .multipliedBy(bondPrice)
+      .multipliedBy(price)
+      .toString()
+  );
+}
+
 export const AllBondsTable: React.FC<AllBondsTableProps> = ({
   bonds,
   onRowClick = () => {},
   ...rest
 }) => {
+  const { loading, data, error } = useQuery(GET_BONDED_FINANCE);
+
+  if (error) {
+    console.error(error);
+    return (
+      <Box>
+        <Typography textAlign="center">An error occurred.</Typography>
+        <Button onClick={() => window.location.reload()}>Reload</Button>
+      </Box>
+    );
+  }
+
+  if (loading) {
+    return <Skeleton width={200} height={50} />;
+  }
+
+  const bondedFinanceBondOffers = data.bondedFinanceBondOffers;
   if (bonds && bonds.length > 0) {
     return (
       <TableContainer {...rest}>
@@ -39,18 +78,19 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
           </TableHead>
           <TableBody>
             {bonds.map(
-              (
-                {
-                  bondPrice,
-                  asset,
-                  price,
-                  rewardPrice,
-                  reward: { amount, asset: rewardAsset },
-                  nbOfBonds,
-                },
-                index
-              ) => {
+              ({ bondPrice, asset, price, rewardPrice, bondOfferId }) => {
                 const roi = getROI(rewardPrice, price);
+                let currentBond = bondedFinanceBondOffers.find(
+                  (offer: any) => offer.id === bondOfferId.toString()
+                );
+                if (!currentBond) {
+                  return null;
+                }
+                let totalPurchased = getTotalPurchasedInFormat(
+                  currentBond,
+                  bondPrice,
+                  price
+                );
                 return (
                   <TableRow
                     sx={{
@@ -63,7 +103,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                         ? asset.map((a) => a.symbol).join("+")
                         : asset.symbol
                     }
-                    onClick={() => onRowClick(String(index + 1))}
+                    onClick={() => onRowClick(String(bondOfferId))}
                   >
                     <TableCell align="left">
                       {Array.isArray(asset) && (
@@ -88,8 +128,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
-                      {/* Uncomment once totalPurchased is clear */}
-                      {/*<Typography variant="body2">${totalPurchased}</Typography>*/}
+                      <Typography variant="body2">${totalPurchased}</Typography>
                     </TableCell>
                   </TableRow>
                 );

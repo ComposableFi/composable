@@ -146,6 +146,7 @@ const ParachainContextProvider = ({
       const { wsUrl, parachainId, relayChain, ss58Format } = supportedChains[i];
       const chainId = getChainId(relayChain, parachainId);
       // just so we can activate ASAP (where ss58Format is needed)
+      console.log("setting up", chainId);
       setParachainProviders((s) => {
         s[chainId] = {
           chainId,
@@ -224,7 +225,7 @@ const ParachainContextProvider = ({
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parachainProviders, supportedChains]);
+  }, [supportedChains.length]);
 
   const [selectedAccount, setSelectedAccount] = useState<number | -1>(-1);
 
