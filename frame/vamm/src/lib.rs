@@ -129,6 +129,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Codec, FullCodec};
+	use composable_maths::labs::numbers::{IntoDecimal, UnsignedMath};
 	use composable_traits::vamm::{
 		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm,
 		VammConfig, MINIMUM_TWAP_PERIOD,
@@ -590,6 +591,7 @@ pub mod pallet {
 		///
 		/// # Runtime
 		/// `O(1)`
+		#[transactional]
 		fn get_price(
 			vamm_id: VammIdOf<T>,
 			asset_type: AssetType,
@@ -728,6 +730,7 @@ pub mod pallet {
 		///
 		/// # Runtime
 		/// `O(1)`
+		#[transactional]
 		fn update_twap(
 			vamm_id: VammIdOf<T>,
 			base_twap: Option<DecimalOf<T>>,
@@ -918,6 +921,7 @@ pub mod pallet {
 		fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError> {
 			// Get Vamm state.
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
+
 			// TODO(Cardosaum): Try to move from using function
 			// Self::is_vamm_closed to Vamm.is_closed method
 			ensure!(!Self::is_vamm_closed(&vamm_state, &None), Error::<T>::VammIsClosed);
@@ -984,7 +988,7 @@ pub mod pallet {
 
 			let price = Self::u256_to_balance(price_u256)?;
 
-			Ok(DecimalOf::<T>::from_inner(price))
+			Ok(price.into_decimal()?)
 		}
 
 		fn do_update_twap(
@@ -1013,10 +1017,8 @@ pub mod pallet {
 			config: &SwapConfigOf<T>,
 			vamm_state: &mut VammStateOf<T>,
 		) -> Result<SwapOutputOf<T>, DispatchError> {
-			let quote_asset_reserve_amount = config
-				.input_amount
-				.checked_div(&vamm_state.peg_multiplier)
-				.ok_or(ArithmeticError::DivisionByZero)?;
+			let quote_asset_reserve_amount =
+				config.input_amount.try_div(&vamm_state.peg_multiplier)?;
 
 			let initial_base_asset_reserve = vamm_state.base_asset_reserves;
 			let swap_amount = Self::calculate_swap_asset(
@@ -1031,16 +1033,11 @@ pub mod pallet {
 
 			match initial_base_asset_reserve.cmp(&swap_amount.output_amount) {
 				Ordering::Less => Ok(SwapOutput {
-					output: swap_amount
-						.output_amount
-						.checked_sub(&initial_base_asset_reserve)
-						.ok_or(ArithmeticError::Underflow)?,
+					output: swap_amount.output_amount.try_sub(&initial_base_asset_reserve)?,
 					negative: true,
 				}),
 				_ => Ok(SwapOutput {
-					output: initial_base_asset_reserve
-						.checked_sub(&swap_amount.output_amount)
-						.ok_or(ArithmeticError::Underflow)?,
+					output: initial_base_asset_reserve.try_sub(&swap_amount.output_amount)?,
 					negative: false,
 				}),
 			}
@@ -1079,11 +1076,8 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<CalculateSwapAsset<T>, DispatchError> {
 			let new_input_amount = match direction {
-				Direction::Add =>
-					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?,
-
-				Direction::Remove =>
-					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?,
+				Direction::Add => input_asset_amount.try_add(swap_amount)?,
+				Direction::Remove => input_asset_amount.try_sub(swap_amount)?,
 			};
 			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
 
@@ -1110,17 +1104,13 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<BalanceOf<T>, DispatchError> {
 			let quote_asset_reserve_change = match direction {
-				Direction::Add => quote_asset_reserve_before
-					.checked_sub(quote_asset_reserve_after)
-					.ok_or(ArithmeticError::Underflow)?,
-				Direction::Remove => quote_asset_reserve_after
-					.checked_sub(quote_asset_reserve_before)
-					.ok_or(ArithmeticError::Underflow)?,
+				Direction::Add => quote_asset_reserve_before.try_sub(quote_asset_reserve_after)?,
+				Direction::Remove =>
+					quote_asset_reserve_after.try_sub(quote_asset_reserve_before)?,
 			};
 
-			let quote_asset_amount = quote_asset_reserve_change
-				.checked_mul(&vamm_state.peg_multiplier)
-				.ok_or(ArithmeticError::Overflow)?;
+			let quote_asset_amount =
+				quote_asset_reserve_change.try_mul(&vamm_state.peg_multiplier)?;
 
 			Ok(quote_asset_amount)
 		}
@@ -1230,16 +1220,9 @@ pub mod pallet {
 			old_price: DecimalOf<T>,
 		) -> Result<DecimalOf<T>, DispatchError> {
 			let now = Self::now(now);
-			let weight_now: MomentOf<T> =
-				std::cmp::max(1_u64.into(), now.saturating_sub(last_twap_timestamp));
-
-			// TODO(Cardosaum): Won't this subtraction cause a failure everytime
-			// if we don't update twap for a long period of time?  for example,
-			// if `twap_period = 1 hour`, and we pass 2 or more hours without
-			// updating the twap, doesn't it mean we will throw an error each
-			// time we try to subtract `twap_period -  weight_now`?
+			let weight_now: MomentOf<T> = now.saturating_sub(last_twap_timestamp).max(1_u64.into());
 			let weight_last_twap: MomentOf<T> =
-				std::cmp::max(1_u64.into(), twap_period.saturating_sub(weight_now));
+				twap_period.saturating_sub(weight_now).max(1_u64.into());
 
 			Self::calculate_exponential_moving_average(
 				new_price,

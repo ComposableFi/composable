@@ -13,22 +13,18 @@ frame-support = { default-features = false, git = "https://github.com/paritytech
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate" , branch = "polkadot-v0.9.22" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 
-codec = { version = "3.0.0", package = "parity-scale-codec", default-features = false, features = [
-  "derive",
-] }
-scale-info = { version = "2.1.1", default-features = false, features = [
-  "derive",
-] }
+codec = { version = "3.0.0", package = "parity-scale-codec", default-features = false, features = ["derive",] }
+num-integer = "0.1.44"
+num-traits = { version = "0.2.14", default-features = false }
+rust_decimal = { version = "1.2", default-features = false, features = ["maths"] }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
 
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
-
-rust_decimal = { version = "1.2", default-features = false, features = [
-  "maths",
-] }
 
 [features]
 default = ["std"]
