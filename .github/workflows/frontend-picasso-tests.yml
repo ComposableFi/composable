@@ -5,9 +5,11 @@ on:
       - main
     paths:
       - 'frontend/apps/picasso/*'
+      - 'frontend/apps/picasso-storybook/*'
   push:
     paths:
       - 'frontend/apps/picasso/*'
+      - 'frontend/apps/picasso-storybook/*'
 
 jobs:
   tests:
