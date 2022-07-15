@@ -54,7 +54,7 @@ pub mod pallet {
 				start_at::ZeroInit,
 			},
 		},
-		math::safe::{SafeArithmetic, SafeDiv, SafeMul},
+		math::safe::{SafeArithmetic, SafeDiv, SafeMul, SafeSub},
 		validation::Validated,
 	};
 	use composable_traits::{
@@ -105,6 +105,14 @@ pub mod pallet {
 			position_id: T::PositionId,
 			keep_alive: bool,
 		},
+		Unstaked {
+			/// Id of newly created stake.
+			pool_id: T::RewardPoolId,
+			/// Owner of the stake.
+			owner: T::AccountId,
+			/// Position Id of newly created stake.
+			position_id: T::PositionId,
+		},
 		/// Split stake position into two positions
 		SplitPosition { positions: Vec<T::PositionId> },
 	}
@@ -129,6 +137,10 @@ pub mod pallet {
 		MaxRewardLimitReached,
 		/// Only pool owner can add new reward asset.
 		OnlyPoolOwnerCanAddNewReward,
+		/// Stake not found.
+		StakeNotFound,
+		/// only the owner of stake can unstake it
+		OnlyOwnerCanDoIt,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -140,7 +152,13 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The reward balance type.
-		type Balance: Parameter + Member + BalanceLike + FixedPointOperand + From<u128> + Into<u128>;
+		type Balance: Parameter
+			+ Member
+			+ BalanceLike
+			+ FixedPointOperand
+			+ From<u128>
+			+ Into<u128>
+			+ Zero;
 
 		/// The reward pool ID type.
 		/// Type representing the unique ID of a pool.
@@ -228,6 +246,7 @@ pub mod pallet {
 
 	/// Abstraction over Stake type
 	type StakeOf<T> = Stake<
+		<T as frame_system::Config>::AccountId,
 		<T as Config>::RewardPoolId,
 		<T as Config>::Balance,
 		Reductions<
@@ -335,6 +354,17 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Remove a stake.
+		///
+		/// Emits `Unstaked` event when successful.
+		#[pallet::weight(T::WeightInfo::stake())]
+		pub fn unstake(origin: OriginFor<T>, position_id: T::PositionId) -> DispatchResult {
+			let owner = ensure_signed(origin)?;
+			<Self as Staking>::unstake(&owner, &position_id, Zero::zero())?;
+
+			Ok(())
+		}
+
 		#[pallet::weight(T::WeightInfo::split())]
 		pub fn split(
 			origin: OriginFor<T>,
@@ -414,6 +444,7 @@ pub mod pallet {
 				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
 
 			let new_position = Stake {
+				owner: who.clone(),
 				reward_pool_id: *pool_id,
 				stake: amount,
 				share: boosted_amount,
@@ -425,7 +456,7 @@ pub mod pallet {
 				},
 			};
 
-			rewards_pool.total_shares += boosted_amount;
+			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
 			rewards_pool.rewards = rewards;
 
 			let position_id = StakeCount::<T>::increment()?;
@@ -463,11 +494,51 @@ pub mod pallet {
 
 		#[transactional]
 		fn unstake(
-			_who: &Self::AccountId,
-			_position: &Self::PositionId,
+			who: &Self::AccountId,
+			position_id: &Self::PositionId,
 			_remove_amount: Self::Balance,
 		) -> DispatchResult {
-			Err("Not implemented".into())
+			let keep_alive = false;
+			let stake = Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
+			ensure!(who == &stake.owner, Error::<T>::OnlyOwnerCanDoIt);
+			let pool_id = stake.reward_pool_id;
+			let mut rewards_pool =
+				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+
+			let mut inner_rewards = rewards_pool.rewards.into_inner();
+			for (asset_id, reward) in inner_rewards.iter_mut() {
+				let inflation =
+					stake.reductions.get(asset_id).ok_or(Error::<T>::ReductionConfigProblem)?;
+				let claim = reward
+					.total_rewards
+					.safe_mul(&stake.share)?
+					.safe_div(&rewards_pool.total_shares)?
+					.safe_sub(inflation)?;
+				reward.total_rewards = reward.total_rewards.safe_sub(inflation)?;
+				reward.total_dilution_adjustment =
+					reward.total_dilution_adjustment.safe_sub(inflation)?;
+
+				T::Assets::transfer(
+					rewards_pool.asset_id,
+					&Self::pool_account_id(&pool_id),
+					who,
+					claim,
+					keep_alive,
+				)?;
+			}
+			rewards_pool.rewards =
+				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+
+			RewardPools::<T>::insert(pool_id, rewards_pool);
+			Stakes::<T>::remove(position_id);
+
+			Self::deposit_event(Event::<T>::Unstaked {
+				pool_id,
+				owner: who.clone(),
+				position_id: *position_id,
+			});
+
+			Ok(())
 		}
 
 		#[transactional]

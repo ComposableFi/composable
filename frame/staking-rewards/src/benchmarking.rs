@@ -91,7 +91,8 @@ benchmarks! {
 		let user: T::AccountId = account("user", 0, 0);
 		let _res = Pallet::<T>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(user.clone()));
 		let _res = StakeCount::<T>::increment();
-		let new_stake = Stake::<T::RewardPoolId, T::Balance, Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>> {
+		let new_stake = Stake::<T::AccountId, T::RewardPoolId, T::Balance, Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>> {
+			owner: user.clone(),
 			reward_pool_id: 1_u16.into(),
 			stake: 1000_000_000_000_000_u128.into(),
 			share: 1000_000_000_000_000_u128.into(),

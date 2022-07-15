@@ -102,6 +102,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		assert_eq!(
 			StakingRewards::stakes(StakingRewards::stake_count()),
 			Some(Stake {
+				owner: staker,
 				reward_pool_id: pool_id,
 				stake: amount,
 				share: StakingRewards::boosted_amount(reward_multiplier, amount),
@@ -149,6 +150,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		assert_eq!(
 			StakingRewards::stakes(StakingRewards::stake_count()),
 			Some(Stake {
+				owner: staker,
 				reward_pool_id: pool_id,
 				stake: amount,
 				share: StakingRewards::boosted_amount(reward_multiplier, amount),
@@ -162,6 +164,40 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		);
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
+	});
+}
+
+#[test]
+fn unstake_of_not_exists_stake_shold_not_work() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let (staker, pool_id) = (ALICE, 42);
+		assert_noop!(
+			StakingRewards::unstake(Origin::signed(staker), pool_id),
+			crate::Error::<Test>::StakeNotFound
+		);
+	});
+}
+
+#[test]
+fn not_owner_of_stake_can_not_unstake() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(StakingRewards::stake_count(), 0);
+
+		let pool_init_config = get_default_reward_pool();
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		let (staker, not_owner, pool_id, amount, duration_preset) = (ALICE, BOB, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
+		assert_ne!(staker, not_owner);
+
+		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
+		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 2).expect("an asset minting expected");
+
+		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
+
+		assert_noop!(
+			StakingRewards::unstake(Origin::signed(not_owner), StakingRewards::stake_count()),
+			crate::Error::<Test>::OnlyOwnerCanDoIt
+		);
 	});
 }
 
@@ -221,10 +257,12 @@ fn test_split_postion() {
 		assert_ok!(new_position);
 		let reduction = 10_000_000_000_000_u128;
 		let stake = Stake::<
+			<Test as frame_system::Config>::AccountId,
 			RewardPoolId,
 			Balance,
 			Reductions<CurrencyId, Balance, MaxRewardConfigsPerPool>,
 		> {
+			owner: ALICE,
 			reward_pool_id: 1,
 			stake: 1000_000_000_000_000_u128,
 			share: 1000_000_000_000_000_u128,

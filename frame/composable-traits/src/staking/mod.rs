@@ -126,7 +126,10 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 /// should exist for each position when stored in the runtime storage.
 /// TODO refer to the relevant section in the design doc.
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct Stake<RewardPoolId, Balance, Reductions> {
+pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
+	/// Protocol or the user account that owns this stake
+	pub owner: AccountId,
+
 	/// Reward Pool ID from which pool to allocate rewards for this
 	pub reward_pool_id: RewardPoolId,
 
