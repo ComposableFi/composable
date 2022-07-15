@@ -18,6 +18,7 @@ blockweight
 bonder
 bootnodes
 builtins
+cachix
 CLI
 clippy
 cmake
