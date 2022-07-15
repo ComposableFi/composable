@@ -36,7 +36,7 @@ const getOracleStake = async (api: ApiPromise, wallet: KeyringPair): Promise<BN>
  * then such a situation would result in legitimate Oracles getting slashed.
  *
  */
-describe("HAL01 [Oracle] Tests", function() {
+describe("HAL01 [Oracle] Tests", function () {
   if (!testConfiguration.enabledTests.HAL01) return;
   let api: ApiPromise;
   let assetID: number;
@@ -47,7 +47,7 @@ describe("HAL01 [Oracle] Tests", function() {
     controllerWallet: KeyringPair,
     sudoKey: KeyringPair;
 
-  before("HAL01: Setting up tests", async function() {
+  before("HAL01: Setting up tests", async function () {
     this.timeout(60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
@@ -61,7 +61,7 @@ describe("HAL01 [Oracle] Tests", function() {
     assetID = 1001;
   });
 
-  before("HAL01: Providing funds", async function() {
+  before("HAL01: Providing funds", async function () {
     this.timeout(5 * 60 * 1000);
     await mintAssetsToWallet(api, controllerWallet, sudoKey, [1, assetID]);
     await mintAssetsToWallet(api, walletHAL01_1, sudoKey, [1, assetID]);
@@ -70,11 +70,11 @@ describe("HAL01 [Oracle] Tests", function() {
     await mintAssetsToWallet(api, walletHAL01_4, sudoKey, [1, assetID]);
   });
 
-  after("Closing the connection", async function() {
+  after("Closing the connection", async function () {
     await api.disconnect();
   });
 
-  it("HAL01: Creating oracle", async function() {
+  it("HAL01: Creating oracle", async function () {
     this.timeout(2 * 60 * 1000);
     const assetId = api.createType("u128", assetID);
     const threshold = api.createType("Percent", 80);
@@ -99,12 +99,12 @@ describe("HAL01 [Oracle] Tests", function() {
     expect(result.isOk).to.be.true;
   });
 
-  describe("HAL01: Setting signers", function() {
-    it("HAL01: Setting signer 1", async function() {
+  describe("HAL01: Setting signers", function () {
+    it("HAL01: Setting signer 1", async function () {
       this.timeout(2 * 60 * 1000);
       const {
         data: [resultAccount0, resultAccount1]
-      } = await txOracleSetSignerSuccessTest(api, controllerWallet, walletHAL01_1).catch(function(exc) {
+      } = await txOracleSetSignerSuccessTest(api, controllerWallet, walletHAL01_1).catch(function (exc) {
         return { data: [exc] }; /* We can't call this.skip() from here. */
       });
 
@@ -117,11 +117,11 @@ describe("HAL01 [Oracle] Tests", function() {
       );
     });
 
-    it("HAL01: Setting signer 2", async function() {
+    it("HAL01: Setting signer 2", async function () {
       this.timeout(2 * 60 * 1000);
       const {
         data: [resultAccount0, resultAccount1]
-      } = await txOracleSetSignerSuccessTest(api, walletHAL01_1, walletHAL01_2).catch(function(exc) {
+      } = await txOracleSetSignerSuccessTest(api, walletHAL01_1, walletHAL01_2).catch(function (exc) {
         return { data: [exc] }; /* We can't call this.skip() from here. */
       });
 
@@ -132,11 +132,11 @@ describe("HAL01 [Oracle] Tests", function() {
       expect(resultAccount1.toString()).to.be.equal(api.createType("AccountId32", walletHAL01_1.publicKey).toString());
     });
 
-    it("HAL01: Setting signer 3", async function() {
+    it("HAL01: Setting signer 3", async function () {
       this.timeout(2 * 60 * 1000);
       const {
         data: [resultAccount0, resultAccount1]
-      } = await txOracleSetSignerSuccessTest(api, walletHAL01_2, walletHAL01_3).catch(function(exc) {
+      } = await txOracleSetSignerSuccessTest(api, walletHAL01_2, walletHAL01_3).catch(function (exc) {
         return { data: [exc] }; /* We can't call this.skip() from here. */
       });
 
@@ -147,11 +147,11 @@ describe("HAL01 [Oracle] Tests", function() {
       expect(resultAccount1.toString()).to.be.equal(api.createType("AccountId32", walletHAL01_2.publicKey).toString());
     });
 
-    it("HAL01: Setting signer 4", async function() {
+    it("HAL01: Setting signer 4", async function () {
       this.timeout(2 * 60 * 1000);
       const {
         data: [resultAccount0, resultAccount1]
-      } = await txOracleSetSignerSuccessTest(api, walletHAL01_3, walletHAL01_4).catch(function(exc) {
+      } = await txOracleSetSignerSuccessTest(api, walletHAL01_3, walletHAL01_4).catch(function (exc) {
         return { data: [exc] }; /* We can't call this.skip() from here. */
       });
 
@@ -165,7 +165,7 @@ describe("HAL01 [Oracle] Tests", function() {
       // else signer 4 won't be able to add its stake.
       const {
         data: [result2Account0, result2Account1]
-      } = await txOracleSetSignerSuccessTest(api, walletHAL01_4, controllerWallet).catch(function(exc) {
+      } = await txOracleSetSignerSuccessTest(api, walletHAL01_4, controllerWallet).catch(function (exc) {
         return { data: [exc] }; /* We can't call this.skip() from here. */
       });
       expect(result2Account0).to.not.be.an("Error");
@@ -177,8 +177,8 @@ describe("HAL01 [Oracle] Tests", function() {
     });
   });
 
-  describe("HAL01: Adding stakes", function() {
-    it("HAL01: Adding stake 1", async function() {
+  describe("HAL01: Adding stakes", function () {
+    it("HAL01: Adding stake 1", async function () {
       this.timeout(2 * 60 * 1000);
       const stake = api.createType("u128", 25000000000000);
       const {
@@ -188,7 +188,7 @@ describe("HAL01 [Oracle] Tests", function() {
       expect(result.toString()).to.be.equal(api.createType("AccountId32", walletHAL01_2.publicKey).toString());
     });
 
-    it("HAL01: Adding stake 2", async function() {
+    it("HAL01: Adding stake 2", async function () {
       this.timeout(2 * 60 * 1000);
       const stake = api.createType("u128", 25000000000000);
       const {
@@ -198,7 +198,7 @@ describe("HAL01 [Oracle] Tests", function() {
       expect(result.toString()).to.be.equal(api.createType("AccountId32", walletHAL01_3.publicKey).toString());
     });
 
-    it("HAL01: Adding stake 3", async function() {
+    it("HAL01: Adding stake 3", async function () {
       this.timeout(2 * 60 * 1000);
       const stake = api.createType("u128", 25000000000000);
       const {
@@ -208,7 +208,7 @@ describe("HAL01 [Oracle] Tests", function() {
       expect(result.toString()).to.be.equal(api.createType("AccountId32", walletHAL01_4.publicKey).toString());
     });
 
-    it("HAL01: Adding stake 4", async function() {
+    it("HAL01: Adding stake 4", async function () {
       this.timeout(2 * 60 * 1000);
       const stake = api.createType("u128", 25000000000000);
       const {
@@ -219,8 +219,8 @@ describe("HAL01 [Oracle] Tests", function() {
     });
   });
 
-  describe("HAL01: Test Scenarios", function() {
-    it("HAL01: Scenario 1: 50% of Oracles are malicious", async function() {
+  describe("HAL01: Test Scenarios", function () {
+    it("HAL01: Scenario 1: 50% of Oracles are malicious", async function () {
       this.timeout(10 * 60 * 1000);
 
       const correctPrice = api.createType("u128", 100);
@@ -238,20 +238,20 @@ describe("HAL01 [Oracle] Tests", function() {
         txOracleSubmitPriceSuccessTest(api, walletHAL01_2, correctPrice, asset),
         txOracleSubmitPriceSuccessTest(api, walletHAL01_3, maliciousPrice, asset),
         txOracleSubmitPriceSuccessTest(api, walletHAL01_4, maliciousPrice, asset)
-      ]).then(async function([
-                               {
-                                 data: [result1AccountID, result1AssetID, result1ReportedPrice]
-                               },
-                               {
-                                 data: [result2AccountID, result2AssetID, result2ReportedPrice]
-                               },
-                               {
-                                 data: [result3AccountID, result3AssetID, result3ReportedPrice]
-                               },
-                               {
-                                 data: [result4AccountID, result4AssetID, result4ReportedPrice]
-                               }
-                             ]) {
+      ]).then(async function ([
+        {
+          data: [result1AccountID, result1AssetID, result1ReportedPrice]
+        },
+        {
+          data: [result2AccountID, result2AssetID, result2ReportedPrice]
+        },
+        {
+          data: [result3AccountID, result3AssetID, result3ReportedPrice]
+        },
+        {
+          data: [result4AccountID, result4AssetID, result4ReportedPrice]
+        }
+      ]) {
         expect(result1AssetID.toNumber())
           .to.be.equal(result2AssetID.toNumber())
           .to.be.equal(result3AssetID.toNumber())
@@ -283,7 +283,7 @@ describe("HAL01 [Oracle] Tests", function() {
       });
     });
 
-    it("HAL01: Scenario 2: >50% of Oracles are malicious", async function() {
+    it("HAL01: Scenario 2: >50% of Oracles are malicious", async function () {
       this.timeout(10 * 60 * 1000);
 
       const correctPrice = api.createType("u128", 100);
@@ -302,17 +302,17 @@ describe("HAL01 [Oracle] Tests", function() {
         txOracleSubmitPriceSuccessTest(api, walletHAL01_1, correctPrice, asset),
         txOracleSubmitPriceSuccessTest(api, walletHAL01_3, maliciousPrice, asset),
         txOracleSubmitPriceSuccessTest(api, walletHAL01_4, maliciousPrice, asset)
-      ]).then(async function([
-                               {
-                                 data: [result1AccountID, result1AssetID, result1ReportedPrice]
-                               },
-                               {
-                                 data: [result3AccountID, result3AssetID, result3ReportedPrice]
-                               },
-                               {
-                                 data: [result4AccountID, result4AssetID, result4ReportedPrice]
-                               }
-                             ]) {
+      ]).then(async function ([
+        {
+          data: [result1AccountID, result1AssetID, result1ReportedPrice]
+        },
+        {
+          data: [result3AccountID, result3AssetID, result3ReportedPrice]
+        },
+        {
+          data: [result4AccountID, result4AssetID, result4ReportedPrice]
+        }
+      ]) {
         expect(result1AssetID.toNumber())
           .to.be.equal(result3AssetID.toNumber())
           .to.be.equal(result4AssetID.toNumber())
