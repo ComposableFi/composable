@@ -241,11 +241,21 @@
               coreutils 
               bash
               findutils
+              nettools
+
+              # and install anything else
+              nix                             
 
               # just allow to bash into it and run with custom entries
               packages.devnet
               packages.polkadot-launch
               ];
+          };
+          codespace-base-container = dockerTools.pullImage {
+            imageName = "mcr.microsoft.com/vscode/devcontainers/rust:0-bullseye";
+            imageDigest =
+              "sha256:a660657d12af73bca492b28dc40994d19818fb9b729c7d4aba252b0b87fa8874";
+            sha256 = "0mqjy3zq2v6rrhizgb9nvhczl87lcfphq9601wcprdika2jz7qh8";
           };
           default = packages.composable-node;
         };
