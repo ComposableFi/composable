@@ -239,11 +239,7 @@
             name = "composable-devnet-container";
             config = { Cmd = [ "${packages.devnet}/bin/composable-devnet" ]; };
             contents = [
-<<<<<<< HEAD
-              pkgs.coreutils # added so we can into it and do some debug
-=======
               coreutils # added so we can into it and do some debug
->>>>>>> nix/dz/pr
               ];
           };
           default = packages.composable-node;
