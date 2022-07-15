@@ -251,9 +251,16 @@
               packages.polkadot-launch
               ];
           };
-
-          # nix-prefetch-docker --image-name mcr.microsoft.com/vscode/devcontainers/rust" --image-tag 0-bulleye
+          
           # image which will be base for remote development
+          # we do not start from nixos:
+          # - no all people like devcontainer to be nix (gh know better)
+          # - devcontainer has setup in shell for code, users, groups and remote stuff
+          # - it has nice cli/shell setup, unlike bare nixos docker        
+          # we want devcontainer to be built of nix:
+          # - so it has same version or rust as our env and ci
+          # - it has same all tooling we have
+          # - and we do not need to maintain separate script for that
           codespace-base-container = dockerTools.pullImage {
             imageName = "mcr.microsoft.com/vscode/devcontainers/rust";
             finalImageTag = "0-bulleye";
@@ -261,7 +268,18 @@
               "sha256:a660657d12af73bca492b28dc40994d19818fb9b729c7d4aba252b0b87fa8874";
             sha256 = "sha256-j3zRLfOlg2Ukpzkmz+LVm+b5a2zyxYoWykopR60CrkY=";
           };
-          
+
+          # TODO: publish container and inherit in dev container
+          codespace-container = dockerTools.buildLayeredImage {
+            name = "composable-codespace-container";
+            fromImage = packages.codespace-base-container;
+            contents = [
+              neovim
+              nix                           
+              rust-stable
+              rust-nightly  
+              ];
+          };
           default = packages.composable-node;
         };
 
