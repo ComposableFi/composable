@@ -109,9 +109,6 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
         .catch((err: any) => {
           console.error(err);
         });
-    } else {
-      setExpectedRemoveAmountBase(new BigNumber(0));
-      setExpectedRemoveAmountQuote(new BigNumber(0));
     }
   }, [
     parachainApi,
