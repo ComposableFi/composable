@@ -143,6 +143,13 @@
                 --output $out/lib/runtime.optimized.wasm
             '';
           };
+
+        # Current polkadot version
+        polkadot = {
+          version = "0.9.24";
+          hash = "sha256-k+6mXjAsHbS4gnHljGmEkMcok77zBd8jhyp56mXyKgI=";
+        };
+
       in rec {
         packages = {
           inherit wasm-optimizer;
@@ -170,6 +177,42 @@
                 cp target/release/composable $out/bin/composable
               '';
             });
+          polkadot-node = stdenv.mkDerivation {
+            name = "polkadot-${polkadot.version}";
+            version = polkadot.version;
+            src = fetchurl {
+              url =
+                "https://github.com/paritytech/polkadot/releases/download/v${polkadot.version}/polkadot";
+              sha256 = polkadot.hash;
+            };
+            nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+            buildInputs = [ pkgs.stdenv.cc.cc ];
+            dontUnpack = true;
+            installPhase = ''
+              mkdir -p $out/bin
+              cp $src $out/bin/polkadot
+              chmod +x $out/bin/polkadot
+            '';
+          };
+          polkadot-launch = let
+            src = fetchFromGitHub {
+              owner = "paritytech";
+              repo = "polkadot-launch";
+              rev = "951af7055e2c9abfa7a03ee7848548c1a3efdc16";
+              hash = "sha256-ZaCHgkr5lVsGFg/Yvx6QY/zSiIafwSec+oiioOWTZMg=";
+            };
+          in mkYarnPackage {
+            name = "polkadot-launch";
+            inherit src;
+            packageJSON = "${src}/package.json";
+            yarnLock = "${src}/yarn.lock";
+            buildPhase = ''
+              yarn build
+            '';
+            postInstall = ''
+              chmod +x $out/bin/polkadot-launch
+            '';
+          };
           default = packages.composable-node;
         };
 
@@ -180,6 +223,34 @@
             cargoArtifacts = common-deps;
             cargoBuildCommand = "cargo test --workspace --release";
           });
+        };
+
+        # Applications runnable with `nix run`
+        apps = {
+          # nix run .#devnet
+          devnet = let
+            config = stdenv.mkDerivation {
+              name = "devnet-config";
+              src = ./../scripts/polkadot-launch/composable.json;
+              phases = [ "installPhase" ];
+              installPhase = ''
+                mkdir $out
+                substitute $src $out/config.json \
+                    --replace ../../../polkadot/target/release/polkadot ${packages.polkadot-node}/bin/polkadot \
+                    --replace ../../target/release/composable ${packages.composable-node}/bin/composable
+              '';
+            };
+            program = writeShellApplication {
+              name = "composable-devnet";
+              text = ''
+                rm -rf /tmp/polkadot-launch
+                ${packages.polkadot-launch}/bin/polkadot-launch ${config}/config.json --verbose
+              '';
+            };
+          in {
+            type = "app";
+            program = "${program}/bin/composable-devnet";
+          };
         };
 
         # Shell env a user can enter with `nix develop`
