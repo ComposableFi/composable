@@ -165,6 +165,63 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 	});
 }
 
+#[test]
+fn test_extend_stake_amount() {
+	new_test_ext().execute_with(|| {
+		assert_eq!(StakingRewards::stake_count(), 0);
+
+		let pool_init_config = get_default_reward_pool();
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		let (staker, pool_id, amount, duration_preset, total_rewards, total_shares) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR, 100, 200);
+
+		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
+		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 3).expect("an asset minting expected");
+
+		let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
+		let mut inner_rewards = rewards_pool.rewards.into_inner();
+		for (_asset_id, reward) in inner_rewards.iter_mut() {
+			reward.total_rewards += total_rewards;
+		}
+		rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
+		rewards_pool.total_shares = total_shares;
+		RewardPools::<Test>::insert(pool_id, rewards_pool.clone());
+
+		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
+		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
+		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset).expect("reward_multiplier expected");
+        let boosted_amount = StakingRewards::boosted_amount(reward_multiplier, amount);
+		let inflation = boosted_amount * total_rewards / total_shares;
+		assert_eq!(StakingRewards::stake_count(), 1);
+		assert_ok!(StakingRewards::extend(Origin::signed(staker), 1, amount));
+		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
+        let mut total_rewards = 0;
+		for (_asset_id, reward) in rewards_pool.rewards.iter() {
+			total_rewards += reward.total_rewards;
+		}
+        let inflation_extended = amount * total_rewards / rewards_pool.total_shares;
+        let inflation = inflation + inflation_extended;
+		assert_eq!(inflation, 50710);
+		let reductions = Reductions::try_from(rewards_pool.rewards.into_inner().iter().map(|(asset_id, _reward)| (*asset_id, inflation)).collect::<BTreeMap<_, _>>()).expect("reductions expected");
+		assert_eq!(
+			StakingRewards::stakes(StakingRewards::stake_count()),
+			Some(Stake {
+				reward_pool_id: pool_id,
+				stake: amount + amount,
+				share: StakingRewards::boosted_amount(reward_multiplier, amount) + amount,
+				reductions,
+				lock: Lock {
+					started_at: <Test as crate::Config>::UnixTime::now(),
+					duration: duration_preset,
+					unlock_penalty: rewards_pool.lock.unlock_penalty,
+				},
+			})
+		);
+		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
+		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount + amount);
+	});
+}
+
+#[test]
 fn test_transfer_reward() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);

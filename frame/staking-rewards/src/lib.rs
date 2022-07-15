@@ -335,6 +335,22 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Extend a new stake.
+		///
+		/// Emits `StakeExtended` event when successful.
+		#[pallet::weight(T::WeightInfo::extend())]
+		pub fn extend(
+			origin: OriginFor<T>,
+			position: T::PositionId,
+			amount: T::Balance,
+		) -> DispatchResult {
+			let owner = ensure_signed(origin)?;
+			let keep_alive = true;
+			let _position_id = <Self as Staking>::extend(&owner, position, amount, keep_alive)?;
+
+			Ok(())
+		}
+
 		#[pallet::weight(T::WeightInfo::split())]
 		pub fn split(
 			origin: OriginFor<T>,
@@ -378,36 +394,6 @@ pub mod pallet {
 			let boosted_amount = Self::boosted_amount(reward_multiplier, amount);
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(boosted_amount, &rewards_pool)?;
-			// let mut reductions = Reductions::new();
-
-			// let mut inner_rewards = rewards_pool.rewards.into_inner();
-			// for (asset_id, reward) in inner_rewards.iter_mut() {
-			// 	let inflation = if rewards_pool.total_shares == Self::Balance::from(0_u32) {
-			// 		Self::Balance::from(0_u32)
-			// 	} else {
-			// 		reward
-			// 			.total_rewards
-			// 			.safe_mul(&boosted_amount)
-			// 			.map_err(|_| ArithmeticError::Overflow)?
-			// 			.safe_div(&rewards_pool.total_shares)
-			// 			.map_err(|_| ArithmeticError::Overflow)?
-			// 	};
-
-			// 	reward.total_rewards = reward
-			// 		.total_rewards
-			// 		.safe_add(&inflation)
-			// 		.map_err(|_| ArithmeticError::Overflow)?;
-			// 	reward.total_dilution_adjustment = reward
-			// 		.total_dilution_adjustment
-			// 		.safe_add(&inflation)
-			// 		.map_err(|_| ArithmeticError::Overflow)?;
-
-			// 	reductions
-			// 		.try_insert(*asset_id, inflation)
-			// 		.map_err(|_| Error::<T>::ReductionConfigProblem)?;
-			// }
-			// let rewards =
-			// 	Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
 
 			let new_position = Stake {
 				reward_pool_id: *pool_id,
@@ -475,7 +461,12 @@ pub mod pallet {
 			rewards_pool.rewards = rewards;
 			stake.stake += boosted_amount;
 			stake.share += boosted_amount;
-			stake.reductions = reductions;
+			for (asset, additional_inflation) in reductions.iter() {
+				let inflation =
+					stake.reductions.get_mut(asset).ok_or(Error::<T>::ReductionConfigProblem)?;
+				*inflation += *additional_inflation;
+			}
+
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				who,
