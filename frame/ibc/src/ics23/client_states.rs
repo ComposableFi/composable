@@ -1,10 +1,9 @@
 use crate::{format, Config};
-use alloc::string::String;
+use alloc::string::{String, ToString};
 use frame_support::storage::{child, child::ChildInfo, ChildTriePrefixIterator};
 use ibc::core::ics24_host::{identifier::ClientId, path::ClientStatePath, Path};
-use ibc_trait::apply_prefix_and_encode;
+use ibc_trait::apply_prefix;
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
-use alloc::string::ToString;
 
 /// client_id => client_states
 /// trie key path: "clients/{client_id}/clientState"
@@ -14,21 +13,21 @@ impl<T: Config> ClientStates<T> {
 	pub fn get(client_id: &ClientId) -> Option<Vec<u8>> {
 		let client_state_path = format!("{}", ClientStatePath(client_id.clone()));
 		let client_state_key =
-			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path]);
+			apply_prefix(T::CONNECTION_PREFIX, vec![client_state_path]);
 		child::get(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &client_state_key)
 	}
 
 	pub fn insert(client_id: &ClientId, client_state: Vec<u8>) {
 		let client_state_path = format!("{}", ClientStatePath(client_id.clone()));
 		let client_state_key =
-			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path]);
+			apply_prefix(T::CONNECTION_PREFIX, vec![client_state_path]);
 		child::put(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &client_state_key, &client_state);
 	}
 
 	pub fn contains_key(client_id: &ClientId) -> bool {
 		let client_state_path = format!("{}", ClientStatePath(client_id.clone()));
 		let client_state_key =
-			apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path]);
+			apply_prefix(T::CONNECTION_PREFIX, vec![client_state_path]);
 		child::exists(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &client_state_key)
 	}
 
@@ -36,7 +35,7 @@ impl<T: Config> ClientStates<T> {
 	// client_id => client_state
 	pub fn iter() -> impl Iterator<Item = (ClientId, Vec<u8>)> {
 		let prefix_path = "clients/".to_string();
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![prefix_path.clone()]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![prefix_path.clone()]);
 		ChildTriePrefixIterator::with_prefix(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &key)
 			.filter_map(move |(remaining_key, value)| {
 				let path = format!("{prefix_path}{}", String::from_utf8(remaining_key).ok()?);

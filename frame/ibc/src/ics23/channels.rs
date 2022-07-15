@@ -9,7 +9,7 @@ use ibc::core::{
 		Path,
 	},
 };
-use ibc_trait::apply_prefix_and_encode;
+use ibc_trait::apply_prefix;
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 use tendermint_proto::Protobuf;
 
@@ -21,13 +21,13 @@ pub struct Channels<T>(PhantomData<T>);
 impl<T: Config> Channels<T> {
 	pub fn get(port_id: PortId, channel_id: ChannelId) -> Option<Vec<u8>> {
 		let channel_path = format!("{}", ChannelEndsPath(port_id, channel_id));
-		let channel_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path]);
+		let channel_key = apply_prefix(T::CONNECTION_PREFIX, vec![channel_path]);
 		child::get(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &channel_key)
 	}
 
 	pub fn insert(port_id: PortId, channel_id: ChannelId, channel_end: &ChannelEnd) {
 		let channel_path = format!("{}", ChannelEndsPath(port_id, channel_id));
-		let channel_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path]);
+		let channel_key = apply_prefix(T::CONNECTION_PREFIX, vec![channel_path]);
 		child::put(
 			&ChildInfo::new_default(T::CHILD_TRIE_KEY),
 			&channel_key,
@@ -37,7 +37,7 @@ impl<T: Config> Channels<T> {
 
 	pub fn iter() -> impl Iterator<Item = (Vec<u8>, Vec<u8>, Vec<u8>)> {
 		let prefix = "channelEnds/ports/".to_string();
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![prefix.clone()]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![prefix.clone()]);
 		ChildTriePrefixIterator::with_prefix(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &key)
 			.filter_map(move |(key, value)| {
 				let path = format!("{prefix}{}", String::from_utf8(key).ok()?);

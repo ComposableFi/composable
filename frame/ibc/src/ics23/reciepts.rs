@@ -7,9 +7,8 @@ use ibc::core::{
 		path::ReceiptsPath,
 	},
 };
-use ibc_trait::apply_prefix_and_encode;
-use sp_std::marker::PhantomData;
-use sp_std::prelude::*;
+use ibc_trait::apply_prefix;
+use sp_std::{marker::PhantomData, prelude::*};
 
 // todo: pruning
 /// (port_id, channel_id, sequence) => hash
@@ -23,14 +22,14 @@ impl<T: Config> PacketReceipt<T> {
 	) {
 		let receipt_path = ReceiptsPath { port_id, channel_id, sequence };
 		let receipt_path = format!("{}", receipt_path);
-		let receipt_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path]);
+		let receipt_key = apply_prefix(T::CONNECTION_PREFIX, vec![receipt_path]);
 		child::put(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &receipt_key, &receipt)
 	}
 
 	pub fn get((port_id, channel_id, sequence): (PortId, ChannelId, Sequence)) -> Option<Vec<u8>> {
 		let receipt_path = ReceiptsPath { port_id, channel_id, sequence };
 		let receipt_path = format!("{}", receipt_path);
-		let receipt_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path]);
+		let receipt_key = apply_prefix(T::CONNECTION_PREFIX, vec![receipt_path]);
 		child::get(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &receipt_key)
 	}
 
@@ -44,7 +43,7 @@ impl<T: Config> PacketReceipt<T> {
 	pub fn contains_key((port_id, channel_id, sequence): (PortId, ChannelId, Sequence)) -> bool {
 		let receipt_path = ReceiptsPath { port_id, channel_id, sequence };
 		let receipt_path = format!("{}", receipt_path);
-		let receipt_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path]);
+		let receipt_key = apply_prefix(T::CONNECTION_PREFIX, vec![receipt_path]);
 		child::exists(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &receipt_key)
 	}
 }

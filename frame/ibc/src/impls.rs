@@ -4,7 +4,7 @@ use crate::{
 	ics23::{
 		acknowledgements::Acknowledgements, channels::Channels, client_states::ClientStates,
 		connections::Connections, consensus_states::ConsensusStates,
-		next_seq_send::NextSequenceSend,
+		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
 		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
 	},
 	routing::Context,
@@ -65,13 +65,12 @@ use ibc_primitives::{
 	SendPacketData,
 };
 use ibc_trait::{
-	apply_prefix_and_encode, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
+	apply_prefix, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
 	port_id_from_bytes, Error as IbcHandlerError, IbcTrait,
 };
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;
-use crate::ics23::next_seq_recv::NextSequenceRecv;
 
 impl<T: Config> Pallet<T>
 where
@@ -93,10 +92,10 @@ where
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
-		let channel = Channels::<T>::get(port_id.clone(), channel_id)
-			.ok_or(Error::<T>::ChannelNotFound)?;
+		let channel =
+			Channels::<T>::get(port_id.clone(), channel_id).ok_or(Error::<T>::ChannelNotFound)?;
 		let channel_path = format!("{}", ChannelEndsPath(port_id, channel_id));
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![channel_path]);
 
 		Ok(QueryChannelResponse { channel, trie_key: key, height: host_height::<T>() })
 	}
@@ -109,7 +108,7 @@ where
 			Connections::<T>::get(&connection_id).ok_or(Error::<T>::ConnectionNotFound)?;
 
 		let connection_path = format!("{}", ConnectionsPath(connection_id));
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![connection_path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![connection_path]);
 
 		Ok(QueryConnectionResponse { connection, trie_key: key, height: host_height::<T>() })
 	}
@@ -121,7 +120,7 @@ where
 			ClientStates::<T>::get(&client_id).ok_or(Error::<T>::ClientStateNotFound)?;
 		let client_state_path = format!("{}", ClientStatePath(client_id));
 
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![client_state_path]);
 
 		Ok(QueryClientStateResponse { client_state, trie_key: key, height: host_height::<T>() })
 	}
@@ -142,8 +141,8 @@ where
 	) -> Result<QueryConsensusStateResponse, Error<T>> {
 		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
 		let height = if latest_cs {
-			let client_state = ClientStates::<T>::get(&client_id)
-				.ok_or(Error::<T>::ClientStateNotFound)?;
+			let client_state =
+				ClientStates::<T>::get(&client_id).ok_or(Error::<T>::ClientStateNotFound)?;
 			let client_state =
 				AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
 			client_state.latest_height()
@@ -160,7 +159,7 @@ where
 		};
 
 		let path = format!("{}", consensus_path);
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![path]);
 
 		Ok(QueryConsensusStateResponse {
 			consensus_state,
@@ -244,8 +243,8 @@ where
 				let port_id = port_id_from_bytes(port_id_bytes.clone())
 					.map_err(|_| Error::<T>::DecodingError)?;
 
-				let channel_end = Channels::<T>::get(port_id, channel_id)
-					.ok_or(Error::<T>::ChannelNotFound)?;
+				let channel_end =
+					Channels::<T>::get(port_id, channel_id).ok_or(Error::<T>::ChannelNotFound)?;
 				Ok(IdentifiedChannel {
 					channel_id: channel_id_bytes,
 					port_id: port_id_bytes,
@@ -320,11 +319,7 @@ where
 		Ok(seqs
 			.into_iter()
 			.filter(|s| {
-				!PacketReceipt::<T>::contains_key((
-					port_id.clone(),
-					channel_id,
-					(*s).into(),
-				))
+				!PacketReceipt::<T>::contains_key((port_id.clone(), channel_id, (*s).into()))
 			})
 			.collect())
 	}
@@ -334,18 +329,13 @@ where
 		port_id_bytes: Vec<u8>,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Error<T>> {
-		let channel_id = channel_id_from_bytes(channel_id_bytes)
-			.map_err(|_| Error::<T>::DecodingError)?;
-		let port_id =
-			port_id_from_bytes(port_id_bytes).map_err(|_| Error::<T>::DecodingError)?;
+		let channel_id =
+			channel_id_from_bytes(channel_id_bytes).map_err(|_| Error::<T>::DecodingError)?;
+		let port_id = port_id_from_bytes(port_id_bytes).map_err(|_| Error::<T>::DecodingError)?;
 		Ok(seqs
 			.into_iter()
 			.filter(|s| {
-				PacketCommitment::<T>::contains_key((
-					port_id.clone(),
-					channel_id,
-					(*s).into(),
-				))
+				PacketCommitment::<T>::contains_key((port_id.clone(), channel_id, (*s).into()))
 			})
 			.collect())
 	}
@@ -360,7 +350,7 @@ where
 		let sequence = NextSequenceRecv::<T>::get(port_id.clone(), channel_id)
 			.ok_or(Error::<T>::SendPacketError)?;
 		let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id, channel_id));
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_recv_path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![next_seq_recv_path]);
 
 		Ok(QueryNextSequenceReceiveResponse { sequence, trie_key: key, height: host_height::<T>() })
 	}
@@ -373,12 +363,11 @@ where
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
-		let commitment =
-			PacketCommitment::<T>::get((port_id.clone(), channel_id, seq.into()))
-				.ok_or(Error::<T>::PacketCommitmentNotFound)?;
+		let commitment = PacketCommitment::<T>::get((port_id.clone(), channel_id, seq.into()))
+			.ok_or(Error::<T>::PacketCommitmentNotFound)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
 		let commitment_path = format!("{}", CommitmentsPath { port_id, channel_id, sequence });
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![commitment_path]);
 
 		Ok(QueryPacketCommitmentResponse { commitment, trie_key: key, height: host_height::<T>() })
 	}
@@ -392,11 +381,10 @@ where
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
-		let ack =
-			Acknowledgements::<T>::get((port_id.clone(), channel_id, sequence))
-				.ok_or(Error::<T>::PacketCommitmentNotFound)?;
+		let ack = Acknowledgements::<T>::get((port_id.clone(), channel_id, sequence))
+			.ok_or(Error::<T>::PacketCommitmentNotFound)?;
 		let acks_path = format!("{}", AcksPath { port_id, channel_id, sequence });
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![acks_path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![acks_path]);
 
 		Ok(QueryPacketAcknowledgementResponse { ack, trie_key: key, height: host_height::<T>() })
 	}
@@ -410,12 +398,11 @@ where
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
-		let receipt =
-			PacketReceipt::<T>::get((port_id.clone(), channel_id, sequence))
-				.ok_or(Error::<T>::PacketReceiptNotFound)?;
+		let receipt = PacketReceipt::<T>::get((port_id.clone(), channel_id, sequence))
+			.ok_or(Error::<T>::PacketReceiptNotFound)?;
 		let receipt = String::from_utf8(receipt).map_err(|_| Error::<T>::DecodingError)?;
 		let receipt_path = format!("{}", ReceiptsPath { port_id, channel_id, sequence });
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![receipt_path]);
 		let receipt = &receipt == "Ok";
 		Ok(QueryPacketReceiptResponse { receipt, trie_key: key, height: host_height::<T>() })
 	}
@@ -441,9 +428,9 @@ where
 		};
 		let client_state_path = format!("{}", ClientStatePath(client_id));
 		let consensus_path = format!("{}", consensus_path);
-		let client_state_key = apply_prefix_and_encode(prefix, vec![client_state_path]);
-		let connection_key = apply_prefix_and_encode(prefix, vec![connection_path]);
-		let consensus_key = apply_prefix_and_encode(prefix, vec![consensus_path]);
+		let client_state_key = apply_prefix(prefix, vec![client_state_path]);
+		let connection_key = apply_prefix(prefix, vec![connection_path]);
+		let consensus_key = apply_prefix(prefix, vec![consensus_path]);
 		Ok(ConnectionHandshake {
 			client_state,
 			trie_keys: vec![client_state_key, connection_key, consensus_key],

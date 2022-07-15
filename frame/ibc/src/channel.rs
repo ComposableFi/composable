@@ -321,10 +321,7 @@ where
 		ack_commitment: AcknowledgementCommitment,
 	) -> Result<(), ICS04Error> {
 		// store packet acknowledgement key-value
-		<Acknowledgements<T>>::insert(
-			(key.0.clone(), key.1, key.2),
-			ack_commitment,
-		);
+		<Acknowledgements<T>>::insert((key.0.clone(), key.1, key.2), ack_commitment);
 
 		if let Some(val) = AcknowledgementCounter::<T>::get().checked_add(1) {
 			AcknowledgementCounter::<T>::put(val)

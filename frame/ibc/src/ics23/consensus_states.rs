@@ -5,7 +5,7 @@ use ibc::{
 	core::ics24_host::{identifier::ClientId, path::ClientConsensusStatePath},
 	Height,
 };
-use ibc_trait::apply_prefix_and_encode;
+use ibc_trait::apply_prefix;
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 
 /// client_id, height => consensus_state
@@ -21,7 +21,7 @@ impl<T: Config> ConsensusStates<T> {
 			height: height.revision_height,
 		};
 		let path = format!("{}", consensus_path);
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![path]);
 		child::get(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &key)
 	}
 
@@ -32,13 +32,13 @@ impl<T: Config> ConsensusStates<T> {
 			height: height.revision_height,
 		};
 		let path = format!("{}", consensus_path);
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![path]);
 		child::put(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &key, &consensus_state)
 	}
 
 	pub fn iter_key_prefix(client_id: &ClientId) -> impl Iterator<Item = (Height, Vec<u8>)> {
 		let prefix_path = format!("clients/{}/consensusStates/", client_id);
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![prefix_path]);
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![prefix_path]);
 		ChildTriePrefixIterator::with_prefix(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &key)
 			.filter_map(|(key, value)| {
 				let height = Height::from_str(&String::from_utf8(key).ok()?).ok()?;
