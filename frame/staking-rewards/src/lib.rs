@@ -105,6 +105,11 @@ pub mod pallet {
 			position_id: T::PositionId,
 			keep_alive: bool,
 		},
+		StakeAmountExtended {
+			position_id: T::PositionId,
+			/// Extended amount
+			amount: T::Balance,
+		},
 		/// Split stake position into two positions
 		SplitPosition { positions: Vec<T::PositionId> },
 	}
@@ -476,6 +481,7 @@ pub mod pallet {
 			)?;
 			RewardPools::<T>::insert(stake.reward_pool_id, rewards_pool);
 			Stakes::<T>::insert(position, stake);
+			Self::deposit_event(Event::<T>::StakeAmountExtended { position_id: position, amount });
 			Ok(position)
 		}
 
