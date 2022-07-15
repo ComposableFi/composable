@@ -11,6 +11,15 @@ export class VestingSchedule {
   @PrimaryColumn_()
   id!: string
 
+  @Column_("text", {nullable: false})
+  eventId!: string
+
+  /**
+   * {accoundId}-{assetId}
+   */
+  @Column_("text", {nullable: false})
+  scheduleId!: string
+
   /**
    * 'To' account for the vesting schedule
    */

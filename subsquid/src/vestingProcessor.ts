@@ -59,11 +59,15 @@ export async function processVestingScheduleAddedEvent(
   ctx: EventHandlerContext,
   event: VestingVestingScheduleAddedEvent
 ) {
-  const { to, schedule } = getVestingScheduleAddedEvent(event);
+  const { to, asset, schedule } = getVestingScheduleAddedEvent(event);
+
+  const beneficiary = encodeAccount(to);
 
   const vestingSchedule = new VestingSchedule({
-    id: ctx.event.id,
-    beneficiary: encodeAccount(to),
+    id: randomUUID(),
+    eventId: ctx.event.id,
+    scheduleId: `${beneficiary}-${asset.toString()}`,
+    beneficiary,
     schedule: createVestingSchedule(schedule),
   });
 

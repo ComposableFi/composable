@@ -69,6 +69,9 @@ type PabloPoolAsset @entity {
 }
 
 type BondedFinanceBondOffer @entity {
+  id: ID!
+  eventId: String!
+  offerId: String!
   "Total amount of purchased bonds"
   totalPurchased: BigInt!
   "Beneficiary account for the bond offer"
@@ -89,6 +92,9 @@ type Schedule {
 
 type VestingSchedule @entity {
   id: ID!
+  eventId: String!
+  "{accoundId}-{assetId}"
+  scheduleId: String!
   "'To' account for the vesting schedule"
   beneficiary: String!
   "Vesting schedule"

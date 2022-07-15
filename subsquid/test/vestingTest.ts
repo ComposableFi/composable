@@ -31,11 +31,24 @@ const MOCK_VESTING_SCHEDULE: VestingScheduleType = {
   perPeriod: BigInt(100),
 };
 
+/**
+ * Check if vesting schedule has expected values
+ * @param vestingSchedule
+ * @param beneficiary
+ * @param eventId
+ * @param assetId
+ * @param schedule
+ */
 function assertVestingSchedule(
   vestingSchedule: VestingSchedule,
   beneficiary: string,
+  eventId: string,
+  assetId: string,
   schedule: Schedule
 ) {
+  const expectedScheduleId = `${beneficiary}-${assetId}`;
+  expect(vestingSchedule.eventId).to.equal(eventId);
+  expect(vestingSchedule.scheduleId).to.equal(expectedScheduleId);
   expect(vestingSchedule.beneficiary).to.equal(beneficiary);
   expect(vestingSchedule.schedule).to.deep.equal(schedule);
 }
@@ -44,6 +57,7 @@ async function assertVestingScheduleAddedEvent(
   ctx: EventHandlerContext,
   storeMock: Store,
   beneficiary: Uint8Array,
+  assetId: string,
   schedule: Schedule
 ) {
   // Assert last save
@@ -51,6 +65,8 @@ async function assertVestingScheduleAddedEvent(
   assertVestingSchedule(
     arg as unknown as VestingSchedule,
     encodeAccount(beneficiary),
+    ctx.event.id,
+    assetId,
     schedule
   );
 }
@@ -120,6 +136,7 @@ describe("Vesting schedule added", () => {
       ctx,
       storeMock,
       MOCK_ADDRESS_TO,
+      event.asV2300.asset.toString(),
       schedule
     );
 
