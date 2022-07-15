@@ -11,6 +11,6 @@ client -> vamm++: Swap simulation request
 vamm -[#green]> svamm++: Get vamm
 svamm --> vamm--: vamm
 vamm -> vamm: Sanity checks
-vamm -> vamm: Compute asset price
-vamm --> client--: Asset price
+vamm -> vamm: Compute simulation
+vamm --> client--: Asset amount
 @enduml

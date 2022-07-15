@@ -59,8 +59,8 @@
 //! desired asset against the vamm.
 //! * [`swap_simulation`](pallet/struct.Pallet.html#method.swap_simulation):
 //! Performs the *simulation* of the swap operation for the desired asset
-//! against the vamm, returning the computed asset price if the swap were in
-//! fact executed.
+//! against the vamm, returning the expected amount such a trade would result if
+//! the swap were in fact executed.
 //! * [`update_twap`](pallet/struct.Pallet.html#method.update_twap): Updates the
 //! time weighted average price of the desired asset.
 //!
@@ -834,20 +834,13 @@ pub mod pallet {
 			Ok(amount_swapped)
 		}
 
-		// TODO(Cardosaum): Rewrite specification
 		/// Performs the *simulation* of the swap operation for the desired
-		/// asset against the vamm, returning the computed asset price if the
-		/// swap were in fact executed.
+		/// asset against the vamm, returning the expected amount such a trade
+		/// would result if the swap were in fact executed.
 		///
 		/// # Overview
-		/// The Vamm Pallet has a function to retrieve the current price:
-		/// [`get_price`](Self::get_price), but it only returns the 'current'
-		/// price of an infinitesimal trade, not taking into account price move
-		/// due to possibly large operations of opening or closing positions.
-		/// [`swap_simulation`](Self::swap_simulation) has the purpose of taking
-		/// into account possible price moves due to trade size, hence being the
-		/// recommended option to estimate the price of an asset in case of
-		/// swaps.
+		/// This function essentially does the same as [`swap`](Self::swap),
+		/// except for the fact that the runtime storage is not mutated.
 		///
 		/// ![](http://www.plantuml.com/plantuml/svg/FSuzZi90343XVa-nN23kgI8XSOt8cJYPaMpFo3_a-WGAggUlUxC7MgJmtwrfuTmeZVzhnF0xWE4v7IrghkbafMkGnbIwmAFBw8uhqxD1-G78IoM3tL08NYW2MyFZaiEUMg9rNVp4iNYJPFnu6epwNPX9jwjl)
 		///
@@ -855,7 +848,7 @@ pub mod pallet {
 		///  - `config`: Specification for swaps.
 		///
 		/// ## Returns
-		/// The asset price taking into account slippage and price move due to
+		/// The asset amount taking into account slippage and price move due to
 		/// trade size.
 		///
 		/// ## Assumptions or Requirements

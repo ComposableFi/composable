@@ -2629,7 +2629,7 @@ dependencies = [
  "sc-consensus-babe",
  "sc-network",
  "sc-service",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.22)",
+ "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.22)",
  "sc-telemetry",
  "sc-tracing",
  "sp-api",
@@ -7653,7 +7653,7 @@ dependencies = [
 [[package]]
 name = "pallet-election-provider-support-benchmarking"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -8052,7 +8052,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools"
 version = "1.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -8067,7 +8067,7 @@ dependencies = [
 [[package]]
 name = "pallet-nomination-pools-benchmarking"
 version = "1.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
 dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
@@ -9315,7 +9315,7 @@ dependencies = [
  "polkadot-service",
  "sc-cli",
  "sc-service",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.22)",
+ "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.22)",
  "sc-tracing",
  "sp-core",
  "sp-trie",
@@ -10304,7 +10304,7 @@ dependencies = [
  "sc-offchain",
  "sc-service",
  "sc-sync-state-rpc",
- "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.22)",
+ "sc-sysinfo 6.0.0-dev (git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.22)",
  "sc-telemetry",
  "sc-transaction-pool",
  "serde",
@@ -12561,7 +12561,7 @@ dependencies = [
 [[package]]
 name = "sc-sysinfo"
 version = "6.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
 dependencies = [
  "futures 0.3.21",
  "libc",
@@ -14505,7 +14505,7 @@ dependencies = [
 [[package]]
 name = "substrate-state-trie-migration-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
+source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
 dependencies = [
  "jsonrpsee 0.13.1",
  "log 0.4.17",
