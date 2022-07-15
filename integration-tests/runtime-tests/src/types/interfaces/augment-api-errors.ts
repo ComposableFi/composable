@@ -1,9 +1,9 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from "@polkadot/api-base/types";
+import type { ApiTypes } from '@polkadot/api-base/types';
 
-declare module "@polkadot/api-base/types/errors" {
+declare module '@polkadot/api-base/types/errors' {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
@@ -702,7 +702,9 @@ declare module "@polkadot/api-base/types/errors" {
       [key: string]: AugmentedError<ApiType>;
     };
     liquidations: {
+      InvalidLiquidationStrategiesVector: AugmentedError<ApiType>;
       NoLiquidationEngineFound: AugmentedError<ApiType>;
+      OnlyDutchAuctionStrategyIsImplemented: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1152,9 +1154,33 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       EndBlockMustBeInTheFuture: AugmentedError<ApiType>;
       /**
+       * Reward's max limit reached.
+       **/
+      MaxRewardLimitReached: AugmentedError<ApiType>;
+      /**
+       * No position found for given id.
+       **/
+      NoPositionFound: AugmentedError<ApiType>;
+      /**
+       * Not enough assets for a stake.
+       **/
+      NotEnoughAssets: AugmentedError<ApiType>;
+      /**
+       * Only pool owner can add new reward asset.
+       **/
+      OnlyPoolOwnerCanAddNewReward: AugmentedError<ApiType>;
+      /**
+       * Error when creating reduction configs.
+       **/
+      ReductionConfigProblem: AugmentedError<ApiType>;
+      /**
        * Error when creating reward configs.
        **/
       RewardConfigProblem: AugmentedError<ApiType>;
+      /**
+       * Rewards pool not found.
+       **/
+      RewardsPoolNotFound: AugmentedError<ApiType>;
       /**
        * Unimplemented reward pool type.
        **/
@@ -1181,7 +1207,7 @@ declare module "@polkadot/api-base/types/errors" {
       CallFiltered: AugmentedError<ApiType>;
       /**
        * Failed to extract the runtime version from the new runtime.
-       *
+       * 
        * Either calling `Core_version` or decoding `RuntimeVersion` failed.
        **/
       FailedToExtractRuntimeVersion: AugmentedError<ApiType>;
@@ -1542,6 +1568,10 @@ declare module "@polkadot/api-base/types/errors" {
        * Invalid transfer destination.
        **/
       InvalidDest: AugmentedError<ApiType>;
+      /**
+       * MinXcmFee not registered for certain reserve location
+       **/
+      MinXcmFeeNotDefined: AugmentedError<ApiType>;
       /**
        * Not cross-chain transfer.
        **/
