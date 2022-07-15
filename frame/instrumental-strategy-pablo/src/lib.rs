@@ -308,6 +308,7 @@ pub mod pallet {
 			})
 		}
 
+		#[transactional]
 		fn rebalance() -> DispatchResult {
 			AssociatedVaults::<T>::try_mutate(|vaults| -> DispatchResult {
 				vaults.iter().for_each(|vault_id| {
@@ -332,7 +333,6 @@ pub mod pallet {
 	// ---------------------------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
-		#[transactional]
 		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
 			Ok(())
 		}
