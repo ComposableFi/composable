@@ -62,10 +62,6 @@ use sp_std::prelude::*;
 use tendermint::{block::signed_header::SignedHeader, validator::Set as ValidatorSet, Hash};
 use tendermint_proto::Protobuf;
 
-pub fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
-	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
-}
-
 /// Create a mock avl implementation that can be used to mock tendermint's iavl tree.
 fn create_avl() -> simple_iavl::avl::AvlTree<Vec<u8>, Vec<u8>> {
 	let mut avl_tree = simple_iavl::avl::AvlTree::new();
