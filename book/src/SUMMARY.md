@@ -42,7 +42,7 @@
     - [How it Works](./products/apollo/apollo-how-it-works.md)
     - [Apollo Deployment](./products/apollo/apollo-deployment.md)
 - [Cubic](./products/cubic/cubic.md)
-  - [Additional Details](./products/cubic/addtional-details.md)
+    - [Additional Details](./products/cubic/addtional-details.md)
 - [Pablo](./products/pablo-overview.md)
     - [Swaps/Trading](./products/pablo/swaps-trading.md)
     - [Liquidity provision](./products/pablo/liquidity-provision.md)
