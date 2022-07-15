@@ -186,13 +186,13 @@ fn not_owner_of_stake_can_not_unstake() {
 
 		let pool_init_config = get_default_reward_pool();
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
-		let (staker, not_owner, pool_id, amount, duration_preset) = (ALICE, BOB, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
-		assert_ne!(staker, not_owner);
+		let (owner, not_owner, pool_id, amount, duration_preset) = (ALICE, BOB, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
+		assert_ne!(owner, not_owner);
 
 		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 2).expect("an asset minting expected");
+		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &owner, amount * 2).expect("an asset minting expected");
 
-		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
+		assert_ok!(StakingRewards::stake(Origin::signed(owner), pool_id, amount, duration_preset));
 
 		assert_noop!(
 			StakingRewards::unstake(Origin::signed(not_owner), StakingRewards::stake_count()),
