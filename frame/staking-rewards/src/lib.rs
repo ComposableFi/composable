@@ -75,7 +75,7 @@ pub mod pallet {
 	use sp_arithmetic::{traits::One, Permill};
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider},
-		ArithmeticError, PerThing, Perbill,
+		PerThing, Perbill,
 	};
 	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, vec, vec::Vec};
 
@@ -145,7 +145,13 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The reward balance type.
-		type Balance: Parameter + Member + BalanceLike + FixedPointOperand + From<u128> + Into<u128>;
+		type Balance: Parameter
+			+ Member
+			+ BalanceLike
+			+ FixedPointOperand
+			+ From<u128>
+			+ Into<u128>
+			+ Zero;
 
 		/// The reward pool ID type.
 		/// Type representing the unique ID of a pool.
@@ -569,28 +575,20 @@ pub mod pallet {
 			let mut reductions = Reductions::new();
 			let mut rewards_btree_map = Rewards::new();
 
-			// let mut inner_rewards = rewards_pool.rewards.into_inner();
 			for (asset_id, reward) in rewards_pool.rewards.iter() {
 				let reward = reward.clone();
-				let inflation = if rewards_pool.total_shares == T::Balance::from(0_u32) {
-					T::Balance::from(0_u32)
+				let inflation = if rewards_pool.total_shares == T::Balance::zero() {
+					T::Balance::zero()
 				} else {
 					reward
 						.total_rewards
-						.safe_mul(&boosted_amount)
-						.map_err(|_| ArithmeticError::Overflow)?
-						.safe_div(&rewards_pool.total_shares)
-						.map_err(|_| ArithmeticError::Overflow)?
+						.safe_mul(&boosted_amount)?
+						.safe_div(&rewards_pool.total_shares)?
 				};
 
-				let total_rewards = reward
-					.total_rewards
-					.safe_add(&inflation)
-					.map_err(|_| ArithmeticError::Overflow)?;
-				let total_dilution_adjustment = reward
-					.total_dilution_adjustment
-					.safe_add(&inflation)
-					.map_err(|_| ArithmeticError::Overflow)?;
+				let total_rewards = reward.total_rewards.safe_add(&inflation)?;
+				let total_dilution_adjustment =
+					reward.total_dilution_adjustment.safe_add(&inflation)?;
 				let updated_reward = Reward { total_rewards, total_dilution_adjustment, ..reward };
 				rewards_btree_map
 					.try_insert(*asset_id, updated_reward)
