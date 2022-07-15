@@ -9,7 +9,7 @@ pub mod pallet {
 	use codec::{Codec, Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_traits::{
 		defi::DeFiComposableConfig,
-		vamm::{AssetType, Direction, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm},
+		vamm::{AssetType, Direction, SwapConfig, SwapOutput, Vamm},
 	};
 	use frame_support::pallet_prelude::*;
 	use scale_info::TypeInfo;
@@ -161,7 +161,6 @@ pub mod pallet {
 		type Moment = T::Moment;
 		type MovePriceConfig = MovePriceConfig;
 		type SwapConfig = SwapConfig<Self::VammId, Self::Balance>;
-		type SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>;
 		type VammConfig = VammConfig;
 		type VammId = T::VammId;
 

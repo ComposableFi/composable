@@ -52,7 +52,6 @@ type Market = <TestPallet as Instruments>::Market;
 type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type Position = <TestPallet as Instruments>::Position;
 type SwapConfig = <VammPallet as Vamm>::SwapConfig;
-type SwapSimulationConfig = <VammPallet as Vamm>::SwapSimulationConfig;
 
 impl Default for ExtBuilder {
 	fn default() -> Self {

@@ -135,8 +135,8 @@ pub mod pallet {
 
 	use codec::{Codec, FullCodec};
 	use composable_traits::vamm::{
-		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm,
-		VammConfig, MINIMUM_TWAP_PERIOD,
+		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, Vamm, VammConfig,
+		MINIMUM_TWAP_PERIOD,
 	};
 	use frame_support::{
 		pallet_prelude::*, sp_std::fmt::Debug, traits::UnixTime, transactional, Blake2_128Concat,
@@ -245,7 +245,6 @@ pub mod pallet {
 	type MomentOf<T> = <T as Config>::Moment;
 	type SwapOutputOf<T> = SwapOutput<BalanceOf<T>>;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
-	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type MovePriceConfigOf<T> = MovePriceConfig<VammIdOf<T>, BalanceOf<T>>;
 	type VammConfigOf<T> = VammConfig<BalanceOf<T>, MomentOf<T>>;
 	type VammStateOf<T> = VammState<BalanceOf<T>, MomentOf<T>, DecimalOf<T>>;
@@ -454,7 +453,6 @@ pub mod pallet {
 		type Moment = MomentOf<T>;
 		type Decimal = T::Decimal;
 		type SwapConfig = SwapConfigOf<T>;
-		type SwapSimulationConfig = SwapSimulationConfigOf<T>;
 		type VammConfig = VammConfigOf<T>;
 		type MovePriceConfig = MovePriceConfigOf<T>;
 		type VammId = VammIdOf<T>;

@@ -170,7 +170,7 @@ pub mod pallet {
 		defi::DeFiComposableConfig,
 		oracle::Oracle,
 		time::DurationSeconds,
-		vamm::{AssetType, SwapConfig, SwapSimulationConfig, Vamm},
+		vamm::{AssetType, SwapConfig, Vamm},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -259,7 +259,6 @@ pub mod pallet {
 		type Vamm: Vamm<
 			Balance = Self::Balance,
 			SwapConfig = SwapConfig<Self::VammId, Self::Balance>,
-			SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>,
 			VammConfig = Self::VammConfig,
 			VammId = Self::VammId,
 		>;
@@ -285,7 +284,6 @@ pub mod pallet {
 	type VammConfigOf<T> = <T as Config>::VammConfig;
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
-	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type MarketConfigOf<T> =
 		MarketConfig<AssetIdOf<T>, BalanceOf<T>, DecimalOf<T>, VammConfigOf<T>>;
 
