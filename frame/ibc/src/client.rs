@@ -28,7 +28,7 @@ where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
 	fn client_type(&self, client_id: &ClientId) -> Result<ClientType, ICS02Error> {
-		log::trace!("in client : [client_type] >> client_id = {:?}", client_id);
+		log::trace!(target: "pallet_ibc", "in client : [client_type] >> client_id = {:?}", client_id);
 
 		if <Clients<T>>::contains_key(client_id) {
 			let data = <Clients<T>>::get(client_id)
@@ -42,23 +42,23 @@ where
 			match ClientType::from_str(&data) {
 				Err(_err) => Err(ICS02Error::unknown_client_type(data.to_string())),
 				Ok(val) => {
-					log::trace!("in client : [client_type] >> client_type : {:?}", val);
+					log::trace!(target: "pallet_ibc", "in client : [client_type] >> client_type : {:?}", val);
 					Ok(val)
 				},
 			}
 		} else {
-			log::trace!("in client : [client_type] >> read client_type is None");
+			log::trace!(target: "pallet_ibc", "in client : [client_type] >> read client_type is None");
 			Err(ICS02Error::client_not_found(client_id.clone()))
 		}
 	}
 
 	fn client_state(&self, client_id: &ClientId) -> Result<AnyClientState, ICS02Error> {
-		log::trace!("in client : [client_state] >> client_id = {:?}", client_id);
+		log::trace!(target: "pallet_ibc", "in client : [client_state] >> client_id = {:?}", client_id);
 		let data = <ClientStates<T>>::get(client_id)
 			.ok_or_else(|| ICS02Error::client_not_found(client_id.clone()))?;
 		let state = AnyClientState::decode_vec(&*data)
 			.map_err(|_| ICS02Error::client_not_found(client_id.clone()))?;
-		log::trace!("in client : [client_state] >> any client_state: {:?}", state);
+		log::trace!(target: "pallet_ibc", "in client : [client_state] >> any client_state: {:?}", state);
 		Ok(state)
 	}
 
@@ -67,7 +67,7 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<AnyConsensusState, ICS02Error> {
-		log::trace!(
+		log::trace!(target: "pallet_ibc",
 			"in client : [consensus_state] >> client_id = {:?}, height = {:?}",
 			client_id,
 			height
@@ -79,7 +79,7 @@ where
 
 		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
 			.map_err(|_| ICS02Error::consensus_state_not_found(client_id.clone(), native_height))?;
-		log::trace!(
+		log::trace!(target: "pallet_ibc",
 			"in client : [consensus_state] >> any consensus state = {:?}",
 			any_consensus_state
 		);
@@ -154,7 +154,7 @@ where
 	}
 
 	fn host_height(&self) -> Height {
-		log::trace!("in client: [host_height]");
+		log::trace!(target: "pallet_ibc", "in client: [host_height]");
 		let current_height = host_height::<T>();
 		let para_id: u32 = parachain_info::Pallet::<T>::get().into();
 		Height::new(para_id.into(), current_height)
@@ -192,7 +192,7 @@ where
 
 	fn client_counter(&self) -> Result<u64, ICS02Error> {
 		let count = ClientCounter::<T>::get();
-		log::trace!("in client : [client_counter] >> client_counter: {:?}", count);
+		log::trace!(target: "pallet_ibc", "in client : [client_counter] >> client_counter: {:?}", count);
 
 		Ok(count as u64)
 	}
@@ -204,7 +204,7 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		client_id: ClientId,
 		client_type: ClientType,
 	) -> Result<(), ICS02Error> {
-		log::trace!(
+		log::trace!(target: "pallet_ibc",
 			"in client : [store_client_type] >> client id = {:?}, client_type = {:?}",
 			client_id,
 			client_type
@@ -216,7 +216,7 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 	}
 
 	fn increase_client_counter(&mut self) {
-		log::trace!("in client : [increase_client_counter]");
+		log::trace!(target: "pallet_ibc", "in client : [increase_client_counter]");
 		// increment counter
 		if let Some(val) = <ClientCounter<T>>::get().checked_add(1) {
 			<ClientCounter<T>>::put(val);
@@ -228,7 +228,7 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		client_id: ClientId,
 		client_state: AnyClientState,
 	) -> Result<(), ICS02Error> {
-		log::trace!(
+		log::trace!(target: "pallet_ibc",
 			"in client : [store_client_state] >> client_id: {:?}, client_state = {:?}",
 			client_id,
 			client_state
@@ -247,7 +247,7 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		height: Height,
 		consensus_state: AnyConsensusState,
 	) -> Result<(), ICS02Error> {
-		log::trace!("in client : [store_consensus_state] >> client_id: {:?}, height = {:?}, consensus_state = {:?}",
+		log::trace!(target: "pallet_ibc", "in client : [store_consensus_state] >> client_id: {:?}, height = {:?}, consensus_state = {:?}",
 			client_id, height, consensus_state);
 
 		let data = consensus_state.encode_vec();

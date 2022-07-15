@@ -379,7 +379,9 @@ pub mod pallet {
 				},
 			);
 
-			log::trace!("[pallet_ibc_deliver]: logs: {:?}", logs);
+			log::trace!(target: "pallet_ibc", "[pallet_ibc_deliver]: logs: {:?}", logs);
+			log::trace!(target: "pallet_ibc", "[pallet_ibc_deliver]: errors: {:?}", errors);
+
 			Self::deposit_event(events.into());
 			Self::deposit_event(errors.into());
 			Ok(())
@@ -401,7 +403,7 @@ pub mod pallet {
 				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
 					.map_err(|_| Error::<T>::ProcessingError)?;
 
-			log::trace!("[pallet_ibc_deliver]: logs: {:?}", log);
+			log::trace!(target: "pallet_ibc", "[pallet_ibc_deliver]: logs: {:?}", log);
 			Self::deposit_event(events.into());
 			Ok(())
 		}
