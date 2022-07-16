@@ -21,7 +21,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 instrumental-strategy-pablo = { version = "0.1.0", path = "../instrumental-strategy-pablo", default-features = false }
-pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 
 codec = { default-features = false, package = "parity-scale-codec", version = "3.0.0", features = ["derive",] }
 scale-info = { version = "2.1.2", default-features = false, features = ["derive",] }
