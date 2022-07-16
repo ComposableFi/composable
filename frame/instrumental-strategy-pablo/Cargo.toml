@@ -18,7 +18,6 @@ sp-arithmetic = { default-features = false, git = "https://github.com/paritytech
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
