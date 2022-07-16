@@ -64,11 +64,15 @@ Working under the assumption of an honest majority of Oracle providers,
 
 === System Overview
 
+Following diagram illustrates an overview of the Apollo design with some minor components skipped over for clarity.
+
+.Apollo Price Oracle: The System Overview
 [plantuml,images/apollo-overview,png]
 ----
 cloud "Oracle Provider Infra" {
     node "Picasso Parachain Node" {
-        package "Pallet-Apollo" {
+        () "Oracle" as o
+        package "Pallet Apollo" {
             Database "PrePrices" as prepricedb
             Database "AssetInfo" as assetdb
             Database "OracleStake" as stakedb
@@ -88,14 +92,16 @@ cloud "Oracle Provider Infra" {
             adda --> assetdb
             assetdb --> oih
             oih --> pricedb
-            oih <--> stakedb
+            oih <--> stakedb : read/slash
             as --> stakedb
             oih --> pricehistorydb
         }
 
         ["Governance"] --> ar
         ["Governance"] --> adda
-        rewarddb --> oih
+        rewarddb --> oih : block reward
+        pricedb --> o
+        pricehistorydb --> o
     }
 
     package "Price Feed Server" {
@@ -106,9 +112,9 @@ cloud "Oracle Provider Infra" {
         () ".. Client n" as cn
 
         pc --> papi
-        c1 --> pc
-        c2 --> pc
-        cn --> pc
+        c1 --> pc: price feed
+        c2 --> pc: price feed
+        cn --> pc: price feed
         c1 <.up.> binance
         c2 <.up.> pyth
         cn <.up.> n
@@ -136,19 +142,37 @@ cloud {
 op -up-> as
 ----
 
+NOTE: It is proposed to rename the existing pallet-oracle as pallet-apollo here.
+
+The following sections drill down into these components and others in more detail.
+
+=== Component: Pallet Apollo
+
+==== Interface: Oracle
+
+==== Interface: Pallet Extrinsics
+
+==== Algorithm: Offchain Worker
+
+==== Algorithm: on_init Hook
+
+- slashing - answer in transit?
+
+=== Component: Price Feed Server
+
+==== Interface: Price Feed Client
+
+==== Interface: Rest API
+
 === Security and Price Accuracy Model
+
+TODO
 
 - Manipulation range without getting slashed?
 - How much of bribe it takes for an Oracle provider to provide the wrong price?
 - Chance of collusion
 - Nothing at stake?
 - Ensuring continuous function?
-
-=== Interfaces
-
-=== Algorithms
-
-- slashing - answer in transit?
 
 === Becoming an Oracle Provider
 
