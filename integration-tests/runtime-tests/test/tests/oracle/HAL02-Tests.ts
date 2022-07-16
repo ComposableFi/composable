@@ -58,13 +58,11 @@ describe("HAL02 [Oracle] Tests", function () {
 
   before("HAL02: Providing funds", async function () {
     this.timeout(5 * 60 * 1000);
-    await Promise.all([
-      mintAssetsToWallet(api, controllerWallet, sudoKey, [1, assetID]),
-      mintAssetsToWallet(api, walletHAL02_1, sudoKey, [1, assetID]),
-      mintAssetsToWallet(api, walletHAL02_2, sudoKey, [1, assetID]),
-      mintAssetsToWallet(api, walletHAL02_3, sudoKey, [1, assetID]),
-      mintAssetsToWallet(api, walletHAL02_4, sudoKey, [1, assetID])
-    ]);
+    await mintAssetsToWallet(api, controllerWallet, sudoKey, [1, assetID]);
+    await mintAssetsToWallet(api, walletHAL02_1, sudoKey, [1, assetID]);
+    await mintAssetsToWallet(api, walletHAL02_2, sudoKey, [1, assetID]);
+    await mintAssetsToWallet(api, walletHAL02_3, sudoKey, [1, assetID]);
+    await mintAssetsToWallet(api, walletHAL02_4, sudoKey, [1, assetID]);
   });
 
   after("Closing the connection", async function () {
