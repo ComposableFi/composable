@@ -10,11 +10,11 @@ use composable_support::{
 };
 use composable_traits::airdrop::Airdropper;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_support::{pallet_prelude::*, traits::fungible::Mutate};
+use frame_support::{pallet_prelude::*, traits::Currency};
 use frame_system::{Pallet as System, RawOrigin};
 use multihash::{Hasher, Keccak256, Sha2_256};
 use p256::ecdsa::{signature::Signer, SigningKey, VerifyingKey};
-use sp_runtime::traits::One;
+use sp_runtime::traits::{One, Saturating};
 use sp_std::prelude::*;
 
 pub type EthereumKey = libsecp256k1::SecretKey;
@@ -32,8 +32,8 @@ const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 const HOURS: BlockNumber = MINUTES * 60;
 const DAYS: BlockNumber = HOURS * 24;
 const WEEKS: BlockNumber = DAYS * 7;
-const ACCOUNT_FUND_AMOUNT: u128 = 1_000_000;
-pub const STAKE: u128 = 10_000;
+const ACCOUNT_FUND_AMOUNT: u32 = 1_000_000;
+pub const STAKE: u32 = 10_000;
 
 #[derive(Clone)]
 pub enum Identity {
@@ -169,12 +169,14 @@ where
 benchmarks! {
 	where_clause {
 		where
-			BalanceOf<T>: From<u128>,
+			BalanceOf<T>: From<u32>,
+			T::RecipientFundAsset: Currency<T::AccountId>,
 	}
 
 	create_airdrop_benchmark {
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		T::RecipientFundAsset::mint_into(&creator, STAKE.into())?;
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add(STAKE.into());
+		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 	}: create_airdrop(RawOrigin::Signed(creator), None, VESTING_STEP.into())
 
 	add_recipient_benchmark {
@@ -182,7 +184,8 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		T::RecipientFundAsset::mint_into(&creator, (STAKE + ACCOUNT_FUND_AMOUNT * (x as u128)).into())?;
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add((STAKE + ACCOUNT_FUND_AMOUNT * x).into());
+		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 	}: add_recipient(RawOrigin::Signed(creator), airdrop_id, accounts)
 
@@ -191,7 +194,8 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		T::RecipientFundAsset::mint_into(&creator, (STAKE + ACCOUNT_FUND_AMOUNT * (x as u128)).into())?;
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add((STAKE + ACCOUNT_FUND_AMOUNT * x).into());
+		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts.clone())?;
 	}: remove_recipient(RawOrigin::Signed(creator), airdrop_id, accounts[0].0.clone())
@@ -201,7 +205,8 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		T::RecipientFundAsset::mint_into(&creator, (STAKE + ACCOUNT_FUND_AMOUNT * (x as u128)).into())?;
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add((STAKE + ACCOUNT_FUND_AMOUNT * x).into());
+		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts)?;
 	}: enable_airdrop(RawOrigin::Signed(creator), airdrop_id)
@@ -211,7 +216,8 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		T::RecipientFundAsset::mint_into(&creator, (STAKE + ACCOUNT_FUND_AMOUNT * (x as u128)).into())?;
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add((STAKE + ACCOUNT_FUND_AMOUNT * x).into());
+		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts)?;
 	}: disable_airdrop(RawOrigin::Signed(creator), airdrop_id)
@@ -222,7 +228,8 @@ benchmarks! {
 		let remote_accounts = accounts.clone().into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		T::RecipientFundAsset::mint_into(&creator, (STAKE + ACCOUNT_FUND_AMOUNT * (x as u128)).into())?;
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add((STAKE + ACCOUNT_FUND_AMOUNT * x).into());
+		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator, airdrop_id, remote_accounts)?;
 		let reward_account = accounts[0].0.clone();
