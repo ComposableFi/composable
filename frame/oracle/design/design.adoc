@@ -1,0 +1,162 @@
+= Design Document: Apollo Price Oracle
+:math:
+:stem:
+:imagesoutdir: images
+:imagesdir: images
+:toc:
+:toclevels: 4
+:sectnums:
+:sectnumlevels: 4
+
+== Abstract
+
+This is a post-facto engineering design document for the Apollo price oracle.
+
+== Background
+
+Composable Finance plans to launch a decentralized price oracle to support the DeFi ecosystem in the Picasso parachain called Apollo. Apollo would provide access to asset prices from various price feeds coming from both centralized and decentralized off-chain sources such as decentralized/centralized exchanges. Bringing off-chain prices on-chain requires solving the infamous oracle problem.
+
+=== What is the Oracle Problem?
+
+The oracle problem in blockchains occur because of the need for pieces of logic running on a blockchain such as smart contracts to access off-chain data sources that do not fall within blockchain consensus and verifiability by definition and hence would not be natively "trustworthy" as they could be manipulated. For example if a smart contract running on Picasso parachain wants to access the price of ETH token it would require getting that price from an exchange such as Binance or Uniswap. But that runs the risk of the price being manipulated by the provider of the data or the original source itself causing the smart contract logic to derive wrong results. Avoiding this problem requires either implementing a) a fully trusted centralized oracle or b) a decentralized oracle. While the centralized approach could work for a variety of use cases, when designing a large DeFi ecosystem such as Picasso it's not the right choice as the oracle could become the weakest element in terms of security in the system.
+
+=== Decentralized Price Oracles
+
+A decentralized price oracle provides certain guarantees that a provided price is accurate and free of manipulation by employing a decentralized set of price providers instead of a single centralized one.
+Refer https://hal.archives-ouvertes.fr/hal-03620931/document[[1]] or https://research.chain.link/whitepaper-v2.pdf[[2]] for more thorough coverage of the topics involved.
+
+== Requirements
+
+=== Utility
+
+. Oracle MUST be configurable to provide prices for required assets types for the Picasso parachain DeFi ecosystem.
+. Oracle MUST provide interfaces for any other on-chain protocol on Picasso to integrate with it to get price updates.
+. Oracle MUST provide interfaces for any off-chain protocol such as a front end app to integrate with it to get price updates.
+. Oracle system MUST be extensible to provide additional statistics on top of the Oracle prices such as time weighted average price(TWAP).
+
+=== Accuracy (Observation Integrity)
+
+Working under the assumption of an honest majority of Oracle providers,
+
+. Oracle prices MUST be accurate to within a pre-defined level of error from the market consensus.
+. Oracle prices MUST be resistant to temporary glitches in accuracy faced by a minority of the Oracle providers.
+
+=== Security
+
+Working under the assumption of an honest majority of Oracle providers,
+
+. Oracle prices MUST be resistant to manipulation by an Oracle price provider.
+. Oracle prices MUST be resistant to manipulation by a third party.
+. Oracle MUST be resistant to denial of service attacks. i.e prices MUST be available at all required intervals.
+. Oracle MUST be resistant to front-running.
+
+=== Scalability
+
+. The system MUST provide prices in the desired frequency(every `n` blocks) with low latency for the required asset types (Liveliness).
+. The system MUST scale to be able to provide prices for any number of assets that Picasso DeFi ecosystem requires.
+
+=== Decentralization
+
+. The system MUST support the number of Oracle providers that governance deems necessary for the decentralization of the protocol.
+. The system MUST support a wide variety of price sources.
+
+== Method
+
+=== System Overview
+
+[plantuml,images/apollo-overview,png]
+----
+cloud "Oracle Provider Infra" {
+    node "Picasso Parachain Node" {
+        package "Pallet-Apollo" {
+            Database "PrePrices" as prepricedb
+            Database "AssetInfo" as assetdb
+            Database "OracleStake" as stakedb
+            Database "Prices" as pricedb
+            Database "PriceHistory" as pricehistorydb
+            Database "RewardTrackerStore" as rewarddb
+            [Offchain Worker] as ofw
+            [on_init hook] as oih
+            () "SubmitPrice" as sp
+            () "AdjustRewards" as ar
+            () "AddStake" as as
+            () "AddAssetAndInfo" as adda
+            ar --> rewarddb
+            ofw --> sp
+            sp --> prepricedb
+            oih <-- prepricedb
+            adda --> assetdb
+            assetdb --> oih
+            oih --> pricedb
+            oih <--> stakedb
+            as --> stakedb
+            oih --> pricehistorydb
+        }
+
+        ["Governance"] --> ar
+        ["Governance"] --> adda
+        rewarddb --> oih
+    }
+
+    package "Price Feed Server" {
+        () "Rest API" as papi
+        database "Price Cache" as pc
+        () "Client 1 - Binance Client" as c1
+        () "Client 2 - Pyth Client" as c2
+        () ".. Client n" as cn
+
+        pc --> papi
+        c1 --> pc
+        c2 --> pc
+        cn --> pc
+        c1 <.up.> binance
+        c2 <.up.> pyth
+        cn <.up.> n
+    }
+}
+
+ofw <.left.> papi : get price
+
+cloud {
+    node "Price-Source 1 - Binance" as binance {
+    }
+}
+
+cloud {
+    node "Price-Source 2 - Pyth" as pyth {
+    }
+}
+
+cloud {
+    node ".. Price-Source n" as n {
+    }
+}
+
+"Oracle Provider" as op
+op -up-> as
+----
+
+=== Security and Price Accuracy Model
+
+- Manipulation range without getting slashed?
+- How much of bribe it takes for an Oracle provider to provide the wrong price?
+- Chance of collusion
+- Nothing at stake?
+- Ensuring continuous function?
+
+=== Interfaces
+
+=== Algorithms
+
+- slashing - answer in transit?
+
+=== Becoming an Oracle Provider
+
+==== Key Management
+
+== Rollout
+
+== References
+
+. Distributed Blockchain Price Oracle. https://hal.archives-ouvertes.fr/hal-03620931/document
+. Chainlink 2.0: Next Steps in the Evolution of Decentralized Oracle Networks. https://research.chain.link/whitepaper-v2.pdf
