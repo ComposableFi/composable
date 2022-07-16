@@ -72,7 +72,7 @@ benchmarks! {
 		);
 
 		let balance = 100000 * CurrencyId::milli::<u128>();
-		let channel_id = <T as Config>::IbcHandler::open_channel(port_id, channel_end).unwrap();
+		let channel_id = <T as Config>::IbcHandler::open_channel(port_id.clone(), channel_end).unwrap();
 		let denom = "transfer/channel-15/uatom";
 		let foreign_asset_id = ibc_denom_to_foreign_asset_id(denom);
 		let asset_id = <T as Config>::CurrencyFactory::create(
@@ -124,7 +124,7 @@ benchmarks! {
 		let open_channel_params = OpenChannelParams {
 			connection_id: connection_id.as_bytes().to_vec(),
 			order: 1,
-			counterparty_port_id: port_id.clone().as_bytes().to_vec(),
+			counterparty_port_id: port_id.as_bytes().to_vec(),
 			version: vec![]
 		};
 	}:_(RawOrigin::Root, open_channel_params)

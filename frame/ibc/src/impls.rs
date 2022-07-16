@@ -1,11 +1,23 @@
 use super::*;
-use crate::{events::IbcEvent, routing::Context};
+use crate::{
+	events::IbcEvent,
+	ics23::{
+		acknowledgements::Acknowledgements, channels::Channels, client_states::ClientStates,
+		connections::Connections, consensus_states::ConsensusStates,
+		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
+		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+	},
+	routing::Context,
+};
 use codec::{Decode, Encode};
 use composable_traits::{
 	defi::DeFiComposableConfig,
 	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
 };
-use frame_support::traits::Currency;
+use frame_support::{
+	storage::{child, child::ChildInfo},
+	traits::Currency,
+};
 use ibc::{
 	applications::transfer::{
 		acknowledgement::{Acknowledgement as Ics20Acknowledgement, ACK_SUCCESS_B64},
@@ -34,8 +46,7 @@ use ibc::{
 			identifier::*,
 			path::{
 				AcksPath, ChannelEndsPath, ClientConsensusStatePath, ClientStatePath,
-				ClientTypePath, CommitmentsPath, ConnectionsPath, ReceiptsPath, SeqAcksPath,
-				SeqRecvsPath, SeqSendsPath,
+				CommitmentsPath, ConnectionsPath, ReceiptsPath, SeqRecvsPath,
 			},
 		},
 		ics26_routing::context::ModuleOutputBuilder,
@@ -54,7 +65,7 @@ use ibc_primitives::{
 	SendPacketData,
 };
 use ibc_trait::{
-	apply_prefix_and_encode, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
+	apply_prefix, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
 	port_id_from_bytes, Error as IbcHandlerError, IbcTrait,
 };
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
@@ -66,146 +77,10 @@ where
 	T: Send + Sync,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
-	pub fn build_trie_inputs() -> Result<Vec<(Vec<u8>, Vec<u8>)>, Error<T>> {
-		let mut inputs = Vec::new();
-
-		// Insert client state in trie
-		for (client_id, client_state) in ClientStates::<T>::iter() {
-			let client_type = Clients::<T>::get(&client_id);
-			let id = ClientId::from_str(
-				&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?,
-			)
-			.map_err(|_| Error::<T>::DecodingError)?;
-			let client_state_path = format!("{}", ClientStatePath(id.clone()));
-			let client_type_path = format!("{}", ClientTypePath(id.clone()));
-			let client_type_key =
-				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_type_path])
-					.map_err(|_| Error::<T>::DecodingError)?;
-			let client_state_key =
-				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path])
-					.map_err(|_| Error::<T>::DecodingError)?;
-			inputs.push((client_state_key, client_state));
-			inputs.push((client_type_key, client_type))
-		}
-
-		// Insert consensus states in trie
-		let consensus_states = ConsensusStates::<T>::iter();
-		for (client_id, height, consensus_state) in consensus_states {
-			let client_id = ClientId::from_str(
-				&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?,
-			)
-			.map_err(|_| Error::<T>::DecodingError)?;
-			let height =
-				ibc::Height::decode(&mut &*height).map_err(|_| Error::<T>::DecodingError)?;
-			let consensus_path = ClientConsensusStatePath {
-				client_id,
-				epoch: height.revision_number,
-				height: height.revision_height,
-			};
-			let path = format!("{}", consensus_path);
-			let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path])
-				.map_err(|_| Error::<T>::DecodingError)?;
-			inputs.push((key, consensus_state));
-		}
-
-		// Insert connection ends in trie
-		for (connection, connection_end) in Connections::<T>::iter() {
-			let connection_id = ConnectionId::from_str(
-				&String::from_utf8(connection).map_err(|_| Error::<T>::DecodingError)?,
-			)
-			.map_err(|_| Error::<T>::DecodingError)?;
-			let path = format!("{}", ConnectionsPath(connection_id));
-			let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path])
-				.map_err(|_| Error::<T>::DecodingError)?;
-			inputs.push((key, connection_end))
-		}
-
-		// Insert channel ends and sequences in trie
-		for (port, channel, channel_end) in Channels::<T>::iter() {
-			let next_seq_send = NextSequenceSend::<T>::get(&port, &channel);
-			let next_seq_recv = NextSequenceRecv::<T>::get(&port, &channel);
-			let next_seq_ack = NextSequenceAck::<T>::get(&port, &channel);
-			let channel_id =
-				channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
-			let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-			let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id));
-			let next_seq_send_path = format!("{}", SeqSendsPath(port_id.clone(), channel_id));
-			let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id.clone(), channel_id));
-			let next_seq_ack_path = format!("{}", SeqAcksPath(port_id.clone(), channel_id));
-			let next_seq_send_key =
-				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_send_path])
-					.map_err(|_| Error::<T>::DecodingError)?;
-			let next_seq_recv_key =
-				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_recv_path])
-					.map_err(|_| Error::<T>::DecodingError)?;
-			let next_seq_ack_key =
-				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_ack_path])
-					.map_err(|_| Error::<T>::DecodingError)?;
-			let channel_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path])
-				.map_err(|_| Error::<T>::DecodingError)?;
-			inputs.push((channel_key, channel_end));
-			inputs.push((next_seq_ack_key, next_seq_ack.encode()));
-			inputs.push((next_seq_send_key, next_seq_send.encode()));
-			inputs.push((next_seq_recv_key, next_seq_recv.encode()));
-		}
-
-		// Insert packet commitments in trie
-		for ((port, channel, sequence), commitment) in PacketCommitment::<T>::iter() {
-			let channel_id =
-				channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
-			let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-			let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
-
-			let commitment_path = CommitmentsPath { port_id, channel_id, sequence };
-
-			let commitment_path = format!("{}", commitment_path);
-			let commitment_key =
-				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path])
-					.map_err(|_| Error::<T>::DecodingError)?;
-			inputs.push((commitment_key, commitment))
-		}
-
-		// Insert packet acknowledgements in trie
-		for ((port, channel, sequence), ack) in Acknowledgements::<T>::iter() {
-			let channel_id =
-				channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
-			let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-			let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
-
-			let ack_path = AcksPath { port_id, channel_id, sequence };
-
-			let ack_path = format!("{}", ack_path);
-			let ack_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![ack_path])
-				.map_err(|_| Error::<T>::DecodingError)?;
-			inputs.push((ack_key, ack));
-		}
-
-		// Insert packet receipts in trie
-		for ((port, channel, sequence), receipt) in PacketReceipt::<T>::iter() {
-			let channel_id =
-				channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
-			let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-			let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
-
-			let receipt_path = ReceiptsPath { port_id, channel_id, sequence };
-
-			let receipt_path = format!("{}", receipt_path);
-			let receipt_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path])
-				.map_err(|_| Error::<T>::DecodingError)?;
-			inputs.push((receipt_key, receipt))
-		}
-
-		Ok(inputs)
-	}
-
-	pub(crate) fn build_ibc_state_root() -> Result<sp_core::H256, Error<T>> {
-		let inputs = Self::build_trie_inputs()?;
-		Ok(sp_io::trie::blake2_256_root(inputs, sp_core::storage::StateVersion::V0))
-	}
-
-	pub(crate) fn extract_ibc_state_root() -> Result<Vec<u8>, Error<T>> {
-		let root = Self::build_ibc_state_root()?;
-		Ok(root.as_bytes().to_vec())
+	/// WARNING: Pretty expensive function. Only call this after all changes to the ics23 key store
+	/// have been made. This recalculates the root hash of the ics23 key store.
+	pub(crate) fn extract_ibc_commitment_root() -> Vec<u8> {
+		child::root(&ChildInfo::new_default(T::CHILD_TRIE_KEY), sp_core::storage::StateVersion::V0)
 	}
 
 	// IBC Runtime Api helper methods
@@ -214,50 +89,48 @@ where
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 	) -> Result<QueryChannelResponse, Error<T>> {
-		let channel = Channels::<T>::get(port_id.clone(), channel_id.clone());
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
-
+		let channel =
+			Channels::<T>::get(port_id.clone(), channel_id).ok_or(Error::<T>::ChannelNotFound)?;
 		let channel_path = format!("{}", ChannelEndsPath(port_id, channel_id));
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path])
-			.map_err(|_| Error::<T>::DecodingError)?;
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![channel_path]);
 
 		Ok(QueryChannelResponse { channel, trie_key: key, height: host_height::<T>() })
 	}
 
 	/// Get a connection state
 	pub fn connection(connection_id: Vec<u8>) -> Result<QueryConnectionResponse, Error<T>> {
-		let connection = Connections::<T>::get(connection_id.clone());
 		let connection_id =
 			connection_id_from_bytes(connection_id).map_err(|_| Error::<T>::DecodingError)?;
+		let connection =
+			Connections::<T>::get(&connection_id).ok_or(Error::<T>::ConnectionNotFound)?;
 
 		let connection_path = format!("{}", ConnectionsPath(connection_id));
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![connection_path])
-			.map_err(|_| Error::<T>::DecodingError)?;
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![connection_path]);
 
 		Ok(QueryConnectionResponse { connection, trie_key: key, height: host_height::<T>() })
 	}
 
 	/// Get a client state
 	pub fn client(client_id: Vec<u8>) -> Result<QueryClientStateResponse, Error<T>> {
-		let client_state = ClientStates::<T>::get(client_id.clone());
 		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
-
+		let client_state =
+			ClientStates::<T>::get(&client_id).ok_or(Error::<T>::ClientStateNotFound)?;
 		let client_state_path = format!("{}", ClientStatePath(client_id));
 
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path])
-			.map_err(|_| Error::<T>::DecodingError)?;
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![client_state_path]);
 
 		Ok(QueryClientStateResponse { client_state, trie_key: key, height: host_height::<T>() })
 	}
 
 	/// Get all client states
 	/// Returns a Vec of (client_id, client_state)
-	pub fn clients() -> Result<Vec<(Vec<u8>, Vec<u8>)>, Error<T>> {
-		let client_states = ClientStates::<T>::iter().collect::<Vec<_>>();
-
-		Ok(client_states)
+	pub fn clients() -> Vec<(Vec<u8>, Vec<u8>)> {
+		ClientStates::<T>::iter()
+			.map(|(client_id, client_state)| (client_id.as_bytes().to_vec(), client_state))
+			.collect::<Vec<_>>()
 	}
 
 	/// Get a consensus state for client
@@ -266,18 +139,19 @@ where
 		client_id: Vec<u8>,
 		latest_cs: bool,
 	) -> Result<QueryConsensusStateResponse, Error<T>> {
+		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
 		let height = if latest_cs {
-			let client_state = ClientStates::<T>::get(client_id.clone());
+			let client_state =
+				ClientStates::<T>::get(&client_id).ok_or(Error::<T>::ClientStateNotFound)?;
 			let client_state =
 				AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
-			client_state.latest_height().encode_vec()
+			client_state.latest_height()
 		} else {
-			height
+			Height::decode_vec(&height).map_err(|_| Error::<T>::DecodingError)?
 		};
-		let consensus_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
-		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
+		let consensus_state = ConsensusStates::<T>::get(client_id.clone(), height)
+			.ok_or(Error::<T>::ConsensusStateNotFound)?;
 
-		let height = ibc::Height::decode(&mut &*height).map_err(|_| Error::<T>::DecodingError)?;
 		let consensus_path = ClientConsensusStatePath {
 			client_id,
 			epoch: height.revision_number,
@@ -285,8 +159,7 @@ where
 		};
 
 		let path = format!("{}", consensus_path);
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path])
-			.map_err(|_| Error::<T>::DecodingError)?;
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![path]);
 
 		Ok(QueryConsensusStateResponse {
 			consensus_state,
@@ -302,9 +175,13 @@ where
 		let connection_ids = ConnectionClient::<T>::get(client_id);
 		let connections = connection_ids
 			.into_iter()
-			.map(|connection_id| IdentifiedConnection {
-				connection_end: Connections::<T>::get(connection_id.clone()),
-				connection_id,
+			.filter_map(|connection_id| {
+				let conn_id = connection_id_from_bytes(connection_id.clone()).ok()?;
+
+				Some(IdentifiedConnection {
+					connection_end: Connections::<T>::get(&conn_id)?,
+					connection_id,
+				})
 			})
 			.collect::<Vec<_>>();
 
@@ -321,7 +198,10 @@ where
 				if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
 					.find(|(.., connection_ids)| connection_ids.contains(&connection_id))
 				{
-					let client_state = ClientStates::<T>::get(client_id.clone());
+					let client_id_ = client_id_from_bytes(client_id.clone())
+						.map_err(|_| Error::<T>::DecodingError)?;
+					let client_state = ClientStates::<T>::get(&client_id_)
+						.ok_or(Error::<T>::ClientStateNotFound)?;
 					return Ok(IdentifiedClientState { client_id, client_state })
 				}
 			}
@@ -357,25 +237,39 @@ where
 
 		let channels = identifiers
 			.into_iter()
-			.map(|(port_id, channel_id)| {
-				let channel_end = Channels::<T>::get(port_id.clone(), channel_id.clone());
-				Ok(IdentifiedChannel { channel_id, port_id, channel_end })
+			.map(|(port_id_bytes, channel_id_bytes)| {
+				let channel_id = channel_id_from_bytes(channel_id_bytes.clone())
+					.map_err(|_| Error::<T>::DecodingError)?;
+				let port_id = port_id_from_bytes(port_id_bytes.clone())
+					.map_err(|_| Error::<T>::DecodingError)?;
+
+				let channel_end =
+					Channels::<T>::get(port_id, channel_id).ok_or(Error::<T>::ChannelNotFound)?;
+				Ok(IdentifiedChannel {
+					channel_id: channel_id_bytes,
+					port_id: port_id_bytes,
+					channel_end,
+				})
 			})
 			.collect::<Result<Vec<_>, Error<T>>>()?;
 		Ok(QueryChannelsResponse { channels, height: host_height::<T>() })
 	}
 
 	pub fn packet_commitments(
-		channel_id: Vec<u8>,
-		port_id: Vec<u8>,
+		channel_id_bytes: Vec<u8>,
+		port_id_bytes: Vec<u8>,
 	) -> Result<QueryPacketCommitmentsResponse, Error<T>> {
+		let channel_id = channel_id_from_bytes(channel_id_bytes.clone())
+			.map_err(|_| Error::<T>::DecodingError)?;
+		let port_id =
+			port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
 		let commitments = PacketCommitment::<T>::iter()
 			.filter_map(|((p, c, s), commitment)| {
 				if p == port_id && c == channel_id {
 					let packet_state = PacketState {
-						port_id: port_id.clone(),
-						channel_id: channel_id.clone(),
-						sequence: s,
+						port_id: port_id_bytes.clone(),
+						channel_id: channel_id_bytes.clone(),
+						sequence: s.into(),
 						data: commitment,
 					};
 					Some(packet_state)
@@ -389,16 +283,20 @@ where
 	}
 
 	pub fn packet_acknowledgements(
-		channel_id: Vec<u8>,
-		port_id: Vec<u8>,
+		channel_id_bytes: Vec<u8>,
+		port_id_bytes: Vec<u8>,
 	) -> Result<QueryPacketAcknowledgementsResponse, Error<T>> {
+		let channel_id = channel_id_from_bytes(channel_id_bytes.clone())
+			.map_err(|_| Error::<T>::DecodingError)?;
+		let port_id =
+			port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
 		let acks = Acknowledgements::<T>::iter()
 			.filter_map(|((p, c, s), ack)| {
 				if p == port_id && c == channel_id {
 					let packet_state = PacketState {
-						port_id: port_id.clone(),
-						channel_id: channel_id.clone(),
-						sequence: s,
+						port_id: port_id_bytes.clone(),
+						channel_id: channel_id_bytes.clone(),
+						sequence: s.into(),
 						data: ack,
 					};
 					Some(packet_state)
@@ -415,23 +313,29 @@ where
 		port_id: Vec<u8>,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Error<T>> {
+		let channel_id =
+			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
+		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		Ok(seqs
 			.into_iter()
 			.filter(|s| {
-				!PacketReceipt::<T>::contains_key((port_id.clone(), channel_id.clone(), *s))
+				!PacketReceipt::<T>::contains_key((port_id.clone(), channel_id, (*s).into()))
 			})
 			.collect())
 	}
 
 	pub fn unreceived_acknowledgements(
-		channel_id: Vec<u8>,
-		port_id: Vec<u8>,
+		channel_id_bytes: Vec<u8>,
+		port_id_bytes: Vec<u8>,
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Error<T>> {
+		let channel_id =
+			channel_id_from_bytes(channel_id_bytes).map_err(|_| Error::<T>::DecodingError)?;
+		let port_id = port_id_from_bytes(port_id_bytes).map_err(|_| Error::<T>::DecodingError)?;
 		Ok(seqs
 			.into_iter()
 			.filter(|s| {
-				PacketCommitment::<T>::contains_key((port_id.clone(), channel_id.clone(), *s))
+				PacketCommitment::<T>::contains_key((port_id.clone(), channel_id, (*s).into()))
 			})
 			.collect())
 	}
@@ -440,13 +344,13 @@ where
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 	) -> Result<QueryNextSequenceReceiveResponse, Error<T>> {
-		let sequence = NextSequenceRecv::<T>::get(port_id.clone(), channel_id.clone());
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
+		let sequence = NextSequenceRecv::<T>::get(port_id.clone(), channel_id)
+			.ok_or(Error::<T>::SendPacketError)?;
 		let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id, channel_id));
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_recv_path])
-			.map_err(|_| Error::<T>::DecodingError)?;
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![next_seq_recv_path]);
 
 		Ok(QueryNextSequenceReceiveResponse { sequence, trie_key: key, height: host_height::<T>() })
 	}
@@ -456,14 +360,14 @@ where
 		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketCommitmentResponse, Error<T>> {
-		let commitment = PacketCommitment::<T>::get((port_id.clone(), channel_id.clone(), seq));
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
+		let commitment = PacketCommitment::<T>::get((port_id.clone(), channel_id, seq.into()))
+			.ok_or(Error::<T>::PacketCommitmentNotFound)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
 		let commitment_path = format!("{}", CommitmentsPath { port_id, channel_id, sequence });
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path])
-			.map_err(|_| Error::<T>::DecodingError)?;
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![commitment_path]);
 
 		Ok(QueryPacketCommitmentResponse { commitment, trie_key: key, height: host_height::<T>() })
 	}
@@ -473,14 +377,14 @@ where
 		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse, Error<T>> {
-		let ack = Acknowledgements::<T>::get((port_id.clone(), channel_id.clone(), seq));
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
+		let ack = Acknowledgements::<T>::get((port_id.clone(), channel_id, sequence))
+			.ok_or(Error::<T>::PacketCommitmentNotFound)?;
 		let acks_path = format!("{}", AcksPath { port_id, channel_id, sequence });
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![acks_path])
-			.map_err(|_| Error::<T>::DecodingError)?;
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![acks_path]);
 
 		Ok(QueryPacketAcknowledgementResponse { ack, trie_key: key, height: host_height::<T>() })
 	}
@@ -490,15 +394,15 @@ where
 		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse, Error<T>> {
-		let receipt = PacketReceipt::<T>::get((port_id.clone(), channel_id.clone(), seq));
-		let receipt = String::from_utf8(receipt).map_err(|_| Error::<T>::DecodingError)?;
 		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
+		let receipt = PacketReceipt::<T>::get((port_id.clone(), channel_id, sequence))
+			.ok_or(Error::<T>::PacketReceiptNotFound)?;
+		let receipt = String::from_utf8(receipt).map_err(|_| Error::<T>::DecodingError)?;
 		let receipt_path = format!("{}", ReceiptsPath { port_id, channel_id, sequence });
-		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path])
-			.map_err(|_| Error::<T>::DecodingError)?;
+		let key = apply_prefix(T::CONNECTION_PREFIX, vec![receipt_path]);
 		let receipt = &receipt == "Ok";
 		Ok(QueryPacketReceiptResponse { receipt, trie_key: key, height: host_height::<T>() })
 	}
@@ -507,11 +411,12 @@ where
 		client_id: Vec<u8>,
 		connection_id: Vec<u8>,
 	) -> Result<ConnectionHandshake, Error<T>> {
-		let client_state = ClientStates::<T>::get(client_id.clone());
+		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
+		let client_state =
+			ClientStates::<T>::get(&client_id).ok_or(Error::<T>::ClientStateNotFound)?;
 		let client_state_decoded =
 			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
 		let height = client_state_decoded.latest_height();
-		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
 		let connection_id =
 			connection_id_from_bytes(connection_id).map_err(|_| Error::<T>::DecodingError)?;
 		let prefix = T::CONNECTION_PREFIX;
@@ -523,13 +428,9 @@ where
 		};
 		let client_state_path = format!("{}", ClientStatePath(client_id));
 		let consensus_path = format!("{}", consensus_path);
-		let client_state_key = apply_prefix_and_encode(prefix, vec![client_state_path])
-			.map_err(|_| Error::<T>::DecodingError)?;
-		let connection_key = apply_prefix_and_encode(prefix, vec![connection_path])
-			.map_err(|_| Error::<T>::DecodingError)?;
-		let consensus_key = apply_prefix_and_encode(prefix, vec![consensus_path])
-			.map_err(|_| Error::<T>::DecodingError)?;
-
+		let client_state_key = apply_prefix(prefix, vec![client_state_path]);
+		let connection_key = apply_prefix(prefix, vec![connection_path]);
+		let consensus_key = apply_prefix(prefix, vec![consensus_path]);
 		Ok(ConnectionHandshake {
 			client_state,
 			trie_keys: vec![client_state_key, connection_key, consensus_key],
@@ -575,10 +476,18 @@ where
 		Ok(())
 	}
 
-	pub(crate) fn packet_cleanup() {
-		for (port_id, channel_id) in Channels::<T>::iter_keys() {
-			let key = Pallet::<T>::offchain_key(channel_id.clone(), port_id.clone());
-			let ack_key = Pallet::<T>::offchain_key(channel_id.clone(), port_id.clone());
+	pub(crate) fn packet_cleanup() -> Result<(), Error<T>> {
+		for (port_id_bytes, channel_id_bytes, _) in Channels::<T>::iter() {
+			let channel_id = channel_id_from_bytes(channel_id_bytes.clone())
+				.map_err(|_| Error::<T>::DecodingError)?;
+			let port_id =
+				port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
+
+			let key = Pallet::<T>::offchain_key(channel_id_bytes.clone(), port_id_bytes.clone());
+			let ack_key = Pallet::<T>::acknowledgements_offchain_key(
+				channel_id_bytes.clone(),
+				port_id_bytes.clone(),
+			);
 			// Clean up offchain packets
 			if let Some(mut offchain_packets) =
 				sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
@@ -588,8 +497,8 @@ where
 				for key in keys {
 					if !PacketCommitment::<T>::contains_key((
 						port_id.clone(),
-						channel_id.clone(),
-						key,
+						channel_id,
+						key.into(),
 					)) {
 						let _ = offchain_packets.remove(&key);
 					}
@@ -608,8 +517,8 @@ where
 				for key in keys {
 					if !Acknowledgements::<T>::contains_key((
 						port_id.clone(),
-						channel_id.clone(),
-						key,
+						channel_id,
+						key.into(),
 					)) {
 						let _ = acks.remove(&key);
 					}
@@ -617,6 +526,8 @@ where
 				sp_io::offchain_index::set(&key, acks.encode().as_slice());
 			}
 		}
+
+		Ok(())
 	}
 
 	pub fn get_offchain_packets(
@@ -654,7 +565,7 @@ where
 	pub fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
 		let ctx = Context::<T>::new();
 		// revision number is not used in this case so it's fine to use zero
-		let height = ibc::Height::new(0, height as u64);
+		let height = Height::new(0, height as u64);
 		ctx.host_consensus_state(height).ok().map(|cs_state| cs_state.encode_vec())
 	}
 }
@@ -714,7 +625,10 @@ where
 				},
 			)
 			.ok_or(IbcHandlerError::ClientIdError)?;
-		let client_state = ClientStates::<T>::get(client_id);
+		let client_id =
+			client_id_from_bytes(client_id).map_err(|_| IbcHandlerError::DecodingError)?;
+		let client_state =
+			ClientStates::<T>::get(&client_id).ok_or(IbcHandlerError::ClientStateError)?;
 		let client_state = AnyClientState::decode_vec(&client_state)
 			.map_err(|_| IbcHandlerError::ClientStateError)?;
 		Ok(client_state.chain_id().version())
@@ -729,13 +643,14 @@ where
 		} else {
 			Self::client_revision_number(port_id.clone(), channel_id.clone())?
 		};
-		let mut ctx = crate::routing::Context::<T>::new();
-		let next_seq_send = NextSequenceSend::<T>::get(port_id.clone(), channel_id.clone());
-		let sequence = Sequence::from(next_seq_send);
+		let mut ctx = Context::<T>::new();
 		let source_port =
 			port_id_from_bytes(port_id).map_err(|_| IbcHandlerError::ChannelOrPortError)?;
 		let source_channel =
 			channel_id_from_bytes(channel_id).map_err(|_| IbcHandlerError::ChannelOrPortError)?;
+		let next_seq_send = NextSequenceSend::<T>::get(source_port.clone(), source_channel)
+			.ok_or(IbcHandlerError::SendPacketError)?;
+		let sequence = Sequence::from(next_seq_send);
 		let source_channel_end = ctx
 			.channel_end(&(source_port.clone(), source_channel))
 			.map_err(|_| IbcHandlerError::ChannelOrPortError)?;

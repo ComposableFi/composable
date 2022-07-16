@@ -3,8 +3,14 @@
 #[allow(unused)]
 use super::super::*;
 use crate::{
-	benchmarks::tendermint_benchmark_utils::*, host_functions::HostFunctions,
-	pallet::Pallet as PalletIbc, Any, Config, HostConsensusStates,
+	benchmarks::tendermint_benchmark_utils::*,
+	host_functions::HostFunctions,
+	ics23::{
+		acknowledgements::Acknowledgements, client_states::ClientStates,
+		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+	},
+	pallet::Pallet as PalletIbc,
+	Any, Config, HostConsensusStates,
 };
 use core::str::FromStr;
 use frame_benchmarking::{benchmarks, whitelisted_caller};
@@ -64,7 +70,7 @@ const TIMESTAMP: u64 = 1650894363;
 benchmarks! {
 	where_clause {
 		where u32: From<<T as frame_system::Config>::BlockNumber>,
-				T: Send + Sync + pallet_timestamp::Config<Moment = u64> + parachain_info::Config,
+				T: Send + Sync + pallet_timestamp::Config<Moment = u64> + parachain_info::Config + Config,
 	}
 
 	// update_client
@@ -90,7 +96,7 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
-		let client_state = ClientStates::<T>::get(client_id.as_bytes().to_vec());
+		let client_state = ClientStates::<T>::get(&client_id).unwrap();
 		let client_state = AnyClientState::decode_vec(&*client_state).unwrap();
 		assert_eq!(client_state.latest_height(), Height::new(0, 2));
 	}
@@ -107,7 +113,7 @@ benchmarks! {
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let counterparty = Counterparty::new(counterparty_client_id, None, commitment_prefix);
 		let delay_period = core::time::Duration::from_nanos(1000);
 
@@ -146,7 +152,7 @@ benchmarks! {
 		// Successful processing of a connection try open message requires a compatible connection end with state INIT
 		// to exist on the local chain
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(1000);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Init, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -165,6 +171,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let caller: T::AccountId = whitelisted_caller();
 		let msg = Any { type_url: CONN_TRY_OPEN_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec() };
+		log::trace!(target: "pallet_ibc", "\n\n\n\n\n\n<=============== Begin benchmark ====================>\n\n\n\n\n");
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
@@ -188,7 +195,7 @@ benchmarks! {
 		// Successful processing of a connection open confirm message requires a compatible connection end with state INIT or TRYOPEN
 		// to exist on the local chain
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(1000);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Init, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -228,7 +235,7 @@ benchmarks! {
 		// Successful processing of a connection open confirm message requires a compatible connection end with state TryOpen
 		// to exist on the local chain
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(1000);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::TryOpen, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -267,7 +274,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(1000);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -312,7 +319,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(1000);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -377,7 +384,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(1000);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -439,7 +446,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(1000);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -464,7 +471,7 @@ benchmarks! {
 		);
 
 		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
-		ctx.store_connection_channels(ConnectionId::new(0), &(port_id, ChannelId::new(0))).unwrap();
+		ctx.store_connection_channels(ConnectionId::new(0), &(port_id.clone(), ChannelId::new(0))).unwrap();
 
 		let (cs_state, value) = create_chan_open_confirm();
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
@@ -494,7 +501,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(1000);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -519,7 +526,7 @@ benchmarks! {
 		);
 
 		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
-		ctx.store_connection_channels(ConnectionId::new(0), &(port_id, ChannelId::new(0))).unwrap();
+		ctx.store_connection_channels(ConnectionId::new(0), &(port_id.clone(), ChannelId::new(0))).unwrap();
 
 		let value = create_chan_close_init();
 		let msg = Any {
@@ -548,7 +555,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(1000);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -573,7 +580,7 @@ benchmarks! {
 		);
 
 		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
-		ctx.store_connection_channels(ConnectionId::new(0), &(port_id, ChannelId::new(0))).unwrap();
+		ctx.store_connection_channels(ConnectionId::new(0), &(port_id.clone(), ChannelId::new(0))).unwrap();
 
 		let (cs_state, value) = create_chan_close_confirm();
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
@@ -607,7 +614,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(0);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -631,7 +638,7 @@ benchmarks! {
 
 		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
 		ctx.store_connection_channels(ConnectionId::new(0), &(port_id.clone(), ChannelId::new(0))).unwrap();
-		ctx.store_next_sequence_recv((port_id, ChannelId::new(0)), 1u64.into()).unwrap();
+		ctx.store_next_sequence_recv((port_id.clone(), ChannelId::new(0)), 1u64.into()).unwrap();
 
 		let (cs_state, value) = create_recv_packet::<T>(data);
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
@@ -669,7 +676,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(0);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -694,7 +701,7 @@ benchmarks! {
 
 		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
 		ctx.store_connection_channels(ConnectionId::new(0), &(port_id.clone(), ChannelId::new(0))).unwrap();
-		ctx.store_next_sequence_recv((port_id, ChannelId::new(0)), 1u64.into()).unwrap();
+		ctx.store_next_sequence_recv((port_id.clone(), ChannelId::new(0)), 1u64.into()).unwrap();
 
 		let (cs_state, value) = create_ack_packet::<T>(data, ack);
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
@@ -729,7 +736,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
 		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let delay_period = core::time::Duration::from_nanos(0);
 		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
 		let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
@@ -755,7 +762,7 @@ benchmarks! {
 		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
 		ctx.store_connection_channels(ConnectionId::new(0), &(port_id.clone(), ChannelId::new(0))).unwrap();
 		ctx.store_next_sequence_recv((port_id.clone(), ChannelId::new(0)), 1u64.into()).unwrap();
-		ctx.store_next_sequence_send((port_id, ChannelId::new(0)), 1u64.into()).unwrap();
+		ctx.store_next_sequence_send((port_id.clone(), ChannelId::new(0)), 1u64.into()).unwrap();
 
 		let (cs_state, value) = create_timeout_packet::<T>(data);
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
@@ -801,7 +808,7 @@ benchmarks! {
 
 		for j in 1..b {
 			let connection_id = ConnectionId::new(j.into());
-			let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+			let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 			let delay_period = core::time::Duration::from_nanos(1000);
 			let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
 			let connection_counterparty = Counterparty::new(client_id.clone(), Some(ConnectionId::new(j.into())), commitment_prefix);
@@ -827,20 +834,20 @@ benchmarks! {
 			let commitment = vec![0;32];
 			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 			let channel_id = ChannelId::new(0);
-			PacketCommitment::<T>::insert((port_id.as_bytes(), channel_id.to_string().as_bytes(), l as u64), commitment)
+			PacketCommitment::<T>::insert((port_id.clone(), channel_id, (l as u64).into()), commitment.into())
 		}
 
 		for m in 1..e {
 			let ack = vec![0;32];
 			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 			let channel_id = ChannelId::new(0);
-			Acknowledgements::<T>::insert((port_id.as_bytes(), channel_id.to_string().as_bytes(), m as u64), ack)
+			Acknowledgements::<T>::insert((port_id.clone(), channel_id, (m as u64).into()), ack.into())
 		}
 
 		for n in 1..f {
 			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 			let channel_id = ChannelId::new(0);
-			PacketReceipt::<T>::insert((port_id.as_bytes(), channel_id.to_string().as_bytes(), n as u64), "Ok".as_bytes())
+			PacketReceipt::<T>::insert((port_id.clone(), channel_id, (n as u64).into()), b"Ok".to_vec())
 		}
 
 	}: { PalletIbc::<T>::on_finalize(0u32.into())}
@@ -872,7 +879,7 @@ benchmarks! {
 			),
 			client_id: client_id.as_bytes().to_vec(),
 			counterparty_client_id: counterparty_client_id.as_bytes().to_vec(),
-			commitment_prefix: "ibc".as_bytes().to_vec(),
+			commitment_prefix: "ibc/".as_bytes().to_vec(),
 			delay_period: 1000,
 		};
 
@@ -896,6 +903,6 @@ benchmarks! {
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 	}: _(RawOrigin::Root, msg)
 	verify {
-		assert_eq!(Clients::<T>::count(), 1)
+		assert_eq!(ClientCounter::<T>::get(), 1)
 	}
 }

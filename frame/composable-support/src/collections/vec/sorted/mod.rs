@@ -20,7 +20,7 @@ pub struct SortedVec<T: Ord> {
 	vec: Vec<T>,
 }
 
-impl<'a, T: Encode + Decode + Ord> EncodeLike<Vec<T>> for SortedVec<T> {}
+impl<T: Encode + Decode + Ord> EncodeLike<Vec<T>> for SortedVec<T> {}
 impl<T: Ord> WrapperTypeEncode for SortedVec<T> {}
 
 impl<T: Decode + Ord> Decode for SortedVec<T> {
