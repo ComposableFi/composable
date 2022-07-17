@@ -36,8 +36,11 @@ book/ @ComposableFi/technical-writing-reviewers
 README.md @ComposableFi/technical-writing-reviewers @ComposableFi/core @ComposableFi/parachain-leads
 
 ## Frontend and Blockchain Integration
-
 frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
+.github/workflows/frontend-pablo-eslint.yml @ComposableFi/sre @ComposableFi/blockchain-integrations
+.github/workflows/frontend-pablo-tests.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations
+.github/workflows/frontend-picasso-eslint.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations
+.github/workflows/frontend-picasso-tests.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations
 
 ## Runtime Integration Tests
 
