@@ -239,9 +239,8 @@ pub mod pallet {
 		fn update_twap(
 			vamm_id: Self::VammId,
 			base_twap: Option<Self::Decimal>,
-			quote_twap: Option<Self::Decimal>,
-		) -> Result<(Self::Decimal, Self::Decimal), DispatchError> {
-			if base_twap.is_some() || quote_twap.is_some() {
+		) -> Result<Self::Decimal, DispatchError> {
+			if base_twap.is_some() {
 				panic!("To set twap directly, use the helper functions.");
 			}
 
@@ -252,7 +251,7 @@ pub mod pallet {
 				*n = None;
 			});
 
-			Ok((Zero::zero(), Zero::zero())) // Dummy returns
+			Ok(Zero::zero()) // Dummy returns
 		}
 	}
 

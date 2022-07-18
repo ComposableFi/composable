@@ -6,7 +6,7 @@ use frame_support::{dispatch::DispatchError, pallet_prelude::*};
 use sp_std::vec::Vec;
 
 // block timestamped value
-#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Eq, TypeInfo, Clone)]
 pub struct Price<PriceValue, BlockNumber> {
 	/// value
 	pub price: PriceValue,
