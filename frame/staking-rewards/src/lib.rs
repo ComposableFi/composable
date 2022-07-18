@@ -507,11 +507,15 @@ pub mod pallet {
 			for (asset_id, reward) in inner_rewards.iter_mut() {
 				let inflation =
 					stake.reductions.get(asset_id).ok_or(Error::<T>::ReductionConfigProblem)?;
-				let claim = reward
-					.total_rewards
-					.safe_mul(&stake.share)?
-					.safe_div(&rewards_pool.total_shares)?
-					.safe_sub(inflation)?;
+				let claim = if rewards_pool.total_shares == Zero::zero() {
+					Zero::zero()
+				} else {
+					reward
+						.total_rewards
+						.safe_mul(&stake.share)?
+						.safe_div(&rewards_pool.total_shares)?
+						.safe_sub(inflation)?
+				};
 				reward.total_rewards = reward.total_rewards.safe_sub(inflation)?;
 				reward.total_dilution_adjustment =
 					reward.total_dilution_adjustment.safe_sub(inflation)?;

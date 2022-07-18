@@ -50,6 +50,18 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+	// Storage: StakingRewards RewardPools (r:1 w:1)
+	// Storage: Tokens Accounts (r:2 w:2)
+	// Storage: Tokens TotalIssuance (r:1 w:0)
+	// Storage: Timestamp Now (r:1 w:0)
+	// Storage: StakingRewards StakeCount (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	// Storage: StakingRewards Stakes (r:0 w:1)
+	fn unstake() -> Weight {
+		(65_201_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(7 as Weight))
+			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+	}
 	// Storage: StakingRewards Stakes (r:1 w:2)
 	// Storage: StakingRewards StakeCount (r:1 w:1)
 	fn split() -> Weight {
