@@ -20,7 +20,7 @@ import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 
 export type MyBondingsTableProps = TableContainerProps & {
   onRowClick?: (offerId: string) => void;
-  openPositions: ActiveBond[];
+  items: ActiveBond[];
 };
 
 export const BondTableRow: FC<{
@@ -72,11 +72,11 @@ export const BondTableRow: FC<{
 };
 
 export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
-  openPositions,
+  items,
   onRowClick = () => {},
   ...rest
 }) => {
-  if (openPositions.length > 0) {
+  if (items.length > 0) {
     return (
       <TableContainer {...rest}>
         <Table sx={{ minWidth: 420 }} aria-label="simple table">
@@ -89,7 +89,7 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {openPositions.map(({ bond }: { bond: BondOffer }, index) => (
+            {items.map(({ bond }: { bond: BondOffer }, index) => (
               <BondTableRow key={index} bond={bond} onRowClick={onRowClick} />
             ))}
           </TableBody>
