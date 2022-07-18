@@ -139,9 +139,7 @@ export const AllBondTable: React.FC = () => {
 
   useEffect(() => {
     fetchTotalPurchasedBondsByOfferIds().then(
-      (totalPurchasedByOfferIds) => {
-        setBondOfferTotalPurchased(totalPurchasedByOfferIds);
-      }
+      setBondOfferTotalPurchased
     );
   }, [setBondOfferTotalPurchased]);
 
