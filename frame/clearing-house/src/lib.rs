@@ -504,6 +504,9 @@ pub mod pallet {
 		InvalidMarginRatioRequirement,
 		/// Raised when the price returned by the Oracle is nonpositive.
 		InvalidOracleReading,
+		/// Raised when performing an operation (opening/closing a position) on a market that is
+		/// not open.
+		MarketClosed,
 		/// Raised when querying a market with an invalid or nonexistent market Id.
 		MarketIdNotFound,
 		/// Raised when creating a new position but exceeding the maximum number of positions for
@@ -1245,8 +1248,10 @@ pub mod pallet {
 			account_id: &Self::AccountId,
 			market_id: &Self::MarketId,
 		) -> Result<Self::Balance, DispatchError> {
-			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
 			let mut market = Self::try_get_market(market_id)?;
+			Self::ensure_market_open(&market)?;
+
+			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
 			let mut positions = Self::get_positions(account_id);
 			let (position, position_index) = Self::try_get_position(&mut positions, market_id)?;
 
@@ -1395,7 +1400,9 @@ pub mod pallet {
 			market_id: Self::MarketId,
 			when: Self::Timestamp,
 		) -> Result<(), DispatchError> {
-			let market = Self::try_get_market(&market_id)?;
+			let mut market = Self::try_get_market(&market_id)?;
+			market.closed_ts = Some(when);
+			Markets::<T>::insert(&market_id, market);
 			Ok(())
 		}
 	}
@@ -1784,6 +1791,15 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
+		fn ensure_market_open(market: &Market<T>) -> Result<(), DispatchError> {
+			let now = T::UnixTime::now().as_secs();
+			if market.is_closed(now) {
+				Err(Error::<T>::MarketClosed.into())
+			} else {
+				Ok(())
+			}
+		}
+
 		fn check_oracle_guard_rails(
 			market: &Market<T>,
 			oracle_status: &OracleStatus<T>,
