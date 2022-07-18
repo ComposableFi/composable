@@ -106,8 +106,6 @@ pub mod pallet {
 			keep_alive: bool,
 		},
 		Unstaked {
-			/// Id of newly created stake.
-			pool_id: T::RewardPoolId,
 			/// Owner of the stake.
 			owner: T::AccountId,
 			/// Position Id of newly created stake.
@@ -357,7 +355,7 @@ pub mod pallet {
 		/// Remove a stake.
 		///
 		/// Emits `Unstaked` event when successful.
-		#[pallet::weight(T::WeightInfo::stake())]
+		#[pallet::weight(T::WeightInfo::unstake())]
 		pub fn unstake(origin: OriginFor<T>, position_id: T::PositionId) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
 			<Self as Staking>::unstake(&owner, &position_id, Zero::zero())?;
@@ -533,7 +531,6 @@ pub mod pallet {
 			Stakes::<T>::remove(position_id);
 
 			Self::deposit_event(Event::<T>::Unstaked {
-				pool_id,
 				owner: who.clone(),
 				position_id: *position_id,
 			});
