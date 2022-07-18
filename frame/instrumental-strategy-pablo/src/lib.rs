@@ -214,10 +214,6 @@ pub mod pallet {
 		PoolNotFound,
 		// Occurs when we try to set a new pool_id, during a transferring from or to an old one
 		TransferringInProgress,
-		// Occurs when an attempt is made to initialize a function not from an admin account
-		NotAdminAccount,
-		// Occurs when an admin account doesn't have enough access rights to initialize a function
-		NotEnoughAccessRights,
 	}
 
 	// ---------------------------------------------------------------------------------------------
