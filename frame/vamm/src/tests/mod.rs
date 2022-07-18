@@ -3,8 +3,9 @@
 
 use crate::{
 	mock::{Balance, MockRuntime},
-	pallet::{self, VammState},
+	pallet::{self},
 	tests::helpers::as_decimal,
+	types::VammState,
 };
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, VammConfig};
 use frame_benchmarking::Zero;

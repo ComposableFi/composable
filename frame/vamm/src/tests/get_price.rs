@@ -1,10 +1,11 @@
 use crate::{
 	mock::{ExtBuilder, MockRuntime, TestPallet},
-	pallet::{Error, VammState},
+	pallet::Error,
 	tests::{
 		helpers::{any_sane_asset_amount, as_decimal, as_decimal_from_fraction, run_for_seconds},
 		Timestamp, RUN_CASES,
 	},
+	types::VammState,
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait};
 use frame_support::{assert_noop, assert_ok};

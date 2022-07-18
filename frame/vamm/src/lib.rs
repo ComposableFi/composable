@@ -125,6 +125,10 @@ mod tests;
 #[cfg(test)]
 mod mock;
 
+mod types;
+
+mod helpers;
+
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -133,6 +137,7 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
+	use crate::{helpers::types::CalculateSwapAsset, types::VammState};
 	use codec::{Codec, FullCodec};
 	use composable_maths::labs::numbers::{IntoDecimal, TryReciprocal, UnsignedMath};
 	use composable_traits::vamm::{
@@ -153,9 +158,6 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber,
 	};
 	use std::cmp::Ordering;
-
-	#[cfg(feature = "std")]
-	use serde::{Deserialize, Serialize};
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -245,69 +247,10 @@ pub mod pallet {
 	//                                             Pallet Types
 	// ----------------------------------------------------------------------------------------------------
 
-	type BalanceOf<T> = <T as Config>::Balance;
-	type DecimalOf<T> = <T as Config>::Decimal;
-	type VammIdOf<T> = <T as Config>::VammId;
-	type MomentOf<T> = <T as Config>::Moment;
-	type SwapOutputOf<T> = SwapOutput<BalanceOf<T>>;
-	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
-	type MovePriceConfigOf<T> = MovePriceConfig<VammIdOf<T>, BalanceOf<T>>;
-	type VammConfigOf<T> = VammConfig<BalanceOf<T>, MomentOf<T>>;
-	type VammStateOf<T> = VammState<BalanceOf<T>, MomentOf<T>, DecimalOf<T>>;
-
-	/// Represents the direction a of a position.
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
-	pub enum SwapDirection {
-		Add,
-		Remove,
-	}
-
-	/// Data relating to the state of a virtual market.
-	#[derive(
-		Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug, Default,
-	)]
-	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-	pub struct VammState<Balance, Moment, Decimal> {
-		/// The total amount of base asset present in the vamm.
-		pub base_asset_reserves: Balance,
-
-		/// The total amount of quote asset present in the vamm.
-		pub quote_asset_reserves: Balance,
-
-		/// The magnitude of the quote asset reserve.
-		pub peg_multiplier: Balance,
-
-		/// The invariant `K`.
-		pub invariant: U256,
-
-		/// Whether this market is closed or not.
-		///
-		/// This variable function as a signal to allow pallets who uses the
-		/// Vamm to set a market as "operating as normal" or "not to be used
-		/// anymore".  If the value is `None` it means the market is operating
-		/// as normal, but if the value is `Some(timestamp)` it means the market
-		/// is flagged to be closed and the closing action will take (or took)
-		/// effect at the time `timestamp`.
-		pub closed: Option<Moment>,
-
-		/// The time weighted average price of
-		/// [`base`](composable_traits::vamm::AssetType::Base) asset w.r.t.
-		/// [`quote`](composable_traits::vamm::AssetType::Quote) asset.  If
-		/// wanting to get `quote_asset_twap`, just call
-		/// `base_asset_twap.reciprocal()` as those values should always be
-		/// reciprocal of each other. For more information about computing the
-		/// reciprocal, please check
-		/// [`reciprocal`](sp_runtime::FixedPointNumber::reciprocal).
-		pub base_asset_twap: Decimal,
-
-		/// The timestamp for the last update of
-		/// [`base_asset_twap`](VammState::base_asset_twap).
-		pub twap_timestamp: Moment,
-
-		/// The frequency with which the vamm must have its funding rebalanced.
-		/// (Used only for twap calculations.)
-		pub twap_period: Moment,
-	}
+	type SwapOutputOf<T> = SwapOutput<<T as Config>::Balance>;
+	pub type SwapConfigOf<T> = SwapConfig<<T as Config>::VammId, <T as Config>::Balance>;
+	type VammStateOf<T> =
+		VammState<<T as Config>::Balance, <T as Config>::Moment, <T as Config>::Decimal>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
@@ -322,13 +265,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn vamm_count)]
 	#[allow(clippy::disallowed_types)]
-	pub type VammCounter<T: Config> = StorageValue<_, VammIdOf<T>, ValueQuery>;
+	pub type VammCounter<T: Config> = StorageValue<_, T::VammId, ValueQuery>;
 
 	/// Maps [VammId](Config::VammId) to the corresponding virtual
 	/// [VammState] specs.
 	#[pallet::storage]
 	#[pallet::getter(fn get_vamm)]
-	pub type VammMap<T: Config> = StorageMap<_, Blake2_128Concat, VammIdOf<T>, VammStateOf<T>>;
+	pub type VammMap<T: Config> = StorageMap<_, Blake2_128Concat, T::VammId, VammStateOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                            Runtime Events
@@ -340,12 +283,12 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Emitted after a successful call to the [`create`](Pallet::create)
 		/// function.
-		Created { vamm_id: VammIdOf<T>, state: VammStateOf<T> },
+		Created { vamm_id: T::VammId, state: VammStateOf<T> },
 		/// Emitted after a successful call to the [`swap`](Pallet::swap)
 		/// function.
 		Swapped {
-			vamm_id: VammIdOf<T>,
-			input_amount: BalanceOf<T>,
+			vamm_id: T::VammId,
+			input_amount: T::Balance,
 			output_amount: SwapOutputOf<T>,
 			input_asset_type: AssetType,
 			direction: Direction,
@@ -353,14 +296,14 @@ pub mod pallet {
 		/// Emitted after a successful call to the
 		/// [`move_price`](Pallet::move_price) function.
 		PriceMoved {
-			vamm_id: VammIdOf<T>,
-			base_asset_reserves: BalanceOf<T>,
-			quote_asset_reserves: BalanceOf<T>,
+			vamm_id: T::VammId,
+			base_asset_reserves: T::Balance,
+			quote_asset_reserves: T::Balance,
 			invariant: U256,
 		},
 		/// Emitted after a successful call to the
 		/// [`update_twap`](Pallet::update_twap) function.
-		UpdatedTwap { vamm_id: VammIdOf<T>, base_twap: DecimalOf<T> },
+		UpdatedTwap { vamm_id: T::VammId, base_twap: T::Decimal },
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -433,8 +376,8 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		pub vamm_count: VammIdOf<T>,
-		pub vamms: Vec<(VammIdOf<T>, VammStateOf<T>)>,
+		pub vamm_count: T::VammId,
+		pub vamms: Vec<(T::VammId, VammStateOf<T>)>,
 	}
 
 	#[cfg(feature = "std")]
@@ -459,13 +402,13 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Vamm for Pallet<T> {
-		type Balance = BalanceOf<T>;
-		type Moment = MomentOf<T>;
+		type Balance = T::Balance;
 		type Decimal = T::Decimal;
+		type Moment = T::Moment;
+		type MovePriceConfig = MovePriceConfig<T::VammId, T::Balance>;
 		type SwapConfig = SwapConfigOf<T>;
-		type VammConfig = VammConfigOf<T>;
-		type MovePriceConfig = MovePriceConfigOf<T>;
-		type VammId = VammIdOf<T>;
+		type VammConfig = VammConfig<T::Balance, T::Moment>;
+		type VammId = T::VammId;
 
 		/// Creates a new virtual automated market maker.
 		///
@@ -516,7 +459,7 @@ pub mod pallet {
 		/// # Runtime
 		/// `O(1)`
 		#[transactional]
-		fn create(config: &VammConfigOf<T>) -> Result<VammIdOf<T>, DispatchError> {
+		fn create(config: &Self::VammConfig) -> Result<T::VammId, DispatchError> {
 			// TODO(Cardosaum)
 			// How to ensure that the caller has the right privileges?
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
@@ -602,9 +545,9 @@ pub mod pallet {
 		/// `O(1)`
 		#[transactional]
 		fn get_price(
-			vamm_id: VammIdOf<T>,
+			vamm_id: T::VammId,
 			asset_type: AssetType,
-		) -> Result<DecimalOf<T>, DispatchError> {
+		) -> Result<T::Decimal, DispatchError> {
 			// Get Vamm state.
 			let vamm_state = Self::get_vamm_state(&vamm_id)?;
 
@@ -654,9 +597,9 @@ pub mod pallet {
 		/// `O(1)`
 		#[transactional]
 		fn get_twap(
-			vamm_id: VammIdOf<T>,
+			vamm_id: T::VammId,
 			asset_type: AssetType,
-		) -> Result<DecimalOf<T>, DispatchError> {
+		) -> Result<T::Decimal, DispatchError> {
 			// Sanity Checks
 			// 1) Vamm must exist
 			let vamm_state = Self::get_vamm_state(&vamm_id)?;
@@ -737,9 +680,9 @@ pub mod pallet {
 		/// `O(1)`
 		#[transactional]
 		fn update_twap(
-			vamm_id: VammIdOf<T>,
-			base_twap: Option<DecimalOf<T>>,
-		) -> Result<DecimalOf<T>, DispatchError> {
+			vamm_id: T::VammId,
+			base_twap: Option<T::Decimal>,
+		) -> Result<T::Decimal, DispatchError> {
 			let mut vamm_state = Self::get_vamm_state(&vamm_id)?;
 
 			// Handle optional value.
@@ -999,21 +942,15 @@ pub mod pallet {
 	//                              Helper Functions
 	// ----------------------------------------------------------------------------------------------------
 
-	// Helper types - Swap functionality
-	struct CalculateSwapAsset<T: Config> {
-		output_amount: BalanceOf<T>,
-		input_amount: BalanceOf<T>,
-	}
-
 	// Helper functions - Update twap functionality
 	impl<T: Config> Pallet<T> {
 		#[transactional]
 		fn do_update_twap(
-			vamm_id: VammIdOf<T>,
+			vamm_id: T::VammId,
 			vamm_state: &mut VammStateOf<T>,
-			base_twap: DecimalOf<T>,
-			now: &Option<MomentOf<T>>,
-		) -> Result<DecimalOf<T>, DispatchError> {
+			base_twap: T::Decimal,
+			now: &Option<T::Moment>,
+		) -> Result<T::Decimal, DispatchError> {
 			// Sanity checks must pass before updating runtime storage.
 			Self::update_twap_sanity_check(vamm_state, base_twap, now)?;
 
@@ -1030,8 +967,8 @@ pub mod pallet {
 
 		fn compute_new_twap(
 			vamm_state: &VammStateOf<T>,
-			now: &Option<MomentOf<T>>,
-		) -> Result<DecimalOf<T>, DispatchError> {
+			now: &Option<T::Moment>,
+		) -> Result<T::Decimal, DispatchError> {
 			// Compute base twap.
 			let base_twap = Self::calculate_twap(
 				now,
@@ -1045,15 +982,15 @@ pub mod pallet {
 		}
 
 		fn calculate_twap(
-			now: &Option<MomentOf<T>>,
-			last_twap_timestamp: MomentOf<T>,
-			twap_period: MomentOf<T>,
-			new_price: DecimalOf<T>,
-			old_price: DecimalOf<T>,
-		) -> Result<DecimalOf<T>, DispatchError> {
+			now: &Option<T::Moment>,
+			last_twap_timestamp: T::Moment,
+			twap_period: T::Moment,
+			new_price: T::Decimal,
+			old_price: T::Decimal,
+		) -> Result<T::Decimal, DispatchError> {
 			let now = Self::now(now);
-			let weight_now: MomentOf<T> = now.saturating_sub(last_twap_timestamp).max(1_u64.into());
-			let weight_last_twap: MomentOf<T> =
+			let weight_now: T::Moment = now.saturating_sub(last_twap_timestamp).max(1_u64.into());
+			let weight_last_twap: T::Moment =
 				twap_period.saturating_sub(weight_now).max(1_u64.into());
 
 			Self::calculate_exponential_moving_average(
@@ -1070,8 +1007,8 @@ pub mod pallet {
 		pub fn do_get_price(
 			vamm_state: &VammStateOf<T>,
 			asset_type: AssetType,
-		) -> Result<DecimalOf<T>, DispatchError> {
-			let precision = Self::balance_to_u256(DecimalOf::<T>::DIV)?;
+		) -> Result<T::Decimal, DispatchError> {
+			let precision = Self::balance_to_u256(T::Decimal::DIV)?;
 			let base_u256 = Self::balance_to_u256(vamm_state.base_asset_reserves)?;
 			let quote_u256 = Self::balance_to_u256(vamm_state.quote_asset_reserves)?;
 			let peg_u256 = Self::balance_to_u256(vamm_state.peg_multiplier)?;
@@ -1173,8 +1110,8 @@ pub mod pallet {
 		}
 
 		fn calculate_swap_asset(
-			swap_amount: &BalanceOf<T>,
-			input_asset_amount: &BalanceOf<T>,
+			swap_amount: &T::Balance,
+			input_asset_amount: &T::Balance,
 			direction: &Direction,
 			vamm_state: &VammStateOf<T>,
 		) -> Result<CalculateSwapAsset<T>, DispatchError> {
@@ -1201,11 +1138,11 @@ pub mod pallet {
 		}
 
 		fn calculate_quote_asset_amount_swapped(
-			quote_asset_reserve_before: &BalanceOf<T>,
-			quote_asset_reserve_after: &BalanceOf<T>,
+			quote_asset_reserve_before: &T::Balance,
+			quote_asset_reserve_after: &T::Balance,
 			direction: &Direction,
 			vamm_state: &VammStateOf<T>,
-		) -> Result<BalanceOf<T>, DispatchError> {
+		) -> Result<T::Balance, DispatchError> {
 			let quote_asset_reserve_change = match direction {
 				Direction::Add => quote_asset_reserve_before.try_sub(quote_asset_reserve_after)?,
 				Direction::Remove => {
@@ -1220,103 +1157,14 @@ pub mod pallet {
 		}
 	}
 
-	// Helper functions - validity checks
-	impl<T: Config> Pallet<T> {
-		fn update_twap_sanity_check(
-			vamm_state: &VammStateOf<T>,
-			base_twap: DecimalOf<T>,
-			now: &Option<MomentOf<T>>,
-		) -> Result<(), DispatchError> {
-			// Sanity Checks
-			// New desired twap value can't be zero.
-			ensure!(!base_twap.is_zero(), Error::<T>::NewTwapValueIsZero);
-
-			// Vamm must be open.
-			ensure!(!Self::is_vamm_closed(vamm_state, now), Error::<T>::VammIsClosed);
-
-			// Only update asset's twap if time has passed since last update.
-			let now = Self::now(now);
-			ensure!(now > vamm_state.twap_timestamp, Error::<T>::AssetTwapTimestampIsMoreRecent);
-
-			Ok(())
-		}
-
-		fn sanity_check_before_swap(
-			config: &SwapConfigOf<T>,
-			vamm_state: &VammStateOf<T>,
-		) -> Result<(), DispatchError> {
-			// We must ensure that the vamm is not closed before performing any swap.
-			ensure!(!Self::is_vamm_closed(vamm_state, &None), Error::<T>::VammIsClosed);
-
-			match config.direction {
-				// If we intend to remove some asset amount from vamm, we must
-				// have sufficient funds for it.
-				Direction::Remove => match config.asset {
-					AssetType::Base => ensure!(
-						config.input_amount < vamm_state.base_asset_reserves,
-						Error::<T>::InsufficientFundsForTrade
-					),
-					AssetType::Quote => ensure!(
-						config.input_amount < vamm_state.quote_asset_reserves,
-						Error::<T>::InsufficientFundsForTrade
-					),
-				},
-
-				// If we intend to add some asset amount to the vamm, the
-				// final amount must not overflow.
-				Direction::Add => match config.asset {
-					AssetType::Base => ensure!(
-						config.input_amount.checked_add(&vamm_state.base_asset_reserves).is_some(),
-						Error::<T>::TradeExtrapolatesMaximumSupportedAmount
-					),
-					AssetType::Quote => ensure!(
-						config.input_amount.checked_add(&vamm_state.quote_asset_reserves).is_some(),
-						Error::<T>::TradeExtrapolatesMaximumSupportedAmount
-					),
-				},
-			};
-
-			Ok(())
-		}
-
-		fn sanity_check_after_swap(
-			vamm_state: &VammStateOf<T>,
-			config: &SwapConfigOf<T>,
-			amount_swapped: &SwapOutputOf<T>,
-		) -> Result<(), DispatchError> {
-			// Ensure swapped amount is valid.
-			if let Some(limit) = config.output_amount_limit {
-				ensure!(
-					amount_swapped.output >= limit,
-					Error::<T>::SwappedAmountLessThanMinimumLimit
-				);
-			}
-
-			// Ensure both quote and base assets weren't completely drained from vamm.
-			ensure!(
-				!vamm_state.base_asset_reserves.is_zero(),
-				Error::<T>::BaseAssetReservesWouldBeCompletelyDrained
-			);
-			ensure!(
-				!vamm_state.quote_asset_reserves.is_zero(),
-				Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained
-			);
-
-			// TODO(Cardosaum): Write one more `ensure!` block regarding
-			// amount_swapped negative or positive?
-
-			Ok(())
-		}
-	}
-
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
 		fn calculate_exponential_moving_average(
-			x1: DecimalOf<T>,
-			w1: MomentOf<T>,
-			x2: DecimalOf<T>,
-			w2: MomentOf<T>,
-		) -> Result<DecimalOf<T>, DispatchError> {
+			x1: T::Decimal,
+			w1: T::Moment,
+			x2: T::Decimal,
+			w2: T::Moment,
+		) -> Result<T::Decimal, DispatchError> {
 			let w1_u256 = U256::from(w1.into());
 			let w2_u256 = U256::from(w2.into());
 			let denominator = w1_u256.checked_add(w2_u256).ok_or(ArithmeticError::Overflow)?;
@@ -1336,37 +1184,21 @@ pub mod pallet {
 			Ok(twap)
 		}
 
-		fn get_vamm_state(vamm_id: &VammIdOf<T>) -> Result<VammStateOf<T>, DispatchError> {
-			// Requested vamm must exists and be retrievable.
-			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
-			let vamm_state = VammMap::<T>::get(vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
-			Ok(vamm_state)
-		}
-
-		fn is_vamm_closed(vamm_state: &VammStateOf<T>, now: &Option<MomentOf<T>>) -> bool {
-			let now = Self::now(now);
-			match vamm_state.closed {
-				Some(timestamp) => now >= timestamp,
-				None => false,
-			}
-		}
-
-		fn now(now: &Option<MomentOf<T>>) -> MomentOf<T> {
+		pub fn now(now: &Option<T::Moment>) -> T::Moment {
 			match now {
 				Some(now) => *now,
 				None => T::TimeProvider::now().as_secs().into(),
 			}
 		}
 
-		fn balance_to_decimal(value: BalanceOf<T>) -> DecimalOf<T> {
-			DecimalOf::<T>::from_inner(value)
+		fn balance_to_decimal(value: T::Balance) -> T::Decimal {
+			T::Decimal::from_inner(value)
 		}
-
-		fn balance_to_u128(value: BalanceOf<T>) -> Result<u128, DispatchError> {
+		fn balance_to_u128(value: T::Balance) -> Result<u128, DispatchError> {
 			Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
 		}
 
-		fn balance_to_u256(value: BalanceOf<T>) -> Result<U256, DispatchError> {
+		fn balance_to_u256(value: T::Balance) -> Result<U256, DispatchError> {
 			Ok(U256::from(Self::balance_to_u128(value)?))
 		}
 
@@ -1374,13 +1206,13 @@ pub mod pallet {
 			Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
 		}
 
-		fn u256_to_balance(value: U256) -> Result<BalanceOf<T>, DispatchError> {
+		fn u256_to_balance(value: U256) -> Result<T::Balance, DispatchError> {
 			Ok(Self::u256_to_u128(value)?.try_into().ok().ok_or(ArithmeticError::Overflow)?)
 		}
 
 		pub fn compute_invariant(
-			base: BalanceOf<T>,
-			quote: BalanceOf<T>,
+			base: T::Balance,
+			quote: T::Balance,
 		) -> Result<U256, DispatchError> {
 			// Neither base nor quote asset are allowed to be zero since it
 			// would mean the invariant would also be zero.

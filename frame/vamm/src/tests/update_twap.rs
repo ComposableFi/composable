@@ -9,7 +9,7 @@ use crate::{
 		helpers_propcompose::any_vamm_state,
 		Decimal, Timestamp, RUN_CASES,
 	},
-	VammState,
+	types::VammState,
 };
 use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 use composable_traits::vamm::{Vamm as VammTrait, VammConfig};
