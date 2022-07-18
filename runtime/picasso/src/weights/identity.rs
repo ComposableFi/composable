@@ -33,19 +33,19 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity Registrars (r:1 w:1)
 	fn add_registrar(r: u32, ) -> Weight {
-		(30_812_000 as Weight)
-			// Standard Error: 58_000
-			.saturating_add((298_000 as Weight).saturating_mul(r as Weight))
+		(28_028_000 as Weight)
+			// Standard Error: 30_000
+			.saturating_add((503_000 as Weight).saturating_mul(r as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Identity IdentityOf (r:1 w:1)
 	fn set_identity(r: u32, x: u32, ) -> Weight {
-		(62_406_000 as Weight)
-			// Standard Error: 142_000
-			.saturating_add((652_000 as Weight).saturating_mul(r as Weight))
-			// Standard Error: 23_000
-			.saturating_add((996_000 as Weight).saturating_mul(x as Weight))
+		(58_486_000 as Weight)
+			// Standard Error: 120_000
+			.saturating_add((924_000 as Weight).saturating_mul(r as Weight))
+			// Standard Error: 20_000
+			.saturating_add((1_072_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -53,9 +53,9 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity SubsOf (r:1 w:1)
 	// Storage: Identity SuperOf (r:1 w:1)
 	fn set_subs_new(s: u32, ) -> Weight {
-		(53_012_000 as Weight)
-			// Standard Error: 15_000
-			.saturating_add((7_301_000 as Weight).saturating_mul(s as Weight))
+		(50_687_000 as Weight)
+			// Standard Error: 30_000
+			.saturating_add((7_478_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(s as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -65,9 +65,9 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity SubsOf (r:1 w:1)
 	// Storage: Identity SuperOf (r:0 w:1)
 	fn set_subs_old(p: u32, ) -> Weight {
-		(53_378_000 as Weight)
-			// Standard Error: 12_000
-			.saturating_add((2_286_000 as Weight).saturating_mul(p as Weight))
+		(52_065_000 as Weight)
+			// Standard Error: 10_000
+			.saturating_add((2_293_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(p as Weight)))
@@ -76,13 +76,13 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity IdentityOf (r:1 w:1)
 	// Storage: Identity SuperOf (r:0 w:32)
 	fn clear_identity(r: u32, s: u32, x: u32, ) -> Weight {
-		(70_742_000 as Weight)
-			// Standard Error: 81_000
-			.saturating_add((212_000 as Weight).saturating_mul(r as Weight))
-			// Standard Error: 12_000
-			.saturating_add((2_225_000 as Weight).saturating_mul(s as Weight))
-			// Standard Error: 12_000
-			.saturating_add((461_000 as Weight).saturating_mul(x as Weight))
+		(67_131_000 as Weight)
+			// Standard Error: 76_000
+			.saturating_add((465_000 as Weight).saturating_mul(r as Weight))
+			// Standard Error: 11_000
+			.saturating_add((2_174_000 as Weight).saturating_mul(s as Weight))
+			// Standard Error: 11_000
+			.saturating_add((513_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(s as Weight)))
@@ -90,56 +90,56 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity Registrars (r:1 w:0)
 	// Storage: Identity IdentityOf (r:1 w:1)
 	fn request_judgement(r: u32, x: u32, ) -> Weight {
-		(70_180_000 as Weight)
-			// Standard Error: 66_000
-			.saturating_add((260_000 as Weight).saturating_mul(r as Weight))
-			// Standard Error: 11_000
-			.saturating_add((993_000 as Weight).saturating_mul(x as Weight))
+		(66_070_000 as Weight)
+			// Standard Error: 42_000
+			.saturating_add((549_000 as Weight).saturating_mul(r as Weight))
+			// Standard Error: 7_000
+			.saturating_add((987_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Identity IdentityOf (r:1 w:1)
 	fn cancel_request(r: u32, x: u32, ) -> Weight {
-		(60_677_000 as Weight)
-			// Standard Error: 49_000
-			.saturating_add((607_000 as Weight).saturating_mul(r as Weight))
-			// Standard Error: 8_000
-			.saturating_add((1_017_000 as Weight).saturating_mul(x as Weight))
+		(59_473_000 as Weight)
+			// Standard Error: 56_000
+			.saturating_add((591_000 as Weight).saturating_mul(r as Weight))
+			// Standard Error: 9_000
+			.saturating_add((1_051_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Identity Registrars (r:1 w:1)
 	fn set_fee(r: u32, ) -> Weight {
-		(11_097_000 as Weight)
-			// Standard Error: 17_000
-			.saturating_add((378_000 as Weight).saturating_mul(r as Weight))
+		(10_523_000 as Weight)
+			// Standard Error: 15_000
+			.saturating_add((365_000 as Weight).saturating_mul(r as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Identity Registrars (r:1 w:1)
 	fn set_account_id(r: u32, ) -> Weight {
-		(11_027_000 as Weight)
-			// Standard Error: 16_000
-			.saturating_add((434_000 as Weight).saturating_mul(r as Weight))
+		(10_465_000 as Weight)
+			// Standard Error: 13_000
+			.saturating_add((423_000 as Weight).saturating_mul(r as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Identity Registrars (r:1 w:1)
 	fn set_fields(r: u32, ) -> Weight {
-		(11_058_000 as Weight)
-			// Standard Error: 18_000
-			.saturating_add((410_000 as Weight).saturating_mul(r as Weight))
+		(10_658_000 as Weight)
+			// Standard Error: 14_000
+			.saturating_add((355_000 as Weight).saturating_mul(r as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Identity Registrars (r:1 w:0)
 	// Storage: Identity IdentityOf (r:1 w:1)
 	fn provide_judgement(r: u32, x: u32, ) -> Weight {
-		(43_540_000 as Weight)
-			// Standard Error: 43_000
-			.saturating_add((678_000 as Weight).saturating_mul(r as Weight))
-			// Standard Error: 6_000
-			.saturating_add((983_000 as Weight).saturating_mul(x as Weight))
+		(40_196_000 as Weight)
+			// Standard Error: 55_000
+			.saturating_add((931_000 as Weight).saturating_mul(r as Weight))
+			// Standard Error: 7_000
+			.saturating_add((1_054_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -147,12 +147,10 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity IdentityOf (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	// Storage: Identity SuperOf (r:0 w:32)
-	fn kill_identity(r: u32, s: u32, _x: u32, ) -> Weight {
-		(93_193_000 as Weight)
-			// Standard Error: 85_000
-			.saturating_add((569_000 as Weight).saturating_mul(r as Weight))
+	fn kill_identity(_r: u32, s: u32, _x: u32, ) -> Weight {
+		(100_547_000 as Weight)
 			// Standard Error: 13_000
-			.saturating_add((2_335_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((2_280_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(s as Weight)))
@@ -161,18 +159,18 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity SuperOf (r:1 w:1)
 	// Storage: Identity SubsOf (r:1 w:1)
 	fn add_sub(s: u32, ) -> Weight {
-		(70_593_000 as Weight)
-			// Standard Error: 12_000
-			.saturating_add((312_000 as Weight).saturating_mul(s as Weight))
+		(71_219_000 as Weight)
+			// Standard Error: 14_000
+			.saturating_add((245_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Identity IdentityOf (r:1 w:0)
 	// Storage: Identity SuperOf (r:1 w:1)
 	fn rename_sub(s: u32, ) -> Weight {
-		(21_559_000 as Weight)
-			// Standard Error: 3_000
-			.saturating_add((169_000 as Weight).saturating_mul(s as Weight))
+		(23_158_000 as Weight)
+			// Standard Error: 6_000
+			.saturating_add((137_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -180,18 +178,18 @@ impl<T: frame_system::Config> identity::WeightInfo for WeightInfo<T> {
 	// Storage: Identity SuperOf (r:1 w:1)
 	// Storage: Identity SubsOf (r:1 w:1)
 	fn remove_sub(s: u32, ) -> Weight {
-		(71_816_000 as Weight)
-			// Standard Error: 11_000
-			.saturating_add((353_000 as Weight).saturating_mul(s as Weight))
+		(75_047_000 as Weight)
+			// Standard Error: 20_000
+			.saturating_add((264_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Identity SuperOf (r:1 w:1)
 	// Storage: Identity SubsOf (r:1 w:1)
 	fn quit_sub(s: u32, ) -> Weight {
-		(47_358_000 as Weight)
-			// Standard Error: 7_000
-			.saturating_add((312_000 as Weight).saturating_mul(s as Weight))
+		(46_096_000 as Weight)
+			// Standard Error: 9_000
+			.saturating_add((304_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}

@@ -34,7 +34,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: Pablo Pools (r:4 w:0)
 	// Storage: DexRouter DexRoutes (r:2 w:1)
 	fn update_route() -> Weight {
-		(83_034_000 as Weight)
+		(80_712_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -44,7 +44,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:4 w:0)
 	// Storage: Pablo PriceCumulativeState (r:4 w:4)
 	fn exchange() -> Weight {
-		(614_029_000 as Weight)
+		(619_497_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(27 as Weight))
 			.saturating_add(T::DbWeight::get().writes(17 as Weight))
 	}
@@ -54,7 +54,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:4 w:0)
 	// Storage: Pablo PriceCumulativeState (r:4 w:4)
 	fn buy() -> Weight {
-		(722_139_000 as Weight)
+		(733_265_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(26 as Weight))
 			.saturating_add(T::DbWeight::get().writes(17 as Weight))
 	}
@@ -64,7 +64,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:4 w:0)
 	// Storage: Pablo PriceCumulativeState (r:4 w:4)
 	fn sell() -> Weight {
-		(621_104_000 as Weight)
+		(613_018_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(26 as Weight))
 			.saturating_add(T::DbWeight::get().writes(17 as Weight))
 	}
@@ -75,7 +75,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn add_liquidity() -> Weight {
-		(254_391_000 as Weight)
+		(249_979_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(10 as Weight))
 			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
@@ -85,7 +85,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens TotalIssuance (r:1 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn remove_liquidity() -> Weight {
-		(126_962_000 as Weight)
+		(127_147_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}

@@ -33,33 +33,33 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> indices::WeightInfo for WeightInfo<T> {
 	// Storage: Indices Accounts (r:1 w:1)
 	fn claim() -> Weight {
-		(49_722_000 as Weight)
+		(48_944_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Indices Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn transfer() -> Weight {
-		(60_959_000 as Weight)
+		(60_384_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Indices Accounts (r:1 w:1)
 	fn free() -> Weight {
-		(51_334_000 as Weight)
+		(50_019_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Indices Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn force_transfer() -> Weight {
-		(52_072_000 as Weight)
+		(51_943_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Indices Accounts (r:1 w:1)
 	fn freeze() -> Weight {
-		(57_837_000 as Weight)
+		(57_278_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}

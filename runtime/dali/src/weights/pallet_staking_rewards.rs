@@ -34,7 +34,7 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: StakingRewards RewardPoolCount (r:1 w:1)
 	// Storage: StakingRewards RewardPools (r:0 w:1)
 	fn create_reward_pool() -> Weight {
-		(39_157_000 as Weight)
+		(39_163_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -46,14 +46,23 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	// Storage: System Account (r:1 w:1)
 	// Storage: StakingRewards Stakes (r:0 w:1)
 	fn stake() -> Weight {
-		(120_144_000 as Weight)
+		(119_786_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+	}
+	// Storage: StakingRewards Stakes (r:1 w:1)
+	// Storage: StakingRewards RewardPools (r:1 w:1)
+	// Storage: Tokens Accounts (r:2 w:2)
+	// Storage: Tokens TotalIssuance (r:1 w:0)
+	fn extend() -> Weight {
+		(96_421_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(5 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	// Storage: StakingRewards Stakes (r:1 w:2)
 	// Storage: StakingRewards StakeCount (r:1 w:1)
 	fn split() -> Weight {
-		(49_065_000 as Weight)
+		(47_533_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
