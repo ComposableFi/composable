@@ -186,7 +186,13 @@ fn test_extend_stake_amount() {
 
 		let pool_init_config = get_default_reward_pool();
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
-		let (staker, pool_id, amount, extend_amount, duration_preset, total_rewards, total_shares) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), 100_500u32.into(), ONE_HOUR, 100, 200);
+        let staker = ALICE;
+        let pool_id =  StakingRewards::pool_count();
+        let amount = 100_500u32.into();
+        let extend_amount = 100_500u32.into();
+        let duration_preset = ONE_HOUR;
+        let total_rewards = 100;
+        let total_shares =  200;
 
 		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
 		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 3).expect("an asset minting expected");

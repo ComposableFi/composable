@@ -54,7 +54,7 @@ pub mod pallet {
 				start_at::ZeroInit,
 			},
 		},
-		math::safe::{SafeArithmetic, SafeDiv, SafeMul},
+		math::safe::{SafeArithmetic, SafeDiv, SafeMul, SafeSub},
 		validation::Validated,
 	};
 	use composable_traits::{
@@ -128,8 +128,8 @@ pub mod pallet {
 		ReductionConfigProblem,
 		/// Not enough assets for a stake.
 		NotEnoughAssets,
-		/// No position found for given id.
-		NoPositionFound,
+		/// No stake found for given id.
+		StakeNotFound,
 		/// Reward's max limit reached.
 		MaxRewardLimitReached,
 		/// Only pool owner can add new reward asset.
@@ -346,7 +346,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Extend a new stake.
+		/// Extend an existing stake.
 		///
 		/// Emits `StakeExtended` event when successful.
 		#[pallet::weight(T::WeightInfo::extend())]
@@ -418,7 +418,7 @@ pub mod pallet {
 				},
 			};
 
-			rewards_pool.total_shares += boosted_amount;
+			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
 			rewards_pool.rewards = rewards;
 
 			let position_id = StakeCount::<T>::increment()?;
@@ -451,7 +451,7 @@ pub mod pallet {
 			amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
-			let mut stake = Stakes::<T>::get(position).ok_or(Error::<T>::NoPositionFound)?;
+			let mut stake = Stakes::<T>::get(position).ok_or(Error::<T>::StakeNotFound)?;
 			let mut rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
 				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 			let reward_multiplier = Perbill::one();
@@ -468,14 +468,14 @@ pub mod pallet {
 
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(boosted_amount, &rewards_pool)?;
-			rewards_pool.total_shares += boosted_amount;
+			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
 			rewards_pool.rewards = rewards;
-			stake.stake += boosted_amount;
-			stake.share += boosted_amount;
+			stake.stake = stake.stake.safe_add(&boosted_amount)?;
+			stake.share = stake.share.safe_add(&boosted_amount)?;
 			for (asset, additional_inflation) in reductions.iter() {
 				let inflation =
 					stake.reductions.get_mut(asset).ok_or(Error::<T>::ReductionConfigProblem)?;
-				*inflation += *additional_inflation;
+				*inflation = inflation.safe_add(additional_inflation)?;
 			}
 
 			T::Assets::transfer(
@@ -521,7 +521,7 @@ pub mod pallet {
 						}
 						Ok(old_value)
 					},
-					None => Err(Error::<T>::NoPositionFound),
+					None => Err(Error::<T>::StakeNotFound),
 				})?;
 			let left_from_one_ratio = ratio.left_from_one();
 			let assets: Vec<T::AssetId> = old_position.reductions.keys().cloned().collect();
@@ -628,9 +628,11 @@ pub mod pallet {
 					Some(reward_pool) => {
 						match reward_pool.rewards.get_mut(&reward_currency) {
 							Some(mut reward) => {
-								let new_total_reward = reward.total_rewards + reward_increment;
+								let new_total_reward =
+									reward.total_rewards.safe_add(&reward_increment)?;
 								ensure!(
-									(new_total_reward - reward.total_dilution_adjustment) <=
+									(new_total_reward
+										.safe_sub(&reward.total_dilution_adjustment)?) <=
 										reward.max_rewards,
 									Error::<T>::MaxRewardLimitReached
 								);
