@@ -17,6 +17,7 @@ use frame_support::{
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
+use sp_runtime::traits::Zero;
 use sp_std::collections::btree_map::BTreeMap;
 
 fn get_reward_pool<T: Config>(
@@ -59,7 +60,7 @@ fn reward_config<T: Config>(
 		let config = RewardConfig {
 			asset_id: asset_id.into(),
 			max_rewards: 100_u128.into(),
-			reward_rate: Perbill::from_percent(10),
+			reward_rate: composable_traits::staking::RewardRate::per_second(1, 10_u128.into()),
 		};
 		rewards.insert(asset_id.into(), config);
 		asset_id += 1;

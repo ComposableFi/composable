@@ -1,5 +1,8 @@
+use core::ops::Mul;
+
 use crate::staking::lock::{Lock, LockConfig};
 use codec::{Decode, Encode};
+use composable_support::validation::{Validate, Validated};
 
 use crate::time::DurationSeconds;
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
@@ -39,7 +42,7 @@ pub struct Reward<AssetId, Balance> {
 
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
-	pub reward_rate: Perbill,
+	pub reward_rate: RewardRate<Balance>,
 }
 
 /// Abstraction over the asset to reduction map stored for staking.
@@ -102,7 +105,54 @@ pub struct RewardConfig<AssetId, Balance> {
 
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
-	pub reward_rate: Perbill,
+	pub reward_rate: RewardRate<Balance>,
+}
+
+#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
+pub struct RewardRate<Balance> {
+	/// The period that the rewards are handed out in, in seconds.
+	pub period: u64,
+	/// The amount that is rewarded each period.
+	pub amount: Balance,
+}
+
+pub struct BoundedU64<const MIN: u64 = 0, const MAX: u64 = { u64::MAX }> {
+	// _marker: PhantomData<(MIN, MAX)>,
+}
+
+// TODO: TESTS!!!
+impl<const MIN: u64, const MAX: u64> Validate<u64, BoundedU64<MIN, MAX>> for BoundedU64<MIN, MAX> {
+	fn validate(input: u64) -> Result<u64, &'static str> {
+		if input > MAX {
+			Err("value too big")
+		} else if input < MIN {
+			Err("value too small")
+		} else {
+			Ok(input)
+		}
+	}
+}
+
+// TODO: TESTS!!!
+// TODO(benluelo): uom?
+impl<Balance> RewardRate<Balance> {
+	pub fn per_second(period: u64, amount: Balance) -> Self {
+		Self { period, amount }
+	}
+
+	pub fn per_minute(
+		amount: Balance,
+		minutes: Validated<u64, BoundedU64<0, { u64::MAX / 60 }>>,
+	) -> Self {
+		RewardRate { period: minutes.mul(60), amount }
+	}
+
+	pub fn per_hour(
+		amount: Balance,
+		hours: Validated<u64, BoundedU64<0, { u64::MAX / (60 * 60) }>>,
+	) -> Self {
+		RewardRate { period: hours.mul(60).mul(60), amount }
+	}
 }
 
 pub type RewardConfigs<AssetId, Balance, Limit> =
