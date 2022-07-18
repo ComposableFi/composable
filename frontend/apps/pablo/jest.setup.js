@@ -77,11 +77,11 @@ jest.mock("@/store/hooks/useUserProvidedLiquidityByPool.ts", () => {
   }))}
 })
 
-jest.mock("@/defi/subsquid/queries/bonds", () => {
+jest.mock("@/defi/subsquid/bonds/helpers", () => {
   return { fetchTotalPurchasedBondsByOfferIds: jest.fn().mockImplementation(() => (Promise.resolve({})))}
 })
 
-jest.mock("@/defi/subsquid/queries/auctions", () => {
+jest.mock("@/defi/subsquid/auctions/helpers", () => {
   const BigNumber = require('bignumber.js');
   return { 
     fetchInitialBalance: jest.fn().mockImplementation(() => (Promise.resolve({
