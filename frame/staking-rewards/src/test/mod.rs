@@ -10,7 +10,7 @@ use composable_traits::{
 		lock::{Lock, LockConfig},
 		ProtocolStaking, Reductions, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		Rewards, Stake, Staking,
+		RewardUpdate, Stake, Staking,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -27,6 +27,24 @@ use sp_std::collections::btree_map::BTreeMap;
 
 mod prelude;
 mod runtime;
+
+#[test]
+fn test_update_reward_pool() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		Timestamp::set_timestamp(200000);
+
+		let pool_init_config = get_default_reward_pool();
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+
+		let mut reward_updates = BTreeMap::new();
+		reward_updates
+			.insert(USDT::ID, RewardUpdate { amount: 50, reward_rate: Perbill::from_percent(10) });
+
+		assert_ok!(StakingRewards::update_reward_pool(Origin::root(), 1, reward_updates,)); // TODO: set proper time
+	});
+}
 
 #[test]
 fn test_create_reward_pool() {

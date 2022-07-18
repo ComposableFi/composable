@@ -1,5 +1,6 @@
 use crate::staking::lock::{Lock, LockConfig};
 use codec::{Decode, Encode};
+use std::collections::BTreeMap;
 
 use crate::time::DurationSeconds;
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
@@ -79,7 +80,19 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 
 	// possible lock config for this pool
 	pub lock: LockConfig<DurationPresets>,
+
+	pub last_updated: u64,
 }
+
+// TODO: add comments
+#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
+pub struct RewardUpdate<Balance> {
+	pub amount: Balance,
+
+	pub reward_rate: Perbill,
+}
+
+pub type RewardUpdates<AssetId, Balance> = BTreeMap<AssetId, RewardUpdate<Balance>>;
 
 /// Default transfer limit on new asset added as rewards.
 pub const DEFAULT_MAX_REWARDS: u128 = 1_000_000_000_000_000_000_u128;

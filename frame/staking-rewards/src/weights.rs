@@ -5,6 +5,7 @@ pub trait WeightInfo {
 	fn stake() -> Weight;
 	fn extend() -> Weight;
 	fn split() -> Weight;
+	fn update_reward_pool() -> Weight;
 }
 
 impl WeightInfo for () {
@@ -21,6 +22,10 @@ impl WeightInfo for () {
 	}
 
 	fn split() -> Weight {
+		10_000
+	}
+
+	fn update_reward_pool() -> Weight {
 		10_000
 	}
 }

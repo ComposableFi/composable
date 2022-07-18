@@ -59,7 +59,9 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
-		staking::{RewardPoolConfiguration::RewardRateBasedIncentive, DEFAULT_MAX_REWARDS},
+		staking::{
+			RewardPoolConfiguration::RewardRateBasedIncentive, RewardUpdates, DEFAULT_MAX_REWARDS,
+		},
 		time::DurationSeconds,
 	};
 	use frame_support::{
@@ -134,6 +136,8 @@ pub mod pallet {
 		MaxRewardLimitReached,
 		/// Only pool owner can add new reward asset.
 		OnlyPoolOwnerCanAddNewReward,
+		/// Max reward is exceeded
+		MaxRewardExceeded,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -248,6 +252,8 @@ pub mod pallet {
 		>,
 	>;
 
+	type RewardUpdatesOf<T> = RewardUpdates<<T as Config>::AssetId, <T as Config>::Balance>;
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub (super) trait Store)]
 	#[pallet::without_storage_info]
@@ -318,6 +324,7 @@ pub mod pallet {
 							total_shares: T::Balance::zero(),
 							end_block,
 							lock,
+							last_updated: T::UnixTime::now().as_secs(),
 						},
 					);
 					Ok((owner, pool_id, end_block))
@@ -370,6 +377,56 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			<Self as Staking>::split(&who, &position, ratio.value())?;
+			Ok(())
+		}
+
+		#[pallet::weight(T::WeightInfo::update_reward_pool())]
+		#[transactional]
+		pub fn update_reward_pool(
+			origin: OriginFor<T>,
+			pool_id: T::RewardPoolId,
+			reward_updates: RewardUpdatesOf<T>,
+		) -> DispatchResult {
+			// let _who = ensure_signed(origin)?;
+
+			let current_time = T::UnixTime::now().as_secs();
+
+			let mut rewards_pool =
+				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+
+			let mut inner_rewards = rewards_pool.rewards.into_inner();
+
+			for (asset_id, reward) in inner_rewards.iter_mut() {
+				let elapsed_time = current_time - rewards_pool.last_updated;
+
+				match reward_updates.get(asset_id) {
+					Some(reward_update) => {
+						ensure!(
+							reward.max_rewards > reward.total_rewards + reward_update.amount,
+							Error::<T>::MaxRewardExceeded
+						);
+
+						reward
+							.total_rewards
+							.safe_add(&reward_update.amount)
+							.map_err(|_| ArithmeticError::Overflow)?;
+						// pool.total_rewards
+						// 	.safe_add(reward_update.amount * elapsed_time * pool.reward_rate)
+						// 	.map_err(|_| ArithmeticError::Overflow)?;
+						reward.reward_rate = reward_update.reward_rate;
+					},
+					None => println!("{:?} not found.", asset_id),
+				}
+			}
+
+			let rewards =
+				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+
+			rewards_pool.last_updated = current_time;
+			rewards_pool.rewards = rewards;
+
+			RewardPools::<T>::insert(pool_id, rewards_pool);
+
 			Ok(())
 		}
 	}
