@@ -313,14 +313,26 @@ mod reservable_currency {
 
 mod multicurrency {
 	use super::*;
+	use frame_support::assert_err;
 	use orml_traits::currency::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
+
+	#[test]
+	fn test_unknown_asset() {
+		new_test_ext_multi_currency().execute_with(|| {
+			// asset_id 0 is invalid
+			assert_err!(
+				<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(0, &1, 100),
+				Error::<Test>::InvalidCurrency
+			);
+		});
+	}
 
 	proptest! {
 		#![proptest_config(ProptestConfig::with_cases(10000))]
 
 		#[test]
 		fn test_minimum_balance_implementation(
-			account in accounts(),
+			_account in accounts(),
 			asset_id in asset(),
 			(_first, _second, _third) in valid_amounts_without_overflow_3()) {
 			new_test_ext_multi_currency().execute_with(|| {

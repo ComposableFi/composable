@@ -5,15 +5,12 @@ mod tests;
 
 use crate::{
 	defi::{CurrencyPair, DeFiEngine, MoreThanOneFixedU128},
+	oracle::Oracle as OracleTrait,
 	time::Timestamp,
 };
-use composable_support::validation::{TryIntoValidated, Validate};
-use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
+use frame_support::{pallet_prelude::*, sp_std::vec::Vec};
 use scale_info::TypeInfo;
-use sp_runtime::{
-	traits::{One, Zero},
-	Percent,
-};
+use sp_runtime::{traits::Zero, Percent, Perquintill};
 
 use self::math::*;
 
@@ -32,9 +29,6 @@ pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
-pub struct UpdateInputValid;
-
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	/// Collateral factor of market
@@ -44,28 +38,8 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	pub under_collateralized_warn_percent: Percent,
 	/// liquidation engine id
 	pub liquidators: Vec<LiquidationStrategyId>,
-	pub interest_rate_model: InterestRateModel,
 	/// Count of blocks until throw error PriceIsTooOld
 	pub max_price_age: BlockNumber,
-}
-
-impl<LiquidationStrategyId, BlockNumber>
-	Validate<UpdateInput<LiquidationStrategyId, BlockNumber>, UpdateInputValid> for UpdateInputValid
-{
-	fn validate(
-		update_input: UpdateInput<LiquidationStrategyId, BlockNumber>,
-	) -> Result<UpdateInput<LiquidationStrategyId, BlockNumber>, &'static str> {
-		if update_input.collateral_factor < MoreThanOneFixedU128::one() {
-			return Err("collateral factor must be >= 1")
-		}
-
-		let interest_rate_model = update_input
-			.interest_rate_model
-			.try_into_validated::<InteresteRateModelIsValid>()?
-			.value();
-
-		Ok(UpdateInput { interest_rate_model, ..update_input })
-	}
 }
 
 /// input to create market extrinsic
@@ -80,39 +54,7 @@ pub struct CreateInput<LiquidationStrategyId, AssetId, BlockNumber> {
 	pub currency_pair: CurrencyPair<AssetId>,
 	/// Reserve factor of market borrow vault.
 	pub reserved_factor: Perquintill,
-}
-
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
-pub struct MarketModelValid;
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
-pub struct CurrencyPairIsNotSame;
-
-impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
-	Validate<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, MarketModelValid>
-	for MarketModelValid
-{
-	fn validate(
-		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
-	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
-		let updatable = create_input.updatable.try_into_validated::<UpdateInputValid>()?.value();
-
-		Ok(CreateInput { updatable, ..create_input })
-	}
-}
-
-impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
-	Validate<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, CurrencyPairIsNotSame>
-	for CurrencyPairIsNotSame
-{
-	fn validate(
-		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
-	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
-		if create_input.currency_pair.base == create_input.currency_pair.quote {
-			Err("currency pair must be different assets")
-		} else {
-			Ok(create_input)
-		}
-	}
+	pub interest_rate_model: InterestRateModel,
 }
 
 impl<LiquidationStrategyId, AssetId: Copy, BlockNumber>
@@ -250,8 +192,7 @@ pub trait Lending: DeFiEngine {
 	type BlockNumber;
 	/// id of dispatch used to liquidate collateral in case of undercollateralized asset
 	type LiquidationStrategyId;
-	/// returned from extrinsic is guaranteed to be existing asset id at time of block execution
-	//type AssetId;
+	type Oracle: OracleTrait;
 
 	/// Generates the underlying owned vault that will hold borrowable asset (may be shared with
 	/// specific set of defined collaterals). Creates market for new pair in specified vault. if
@@ -292,11 +233,17 @@ pub trait Lending: DeFiEngine {
 	/// but the lending Market would have all the lendable funds in a single vault.
 	///
 	/// Returned `MarketId` is mapped one to one with (deposit VaultId, collateral VaultId)
-	fn create(
+	fn create_market(
 		manager: Self::AccountId,
 		config: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId, Self::BlockNumber>,
 		keep_alive: bool,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
+
+	fn update_market(
+		manager: Self::AccountId,
+		market_id: Self::MarketId,
+		input: UpdateInput<Self::LiquidationStrategyId, Self::BlockNumber>,
+	) -> DispatchResultWithPostInfo;
 
 	/// [`AccountId`][Self::AccountId] of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
@@ -305,7 +252,8 @@ pub trait Lending: DeFiEngine {
 	fn deposit_collateral(
 		market_id: &Self::MarketId,
 		account_id: &Self::AccountId,
-		amount: CollateralLpAmountOf<Self>,
+		amount: Self::Balance,
+		keep_alive: bool,
 	) -> Result<(), DispatchError>;
 
 	/// Withdraw a part/total of previously deposited collateral.
@@ -354,6 +302,7 @@ pub trait Lending: DeFiEngine {
 		from: &Self::AccountId,
 		beneficiary: &Self::AccountId,
 		repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
+		keep_alive: bool,
 	) -> Result<BorrowAmountOf<Self>, DispatchError>;
 
 	/// The total amount borrowed from the given market, excluding interest.

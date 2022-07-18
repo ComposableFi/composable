@@ -106,6 +106,8 @@ impl orml_tokens::Config for MockRuntime {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -229,6 +231,7 @@ impl pallet_assets::Config for MockRuntime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 // -------------------------------------------------------------------------------------------------

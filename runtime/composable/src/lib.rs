@@ -28,7 +28,7 @@ use common::{
 };
 use composable_traits::assets::Asset;
 use orml_traits::parameter_type_with_key;
-use primitives::currency::CurrencyId;
+use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -107,8 +107,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 1200,
-	impl_version: 2,
+	spec_version: 1201,
+	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 0,
@@ -482,6 +482,7 @@ impl assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 parameter_type_with_key! {
@@ -494,14 +495,14 @@ parameter_type_with_key! {
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
-		let account: AccountId = TreasuryPalletId::get().into_account();
-		let account2: AccountId = PotId::get().into_account();
+		let account: AccountId = TreasuryPalletId::get().into_account_truncating();
+		let account2: AccountId = PotId::get().into_account_truncating();
 		vec![&account, &account2].contains(&a)
 	}
 }
 
 parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 type ReserveIdentifier = [u8; 8];
@@ -517,6 +518,8 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 parameter_types! {

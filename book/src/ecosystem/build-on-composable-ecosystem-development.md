@@ -1,95 +1,75 @@
 # Build on Composable: Ecosystem Development
 
-*To help usher in the interoperable future of DeFi, Composable Finance is launching a program to support developers building projects with our technology. This includes projects using our Picasso palle*
+*To help usher in the interoperable future of DeFi, Composable Labs actively supports developers building projects with our technology. This includes projects using pallets on our Picasso parachain and those building with our cross-chain technology.*
 
 ---
 
-## Ecosystem-as-a-Service Model
+## Composable Ecosystem
 
-Composable offers an Ecosystem-as-a-Service model, supporting the development of a number of other projects - both internal and external - that leverage Composable’s technology and ecosystem. Some projects supported so far include: 
+[The Composable Labs team](https://medium.com/@ComposableLabs/introducing-composable-labs-our-approach-to-building-and-developing-a-substrate-focused-605415f8ac79) operates as the research, development, and incubation division of Composable and comprises a team of 14 researchers, developers, and engineers. Composable Labs serves three core purposes: Firstly, exploring partnerships with existing projects in the DeFi space. Secondly, crafting protocol designs with aspiring founders who share their vision of a blockchain-agnostic future and offering them incubation grants. Thirdly, building protocols in-house that harness the Composable tech stack. 
 
-### Whirlpool Cash:
+As Composable’s tech stack is primarily based on Substrate pallets, Composable Labs is heavily focused on Substrate-based DeFi. Composable Labs’ Substrate primitives are at the pioneering front of DeFi innovation and represent novel advancements. They are built as modular pallets that can be natively ‘stacked’ by any DeFi developer to create new services. The primitives Composable Labs are building to fill critical gaps within the DotSama ecosystem are vital to the realization of DotSama’s potential.
 
-An enhanced privacy protocol with rewards from asset tumbling and yield farming on Picasso.
 
-### Angular Finance:
+### [Angular Finance](https://angularfinance.medium.com/)
 
-An isolated lending pair protocol on Kusama to allow risk-isolated loans. 
+[Angular Finance](https://www.angular.finance/) is a cross-chain money market that will enable the permissionless creation of isolated pools for any asset part of Composable’s ecosystem. Angular will also offer leverage as a service, liquidation as a service, flash loans, and unique capabilities such as the option to provide NFTs and fNFTs as collateral, among other functionalities.
 
-### Bribe: 
-
-Innovative governance tooling for the cross-layer, Polkadot, and Web 3.0 future.
-
-### Cyclical Finance:
-
-Decentralizing the network validation for Ethereum 2.0 and beyond. 
 
 ### Instrumental Finance:
 
-A cross-layer, cross-chain LP position movement and arbitrage protocol.
+[Instrumental Finance](https://www.instrumental.finance/) is a cross-chain-and-layer LP position movement and arbitrage protocol. LPs can deposit any asset belonging to Composable’s ecosystem into an Instrumental Vault. Instrumental will automatically deploy the funds to the highest yield-earning platform and pool currently available, regardless of the chain or layer it is on.
 
-[Composable Labs](https://0xbrainjar.medium.com/introducing-composable-labs-an-incubator-and-testing-ground-for-projects-using-composables-tech-b467d438142c), the incubation and testing ground of Composable Finance, is excited to announce the **Composable Grant Program**. This program invites developers to submit proposals to either build projects or pallets for our parachain Picasso, or create applications that will be forerunners in our seamlessly interoperable cross-layer ecosystem. As part of our initiative, we will be offering grants and developmental assistance to the projects using our technology in one of these two manners, with particular emphasis on supporting those that provide crucial functionalities or are especially innovative.
 
-The program allows us to support and award the most promising projects using our infrastructure by providing them with funding in addition to developmental assistance from our own team. Our grants program has two divisions
+### Whirlpool Cash:
 
-- **The Pallets Program**: invites developers to build Substrate pallets onto our Picasso parachain, helping to build out a complete offering of all DeFi functionalities (from basic to advanced) as building blocks for future developers to easily architect powerful dApps on Picasso
-- **The Cross-Layer Applications Program**: invites developers to leverage our software development kit (SDK) to use our technology to build interoperable applications that are native to the Composable ecosystem
+[Whirlpool Cash](https://www.whirlpoolcash.com/) is a native, privacy-preserving protocol that works by mixing transactions into a collective, anonymized pool. In addition, Whirlpool uses yield farms to generate returns for those who deposit assets that are part of Composable’s ecosystem, which are later paid back to contributors. This compensates for any costs incurred through transaction fees and inverts the traditional view of privacy in DeFi as a cost-driver.
 
----
+To see an overview of the decentralized applications and services hosted within the Composable ecosystem, explore[ this blog by Karel Kubat and 0xbrainjar](https://medium.com/composable-finance/the-primitives-needed-to-power-a-complete-defi-ecosystem-6e7d5cfdc525).
 
-## The Applicants We Are Seeking:
+## Composable Labs Roadmap
 
-The Composable Grants Program has two categories: pallet and project development for our Picasso parachain, and cross-layer dApps. Those interested in building pallets on Picasso are playing an important role in developing the building blocks for an interoperable DeFi ecosystem on Polkadot and Kusama. Users developing cross-layer dApps will be leveraging the software development kit (SDK) of Mosaic, our layer 2-layer 2 digital asset transferal system, to provide end-users with cutting edge applications that embrace the cross-layer future of DeFi.
 
----
+### Phase 1
+
+Composable Labs will develop and run in-house and incubated projects. These include Substrate primitives such as Angular Finance, Ensemble, and Whirlpool Cash. During each phase, Composable Labs will continue researching innovative solutions for DeFi products and services.
+
+
+### Phase 2
+
+Composable Labs will dedicate members of its talent pool to project-specific needs and enable developers to use the resources available at Composable to build faster, more efficiently, and scale at will. Angular, for example, already has a dedicated team of Composable Labs engineers to aid in the project’s development.
+
+
+### Phase 3
+
+During this phase, Composable will be entirely up and running, and the pallets on Picasso. Composable Labs will heavily explore the nested parachain approach to project deployment on the Composable parachain. This means that each project will become a nested parachain.
+
+
+## Composable Research
+
+Composable Labs is always working towards advancing innovative ideas, identifying market trends, and discovering untapped potential. This is not only the case for in-house projects – Composable Labs works closely with incubated project teams to identify problems, shortcomings, and opportunities for new functionality or increased efficiency. 
+
+Composable Labs have recently researched and developed Instrumental Finance’s pallet on Picasso. This benefits mainnet and EVM ecosystem users looking to farm yield on Picasso and DotSama. As Picasso-based pallets start offering liquidity rush events (LREs) and other strategies, Ethereum and other EVM communities can participate in these fresh APY opportunities without the hassle of installing a Polkadot.js wallet. 
+
+Composable Labs works in tandem with our in-house lead cryptography researcher, [@Cryptoni0x](https://twitter.com/Cryptoni0x), who plays a crucial role in researching cryptographic primitives and the technology that surrounds it. Composable Labs are developing several primitives that will serve as fundamental DeFi products and services for users on Picasso.
+
+As we work to confront MEV in the DeFi ecosystem and explore opportunities to leverage the idea for the good of Composable Finance, we will continue to research and discussions within our team and community. [You can check out this post](https://medium.com/@ComposableLabs/addressing-mev-in-composables-cross-layer-solution-b59f91fc46dc) by 0xbrainjar and CryptoNymph stating our team's approach to addressing MEV in the Composable ecosystem.
+
+**Composable Labs will continue to grow its research presence and is always looking for individuals to add to their talent pool.**
+
 
 ## The Resources Provided To Developers:
 
-The ingenuity of developers is at the core of DeFi’s growth towards a more end-user-friendly and optimized industry. As stated in the [announcement](https://0xbrainjar.medium.com/picasso-f17705da670e) of Picasso, we see the potential for dApps built in our ecosystem to only be limited by a developer’s imagination. In order to untether this potential, it is essential to provide resources to smooth the creative and developmental process.
 
-For both grant categories, we will award funding to projects built that show promise in generating solutions to some of DeFi’s most pressing issues, as well as those that take beloved DeFi services to the next level of utility.
+The ingenuity of developers is at the core of DeFi’s growth towards a more end-user-friendly and optimized industry. As stated in the [announcement](https://0xbrainjar.medium.com/picasso-f17705da670e) of our procurement of a parachain for Picasso, we see the potential for dApps built in our ecosystem only to be limited by a developer’s imagination. To untether this potential, it is essential to provide resources to improve the creative and developmental process.
 
-Beyond funding, developers working on Polkadot and Kusama will be given access to our oracle and vault pallets, [Apollo](https://0xbrainjar.medium.com/introducing-apollo-an-mev-resistant-oracle-884efae18848) and [Cubic](https://0xbrainjar.medium.com/introducing-cubic-setting-the-standard-for-vault-infrastructure-in-polkadot-and-kusama-8c1ab9390c5f). Developers working on Ethereum will get access to [Mosaic](https://0xbrainjar.medium.com/introducing-mosaic-tackling-cross-layer-2-liquidity-provisioning-through-delivering-a-new-means-of-1c1edb8691df), which will facilitate the development of cross-layer dApp projects. Once an Ethereum project reaches a certain stage of development, Composable’s team can also help port it to [Rust pallets](https://substrate.dev/docs/en/knowledgebase/runtime/pallets) and deploy them on our parachain.
 
-Along with a grant, a key piece of Composable’s added value is the team we have to support you. Grant participants will be able to leverage the Composable team in order to assist with furthering their product development roadmap. Additionally, in some cases, we might jump in and build alongside some of the teams we select for our grants program. We are currently doing this with Composable Labs, and would certainly expand it to the grants program on a case by case basis.
+Composable Labs is recruiting projects to build on Picasso. Individuals and teams can contribute to a cutting-edge ecosystem with the potential to win grants and developmental/marketing assistance. We invite community members and developers to build these pallets on Picasso, with the most promising projects being incubated by Composable Labs. Thus, developers can work with all of the tools they need to build powerful applications and receive the support to achieve success.
 
----
 
-## Building Pallets for Composable
+Beyond funding, developers working on Polkadot and Kusama will be given access to any of our existing pallets, such as our oracle and vault pallets, [Apollo](https://0xbrainjar.medium.com/introducing-apollo-an-mev-resistant-oracle-884efae18848) and [Cubic](https://0xbrainjar.medium.com/introducing-cubic-setting-the-standard-for-vault-infrastructure-in-polkadot-and-kusama-8c1ab9390c5f). Developers working on Ethereum will get access to [Mosaic](https://medium.com/composable-finance/introducing-mosaic-phase-2-10d1bfe5f6f8), facilitating the development of cross-layer dApp projects. Once an Ethereum project reaches a particular stage of development, Composable’s team can also help port it to [Rust pallets](https://substrate.dev/docs/en/knowledgebase/runtime/pallets) and deploy them on our parachain. Once the [Cross-Chain Virtual Machine (XCVM)](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine.html) launches, this technology will also be available for developers to capitalize upon.
 
-Composable’s Substrate pallets provide the LEGO-like building blocks for developers to build interoperable applications on Picasso. As noted, our team is currently working on a number of pallets. In order to reach our goal of providing a complete list of offerings to make building on our ecosystem as simple as possible, we are providing grants for pallet developers, as well as those leveraging our pallets to create applications.
 
-We are focused on three separate pallet tracks for our grants: primitive, core and application. Primitive track grant recipients will provide pallets for essential tools such as smart contracts, tokens and governance. Core track teams will leverage the primitive pallets to create building blocks which allow for user interaction and value generation. The application track will be for people who leverage both primitive pallets and core functionalities.
+Along with the above tools and funds, a key piece of Composable’s value add for developers is the team we have to support you. Grant participants will be able to leverage the Composable team to assist with furthering their product development roadmap. Additionally, in some of the most promising cases, we can jump in and build alongside teams we selected for our grants program. We are currently doing this with projects working with Composable Labs and plan to expand this offering to the grants program on a case by case basis.
 
----
-
-## Building Cross-Layer dApps on Mosaic
-
-Composable Finance has built an [SDK](../developer-guides/composable-sdk.html) with Mosaic in order to facilitate development on layer 2 (L2). Presently, Mosaic is conducting its [proof of concept](https://composablefi.medium.com/testing-mosaic-through-our-arbitrum-polygon-transferal-system-proof-of-concept-4e459e24e427) (PoC) and on its way to full operability.
-
-With Mosaic, we are enabling assets and information to move seamlessly across L2 solutions. As a result, movement between all of the many decentralized exchanges, liquidity pools, and other DeFi protocols is possibl.
-
-This dispatch system will also eventually enable cross-layer function calls. This is crucial infrastructure which allows for individual smart contracts from disparate layer 2 solutions to directly communicate. Smart contracts on [Polygon](https://polygon.technology/), for example, will be able to talk to smart contracts on [Arbitrum](https://offchainlabs.com/).
-
-Given this wide scope of possibilities, our cross-layer grant recipients can have a diverse set of interests:
-
-*Yield farming enthusiast*? Use Composable’s SDK to build a cross-layer yield aggregator, allowing for maximal yield generation.
-
-*Crypto-lending connoisseur*? Use cross-layer function calls to build a flash loan protocol which can leap across L2s within a single block time.
-
-This is just the beginning. Even here at Composable, we are still discovering the full extent to which this technology can be applied. Even if you are not seeking a grant, we still invite you to work with our SDK to see what you can build!
-
----
-
-## Applying for Composable’s Grant Program
-
-Whether you have an idea or a fully-formed existing project, we are interested in working with you and will support projects at every stage of development — from initiation to completion.
-
-We are offering grants in the form of LAYR, Composable’s native token, to projects that are the most exciting, novel, and/or integral to the Composable ecosystem.
-
-Individuals and teams looking to build pallets should apply [here](https://airtable.com/shrGBfRd7HfEFKQOM).
-
-Those interested in working with Mosaic to develop cross-layer dApps should apply [here](https://airtable.com/shryLItVAiXjWzqdn).
-
-Apply now to be on the cutting-edge of DeFi’s interoperable future. This is just the start of Composable’s journey to bring interoperability to the blockchain, and we want you to grow alongside us.
-
+To further support and incentivize the development on Picasso, we have launched[ Grant Program](https://grants.composable.finance/)s to assist some of the most promising upcoming projects. Selected projects will receive full hands-on support from the entire Composable team in addition to funding. 

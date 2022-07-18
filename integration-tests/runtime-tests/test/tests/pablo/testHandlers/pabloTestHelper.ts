@@ -1,8 +1,8 @@
 import { sendAndWaitForSuccess, sendWithBatchAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { u128 } from "@polkadot/types-codec";
-import { AccountId, AccountId32 } from "@polkadot/types/interfaces/runtime";
-import { ComposableTraitsDexFee, CustomRpcCurrencyId, PalletPabloPoolId } from "@composable/types/interfaces";
+import { AccountId32 } from "@polkadot/types/interfaces/runtime";
+import { CustomRpcCurrencyId, PalletPabloPoolId } from "@composable/types/interfaces";
 import { ApiPromise } from "@polkadot/api";
 
 /**
@@ -35,7 +35,7 @@ export async function createConsProdPool(
   baseAssetId: number,
   quoteAssetId: number,
   fee: number,
-  ownerFee: number
+  baseWeight: number
 ): Promise<number> {
   const pool = api.createType("PalletPabloPoolInitConfiguration", {
     ConstantProduct: {
@@ -45,7 +45,7 @@ export async function createConsProdPool(
         quote: api.createType("u128", quoteAssetId)
       }),
       fee: api.createType("Permill", fee),
-      ownerFee: api.createType("Permill", ownerFee)
+      baseWeight: api.createType("Permill", baseWeight)
     }
   });
   const {
@@ -145,8 +145,6 @@ export async function removeLiquidityFromPool(
   walletId: KeyringPair,
   lpTokens: bigint
 ): Promise<{ resultBase: u128; resultQuote: u128 }> {
-  let expectedLPTokens = mintedLPTokens;
-  expectedLPTokens -= lpTokens;
   const poolIdParam = api.createType("u128", poolId);
   const lpTokenParam = api.createType("u128", lpTokens);
   const minBaseParam = api.createType("u128", 0);
@@ -180,23 +178,14 @@ export async function swapTokenPairs(
   const minReceiveParam = api.createType("u128", minReceiveAmount);
   const keepAliveParam = api.createType("bool", true);
   const {
-    data: [
-      resultPoolId,
-      resultWallet,
-      baseAsset,
-      quoteAsset,
-      quoteAssetIdParam,
-      returnedBaseAmount,
-      returnedQuoteAmount,
-      lpTokens
-    ]
+    data: [resultPoolId, resultWallet, baseAsset, quoteAsset, returnedBaseAmount, returnedQuoteAmount, feeInfo]
   } = await sendAndWaitForSuccess(
     api,
     wallet,
     api.events.pablo.Swapped.is,
     api.tx.pablo.swap(poolIdParam, currencyPair, quoteAmountParam, minReceiveParam, keepAliveParam)
   );
-  return { returnedBaseAmount, returnedQuoteAmount: returnedQuoteAmount.fee };
+  return { returnedBaseAmount, returnedQuoteAmount };
 }
 
 export async function createMultipleCPPools(api: ApiPromise, wallet: KeyringPair) {
@@ -211,7 +200,7 @@ export async function createMultipleCPPools(api: ApiPromise, wallet: KeyringPair
           quote: api.createType("u128", Math.floor(Math.random() * 10000))
         }),
         fee: api.createType("Permill", Math.floor(Math.random() * 100000)),
-        ownerFee: api.createType("Permill", Math.floor(Math.random() * 100000))
+        baseWeight: api.createType("Permill", Math.floor(Math.random() * 100000))
       }
     });
     tx.push(api.tx.pablo.create(pool));
@@ -220,21 +209,16 @@ export async function createMultipleCPPools(api: ApiPromise, wallet: KeyringPair
 }
 
 export async function getUserTokens(api: ApiPromise, walletId: KeyringPair, assetId: number): Promise<u128> {
-  const { free, reserved, frozen } = await api.query.tokens.accounts(walletId.address, assetId);
+  const { free } = await api.query.tokens.accounts(walletId.address, assetId);
   return free;
 }
 
-export async function getPoolInfo(
-  api: ApiPromise,
-  poolType: string,
-  poolId: number
-): Promise<{ ownFee: number; lpTokenId: number }> {
+export async function getPoolInfo(api: ApiPromise, poolType: string, poolId: number): Promise<{ lpTokenId: number }> {
   const result = await api.query.pablo.pools(api.createType("u128", poolId));
   const pool = result.unwrap();
   const poolS = "as" + poolType;
-  const ownFee = pool[poolS].ownerFee.toNumber();
   const lpTokenId = pool[poolS].lpToken.toNumber();
-  return { ownFee, lpTokenId };
+  return { lpTokenId };
 }
 
 export async function rpcPriceFor(
@@ -275,7 +259,7 @@ export async function getPoolAddress(
 }
 
 export async function getPoolBalance(api: ApiPromise, poolAddress: string, assetId: number): Promise<u128> {
-  const { free, reserved, frozen } = await api.query.tokens.accounts(poolAddress, assetId);
+  const { free } = await api.query.tokens.accounts(poolAddress, assetId);
   return free;
 }
 
@@ -326,7 +310,9 @@ export async function createLBPool(
   end: number,
   initialWeight: number,
   finalWeight: number,
-  fee: number
+  feeRate: number,
+  ownerFeeRate: number,
+  protocolFeeRate: number
 ): Promise<{ resultPoolId: number }> {
   const pool = api.createType("PalletPabloPoolInitConfiguration", {
     LiquidityBootstrapping: {
@@ -341,7 +327,11 @@ export async function createLBPool(
         initialWeight: api.createType("Permill", initialWeight),
         finalWeight: api.createType("Permill", finalWeight)
       }),
-      fee: api.createType("Permill", fee)
+      feeConfig: api.createType("ComposableTraitsDexFeeConfig", {
+        feeRate: api.createType("Permill", feeRate),
+        ownerFeeRate: api.createType("Permill", ownerFeeRate),
+        protocolFeeRate: api.createType("Permill", protocolFeeRate)
+      })
     }
   });
   const {
@@ -356,19 +346,23 @@ export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair
   for (let i = 0; i < 500; i++) {
     const owner = wallet.derive("/test/ConstantProduct/deriveWallet");
     const pool = api.createType("PalletPabloPoolInitConfiguration", {
-      ConstantProduct: {
+      LiquidityBootstrapping: {
         owner: api.createType("AccountId32", owner.address),
         pair: api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
           base: api.createType("u128", Math.floor(Math.random() * 10000)),
           quote: api.createType("u128", Math.floor(Math.random() * 10000))
         }),
         sale: api.createType("ComposableTraitsDexSale", {
-          start: api.createType("u32", Math.floor(Math.random() * 100000) + 300),
-          end: api.createType("u32", Math.floor(Math.random() * 216000) + 7200),
-          initialWeight: api.createType("Permill", Math.floor(Math.random() * 900000) + 50000),
-          finalWeight: api.createType("Permill", Math.floor(Math.random() * 900000) + 5000)
+          start: api.createType("u32", Math.floor(Math.random() * 50000) + 300),
+          end: api.createType("u32", Math.floor(Math.random() * 100000) + 100000),
+          initialWeight: api.createType("Permill", Math.floor(Math.random() * 800000) + 150000),
+          finalWeight: api.createType("Permill", Math.floor(Math.random() * 100000) + 50000)
         }),
-        fee: api.createType("Permill", Math.floor(Math.random() * 999000))
+        feeConfig: api.createType("ComposableTraitsDexFeeConfig", {
+          feeRate: api.createType("Permill", Math.floor(Math.random() * 150000)),
+          ownerFeeRate: api.createType("Permill", Math.floor(Math.random() * 150000)),
+          protocolFeeRate: api.createType("Permill", Math.floor(Math.random() * 150000))
+        })
       }
     });
     tx.push(api.tx.pablo.create(pool));
@@ -383,7 +377,6 @@ export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair
  @param quoteAssetId: CurrencyId
  @param ampCoefficient: Amplification Coefficient, for details see curve.fi stable swap dex
  @param fee: Total fee to be charged for each transaction in the pool
- @param ownerFee: The permill of the fee, to be sent to the owner of the pool
  @returns resultPoolId: the number of the created pool
  */
 export async function createStableSwapPool(
@@ -393,8 +386,7 @@ export async function createStableSwapPool(
   baseAssetId: number,
   quoteAssetId: number,
   ampCoefficient: number,
-  fee: number,
-  ownerFee: number
+  fee: number
 ): Promise<{ resultPoolId: number }> {
   const pool = api.createType("PalletPabloPoolInitConfiguration", {
     StableSwap: {
@@ -404,8 +396,7 @@ export async function createStableSwapPool(
         quote: api.createType("u128", quoteAssetId)
       }),
       amplification_coefficient: api.createType("u16", ampCoefficient),
-      fee: api.createType("Permill", fee),
-      ownerFee: api.createType("Permill", ownerFee)
+      fee: api.createType("Permill", fee)
     }
   });
   const {
@@ -426,8 +417,7 @@ export async function createMultipleStableSwapPools(api: ApiPromise, wallet: Key
           quote: api.createType("u128", Math.floor(Math.random() * 10000))
         }),
         amplification_coefficient: api.createType("u16", Math.floor(Math.random() * 20000)),
-        fee: api.createType("Permill", Math.floor(Math.random() * 990000)),
-        ownerFee: api.createType("Permill", Math.floor(Math.random() * 990000))
+        fee: api.createType("Permill", Math.floor(Math.random() * 990000))
       }
     });
     tx.push(api.tx.pablo.create(pool));

@@ -56,7 +56,7 @@ fn create_vault<T: Config>(
 	)
 }
 
-const A: u128 = 0;
+const A: u128 = 2;
 // if to make it generic, and pass u128, it will pass HasCompact, and u128 will be 5 bits, not 16...
 pub fn recode_unwrap_u128<
 	O: Decode + MaxEncodedLen + Encode,

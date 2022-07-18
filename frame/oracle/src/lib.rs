@@ -34,26 +34,31 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_support::{
 		abstractions::{
-			nonce::{Increment, Nonce},
-			utils::{increment::SafeIncrement, start_at::ZeroInit},
+			nonce::Nonce,
+			utils::{
+				increment::{Increment, SafeIncrement},
+				start_at::ZeroInit,
+			},
 		},
-		math::safe::SafeDiv,
+		math::safe::{safe_multiply_by_rational, SafeDiv},
 		validation::Validated,
 	};
 	use composable_traits::{
-		currency::LocalAssets,
-		oracle::{Oracle, Price},
+		currency::{BalanceLike, LocalAssets},
+		oracle::{Oracle, Price, RewardTracker},
+		time::MS_PER_YEAR_NAIVE,
 	};
-	use core::ops::{Div, Mul};
 	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo},
 		pallet_prelude::*,
 		traits::{
 			BalanceStatus, Currency, EnsureOrigin,
 			ExistenceRequirement::{AllowDeath, KeepAlive},
-			ReservableCurrency,
+			ReservableCurrency, Time,
 		},
+		transactional,
 		weights::{DispatchClass::Operational, Pays},
+		PalletId,
 	};
 	use frame_system::{
 		offchain::{
@@ -61,7 +66,6 @@ pub mod pallet {
 			SigningTypes,
 		},
 		pallet_prelude::*,
-		Config as SystemConfig,
 	};
 	use lite_json::json::JsonValue;
 	use scale_info::TypeInfo;
@@ -69,11 +73,16 @@ pub mod pallet {
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
 		offchain::{http, Duration},
-		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
+		traits::{
+			AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub,
+			Saturating, UniqueSaturatedInto as _, Zero,
+		},
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
 		PerThing, Percent, RuntimeDebug,
 	};
-	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
+	use sp_std::{
+		borrow::ToOwned, collections::btree_set::BTreeSet, fmt::Debug, str, vec, vec::Vec,
+	};
 
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
@@ -113,8 +122,9 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Balance: BalanceLike + From<u128>;
 		/// The currency mechanism.
-		type Currency: ReservableCurrency<Self::AccountId>;
+		type Currency: ReservableCurrency<Self::AccountId, Balance = Self::Balance>;
 		type AssetId: FullCodec
 			+ Eq
 			+ PartialEq
@@ -149,6 +159,8 @@ pub mod pallet {
 		type StalePrice: Get<Self::BlockNumber>;
 		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::Origin>;
+		/// Origin to manage rewards
+		type RewardOrigin: EnsureOrigin<Self::Origin>;
 		/// Upper bound for max answers for a price
 		type MaxAnswerBound: Get<u32>;
 		/// Upper bound for total assets available for the oracle
@@ -160,11 +172,26 @@ pub mod pallet {
 		type MaxHistory: Get<u32>;
 
 		#[pallet::constant]
+		type TwapWindow: Get<u16>;
+
+		#[pallet::constant]
 		type MaxPrePrices: Get<u32>;
+
+		#[pallet::constant]
+		type MsPerBlock: Get<u64>;
 
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
 		type LocalAssets: LocalAssets<Self::AssetId>;
+
+		/// Type for timestamps
+		type Moment: AtLeast32Bit + Parameter + Default + Copy + MaxEncodedLen + FullCodec;
+
+		/// The time provider.
+		type Time: Time<Moment = Self::Moment>;
+
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
@@ -175,8 +202,11 @@ pub mod pallet {
 
 	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
 	pub struct PrePrice<PriceValue, BlockNumber, AccountId> {
+		/// The price of an asset, normalized to 12 decimals.
 		pub price: PriceValue,
+		/// The block the price was submitted at.
 		pub block: BlockNumber,
+		/// The account that submitted the price.
 		pub who: AccountId,
 	}
 
@@ -186,12 +216,13 @@ pub mod pallet {
 		pub min_answers: u32,
 		pub max_answers: u32,
 		pub block_interval: BlockNumber,
-		pub reward: Balance,
+		/// Reward allocation weight for this asset type out of the total block reward.
+		/// TODO refer design doc.
+		pub reward_weight: Balance,
 		pub slash: Balance,
 	}
 
-	type BalanceOf<T> =
-		<<T as Config>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+	type BalanceOf<T> = <T as Config>::Balance;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -201,8 +232,16 @@ pub mod pallet {
 	#[pallet::getter(fn assets_count)]
 	#[allow(clippy::disallowed_types)] // Default asset count of 0 is valid in this context
 	/// Total amount of assets
+	// TODO: Replace SafeIncrement with IncrementToMax
 	pub type AssetsCount<T: Config> =
 		StorageValue<_, u32, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn reward_tracker_store)]
+	#[allow(clippy::disallowed_types)]
+	/// Rewarding history for Oracles. Used for calculating the current block reward.
+	pub type RewardTrackerStore<T: Config> =
+		StorageValue<_, RewardTracker<BalanceOf<T>, T::Moment>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn signer_to_controller)]
@@ -302,7 +341,9 @@ pub mod pallet {
 		/// Oracle slashed. \[oracle_address, asset_id, amount\]
 		UserSlashed(T::AccountId, T::AssetId, BalanceOf<T>),
 		/// Oracle rewarded. \[oracle_address, asset_id, price\]
-		UserRewarded(T::AccountId, T::AssetId, BalanceOf<T>),
+		OracleRewarded(T::AccountId, T::AssetId, BalanceOf<T>),
+		/// Rewarding Started \[rewarding start timestamp]
+		RewardingAdjustment(T::Moment),
 		/// Answer from oracle removed for staleness. \[oracle_address, price\]
 		AnswerPruned(T::AccountId, T::PriceValue),
 	}
@@ -366,11 +407,16 @@ pub mod pallet {
 		TransferError,
 		MaxHistory,
 		MaxPrePrices,
+		/// Rewarding has not started
+		NoRewardTrackerSet,
+		/// Annual rewarding cost too high
+		AnnualRewardLessThanAlreadyRewarded,
 	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_initialize(block: T::BlockNumber) -> Weight {
+			Self::reset_reward_tracker_if_expired();
 			Self::update_prices(block)
 		}
 
@@ -381,11 +427,12 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Oracle for Pallet<T> {
-		type Balance = T::PriceValue;
 		type AssetId = T::AssetId;
+		type Balance = T::PriceValue;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 		type LocalAssets = T::LocalAssets;
 		type MaxAnswerBound = T::MaxAnswerBound;
+		type TwapWindow = T::TwapWindow;
 
 		fn get_price(
 			asset_id: Self::AssetId,
@@ -393,35 +440,34 @@ pub mod pallet {
 		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
-			let unit = 10_u128
-				.checked_pow(Self::LocalAssets::decimals(asset_id)?)
-				.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = multiply_by_rational(price.into(), amount.into(), unit)
-				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = price
-				.try_into()
-				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			// dbg!(&price);
+			let price = Self::quote(asset_id, price, amount)?;
+			// dbg!(&price);
 			Ok(Price { price, block })
 		}
 
-		fn get_twap(
-			of: Self::AssetId,
-			weighting: Vec<Self::Balance>,
+		/// Currently using a flat distribution of weights.
+		fn get_twap_for_amount(
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			Self::get_twap(of, weighting)
+			let prices_length = Self::price_history(asset_id).len();
+			let twap_window: usize = <Self as Oracle>::TwapWindow::get().into();
+			if twap_window > prices_length + 1 {
+				Self::get_price(asset_id, amount).map(|p| p.price)
+			} else {
+				let price = Self::get_twap(asset_id, twap_window)?;
+				Self::quote(asset_id, price, amount)
+			}
 		}
 
 		fn get_ratio(
 			pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
 		) -> Result<sp_runtime::FixedU128, DispatchError> {
 			let base: u128 =
-				Self::get_price(pair.base, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
-					.price
-					.into();
+				Self::get_price(pair.base, T::LocalAssets::unit(pair.base)?)?.price.into();
 			let quote: u128 =
-				Self::get_price(pair.quote, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
-					.price
-					.into();
+				Self::get_price(pair.quote, T::LocalAssets::unit(pair.base)?)?.price.into();
 
 			let base = FixedU128::saturating_from_integer(base);
 			let quote = FixedU128::saturating_from_integer(quote);
@@ -432,19 +478,25 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			// imagine 10^3 == 1_000 costs 4
-			// so 1 costs 0,
-			// and amount of normalized desired is 10
-			// 10 * 1_000 / 4 = 2_500
-			// so we need 2_500 asset amount to pay for 10 normalized
-			let unit = 10 ^ (T::LocalAssets::decimals(asset_id))?;
-			let price_asset_for_unit: u128 = Self::get_price(asset_id, unit.into())?.price.into();
+			// assume the following parameters:
+			//
+			// asset A has 3 decimal places
+			// 1 unit of asset ACOIN costs 4 units of default quote asset (4_000_000_000_000)
+			// the price for 1/1_000th of asset ACOIN (the smallest unit possible, we'll call it
+			// ACENT) is then: 4_000_000_000_000/1_000 == 4_000_000_000; or 4/1000ths (1/250th) of 1
+			// unit of default quote asset.
+			//
+			// if we want 10 units of default quote asset:
+			// 10_000_000_000_000 * (1_000 / 4_000_000_000_000) = 2_500
+			// 10^12 * (10^3 / 4^12) = 2_500
+			//
+			// 2_500 ACENTS are needed to pay for 10 default quote asset.
+			let unit = T::LocalAssets::unit(asset_id)?;
+			let asset_price_per_unit: u128 = Self::get_price(asset_id, unit)?.price.into();
 
 			let amount: u128 = amount.into();
-			let result = multiply_by_rational(amount, unit as u128, price_asset_for_unit)?;
-			let result: u64 = result
-				.try_into()
-				.map_err(|_| Into::<DispatchError>::into(ArithmeticError::Overflow))?;
+			let result = multiply_by_rational(amount, unit.into(), asset_price_per_unit)?;
+			let result: u64 = result.try_into().map_err(|_| ArithmeticError::Overflow)?;
 
 			Ok(result.into())
 		}
@@ -471,7 +523,7 @@ pub mod pallet {
 			min_answers: Validated<u32, ValidMinAnswers>,
 			max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
 			block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
-			reward: BalanceOf<T>,
+			reward_weight: BalanceOf<T>,
 			slash: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
@@ -488,14 +540,20 @@ pub mod pallet {
 				min_answers: *min_answers,
 				max_answers: *max_answers,
 				block_interval: *block_interval,
-				reward,
+				reward_weight,
 				slash,
 			};
-
-			let current_asset_info = Self::asset_info(asset_id);
-			if current_asset_info.is_none() {
+			// track reward total weight for all assets
+			let mut reward_tracker = RewardTrackerStore::<T>::get().unwrap_or_default();
+			if let Some(current_asset_info) = Self::asset_info(asset_id) {
+				reward_tracker.total_reward_weight = reward_tracker.total_reward_weight +
+					reward_weight - current_asset_info
+					.reward_weight;
+			} else {
 				AssetsCount::<T>::increment()?;
+				reward_tracker.total_reward_weight += reward_weight;
 			}
+			RewardTrackerStore::<T>::set(Option::from(reward_tracker));
 
 			AssetsInfo::<T>::insert(asset_id, asset_info);
 			Self::deposit_event(Event::AssetInfoChange(
@@ -504,7 +562,7 @@ pub mod pallet {
 				*min_answers,
 				*max_answers,
 				*block_interval,
-				reward,
+				reward_weight,
 				slash,
 			));
 			Ok(().into())
@@ -533,6 +591,48 @@ pub mod pallet {
 			SignerToController::<T>::insert(signer.clone(), who.clone());
 
 			Self::deposit_event(Event::SignerSet(signer, who));
+			Ok(().into())
+		}
+
+		/// Call to start rewarding Oracles.
+		/// - `annual_cost_per_oracle`: Annual cost of an Oracle.
+		/// - `num_ideal_oracles`: Number of ideal Oracles. This in fact should be higher than the
+		///   actual ideal number so that the Oracles make a profit under ideal conditions.
+		///
+		/// Emits `RewardRateSet` event when successful.
+		#[pallet::weight(T::WeightInfo::adjust_rewards())]
+		pub fn adjust_rewards(
+			origin: OriginFor<T>,
+			annual_cost_per_oracle: BalanceOf<T>,
+			num_ideal_oracles: u8,
+		) -> DispatchResultWithPostInfo {
+			T::RewardOrigin::ensure_origin(origin)?;
+			let now = T::Time::now();
+			let period: T::Moment = MS_PER_YEAR_NAIVE.unique_saturated_into();
+			let mut reward_tracker = RewardTrackerStore::<T>::get().unwrap_or_default();
+			if reward_tracker.start == Zero::zero() {
+				reward_tracker.start = now;
+				reward_tracker.period = period;
+			}
+			// calculate the current block reward by dividing the total possible reward by the
+			// remaining number of blocks in the year.
+			let elapsed_period = (now - reward_tracker.start) % period;
+			let period_left: u64 = (period - elapsed_period).unique_saturated_into();
+			let remaining_blocks_in_year: T::Balance = period_left
+				.checked_div(T::MsPerBlock::get())
+				.ok_or(ArithmeticError::DivisionByZero)?
+				.unique_saturated_into();
+			let new_annual_reward = annual_cost_per_oracle.saturating_mul(num_ideal_oracles.into());
+			ensure!(
+				new_annual_reward > reward_tracker.total_already_rewarded,
+				Error::<T>::AnnualRewardLessThanAlreadyRewarded
+			);
+			reward_tracker.current_block_reward = (new_annual_reward -
+				reward_tracker.total_already_rewarded)
+				.checked_div(&remaining_blocks_in_year)
+				.ok_or(ArithmeticError::Overflow)?;
+			RewardTrackerStore::<T>::set(Option::from(reward_tracker));
+			Self::deposit_event(Event::RewardingAdjustment(T::Time::now()));
 			Ok(().into())
 		}
 
@@ -590,12 +690,13 @@ pub mod pallet {
 			Self::deposit_event(Event::StakeReclaimed(signer, withdrawal.stake));
 			Ok(().into())
 		}
-		/// Call to submit a price, gas is returned if all logic gates passed
-		/// Should be called from offchain worker but can be called manually too
-		/// Operational transaction
+		/// Call to submit a price, gas is returned if extrinsic is successfull.
+		/// Should be called from offchain worker but can be called manually too.
 		///
-		/// - `price`: price to submit
-		/// - `asset_id`: Id for the asset
+		/// This is an operational transaction.
+		///
+		/// - `price`: price to submit, normalized to 12 decimals
+		/// - `asset_id`: id for the asset
 		///
 		/// Emits `PriceSubmitted` event when successful.
 		#[pallet::weight((T::WeightInfo::submit_price(T::MaxAnswerBound::get()), Operational))]
@@ -618,9 +719,8 @@ pub mod pallet {
 			ensure!(author_stake >= asset_info.slash, Error::<T>::NotEnoughStake);
 
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
-				// There can convert current_prices.len() to u32 safely
-				// because current_prices.len() limited by u32
-				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
+				// current_prices.len() can be casted to u32 safely because current_prices.len() is
+				// limited to u32::MAX (see AssetsInfo::<T>::get(asset_id).max_answers).
 				if current_prices.len() as u32 >= asset_info.max_answers {
 					return Err(Error::<T>::MaxPrices.into())
 				}
@@ -685,7 +785,8 @@ pub mod pallet {
 			price: T::PriceValue,
 			asset_id: T::AssetId,
 			asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
-		) {
+		) -> DispatchResult {
+			let mut rewarded_oracles = BTreeSet::new();
 			for answer in pre_prices {
 				let accuracy: Percent = if answer.price < price {
 					PerThing::from_rational(answer.price, price)
@@ -721,22 +822,78 @@ pub mod pallet {
 						slash_amount,
 					));
 				} else {
-					let reward_amount = asset_info.reward;
 					let controller = SignerToController::<T>::get(&answer.who)
 						.unwrap_or_else(|| answer.who.clone());
-
-					let result = T::Currency::deposit_into_existing(&controller, reward_amount);
-					if result.is_err() {
-						log::warn!("Failed to deposit {:?}", controller);
-					}
-					Self::deposit_event(Event::UserRewarded(
-						answer.who.clone(),
-						asset_id,
-						reward_amount,
-					));
-				};
+					rewarded_oracles.insert((answer.who.clone(), controller.clone()));
+				}
 				Self::remove_price_in_transit(&answer.who, asset_info)
 			}
+			if let Some(mut reward_tracker) = Self::get_reward_tracker_if_enabled() {
+				// divide the per asset reward(by weight) by the number of oracles
+				let reward_amount_per_oracle: T::Balance = safe_multiply_by_rational(
+					reward_tracker.current_block_reward.unique_saturated_into(),
+					asset_info.reward_weight.unique_saturated_into(),
+					reward_tracker.total_reward_weight.unique_saturated_into(),
+				)?
+				.checked_div(rewarded_oracles.len() as u128)
+				.ok_or(ArithmeticError::DivisionByZero)?
+				.into();
+				if !reward_amount_per_oracle.is_zero() {
+					for accounts in rewarded_oracles {
+						Self::transfer_reward(
+							accounts.0,
+							accounts.1,
+							asset_id,
+							reward_amount_per_oracle,
+						);
+						// track the total being rewarded
+						reward_tracker.total_already_rewarded = reward_tracker
+							.total_already_rewarded
+							.saturating_add(reward_amount_per_oracle);
+					}
+					RewardTrackerStore::<T>::mutate(|r| *r = Some(reward_tracker));
+				}
+			} else {
+				log::warn!("Oracle rewarding not enabled");
+			}
+			Ok(())
+		}
+
+		fn get_reward_tracker_if_enabled(
+		) -> Option<RewardTracker<<T as Config>::Balance, <T as Config>::Moment>> {
+			RewardTrackerStore::<T>::get().and_then(|r| {
+				if r.start != Zero::zero() {
+					Some(r)
+				} else {
+					None
+				}
+			})
+		}
+
+		fn transfer_reward(
+			who: T::AccountId,
+			controller: T::AccountId,
+			asset_id: T::AssetId,
+			reward_amount: BalanceOf<T>,
+		) {
+			let result = T::Currency::deposit_into_existing(&controller, reward_amount);
+			if result.is_err() {
+				log::warn!("Failed to deposit {:?}", controller);
+			}
+			Self::deposit_event(Event::OracleRewarded(who, asset_id, reward_amount));
+		}
+
+		pub fn reset_reward_tracker_if_expired() {
+			RewardTrackerStore::<T>::mutate(|reward_tracker_opt| match reward_tracker_opt {
+				Some(reward_tracker) => {
+					let now = T::Time::now();
+					if now - reward_tracker.start >= reward_tracker.period {
+						reward_tracker.start = now;
+						reward_tracker.total_already_rewarded = Zero::zero();
+					}
+				},
+				None => {},
+			});
 		}
 
 		pub fn update_prices(block: T::BlockNumber) -> Weight {
@@ -794,6 +951,7 @@ pub mod pallet {
 			Ok((prev_pre_prices_len - pre_prices.len(), pre_prices))
 		}
 
+		#[transactional]
 		pub fn update_price(
 			asset_id: T::AssetId,
 			asset_info: AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
@@ -819,7 +977,7 @@ pub mod pallet {
 					})?;
 					PrePrices::<T>::remove(asset_id);
 
-					Self::handle_payout(&pre_prices, price, asset_id, &asset_info);
+					Self::handle_payout(&pre_prices, price, asset_id, &asset_info)?;
 				}
 			}
 			Ok(())
@@ -940,51 +1098,74 @@ pub mod pallet {
 			});
 		}
 
-		// REVIEW: indexing
-		#[allow(clippy::indexing_slicing)] // to get CI to pass
 		pub fn get_twap(
 			asset_id: T::AssetId,
-			mut price_weights: Vec<T::PriceValue>,
+			twap_window: usize,
 		) -> Result<T::PriceValue, DispatchError> {
-			let precision: T::PriceValue = 100_u128.into();
 			let historical_prices = Self::price_history(asset_id);
 
-			// add an extra to account for current price not stored in history
-			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
+			ensure!(twap_window <= historical_prices.len() + 1, Error::<T>::DepthTooLarge);
 
-			let sum = Self::price_values_sum(&price_weights);
-			ensure!(sum == precision, Error::<T>::MustSumTo100);
+			let mut prices: Vec<_> =
+				historical_prices.iter().rev().take(twap_window).rev().collect();
+			let current_price =
+				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
+			prices.push(&current_price);
 
-			let last_weight = price_weights.pop().unwrap_or_else(|| 0_u128.into());
-			ensure!(last_weight != 0_u128.into(), Error::<T>::ArithmeticError);
-
-			let mut weighted_prices = price_weights
-				.iter()
-				.enumerate()
-				.map(|(i, weight)| {
-					weight
-						.mul(
-							historical_prices[historical_prices.len() - price_weights.len() + i]
-								.price,
-						)
-						.div(precision)
+			let weights: Vec<u128> = prices
+				.windows(2)
+				.map(|window| {
+					window
+						.get(0)
+						.and_then(|first| window.get(1).map(|second| (first, second)))
+						.and_then(|(first, second)| second.block.checked_sub(&first.block))
+						.unwrap_or_default()
+						.unique_saturated_into()
 				})
-				.collect::<Vec<_>>();
-			let current_price = Self::prices(asset_id);
-			let current_weighted_price = last_weight.mul(current_price.price).div(precision);
+				.collect();
 
-			weighted_prices.push(current_weighted_price);
+			let weights_sum: u128 = weights.iter().sum();
 
-			let weighted_average = Self::price_values_sum(&weighted_prices);
-			ensure!(weighted_average != 0_u128.into(), Error::<T>::ArithmeticError);
+			let prices_sum: u128 = prices
+				.iter()
+				// skip 1 for diff calculation
+				.skip(1)
+				.map(|e| -> u128 { e.price.into() })
+				.zip(weights)
+				.filter_map(|(price, weight)| {
+					if weights_sum.is_zero() {
+						// if all weights is eq 0 then just return price.
+						Some(price)
+					} else if weight.is_zero() {
+						// if weight is eq 0 then skip it.
+						// it happens if few prices associated with same block number.
+						None
+					} else {
+						// otherwise muliply price and weight.
+						Some(price * weight)
+					}
+				})
+				.sum();
 
-			Ok(weighted_average)
+			let twap = if weights_sum.is_zero() {
+				prices_sum / ((prices.len() - 1) as u128)
+			} else {
+				prices_sum / weights_sum
+			};
+
+			Ok(twap.into())
 		}
 
-		fn price_values_sum(price_values: &[T::PriceValue]) -> T::PriceValue {
-			price_values
-				.iter()
-				.fold(T::PriceValue::from(0_u128), |acc, b| acc.saturating_add(*b))
+		fn quote(
+			asset_id: T::AssetId,
+			price: T::PriceValue,
+			amount: T::PriceValue,
+		) -> Result<T::PriceValue, DispatchError> {
+			let unit = <Self as Oracle>::LocalAssets::unit(asset_id)?;
+			// dbg!(&unit);
+			// dbg!(&amount);
+			let price = multiply_by_rational(price.into(), amount.into(), unit)?;
+			Ok(price.into())
 		}
 
 		// REVIEW: indexing

@@ -55,10 +55,10 @@ dev:
 
 # run as `make open=y run-book` to open as well
 run-book:
-	bash -c "(trap 'kill 0' SIGINT; cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve --hostname 0.0.0.0 book/ $(if $(filter y,${open}),'--open'))"
+	bash -c "(trap 'kill 0' SIGINT; cargo run --manifest-path utils/extrinsics-docs-scraper/Cargo.toml --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve --hostname 0.0.0.0 book/ $(if $(filter y,${open}),'--open'))"
 
 build-book:
-	cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml
+	cargo run --manifest-path utils/extrinsics-docs-scraper/Cargo.toml --release -- --config-file-path=scraper.toml
 	mdbook build book/
 
 .PHONY: version
@@ -100,6 +100,19 @@ push-composable-sandbox:
 	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
 	@docker push ${REPO}/composable-sandbox:latest
 
+push-composable-sandbox-without-latest-tag:
+	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
+
+containerize-composable-sandbox-plus:
+	@docker build -f docker/composable-sandbox-plus.dockerfile \
+		-t ${REPO}/composable-sandbox-plus:${COMMIT_SHA} \
+		-t ${REPO}/composable-sandbox-plus:latest  \
+		.
+
+push-composable-sandbox-plus:
+	@docker push ${REPO}/composable-sandbox-plus:${COMMIT_SHA}
+	@docker push ${REPO}/composable-sandbox-plus:latest
+
 containerize-mmr-polkadot:
 	@docker build -f docker/mmr-polkadot.dockerfile \
 		-t ${REPO}/mmr-polkadot:latest  \
@@ -137,8 +150,11 @@ endif
 
 
 .PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
-.PHONY: containerize-composable-sandbox push-composable-sandbox containerize-mmr-polkadot push-mmr-polkadot
-.PHONY: containerize-ci-linux push-ci-linux containerize-base-ci-linux push-base-ci-linux
+.PHONY: containerize-composable-sandbox push-composable-sandbox push-composable-sandbox-without-latest-tag
+.PHONY: containerize-composable-sandbox-plus push-composable-sandbox-plus
+.PHONY: containerize-mmr-polkadot push-mmr-polkadot
+.PHONY: containerize-base-ci-linux push-base-ci-linux
+.PHONY: containerize-ci-linux push-ci-linux
 
 #----------------------------------------------------------------------
 # UTILITY FUNCTIONS TO remove

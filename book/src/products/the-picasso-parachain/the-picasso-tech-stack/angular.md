@@ -1,6 +1,10 @@
 # Angular Finance: The Isolated Lending Pair Pallet
 
+---
+
+
 ![banner](./angular-banner.png)
+
 
 Another project building on Picasso that is being developed by a team that is 
 working in collaboration with [Composable Labs](https://0xbrainjar.medium.com/introducing-composable-labs-an-incubator-and-testing-ground-for-projects-using-composables-tech-b467d438142c) 

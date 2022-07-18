@@ -10,11 +10,12 @@ version = "0.0.1"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
-sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 codec = { version = "3.0.0", package = "parity-scale-codec", default-features = false, features = [
   "derive",
@@ -23,16 +24,21 @@ scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
 is_sorted = { version = "0.1.1", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
+p256 = { version = "0.10.1", default-features = false, features = [
+  "ecdsa",
+  "ecdsa-core",
+] }
 rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = "1.0.136", features = ["derive"], optional = true }
 
 [dev-dependencies]
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 proptest = { version = "1.0" }
 serde_json = "1.0.45"
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 [features]
 default = ["std"]

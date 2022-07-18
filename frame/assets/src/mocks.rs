@@ -8,6 +8,7 @@ use frame_support::{
 use frame_system as system;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
+use primitives::currency::ValidateCurrencyId;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -31,6 +32,8 @@ pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
 
 pub const MINIMUM_BALANCE: Balance = 1;
 
+#[allow(dead_code)]
+pub const INVALID: AssetId = 0;
 pub const ASSET_1: AssetId = 1;
 pub const ASSET_2: AssetId = 2;
 pub const ASSET_FREE_START: AssetId = ASSET_2 + 1;
@@ -78,6 +81,7 @@ impl Config for Test {
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 parameter_types! {
@@ -97,6 +101,8 @@ impl orml_tokens::Config for Test {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 impl governance_registry::Config for Test {

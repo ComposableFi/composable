@@ -1,0 +1,4 @@
+*.log
+ops.json
+deployment.nixops
+deployment.nixops.bak

@@ -1,28 +1,31 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-04-22T18:59:06.831389842Z -->
+<!-- Generated at 2022-06-25T22:31:58.281456585Z -->
 
 # Assets Registry Pallet Extrinsics
 
-## Set Local Admin
+## Register Asset
 
-[`set_local_admin`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets_registry/pallet/enum.Call.html#variant.set_local_admin)
+[`register_asset`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets_registry/pallet/enum.Call.html#variant.register_asset)
 
-No documentation available at this time.
+creates asset using `CurrencyFactory`,
+raises `AssetRegistered` event
 
-## Set Foreign Admin
+## Update Asset
 
-[`set_foreign_admin`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets_registry/pallet/enum.Call.html#variant.set_foreign_admin)
+[`update_asset`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets_registry/pallet/enum.Call.html#variant.update_asset)
 
-No documentation available at this time.
+Given well existing asset, update its remote information.
+Use with caution as it allow reroute assets location.
 
-## Approve Assets Mapping Candidate
+## Set Min Fee
 
-[`approve_assets_mapping_candidate`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets_registry/pallet/enum.Call.html#variant.approve_assets_mapping_candidate)
+[`set_min_fee`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets_registry/pallet/enum.Call.html#variant.set_min_fee)
 
-No documentation available at this time.
-
-## Set Metadata
-
-[`set_metadata`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets_registry/pallet/enum.Call.html#variant.set_metadata)
-
-No documentation available at this time.
+Minimal amount of asset_id required to send message to other network.
+Target network may or may not accept payment.
+Assumed this is maintained up to date by technical team.
+Mostly UI hint and fail fast solution.
+In theory can be updated by parachain sovereign account too.
+If None, than it is well known cannot pay with that asset on target_parachain_id.
+If Some(0), than price can be anything greater or equal to zero.
+If Some(MAX), than actually it forbids transfers.

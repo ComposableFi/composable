@@ -37,13 +37,24 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_support::math::wrapping_next::WrappingNext;
+	use composable_support::{
+		abstractions::{
+			counter::Counter,
+			utils::{
+				decrement::{Decrement, SafeDecrement},
+				increment::{Increment, IncrementToMax},
+				start_at::ZeroInit,
+			},
+		},
+		error_to_pallet_error,
+		math::wrapping_next::WrappingNext,
+	};
 	use composable_traits::privilege::{
 		InspectPrivilege, InspectPrivilegeGroup, MutatePrivilege, MutatePrivilegeGroup, Privilege,
 		PrivilegedGroupOf,
 	};
 	use frame_support::pallet_prelude::*;
-	use sp_runtime::traits::MaybeDisplay;
+	use sp_runtime::{traits::MaybeDisplay, DispatchError};
 	use sp_std::fmt::Debug;
 
 	type AccountIdOf<T> = <T as Config>::AccountId;
@@ -61,7 +72,9 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		// TODO: Rename to `TooManyGroups` (pluralize properly)
 		TooManyGroup,
+		// TODO: Rename to `TooManyMembers` (pluralize properly)
 		TooManyMember,
 		GroupNotFound,
 		GroupPrivilegeNotHeld,
@@ -148,7 +161,14 @@ pub mod pallet {
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
 	#[allow(clippy::disallowed_types)]
-	pub type GroupCount<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type GroupCount<T: Config> = StorageValue<
+		_,
+		u32,
+		ValueQuery,
+		Counter<ZeroInit, IncrementToMax<T::MaxGroup, TooManyGroup, Error<T>>, SafeDecrement>,
+	>;
+
+	error_to_pallet_error!(TooManyGroup,);
 
 	impl<T: Config> InspectPrivilege for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
@@ -220,12 +240,11 @@ pub mod pallet {
 			group: PrivilegedGroupOf<Self>,
 			privilege: Privilege,
 		) -> Result<Self::GroupId, DispatchError> {
-			ensure!(GroupCount::<T>::get() < T::MaxGroup::get(), Error::<T>::TooManyGroup);
 			GroupId::<T>::try_mutate(|previous_group_id| {
 				let group_id = previous_group_id.next();
 				*previous_group_id = group_id;
 
-				GroupCount::<T>::mutate(|x| *x += 1);
+				GroupCount::<T>::increment()?;
 				GroupPrivileges::<T>::insert(group_id, privilege);
 				// NOTE(hussein-aitlahcen): we don't know if it's correctly sorted at creation,
 				// hence we promote member per member.
@@ -241,7 +260,7 @@ pub mod pallet {
 		}
 
 		fn delete(group_id: Self::GroupId) -> DispatchResult {
-			GroupCount::<T>::mutate(|x| *x -= 1);
+			GroupCount::<T>::decrement()?;
 			GroupPrivileges::<T>::remove(group_id);
 			GroupMembers::<T>::remove(group_id);
 			Self::deposit_event(Event::GroupDeleted { group_id });

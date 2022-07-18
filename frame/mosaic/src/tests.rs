@@ -379,7 +379,11 @@ fn incoming_outgoing_accounts_are_isolated() {
 			asset_id,
 			ethereum_address,
 			amount,
-			true
+			amount,
+			false,
+			ALICE,
+			None,
+			true,
 		));
 		assert_eq!(account_balance(), 0);
 		assert_eq!(balance_of(SubAccount::new_outgoing(ALICE)), amount);
@@ -1078,6 +1082,10 @@ mod transfer_to {
 					asset_id,
 					ethereum_address,
 					amount,
+					amount,
+					false,
+					ALICE,
+					None,
 					true
 				),
 				Error::<Test>::BelowMinTransferSize
@@ -1127,6 +1135,10 @@ mod transfer_to {
 					asset_id,
 					ethereum_address,
 					amount,
+					amount,
+					false,
+					ALICE,
+					None,
 					true
 				),
 				Error::<Test>::ExceedsMaxTransferSize
@@ -1157,6 +1169,10 @@ mod transfer_to {
 				asset_id,
 				ethereum_address,
 				amount,
+				amount,
+				false,
+				ALICE,
+				None,
 				true
 			));
 			assert_eq!(account_balance(), 0);
@@ -1189,7 +1205,11 @@ mod transfer_to {
 					asset_id,
 					ethereum_address,
 					amount,
-					true
+					amount,
+					true,
+					ALICE,
+					None,
+					false
 				),
 				Error::<Test>::UnsupportedAsset
 			);
@@ -1199,6 +1219,7 @@ mod transfer_to {
 	fn do_transfer_to() {
 		let ethereum_address = EthereumAddress([0; 20]);
 		let amount = 100;
+		let swap_to_native = false;
 
 		assert_ok!(Mosaic::transfer_to(
 			Origin::signed(ALICE),
@@ -1206,6 +1227,10 @@ mod transfer_to {
 			ASSET_ID,
 			ethereum_address,
 			amount,
+			amount,
+			swap_to_native,
+			ALICE,
+			None,
 			true,
 		));
 		assert_eq!(
@@ -1245,6 +1270,10 @@ mod transfer_to {
 			network_id: NETWORK_ID,
 			remote_asset_id: REMOTE_ASSET_ID,
 			amount,
+			minimum_amount_out: amount,
+			swap_to_native,
+			source_user_account: ALICE,
+			amm_swap_info: None,
 		}));
 	}
 }
@@ -1377,5 +1406,270 @@ mod test_validation {
 			BlockNumber,
 			ValidTimeLockPeriod<MinimumTimeLockPeriod>,
 		>>::validate(MinimumTimeLockPeriod::get() + 1));
+	}
+}
+
+mod add_remote_amm_id {
+	use super::*;
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+
+		#[test]
+		fn should_be_able_to_add_remote_amm_id(
+			network_id in 1..u32::max_value(),
+			amm_id in 0..u128::max_value(),
+			start_block in 1..10_000u64,
+		) {
+			new_test_ext().execute_with(|| {
+
+				System::set_block_number(start_block);
+				prop_assert_ok!(Mosaic::add_remote_amm_id(
+					Origin::root(),
+					network_id,
+					amm_id
+				));
+
+				Ok(())
+			})?;
+		}
+
+		#[test]
+		fn should_be_impossible_to_add_amm_id_twice(
+			network_id in 1..u32::max_value(),
+			amm_id in 0..u128::max_value(),
+			start_block in 1..10_000u64,
+		) {
+			new_test_ext().execute_with(|| {
+
+				System::set_block_number(start_block);
+				prop_assert_ok!(Mosaic::add_remote_amm_id(
+					Origin::root(),
+					network_id,
+					amm_id
+				));
+
+				prop_assert_noop!(
+					Mosaic::add_remote_amm_id(
+						Origin::root(),
+						network_id,
+						amm_id
+					),
+					Error::<Test>::RemoteAmmIdAlreadyExists
+				);
+
+				Ok(())
+			})?;
+		}
+	}
+}
+
+mod remove_remote_amm_id {
+	use super::*;
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+
+		#[test]
+		fn should_be_able_remove_amm_id_after_adding(
+			network_id in 1..u32::max_value(),
+			amm_id in 0..u128::max_value(),
+			start_block in 1..10_000u64,
+		) {
+			new_test_ext().execute_with(|| {
+
+				System::set_block_number(start_block);
+				prop_assert_ok!(Mosaic::add_remote_amm_id(
+					Origin::root(),
+					network_id,
+					amm_id
+				));
+
+				prop_assert_ok!(Mosaic::remove_remote_amm_id(
+					Origin::root(),
+					network_id,
+					amm_id
+				));
+
+				Ok(())
+			})?;
+		}
+
+		#[test]
+		fn should_not_be_able_to_remove_nonexistent_remote_amm_ids(
+			network_id in 1..u32::max_value(),
+			amm_id in 0..u128::max_value(),
+			start_block in 1..10_000u64,
+		) {
+			new_test_ext().execute_with(|| {
+
+				System::set_block_number(start_block);
+				prop_assert_noop!(
+					Mosaic::remove_remote_amm_id(
+						Origin::root(),
+						network_id,
+						amm_id
+					),
+					Error::<Test>::RemoteAmmIdNotFound
+				);
+
+				Ok(())
+			})?;
+		}
+	}
+}
+
+mod do_transfer_with_remote_amm_swap {
+	use super::*;
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+
+		#[test]
+		fn should_work_with_whitelisted_amm_id(
+			account_a in account_id(),
+			network_id in 1..u32::max_value(),
+			asset_id in 1..100u128,
+			amm_id in 0..u128::max_value(),
+			amount in 100..u128::max_value(),
+			start_block in 1..10_000u64,
+			minimum_amount_out in 0..u128::max_value(),
+			// ethereum_address in ethereum_address()
+		) {
+			new_test_ext().execute_with(|| {
+
+				assert_ok!(Tokens::mint_into(asset_id, &account_a, amount));
+
+				assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+				assert_ok!(Mosaic::set_network(
+					Origin::relayer(),
+					network_id,
+					NetworkInfo { enabled: true,  min_transfer_size: 1, max_transfer_size: amount },
+				));
+
+				assert_ok!(Mosaic::set_budget(
+					Origin::root(),
+					asset_id,
+					amount,
+					BudgetPenaltyDecayer::linear(10)
+				));
+
+				let remote_asset_id = [0xFFu8; 20];
+				assert_ok!(Mosaic::update_asset_mapping(
+					Origin::root(),
+					asset_id,
+					network_id,
+					Some(remote_asset_id)
+				));
+
+				let ethereum_address = EthereumAddress([0; 20]);
+
+				System::set_block_number(start_block);
+				prop_assert_ok!(Mosaic::add_remote_amm_id(
+					Origin::root(),
+					network_id,
+					amm_id
+				));
+
+				let amm_swap_info = AmmSwapInfo {
+					destination_token_out_address: ethereum_address,
+					destination_amm: RemoteAmm {
+						network_id,
+						amm_id,
+					},
+					minimum_amount_out,
+				};
+
+				prop_assert_ok!(Mosaic::transfer_to(
+					Origin::signed(account_a),
+					network_id,
+					asset_id,
+					ethereum_address,
+					amount,
+					amount,
+					true,
+					account_a,
+					Some(amm_swap_info),
+					true
+				));
+
+				Ok(())
+			})?;
+		}
+
+		#[test]
+		fn should_not_work_with_not_whitelisted_amm_id(
+			account_a in account_id(),
+			network_id in 1..u32::max_value(),
+			asset_id in 1..100u128,
+			amm_id in 0..u128::max_value(),
+			amount in 100..u128::max_value(),
+			start_block in 1..10_000u64,
+			minimum_amount_out in 0..u128::max_value(),
+			// ethereum_address in ethereum_address()
+		) {
+			new_test_ext().execute_with(|| {
+
+				assert_ok!(Tokens::mint_into(asset_id, &account_a, amount));
+
+				assert_ok!(Mosaic::set_relayer(Origin::root(), RELAYER));
+
+				assert_ok!(Mosaic::set_network(
+					Origin::relayer(),
+					network_id,
+					NetworkInfo { enabled: true,  min_transfer_size: 1, max_transfer_size: amount },
+				));
+
+				assert_ok!(Mosaic::set_budget(
+					Origin::root(),
+					asset_id,
+					amount,
+					BudgetPenaltyDecayer::linear(10)
+				));
+
+				let remote_asset_id = [0xFFu8; 20];
+				assert_ok!(Mosaic::update_asset_mapping(
+					Origin::root(),
+					asset_id,
+					network_id,
+					Some(remote_asset_id)
+				));
+
+				let ethereum_address = EthereumAddress([0; 20]);
+
+
+				System::set_block_number(start_block);
+
+
+				// Note how we are NOT calling Mosaic::add_remote_amm_id here.
+				// Therefore, any (network_id, amm_id) is not-whitelisted.
+
+				let amm_swap_info = AmmSwapInfo {
+					destination_token_out_address: ethereum_address,
+					destination_amm: RemoteAmm {
+						network_id,
+						amm_id,
+					},
+					minimum_amount_out,
+				};
+
+				prop_assert_noop!(Mosaic::transfer_to(
+					Origin::signed(account_a),
+					network_id,
+					asset_id,
+					ethereum_address,
+					amount,
+					amount,
+					true,
+					account_a,
+					Some(amm_swap_info),
+					true
+				), Error::<Test>::DestinationAmmIdNotWhitelisted);
+
+
+				Ok(())
+			})?;
+		}
 	}
 }

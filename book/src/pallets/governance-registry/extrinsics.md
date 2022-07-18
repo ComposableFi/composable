@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-04-22T18:59:06.831988244Z -->
+<!-- Generated at 2022-06-25T22:31:58.345310182Z -->
 
 # Governance Registry Pallet Extrinsics
 

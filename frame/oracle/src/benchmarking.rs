@@ -8,7 +8,7 @@ use composable_traits::oracle::Price;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,
-	traits::{Currency, EnsureOrigin, Get},
+	traits::{Currency, Get},
 	BoundedVec,
 };
 use frame_system::{EventRecord, RawOrigin};
@@ -55,6 +55,11 @@ benchmarks! {
 	verify {
 		assert_last_event::<T>(Event::AssetInfoChange(asset_id.into(), *threshold, *min_answers, *max_answers, *block_interval, reward, slash).into());
 	}
+
+	adjust_rewards {
+		let annual_cost_per_oracle: T::Balance = 100_000_u128.into();
+		let num_ideal_oracles: u8 = 10;
+	}: _(RawOrigin::Root, annual_cost_per_oracle, num_ideal_oracles)
 
 	set_signer {
 		let caller: T::AccountId = whitelisted_caller();
@@ -115,7 +120,7 @@ benchmarks! {
 			min_answers: 1,
 			max_answers: T::MaxAnswerBound::get(),
 			block_interval: 0u32.into(),
-			reward: T::Currency::minimum_balance(),
+			reward_weight: T::Currency::minimum_balance(),
 			slash: T::Currency::minimum_balance()
 		});
 		frame_system::Pallet::<T>::set_block_number(6u32.into());
@@ -145,7 +150,7 @@ benchmarks! {
 			min_answers: 1,
 			max_answers: p,
 			block_interval: T::StalePrice::get(),
-			reward: T::Currency::minimum_balance(),
+			reward_weight: T::Currency::minimum_balance(),
 			slash: T::Currency::minimum_balance()
 		};
 		let pre_prices = (0..p).map(|i| {
@@ -171,7 +176,7 @@ benchmarks! {
 			min_answers: 1,
 			max_answers: p,
 			block_interval: T::StalePrice::get(),
-			reward: T::Currency::minimum_balance(),
+			reward_weight: T::Currency::minimum_balance(),
 			slash: T::Currency::minimum_balance()
 		};
 		let pre_prices = (0..p).map(|_| {

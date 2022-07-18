@@ -1,6 +1,8 @@
 {
   "enabledTests": {
     "enabled": true,
+    "HAL01": true,
+    "HAL02": true,
     "addAssetAndInfo__success": {
       "enabled": true,
       "add1": true

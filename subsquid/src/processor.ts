@@ -1,56 +1,78 @@
 import * as ss58 from "@subsquid/ss58";
 import {
   EventHandlerContext,
-  Store,
   SubstrateProcessor,
 } from "@subsquid/substrate-processor";
-import { lookupArchive } from "@subsquid/archive-registry";
 import { Account, HistoricalBalance } from "./model";
 import {
   BalancesTransferEvent,
-  PabloLiquidityAddedEvent, PabloLiquidityRemovedEvent,
-  PabloPoolCreatedEvent, PabloPoolDeletedEvent,
-  PabloSwappedEvent
+  PabloLiquidityAddedEvent,
+  PabloLiquidityRemovedEvent,
+  PabloPoolCreatedEvent,
+  PabloPoolDeletedEvent,
+  PabloSwappedEvent,
+  BondedFinanceNewBondEvent,
+  BondedFinanceNewOfferEvent,
 } from "./types/events";
-import {getOrCreate} from "./dbHelper";
+import { getOrCreate } from "./dbHelper";
 import {
   processLiquidityAddedEvent,
   processLiquidityRemovedEvent,
-  processPoolCreatedEvent, processPoolDeletedEvent,
-  processSwappedEvent
+  processPoolCreatedEvent,
+  processPoolDeletedEvent,
+  processSwappedEvent,
 } from "./pabloProcessor";
+import {
+  processNewBondEvent,
+  processNewOfferEvent,
+} from "./bondedFinanceProcessor";
 
 const processor = new SubstrateProcessor("composable_dali_dev");
 
+const chain = (): string => {
+  switch (process.env.ENV) {
+    case "dali":
+      return "wss://dali.devnets.composablefinance.ninja/parachain/alice";
+    case "dali-stage":
+      return "wss://dali-cluster-fe.composablefinance.ninja";
+    default:
+      return "ws://localhost:9988";
+  }
+};
+
+const chain_connection_string = chain();
+const archive_connection_string = "http://localhost:8080/v1/graphql";
+
+console.log(`Chain ${chain_connection_string}`);
+console.log(`Archive ${archive_connection_string}`);
+
 processor.setBatchSize(500);
 processor.setDataSource({
-  archive: `http://localhost:8080/v1/graphql`,
-  // archive: `http://localhost:4010/v1/graphql`,
-  chain: "ws://localhost:9997",
-  // chain: "wss://dali.devnets.composablefinance.ninja/parachain/alice",
+  archive: archive_connection_string,
+  chain: chain_connection_string,
 });
 
-processor.addEventHandler('pablo.PoolCreated', async (ctx) => {
+processor.addEventHandler("pablo.PoolCreated", async (ctx) => {
   const event = new PabloPoolCreatedEvent(ctx);
   await processPoolCreatedEvent(ctx, event);
 });
 
-processor.addEventHandler('pablo.PoolDeleted', async (ctx) => {
+processor.addEventHandler("pablo.PoolDeleted", async (ctx) => {
   const event = new PabloPoolDeletedEvent(ctx);
   await processPoolDeletedEvent(ctx, event);
 });
 
-processor.addEventHandler('pablo.LiquidityAdded', async (ctx) => {
+processor.addEventHandler("pablo.LiquidityAdded", async (ctx) => {
   const event = new PabloLiquidityAddedEvent(ctx);
   await processLiquidityAddedEvent(ctx, event);
 });
 
-processor.addEventHandler('pablo.LiquidityRemoved', async (ctx) => {
+processor.addEventHandler("pablo.LiquidityRemoved", async (ctx) => {
   const event = new PabloLiquidityRemovedEvent(ctx);
   await processLiquidityRemovedEvent(ctx, event);
 });
 
-processor.addEventHandler('pablo.Swapped', async (ctx) => {
+processor.addEventHandler("pablo.Swapped", async (ctx) => {
   const event = new PabloSwappedEvent(ctx);
   await processSwappedEvent(ctx, event);
 });
@@ -91,6 +113,18 @@ processor.addEventHandler("balances.Transfer", async (ctx) => {
   );
 });
 
+processor.addEventHandler("bondedFinance.NewOffer", async (ctx) => {
+  const event = new BondedFinanceNewOfferEvent(ctx);
+
+  await processNewOfferEvent(ctx, event);
+});
+
+processor.addEventHandler("bondedFinance.NewBond", async (ctx) => {
+  const event = new BondedFinanceNewBondEvent(ctx);
+
+  await processNewBondEvent(ctx, event);
+});
+
 processor.run();
 
 interface TransferEvent {
@@ -101,8 +135,8 @@ interface TransferEvent {
 
 function getTransferEvent(ctx: EventHandlerContext): TransferEvent {
   const event = new BalancesTransferEvent(ctx);
-  if (event.isV2100) {
-    const {from, to, amount} = event.asV2100;
+  if (event.isV2300) {
+    const { from, to, amount } = event.asV2300;
     return { from, to, amount };
   } else {
     const { from, to, amount } = event.asLatest;

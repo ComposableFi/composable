@@ -1,18 +1,20 @@
 use crate::{
 	self as pallet_liquidations,
 	mock::currency::{CurrencyId, NativeAssetId},
+	weights::SubstrateWeight,
 };
 
 use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{Everything, GenesisBuild},
+	traits::{ConstU32, Everything, GenesisBuild},
 	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
+use primitives::currency::ValidateCurrencyId;
 use smallvec::smallvec;
 use sp_core::{
 	sr25519::{Public, Signature},
@@ -34,6 +36,7 @@ pub type OrderId = u32;
 pub type Amount = i64;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+pub type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
 
 frame_support::construct_runtime! {
 	pub enum Runtime where
@@ -81,7 +84,7 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -130,8 +133,10 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = ();
 	type MaxLocks = ();
 	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 pub static ALICE: Public =
@@ -155,6 +160,7 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 impl pallet_currency_factory::Config for Runtime {
@@ -236,12 +242,13 @@ impl pallet_liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
 	type OrderId = OrderId;
-	type WeightInfo = ();
+	type WeightInfo = SubstrateWeight<Self>;
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LiquidationPalletId;
 	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
 	type XcmSender = XcmFake;
+	type MaxLiquidationStrategiesAmount = ConstU32<3>;
 }
 
 #[allow(dead_code)] // not really dead

@@ -1,0 +1,46 @@
+name: GCS Bucket deploy 
+on:
+  push: 
+    branches: 
+      - main
+      - setup-cicd-for-mdbook
+
+env:
+  CI_SERVICE_ACCOUNT_KEY: ${{ secrets.CI_SERVICE_ACCOUNT_KEY }}
+
+jobs:
+  build-and-deploy-book:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '16.x'
+
+      - name: Setup mdBook
+        run: |
+          wget "https://github.com/rust-lang/mdBook/releases/download/v0.4.18/mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz" 
+          tar -xzf mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz 
+          chmod +x mdbook
+          sudo cp ./mdbook /usr/bin 
+
+      - name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v0'
+        with:
+          credentials_json: '${{ secrets.CI_SERVICE_ACCOUNT_KEY }}'
+
+      - name: Build Book
+        working-directory: 'book'
+        run: |
+          mdbook build --dest-dir html/
+          
+
+      - name: 'Deploy to CLoud Storage Website'
+        uses: 'google-github-actions/upload-cloud-storage@v0'
+        with:
+          path: 'book/html/'
+          destination: 'docs.composable.finance'
