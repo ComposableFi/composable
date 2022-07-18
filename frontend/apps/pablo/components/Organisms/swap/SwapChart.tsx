@@ -56,12 +56,12 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
                 baseAsset && quoteAsset ? <PairAsset
                 assets={[
                   {
-                    icon: quoteAsset.icon,
-                    label: quoteAsset.symbol,
+                    icon: baseAsset.icon,
+                    label: baseAsset.symbol,
                   },
                   {
-                    icon: baseAsset.icon,
-                    label: baseAsset.symbol
+                    icon: quoteAsset.icon,
+                    label: quoteAsset.symbol
                   },
                 ]}
                 separator="-"
@@ -79,7 +79,7 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
             </Box>
           </Box>
         }
-        totalText={`${swaps.spotPrice} ${baseAsset ? baseAsset.symbol : ""}`}
+        totalText={`${swaps.spotPrice} ${quoteAsset ? quoteAsset.symbol : ""}`}
         changeTextColor={
           changePercent > 0
             ? theme.palette.featured.main
@@ -88,8 +88,8 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
         changeIntroText={`Past ${getCurrentInterval()?.name}`}
         changeText={
           changePercent > 0
-            ? `+${changePercent}% ${baseAsset ? baseAsset.symbol : ""}`
-            : `${changePercent}% ${baseAsset ? baseAsset.symbol : ""}`
+            ? `+${changePercent}% ${quoteAsset ? quoteAsset.symbol : ""}`
+            : `${changePercent}% ${quoteAsset ? quoteAsset.symbol : ""}`
         }
         AreaChartProps={{
           data: chartSeries,

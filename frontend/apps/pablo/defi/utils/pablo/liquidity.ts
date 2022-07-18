@@ -1,11 +1,45 @@
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import {
   createPabloPoolAccountId,
+  fetchAssetBalance,
   fetchBalanceByAssetId,
   fromChainUnits,
 } from "@/defi/utils";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
+
+export async function fetchPoolLiquidity(
+  parachainApi: ApiPromise,
+  pools: {
+    id: string;
+    pair: {
+      base: number;
+      quote: number;
+    };
+  }[]
+): Promise<Record<string, { baseAmount: BigNumber; quoteAmount: BigNumber }>> {
+  let liquidityRecord: Record<
+    string,
+    { baseAmount: BigNumber; quoteAmount: BigNumber }
+  > = {};
+
+  for (const pool of pools) {
+    try {
+      const poolAccountId = createPabloPoolAccountId(parachainApi, Number(pool.id));
+      const baseLiq = await fetchAssetBalance(parachainApi, poolAccountId, pool.pair.base.toString())
+      const quoteLiq = await fetchAssetBalance(parachainApi, poolAccountId, pool.pair.quote.toString())
+
+      liquidityRecord[pool.id] = {
+        baseAmount: baseLiq,
+        quoteAmount: quoteLiq
+      }
+    } catch (err: any) {
+      console.error(err);
+    }
+  }
+
+  return liquidityRecord;
+}
 
 export async function fetchAndUpdatePoolLiquidity(
   pool: ConstantProductPool | StableSwapPool,
@@ -89,4 +123,14 @@ export function calcaulateProvidedLiquidity(
     baseAmountProvided,
     quoteAmountProvided,
   };
+}
+
+export function fromRemoveLiquiditySimulationResult(result: { assets: { [assetId: number | string]: string } } ): Record<string, BigNumber> {
+  let liquidityRecord: Record<string, BigNumber> = {};
+
+  for (const key in result.assets) {
+    liquidityRecord[key] = fromChainUnits(result.assets[key]);
+  }
+
+  return liquidityRecord;
 }

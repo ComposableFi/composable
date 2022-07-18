@@ -25,16 +25,17 @@ import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
-import { fetchSpotPrice, toChainUnits } from "@/defi/utils";
-import { useParachainApi } from "substrate-react";
+import { fetchSpotPrice, fromRemoveLiquiditySimulationResult, toChainUnits } from "@/defi/utils";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 
-export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
+export const RemoveLiquidityForm = ({ ...rest }) => {
   const theme = useTheme();
   const router = useRouter();
   const dispatch = useDispatch();
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { poolId } = useRemoveLiquidityState();
   const { lpBalance, baseAsset, quoteAsset } = useLiquidityPoolDetails(poolId);
 
@@ -73,23 +74,51 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     }
   }, [poolId, baseAsset, quoteAsset, parachainApi]);
 
-  // useEffect(() => {
-  //   if (parachainApi && debouncedPercentage > 0 && lpBalance.gt(0)) {
-  //     const selectedLpAmount = toChainUnits(
-  //       lpBalance.times(debouncedPercentage / 100)
-  //     );
-  //     (parachainApi.rpc as any).pablo
-  //       .redeemableAssetForGivenLpTokens(poolId, selectedLpAmount)
-  //       .then((response: any) => {
-  //         console.log(response);
-  //       }).catch((err: any) => {
-  //         console.error(err)
-  //       });
-  //   } else {
-  //     setExpectedRemoveAmountBase(new BigNumber(0));
-  //     setExpectedRemoveAmountQuote(new BigNumber(0));
-  //   }
-  // }, [parachainApi, debouncedPercentage, lpBalance, poolId]);
+  useEffect(() => {
+    if (
+      parachainApi &&
+      debouncedPercentage > 0 &&
+      lpBalance.gt(0) &&
+      selectedAccount &&
+      baseAsset &&
+      quoteAsset
+    ) {
+      const selectedLpAmount = toChainUnits(
+        lpBalance.times(debouncedPercentage / 100)
+      );
+
+      const b = baseAsset.network[DEFAULT_NETWORK_ID].toString();
+      const q = quoteAsset.network[DEFAULT_NETWORK_ID].toString();
+
+      // @ts-ignore
+      parachainApi.rpc.pablo
+        .simulateRemoveLiquidity(
+          parachainApi.createType("AccountId32", selectedAccount.address),
+          parachainApi.createType("PalletPabloPoolId", poolId.toString()),
+          selectedLpAmount.toString(),
+          {
+            [b]: "0",
+            [q]: "0",
+          }
+        )
+        .then((response: any) => {
+          const remove = fromRemoveLiquiditySimulationResult(response.toJSON())
+          setExpectedRemoveAmountBase(remove[b])
+          setExpectedRemoveAmountQuote(remove[q])
+        })
+        .catch((err: any) => {
+          console.error(err);
+        });
+    }
+  }, [
+    parachainApi,
+    debouncedPercentage,
+    lpBalance,
+    poolId,
+    selectedAccount,
+    baseAsset,
+    quoteAsset,
+  ]);
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -114,7 +143,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
   useEffect(() => {
     dispatch(setMessage({}));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

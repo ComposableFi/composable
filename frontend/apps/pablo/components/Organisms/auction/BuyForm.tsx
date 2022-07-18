@@ -6,14 +6,17 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useCallback, useState } from "react";
-import BigNumber from "bignumber.js";
-import { DropdownCombinedBigNumberInput, BigNumberInput } from "@/components";
+import { Settings } from "@mui/icons-material";
+import { useCallback } from "react";
+import { DropdownCombinedBigNumberInput, BigNumberInput, TransactionSettings } from "@/components";
 import { useMobile } from "@/hooks/responsive";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useAppDispatch } from "@/hooks/store";
-import { openPolkadotModal } from "@/stores/ui/uiSlice";
+import {
+  openPolkadotModal,
+  openTransactionSettingsModal,
+} from "@/stores/ui/uiSlice";
 import { getFullHumanizedDateDiff } from "shared";
 import { LiquidityBootstrappingPool } from "@/defi/types";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
@@ -46,7 +49,8 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     setIsValidQuoteInput,
     isBuyButtonDisabled,
     selectedAuction,
-    minimumReceived
+    minimumReceived,
+    isProcessing,
   } = useBuyForm();
 
   const isActive: boolean =
@@ -56,15 +60,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
 
   const dispatch = useAppDispatch();
 
-  const [isProcessing, setIsProcessing] = useState(false);
-  const handleDebounceFn = async (side: "base" | "quote", value: BigNumber) => {
-    setIsProcessing(true);
-    await onChangeTokenAmount(side, value);
-    setTimeout(() => {
-      setIsProcessing(false);
-    }, 1000);
-  };
-  const debouncedTokenAmountUpdate = _.debounce(handleDebounceFn, 1000);
+  const debouncedTokenAmountUpdate = _.debounce(onChangeTokenAmount, 1000);
 
   const initiateBuyTx = usePabloSwap({
     baseAssetId: selectedAuction.pair.base.toString(),
@@ -73,9 +69,13 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     minimumReceived,
   });
 
+  const onSettingHandler = () => {
+    dispatch(openTransactionSettingsModal());
+  };
+
   const handleBuy = useCallback(async () => {
     await initiateBuyTx();
-  }, [initiateBuyTx])
+  }, [initiateBuyTx]);
 
   return (
     <Box
@@ -91,8 +91,23 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
       {...rest}
     >
       <Box visibility={isActive ? undefined : "hidden"}>
+        <Box display="flex" justifyContent="end" alignItems="center">
+          <Settings
+            sx={{
+              marginBottom: theme.spacing(2),
+              color: alpha(
+                theme.palette.common.white,
+                theme.custom.opacity.darker
+              ),
+              "&:hover": {
+                color: theme.palette.common.white,
+              },
+              cursor: "pointer",
+            }}
+            onClick={onSettingHandler}
+          />
+        </Box>
         <DropdownCombinedBigNumberInput
-          onMouseDown={(evt) => setIsProcessing(false)}
           maxValue={balanceQuote}
           setValid={setIsValidQuoteInput}
           noBorder
@@ -123,13 +138,15 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
                 disabled: true,
                 hidden: true,
               },
-              ... quoteAsset ? [
-                {
-                  value: quoteAsset.network[DEFAULT_NETWORK_ID],
-                  icon: quoteAsset.icon,
-                  label: quoteAsset.symbol,
-                },
-              ] : [],
+              ...(quoteAsset
+                ? [
+                    {
+                      value: quoteAsset.network[DEFAULT_NETWORK_ID],
+                      icon: quoteAsset.icon,
+                      label: quoteAsset.symbol,
+                    },
+                  ]
+                : []),
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
@@ -170,7 +187,6 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
       <Box mt={4} visibility={isActive ? undefined : "hidden"}>
         <BigNumberInput
           disabled={isProcessing}
-          onMouseDown={(evt) => setIsProcessing(false)}
           value={baseAmount}
           setValue={(value) => {
             if (isProcessing) return;
@@ -179,12 +195,14 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
           maxValue={balanceBase}
           setValid={setIsValidBaseInput}
           EndAdornmentAssetProps={{
-            assets: baseAsset ? [
-              {
-                icon: baseAsset.icon,
-                label: baseAsset.symbol,
-              },
-            ] : [],
+            assets: baseAsset
+              ? [
+                  {
+                    icon: baseAsset.icon,
+                    label: baseAsset.symbol,
+                  },
+                ]
+              : [],
           }}
           LabelProps={{
             label: "Launch token",
@@ -267,6 +285,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         </Box>
       )}
       <ConfirmingModal open={isPendingBuy} />
+      <TransactionSettings />
     </Box>
   );
 };

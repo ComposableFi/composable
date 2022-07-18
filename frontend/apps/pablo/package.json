@@ -35,6 +35,7 @@
     "imagemin-svgo": "^10.0.1",
     "lodash": "^4.17.21",
     "micro-base": "^0.10.2",
+    "millify": "^4.0.0",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.34",
     "next": "^12.2.0",

@@ -1,4 +1,3 @@
-import { Assets } from "@/defi/polkadot/Assets";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useEffect, useState } from "react";
 import useStore from "../useStore";

@@ -1,5 +1,8 @@
 import { AssetId } from "@/defi/polkadot/types";
-import { setSelection, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
+import {
+  setSelection,
+  useAddLiquiditySlice,
+} from "@/store/addLiquidity/addLiquidity.slice";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import BigNumber from "bignumber.js";
 import { useState, useMemo, useEffect } from "react";
@@ -18,18 +21,15 @@ export const useAddLiquidity = () => {
   const {
     ui: { assetOne, assetTwo, assetOneAmount, assetTwoAmount },
     pool,
-    findPoolManually
+    findPoolManually,
   } = useAddLiquiditySlice();
 
   const _assetOne = useAsset(assetOne);
   const _assetTwo = useAsset(assetTwo);
 
   const {
-    tokenAmounts: {
-      baseAmount,
-      quoteAmount
-    }
-  } = useLiquidityByPool(pool)
+    tokenAmounts: { baseAmount, quoteAmount },
+  } = useLiquidityByPool(pool);
 
   const assetOneAmountBn = useMemo(
     () => new BigNumber(assetOneAmount),
@@ -105,41 +105,38 @@ export const useAddLiquidity = () => {
         .div(new BigNumber(netAum).plus(netUser))
         .times(100);
     }
-  }, [
-    baseAmount,
-    quoteAmount,
-    assetOneAmountBn,
-    assetTwoAmountBn
-  ]);
+  }, [baseAmount, quoteAmount, assetOneAmountBn, assetTwoAmountBn]);
 
   const [lpReceiveAmount, setLpReceiveAmount] = useState(new BigNumber(0));
 
   useEffect(() => {
-    if (parachainApi && assetOne !== "none" && assetTwo !== "none" && pool && selectedAccount) {
+    if (
+      parachainApi &&
+      assetOne !== "none" &&
+      assetTwo !== "none" &&
+      pool &&
+      selectedAccount
+    ) {
       let isReverse = pool.pair.base.toString() !== assetOne;
-      const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount)
+      const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount);
       const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
 
       if (bnBase.gte(0) && bnQuote.gte(0)) {
+        
+        let b = isReverse ? pool.pair.quote.toString() : pool.pair.base.toString();
+        let q = isReverse ? pool.pair.base.toString() : pool.pair.quote.toString();
+
         (parachainApi.rpc as any).pablo
           .simulateAddLiquidity(
             parachainApi.createType("AccountId32", selectedAccount.address),
             parachainApi.createType("PalletPabloPoolId", pool.poolId),
-            parachainApi.createType(
-              "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>", 
-              [[
-                parachainApi.createType('SafeRpcWrapper<AssetId>', isReverse ? pool.pair.quote : pool.pair.base),
-                parachainApi.createType('SafeRpcWrapper<Balance>', bnBase.toString())
-              ], [
-                parachainApi.createType('SafeRpcWrapper<AssetId>', isReverse ? pool.pair.base : pool.pair.quote),
-                parachainApi.createType('SafeRpcWrapper<Balance>', bnQuote.toString())
-              ]]
-            )
+            {
+              [b]: bnBase.toString(),
+              [q]: bnQuote.toString()
+            }
           )
           .then((expectedLP: any) => {
-            setLpReceiveAmount(
-              fromChainUnits(expectedLP.toString())
-            );
+            setLpReceiveAmount(fromChainUnits(expectedLP.toString()));
           })
           .catch((err: any) => {
             console.log(err);
@@ -168,6 +165,6 @@ export const useAddLiquidity = () => {
     needToSelectToken,
     invalidTokenPair,
     canSupply,
-    findPoolManually
+    findPoolManually,
   };
 };

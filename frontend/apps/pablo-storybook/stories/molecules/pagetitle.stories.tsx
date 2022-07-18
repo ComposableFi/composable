@@ -22,4 +22,6 @@ export const PageTitleStory = Template.bind({});
 PageTitleStory.args = {
   title: "Overview",
   subtitle: "You will be able to check on your positions here.",
+  principalAsset: undefined,
+  rewardAsset: undefined
 };

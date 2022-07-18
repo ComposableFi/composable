@@ -6,8 +6,10 @@ import { BondPrincipalAsset } from "@/defi/types";
 import { useCallback } from "react";
 
 export type PageTitleProps = {
-  principalAsset: BondPrincipalAsset;
-  rewardAsset: MockedAsset | undefined;
+  title?: string;
+  subtitle?: string;
+  principalAsset?: BondPrincipalAsset;
+  rewardAsset?: MockedAsset;
   iconSize?: number;
 } & BoxProps;
 export const PageTitle: React.FC<PageTitleProps> = ({

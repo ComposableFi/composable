@@ -77,6 +77,23 @@ jest.mock("@/store/hooks/useUserProvidedLiquidityByPool.ts", () => {
   }))}
 })
 
+jest.mock("@/defi/subsquid/queries/bonds", () => {
+  return { fetchTotalPurchasedBondsByOfferIds: jest.fn().mockImplementation(() => (Promise.resolve({})))}
+})
+
+jest.mock("@/defi/subsquid/queries/auctions", () => {
+  const BigNumber = require('bignumber.js');
+  return { 
+    fetchInitialBalance: jest.fn().mockImplementation(() => (Promise.resolve({
+    baseBalance: new BigNumber(0), quoteBalance: new BigNumber(0)
+  }))),
+  fetchAuctionTrades: jest.fn().mockImplementation(() => (Promise.resolve([]))),
+  fetchLbpStats: jest.fn().mockImplementation(() => (Promise.resolve({
+    totalLiquidity: new BigNumber(0), totalVolume: new BigNumber(0)
+  })))
+}
+})
+
 jest.mock("@/store/hooks/usePoolTvlChart", () => ({
     usePoolTvlChart: jest.fn().mockImplementation(() => ({
       seriesIntervals: [],
