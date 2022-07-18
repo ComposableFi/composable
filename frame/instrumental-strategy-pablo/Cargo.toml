@@ -38,8 +38,8 @@ pallet-currency-factory = { path = "../currency-factory", default-features = fal
 pallet-governance-registry = { path = "../governance-registry", default-features = false }
 pallet-instrumental = { version = "0.1.0", path = "../instrumental", default-features = false }
 pallet-pablo = { path = "../pablo", default-features = false }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
-pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-vault = { path = "../vault", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 proptest = "1.0.0"
