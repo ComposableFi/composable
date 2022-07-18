@@ -19,7 +19,6 @@ pub type PoolId = u128;
 pub type Moment = composable_traits::time::Timestamp;
 pub type VaultId = u64;
 
-const NATIVE_ASSET: CurrencyId = CurrencyId::PICA;
 // These time units are defined in number of blocks.
 pub const MILLISECS_PER_BLOCK: Moment = 3000;
 pub const SECS_PER_BLOCK: Moment = MILLISECS_PER_BLOCK / 1000;
