@@ -27,7 +27,7 @@ export default async function(
   fee: number | Permill
 ): Promise<IEvent<[u128, AccountId32, ComposableTraitsDefiCurrencyPairCurrencyId]>> {
   const pool = api.createType("PalletPabloPoolInitConfiguration", {
-    ConstantProduct: {
+    StableSwap: {
       owner: api.createType("AccountId32", managerWallet),
       pair: api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
         base: api.createType("u128", baseAssetId),
