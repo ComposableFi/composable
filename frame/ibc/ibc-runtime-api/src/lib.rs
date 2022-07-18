@@ -10,14 +10,15 @@ sp_api::decl_runtime_apis! {
 	pub trait IbcRuntimeApi {
 		/// Get parachain id
 		fn para_id() -> u32;
-		/// Returns inputs used to create trie db
-		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>>;
 
 		/// Returns the balance of this address
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128>;
 
 		/// Quuery offchain packets
 		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<OffchainPacketType>>;
+
+		/// Quuery offchain acks
+		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>>;
 
 		/// Returns client state at height
 		fn client_state(client_id: Vec<u8>) -> Option<QueryClientStateResponse>;

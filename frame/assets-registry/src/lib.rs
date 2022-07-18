@@ -162,8 +162,11 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Creates asset using `CurrencyFactory`,
+		/// Creates asset using `CurrencyFactory`.
 		/// Raises `AssetRegistered` event
+		///
+		/// Sets only required fields by `CurrencyFactory`, to upsert metadata use referenced
+		/// pallet.
 		///
 		/// # Parameters:
 		///

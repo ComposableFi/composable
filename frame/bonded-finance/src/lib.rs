@@ -424,7 +424,7 @@ pub mod pallet {
 		}
 
 		pub(crate) fn account_id(offer_id: T::BondOfferId) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account(offer_id)
+			T::PalletId::get().into_sub_account_truncating(offer_id)
 		}
 	}
 

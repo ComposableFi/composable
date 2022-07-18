@@ -1,7 +1,11 @@
 ![picasso_banner](../picasso-banner.png)
 
+---
 
 # Apollo Oracle Set-up Guide 
+
+---
+
 ## Overview
 
 Apollo is an oracle for submitting prices on-chain. We plan to upgrade it and allow everyone to stream arbitrary third party data in the future. By taking part in Apollo and becoming an oracle operator, you will be securing the assets prices and help the network become more resilient. Participants receive tokens as rewards for their work, but it is important to note that the on-chain algorithm also allows for slashing based on bad behavior, which is defined as submitting prices out of a certain threshold range from a pivot price calculated on all submitted prices.

@@ -328,7 +328,7 @@ pub mod pallet {
 			// we can later allow liquidate old orders(or orders with some block liquidation
 			// timeout set) using kind of account per order is possible, but may risk to
 			// pollute account system
-			let treasury = &T::PalletId::get().into_account();
+			let treasury = &T::PalletId::get().into_account_truncating();
 			T::MultiCurrency::unreserve(order.order.pair.base, &who, order.order.take.amount);
 			<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(
 				treasury,

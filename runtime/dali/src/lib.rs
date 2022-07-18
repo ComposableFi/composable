@@ -1,3 +1,6 @@
+//! Test runtime.
+//! Consider to set minimal values (duration, times, and limits) to be easy to test within day of
+//! work. Example, use several hours, instead of several days.
 #![cfg_attr(
 	not(test),
 	warn(
@@ -126,7 +129,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2300,
+	spec_version: 2400,
 	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -272,7 +275,7 @@ impl identity::Config for Runtime {
 parameter_types! {
 	pub DepositBase: u64 = CurrencyId::unit();
 	pub DepositFactor: u64 = 32 * CurrencyId::milli::<u64>();
-	pub const MaxSignatories: u16 = 5;
+	pub const MaxSignatories: u16 = 100;
 }
 
 impl multisig::Config for Runtime {
@@ -456,26 +459,34 @@ parameter_types! {
 	pub const MaxHistory: u32 = 20;
 	pub const MaxPrePrices: u32 = 40;
 	pub const TwapWindow: u16 = 3;
+	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
+	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
 }
 
 impl oracle::Config for Runtime {
-	type Currency = Balances;
 	type Event = Event;
-	type AuthorityId = oracle::crypto::BathurstStId;
+	type Balance = Balance;
+	type Currency = Balances;
 	type AssetId = CurrencyId;
 	type PriceValue = Balance;
-	type StakeLock = StakeLock;
+	type AuthorityId = oracle::crypto::BathurstStId;
 	type MinStake = MinStake;
+	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfCouncil;
+	type RewardOrigin = EnsureRootOrHalfCouncil;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
+	type TreasuryAccount = TreasuryAccount;
 	type MaxHistory = MaxHistory;
+	type TwapWindow = TwapWindow;
 	type MaxPrePrices = MaxPrePrices;
+	type MsPerBlock = MsPerBlock;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
-	type TreasuryAccount = TreasuryAccount;
-	type TwapWindow = TwapWindow;
+	type Moment = Moment;
+	type Time = Timestamp;
+	type PalletId = OraclePalletId;
 }
 
 // Parachain stuff.
@@ -561,14 +572,14 @@ impl collator_selection::Config for Runtime {
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
-		let account: AccountId = TreasuryPalletId::get().into_account();
-		let account2: AccountId = PotId::get().into_account();
+		let account: AccountId = TreasuryPalletId::get().into_account_truncating();
+		let account2: AccountId = PotId::get().into_account_truncating();
 		vec![&account, &account2].contains(&a)
 	}
 }
 
 parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 type ReserveIdentifier = [u8; 8];
@@ -584,6 +595,8 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 parameter_types! {
@@ -877,6 +890,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolId = u16;
 	type PositionId = u128;
 	type AssetId = CurrencyId;
+	type Assets = Assets;
 	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
@@ -1041,7 +1055,7 @@ impl lending::Config for Runtime {
 
 parameter_types! {
   pub PabloId: PalletId = PalletId(*b"pall_pab");
-  pub LbpMinSaleDuration: BlockNumber = DAYS;
+  pub LbpMinSaleDuration: BlockNumber = 3 * HOURS;
   pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
   pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
   pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
@@ -1150,8 +1164,9 @@ impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type Event = Event;
 	type Currency = Balances;
-	const INDEXING_PREFIX: &'static [u8] = b"ibc";
-	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
+	const INDEXING_PREFIX: &'static [u8] = b"ibc/";
+	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
+	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
 	type AdminOrigin = EnsureRoot<AccountId>;
@@ -1209,7 +1224,7 @@ construct_runtime!(
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
-		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
+		CurrencyFactory: currency_factory = 53,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
@@ -1558,16 +1573,16 @@ impl_runtime_apis! {
 			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
 		}
 
-		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
-			Ibc::build_trie_inputs().ok()
-		}
-
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
 			Ibc::query_balance_with_address(addr).ok()
 		}
 
 		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
 			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
+		}
+
+		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>> {
+			Ibc::get_offchain_acks(channel_id, port_id, seqs).ok()
 		}
 
 		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
@@ -1583,7 +1598,7 @@ impl_runtime_apis! {
 		}
 
 		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
-			Ibc::clients().ok()
+			Some(Ibc::clients())
 		}
 
 		fn connection(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryConnectionResponse>{

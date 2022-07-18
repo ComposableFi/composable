@@ -27,6 +27,8 @@ type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
+pub type RewardPoolId = u16;
+pub type PositionId = u128;
 
 pub static ALICE: Public =
 	Public(hex!("0000000000000000000000000000000000000000000000000000000000000000"));
@@ -143,6 +145,8 @@ impl orml_tokens::Config for Test {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 pub struct NoopRegistry;
@@ -191,9 +195,10 @@ parameter_types! {
 impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = u16;
-	type PositionId = u128;
+	type RewardPoolId = RewardPoolId;
+	type PositionId = PositionId;
 	type AssetId = CurrencyId;
+	type Assets = Assets;
 	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;

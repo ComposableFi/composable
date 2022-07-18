@@ -1,6 +1,6 @@
 use crate::{
 	asset::Asset,
-	cache::{PriceCache, ThreadSafePriceCache},
+	cache::{Cache, PriceCache, ThreadSafePriceCache},
 	feed::{Exponent, Price, TimeStamp, TimeStampedPrice},
 };
 use chrono::Duration;
@@ -42,7 +42,7 @@ impl Frontend {
 
 		let get_price_endpoint =
 			warp::path!("price" / CurrencyId).and(warp::get()).map(move |currency_index| {
-				get_price(&prices_cache, currency_index, cache_duration, expected_exponent)
+				get_price(prices_cache.clone(), currency_index, cache_duration, expected_exponent)
 			});
 
 		let (shutdown_trigger, shutdown) = oneshot::channel::<()>();
@@ -68,18 +68,16 @@ fn get_asset_id(x: Asset) -> WithStatus<Json> {
 }
 
 fn get_price(
-	prices: &ThreadSafePriceCache,
+	prices: ThreadSafePriceCache,
 	currency_index: CurrencyId,
 	cache_duration: Duration,
 	expected_exponent: Exponent,
 ) -> WithStatus<Json> {
 	match Asset::try_from(currency_index).and_then(|asset| {
 		let now = TimeStamp::now();
+
 		prices
-			.read()
-			.expect("could not acquire read lock")
 			.get(&asset)
-			.copied()
 			.and_then(|timestamped_price| {
 				ensure_uptodate_price(&cache_duration, &now, &timestamped_price)
 			})
@@ -90,8 +88,7 @@ fn get_price(
 		Ok(normalized_price) => reply::with_status(
 			reply::json(
 				&[(format!("{}", currency_index), normalized_price)]
-					.iter()
-					.cloned()
+					.into_iter()
 					.collect::<HashMap<_, _>>(),
 			),
 			StatusCode::OK,

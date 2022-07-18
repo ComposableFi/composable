@@ -143,7 +143,7 @@ pub fn cosmos_recover(
 				.map_err(|_| SignatureVerificationError::InvalidSignature)?;
 			let verify_key = VerifyingKey::from_sec1_bytes(&pub_key)
 				.map_err(|_| SignatureVerificationError::InvalidPublicKey)?;
-			let _ = verify_key
+			verify_key
 				.verify(&msg, &sig)
 				.map_err(|_| SignatureVerificationError::FailedVerification)?;
 			Ok(CosmosPublicKey::Secp256r1(pub_key))

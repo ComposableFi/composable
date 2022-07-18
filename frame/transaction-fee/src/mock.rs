@@ -136,6 +136,8 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type ExistentialDeposits = ExistentialDeposits;
+  type OnNewTokenAccount = ();
+  type OnKilledTokenAccount = ();
 }
 
 impl WeightToFeePolynomial for WeightToFee {

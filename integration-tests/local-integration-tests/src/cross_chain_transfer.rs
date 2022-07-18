@@ -225,6 +225,7 @@ fn transfer_from_sibling_to_this() {
 
 // from: Hydra
 #[test]
+#[ignore = "#CU-363g6rf"]
 fn transfer_insufficient_amount_should_fail() {
 	simtest();
 	Sibling::execute_with(|| {
@@ -264,7 +265,7 @@ fn transfer_to_sibling() {
 
 	fn this_native_reserve_account() -> AccountId {
 		use sp_runtime::traits::AccountIdConversion;
-		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account()
+		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating()
 	}
 
 	let alice_original = This::execute_with(|| {
@@ -417,10 +418,10 @@ fn xcm_transfer_execution_barrier_trader_works() {
 		assert!(this_runtime::System::events().iter().any(|r| {
 			matches!(
 				r.event,
-				this_runtime::Event::DmpQueue(cumulus_pallet_dmp_queue::Event::ExecutedDownward(
-					_,
-					Outcome::Error(XcmError::Barrier)
-				))
+				this_runtime::Event::DmpQueue(cumulus_pallet_dmp_queue::Event::ExecutedDownward {
+					message_id: _,
+					outcome: Outcome::Error(XcmError::Barrier)
+				})
 			)
 		}));
 	});
@@ -491,8 +492,9 @@ fn xcm_transfer_execution_barrier_trader_works() {
 
 #[test]
 fn unspent_xcm_fee_is_returned_correctly() {
-	let parachain_account: AccountId =
-		This::execute_with(|| this_runtime::ParachainInfo::parachain_id().into_account());
+	let parachain_account: AccountId = This::execute_with(|| {
+		this_runtime::ParachainInfo::parachain_id().into_account_truncating()
+	});
 	let some_account: AccountId = AccountId::from(CHARLIE);
 
 	KusamaRelay::execute_with(|| {

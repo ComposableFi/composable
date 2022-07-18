@@ -500,10 +500,10 @@ pub mod pallet {
 			let current_timestamp = T::Time::now();
 			let rate_base = Self::do_get_exchange_rate(pool_id, PriceRatio::NotSwapped)?;
 			let rate_quote = Self::do_get_exchange_rate(pool_id, PriceRatio::Swapped)?;
-			let (base_price_cumulative, quote_price_cumulative) = (
-				compute_initial_price_cumulative::<T::Convert, _>(rate_base)?,
-				compute_initial_price_cumulative::<T::Convert, _>(rate_quote)?,
-			);
+			let base_price_cumulative =
+				compute_initial_price_cumulative::<T::Convert, _>(rate_base)?;
+			let quote_price_cumulative =
+				compute_initial_price_cumulative::<T::Convert, _>(rate_quote)?;
 			TWAPState::<T>::insert(
 				pool_id,
 				TimeWeightedAveragePrice {
@@ -624,7 +624,7 @@ pub mod pallet {
 		}
 
 		pub(crate) fn account_id(pool_id: &T::PoolId) -> T::AccountId {
-			T::PalletId::get().into_sub_account(pool_id)
+			T::PalletId::get().into_sub_account_truncating(pool_id)
 		}
 
 		pub(crate) fn do_get_exchange_rate(
@@ -641,6 +641,16 @@ pub mod pallet {
 				T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 			let pool_quote_asset_under_management =
 				T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+
+			ensure!(
+				pool_base_asset_under_management > Zero::zero(),
+				Error::<T>::NotEnoughLiquidity
+			);
+			ensure!(
+				pool_quote_asset_under_management > Zero::zero(),
+				Error::<T>::NotEnoughLiquidity
+			);
+
 			Ok(Rate::checked_from_rational(
 				pool_base_asset_under_management,
 				pool_quote_asset_under_management,

@@ -35,7 +35,7 @@ use frame_support::{
 		tokens::DepositConsequence,
 		UnixTime,
 	},
-	weights::WeightToFeePolynomial,
+	weights::WeightToFee,
 };
 use sp_runtime::{
 	traits::{One, Saturating, Zero},
@@ -313,7 +313,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		if !BorrowRent::<T>::contains_key(market_id, debt_owner) {
-			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(1));
+			let deposit = T::WeightToFee::weight_to_fee(&T::WeightInfo::liquidate(1));
 			// See note 1
 			ensure!(
 				<T as Config>::NativeCurrency::can_withdraw(debt_owner, deposit)

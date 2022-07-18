@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 NIGHTLY_VERSION="2022-04-18"
 
@@ -20,6 +20,12 @@ EOF
 check=""
 verbose=""
 
+check_return_code() {
+    if [ $? -eq 0 ]; then
+        echo "OK"
+    fi
+}
+
 cargo_fmt() {
     rustfmt_check=""
     rustfmt_verbose=""
@@ -32,7 +38,11 @@ cargo_fmt() {
         rustfmt_verbose="--verbose"
     fi
 
+    echo "Running rustfmt..."
+
     cargo +nightly-${NIGHTLY_VERSION} fmt --all ${rustfmt_verbose} ${rustfmt_check}
+
+    check_return_code
 }
 
 taplo_fmt() {
@@ -41,30 +51,44 @@ taplo_fmt() {
         taplo_verbose="--verbose"
     fi
 
+    echo "Running taplo..."
+
     if [[ ${check} = "check" ]]; then
         taplo check ${taplo_verbose}
     else
         taplo fmt ${taplo_verbose}
     fi
+
+    check_return_code
 }
 
 prettier_fmt() {
-    cd integration-tests/runtime-tests
+    # cd integration-tests/runtime-tests
     prettier_verbose=""
 
     if [[ ${verbose} = "verbose" ]]; then
-        prettier_verbose="--loglevel=log"
+        prettier_verbose="--loglevel=debug"
     else
         prettier_verbose="--loglevel=warn"
     fi
 
+    echo "Running Prettier on integration-tests/runtime-tests..."
+
     if [[ ${check} = "check" ]]; then
-        npx prettier --check ${prettier_verbose} .
+        npx prettier \
+            --config="integration-tests/runtime-tests/.prettierrc" \
+            --ignore-path="integration-tests/runtime-tests/.prettierignore" \
+            --check ${prettier_verbose} \
+            "integration-tests/runtime-tests/"
     else
-        npx prettier --write ${prettier_verbose} .
+        npx prettier \
+            --config="integration-tests/runtime-tests/.prettierrc" \
+            --ignore-path="integration-tests/runtime-tests/.prettierignore" \
+            --write ${prettier_verbose} \
+            "integration-tests/runtime-tests/"
     fi
 
-    cd ../..
+    check_return_code
 }
 
 # install taplo if it isn't already
@@ -93,6 +117,6 @@ for arg in "$@"; do
     esac
 done
 
-cargo_fmt ${check} ${verbose}
-taplo_fmt ${check} ${verbose}
-prettier_fmt ${check} ${verbose}
+cargo_fmt
+taplo_fmt
+prettier_fmt

@@ -17,6 +17,7 @@ pub const ONE_HOUR: DurationSeconds = 60 * ONE_MINUTE;
 /// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no
 /// accounts to length of year)
 pub const SECONDS_PER_YEAR_NAIVE: DurationSeconds = 365 * 24 * ONE_HOUR;
+pub const MS_PER_YEAR_NAIVE: DurationSeconds = SECONDS_PER_YEAR_NAIVE * 1000;
 
 #[derive(Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, TypeInfo)]
 pub enum TimeReleaseFunction {

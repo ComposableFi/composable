@@ -143,6 +143,7 @@ jobs:
             --chain="${{ matrix.runtime }}" \
             --execution=wasm \
             --wasm-execution=compiled \
+            --wasm-instantiation-strategy=legacy-instance-reuse \
             --pallet="*" \
             --extrinsic='*' \
             --steps=1 \
@@ -202,23 +203,13 @@ jobs:
         with:
           node-version: 14.x
 
-      - name: Cargo format (Rust)
-        run: |
-          cargo +nightly fmt --all -- --check
-
       - name: Work around permission issue (https://github.com/actions/checkout/issues/760)
         run: |
           git config --global --add safe.directory /__w/composable/composable
 
-      - name: Taplo format (Toml)
+      - name: Make Style
         run: |
-          taplo lint --warn-as-error
-          taplo fmt --warn-as-error
-          if ! git diff-index HEAD; then
-            exit 1
-          else
-            echo "Everything is fine!"
-          fi
+          make style-check
       
       - name: Hadolint
         continue-on-error: true # this step is such a pita

@@ -20,7 +20,7 @@ use frame_support::{
 		fungible::Transfer as NativeTransfer,
 		fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
 	},
-	weights::WeightToFeePolynomial,
+	weights::WeightToFee,
 };
 use sp_runtime::{
 	traits::{AccountIdConversion, Zero},
@@ -52,7 +52,7 @@ impl<T: Config> Lending for Pallet<T> {
 	}
 
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
-		T::PalletId::get().into_sub_account(market_id)
+		T::PalletId::get().into_sub_account_truncating(market_id)
 	}
 
 	fn deposit_collateral(
@@ -143,7 +143,7 @@ impl<T: Config> Lending for Pallet<T> {
 		BorrowTimestamp::<T>::insert(market_id, borrowing_account, LastBlockTimestamp::<T>::get());
 
 		if !BorrowRent::<T>::contains_key(market_id, borrowing_account) {
-			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(2));
+			let deposit = T::WeightToFee::weight_to_fee(&T::WeightInfo::liquidate(2));
 			<T as Config>::NativeCurrency::transfer(
 				borrowing_account,
 				&market_account,

@@ -39,6 +39,9 @@ pub struct Reward<AssetId, Balance> {
 	pub reward_rate: Perbill,
 }
 
+/// Abstraction over the asset to reduction map stored for staking.
+pub type Reductions<AssetId, Balance, Limit> = BoundedBTreeMap<AssetId, Balance, Limit>;
+
 /// Abstraction over the asset to rewards map stored for staking.
 pub type Rewards<AssetId, Balance, Limit> =
 	BoundedBTreeMap<AssetId, Reward<AssetId, Balance>, Limit>;
@@ -77,6 +80,9 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 	// possible lock config for this pool
 	pub lock: LockConfig<DurationPresets>,
 }
+
+/// Default transfer limit on new asset added as rewards.
+pub const DEFAULT_MAX_REWARDS: u128 = 1_000_000_000_000_000_000_u128;
 
 /// Reward configurations for a given asset type.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
@@ -120,7 +126,7 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 /// should exist for each position when stored in the runtime storage.
 /// TODO refer to the relevant section in the design doc.
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct Stake<RewardPoolId, Balance, Rewards> {
+pub struct Stake<RewardPoolId, Balance, Reductions> {
 	/// Reward Pool ID from which pool to allocate rewards for this
 	pub reward_pool_id: RewardPoolId,
 
@@ -131,7 +137,7 @@ pub struct Stake<RewardPoolId, Balance, Rewards> {
 	pub share: Balance,
 
 	/// Reduced rewards by asset for the position (d_n)
-	reductions: Rewards,
+	pub reductions: Reductions,
 
 	/// The lock period for the stake.
 	pub lock: Lock,
