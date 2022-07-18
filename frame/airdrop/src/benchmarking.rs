@@ -184,7 +184,7 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		let funds = T::RecipientFundAsset::minimum_balance().saturating_add((STAKE + ACCOUNT_FUND_AMOUNT * x).into());
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add(STAKE.into()).saturating_mul(ACCOUNT_FUND_AMOUNT.into()).saturating_mul(x.into());
 		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 	}: add_recipient(RawOrigin::Signed(creator), airdrop_id, accounts)
@@ -194,7 +194,7 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		let funds = T::RecipientFundAsset::minimum_balance().saturating_add((STAKE + ACCOUNT_FUND_AMOUNT * x).into());
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add(STAKE.into()).saturating_mul(ACCOUNT_FUND_AMOUNT.into()).saturating_mul(x.into());
 		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts.clone())?;
@@ -205,7 +205,7 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		let funds = T::RecipientFundAsset::minimum_balance().saturating_add((STAKE + ACCOUNT_FUND_AMOUNT * x).into());
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add(STAKE.into()).saturating_mul(ACCOUNT_FUND_AMOUNT.into()).saturating_mul(x.into());
 		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts)?;
@@ -216,7 +216,7 @@ benchmarks! {
 		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		let funds = T::RecipientFundAsset::minimum_balance().saturating_add((STAKE + ACCOUNT_FUND_AMOUNT * x).into());
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add(STAKE.into()).saturating_mul(ACCOUNT_FUND_AMOUNT.into()).saturating_mul(x.into());
 		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts)?;
@@ -228,7 +228,7 @@ benchmarks! {
 		let remote_accounts = accounts.clone().into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(ACCOUNT_FUND_AMOUNT), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		let funds = T::RecipientFundAsset::minimum_balance().saturating_add((STAKE + ACCOUNT_FUND_AMOUNT * x).into());
+		let funds = T::RecipientFundAsset::minimum_balance().saturating_add(STAKE.into()).saturating_mul(ACCOUNT_FUND_AMOUNT.into()).saturating_mul(x.into());
 		T::RecipientFundAsset::make_free_balance_be(&creator, funds);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as Airdropper>::add_recipient(creator, airdrop_id, remote_accounts)?;
