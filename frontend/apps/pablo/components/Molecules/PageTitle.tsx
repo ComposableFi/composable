@@ -1,91 +1,48 @@
-import { BaseAsset, PairAsset } from "@/components/Atoms";
-import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
-import { Box, Typography, BoxProps } from "@mui/material";
-import { MockedAsset } from "@/store/assets/assets.types";
-import { BondPrincipalAsset } from "@/defi/types";
-import { useCallback } from "react";
+import { Box, Typography, useTheme } from "@mui/material";
+import { TypographyProps } from "@mui/system";
 
-export type PageTitleProps = {
-  principalAsset: BondPrincipalAsset;
-  rewardAsset: MockedAsset | undefined;
-  iconSize?: number;
-} & BoxProps;
+export type PageTitleProps = TypographyProps & {
+  title: string;
+  subtitle?: string;
+  withDot?: boolean;
+};
 export const PageTitle: React.FC<PageTitleProps> = ({
-  principalAsset,
-  rewardAsset,
-  iconSize = 67,
-  ...boxProps
+  title,
+  subtitle,
+  withDot = false,
+  ...props
 }) => {
-  let lpPrincipalAsset: BondPrincipalAsset["lpPrincipalAsset"] | undefined,
-    simplePrincipalAsset: MockedAsset | undefined;
-
-  if (principalAsset) {
-    lpPrincipalAsset = principalAsset.lpPrincipalAsset;
-    simplePrincipalAsset = principalAsset.simplePrincipalAsset;
-  }
-  let baseAsset: MockedAsset | undefined = undefined,
-    quoteAsset: MockedAsset | undefined = undefined;
-
-  if (lpPrincipalAsset) {
-    baseAsset = lpPrincipalAsset.baseAsset;
-    quoteAsset = lpPrincipalAsset.quoteAsset;
-  }
-
-  const renderIcons = useCallback(() => {
-    if (baseAsset && quoteAsset) {
-      return (
-        <PairAsset
-          assets={[
-            {
-              icon: baseAsset.icon,
-              label: baseAsset.symbol,
-            },
-            {
-              icon: quoteAsset.icon,
-              label: quoteAsset.symbol,
-            },
-          ]}
-          label={`LP ${baseAsset.symbol}-${quoteAsset.symbol}`}
-          LabelProps={{ variant: "h4" }}
-          iconSize={iconSize}
-        />
-      );
-    } else if (simplePrincipalAsset) {
-      return (
-        <BaseAsset
-          label={simplePrincipalAsset.symbol}
-          icon={simplePrincipalAsset.icon}
-          LabelProps={{ variant: "h4" }}
-          iconSize={iconSize}
-        />
-      );
-    }
-    return null;
-  }, [simplePrincipalAsset, baseAsset, quoteAsset, iconSize]);
+  const theme = useTheme();
+  const { textAlign, ...rest } = props;
 
   return (
-    <Box width="100%" {...boxProps}>
-      <Box display="flex" justifyContent="center" alignItems="center" gap={3.5}>
-        {renderIcons()}
-        <ArrowRightAltIcon sx={{ color: "text.secondary" }} />
-        {rewardAsset && (
-          <BaseAsset
-            icon={rewardAsset.icon}
-            iconSize={67}
-            label={rewardAsset.symbol}
-            LabelProps={{ variant: "h4" }}
-          />
-        )}
-      </Box>
+    <>
       <Typography
-        mt={3}
-        variant="body1"
-        color="text.secondary"
-        textAlign="center"
-        fontWeight="normal"
+        textAlign={textAlign}
+        variant="h4"
+        {...rest}
+        sx={{
+          marginBottom: theme.spacing(3),
+        }}
       >
-        {rewardAsset ? `Buy ${rewardAsset.name} while supplying tokens` : "-"}
+        {title}
+        {
+          withDot && (
+            <Box sx={{ display: "inline", color: theme.palette.primary.main }}>
+              .
+            </Box>
+          )
+        }
       </Typography>
-    </Box>
+      {subtitle && (
+        <Typography
+          variant="body1"
+          textAlign={textAlign}
+          color="text.secondary"
+        >
+          {subtitle}
+        </Typography>
+      )}
+    </>
   );
 };
