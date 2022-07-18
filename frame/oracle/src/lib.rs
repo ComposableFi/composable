@@ -217,7 +217,6 @@ pub mod pallet {
 		pub max_answers: u32,
 		pub block_interval: BlockNumber,
 		/// Reward allocation weight for this asset type out of the total block reward.
-		/// TODO refer design doc.
 		pub reward_weight: Balance,
 		pub slash: Balance,
 	}

@@ -74,7 +74,7 @@ cloud "Oracle Provider Infra" {
         () "Oracle" as o
         package "Pallet Apollo" {
             Database "PrePrices" as prepricedb
-            Database "AssetInfo" as assetdb
+            Database "AssetsInfo" as assetdb
             Database "OracleStake" as stakedb
             Database "Prices" as pricedb
             Database "PriceHistory" as pricehistorydb
@@ -147,12 +147,147 @@ NOTE: It is proposed to rename the existing pallet-oracle as pallet-apollo here.
 The following sections drill down into these components and others in more detail.
 
 === Component: Pallet Apollo
+==== Data Structure: Price
+
+[plantuml,images/price,png]
+----
+class Price {
+    /// value
+	price: PriceValue,
+	block: BlockNumber,
+}
+----
+
+==== Data Structure: PrePrice
+
+[plantuml,images/pre-price,png]
+----
+class PrePrice {
+    // The price of an asset, normalized to 12 decimals.
+    price: PriceValue,
+    // The block the price was submitted at.
+    block: BlockNumber,
+    // The account that submitted the price.
+    who: AccountId,
+}
+----
+
+==== Data Structure: AssetInfo
+
+[plantuml,images/asset-info,png]
+----
+class AssetInfo {
+    threshold: Percent,
+    min_answers: u32,
+    max_answers: u32,
+    block_interval: BlockNumber,
+    // Reward allocation weight for this asset
+    // type out of the total block reward.
+    reward_weight: Balance,
+    slash: Balance,
+}
+----
+
+==== Storage: AssetsInfo
+
+----
+asset_info = Map<AssetId, AssetInfo>
+----
+
+==== Storage: Prices
+
+----
+prices = Map<AssetId, Price>
+----
+
+==== Storage: PrePrices
+
+----
+pre_prices = Map<AssetId, Array<PrePrice>>
+----
+
+==== Storage: PriceHistory
+
+----
+price_history = Map<AssetId, Array<Price>>
+----
+
+==== Storage: OracleStake
+
+----
+oracle_stake = Map<AccountId, Balance>
+----
+
+==== Storage: RewardTrackerStore
+
+For further details refer https://github.com/ComposableFi/composable/blob/main/frame/oracle/design/rewards/rewards-design.md[rewards-design].
 
 ==== Interface: Oracle
 
 ==== Interface: Pallet Extrinsics
 
 ==== Algorithm: Offchain Worker
+
+.Offchain Worker: check_requests
+[plantuml,images/offchain-worker,png]
+----
+start
+while (asset_id, asset_info = AssetsInfo.iter().next())
+  if (1. is_requested(asset_id)) then (yes)
+    :2. fetch_price_and_send_signed(asset_id, asset_info);
+  endif
+endwhile
+stop
+----
+
+Following are the sub-procedures from above main algorithm,
+
+.Offchain Woker: is_requested
+[plantuml,images/offchain-worker-1-is-requested,png]
+----
+start
+->asset_id;
+:last_update = prices[asset_id];
+:asset_info = asset_info[asset_id];
+if (exists asset_info ?) then (yes)
+    :return
+    last_update.block
+    + asset_info.block_interval
+    < current_block;
+    note left: Price is requested if\nthe last update is too old
+    stop
+else (no)
+    :return false;
+    stop
+endif
+----
+
+.Offchain Woker: fetch_price_and_send_signed
+[plantuml,images/offchain-worker-2-fetch-price-and-send-signed,png]
+----
+start
+->asset_id, asset_info;
+:signer = all available keys in key_store;
+:oracle_account_id = read_key_store();
+:asset_info = asset_info[asset_id];
+:prices = pre_prices[asset_id];
+if (signer can not sign)
+    :Error: No Local accounts to sign;
+elseif (length of prices > asset_info.max_answers) then (yes)
+    :Error: Maximum number of answers provided;
+    stop
+elseif (prices has price with\nwho=oracle_account_id) then (yes)
+    :Error: Price already submitted by the Oracle;
+    stop
+else
+    :price = fetch_price(asset_id);
+    note right: Fetch price from the\nlocal price feed server
+    :signed_extrinsic = sign with signer:
+    extrinsic submit_price(asset_id, price);
+    :call signed_extrinsic;
+endif
+stop
+----
 
 ==== Algorithm: on_init Hook
 
@@ -184,3 +319,4 @@ TODO
 
 . Distributed Blockchain Price Oracle. https://hal.archives-ouvertes.fr/hal-03620931/document
 . Chainlink 2.0: Next Steps in the Evolution of Decentralized Oracle Networks. https://research.chain.link/whitepaper-v2.pdf
+. Apollo docs. https://docs.composable.finance/products/the-picasso-parachain/the-picasso-tech-stack/apollo
