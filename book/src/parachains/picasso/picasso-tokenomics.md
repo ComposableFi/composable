@@ -57,4 +57,4 @@ The total supply of PICA is 10 billion tokens. PICA Token distribution is intend
 
 **Liquidity mining**: 15% of the total token supply will be released from the protocol as rewards and incentives for users on Picasso. 
 
-*All terms related to token allocations are subject to change.
+**All terms related to token allocations are subject to change. Legal disclosures apply.**

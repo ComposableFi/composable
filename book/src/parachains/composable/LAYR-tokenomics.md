@@ -59,4 +59,4 @@ LAYR release schedule is envisioned as follows:
 
 **Polkadot vault strategy**: 5% (or 5,000,000 LAYR) of the total token supply will be rewarded to participants in our Polkadot vault strategy. 50% of this (2,500,000 LAYR) will be released at TGE, with the remaining distributed over six months. 
 
-*All terms related to token allocations are subject to change.
+**All terms related to token allocations are subject to change. Legal disclosures apply**
