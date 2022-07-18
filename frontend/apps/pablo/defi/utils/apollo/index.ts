@@ -1,4 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
+import BigNumber from "bignumber.js";
 
 export const fetchApolloPriceByAssetId = async (
   api: ApiPromise,
@@ -12,3 +13,24 @@ export const fetchApolloPriceByAssetId = async (
     return "0";
   }
 };
+
+export const fetchApolloPriceByAssetIds = async (
+  api: ApiPromise,
+  assetIds: string[]
+): Promise<Record<string, BigNumber>> => {
+  let usdPricesRecord: Record<string, BigNumber> = {};
+
+  for (const assetId of assetIds) {
+    let price = new BigNumber(0);
+    try {
+      const p = await fetchApolloPriceByAssetId(api, assetId);
+      price = new BigNumber(p);
+    } catch (err) {
+      console.error(`Error fetching price assetId: ${assetId}, Error: ${err}`)
+    } finally {
+      usdPricesRecord[assetId] = price;
+    }
+  }
+
+  return usdPricesRecord;
+}

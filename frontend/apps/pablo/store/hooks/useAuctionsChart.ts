@@ -7,7 +7,7 @@ import {
 import { calculatePredictedChartSeries } from "@/defi/utils/charts/auctions";
 import { transformAuctionsTransaction } from "@/defi/utils/pablo/auctions";
 
-import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
+import { queryPoolTransactionsByType } from "@/defi/subsquid/pools/queries";
 import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { useParachainApi } from "substrate-react";

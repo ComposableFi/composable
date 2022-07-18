@@ -11,13 +11,18 @@ import {
   Tooltip,
 } from "@mui/material";
 import { BaseAsset, PairAsset } from "../Atoms";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
-import { TableHeader } from "@/defi/types";
+import { BondOffer, BondPrincipalAsset, TableHeader } from "@/defi/types";
 import { useRouter } from "next/router";
-import useBondOffers, {
-  BondPrincipalAsset,
-} from "@/defi/hooks/bonds/useBondOffers";
+import useBondOfferROI from "@/defi/hooks/bonds/useBondOfferROI";
+import useBondOfferPrincipalAsset from "@/defi/hooks/bonds/useBondOfferPrincipalAsset";
+import useTotalPurchasedBondOffer from "@/defi/hooks/bonds/useTotalPurchased";
+import useBondPrice from "@/defi/hooks/bonds/useBondPrice";
+import useStore from "@/store/useStore";
+import { DEFAULT_NETWORK_ID, fetchBondOffers } from "@/defi/utils";
+import { fetchTotalPurchasedBondsByOfferIds } from "@/defi/utils/bonds/fetchTotalPurchased";
+import { useParachainApi } from "substrate-react";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -39,12 +44,110 @@ const tableHeaders: TableHeader[] = [
 
 const BOND_LIMIT_TO_SHOW = 4;
 
+const BondPrincipalAssetIcon = ({
+  principalAsset,
+}: {
+  principalAsset: BondPrincipalAsset;
+}) => {
+  const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
+  const { baseAsset, quoteAsset } = lpPrincipalAsset;
+
+  if (baseAsset && quoteAsset) {
+    return (
+      <PairAsset
+        assets={[
+          {
+            icon: baseAsset.icon,
+            label: baseAsset.symbol,
+          },
+          {
+            icon: quoteAsset.icon,
+            label: quoteAsset.symbol,
+          },
+        ]}
+        separator="/"
+      />
+    );
+  }
+
+  if (simplePrincipalAsset) {
+    return (
+      <BaseAsset
+        label={simplePrincipalAsset.symbol}
+        icon={simplePrincipalAsset.icon}
+      />
+    );
+  }
+
+  return null;
+};
+
+const BondOfferRow = ({
+  bondOffer,
+  handleBondClick,
+}: {
+  bondOffer: BondOffer;
+  handleBondClick: (bondOfferId: string) => void;
+}) => {
+  const roi = useBondOfferROI(bondOffer);
+  const totalPurchasedValue = useTotalPurchasedBondOffer(bondOffer);
+  const principalAsset = useBondOfferPrincipalAsset(bondOffer);
+  const bondPrice = useBondPrice(bondOffer);
+
+  return (
+    <TableRow
+      key={bondOffer.offerId.toString()}
+      onClick={() => handleBondClick(bondOffer.offerId.toString())}
+      sx={{ cursor: "pointer" }}
+    >
+      <TableCell align="left">
+        <BondPrincipalAssetIcon principalAsset={principalAsset} />
+      </TableCell>
+      <TableCell align="left">
+        <Typography variant="body2">${bondPrice.toFormat()}</Typography>
+      </TableCell>
+      <TableCell align="left">
+        <Typography variant="body2" color="featured.main">
+          {roi.toFormat()}%
+        </Typography>
+      </TableCell>
+      <TableCell align="left">
+        <Typography variant="body2">
+          ${totalPurchasedValue.toFormat()}
+        </Typography>
+      </TableCell>
+    </TableRow>
+  );
+};
+
 export const AllBondTable: React.FC = () => {
   const theme = useTheme();
   const router = useRouter();
-  const bondOffers = useBondOffers();
-  const [count, setCount] = useState(BOND_LIMIT_TO_SHOW);
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
 
+  const {
+    bondOffers: { list },
+    setBondOffers,
+    setBondOfferTotalPurchased,
+  } = useStore();
+
+  useEffect(() => {
+    if (parachainApi) {
+      fetchBondOffers(parachainApi).then((decodedOffers) => {
+        setBondOffers(decodedOffers);
+      });
+    }
+  }, [parachainApi, setBondOffers]);
+
+  useEffect(() => {
+    fetchTotalPurchasedBondsByOfferIds().then(
+      (totalPurchasedByOfferIds) => {
+        setBondOfferTotalPurchased(totalPurchasedByOfferIds);
+      }
+    );
+  }, [setBondOfferTotalPurchased]);
+
+  const [count, setCount] = useState(BOND_LIMIT_TO_SHOW);
   const handleSeeMore = () => {
     setCount(count + BOND_LIMIT_TO_SHOW);
   };
@@ -52,40 +155,6 @@ export const AllBondTable: React.FC = () => {
   const handleBondClick = (offerId: string) => {
     router.push(`bond/select/${offerId}`);
   };
-
-  const renderIcon = useCallback((principalAsset: BondPrincipalAsset) => {
-    const { simplePrincipalAsset, lpPrincipalAsset } = principalAsset;
-    const { baseAsset, quoteAsset } = lpPrincipalAsset;
-
-    if (baseAsset && quoteAsset) {
-      return (
-        <PairAsset
-          assets={[
-            {
-              icon: baseAsset.icon,
-              label: baseAsset.symbol,
-            },
-            {
-              icon: quoteAsset.icon,
-              label: quoteAsset.symbol,
-            },
-          ]}
-          separator="/"
-        />
-      );
-    }
-
-    if (simplePrincipalAsset) {
-      return (
-        <BaseAsset
-          label={simplePrincipalAsset.symbol}
-          icon={simplePrincipalAsset.icon}
-        />
-      );
-    }
-
-    return null;
-  }, []);
 
   return (
     <TableContainer>
@@ -107,35 +176,16 @@ export const AllBondTable: React.FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {bondOffers.slice(0, count).map((bond, index) => (
-            <TableRow
-              key={index}
-              onClick={() => handleBondClick(bond.offerId.toString())}
-              sx={{ cursor: "pointer" }}
-            >
-              <TableCell align="left">
-                {renderIcon(bond.principalAsset)}
-              </TableCell>
-              <TableCell align="left">
-                <Typography variant="body2">
-                  ${bond.bondPrice.toFormat()}
-                </Typography>
-              </TableCell>
-              <TableCell align="left">
-                <Typography variant="body2" color="featured.main">
-                  {bond.roi.toFormat()}%
-                </Typography>
-              </TableCell>
-              <TableCell align="left">
-                <Typography variant="body2">
-                  ${bond.totalPurchased.toFormat()}
-                </Typography>
-              </TableCell>
-            </TableRow>
+          {list.slice(0, count).map((bondOffer, index) => (
+            <BondOfferRow
+              key={bondOffer.offerId.toString()}
+              bondOffer={bondOffer}
+              handleBondClick={handleBondClick}
+            />
           ))}
         </TableBody>
       </Table>
-      {bondOffers.length > count && (
+      {list.length > count && (
         <Box
           onClick={handleSeeMore}
           mt={4}

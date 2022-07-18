@@ -1,19 +1,19 @@
-import { BondOffer } from "@/defi/types";
+import { BondOffer, BondPrincipalAsset } from "@/defi/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
-import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import { MockedAsset } from "@/store/assets/assets.types";
 import {
+  calculateBondROI,
   decodeBondOffer,
   DEFAULT_NETWORK_ID,
   fetchVestingPeriod,
+  getBondPrincipalAsset,
   matchAssetByPicassoId,
 } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 import { useBlockInterval } from "../useBlockInterval";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
-import { BondPrincipalAsset } from "./useBondOffers";
 
 export default function useBondOffer(offerId: string) {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
@@ -31,48 +31,27 @@ export default function useBondOffer(offerId: string) {
   }, [bondOffers, offerId]);
 
   const principalAsset: BondPrincipalAsset = useMemo<BondPrincipalAsset>(() => {
-    let principalAsset: BondPrincipalAsset = {
-      lpPrincipalAsset: {
-        baseAsset: undefined,
-        quoteAsset: undefined,
-      },
-      simplePrincipalAsset: undefined,
-    };
-    if (
-      supportedAssets.length &&
-      lpRewardingPools.length &&
-      selectedBondOffer
-    ) {
-      const isLpBasedBond: ConstantProductPool | StableSwapPool | undefined =
-        lpRewardingPools.find(
-          (pool: ConstantProductPool | StableSwapPool) =>
-            pool.lpToken === selectedBondOffer.asset
-        );
-
-      if (isLpBasedBond) {
-        const baseAsset = supportedAssets.find(
-          (asset) => matchAssetByPicassoId(asset, isLpBasedBond.pair.base.toString())
-        );
-        const quoteAsset = supportedAssets.find(
-          (asset) => matchAssetByPicassoId(asset, isLpBasedBond.pair.quote.toString())
-        );
-
-        if (baseAsset || quoteAsset) {
-          principalAsset.lpPrincipalAsset = { baseAsset, quoteAsset };
-        }
-      } else {
-        principalAsset.simplePrincipalAsset = supportedAssets.find(
-          asset => matchAssetByPicassoId(asset, selectedBondOffer.asset)
-        );
-      }
+    if (selectedBondOffer) {
+      return getBondPrincipalAsset(
+        selectedBondOffer,
+        supportedAssets,
+        lpRewardingPools
+      );
+    } else {
+      return {
+        lpPrincipalAsset: {
+          baseAsset: undefined,
+          quoteAsset: undefined,
+        },
+        simplePrincipalAsset: undefined,
+      };
     }
-    return principalAsset;
   }, [supportedAssets, lpRewardingPools, selectedBondOffer]);
 
   const rewardAsset = useMemo<MockedAsset | undefined>(() => {
     if (supportedAssets.length && selectedBondOffer) {
-      return supportedAssets.find(
-        (a) => matchAssetByPicassoId(a, selectedBondOffer.reward.asset)
+      return supportedAssets.find((a) =>
+        matchAssetByPicassoId(a, selectedBondOffer.reward.asset)
       );
     }
   }, [supportedAssets, selectedBondOffer]);
@@ -109,7 +88,7 @@ export default function useBondOffer(offerId: string) {
           selectedBondOffer.offerId.toString()
         );
         const decodedOffer = decodeBondOffer(
-          bondOffer.toHuman(),
+          bondOffer,
           selectedBondOffer.offerId.toNumber()
         );
         putBondOffer(decodedOffer);
@@ -126,13 +105,12 @@ export default function useBondOffer(offerId: string) {
         apollo[selectedBondOffer.asset] &&
         apollo[selectedBondOffer.reward.asset]
       ) {
-        let rewardPrice = new BigNumber(apollo[selectedBondOffer.reward.asset]);
-        let principalPrice = new BigNumber(apollo[selectedBondOffer.asset]);
-        if (rewardPrice.gt(0) && principalPrice.gt(0)) {
-          const initialInv = principalPrice.times(principalAssetPerBond);
-          const finalInv = rewardAssetPerBond.times(rewardPrice);
-          return finalInv.minus(initialInv).div(initialInv).times(100);
-        }
+        return calculateBondROI(
+          new BigNumber(apollo[selectedBondOffer.asset]),
+          new BigNumber(apollo[selectedBondOffer.reward.asset]),
+          principalAssetPerBond,
+          rewardAssetPerBond
+        );
       }
     }
     return new BigNumber(0);

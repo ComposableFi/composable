@@ -104,12 +104,8 @@ export const DepositForm: React.FC<DepositFormProps> = ({
 
   const maxYouCanBuy = useMemo(() => {
     if (bond.selectedBondOffer) {
-      let amountOfBondsBuyable = principalBalance.div(bond.principalAssetPerBond).dp(0);
-      if (amountOfBondsBuyable > bond.selectedBondOffer.nbOfBonds) {
-        return bond.selectedBondOffer.nbOfBonds;
-      } else {
-        return amountOfBondsBuyable;
-      }
+      let amountOfBondsBuyable = principalBalance.div(bond.principalAssetPerBond).decimalPlaces(0, BigNumber.ROUND_FLOOR)
+      return amountOfBondsBuyable;
     }
   }, [principalBalance, bond]);
 
