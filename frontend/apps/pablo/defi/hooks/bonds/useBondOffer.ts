@@ -3,17 +3,17 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 import { MockedAsset } from "@/store/assets/assets.types";
 import {
-  calculateBondROI,
   decodeBondOffer,
   DEFAULT_NETWORK_ID,
   fetchVestingPeriod,
-  getBondPrincipalAsset,
   matchAssetByPicassoId,
 } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 import { useBlockInterval } from "../useBlockInterval";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
+import { getBondPrincipalAsset } from "@/defi/utils/bonds/assets";
+import { calculateBondROI } from "@/defi/utils/bonds/math";
 
 export default function useBondOffer(offerId: string) {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);

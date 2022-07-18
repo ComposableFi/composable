@@ -8,22 +8,16 @@ const Updater = () => {
   const { bondOffers, supportedAssets, apollo } = useStore();
 //   const lpRewardingPools = useAllLpTokenRewardingPools();
 
-  const { putBondOffers } = useStore();
+  const { setBondOffers } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
 
   useEffect(() => {
     if (parachainApi) {
       fetchBondOffers(parachainApi).then((decodedOffers) => {
-        putBondOffers(decodedOffers);
+        setBondOffers(decodedOffers);
       });
     }
-  }, [parachainApi, putBondOffers]);
-
-  useEffect(() => {
-    const bondOfferIds = bondOffers.list.map(i => (i.offerId.toString()));
-
-    
-  }, [bondOffers.list])
+  }, [parachainApi, setBondOffers]);
 
   return null;
 }

@@ -21,7 +21,7 @@ import useTotalPurchasedBondOffer from "@/defi/hooks/bonds/useTotalPurchased";
 import useBondPrice from "@/defi/hooks/bonds/useBondPrice";
 import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID, fetchBondOffers } from "@/defi/utils";
-import { fetchTotalPurchasedBondsByOfferIds } from "@/defi/utils/bonds/fetchTotalPurchased";
+import { fetchTotalPurchasedBondsByOfferIds } from "@/defi/subsquid/bonds/helpers";
 import { useParachainApi } from "substrate-react";
 
 const tableHeaders: TableHeader[] = [

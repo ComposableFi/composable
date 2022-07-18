@@ -16,8 +16,20 @@ export const PageTitle: React.FC<PageTitleProps> = ({
   iconSize = 67,
   ...boxProps
 }) => {
-  const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
-  const { baseAsset, quoteAsset } = lpPrincipalAsset;
+  let lpPrincipalAsset: BondPrincipalAsset["lpPrincipalAsset"] | undefined,
+    simplePrincipalAsset: MockedAsset | undefined;
+
+  if (principalAsset) {
+    lpPrincipalAsset = principalAsset.lpPrincipalAsset;
+    simplePrincipalAsset = principalAsset.simplePrincipalAsset;
+  }
+  let baseAsset: MockedAsset | undefined = undefined,
+    quoteAsset: MockedAsset | undefined = undefined;
+
+  if (lpPrincipalAsset) {
+    baseAsset = lpPrincipalAsset.baseAsset;
+    quoteAsset = lpPrincipalAsset.quoteAsset;
+  }
 
   const renderIcons = useCallback(() => {
     if (baseAsset && quoteAsset) {
