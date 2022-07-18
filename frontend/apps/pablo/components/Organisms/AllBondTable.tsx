@@ -133,9 +133,7 @@ export const AllBondTable: React.FC = () => {
 
   useEffect(() => {
     if (parachainApi) {
-      fetchBondOffers(parachainApi).then((decodedOffers) => {
-        setBondOffers(decodedOffers);
-      });
+      fetchBondOffers(parachainApi).then(setBondOffers);
     }
   }, [parachainApi, setBondOffers]);
 
