@@ -20,12 +20,18 @@ pub enum AccessRights {
 	/// Account has full access rights.
 	Full,
 	/// Account has access only to `rebalance` function
-	/// Account has access only to [`rebalance`](InstrumentalProtocolStrategy::rebalance())
+	/// Account has access only to [`rebalance`](InstrumentalStrategy::rebalance())
 	/// function.
 	Rebalance,
 	/// Account has access only to `set_pool_id_for_asset` function
-	/// [`set_pool_id_for_asset`](InstrumentalProtocolStrategy::set_pool_id_for_asset()) function.
+	/// [`set_pool_id_for_asset`](InstrumentalStrategy::set_pool_id_for_asset()) function.
 	SetPoolId,
+	/// Account has access only to `add_vault_id` function
+	/// [`associate_vault`](InstrumentalStrategy::associate_vault()) function.
+	AssociateVaultId,
+	/// Account has access only to `set_access` function
+	/// [`associate_vault`](InstrumentalStrategy::associate_vault()) function.
+	SetAccess,
 }
 
 #[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
@@ -66,13 +72,15 @@ pub trait InstrumentalDynamicStrategy {
 	fn get_optimum_strategy_for(asset: Self::AssetId) -> Result<Self::AccountId, DispatchError>;
 }
 
-pub trait InstrumentalProtocolStrategy {
+pub trait InstrumentalStrategy {
 	type AccountId: core::cmp::Ord;
 	type AssetId;
 	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 	type PoolId;
 
 	fn account_id() -> Self::AccountId;
+
+	fn caller_has_rights(account_id: Self::AccountId, access: AccessRights) -> DispatchResult;
 
 	fn associate_vault(vault_id: &Self::VaultId) -> Result<(), DispatchError>;
 
@@ -84,4 +92,12 @@ pub trait InstrumentalProtocolStrategy {
 		asset_id: Self::AssetId,
 		pool_id: Self::PoolId,
 	) -> Result<(), DispatchError>;
+
+	fn transferring_funds_from_old_pool_to_new(
+		asset_id: Self::AssetId,
+		old_pool_id: Self::PoolId,
+		new_pool_id: Self::PoolId,
+	) -> DispatchResult;
+
+	fn set_access(account: &Self::AccountId, access: AccessRights) -> DispatchResult;
 }

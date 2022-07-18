@@ -34,12 +34,13 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		dex::Amm,
-		instrumental::{AccessRights, InstrumentalProtocolStrategy, State},
+		instrumental::{AccessRights, InstrumentalStrategy, State},
 		vault::{FundsAvailability, StrategicVault, Vault},
 	};
 	use frame_support::{
 		dispatch::{DispatchError, DispatchResult},
 		pallet_prelude::*,
+		require_transactional,
 		storage::bounded_btree_set::BoundedBTreeSet,
 		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
 		transactional, Blake2_128Concat, PalletId,
@@ -132,7 +133,8 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 			PoolId = Self::PoolId,
 		>;
-
+		/// The [`AssetId`](Config::AssetId)
+		///
 		/// Type representing the unique ID of a pool.
 		type PoolId: FullCodec
 			+ MaxEncodedLen
@@ -203,6 +205,14 @@ pub mod pallet {
 		UnableToRebalanceVault { vault_id: T::VaultId },
 
 		AssociatedPoolWithAsset { asset_id: T::AssetId, pool_id: T::PoolId },
+
+		OccuredFundsTransferring { old_pool_id: T::PoolId, new_pool_id: T::PoolId },
+
+		TransfferedFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
+
+		UnableToTransfferFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
+
+		AssociatedAccountId { account_id: T::AccountId, access: AccessRights },
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -222,7 +232,9 @@ pub mod pallet {
 		// Occurs when an attempt is made to initialize a function not from an admin account
 		NotAdminAccount,
 		// Occurs when an admin account doesn't have enough access rights to initialize a function
-		NotEnoughAccessRights,
+		UserDoesNotHaveCorrectAccessRight,
+		// Occurs when pool_id not contained in Pablo pools storage
+		PoolIdDoesNotExist,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -238,9 +250,25 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object.
+		/// Add [`VaultId`](Config::VaultId) to [`AssociatedVaults`](AssociatedVaults) storage.
+		///
+		/// Emits [`AssociatedVault`](Event::AssociatedVault) event when successful.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::associate_vault())]
+		pub fn associate_vault(
+			origin: OriginFor<T>,
+			vault_id: T::VaultId,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			<Self as InstrumentalStrategy>::caller_has_rights(who, AccessRights::AssociateVaultId)?;
+			<Self as InstrumentalStrategy>::associate_vault(&vault_id)?;
+			Ok(().into())
+		}
+		/// Store a mapping of [`AssetId`](Config::AssetId) -> [`AssetId`](Config::AssetId) in the
+		/// pools runtime storage object.
 		///
 		/// Emits [`AssociatedPoolWithAsset`](Event::AssociatedPoolWithAsset) event when successful.
+		#[transactional]
 		#[pallet::weight(T::WeightInfo::set_pool_id_for_asset())]
 		pub fn set_pool_id_for_asset(
 			origin: OriginFor<T>,
@@ -248,27 +276,37 @@ pub mod pallet {
 			pool_id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
-			ensure!(
-				access_right == AccessRights::Full || access_right == AccessRights::SetPoolId,
-				Error::<T>::NotEnoughAccessRights
-			);
-			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
+			<Self as InstrumentalStrategy>::caller_has_rights(who, AccessRights::SetPoolId)?;
+			ensure!(T::Pablo::pool_exists(pool_id), Error::<T>::PoolIdDoesNotExist);
+			<Self as InstrumentalStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
 			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
 			Ok(().into())
 		}
 		/// Occur rebalance of liquidity of each vault.
 		///
 		/// Emits [`RebalancedVault`](Event::RebalancedVault) event when successful.
+		#[transactional]
 		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
 		pub fn liquidity_rebalance(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
-			ensure!(
-				access_right == AccessRights::Full || access_right == AccessRights::Rebalance,
-				Error::<T>::NotEnoughAccessRights
-			);
-			<Self as InstrumentalProtocolStrategy>::rebalance()?;
+			<Self as InstrumentalStrategy>::caller_has_rights(who, AccessRights::Rebalance)?;
+			<Self as InstrumentalStrategy>::rebalance()?;
+			Ok(().into())
+		}
+		/// Occur set access to Account and add it to [`AdminAccountIds`](AdminAccountIds) storage.
+		///
+		/// Emits [`AssociatedAccountId`](Event::AssociatedAccountId) event when successful.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::set_access())]
+		pub fn set_access(
+			origin: OriginFor<T>,
+			account_id: T::AccountId,
+			access: AccessRights,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			<Self as InstrumentalStrategy>::caller_has_rights(who, AccessRights::SetAccess)?;
+			<Self as InstrumentalStrategy>::set_access(&account_id, access)?;
+			Self::deposit_event(Event::AssociatedAccountId { account_id, access });
 			Ok(().into())
 		}
 	}
@@ -277,7 +315,7 @@ pub mod pallet {
 	//                                         Protocol Strategy
 	// ---------------------------------------------------------------------------------------------
 
-	impl<T: Config> InstrumentalProtocolStrategy for Pallet<T> {
+	impl<T: Config> InstrumentalStrategy for Pallet<T> {
 		type AccountId = T::AccountId;
 		type AssetId = T::AssetId;
 		type VaultId = T::VaultId;
@@ -287,23 +325,95 @@ pub mod pallet {
 			T::PalletId::get().into_account_truncating()
 		}
 
-		#[transactional]
+		#[require_transactional]
+		fn set_access(account_id: &T::AccountId, access: AccessRights) -> DispatchResult {
+			match AdminAccountIds::<T>::try_get(&account_id) {
+				Ok(_) => {
+					AdminAccountIds::<T>::mutate(&account_id, |current_access| {
+						*current_access = Some(access);
+					});
+				},
+				Err(_) => AdminAccountIds::<T>::insert(&account_id, access),
+			}
+			Ok(())
+		}
+
+		#[require_transactional]
+		fn caller_has_rights(account_id: T::AccountId, access: AccessRights) -> DispatchResult {
+			let access_right =
+				Self::admin_accounts(account_id).ok_or(Error::<T>::NotAdminAccount)?;
+			ensure!(
+				access_right == AccessRights::Full || access_right == access,
+				Error::<T>::UserDoesNotHaveCorrectAccessRight
+			);
+			Ok(())
+		}
+
+		#[require_transactional]
 		fn set_pool_id_for_asset(asset_id: T::AssetId, pool_id: T::PoolId) -> DispatchResult {
 			match Pools::<T>::try_get(asset_id) {
-				Ok(pool) => {
-					ensure!(pool.state == State::Normal, Error::<T>::TransferringInProgress);
-					Pools::<T>::mutate(asset_id, |_| PoolState { pool_id, state: State::Normal });
+				Ok(pool_id_and_state) => {
+					ensure!(
+						pool_id_and_state.state == State::Normal,
+						Error::<T>::TransferringInProgress
+					);
+					Pools::<T>::mutate(asset_id, |pool| {
+						*pool = Some(PoolState { pool_id, state: State::Transferring });
+					});
+					Self::deposit_event(Event::OccuredFundsTransferring {
+						old_pool_id: pool_id_and_state.pool_id,
+						new_pool_id: pool_id,
+					});
+					Self::transferring_funds_from_old_pool_to_new(
+						asset_id,
+						pool_id_and_state.pool_id,
+						pool_id,
+					)?;
 				},
 				Err(_) => Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal }),
 			}
 			Ok(())
 		}
+		/// Called when an existing asset_id-pool_id pair is replaced by new pool_id.
+		///
+		/// Occurs a withdrawal of all funds from the old pool to the Vault, and then from the Vault
+		/// to the new pool.
+		#[require_transactional]
+		fn transferring_funds_from_old_pool_to_new(
+			asset_id: T::AssetId,
+			old_pool_id: T::PoolId,
+			new_pool_id: T::PoolId,
+		) -> DispatchResult {
+			AssociatedVaults::<T>::try_mutate(|vaults| {
+				// TODO(belousm): Ask Kevin about uniquest of vaults with underlying asset
+				for vault_id in vaults.iter() {
+					if asset_id == T::Vault::asset_id(vault_id)? {
+						if Self::do_transferring_funds_from_old_pool_to_new(vault_id, old_pool_id)
+							.is_ok()
+						{
+							Self::deposit_event(Event::TransfferedFundsCorrespondedToVault {
+								vault_id: *vault_id,
+								pool_id: new_pool_id,
+							});
+						} else {
+							Self::deposit_event(Event::UnableToTransfferFundsCorrespondedToVault {
+								vault_id: *vault_id,
+								pool_id: new_pool_id,
+							});
+						}
+					}
+				}
+				Pools::<T>::mutate(asset_id, |pool| {
+					*pool = Some(PoolState { pool_id: new_pool_id, state: State::Normal });
+				});
+				Ok(())
+			})
+		}
 
-		#[transactional]
+		#[require_transactional]
 		fn associate_vault(vault_id: &Self::VaultId) -> DispatchResult {
 			AssociatedVaults::<T>::try_mutate(|vaults| -> DispatchResult {
 				ensure!(!vaults.contains(vault_id), Error::<T>::VaultAlreadyAssociated);
-
 				vaults
 					.try_insert(*vault_id)
 					.map_err(|_| Error::<T>::TooManyAssociatedStrategies)?;
@@ -314,6 +424,7 @@ pub mod pallet {
 			})
 		}
 
+		#[require_transactional]
 		fn rebalance() -> DispatchResult {
 			AssociatedVaults::<T>::try_mutate(|vaults| -> DispatchResult {
 				vaults.iter().for_each(|vault_id| {
@@ -338,7 +449,7 @@ pub mod pallet {
 	// ---------------------------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
-		#[transactional]
+		#[require_transactional]
 		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
 			let asset_id = T::Vault::asset_id(vault_id)?;
 			let vault_account = T::Vault::account_id(vault_id);
@@ -359,7 +470,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[transactional]
+		#[require_transactional]
 		fn withdraw(
 			vault_account: T::AccountId,
 			pool_id: T::PoolId,
@@ -375,7 +486,7 @@ pub mod pallet {
 			)
 		}
 
-		#[transactional]
+		#[require_transactional]
 		fn deposit(
 			vault_account: T::AccountId,
 			pool_id: T::PoolId,
@@ -390,7 +501,7 @@ pub mod pallet {
 			)
 		}
 
-		#[transactional]
+		#[require_transactional]
 		fn liquidate(vault_account: T::AccountId, pool_id: T::PoolId) -> DispatchResult {
 			let lp_token_id = T::Pablo::lp_token(pool_id)?;
 			let balance_of_lp_token = T::Currency::balance(lp_token_id, &vault_account);
@@ -401,6 +512,17 @@ pub mod pallet {
 				T::Balance::zero(),
 				T::Balance::zero(),
 			)
+		}
+
+		#[require_transactional]
+		fn do_transferring_funds_from_old_pool_to_new(
+			vault_id: &T::VaultId,
+			old_pool_id: T::PoolId,
+		) -> DispatchResult {
+			let vault_account = T::Vault::account_id(vault_id);
+			Self::liquidate(vault_account, old_pool_id)?;
+			Self::do_rebalance(vault_id)?;
+			Ok(())
 		}
 	}
 }
