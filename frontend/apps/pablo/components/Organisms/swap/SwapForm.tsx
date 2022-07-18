@@ -63,7 +63,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     assetOneInputValid,
     assetTwoInputValid,
     flipAssetSelection,
-    isProcessing
+    isProcessing,
+    percentageToSwap
   } = useSwaps();
 
   const initiateSwapTx = usePabloSwap({
@@ -84,9 +85,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       });
   };
 
-  const percentageToSwap = useAppSelector(
-    (state) => state.swap.percentageToSwap
-  );
   const isSwapPreviewModalOpen = useAppSelector(
     (state) => state.ui.isSwapPreviewModalOpen
   );

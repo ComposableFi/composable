@@ -44,6 +44,7 @@ export function useSwaps(): {
   feeCharged: BigNumber;
   spotPrice: BigNumber;
   valid: boolean;
+  percentageToSwap: number;
   asset1PriceUsd: BigNumber;
   asset2PriceUsd: BigNumber;
   setAssetOneInputValid: (validity: boolean) => void;
@@ -306,6 +307,8 @@ export function useSwaps(): {
     assetTwoInputValid &&
     !!selectedPool;
 
+  const percentageToSwap = 50;
+
   return {
     balance1,
     balance2,
@@ -334,6 +337,7 @@ export function useSwaps(): {
     assetOneInputValid,
     assetTwoInputValid,
     flipAssetSelection: flipAssets,
+    percentageToSwap,
     isProcessing,
   };
 }
