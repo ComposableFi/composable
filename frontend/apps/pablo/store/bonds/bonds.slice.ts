@@ -19,7 +19,7 @@ const createBondsSlice: StoreSlice<BondSlice> = (set) => ({
     set((prev: BondSlice) => ({
       bondOffers: putBondOffers(prev.bondOffers, bondOffers),
     })),
-  putBondOffer: (bondOffer: BondOffer) =>
+  setBondOffer: (bondOffer: BondOffer) =>
     set((prev: BondSlice) => ({
       bondOffers: putBondOffer(prev.bondOffers, bondOffer),
     })),

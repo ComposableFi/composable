@@ -10,6 +10,6 @@ export interface BondSlice {
   setBondOfferTotalPurchased: (totalPurchasedBonds: Record<string, BigNumber>) => void;
   putBondOfferROI: (totalPurchasedBonds: Record<string, BigNumber>) => void;
   setBondOffers: (bondsOffers: BondOffer[]) => void;
-  putBondOffer: (bondsOffers: BondOffer) => void;
+  setBondOffer: (bondsOffers: BondOffer) => void;
   reset: () => void;
 }

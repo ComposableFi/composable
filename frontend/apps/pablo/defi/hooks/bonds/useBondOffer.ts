@@ -17,7 +17,7 @@ import BigNumber from "bignumber.js";
 
 export default function useBondOffer(offerId: string) {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const { bondOffers, supportedAssets, apollo, putBondOffer } = useStore();
+  const { bondOffers, supportedAssets, apollo, setBondOffer } = useStore();
   const lpRewardingPools = useAllLpTokenRewardingPools();
 
   const [selectedBondOffer, setSelectedBondOffer] =
@@ -91,12 +91,12 @@ export default function useBondOffer(offerId: string) {
           bondOffer,
           selectedBondOffer.offerId.toNumber()
         );
-        putBondOffer(decodedOffer);
+        setBondOffer(decodedOffer);
       } catch (err) {
         console.error(err);
       }
     }
-  }, [selectedBondOffer, parachainApi, putBondOffer]);
+  }, [selectedBondOffer, parachainApi, setBondOffer]);
 
   const roi = useMemo(() => {
     if (principalAssetPerBond.gt(0) && rewardAssetPerBond.gt(0)) {

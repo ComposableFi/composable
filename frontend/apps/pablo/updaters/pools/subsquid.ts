@@ -1,4 +1,4 @@
-import { makeClient } from "../..";
+import { makeClient } from "@/subsquid";
 
 export const queryPoolTransactionsByType = (
   poolId: number,

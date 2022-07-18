@@ -10,19 +10,15 @@ import {
   useTheme,
   Tooltip,
 } from "@mui/material";
-import { BaseAsset, PairAsset } from "../Atoms";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
-import { BondOffer, BondPrincipalAsset, TableHeader } from "@/defi/types";
+import { TableHeader } from "@/defi/types";
 import { useRouter } from "next/router";
-import useBondOfferROI from "@/defi/hooks/bonds/useBondOfferROI";
-import useBondOfferPrincipalAsset from "@/defi/hooks/bonds/useBondOfferPrincipalAsset";
-import useTotalPurchasedBondOffer from "@/defi/hooks/bonds/useTotalPurchased";
-import useBondPrice from "@/defi/hooks/bonds/useBondPrice";
 import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID, fetchBondOffers } from "@/defi/utils";
 import { fetchTotalPurchasedBondsByOfferIds } from "@/defi/utils/bonds/fetchTotalPurchased";
 import { useParachainApi } from "substrate-react";
+import BondOfferRow from "./bonds/OfferTable/BondOfferRow";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -44,81 +40,6 @@ const tableHeaders: TableHeader[] = [
 
 const BOND_LIMIT_TO_SHOW = 4;
 
-const BondPrincipalAssetIcon = ({
-  principalAsset,
-}: {
-  principalAsset: BondPrincipalAsset;
-}) => {
-  const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
-  const { baseAsset, quoteAsset } = lpPrincipalAsset;
-
-  if (baseAsset && quoteAsset) {
-    return (
-      <PairAsset
-        assets={[
-          {
-            icon: baseAsset.icon,
-            label: baseAsset.symbol,
-          },
-          {
-            icon: quoteAsset.icon,
-            label: quoteAsset.symbol,
-          },
-        ]}
-        separator="/"
-      />
-    );
-  }
-
-  if (simplePrincipalAsset) {
-    return (
-      <BaseAsset
-        label={simplePrincipalAsset.symbol}
-        icon={simplePrincipalAsset.icon}
-      />
-    );
-  }
-
-  return null;
-};
-
-const BondOfferRow = ({
-  bondOffer,
-  handleBondClick,
-}: {
-  bondOffer: BondOffer;
-  handleBondClick: (bondOfferId: string) => void;
-}) => {
-  const roi = useBondOfferROI(bondOffer);
-  const totalPurchasedValue = useTotalPurchasedBondOffer(bondOffer);
-  const principalAsset = useBondOfferPrincipalAsset(bondOffer);
-  const bondPrice = useBondPrice(bondOffer);
-
-  return (
-    <TableRow
-      key={bondOffer.offerId.toString()}
-      onClick={() => handleBondClick(bondOffer.offerId.toString())}
-      sx={{ cursor: "pointer" }}
-    >
-      <TableCell align="left">
-        <BondPrincipalAssetIcon principalAsset={principalAsset} />
-      </TableCell>
-      <TableCell align="left">
-        <Typography variant="body2">${bondPrice.toFormat()}</Typography>
-      </TableCell>
-      <TableCell align="left">
-        <Typography variant="body2" color="featured.main">
-          {roi.toFormat()}%
-        </Typography>
-      </TableCell>
-      <TableCell align="left">
-        <Typography variant="body2">
-          ${totalPurchasedValue.toFormat()}
-        </Typography>
-      </TableCell>
-    </TableRow>
-  );
-};
 
 export const AllBondTable: React.FC = () => {
   const theme = useTheme();
@@ -133,18 +54,12 @@ export const AllBondTable: React.FC = () => {
 
   useEffect(() => {
     if (parachainApi) {
-      fetchBondOffers(parachainApi).then((decodedOffers) => {
-        setBondOffers(decodedOffers);
-      });
+      fetchBondOffers(parachainApi).then(setBondOffers);
     }
   }, [parachainApi, setBondOffers]);
 
   useEffect(() => {
-    fetchTotalPurchasedBondsByOfferIds().then(
-      (totalPurchasedByOfferIds) => {
-        setBondOfferTotalPurchased(totalPurchasedByOfferIds);
-      }
-    );
+    fetchTotalPurchasedBondsByOfferIds().then(setBondOfferTotalPurchased);
   }, [setBondOfferTotalPurchased]);
 
   const [count, setCount] = useState(BOND_LIMIT_TO_SHOW);
@@ -176,7 +91,7 @@ export const AllBondTable: React.FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {list.slice(0, count).map((bondOffer, index) => (
+          {list.slice(0, count).map((bondOffer) => (
             <BondOfferRow
               key={bondOffer.offerId.toString()}
               bondOffer={bondOffer}

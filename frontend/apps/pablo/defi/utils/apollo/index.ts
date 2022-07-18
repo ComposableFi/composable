@@ -18,19 +18,20 @@ export const fetchApolloPriceByAssetIds = async (
   api: ApiPromise,
   assetIds: string[]
 ): Promise<Record<string, BigNumber>> => {
-  let usdPricesRecord: Record<string, BigNumber> = {};
-
-  for (const assetId of assetIds) {
+  return assetIds.reduce(async (recordPromise, currentAssetId) => {
+    const record = await recordPromise;
     let price = new BigNumber(0);
     try {
-      const p = await fetchApolloPriceByAssetId(api, assetId);
-      price = new BigNumber(p);
+      price = new BigNumber(
+        await fetchApolloPriceByAssetId(api, currentAssetId)
+      );
     } catch (err) {
-      console.error(`Error fetching price assetId: ${assetId}, Error: ${err}`)
+      console.error(
+        `Error fetching price assetId: ${currentAssetId}, Error: ${err}`
+      );
     } finally {
-      usdPricesRecord[assetId] = price;
+      record[currentAssetId] = price;
     }
-  }
-
-  return usdPricesRecord;
-}
+    return record;
+  }, Promise.resolve({}) as Promise<Record<string, BigNumber>>);
+};
