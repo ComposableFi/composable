@@ -86,7 +86,8 @@ mod rebalance {
 				vec![ADMIN, ALICE, BOB],
 				None,
 				members_count,
-			).ok();
+			)
+			.ok();
 			let proposal = Call::PabloStrategy(crate::Call::set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
@@ -140,7 +141,8 @@ mod rebalance {
 				vec![ADMIN, ALICE, BOB],
 				None,
 				members_count,
-			).ok();
+			)
+			.ok();
 			let proposal = Call::PabloStrategy(crate::Call::set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
