@@ -15,11 +15,13 @@ use proptest::prelude::*;
 //                                             Prop Compose
 // ----------------------------------------------------------------------------------------------------
 
+const MAX_DURATION_SECONDS: DurationSeconds = 1_000_000_000;
+
 prop_compose! {
-	fn close_times()(close_market in 2..DurationSeconds::MAX)(
+	fn close_times()(close_market in 2..MAX_DURATION_SECONDS)(
 		close_market in Just(close_market),
 		close_position in 1..close_market,
-	) -> (DurationSeconds, DurationSeconds){
+	) -> (DurationSeconds, DurationSeconds) {
 		(close_position, close_market)
 	}
 }
