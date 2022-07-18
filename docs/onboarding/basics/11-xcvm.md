@@ -18,9 +18,3 @@ By now you should have a decent understanding of bridging, cross-chain communica
 - Chain-to-tradfi integrations.
 
 Spend ~20 minutes formulating how you'd combine some tech to build something. If you feel overwhelmed, don't worry. You can also think about what is needed from a UI/UX standpoint, and what you feel is missing right now in crypto.
-
-## Welcome!
-
-Feel free to discuss your thoughts with me (@kaiserkarel), and ask any questions that you might have. Make sure to leave some feedback on the onboarding course. 
-
-Welcome to Composable!
