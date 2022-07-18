@@ -63,15 +63,15 @@ mod associate_vault {
 }
 
 // -------------------------------------------------------------------------------------------------
-//                                             Rebalance
+//                                             Set pool_id for asset_id
 // -------------------------------------------------------------------------------------------------
 
 #[cfg(test)]
-mod rebalance {
+mod set_pool_id_for_asset {
 	use super::*;
 
 	#[test]
-	fn rebalance_emits_event() {
+	fn set_pool_id_for_asset_emits_event() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 			let base_asset = CurrencyId::LAYR;
@@ -81,13 +81,12 @@ mod rebalance {
 			// Create Pool (LAYR/CROWD_LOAN)
 			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
 			let members_count: MemberCount = 5;
-			CollectiveInstrumental::set_members(
+			assert_ok!(CollectiveInstrumental::set_members(
 				Origin::root(),
 				vec![ADMIN, ALICE, BOB],
 				None,
 				members_count,
-			)
-			.ok();
+			));
 			let proposal = Call::PabloStrategy(crate::Call::set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
@@ -98,7 +97,7 @@ mod rebalance {
 			assert_ok!(CollectiveInstrumental::propose(
 				Origin::signed(ALICE),
 				2,
-				Box::new(proposal.clone()),
+				Box::new(proposal),
 				proposal_len
 			));
 			assert_ok!(CollectiveInstrumental::vote(Origin::signed(ALICE), hash, 0, true));
@@ -126,7 +125,7 @@ mod rebalance {
 	}
 
 	#[test]
-	fn rebalance_with_not_enough_number_of_votes_throw_error() {
+	fn setting_pool_id_for_asset_with_not_enough_number_of_votes_throw_error() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 			let base_asset = CurrencyId::LAYR;
@@ -136,13 +135,12 @@ mod rebalance {
 			// Create Pool (LAYR/CROWD_LOAN)
 			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
 			let members_count: MemberCount = 5;
-			CollectiveInstrumental::set_members(
+			assert_ok!(CollectiveInstrumental::set_members(
 				Origin::root(),
 				vec![ADMIN, ALICE, BOB],
 				None,
 				members_count,
-			)
-			.ok();
+			));
 			let proposal = Call::PabloStrategy(crate::Call::set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
@@ -153,7 +151,7 @@ mod rebalance {
 			assert_ok!(CollectiveInstrumental::propose(
 				Origin::signed(ALICE),
 				2,
-				Box::new(proposal.clone()),
+				Box::new(proposal),
 				proposal_len
 			));
 			assert_ok!(CollectiveInstrumental::vote(Origin::signed(ALICE), hash, 0, true));

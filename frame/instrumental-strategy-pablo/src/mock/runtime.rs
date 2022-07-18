@@ -9,7 +9,7 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureSigned};
 use orml_traits::parameter_type_with_key;
 use pallet_collective::EnsureProportionAtLeast;
-use primitives::currency::CurrencyId;
+use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
