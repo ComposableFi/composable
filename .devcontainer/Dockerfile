@@ -1,28 +1,6 @@
-# See here for image contents: https://github.com/microsoft/vscode-dev-containers/tree/v0.233.0/containers/rust/.devcontainer/base.Dockerfile
+FROM composablefi/composable-devcontainer:latest
 
-# TODO: replace base with output of nix ci
-ARG VARIANT="bullseye"
-FROM mcr.microsoft.com/vscode/devcontainers/rust:0-${VARIANT}
-
-# [Optional] Uncomment this section to install additional packages.
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends clang libclang-dev gcc libc6-dev musl-tools openssl libssl-dev pkg-config
-
-# Configure rust with corect channels and targets. 
-RUN rustup update stable && \
-    rustup update nightly-2022-04-18 && \
-    rustup target add wasm32-unknown-unknown --toolchain nightly-2022-04-18 && \
-    rustup default stable && \
-    rustup component add clippy && \
-    rustup component add rustfmt && \
-    rustup component add rust-src && \
-    rustup component add rustfmt --toolchain nightly-2022-04-18
-
-# Install rust-analyzer
-ARG RUST_ANALYZER_VERSION=2022-04-25
-RUN wget -qO- "https://github.com/rust-analyzer/rust-analyzer/releases/download/${RUST_ANALYZER_VERSION}/rust-analyzer-$(uname -m)-unknown-linux-gnu.gz" | \
-    gunzip > /usr/local/bin/rust-analyzer && \
-    chmod 700 /usr/local/bin/rust-analyzer
+# TODO: make fetchTarbal stuff easy
 
 # # Add polkadot
 # Not straight to the workspace dir because that seems to be causing issues.
@@ -49,11 +27,4 @@ WORKDIR /taplo-binary
 RUN wget "https://github.com/tamasfe/taplo/releases/download/release-cli-0.6.2/taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz" && \
     tar -xzf taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
     chmod +x taplo && \
-    cp ./taplo /usr/bin 
-
-# Add btm
-WORKDIR /btm-binary
-RUN wget "https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_x86_64-unknown-linux-gnu.tar.gz" && \
-    tar -xzf bottom_x86_64-unknown-linux-gnu.tar.gz && \
-    chmod +x btm && \
-    cp ./btm /usr/bin 
+    cp ./taplo /usr/bin

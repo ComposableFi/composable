@@ -33,6 +33,12 @@
             targets = [ "wasm32-unknown-unknown" ];
           });
 
+        rust-nightly-dev = rust-bin.selectLatestNightlyWith (toolchain:
+          toolchain.default.override {
+            extensions = [ "rust-src" "clippy" "rustfmt" ];
+            targets = [ "wasm32-unknown-unknown" ];
+          });  
+
         # Crane lib instantiated with current nixpkgs
         crane-lib = crane.mkLib pkgs;
 
@@ -56,6 +62,19 @@
             };
           };
         };
+
+        # for containers which are intented for testing, debug and development (including running isolated runtime)
+        container-tools =     
+        [
+          coreutils
+          bash
+          procps
+          findutils
+          nettools
+          bottom
+          nix   
+          procps
+        ];
 
         src = let
           blacklist = [
@@ -96,7 +115,7 @@
         # Common env required to build the node
         common-args = {
           inherit src;
-          buildInputs = [ openssl zstd ];
+          buildInputs = [ openssl zstd (docker.override(args: { buildxSupport = true; }))];
           nativeBuildInputs = [ clang pkg-config ]
             ++ lib.optional stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
               Security
@@ -149,6 +168,34 @@
           version = "0.9.24";
           hash = "sha256-k+6mXjAsHbS4gnHljGmEkMcok77zBd8jhyp56mXyKgI=";
         };
+
+        # TODO: move this to dockerTools.Buildx
+        # https://github.com/microsoft/vscode-dev-containers/tree/main/containers/debian
+        # https://github.com/numtide/flake-utils/blob/master/default.nix       
+        supported-nix-to-container-images = { 
+            x86_64-linux ={
+                os = "linux";
+                arch = "amd64"; # seems, this is correct mapping for this case
+                imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
+                sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+            };
+            aarch64-linux ={
+                os = "linux";
+                arch = "arm64"; # seems, this is correct mapping for this case
+                imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
+                sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+            };
+            aarch64-darwin ={
+                os = "linux"; # macos runs linuxes
+                arch = "arm64";
+                imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
+                sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+            };
+           };
+        nix-to-container-image = system: 
+          if builtins.hasAttr system supported-nix-to-container-images then 
+            supported-nix-to-container-images.${system}
+          else supported-nix-to-container-images.x86_64-linux;
 
       in rec {
         packages = {
@@ -237,21 +284,11 @@
           };
           devnet-container = dockerTools.buildLayeredImage {
             name = "composable-devnet-container";
-            contents = [
-              # added so we can into it and do some debug
-              coreutils
-              bash
-              procps
-              findutils
-              nettools
-
-              # and install anything else
-              nix                             
-
+            contents = [                                     
               # just allow to bash into it and run with custom entries
               packages.devnet
               packages.polkadot-launch
-              ];
+              ] ++ container-tools;
           };
           
           # image which will be base for remote development
@@ -263,28 +300,42 @@
           # - so it has same version or rust as our env and ci
           # - it has same all tooling we have
           # - and we do not need to maintain separate script for that
-          codespace-base-container = dockerTools.pullImage {
-            imageName = "mcr.microsoft.com/vscode/devcontainers/rust";
-            finalImageTag = "0-bulleye";
-            imageDigest =
-              "sha256:a660657d12af73bca492b28dc40994d19818fb9b729c7d4aba252b0b87fa8874";
-            sha256 = "sha256-j3zRLfOlg2Ukpzkmz+LVm+b5a2zyxYoWykopR60CrkY=";
+          codespace-base-container = dockerTools.pullImage ((nix-to-container-image system) // {
+            imageName = "mcr.microsoft.com/vscode/devcontainers/base";
+            finalImageTag = "0.202.7-bullseye"; # being very exact just so can fetch not knowing hash
+          });
+          
+          codespace-container = dockerTools.buildLayeredImage {
+            name = "composable-codespace";
+            fromImage = packages.codespace-base-container;
+            contents = [
+              neovim              
+              rust-stable
+              rust-nightly-dev
+              cachix
+              rust-analyzer
+              rustup # just if it wants to make ad hoc updates
+              nodejs
+              ] ++ container-tools;
+            # NOTE: may or may not be required to ease
+            # enableFakechroot = true;
+            # fakeRootCommands = ''
+            #   ${pkgs.cachix} use composable-community
+            #   sudo --user vscode ${pkgs.cachix} use composable-community
+            #   rustup default stable
+            # '';            
           };
 
-          # TODO: publish container and inherit in dev container
-          codespace-container = dockerTools.buildLayeredImage {
-            name = "composable-codespace-container";
-            fromImage = packages.codespace-base-container;
-            fakeRootCommands = ''
-              ${pkgs.cachix} use composable-community
-            '';
-            contents = [
-              neovim
-              nix                           
-              rust-stable
-              rust-nightly  
-              cachix
-              ];
+          # nix way to do write line, just retain it to allow probes
+          debug-derivation = stdenv.mkDerivation {
+                 name = "debug-derivation";
+                 phases = [ "installPhase" ];
+                 installPhase = ''
+                    mkdir --parents $out/bin
+                    echo 'echo ${system}' > $out/bin/debug.sh
+                    chmod +x $out/bin/debug.sh                    
+                    echo 'echo ${(nix-to-container-image system).imageDigest}' > $out/bin/debug.sh
+                 '';
           };
           default = packages.composable-node;
         };
@@ -312,6 +363,7 @@
               rust-stable
               wasm-optimizer
               composable-node
+              debug-derivation
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
