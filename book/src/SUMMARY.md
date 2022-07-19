@@ -5,7 +5,6 @@
 - [Picasso](./parachains/picasso-parachain-overview.md)
     - [Picasso Crowdloan](./parachains/picasso/picasso-crowdloan.md)
         - [KSM Purchase Log](./parachains/picasso/KSM-purchase-log.md)
-    - [Governance](./parachains/picasso/picasso-governance.md)
     - [Tokenomics](./parachains/picasso/picasso-tokenomics.md)
   
 - [Composable](./parachains/composable-parachain-overview.md)
