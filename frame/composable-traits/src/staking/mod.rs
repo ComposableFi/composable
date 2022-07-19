@@ -1,6 +1,5 @@
 use crate::staking::lock::{Lock, LockConfig};
 use codec::{Decode, Encode};
-use std::num::FpCategory::Zero;
 
 use crate::time::DurationSeconds;
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
