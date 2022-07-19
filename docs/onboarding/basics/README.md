@@ -16,7 +16,7 @@ If you're being onboarded right now as an employee of Composable finance, we exp
 - Cosmos
 - NEAR
 - IBC
-- XCVM
+- XCVM (our own protocol)
 
 Some of the other stuff you'll be learning, but not necessarily in your first week, include:
 
@@ -33,6 +33,10 @@ If you're already familiar with blockchain and cryptocurrencies, each section wi
 ## Will I stop having to learn after my onboarding?
 
 Never.
+
+## Will I be learning about Composable specific technologies?
+
+Yes, although that is towards the end of your onboarding. Initially, these docs focus on the basics.
 
 ## I don't work for Composable, but am a contributor/interested in crypto/passing by
 
