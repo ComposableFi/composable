@@ -42,7 +42,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_set::BoundedBTreeSet,
 		traits::fungibles::{Mutate, MutateHold, Transfer},
-		transactional, Blake2_128Concat, PalletId,
+		transactional, Blake2_128Concat, PalletId, RuntimeDebug,
 	};
 	use frame_system::pallet_prelude::OriginFor;
 	use sp_runtime::traits::{
@@ -162,7 +162,9 @@ pub mod pallet {
 	//                                           Pallet Types
 	// ---------------------------------------------------------------------------------------------
 
-	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
+	#[derive(
+		Encode, Decode, MaxEncodedLen, Clone, Copy, Default, RuntimeDebug, PartialEq, TypeInfo,
+	)]
 	pub struct PoolState<PoolId, State> {
 		pub pool_id: PoolId,
 		pub state: State,
