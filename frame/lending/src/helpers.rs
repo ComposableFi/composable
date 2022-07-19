@@ -334,7 +334,7 @@ impl<T: Config> Pallet<T> {
 	// In the case of FundsAvailability::MustLiquidate we obviously can not borrow, since the market
 	// is going to be closed. If FundsAvailability::Withdrawable is return, we can borrow, since
 	// vault has extra money that will be used for balancing in the next block. So, if we even
-	// borrow all assets from the market, vault has posibity for rebalancing.
+	// borrow all assets from the market, vault has possibility for rebalancing.
 	pub(crate) fn ensure_can_borrow_from_vault(
 		vault_id: &T::VaultId,
 		account_id: &T::AccountId,
@@ -346,6 +346,7 @@ impl<T: Config> Pallet<T> {
 				.ok_or(Error::<T>::CannotBorrowFromMarketWithUnbalancedVault),
 			FundsAvailability::MustLiquidate => Err(Error::<T>::MarketIsClosing),
 			FundsAvailability::Withdrawable(_) => Ok(()),
+			FundsAvailability::None => Ok(()),
 		}?;
 		Ok(())
 	}
@@ -566,6 +567,7 @@ impl<T: Config> Pallet<T> {
 							Self::handle_must_liquidate(&config, &market_account)?;
 							call_counters.handle_must_liquidate += 1;
 						},
+						FundsAvailability::None => {},
 					}
 
 					call_counters.available_funds += 1;

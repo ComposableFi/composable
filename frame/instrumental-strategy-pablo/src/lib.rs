@@ -92,6 +92,7 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
+			+ Ord
 			+ Copy
 			+ MaybeSerializeDeserialize
 			+ Debug
