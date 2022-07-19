@@ -3,6 +3,7 @@ import BN from "bn.js";
 import { expect } from "chai";
 import { PalletPabloPoolConfiguration } from "@composable/types/interfaces";
 import { Option, u128 } from "@polkadot/types-codec";
+import { AccountId32 } from "@polkadot/types/interfaces/runtime";
 
 export class Phase2 {
   public static async verifyLastPoolCreation(
@@ -100,8 +101,14 @@ export class Phase2 {
     api: ApiPromise,
     baseAssetId: number,
     quoteAssetId: number,
+    lpTokenId: number,
+    wallet: AccountId32 | Uint8Array,
     amount: number
-  ) {}
+  ) {
+    const currentBaseAssetFunds = await api.rpc.assets.balanceOf(baseAssetId.toString(), wallet);
+    const currentQuoteAssetFunds = await api.rpc.assets.balanceOf(baseAssetId.toString(), wallet);
+    const currentLPTokenAssetFunds = await api.rpc.assets.balanceOf(baseAssetId.toString(), wallet);
+  }
 
   public static async verifyPoolLiquidityRemoved() {}
 }

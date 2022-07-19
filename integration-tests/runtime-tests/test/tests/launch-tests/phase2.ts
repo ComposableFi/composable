@@ -54,7 +54,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
     btcAssetId = 1000,
     wethAssetId = 1111, // ToDo: Update to wETH assetId.
     ausdAssetId = 1112, // ToDo: Update to aUSD assetId.
-    usdtAssetId = 2000; // ToDo: Update to wETH assetId.
+    usdtAssetId = 2000; // ToDo: Update to USDT assetId.
   const baseAmount = 250000000000000000n;
   const quoteAmount = 250000000000000000n;
   const minMintAmount = 0;
@@ -364,12 +364,13 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
       const quoteAsset = usdcAssetId;
       const saleStart = currentBlock.toNumber() + 5;
       const saleEnd = currentBlock.toNumber() + 50;
-      const initialWeight = 980000;
+      const initialWeight = 950000;
       const finalWeight = 500000;
       const feeRate = 0;
       const ownerFeeRate = 0;
       const protocolFeeRate = 0;
-      const result = await pablo.liquidityBootstrapping.sudo.sudoCreateMarket(
+      // ToDo: Switch to sudo!
+      const result = await pablo.liquidityBootstrapping.createMarket(
         api,
         sudoKey,
         composableManagerWallet.publicKey,
@@ -528,7 +529,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
   describe("Picasso/Pablo Launch Plan - Phase 2C", function () {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
-    describe("2C: PICA/USDC Uniswap Pool", function () {
+    describe("2C:1 PICA/USDC Uniswap Pool", function () {
       it("Create PICA/USDC uniswap pool", async function () {
         if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
         this.timeout(2 * 60 * 1000);
@@ -728,7 +729,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
         describe("Test 2C:1 swap", function () {
           it("Users can swap in the pool", async function () {
             this.timeout(2 * 60 * 1000);
-            const pair = { base: ksmAssetId, quote: usdcAssetId };
+            const pair = { base: picaAssetId, quote: usdcAssetId };
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
@@ -1137,7 +1138,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
         describe("Test 2C:2 buy", function () {
           it("Users can buy from pool", async function () {
             this.timeout(2 * 60 * 1000);
-            const assetIdToBuy = picaAssetId;
+            const assetIdToBuy = usdcAssetId;
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
@@ -1158,7 +1159,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
         describe("Test 2C:2 sell", function () {
           it("Users can sell to pool", async function () {
             this.timeout(2 * 60 * 1000);
-            const assetIdToSell = picaAssetId;
+            const assetIdToSell = usdcAssetId;
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
@@ -1179,7 +1180,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
         describe("Test 2C:2 swap", function () {
           it("Users can swap in the pool", async function () {
             this.timeout(2 * 60 * 1000);
-            const pair = { base: picaAssetId, quote: ksmAssetId };
+            const pair = { base: usdcAssetId, quote: ausdAssetId };
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
