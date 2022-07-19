@@ -77,7 +77,7 @@ pub mod pallet {
 	use sp_arithmetic::{traits::One, Permill};
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider},
-		PerThing, Perbill,
+		ArithmeticError, PerThing, Perbill,
 	};
 	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, vec, vec::Vec};
 
@@ -418,10 +418,10 @@ pub mod pallet {
 							Error::<T>::MaxRewardExceeded
 						);
 
-						reward.total_rewards =
-							reward.total_rewards.safe_add(&reward_update.amount).map_err(
-								|_| Error::<T>::RewardConfigProblem, // TODO: use proper error
-							)?;
+						reward.total_rewards = reward
+							.total_rewards
+							.safe_add(&reward_update.amount)
+							.map_err(|_| ArithmeticError::Overflow)?;
 						// reward.total_rewards = reward.total_rewards
 						// 	.safe_add(elapsed_time * pool.reward_rate)
 						// 	.map_err(|_| ArithmeticError::Overflow)?;
