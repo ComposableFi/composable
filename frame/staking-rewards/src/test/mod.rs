@@ -221,7 +221,7 @@ fn unstake_in_case_of_zero_claims_should_work() {
 		assert_eq!(StakingRewards::stakes(stake_id), None);
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
-			Event::StakingRewards(crate::Event::Unstaked { owner, position_id, .. })
+			Event::StakingRewards(crate::Event::Unstaked { owner, position_id })
 			if owner == staker && position_id == stake_id)
 		});
 
@@ -238,7 +238,7 @@ fn unstake_in_case_of_not_zero_claims_should_work() {
 
 		let pool_init_config = get_default_reward_pool();
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
-		let (staker, pool_id, amount, duration_preset, total_rewards, total_shares) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR, 100, 200);
+		let (staker, pool_id, amount, duration_preset, total_rewards, total_shares, claim) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR, 100, 200, 50);
 
 		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
 		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 2).expect("an asset minting expected");
@@ -255,19 +255,26 @@ fn unstake_in_case_of_not_zero_claims_should_work() {
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let stake_id = StakingRewards::stake_count();
 
-		let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
-		rewards_pool.total_shares /= 2;
-		RewardPools::<Test>::insert(pool_id, rewards_pool);
+		let mut stake = StakingRewards::stakes(stake_id).expect("stake expected");
+		let mut claim_count = 0;
+		let reductions = stake.reductions.try_mutate(|inner: &mut BTreeMap<_, _>| {
+			for (_asset_id, inflation) in inner.iter_mut() {
+				*inflation -= claim;
+				claim_count += 1;
+			}
+		}).expect("reductions expected");
+		stake.reductions = reductions;
+		Stakes::<Test>::insert(stake_id, stake);
 
 		assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
 		assert_eq!(StakingRewards::stakes(stake_id), None);
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
-			Event::StakingRewards(crate::Event::Unstaked { owner, position_id, .. })
+			Event::StakingRewards(crate::Event::Unstaked { owner, position_id })
 			if owner == staker && position_id == stake_id)
 		});
 
-		let claims = 503;
+		let claims = claim * claim_count;
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount + claims);
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount - claims);
 	});
