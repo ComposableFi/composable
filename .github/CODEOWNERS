@@ -26,7 +26,7 @@ frame/dex-router/ @ComposableFi/parachain-finance
 frame/nft/ @ComposableFi/parachain-finance
 frame/staking-rewards/ @ComposableFi/parachain-finance
 frame/oracle/ @ComposableFi/parachain-finance
-subsquid/ @ComposableFi/parachain-finance
+subsquid/ @ComposableFi/parachain-finance @ComposableFi/blockchain-integrations
 frame/*/rpc/ @ComposableFi/parachain-rpc
 frame/*/runtime-api @ComposableFi/parachain-rpc
 
