@@ -337,7 +337,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
    *  - Pool consists of USDC only.
    *  - Pool starts 98/2, finishing at 50/50.
    */
-  describe.only("Picasso/Pablo Launch Plan - Phase 2B", function () {
+  describe("Picasso/Pablo Launch Plan - Phase 2B", function () {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
     it("Create PICA LBP w/ USDC", async function () {
