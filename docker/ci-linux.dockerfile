@@ -1,3 +1,4 @@
+# TODO: install hadolint via official nix, no need to get full docker image just to copy one file
 FROM hadolint/hadolint:latest as hadolint
 
 FROM composablefi/base-ci-linux:1.60.0

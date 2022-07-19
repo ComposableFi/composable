@@ -12,6 +12,21 @@ pub struct Price<PriceValue, BlockNumber> {
 	pub block: BlockNumber,
 }
 
+/// Statistics useful for oracle rewarding and tracking.
+#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
+pub struct RewardTracker<Balance, Timestamp> {
+	/// Period which rewarding resets. Most likely a year.
+	pub period: Timestamp,
+	/// Start of the current rewarding period.
+	pub start: Timestamp,
+	/// Total already rewarded during the current rewarding period.
+	pub total_already_rewarded: Balance,
+	/// Pre-calculated current reward rate per block.
+	pub current_block_reward: Balance,
+	/// total asset weight rewarded.
+	pub total_reward_weight: Balance,
+}
+
 /// oracle that only works with single asset to some normalized asset at latest block in local
 /// consensus usually normalized asset is stable coin or native currency
 /// fallback in `Oracle` or `Market`(DEXes) lacks trusted prices

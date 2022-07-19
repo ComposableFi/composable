@@ -18,7 +18,7 @@ use composable_traits::{
 	dex::{Amm, FeeConfig},
 };
 use frame_support::{
-	assert_noop, assert_ok,
+	assert_err, assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
@@ -190,6 +190,32 @@ fn add_remove_lp() {
 			expected_lp_check,
 		);
 	});
+}
+
+#[test]
+fn test_enable_twap() {
+	new_test_ext().execute_with(|| {
+		Tokens::mint_into(USDC, &ALICE, 1_000_000_000_000_000).unwrap();
+		Tokens::mint_into(BTC, &ALICE, 1_000_000_000_000_000).unwrap();
+
+		Pablo::create(
+			Origin::signed(ALICE),
+			PoolInitConfiguration::StableSwap {
+				amplification_coefficient: 10,
+				fee: Permill::from_rational(10_000_u128, 1_000_000),
+				owner: ALICE,
+				pair: CurrencyPair::new(USDC, BTC),
+			},
+		)
+		.unwrap();
+
+		assert_err!(Pablo::enable_twap(Origin::root(), 0), Error::<Test>::NotEnoughLiquidity);
+
+		Pablo::add_liquidity(Origin::signed(ALICE), 0, 1_000_000_000, 1_000_000_000, 100, true)
+			.unwrap();
+
+		Pablo::enable_twap(Origin::root(), 0).unwrap();
+	})
 }
 
 //

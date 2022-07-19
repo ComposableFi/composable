@@ -10,8 +10,6 @@ sp_api::decl_runtime_apis! {
 	pub trait IbcRuntimeApi {
 		/// Get parachain id
 		fn para_id() -> u32;
-		/// Returns inputs used to create trie db
-		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>>;
 
 		/// Returns the balance of this address
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128>;
