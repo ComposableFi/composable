@@ -17,7 +17,7 @@ use crate::pallet::Error;
 #[test]
 fn test_get_apy() {
 	ExtBuilder::default().build().execute_with(|| {
-		let asset_id = 0;
+		let asset_id = primitives::currency::CurrencyId::PICA;
 
 		assert_eq!(InstrumentalStrategy::get_apy(asset_id), PabloStrategy::get_apy(asset_id));
 	});
