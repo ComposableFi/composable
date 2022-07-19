@@ -95,6 +95,12 @@ pub mod pallet {
 			/// End block
 			end_block: T::BlockNumber,
 		},
+		/// Pool with specified id `T::RewardPoolId` was updated successfully by `T::AccountId`.
+		RewardPoolUpdated {
+			/// Id of updated pool.
+			pool_id: T::RewardPoolId,
+			reward_updates: RewardUpdatesOf<T>,
+		},
 		Staked {
 			/// Id of newly created stake.
 			pool_id: T::RewardPoolId,
@@ -406,10 +412,12 @@ pub mod pallet {
 							Error::<T>::MaxRewardExceeded
 						);
 
-						reward
+						reward.total_rewards = reward
 							.total_rewards
 							.safe_add(&reward_update.amount)
-							.map_err(|_| ArithmeticError::Overflow)?;
+							.map_err(|_|
+								Error::<T>::RewardConfigProblem // TODO: use proper error
+							)?;
 						// pool.total_rewards
 						// 	.safe_add(reward_update.amount * elapsed_time * pool.reward_rate)
 						// 	.map_err(|_| ArithmeticError::Overflow)?;
@@ -426,6 +434,8 @@ pub mod pallet {
 			rewards_pool.rewards = rewards;
 
 			RewardPools::<T>::insert(pool_id, rewards_pool);
+
+			Self::deposit_event(Event::<T>::RewardPoolUpdated { pool_id, reward_updates });
 
 			Ok(())
 		}

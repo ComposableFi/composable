@@ -1,8 +1,5 @@
 pub(crate) use crate::test::runtime::{new_test_ext, Test}; // for benchmarks
-use crate::{
-	test::{prelude::H256, runtime::*},
-	Config, RewardPools, StakeCount, Stakes,
-};
+use crate::{test::{prelude::H256, runtime::*}, Config, RewardPools, StakeCount, Stakes};
 use composable_support::abstractions::utils::increment::Increment;
 use composable_tests_helpers::test::currency::{CurrencyId, BTC, PICA, USDT};
 use composable_traits::{
@@ -38,11 +35,28 @@ fn test_update_reward_pool() {
 		let pool_init_config = get_default_reward_pool();
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
 
+		let pool_id_1 = 1;
+
 		let mut reward_updates = BTreeMap::new();
 		reward_updates
 			.insert(USDT::ID, RewardUpdate { amount: 50, reward_rate: Perbill::from_percent(10) });
 
-		assert_ok!(StakingRewards::update_reward_pool(Origin::root(), 1, reward_updates,)); // TODO: set proper time
+		assert_ok!(StakingRewards::update_reward_pool(Origin::root(), pool_id_1, reward_updates));
+		assert_eq!(StakingRewards::pool_count(), 1);
+
+		let rewards_pool = StakingRewards::pools(1).expect("rewards_pool expected");
+		let reward = rewards_pool.rewards.get(&USDT::ID).unwrap();
+
+		assert_eq!(reward.total_rewards, 50);
+
+		println!("{:?}", StakingRewards::pools(pool_id_1));
+
+		assert_last_event::<Test, _>(|e| {
+			matches!(e.event,
+				Event::StakingRewards(crate::Event::RewardPoolUpdated { pool_id, .. })
+				if pool_id == pool_id_1
+			)
+		});
 	});
 }
 
