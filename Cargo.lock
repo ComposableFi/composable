@@ -8212,6 +8212,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-vault",
  "parity-scale-codec 2.3.1",
+ "proptest",
  "scale-info 1.0.0",
  "serde",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
