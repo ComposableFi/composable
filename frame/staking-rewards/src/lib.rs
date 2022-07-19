@@ -216,6 +216,7 @@ pub mod pallet {
 		/// Required origin for reward pool creation.
 		type RewardPoolCreationOrigin: EnsureOrigin<Self::Origin>;
 
+		/// Required origin for reward pool update.
 		type RewardPoolUpdateOrigin: EnsureOrigin<Self::Origin>;
 
 		type WeightInfo: WeightInfo;
@@ -259,6 +260,7 @@ pub mod pallet {
 		>,
 	>;
 
+	/// Abstraction over RewardUpdates
 	type RewardUpdatesOf<T> = RewardUpdates<<T as Config>::AssetId, <T as Config>::Balance>;
 
 	#[pallet::pallet]
@@ -416,11 +418,9 @@ pub mod pallet {
 							Error::<T>::MaxRewardExceeded
 						);
 
-						reward.total_rewards = reward
-							.total_rewards
-							.safe_add(&reward_update.amount)
-							.map_err(|_|
-								Error::<T>::RewardConfigProblem // TODO: use proper error
+						reward.total_rewards =
+							reward.total_rewards.safe_add(&reward_update.amount).map_err(
+								|_| Error::<T>::RewardConfigProblem, // TODO: use proper error
 							)?;
 						// reward.total_rewards = reward.total_rewards
 						// 	.safe_add(elapsed_time * pool.reward_rate)
