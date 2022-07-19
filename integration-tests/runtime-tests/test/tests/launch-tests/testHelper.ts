@@ -4,6 +4,7 @@ import { expect } from "chai";
 import { PalletPabloPoolConfiguration } from "@composable/types/interfaces";
 import { Option, u128 } from "@polkadot/types-codec";
 import { AccountId32 } from "@polkadot/types/interfaces/runtime";
+import { waitForBlocks } from "@composable/utils/polkadotjs";
 
 export class Phase2 {
   public static async verifyLastPoolCreation(
@@ -58,13 +59,55 @@ export class Phase2 {
     return { poolId, lpTokenId };
   }
 
-  static verifyStableSwapPool(
+  static verifyLBPPool(
     poolConfig: PalletPabloPoolConfiguration,
     pools: Option<PalletPabloPoolConfiguration>,
     poolId: BN,
     poolAmount: u128
   ) {
     console.debug(poolConfig.toString());
+    expect(pools.unwrap().asLiquidityBootstrapping.owner.toString()).to.be.equal(
+      poolConfig.asLiquidityBootstrapping.owner.toString()
+    );
+    expect(pools.unwrap().asLiquidityBootstrapping.pair.base).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.pair.base)
+    );
+    expect(pools.unwrap().asLiquidityBootstrapping.pair.quote).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.pair.quote)
+    );
+
+    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.start)).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.sale.start)
+    );
+    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.end)).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.sale.end)
+    );
+    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.initial_weight)).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.sale.initial_weight)
+    );
+    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.final_weight)).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.sale.final_weight)
+    );
+
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.feeRate).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.feeConfig.feeRate)
+    );
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.ownerFeeRate).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.feeConfig.ownerFeeRate)
+    );
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.protocolFeeRate).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.feeConfig.protocolFeeRate)
+    );
+
+    return { poolId, undefined };
+  }
+
+  static verifyStableSwapPool(
+    poolConfig: PalletPabloPoolConfiguration,
+    pools: Option<PalletPabloPoolConfiguration>,
+    poolId: BN,
+    poolAmount: u128
+  ) {
     const lpTokenId = poolConfig.asStableSwap.lpToken.add(poolAmount);
     expect(pools.unwrap().asStableSwap.owner.toString()).to.be.equal(poolConfig.asStableSwap.owner.toString());
     expect(pools.unwrap().asStableSwap.pair.base).to.be.bignumber.equal(new BN(poolConfig.asStableSwap.pair.base));
@@ -111,4 +154,13 @@ export class Phase2 {
   }
 
   public static async verifyPoolLiquidityRemoved() {}
+
+  public static async waitForLBPPoolStarted(api: ApiPromise, poolId: u128 | number | BN) {
+    let currentBlock = await api.query.system.number();
+    const poolInfo = await api.query.pablo.pools(poolId);
+    while (currentBlock.lt(poolInfo.unwrap().asLiquidityBootstrapping.sale.start)) {
+      await waitForBlocks(api);
+      currentBlock = await api.query.system.number();
+    }
+  }
 }
