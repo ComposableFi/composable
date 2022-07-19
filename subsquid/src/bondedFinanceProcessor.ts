@@ -1,4 +1,5 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
+import { randomUUID } from "crypto";
 import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
@@ -49,7 +50,9 @@ export async function processNewOfferEvent(
 
   await ctx.store.save(
     new BondedFinanceBondOffer({
-      id: offerId.toString(),
+      id: randomUUID(),
+      eventId: ctx.event.id,
+      offerId: offerId.toString(),
       totalPurchased: BigInt(0),
       beneficiary: encodeAccount(beneficiary),
     })
@@ -69,7 +72,7 @@ export async function processNewBondEvent(
 
   // Get stored information (when possible) about the bond offer
   const stored = await ctx.store.get(BondedFinanceBondOffer, {
-    where: { id: offerId.toString() },
+    where: { offerId: offerId.toString() },
   });
 
   if (!stored?.id) {

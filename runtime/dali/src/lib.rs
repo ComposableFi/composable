@@ -129,7 +129,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2301,
+	spec_version: 2400,
 	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -459,26 +459,34 @@ parameter_types! {
 	pub const MaxHistory: u32 = 20;
 	pub const MaxPrePrices: u32 = 40;
 	pub const TwapWindow: u16 = 3;
+	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
+	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
 }
 
 impl oracle::Config for Runtime {
-	type Currency = Balances;
 	type Event = Event;
-	type AuthorityId = oracle::crypto::BathurstStId;
+	type Balance = Balance;
+	type Currency = Balances;
 	type AssetId = CurrencyId;
 	type PriceValue = Balance;
-	type StakeLock = StakeLock;
+	type AuthorityId = oracle::crypto::BathurstStId;
 	type MinStake = MinStake;
+	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfCouncil;
+	type RewardOrigin = EnsureRootOrHalfCouncil;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
+	type TreasuryAccount = TreasuryAccount;
 	type MaxHistory = MaxHistory;
+	type TwapWindow = TwapWindow;
 	type MaxPrePrices = MaxPrePrices;
+	type MsPerBlock = MsPerBlock;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
-	type TreasuryAccount = TreasuryAccount;
-	type TwapWindow = TwapWindow;
+	type Moment = Moment;
+	type Time = Timestamp;
+	type PalletId = OraclePalletId;
 }
 
 // Parachain stuff.
@@ -1156,8 +1164,9 @@ impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type Event = Event;
 	type Currency = Balances;
-	const INDEXING_PREFIX: &'static [u8] = b"ibc";
-	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
+	const INDEXING_PREFIX: &'static [u8] = b"ibc/";
+	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
+	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
 	type AdminOrigin = EnsureRoot<AccountId>;
@@ -1564,10 +1573,6 @@ impl_runtime_apis! {
 			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
 		}
 
-		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
-			Ibc::build_trie_inputs().ok()
-		}
-
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
 			Ibc::query_balance_with_address(addr).ok()
 		}
@@ -1593,7 +1598,7 @@ impl_runtime_apis! {
 		}
 
 		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
-			Ibc::clients().ok()
+			Some(Ibc::clients())
 		}
 
 		fn connection(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryConnectionResponse>{

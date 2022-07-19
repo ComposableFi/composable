@@ -13,6 +13,7 @@ import {
   PabloSwappedEvent,
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
+  VestingVestingScheduleAddedEvent,
 } from "./types/events";
 import { getOrCreate } from "./dbHelper";
 import {
@@ -26,6 +27,7 @@ import {
   processNewBondEvent,
   processNewOfferEvent,
 } from "./bondedFinanceProcessor";
+import { processVestingScheduleAddedEvent } from "./vestingProcessor";
 
 const processor = new SubstrateProcessor("composable_dali_dev");
 
@@ -36,12 +38,12 @@ const chain = (): string => {
     case "dali-stage":
       return "wss://dali-cluster-fe.composablefinance.ninja";
     default:
-      return "ws://localhost:9988";
+      return "ws://127.0.0.1:9988";
   }
 };
 
 const chain_connection_string = chain();
-const archive_connection_string = "http://localhost:8080/v1/graphql";
+const archive_connection_string = "http://localhost:4010/v1/graphql";
 
 console.log(`Chain ${chain_connection_string}`);
 console.log(`Archive ${archive_connection_string}`);
@@ -123,6 +125,12 @@ processor.addEventHandler("bondedFinance.NewBond", async (ctx) => {
   const event = new BondedFinanceNewBondEvent(ctx);
 
   await processNewBondEvent(ctx, event);
+});
+
+processor.addEventHandler("vesting.VestingScheduleAdded", async (ctx) => {
+  const event = new VestingVestingScheduleAddedEvent(ctx);
+
+  await processVestingScheduleAddedEvent(ctx, event);
 });
 
 processor.run();

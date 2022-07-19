@@ -86,6 +86,18 @@ benchmarks! {
 		assert_last_event::<T>(Event::Staked { pool_id, owner: staker, amount, duration_preset, position_id, keep_alive }.into());
 	}
 
+	extend {
+		let (asset_id, pool_id, amount, duration_preset, position_id, keep_alive) = (100.into(), 1_u16.into(), 100_500_u128.into(), ONE_HOUR, 1_u128.into(), true);
+		let staker = whitelisted_caller();
+		let pool_owner: T::AccountId = account("owner", 0, 0);
+		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner))?;
+		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into()).expect("an asset minting expected");
+		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), pool_id, amount, duration_preset)?;
+	}: _(RawOrigin::Signed(staker.clone()), 1_u128.into(), amount)
+	verify {
+		assert_last_event::<T>(Event::StakeAmountExtended { position_id, amount}.into());
+	}
+
 	unstake {
 		let (asset_id, pool_id, amount, duration_preset, position_id, keep_alive) = (100.into(), 1_u16.into(), 100_500_u128.into(), ONE_HOUR, 1_u128.into(), true);
 		let staker = whitelisted_caller();

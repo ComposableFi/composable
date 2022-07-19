@@ -249,3 +249,34 @@ export class PabloSwappedEvent {
     return this.asV2300
   }
 }
+
+export class VestingVestingScheduleAddedEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'vesting.VestingScheduleAdded')
+  }
+
+  /**
+   * Added new vesting schedule. \[from, to, schedule\]
+   */
+  get isV2300(): boolean {
+    return this.ctx._chain.getEventHash('vesting.VestingScheduleAdded') === 'c5e29260a72cc5736d41a9413a02519d99775ae811581363c8cbdf2433143a79'
+  }
+
+  /**
+   * Added new vesting schedule. \[from, to, schedule\]
+   */
+  get asV2300(): {from: v2300.AccountId32, to: v2300.AccountId32, asset: v2300.CurrencyId, schedule: v2300.VestingSchedule} {
+    assert(this.isV2300)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2300
+  }
+
+  get asLatest(): {from: v2300.AccountId32, to: v2300.AccountId32, asset: v2300.CurrencyId, schedule: v2300.VestingSchedule} {
+    deprecateLatest()
+    return this.asV2300
+  }
+}
