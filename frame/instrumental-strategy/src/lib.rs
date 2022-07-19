@@ -13,6 +13,7 @@
 		clippy::disallowed_types,
 		clippy::panic,
 		clippy::unwrap_used,
+		clippy::indexing_slicing,
 	)
 )]
 
@@ -30,7 +31,6 @@ pub mod pallet {
 	//                                     Imports and Dependencies
 	// ---------------------------------------------------------------------------------------------
 
-	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		instrumental::{InstrumentalDynamicStrategy, InstrumentalProtocolStrategy},
@@ -43,6 +43,8 @@ pub mod pallet {
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
 	use sp_std::fmt::Debug;
+
+	use crate::weights::WeightInfo;
 
 	// ---------------------------------------------------------------------------------------------
 	//                                  Declaration Of The Pallet Type
