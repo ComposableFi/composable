@@ -1,5 +1,6 @@
 use crate::staking::lock::{Lock, LockConfig};
 use codec::{Decode, Encode};
+use std::num::FpCategory::Zero;
 
 use crate::time::DurationSeconds;
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
@@ -54,6 +55,7 @@ impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
 		Reward {
 			asset_id: reward_config.asset_id,
 			total_rewards: Zero::zero(),
+			claimed_rewards: Zero::zero(),
 			total_dilution_adjustment: Zero::zero(),
 			max_rewards: reward_config.max_rewards,
 			reward_rate: reward_config.reward_rate,
