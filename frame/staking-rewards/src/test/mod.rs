@@ -118,9 +118,11 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
 		assert_last_event::<Test, _>(|e| {
-			matches!(e.event,
+			matches!(
+				e.event,
 				Event::StakingRewards(crate::Event::Staked { pool_id, owner, amount, position_id, ..})
-				if owner == ALICE && pool_id == 1 && amount == 100_500u32.into() && position_id == 1 )
+					if owner == staker && pool_id == 1 && amount == 100_500u32.into() && position_id == 1
+			)
 		});
 	});
 }
@@ -172,9 +174,11 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
 		assert_last_event::<Test, _>(|e| {
-			matches!(e.event,
+			matches!(
+				e.event,
 				Event::StakingRewards(crate::Event::Staked { pool_id, owner, amount, position_id, ..})
-				if owner == ALICE && pool_id == 1 && amount == 100_500u32.into() && position_id == 1 )
+					if owner == staker && pool_id == 1 && amount == 100_500u32.into() && position_id == 1
+			)
 		});
 	});
 }
@@ -301,9 +305,11 @@ fn unstake_in_case_of_zero_claims_should_work() {
 		assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
 		assert_eq!(StakingRewards::stakes(stake_id), None);
 		assert_last_event::<Test, _>(|e| {
-			matches!(e.event,
+			matches!(
+				e.event,
 				Event::StakingRewards(crate::Event::Unstaked { owner, position_id })
-				if owner == staker && position_id == stake_id)
+					if owner == staker && position_id == stake_id
+			)
 		});
 
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
@@ -348,9 +354,11 @@ fn unstake_in_case_of_not_zero_claims_should_work() {
 		assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
 		assert_eq!(StakingRewards::stakes(stake_id), None);
 		assert_last_event::<Test, _>(|e| {
-			matches!(e.event,
+			matches!(
+				e.event,
 				Event::StakingRewards(crate::Event::Unstaked { owner, position_id })
-				if owner == staker && position_id == stake_id)
+					if owner == staker && position_id == stake_id
+			)
 		});
 
 		let claims = claim * claim_count;
