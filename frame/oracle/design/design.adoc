@@ -224,7 +224,125 @@ For further details refer https://github.com/ComposableFi/composable/blob/main/f
 
 ==== Interface: Oracle
 
+===== get_price
+
+[source,rust]
+----
+fn get_price(asset_id: Self::AssetId, amount: Self::Balance, ) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError>;
+----
+
+TODO: Algo
+
+===== get_twap_for_amount
+
+[source,rust]
+----
+fn get_twap_for_amount(asset_id: Self::AssetId, amount: Self::Balance) -> Result<Self::Balance, DispatchError>;
+----
+
+TODO: Algo
+
+===== get_ratio
+
+[source,rust]
+----
+fn get_ratio(pair: composable_traits::defi::CurrencyPair<Self::AssetId>) -> Result<sp_runtime::FixedU128, DispatchError>;
+----
+TODO: Algo
+
+===== get_price_inverse
+
+[source,rust]
+----
+fn get_price_inverse(asset_id: Self::AssetId, amount: Self::Balance) -> Result<Self::Balance, DispatchError>;
+----
+
+TODO: Algo
+
 ==== Interface: Pallet Extrinsics
+
+===== add_asset_and_info
+
+[source,rust]
+----
+pub fn add_asset_and_info(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			threshold: Validated<Percent, ValidThreshhold>,
+			min_answers: Validated<u32, ValidMinAnswers>,
+			max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
+			block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
+			reward_weight: BalanceOf<T>,
+			slash: BalanceOf<T>,
+		) -> DispatchResultWithPostInfo;
+----
+
+TODO: Algo
+
+===== set_signer
+
+[source,rust]
+----
+pub fn set_signer(
+			origin: OriginFor<T>,
+			signer: T::AccountId,
+		) -> DispatchResultWithPostInfo;
+----
+
+TODO: Algo
+
+===== adjust_rewards
+
+[source,rust]
+----
+pub fn adjust_rewards(
+			origin: OriginFor<T>,
+			annual_cost_per_oracle: BalanceOf<T>,
+			num_ideal_oracles: u8,
+		) -> DispatchResultWithPostInfo;
+----
+
+TODO: Algo
+
+===== add_stake
+
+[source,rust]
+----
+pub fn add_stake(origin: OriginFor<T>, stake: BalanceOf<T>) -> DispatchResultWithPostInfo;
+----
+
+TODO: Algo
+
+===== remove_stake
+
+[source,rust]
+----
+pub fn remove_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo;
+----
+
+TODO: Algo
+
+===== reclaim_stake
+
+[source,rust]
+----
+pub fn reclaim_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo;
+----
+
+TODO: Algo
+
+===== submit_price
+
+[source,rust]
+----
+pub fn submit_price(
+			origin: OriginFor<T>,
+			price: T::PriceValue,
+			asset_id: T::AssetId,
+		) -> DispatchResultWithPostInfo;
+----
+
+TODO: Algo
 
 ==== Algorithm: Offchain Worker
 
@@ -242,7 +360,7 @@ stop
 
 Following are the sub-procedures from above main algorithm,
 
-.Offchain Woker: is_requested
+.Offchain Worker: is_requested
 [plantuml,images/offchain-worker-1-is-requested,png]
 ----
 start
@@ -262,7 +380,7 @@ else (no)
 endif
 ----
 
-.Offchain Woker: fetch_price_and_send_signed
+.Offchain Worker: fetch_price_and_send_signed
 [plantuml,images/offchain-worker-2-fetch-price-and-send-signed,png]
 ----
 start
