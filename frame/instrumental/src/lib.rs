@@ -409,7 +409,7 @@ pub mod pallet {
 		// TODO: (Nevin)
 		//  - should each asset have its own account?
 		fn account_id() -> Self::AccountId {
-			T::PalletId::get().into_account()
+			T::PalletId::get().into_account_truncating()
 		}
 
 		/// Create an underlying vault and save a reference to its [`VaultId`](Config::VaultId).
