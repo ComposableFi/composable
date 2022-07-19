@@ -31,10 +31,11 @@ pub mod pallet {
 	//                                     Imports and Dependencies
 	// ---------------------------------------------------------------------------------------------
 
+	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		dex::Amm,
-		instrumental::{AccessRights, InstrumentalProtocolStrategy, State},
+		instrumental::{InstrumentalProtocolStrategy, State},
 		vault::{FundsAvailability, StrategicVault, Vault},
 	};
 	use frame_support::{
@@ -44,13 +45,11 @@ pub mod pallet {
 		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
 		transactional, Blake2_128Concat, PalletId,
 	};
-	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
+	use frame_system::pallet_prelude::OriginFor;
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
 	use sp_std::fmt::Debug;
-
-	use crate::weights::WeightInfo;
 
 	// ---------------------------------------------------------------------------------------------
 	//                                  Declaration Of The Pallet Type
@@ -69,6 +68,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		type ExternalOrigin: EnsureOrigin<Self::Origin>;
 
 		type WeightInfo: WeightInfo;
 
@@ -184,11 +185,6 @@ pub mod pallet {
 	pub type Pools<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AssetId, PoolState<T::PoolId, State>>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn admin_accounts)]
-	pub type AdminAccountIds<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, AccessRights>;
-
 	// ---------------------------------------------------------------------------------------------
 	//                                          Runtime Events
 	// ---------------------------------------------------------------------------------------------
@@ -219,10 +215,6 @@ pub mod pallet {
 		PoolNotFound,
 		// Occurs when we try to set a new pool_id, during a transferring from or to an old one
 		TransferringInProgress,
-		// Occurs when an attempt is made to initialize a function not from an admin account
-		NotAdminAccount,
-		// Occurs when an admin account doesn't have enough access rights to initialize a function
-		NotEnoughAccessRights,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -247,12 +239,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			pool_id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
-			ensure!(
-				access_right == AccessRights::Full || access_right == AccessRights::SetPoolId,
-				Error::<T>::NotEnoughAccessRights
-			);
+			T::ExternalOrigin::ensure_origin(origin)?;
 			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
 			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
 			Ok(().into())
@@ -262,12 +249,7 @@ pub mod pallet {
 		/// Emits [`RebalancedVault`](Event::RebalancedVault) event when successful.
 		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
 		pub fn liquidity_rebalance(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin)?;
-			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
-			ensure!(
-				access_right == AccessRights::Full || access_right == AccessRights::Rebalance,
-				Error::<T>::NotEnoughAccessRights
-			);
+			T::ExternalOrigin::ensure_origin(origin)?;
 			<Self as InstrumentalProtocolStrategy>::rebalance()?;
 			Ok(().into())
 		}

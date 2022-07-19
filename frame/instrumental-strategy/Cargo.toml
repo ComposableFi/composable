@@ -37,6 +37,7 @@ pallet-governance-registry = { path = "../governance-registry", default-features
 pallet-pablo = { path = "../pablo", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-vault = { path = "../vault", default-features = false }
+pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 
 [features]
@@ -48,6 +49,7 @@ std = [
     "frame-system/std",
     "log/std",
     "orml-tokens/std",
+    "pallet-collective/std",
     "orml-traits/std",
     "primitives/std",
     "scale-info/std",
@@ -63,4 +65,5 @@ runtime-benchmarks = [
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
+  "pallet-collective/runtime-benchmarks"
 ]

@@ -14,20 +14,6 @@ pub enum State {
 	Transferring,
 }
 
-/// An indication of access rights for admin accounts.
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
-pub enum AccessRights {
-	/// Account has full access rights.
-	Full,
-	/// Account has access only to `rebalance` function
-	/// Account has access only to [`rebalance`](InstrumentalProtocolStrategy::rebalance())
-	/// function.
-	Rebalance,
-	/// Account has access only to `set_pool_id_for_asset` function
-	/// [`set_pool_id_for_asset`](InstrumentalProtocolStrategy::set_pool_id_for_asset()) function.
-	SetPoolId,
-}
-
 #[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct InstrumentalVaultConfig<AssetId, Percent> {
 	pub asset_id: AssetId,
