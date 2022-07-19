@@ -19,6 +19,7 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 
+composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 
 codec = { default-features = false, package = "parity-scale-codec", version = "3.0.0", features = ["derive",] }

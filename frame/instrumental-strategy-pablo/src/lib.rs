@@ -14,10 +14,17 @@ pub mod pallet {
 	//                                   Imports and Dependencies
 	// -------------------------------------------------------------------------------------------
 	use codec::{Codec, FullCodec};
-	use composable_traits::{instrumental::InstrumentalProtocolStrategy, vault::StrategicVault};
+	use composable_traits::{
+		dex::Amm,
+		instrumental::InstrumentalProtocolStrategy,
+		vault::{FundsAvailability, StrategicVault, Vault},
+	};
 	use frame_support::{
-		dispatch::DispatchResult, pallet_prelude::*, storage::bounded_btree_set::BoundedBTreeSet,
-		transactional, PalletId,
+		dispatch::{DispatchError, DispatchResult},
+		pallet_prelude::*,
+		storage::bounded_btree_set::BoundedBTreeSet,
+		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
+		transactional, Blake2_128Concat, PalletId,
 	};
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
@@ -92,6 +99,31 @@ pub mod pallet {
 			VaultId = Self::VaultId,
 		>;
 
+		/// The [`Currency`](Config::Currency).
+		///
+		/// Currency is used for the assets managed by the vaults.
+		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
+			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
+
+		type Pablo: Amm<
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+			PoolId = Self::PoolId,
+		>;
+
+		/// Type representing the unique ID of a pool.
+		type PoolId: FullCodec
+			+ MaxEncodedLen
+			+ Default
+			+ Debug
+			+ TypeInfo
+			+ Eq
+			+ PartialEq
+			+ Ord
+			+ Copy;
+
 		/// The maximum number of vaults that can be associated with this strategy.
 		#[pallet::constant]
 		type MaxAssociatedVaults: Get<u32>;
@@ -117,6 +149,13 @@ pub mod pallet {
 	pub type AssociatedVaults<T: Config> =
 		StorageValue<_, BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults>, ValueQuery>;
 
+	/// An asset whitelisted by Instrumental.
+	///
+	/// The corresponding Pool to invest the whitelisted asset into.
+	#[pallet::storage]
+	#[pallet::getter(fn pools)]
+	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::PoolId>;
+
 	// -------------------------------------------------------------------------------------------
 	//                                        Runtime Events
 	// -------------------------------------------------------------------------------------------
@@ -140,6 +179,10 @@ pub mod pallet {
 		VaultAlreadyAssociated,
 
 		TooManyAssociatedStrategies,
+
+		// TODO(belousm): only for MVP version we can assume the `pool_id` is already known and
+		// exist. We should remove it in V1.
+		PoolNotFound,
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -209,7 +252,56 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		#[transactional]
-		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
+		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
+			let asset_id = T::Vault::asset_id(vault_id)?;
+			let account_id = T::Vault::account_id(vault_id);
+			let pool_id = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
+			match T::Vault::available_funds(vault_id, &Self::account_id())? {
+				FundsAvailability::Withdrawable(balance) => {
+					let vault_account = T::Vault::account_id(vault_id);
+					let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
+						pool_id,
+						T::Balance::zero(),
+						balance,
+					)?;
+					T::Pablo::add_liquidity(
+						&vault_account,
+						pool_id,
+						T::Balance::zero(),
+						balance,
+						lp_token_amount,
+						true,
+					)?;
+				},
+				FundsAvailability::Depositable(balance) => {
+					let vault_account = T::Vault::account_id(vault_id);
+					let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
+						pool_id,
+						T::Balance::zero(),
+						balance,
+					)?;
+					T::Pablo::remove_liquidity(
+						&vault_account,
+						pool_id,
+						lp_token_amount,
+						T::Balance::zero(),
+						T::Balance::zero(),
+					)?;
+				},
+				FundsAvailability::MustLiquidate => {
+					let vault_account = T::Vault::account_id(vault_id);
+					let lp_token_id = T::Pablo::lp_token(pool_id)?;
+					let balance_of_lp_token = T::Currency::balance(lp_token_id, &account_id);
+					T::Pablo::remove_liquidity(
+						&vault_account,
+						pool_id,
+						balance_of_lp_token,
+						T::Balance::zero(),
+						T::Balance::zero(),
+					)?;
+				},
+				FundsAvailability::None => {},
+			};
 			Ok(())
 		}
 	}
