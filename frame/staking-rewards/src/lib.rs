@@ -99,7 +99,6 @@ pub mod pallet {
 		RewardPoolUpdated {
 			/// Id of updated pool.
 			pool_id: T::RewardPoolId,
-			reward_updates: RewardUpdatesOf<T>,
 		},
 		Staked {
 			/// Id of newly created stake.
@@ -216,6 +215,8 @@ pub mod pallet {
 
 		/// Required origin for reward pool creation.
 		type RewardPoolCreationOrigin: EnsureOrigin<Self::Origin>;
+
+		type RewardPoolUpdateOrigin: EnsureOrigin<Self::Origin>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -386,6 +387,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Update a new reward pool based on the provided amounts and rates.
+		///
+		/// Emits `RewardPoolUpdated` event when successful.
 		#[pallet::weight(T::WeightInfo::update_reward_pool())]
 		#[transactional]
 		pub fn update_reward_pool(
@@ -393,7 +397,7 @@ pub mod pallet {
 			pool_id: T::RewardPoolId,
 			reward_updates: RewardUpdatesOf<T>,
 		) -> DispatchResult {
-			// let _who = ensure_signed(origin)?;
+			T::RewardPoolUpdateOrigin::ensure_origin(origin)?;
 
 			let current_time = T::UnixTime::now().as_secs();
 
@@ -402,9 +406,9 @@ pub mod pallet {
 
 			let mut inner_rewards = rewards_pool.rewards.into_inner();
 
-			for (asset_id, reward) in inner_rewards.iter_mut() {
-				let elapsed_time = current_time - rewards_pool.last_updated;
+			let elapsed_time = current_time - rewards_pool.last_updated;
 
+			for (asset_id, reward) in inner_rewards.iter_mut() {
 				match reward_updates.get(asset_id) {
 					Some(reward_update) => {
 						ensure!(
@@ -418,12 +422,12 @@ pub mod pallet {
 							.map_err(|_|
 								Error::<T>::RewardConfigProblem // TODO: use proper error
 							)?;
-						// pool.total_rewards
-						// 	.safe_add(reward_update.amount * elapsed_time * pool.reward_rate)
+						// reward.total_rewards = reward.total_rewards
+						// 	.safe_add(elapsed_time * pool.reward_rate)
 						// 	.map_err(|_| ArithmeticError::Overflow)?;
 						reward.reward_rate = reward_update.reward_rate;
 					},
-					None => println!("{:?} not found.", asset_id),
+					None => (),
 				}
 			}
 
@@ -435,7 +439,7 @@ pub mod pallet {
 
 			RewardPools::<T>::insert(pool_id, rewards_pool);
 
-			Self::deposit_event(Event::<T>::RewardPoolUpdated { pool_id, reward_updates });
+			Self::deposit_event(Event::<T>::RewardPoolUpdated { pool_id });
 
 			Ok(())
 		}

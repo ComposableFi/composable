@@ -49,8 +49,6 @@ fn test_update_reward_pool() {
 
 		assert_eq!(reward.total_rewards, 50);
 
-		println!("{:?}", StakingRewards::pools(pool_id_1));
-
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
 				Event::StakingRewards(crate::Event::RewardPoolUpdated { pool_id, .. })
