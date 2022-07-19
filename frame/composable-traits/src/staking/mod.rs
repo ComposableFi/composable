@@ -27,6 +27,9 @@ pub struct Reward<AssetId, Balance> {
 	/// pool.
 	pub total_rewards: Balance,
 
+	/// Already claimed rewards by stakers by unstaking.
+	pub claimed_rewards: Balance,
+
 	/// A book keeping field to track the actual total reward without the
 	/// reward dilution adjustment caused by new stakers joining the pool.
 	pub total_dilution_adjustment: Balance,
@@ -73,6 +76,9 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 
 	/// Total shares distributed among stakers
 	pub total_shares: Balance,
+
+	/// Already claimed shares by stakers by unstaking
+	pub claimed_shares: Balance,
 
 	/// Pool would stop adding rewards to pool at this block number.
 	pub end_block: BlockNumber,
