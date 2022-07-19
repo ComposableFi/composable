@@ -289,7 +289,7 @@ pub mod pallet {
 		/// Create a new reward pool based on the config.
 		///
 		/// Emits `RewardPoolCreated` event when successful.
-		#[pallet::weight(T::WeightInfo::create_reward_pool())]
+		#[pallet::weight(T::WeightInfo::create_reward_pool(T::MaxRewardConfigsPerPool::get()))]
 		#[transactional]
 		pub fn create_reward_pool(
 			origin: OriginFor<T>,
@@ -310,7 +310,7 @@ pub mod pallet {
 					);
 					let pool_id = RewardPoolCount::<T>::increment()?;
 					let mut rewards = BTreeMap::new();
-					for (_, reward_config) in initial_reward_config.into_iter().enumerate() {
+					for reward_config in initial_reward_config.into_iter() {
 						rewards.insert(reward_config.0, Reward::from(reward_config.1));
 					}
 					RewardPools::<T>::insert(
@@ -340,7 +340,7 @@ pub mod pallet {
 		/// Create a new stake.
 		///
 		/// Emits `Staked` event when successful.
-		#[pallet::weight(T::WeightInfo::stake())]
+		#[pallet::weight(T::WeightInfo::stake(T::MaxRewardConfigsPerPool::get()))]
 		pub fn stake(
 			origin: OriginFor<T>,
 			pool_id: T::RewardPoolId,
@@ -358,7 +358,7 @@ pub mod pallet {
 		/// Extend an existing stake.
 		///
 		/// Emits `StakeExtended` event when successful.
-		#[pallet::weight(T::WeightInfo::extend())]
+		#[pallet::weight(T::WeightInfo::extend(T::MaxRewardConfigsPerPool::get()))]
 		pub fn extend(
 			origin: OriginFor<T>,
 			position: T::PositionId,
@@ -374,7 +374,7 @@ pub mod pallet {
 		/// Remove a stake.
 		///
 		/// Emits `Unstaked` event when successful.
-		#[pallet::weight(T::WeightInfo::unstake())]
+		#[pallet::weight(T::WeightInfo::unstake(T::MaxRewardConfigsPerPool::get()))]
 		pub fn unstake(origin: OriginFor<T>, position_id: T::PositionId) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
 			<Self as Staking>::unstake(&owner, &position_id, Zero::zero())?;
@@ -382,7 +382,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(T::WeightInfo::split())]
+		#[pallet::weight(T::WeightInfo::split(T::MaxRewardConfigsPerPool::get()))]
 		pub fn split(
 			origin: OriginFor<T>,
 			position: T::PositionId,

@@ -1,31 +1,31 @@
 use frame_support::dispatch::Weight;
 
 pub trait WeightInfo {
-	fn create_reward_pool() -> Weight;
-	fn stake() -> Weight;
-	fn extend() -> Weight;
-	fn unstake() -> Weight;
-	fn split() -> Weight;
+	fn create_reward_pool(r: u32) -> Weight;
+	fn stake(r: u32) -> Weight;
+	fn extend(r: u32) -> Weight;
+	fn unstake(r: u32) -> Weight;
+	fn split(r: u32) -> Weight;
 }
 
 impl WeightInfo for () {
-	fn create_reward_pool() -> Weight {
+	fn create_reward_pool(_r: u32) -> Weight {
 		10_000
 	}
 
-	fn stake() -> Weight {
+	fn stake(_r: u32) -> Weight {
 		10_000
 	}
 
-	fn extend() -> Weight {
+	fn extend(_r: u32) -> Weight {
 		10_000
 	}
 
-	fn unstake() -> Weight {
+	fn unstake(_r: u32) -> Weight {
 		10_000
 	}
 
-	fn split() -> Weight {
+	fn split(_r: u32) -> Weight {
 		10_000
 	}
 }
