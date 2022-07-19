@@ -98,11 +98,11 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
     "baseUrl": "./",
+    "rootDir": "./src",
     "paths": {
-      "@bootstrap-pallets/*": ["./src/*"],
-      "@composable/*": ["./interfaces/*"],
-      "@polkadot/api/augment": ["./interfaces/augment-api.ts"],
-      "@polkadot/types/augment": ["./interfaces/augment-types.ts"]
+      "@bootstrap-pallets/*": ["src/*"],
+      "@polkadot/api/augment": ["../types/src/augment-api.ts"],
+      "@polkadot/types/augment": ["../types/src/augment-types.ts"]
     }
   }
 }

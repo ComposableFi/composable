@@ -1,5 +1,5 @@
-import { ComposableTraitsDefiCurrencyPairCurrencyId } from "@composable/common";
-import { PalletPabloPoolInitConfiguration } from "@composable/pablo";
+import { ComposableTraitsDefiCurrencyPairCurrencyId } from "@composable/types/dist/common";
+import { PalletPabloPoolInitConfiguration } from "@composable/types/dist/pablo";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 import BigNumber from "bignumber.js";
@@ -19,7 +19,7 @@ export async function updateDexRoute(
   pair: ComposableTraitsDefiCurrencyPairCurrencyId,
   poolId: number
 ) {
-  let dexRoute = [poolId];
+  const dexRoute = [poolId];
   return await sendAndWaitForSuccess(
     api,
     walletSudo,

@@ -2,7 +2,7 @@ import { u128, u32 } from "@polkadot/types-codec";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { ethers } from "ethers";
 import { ApiPromise } from "@polkadot/api";
-import { PalletCrowdloanRewardsModelsRemoteAccount } from "../../../../interfaces";
+import { PalletCrowdloanRewardsModelsRemoteAccount } from "@composable/types";
 
 import { mintAssetsToWallets } from "../assets/extrinsics";
 import BigNumber from "bignumber.js";

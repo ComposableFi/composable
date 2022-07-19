@@ -42,7 +42,7 @@ export function toDexSale(
   initialWeight: string,
   finalWeight: string,
   currentBlock: BigNumber,
-  startDelay: number = 25
+  startDelay = 25
 ): any {
   const startBlock = currentBlock.plus(start).plus(startDelay).toString();
   const endBlock = new BigNumber(startBlock).plus(end).toString();
@@ -60,7 +60,7 @@ export function toLiquidityBootstrappingPoolInitConfig(
   owner: KeyringPair,
   poolConfig: any,
   currentBlock: BigNumber,
-  startDelay: number = 25
+  startDelay = 25
 ): PalletPabloPoolInitConfiguration {
   return api.createType("PalletPabloPoolInitConfiguration", {
     LiquidityBootstrapping: {

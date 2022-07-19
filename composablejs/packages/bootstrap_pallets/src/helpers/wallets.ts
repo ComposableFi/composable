@@ -31,7 +31,7 @@ export function getSudoWallet(chain: "dali-local" | string): KeyringPair {
   if (chain === "dali-local") {
     return kr.addFromUri("//Alice");
   } else {
-    let pk = process.env.SUDO_SEED && process.env.SUDO_SEED.length ? process.env.SUDO_SEED : undefined;
+    const pk = process.env.SUDO_SEED && process.env.SUDO_SEED.length ? process.env.SUDO_SEED : undefined;
     if (!pk?.length) throw new Error("Provide a sudo key env variable");
     return kr.addFromSeed(hexToU8a(pk));
   }

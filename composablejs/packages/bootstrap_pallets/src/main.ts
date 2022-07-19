@@ -1,7 +1,8 @@
-require("dotenv").config();
+import dotenv from "dotenv";
+dotenv.config();
 import { cryptoWaitReady } from "@polkadot/util-crypto";
 import { getSudoWallet, getSubstrateWallets } from "@bootstrap-pallets/helpers/wallets";
-import * as definitions from "@composable/definitions";
+import * as definitions from "@composable/types/dist/definitions";
 import { createRPC, createTypes, buildApi } from "@bootstrap-pallets/helpers";
 import config from "@bootstrap-pallets/constants/config.json";
 import { bootstrapBondOffers } from "./bootstrap/bondedFinance";
