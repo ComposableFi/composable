@@ -528,8 +528,10 @@ pub mod pallet {
 
 			let mut inner_rewards = rewards_pool.rewards.into_inner();
 			for (asset_id, reward) in inner_rewards.iter_mut() {
-				let inflation =
-					stake.reductions.get(asset_id).ok_or(Error::<T>::ReductionConfigProblem)?;
+				let inflation = match stake.reductions.get(asset_id) {
+					Some(inflation) => *inflation,
+					None => Zero::zero(),
+				};
 				let claim = if rewards_pool.total_shares == Zero::zero() {
 					Zero::zero()
 				} else {
@@ -537,15 +539,15 @@ pub mod pallet {
 						.total_rewards
 						.safe_mul(&stake.share)?
 						.safe_div(&rewards_pool.total_shares)?
-						.safe_sub(inflation)?
+						.safe_sub(&inflation)?
 				};
 
-				reward.total_rewards = reward.total_rewards.safe_sub(inflation)?;
+				reward.total_rewards = reward.total_rewards.safe_sub(&inflation)?;
 				let claim = sp_std::cmp::min(claim, reward.total_rewards);
 				reward.total_rewards = reward.total_rewards.safe_sub(&claim)?;
 
 				reward.total_dilution_adjustment =
-					reward.total_dilution_adjustment.safe_sub(inflation)?;
+					reward.total_dilution_adjustment.safe_sub(&inflation)?;
 
 				T::Assets::transfer(
 					rewards_pool.asset_id,
