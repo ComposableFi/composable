@@ -163,18 +163,9 @@ mod set_pool_id_for_asset {
 				proposal_weight,
 				proposal_len
 			));
-			let system_events = frame_system::Pallet::<MockRuntime>::events();
-			let mut occured_associated_pool_with_asset = false;
-			system_events.iter().for_each(|event_record| {
-				if event_record.event ==
-					Event::PabloStrategy(pallet::Event::AssociatedPoolWithAsset {
-						asset_id: base_asset,
-						pool_id,
-					}) {
-					occured_associated_pool_with_asset = true;
-				}
-			});
-			assert!(occured_associated_pool_with_asset);
+			System::assert_has_event(Event::PabloStrategy(
+				pallet::Event::AssociatedPoolWithAsset { asset_id: base_asset, pool_id },
+			));
 		});
 	}
 
