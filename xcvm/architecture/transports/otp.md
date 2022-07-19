@@ -108,6 +108,66 @@ sequenceDiagram
 
 ## Example Implementations
 
+Here we expand on two architectures, `multisig` and `updater` already in existence, and how to adapt them to become OTP compatible. Multisig or TSS-based bridges are custodial solutions, where multiple parties take custody of the funds and act on behalf of the user/contract. In `updater` based solutions, a message is stored inside a Merkle tree, and a single entity broadcasts this hash to other chains. Users/relayers are then required to submit the actual message to the other chain, plus a proof-of-inclusion for message authenticity.
+
 ### Multisignature (or TSS based) Bridge
+
+The theoretical multisig based bridge already exposes the following protocol:
+
+- It has a smart contract, which accepts a `NetworkId`, `Account`, `Assets` for token transfers, or instead of the assets, a `data` payload. (Ideally it would accept both, and some bridges do).
+- It can call a contract with a `data` payload. The contract is expected to verify that the `caller` is the multisig bridge contract for message authenticity.
+
+#### Sequence diagram of incoming assets and data
+
+```mermaid
+sequenceDiagram
+    Multisig Relayer->>Bridge Contract: Submit message.
+    Bridge Contract->>Contract: Forward message.
+    Multisig Relayer->>Token Contract: Submit mint request.
+    Token Contract->>User: Transfer tokens.
+```
+
+
+#### Sequence diagram of outgoing assets and data
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Contract
+    User->>Bridge Contract: Transfer tokens.
+    Contract->>Bridge Contract: Call message pass.
+    Bridge Contract->>Multisig Relayer: Enact message pass.
+    Bridge Contract->>Multisig Relayer: Enact token transfer.
+```
+
+A new contract needs to be introduced to handle the requirement to compound the asset and data transfer, as well as reimbursements. We'll also make sure to have our adapter's contract address in the `Relayer` registry so that the fees can be fairly distributed to the multisig validators. 
+
+#### Sequence diagram of incoming Spawn.
+
+```mermaid
+sequenceDiagram
+    Multisig Relayer->>Token Contract: Submit mint request.
+    Token Contract->>Adapter: Transfer tokens.
+    Multisig Relayer->>Adapter: Submit mint request.
+    Multisig Relayer->>Adapter: Forward message.
+    Note over Adapter: Waits for both message and assets to arive.
+    Adapter->>Gateway: Initiate Spawn
+    Note over Adapter,Gateway: Sets the Relayer registry to self.
+    Adapter->>Multisig Relayer: Transfer earned fees.
+```
+
+For outgoing messages, the pattern is very similar:
+
+```mermaid
+sequenceDiagram
+    Gateway->>Adapter: Submit Spawn.
+    Note over Gateway,Adapter: Selects based on destinations.
+    Adapter->>Bridge Contract: Call transfer.
+    Bridge Contract->>Multisig Relayer: Enact token transfer.
+    Adapter->>Bridge Contract: Call message pass.
+    Bridge Contract->>Multisig Relayer: Enact token transfer.
+```
+
+Reimbursements can be constructed similarly to an incoming spawn.
 
 ### Updater Architecture using Merkle Roots
