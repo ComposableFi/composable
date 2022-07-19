@@ -553,7 +553,6 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
           });
 
           it("Pool owner (root) can add liquidity to the pool", async function () {
-            this.skip();
             this.timeout(2 * 60 * 1000);
             const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
               picaUsdcLpTokenId.toString(),
@@ -643,7 +642,6 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
       describe("Test 2C:1 trading", function () {
         describe("Test 2C:1 buy", function () {
           it("Users can buy from pool", async function () {
-            this.timeout(2 * 60 * 1000);
             const assetIdToBuy = picaAssetId;
             const amount = 500_000_000_000_000n;
             const minReceive = 0;

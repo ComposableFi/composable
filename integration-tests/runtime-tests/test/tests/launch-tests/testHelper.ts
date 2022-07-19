@@ -30,7 +30,7 @@ export class Phase2 {
     poolId: BN,
     poolAmount: u128
   ) {
-    const lpTokenId = poolConfig.asConstantProduct.lpToken.add(poolAmount);
+    const lpTokenId = poolConfig.asConstantProduct.lpToken.add(poolAmount.sub(new BN(1)));
     expect(pools.unwrap().asConstantProduct.owner.toString()).to.be.equal(
       poolConfig.asConstantProduct.owner.toString()
     );
@@ -108,7 +108,7 @@ export class Phase2 {
     poolId: BN,
     poolAmount: u128
   ) {
-    const lpTokenId = poolConfig.asStableSwap.lpToken.add(poolAmount);
+    const lpTokenId = poolConfig.asStableSwap.lpToken.add(poolAmount.sub(new BN(1)));
     expect(pools.unwrap().asStableSwap.owner.toString()).to.be.equal(poolConfig.asStableSwap.owner.toString());
     expect(pools.unwrap().asStableSwap.pair.base).to.be.bignumber.equal(new BN(poolConfig.asStableSwap.pair.base));
     expect(pools.unwrap().asStableSwap.pair.quote).to.be.bignumber.equal(new BN(poolConfig.asStableSwap.pair.quote));
@@ -146,11 +146,18 @@ export class Phase2 {
     quoteAssetId: number,
     lpTokenId: number,
     wallet: AccountId32 | Uint8Array,
-    amount: number
+    amount: number,
+    baseAssetFundsBefore: BN,
+    quoteAssetFundsBefore: BN,
+    currentLpTokenFundsBefore: BN
   ) {
     const currentBaseAssetFunds = await api.rpc.assets.balanceOf(baseAssetId.toString(), wallet);
     const currentQuoteAssetFunds = await api.rpc.assets.balanceOf(baseAssetId.toString(), wallet);
     const currentLPTokenAssetFunds = await api.rpc.assets.balanceOf(baseAssetId.toString(), wallet);
+
+    expect(new BN(currentBaseAssetFunds.toString())).to.be.bignumber.lessThan(baseAssetFundsBefore);
+    expect(new BN(currentQuoteAssetFunds.toString())).to.be.bignumber.lessThan(quoteAssetFundsBefore);
+    expect(new BN(currentLPTokenAssetFunds.toString())).to.be.bignumber.greaterThan(currentLpTokenFundsBefore);
   }
 
   public static async verifyPoolLiquidityRemoved() {}
