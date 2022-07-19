@@ -1,4 +1,3 @@
-// use crate::mock::strategies::*;
 use composable_traits::instrumental::InstrumentalProtocolStrategy;
 use frame_support::{assert_noop, assert_ok};
 use primitives::currency::CurrencyId;

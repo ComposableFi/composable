@@ -13,6 +13,7 @@
 		clippy::disallowed_types,
 		clippy::panic,
 		clippy::unwrap_used,
+		clippy::indexing_slicing,
 	)
 )]
 

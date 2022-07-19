@@ -71,6 +71,7 @@
 	allow(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
+		clippy::indexing_slicing,
 		clippy::panic,
 		clippy::unwrap_used,
 	)
