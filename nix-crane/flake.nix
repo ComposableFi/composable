@@ -215,31 +215,33 @@
             '';
           };
           devnet = let
-            config = stdenv.mkDerivation {
-              name = "devnet-config";
-              src = ./../scripts/polkadot-launch/composable.json;
-              phases = [ "installPhase" ];
-              installPhase = ''
-                mkdir $out
-                substitute $src $out/config.json \
-                    --replace ../../../polkadot/target/release/polkadot ${packages.polkadot-node}/bin/polkadot \
-                    --replace ../../target/release/composable ${packages.composable-node}/bin/composable
-              '';
+            original-config = builtins.fromJSON
+              (builtins.readFile ./../scripts/polkadot-launch/composable.json);
+            patched-config = lib.recursiveUpdate original-config {
+              relaychain = { bin = "${packages.polkadot-node}/bin/polkadot"; };
+              parachains = builtins.map (parachain:
+                parachain // {
+                  bin = "${packages.composable-node}/bin/composable";
+                }) original-config.parachains;
+            };
+            config = writeTextFile {
+              name = "devnet-config.json";
+              text = "${builtins.toJSON patched-config}";
             };
           in writeShellApplication {
             name = "composable-devnet";
             text = ''
               rm -rf /tmp/polkadot-launch
-              ${packages.polkadot-launch}/bin/polkadot-launch ${config}/config.json --verbose
+              ${packages.polkadot-launch}/bin/polkadot-launch ${config} --verbose
             '';
           };
           devnet-container = dockerTools.buildLayeredImage {
             name = "composable-devnet-container";
-            config = { Cmd = [ "${packages.devnet}/bin/composable-devnet" ]; };
             contents = [
               # added so we can into it and do some debug
-              coreutils 
+              coreutils
               bash
+              procps
               findutils
               nettools
 
