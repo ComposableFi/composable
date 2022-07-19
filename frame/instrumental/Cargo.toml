@@ -32,10 +32,11 @@ hex-literal = "0.3.3"
 instrumental-strategy = { path = "../instrumental-strategy", default-features = false }
 instrumental-strategy-pablo = { path = "../instrumental-strategy-pablo", default-features = false }
 itertools = "0.10.3"
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
 pallet-assets = { path = "../assets", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 pallet-currency-factory = { path = "../currency-factory", default-features = false }
 pallet-governance-registry = { path = "../governance-registry", default-features = false }
 pallet-pablo = { path = "../pablo", default-features = false }
@@ -58,6 +59,7 @@ std = [
     "orml-traits/std",
     "pallet-balances/std",
     "pallet-vault/std",
+    "pallet-collective/std",
     "primitives/std",
     "scale-info/std",
     "serde/std",
@@ -72,4 +74,5 @@ runtime-benchmarks = [
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
+  "pallet-collective/runtime-benchmarks"
 ]

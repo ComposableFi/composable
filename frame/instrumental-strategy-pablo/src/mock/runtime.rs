@@ -5,6 +5,7 @@ use frame_support::{
 };
 use frame_system::{EnsureRoot, EnsureSigned};
 use orml_traits::parameter_type_with_key;
+use pallet_collective::EnsureProportionAtLeast;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_core::H256;
 use sp_runtime::{
@@ -27,9 +28,14 @@ pub type Moment = composable_traits::time::Timestamp;
 pub type VaultId = u64;
 
 pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
 const NATIVE_ASSET: CurrencyId = CurrencyId::PICA;
+// These time units are defined in number of blocks.
+pub const MILLISECS_PER_BLOCK: Moment = 3000;
+pub const SECS_PER_BLOCK: Moment = MILLISECS_PER_BLOCK / 1000;
+pub const MINUTES: BlockNumber = 60 / (SECS_PER_BLOCK as BlockNumber);
+pub const HOURS: BlockNumber = MINUTES * 60;
+pub const DAYS: BlockNumber = HOURS * 24;
 
 // -------------------------------------------------------------------------------------------------
 //                                              Config
@@ -84,6 +90,28 @@ impl pallet_balances::Config for MockRuntime {
 	type MaxLocks = ();
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                             Collective
+// -------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const CouncilMotionDuration: BlockNumber = 5 * DAYS;
+	pub const CouncilMaxProposals: u32 = 100;
+	pub const CouncilMaxMembers: u32 = 100;
+}
+
+type InstrumentalPabloCollective = pallet_collective::Instance1;
+impl pallet_collective::Config<InstrumentalPabloCollective> for MockRuntime {
+	type Origin = Origin;
+	type Proposal = Call;
+	type Event = Event;
+	type MotionDuration = CouncilMotionDuration;
+	type MaxProposals = CouncilMaxProposals;
+	type MaxMembers = CouncilMaxMembers;
+	type DefaultVote = pallet_collective::PrimeDefaultVote;
+	type WeightInfo = pallet_collective::weights::SubstrateWeight<MockRuntime>;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -300,6 +328,7 @@ impl instrumental_strategy_pablo::Config for MockRuntime {
 	type Currency = Tokens;
 	type Pablo = Pablo;
 	type PalletId = InstrumentalPabloStrategyPalletId;
+	type ExternalOrigin = EnsureProportionAtLeast<AccountId, InstrumentalPabloCollective, 2, 3>;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -366,6 +395,7 @@ frame_support::construct_runtime!(
 		Assets: pallet_assets::{Pallet, Call, Storage},
 		StakingRewards: pallet_staking_rewards::{Pallet, Storage, Call, Event<T>},
 		Pablo: pallet_pablo::{Pallet, Call, Storage, Event<T>},
+		CollectiveInstrumental: pallet_collective::<Instance1>::{Pallet, Call, Event<T>, Origin<T>, Config<T>},
 
 		InstrumentalStrategy: instrumental_strategy::{Pallet, Call, Storage, Event<T>},
 		Instrumental: pallet_instrumental::{Pallet, Call, Storage, Event<T>},
