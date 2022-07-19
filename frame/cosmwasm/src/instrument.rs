@@ -1,3 +1,4 @@
+use sp_std::vec::Vec;
 use wasm_instrument::{
 	gas_metering::{self, MemoryGrowCost, Rules},
 	parity_wasm::elements::{Instruction, Module},
@@ -8,12 +9,12 @@ use wasm_instrument::{
 pub enum InstrumentationError {
 	Decoding(wasm_instrument::parity_wasm::elements::Error),
 	GasMeteringInjection,
-	StackHeightInjection,
+	StackHeightLimitingInjection,
 	Encoding(wasm_instrument::parity_wasm::elements::Error),
 }
 
 /// Instrument a code for gas metering and stack height limiting.
-pub fn instrument(
+pub fn gas_and_stack_instrumentation(
 	gas_module_name: &str,
 	code: &[u8],
 	stack_limit: u32,
@@ -24,7 +25,7 @@ pub fn instrument(
 		.map_err(|_| InstrumentationError::GasMeteringInjection)?;
 	let stack_and_gas_instrumented_module =
 		wasm_instrument::inject_stack_limiter(gas_instrumented_module, stack_limit)
-			.map_err(|_| InstrumentationError::StackHeightInjection)?;
+			.map_err(|_| InstrumentationError::StackHeightLimitingInjection)?;
 	stack_and_gas_instrumented_module
 		.into_bytes()
 		.map_err(InstrumentationError::Encoding)

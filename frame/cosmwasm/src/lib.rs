@@ -34,43 +34,76 @@
 )]
 #![doc = include_str!("../README.md")]
 
+extern crate alloc;
+
 pub use pallet::*;
 
-pub mod instrument;
 pub mod runtimes;
 pub mod types;
+pub mod instrument;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use core::fmt::Debug;
-
-	use crate::types::CodeInfo;
-	use cosmwasm_minimal_std::{Env, Addr};
-	use cosmwasm_vm::system::CosmwasmCodeId;
+	use crate::{
+		runtimes::wasmi::{CosmwasmAccount, CosmwasmVM, CosmwasmVMError},
+		types::{CodeInfo, ContractInfo},
+	};
+	use alloc::{borrow::ToOwned, string::String};
+	use core::{fmt::Debug, num::NonZeroU32};
+	use cosmwasm_minimal_std::{
+		Addr, BlockInfo, ContractInfo as CosmwasmContractInfo, Empty, Env, Event as CosmwasmEvent,
+		MessageInfo, Timestamp, TransactionInfo,
+	};
+	use cosmwasm_vm::{
+		executor::{cosmwasm_call, InstantiateInput},
+		system::{cosmwasm_system_entrypoint, CosmwasmCodeId},
+		vm::VmErrorOf,
+	};
+	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
 	use frame_support::{
 		pallet_prelude::*,
+		storage::child::ChildInfo,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			tokens::{AssetId, Balance},
 			Get,
 		},
 	};
-	use sp_runtime::traits::MaybeDisplay;
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
+	use sp_runtime::traits::{Convert, MaybeDisplay};
+	use sp_runtime::SaturatedConversion;
+	use sp_std::vec::Vec;
+	use wasm_instrument::gas_metering::Rules;
+  use frame_support::StorageHasher;
 
-	pub(crate) type TrieId = Vec<u8>;
+	pub(crate) type Nonce = u64;
+	pub(crate) type ContractTrieIdOf<T> = BoundedVec<u8, MaxContractTrieIdSizeOf<T>>;
+	pub(crate) type ContractLabelOf<T> = BoundedVec<u8, MaxContractLabelSizeOf<T>>;
 	pub(crate) type CodeHash<T> = <T as frame_system::Config>::Hash;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type MaxCodeSizeOf<T> = <T as Config>::MaxCodeSize;
 	pub(crate) type MaxInstrumentedCodeSizeOf<T> = <T as Config>::MaxInstrumentedCodeSize;
+	pub(crate) type MaxMessageSizeOf<T> = <T as Config>::MaxMessageSize;
+	pub(crate) type MaxContractLabelSizeOf<T> = <T as Config>::MaxContractLabelSize;
+	pub(crate) type MaxContractTrieIdSizeOf<T> = <T as Config>::MaxContractTrieIdSize;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
+	pub type ContractInfoOf<T> =
+		ContractInfo<AccountIdOf<T>, ContractLabelOf<T>, ContractTrieIdOf<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		Uploaded { code_hash: CodeHash<T>, code_id: CosmwasmCodeId },
+		Instantiated { contract: AccountIdOf<T>, info: ContractInfoOf<T> },
+	}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		InstrumentationFailed,
+		VmCreationFailed,
+		ExecutionFailed,
+	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -83,22 +116,28 @@ pub mod pallet {
 		/// Max code size after gas instrumentation.
 		type MaxInstrumentedCodeSize: Get<u32>;
 
-		/// The user account identifier type for the runtime.
-		type AccountId: Parameter
-			+ Member
-			+ MaybeSerializeDeserialize
-			+ Debug
-			+ MaybeDisplay
-			+ Ord
-			+ MaxEncodedLen
-			+ Into<String>
-			+ TryFrom<String>;
+		/// Max message size.
+		type MaxMessageSize: Get<u32>;
+
+		/// Max contract label size.
+		type MaxContractLabelSize: Get<u32>;
+
+		/// Max contract trie id size.
+		type MaxContractTrieIdSize: Get<u32>;
+
+		/// A way to convert from our native account to cosmwasm `Addr`.
+		type AccountToAddr: Convert<AccountIdOf<Self>, String>
+			+ Convert<String, Result<AccountIdOf<Self>, ()>>;
 
 		/// Type of an account balance.
-		type Balance: Balance;
+		type Balance: Balance + From<u128>;
 
 		/// Type of a tradable asset id.
-		type AssetId: AssetId + Into<String> + TryFrom<String>;
+		type AssetId: AssetId;
+
+		/// A way to convert from our native currency to cosmwasm `Denom`.
+		type AssetToDenom: Convert<AssetIdOf<Self>, String>
+			+ Convert<String, Result<AssetIdOf<Self>, ()>>;
 
 		/// Interface from which we are going to execute assets operations.
 		type Assets: Inspect<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
@@ -122,7 +161,7 @@ pub mod pallet {
 
 	/// Momotonic counter incremented on code creation.
 	#[pallet::storage]
-	pub(crate) type CodeIdCounter<T: Config> = StorageValue<_, CosmwasmCodeId, ValueQuery>;
+	pub(crate) type CurrentCodeId<T: Config> = StorageValue<_, CosmwasmCodeId, ValueQuery>;
 
 	/// A mapping between an original code hash and its metadata.
 	#[pallet::storage]
@@ -134,30 +173,147 @@ pub mod pallet {
 	pub(crate) type CodeHashToId<T: Config> = StorageMap<_, Identity, CodeHash<T>, CosmwasmCodeId>;
 
 	/// This is a **monotonic** counter incremented on contract instantiation.
-	///
-	/// This is used in order to generate unique trie ids for contracts.
-	/// The trie id of a new contract is calculated from hash(account_id, nonce).
-	/// The nonce is required because otherwise the following sequence would lead to
-	/// a possible collision of storage:
-	///
-	/// 1. Create a new contract.
-	/// 2. Terminate the contract.
-	/// 3. Immediately recreate the contract with the same account_id.
-	///
-	/// This is bad because the contents of a trie are deleted lazily and there might be
-	/// storage of the old instantiation still in it when the new contract is created. Please
-	/// note that we can't replace the counter by the block number because the sequence above
-	/// can happen in the same block. We also can't keep the account counter in memory only
-	/// because storage is the only way to communicate across different extrinsics in the
-	/// same block.
-	///
-	/// # Note
-	///
-	/// Do not use it to determine the number of contracts. It won't be decremented if
-	/// a contract is destroyed.
+	/// The purpose of this nonce is just to make sure that contract trie are unique.
 	#[pallet::storage]
-	pub(crate) type Nonce<T: Config> = StorageValue<_, u64, ValueQuery>;
+	pub(crate) type CurrentNonce<T: Config> = StorageValue<_, Nonce, ValueQuery>;
+
+	/// A mapping between a contract and it's metadata.
+	#[pallet::storage]
+	pub(crate) type ContractToInfo<T: Config> =
+		StorageMap<_, Identity, AccountIdOf<T>, ContractInfoOf<T>>;
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[pallet::weight(0)]
+		pub fn upload(
+			origin: OriginFor<T>,
+			code: BoundedVec<u8, MaxCodeSizeOf<T>>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			Self::do_upload(&who)?;
+			Ok(().into())
+		}
+
+		// #[pallet::weight(0)]
+		// pub fn instantiate(
+		// 	origin: OriginFor<T>,
+		// 	code_id: CosmwasmCodeId,
+		// 	message: BoundedVec<u8, MaxMessageSizeOf<T>>,
+		// ) -> DispatchResultWithPostInfo {
+		// 	let who = ensure_signed(origin)?;
+		// 	Self::do_instantiate(&CosmwasmAccount::new(who), &code, &message)?;
+		// 	Ok(().into())
+		// }
+	}
+
+	struct DummyCostRules;
+	impl Rules for DummyCostRules {
+		fn instruction_cost(
+			&self,
+			_: &wasm_instrument::parity_wasm::elements::Instruction,
+		) -> Option<u32> {
+			Some(42)
+		}
+
+		fn memory_grow_cost(&self) -> wasm_instrument::gas_metering::MemoryGrowCost {
+			wasm_instrument::gas_metering::MemoryGrowCost::Linear(
+				NonZeroU32::new(1024).expect("impossible"),
+			)
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		fn do_upload(who: &AccountIdOf<T>) -> DispatchResult {
+			Ok(())
+		}
+
+		// fn do_instantiate(
+		// 	who: &CosmwasmAccount<T, AccountIdOf<T>>,
+		// 	code: &[u8],
+		// 	message: &[u8],
+		// ) -> DispatchResult {
+		// 	let instrumented_code =
+		// 		gas_and_stack_instrumentation("env", code, 1000, &DummyCostRules)
+		// 			.map_err(|_| Error::<T>::InstrumentationFailed)?;
+		// 	let host_functions_definitions = WasmiImportResolver(host_functions::definitions());
+		// 	let module = new_wasmi_vm(&host_functions_definitions, &instrumented_code)
+		// 		.map_err(|_| Error::<T>::VmCreationFailed)?;
+		// 	let mut vm = WasmiVM(CosmwasmVM::<T> {
+		// 		host_functions: host_functions_definitions
+		// 			.0
+		// 			.clone()
+		// 			.into_iter()
+		// 			.flat_map(|(_, modules)| modules.into_iter().map(|(_, function)| function))
+		// 			.collect(),
+		// 		executing_module: module,
+		// 		env: Env {
+		// 			block: BlockInfo {
+		// 				height: frame_system::Pallet::<T>::block_number().saturated_into(),
+		// 				time: Timestamp(0),
+		// 				chain_id: "picasso".to_owned(),
+		// 			},
+		// 			transaction: frame_system::Pallet::<T>::extrinsic_index()
+		// 				.map(|index| TransactionInfo { index }),
+		// 			contract: CosmwasmContractInfo {
+		// 				address: Addr::unchecked(Into::<String>::into(who.clone())),
+		// 			},
+		// 		},
+		// 		info: MessageInfo {
+		// 			sender: Addr::unchecked(Into::<String>::into(who.clone())),
+		// 			funds: Default::default(),
+		// 		},
+		// 		_marker: PhantomData,
+		// 	});
+		// 	let result = cosmwasm_system_entrypoint::<InstantiateInput<Empty>, _>(&mut vm, message);
+		// 	log::debug!(target: "runtime::contracts", "Result: {:#?}", result);
+		// 	Ok(())
+		// }
+
+	  fn determine_contract_address(
+		  instantiator: &T::AccountId,
+		  code_hash: &CodeHash<T>,
+		  salt: &[u8],
+	  ) -> T::AccountId {
+		  let buf: Vec<_> = instantiator
+			  .as_ref()
+			  .iter()
+			  .chain(code_hash.as_ref())
+			  .chain(salt)
+			  .cloned()
+			  .collect();
+		  T::Hashing::hash(&buf)
+	  }
+
+		fn contract_info(
+			contract: &CosmwasmAccount<T, AccountIdOf<T>>,
+		) -> Result<ContractInfoOf<T>, Error<T>> {
+			todo!()
+		}
+
+		fn contract_child_trie(trie_id: &[u8]) -> ChildInfo {
+			ChildInfo::new_default(trie_id)
+		}
+
+		fn determine_contract_trie_id(
+			contract: &CosmwasmAccount<T, AccountIdOf<T>>,
+			nonce: Nonce,
+		) -> ContractTrieIdOf<T> {
+			todo!()
+		}
+
+		fn do_db_read(
+			who: &CosmwasmAccount<T, AccountIdOf<T>>,
+			key: Vec<u8>,
+		) -> Result<Vec<u8>, Error<T>> {
+			todo!()
+		}
+
+		fn do_db_write(
+			who: &CosmwasmAccount<T, AccountIdOf<T>>,
+			key: Vec<u8>,
+			value: Vec<u8>,
+		) -> Result<(), Error<T>> {
+			todo!()
+		}
+	}
 }

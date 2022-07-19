@@ -1892,7 +1892,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-minimal-std"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=cac61c22b7f76f137e20e4ab8dadef6cdf1c5a3f#cac61c22b7f76f137e20e4ab8dadef6cdf1c5a3f"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=519f07591bb75d12b4c6efd9bfa6cc4786e54ffb#519f07591bb75d12b4c6efd9bfa6cc4786e54ffb"
 dependencies = [
  "base64 0.13.0",
  "serde",
@@ -1902,7 +1902,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=cac61c22b7f76f137e20e4ab8dadef6cdf1c5a3f#cac61c22b7f76f137e20e4ab8dadef6cdf1c5a3f"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=519f07591bb75d12b4c6efd9bfa6cc4786e54ffb#519f07591bb75d12b4c6efd9bfa6cc4786e54ffb"
 dependencies = [
  "cosmwasm-minimal-std",
  "either",
@@ -1914,7 +1914,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=cac61c22b7f76f137e20e4ab8dadef6cdf1c5a3f#cac61c22b7f76f137e20e4ab8dadef6cdf1c5a3f"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=519f07591bb75d12b4c6efd9bfa6cc4786e54ffb#519f07591bb75d12b4c6efd9bfa6cc4786e54ffb"
 dependencies = [
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
@@ -2810,6 +2810,7 @@ dependencies = [
  "pallet-call-filter",
  "pallet-collator-selection",
  "pallet-collective",
+ "pallet-cosmwasm",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
  "pallet-democracy 4.0.0-dev",
@@ -7792,6 +7793,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
@@ -16675,10 +16677,10 @@ dependencies = [
 [[package]]
 name = "wasmi"
 version = "0.11.0"
-source = "git+https://github.com/ComposableFi/wasmi?rev=ddadd38d6816aca52e8c9fd7a121129896681666#ddadd38d6816aca52e8c9fd7a121129896681666"
+source = "git+https://github.com/ComposableFi/wasmi?rev=0961ed49b3e1a9134354b4e92235fe5f7b96f344#0961ed49b3e1a9134354b4e92235fe5f7b96f344"
 dependencies = [
  "parity-wasm 0.42.2",
- "wasmi-validation 0.4.1 (git+https://github.com/ComposableFi/wasmi?rev=ddadd38d6816aca52e8c9fd7a121129896681666)",
+ "wasmi-validation 0.4.1 (git+https://github.com/ComposableFi/wasmi?rev=0961ed49b3e1a9134354b4e92235fe5f7b96f344)",
  "wasmi_core",
 ]
 
@@ -16694,7 +16696,7 @@ dependencies = [
 [[package]]
 name = "wasmi-validation"
 version = "0.4.1"
-source = "git+https://github.com/ComposableFi/wasmi?rev=ddadd38d6816aca52e8c9fd7a121129896681666#ddadd38d6816aca52e8c9fd7a121129896681666"
+source = "git+https://github.com/ComposableFi/wasmi?rev=0961ed49b3e1a9134354b4e92235fe5f7b96f344#0961ed49b3e1a9134354b4e92235fe5f7b96f344"
 dependencies = [
  "parity-wasm 0.42.2",
 ]
@@ -16702,7 +16704,7 @@ dependencies = [
 [[package]]
 name = "wasmi_core"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/wasmi?rev=ddadd38d6816aca52e8c9fd7a121129896681666#ddadd38d6816aca52e8c9fd7a121129896681666"
+source = "git+https://github.com/ComposableFi/wasmi?rev=0961ed49b3e1a9134354b4e92235fe5f7b96f344#0961ed49b3e1a9134354b4e92235fe5f7b96f344"
 dependencies = [
  "libm",
  "memory_units 0.4.0",

@@ -23,6 +23,8 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("DALI_RUNTIME
 #[cfg(not(feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
+extern crate alloc;
+
 mod governance;
 mod weights;
 mod xcmp;
@@ -55,8 +57,8 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto,
-		Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, Convert,
+		ConvertInto, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -851,8 +853,10 @@ impl pallet_staking_rewards::Config for Runtime {
 pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		!(call_filter::Pallet::<Runtime>::contains(call) ||
-			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
+		if call_filter::Pallet::<Runtime>::contains(call) {
+			return false;
+		}
+		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
 	}
 }
 
@@ -1127,6 +1131,57 @@ impl pallet_ibc_ping::Config for Runtime {
 	type IbcHandler = Ibc;
 }
 
+parameter_types! {
+	pub const MaxCodeSize: u32 = 512 * 1024;
+  pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
+  pub const MaxMessageSize: u32 = 256 * 1024;
+}
+
+/// Native <-> Cosmwasm account mapping
+pub struct AccountToAddr;
+impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
+	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
+		match a.strip_prefix("0x") {
+			Some(account_id) => {
+				Ok(TryInto::<[u8; 32]>::try_into(hex::decode(account_id).map_err(|_| ())?)
+					.map_err(|_| ())?
+					.into())
+			},
+			_ => Err(()),
+		}
+	}
+}
+impl Convert<AccountId, alloc::string::String> for AccountToAddr {
+	fn convert(a: AccountId) -> alloc::string::String {
+		alloc::format!("0x{}", hex::encode(a))
+	}
+}
+
+/// Native <-> Cosmwasm asset mapping
+pub struct AssetToDenom;
+impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
+	fn convert(currency_id: alloc::string::String) -> Result<CurrencyId, ()> {
+		core::str::FromStr::from_str(&currency_id).map_err(|_| ())
+	}
+}
+impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
+	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
+		alloc::format!("{}", currency_id)
+	}
+}
+
+impl cosmwasm::Config for Runtime {
+	type Event = Event;
+	type MaxCodeSize = MaxCodeSize;
+	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
+	type MaxMessageSize = MaxMessageSize;
+	type AccountToAddr = AccountToAddr;
+	type AssetToDenom = AssetToDenom;
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type Assets = Assets;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1202,6 +1257,9 @@ construct_runtime!(
 		IbcPing: pallet_ibc_ping = 151,
 		Transfer: ibc_transfer = 152,
 		Ibc: pallet_ibc = 153
+
+	  // Cosmwasm support
+	  Cosmwasm: cosmwasm::{Pallet, Call, Storage, Event<T>} = 180
 	}
 );
 
