@@ -219,8 +219,8 @@ dependencies = [
  "composable-support",
  "composable-traits",
  "jsonrpsee 0.13.1",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-api",
  "sp-blockchain",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -233,7 +233,7 @@ version = "0.0.1"
 dependencies = [
  "composable-support",
  "composable-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -598,7 +598,7 @@ dependencies = [
  "futures-timer",
  "hex",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-chain-spec",
  "sc-client-api",
@@ -631,7 +631,7 @@ dependencies = [
  "futures 0.3.21",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-rpc",
  "sc-utils",
@@ -651,7 +651,7 @@ dependencies = [
  "derive_more",
  "pallet-beefy-mmr",
  "pallet-mmr",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "rs_merkle",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core-hashing 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -671,8 +671,8 @@ name = "beefy-primitives"
 version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-api",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -754,26 +754,14 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitvec"
-version = "0.20.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7774144344a4faa177370406a7ff5f1da24303817368584c6206c8303eb07848"
-dependencies = [
- "funty 1.1.0",
- "radium 0.6.2",
- "tap",
- "wyz 0.2.0",
-]
-
-[[package]]
-name = "bitvec"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1489fcb93a5bb47da0462ca93ad252ad6af2145cce58d10d46a83931ba9f016b"
 dependencies = [
- "funty 2.0.0",
- "radium 0.7.0",
+ "funty",
+ "radium",
  "tap",
- "wyz 0.5.0",
+ "wyz",
 ]
 
 [[package]]
@@ -968,8 +956,8 @@ dependencies = [
  "bp-runtime",
  "finality-grandpa",
  "frame-support",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-finality-grandpa",
@@ -984,8 +972,8 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#2283
 dependencies = [
  "bp-runtime",
  "frame-support",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
@@ -994,13 +982,13 @@ name = "bp-messages"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
- "bitvec 1.0.0",
+ "bitvec",
  "bp-runtime",
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -1015,8 +1003,8 @@ dependencies = [
  "bp-runtime",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-api",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -1033,7 +1021,7 @@ dependencies = [
  "bp-polkadot-core",
  "bp-runtime",
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "smallvec 1.8.0",
  "sp-api",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -1049,8 +1037,8 @@ dependencies = [
  "frame-support",
  "hash-db",
  "num-traits",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -1067,7 +1055,7 @@ dependencies = [
  "bp-header-chain",
  "ed25519-dalek",
  "finality-grandpa",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-finality-grandpa",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -1083,7 +1071,7 @@ dependencies = [
  "bp-polkadot-core",
  "bp-rococo",
  "bp-runtime",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -1104,8 +1092,8 @@ dependencies = [
  "pallet-bridge-grandpa",
  "pallet-bridge-messages",
  "pallet-transaction-payment",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-api",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -1508,25 +1496,25 @@ dependencies = [
  "frame-support",
  "frame-system",
  "num-traits",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-authorship",
  "pallet-balances",
  "pallet-collator-selection",
  "pallet-collective",
  "pallet-sudo",
  "pallet-treasury",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "primitives",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-consensus-aura",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -1547,9 +1535,9 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "rust_decimal",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -1594,7 +1582,7 @@ dependencies = [
  "pallet-crowdloan-rewards",
  "pallet-transaction-payment-rpc",
  "pallet-transaction-payment-rpc-runtime-api",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "picasso-runtime",
  "polkadot-cli",
  "polkadot-parachain",
@@ -1667,8 +1655,8 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
@@ -1700,10 +1688,10 @@ dependencies = [
  "pallet-vault",
  "pallet-xcm",
  "parachain-info",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-parachain",
  "primitives",
- "scale-info 2.1.2",
+ "scale-info",
  "simnode-runtime-apis",
  "smallvec 1.8.0",
  "sp-api",
@@ -1718,7 +1706,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm 0.9.24",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -1733,10 +1721,10 @@ dependencies = [
  "is_sorted",
  "num-traits",
  "p256",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "proptest",
  "rustc-hex",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_json",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -1753,8 +1741,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -1769,16 +1757,16 @@ dependencies = [
  "composable-support",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "plotters",
  "polkadot-parachain",
  "proptest",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -2089,8 +2077,8 @@ dependencies = [
  "crowdloan-rewards-runtime-api",
  "frame-support",
  "jsonrpsee 0.13.1",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-api",
  "sp-blockchain",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -2102,7 +2090,7 @@ name = "crowdloan-rewards-runtime-api"
 version = "0.0.1"
 dependencies = [
  "composable-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
 ]
 
@@ -2224,7 +2212,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -2247,7 +2235,7 @@ dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-primitives-core",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-client-api",
  "sc-consensus",
  "sc-consensus-aura",
@@ -2276,7 +2264,7 @@ dependencies = [
  "cumulus-relay-chain-interface",
  "dyn-clone",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "sc-client-api",
  "sc-consensus",
@@ -2298,7 +2286,7 @@ dependencies = [
  "derive_more",
  "futures 0.3.21",
  "futures-timer",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "polkadot-node-primitives",
  "polkadot-parachain",
@@ -2322,7 +2310,7 @@ dependencies = [
  "cumulus-relay-chain-interface",
  "futures 0.3.21",
  "futures-timer",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-overseer",
@@ -2348,7 +2336,7 @@ dependencies = [
  "cumulus-client-pov-recovery",
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "polkadot-overseer",
  "polkadot-primitives",
@@ -2376,8 +2364,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-aura",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-consensus-aura",
@@ -2394,12 +2382,12 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -2417,9 +2405,9 @@ dependencies = [
  "impl-trait-for-tuples",
  "log 0.4.17",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-parachain",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -2430,7 +2418,7 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-version",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -2453,7 +2441,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-session",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -2466,13 +2454,13 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -2485,12 +2473,12 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "rand_chacha 0.3.1",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -2503,12 +2491,12 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -2517,7 +2505,7 @@ version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.24#95ca5a085727c1494ddeeae4a2b2e69c4ee1933b"
 dependencies = [
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-primitives",
@@ -2536,9 +2524,9 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
  "cumulus-test-relay-sproof-builder",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-client-api",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-api",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-inherents",
@@ -2557,7 +2545,7 @@ source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.24#95ca
 dependencies = [
  "cumulus-primitives-core",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-inherents",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-timestamp",
@@ -2570,14 +2558,14 @@ source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.24#95ca
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-primitives",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -2621,7 +2609,7 @@ dependencies = [
  "derive_more",
  "futures 0.3.21",
  "jsonrpsee-core 0.13.1",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "polkadot-overseer",
  "polkadot-service",
@@ -2647,7 +2635,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "jsonrpsee 0.13.1",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "polkadot-service",
  "sc-client-api",
@@ -2667,7 +2655,7 @@ version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.24#95ca5a085727c1494ddeeae4a2b2e69c4ee1933b"
 dependencies = [
  "cumulus-primitives-core",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-state-machine 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -2762,8 +2750,8 @@ dependencies = [
  "ibc-runtime-api",
  "ibc-transfer",
  "lending-runtime-api",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
@@ -2812,10 +2800,10 @@ dependencies = [
  "pallet-vesting 0.0.1",
  "pallet-xcm",
  "parachain-info",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-parachain",
  "primitives",
- "scale-info 2.1.2",
+ "scale-info",
  "simnode-runtime-apis",
  "smallvec 1.8.0",
  "sp-api",
@@ -2830,7 +2818,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm 0.9.24",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -3436,9 +3424,9 @@ dependencies = [
  "futures-timer",
  "log 0.4.17",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.11.2",
- "scale-info 2.1.2",
+ "scale-info",
 ]
 
 [[package]]
@@ -3537,7 +3525,7 @@ name = "fork-tree"
 version = "3.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
 ]
 
 [[package]]
@@ -3559,9 +3547,9 @@ dependencies = [
  "frame-system",
  "linregress",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "paste 1.0.7",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-api",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -3593,7 +3581,7 @@ dependencies = [
  "linked-hash-map",
  "log 0.4.17",
  "memory-db",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "rand 0.8.5",
  "rand_pcg 0.3.1",
  "sc-block-builder",
@@ -3641,8 +3629,8 @@ dependencies = [
  "frame-election-provider-solution-type",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-npos-elections",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -3656,8 +3644,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -3672,8 +3660,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "df6bb8542ef006ef0de09a5c4420787d79823c0ed7924225822362fd2bf2ff2d"
 dependencies = [
  "cfg-if 1.0.0",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
 ]
 
@@ -3689,9 +3677,9 @@ dependencies = [
  "k256",
  "log 0.4.17",
  "once_cell",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "paste 1.0.7",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "smallvec 1.8.0",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -3748,8 +3736,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "frame-support",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -3766,8 +3754,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -3778,7 +3766,7 @@ name = "frame-system-rpc-runtime-api"
 version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
 ]
 
@@ -3869,12 +3857,6 @@ name = "fuchsia-zircon-sys"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
-
-[[package]]
-name = "funty"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fed34cd105917e91daa4da6b3728c47b068749d6a62c59811f06ed2ac71d9da7"
 
 [[package]]
 name = "funty"
@@ -4514,7 +4496,7 @@ dependencies = [
  "ibc-proto",
  "ics23",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "primitive-types",
  "prost 0.10.4",
  "prost-types 0.10.1",
@@ -4547,9 +4529,9 @@ name = "ibc-primitives"
 version = "0.1.0"
 dependencies = [
  "ibc",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "ripemd",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sha2 0.10.2",
  "sha3 0.10.1",
@@ -4586,7 +4568,7 @@ dependencies = [
  "ibc-runtime-api",
  "jsonrpsee 0.13.1",
  "pallet-ibc",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-chain-spec",
  "sc-client-api",
  "serde",
@@ -4618,11 +4600,11 @@ dependencies = [
  "hex",
  "ibc",
  "ibc-primitives",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -4639,9 +4621,9 @@ dependencies = [
  "ibc-trait",
  "log 0.4.17",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "primitives",
- "scale-info 2.1.2",
+ "scale-info",
  "serde_json",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -4741,7 +4723,7 @@ version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba6a270039626615617f3f36d15fc827041df3b78c439da2cadfa47455a77f2f"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
 ]
 
 [[package]]
@@ -4794,71 +4776,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if 1.0.0",
-]
-
-[[package]]
-name = "instrumental-strategy"
-version = "0.1.0"
-dependencies = [
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log 0.4.17",
- "pallet-balances",
- "parity-scale-codec 2.3.1",
- "scale-info 1.0.0",
- "serde",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "instrumental-strategy-pablo"
-version = "0.1.0"
-dependencies = [
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log 0.4.17",
- "pallet-balances",
- "parity-scale-codec 2.3.1",
- "scale-info 1.0.0",
- "serde",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "instrumental-strategy-pablo"
-version = "0.1.0"
-dependencies = [
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log 0.4.17",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",
- "pallet-balances",
- "pallet-currency-factory",
- "pallet-instrumental",
- "pallet-vault",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-arithmetic",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
- "sp-io",
- "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
 ]
 
 [[package]]
@@ -5396,7 +5313,7 @@ version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
  "beefy-primitives",
- "bitvec 1.0.0",
+ "bitvec",
  "frame-benchmarking",
  "frame-election-provider-support",
  "frame-executive",
@@ -5450,12 +5367,12 @@ dependencies = [
  "pallet-vesting 4.0.0-dev",
  "pallet-xcm",
  "pallet-xcm-benchmarks",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
  "rustc-hex",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_derive",
  "smallvec 1.8.0",
@@ -5478,7 +5395,7 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm 0.9.24",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -5569,8 +5486,8 @@ dependencies = [
  "composable-traits",
  "jsonrpsee 0.13.1",
  "lending-runtime-api",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-api",
  "sp-blockchain",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -5583,7 +5500,7 @@ version = "0.0.1"
 dependencies = [
  "composable-support",
  "composable-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
 ]
 
@@ -6319,8 +6236,8 @@ dependencies = [
  "hex-literal",
  "kusama-runtime",
  "num-traits",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "orml-xtokens",
  "pallet-assets 0.0.1",
  "pallet-assets-registry",
@@ -6350,7 +6267,7 @@ dependencies = [
  "pallet-xcm",
  "parachain-info",
  "parachains-common",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "paste 1.0.7",
  "picasso-runtime",
  "polkadot-core-primitives",
@@ -6358,7 +6275,7 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-runtime-parachains",
  "primitives",
- "scale-info 2.1.2",
+ "scale-info",
  "smallvec 1.8.0",
  "sp-api",
  "sp-block-builder",
@@ -6373,7 +6290,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "statemine-runtime",
- "xcm 0.9.24",
+ "xcm",
  "xcm-builder",
  "xcm-emulator",
  "xcm-executor",
@@ -7235,9 +7152,9 @@ source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "orml-traits",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7248,49 +7165,16 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994#238828ac2bafe498a2a071317639e9404d6f6994"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
- "serde",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "orml-tokens"
-version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5#b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5"
 dependencies = [
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "orml-traits",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "orml-traits"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994#238828ac2bafe498a2a071317639e9404d6f6994"
-dependencies = [
- "frame-support",
- "impl-trait-for-tuples",
- "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
- "serde",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.19",
 ]
 
 [[package]]
@@ -7301,14 +7185,14 @@ dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "num-traits",
- "orml-utilities 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "orml-utilities",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -7319,25 +7203,11 @@ dependencies = [
  "frame-support",
  "frame-system",
  "orml-xcm-support",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
-]
-
-[[package]]
-name = "orml-utilities"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994#238828ac2bafe498a2a071317639e9404d6f6994"
-dependencies = [
- "frame-support",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
- "serde",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "xcm",
 ]
 
 [[package]]
@@ -7346,8 +7216,8 @@ version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5#b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5"
 dependencies = [
  "frame-support",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7360,11 +7230,11 @@ version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5#b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5"
 dependencies = [
  "frame-support",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "parity-scale-codec 3.1.2",
+ "orml-traits",
+ "parity-scale-codec",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -7376,16 +7246,16 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-traits",
  "orml-xcm-support",
  "pallet-xcm",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -7430,8 +7300,8 @@ dependencies = [
  "composable-traits",
  "jsonrpsee 0.13.1",
  "pablo-runtime-api",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-api",
  "sp-blockchain",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7444,7 +7314,7 @@ version = "0.0.1"
 dependencies = [
  "composable-support",
  "composable-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -7467,11 +7337,11 @@ dependencies = [
  "p256",
  "pallet-balances",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "proptest",
  "rand_core 0.6.3",
  "rustc-hex",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7490,8 +7360,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-transaction-payment",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7510,14 +7380,14 @@ dependencies = [
  "frame-support",
  "frame-system",
  "num-traits",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-balances",
  "pallet-governance-registry",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "primitives",
  "proptest",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-api",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7534,8 +7404,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -7552,13 +7422,13 @@ dependencies = [
  "log 0.4.17",
  "pallet-balances",
  "pallet-currency-factory",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -7569,8 +7439,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-consensus-aura",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7585,8 +7455,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-session",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-authority-discovery",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7601,8 +7471,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "impl-trait-for-tuples",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-authorship",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7620,8 +7490,8 @@ dependencies = [
  "pallet-authorship",
  "pallet-session",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-consensus-babe",
  "sp-consensus-vrf",
@@ -7643,8 +7513,8 @@ dependencies = [
  "frame-system",
  "log 0.4.17",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7661,8 +7531,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -7676,8 +7546,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-session",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7697,8 +7567,8 @@ dependencies = [
  "pallet-beefy",
  "pallet-mmr",
  "pallet-session",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7716,14 +7586,14 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-timestamp",
  "pallet-vesting 0.0.1",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "proptest",
  "proptest-derive",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7742,8 +7612,8 @@ dependencies = [
  "frame-system",
  "log 0.4.17",
  "pallet-treasury",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7760,8 +7630,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7780,8 +7650,8 @@ dependencies = [
  "frame-system",
  "log 0.4.17",
  "num-traits",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-finality-grandpa",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7794,7 +7664,7 @@ name = "pallet-bridge-messages"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
- "bitvec 1.0.0",
+ "bitvec",
  "bp-message-dispatch",
  "bp-messages",
  "bp-runtime",
@@ -7802,8 +7672,8 @@ dependencies = [
  "frame-system",
  "log 0.4.17",
  "num-traits",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7818,8 +7688,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "smallvec 1.8.0",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7839,8 +7709,8 @@ dependencies = [
  "log 0.4.17",
  "pallet-bounties",
  "pallet-treasury",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7858,9 +7728,9 @@ dependencies = [
  "log 0.4.17",
  "pallet-authorship",
  "pallet-session",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "rand 0.8.5",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-staking",
@@ -7876,8 +7746,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7896,9 +7766,9 @@ dependencies = [
  "libsecp256k1",
  "pallet-balances",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "rustc-hex",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7919,9 +7789,9 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "proptest",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7937,14 +7807,14 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-balances",
  "pallet-governance-registry",
  "pallet-preimage",
  "pallet-scheduler",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7960,8 +7830,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -7978,14 +7848,14 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-pablo",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8009,17 +7879,17 @@ dependencies = [
  "hex-literal",
  "log 0.4.17",
  "num-traits",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-assets 0.0.1",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-parachain",
  "primitives",
  "proptest",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "smallvec 1.8.0",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8027,7 +7897,7 @@ dependencies = [
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -8040,9 +7910,9 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "rand 0.7.3",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8061,7 +7931,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-election-provider-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-npos-elections",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -8075,8 +7945,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-npos-elections",
@@ -8092,8 +7962,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8106,10 +7976,10 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-traits",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8128,8 +7998,8 @@ dependencies = [
  "log 0.4.17",
  "pallet-authorship",
  "pallet-session",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-finality-grandpa",
@@ -8157,8 +8027,8 @@ dependencies = [
  "ibc-transfer",
  "ics23",
  "log 0.4.17",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-assets 0.0.1",
  "pallet-assets-registry",
  "pallet-balances",
@@ -8167,10 +8037,10 @@ dependencies = [
  "pallet-ibc-ping",
  "pallet-timestamp",
  "parachain-info",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "primitives",
  "prost 0.10.4",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_json",
  "sha2 0.10.2",
@@ -8184,7 +8054,7 @@ dependencies = [
  "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "tendermint",
  "tendermint-proto",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -8199,8 +8069,8 @@ dependencies = [
  "log 0.4.17",
  "pallet-balances",
  "pallet-ibc",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8218,8 +8088,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8235,8 +8105,8 @@ dependencies = [
  "frame-system",
  "log 0.4.17",
  "pallet-authorship",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8253,44 +8123,12 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-keyring",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "pallet-instrumental"
-version = "0.1.0"
-dependencies = [
- "composable-support",
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex-literal",
- "instrumental-strategy",
- "instrumental-strategy-pablo",
- "itertools",
- "log 0.4.17",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",
- "pallet-assets 0.0.1",
- "pallet-balances",
- "pallet-currency-factory",
- "pallet-vault",
- "parity-scale-codec 3.1.2",
- "proptest",
- "scale-info 2.1.2",
- "serde",
- "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
@@ -8310,8 +8148,8 @@ dependencies = [
  "log 0.4.17",
  "num-traits",
  "once_cell",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-assets 0.0.1",
  "pallet-balances",
  "pallet-currency-factory",
@@ -8320,11 +8158,11 @@ dependencies = [
  "pallet-oracle",
  "pallet-timestamp",
  "pallet-vault",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "primitives",
  "proptest",
  "rand 0.7.3",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "smallvec 1.8.0",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8334,7 +8172,7 @@ dependencies = [
  "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -8351,24 +8189,24 @@ dependencies = [
  "hex-literal",
  "log 0.4.17",
  "num-traits",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-assets 0.0.1",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-dutch-auction",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "primitives",
  "proptest",
- "scale-info 2.1.2",
+ "scale-info",
  "smallvec 1.8.0",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -8380,8 +8218,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8397,8 +8235,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-mmr-primitives",
@@ -8412,7 +8250,7 @@ version = "3.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "jsonrpsee 0.13.1",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "serde",
  "sp-api",
  "sp-blockchain",
@@ -8433,18 +8271,18 @@ dependencies = [
  "frame-system",
  "log 0.4.17",
  "num-traits",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "plotters",
  "proptest",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -8455,8 +8293,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8472,8 +8310,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8488,8 +8326,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8503,8 +8341,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-staking",
@@ -8523,8 +8361,8 @@ dependencies = [
  "pallet-bags-list",
  "pallet-nomination-pools",
  "pallet-staking",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-staking",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8539,8 +8377,8 @@ dependencies = [
  "frame-system",
  "log 0.4.17",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-staking",
@@ -8563,8 +8401,8 @@ dependencies = [
  "pallet-offences",
  "pallet-session",
  "pallet-staking",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-staking",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8584,10 +8422,10 @@ dependencies = [
  "log 0.4.17",
  "pallet-balances",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "proptest",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_json",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8609,14 +8447,14 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-currency-factory",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "proptest",
  "rust_decimal",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8632,12 +8470,12 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -8648,8 +8486,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8665,8 +8503,8 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8682,8 +8520,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8696,9 +8534,9 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "safe-mix",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -8711,8 +8549,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8727,8 +8565,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8744,8 +8582,8 @@ dependencies = [
  "impl-trait-for-tuples",
  "log 0.4.17",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8778,9 +8616,9 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "rand_chacha 0.2.2",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -8797,9 +8635,9 @@ dependencies = [
  "log 0.4.17",
  "pallet-authorship",
  "pallet-session",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "rand_chacha 0.2.2",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8842,16 +8680,16 @@ dependencies = [
  "hex-literal",
  "once_cell",
  "orml-rewards",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-assets 0.0.1",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "primitives",
  "proptest",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8866,8 +8704,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8882,8 +8720,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-inherents",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8901,8 +8739,8 @@ dependencies = [
  "frame-system",
  "log 0.4.17",
  "pallet-treasury",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8917,8 +8755,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8933,7 +8771,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "jsonrpsee 0.13.1",
  "pallet-transaction-payment-rpc-runtime-api",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
  "sp-blockchain",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8947,7 +8785,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "pallet-transaction-payment",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -8962,8 +8800,8 @@ dependencies = [
  "frame-system",
  "impl-trait-for-tuples",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -8978,8 +8816,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -8992,8 +8830,8 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -9014,12 +8852,12 @@ dependencies = [
  "log 0.4.17",
  "num-traits",
  "once_cell",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-balances",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "proptest",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -9036,11 +8874,11 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "pallet-timestamp",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -9057,8 +8895,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -9071,13 +8909,13 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -9090,11 +8928,11 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -9106,8 +8944,8 @@ dependencies = [
  "cumulus-primitives-core",
  "frame-support",
  "frame-system",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
 ]
 
@@ -9124,17 +8962,17 @@ dependencies = [
  "pallet-authorship",
  "pallet-balances",
  "pallet-collator-selection",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "polkadot-runtime-common",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-consensus-aura",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "substrate-wasm-builder",
- "xcm 0.9.24",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -9159,41 +8997,15 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "2.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "373b1a4c1338d9cd3d1fa53b3a11bdab5ab6bd80a20f7f7becd76953ae2be909"
-dependencies = [
- "arrayvec 0.7.2",
- "bitvec 0.20.4",
- "byte-slice-cast",
- "impl-trait-for-tuples",
- "parity-scale-codec-derive 2.3.1",
- "serde",
-]
-
-[[package]]
-name = "parity-scale-codec"
 version = "3.1.2"
 source = "git+https://github.com/paritytech/parity-scale-codec?tag=parity-scale-codec-3.1.2#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
 dependencies = [
  "arrayvec 0.7.2",
- "bitvec 1.0.0",
+ "bitvec",
  "byte-slice-cast",
  "impl-trait-for-tuples",
- "parity-scale-codec-derive 3.1.2",
+ "parity-scale-codec-derive",
  "serde",
-]
-
-[[package]]
-name = "parity-scale-codec-derive"
-version = "2.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1557010476e0595c9b568d16dcfb81b93cdeb157612726f5170d31aa707bed27"
-dependencies = [
- "proc-macro-crate 1.1.3",
- "proc-macro2 1.0.40",
- "quote 1.0.20",
- "syn 1.0.98",
 ]
 
 [[package]]
@@ -9520,8 +9332,8 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
- "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
- "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5)",
+ "orml-tokens",
+ "orml-traits",
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
@@ -9555,10 +9367,10 @@ dependencies = [
  "pallet-vesting 0.0.1",
  "pallet-xcm",
  "parachain-info",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-parachain",
  "primitives",
- "scale-info 2.1.2",
+ "scale-info",
  "simnode-runtime-apis",
  "smallvec 1.8.0",
  "sp-api",
@@ -9573,7 +9385,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm 0.9.24",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -9755,7 +9567,7 @@ dependencies = [
  "fatality",
  "futures 0.3.21",
  "lru 0.7.7",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
@@ -9777,7 +9589,7 @@ dependencies = [
  "fatality",
  "futures 0.3.21",
  "lru 0.7.7",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
@@ -9882,9 +9694,9 @@ name = "polkadot-core-primitives"
 version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -9899,7 +9711,7 @@ dependencies = [
  "fatality",
  "futures 0.3.21",
  "lru 0.7.7",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
@@ -9918,7 +9730,7 @@ name = "polkadot-erasure-coding"
 version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-node-primitives",
  "polkadot-primitives",
  "reed-solomon-novelpoly",
@@ -9956,7 +9768,7 @@ dependencies = [
  "async-trait",
  "bytes 1.1.0",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "polkadot-node-network-protocol",
  "polkadot-node-subsystem",
@@ -9974,7 +9786,7 @@ version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -9991,14 +9803,14 @@ name = "polkadot-node-core-approval-voting"
 version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
- "bitvec 1.0.0",
+ "bitvec",
  "derive_more",
  "futures 0.3.21",
  "futures-timer",
  "kvdb",
  "lru 0.7.7",
  "merlin",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-node-jaeger",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -10020,11 +9832,11 @@ name = "polkadot-node-core-av-store"
 version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
- "bitvec 1.0.0",
+ "bitvec",
  "futures 0.3.21",
  "futures-timer",
  "kvdb",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -10040,7 +9852,7 @@ name = "polkadot-node-core-backing"
 version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
- "bitvec 1.0.0",
+ "bitvec",
  "fatality",
  "futures 0.3.21",
  "polkadot-erasure-coding",
@@ -10076,7 +9888,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#2283
 dependencies = [
  "async-trait",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-node-core-pvf",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -10110,7 +9922,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "kvdb",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
@@ -10128,7 +9940,7 @@ dependencies = [
  "futures 0.3.21",
  "kvdb",
  "lru 0.7.7",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
  "polkadot-node-subsystem-util",
@@ -10160,7 +9972,7 @@ name = "polkadot-node-core-provisioner"
 version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
- "bitvec 1.0.0",
+ "bitvec",
  "fatality",
  "futures 0.3.21",
  "futures-timer",
@@ -10184,7 +9996,7 @@ dependencies = [
  "async-std",
  "futures 0.3.21",
  "futures-timer",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "pin-project 1.0.10",
  "polkadot-core-primitives",
  "polkadot-node-subsystem-util",
@@ -10246,7 +10058,7 @@ dependencies = [
  "lazy_static",
  "log 0.4.17",
  "mick-jaeger",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "polkadot-node-primitives",
  "polkadot-primitives",
@@ -10264,7 +10076,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "prioritized-metered-channel",
  "sc-cli",
@@ -10283,7 +10095,7 @@ dependencies = [
  "derive_more",
  "fatality",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-node-jaeger",
  "polkadot-node-primitives",
  "polkadot-primitives",
@@ -10302,7 +10114,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#2283
 dependencies = [
  "bounded-vec",
  "futures 0.3.21",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-parachain",
  "polkadot-primitives",
  "schnorrkel",
@@ -10359,7 +10171,7 @@ dependencies = [
  "kvdb",
  "lru 0.7.7",
  "parity-db",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.11.2",
  "pin-project 1.0.10",
@@ -10408,10 +10220,10 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#2283
 dependencies = [
  "derive_more",
  "frame-support",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
  "polkadot-core-primitives",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -10438,14 +10250,14 @@ name = "polkadot-primitives"
 version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
- "bitvec 1.0.0",
+ "bitvec",
  "frame-system",
  "hex-literal",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
  "polkadot-core-primitives",
  "polkadot-parachain",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-api",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -10501,7 +10313,7 @@ version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
  "beefy-primitives",
- "bitvec 1.0.0",
+ "bitvec",
  "frame-benchmarking",
  "frame-election-provider-support",
  "frame-executive",
@@ -10548,13 +10360,13 @@ dependencies = [
  "pallet-utility",
  "pallet-vesting 4.0.0-dev",
  "pallet-xcm",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "polkadot-runtime-common",
  "polkadot-runtime-constants",
  "polkadot-runtime-parachains",
  "rustc-hex",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_derive",
  "smallvec 1.8.0",
@@ -10576,7 +10388,7 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm 0.9.24",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -10587,7 +10399,7 @@ version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
  "beefy-primitives",
- "bitvec 1.0.0",
+ "bitvec",
  "frame-benchmarking",
  "frame-election-provider-support",
  "frame-support",
@@ -10607,11 +10419,11 @@ dependencies = [
  "pallet-transaction-payment",
  "pallet-treasury",
  "pallet-vesting 4.0.0-dev",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
  "rustc-hex",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_derive",
  "slot-range-helper",
@@ -10625,7 +10437,7 @@ dependencies = [
  "sp-staking",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "static_assertions",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -10646,7 +10458,7 @@ version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
  "bs58",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -10658,7 +10470,7 @@ version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
  "bitflags",
- "bitvec 1.0.0",
+ "bitvec",
  "derive_more",
  "frame-benchmarking",
  "frame-support",
@@ -10672,13 +10484,13 @@ dependencies = [
  "pallet-staking",
  "pallet-timestamp",
  "pallet-vesting 4.0.0-dev",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "polkadot-runtime-metrics",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rustc-hex",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-api",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -10691,7 +10503,7 @@ dependencies = [
  "sp-staking",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "static_assertions",
- "xcm 0.9.24",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -10808,7 +10620,7 @@ dependencies = [
  "fatality",
  "futures 0.3.21",
  "indexmap",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-node-network-protocol",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -10825,7 +10637,7 @@ name = "polkadot-statement-table"
 version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -10898,7 +10710,7 @@ dependencies = [
  "jsonrpc-core",
  "lazy_static",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "primitives",
  "serde",
  "serde_json",
@@ -10921,7 +10733,7 @@ dependencies = [
  "fixed-hash",
  "impl-codec",
  "impl-serde",
- "scale-info 2.1.2",
+ "scale-info",
  "uint",
 ]
 
@@ -10931,12 +10743,12 @@ version = "0.1.0"
 dependencies = [
  "composable-support",
  "composable-traits",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
 ]
 
 [[package]]
@@ -11259,12 +11071,6 @@ checksum = "3bcdf212e9776fbcb2d23ab029360416bb1706b1aea2d1a5ba002727cbcab804"
 dependencies = [
  "proc-macro2 1.0.40",
 ]
-
-[[package]]
-name = "radium"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "643f8f41a8ebc4c5dc4515c82bb8abd397b527fc20fd681b7c011c2aee5d44fb"
 
 [[package]]
 name = "radium"
@@ -11642,7 +11448,7 @@ dependencies = [
  "env_logger",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "serde",
  "serde_json",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -11815,13 +11621,13 @@ dependencies = [
  "pallet-transaction-payment-rpc-runtime-api",
  "pallet-utility",
  "pallet-xcm",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
  "rococo-runtime-constants",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_derive",
  "smallvec 1.8.0",
@@ -11841,7 +11647,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm 0.9.24",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -12153,7 +11959,7 @@ dependencies = [
  "ip_network",
  "libp2p",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "prost 0.10.4",
  "prost-build 0.9.0",
  "rand 0.7.3",
@@ -12177,7 +11983,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-block-builder",
  "sc-client-api",
  "sc-proposer-metrics",
@@ -12197,7 +12003,7 @@ name = "sc-block-builder"
 version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-client-api",
  "sp-api",
  "sp-block-builder",
@@ -12215,7 +12021,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "impl-trait-for-tuples",
  "memmap2 0.5.4",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-chain-spec-derive",
  "sc-network",
  "sc-telemetry",
@@ -12249,7 +12055,7 @@ dependencies = [
  "libp2p",
  "log 0.4.17",
  "names",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "rand 0.7.3",
  "regex",
  "rpassword",
@@ -12284,7 +12090,7 @@ dependencies = [
  "futures 0.3.21",
  "hash-db",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-executor",
  "sc-transaction-pool-api",
@@ -12315,7 +12121,7 @@ dependencies = [
  "linked-hash-map",
  "log 0.4.17",
  "parity-db",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-client-api",
  "sc-state-db",
@@ -12360,7 +12166,7 @@ dependencies = [
  "async-trait",
  "futures 0.3.21",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-block-builder",
  "sc-client-api",
  "sc-consensus",
@@ -12394,7 +12200,7 @@ dependencies = [
  "num-bigint",
  "num-rational 0.2.4",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "rand 0.7.3",
  "retain_mut",
@@ -12452,7 +12258,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "fork-tree",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-client-api",
  "sc-consensus",
  "sp-blockchain",
@@ -12469,7 +12275,7 @@ dependencies = [
  "futures 0.3.21",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-client-api",
  "sc-consensus",
  "sc-consensus-aura",
@@ -12502,7 +12308,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-client-api",
  "sc-consensus",
  "sc-telemetry",
@@ -12536,7 +12342,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "lazy_static",
  "lru 0.7.7",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-executor-common",
  "sc-executor-wasmi",
@@ -12562,7 +12368,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "environmental",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-allocator",
  "sp-maybe-compressed-blob",
  "sp-sandbox",
@@ -12579,7 +12385,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-allocator",
  "sc-executor-common",
  "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -12596,7 +12402,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "libc",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-wasm 0.42.2",
  "sc-allocator",
  "sc-executor-common",
@@ -12620,7 +12426,7 @@ dependencies = [
  "futures-timer",
  "hex",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "rand 0.8.5",
  "sc-block-builder",
@@ -12655,7 +12461,7 @@ dependencies = [
  "futures 0.3.21",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-client-api",
  "sc-finality-grandpa",
  "sc-rpc",
@@ -12721,7 +12527,7 @@ dependencies = [
  "linked_hash_set",
  "log 0.4.17",
  "lru 0.7.7",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "pin-project 1.0.10",
  "prost 0.10.4",
@@ -12758,7 +12564,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "futures 0.3.21",
  "libp2p",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "prost-build 0.9.0",
  "sc-peerset",
  "smallvec 1.8.0",
@@ -12789,7 +12595,7 @@ dependencies = [
  "futures 0.3.21",
  "libp2p",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "prost 0.10.4",
  "prost-build 0.9.0",
  "sc-client-api",
@@ -12813,7 +12619,7 @@ dependencies = [
  "libp2p",
  "log 0.4.17",
  "lru 0.7.7",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "prost 0.10.4",
  "prost-build 0.9.0",
  "sc-client-api",
@@ -12844,7 +12650,7 @@ dependencies = [
  "hyper-rustls",
  "num_cpus",
  "once_cell",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "rand 0.7.3",
  "sc-client-api",
@@ -12889,7 +12695,7 @@ dependencies = [
  "hash-db",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-block-builder",
  "sc-chain-spec",
@@ -12918,11 +12724,11 @@ dependencies = [
  "futures 0.3.21",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "sc-chain-spec",
  "sc-transaction-pool-api",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_json",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -12959,7 +12765,7 @@ dependencies = [
  "hash-db",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.12.1",
  "pin-project 1.0.10",
@@ -13017,7 +12823,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
  "parity-util-mem-derive",
  "parking_lot 0.12.1",
@@ -13031,7 +12837,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "jsonrpsee 0.13.1",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-chain-spec",
  "sc-client-api",
  "sc-consensus-babe",
@@ -13151,7 +12957,7 @@ dependencies = [
  "futures-timer",
  "linked-hash-map",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.12.1",
  "retain_mut",
@@ -13197,41 +13003,16 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c55b744399c25532d63a0d2789b109df8d46fc93752d46b0782991a931a782f"
-dependencies = [
- "bitvec 0.20.4",
- "cfg-if 1.0.0",
- "derive_more",
- "parity-scale-codec 2.3.1",
- "scale-info-derive 1.0.0",
-]
-
-[[package]]
-name = "scale-info"
 version = "2.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c46be926081c9f4dd5dd9b6f1d3e3229f2360bc6502dd8836f84a93b7c75e99a"
 dependencies = [
- "bitvec 1.0.0",
+ "bitvec",
  "cfg-if 1.0.0",
  "derive_more",
- "parity-scale-codec 3.1.2",
- "scale-info-derive 2.1.2",
+ "parity-scale-codec",
+ "scale-info-derive",
  "serde",
-]
-
-[[package]]
-name = "scale-info-derive"
-version = "1.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "baeb2780690380592f86205aa4ee49815feb2acad8c2f59e6dd207148c3f1fcd"
-dependencies = [
- "proc-macro-crate 1.1.3",
- "proc-macro2 1.0.40",
- "quote 1.0.20",
- "syn 1.0.98",
 ]
 
 [[package]]
@@ -13744,7 +13525,7 @@ name = "simnode-runtime-apis"
 version = "0.1.0"
 source = "git+https://github.com/polytope-labs/substrate-simnode?rev=eed85119358bc80bbb1aedd98778f370d4932dee#eed85119358bc80bbb1aedd98778f370d4932dee"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -13764,7 +13545,7 @@ dependencies = [
  "num-traits",
  "pallet-sudo",
  "parachain-info",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "picasso-runtime",
  "polkadot-primitives",
  "sc-cli",
@@ -13819,7 +13600,7 @@ version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
  "enumn",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "paste 1.0.7",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -13923,7 +13704,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "hash-db",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api-proc-macro",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -13951,8 +13732,8 @@ version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acb4490364cb3b097a6755343e552495b0013778152300714be4647d107e9a2e"
 dependencies = [
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-io 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -13964,8 +13745,8 @@ name = "sp-application-crypto"
 version = "6.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -13980,8 +13761,8 @@ checksum = "31ef21f82cc10f75ed046b65e2f8048080ee76e59f1b8aed55c7150daebfd35b"
 dependencies = [
  "integer-sqrt",
  "num-traits",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-debug-derive 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -13995,8 +13776,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "integer-sqrt",
  "num-traits",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-debug-derive 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14008,8 +13789,8 @@ name = "sp-authority-discovery"
 version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-api",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14022,7 +13803,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "async-trait",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-inherents",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14033,7 +13814,7 @@ name = "sp-block-builder"
 version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
  "sp-inherents",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14048,7 +13829,7 @@ dependencies = [
  "futures 0.3.21",
  "log 0.4.17",
  "lru 0.7.7",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "sp-api",
  "sp-consensus",
@@ -14067,7 +13848,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-inherents",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14083,8 +13864,8 @@ version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "async-trait",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-api",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-consensus",
@@ -14102,8 +13883,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "async-trait",
  "merlin",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-api",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14123,8 +13904,8 @@ name = "sp-consensus-slots"
 version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14137,8 +13918,8 @@ name = "sp-consensus-vrf"
 version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "schnorrkel",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14167,13 +13948,13 @@ dependencies = [
  "log 0.4.17",
  "merlin",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.12.1",
  "primitive-types",
  "rand 0.7.3",
  "regex",
- "scale-info 2.1.2",
+ "scale-info",
  "schnorrkel",
  "secp256k1",
  "secrecy",
@@ -14213,13 +13994,13 @@ dependencies = [
  "log 0.4.17",
  "merlin",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
  "parking_lot 0.12.1",
  "primitive-types",
  "rand 0.7.3",
  "regex",
- "scale-info 2.1.2",
+ "scale-info",
  "schnorrkel",
  "secp256k1",
  "secrecy",
@@ -14314,7 +14095,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fcfd91f92a2a59224230a77c4a5d6f51709620c0aab4e51f108ccece6adc56f"
 dependencies = [
  "environmental",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-storage 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -14325,7 +14106,7 @@ version = "0.12.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "environmental",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -14337,8 +14118,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "finality-grandpa",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-api",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14355,7 +14136,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "async-trait",
  "impl-trait-for-tuples",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14372,7 +14153,7 @@ dependencies = [
  "hash-db",
  "libsecp256k1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "secp256k1",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -14397,7 +14178,7 @@ dependencies = [
  "hash-db",
  "libsecp256k1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "secp256k1",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14433,7 +14214,7 @@ dependencies = [
  "async-trait",
  "futures 0.3.21",
  "merlin",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "schnorrkel",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -14449,7 +14230,7 @@ dependencies = [
  "async-trait",
  "futures 0.3.21",
  "merlin",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "schnorrkel",
  "serde",
@@ -14473,7 +14254,7 @@ version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "serde",
  "sp-api",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14487,8 +14268,8 @@ name = "sp-npos-elections"
 version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "serde",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14547,11 +14328,11 @@ dependencies = [
  "hash256-std-hasher",
  "impl-trait-for-tuples",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
  "paste 1.0.7",
  "rand 0.7.3",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-application-crypto 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-arithmetic 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -14569,11 +14350,11 @@ dependencies = [
  "hash256-std-hasher",
  "impl-trait-for-tuples",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-util-mem",
  "paste 1.0.7",
  "rand 0.7.3",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14589,7 +14370,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "158bf0305c75a50fc0e334b889568f519a126e32b87900c3f4251202dece7b4b"
 dependencies = [
  "impl-trait-for-tuples",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "primitive-types",
  "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime-interface-proc-macro 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -14606,7 +14387,7 @@ version = "6.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "impl-trait-for-tuples",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "primitive-types",
  "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime-interface-proc-macro 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14648,7 +14429,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14670,8 +14451,8 @@ name = "sp-session"
 version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-api",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14684,8 +14465,8 @@ name = "sp-staking"
 version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
@@ -14699,7 +14480,7 @@ dependencies = [
  "hash-db",
  "log 0.4.17",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "rand 0.7.3",
  "smallvec 1.8.0",
@@ -14722,7 +14503,7 @@ dependencies = [
  "hash-db",
  "log 0.4.17",
  "num-traits",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
  "rand 0.7.3",
  "smallvec 1.8.0",
@@ -14754,7 +14535,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5dab53af846068e3e0716d3ccc70ea0db44035c79b2ed5821aaa6635039efa37"
 dependencies = [
  "impl-serde",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "ref-cast",
  "serde",
  "sp-debug-derive 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -14767,7 +14548,7 @@ version = "6.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "impl-serde",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "ref-cast",
  "serde",
  "sp-debug-derive 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14795,7 +14576,7 @@ dependencies = [
  "async-trait",
  "futures-timer",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-api",
  "sp-inherents",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14809,7 +14590,7 @@ version = "5.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "69a67e555d171c4238bd223393cda747dd20ec7d4f5fe5c042c056cb7fde9eda"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tracing",
  "tracing-core",
@@ -14821,7 +14602,7 @@ name = "sp-tracing"
 version = "5.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "tracing",
  "tracing-core",
@@ -14844,8 +14625,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "async-trait",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-inherents",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14861,8 +14642,8 @@ checksum = "d6fc34f4f291886914733e083b62708d829f3e6b8d7a7ca7fa8a55a3d7640b0b"
 dependencies = [
  "hash-db",
  "memory-db",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "trie-db",
@@ -14876,8 +14657,8 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "hash-db",
  "memory-db",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "thiserror",
@@ -14891,9 +14672,9 @@ version = "5.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
  "impl-serde",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parity-wasm 0.42.2",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-core-hashing-proc-macro",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -14907,7 +14688,7 @@ name = "sp-version-proc-macro"
 version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
 dependencies = [
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "proc-macro2 1.0.40",
  "quote 1.0.20",
  "syn 1.0.98",
@@ -14921,7 +14702,7 @@ checksum = "10d88debe690c2b24eaa9536a150334fcef2ae184c21a0e5b3e80135407a7d52"
 dependencies = [
  "impl-trait-for-tuples",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmi",
 ]
@@ -14933,7 +14714,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#
 dependencies = [
  "impl-trait-for-tuples",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "wasmi",
  "wasmtime",
@@ -15026,11 +14807,11 @@ dependencies = [
  "pallet-xcm",
  "parachain-info",
  "parachains-common",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-core-primitives",
  "polkadot-parachain",
  "polkadot-runtime-common",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "smallvec 1.8.0",
  "sp-api",
@@ -15046,7 +14827,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm 0.9.24",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -15254,7 +15035,7 @@ dependencies = [
  "futures 0.3.21",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-client-api",
  "sc-rpc-api",
  "sc-transaction-pool-api",
@@ -15294,7 +15075,7 @@ dependencies = [
  "log 0.4.17",
  "num-traits",
  "parachain-info",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-primitives",
  "sc-basic-authorship",
  "sc-cli",
@@ -15341,10 +15122,10 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#81
 dependencies = [
  "jsonrpsee 0.13.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-client-api",
  "sc-rpc-api",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -15397,16 +15178,16 @@ name = "subxt"
 version = "0.21.0"
 source = "git+https://github.com/paritytech/subxt?rev=6d73172560b4c722aeac19695c96c618799d50a2#6d73172560b4c722aeac19695c96c618799d50a2"
 dependencies = [
- "bitvec 1.0.0",
+ "bitvec",
  "derivative",
  "frame-metadata",
  "futures 0.3.21",
  "hex",
  "jsonrpsee 0.10.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_json",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -15422,15 +15203,15 @@ version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e731c0245979a80f9090a89b43635e23f367f13a225695f286f307978db36f11"
 dependencies = [
- "bitvec 1.0.0",
+ "bitvec",
  "derivative",
  "frame-metadata",
  "futures 0.3.21",
  "hex",
  "jsonrpsee 0.14.0",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "parking_lot 0.12.1",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_json",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -15449,11 +15230,11 @@ dependencies = [
  "darling",
  "frame-metadata",
  "heck 0.4.0",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "proc-macro-error",
  "proc-macro2 1.0.40",
  "quote 1.0.20",
- "scale-info 2.1.2",
+ "scale-info",
  "subxt-metadata 0.21.0",
  "syn 1.0.98",
 ]
@@ -15467,11 +15248,11 @@ dependencies = [
  "darling",
  "frame-metadata",
  "heck 0.4.0",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "proc-macro-error",
  "proc-macro2 1.0.40",
  "quote 1.0.20",
- "scale-info 2.1.2",
+ "scale-info",
  "subxt-metadata 0.22.0",
  "syn 1.0.98",
 ]
@@ -15505,8 +15286,8 @@ version = "0.21.0"
 source = "git+https://github.com/paritytech/subxt?rev=6d73172560b4c722aeac19695c96c618799d50a2#6d73172560b4c722aeac19695c96c618799d50a2"
 dependencies = [
  "frame-metadata",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -15517,8 +15298,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37b01bac35f2524ce590fa1438fb6c81a63df1b4c94f686be391afd8d02615b3"
 dependencies = [
  "frame-metadata",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
+ "parity-scale-codec",
+ "scale-info",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -16350,7 +16131,7 @@ dependencies = [
  "clap 3.2.5",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "remote-externalities",
  "sc-chain-spec",
  "sc-cli",
@@ -17137,7 +16918,7 @@ version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
  "beefy-primitives",
- "bitvec 1.0.0",
+ "bitvec",
  "frame-benchmarking",
  "frame-election-provider-support",
  "frame-executive",
@@ -17187,13 +16968,13 @@ dependencies = [
  "pallet-vesting 4.0.0-dev",
  "pallet-xcm",
  "pallet-xcm-benchmarks",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-common",
  "polkadot-runtime-parachains",
  "rustc-hex",
- "scale-info 2.1.2",
+ "scale-info",
  "serde",
  "serde_derive",
  "smallvec 1.8.0",
@@ -17215,7 +16996,7 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder",
  "westend-runtime-constants",
- "xcm 0.9.24",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -17417,12 +17198,6 @@ dependencies = [
 
 [[package]]
 name = "wyz"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85e60b0d1b5f99db2556934e21937020776a5d31520bf169e851ac44e6420214"
-
-[[package]]
-name = "wyz"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "30b31594f29d27036c383b53b59ed3476874d518f0efb151b27a4c275141390e"
@@ -17443,28 +17218,15 @@ dependencies = [
 
 [[package]]
 name = "xcm"
-version = "0.9.19"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.19#f00a2772497aadddf75b8b4b475843ea0d910c48"
-dependencies = [
- "derivative",
- "impl-trait-for-tuples",
- "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
- "xcm-procedural 0.1.0 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.19)",
-]
-
-[[package]]
-name = "xcm"
 version = "0.9.24"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.24#22836e55d41eef24ed5917fd654ee82a683a7cfe"
 dependencies = [
  "derivative",
  "impl-trait-for-tuples",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
- "scale-info 2.1.2",
- "xcm-procedural 0.1.0 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.24)",
+ "parity-scale-codec",
+ "scale-info",
+ "xcm-procedural",
 ]
 
 [[package]]
@@ -17476,14 +17238,14 @@ dependencies = [
  "frame-system",
  "log 0.4.17",
  "pallet-transaction-payment",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "polkadot-parachain",
- "scale-info 2.1.2",
+ "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -17501,13 +17263,13 @@ dependencies = [
  "frame-support",
  "frame-system",
  "parachain-info",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "paste 1.0.7",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -17520,24 +17282,13 @@ dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
  "log 0.4.17",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm 0.9.24",
-]
-
-[[package]]
-name = "xcm-procedural"
-version = "0.1.0"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.19#f00a2772497aadddf75b8b4b475843ea0d910c48"
-dependencies = [
- "Inflector",
- "proc-macro2 1.0.40",
- "quote 1.0.20",
- "syn 1.0.98",
+ "xcm",
 ]
 
 [[package]]
@@ -17559,7 +17310,7 @@ dependencies = [
  "clap 3.2.5",
  "env_logger",
  "hex",
- "parity-scale-codec 3.1.2",
+ "parity-scale-codec",
  "sc-rpc",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-externalities 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
