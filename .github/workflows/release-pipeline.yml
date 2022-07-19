@@ -22,6 +22,11 @@ jobs:
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
 
+      - name: Set Permission
+        continue-on-error: true
+        run: |
+          sudo su runner && sudo chmod -R 777  /home/runner/_work/
+
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -45,11 +50,6 @@ jobs:
       # in between this commit and the previous tag.
       - uses: release-drafter/release-drafter@v5
         id: release_drafter
-
-      - name: Set Permission
-        continue-on-error: true
-        run: |
-          sudo su runner && sudo chmod -R 777  /home/runner/_work/_tool/node/
 
       - uses: actions/setup-node@v2
         with:
