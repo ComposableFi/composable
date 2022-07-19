@@ -1,10 +1,10 @@
 use codec::Codec;
-use frame_support::{pallet_prelude::*, sp_std::fmt::Debug};
+use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, RuntimeDebug};
 use sp_runtime::Perquintill;
 
 /// An indication of pool state. Shows whether the transfer of assets is currently taking place with
 /// the current pool.
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
+#[derive(Copy, Clone, Encode, Decode, RuntimeDebug, PartialEq, MaxEncodedLen, TypeInfo)]
 pub enum State {
 	/// Indicates that there is currently no asset transfering going on for this asset
 	/// and it can be initialized.
@@ -14,7 +14,7 @@ pub enum State {
 	Transferring,
 }
 
-#[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Copy, Encode, Decode, Default, RuntimeDebug, PartialEq, TypeInfo)]
 pub struct InstrumentalVaultConfig<AssetId, Percent> {
 	pub asset_id: AssetId,
 	pub percent_deployable: Percent,
