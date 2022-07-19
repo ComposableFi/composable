@@ -84,7 +84,7 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 	pub last_updated: u64,
 }
 
-// TODO: add comments
+/// A reward update states the new reward and reward_rate for a given asset
 #[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 pub struct RewardUpdate<Balance> {
 	pub amount: Balance,
@@ -92,6 +92,7 @@ pub struct RewardUpdate<Balance> {
 	pub reward_rate: Perbill,
 }
 
+/// Maps asset ids to their corresponding RewardUpdate
 pub type RewardUpdates<AssetId, Balance> = BTreeMap<AssetId, RewardUpdate<Balance>>;
 
 /// Default transfer limit on new asset added as rewards.
