@@ -8272,6 +8272,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "instrumental-strategy",
+ "instrumental-strategy-pablo",
  "itertools",
  "log 0.4.17",
  "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",

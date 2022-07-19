@@ -150,11 +150,12 @@ impl pallet_vault::Config for MockRuntime {
 }
 
 // -----------------------------------------------------------------------------------------------
-//                                      Instrumental Strategy                                    
+//                                   Instrumental Pablo Strategy                                  
 // -----------------------------------------------------------------------------------------------
 
 parameter_types! {
 	pub const MaxAssociatedVaults: u32 = MAX_ASSOCIATED_VAULTS;
+	pub const InstrumentalPabloStrategyPalletId: PalletId = PalletId(*b"strmxpab");
 }
 
 impl pallet_pablo_strategy::Config for MockRuntime {
@@ -165,6 +166,7 @@ impl pallet_pablo_strategy::Config for MockRuntime {
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type MaxAssociatedVaults = MaxAssociatedVaults;
+	type PalletId = InstrumentalPabloStrategyPalletId;
 }
 
 // -----------------------------------------------------------------------------------------------
