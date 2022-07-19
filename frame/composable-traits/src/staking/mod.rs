@@ -87,8 +87,11 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 /// A reward update states the new reward and reward_rate for a given asset
 #[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 pub struct RewardUpdate<Balance> {
+	/// The amount in which the reward should be increased
 	pub amount: Balance,
 
+	/// The rewarding rate that increases the pool `total_reward`
+	/// at a given time.
 	pub reward_rate: Perbill,
 }
 
