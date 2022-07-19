@@ -265,7 +265,7 @@ pub mod pallet {
 		type PoolId = T::PoolId;
 
 		fn account_id() -> Self::AccountId {
-			T::PalletId::get().into_account()
+			T::PalletId::get().into_account_truncating()
 		}
 
 		#[transactional]
@@ -321,78 +321,78 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[transactional]
 		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
-			let asset_id = T::Vault::asset_id(vault_id)?;
-			let vault_account = T::Vault::account_id(vault_id);
-			let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
-			let pool_id = pool_id_and_state.pool_id;
-			match T::Vault::available_funds(vault_id, &Self::account_id())? {
-				FundsAvailability::Withdrawable(balance) => {
-					Self::withdraw(vault_account, pool_id, balance)?;
-				},
-				FundsAvailability::Depositable(balance) => {
-					Self::deposit(vault_account, pool_id, balance)?;
-				},
-				FundsAvailability::MustLiquidate => {
-					Self::liquidate(vault_account, pool_id)?;
-				},
-				FundsAvailability::None => {},
-			};
+			// let asset_id = T::Vault::asset_id(vault_id)?;
+			// let vault_account = T::Vault::account_id(vault_id);
+			// let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
+			// let pool_id = pool_id_and_state.pool_id;
+			// match T::Vault::available_funds(vault_id, &Self::account_id())? {
+			// 	FundsAvailability::Withdrawable(balance) => {
+			// 		Self::withdraw(vault_account, pool_id, balance)?;
+			// 	},
+			// 	FundsAvailability::Depositable(balance) => {
+			// 		Self::deposit(vault_account, pool_id, balance)?;
+			// 	},
+			// 	FundsAvailability::MustLiquidate => {
+			// 		Self::liquidate(vault_account, pool_id)?;
+			// 	},
+			// 	FundsAvailability::None => {},
+			// };
 			Ok(())
 		}
 
-		#[transactional]
-		fn withdraw(
-			vault_account: T::AccountId,
-			pool_id: T::PoolId,
-			balance: T::Balance,
-		) -> DispatchResult {
-			let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
-				pool_id,
-				balance,
-				T::Balance::zero(),
-			)?;
-			T::Pablo::add_liquidity(
-				&vault_account,
-				pool_id,
-				balance,
-				T::Balance::zero(),
-				lp_token_amount,
-				true,
-			)
-		}
+		// #[transactional]
+		// fn withdraw(
+		// 	vault_account: T::AccountId,
+		// 	pool_id: T::PoolId,
+		// 	balance: T::Balance,
+		// ) -> DispatchResult {
+		// 	let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
+		// 		pool_id,
+		// 		balance,
+		// 		T::Balance::zero(),
+		// 	)?;
+		// 	T::Pablo::add_liquidity(
+		// 		&vault_account,
+		// 		pool_id,
+		// 		balance,
+		// 		T::Balance::zero(),
+		// 		lp_token_amount,
+		// 		true,
+		// 	)
+		// }
 
-		#[transactional]
-		fn deposit(
-			vault_account: T::AccountId,
-			pool_id: T::PoolId,
-			balance: T::Balance,
-		) -> DispatchResult {
-			let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
-				pool_id,
-				T::Balance::zero(),
-				balance,
-			)?;
-			T::Pablo::remove_liquidity(
-				&vault_account,
-				pool_id,
-				lp_token_amount,
-				T::Balance::zero(),
-				T::Balance::zero(),
-			)
-		}
+		// #[transactional]
+		// fn deposit(
+		// 	vault_account: T::AccountId,
+		// 	pool_id: T::PoolId,
+		// 	balance: T::Balance,
+		// ) -> DispatchResult {
+		// 	let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
+		// 		pool_id,
+		// 		T::Balance::zero(),
+		// 		balance,
+		// 	)?;
+		// 	T::Pablo::remove_liquidity(
+		// 		&vault_account,
+		// 		pool_id,
+		// 		lp_token_amount,
+		// 		T::Balance::zero(),
+		// 		T::Balance::zero(),
+		// 	)
+		// }
 
-		#[transactional]
-		fn liquidate(vault_account: T::AccountId, pool_id: T::PoolId) -> DispatchResult {
-			let lp_token_id = T::Pablo::lp_token(pool_id)?;
-			let balance_of_lp_token = T::Currency::balance(lp_token_id, &vault_account);
-			T::Pablo::remove_liquidity(
-				&vault_account,
-				pool_id,
-				balance_of_lp_token,
-				T::Balance::zero(),
-				T::Balance::zero(),
-			)
-		}
+		// #[transactional]
+		// fn liquidate(vault_account: T::AccountId, pool_id: T::PoolId) -> DispatchResult {
+		// 	let lp_token_id = T::Pablo::lp_token(pool_id)?;
+		// 	let balance_of_lp_token = T::Currency::balance(lp_token_id, &vault_account);
+		// 	T::Pablo::remove_liquidity(
+		// 		&vault_account,
+		// 		pool_id,
+		// 		balance_of_lp_token,
+		// 		T::Balance::zero(),
+		// 		T::Balance::zero(),
+		// 	)
+		// }
 	}
 }
 
