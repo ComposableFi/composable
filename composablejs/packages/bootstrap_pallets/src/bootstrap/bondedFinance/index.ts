@@ -1,11 +1,11 @@
-import { createOffer } from "@bootstrap-pallets/lib/pallets/bondedFinance/extrinsics";
-import { BondOffer } from "@bootstrap-pallets/types";
+import { createOffer } from "@composable/bootstrap_pallets/lib/pallets/bondedFinance/extrinsics";
+import { BondOffer } from "@composable/bootstrap_pallets/types";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
-import config from "@bootstrap-pallets/constants/config.json";
-import { logger, toBondOffer, toChainUnits } from "@bootstrap-pallets/utils";
+import config from "@composable/bootstrap_pallets/constants/config.json";
+import { logger, toBondOffer, toChainUnits } from "@composable/bootstrap_pallets/utils";
 import BigNumber from "bignumber.js";
-import { mintAssetsToWallets } from "@bootstrap-pallets/lib";
+import { mintAssetsToWallets } from "@composable/bootstrap_pallets/lib";
 import { u8aToHex } from "@polkadot/util";
 
 export async function bootstrapBondOffers(api: ApiPromise, wallet: KeyringPair, walletSudo: KeyringPair): Promise<void> {

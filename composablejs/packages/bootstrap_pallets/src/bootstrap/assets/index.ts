@@ -1,4 +1,4 @@
-import { mintAssetsToAddress } from "@bootstrap-pallets/lib";
+import { mintAssetsToAddress } from "@composable/bootstrap_pallets/lib";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 

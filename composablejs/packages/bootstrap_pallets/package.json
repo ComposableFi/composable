@@ -5,6 +5,7 @@
     "name": "Saad Ahmed",
     "email": "saadahm.siddiqui@gmail.com"
   },
+  "main": "dist/index.js",
   "dependencies": {
     "@polkadot/api": "^8.3.2",
     "@composable/types": "0.1.0",

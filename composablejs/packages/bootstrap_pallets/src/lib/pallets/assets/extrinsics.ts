@@ -1,9 +1,9 @@
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
-import { sendAndWaitForSuccess } from "@bootstrap-pallets/lib";
+import { sendAndWaitForSuccess } from "@composable/bootstrap_pallets/lib";
 import BigNumber from "bignumber.js";
 import { u8aToHex } from "@polkadot/util";
-import { fromChainUnits, logger } from "@bootstrap-pallets/utils";
+import { fromChainUnits, logger } from "@composable/bootstrap_pallets/utils";
 
 /***
  * This mints all specified assets to a specified wallet.

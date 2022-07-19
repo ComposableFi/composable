@@ -7,8 +7,8 @@ import {
   toLiquidityBootstrappingPoolInitConfig,
   toPabloPoolPair,
   toStableSwapPoolInitConfig
-} from "@bootstrap-pallets/utils";
-import config from "@bootstrap-pallets/constants/config.json";
+} from "@composable/bootstrap_pallets/utils";
+import config from "@composable/bootstrap_pallets/constants/config.json";
 import BigNumber from "bignumber.js";
 import {
   mintAssetsToWallets,
@@ -17,7 +17,7 @@ import {
   createLiquidityBootstrappingPool,
   enableTwap,
   updateDexRoute
-} from "@bootstrap-pallets/lib";
+} from "@composable/bootstrap_pallets/lib";
 
 export async function bootstrapPools(api: ApiPromise, wallets: KeyringPair[], walletSudo: KeyringPair): Promise<void> {
   // Mint 10 Tokens For Gas

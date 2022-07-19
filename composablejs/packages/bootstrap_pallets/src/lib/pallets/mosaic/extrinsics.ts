@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
-import { sendAndWaitForSuccess } from "@bootstrap-pallets/lib";
+import { sendAndWaitForSuccess } from "@composable/bootstrap_pallets/lib";
 
 export const setRelayer = async (api: ApiPromise, relayerAccount: KeyringPair, sudoAccount: KeyringPair) => {
   return sendAndWaitForSuccess(

@@ -100,7 +100,7 @@
     "baseUrl": "./",
     "rootDir": "./src",
     "paths": {
-      "@bootstrap-pallets/*": ["src/*"],
+      "@composable/bootstrap_pallets/*": ["src/*"],
       "@polkadot/api/augment": ["../types/src/augment-api.ts"],
       "@polkadot/types/augment": ["../types/src/augment-types.ts"]
     }

@@ -6,8 +6,8 @@ import { PalletCrowdloanRewardsModelsRemoteAccount } from "@composable/types";
 
 import { mintAssetsToWallets } from "../assets/extrinsics";
 import BigNumber from "bignumber.js";
-import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@bootstrap-pallets/lib";
-import { toHexString } from "@bootstrap-pallets/utils";
+import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@composable/bootstrap_pallets/lib";
+import { toHexString } from "@composable/bootstrap_pallets/utils";
 
 export const associateKSM = async (api: ApiPromise, contributorAccount: KeyringPair, rewardAccount: KeyringPair) => {
   const message = `<Bytes>picasso-${toHexString(rewardAccount.publicKey)}</Bytes>`;
