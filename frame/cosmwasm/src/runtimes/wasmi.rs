@@ -1,4 +1,5 @@
 use crate::{AccountIdOf, Config};
+use alloc::string::String;
 use core::{fmt::Display, marker::PhantomData, num::NonZeroU32};
 use cosmwasm_minimal_std::{Coin, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
@@ -16,61 +17,98 @@ use cosmwasm_vm_wasmi::{
 	WasmiHostFunction, WasmiHostFunctionIndex, WasmiInput, WasmiModule, WasmiModuleExecutor,
 	WasmiOutput, WasmiVM, WasmiVMError,
 };
+use sp_runtime::traits::Convert;
 use sp_std::collections::btree_map::BTreeMap;
+use sp_std::vec::Vec;
 use wasmi::CanResume;
 
 #[derive(Debug)]
-pub enum CosmwasmVMError {
+pub enum CosmwasmVMError<Custom> {
 	Interpreter(wasmi::Error),
 	VirtualMachine(WasmiVMError),
+	Pallet(Custom),
+	AccountConversionFailure,
+	Aborted(String),
 }
-impl From<wasmi::Error> for CosmwasmVMError {
+
+impl<T: Config> From<crate::Error<T>> for CosmwasmVMError<crate::Error<T>> {
+	fn from(e: crate::Error<T>) -> Self {
+		Self::Pallet(e)
+	}
+}
+
+impl<T> From<wasmi::Error> for CosmwasmVMError<T> {
 	fn from(e: wasmi::Error) -> Self {
 		Self::Interpreter(e)
 	}
 }
-impl From<WasmiVMError> for CosmwasmVMError {
+
+impl<T> From<WasmiVMError> for CosmwasmVMError<T> {
 	fn from(e: WasmiVMError) -> Self {
-		CosmwasmVMError::VirtualMachine(e)
+		Self::VirtualMachine(e)
 	}
 }
-impl From<SystemError> for CosmwasmVMError {
+
+impl<T> From<SystemError> for CosmwasmVMError<T> {
 	fn from(e: SystemError) -> Self {
-		CosmwasmVMError::VirtualMachine(e.into())
+		Self::VirtualMachine(e.into())
 	}
 }
-impl From<ExecutorError> for CosmwasmVMError {
+
+impl<T> From<ExecutorError> for CosmwasmVMError<T> {
 	fn from(e: ExecutorError) -> Self {
-		CosmwasmVMError::VirtualMachine(e.into())
+		Self::VirtualMachine(e.into())
 	}
 }
-impl From<MemoryReadError> for CosmwasmVMError {
+
+impl<T> From<MemoryReadError> for CosmwasmVMError<T> {
 	fn from(e: MemoryReadError) -> Self {
-		CosmwasmVMError::VirtualMachine(e.into())
+		Self::VirtualMachine(e.into())
 	}
 }
-impl From<MemoryWriteError> for CosmwasmVMError {
+
+impl<T> From<MemoryWriteError> for CosmwasmVMError<T> {
 	fn from(e: MemoryWriteError) -> Self {
-		CosmwasmVMError::VirtualMachine(e.into())
+		Self::VirtualMachine(e.into())
 	}
 }
-impl Display for CosmwasmVMError {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		write!(f, "{:?}", self)
-	}
-}
-impl CanResume for CosmwasmVMError {
+
+impl<T> CanResume for CosmwasmVMError<T> {
 	fn can_resume(&self) -> bool {
 		false
 	}
 }
 
+#[derive(Clone, Debug)]
+pub struct CosmwasmAccount<T, U>(PhantomData<T>, U);
+
+impl<T, U> CosmwasmAccount<T, U> {
+	pub fn new(x: U) -> Self {
+		CosmwasmAccount(PhantomData, x)
+	}
+}
+
+impl<T: Config> Into<String> for CosmwasmAccount<T, <T as frame_system::Config>::AccountId> {
+	fn into(self) -> String {
+		T::AccountToAddr::convert(self.1)
+	}
+}
+
+impl<T: Config> TryFrom<String> for CosmwasmAccount<T, <T as frame_system::Config>::AccountId> {
+	type Error = VmErrorOf<CosmwasmVM<T>>;
+	fn try_from(value: String) -> Result<Self, Self::Error> {
+		T::AccountToAddr::convert(value)
+			.map(CosmwasmAccount::new)
+			.map_err(|()| CosmwasmVMError::AccountConversionFailure)
+	}
+}
+
 pub struct CosmwasmVM<T: Config> {
-	host_functions: BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<Self>>,
-	executing_module: WasmiModule,
-	env: Env,
-	info: MessageInfo,
-	_marker: PhantomData<T>,
+	pub host_functions: BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<Self>>,
+	pub executing_module: WasmiModule,
+	pub env: Env,
+	pub info: MessageInfo,
+	pub _marker: PhantomData<T>,
 }
 
 impl<T: Config> WasmiModuleExecutor for CosmwasmVM<T> {
@@ -128,12 +166,13 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 	type QueryCustom = Empty;
 	type MessageCustom = Empty;
 	type CodeId = CosmwasmContractMeta;
-	type Address = AccountIdOf<T>;
+	type Address = CosmwasmAccount<T, AccountIdOf<T>>;
 	type StorageKey = Vec<u8>;
 	type StorageValue = Vec<u8>;
-	type Error = CosmwasmVMError;
+	type Error = CosmwasmVMError<crate::Error<T>>;
 
 	fn new_contract(&mut self, code_id: Self::CodeId) -> Result<Self::Address, Self::Error> {
+		log::debug!(target: "runtime::contracts", "new_contract");
 		todo!()
 	}
 
@@ -142,10 +181,12 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		address: Self::Address,
 		new_code_id: Self::CodeId,
 	) -> Result<(), Self::Error> {
+		log::debug!(target: "runtime::contracts", "set_code_id");
 		todo!()
 	}
 
 	fn code_id(&mut self, address: Self::Address) -> Result<Self::CodeId, Self::Error> {
+		log::debug!(target: "runtime::contracts", "code_id");
 		todo!()
 	}
 
@@ -154,6 +195,7 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		address: Self::Address,
 		message: &[u8],
 	) -> Result<cosmwasm_minimal_std::QueryResult, Self::Error> {
+		log::debug!(target: "runtime::contracts", "query_continuation");
 		todo!()
 	}
 
@@ -164,6 +206,7 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "continue_execute");
 		todo!()
 	}
 
@@ -174,6 +217,7 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "continue_instantiate");
 		todo!()
 	}
 
@@ -184,6 +228,7 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "continue_migrate");
 		todo!()
 	}
 
@@ -194,6 +239,7 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		cosmwasm_minimal_std::SystemResult<cosmwasm_minimal_std::CosmwasmQueryResult>,
 		Self::Error,
 	> {
+		log::debug!(target: "runtime::contracts", "query_custom");
 		todo!()
 	}
 
@@ -202,6 +248,7 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		message: Self::MessageCustom,
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "message_custom");
 		todo!()
 	}
 
@@ -210,22 +257,27 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		address: Self::Address,
 		key: Self::StorageKey,
 	) -> Result<Option<Self::StorageValue>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "query_raw");
 		todo!()
 	}
 
 	fn transfer(&mut self, to: &Self::Address, funds: &[Coin]) -> Result<(), Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "transfer: {:#?}", funds);
+		Ok(())
 	}
 
 	fn burn(&mut self, funds: &[Coin]) -> Result<(), Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "burn: {:#?}", funds);
+		Ok(())
 	}
 
 	fn balance(&mut self, account: &Self::Address, denom: String) -> Result<Coin, Self::Error> {
+		log::debug!(target: "runtime::contracts", "balance: {} => {:#?}", Into::<String>::into(account.clone()), denom);
 		todo!()
 	}
 
 	fn all_balance(&mut self, account: &Self::Address) -> Result<Vec<Coin>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "all balance: {}", Into::<String>::into(account.clone()));
 		todo!()
 	}
 
@@ -233,6 +285,7 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		&mut self,
 		address: Self::Address,
 	) -> Result<cosmwasm_minimal_std::ContractInfoResponse, Self::Error> {
+		log::debug!(target: "runtime::contracts", "query_info");
 		todo!()
 	}
 
@@ -240,7 +293,8 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		&mut self,
 		key: Self::StorageKey,
 	) -> Result<Option<Self::StorageValue>, Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "db_read");
+		Ok(None)
 	}
 
 	fn db_write(
@@ -248,34 +302,40 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		key: Self::StorageKey,
 		value: Self::StorageValue,
 	) -> Result<(), Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "db_write");
+		Ok(())
 	}
 
 	fn db_remove(&mut self, key: Self::StorageKey) -> Result<(), Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "db_remove");
+		Ok(())
 	}
 
 	fn abort(&mut self, message: String) -> Result<(), Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "db_abort");
+		Err(CosmwasmVMError::Aborted(message))
 	}
 
 	fn charge(&mut self, value: cosmwasm_vm::vm::VmGas) -> Result<(), Self::Error> {
-		todo!()
+		Ok(())
 	}
 
 	fn gas_checkpoint_push(
 		&mut self,
 		checkpoint: cosmwasm_vm::vm::VmGasCheckpoint,
 	) -> Result<(), Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "gas_checkpoint_push");
+		Ok(())
 	}
 
 	fn gas_checkpoint_pop(&mut self) -> Result<(), Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "gas_checkpoint_pop");
+		Ok(())
 	}
 
 	fn gas_ensure_available(&mut self) -> Result<(), Self::Error> {
-		todo!()
+		log::debug!(target: "runtime::contracts", "gas_ensure_available");
+		Ok(())
 	}
 }
 
@@ -291,7 +351,7 @@ impl<T: Config> Has<MessageInfo> for CosmwasmVM<T> {
 }
 
 impl<T: Config> Transactional for CosmwasmVM<T> {
-	type Error = CosmwasmVMError;
+	type Error = CosmwasmVMError<crate::Error<T>>;
 	fn transaction_begin(&mut self) -> Result<(), Self::Error> {
 		sp_io::storage::start_transaction();
 		Ok(())
