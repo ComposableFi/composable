@@ -253,7 +253,7 @@ fn test_extend_stake_amount() {
 }
 
 #[test]
-fn unstake_of_not_exists_stake_shold_not_work() {
+fn unstake_non_existent_stake_should_not_work() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		let (staker, pool_id) = (ALICE, 42);
@@ -281,7 +281,7 @@ fn not_owner_of_stake_can_not_unstake() {
 
 		assert_noop!(
 			StakingRewards::unstake(Origin::signed(not_owner), StakingRewards::stake_count()),
-			crate::Error::<Test>::OnlyOwnerCanDoIt
+			crate::Error::<Test>::OnlyStakeOwnerCanUnstake
 		);
 	});
 }

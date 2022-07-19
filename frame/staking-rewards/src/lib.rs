@@ -141,7 +141,7 @@ pub mod pallet {
 		/// Only pool owner can add new reward asset.
 		OnlyPoolOwnerCanAddNewReward,
 		/// only the owner of stake can unstake it
-		OnlyOwnerCanDoIt,
+		OnlyStakeOwnerCanUnstake,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -520,7 +520,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let keep_alive = false;
 			let stake = Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
-			ensure!(who == &stake.owner, Error::<T>::OnlyOwnerCanDoIt);
+			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
+			ensure!(!stake.reductions.is_empty(), Error::<T>::ReductionConfigProblem);
 			let pool_id = stake.reward_pool_id;
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
@@ -538,7 +539,11 @@ pub mod pallet {
 						.safe_div(&rewards_pool.total_shares)?
 						.safe_sub(inflation)?
 				};
+
 				reward.total_rewards = reward.total_rewards.safe_sub(inflation)?;
+				let claim = sp_std::cmp::min(claim, reward.total_rewards);
+				reward.total_rewards = reward.total_rewards.safe_sub(&claim)?;
+
 				reward.total_dilution_adjustment =
 					reward.total_dilution_adjustment.safe_sub(inflation)?;
 
