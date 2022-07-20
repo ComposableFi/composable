@@ -40,6 +40,10 @@ Marti has developed and grown talent across different DeFi start-ups in the past
 
 Seun brings his wealth of experience as a former core developer at Parity Technologies to Picasso. Seun is leading the bridging team and harnessing his knowledge and experience to power the development of trustless bridging solutions between various networks beyond DotSama, including IBC and more. Follow him on [Twitter](https://twitter.com/seunlanlege) or [Medium](https://medium.com/@seunlanlege).
 
+## Blas Rodriguez Irizar | Rust Solana Developer
+
+Blas has worked building zk-rollups at Consensys, has expertise in building high performance systems, and working with different blockchains (Solana, Ethereum, and Bitcoin). He studied Economics and Finance, and now works at Composable on trustless bridges. Follow him on [Twitter](https://mobile.twitter.com/blasrodri).
+
 ## Pepe Blasco | Solidity lead
 
 Pepe has been around the crypto sphere since 2016 and assists Picasso with Solidity development, specializing in the design and implementation of blockchain applications. Before Composable, Pepe was the CTO and technical architect of a Blockchain-based carbon credits marketplace. He is an expert in user interface technology, focusing on increasing customer ease of use, while optimizing costs and utility. Follow him on [Twitter](https://mobile.twitter.com/pepeblasco_tech)
@@ -63,3 +67,4 @@ Vim is a seasoned software engineer and a technical lead. He has been building f
 ## Ahmad Wehbi | Head of Growth
 
 Ahmad spent most of his career advising institutions on strategy, operations and organizational topics. At McKinsey & Company, he helped organizations design and orchestrate ecosystems at scale. At Composable, Ahmad leads efforts to grow the community of builders, founders and partners that live on Composable or utilize the Composable tech stack. He is present on [Twitter](https://twitter.com/wehbix) and [LinkedIn](https://www.linkedin.com/in/ahmad-wehbi-184813134/). 
+
