@@ -1075,7 +1075,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
    *  - USDC/USDT
    *  - - Stableswap AMM, 0.1% fee.
    */
-  describe.only("Picasso/Pablo Launch Plan - Phase 2D", function () {
+  describe("Picasso/Pablo Launch Plan - Phase 2D", function () {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
     describe("2D:1 USDC/aUSD StableSwap Pool", function () {
