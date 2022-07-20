@@ -28,21 +28,13 @@ Jeffrey has specialized experience spanning the different dimensions of finance 
 
 Before becoming a DeFi degen and joining Composable, Marmite had a career as a physical commodity trader in the European Gas and Carbon markets. As head of product strategy Marmite ensures that the Composable vision is translated into high quality, innovative, and user-centric products. It is Product's responsibility to ensure that the technical developments align with the broader strategy and business objectives. Follow him on [Twitter](https://twitter.com/TLE_dot_com).
 
-## Rob Zhuang | Head of Operations
+## Rob Zhuang | Head of Product Delivery 
 
-Rob is a crypto enthusiast who previously founded a football loyalty program on the blockchain. He brings valuable expertise in digital delivery, focusing on banking and payments platforms within the blockchain. An integral team member, he unites product, design, and development in order to bring Composable’s vision to life. Rob has been working with Composable for a year and has been instrumental in the growth and development of  Composable Finance. Rob spends his time showcasing Compossable features and product designs on [Linkedin](https://www.linkedin.com/in/robertzhuangpm/?originalSubdomain=uk) and [Twitter](https://twitter.com/GosuRZ).
+Rob brings valuable expertise in digital delivery, focusing on banking and payments platforms within the blockchain. An integral team member, he unites product, design, and development in order to bring Composable’s vision to life. Rob has been working with Composable for a year and has been instrumental in the growth and development of  Composable Finance. Rob spends his time showcasing Composable features and product designs on [Linkedin](https://www.linkedin.com/in/robertzhuangpm/?originalSubdomain=uk) and [Twitter](https://twitter.com/GosuRZ).
 
 ## Martina Burghi | Head of HR
 
 Marti has developed and grown talent across different DeFi start-ups in the past three years including extensive HR management and recruiting experience in the global tech industry. She brings a people perspective to Composable, believing that hiring and developing people is at the center of organizational success. As Head of HR, she brings teams together, strengthens relationships, and leverages people’s creative capacity and skill sets to ensure our objectives are accomplished. You can find Marti on [Twitter](https://twitter.com/martiburghi).
-
-## Nanni Sackmann | Head of People and Operations
-
-Nanni brings a lot of passion, professionalism and ideas to the Picasso team. Nanni has been working within DeFi for the past three years and within international tech companies for the last ten. She provides crucial operations support for Composable, as she works on building the team itself, developing internal talent, and growing the organization.
-
-## Cosmin Grigore | Principal Engineer
-
-Cosmin entered the crypto space in 2017, and has had a long career in computer science. He brings strong Solidity skills as well as the engineering know-how from years of working as a full-stack engineer. Cosmin currently leads the development of Mosaic Phase 2 and the SDK. Follow him on [Twitter](https://twitter.com/gcosmintech?lang=en). 
 
 ## Seun Lanlege | Bridging Lead 
 
@@ -52,7 +44,7 @@ Seun brings his wealth of experience as a former core developer at Parity Techno
 
 Pepe has been around the crypto sphere since 2016 and assists Picasso with Solidity development, specializing in the design and implementation of blockchain applications. Before Composable, Pepe was the CTO and technical architect of a Blockchain-based carbon credits marketplace. He is an expert in user interface technology, focusing on increasing customer ease of use, while optimizing costs and utility. Follow him on [Twitter](https://mobile.twitter.com/pepeblasco_tech)
 
-## 0xBobaFetador | Mosaic Lead
+## 0xBobaFetador | Mosaic and Bots Lead
 
 Boba has a passion for understanding incentive structures, game theory, and bot networks for DeFi applications. Boba has experience in capturing cross-chain arbitrage and building arbitrage bots on multiple blockchains. He is currently creating and supporting the development of Mosaic Phase 2. Before Composable, Boba worked as a senior software engineer on high-level security GPS software. Follow him on [Twitter](https://mobile.twitter.com/Bobafetador/with_replies)
 
