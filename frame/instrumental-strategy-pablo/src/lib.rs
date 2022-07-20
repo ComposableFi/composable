@@ -36,13 +36,13 @@ pub mod pallet {
 	use composable_traits::{
 		dex::Amm,
 		instrumental::{InstrumentalProtocolStrategy, State},
-		vault::{FundsAvailability, StrategicVault, Vault},
+		vault::StrategicVault,
 	};
 	use frame_support::{
 		dispatch::{DispatchError, DispatchResult},
 		pallet_prelude::*,
 		storage::bounded_btree_set::BoundedBTreeSet,
-		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
+		traits::fungibles::{Mutate, MutateHold, Transfer},
 		transactional, Blake2_128Concat, PalletId,
 	};
 	use frame_system::pallet_prelude::OriginFor;
@@ -230,6 +230,19 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Add [`VaultId`](Config::VaultId) to [`AssociatedVaults`](AssociatedVaults) storage.
+		///
+		/// Emits [`AssociatedVault`](Event::AssociatedVault) event when successful.
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::associate_vault())]
+		pub fn associate_vault(
+			origin: OriginFor<T>,
+			vault_id: T::VaultId,
+		) -> DispatchResultWithPostInfo {
+			T::ExternalOrigin::ensure_origin(origin)?;
+			<Self as InstrumentalProtocolStrategy>::associate_vault(&vault_id)?;
+			Ok(().into())
+		}
 		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object.
 		///
 		/// Emits [`AssociatedPoolWithAsset`](Event::AssociatedPoolWithAsset) event when successful.
@@ -321,7 +334,7 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		#[transactional]
-		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
+		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
 			Ok(())
 		}
 	}
