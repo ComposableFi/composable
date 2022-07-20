@@ -1892,7 +1892,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-minimal-std"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=519f07591bb75d12b4c6efd9bfa6cc4786e54ffb#519f07591bb75d12b4c6efd9bfa6cc4786e54ffb"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=f92c2f5516f2596dd331cec4a6e94667b209c3a5#f92c2f5516f2596dd331cec4a6e94667b209c3a5"
 dependencies = [
  "base64 0.13.0",
  "serde",
@@ -1902,7 +1902,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=519f07591bb75d12b4c6efd9bfa6cc4786e54ffb#519f07591bb75d12b4c6efd9bfa6cc4786e54ffb"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=f92c2f5516f2596dd331cec4a6e94667b209c3a5#f92c2f5516f2596dd331cec4a6e94667b209c3a5"
 dependencies = [
  "cosmwasm-minimal-std",
  "either",
@@ -1914,7 +1914,7 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm-wasmi"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=519f07591bb75d12b4c6efd9bfa6cc4786e54ffb#519f07591bb75d12b4c6efd9bfa6cc4786e54ffb"
+source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=f92c2f5516f2596dd331cec4a6e94667b209c3a5#f92c2f5516f2596dd331cec4a6e94667b209c3a5"
 dependencies = [
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
@@ -7786,7 +7786,7 @@ dependencies = [
 name = "pallet-cosmwasm"
 version = "0.0.1"
 dependencies = [
- "composable-traits",
+ "composable-support",
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
@@ -7795,7 +7795,9 @@ dependencies = [
  "frame-system",
  "log 0.4.17",
  "parity-scale-codec",
+ "parity-wasm 0.45.0",
  "scale-info",
+ "serde_json",
  "sp-arithmetic 5.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-core 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-io 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
@@ -7803,6 +7805,7 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "wasm-instrument 0.2.0",
  "wasmi 0.11.0",
+ "wasmi-validation 0.4.1 (git+https://github.com/ComposableFi/wasmi?rev=cd8c0c775a1d197a35ff3d5c7d6cded3d476411b)",
 ]
 
 [[package]]
@@ -16677,10 +16680,10 @@ dependencies = [
 [[package]]
 name = "wasmi"
 version = "0.11.0"
-source = "git+https://github.com/ComposableFi/wasmi?rev=0961ed49b3e1a9134354b4e92235fe5f7b96f344#0961ed49b3e1a9134354b4e92235fe5f7b96f344"
+source = "git+https://github.com/ComposableFi/wasmi?rev=cd8c0c775a1d197a35ff3d5c7d6cded3d476411b#cd8c0c775a1d197a35ff3d5c7d6cded3d476411b"
 dependencies = [
- "parity-wasm 0.42.2",
- "wasmi-validation 0.4.1 (git+https://github.com/ComposableFi/wasmi?rev=0961ed49b3e1a9134354b4e92235fe5f7b96f344)",
+ "parity-wasm 0.45.0",
+ "wasmi-validation 0.4.1 (git+https://github.com/ComposableFi/wasmi?rev=cd8c0c775a1d197a35ff3d5c7d6cded3d476411b)",
  "wasmi_core",
 ]
 
@@ -16696,21 +16699,21 @@ dependencies = [
 [[package]]
 name = "wasmi-validation"
 version = "0.4.1"
-source = "git+https://github.com/ComposableFi/wasmi?rev=0961ed49b3e1a9134354b4e92235fe5f7b96f344#0961ed49b3e1a9134354b4e92235fe5f7b96f344"
+source = "git+https://github.com/ComposableFi/wasmi?rev=cd8c0c775a1d197a35ff3d5c7d6cded3d476411b#cd8c0c775a1d197a35ff3d5c7d6cded3d476411b"
 dependencies = [
- "parity-wasm 0.42.2",
+ "parity-wasm 0.45.0",
 ]
 
 [[package]]
 name = "wasmi_core"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/wasmi?rev=0961ed49b3e1a9134354b4e92235fe5f7b96f344#0961ed49b3e1a9134354b4e92235fe5f7b96f344"
+source = "git+https://github.com/ComposableFi/wasmi?rev=cd8c0c775a1d197a35ff3d5c7d6cded3d476411b#cd8c0c775a1d197a35ff3d5c7d6cded3d476411b"
 dependencies = [
  "libm",
  "memory_units 0.4.0",
  "num-rational 0.4.1",
  "num-traits",
- "parity-wasm 0.42.2",
+ "parity-wasm 0.45.0",
 ]
 
 [[package]]
