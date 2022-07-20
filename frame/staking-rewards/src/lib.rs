@@ -293,18 +293,12 @@ pub mod pallet {
 	pub type Stakes<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>, OptionQuery>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn last_update_timestamp)]
-	#[allow(clippy::disallowed_types)]
-	/// [`core::time::Duration::as_secs`]
-	pub type LastUpdateTimestamp<T: Config> = StorageValue<_, u64, ValueQuery>;
-
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Weight: see `begin_block`
 		fn on_initialize(n: T::BlockNumber) -> Weight {
-			// Self::begin_block(n)
 			Self::acumulate_rewards_hook();
+			// TODO(benluelo): Benchmarkig
 			1
 		}
 	}
@@ -850,6 +844,7 @@ pub mod pallet {
 										amount: T::Balance::zero(),
 										period: 0,
 									},
+									last_updated_timestamp: 0,
 								};
 								reward_pool
 									.rewards
