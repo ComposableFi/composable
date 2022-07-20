@@ -31,14 +31,14 @@ const SelectBond: NextPage = () => {
   const offerId = router.query.offerId || "";
   const bondOfferSelected = useBondOffer(offerId as string);
 
-  const claimable = false;
+  const claimable = true;
   const message = useAppSelector((state) => state.ui.message);
 
   useEffect(
     () => {
-      if (extensionStatus !== "connected") {
-        router.push("/bond");
-      }
+      // if (extensionStatus !== "connected") {
+      //   router.push("/bond");
+      // }
     },
     [extensionStatus, router]
   );

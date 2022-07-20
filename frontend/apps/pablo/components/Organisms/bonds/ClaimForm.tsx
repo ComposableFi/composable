@@ -47,7 +47,7 @@ export type ClaimFormProps = {
 
 export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
-  const { principalAsset, rewardAsset } = bond;
+  const { rewardAsset } = bond;
 
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);

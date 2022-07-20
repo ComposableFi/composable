@@ -15,13 +15,13 @@ import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import { InfoOutlined } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
-import { useParachainApi, useSelectedAccount } from "@/../../packages/substrate-react/dist";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { fetchVestingSchedulesByAccount } from "@/defi/subsquid/bonds/helpers";
 
 const tableHeaders: TableHeader[] = [
   {
-    header: "Asset",
+    header: "Claimable",
   },
   {
     header: "Claimable",
@@ -46,7 +46,7 @@ export const YourBondTable: React.FC = () => {
   
   useEffect(() => {
     if (selectedAccount && parachainApi) {
-      fetchVestingSchedulesByAccount(selectedAccount.address).then(console.log)
+      fetchVestingSchedulesByAccount(parachainApi, selectedAccount.address).then(console.log)
     }
   }, [parachainApi, selectedAccount]);
 

@@ -1,5 +1,8 @@
 import { queryTotalPurchasedBondsByBondOfferIds, queryVestingSchedulesByAccountId } from "./queries";
 import BigNumber from "bignumber.js";
+import { ApiPromise } from "@polkadot/api";
+import { stringToBytes } from "micro-base";
+import { u8aToHex } from "@polkadot/util";
 
 export async function fetchTotalPurchasedBondsByOfferIds(): Promise<Record<string, BigNumber>> {
   let totalPurchasedMap: Record<string, BigNumber> = {};
@@ -40,13 +43,23 @@ interface SubsquidVestingScheduleEntity {
   beneficiary: string;
 }
 
-export async function fetchVestingSchedulesByAccount(accountId: string): Promise<SubsquidVestingScheduleEntity[]> {
+export async function fetchVestingSchedulesByAccount(parachainApi: ApiPromise, accountId: string): Promise<SubsquidVestingScheduleEntity[]> {
   let schedules: SubsquidVestingScheduleEntity[] = [];
   try {
     const { data, error } = await queryVestingSchedulesByAccountId(accountId);
     if (error) throw new Error(error.message);
     if (!data) throw new Error('fetchVestingSchedulesByAccount: Data unavailable.');
-    const { vestingSchedules } = data;
+    let { vestingSchedules } = data;
+
+    vestingSchedules = vestingSchedules.filter(schedule => {
+      const accountId32 = parachainApi.createType("AccountId32", schedule.from);
+      const bondedFiPalletId = u8aToHex(stringToBytes("utf8", "modlbondedfi"))
+
+      if (accountId32.toHex().startsWith(bondedFiPalletId)) {
+        return true;
+      }
+      return false;
+    });
 
     schedules = vestingSchedules;
   } catch (err) {
