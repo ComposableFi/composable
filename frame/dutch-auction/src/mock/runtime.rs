@@ -7,14 +7,12 @@ use crate::{
 use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::Everything,
-	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
+	traits::{ConstU32, EnsureOneOf, Everything},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
-use smallvec::smallvec;
 use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
@@ -22,11 +20,11 @@ use sp_core::{
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
-	Perbill,
 };
-use xcm::latest::{opaque::Xcm, SendXcm};
+use xcm::latest::SendXcm;
 
 use super::governance_registry::GovernanceRegistry;
+use primitives::currency::ValidateCurrencyId;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
@@ -47,6 +45,7 @@ frame_support::construct_runtime! {
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 
+		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Assets: pallet_assets::{Pallet, Call, Storage},
 		DutchAuction: pallet_dutch_auction::{Pallet, Call, Storage, Event<T>},
@@ -82,7 +81,7 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -131,8 +130,10 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = ();
 	type MaxLocks = ();
 	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 pub static ALICE: Public =
@@ -154,6 +155,7 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 impl pallet_currency_factory::Config for Runtime {
@@ -183,10 +185,14 @@ impl pallet_dutch_auction::Config for Runtime {
 	type PositionExistentialDeposit = NativeExistentialDeposit;
 	type PalletId = DutchAuctionPalletId;
 	type NativeCurrency = Balances;
-	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
+	type AdminOrigin = EnsureOneOf<EnsureRoot<AccountId>, EnsureSignedBy<RootAccount, AccountId>>;
 	type XcmSender = XcmFake;
+	type XcmOrigin = Origin;
+}
 
-	type XcmOrigin = XcmFake;
+impl cumulus_pallet_xcm::Config for Runtime {
+	type Event = Event;
+	type XcmExecutor = ();
 }
 
 pub struct XcmFake;

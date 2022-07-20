@@ -73,7 +73,7 @@ pub struct DaliExecutor;
 impl sc_executor::NativeExecutionDispatch for DaliExecutor {
 	type ExtendHostFunctions = (
 		frame_benchmarking::benchmarking::HostFunctions,
-		pallet_ibc::runtime_interface::trie::HostFunctions,
+		ibc_primitives::runtime_interface::ibc::HostFunctions,
 	);
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {

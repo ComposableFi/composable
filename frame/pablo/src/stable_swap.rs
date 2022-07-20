@@ -163,8 +163,8 @@ impl<T: Config> StableSwap<T> {
 		pool: StableSwapPoolInfo<T::AccountId, T::AssetId>,
 		pool_account: T::AccountId,
 		lp_amount: T::Balance,
-		min_base_amount: T::Balance,
-		min_quote_amount: T::Balance,
+		base_amount: T::Balance,
+		quote_amount: T::Balance,
 	) -> Result<
 		(
 			T::Balance, /* base_amount */
@@ -173,25 +173,7 @@ impl<T: Config> StableSwap<T> {
 		),
 		DispatchError,
 	> {
-		let pool_base_aum = T::Assets::balance(pool.pair.base, &pool_account);
-		let pool_quote_aum = T::Assets::balance(pool.pair.quote, &pool_account);
 		let lp_issued = T::Assets::total_issuance(pool.lp_token);
-		let base_amount = T::Convert::convert(safe_multiply_by_rational(
-			T::Convert::convert(lp_amount),
-			T::Convert::convert(pool_base_aum),
-			T::Convert::convert(lp_issued),
-		)?);
-		let quote_amount = T::Convert::convert(safe_multiply_by_rational(
-			T::Convert::convert(lp_amount),
-			T::Convert::convert(pool_quote_aum),
-			T::Convert::convert(lp_issued),
-		)?);
-
-		ensure!(
-			base_amount >= min_base_amount && quote_amount >= min_quote_amount,
-			Error::<T>::CannotRespectMinimumRequested
-		);
-
 		let total_issuance = lp_issued.safe_sub(&lp_amount)?;
 
 		// NOTE(hussein-aitlance): no need to keep alive the pool account

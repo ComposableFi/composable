@@ -68,14 +68,14 @@ where
 			+ ExtendWithLendingApi<RuntimeApi, Executor>
 			+ ExtendWithIbcApi<RuntimeApi, Executor>,
 {
-	use pallet_transaction_payment_rpc::{TransactionPaymentApiServer, TransactionPaymentRpc};
-	use substrate_frame_rpc_system::{SystemApiServer, SystemRpc};
+	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
+	use substrate_frame_rpc_system::{System, SystemApiServer};
 
 	let mut io = jsonrpsee::RpcModule::new(());
 
-	io.merge(SystemRpc::new(deps.client.clone(), deps.pool.clone(), deps.deny_unsafe).into_rpc())?;
+	io.merge(System::new(deps.client.clone(), deps.pool.clone(), deps.deny_unsafe).into_rpc())?;
 
-	io.merge(TransactionPaymentRpc::new(deps.client.clone()).into_rpc())?;
+	io.merge(TransactionPayment::new(deps.client.clone()).into_rpc())?;
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_assets_api(
 		&mut io,

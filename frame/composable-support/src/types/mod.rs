@@ -4,6 +4,20 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 
+/// Cosmos Public Key type
+///
+/// Cosmos supports both secp256k1 & secp256r1 for transaction authentication.
+/// Public Keys for both are in the ECDSA 33-byte compressed format.
+#[derive(
+	Clone, Copy, Decode, Encode, Eq, Hash, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo,
+)]
+pub enum CosmosPublicKey {
+	/// Address length will be 20 bytes long
+	Secp256k1([u8; 33]),
+	/// Address length will be 32 bytes long
+	Secp256r1([u8; 33]),
+}
+
 /// Raw ethereum address.
 #[derive(
 	Hash, Clone, Copy, PartialEq, Eq, Encode, Decode, Default, RuntimeDebug, MaxEncodedLen, TypeInfo,
@@ -45,18 +59,31 @@ impl<'de> frame_support::Deserialize<'de> for EthereumAddress {
 	}
 }
 
-/// Struct representing an Elliptic Curve Signature
-#[derive(Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
-pub struct EcdsaSignature(pub [u8; 65]);
+#[derive(PartialEq, Eq, Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
+pub struct CosmosEcdsaSignature(pub [u8; 64]);
 
-impl PartialEq for EcdsaSignature {
-	fn eq(&self, other: &Self) -> bool {
-		self.0[..] == other.0[..]
+impl sp_std::fmt::Debug for CosmosEcdsaSignature {
+	fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
+		write!(f, "CosmosEcdsaSignature({:?})", &self.0[..])
 	}
 }
+
+/// Struct representing an Elliptic Curve Signature
+#[derive(PartialEq, Eq, Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
+pub struct EcdsaSignature(pub [u8; 65]);
 
 impl sp_std::fmt::Debug for EcdsaSignature {
 	fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
 		write!(f, "EcdsaSignature({:?})", &self.0[..])
+	}
+}
+
+impl From<CosmosEcdsaSignature> for EcdsaSignature {
+	fn from(item: CosmosEcdsaSignature) -> Self {
+		let mut sig: [u8; 65] = [0; 65];
+
+		sig.copy_from_slice(&item.0);
+
+		EcdsaSignature(sig)
 	}
 }

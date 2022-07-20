@@ -133,3 +133,38 @@ impl<S, K> BlockFold<S, K> {
 		BlockFold::Init { strategy, state }
 	}
 }
+
+#[cfg(all(test, feature = "std"))]
+mod tests {
+	use frame_support::Identity;
+	use sp_io::TestExternalities;
+
+	#[frame_support::storage_alias]
+	type QueueStorageMap = StorageMap<Prefix, Identity, u64, u64>;
+
+	/// based on tests from frame_support, but there is no such test to show off partial drain
+	/// and docs do not tell that drain happens if you iterate element, not just by calling
+	/// drain
+	#[test]
+	fn proves_partial_drain_possible() {
+		TestExternalities::default().execute_with(|| {
+			QueueStorageMap::insert(1, 1);
+			QueueStorageMap::insert(2, 2);
+			QueueStorageMap::insert(3, 3);
+			QueueStorageMap::insert(4, 4);
+
+			{
+				let mut drain = QueueStorageMap::drain();
+				assert!(drain.next().is_some());
+				assert!(drain.next().is_some());
+				drop(drain);
+			}
+			{
+				let mut drain = QueueStorageMap::drain();
+				assert!(drain.next().is_some());
+				assert!(drain.next().is_some());
+				assert_eq!(drain.next(), None);
+			}
+		});
+	}
+}

@@ -10,13 +10,19 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
 ] }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "198440a62d4ccc88555cfef6253d6595319b88bf", default-features = false }
+composable-traits = { default-features = false, path = "../../composable-traits" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+hex = { version = "0.4.3", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "ec349b3043a6e9ab84d2208d9901314cdfdddd69", default-features = false, features = [
+  "ics11_beefy",
+] }
 ibc-primitives = { path = "../ibc-primitives", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24" }
 
 [features]
 default = ["std"]
@@ -27,4 +33,10 @@ std = [
   "codec/std",
   "frame-support/std",
   "sp-std/std",
+  "sp-io/std",
+  "composable-traits/std",
+  "xcm/std",
+  "hex/std",
 ]
+
+runtime-benchmarks = []

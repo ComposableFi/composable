@@ -2,7 +2,7 @@ use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::constant_product::{
 	compute_deposit_lp, compute_in_given_out, compute_out_given_in,
 };
-use composable_support::math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub};
+use composable_support::math::safe::{SafeAdd, SafeSub};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	defi::CurrencyPair,
@@ -135,30 +135,10 @@ impl<T: Config> Uniswap<T> {
 		pool: ConstantProductPoolInfo<T::AccountId, T::AssetId>,
 		pool_account: T::AccountId,
 		lp_amount: T::Balance,
-		min_base_amount: T::Balance,
-		min_quote_amount: T::Balance,
+		base_amount: T::Balance,
+		quote_amount: T::Balance,
 	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
-		let pool_base_aum = T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
-		let pool_quote_aum =
-			T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
 		let lp_issued = T::Assets::total_issuance(pool.lp_token);
-
-		let base_amount = T::Convert::convert(safe_multiply_by_rational(
-			T::Convert::convert(lp_amount),
-			pool_base_aum,
-			T::Convert::convert(lp_issued),
-		)?);
-		let quote_amount = T::Convert::convert(safe_multiply_by_rational(
-			T::Convert::convert(lp_amount),
-			pool_quote_aum,
-			T::Convert::convert(lp_issued),
-		)?);
-
-		ensure!(
-			base_amount >= min_base_amount && quote_amount >= min_quote_amount,
-			Error::<T>::CannotRespectMinimumRequested
-		);
-
 		// NOTE(hussein-aitlance): no need to keep alive the pool account
 		T::Assets::transfer(pool.pair.base, &pool_account, who, base_amount, false)?;
 		T::Assets::transfer(pool.pair.quote, &pool_account, who, quote_amount, false)?;

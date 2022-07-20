@@ -1,0 +1,101 @@
+name: Dali-Stage Release Pipeline
+on:
+  push:
+    branches:
+      - dali-stage
+  pull_request:
+    branches:
+      - dali-stage
+
+env:
+  GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+  RELEASE_VERSION: 
+jobs:
+  build-and-publish:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    strategy:
+      fail-fast: true
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      # This would draft a release note presenting a list of new prs that have been added
+      # in between this commit and the previous tag.
+      - uses: release-drafter/release-drafter@v5
+        id: release_drafter
+
+      - name: Set Permission
+        continue-on-error: true
+        run: |
+          sudo su runner && sudo chmod -R 777  /home/runner/_work/_tool/node/
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: 🔨 Build Composable Binary
+        env:
+          # this is so that the binary version corresponds with the release tag.
+          RELEASE_VERSION: ${{ steps.release_drafter.outputs.tag_name }}
+        run: |
+          RELEASE_VERSION=${RELEASE_VERSION:1} make version
+          cargo build --release -p composable
+
+      - name: Upload Artifacts
+        run: |
+          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+          sudo gsutil cp ./target/release/composable gs://composable-binaries/dali-stage/${{ env.RELEASE_VERSION }}/
+          
+    
+  dali-client-release:
+    runs-on:
+      - self-hosted
+      - linux
+      - X64
+      - ansible-runner
+    needs: [build-and-publish]
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set env
+        run: |
+          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+      - name: Run ansible playbook
+        working-directory: "./.maintain/playbooks"
+        run: |
+          ansible-playbook -l _environment_dali_stage dali-stage-client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+      - name: Notify sre-tasks slack channel
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_CHANNEL: releases
+          SLACK_USERNAME: Github Actions
+          SLACK_ICON: https://avatars.githubusercontent.com/u/44036562?s=200&v=4
+          SLACK_TITLE: A new composable client for Dali-rococo ${{ env.RELEASE_VERSION }} has been rolled out
+          SLACK_MESSAGE: "https://telemetry.polkadot.io/#list/0x5719ed0c1a5f4a11ef4d206f3a35d350365adc35943f2834b8d5bc7ff6e1a1d2"
+          SLACK_FOOTER: ""
+          MSG_MINIMAL: true
+
+     

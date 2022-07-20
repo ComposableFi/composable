@@ -139,12 +139,24 @@ export class TxMosaicTests {
     const pAssetId = api.createType("u128", assetId);
     const contractAddress = api.createType("[u8;20]", ethAddress);
     const pAmount = api.createType("u128", transferAmount);
+    const pSwapToNative = api.createType("bool", false);
+    const pSourceUserAccount = api.createType("AccountId32", relayerWallet.address);
+    const pAmmSwapInfo = api.createType("Option<PalletMosaicAmmSwapInfo>", null);
     const pKeepAlive = api.createType("bool", false);
     return await sendAndWaitForSuccess(
       api,
       relayerWallet,
       api.events.mosaic.TransferOut.is,
-      api.tx.mosaic.transferTo(networkId, pAssetId, contractAddress, pAmount, pKeepAlive)
+      api.tx.mosaic.transferTo(
+        networkId,
+        pAssetId,
+        contractAddress,
+        pAmount,
+        pSwapToNative,
+        pSourceUserAccount,
+        pAmmSwapInfo,
+        pKeepAlive
+      )
     );
   }
 

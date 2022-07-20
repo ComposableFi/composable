@@ -4,51 +4,141 @@ This is guide on how to open XCMP channel to Karura and register PICA token here
 
 This proposal does not covers `paper work` around tech stuff as it is described in Acala docs. 
 
-## Steps
-
-0. Prerequisites
-1. Initiate opening channel
-2. Accept channel on Karura
-3. Send opening channel from Karura
-4. Accept channel on Picasso
-5. Make PICA transferable to Karura
+- [Overview](#overview)
+  - [Prerequisites](#prerequisites)
+  - [Picasso to Karura](#picasso-to-karura)
+  - [Accept Picasso to Karura](#accept-picasso-to-karura)
+  - [Karura to Picasso](#karura-to-picasso)
+  - [Accept Karura on Picasso](#accept-karura-on-picasso)
+  - [Karura assets on Picasso](#karura-assets-on-picasso)
+  - [Picasso tokens on Karura](#picasso-tokens-on-karura)
+  - [Reference](#reference)
 
 ## Prerequisites
 
-Ensure have at least 100 KAR on Karura and 20 KSM or Kusama and root on Picasso.
+**Picasso**
 
-## Initiate open channel
+Ensure have at least 100 KAR on Karura and 20 KSM on Kusama and can do democracy on Picasso.
+
+Create identity on Kusama and Picasso.
+
+**Rococo**
+
+Root is `5D2cjLGNWibiSsEh4oPXo8MmBTkeptrpuiUdEKRMauUn1TkZ` and make sure it has 20 ROC.
+
+Paracahin is `5Ec4AhNu5P23CC2GdrmsC8HYBKiidqhPnfSfRQPaH9swr2b7` and make sure it has 20 ROC.
+
+Transfer to [dali-rococo] accounts some amounts.
+
+## Picasso to Karura
+
+That to be executed https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c00d0070000e803000000900100 on behalf of  parachain via next
+
+run https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x2900010100020c0004000000000b00a0724e180913000000000b00a0724e180900060102286bee383c00d0070000e803000000900100 
+
+## Accept Picasso to Karura
+
+That should be executed 
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama.api.onfinality.io%2Fpublic-ws#/extrinsics/decode/0x3c0127080000
+
+on behalf of 
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-2.aca-api.network%2Fws#/extrinsics/decode/0x3300010100020c000400000000070010a5d4e81300000000070010a5d4e80006010700e8764817183c0127080000
+
+**Democracy**
+
+Encode above preimage via `Submit preimage` via https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura.api.onfinality.io%2Fpublic-ws#/democracy 
+
+Then `Submit proposal`.
+
+## Karura to Picasso
+
+This should be executed
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama.api.onfinality.io%2Fpublic-ws#/extrinsics/decode/0x3c0027080000e803000000900100
+
+On behalf of 
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-0.aca-api.network#/extrinsics/decode/0x3300010100020c000400000000070010a5d4e81300000000070010a5d4e80006010700e8764817383c0027080000e803000000900100
+
+**Democracy**
+
+Encode above preimage via `Submit preimage` via https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura.api.onfinality.io%2Fpublic-ws#/democracy 
+
+Then `Submit proposal`.
+
+## Accept Karura on Picasso
+
+This should be executed
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama.api.onfinality.io%2Fpublic-ws#/extrinsics/decode/0x3c01d0070000
+
+executed on behalf of 
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x2900010100020c000400000000070010a5d4e81300000000070010a5d4e80006010700e8764817183c01d0070000
 
 
-This call `0x3c00d0070000e803000000900100` can be decoded by https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode  ,
+## Karura assets on Picasso
 
-Initate this calls from Picasso as `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee383c00d0070000e803000000900100` . 
+Need to ensure token exists and on deposit on Karura, register pay your gas fee on Picasso, and transfer from Picasso.
 
-## Accept open channel
 
-`0x3c0127080000` accept channel on Kusama, should be send from Karura origin with next preimage:
+**On [karura-kusama]**
 
-`0x3300010100020c0004000000000700e876481713000100000700e87648170006010700e8764817183c0127080000`
+- Check `system.account` storage you have native token.
+- Check there is `assestRegistry.assetsMetadata` for `ForeignAssetId(7)` and `tokens.totalIssuance` for it is good.
+- Use `dex.swapWithExactSupply` to make swap onto target asset (may require doing routing over intermediate currency) .
 
-can be decoded by   https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-0.aca-api.network#/extrinsics/decode
 
-## Send Initiate open channel from Karura
+**On Picasso**
 
-`0x3c0027080000e803000000900100` executed on Kusama as send by Karura parachain:
+Register Karura token like this 
 
-`0x3300010100020c0004000000000700e876481713000100000700e87648170006010700e8764817383c0027080000e803000000900100`  decoded on ` https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-0.aca-api.network#/extrinsics/decode`
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x3700010200411f0608008140420f0000000000000000000000000001000064a7b3b6e00d0000000000000000010c000000
 
-## Accept on Picasso
 
-`0x3c01d0070000` on Kusama as sent by Picasso:
+Examples:
 
-`0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01d0070000` 
+```
+Asset Name: Karura Native Token 
+Asset Symbol:  KAR
+Decimals:  12
+existentialDeposit: 0.1
+Multiloaction: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0080} ]}}
 
-## Register PICA
+Asset Name: Acala Dollar
+Asset Symbol:  AUSD
+Decimals:  12
+existentialDeposit: 0.01
+Multiloaction: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0081} ]}}
+
+Asset Name:  Karura Liquid KSM
+Asset Symbol:  LKSM
+Decimals:  12
+existentialDeposit: 0.0005
+Multiloaction: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0083} ]}}
+```
+
+**On Karura again**
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rococo.aca-dev.network#/extrinsics/decode/0x360000800010a5d4e80000000000000000000000010102009d2001002aa47c41b763a16946b6cc7e051174877b14fafe5d8daf075b0e39e2398c8e4c00e40b5402000000
+
+Repeat for other token. Validate via `events` and via `tokens` storage.
+
+## Picasso tokens on Karura
+
+**KAR**
+
+You can transfer KAR back, it will use Karura identifier for that asset and send it Karura using `xtokens`
+
+**PICA**
 
 Create preimage and submit proposal via https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-1.aca-api.network#/democracy
 
-where preimage is `0x7a000001019d20105049434110504943410c00ca9a3b000000000000000000000000` 
+to enact https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkarura-rpc-1.aca-api.network#/extrinsics/decode/0x7a000001019d20105049434110504943410c00ca9a3b000000000000000000000000
+
+for `PICA` token.
 
 ## Reference
 
@@ -57,3 +147,12 @@ https://docs.acalaswap.app/developer-guides/create-a-new-token
 https://wiki.acala.network/build/development-guide/composable-chains/open-hrmp-channel
 
 https://acala.notion.site/Acala-Karura-Token-Listing-Playbook-c6b97e022ac6402cb15ce3cb419c48e5
+
+https://wiki.acala.network/integrate/integration-1/token-transfer
+
+https://acala.discourse.group/t/open-hrmp-channel-between-composable-picasso-and-karura/918
+
+[kusama]: https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode
+[rococo]: https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frococo-rpc.polkadot.io#/explorer
+[dali-rococo]: https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/explorer
+[picasso]: https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode

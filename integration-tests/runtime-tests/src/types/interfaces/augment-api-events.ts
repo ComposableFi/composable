@@ -16,12 +16,29 @@ import type {
   PalletDemocracyVoteAccountVote,
   PalletDemocracyVoteThreshold,
   PalletDutchAuctionSellOrder,
+  PalletIbcErrorsIbcError,
+  PalletIbcEventsIbcEvent,
+  PalletMosaicAmmSwapInfo,
   PalletMosaicDecayBudgetPenaltyDecayer,
   PalletMosaicNetworkInfo
 } from "@composable/types/interfaces/crowdloanRewards";
 import type { ComposableTraitsDexFee } from "@composable/types/interfaces/pablo";
 import type { ApiTypes } from "@polkadot/api-base/types";
-import type { Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u32, u64, u8 } from "@polkadot/types-codec";
+import type {
+  BTreeMap,
+  Bytes,
+  Null,
+  Option,
+  Result,
+  U8aFixed,
+  Vec,
+  bool,
+  u128,
+  u16,
+  u32,
+  u64,
+  u8
+} from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type { AccountId32, H256, Percent } from "@polkadot/types/interfaces/runtime";
 import type {
@@ -335,9 +352,9 @@ declare module "@polkadot/api-base/types/events" {
       [key: string]: AugmentedEvent<ApiType>;
     };
     dexRouter: {
-      RouteAdded: AugmentedEvent<ApiType, [AccountId32, u128, u128, Vec<u128>]>;
-      RouteDeleted: AugmentedEvent<ApiType, [AccountId32, u128, u128, Vec<u128>]>;
-      RouteUpdated: AugmentedEvent<ApiType, [AccountId32, u128, u128, Vec<u128>, Vec<u128>]>;
+      RouteAdded: AugmentedEvent<ApiType, [u128, u128, Vec<u128>]>;
+      RouteDeleted: AugmentedEvent<ApiType, [u128, u128, Vec<u128>]>;
+      RouteUpdated: AugmentedEvent<ApiType, [u128, u128, Vec<u128>, Vec<u128>]>;
       /**
        * Generic event
        **/
@@ -396,6 +413,42 @@ declare module "@polkadot/api-base/types/events" {
       GrantRoot: AugmentedEvent<ApiType, [u128]>;
       Remove: AugmentedEvent<ApiType, [u128]>;
       Set: AugmentedEvent<ApiType, [u128, AccountId32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    ibc: {
+      /**
+       * Initiated a new connection
+       **/
+      ConnectionInitiated: AugmentedEvent<ApiType, []>;
+      /**
+       * Ibc errors
+       **/
+      IbcErrors: AugmentedEvent<ApiType, [Vec<PalletIbcErrorsIbcError>]>;
+      /**
+       * Raw Ibc events
+       **/
+      IbcEvents: AugmentedEvent<ApiType, [Vec<PalletIbcEventsIbcEvent>]>;
+      /**
+       * Processed incoming ibc messages
+       **/
+      ProcessedIBCMessages: AugmentedEvent<ApiType, []>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    ibcPing: {
+      /**
+       * A channel has been opened
+       **/
+      ChannelOpened: AugmentedEvent<ApiType, [Bytes, Bytes]>;
+      /**
+       * A send packet has been registered
+       **/
+      PacketSent: AugmentedEvent<ApiType, []>;
       /**
        * Generic event
        **/
@@ -493,7 +546,7 @@ declare module "@polkadot/api-base/types/events" {
       MarketCreated: AugmentedEvent<ApiType, [u32, u64, AccountId32, ComposableTraitsDefiCurrencyPairCurrencyId]>;
       MarketUpdated: AugmentedEvent<ApiType, [u32, ComposableTraitsLendingUpdateInput]>;
       /**
-       * Event emitted to warn that loan may go under collateralized soon.
+       * Event emitted to warn that loan may go under collaterlized soon.
        **/
       MayGoUnderCollateralizedSoon: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
@@ -564,7 +617,17 @@ declare module "@polkadot/api-base/types/events" {
        **/
       TransferOut: AugmentedEvent<
         ApiType,
-        [H256, ComposableSupportEthereumAddress, u128, u32, CommonMosaicRemoteAssetId, u128]
+        [
+          H256,
+          ComposableSupportEthereumAddress,
+          u128,
+          u32,
+          CommonMosaicRemoteAssetId,
+          u128,
+          bool,
+          AccountId32,
+          Option<PalletMosaicAmmSwapInfo>
+        ]
       >;
       /**
        * Generic event
@@ -661,6 +724,10 @@ declare module "@polkadot/api-base/types/events" {
        **/
       Swapped: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128, u128, ComposableTraitsDexFee]>;
       /**
+       * TWAP updated.
+       **/
+      TwapUpdated: AugmentedEvent<ApiType, [u128, u64, BTreeMap<u128, u128>]>;
+      /**
        * Generic event
        **/
       [key: string]: AugmentedEvent<ApiType>;
@@ -710,6 +777,33 @@ declare module "@polkadot/api-base/types/events" {
        * A preimage has been requested.
        **/
       Requested: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    proxy: {
+      /**
+       * An announcement was placed to make a call in the future.
+       **/
+      Announced: AugmentedEvent<ApiType, [AccountId32, AccountId32, H256]>;
+      /**
+       * Anonymous account has been created by new proxy with given
+       * disambiguation index and proxy type.
+       **/
+      AnonymousCreated: AugmentedEvent<ApiType, [AccountId32, AccountId32, Null, u16]>;
+      /**
+       * A proxy was added.
+       **/
+      ProxyAdded: AugmentedEvent<ApiType, [AccountId32, AccountId32, Null, u32]>;
+      /**
+       * A proxy was executed correctly, with the given.
+       **/
+      ProxyExecuted: AugmentedEvent<ApiType, [Result<Null, SpRuntimeDispatchError>]>;
+      /**
+       * A proxy was removed.
+       **/
+      ProxyRemoved: AugmentedEvent<ApiType, [AccountId32, AccountId32, Null, u32]>;
       /**
        * Generic event
        **/
@@ -870,6 +964,16 @@ declare module "@polkadot/api-base/types/events" {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    stakingRewards: {
+      /**
+       * Pool with specified id `T::RewardPoolId` was created successfully by `T::AccountId`.
+       **/
+      RewardPoolCreated: AugmentedEvent<ApiType, [u16, AccountId32, u32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     sudo: {
       /**
        * The \[sudoer\] just switched identity; the old key is supplied if one existed.
@@ -924,6 +1028,10 @@ declare module "@polkadot/api-base/types/events" {
        **/
       BalanceSet: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128]>;
       /**
+       * Deposited some balance into an account
+       **/
+      Deposited: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
+      /**
        * An account was removed whose balance was non-zero but below
        * ExistentialDeposit, resulting in an outright loss.
        **/
@@ -933,17 +1041,33 @@ declare module "@polkadot/api-base/types/events" {
        **/
       Endowed: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
       /**
-       * Some reserved balance was repatriated (moved from reserved to
-       * another account).
+       * Some locked funds were unlocked
        **/
-      RepatriatedReserve: AugmentedEvent<
-        ApiType,
-        [u128, AccountId32, AccountId32, u128, FrameSupportTokensMiscBalanceStatus]
-      >;
+      LockRemoved: AugmentedEvent<ApiType, [U8aFixed, u128, AccountId32]>;
+      /**
+       * Some funds are locked
+       **/
+      LockSet: AugmentedEvent<ApiType, [U8aFixed, u128, AccountId32, u128]>;
       /**
        * Some balance was reserved (moved from free to reserved).
        **/
       Reserved: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
+      /**
+       * Some reserved balance was repatriated (moved from reserved to
+       * another account).
+       **/
+      ReserveRepatriated: AugmentedEvent<
+        ApiType,
+        [u128, AccountId32, AccountId32, u128, FrameSupportTokensMiscBalanceStatus]
+      >;
+      /**
+       * Some balances were slashed (e.g. due to mis-behavior)
+       **/
+      Slashed: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128]>;
+      /**
+       * The total issuance of an currency has been set
+       **/
+      TotalIssuanceSet: AugmentedEvent<ApiType, [u128, u128]>;
       /**
        * Transfer succeeded.
        **/
@@ -952,6 +1076,25 @@ declare module "@polkadot/api-base/types/events" {
        * Some balance was unreserved (moved from reserved to free).
        **/
       Unreserved: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
+      /**
+       * Some balances were withdrawn (e.g. pay for transaction fee)
+       **/
+      Withdrawn: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    transfer: {
+      /**
+       * A channel has been opened
+       **/
+      ChannelOpened: AugmentedEvent<ApiType, [Bytes, Bytes]>;
+      /**
+       * Pallet params updated
+       **/
+      PalletParamsUpdated: AugmentedEvent<ApiType, [bool, bool]>;
+      TokenTransferInitiated: AugmentedEvent<ApiType, [AccountId32, Bytes, u128]>;
       /**
        * Generic event
        **/
@@ -1011,6 +1154,10 @@ declare module "@polkadot/api-base/types/events" {
        **/
       BatchCompleted: AugmentedEvent<ApiType, []>;
       /**
+       * Batch of dispatches completed but has errors.
+       **/
+      BatchCompletedWithErrors: AugmentedEvent<ApiType, []>;
+      /**
        * Batch of dispatches did not complete fully. Index of first failing dispatch given, as
        * well as the error.
        **/
@@ -1023,6 +1170,10 @@ declare module "@polkadot/api-base/types/events" {
        * A single item within a Batch of dispatches has completed with no error.
        **/
       ItemCompleted: AugmentedEvent<ApiType, []>;
+      /**
+       * A single item within a Batch of dispatches has completed with error.
+       **/
+      ItemFailed: AugmentedEvent<ApiType, [SpRuntimeDispatchError]>;
       /**
        * Generic event
        **/

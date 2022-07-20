@@ -1,0 +1,24 @@
+{
+  "nodes": [
+    {
+      "name": "Alice",
+      "address": "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL",
+      "mnemonic": "bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice"
+    }
+  ],
+  "price_feed_settings": {
+    "kind": "PERSISTENT",
+    "key": "ocw-url",
+    "value": "http://localhost:3001/price/"
+  },
+  "oracle_parameters": {
+    "assetID": 4,
+    "threshold": 10,
+    "minAnswers": 1,
+    "maXAnswers": 3,
+    "blockInterval": 10,
+    "reward": 10,
+    "slash": 10
+  },
+  "auto_register_offchain_worker_enabled": false
+}

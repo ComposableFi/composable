@@ -1,9 +1,17 @@
 use super::*;
 use core::{str::FromStr, time::Duration};
 use frame_support::traits::Get;
-use scale_info::prelude::string::ToString;
+use ibc_primitives::OffchainPacketType;
+use scale_info::prelude::{collections::BTreeMap, string::ToString};
 
-use crate::routing::Context;
+use crate::{
+	ics23::{
+		acknowledgements::Acknowledgements, channels::Channels, next_seq_ack::NextSequenceAck,
+		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
+		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+	},
+	routing::Context,
+};
 use ibc::{
 	core::{
 		ics04_channel::{
@@ -26,19 +34,17 @@ where
 {
 	/// Returns the ChannelEnd for the given `port_id` and `chan_id`.
 	fn channel_end(&self, port_channel_id: &(PortId, ChannelId)) -> Result<ChannelEnd, ICS04Error> {
-		log::trace!(
+		log::trace!(target: "pallet_ibc",
 			"in channel : [channel_end] >> port_id = {:?}, channel_id = {:?}",
 			port_channel_id.0,
 			port_channel_id.1
 		);
-		let data = <Channels<T>>::get(
-			port_channel_id.0.as_bytes(),
-			port_channel_id.1.to_string().as_bytes(),
-		);
+		let data = <Channels<T>>::get(port_channel_id.0.clone(), port_channel_id.1)
+			.ok_or_else(ICS04Error::missing_channel)?;
 		let channel_end = ChannelEnd::decode_vec(&*data).map_err(|_| {
 			ICS04Error::channel_not_found(port_channel_id.clone().0, port_channel_id.clone().1)
 		})?;
-		log::trace!("in channel : [channel_end] >> channel_end = {:?}", channel_end);
+		log::trace!(target: "pallet_ibc", "in channel : [channel_end] >> channel_end = {:?}", channel_end);
 		Ok(channel_end)
 	}
 
@@ -81,7 +87,7 @@ where
 				result.push((port_id, channel_id));
 			}
 
-			log::trace!(
+			log::trace!(target: "pallet_ibc",
 				"in channel : [connection_channels] >> Vector<(PortId, ChannelId)> =  {:?}",
 				result
 			);
@@ -95,11 +101,9 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		let seq = <NextSequenceSend<T>>::get(
-			port_channel_id.0.as_bytes(),
-			port_channel_id.1.to_string().as_bytes(),
-		);
-		log::trace!("in channel : [get_next_sequence] >> sequence  = {:?}", seq);
+		let seq = <NextSequenceSend<T>>::get(port_channel_id.0.clone(), port_channel_id.1)
+			.ok_or_else(|| ICS04Error::missing_next_send_seq(port_channel_id.clone()))?;
+		log::trace!(target: "pallet_ibc", "in channel : [get_next_sequence] >> sequence  = {:?}", seq);
 		Ok(Sequence::from(seq))
 	}
 
@@ -107,11 +111,10 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		let seq = <NextSequenceRecv<T>>::get(
-			port_channel_id.0.as_bytes(),
-			port_channel_id.1.to_string().as_bytes(),
-		);
-		log::trace!("in channel : [get_next_sequence_recv] >> sequence = {:?}", seq);
+		let seq = <NextSequenceRecv<T>>::get(port_channel_id.0.clone(), port_channel_id.1)
+			.ok_or_else(|| ICS04Error::missing_next_recv_seq(port_channel_id.clone()))?;
+
+		log::trace!(target: "pallet_ibc", "in channel : [get_next_sequence_recv] >> sequence = {:?}", seq);
 		Ok(Sequence::from(seq))
 	}
 
@@ -119,11 +122,9 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		let seq = <NextSequenceAck<T>>::get(
-			port_channel_id.0.as_bytes(),
-			port_channel_id.1.to_string().as_bytes(),
-		);
-		log::trace!("in channel : [get_next_sequence_ack] >> sequence = {:?}", seq);
+		let seq = <NextSequenceAck<T>>::get(port_channel_id.0.clone(), port_channel_id.1)
+			.ok_or_else(|| ICS04Error::missing_next_ack_seq(port_channel_id.clone()))?;
+		log::trace!(target: "pallet_ibc", "in channel : [get_next_sequence_ack] >> sequence = {:?}", seq);
 		Ok(Sequence::from(seq))
 	}
 
@@ -131,19 +132,13 @@ where
 		&self,
 		key: &(PortId, ChannelId, Sequence),
 	) -> Result<PacketCommitmentType, ICS04Error> {
-		let seq = u64::from(key.2);
-
-		if <PacketCommitment<T>>::contains_key((
-			key.0.as_bytes(),
-			key.1.to_string().as_bytes(),
-			seq,
-		)) {
-			let data =
-				<PacketCommitment<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
-			log::trace!("in channel : [get_packet_commitment] >> packet_commitment = {:?}", data);
+		if <PacketCommitment<T>>::contains_key((key.0.clone(), key.1, key.2)) {
+			let data = <PacketCommitment<T>>::get((key.0.clone(), key.1, key.2))
+				.ok_or_else(ICS04Error::missing_packet)?;
+			log::trace!(target: "pallet_ibc", "in channel : [get_packet_commitment] >> packet_commitment = {:?}", data);
 			Ok(data.into())
 		} else {
-			log::trace!(
+			log::trace!(target: "pallet_ibc",
 				"in channel : [get_packet_commitment] >> read get packet commitment return None"
 			);
 			Err(ICS04Error::packet_commitment_not_found(key.2))
@@ -156,9 +151,9 @@ where
 	) -> Result<Receipt, ICS04Error> {
 		let seq = u64::from(key.2);
 
-		if <PacketReceipt<T>>::contains_key((key.0.as_bytes(), key.1.to_string().as_bytes(), seq)) {
-			let data =
-				<PacketReceipt<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
+		if <PacketReceipt<T>>::contains_key((key.0.clone(), key.1, key.2)) {
+			let data = <PacketReceipt<T>>::get((key.0.clone(), key.1, key.2))
+				.ok_or_else(|| ICS04Error::packet_receipt_not_found(key.2))?;
 			let data = String::from_utf8(data).map_err(|e| {
 				ICS04Error::implementation_specific(format!(
 					"[get_packet_receipt]: error decoding packet receipt: {}",
@@ -169,10 +164,10 @@ where
 				"Ok" => Receipt::Ok,
 				_ => return Err(ICS04Error::packet_receipt_not_found(seq.into())),
 			};
-			log::trace!("in channel : [get_packet_receipt] >> packet_receipt = {:?}", data);
+			log::trace!(target: "pallet_ibc", "in channel : [get_packet_receipt] >> packet_receipt = {:?}", data);
 			Ok(data)
 		} else {
-			log::trace!("in channel : [get_packet_receipt] >> read get packet receipt not found");
+			log::trace!(target: "pallet_ibc", "in channel : [get_packet_receipt] >> read get packet receipt not found");
 			Err(ICS04Error::packet_receipt_not_found(key.2))
 		}
 	}
@@ -181,22 +176,16 @@ where
 		&self,
 		key: &(PortId, ChannelId, Sequence),
 	) -> Result<AcknowledgementCommitment, ICS04Error> {
-		let seq = u64::from(key.2);
-
-		if <Acknowledgements<T>>::contains_key((
-			key.0.as_bytes(),
-			key.1.to_string().as_bytes(),
-			seq,
-		)) {
-			let ack =
-				<Acknowledgements<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
-			log::trace!(
+		if <Acknowledgements<T>>::contains_key((key.0.clone(), key.1, key.2)) {
+			let ack = <Acknowledgements<T>>::get((key.0.clone(), key.1, key.2))
+				.ok_or_else(|| ICS04Error::packet_acknowledgement_not_found(key.2))?;
+			log::trace!(target: "pallet_ibc",
 				"in channel : [get_packet_acknowledgement] >> packet_acknowledgement = {:?}",
 				ack
 			);
 			Ok(ack.into())
 		} else {
-			log::trace!(
+			log::trace!(target: "pallet_ibc",
 				"in channel : [get_packet_acknowledgement] >> get acknowledgement not found"
 			);
 			Err(ICS04Error::packet_acknowledgement_not_found(key.2))
@@ -213,12 +202,7 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Timestamp, ICS04Error> {
-		let height = height.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[client_update_time]: error encoding height: {}",
-				e
-			))
-		})?;
+		let height = height.encode_vec();
 		let client_id = client_id.as_bytes().to_vec();
 		let timestamp = ClientUpdateTime::<T>::get(&client_id, &height);
 
@@ -235,12 +219,7 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Height, ICS04Error> {
-		let height = height.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[client_update_height]: error encoding height: {}",
-				e
-			))
-		})?;
+		let height = height.encode_vec();
 		let client_id = client_id.as_bytes().to_vec();
 		let host_height = ClientUpdateHeight::<T>::get(&client_id, &height);
 
@@ -257,7 +236,7 @@ where
 	/// `ChannelKeeper::increase_channel_counter`.
 	fn channel_counter(&self) -> Result<u64, ICS04Error> {
 		let count = ChannelCounter::<T>::get();
-		log::trace!("in channel: [channel_counter] >> channel_counter = {:?}", count);
+		log::trace!(target: "pallet_ibc", "in channel: [channel_counter] >> channel_counter = {:?}", count);
 		Ok(count.into())
 	}
 
@@ -276,12 +255,31 @@ where
 		key: (PortId, ChannelId, Sequence),
 		commitment: PacketCommitmentType,
 	) -> Result<(), ICS04Error> {
-		let seq = u64::from(key.2);
-		<PacketCommitment<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
-			commitment.into_vec(),
-		);
+		<PacketCommitment<T>>::insert((key.0.clone(), key.1, key.2), commitment);
+		if let Some(val) = PacketCounter::<T>::get().checked_add(1) {
+			PacketCounter::<T>::put(val);
+		}
 
+		Ok(())
+	}
+
+	fn store_packet(
+		&mut self,
+		key: (PortId, ChannelId, Sequence),
+		packet: ibc::core::ics04_channel::packet::Packet,
+	) -> Result<(), ICS04Error> {
+		// store packet offchain
+		let channel_id = key.1.to_string().as_bytes().to_vec();
+		let port_id = key.0.as_bytes().to_vec();
+		let seq = u64::from(key.2);
+		let key = Pallet::<T>::offchain_key(channel_id, port_id);
+		let mut offchain_packets: BTreeMap<u64, OffchainPacketType> =
+			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
+				.unwrap_or_default();
+		let offchain_packet: OffchainPacketType = packet.into();
+		offchain_packets.insert(seq, offchain_packet);
+		sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
 		Ok(())
 	}
 
@@ -289,14 +287,12 @@ where
 		&mut self,
 		key: (PortId, ChannelId, Sequence),
 	) -> Result<(), ICS04Error> {
-		let seq = u64::from(key.2);
-
 		// delete packet commitment
-		<PacketCommitment<T>>::remove((
-			key.0.as_bytes().to_vec(),
-			key.1.to_string().as_bytes().to_vec(),
-			seq,
-		));
+		<PacketCommitment<T>>::remove((key.0.clone(), key.1, key.2));
+
+		if let Some(val) = PacketCounter::<T>::get().checked_sub(1) {
+			PacketCounter::<T>::put(val);
+		}
 
 		Ok(())
 	}
@@ -307,15 +303,14 @@ where
 		receipt: Receipt,
 	) -> Result<(), ICS04Error> {
 		let receipt = match receipt {
-			Receipt::Ok => "Ok".as_bytes(),
+			Receipt::Ok => b"Ok".to_vec(),
 		};
 
-		let seq = u64::from(key.2);
+		<PacketReceipt<T>>::insert((key.0.clone(), key.1, key.2), receipt);
 
-		<PacketReceipt<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
-			receipt,
-		);
+		if let Some(val) = <PacketReceiptCounter<T>>::get().checked_add(1) {
+			<PacketReceiptCounter<T>>::put(val)
+		}
 
 		Ok(())
 	}
@@ -325,13 +320,12 @@ where
 		key: (PortId, ChannelId, Sequence),
 		ack_commitment: AcknowledgementCommitment,
 	) -> Result<(), ICS04Error> {
-		let seq = u64::from(key.2);
-
 		// store packet acknowledgement key-value
-		<Acknowledgements<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
-			ack_commitment.into_vec(),
-		);
+		<Acknowledgements<T>>::insert((key.0.clone(), key.1, key.2), ack_commitment);
+
+		if let Some(val) = AcknowledgementCounter::<T>::get().checked_add(1) {
+			AcknowledgementCounter::<T>::put(val)
+		}
 
 		Ok(())
 	}
@@ -340,15 +334,12 @@ where
 		&mut self,
 		key: (PortId, ChannelId, Sequence),
 	) -> Result<(), ICS04Error> {
-		let seq = u64::from(key.2);
-
 		// remove acknowledgements
-		<Acknowledgements<T>>::remove((
-			key.0.as_bytes().to_vec(),
-			key.1.to_string().as_bytes().to_vec(),
-			seq,
-		));
+		<Acknowledgements<T>>::remove((key.0.clone(), key.1, key.2));
 
+		if let Some(val) = AcknowledgementCounter::<T>::get().checked_sub(1) {
+			AcknowledgementCounter::<T>::put(val)
+		}
 		Ok(())
 	}
 
@@ -365,14 +356,14 @@ where
 		);
 
 		if <ChannelsConnection<T>>::contains_key(conn_id.clone()) {
-			log::trace!("in channel: [store_connection_channels] >> insert port_channel_id");
+			log::trace!(target: "pallet_ibc", "in channel: [store_connection_channels] >> insert port_channel_id");
 			<ChannelsConnection<T>>::try_mutate(conn_id, |val| -> Result<(), &'static str> {
 				val.push(port_channel_id);
 				Ok(())
 			})
 			.expect("store connection channels error");
 		} else {
-			log::trace!("in channel: [store_connection_channels] >> init ChannelsConnection");
+			log::trace!(target: "pallet_ibc", "in channel: [store_connection_channels] >> init ChannelsConnection");
 			let temp_connection_channels = vec![port_channel_id];
 			<ChannelsConnection<T>>::insert(conn_id, temp_connection_channels);
 		}
@@ -386,19 +377,8 @@ where
 		port_channel_id: (PortId, ChannelId),
 		channel_end: &ChannelEnd,
 	) -> Result<(), ICS04Error> {
-		let channel_end = channel_end.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[store_channel]: error encoding channel end: {}",
-				e
-			))
-		})?;
-
 		// store channels key-value
-		<Channels<T>>::insert(
-			port_channel_id.0.as_bytes().to_vec(),
-			port_channel_id.1.to_string().as_bytes().to_vec(),
-			channel_end,
-		);
+		<Channels<T>>::insert(port_channel_id.0.clone(), port_channel_id.1, channel_end);
 
 		Ok(())
 	}
@@ -410,11 +390,7 @@ where
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
 
-		<NextSequenceSend<T>>::insert(
-			port_channel_id.0.as_bytes().to_vec(),
-			port_channel_id.1.to_string().as_bytes().to_vec(),
-			seq,
-		);
+		<NextSequenceSend<T>>::insert(port_channel_id.0.clone(), port_channel_id.1, seq);
 
 		Ok(())
 	}
@@ -426,11 +402,7 @@ where
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
 
-		<NextSequenceRecv<T>>::insert(
-			port_channel_id.0.as_bytes().to_vec(),
-			port_channel_id.1.to_string().as_bytes().to_vec(),
-			seq,
-		);
+		<NextSequenceRecv<T>>::insert(port_channel_id.0.clone(), port_channel_id.1, seq);
 
 		Ok(())
 	}
@@ -442,11 +414,7 @@ where
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
 
-		<NextSequenceAck<T>>::insert(
-			port_channel_id.0.as_bytes().to_vec(),
-			port_channel_id.1.to_string().as_bytes().to_vec(),
-			seq,
-		);
+		<NextSequenceAck<T>>::insert(port_channel_id.0.clone(), port_channel_id.1, seq);
 
 		Ok(())
 	}
@@ -455,7 +423,7 @@ where
 	/// Increases the counter which keeps track of how many channels have been created.
 	/// Should never fail.
 	fn increase_channel_counter(&mut self) {
-		log::trace!("in channel: [increase_channel_counter]");
+		log::trace!(target: "pallet_ibc", "in channel: [increase_channel_counter]");
 		let _ = ChannelCounter::<T>::try_mutate::<_, (), _>(|val| {
 			*val = val.saturating_add(1);
 			Ok(())

@@ -18,7 +18,7 @@ Note that the type bundle format for typegen is slightly different from `Overrid
 ```javascript
 {
   types: {}, // top-level type definitions, as `.types` option of `ApiPromise`
-  typesAlias: {}, // top-level type alieases, as `.typesAlias` option of `ApiPromise`
+  typesAlias: {}, // top-level type aliases, as `.typesAlias` option of `ApiPromise`
   versions: [ // spec version specific overrides, same as `OverrideBundleDefinition.types` of `polkadot.js`
     {
        minmax: [0, 1010] // spec range
@@ -34,7 +34,7 @@ Note that the type bundle format for typegen is slightly different from `Overrid
 
 The schema file defines the shape of the final GraphQL API and has very few limitations. Designing the schema file is very similar to the design of the database schema. As a rule of thumb, the schema should represent high level domain specific entities and relations between them, to make data fetching and filtering easy for the API consumers.
 
-Typically, the API is consumed by the frontend and mobile apps, so it's a good idea to design the schema even before you go on with implementing the processor mappings. In fact, the processor is completely indpendent from the GraphQL server serving the API, so you can experiment how the API looks like.
+Typically, the API is consumed by the frontend and mobile apps, so it's a good idea to design the schema even before you go on with implementing the processor mappings. In fact, the processor is completely independent from the GraphQL server serving the API, so you can experiment how the API looks like.
 
 ## How do I update my schema?
 
@@ -56,7 +56,7 @@ npm run build
 
 Now you have to options: either create a migration for an incremental schema update or recreate the whole schema from scratch. 
 
-During the development process, recreating the schema is often more convenient. However, if you already have a running API in production and don't want to resync it, having an incremental update is preferrable (but requires data backfilling).
+During the development process, recreating the schema is often more convenient. However, if you already have a running API in production and don't want to resync it, having an incremental update is preferable (but requires data backfilling).
 
 ### Option 1: Recreate schema from scratch
 
@@ -146,7 +146,7 @@ interface TransferEvent {
 }
 
 function getTransferEvent(ctx: EventHandlerContext): TransferEvent {
-    // instanciate type-safe facade around event data
+    // instantiate type-safe facade around event data
     let event = new BalancesTransferEvent(ctx)
     // initial version, with runtime spec 1020
     if (event.isV1020) { 

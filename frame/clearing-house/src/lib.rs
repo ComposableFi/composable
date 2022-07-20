@@ -1893,17 +1893,17 @@ pub mod pallet {
 
 		/// Returns the Id of the account holding user's collateral.
 		pub fn get_collateral_account() -> T::AccountId {
-			T::PalletId::get().into_sub_account("Collateral")
+			T::PalletId::get().into_sub_account_truncating("Collateral")
 		}
 
 		/// Returns the Id of the account holding insurance funds.
 		pub fn get_insurance_account() -> T::AccountId {
-			T::PalletId::get().into_sub_account("Insurance")
+			T::PalletId::get().into_sub_account_truncating("Insurance")
 		}
 
 		/// Returns the Id of the account holding the Fee Pool funds for a market.
 		pub fn get_fee_pool_account(market_id: T::MarketId) -> T::AccountId {
-			T::PalletId::get().into_sub_account(market_id)
+			T::PalletId::get().into_sub_account_truncating(market_id)
 		}
 
 		fn decimal_from_swapped(

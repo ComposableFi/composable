@@ -1,14 +1,17 @@
 use crate::{
+	self as pallet_liquidations,
 	mock::{currency::*, runtime::*},
-	{self as pallet_liquidations},
 };
-use codec::{Decode, Encode};
+use codec::Encode;
 use composable_traits::{
 	defi::{Ratio, Sell},
 	liquidation::Liquidation,
 };
-use frame_support::traits::{fungible::Mutate as NativeMutate, fungibles::Mutate};
-use sp_runtime::{traits::StaticLookup, FixedPointNumber, FixedU128};
+use frame_support::{
+	assert_noop,
+	traits::{fungible::Mutate as NativeMutate, fungibles::Mutate},
+};
+use sp_runtime::{FixedPointNumber, FixedU128};
 
 // ensure that we take extra for sell, at least amount to remove
 #[test]
@@ -72,6 +75,22 @@ fn serde_call() {
 	let sell_binary_flat = composable_traits::liquidation::XcmLiquidation::new(7, 1, order, vec![]);
 	assert_eq!(sell_typed.encode(), sell_binary.encode());
 	assert_eq!(sell_typed.encode(), sell_binary_flat.encode());
+}
+
+#[test]
+fn pallet_do_not_treat_infinitely_large_strategies_vector() {
+	new_test_externalities().execute_with(|| {
+		let manager = ALICE;
+		let order = Sell::new(PICA, KUSD, 100, FixedU128::saturating_from_integer(1));
+		assert_noop!(
+			crate::Pallet::<Runtime>::sell(
+				SystemOriginOf::<Runtime>::signed(manager),
+				order,
+				vec![42; 100_000_000]
+			),
+			crate::Error::<Runtime>::InvalidLiquidationStrategiesVector,
+		);
+	});
 }
 
 // TODO: add XCM end to end tests with callbacks

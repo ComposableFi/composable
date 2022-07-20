@@ -4,7 +4,7 @@ use crate::{
 		assets::{PICA, USDC},
 		runtime::{
 			Assets as AssetsPallet, Balance, ExtBuilder, Origin, Runtime, System as SystemPallet,
-			TestPallet, TestPalletId,
+			TestPallet,
 		},
 	},
 	pallet::{Collateral, Error, Event},
@@ -12,7 +12,6 @@ use crate::{
 };
 use frame_support::{assert_noop, assert_ok, traits::fungibles::Inspect};
 use orml_tokens::Error as TokenError;
-use sp_runtime::traits::AccountIdConversion;
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Add Margin
@@ -65,7 +64,7 @@ fn deposit_supported_collateral_succeeds() {
 			assert_eq!(after.0 - before.0, amount);
 			assert_eq!(after.1, before.1 - amount);
 
-			let pallet_acc = TestPalletId::get().into_sub_account("Collateral");
+			let pallet_acc = TestPallet::get_collateral_account();
 			assert_eq!(<AssetsPallet as Inspect<AccountId>>::balance(USDC, &pallet_acc), amount);
 
 			SystemPallet::assert_last_event(Event::MarginAdded { account, asset, amount }.into());
