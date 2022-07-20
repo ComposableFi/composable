@@ -53,7 +53,7 @@ We hope that the learning during the onboarding was challenging and useful to yo
 
 - 18 Feb 2022 - Brainjar, the founder of CF, got doxxed, which brought things about his life as a college student into the media. All of that was fully resolved in the past and was also discussed with investors, who agreed to continue their support. After this event, he started to appear publicly as well.
 
-- 01 July 2022 - Composable Unchained hosted in Berlin was our first conference, and a massive success
+- 01 July 2022 - Composable Unchained hosted in Berlin was our first conference, and was a massive success.
 
 ## Welcome!
 

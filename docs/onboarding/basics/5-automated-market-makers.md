@@ -1,6 +1,6 @@
 # Automated Market Makers
 
-To understand how AMMs work, we'll first take a brief detour to tradfi. To understand the whole topic, you'll need to be familiar with the following concepts:
+To understand how AMMs work, we'll first take a brief detour to traditional finance (tradfi). To understand the whole topic, you'll need to be familiar with the following concepts:
 
 - [Order Book](https://www.investopedia.com/terms/o/order-book.asp)
 - [Spread](https://www.investopedia.com/terms/s/spread.asp)
