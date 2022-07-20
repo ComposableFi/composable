@@ -854,7 +854,7 @@ pub struct BaseCallFilter;
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
 		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false;
+			return false
 		}
 		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
 	}
@@ -1136,11 +1136,10 @@ pub struct AccountToAddr;
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
 		match a.strip_prefix("0x") {
-			Some(account_id) => {
+			Some(account_id) =>
 				Ok(TryInto::<[u8; 32]>::try_into(hex::decode(account_id).map_err(|_| ())?)
 					.map_err(|_| ())?
-					.into())
-			},
+					.into()),
 			_ => Err(()),
 		}
 	}
@@ -1191,17 +1190,17 @@ impl cosmwasm::Config for Runtime {
 	type Balance = Balance;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
-  type ChainId = ChainId;
-  type MaxContractLabelSize = MaxContractLabelSize;
-  type MaxContractTrieIdSize = MaxContractTrieIdSize;
-  type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
-  type MaxFundsAssets = MaxFundsAssets;
-  type CodeTableSizeLimit = CodeTableSizeLimit;
-  type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
-  type CodeParameterLimit = CodeParameterLimit;
-  type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
-  type CodeStackLimit = CodeStackLimit;
-  type UnixTime = Timestamp;
+	type ChainId = ChainId;
+	type MaxContractLabelSize = MaxContractLabelSize;
+	type MaxContractTrieIdSize = MaxContractTrieIdSize;
+	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
+	type MaxFundsAssets = MaxFundsAssets;
+	type CodeTableSizeLimit = CodeTableSizeLimit;
+	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
+	type CodeParameterLimit = CodeParameterLimit;
+	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
+	type CodeStackLimit = CodeStackLimit;
+	type UnixTime = Timestamp;
 }
 
 construct_runtime!(
