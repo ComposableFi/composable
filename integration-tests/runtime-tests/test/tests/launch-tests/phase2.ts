@@ -1110,9 +1110,9 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
             await Phase2.verifyPoolLiquidityAdded(
               api,
-              ksmAssetId,
               usdcAssetId,
-              ksmUsdcLpTokenId,
+              ausdAssetId,
+              usdcAusdLpTokenId,
               liquidityProviderWallet1.publicKey,
               baseAmount,
               new BN(usdcBalanceBefore.toString()),
