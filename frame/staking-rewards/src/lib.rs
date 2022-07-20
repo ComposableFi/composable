@@ -45,7 +45,6 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	pub use crate::weights::WeightInfo;
 	use composable_support::{
 		abstractions::{
 			nonce::Nonce,
@@ -54,7 +53,7 @@ pub mod pallet {
 				start_at::ZeroInit,
 			},
 		},
-		math::safe::{SafeArithmetic, SafeDiv, SafeMul, SafeSub},
+		math::safe::{SafeAdd, SafeArithmetic, SafeDiv, SafeMul, SafeSub},
 		validation::Validated,
 	};
 	use composable_traits::{
@@ -69,7 +68,7 @@ pub mod pallet {
 			tokens::WithdrawConsequence,
 			UnixTime,
 		},
-		transactional, BoundedBTreeMap, PalletId,
+		transactional, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_arithmetic::{traits::One, Permill};
@@ -77,9 +76,11 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider},
 		PerThing, Perbill,
 	};
-	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, vec, vec::Vec};
+	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, iter, vec, vec::Vec};
 
 	use crate::{prelude::*, validation::ValidSplitRatio};
+
+	pub use crate::weights::WeightInfo;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
@@ -729,7 +730,63 @@ pub mod pallet {
 					.try_insert(*asset_id, inflation)
 					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
 			}
+
 			Ok((rewards_btree_map, reductions))
+		}
+
+		fn update_reward(
+			reward: Reward<T::AssetId, T::Balance>,
+		) -> Result<Reward<T::AssetId, T::Balance>, DispatchError> {
+			let now = T::UnixTime::now().as_secs();
+			let elapsed_time = now.safe_sub(&reward.last_updated_timestamp)?;
+
+			let periods_surpassed = elapsed_time.safe_div(&reward.reward_rate.period)?;
+
+			if periods_surpassed.is_zero() {
+				Ok(reward)
+			} else {
+				// NOTE(benluelo): used this instead of `safe_mul` since `T::Balance` can't be
+				// multiplied by a `u64` and the definition of `CheckedMul` constrains the `Rhs`
+				// type to `Self`, so `T::balance` can't `.safe_mul(u64)`
+				let new_rewards = iter::repeat(reward.reward_rate.amount)
+					// REVIEW(benluelo): this cast is *probably* safe, but should be verified
+					.take(periods_surpassed as usize)
+					.try_fold(reward.total_rewards, |total_amount, amount| {
+						total_amount.safe_add(&amount)
+					})?;
+
+				ensure!(new_rewards <= reward.max_rewards, Error::<T>::MaxRewardLimitReached);
+
+				Ok(Reward { total_rewards: new_rewards, last_updated_timestamp: now, ..reward })
+			}
+		}
+
+		pub(crate) fn acumulate_rewards_hook() {
+			let updated_reward_pools = RewardPools::<T>::iter()
+				.into_iter()
+				.map(|(pool_id, reward_pool)| {
+					let rewards = reward_pool
+						.rewards
+						.into_iter()
+						.map(|(asset_id, reward)| {
+							Self::update_reward(reward)
+								.map(|updated_reward| (asset_id, updated_reward))
+						})
+						.collect::<Result<BTreeMap<_, _>, _>>()?
+						.try_into()
+						.unwrap();
+
+					Ok((pool_id, RewardPool { rewards, ..reward_pool }))
+				})
+				.collect::<Result<BTreeMap<_, _>, DispatchError>>();
+
+			match updated_reward_pools {
+				Ok(updated_reward_pools) =>
+					for (a, p) in updated_reward_pools {
+						RewardPools::<T>::insert(a, p);
+					},
+				Err(_) => {},
+			}
 		}
 	}
 

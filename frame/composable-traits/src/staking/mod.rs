@@ -43,6 +43,9 @@ pub struct Reward<AssetId, Balance> {
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
 	pub reward_rate: RewardRate<Balance>,
+
+	/// The last time the reward was updated, in seconds.
+	pub last_updated_timestamp: u64,
 }
 
 /// Abstraction over the asset to reduction map stored for staking.
@@ -61,6 +64,7 @@ impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
 			total_dilution_adjustment: Zero::zero(),
 			max_rewards: reward_config.max_rewards,
 			reward_rate: reward_config.reward_rate,
+			last_updated_timestamp: 0,
 		}
 	}
 }
@@ -111,6 +115,7 @@ pub struct RewardConfig<AssetId, Balance> {
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
 pub struct RewardRate<Balance> {
 	/// The period that the rewards are handed out in, in seconds.
+	// REVIEW(benluelo): NonZeroU64?
 	pub period: u64,
 	/// The amount that is rewarded each period.
 	pub amount: Balance,
