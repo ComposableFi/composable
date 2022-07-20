@@ -24,7 +24,7 @@ export interface PalletPabloPoolConfiguration extends Enum {
     readonly owner: AccountId32;
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
     readonly lpToken: u128;
-    readonly amplification_coefficient: u16;
+    readonly amplificationCoefficient: u16;
     readonly feeConfig: {
     readonly feeRate: Permill;
     readonly ownerFeeRate: Permill;

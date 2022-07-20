@@ -46,9 +46,23 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
   let sudoKey: KeyringPair,
     composableManagerWallet: KeyringPair,
     liquidityProviderWallet1: KeyringPair,
+    liquidityProviderWallet2: KeyringPair,
     traderWallet1: KeyringPair;
-  let ksmUsdcLpTokenId: BN, picaUsdcLpTokenId: BN, picaKsmLpTokenId: BN, usdcAusdLpTokenId: BN;
-  let ksmUsdcPoolId: BN, picaLBPPoolId: BN, picaUsdcPoolId: BN, picaKsmPoolId: BN, usdcAusdPoolId: BN;
+  let ksmUsdcLpTokenId: BN,
+    picaUsdcLpTokenId: BN,
+    picaKsmLpTokenId: BN,
+    usdcAusdLpTokenId: BN,
+    wethKsmLpTokenId: BN,
+    wbtcKsmLpTokenId: BN,
+    usdcUsdtLpTokenId: BN;
+  let ksmUsdcPoolId: BN,
+    picaLBPPoolId: BN,
+    picaUsdcPoolId: BN,
+    picaKsmPoolId: BN,
+    usdcAusdPoolId: BN,
+    wethKsmPoolId: BN,
+    wbtcKsmPoolId: BN,
+    usdcUsdtPoolId: BN;
   const picaAssetId = 1,
     ksmAssetId = 4,
     usdcAssetId = 131,
@@ -69,14 +83,17 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
     sudoKey = devWalletAlice;
     composableManagerWallet = devWalletAlice;
     liquidityProviderWallet1 = devWalletAlice.derive("/test/launch/lp1");
+    liquidityProviderWallet2 = devWalletAlice.derive("/test/launch/lp12");
     traderWallet1 = devWalletAlice.derive("/test/launch/trader1");
   });
 
   before("Minting assets", async function () {
     this.timeout(5 * 60 * 1000);
-    await mintAssetsToWallet(api, composableManagerWallet, sudoKey, [1, ksmAssetId, usdcAssetId]);
-    await mintAssetsToWallet(api, liquidityProviderWallet1, sudoKey, [1, ksmAssetId, usdcAssetId]);
-    await mintAssetsToWallet(api, traderWallet1, sudoKey, [1, ksmAssetId, usdcAssetId]);
+    const assetIdList = [1, ksmAssetId, usdcAssetId, wethAssetId, btcAssetId, usdtAssetId, ausdAssetId];
+    await mintAssetsToWallet(api, composableManagerWallet, sudoKey, assetIdList);
+    await mintAssetsToWallet(api, liquidityProviderWallet1, sudoKey, assetIdList);
+    await mintAssetsToWallet(api, liquidityProviderWallet2, sudoKey, assetIdList);
+    await mintAssetsToWallet(api, traderWallet1, sudoKey, assetIdList);
   });
 
   after("Closing the connection", async function () {
@@ -918,7 +935,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
    *  - USDC/USDT
    *  - - Stableswap AMM, 0.1% fee.
    */
-  describe("Picasso/Pablo Launch Plan - Phase 2D", function () {
+  describe.only("Picasso/Pablo Launch Plan - Phase 2D", function () {
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
     describe("2D:1 USDC/aUSD StableSwap Pool", function () {
@@ -952,7 +969,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               },
               amplificationCoefficient: amplificationCoefficient,
               lpToken: 100_000_000_000n,
-              fee: fee
+              feeConfig: {
+                feeRate: 100000,
+                ownerFeeRate: 200000,
+                protocolFeeRate: 1000000
+              }
             }
           })
         );
@@ -972,7 +993,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               data: [result]
             } = await pablo.addLiquidity(
               api,
-              liquidityProviderWallet1,
+              liquidityProviderWallet2,
               usdcAusdPoolId,
               baseAmount,
               quoteAmount,
@@ -1079,8 +1100,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         });
       });
 
-      describe("Test 2C:2 trading", function () {
-        describe("Test 2C:2 buy", function () {
+      describe("Test 2D:1 trading", function () {
+        describe("Test 2D:! buy", function () {
           it("Users can buy from pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToBuy = usdcAssetId;
@@ -1101,7 +1122,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           });
         });
 
-        describe("Test 2C:2 sell", function () {
+        describe("Test 2D:1 sell", function () {
           it("Users can sell to pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToSell = usdcAssetId;
@@ -1122,7 +1143,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           });
         });
 
-        describe("Test 2C:2 swap", function () {
+        describe("Test 2D:1 swap", function () {
           it("Users can swap in the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const pair = { base: usdcAssetId, quote: ausdAssetId };
@@ -1145,7 +1166,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
       });
     });
 
-    describe("2D:2 wETH/KSM StableSwap Pool", function () {
+    describe("2D:2 wETH/KSM Uniswap Pool", function () {
       it("Create wETH/KSM uniswap pool", async function () {
         if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
         this.timeout(2 * 60 * 1000);
@@ -1186,6 +1207,168 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             }
           })
         );
+        wethKsmPoolId = poolId;
+        wethKsmLpTokenId = lpTokenId;
+      });
+
+      describe("Test 2D:2 pool liquidity", function () {
+        describe("Test 2D:2 pool add liquidity", function () {
+          it("Users can add liquidity to the pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              wethKsmLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            const {
+              data: [result]
+            } = await pablo.addLiquidity(
+              api,
+              liquidityProviderWallet2,
+              wethKsmPoolId,
+              baseAmount,
+              quoteAmount,
+              minMintAmount,
+              true
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              wethKsmLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+
+          it("Pool owner can add liquidity to the pool", async function () {
+            // ToDo: Update when root can create pools!
+            this.skip();
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              wethKsmLpTokenId.toString(),
+              composableManagerWallet.publicKey
+            );
+            const {
+              data: [result]
+            } = await pablo.addLiquidity(
+              // ToDo: Switch to sudo!
+              api,
+              composableManagerWallet,
+              wethKsmPoolId,
+              baseAmount,
+              quoteAmount,
+              minMintAmount,
+              true
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              wethKsmLpTokenId.toString(),
+              composableManagerWallet.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+        });
+
+        describe("Test 2C:2 pool remove liquidity", function () {
+          it("Users can remove liquidity from the pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              wethKsmLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
+            const baseAmount = 0;
+            const quoteAmount = 0;
+            const {
+              data: [result]
+            } = await pablo.removeLiquidity(
+              api,
+              liquidityProviderWallet1,
+              wethKsmPoolId,
+              lpAmount,
+              baseAmount,
+              quoteAmount
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              wethKsmPoolId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.lessThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+          it("Pool owner can remove liquidity from the pool", async function () {
+            // ToDo: Update when root can create pools!
+            this.skip();
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              wethKsmPoolId.toString(),
+              composableManagerWallet.publicKey
+            );
+            const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
+            const baseAmount = 0;
+            const quoteAmount = 0;
+            const {
+              data: [result]
+            } = await pablo.removeLiquidity(
+              // ToDo: Switch to sudo!
+              api,
+              composableManagerWallet,
+              wethKsmPoolId,
+              lpAmount,
+              baseAmount,
+              quoteAmount
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              wethKsmLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.lessThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+        });
+      });
+
+      describe("Test 2D:2 trading", function () {
+        describe("Test 2D:2 buy", function () {
+          it("Users can buy from pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const assetIdToBuy = wethAssetId;
+            const amount = 100_000_000_000n;
+            const minReceive = 0;
+            const keepAlive = true;
+            const {
+              data: [result]
+            } = await pablo.buyTokens(api, traderWallet1, wethKsmPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+          });
+        });
+
+        describe("Test 2D:2 sell", function () {
+          it("Users can sell to pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const assetIdToSell = wethAssetId;
+            const amount = 100_000_000_000n;
+            const minReceive = 0;
+            const keepAlive = true;
+            const {
+              data: [result]
+            } = await pablo.sellTokens(api, traderWallet1, wethKsmPoolId, assetIdToSell, amount, minReceive, keepAlive);
+          });
+        });
+
+        describe("Test 2D:2 swap", function () {
+          it("Users can swap in the pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const pair = { base: wethAssetId, quote: ksmAssetId };
+            const amount = 100_000_000_000n;
+            const minReceive = 0;
+            const keepAlive = true;
+            const {
+              data: [result]
+            } = await pablo.swapTokens(api, traderWallet1, wethKsmPoolId, pair, amount, minReceive, keepAlive);
+          });
+        });
       });
     });
 
@@ -1229,6 +1412,167 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             }
           })
         );
+        wbtcKsmPoolId = poolId;
+        wbtcKsmLpTokenId = lpTokenId;
+      });
+      describe("Test 2D:1 pool liquidity", function () {
+        describe("Test 2D:1 pool add liquidity", function () {
+          it("Users can add liquidity to the pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              wbtcKsmLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            const {
+              data: [result]
+            } = await pablo.addLiquidity(
+              api,
+              liquidityProviderWallet2,
+              wbtcKsmPoolId,
+              baseAmount,
+              quoteAmount,
+              minMintAmount,
+              true
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              wbtcKsmLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+
+          it("Pool owner can add liquidity to the pool", async function () {
+            // ToDo: Update when root can create pools!
+            this.skip();
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              wbtcKsmLpTokenId.toString(),
+              composableManagerWallet.publicKey
+            );
+            const {
+              data: [result]
+            } = await pablo.addLiquidity(
+              // ToDo: Switch to sudo!
+              api,
+              composableManagerWallet,
+              wbtcKsmPoolId,
+              baseAmount,
+              quoteAmount,
+              minMintAmount,
+              true
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              wbtcKsmLpTokenId.toString(),
+              composableManagerWallet.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+        });
+
+        describe("Test 2D:3 pool remove liquidity", function () {
+          it("Users can remove liquidity from the pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              wbtcKsmLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
+            const baseAmount = 0;
+            const quoteAmount = 0;
+            const {
+              data: [result]
+            } = await pablo.removeLiquidity(
+              api,
+              liquidityProviderWallet1,
+              wbtcKsmPoolId,
+              lpAmount,
+              baseAmount,
+              quoteAmount
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              wbtcKsmLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.lessThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+          it("Pool owner can remove liquidity from the pool", async function () {
+            // ToDo: Update when root can create pools!
+            this.skip();
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              wbtcKsmLpTokenId.toString(),
+              composableManagerWallet.publicKey
+            );
+            const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
+            const baseAmount = 0;
+            const quoteAmount = 0;
+            const {
+              data: [result]
+            } = await pablo.removeLiquidity(
+              // ToDo: Switch to sudo!
+              api,
+              composableManagerWallet,
+              wbtcKsmPoolId,
+              lpAmount,
+              baseAmount,
+              quoteAmount
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              wbtcKsmLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.lessThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+        });
+      });
+
+      describe("Test 2D:3 trading", function () {
+        describe("Test 2D:3 buy", function () {
+          it("Users can buy from pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const assetIdToBuy = btcAssetId;
+            const amount = 100_000_000_000n;
+            const minReceive = 0;
+            const keepAlive = true;
+            const {
+              data: [result]
+            } = await pablo.buyTokens(api, traderWallet1, wbtcKsmPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+          });
+        });
+
+        describe("Test 2D:3 sell", function () {
+          it("Users can sell to pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const assetIdToSell = btcAssetId;
+            const amount = 100_000_000_000n;
+            const minReceive = 0;
+            const keepAlive = true;
+            const {
+              data: [result]
+            } = await pablo.sellTokens(api, traderWallet1, wbtcKsmPoolId, assetIdToSell, amount, minReceive, keepAlive);
+          });
+        });
+
+        describe("Test 2D:3 swap", function () {
+          it("Users can swap in the pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const pair = { base: btcAssetId, quote: ksmAssetId };
+            const amount = 100_000_000_000n;
+            const minReceive = 0;
+            const keepAlive = true;
+            const {
+              data: [result]
+            } = await pablo.swapTokens(api, traderWallet1, wbtcKsmPoolId, pair, amount, minReceive, keepAlive);
+          });
+        });
       });
     });
 
@@ -1264,10 +1608,184 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               },
               amplificationCoefficient: amplificationCoefficient,
               lpToken: 100_000_000_000n,
-              fee: fee
+              feeConfig: {
+                feeRate: 100000,
+                ownerFeeRate: 200000,
+                protocolFeeRate: 1000000
+              }
             }
           })
         );
+        usdcUsdtPoolId = poolId;
+        usdcUsdtLpTokenId = lpTokenId;
+      });
+
+      describe("Test 2D:1 pool liquidity", function () {
+        describe("Test 2D:1 pool add liquidity", function () {
+          it("Users can add liquidity to the pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              usdcUsdtLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            const {
+              data: [result]
+            } = await pablo.addLiquidity(
+              api,
+              liquidityProviderWallet2,
+              usdcUsdtPoolId,
+              baseAmount,
+              quoteAmount,
+              minMintAmount,
+              true
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              usdcUsdtLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+
+          it("Pool owner can add liquidity to the pool", async function () {
+            // ToDo: Update when root can create pools!
+            this.skip();
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              usdcUsdtLpTokenId.toString(),
+              composableManagerWallet.publicKey
+            );
+            const {
+              data: [result]
+            } = await pablo.addLiquidity(
+              // ToDo: Switch to sudo!
+              api,
+              composableManagerWallet,
+              usdcUsdtPoolId,
+              baseAmount,
+              quoteAmount,
+              minMintAmount,
+              true
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              usdcUsdtLpTokenId.toString(),
+              composableManagerWallet.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+        });
+
+        describe("Test 2D:3 pool remove liquidity", function () {
+          it("Users can remove liquidity from the pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              usdcUsdtLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
+            const baseAmount = 0;
+            const quoteAmount = 0;
+            const {
+              data: [result]
+            } = await pablo.removeLiquidity(
+              api,
+              liquidityProviderWallet1,
+              usdcUsdtPoolId,
+              lpAmount,
+              baseAmount,
+              quoteAmount
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              usdcUsdtLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.lessThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+          it("Pool owner can remove liquidity from the pool", async function () {
+            // ToDo: Update when root can create pools!
+            this.skip();
+            this.timeout(2 * 60 * 1000);
+            const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
+              usdcUsdtLpTokenId.toString(),
+              composableManagerWallet.publicKey
+            );
+            const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
+            const baseAmount = 0;
+            const quoteAmount = 0;
+            const {
+              data: [result]
+            } = await pablo.removeLiquidity(
+              // ToDo: Switch to sudo!
+              api,
+              composableManagerWallet,
+              usdcUsdtPoolId,
+              lpAmount,
+              baseAmount,
+              quoteAmount
+            );
+            const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
+              usdcUsdtLpTokenId.toString(),
+              liquidityProviderWallet1.publicKey
+            );
+            expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.lessThan(
+              new BN(lpTokenBalanceBefore.toString())
+            );
+          });
+        });
+      });
+
+      describe("Test 2D:3 trading", function () {
+        describe("Test 2D:3 buy", function () {
+          it("Users can buy from pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const assetIdToBuy = usdcAssetId;
+            const amount = 100_000_000_000n;
+            const minReceive = 0;
+            const keepAlive = true;
+            const {
+              data: [result]
+            } = await pablo.buyTokens(api, traderWallet1, usdcUsdtPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+          });
+        });
+
+        describe("Test 2D:3 sell", function () {
+          it("Users can sell to pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const assetIdToSell = usdcAssetId;
+            const amount = 100_000_000_000n;
+            const minReceive = 0;
+            const keepAlive = true;
+            const {
+              data: [result]
+            } = await pablo.sellTokens(
+              api,
+              traderWallet1,
+              usdcUsdtPoolId,
+              assetIdToSell,
+              amount,
+              minReceive,
+              keepAlive
+            );
+          });
+        });
+
+        describe("Test 2D:3 swap", function () {
+          it("Users can swap in the pool", async function () {
+            this.timeout(2 * 60 * 1000);
+            const pair = { base: usdcAssetId, quote: usdtAssetId };
+            const amount = 100_000_000_000n;
+            const minReceive = 0;
+            const keepAlive = true;
+            const {
+              data: [result]
+            } = await pablo.swapTokens(api, traderWallet1, usdcUsdtPoolId, pair, amount, minReceive, keepAlive);
+          });
+        });
       });
     });
   });

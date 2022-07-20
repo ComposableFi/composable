@@ -14,6 +14,7 @@ export class Phase2 {
     const poolAmount = await api.query.pablo.poolCount();
     const poolId = poolAmount.sub(new BN(1));
     const pools = await api.query.pablo.pools(poolId);
+    console.log(pools.toString());
     if (poolConfig.isConstantProduct == true) {
       return this.verifyConstantProductPool(poolConfig, pools, poolId, poolAmount);
     } else if (poolConfig.isLiquidityBootstrapping == true) {
@@ -66,8 +67,8 @@ export class Phase2 {
     expect(pools.unwrap().asStableSwap.owner.toString()).to.be.equal(poolConfig.asStableSwap.owner.toString());
     expect(pools.unwrap().asStableSwap.pair.base).to.be.bignumber.equal(new BN(poolConfig.asStableSwap.pair.base));
     expect(pools.unwrap().asStableSwap.pair.quote).to.be.bignumber.equal(new BN(poolConfig.asStableSwap.pair.quote));
-    expect(pools.unwrap().asStableSwap.amplification_coefficient).to.be.bignumber.equal(
-      new BN(poolConfig.asStableSwap.amplification_coefficient)
+    expect(pools.unwrap().asStableSwap.amplificationCoefficient).to.be.bignumber.equal(
+      new BN(poolConfig.asStableSwap.amplificationCoefficient)
     );
     expect(pools.unwrap().asStableSwap.feeConfig.feeRate).to.be.bignumber.equal(
       new BN(poolConfig.asStableSwap.feeConfig.feeRate)

@@ -65,8 +65,13 @@ export default {
         StableSwap: {
           owner: "AccountId32",
           pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
-          amplification_coefficient: "u16",
-          fee: "Permill"
+          lpToken: "u128",
+          amplificationCoefficient: "u16",
+          feeConfig: {
+            feeRate: "Permill",
+            ownerFeeRate: "Permill",
+            protocolFeeRate: "Permill"
+          }
         },
         ConstantProduct: {
           owner: "AccountId32",
