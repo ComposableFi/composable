@@ -64,8 +64,8 @@ pub mod pallet {
 	};
 	use core::{fmt::Debug, num::NonZeroU32};
 	use cosmwasm_minimal_std::{
-		Addr, Binary as CosmwasmBinary, BlockInfo, ContractInfo as CosmwasmContractInfo, Empty,
-		Env, Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
+		Addr, Binary as CosmwasmBinary, BlockInfo, Coin, ContractInfo as CosmwasmContractInfo,
+		Empty, Env, Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
 	};
 	use cosmwasm_vm::{
 		executor::{cosmwasm_call, ExecuteInput, InstantiateInput},
@@ -81,7 +81,7 @@ pub mod pallet {
 			tokens::{AssetId, Balance},
 			Get, UnixTime,
 		},
-		BoundedBTreeMap,
+		transactional, BoundedBTreeMap,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_core::crypto::UncheckedFrom;
@@ -144,6 +144,7 @@ pub mod pallet {
 		CodeNotFound,
 		ContractAlreadyExists,
 		ContractNotFound,
+		TransferFailed,
 	}
 
 	#[pallet::config]
@@ -153,7 +154,7 @@ pub mod pallet {
 
 		/// Current chain ID. Provided to the contract via the [`Env`].
 		#[pallet::constant]
-		type ChainId: Get<String>;
+		type ChainId: Get<&'static str>;
 
 		/// Max accepted code size.
 		#[pallet::constant]
@@ -208,7 +209,7 @@ pub mod pallet {
 			+ Convert<String, Result<AccountIdOf<Self>, ()>>;
 
 		/// Type of an account balance.
-		type Balance: Balance + From<u128>;
+		type Balance: Balance + Into<u128>;
 
 		/// Type of a tradable asset id.
 		///
@@ -283,6 +284,7 @@ pub mod pallet {
 		///
 		/// - `origin` the original dispatching the extrinsic.
 		/// - `code` the actual wasm code.
+		#[transactional]
 		#[pallet::weight(0)]
 		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -293,8 +295,8 @@ pub mod pallet {
 		/// Instantiate a previously uploaded code resulting in a new contract being generated.
 		///
 		/// * Emits an `Instantiated` event on success.
-		/// * Possibily emit a `ContractData` event.
-		/// * Possibily emit a `ContractEvent` event.
+		/// * Emit an `Executed` event.
+		/// * Possibily emit a `Emitted` event.
 		///
 		/// Arguments
 		///
@@ -302,6 +304,7 @@ pub mod pallet {
 		/// * `code_id` the unique code id generated when the code has been uploaded via [`upload`].
 		/// * `salt` the salt, usually used to instantiate the same contract multiple times.
 		/// * `funds` the assets transferred to the contract prior to calling it's `instantiate` export.
+		#[transactional]
 		#[pallet::weight(0)]
 		pub fn instantiate(
 			origin: OriginFor<T>,
@@ -317,6 +320,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		#[transactional]
 		#[pallet::weight(0)]
 		pub fn execute(
 			origin: OriginFor<T>,
@@ -383,16 +387,16 @@ pub mod pallet {
 				label,
 			};
 			ContractToInfo::<T>::insert(&contract, &contract_info);
-			Self::deposit_event(Event::<T>::Instantiated {
-				contract: contract.clone(),
-				info: contract_info.clone(),
-			});
 			Self::cosmwasm_run::<InstantiateInput<Empty>>(
 				EntryPoint::Instantiate,
 				instantiator,
-				contract,
-				contract_info,
+				contract.clone(),
+				contract_info.clone(),
+				funds,
 				message,
+				move || {
+					Self::deposit_event(Event::<T>::Instantiated { contract, info: contract_info });
+				},
 			)
 			.map_err(|_| Error::<T>::Instantiation)?;
 			Ok(())
@@ -411,7 +415,9 @@ pub mod pallet {
 				sender,
 				contract,
 				contract_info,
+				funds,
 				message,
+				|| {},
 			)
 			.map_err(|_| Error::<T>::Execution)?;
 			Ok(())
@@ -601,7 +607,7 @@ pub mod pallet {
 				block: BlockInfo {
 					height: frame_system::Pallet::<T>::block_number().saturated_into(),
 					time: Timestamp(T::UnixTime::now().as_secs().into()),
-					chain_id: T::ChainId::get(),
+					chain_id: T::ChainId::get().into(),
 				},
 				transaction: frame_system::Pallet::<T>::extrinsic_index()
 					.map(|index| TransactionInfo { index }),
@@ -613,10 +619,16 @@ pub mod pallet {
 			}
 		}
 
+		pub(crate) fn native_asset_to_coin(asset: AssetIdOf<T>, amount: BalanceOf<T>) -> Coin {
+			let denom = T::AssetToDenom::convert(asset);
+			Coin { denom, amount: amount.into() }
+		}
+
 		pub(crate) fn cosmwasm_new_vm(
 			sender: AccountIdOf<T>,
 			contract: AccountIdOf<T>,
 			info: ContractInfoOf<T>,
+			funds: Vec<Coin>,
 		) -> Result<WasmiVM<CosmwasmVM<T>>, <WasmiVM<CosmwasmVM<T>> as VMBase>::Error> {
 			let code = InstrumentedCode::<T>::get(info.code_id).ok_or(Error::<T>::CodeNotFound)?;
 			let host_functions_definitions = WasmiImportResolver(host_functions::definitions());
@@ -637,7 +649,7 @@ pub mod pallet {
 				cosmwasm_env: Self::cosmwasm_env(cosmwasm_contract_address.clone()),
 				cosmwasm_message_info: MessageInfo {
 					sender: Addr::unchecked(Into::<String>::into(cosmwasm_sender_address)),
-					funds: Default::default(),
+					funds,
 				},
 				contract_address: cosmwasm_contract_address,
 				contract_info: info,
@@ -650,16 +662,27 @@ pub mod pallet {
 			sender: AccountIdOf<T>,
 			contract: AccountIdOf<T>,
 			info: ContractInfoOf<T>,
+			funds: FundsOf<T>,
 			message: ContractMessageOf<T>,
+			on_success: impl FnOnce(),
 		) -> Result<(Option<CosmwasmBinary>, Vec<CosmwasmEvent>), VmErrorOf<WasmiVM<CosmwasmVM<T>>>>
 		where
 			WasmiVM<CosmwasmVM<T>>: CosmwasmCallVM<I>,
 			VmErrorOf<WasmiVM<CosmwasmVM<T>>>: From<Error<T>>,
 		{
+			for (asset, amount) in funds.clone() {
+				T::Assets::transfer(asset, &sender, &contract, amount, false)
+					.map_err(|_| Error::<T>::TransferFailed)?;
+			}
+			let cosmwasm_funds = funds
+				.into_iter()
+				.map(|(asset, amount)| Self::native_asset_to_coin(asset, amount))
+				.collect::<Vec<_>>();
 			Self::do_check_for_reinstrumentation(info.code_id)?;
-			let mut vm = Self::cosmwasm_new_vm(sender, contract.clone(), info)?;
+			let mut vm = Self::cosmwasm_new_vm(sender, contract.clone(), info, cosmwasm_funds)?;
 			cosmwasm_system_entrypoint::<I, WasmiVM<CosmwasmVM<T>>>(&mut vm, &message)
 				.map(|(data, events)| {
+					on_success();
 					Self::deposit_event(Event::<T>::Emitted {
 						contract: contract.clone(),
 						events: serde_json::to_vec(&events).unwrap(),
