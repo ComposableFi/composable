@@ -1248,11 +1248,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
             const usdcBalanceBefore = await api.rpc.assets.balanceOf(
               usdcAssetId.toString(),
-              liquidityProviderWallet1.publicKey
+              composableManagerWallet.publicKey
             );
             const ausdBalanceBefore = await api.rpc.assets.balanceOf(
               ausdAssetId.toString(),
-              liquidityProviderWallet1.publicKey
+              composableManagerWallet.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
             const baseAmount = 0;
