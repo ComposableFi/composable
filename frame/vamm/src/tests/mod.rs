@@ -18,7 +18,8 @@ pub mod get_twap;
 pub mod helpers;
 pub mod helpers_propcompose;
 pub mod move_price;
-pub mod swap_asset;
+pub mod swap;
+pub mod swap_simulation;
 pub mod update_twap;
 
 // ----------------------------------------------------------------------------------------------------
