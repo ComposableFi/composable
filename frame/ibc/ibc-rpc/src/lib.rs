@@ -362,9 +362,9 @@ where
 		count_total: bool,
 	) -> Result<QueryDenomTracesResponse>;
 
-	/// Query newly created clients in block
-	#[method(name = "ibc_queryNewlyCreatedClients")]
-	fn query_newly_created_clients(
+	/// Query newly created client in block and extrinsic
+	#[method(name = "ibc_queryNewlyCreatedClient")]
+	fn query_newly_created_client(
 		&self,
 		block_hash: Hash,
 		ext_hash: Hash,
@@ -1378,7 +1378,7 @@ where
 		})
 	}
 
-	fn query_newly_created_clients(
+	fn query_newly_created_client(
 		&self,
 		block_hash: Block::Hash,
 		ext_hash: Block::Hash,

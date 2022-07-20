@@ -4587,7 +4587,6 @@ version = "0.1.0"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
- "parity-scale-codec",
  "sp-api",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
