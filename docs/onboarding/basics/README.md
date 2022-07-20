@@ -23,7 +23,7 @@ Some of the other stuff you'll be learning, but not necessarily in your first we
 - Zero-knowledge proofs.
 - Layer 2 scaling solutions
 
-Depending on your role, the expected level of knowledge will differ, however. For our developers, we expect a solid understanding of the above concepts, including the mathematics, design tradeoffs, and underlying technology. However we feel like everyone in Composable is building together towards a shared vision, and for that, you need to see where we came from, and where we are going. A strong foundation is needed to build a strong community and product.
+Depending on your role, the expected level of knowledge will differ. For our developers, we expect a solid understanding of the above concepts, including the mathematics, design tradeoffs, and underlying technology. However, we feel like everyone in Composable is building together towards a shared vision, and for that, you need to see where we came from, and where we are going. A strong foundation is needed to build a strong community and product.
 
 > *Note*
 > DO NOT PANIC. We're here to help.
