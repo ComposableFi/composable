@@ -40,7 +40,6 @@ import BN from "bn.js";
 // ToDo (D. Roth): Remove `SHORT` tag.
 describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function () {
   if (!testConfiguration.enabledTests.query.enabled) return;
-  this.bail(true);
 
   let api: ApiPromise;
   let sudoKey: KeyringPair,
@@ -647,11 +646,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
             const picaBalanceBefore = await api.rpc.assets.balanceOf(
               picaAssetId.toString(),
-              liquidityProviderWallet1.publicKey
+              composableManagerWallet.publicKey
             );
             const usdcBalanceBefore = await api.rpc.assets.balanceOf(
               usdcAssetId.toString(),
-              liquidityProviderWallet1.publicKey
+              composableManagerWallet.publicKey
             );
             const {
               data: [result]
@@ -669,7 +668,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               picaAssetId,
               usdcAssetId,
               ksmUsdcLpTokenId,
-              liquidityProviderWallet1.publicKey,
+              composableManagerWallet.publicKey,
               baseAmount,
               new BN(picaBalanceBefore.toString()),
               new BN(usdcBalanceBefore.toString()),
