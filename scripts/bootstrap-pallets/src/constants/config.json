@@ -1,8 +1,8 @@
 {
-  "bootstrapPools": false,
+  "bootstrapPools": true,
   "bootstrapBonds": true,
-  "bootstrapCrowdloanRewards": false,
-  "mintAssetsToWallets": false,
+  "bootstrapCrowdloanRewards": true,
+  "mintAssetsToWallets": true,
   "bondOffers": [
     {
       "asset": "4",
