@@ -10,11 +10,10 @@ export class Phase2 {
   public static async verifyLastPoolCreation(
     api: ApiPromise,
     poolConfig: PalletPabloPoolConfiguration
-  ): Promise<{ poolId: BN; lpTokenId: BN }> {
+  ): Promise<{ poolId: BN; lpTokenId: BN | undefined }> {
     const poolAmount = await api.query.pablo.poolCount();
     const poolId = poolAmount.sub(new BN(1));
     const pools = await api.query.pablo.pools(poolId);
-    console.log(pools.toString());
     if (poolConfig.isConstantProduct == true) {
       return this.verifyConstantProductPool(poolConfig, pools, poolId, poolAmount);
     } else if (poolConfig.isLiquidityBootstrapping == true) {
@@ -59,49 +58,6 @@ export class Phase2 {
     return { poolId, lpTokenId };
   }
 
-  static verifyLBPPool(
-    poolConfig: PalletPabloPoolConfiguration,
-    pools: Option<PalletPabloPoolConfiguration>,
-    poolId: BN,
-    poolAmount: u128
-  ) {
-    console.debug(poolConfig.toString());
-    expect(pools.unwrap().asLiquidityBootstrapping.owner.toString()).to.be.equal(
-      poolConfig.asLiquidityBootstrapping.owner.toString()
-    );
-    expect(pools.unwrap().asLiquidityBootstrapping.pair.base).to.be.bignumber.equal(
-      new BN(poolConfig.asLiquidityBootstrapping.pair.base)
-    );
-    expect(pools.unwrap().asLiquidityBootstrapping.pair.quote).to.be.bignumber.equal(
-      new BN(poolConfig.asLiquidityBootstrapping.pair.quote)
-    );
-
-    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.start)).to.be.bignumber.equal(
-      new BN(poolConfig.asLiquidityBootstrapping.sale.start)
-    );
-    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.end)).to.be.bignumber.equal(
-      new BN(poolConfig.asLiquidityBootstrapping.sale.end)
-    );
-    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.initial_weight)).to.be.bignumber.equal(
-      new BN(poolConfig.asLiquidityBootstrapping.sale.initial_weight)
-    );
-    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.final_weight)).to.be.bignumber.equal(
-      new BN(poolConfig.asLiquidityBootstrapping.sale.final_weight)
-    );
-
-    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.feeRate).to.be.bignumber.equal(
-      new BN(poolConfig.asLiquidityBootstrapping.feeConfig.feeRate)
-    );
-    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.ownerFeeRate).to.be.bignumber.equal(
-      new BN(poolConfig.asLiquidityBootstrapping.feeConfig.ownerFeeRate)
-    );
-    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.protocolFeeRate).to.be.bignumber.equal(
-      new BN(poolConfig.asLiquidityBootstrapping.feeConfig.protocolFeeRate)
-    );
-
-    return { poolId, undefined };
-  }
-
   static verifyStableSwapPool(
     poolConfig: PalletPabloPoolConfiguration,
     pools: Option<PalletPabloPoolConfiguration>,
@@ -135,9 +91,40 @@ export class Phase2 {
     poolId: BN,
     poolAmount: u128
   ) {
-    // ToDo!
-    const lpTokenId = new BN(0);
-    return { poolId, lpTokenId };
+    expect(pools.unwrap().asLiquidityBootstrapping.owner.toString()).to.be.equal(
+      poolConfig.asLiquidityBootstrapping.owner.toString()
+    );
+    expect(pools.unwrap().asLiquidityBootstrapping.pair.base).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.pair.base)
+    );
+    expect(pools.unwrap().asLiquidityBootstrapping.pair.quote).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.pair.quote)
+    );
+
+    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.start)).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.sale.start)
+    );
+    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.end)).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.sale.end)
+    );
+    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.initial_weight)).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.sale.initial_weight)
+    );
+    expect(new BN(pools.unwrap().asLiquidityBootstrapping.sale.final_weight)).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.sale.final_weight)
+    );
+
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.feeRate).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.feeConfig.feeRate)
+    );
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.ownerFeeRate).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.feeConfig.ownerFeeRate)
+    );
+    expect(pools.unwrap().asLiquidityBootstrapping.feeConfig.protocolFeeRate).to.be.bignumber.equal(
+      new BN(poolConfig.asLiquidityBootstrapping.feeConfig.protocolFeeRate)
+    );
+
+    return { poolId, lpTokenId: undefined };
   }
 
   public static async verifyPoolLiquidityAdded(
