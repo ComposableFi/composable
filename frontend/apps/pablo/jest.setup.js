@@ -86,6 +86,10 @@ jest.mock("@/store/hooks/usePoolTvlChart", () => ({
     }))
 }))
 
+jest.mock("@/defi/subsquid/bonds/helpers", () => ({
+  fetchTotalPurchasedBondsByOfferIds: jest.fn().mockImplementation(() => (Promise.resolve({})))
+}))
+
 jest.mock("@/defi/utils/pablo/auctions/subsquidHelpers", () => {
   return { fetchTrades: jest.fn().mockImplementation(() => (Promise.resolve([])))}
 })

@@ -72,48 +72,56 @@ export const useBuyForm = (): {
     changedSide: "base" | "quote",
     amount: BigNumber
   ) => {
-    if (
-      parachainApi &&
-      activeLBP
-    ) {
-      const { base, quote } = activeLBP.pair;
-      const { feeRate } = activeLBP.feeConfig;
-      let feePercentage = new BigNumber(feeRate).toNumber();
-
-      let pair = { base: base.toString(), quote: quote.toString() };
-
-      const oneBaseInQuote = await fetchSpotPrice(
-        parachainApi,
-        pair,
-        activeLBP.poolId
-      );
-      const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
-        uniswapCalculator(
-          changedSide,
-          false,
-          amount,
-          oneBaseInQuote,
-          slippage,
-          feePercentage
+    try {
+      if (
+        parachainApi &&
+        activeLBP
+      ) {
+        const { base, quote } = activeLBP.pair;
+        const { feeRate } = activeLBP.feeConfig;
+        let feePercentage = new BigNumber(feeRate).toNumber();
+  
+        let pair = { base: base.toString(), quote: quote.toString() };
+  
+        const oneBaseInQuote = await fetchSpotPrice(
+          parachainApi,
+          pair,
+          activeLBP.poolId
         );
-
-      setTokenAmounts({
-        quoteAmount: changedSide === "base" ? tokenOutAmount : amount,
-        baseAmount: changedSide === "quote" ? tokenOutAmount : amount,
-      });
-      setMinimumReceived(minReceive);
-      setFeeCharged(feeChargedAmount);
-      setSlippageAmount(slippageAmount);
-      return {
-        minReceive,
-        tokenOutAmount,
-        feeCharged,
-        slippageAmount,
-      };
-    } else {
+        const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
+          uniswapCalculator(
+            changedSide,
+            false,
+            amount,
+            oneBaseInQuote,
+            slippage,
+            feePercentage
+          );
+  
+        if (changedSide === "base" && tokenOutAmount.gt(balanceQuote)) {
+          throw new Error('Insufficient Balance');
+        }
+  
+        setTokenAmounts({
+          quoteAmount: changedSide === "base" ? tokenOutAmount : amount,
+          baseAmount: changedSide === "quote" ? tokenOutAmount : amount,
+        });
+        setMinimumReceived(minReceive);
+        setFeeCharged(feeChargedAmount);
+        setSlippageAmount(slippageAmount);
+        return {
+          minReceive,
+          tokenOutAmount,
+          feeCharged,
+          slippageAmount,
+        };
+      } else {
+        throw new Error('Invalid LBP');
+      }
+    } catch (err: any) {
+      console.error(err.message);
+      enqueueSnackbar(err.message);
       resetTokenAmounts();
-      console.error(`Error LBP`);
-      enqueueSnackbar(`Error LBP`);
       return {
         minReceive: new BigNumber(0),
         tokenOutAmount: new BigNumber(0),
