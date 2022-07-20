@@ -1,12 +1,15 @@
 //! Benchmarks
 use crate::{validation::ValidSplitRatio, *};
-use composable_support::{abstractions::utils::increment::Increment, validation::Validated};
+use composable_support::{
+	abstractions::utils::increment::Increment,
+	validation::{TryIntoValidated, Validated},
+};
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
 		Reductions, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		Stake,
+		RewardRate, Stake,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -17,7 +20,6 @@ use frame_support::{
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
-use sp_runtime::traits::Zero;
 use sp_std::collections::btree_map::BTreeMap;
 
 fn get_reward_pool<T: Config>(

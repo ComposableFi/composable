@@ -3,14 +3,14 @@ use crate::{
 	test::{prelude::H256, runtime::*},
 	Config, RewardPools, StakeCount, Stakes,
 };
-use composable_support::abstractions::utils::increment::Increment;
+use composable_support::{abstractions::utils::increment::Increment, validation::TryIntoValidated};
 use composable_tests_helpers::test::currency::{CurrencyId, BTC, PICA, USDT};
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
 		ProtocolStaking, Reductions, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		Rewards, Stake, Staking,
+		RewardRate, Stake, Staking,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -638,7 +638,7 @@ fn default_reward_config(
 	let config = RewardConfig {
 		asset_id: USDT::ID,
 		max_rewards: 100_u128,
-		reward_rate: Perbill::from_percent(10),
+		reward_rate: RewardRate::per_second(1_u128.into(), 10.try_into_validated().unwrap()),
 	};
 	let mut rewards = BTreeMap::new();
 	rewards.insert(USDT::ID, config);
