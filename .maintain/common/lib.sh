@@ -22,7 +22,7 @@ git fetch origin tag "${LATEST_TAG_NAME}" --no-tags
 
 # We want to get the tag of the most reccent release.
 # Used by client/runtime_release.sh
-PREV_TAG_OR_COMMIT=$(gh release list -L=1 | sed -n '1 p' | awk '{print $(NF-1)}')
+PREV_TAG_OR_COMMIT=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
 # This is a special case where a draft release is already in progress.
 # which also means that this is either a runtime_release/client_release
 # workflow which runs on push. Lets diff with the last commit in the base branch then.
