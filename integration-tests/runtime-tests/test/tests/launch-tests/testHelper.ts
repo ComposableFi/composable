@@ -29,7 +29,6 @@ export class Phase2 {
     poolId: BN,
     poolAmount: u128
   ) {
-    const lpTokenId = poolConfig.asConstantProduct.lpToken.add(poolAmount);
     expect(pools.unwrap().asConstantProduct.owner.toString()).to.be.equal(
       poolConfig.asConstantProduct.owner.toString()
     );
@@ -54,7 +53,7 @@ export class Phase2 {
     expect(pools.unwrap().asConstantProduct.quoteWeight).to.be.bignumber.equal(
       new BN(poolConfig.asConstantProduct.quoteWeight)
     );
-    expect(pools.unwrap().asConstantProduct.lpToken).to.be.bignumber.equal(lpTokenId);
+    const lpTokenId = pools.unwrap().asConstantProduct.lpToken;
     return { poolId, lpTokenId };
   }
 
@@ -64,11 +63,9 @@ export class Phase2 {
     poolId: BN,
     poolAmount: u128
   ) {
-    const lpTokenId = poolConfig.asStableSwap.lpToken.add(poolAmount.sub(new BN(1)));
     expect(pools.unwrap().asStableSwap.owner.toString()).to.be.equal(poolConfig.asStableSwap.owner.toString());
     expect(pools.unwrap().asStableSwap.pair.base).to.be.bignumber.equal(new BN(poolConfig.asStableSwap.pair.base));
     expect(pools.unwrap().asStableSwap.pair.quote).to.be.bignumber.equal(new BN(poolConfig.asStableSwap.pair.quote));
-    expect(pools.unwrap().asStableSwap.lpToken).to.be.bignumber.equal(new BN(lpTokenId));
     expect(pools.unwrap().asStableSwap.amplification_coefficient).to.be.bignumber.equal(
       new BN(poolConfig.asStableSwap.amplification_coefficient)
     );
@@ -81,7 +78,7 @@ export class Phase2 {
     expect(pools.unwrap().asStableSwap.feeConfig.protocolFeeRate).to.be.bignumber.equal(
       new BN(poolConfig.asStableSwap.feeConfig.protocolFeeRate)
     );
-
+    const lpTokenId = pools.unwrap().asStableSwap.lpToken;
     return { poolId, lpTokenId };
   }
 
