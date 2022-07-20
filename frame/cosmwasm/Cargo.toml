@@ -25,14 +25,17 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 log = { version = "0.4.14", default-features = false }
+serde_json = { version = "1.0.82", default-features = false, features = [
+  "alloc",
+] }
 wasm-instrument = { version = "0.2", default-features = false }
-
-wasmi = { git = "https://github.com/ComposableFi/wasmi", rev = "0961ed49b3e1a9134354b4e92235fe5f7b96f344", default-features = false }
-cosmwasm-minimal-std =  { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "519f07591bb75d12b4c6efd9bfa6cc4786e54ffb", default-features = false }
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "519f07591bb75d12b4c6efd9bfa6cc4786e54ffb", default-features = false }
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "519f07591bb75d12b4c6efd9bfa6cc4786e54ffb", default-features = false }
-
-composable-traits = { path = "../composable-traits", default-features = false }
+parity-wasm = { version = "0.45.0", default-features = false }
+wasmi = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
+wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b", default-features = false }
+cosmwasm-minimal-std =  { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "f92c2f5516f2596dd331cec4a6e94667b209c3a5", default-features = false }
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "f92c2f5516f2596dd331cec4a6e94667b209c3a5", default-features = false }
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "f92c2f5516f2596dd331cec4a6e94667b209c3a5", default-features = false }
+composable-support = { path = "../composable-support", default-features = false }
 
 [features]
 default = ["std"]
@@ -45,7 +48,7 @@ std = [
   "sp-core/std",
   "sp-std/std",
   "sp-arithmetic/std",
-  "composable-traits/std",
+  "composable-support/std",
   "scale-info/std",
 ]
 
