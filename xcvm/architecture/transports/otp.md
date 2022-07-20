@@ -1,4 +1,4 @@
-# Open Transport Protocol
+# Open Transport Protocol (OTP)
 
 Although [IBC](./ibc.md) is the default and preferred transport method within the `XCVM`, we also support arbitrary third party protocols. The abstract interface for registration and participation in `XCVM` transactions is what we call `OTP`.
 
