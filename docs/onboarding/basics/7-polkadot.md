@@ -28,7 +28,7 @@ In conjunction with our main projects, Composable Labs is incubating more projec
 
 ## Acala
 
-A parachain focussed on DeFi and stablecoins, and one of our partners in the DeFi space. Read through their [wiki](https://wiki.acala.network/) on the different products as well as their EVM+
+A parachain focussed on DeFi and stablecoins, and one of our partners in the DeFi space. Read through their [wiki](https://wiki.acala.network/) on the different products as well as their EVM+.
 
 ## Moonbeam
 
