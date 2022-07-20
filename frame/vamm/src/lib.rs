@@ -1145,9 +1145,8 @@ pub mod pallet {
 		) -> Result<T::Balance, DispatchError> {
 			let quote_asset_reserve_change = match direction {
 				Direction::Add => quote_asset_reserve_before.try_sub(quote_asset_reserve_after)?,
-				Direction::Remove => {
-					quote_asset_reserve_after.try_sub(quote_asset_reserve_before)?
-				},
+				Direction::Remove =>
+					quote_asset_reserve_after.try_sub(quote_asset_reserve_before)?,
 			};
 
 			let quote_asset_amount =
