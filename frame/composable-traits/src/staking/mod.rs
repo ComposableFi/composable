@@ -141,20 +141,23 @@ impl<const MIN: u64, const MAX: u64> Validate<u64, BoundedU64<MIN, MAX>> for Bou
 // TODO: TESTS!!!
 // TODO(benluelo): uom?
 impl<Balance> RewardRate<Balance> {
-	pub fn per_second(period: u64, amount: Balance) -> Self {
-		Self { period, amount }
+	pub fn per_second(
+		amount: Balance,
+		seconds: Validated<u64, BoundedU64<1, { u64::MAX }>>,
+	) -> Self {
+		Self { period: *seconds, amount }
 	}
 
 	pub fn per_minute(
 		amount: Balance,
-		minutes: Validated<u64, BoundedU64<0, { u64::MAX / 60 }>>,
+		minutes: Validated<u64, BoundedU64<1, { u64::MAX / 60 }>>,
 	) -> Self {
 		RewardRate { period: minutes.mul(60), amount }
 	}
 
 	pub fn per_hour(
 		amount: Balance,
-		hours: Validated<u64, BoundedU64<0, { u64::MAX / (60 * 60) }>>,
+		hours: Validated<u64, BoundedU64<1, { u64::MAX / (60 * 60) }>>,
 	) -> Self {
 		RewardRate { period: hours.mul(60).mul(60), amount }
 	}
