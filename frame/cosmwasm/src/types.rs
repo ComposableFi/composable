@@ -7,10 +7,10 @@ use scale_info::TypeInfo;
 pub struct CodeInfo<AccountId> {
 	/// Original owner of the code.
 	pub creator: AccountId,
-  /// Version of the instrumentation applied to the code.
-  pub instrumentation_version: u16,
-  /// Number of contract referencing this code.
-  pub refcount: u32,
+	/// Version of the instrumentation applied to the code.
+	pub instrumentation_version: u16,
+	/// Number of contract referencing this code.
+	pub refcount: u32,
 }
 
 /// Contract metadatas.

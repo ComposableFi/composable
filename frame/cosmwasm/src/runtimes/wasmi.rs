@@ -436,11 +436,11 @@ impl<'a> CodeValidation<'a> {
 							export_name: name,
 							expected_signature: signature.to_vec(),
 							actual_signature: func_ty.params().to_vec(),
-						});
+						})
 					}
 				},
 				None if *requirement == ExportRequirement::Mandatory => {
-					return Err(ValidationError::MissingMandatoryExport(name));
+					return Err(ValidationError::MissingMandatoryExport(name))
 				},
 				None => {
 					// Not mandatory
@@ -472,7 +472,7 @@ impl<'a> CodeValidation<'a> {
 			if let Some((m, f)) =
 				import_banlist.iter().find(|(m, f)| m == &import_module && f == &import_name)
 			{
-				return Err(ValidationError::ImportIsBanned(m, f));
+				return Err(ValidationError::ImportIsBanned(m, f))
 			}
 		}
 		Ok(self)
@@ -489,11 +489,11 @@ impl<'a> CodeValidation<'a> {
 		let CodeValidation(module) = self;
 		if let Some(table_section) = module.table_section() {
 			if table_section.entries().len() > 1 {
-				return Err(ValidationError::MustDeclareOneTable);
+				return Err(ValidationError::MustDeclareOneTable)
 			}
 			if let Some(table_type) = table_section.entries().first() {
 				if table_type.limits().initial() > limit {
-					return Err(ValidationError::TableExceedLimit);
+					return Err(ValidationError::TableExceedLimit)
 				}
 			}
 		}
@@ -506,7 +506,7 @@ impl<'a> CodeValidation<'a> {
 				use self::elements::Instruction::BrTable;
 				if let BrTable(table) = instr {
 					if table.table.len() > limit as usize {
-						return Err(ValidationError::BrTableExceedLimit);
+						return Err(ValidationError::BrTableExceedLimit)
 					}
 				}
 			}
@@ -517,7 +517,7 @@ impl<'a> CodeValidation<'a> {
 		let CodeValidation(module) = self;
 		if let Some(global_section) = module.global_section() {
 			if global_section.entries().len() > limit as usize {
-				return Err(ValidationError::GlobalsExceedLimit);
+				return Err(ValidationError::GlobalsExceedLimit)
 			}
 		}
 		Ok(self)
@@ -527,9 +527,8 @@ impl<'a> CodeValidation<'a> {
 		if let Some(global_section) = module.global_section() {
 			for global in global_section.entries() {
 				match global.global_type().content_type() {
-					ValueType::F32 | ValueType::F64 => {
-						return Err(ValidationError::GlobalFloatingPoint)
-					},
+					ValueType::F32 | ValueType::F64 =>
+						return Err(ValidationError::GlobalFloatingPoint),
 					_ => {},
 				}
 			}
@@ -538,9 +537,8 @@ impl<'a> CodeValidation<'a> {
 			for func_body in code_section.bodies() {
 				for local in func_body.locals() {
 					match local.value_type() {
-						ValueType::F32 | ValueType::F64 => {
-							return Err(ValidationError::LocalFloatingPoint)
-						},
+						ValueType::F32 | ValueType::F64 =>
+							return Err(ValidationError::LocalFloatingPoint),
 						_ => {},
 					}
 				}
@@ -553,9 +551,8 @@ impl<'a> CodeValidation<'a> {
 						let return_type = func_type.results().get(0);
 						for value_type in func_type.params().iter().chain(return_type) {
 							match value_type {
-								ValueType::F32 | ValueType::F64 => {
-									return Err(ValidationError::ParamFloatingPoint)
-								},
+								ValueType::F32 | ValueType::F64 =>
+									return Err(ValidationError::ParamFloatingPoint),
 								_ => {},
 							}
 						}
@@ -570,7 +567,7 @@ impl<'a> CodeValidation<'a> {
 		if let Some(type_section) = module.type_section() {
 			for Type::Function(func) in type_section.types() {
 				if func.params().len() > limit as usize {
-					return Err(ValidationError::FunctionParameterExceedLimit);
+					return Err(ValidationError::FunctionParameterExceedLimit)
 				}
 			}
 		}

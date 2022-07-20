@@ -275,8 +275,9 @@ pub mod pallet {
 		AccountIdOf<T>: UncheckedFrom<T::Hash> + AsRef<[u8]>,
 	{
 		/// Upload a CosmWasm contract.
-		/// The function will ensure that the wasm module is well formed and that it fits the according limits.
-		/// The module exports are going to be checked against the expected CosmWasm export signatures.
+		/// The function will ensure that the wasm module is well formed and that it fits the
+		/// according limits. The module exports are going to be checked against the expected
+		/// CosmWasm export signatures.
 		///
 		/// * Emits an `Uploaded` event on success.
 		///
@@ -303,7 +304,8 @@ pub mod pallet {
 		/// * `origin` the origin dispatching the extrinsic.
 		/// * `code_id` the unique code id generated when the code has been uploaded via [`upload`].
 		/// * `salt` the salt, usually used to instantiate the same contract multiple times.
-		/// * `funds` the assets transferred to the contract prior to calling it's `instantiate` export.
+		/// * `funds` the assets transferred to the contract prior to calling it's `instantiate`
+		///   export.
 		#[transactional]
 		#[pallet::weight(0)]
 		pub fn instantiate(
@@ -532,8 +534,9 @@ pub mod pallet {
 				module,
 				Self::ENV_MODULE,
 				T::CodeStackLimit::get(),
-				// TODO(hussein-aitlahcen): this constant cost rules can't be used in production and must be benchmarked
-				// we can reuse contracts pallet cost rules for now as well.
+				// TODO(hussein-aitlahcen): this constant cost rules can't be used in production
+				// and must be benchmarked we can reuse contracts pallet cost rules for now as
+				// well.
 				&ConstantCostRules::new(0, 0),
 			);
 			instrumented_module
