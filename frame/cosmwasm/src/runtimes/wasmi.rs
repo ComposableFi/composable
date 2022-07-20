@@ -466,7 +466,7 @@ impl<'a> CodeValidation<'a> {
 			}?;
 			let import_name = import.field();
 			let import_module = import.module();
-			let Type::Function(ref func_ty) = types
+			let Type::Function(_) = types
 				.get(*type_idx as usize)
 				.ok_or_else(|| ValidationError::ImportWithoutSignature)?;
 			if let Some((m, f)) =

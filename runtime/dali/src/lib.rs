@@ -1131,12 +1131,6 @@ impl pallet_ibc_ping::Config for Runtime {
 	type IbcHandler = Ibc;
 }
 
-parameter_types! {
-	pub const MaxCodeSize: u32 = 512 * 1024;
-  pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
-  pub const MaxMessageSize: u32 = 256 * 1024;
-}
-
 /// Native <-> Cosmwasm account mapping
 pub struct AccountToAddr;
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
@@ -1170,6 +1164,23 @@ impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
 	}
 }
 
+parameter_types! {
+  pub const ChainId: &'static str = "composable-network-dali";
+	pub const MaxCodeSize: u32 = 512 * 1024;
+  pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
+  pub const MaxMessageSize: u32 = 256 * 1024;
+  pub const MaxContractLabelSize: u32 = 64;
+  pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
+  pub const MaxInstantiateSaltSize: u32 = 128;
+  pub const MaxFundsAssets: u32 = 32;
+  pub const CodeTableSizeLimit: u32 = 4096;
+  pub const CodeGlobalVariableLimit: u32 = 256;
+  pub const CodeParameterLimit: u32 = 128;
+  pub const CodeBranchTableSizeLimit: u32 = 256;
+  // Not really required as it's embedded.
+  pub const CodeStackLimit: u32 = u32::MAX;
+}
+
 impl cosmwasm::Config for Runtime {
 	type Event = Event;
 	type MaxCodeSize = MaxCodeSize;
@@ -1180,6 +1191,17 @@ impl cosmwasm::Config for Runtime {
 	type Balance = Balance;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
+  type ChainId = ChainId;
+  type MaxContractLabelSize = MaxContractLabelSize;
+  type MaxContractTrieIdSize = MaxContractTrieIdSize;
+  type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
+  type MaxFundsAssets = MaxFundsAssets;
+  type CodeTableSizeLimit = CodeTableSizeLimit;
+  type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
+  type CodeParameterLimit = CodeParameterLimit;
+  type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
+  type CodeStackLimit = CodeStackLimit;
+  type UnixTime = Timestamp;
 }
 
 construct_runtime!(
