@@ -667,7 +667,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               api,
               picaAssetId,
               usdcAssetId,
-              ksmUsdcLpTokenId,
+              picaUsdcPoolId,
               composableManagerWallet.publicKey,
               baseAmount,
               new BN(picaBalanceBefore.toString()),
@@ -1462,9 +1462,9 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
             await Phase2.verifyPoolLiquidityAdded(
               api,
+              wethAssetId,
               ksmAssetId,
-              usdcAssetId,
-              ksmUsdcLpTokenId,
+              wethKsmPoolId,
               composableManagerWallet.publicKey,
               baseAmount,
               new BN(wethBalanceBefore.toString()),
@@ -1474,7 +1474,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           });
         });
 
-        describe("Test 2C:2 pool remove liquidity", function () {
+        describe("Test 2D:2 pool remove liquidity", function () {
           it("Users can remove liquidity from the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
@@ -1522,11 +1522,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
             const wethBalanceBefore = await api.rpc.assets.balanceOf(
               wethAssetId.toString(),
-              liquidityProviderWallet1.publicKey
+              composableManagerWallet.publicKey
             );
             const ksmBalanceBefore = await api.rpc.assets.balanceOf(
               ksmAssetId.toString(),
-              liquidityProviderWallet1.publicKey
+              composableManagerWallet.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
             const baseAmount = 0;
@@ -1547,7 +1547,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               wethAssetId,
               ksmAssetId,
               wethKsmLpTokenId,
-              liquidityProviderWallet2.publicKey,
+              composableManagerWallet.publicKey,
               baseAmount,
               new BN(wethBalanceBefore.toString()),
               new BN(ksmBalanceBefore.toString()),
@@ -1793,9 +1793,9 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
             await Phase2.verifyPoolLiquidityRemoved(
               api,
-              wethAssetId,
+              btcAssetId,
               ksmAssetId,
-              wethKsmLpTokenId,
+              wbtcKsmPoolId,
               composableManagerWallet.publicKey,
               baseAmount,
               new BN(wbtcBalanceBefore.toString()),
@@ -2021,11 +2021,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const usdcBalanceBefore = await api.rpc.assets.balanceOf(
-              usdcUsdtLpTokenId.toString(),
+              usdcAssetId.toString(),
               composableManagerWallet.publicKey
             );
             const usdtBalanceBefore = await api.rpc.assets.balanceOf(
-              usdcUsdtLpTokenId.toString(),
+              usdtAssetId.toString(),
               composableManagerWallet.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
@@ -2057,8 +2057,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         });
       });
 
-      describe("Test 2D:3 trading", function () {
-        describe("Test 2D:3 buy", function () {
+      describe("Test 2D:4 trading", function () {
+        describe("Test 2D:4 buy", function () {
           it("Users can buy from pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToBuy = usdcAssetId;
@@ -2071,7 +2071,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           });
         });
 
-        describe("Test 2D:3 sell", function () {
+        describe("Test 2D:4 sell", function () {
           it("Users can sell to pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToSell = usdcAssetId;
@@ -2092,7 +2092,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           });
         });
 
-        describe("Test 2D:3 swap", function () {
+        describe("Test 2D:4 swap", function () {
           it("Users can swap in the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const pair = { base: usdcAssetId, quote: usdtAssetId };
