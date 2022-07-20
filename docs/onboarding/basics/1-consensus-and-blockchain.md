@@ -58,7 +58,7 @@ A big upside of DPoS is that, since we are running fewer staking nodes, and do n
 
 - DPoS is a consensus protocol, but not necessarily better, just different tradeoffs again.
 - We need to be extra vigilant with DPoS to guarantee censorship resistance.
-- Less decentralized networks can still.
+- Less decentralized networks can still be censorship resistant, as long as new validators can freely join if old ones are taken down.
 
 ## Further reading
 
