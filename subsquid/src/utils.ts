@@ -9,12 +9,12 @@ import { randomFill, randomUUID } from "crypto";
 import * as ss58 from "@subsquid/ss58";
 
 export function createCtx(storeMock: Store, blockHeight: number) {
-  let blockMock: SubstrateBlock = mock<SubstrateBlock>();
+  const blockMock: SubstrateBlock = mock<SubstrateBlock>();
   blockMock.height = blockHeight;
-  let event: SubstrateEvent = mock<SubstrateEvent>();
+  const event: SubstrateEvent = mock<SubstrateEvent>();
   event.id = randomUUID();
-  let ctxMock: EventHandlerContext = mock<EventHandlerContext>();
-  let ctx: EventHandlerContext = instance(ctxMock);
+  const ctxMock: EventHandlerContext = mock<EventHandlerContext>();
+  const ctx: EventHandlerContext = instance(ctxMock);
   ctx.store = instance(storeMock);
   ctx.block = blockMock;
   ctx.event = event;
@@ -23,7 +23,7 @@ export function createCtx(storeMock: Store, blockHeight: number) {
 }
 
 export function createAccount() {
-  let acc = Uint8Array.of(...new Array<any>(32));
+  const acc = Uint8Array.of(...new Array<any>(32));
   randomFill(acc, (err) => (err != null ? console.log(err) : ""));
   return acc;
 }

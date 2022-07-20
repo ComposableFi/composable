@@ -92,6 +92,9 @@ type Schedule {
 
 type VestingSchedule @entity {
   id: ID!
+  "account that initiates the schedule"
+  from: String!
+  "random UUID"
   eventId: String!
   "{accoundId}-{assetId}"
   scheduleId: String!
