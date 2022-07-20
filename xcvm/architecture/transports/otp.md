@@ -151,7 +151,7 @@ sequenceDiagram
     Multisig Relayer->>Adapter: Submit mint request.
     Multisig Relayer->>Adapter: Forward message.
     Note over Adapter: Waits for both message and assets to arive.
-    Adapter->>Gateway: Initiate Spawn
+    Adapter->>Gateway: Initiate Spawn.
     Note over Adapter,Gateway: Sets the Relayer registry to self.
     Adapter->>Multisig Relayer: Transfer earned fees.
 ```
@@ -171,3 +171,38 @@ sequenceDiagram
 Reimbursements can be constructed similarly to an incoming spawn.
 
 ### Updater Architecture using Merkle Roots
+
+Updater style bridges do not actually pay for XCVM execution on the destination chain, but instead synchronize a proof across chains, this decouples synchronization and execution, but means that we will need to add payment for synchronization as part of the adapter, as the Relayer receives payment after synchronization and execution has taken place. Luckily `updater` based protocols are quite cheap.
+
+#### Sequence diagram of incoming Spawn.
+
+```mermaid
+sequenceDiagram
+    participant Executor
+    participant Updater
+    participant Bridge Contract
+    participant Adapter
+    participant Gateway
+    Updater->>Bridge Contract: Set root hash.
+    Executor->>Adapter: Provide program.
+    Adapter->>Bridge Contract: Authenticate program.
+    Adapter->>Gateway: Initiate Spawn.
+```
+
+For outgoing messages, our adapter will need to take into account the synchronization fee charged by the updater: 
+
+```mermaid
+sequenceDiagram
+    Gateway->>Adapter: Submit Spawn.
+    Note over Adapter: Parses the Spawn to ensure enough fees are earned by the executor.
+    Adapter->>Bridge Contract: Submit data and assets.
+    Note over Adapter,Bridge Contract: Pays the synchronization fee in advance.
+    Bridge Contract->>Updater: Read root hash.
+    Updater->>Chain 2: Set root hash.
+    Executor->>Chain 2: Trigger program execution.
+```
+
+In the example of the updater-based protocol, we are assuming that the `Adapter` does not have any special privileges. The fee handling could be immensely simplified if the `Bridge Contract` would allow fees to be charged on the destination side, as that would remove the need for the `Adapter` to parse the `Spawn`. An added benefit is that the executor can be any party, not just the one controlling the Adapter contract.
+
+> **Note**
+> Fees should always be paid on the destination side. This avoids opening a Pandora's box of headaches related to reimbursements and gas price fluctuations.
