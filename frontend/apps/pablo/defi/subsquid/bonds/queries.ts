@@ -8,7 +8,7 @@ export const queryTotalPurchasedBondsByBondOfferIds = () => makeClient().query(`
     }
 }`).toPromise(); 
 
-interface SubsquidVestingScheduleEntity {
+export interface SubsquidVestingScheduleEntity {
   scheduleId: string;
   id: string;
   from: string;

@@ -17,7 +17,7 @@ import { InfoOutlined } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { fetchVestingSchedulesByAccount } from "@/defi/subsquid/bonds/helpers";
+import { fetchBondVestingSchedules } from "@/defi/subsquid/bonds/helpers";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -46,7 +46,7 @@ export const YourBondTable: React.FC = () => {
   
   useEffect(() => {
     if (selectedAccount && parachainApi) {
-      fetchVestingSchedulesByAccount(parachainApi, selectedAccount.address).then(console.log)
+      fetchBondVestingSchedules(parachainApi, selectedAccount.address).then(console.log)
     }
   }, [parachainApi, selectedAccount]);
 

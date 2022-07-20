@@ -1,4 +1,4 @@
-import { queryTotalPurchasedBondsByBondOfferIds, queryVestingSchedulesByAccountId } from "./queries";
+import { queryTotalPurchasedBondsByBondOfferIds, queryVestingSchedulesByAccountId, SubsquidVestingScheduleEntity } from "./queries";
 import BigNumber from "bignumber.js";
 import { ApiPromise } from "@polkadot/api";
 import { stringToBytes } from "micro-base";
@@ -35,15 +35,7 @@ export async function fetchTotalPurchasedBondsByOfferIds(): Promise<Record<strin
   }
 }
 
-interface SubsquidVestingScheduleEntity {
-  scheduleId: string;
-  id: string;
-  from: string;
-  eventId: string;
-  beneficiary: string;
-}
-
-export async function fetchVestingSchedulesByAccount(parachainApi: ApiPromise, accountId: string): Promise<SubsquidVestingScheduleEntity[]> {
+export async function fetchBondVestingSchedules(parachainApi: ApiPromise, accountId: string): Promise<SubsquidVestingScheduleEntity[]> {
   let schedules: SubsquidVestingScheduleEntity[] = [];
   try {
     const { data, error } = await queryVestingSchedulesByAccountId(accountId);
