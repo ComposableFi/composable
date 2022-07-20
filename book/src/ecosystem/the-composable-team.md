@@ -48,7 +48,7 @@ Cosmin entered the crypto space in 2017, and has had a long career in computer s
 
 ## Seun Lanlege | Bridging Lead 
 
-Seun brings his wealth of experience as a former core developer at Parity Technologies to Picasso. Seun is leading the bridging team and harnessing his knowledge and experience to power the development of trustless bridging solutions between various networks beyond DotSama, including IBC, and more. Follow him on [Twitter](https://twitter.com/seunlanlege) or [Medium](https://medium.com/@seunlanlege).
+Seun brings his wealth of experience as a former core developer at Parity Technologies to Picasso. Seun is leading the bridging team and harnessing his knowledge and experience to power the development of trustless bridging solutions between various networks beyond DotSama, including IBC and more. Follow him on [Twitter](https://twitter.com/seunlanlege) or [Medium](https://medium.com/@seunlanlege).
 
 ## Pepe Blasco | Solidity lead
 
