@@ -115,7 +115,7 @@ pub fn make_proposale(
 	if treshold > 1 {
 		match yes_votes {
 			Some(votes) => {
-				votes.iter().for_each(move |account| {
+				votes.iter().for_each(|account| {
 					assert_ok!(CollectiveInstrumental::vote(
 						Origin::signed(*account),
 						hash,
