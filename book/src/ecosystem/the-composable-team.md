@@ -66,7 +66,7 @@ Antonio Larriba is a cypherpunk deeply concerned about privacy and true decentra
 
 ## Vim Wickramasinghe | Substrate Lead
 
-Vim is a seasoned software engineer and a technical lead. He has been building financial technology (trading systems, banking, robo advisors etc.) for over 10 years. Having been interested in crypto since the early days, he took the dive into DeFi in 2018, building on Rust/Substrate. He is passionate about architecting/scaling decentralized products on distributed systems, specially Substrate. His career long mission is financial inclusion and independence for all. You can follow him on [LinkedIn](https://www.linkedin.com/in/vimukthicom/) and on [Twitter](https://twitter.com/rustic_cyborg).
+Vim is a seasoned software engineer and a technical lead. He has been building financial technology (trading systems, banking, robo advisors, etc.) for over 10 years. Having been interested in crypto since the early days, he took the dive into DeFi in 2018, building on Rust/Substrate. He is passionate about architecting/scaling decentralized products on distributed systems, specially Substrate. His career long mission is financial inclusion and independence for all. You can follow him on [LinkedIn](https://www.linkedin.com/in/vimukthicom/) and on [Twitter](https://twitter.com/rustic_cyborg).
 
 ## Ahmad Wehbi | Head of Growth
 
