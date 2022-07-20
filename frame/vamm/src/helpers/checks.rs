@@ -69,7 +69,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	pub fn update_twap_sanity_check(
+	pub fn sanity_check_before_update_twap(
 		vamm_state: &VammState<T::Balance, T::Moment, T::Decimal>,
 		base_twap: T::Decimal,
 		now: &Option<T::Moment>,

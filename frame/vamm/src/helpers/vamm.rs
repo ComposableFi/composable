@@ -1,5 +1,5 @@
 use crate::{types::VammState, Config, Error, Pallet, VammMap};
-use frame_support::pallet_prelude::*;
+use frame_support::{pallet_prelude::*, traits::UnixTime};
 
 impl<T: Config> Pallet<T> {
 	pub fn get_vamm_state(
@@ -19,6 +19,13 @@ impl<T: Config> Pallet<T> {
 		match vamm_state.closed {
 			Some(timestamp) => now >= timestamp,
 			None => false,
+		}
+	}
+
+	pub fn now(now: &Option<T::Moment>) -> T::Moment {
+		match now {
+			Some(now) => *now,
+			None => T::TimeProvider::now().as_secs().into(),
 		}
 	}
 }

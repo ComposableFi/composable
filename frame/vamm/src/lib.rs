@@ -137,9 +137,9 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use crate::{helpers::types::CalculateSwapAsset, types::VammState};
+	use crate::types::VammState;
 	use codec::{Codec, FullCodec};
-	use composable_maths::labs::numbers::{IntoDecimal, TryReciprocal, UnsignedMath};
+	use composable_maths::labs::numbers::TryReciprocal;
 	use composable_traits::vamm::{
 		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, Vamm, VammConfig,
 		MINIMUM_TWAP_PERIOD,
@@ -151,13 +151,9 @@ pub mod pallet {
 	use sp_arithmetic::traits::Unsigned;
 	use sp_core::U256;
 	use sp_runtime::{
-		traits::{
-			AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating,
-			Zero,
-		},
+		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
 		ArithmeticError, FixedPointNumber,
 	};
-	use std::cmp::Ordering;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -247,9 +243,9 @@ pub mod pallet {
 	//                                             Pallet Types
 	// ----------------------------------------------------------------------------------------------------
 
-	type SwapOutputOf<T> = SwapOutput<<T as Config>::Balance>;
+	pub type SwapOutputOf<T> = SwapOutput<<T as Config>::Balance>;
 	pub type SwapConfigOf<T> = SwapConfig<<T as Config>::VammId, <T as Config>::Balance>;
-	type VammStateOf<T> =
+	pub type VammStateOf<T> =
 		VammState<<T as Config>::Balance, <T as Config>::Moment, <T as Config>::Decimal>;
 
 	// ----------------------------------------------------------------------------------------------------
@@ -393,7 +389,7 @@ pub mod pallet {
 			VammCounter::<T>::put(self.vamm_count);
 			self.vamms.iter().for_each(|(vamm_id, vamm_state)| {
 				VammMap::<T>::insert(vamm_id, vamm_state);
-			})
+			});
 		}
 	}
 
@@ -934,298 +930,6 @@ pub mod pallet {
 			});
 
 			// Return new invariant.
-			Ok(invariant)
-		}
-	}
-
-	// ----------------------------------------------------------------------------------------------------
-	//                              Helper Functions
-	// ----------------------------------------------------------------------------------------------------
-
-	// Helper functions - Update twap functionality
-	impl<T: Config> Pallet<T> {
-		#[transactional]
-		fn do_update_twap(
-			vamm_id: T::VammId,
-			vamm_state: &mut VammStateOf<T>,
-			base_twap: T::Decimal,
-			now: &Option<T::Moment>,
-		) -> Result<T::Decimal, DispatchError> {
-			// Sanity checks must pass before updating runtime storage.
-			Self::update_twap_sanity_check(vamm_state, base_twap, now)?;
-
-			let now = Self::now(now);
-			vamm_state.base_asset_twap = base_twap;
-			vamm_state.twap_timestamp = now;
-
-			// Update runtime storage.
-			VammMap::<T>::insert(&vamm_id, vamm_state);
-
-			// Return new asset twap.
-			Ok(base_twap)
-		}
-
-		fn compute_new_twap(
-			vamm_state: &VammStateOf<T>,
-			now: &Option<T::Moment>,
-		) -> Result<T::Decimal, DispatchError> {
-			// Compute base twap.
-			let base_twap = Self::calculate_twap(
-				now,
-				vamm_state.twap_timestamp,
-				vamm_state.twap_period,
-				Self::do_get_price(vamm_state, AssetType::Base)?,
-				vamm_state.base_asset_twap,
-			)?;
-
-			Ok(base_twap)
-		}
-
-		fn calculate_twap(
-			now: &Option<T::Moment>,
-			last_twap_timestamp: T::Moment,
-			twap_period: T::Moment,
-			new_price: T::Decimal,
-			old_price: T::Decimal,
-		) -> Result<T::Decimal, DispatchError> {
-			let now = Self::now(now);
-			let weight_now: T::Moment = now.saturating_sub(last_twap_timestamp).max(1_u64.into());
-			let weight_last_twap: T::Moment =
-				twap_period.saturating_sub(weight_now).max(1_u64.into());
-
-			Self::calculate_exponential_moving_average(
-				new_price,
-				weight_now,
-				old_price,
-				weight_last_twap,
-			)
-		}
-	}
-
-	// Helper functions - core functionality
-	impl<T: Config> Pallet<T> {
-		pub fn do_get_price(
-			vamm_state: &VammStateOf<T>,
-			asset_type: AssetType,
-		) -> Result<T::Decimal, DispatchError> {
-			let precision = Self::balance_to_u256(T::Decimal::DIV)?;
-			let base_u256 = Self::balance_to_u256(vamm_state.base_asset_reserves)?;
-			let quote_u256 = Self::balance_to_u256(vamm_state.quote_asset_reserves)?;
-			let peg_u256 = Self::balance_to_u256(vamm_state.peg_multiplier)?;
-
-			let price_u256 = match asset_type {
-				AssetType::Base => quote_u256
-					.checked_mul(peg_u256)
-					.ok_or(ArithmeticError::Overflow)?
-					.checked_mul(precision)
-					.ok_or(ArithmeticError::Overflow)?
-					.checked_div(base_u256)
-					.ok_or(ArithmeticError::DivisionByZero)?,
-
-				AssetType::Quote => base_u256
-					.checked_mul(precision)
-					.ok_or(ArithmeticError::Overflow)?
-					.checked_div(peg_u256.checked_mul(quote_u256).ok_or(ArithmeticError::Overflow)?)
-					.ok_or(ArithmeticError::DivisionByZero)?,
-			};
-
-			let price = Self::u256_to_balance(price_u256)?;
-
-			Ok(price.into_decimal()?)
-		}
-
-		fn do_swap(
-			config: &SwapConfigOf<T>,
-			vamm_state: &mut VammStateOf<T>,
-		) -> Result<SwapOutputOf<T>, DispatchError> {
-			// Delegate swap to helper functions.
-			let amount_swapped = match config.asset {
-				AssetType::Quote => Self::swap_quote_asset(config, vamm_state),
-				AssetType::Base => Self::swap_base_asset(config, vamm_state),
-			}?;
-
-			// Check if swap doesn't violate Vamm properties and swap requirements.
-			Self::sanity_check_after_swap(vamm_state, config, &amount_swapped)?;
-
-			// TODO(Cardosaum): Write one more `ensure!` block regarding
-			// amount_swapped negative or positive?
-
-			Ok(amount_swapped)
-		}
-
-		fn swap_quote_asset(
-			config: &SwapConfigOf<T>,
-			vamm_state: &mut VammStateOf<T>,
-		) -> Result<SwapOutputOf<T>, DispatchError> {
-			let quote_asset_reserve_amount =
-				config.input_amount.try_div(&vamm_state.peg_multiplier)?;
-
-			let initial_base_asset_reserve = vamm_state.base_asset_reserves;
-			let swap_amount = Self::calculate_swap_asset(
-				&quote_asset_reserve_amount,
-				&vamm_state.quote_asset_reserves,
-				&config.direction,
-				vamm_state,
-			)?;
-
-			vamm_state.base_asset_reserves = swap_amount.output_amount;
-			vamm_state.quote_asset_reserves = swap_amount.input_amount;
-
-			match initial_base_asset_reserve.cmp(&swap_amount.output_amount) {
-				Ordering::Less => Ok(SwapOutput {
-					output: swap_amount.output_amount.try_sub(&initial_base_asset_reserve)?,
-					negative: true,
-				}),
-				_ => Ok(SwapOutput {
-					output: initial_base_asset_reserve.try_sub(&swap_amount.output_amount)?,
-					negative: false,
-				}),
-			}
-		}
-
-		fn swap_base_asset(
-			config: &SwapConfigOf<T>,
-			vamm_state: &mut VammStateOf<T>,
-		) -> Result<SwapOutputOf<T>, DispatchError> {
-			let initial_quote_asset_reserve = vamm_state.quote_asset_reserves;
-			let swap_amount = Self::calculate_swap_asset(
-				&config.input_amount,
-				&vamm_state.base_asset_reserves,
-				&config.direction,
-				vamm_state,
-			)?;
-
-			vamm_state.base_asset_reserves = swap_amount.input_amount;
-			vamm_state.quote_asset_reserves = swap_amount.output_amount;
-
-			Ok(SwapOutput {
-				output: Self::calculate_quote_asset_amount_swapped(
-					&initial_quote_asset_reserve,
-					&swap_amount.output_amount,
-					&config.direction,
-					vamm_state,
-				)?,
-				negative: false,
-			})
-		}
-
-		fn calculate_swap_asset(
-			swap_amount: &T::Balance,
-			input_asset_amount: &T::Balance,
-			direction: &Direction,
-			vamm_state: &VammStateOf<T>,
-		) -> Result<CalculateSwapAsset<T>, DispatchError> {
-			let new_input_amount = match direction {
-				Direction::Add => input_asset_amount.try_add(swap_amount)?,
-				Direction::Remove => input_asset_amount.try_sub(swap_amount)?,
-			};
-			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
-
-			// TODO(Cardosaum): Maybe it would be worth to create another sanity
-			// check in the helper function tracking the inputs and verify if
-			// they would result in a division by zero? (Doing this we could
-			// present a better error message for the caller).
-			let new_output_amount_u256 = vamm_state
-				.invariant
-				.checked_div(new_input_amount_u256)
-				.ok_or(ArithmeticError::DivisionByZero)?;
-			let new_output_amount = Self::u256_to_balance(new_output_amount_u256)?;
-
-			Ok(CalculateSwapAsset {
-				input_amount: new_input_amount,
-				output_amount: new_output_amount,
-			})
-		}
-
-		fn calculate_quote_asset_amount_swapped(
-			quote_asset_reserve_before: &T::Balance,
-			quote_asset_reserve_after: &T::Balance,
-			direction: &Direction,
-			vamm_state: &VammStateOf<T>,
-		) -> Result<T::Balance, DispatchError> {
-			let quote_asset_reserve_change = match direction {
-				Direction::Add => quote_asset_reserve_before.try_sub(quote_asset_reserve_after)?,
-				Direction::Remove =>
-					quote_asset_reserve_after.try_sub(quote_asset_reserve_before)?,
-			};
-
-			let quote_asset_amount =
-				quote_asset_reserve_change.try_mul(&vamm_state.peg_multiplier)?;
-
-			Ok(quote_asset_amount)
-		}
-	}
-
-	// Helper functions - low-level functionality
-	impl<T: Config> Pallet<T> {
-		fn calculate_exponential_moving_average(
-			x1: T::Decimal,
-			w1: T::Moment,
-			x2: T::Decimal,
-			w2: T::Moment,
-		) -> Result<T::Decimal, DispatchError> {
-			let w1_u256 = U256::from(w1.into());
-			let w2_u256 = U256::from(w2.into());
-			let denominator = w1_u256.checked_add(w2_u256).ok_or(ArithmeticError::Overflow)?;
-			let xw1 = Self::balance_to_u256(x1.into_inner())?
-				.checked_mul(w1_u256)
-				.ok_or(ArithmeticError::Overflow)?;
-			let xw2 = Self::balance_to_u256(x2.into_inner())?
-				.checked_mul(w2_u256)
-				.ok_or(ArithmeticError::Overflow)?;
-
-			let twap_u256 = xw1
-				.checked_add(xw2)
-				.ok_or(ArithmeticError::Overflow)?
-				.checked_div(denominator)
-				.ok_or(ArithmeticError::DivisionByZero)?;
-			let twap = Self::balance_to_decimal(Self::u256_to_balance(twap_u256)?);
-			Ok(twap)
-		}
-
-		pub fn now(now: &Option<T::Moment>) -> T::Moment {
-			match now {
-				Some(now) => *now,
-				None => T::TimeProvider::now().as_secs().into(),
-			}
-		}
-
-		fn balance_to_decimal(value: T::Balance) -> T::Decimal {
-			T::Decimal::from_inner(value)
-		}
-		fn balance_to_u128(value: T::Balance) -> Result<u128, DispatchError> {
-			Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
-		}
-
-		fn balance_to_u256(value: T::Balance) -> Result<U256, DispatchError> {
-			Ok(U256::from(Self::balance_to_u128(value)?))
-		}
-
-		fn u256_to_u128(value: U256) -> Result<u128, DispatchError> {
-			Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
-		}
-
-		fn u256_to_balance(value: U256) -> Result<T::Balance, DispatchError> {
-			Ok(Self::u256_to_u128(value)?.try_into().ok().ok_or(ArithmeticError::Overflow)?)
-		}
-
-		pub fn compute_invariant(
-			base: T::Balance,
-			quote: T::Balance,
-		) -> Result<U256, DispatchError> {
-			// Neither base nor quote asset are allowed to be zero since it
-			// would mean the invariant would also be zero.
-			ensure!(!base.is_zero(), Error::<T>::BaseAssetReserveIsZero);
-			ensure!(!quote.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
-
-			let base_u256 = Self::balance_to_u256(base)?;
-			let quote_u256 = Self::balance_to_u256(quote)?;
-			let invariant = base_u256
-				.checked_mul(quote_u256)
-				.ok_or(Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset)?;
-
-			ensure!(!invariant.is_zero(), Error::<T>::InvariantIsZero);
-
 			Ok(invariant)
 		}
 	}
