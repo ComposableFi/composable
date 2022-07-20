@@ -27,7 +27,7 @@ fn should_fail_if_vamm_does_not_exist() {
 			TestPallet::get_twap(0, AssetType::Quote),
 			Error::<MockRuntime>::VammDoesNotExist
 		);
-	})
+	});
 }
 
 #[test]
@@ -52,7 +52,7 @@ fn should_fail_if_vamm_is_closed() {
 				TestPallet::get_twap(0, AssetType::Quote),
 				Error::<MockRuntime>::VammIsClosed
 			);
-		})
+		});
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -74,7 +74,7 @@ proptest! {
 		}.build().execute_with(|| {
 			assert_ok!(TestPallet::get_twap(0, AssetType::Base));
 			assert_storage_noop!(TestPallet::get_twap(0, AssetType::Base));
-		})
+		});
 	}
 
 	#[test]
@@ -90,7 +90,7 @@ proptest! {
 				TestPallet::get_twap(vamm_id, AssetType::Base),
 				Error::<MockRuntime>::VammDoesNotExist
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -115,7 +115,7 @@ proptest! {
 				TestPallet::get_twap(0, AssetType::Base),
 				Error::<MockRuntime>::VammIsClosed
 			);
-		})
+		});
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -131,7 +131,7 @@ proptest! {
 		}.build().execute_with(|| {
 			assert_ok!(TestPallet::get_twap(0, AssetType::Quote));
 			assert_storage_noop!(TestPallet::get_twap(0, AssetType::Quote));
-		})
+		});
 	}
 
 	#[test]
@@ -147,7 +147,7 @@ proptest! {
 				TestPallet::get_twap(vamm_id, AssetType::Quote),
 				Error::<MockRuntime>::VammDoesNotExist
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -172,6 +172,6 @@ proptest! {
 				TestPallet::get_twap(0, AssetType::Quote),
 				Error::<MockRuntime>::VammIsClosed
 			);
-		})
+		});
 	}
 }

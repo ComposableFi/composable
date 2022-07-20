@@ -55,7 +55,7 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_base() {
 			}
 			.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -95,7 +95,7 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_quote() {
 			}
 			.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -135,7 +135,7 @@ fn should_succeed_returning_correct_values_and_emitting_events_remove_base() {
 			}
 			.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -175,7 +175,7 @@ fn should_succeed_returning_correct_values_and_emitting_events_remove_quote() {
 			}
 			.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -205,7 +205,7 @@ fn should_update_twap_when_adding_base_asset() {
 		System::assert_has_event(
 			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -235,7 +235,7 @@ fn should_update_twap_when_removing_base_asset() {
 		System::assert_has_event(
 			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -265,7 +265,7 @@ fn should_update_twap_when_adding_quote_asset() {
 		System::assert_has_event(
 			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -295,7 +295,7 @@ fn should_update_twap_when_removing_quote_asset() {
 		System::assert_has_event(
 			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
 		);
-	})
+	});
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -319,7 +319,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::VammDoesNotExist
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -344,7 +344,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::VammIsClosed
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -371,7 +371,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::SwappedAmountLessThanMinimumLimit
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -418,7 +418,7 @@ proptest! {
 					}.into()
 				);
 			}
-		})
+		});
 	}
 
 	#[test]
@@ -451,7 +451,7 @@ proptest! {
 					Event::UpdatedTwap { vamm_id: 0, base_twap: new_vamm_state.base_asset_twap }.into(),
 				);
 			}
-		})
+		});
 	}
 
 	#[test]
@@ -479,7 +479,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::InsufficientFundsForTrade
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -507,7 +507,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::InsufficientFundsForTrade
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -535,7 +535,7 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			assert_ok!(TestPallet::swap(&swap_config));
-		})
+		});
 	}
 
 	#[test]
@@ -563,7 +563,7 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			assert_ok!(TestPallet::swap(&swap_config));
-		})
+		});
 	}
 
 	#[test]
@@ -591,7 +591,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::TradeExtrapolatesMaximumSupportedAmount
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -619,7 +619,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::TradeExtrapolatesMaximumSupportedAmount
 			);
-		})
+		});
 	}
 }
 

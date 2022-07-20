@@ -144,7 +144,7 @@ pub fn with_swap_context(
 	ExtBuilder::default().build().execute_with(|| {
 		create_vamm(&vamm_config.into());
 		execute(swap_config.into());
-	})
+	});
 }
 
 // ----------------------------------------------------------------------------------------------------

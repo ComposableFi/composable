@@ -24,7 +24,7 @@ fn should_fail_if_vamm_does_not_exist() {
 				Error::<MockRuntime>::VammDoesNotExist
 			);
 		},
-	)
+	);
 }
 
 #[test]
@@ -44,14 +44,14 @@ fn should_fail_if_vamm_is_closed() {
 			TestPallet::swap_simulation(&swap_config.into()),
 			Error::<MockRuntime>::VammIsClosed
 		);
-	})
+	});
 }
 
 #[test]
 fn should_not_update_runtime_storage() {
 	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
 		assert_storage_noop!(TestPallet::swap_simulation(&swap_config));
-	})
+	});
 }
 
 #[test]
@@ -62,7 +62,7 @@ fn should_not_modify_runtime_storage_add_base() {
 			direction: Direction::Add,
 			..swap_config
 		}));
-	})
+	});
 }
 
 #[test]
@@ -73,7 +73,7 @@ fn should_not_modify_runtime_storage_remove_base() {
 			direction: Direction::Remove,
 			..swap_config
 		}));
-	})
+	});
 }
 
 #[test]
@@ -84,7 +84,7 @@ fn should_not_modify_runtime_storage_add_quote() {
 			direction: Direction::Add,
 			..swap_config
 		}));
-	})
+	});
 }
 
 #[test]
@@ -95,7 +95,7 @@ fn should_not_modify_runtime_storage_remove_quote() {
 			direction: Direction::Remove,
 			..swap_config
 		}));
-	})
+	});
 }
 
 #[test]
@@ -109,8 +109,8 @@ fn should_return_correct_value_add_base() {
 				..swap_config
 			})
 			.unwrap()
-		)
-	})
+		);
+	});
 }
 
 #[test]
@@ -124,8 +124,8 @@ fn should_return_correct_value_remove_base() {
 				..swap_config
 			})
 			.unwrap()
-		)
-	})
+		);
+	});
 }
 
 #[test]
@@ -139,8 +139,8 @@ fn should_return_correct_value_add_quote() {
 				..swap_config
 			})
 			.unwrap()
-		)
-	})
+		);
+	});
 }
 
 #[test]
@@ -154,8 +154,8 @@ fn should_return_correct_value_remove_quote() {
 				..swap_config
 			})
 			.unwrap()
-		)
-	})
+		);
+	});
 }
 
 // -------------------------------------------------------------------------------------------------

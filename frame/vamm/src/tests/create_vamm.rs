@@ -70,7 +70,7 @@ fn should_fail_if_twap_period_is_less_than_minimum() {
 	};
 	ExtBuilder::default().build().execute_with(|| {
 		assert_noop!(TestPallet::create(&vamm_state), Error::<MockRuntime>::FundingPeriodTooSmall);
-	})
+	});
 }
 
 #[test]
@@ -129,7 +129,7 @@ proptest! {
 			assert_noop!(
 				TestPallet::create(&vamm_config),
 				Error::<MockRuntime>::BaseAssetReserveIsZero);
-		})
+		});
 	}
 
 	#[test]
@@ -141,7 +141,7 @@ proptest! {
 			assert_noop!(
 				TestPallet::create(&vamm_config),
 				Error::<MockRuntime>::QuoteAssetReserveIsZero);
-		})
+		});
 	}
 
 	#[test]
@@ -153,7 +153,7 @@ proptest! {
 			assert_noop!(
 				TestPallet::create(&vamm_config),
 				Error::<MockRuntime>::PegMultiplierIsZero);
-		})
+		});
 	}
 
 	#[test]
@@ -182,7 +182,7 @@ proptest! {
 			let vamm_created = TestPallet::get_vamm(0).unwrap();
 			System::assert_last_event(Event::TestPallet(
 				pallet::Event::Created { vamm_id: 0_u128, state: vamm_created}
-			))
+			));
 		});
 	}
 

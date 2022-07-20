@@ -27,7 +27,7 @@ fn should_fail_if_vamm_does_not_exist() {
 			TestPallet::get_price(0, AssetType::Quote),
 			Error::<MockRuntime>::VammDoesNotExist
 		);
-	})
+	});
 }
 
 #[test]
@@ -52,7 +52,7 @@ fn should_fail_if_vamm_is_closed() {
 				TestPallet::get_price(0, AssetType::Quote),
 				Error::<MockRuntime>::VammIsClosed
 			);
-		})
+		});
 }
 
 #[test]
@@ -69,7 +69,7 @@ fn should_succeed_returning_correct_price() {
 		.execute_with(|| {
 			assert_ok!(TestPallet::get_price(0, AssetType::Base), as_decimal(2));
 			assert_ok!(TestPallet::get_price(0, AssetType::Quote), as_decimal_from_fraction(5, 10));
-		})
+		});
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -97,6 +97,6 @@ proptest! {
 		}.build().execute_with(|| {
 			assert_ok!(TestPallet::get_price(0, AssetType::Base));
 			assert_ok!(TestPallet::get_price(0, AssetType::Quote));
-		})
+		});
 	}
 }

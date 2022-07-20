@@ -54,7 +54,7 @@ fn update_twap_fails_if_vamm_does_not_exist() {
 				TestPallet::update_twap(1, base_twap),
 				Error::<MockRuntime>::VammDoesNotExist
 			);
-		})
+		});
 }
 
 #[test]
@@ -76,7 +76,7 @@ fn update_twap_fails_if_vamm_is_closed() {
 			assert_noop!(TestPallet::update_twap(0, base_twap), Error::<MockRuntime>::VammIsClosed);
 
 			assert_noop!(TestPallet::update_twap(0, None), Error::<MockRuntime>::VammIsClosed);
-		})
+		});
 }
 
 #[test]
@@ -88,7 +88,7 @@ fn update_twap_fails_if_new_twap_is_zero() {
 		.execute_with(|| {
 			run_for_seconds(1);
 			assert_storage_noop!(TestPallet::update_twap(0, base_twap));
-		})
+		});
 }
 
 #[test]
@@ -116,7 +116,7 @@ fn update_twap_fails_if_twap_timestamp_is_more_recent() {
 				TestPallet::update_twap(0, None),
 				Error::<MockRuntime>::AssetTwapTimestampIsMoreRecent
 			);
-		})
+		});
 }
 
 #[test]
@@ -143,7 +143,7 @@ fn should_succeed_updating_twap_correctly() {
 			run_for_seconds(twap_update_delay(0));
 			assert_ok!(TestPallet::update_twap(0, None));
 			assert_ne!(TestPallet::get_vamm(0).unwrap().base_asset_twap, new_twap.unwrap());
-		})
+		});
 }
 
 #[test]
@@ -182,7 +182,7 @@ fn should_update_twap_correctly() {
 			vamm_id,
 			base_twap: vamm_state.base_asset_twap,
 		}));
-	})
+	});
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -222,6 +222,6 @@ proptest! {
 				assert_ok!(
 					TestPallet::update_twap(0, None)
 				);
-			})
+			});
 	}
 }

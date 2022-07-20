@@ -34,7 +34,7 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			assert_ok!(TestPallet::move_price(&move_price_config));
-		})
+		});
 	}
 
 	#[test]
@@ -57,7 +57,7 @@ proptest! {
 				TestPallet::move_price(&move_price_config),
 				Error::<MockRuntime>::VammDoesNotExist
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -84,7 +84,7 @@ proptest! {
 				TestPallet::move_price(&move_price_config),
 				Error::<MockRuntime>::VammIsClosed
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -110,7 +110,7 @@ proptest! {
 				TestPallet::move_price(&move_price_config),
 				Error::<MockRuntime>::BaseAssetReserveIsZero
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -136,7 +136,7 @@ proptest! {
 				TestPallet::move_price(&move_price_config),
 				Error::<MockRuntime>::QuoteAssetReserveIsZero
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -163,7 +163,7 @@ proptest! {
 				move_price_config.base_asset_reserves,
 				move_price_config.quote_asset_reserves).unwrap()
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -197,8 +197,8 @@ proptest! {
 						move_price_config.quote_asset_reserves
 					).unwrap(),
 				}.into()
-			)
-		})
+			);
+		});
 	}
 
 	#[test]
@@ -224,6 +224,6 @@ proptest! {
 					move_price_config.quote_asset_reserves
 				).unwrap()
 			);
-		})
+		});
 	}
 }
