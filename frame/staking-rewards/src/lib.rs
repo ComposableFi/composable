@@ -543,23 +543,31 @@ pub mod pallet {
 						.safe_sub(&inflation)?
 				};
 
-				reward.total_rewards = reward.total_rewards.safe_sub(&inflation)?;
-				let claim = sp_std::cmp::min(claim, reward.total_rewards);
-				reward.total_rewards = reward.total_rewards.safe_sub(&claim)?;
+				let claim = sp_std::cmp::min(
+					(Perbill::one() - rewards_pool.lock.unlock_penalty).mul_ceil(claim),
+					reward.total_rewards.safe_sub(&reward.claimed_rewards)?
+				);
 
-				reward.total_dilution_adjustment =
-					reward.total_dilution_adjustment.safe_sub(&inflation)?;
+				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
 
 				T::Assets::transfer(
 					rewards_pool.asset_id,
 					&Self::pool_account_id(&pool_id),
-					who,
+					&stake.owner,
 					claim,
 					keep_alive,
 				)?;
 			}
 			rewards_pool.rewards =
 				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+
+			T::Assets::transfer(
+				rewards_pool.asset_id,
+				&Self::pool_account_id(&pool_id),
+				&stake.owner,
+				stake.stake,
+				keep_alive,
+			)?;
 
 			RewardPools::<T>::insert(pool_id, rewards_pool);
 			Stakes::<T>::remove(position_id);
