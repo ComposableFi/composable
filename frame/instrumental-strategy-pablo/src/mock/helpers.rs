@@ -3,16 +3,24 @@ use composable_traits::{
 	dex::Amm,
 	instrumental::{Instrumental as InstrumentalTrait, InstrumentalVaultConfig},
 };
-use frame_support::{assert_ok, traits::fungibles::Mutate};
+use frame_support::{
+	assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate,
+	weights::GetDispatchInfo,
+};
 use pallet_pablo::PoolInitConfiguration;
 use primitives::currency::CurrencyId;
-use sp_runtime::{Permill, Perquintill};
+use sp_core::{Encode, H256};
+use sp_runtime::{
+	traits::{BlakeTwo256, Hash},
+	Permill, Perquintill,
+};
 
-use super::runtime::{Instrumental, VaultId};
+use super::runtime::{Call, CollectiveInstrumental, Instrumental, MockRuntime, Origin, VaultId};
 use crate::mock::{
 	account_id::{AccountId, ALICE, BOB},
 	runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
 };
+use pallet_collective::{Error as CollectiveError, Instance1, MemberCount};
 
 pub fn create_pool<BAS, BAM, QAS, QAM, F, BW>(
 	base_asset: BAS,
@@ -82,4 +90,63 @@ where
 	let vault_id = <Instrumental as InstrumentalTrait>::create(config);
 	assert_ok!(vault_id);
 	vault_id.unwrap()
+}
+
+pub fn set_admin_members(members: Vec<AccountId>, members_count: MemberCount) -> Result<(), ()> {
+	assert_ok!(CollectiveInstrumental::set_members(Origin::root(), members, None, members_count,));
+	Ok(())
+}
+
+pub fn make_proposale(
+	proposal: Call,
+	account_id: AccountId,
+	treshold: u32,
+	yes_votes: Option<Vec<AccountId>>,
+) -> DispatchResultWithPostInfo {
+	let proposal_len: u32 = proposal.using_encoded(|p| p.len() as u32);
+	let proposal_weight = proposal.get_dispatch_info().weight;
+	let hash: H256 = BlakeTwo256::hash_of(&proposal);
+	assert_ok!(CollectiveInstrumental::propose(
+		Origin::signed(account_id),
+		treshold,
+		Box::new(proposal),
+		proposal_len
+	));
+	if treshold > 1 {
+		match yes_votes {
+			Some(votes) => {
+				votes.iter().for_each(move |account| {
+					assert_ok!(CollectiveInstrumental::vote(
+						Origin::signed(*account),
+						hash,
+						0,
+						true
+					));
+				});
+				if (votes.len() as u32) < treshold {
+					assert_noop!(
+						CollectiveInstrumental::close(
+							Origin::signed(account_id),
+							hash,
+							0,
+							proposal_weight,
+							proposal_len
+						),
+						CollectiveError::<MockRuntime, Instance1>::TooEarly
+					);
+				} else {
+					assert_ok!(CollectiveInstrumental::close(
+						Origin::signed(account_id),
+						hash,
+						0,
+						proposal_weight,
+						proposal_len
+					));
+				}
+				Some(())
+			},
+			None => None,
+		};
+	}
+	Ok(().into())
 }
