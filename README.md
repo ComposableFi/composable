@@ -1,57 +1,32 @@
 
-<p align="center">
+<br />
+<br />
 
-# Composable Node
-  <img alt="Composable Finance" title="Composable Finance" src="composable.png">
+<p align="center">
+  <img alt="Composable Finance" title="Composable Finance" src="banner.png">
 </p>
 
+<br />
+<br />
 
-[![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/composablefi/composable)](https://github.com/composablefi/composable/tags) [![Twitter](https://img.shields.io/badge/Twitter-gray?logo=twitter)](https://twitter.com/ComposableFin) [![Discord](https://img.shields.io/badge/Discord-gray?logo=discord)](https://discord.gg/pFZn2GCn65) [![Telegram](https://img.shields.io/badge/Telegram-gray?logo=telegram)](https://t.me/ComposableFinanceAnnouncements) [![Medium](https://img.shields.io/badge/Medium-gray?logo=medium)](https://composablefi.medium.com/)
-[![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/45659)
+## Monorepo for Composable Finance
 
+[![Latest Release](https://img.shields.io/github/v/tag/composablefi/composable)][latest-url]
+![Build][build-badge]
+[![Discord][discord-badge]][discord-url]
+[![Bors Enabled][bors-badge]][bors-url]
 
-Picasso is our custom built Kusama parachain, based on the substrate framework.
+[latest-url]: https://github.com/composablefi/composable/tags
+
+[build-badge]: https://github.com/composablefi/composable/actions/workflows/check.yml/badge.svg
+
+[discord-badge]: https://img.shields.io/badge/Discord-gray?logo=discord
+[discord-url]: https://discord.gg/pFZn2GCn65
+
+[bors-badge]: https://bors.tech/images/badge_small.svg
+[bors-url]: https://app.bors.tech/repositories/45659
 
 ## Documentation
 
 To learn more about our ecosystem, vision, and product specifics - visit our 
-[mdbook](https://docs.composable.finance/).
-
-You can also find our cargo docs [here](https://dali.devnets.composablefinance.ninja/doc).
-
-## Install
-
-For linux, FreeBSD, OpenBSD and macOS:
-
-```sh
-rustup update
-rustup update nightly
-rustup target add wasm32-unknown-unknown --toolchain nightly
-git clone https://github.com/composableFi/composable
-cd composable/
-sh scripts/init.sh
-cargo build --release
-```
-
-or you can simply install it with this one-liner:
-
-```sh
-curl https://get.composable.finance | sh
-```
-
-
-## Run  
-
-You may run [Composable parachain with relay chain](scripts/polkadot-launch).
-
-Or via `nix develop .#devnet`.
-
-## Pallets
-
-Picasso ships with multiple custom made pallets such as:
-[Cubic Vault](frame/vault/README.md)
-[Apollo](frame/oracle/README.md)
-
-and several others you can find in the frame folder.
-
-Read more specific information in [our docs folder](docs/).
+[mdbook](https://docs.composablefinance.finance).
