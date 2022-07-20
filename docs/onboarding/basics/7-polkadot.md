@@ -32,7 +32,7 @@ A parachain focussed on DeFi and stablecoins, and one of our partners in the DeF
 
 ## Moonbeam
 
-Another major parachain, focussing on being an Ethereum compatible execution layer. Many protocols jumped over to moonbeam because they did not have to rewrite their contracts.
+Another major parachain, focusing on being an Ethereum compatible execution layer. Many protocols jumped over to moonbeam because they did not have to rewrite their contracts.
 
 Peruse their [wiki](https://docs.moonbeam.network/builders/) too.
 
