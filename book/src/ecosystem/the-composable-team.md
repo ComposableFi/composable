@@ -4,7 +4,7 @@
 
 
 
-The Composable Finance team is made up of individuals dedicated to realize seamless cross-chain user experience and a blockchain-agnostic future of DeFi. There are around 80 people on the Composable team; 40 developers, 12 on Product and QA, 8 on Growth and HR, and 18 on design, marketing and community. Select biographies on our core members are below.
+The Composable Finance team is made up of individuals dedicated to realizing seamless cross-chain user experience and a blockchain-agnostic future of DeFi. There are around 80 people on the Composable team; 40 developers, 12 on Product and QA, 8 on Growth and HR, and 18 on design, marketing and community. Select biographies on our core members are below.
 
 ## 0xbrainjar | Founder & CEO
 
@@ -48,7 +48,7 @@ Cosmin entered the crypto space in 2017, and has had a long career in computer s
 
 ## Seun Lanlege | Bridging Lead 
 
-Seun is bringing his wealth of experience as a former core developer at Parity Technologies to Picasso. Seun is leading the bridging team and harnessing his knowledge and experience to the growth of developing trustless bridging solutions between various networks beyond DotSama including DotSama, IBC, and more. Follow him on [Twitter](https://twitter.com/seunlanlege) or [Medium](https://medium.com/@seunlanlege).
+Seun brings his wealth of experience as a former core developer at Parity Technologies to Picasso. Seun is leading the bridging team and harnessing his knowledge and experience to power the development of trustless bridging solutions between various networks beyond DotSama including DotSama, IBC, and more. Follow him on [Twitter](https://twitter.com/seunlanlege) or [Medium](https://medium.com/@seunlanlege).
 
 ## Pepe Blasco | Solidity lead
 
