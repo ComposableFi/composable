@@ -135,7 +135,7 @@ Below you'll find all content referenced in the onboarding basics. Feel free to 
 - [Sharding Design: Nightshade](https://near.org/papers/nightshade/#introduction)
 
 ### Videos
-- [![Alexander Skidanov on a new NEAR Sharding Design: NightShade](https://img.youtube.com/vi/LFi3SgkBtkA/maxresdefault.jpg)](https://youtu.be/LFi3SgkBtkA)
+- [![Alexander Skidanov Presents Challenges in Designing Shared Blockchain Protocols at Web3 Summit 2019](https://img.youtube.com/vi/fWig0S7cjO0/maxresdefault.jpg)](https://youtu.be/fWig0S7cjO0)
 
 ## IBC
 ---
