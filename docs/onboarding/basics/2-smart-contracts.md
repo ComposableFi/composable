@@ -11,7 +11,7 @@ Appchains have gained popularity in the past few years in the Cosmos and Polkado
 ### Takeaways
 
 - Understand how smart contracts are just rules written by humans.
-- Know smart contracts can only operate on data available onchain and are just limited in their capabilities.
+- Know smart contracts can only operate on data available onchain and are limited in their capabilities.
 
 ## Implementations of VMs
 
