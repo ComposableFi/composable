@@ -413,15 +413,15 @@ pub mod pallet {
 			for (asset_id, reward) in inner_rewards.iter_mut() {
 				match reward_updates.get(asset_id) {
 					Some(reward_update) => {
+						let new_total_rewards =
+							reward.total_rewards.safe_add(&reward_update.amount)?;
+
 						ensure!(
-							reward.max_rewards > reward.total_rewards + reward_update.amount,
+							reward.max_rewards >= new_total_rewards,
 							Error::<T>::MaxRewardExceeded
 						);
 
-						reward.total_rewards = reward
-							.total_rewards
-							.safe_add(&reward_update.amount)
-							.map_err(|_| ArithmeticError::Overflow)?;
+						reward.total_rewards = new_total_rewards;
 						// reward.total_rewards = reward.total_rewards
 						// 	.safe_add(elapsed_time * pool.reward_rate)
 						// 	.map_err(|_| ArithmeticError::Overflow)?;
