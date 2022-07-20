@@ -1573,6 +1573,10 @@ impl_runtime_apis! {
 			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
 		}
 
+		fn child_trie_key() -> Vec<u8> {
+			<Runtime as pallet_ibc::Config>::CHILD_TRIE_KEY.to_vec()
+		}
+
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
 			Ibc::query_balance_with_address(addr).ok()
 		}
@@ -1673,21 +1677,44 @@ impl_runtime_apis! {
 			Transfer::get_denom_traces(key, offset, limit, count_total)
 		}
 
-		fn block_events() -> Vec<pallet_ibc::events::IbcEvent> {
-			let events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter().filter_map(|e| {
-				let frame_system::EventRecord{ event, ..} = *e;
-				match event {
-					Event::Ibc(pallet_ibc::Event::IbcEvents{ events }) => {
-						Some(events)
-					},
-					_ => None
-				}
-			});
+		fn block_events(extrinsic_index: Option<u32>) -> Option<Vec<pallet_ibc::events::IbcEvent>> {
+			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter();
+			if let Some(idx) = extrinsic_index {
+				raw_events.find(|e| {
+					let frame_system::EventRecord{ phase, ..} = &**e;
+					match phase {
+						frame_system::Phase::ApplyExtrinsic(index) => *index == idx,
+						_ => false
+					}
+				}).and_then(|e| {
+					let frame_system::EventRecord{ event, ..} = *e;
+					match event {
+						Event::Ibc(pallet_ibc::Event::IbcEvents{ events }) => {
+								Some(events)
+							},
+						_ => None
+					}
+				})
+			}
+			else {
+				let events = raw_events.filter_map(|e| {
+					let frame_system::EventRecord{ event, ..} = *e;
 
-			events.fold(vec![], |mut events, ev| {
-				events.extend(ev);
-				events
-			})
+					match event {
+						Event::Ibc(pallet_ibc::Event::IbcEvents{ events }) => {
+								Some(events)
+							},
+						_ => None
+					}
+				});
+
+				let events = events.fold(vec![], |mut events, ev| {
+					events.extend(ev);
+					events
+				});
+
+				Some(events)
+			}
 		}
 	}
 	#[cfg(feature = "runtime-benchmarks")]

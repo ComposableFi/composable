@@ -57,11 +57,11 @@ use jsonrpsee::{
 };
 use pallet_ibc::events::IbcEvent;
 use sc_chain_spec::Properties;
-use sc_client_api::ProofProvider;
+use sc_client_api::{BlockBackend, ProofProvider};
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
-use sp_core::storage::ChildInfo;
+use sp_core::{blake2_256, storage::ChildInfo};
 use sp_runtime::{
 	generic::BlockId,
 	traits::{BlakeTwo256, Block as BlockT, Header as HeaderT},
@@ -364,7 +364,11 @@ where
 
 	/// Query newly created clients in block
 	#[method(name = "ibc_queryNewlyCreatedClients")]
-	fn query_newly_created_clients(&self, block_hash: Hash) -> Result<Vec<IdentifiedClientState>>;
+	fn query_newly_created_clients(
+		&self,
+		block_hash: Hash,
+		ext_hash: Hash,
+	) -> Result<IdentifiedClientState>;
 
 	/// Query Ibc Events that were deposited in a series of blocks
 	/// Using String keys because HashMap fails to deserialize when key is not a String
@@ -408,7 +412,8 @@ where
 		+ 'static
 		+ ProvideRuntimeApi<Block>
 		+ HeaderBackend<Block>
-		+ ProofProvider<Block>,
+		+ ProofProvider<Block>
+		+ BlockBackend<Block>,
 	C::Api: IbcRuntimeApi<Block>,
 {
 	fn query_packets(
@@ -478,9 +483,10 @@ where
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		let child_info = ChildInfo::new_default(b"ibc/");
+		let child_trie_key = api
+			.child_trie_key(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to get child trie key"))?;
+		let child_info = ChildInfo::new_default(&child_trie_key);
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
@@ -536,8 +542,10 @@ where
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error querying client state"))?;
 		let mut keys = vec![result.trie_key];
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		let child_info = ChildInfo::new_default(b"ibc/");
+		let child_trie_key = api
+			.child_trie_key(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to get child trie key"))?;
+		let child_info = ChildInfo::new_default(&child_trie_key);
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
@@ -602,8 +610,10 @@ where
 		let consensus_state = AnyConsensusState::decode_vec(&result.consensus_state)
 			.map_err(|_| runtime_error_into_rpc_error("Error querying client consensus state"))?;
 		let mut keys = vec![result.trie_key];
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		let child_info = ChildInfo::new_default(b"ibc/");
+		let child_trie_key = api
+			.child_trie_key(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to get child trie key"))?;
+		let child_info = ChildInfo::new_default(&child_trie_key);
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
@@ -673,8 +683,10 @@ where
 			ibc::core::ics03_connection::connection::ConnectionEnd::decode_vec(&result.connection)
 				.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection end"))?;
 		let mut keys = vec![result.trie_key];
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		let child_info = ChildInfo::new_default(b"ibc/");
+		let child_trie_key = api
+			.child_trie_key(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to get child trie key"))?;
+		let child_info = ChildInfo::new_default(&child_trie_key);
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
@@ -785,8 +797,10 @@ where
 			.ok()
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		let child_info = ChildInfo::new_default(b"ibc/");
+		let child_trie_key = api
+			.child_trie_key(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to get child trie key"))?;
+		let child_info = ChildInfo::new_default(&child_trie_key);
 		let proof = self
 			.client
 			.read_child_proof(
@@ -834,8 +848,10 @@ where
 		let channel = ibc::core::ics04_channel::channel::ChannelEnd::decode_vec(&result.channel)
 			.map_err(|_| runtime_error_into_rpc_error("Failed to decode channel state"))?;
 		let mut keys = vec![result.trie_key];
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		let child_info = ChildInfo::new_default(b"ibc/");
+		let child_trie_key = api
+			.child_trie_key(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to get child trie key"))?;
+		let child_info = ChildInfo::new_default(&child_trie_key);
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
@@ -1124,8 +1140,10 @@ where
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
 		let mut keys = vec![result.trie_key];
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		let child_info = ChildInfo::new_default(b"ibc/");
+		let child_trie_key = api
+			.child_trie_key(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to get child trie key"))?;
+		let child_info = ChildInfo::new_default(&child_trie_key);
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
@@ -1167,8 +1185,10 @@ where
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
 		let mut keys = vec![result.trie_key];
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		let child_info = ChildInfo::new_default(b"ibc/");
+		let child_trie_key = api
+			.child_trie_key(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to get child trie key"))?;
+		let child_info = ChildInfo::new_default(&child_trie_key);
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
@@ -1210,8 +1230,10 @@ where
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
 		let mut keys = vec![result.trie_key];
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		let child_info = ChildInfo::new_default(b"ibc/");
+		let child_trie_key = api
+			.child_trie_key(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to get child trie key"))?;
+		let child_info = ChildInfo::new_default(&child_trie_key);
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
@@ -1248,8 +1270,10 @@ where
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
 		let mut keys = vec![result.trie_key];
-		// todo: get this, somehow, from pallet_ibc::Config::CHILD_TRIE_KEY
-		let child_info = ChildInfo::new_default(b"ibc/");
+		let child_trie_key = api
+			.child_trie_key(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Failed to get child trie key"))?;
+		let child_info = ChildInfo::new_default(&child_trie_key);
 		let proof = self
 			.client
 			.read_child_proof(&at, &child_info, &mut keys.iter_mut().map(|nodes| &nodes[..]))
@@ -1357,38 +1381,54 @@ where
 	fn query_newly_created_clients(
 		&self,
 		block_hash: Block::Hash,
-	) -> Result<Vec<IdentifiedClientState>> {
+		ext_hash: Block::Hash,
+	) -> Result<IdentifiedClientState> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(block_hash);
-		let events = api
-			.block_events(&at)
-			.map_err(|_| runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events"))?;
+		let block = self.client.block(&at).ok().flatten().ok_or_else(|| {
+			runtime_error_into_rpc_error("[ibc_rpc]: failed to find block with provided hash")
+		})?;
+		let extrinsics = block.block.extrinsics();
+		let (ext_index, ..) = extrinsics
+			.iter()
+			.enumerate()
+			.find(|(_, ext)| ext_hash.as_ref() == blake2_256(ext.encode().as_slice()).as_ref())
+			.ok_or_else(|| {
+				runtime_error_into_rpc_error(
+					"[ibc_rpc]: failed to find extrinsic with provided hash",
+				)
+			})?;
+		let events =
+			api.block_events(&at, Some(ext_index as u32)).ok().flatten().ok_or_else(|| {
+				runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events")
+			})?;
 
-		let mut identified_clients = vec![];
-		for e in events {
-			match e {
-				IbcEvent::CreateClient { client_id, .. } => {
-					let result: ibc_primitives::QueryClientStateResponse = api
-						.client_state(&at, client_id.clone())
-						.ok()
-						.flatten()
-						.ok_or_else(|| runtime_error_into_rpc_error("client state to exist"))?;
+		// There should be only one ibc event in this list in this case
+		let event = events
+			.get(0)
+			.ok_or_else(|| runtime_error_into_rpc_error("[ibc_rpc]: failed to read block event"))?
+			.clone();
 
-					let client_state = AnyClientState::decode_vec(&result.client_state)
-						.map_err(|_| runtime_error_into_rpc_error("client state to be valid"))?;
-					let client_state = IdentifiedClientState {
-						client_id: String::from_utf8(client_id).map_err(|_| {
-							runtime_error_into_rpc_error("client id should be valid utf8")
-						})?,
-						client_state: Some(client_state.into()),
-					};
-					identified_clients.push(client_state)
-				},
-				_ => continue,
-			}
+		match event {
+			IbcEvent::CreateClient { client_id, .. } => {
+				let result: ibc_primitives::QueryClientStateResponse = api
+					.client_state(&at, client_id.clone())
+					.ok()
+					.flatten()
+					.ok_or_else(|| runtime_error_into_rpc_error("client state to exist"))?;
+
+				let client_state = AnyClientState::decode_vec(&result.client_state)
+					.map_err(|_| runtime_error_into_rpc_error("client state to be valid"))?;
+				Ok(IdentifiedClientState {
+					client_id: String::from_utf8(client_id).map_err(|_| {
+						runtime_error_into_rpc_error("client id should be valid utf8")
+					})?,
+					client_state: Some(client_state.into()),
+				})
+			},
+			_ =>
+				Err(runtime_error_into_rpc_error("[ibc_rpc]: Could not find client creation event")),
 		}
-
-		Ok(identified_clients)
 	}
 
 	fn query_ibc_events(
@@ -1403,17 +1443,13 @@ where
 				BlockNumberOrHash::Number(block_number) => BlockId::Number(block_number.into()),
 			};
 
-			let temp = api
-				.block_events(&at)
-				.map(|events| {
-					events
-						.into_iter()
-						.filter_map(|event| filter_map_pallet_event::<C, Block>(&at, &api, event))
-						.collect()
-				})
-				.map_err(|_| {
-					runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events")
-				})?;
+			let temp = api.block_events(&at, None).ok().flatten().ok_or_else(|| {
+				runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events")
+			})?;
+			let temp = temp
+				.into_iter()
+				.filter_map(|event| filter_map_pallet_event::<C, Block>(&at, &api, event))
+				.collect();
 			events.insert(block_number_or_hash.to_string(), temp);
 		}
 		Ok(events)
