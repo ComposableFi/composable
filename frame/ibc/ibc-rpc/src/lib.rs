@@ -1398,6 +1398,7 @@ where
 					"[ibc_rpc]: failed to find extrinsic with provided hash",
 				)
 			})?;
+			
 		let events =
 			api.block_events(&at, Some(ext_index as u32)).ok().flatten().ok_or_else(|| {
 				runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events")
@@ -1406,7 +1407,7 @@ where
 		// There should be only one ibc event in this list in this case
 		let event = events
 			.get(0)
-			.ok_or_else(|| runtime_error_into_rpc_error("[ibc_rpc]: failed to read block event"))?
+			.ok_or_else(|| runtime_error_into_rpc_error("[ibc_rpc]: Could not find any ibc event"))?
 			.clone();
 
 		match event {

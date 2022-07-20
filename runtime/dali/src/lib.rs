@@ -1680,18 +1680,10 @@ impl_runtime_apis! {
 		fn block_events(extrinsic_index: Option<u32>) -> Option<Vec<pallet_ibc::events::IbcEvent>> {
 			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter();
 			if let Some(idx) = extrinsic_index {
-				raw_events.find(|e| {
-					let frame_system::EventRecord{ phase, ..} = &**e;
-					match phase {
-						frame_system::Phase::ApplyExtrinsic(index) => *index == idx,
-						_ => false
-					}
-				}).and_then(|e| {
-					let frame_system::EventRecord{ event, ..} = *e;
-					match event {
-						Event::Ibc(pallet_ibc::Event::IbcEvents{ events }) => {
-								Some(events)
-							},
+				raw_events.find_map(|e| {
+					let frame_system::EventRecord{ event, phase, ..} = *e;
+					match (event, phase) {
+						(Event::Ibc(pallet_ibc::Event::IbcEvents{ events }), frame_system::Phase::ApplyExtrinsic(index)) if index == idx => Some(events),
 						_ => None
 					}
 				})
