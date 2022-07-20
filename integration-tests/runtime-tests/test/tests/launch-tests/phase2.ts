@@ -38,7 +38,7 @@ import BN from "bn.js";
  *  - - Stableswap AMM, 0.1% fee.
  */
 // ToDo (D. Roth): Remove `SHORT` tag.
-describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
+describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function () {
   if (!testConfiguration.enabledTests.query.enabled) return;
 
   let api: ApiPromise;
@@ -105,7 +105,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
           data: [result]
         } = await pablo.uniswap.createMarket(
           api,
-          sudoKey,
+          sudoKey, // ToDo: Update to use different wallet!
           composableManagerWallet.publicKey,
           baseAsset,
           quoteAsset,
@@ -166,6 +166,15 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
       describe("Test 2A pool add liquidity", function () {
         it("Users can add liquidity to the pool", async function () {
           this.timeout(2 * 60 * 1000);
+          const ksmBalanceBefore = await api.rpc.assets.balanceOf(
+            ksmAssetId.toString(),
+            liquidityProviderWallet1.publicKey
+          );
+
+          const usdcBalanceBefore = await api.rpc.assets.balanceOf(
+            usdcAssetId.toString(),
+            liquidityProviderWallet1.publicKey
+          );
           const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
             ksmUsdcLpTokenId.toString(),
             liquidityProviderWallet1.publicKey
@@ -181,11 +190,15 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
             minMintAmount,
             true
           );
-          const lpTokenBalanceAfter = await api.rpc.assets.balanceOf(
-            ksmUsdcLpTokenId.toString(),
-            liquidityProviderWallet1.publicKey
-          );
-          expect(new BN(lpTokenBalanceAfter.toString())).to.be.bignumber.greaterThan(
+          await Phase2.verifyPoolLiquidityAdded(
+            api,
+            ksmAssetId,
+            usdcAssetId,
+            ksmUsdcLpTokenId,
+            liquidityProviderWallet1.publicKey,
+            baseAmount,
+            new BN(ksmBalanceBefore.toString()),
+            new BN(usdcBalanceBefore.toString()),
             new BN(lpTokenBalanceBefore.toString())
           );
         });
@@ -642,6 +655,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
       describe("Test 2C:1 trading", function () {
         describe("Test 2C:1 buy", function () {
           it("Users can buy from pool", async function () {
+            this.timeout(2 * 60 * 1000);
             const assetIdToBuy = picaAssetId;
             const amount = 500_000_000_000_000n;
             const minReceive = 0;
@@ -929,7 +943,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
         const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
           api,
           api.createType("PalletPabloPoolConfiguration", {
-            StableSwap: {
+            stableSwap: {
               owner: composableManagerWallet.publicKey,
               pair: {
                 base: baseAsset,
@@ -1241,7 +1255,7 @@ describe.only("[SHORT] Picasso/Pablo Launch Plan - Phase 2", function () {
         const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
           api,
           api.createType("PalletPabloPoolConfiguration", {
-            StableSwap: {
+            stableSwap: {
               owner: composableManagerWallet.publicKey,
               pair: {
                 base: baseAsset,

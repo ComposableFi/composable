@@ -29,7 +29,7 @@ export class Phase2 {
     poolId: BN,
     poolAmount: u128
   ) {
-    const lpTokenId = poolConfig.asConstantProduct.lpToken.add(poolAmount.sub(new BN(1)));
+    const lpTokenId = poolConfig.asConstantProduct.lpToken.add(poolAmount);
     expect(pools.unwrap().asConstantProduct.owner.toString()).to.be.equal(
       poolConfig.asConstantProduct.owner.toString()
     );
@@ -129,25 +129,53 @@ export class Phase2 {
 
   public static async verifyPoolLiquidityAdded(
     api: ApiPromise,
-    baseAssetId: number,
-    quoteAssetId: number,
-    lpTokenId: number,
+    baseAssetId: number | BN,
+    quoteAssetId: number | BN,
+    lpTokenId: number | BN,
+    wallet: AccountId32 | Uint8Array,
+    amount: number | BN | bigint,
+    baseAssetFundsBefore: BN,
+    quoteAssetFundsBefore: BN,
+    lpTokenFundsBefore: BN
+  ) {
+    const { currentBaseAssetFunds, currentQuoteAssetFunds, currentLPTokenAssetFunds } =
+      await this.getLPBLiquidityCheckFunds(api, wallet, baseAssetId, quoteAssetId, lpTokenId);
+
+    expect(new BN(currentBaseAssetFunds.toString())).to.be.bignumber.lessThan(baseAssetFundsBefore);
+    expect(new BN(currentQuoteAssetFunds.toString())).to.be.bignumber.lessThan(quoteAssetFundsBefore);
+    expect(new BN(currentLPTokenAssetFunds.toString())).to.be.bignumber.greaterThan(lpTokenFundsBefore);
+  }
+
+  public static async verifyPoolLiquidityRemoved(
+    api: ApiPromise,
+    baseAssetId: number | BN,
+    quoteAssetId: number | BN,
+    lpTokenId: number | BN,
     wallet: AccountId32 | Uint8Array,
     amount: number,
     baseAssetFundsBefore: BN,
     quoteAssetFundsBefore: BN,
     currentLpTokenFundsBefore: BN
   ) {
-    const currentBaseAssetFunds = await api.rpc.assets.balanceOf(baseAssetId.toString(), wallet);
-    const currentQuoteAssetFunds = await api.rpc.assets.balanceOf(baseAssetId.toString(), wallet);
-    const currentLPTokenAssetFunds = await api.rpc.assets.balanceOf(baseAssetId.toString(), wallet);
-
-    expect(new BN(currentBaseAssetFunds.toString())).to.be.bignumber.lessThan(baseAssetFundsBefore);
-    expect(new BN(currentQuoteAssetFunds.toString())).to.be.bignumber.lessThan(quoteAssetFundsBefore);
-    expect(new BN(currentLPTokenAssetFunds.toString())).to.be.bignumber.greaterThan(currentLpTokenFundsBefore);
+    const { currentBaseAssetFunds, currentQuoteAssetFunds, currentLPTokenAssetFunds } =
+      await this.getLPBLiquidityCheckFunds(api, wallet, baseAssetId, quoteAssetId, lpTokenId);
+    expect(new BN(currentBaseAssetFunds.toString())).to.be.bignumber.greaterThan(baseAssetFundsBefore);
+    expect(new BN(currentQuoteAssetFunds.toString())).to.be.bignumber.greaterThan(quoteAssetFundsBefore);
+    expect(new BN(currentLPTokenAssetFunds.toString())).to.be.bignumber.lessThan(currentLpTokenFundsBefore);
   }
 
-  public static async verifyPoolLiquidityRemoved() {}
+  private static async getLPBLiquidityCheckFunds(
+    api: ApiPromise,
+    wallet: AccountId32 | Uint8Array,
+    baseAssetId: number | BN,
+    quoteAssetId: number | BN,
+    lpTokenId: number | BN
+  ) {
+    const currentBaseAssetFunds = await api.rpc.assets.balanceOf(baseAssetId.toString(), wallet);
+    const currentQuoteAssetFunds = await api.rpc.assets.balanceOf(quoteAssetId.toString(), wallet);
+    const currentLPTokenAssetFunds = await api.rpc.assets.balanceOf(lpTokenId.toString(), wallet);
+    return { currentBaseAssetFunds, currentQuoteAssetFunds, currentLPTokenAssetFunds };
+  }
 
   public static async waitForLBPPoolStarted(api: ApiPromise, poolId: u128 | number | BN) {
     let currentBlock = await api.query.system.number();
