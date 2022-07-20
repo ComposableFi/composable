@@ -30,7 +30,7 @@ One question that every merchant asks is: when do I know that a payment will no 
 ### Takeaways
 
 - Probabilistic finality is strictly worse than deterministic finality.
-- It's still tradeoffs, we pay a price for deterministic finality.
+- There are still tradeoffs, we pay a price for deterministic finality.
 - We live in an imperfect world. Blockchains need to be resilient toward network failures as well as malicious actors.
 
 ## Proof of Stake (PoS)
