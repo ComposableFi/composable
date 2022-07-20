@@ -1,3 +1,4 @@
+src/types/**/*
 src/**/*.js
 test/**/*.js
 mochawesome-report

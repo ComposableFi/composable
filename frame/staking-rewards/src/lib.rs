@@ -325,6 +325,7 @@ pub mod pallet {
 							>::try_from(rewards)
 							.map_err(|_| Error::<T>::RewardConfigProblem)?,
 							total_shares: T::Balance::zero(),
+							claimed_shares: T::Balance::zero(),
 							end_block,
 							lock,
 						},
@@ -726,6 +727,7 @@ pub mod pallet {
 								let reward = Reward {
 									asset_id: reward_currency,
 									total_rewards: reward_increment,
+									claimed_rewards: Zero::zero(),
 									total_dilution_adjustment: T::Balance::zero(),
 									max_rewards: max(reward_increment, DEFAULT_MAX_REWARDS.into()),
 									reward_rate: Perbill::zero(),
