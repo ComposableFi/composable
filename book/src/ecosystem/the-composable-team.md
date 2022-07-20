@@ -2,9 +2,7 @@
 
 ---
 
-
-
-The Composable Finance team is made up of individuals dedicated to realizing seamless cross-chain user experience and a blockchain-agnostic future of DeFi. There are around 80 people on the Composable team; 40 developers, 12 on Product and QA, 8 on Growth and HR, and 18 on design, marketing and community. Select biographies on our core members are below.
+The Composable Finance team is made up of individuals dedicated to realizing a seamless cross-chain user experience and a blockchain-agnostic future of DeFi. There are around 80 people on the Composable team; 40 developers, 12 on Product and QA, 8 on Growth and HR, and 18 on design, marketing, and community. Select biographies of our core members are below.
 
 ## 0xbrainjar | Founder & CEO
 
@@ -56,11 +54,11 @@ Pepe has been around the crypto sphere since 2016 and assists Picasso with Solid
 
 ## 0xBobaFetador | Mosaic Lead
 
-Boba has a passion for understanding incentive structures, game theory, and bot networks for DeFi applications. Boba has experience in capturing cross-chain arbitrage and building arbitrage bots on multiple blockchains. He is currently creating and supporting the development of Mosaic Phase 2. Before Composable, Boba worked as a senior software engineer on high level security GPS software. Follow him on [Twitter](https://mobile.twitter.com/Bobafetador/with_replies)
+Boba has a passion for understanding incentive structures, game theory, and bot networks for DeFi applications. Boba has experience in capturing cross-chain arbitrage and building arbitrage bots on multiple blockchains. He is currently creating and supporting the development of Mosaic Phase 2. Before Composable, Boba worked as a senior software engineer on high-level security GPS software. Follow him on [Twitter](https://mobile.twitter.com/Bobafetador/with_replies)
 
 ## Hussein Ait Lachen | XCVM Lead 
 
-Hussein, also known as 0xcodejug has a passion for functional programming and started his career as a self taught haskeller working in a logistic startup. He got involved in blockchain technology in 2020 and with his background as a Haskeller, Hussein started looking into Cardano and its domain. Hussein joined Mlabs in 2021 and now works as the XCVM lead for Composable. Hussein also loves game hacking and bypassing anti cheats and still does this in his spare time. Follow him on [Twitter](https://twitter.com/0xc0dejug).
+Hussein, also known as 0xcodejug, has a passion for functional programming and started his career as a self taught haskeller working in a logistic startup. He got involved in blockchain technology in 2020, and with his background as a Haskeller, Hussein started looking into Cardano and its domain. Hussein joined Mlabs in 2021 and now works as the XCVM lead for Composable. Hussein also loves game hacking and bypassing anti cheats and still does this in his spare time. Follow him on [Twitter](https://twitter.com/0xc0dejug).
 
 ## Antonio Larriba | Head of Composable Research
 
@@ -68,7 +66,7 @@ Antonio Larriba is a cypherpunk deeply concerned about privacy and true decentra
 
 ## Vim Wickramasinghe | Substrate Lead
 
-Vim is a seasoned software engineer and a technical lead. He has been building financial technology (trading systems, banking, robo advisors etc.) for over 10 years. Having had an interest in crypto since the early days, he took the dive into DeFi in 2018 building on Rust/Substrate. He is passionate about architecting/scaling decentralized products on distributed systems specially Substrate. His career long mission is financial inclusion and independence for all. You can follow him on [LinkedIn](https://www.linkedin.com/in/vimukthicom/) and on [Twitter](https://twitter.com/rustic_cyborg).
+Vim is a seasoned software engineer and a technical lead. He has been building financial technology (trading systems, banking, robo advisors etc.) for over 10 years. Having been interested in crypto since the early days, he took the dive into DeFi in 2018, building on Rust/Substrate. He is passionate about architecting/scaling decentralized products on distributed systems, specially Substrate. His career long mission is financial inclusion and independence for all. You can follow him on [LinkedIn](https://www.linkedin.com/in/vimukthicom/) and on [Twitter](https://twitter.com/rustic_cyborg).
 
 ## Ahmad Wehbi | Head of Growth
 
