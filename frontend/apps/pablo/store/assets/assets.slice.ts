@@ -42,8 +42,28 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
       karura: "none",
       picasso: "201",
     },
-  }
-]
+  },
+  {
+    decimals: 12,
+    symbol: "USDC",
+    icon: "/tokens/usd-coin-usdc.svg",
+    name: "USD Coin",
+    network: {
+      karura: "none",
+      picasso: "131",
+    },
+  },
+  {
+    decimals: 12,
+    symbol: "USDT",
+    icon: "/tokens/usd-coin-usdc.svg",
+    name: "USD Tether",
+    network: {
+      karura: "none",
+      picasso: "130",
+    },
+  },
+];
 
 const createAssetsSlice: StoreSlice<AssetsSlice> = (set) => ({
   supportedAssets: SUPPORTED_ASSETS,

@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import { Container, Box, Grid, useTheme } from "@mui/material";
+import { Container, Box, Grid } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import AccountSettings from "@/components/Organisms/TransactionSettings/AccountSettings";
 import { Alert, Link, PageTitle } from "@/components";

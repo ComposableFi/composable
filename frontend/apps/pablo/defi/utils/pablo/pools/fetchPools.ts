@@ -34,7 +34,7 @@ export async function fetchPool(
       return decodeCpp(decodedPool.ConstantProduct, poolId);
     }
     if ("StableSwap" in decodedPool) {
-      return decodeSsp(decodedPool.ConstantProduct, poolId);
+      return decodeSsp(decodedPool.StableSwap, poolId);
     }
 
     return null;
