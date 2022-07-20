@@ -6,9 +6,7 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
-  dali_wasm: 1
-  picasso_wasm: 1
-  composable_was: 1cons
+
 jobs:
   build-and-publish:
     runs-on:
