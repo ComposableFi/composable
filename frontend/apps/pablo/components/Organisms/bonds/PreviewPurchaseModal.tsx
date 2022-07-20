@@ -24,7 +24,7 @@ const defaultLabelProps = (label: string, balance: string) =>
 export type PreviewPurchaseModalProps = {
   bond: SelectedBondOffer,
   amount: BigNumber;
-  rewardableTokens: string;
+  rewardableTokens: BigNumber;
   onPurchaseBond: () => Promise<any>;
   setAmount: (v: BigNumber) => any;
 } & ModalProps;
@@ -40,13 +40,12 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const { principalAsset, roi } = bond;
+  const { roi } = bond;
   const handleCancelBond = async () => {
     dispatch(closeConfirmingModal());
   };
 
-  let principalSymbol = usePrincipalAssetSymbol(bond.principalAsset);
-  const principalPriceUSD = useUSDPriceByAssetId(bond.selectedBondOffer ?  bond.selectedBondOffer.asset : "none")
+  const principalPriceUSD = useUSDPriceByAssetId(bond.selectedBondOffer ?  bond.selectedBondOffer.asset : "none");
   const bondMarketPrice = principalPriceUSD.times(bond.principalAssetPerBond);
   const rewardPriceUSD = useUSDPriceByAssetId(bond.selectedBondOffer ?  bond.selectedBondOffer.reward.asset : "none");
   const totalRewardsPrice = rewardPriceUSD.times(bond.rewardAssetPerBond);
@@ -79,8 +78,8 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
         <Box mt={8}>
           <Label
             {...defaultLabelProps(
-              "Bonding",
-              `${amount} ${[principalSymbol]}`
+              "Amount of Bonds",
+              `${amount}`
             )}
           />
           <Label

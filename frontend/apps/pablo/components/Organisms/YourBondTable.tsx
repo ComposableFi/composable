@@ -12,9 +12,12 @@ import {
 import Image from "next/image";
 import { BaseAsset, PairAsset } from "../Atoms";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useEffect } from "react";
 import { InfoOutlined } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
+import { useParachainApi, useSelectedAccount } from "@/../../packages/substrate-react/dist";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { fetchVestingSchedulesByAccount } from "@/defi/subsquid/bonds/helpers";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -36,7 +39,17 @@ const tableHeaders: TableHeader[] = [
 
 export const YourBondTable: React.FC = () => {
   const activeBonds: any[] = [];
+
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const router = useRouter();
+  
+  useEffect(() => {
+    if (selectedAccount && parachainApi) {
+      fetchVestingSchedulesByAccount(selectedAccount.address).then(console.log)
+    }
+  }, [parachainApi, selectedAccount]);
+
 
   const handleRowClick = (offerId: number) => {
     router.push(`/bond/select/${offerId}`);

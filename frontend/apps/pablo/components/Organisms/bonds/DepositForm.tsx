@@ -194,7 +194,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
       <PreviewPurchaseModal
         onPurchaseBond={onPurchaseBond}
         bond={bond}
-        rewardableTokens={bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds.toString() : "0"}
+        rewardableTokens={bond.selectedBondOffer ? amount.times(bond.selectedBondOffer.nbOfBonds) : new BigNumber(0)}
         amount={amount}
         setAmount={setAmount}
         open={isOpenPreviewPurchaseModal}

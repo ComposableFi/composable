@@ -1,4 +1,4 @@
-import { queryTotalPurchasedBondsByBondOfferIds } from "./queries";
+import { queryTotalPurchasedBondsByBondOfferIds, queryVestingSchedulesByAccountId } from "./queries";
 import BigNumber from "bignumber.js";
 
 export async function fetchTotalPurchasedBondsByOfferIds(): Promise<Record<string, BigNumber>> {
@@ -29,5 +29,29 @@ export async function fetchTotalPurchasedBondsByOfferIds(): Promise<Record<strin
     console.error(err);
   } finally {
     return totalPurchasedMap;
+  }
+}
+
+interface SubsquidVestingScheduleEntity {
+  scheduleId: string;
+  id: string;
+  from: string;
+  eventId: string;
+  beneficiary: string;
+}
+
+export async function fetchVestingSchedulesByAccount(accountId: string): Promise<SubsquidVestingScheduleEntity[]> {
+  let schedules: SubsquidVestingScheduleEntity[] = [];
+  try {
+    const { data, error } = await queryVestingSchedulesByAccountId(accountId);
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('fetchVestingSchedulesByAccount: Data unavailable.');
+    const { vestingSchedules } = data;
+
+    schedules = vestingSchedules;
+  } catch (err) {
+    console.error(err);
+  } finally {
+    return schedules;
   }
 }
