@@ -1242,8 +1242,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
           });
           it("Pool owner (sudo) can remove liquidity from the pool", async function () {
-            // ToDo: Update when root can create pools!
-            this.skip();
             this.timeout(2 * 60 * 1000);
             const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
               usdcAusdLpTokenId.toString(),
@@ -1518,8 +1516,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
           });
           it("Pool owner can remove liquidity from the pool", async function () {
-            // ToDo: Update when root can create pools!
-            this.skip();
             this.timeout(2 * 60 * 1000);
             const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
               wethKsmPoolId.toString(),
@@ -1769,8 +1765,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
           });
           it("Pool owner can remove liquidity from the pool", async function () {
-            // ToDo: Update when root can create pools!
-            this.skip();
             this.timeout(2 * 60 * 1000);
             const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
               wbtcKsmLpTokenId.toString(),
@@ -2022,7 +2016,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
           });
           it("Pool owner can remove liquidity from the pool", async function () {
-            this.skip();
             this.timeout(2 * 60 * 1000);
             const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
               usdcUsdtLpTokenId.toString(),
