@@ -301,6 +301,7 @@ fn unstake_in_case_of_zero_claims_should_work() {
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let stake_id = StakingRewards::stake_count();
+		let unlock_penalty = StakingRewards::stakes(stake_id).expect("stake expected").lock.unlock_penalty;
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
 
 		assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
@@ -313,8 +314,9 @@ fn unstake_in_case_of_zero_claims_should_work() {
 			)
 		});
 
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount * 2);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), 0_u32.into());
+		let penalty = unlock_penalty.mul_ceil(amount);
+		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount + (amount - penalty));
+		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), penalty);
 	});
 }
 
@@ -341,6 +343,7 @@ fn unstake_in_case_of_not_zero_claims_should_work() {
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let stake_id = StakingRewards::stake_count();
+		let unlock_penalty = StakingRewards::stakes(stake_id).expect("stake expected").lock.unlock_penalty;
 		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
 
 		let mut stake = StakingRewards::stakes(stake_id).expect("stake expected");
@@ -366,8 +369,9 @@ fn unstake_in_case_of_not_zero_claims_should_work() {
 
 		let total_unlock_penalty = 2;
 		let claims = claim * claim_count - total_unlock_penalty;
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount * 2 + claims);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), 2 * amount - claims);
+		let penalty = unlock_penalty.mul_ceil(amount);
+		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount + (amount - penalty) + claims);
+		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), 2 * amount + penalty - claims);
 	});
 }
 

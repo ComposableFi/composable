@@ -523,6 +523,8 @@ pub mod pallet {
 			let stake = Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
 			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
 			ensure!(!stake.reductions.is_empty(), Error::<T>::ReductionConfigProblem);
+			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >
+				T::UnixTime::now().as_secs();
 			let pool_id = stake.reward_pool_id;
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
@@ -544,8 +546,8 @@ pub mod pallet {
 				};
 
 				let claim = sp_std::cmp::min(
-					(Perbill::one() - rewards_pool.lock.unlock_penalty).mul_ceil(claim),
-					reward.total_rewards.safe_sub(&reward.claimed_rewards)?
+					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim),
+					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
 				);
 
 				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
@@ -561,11 +563,17 @@ pub mod pallet {
 			rewards_pool.rewards =
 				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
 
+			let stake_without_penalty = if early_unlock {
+				(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(stake.stake)
+			} else {
+				stake.stake
+			};
+
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				&Self::pool_account_id(&pool_id),
 				&stake.owner,
-				stake.stake,
+				stake_without_penalty,
 				keep_alive,
 			)?;
 
