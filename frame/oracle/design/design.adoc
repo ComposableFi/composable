@@ -79,7 +79,7 @@ skinparam node {
 }
 
 skinparam package {
-  backgroundColor<<price-feed>> LightCyan
+  backgroundColor LightCyan
 }
 
 skinparam cloud {
