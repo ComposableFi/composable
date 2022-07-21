@@ -168,7 +168,7 @@ jobs:
           install: |
                 ls
                 apt-get update -q -y
-                apt-get install -q -y git curl xz
+                apt-get install -q -y git curl xz-utils
                 # NOTE: cannot use ( or ) in next line as it wrapped into script and fails to run of syntax
                 curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
 
