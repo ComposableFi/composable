@@ -177,7 +177,7 @@ benchmarks! {
 
 	}: _(RawOrigin::Signed(user), position_id, validated_ratio)
 
-	udpate_reward {
+	reward_acumulation_hook_reward_update_calculation {
 		let reward = Reward {
 			asset_id: 1_u128.into(),
 			total_rewards: 0_u128.into(),
