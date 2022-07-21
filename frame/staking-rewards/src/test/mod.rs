@@ -366,15 +366,7 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 
 		let mut stake = StakingRewards::stakes(stake_id).expect("stake expected");
 		let unlock_penalty = stake.lock.unlock_penalty;
-		let reductions = stake
-			.reductions
-			.try_mutate(|inner: &mut BTreeMap<_, _>| {
-				for (_asset_id, inflation) in inner.iter_mut() {
-					*inflation -= claim;
-				}
-			})
-			.expect("reductions expected");
-		stake.reductions = reductions;
+		stake.reductions = update_reductions(stake.reductions, claim);
 		Stakes::<Test>::insert(stake_id, stake);
 
 		assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
@@ -435,15 +427,7 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 		let mut stake = StakingRewards::stakes(stake_id).expect("stake expected");
 		let unlock_penalty = stake.lock.unlock_penalty;
 		let stake_duration = stake.lock.duration;
-		let reductions = stake
-			.reductions
-			.try_mutate(|inner: &mut BTreeMap<_, _>| {
-				for (_asset_id, inflation) in inner.iter_mut() {
-					*inflation -= claim;
-				}
-			})
-			.expect("reductions expected");
-		stake.reductions = reductions;
+		stake.reductions = update_reductions(stake.reductions, claim);
 		Stakes::<Test>::insert(stake_id, stake);
 
 		let second_in_milliseconds = 1000;
@@ -683,4 +667,17 @@ fn update_total_rewards_and_total_shares_in_rewards_pool(
 	rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
 	rewards_pool.total_shares = total_shares;
 	RewardPools::<Test>::insert(pool_id, rewards_pool.clone());
+}
+
+fn update_reductions(
+	reductions: Reductions<u128, u128, MaxRewardConfigsPerPool>,
+	claim: u128,
+) -> Reductions<u128, u128, MaxRewardConfigsPerPool> {
+	reductions
+		.try_mutate(|inner: &mut BTreeMap<_, _>| {
+			for (_asset_id, inflation) in inner.iter_mut() {
+				*inflation -= claim;
+			}
+		})
+		.expect("reductions expected")
 }
