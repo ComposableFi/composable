@@ -29,4 +29,4 @@
 ## Documentation
 
 To learn more about our ecosystem, vision, and product specifics - visit our 
-[mdbook](https://docs.composablefinance.finance).
+[mdbook](https://docs.composable.finance).
