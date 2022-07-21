@@ -169,6 +169,7 @@ jobs:
                 ls
                 apt-get update -q -y
                 apt-get install -q -y git
+                # NOTE: cannot use ( or ) in next line as it wrapped into script and fails to run of syntax
                 curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
 
           # Produce a binary artifact and place it in the mounted volume
@@ -176,9 +177,9 @@ jobs:
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
             ls
-            cd /nix-crane
+            cd ./nix-crane
             nix build .#packages.aarch64-linux.codespace-container
-            mv /result /artifacts/aarch64-linux.codespace-container.oci.tar.gz 
+            mv ./result /artifacts/aarch64-linux.codespace-container.oci.tar.gz 
 
       - name: Show the artifact
         # Items placed in /artifacts in the container will be in
