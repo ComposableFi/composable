@@ -69,8 +69,31 @@ Following diagram illustrates an overview of the Apollo design with some minor c
 .Apollo Price Oracle: The System Overview
 [plantuml,images/apollo-overview,png]
 ----
-cloud "Oracle Provider Infra" {
-    node "Picasso Parachain Node" {
+skinparam interface {
+  backgroundColor RosyBrown
+  borderColor orange
+}
+
+skinparam node {
+  backgroundColor<<parachain>> TECHNOLOGY
+}
+
+skinparam package {
+  backgroundColor<<price-feed>> LightCyan
+}
+
+skinparam cloud {
+  backgroundColor Azure
+}
+
+skinparam node {
+  backgroundColor<<price-source>> Lavender
+}
+
+skinparam databaseBackgroundColor SkyBlue
+
+cloud "Oracle Provider Infra" <<oracle-infra>> {
+    node "Picasso Parachain Node" <<parachain>> {
         () "Oracle" as o
         package "Pallet Apollo" {
             Database "PrePrices" as prepricedb
@@ -104,7 +127,7 @@ cloud "Oracle Provider Infra" {
         pricehistorydb --> o
     }
 
-    package "Price Feed Server" {
+    package "Price Feed Server" <<price-feed>> {
         () "Rest API" as papi
         database "Price Cache" as pc
         () "Client 1 - Binance Client" as c1
@@ -124,17 +147,17 @@ cloud "Oracle Provider Infra" {
 ofw <.left.> papi : get price
 
 cloud {
-    node "Price-Source 1 - Binance" as binance {
+    node "Price-Source 1 - Binance" <<price-source>> as binance {
     }
 }
 
 cloud {
-    node "Price-Source 2 - Pyth" as pyth {
+    node "Price-Source 2 - Pyth" <<price-source>> as pyth {
     }
 }
 
 cloud {
-    node ".. Price-Source n" as n {
+    node ".. Price-Source n" <<price-source>> as n {
     }
 }
 
@@ -156,6 +179,11 @@ class Price {
 	price: PriceValue,
 	block: BlockNumber,
 }
+
+note left of Price::block
+The block the price
+was submitted at.
+end note
 ----
 
 ==== Data Structure: PrePrice
@@ -201,6 +229,13 @@ class AssetInfo {
     slash: Balance,
 }
 
+note left of AssetInfo::threshold
+accuracy in terms of a
+percentage of median price.
+This measure needs review
+& improvement.
+end note
+
 note left of AssetInfo::min_answers
 minimum number of
 submitted pre-prices
@@ -211,6 +246,11 @@ note left of AssetInfo::max_answers
 maximum number of
 submitted pre-prices
 accepted for this asset type.
+end note
+
+note left of AssetInfo::block_interval
+Expected frequency of
+updates to the price.
 end note
 
 note left of AssetInfo::reward_weight
@@ -464,7 +504,7 @@ endwhile
 end
 ----
 
-This algorithm is `O(A * P)` Where `A` = number of assets and `P` = number of prices, i.e in the order of the number of assets the prices are required for, by the oracle. Possibly requires optimization to scale so that it won't take up the entire block weight.
+This algorithm is `O(A * P)` Where `A` = number of assets tracked and `P` = number of prices. This possibly requires optimization to scale so that it won't take up the entire block weight.
 
 .update_prices: update_pre_prices prunes PrePrices storage
 [plantuml,images/update-prices-1-update-pre-prices,png]
@@ -567,6 +607,7 @@ start
 :rewarded_oracles = [];
 while(answer = pre_prices.next())
     :accuracy = (median_price - abs(answer - median_price)) / median_price * 100;
+    note left: Can improve on this statistic
     if (accuracy < asset_info.threshold) then
         :OracleStake[answer.who] -= asset_info.slash;
         :transfer slash_amount to treasury;
@@ -604,6 +645,13 @@ TODO
 ==== Key Management
 
 == Rollout
+
+== Future Improvements
+
+* [ ] Measure and improve on_initialize algorithm to use less block weight(possibly reusing some of the looping logic) or use a block fold abstraction when processing prices.
+* [ ] Use a better statistical measure(standard deviation?) when assessing accuracy compare threshold of a provided price by an oracle.
+* [ ] Possibly set maximum on `AssetInfo.max_answers` field. Use the field to short circuit the any additional logic that might be performed unnecessarily on pre_prices.
+* [ ] Improve the median for price accuracy calculation.
 
 == References
 
