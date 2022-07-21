@@ -118,6 +118,71 @@ jobs:
   #         cd nix-crane
   #         cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed -L
 
+
+
+  build-arm64-docker:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
+
+    # Run steps on a matrix of 3 arch/distro combinations
+    strategy:
+      matrix:
+        include:
+          - arch: aarch64
+            distro: ubuntu20.04
+
+    steps:
+      - uses: actions/checkout@v2.1.0
+      - uses: uraimo/run-on-arch-action@v2
+        name: Build artifact
+        id: build
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
+
+          # Not required, but speeds up builds
+          githubToken: ${{ github.token }}
+
+          # Create an artifacts directory
+          setup: |
+            mkdir -p "${PWD}/artifacts"
+
+          # Mount the artifacts directory as /artifacts in the container
+          dockerRunArgs: |
+            --volume "${PWD}/artifacts:/artifacts"
+
+          # Pass some environment variables to the container
+          env: | # YAML, but pipe character is necessary
+            artifact_name: git-${{ matrix.distro }}_${{ matrix.arch }}
+
+          # The shell to run commands with in the container
+          shell: /bin/sh
+
+          # Install some dependencies in the container. This speeds up builds if
+          # you are also using githubToken. Any dependencies installed here will
+          # be part of the container image that gets cached, so subsequent
+          # builds don't have to re-install them. The image layer is cached
+          # publicly in your project's package repository, so it is vital that
+          # no secrets are present in the container state or logs.
+          install: |
+                apt-get update -q -y
+                apt-get install -q -y git
+
+          # Produce a binary artifact and place it in the mounted volume
+          run: |
+            cp $(which git) "/artifacts/${artifact_name}"
+            echo "Produced artifact at /artifacts/${artifact_name}"
+
+      - name: Show the artifact
+        # Items placed in /artifacts in the container will be in
+        # ${PWD}/artifacts on the host.
+        run: |
+          ls -al "${PWD}/artifacts"
+
   codespace-devcontainer:
     # NOTE: so we want new container be publish iff all is ready and works
     # needs: package-node
@@ -143,12 +208,12 @@ jobs:
           name: ${{  env.NIX_CACHIX }}
       - run: |
           cd nix-crane
-          # TODO: use buildx to merge          
-          # @dz-pc-11:~/git/blockchain/polkadot/composable/nix-crane$ nix build .#packages.aarch64-linux.codespace-container
+          # TODO: use buildx to merge
+          # ISSUE: cannot build not on arm          
+          # nix build .#packages.aarch64-linux.codespace-container
           # warning: Git tree '/home/dz/git/blockchain/polkadot/composable' is dirty
           # error: a 'aarch64-linux' with features {} is required to build '/nix/store/pr7gzckrjqw1p2gxh4qwmmh3ydrdqf9b-builder.pl.drv', but I am a 'x86_64-linux' with features {benchmark, big-parallel, kvm, nixos-test}
-          # NOTE: naive attemp to buidl
-          nix build .#packages.aarch64-linux.codespace-container
+          # nix build .#packages.aarch64-linux.codespace-container
           nix build .#packages.x86_64-linux.codespace-container
       - uses: docker/login-action@v1 
         with:
