@@ -90,4 +90,8 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	fn reward_acumulation_hook_reward_update_calculation() -> Weight {
 		10_000
 	}
+
+	fn unix_time_now() -> Weight {
+		10_000
+	}
 }

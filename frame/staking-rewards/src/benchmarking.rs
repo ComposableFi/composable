@@ -191,5 +191,7 @@ benchmarks! {
 		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), 1.into(), reward, T::UnixTime::now().as_secs());
 	}
 
+	unix_time_now {}: {T::UnixTime::now()}
+
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
 }

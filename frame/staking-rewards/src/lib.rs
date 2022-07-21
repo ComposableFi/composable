@@ -66,7 +66,7 @@ pub mod pallet {
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			tokens::WithdrawConsequence,
-			UnixTime,
+			TryCollect, UnixTime,
 		},
 		transactional, PalletId,
 	};
@@ -304,7 +304,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Weight: see `begin_block`
-		fn on_initialize(n: T::BlockNumber) -> Weight {
+		fn on_initialize(_: T::BlockNumber) -> Weight {
 			Self::acumulate_rewards_hook()
 		}
 	}
@@ -767,29 +767,27 @@ pub mod pallet {
 					// REVIEW(benluelo): this cast is *probably* safe, but
 					// should be verified somehow
 					.take(periods_surpassed as usize)
-					.try_fold(reward.total_rewards, |total_amount, amount| {
-						match total_amount
+					.try_fold(reward.total_rewards, |current_total_amount, amount| {
+						match current_total_amount
 							.safe_add(&amount)
 							.map(|new_rewards| (new_rewards, new_rewards <= reward.max_rewards))
 						{
-							Ok((new_rewards, true)) => Ok(new_rewards),
-							// max rewards hit
-							Ok((new_rewards, false)) => Ok(new_rewards),
-							// overflow
-							Err(_) => Err(total_amount),
+							Ok((new_total_amount, true)) => Ok(new_total_amount),
+							// max rewards hit or overflow
+							// REVIEW(benluelo): Partial rewards accumulation?
+							// i.e. max rewards is 100, amount is 30, period is 1 second; after 4
+							// seconds the total accumulated will be 120, but that's more than
+							// themax amount so it gets reverted to 9.
+							Ok((_, false)) | Err(_) => {
+								Self::deposit_event(Event::<T>::RewardAccumulationError {
+									pool_id,
+									asset_id,
+								});
+								Err(current_total_amount)
+							},
 						}
-					});
-
-				let new_total_rewards = match new_total_rewards {
-					Ok(amount) => amount,
-					Err(amount) => {
-						Self::deposit_event(Event::<T>::RewardAccumulationError {
-							pool_id,
-							asset_id,
-						});
-						amount
-					},
-				};
+					})
+					.unwrap_or_else(sp_std::convert::identity);
 
 				(
 					asset_id,
@@ -817,8 +815,7 @@ pub mod pallet {
 								pool_id, asset_id, reward, now,
 							)
 						})
-						.collect::<BTreeMap<_, _>>()
-						.try_into()
+						.try_collect()
 						// SAFETY(benluelo): No elements were added to the BTreeMap; the only
 						// operation was `.map()`. This unwrap will be unnecessary once this is
 						// merged and we update to whatever version it's included in:
@@ -833,7 +830,7 @@ pub mod pallet {
 				// hence the double iteration.
 				.collect::<Vec<_>>()
 				.into_iter()
-				.fold(0, |total_weights, (pool_id, reward_pool)| {
+				.fold(T::WeightInfo::unix_time_now(), |total_weights, (pool_id, reward_pool)| {
 					// 128 bit platforms don't exist as of writing this so this cast should be ok
 					let amount_of_rewards_in_pool = reward_pool.rewards.len() as u64;
 
