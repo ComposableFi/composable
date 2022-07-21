@@ -185,6 +185,7 @@ benchmarks! {
 			max_rewards: 100.into(),
 			reward_rate: RewardRate::per_second(1.into(), 1.try_into_validated().unwrap()),
 			last_updated_timestamp: 0,
+			claimed_rewards: 0_u128.into()
 		};
 	}: {
 		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), 1.into(), reward, T::UnixTime::now().as_secs());
