@@ -177,19 +177,19 @@
                 os = "linux";
                 arch = "amd64"; # seems, this is correct mapping for this case
                 imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
-                sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+                sha256 = "1sd4sszgrfxh1a982g0psi9w26247wjxmw3pr6p0vfdg9ckmbvji";
             };
             aarch64-linux ={
                 os = "linux";
                 arch = "arm64"; # seems, this is correct mapping for this case
                 imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
-                sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+                sha256 = "1sd4sszgrfxh1a982g0psi9w26247wjxmw3pr6p0vfdg9ckmbvji";
             };
             aarch64-darwin ={
                 os = "linux"; # macos runs linuxes
                 arch = "arm64";
                 imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
-                sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+                sha256 = "1sd4sszgrfxh1a982g0psi9w26247wjxmw3pr6p0vfdg9ckmbvji";
             };
            };
         nix-to-container-image = system: 
@@ -335,7 +335,7 @@
               arch = "amd64";
               imageName = "mcr.microsoft.com/vscode/devcontainers/base";
               imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
-              sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+              sha256 = "1sd4sszgrfxh1a982g0psi9w26247wjxmw3pr6p0vfdg9ckmbvji";
               finalImageName = "mcr.microsoft.com/vscode/devcontainers/base";
               finalImageTag = "0-bullseye"; # TODO: specify exact version of build will be broken in case of cache clean g0.202.7-bullseye
             };
