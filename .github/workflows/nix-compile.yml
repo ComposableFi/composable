@@ -179,8 +179,8 @@ jobs:
                 echo "switching to user"
                 su - vscode
                 whoami
-                sudo -u vscode sh
-                whoami
+                sudo --user vscode sh
+                whoami                                
                 su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
                 #curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
                 # NOTE: does not work
@@ -192,7 +192,8 @@ jobs:
             echo "compiling"
             ls
             whoami
-            curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+            sudo --user vscode sh
+            whoami                                
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
             cd ./nix-crane
