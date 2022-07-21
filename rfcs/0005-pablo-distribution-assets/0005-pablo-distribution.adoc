@@ -190,7 +190,7 @@ Each pool in Pablo defines a fee percentage to be charged for each trade.Except 
 
 [source,rust]
 ----
-include::../../frame/composable-traits/src/dex.rs[lines=152..163]
+include::../../frame/composable-traits/src/dex.rs[lines=166..177]
 ----
 
 *Existing code must be modified to use this data structure*.
@@ -321,9 +321,15 @@ In general,
 
 stem:[d_n = "Any reduction in reward"]
 
-===== When removing a staker from the pool the above addition step has to be reverted
+===== When removing a staker(Claim/Unstake) from the pool the above addition step has to be reverted
 
-This can be done by subtracting the stem:[d_n] of the staker from the total pool and reducing the pool shares accordingly.
+The n+1 stakers claim stem:[x_(n + 1)] is given by (1). With the reward rate based rewards added in after time stem:[delta t] and replacing stem:[P_(current) = P_(old)] and substituting stem:[d_n],
+
+stem:[x_(n+1) = (P_(old) + P_(old).S_(n+1)/(sum S_n) + r.delta t).S_(n+1)/(sum S_(n+1)) - P_(old).S_(n+1)/(sum S_n)]
+
+stem:[x_(n+1) = r.delta t.S_(n+1)/(sum S_(n+1))]
+
+Therefore, the adjustment made above for the total reward pool works as expected for claims for the all the stakers. As this relationship holds for any number of stakers the total reward pool need not be adjusted when removing a staker.
 
 ===== When adding a new reward to the pool the calculations remain the same other than increasing the reward pool as follows,
 
@@ -361,7 +367,7 @@ Staking rewards pallet already uses the following data structure representing a 
 
 [source,rust]
 ----
-include::../../frame/composable-traits/src/staking/mod.rs[lines=122..138]
+include::../../frame/composable-traits/src/staking/mod.rs[lines=135..150]
 ----
 
 Which is referred to in the algorithms in the followin sections.
@@ -370,12 +376,12 @@ Now in order to allow redeeming the above staking position, following data struc
 
 [source,rust]
 ----
-include::../../frame/composable-traits/src/staking/mod.rs[lines=20..40]
+include::../../frame/composable-traits/src/staking/mod.rs[lines=20..43]
 ----
 
 [source,rust]
 ----
-include::../../frame/composable-traits/src/staking/mod.rs[lines=61..79]
+include::../../frame/composable-traits/src/staking/mod.rs[lines=64..88]
 ----
 
 Following sections describe the algorithms for various operations on the rewards pool based on these data structures.
@@ -458,14 +464,17 @@ start
 ->assetId\npositionId;
 :rewards_pool = readStorage(assetId);
 :position = readStorage(positionId);
+:penalty = reward_pool.lock.unlock_penalty;
 while (reward = rewards_pool.rewards.has_next) is (yes)
     :claim = reward.total_rewards * position.shares /\nrewards_pool.total_shares - position.reductions[reward.asset_id];
-    :reward.total_rewards -= position.reductions[reward.asset_id];
-    :reward.total_inflation -= position.reductions[reward.asset_id];
+    note right: as per section 5.3.1.2
+    :claim = min(claim * (1 - penalty), reward.total_rewards - reward.claimed_rewards);
     :transfer(claim);
+    :reward.claimed_rewards += claim;
 endwhile (no)
-:rewards_pool.total_shares -= position.shares;
+:transfer(position.stake);
 :remove(position);
+:rewards_pool.claimed_shares += position.shares;
 :save(rewards_pool);
 stop
 ----

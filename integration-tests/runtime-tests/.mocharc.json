@@ -15,15 +15,9 @@
   "retries": 2,
   "ui": "bdd",
   "trace-warnings": true,
-  "watch-files": [
-    "src/**/*.ts"
-  ],
-  "watch-ignore": [
-    "lib/vendor"
-  ],
-  "require": [
-    "mochawesome/register"
-  ],
+  "watch-files": ["src/**/*.ts"],
+  "watch-ignore": ["lib/vendor"],
+  "require": ["mochawesome/register"],
   "full-trace": true,
   "parallel": false,
   "recursive": true,

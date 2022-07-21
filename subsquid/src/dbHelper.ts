@@ -18,6 +18,7 @@ export async function getLatestPoolByPoolId<T extends { id: string }>(
   return store.get<PabloPool>(PabloPool, {
     where: { poolId },
     order: { calculatedTimestamp: "DESC" },
+    relations: ["poolAssets"],
   });
 }
 

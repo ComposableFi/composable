@@ -179,8 +179,10 @@ impl<const ID: u128, const EXPONENT: u8> codec::Encode for Currency<ID, EXPONENT
 	}
 }
 
-// separate module so that the `allow` attribute isn't appllied to the entirety of the currency
+// separate module so that the `allow` attribute isn't applied to the entirety of the currency
 // module or per item.
+// TODO: make macro which takes `type` name as `symbol` and produce static `map` from id to
+// metadata.
 pub mod defs {
 	#![allow(clippy::upper_case_acronyms)]
 

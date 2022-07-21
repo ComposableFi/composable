@@ -1,54 +1,12 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-04-22T18:59:06.829836435Z -->
+<!-- Generated at 2022-07-05T22:23:23.979589572Z -->
 
 # Staking Rewards Pallet Extrinsics
 
-## Configure
+## Create Reward Pool
 
-[`configure`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.configure)
+[`create_reward_pool`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.create_reward_pool)
 
-Enable a protocol staking configuration.
+Create a new reward pool based on the config.
 
-Arguments
-
-* `origin` the origin that signed this extrinsic, must be `T::GovernanceOrigin`.
-* `staking_configuration` the staking configuration for the given protocol `asset`.
-
-## Stake
-
-[`stake`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.stake)
-
-Stake an amount of protocol asset tokens. Generating an NFT for the staked position.
-
-Arguments
-
-* `origin` the origin that signed this extrinsic. Must be the owner of the NFT targeted
-  by `instance_id`.
-* `amount` the amount of tokens to stake.
-* `duration` the duration for which the tokens will be staked.
-* `keep_alive` whether to keep the caller account alive or not.
-
-## Unstake
-
-[`unstake`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.unstake)
-
-Unstake an amount of protocol asset tokens.
-
-Arguments
-
-* `origin` the origin that signed this extrinsic. Must be the owner of the NFT targeted
-  by `instance_id`.
-* `instance_id` the ID of the NFT that represent our staked position.
-* `to` the account in which the rewards will be transferred before unstaking.
-
-## Claim
-
-[`claim`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.claim)
-
-Claim the current available rewards.
-
-Arguments
-
-* `origin` the origin that signed this extrinsic. Can be anyone. by `instance_id`.
-* `instance_id` the ID of the NFT that represent our staked position.
-* `to` the account in which the rewards will be transferred.
+Emits `RewardPoolCreated` event when successful.

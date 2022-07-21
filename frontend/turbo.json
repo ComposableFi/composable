@@ -2,7 +2,7 @@
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "storybook-static", "coverage", "eslint_report.json"]
+      "outputs": ["dist/**", ".next/**", "storybook-static/**", "coverage/**", "eslint_report.json"]
     },
     "lint": {
       "outputs": []

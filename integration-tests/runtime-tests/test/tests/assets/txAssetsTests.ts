@@ -24,13 +24,13 @@ import BN from "bn.js";
  * - Mint Into
  * - Burn From
  */
-describe("tx.assets Tests", function() {
+describe("tx.assets Tests", function () {
   if (!testConfiguration.enabledTests.tx.enabled) return;
 
   let api: ApiPromise;
   let sudoKey: KeyringPair, senderWallet: KeyringPair;
 
-  before("Setting up the tests", async function() {
+  before("Setting up the tests", async function () {
     this.timeout(60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
@@ -40,23 +40,23 @@ describe("tx.assets Tests", function() {
     senderWallet = devWalletBob.derive("/tests/assets/transferTestSenderWallet");
   });
 
-  before("Providing funds for tests", async function() {
+  before("Providing funds for tests", async function () {
     this.timeout(5 * 60 * 1000);
     await mintAssetsToWallet(api, sudoKey, sudoKey, [1]);
     await mintAssetsToWallet(api, senderWallet, sudoKey, [1, 4]);
   });
 
-  after("Closing the connection", async function() {
+  after("Closing the connection", async function () {
     await api.disconnect();
   });
 
   /**
    * The `transfer` extrinsic transfers any `asset` from `origin` to `dest`.
    */
-  describe("tx.assets.transfer Tests", function() {
+  describe("tx.assets.transfer Tests", function () {
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
-    it("[SHORT] A wallet can `transfer` KSM to another wallet", async function() {
+    it("[SHORT] A wallet can `transfer` KSM to another wallet", async function () {
       this.timeout(2 * 60 * 1000);
 
       const paraAsset = api.createType("u128", 4);
@@ -96,10 +96,10 @@ describe("tx.assets Tests", function() {
   /**
    * The `transfer_native` extrinsic transfers the blockchains native asset (PICA) from `origin` to `dest`.
    */
-  describe("tx.assets.transferNative Tests", function() {
+  describe("tx.assets.transferNative Tests", function () {
     if (!testConfiguration.enabledTests.tx.transferNative__success) return;
 
-    it("[SHORT] A wallet can `transfer_native` asset PICA to another wallet", async function() {
+    it("[SHORT] A wallet can `transfer_native` asset PICA to another wallet", async function () {
       this.timeout(2 * 60 * 1000);
       const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
       const paraAmount = api.createType("Balance", 100000000000);
@@ -137,10 +137,10 @@ describe("tx.assets Tests", function() {
   /**
    * The `force_transfer` extrinsic transfers any `asset` from `origin` to `dest` with sudo privileges.
    */
-  describe("tx.assets.forceTransfer Tests", function() {
+  describe("tx.assets.forceTransfer Tests", function () {
     if (!testConfiguration.enabledTests.tx.forceTransfer__success) return;
 
-    it("A *sudo* wallet can `forceTransfer` KSM to another wallet", async function() {
+    it("A *sudo* wallet can `forceTransfer` KSM to another wallet", async function () {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
       const paraSource = senderWallet.publicKey;
@@ -183,10 +183,10 @@ describe("tx.assets Tests", function() {
    * The `force_transfer_native` extrinsic transfers the blockchains native asset (PICA) from `origin` to `dest`
    * with sudo privileges.
    */
-  describe("tx.assets.force_transfer_native Tests", function() {
+  describe("tx.assets.force_transfer_native Tests", function () {
     if (!testConfiguration.enabledTests.tx.forceTransferNative__success) return;
 
-    it("A *sudo* wallet can `force_transfer_native` token to another wallet", async function() {
+    it("A *sudo* wallet can `force_transfer_native` token to another wallet", async function () {
       this.timeout(2 * 60 * 1000);
       const paraSource = senderWallet.publicKey;
       const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
@@ -219,10 +219,10 @@ describe("tx.assets Tests", function() {
   /**
    * The `transfer_all` extrinsic transfers the remaining balance of a specified `asset` from `origin` to `dest`.
    */
-  describe("tx.assets.transfer_all Tests", function() {
+  describe("tx.assets.transfer_all Tests", function () {
     if (!testConfiguration.enabledTests.tx.transferAll__success) return;
 
-    it("A wallet can `transfer_all` remaining KSM to another wallet", async function() {
+    it("A wallet can `transfer_all` remaining KSM to another wallet", async function () {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
       const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
@@ -262,10 +262,10 @@ describe("tx.assets Tests", function() {
    * The `transfer_all_native` extrinsic transfers the remaining balance of the blockchains native asset (PICA)
    * from `origin` to `dest`.
    */
-  describe("tx.assets.transfer_all_native Tests", function() {
+  describe("tx.assets.transfer_all_native Tests", function () {
     if (!testConfiguration.enabledTests.tx.transferAllNative__success) return;
 
-    it("A wallet can `transfer_all_native` PICA tokens to another wallet", async function() {
+    it("A wallet can `transfer_all_native` PICA tokens to another wallet", async function () {
       this.timeout(2 * 60 * 1000);
       const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
       const paraKeepAlive = api.createType("bool", false);
@@ -307,10 +307,10 @@ describe("tx.assets Tests", function() {
   /**
    * The `mint_initialize` extrinsic creates a new asset & mints a defined `amount` into the `dest` wallet.
    */
-  describe("tx.assets.mint_initialize Tests", function() {
+  describe("tx.assets.mint_initialize Tests", function () {
     if (!testConfiguration.enabledTests.tx.mintInitialize) return;
 
-    it("A *sudo* wallet can `mint_initialize` a new asset to another wallet", async function() {
+    it("A *sudo* wallet can `mint_initialize` a new asset to another wallet", async function () {
       this.timeout(2 * 60 * 1000);
       const paraAmount = api.createType("u128", 100000000000);
       const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
@@ -350,10 +350,10 @@ describe("tx.assets Tests", function() {
    * > or if the `governance_origin` is set to an owned account, using signed transactions.
    * > In general the governance_origin should be generated from the pallet id.
    */
-  describe("tx.assets.mint_initialize_with_governance Tests", function() {
+  describe("tx.assets.mint_initialize_with_governance Tests", function () {
     if (!testConfiguration.enabledTests.tx.mintInitializeWithGovernance) return;
 
-    it("A *sudo* wallet can `mint_initialize_with_governance` a new asset to another wallet", async function() {
+    it("A *sudo* wallet can `mint_initialize_with_governance` a new asset to another wallet", async function () {
       this.timeout(2 * 60 * 1000);
       const paraAmount = api.createType("u128", 100000000000);
       const paraGovernanceOrigin = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
@@ -381,10 +381,10 @@ describe("tx.assets Tests", function() {
   /**
    * The `mint_into` extrinsic mints `amount` of `asset_id` into `dest` wallet.
    */
-  describe("tx.assets.mint_into Tests", function() {
+  describe("tx.assets.mint_into Tests", function () {
     if (!testConfiguration.enabledTests.tx.mintInto) return;
 
-    it("A *sudo* wallet can `mintInto` KSM to another wallet", async function() {
+    it("A *sudo* wallet can `mintInto` KSM to another wallet", async function () {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
       const paraAmount = api.createType("u128", 100000000000);
@@ -415,12 +415,12 @@ describe("tx.assets Tests", function() {
   /**
    * The `burn_from` extrinsic burns `amount` of `asset_id` of `dest` wallet.
    */
-  describe("tx.assets.burn_from Tests", function() {
+  describe("tx.assets.burn_from Tests", function () {
     // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.burnFrom) return;
 
     // it(name, function) describes a single test.
-    it("A *sudo* wallet can `burn_from` KSM from another wallet", async function() {
+    it("A *sudo* wallet can `burn_from` KSM from another wallet", async function () {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
       const paraAmount = api.createType("u128", 50000000000);
