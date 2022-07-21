@@ -97,8 +97,8 @@ export async function fetchBondVestingSchedules(
       return filteredSchedules.some(fs => fs?.bondOfferId.eq(i.offerId))
     });
 
-    const vs = await Promise.all(offers.map(i => fetchVestingSchedule(parachainApi, accountId, i.reward.asset)));
 
+    const vs = await Promise.all(offers.map(i => fetchVestingSchedule(parachainApi, accountId, i.reward.asset)));
     console.log('vs', vs);
 
   } catch (err) {
