@@ -168,7 +168,7 @@ jobs:
           install: |
                 ls
                 apt-get update -q -y
-                apt-get install -q -y git curl xz-utils
+                apt-get install -q -y git curl xz-utils sudo
                 # NOTE: cannot use ( or ) in next line as it wrapped into script and fails to run of syntax
                 echo "getting nix"
                 
