@@ -173,11 +173,13 @@ jobs:
                 echo "getting nix"
                 
                 adduser --quiet --gecos "" --disabled-password vscode
+                passwd -d vscode
                 mkdir -m 0755 /nix && chown vscode /nix
 
                 echo "switching to user"
                 su - vscode
-                curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+                su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
+                #curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
                 # NOTE: does not work
                 # curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
                 # sh nix-2.10.3-install.sh --daemon                
