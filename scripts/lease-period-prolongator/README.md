@@ -1,5 +1,7 @@
 # lease-period-prolongator
 
+This script allows updating a parachain lease period.
+
 ## Build
 
 ```bash
@@ -14,11 +16,11 @@ yarn start
 
 ### Environment variables
 
-| Name         | Default             |
-| ------------ | ------------------- |
-| NODE_URL     | ws://localhost:9944 |
-| PARA_ID      | 2000                |
-| LEASE_PERIOD | 365 (days)          |
+| Name         | Default             | Notes |
+| ------------ | ------------------- | ----- |
+| NODE_URL     | ws://localhost:9944 |       |
+| PARA_ID      | 2000                |       |
+| LEASE_PERIOD | 365                 | days  |
 
 
 ## Docker
