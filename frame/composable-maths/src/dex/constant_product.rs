@@ -13,7 +13,7 @@ use sp_runtime::{
 
 /// From https://balancer.fi/whitepaper.pdf, equation (2)
 /// Compute the spot price of an asset pair.
-/// - `wi` the weight on the quote asset
+/// - `wi` the weight of the quote asset
 /// - `wo` the weight of the base asset
 /// - `bi` the pool quote balance
 /// - `bo` the pool base balance
@@ -162,4 +162,31 @@ pub fn compute_deposit_lp(
 		let lp_to_mint = safe_multiply_by_rational(lp_total_issuance, base_amount, pool_base_aum)?;
 		Ok((overwritten_quote_amount, lp_to_mint))
 	}
+}
+
+/// Compute the share of an LP provider for an existing non-empty pool in the case with a single
+/// asset.
+///
+/// From https://balancer.fi/whitepaper.pdf, equation (25):
+///
+/// - `amount` the amount deposited;
+/// - `balance` the pool balance;
+/// - `weight` the weight of asset;
+/// - `lp_supply` the total LP already issued to other LP providers.
+#[inline(always)]
+pub fn compute_deposit_lp_single_asset<T: PerThing>(
+	amount: u128,
+	balance: u128,
+	weight: T,
+	lp_supply: u128,
+) -> Result<u128, ArithmeticError>
+where
+	T::Inner: Into<u32>,
+{
+	let weight = weight.deconstruct().into();
+	let amount_div_balance = amount.safe_div(&balance)?;
+	let value_ratio = (1_u128 + amount_div_balance)
+		.checked_pow(weight)
+		.ok_or(ArithmeticError::Overflow)?;
+	Ok(lp_supply.safe_mul(&value_ratio.safe_sub(&1_u128)?)?)
 }
