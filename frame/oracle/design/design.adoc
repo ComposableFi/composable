@@ -149,10 +149,10 @@ The following sections drill down into these components and others in more detai
 === Component: Pallet Apollo
 ==== Data Structure: Price
 
+Represents a price of an asset accepted by the Oracle.
 [plantuml,images/price,png]
 ----
 class Price {
-    /// value
 	price: PriceValue,
 	block: BlockNumber,
 }
@@ -160,19 +160,35 @@ class Price {
 
 ==== Data Structure: PrePrice
 
+Represents a price submitted by an Oracle provider.
+
 [plantuml,images/pre-price,png]
 ----
 class PrePrice {
-    // The price of an asset, normalized to 12 decimals.
     price: PriceValue,
-    // The block the price was submitted at.
     block: BlockNumber,
-    // The account that submitted the price.
     who: AccountId,
 }
+
+note left of PrePrice::price
+The price of an asset,
+normalized to 12 decimals.
+end note
+
+note left of PrePrice::block
+The block the price
+was submitted at.
+end note
+
+note left of PrePrice::who
+The account that
+submitted the price.
+end note
 ----
 
 ==== Data Structure: AssetInfo
+
+Represents the asset information for an asset that prices would be tracked for in the oracle.
 
 [plantuml,images/asset-info,png]
 ----
@@ -181,11 +197,34 @@ class AssetInfo {
     min_answers: u32,
     max_answers: u32,
     block_interval: BlockNumber,
-    // Reward allocation weight for this asset
-    // type out of the total block reward.
     reward_weight: Balance,
     slash: Balance,
 }
+
+note left of AssetInfo::min_answers
+minimum number of
+submitted pre-prices
+required for this asset type.
+end note
+
+note left of AssetInfo::max_answers
+maximum number of
+submitted pre-prices
+accepted for this asset type.
+end note
+
+note left of AssetInfo::reward_weight
+Reward allocation weight
+for this asset type out
+of the total block reward.
+end note
+
+note left of AssetInfo::slash
+Amount slashed for submitting
+a price beyond the
+accepted error threshold
+end note
+
 ----
 
 ==== Storage: AssetsInfo
@@ -407,9 +446,142 @@ endif
 stop
 ----
 
-==== Algorithm: on_init Hook
+==== Algorithm: on_initialize Hook
 
-- slashing - answer in transit?
+.on_initialize: update_prices
+[plantuml,images/on-initialize-1-update-prices,png]
+----
+start
+->block;
+:total_weight = 0;
+while (asset_id, asset_info = AssetsInfo.iter().next())
+    :ok, pre_prices, removed_pre_prices_len = update_pre_prices(asset_id, asset_info, block);
+    if (ok) then (yes)
+        :total_weight += removed_pre_prices_len;
+        :update_price(asset_id, asset_info, block, pre_prices);
+    endif
+endwhile
+end
+----
+
+This algorithm is `O(A * P)` Where `A` = number of assets and `P` = number of prices, i.e in the order of the number of assets the prices are required for, by the oracle. Possibly requires optimization to scale so that it won't take up the entire block weight.
+
+.update_prices: update_pre_prices prunes PrePrices storage
+[plantuml,images/update-prices-1-update-pre-prices,png]
+----
+start
+->asset_id, asset_info, block;
+if (length of PrePrices[asset_id] > asset_info.min_answers) then (yes)
+    :staled_prices, pruned_prices = prune_old_pre_prices(asset_info, PrePrices[asset_id], block);
+    :for each staled_prices emit AnswerPruned;
+    :PrePrices[asset_id] = pruned_prices;
+endif
+end
+----
+
+.update_pre_prices: prune_old_pre_prices prunes PrePrices storage based on stale_price config
+[plantuml,images/update-pre-prices-1-prune-old-prices,png]
+----
+start
+->asset_info, pre_prices, block;
+:stale_block = block - config[stale_price];
+note left
+A price is considered
+stale of it was
+submitted earlier
+than stale_block
+end note
+:stale_prices, fresh_prices = pre_prices, [];
+while (index, p = pre_prices.next())
+    if (p.block >= stale_block) then (yes)
+        :remove_price_in_transit(p.who, asset_info);
+        :stale_prices, fresh_prices = split pre_prices from split index to end;
+    endif
+endwhile
+:fresh_prices = fresh_prices[0..asset_info.max_answers];
+:return stale_prices, fresh_prices;
+end
+----
+
+NOTE: AnswerInTransit seems not to be used for anything?
+
+.update_prices: update_price calculates and updates the actual asset price based on the already pruned pre_prices.
+[plantuml,images/update-prices-2-update-price,png]
+----
+start
+->asset_id, asset_info, block, pre_prices;
+if (length of pre_prices > == asset_info.min_answers) then (yes)
+    :price = calculate_price(pre_prices, asset_info);
+    :Prices[asset_id] = price;
+    if (length of PriceHistory > config[max_history]) then (yes)
+        :remove PriceHistory[asset_id][0];
+    endif
+    :PriceHistory[asset_id].append(price);
+endif
+end
+----
+
+.update_price: calculate_price calculates the actual price for asset
+[plantuml,images/update-price-1-calculate-price,png]
+----
+start
+->pre_prices,asset_info;
+:median_price = get_median_price(pre_prices);
+:sum_of_prices, number_of_prices = 0;
+while(answer = pre_prices.next())
+    :accuracy = (median_price - abs(answer - median_price)) / median_price * 100;
+    if (accuracy >= asset_info.threshold) then
+        :sum_of_prices += answer;
+        :number_of_prices++;
+    endif
+endwhile
+:return sum_of_prices / number_of_prices;
+end
+----
+
+.calculate_price: get_median_price calculates the median price for an asset among pre-prices
+[plantuml,images/calculate-price-1-get-median-price,png]
+----
+start
+->pre_prices;
+:numbers = [];
+while (pre_price = pre_prices.next())
+    :numbers.append(converted pre_price);
+endwhile
+:quick_sort(numbers);
+:mid = numbers.len() / 2;
+if (numbers.len() % 2 == 0) then (yes)
+    :median = numbers[mid - 1] + numbers[mid] / 2;
+else
+    :median =  numbers[mid];
+endif
+:return median;
+end
+----
+
+.update_price: handle_payout pays the reward out
+[plantuml,images/update-price-2-handle-payout,png]
+----
+start
+->pre_prices, price, asset_id, asset_info;
+:rewarded_oracles = [];
+while(answer = pre_prices.next())
+    :accuracy = (median_price - abs(answer - median_price)) / median_price * 100;
+    if (accuracy < asset_info.threshold) then
+        :OracleStake[answer.who] -= asset_info.slash;
+        :transfer slash_amount to treasury;
+    else
+        :rewarded_oracles.append(answer.who);
+    endif
+endwhile
+:reward_tracker = RewardTrackerStore.value;
+:reward_amount_per_oracle = reward_tracker.current_block_reward *
+asset_info.reward_weight / reward_tracker.total_reward_weight;
+:transfer reward_amount_per_oracle to all rewarded_oracles;
+end
+----
+
+For further details on rewarding refer https://github.com/ComposableFi/composable/blob/main/frame/oracle/design/rewards/rewards-design.md[rewards-design].
 
 === Component: Price Feed Server
 
