@@ -69,8 +69,34 @@ type PabloPoolAsset @entity {
 }
 
 type BondedFinanceBondOffer @entity {
+  id: ID!
+  eventId: String!
+  offerId: String!
   "Total amount of purchased bonds"
   totalPurchased: BigInt!
   "Beneficiary account for the bond offer"
   beneficiary: String!
+}
+
+type ScheduleWindow {
+  start: BigInt!
+  period: BigInt!
+  kind: String!
+}
+
+type Schedule {
+  window: ScheduleWindow!
+  periodCount: BigInt!
+  perPeriod:BigInt!
+}
+
+type VestingSchedule @entity {
+  id: ID!
+  eventId: String!
+  "{accoundId}-{assetId}"
+  scheduleId: String!
+  "'To' account for the vesting schedule"
+  beneficiary: String!
+  "Vesting schedule"
+  schedule: Schedule!
 }

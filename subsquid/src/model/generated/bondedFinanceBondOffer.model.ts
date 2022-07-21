@@ -10,6 +10,12 @@ export class BondedFinanceBondOffer {
   @PrimaryColumn_()
   id!: string
 
+  @Column_("text", {nullable: false})
+  eventId!: string
+
+  @Column_("text", {nullable: false})
+  offerId!: string
+
   /**
    * Total amount of purchased bonds
    */

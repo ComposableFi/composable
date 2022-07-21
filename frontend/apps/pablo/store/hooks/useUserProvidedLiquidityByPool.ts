@@ -1,5 +1,5 @@
 import { calcaulateProvidedLiquidity } from "@/defi/utils";
-import { liquidityTransactionsByAddressAndPool } from "@/subsquid/queries/pools";
+import { liquidityTransactionsByAddressAndPool } from "@/defi/subsquid/pools/queries";
 import { useEffect, useMemo, useState } from "react";
 import { useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
