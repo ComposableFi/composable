@@ -1,5 +1,5 @@
-import { queryTotalPurchasedBondsByBondOfferIds } from "@/subsquid/queries/bonds";
 import BigNumber from "bignumber.js";
+import { queryTotalPurchasedBondsByBondOfferIds } from "../../subsquid/bonds/queries";
 
 export async function fetchTotalPurchasedBondsByOfferIds(): Promise<Record<string, BigNumber>> {
   let totalPurchasedMap: Record<string, BigNumber> = {};
