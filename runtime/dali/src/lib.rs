@@ -1689,7 +1689,7 @@ impl_runtime_apis! {
 				}).unwrap_or_default()
 			}
 			else {
-				let events = raw_events.filter_map(|e| {
+				raw_events.filter_map(|e| {
 					let frame_system::EventRecord{ event, ..} = *e;
 
 					match event {
@@ -1698,9 +1698,7 @@ impl_runtime_apis! {
 							},
 						_ => None
 					}
-				}).flatten().collect();
-
-				events
+				}).flatten().collect()
 			}
 		}
 	}
