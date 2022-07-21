@@ -421,7 +421,34 @@ pub fn submit_price(
 		) -> DispatchResultWithPostInfo;
 ----
 
-TODO: Algo
+
+.Extrinsic: SubmitPrice
+[plantuml,images/extrinsic-submit-price,png]
+----
+start
+->origin, price, asset_id;
+:author = ensure origin is signed;
+:author_stake = OracleStake.get(author);
+:ensure is_requested;
+note left: refer algorithm for is_requested\nin Offchain Worker
+:ensure author_stake >= config[min_stake] + AnswerInTransit[author];
+note left
+an answer in transit
+could be slashed later
+hence it has to be taken
+into account.
+end note
+:asset_info = AssetInfo[asset_id];
+:ensure asset_info.slash <= author_stake;
+:current_prices = PrePrices[asset_id];
+:ensure length of current_prices < asset_info.max_answers;
+:ensure current_prices does not contain
+a price submitted by the author;
+:current_prices.append(price);
+:AnswerInTransit[author] += asset_info.slash;
+:publish PriceSubmitted Event;
+end
+----
 
 ==== Algorithm: Offchain Worker
 
@@ -543,7 +570,7 @@ endwhile
 end
 ----
 
-NOTE: AnswerInTransit seems not to be used for anything?
+NOTE: `AnswerInTransit` is used to calculate the minimum stake required to submit a price. Refer submit_price extrinsic.
 
 .update_prices: update_price calculates and updates the actual asset price based on the already pruned pre_prices.
 [plantuml,images/update-prices-2-update-price,png]
