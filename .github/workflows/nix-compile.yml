@@ -153,7 +153,8 @@ jobs:
 
           # Mount the artifacts directory as /artifacts in the container
           dockerRunArgs: |
-            --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}:/"
+            # --volume "${PWD}:/"
+            --volume "${PWD}/artifacts:/artifacts" 
 
           # Pass some environment variables to the container
           env: | # YAML, but pipe character is necessary
@@ -184,7 +185,6 @@ jobs:
         # Items placed in /artifacts in the container will be in
         # ${PWD}/artifacts on the host.
         run: |
-
           ls -al "${PWD}/artifacts"
 
   codespace-devcontainer:
