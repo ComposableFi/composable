@@ -33,8 +33,7 @@ fn test_create_reward_pool() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		assert_eq!(StakingRewards::pool_count(), 0);
-		let pool_init_config = get_default_reward_pool();
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		assert_eq!(StakingRewards::pool_count(), 1);
 
 		assert_last_event::<Test, _>(|e| {
@@ -59,18 +58,12 @@ fn stake_in_case_of_low_balance_should_not_work() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(StakingRewards::stake_count(), 0);
 
-		let pool_init_config = get_default_reward_pool();
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let (staker, pool_id, amount, duration_preset) =
 			(ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
 
 		let asset_id = StakingRewards::pools(pool_id).expect("asset_id expected").asset_id;
-		assert_eq!(
-			<<Test as crate::Config>::Assets as Inspect<
-				<Test as frame_system::Config>::AccountId,
-			>>::balance(asset_id, &staker),
-			0
-		);
+		assert_eq!(balance(asset_id, &staker), 0);
 
 		assert_noop!(
 			StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset),
@@ -87,12 +80,11 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		System::set_block_number(1);
 		assert_eq!(StakingRewards::stake_count(), 0);
 
-		let pool_init_config = get_default_reward_pool();
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let (staker, pool_id, amount, duration_preset) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
 
-		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 2).expect("an asset minting expected");
+		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
+		mint_assets(vec![staker], vec![staked_asset_id], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		assert_eq!(StakingRewards::stake_count(), 1);
@@ -115,8 +107,8 @@ fn stake_in_case_of_zero_inflation_should_work() {
 				},
 			})
 		);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
+		assert_eq!(balance(staked_asset_id, &staker), amount);
+		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
 		assert_last_event::<Test, _>(|e| {
 			matches!(
 				e.event,
@@ -133,21 +125,12 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		System::set_block_number(1);
 		assert_eq!(StakingRewards::stake_count(), 0);
 
-		let pool_init_config = get_default_reward_pool();
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let (staker, pool_id, amount, duration_preset, total_rewards, total_shares) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR, 100, 200);
 
-		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 2).expect("an asset minting expected");
-
-		let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
-		let mut inner_rewards = rewards_pool.rewards.into_inner();
-		for (_asset_id, reward) in inner_rewards.iter_mut() {
-			reward.total_rewards += total_rewards;
-		}
-		rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
-		rewards_pool.total_shares = total_shares;
-		RewardPools::<Test>::insert(pool_id, rewards_pool.clone());
+		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
+		mint_assets(vec![staker], vec![staked_asset_id], amount * 2);
+		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		assert_eq!(StakingRewards::stake_count(), 1);
@@ -171,8 +154,8 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 				},
 			})
 		);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
+		assert_eq!(balance(staked_asset_id, &staker), amount);
+		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
 		assert_last_event::<Test, _>(|e| {
 			matches!(
 				e.event,
@@ -189,8 +172,7 @@ fn test_extend_stake_amount() {
 		assert_eq!(StakingRewards::pool_count(), 0);
 		assert_eq!(StakingRewards::stake_count(), 0);
 
-		let pool_init_config = get_default_reward_pool();
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
         let staker = ALICE;
         let pool_id =  StakingRewards::pool_count();
         let amount = 100_500u32.into();
@@ -199,17 +181,9 @@ fn test_extend_stake_amount() {
         let total_rewards = 100;
         let total_shares =  200;
 
-		let asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(asset_id, &staker, amount * 3).expect("an asset minting expected");
-
-		let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
-		let mut inner_rewards = rewards_pool.rewards.into_inner();
-		for (_asset_id, reward) in inner_rewards.iter_mut() {
-			reward.total_rewards += total_rewards;
-		}
-		rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
-		rewards_pool.total_shares = total_shares;
-		RewardPools::<Test>::insert(pool_id, rewards_pool.clone());
+		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
+		mint_assets(vec![staker], vec![staked_asset_id], amount * 2);
+		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
@@ -242,8 +216,8 @@ fn test_extend_stake_amount() {
 				},
 			})
 		);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &staker), amount);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, &StakingRewards::pool_account_id(&pool_id)), amount + extend_amount);
+		assert_eq!(balance(staked_asset_id, &staker), amount);
+		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount + extend_amount);
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
             Event::StakingRewards(crate::Event::StakeAmountExtended { position_id, amount})
@@ -269,13 +243,12 @@ fn not_owner_of_stake_can_not_unstake() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(StakingRewards::stake_count(), 0);
 
-		let pool_init_config = get_default_reward_pool();
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let (owner, not_owner, pool_id, amount, duration_preset) = (ALICE, BOB, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
 		assert_ne!(owner, not_owner);
 
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(staked_asset_id, &owner, amount * 2).expect("an asset minting expected");
+		mint_assets(vec![owner, not_owner], vec![staked_asset_id], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(owner), pool_id, amount, duration_preset));
 
@@ -292,17 +265,16 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		System::set_block_number(1);
 		assert_eq!(StakingRewards::stake_count(), 0);
 
-		let pool_init_config = get_default_reward_pool();
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let (staker, pool_id, amount, duration_preset) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
 
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count()).expect("asset_id expected").asset_id;
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(staked_asset_id, &staker, amount * 2).expect("an asset minting expected");
+		mint_assets(vec![staker], vec![staked_asset_id], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let stake_id = StakingRewards::stake_count();
 		let unlock_penalty = StakingRewards::stakes(stake_id).expect("stake expected").lock.unlock_penalty;
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(staked_asset_id, &staker), amount);
+		assert_eq!(balance(staked_asset_id, &staker), amount);
 
 		assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
 		assert_eq!(StakingRewards::stakes(stake_id), None);
@@ -315,8 +287,8 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		});
 
 		let penalty = unlock_penalty.mul_ceil(amount);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(staked_asset_id, &staker), amount + (amount - penalty));
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), penalty);
+		assert_eq!(balance(staked_asset_id, &staker), amount + (amount - penalty));
+		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), penalty);
 	});
 }
 
@@ -324,30 +296,21 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
-		let pool_init_config = get_default_reward_pool();
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let (staker, pool_id, amount, duration_preset, total_rewards, total_shares, claim) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR, 100, 200, 50);
 
 		let rewards_pool = StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
 		let staked_asset_id = rewards_pool.asset_id;
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(staked_asset_id, &staker, amount * 2).expect("an asset minting expected");
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(staked_asset_id, &StakingRewards::pool_account_id(&pool_id), amount * 2).expect("an asset minting expected");
-		for (asset_id, _) in rewards_pool.rewards.iter() {
-			<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(*asset_id, &StakingRewards::pool_account_id(&pool_id), amount * 2).expect("an asset minting expected");
-		}
-
-		let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
-		let mut inner_rewards = rewards_pool.rewards.into_inner();
-		for (_asset_id, reward) in inner_rewards.iter_mut() {
-			reward.total_rewards += total_rewards;
-		}
-		rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
-		rewards_pool.total_shares = total_shares;
-		RewardPools::<Test>::insert(pool_id, rewards_pool);
+		mint_assets(
+			vec![staker, StakingRewards::pool_account_id(&pool_id)],
+			vec![staked_asset_id].iter().chain(rewards_pool.rewards.iter().map(|(asset_id, _inflation)| asset_id)).cloned().collect::<Vec<_>>(),
+			amount * 2,
+		);
+		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let stake_id = StakingRewards::stake_count();
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(staked_asset_id, &staker), amount);
+		assert_eq!(balance(staked_asset_id, &staker), amount);
 
 		let mut stake = StakingRewards::stakes(stake_id).expect("stake expected");
 		let unlock_penalty = stake.lock.unlock_penalty;
@@ -372,11 +335,11 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 		let penalty = unlock_penalty.mul_ceil(amount);
 		let claim_with_penalty = (Perbill::one() - unlock_penalty).mul_ceil(claim);
 		let rewards_pool = StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(staked_asset_id, &staker), amount * 2 - penalty);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount * 2 + penalty);
+		assert_eq!(balance(staked_asset_id, &staker), amount * 2 - penalty);
+		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount * 2 + penalty);
 		for (asset_id, _) in rewards_pool.rewards.iter() {
-			assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(*asset_id, &staker), claim_with_penalty);
-			assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(*asset_id, &StakingRewards::pool_account_id(&pool_id)), amount * 2 - claim_with_penalty);
+			assert_eq!(balance(*asset_id, &staker), amount * 2 + claim_with_penalty);
+			assert_eq!(balance(*asset_id, &StakingRewards::pool_account_id(&pool_id)), amount * 2 - claim_with_penalty);
 		}
 	});
 }
@@ -385,30 +348,21 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
-		let pool_init_config = get_default_reward_pool();
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let (staker, pool_id, amount, duration_preset, total_rewards, total_shares, claim) = (ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR, 100, 200, 50);
 
 		let rewards_pool = StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
 		let staked_asset_id = rewards_pool.asset_id;
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(staked_asset_id, &staker, amount * 2).expect("an asset minting expected");
-		<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(staked_asset_id, &StakingRewards::pool_account_id(&pool_id), amount * 2).expect("an asset minting expected");
-		for (asset_id, _) in rewards_pool.rewards.iter() {
-			<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(*asset_id, &StakingRewards::pool_account_id(&pool_id), amount * 2).expect("an asset minting expected");
-		}
-
-		let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
-		let mut inner_rewards = rewards_pool.rewards.into_inner();
-		for (_asset_id, reward) in inner_rewards.iter_mut() {
-			reward.total_rewards += total_rewards;
-		}
-		rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
-		rewards_pool.total_shares = total_shares;
-		RewardPools::<Test>::insert(pool_id, rewards_pool);
+		mint_assets(
+			vec![staker, StakingRewards::pool_account_id(&pool_id)],
+			vec![staked_asset_id].iter().chain(rewards_pool.rewards.iter().map(|(asset_id, _inflation)| asset_id)).cloned().collect::<Vec<_>>(),
+			amount * 2,
+		);
+		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let stake_id = StakingRewards::stake_count();
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(staked_asset_id, &staker), amount);
+		assert_eq!(balance(staked_asset_id, &staker), amount);
 
 		let mut stake = StakingRewards::stakes(stake_id).expect("stake expected");
 		let unlock_penalty = stake.lock.unlock_penalty;
@@ -434,11 +388,11 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 		});
 
 		let rewards_pool = StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(staked_asset_id, &staker), amount * 2);
-		assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount * 2);
+		assert_eq!(balance(staked_asset_id, &staker), amount * 2);
+		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount * 2);
 		for (asset_id, _) in rewards_pool.rewards.iter() {
-			assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(*asset_id, &staker), claim);
-			assert_eq!(<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(*asset_id, &StakingRewards::pool_account_id(&pool_id)), amount * 2 - claim);
+			assert_eq!(balance(*asset_id, &staker), amount * 2 + claim);
+			assert_eq!(balance(*asset_id, &StakingRewards::pool_account_id(&pool_id)), amount * 2 - claim);
 		}
 	});
 }
@@ -617,4 +571,27 @@ where
 	F: FnOnce(&EventRecord<Event, H256>) -> bool,
 {
 	assert!(matcher(System::events().last().expect("events expected")));
+}
+
+fn mint_assets(accounts: Vec<Public>, asset_ids: Vec<u128>, amount: u128) {
+	for account in accounts.iter() {
+		for asset_id in asset_ids.iter() {
+			<<Test as crate::Config>::Assets as Mutate<<Test as frame_system::Config>::AccountId>>::mint_into(*asset_id, account, amount).expect("an asset minting expected");
+		}
+	}
+}
+
+fn balance(asset_id: u128, account: &Public) -> u128 {
+	<<Test as crate::Config>::Assets as Inspect<<Test as frame_system::Config>::AccountId>>::balance(asset_id, account)
+}
+
+fn update_total_rewards_and_total_shares_in_rewards_pool(pool_id: u16, total_rewards: u128, total_shares: u128) {
+	let mut rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
+	let mut inner_rewards = rewards_pool.rewards.into_inner();
+	for (_asset_id, reward) in inner_rewards.iter_mut() {
+		reward.total_rewards += total_rewards;
+	}
+	rewards_pool.rewards = inner_rewards.try_into().expect("rewards expected");
+	rewards_pool.total_shares = total_shares;
+	RewardPools::<Test>::insert(pool_id, rewards_pool.clone());
 }
