@@ -544,13 +544,11 @@ pub mod pallet {
 						.safe_div(&rewards_pool.total_shares)?
 						.safe_sub(&inflation)?
 				};
-
 				let claim = sp_std::cmp::min(
 					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim),
 					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
 				);
 				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
-
 				T::Assets::transfer(
 					reward.asset_id,
 					&Self::pool_account_id(&pool_id),
