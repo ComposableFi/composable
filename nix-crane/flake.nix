@@ -331,6 +331,7 @@
             name = "codespace-simplespace";
             fromImage = dockerTools.pullImage {
               os = "linux";
+              #arch = "arm64";
               arch = "amd64";
               imageName = "mcr.microsoft.com/vscode/devcontainers/base";
               imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
