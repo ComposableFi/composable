@@ -154,9 +154,8 @@ jobs:
             mkdir --parents "${PWD}/artifacts"
             mkdir --parents "${PWD}/git"
 
-          # Mount the artifacts directory as /artifacts in the container
           dockerRunArgs: |
-            --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}:/git"
+            --volume "${PWD}/artifacts:/artifacts"
 
           # Pass some environment variables to the container
           env: | # YAML, but pipe character is necessary
