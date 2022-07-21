@@ -1398,11 +1398,10 @@ where
 					"[ibc_rpc]: failed to find extrinsic with provided hash",
 				)
 			})?;
-			
-		let events =
-			api.block_events(&at, Some(ext_index as u32)).ok().flatten().ok_or_else(|| {
-				runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events")
-			})?;
+
+		let events = api
+			.block_events(&at, Some(ext_index as u32))
+			.map_err(|_| runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events"))?;
 
 		// There should be only one ibc event in this list in this case
 		let event = events
@@ -1444,7 +1443,7 @@ where
 				BlockNumberOrHash::Number(block_number) => BlockId::Number(block_number.into()),
 			};
 
-			let temp = api.block_events(&at, None).ok().flatten().ok_or_else(|| {
+			let temp = api.block_events(&at, None).map_err(|_| {
 				runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events")
 			})?;
 			let temp = temp

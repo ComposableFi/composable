@@ -1677,7 +1677,7 @@ impl_runtime_apis! {
 			Transfer::get_denom_traces(key, offset, limit, count_total)
 		}
 
-		fn block_events(extrinsic_index: Option<u32>) -> Option<Vec<pallet_ibc::events::IbcEvent>> {
+		fn block_events(extrinsic_index: Option<u32>) -> Vec<pallet_ibc::events::IbcEvent> {
 			let mut raw_events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter();
 			if let Some(idx) = extrinsic_index {
 				raw_events.find_map(|e| {
@@ -1686,7 +1686,7 @@ impl_runtime_apis! {
 						(Event::Ibc(pallet_ibc::Event::IbcEvents{ events }), frame_system::Phase::ApplyExtrinsic(index)) if index == idx => Some(events),
 						_ => None
 					}
-				})
+				}).unwrap_or_default()
 			}
 			else {
 				let events = raw_events.filter_map(|e| {
@@ -1700,7 +1700,7 @@ impl_runtime_apis! {
 					}
 				}).flatten().collect();
 
-				Some(events)
+				events
 			}
 		}
 	}

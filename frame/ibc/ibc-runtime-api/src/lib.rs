@@ -77,6 +77,6 @@ sp_api::decl_runtime_apis! {
 		/// Key is the asset id from which to start looking up results
 		fn denom_traces(key: Option<u128>, offset: Option<u32>, limit: u64, count_total: bool) -> QueryDenomTracesResponse;
 
-		fn block_events(extrinsic_index: Option<u32>) -> Option<Vec<pallet_ibc::events::IbcEvent>>;
+		fn block_events(extrinsic_index: Option<u32>) -> Vec<pallet_ibc::events::IbcEvent>;
 	}
 }
