@@ -14,7 +14,7 @@ import {
   createVestingSchedule,
   processVestingScheduleAddedEvent,
 } from "../src/vestingProcessor";
-import { VestingSchedule as VestingScheduleType } from "../src/types/v2300";
+import { VestingSchedule as VestingScheduleType } from "../src/types/v2400";
 import { VestingVestingScheduleAddedEvent } from "../src/types/events";
 import { expect } from "chai";
 
@@ -42,11 +42,13 @@ const MOCK_VESTING_SCHEDULE: VestingScheduleType = {
 function assertVestingSchedule(
   vestingSchedule: VestingSchedule,
   beneficiary: string,
+  from: string,
   eventId: string,
   assetId: string,
   schedule: Schedule
 ) {
   const expectedScheduleId = `${beneficiary}-${assetId}`;
+  expect(vestingSchedule.from).to.equal(from);
   expect(vestingSchedule.eventId).to.equal(eventId);
   expect(vestingSchedule.scheduleId).to.equal(expectedScheduleId);
   expect(vestingSchedule.beneficiary).to.equal(beneficiary);
@@ -56,6 +58,7 @@ function assertVestingSchedule(
 async function assertVestingScheduleAddedEvent(
   ctx: EventHandlerContext,
   storeMock: Store,
+  from: Uint8Array,
   beneficiary: Uint8Array,
   assetId: string,
   schedule: Schedule
@@ -65,6 +68,7 @@ async function assertVestingScheduleAddedEvent(
   assertVestingSchedule(
     arg as unknown as VestingSchedule,
     encodeAccount(beneficiary),
+    encodeAccount(from),
     ctx.event.id,
     assetId,
     schedule
@@ -85,7 +89,7 @@ function createVestingScheduleAddedEvent(
     schedule,
   };
 
-  when(eventMock.asV2300).thenReturn(evt);
+  when(eventMock.asV2400).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
 
   let event = instance(eventMock);
@@ -135,8 +139,9 @@ describe("Vesting schedule added", () => {
     await assertVestingScheduleAddedEvent(
       ctx,
       storeMock,
+      MOCK_ADDRESS_FROM,
       MOCK_ADDRESS_TO,
-      event.asV2300.asset.toString(),
+      event.asV2400.asset.toString(),
       schedule
     );
 
