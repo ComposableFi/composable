@@ -127,8 +127,8 @@ jobs:
       - x64
       - sre
     name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+
+    # Run steps on a matrix of 3 arch/distro combinations
     strategy:
       matrix:
         include:
@@ -136,9 +136,7 @@ jobs:
             distro: ubuntu20.04
 
     steps:
-      # - uses: actions/checkout@v3
-      #   name: Checkout root git
-
+      - uses: actions/checkout@v2.1.0
       - uses: uraimo/run-on-arch-action@v2
         name: Build artifact
         id: build
@@ -151,9 +149,9 @@ jobs:
 
           # Create an artifacts directory
           setup: |
-            mkdir --parents "${PWD}/artifacts"
-            mkdir --parents "${PWD}/git"
+            mkdir -p "${PWD}/artifacts"
 
+          # Mount the artifacts directory as /artifacts in the container
           dockerRunArgs: |
             --volume "${PWD}/artifacts:/artifacts"
 
@@ -173,16 +171,14 @@ jobs:
           install: |
                 apt-get update -q -y
                 apt-get install -q -y git
-                sh <(curl --location https://releases.nixos.org/nix/nix-2.10.3/install) --no-daemon
 
           # Produce a binary artifact and place it in the mounted volume
           run: |
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
-            cd /git
-            cd ./nix-crane
+            cd /nix-crane
             nix build .#packages.aarch64-linux.codespace-container
-            mv ./result /artifacts/aarch64-linux.codespace-container.oci.tar.gz 
+            mv /result /artifacts/aarch64-linux.codespace-container.oci.tar.gz 
 
       - name: Show the artifact
         # Items placed in /artifacts in the container will be in
