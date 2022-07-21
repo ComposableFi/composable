@@ -173,23 +173,27 @@
         # https://github.com/microsoft/vscode-dev-containers/tree/main/containers/debian
         # https://github.com/numtide/flake-utils/blob/master/default.nix       
         supported-nix-to-container-images = { 
+            # NOTE: we peeky container version to make these work version compatible with nix and native packaging/scripts
             x86_64-linux ={
                 os = "linux";
                 arch = "amd64"; # seems, this is correct mapping for this case
                 imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
-                sha256 = "1sd4sszgrfxh1a982g0psi9w26247wjxmw3pr6p0vfdg9ckmbvji";
+                sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+                finalImageTag = "0.202.7-bullseye"; 
             };
             aarch64-linux ={
                 os = "linux";
                 arch = "arm64"; # seems, this is correct mapping for this case
                 imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
-                sha256 = "1sd4sszgrfxh1a982g0psi9w26247wjxmw3pr6p0vfdg9ckmbvji";
+                sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+                finalImageTag = "0.202.7-bullseye"; 
             };
             aarch64-darwin ={
                 os = "linux"; # macos runs linuxes
                 arch = "arm64";
                 imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
-                sha256 = "1sd4sszgrfxh1a982g0psi9w26247wjxmw3pr6p0vfdg9ckmbvji";
+                sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+                finalImageTag = "0.202.7-bullseye"; 
             };
            };
         nix-to-container-image = system: 
@@ -302,21 +306,23 @@
           # - and we do not need to maintain separate script for that
           codespace-base-container = dockerTools.pullImage ((nix-to-container-image system) // {
             imageName = "mcr.microsoft.com/vscode/devcontainers/base";
-            finalImageTag = "0.202.7-bullseye"; # being very exact just so can fetch not knowing hash
           });
           
-          codespace-container-wtf = dockerTools.buildLayeredImage {
+          codespace-container = dockerTools.buildLayeredImage {
             name = "composable-codespace";
             fromImage = packages.codespace-base-container;
-            contents = [
-              neovim              
-              rust-stable
+            contents = [                                          
+              # be very carefull with this, so this must be version compatible with base and what vscode will inject
+              # rust-analyzer failed to load workspace: Failed to find sysroot for Cargo.toml file /workspaces/composable/Cargo.toml. Is rust-src installed?: can't load standard library from sysroot /nix/store/y9bbhnz369y6m7gq8bzgzg0gnwh5ck7i-rust-default-1.62.0 (discovered via `rustc --print sysroot`) try installing the Rust source the same way you installed rustc
+              # ISSUE: for some reason stable overrides nighly, need to set different order somehow
+              #rust-stable
               rust-nightly-dev
               cachix
               rust-analyzer
               rustup # just if it wants to make ad hoc updates
               nodejs
-              ] ++ container-tools;
+              bottom
+              ];
             # NOTE: may or may not be required to ease
             # enableFakechroot = true;
             # fakeRootCommands = ''
@@ -327,18 +333,18 @@
           };
 
            # simple cross platform container 
-          codespace-container = dockerTools.buildLayeredImage {
-            name = "codespace-simplespace";
-            fromImage = dockerTools.pullImage {
-              os = "linux";
-              #arch = "arm64";
-              arch = "amd64";
-              imageName = "mcr.microsoft.com/vscode/devcontainers/base";
-              imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
-              sha256 = "1sd4sszgrfxh1a982g0psi9w26247wjxmw3pr6p0vfdg9ckmbvji";
-              finalImageName = "mcr.microsoft.com/vscode/devcontainers/base";
-              finalImageTag = "0-bullseye"; # TODO: specify exact version of build will be broken in case of cache clean g0.202.7-bullseye
-            };
+          # codespace-container = dockerTools.buildLayeredImage {
+          #   name = "codespace-simplespace";
+          #   fromImage = dockerTools.pullImage {
+          #     os = "linux";
+          #     #arch = "arm64";
+          #     arch = "amd64";
+          #     imageName = "mcr.microsoft.com/vscode/devcontainers/base";
+          #     imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
+          #     sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+          #     finalImageName = "mcr.microsoft.com/vscode/devcontainers/base";
+          #     finalImageTag = "0-bullseye";
+          #   };
             # ACT1: removing all content
             # contents = [
             #   coreutils
@@ -350,7 +356,7 @@
             #   nix 
             #   nodejs
             # ];
-          };
+          #};
 
 
           # nix way to do write line, just retain it to allow probes
