@@ -136,8 +136,8 @@ jobs:
             distro: ubuntu20.04
 
     steps:
-      - uses: actions/checkout@v3
-        name: Checkout root git
+      # - uses: actions/checkout@v3
+      #   name: Checkout root git
 
       - uses: uraimo/run-on-arch-action@v2
         name: Build artifact
@@ -156,8 +156,7 @@ jobs:
 
           # Mount the artifacts directory as /artifacts in the container
           dockerRunArgs: |
-            --volume "${PWD}/artifacts:/artifacts"
-            --volume "${PWD}:/git"
+            --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}:/git"
 
           # Pass some environment variables to the container
           env: | # YAML, but pipe character is necessary
