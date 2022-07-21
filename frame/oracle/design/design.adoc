@@ -10,7 +10,7 @@
 
 == Abstract
 
-This is a post-facto engineering design document for the Apollo price oracle.
+This is a post-facto engineering design document for the Apollo price oracle. Apollo oracle serves price information from out of consensus sources such as exchanges into the Picasso DeFi ecosystem.
 
 == Background
 
