@@ -118,8 +118,6 @@ jobs:
   #         cd nix-crane
   #         cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed -L
 
-
-
   build-arm64-docker:
     runs-on:
       - self-hosted
@@ -152,7 +150,7 @@ jobs:
 
           # Mount the artifacts directory as /artifacts in the container
           dockerRunArgs: |
-            --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}/:/git"
+            --volume "${PWD}/artifacts:/artifacts"
 
           # Pass some environment variables to the container
           env: | # YAML, but pipe character is necessary
@@ -168,6 +166,7 @@ jobs:
           # publicly in your project's package repository, so it is vital that
           # no secrets are present in the container state or logs.
           install: |
+                ls
                 apt-get update -q -y
                 apt-get install -q -y git
                 sh <(curl --location https://releases.nixos.org/nix/nix-2.10.3/install) --no-daemon
@@ -176,6 +175,7 @@ jobs:
           run: |
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
+            ls
             cd /nix-crane
             nix build .#packages.aarch64-linux.codespace-container
             mv /result /artifacts/aarch64-linux.codespace-container.oci.tar.gz 
@@ -186,55 +186,53 @@ jobs:
         run: |
           ls -al "${PWD}/artifacts"
 
-  codespace-devcontainer:
-    # NOTE: so we want new container be publish iff all is ready and works
-    # needs: package-node
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: ${{  env.NIX_CACHIX }}
-      - run: |
-          cd nix-crane
-          # TODO: use buildx to merge
-          # ISSUE: cannot build not on arm          
-          # nix build .#packages.aarch64-linux.codespace-container
-          # warning: Git tree '/home/dz/git/blockchain/polkadot/composable' is dirty
-          # error: a 'aarch64-linux' with features {} is required to build '/nix/store/pr7gzckrjqw1p2gxh4qwmmh3ydrdqf9b-builder.pl.drv', but I am a 'x86_64-linux' with features {benchmark, big-parallel, kvm, nixos-test}
-          # nix build .#packages.aarch64-linux.codespace-container
-          nix build .#packages.x86_64-linux.codespace-container
-      - uses: docker/login-action@v1 
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} 
-      - run: |
-          # TODO: need to switch to root folder
-          ls
-          cd /git
-          ls
-          cd ./nix-crane
-          ls
-          docker load --input ./result
-          # update soon https://github.com/actions/checkout/issues/760
-          git config --global --add safe.directory /__w/composable/composable
-          COMMIT_SHA=$(git rev-parse --short=9 HEAD)
-          DOCKER_IMAGE_HASH=$(docker images | tail --lines=1 | tr --squeeze-repeats  ' ' |  cut --delimiter " " --fields 3)
-          # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
-          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:$COMMIT_SHA
-          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
-          docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer
+
+
+  # codespace-devcontainer:
+  #   # NOTE: so we want new container be publish iff all is ready and works
+  #   # needs: package-node
+  #   runs-on:
+  #     - self-hosted
+  #     - linux
+  #     - x64
+  #     - sre
+  #   container:
+  #     image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - run: |
+  #         echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+  #     - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+  #       with:
+  #         skipPush: true
+  #         installCommand: |
+  #           nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+  #           nix-channel --update
+  #           nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
+  #         authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+  #         name: ${{  env.NIX_CACHIX }}
+  #     - run: |
+  #         cd nix-crane
+  #         # TODO: use buildx to merge
+  #         # ISSUE: cannot build not on arm          
+  #         # nix build .#packages.aarch64-linux.codespace-container
+  #         # warning: Git tree '/home/dz/git/blockchain/polkadot/composable' is dirty
+  #         # error: a 'aarch64-linux' with features {} is required to build '/nix/store/pr7gzckrjqw1p2gxh4qwmmh3ydrdqf9b-builder.pl.drv', but I am a 'x86_64-linux' with features {benchmark, big-parallel, kvm, nixos-test}
+  #         # nix build .#packages.aarch64-linux.codespace-container
+  #         nix build .#packages.x86_64-linux.codespace-container
+  #     - uses: docker/login-action@v1 
+  #       with:
+  #         username: ${{ secrets.DOCKER_HUB_USERNAME }}
+  #         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} 
+  #     - run: |
+  #         # TODO: need to switch to root folder
+  #         cd nix-crane
+  #         docker load --input ./result
+  #         # update soon https://github.com/actions/checkout/issues/760
+  #         git config --global --add safe.directory /__w/composable/composable
+  #         COMMIT_SHA=$(git rev-parse --short=9 HEAD)
+  #         DOCKER_IMAGE_HASH=$(docker images | tail --lines=1 | tr --squeeze-repeats  ' ' |  cut --delimiter " " --fields 3)
+  #         # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
+  #         docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:$COMMIT_SHA
+  #         docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
+  #         docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer
