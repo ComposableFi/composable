@@ -169,7 +169,7 @@ jobs:
                 ls
                 apt-get update -q -y
                 apt-get install -q -y git
-                sh <(curl --location https://releases.nixos.org/nix/nix-2.10.3/install) --no-daemon
+                curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
 
           # Produce a binary artifact and place it in the mounted volume
           run: |
