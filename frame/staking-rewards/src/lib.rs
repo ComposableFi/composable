@@ -549,11 +549,10 @@ pub mod pallet {
 					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim),
 					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
 				);
-
 				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
 
 				T::Assets::transfer(
-					rewards_pool.asset_id,
+					reward.asset_id,
 					&Self::pool_account_id(&pool_id),
 					&stake.owner,
 					claim,
@@ -562,8 +561,9 @@ pub mod pallet {
 			}
 			rewards_pool.rewards =
 				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+			rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
 
-			let stake_without_penalty = if early_unlock {
+			let stake_with_penalty = if early_unlock {
 				(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(stake.stake)
 			} else {
 				stake.stake
@@ -573,7 +573,7 @@ pub mod pallet {
 				rewards_pool.asset_id,
 				&Self::pool_account_id(&pool_id),
 				&stake.owner,
-				stake_without_penalty,
+				stake_with_penalty,
 				keep_alive,
 			)?;
 
