@@ -139,58 +139,58 @@ jobs:
       - uses: actions/checkout@v3
         name: Checkout root git
 
-      # - uses: uraimo/run-on-arch-action@v2
-      #   name: Build artifact
-      #   id: build
-      #   with:
-      #     arch: ${{ matrix.arch }}
-      #     distro: ${{ matrix.distro }}
+      - uses: uraimo/run-on-arch-action@v2
+        name: Build artifact
+        id: build
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
 
-      #     # Not required, but speeds up builds
-      #     githubToken: ${{ github.token }}
+          # Not required, but speeds up builds
+          githubToken: ${{ github.token }}
 
-      #     # Create an artifacts directory
-      #     setup: |
-      #       mkdir --parents "${PWD}/artifacts"
-      #       mkdir --parents "${PWD}/git"
+          # Create an artifacts directory
+          setup: |
+            mkdir --parents "${PWD}/artifacts"
+            mkdir --parents "${PWD}/git"
 
-      #     # Mount the artifacts directory as /artifacts in the container
-      #     dockerRunArgs: |
-      #       --volume "${PWD}/artifacts:/artifacts"
-      #       --volume "${PWD}:/git"
+          # Mount the artifacts directory as /artifacts in the container
+          dockerRunArgs: |
+            --volume "${PWD}/artifacts:/artifacts"
+            --volume "${PWD}:/git"
 
-      #     # Pass some environment variables to the container
-      #     env: | # YAML, but pipe character is necessary
-      #       artifact_name: git-${{ matrix.distro }}_${{ matrix.arch }}
+          # Pass some environment variables to the container
+          env: | # YAML, but pipe character is necessary
+            artifact_name: git-${{ matrix.distro }}_${{ matrix.arch }}
 
-      #     # The shell to run commands with in the container
-      #     shell: /bin/sh
+          # The shell to run commands with in the container
+          shell: /bin/sh
 
-      #     # Install some dependencies in the container. This speeds up builds if
-      #     # you are also using githubToken. Any dependencies installed here will
-      #     # be part of the container image that gets cached, so subsequent
-      #     # builds don't have to re-install them. The image layer is cached
-      #     # publicly in your project's package repository, so it is vital that
-      #     # no secrets are present in the container state or logs.
-      #     install: |
-      #           apt-get update -q -y
-      #           apt-get install -q -y git
-      #           sh <(curl --location https://releases.nixos.org/nix/nix-2.10.3/install) --no-daemon
+          # Install some dependencies in the container. This speeds up builds if
+          # you are also using githubToken. Any dependencies installed here will
+          # be part of the container image that gets cached, so subsequent
+          # builds don't have to re-install them. The image layer is cached
+          # publicly in your project's package repository, so it is vital that
+          # no secrets are present in the container state or logs.
+          install: |
+                apt-get update -q -y
+                apt-get install -q -y git
+                sh <(curl --location https://releases.nixos.org/nix/nix-2.10.3/install) --no-daemon
 
-      #     # Produce a binary artifact and place it in the mounted volume
-      #     run: |
-      #       cp $(which git) "/artifacts/${artifact_name}"
-      #       echo "Produced artifact at /artifacts/${artifact_name}"
-      #       cd /git
-      #       cd ./nix-crane
-      #       nix build .#packages.aarch64-linux.codespace-container
-      #       mv ./result /artifacts/aarch64-linux.codespace-container.oci.tar.gz 
+          # Produce a binary artifact and place it in the mounted volume
+          run: |
+            cp $(which git) "/artifacts/${artifact_name}"
+            echo "Produced artifact at /artifacts/${artifact_name}"
+            cd /git
+            cd ./nix-crane
+            nix build .#packages.aarch64-linux.codespace-container
+            mv ./result /artifacts/aarch64-linux.codespace-container.oci.tar.gz 
 
-      # - name: Show the artifact
-      #   # Items placed in /artifacts in the container will be in
-      #   # ${PWD}/artifacts on the host.
-      #   run: |
-      #     ls -al "${PWD}/artifacts"
+      - name: Show the artifact
+        # Items placed in /artifacts in the container will be in
+        # ${PWD}/artifacts on the host.
+        run: |
+          ls -al "${PWD}/artifacts"
 
   codespace-devcontainer:
     # NOTE: so we want new container be publish iff all is ready and works
