@@ -77,7 +77,13 @@ pub mod pallet {
 		PerThing, Perbill,
 	};
 	use sp_std::{
-		cmp::max, collections::btree_map::BTreeMap, fmt::Debug, iter, ops::Div, vec, vec::Vec,
+		cmp::max,
+		collections::btree_map::BTreeMap,
+		fmt::Debug,
+		iter,
+		ops::{ControlFlow, Div},
+		vec,
+		vec::Vec,
 	};
 
 	use crate::{prelude::*, validation::ValidSplitRatio};
@@ -734,7 +740,7 @@ pub mod pallet {
 			Ok((rewards_btree_map, reductions))
 		}
 
-		//TODO: tests
+		// TODO: tests
 		pub(crate) fn reward_acumulation_hook_reward_update_calculation(
 			pool_id: T::RewardPoolId,
 			asset_id: T::AssetId,
@@ -761,38 +767,38 @@ pub mod pallet {
 				// can't `.safe_mul(u64)`
 				//
 				// this also allows us to accumulate up to the maximum amount before
-				// erroring, short-circuiting on any error found with the last known
+				// erroring, short-circuiting on any error found and returning the last known
 				// "good" value.
 				let new_total_rewards = iter::repeat(reward.reward_rate.amount)
 					// REVIEW(benluelo): this cast is *probably* safe, but
 					// should be verified somehow
 					.take(periods_surpassed as usize)
-					.try_fold(reward.total_rewards, |current_total_amount, amount| {
-						match current_total_amount
-							.safe_add(&amount)
-							.map(|new_rewards| (new_rewards, new_rewards <= reward.max_rewards))
-						{
-							Ok((new_total_amount, true)) => Ok(new_total_amount),
+					.try_fold(reward.total_rewards, |current_total_amount, reward_amount| {
+						match current_total_amount.safe_add(&reward_amount) {
+							Ok(new_total_amount) if new_total_amount <= reward.max_rewards =>
+								ControlFlow::Continue(new_total_amount),
 							// max rewards hit or overflow
 							// REVIEW(benluelo): Partial rewards accumulation?
 							// i.e. max rewards is 100, amount is 30, period is 1 second; after 4
 							// seconds the total accumulated will be 120, but that's more than
-							// themax amount so it gets reverted to 9.
-							Ok((_, false)) | Err(_) => {
+							// the max amount so it gets reverted to 90.
+							Ok(_) | Err(_) => {
 								Self::deposit_event(Event::<T>::RewardAccumulationError {
 									pool_id,
 									asset_id,
 								});
-								Err(current_total_amount)
+								ControlFlow::Break(current_total_amount)
 							},
 						}
-					})
-					.unwrap_or_else(sp_std::convert::identity);
+					});
 
 				(
 					asset_id,
 					Reward {
-						total_rewards: new_total_rewards,
+						total_rewards: match new_total_rewards {
+							ControlFlow::Continue(new_total_rewards) => new_total_rewards,
+							ControlFlow::Break(new_total_rewards) => new_total_rewards,
+						},
 						last_updated_timestamp: now,
 						..reward
 					},
