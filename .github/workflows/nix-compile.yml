@@ -176,7 +176,7 @@ jobs:
                 mkdir -m 0755 /nix && chown vscode /nix
 
                 echo "switching to user"
-                sudo -u vscode sh
+                su - vscode
                 curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
                 # NOTE: does not work
                 # curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
