@@ -1,5 +1,4 @@
-#FROM composablefi/composable-devcontainer:latest
-FROM codespace-simplespace:5jg1zarca1xsixd7kzrlbq7kh121ar7y
+FROM composablefi/composable-devcontainer:latest
 
 # TODO: make fetchTarbal stuff easy
 
