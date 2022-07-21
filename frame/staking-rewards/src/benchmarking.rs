@@ -1,5 +1,6 @@
 //! Benchmarks
 use crate::{validation::ValidSplitRatio, *};
+
 use composable_support::{
 	abstractions::utils::increment::Increment,
 	validation::{TryIntoValidated, Validated},
@@ -7,7 +8,7 @@ use composable_support::{
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
-		Reductions, RewardConfig, RewardPoolConfiguration,
+		Reductions, Reward, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
 		RewardRate, Stake,
 	},
@@ -15,7 +16,7 @@ use composable_traits::{
 };
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::{
-	traits::{fungibles::Mutate, Get},
+	traits::{fungibles::Mutate, UnixTime},
 	BoundedBTreeMap,
 };
 use frame_system::{EventRecord, RawOrigin};
@@ -80,7 +81,12 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 
 benchmarks! {
 	where_clause {
-		where T::BlockNumber: From<u32>, T::Balance: From<u128>, T::AssetId: From<u128>, T::RewardPoolId: From<u16>, T::PositionId: From<u128>,
+		where
+			T::BlockNumber: From<u32>,
+			T::Balance: From<u128>,
+			T::AssetId: From<u128>,
+			T::RewardPoolId: From<u16>,
+			T::PositionId: From<u128>,
 	}
 
 	create_reward_pool {
@@ -170,6 +176,19 @@ benchmarks! {
 		let validated_ratio = Validated::<Permill, ValidSplitRatio>::new(ratio).unwrap();
 
 	}: _(RawOrigin::Signed(user), position_id, validated_ratio)
+
+	udpate_reward {
+		let reward = Reward {
+			asset_id: 1_u128.into(),
+			total_rewards: 0_u128.into(),
+			total_dilution_adjustment: 0.into(),
+			max_rewards: 100.into(),
+			reward_rate: RewardRate::per_second(1.into(), 1.try_into_validated().unwrap()),
+			last_updated_timestamp: 0,
+		};
+	}: {
+		let reward = Pallet::<T>::update_reward(1.into(), 1.into(), reward, T::UnixTime::now().as_secs());
+	}
 
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
 }

@@ -76,7 +76,9 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider},
 		PerThing, Perbill,
 	};
-	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, iter, vec, vec::Vec};
+	use sp_std::{
+		cmp::max, collections::btree_map::BTreeMap, fmt::Debug, iter, ops::Div, vec, vec::Vec,
+	};
 
 	use crate::{prelude::*, validation::ValidSplitRatio};
 
@@ -118,7 +120,9 @@ pub mod pallet {
 			position_id: T::PositionId,
 		},
 		/// Split stake position into two positions
-		SplitPosition { positions: Vec<T::PositionId> },
+		SplitPosition {
+			positions: Vec<T::PositionId>,
+		},
 		/// Reward transfer event.
 		RewardTransferred {
 			from: T::AccountId,
@@ -126,6 +130,10 @@ pub mod pallet {
 			reward_currency: T::AssetId,
 			/// amount of reward currency transferred.
 			reward_increment: T::Balance,
+		},
+		RewardAccumulationError {
+			pool_id: T::RewardPoolId,
+			asset_id: T::AssetId,
 		},
 	}
 
@@ -297,9 +305,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Weight: see `begin_block`
 		fn on_initialize(n: T::BlockNumber) -> Weight {
-			Self::acumulate_rewards_hook();
-			// TODO(benluelo): Benchmarkig
-			1
+			Self::acumulate_rewards_hook()
 		}
 	}
 
@@ -728,59 +734,114 @@ pub mod pallet {
 			Ok((rewards_btree_map, reductions))
 		}
 
-		fn update_reward(
+		//TODO: tests
+		pub(crate) fn update_reward(
+			pool_id: T::RewardPoolId,
+			asset_id: T::AssetId,
 			reward: Reward<T::AssetId, T::Balance>,
-		) -> Result<Reward<T::AssetId, T::Balance>, DispatchError> {
-			let now = T::UnixTime::now().as_secs();
-			let elapsed_time = now.safe_sub(&reward.last_updated_timestamp)?;
+			now: u64,
+		) -> (T::AssetId, Reward<T::AssetId, T::Balance>) {
+			let elapsed_time = match now.safe_sub(&reward.last_updated_timestamp) {
+				Ok(elapsed_time) => elapsed_time,
+				Err(_) => {
+					Self::deposit_event(Event::<T>::RewardAccumulationError { pool_id, asset_id });
+					return (asset_id, reward)
+				},
+			};
 
-			let periods_surpassed = elapsed_time.safe_div(&reward.reward_rate.period)?;
+			// SAFETY(benluelo): RewardRate::period is non-zero.
+			let periods_surpassed = elapsed_time.div(&reward.reward_rate.period);
 
 			if periods_surpassed.is_zero() {
-				Ok(reward)
+				(asset_id, reward)
 			} else {
-				// NOTE(benluelo): used this instead of `safe_mul` since `T::Balance` can't be
-				// multiplied by a `u64` and the definition of `CheckedMul` constrains the `Rhs`
-				// type to `Self`, so `T::balance` can't `.safe_mul(u64)`
-				let new_rewards = iter::repeat(reward.reward_rate.amount)
-					// REVIEW(benluelo): this cast is *probably* safe, but should be verified
+				// NOTE(benluelo): used this instead of `safe_mul` since
+				// `T::Balance` can't be multiplied by a `u64` and the definition of
+				// `CheckedMul` constrains the `Rhs` type to `Self`, so `T::balance`
+				// can't `.safe_mul(u64)`
+				//
+				// this also allows us to accumulate up to the maximum amount before
+				// erroring, short-circuiting on any error found with the last known
+				// "good" value.
+				let new_total_rewards = iter::repeat(reward.reward_rate.amount)
+					// REVIEW(benluelo): this cast is *probably* safe, but
+					// should be verified somehow
 					.take(periods_surpassed as usize)
 					.try_fold(reward.total_rewards, |total_amount, amount| {
-						total_amount.safe_add(&amount)
-					})?;
+						match total_amount
+							.safe_add(&amount)
+							.map(|new_rewards| (new_rewards, new_rewards <= reward.max_rewards))
+						{
+							Ok((new_rewards, true)) => Ok(new_rewards),
+							// max rewards hit
+							Ok((new_rewards, false)) => Ok(new_rewards),
+							// overflow
+							Err(_) => Err(total_amount),
+						}
+					});
 
-				ensure!(new_rewards <= reward.max_rewards, Error::<T>::MaxRewardLimitReached);
+				let new_total_rewards = match new_total_rewards {
+					Ok(amount) => amount,
+					Err(amount) => {
+						Self::deposit_event(Event::<T>::RewardAccumulationError {
+							pool_id,
+							asset_id,
+						});
+						amount
+					},
+				};
 
-				Ok(Reward { total_rewards: new_rewards, last_updated_timestamp: now, ..reward })
+				(
+					asset_id,
+					Reward {
+						total_rewards: new_total_rewards,
+						last_updated_timestamp: now,
+						..reward
+					},
+				)
 			}
 		}
 
-		pub(crate) fn acumulate_rewards_hook() {
-			let updated_reward_pools = RewardPools::<T>::iter()
+		//TODO: tests
+		pub(crate) fn acumulate_rewards_hook() -> Weight {
+			let now = T::UnixTime::now().as_secs();
+
+			RewardPools::<T>::iter()
 				.into_iter()
 				.map(|(pool_id, reward_pool)| {
-					let rewards = reward_pool
+					let updated_rewards = reward_pool
 						.rewards
 						.into_iter()
 						.map(|(asset_id, reward)| {
-							Self::update_reward(reward)
-								.map(|updated_reward| (asset_id, updated_reward))
+							Self::update_reward(pool_id, asset_id, reward, now)
 						})
-						.collect::<Result<BTreeMap<_, _>, _>>()?
+						.collect::<BTreeMap<_, _>>()
 						.try_into()
+						// SAFETY(benluelo): No elements were added to the BTreeMap; the only
+						// operation was `.map()`. This unwrap will be unnecessary once this is
+						// merged and we update to whatever version it's included in:
+						// https://github.com/paritytech/substrate/pull/11869
 						.unwrap();
 
-					Ok((pool_id, RewardPool { rewards, ..reward_pool }))
+					(pool_id, RewardPool { rewards: updated_rewards, ..reward_pool })
 				})
-				.collect::<Result<BTreeMap<_, _>, DispatchError>>();
+				// NOTE(benluelo): As per these docs on `StorageMap::iter`:
+				// https://github.com/paritytech/substrate/blob/cac91f59b9e3fb8fd59842c023f87b4206931993/frame/support/src/storage/types/map.rs,
+				// "If you alter the map while doing this, you'll get undefined results."
+				// hence the double iteration.
+				.collect::<Vec<_>>()
+				.into_iter()
+				.fold(0, |total_weights, (pool_id, reward_pool)| {
+					// 128 bit platforms don't exist as of writing this so this cast should be ok
+					let amount_of_rewards_in_pool: u64 = reward_pool.rewards.len() as u64;
+					RewardPools::<T>::insert(pool_id, reward_pool);
 
-			match updated_reward_pools {
-				Ok(updated_reward_pools) =>
-					for (a, p) in updated_reward_pools {
-						RewardPools::<T>::insert(a, p);
-					},
-				Err(_) => {},
-			}
+					total_weights +
+						(amount_of_rewards_in_pool * T::WeightInfo::reward_acumulation_hook_reward_update_calculation()) +
+						// REVIEW(benluelo): I'm assuming that `StorageMap::iter` does one read per item, I could be wrong though
+						T::DbWeight::get().reads(1) +
+						T::DbWeight::get().writes(1)
+				})
 		}
 	}
 

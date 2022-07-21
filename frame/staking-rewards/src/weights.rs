@@ -6,6 +6,7 @@ pub trait WeightInfo {
 	fn extend(r: u32) -> Weight;
 	fn unstake(r: u32) -> Weight;
 	fn split(r: u32) -> Weight;
+	fn reward_acumulation_hook_reward_update_calculation() -> Weight;
 }
 
 impl WeightInfo for () {
@@ -26,6 +27,10 @@ impl WeightInfo for () {
 	}
 
 	fn split(_r: u32) -> Weight {
+		10_000
+	}
+
+	fn reward_acumulation_hook_reward_update_calculation() -> Weight {
 		10_000
 	}
 }
