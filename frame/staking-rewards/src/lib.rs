@@ -802,7 +802,7 @@ pub mod pallet {
 			}
 		}
 
-		//TODO: tests
+		// TODO: tests
 		pub(crate) fn acumulate_rewards_hook() -> Weight {
 			let now = T::UnixTime::now().as_secs();
 
@@ -835,7 +835,8 @@ pub mod pallet {
 				.into_iter()
 				.fold(0, |total_weights, (pool_id, reward_pool)| {
 					// 128 bit platforms don't exist as of writing this so this cast should be ok
-					let amount_of_rewards_in_pool: u64 = reward_pool.rewards.len() as u64;
+					let amount_of_rewards_in_pool = reward_pool.rewards.len() as u64;
+
 					RewardPools::<T>::insert(pool_id, reward_pool);
 
 					total_weights +
