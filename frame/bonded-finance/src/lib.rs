@@ -361,6 +361,7 @@ pub mod pallet {
 							&offer_account,
 							from,
 							VestingSchedule {
+								/// vesting_schedule_id: /// TODO: generate random id
 								window: BlockNumberBased {
 									start: current_block,
 									period: offer.reward.maturity,
@@ -377,6 +378,7 @@ pub mod pallet {
 									&offer.beneficiary,
 									from,
 									VestingSchedule {
+										/// vesting_schedule_id: /// TODO: generate random id
 										window: BlockNumberBased {
 											start: current_block,
 											period: return_in,
