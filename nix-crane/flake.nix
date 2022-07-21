@@ -305,7 +305,7 @@
             finalImageTag = "0.202.7-bullseye"; # being very exact just so can fetch not knowing hash
           });
           
-          codespace-container = dockerTools.buildLayeredImage {
+          codespace-container-wtf = dockerTools.buildLayeredImage {
             name = "composable-codespace";
             fromImage = packages.codespace-base-container;
             contents = [
@@ -325,6 +325,31 @@
             #   rustup default stable
             # '';            
           };
+
+           # simple cross platform container 
+          codespace-container = dockerTools.buildLayeredImage {
+            name = "codespace-simplespace";
+            fromImage = dockerTools.pullImage {
+              os = "linux";
+              arch = "amd64";
+              imageName = "mcr.microsoft.com/vscode/devcontainers/base";
+              imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
+              sha256 = "JHsEDo3IN4OUaGIDZH+c1rsEIj51bPpDSj4ZUH63sLQ=";
+              finalImageName = "mcr.microsoft.com/vscode/devcontainers/base";
+              finalImageTag = "0-bullseye";
+            };
+            contents = [
+              coreutils
+              bash
+              procps
+              findutils
+              nettools
+              bottom
+              nix 
+              nodejs
+            ];
+          };
+
 
           # nix way to do write line, just retain it to allow probes
           debug-derivation = stdenv.mkDerivation {
