@@ -1,7 +1,6 @@
 import {
   queryTotalPurchasedBondsByBondOfferIds,
   queryVestingSchedulesByAccountId,
-  SubsquidVestingScheduleEntity,
 } from "./queries";
 import BigNumber from "bignumber.js";
 import { ApiPromise } from "@polkadot/api";
