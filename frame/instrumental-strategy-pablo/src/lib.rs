@@ -199,6 +199,8 @@ pub mod pallet {
 		UnableToRebalanceVault { vault_id: T::VaultId },
 
 		AssociatedPoolWithAsset { asset_id: T::AssetId, pool_id: T::PoolId },
+
+		Check,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -233,13 +235,13 @@ pub mod pallet {
 		/// Add [`VaultId`](Config::VaultId) to [`AssociatedVaults`](AssociatedVaults) storage.
 		///
 		/// Emits [`AssociatedVault`](Event::AssociatedVault) event when successful.
-		#[transactional]
 		#[pallet::weight(T::WeightInfo::associate_vault())]
 		pub fn associate_vault(
 			origin: OriginFor<T>,
 			vault_id: T::VaultId,
 		) -> DispatchResultWithPostInfo {
 			T::ExternalOrigin::ensure_origin(origin)?;
+			Self::deposit_event(Event::Check);
 			<Self as InstrumentalProtocolStrategy>::associate_vault(&vault_id)?;
 			Ok(().into())
 		}

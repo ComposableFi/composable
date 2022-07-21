@@ -2,16 +2,21 @@ use crate::mock::{
 	account_id::{ADMIN, ALICE, BOB},
 	helpers::{create_pool, create_vault, make_proposale, set_admin_members},
 	runtime::{
-		Balance, Call, CollectiveInstrumental, Event, ExtBuilder, MockRuntime, Origin,
-		PabloStrategy, System, VaultId, MAX_ASSOCIATED_VAULTS,
+		Balance, Call, Event, ExtBuilder, PabloStrategy, System, VaultId, MAX_ASSOCIATED_VAULTS,
 	},
 };
-use composable_traits::instrumental::InstrumentalProtocolStrategy;
-use frame_support::{assert_noop, assert_ok, weights::GetDispatchInfo};
-use primitives::currency::CurrencyId;
-
 #[allow(unused_imports)]
 use crate::{pallet, pallet::Error};
+use composable_traits::instrumental::InstrumentalProtocolStrategy;
+use frame_support::assert_ok;
+use primitives::currency::CurrencyId;
+
+use sp_core::H256;
+use sp_runtime::{
+	traits::{BlakeTwo256, Hash},
+	DispatchError::Module,
+	ModuleError,
+};
 
 // -------------------------------------------------------------------------------------------------
 //                                          Associate Vault
@@ -21,47 +26,74 @@ use crate::{pallet, pallet::Error};
 mod associate_vault {
 	use super::*;
 
-	// #[test]
-	// fn add_an_associated_vault() {
-	// 	ExtBuilder::default().build().execute_with(|| {
-	// 		let vault_id: VaultId = 1;
+	#[test]
+	fn add_an_associated_vault() {
+		ExtBuilder::default().build().execute_with(|| {
+			System::set_block_number(1);
+			let base_asset = CurrencyId::LAYR;
+			let vault_id = create_vault(base_asset, None);
+			assert_ok!(set_admin_members(vec![ALICE], 5));
+			let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
+			assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
+			System::assert_has_event(Event::PabloStrategy(pallet::Event::AssociatedVault {
+				vault_id,
+			}));
+		});
+	}
 
-	// 		assert_ok!(set_admin_members(vec![ALICE], 5));
-	// 		let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id: vault_id });
-	// 		assert_ok!(make_proposale(proposal, ALICE, 1, None));
-	// 	});
-	// }
+	#[test]
+	fn adding_an_associated_vault_twice_throws_an_error() {
+		ExtBuilder::default().build().execute_with(|| {
+			System::set_block_number(1);
+			let base_asset = CurrencyId::LAYR;
+			let vault_id = create_vault(base_asset, None);
+			assert_ok!(set_admin_members(vec![ALICE], 5));
+			let proposal_1 = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
+			assert_ok!(make_proposale(proposal_1, ALICE, 1, 0, None));
 
-	// #[test]
-	// fn adding_an_associated_vault_twice_throws_an_error() {
-	// 	ExtBuilder::default().build().execute_with(|| {
-	// 		let vault_id: VaultId = 1;
+			let proposal_2 = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
+			let hash: H256 = BlakeTwo256::hash_of(&proposal_2);
+			assert_ok!(make_proposale(proposal_2, ALICE, 1, 1, None));
+			System::assert_has_event(Event::CollectiveInstrumental(
+				pallet_collective::Event::Executed {
+					proposal_hash: hash,
+					result: Err(Module(ModuleError {
+						index: 12,
+						error: [0, 0, 0, 0],
+						message: None,
+					})),
+				},
+			));
+		});
+	}
 
-	// 		assert_ok!(set_admin_members(vec![ALICE], 5));
-	// 		let proposal_1 = Call::PabloStrategy(crate::Call::associate_vault { vault_id: vault_id });
-	// 		assert_ok!(make_proposale(proposal_1, ALICE, 1, None));
-	// 		let proposal_2 = Call::PabloStrategy(crate::Call::associate_vault { vault_id: vault_id });
-	// 		assert_noop!(
-	// 			make_proposale(proposal_2, ALICE, 1, None),
-	// 			Error::<MockRuntime>::VaultAlreadyAssociated
-	// 		);
-	// 	});
-	// }
+	#[test]
+	fn associating_too_many_vaults_throws_an_error() {
+		ExtBuilder::default().build().execute_with(|| {
+			System::set_block_number(1);
+			assert_ok!(set_admin_members(vec![ALICE], 5));
+			for vault_id in 0..MAX_ASSOCIATED_VAULTS {
+				let proposal =
+					Call::PabloStrategy(crate::Call::associate_vault { vault_id: vault_id as u64 });
+				assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
+			}
 
-	// #[test]
-	// fn associating_too_many_vaults_throws_an_error() {
-	// 	ExtBuilder::default().build().execute_with(|| {
-	// 		for vault_id in 0..MAX_ASSOCIATED_VAULTS {
-	// 			assert_ok!(PabloStrategy::associate_vault(&(vault_id as VaultId)));
-	// 		}
-
-	// 		let vault_id = MAX_ASSOCIATED_VAULTS as VaultId;
-	// 		assert_noop!(
-	// 			PabloStrategy::associate_vault(&vault_id),
-	// 			Error::<MockRuntime>::TooManyAssociatedStrategies
-	// 		);
-	// 	});
-	// }
+			let vault_id = MAX_ASSOCIATED_VAULTS as VaultId;
+			let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
+			let hash: H256 = BlakeTwo256::hash_of(&proposal);
+			assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
+			System::assert_has_event(Event::CollectiveInstrumental(
+				pallet_collective::Event::Executed {
+					proposal_hash: hash,
+					result: Err(Module(ModuleError {
+						index: 12,
+						error: [1, 0, 0, 0],
+						message: None,
+					})),
+				},
+			));
+		});
+	}
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -91,25 +123,16 @@ mod rebalance {
 				pool_id,
 			});
 			assert_ok!(set_admin_members(vec![ALICE], 5));
-			assert_ok!(make_proposale(proposal, ALICE, 1, None));
+			assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
 
-			// let proposal_len: u32 = proposal.using_encoded(|p| p.len() as u32);
-			// let proposal_weight = proposal.get_dispatch_info().weight;
-			// let hash: H256 = BlakeTwo256::hash_of(&proposal);
-			// assert_ok!(CollectiveInstrumental::propose(
-			// 	Origin::signed(ALICE),
-			// 	1,
-			// 	Box::new(proposal),
-			// 	proposal_len
-			// ));
+			let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
+			assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
 
-			// assert_ok!(PabloStrategy::associate_vault(&vault_id));
+			assert_ok!(PabloStrategy::rebalance());
 
-			// assert_ok!(PabloStrategy::rebalance());
-
-			// System::assert_last_event(Event::PabloStrategy(pallet::Event::RebalancedVault {
-			// 	vault_id,
-			// }));
+			System::assert_last_event(Event::PabloStrategy(pallet::Event::RebalancedVault {
+				vault_id,
+			}));
 		});
 	}
 }
@@ -137,7 +160,7 @@ mod set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
 			});
-			assert_ok!(make_proposale(proposal, ALICE, 2, Some(vec![ALICE, BOB])));
+			assert_ok!(make_proposale(proposal, ALICE, 2, 0, Some(vec![ALICE, BOB])));
 			System::assert_has_event(Event::PabloStrategy(
 				pallet::Event::AssociatedPoolWithAsset { asset_id: base_asset, pool_id },
 			));
@@ -159,7 +182,7 @@ mod set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
 			});
-			assert_ok!(make_proposale(proposal, ALICE, 2, Some(vec![ALICE])));
+			assert_ok!(make_proposale(proposal, ALICE, 2, 0, Some(vec![ALICE])));
 		});
 	}
 }

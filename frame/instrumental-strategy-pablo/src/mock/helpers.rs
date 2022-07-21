@@ -20,7 +20,7 @@ use crate::mock::{
 	account_id::{AccountId, ALICE, BOB},
 	runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
 };
-use pallet_collective::{Error as CollectiveError, Instance1, MemberCount};
+use pallet_collective::{Error as CollectiveError, Instance1, MemberCount, ProposalIndex};
 
 pub fn create_pool<BAS, BAM, QAS, QAM, F, BW>(
 	base_asset: BAS,
@@ -101,6 +101,7 @@ pub fn make_proposale(
 	proposal: Call,
 	account_id: AccountId,
 	treshold: u32,
+	index: ProposalIndex,
 	yes_votes: Option<Vec<AccountId>>,
 ) -> DispatchResultWithPostInfo {
 	let proposal_len: u32 = proposal.using_encoded(|p| p.len() as u32);
@@ -119,7 +120,7 @@ pub fn make_proposale(
 					assert_ok!(CollectiveInstrumental::vote(
 						Origin::signed(*account),
 						hash,
-						0,
+						index,
 						true
 					));
 				});
@@ -128,7 +129,7 @@ pub fn make_proposale(
 						CollectiveInstrumental::close(
 							Origin::signed(account_id),
 							hash,
-							0,
+							index,
 							proposal_weight,
 							proposal_len
 						),
@@ -138,7 +139,7 @@ pub fn make_proposale(
 					assert_ok!(CollectiveInstrumental::close(
 						Origin::signed(account_id),
 						hash,
-						0,
+						index,
 						proposal_weight,
 						proposal_len
 					));
