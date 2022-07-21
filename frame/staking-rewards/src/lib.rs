@@ -544,8 +544,13 @@ pub mod pallet {
 						.safe_div(&rewards_pool.total_shares)?
 						.safe_sub(&inflation)?
 				};
+				let claim = if early_unlock {
+					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim)
+				} else {
+					claim
+				};
 				let claim = sp_std::cmp::min(
-					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim),
+					claim,
 					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
 				);
 				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
