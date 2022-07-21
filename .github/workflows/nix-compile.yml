@@ -153,7 +153,7 @@ jobs:
 
           # Mount the artifacts directory as /artifacts in the container
           dockerRunArgs: |
-            --volume "${PWD}/artifacts:/artifacts"
+            --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}:/"
 
           # Pass some environment variables to the container
           env: | # YAML, but pipe character is necessary
@@ -171,16 +171,20 @@ jobs:
           install: |
                 apt-get update -q -y
                 apt-get install -q -y git
+                sh <(curl -L https://nixos.org/nix/install) --no-daemon
+
 
           # Produce a binary artifact and place it in the mounted volume
           run: |
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
+            ls 
 
       - name: Show the artifact
         # Items placed in /artifacts in the container will be in
         # ${PWD}/artifacts on the host.
         run: |
+
           ls -al "${PWD}/artifacts"
 
   codespace-devcontainer:
