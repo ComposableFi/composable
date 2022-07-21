@@ -339,16 +339,17 @@
               finalImageName = "mcr.microsoft.com/vscode/devcontainers/base";
               finalImageTag = "0-bullseye"; # TODO: specify exact version of build will be broken in case of cache clean g0.202.7-bullseye
             };
-            contents = [
-              coreutils
-              bash
-              procps
-              findutils
-              nettools
-              bottom
-              nix 
-              nodejs
-            ];
+            # ACT1: removing all content
+            # contents = [
+            #   coreutils
+            #   bash
+            #   procps
+            #   findutils
+            #   nettools
+            #   bottom
+            #   nix 
+            #   nodejs
+            # ];
           };
 
 
