@@ -69,8 +69,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
     wethAssetId = 1111, // ToDo: Update to wETH assetId.
     ausdAssetId = 1112, // ToDo: Update to aUSD assetId.
     usdtAssetId = 2000; // ToDo: Update to USDT assetId.
-  const baseAmount = new BN("250_000_000_000_000_000");
-  const quoteAmount = new BN("250_000_000_000_000_000");
+  const baseAmount = new BN("250000000000000000");
+  const quoteAmount = new BN("250000000000000000");
   const minMintAmount = 0;
 
   before("Setting up the tests", async function () {
