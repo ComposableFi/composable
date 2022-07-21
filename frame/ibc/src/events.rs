@@ -224,7 +224,7 @@ impl From<RawIbcEvent> for IbcEvent {
 			},
 			RawIbcEvent::CreateClient(ev) => IbcEvent::CreateClient {
 				client_id: ev.0.client_id.as_bytes().to_vec(),
-				client_type: ev.0.client_type.to_string().as_bytes().to_vec(),
+				client_type: ev.0.client_type.as_str().as_bytes().to_vec(),
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
 				consensus_height: ev.0.consensus_height.revision_height,
@@ -232,7 +232,7 @@ impl From<RawIbcEvent> for IbcEvent {
 			},
 			RawIbcEvent::UpdateClient(ev) => IbcEvent::UpdateClient {
 				client_id: ev.client_id().as_bytes().to_vec(),
-				client_type: ev.client_type().to_string().as_bytes().to_vec(),
+				client_type: ev.client_type().as_str().as_bytes().to_vec(),
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
 				consensus_height: ev.consensus_height().revision_height,
@@ -240,7 +240,7 @@ impl From<RawIbcEvent> for IbcEvent {
 			},
 			RawIbcEvent::UpgradeClient(ev) => IbcEvent::UpgradeClient {
 				client_id: ev.client_id().as_bytes().to_vec(),
-				client_type: ev.0.client_type.to_string().as_bytes().to_vec(),
+				client_type: ev.0.client_type.as_str().as_bytes().to_vec(),
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
 				consensus_height: ev.0.consensus_height.revision_height,
@@ -248,7 +248,7 @@ impl From<RawIbcEvent> for IbcEvent {
 			},
 			RawIbcEvent::ClientMisbehaviour(ev) => IbcEvent::ClientMisbehaviour {
 				client_id: ev.client_id().as_bytes().to_vec(),
-				client_type: ev.0.client_type.to_string().as_bytes().to_vec(),
+				client_type: ev.0.client_type.as_str().as_bytes().to_vec(),
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
 				consensus_height: ev.0.consensus_height.revision_height,
