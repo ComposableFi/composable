@@ -171,7 +171,7 @@ jobs:
                 apt-get install -q -y git curl xz-utils
                 # NOTE: cannot use ( or ) in next line as it wrapped into script and fails to run of syntax
                 echo "getting nix"
-                adduser vscode
+                adduser -D vscode
                 adduser vscode vscode
                 mkdir -m 0755 /nix && chown vscode /nix
 
