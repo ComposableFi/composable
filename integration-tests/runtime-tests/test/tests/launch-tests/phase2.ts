@@ -278,8 +278,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             liquidityProviderWallet1.publicKey
           );
           const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-          const baseAmount = 0;
-          const quoteAmount = 0;
           const {
             data: [result]
           } = await pablo.removeLiquidity(
@@ -303,7 +301,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           );
         });
         it("Pool owner can remove liquidity from the pool", async function () {
-          // ToDo: Update when root can create pools!
           this.skip();
           this.timeout(2 * 60 * 1000);
           const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
@@ -319,8 +316,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             liquidityProviderWallet1.publicKey
           );
           const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-          const baseAmount = 0;
-          const quoteAmount = 0;
           const {
             data: [result]
           } = await pablo.removeLiquidity(
@@ -693,8 +688,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet1.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(
@@ -718,8 +711,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
           });
           it("Pool owner can remove liquidity from the pool", async function () {
-            // ToDo: Update when root can create pools!
-            this.skip();
             this.timeout(2 * 60 * 1000);
             const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
               picaUsdcLpTokenId.toString(),
@@ -734,11 +725,9 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet1.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
-            } = await pablo.sudo.sudoRemoveLiquidity(
+            } = await pablo.sudo.removeLiquidity(
               api,
               composableManagerWallet,
               picaUsdcPoolId,
@@ -953,8 +942,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet1.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(
@@ -978,7 +965,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
           });
           it("Pool owner can remove liquidity from the pool", async function () {
-            this.skip();
             this.timeout(2 * 60 * 1000);
             const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
               picaKsmLpTokenId.toString(),
@@ -993,8 +979,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(
@@ -1216,8 +1200,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet2.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(
@@ -1255,8 +1237,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(
@@ -1490,8 +1470,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet2.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(
@@ -1529,8 +1507,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(
@@ -1739,8 +1715,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet2.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(
@@ -1778,8 +1752,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(
@@ -1990,8 +1962,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet2.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(
@@ -2029,8 +1999,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-            const baseAmount = 0;
-            const quoteAmount = 0;
             const {
               data: [result]
             } = await pablo.removeLiquidity(

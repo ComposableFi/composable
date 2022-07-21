@@ -153,13 +153,13 @@ export class Phase2 {
     amount: number,
     baseAssetFundsBefore: BN,
     quoteAssetFundsBefore: BN,
-    currentLpTokenFundsBefore: BN
+    lpTokenFundsBefore: BN
   ) {
     const { currentBaseAssetFunds, currentQuoteAssetFunds, currentLPTokenAssetFunds } =
       await this.getLPBLiquidityCheckFunds(api, wallet, baseAssetId, quoteAssetId, lpTokenId);
     expect(new BN(currentBaseAssetFunds.toString())).to.be.bignumber.greaterThan(baseAssetFundsBefore);
     expect(new BN(currentQuoteAssetFunds.toString())).to.be.bignumber.greaterThan(quoteAssetFundsBefore);
-    expect(new BN(currentLPTokenAssetFunds.toString())).to.be.bignumber.lessThan(currentLpTokenFundsBefore);
+    expect(new BN(currentLPTokenAssetFunds.toString())).to.be.bignumber.lessThan(lpTokenFundsBefore);
   }
 
   private static async getLPBLiquidityCheckFunds(
