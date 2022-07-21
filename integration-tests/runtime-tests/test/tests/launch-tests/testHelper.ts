@@ -150,7 +150,7 @@ export class Phase2 {
     quoteAssetId: number | BN,
     lpTokenId: number | BN,
     wallet: AccountId32 | Uint8Array,
-    amount: number,
+    amount: number | BN,
     baseAssetFundsBefore: BN,
     quoteAssetFundsBefore: BN,
     lpTokenFundsBefore: BN
