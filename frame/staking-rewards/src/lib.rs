@@ -735,7 +735,7 @@ pub mod pallet {
 		}
 
 		//TODO: tests
-		pub(crate) fn update_reward(
+		pub(crate) fn reward_acumulation_hook_reward_update_calculation(
 			pool_id: T::RewardPoolId,
 			asset_id: T::AssetId,
 			reward: Reward<T::AssetId, T::Balance>,
@@ -813,7 +813,9 @@ pub mod pallet {
 						.rewards
 						.into_iter()
 						.map(|(asset_id, reward)| {
-							Self::update_reward(pool_id, asset_id, reward, now)
+							Self::reward_acumulation_hook_reward_update_calculation(
+								pool_id, asset_id, reward, now,
+							)
 						})
 						.collect::<BTreeMap<_, _>>()
 						.try_into()

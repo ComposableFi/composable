@@ -187,7 +187,7 @@ benchmarks! {
 			last_updated_timestamp: 0,
 		};
 	}: {
-		let reward = Pallet::<T>::update_reward(1.into(), 1.into(), reward, T::UnixTime::now().as_secs());
+		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), 1.into(), reward, T::UnixTime::now().as_secs());
 	}
 
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
