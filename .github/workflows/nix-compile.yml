@@ -172,7 +172,7 @@ jobs:
                 # NOTE: cannot use ( or ) in next line as it wrapped into script and fails to run of syntax
                 echo "getting nix"
                 
-                adduser --quiet --gecos "" --disabled-password xxx
+                adduser --quiet --gecos "" --disabled-password vscode
                 mkdir -m 0755 /nix && chown vscode /nix
 
                 echo "switching to user"
