@@ -185,7 +185,7 @@
                 os = "linux";
                 arch = "arm64"; # seems, this is correct mapping for this case
                 imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
-                sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+                sha256 = "TBbDCKlGb+n5V/IqWPuZBef3dZ//Pt7v3gdOvyoOrjU=";
                 finalImageTag = "0.202.7-bullseye"; 
             };
             aarch64-darwin ={
