@@ -136,7 +136,9 @@ jobs:
             distro: ubuntu20.04
 
     steps:
-      - uses: actions/checkout@v2.1.0
+      - uses: actions/checkout@v3
+        name: Checkout root git
+
       - uses: uraimo/run-on-arch-action@v2
         name: Build artifact
         id: build
@@ -149,11 +151,13 @@ jobs:
 
           # Create an artifacts directory
           setup: |
-            mkdir -p "${PWD}/artifacts"
+            mkdir --parents "${PWD}/artifacts"
+            mkdir --parents "${PWD}/git"
 
           # Mount the artifacts directory as /artifacts in the container
           dockerRunArgs: |
             --volume "${PWD}/artifacts:/artifacts"
+            --volume "${PWD}:/git"
 
           # Pass some environment variables to the container
           env: | # YAML, but pipe character is necessary
@@ -177,6 +181,10 @@ jobs:
           run: |
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
+            cd /git
+            cd ./nix-crane
+            nix build .#packages.aarch64-linux.codespace-container
+            mv ./result /artifacts/aarch64-linux.codespace-container.oci.tar.gz 
 
       - name: Show the artifact
         # Items placed in /artifacts in the container will be in
