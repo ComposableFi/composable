@@ -84,7 +84,7 @@ There are other pallets like `Referenda`, `Society`, `Fellowship`, and `Incetive
 - Any `democracy` voting using said token will dispatch calls using that origin (native token always dispatches from `root`)
 - Each token can have only one origin
 
- **Bribe**
+ **Bribrye**
 
 Ideated primitive which allows:
 
