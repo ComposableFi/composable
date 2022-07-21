@@ -152,7 +152,7 @@ jobs:
 
           # Mount the artifacts directory as /artifacts in the container
           dockerRunArgs: |
-            --volume "${PWD}/artifacts:/artifacts"
+            --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}/:/git"
 
           # Pass some environment variables to the container
           env: | # YAML, but pipe character is necessary
@@ -224,7 +224,11 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} 
       - run: |
           # TODO: need to switch to root folder
-          cd nix-crane
+          ls
+          cd /git
+          ls
+          cd ./nix-crane
+          ls
           docker load --input ./result
           # update soon https://github.com/actions/checkout/issues/760
           git config --global --add safe.directory /__w/composable/composable
