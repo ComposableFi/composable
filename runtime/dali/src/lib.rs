@@ -1698,12 +1698,7 @@ impl_runtime_apis! {
 							},
 						_ => None
 					}
-				});
-
-				let events = events.fold(vec![], |mut events, ev| {
-					events.extend(ev);
-					events
-				});
+				}).flatten().collect();
 
 				Some(events)
 			}
