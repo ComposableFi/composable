@@ -1,4 +1,5 @@
 {
+  "extends": "../../tsconfig-base.json",
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
 
@@ -97,12 +98,19 @@
     /* Completeness */
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */,
-    "baseUrl": "./",
-    "rootDir": "./src",
+    "baseUrl": ".",
+    "rootDir": "src",
     "paths": {
       "@composable/bootstrap_pallets/*": ["src/*"],
+      "@composable/types": ["../types/src"],
+      "@composable/types/*": ["../types/src/*"],
       "@polkadot/api/augment": ["../types/src/augment-api.ts"],
       "@polkadot/types/augment": ["../types/src/augment-types.ts"]
+    },
+  },
+  "references": [
+    {
+      "path": "../types"
     }
-  }
+  ]
 }

@@ -5,11 +5,14 @@
     "rootDir": "./src",
     "baseUrl": "./",
     "paths": {
-      "@composable/oracle_setup/*": ["./src/*"]
+      "@composable/oracle_setup/*": ["./src/*"],
+      "@composable/utils": ["../utils/src"],
+      "@composable/utils/*": ["../utils/src/*"],
+      "@composable/types": ["../types/src"],
+      "@composable/types/*": ["../types/src/*"],
     },
     "resolveJsonModule": true
   },
-  "include": ["./src/config.json"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "transpileOnly": true,
@@ -19,5 +22,9 @@
       "types": ["node"],
       "traceResolution": true
     }
-  }
+  },
+  "references": [
+    { "path": "../utils" },
+    { "path": "../types" },
+  ]
 }

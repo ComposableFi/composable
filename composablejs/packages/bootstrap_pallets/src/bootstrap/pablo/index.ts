@@ -78,7 +78,7 @@ export async function bootstrapPools(api: ApiPromise, wallets: KeyringPair[], wa
           logger.log('info', `Liquidity Added to Pool: ${poolId.toString()}`);
         }
         if (pool.addDexRoute) {
-          let pair = toPabloPoolPair(api, pool.pair.base, pool.pair.quote);
+          const pair = toPabloPoolPair(api, pool.pair.base, pool.pair.quote);
           await updateDexRoute(api, walletSudo, pair, poolId.toNumber());
           logger.log('info', `Dex Route Added: ${pool.pair.base}-${pool.pair.quote}`);
         }

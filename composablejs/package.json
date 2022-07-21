@@ -4,7 +4,7 @@
   "private": true,
   "license": "Public Domain",
   "scripts": {
-    "build": "tsc -b -f tsconfig.json",
+    "build": "npx lerna run build",
     "lint": "eslint 'packages/**/*.ts' --ext .ts,.tsx",
     "prettier": "prettier ./packages --write"
   },

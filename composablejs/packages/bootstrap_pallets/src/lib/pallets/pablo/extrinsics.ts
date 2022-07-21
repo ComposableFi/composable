@@ -1,5 +1,5 @@
-import { ComposableTraitsDefiCurrencyPairCurrencyId } from "@composable/types/dist/common";
-import { PalletPabloPoolInitConfiguration } from "@composable/types/dist/pablo";
+import { ComposableTraitsDefiCurrencyPairCurrencyId } from "@composable/types/common";
+import { PalletPabloPoolInitConfiguration } from "@composable/types/pablo";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 import BigNumber from "bignumber.js";

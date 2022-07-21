@@ -4,9 +4,16 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "baseUrl": "./",
+    "composite": true,
     "paths": {
-      "@composable/utils/*": ["./src/*"]
+      "@composable/utils/*": ["./src/*"],
+      "@composable/types/*": ["../types/src/*"],
+      "@polkadot/api/augment": ["../types/src/augment-api.ts"],
+      "@polkadot/types/augment": ["../types/src/augment-types.ts"]
     }
   },
   "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../types/" }
+  ]
 }

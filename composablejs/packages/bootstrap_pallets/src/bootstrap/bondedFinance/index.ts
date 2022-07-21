@@ -20,7 +20,7 @@ export async function bootstrapBondOffers(api: ApiPromise, wallet: KeyringPair, 
     await mintAssetsToWallets(api, [wallet], walletSudo, [rewardAssetId], new BigNumber(rewardAssetAmount));
     
     logger.log("info", 'Creating Bond Offer');
-    let bondOffer: BondOffer & { beneficiary: Uint8Array } = { ...toBondOffer(api, offer), beneficiary };
+    const bondOffer: BondOffer & { beneficiary: Uint8Array } = { ...toBondOffer(api, offer), beneficiary };
     const created = await createOffer(api, wallet, bondOffer);
     
     logger.log("info", "Bond Offer Created: " + created.data.toString());

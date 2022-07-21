@@ -3,7 +3,6 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { ethers } from "ethers";
 import { ApiPromise } from "@polkadot/api";
 import { PalletCrowdloanRewardsModelsRemoteAccount } from "@composable/types";
-
 import { mintAssetsToWallets } from "../assets/extrinsics";
 import BigNumber from "bignumber.js";
 import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@composable/bootstrap_pallets/lib";

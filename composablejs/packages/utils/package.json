@@ -9,7 +9,6 @@
     "clean": "find ./src -name '*.js' -type f -delete && find ./src -name '*.js.map' -type f -delete && find ./src -name '*.d.ts' -type f -delete"
   },
   "devDependencies": {
-    "@composable/types": "*",
     "@polkadot/api": "^8.11.3",
     "@polkadot/keyring": "^9.7.2",
     "typescript": "^4.7.4"
