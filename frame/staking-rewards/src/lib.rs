@@ -823,10 +823,10 @@ pub mod pallet {
 						})
 						.try_collect()
 						// SAFETY(benluelo): No elements were added to the BTreeMap; the only
-						// operation was `.map()`. This unwrap will be unnecessary once this is
+						// operation was `.map()`. This expect call will be unnecessary once this is
 						// merged and we update to whatever version it's included in:
 						// https://github.com/paritytech/substrate/pull/11869
-						.unwrap();
+						.expect("no elements were added; qed");
 
 					(pool_id, RewardPool { rewards: updated_rewards, ..reward_pool })
 				})
