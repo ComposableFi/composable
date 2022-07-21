@@ -5,7 +5,6 @@
 - [Picasso](./parachains/picasso-parachain-overview.md)
     - [Picasso Crowdloan](./parachains/picasso/picasso-crowdloan.md)
         - [KSM Purchase Log](./parachains/picasso/KSM-purchase-log.md)
-    - [Governance](./parachains/picasso/picasso-governance.md)
     - [Tokenomics](./parachains/picasso/picasso-tokenomics.md)
   
 - [Composable](./parachains/composable-parachain-overview.md)
@@ -87,9 +86,6 @@
         - [currency-factory](./pallets/currency-factory.md)
             - [Extrinsics](./pallets/currency-factory/extrinsics.md)
             - [Integration Guide](./pallets/currency-factory/integration-guide.md)
-        - [lending](./pallets/lending.md)
-            - [Extrinsics](./pallets/lending/extrinsics.md)
-            - [Integration Guide](./pallets/lending/integration-guide.md)
         - [privilege](./pallets/privilege.md)
             - [Extrinsics](./pallets/privilege/extrinsics.md)
             - [Integration Guide](./pallets/privilege/integration-guide.md)

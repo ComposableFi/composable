@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-06-25T22:31:58.560425458Z -->
+<!-- Generated at 2022-07-05T22:23:24.341339389Z -->
 
 # Lending Pallet Extrinsics
 

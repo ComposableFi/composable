@@ -35,7 +35,7 @@ jobs:
       - name: Run ansible playbook
         working-directory: "./.maintain/playbooks"
         run: |
-          ansible-playbook -l _environment_testnet client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+          ansible-playbook -l _environment_testnet client-upgrade.yml -i gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
       - name: Notify sre-tasks slack channel
         uses: rtCamp/action-slack-notify@v2
         env:
