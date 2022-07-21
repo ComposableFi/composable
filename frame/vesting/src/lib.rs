@@ -145,6 +145,8 @@ pub mod module {
 		MaxVestingSchedulesExceeded,
 		/// Trying to vest to ourselves
 		TryingToSelfVest,
+		/// There is no vesting schedule with a given id
+		NonexistentVestingSchedule,
 	}
 
 	#[pallet::event]
@@ -158,6 +160,7 @@ pub mod module {
 			schedule: VestingScheduleOf<T>,
 		},
 		/// Claimed vesting. \[who, locked_amount\]
+		/// TODO: add vesting_schedule_id to event
 		Claimed { who: AccountIdOf<T>, asset: AssetIdOf<T>, locked_amount: BalanceOf<T> },
 		/// Updated vesting schedules. \[who\]
 		VestingSchedulesUpdated { who: AccountIdOf<T> },
@@ -200,6 +203,7 @@ pub mod module {
 				let mut bounded_schedules = VestingSchedules::<T>::get(who, asset);
 				bounded_schedules
 					.try_push(VestingSchedule {
+						/// vesting_schedule_id: /// TODO: generate random id
 						window: window.clone(),
 						period_count: *period_count,
 						per_period: *per_period,
@@ -237,6 +241,7 @@ pub mod module {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(<T as Config>::WeightInfo::claim((<T as Config>::MaxVestingSchedules::get() / 2) as u32))]
+		/// TODO: add vesting_schedule_id parameter
 		pub fn claim(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let locked_amount = Self::do_claim(&who, asset)?;
@@ -282,11 +287,13 @@ pub mod module {
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
+			// TODO: add vesting_schedule_id parameter
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let who = T::Lookup::lookup(dest)?;
 			let locked_amount = Self::do_claim(&who, asset)?;
 
+			/// TODO: add vesting_schedule_id to event
 			Self::deposit_event(Event::Claimed { who, asset, locked_amount });
 			Ok(())
 		}
@@ -346,10 +353,13 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Returns locked balance based on current block number.
+	/// TODO: add vesting_schedule_id parameter
 	fn locked_balance(who: &AccountIdOf<T>, asset: AssetIdOf<T>) -> BalanceOf<T> {
 		<VestingSchedules<T>>::mutate_exists(who, asset, |maybe_schedules| {
 			let total = if let Some(schedules) = maybe_schedules.as_mut() {
 				let mut total: BalanceOf<T> = Zero::zero();
+				/// TODO: only use schedule with given vesting_schedule_id, or throw
+				/// NonExistentVestingSchedule error if not found
 				schedules.retain(|s| {
 					let amount = s.locked_amount(
 						frame_system::Pallet::<T>::current_block_number(),

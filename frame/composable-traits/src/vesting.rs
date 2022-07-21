@@ -45,6 +45,8 @@ pub enum VestingWindow<BlockNumber, Moment> {
 /// of blocks after `window.start`.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub struct VestingSchedule<BlockNumber, Moment, Balance: HasCompact> {
+	/// Vesting schedule id
+	/// pub vesting_schedule_id: VestingScheduleId /// TODO: create VestingScheduleId type
 	pub window: VestingWindow<BlockNumber, Moment>,
 	/// Number of vest
 	pub period_count: u32,
