@@ -99,7 +99,7 @@ type VestingSchedule @entity {
   "{accoundId}-{assetId}"
   scheduleId: String!
   "'To' account for the vesting schedule"
-  beneficiary: String!
+  to: String!
   "Vesting schedule"
   schedule: Schedule!
 }

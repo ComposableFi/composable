@@ -27,7 +27,7 @@ export class VestingSchedule {
    * 'To' account for the vesting schedule
    */
   @Column_("text", {nullable: false})
-  beneficiary!: string
+  to!: string
 
   /**
    * Vesting schedule

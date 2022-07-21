@@ -34,24 +34,24 @@ const MOCK_VESTING_SCHEDULE: VestingScheduleType = {
 /**
  * Check if vesting schedule has expected values
  * @param vestingSchedule
- * @param beneficiary
+ * @param to
  * @param eventId
  * @param assetId
  * @param schedule
  */
 function assertVestingSchedule(
   vestingSchedule: VestingSchedule,
-  beneficiary: string,
+  to: string,
   from: string,
   eventId: string,
   assetId: string,
   schedule: Schedule
 ) {
-  const expectedScheduleId = `${beneficiary}-${assetId}`;
+  const expectedScheduleId = `${to}-${assetId}`;
   expect(vestingSchedule.from).to.equal(from);
   expect(vestingSchedule.eventId).to.equal(eventId);
   expect(vestingSchedule.scheduleId).to.equal(expectedScheduleId);
-  expect(vestingSchedule.beneficiary).to.equal(beneficiary);
+  expect(vestingSchedule.to).to.equal(to);
   expect(vestingSchedule.schedule).to.deep.equal(schedule);
 }
 
@@ -59,7 +59,7 @@ async function assertVestingScheduleAddedEvent(
   ctx: EventHandlerContext,
   storeMock: Store,
   from: Uint8Array,
-  beneficiary: Uint8Array,
+  to: Uint8Array,
   assetId: string,
   schedule: Schedule
 ) {
@@ -67,7 +67,7 @@ async function assertVestingScheduleAddedEvent(
   const [arg] = capture(storeMock.save).last();
   assertVestingSchedule(
     arg as unknown as VestingSchedule,
-    encodeAccount(beneficiary),
+    encodeAccount(to),
     encodeAccount(from),
     ctx.event.id,
     assetId,
