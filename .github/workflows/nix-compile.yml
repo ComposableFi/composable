@@ -177,6 +177,7 @@ jobs:
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
             ls
+            curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
             cd ./nix-crane
             nix build .#packages.aarch64-linux.codespace-container
             mv ./result /artifacts/aarch64-linux.codespace-container.oci.tar.gz 
