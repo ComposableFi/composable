@@ -171,12 +171,14 @@ jobs:
                 apt-get install -q -y git curl xz-utils
                 # NOTE: cannot use ( or ) in next line as it wrapped into script and fails to run of syntax
                 echo "getting nix"
-                useradd vscode
-                groupadd vscode
-                useradd vscode --groups vscode
-                mkdir -m 0755 /nix && chown vscode /nix
-                sudo -u vscode sh
-                curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+                # useradd vscode
+                # groupadd vscode
+                # useradd vscode --groups vscode
+                # mkdir -m 0755 /nix && chown vscode /nix
+                # sudo -u vscode sh
+                # curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+                curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
+                sh nix-2.10.3-install.sh --daemon                
 
           # Produce a binary artifact and place it in the mounted volume
           run: |
