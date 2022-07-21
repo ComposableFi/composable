@@ -9,11 +9,6 @@
 		"memory": "32gb",
 		"cpus": 16
 	},
-	"runArgs": [
-		"--cap-add=SYS_PTRACE",
-		"--security-opt",
-		"seccomp=unconfined"
-	],
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"workbench.colorTheme": "GitHub Dark",
@@ -83,9 +78,4 @@
   	"postCreateCommand": "mkdir -p /workspaces/polkadot/target/release && cp /polkadot-binary/polkadot /workspaces/polkadot/target/release/polkadot",
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
-	"features": {
-		"docker-in-docker": "latest",
-		"git-lfs": "latest",
-		"node": "16"
-	}
 }
