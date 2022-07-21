@@ -10,7 +10,5 @@ export async function fetchVestingSchedule(
     principalCurrencyId
   ) as any;
 
-  console.log("Vesting schedule", vestingSchedule);
-
-  return vestingSchedule ? vestingSchedule : null;
+  return vestingSchedule ? vestingSchedule.toJSON() : null;
 }

@@ -10,18 +10,19 @@ import {
   Tooltip,
 } from "@mui/material";
 import Image from "next/image";
-import { BaseAsset, PairAsset } from "../Atoms";
 import { useRouter } from "next/router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { InfoOutlined } from "@mui/icons-material";
-import { TableHeader } from "@/defi/types";
+import { BondOffer, TableHeader } from "@/defi/types";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { fetchBondVestingSchedules } from "@/defi/subsquid/bonds/helpers";
+import useStore from "@/store/useStore";
+import BondedOfferRow from "./bonds/BondedOfferRow";
 
 const tableHeaders: TableHeader[] = [
   {
-    header: "Claimable",
+    header: "Asset",
   },
   {
     header: "Claimable",
@@ -38,24 +39,25 @@ const tableHeaders: TableHeader[] = [
 ];
 
 export const YourBondTable: React.FC = () => {
-  const activeBonds: any[] = [];
 
+  const { bondOffers } = useStore();
+  const { list } = bondOffers;
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const router = useRouter();
+  const router = useRouter();  
   
+  const [myOffers, setMyOffers] = useState<BondOffer[]>([]);
   useEffect(() => {
     if (selectedAccount && parachainApi) {
-      fetchBondVestingSchedules(parachainApi, selectedAccount.address).then(console.log)
+      fetchBondVestingSchedules(parachainApi, list, selectedAccount.address).then(setMyOffers)
     }
-  }, [parachainApi, selectedAccount]);
-
+  }, [parachainApi, selectedAccount, list]);
 
   const handleRowClick = (offerId: number) => {
     router.push(`/bond/select/${offerId}`);
   };
 
-  if (activeBonds.length == 0) {
+  if (myOffers.length == 0) {
     return (
       <Box textAlign="center" mt={3}>
         <Image
@@ -91,48 +93,8 @@ export const YourBondTable: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {activeBonds.map((bond, index) => (
-              <TableRow
-                onClick={() => handleRowClick(bond.offerId)}
-                key={index}
-                sx={{ cursor: "pointer" }}
-              >
-                <TableCell align="left">
-                  {"base" in bond.asset ? (
-                    <PairAsset
-                      assets={[
-                        {
-                          icon: bond.asset.base.icon,
-                          label: bond.asset.base.symbol,
-                        },
-                        {
-                          icon: bond.asset.quote.icon,
-                          label: bond.asset.quote.symbol,
-                        },
-                      ]}
-                      separator="/"
-                    />
-                  ) : (
-                    <BaseAsset
-                      label={bond.asset.symbol}
-                      icon={bond.asset.icon}
-                    />
-                  )}
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">
-                    {bond.claimableAmount.toFormat()} CHAOS
-                  </Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">
-                    {bond.pendingAmount.toFormat()} CHAOS
-                  </Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">{bond.vestingTime}</Typography>
-                </TableCell>
-              </TableRow>
+            {myOffers.map((bond) => (
+              <BondedOfferRow key={bond.offerId.toString()} bondOffer={bond} />
             ))}
           </TableBody>
         </Table>

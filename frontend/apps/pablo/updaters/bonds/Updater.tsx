@@ -1,25 +1,35 @@
 import { useEffect } from "react";
 import useStore from "@/store/useStore";
-
-import { DEFAULT_NETWORK_ID, fetchBondOffers } from "@/defi/utils";
-import { useParachainApi } from "substrate-react";
+import { fetchTotalPurchasedBondsByOfferIds } from "@/defi/subsquid/bonds/helpers";
+import { calculateBondROI } from "@/defi/utils/bonds/math";
+import BigNumber from "bignumber.js";
 
 const Updater = () => {
-  const { bondOffers, supportedAssets, apollo } = useStore();
-//   const lpRewardingPools = useAllLpTokenRewardingPools();
-
-  const { setBondOffers } = useStore();
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const { setBondOfferTotalPurchased, apollo, bondOffers, putBondOfferROI } =
+    useStore();
+  const { list } = bondOffers;
 
   useEffect(() => {
-    if (parachainApi) {
-      fetchBondOffers(parachainApi).then((decodedOffers) => {
-        setBondOffers(decodedOffers);
-      });
-    }
-  }, [parachainApi, setBondOffers]);
+    fetchTotalPurchasedBondsByOfferIds().then(setBondOfferTotalPurchased);
+  }, [setBondOfferTotalPurchased]);
+
+  useEffect(() => {
+    const bondOfferROIMap = list.reduce((acc, bondOffer) => {
+      return {
+        ...acc,
+        [bondOffer.offerId.toString()]: calculateBondROI(
+          new BigNumber(apollo[bondOffer.asset] || 0),
+          new BigNumber(apollo[bondOffer.reward.asset.toString()] || 0),
+          bondOffer.bondPrice,
+          bondOffer.reward.amount.div(bondOffer.nbOfBonds)
+        ),
+      };
+    }, {} as Record<string, BigNumber>);
+
+    putBondOfferROI(bondOfferROIMap);
+  }, [apollo, list, putBondOfferROI]);
 
   return null;
-}
+};
 
 export default Updater;

@@ -7,13 +7,27 @@ import { AssetId } from "@/defi/polkadot/types";
  * @param asset2 Asset id | "none"
  * @returns boolean
  */
-export function isValidAssetPair(asset1: string | "none", asset2: string | "none"): boolean {
-    return asset1 !== "none" && asset2 !== "none";
+export function isValidAssetPair(
+  asset1: string | "none",
+  asset2: string | "none"
+): boolean {
+  return asset1 !== "none" && asset2 !== "none";
 }
 
-export function concatU8a (a: Uint8Array, b: Uint8Array): Uint8Array {
-    const c = new Uint8Array(a.length + b.length);
-    c.set(a);
-    c.set(b, a.length);
-    return c;
+export function concatU8a(a: Uint8Array, b: Uint8Array): Uint8Array {
+  const c = new Uint8Array(a.length + b.length);
+  c.set(a);
+  c.set(b, a.length);
+  return c;
+}
+
+export function compareU8a(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
   }
+
+  return true;
+}

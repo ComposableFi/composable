@@ -3,7 +3,7 @@ import { OperationResult } from "urql";
 
 export const queryTotalPurchasedBondsByBondOfferIds = () => makeClient().query(`query queryTotalPurchasedBondsByBondOfferIds {
     bondedFinanceBondOffers {
-      id
+      offerId
       totalPurchased
     }
 }`).toPromise(); 
@@ -13,7 +13,7 @@ export interface SubsquidVestingScheduleEntity {
   id: string;
   from: string;
   eventId: string;
-  beneficiary: string;
+  to: string;
 }
 
 export function queryVestingSchedulesByAccountId(accountId: string): Promise<OperationResult<{
@@ -21,12 +21,12 @@ export function queryVestingSchedulesByAccountId(accountId: string): Promise<Ope
 }, {}>> {
   return makeClient().query(`
   query vestingSchedules {
-    vestingSchedules(where: {beneficiary_eq: "${accountId}"}) {
+    vestingSchedules(where: {to_eq: "${accountId}"}) {
       scheduleId
       id
       from
       eventId
-      beneficiary
+      to
     }
   }  
   `).toPromise();
