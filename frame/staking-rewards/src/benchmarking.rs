@@ -161,8 +161,8 @@ benchmarks! {
 		let new_stake = Stake::<T::AccountId, T::RewardPoolId, T::Balance, Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>> {
 			owner: user.clone(),
 			reward_pool_id: 1_u16.into(),
-			stake: 1000_000_000_000_000_u128.into(),
-			share: 1000_000_000_000_000_u128.into(),
+			stake: 1_000_000_000_000_000_u128.into(),
+			share: 1_000_000_000_000_000_u128.into(),
 			reductions: Reductions::<_,_,_>::new(),
 			lock: Lock {
 				started_at: 10000_u64,
@@ -178,20 +178,26 @@ benchmarks! {
 	}: _(RawOrigin::Signed(user), position_id, validated_ratio)
 
 	reward_acumulation_hook_reward_update_calculation {
+		let now = T::UnixTime::now();
+
 		let reward = Reward {
 			asset_id: 1_u128.into(),
 			total_rewards: 0_u128.into(),
 			total_dilution_adjustment: 0.into(),
 			max_rewards: 100.into(),
-			reward_rate: RewardRate::per_second(1.into(), 1.try_into_validated().unwrap()),
-			last_updated_timestamp: 0,
+			reward_rate: RewardRate::per_second(6.into(), 10_000.try_into_validated().unwrap()),
+			last_updated_timestamp: now.as_secs(),
 			claimed_rewards: 0_u128.into()
 		};
+
+		let now = now + std::time::Duration::from_secs(12);
 	}: {
-		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), 1.into(), reward, T::UnixTime::now().as_secs());
+		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), 1.into(), reward, now.as_secs());
 	}
 
-	unix_time_now {}: {T::UnixTime::now()}
+	unix_time_now {}: {
+		T::UnixTime::now()
+	}
 
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
 }
