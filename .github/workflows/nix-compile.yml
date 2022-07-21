@@ -153,8 +153,7 @@ jobs:
 
           # Mount the artifacts directory as /artifacts in the container
           dockerRunArgs: |
-            # --volume "${PWD}:/"
-            --volume "${PWD}/artifacts:/artifacts" 
+            --volume "${PWD}/artifacts:/artifacts"
 
           # Pass some environment variables to the container
           env: | # YAML, but pipe character is necessary
@@ -174,12 +173,10 @@ jobs:
                 apt-get install -q -y git
                 sh <(curl --location https://releases.nixos.org/nix/nix-2.10.3/install) --no-daemon
 
-
           # Produce a binary artifact and place it in the mounted volume
           run: |
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
-            ls 
 
       - name: Show the artifact
         # Items placed in /artifacts in the container will be in
