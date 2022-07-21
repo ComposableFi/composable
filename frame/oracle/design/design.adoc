@@ -628,7 +628,11 @@ For further details on rewarding refer https://github.com/ComposableFi/composabl
 
 ==== Interface: Price Feed Client
 
+TODO
+
 ==== Interface: Rest API
+
+TODO
 
 === Security and Price Accuracy Model
 
@@ -642,7 +646,11 @@ TODO
 
 === Becoming an Oracle Provider
 
+TODO flow chart of the process
+
 ==== Key Management
+
+TODO
 
 == Rollout
 
