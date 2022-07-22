@@ -229,8 +229,8 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
           mt={4}
           token1={baseAsset}
           token2={quoteAsset}
-          expectedRecieveAmountToken1={expectedRemoveAmountBase}
-          expectedRecieveAmountToken2={expectedRemoveAmountQuote}
+          expectedReceiveAmountToken1={expectedRemoveAmountBase}
+          expectedReceiveAmountToken2={expectedRemoveAmountQuote}
           price1={priceOfBase}
           price2={priceOfQuote}
         />

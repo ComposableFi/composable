@@ -21,13 +21,13 @@ export async function fetchInitialBalance(
     if (queryResponse.error) throw new Error(queryResponse.error.message);
     if (!queryResponse.data)
       throw new Error(
-        "[fetchInitialBalance] Unable to retreive data from query"
+        "[fetchInitialBalance] Unable to retrieve data from query"
       );
 
     const { pabloTransactions } = queryResponse.data;
     if (!pabloTransactions)
       throw new Error(
-        "[fetchInitialBalance] Unable to retreive data from query"
+        "[fetchInitialBalance] Unable to retrieve data from query"
       );
 
     const addLiqTxs: PoolTradeHistory[] = pabloTransactions.map((t: any) =>
@@ -64,13 +64,13 @@ export async function fetchAuctionTrades(
     if (queryResponse.error) throw new Error(queryResponse.error.message);
     if (!queryResponse.data)
       throw new Error(
-        "[fetchInitialBalance] Unable to retreive data from query"
+        "[fetchInitialBalance] Unable to retrieve data from query"
       );
 
     const { pabloTransactions } = queryResponse.data;
     if (!pabloTransactions)
       throw new Error(
-        "[fetchInitialBalance] Unable to retreive data from query"
+        "[fetchInitialBalance] Unable to retrieve data from query"
       );
 
     let poolQuote = pool.pair.quote;
@@ -96,13 +96,13 @@ export async function fetchLbpStats(pool: LiquidityBootstrappingPool): Promise<{
     if (queryResponse.error) throw new Error(queryResponse.error.message);
     if (!queryResponse.data)
       throw new Error(
-        "[fetchInitialBalance] Unable to retreive data from query"
+        "[fetchInitialBalance] Unable to retrieve data from query"
       );
 
     const { pabloPools } = queryResponse.data;
     if (!pabloPools)
       throw new Error(
-        "[fetchInitialBalance] Unable to retreive data from query"
+        "[fetchInitialBalance] Unable to retrieve data from query"
       );
 
     if (pabloPools.length) {

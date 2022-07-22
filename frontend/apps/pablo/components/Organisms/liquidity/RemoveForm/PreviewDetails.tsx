@@ -13,8 +13,8 @@ export type PreviewDetailsProps = {
   token1: MockedAsset | undefined,
   token2: MockedAsset | undefined,
   lpToRemove: BigNumber,
-  expectedRecieveAmountToken1: BigNumber,
-  expectedRecieveAmountToken2: BigNumber,
+  expectedReceiveAmountToken1: BigNumber,
+  expectedReceiveAmountToken2: BigNumber,
   price1: BigNumber,
   price2: BigNumber,
 } & BoxProps;
@@ -23,8 +23,8 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
   token1,
   token2,
   lpToRemove,
-  expectedRecieveAmountToken1,
-  expectedRecieveAmountToken2,
+  expectedReceiveAmountToken1,
+  expectedReceiveAmountToken2,
   price1,
   price2,
   ...rest
@@ -59,7 +59,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
 
       <Label mt={3}
         BalanceProps={{
-          balance: `${millify(expectedRecieveAmountToken1.toNumber())}`,
+          balance: `${millify(expectedReceiveAmountToken1.toNumber())}`,
           BalanceTypographyProps: {
             variant: "body1",
           },
@@ -71,7 +71,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
       <Label
         mt={3}
         BalanceProps={{
-          balance: `${millify(expectedRecieveAmountToken2.toNumber())}`,
+          balance: `${millify(expectedReceiveAmountToken2.toNumber())}`,
           BalanceTypographyProps: {
             variant: "body1",
           },

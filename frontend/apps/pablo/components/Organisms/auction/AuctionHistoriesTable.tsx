@@ -28,18 +28,18 @@ export type AuctionHistoriesTableProps = {
   auction: LiquidityBootstrappingPool,
   baseAsset?: MockedAsset,
   quoteAsset?: MockedAsset,
-  histiriesTableLimit?: number,
+  historiesTableLimit?: number,
 } & TableContainerProps;
 
 export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
-  histiriesTableLimit = 10,
+  historiesTableLimit = 10,
   auction,
   baseAsset,
   quoteAsset,
   ...rest
 }) => {
   const theme = useTheme();
-  const limit = histiriesTableLimit;
+  const limit = historiesTableLimit;
   const [count, setCount] = useState(limit);
   const { auctions: { activeLBPHistory } } = useStore();
 
