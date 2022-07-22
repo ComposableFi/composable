@@ -59,8 +59,10 @@ fn stake_in_case_of_low_balance_should_not_work() {
 		assert_eq!(StakingRewards::stake_count(), 0);
 
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
-		let (staker, pool_id, amount, duration_preset) =
-			(ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
+		let staker = ALICE;
+		let pool_id = StakingRewards::pool_count();
+		let amount = 100_500u32.into();
+		let duration_preset = ONE_HOUR;
 
 		let asset_id = StakingRewards::pools(pool_id).expect("asset_id expected").asset_id;
 		assert_eq!(balance(asset_id, &staker), 0);
@@ -81,8 +83,10 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		assert_eq!(StakingRewards::stake_count(), 0);
 
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
-		let (staker, pool_id, amount, duration_preset) =
-			(ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
+		let staker = ALICE;
+		let pool_id = StakingRewards::pool_count();
+		let amount = 100_500u32.into();
+		let duration_preset = ONE_HOUR;
 
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
 			.expect("asset_id expected")
@@ -138,8 +142,12 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		assert_eq!(StakingRewards::stake_count(), 0);
 
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
-		let (staker, pool_id, amount, duration_preset, total_rewards, total_shares) =
-			(ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR, 100, 200);
+		let staker = ALICE;
+		let pool_id = StakingRewards::pool_count();
+		let amount = 100_500u32.into();
+		let duration_preset = ONE_HOUR;
+		let total_rewards = 100;
+		let total_shares = 200;
 
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
 			.expect("asset_id expected")
@@ -269,7 +277,8 @@ fn test_extend_stake_amount() {
 fn unstake_non_existent_stake_should_not_work() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
-		let (staker, pool_id) = (ALICE, 42);
+		let staker = ALICE;
+		let pool_id = 42;
 		assert_noop!(
 			StakingRewards::unstake(Origin::signed(staker), pool_id),
 			crate::Error::<Test>::StakeNotFound
@@ -283,8 +292,11 @@ fn not_owner_of_stake_can_not_unstake() {
 		assert_eq!(StakingRewards::stake_count(), 0);
 
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
-		let (owner, not_owner, pool_id, amount, duration_preset) =
-			(ALICE, BOB, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
+		let owner = ALICE;
+		let not_owner = BOB;
+		let pool_id = StakingRewards::pool_count();
+		let amount = 100_500u32.into();
+		let duration_preset = ONE_HOUR;
 		assert_ne!(owner, not_owner);
 
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
@@ -308,8 +320,10 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		assert_eq!(StakingRewards::stake_count(), 0);
 
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
-		let (staker, pool_id, amount, duration_preset) =
-			(ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR);
+		let staker = ALICE;
+		let pool_id = StakingRewards::pool_count();
+		let amount = 100_500u32.into();
+		let duration_preset = ONE_HOUR;
 
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
 			.expect("asset_id expected")
@@ -343,8 +357,13 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
-		let (staker, pool_id, amount, duration_preset, total_rewards, total_shares, claim) =
-			(ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR, 100, 200, 50);
+		let staker = ALICE;
+		let pool_id = StakingRewards::pool_count();
+		let amount = 100_500u32.into();
+		let duration_preset = ONE_HOUR;
+		let total_rewards = 100;
+		let total_shares = 200;
+		let claim = 50;
 
 		let rewards_pool =
 			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
@@ -388,10 +407,10 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
 			amount * 2 + penalty
 		);
-		for (asset_id, _) in rewards_pool.rewards.iter() {
-			assert_eq!(balance(*asset_id, &staker), amount * 2 + claim_with_penalty);
+		for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
+			assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim_with_penalty);
 			assert_eq!(
-				balance(*asset_id, &StakingRewards::pool_account_id(&pool_id)),
+				balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
 				amount * 2 - claim_with_penalty
 			);
 		}
@@ -403,8 +422,13 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
-		let (staker, pool_id, amount, duration_preset, total_rewards, total_shares, claim) =
-			(ALICE, StakingRewards::pool_count(), 100_500u32.into(), ONE_HOUR, 100, 200, 50);
+		let staker = ALICE;
+		let pool_id = StakingRewards::pool_count();
+		let amount = 100_500u32.into();
+		let duration_preset = ONE_HOUR;
+		let total_rewards = 100;
+		let total_shares = 200;
+		let claim = 50;
 
 		let rewards_pool =
 			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
@@ -451,10 +475,10 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
 			amount * 2
 		);
-		for (asset_id, _) in rewards_pool.rewards.iter() {
-			assert_eq!(balance(*asset_id, &staker), amount * 2 + claim);
+		for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
+			assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
 			assert_eq!(
-				balance(*asset_id, &StakingRewards::pool_account_id(&pool_id)),
+				balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
 				amount * 2 - claim
 			);
 		}
