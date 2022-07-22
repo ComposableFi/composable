@@ -95,6 +95,7 @@ pub fn common_add_remove_lp(
 	// all lp tokens must have been burnt
 	assert_eq!(lp, 0_u128);
 }
+
 /// `expected_lp` is a function with `base_amount`, `quote_amount`, `lp_total_issuance`,
 /// `pool_base_amount` and `pool_quote_amount` parameters and returns amount of expected new
 /// lp_tokens.
@@ -225,7 +226,7 @@ pub fn common_remove_lp_failure(
 	);
 	let min_expected_base_amount = base_amount + 1;
 	let min_expected_quote_amount = quote_amount + 1;
-	// error as expected values are more than actaul redeemed values.
+	// error as expected values are more than actual redeemed values.
 	assert_noop!(
 		Pablo::remove_liquidity(
 			Origin::signed(BOB),
