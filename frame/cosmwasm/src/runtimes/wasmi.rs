@@ -1,4 +1,5 @@
-use crate::{AccountIdOf, Config, ContractInfoOf, Pallet};
+use super::abstraction::{CosmwasmAccount, Gas};
+use crate::{AccountIdOf, Config, ContractInfoOf, Pallet, runtimes::abstraction::GasOutcome};
 use alloc::string::String;
 use core::{fmt::Display, marker::PhantomData, num::NonZeroU32};
 use cosmwasm_minimal_std::{Coin, Empty, Env, MessageInfo};
@@ -23,8 +24,6 @@ use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::CanResume;
 use wasmi_validation::{validate_module, PlainValidator};
 
-use super::abstraction::CosmwasmAccount;
-
 #[derive(Debug)]
 pub enum CosmwasmVMError<Custom> {
 	Interpreter(wasmi::Error),
@@ -32,6 +31,7 @@ pub enum CosmwasmVMError<Custom> {
 	Pallet(Custom),
 	AccountConversionFailure,
 	Aborted(String),
+  OutOfGas,
 }
 
 impl<T: Config> From<crate::Error<T>> for CosmwasmVMError<crate::Error<T>> {
@@ -87,8 +87,9 @@ pub struct CosmwasmVM<T: Config> {
 	pub executing_module: WasmiModule,
 	pub cosmwasm_env: Env,
 	pub cosmwasm_message_info: MessageInfo,
-	pub contract_address: CosmwasmAccount<T, AccountIdOf<T>>,
+	pub contract_address: CosmwasmAccount<T>,
 	pub contract_info: ContractInfoOf<T>,
+  pub gas: Gas,
 	pub _marker: PhantomData<T>,
 }
 
@@ -158,7 +159,7 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 	type QueryCustom = Empty;
 	type MessageCustom = Empty;
 	type CodeId = CosmwasmContractMeta;
-	type Address = CosmwasmAccount<T, AccountIdOf<T>>;
+	type Address = CosmwasmAccount<T>;
 	type StorageKey = Vec<u8>;
 	type StorageValue = Vec<u8>;
 	type Error = CosmwasmVMError<crate::Error<T>>;
@@ -321,11 +322,15 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		checkpoint: cosmwasm_vm::vm::VmGasCheckpoint,
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "gas_checkpoint_push");
-		Ok(())
+    match self.gas.push(checkpoint) {
+        GasOutcome::Continue => Ok(()),
+        GasOutcome::Halt => Err(CosmwasmVMError::OutOfGas),
+    }
 	}
 
 	fn gas_checkpoint_pop(&mut self) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "gas_checkpoint_pop");
+    self.gas.pop();
 		Ok(())
 	}
 
@@ -436,7 +441,7 @@ impl<'a> CodeValidation<'a> {
 							export_name: name,
 							expected_signature: signature.to_vec(),
 							actual_signature: func_ty.params().to_vec(),
-						})
+						});
 					}
 				},
 				None if *requirement == ExportRequirement::Mandatory => {
@@ -472,7 +477,7 @@ impl<'a> CodeValidation<'a> {
 			if let Some((m, f)) =
 				import_banlist.iter().find(|(m, f)| m == &import_module && f == &import_name)
 			{
-				return Err(ValidationError::ImportIsBanned(m, f))
+				return Err(ValidationError::ImportIsBanned(m, f));
 			}
 		}
 		Ok(self)
@@ -489,11 +494,11 @@ impl<'a> CodeValidation<'a> {
 		let CodeValidation(module) = self;
 		if let Some(table_section) = module.table_section() {
 			if table_section.entries().len() > 1 {
-				return Err(ValidationError::MustDeclareOneTable)
+				return Err(ValidationError::MustDeclareOneTable);
 			}
 			if let Some(table_type) = table_section.entries().first() {
 				if table_type.limits().initial() > limit {
-					return Err(ValidationError::TableExceedLimit)
+					return Err(ValidationError::TableExceedLimit);
 				}
 			}
 		}
@@ -506,7 +511,7 @@ impl<'a> CodeValidation<'a> {
 				use self::elements::Instruction::BrTable;
 				if let BrTable(table) = instr {
 					if table.table.len() > limit as usize {
-						return Err(ValidationError::BrTableExceedLimit)
+						return Err(ValidationError::BrTableExceedLimit);
 					}
 				}
 			}
@@ -517,7 +522,7 @@ impl<'a> CodeValidation<'a> {
 		let CodeValidation(module) = self;
 		if let Some(global_section) = module.global_section() {
 			if global_section.entries().len() > limit as usize {
-				return Err(ValidationError::GlobalsExceedLimit)
+				return Err(ValidationError::GlobalsExceedLimit);
 			}
 		}
 		Ok(self)
@@ -527,8 +532,9 @@ impl<'a> CodeValidation<'a> {
 		if let Some(global_section) = module.global_section() {
 			for global in global_section.entries() {
 				match global.global_type().content_type() {
-					ValueType::F32 | ValueType::F64 =>
-						return Err(ValidationError::GlobalFloatingPoint),
+					ValueType::F32 | ValueType::F64 => {
+						return Err(ValidationError::GlobalFloatingPoint)
+					},
 					_ => {},
 				}
 			}
@@ -537,8 +543,9 @@ impl<'a> CodeValidation<'a> {
 			for func_body in code_section.bodies() {
 				for local in func_body.locals() {
 					match local.value_type() {
-						ValueType::F32 | ValueType::F64 =>
-							return Err(ValidationError::LocalFloatingPoint),
+						ValueType::F32 | ValueType::F64 => {
+							return Err(ValidationError::LocalFloatingPoint)
+						},
 						_ => {},
 					}
 				}
@@ -551,8 +558,9 @@ impl<'a> CodeValidation<'a> {
 						let return_type = func_type.results().get(0);
 						for value_type in func_type.params().iter().chain(return_type) {
 							match value_type {
-								ValueType::F32 | ValueType::F64 =>
-									return Err(ValidationError::ParamFloatingPoint),
+								ValueType::F32 | ValueType::F64 => {
+									return Err(ValidationError::ParamFloatingPoint)
+								},
 								_ => {},
 							}
 						}
@@ -567,7 +575,7 @@ impl<'a> CodeValidation<'a> {
 		if let Some(type_section) = module.type_section() {
 			for Type::Function(func) in type_section.types() {
 				if func.params().len() > limit as usize {
-					return Err(ValidationError::FunctionParameterExceedLimit)
+					return Err(ValidationError::FunctionParameterExceedLimit);
 				}
 			}
 		}
