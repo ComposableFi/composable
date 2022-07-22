@@ -755,7 +755,8 @@ pub mod pallet {
 						reward
 					} else {
 						let new_total_rewards = u128::from(periods_surpassed)
-							.saturating_mul(reward.reward_rate.amount.into());
+							.saturating_mul(reward.reward_rate.amount.into())
+							.saturating_add(reward.total_rewards.into());
 
 						let new_total_rewards = if new_total_rewards <= reward.max_rewards.into() {
 							new_total_rewards.into()
@@ -768,9 +769,13 @@ pub mod pallet {
 							reward.max_rewards
 						};
 
+						use core::ops::{Add, Mul};
+
 						Reward {
 							total_rewards: new_total_rewards,
-							last_updated_timestamp: now,
+							last_updated_timestamp: reward
+								.last_updated_timestamp
+								.add(periods_surpassed.mul(reward.reward_rate.period)),
 							..reward
 						}
 					}
