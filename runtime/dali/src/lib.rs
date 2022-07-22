@@ -977,7 +977,7 @@ impl pablo::Config for Runtime {
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
-	type ManageStakingPool = StakingRewards;
+	type ManageStaking = StakingRewards;
 	type ProtocolStaking = StakingRewards;
 }
 

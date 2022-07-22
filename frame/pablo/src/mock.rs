@@ -196,7 +196,7 @@ impl pablo::Config for Test {
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
-	type ManageStakingPool = StakingRewards;
+	type ManageStaking = StakingRewards;
 	type ProtocolStaking = StakingRewards;
 }
 

@@ -75,11 +75,10 @@ pub mod pallet {
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
 			RedeemableAssets, RemoveLiquiditySimulationResult, RewardPoolType, StableSwapPoolInfo,
-			StakingRewardPool,
+			StakingRewardPool, FIVE_YEAR_BLOCKS, MAX_REWARDS, REWARD_PERCENTAGE,
 		},
 		staking::{
-			lock::LockConfig, ManageStakingPool, ProtocolStaking, RewardConfig,
-			RewardPoolConfiguration,
+			lock::LockConfig, ManageStaking, ProtocolStaking, RewardConfig, RewardPoolConfiguration,
 		},
 		time::{ONE_HOUR, ONE_MINUTE},
 	};
@@ -159,10 +158,18 @@ pub mod pallet {
 		StakingRewardPool<<T as Config>::RewardPoolId>,
 		<T as Config>::MaxStakingRewardPools,
 	>;
+	type RewardConfigsOf<T> = BoundedBTreeMap<
+		<T as Config>::AssetId,
+		RewardConfig<<T as Config>::AssetId, <T as Config>::Balance>,
+		<T as Config>::MaxRewardConfigsPerPool,
+	>;
 	pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
 	pub(crate) type TWAPStateOf<T> = TimeWeightedAveragePrice<MomentOf<T>, <T as Config>::Balance>;
 	pub(crate) type PriceCumulativeStateOf<T> =
 		PriceCumulative<MomentOf<T>, <T as Config>::Balance>;
+
+	type DurationPresets<T> =
+		BoundedBTreeMap<u64, Perbill, <T as Config>::MaxStakingDurationPresets>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -365,7 +372,7 @@ pub mod pallet {
 
 		type MaxStakingDurationPresets: Get<u32>;
 
-		type ManageStakingPool: ManageStakingPool<
+		type ManageStaking: ManageStaking<
 			AccountId = AccountIdOf<Self>,
 			AssetId = <Self as Config>::AssetId,
 			BlockNumber = <Self as frame_system::Config>::BlockNumber,
@@ -627,48 +634,102 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		#[transactional]
-		fn create_staking_reward_pool(
+		fn default_pblo_staking_pool_config(
 			pool_id: &T::PoolId,
-			pair: CurrencyPair<T::AssetId>,
-		) -> DispatchResult {
+			pair: &CurrencyPair<T::AssetId>,
+		) -> Result<
+			RewardPoolConfiguration<
+				T::AccountId,
+				T::AssetId,
+				T::BlockNumber,
+				RewardConfigsOf<T>,
+				DurationPresets<T>,
+			>,
+			DispatchError,
+		> {
 			let mut rewards = BTreeMap::new();
-			let max_rewards: T::Balance = T::Convert::convert(100_000_000_000_000_000_000_000_u128);
-			let reward_rate = Perbill::from_percent(10);
-			let five_yers_blocks: u32 = 5 * 365 * 24 * 60 * 10; // 6s for one block
+			let max_rewards: T::Balance = T::Convert::convert(MAX_REWARDS);
+			let reward_rate = Perbill::from_percent(REWARD_PERCENTAGE);
 			rewards
 				.insert(pair.base, RewardConfig { asset_id: pair.base, max_rewards, reward_rate });
 			rewards.insert(
 				pair.quote,
 				RewardConfig { asset_id: pair.quote, max_rewards, reward_rate },
 			);
-			let reward_configs = BoundedBTreeMap::<
-				T::AssetId,
-				RewardConfig<T::AssetId, T::Balance>,
-				T::MaxRewardConfigsPerPool,
-			>::try_from(rewards)
-			.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let reward_configs = RewardConfigsOf::<T>::try_from(rewards)
+				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let mut duration_presets = BTreeMap::new();
 			duration_presets.insert(ONE_HOUR, Perbill::from_percent(1));
 			duration_presets.insert(ONE_MINUTE, Perbill::from_percent(10));
 			let duration_presets = BoundedBTreeMap::try_from(duration_presets)
 				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
-			let pool_config = RewardPoolConfiguration::<_, _, _, _, _>::RewardRateBasedIncentive {
+			Ok(RewardPoolConfiguration::<_, _, _, _, _>::RewardRateBasedIncentive {
 				owner: Self::account_id(pool_id),
 				asset_id: primitives::currency::CurrencyId::PBLO.0.into(),
 				end_block: frame_system::Pallet::<T>::current_block_number() +
-					five_yers_blocks.into(),
+					FIVE_YEAR_BLOCKS.into(),
 				reward_configs,
 				lock,
-			};
-			let staking_reward_pool_id = T::ManageStakingPool::crete_staking_pool(pool_config)?;
-			let staking_reward_pool = StakingRewardPool {
-				pool_id: staking_reward_pool_id,
+			})
+		}
+
+		fn default_lp_staking_pool_config(
+			pool_id: &T::PoolId,
+		) -> Result<
+			RewardPoolConfiguration<
+				T::AccountId,
+				T::AssetId,
+				T::BlockNumber,
+				RewardConfigsOf<T>,
+				DurationPresets<T>,
+			>,
+			DispatchError,
+		> {
+			let mut rewards = BTreeMap::new();
+			let max_rewards: T::Balance = T::Convert::convert(MAX_REWARDS);
+			let reward_rate = Perbill::from_percent(REWARD_PERCENTAGE);
+			let pblo_asset_id: T::AssetId = primitives::currency::CurrencyId::PBLO.0.into();
+			rewards.insert(
+				pblo_asset_id,
+				RewardConfig { asset_id: pblo_asset_id, max_rewards, reward_rate },
+			);
+			let reward_configs = RewardConfigsOf::<T>::try_from(rewards)
+				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let mut duration_presets = BTreeMap::new();
+			duration_presets.insert(ONE_HOUR, Perbill::from_percent(1));
+			duration_presets.insert(ONE_MINUTE, Perbill::from_percent(10));
+			let duration_presets = BoundedBTreeMap::try_from(duration_presets)
+				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
+			Ok(RewardPoolConfiguration::<_, _, _, _, _>::RewardRateBasedIncentive {
+				owner: Self::account_id(pool_id),
+				asset_id: Self::lp_token(*pool_id)?,
+				end_block: frame_system::Pallet::<T>::current_block_number() +
+					FIVE_YEAR_BLOCKS.into(),
+				reward_configs,
+				lock,
+			})
+		}
+
+		#[transactional]
+		fn create_staking_reward_pool(
+			pool_id: &T::PoolId,
+			pair: CurrencyPair<T::AssetId>,
+		) -> DispatchResult {
+			let pblo_pool_config = Self::default_pblo_staking_pool_config(pool_id, &pair)?;
+			let lp_pool_config = Self::default_lp_staking_pool_config(pool_id)?;
+			let pblo_staking_pool_id = T::ManageStaking::create_staking_pool(pblo_pool_config)?;
+			let lp_staking_pool_id = T::ManageStaking::create_staking_pool(lp_pool_config)?;
+			let pblo_staking_pool = StakingRewardPool {
+				pool_id: pblo_staking_pool_id,
 				pool_type: RewardPoolType::PBLO,
 			};
-			let staking_reward_pools = BoundedVec::try_from(vec![staking_reward_pool])
-				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let lp_staking_pool =
+				StakingRewardPool { pool_id: lp_staking_pool_id, pool_type: RewardPoolType::LP };
+			let staking_reward_pools =
+				BoundedVec::try_from(vec![pblo_staking_pool, lp_staking_pool])
+					.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 
 			StakingRewardPools::<T>::insert(pool_id, staking_reward_pools);
 			Ok(())
@@ -814,23 +875,16 @@ pub mod pallet {
 				let staking_reward_pools_ref: &Vec<StakingRewardPool<T::RewardPoolId>> =
 					staking_reward_pools.as_ref();
 				for staking_reward_pool in staking_reward_pools_ref {
-					match staking_reward_pool.pool_type {
-						RewardPoolType::PBLO => {
-							T::ProtocolStaking::transfer_reward(
-								who,
-								&staking_reward_pool.pool_id,
-								fees.asset_id,
-								fees.protocol_fee,
-							)?;
-						},
-						RewardPoolType::LP => {
-							// TODO: implement.
-							continue
-						},
+					if staking_reward_pool.pool_type == RewardPoolType::PBLO {
+						T::ProtocolStaking::transfer_reward(
+							who,
+							&staking_reward_pool.pool_id,
+							fees.asset_id,
+							fees.protocol_fee,
+						)?;
 					}
 				}
 			}
-			// TODO other fees handling
 			Ok(())
 		}
 	}

@@ -153,7 +153,7 @@ pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
 	pub lock: Lock,
 }
 
-pub trait ManageStakingPool {
+pub trait ManageStaking {
 	type AccountId;
 	type AssetId;
 	type BlockNumber;
@@ -162,7 +162,7 @@ pub trait ManageStakingPool {
 	type StakingDurationPresetsLimit;
 	type RewardPoolId;
 
-	fn crete_staking_pool(
+	fn create_staking_pool(
 		pool_config: RewardPoolConfiguration<
 			Self::AccountId,
 			Self::AssetId,

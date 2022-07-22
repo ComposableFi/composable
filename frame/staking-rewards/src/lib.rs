@@ -304,7 +304,7 @@ pub mod pallet {
 			pool_config: RewardPoolConfigurationOf<T>,
 		) -> DispatchResult {
 			T::RewardPoolCreationOrigin::ensure_origin(origin)?;
-			let _ = <Self as ManageStakingPool>::crete_staking_pool(pool_config)?;
+			let _ = <Self as ManageStaking>::create_staking_pool(pool_config)?;
 			Ok(())
 		}
 
@@ -365,7 +365,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> ManageStakingPool for Pallet<T> {
+	impl<T: Config> ManageStaking for Pallet<T> {
 		type AssetId = T::AssetId;
 		type AccountId = T::AccountId;
 		type BlockNumber = <T as frame_system::Config>::BlockNumber;
@@ -375,7 +375,7 @@ pub mod pallet {
 		type RewardPoolId = T::RewardPoolId;
 
 		#[transactional]
-		fn crete_staking_pool(
+		fn create_staking_pool(
 			pool_config: RewardPoolConfiguration<
 				Self::AccountId,
 				Self::AssetId,
