@@ -192,7 +192,7 @@ benchmarks! {
 
 		let now = now + std::time::Duration::from_secs(12);
 	}: {
-		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), 1.into(), reward, now.as_secs());
+		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), reward, now.as_secs());
 	}
 
 	unix_time_now {}: {

@@ -743,11 +743,10 @@ pub mod pallet {
 		// TODO: tests
 		pub(crate) fn reward_acumulation_hook_reward_update_calculation(
 			pool_id: T::RewardPoolId,
-			asset_id: T::AssetId,
 			reward: Reward<T::AssetId, T::Balance>,
 			now: u64,
-		) -> (T::AssetId, Reward<T::AssetId, T::Balance>) {
-			let new_reward = match now.safe_sub(&reward.last_updated_timestamp) {
+		) -> Reward<T::AssetId, T::Balance> {
+			match now.safe_sub(&reward.last_updated_timestamp) {
 				Ok(elapsed_time) => {
 					// SAFETY(benluelo): RewardRate::period is non-zero.
 					let periods_surpassed = elapsed_time.div(&reward.reward_rate.period);
@@ -764,7 +763,7 @@ pub mod pallet {
 							// saturate at max_rewards, but emit an error first
 							Self::deposit_event(Event::<T>::RewardAccumulationError {
 								pool_id,
-								asset_id,
+								asset_id: reward.asset_id,
 							});
 							reward.max_rewards
 						};
@@ -777,12 +776,13 @@ pub mod pallet {
 					}
 				},
 				Err(_) => {
-					Self::deposit_event(Event::<T>::RewardAccumulationError { pool_id, asset_id });
+					Self::deposit_event(Event::<T>::RewardAccumulationError {
+						pool_id,
+						asset_id: reward.asset_id,
+					});
 					reward
 				},
-			};
-
-			(asset_id, new_reward)
+			}
 		}
 
 		// TODO: tests
@@ -796,8 +796,11 @@ pub mod pallet {
 						.rewards
 						.into_iter()
 						.map(|(asset_id, reward)| {
-							Self::reward_acumulation_hook_reward_update_calculation(
-								pool_id, asset_id, reward, now,
+							(
+								asset_id,
+								Self::reward_acumulation_hook_reward_update_calculation(
+									pool_id, reward, now,
+								),
 							)
 						})
 						.try_collect()
