@@ -183,10 +183,20 @@ pub fn compute_deposit_lp_single_asset<T: PerThing>(
 where
 	T::Inner: Into<u32>,
 {
-	let weight = weight.deconstruct().into();
+	let weight = Decimal::from_u32(weight.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+	let full_perthing =
+		Decimal::from_u32(T::one().deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+	let weight = weight.safe_div(&full_perthing)?;
+	let amount = Decimal::from_u128(amount).ok_or(ArithmeticError::Overflow)?;
+	let balance = Decimal::from_u128(balance).ok_or(ArithmeticError::Overflow)?;
+
 	let amount_div_balance = amount.safe_div(&balance)?;
-	let value_ratio = (1_u128 + amount_div_balance)
-		.checked_pow(weight)
+	let value_ratio = (Decimal::one() + amount_div_balance)
+		.checked_powd(weight)
 		.ok_or(ArithmeticError::Overflow)?;
-	Ok(lp_supply.safe_mul(&value_ratio.safe_sub(&1_u128)?)?)
+	let lp_supply = Decimal::from_u128(lp_supply).ok_or(ArithmeticError::Overflow)?;
+	lp_supply
+		.safe_mul(&value_ratio.safe_sub(&Decimal::one())?)?
+		.to_u128()
+		.ok_or(ArithmeticError::Overflow)
 }
