@@ -315,6 +315,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             composableManagerWallet.publicKey
           );
           const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
+          const baseAmount = 1000;
+          const quoteAmount = 1000;
           const {
             data: [result]
           } = await pablo.removeLiquidity(
@@ -661,7 +663,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               api,
               picaAssetId,
               usdcAssetId,
-              picaUsdcPoolId,
+              picaUsdcLpTokenId,
               composableManagerWallet.publicKey,
               baseAmount,
               new BN(picaBalanceBefore.toString()),
@@ -719,11 +721,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             );
             const picaBalanceBefore = await api.rpc.assets.balanceOf(
               picaAssetId.toString(),
-              liquidityProviderWallet1.publicKey
+              composableManagerWallet.publicKey
             );
             const usdcBalanceBefore = await api.rpc.assets.balanceOf(
               usdcAssetId.toString(),
-              liquidityProviderWallet1.publicKey
+              composableManagerWallet.publicKey
             );
             const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
             const baseAmount = 1000;
@@ -1453,7 +1455,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               api,
               wethAssetId,
               ksmAssetId,
-              wethKsmPoolId,
+              wethKsmLpTokenId,
               composableManagerWallet.publicKey,
               baseAmount,
               new BN(wethBalanceBefore.toString()),
@@ -1506,7 +1508,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Pool owner can remove liquidity from the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
-              wethKsmPoolId.toString(),
+              wethKsmLpTokenId.toString(),
               composableManagerWallet.publicKey
             );
             const wethBalanceBefore = await api.rpc.assets.balanceOf(
