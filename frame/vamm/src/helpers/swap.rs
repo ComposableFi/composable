@@ -1,7 +1,7 @@
 use crate::{Config, Error, Event, Pallet, SwapConfigOf, SwapOutputOf, VammMap, VammStateOf};
 use composable_maths::labs::numbers::UnsignedMath;
 use composable_traits::vamm::{AssetType, Direction, SwapOutput};
-use frame_support::pallet_prelude::*;
+use frame_support::{pallet_prelude::*, transactional};
 use sp_runtime::ArithmeticError;
 use std::cmp::Ordering;
 
@@ -13,10 +13,22 @@ struct CalculateSwapAsset<T: Config> {
 pub struct ComputeSwap<T: Config> {
 	base_asset_reserves: T::Balance,
 	quote_asset_reserves: T::Balance,
-	swap_output: SwapOutputOf<T>,
+	pub swap_output: SwapOutputOf<T>,
 }
 
 impl<T: Config> Pallet<T> {
+	/// Performs runtime storage changes, effectively conducting the asset swap.
+	/// For more information about what this function does, read
+	/// [`swap`](struct.Pallet.html#method.swap) function documentation.
+	///
+	/// # Errors
+	///
+	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+	/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
+	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
+	/// * [`Error::<T>::FailToRetrieveVamm`]
+	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
+	#[transactional]
 	pub fn do_swap(
 		config: &SwapConfigOf<T>,
 		vamm_state: &mut VammStateOf<T>,
@@ -24,13 +36,6 @@ impl<T: Config> Pallet<T> {
 		// Compute new reserves of base and quote asset and swap result.
 		let ComputeSwap { base_asset_reserves, quote_asset_reserves, swap_output } =
 			Self::compute_swap(config, vamm_state)?;
-
-		// Check if swap doesn't violate Vamm properties and swap requirements.
-		Self::sanity_check_after_swap(
-			&VammStateOf::<T> { base_asset_reserves, quote_asset_reserves, ..*vamm_state },
-			config,
-			&swap_output,
-		)?;
 
 		// Update runtime storage.
 		VammMap::<T>::try_mutate(&config.vamm_id, |old_vamm_state| match old_vamm_state {
@@ -55,15 +60,43 @@ impl<T: Config> Pallet<T> {
 		Ok(swap_output)
 	}
 
+	/// Performs runtime storage changes, effectively conducting the asset swap.
+	/// For more information about what this function does, read
+	/// [`swap`](struct.Pallet.html#method.swap) function documentation.
+	///
+	/// # Errors
+	///
+	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+	/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
+	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
+	/// * [`Error::<T>::FailToRetrieveVamm`]
+	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
 	pub fn compute_swap(
 		config: &SwapConfigOf<T>,
 		vamm_state: &VammStateOf<T>,
 	) -> Result<ComputeSwap<T>, DispatchError> {
+		// Check if initial swap properties are valid.
+		Self::sanity_check_before_swap(config, vamm_state)?;
+
 		// Delegate alternate computation to helper functions.
-		match config.asset {
+		let swap = match config.asset {
 			AssetType::Quote => Self::compute_swap_quote_asset(config, vamm_state),
 			AssetType::Base => Self::compute_swap_base_asset(config, vamm_state),
-		}
+		}?;
+
+		// Check if swap doesn't violate Vamm properties and swap requirements.
+		Self::sanity_check_after_swap(
+			&VammStateOf::<T> {
+				base_asset_reserves: swap.base_asset_reserves,
+				quote_asset_reserves: swap.quote_asset_reserves,
+				..*vamm_state
+			},
+			config,
+			&swap.swap_output,
+		)?;
+
+		// Return swap result.
+		Ok(swap)
 	}
 
 	fn compute_swap_quote_asset(

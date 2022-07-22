@@ -4,7 +4,7 @@ use frame_support::{pallet_prelude::*, transactional};
 use sp_runtime::traits::Saturating;
 
 impl<T: Config> Pallet<T> {
-	/// Perform runtime storage changes, effectively updating the asset twap.
+	/// Performs runtime storage changes, effectively updating the asset twap.
 	///
 	/// # Errors
 	///

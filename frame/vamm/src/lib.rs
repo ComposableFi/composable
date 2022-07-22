@@ -140,7 +140,7 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use crate::types::VammState;
+	use crate::{helpers::swap::ComputeSwap, types::VammState};
 	use codec::{Codec, FullCodec};
 	use composable_maths::labs::numbers::TryReciprocal;
 	use composable_traits::vamm::{
@@ -767,9 +767,6 @@ pub mod pallet {
 				},
 			}?;
 
-			// Perform required sanity checks.
-			Self::sanity_check_before_swap(config, &vamm_state)?;
-
 			// Delegate swap to helper function.
 			let amount_swapped = Self::do_swap(config, &mut vamm_state)?;
 
@@ -821,13 +818,13 @@ pub mod pallet {
 		#[transactional]
 		fn swap_simulation(config: &SwapConfigOf<T>) -> Result<SwapOutputOf<T>, DispatchError> {
 			// Get Vamm state.
-			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
-
-			// Sanity checks.
-			Self::sanity_check_before_swap(config, &vamm_state)?;
+			let vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
 			// Delegate swap to helper function.
-			Self::do_swap(config, &mut vamm_state)
+			let ComputeSwap { swap_output, .. } = Self::compute_swap(config, &vamm_state)?;
+
+			// Return swap result.
+			Ok(swap_output)
 		}
 
 		/// Moves the price of a vamm to the desired values of

@@ -1,6 +1,6 @@
 mod checks;
 mod math;
 mod price;
-mod swap;
+pub mod swap;
 mod twap;
 mod vamm;

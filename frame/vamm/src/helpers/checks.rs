@@ -1,4 +1,4 @@
-use crate::{types::VammState, Config, Error, Pallet};
+use crate::{Config, Error, Pallet, VammStateOf};
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, SwapOutput};
 use frame_support::pallet_prelude::*;
 use sp_runtime::traits::{CheckedAdd, Zero};
@@ -20,7 +20,7 @@ impl<T: Config> Pallet<T> {
 	pub fn sanity_check_before_swap(
 		// config: &SwapConfigOf<T>,
 		config: &SwapConfig<T::VammId, T::Balance>,
-		vamm_state: &VammState<T::Balance, T::Moment, T::Decimal>,
+		vamm_state: &VammStateOf<T>,
 	) -> Result<(), DispatchError> {
 		// We must ensure that the vamm is not closed before performing any swap.
 		ensure!(!Self::is_vamm_closed(vamm_state, &None), Error::<T>::VammIsClosed);
@@ -69,7 +69,7 @@ impl<T: Config> Pallet<T> {
 	/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
 	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 	pub fn sanity_check_after_swap(
-		vamm_state: &VammState<T::Balance, T::Moment, T::Decimal>,
+		vamm_state: &VammStateOf<T>,
 		config: &SwapConfig<T::VammId, T::Balance>,
 		amount_swapped: &SwapOutput<T::Balance>,
 	) -> Result<(), DispatchError> {
@@ -106,7 +106,7 @@ impl<T: Config> Pallet<T> {
 	/// * [`Error::<T>::VammIsClosed`]
 	/// * [`Error::<T>::AssetTwapTimestampIsMoreRecent`]
 	pub fn sanity_check_before_update_twap(
-		vamm_state: &VammState<T::Balance, T::Moment, T::Decimal>,
+		vamm_state: &VammStateOf<T>,
 		base_twap: T::Decimal,
 		now: &Option<T::Moment>,
 	) -> Result<(), DispatchError> {
