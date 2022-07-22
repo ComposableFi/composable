@@ -324,6 +324,51 @@ fn add_lp_with_min_mint_amount() {
 	});
 }
 
+#[test]
+fn add_liquidity_single_asset() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_btc = 100_u128 * unit;
+		let btc_price = 20_000_u128;
+		let initial_usdt = initial_btc * btc_price;
+		let pool_id =
+			create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
+
+		let base_amount = 10 * unit;
+		let quote_amount = 0;
+		assert_ok!(Tokens::mint_into(BTC, &ALICE, base_amount));
+
+		let pool = get_pool(pool_id);
+		let lp_total_issuance = Tokens::total_issuance(pool.lp_token);
+
+		assert_ok!(<Pablo as Amm>::add_liquidity(
+			&ALICE,
+			pool_id,
+			base_amount,
+			quote_amount,
+			0,
+			false
+		));
+
+		let new_lp_total_issuance = Tokens::total_issuance(pool.lp_token);
+
+		assert_last_event::<Test, _>(|e| {
+			matches!(e.event,
+				mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, base_amount, quote_amount, minted_lp })
+				if who == ALICE
+				&& pool_id == pool_id
+				&& base_amount == base_amount
+				&& quote_amount == 0
+				&& minted_lp == new_lp_total_issuance - lp_total_issuance)
+		});
+
+		let pool_account_id = Pablo::account_id(&pool_id);
+		assert_eq!(Tokens::balance(pool.pair.base, &pool_account_id), initial_btc + base_amount);
+		assert_eq!(Tokens::balance(pool.pair.quote, &pool_account_id), initial_usdt);
+		assert_eq!(Tokens::balance(BTC, &ALICE), 0);
+	})
+}
+
 //
 // - test error if trying to remove > lp than we have
 #[test]
@@ -384,8 +429,8 @@ fn high_slippage() {
 
 		assert_ok!(<Pablo as Amm>::sell(&BOB, pool_id, BTC, bob_btc, 0_u128, false));
 		let usdt_balance = Tokens::balance(USDT, &BOB);
-		let idea_usdt_balance = bob_btc * btc_price;
-		assert!((idea_usdt_balance - usdt_balance) > 5_u128);
+		let ideal_usdt_balance = bob_btc * btc_price;
+		assert!((ideal_usdt_balance - usdt_balance) > 5_u128);
 	});
 }
 
@@ -421,7 +466,7 @@ fn fees() {
             println!("expected_btc_value {:?}, btc_balance {:?}", expected_btc_value, btc_balance);
         }
 		assert_ok!(default_acceptable_computation_error(expected_btc_value, btc_balance));
-        // lp_fee is taken from quote 
+        // lp_fee is taken from quote
 		// from lp_fee 1 % (as per owner_fee) goes to pool owner (ALICE)
         let alice_usdt_bal = Tokens::balance(USDT, &ALICE);
         let expected_alice_usdt_bal = owner_fee.mul_floor(lp_fee.mul_floor(bob_usdt));
