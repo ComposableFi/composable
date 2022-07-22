@@ -1,13 +1,16 @@
 use crate::{
 	mock::{ExtBuilder, MockRuntime, TestPallet},
 	pallet::{Error, VammMap},
-	tests::{helpers::run_for_seconds, TestSwapConfig, TestVammConfig},
+	tests::{
+		helpers::{run_for_seconds, with_swap_context},
+		helpers_propcompose::{any_swap_config, any_vamm_state},
+		TestSwapConfig, TestVammConfig,
+	},
 };
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait};
 use frame_support::{assert_noop, assert_storage_noop};
+use proptest::prelude::*;
 use sp_runtime::traits::{One, Zero};
-
-use super::helpers::with_swap_context;
 
 // -------------------------------------------------------------------------------------------------
 //                                            Unit Tests
@@ -44,13 +47,6 @@ fn should_fail_if_vamm_is_closed() {
 			TestPallet::swap_simulation(&swap_config.into()),
 			Error::<MockRuntime>::VammIsClosed
 		);
-	});
-}
-
-#[test]
-fn should_not_update_runtime_storage() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
-		assert_storage_noop!(TestPallet::swap_simulation(&swap_config));
 	});
 }
 
@@ -161,3 +157,24 @@ fn should_return_correct_value_remove_quote() {
 // -------------------------------------------------------------------------------------------------
 //                                             Proptests
 // -------------------------------------------------------------------------------------------------
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(1))]
+	#[test]
+	fn should_not_update_runtime_storage(
+		mut vamm_state in any_vamm_state(),
+		mut swap_config in any_swap_config()
+	) {
+		// Ensure vamm is always open.
+		vamm_state.closed = None;
+		// Ensure we always perform operation on an existing vamm.
+		swap_config.vamm_id = Zero::zero();
+
+		with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
+			let vamm_state_before = TestPallet::get_vamm(swap_config.vamm_id).unwrap();
+			TestPallet::swap_simulation(&swap_config);
+			let vamm_state_after = TestPallet::get_vamm(swap_config.vamm_id).unwrap();
+			assert_eq!(vamm_state_before, vamm_state_after);
+		});
+	}
+}

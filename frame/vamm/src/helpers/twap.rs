@@ -31,20 +31,27 @@ impl<T: Config> Pallet<T> {
 		Ok(base_twap)
 	}
 
-	pub fn compute_new_twap(
+	/// Handles the optional value for `base_twap` parameter in function
+	/// [`update_twap`](struct.Pallet.html#method.update_twap), computing a new
+	/// twap value if necessary.
+	///
+	/// # Errors
+	///
+	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
+	pub fn handle_base_twap(
+		base_twap: Option<T::Decimal>,
 		vamm_state: &VammStateOf<T>,
-		now: &Option<T::Moment>,
 	) -> Result<T::Decimal, DispatchError> {
-		// Compute base twap.
-		let base_twap = Self::calculate_twap(
-			now,
-			vamm_state.twap_timestamp,
-			vamm_state.twap_period,
-			Self::do_get_price(vamm_state, AssetType::Base)?,
-			vamm_state.base_asset_twap,
-		)?;
-
-		Ok(base_twap)
+		match base_twap {
+			Some(base_twap) => Ok(base_twap),
+			None => Self::calculate_twap(
+				&None,
+				vamm_state.twap_timestamp,
+				vamm_state.twap_period,
+				Self::do_get_price(vamm_state, AssetType::Base)?,
+				vamm_state.base_asset_twap,
+			),
+		}
 	}
 
 	fn calculate_twap(

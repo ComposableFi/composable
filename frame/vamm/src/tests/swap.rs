@@ -628,9 +628,9 @@ proptest! {
 	#[test]
 	fn multiple_swaps_dont_diverge_from_original_invariant(
 		mut vamm_state in any_vamm_state(),
-		swap_config in multiple_swaps()
+		mut swap_config in multiple_swaps()
 	) {
-		// Ensure vamm is always open
+		// Ensure vamm is always open.
 		vamm_state.closed = None;
 
 		ExtBuilder {
@@ -638,7 +638,9 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
-			for x in swap_config.iter() {
+			for x in swap_config.iter_mut() {
+				// Ensure we always perform operation on an existing vamm.
+				x.vamm_id = Zero::zero();
 				TestPallet::swap(x);
 			}
 			let vamm_after_swap = VammMap::<MockRuntime>::get(0);
@@ -666,7 +668,7 @@ proptest! {
 		mut vamm_state in any_vamm_state(),
 		mut swap_config in multiple_swaps()
 	) {
-		// Ensure vamm is always open
+		// Ensure vamm is always open.
 		vamm_state.closed = None;
 
 		ExtBuilder {
@@ -675,6 +677,8 @@ proptest! {
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for mut x in swap_config.iter_mut() {
+				// Ensure we always perform operation on an existing vamm.
+				x.vamm_id = Zero::zero();
 				// Make swaps only for base asset
 				x.asset = AssetType::Base;
 				TestPallet::swap(x);
@@ -714,6 +718,8 @@ proptest! {
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for mut x in swap_config.iter_mut() {
+				// Ensure we always perform operation on an existing vamm.
+				x.vamm_id = Zero::zero();
 				// Make swaps only for quote asset
 				x.asset = AssetType::Quote;
 				TestPallet::swap(x);

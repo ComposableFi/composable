@@ -128,9 +128,9 @@ mod tests;
 #[cfg(test)]
 mod mock;
 
-mod types;
+pub mod types;
 
-mod helpers;
+pub mod helpers;
 
 pub use pallet::*;
 
@@ -682,13 +682,11 @@ pub mod pallet {
 			vamm_id: T::VammId,
 			base_twap: Option<T::Decimal>,
 		) -> Result<T::Decimal, DispatchError> {
+			// Retrieve vamm state.
 			let mut vamm_state = Self::get_vamm_state(&vamm_id)?;
 
 			// Handle optional value.
-			let base_twap = match base_twap {
-				Some(base_twap) => base_twap,
-				None => Self::compute_new_twap(&vamm_state, &None)?,
-			};
+			let base_twap = Self::handle_base_twap(base_twap, &vamm_state)?;
 
 			// Delegate update twap to internal functions.
 			Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, &None)?;
@@ -774,25 +772,6 @@ pub mod pallet {
 
 			// Delegate swap to helper function.
 			let amount_swapped = Self::do_swap(config, &mut vamm_state)?;
-
-			// Update runtime storage.
-			VammMap::<T>::try_mutate(&config.vamm_id, |old_vamm_state| match old_vamm_state {
-				Some(v) => {
-					v.base_asset_reserves = vamm_state.base_asset_reserves;
-					v.quote_asset_reserves = vamm_state.quote_asset_reserves;
-					Ok(())
-				},
-				None => Err(Error::<T>::FailToRetrieveVamm),
-			})?;
-
-			// Deposit swap event into blockchain.
-			Self::deposit_event(Event::<T>::Swapped {
-				vamm_id: config.vamm_id,
-				input_amount: config.input_amount,
-				output_amount: amount_swapped,
-				input_asset_type: config.asset,
-				direction: config.direction,
-			});
 
 			// Return total swapped asset.
 			Ok(amount_swapped)

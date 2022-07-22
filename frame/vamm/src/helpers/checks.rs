@@ -118,8 +118,10 @@ impl<T: Config> Pallet<T> {
 		ensure!(!Self::is_vamm_closed(vamm_state, now), Error::<T>::VammIsClosed);
 
 		// Only update asset's twap if time has passed since last update.
-		let now = Self::now(now);
-		ensure!(now > vamm_state.twap_timestamp, Error::<T>::AssetTwapTimestampIsMoreRecent);
+		ensure!(
+			Self::now(now) > vamm_state.twap_timestamp,
+			Error::<T>::AssetTwapTimestampIsMoreRecent
+		);
 
 		Ok(())
 	}

@@ -1,4 +1,4 @@
-use crate::{Config, Pallet, SwapConfigOf, SwapOutputOf, VammStateOf};
+use crate::{Config, Error, Event, Pallet, SwapConfigOf, SwapOutputOf, VammMap, VammStateOf};
 use composable_maths::labs::numbers::UnsignedMath;
 use composable_traits::vamm::{AssetType, Direction, SwapOutput};
 use frame_support::pallet_prelude::*;
@@ -6,8 +6,14 @@ use sp_runtime::ArithmeticError;
 use std::cmp::Ordering;
 
 struct CalculateSwapAsset<T: Config> {
-	pub output_amount: T::Balance,
-	pub input_amount: T::Balance,
+	output_amount: T::Balance,
+	input_amount: T::Balance,
+}
+
+pub struct ComputeSwap<T: Config> {
+	base_asset_reserves: T::Balance,
+	quote_asset_reserves: T::Balance,
+	swap_output: SwapOutputOf<T>,
 }
 
 impl<T: Config> Pallet<T> {
@@ -15,25 +21,55 @@ impl<T: Config> Pallet<T> {
 		config: &SwapConfigOf<T>,
 		vamm_state: &mut VammStateOf<T>,
 	) -> Result<SwapOutputOf<T>, DispatchError> {
-		// Delegate swap to helper functions.
-		let amount_swapped = match config.asset {
-			AssetType::Quote => Self::swap_quote_asset(config, vamm_state),
-			AssetType::Base => Self::swap_base_asset(config, vamm_state),
-		}?;
+		// Compute new reserves of base and quote asset and swap result.
+		let ComputeSwap { base_asset_reserves, quote_asset_reserves, swap_output } =
+			Self::compute_swap(config, vamm_state)?;
 
 		// Check if swap doesn't violate Vamm properties and swap requirements.
-		Self::sanity_check_after_swap(vamm_state, config, &amount_swapped)?;
+		Self::sanity_check_after_swap(
+			&VammStateOf::<T> { base_asset_reserves, quote_asset_reserves, ..*vamm_state },
+			config,
+			&swap_output,
+		)?;
 
-		// TODO(Cardosaum): Write one more `ensure!` block regarding
-		// amount_swapped negative or positive?
+		// Update runtime storage.
+		VammMap::<T>::try_mutate(&config.vamm_id, |old_vamm_state| match old_vamm_state {
+			Some(v) => {
+				v.base_asset_reserves = base_asset_reserves;
+				v.quote_asset_reserves = quote_asset_reserves;
+				Ok(())
+			},
+			None => Err(Error::<T>::FailToRetrieveVamm),
+		})?;
 
-		Ok(amount_swapped)
+		// Deposit swap event into blockchain.
+		Self::deposit_event(Event::<T>::Swapped {
+			vamm_id: config.vamm_id,
+			input_amount: config.input_amount,
+			output_amount: swap_output,
+			input_asset_type: config.asset,
+			direction: config.direction,
+		});
+
+		// Return swap output.
+		Ok(swap_output)
 	}
 
-	fn swap_quote_asset(
+	pub fn compute_swap(
 		config: &SwapConfigOf<T>,
-		vamm_state: &mut VammStateOf<T>,
-	) -> Result<SwapOutputOf<T>, DispatchError> {
+		vamm_state: &VammStateOf<T>,
+	) -> Result<ComputeSwap<T>, DispatchError> {
+		// Delegate alternate computation to helper functions.
+		match config.asset {
+			AssetType::Quote => Self::compute_swap_quote_asset(config, vamm_state),
+			AssetType::Base => Self::compute_swap_base_asset(config, vamm_state),
+		}
+	}
+
+	fn compute_swap_quote_asset(
+		config: &SwapConfigOf<T>,
+		vamm_state: &VammStateOf<T>,
+	) -> Result<ComputeSwap<T>, DispatchError> {
 		let quote_asset_reserve_amount = config.input_amount.try_div(&vamm_state.peg_multiplier)?;
 
 		let initial_base_asset_reserve = vamm_state.base_asset_reserves;
@@ -44,25 +80,28 @@ impl<T: Config> Pallet<T> {
 			vamm_state,
 		)?;
 
-		vamm_state.base_asset_reserves = swap_amount.output_amount;
-		vamm_state.quote_asset_reserves = swap_amount.input_amount;
-
-		match initial_base_asset_reserve.cmp(&swap_amount.output_amount) {
-			Ordering::Less => Ok(SwapOutput {
+		let swap_output = match initial_base_asset_reserve.cmp(&swap_amount.output_amount) {
+			Ordering::Less => SwapOutput {
 				output: swap_amount.output_amount.try_sub(&initial_base_asset_reserve)?,
 				negative: true,
-			}),
-			_ => Ok(SwapOutput {
+			},
+			_ => SwapOutput {
 				output: initial_base_asset_reserve.try_sub(&swap_amount.output_amount)?,
 				negative: false,
-			}),
-		}
+			},
+		};
+
+		Ok(ComputeSwap {
+			base_asset_reserves: swap_amount.output_amount,
+			quote_asset_reserves: swap_amount.input_amount,
+			swap_output,
+		})
 	}
 
-	fn swap_base_asset(
+	fn compute_swap_base_asset(
 		config: &SwapConfigOf<T>,
-		vamm_state: &mut VammStateOf<T>,
-	) -> Result<SwapOutputOf<T>, DispatchError> {
+		vamm_state: &VammStateOf<T>,
+	) -> Result<ComputeSwap<T>, DispatchError> {
 		let initial_quote_asset_reserve = vamm_state.quote_asset_reserves;
 		let swap_amount = Self::calculate_swap_asset(
 			&config.input_amount,
@@ -70,11 +109,7 @@ impl<T: Config> Pallet<T> {
 			&config.direction,
 			vamm_state,
 		)?;
-
-		vamm_state.base_asset_reserves = swap_amount.input_amount;
-		vamm_state.quote_asset_reserves = swap_amount.output_amount;
-
-		Ok(SwapOutput {
+		let swap_output = SwapOutput {
 			output: Self::calculate_quote_asset_amount_swapped(
 				&initial_quote_asset_reserve,
 				&swap_amount.output_amount,
@@ -82,6 +117,12 @@ impl<T: Config> Pallet<T> {
 				vamm_state,
 			)?,
 			negative: false,
+		};
+
+		Ok(ComputeSwap {
+			base_asset_reserves: swap_amount.input_amount,
+			quote_asset_reserves: swap_amount.output_amount,
+			swap_output,
 		})
 	}
 
