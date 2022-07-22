@@ -10,13 +10,13 @@ use crate::{pallet, pallet::Error};
 use composable_traits::instrumental::InstrumentalProtocolStrategy;
 use frame_support::assert_ok;
 use primitives::currency::CurrencyId;
-
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, Hash},
 	DispatchError::Module,
 	ModuleError,
 };
+use sp_std::collections::btree_set::BTreeSet;
 
 // -------------------------------------------------------------------------------------------------
 //                                          Associate Vault
@@ -64,6 +64,12 @@ mod associate_vault {
 					})),
 				},
 			));
+			let mut correct_associated_vaults_storage = BTreeSet::new();
+			correct_associated_vaults_storage.insert(vault_id);
+			assert_eq!(
+				BTreeSet::from(PabloStrategy::associated_vaults()),
+				correct_associated_vaults_storage
+			);
 		});
 	}
 
@@ -92,6 +98,7 @@ mod associate_vault {
 					})),
 				},
 			));
+			assert!(!BTreeSet::from(PabloStrategy::associated_vaults()).contains(&vault_id));
 		});
 	}
 }
