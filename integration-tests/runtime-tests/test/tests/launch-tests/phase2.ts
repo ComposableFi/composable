@@ -122,7 +122,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           data: [result]
         } = await pablo.uniswap.createMarket(
           api,
-          sudoKey, // ToDo: Update to use different wallet!
+          sudoKey,
           composableManagerWallet.publicKey,
           baseAsset,
           quoteAsset,
@@ -156,6 +156,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
 
       it("Create KSM/USDC uniswap pool by root.", async function () {
         // ToDo: Update when root can create pools!
+        // Note: Check all pool creations for necessary updates when this is possible.
         this.skip();
         this.timeout(2 * 60 * 1000);
 
@@ -167,6 +168,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         const {
           data: [result]
         } = await pablo.uniswap.sudo.sudoCreateMarket(
+          // ToDo: Enable when sudo creation is possible!
           api,
           sudoKey,
           composableManagerWallet.publicKey,
@@ -347,12 +349,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         it("Users can buy from pool", async function () {
           this.timeout(2 * 60 * 1000);
           const assetIdToBuy = ksmAssetId;
+          const ksmBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+          const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           const amount = 100_000_000_000n;
           const minReceive = 0;
           const keepAlive = true;
           const {
             data: [result]
           } = await pablo.buyTokens(api, traderWallet1, ksmUsdcPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+          const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+          const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+          expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(ksmBalanceBefore.toString()));
+          expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdcBalanceBefore.toString()));
         });
       });
 
@@ -360,12 +368,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         it("Users can sell to pool", async function () {
           this.timeout(2 * 60 * 1000);
           const assetIdToSell = ksmAssetId;
+          const ksmBalanceBefore = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+          const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           const amount = 100_000_000_000n;
           const minReceive = 0;
           const keepAlive = true;
           const {
             data: [result]
           } = await pablo.sellTokens(api, traderWallet1, ksmUsdcPoolId, assetIdToSell, amount, minReceive, keepAlive);
+          const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+          const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+          expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ksmBalanceBefore.toString()));
+          expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(usdcBalanceBefore.toString()));
         });
       });
 
@@ -373,12 +387,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         it("Users can swap in the pool", async function () {
           this.timeout(2 * 60 * 1000);
           const pair = { base: ksmAssetId, quote: usdcAssetId };
+          const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+          const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           const amount = 100_000_000_000n;
           const minReceive = 0;
           const keepAlive = true;
           const {
             data: [result]
           } = await pablo.swapTokens(api, traderWallet1, ksmUsdcPoolId, pair, amount, minReceive, keepAlive);
+          const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+          const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+          expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(ksmBalanceBefore.toString()));
+          expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdcBalanceBefore.toString()));
         });
       });
     });
@@ -416,7 +436,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
       const currentBlock = await api.query.system.number();
       const baseAsset = picaAssetId;
       const quoteAsset = usdcAssetId;
-      const saleStart = currentBlock.toNumber() + 25;
+      const saleStart = currentBlock.toNumber() + 15;
       const saleEnd = currentBlock.toNumber() + 1000;
       // Todo: Set initial weight to 980000.
       const initialWeight = 950000;
@@ -503,12 +523,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           this.timeout(5 * 60 * 1000);
           await Phase2.waitForLBPPoolStarted(api, picaLBPPoolId);
           const assetIdToBuy = picaAssetId;
+          const picaBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+          const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           const amount = 100_000_000_000n;
           const minReceive = 0;
           const keepAlive = true;
           const {
             data: [result]
           } = await pablo.buyTokens(api, traderWallet1, picaLBPPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+          const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+          const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+          expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(picaBalanceBefore.toString()));
+          expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdcBalanceBefore.toString()));
         });
       });
 
@@ -516,12 +542,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         it("Users can sell to pool", async function () {
           this.timeout(2 * 60 * 1000);
           const assetIdToSell = picaAssetId;
+          const picaBalanceBefore = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+          const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           const amount = 50_000_000_000n;
           const minReceive = 0;
           const keepAlive = true;
           const {
             data: [result]
           } = await pablo.sellTokens(api, traderWallet1, picaLBPPoolId, assetIdToSell, amount, minReceive, keepAlive);
+          const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+          const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+          expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(picaBalanceBefore.toString()));
+          expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(usdcBalanceBefore.toString()));
         });
       });
 
@@ -529,12 +561,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         it("Users can swap in the pool", async function () {
           this.timeout(2 * 60 * 1000);
           const pair = { base: picaAssetId, quote: usdcAssetId };
+          const picaBalanceBefore = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
+          const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           const amount = 10_000_000_000n;
           const minReceive = 0;
           const keepAlive = true;
           const {
             data: [result]
           } = await pablo.swapTokens(api, traderWallet1, picaLBPPoolId, pair, amount, minReceive, keepAlive);
+          const picaBalanceAfter = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
+          const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+          expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(picaBalanceBefore.toString()));
+          expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdcBalanceBefore.toString()));
         });
       });
     });
@@ -760,12 +798,20 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can buy from pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToBuy = picaAssetId;
+            const picaBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             const amount = 500_000_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.buyTokens(api, traderWallet1, picaUsdcPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(picaBalanceBefore.toString())
+            );
+            expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdcBalanceBefore.toString()));
           });
         });
 
@@ -773,6 +819,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can sell to pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToSell = picaAssetId;
+            const picaBalanceBefore = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
@@ -787,6 +835,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minReceive,
               keepAlive
             );
+            const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(picaBalanceBefore.toString()));
+            expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(usdcBalanceBefore.toString())
+            );
           });
         });
 
@@ -794,12 +848,20 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can swap in the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const pair = { base: picaAssetId, quote: usdcAssetId };
+            const picaBalanceBefore = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
+            const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.swapTokens(api, traderWallet1, picaUsdcPoolId, pair, amount, minReceive, keepAlive);
+            const picaBalanceAfter = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
+            const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(picaBalanceBefore.toString())
+            );
+            expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdcBalanceBefore.toString()));
           });
         });
       });
@@ -1016,12 +1078,20 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can buy from pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToBuy = picaAssetId;
+            const picaBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const ksmBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.buyTokens(api, traderWallet1, picaKsmPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(picaBalanceBefore.toString())
+            );
+            expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ksmBalanceBefore.toString()));
           });
         });
 
@@ -1029,12 +1099,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can sell to pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToSell = picaAssetId;
+            const picaBalanceBefore = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.sellTokens(api, traderWallet1, picaKsmPoolId, assetIdToSell, amount, minReceive, keepAlive);
+            const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(picaBalanceBefore.toString()));
+            expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(ksmBalanceBefore.toString()));
           });
         });
 
@@ -1042,12 +1118,20 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can swap in the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const pair = { base: picaAssetId, quote: ksmAssetId };
+            const picaBalanceBefore = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
+            const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.swapTokens(api, traderWallet1, picaKsmPoolId, pair, amount, minReceive, keepAlive);
+            const picaBalanceAfter = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
+            const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(picaBalanceBefore.toString())
+            );
+            expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ksmBalanceBefore.toString()));
           });
         });
       });
@@ -1231,7 +1315,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               new BN(lpTokenBalanceBefore.toString())
             );
           });
-          it("Pool owner (sudo) can remove liquidity from the pool", async function () {
+          it("Pool owner can remove liquidity from the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const lpTokenBalanceBefore = await api.rpc.assets.balanceOf(
               usdcAusdLpTokenId.toString(),
@@ -1251,7 +1335,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const {
               data: [result]
             } = await pablo.removeLiquidity(
-              // ToDo: Switch to sudo!
               api,
               composableManagerWallet,
               usdcAusdPoolId,
@@ -1275,10 +1358,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
       });
 
       describe("Test 2D:1 trading", function () {
-        describe("Test 2D:! buy", function () {
+        describe("Test 2D:1 buy", function () {
           it("Users can buy from pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToBuy = usdcAssetId;
+            const usdcBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const ausdBalanceBefore = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
@@ -1293,6 +1378,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minReceive,
               keepAlive
             );
+            const usdcaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const ausdBalanceAfter = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(usdcaBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(usdcBalanceBefore.toString())
+            );
+            expect(new BN(ausdBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ausdBalanceBefore.toString()));
           });
         });
 
@@ -1300,6 +1391,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can sell to pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToSell = usdcAssetId;
+            const usdcBalanceBefore = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const ausdBalanceBefore = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
@@ -1314,6 +1407,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minReceive,
               keepAlive
             );
+            const usdcaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const ausdBalanceAfter = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(usdcaBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdcBalanceBefore.toString()));
+            expect(new BN(ausdBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(ausdBalanceBefore.toString())
+            );
           });
         });
 
@@ -1321,6 +1420,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can swap in the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const pair = { base: usdcAssetId, quote: ausdAssetId };
+            const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            const ausdBalanceBefore = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
@@ -1335,6 +1436,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minReceive,
               keepAlive
             );
+            const usdcaBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            const ausdBalanceAfter = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(usdcaBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(usdcBalanceBefore.toString())
+            );
+            expect(new BN(ausdBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ausdBalanceBefore.toString()));
           });
         });
       });
@@ -1442,7 +1549,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const {
               data: [result]
             } = await pablo.addLiquidity(
-              // ToDo: Switch to sudo!
               api,
               composableManagerWallet,
               wethKsmPoolId,
@@ -1525,7 +1631,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const {
               data: [result]
             } = await pablo.removeLiquidity(
-              // ToDo: Switch to sudo!
               api,
               composableManagerWallet,
               wethKsmPoolId,
@@ -1553,12 +1658,20 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can buy from pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToBuy = wethAssetId;
+            const wethBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.buyTokens(api, traderWallet1, wethKsmPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            const wethBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(wethBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(wethBalanceBefore.toString())
+            );
+            expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ksmBalanceBefore.toString()));
           });
         });
 
@@ -1566,12 +1679,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can sell to pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToSell = wethAssetId;
+            const wethBalanceBefore = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.sellTokens(api, traderWallet1, wethKsmPoolId, assetIdToSell, amount, minReceive, keepAlive);
+            const wethBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(wethBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(wethBalanceBefore.toString()));
+            expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(ksmBalanceBefore.toString()));
           });
         });
 
@@ -1579,12 +1698,20 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can swap in the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const pair = { base: wethAssetId, quote: ksmAssetId };
+            const wethBalanceBefore = await api.rpc.assets.balanceOf(wethAssetId.toString(), traderWallet1.publicKey);
+            const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.swapTokens(api, traderWallet1, wethKsmPoolId, pair, amount, minReceive, keepAlive);
+            const wethBalanceAfter = await api.rpc.assets.balanceOf(wethAssetId.toString(), traderWallet1.publicKey);
+            const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(wethBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(wethBalanceBefore.toString())
+            );
+            expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ksmBalanceBefore.toString()));
           });
         });
       });
@@ -1801,12 +1928,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can buy from pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToBuy = btcAssetId;
+            const btcBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.buyTokens(api, traderWallet1, wbtcKsmPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            const btcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(btcBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(btcBalanceBefore.toString()));
+            expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ksmBalanceBefore.toString()));
           });
         });
 
@@ -1814,12 +1947,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can sell to pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToSell = btcAssetId;
+            const btcBalanceBefore = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.sellTokens(api, traderWallet1, wbtcKsmPoolId, assetIdToSell, amount, minReceive, keepAlive);
+            const btcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(btcBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(btcBalanceBefore.toString()));
+            expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(ksmBalanceBefore.toString()));
           });
         });
 
@@ -1827,12 +1966,18 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can swap in the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const pair = { base: btcAssetId, quote: ksmAssetId };
+            const btcBalanceBefore = await api.rpc.assets.balanceOf(btcAssetId.toString(), traderWallet1.publicKey);
+            const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.swapTokens(api, traderWallet1, wbtcKsmPoolId, pair, amount, minReceive, keepAlive);
+            const btcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(btcBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(btcBalanceBefore.toString()));
+            expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ksmBalanceBefore.toString()));
           });
         });
       });
@@ -2050,12 +2195,20 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can buy from pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToBuy = usdcAssetId;
+            const usdcBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const usdtBalanceBefore = await api.rpc.assets.balanceOf(usdtAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.buyTokens(api, traderWallet1, usdcUsdtPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            const usdcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            const usdtBalanceAfter = await api.rpc.assets.balanceOf(usdtAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(usdcBalanceBefore.toString())
+            );
+            expect(new BN(usdtBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdtBalanceBefore.toString()));
           });
         });
 
@@ -2063,6 +2216,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can sell to pool", async function () {
             this.timeout(2 * 60 * 1000);
             const assetIdToSell = usdcAssetId;
+            const usdcBalanceBefore = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const usdtBalanceBefore = await api.rpc.assets.balanceOf(usdtAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
@@ -2077,6 +2232,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minReceive,
               keepAlive
             );
+            const usdcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const usdtBalanceAfter = await api.rpc.assets.balanceOf(usdtAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdcBalanceBefore.toString()));
+            expect(new BN(usdtBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(usdtBalanceBefore.toString())
+            );
           });
         });
 
@@ -2084,12 +2245,20 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           it("Users can swap in the pool", async function () {
             this.timeout(2 * 60 * 1000);
             const pair = { base: usdcAssetId, quote: usdtAssetId };
+            const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            const usdtBalanceBefore = await api.rpc.assets.balanceOf(usdtAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
             const minReceive = 0;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.swapTokens(api, traderWallet1, usdcUsdtPoolId, pair, amount, minReceive, keepAlive);
+            const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            const usdtBalanceAfter = await api.rpc.assets.balanceOf(usdtAssetId.toString(), traderWallet1.publicKey);
+            expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(
+              new BN(usdcBalanceBefore.toString())
+            );
+            expect(new BN(usdtBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdtBalanceBefore.toString()));
           });
         });
       });

@@ -14,7 +14,6 @@ export class Phase2 {
     const poolAmount = await api.query.pablo.poolCount();
     const poolId = poolAmount.sub(new BN(1));
     const pools = await api.query.pablo.pools(poolId);
-    console.log(pools.toString());
     if (poolConfig.isConstantProduct == true) {
       return this.verifyConstantProductPool(poolConfig, pools, poolId, poolAmount);
     } else if (poolConfig.isLiquidityBootstrapping == true) {
