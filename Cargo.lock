@@ -1576,6 +1576,7 @@ dependencies = [
  "lending-rpc",
  "lending-runtime-api",
  "log 0.4.17",
+ "once_cell",
  "pablo-rpc",
  "pablo-runtime-api",
  "pallet-assets 0.0.1",
