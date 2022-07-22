@@ -28,6 +28,9 @@ use sp_std::collections::btree_map::BTreeMap;
 mod prelude;
 mod runtime;
 
+#[cfg(test)]
+mod test_reward_accumulation_hook;
+
 #[test]
 fn test_create_reward_pool() {
 	new_test_ext().execute_with(|| {
