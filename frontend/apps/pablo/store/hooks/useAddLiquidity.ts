@@ -126,7 +126,8 @@ export const useAddLiquidity = () => {
         let b = isReverse ? pool.pair.quote.toString() : pool.pair.base.toString();
         let q = isReverse ? pool.pair.base.toString() : pool.pair.quote.toString();
 
-        (parachainApi.rpc as any).pablo
+        // @ts-ignore
+        parachainApi.rpc.pablo
           .simulateAddLiquidity(
             parachainApi.createType("AccountId32", selectedAccount.address),
             parachainApi.createType("PalletPabloPoolId", pool.poolId),
