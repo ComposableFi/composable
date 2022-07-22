@@ -187,8 +187,8 @@ jobs:
                 su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
                 sudo --user vscode sh
                 /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                nix-env --install --attr nixpkgs.cachix
-                cachix use composable-community       
+                #nix-env --install --attr nixpkgs.cachix
+                #cachix use composable-community       
                 #curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
                 # NOTE: does not work
                 # curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
