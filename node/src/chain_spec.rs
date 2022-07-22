@@ -20,7 +20,7 @@ const DEFAULT_PARA_ID: u32 = 2000;
 static PARA_ID: Lazy<ParaId> = Lazy::new(|| {
 	ParaId::new(
 		std::env::var("COMPOSABLE_PARA_ID")
-			.unwrap_or(DEFAULT_PARA_ID.to_string())
+			.unwrap_or_else(|_| DEFAULT_PARA_ID.to_string())
 			.parse::<u32>()
 			.unwrap_or(DEFAULT_PARA_ID),
 	)
