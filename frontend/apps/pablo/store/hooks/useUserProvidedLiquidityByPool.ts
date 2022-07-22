@@ -7,6 +7,7 @@ import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
+import { fetchLiquidityProvided } from "@/defi/subsquid/liquidity/helpers";
 /**
  * Provides the amount of liquidity
  * added by the user, and its value in
@@ -70,19 +71,14 @@ export const useUserProvidedLiquidityByPool = (
   useEffect(() => {
     console.log("Query subsquid for user liquidity");
     if (pool && selectedAccount) {
-      liquidityTransactionsByAddressAndPool(
+      fetchLiquidityProvided(
         selectedAccount.address,
-        pool.poolId
-      ).then((userLiqTransactions) => {
-        console.log("Fetch up to data pool asset amounts");
-        let { baseAmountProvided, quoteAmountProvided } =
-          calcaulateProvidedLiquidity(
-            userLiqTransactions.data.pabloTransactions
-          );
-        setUserProvidedTokenAmountInLiquidityPool((pool as any).poolId, {
-          baseAmount: baseAmountProvided.toString(),
-          quoteAmount: quoteAmountProvided.toString(),
-        });
+        pool.poolId.toString()
+      ).then((liqRecord) => {
+        setUserProvidedTokenAmountInLiquidityPool(
+          pool.poolId,
+          liqRecord[pool.poolId]
+        );
       });
     }
   }, [pool, selectedAccount, setUserProvidedTokenAmountInLiquidityPool]);

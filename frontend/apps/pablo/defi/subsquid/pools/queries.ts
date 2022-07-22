@@ -24,7 +24,7 @@ export const queryPoolTransactionsByType = (
 
 export const liquidityTransactionsByAddressAndPool = (
   who: string,
-  poolId: number
+  poolId: number | string
 ) => makeClient().query(`query queryAddOrRemoveLiquidityTransactionsByUserAddress {
   pabloTransactions(
     orderBy: receivedTimestamp_ASC,where: {
