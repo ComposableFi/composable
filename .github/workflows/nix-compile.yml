@@ -185,8 +185,6 @@ jobs:
                 sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
-                su -c 'nix-env --install --attr nixpkgs.cachix' - vscode
-                su -c 'cachix use composable-community' - vscode       
                 #curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
                 # NOTE: does not work
                 # curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
@@ -198,6 +196,9 @@ jobs:
             ls
             whoami
             sudo --user vscode sh
+            # su -c 'nix-env --install --attr nixpkgs.cachix' - vscode
+            nix-env --install --attr nixpkgs.cachix
+            cachix use composable-community       
             whoami                                
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
