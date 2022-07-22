@@ -648,7 +648,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const assetIdToBuy = picaAssetId;
           const picaBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
           const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
-          const amount = 100_000_000_000n;
+          const amount = 1_000_000_000_000n;
           const minReceive = 100_000_000;
           const keepAlive = true;
           const {
@@ -698,7 +698,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const pair = { base: picaAssetId, quote: usdcAssetId };
           const picaBalanceBefore = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
           const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
-          const amount = 10_000_000_000n;
+          const amount = 1_000_000_000_000n;
           const minReceive = 100_000_000;
           const keepAlive = true;
           const {
@@ -1069,7 +1069,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const pair = { base: picaAssetId, quote: usdcAssetId };
             const picaBalanceBefore = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
             const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
-            const amount = 100_000_000_000n;
+            const amount = 1_000_000_000_000n;
             const minReceive = 100_000;
             const keepAlive = true;
             const {
@@ -1351,7 +1351,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const assetIdToBuy = picaAssetId;
             const picaBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
             const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
-            const amount = 100_000_000_000n;
+            const amount = 1_000_000_000_000n;
             const minReceive = 10_000_000_000;
             const keepAlive = true;
             const {
@@ -1443,7 +1443,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const pair = { base: picaAssetId, quote: ksmAssetId };
             const picaBalanceBefore = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
             const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
-            const amount = 100_000_000_000n;
+            const amount = 1_000_000_000_000n;
             const minReceive = 10_000_000_000;
             const keepAlive = true;
             const {
@@ -2560,8 +2560,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             expect(resultAccount.toString()).to.be.equal(
               api.createType("AccountId32", traderWallet1.publicKey).toString()
             );
-            expect(resultBaseAsset.toString()).to.be.equal(btcAssetId.toString());
-            expect(resultQuoteAsset.toString()).to.be.equal(ksmAssetId.toString());
+            expect(resultBaseAsset.toString()).to.be.equal(ksmAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(assetIdToSell.toString());
             expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
               new BN(amount.toString()).sub(fee.fee),
               RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
@@ -2941,7 +2941,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             expect(resultAccount.toString()).to.be.equal(
               api.createType("AccountId32", traderWallet1.publicKey).toString()
             );
-            expect(resultBaseAsset.toString()).to.be.equal(usdtBalanceBefore.toString());
+            expect(resultBaseAsset.toString()).to.be.equal(usdtAssetId.toString());
             expect(resultQuoteAsset.toString()).to.be.equal(assetIdToSell.toString());
             expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
               new BN(amount.toString()).sub(fee.fee),
