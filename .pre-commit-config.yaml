@@ -89,7 +89,7 @@ repos:
         stages: [push, manual]
       - id: composable-traits::cargo-test
         name: composable-traits::cargo-test
-        entry: cargo +nightly test --all-features --tests -p composable-traits
+        entry: cargo +nightly nextest run --fail-fast --all-features --tests -p composable-traits
         language: system
         pass_filenames: false
         files: ^frame/composable-traits/
@@ -131,7 +131,7 @@ repos:
         stages: [push, manual]
       - id: composable-maths::cargo-test
         name: composable-maths::cargo-test
-        entry: cargo +nightly test --all-features --tests -p composable-maths
+        entry: cargo +nightly nextest run --fail-fast --all-features --tests -p composable-maths
         language: system
         pass_filenames: false
         files: ^frame/composable-maths/
