@@ -80,8 +80,7 @@ pub mod pallet {
 		cmp::max,
 		collections::btree_map::BTreeMap,
 		fmt::Debug,
-		iter,
-		ops::{ControlFlow, Div},
+		ops::{Add, Div, Mul},
 		vec,
 		vec::Vec,
 	};
@@ -768,8 +767,6 @@ pub mod pallet {
 							});
 							reward.max_rewards
 						};
-
-						use core::ops::{Add, Mul};
 
 						Reward {
 							total_rewards: new_total_rewards,
