@@ -1,8 +1,11 @@
 // TODO: move this pallet stuff into currency-factory (check if used on picasso and may need to
 // route from this pallet to factory)
-//! # Governance Registry Pallet
-//!
-//! Is used to add new assets into chain.
+// TODO: prove it supports `collective`(CallerOrigin) (which allows Council and other more
+// complicated custom) https://app.clickup.com/t/37h4edu
+//! # Overview
+//! Allows root (or entity acting as root) to set origin for relevant token.
+//! The origin can be used to enact preimages if voted using specific token or update some asset
+//! parameters.
 
 #![cfg_attr(
 	not(test),

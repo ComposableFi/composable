@@ -1,46 +1,29 @@
 //! Setup of XCMP for parachain to allow cross chain transfers and other operations.
 //! Very similar to https://github.com/galacticcouncil/Basilisk-node/blob/master/runtime/basilisk/src/xcm.rs
-#![allow(unused_imports)] // allow until v2 xcm released (instead creating 2 runtimes)
-use super::*; // recursive dependency onto runtime
-use codec::{Decode, Encode};
-use common::{xcmp::*, PriceConverter};
+use super::*;
+use common::{governance::native::EnsureRootOrHalfNativeTechnical, xcmp::*, PriceConverter};
 use composable_traits::{
-	defi::Ratio,
 	oracle::MinimalOracle,
 	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
-use cumulus_primitives_core::{IsSystem, ParaId};
+use cumulus_primitives_core::ParaId;
 use frame_support::{
-	construct_runtime, ensure, log, parameter_types,
-	traits::{
-		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, Randomness, StorageInfo,
-	},
-	weights::{
-		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
-		WeightToFeePolynomial,
-	},
-	PalletId, RuntimeDebug,
+	log, parameter_types,
+	traits::{Everything, Nothing},
+	weights::Weight,
 };
 use orml_traits::{
-	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
-	parameter_type_with_key, MultiCurrency,
+	location::{AbsoluteReserveProvider, Reserve},
+	parameter_type_with_key,
 };
 use orml_xcm_support::{
-	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, OnDepositFail,
+	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset,
 };
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use primitives::currency::WellKnownCurrency;
-use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_runtime::{
-	traits::{AccountIdLookup, BlakeTwo256, Convert, ConvertInto, Zero},
-	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult, DispatchError,
-};
-use sp_std::marker::PhantomData;
-use xcm::latest::{prelude::*, Error};
+use sp_runtime::traits::{Convert, Zero};
+use sp_std::{marker::PhantomData, prelude::*};
+use xcm::latest::prelude::*;
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
 	AllowTopLevelPaidExecutionFrom, AllowUnpaidExecutionFrom, EnsureXcmOrigin, FixedWeightBounds,
@@ -49,10 +32,8 @@ use xcm_builder::{
 	SovereignSignedViaLocation, TakeRevenue, TakeWeightCredit,
 };
 use xcm_executor::{
-	traits::{
-		ConvertOrigin, DropAssets, FilterAssetLocation, ShouldExecute, TransactAsset, WeightTrader,
-	},
-	Assets, Config, XcmExecutor,
+	traits::{DropAssets, FilterAssetLocation},
+	Assets, XcmExecutor,
 };
 
 parameter_types! {
@@ -328,8 +309,8 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type VersionWrapper = RelayerXcm;
 	type ChannelInfo = ParachainSystem;
-	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
-	type ControllerOrigin = EnsureRootOrHalfCouncil;
+	type ExecuteOverweightOrigin = EnsureRootOrHalfNativeCouncil;
+	type ControllerOrigin = EnsureRootOrHalfNativeTechnical;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type WeightInfo = cumulus_pallet_xcmp_queue::weights::SubstrateWeight<Self>;
 }
@@ -337,5 +318,5 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
+	type ExecuteOverweightOrigin = EnsureRootOrHalfNativeCouncil;
 }

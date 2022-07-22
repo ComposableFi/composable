@@ -10,7 +10,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "3.0.0", features = [
   "derive",
 ], default-features = false }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "ec349b3043a6e9ab84d2208d9901314cdfdddd69", default-features = false, features = [
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "09ac302cedc33f3e1c100541bfa0a33ee2751679", default-features = false, features = [
   "ics11_beefy",
 ] }
 ripemd = { version = "0.1.1", default-features = false }
