@@ -47,7 +47,7 @@ pub mod pallet {
 	use crate::{
 		instrument::{gas_and_stack_instrumentation, InstrumentationError},
 		runtimes::{
-			abstraction::{CosmwasmAccount, VMPallet},
+			abstraction::{CosmwasmAccount, Gas, VMPallet},
 			wasmi::{
 				CodeValidation, CosmwasmVM, CosmwasmVMError, ExportRequirement, ValidationError,
 			},
@@ -77,20 +77,25 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::child::ChildInfo,
 		traits::{
-			fungibles::{Inspect, Mutate, Transfer},
+			fungible::{Inspect as FungibleInspect, Transfer as FungibleTransfer},
+			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 			tokens::{AssetId, Balance},
 			Get, UnixTime,
 		},
-		transactional, BoundedBTreeMap,
+		transactional, BoundedBTreeMap, PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_core::crypto::UncheckedFrom;
 	use sp_io::hashing::blake2_256;
-	use sp_runtime::traits::{Convert, Hash, MaybeDisplay, SaturatedConversion};
+	use sp_runtime::traits::{
+		AccountIdConversion, Convert, Hash, MaybeDisplay, SaturatedConversion,
+	};
 	use sp_std::vec::Vec;
 	use wasm_instrument::gas_metering::ConstantCostRules;
 
-	pub(crate) type FundsOf<T> = BoundedBTreeMap<AssetIdOf<T>, BalanceOf<T>, MaxFundsAssetOf<T>>;
+	pub(crate) type KeepAlive = bool;
+	pub(crate) type FundsOf<T> =
+		BoundedBTreeMap<AssetIdOf<T>, (BalanceOf<T>, KeepAlive), MaxFundsAssetOf<T>>;
 	pub(crate) type ContractSaltOf<T> = BoundedVec<u8, MaxInstantiateSaltSizeOf<T>>;
 	pub(crate) type ContractMessageOf<T> = BoundedVec<u8, MaxMessageSizeOf<T>>;
 	pub(crate) type ContractCodeOf<T> = BoundedVec<u8, MaxCodeSizeOf<T>>;
@@ -144,7 +149,9 @@ pub mod pallet {
 		CodeNotFound,
 		ContractAlreadyExists,
 		ContractNotFound,
-		TransferFailed,
+		FundsTransfer,
+		ChargeGas,
+		RefundGas,
 	}
 
 	#[pallet::config]
@@ -152,9 +159,17 @@ pub mod pallet {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
+		/// Pallet unique ID.
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
+
 		/// Current chain ID. Provided to the contract via the [`Env`].
 		#[pallet::constant]
 		type ChainId: Get<&'static str>;
+
+		/// Max number of frames a contract is able to push, a.k.a recursive calls.
+		#[pallet::constant]
+		type MaxFrames: Get<u32>;
 
 		/// Max accepted code size.
 		#[pallet::constant]
@@ -220,10 +235,20 @@ pub mod pallet {
 		type AssetToDenom: Convert<AssetIdOf<Self>, String>
 			+ Convert<String, Result<AssetIdOf<Self>, ()>>;
 
+		/// Interface from which we are going to execute gas assets operation.
+		type GasAsset: FungibleInspect<AccountIdOf<Self>, Balance = BalanceOf<Self>>
+			+ FungibleTransfer<AccountIdOf<Self>, Balance = BalanceOf<Self>>;
+
 		/// Interface from which we are going to execute assets operations.
-		type Assets: Inspect<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
-			+ Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
-			+ Mutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>;
+		type Assets: FungiblesInspect<
+				AccountIdOf<Self>,
+				Balance = BalanceOf<Self>,
+				AssetId = AssetIdOf<Self>,
+			> + FungiblesTransfer<
+				AccountIdOf<Self>,
+				Balance = BalanceOf<Self>,
+				AssetId = AssetIdOf<Self>,
+			>;
 
 		/// Source of time.
 		type UnixTime: UnixTime;
@@ -315,10 +340,22 @@ pub mod pallet {
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
 			funds: FundsOf<T>,
+			gas: u64,
+			gas_keep_alive: bool,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			Self::do_instantiate(who, code_id, salt, admin, label, funds, message)?;
+			Self::do_instantiate(
+				who,
+				code_id,
+				salt,
+				admin,
+				label,
+				funds,
+				gas,
+				gas_keep_alive,
+				message,
+			)?;
 			Ok(().into())
 		}
 
@@ -328,10 +365,12 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
 			funds: FundsOf<T>,
+			gas: u64,
+			gas_keep_alive: bool,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			Self::do_execute(who, contract, funds, message)?;
+			Self::do_execute(who, contract, funds, gas, gas_keep_alive, message)?;
 			Ok(().into())
 		}
 	}
@@ -372,6 +411,8 @@ pub mod pallet {
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
 			funds: FundsOf<T>,
+			gas: u64,
+			gas_keep_alive: bool,
 			message: ContractMessageOf<T>,
 		) -> DispatchResult {
 			let contract = Self::derive_contract_address(&instantiator, code_id, &salt);
@@ -389,16 +430,24 @@ pub mod pallet {
 				label,
 			};
 			ContractToInfo::<T>::insert(&contract, &contract_info);
+			CodeIdToInfo::<T>::try_mutate(code_id, |entry| -> Result<(), Error<T>> {
+				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
+				code_info.refcount += 1;
+				Ok(())
+			})?;
+			Self::deposit_event(Event::<T>::Instantiated {
+				contract: contract.clone(),
+				info: contract_info.clone(),
+			});
 			Self::cosmwasm_run::<InstantiateInput<Empty>>(
 				EntryPoint::Instantiate,
 				instantiator,
-				contract.clone(),
-				contract_info.clone(),
+				contract,
+				contract_info,
 				funds,
+				gas,
+				gas_keep_alive,
 				message,
-				move || {
-					Self::deposit_event(Event::<T>::Instantiated { contract, info: contract_info });
-				},
 			)
 			.map_err(|_| Error::<T>::Instantiation)?;
 			Ok(())
@@ -408,6 +457,8 @@ pub mod pallet {
 			sender: AccountIdOf<T>,
 			contract: AccountIdOf<T>,
 			funds: FundsOf<T>,
+			gas: u64,
+			gas_keep_alive: bool,
 			message: ContractMessageOf<T>,
 		) -> DispatchResult {
 			let contract_info =
@@ -418,8 +469,9 @@ pub mod pallet {
 				contract,
 				contract_info,
 				funds,
+				gas,
+				gas_keep_alive,
 				message,
-				|| {},
 			)
 			.map_err(|_| Error::<T>::Execution)?;
 			Ok(())
@@ -530,6 +582,7 @@ pub mod pallet {
 		pub(crate) fn do_instrument_code(
 			module: parity_wasm::elements::Module,
 		) -> Result<ContractInstrumentedCodeOf<T>, Error<T>> {
+			Self::do_validate_code(&module)?;
 			let instrumented_module = gas_and_stack_instrumentation(
 				module,
 				Self::ENV_MODULE,
@@ -561,12 +614,14 @@ pub mod pallet {
 			CodeIdToInfo::<T>::try_mutate(code_id, |entry| {
 				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
 				if code_info.instrumentation_version != Self::INSTRUMENTATION_VERSION {
+					log::debug!(target: "runtime::contracts", "do_check_for_reinstrumentation: required");
 					let code = PristineCode::<T>::get(code_id).ok_or(Error::<T>::CodeNotFound)?;
 					let module = Self::do_load_module(&code)?;
-					Self::do_validate_code(&module)?;
 					let instrumented_code = Self::do_instrument_code(module)?;
 					InstrumentedCode::<T>::insert(&code_id, instrumented_code);
 					code_info.instrumentation_version = Self::INSTRUMENTATION_VERSION;
+				} else {
+					log::debug!(target: "runtime::contracts", "do_check_for_reinstrumentation: not required");
 				}
 				Ok(())
 			})
@@ -585,7 +640,6 @@ pub mod pallet {
 			let code_hash = T::Hashing::hash(&code);
 			ensure!(!CodeHashToId::<T>::contains_key(code_hash), Error::<T>::CodeAlreadyExists);
 			let module = Self::do_load_module(&code)?;
-			Self::do_validate_code(&module)?;
 			let instrumented_code = Self::do_instrument_code(module)?;
 			let code_id = CurrentCodeId::<T>::increment()?;
 			PristineCode::<T>::insert(code_id, code);
@@ -595,7 +649,7 @@ pub mod pallet {
 				CodeInfoOf::<T> {
 					creator: who.clone(),
 					instrumentation_version: Self::INSTRUMENTATION_VERSION,
-					refcount: 1,
+					refcount: 0,
 				},
 			);
 			Self::deposit_event(Event::<T>::Uploaded { code_hash, code_id });
@@ -603,9 +657,7 @@ pub mod pallet {
 		}
 
 		/// Extract the current environment from the pallet.
-		pub(crate) fn cosmwasm_env(
-			cosmwasm_contract_address: CosmwasmAccount<T, AccountIdOf<T>>,
-		) -> Env {
+		pub(crate) fn cosmwasm_env(cosmwasm_contract_address: CosmwasmAccount<T>) -> Env {
 			Env {
 				block: BlockInfo {
 					height: frame_system::Pallet::<T>::block_number().saturated_into(),
@@ -632,15 +684,21 @@ pub mod pallet {
 			contract: AccountIdOf<T>,
 			info: ContractInfoOf<T>,
 			funds: Vec<Coin>,
+			gas: u64,
 		) -> Result<WasmiVM<CosmwasmVM<T>>, <WasmiVM<CosmwasmVM<T>> as VMBase>::Error> {
 			let code = InstrumentedCode::<T>::get(info.code_id).ok_or(Error::<T>::CodeNotFound)?;
 			let host_functions_definitions = WasmiImportResolver(host_functions::definitions());
 			let module = new_wasmi_vm(&host_functions_definitions, &code)
 				.map_err(|_| Error::<T>::VmCreation)?;
-			let cosmwasm_sender_address: CosmwasmAccount<T, AccountIdOf<T>> =
-				CosmwasmAccount::new(sender);
-			let cosmwasm_contract_address: CosmwasmAccount<T, AccountIdOf<T>> =
-				CosmwasmAccount::new(contract);
+			let cosmwasm_sender_address: CosmwasmAccount<T> = CosmwasmAccount::new(sender);
+			let cosmwasm_contract_address: CosmwasmAccount<T> = CosmwasmAccount::new(contract);
+			let env = Self::cosmwasm_env(cosmwasm_contract_address.clone());
+			let message_info = MessageInfo {
+				sender: Addr::unchecked(Into::<String>::into(cosmwasm_sender_address)),
+				funds,
+			};
+			log::debug!(target: "runtime::contracts", "cosmwasm_new_vm: {:#?}", env);
+			log::debug!(target: "runtime::contracts", "cosmwasm_new_vm: {:#?}", message_info);
 			Ok(WasmiVM(CosmwasmVM::<T> {
 				host_functions: host_functions_definitions
 					.0
@@ -649,15 +707,17 @@ pub mod pallet {
 					.flat_map(|(_, modules)| modules.into_iter().map(|(_, function)| function))
 					.collect(),
 				executing_module: module,
-				cosmwasm_env: Self::cosmwasm_env(cosmwasm_contract_address.clone()),
-				cosmwasm_message_info: MessageInfo {
-					sender: Addr::unchecked(Into::<String>::into(cosmwasm_sender_address)),
-					funds,
-				},
+				cosmwasm_env: env,
+				cosmwasm_message_info: message_info,
 				contract_address: cosmwasm_contract_address,
 				contract_info: info,
+				gas: Gas::new(0, gas),
 				_marker: PhantomData,
 			}))
+		}
+
+		pub(crate) fn account() -> AccountIdOf<T> {
+			T::PalletId::get().into_account_truncating()
 		}
 
 		pub(crate) fn cosmwasm_run<I>(
@@ -666,26 +726,37 @@ pub mod pallet {
 			contract: AccountIdOf<T>,
 			info: ContractInfoOf<T>,
 			funds: FundsOf<T>,
+			gas: u64,
+			gas_keep_alive: bool,
 			message: ContractMessageOf<T>,
-			on_success: impl FnOnce(),
 		) -> Result<(Option<CosmwasmBinary>, Vec<CosmwasmEvent>), VmErrorOf<WasmiVM<CosmwasmVM<T>>>>
 		where
 			WasmiVM<CosmwasmVM<T>>: CosmwasmCallVM<I>,
 			VmErrorOf<WasmiVM<CosmwasmVM<T>>>: From<Error<T>>,
 		{
-			for (asset, amount) in funds.clone() {
-				T::Assets::transfer(asset, &sender, &contract, amount, false)
-					.map_err(|_| Error::<T>::TransferFailed)?;
+			// Charge gas.
+			let pallet_account = Self::account();
+			T::GasAsset::transfer(&sender, &pallet_account, gas.saturated_into(), gas_keep_alive)
+				.map_err(|_| Error::<T>::ChargeGas)?;
+
+			// Move funds to contract.
+			for (asset, (amount, keep_alive)) in funds.clone() {
+				T::Assets::transfer(asset, &sender, &contract, amount, keep_alive)
+					.map_err(|_| Error::<T>::FundsTransfer)?;
 			}
+
+			// Check whether instrumentation is outdated.
+			Self::do_check_for_reinstrumentation(info.code_id)?;
+
 			let cosmwasm_funds = funds
 				.into_iter()
-				.map(|(asset, amount)| Self::native_asset_to_coin(asset, amount))
+				.map(|(asset, (amount, _))| Self::native_asset_to_coin(asset, amount))
 				.collect::<Vec<_>>();
-			Self::do_check_for_reinstrumentation(info.code_id)?;
-			let mut vm = Self::cosmwasm_new_vm(sender, contract.clone(), info, cosmwasm_funds)?;
-			cosmwasm_system_entrypoint::<I, WasmiVM<CosmwasmVM<T>>>(&mut vm, &message)
+
+			let mut vm =
+				Self::cosmwasm_new_vm(sender.clone(), contract.clone(), info, cosmwasm_funds, gas)?;
+			let result = cosmwasm_system_entrypoint::<I, WasmiVM<CosmwasmVM<T>>>(&mut vm, &message)
 				.map(|(data, events)| {
-					on_success();
 					Self::deposit_event(Event::<T>::Emitted {
 						contract: contract.clone(),
 						events: serde_json::to_vec(&events).unwrap(),
@@ -700,7 +771,18 @@ pub mod pallet {
 				.map_err(|e| {
 					log::debug!(target: "runtime::contracts", "cosmwasm_run: {:#?}", e);
 					e
-				})
+				});
+
+			// Refund gas.
+			T::GasAsset::transfer(
+				&pallet_account,
+				&sender,
+				vm.0.gas.remaining().saturated_into(),
+				false,
+			)
+			.map_err(|_| Error::<T>::RefundGas)?;
+
+			result
 		}
 
 		/// Build a [`ChildInfo`] out of a contract trie id.
