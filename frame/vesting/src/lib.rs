@@ -146,7 +146,7 @@ pub mod module {
 		/// Trying to vest to ourselves
 		TryingToSelfVest,
 		/// There is no vesting schedule with a given id
-		NonexistentVestingSchedule,
+		NonExistentVestingSchedule,
 	}
 
 	#[pallet::event]
@@ -319,6 +319,7 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
+		// TODO: pass schedule.vesting_schedule_id to this function
 		let total_amount = Self::locked_balance(to, asset)
 			.checked_add(&schedule_amount)
 			.ok_or(ArithmeticError::Overflow)?;
@@ -358,9 +359,9 @@ impl<T: Config> Pallet<T> {
 		<VestingSchedules<T>>::mutate_exists(who, asset, |maybe_schedules| {
 			let total = if let Some(schedules) = maybe_schedules.as_mut() {
 				let mut total: BalanceOf<T> = Zero::zero();
-				/// TODO: only use schedule with given vesting_schedule_id, or throw
-				/// NonExistentVestingSchedule error if not found
 				schedules.retain(|s| {
+					/// TODO: only use schedule with given vesting_schedule_id, or throw
+					/// NonExistentVestingSchedule error if not found
 					let amount = s.locked_amount(
 						frame_system::Pallet::<T>::current_block_number(),
 						T::Time::now(),
