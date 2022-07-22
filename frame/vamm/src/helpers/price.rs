@@ -5,6 +5,11 @@ use frame_support::pallet_prelude::*;
 use sp_runtime::{ArithmeticError, FixedPointNumber};
 
 impl<T: Config> Pallet<T> {
+	/// Computes the current price for the desired asset, returning it.
+	///
+	/// # Errors
+	///
+	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
 	pub fn do_get_price(
 		vamm_state: &VammStateOf<T>,
 		asset_type: AssetType,

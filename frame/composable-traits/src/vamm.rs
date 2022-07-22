@@ -122,7 +122,7 @@ pub struct MovePriceConfig<VammId, Balance> {
 	pub quote_asset_reserves: Balance,
 }
 
-/// Specify the return type for [`Vamm::swap`].
+/// Specify the return type for [`Vamm::swap`] and [`Vamm::swap_simulation`].
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct SwapOutput<Balance> {

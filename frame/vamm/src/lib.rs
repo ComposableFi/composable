@@ -47,14 +47,17 @@
 //! * [`create`](pallet/struct.Pallet.html#method.create): Creates a new vamm,
 //! returning it's Id.
 //! * [`get_price`](pallet/struct.Pallet.html#method.get_price): Gets the
-//! current price of the [`base`](VammState::base_asset_reserves) or
-//! [`quote`](VammState::quote_asset_reserves) asset in a vamm.
+//! current price of the
+//! [`base`](types/struct.VammState.html#structfield.base_asset_reserves) or
+//! [`quote`](types/struct.VammState.html#structfield.quote_asset_reserves)
+//! asset in a vamm.
 //! * [`get_twap`](pallet/struct.Pallet.html#method.get_twap): Gets the time
 //! weighted average price of the desired asset.
 //! * [`move_price`](pallet/struct.Pallet.html#method.move_price): Changes
-//! amount of [`base`](VammState::base_asset_reserves) and
-//! [`quote`](VammState::quote_asset_reserves) assets in reserve, essentially
-//! changing the invariant.
+//! amount of
+//! [`base`](types/struct.VammState.html#structfield.base_asset_reserves) and
+//! [`quote`](types/struct.VammState.html#structfield.quote_asset_reserves)
+//! assets in reserve, essentially changing the invariant.
 //! * [`swap`](pallet/struct.Pallet.html#method.swap): Performs the swap of the
 //! desired asset against the vamm.
 //! * [`swap_simulation`](pallet/struct.Pallet.html#method.swap_simulation):
@@ -68,7 +71,7 @@
 //!
 //! - [`VammCounter`](VammCounter): The number of created vamms.
 //! - [`VammMap`](VammMap): Mapping of a [`VammId`](Config::VammId) to it's
-//! corresponding [`VammState`].
+//! corresponding [`VammState`](types/struct.VammState.html#).
 //!
 //! ## Usage
 //!

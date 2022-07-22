@@ -52,6 +52,8 @@ pub struct VammState<Balance, Moment, Decimal> {
 /// Represents the direction a of a position.
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum SwapDirection {
+	/// Adding an asset to the vamm, receiving the other in return.
 	Add,
+	/// Removing an asset from the vamm, giving the other in return.
 	Remove,
 }

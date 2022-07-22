@@ -4,6 +4,12 @@ use frame_support::{pallet_prelude::*, transactional};
 use sp_runtime::traits::Saturating;
 
 impl<T: Config> Pallet<T> {
+	/// Perform runtime storage changes, effectively updating the asset twap.
+	///
+	/// # Errors
+	///
+	/// * All errors returned by
+	/// [`sanity_check_before_update_twap`](Self::sanity_check_before_update_twap).
 	#[transactional]
 	pub fn do_update_twap(
 		vamm_id: T::VammId,

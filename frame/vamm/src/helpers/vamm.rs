@@ -2,6 +2,12 @@ use crate::{types::VammState, Config, Error, Pallet, VammMap};
 use frame_support::{pallet_prelude::*, traits::UnixTime};
 
 impl<T: Config> Pallet<T> {
+	/// Retrieve the [`VammState`] of the desired vamm.
+	///
+	/// # Errors
+	///
+	/// * [`Error::<T>::VammDoesNotExist`]
+	/// * [`Error::<T>::FailToRetrieveVamm`]
 	pub fn get_vamm_state(
 		vamm_id: &T::VammId,
 	) -> Result<VammState<T::Balance, T::Moment, T::Decimal>, DispatchError> {
@@ -11,6 +17,7 @@ impl<T: Config> Pallet<T> {
 		Ok(vamm_state)
 	}
 
+	/// Returns a boolean informing if the vamm is closed or not.
 	pub fn is_vamm_closed(
 		vamm_state: &VammState<T::Balance, T::Moment, T::Decimal>,
 		now: &Option<T::Moment>,
@@ -22,6 +29,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	/// Returns the current timestamp.
 	pub fn now(now: &Option<T::Moment>) -> T::Moment {
 		match now {
 			Some(now) => *now,

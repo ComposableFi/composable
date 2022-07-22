@@ -4,6 +4,19 @@ use frame_support::pallet_prelude::*;
 use sp_runtime::traits::{CheckedAdd, Zero};
 
 impl<T: Config> Pallet<T> {
+	/// Checks if the following properties hold before performing a swap:
+	///
+	/// * Vamm is open.
+	/// * There is a sufficient amount of assets in the reserves to give to the
+	/// caller if the swap is a [`Remove`](Direction::Remove) operation.
+	/// * The total amount of assets in the reserve will not overflow if the
+	/// swap is a [`Add`](Direction::Add) operation.
+	///
+	/// # Errors
+	///
+	/// * [`Error::<T>::VammIsClosed`]
+	/// * [`Error::<T>::InsufficientFundsForTrade`]
+	/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
 	pub fn sanity_check_before_swap(
 		// config: &SwapConfigOf<T>,
 		config: &SwapConfig<T::VammId, T::Balance>,
@@ -43,6 +56,18 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Checks if the following properties hold after performing a swap:
+	///
+	/// * Swapped amount respects limit specified in
+	/// [`SwapConfig::output_amount_limit`].
+	/// * Base asses was not completely drained.
+	/// * Quote asses was not completely drained.
+	///
+	/// # Errors
+	///
+	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+	/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
+	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 	pub fn sanity_check_after_swap(
 		vamm_state: &VammState<T::Balance, T::Moment, T::Decimal>,
 		config: &SwapConfig<T::VammId, T::Balance>,
@@ -69,6 +94,17 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Checks if the following properties hold before updating twap:
+	///
+	/// * Vamm is open.
+	/// * New twap value is not zero.
+	/// * Current time is greater than last twap timestamp.
+	///
+	/// # Errors
+	///
+	/// * [`Error::<T>::NewTwapValueIsZero`]
+	/// * [`Error::<T>::VammIsClosed`]
+	/// * [`Error::<T>::AssetTwapTimestampIsMoreRecent`]
 	pub fn sanity_check_before_update_twap(
 		vamm_state: &VammState<T::Balance, T::Moment, T::Decimal>,
 		base_twap: T::Decimal,
