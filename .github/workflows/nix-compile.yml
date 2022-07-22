@@ -182,6 +182,7 @@ jobs:
                 sudo --user vscode sh
                 whoami                                
                 su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
+                su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
                 su -c 'nix-env --install --attr nixpkgs.cachix' - vscode
                 su -c 'cachix use composable-community' - vscode       
                 #curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
