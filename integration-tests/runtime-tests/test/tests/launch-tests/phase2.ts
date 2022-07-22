@@ -526,7 +526,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const picaBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
           const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           const amount = 100_000_000_000n;
-          const minReceive = 0;
+          const minReceive = 1000;
           const keepAlive = true;
           const {
             data: [result]
@@ -564,7 +564,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const picaBalanceBefore = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
           const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           const amount = 10_000_000_000n;
-          const minReceive = 0;
+          const minReceive = 1000;
           const keepAlive = true;
           const {
             data: [result]
@@ -851,7 +851,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const picaBalanceBefore = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
             const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
-            const minReceive = 0;
+            const minReceive = 1000;
             const keepAlive = true;
             const {
               data: [result]
@@ -1079,9 +1079,9 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             this.timeout(2 * 60 * 1000);
             const assetIdToBuy = picaAssetId;
             const picaBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
-            const ksmBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
-            const minReceive = 0;
+            const minReceive = 1000;
             const keepAlive = true;
             const {
               data: [result]
@@ -1121,7 +1121,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const picaBalanceBefore = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
             const ksmBalanceBefore = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
-            const minReceive = 0;
+            const minReceive = 1000;
             const keepAlive = true;
             const {
               data: [result]
@@ -1365,22 +1365,14 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const usdcBalanceBefore = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
             const ausdBalanceBefore = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
-            const minReceive = 0;
+            const minReceive = 1000;
             const keepAlive = true;
             const {
               data: [result]
-            } = await pablo.buyTokens(
-              api,
-              liquidityProviderWallet1,
-              usdcAusdPoolId,
-              assetIdToBuy,
-              amount,
-              minReceive,
-              keepAlive
-            );
-            const usdcaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
+            } = await pablo.buyTokens(api, traderWallet1, usdcAusdPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            const usdcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
             const ausdBalanceAfter = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
-            expect(new BN(usdcaBalanceAfter.toString())).to.be.bignumber.greaterThan(
+            expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(
               new BN(usdcBalanceBefore.toString())
             );
             expect(new BN(ausdBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ausdBalanceBefore.toString()));
@@ -1394,22 +1386,22 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const usdcBalanceBefore = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
             const ausdBalanceBefore = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
-            const minReceive = 0;
+            const minReceive = 1000;
             const keepAlive = true;
             const {
               data: [result]
             } = await pablo.sellTokens(
               api,
-              liquidityProviderWallet1,
+              traderWallet1,
               usdcAusdPoolId,
               assetIdToSell,
               amount,
               minReceive,
               keepAlive
             );
-            const usdcaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
+            const usdcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
             const ausdBalanceAfter = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
-            expect(new BN(usdcaBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdcBalanceBefore.toString()));
+            expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(usdcBalanceBefore.toString()));
             expect(new BN(ausdBalanceAfter.toString())).to.be.bignumber.greaterThan(
               new BN(ausdBalanceBefore.toString())
             );
@@ -1423,22 +1415,14 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             const ausdBalanceBefore = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
             const amount = 100_000_000_000n;
-            const minReceive = 0;
+            const minReceive = 1000;
             const keepAlive = true;
             const {
               data: [result]
-            } = await pablo.swapTokens(
-              api,
-              liquidityProviderWallet1,
-              usdcAusdPoolId,
-              pair,
-              amount,
-              minReceive,
-              keepAlive
-            );
-            const usdcaBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            } = await pablo.swapTokens(api, traderWallet1, usdcAusdPoolId, pair, amount, minReceive, keepAlive);
+            const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             const ausdBalanceAfter = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
-            expect(new BN(usdcaBalanceAfter.toString())).to.be.bignumber.greaterThan(
+            expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(
               new BN(usdcBalanceBefore.toString())
             );
             expect(new BN(ausdBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ausdBalanceBefore.toString()));
@@ -1974,7 +1958,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const {
               data: [result]
             } = await pablo.swapTokens(api, traderWallet1, wbtcKsmPoolId, pair, amount, minReceive, keepAlive);
-            const btcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
+            const btcBalanceAfter = await api.rpc.assets.balanceOf(btcAssetId.toString(), traderWallet1.publicKey);
             const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(btcBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(btcBalanceBefore.toString()));
             expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ksmBalanceBefore.toString()));
