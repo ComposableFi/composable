@@ -81,6 +81,7 @@ pub mod pallet {
 			lock::LockConfig, ManageStakingPool, ProtocolStaking, RewardConfig,
 			RewardPoolConfiguration,
 		},
+		time::{ONE_HOUR, ONE_MINUTE},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
@@ -632,21 +633,14 @@ pub mod pallet {
 			pair: CurrencyPair<T::AssetId>,
 		) -> DispatchResult {
 			let mut rewards = BTreeMap::new();
-			rewards.insert(
-				pair.base,
-				RewardConfig {
-					asset_id: pair.base,
-					max_rewards: T::Convert::convert(1_000_000_000_000_000_00_000_000_u128),
-					reward_rate: Perbill::from_percent(10),
-				},
-			);
+			let max_rewards: T::Balance = T::Convert::convert(100_000_000_000_000_000_000_000_u128);
+			let reward_rate = Perbill::from_percent(10);
+			let five_yers_blocks: u32 = 5 * 365 * 24 * 60 * 10; // 6s for one block
+			rewards
+				.insert(pair.base, RewardConfig { asset_id: pair.base, max_rewards, reward_rate });
 			rewards.insert(
 				pair.quote,
-				RewardConfig {
-					asset_id: pair.quote,
-					max_rewards: T::Convert::convert(1_000_000_000_000_000_00_000_000_u128),
-					reward_rate: Perbill::from_percent(10),
-				},
+				RewardConfig { asset_id: pair.quote, max_rewards, reward_rate },
 			);
 			let reward_configs = BoundedBTreeMap::<
 				T::AssetId,
@@ -655,15 +649,16 @@ pub mod pallet {
 			>::try_from(rewards)
 			.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let mut duration_presets = BTreeMap::new();
-			duration_presets.insert(3600_u64, Perbill::from_percent(1));
-			duration_presets.insert(60_u64, Perbill::from_rational(1_u32, 10_u32));
+			duration_presets.insert(ONE_HOUR, Perbill::from_percent(1));
+			duration_presets.insert(ONE_MINUTE, Perbill::from_percent(10));
 			let duration_presets = BoundedBTreeMap::try_from(duration_presets)
 				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
 			let pool_config = RewardPoolConfiguration::<_, _, _, _, _>::RewardRateBasedIncentive {
 				owner: Self::account_id(pool_id),
 				asset_id: primitives::currency::CurrencyId::PBLO.0.into(),
-				end_block: frame_system::Pallet::<T>::current_block_number() + 26280000_u32.into(),
+				end_block: frame_system::Pallet::<T>::current_block_number() +
+					five_yers_blocks.into(),
 				reward_configs,
 				lock,
 			};
@@ -697,7 +692,7 @@ pub mod pallet {
 						FeeConfig::default_from(fee),
 					)?;
 					Self::create_staking_reward_pool(&pool_id, pair)?;
-					(owner.clone(), pool_id, pair)
+					(owner, pool_id, pair)
 				},
 				PoolInitConfiguration::ConstantProduct { owner, pair, fee, base_weight } => {
 					let pool_id = Uniswap::<T>::do_create_pool(
@@ -707,7 +702,7 @@ pub mod pallet {
 						base_weight,
 					)?;
 					Self::create_staking_reward_pool(&pool_id, pair)?;
-					(owner.clone(), pool_id, pair)
+					(owner, pool_id, pair)
 				},
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
 					let validated_pool_config =

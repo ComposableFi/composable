@@ -118,6 +118,14 @@ pub mod pallet {
 		},
 		/// Split stake position into two positions
 		SplitPosition { positions: Vec<T::PositionId> },
+		/// Reward transfer event.
+		RewardTransferred {
+			from: T::AccountId,
+			pool: T::RewardPoolId,
+			reward_currency: T::AssetId,
+			/// amount of reward currency transferred.
+			reward_increment: T::Balance,
+		},
 	}
 
 	#[pallet::error]
@@ -781,6 +789,12 @@ pub mod pallet {
 								)?;
 							},
 						}
+						Self::deposit_event(Event::RewardTransferred {
+							from: from.clone(),
+							pool: *pool,
+							reward_currency,
+							reward_increment,
+						});
 						Ok(())
 					},
 					None => Err(Error::<T>::UnimplementedRewardPoolConfiguration.into()),
