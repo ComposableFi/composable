@@ -2,7 +2,7 @@ use crate::{Config, Error, Pallet, VammMap, VammStateOf};
 use frame_support::{pallet_prelude::*, traits::UnixTime};
 
 impl<T: Config> Pallet<T> {
-	/// Retrieve the [`VammState`] of the desired vamm.
+	/// Retrieve the [`VammState`](../types/struct.VammState.html) of the desired vamm.
 	///
 	/// # Errors
 	///
