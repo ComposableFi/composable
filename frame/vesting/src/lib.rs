@@ -319,7 +319,6 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
-		// TODO: pass schedule.vesting_schedule_id to this function
 		let total_amount = Self::locked_balance(to, asset)
 			.checked_add(&schedule_amount)
 			.ok_or(ArithmeticError::Overflow)?;
@@ -354,14 +353,12 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Returns locked balance based on current block number.
-	/// TODO: add vesting_schedule_id parameter
+	/// TODO: change return type to (BalanceOf<T>. BTreeMap<VestingScheduleId, BalanceOf<T>>)
 	fn locked_balance(who: &AccountIdOf<T>, asset: AssetIdOf<T>) -> BalanceOf<T> {
 		<VestingSchedules<T>>::mutate_exists(who, asset, |maybe_schedules| {
 			let total = if let Some(schedules) = maybe_schedules.as_mut() {
 				let mut total: BalanceOf<T> = Zero::zero();
 				schedules.retain(|s| {
-					/// TODO: only use schedule with given vesting_schedule_id, or throw
-					/// NonExistentVestingSchedule error if not found
 					let amount = s.locked_amount(
 						frame_system::Pallet::<T>::current_block_number(),
 						T::Time::now(),
