@@ -83,7 +83,8 @@ benchmarks! {
 	create_reward_pool {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		let owner: T::AccountId = account("owner", 0, 0);
-		let (pool_id, end_block) = (1_u16.into(), 5_u128.saturated_into());
+		let pool_id = 1_u16.into();
+		let end_block = 5_u128.saturated_into();
 	}: _(RawOrigin::Root, get_reward_pool::<T>(owner.clone(), r))
 	verify {
 		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner, end_block }.into());
@@ -91,7 +92,12 @@ benchmarks! {
 
 	stake {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
-		let (asset_id, pool_id, amount, duration_preset, position_id, keep_alive) = (100.into(), 1_u16.into(), 100_500_u128.into(), ONE_HOUR, 1_u128.into(), true);
+		let asset_id = 100.into();
+		let pool_id = 1_u16.into();
+		let amount = 100_500_u128.into();
+		let duration_preset = ONE_HOUR;
+		let position_id = 1_u128.into();
+		let keep_alive = true;
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
 		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
@@ -103,7 +109,12 @@ benchmarks! {
 
 	extend {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
-		let (asset_id, pool_id, amount, duration_preset, position_id, keep_alive) = (100.into(), 1_u16.into(), 100_500_u128.into(), ONE_HOUR, 1_u128.into(), true);
+		let asset_id = 100.into();
+		let pool_id = 1_u16.into();
+		let amount = 100_500_u128.into();
+		let duration_preset = ONE_HOUR;
+		let position_id = 1_u128.into();
+		let keep_alive = true;
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
 		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
@@ -116,7 +127,12 @@ benchmarks! {
 
 	unstake {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
-		let (asset_id, pool_id, amount, duration_preset, position_id, keep_alive) = (100.into(), 1_u16.into(), 100_500_u128.into(), ONE_HOUR, 1_u128.into(), true);
+		let asset_id = 100.into();
+		let pool_id = 1_u16.into();
+		let amount = 100_500_u128.into();
+		let duration_preset = ONE_HOUR;
+		let position_id = 1_u128.into();
+		let keep_alive = true;
 		let staker = whitelisted_caller();
 		let pool_owner: T::AccountId = account("owner", 0, 0);
 		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
