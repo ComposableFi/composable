@@ -193,7 +193,12 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
           ButtonProps={{
-            onClick: () => {},
+            onClick: () => {
+              const balanceLimit = balance1.multipliedBy(percentageToSwap / 100);
+              if (!isProcessing && balanceLimit.gt(0)) {
+                debouncedTokenAmountUpdate("quote", balanceLimit);
+              }
+            },
           }}
           CombinedSelectProps={{
             value: selectedAssetOneId,
