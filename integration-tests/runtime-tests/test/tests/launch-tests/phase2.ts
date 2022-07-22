@@ -40,6 +40,11 @@ import BN from "bn.js";
 // ToDo (D. Roth): Remove `SHORT` tag.
 describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function () {
   if (!testConfiguration.enabledTests.query.enabled) return;
+  this.retries(0);
+
+  const RESULT_DEVIATION_DELTA = (input: BN) => {
+    return new BN(input).muln(0.01);
+  };
 
   let api: ApiPromise;
   let sudoKey: KeyringPair,
@@ -119,16 +124,21 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         const baseAsset = ksmAssetId;
         const quoteAsset = usdcAssetId;
         const {
-          data: [result]
+          data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
         } = await pablo.uniswap.createMarket(
           api,
-          sudoKey,
+          composableManagerWallet,
           composableManagerWallet.publicKey,
           baseAsset,
           quoteAsset,
           fee,
           baseWeight
         );
+        expect(resultManagerWallet.toString()).to.be.equal(
+          api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+        );
+        expect(resultCurrencyPair.base.toString()).to.be.equal(baseAsset.toString());
+        expect(resultCurrencyPair.quote.toString()).to.be.equal(quoteAsset.toString());
         // ToDo: Update to expect error!
         const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
           api,
@@ -150,6 +160,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             }
           })
         );
+        expect(new BN(resultPoolId)).to.be.bignumber.equal(poolId);
         ksmUsdcPoolId = poolId;
         ksmUsdcLpTokenId = lpTokenId;
       });
@@ -179,6 +190,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         );
         expect(result.isOk).to.be.true;
       });
+      // ToDo: Add check from above test when sudo creation is possible!
     });
 
     describe("Test 2A pool liquidity", function () {
@@ -199,7 +211,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             liquidityProviderWallet1.publicKey
           );
           const {
-            data: [result]
+            data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
           } = await pablo.addLiquidity(
             api,
             liquidityProviderWallet1,
@@ -209,6 +221,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             minMintAmount,
             true
           );
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", liquidityProviderWallet1.publicKey).toString()
+          );
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(ksmUsdcPoolId);
+          expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+          expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
           await Phase2.verifyPoolLiquidityAdded(
             api,
             ksmAssetId,
@@ -238,7 +256,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             composableManagerWallet.publicKey
           );
           const {
-            data: [result]
+            data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
           } = await pablo.addLiquidity(
             api,
             composableManagerWallet,
@@ -248,6 +266,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             minMintAmount,
             true
           );
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+          );
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(ksmUsdcPoolId);
+          expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+          expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
           await Phase2.verifyPoolLiquidityAdded(
             api,
             ksmAssetId,
@@ -278,10 +302,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             liquidityProviderWallet1.publicKey
           );
           const lpAmount = new BN(lpTokenBalanceBefore.toString()).div(new BN(2));
-          const baseAmount = 1000;
-          const quoteAmount = 1000;
+          const baseAmount = new BN(1000);
+          const quoteAmount = new BN(1000);
           const {
-            data: [result]
+            data: [resultAccount, resultPoolId]
           } = await pablo.removeLiquidity(
             api,
             liquidityProviderWallet1,
@@ -290,6 +314,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             baseAmount,
             quoteAmount
           );
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", liquidityProviderWallet1.publicKey).toString()
+          );
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(ksmUsdcPoolId);
           await Phase2.verifyPoolLiquidityRemoved(
             api,
             ksmAssetId,
@@ -320,7 +348,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const baseAmount = 1000;
           const quoteAmount = 1000;
           const {
-            data: [result]
+            data: [resultAccount, resultPoolId]
           } = await pablo.removeLiquidity(
             api,
             composableManagerWallet,
@@ -329,6 +357,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             baseAmount,
             quoteAmount
           );
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+          );
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(ksmUsdcPoolId);
           await Phase2.verifyPoolLiquidityRemoved(
             api,
             ksmAssetId,
@@ -355,8 +387,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const minReceive = 0;
           const keepAlive = true;
           const {
-            data: [result]
+            data: [
+              resultPoolId,
+              resultAccount,
+              resultBaseAsset,
+              resultQuoteAsset,
+              resultBaseAmount,
+              resultQuoteAmount,
+              fee
+            ]
           } = await pablo.buyTokens(api, traderWallet1, ksmUsdcPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(ksmUsdcPoolId);
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", traderWallet1.publicKey).toString()
+          );
+          expect(resultBaseAsset.toString()).to.be.equal(assetIdToBuy.toString());
+          expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+          expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()).sub(fee.fee),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+            new BN(amount.toString()).muln(0.15),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
           const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
           const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(ksmBalanceBefore.toString()));
@@ -374,8 +432,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const minReceive = 0;
           const keepAlive = true;
           const {
-            data: [result]
+            data: [
+              resultPoolId,
+              resultAccount,
+              resultBaseAsset,
+              resultQuoteAsset,
+              resultBaseAmount,
+              resultQuoteAmount,
+              fee
+            ]
           } = await pablo.sellTokens(api, traderWallet1, ksmUsdcPoolId, assetIdToSell, amount, minReceive, keepAlive);
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(ksmUsdcPoolId);
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", traderWallet1.publicKey).toString()
+          );
+          expect(resultBaseAsset.toString()).to.be.equal(usdcAssetId.toString());
+          expect(resultQuoteAsset.toString()).to.be.equal(assetIdToSell.toString());
+          expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()).sub(fee.fee),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()),
+            RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+          );
+          expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+            new BN(amount.toString()).muln(0.15),
+            RESULT_DEVIATION_DELTA(new BN(fee.fee))
+          );
           const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
           const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(ksmBalanceBefore.toString()));
@@ -393,8 +477,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const minReceive = 0;
           const keepAlive = true;
           const {
-            data: [result]
+            data: [
+              resultPoolId,
+              resultAccount,
+              resultBaseAsset,
+              resultQuoteAsset,
+              resultBaseAmount,
+              resultQuoteAmount,
+              fee
+            ]
           } = await pablo.swapTokens(api, traderWallet1, ksmUsdcPoolId, pair, amount, minReceive, keepAlive);
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(ksmUsdcPoolId);
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", traderWallet1.publicKey).toString()
+          );
+          expect(resultBaseAsset.toString()).to.be.equal(ksmAssetId.toString());
+          expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+          expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()).sub(fee.fee),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+            new BN(amount.toString()).muln(0.15),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
           const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
           const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           expect(new BN(ksmBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(ksmBalanceBefore.toString()));
@@ -445,7 +555,9 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
       const ownerFeeRate = 0;
       const protocolFeeRate = 0;
       // ToDo: Switch to sudo!
-      const result = await pablo.liquidityBootstrapping.createMarket(
+      const {
+        data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
+      } = await pablo.liquidityBootstrapping.createMarket(
         api,
         composableManagerWallet,
         composableManagerWallet.publicKey,
@@ -459,7 +571,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         ownerFeeRate,
         protocolFeeRate
       );
-
+      expect(resultManagerWallet.toString()).to.be.equal(
+        api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+      );
+      expect(resultCurrencyPair.base.toString()).to.be.equal(baseAsset.toString());
+      expect(resultCurrencyPair.quote.toString()).to.be.equal(quoteAsset.toString());
       const { poolId } = await Phase2.verifyLastPoolCreation(
         api,
         api.createType("PalletPabloPoolConfiguration", {
@@ -483,6 +599,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           }
         })
       );
+      expect(resultPoolId.toString()).to.be.equal(poolId.toString());
       picaLBPPoolId = poolId;
     });
 
@@ -503,7 +620,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         it("Pool owner can add liquidity to the pool", async function () {
           this.timeout(2 * 60 * 1000);
           const {
-            data: [result]
+            data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
           } = await pablo.addLiquidity(
             api,
             composableManagerWallet,
@@ -513,6 +630,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             minMintAmount,
             true
           );
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+          );
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(ksmUsdcPoolId);
+          expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+          expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
         });
       });
     });
@@ -529,8 +652,31 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const minReceive = 1000;
           const keepAlive = true;
           const {
-            data: [result]
+            data: [
+              resultPoolId,
+              resultAccount,
+              resultBaseAsset,
+              resultQuoteAsset,
+              resultBaseAmount,
+              resultQuoteAmount,
+              fee
+            ]
           } = await pablo.buyTokens(api, traderWallet1, picaLBPPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(picaLBPPoolId);
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", traderWallet1.publicKey).toString()
+          );
+          expect(resultBaseAsset.toString()).to.be.equal(assetIdToBuy.toString());
+          expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+          expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()).sub(fee.fee),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(fee.fee)).to.be.bignumber.equal(new BN(0));
           const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
           const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(picaBalanceBefore.toString()));
@@ -548,8 +694,31 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const minReceive = 0;
           const keepAlive = true;
           const {
-            data: [result]
+            data: [
+              resultPoolId,
+              resultAccount,
+              resultBaseAsset,
+              resultQuoteAsset,
+              resultBaseAmount,
+              resultQuoteAmount,
+              fee
+            ]
           } = await pablo.sellTokens(api, traderWallet1, picaLBPPoolId, assetIdToSell, amount, minReceive, keepAlive);
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(picaLBPPoolId);
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", traderWallet1.publicKey).toString()
+          );
+          expect(resultBaseAsset.toString()).to.be.equal(assetIdToSell.toString());
+          expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+          expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()).sub(fee.fee),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(fee.fee)).to.be.bignumber.equal(0);
           const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
           const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(picaBalanceBefore.toString()));
@@ -567,8 +736,35 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const minReceive = 1000;
           const keepAlive = true;
           const {
-            data: [result]
+            data: [
+              resultPoolId,
+              resultAccount,
+              resultBaseAsset,
+              resultQuoteAsset,
+              resultBaseAmount,
+              resultQuoteAmount,
+              fee
+            ]
           } = await pablo.swapTokens(api, traderWallet1, picaLBPPoolId, pair, amount, minReceive, keepAlive);
+          expect(new BN(resultPoolId)).to.be.bignumber.equal(picaLBPPoolId);
+          expect(resultAccount.toString()).to.be.equal(
+            api.createType("AccountId32", traderWallet1.publicKey).toString()
+          );
+          expect(resultBaseAsset.toString()).to.be.equal(picaAssetId.toString());
+          expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+          expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()).sub(fee.fee),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+            new BN(amount.toString()),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+            new BN(amount.toString()).mul(new BN(0.15)),
+            RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+          );
+          expect(new BN(fee.fee)).to.be.bignumber.equal(0);
           const picaBalanceAfter = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
           const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
           expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(picaBalanceBefore.toString()));
@@ -589,7 +785,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
     if (!testConfiguration.enabledTests.query.account__success.enabled) return;
 
     describe("2C:1 PICA/USDC Uniswap Pool", function () {
-      it("Create PICA/USDC uniswap pool", async function () {
+      it("Create PICA/USDC Uniswap pool", async function () {
         if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
         this.timeout(2 * 60 * 1000);
         const baseAsset = picaAssetId;
@@ -597,7 +793,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         const fee = 200000;
         const baseWeight = 500000;
         const {
-          data: [result]
+          data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
         } = await pablo.uniswap.createMarket(
           // ToDo: Switch to sudo!
           api,
@@ -608,6 +804,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           fee,
           baseWeight
         );
+        expect(resultManagerWallet.toString()).to.be.equal(
+          api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+        );
+        expect(resultCurrencyPair.base.toString()).to.be.equal(baseAsset.toString());
+        expect(resultCurrencyPair.quote.toString()).to.be.equal(quoteAsset.toString());
         const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
           api,
           api.createType("PalletPabloPoolConfiguration", {
@@ -628,6 +829,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             }
           })
         );
+        expect(new BN(resultPoolId)).to.be.bignumber.equal(poolId);
         picaUsdcPoolId = poolId;
         picaUsdcLpTokenId = lpTokenId;
       });
@@ -649,7 +851,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet1.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               api,
               liquidityProviderWallet1,
@@ -659,6 +861,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet1.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaUsdcPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               picaAssetId,
@@ -687,7 +895,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               api,
               composableManagerWallet,
@@ -697,6 +905,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaUsdcPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               picaAssetId,
@@ -730,7 +944,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               api,
               liquidityProviderWallet1,
@@ -739,6 +953,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet1.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaUsdcPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               picaAssetId,
@@ -769,7 +987,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.removeLiquidity(
               api,
               composableManagerWallet,
@@ -778,6 +996,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(ksmUsdcPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               picaAssetId,
@@ -804,8 +1028,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.buyTokens(api, traderWallet1, picaUsdcPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaUsdcPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(assetIdToBuy.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.15)),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
             const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
             const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(
@@ -825,7 +1075,15 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.sellTokens(
               api,
               traderWallet1,
@@ -834,6 +1092,24 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               amount,
               minReceive,
               keepAlive
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaUsdcPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(assetIdToSell.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.15)),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
             );
             const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
             const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
@@ -854,8 +1130,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 1000;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.swapTokens(api, traderWallet1, picaUsdcPoolId, pair, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaUsdcPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(picaAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.15)),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
+            );
             const picaBalanceAfter = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
             const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(
@@ -877,7 +1179,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         const baseAsset = picaAssetId;
         const quoteAsset = ksmAssetId;
         const {
-          data: [result]
+          data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
         } = await pablo.uniswap.createMarket(
           // ToDo: Switch to sudo!
           api,
@@ -888,6 +1190,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           fee,
           baseWeight
         );
+        expect(resultManagerWallet.toString()).to.be.equal(
+          api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+        );
+        expect(resultCurrencyPair.base.toString()).to.be.equal(baseAsset.toString());
+        expect(resultCurrencyPair.quote.toString()).to.be.equal(quoteAsset.toString());
         const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
           api,
           api.createType("PalletPabloPoolConfiguration", {
@@ -908,6 +1215,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             }
           })
         );
+        expect(new BN(resultPoolId)).to.be.bignumber.equal(poolId);
         picaKsmPoolId = poolId;
         picaKsmLpTokenId = lpTokenId;
       });
@@ -929,7 +1237,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet1.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               api,
               liquidityProviderWallet1,
@@ -939,6 +1247,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet1.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaKsmPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               picaAssetId,
@@ -967,7 +1281,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               api,
               composableManagerWallet,
@@ -977,6 +1291,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaKsmPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               ksmAssetId,
@@ -1010,7 +1330,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               api,
               liquidityProviderWallet1,
@@ -1019,6 +1339,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet1.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaKsmPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               picaAssetId,
@@ -1049,7 +1373,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               api,
               composableManagerWallet,
@@ -1058,6 +1382,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaKsmPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               picaAssetId,
@@ -1084,8 +1412,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 1000;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.buyTokens(api, traderWallet1, picaKsmPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaKsmPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(assetIdToBuy.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.15)),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
+            );
             const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
             const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(
@@ -1105,8 +1459,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.sellTokens(api, traderWallet1, picaKsmPoolId, assetIdToSell, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaKsmPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(assetIdToSell.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.15)),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
+            );
             const picaBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
             const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(picaBalanceBefore.toString()));
@@ -1124,8 +1504,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 1000;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.swapTokens(api, traderWallet1, picaKsmPoolId, pair, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(picaKsmPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(picaAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.15)),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
+            );
             const picaBalanceAfter = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
             const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(picaBalanceAfter.toString())).to.be.bignumber.greaterThan(
@@ -1161,7 +1567,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         const baseAsset = usdcAssetId;
         const quoteAsset = ausdAssetId;
         const {
-          data: [result]
+          data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
         } = await pablo.stableswap.createMarket(
           // ToDo: Switch to sudo!
           api,
@@ -1172,6 +1578,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           amplificationCoefficient,
           fee
         );
+        expect(resultManagerWallet.toString()).to.be.equal(
+          api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+        );
+        expect(resultCurrencyPair.base.toString()).to.be.equal(baseAsset.toString());
+        expect(resultCurrencyPair.quote.toString()).to.be.equal(quoteAsset.toString());
         const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
           api,
           api.createType("PalletPabloPoolConfiguration", {
@@ -1191,6 +1602,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             }
           })
         );
+        expect(new BN(resultPoolId)).to.be.bignumber.equal(poolId);
         usdcAusdPoolId = poolId;
         usdcAusdLpTokenId = lpTokenId;
       });
@@ -1212,7 +1624,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet2.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               api,
               liquidityProviderWallet2,
@@ -1222,6 +1634,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet2.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcAusdPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               usdcAssetId,
@@ -1250,9 +1668,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
-              // ToDo: Switch to sudo!
               api,
               composableManagerWallet,
               usdcAusdPoolId,
@@ -1261,6 +1678,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcAusdPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               usdcAssetId,
@@ -1294,7 +1717,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               api,
               liquidityProviderWallet2,
@@ -1303,6 +1726,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet2.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcAusdPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               usdcAssetId,
@@ -1333,7 +1760,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               api,
               composableManagerWallet,
@@ -1342,6 +1769,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet2.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcAusdPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               usdcAssetId,
@@ -1368,8 +1799,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 1000;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.buyTokens(api, traderWallet1, usdcAusdPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcAusdPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(assetIdToBuy.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(ausdAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.1)),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
             const usdcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
             const ausdBalanceAfter = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(
@@ -1389,7 +1846,15 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 1000;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.sellTokens(
               api,
               traderWallet1,
@@ -1398,6 +1863,24 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               amount,
               minReceive,
               keepAlive
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcAusdPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(ausdAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(assetIdToSell.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.1)),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
             );
             const usdcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
             const ausdBalanceAfter = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
@@ -1418,8 +1901,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 1000;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.swapTokens(api, traderWallet1, usdcAusdPoolId, pair, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcAusdPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(ausdAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.1)),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
             const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             const ausdBalanceAfter = await api.rpc.assets.balanceOf(ausdAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(
@@ -1435,13 +1944,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
       it("Create wETH/KSM uniswap pool", async function () {
         if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
         this.timeout(2 * 60 * 1000);
-
         const fee = 150000;
         const baseWeight = 500000;
         const baseAsset = wethAssetId;
         const quoteAsset = ksmAssetId;
         const {
-          data: [result]
+          data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
         } = await pablo.uniswap.createMarket(
           // ToDo: Switch to sudo!
           api,
@@ -1452,6 +1960,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           fee,
           baseWeight
         );
+        expect(resultManagerWallet.toString()).to.be.equal(
+          api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+        );
+        expect(resultCurrencyPair.base.toString()).to.be.equal(baseAsset.toString());
+        expect(resultCurrencyPair.quote.toString()).to.be.equal(quoteAsset.toString());
         const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
           api,
           api.createType("PalletPabloPoolConfiguration", {
@@ -1472,6 +1985,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             }
           })
         );
+        expect(new BN(resultPoolId)).to.be.bignumber.equal(poolId);
         wethKsmPoolId = poolId;
         wethKsmLpTokenId = lpTokenId;
       });
@@ -1493,7 +2007,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet2.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               api,
               liquidityProviderWallet2,
@@ -1503,6 +2017,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet2.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wethKsmPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               wethAssetId,
@@ -1531,7 +2051,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               api,
               composableManagerWallet,
@@ -1541,6 +2061,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wethKsmPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               wethAssetId,
@@ -1574,7 +2100,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               api,
               liquidityProviderWallet2,
@@ -1583,6 +2109,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet2.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wethKsmPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               wethAssetId,
@@ -1613,7 +2143,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               api,
               composableManagerWallet,
@@ -1622,6 +2152,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wethKsmPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               wethAssetId,
@@ -1648,8 +2182,35 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.buyTokens(api, traderWallet1, wethKsmPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wethKsmPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(assetIdToBuy.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(ksmAssetId.toString());
+
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.1)),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
             const wethBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
             const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(wethBalanceAfter.toString())).to.be.bignumber.greaterThan(
@@ -1669,8 +2230,35 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.sellTokens(api, traderWallet1, wethKsmPoolId, assetIdToSell, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wethKsmPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(ksmAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(assetIdToSell.toString());
+
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.1)),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
             const wethBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
             const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(wethBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(wethBalanceBefore.toString()));
@@ -1688,8 +2276,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.swapTokens(api, traderWallet1, wethKsmPoolId, pair, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wethKsmPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(wethAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(ksmAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).mul(new BN(0.1)),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
             const wethBalanceAfter = await api.rpc.assets.balanceOf(wethAssetId.toString(), traderWallet1.publicKey);
             const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(wethBalanceAfter.toString())).to.be.bignumber.greaterThan(
@@ -1710,7 +2324,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         const baseAsset = btcAssetId;
         const quoteAsset = ksmAssetId;
         const {
-          data: [result]
+          data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
         } = await pablo.uniswap.createMarket(
           // ToDo: Switch to sudo!
           api,
@@ -1721,6 +2335,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           fee,
           baseWeight
         );
+        expect(resultManagerWallet.toString()).to.be.equal(
+          api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+        );
+        expect(resultCurrencyPair.base.toString()).to.be.equal(baseAsset.toString());
+        expect(resultCurrencyPair.quote.toString()).to.be.equal(quoteAsset.toString());
         const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
           api,
           api.createType("PalletPabloPoolConfiguration", {
@@ -1741,6 +2360,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             }
           })
         );
+        expect(new BN(resultPoolId)).to.be.bignumber.equal(poolId);
         wbtcKsmPoolId = poolId;
         wbtcKsmLpTokenId = lpTokenId;
       });
@@ -1761,7 +2381,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet2.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               api,
               liquidityProviderWallet2,
@@ -1771,6 +2391,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet2.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wbtcKsmPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               btcAssetId,
@@ -1799,7 +2425,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               // ToDo: Switch to sudo!
               api,
@@ -1810,6 +2436,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wbtcKsmPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               btcAssetId,
@@ -1843,7 +2475,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               api,
               liquidityProviderWallet2,
@@ -1852,6 +2484,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet2.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wbtcKsmPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               wethAssetId,
@@ -1882,7 +2518,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               // ToDo: Switch to sudo!
               api,
@@ -1892,6 +2528,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wbtcKsmPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               btcAssetId,
@@ -1918,8 +2558,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.buyTokens(api, traderWallet1, wbtcKsmPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wbtcKsmPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(ksmAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).muln(0.15),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
+            );
             const btcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
             const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(btcBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(btcBalanceBefore.toString()));
@@ -1937,8 +2603,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.sellTokens(api, traderWallet1, wbtcKsmPoolId, assetIdToSell, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wbtcKsmPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(ksmAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).muln(0.15),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
+            );
             const btcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
             const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(btcBalanceAfter.toString())).to.be.bignumber.lessThan(new BN(btcBalanceBefore.toString()));
@@ -1956,8 +2648,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.swapTokens(api, traderWallet1, wbtcKsmPoolId, pair, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(wbtcKsmPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(ksmAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).muln(0.15),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
+            );
             const btcBalanceAfter = await api.rpc.assets.balanceOf(btcAssetId.toString(), traderWallet1.publicKey);
             const ksmBalanceAfter = await api.rpc.assets.balanceOf(ksmAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(btcBalanceAfter.toString())).to.be.bignumber.greaterThan(new BN(btcBalanceBefore.toString()));
@@ -1971,13 +2689,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
       it("Create USDC/USDT stableswap pool", async function () {
         if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
         this.timeout(2 * 60 * 1000);
-
         const amplificationCoefficient = 24; // ToDo: Update!
         const fee = 100000; // ToDo: Update!
         const baseAsset = usdcAssetId;
         const quoteAsset = usdtAssetId;
         const {
-          data: [result]
+          data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
         } = await pablo.stableswap.createMarket(
           // ToDo: Switch to sudo!
           api,
@@ -1988,6 +2705,11 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           amplificationCoefficient,
           fee
         );
+        expect(resultManagerWallet.toString()).to.be.equal(
+          api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+        );
+        expect(resultCurrencyPair.base.toString()).to.be.equal(baseAsset.toString());
+        expect(resultCurrencyPair.quote.toString()).to.be.equal(quoteAsset.toString());
         const { poolId, lpTokenId } = await Phase2.verifyLastPoolCreation(
           api,
           api.createType("PalletPabloPoolConfiguration", {
@@ -2007,6 +2729,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             }
           })
         );
+        expect(new BN(resultPoolId)).to.be.bignumber.equal(poolId);
         usdcUsdtPoolId = poolId;
         usdcUsdtLpTokenId = lpTokenId;
       });
@@ -2028,7 +2751,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               liquidityProviderWallet2.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               api,
               liquidityProviderWallet2,
@@ -2038,6 +2761,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet2.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcUsdtPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               usdcAssetId,
@@ -2066,7 +2795,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               composableManagerWallet.publicKey
             );
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId, resultBaseAmount, resultQuoteAmount]
             } = await pablo.addLiquidity(
               // ToDo: Switch to sudo!
               api,
@@ -2077,6 +2806,12 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               minMintAmount,
               true
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcUsdtPoolId);
+            expect(new BN(resultBaseAmount)).to.be.bignumber.equal(baseAmount);
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.equal(quoteAmount);
             await Phase2.verifyPoolLiquidityAdded(
               api,
               usdcAssetId,
@@ -2110,7 +2845,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               api,
               liquidityProviderWallet2,
@@ -2119,6 +2854,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", liquidityProviderWallet2.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcUsdtPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               usdcAssetId,
@@ -2149,7 +2888,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const baseAmount = 1000;
             const quoteAmount = 1000;
             const {
-              data: [result]
+              data: [resultAccount, resultPoolId]
             } = await pablo.removeLiquidity(
               // ToDo: Switch to sudo!
               api,
@@ -2159,6 +2898,10 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               baseAmount,
               quoteAmount
             );
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", composableManagerWallet.publicKey).toString()
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcUsdtPoolId);
             await Phase2.verifyPoolLiquidityRemoved(
               api,
               usdcAssetId,
@@ -2185,8 +2928,35 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.buyTokens(api, traderWallet1, usdcUsdtPoolId, assetIdToBuy, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcUsdtPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(assetIdToBuy.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(usdtAssetId.toString());
+
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).muln(0.15),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
+            );
             const usdcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToBuy.toString(), traderWallet1.publicKey);
             const usdtBalanceAfter = await api.rpc.assets.balanceOf(usdtAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(
@@ -2206,7 +2976,15 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.sellTokens(
               api,
               traderWallet1,
@@ -2215,6 +2993,24 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               amount,
               minReceive,
               keepAlive
+            );
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcUsdtPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(assetIdToSell.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(usdtBalanceBefore.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).muln(0.15),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
             );
             const usdcBalanceAfter = await api.rpc.assets.balanceOf(assetIdToSell.toString(), traderWallet1.publicKey);
             const usdtBalanceAfter = await api.rpc.assets.balanceOf(usdtAssetId.toString(), traderWallet1.publicKey);
@@ -2235,8 +3031,34 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
             const minReceive = 0;
             const keepAlive = true;
             const {
-              data: [result]
+              data: [
+                resultPoolId,
+                resultAccount,
+                resultBaseAsset,
+                resultQuoteAsset,
+                resultBaseAmount,
+                resultQuoteAmount,
+                fee
+              ]
             } = await pablo.swapTokens(api, traderWallet1, usdcUsdtPoolId, pair, amount, minReceive, keepAlive);
+            expect(new BN(resultPoolId)).to.be.bignumber.equal(usdcUsdtPoolId);
+            expect(resultAccount.toString()).to.be.equal(
+              api.createType("AccountId32", traderWallet1.publicKey).toString()
+            );
+            expect(resultBaseAsset.toString()).to.be.equal(usdcAssetId.toString());
+            expect(resultQuoteAsset.toString()).to.be.equal(usdtAssetId.toString());
+            expect(new BN(resultBaseAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).sub(fee.fee),
+              RESULT_DEVIATION_DELTA(new BN(resultBaseAmount))
+            );
+            expect(new BN(resultQuoteAmount)).to.be.bignumber.closeTo(
+              new BN(amount.toString()),
+              RESULT_DEVIATION_DELTA(new BN(resultQuoteAmount))
+            );
+            expect(new BN(fee.fee)).to.be.bignumber.closeTo(
+              new BN(amount.toString()).muln(0.15),
+              RESULT_DEVIATION_DELTA(new BN(fee.fee))
+            );
             const usdcBalanceAfter = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
             const usdtBalanceAfter = await api.rpc.assets.balanceOf(usdtAssetId.toString(), traderWallet1.publicKey);
             expect(new BN(usdcBalanceAfter.toString())).to.be.bignumber.greaterThan(

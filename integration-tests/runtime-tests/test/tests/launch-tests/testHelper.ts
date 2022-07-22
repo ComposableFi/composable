@@ -15,19 +15,18 @@ export class Phase2 {
     const poolId = poolAmount.sub(new BN(1));
     const pools = await api.query.pablo.pools(poolId);
     if (poolConfig.isConstantProduct == true) {
-      return this.verifyConstantProductPool(poolConfig, pools, poolId, poolAmount);
+      return this.verifyConstantProductPool(poolConfig, pools, poolId);
     } else if (poolConfig.isLiquidityBootstrapping == true) {
-      return this.verifyLiquidityBootstrappingPool(poolConfig, pools, poolId, poolAmount);
+      return this.verifyLiquidityBootstrappingPool(poolConfig, pools, poolId);
     } else if (poolConfig.isStableSwap == true) {
-      return this.verifyStableSwapPool(poolConfig, pools, poolId, poolAmount);
+      return this.verifyStableSwapPool(poolConfig, pools, poolId);
     }
   }
 
   static verifyConstantProductPool(
     poolConfig: PalletPabloPoolConfiguration,
     pools: Option<PalletPabloPoolConfiguration>,
-    poolId: BN,
-    poolAmount: u128
+    poolId: BN
   ) {
     expect(pools.unwrap().asConstantProduct.owner.toString()).to.be.equal(
       poolConfig.asConstantProduct.owner.toString()
@@ -60,8 +59,7 @@ export class Phase2 {
   static verifyStableSwapPool(
     poolConfig: PalletPabloPoolConfiguration,
     pools: Option<PalletPabloPoolConfiguration>,
-    poolId: BN,
-    poolAmount: u128
+    poolId: BN
   ) {
     expect(pools.unwrap().asStableSwap.owner.toString()).to.be.equal(poolConfig.asStableSwap.owner.toString());
     expect(pools.unwrap().asStableSwap.pair.base).to.be.bignumber.equal(new BN(poolConfig.asStableSwap.pair.base));
@@ -85,8 +83,7 @@ export class Phase2 {
   static verifyLiquidityBootstrappingPool(
     poolConfig: PalletPabloPoolConfiguration,
     pools: Option<PalletPabloPoolConfiguration>,
-    poolId: BN,
-    poolAmount: u128
+    poolId: BN
   ) {
     expect(pools.unwrap().asLiquidityBootstrapping.owner.toString()).to.be.equal(
       poolConfig.asLiquidityBootstrapping.owner.toString()

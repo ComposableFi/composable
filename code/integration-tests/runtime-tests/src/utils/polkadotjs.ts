@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { ApiPromise } from "@polkadot/api";
 import { AnyTuple, IEvent } from "@polkadot/types/types";
 import { AddressOrPair, SubmittableExtrinsic } from "@polkadot/api/types";

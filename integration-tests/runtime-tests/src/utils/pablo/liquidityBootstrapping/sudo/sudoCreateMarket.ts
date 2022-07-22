@@ -6,7 +6,6 @@ import { Permill } from "@polkadot/types/interfaces/runtime";
 import { SpRuntimeDispatchError } from "@polkadot/types/lookup";
 import { IEvent } from "@polkadot/types/types";
 import { AccountId32 } from "@polkadot/types/interfaces";
-import { ComposableTraitsDefiCurrencyPairCurrencyId } from "@composable/types/interfaces/index";
 
 /**
  * Creates a constant product (Uniswap) dex pool.
@@ -23,7 +22,7 @@ import { ComposableTraitsDefiCurrencyPairCurrencyId } from "@composable/types/in
  * @param ownerFeeRate
  * @param protocolFeeRate
  */
-export default async function(
+export default async function (
   api: ApiPromise,
   sudoKey: KeyringPair,
   managerWallet: Uint8Array | AccountId32 | string,
