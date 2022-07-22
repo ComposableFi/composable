@@ -26,7 +26,7 @@ pub type MarketId = u32;
 #[repr(transparent)]
 pub struct MarketIndex(
 	#[cfg(test)] // to allow pattern matching in tests outside of this crate
-	pub  MarketId,
+	pub MarketId,
 	#[cfg(not(test))] pub(crate) MarketId,
 );
 
