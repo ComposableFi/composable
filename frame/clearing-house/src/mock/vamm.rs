@@ -70,12 +70,13 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub vamm_id: Option<T::VammId>,
+		pub price: Option<T::Decimal>,
 		pub twap: Option<T::Decimal>,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { vamm_id: None, twap: Some(T::Decimal::zero()) }
+			Self { vamm_id: None, price: Some(T::Decimal::one()), twap: Some(T::Decimal::one()) }
 		}
 	}
 
@@ -83,6 +84,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			NextVammId::<T>::set(self.vamm_id);
+			Price::<T>::set(self.price);
 			Twap::<T>::set(self.twap);
 		}
 	}
@@ -142,6 +144,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn _twap_of)]
 	pub type Twaps<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn _next_twap_of)]
+	pub type NextTwaps<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
@@ -233,9 +239,19 @@ pub mod pallet {
 		fn update_twap(
 			vamm_id: Self::VammId,
 			base_twap: Option<Self::Decimal>,
-			quote_twap: Option<Self::Decimal>,
-		) -> Result<(Self::Decimal, Self::Decimal), DispatchError> {
-			unimplemented!()
+		) -> Result<Self::Decimal, DispatchError> {
+			if base_twap.is_some() {
+				panic!("To set twap directly, use the helper functions.");
+			}
+
+			NextTwaps::<T>::mutate_exists(&vamm_id, |n| {
+				Twaps::<T>::mutate_exists(&vamm_id, |t| {
+					*t = *n;
+				});
+				*n = None;
+			});
+
+			Ok(Zero::zero()) // Dummy returns
 		}
 	}
 
@@ -270,6 +286,12 @@ pub mod pallet {
 
 		pub fn set_twap_of(vamm_id: &T::VammId, twap: Option<T::Decimal>) {
 			Twaps::<T>::mutate_exists(vamm_id, |t| {
+				*t = twap;
+			});
+		}
+
+		pub fn set_next_twap_of(vamm_id: &T::VammId, twap: Option<T::Decimal>) {
+			NextTwaps::<T>::mutate_exists(vamm_id, |t| {
 				*t = twap;
 			});
 		}

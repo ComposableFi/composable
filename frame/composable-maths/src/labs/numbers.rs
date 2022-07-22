@@ -26,6 +26,22 @@ where
 //                                             Traits
 // -------------------------------------------------------------------------------------------------
 
+pub trait TryClamp: Ord + Sized {
+	fn try_clamp(self, min: Self, max: Self) -> Result<Self, &'static str> {
+		if min > max {
+			return Err("min must be less than or equal to max")
+		}
+
+		Ok(if self < min {
+			min
+		} else if self > max {
+			max
+		} else {
+			self
+		})
+	}
+}
+
 pub trait UnsignedMath: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + Unsigned {
 	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError>;
 
@@ -57,20 +73,20 @@ pub trait UnsignedMath: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + Unsi
 }
 
 pub trait FixedPointMath: FixedPointNumber {
-	/// Like [`FixedPointNumber::checked_add`], but returning a [`Result`] with [`ArithmeticError`]
+	/// Like [`sp_runtime::traits::CheckedAdd`], but returning a [`Result`] with [`ArithmeticError`]
 	/// in case of failures
 	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError>;
 
-	/// Like [`FixedPointNumber::checked_sub`], but returning a [`Result`] with [`ArithmeticError`]
+	/// Like [`sp_runtime::traits::CheckedSub`], but returning a [`Result`] with [`ArithmeticError`]
 	/// in case of failures
 	fn try_sub(&self, other: &Self) -> Result<Self, ArithmeticError>;
 
-	/// Like [`FixedPointNumber::checked_mul`], but:
+	/// Like [`sp_runtime::traits::CheckedMul`], but:
 	/// - with flooring instead of rounding in the final division by accuracy
 	/// - returning a [`Result`] with [`ArithmeticError`] in case of failures
 	fn try_mul(&self, other: &Self) -> Result<Self, ArithmeticError>;
 
-	/// Like [`FixedPointNumber::checked_div`], but:
+	/// Like [`sp_runtime::traits::CheckedDiv`], but:
 	/// - with flooring instead of rounding of the quotient
 	/// - returning a [`Result`] with [`ArithmeticError`] in case of failures
 	fn try_div(&self, other: &Self) -> Result<Self, ArithmeticError>;
@@ -120,9 +136,15 @@ pub trait IntoSigned<S> {
 	fn into_signed(self) -> Result<S, ArithmeticError>;
 }
 
+pub trait TryReciprocal: FixedPointNumber {
+	fn try_reciprocal(self) -> Result<Self, ArithmeticError>;
+}
+
 // -------------------------------------------------------------------------------------------------
 //                                              Impls
 // -------------------------------------------------------------------------------------------------
+
+impl<T: Ord> TryClamp for T {}
 
 impl<T> UnsignedMath for T
 where
@@ -291,6 +313,12 @@ where
 	}
 }
 
+impl<T: FixedPointNumber> TryReciprocal for T {
+	fn try_reciprocal(self) -> Result<T, ArithmeticError> {
+		self.reciprocal().ok_or(DivisionByZero)
+	}
+}
+
 // -------------------------------------------------------------------------------------------------
 //                                             Helpers
 // -------------------------------------------------------------------------------------------------
@@ -331,7 +359,7 @@ fn from_i129<N: FixedPointOperand>(n: I129) -> Option<N> {
 	}
 }
 
-/// Alterative to [`sp_arithmetic::helpers_128bits::multiply_by_rational`] that does not modify
+/// Alterative to [`sp_arithmetic::helpers_128bit::multiply_by_rational`] that does not modify
 /// the quotient of the last division and uses U256 as a backend if necessary
 pub fn multiply_by_rational(
 	mut a: u128,

@@ -1,8 +1,3 @@
-use super::{
-	any_balance, any_price, run_for_seconds, run_to_time, set_fee_pool_depth,
-	traders_in_one_market_context, with_market_context, with_trading_context, Balance,
-	MarketConfig, Position,
-};
 use crate::{
 	mock::{
 		accounts::{AccountId, ALICE, BOB},
@@ -11,13 +6,20 @@ use crate::{
 			Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
 		},
 	},
-	tests::{get_market_fee_pool, set_oracle_twap},
+	tests::{
+		any_balance, any_price, as_balance, get_market, get_market_fee_pool, run_for_seconds,
+		run_to_time, set_fee_pool_depth, set_maximum_oracle_mark_divergence,
+		set_maximum_twap_divergence, set_oracle_price, set_oracle_twap,
+		traders_in_one_market_context, with_market_context, with_trading_context, Balance, Market,
+		MarketConfig, Position,
+	},
 	Direction, Error, Event,
 };
 use composable_maths::labs::numbers::{FixedPointMath, FromBalance, FromUnsigned, IntoDecimal};
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
 	time::{DurationSeconds, ONE_HOUR},
+	vamm::{AssetType, Vamm},
 };
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
@@ -37,6 +39,41 @@ fn get_position(account: &AccountId, market_id: &MarketId) -> Position {
 // -------------------------------------------------------------------------------------------------
 //                                           Unit tests
 // -------------------------------------------------------------------------------------------------
+
+#[test]
+fn should_update_oracle_and_vamm_twaps() {
+	let config = MarketConfig {
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR,
+		twap_period: ONE_HOUR,
+		..Default::default()
+	};
+
+	// Set oracle price at genesis
+	let ext_builder = ExtBuilder { oracle_price: Some(100) /* 1.0 */, ..Default::default() };
+	with_market_context(ext_builder, config, |market_id| {
+		// Get variables before update (timestamp should be 0)
+		let Market { vamm_id, last_oracle_ts, last_oracle_price, last_oracle_twap, .. } =
+			get_market(&market_id);
+		assert_eq!(last_oracle_ts, 0);
+		assert_eq!(last_oracle_price, 1.into());
+		assert_eq!(last_oracle_twap, 1.into());
+
+		// Run to next available update time
+		run_to_time(ONE_HOUR);
+		set_oracle_price(&market_id, 1.into());
+		VammPallet::set_next_twap_of(&vamm_id, Some(1.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+		let market = get_market(&market_id);
+		// Check that oracle price and twap were updated; in this case the price stayed the same
+		assert_eq!(market.last_oracle_price, 1.into());
+		assert_eq!(market.last_oracle_twap, market.last_oracle_price);
+		assert_eq!(market.last_oracle_ts, ONE_HOUR);
+		// Assert `Vamm::update_twap` was called
+		assert_eq!(VammPallet::get_twap(vamm_id, AssetType::Base).unwrap(), 1.into());
+	});
+}
 
 #[test]
 fn late_update_has_same_weight_as_normal_update() {
@@ -66,7 +103,7 @@ fn late_update_has_same_weight_as_normal_update() {
 		let delta_0 = market_t1.cum_funding_rate(Direction::Long) -
 			market_t0.cum_funding_rate(Direction::Long);
 
-		// Update after prolongued interval (keeping mark-index divergence the same)
+		// Update after prolonged interval (keeping mark-index divergence the same)
 		run_for_seconds(ONE_HOUR * 2);
 		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
 
@@ -128,7 +165,7 @@ fn late_update_may_not_interfere_with_next_update_time() {
 
 	with_market_context(ExtBuilder::default(), config, |market_id| {
 		// Set mark-index price divergence
-		set_oracle_twap(&market_id, 100.into()); // 100 in cents
+		set_oracle_twap(&market_id, 100.into());
 		VammPallet::set_twap(Some(150.into()));
 
 		// HACK: set fee pool depth so as not to worry about capped funding rates
@@ -141,6 +178,75 @@ fn late_update_may_not_interfere_with_next_update_time() {
 		// Successfully update at next usual frequency time
 		run_to_time(ONE_HOUR * 2);
 		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+	});
+}
+
+#[test]
+fn should_block_update_if_mark_index_too_divergent() {
+	let config = MarketConfig {
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR * 24,
+		..Default::default()
+	};
+
+	with_market_context(ExtBuilder::default(), config, |market_id| {
+		// Set max divergence to 10%
+		set_maximum_oracle_mark_divergence((1, 10).into());
+
+		// Set mark-index price divergence
+		set_oracle_twap(&market_id, 100.into());
+		VammPallet::set_twap(Some(111.into()));
+
+		// HACK: set fee pool depth so as not to worry about capped funding rates
+		set_fee_pool_depth(&market_id, Balance::MAX);
+
+		// Set mark more than 10% away from oracle
+		VammPallet::set_price(Some(111.into()));
+
+		// Update after normal interval
+		run_for_seconds(ONE_HOUR);
+		assert_noop!(
+			TestPallet::update_funding(Origin::signed(ALICE), market_id),
+			Error::<Runtime>::OracleMarkTooDivergent
+		);
+	});
+}
+
+#[test]
+fn should_clip_twap_divergence_for_update() {
+	let config = MarketConfig {
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR,
+		..Default::default()
+	};
+	let net_position = as_balance(100);
+
+	with_trading_context(config.clone(), net_position, |market_id| {
+		// Set maximum TWAP divergence for update at 3%
+		set_maximum_twap_divergence((3, 100).into());
+
+		VammPallet::set_price(Some(1.into()));
+
+		// Alice opens a position representing the net one of all traders
+		// 1st TWAP updates here
+		let _ = <TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_id,
+			Direction::Long,
+			net_position,
+			net_position,
+		);
+
+		run_for_seconds(config.funding_frequency);
+		set_oracle_twap(&market_id, 1.into());
+		VammPallet::set_twap(Some(2.into()));
+		// 2nd TWAP updates here
+		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+		// TWAP_diff is clipped from 100% to 3%
+		// funding rate is 3% ( TWAP_diff * freq / period )
+		// payment = rate * net_position
+		assert_eq!(get_market_fee_pool(&market_id), (net_position * 3) / 100);
 	});
 }
 
@@ -269,9 +375,11 @@ proptest! {
 			..Default::default()
 		};
 
-		with_trading_context(config, net_position, |market_id| {
+		with_trading_context(config.clone(), net_position, |market_id| {
 			VammPallet::set_price(Some(1.into()));
+
 			// Alice opens a position representing the net one of all traders
+			// 1st TWAP updates here
 			let _ = <TestPallet as ClearingHouse>::open_position(
 				&ALICE,
 				&market_id,
@@ -280,10 +388,10 @@ proptest! {
 				net_position,
 			);
 
-			let market = TestPallet::get_market(&market_id).unwrap();
-			run_for_seconds(market.funding_frequency);
+			run_for_seconds(config.funding_frequency);
 			set_oracle_twap(&market_id, 1.into());
 			VammPallet::set_twap(Some(2.into()));
+			// 2nd TWAP updates here
 			assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
 
 			// funding rate is 1 ( TWAP_diff * freq / period )
@@ -304,7 +412,9 @@ proptest! {
 
 		with_trading_context(config.clone(), net_position + fee, |market_id| {
 			VammPallet::set_price(Some(1.into()));
+
 			// Alice opens a position representing the net one of all traders
+			// 1st TWAP updates here
 			let _ = <TestPallet as ClearingHouse>::open_position(
 				&ALICE,
 				&market_id,
@@ -313,6 +423,7 @@ proptest! {
 				net_position,
 			);
 
+			// 2st TWAP updates here
 			run_for_seconds(config.funding_frequency);
 			set_oracle_twap(&market_id, (101, 100).into()); // 1.01
 			VammPallet::set_twap(Some(1.into()));
@@ -350,6 +461,7 @@ proptest! {
 				alice_position,
 				alice_position,
 			));
+
 			// Bob opens the smallest position representing the total amount of all short traders
 			assert_ok!(<TestPallet as ClearingHouse>::open_position(
 				&BOB,
@@ -358,13 +470,14 @@ proptest! {
 				bob_position,
 				bob_position,
 			));
+
 			let initial_fee_pool = fees.0 + fees.1;
 			assert_eq!(get_market_fee_pool(&market_id), initial_fee_pool);
 
-			// Time passes and the external market moves in favor of Alice's position
+			// Time passes and the external market is in favor of Alice's position
 			run_for_seconds(config.funding_frequency);
-			set_oracle_twap(&market_id, (105, 100).into()); // 0.95, a 5% move
-			VammPallet::set_twap(Some(1.into())); // On-chain market hasn't changed
+			set_oracle_twap(&market_id, (105, 100).into());
+			VammPallet::set_twap(Some(1.into()));
 			assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
 
 			let market = TestPallet::get_market(&market_id).unwrap();

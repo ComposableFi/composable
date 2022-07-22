@@ -14,7 +14,7 @@ use crate::{
 		vamm::VammConfig,
 	},
 	Direction, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
-	MaxPriceDivergence,
+	MaxPriceDivergence, MaxTwapDivergence,
 };
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
@@ -64,6 +64,7 @@ impl Default for ExtBuilder {
 			oracle_asset_support: Some(true),
 			oracle_price: Some(10_000),
 			oracle_twap: Some(10_000),
+			max_price_divergence: FixedI128::from_inner(i128::MAX),
 		}
 	}
 }
@@ -154,9 +155,21 @@ fn set_maximum_oracle_mark_divergence(fraction: FixedI128) {
 	MaxPriceDivergence::<Runtime>::set(fraction);
 }
 
+fn set_maximum_twap_divergence(fraction: FixedI128) {
+	MaxTwapDivergence::<Runtime>::set(Some(fraction));
+}
+
+fn set_oracle_price(_market_id: &MarketId, price: FixedU128) {
+	// let market = get_market(market_id);
+	OraclePallet::set_price(Some(price.saturating_mul_int(100)));
+}
+
 fn set_oracle_twap(market_id: &MarketId, twap: FixedI128) {
+	// Prepare everything so that even if the TWAP is updated via an EMA, it stays the same
+	OraclePallet::set_price(Some(twap.saturating_mul_int(100)));
 	Markets::<Runtime>::try_mutate(market_id, |m| {
 		if let Some(m) = m {
+			m.last_oracle_price = twap;
 			m.last_oracle_twap = twap;
 			Ok(())
 		} else {
@@ -169,6 +182,45 @@ fn set_oracle_twap(market_id: &MarketId, twap: FixedI128) {
 // ----------------------------------------------------------------------------------------------------
 //                                        Execution Contexts
 // ----------------------------------------------------------------------------------------------------
+
+impl ExtBuilder {
+	fn trading_context<R>(
+		self,
+		config: MarketConfig,
+		margin: Balance,
+		execute: impl FnOnce(MarketId) -> R,
+	) -> R {
+		self.multi_market_and_trader_context(vec![config], vec![(ALICE, margin)], |market_ids| {
+			execute(market_ids[0])
+		})
+	}
+
+	fn multi_market_and_trader_context<R>(
+		self,
+		configs: Vec<MarketConfig>,
+		margins: Vec<(AccountId, Balance)>,
+		execute: impl FnOnce(Vec<MarketId>) -> R,
+	) -> R {
+		let mut ext = self.build();
+
+		ext.execute_with(|| {
+			run_to_time(0);
+			let ids = configs
+				.into_iter()
+				.map(|config| {
+					<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(
+						config,
+					))
+				})
+				.collect::<Vec<_>>();
+			for (account, margin) in margins.into_iter() {
+				AssetsPallet::set_balance(USDC, &account, margin);
+				TestPallet::deposit_collateral(Origin::signed(account), USDC, margin);
+			}
+			execute(ids)
+		})
+	}
+}
 
 fn with_market_context<R>(
 	ext_builder: ExtBuilder,
@@ -221,17 +273,7 @@ fn multi_market_and_trader_context<R>(
 	margins: Vec<(AccountId, Balance)>,
 	execute: impl FnOnce(Vec<MarketId>) -> R,
 ) -> R {
-	let balances: Vec<(AccountId, AssetId, Balance)> =
-		margins.iter().map(|&(a, m)| (a, USDC, m)).collect();
-	let ext_builder = ExtBuilder { balances, ..Default::default() };
-
-	with_markets_context(ext_builder, configs, |market_ids| {
-		for (acc, margin) in margins {
-			TestPallet::deposit_collateral(Origin::signed(acc), USDC, margin);
-		}
-
-		execute(market_ids)
-	})
+	ExtBuilder::default().multi_market_and_trader_context(configs, margins, execute)
 }
 
 // ----------------------------------------------------------------------------------------------------

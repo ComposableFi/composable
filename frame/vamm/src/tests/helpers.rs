@@ -59,15 +59,6 @@ pub fn as_decimal_from_fraction(n: u128, d: u128) -> Decimal {
 //                                    Vamm Specific Helper Functions
 // ----------------------------------------------------------------------------------------------------
 
-pub fn default_vamm_config() -> VammConfig<Balance, Moment> {
-	VammConfig {
-		base_asset_reserves: as_decimal(2).into_inner(),
-		quote_asset_reserves: as_decimal(50).into_inner(),
-		peg_multiplier: 1,
-		twap_period: 3600,
-	}
-}
-
 pub fn create_vamm(vamm_config: &VammConfig<Balance, Moment>) {
 	assert_ok!(TestPallet::create(vamm_config));
 }

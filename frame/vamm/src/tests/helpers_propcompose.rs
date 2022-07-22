@@ -168,7 +168,6 @@ prop_compose! {
 			).unwrap(),
 			twap_timestamp,
 			base_asset_twap: Decimal::from_inner(base_asset_reserves),
-			quote_asset_twap: Decimal::from_inner(quote_asset_reserves),
 			closed,
 			twap_period,
 		}

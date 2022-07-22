@@ -6,7 +6,7 @@ use crate::{
 	tests::{
 		helpers::any_sane_asset_amount,
 		helpers_propcompose::{loop_times, valid_twap_period},
-		Balance, Decimal, Timestamp, RUN_CASES,
+		Balance, Decimal, TestVammConfig, Timestamp, RUN_CASES,
 	},
 };
 use composable_traits::vamm::{Vamm as VammTrait, VammConfig, MINIMUM_TWAP_PERIOD};
@@ -71,6 +71,13 @@ fn should_fail_if_twap_period_is_less_than_minimum() {
 	ExtBuilder::default().build().execute_with(|| {
 		assert_noop!(TestPallet::create(&vamm_state), Error::<MockRuntime>::FundingPeriodTooSmall);
 	})
+}
+
+#[test]
+fn should_succeed_returning_vamm_id() {
+	ExtBuilder::default()
+		.build()
+		.execute_with(|| assert_ok!(TestPallet::create(&TestVammConfig::default().into()), 0));
 }
 
 // -------------------------------------------------------------------------------------------------

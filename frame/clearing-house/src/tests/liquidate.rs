@@ -11,8 +11,8 @@ use crate::{
 		accounts::{ALICE, BOB},
 		assets::USDC,
 		runtime::{
-			Assets as AssetsPallet, Balance, Oracle as OraclePallet, Origin, Runtime,
-			System as SystemPallet, TestPallet, Vamm as VammPallet,
+			Assets as AssetsPallet, Balance, Origin, Runtime, System as SystemPallet, TestPallet,
+			Vamm as VammPallet,
 		},
 	},
 	tests::set_oracle_twap,
@@ -118,6 +118,51 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_pnl() {
 }
 
 #[test]
+fn can_partially_liquidate_if_below_partial_margin_ratio_by_funding() {
+	let config = MarketConfig {
+		funding_frequency: 60,
+		funding_period: 60,
+		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
+		margin_ratio_maintenance: (5, 100).into(), // 5% MMR
+		margin_ratio_partial: (7, 100).into(),     // 7% PMR
+		..Default::default()
+	};
+
+	let margins = vec![(ALICE, as_balance(50)), (BOB, 0)];
+	traders_in_one_market_context(config, margins, |market_id| {
+		set_partial_liquidation_close((25, 100).into());
+		set_partial_liquidation_penalty((25, 1000).into());
+		set_liquidator_share_partial((50, 100).into());
+
+		set_oracle_twap(&market_id, 1.into());
+		VammPallet::set_twap(Some(1.into()));
+
+		// Alice opens a position
+		VammPallet::set_price(Some(1.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_id,
+			Direction::Short,
+			as_balance(100),
+			as_balance(100),
+		));
+
+		run_for_seconds(60);
+		// Time passes and funding rates are updated
+		VammPallet::set_twap(Some(1.into()));
+		// Index price moves against Alice's position
+		set_oracle_twap(&market_id, (144, 100).into());
+		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+		// Alice should now owe 0.44 * 100 = 44 in funding, bringing her account's
+		// margin ratio to slightly below the PMR
+		// - margin requirement = 7
+		// - margin = 50 - 44 = 6
+
+		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
+	});
+}
+
+#[test]
 fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 	let config = MarketConfig {
 		funding_frequency: 60,
@@ -130,6 +175,7 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 
 	let margins = vec![(ALICE, as_balance(50)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
+		set_oracle_twap(&market_id, 1.into());
 		VammPallet::set_price(Some(1.into()));
 
 		// Alice opens a position
@@ -151,13 +197,71 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 		// Time passes and funding rates are updated
 		VammPallet::set_twap(Some(1.into()));
 		// Index price moves against Alice's position
-		OraclePallet::set_twap(Some(143)); // 100 -> 143 cents
+		set_oracle_twap(&market_id, (143, 100).into());
 		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
 		// Alice should now owe 0.43 * 100 = 43 in funding, bringing her account's
-		// margin ratio to exactly the MMR
+		// margin ratio to exactly the PMR
 		// - margin requirement = 7
 		// - margin = 50 - 43 = 7
 
+		assert_noop!(
+			TestPallet::liquidate(Origin::signed(BOB), ALICE),
+			Error::<Runtime>::SufficientCollateral
+		);
+	});
+}
+
+#[test]
+fn cant_liquidate_if_above_partial_margin_ratio_by_funding_2() {
+	let config = MarketConfig {
+		funding_frequency: 60,
+		funding_period: 60,
+		margin_ratio_initial: (10, 100).into(),     // 10x leverage
+		margin_ratio_maintenance: (4, 100).into(),  // 25x leverage
+		margin_ratio_partial: (625, 10_000).into(), // 16x leverage
+		..Default::default()
+	};
+
+	let margins = vec![(ALICE, as_balance(50)), (BOB, 0)];
+	traders_in_one_market_context(config.clone(), margins, |market_id| {
+		set_partial_liquidation_close((25, 100).into());
+		set_partial_liquidation_penalty((25, 1000).into());
+		set_liquidator_share_partial((50, 100).into());
+
+		set_oracle_twap(&market_id, 100.into());
+		VammPallet::set_twap(Some(100.into()));
+
+		// Alice opens a position
+		VammPallet::set_price(Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_id,
+			Direction::Long,
+			as_balance(500),
+			as_balance(5)
+		));
+
+		// Price moves so that Alice's account is below the PMR
+		VammPallet::set_price(Some(95.into()));
+		// 100 -> 95
+		// - margin requirement (partial) = 29.688
+		// - margin requirement (full) = 19
+		// - PnL = 475 - 500 = -25
+		// - margin = 50 - 25 = 25
+
+		// Time passes and funding rates are updated
+		// Index price moves in favor of Alice's position
+		// Alice now has +5 in unrealized funding
+		// funding = -(95 - 96) * 5 = 5
+		// margin = 50 - 25 + 5 = 30
+		run_for_seconds(config.funding_frequency);
+		VammPallet::set_twap(Some(95.into()));
+		set_oracle_twap(&market_id, 96.into());
+		// HACK: pretend the market's Fee Pool has enough funds
+		set_fee_pool_depth(&market_id, as_balance(1_000_000));
+		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+		// Bob cannot liquidate Alice's account because she is above the PMR
 		assert_noop!(
 			TestPallet::liquidate(Origin::signed(BOB), ALICE),
 			Error::<Runtime>::SufficientCollateral
