@@ -319,7 +319,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         </Typography>
       )}
 
-      <Box
+      {/* <Box
         mt={4}
         display="flex"
         justifyContent="center"
@@ -343,7 +343,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             </Tooltip>
           </>
         )}
-      </Box>
+      </Box> */}
 
       <Box mt={4}>
         <Button
