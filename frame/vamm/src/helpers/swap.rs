@@ -23,10 +23,12 @@ impl<T: Config> Pallet<T> {
 	///
 	/// # Errors
 	///
-	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
 	/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
-	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 	/// * [`Error::<T>::FailToRetrieveVamm`]
+	/// * [`Error::<T>::InsufficientFundsForTrade`]
+	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
+	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+	/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
 	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
 	#[transactional]
 	pub fn do_swap(
@@ -66,10 +68,12 @@ impl<T: Config> Pallet<T> {
 	///
 	/// # Errors
 	///
-	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
 	/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
-	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 	/// * [`Error::<T>::FailToRetrieveVamm`]
+	/// * [`Error::<T>::InsufficientFundsForTrade`]
+	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
+	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+	/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
 	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
 	pub fn compute_swap(
 		config: &SwapConfigOf<T>,

@@ -314,51 +314,164 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Tried to set [`base_asset_reserves`](VammState::base_asset_reserves)
 		/// to zero.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::create`]
+		/// * [`Pallet::move_price`]
+		/// * [`Pallet::compute_invariant`]
 		BaseAssetReserveIsZero,
 		/// Tried to set
 		/// [`quote_asset_reserves`](VammState::quote_asset_reserves) to zero.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::create`]
+		/// * [`Pallet::move_price`]
+		/// * [`Pallet::compute_invariant`]
 		QuoteAssetReserveIsZero,
 		/// Computed Invariant is zero.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::create`]
+		/// * [`Pallet::move_price`]
+		/// * [`Pallet::compute_invariant`]
 		InvariantIsZero,
 		/// Tried to set [`peg_multiplier`](VammState) to zero.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::create`]
 		PegMultiplierIsZero,
 		/// Tried to access an invalid [`VammId`](Config::VammId).
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::get_price`]
+		/// * [`Pallet::get_twap`]
+		/// * [`Pallet::update_twap`]
+		/// * [`Pallet::swap`]
+		/// * [`Pallet::swap_simulation`]
+		/// * [`Pallet::move_price`]
+		/// * [`Pallet::get_vamm_state`]
 		VammDoesNotExist,
 		/// Tried to retrieve a Vamm but the function failed.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::get_price`]
+		/// * [`Pallet::get_twap`]
+		/// * [`Pallet::update_twap`]
+		/// * [`Pallet::swap`]
+		/// * [`Pallet::swap_simulation`]
+		/// * [`Pallet::move_price`]
+		/// * [`Pallet::do_swap`]
+		/// * [`Pallet::get_vamm_state`]
 		FailToRetrieveVamm,
 		/// Tried to execute a trade but the Vamm didn't have enough funds to
 		/// fulfill it.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::swap`]
+		/// * [`Pallet::swap_simulation`]
+		/// * [`Pallet::do_swap`]
+		/// * [`Pallet::compute_swap`]
+		/// * [`Pallet::sanity_check_before_swap`]
 		InsufficientFundsForTrade,
 		/// Tried to add some amount of asset to Vamm but it would exceeds the
 		/// supported maximum value.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::swap`]
+		/// * [`Pallet::swap_simulation`]
+		/// * [`Pallet::do_swap`]
+		/// * [`Pallet::compute_swap`]
+		/// * [`Pallet::sanity_check_before_swap`]
 		TradeExtrapolatesMaximumSupportedAmount,
 		/// Tried to perform operation against a closed Vamm.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::get_price`]
+		/// * [`Pallet::get_twap`]
+		/// * [`Pallet::update_twap`]
+		/// * [`Pallet::swap`]
+		/// * [`Pallet::swap_simulation`]
+		/// * [`Pallet::move_price`]
+		/// * [`Pallet::sanity_check_before_swap`]
+		/// * [`Pallet::sanity_check_before_update_twap`]
 		VammIsClosed,
 		/// Tried to swap assets but the amount returned was less than the minimum expected.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::swap`]
+		/// * [`Pallet::swap_simulation`]
+		/// * [`Pallet::do_swap`]
+		/// * [`Pallet::compute_swap`]
+		/// * [`Pallet::sanity_check_after_swap`]
 		SwappedAmountLessThanMinimumLimit,
 		/// Tried to derive invariant from [`base`](VammState::base_asset_reserves) and
 		/// [`quote`](VammState::quote_asset_reserves) asset, but the
 		/// computation was not successful.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::create`]
+		/// * [`Pallet::move_price`]
+		/// * [`Pallet::compute_invariant`]
 		FailedToDeriveInvariantFromBaseAndQuoteAsset,
 		/// Tried to perform swap operation but it would drain all
 		/// [`base`](VammState::base_asset_reserves) asset reserves.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::swap`]
+		/// * [`Pallet::swap_simulation`]
+		/// * [`Pallet::do_swap`]
+		/// * [`Pallet::compute_swap`]
+		/// * [`Pallet::sanity_check_after_swap`]
 		BaseAssetReservesWouldBeCompletelyDrained,
 		/// Tried to perform swap operation but it would drain all
 		/// [`quote`](VammState::quote_asset_reserves) asset reserves.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::swap`]
+		/// * [`Pallet::swap_simulation`]
+		/// * [`Pallet::do_swap`]
+		/// * [`Pallet::compute_swap`]
+		/// * [`Pallet::sanity_check_after_swap`]
 		QuoteAssetReservesWouldBeCompletelyDrained,
 		/// Tried to update twap for an asset, but its last twap update was
 		/// more recent than the current time.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::update_twap`]
+		/// * [`Pallet::do_update_twap`]
+		/// * [`Pallet::sanity_check_before_update_twap`]
 		AssetTwapTimestampIsMoreRecent,
 		/// Tried to update twap for an asset, but the desired new twap value is
 		/// zero.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::update_twap`]
+		/// * [`Pallet::do_update_twap`]
+		/// * [`Pallet::sanity_check_before_update_twap`]
 		NewTwapValueIsZero,
-		/// Tried to update twaps with values that are not reciprocal of one
-		/// another.
-		TwapsMustBeReciprocals,
 		/// Tried to create a vamm with a
 		/// [`twap_period`](VammState::twap_period) smaller than the
 		/// minimum allowed one specified by
 		/// [`MINIMUM_TWAP_PERIOD`](composable_traits::vamm::MINIMUM_TWAP_PERIOD).
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::create`]
 		FundingPeriodTooSmall,
 	}
 
@@ -451,6 +564,7 @@ pub mod pallet {
 		/// * [`Error::<T>::BaseAssetReserveIsZero`]
 		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
 		/// * [`Error::<T>::InvariantIsZero`]
+		/// * [`Error::<T>::PegMultiplierIsZero`]
 		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
 		/// * [`Error::<T>::FundingPeriodTooSmall`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
@@ -537,6 +651,7 @@ pub mod pallet {
 		/// ## Errors
 		/// * [`Error::<T>::VammDoesNotExist`]
 		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`Error::<T>::VammIsClosed`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
 		///
@@ -741,6 +856,9 @@ pub mod pallet {
 		/// * [`Error::<T>::VammIsClosed`]
 		/// * [`Error::<T>::InsufficientFundsForTrade`]
 		/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
+		/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
+		/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
+		/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		/// * [`ArithmeticError::Underflow`](sp_runtime::ArithmeticError)
 		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
@@ -808,7 +926,10 @@ pub mod pallet {
 		/// * [`Error::<T>::FailToRetrieveVamm`]
 		/// * [`Error::<T>::VammIsClosed`]
 		/// * [`Error::<T>::InsufficientFundsForTrade`]
+		/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
+		/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 		/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
+		/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		/// * [`ArithmeticError::Underflow`](sp_runtime::ArithmeticError)
 		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
