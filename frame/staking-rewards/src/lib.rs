@@ -747,63 +747,42 @@ pub mod pallet {
 			reward: Reward<T::AssetId, T::Balance>,
 			now: u64,
 		) -> (T::AssetId, Reward<T::AssetId, T::Balance>) {
-			let elapsed_time = match now.safe_sub(&reward.last_updated_timestamp) {
-				Ok(elapsed_time) => elapsed_time,
+			let new_reward = match now.safe_sub(&reward.last_updated_timestamp) {
+				Ok(elapsed_time) => {
+					// SAFETY(benluelo): RewardRate::period is non-zero.
+					let periods_surpassed = elapsed_time.div(&reward.reward_rate.period);
+
+					if periods_surpassed.is_zero() {
+						reward
+					} else {
+						let new_total_rewards = u128::from(periods_surpassed)
+							.saturating_mul(reward.reward_rate.amount.into());
+
+						let new_total_rewards = if new_total_rewards <= reward.max_rewards.into() {
+							new_total_rewards.into()
+						} else {
+							// saturate at max_rewards, but emit an error first
+							Self::deposit_event(Event::<T>::RewardAccumulationError {
+								pool_id,
+								asset_id,
+							});
+							reward.max_rewards
+						};
+
+						Reward {
+							total_rewards: new_total_rewards,
+							last_updated_timestamp: now,
+							..reward
+						}
+					}
+				},
 				Err(_) => {
 					Self::deposit_event(Event::<T>::RewardAccumulationError { pool_id, asset_id });
-					return (asset_id, reward)
+					reward
 				},
 			};
 
-			// SAFETY(benluelo): RewardRate::period is non-zero.
-			let periods_surpassed = elapsed_time.div(&reward.reward_rate.period);
-
-			if periods_surpassed.is_zero() {
-				(asset_id, reward)
-			} else {
-				// NOTE(benluelo): used this instead of `safe_mul` since
-				// `T::Balance` can't be multiplied by a `u64` and the definition of
-				// `CheckedMul` constrains the `Rhs` type to `Self`, so `T::balance`
-				// can't `.safe_mul(u64)`
-				//
-				// this also allows us to accumulate up to the maximum amount before
-				// erroring, short-circuiting on any error found and returning the last known
-				// "good" value.
-				let new_total_rewards = iter::repeat(reward.reward_rate.amount)
-					// REVIEW(benluelo): this cast is *probably* safe, but
-					// should be verified somehow
-					.take(periods_surpassed as usize)
-					.try_fold(reward.total_rewards, |current_total_amount, reward_amount| {
-						match current_total_amount.safe_add(&reward_amount) {
-							Ok(new_total_amount) if new_total_amount <= reward.max_rewards =>
-								ControlFlow::Continue(new_total_amount),
-							// max rewards hit or overflow
-							// REVIEW(benluelo): Partial rewards accumulation?
-							// i.e. max rewards is 100, amount is 30, period is 1 second; after 4
-							// seconds the total accumulated will be 120, but that's more than
-							// the max amount so it gets reverted to 90.
-							Ok(_) | Err(_) => {
-								Self::deposit_event(Event::<T>::RewardAccumulationError {
-									pool_id,
-									asset_id,
-								});
-								ControlFlow::Break(current_total_amount)
-							},
-						}
-					});
-
-				(
-					asset_id,
-					Reward {
-						total_rewards: match new_total_rewards {
-							ControlFlow::Continue(new_total_rewards) => new_total_rewards,
-							ControlFlow::Break(new_total_rewards) => new_total_rewards,
-						},
-						last_updated_timestamp: now,
-						..reward
-					},
-				)
-			}
+			(asset_id, new_reward)
 		}
 
 		// TODO: tests
@@ -826,7 +805,7 @@ pub mod pallet {
 						// operation was `.map()`. This expect call will be unnecessary once this is
 						// merged and we update to whatever version it's included in:
 						// https://github.com/paritytech/substrate/pull/11869
-						.expect("no elements were added; qed");
+						.expect("no elements were added; qed;");
 
 					(pool_id, RewardPool { rewards: updated_rewards, ..reward_pool })
 				})
