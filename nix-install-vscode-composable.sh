@@ -10,14 +10,20 @@ chmod +x ./nix-install.sh
 # force nix upon user
 echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc
 echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile
+echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile
 chmod +x ~/.nix-profile/etc/profile.d/nix.sh
 ~/.nix-profile/etc/profile.d/nix.sh
+cat ~/.nix-profile/etc/profile.d/nix.sh
 
 ls ~/.nix-profile/bin
+# WTF? why it does not work?
 export PATH="~/.nix-profile/bin:$PATH"
 
-# ensure user is on same binaries we are
-nix-channel --add $2 nixpkgs
-nix-channel --update                
-nix-env --install --attr nixpkgs.cachix
-cachix use composable-community       
+(
+    cd ~/.nix-profile/bin
+    # ensure user is on same binaries we are
+    nix-channel --add $2 nixpkgs
+    nix-channel --update                
+    nix-env --install --attr nixpkgs.cachix
+    cachix use composable-community       
+)
