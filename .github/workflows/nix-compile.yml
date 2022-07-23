@@ -208,8 +208,11 @@ jobs:
             echo "compiling"
             ls
             whoami
-            sudo --user vscode sh
-            whoami            
+            # switching to any user hags the execution,
+            # but neither can run as root
+            cat /etc/passwd
+            # sudo --user vscode sh
+            # whoami            
             # nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs             
             # nix-channel --update
             # nix-env --install --attr nixpkgs.cachix
