@@ -188,6 +188,8 @@ jobs:
                 mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
                 sudo --user vscode sh
                 /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs -c 'nix-env --install --
+                nix-channel --update                
                 #nix-env --install --attr nixpkgs.cachix
                 #cachix use composable-community       
                 #curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
@@ -201,14 +203,14 @@ jobs:
             ls
             whoami
             sudo --user vscode sh
-            # su -c 'nix-env --install --attr nixpkgs.cachix' - vscode
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-            nix-channel --update
-            nix-env --install --attr nixpkgs.cachix
+            # suattr nixpkgs.cachix' - vscode
+            #nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs -c 'nix-env --install --
+            #nix-channel --update
+            #nix-env --install --attr nixpkgs.cachix
             # cachix use composable-community       
-            # whoami                                
-            # cp $(which git) "/artifacts/${artifact_name}"
-            # echo "Produced artifact at /artifacts/${artifact_name}"
+            whoami                                
+            cp $(which git) "/artifacts/${artifact_name}"
+            echo "Produced artifact at /artifacts/${artifact_name}"
             # cd ./nix-crane 
             # echo "pushing cache"
             # cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}            
