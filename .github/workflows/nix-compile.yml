@@ -130,12 +130,13 @@ jobs:
     name: Build on ubuntu20.04 aarch64
 
     steps:
-      # ISSUE: cannot use it as it does some cleaning and fails
       - uses: actions/checkout@v3
         with:
+          # NOTE: this setup to avoid checkout action to fail
+    
           persist-credentials: false
           clean: false
-          # TODO: replace with github parameters (please note that checkout for some reason is fucked up)
+          # TODO: replace with github parameters - very hard to get things working so and propagated into
           path: composable #${{ github.GITHUB_REPOSITORY }}
       - uses: uraimo/run-on-arch-action@v2
         name: Build nix
@@ -145,11 +146,11 @@ jobs:
           distro: ubuntu20.04
           githubToken: ${{ github.token }}
           setup: |
-            mkdir -p "${PWD}/artifacts"
+            mkdir -p "${PWD}/result"
           dockerRunArgs: |
-            --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}/composable:/composable"
+            --volume "${PWD}/result:/result" --volume "${PWD}/composable:/composable"
           env: | 
-            artifact_name: git-ubuntu20.04_aarch64
+            result_name: git-ubuntu20.04_aarch64
 
           shell: /bin/bash
           install: |
@@ -170,14 +171,13 @@ jobs:
 
           run: |
             echo "Run in qemu each build"
-            ls
             ls /composable
-
             echo "Installing actually"
+            chmod +x ./composable/nix-install-vscode-composable.sh
             sudo --user vscode ./composable/nix-install-vscode-composable.sh ${{env.NIX_INSTALL_SCRIPT}} ${{env.NIX_NIXPKGS_CHANNEL}}
             find / -name nix-env        
-            # cp $(which git) "/artifacts/${artifact_name}"
-            # echo "Produced artifact at /artifacts/${artifact_name}"
+            # cp $(which git) "/result/${result_name}"
+            # echo "Produced artifact at /result/${result_name}"
             # cd ./nix-crane 
             # echo "pushing cache"
             # cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}            
@@ -185,7 +185,7 @@ jobs:
 
       - name: Show the artifact
         run: |
-          ls -al "${PWD}/artifacts"
+          ls -al "${PWD}/result"
 
 
 
@@ -225,7 +225,7 @@ jobs:
 
   #         # Pass some environment variables to the container
   #         env: | # YAML, but pipe character is necessary
-  #           artifact_name: git-ubuntu20.04_aarch64
+  #           result_name: git-ubuntu20.04_aarch64
 
   #         # The shell to run commands with in the container
   #         shell: /bin/sh
@@ -275,8 +275,8 @@ jobs:
   #           nix-env --install --attr nixpkgs.cachix
   #           cachix use composable-community       
   #           whoami                                
-  #           cp $(which git) "/artifacts/${artifact_name}"
-  #           echo "Produced artifact at /artifacts/${artifact_name}"
+  #           cp $(which git) "/artifacts/${result_name}"
+  #           echo "Produced artifact at /artifacts/${result_name}"
   #           cd ./nix-crane
   #           nix build .#packages.aarch64-linux.codespace-container
   #           mv ./result /artifacts/aarch64-linux.codespace-container.oci.tar.gz 
