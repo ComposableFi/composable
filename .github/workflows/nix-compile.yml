@@ -221,7 +221,9 @@ jobs:
             whoami            
             sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
             curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
-            curl
+            curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
+            chmod +x ./nix-2.10.3-install.sh
+            sudo --user vscode ./nix-2.10.3-install.sh
             sudo --user vscode curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
             sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
             sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
