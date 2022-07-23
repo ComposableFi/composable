@@ -29,5 +29,6 @@ export PATH="~/.nix-profile/bin:$PATH"
     find / -name cachix
     chmod +x ~/.nix-profile/bin
     ls ~/.nix-profile/bin
-    ./cachix use composable-community       
+    find ~/.nix-profile/bin -exec chmod +x {} \;
+    ~/.nix-profile/bin/cachix use composable-community       
 )
