@@ -144,7 +144,9 @@ jobs:
           dockerRunArgs: |
             --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}/:/git"
           env: | 
-            artifact_name: git-ubuntu20.04_aarch64
+            artifact_name: git-ubuntu20.04_aarch64            
+            GITHUB_SERVER_URL: $GITHUB_SERVER_URL
+            GITHUB_REPOSITORY: $GITHUB_REPOSITORY
 
           shell: /bin/bash
           install: |
@@ -159,7 +161,7 @@ jobs:
                 cd $GITHUB_REPOSITORY
                 git checkout $GITHUB_SHA
                 cd ..
-                
+
                 echo "Making vscode user as nix hates root(see dozen of open issues)"
                 adduser --quiet --gecos "" --disabled-password vscode
                 passwd -d vscode
