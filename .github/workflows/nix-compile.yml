@@ -189,8 +189,8 @@ jobs:
                 sudo --user vscode sh
                 /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-                sudo --user vscode nix-channel --update                
+                #sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+                #sudo --user vscode nix-channel --update                
                 #nix-env --install --attr nixpkgs.cachix
                 #cachix use composable-community       
                 #curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
