@@ -145,8 +145,9 @@ jobs:
             --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}/:/git"
           env: | 
             artifact_name: git-ubuntu20.04_aarch64            
-            GITHUB_SERVER_URL: $GITHUB_SERVER_URL
-            GITHUB_REPOSITORY: $GITHUB_REPOSITORY
+            GITHUB_SERVER_URL: ${{ env.GITHUB_SERVER_URL }}
+            GITHUB_REPOSITORY: ${{ env.GITHUB_REPOSITORY }}
+            GITHUB_SHA: ${{ env.GITHUB_SHA }}
 
           shell: /bin/bash
           install: |
