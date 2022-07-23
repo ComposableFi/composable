@@ -180,8 +180,6 @@ jobs:
                 mkdir -m 0755 /nix && chown vscode /nix
 
                 echo "switching to user "
-                su - vscode
-                whoami
                 sudo --user vscode whoami                                                
                 # su -c 'curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh' - vscode
                 curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
@@ -227,10 +225,18 @@ jobs:
             sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
             sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
             #/home/vscode/.nix-profile/etc/profile.d/nix.sh
-            find / -name nix-channel
+            find / -name nix-env
             #sudo --user vscode nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL}} nixpkgs             
             # nix-channel --update
-            sudo --user vscode nix-env --install --attr nixpkgs.cachix
+            #sudo --user vscode nix-env --install --attr nixpkgs.cachix
+            echo "BEFOREINSIDE"
+            whoami
+            su - vscode
+            echo "INSIDE"
+            whoami
+            exit
+            echo "OUT"
+            whoami
             # cachix use composable-community       
             # cp $(which git) "/artifacts/${artifact_name}"
             # echo "Produced artifact at /artifacts/${artifact_name}"
