@@ -13,6 +13,7 @@ env:
   DOCKER_REPOSITORY_NAME: composablefi
   # weird, next is implicit dependency of docker action
   DOCKER_USER_OPTION: '$UID:$GID' 
+  ACTIONS_RUNNER_DEBUG: true
 
 jobs:
   # common-deps:
@@ -183,9 +184,9 @@ jobs:
                 sudo --user vscode sh
                 su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
                 sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                # sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                # su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
-                # mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+                sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
+                mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
                 # sudo --user vscode sh
                 # /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 # sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
