@@ -155,7 +155,7 @@ jobs:
                 # NOTE: DO NOT USE ( and ) in script as it fails with syntax error
                 echo "Installing inside docker inside qemu so it will be cached"
                 ls
-                apt-get update -q -y
+                apt-get update -q -y # not deterministic
                 apt-get install -q -y curl xz-utils sudo
                 
                 echo "Making vscode user as nix hates root(see dozen of open issues)"
