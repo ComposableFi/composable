@@ -176,10 +176,10 @@ jobs:
             chmod +x ./composable/nix-install-vscode-composable.sh
             sudo --user vscode ./composable/nix-install-vscode-composable.sh ${{env.NIX_INSTALL_SCRIPT}} ${{env.NIX_NIXPKGS_CHANNEL}}
             find / -name nix-env        
-            # cd ./composable/nix-crane 
-            # echo "Pushing cache"
-            # cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}            
-            # cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L             
+            cd ./composable/nix-crane 
+            echo "Pushing cache"
+            sudo --user vscode cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}            
+            sudo --user vscode cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L             
 
       - name: Show the artifact
         run: |
