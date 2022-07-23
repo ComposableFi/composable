@@ -192,10 +192,11 @@ jobs:
                 # sudo --user vscode sh
                 /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-                sudo --user vscode nix-channel --update                
-                # nix-env --install --attr nixpkgs.cachix
-                # cachix use composable-community       
+                # ISSUE: what ever you do, stuff does not gets into ENV
+                # sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+                # sudo --user vscode nix-channel --update                
+                # sudo --user vscode nix-env --install --attr nixpkgs.cachix
+                # sudo --user vscode cachix use composable-community       
                 # curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
                 # NOTE: does not work
                 curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
@@ -204,16 +205,16 @@ jobs:
           # Produce a binary artifact and place it in the mounted volume
           run: |
             echo "compiling"
-            # ls
-            # whoami
-            # sudo --user vscode sh
+            ls
+            whoami
+            sudo --user vscode sh
+            whoami            
             # nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs             
             # nix-channel --update
             # nix-env --install --attr nixpkgs.cachix
             # cachix use composable-community       
-            whoami                                
-            cp $(which git) "/artifacts/${artifact_name}"
-            echo "Produced artifact at /artifacts/${artifact_name}"
+            # cp $(which git) "/artifacts/${artifact_name}"
+            # echo "Produced artifact at /artifacts/${artifact_name}"
             # cd ./nix-crane 
             # echo "pushing cache"
             # cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}            
