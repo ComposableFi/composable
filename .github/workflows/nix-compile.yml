@@ -182,14 +182,12 @@ jobs:
                 su - vscode
                 whoami
                 sudo --user vscode whoami                                                
-                sudo --user vscode sh
                 su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
                 sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
                 mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
                 cat /etc/nix/nix.conf
-                # sudo --user vscode sh
                 /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 whoami
@@ -210,10 +208,10 @@ jobs:
             whoami
             # switching to any user hags the execution,
             # but neither can run as root
+            # cannot sudo into sh as it hangs
             cat /etc/passwd
-            # sudo --user vscode sh
-            # whoami            
-            # nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs             
+            whoami            
+            sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs             
             # nix-channel --update
             # nix-env --install --attr nixpkgs.cachix
             # cachix use composable-community       
