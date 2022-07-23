@@ -135,7 +135,7 @@ jobs:
 
     steps:
       - uses: uraimo/run-on-arch-action@v2
-        name: Build artifact
+        name: Build nix
         id: build
         with:
           arch: ${{ matrix.arch }}
@@ -205,13 +205,13 @@ jobs:
             nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
             nix-channel --update
             nix-env --install --attr nixpkgs.cachix
-            cachix use composable-community       
-            whoami                                
-            cp $(which git) "/artifacts/${artifact_name}"
-            echo "Produced artifact at /artifacts/${artifact_name}"
-            cd ./nix-crane 
-            echo "pushing cache"
-            cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}            
+            # cachix use composable-community       
+            # whoami                                
+            # cp $(which git) "/artifacts/${artifact_name}"
+            # echo "Produced artifact at /artifacts/${artifact_name}"
+            # cd ./nix-crane 
+            # echo "pushing cache"
+            # cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}            
             #cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L
 
       - name: Show the artifact
