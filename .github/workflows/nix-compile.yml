@@ -154,9 +154,7 @@ jobs:
           shell: /bin/bash
           install: |
                 # NOTE: DO NOT USE ( and ) in script as it fails with syntax error
-                echo "Installing inside docker inside qemu so it will be cached"
-                ls
-                ls /composable
+                echo "Installing inside docker inside qemu so it will be cached"                
                 # not deterministic and you cannot make it so until bake your own base, required as because without update there is no stuff
                 apt-get update -q -y 
                 apt-get install -q -y curl xz-utils sudo
