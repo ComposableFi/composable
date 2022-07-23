@@ -188,7 +188,7 @@ jobs:
                 mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
                 sudo --user vscode sh
                 /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs -c 'nix-env --install --
+                nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
                 nix-channel --update                
                 #nix-env --install --attr nixpkgs.cachix
                 #cachix use composable-community       
@@ -204,7 +204,7 @@ jobs:
             whoami
             sudo --user vscode sh
             # suattr nixpkgs.cachix' - vscode
-            #nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs -c 'nix-env --install --
+            #nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs             
             #nix-channel --update
             #nix-env --install --attr nixpkgs.cachix
             # cachix use composable-community       
