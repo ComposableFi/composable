@@ -190,8 +190,8 @@ jobs:
                 mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
                 cat /etc/nix/nix.conf
                 # sudo --user vscode sh
-                # /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                # sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 # sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
                 # sudo --user vscode nix-channel --update                
                 # nix-env --install --attr nixpkgs.cachix
