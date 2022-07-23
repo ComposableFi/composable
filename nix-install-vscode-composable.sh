@@ -20,6 +20,7 @@ ls ~/.nix-profile/bin
 export PATH="~/.nix-profile/bin:$PATH"
 
 (
+    chmod +x ~/.nix-profile/bin
     cd ~/.nix-profile/bin
     # ensure user is on same binaries we are
     ./nix-channel --add $2 nixpkgs
