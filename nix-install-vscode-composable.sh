@@ -13,15 +13,12 @@ echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile
 echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile
 chmod +x ~/.nix-profile/etc/profile.d/nix.sh
 ~/.nix-profile/etc/profile.d/nix.sh
-cat ~/.nix-profile/etc/profile.d/nix.sh
 
-ls ~/.nix-profile/bin
 # WTF? why it does not work?
 export PATH="~/.nix-profile/bin:$PATH"
 
 (
     chmod +x ~/.nix-profile/bin
-    cd ~/.nix-profile/bin
     echo "Ensure user is on same binaries we are"
     
     ./nix-channel --add $2 nixpkgs
@@ -30,9 +27,7 @@ export PATH="~/.nix-profile/bin:$PATH"
 
 
     echo "Cachix"
-    find / -name cachix
     chmod +x ~/.nix-profile/bin
     ls ~/.nix-profile/bin
-    find ~/.nix-profile/bin -exec chmod +x {} \;
     ~/.nix-profile/bin/cachix use composable-community       
 )
