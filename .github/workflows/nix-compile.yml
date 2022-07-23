@@ -130,7 +130,8 @@ jobs:
     name: Build on ubuntu20.04 aarch64
 
     steps:
-      - uses: actions/checkout@v3
+      # cannot use it as it does some cleaning and fails
+      #- uses: actions/checkout@v3
       - uses: uraimo/run-on-arch-action@v2
         name: Build nix
         id: build
