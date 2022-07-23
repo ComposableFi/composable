@@ -169,72 +169,73 @@ jobs:
           # publicly in your project's package repository, so it is vital that
           # no secrets are present in the container state or logs.
           install: |
+                # NOTE: 
+                # DO NOT USE ( and ) in script as it fails with syntax error
+                echo "Installing inside docker inside qemu so it will be cached"
                 ls
-                apt-get update -q -y
-                apt-get install -q -y git curl xz-utils sudo
-                # NOTE: cannot use ( or ) in next line as it wrapped into script and fails to run of syntax
-                echo "getting nix"
-                
+                apt-get install -q -y curl xz-utils sudo
+                echo "Making vscode user as nix hates root(see dozen of open issues)"
                 adduser --quiet --gecos "" --disabled-password vscode
                 passwd -d vscode
                 mkdir -m 0755 /nix && chown vscode /nix
 
-                echo "switching to user "
-                sudo --user vscode whoami                                                
-                # su -c 'curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh' - vscode
-                curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
-                #sudo --user vscode curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh
-                echo "foo bar"
-                whoami
-                #sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                #sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                #su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
-                mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-                cat /etc/nix/nix.conf
-                #/home/vscode/.nix-profile/etc/profile.d/nix.sh
-                #sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                #sudo --user vscode echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bashrc
-                #sudo --user vscode echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.profile
-                whoami
-                # ISSUE: what ever you do, stuff does not gets into ENV
-                # sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-                # sudo --user vscode nix-channel --update                
-                # sudo --user vscode nix-env --install --attr nixpkgs.cachix
-                # sudo --user vscode cachix use composable-community       
-                # curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh
-                # NOTE: does not work
-                curl --location ${{env.NIX_INSTALL_SCRIPT}} > nix-2.10.3-install.sh
-                chmod +x ./nix-2.10.3-install.sh
-                # sh nix-2.10.3-install.sh --daemon                
+                #apt-get install -q -y git curl xz-utils sudo
+                # echo "switching to user "
+                # sudo --user vscode whoami                                                
+                # # su -c 'curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh' - vscode
+                # curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
+                # #sudo --user vscode curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh
+                # echo "foo bar"
+                # whoami
+                # #sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                # #sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                # #su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
+                # mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+                # cat /etc/nix/nix.conf
+                # #/home/vscode/.nix-profile/etc/profile.d/nix.sh
+                # #sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                # #sudo --user vscode echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bashrc
+                # #sudo --user vscode echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.profile
+                # whoami
+                # # ISSUE: what ever you do, stuff does not gets into ENV
+                # # sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+                # # sudo --user vscode nix-channel --update                
+                # # sudo --user vscode nix-env --install --attr nixpkgs.cachix
+                # # sudo --user vscode cachix use composable-community       
+                # # curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh
+                # # NOTE: does not work
+                # curl --location ${{env.NIX_INSTALL_SCRIPT}} > nix-2.10.3-install.sh
+                # chmod +x ./nix-2.10.3-install.sh
+                # # sh nix-2.10.3-install.sh --daemon                
 
           # Produce a binary artifact and place it in the mounted volume
           run: |
-            echo "compiling"
+            echo "Run in qemu each build"
             ls
-            whoami
-            # switching to any user hags the execution,
-            # but neither can run as root
-            # cannot sudo into sh as it hangs
-            cat /etc/passwd
-            whoami            
-            curl --location ${{env.NIX_INSTALL_SCRIPT}} > nix-2.10.3-install.sh
-            chmod +x ./nix-2.10.3-install.sh
-            sudo --user vscode ./nix-2.10.3-install.sh
-            sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
-            sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-            /home/vscode/.nix-profile/etc/profile.d/nix.sh
-            find / -name nix-env
-            #sudo --user vscode nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL}} nixpkgs             
-            # nix-channel --update
-            #sudo --user vscode nix-env --install --attr nixpkgs.cachix
-            echo "BEFOREINSIDE"
-            whoami
-            su - vscode
-            echo "INSIDE"
-            whoami
-            exit
-            echo "OUT"
-            whoami
+            # whoami
+            # # switching to any user hags the execution,
+            # # but neither can run as root
+            # # cannot sudo into sh as it hangs
+            # cat /etc/passwd
+            # whoami            
+            # curl --location ${{env.NIX_INSTALL_SCRIPT}} > nix-2.10.3-install.sh
+            # chmod +x ./nix-2.10.3-install.sh
+            # sudo --user vscode ./nix-2.10.3-install.sh
+            # sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
+            # sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+            # /home/vscode/.nix-profile/etc/profile.d/nix.sh
+            # find / -name nix-env
+            # #sudo --user vscode nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL}} nixpkgs             
+            # # nix-channel --update
+            # #sudo --user vscode nix-env --install --attr nixpkgs.cachix
+            # echo "BEFOREINSIDE"
+            # whoami
+            # su vscode
+            # echo "INSIDE"
+            # whoami
+            # exit
+            # echo "OUT"
+            # whoami
             # cachix use composable-community       
             # cp $(which git) "/artifacts/${artifact_name}"
             # echo "Produced artifact at /artifacts/${artifact_name}"
