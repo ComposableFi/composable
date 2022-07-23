@@ -15,6 +15,7 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID' 
   ACTIONS_RUNNER_DEBUG: true
   ACTIONS_STEP_DEBUG: true
+  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
 
 jobs:
   # common-deps:
@@ -183,7 +184,10 @@ jobs:
                 whoami
                 sudo --user vscode whoami                                                
                 # su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
-                sudo --user vscode curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+                curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode NIX_INSTALLER_NO_MODIFY_PROFILE=1 sh
+                #sudo --user vscode curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+                echo "foo bar"
+                whoami
                 sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
