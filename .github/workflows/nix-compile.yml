@@ -217,11 +217,9 @@ jobs:
             # cannot sudo into sh as it hangs
             cat /etc/passwd
             whoami            
-            curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
             curl --location ${{env.NIX_INSTALL_SCRIPT}} > nix-2.10.3-install.sh
             chmod +x ./nix-2.10.3-install.sh
             sudo --user vscode ./nix-2.10.3-install.sh
-            sudo --user vscode curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
             sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
             sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
             #/home/vscode/.nix-profile/etc/profile.d/nix.sh
