@@ -188,15 +188,15 @@ jobs:
                 #sudo --user vscode curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh
                 echo "foo bar"
                 whoami
-                sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
+                #sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                #sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                #su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
                 mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
                 cat /etc/nix/nix.conf
-                /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                sudo --user vscode echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bashrc
-                sudo --user vscode echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.profile
+                #/home/vscode/.nix-profile/etc/profile.d/nix.sh
+                #sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                #sudo --user vscode echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bashrc
+                #sudo --user vscode echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.profile
                 whoami
                 # ISSUE: what ever you do, stuff does not gets into ENV
                 # sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
@@ -219,7 +219,6 @@ jobs:
             # cannot sudo into sh as it hangs
             cat /etc/passwd
             whoami            
-            sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
             curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
             curl --location ${{env.NIX_INSTALL_SCRIPT}} > nix-2.10.3-install.sh
             chmod +x ./nix-2.10.3-install.sh
@@ -227,9 +226,8 @@ jobs:
             sudo --user vscode curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
             sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
             sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-            /home/vscode/.nix-profile/etc/profile.d/nix.sh
+            #/home/vscode/.nix-profile/etc/profile.d/nix.sh
             find / -name nix-channel
-            find / -name nix-env
             #sudo --user vscode nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL}} nixpkgs             
             # nix-channel --update
             nix-env --install --attr nixpkgs.cachix
