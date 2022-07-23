@@ -152,7 +152,8 @@ jobs:
                 # NOTE: DO NOT USE ( and ) in script as it fails with syntax error
                 echo "Installing inside docker inside qemu so it will be cached"
                 ls
-                apt-get update -q -y # not deterministic and you cannot make it so until bake your own base
+                # not deterministic and you cannot make it so until bake your own base, required as because without update there is no stuff
+                apt-get update -q -y 
                 apt-get install -q -y curl xz-utils sudo git
 
                 echo "Making vscode user as nix hates root(see dozen of open issues)"
@@ -168,14 +169,15 @@ jobs:
             echo "Run in qemu each build"
             ls
             ls /git
-            # TODO: replace with git clone (please note that checkout for some reason is fucked up)
+
+            # TODO: replace with github parameters (please note that checkout for some reason is fucked up)
             git clone https://github.com/ComposableFi/composable.git
             cd composable
             git checkout nix/dz/devc
             cd 
 
             echo "Installing actually"
-            sudo --user vscode ./nix-install-vscode-composable.sh ${{env.NIX_INSTALL_SCRIPT}} ${{env.NIX_NIXPKGS_CHANNEL}}
+            sudo --user vscode ./composable/nix-install-vscode-composable.sh ${{env.NIX_INSTALL_SCRIPT}} ${{env.NIX_NIXPKGS_CHANNEL}}
             find / -name nix-env        
             # cp $(which git) "/artifacts/${artifact_name}"
             # echo "Produced artifact at /artifacts/${artifact_name}"
