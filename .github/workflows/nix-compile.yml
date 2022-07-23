@@ -14,6 +14,7 @@ env:
   # weird, next is implicit dependency of docker action
   DOCKER_USER_OPTION: '$UID:$GID' 
   ACTIONS_RUNNER_DEBUG: true
+  ACTIONS_STEP_DEBUG: true
 
 jobs:
   # common-deps:
@@ -188,9 +189,9 @@ jobs:
                 su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
                 mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
                 cat /etc/nix/nix.conf
-                # sudo --user vscode sh
-                # /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                # sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                sudo --user vscode sh
+                /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 # sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
                 # sudo --user vscode nix-channel --update                
                 # nix-env --install --attr nixpkgs.cachix
@@ -203,15 +204,14 @@ jobs:
           # Produce a binary artifact and place it in the mounted volume
           run: |
             echo "compiling"
-            # ls
-            # whoami
-            # sudo --user vscode sh
-            # suattr nixpkgs.cachix' - vscode
+            ls
+            whoami
+            sudo --user vscode sh
+            whoami                                
             # nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs             
             # nix-channel --update
             # nix-env --install --attr nixpkgs.cachix
             # cachix use composable-community       
-            whoami                                
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
             # cd ./nix-crane 
