@@ -184,7 +184,7 @@ jobs:
                 whoami
                 sudo --user vscode whoami                                                
                 # su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
-                curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode NIX_INSTALLER_NO_MODIFY_PROFILE=1 sh
+                curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
                 #sudo --user vscode curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
                 echo "foo bar"
                 whoami
@@ -221,7 +221,12 @@ jobs:
             sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
             find / -name nix-channel
             find / -name nix-env
-            sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs             
+            curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
+            sudo --user vscode curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+            sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
+            sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+            /home/vscode/.nix-profile/etc/profile.d/nix.sh
+            #sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs             
             # nix-channel --update
             # nix-env --install --attr nixpkgs.cachix
             # cachix use composable-community       
