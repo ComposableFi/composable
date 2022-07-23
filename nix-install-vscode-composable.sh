@@ -22,10 +22,14 @@ export PATH="~/.nix-profile/bin:$PATH"
 (
     chmod +x ~/.nix-profile/bin
     cd ~/.nix-profile/bin
-    # ensure user is on same binaries we are
+    echo "Ensure user is on same binaries we are"
+    
     ./nix-channel --add $2 nixpkgs
     ./nix-channel --update                
     ./nix-env --install --attr nixpkgs.cachix
+
+
+    echo "Cachix"
     find / -name cachix
     chmod +x ~/.nix-profile/bin
     ls ~/.nix-profile/bin
