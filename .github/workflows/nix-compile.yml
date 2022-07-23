@@ -130,8 +130,9 @@ jobs:
     name: Build on ubuntu20.04 aarch64
 
     steps:
-      # cannot use it as it does some cleaning and fails
+      # ISSUE: cannot use it as it does some cleaning and fails
       #- uses: actions/checkout@v3
+      #- uses: actions/checkout@v2.1
       - uses: uraimo/run-on-arch-action@v2
         name: Build nix
         id: build
@@ -144,24 +145,15 @@ jobs:
           dockerRunArgs: |
             --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}/:/git"
           env: | 
-            artifact_name: git-ubuntu20.04_aarch64            
-            GITHUB_SERVER_URL: ${{ github.GITHUB_SERVER_URL }}
-            GITHUB_REPOSITORY: ${{ github.GITHUB_REPOSITORY }}
-            GITHUB_SHA: ${{ github.GITHUB_SHA }}
+            artifact_name: git-ubuntu20.04_aarch64
 
           shell: /bin/bash
           install: |
                 # NOTE: DO NOT USE ( and ) in script as it fails with syntax error
                 echo "Installing inside docker inside qemu so it will be cached"
                 ls
-                apt-get update -q -y # not deterministic
+                apt-get update -q -y # not deterministic and you cannot make it so until bake your own base
                 apt-get install -q -y curl xz-utils sudo git
-
-                echo $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/
-                git clone $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/
-                cd $GITHUB_REPOSITORY
-                git checkout $GITHUB_SHA
-                cd ..
 
                 echo "Making vscode user as nix hates root(see dozen of open issues)"
                 adduser --quiet --gecos "" --disabled-password vscode
@@ -176,6 +168,12 @@ jobs:
             echo "Run in qemu each build"
             ls
             ls /git
+            # TODO: replace with git clone (please note that checkout for some reason is fucked up)
+            git clone https://github.com/ComposableFi/composable.git
+            cd composable
+            git checkout nix/dz/devc
+            cd 
+
             echo "Installing actually"
             sudo --user vscode ./nix-install-vscode-composable.sh ${{env.NIX_INSTALL_SCRIPT}} ${{env.NIX_NIXPKGS_CHANNEL}}
             find / -name nix-env        
