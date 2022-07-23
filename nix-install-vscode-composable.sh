@@ -12,6 +12,7 @@ chmod +x ~/.nix-profile/bin
 echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc
 echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile
 echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile
+echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_login
 chmod +x ~/.nix-profile/etc/profile.d/nix.sh
 ~/.nix-profile/etc/profile.d/nix.sh
 
