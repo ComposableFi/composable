@@ -6,6 +6,7 @@ echo "Installin via $1 and using $2"
 curl --location $1 > ./nix-install.sh
 chmod +x ./nix-install.sh 
 ./nix-install.sh
+chmod +x ~/.nix-profile/bin
 
 # force nix upon user
 echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc
@@ -17,17 +18,15 @@ chmod +x ~/.nix-profile/etc/profile.d/nix.sh
 # WTF? why it does not work?
 export PATH="~/.nix-profile/bin:$PATH"
 
-(
-    chmod +x ~/.nix-profile/bin
-    echo "Ensure user is on same binaries we are"
-    
-    ./nix-channel --add $2 nixpkgs
-    ./nix-channel --update                
-    ./nix-env --install --attr nixpkgs.cachix
+
+echo "Ensure user is on same binaries we are"
+
+nix-channel --add $2 nixpkgs
+nix-channel --update                
+nix-env --install --attr nixpkgs.cachix
 
 
-    echo "Cachix"
-    chmod +x ~/.nix-profile/bin
-    ls ~/.nix-profile/bin
-    ~/.nix-profile/bin/cachix use composable-community       
-)
+echo "Cachix"
+chmod +x ~/.nix-profile/bin
+ls ~/.nix-profile/bin
+cachix use composable-community       
