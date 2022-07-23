@@ -2,8 +2,7 @@
  * Helper functions to handle the oracle setup.
  */
 import { ApiPromise, Keyring } from "@polkadot/api";
-import { getNewConnection } from "@composable/utils/src/connectionHelper";
-import { sendAndWaitForSuccess } from "@composable/utils/src/polkadotjs";
+import { getNewConnection, sendAndWaitForSuccess } from "@composable/utils";
 import { Bytes, Text, u128, u32 } from "@polkadot/types-codec";
 import { AnyNumber, AnyString } from "@polkadot/types-codec/types";
 import { AccountId32, Percent } from "@polkadot/types/interfaces";
