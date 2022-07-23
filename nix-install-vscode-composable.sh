@@ -28,6 +28,6 @@ export PATH="~/.nix-profile/bin:$PATH"
     ./nix-env --install --attr nixpkgs.cachix
     find / -name cachix
     chmod +x ~/.nix-profile/bin
-ls ~/.nix-profile/bin
-    cachix use composable-community       
+    ls ~/.nix-profile/bin
+    ./cachix use composable-community       
 )
