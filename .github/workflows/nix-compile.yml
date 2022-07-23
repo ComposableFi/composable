@@ -15,7 +15,7 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID' 
   ACTIONS_RUNNER_DEBUG: true
   ACTIONS_STEP_DEBUG: true
-  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
+  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install  
 
 jobs:
   # common-deps:
@@ -152,7 +152,13 @@ jobs:
                 echo "Installing inside docker inside qemu so it will be cached"
                 ls
                 apt-get update -q -y # not deterministic
-                apt-get install -q -y curl xz-utils sudo
+                apt-get install -q -y curl xz-utils sudo git
+
+                echo $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/
+                git clone $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/
+                cd $GITHUB_REPOSITORY
+                git checkout $GITHUB_SHA
+                cd ..
                 
                 echo "Making vscode user as nix hates root(see dozen of open issues)"
                 adduser --quiet --gecos "" --disabled-password vscode
