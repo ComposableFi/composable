@@ -187,6 +187,7 @@ jobs:
                 sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
                 mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+                cat /etc/nix/nix.conf
                 # sudo --user vscode sh
                 # /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 # sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
