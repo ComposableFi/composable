@@ -178,9 +178,7 @@ jobs:
             find / -name nix-env        
             cd ./composable/nix-crane 
             echo "Pushing cache"
-            PATH="/home/vscode/.nix-profile/bin:$PATH" sudo --user vscode \                
-                cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }} \
-                && cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L               
+            sudo --user vscode env PATH="/home/vscode/.nix-profile/bin:$PATH" cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }} && cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L               
 
       - name: Show the artifact
         run: |
