@@ -127,28 +127,23 @@ jobs:
       - linux
       - x64
       - sre
-    name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
-
-    strategy:
-      matrix:
-        include:
-          - arch: aarch64
-            distro: ubuntu20.04
+    name: Build on ubuntu20.04 aarch64
 
     steps:
+      - uses: actions/checkout@v3
       - uses: uraimo/run-on-arch-action@v2
         name: Build nix
         id: build
         with:
-          arch: ${{ matrix.arch }}
-          distro: ${{ matrix.distro }}
+          arch: aarch64
+          distro: ubuntu20.04
           githubToken: ${{ github.token }}
           setup: |
             mkdir -p "${PWD}/artifacts"
           dockerRunArgs: |
-            --volume "${PWD}/artifacts:/artifacts"
+            --volume "${PWD}/artifacts:/artifacts" --volume "${PWD}/:/git"
           env: | 
-            artifact_name: git-${{ matrix.distro }}_${{ matrix.arch }}
+            artifact_name: git-ubuntu20.04_aarch64
 
           shell: /bin/bash
           install: |
@@ -170,6 +165,7 @@ jobs:
           run: |
             echo "Run in qemu each build"
             ls
+            ls /git
             echo "Installing actually"
             sudo --user vscode ./nix-install-vscode-composable.sh ${{env.NIX_INSTALL_SCRIPT}} ${{env.NIX_NIXPKGS_CHANNEL}}
             find / -name nix-env        
@@ -192,7 +188,7 @@ jobs:
   #     - linux
   #     - x64
   #     - sre
-  #   name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
+  #   name: Build on ${{ matrix.distro }} aarch64
 
   #   # Run steps on a matrix of 3 arch/distro combinations
   #   strategy:
@@ -206,7 +202,7 @@ jobs:
   #       name: Build artifact
   #       id: build
   #       with:
-  #         arch: ${{ matrix.arch }}
+  #         arch: aarch64
   #         distro: ${{ matrix.distro }}
 
   #         # Not required, but speeds up builds
@@ -222,7 +218,7 @@ jobs:
 
   #         # Pass some environment variables to the container
   #         env: | # YAML, but pipe character is necessary
-  #           artifact_name: git-${{ matrix.distro }}_${{ matrix.arch }}
+  #           artifact_name: git-ubuntu20.04_aarch64
 
   #         # The shell to run commands with in the container
   #         shell: /bin/sh
