@@ -112,7 +112,6 @@
           };
         };
 
-        # Common env required to build the node
         common-args = {
           inherit src;
           buildInputs = [ openssl zstd (docker.override(args: { buildxSupport = true; }))];
@@ -363,6 +362,7 @@
           debug-derivation = stdenv.mkDerivation {
                  name = "debug-derivation";
                  phases = [ "installPhase" ];
+                 buildInputs = [ pkgs.openssl pkgs.jq ];
                  installPhase = ''
                     mkdir --parents $out/bin
                     echo 'echo ${system}' > $out/bin/debug.sh
