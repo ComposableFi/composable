@@ -185,7 +185,7 @@ jobs:
                 sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
-                echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+                mkdir /etc/nix && --parents echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
                 sudo --user vscode sh
                 /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 #nix-env --install --attr nixpkgs.cachix
@@ -210,6 +210,9 @@ jobs:
             cp $(which git) "/artifacts/${artifact_name}"
             echo "Produced artifact at /artifacts/${artifact_name}"
             cd ./nix-crane 
+            echo "pushing cache"
+            cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
+            cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps -L
 
       - name: Show the artifact
         # Items placed in /artifacts in the container will be in
