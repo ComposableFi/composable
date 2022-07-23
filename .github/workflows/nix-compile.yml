@@ -176,7 +176,7 @@ jobs:
                 passwd -d vscode
                 mkdir -m 0755 /nix && chown vscode /nix
 
-                echo "switching to user"
+                echo "switching to user "
                 su - vscode
                 whoami
                 sudo --user vscode sh
@@ -185,7 +185,7 @@ jobs:
                 sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
-                mkdir /etc/nix && --parents echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+                mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
                 sudo --user vscode sh
                 /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 #nix-env --install --attr nixpkgs.cachix
