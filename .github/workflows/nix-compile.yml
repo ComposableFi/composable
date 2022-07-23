@@ -222,7 +222,7 @@ jobs:
             sudo --user vscode ./nix-2.10.3-install.sh
             sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
             sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-            #/home/vscode/.nix-profile/etc/profile.d/nix.sh
+            /home/vscode/.nix-profile/etc/profile.d/nix.sh
             find / -name nix-env
             #sudo --user vscode nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL}} nixpkgs             
             # nix-channel --update
