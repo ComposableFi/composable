@@ -15,8 +15,10 @@ echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile
 chmod +x ~/.nix-profile/etc/profile.d/nix.sh
 ~/.nix-profile/etc/profile.d/nix.sh
 
+chmod +x ~/.nix-profile/bin/nix-channel
+chmod +x ~/.nix-profile/bin/nix-env
 # WTF? why it does not work?
-export PATH="~/.nix-profile/bin:$PATH"
+export PATH="/home/vscode/.nix-profile/bin:$PATH"
 
 
 echo "Ensure user is on same binaries we are"
@@ -24,7 +26,7 @@ echo "Ensure user is on same binaries we are"
 nix-channel --add $2 nixpkgs
 nix-channel --update                
 nix-env --install --attr nixpkgs.cachix
-
+chmod +x ~/.nix-profile/bin/cachix
 
 echo "Cachix"
 chmod +x ~/.nix-profile/bin
