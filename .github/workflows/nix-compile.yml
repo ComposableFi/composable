@@ -181,19 +181,19 @@ jobs:
                 whoami
                 sudo --user vscode sh
                 whoami                                
-                su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
-                sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
-                mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-                sudo --user vscode sh
-                /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
-                #sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-                #sudo --user vscode nix-channel --update                
-                #nix-env --install --attr nixpkgs.cachix
-                #cachix use composable-community       
-                #curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+                # su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
+                # sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                # sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                # su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
+                # mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+                # sudo --user vscode sh
+                # /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                # sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
+                # sudo --user vscode nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+                # sudo --user vscode nix-channel --update                
+                # nix-env --install --attr nixpkgs.cachix
+                # cachix use composable-community       
+                # curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
                 # NOTE: does not work
                 # curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
                 # sh nix-2.10.3-install.sh --daemon                
@@ -201,13 +201,13 @@ jobs:
           # Produce a binary artifact and place it in the mounted volume
           run: |
             echo "compiling"
-            ls
-            whoami
-            sudo --user vscode sh
+            # ls
+            # whoami
+            # sudo --user vscode sh
             # suattr nixpkgs.cachix' - vscode
-            #nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs             
-            #nix-channel --update
-            #nix-env --install --attr nixpkgs.cachix
+            # nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs             
+            # nix-channel --update
+            # nix-env --install --attr nixpkgs.cachix
             # cachix use composable-community       
             whoami                                
             cp $(which git) "/artifacts/${artifact_name}"
@@ -215,7 +215,7 @@ jobs:
             # cd ./nix-crane 
             # echo "pushing cache"
             # cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}            
-            #cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L
+            # cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L
 
       - name: Show the artifact
         # Items placed in /artifacts in the container will be in
