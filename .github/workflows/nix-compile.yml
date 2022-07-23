@@ -182,7 +182,8 @@ jobs:
                 su - vscode
                 whoami
                 sudo --user vscode whoami                                                
-                su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
+                # su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
+                sudo --user vscode curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
                 sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
                 su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
