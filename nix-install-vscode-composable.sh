@@ -22,8 +22,9 @@ export PATH="~/.nix-profile/bin:$PATH"
 (
     cd ~/.nix-profile/bin
     # ensure user is on same binaries we are
-    nix-channel --add $2 nixpkgs
-    nix-channel --update                
-    nix-env --install --attr nixpkgs.cachix
+    ./nix-channel --add $2 nixpkgs
+    ./nix-channel --update                
+    ./nix-env --install --attr nixpkgs.cachix
+    find / -name cachix
     cachix use composable-community       
 )
