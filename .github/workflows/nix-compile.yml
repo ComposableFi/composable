@@ -166,12 +166,12 @@ jobs:
                 mkdir -m 0755 /nix && chown vscode /nix
                 mkdir --parents /etc/nix && echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
 
-                echo "Installing actually"
-                sudo --user vscode ./nix-install-vscode-composable.sh ${{env.NIX_INSTALL_SCRIPT}} ${{env.NIX_NIXPKGS_CHANNEL}}
 
           run: |
             echo "Run in qemu each build"
             ls
+            echo "Installing actually"
+            sudo --user vscode ./nix-install-vscode-composable.sh ${{env.NIX_INSTALL_SCRIPT}} ${{env.NIX_NIXPKGS_CHANNEL}}
             find / -name nix-env        
             # cp $(which git) "/artifacts/${artifact_name}"
             # echo "Produced artifact at /artifacts/${artifact_name}"
