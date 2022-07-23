@@ -15,7 +15,7 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID' 
   ACTIONS_RUNNER_DEBUG: true
   ACTIONS_STEP_DEBUG: true
-  NIX_INSTALL_SCRIPT: https://releases1.nixos.org/nix/nix-2.10.3/install
+  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
 
 jobs:
   # common-deps:
