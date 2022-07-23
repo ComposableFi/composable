@@ -15,7 +15,7 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID' 
   ACTIONS_RUNNER_DEBUG: true
   ACTIONS_STEP_DEBUG: true
-  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
+  NIX_INSTALL_SCRIPT: https://releases1.nixos.org/nix/nix-2.10.3/install
 
 jobs:
   # common-deps:
@@ -183,9 +183,9 @@ jobs:
                 su - vscode
                 whoami
                 sudo --user vscode whoami                                                
-                # su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
+                # su -c 'curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh' - vscode
                 curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
-                #sudo --user vscode curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+                #sudo --user vscode curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh
                 echo "foo bar"
                 whoami
                 sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
@@ -203,9 +203,9 @@ jobs:
                 # sudo --user vscode nix-channel --update                
                 # sudo --user vscode nix-env --install --attr nixpkgs.cachix
                 # sudo --user vscode cachix use composable-community       
-                # curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+                # curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh
                 # NOTE: does not work
-                curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
+                curl --location ${{env.NIX_INSTALL_SCRIPT}} > nix-2.10.3-install.sh
                 chmod +x ./nix-2.10.3-install.sh
                 # sh nix-2.10.3-install.sh --daemon                
 
@@ -221,10 +221,10 @@ jobs:
             whoami            
             sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
             curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
-            curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
+            curl --location ${{env.NIX_INSTALL_SCRIPT}} > nix-2.10.3-install.sh
             chmod +x ./nix-2.10.3-install.sh
             sudo --user vscode ./nix-2.10.3-install.sh
-            sudo --user vscode curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+            sudo --user vscode curl --location ${{env.NIX_INSTALL_SCRIPT}} | sudo --user vscode sh
             sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
             sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
             /home/vscode/.nix-profile/etc/profile.d/nix.sh
@@ -312,7 +312,7 @@ jobs:
   #               whoami
   #               sudo --user vscode sh
   #               whoami                                
-  #               su -c 'curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh' - vscode
+  #               su -c 'curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh' - vscode
   #               sudo chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
   #               sudo --user vscode /home/vscode/.nix-profile/etc/profile.d/nix.sh
   #               su -c '/home/vscode/.nix-profile/etc/profile.d/nix.sh' - vscode
@@ -320,9 +320,9 @@ jobs:
   #               /home/vscode/.nix-profile/etc/profile.d/nix.sh
   #               #nix-env --install --attr nixpkgs.cachix
   #               #cachix use composable-community       
-  #               #curl --location https://releases.nixos.org/nix/nix-2.10.3/install | sh
+  #               #curl --location ${{env.NIX_INSTALL_SCRIPT}} | sh
   #               # NOTE: does not work
-  #               # curl --location https://releases.nixos.org/nix/nix-2.10.3/install > nix-2.10.3-install.sh
+  #               # curl --location ${{env.NIX_INSTALL_SCRIPT}} > nix-2.10.3-install.sh
   #               # sh nix-2.10.3-install.sh --daemon                
 
   #         # Produce a binary artifact and place it in the mounted volume
