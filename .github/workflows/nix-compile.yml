@@ -129,7 +129,6 @@ jobs:
       - sre
     name: Build on ${{ matrix.distro }} ${{ matrix.arch }}
 
-    # Run steps on a matrix of 3 arch/distro combinations
     strategy:
       matrix:
         include:
@@ -143,35 +142,20 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
           distro: ${{ matrix.distro }}
-
-          # Not required, but speeds up builds
           githubToken: ${{ github.token }}
-
-          # Create an artifacts directory
           setup: |
             mkdir -p "${PWD}/artifacts"
-
-          # Mount the artifacts directory as /artifacts in the container
           dockerRunArgs: |
             --volume "${PWD}/artifacts:/artifacts"
-
-          # Pass some environment variables to the container
-          env: | # YAML, but pipe character is necessary
+          env: | 
             artifact_name: git-${{ matrix.distro }}_${{ matrix.arch }}
 
-          # The shell to run commands with in the container
           shell: /bin/bash
-
-          # Install some dependencies in the container. This speeds up builds if
-          # you are also using githubToken. Any dependencies installed here will
-          # be part of the container image that gets cached, so subsequent
-          # builds don't have to re-install them. The image layer is cached
-          # publicly in your project's package repository, so it is vital that
-          # no secrets are present in the container state or logs.
           install: |
                 # NOTE: DO NOT USE ( and ) in script as it fails with syntax error
                 echo "Installing inside docker inside qemu so it will be cached"
                 ls
+                apt-get update -q -y
                 apt-get install -q -y curl xz-utils sudo
                 
                 echo "Making vscode user as nix hates root(see dozen of open issues)"
@@ -185,7 +169,6 @@ jobs:
                 echo "Installing actually"
                 sudo --user vscode ./nix-install-vscode-composable.sh ${{env.NIX_INSTALL_SCRIPT}} ${{env.NIX_NIXPKGS_CHANNEL}}
 
-          # Produce a binary artifact and place it in the mounted volume
           run: |
             echo "Run in qemu each build"
             ls
@@ -198,8 +181,6 @@ jobs:
             # cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L
 
       - name: Show the artifact
-        # Items placed in /artifacts in the container will be in
-        # ${PWD}/artifacts on the host.
         run: |
           ls -al "${PWD}/artifacts"
 
