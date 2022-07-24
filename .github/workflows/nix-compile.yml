@@ -180,7 +180,8 @@ jobs:
             echo "Pushing cache"
             export PATH="/home/vscode/.nix-profile/bin:$PATH"
             echo "PATH="/home/vscode/.nix-profile/bin:$PATH"" >> /etc/environment
-            sudo --user vscode env PATH="/home/vscode/.nix-profile/bin:$PATH" cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }} && cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L               
+            CACHIX_AUTH_TOKEN=${{ secrets.CACHIX_AUTH_TOKEN }}
+            sudo --user vscode env PATH="/home/vscode/.nix-profile/bin:$PATH" env CACHIX_AUTH_TOKEN=${{ secrets.CACHIX_AUTH_TOKEN }} source ~/.nix-profile/etc/profile.d/nix.sh && cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }} && cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L               
 
       - name: Show the artifact
         run: |
