@@ -33,6 +33,12 @@
             targets = [ "wasm32-unknown-unknown" ];
           });
 
+        rust-nightly-dev = rust-bin.selectLatestNightlyWith (toolchain:
+          toolchain.default.override {
+            extensions = [ "rust-src" "clippy" "rustfmt" ];
+            targets = [ "wasm32-unknown-unknown" ];
+          });  
+
         # Crane lib instantiated with current nixpkgs
         crane-lib = crane.mkLib pkgs;
 
@@ -56,6 +62,19 @@
             };
           };
         };
+
+        # for containers which are intented for testing, debug and development (including running isolated runtime)
+        container-tools =     
+        [
+          coreutils
+          bash
+          procps
+          findutils
+          nettools
+          bottom
+          nix   
+          procps
+        ];
 
         src = let
           blacklist = [
@@ -150,6 +169,26 @@
           hash = "sha256-k+6mXjAsHbS4gnHljGmEkMcok77zBd8jhyp56mXyKgI=";
         };
 
+        # TODO: move this to dockerTools.Buildx
+        # https://github.com/microsoft/vscode-dev-containers/tree/main/containers/debian
+        # https://github.com/numtide/flake-utils/blob/master/default.nix       
+        supported-nix-to-container-images = { 
+            # NOTE: we peeky container version to make these work version compatible with nix and native packaging/scripts
+            x86_64-linux ={
+                arch = "amd64";
+            };
+            aarch64-linux ={
+                arch = "arm64";
+            };
+            aarch64-darwin ={
+                arch = "arm64";
+            };
+           };
+        nix-to-container-image = system: 
+          if builtins.hasAttr system supported-nix-to-container-images then 
+            supported-nix-to-container-images.${system}
+          else supported-nix-to-container-images.x86_64-linux;
+
       in rec {
         packages = {
           inherit wasm-optimizer;
@@ -237,14 +276,45 @@
           };
           devnet-container = dockerTools.buildLayeredImage {
             name = "composable-devnet-container";
-            contents = [
-              # added so we can into it and do some debug
-              coreutils
-              bash
-              procps
-              findutils
-            ];
-            config = { Cmd = [ "${packages.devnet}/bin/composable-devnet" ]; };
+            contents = [                                     
+              # just allow to bash into it and run with custom entries
+              packages.devnet
+              packages.polkadot-launch
+              ] ++ container-tools;
+              config = { Cmd = [ "${packages.devnet}/bin/composable-devnet" ]; };
+          };
+          
+          # image which will be base for remote development
+          # we do not start from nixos:
+          # - no all people like devcontainer to be nix (gh know better)
+          # - devcontainer has setup in shell for code, users, groups and remote stuff
+          # - it has nice cli/shell setup, unlike bare nixos docker        
+          # we want devcontainer to be built of nix:
+          # - so it has same version or rust as our env and ci
+          # - it has same all tooling we have
+          # - and we do not need to maintain separate script for that
+          codespace-base-container = dockerTools.pullImage ((nix-to-container-image system) // {
+            imageName = "mcr.microsoft.com/vscode/devcontainers/base";
+            os = "linux";
+            imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
+            sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
+            finalImageTag = "0.202.7-bullseye";             
+          });
+          
+          codespace-container = dockerTools.buildLayeredImage {
+            name = "composable-codespace";
+            fromImage = packages.codespace-base-container;
+            contents = [                                          
+              # be very carefull with this, so this must be version compatible with base and what vscode will inject
+              # ISSUE: for some reason stable overrides nighly, need to set different order somehow
+              #rust-stable
+              rust-nightly-dev
+              cachix
+              rust-analyzer
+              rustup # just if it wants to make ad hoc updates
+              nodejs
+              bottom
+              ];
           };
           default = packages.composable-node;
         };
