@@ -25,7 +25,7 @@ export PATH="/home/vscode/.nix-profile/bin:$PATH"
 echo "Ensure user is on same binaries we are"
 nix-channel --add $2 nixpkgs
 nix-channel --update                
-nix-env --install --attr nixpkgs.cachix
+nix-env --install --attr nixpkgs.cachix nixpkgs.git
 chmod +x ~/.nix-profile/bin/cachix
 
 echo "Cachix"
