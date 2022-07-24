@@ -188,8 +188,8 @@ jobs:
             # They are looked up via $CACHIX_AUTH_TOKEN and $CACHIX_SIGNING_KEY,
             # and if missing also looked up from ~/.config/cachix/cachix.dhall
             
-            #sudo --user vscode env PATH="/home/vscode/.nix-profile/bin:$PATH" env CACHIX_AUTH_TOKEN=${{ secrets.CACHIX_AUTH_TOKEN }} source ~/.nix-profile/etc/profile.d/nix.sh && cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }} && cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L               
-            sudo --user vscode env PATH="/home/vscode/.nix-profile/bin:$PATH" source ~/.nix-profile/etc/profile.d/nix.sh nix build .#debug-derivation               
+            # sudo --user vscode env PATH="/home/vscode/.nix-profile/bin:$PATH" env CACHIX_AUTH_TOKEN=${{ secrets.CACHIX_AUTH_TOKEN }} cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }} && cachix watch-exec -j 16 -c 0 composable-community nix -- build .#debug-derivation -L               
+            sudo --user vscode env PATH="/home/vscode/.nix-profile/bin:$PATH" nix build .#debug-derivation               
 
       - name: Show the artifact
         run: |
