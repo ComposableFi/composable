@@ -171,7 +171,7 @@ jobs:
 
           run: |
             echo "Run in qemu each build"
-            uname -p
+            uname --all
             ls /composable
             echo "Installing actually"
             chmod +x ./composable/nix-install-vscode-composable.sh
