@@ -1,6 +1,6 @@
 use crate::mock::{
 	account_id::{ADMIN, ALICE, BOB},
-	helpers::{assert_has_event, create_pool, create_vault, make_proposale, set_admin_members},
+	helpers::{assert_has_event, create_pool, create_vault, make_proposal, set_admin_members},
 	runtime::{
 		Balance, Call, Event, ExtBuilder, PabloStrategy, System, VaultId, MAX_ASSOCIATED_VAULTS,
 	},
@@ -32,7 +32,7 @@ mod associate_vault {
 			let vault_id = create_vault(base_asset, None);
 			assert_ok!(set_admin_members(vec![ALICE], 5));
 			let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
-			assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
+			assert_ok!(make_proposal(proposal, ALICE, 1, 0, None));
 			System::assert_has_event(Event::PabloStrategy(pallet::Event::AssociatedVault {
 				vault_id,
 			}));
@@ -47,11 +47,11 @@ mod associate_vault {
 			let vault_id = create_vault(base_asset, None);
 			assert_ok!(set_admin_members(vec![ALICE], 5));
 			let proposal_1 = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
-			assert_ok!(make_proposale(proposal_1, ALICE, 1, 0, None));
+			assert_ok!(make_proposal(proposal_1, ALICE, 1, 0, None));
 
 			let proposal_2 = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
 			let hash: H256 = BlakeTwo256::hash_of(&proposal_2);
-			assert_ok!(make_proposale(proposal_2, ALICE, 1, 1, None));
+			assert_ok!(make_proposal(proposal_2, ALICE, 1, 1, None));
 			// Check that last proposal completed with error, since we are trying to add the same Vault
 			assert_has_event::<MockRuntime, _>(
 				|e| matches!(
@@ -75,13 +75,13 @@ mod associate_vault {
 			for vault_id in 0..MAX_ASSOCIATED_VAULTS {
 				let proposal =
 					Call::PabloStrategy(crate::Call::associate_vault { vault_id: vault_id as u64 });
-				assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
+				assert_ok!(make_proposal(proposal, ALICE, 1, 0, None));
 			}
 
 			let vault_id = MAX_ASSOCIATED_VAULTS as VaultId;
 			let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
 			let hash: H256 = BlakeTwo256::hash_of(&proposal);
-			assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
+			assert_ok!(make_proposal(proposal, ALICE, 1, 0, None));
 			// Check that last proposal completed with error, since we are trying to add more Vaults than allowed
 			assert_has_event::<MockRuntime, _>(
 				|e| matches!(
@@ -120,10 +120,10 @@ mod rebalance {
 				pool_id,
 			});
 			assert_ok!(set_admin_members(vec![ALICE], 5));
-			assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
+			assert_ok!(make_proposal(proposal, ALICE, 1, 0, None));
 
 			let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
-			assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
+			assert_ok!(make_proposal(proposal, ALICE, 1, 0, None));
 
 			assert_ok!(PabloStrategy::rebalance());
 
@@ -157,7 +157,7 @@ mod set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
 			});
-			assert_ok!(make_proposale(proposal, ALICE, 2, 0, Some(vec![ALICE, BOB])));
+			assert_ok!(make_proposal(proposal, ALICE, 2, 0, Some(vec![ALICE, BOB])));
 			System::assert_has_event(Event::PabloStrategy(
 				pallet::Event::AssociatedPoolWithAsset { asset_id: base_asset, pool_id },
 			));
@@ -179,7 +179,7 @@ mod set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
 			});
-			assert_ok!(make_proposale(proposal, ALICE, 2, 0, Some(vec![ALICE])));
+			assert_ok!(make_proposal(proposal, ALICE, 2, 0, Some(vec![ALICE])));
 		});
 	}
 }

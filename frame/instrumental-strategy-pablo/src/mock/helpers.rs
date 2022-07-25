@@ -102,7 +102,7 @@ pub fn set_admin_members(members: Vec<AccountId>, members_count: MemberCount) ->
 	Ok(())
 }
 
-pub fn make_proposale(
+pub fn make_proposal(
 	proposal: Call,
 	account_id: AccountId,
 	treshold: u32,
