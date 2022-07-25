@@ -11,13 +11,19 @@ pub trait VestedTransfer {
 	type Moment;
 	type Balance: HasCompact;
 	type MinVestedTransfer: Get<Self::Balance>;
+	type VestingScheduleId;
 
 	/// Transfer `asset` from `from` to `to` vested based on `schedule`.
 	fn vested_transfer(
 		asset: Self::AssetId,
 		from: &Self::AccountId,
 		to: &Self::AccountId,
-		schedule: VestingSchedule<Self::BlockNumber, Self::Moment, Self::Balance>,
+		schedule: VestingSchedule<
+			Self::VestingScheduleId,
+			Self::BlockNumber,
+			Self::Moment,
+			Self::Balance,
+		>,
 	) -> DispatchResult;
 }
 
@@ -44,9 +50,9 @@ pub enum VestingWindow<BlockNumber, Moment> {
 /// Benefits would be granted gradually, `per_period` amount every `window.period`
 /// of blocks after `window.start`.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct VestingSchedule<BlockNumber, Moment, Balance: HasCompact> {
+pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasCompact> {
 	/// Vesting schedule id
-	/// pub vesting_schedule_id: VestingScheduleId /// TODO: create VestingScheduleId type
+	pub vesting_schedule_id: VestingScheduleId,
 	pub window: VestingWindow<BlockNumber, Moment>,
 	/// Number of vest
 	pub period_count: u32,
@@ -61,10 +67,11 @@ pub enum VestingWindowResult<BlockNumber, Moment> {
 }
 
 impl<
+		VestingScheduleId,
 		BlockNumber: AtLeast32Bit + Copy,
 		Moment: AtLeast32Bit + Copy,
 		Balance: AtLeast32Bit + Copy,
-	> VestingSchedule<BlockNumber, Moment, Balance>
+	> VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance>
 {
 	/// Check if the period is zero
 	pub fn is_zero_period(&self) -> bool {
@@ -131,7 +138,8 @@ mod tests {
 
 	#[test]
 	fn test_is_zero_period() {
-		let mut vesting_schedule_time_based = VestingSchedule::<u32, u64, u64> {
+		let mut vesting_schedule_time_based = VestingSchedule::<u128, u32, u64, u64> {
+			vesting_schedule_id: 1u128,
 			window: MomentBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
@@ -140,7 +148,8 @@ mod tests {
 		vesting_schedule_time_based.window = MomentBased { start: 1, period: 0 };
 		assert!(vesting_schedule_time_based.is_zero_period());
 
-		let mut vesting_schedule_block_number_based = VestingSchedule::<u64, u32, u64> {
+		let mut vesting_schedule_block_number_based = VestingSchedule::<u128, u64, u32, u64> {
+			vesting_schedule_id: 2u128,
 			window: BlockNumberBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
@@ -152,7 +161,8 @@ mod tests {
 
 	#[test]
 	fn test_end() {
-		let vesting_schedule_time_based = VestingSchedule::<u32, u64, u64> {
+		let vesting_schedule_time_based = VestingSchedule::<u128, u32, u64, u64> {
+			vesting_schedule_id: 3u128,
 			window: MomentBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
@@ -164,7 +174,8 @@ mod tests {
 				VestingWindowResult::BlockNumberResult(_) => panic!("Unexpected BlockNumberResult"),
 			},
 		}
-		let vesting_schedule_block_number_based = VestingSchedule::<u64, u32, u64> {
+		let vesting_schedule_block_number_based = VestingSchedule::<u128, u64, u32, u64> {
+			vesting_schedule_id: 4u128,
 			window: BlockNumberBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
@@ -180,7 +191,8 @@ mod tests {
 
 	#[test]
 	fn test_total_amount() {
-		let vesting_schedule = VestingSchedule::<u64, u64, u64> {
+		let vesting_schedule = VestingSchedule::<u128, u64, u64, u64> {
+			vesting_schedule_id: 5u128,
 			window: BlockNumberBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
@@ -191,7 +203,8 @@ mod tests {
 	/// TODO proptest for exhastive tests
 	#[test]
 	fn test_locked_amount() {
-		let vesting_schedule_time_based = VestingSchedule::<u32, u64, u64> {
+		let vesting_schedule_time_based = VestingSchedule::<u128, u32, u64, u64> {
+			vesting_schedule_id: 6u128,
 			window: MomentBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
@@ -200,7 +213,8 @@ mod tests {
 		assert_eq!(vesting_schedule_time_based.locked_amount(1, 11), 99);
 		assert_eq!(vesting_schedule_time_based.locked_amount(1, 1001), 0);
 
-		let vesting_schedule_block_number_based = VestingSchedule::<u64, u32, u64> {
+		let vesting_schedule_block_number_based = VestingSchedule::<u128, u64, u32, u64> {
+			vesting_schedule_id: 7u128,
 			window: BlockNumberBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
