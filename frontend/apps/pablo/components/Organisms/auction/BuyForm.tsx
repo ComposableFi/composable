@@ -8,7 +8,11 @@ import {
 } from "@mui/material";
 import { Settings } from "@mui/icons-material";
 import { useCallback } from "react";
-import { DropdownCombinedBigNumberInput, BigNumberInput, TransactionSettings } from "@/components";
+import {
+  DropdownCombinedBigNumberInput,
+  BigNumberInput,
+  TransactionSettings,
+} from "@/components";
 import { useMobile } from "@/hooks/responsive";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -25,6 +29,7 @@ import { useBuyForm } from "@/defi/hooks/auctions/useBuyForm";
 import _ from "lodash";
 import { useDotSamaContext } from "substrate-react";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
@@ -45,6 +50,8 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     quoteAsset,
     onChangeTokenAmount,
     isPendingBuy,
+    isValidBaseInput,
+    isValidQuoteInput,
     setIsValidBaseInput,
     setIsValidQuoteInput,
     isBuyButtonDisabled,
@@ -52,6 +59,13 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     minimumReceived,
     isProcessing,
   } = useBuyForm();
+
+  const priceUSDBase = useUSDPriceByAssetId(
+    baseAsset ? baseAsset.network[DEFAULT_NETWORK_ID] : "none"
+  );
+  const priceUSDQuote = useUSDPriceByAssetId(
+    quoteAsset ? quoteAsset.network[DEFAULT_NETWORK_ID] : "none"
+  );
 
   const isActive: boolean =
     auction.sale.start <= currentTimestamp &&
@@ -160,6 +174,11 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             },
           }}
         />
+        {isValidQuoteInput && (
+          <Typography variant="body2" mt={1.5}>
+            {`≈$${quoteAmount.multipliedBy(priceUSDQuote)}`}
+          </Typography>
+        )}
       </Box>
       <Box
         mt={4}
@@ -212,6 +231,11 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             },
           }}
         />
+        {isValidBaseInput && (
+          <Typography variant="body2" mt={1.5}>
+            {`≈$${baseAmount.multipliedBy(priceUSDBase)}`}
+          </Typography>
+        )}
       </Box>
 
       <Box mt={4}>
