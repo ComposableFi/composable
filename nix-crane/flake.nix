@@ -213,6 +213,7 @@
                 hash = "sha256-ggcyOsA4cyo5l87cZmOMI0w1gCzmWy9NRJiWxjBdB1E=";
               };          
             };
+
           taplo = with packages; 
             crane-stable.buildPackage {
               src = fetchFromGitHub {
@@ -222,7 +223,6 @@
                 hash = "sha256-ggcyOsA4cyo5l87cZmOMI0w1gCzmWy9NRJiWxjBdB1E=";
               };          
             };            
-
 
           polkadot-node = stdenv.mkDerivation {
             name = "polkadot-${polkadot.version}";
@@ -322,7 +322,8 @@
               rustup # just if it wants to make ad hoc updates
               nodejs
               bottom
-              mdbook
+              packages.mdbook
+              packages.taplo
               ];
           };
           default = packages.composable-node;

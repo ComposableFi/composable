@@ -1,5 +1,7 @@
 # Overview
 
+It replaces a lot, `cargo install`, `rustup`, `cargo make`, `docker build`, etc
+
 ## Setup
 
 ```shell
