@@ -18,13 +18,13 @@
 // Make the WASM binary available
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
-
+// TODO: XCMP/governance/.. setups here are outdated
 mod weights;
 mod xcmp;
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
+	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_traits::assets::Asset;
 use orml_traits::parameter_type_with_key;
@@ -47,7 +47,10 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
+	traits::{
+		Contains, EnsureOneOf, Everything, KeyOwnerProofSystem, LockIdentifier, Nothing,
+		Randomness, StorageInfo,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -73,6 +76,12 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
+
+pub type CouncilInstance = collective::Instance1;
+pub type EnsureRootOrHalfCouncil = EnsureOneOf<
+	EnsureRoot<AccountId>,
+	collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
+>;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -291,9 +300,11 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
+type NativeTreasury = treasury::Instance1;
+
 impl transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
@@ -535,7 +546,7 @@ parameter_types! {
 	pub const MaxApprovals: u32 = 30;
 }
 
-impl treasury::Config for Runtime {
+impl treasury::Config<NativeTreasury> for Runtime {
 	type PalletId = TreasuryPalletId;
 	type Currency = Balances;
 	type ApproveOrigin = EnsureRootOrHalfCouncil;
@@ -627,21 +638,6 @@ impl utility::Config for Runtime {
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
-	pub const VotingPeriod: BlockNumber = 5 * DAYS;
-	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
-
-	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
-	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
-	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
-	// TODO: prod value
-	pub PreimageByteDeposit: Balance = CurrencyId::milli();
-	pub const InstantAllowed: bool = true;
-	pub const MaxVotes: u32 = 100;
-	pub const MaxProposals: u32 = 100;
-}
-
 impl governance_registry::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
@@ -656,7 +652,24 @@ impl currency_factory::Config for Runtime {
 	type Balance = Balance;
 }
 
-impl democracy::Config for Runtime {
+parameter_types! {
+	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
+	pub const VotingPeriod: BlockNumber = 5 * DAYS;
+	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
+
+	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
+	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
+	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
+	// TODO: prod value
+	pub PreimageByteDeposit: Balance = CurrencyId::milli();
+	pub const InstantAllowed: bool = true;
+	pub const MaxVotes: u32 = 100;
+	pub const MaxProposals: u32 = 100;
+	pub const DemocracyId: LockIdentifier = *b"democrac";
+	pub RootOrigin: Origin = frame_system::RawOrigin::Root.into();
+}
+
+impl democracy::Config<democracy::Instance1> for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type Currency = Balances;
@@ -691,6 +704,10 @@ impl democracy::Config for Runtime {
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type Scheduler = Scheduler;
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
+	type EnsureRoot = EnsureRoot<AccountId>;
+	type DemocracyId = DemocracyId;
+	type Origin = Origin;
+	type ProtocolRoot = RootOrigin;
 }
 
 parameter_types! {
@@ -765,11 +782,11 @@ construct_runtime!(
 		// Governance utilities
 		Council: collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 30,
 		CouncilMembership: membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
-		Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 32,
-		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
+		Treasury: treasury::<Instance1> = 32,
+		Democracy: democracy::<Instance1> = 33,
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
-		  Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -840,7 +857,6 @@ mod benches {
 		[membership, CouncilMembership]
 		[treasury, Treasury]
 		[scheduler, Scheduler]
-		[democracy, Democracy]
 		[collective, Council]
 		[utility, Utility]
 	);

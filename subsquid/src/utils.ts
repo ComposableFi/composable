@@ -5,16 +5,21 @@ import {
   SubstrateEvent,
 } from "@subsquid/substrate-processor";
 import { instance, mock } from "ts-mockito";
-import { randomFill, randomUUID } from "crypto";
+import { randomUUID } from "crypto";
 import * as ss58 from "@subsquid/ss58";
 
-export function createCtx(storeMock: Store, blockHeight: number) {
-  let blockMock: SubstrateBlock = mock<SubstrateBlock>();
+const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
+
+export function createCtx(
+  storeMock: Store,
+  blockHeight: number
+): EventHandlerContext {
+  const blockMock: SubstrateBlock = mock<SubstrateBlock>();
   blockMock.height = blockHeight;
-  let event: SubstrateEvent = mock<SubstrateEvent>();
+  const event: SubstrateEvent = mock<SubstrateEvent>();
   event.id = randomUUID();
-  let ctxMock: EventHandlerContext = mock<EventHandlerContext>();
-  let ctx: EventHandlerContext = instance(ctxMock);
+  const ctxMock: EventHandlerContext = mock<EventHandlerContext>();
+  const ctx: EventHandlerContext = instance(ctxMock);
   ctx.store = instance(storeMock);
   ctx.block = blockMock;
   ctx.event = event;
@@ -22,12 +27,10 @@ export function createCtx(storeMock: Store, blockHeight: number) {
   return ctx;
 }
 
-export function createAccount() {
-  let acc = Uint8Array.of(...new Array<any>(32));
-  randomFill(acc, (err) => (err != null ? console.log(err) : ""));
-  return acc;
+export function createAccount(): Uint8Array {
+  return ss58.codec("picasso").decode(BOB);
 }
 
-export function encodeAccount(account: Uint8Array) {
+export function encodeAccount(account: Uint8Array): string {
   return ss58.codec("picasso").encode(account);
 }

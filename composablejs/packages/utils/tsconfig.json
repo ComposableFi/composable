@@ -1,14 +1,19 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "../../tsconfig-base.json",
   "compilerOptions": {
+    "rootDir": "./src",
     "outDir": "./dist",
-    "baseUrl": "./"
+    "baseUrl": "./",
+    "composite": true,
+    "paths": {
+      "@composable/utils/*": ["./src/*"],
+      "@composable/types/*": ["../types/src/*"],
+      "@polkadot/api/augment": ["../types/src/augment-api.ts"],
+      "@polkadot/types/augment": ["../types/src/augment-types.ts"]
+    }
   },
-  "include": ["./src/**/*"],
   "exclude": ["node_modules", "dist"],
   "references": [
-    {
-      "path": "../types/tsconfig.json"
-    }
+    { "path": "../types/" }
   ]
 }
