@@ -1,0 +1,196 @@
+name: "Nix pipeline"
+on:
+  push:
+    branches:
+      - nix/dz/only-linux     
+      - ci-via-nix
+      - main
+
+env:
+  NIX_CACHIX: composable-community
+  NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
+  NIX_CONTAINER_IMAGE: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  DOCKER_REPOSITORY_NAME: composablefi
+  # weird, next is implicit dependency of docker action
+  DOCKER_USER_OPTION: '$UID:$GID' 
+  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install  
+
+jobs:
+  common-deps:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          name: composable-community
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - run: |
+          cd nix-crane
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps -L
+
+  tests:
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cd nix-crane
+          nix flake check -L --keep-going
+
+  package-node:
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cd nix-crane
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node -L
+
+  package-price-feed:
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cd nix-crane
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed -L
+
+  devnet-container:
+    needs: package-node
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cd nix-crane
+          # TODO: upload docker image
+          # Only on trigger by user?
+          nix build .#devnet-container -L
+
+  codespace-devcontainer:
+    # NOTE: so we want new container be publish iff all is ready and works
+    # needs: package-node
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{  env.NIX_CACHIX }}
+      - run: |
+          cd nix-crane
+          # TODO: either make nixos to be devcontainer and use buildx https://github.com/microsoft/vscode-dev-containers/issues/947 
+          # TODO: or use nix remote build 
+          # TODO: to produce arm image
+          # NOTE: building on qemu action failed (also it was emulating arm, still complained building wrong system - not reported)
+          # NOTE: used manual install, so better to use this in future https://github.com/uraimo/run-on-arch-action/pull/83
+          # NOTE: build arm on x86 failed and documented to fail          
+          nix build .#packages.x86_64-linux.codespace-container
+      - uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} 
+      - run: |
+          cd nix-crane
+          docker load --input ./result
+          # update soon https://github.com/actions/checkout/issues/760
+          git config --global --add safe.directory /__w/composable/composable
+          COMMIT_SHA=$(git rev-parse --short=9 HEAD)
+          DOCKER_IMAGE_HASH=$(docker images | tail --lines=1 | tr --squeeze-repeats  ' ' |  cut --delimiter " " --fields 3)
+          # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
+          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:$COMMIT_SHA
+          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
+          docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer

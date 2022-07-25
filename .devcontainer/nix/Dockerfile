@@ -1,0 +1,1 @@
+FROM composablefi/composable-devcontainer:latest

@@ -1,0 +1,73 @@
+{
+	"name": "Rust",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"hostRequirements": {
+		"memory": "32gb",
+		"cpus": 16
+	},
+	// Set *default* container specific settings.json values on container create.
+	"settings": {
+		"workbench.colorTheme": "GitHub Dark",
+		"workbench.iconTheme": "vscode-icons",
+		"lldb.executable": "/usr/bin/lldb",
+		// VS Code don't watch files under ./target
+		"files.watcherExclude": {
+			"**/target/**": true
+		},
+		"rust-analyzer.checkOnSave.command": "clippy",
+		"rust-analyzer.checkOnSave.extraArgs": [
+			"--target-dir",
+			"/workspaces/composable/target/check"
+		],
+		"git.enableCommitSigning": true,
+		"editor.formatOnSave": true,
+		// use same shell as nix default shell
+		"terminal.integrated.defaultProfile.linux": "bash",
+		"rust-analyzer.rustfmt.enableRangeFormatting": true,
+		"[rust]": {
+			"editor.defaultFormatter": "rust-lang.rust-analyzer",
+			"editor.formatOnSave": false
+		},
+		"editor.quickSuggestions": {
+			"other": true,
+			"comments": false,
+			"strings": true
+		},
+		"workbench.tree.indent": 16,
+		"explorer.compactFolders": false,
+		"githubPullRequests.fileListLayout": "tree",
+		"vsicons.dontShowNewVersionMessage": true,
+		"window.autoDetectColorScheme": true,
+		"workbench.preferredLightColorTheme": "GitHub Light",
+		"workbench.preferredDarkColorTheme": "GitHub Dark",
+		"workbench.startupEditor": "none",
+		"editor.inlineSuggest.enabled": true,
+		"git.autofetch": true,
+		"git.confirmSync": false
+	},
+	"extensions": [
+		"fsevenm.run-it-on",
+		"ms-azuretools.vscode-docker",
+		"yzhang.markdown-all-in-one",
+		"vadimcn.vscode-lldb",
+		"mutantdino.resourcemonitor",
+		"rust-lang.rust-analyzer",
+		"tamasfe.even-better-toml",
+		"serayuzgur.crates",
+		"ms-azuretools.vscode-docker",
+		"GitHub.copilot",
+		"eamodio.gitlens",
+		"ms-vscode.makefile-tools",
+		"ms-vsliveshare.vsliveshare",
+		"tomoki1207.pdf",
+		"vscode-icons-team.vscode-icons",
+		"GitHub.github-vscode-theme",
+		"streetsidesoftware.code-spell-checker",
+		"zxh404.vscode-proto3",
+		"rangav.vscode-thunder-client",
+		"adam-bender.commit-message-editor"
+	],
+	"remoteUser": "vscode",
+}

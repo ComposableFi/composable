@@ -23,7 +23,7 @@ pub fn genesis_config(
 ) -> dali_runtime::GenesisConfig {
 	dali_runtime::GenesisConfig {
 		system: dali_runtime::SystemConfig {
-			code: dali_runtime::WASM_BINARY
+			code: dali_runtime::WASM_BINARY_V2
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},

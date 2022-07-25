@@ -125,11 +125,9 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 # simnode support
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, rev = "eed85119358bc80bbb1aedd98778f370d4932dee" }
 
-[build-dependencies]
-substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-
 [features]
-default = ["std", "wasm-builder"]
+default = ["std"]
+builtin-wasm = []
 local-integration-tests = []
 std = [
   "codec/std",
@@ -201,8 +199,6 @@ std = [
   "crowdloan-rewards-runtime-api/std",
   "simnode-apis/std",
 ]
-wasm-builder = []
-
 runtime-benchmarks = [
   "balances/runtime-benchmarks",
   "frame-benchmarking",
