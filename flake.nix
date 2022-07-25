@@ -2,26 +2,33 @@
   description = "Composable Finance Local Networks Lancher and documentation Book";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    rust-overlay.url = "github:oxalica/rust-overlay/2af4f775282ff9cb458c3ef6f30c0a8f689d202b";
-    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+    nixpkgs.url = "github:nixos/nixpkgs";
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    crane = {
+      url = "github:ipetkov/crane";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, rust-overlay }:
+  outputs = { self, nixpkgs, rust-overlay, flake-utils, crane, }:
+    flake-utils.lib.eachDefaultSystem (system:
     let
       overlays = [ (import rust-overlay) ];
-      supportedSystems =
-        [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
-      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system overlays; });
+      pkgs = import nixpkgs { inherit system overlays; };
     in {
       nixopsConfigurations.default =
         let pkgs = import nixpkgs {};
         in (pkgs.callPackage ./devnet/default.nix { inherit nixpkgs; }).machines;
 
-      packages = forAllSystems (system:
+      packages = 
         let
-          pkgs = nixpkgsFor.${system};
           devnet = pkgs.callPackage ./devnet { inherit nixpkgs; };
           latest-book = pkgs.callPackage ./book {};
         in {
@@ -30,13 +37,14 @@
           inherit (devnet.dali) book;
           inherit (devnet) nixops;
           inherit latest-book;
-        });
+        };
 
       # Default package is currently the book, but that will change
-      defaultPackage = forAllSystems (system: self.packages.${system}.book);
+      defaultPackage =  self.packages.${system}.book;
 
-      devShells = forAllSystems (system:
-        let pkgs = nixpkgsFor.${system};
+      devShells = 
+        let 
+          PROTOC = "${pkgs.protobuf}/bin/protoc";
         in {
           book = pkgs.mkShell { buildInputs = [ pkgs.mdbook ]; };
           devnet = pkgs.mkShell {
@@ -108,7 +116,7 @@
             # BINDGEN_EXTRA_CLANG_ARGS = "-isystem ${pkgs.llvmPackages.libclang.lib}/lib/clang/${pkgs.lib.getVersion pkgs.clang}/include";
             
 
-            PROTOC = "${pkgs.protobuf}/bin/protoc";
+            PROTOC = PROTOC;
             ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
 
             # Disabled because this would need to depend on the nightly version
@@ -117,6 +125,6 @@
             # See https://discourse.nixos.org/t/rust-src-not-found-and-other-misadventures-of-developing-rust-on-nixos/11570/3?u=samuela. for more details.
             # RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
           };
-        });
-    };
+        };
+    });
 }
