@@ -9,6 +9,7 @@ import {
 } from "@/defi/utils";
 import { useAppSelector } from "@/hooks/store";
 import { useAsyncEffect } from "@/hooks/useAsyncEffect";
+import { usePrevious } from "@/hooks/usePrevious";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
 import useStore from "@/store/useStore";
@@ -56,6 +57,7 @@ export function useSwaps(): {
   const slippage = useAppSelector(
     (state) => state.settings.transactionSettings.tolerance
   );
+  const previousSlippage = usePrevious(slippage);
 
   const [assetOneInputValid, setAssetOneInputValid] = useState(true);
   const [assetTwoInputValid, setAssetTwoInputValid] = useState(true);
@@ -223,7 +225,7 @@ export function useSwaps(): {
     }, 500);
   };
 
-  const onChangeTokenAmount = async (
+  const onChangeTokenAmount = useCallback(async (
     changedSide: "base" | "quote",
     amount: BigNumber
   ) => {
@@ -281,7 +283,41 @@ export function useSwaps(): {
     } finally {
       unsetProcessingDelayed();
     }
-  };
+  }, [
+    balance1,
+    enqueueSnackbar,
+    parachainApi,
+    resetTokenAmounts,
+    selectedAssetOneId,
+    selectedAssetTwoId,
+    selectedPool,
+    setTokenAmounts,
+    slippage
+  ]);
+
+  /**
+   * Effect to update minimum recieved when
+   * there is a change in slippage
+   */
+   useEffect(() => {
+    if (parachainApi) {
+      if (previousSlippage != slippage && assetOneAmount.gt(0) && balance1.gt(0)) {
+        onChangeTokenAmount("quote", assetOneAmount);
+      }
+    }
+    return;
+  }, [
+    balance1,
+    previousSlippage,
+    minimumReceived,
+    feeCharged,
+    slippageAmount,
+    slippage,
+    parachainApi,
+    assetOneAmount,
+    assetTwoAmount,
+    onChangeTokenAmount
+  ]);
 
   const flipAssets = () => {
     setIsProcessing(true);
