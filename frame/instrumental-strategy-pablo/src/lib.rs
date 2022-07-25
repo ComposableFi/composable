@@ -239,7 +239,6 @@ pub mod pallet {
 			vault_id: T::VaultId,
 		) -> DispatchResultWithPostInfo {
 			T::ExternalOrigin::ensure_origin(origin)?;
-			Self::deposit_event(Event::Check);
 			<Self as InstrumentalProtocolStrategy>::associate_vault(&vault_id)?;
 			Ok(().into())
 		}
