@@ -1,5 +1,3 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.233.0/containers/rust
 {
 	"name": "Rust",
 	"build": {
@@ -25,6 +23,7 @@
 		],
 		"git.enableCommitSigning": true,
 		"editor.formatOnSave": true,
+		// use same shell as nix default shell
 		"terminal.integrated.defaultProfile.linux": "bash",
 		"rust-analyzer.rustfmt.enableRangeFormatting": true,
 		"[rust]": {
@@ -48,7 +47,6 @@
 		"git.autofetch": true,
 		"git.confirmSync": false
 	},
-	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
 		"fsevenm.run-it-on",
 		"ms-azuretools.vscode-docker",
@@ -71,11 +69,5 @@
 		"rangav.vscode-thunder-client",
 		"adam-bender.commit-message-editor"
 	],
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-	// TODO: use nix to install these
-	"onCreateCommand": "cd /workspaces/composable/scripts/polkadot-launch && yarn && cd /workspaces/composable/integration-tests/runtime-tests && npm install",
-  	"postCreateCommand": "mkdir -p /workspaces/polkadot/target/release && cp /polkadot-binary/polkadot /workspaces/polkadot/target/release/polkadot",
-	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 }
