@@ -119,7 +119,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
       it("Users can not create a pablo pool.", async function () {
         this.timeout(2 * 60 * 1000);
 
-        const fee = 15000;
+        const fee = 150000;
         const baseWeight = 500000;
         const baseAsset = ksmAssetId;
         const quoteAsset = usdcAssetId;
@@ -152,7 +152,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               lpToken: 100_000_000_000n,
               feeConfig: {
                 feeRate: fee,
-                ownerFeeRate: 20000,
+                ownerFeeRate: 200000,
                 protocolFeeRate: 1000000
               },
               baseWeight: baseWeight,
@@ -735,7 +735,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         this.timeout(2 * 60 * 1000);
         const baseAsset = picaAssetId;
         const quoteAsset = usdcAssetId;
-        const fee = 20000;
+        const fee = 200000;
         const baseWeight = 500000;
         const {
           data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
@@ -766,8 +766,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               lpToken: 100_000_000_000n,
               feeConfig: {
                 feeRate: fee,
-                ownerFeeRate: 20000,
-                protocolFeeRate: 100000
+                ownerFeeRate: 200000,
+                protocolFeeRate: 1000000
               },
               baseWeight: baseWeight,
               quoteWeight: baseWeight
@@ -1117,7 +1117,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
         this.timeout(2 * 60 * 1000);
 
-        const fee = 20000;
+        const fee = 200000;
         const baseWeight = 500000;
         const baseAsset = picaAssetId;
         const quoteAsset = ksmAssetId;
@@ -1150,8 +1150,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               lpToken: 100_000_000_000n,
               feeConfig: {
                 feeRate: fee,
-                ownerFeeRate: 20000,
-                protocolFeeRate: 100000
+                ownerFeeRate: 200000,
+                protocolFeeRate: 1000000
               },
               baseWeight: baseWeight,
               quoteWeight: baseWeight
@@ -1506,7 +1506,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
         this.timeout(2 * 60 * 1000);
         const amplificationCoefficient = 24; // ToDo: Update!
-        const fee = 10000; // ToDo: Update!
+        const fee = 100000;
         const baseAsset = usdcAssetId;
         const quoteAsset = ausdAssetId;
         const {
@@ -1538,9 +1538,9 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               amplificationCoefficient: amplificationCoefficient,
               lpToken: 100_000_000_000n,
               feeConfig: {
-                feeRate: 10000,
-                ownerFeeRate: 20000,
-                protocolFeeRate: 100000
+                feeRate: 100000,
+                ownerFeeRate: 200000,
+                protocolFeeRate: 1000000
               }
             }
           })
@@ -1887,7 +1887,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
       it("Create wETH/KSM uniswap pool", async function () {
         if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
         this.timeout(2 * 60 * 1000);
-        const fee = 15000;
+        const fee = 150000;
         const baseWeight = 500000;
         const baseAsset = wethAssetId;
         const quoteAsset = ksmAssetId;
@@ -1920,8 +1920,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               lpToken: 100_000_000_000n,
               feeConfig: {
                 feeRate: fee,
-                ownerFeeRate: 20000,
-                protocolFeeRate: 100000
+                ownerFeeRate: 200000,
+                protocolFeeRate: 1000000
               },
               baseWeight: baseWeight,
               quoteWeight: baseWeight
@@ -2262,7 +2262,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
       it("Create wBTC/KSM uniswap pool", async function () {
         if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
         this.timeout(2 * 60 * 1000);
-        const fee = 15000;
+        const fee = 150000;
         const baseWeight = 500000;
         const baseAsset = btcAssetId;
         const quoteAsset = ksmAssetId;
@@ -2295,8 +2295,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               lpToken: 100_000_000_000n,
               feeConfig: {
                 feeRate: fee,
-                ownerFeeRate: 20000,
-                protocolFeeRate: 100000
+                ownerFeeRate: 200000,
+                protocolFeeRate: 1000000
               },
               baseWeight: baseWeight,
               quoteWeight: baseWeight
@@ -2633,7 +2633,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
         this.timeout(2 * 60 * 1000);
         const amplificationCoefficient = 24; // ToDo: Update!
-        const fee = 10000; // ToDo: Update!
+        const fee = 100000; // ToDo: Update!
         const baseAsset = usdcAssetId;
         const quoteAsset = usdtAssetId;
         const {
@@ -2665,9 +2665,9 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               amplificationCoefficient: amplificationCoefficient,
               lpToken: 100_000_000_000n,
               feeConfig: {
-                feeRate: 10000,
-                ownerFeeRate: 20000,
-                protocolFeeRate: 100000
+                feeRate: 100000,
+                ownerFeeRate: 200000,
+                protocolFeeRate: 1000000
               }
             }
           })
