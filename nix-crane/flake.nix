@@ -216,6 +216,19 @@
                 cp target/release/composable $out/bin/composable
               '';
             });
+          # also mdbook has releases for all targets,
+          # so it simple to build it as it is rust
+          # and also we then can have fork easy
+          mdbook = with packages; 
+            crane-stable.buildPackage {
+              src = fetchFromGitHub {
+                owner = "rust-lang";
+                repo = "mdBook";
+                rev = "40c06f5e774924bef97d339cf8c64343c9056d86";
+                hash = "sha256-ZaCHgkr5lVsGFg/Yvx6QY/zSiIafwSec+oiioOWTZMg=";
+              };          
+            };
+
           polkadot-node = stdenv.mkDerivation {
             name = "polkadot-${polkadot.version}";
             version = polkadot.version;
@@ -342,6 +355,7 @@
               rust-stable
               wasm-optimizer
               composable-node
+              mdbook
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
