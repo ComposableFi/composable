@@ -233,6 +233,7 @@
               chmod +x $out/bin/polkadot
             '';
           };
+
           polkadot-launch = let
             src = fetchFromGitHub {
               owner = "paritytech";
@@ -254,8 +255,7 @@
             '';
           };
           devnet = let
-            original-config = builtins.fromJSON
-              (builtins.readFile ./../scripts/polkadot-launch/composable.json);
+            original-config = import ./composable.nix;
             patched-config = lib.recursiveUpdate original-config {
               relaychain = { bin = "${packages.polkadot-node}/bin/polkadot"; };
               parachains = builtins.map (parachain:
