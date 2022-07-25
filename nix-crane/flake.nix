@@ -216,18 +216,28 @@
                 cp target/release/composable $out/bin/composable
               '';
             });
+
           # also mdbook has releases for all targets,
           # so it simple to build it as it is rust
           # and also we then can have fork easy
+          # and nix allows to use any version of rust
+          # so if will need to special docs for substrate, we will have it
           mdbook = with packages; 
             crane-stable.buildPackage {
               src = fetchFromGitHub {
                 owner = "rust-lang";
                 repo = "mdBook";
                 rev = "40c06f5e774924bef97d339cf8c64343c9056d86";
-                hash = "sha256-ZaCHgkr5lVsGFg/Yvx6QY/zSiIafwSec+oiioOWTZMg=";
+                hash = "sha256-ggcyOsA4cyo5l87cZmOMI0w1gCzmWy9NRJiWxjBdB1E=";
               };          
             };
+
+# # Add taplo
+# WORKDIR /taplo-binary
+# RUN wget "https://github.com/tamasfe/taplo/releases/download/release-cli-0.6.2/taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz" && \
+#     tar -xzf taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
+#     chmod +x taplo && \
+#     cp ./taplo /usr/bin
 
           polkadot-node = stdenv.mkDerivation {
             name = "polkadot-${polkadot.version}";
@@ -327,6 +337,7 @@
               rustup # just if it wants to make ad hoc updates
               nodejs
               bottom
+              mdbook
               ];
           };
           default = packages.composable-node;
