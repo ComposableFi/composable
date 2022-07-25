@@ -2,13 +2,14 @@ use std::ops::RangeInclusive;
 
 use crate::{
 	mock::{Event, ExtBuilder, MockRuntime, System, TestPallet},
-	pallet::{self, Error, VammMap, VammState},
+	pallet::{self, Error, VammMap},
 	tests::{
-		any_sane_asset_amount, default_vamm_config, loop_times, valid_twap_period, Balance,
-		Decimal, Timestamp, RUN_CASES,
+		helpers::{any_sane_asset_amount, default_vamm_config},
+		helpers_propcompose::{loop_times, valid_twap_period},
+		Balance, Decimal, Timestamp, RUN_CASES,
 	},
 };
-use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig, MINIMUM_TWAP_PERIOD};
+use composable_traits::vamm::{Vamm as VammTrait, VammConfig, MINIMUM_TWAP_PERIOD};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_runtime::FixedPointNumber;
@@ -69,7 +70,7 @@ fn should_fail_if_twap_period_is_less_than_minimum() {
 	};
 	ExtBuilder::default().build().execute_with(|| {
 		assert_noop!(TestPallet::create(&vamm_state), Error::<MockRuntime>::FundingPeriodTooSmall);
-	})
+	});
 }
 
 #[test]
@@ -92,37 +93,20 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let vamm_counter = TestPallet::vamm_count();
 
+			assert_ok!(TestPallet::create(&vamm_config));
+
+			let vamm_state = TestPallet::get_vamm(0).unwrap();
+
 			let invariant = TestPallet::compute_invariant(
 				vamm_config.base_asset_reserves,
 				vamm_config.quote_asset_reserves
 			).unwrap();
 
-			let tmp_vamm_expected = VammState::<Balance, Timestamp, Decimal> {
-					base_asset_reserves: vamm_config.base_asset_reserves,
-					quote_asset_reserves: vamm_config.quote_asset_reserves,
-					peg_multiplier: vamm_config.peg_multiplier,
-					invariant,
-					..Default::default()
-			};
-
-			let base_asset_twap = TestPallet::do_get_price(&tmp_vamm_expected, AssetType::Base).unwrap();
-
-			let vamm_expected = VammState::<Balance, Timestamp, Decimal> {
-				base_asset_reserves: vamm_config.base_asset_reserves,
-				quote_asset_reserves: vamm_config.quote_asset_reserves,
-				peg_multiplier: vamm_config.peg_multiplier,
-				twap_period: vamm_config.twap_period,
-				base_asset_twap,
-				invariant,
-				..Default::default()
-			};
-
-			let vamm_created_ok = TestPallet::create(&vamm_config);
-			let vamm_created_some = TestPallet::get_vamm(vamm_created_ok.unwrap());
-
-			assert_ok!(vamm_created_ok);
-			assert_eq!(vamm_created_some, Some(vamm_expected));
-
+			assert_eq!(vamm_state.base_asset_reserves, vamm_config.base_asset_reserves);
+			assert_eq!(vamm_state.quote_asset_reserves, vamm_config.quote_asset_reserves);
+			assert_eq!(vamm_state.peg_multiplier, vamm_config.peg_multiplier);
+			assert_eq!(vamm_state.twap_period, vamm_config.twap_period);
+			assert_eq!(vamm_state.invariant, invariant);
 			assert_eq!(TestPallet::vamm_count(), vamm_counter+1);
 		});
 	}
@@ -145,7 +129,7 @@ proptest! {
 			assert_noop!(
 				TestPallet::create(&vamm_config),
 				Error::<MockRuntime>::BaseAssetReserveIsZero);
-		})
+		});
 	}
 
 	#[test]
@@ -157,7 +141,7 @@ proptest! {
 			assert_noop!(
 				TestPallet::create(&vamm_config),
 				Error::<MockRuntime>::QuoteAssetReserveIsZero);
-		})
+		});
 	}
 
 	#[test]
@@ -169,7 +153,7 @@ proptest! {
 			assert_noop!(
 				TestPallet::create(&vamm_config),
 				Error::<MockRuntime>::PegMultiplierIsZero);
-		})
+		});
 	}
 
 	#[test]
@@ -198,7 +182,7 @@ proptest! {
 			let vamm_created = TestPallet::get_vamm(0).unwrap();
 			System::assert_last_event(Event::TestPallet(
 				pallet::Event::Created { vamm_id: 0_u128, state: vamm_created}
-			))
+			));
 		});
 	}
 

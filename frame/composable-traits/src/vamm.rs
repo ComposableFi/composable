@@ -31,9 +31,6 @@ pub trait Vamm {
 	/// Configuration for swap assets in a vamm.
 	type SwapConfig;
 
-	/// Configuration for simulation of asset swap in a vamm.
-	type SwapSimulationConfig;
-
 	/// Configuration for moving prices in a vamm.
 	type MovePriceConfig;
 
@@ -50,8 +47,9 @@ pub trait Vamm {
 	fn swap(config: &Self::SwapConfig) -> Result<SwapOutput<Self::Balance>, DispatchError>;
 
 	/// Performs swap simulation.
-	fn swap_simulation(config: &Self::SwapSimulationConfig)
-		-> Result<Self::Balance, DispatchError>;
+	fn swap_simulation(
+		config: &Self::SwapConfig,
+	) -> Result<SwapOutput<Self::Balance>, DispatchError>;
 
 	/// Sets the amount of base and quote asset reserves, modifying the
 	/// invariant of the desired vamm.
@@ -85,7 +83,7 @@ pub struct VammConfig<Balance, Moment> {
 	pub quote_asset_reserves: Balance,
 	/// The magnitude of the quote asset reserve.
 	pub peg_multiplier: Balance,
-	/// The frequency with which the vamm must have it's funding rebalance.
+	/// The frequency with which the vamm must have its funding rebalanced.
 	/// (Used only for twap calculations.)
 	pub twap_period: Moment,
 }
@@ -97,16 +95,7 @@ pub struct SwapConfig<VammId, Balance> {
 	pub asset: AssetType,
 	pub input_amount: Balance,
 	pub direction: Direction,
-	pub output_amount_limit: Balance,
-}
-
-/// Specify a common encapsulation layer for the swap simulation function.
-#[derive(Clone, Debug)]
-pub struct SwapSimulationConfig<VammId, Balance> {
-	pub vamm_id: VammId,
-	pub asset: AssetType,
-	pub input_amount: Balance,
-	pub direction: Direction,
+	pub output_amount_limit: Option<Balance>,
 }
 
 /// Distinguish between asset types present in the vamm.
@@ -121,7 +110,13 @@ pub enum AssetType {
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Direction {
+	/// A swap operation in the Vamm will add the specified asset to the
+	/// reserves, returning the other asset in order to keep the invariant
+	/// constant.
 	Add,
+	/// A swap operation in the Vamm will remove the specified asset from the
+	/// reserves, requiring the other asset to be added to the reserves in order
+	/// to keep the invariant constant.
 	Remove,
 }
 
@@ -133,7 +128,7 @@ pub struct MovePriceConfig<VammId, Balance> {
 	pub quote_asset_reserves: Balance,
 }
 
-/// Specify the return type for [`Vamm::swap`].
+/// Specify the return type for [`Vamm::swap`] and [`Vamm::swap_simulation`].
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct SwapOutput<Balance> {
