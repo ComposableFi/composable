@@ -1,5 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { txOracleAddAssetAndInfoSuccessTest } from "./testHandlers/addAssetAndInfoTests";
+import { txOracleAddAssetAndInfoSuccessTest, verifyOracleCreation } from "./testHandlers/addAssetAndInfoTests";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
@@ -81,11 +81,9 @@ describe("HAL01 [Oracle] Tests", function () {
     const minAnswers = api.createType("u32", 3);
     const maxAnswers = api.createType("u32", 5);
     const blockInterval = api.createType("u32", 6);
-    const reward = api.createType("u128", 150000000);
+    const rewardWeight = api.createType("u128", 150000000);
     const slash = api.createType("u128", 100000000);
-    const {
-      data: [result]
-    } = await txOracleAddAssetAndInfoSuccessTest(
+    const data = await txOracleAddAssetAndInfoSuccessTest(
       api,
       sudoKey,
       assetId,
@@ -93,11 +91,11 @@ describe("HAL01 [Oracle] Tests", function () {
       minAnswers,
       maxAnswers,
       blockInterval,
-      reward,
+      rewardWeight,
       slash,
       true
     );
-    expect(result.isOk).to.be.true;
+    await verifyOracleCreation(api, data, { threshold, minAnswers, maxAnswers, blockInterval, rewardWeight, slash });
   });
 
   describe("HAL01: Setting signers", function () {

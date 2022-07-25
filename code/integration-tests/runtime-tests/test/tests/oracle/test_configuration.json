@@ -15,9 +15,13 @@
       "enabled": true,
       "add1": true
     },
-    "submitPrice__success": {
+    "submitPrice_before_adjustments__success": {
       "enabled": true,
       "submit1": true
+    },
+    "adjustRewards__success": {
+      "enabled": true,
+      "adjust1": true
     },
     "removeStake__success": {
       "enabled": true,
