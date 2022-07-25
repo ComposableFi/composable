@@ -152,7 +152,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               lpToken: 100_000_000_000n,
               feeConfig: {
                 feeRate: fee,
-                ownerFeeRate: 200000,
+                ownerFeeRate: 20000,
                 protocolFeeRate: 1000000
               },
               baseWeight: baseWeight,
@@ -766,8 +766,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               lpToken: 100_000_000_000n,
               feeConfig: {
                 feeRate: fee,
-                ownerFeeRate: 200000,
-                protocolFeeRate: 1000000
+                ownerFeeRate: 20000,
+                protocolFeeRate: 100000
               },
               baseWeight: baseWeight,
               quoteWeight: baseWeight
@@ -1150,8 +1150,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               lpToken: 100_000_000_000n,
               feeConfig: {
                 feeRate: fee,
-                ownerFeeRate: 200000,
-                protocolFeeRate: 1000000
+                ownerFeeRate: 20000,
+                protocolFeeRate: 100000
               },
               baseWeight: baseWeight,
               quoteWeight: baseWeight
@@ -1538,9 +1538,9 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               amplificationCoefficient: amplificationCoefficient,
               lpToken: 100_000_000_000n,
               feeConfig: {
-                feeRate: 100000,
-                ownerFeeRate: 200000,
-                protocolFeeRate: 1000000
+                feeRate: 10000,
+                ownerFeeRate: 20000,
+                protocolFeeRate: 100000
               }
             }
           })
@@ -1920,8 +1920,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               lpToken: 100_000_000_000n,
               feeConfig: {
                 feeRate: fee,
-                ownerFeeRate: 200000,
-                protocolFeeRate: 1000000
+                ownerFeeRate: 20000,
+                protocolFeeRate: 100000
               },
               baseWeight: baseWeight,
               quoteWeight: baseWeight
@@ -2295,8 +2295,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               lpToken: 100_000_000_000n,
               feeConfig: {
                 feeRate: fee,
-                ownerFeeRate: 200000,
-                protocolFeeRate: 1000000
+                ownerFeeRate: 20000,
+                protocolFeeRate: 100000
               },
               baseWeight: baseWeight,
               quoteWeight: baseWeight
@@ -2665,9 +2665,9 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
               amplificationCoefficient: amplificationCoefficient,
               lpToken: 100_000_000_000n,
               feeConfig: {
-                feeRate: 100000,
-                ownerFeeRate: 200000,
-                protocolFeeRate: 1000000
+                feeRate: 10000,
+                ownerFeeRate: 20000,
+                protocolFeeRate: 100000
               }
             }
           })
