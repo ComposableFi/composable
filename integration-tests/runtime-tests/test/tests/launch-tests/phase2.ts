@@ -698,8 +698,8 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           const pair = { base: picaAssetId, quote: usdcAssetId };
           const picaBalanceBefore = await api.rpc.assets.balanceOf(picaAssetId.toString(), traderWallet1.publicKey);
           const usdcBalanceBefore = await api.rpc.assets.balanceOf(usdcAssetId.toString(), traderWallet1.publicKey);
-          const amount = 1_000_000_000_000n;
-          const minReceive = 100_000_000;
+          const amount = 10_000_000_000_000n;
+          const minReceive = 1_000_000_000;
           const keepAlive = true;
           const {
             data: [resultPoolId, resultAccount, resultBaseAsset, resultQuoteAsset]
