@@ -8,3 +8,4 @@ export * from './common/types';
 export * from './pablo/types';
 export * from './currencyFactory/types';
 export * from './democracy/types';
+export * from './oracle/types';
