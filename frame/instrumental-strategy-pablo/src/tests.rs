@@ -30,9 +30,9 @@ mod associate_vault {
 			System::set_block_number(1);
 			let base_asset = CurrencyId::LAYR;
 			let vault_id = create_vault(base_asset, None);
-			assert_ok!(set_admin_members(vec![ALICE], 5));
+			set_admin_members(vec![ALICE], 5);
 			let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
-			assert_ok!(make_proposal(proposal, ALICE, 1, 0, None));
+			make_proposal(proposal, ALICE, 1, 0, None);
 			System::assert_has_event(Event::PabloStrategy(pallet::Event::AssociatedVault {
 				vault_id,
 			}));
@@ -45,13 +45,13 @@ mod associate_vault {
 			System::set_block_number(1);
 			let base_asset = CurrencyId::LAYR;
 			let vault_id = create_vault(base_asset, None);
-			assert_ok!(set_admin_members(vec![ALICE], 5));
+			set_admin_members(vec![ALICE], 5);
 			let proposal_1 = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
-			assert_ok!(make_proposal(proposal_1, ALICE, 1, 0, None));
+			make_proposal(proposal_1, ALICE, 1, 0, None);
 
 			let proposal_2 = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
 			let hash: H256 = BlakeTwo256::hash_of(&proposal_2);
-			assert_ok!(make_proposal(proposal_2, ALICE, 1, 1, None));
+			make_proposal(proposal_2, ALICE, 1, 1, None);
 			// Check that last proposal completed with error, since we are trying to add the same Vault
 			assert_has_event::<MockRuntime, _>(
 				|e| matches!(
@@ -71,17 +71,17 @@ mod associate_vault {
 	fn associating_too_many_vaults_throws_an_error() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
-			assert_ok!(set_admin_members(vec![ALICE], 5));
+			set_admin_members(vec![ALICE], 5);
 			for vault_id in 0..MAX_ASSOCIATED_VAULTS {
 				let proposal =
 					Call::PabloStrategy(crate::Call::associate_vault { vault_id: vault_id as u64 });
-				assert_ok!(make_proposal(proposal, ALICE, 1, 0, None));
+				make_proposal(proposal, ALICE, 1, 0, None);
 			}
 
 			let vault_id = MAX_ASSOCIATED_VAULTS as VaultId;
 			let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
 			let hash: H256 = BlakeTwo256::hash_of(&proposal);
-			assert_ok!(make_proposal(proposal, ALICE, 1, 0, None));
+			make_proposal(proposal, ALICE, 1, 0, None);
 			// Check that last proposal completed with error, since we are trying to add more Vaults than allowed
 			assert_has_event::<MockRuntime, _>(
 				|e| matches!(
@@ -119,11 +119,11 @@ mod rebalance {
 				asset_id: base_asset,
 				pool_id,
 			});
-			assert_ok!(set_admin_members(vec![ALICE], 5));
-			assert_ok!(make_proposal(proposal, ALICE, 1, 0, None));
+			set_admin_members(vec![ALICE], 5);
+			make_proposal(proposal, ALICE, 1, 0, None);
 
 			let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
-			assert_ok!(make_proposal(proposal, ALICE, 1, 0, None));
+			make_proposal(proposal, ALICE, 1, 0, None);
 
 			assert_ok!(PabloStrategy::rebalance());
 
@@ -152,12 +152,12 @@ mod set_pool_id_for_asset {
 
 			// Create Pool (LAYR/CROWD_LOAN)
 			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
-			assert_ok!(set_admin_members(vec![ADMIN, ALICE, BOB], 5));
+			set_admin_members(vec![ADMIN, ALICE, BOB], 5);
 			let proposal = Call::PabloStrategy(crate::Call::set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
 			});
-			assert_ok!(make_proposal(proposal, ALICE, 2, 0, Some(&vec![ALICE, BOB])));
+			make_proposal(proposal, ALICE, 2, 0, Some(&vec![ALICE, BOB]));
 			System::assert_has_event(Event::PabloStrategy(
 				pallet::Event::AssociatedPoolWithAsset { asset_id: base_asset, pool_id },
 			));
@@ -174,12 +174,12 @@ mod set_pool_id_for_asset {
 
 			// Create Pool (LAYR/CROWD_LOAN)
 			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
-			assert_ok!(set_admin_members(vec![ADMIN, ALICE, BOB], 5));
+			set_admin_members(vec![ADMIN, ALICE, BOB], 5);
 			let proposal = Call::PabloStrategy(crate::Call::set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
 			});
-			assert_ok!(make_proposal(proposal, ALICE, 2, 0, Some(&vec![ALICE])));
+			make_proposal(proposal, ALICE, 2, 0, Some(&vec![ALICE]));
 		});
 	}
 }

@@ -97,12 +97,8 @@ where
 	vault_id.unwrap()
 }
 
-pub fn set_admin_members(
-	members: Vec<AccountId>,
-	members_count: MemberCount,
-) -> DispatchResultWithPostInfo {
+pub fn set_admin_members(members: Vec<AccountId>, members_count: MemberCount) {
 	assert_ok!(CollectiveInstrumental::set_members(Origin::root(), members, None, members_count,));
-	Ok(().into())
 }
 
 pub fn make_proposal(
@@ -111,7 +107,7 @@ pub fn make_proposal(
 	threshold: u32,
 	index: ProposalIndex,
 	yes_votes: Option<&Vec<AccountId>>,
-) -> DispatchResultWithPostInfo {
+) {
 	let proposal_len: u32 = proposal.using_encoded(|p| p.len() as u32);
 	let proposal_weight = proposal.get_dispatch_info().weight;
 	let hash: H256 = BlakeTwo256::hash_of(&proposal);
@@ -153,7 +149,6 @@ pub fn make_proposal(
 			}
 		};
 	}
-	Ok(().into())
 }
 
 pub fn assert_has_event<T, F>(matcher: F)
