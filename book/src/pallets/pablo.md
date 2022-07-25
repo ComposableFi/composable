@@ -1,6 +1,6 @@
 # Pablo
 
-*The Pablo pallet allows creating and maintaining liquidity pools and adds some basic functionality for swaps*
+*Pallet Pablo provides extensive functionality to set up an exchange; enabling users to create, trade with, and manage, liquidity pools.*
 
 ---
 

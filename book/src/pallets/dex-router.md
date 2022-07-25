@@ -1,4 +1,4 @@
-# DEX-Router
+# Dex-Router
 
 *This pallet is used to add a route to a Decentralized Exchange (DEX) for a given pair of asset id's.*
 
