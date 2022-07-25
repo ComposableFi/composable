@@ -199,8 +199,6 @@ pub mod pallet {
 		UnableToRebalanceVault { vault_id: T::VaultId },
 
 		AssociatedPoolWithAsset { asset_id: T::AssetId, pool_id: T::PoolId },
-
-		Check,
 	}
 
 	// ---------------------------------------------------------------------------------------------
