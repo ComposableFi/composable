@@ -1,18 +1,11 @@
 {
-  "extends": "../../tsconfig-base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "./src",
-    "baseUrl": "./",
-    "paths": {
-      "@composable/oracle_setup/*": ["./src/*"],
-      "@composable/utils": ["../utils/src"],
-      "@composable/utils/*": ["../utils/src/*"],
-      "@composable/types": ["../types/src"],
-      "@composable/types/*": ["../types/src/*"],
-    },
-    "resolveJsonModule": true
+    "baseUrl": "./"
   },
+  "files": ["src/index.ts", "src/config.json"],
+  "include": ["./src/**/*"],
   "exclude": ["node_modules", "dist"],
   "ts-node": {
     "transpileOnly": true,
@@ -20,11 +13,16 @@
     "require": ["tsconfig-paths/register"],
     "compilerOptions": {
       "types": ["node"],
+      "rootDir": "..",
       "traceResolution": true
     }
   },
   "references": [
-    { "path": "../utils" },
-    { "path": "../types" },
+    {
+      "path": "../types/tsconfig.json"
+    },
+    {
+      "path": "../utils/tsconfig.json"
+    }
   ]
 }

@@ -273,7 +273,7 @@ pub mod pallet {
 			// SS58Codec is only implemented for AccountId32 in std
 			// implementing it in wasm would require compiling the ss58 registry in the runtime,
 			// which is not ideal Hence, the reason for delegating this to a host function
-			let from = runtime_interface::ibc::account_id_to_ss58(account_id_32.into())
+			let from = runtime_interface::account_id_to_ss58(account_id_32.into())
 				.and_then(|val| {
 					String::from_utf8(val).map_err(|_| SS58CodecError::InvalidAccountId)
 				})

@@ -1,4 +1,4 @@
-import * as definitions from "@composable/types/definitions";
+import * as definitions from "@composable/types/src/interfaces/definitions";
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
 import { ApiOptions } from "@polkadot/api/types";
 

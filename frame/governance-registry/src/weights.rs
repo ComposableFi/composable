@@ -34,7 +34,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 }
 
-// TODO: remove, really it is not needed
+// For backwards compatibility and tests
 impl WeightInfo for () {
 	fn set() -> Weight {
 		(83_205_000 as Weight)

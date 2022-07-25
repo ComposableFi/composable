@@ -39,6 +39,8 @@ use crate::{
 pub struct PicassoExecutor;
 
 impl sc_executor::NativeExecutionDispatch for PicassoExecutor {
+	/// This should not be extended under any circumstances or we risk bricking our chain
+	/// permanently, with the only option for recovery being a re-genesis.
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
@@ -55,6 +57,8 @@ pub struct ComposableExecutor;
 
 #[cfg(feature = "composable")]
 impl sc_executor::NativeExecutionDispatch for ComposableExecutor {
+	/// This should not be extended under any circumstances or we risk bricking our chain
+	/// permanently, with the only option for recovery being a re-genesis.
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
@@ -70,11 +74,10 @@ impl sc_executor::NativeExecutionDispatch for ComposableExecutor {
 pub struct DaliExecutor;
 
 #[cfg(feature = "dali")]
-impl sc_executor::NativeExecutionDispatch for DaliExecutor {
-	type ExtendHostFunctions = (
-		frame_benchmarking::benchmarking::HostFunctions,
-		ibc_primitives::runtime_interface::ibc::HostFunctions,
-	);
+impl NativeExecutionDispatch for DaliExecutor {
+	/// This should not be extended under any circumstances or we risk bricking our chain
+	/// permanently, with the only option for recovery being a re-genesis.
+	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		dali_runtime::api::dispatch(method, data)

@@ -16,7 +16,6 @@ Makefile @ComposableFi/sre
 ## Parachain related files
 
 runtime/ @ComposableFi/parachain-leads
-
 node/ @ComposableFi/parachain-leads
 frame/ @ComposableFi/parachain
 integration-tests/ @ComposableFi/parachain @ComposableFi/testers

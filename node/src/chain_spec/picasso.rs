@@ -70,8 +70,5 @@ pub fn genesis_config(
 		council: Default::default(),
 		democracy: Default::default(),
 		treasury: Default::default(),
-		technical_collective: Default::default(),
-		technical_membership: Default::default(),
-		relayer_xcm: Default::default(),
 	}
 }
