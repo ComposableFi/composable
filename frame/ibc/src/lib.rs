@@ -123,15 +123,30 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{Currency, UnixTime},
+		Blake2_128Concat,
 	};
 	use frame_system::pallet_prelude::*;
-	use ibc::core::{
-		ics02_client::msgs::create_client::TYPE_URL as CREATE_CLIENT_TYPE_URL,
-		ics03_connection::{
-			connection::Counterparty, msgs::conn_open_init::MsgConnectionOpenInit, version::Version,
+	use ibc::{
+		core::{
+			ics02_client::{
+				client_def::ConsensusUpdateResult,
+				context::{ClientKeeper, ClientReader},
+				handler::{update_client::process as process_update_client, ClientResult},
+				msgs::{
+					create_client::TYPE_URL as CREATE_CLIENT_TYPE_URL,
+					update_client::TYPE_URL as UPDATE_CLIENT_TYPE_URL, ClientMsg,
+					misbehavior::TYPE_URL as SUBMIT_MISBEHAVIOUR_TYPE_URL
+				},
+			},
+			ics03_connection::{
+				connection::Counterparty, msgs::conn_open_init::MsgConnectionOpenInit,
+				version::Version,
+			},
+			ics04_channel::context::ChannelReader,
+			ics23_commitment::commitment::CommitmentPrefix,
+			ics26_routing::{handler::MsgReceipt, msgs::Ics26Envelope},
 		},
-		ics23_commitment::commitment::CommitmentPrefix,
-		ics26_routing::handler::MsgReceipt,
+		handler::HandlerOutput,
 	};
 
 	use crate::{host_functions::HostFunctions, ics23::client_states::ClientStates};
@@ -167,6 +182,9 @@ pub mod pallet {
 		/// Expected blocktime
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
+		/// Period during which a light client update can be challenged
+		#[pallet::constant]
+		type HeaderChallengeWindow: Get<Self::BlockNumber>;
 		/// benchmarking weight info
 		type WeightInfo: WeightInfo;
 		/// Origin allowed to create light clients and initiate connections
@@ -239,6 +257,12 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
+	/// client_id => bool
+	pub type ChallengePeriod<T: Config> =
+		StorageMap<_, Blake2_128Concat, Vec<u8>, bool, ValueQuery>;
+
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// height => IbcConsensusState
 	pub type HostConsensusStates<T: Config> =
 		StorageValue<_, BoundedBTreeMap<u64, IbcConsensusState, ConstU32<250>>, ValueQuery>;
@@ -250,12 +274,16 @@ pub mod pallet {
 		IbcEvents { events: Vec<events::IbcEvent> },
 		/// Ibc errors
 		IbcErrors { errors: Vec<errors::IbcError> },
+		/// Update light client state
+		ClientStateUpdate { client_id: Vec<u8>, revision_number: u64, revision_height: u64 },
+		/// Consensus state updated
+		ConsensusStateUpdate { client_id: Vec<u8>, revision_number: u64, revision_height: u64 },
 	}
 
 	/// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Error processing ibc messages
+		/// Error processing ibc message
 		ProcessingError,
 		/// Error decoding some type
 		DecodingError,
@@ -285,6 +313,8 @@ pub mod pallet {
 		InvalidRoute,
 		/// Invalid message for extirnsic
 		InvalidMessageType,
+		/// Challenge Period has not elapsed
+		ChallengePeriodNotElapsed
 	}
 
 	#[pallet::hooks]
@@ -457,6 +487,159 @@ pub mod pallet {
 				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
 					.map_err(|_| Error::<T>::ProcessingError)?;
 			Self::deposit_event(result.events.into());
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		#[frame_support::transactional]
+		pub fn update_client_state(origin: OriginFor<T>, msg: Any) -> DispatchResult {
+			let _sender = ensure_signed(origin)?;
+			let mut ctx = routing::Context::<T>::new();
+			let type_url =
+				String::from_utf8(msg.type_url.clone()).map_err(|_| Error::<T>::DecodingError)?;
+			if type_url.as_str() != UPDATE_CLIENT_TYPE_URL {
+				return Err(Error::<T>::InvalidMessageType.into())
+			}
+			let msg = ibc_proto::google::protobuf::Any { type_url, value: msg.value };
+
+			// Decode the proto message into a domain message, creating an ICS26 envelope.
+			let envelope = ibc::core::ics26_routing::handler::decode(msg)
+				.map_err(|_| Error::<T>::DecodingError)?;
+
+			let HandlerOutput { mut result, .. } = match envelope {
+				Ics26Envelope::Ics2Msg(ClientMsg::UpdateClient(msg)) =>
+					process_update_client::<HostFunctions>(&mut ctx, msg)
+						.map_err(|_| Error::<T>::ProcessingError)?,
+				_ => return Err(Error::<T>::InvalidMessageType.into()),
+			};
+
+			let (client_id, height) = match &mut result {
+				ClientResult::Update(res) => {
+					res.consensus_state = None;
+					(res.client_id.as_bytes().to_vec(), res.client_state.latest_height())
+				},
+				_ => unreachable!(),
+			};
+
+			ctx.store_client_result(result).map_err(|_| Error::<T>::ProcessingError)?;
+
+			ChallengePeriod::<T>::insert(client_id.clone(), true);
+
+			Self::deposit_event(Event::<T>::ClientStateUpdate {
+				client_id,
+				revision_number: height.revision_number,
+				revision_height: height.revision_height,
+			});
+
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		#[frame_support::transactional]
+		pub fn update_client_consensus(origin: OriginFor<T>, msg: Any) -> DispatchResult {
+			let _sender = ensure_signed(origin)?;
+			let mut ctx = routing::Context::<T>::new();
+			let type_url =
+				String::from_utf8(msg.type_url.clone()).map_err(|_| Error::<T>::DecodingError)?;
+			if type_url.as_str() != UPDATE_CLIENT_TYPE_URL {
+				return Err(Error::<T>::InvalidMessageType.into())
+			}
+
+			let msg = ibc_proto::google::protobuf::Any { type_url, value: msg.value };
+
+			// Decode the proto message into a domain message, creating an ICS26 envelope.
+			let envelope = ibc::core::ics26_routing::handler::decode(msg)
+				.map_err(|_| Error::<T>::DecodingError)?;
+
+			let HandlerOutput { result, .. } = match envelope {
+				Ics26Envelope::Ics2Msg(ClientMsg::UpdateClient(msg)) => {
+					let client_id = msg.client_id.as_bytes().to_vec();
+					let challenge_window: u32 = T::HeaderChallengeWindow::get().into();
+					let client_state = ctx.client_state(&msg.client_id).map_err(|_| Error::<T>::ClientStateNotFound)?;
+					let client_update_height = ctx.client_update_height(&msg.client_id, client_state.latest_height()).map_err(|_| Error::<T>::Other)?.revision_height;
+					let current_height = ctx.host_height().revision_height; 
+					let block_diff = current_height  - client_update_height;
+
+					if !ChallengePeriod::<T>::get(client_id) || block_diff <= challenge_window.into() {
+						return Err(Error::<T>::ChallengePeriodNotElapsed.into())
+					}
+					
+					process_update_client::<HostFunctions>(&mut ctx, msg)
+						.map_err(|_| Error::<T>::ProcessingError)?
+				}
+				_ => return Err(Error::<T>::InvalidMessageType.into()),
+			};
+
+			let res = match result {
+				ClientResult::Update(res) => res,
+				_ => unreachable!(),
+			};
+
+			match res.consensus_state {
+				None => return Err(Error::<T>::ConsensusStateNotFound.into()),
+				Some(cs_state_update) => match cs_state_update {
+					ConsensusUpdateResult::Single(cs_state) => {
+						ctx.store_consensus_state(
+							res.client_id.clone(),
+							res.client_state.latest_height(),
+							cs_state,
+						)
+						.map_err(|_| Error::<T>::ProcessingError)?;
+					},
+					ConsensusUpdateResult::Batch(cs_states) =>
+						for (height, cs_state) in cs_states {
+							ctx.store_consensus_state(res.client_id.clone(), height, cs_state)
+								.map_err(|_| Error::<T>::ProcessingError)?;
+						},
+				},
+			}
+
+			ctx.store_update_time(
+				res.client_id.clone(),
+				res.client_state.latest_height(),
+				res.processed_time,
+			)
+			.map_err(|_| Error::<T>::ProcessingError)?;
+			ctx.store_update_height(
+				res.client_id.clone(),
+				res.client_state.latest_height(),
+				res.processed_height,
+			)
+			.map_err(|_| Error::<T>::ProcessingError)?;
+
+			ChallengePeriod::<T>::insert(res.client_id.as_bytes().to_vec(), false);
+
+			Self::deposit_event(Event::<T>::ConsensusStateUpdate {
+				client_id: res.client_id.as_bytes().to_vec(),
+				revision_number: res.client_state.latest_height().revision_number,
+				revision_height: res.client_state.latest_height().revision_height,
+			});
+
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		#[frame_support::transactional]
+		pub fn challenge_client_update(origin: OriginFor<T>, msg: Any) -> DispatchResult {
+			let _sender = ensure_signed(origin)?;
+			let mut ctx = routing::Context::<T>::new();
+			let type_url =
+				String::from_utf8(msg.type_url.clone()).map_err(|_| Error::<T>::DecodingError)?;
+			if type_url.as_str() != SUBMIT_MISBEHAVIOUR_TYPE_URL {
+				return Err(Error::<T>::InvalidMessageType.into())
+			}
+
+			let msg = ibc_proto::google::protobuf::Any { type_url, value: msg.value };
+			let envelope = ibc::core::ics26_routing::handler::decode(msg)
+				.map_err(|_| Error::<T>::DecodingError)?;
+			match envelope {
+					Ics26Envelope::Ics2Msg(ClientMsg::Misbehaviour(msg)) => {
+						match msg.misbehaviour {
+							
+						}
+					}
+					_ => return Err(Error::<T>::InvalidMessageType.into()),
+			}
 			Ok(())
 		}
 	}
