@@ -1,5 +1,5 @@
 # Pablo
-Pallet Pablo provides extensive functionality to set up an exchange and enabling users to create, manage and take part in liquidity pools.
+Pallet Pablo provides extensive functionality to set up an exchange; enabling users to create, trade with, and manage, liquidity pools.
 
 
 ## Overview
@@ -9,7 +9,7 @@ Pablo builds on four pillars, previously distinguished pallets in their own righ
 
 - [Balancer AMM](https://balancer.fi/whitepaper.pdf) built on the constant product formula it functions similar to Uniswap but applies adjustable weights to set a price difference at pool initialization.
 
-- Liquidity Bootstrapping; enables creation and management of liquidity pools by users
+- Liquidity Bootstrapping; is based on Balancer AMM and with a set start ending period. The idea is to use the AMM to launch a new token which after it's initial liquidity has been provided by its creator it becomes crowdfunded.
 
 - DEX Router; provides trading infrastructure for currency pairs with no direct pool in Pablo by combining different pools 
 
