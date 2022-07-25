@@ -301,8 +301,10 @@ export function useSwaps(): {
    */
    useEffect(() => {
     if (parachainApi) {
-      if (previousSlippage != slippage && assetOneAmount.gt(0) && balance1.gt(0)) {
+      if (previousSlippage != slippage && assetOneAmount.gt(0) && balance1.gt(0) && balance1.gt(assetOneAmount)) {
         onChangeTokenAmount("quote", assetOneAmount);
+      } else {
+        onChangeTokenAmount("quote", new BigNumber(0));
       }
     }
     return;
