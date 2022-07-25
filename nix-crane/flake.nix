@@ -222,6 +222,7 @@
           # and also we then can have fork easy
           # and nix allows to use any version of rust
           # so if will need to special docs for substrate, we will have it
+          # and, anyway cargo install also compiles
           mdbook = with packages; 
             crane-stable.buildPackage {
               src = fetchFromGitHub {
@@ -231,13 +232,16 @@
                 hash = "sha256-ggcyOsA4cyo5l87cZmOMI0w1gCzmWy9NRJiWxjBdB1E=";
               };          
             };
+          taplo = with packages; 
+            crane-stable.buildPackage {
+              src = fetchFromGitHub {
+                owner = "tamasfe";
+                repo = "taplo";
+                rev = "eeb62dcbada89f13de73cfc063ffe67a890c4bc6";
+                hash = "sha256-ggcyOsA4cyo5l87cZmOMI0w1gCzmWy9NRJiWxjBdB1E=";
+              };          
+            };            
 
-# # Add taplo
-# WORKDIR /taplo-binary
-# RUN wget "https://github.com/tamasfe/taplo/releases/download/release-cli-0.6.2/taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz" && \
-#     tar -xzf taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
-#     chmod +x taplo && \
-#     cp ./taplo /usr/bin
 
           polkadot-node = stdenv.mkDerivation {
             name = "polkadot-${polkadot.version}";
@@ -367,6 +371,7 @@
               wasm-optimizer
               composable-node
               mdbook
+              taplo
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
