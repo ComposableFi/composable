@@ -223,7 +223,7 @@
                 hash = "sha256-ggcyOsA4cyo5l87cZmOMI0w1gCzmWy9NRJiWxjBdB1E=";
               };          
             };            
-
+          composable-book = import ../book/default.nix { crane = crane-stable; cargo  = pkgs.cargo; stdenv = pkgs.stdenv; mdbook = mdbook; };
           polkadot-node = stdenv.mkDerivation {
             name = "polkadot-${polkadot.version}";
             version = polkadot.version;
@@ -345,9 +345,8 @@
           program = "${packages.devnet}/bin/composable-devnet";
         };
 
-        # Shell env a user can enter with `nix develop`
         devShells = {
-          default = mkShell {
+          developers = mkShell {
             buildInputs = with packages; [
               rust-stable
               wasm-optimizer
@@ -357,6 +356,20 @@
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
+
+          technical-writers = mkShell {
+            buildInputs = with packages; [
+              mdbook
+              python3
+              plantuml
+              graphviz
+              pandoc
+              adoc
+            ];
+            NIX_PATH = "nixpkgs=${pkgs.path}";
+          };
+          
+          default = developers;
         };
       });
 }

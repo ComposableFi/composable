@@ -1,18 +1,18 @@
-{ pkgs }:
+{ mdbook, cargo, crane, stdenv,  }:
 let 
-  scraper = pkgs.rustPlatform.buildRustPackage rec {
+  scraper = crane.buildPackage rec {
     pname = "extrinsics-docs-scraper";
     version = "1.0.0";
     src = ../utils/extrinsics-docs-scraper;
     cargoSha256 = "q9D41wUeVOQ/pet950Omk09+Act7tM9wdXSZynvujuc=";
   };
 in
-pkgs.stdenv.mkDerivation {
+stdenv.mkDerivation {
   name = "composable-book";
   src = ./..;
   buildInputs = [ 
-    pkgs.mdbook 
-    pkgs.cargo
+    mdbook 
+    cargo
   ];
   dontUnpack = true;
   installPhase = ''

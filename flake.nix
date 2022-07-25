@@ -29,14 +29,12 @@
 
       packages = 
         let
-          devnet = pkgs.callPackage ./devnet { inherit nixpkgs; };
-          latest-book = pkgs.callPackage ./book {};
+          devnet = pkgs.callPackage ./devnet { inherit nixpkgs; };          
         in {
           dali-script = devnet.dali.script;
           picasso-script = devnet.picasso.script;
           inherit (devnet.dali) book;
           inherit (devnet) nixops;
-          inherit latest-book;
         };
 
       # Default package is currently the book, but that will change
@@ -63,18 +61,11 @@
               llvmPackages_latest.llvm
               llvmPackages_latest.bintools
               zlib.out
-              xorriso
-              grub2
               qemu
               llvmPackages_latest.lld
               python3
               openssl.dev
               pkg-config
-              rust-analyzer
-              # rustup
-              # (rust-bin.stable.latest.default.override {
-              #   extensions = [ "rust-src" ];
-              # })
               (rust-bin.nightly."2022-02-01".default.override {
                 targets = [ "wasm32-unknown-unknown" ];
               })
@@ -88,15 +79,6 @@
             #   export PATH=$PATH:~/.rustup/toolchains/$RUSTC_VERSION-aarch64-unknown-linux-gnu/bin/
             #   rustup target add wasm32-unknown-unknown --toolchain nightly-2022-02-01
             #   '';
-
-
-            # Disabled because no aarch64 support:
-            #
-            # Add libvmi precompiled library to rustc search path 
-            # RUSTFLAGS = (builtins.map (a: ''-L ${a}/lib'') [ 
-            #   pkgs.libvmi
-            # ]);
-
 
             # Add libvmi, glibc, clang, glib headers to bindgen search path
             BINDGEN_EXTRA_CLANG_ARGS = 
