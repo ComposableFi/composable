@@ -47,12 +47,18 @@ fn vesting_schedule<T>(
 	period: BlockNumberOf<T>,
 	period_count: u32,
 	per_period: BalanceOf<T>,
+	vesting_schedule_id: u128,
 ) -> VestingScheduleOf<T>
 where
 	T: Config,
 	BalanceOf<T>: From<u64>,
 {
-	VestingSchedule { window: BlockNumberBased { start, period }, period_count, per_period }
+	VestingSchedule {
+		vesting_schedule_id,
+		window: BlockNumberBased { start, period },
+		period_count,
+		per_period,
+	}
 }
 
 fn zero_account<T>() -> T::AccountId
@@ -79,7 +85,8 @@ benchmarks! {
 			START_BLOCK_NUMBER.into(),
 			PERIOD.into(),
 			PERIOD_COUNT,
-			per_period.into()
+			per_period.into(),
+			VestingScheduleCount::<T>::get().increment()?
 		);
 		for i in 0 .. s {
 			let source = create_account::<T>("source", i);
