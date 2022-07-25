@@ -4,7 +4,7 @@ A pallet that provides basic functionality to add a route to a DEX for any given
 
 ## Overview
 
-The DEX Router pallet is used to find liquidity pools on DEX's for a set given assets. The pallet also provides methods to maintain established routes.
+The DEX Router pallet's main goal is to enable trading infrastructure for currency pair's outside local.
 
 ## Workflow
 
