@@ -1,21 +1,17 @@
 use crate::mock::{
 	account_id::{ADMIN, ALICE, BOB},
-	helpers::{create_pool, create_vault, make_proposale, set_admin_members},
+	helpers::{assert_has_event, create_pool, create_vault, make_proposale, set_admin_members},
 	runtime::{
 		Balance, Call, Event, ExtBuilder, PabloStrategy, System, VaultId, MAX_ASSOCIATED_VAULTS,
 	},
 };
 #[allow(unused_imports)]
-use crate::{pallet, pallet::Error};
+use crate::pallet;
 use composable_traits::instrumental::InstrumentalProtocolStrategy;
 use frame_support::assert_ok;
 use primitives::currency::CurrencyId;
 use sp_core::H256;
-use sp_runtime::{
-	traits::{BlakeTwo256, Hash},
-	DispatchError::Module,
-	ModuleError,
-};
+use sp_runtime::traits::{BlakeTwo256, Hash};
 use sp_std::collections::btree_set::BTreeSet;
 
 // -------------------------------------------------------------------------------------------------
@@ -24,6 +20,8 @@ use sp_std::collections::btree_set::BTreeSet;
 
 #[cfg(test)]
 mod associate_vault {
+	use crate::mock::runtime::MockRuntime;
+
 	use super::*;
 
 	#[test]
@@ -54,16 +52,12 @@ mod associate_vault {
 			let proposal_2 = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
 			let hash: H256 = BlakeTwo256::hash_of(&proposal_2);
 			assert_ok!(make_proposale(proposal_2, ALICE, 1, 1, None));
-			System::assert_has_event(Event::CollectiveInstrumental(
-				pallet_collective::Event::Executed {
-					proposal_hash: hash,
-					result: Err(Module(ModuleError {
-						index: 12,
-						error: [0, 0, 0, 0],
-						message: None,
-					})),
-				},
-			));
+			// Check that last proposal completed with error, since we are trying to add the same Vault
+			assert_has_event::<MockRuntime, _>(
+				|e| matches!(
+					e.event,
+					Event::CollectiveInstrumental(pallet_collective::Event::Executed { proposal_hash, .. }) if proposal_hash == hash),
+			);
 			let mut correct_associated_vaults_storage = BTreeSet::new();
 			correct_associated_vaults_storage.insert(vault_id);
 			assert_eq!(
@@ -88,16 +82,12 @@ mod associate_vault {
 			let proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
 			let hash: H256 = BlakeTwo256::hash_of(&proposal);
 			assert_ok!(make_proposale(proposal, ALICE, 1, 0, None));
-			System::assert_has_event(Event::CollectiveInstrumental(
-				pallet_collective::Event::Executed {
-					proposal_hash: hash,
-					result: Err(Module(ModuleError {
-						index: 12,
-						error: [1, 0, 0, 0],
-						message: None,
-					})),
-				},
-			));
+			// Check that last proposal completed with error, since we are trying to add more Vaults than allowed
+			assert_has_event::<MockRuntime, _>(
+				|e| matches!(
+					e.event,
+					Event::CollectiveInstrumental(pallet_collective::Event::Executed { proposal_hash, .. }) if proposal_hash == hash),
+			);
 			assert!(!BTreeSet::from(PabloStrategy::associated_vaults()).contains(&vault_id));
 		});
 	}

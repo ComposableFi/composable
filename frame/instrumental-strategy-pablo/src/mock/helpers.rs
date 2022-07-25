@@ -1,3 +1,13 @@
+use super::runtime::{
+	Call, CollectiveInstrumental, Event, Instrumental, MockRuntime, Origin, System, VaultId,
+};
+use crate::{
+	mock::{
+		account_id::{AccountId, ALICE, BOB},
+		runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
+	},
+	Config,
+};
 use composable_traits::{
 	defi::CurrencyPair,
 	dex::Amm,
@@ -7,6 +17,8 @@ use frame_support::{
 	assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate,
 	weights::GetDispatchInfo,
 };
+use frame_system::EventRecord;
+use pallet_collective::{Error as CollectiveError, Instance1, MemberCount, ProposalIndex};
 use pallet_pablo::PoolInitConfiguration;
 use primitives::currency::CurrencyId;
 use sp_core::{Encode, H256};
@@ -14,13 +26,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, Hash},
 	Permill, Perquintill,
 };
-
-use super::runtime::{Call, CollectiveInstrumental, Instrumental, MockRuntime, Origin, VaultId};
-use crate::mock::{
-	account_id::{AccountId, ALICE, BOB},
-	runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
-};
-use pallet_collective::{Error as CollectiveError, Instance1, MemberCount, ProposalIndex};
 
 pub fn create_pool<BAS, BAM, QAS, QAM, F, BW>(
 	base_asset: BAS,
@@ -150,4 +155,12 @@ pub fn make_proposale(
 		};
 	}
 	Ok(().into())
+}
+
+pub fn assert_has_event<T, F>(matcher: F)
+where
+	T: Config,
+	F: Fn(&EventRecord<Event, H256>) -> bool,
+{
+	assert!(System::events().iter().any(matcher));
 }
