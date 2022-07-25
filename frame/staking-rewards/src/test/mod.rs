@@ -10,7 +10,7 @@ use composable_traits::{
 		lock::{Lock, LockConfig},
 		ProtocolStaking, Reductions, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		Rewards, Stake, Staking,
+		RewardUpdate, Stake, Staking,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -27,6 +27,40 @@ use sp_std::collections::btree_map::BTreeMap;
 
 mod prelude;
 mod runtime;
+
+#[test]
+fn test_update_reward_pool() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+
+		Timestamp::set_timestamp(200000);
+
+		let pool_init_config = get_default_reward_pool();
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), pool_init_config));
+
+		let pool_id_1 = StakingRewards::pool_count();
+
+		let reward_updates = BTreeMap::from_iter([(
+			USDT::ID,
+			RewardUpdate { amount: 50, reward_rate: Perbill::from_percent(10) },
+		)]);
+
+		assert_ok!(StakingRewards::update_reward_pool(Origin::root(), pool_id_1, reward_updates));
+		assert_eq!(StakingRewards::pool_count(), 1);
+
+		let rewards_pool = StakingRewards::pools(1).expect("rewards_pool expected");
+		let reward = rewards_pool.rewards.get(&USDT::ID).unwrap();
+
+		assert_eq!(reward.total_rewards, 50);
+
+		assert_last_event::<Test, _>(|e| {
+			matches!(e.event,
+				Event::StakingRewards(crate::Event::RewardPoolUpdated { pool_id, .. })
+				if pool_id == pool_id_1
+			)
+		});
+	});
+}
 
 #[test]
 fn test_create_reward_pool() {

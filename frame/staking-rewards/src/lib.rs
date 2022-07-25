@@ -59,7 +59,9 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
-		staking::{RewardPoolConfiguration::RewardRateBasedIncentive, DEFAULT_MAX_REWARDS},
+		staking::{
+			RewardPoolConfiguration::RewardRateBasedIncentive, RewardUpdates, DEFAULT_MAX_REWARDS,
+		},
 		time::DurationSeconds,
 	};
 	use frame_support::{
@@ -75,7 +77,7 @@ pub mod pallet {
 	use sp_arithmetic::{traits::One, Permill};
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider},
-		PerThing, Perbill,
+		ArithmeticError, PerThing, Perbill,
 	};
 	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, vec, vec::Vec};
 
@@ -92,6 +94,11 @@ pub mod pallet {
 			owner: T::AccountId,
 			/// End block
 			end_block: T::BlockNumber,
+		},
+		/// Pool with specified id `T::RewardPoolId` was updated successfully by `T::AccountId`.
+		RewardPoolUpdated {
+			/// Id of updated pool.
+			pool_id: T::RewardPoolId,
 		},
 		Staked {
 			/// Id of newly created stake.
@@ -134,6 +141,8 @@ pub mod pallet {
 		MaxRewardLimitReached,
 		/// Only pool owner can add new reward asset.
 		OnlyPoolOwnerCanAddNewReward,
+		/// Max reward is exceeded
+		MaxRewardExceeded,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -207,6 +216,9 @@ pub mod pallet {
 		/// Required origin for reward pool creation.
 		type RewardPoolCreationOrigin: EnsureOrigin<Self::Origin>;
 
+		/// Required origin for reward pool update.
+		type RewardPoolUpdateOrigin: EnsureOrigin<Self::Origin>;
+
 		type WeightInfo: WeightInfo;
 	}
 
@@ -247,6 +259,9 @@ pub mod pallet {
 			<T as Config>::MaxRewardConfigsPerPool,
 		>,
 	>;
+
+	/// Abstraction over RewardUpdates
+	type RewardUpdatesOf<T> = RewardUpdates<<T as Config>::AssetId, <T as Config>::Balance>;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub (super) trait Store)]
@@ -319,6 +334,7 @@ pub mod pallet {
 							claimed_shares: T::Balance::zero(),
 							end_block,
 							lock,
+							last_updated: T::UnixTime::now().as_secs(),
 						},
 					);
 					Ok((owner, pool_id, end_block))
@@ -371,6 +387,61 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			<Self as Staking>::split(&who, &position, ratio.value())?;
+			Ok(())
+		}
+
+		/// Update a new reward pool based on the provided amounts and rates.
+		///
+		/// Emits `RewardPoolUpdated` event when successful.
+		#[pallet::weight(T::WeightInfo::update_reward_pool())]
+		#[transactional]
+		pub fn update_reward_pool(
+			origin: OriginFor<T>,
+			pool_id: T::RewardPoolId,
+			reward_updates: RewardUpdatesOf<T>,
+		) -> DispatchResult {
+			T::RewardPoolUpdateOrigin::ensure_origin(origin)?;
+
+			let current_time = T::UnixTime::now().as_secs();
+
+			let mut rewards_pool =
+				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+
+			let mut inner_rewards = rewards_pool.rewards.into_inner();
+
+			let elapsed_time = current_time - rewards_pool.last_updated;
+
+			for (asset_id, reward) in inner_rewards.iter_mut() {
+				match reward_updates.get(asset_id) {
+					Some(reward_update) => {
+						let new_total_rewards =
+							reward.total_rewards.safe_add(&reward_update.amount)?;
+
+						ensure!(
+							reward.max_rewards >= new_total_rewards,
+							Error::<T>::MaxRewardExceeded
+						);
+
+						reward.total_rewards = new_total_rewards;
+						// reward.total_rewards = reward.total_rewards
+						// 	.safe_add(elapsed_time * pool.reward_rate)
+						// 	.map_err(|_| ArithmeticError::Overflow)?;
+						reward.reward_rate = reward_update.reward_rate;
+					},
+					None => (),
+				}
+			}
+
+			let rewards =
+				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+
+			rewards_pool.last_updated = current_time;
+			rewards_pool.rewards = rewards;
+
+			RewardPools::<T>::insert(pool_id, rewards_pool);
+
+			Self::deposit_event(Event::<T>::RewardPoolUpdated { pool_id });
+
 			Ok(())
 		}
 	}
