@@ -1,12 +1,14 @@
-use crate::mock::{
-	account_id::{ADMIN, ALICE, BOB},
-	helpers::{assert_has_event, create_pool, create_vault, make_proposal, set_admin_members},
-	runtime::{
-		Balance, Call, Event, ExtBuilder, PabloStrategy, System, VaultId, MAX_ASSOCIATED_VAULTS,
+use crate::{
+	mock::{
+		account_id::{ADMIN, ALICE, BOB},
+		helpers::{assert_has_event, create_pool, create_vault, make_proposal, set_admin_members},
+		runtime::{
+			Balance, Call, Event, ExtBuilder, MockRuntime, PabloStrategy, System, VaultId,
+			MAX_ASSOCIATED_VAULTS,
+		},
 	},
+	pallet,
 };
-#[allow(unused_imports)]
-use crate::pallet;
 use composable_traits::instrumental::InstrumentalProtocolStrategy;
 use frame_support::assert_ok;
 use primitives::currency::CurrencyId;
@@ -20,8 +22,6 @@ use sp_std::collections::btree_set::BTreeSet;
 
 #[cfg(test)]
 mod associate_vault {
-	use crate::mock::runtime::MockRuntime;
-
 	use super::*;
 
 	#[test]
@@ -157,7 +157,7 @@ mod set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
 			});
-			assert_ok!(make_proposal(proposal, ALICE, 2, 0, Some(vec![ALICE, BOB])));
+			assert_ok!(make_proposal(proposal, ALICE, 2, 0, Some(&vec![ALICE, BOB])));
 			System::assert_has_event(Event::PabloStrategy(
 				pallet::Event::AssociatedPoolWithAsset { asset_id: base_asset, pool_id },
 			));
@@ -179,7 +179,7 @@ mod set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
 			});
-			assert_ok!(make_proposal(proposal, ALICE, 2, 0, Some(vec![ALICE])));
+			assert_ok!(make_proposal(proposal, ALICE, 2, 0, Some(&vec![ALICE])));
 		});
 	}
 }
