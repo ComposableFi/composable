@@ -253,7 +253,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::ExternalOrigin::ensure_origin(origin)?;
 			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
-			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
 			Ok(().into())
 		}
 		/// Occur rebalance of liquidity of each vault.
@@ -290,6 +289,7 @@ pub mod pallet {
 				},
 				Err(_) => Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal }),
 			}
+			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
 			Ok(())
 		}
 
