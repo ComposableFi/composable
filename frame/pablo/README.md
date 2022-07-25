@@ -19,7 +19,7 @@ This combination of pallets serves as a foundation making it possible for users 
 
 ## Workflow
 We start by calling the `create` function to create an initial pool. Once liquidity is provided to the pool we can start calling basic transactional functions.
-Our transactional functions consist of `buy`, `sell`, `exchange`.
+Our transactional functions consist of `buy`, `sell`, `exchange` and always reference at least one currency pair.
 
 And basic liquidity pool management functionalities to `Provide liquidity` and `remove liquidity`.
 
@@ -29,4 +29,4 @@ Users can also conduct specific swap operations by composing instructions based 
 ## Use Cases
 - Constant AMM exchange
 - Delegated liquidity pools
-- Liquidity pool aggregator
+- Liquidity pool index
