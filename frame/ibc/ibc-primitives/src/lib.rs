@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 use ibc::{
 	core::{
 		ics04_channel::packet::{Packet, Sequence},

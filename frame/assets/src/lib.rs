@@ -13,10 +13,9 @@
 //! The Assets pallet provides functions for:
 //!
 //! - Transferring balances of native and other assets between accounts.
-//! - Minting and burn new assets by per asset governance.
+//! - Minting new assets, with support for governance.
 //! - Crediting and debiting of created asset balances.
 //! - By design similar to [orml_currencies](https://docs.rs/orml-currencies/latest/orml_currencies/)
-//!   and [substrate_assets](https://github.com/paritytech/substrate/tree/master/frame/assets)
 //! Functions requiring authorization are checked via asset's governance registry origin. Example,
 //! minting.
 //!
@@ -349,7 +348,6 @@ pub mod pallet {
 		origin: OriginFor<T>,
 		asset_id: &T::AssetId,
 	) -> Result<(), DispatchError> {
-		// TODO: that must be ensure_asset_origin(origin, asset_id))
 		if T::AdminOrigin::ensure_origin(origin.clone()).is_ok() {
 			return Ok(())
 		}
@@ -357,22 +355,13 @@ pub mod pallet {
 		match origin.into() {
 			Ok(frame_system::RawOrigin::Signed(account)) => {
 				match T::GovernanceRegistry::get(asset_id) {
-					Ok(SignedRawOrigin::Root) => Ok(()), /* ISSUE: it says if */
-					// (call_origin.is_signed &&
-					// asst_owner.is_root) then allow
-					// mint/burn -> anybody can mint and
-					// burn PICA?
-					// TODO: https://app.clickup.com/t/37h4edu
+					Ok(SignedRawOrigin::Root) => Ok(()),
 					Ok(SignedRawOrigin::Signed(acc)) if acc == account => Ok(()),
 					_ => Err(DispatchError::BadOrigin),
 				}
 			},
 			Ok(frame_system::RawOrigin::Root) => Ok(()),
-			_ => Err(DispatchError::BadOrigin), /* ISSUE: likely will not support collective
-												* origin which is reasonable to have for
-												* governance
-												https://app.clickup.com/t/37h4edu
-												*/
+			_ => Err(DispatchError::BadOrigin),
 		}
 	}
 

@@ -4,6 +4,7 @@ import { AnyTuple, IEvent } from "@polkadot/types/types";
 import { AddressOrPair, SubmittableExtrinsic } from "@polkadot/api/types";
 import { EventRecord } from "@polkadot/types/interfaces";
 import { u32 } from "@polkadot/types-codec";
+
 /**
  * Sends an unsigned extrinsic and waits for success.
  * @param {ApiPromise} api Connected API Client.

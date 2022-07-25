@@ -5,6 +5,9 @@ install:
 build:
 	yarn build
 
+build-all:
+	npx lerna run build
+
 build-types:
 	cd packages/types && yarn gen && yarn build
 
@@ -13,9 +16,6 @@ build-utils:
 
 build-oracle_setup:
 	cd packages/oracle_setup && yarn build
-
-build-oracle_setup:
-	cd packages/bootstrap_pallets && yarn build
 
 lint:
 	yarn lint

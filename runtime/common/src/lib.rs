@@ -12,7 +12,6 @@
 #![deny(clippy::unseparated_literal_suffix, unused_imports, non_snake_case, dead_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-pub mod governance;
 pub mod impls;
 pub mod xcmp;
 use core::marker::PhantomData;
@@ -79,6 +78,9 @@ mod types {
 	// Aura consensus authority.
 	pub type AuraId = sp_consensus_aura::sr25519::AuthorityId;
 
+	/// Council Instance
+	pub type CouncilInstance = collective::Instance1;
+
 	/// Concrete header
 	pub type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::BlakeTwo256>;
 
@@ -101,8 +103,12 @@ mod types {
 
 /// Common constants of statemint and statemine
 mod constants {
-	use super::types::BlockNumber;
-	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
+	use super::types::{AccountId, BlockNumber, CouncilInstance};
+	use frame_support::{
+		traits::EnsureOneOf,
+		weights::{constants::WEIGHT_PER_SECOND, Weight},
+	};
+	use frame_system::EnsureRoot;
 	use sp_runtime::Perbill;
 
 	/// This determines the average expected block time that we are targeting. Blocks will be
@@ -129,12 +135,18 @@ mod constants {
 
 	/// We allow for 2 seconds of compute with a 6 second average block time.
 	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
+
+	/// Origin for either root or half of general council
+	pub type EnsureRootOrHalfCouncil = EnsureOneOf<
+		EnsureRoot<AccountId>,
+		collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
+	>;
 }
 
 #[derive(Default)]
 pub struct PriceConverter<AssetsRegistry>(PhantomData<AssetsRegistry>);
 
-pub mod cross_chain_errors {
+pub mod xcmp_errors {
 	pub const ASSET_IS_NOT_PRICEABLE: &str = "Asset is not priceable";
 	pub const AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE: &str =
 		"Amount of asset is more than max possible";
@@ -160,16 +172,16 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
 							payment.into_inner().safe_div(&Ratio::accuracy()).map_err(Into::into)
 						} else {
 							Err(DispatchError::Other(
-								cross_chain_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
+								xcmp_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
 							))
 						}
 					} else {
 						Err(DispatchError::Other(
-							cross_chain_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
+							xcmp_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
 						))
 					}
 				} else {
-					Err(DispatchError::Other(cross_chain_errors::ASSET_IS_NOT_PRICEABLE))
+					Err(DispatchError::Other(xcmp_errors::ASSET_IS_NOT_PRICEABLE))
 				},
 		}
 	}

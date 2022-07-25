@@ -22,7 +22,7 @@ Each currency has a non-negative total issuance. Given an identifier, we can ask
 
 A Currency may be associated with a `unit` and `minimal amount`. `Unit` usually comes in an amount of 10 to some power like 6, 9, or 12. The units are typically priceable and comprehendible for users. `minimal amount` can be used to operate micro-transactions and help minimize rounding errors.  
 
-Most pallets operate without knowledge of decimals and execute all mathematical operations on whole numbers.
+Most pallets operate with no knowledge of decimals and  execute all mathematical operations on whole numbers.
 
 Only pallets that care about out-of-consensus metadata operate with decimals, such as the oracle and bridge protocols. These protocols normalize all incoming amounts to 12 decimals based on knowledge of remote decimals.
 
