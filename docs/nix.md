@@ -28,10 +28,21 @@ nix run .#devnet
 
 ## You are Technical writer
 
+You can get all tooling to build book locally:
 
 ```shell
 nix shell .#technical-writer
 ```
+
+You can user `developers` codespace `nix` based devcontainer remotely or locally (see relevant codespace docs on how to).
+
+You can `watch` book with
+
+```shell
+nix build .#composable-book
+```
+
+to see live preview.
 
 ## Your are XCVM developer
 
