@@ -1,8 +1,7 @@
 use codec::{Decode, Encode};
 use parity_wasm::elements::Module;
 use scale_info::TypeInfo;
-use sp_std::vec::Vec;
-use wasm_instrument::gas_metering::{self, MemoryGrowCost, Rules};
+use wasm_instrument::gas_metering::{self, Rules};
 
 /// Errors likely to happen while instrumenting a code.
 #[derive(Clone, Debug, Encode, Decode, TypeInfo)]

@@ -41,20 +41,23 @@ pub use pallet::*;
 pub mod instrument;
 pub mod runtimes;
 pub mod types;
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{
-		instrument::{gas_and_stack_instrumentation, InstrumentationError},
+		instrument::gas_and_stack_instrumentation,
 		runtimes::{
 			abstraction::{CosmwasmAccount, Gas, VMPallet},
 			wasmi::{
-				CodeValidation, CosmwasmVM, CosmwasmVMError, ExportRequirement, ValidationError,
+				CodeValidation, CosmwasmVM, CosmwasmVMCache, CosmwasmVMError, CosmwasmVMShared,
+				ExportRequirement, ValidationError,
 			},
 		},
 		types::{CodeInfo, ContractInfo},
+		weights::WeightInfo,
 	};
-	use alloc::string::String;
+	use alloc::{collections::btree_map::Entry, string::String};
 	use composable_support::abstractions::{
 		nonce::Nonce,
 		utils::{
@@ -62,22 +65,22 @@ pub mod pallet {
 			start_at::ZeroInit,
 		},
 	};
-	use core::{fmt::Debug, num::NonZeroU32};
+	use core::fmt::Debug;
 	use cosmwasm_minimal_std::{
-		Addr, Binary as CosmwasmBinary, BlockInfo, Coin, ContractInfo as CosmwasmContractInfo,
-		Empty, Env, Event as CosmwasmEvent, MessageInfo, Timestamp, TransactionInfo,
+		Addr, Attribute as CosmwasmEventAttribute, Binary as CosmwasmBinary, BlockInfo, Coin,
+		ContractInfo as CosmwasmContractInfo, Env, Event as CosmwasmEvent, MessageInfo, Timestamp,
+		TransactionInfo,
 	};
 	use cosmwasm_vm::{
-		executor::{cosmwasm_call, ExecuteInput, InstantiateInput},
-		system::{cosmwasm_system_entrypoint, CosmwasmCallVM, CosmwasmCodeId},
-		vm::{VMBase, VmErrorOf},
+		executor::{ExecuteInput, InstantiateInput},
+		system::{cosmwasm_system_entrypoint, CosmwasmCodeId},
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
 	use frame_support::{
+		dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, PostDispatchInfo},
 		pallet_prelude::*,
 		storage::child::ChildInfo,
 		traits::{
-			fungible::{Inspect as FungibleInspect, Transfer as FungibleTransfer},
 			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 			tokens::{AssetId, Balance},
 			Get, UnixTime,
@@ -87,9 +90,7 @@ pub mod pallet {
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_core::crypto::UncheckedFrom;
 	use sp_io::hashing::blake2_256;
-	use sp_runtime::traits::{
-		AccountIdConversion, Convert, Hash, MaybeDisplay, SaturatedConversion,
-	};
+	use sp_runtime::traits::{Convert, Hash, MaybeDisplay, SaturatedConversion};
 	use sp_std::vec::Vec;
 	use wasm_instrument::gas_metering::ConstantCostRules;
 
@@ -103,7 +104,7 @@ pub mod pallet {
 	pub(crate) type ContractTrieIdOf<T> = BoundedVec<u8, MaxContractTrieIdSizeOf<T>>;
 	pub(crate) type ContractLabelOf<T> = BoundedVec<u8, MaxContractLabelSizeOf<T>>;
 	pub(crate) type CodeHashOf<T> = <T as frame_system::Config>::Hash;
-	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+	pub(crate) type AccountIdOf<T> = <T as Config>::AccountId;
 	pub(crate) type MaxCodeSizeOf<T> = <T as Config>::MaxCodeSize;
 	pub(crate) type MaxInstrumentedCodeSizeOf<T> = <T as Config>::MaxInstrumentedCodeSize;
 	pub(crate) type MaxMessageSizeOf<T> = <T as Config>::MaxMessageSize;
@@ -122,6 +123,9 @@ pub mod pallet {
 		Instantiate,
 		Execute,
 		Migrate,
+		Reply,
+		Sudo,
+		Query,
 	}
 
 	#[pallet::event]
@@ -130,15 +134,15 @@ pub mod pallet {
 		Uploaded { code_hash: CodeHashOf<T>, code_id: CosmwasmCodeId },
 		Instantiated { contract: AccountIdOf<T>, info: ContractInfoOf<T> },
 		Executed { contract: AccountIdOf<T>, entrypoint: EntryPoint, data: Option<Vec<u8>> },
-		Emitted { contract: AccountIdOf<T>, events: Vec<u8> },
+		ExecutionFailed { contract: AccountIdOf<T>, entrypoint: EntryPoint, error: Vec<u8> },
+		Emitted { contract: AccountIdOf<T>, ty: Vec<u8>, attributes: Vec<(Vec<u8>, Vec<u8>)> },
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		Instrumentation,
 		VmCreation,
-		Instantiation,
-		Execution,
+		ContractTrapped,
 		ContractHasNoInfo,
 		CodeDecoding,
 		CodeValidation,
@@ -149,15 +153,28 @@ pub mod pallet {
 		CodeNotFound,
 		ContractAlreadyExists,
 		ContractNotFound,
-		FundsTransfer,
+		TransferFailed,
 		ChargeGas,
 		RefundGas,
+		LabelTooBig,
+		UnknownDenom,
+		StackOverflow,
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config<AccountId = AccountIdOf<Self>> + Debug {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		type AccountId: Parameter
+			+ Member
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ MaybeDisplay
+			+ Ord
+			+ MaxEncodedLen
+			+ UncheckedFrom<Self::Hash>
+			+ AsRef<[u8]>;
 
 		/// Pallet unique ID.
 		#[pallet::constant]
@@ -219,6 +236,14 @@ pub mod pallet {
 		#[pallet::constant]
 		type CodeStackLimit: Get<u32>;
 
+		/// Price of writting a byte in the storage.
+		#[pallet::constant]
+		type StorageByteWritePrice: Get<u32>;
+
+		/// Price of extracting a byte from the storage.
+		#[pallet::constant]
+		type StorageByteReadPrice: Get<u32>;
+
 		/// A way to convert from our native account to cosmwasm `Addr`.
 		type AccountToAddr: Convert<AccountIdOf<Self>, String>
 			+ Convert<String, Result<AccountIdOf<Self>, ()>>;
@@ -235,10 +260,6 @@ pub mod pallet {
 		type AssetToDenom: Convert<AssetIdOf<Self>, String>
 			+ Convert<String, Result<AssetIdOf<Self>, ()>>;
 
-		/// Interface from which we are going to execute gas assets operation.
-		type GasAsset: FungibleInspect<AccountIdOf<Self>, Balance = BalanceOf<Self>>
-			+ FungibleTransfer<AccountIdOf<Self>, Balance = BalanceOf<Self>>;
-
 		/// Interface from which we are going to execute assets operations.
 		type Assets: FungiblesInspect<
 				AccountIdOf<Self>,
@@ -252,6 +273,9 @@ pub mod pallet {
 
 		/// Source of time.
 		type UnixTime: UnixTime;
+
+		/// Weight implementation.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -289,16 +313,19 @@ pub mod pallet {
 	pub(crate) type CurrentNonce<T: Config> =
 		StorageValue<_, u64, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
+	/// A mapping between a contract and it's nonce.
+	/// The nonce is a monotonic counter incremented when the contract instantiate another contract.
+	#[pallet::storage]
+	pub(crate) type ContractNonce<T: Config> =
+		StorageMap<_, Identity, AccountIdOf<T>, u64, ValueQuery>;
+
 	/// A mapping between a contract and it's metadata.
 	#[pallet::storage]
 	pub(crate) type ContractToInfo<T: Config> =
 		StorageMap<_, Identity, AccountIdOf<T>, ContractInfoOf<T>>;
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T>
-	where
-		AccountIdOf<T>: UncheckedFrom<T::Hash> + AsRef<[u8]>,
-	{
+	impl<T: Config> Pallet<T> {
 		/// Upload a CosmWasm contract.
 		/// The function will ensure that the wasm module is well formed and that it fits the
 		/// according limits. The module exports are going to be checked against the expected
@@ -321,8 +348,8 @@ pub mod pallet {
 		/// Instantiate a previously uploaded code resulting in a new contract being generated.
 		///
 		/// * Emits an `Instantiated` event on success.
-		/// * Emit an `Executed` event.
-		/// * Possibily emit a `Emitted` event.
+		/// * Emits an `Executed` event.
+		/// * Possibily emit `Emitted` events.
 		///
 		/// Arguments
 		///
@@ -331,8 +358,9 @@ pub mod pallet {
 		/// * `salt` the salt, usually used to instantiate the same contract multiple times.
 		/// * `funds` the assets transferred to the contract prior to calling it's `instantiate`
 		///   export.
+		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::instantiate().saturating_add(*gas))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
 			code_id: CosmwasmCodeId,
@@ -341,46 +369,55 @@ pub mod pallet {
 			label: ContractLabelOf<T>,
 			funds: FundsOf<T>,
 			gas: u64,
-			gas_keep_alive: bool,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			Self::do_instantiate(
+			let mut shared = Self::do_create_vm_shared(gas, false);
+			let outcome = Self::do_extrinsic_instantiate(
+				&mut shared,
 				who,
 				code_id,
-				salt,
+				&salt,
 				admin,
 				label,
 				funds,
-				gas,
-				gas_keep_alive,
 				message,
-			)?;
-			Ok(().into())
+			);
+			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 
+		/// Execute a previously instantiated contract.
+		///
+		/// * Emits an `Executed` event.
+		/// * Possibily emit `Emitted` events.
+		///
+		/// Arguments
+		///
+		/// * `origin` the origin dispatching the extrinsic.
+		/// * `code_id` the unique code id generated when the code has been uploaded via [`upload`].
+		/// * `salt` the salt, usually used to instantiate the same contract multiple times.
+		/// * `funds` the assets transferred to the contract prior to calling it's `instantiate`
+		///   export.
+		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
 		#[transactional]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::execute().saturating_add(*gas))]
 		pub fn execute(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
 			funds: FundsOf<T>,
 			gas: u64,
-			gas_keep_alive: bool,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			Self::do_execute(who, contract, funds, gas, gas_keep_alive, message)?;
-			Ok(().into())
+			let mut shared = Self::do_create_vm_shared(gas, false);
+			let outcome = Self::do_extrinsic_execute(&mut shared, who, contract, funds, message);
+			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 	}
 
-	impl<T: Config> Pallet<T>
-	where
-		AccountIdOf<T>: UncheckedFrom<T::Hash> + AsRef<[u8]>,
-	{
+	impl<T: Config> Pallet<T> {
 		/// Deterministic contract address computation, equivalent to solidity CREATE2.
-		fn derive_contract_address(
+		pub(crate) fn derive_contract_address(
 			instantiator: &AccountIdOf<T>,
 			code_id: CosmwasmCodeId,
 			salt: &[u8],
@@ -396,7 +433,10 @@ pub mod pallet {
 		}
 
 		/// Deterministic contract trie id generation.
-		fn derive_contract_trie_id(contract: &AccountIdOf<T>, nonce: u64) -> ContractTrieIdOf<T> {
+		pub(crate) fn derive_contract_trie_id(
+			contract: &AccountIdOf<T>,
+			nonce: u64,
+		) -> ContractTrieIdOf<T> {
 			let data: Vec<_> =
 				contract.as_ref().iter().chain(&nonce.to_le_bytes()).cloned().collect();
 			T::Hashing::hash(&data).as_ref().to_vec().try_into().expect(
@@ -404,31 +444,25 @@ pub mod pallet {
 			)
 		}
 
-		fn do_instantiate(
+		/// Setup pallet state for a new contract.
+		/// This is called prior to calling the `instantiate` export of the contract.
+		pub(crate) fn do_instantiate_phase1(
 			instantiator: AccountIdOf<T>,
 			code_id: CosmwasmCodeId,
-			salt: ContractSaltOf<T>,
+			salt: &[u8],
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
-			funds: FundsOf<T>,
-			gas: u64,
-			gas_keep_alive: bool,
-			message: ContractMessageOf<T>,
-		) -> DispatchResult {
-			let contract = Self::derive_contract_address(&instantiator, code_id, &salt);
+		) -> Result<(AccountIdOf<T>, ContractInfoOf<T>), Error<T>> {
+			let contract = Self::derive_contract_address(&instantiator, code_id, salt);
 			ensure!(
 				!ContractToInfo::<T>::contains_key(&contract),
 				Error::<T>::ContractAlreadyExists
 			);
-			let nonce = CurrentNonce::<T>::increment()?;
+			let nonce =
+				CurrentNonce::<T>::increment().expect("2305843009 contracts per human; qed;");
 			let trie_id = Self::derive_contract_trie_id(&contract, nonce);
-			let contract_info = ContractInfoOf::<T> {
-				instantiator: instantiator.clone(),
-				code_id,
-				trie_id,
-				admin,
-				label,
-			};
+			let contract_info =
+				ContractInfoOf::<T> { instantiator, code_id, trie_id, admin, label };
 			ContractToInfo::<T>::insert(&contract, &contract_info);
 			CodeIdToInfo::<T>::try_mutate(code_id, |entry| -> Result<(), Error<T>> {
 				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
@@ -439,52 +473,180 @@ pub mod pallet {
 				contract: contract.clone(),
 				info: contract_info.clone(),
 			});
-			Self::cosmwasm_run::<InstantiateInput<Empty>>(
+			Ok((contract, contract_info))
+		}
+
+		/// Create the VM shared state. Including readonly stack, VM depth, gas metering limits and
+		/// code cache.
+		///
+		/// This state is shared accross all VMs (all contracts loaded within a single call) and is
+		/// used to optimize some operations as well as track shared state (readonly storage while
+		/// doing a `query` etc...)
+		pub(crate) fn do_create_vm_shared(gas: u64, readonly: bool) -> CosmwasmVMShared {
+			CosmwasmVMShared {
+				readonly: if readonly { 1 } else { 0 },
+				depth: 0,
+				gas: Gas::new(T::MaxFrames::get(), gas),
+				cache: CosmwasmVMCache { code: Default::default() },
+			}
+		}
+
+		pub(crate) fn do_extrinsic_instantiate<'a>(
+			shared: &'a mut CosmwasmVMShared,
+			instantiator: AccountIdOf<T>,
+			code_id: CosmwasmCodeId,
+			salt: &[u8],
+			admin: Option<AccountIdOf<T>>,
+			label: ContractLabelOf<T>,
+			funds: FundsOf<T>,
+			message: ContractMessageOf<T>,
+		) -> Result<(), CosmwasmVMError<T>> {
+			let (contract, info) =
+				Self::do_instantiate_phase1(instantiator.clone(), code_id, salt, admin, label)?;
+			Self::do_extrinsic_dispatch(
+				shared,
 				EntryPoint::Instantiate,
 				instantiator,
 				contract,
-				contract_info,
+				info,
 				funds,
-				gas,
-				gas_keep_alive,
-				message,
+				|vm| cosmwasm_system_entrypoint::<InstantiateInput, _>(vm, &message),
 			)
-			.map_err(|_| Error::<T>::Instantiation)?;
-			Ok(())
 		}
 
-		fn do_execute(
+		pub(crate) fn do_extrinsic_execute<'a>(
+			shared: &'a mut CosmwasmVMShared,
 			sender: AccountIdOf<T>,
 			contract: AccountIdOf<T>,
 			funds: FundsOf<T>,
-			gas: u64,
-			gas_keep_alive: bool,
 			message: ContractMessageOf<T>,
-		) -> DispatchResult {
-			let contract_info =
-				ContractToInfo::<T>::get(&contract).ok_or(Error::<T>::ContractNotFound)?;
-			Self::cosmwasm_run::<ExecuteInput<Empty>>(
+		) -> Result<(), CosmwasmVMError<T>> {
+			let info = Self::contract_info(&contract)?;
+			Self::do_extrinsic_dispatch(
+				shared,
 				EntryPoint::Execute,
 				sender,
 				contract,
-				contract_info,
+				info,
 				funds,
-				gas,
-				gas_keep_alive,
-				message,
+				|vm| cosmwasm_system_entrypoint::<ExecuteInput, _>(vm, &message),
 			)
-			.map_err(|_| Error::<T>::Execution)?;
-			Ok(())
 		}
-	}
 
-	impl<T: Config> Pallet<T> {
-		// Current instrumentation version
+		/// Wrapper around [`Pallet::<T>::cosmwasm_call`] for extrinsics.
+		/// It's purpose is converting the input and emit events based on the result.
+		pub(crate) fn do_extrinsic_dispatch<'a, F>(
+			shared: &'a mut CosmwasmVMShared,
+			entrypoint: EntryPoint,
+			sender: AccountIdOf<T>,
+			contract: AccountIdOf<T>,
+			info: ContractInfoOf<T>,
+			funds: FundsOf<T>,
+			call: F,
+		) -> Result<(), CosmwasmVMError<T>>
+		where
+			F: for<'x> FnOnce(
+				&'x mut WasmiVM<CosmwasmVM<'x, T>>,
+			) -> Result<
+				(Option<CosmwasmBinary>, Vec<CosmwasmEvent>),
+				CosmwasmVMError<T>,
+			>,
+		{
+			let cosmwasm_funds = funds
+				.into_iter()
+				.map(|(asset, (amount, _))| Self::native_asset_to_cosmwasm_asset(asset, amount))
+				.collect::<Vec<_>>();
+			Self::cosmwasm_call(shared, sender, contract.clone(), info, cosmwasm_funds, call).map(
+				|(data, events)| {
+					for CosmwasmEvent { ty, attributes } in events.clone() {
+						Self::deposit_event(Event::<T>::Emitted {
+							contract: contract.clone(),
+							ty: ty.into(),
+							attributes: attributes
+								.into_iter()
+								.map(|CosmwasmEventAttribute { key, value }| {
+									(key.into(), value.into())
+								})
+								.collect::<Vec<_>>(),
+						});
+					}
+					Self::deposit_event(Event::<T>::Executed {
+						contract,
+						entrypoint,
+						data: data.clone().map(Into::into),
+					});
+				},
+			)
+		}
+
+		/// Low-level cosmwasm call over the VM. Transfer the `funds` before calling the callback.
+		pub(crate) fn cosmwasm_call<'a, F, R>(
+			shared: &'a mut CosmwasmVMShared,
+			sender: AccountIdOf<T>,
+			contract: AccountIdOf<T>,
+			info: ContractInfoOf<T>,
+			funds: Vec<Coin>,
+			call: F,
+		) -> Result<R, CosmwasmVMError<T>>
+		where
+			F: for<'x> FnOnce(&'x mut WasmiVM<CosmwasmVM<'x, T>>) -> Result<R, CosmwasmVMError<T>>,
+		{
+			// Transfer funds.
+			Self::do_transfer(&sender, &contract, &funds, false)?;
+			let mut vm = Self::cosmwasm_new_vm(shared, sender, contract.clone(), info, funds)?;
+			call(&mut vm)
+		}
+
+		/// Refund the remaining gas regardless of a contract outcome.
+		pub(crate) fn refund_gas(
+			outcome: Result<(), CosmwasmVMError<T>>,
+			initial_gas: u64,
+			remaining_gas: u64,
+		) -> DispatchResultWithPostInfo {
+			let post_info = PostDispatchInfo {
+				actual_weight: Some(initial_gas - remaining_gas),
+				pays_fee: Pays::Yes,
+			};
+			match outcome {
+				Ok(()) => Ok(post_info),
+				Err(e) => {
+					let e = match e {
+						CosmwasmVMError::Pallet(e) => e,
+						_ => Error::<T>::ContractTrapped,
+					};
+					Err(DispatchErrorWithPostInfo { error: e.into(), post_info })
+				},
+			}
+		}
+
+		/// Handy wrapper to return contract info.
+		pub(crate) fn contract_info(
+			contract: &AccountIdOf<T>,
+		) -> Result<ContractInfoOf<T>, Error<T>> {
+			ContractToInfo::<T>::get(contract).ok_or(Error::<T>::ContractNotFound)
+		}
+
+		/// Handy wrapper to update contract info.
+		pub(crate) fn set_contract_info(contract: &AccountIdOf<T>, info: ContractInfoOf<T>) {
+			ContractToInfo::<T>::insert(contract, info)
+		}
+
+		/// Compute the next contract nonce and return it.
+		/// This nonce is used in contract instantiation (contract -> contract).
+		/// Consequently, we track a nonce for each instantiated contracts.
+		pub(crate) fn next_contract_nonce(contract: &AccountIdOf<T>) -> Result<u64, Error<T>> {
+			ContractNonce::<T>::try_mutate(contract, |nonce| {
+				*nonce = nonce.checked_add(1).expect("2305843009 contracts per human; qed;");
+				Ok(*nonce)
+			})
+		}
+
+		/// Current instrumentation version
 		const INSTRUMENTATION_VERSION: u16 = 1;
 
-		//
-		// Exports are verified w.r.t https://github.com/CosmWasm/cosmwasm/#exports
-		//
+		///
+		/// V1 exports, verified w.r.t https://github.com/CosmWasm/cosmwasm/#exports
+		/// The format is (required, function_name, function_signature)
 		const V1_EXPORTS: &'static [(
 			ExportRequirement,
 			&'static str,
@@ -525,12 +687,8 @@ pub mod pallet {
 			(
 				ExportRequirement::Optional,
 				"migrate",
-				// extern "C" fn migrate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
-				&[
-					parity_wasm::elements::ValueType::I32,
-					parity_wasm::elements::ValueType::I32,
-					parity_wasm::elements::ValueType::I32,
-				],
+				// extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
+				&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 			),
 			(
 				ExportRequirement::Optional,
@@ -539,7 +697,12 @@ pub mod pallet {
 				&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 			),
 		];
+
+		/// Default module from where a CosmWasm import functions.
 		const ENV_MODULE: &'static str = "env";
+
+		/// Arbitrary function name for gas instrumentation.
+		/// A contract is not allowed to import this function from the above [`ENV_MODULE`].
 		const ENV_GAS: &'static str = "gas";
 
 		/// Validate a wasm module against the defined limitations.
@@ -569,7 +732,7 @@ pub mod pallet {
 					.validate_no_floating_types()?
 					.validate_exports(Self::V1_EXPORTS)?
 					// env.gas is banned as injected by instrumentation
-					.validate_imports(Self::ENV_MODULE, &[(Self::ENV_MODULE, Self::ENV_GAS)])?;
+					.validate_imports(&[(Self::ENV_MODULE, Self::ENV_GAS)])?;
 				Ok(())
 			})();
 			validation.map_err(|e| {
@@ -674,20 +837,66 @@ pub mod pallet {
 			}
 		}
 
-		pub(crate) fn native_asset_to_coin(asset: AssetIdOf<T>, amount: BalanceOf<T>) -> Coin {
+		/// Try to convert from a CosmWasm address to a native AccountId.
+		pub(crate) fn cosmwasm_addr_to_account(
+			cosmwasm_addr: String,
+		) -> Result<AccountIdOf<T>, <T as VMPallet>::VmError> {
+			T::AccountToAddr::convert(cosmwasm_addr)
+				.map_err(|()| CosmwasmVMError::AccountConversionFailure)
+		}
+
+		/// Convert from a native account to a CosmWasm address.
+		pub(crate) fn account_to_cosmwasm_addr(account: AccountIdOf<T>) -> String {
+			T::AccountToAddr::convert(account)
+		}
+
+		/// Convert a native asset and amount into a CosmWasm [`Coin`].
+		pub(crate) fn native_asset_to_cosmwasm_asset(
+			asset: AssetIdOf<T>,
+			amount: BalanceOf<T>,
+		) -> Coin {
 			let denom = T::AssetToDenom::convert(asset);
 			Coin { denom, amount: amount.into() }
 		}
 
-		pub(crate) fn cosmwasm_new_vm(
+		/// Try to convert from a CosmWasm denom to a native [`AdsetIdOf<T>`].
+		pub(crate) fn cosmwasm_asset_to_native_asset(
+			denom: String,
+		) -> Result<AssetIdOf<T>, Error<T>> {
+			Ok(T::AssetToDenom::convert(denom).map_err(|_| Error::<T>::UnknownDenom)?)
+		}
+
+		/// Create a new CosmWasm VM. One instance is created per contract but all of them share the
+		/// same [`CosmwasmVMShared`] structure.
+		///
+		/// Prior to instantiating the VM. The depth is checked against [`T::MaxFrames`] and the
+		/// contract code is loaded from the shared state if cached. If the code is not in cache, we
+		/// check whether reinstrumentation is required and cache the code.
+		pub(crate) fn cosmwasm_new_vm<'a>(
+			shared: &'a mut CosmwasmVMShared,
 			sender: AccountIdOf<T>,
 			contract: AccountIdOf<T>,
 			info: ContractInfoOf<T>,
 			funds: Vec<Coin>,
-			gas: u64,
-		) -> Result<WasmiVM<CosmwasmVM<T>>, <WasmiVM<CosmwasmVM<T>> as VMBase>::Error> {
-			let code = InstrumentedCode::<T>::get(info.code_id).ok_or(Error::<T>::CodeNotFound)?;
-			let host_functions_definitions = WasmiImportResolver(host_functions::definitions());
+		) -> Result<WasmiVM<CosmwasmVM<'a, T>>, CosmwasmVMError<T>> {
+			shared.depth += 1;
+			ensure!(shared.depth <= T::MaxFrames::get(), Error::<T>::StackOverflow);
+			let code = match shared.cache.code.entry(info.code_id) {
+				Entry::Vacant(v) => {
+					log::debug!(target: "runtime::contracts", "Code cache miss: {:?}", info.code_id);
+					Self::do_check_for_reinstrumentation(info.code_id)?;
+					let code = InstrumentedCode::<T>::get(info.code_id)
+						.ok_or(Error::<T>::CodeNotFound)?
+						.into_inner();
+					v.insert(code)
+				},
+				Entry::Occupied(o) => {
+					log::debug!(target: "runtime::contracts", "Code cache hit: {:?}", info.code_id);
+					o.into_mut()
+				},
+			};
+			let host_functions_definitions =
+				WasmiImportResolver(host_functions::definitions::<CosmwasmVM<'a, T>>());
 			let module = new_wasmi_vm(&host_functions_definitions, &code)
 				.map_err(|_| Error::<T>::VmCreation)?;
 			let cosmwasm_sender_address: CosmwasmAccount<T> = CosmwasmAccount::new(sender);
@@ -699,7 +908,7 @@ pub mod pallet {
 			};
 			log::debug!(target: "runtime::contracts", "cosmwasm_new_vm: {:#?}", env);
 			log::debug!(target: "runtime::contracts", "cosmwasm_new_vm: {:#?}", message_info);
-			Ok(WasmiVM(CosmwasmVM::<T> {
+			Ok(WasmiVM(CosmwasmVM::<'a, T> {
 				host_functions: host_functions_definitions
 					.0
 					.clone()
@@ -711,78 +920,9 @@ pub mod pallet {
 				cosmwasm_message_info: message_info,
 				contract_address: cosmwasm_contract_address,
 				contract_info: info,
-				gas: Gas::new(0, gas),
+				shared,
 				_marker: PhantomData,
 			}))
-		}
-
-		pub(crate) fn account() -> AccountIdOf<T> {
-			T::PalletId::get().into_account_truncating()
-		}
-
-		pub(crate) fn cosmwasm_run<I>(
-			entrypoint: EntryPoint,
-			sender: AccountIdOf<T>,
-			contract: AccountIdOf<T>,
-			info: ContractInfoOf<T>,
-			funds: FundsOf<T>,
-			gas: u64,
-			gas_keep_alive: bool,
-			message: ContractMessageOf<T>,
-		) -> Result<(Option<CosmwasmBinary>, Vec<CosmwasmEvent>), VmErrorOf<WasmiVM<CosmwasmVM<T>>>>
-		where
-			WasmiVM<CosmwasmVM<T>>: CosmwasmCallVM<I>,
-			VmErrorOf<WasmiVM<CosmwasmVM<T>>>: From<Error<T>>,
-		{
-			// Charge gas.
-			let pallet_account = Self::account();
-			T::GasAsset::transfer(&sender, &pallet_account, gas.saturated_into(), gas_keep_alive)
-				.map_err(|_| Error::<T>::ChargeGas)?;
-
-			// Move funds to contract.
-			for (asset, (amount, keep_alive)) in funds.clone() {
-				T::Assets::transfer(asset, &sender, &contract, amount, keep_alive)
-					.map_err(|_| Error::<T>::FundsTransfer)?;
-			}
-
-			// Check whether instrumentation is outdated.
-			Self::do_check_for_reinstrumentation(info.code_id)?;
-
-			let cosmwasm_funds = funds
-				.into_iter()
-				.map(|(asset, (amount, _))| Self::native_asset_to_coin(asset, amount))
-				.collect::<Vec<_>>();
-
-			let mut vm =
-				Self::cosmwasm_new_vm(sender.clone(), contract.clone(), info, cosmwasm_funds, gas)?;
-			let result = cosmwasm_system_entrypoint::<I, WasmiVM<CosmwasmVM<T>>>(&mut vm, &message)
-				.map(|(data, events)| {
-					Self::deposit_event(Event::<T>::Emitted {
-						contract: contract.clone(),
-						events: serde_json::to_vec(&events).unwrap(),
-					});
-					Self::deposit_event(Event::<T>::Executed {
-						contract,
-						entrypoint,
-						data: data.clone().map(Into::into),
-					});
-					(data, events)
-				})
-				.map_err(|e| {
-					log::debug!(target: "runtime::contracts", "cosmwasm_run: {:#?}", e);
-					e
-				});
-
-			// Refund gas.
-			T::GasAsset::transfer(
-				&pallet_account,
-				&sender,
-				vm.0.gas.remaining().saturated_into(),
-				false,
-			)
-			.map_err(|_| Error::<T>::RefundGas)?;
-
-			result
 		}
 
 		/// Build a [`ChildInfo`] out of a contract trie id.
@@ -793,54 +933,122 @@ pub mod pallet {
 		/// Abstract function to operate on a contract child trie entry.
 		pub(crate) fn with_db_entry<R>(
 			trie_id: &ContractTrieIdOf<T>,
-			key: Vec<u8>,
+			key: &[u8],
 			f: impl FnOnce(ChildInfo, [u8; 32]) -> R,
-		) -> Result<R, Error<T>> {
+		) -> R {
 			let child_trie = Self::contract_child_trie(trie_id.as_ref());
-			Ok(f(child_trie, blake2_256(&key)))
+			f(child_trie, blake2_256(&key))
 		}
 
-		pub(crate) fn do_db_read(
-			trie_id: &ContractTrieIdOf<T>,
-			key: Vec<u8>,
-		) -> Result<Option<Vec<u8>>, Error<T>> {
+		/// Compute the gas required to read the given entry.
+		///
+		/// Equation: len(entry(trie, key)) x [`T::StorageByteReadPrice`]
+		pub(crate) fn do_db_read_gas(trie_id: &ContractTrieIdOf<T>, key: &[u8]) -> u64 {
 			Self::with_db_entry(trie_id, key, |child_trie, entry| {
+				let bytes_to_read = match storage::child::len(&child_trie, &entry) {
+					Some(current_len) => current_len,
+					None => 0,
+				};
+				u64::from(bytes_to_read).saturating_mul(T::StorageByteReadPrice::get().into())
+			})
+		}
+
+		/// Read an entry from the executing contract storage, charging the according gas prior to
+		/// actually reading the entry.
+		pub(crate) fn do_db_read<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			key: &[u8],
+		) -> Result<Option<Vec<u8>>, CosmwasmVMError<T>> {
+			let price = Self::do_db_read_gas(&vm.contract_info.trie_id, key);
+			vm.charge_raw(price)?;
+			Ok(Self::with_db_entry(&vm.contract_info.trie_id, key, |child_trie, entry| {
 				storage::child::get_raw(&child_trie, &entry)
-			})
+			}))
 		}
 
-		pub(crate) fn do_db_write(
+		/// Read an entry from an arbitrary contract, charging the according gas prior to actually
+		/// reading the entry.
+		pub(crate) fn do_db_read_other_contract<'a>(
+			vm: &'a mut CosmwasmVM<T>,
 			trie_id: &ContractTrieIdOf<T>,
-			key: Vec<u8>,
-			value: Vec<u8>,
-		) -> Result<(), Error<T>> {
+			key: &[u8],
+		) -> Result<Option<Vec<u8>>, CosmwasmVMError<T>> {
+			let price = Self::do_db_read_gas(trie_id, key);
+			vm.charge_raw(price)?;
+			Ok(Self::with_db_entry(trie_id, key, |child_trie, entry| {
+				storage::child::get_raw(&child_trie, &entry)
+			}))
+		}
+
+		/// Compute the gas required to overwrite the given entry.
+		///
+		/// Equation: len(entry(trie, key)) - len(value)  x [`T::StorageByteWritePrice`]
+		/// With minus saturating.
+		pub(crate) fn do_db_write_gas(
+			trie_id: &ContractTrieIdOf<T>,
+			key: &[u8],
+			value: &[u8],
+		) -> u64 {
 			Self::with_db_entry(trie_id, key, |child_trie, entry| {
-				storage::child::put_raw(&child_trie, &entry, &value)
+				let bytes_to_write = match storage::child::len(&child_trie, &entry) {
+					Some(current_len) => current_len.saturating_sub(value.len() as _),
+					None => value.len() as u32,
+				};
+				u64::from(bytes_to_write).saturating_mul(T::StorageByteWritePrice::get().into())
 			})
 		}
 
-		pub(crate) fn do_db_remove(
-			trie_id: &ContractTrieIdOf<T>,
-			key: Vec<u8>,
-		) -> Result<(), Error<T>> {
+		/// Write an entry from the executing contract, charging the according gas prior to actually
+		/// writting the entry.
+		pub(crate) fn do_db_write<'a>(
+			vm: &'a mut CosmwasmVM<T>,
+			key: &[u8],
+			value: &[u8],
+		) -> Result<(), CosmwasmVMError<T>> {
+			let price = Self::do_db_write_gas(&vm.contract_info.trie_id, key, value);
+			vm.charge_raw(price)?;
+			Self::with_db_entry(&vm.contract_info.trie_id, key, |child_trie, entry| {
+				storage::child::put_raw(&child_trie, &entry, &value)
+			});
+			Ok(())
+		}
+
+		/// Remove an entry from the executing contract, no gas is charged for this operation.
+		pub(crate) fn do_db_remove<'a>(vm: &'a mut CosmwasmVM<T>, key: &[u8]) {
+			let trie_id = &vm.contract_info.trie_id;
 			Self::with_db_entry(trie_id, key, |child_trie, entry| {
 				storage::child::kill(&child_trie, &entry)
 			})
 		}
 
-		pub(crate) fn cosmwasm_addr_to_account(
-			cosmwasm_addr: String,
-		) -> Result<AccountIdOf<T>, <T as VMPallet>::VmError> {
-			T::AccountToAddr::convert(cosmwasm_addr)
-				.map_err(|()| CosmwasmVMError::AccountConversionFailure)
+		/// Retrieve an account balance.
+		pub(crate) fn do_balance(
+			account: &AccountIdOf<T>,
+			denom: String,
+		) -> Result<u128, Error<T>> {
+			let asset = Self::cosmwasm_asset_to_native_asset(denom)?;
+			Ok(T::Assets::balance(asset, account).into())
 		}
 
-		pub(crate) fn account_to_cosmwasm_addr(account: AccountIdOf<T>) -> String {
-			T::AccountToAddr::convert(account)
+		/// Execute a transfer of funds between two accounts.
+		pub(crate) fn do_transfer(
+			from: &AccountIdOf<T>,
+			to: &AccountIdOf<T>,
+			funds: &[Coin],
+			keep_alive: bool,
+		) -> Result<(), Error<T>> {
+			// Move funds to contract.
+			for Coin { denom, amount } in funds {
+				let asset = Self::cosmwasm_asset_to_native_asset(denom.clone())?;
+				let amount = (*amount).saturated_into();
+				T::Assets::transfer(asset, from, to, amount, keep_alive)
+					.map_err(|_| Error::<T>::TransferFailed)?;
+			}
+			Ok(())
 		}
 	}
 
 	impl<T: Config> VMPallet for T {
-		type VmError = VmErrorOf<CosmwasmVM<T>>;
+		type VmError = CosmwasmVMError<T>;
 	}
 }

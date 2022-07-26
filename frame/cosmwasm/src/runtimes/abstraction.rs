@@ -1,8 +1,8 @@
 use crate::{AccountIdOf, Config, Pallet};
 use alloc::{collections::VecDeque, string::String};
 use core::marker::PhantomData;
+use cosmwasm_minimal_std::Addr;
 use cosmwasm_vm::vm::VmGasCheckpoint;
-use frame_support::traits::Get;
 
 pub trait VMPallet {
 	type VmError;
@@ -10,6 +10,12 @@ pub trait VMPallet {
 
 #[derive(Clone, Debug)]
 pub struct CosmwasmAccount<T: Config>(PhantomData<T>, AccountIdOf<T>);
+
+impl<T: Config> CosmwasmAccount<T> {
+	pub fn into_inner(self) -> AccountIdOf<T> {
+		self.1
+	}
+}
 
 impl<T: Config> AsRef<AccountIdOf<T>> for CosmwasmAccount<T> {
 	fn as_ref(&self) -> &AccountIdOf<T> {
@@ -36,6 +42,12 @@ impl<T: Config + VMPallet> TryFrom<String> for CosmwasmAccount<T> {
 	}
 }
 
+impl<T: Config> Into<Addr> for CosmwasmAccount<T> {
+	fn into(self) -> Addr {
+		Addr::unchecked(Into::<String>::into(self))
+	}
+}
+
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Gas {
 	checkpoints: VecDeque<u64>,
@@ -48,8 +60,8 @@ pub enum GasOutcome {
 }
 
 impl Gas {
-	pub fn new(max_frames: usize, initial_value: u64) -> Self {
-		let mut checkpoints = VecDeque::with_capacity(max_frames);
+	pub fn new(max_frames: u32, initial_value: u64) -> Self {
+		let mut checkpoints = VecDeque::with_capacity(max_frames as _);
 		checkpoints.push_front(initial_value);
 		Gas { checkpoints }
 	}
@@ -91,9 +103,9 @@ impl Gas {
 			GasOutcome::Halt
 		}
 	}
-  pub fn remaining(&self) -> u64 {
-    self.checkpoints.iter().sum::<u64>()
-  }
+	pub fn remaining(&self) -> u64 {
+		self.checkpoints.iter().sum::<u64>()
+	}
 }
 
 #[cfg(test)]
