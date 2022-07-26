@@ -73,7 +73,7 @@ pub const VESTING_LOCK_ID: LockIdentifier = *b"compvest";
 
 #[frame_support::pallet]
 pub mod module {
-	use codec::{Codec, FullCodec, MaxEncodedLen};
+	use codec::{FullCodec, MaxEncodedLen};
 	use composable_support::{
 		abstractions::{
 			nonce::Nonce,
@@ -98,8 +98,12 @@ pub mod module {
 		<<T as Config>::Currency as MultiCurrency<AccountIdOf<T>>>::CurrencyId;
 	pub(crate) type BalanceOf<T> =
 		<<T as Config>::Currency as MultiCurrency<AccountIdOf<T>>>::Balance;
-	pub(crate) type VestingScheduleOf<T> =
-		VestingSchedule<VestingScheduleCount<T>, BlockNumberOf<T>, MomentOf<T>, BalanceOf<T>>;
+	pub(crate) type VestingScheduleOf<T> = VestingSchedule<
+		<T as Config>::VestingScheduleId,
+		BlockNumberOf<T>,
+		MomentOf<T>,
+		BalanceOf<T>,
+	>;
 	pub type ScheduledItem<T> = (
 		AssetIdOf<T>,
 		<T as frame_system::Config>::AccountId,
@@ -147,8 +151,10 @@ pub mod module {
 			+ Zero
 			+ SafeAdd
 			+ One
-			// + FullCodec
+			+ Ord
+			+ FullCodec
 			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
 			+ TypeInfo;
 	}
 
@@ -231,7 +237,14 @@ pub mod module {
 		fn build(&self) {
 			self.vesting.iter().for_each(|(asset, who, window, period_count, per_period)| {
 				let mut bounded_schedules = VestingSchedules::<T>::get(who, asset);
-				let vesting_schedule_id = VestingScheduleCount::<T>::increment()?;
+				let vesting_schedule_id = match VestingScheduleCount::<T>::increment() {
+					Ok(id) => id,
+					Err(_) => {
+						// TODO: throw MaxVestingSchedulesExceeded error
+						return
+					},
+				};
+
 				// VestingScheduleCount::<T>::put(vesting_schedule_id + 1);
 				// let vesting_schedule_id = 0; // TODO: get next id from VestingScheduleCount
 				// let vesting_schedule_id = VestingScheduleCount::<T>::increment();
@@ -327,7 +340,7 @@ pub mod module {
 			let who = T::Lookup::lookup(dest)?;
 			let locked_amount = Self::do_claim(&who, asset)?;
 
-			/// TODO: add vesting_schedule_id to event
+			// TODO: add vesting_schedule_id to event
 			Self::deposit_event(Event::Claimed { who, asset, locked_amount });
 			Ok(())
 		}
@@ -349,7 +362,7 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 		from: &Self::AccountId,
 		to: &Self::AccountId,
 		schedule: VestingSchedule<
-			&Self::VestingScheduleId,
+			Self::VestingScheduleId,
 			Self::BlockNumber,
 			Self::Moment,
 			Self::Balance,
@@ -398,7 +411,6 @@ impl<T: Config> Pallet<T> {
 	fn locked_balance(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-		// ) -> (BalanceOf<T>, BTreeMap<Self::VestingScheduleId, BalanceOf<T>>) {
 	) -> (BalanceOf<T>, BTreeMap<T::VestingScheduleId, BalanceOf<T>>) {
 		let mut vesting_schedule_totals = BTreeMap::new();
 		<VestingSchedules<T>>::mutate_exists(who, asset, |maybe_schedules| {

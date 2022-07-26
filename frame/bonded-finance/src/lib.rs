@@ -356,7 +356,7 @@ pub mod pallet {
 							keep_alive,
 						)?;
 						let current_block = frame_system::Pallet::<T>::current_block_number();
-						let vesting_schedule_id = VestingScheduleCount::<T>::get().increment()?;
+						let vesting_schedule_id = VestingScheduleCount::<T>::increment()?;
 						// Schedule the vesting of the reward.
 						T::Vesting::vested_transfer(
 							offer.reward.asset,
@@ -372,7 +372,7 @@ pub mod pallet {
 								per_period: reward_share,
 							},
 						)?;
-						let vesting_schedule_id = VestingScheduleCount::<T>::get().increment()?;
+						let vesting_schedule_id = VestingScheduleCount::<T>::increment()?;
 						match offer.maturity {
 							BondDuration::Finite { return_in } => {
 								// Schedule the return of the bonded amount
