@@ -1,6 +1,7 @@
 {
-  description = "Composable Finance Local Networks Lancher and documentation Book";
+  
 
+  # done
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils = {

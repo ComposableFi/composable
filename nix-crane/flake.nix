@@ -1,4 +1,5 @@
 {
+  description = "Composable Finance Local Networks Lancher and documentation Book";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils = {
@@ -21,6 +22,7 @@
           inherit system;
           overlays = [ rust-overlay.overlays.default ];
         };
+        overlays = [ (import rust-overlay) ];
       in with pkgs;
       let
         # Stable rust for anything except wasm runtime
@@ -242,26 +244,7 @@
             '';
           };
 
-          polkadot-launch = let
-            src = fetchFromGitHub {
-              owner = "paritytech";
-              repo = "polkadot-launch";
-              rev = "951af7055e2c9abfa7a03ee7848548c1a3efdc16";
-              hash = "sha256-ZaCHgkr5lVsGFg/Yvx6QY/zSiIafwSec+oiioOWTZMg=";
-            };
-          in mkYarnPackage {
-            name = "polkadot-launch";
-            inherit src;
-            packageJSON = "${src}/package.json";
-            yarnLock = "${src}/yarn.lock";
-            buildPhase = ''
-              yarn build
-            '';
-            distPhase = "true";
-            postInstall = ''
-              chmod +x $out/bin/polkadot-launch
-            '';
-          };
+          polkadot-launch = pkgs.callPackage ../.nix/polkadot-launch.nix {};
           devnet = let
             original-config = import ./composable.nix;
             patched-config = lib.recursiveUpdate original-config {

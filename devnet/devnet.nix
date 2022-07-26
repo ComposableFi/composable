@@ -5,21 +5,7 @@
   polkadot,
 }:
 let
-  polkalaunch = pkgs.callPackage (pkgs.stdenv.mkDerivation {
-    name = "polkadot-launch";
-    version = "1.0.0";
-    src = fetchFromGitHub {
-      owner = "paritytech";
-      repo = "polkadot-launch";
-      rev = "99c395b9e7dc7468a4b755440d67e317370974c4";
-      hash = "sha256:0is74ad9khbqivnnqfarm8012jvbpg5mcs2p9gl9bz1p7sz1f97d";
-    };
-    patches = [ ./polkadot-launch.patch ];
-    installPhase = ''
-      mkdir $out
-      cp -r * $out
-    '';
-  }) {};
+  polkadot-launch = pkgs.callPackage ../.nix/polkadot-launch.nix {};
 
   polkadot-bin = pkgs.stdenv.mkDerivation {
     name = "polkadot-${polkadot.version}";
@@ -126,7 +112,7 @@ in {
   script =
     pkgs.writeShellScriptBin "run-${composable.spec}" ''
       rm -rf ${tmp-directory}
-      ${polkalaunch}/bin/polkadot-launch ${devnet-polkalaunch-config}
+      ${polkadot-launch}/bin/polkadot-launch ${devnet-polkalaunch-config}
     '';
   documentation = "${composable-bin}/share";
   inherit book;
