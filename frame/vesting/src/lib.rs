@@ -407,6 +407,7 @@ impl<T: Config> Pallet<T> {
 			.get(&vesting_schedule_id)
 			.ok_or(Error::<T>::VestingScheduleNotFound)?;
 		if locked_for_id.is_zero() {
+			// TODO: only remove vesting schedule with vesting_schedule_id
 			// cleanup the storage and unlock the fund
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
