@@ -1,9 +1,10 @@
-name: "Devnet Community Release"
+name: "Devnet(Rococo Local Dali Dev) Community Release"
 
 on:
   push:
     branches:
       - main
+      - nix/dz/fusion
 
 jobs:
   deploy-devnet:
