@@ -798,12 +798,21 @@ impl bonded_finance::Config for Runtime {
 
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
-
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
+		!(call_filter::Pallet::<Runtime>::contains(call) ||
+			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
 	}
 }
+
+impl call_filter::Config for Runtime {
+	type Event = Event;
+	type UpdateOrigin = EnsureRootOrHalfTechnocal<AccountId>; # ASD
+	type Hook = ();
+	type WeightInfo = ();
+	type MaxStringSize = ConstU32<128>;
+}
+
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -858,6 +867,8 @@ construct_runtime!(
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 59,
+
+		CallFilter: call_filter = 100,
 	}
 );
 

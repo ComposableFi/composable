@@ -74,7 +74,7 @@ pub use frame_support::{
 
 use codec::{Codec, Encode, EncodeLike};
 use frame_support::{
-	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade},
+	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade, ConstU32},
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
@@ -903,27 +903,20 @@ impl pallet_staking_rewards::Config for Runtime {
 
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
-
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
-		}
-		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
+		!(call_filter::Pallet::<Runtime>::contains(call) ||
+			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
 	}
 }
 
-parameter_types! {
-  #[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
-	pub const MaxStringSize: u32 = 100;
-}
 
 impl call_filter::Config for Runtime {
 	type Event = Event;
-	type UpdateOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = EnsureRootOrHalfTechnocal<AccountId>; # ASD
 	type Hook = ();
 	type WeightInfo = ();
-	type MaxStringSize = MaxStringSize;
+	type MaxStringSize = ConstU32<128>;
 }
 
 parameter_types! {
