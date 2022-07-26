@@ -109,3 +109,12 @@ export function calculator(
     minReceive: minReceive.dp(formatDecimals),
   };
 }
+
+export function calculatePoolTotalValueLocked(
+  baseAmount: BigNumber,
+  quoteAmount: BigNumber,
+  basePrice: BigNumber,
+  quotePrice: BigNumber
+): BigNumber {
+  return baseAmount.times(basePrice).plus(quoteAmount.times(quotePrice));
+}

@@ -225,7 +225,7 @@ export function useSwaps(): {
     }, 500);
   };
 
-  const onChangeTokenAmount = useCallback(async (
+  const onChangeTokenAmount = async (
     changedSide: "base" | "quote",
     amount: BigNumber
   ) => {
@@ -283,32 +283,45 @@ export function useSwaps(): {
     } finally {
       unsetProcessingDelayed();
     }
-  }, [
-    balance1,
-    enqueueSnackbar,
-    parachainApi,
-    resetTokenAmounts,
-    selectedAssetOneId,
-    selectedAssetTwoId,
-    selectedPool,
-    setTokenAmounts,
-    slippage
-  ]);
+  };
 
   /**
    * Effect to update minimum recieved when
    * there is a change in slippage
    */
-   useEffect(() => {
-    if (parachainApi) {
-      if (previousSlippage != slippage && assetOneAmount.gt(0) && balance1.gt(0) && balance1.gt(assetOneAmount)) {
-        onChangeTokenAmount("quote", assetOneAmount);
-      } else {
-        onChangeTokenAmount("quote", new BigNumber(0));
+  useEffect(() => {
+    if (parachainApi && selectedPool) {
+      if (previousSlippage != slippage) {
+        if (minimumReceived.gt(0)) {
+          const { feeRate } = selectedPool.feeConfig;
+          let feePercentage = new BigNumber(feeRate).toNumber();
+
+          const {
+            minReceive,
+          } =
+            "baseWeight" in selectedPool
+              ? calculator(
+                  "quote",
+                  assetOneAmount,
+                  spotPrice,
+                  slippage,
+                  feePercentage
+                )
+              : stableSwapCalculator(
+                  "quote",
+                  assetOneAmount,
+                  spotPrice,
+                  slippage,
+                  feePercentage
+                );
+            setMinimumReceived(minReceive)
+        }
       }
     }
     return;
   }, [
+    spotPrice,
+    selectedPool,
     balance1,
     previousSlippage,
     minimumReceived,
@@ -318,7 +331,6 @@ export function useSwaps(): {
     parachainApi,
     assetOneAmount,
     assetTwoAmount,
-    onChangeTokenAmount
   ]);
 
   const flipAssets = () => {

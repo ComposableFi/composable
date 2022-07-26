@@ -11,7 +11,7 @@ import BigNumber from "bignumber.js";
 export async function fetchPoolLiquidity(
   parachainApi: ApiPromise,
   pools: {
-    id: string;
+    poolId: string | number;
     pair: {
       base: number;
       quote: number;
@@ -25,11 +25,11 @@ export async function fetchPoolLiquidity(
 
   for (const pool of pools) {
     try {
-      const poolAccountId = createPabloPoolAccountId(parachainApi, Number(pool.id));
+      const poolAccountId = createPabloPoolAccountId(parachainApi, Number(pool.poolId));
       const baseLiq = await fetchAssetBalance(parachainApi, poolAccountId, pool.pair.base.toString())
       const quoteLiq = await fetchAssetBalance(parachainApi, poolAccountId, pool.pair.quote.toString())
 
-      liquidityRecord[pool.id] = {
+      liquidityRecord[pool.poolId] = {
         baseAmount: baseLiq,
         quoteAmount: quoteLiq
       }
@@ -53,7 +53,6 @@ export async function fetchAndUpdatePoolLiquidity(
   parachainApi: ApiPromise
 ): Promise<void> {
   try {
-    console.log("fetchAndUpdatePoolLiquidity: " + pool.poolId);
     const poolAccount = createPabloPoolAccountId(parachainApi, pool.poolId);
     const liqBase = await fetchBalanceByAssetId(
       parachainApi,
@@ -65,11 +64,13 @@ export async function fetchAndUpdatePoolLiquidity(
       poolAccount,
       pool.pair.quote.toString()
     );
+
     setTokenAmountInLiquidityPool(pool.poolId, {
       baseAmount: liqBase,
       quoteAmount: liqQuote,
     });
   } catch (err) {
+    console.error(err)
     setTokenAmountInLiquidityPool(pool.poolId, {
       baseAmount: "0",
       quoteAmount: "0",

@@ -20,17 +20,11 @@ const Updater = () => {
   useEffect(() => {
     if (parachainApi) {
       fetchPools(parachainApi).then((pools) => {
-        console.log("fetchPools", pools);
-        setPoolsList(pools.constantProduct.verified, "ConstantProduct", true);
-        // setPoolsList(pools.constantProduct.unVerified, "ConstantProduct", false)
-        setPoolsList(pools.stableSwap.verified, "StableSwap", true);
-        // setPoolsList(pools.stableSwap.unVerified, "StableSwap", false)
-        setPoolsList(
-          pools.liquidityBootstrapping.verified,
-          "LiquidityBootstrapping",
-          true
-        );
-        // setPoolsList(pools.liquidityBootstrapping.unVerified, "LiquidityBootstrapping", false)
+        setPoolsList([
+          ...pools.liquidityBootstrapping.verified,
+          ...pools.constantProduct.verified,
+          ...pools.stableSwap.verified,
+        ]);
       });
     }
   }, [parachainApi, setPoolsList]);
@@ -42,21 +36,11 @@ const Updater = () => {
       const handleRouteChange = (url: string, params: any) => {
         if (url === "/pool") {
           fetchPools(parachainApi).then((pools) => {
-            console.log("fetchPools", pools);
-            setPoolsList(
-              pools.constantProduct.verified,
-              "ConstantProduct",
-              true
-            );
-            // setPoolsList(pools.constantProduct.unVerified, "ConstantProduct", false)
-            setPoolsList(pools.stableSwap.verified, "StableSwap", true);
-            // setPoolsList(pools.stableSwap.unVerified, "StableSwap", false)
-            setPoolsList(
-              pools.liquidityBootstrapping.verified,
-              "LiquidityBootstrapping",
-              true
-            );
-            // setPoolsList(pools.liquidityBootstrapping.unVerified, "LiquidityBootstrapping", false)
+            setPoolsList([
+              ...pools.liquidityBootstrapping.verified,
+              ...pools.constantProduct.verified,
+              ...pools.stableSwap.verified,
+            ]);
           });
         }
       };
