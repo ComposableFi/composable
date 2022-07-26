@@ -75,7 +75,7 @@ Validators can be any entity, including a user triggering the dispute through ou
 
 Once a transport has been succesfully registered, it becomes accessible to the `Gateway`, which might route traffic based on transport requirements from the interpreter instance dispatching the program. By default, all OTP transports are considered `Trusted`, meaning that no traffic is routed through them unless specifically opted-in by the interpreter instance. 
 
-Later we may add means through governance to upgrade transports to the `Trustless` status using governance. This will accomodate transports such as `XCMP`.
+Later we may add means to upgrade transports to the `Trustless` status using governance. This will accomodate transports such as `XCMP`.
 
 ```mermaid
 sequenceDiagram
