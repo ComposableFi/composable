@@ -13,10 +13,7 @@ use composable_traits::{
 	dex::Amm,
 	instrumental::{Instrumental as InstrumentalTrait, InstrumentalVaultConfig},
 };
-use frame_support::{
-	assert_noop, assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate,
-	weights::GetDispatchInfo,
-};
+use frame_support::{assert_noop, assert_ok, traits::fungibles::Mutate, weights::GetDispatchInfo};
 use frame_system::EventRecord;
 use pallet_collective::{Error as CollectiveError, Instance1, MemberCount, ProposalIndex};
 use pallet_pablo::PoolInitConfiguration;
