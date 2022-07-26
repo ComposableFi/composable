@@ -17,7 +17,4 @@ We can compose said instructions to either exchange, buy or sell for an amount g
 
 ## Use Cases
 
-- This pallet was implemented in pallet pablo to provide an easy way for users to take part in the Defi ecosystem.
-- Swap exchange
-- Liquidity pool aggregator
-- Trading bot
+This pallet was implemented in pallet pablo.
