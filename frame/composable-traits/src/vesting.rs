@@ -3,6 +3,9 @@ use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::AtLeast32Bit;
 
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
+
 /// An object allowing us to transfer funds from one account to another in a vested fashion.
 pub trait VestedTransfer {
 	type AccountId;
@@ -50,6 +53,7 @@ pub enum VestingWindow<BlockNumber, Moment> {
 /// Benefits would be granted gradually, `per_period` amount every `window.period`
 /// of blocks after `window.start`.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasCompact> {
 	/// Vesting schedule id
 	pub vesting_schedule_id: VestingScheduleId,
