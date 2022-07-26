@@ -641,7 +641,7 @@ fn default_reward_config(
 	let config = RewardConfig {
 		asset_id: USDT::ID,
 		max_rewards: 100_u128,
-		reward_rate: RewardRate::per_second(1_u128.into(), 10.try_into_validated().unwrap()),
+		reward_rate: RewardRate::per_second(10_u128),
 	};
 	let mut rewards = BTreeMap::new();
 	rewards.insert(USDT::ID, config);

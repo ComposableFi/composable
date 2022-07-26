@@ -58,7 +58,10 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
-		staking::{RewardPoolConfiguration::RewardRateBasedIncentive, DEFAULT_MAX_REWARDS},
+		staking::{
+			RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
+			DEFAULT_MAX_REWARDS,
+		},
 		time::DurationSeconds,
 	};
 	use frame_support::{
@@ -137,6 +140,10 @@ pub mod pallet {
 			reward_increment: T::Balance,
 		},
 		RewardAccumulationError {
+			pool_id: T::RewardPoolId,
+			asset_id: T::AssetId,
+		},
+		MaxRewardsAccumulated {
 			pool_id: T::RewardPoolId,
 			asset_id: T::AssetId,
 		},
@@ -747,8 +754,12 @@ pub mod pallet {
 		) -> Reward<T::AssetId, T::Balance> {
 			match now.safe_sub(&reward.last_updated_timestamp) {
 				Ok(elapsed_time) => {
-					// SAFETY(benluelo): RewardRate::period is non-zero.
-					let periods_surpassed = elapsed_time.div(&reward.reward_rate.period);
+					let reward_rate_period_seconds = match reward.reward_rate.period {
+						RewardRatePeriod::PerSecond => 1,
+					};
+
+					// SAFETY(benluelo): Usage of Div::div: RewardRate::period is non-zero here.
+					let periods_surpassed = elapsed_time.div(reward_rate_period_seconds);
 
 					if periods_surpassed.is_zero() {
 						reward
@@ -761,7 +772,7 @@ pub mod pallet {
 							new_total_rewards.into()
 						} else {
 							// saturate at max_rewards, but emit an error first
-							Self::deposit_event(Event::<T>::RewardAccumulationError {
+							Self::deposit_event(Event::<T>::MaxRewardsAccumulated {
 								pool_id,
 								asset_id: reward.asset_id,
 							});
@@ -772,7 +783,7 @@ pub mod pallet {
 							total_rewards: new_total_rewards,
 							last_updated_timestamp: reward
 								.last_updated_timestamp
-								.add(periods_surpassed.mul(reward.reward_rate.period)),
+								.add(periods_surpassed.mul(reward_rate_period_seconds)),
 							..reward
 						}
 					}
@@ -893,7 +904,7 @@ pub mod pallet {
 									max_rewards: max(reward_increment, DEFAULT_MAX_REWARDS.into()),
 									reward_rate: RewardRate {
 										amount: T::Balance::zero(),
-										period: 0,
+										period: RewardRatePeriod::PerSecond,
 									},
 									last_updated_timestamp: 0,
 								};

@@ -1,10 +1,7 @@
 //! Benchmarks
 use crate::{validation::ValidSplitRatio, *};
 
-use composable_support::{
-	abstractions::utils::increment::Increment,
-	validation::{TryIntoValidated, Validated},
-};
+use composable_support::{abstractions::utils::increment::Increment, validation::Validated};
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
@@ -63,7 +60,7 @@ fn reward_config<T: Config>(
 		let config = RewardConfig {
 			asset_id: asset_id.into(),
 			max_rewards: 100_u128.into(),
-			reward_rate: composable_traits::staking::RewardRate::per_second(1, 10_u128.into()),
+			reward_rate: RewardRate::per_second(1_u128),
 		};
 		rewards.insert(asset_id.into(), config);
 		asset_id += 1;
@@ -184,8 +181,8 @@ benchmarks! {
 			asset_id: 1_u128.into(),
 			total_rewards: 0_u128.into(),
 			total_dilution_adjustment: 0.into(),
-			max_rewards: 100.into(),
-			reward_rate: RewardRate::per_second(6.into(), 10_000.try_into_validated().unwrap()),
+			max_rewards: 1_000_000.into(),
+			reward_rate: RewardRate::per_second(10_000),
 			last_updated_timestamp: now.as_secs(),
 			claimed_rewards: 0_u128.into()
 		};
