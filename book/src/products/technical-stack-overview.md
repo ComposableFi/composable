@@ -48,6 +48,11 @@ To connect the Cosmos ecosystem to Kusama, Composable is developing [Centauri](.
 
 Composable's integration of the IBC and Cosm Wasm smart contracts into the XCVM will allow for many new integrations between ecosystems beyond Cosmos, helping to expand the capacity of Cosmos.
 
+### Infrastructure Layer
+
+The infrastructure layer consists of the dual Kusama and Polkadot parachains (Picasso and Composable) that undergird the Composable ecosystem, and its pallet architecture, which is leveraged for the development of applications. The parachains provide enhanced security, customizability and blockchain efficiency.
+Primary pallets provide the essential building blocks found within any DeFi ecosystem. These pallets are meant to give the developers the fundamental functionality they are used to, such as oracles, vaults, and bridging infrastructure. Examples of some primary pallets we have been building include:
+
 
 ### Apollo
 
@@ -56,4 +61,4 @@ Apollo is a MEV-resistant decentralized oracle that is leverageable for DeFi pro
 
 ### Cubic
 
-Cubic is a primary pallet that sets the standard as the first vault pallet in DotSama. Vaults are vital infrastructures leverageable universally in DeFi. Their utility is tied to storing and moving tokens for other primitives or dApps such as lending protocols and automated market makers (AMMs) that require vault technologies to store and move collaterals without incurring expensive transaction costs. Cubic ties the Kusama ecosystem, Mosaic (encompassing all the major EVM chains and L2s), and Centauri (Composable’s Substrate-IBC bridge connecting DotSama to Cosmos) together for the unification of yield generated between the DotSama, EVM-compatible and IBC-enabled ecosystems in vault strategies and beyond.
+Cubic sets the standard as the first vault pallet in DotSama. Vaults are vital infrastructures leverageable universally in DeFi. Their utility is tied to storing and moving tokens for other primitives or dApps such as lending protocols and automated market makers (AMMs) that require vault technologies to store and move collaterals without incurring expensive transaction costs. Cubic ties the Kusama ecosystem, Mosaic (encompassing all the major EVM chains and L2s), and Centauri (Composable’s Substrate-IBC bridge connecting DotSama to Cosmos) together for the unification of yield generated between the DotSama, EVM-compatible and IBC-enabled ecosystems in vault strategies and beyond.

@@ -66,6 +66,8 @@ std = [
   "frame-system/std",
   "collator-selection/std",
   "balances/std",
+  "orml-tokens/std",
+  "sudo/std",
   "collective/std",
   "treasury/std",
   "polkadot-primitives/std",
