@@ -29,15 +29,17 @@
 
       packages = 
         let
-          devnet = pkgs.callPackage ./devnet { inherit nixpkgs; };          
+          devnet = pkgs.callPackage ./devnet { inherit nixpkgs; };
+          latest-book = pkgs.callPackage ./book {};
         in {
           dali-script = devnet.dali.script;
           picasso-script = devnet.picasso.script;
           inherit (devnet.dali) book;
           inherit (devnet) nixops;
+          inherit latest-book;
         };
 
-      # Default package is currently the book, but that will change
+      # TODO: default packages should be our parachain i guess ready to run on the network
       defaultPackage =  self.packages.${system}.book;
 
       devShells = 
