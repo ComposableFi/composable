@@ -340,6 +340,8 @@ fn add_liquidity_single_asset() {
 
 		let pool = get_pool(pool_id);
 		let lp_total_issuance = Tokens::total_issuance(pool.lp_token);
+		let lp_alice = Tokens::balance(pool.lp_token, &ALICE);
+		assert_eq!(lp_total_issuance, lp_alice);
 
 		assert_ok!(<Pablo as Amm>::add_liquidity(
 			&ALICE,
@@ -351,21 +353,31 @@ fn add_liquidity_single_asset() {
 		));
 
 		let new_lp_total_issuance = Tokens::total_issuance(pool.lp_token);
+		//  sqrt(100*10^12*20000*100*10^12) * ((1+(10*10^12/(100*10^12)))^.5 - 1)
+		let manually_calculated_minted_lp = 690261350460375;
 
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
-				mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, base_amount, quote_amount, minted_lp })
+				mock::Event::Pablo(crate::Event::LiquidityAdded {
+					who, pool_id, base_amount, quote_amount, minted_lp
+				})
 				if who == ALICE
 				&& pool_id == pool_id
 				&& base_amount == base_amount
 				&& quote_amount == 0
-				&& minted_lp == new_lp_total_issuance - lp_total_issuance)
+				&& minted_lp == new_lp_total_issuance - lp_total_issuance
+				&& default_acceptable_computation_error(minted_lp, manually_calculated_minted_lp)
+					.is_ok())
 		});
 
 		let pool_account_id = Pablo::account_id(&pool_id);
 		assert_eq!(Tokens::balance(pool.pair.base, &pool_account_id), initial_btc + base_amount);
 		assert_eq!(Tokens::balance(pool.pair.quote, &pool_account_id), initial_usdt);
 		assert_eq!(Tokens::balance(BTC, &ALICE), 0);
+		assert_ok!(default_acceptable_computation_error(
+			Tokens::balance(pool.lp_token, &ALICE),
+			lp_alice + manually_calculated_minted_lp
+		));
 	})
 }
 
