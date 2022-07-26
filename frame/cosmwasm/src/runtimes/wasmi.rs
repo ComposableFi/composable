@@ -1,126 +1,152 @@
 use super::abstraction::{CosmwasmAccount, Gas};
-use crate::{AccountIdOf, Config, ContractInfoOf, Pallet, runtimes::abstraction::GasOutcome};
+use crate::{runtimes::abstraction::GasOutcome, Config, ContractInfoOf, Pallet};
 use alloc::string::String;
-use core::{fmt::Display, marker::PhantomData, num::NonZeroU32};
-use cosmwasm_minimal_std::{Coin, Empty, Env, MessageInfo};
+use core::marker::PhantomData;
+use cosmwasm_minimal_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
-	executor::ExecutorError,
+	executor::{cosmwasm_call, ExecutorError, InstantiateInput, MigrateInput, QueryInput},
 	has::Has,
 	memory::{
 		MemoryReadError, MemoryWriteError, Pointable, ReadWriteMemory, ReadableMemory,
 		WritableMemory,
 	},
-	system::{CosmwasmContractMeta, SystemError},
+	system::{cosmwasm_system_run, CosmwasmCodeId, CosmwasmContractMeta, SystemError},
 	transaction::Transactional,
-	vm::{VMBase, VmErrorOf},
+	vm::{VMBase, VmErrorOf, VmGas},
 };
 use cosmwasm_vm_wasmi::{
 	WasmiHostFunction, WasmiHostFunctionIndex, WasmiInput, WasmiModule, WasmiModuleExecutor,
 	WasmiOutput, WasmiVM, WasmiVMError,
 };
-use parity_wasm::elements::{self, External, Internal, MemoryType, Module, Type, ValueType};
-use sp_runtime::traits::Convert;
+use parity_wasm::elements::{self, External, Internal, Module, Type, ValueType};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::CanResume;
 use wasmi_validation::{validate_module, PlainValidator};
 
 #[derive(Debug)]
-pub enum CosmwasmVMError<Custom> {
+pub enum CosmwasmVMError<T: Config> {
 	Interpreter(wasmi::Error),
 	VirtualMachine(WasmiVMError),
-	Pallet(Custom),
+	Pallet(crate::Error<T>),
 	AccountConversionFailure,
 	Aborted(String),
-  OutOfGas,
+	ReadlyViolation,
+	OutOfGas,
+	Unsupported,
 }
 
-impl<T: Config> From<crate::Error<T>> for CosmwasmVMError<crate::Error<T>> {
+impl<T: Config> From<crate::Error<T>> for CosmwasmVMError<T> {
 	fn from(e: crate::Error<T>) -> Self {
 		Self::Pallet(e)
 	}
 }
 
-impl<T> From<wasmi::Error> for CosmwasmVMError<T> {
+impl<T: Config> From<wasmi::Error> for CosmwasmVMError<T> {
 	fn from(e: wasmi::Error) -> Self {
 		Self::Interpreter(e)
 	}
 }
 
-impl<T> From<WasmiVMError> for CosmwasmVMError<T> {
+impl<T: Config> From<WasmiVMError> for CosmwasmVMError<T> {
 	fn from(e: WasmiVMError) -> Self {
 		Self::VirtualMachine(e)
 	}
 }
 
-impl<T> From<SystemError> for CosmwasmVMError<T> {
+impl<T: Config> From<SystemError> for CosmwasmVMError<T> {
 	fn from(e: SystemError) -> Self {
 		Self::VirtualMachine(e.into())
 	}
 }
 
-impl<T> From<ExecutorError> for CosmwasmVMError<T> {
+impl<T: Config> From<ExecutorError> for CosmwasmVMError<T> {
 	fn from(e: ExecutorError) -> Self {
 		Self::VirtualMachine(e.into())
 	}
 }
 
-impl<T> From<MemoryReadError> for CosmwasmVMError<T> {
+impl<T: Config> From<MemoryReadError> for CosmwasmVMError<T> {
 	fn from(e: MemoryReadError) -> Self {
 		Self::VirtualMachine(e.into())
 	}
 }
 
-impl<T> From<MemoryWriteError> for CosmwasmVMError<T> {
+impl<T: Config> From<MemoryWriteError> for CosmwasmVMError<T> {
 	fn from(e: MemoryWriteError) -> Self {
 		Self::VirtualMachine(e.into())
 	}
 }
 
-impl<T> CanResume for CosmwasmVMError<T> {
+impl<T: Config> CanResume for CosmwasmVMError<T> {
 	fn can_resume(&self) -> bool {
 		false
 	}
 }
 
-pub struct CosmwasmVM<T: Config> {
+pub struct CosmwasmVMCache {
+	pub code: BTreeMap<CosmwasmCodeId, Vec<u8>>,
+}
+
+pub struct CosmwasmVMShared {
+	pub readonly: u32,
+	pub depth: u32,
+	pub gas: Gas,
+	pub cache: CosmwasmVMCache,
+}
+
+impl CosmwasmVMShared {
+	pub fn readonly(&self) -> bool {
+		self.readonly == 0
+	}
+	pub fn push_readonly(&mut self) {
+		self.readonly += 1;
+	}
+	pub fn pop_readonly(&mut self) {
+		self.readonly -= 1;
+	}
+}
+
+pub struct CosmwasmVM<'a, T: Config> {
 	pub host_functions: BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<Self>>,
 	pub executing_module: WasmiModule,
 	pub cosmwasm_env: Env,
 	pub cosmwasm_message_info: MessageInfo,
 	pub contract_address: CosmwasmAccount<T>,
 	pub contract_info: ContractInfoOf<T>,
-  pub gas: Gas,
+	pub shared: &'a mut CosmwasmVMShared,
 	pub _marker: PhantomData<T>,
 }
 
-impl<T: Config> Has<Env> for CosmwasmVM<T> {
+impl<'a, T: Config> Has<Env> for CosmwasmVM<'a, T> {
 	fn get(&self) -> Env {
 		self.cosmwasm_env.clone()
 	}
 }
-impl<T: Config> Has<MessageInfo> for CosmwasmVM<T> {
+impl<'a, T: Config> Has<MessageInfo> for CosmwasmVM<'a, T> {
 	fn get(&self) -> MessageInfo {
 		self.cosmwasm_message_info.clone()
 	}
 }
 
-impl<T: Config> WasmiModuleExecutor for CosmwasmVM<T> {
+impl<'a, T: Config> WasmiModuleExecutor for CosmwasmVM<'a, T> {
 	fn executing_module(&self) -> WasmiModule {
 		self.executing_module.clone()
 	}
 }
 
-impl<T: Config> Has<BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<Self>>> for CosmwasmVM<T> {
+impl<'a, T: Config> Has<BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<Self>>>
+	for CosmwasmVM<'a, T>
+{
 	fn get(&self) -> BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<Self>> {
 		self.host_functions.clone()
 	}
 }
 
-impl<T: Config> Pointable for CosmwasmVM<T> {
+impl<'a, T: Config> Pointable for CosmwasmVM<'a, T> {
 	type Pointer = u32;
 }
 
-impl<T: Config> ReadableMemory for CosmwasmVM<T> {
+impl<'a, T: Config> ReadableMemory for CosmwasmVM<'a, T> {
 	type Error = VmErrorOf<Self>;
 	fn read(&self, offset: Self::Pointer, buffer: &mut [u8]) -> Result<(), Self::Error> {
 		self.executing_module
@@ -130,7 +156,7 @@ impl<T: Config> ReadableMemory for CosmwasmVM<T> {
 	}
 }
 
-impl<T: Config> WritableMemory for CosmwasmVM<T> {
+impl<'a, T: Config> WritableMemory for CosmwasmVM<'a, T> {
 	type Error = VmErrorOf<Self>;
 	fn write(&self, offset: Self::Pointer, buffer: &[u8]) -> Result<(), Self::Error> {
 		self.executing_module
@@ -140,47 +166,55 @@ impl<T: Config> WritableMemory for CosmwasmVM<T> {
 	}
 }
 
-impl<T: Config> ReadWriteMemory for CosmwasmVM<T> {}
+impl<'a, T: Config> ReadWriteMemory for CosmwasmVM<'a, T> {}
 
-impl<T: Config> CosmwasmVM<T> {
-	fn load_subvm<R>(
-		&mut self,
-		address: <Self as VMBase>::Address,
-		funds: Vec<Coin>,
-		f: impl FnOnce(&mut WasmiVM<CosmwasmVM<T>>) -> R,
-	) -> Result<R, VmErrorOf<Self>> {
-		todo!()
+impl<'a, T: Config> CosmwasmVM<'a, T> {
+	pub fn charge_raw(&mut self, gas: u64) -> Result<(), <Self as VMBase>::Error> {
+		match self.shared.gas.charge(gas) {
+			GasOutcome::Halt => Err(CosmwasmVMError::OutOfGas),
+			GasOutcome::Continue => Ok(()),
+		}
 	}
 }
 
-impl<T: Config> VMBase for CosmwasmVM<T> {
+impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	type Input<'x> = WasmiInput<'x, WasmiVM<Self>>;
 	type Output<'x> = WasmiOutput<'x, WasmiVM<Self>>;
 	type QueryCustom = Empty;
 	type MessageCustom = Empty;
-	type CodeId = CosmwasmContractMeta;
+	type CodeId = CosmwasmContractMeta<CosmwasmAccount<T>>;
 	type Address = CosmwasmAccount<T>;
 	type StorageKey = Vec<u8>;
 	type StorageValue = Vec<u8>;
-	type Error = CosmwasmVMError<crate::Error<T>>;
-
-	fn new_contract(&mut self, code_id: Self::CodeId) -> Result<Self::Address, Self::Error> {
-		log::debug!(target: "runtime::contracts", "new_contract");
-		todo!()
-	}
+	type Error = CosmwasmVMError<T>;
 
 	fn set_code_id(
 		&mut self,
 		address: Self::Address,
-		new_code_id: Self::CodeId,
+		CosmwasmContractMeta { code_id: new_code_id, admin, label }: Self::CodeId,
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "set_code_id");
-		todo!()
+		let contract = address.into_inner();
+		let mut info = Pallet::<T>::contract_info(&contract)?;
+		info.code_id = new_code_id;
+		info.admin = admin.map(|admin| admin.into_inner());
+		info.label = label
+			.as_bytes()
+			.to_vec()
+			.try_into()
+			.map_err(|_| crate::Error::<T>::LabelTooBig)?;
+		Pallet::<T>::set_contract_info(&contract, info);
+		Ok(())
 	}
 
 	fn code_id(&mut self, address: Self::Address) -> Result<Self::CodeId, Self::Error> {
 		log::debug!(target: "runtime::contracts", "code_id");
-		todo!()
+		let info = Pallet::<T>::contract_info(address.as_ref())?;
+		Ok(CosmwasmContractMeta {
+			code_id: info.code_id,
+			admin: info.admin.map(CosmwasmAccount::new),
+			label: String::from_utf8_lossy(&info.label.into_inner()).into(),
+		})
 	}
 
 	fn query_continuation(
@@ -189,7 +223,20 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		message: &[u8],
 	) -> Result<cosmwasm_minimal_std::QueryResult, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_continuation");
-		todo!()
+		let sender = self.contract_address.clone().into_inner();
+		let contract = address.into_inner();
+		let info = Pallet::<T>::contract_info(&contract)?;
+		self.shared.push_readonly();
+		let result = Pallet::<T>::cosmwasm_call(
+			self.shared,
+			sender,
+			contract,
+			info,
+			Default::default(),
+			|vm| cosmwasm_call::<QueryInput, WasmiVM<CosmwasmVM<T>>>(vm, message),
+		);
+		self.shared.pop_readonly();
+		result
 	}
 
 	fn continue_execute(
@@ -200,49 +247,83 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_execute");
-		todo!()
+		let sender = self.contract_address.clone().into_inner();
+		let contract = address.into_inner();
+		let info = Pallet::<T>::contract_info(&contract)?;
+		Pallet::<T>::cosmwasm_call(self.shared, sender, contract, info, funds, |vm| {
+			cosmwasm_system_run::<InstantiateInput, _>(vm, message, event_handler)
+		})
 	}
 
 	fn continue_instantiate(
 		&mut self,
-		address: Self::Address,
+		CosmwasmContractMeta { code_id, admin, label }: Self::CodeId,
 		funds: Vec<Coin>,
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_instantiate");
-		todo!()
+		let nonce = Pallet::<T>::next_contract_nonce(self.contract_address.as_ref())?;
+		let (contract, info) = Pallet::<T>::do_instantiate_phase1(
+			self.contract_address.clone().into_inner(),
+			code_id,
+			&nonce.to_le_bytes(),
+			admin.map(|admin| admin.into_inner()),
+			label
+				.as_bytes()
+				.to_vec()
+				.try_into()
+				.map_err(|_| crate::Error::<T>::LabelTooBig)?,
+		)?;
+		Pallet::<T>::cosmwasm_call(
+			self.shared,
+			self.contract_address.clone().into_inner(),
+			contract,
+			info,
+			funds,
+			|vm| cosmwasm_system_run::<InstantiateInput, _>(vm, message, event_handler),
+		)
 	}
 
 	fn continue_migrate(
 		&mut self,
 		address: Self::Address,
-		funds: Vec<Coin>,
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_migrate");
-		todo!()
+		let sender = self.contract_address.clone().into_inner();
+		let contract = address.into_inner();
+		let info = Pallet::<T>::contract_info(&contract)?;
+		Pallet::<T>::cosmwasm_call(
+			self.shared,
+			sender,
+			contract,
+			info,
+			// Can't move funds in migration.
+			Default::default(),
+			|vm| cosmwasm_system_run::<MigrateInput, _>(vm, message, event_handler),
+		)
 	}
 
 	fn query_custom(
 		&mut self,
-		query: Self::QueryCustom,
+		_: Self::QueryCustom,
 	) -> Result<
 		cosmwasm_minimal_std::SystemResult<cosmwasm_minimal_std::CosmwasmQueryResult>,
 		Self::Error,
 	> {
 		log::debug!(target: "runtime::contracts", "query_custom");
-		todo!()
+		Err(CosmwasmVMError::Unsupported)
 	}
 
 	fn message_custom(
 		&mut self,
-		message: Self::MessageCustom,
-		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
+		_: Self::MessageCustom,
+		_: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "message_custom");
-		todo!()
+		Err(CosmwasmVMError::Unsupported)
 	}
 
 	fn query_raw(
@@ -251,35 +332,49 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		key: Self::StorageKey,
 	) -> Result<Option<Self::StorageValue>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_raw");
-		todo!()
+		let info = Pallet::<T>::contract_info(address.as_ref())?;
+		Pallet::<T>::do_db_read_other_contract(self, &info.trie_id, &key)
 	}
 
 	fn transfer(&mut self, to: &Self::Address, funds: &[Coin]) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "transfer: {:#?}", funds);
+		let from = self.contract_address.as_ref();
+		Pallet::<T>::do_transfer(from, to.as_ref(), funds, false)?;
 		Ok(())
 	}
 
 	fn burn(&mut self, funds: &[Coin]) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "burn: {:#?}", funds);
-		Ok(())
+		// TODO: assets registry check etc...
+		Err(CosmwasmVMError::Unsupported)
 	}
 
 	fn balance(&mut self, account: &Self::Address, denom: String) -> Result<Coin, Self::Error> {
 		log::debug!(target: "runtime::contracts", "balance: {} => {:#?}", Into::<String>::into(account.clone()), denom);
-		todo!()
+		let amount = Pallet::<T>::do_balance(account.as_ref(), denom.clone())?;
+		Ok(Coin { denom, amount })
 	}
 
 	fn all_balance(&mut self, account: &Self::Address) -> Result<Vec<Coin>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "all balance: {}", Into::<String>::into(account.clone()));
-		todo!()
+		//  TODO: support iterating over all tokens???
+		Err(CosmwasmVMError::Unsupported)
 	}
 
-	fn query_info(
-		&mut self,
-		address: Self::Address,
-	) -> Result<cosmwasm_minimal_std::ContractInfoResponse, Self::Error> {
+	fn query_info(&mut self, address: Self::Address) -> Result<ContractInfoResponse, Self::Error> {
 		log::debug!(target: "runtime::contracts", "query_info");
-		todo!()
+		// TODO: cache or at least check if its current contract and use `self.contract_info`
+		let info = Pallet::<T>::contract_info(address.as_ref())?;
+		let code_id = info.code_id;
+		let pinned = self.shared.cache.code.contains_key(&code_id);
+		Ok(ContractInfoResponse {
+			code_id,
+			creator: CosmwasmAccount::<T>::new(info.instantiator.clone()).into(),
+			admin: info.admin.clone().map(|admin| CosmwasmAccount::<T>::new(admin).into()),
+			pinned,
+			// TODO: IBC
+			ibc_port: None,
+		})
 	}
 
 	fn db_read(
@@ -287,8 +382,7 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		key: Self::StorageKey,
 	) -> Result<Option<Self::StorageValue>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "db_read");
-		let value = Pallet::<T>::do_db_read(&self.contract_info.trie_id, key)?;
-		Ok(value)
+		Pallet::<T>::do_db_read(self, &key)
 	}
 
 	fn db_write(
@@ -297,14 +391,22 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		value: Self::StorageValue,
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "db_write");
-		Pallet::<T>::do_db_write(&self.contract_info.trie_id, key, value)?;
-		Ok(())
+		if self.shared.readonly() {
+			Err(CosmwasmVMError::ReadlyViolation)
+		} else {
+			Pallet::<T>::do_db_write(self, &key, &value)?;
+			Ok(())
+		}
 	}
 
 	fn db_remove(&mut self, key: Self::StorageKey) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "db_remove");
-		Pallet::<T>::do_db_remove(&self.contract_info.trie_id, key)?;
-		Ok(())
+		if self.shared.readonly() {
+			Err(CosmwasmVMError::ReadlyViolation)
+		} else {
+			Pallet::<T>::do_db_remove(self, &key);
+			Ok(())
+		}
 	}
 
 	fn abort(&mut self, message: String) -> Result<(), Self::Error> {
@@ -312,9 +414,13 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		Err(CosmwasmVMError::Aborted(message))
 	}
 
-	fn charge(&mut self, value: cosmwasm_vm::vm::VmGas) -> Result<(), Self::Error> {
-		// TODO: REALLY IMPORTANT
-		Ok(())
+	fn charge(&mut self, value: VmGas) -> Result<(), Self::Error> {
+		let gas_to_charge = match value {
+			VmGas::Instrumentation { metered } => metered as u64,
+			// TODO: gas for each operations
+			_ => 1u64,
+		};
+		self.charge_raw(gas_to_charge)
 	}
 
 	fn gas_checkpoint_push(
@@ -322,26 +428,30 @@ impl<T: Config> VMBase for CosmwasmVM<T> {
 		checkpoint: cosmwasm_vm::vm::VmGasCheckpoint,
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "gas_checkpoint_push");
-    match self.gas.push(checkpoint) {
-        GasOutcome::Continue => Ok(()),
-        GasOutcome::Halt => Err(CosmwasmVMError::OutOfGas),
-    }
+		match self.shared.gas.push(checkpoint) {
+			GasOutcome::Continue => Ok(()),
+			GasOutcome::Halt => Err(CosmwasmVMError::OutOfGas),
+		}
 	}
 
 	fn gas_checkpoint_pop(&mut self) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "gas_checkpoint_pop");
-    self.gas.pop();
+		self.shared.gas.pop();
 		Ok(())
 	}
 
 	fn gas_ensure_available(&mut self) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "gas_ensure_available");
-		Ok(())
+		if self.shared.gas.remaining() > 0 {
+			Ok(())
+		} else {
+			Err(CosmwasmVMError::OutOfGas)
+		}
 	}
 }
 
-impl<T: Config> Transactional for CosmwasmVM<T> {
-	type Error = CosmwasmVMError<crate::Error<T>>;
+impl<'a, T: Config> Transactional for CosmwasmVM<'a, T> {
+	type Error = CosmwasmVMError<T>;
 	fn transaction_begin(&mut self) -> Result<(), Self::Error> {
 		sp_io::storage::start_transaction();
 		Ok(())
@@ -441,12 +551,11 @@ impl<'a> CodeValidation<'a> {
 							export_name: name,
 							expected_signature: signature.to_vec(),
 							actual_signature: func_ty.params().to_vec(),
-						});
+						})
 					}
 				},
-				None if *requirement == ExportRequirement::Mandatory => {
-					return Err(ValidationError::MissingMandatoryExport(name))
-				},
+				None if *requirement == ExportRequirement::Mandatory =>
+					return Err(ValidationError::MissingMandatoryExport(name)),
 				None => {
 					// Not mandatory
 				},
@@ -456,7 +565,6 @@ impl<'a> CodeValidation<'a> {
 	}
 	pub fn validate_imports(
 		self,
-		host_module: &str,
 		import_banlist: &[(&'static str, &'static str)],
 	) -> Result<Self, ValidationError> {
 		let CodeValidation(module) = self;
@@ -477,7 +585,7 @@ impl<'a> CodeValidation<'a> {
 			if let Some((m, f)) =
 				import_banlist.iter().find(|(m, f)| m == &import_module && f == &import_name)
 			{
-				return Err(ValidationError::ImportIsBanned(m, f));
+				return Err(ValidationError::ImportIsBanned(m, f))
 			}
 		}
 		Ok(self)
@@ -494,11 +602,11 @@ impl<'a> CodeValidation<'a> {
 		let CodeValidation(module) = self;
 		if let Some(table_section) = module.table_section() {
 			if table_section.entries().len() > 1 {
-				return Err(ValidationError::MustDeclareOneTable);
+				return Err(ValidationError::MustDeclareOneTable)
 			}
 			if let Some(table_type) = table_section.entries().first() {
 				if table_type.limits().initial() > limit {
-					return Err(ValidationError::TableExceedLimit);
+					return Err(ValidationError::TableExceedLimit)
 				}
 			}
 		}
@@ -511,7 +619,7 @@ impl<'a> CodeValidation<'a> {
 				use self::elements::Instruction::BrTable;
 				if let BrTable(table) = instr {
 					if table.table.len() > limit as usize {
-						return Err(ValidationError::BrTableExceedLimit);
+						return Err(ValidationError::BrTableExceedLimit)
 					}
 				}
 			}
@@ -522,7 +630,7 @@ impl<'a> CodeValidation<'a> {
 		let CodeValidation(module) = self;
 		if let Some(global_section) = module.global_section() {
 			if global_section.entries().len() > limit as usize {
-				return Err(ValidationError::GlobalsExceedLimit);
+				return Err(ValidationError::GlobalsExceedLimit)
 			}
 		}
 		Ok(self)
@@ -532,9 +640,8 @@ impl<'a> CodeValidation<'a> {
 		if let Some(global_section) = module.global_section() {
 			for global in global_section.entries() {
 				match global.global_type().content_type() {
-					ValueType::F32 | ValueType::F64 => {
-						return Err(ValidationError::GlobalFloatingPoint)
-					},
+					ValueType::F32 | ValueType::F64 =>
+						return Err(ValidationError::GlobalFloatingPoint),
 					_ => {},
 				}
 			}
@@ -543,9 +650,8 @@ impl<'a> CodeValidation<'a> {
 			for func_body in code_section.bodies() {
 				for local in func_body.locals() {
 					match local.value_type() {
-						ValueType::F32 | ValueType::F64 => {
-							return Err(ValidationError::LocalFloatingPoint)
-						},
+						ValueType::F32 | ValueType::F64 =>
+							return Err(ValidationError::LocalFloatingPoint),
 						_ => {},
 					}
 				}
@@ -558,9 +664,8 @@ impl<'a> CodeValidation<'a> {
 						let return_type = func_type.results().get(0);
 						for value_type in func_type.params().iter().chain(return_type) {
 							match value_type {
-								ValueType::F32 | ValueType::F64 => {
-									return Err(ValidationError::ParamFloatingPoint)
-								},
+								ValueType::F32 | ValueType::F64 =>
+									return Err(ValidationError::ParamFloatingPoint),
 								_ => {},
 							}
 						}
@@ -575,7 +680,7 @@ impl<'a> CodeValidation<'a> {
 		if let Some(type_section) = module.type_section() {
 			for Type::Function(func) in type_section.types() {
 				if func.params().len() > limit as usize {
-					return Err(ValidationError::FunctionParameterExceedLimit);
+					return Err(ValidationError::FunctionParameterExceedLimit)
 				}
 			}
 		}
