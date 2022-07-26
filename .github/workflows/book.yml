@@ -23,6 +23,7 @@ jobs:
 
       - name: Setup mdBook
         run: |
+          # TODO: use nix
           wget "https://github.com/rust-lang/mdBook/releases/download/v0.4.18/mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz" 
           tar -xzf mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz 
           chmod +x mdbook

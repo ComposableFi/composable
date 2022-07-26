@@ -1,122 +1,395 @@
 {
   description = "Composable Finance Local Networks Lancher and documentation Book";
-
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    rust-overlay.url = "github:oxalica/rust-overlay/2af4f775282ff9cb458c3ef6f30c0a8f689d202b";
-    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    rust-overlay = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+      # different version (we likely have old and conflicts)
+      # inputs.flake-utils.follows = "flake-utils";
+    };
+    crane = {
+      url = "github:ipetkov/crane";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # NOTE: gives weird error
+    # nixops-flake = {
+    #   url = "github:NixOS/nixops?rev=35ac02085169bc2372834d6be6cf4c1bdf820d09";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    #   inputs.utils.follows = "flake-utils";
+    # };
   };
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, #nixpkgs-fmt,
+  #, nixops-flake 
+  }:
+    let 
+      eachSystemOutputs = flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ rust-overlay.overlays.default ];
+          allowUnsupportedSystem = true; # we do not tirgger this on mac
+          permittedInsecurePackages = [
+                "openjdk-headless-16+36" # something depends on it
+          ];
+        };
+        nixops = pkgs.callPackage ./.nix/nixops.nix {};
+        overlays = [ (import rust-overlay) ];        
+        rust-toolchain = import ./.nix/rust-toolchain.nix;
+      in with pkgs;
+      let 
+        # Stable rust for anything except wasm runtime
+        rust-stable = rust-bin.stable.latest.default;
 
-  outputs = { self, nixpkgs, rust-overlay }:
-    let
-      overlays = [ (import rust-overlay) ];
-      supportedSystems =
-        [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
-      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system overlays; });
-    in {
-      nixopsConfigurations.default =
-        let pkgs = import nixpkgs {};
-        in (pkgs.callPackage ./devnet/default.nix { inherit nixpkgs; }).machines;
+        # Nightly rust used for wasm runtime compilation
+        rust-nightly = rust-bin.selectLatestNightlyWith (toolchain:
+          toolchain.default.override {
+            extensions = [ "rust-src" ];
+            targets = [ "wasm32-unknown-unknown" ];
+          });
 
-      packages = forAllSystems (system:
-        let
-          pkgs = nixpkgsFor.${system};
-          devnet = pkgs.callPackage ./devnet { inherit nixpkgs; };
-          latest-book = pkgs.callPackage ./book {};
-        in {
-          dali-script = devnet.dali.script;
-          picasso-script = devnet.picasso.script;
-          inherit (devnet.dali) book;
-          inherit (devnet) nixops;
-          inherit latest-book;
-        });
+        rust-nightly-dev = rust-bin.selectLatestNightlyWith (toolchain:
+          toolchain.default.override {
+            extensions = [ "rust-src" "clippy" "rustfmt" ];
+            targets = [ "wasm32-unknown-unknown" ];
+          });  
 
-      # Default package is currently the book, but that will change
-      defaultPackage = forAllSystems (system: self.packages.${system}.book);
+        # Crane lib instantiated with current nixpkgs
+        crane-lib = crane.mkLib pkgs;
 
-      devShells = forAllSystems (system:
-        let pkgs = nixpkgsFor.${system};
-        in {
-          book = pkgs.mkShell { buildInputs = [ pkgs.mdbook ]; };
-          devnet = pkgs.mkShell {
-            buildInputs =
-              let p = self.packages.${system};
-              in [ p.nixops p.dali-script p.picasso-script ];
+        # Crane pinned to stable Rust
+        crane-stable = crane-lib.overrideToolchain rust-stable;
+
+        # Crane pinned to nightly Rust
+        crane-nightly = crane-lib.overrideToolchain rust-nightly;
+
+        # Wasm optimizer, used to replicate build.rs behavior in an explicit fashion
+        wasm-optimizer = crane-stable.buildPackage {
+          cargoCheckCommand = "true";
+          src = let customFilter = name: type: true;
+          in lib.cleanSourceWith {
+            filter = lib.cleanSourceFilter;
+            src = lib.cleanSourceWith {
+              filter =
+                nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
+                ./utils/wasm-optimizer;
+              src = ./utils/wasm-optimizer;
+            };
+          };
+        };
+
+        # for containers which are intented for testing, debug and development (including running isolated runtime)
+        container-tools =     
+        [
+          coreutils
+          bash
+          procps
+          findutils
+          nettools
+          bottom
+          nix   
+          procps
+        ];
+
+        src = let
+          blacklist = [
+            "nix"            
+            ".config"
+            ".devcontainer"
+            ".github"
+            ".log"
+            ".maintain"
+            ".tools"
+            ".vscode"
+            "audits"
+            "book"
+            "devnet-stage"
+            "devnet"
+            "docker"
+            "docs"
+            "frontend"
+            "rfcs"
+            "scripts"
+            "setup"
+            "subsquid"
+            "runtime-tests"
+          ];
+          customFilter = name: type:
+            !(type == "directory" && builtins.elem (baseNameOf name) blacklist);
+        in lib.cleanSourceWith {
+          filter = lib.cleanSourceFilter;
+          src = lib.cleanSourceWith {
+            filter =
+              nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
+              ./.;
+            src = ./.;
+          };
+        };
+
+        # Common env required to build the node
+        common-args = {
+          inherit src;
+          buildInputs = [ openssl zstd ];
+          nativeBuildInputs = [ clang pkg-config ]
+            ++ lib.optional stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
+              Security
+              SystemConfiguration
+            ]);
+          doCheck = false;
+          cargoCheckCommand = "true";
+          # Don't build any wasm as we do it ourselves
+          SKIP_WASM_BUILD = "1";
+          LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
+            stdenv.cc.cc.lib
+            llvmPackages.libclang.lib
+          ];
+          LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+          PROTOC = "${protobuf}/bin/protoc";
+          ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+        };
+
+        # Common dependencies, all dependencies listed that are out of this repo
+        common-deps = crane-stable.buildDepsOnly (common-args // { });
+
+        # Build a wasm runtime, unoptimized
+        mk-runtime = name:
+          let file-name = "${name}_runtime.wasm";
+          in crane-nightly.buildPackage (common-args // {
+            pname = "${name}-runtime";
+            cargoBuildCommand =
+              "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown";
+            # From parity/wasm-builder
+            RUSTFLAGS =
+              "-Clink-arg=--export=__heap_base -Clink-arg=--import-memory";
+          });
+
+        # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
+        mk-optimized-runtime = name:
+          let runtime = mk-runtime name;
+          in stdenv.mkDerivation {
+            name = "${runtime.name}-optimized";
+            phases = [ "installPhase" ];
+            installPhase = ''
+              mkdir -p $out/lib
+              ${wasm-optimizer}/bin/wasm-optimizer \
+                --input ${runtime}/lib/${name}_runtime.wasm \
+                --output $out/lib/runtime.optimized.wasm
+            '';
+          };
+
+        polkadot = import ./.nix/polkadot-version.nix;
+        
+        devnet-input = builtins.fromJSON (builtins.readFile ./devnet/devnet.json);      
+
+        # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
+        # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file        
+        service-account-credential-key-file-input = builtins.fromJSON (builtins.readFile ./devnet/ops.json);
+        gce-to-nix = file: 
+        {
+          project = file.project_id;
+          serviceAccount = file.client_email;
+          accessKey = file.private_key;
+        };
+        gce-input = gce-to-nix service-account-credential-key-file-input;
+
+        devnet-deploy = pkgs.callPackage ./.nix/devnet.nix {inherit devnet-input; inherit gce-input; inherit nixpkgs;};
+        codespace-base-container = pkgs.callPackage ./.devcontainer/nix/codespace-base-container.nix {inherit system;};
+      in rec {
+        nixopsConfigurations = {
+          default = devnet-deploy.machines;
+        };
+        packages = rec {
+          inherit wasm-optimizer;
+          inherit common-deps;
+          dali-runtime = mk-optimized-runtime "dali";
+          picasso-runtime = mk-optimized-runtime "picasso";
+          composable-runtime = mk-optimized-runtime "composable";
+          
+          price-feed = crane-stable.buildPackage (common-args // {
+            pnameSuffix = "-price-feed";
+            cargoArtifacts = common-deps;
+            cargoBuildCommand = "cargo build --release -p price-feed";
+          });
+          
+          # NOTE: with docs, non nighly fails but nighly fails too...
+          # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
+          composable-node = with packages;
+            crane-stable.buildPackage (common-args // {
+              pnameSuffix = "-node";
+              cargoArtifacts = common-deps;
+              cargoBuildCommand =
+                "cargo build --release -p composable --features builtin-wasm";
+              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+              COMPOSABLE_RUNTIME =
+                "${composable-runtime}/lib/runtime.optimized.wasm";
+              installPhase = ''
+                mkdir -p $out/bin
+                cp target/release/composable $out/bin/composable
+              '';
+            });
+
+
+          taplo = pkgs.callPackage ./.nix/taplo.nix { inherit crane-stable;};
+          mdbook = pkgs.callPackage ./.nix/mdbook.nix { inherit crane-stable;};
+          composable-book = import ./book/default.nix { crane = crane-stable; inherit (pkgs) cargo stdenv; inherit mdbook; };
+          polkadot-node = pkgs.callPackage ./.nix/polkadot-bin.nix { inherit polkadot;};
+
+          polkadot-launch = pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix {};
+          devnet = let
+            original-config = import ./scripts/polkadot-launch/composable.nix;
+            patched-config = lib.recursiveUpdate original-config {
+              relaychain = { bin = "${packages.polkadot-node}/bin/polkadot"; };
+              parachains = builtins.map (parachain:
+                parachain // {
+                  bin = "${packages.composable-node}/bin/composable";
+                }) original-config.parachains;
+            };
+            config = writeTextFile {
+              name = "devnet-config.json";
+              text = "${builtins.toJSON patched-config}";
+            };
+          in writeShellApplication {
+            name = "composable-devnet";
+            text = ''
+              rm -rf /tmp/polkadot-launch
+              ${packages.polkadot-launch}/bin/polkadot-launch ${config} --verbose
+            '';
+          };
+          devnet-container = dockerTools.buildLayeredImage {
+            name = "composable-devnet-container";
+            contents = [                                     
+              # just allow to bash into it and run with custom entries
+              packages.devnet
+              packages.polkadot-launch
+              ] ++ container-tools;
+              config = { Cmd = [ "${packages.devnet}/bin/composable-devnet" ]; };
+          };
+          
+          # TODO: inherit and provide script to run all stuff
+          # devnet-container-xcvm
+
+          codespace-container = dockerTools.buildLayeredImage {
+            name = "composable-codespace";
+            fromImage = codespace-base-container;
+            # be very carefull with this, so this must be version compatible with base and what vscode will inject
+            contents = [                                          
+              # ISSUE: for some reason stable overrides nighly, need to set different order somehow
+              #rust-stable
+              rust-nightly-dev
+              cachix
+              rust-analyzer
+              rustup # just if it wants to make ad hoc updates
+              nodejs
+              bottom
+              packages.mdbook
+              packages.taplo              
+              ];
+          };
+
+          codespace-container-xcvm = dockerTools.buildLayeredImage {
+            name = "composable-codespace-xcvm";
+            fromImage = codespace-container;
+            contents = [                                          
+                go                
+              ];
+          };
+
+          dali-script = devnet-deploy.dali.script;
+          picasso-script = devnet-deploy.picasso.script;
+          dali-composable-book = devnet-deploy.dali.composable-book;
+    
+          default = packages.composable-node;
+        };
+
+        # Derivations built when running `nix flake check`
+        checks = {
+          tests = crane-stable.cargoBuild (common-args // {
+            pnameSuffix = "-tests";
+            cargoArtifacts = common-deps;
+            cargoBuildCommand = "cargo test --workspace --release";
+          });
+        };
+
+
+        devShells = rec {
+          developers = mkShell {
+            buildInputs = with packages; [
+              # with nix developers are empowered for local dry run of most ci
+              rust-stable
+              wasm-optimizer
+              composable-node
+              mdbook
+              taplo
+              python3
+              nodejs
+              nixpkgs-fmt
+              nixops
+              google-cloud-sdk
+              jq
+            ];
+            NIX_PATH = "nixpkgs=${pkgs.path}";
+            HISTFILE = toString ./.history;
+          };
+
+          technical-writers = mkShell {
+            buildInputs = with packages; [
+              mdbook
+              python3
+              plantuml
+              graphviz
+              pandoc
+            ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
-          main = pkgs.mkShell {
-            # source: https://nixos.wiki/wiki/Rust - Installation via rustup
-            # tweaks are made to add the wasm32 target
-            # TODO: support non-aarch64 architectures
 
-            buildInputs = with pkgs; [
-              mdbook
-              llvmPackages_latest.llvm
-              llvmPackages_latest.bintools
-              zlib.out
-              xorriso
-              grub2
-              qemu
-              llvmPackages_latest.lld
-              python3
-              openssl.dev
-              pkg-config
-              rust-analyzer
-              # rustup
-              # (rust-bin.stable.latest.default.override {
-              #   extensions = [ "rust-src" ];
-              # })
-              (rust-bin.nightly."2022-02-01".default.override {
-                targets = [ "wasm32-unknown-unknown" ];
-              })
+          sre = developers // mkShell {
+            buildInputs = with packages; [                                
+                # TODO: replace fetching binries with approciate cachix builds
+                # TODO: binaries are referenced by git commit hash (so can retarted to git easy)
+                packages.picasso-script
+                packages.dali-script 
+                packages.dali-composable-book # book deploy couuld be secure deployed too                                                
             ];
-            # RUSTC_VERSION = "stable";
-            # https://github.com/rust-lang/rust-bindgen#environment-variables
-            LIBCLANG_PATH= pkgs.lib.makeLibraryPath [ pkgs.llvmPackages_latest.libclang.lib ];
-            HISTFILE=toString ./.history;
-            # shellHook = ''
-            #   export PATH=$PATH:~/.cargo/bin
-            #   export PATH=$PATH:~/.rustup/toolchains/$RUSTC_VERSION-aarch64-unknown-linux-gnu/bin/
-            #   rustup target add wasm32-unknown-unknown --toolchain nightly-2022-02-01
-            #   '';
-
-
-            # Disabled because no aarch64 support:
-            #
-            # Add libvmi precompiled library to rustc search path 
-            # RUSTFLAGS = (builtins.map (a: ''-L ${a}/lib'') [ 
-            #   pkgs.libvmi
-            # ]);
-
-
-            # Add libvmi, glibc, clang, glib headers to bindgen search path
-            BINDGEN_EXTRA_CLANG_ARGS = 
-            # Includes with normal include path
-            (builtins.map (a: ''-I"${a}/include"'') [
-              # Disabled because no aarch64 support:
-              # pkgs.libvmi
-              pkgs.glibc.dev 
-            ])
-            # Includes with special directory paths
-            ++ [
-              ''-I"${pkgs.llvmPackages_latest.libclang.lib}/lib/clang/${pkgs.llvmPackages_latest.libclang.version}/include"''
-              ''-I"${pkgs.glib.dev}/include/glib-2.0"''
-              ''-I${pkgs.glib.out}/lib/glib-2.0/include/''
-            ];
-            # Old version of BINDGEN_EXTRA_CLANG_ARGS
-            # BINDGEN_EXTRA_CLANG_ARGS = "-isystem ${pkgs.llvmPackages.libclang.lib}/lib/clang/${pkgs.lib.getVersion pkgs.clang}/include";
-            
-
-            PROTOC = "${pkgs.protobuf}/bin/protoc";
-            ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
-
-            # Disabled because this would need to depend on the nightly version
-            # Certain Rust tools won't work without this
-            # This can also be fixed by using oxalica/rust-overlay and specifying the rust-src extension
-            # See https://discourse.nixos.org/t/rust-src-not-found-and-other-misadventures-of-developing-rust-on-nixos/11570/3?u=samuela. for more details.
-            # RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+            NIX_PATH = "nixpkgs=${pkgs.path}";
           };
-        });
-    };
+
+          developers-xcvm = developers // mkShell {
+            buildInputs = with packages; [
+              # TODO: hasura
+              # TODO: junod client
+              # TODO: junod server
+              # TODO: solc
+              # TODO: script to run all
+              # TODO: compose export
+                packages.dali-script 
+            ];
+            NIX_PATH = "nixpkgs=${pkgs.path}";
+          };
+          
+          default = developers;
+        };
+
+        # Applications runnable with `nix run`
+        # https://github.com/NixOS/nix/issues/5560
+        # apps = {
+        #   # nix run .#devnet
+        #   type = "app";
+        #   program = "${packages.devnet}/bin/composable-devnet";
+        # };
+      });
+    in
+      eachSystemOutputs
+      //
+      {
+        nixopsConfigurations = {
+          # instead of rerusive merge, just do simpler
+          x86_64-linux.default = eachSystemOutputs.nixopsConfigurations.x86_64-linux.default; 
+          default = eachSystemOutputs.nixopsConfigurations.x86_64-linux.default;
+        };
+      };
 }
