@@ -83,7 +83,7 @@ pub mod pallet {
 		traits::{
 			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 			tokens::{AssetId, Balance},
-			Get, UnixTime,
+			Get, ReservableCurrency, UnixTime,
 		},
 		transactional, BoundedBTreeMap, PalletId,
 	};
@@ -159,6 +159,7 @@ pub mod pallet {
 		LabelTooBig,
 		UnknownDenom,
 		StackOverflow,
+		NotEnoughFundsForUpload,
 	}
 
 	#[pallet::config]
@@ -236,13 +237,19 @@ pub mod pallet {
 		#[pallet::constant]
 		type CodeStackLimit: Get<u32>;
 
+		/// Price of a byte when uploading new code.
+		/// The price is expressed in [`Self::NativeAsset`].
+		/// This amount is reserved from the owner and released when the code is destroyed.
+		#[pallet::constant]
+		type CodeStorageByteDeposit: Get<u32>;
+
 		/// Price of writting a byte in the storage.
 		#[pallet::constant]
-		type StorageByteWritePrice: Get<u32>;
+		type ContractStorageByteWritePrice: Get<u32>;
 
 		/// Price of extracting a byte from the storage.
 		#[pallet::constant]
-		type StorageByteReadPrice: Get<u32>;
+		type ContractStorageByteReadPrice: Get<u32>;
 
 		/// A way to convert from our native account to cosmwasm `Addr`.
 		type AccountToAddr: Convert<AccountIdOf<Self>, String>
@@ -259,6 +266,9 @@ pub mod pallet {
 		/// A way to convert from our native currency to cosmwasm `Denom`.
 		type AssetToDenom: Convert<AssetIdOf<Self>, String>
 			+ Convert<String, Result<AssetIdOf<Self>, ()>>;
+
+		/// Interface used to pay when uploading code.
+		type NativeAsset: ReservableCurrency<AccountIdOf<Self>, Balance = BalanceOf<Self>>;
 
 		/// Interface from which we are going to execute assets operations.
 		type Assets: FungiblesInspect<
@@ -802,6 +812,11 @@ pub mod pallet {
 		pub(crate) fn do_upload(who: &AccountIdOf<T>, code: ContractCodeOf<T>) -> DispatchResult {
 			let code_hash = T::Hashing::hash(&code);
 			ensure!(!CodeHashToId::<T>::contains_key(code_hash), Error::<T>::CodeAlreadyExists);
+			let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
+			// TODO: release this when the code is destroyed, a.k.a. refcount => 0 after a contract
+			// migration for instance.
+			T::NativeAsset::reserve(who, deposit.saturated_into())
+				.map_err(|_| Error::<T>::NotEnoughFundsForUpload)?;
 			let module = Self::do_load_module(&code)?;
 			let instrumented_code = Self::do_instrument_code(module)?;
 			let code_id = CurrentCodeId::<T>::increment()?;
@@ -942,14 +957,15 @@ pub mod pallet {
 
 		/// Compute the gas required to read the given entry.
 		///
-		/// Equation: len(entry(trie, key)) x [`T::StorageByteReadPrice`]
+		/// Equation: len(entry(trie, key)) x [`T::ContractStorageByteReadPrice`]
 		pub(crate) fn do_db_read_gas(trie_id: &ContractTrieIdOf<T>, key: &[u8]) -> u64 {
 			Self::with_db_entry(trie_id, key, |child_trie, entry| {
 				let bytes_to_read = match storage::child::len(&child_trie, &entry) {
 					Some(current_len) => current_len,
 					None => 0,
 				};
-				u64::from(bytes_to_read).saturating_mul(T::StorageByteReadPrice::get().into())
+				u64::from(bytes_to_read)
+					.saturating_mul(T::ContractStorageByteReadPrice::get().into())
 			})
 		}
 
@@ -982,7 +998,7 @@ pub mod pallet {
 
 		/// Compute the gas required to overwrite the given entry.
 		///
-		/// Equation: len(entry(trie, key)) - len(value)  x [`T::StorageByteWritePrice`]
+		/// Equation: len(entry(trie, key)) - len(value)  x [`T::ContractStorageByteWritePrice`]
 		/// With minus saturating.
 		pub(crate) fn do_db_write_gas(
 			trie_id: &ContractTrieIdOf<T>,
@@ -994,7 +1010,8 @@ pub mod pallet {
 					Some(current_len) => current_len.saturating_sub(value.len() as _),
 					None => value.len() as u32,
 				};
-				u64::from(bytes_to_write).saturating_mul(T::StorageByteWritePrice::get().into())
+				u64::from(bytes_to_write)
+					.saturating_mul(T::ContractStorageByteWritePrice::get().into())
 			})
 		}
 
