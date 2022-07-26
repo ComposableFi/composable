@@ -94,7 +94,7 @@ A note on this, fees are specified by the program, meaning that the bridge itsel
 
 When a transports fails to transmit a message (such as an IBC timeout or network congestion) the `Third-party Transport` issues a reimbursement to the `Gateway` which then informs the interpreter instance of the failure.
 
-For `OTP`-registerd transports, the reimbursement itself can be disputed as well. After issueing the reimbursement to the Gateway, a short-lived dispute window (hours) allows validators to dispute the reimbursement. This avoids the attack vector where a bridge has identified a contract which will retry a cross-chain operation until success, and extract value from that by issueing malicious reimbursements (a cross-chain re-entrancy attack).
+For `OTP`-registered transports, the reimbursement itself can be disputed as well. After issuing the reimbursement to the Gateway, a short-lived dispute window (hours) allows validators to dispute the reimbursement. This avoids the attack vector where a bridge has identified a contract which will retry a cross-chain operation until success, and extract value from that by issuing malicious reimbursements (a cross-chain re-entrancy attack).
 
 ```mermaid
 sequenceDiagram
