@@ -5,59 +5,10 @@
   polkadot,
 }:
 let
-  polkalaunch = pkgs.callPackage (pkgs.stdenv.mkDerivation {
-    name = "polkadot-launch";
-    version = "1.0.0";
-    src = fetchFromGitHub {
-      owner = "paritytech";
-      repo = "polkadot-launch";
-      rev = "99c395b9e7dc7468a4b755440d67e317370974c4";
-      hash = "sha256:0is74ad9khbqivnnqfarm8012jvbpg5mcs2p9gl9bz1p7sz1f97d";
-    };
-    patches = [ ./polkadot-launch.patch ];
-    installPhase = ''
-      mkdir $out
-      cp -r * $out
-    '';
-  }) {};
-
-  polkadot-bin = pkgs.stdenv.mkDerivation {
-    name = "polkadot-${polkadot.version}";
-    version = polkadot.version;
-    src = fetchurl {
-      url = "https://github.com/paritytech/polkadot/releases/download/v${polkadot.version}/polkadot";
-      sha256 = polkadot.hash;
-    };
-    nativeBuildInputs = [
-      pkgs.autoPatchelfHook
-    ];
-    buildInputs = [ pkgs.stdenv.cc.cc ];
-    dontUnpack = true;
-    installPhase = ''
-      mkdir -p $out/bin
-      cp $src $out/bin/polkadot
-      chmod +x $out/bin/polkadot
-    '';
-  };
-
+  polkadot-launch = pkgs.callPackage ../.nix/polkadot-launch.nix { };
+  polkadot-bin = pkgs.callPackage ../.nix/polkadot-bin.nix { polkadot };
   composable-bin = pkgs.callPackage ../.nix/composable-bin.nix { composable };
-
-  composable-book = pkgs.stdenv.mkDerivation {
-    name = "composable-book";
-    src = fetchFromGitHub {
-      owner = "ComposableFi";
-      repo = "composable";
-      rev = composable.version;
-      sha256 = composable.revhash;
-    };
-    buildInputs = [ pkgs.mdbook ];
-    phases = [ "installPhase" ];
-    installPhase = ''
-      mkdir -p $out/book
-      cd $src/book
-      mdbook build --dest-dir $out/book
-    '';
-  };
+  composable-book = pkgs.callPackage ../.nix/composable-book.nix { composable };
 
   make-node = tmp-directory: node-type: { name, wsPort, port }: {
     inherit name;
@@ -109,7 +60,7 @@ in {
   script =
     pkgs.writeShellScriptBin "run-${composable.spec}" ''
       rm -rf ${tmp-directory}
-      ${polkalaunch}/bin/polkadot-launch ${devnet-polkalaunch-config}
+      ${polkadot-launch}/bin/polkadot-launch ${devnet-polkalaunch-config}
     '';
   documentation = "${composable-bin}/share";
   inherit book;
