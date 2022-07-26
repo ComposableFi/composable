@@ -19,7 +19,7 @@ const DEFAULT_PARA_ID: u32 = 2000;
 // Parachin ID.
 static PARA_ID: Lazy<ParaId> = Lazy::new(|| {
 	ParaId::new(
-		std::env::var("COMPOSABLE_PARA_ID")
+		std::env::var("PARA_ID")
 			.unwrap_or_else(|_| DEFAULT_PARA_ID.to_string())
 			.parse::<u32>()
 			.unwrap_or(DEFAULT_PARA_ID),
@@ -137,7 +137,12 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 
 #[cfg(feature = "dali")]
 // chain spec for local testnet environments
-pub fn dali_dev() -> dali::ChainSpec {
+pub fn dali_dev(id: &str) -> dali::ChainSpec {
+	let para_id = match id.split("-").nth(1).unwrap() {
+		"dev" => None,
+		number => number.parse::<u32>().ok().map(ParaId::from),
+	};
+	let para_id = para_id.unwrap_or(ParaId::from(DEFAULT_PARA_ID));
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "DALI".into());
 	properties.insert("tokenDecimals".into(), 12.into());
@@ -165,7 +170,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 					),
 				],
 				dev_accounts(),
-				*PARA_ID,
+				para_id,
 				common::NativeExistentialDeposit::get(),
 				dali_runtime::TreasuryAccount::get(),
 			)
@@ -175,7 +180,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(*PARA_ID) },
+		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(para_id) },
 	)
 }
 
