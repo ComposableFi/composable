@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - ci-via-nix
 
 jobs:
   deploy-devnet:
