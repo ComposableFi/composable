@@ -175,7 +175,7 @@ pub mod module {
 		/// Trying to vest to ourselves
 		TryingToSelfVest,
 		/// There is no vesting schedule with a given id
-		NonExistentVestingSchedule,
+		VestingScheduleNotFound,
 	}
 
 	#[pallet::event]
@@ -189,8 +189,12 @@ pub mod module {
 			schedule: VestingScheduleOf<T>,
 		},
 		/// Claimed vesting. \[who, locked_amount\]
-		/// TODO: add vesting_schedule_id to event
-		Claimed { who: AccountIdOf<T>, asset: AssetIdOf<T>, locked_amount: BalanceOf<T> },
+		Claimed {
+			who: AccountIdOf<T>,
+			asset: AssetIdOf<T>,
+			locked_amount: BalanceOf<T>,
+			vesting_schedule_id: T::VestingScheduleId,
+		},
 		/// Updated vesting schedules. \[who\]
 		VestingSchedulesUpdated { who: AccountIdOf<T> },
 	}
@@ -213,7 +217,7 @@ pub mod module {
 		ValueQuery,
 	>;
 
-	/// TODO: add description
+	/// Counter used to uniquely identify vesting schedules within this pallet.
 	#[pallet::storage]
 	#[pallet::getter(fn vesting_schedules_count)]
 	#[allow(clippy::disallowed_types)] // nonce, ValueQuery is OK
@@ -245,9 +249,6 @@ pub mod module {
 					},
 				};
 
-				// VestingScheduleCount::<T>::put(vesting_schedule_id + 1);
-				// let vesting_schedule_id = 0; // TODO: get next id from VestingScheduleCount
-				// let vesting_schedule_id = VestingScheduleCount::<T>::increment();
 				bounded_schedules
 					.try_push(VestingSchedule {
 						vesting_schedule_id,
@@ -288,12 +289,15 @@ pub mod module {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(<T as Config>::WeightInfo::claim((<T as Config>::MaxVestingSchedules::get() / 2) as u32))]
-		/// TODO: add vesting_schedule_id parameter
-		pub fn claim(origin: OriginFor<T>, asset: AssetIdOf<T>) -> DispatchResult {
+		pub fn claim(
+			origin: OriginFor<T>,
+			asset: AssetIdOf<T>,
+			vesting_schedule_id: T::VestingScheduleId,
+		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let locked_amount = Self::do_claim(&who, asset)?;
+			let locked_amount = Self::do_claim(&who, asset, vesting_schedule_id)?;
 
-			Self::deposit_event(Event::Claimed { who, asset, locked_amount });
+			Self::deposit_event(Event::Claimed { who, asset, locked_amount, vesting_schedule_id });
 			Ok(())
 		}
 
@@ -334,14 +338,13 @@ pub mod module {
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
-			// TODO: add vesting_schedule_id parameter
+			vesting_schedule_id: T::VestingScheduleId,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let who = T::Lookup::lookup(dest)?;
-			let locked_amount = Self::do_claim(&who, asset)?;
+			let locked_amount = Self::do_claim(&who, asset, vesting_schedule_id)?;
 
-			// TODO: add vesting_schedule_id to event
-			Self::deposit_event(Event::Claimed { who, asset, locked_amount });
+			Self::deposit_event(Event::Claimed { who, asset, locked_amount, vesting_schedule_id });
 			Ok(())
 		}
 	}
@@ -394,20 +397,26 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 }
 
 impl<T: Config> Pallet<T> {
-	fn do_claim(who: &AccountIdOf<T>, asset: AssetIdOf<T>) -> Result<BalanceOf<T>, DispatchError> {
+	fn do_claim(
+		who: &AccountIdOf<T>,
+		asset: AssetIdOf<T>,
+		vesting_schedule_id: T::VestingScheduleId,
+	) -> Result<BalanceOf<T>, DispatchError> {
 		let (locked, locked_map) = Self::locked_balance(who, asset);
-		if locked.is_zero() {
+		let locked_for_id = locked_map
+			.get(&vesting_schedule_id)
+			.ok_or(Error::<T>::VestingScheduleNotFound)?;
+		if locked_for_id.is_zero() {
 			// cleanup the storage and unlock the fund
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
 		} else {
-			T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked)?;
+			T::Currency::set_lock(VESTING_LOCK_ID, asset, who, *locked_for_id)?;
 		}
 		Ok(locked)
 	}
 
 	/// Returns locked balance based on current block number.
-	/// TODO: change return type to (BalanceOf<T>. BTreeMap<VestingScheduleId, BalanceOf<T>>)
 	fn locked_balance(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
