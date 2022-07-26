@@ -107,6 +107,8 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
           setExpectedRemoveAmountQuote(remove[q])
         })
         .catch((err: any) => {
+          setExpectedRemoveAmountBase(new BigNumber(0))
+          setExpectedRemoveAmountQuote(new BigNumber(0))
           console.error(err);
         });
     }
