@@ -43,7 +43,7 @@ pub mod pallet {
 		/// Overarching event type
 		type Event: From<Event<Self>> + IsType<<Self as system::Config>::Event>;
 
-		/// The origin which may  set, update or remove filter.
+		/// The origin which may set, update or remove filter.
 		type UpdateOrigin: EnsureOrigin<Self::Origin>;
 
 		// NOTE: can match by binary prefix which is much more efficient than string comparison.

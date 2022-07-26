@@ -24,6 +24,11 @@ pub mod native {
 		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 50, 100>,
 	>;
 
+	pub type EnsureRootOrOneThirdNativeTechnical = EnsureOneOf<
+		EnsureRoot<AccountId>,
+		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 1, 3>,
+	>;
+
 	pub type EnsureRootOrAllNativeTechnical = EnsureOneOf<
 		EnsureRoot<AccountId>,
 		collective::EnsureProportionAtLeast<AccountId, NativeTechnicalCollective, 50, 100>,

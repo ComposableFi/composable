@@ -687,12 +687,11 @@ impl Contains<Call> for BaseCallFilter {
 
 impl call_filter::Config for Runtime {
 	type Event = Event;
-	type UpdateOrigin = EnsureRootOrHalfTechnocal<AccountId>; # ASD
+	type UpdateOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type Hook = ();
 	type WeightInfo = ();
 	type MaxStringSize = ConstU32<128>;
 }
-
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(

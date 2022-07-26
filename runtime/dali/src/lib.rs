@@ -76,7 +76,7 @@ pub use frame_support::{
 
 use codec::{Codec, Encode, EncodeLike};
 use frame_support::{
-	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade, ConstU32},
+	traits::{fungibles, ConstU32, EqualPrivilegeOnly, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
@@ -805,10 +805,9 @@ impl Contains<Call> for BaseCallFilter {
 	}
 }
 
-
 impl call_filter::Config for Runtime {
 	type Event = Event;
-	type UpdateOrigin = EnsureRootOrHalfTechnocal<AccountId>; # ASD
+	type UpdateOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type Hook = ();
 	type WeightInfo = ();
 	type MaxStringSize = ConstU32<128>;
