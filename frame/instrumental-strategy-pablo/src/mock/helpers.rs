@@ -103,7 +103,7 @@ pub fn make_proposal(
 	account_id: AccountId,
 	threshold: u32,
 	index: ProposalIndex,
-	yes_votes: Option<&Vec<AccountId>>,
+	yes_votes: Option<&[AccountId]>,
 ) {
 	let proposal_len: u32 = proposal.using_encoded(|p| p.len() as u32);
 	let proposal_weight = proposal.get_dispatch_info().weight;

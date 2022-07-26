@@ -157,7 +157,7 @@ mod set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
 			});
-			make_proposal(proposal, ALICE, 2, 0, Some(&vec![ALICE, BOB]));
+			make_proposal(proposal, ALICE, 2, 0, Some(&[ALICE, BOB]));
 			System::assert_has_event(Event::PabloStrategy(
 				pallet::Event::AssociatedPoolWithAsset { asset_id: base_asset, pool_id },
 			));
@@ -179,7 +179,7 @@ mod set_pool_id_for_asset {
 				asset_id: base_asset,
 				pool_id,
 			});
-			make_proposal(proposal, ALICE, 2, 0, Some(&vec![ALICE]));
+			make_proposal(proposal, ALICE, 2, 0, Some(&[ALICE]));
 		});
 	}
 }
