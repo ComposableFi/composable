@@ -21,6 +21,7 @@ RUN groupadd -g 1000 service && useradd -m -s /bin/sh -g 1000 -G service service
 	curl -fsSL https://deb.nodesource.com/setup_17.x | bash - && \
 	apt-get update && apt-get install -y --no-install-recommends nodejs && \
 	npm install --global npm yarn && \
+	# TODO: basilisk obsolete -> remove
 	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v7.0.1/basilisk -Lo /apps/Basilisk-node/target/release/basilisk && \
 	chmod +x /apps/Basilisk-node/target/release/basilisk && \
 	apt-get clean && \
@@ -37,5 +38,6 @@ RUN chown -R service /apps/composable/scripts/polkadot-launch && \
 	sed -i 's/"--rpc-cors=all"/"--rpc-cors=all", "--ws-external", "--unsafe-rpc-external", "--rpc-methods=unsafe"/' composable_and_basilisk.json
 
 USER service
+# ISSUE: it is old and seems not used - for sure some ports are not here anymore
 EXPOSE 9945 9988 9998
 ENTRYPOINT ["yarn", "composable_and_basilisk"]

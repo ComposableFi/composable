@@ -53,6 +53,7 @@ jobs:
 
       - name: Prepare a test environment
         run: |
+          # TODO: use nix
           cd integration-tests/runtime-tests
           curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
           chmod +x ./docker-compose
