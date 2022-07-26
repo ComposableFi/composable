@@ -127,15 +127,17 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use ibc::{
+		clients::ics07_tendermint::client_def::TendermintClient,
 		core::{
 			ics02_client::{
-				client_def::ConsensusUpdateResult,
+				client_def::{ClientDef, ConsensusUpdateResult},
+				client_state::AnyClientState,
 				context::{ClientKeeper, ClientReader},
 				handler::{update_client::process as process_update_client, ClientResult},
 				msgs::{
 					create_client::TYPE_URL as CREATE_CLIENT_TYPE_URL,
+					misbehavior::TYPE_URL as SUBMIT_MISBEHAVIOUR_TYPE_URL,
 					update_client::TYPE_URL as UPDATE_CLIENT_TYPE_URL, ClientMsg,
-					misbehavior::TYPE_URL as SUBMIT_MISBEHAVIOUR_TYPE_URL
 				},
 			},
 			ics03_connection::{
@@ -278,6 +280,8 @@ pub mod pallet {
 		ClientStateUpdate { client_id: Vec<u8>, revision_number: u64, revision_height: u64 },
 		/// Consensus state updated
 		ConsensusStateUpdate { client_id: Vec<u8>, revision_number: u64, revision_height: u64 },
+		/// A client has been frozen
+		ClientFrozen { client_id: Vec<u8>, revision_number: u64, frozen_height: u64 },
 	}
 
 	/// Errors inform users that something went wrong.
@@ -314,7 +318,11 @@ pub mod pallet {
 		/// Invalid message for extirnsic
 		InvalidMessageType,
 		/// Challenge Period has not elapsed
-		ChallengePeriodNotElapsed
+		ChallengePeriodNotElapsed,
+		/// Headers submitted are not competing or invalid
+		InvalidChallengeHeaders,
+		/// Challenge period is not open for this client
+		ChallengePeriodEnded,
 	}
 
 	#[pallet::hooks]
@@ -386,7 +394,9 @@ pub mod pallet {
 				.into_iter()
 				.filter_map(|message| {
 					let type_url = String::from_utf8(message.type_url.clone()).ok()?;
-					if type_url.as_str() == CREATE_CLIENT_TYPE_URL {
+					if type_url.as_str() == CREATE_CLIENT_TYPE_URL ||
+						type_url.as_str() == UPDATE_CLIENT_TYPE_URL
+					{
 						return None
 					}
 					Some(Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value }))
@@ -555,18 +565,25 @@ pub mod pallet {
 				Ics26Envelope::Ics2Msg(ClientMsg::UpdateClient(msg)) => {
 					let client_id = msg.client_id.as_bytes().to_vec();
 					let challenge_window: u32 = T::HeaderChallengeWindow::get().into();
-					let client_state = ctx.client_state(&msg.client_id).map_err(|_| Error::<T>::ClientStateNotFound)?;
-					let client_update_height = ctx.client_update_height(&msg.client_id, client_state.latest_height()).map_err(|_| Error::<T>::Other)?.revision_height;
-					let current_height = ctx.host_height().revision_height; 
-					let block_diff = current_height  - client_update_height;
+					let client_state = ctx
+						.client_state(&msg.client_id)
+						.map_err(|_| Error::<T>::ClientStateNotFound)?;
+					let client_update_height = ctx
+						.client_update_height(&msg.client_id, client_state.latest_height())
+						.map_err(|_| Error::<T>::Other)?
+						.revision_height;
+					let current_height = ctx.host_height().revision_height;
+					let block_diff = current_height - client_update_height;
 
-					if !ChallengePeriod::<T>::get(client_id) || block_diff <= challenge_window.into() {
+					if !ChallengePeriod::<T>::get(client_id) ||
+						block_diff <= challenge_window.into()
+					{
 						return Err(Error::<T>::ChallengePeriodNotElapsed.into())
 					}
-					
+
 					process_update_client::<HostFunctions>(&mut ctx, msg)
 						.map_err(|_| Error::<T>::ProcessingError)?
-				}
+				},
 				_ => return Err(Error::<T>::InvalidMessageType.into()),
 			};
 
@@ -633,12 +650,68 @@ pub mod pallet {
 			let envelope = ibc::core::ics26_routing::handler::decode(msg)
 				.map_err(|_| Error::<T>::DecodingError)?;
 			match envelope {
-					Ics26Envelope::Ics2Msg(ClientMsg::Misbehaviour(msg)) => {
-						match msg.misbehaviour {
-							
-						}
+				Ics26Envelope::Ics2Msg(ClientMsg::Misbehaviour(msg)) => {
+					// Ensure the challenge period is still open
+					if !ChallengePeriod::<T>::get(msg.client_id.as_bytes().to_vec()) {
+						return Err(Error::<T>::ChallengePeriodEnded.into())
 					}
-					_ => return Err(Error::<T>::InvalidMessageType.into()),
+					match msg.misbehaviour {
+						ibc::core::ics02_client::misbehaviour::AnyMisbehaviour::Tendermint(
+							tm_misbehaviour,
+						) => {
+							// we check is competing headers are for the same block height
+							if tm_misbehaviour.header1.height() != tm_misbehaviour.header2.height()
+							{
+								return Err(Error::<T>::InvalidChallengeHeaders.into())
+							}
+							let client_def = TendermintClient::<HostFunctions>::default();
+							let client_state = match ctx
+								.client_state(&msg.client_id)
+								.map_err(|_| Error::<T>::ClientStateNotFound)?
+							{
+								AnyClientState::Tendermint(tm_state) => tm_state,
+								_ => return Err(Error::<T>::ClientStateNotFound.into()),
+							};
+							// Check if both headers verify correctly
+							client_def
+								.verify_header(
+									&ctx,
+									tm_misbehaviour.client_id.clone(),
+									client_state.clone(),
+									tm_misbehaviour.header1,
+								)
+								.map_err(|_| Error::<T>::InvalidChallengeHeaders)?;
+							client_def
+								.verify_header(
+									&ctx,
+									tm_misbehaviour.client_id.clone(),
+									client_state.clone(),
+									tm_misbehaviour.header2,
+								)
+								.map_err(|_| Error::<T>::InvalidChallengeHeaders)?;
+
+							// Freeze light client
+							let frozen_client_state = client_state
+								.with_frozen_height(client_state.latest_height())
+								.map_err(|_| Error::<T>::Other)?;
+							let frozen_height = frozen_client_state.latest_height();
+							ctx.store_client_state(
+								tm_misbehaviour.client_id.clone(),
+								AnyClientState::Tendermint(frozen_client_state),
+							)
+							.map_err(|_| Error::<T>::Other)?;
+							let client_id = tm_misbehaviour.client_id.as_bytes().to_vec();
+							ChallengePeriod::<T>::insert(client_id.clone(), false);
+							Self::deposit_event(Event::<T>::ClientFrozen {
+								client_id,
+								revision_number: frozen_height.revision_number,
+								frozen_height: frozen_height.revision_height,
+							})
+						},
+						_ => unreachable!(),
+					}
+				},
+				_ => return Err(Error::<T>::InvalidMessageType.into()),
 			}
 			Ok(())
 		}
