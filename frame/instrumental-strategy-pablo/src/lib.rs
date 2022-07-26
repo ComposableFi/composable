@@ -36,13 +36,13 @@ pub mod pallet {
 	use composable_traits::{
 		dex::Amm,
 		instrumental::{InstrumentalProtocolStrategy, State},
-		vault::{FundsAvailability, StrategicVault, Vault},
+		vault::StrategicVault,
 	};
 	use frame_support::{
 		dispatch::{DispatchError, DispatchResult},
 		pallet_prelude::*,
 		storage::bounded_btree_set::BoundedBTreeSet,
-		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
+		traits::fungibles::{Mutate, MutateHold, Transfer},
 		transactional, Blake2_128Concat, PalletId,
 	};
 	use frame_system::pallet_prelude::OriginFor;
@@ -230,6 +230,18 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Add [`VaultId`](Config::VaultId) to [`AssociatedVaults`](AssociatedVaults) storage.
+		///
+		/// Emits [`AssociatedVault`](Event::AssociatedVault) event when successful.
+		#[pallet::weight(T::WeightInfo::associate_vault())]
+		pub fn associate_vault(
+			origin: OriginFor<T>,
+			vault_id: T::VaultId,
+		) -> DispatchResultWithPostInfo {
+			T::ExternalOrigin::ensure_origin(origin)?;
+			<Self as InstrumentalProtocolStrategy>::associate_vault(&vault_id)?;
+			Ok(().into())
+		}
 		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object.
 		///
 		/// Emits [`AssociatedPoolWithAsset`](Event::AssociatedPoolWithAsset) event when successful.
@@ -241,7 +253,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::ExternalOrigin::ensure_origin(origin)?;
 			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
-			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
 			Ok(().into())
 		}
 		/// Occur rebalance of liquidity of each vault.
@@ -278,6 +289,7 @@ pub mod pallet {
 				},
 				Err(_) => Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal }),
 			}
+			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
 			Ok(())
 		}
 
@@ -321,68 +333,8 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		#[transactional]
-		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
-			let asset_id = T::Vault::asset_id(vault_id)?;
-			let vault_account = T::Vault::account_id(vault_id);
-			let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
-			let pool_id = pool_id_and_state.pool_id;
-			match T::Vault::available_funds(vault_id, &Self::account_id())? {
-				FundsAvailability::Withdrawable(balance) => {
-					Self::withdraw(vault_account, pool_id, balance)?;
-				},
-				FundsAvailability::Depositable(balance) => {
-					Self::deposit(vault_account, pool_id, balance)?;
-				},
-				FundsAvailability::MustLiquidate => {
-					Self::liquidate(vault_account, pool_id)?;
-				},
-				FundsAvailability::None => {},
-			};
+		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
 			Ok(())
-		}
-
-		#[transactional]
-		fn withdraw(
-			vault_account: T::AccountId,
-			pool_id: T::PoolId,
-			balance: T::Balance,
-		) -> DispatchResult {
-			T::Pablo::add_liquidity(
-				&vault_account,
-				pool_id,
-				balance,
-				T::Balance::zero(),
-				T::Balance::zero(),
-				true,
-			)
-		}
-
-		#[transactional]
-		fn deposit(
-			vault_account: T::AccountId,
-			pool_id: T::PoolId,
-			_balance: T::Balance,
-		) -> DispatchResult {
-			T::Pablo::remove_liquidity(
-				&vault_account,
-				pool_id,
-				T::Balance::zero(), // FIXME(saruman9): Amount of LP's tokens should be not zero
-				T::Balance::zero(),
-				T::Balance::zero(),
-			)
-		}
-
-		#[transactional]
-		fn liquidate(vault_account: T::AccountId, pool_id: T::PoolId) -> DispatchResult {
-			let lp_token_id = T::Pablo::lp_token(pool_id)?;
-			let balance_of_lp_token = T::Currency::balance(lp_token_id, &vault_account);
-			T::Pablo::remove_liquidity(
-				&vault_account,
-				pool_id,
-				balance_of_lp_token,
-				T::Balance::zero(),
-				T::Balance::zero(),
-			)
 		}
 	}
 }

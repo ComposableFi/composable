@@ -10,7 +10,8 @@
     "pablo.LiquidityRemoved",
     "pablo.Swapped",
     "bondedFinance.NewOffer",
-    "bondedFinance.NewBond"
+    "bondedFinance.NewBond",
+    "vesting.VestingScheduleAdded"
   ],
   "calls": []
 }
