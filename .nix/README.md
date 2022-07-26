@@ -1,3 +1,5 @@
 # Overview
 
-Mostly configurations of some external stuff, either 3rd party or not in this repo composable.
+Configurations external to this repository checkout, either 3rd party or not in this repo composable or not this revision of repo.
+
+3rd parties either do not have nix configurations or we need heavily patch them.

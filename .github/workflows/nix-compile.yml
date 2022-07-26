@@ -2,7 +2,7 @@ name: "Nix pipeline"
 on:
   push:
     branches:
-      - nix/dz/only-linux     
+      #- nix/dz/fusion     
       - ci-via-nix
       - main
 

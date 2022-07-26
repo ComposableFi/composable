@@ -40,26 +40,9 @@ let
     '';
   };
 
-  composable-bin = pkgs.stdenv.mkDerivation rec {
-    name = "composable-${composable.name}-${composable.version}";
-    version = composable.version;
-    src = fetchurl {
-      url = "https://storage.googleapis.com/composable-binaries/community-releases/${composable.name}/${name}.tar.gz";
-      sha256 = composable.hash;
-    };
-    nativeBuildInputs = [
-      pkgs.autoPatchelfHook
-    ];
-    buildInputs = [ pkgs.stdenv.cc.cc pkgs.zlib ];
-    installPhase = ''
-      tar -xvf $src
-      mkdir -p $out/bin
-      mv release/composable $out/bin
-      mv doc $out
-    '';
-  };
+  composable-bin = pkgs.callPackage ../.nix/composable-bin.nix { composable };
 
-  book = pkgs.stdenv.mkDerivation {
+  composable-book = pkgs.stdenv.mkDerivation {
     name = "composable-book";
     src = fetchFromGitHub {
       owner = "ComposableFi";

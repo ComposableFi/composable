@@ -45,7 +45,7 @@ let
     '';
   };
 
-  book = pkgs.stdenv.mkDerivation {
+  composable-book = pkgs.stdenv.mkDerivation {
     name = "composable-book";
     src = fetchFromGitHub {
       owner = "ComposableFi";
@@ -115,5 +115,5 @@ in {
       ${polkadot-launch}/bin/polkadot-launch ${devnet-polkalaunch-config}
     '';
   documentation = "${composable-bin}/share";
-  inherit book;
+  inherit composable-book;
 }

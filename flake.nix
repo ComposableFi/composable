@@ -35,13 +35,13 @@
         in {
           dali-script = devnet.dali.script;
           picasso-script = devnet.picasso.script;
-          inherit (devnet.dali) book;
+          inherit (devnet.dali) composable-book;
           inherit (devnet) nixops;
           inherit latest-book;
         };
 
       # TODO: default packages should be our parachain i guess ready to run on the network
-      defaultPackage =  self.packages.${system}.book;
+      defaultPackage =  self.packages.${system}.composable-book;
 
       devShells = 
         let 
