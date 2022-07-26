@@ -1,4 +1,4 @@
-Design Proposal: Pablo Fees & Staking Rewards Distribution
+Design Proposal: Vesting schedules
 ==========================================================
 
 Table of Contents
@@ -30,11 +30,8 @@ a given asset. We need to change this in order to allow users to claim only a ch
 
 The vesting pallet
 
-1. MUST keep track of individual vesting schedules for each asset.
-2. MUST allow a user to choose which vesting schedule to claim.
-3. MUST include the claimed schedule in the corresponding event.
-4. MUST not do anything when a non-existent vesting schedule is claimed.
-5. SHOULD allow users to claim **all** vesting schedules for the same asset, by not specifying a `vesting_schedule_id`
+1. MUST allow a user to choose which vesting schedule to claim.
+2. External systems(eg: FE, Subsquid) MUST be able to track the claimed vesting schedules.
 
 ## 4. Method
 
