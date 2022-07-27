@@ -17,8 +17,12 @@ export interface ComposableSupportEthereumAddress extends Null {}
 
 /** @name ComposableTraitsAssetsBasicAssetMetadata */
 export interface ComposableTraitsAssetsBasicAssetMetadata extends Struct {
-  readonly symbol: Null;
-  readonly name: Null;
+  readonly symbol: {
+    readonly inner: Null;
+  } & Struct;
+  readonly name: {
+    readonly inner: Null;
+  } & Struct;
 }
 
 /** @name ComposableTraitsAssetsXcmAssetLocation */

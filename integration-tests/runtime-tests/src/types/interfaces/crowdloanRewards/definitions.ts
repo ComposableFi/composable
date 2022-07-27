@@ -159,8 +159,12 @@ export default {
     },
     ComposableSupportEthereumAddress: "Null",
     ComposableTraitsAssetsBasicAssetMetadata: {
-      symbol: "Null",
-      name: "Null"
+      symbol: {
+        inner: "Null"
+      },
+      name: {
+        inner: "Null"
+      }
     },
     ComposableTraitsDexDexRoute: "Null",
     ComposableTraitsLendingRepayStrategy: "Null",

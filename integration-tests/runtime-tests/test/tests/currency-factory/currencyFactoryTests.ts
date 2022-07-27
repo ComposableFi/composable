@@ -6,7 +6,10 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { AnyNumber } from "@polkadot/types-codec/types";
-import { u64 } from "@polkadot/types-codec";
+import { Option, u128, u64 } from "@polkadot/types-codec";
+import BN from "bn.js";
+import { AssetId } from "@polkadot/types/interfaces/runtime";
+import { ComposableTraitsAssetsBasicAssetMetadata } from "@composable/types/interfaces";
 
 /**
  *
@@ -21,6 +24,7 @@ describe("[SHORT] Currency Factory Tests", function () {
 
   let api: ApiPromise;
   let sudoKey: KeyringPair;
+  let assetIdToSetMetadata: BN | u128 | AssetId;
 
   before("Setting up the tests", async function () {
     this.timeout(60 * 1000);
@@ -35,11 +39,28 @@ describe("[SHORT] Currency Factory Tests", function () {
     await api.disconnect();
   });
 
+  describe("tx.assets.mintInitialize", function () {
+    it("Can initialize new asset", async function () {
+      this.timeout(2 * 60 * 1000);
+      const amount = 999_999_999_999;
+      const beneficiary = sudoKey.publicKey;
+      const assetListBefore = await api.query.currencyFactory.assetEd.entries();
+      const {
+        data: [resultCurrencyId, resultBeneficiary, resultAmount]
+      } = await CurrencyFactoryTests.initializeNewAsset(api, sudoKey, amount, beneficiary);
+      assetIdToSetMetadata = resultCurrencyId;
+      expect(resultBeneficiary.toString()).to.equal(api.createType("AccountId32", beneficiary).toString());
+      expect(resultAmount).to.be.bignumber.equal(amount.toString());
+      const assetListAfter = await api.query.currencyFactory.assetEd.entries();
+      expect(assetListAfter.length).to.be.greaterThan(assetListBefore.length);
+    });
+  });
+
   describe("tx.currencyFactory.setMetadata", function () {
-    it("Can set metadata for asset ID 100,000,000,001", async function () {
+    it("Can set metadata for newly created asset", async function () {
       this.timeout(2 * 60 * 1000);
 
-      const assetId = 100_000_000_001;
+      const assetId = assetIdToSetMetadata;
       const metadata = {
         symbol: {
           inner: "BAN"
@@ -49,72 +70,21 @@ describe("[SHORT] Currency Factory Tests", function () {
         }
       };
 
-      const assetMetadataBefore = await api.query.currencyFactory.assetMetadata(assetId);
-
       const {
         data: [result]
       } = await CurrencyFactoryTests.setMetadata(api, sudoKey, assetId, metadata);
       expect(result.isOk).to.be.true;
 
-      const assetMetadataAfter = await api.query.currencyFactory.assetMetadata(assetId);
-      expect(assetMetadataBefore.isEmpty).to.be.true;
+      const assetMetadataAfter = <Option<ComposableTraitsAssetsBasicAssetMetadata>>(
+        await api.query.currencyFactory.assetMetadata(assetId)
+      );
       expect(assetMetadataAfter.unwrap().isEmpty).to.be.false;
-      expect(assetMetadataAfter.unwrap().name.toString()).to.be.equal(metadata.name.inner.toString());
-      expect(assetMetadataAfter.unwrap().symbol.toString()).to.be.equal(metadata.symbol.inner.toString());
-    });
-
-    it("Can set metadata for asset ID 1 (PICA)", async function () {
-      this.timeout(2 * 60 * 1000);
-
-      const assetId = 100_000_000_001;
-      const metadata = {
-        symbol: {
-          inner: "BAN"
-        },
-        name: {
-          inner: "Banana Coin"
-        }
-      };
-
-      const assetMetadataBefore = await api.query.currencyFactory.assetMetadata(assetId);
-
-      const {
-        data: [result]
-      } = await CurrencyFactoryTests.setMetadata(api, sudoKey, assetId, metadata);
-      expect(result.isOk).to.be.true;
-
-      const assetMetadataAfter = await api.query.currencyFactory.assetMetadata(assetId);
-      expect(assetMetadataBefore.isEmpty).to.be.true;
-      expect(assetMetadataAfter.unwrap().isEmpty).to.be.false;
-      expect(assetMetadataAfter.unwrap().name.toString()).to.be.equal(metadata.name.inner.toString());
-      expect(assetMetadataAfter.unwrap().symbol.toString()).to.be.equal(metadata.symbol.inner.toString());
-    });
-
-    it("Can set metadata for asset ID 1000 (BTC)", async function () {
-      this.timeout(2 * 60 * 1000);
-
-      const assetId = 1000;
-      const metadata = {
-        symbol: {
-          inner: "BTC"
-        },
-        name: {
-          inner: "Bitcoin"
-        }
-      };
-
-      const assetMetadataBefore = await api.query.currencyFactory.assetMetadata(assetId);
-
-      const {
-        data: [result]
-      } = await CurrencyFactoryTests.setMetadata(api, sudoKey, assetId, metadata);
-      expect(result.isOk).to.be.true;
-
-      const assetMetadataAfter = await api.query.currencyFactory.assetMetadata(assetId);
-      expect(assetMetadataBefore.isEmpty).to.be.true;
-      expect(assetMetadataAfter.unwrap().isEmpty).to.be.false;
-      expect(assetMetadataAfter.unwrap().name.toString()).to.be.equal(metadata.name.inner.toString());
-      expect(assetMetadataAfter.unwrap().symbol.toString()).to.be.equal(metadata.symbol.inner.toString());
+      expect(CurrencyFactoryTests.hex2a(assetMetadataAfter.unwrap().name.inner)).to.be.equal(
+        metadata.name.inner.toString()
+      );
+      expect(CurrencyFactoryTests.hex2a(assetMetadataAfter.unwrap().symbol.inner)).to.be.equal(
+        metadata.symbol.inner.toString()
+      );
     });
   });
 
@@ -158,5 +128,31 @@ export class CurrencyFactoryTests {
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.currencyFactory.addRange(range))
     );
+  }
+
+  public static async initializeNewAsset(
+    api: ApiPromise,
+    sudoKey: KeyringPair,
+    amount: AnyNumber | u128,
+    beneficiary: Uint8Array
+  ) {
+    return await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.tokens.Endowed.is,
+      api.tx.sudo.sudo(api.tx.assets.mintInitialize(amount, beneficiary))
+    );
+  }
+
+  /**
+   * Converts hex to ascii.
+   * Source: https://stackoverflow.com/questions/3745666/how-to-convert-from-hex-to-ascii-in-javascript/3745677#3745677
+   * @param hexx
+   */
+  public static hex2a(hexx) {
+    const hex = hexx.toString().replace("0x", ""); //force conversion
+    let str = "";
+    for (let i = 0; i < hex.length; i += 2) str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    return str;
   }
 }
