@@ -41,9 +41,9 @@ const Updater = () => {
    * zustand store
    */
   useEffect(() => {
-    if (allPools.length && selectedAccount && parachainApi) {
+    if (allPools.length > 0 && selectedAccount !== undefined && parachainApi !== undefined) {
       allPools.forEach((pool) => {
-        if (pool.poolId && pool.pair && pool.lpToken) {
+        if (pool.poolId !== undefined && pool.pair !== undefined && pool.lpToken !== undefined) {
           fetchBalanceByAssetId(
             parachainApi,
             selectedAccount.address,
