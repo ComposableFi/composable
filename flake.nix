@@ -25,7 +25,7 @@
       pkgs = import nixpkgs { inherit system overlays; };
       rust-toolchain = import ./.nix/rust-toolchain.nix;
     in rec {
-      devnet-spec = pkgs.callPackage ./devnet/default.nix { inherit nixpkgs; devnet = "devnet"; };
+      devnet-spec = pkgs.callPackage ./.nix/devnet-spec.nix { inherit nixpkgs; devnet = "devnet"; };
       nixopsConfigurations.default =
         let 
           pkgs = import nixpkgs {};
@@ -34,13 +34,13 @@
 
       packages = 
         let
-          devnet = pkgs.callPackage ./.nix/devnet.nix { composable = devnet-spec.composable-repo; polkadot = devnet-spec.polkadot-repo;};
+          devnet-deploy = pkgs.callPackage ./.nix/devnet-deploy.nix { composable = devnet-spec.composable-repo; polkadot = devnet-spec.polkadot-repo;};
           latest-book = pkgs.callPackage ./book {};
         in {
-          dali-script = devnet.dali.script;
-          picasso-script = devnet.picasso.script;
-          inherit (devnet.dali) composable-book;
-          inherit (devnet) nixops;
+          dali-script = devnet-deploy.dali.script;
+          picasso-script = devnet-deploy.picasso.script;
+          inherit (devnet-deploy.dali) composable-book;
+          inherit (devnet-deploy) nixops;
           inherit latest-book;
         };
 

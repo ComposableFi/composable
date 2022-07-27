@@ -1,13 +1,12 @@
-{ pkgs, nixpkgs, devnet }:
+{ pkgs, nixpkgs, devnet,  }:
 let
   # NOTE: can unify, either use json for input and for composition or can use nix for both
   devnet-json = "${devnet}.json";
-  devnet-nix = "${devnet}.nix";
   bins = (if builtins.pathExists  then
     builtins.fromJSON (builtins.readFile devnet)
   else
     throw
-    "devnet is not found at `${devnet}`, please follow the README.md instructions.");
+    "devnet is not found at `${devnet-json}`, please follow the README.md instructions.");
   mk-composable = spec:
     def: def // {
       inherit spec;
@@ -63,14 +62,14 @@ let
   latest-dali = mk-latest "dali-dev";
   latest-picasso = mk-latest "picasso-dev";
 in {
-  dali = (pkgs.callPackage ./devnet.nix {
+  dali = (pkgs.callPackage ../.nix/devnet-spec.nix {
     inherit (latest-dali) composable;
     inherit (latest-dali) polkadot;
   });
   composable-repo = composable;
   polkadot-repo = polkadot;
 
-  picasso = (pkgs.callPackage ./devnet.nix {
+  picasso = (pkgs.callPackage ../.nix/devnet-spec.nix {
     inherit (latest-picasso) composable;
     inherit (latest-picasso) polkadot;
   });
@@ -89,15 +88,15 @@ in {
   });
 
   machines = let
-    conf = if builtins.pathExists ./ops.json then
+    ops-config = if builtins.pathExists ./ops.json then
       builtins.fromJSON (builtins.readFile ./ops.json)
     else
       throw
       "Operations credentials `ops.json` definition missng, please follow the README.md instructions.";
     credentials = {
-      project = conf.project_id;
-      serviceAccount = conf.client_email;
-      accessKey = conf.private_key;
+      project = ops-config.project_id;
+      serviceAccount = ops-config.client_email;
+      accessKey = ops-config.private_key;
     };
   in builtins.foldl' (machines:
     { composable, polkadot }:
