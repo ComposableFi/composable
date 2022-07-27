@@ -72,7 +72,6 @@ impl<T: Config> Pallet<T> {
 			direction: config.direction,
 		});
 
-		// Return swap output.
 		Ok(swap_output)
 	}
 
@@ -113,7 +112,6 @@ impl<T: Config> Pallet<T> {
 			&swap.swap_output,
 		)?;
 
-		// Return swap result.
 		Ok(swap)
 	}
 

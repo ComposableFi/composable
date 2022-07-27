@@ -27,7 +27,6 @@ impl<T: Config> Pallet<T> {
 		// Update runtime storage.
 		VammMap::<T>::insert(&vamm_id, vamm_state);
 
-		// Return new asset twap.
 		Ok(base_twap)
 	}
 
