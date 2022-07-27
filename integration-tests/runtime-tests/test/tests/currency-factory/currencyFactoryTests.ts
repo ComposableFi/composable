@@ -16,8 +16,8 @@ import { ComposableTraitsAssetsBasicAssetMetadata } from "@composable/types/inte
  * Currency Factory Integration Tests
  *
  * The currency factory pallet persists of 2 extrinsics.
- * - currencyFactory.addRange
  * - currencyFactory.setMetadata
+ * - currencyFactory.addRange
  */
 describe("[SHORT] Currency Factory Tests", function () {
   if (!testConfiguration.enabledTests.enabled) return;
@@ -39,8 +39,8 @@ describe("[SHORT] Currency Factory Tests", function () {
     await api.disconnect();
   });
 
-  describe("tx.assets.mintInitialize", function () {
-    it("Can initialize new asset", async function () {
+  describe("tx.currencyFactory.setMetadata", function () {
+    it("Sudo can initialize new asset", async function () {
       this.timeout(2 * 60 * 1000);
       const amount = 999_999_999_999;
       const beneficiary = sudoKey.publicKey;
@@ -54,10 +54,7 @@ describe("[SHORT] Currency Factory Tests", function () {
       const assetListAfter = await api.query.currencyFactory.assetEd.entries();
       expect(assetListAfter.length).to.be.greaterThan(assetListBefore.length);
     });
-  });
-
-  describe("tx.currencyFactory.setMetadata", function () {
-    it("Can set metadata for newly created asset", async function () {
+    it("Sudo can set metadata for newly created asset", async function () {
       this.timeout(2 * 60 * 1000);
 
       const assetId = assetIdToSetMetadata;
