@@ -435,19 +435,22 @@ TODO
 
 ## 6. Future Improvements
 
--   ❏ Measure and improve on\_initialize algorithm to use less block
+- ❏ Measure and improve on\_initialize algorithm to use less block
     weight(possibly reusing some of the looping logic) or use a block
     fold abstraction when processing prices.
 
--   ❏ Use a better statistical measure(standard deviation?) when
+- ❏ Use a better statistical measure(standard deviation?) when
     assessing accuracy compare threshold of a provided price by an
     oracle.
 
--   ❏ Possibly set maximum on `AssetInfo.max_answers` field. Use the
+- ❏ Possibly set maximum on `AssetInfo.max_answers` field. Use the
     field to short circuit the any additional logic that might be
     performed unnecessarily on pre\_prices.
 
--   ❏ Improve the median for price accuracy calculation.
+- ❏ Improve the median for price accuracy calculation.
+
+- ❏ Make the price server easily extensible by rewriting it in typescript.
+    Ideally any party from the community should be able to integrate price-feeds into the price-server with the least possible effort.
 
 ## 7. References
 
