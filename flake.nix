@@ -23,6 +23,7 @@
     let
       overlays = [ (import rust-overlay) ];
       pkgs = import nixpkgs { inherit system overlays; };
+      rust-toolchain = import ./.nix/rust-toolchain.nix;
     in {
       nixopsConfigurations.default =
         let pkgs = import nixpkgs {};

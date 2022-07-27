@@ -1,0 +1,8 @@
+{ 
+  toolchain = 
+  { channel = "nightly-2020-07-10"; 
+  components = [ "rustfmt" "rustc-dev" ]; 
+  profile = "minimal"; 
+  targets = [ "wasm32-unknown-unknown" "thumbv2-none-eabi" ]; 
+  }; 
+}
