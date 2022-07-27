@@ -13,6 +13,9 @@ pub type Timestamp = u64;
 pub const ONE_MINUTE: DurationSeconds = 60;
 
 pub const ONE_HOUR: DurationSeconds = 60 * ONE_MINUTE;
+pub const ONE_DAY: DurationSeconds = 24 * ONE_HOUR;
+pub const ONE_WEEK: DurationSeconds = 7 * ONE_DAY;
+pub const ONE_MONTH: DurationSeconds = 4 * ONE_WEEK;
 
 /// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no
 /// accounts to length of year)

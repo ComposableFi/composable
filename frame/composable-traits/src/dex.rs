@@ -156,7 +156,8 @@ pub struct StakingRewardPool<RewardPoolId> {
 
 pub const MAX_REWARDS: u128 = 100_000_000_000_000_000_000_000_u128;
 pub const REWARD_PERCENTAGE: u32 = 10;
-pub const FIVE_YEAR_BLOCKS: u32 = 5 * 365 * 24 * 60 * 10;
+const MILLISECS_PER_BLOCK: u32 = 12000;
+pub const FIVE_YEAR_BLOCKS: u32 = 5 * 365 * 24 * 60 * 60 / MILLISECS_PER_BLOCK;
 
 /// Pool Fees
 #[derive(

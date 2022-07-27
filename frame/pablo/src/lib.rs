@@ -80,7 +80,7 @@ pub mod pallet {
 		staking::{
 			lock::LockConfig, ManageStaking, ProtocolStaking, RewardConfig, RewardPoolConfiguration,
 		},
-		time::{ONE_HOUR, ONE_MINUTE},
+		time::{ONE_MONTH, ONE_WEEK},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
@@ -647,20 +647,18 @@ pub mod pallet {
 			>,
 			DispatchError,
 		> {
-			let mut rewards = BTreeMap::new();
 			let max_rewards: T::Balance = T::Convert::convert(MAX_REWARDS);
-			let reward_rate = Perbill::from_percent(REWARD_PERCENTAGE);
-			rewards
-				.insert(pair.base, RewardConfig { asset_id: pair.base, max_rewards, reward_rate });
-			rewards.insert(
-				pair.quote,
-				RewardConfig { asset_id: pair.quote, max_rewards, reward_rate },
-			);
+			let reward_rate = Perbill::zero();
+			let rewards = BTreeMap::from([
+				(pair.base, RewardConfig { asset_id: pair.base, max_rewards, reward_rate }),
+				(pair.quote, RewardConfig { asset_id: pair.quote, max_rewards, reward_rate }),
+			]);
 			let reward_configs = RewardConfigsOf::<T>::try_from(rewards)
 				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
-			let mut duration_presets = BTreeMap::new();
-			duration_presets.insert(ONE_HOUR, Perbill::from_percent(1));
-			duration_presets.insert(ONE_MINUTE, Perbill::from_percent(10));
+			let duration_presets = BTreeMap::from([
+				(ONE_WEEK, Perbill::from_percent(1)),
+				(ONE_MONTH, Perbill::from_percent(10)),
+			]);
 			let duration_presets = BoundedBTreeMap::try_from(duration_presets)
 				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
@@ -686,19 +684,19 @@ pub mod pallet {
 			>,
 			DispatchError,
 		> {
-			let mut rewards = BTreeMap::new();
 			let max_rewards: T::Balance = T::Convert::convert(MAX_REWARDS);
 			let reward_rate = Perbill::from_percent(REWARD_PERCENTAGE);
 			let pblo_asset_id: T::AssetId = primitives::currency::CurrencyId::PBLO.0.into();
-			rewards.insert(
+			let rewards = BTreeMap::from([(
 				pblo_asset_id,
 				RewardConfig { asset_id: pblo_asset_id, max_rewards, reward_rate },
-			);
+			)]);
 			let reward_configs = RewardConfigsOf::<T>::try_from(rewards)
 				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
-			let mut duration_presets = BTreeMap::new();
-			duration_presets.insert(ONE_HOUR, Perbill::from_percent(1));
-			duration_presets.insert(ONE_MINUTE, Perbill::from_percent(10));
+			let duration_presets = BTreeMap::from([
+				(ONE_WEEK, Perbill::from_percent(1)),
+				(ONE_MONTH, Perbill::from_percent(10)),
+			]);
 			let duration_presets = BoundedBTreeMap::try_from(duration_presets)
 				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };

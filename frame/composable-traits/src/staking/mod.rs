@@ -153,6 +153,7 @@ pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
 	pub lock: Lock,
 }
 
+/// Trait to provide interface to manage staking reward pool.
 pub trait ManageStaking {
 	type AccountId;
 	type AssetId;
@@ -162,6 +163,7 @@ pub trait ManageStaking {
 	type StakingDurationPresetsLimit;
 	type RewardPoolId;
 
+	/// Create a staking reward pool from configurations passed as inputs.
 	fn create_staking_pool(
 		pool_config: RewardPoolConfiguration<
 			Self::AccountId,
