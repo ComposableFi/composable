@@ -35,10 +35,10 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24" }
 
 hex-literal = { version = "0.3.4", optional = true }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "09ac302cedc33f3e1c100541bfa0a33ee2751679", default-features = false, features = [
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "963151c8b9a1ff4b5e8fb0e2be029f14da64d580", default-features = false, features = [
   "ics11_beefy",
 ] }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "09ac302cedc33f3e1c100541bfa0a33ee2751679", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "963151c8b9a1ff4b5e8fb0e2be029f14da64d580", default-features = false }
 
 ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false, optional = true }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", optional = true, default-features = false }
@@ -61,7 +61,7 @@ chrono = "0.4.19"
 currency-factory = { package = "pallet-currency-factory", path = "../currency-factory" }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 hex-literal = { version = "0.3.4" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "09ac302cedc33f3e1c100541bfa0a33ee2751679", features = [
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "963151c8b9a1ff4b5e8fb0e2be029f14da64d580", features = [
   "mocks",
 ] }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5" }
