@@ -378,7 +378,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::unstake(T::MaxRewardConfigsPerPool::get()))]
 		pub fn unstake(origin: OriginFor<T>, position_id: T::PositionId) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
-			<Self as Staking>::unstake(&owner, &position_id, Zero::zero())?;
+			<Self as Staking>::unstake(&owner, &position_id)?;
 
 			Ok(())
 		}
@@ -514,11 +514,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn unstake(
-			who: &Self::AccountId,
-			position_id: &Self::PositionId,
-			_remove_amount: Self::Balance,
-		) -> DispatchResult {
+		fn unstake(who: &Self::AccountId, position_id: &Self::PositionId) -> DispatchResult {
 			let keep_alive = false;
 			let stake = Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
 			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);

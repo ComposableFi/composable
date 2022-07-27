@@ -221,11 +221,7 @@ pub trait Staking {
 	/// * `instance_id` the ID uniquely identifying the NFT from which we will compute the available
 	///   rewards.
 	/// * `to` the account to transfer the final claimed rewards to.
-	fn unstake(
-		who: &Self::AccountId,
-		position: &Self::PositionId,
-		remove_amount: Self::Balance,
-	) -> DispatchResult;
+	fn unstake(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
 
 	/// `ratio` - how much of share to retain in the original position.
 	fn split(
