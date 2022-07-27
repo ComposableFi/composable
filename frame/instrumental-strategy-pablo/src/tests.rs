@@ -1,3 +1,10 @@
+use composable_traits::instrumental::InstrumentalProtocolStrategy;
+use frame_support::assert_ok;
+use primitives::currency::CurrencyId;
+use sp_core::H256;
+use sp_runtime::traits::{BlakeTwo256, Hash};
+use sp_std::collections::btree_set::BTreeSet;
+
 use crate::{
 	mock::{
 		account_id::{ADMIN, ALICE, BOB},
@@ -9,12 +16,6 @@ use crate::{
 	},
 	pallet,
 };
-use composable_traits::instrumental::InstrumentalProtocolStrategy;
-use frame_support::assert_ok;
-use primitives::currency::CurrencyId;
-use sp_core::H256;
-use sp_runtime::traits::{BlakeTwo256, Hash};
-use sp_std::collections::btree_set::BTreeSet;
 
 // -------------------------------------------------------------------------------------------------
 //                                          Associate Vault
