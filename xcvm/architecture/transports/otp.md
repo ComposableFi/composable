@@ -1,5 +1,7 @@
 # Open Transport Protocol (OTP)
 
+This document describes the on-chain components related to registration and dispatching XCVM programs over different transports. 
+
 Although [IBC](./ibc.md) is the default and preferred transport method within the `XCVM`, we also support arbitrary third party protocols. The abstract interface for registration and participation in `XCVM` transactions is what we call `OTP`.
 
 For a transport to be OTP compatible, it has to support the following operations:
@@ -30,7 +32,7 @@ The following diagram describes the flow of data (and funds) when OTP is used to
 
 ```mermaid
 sequenceDiagram
-    Third-party transport->>Third-party OTP-adapter: Transform messsage.
+    Third-party transport->>Third-party OTP-adapter: Transform message.
     Third-party OTP-adapter->>Gateway: Transfer assets and pass program.
     Gateway->>Router: Add bridging info and transfer funds.
     Note over Gateway: Accept/deny program based on blacklist.
@@ -73,9 +75,9 @@ Validators can be any entity, including a user triggering the dispute through ou
 
 ## Egress of messages
 
-Once a transport has been succesfully registered, it becomes accessible to the `Gateway`, which might route traffic based on transport requirements from the interpreter instance dispatching the program. By default, all OTP transports are considered `Trusted`, meaning that no traffic is routed through them unless specifically opted-in by the interpreter instance. 
+Once a transport has been successfully registered, it becomes accessible to the `Gateway`, which might route traffic based on transport requirements from the interpreter instance dispatching the program. By default, all OTP transports are considered `Trusted`, meaning that no traffic is routed through them unless specifically opted-in by the interpreter instance. 
 
-Later we may add means to upgrade transports to the `Trustless` status using governance. This will accomodate transports such as `XCMP`.
+Later we may add means to upgrade transports to the `Trustless` status using governance. This will accommodate transports such as `XCMP`.
 
 ```mermaid
 sequenceDiagram
@@ -86,7 +88,7 @@ sequenceDiagram
 
 ### Fees
 
-`XCVM` is relatively unopiniated about handling fees, leaving that up to the users by adding an output to reward the relayer. Read more on how we defined fees [here](../../SPEC.md#fees). 
+`XCVM` is not opinionated about handling fees, leaving that up to the users by adding an output to reward the relayer. Read more on how we defined fees [here](../../SPEC.md#fees). 
 
 A note on this, fees are specified by the program, meaning that the bridge itself cannot charge a fee directly on the `Assets` being transfered. The third-party OTP-adapter will need to take this into account, by possibly using internal APIs of the bridging contract to ensure that no fees are charged based on the `Assets` transferred.
 
@@ -163,9 +165,9 @@ sequenceDiagram
     Gateway->>Adapter: Submit Spawn.
     Note over Gateway,Adapter: Selects based on destinations.
     Adapter->>Bridge Contract: Call transfer.
-    Bridge Contract->>Multisig Relayer: Enact token transfer.
+    Bridge Contract->>Multisig Relayer: Enact message pass.
     Adapter->>Bridge Contract: Call message pass.
-    Bridge Contract->>Multisig Relayer: Enact token transfer.
+    Bridge Contract->>Multisig Relayer: Enact message pass.
 ```
 
 Reimbursements can be constructed similarly to an incoming spawn.
