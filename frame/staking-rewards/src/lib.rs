@@ -847,7 +847,7 @@ pub mod pallet {
 				RewardPools::<T>::insert(pool_id, reward_pool);
 
 				total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_acumulation_hook_reward_update_calculation()) +
-						// REVIEW(benluelo): I'm assuming that `StorageMap::iter` does one read per item, I could be wrong though
+						// NOTE: `StorageMap::iter` does one read per item
 						T::DbWeight::get().reads(1) +
 						T::DbWeight::get().writes(1)
 			}
