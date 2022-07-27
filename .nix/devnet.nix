@@ -1,3 +1,4 @@
+
 { pkgs,
   fetchFromGitHub,
   fetchurl,
@@ -5,10 +6,10 @@
   polkadot,
 }:
 let
-  polkadot-launch = pkgs.callPackage ../.nix/polkadot-launch.nix { };
-  polkadot-bin = pkgs.callPackage ../.nix/polkadot-bin.nix { inherit polkadot; };
-  composable-bin = pkgs.callPackage ../.nix/composable-bin.nix { inherit composable; };
-  composable-book = pkgs.callPackage ../.nix/composable-book.nix { inherit composable; };
+  polkadot-launch = pkgs.callPackage ./polkadot-launch.nix { };
+  polkadot-bin = pkgs.callPackage ./polkadot-bin.nix { inherit polkadot; };
+  composable-bin = pkgs.callPackage ./composable-bin.nix { inherit composable; };
+  composable-book = pkgs.callPackage ./composable-book.nix { inherit composable; };
 
   make-node = tmp-directory: node-type: { name, wsPort, port }: {
     inherit name;
@@ -63,5 +64,5 @@ in {
       ${polkadot-launch}/bin/polkadot-launch ${devnet-polkalaunch-config}
     '';
   documentation = "${composable-bin}/share";
-  inherit book;
+  inherit composable-book;
 }

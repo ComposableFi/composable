@@ -1,6 +1,7 @@
 { composable,
   polkadot,
   credentials,
+  devnet,
 }:
 let
   machine-name = "composable-devnet-${composable.spec}";

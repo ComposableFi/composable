@@ -1,10 +1,13 @@
-{ pkgs, nixpkgs }:
+{ pkgs, nixpkgs, devnet }:
 let
-  bins = (if builtins.pathExists ./devnet.json then
-    builtins.fromJSON (builtins.readFile ./devnet.json)
+  # NOTE: can unify, either use json for input and for composition or can use nix for both
+  devnet-json = "${devnet}.json";
+  devnet-nix = "${devnet}.nix";
+  bins = (if builtins.pathExists  then
+    builtins.fromJSON (builtins.readFile devnet)
   else
     throw
-    "Devnet `devnet.json` definition missing, please follow the README.md instructions.");
+    "devnet is not found at `${devnet}`, please follow the README.md instructions.");
   mk-composable = spec:
     def: def // {
       inherit spec;
