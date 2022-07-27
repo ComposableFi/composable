@@ -95,7 +95,7 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
         .simulateRemoveLiquidity(
           parachainApi.createType("AccountId32", selectedAccount.address),
           parachainApi.createType("PalletPabloPoolId", poolId.toString()),
-          selectedLpAmount.toString(),
+          selectedLpAmount.dp(0).toString(),
           {
             [b]: "0",
             [q]: "0",
