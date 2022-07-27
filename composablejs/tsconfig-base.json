@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "traceResolution": false,
+    "module": "commonjs",
+    "strict": true,
+    "target": "ES6",
+    "lib": [
+      "ES6",
+      "DOM",
+      "ScriptHost"
+    ],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "sourceRoot": "ts",
+    "noLib": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "pretty": true,
+    "removeComments": false,
+    "skipLibCheck": true,
+    // Can't be disabled without compilation issues!
+    "esModuleInterop": true,
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.spec.ts",
+    "dist",
+    "**/dist/**/*",
+    "**/node_modules/**/*",
+    "**/dist/**/*"
+  ]
+}
