@@ -806,8 +806,9 @@ pub mod pallet {
 
 		pub(crate) fn acumulate_rewards_hook() -> Weight {
 			let now = T::UnixTime::now().as_secs();
+			let unix_time_now_weight = T::WeightInfo::unix_time_now();
 
-			RewardPools::<T>::iter()
+			let updated_pools = RewardPools::<T>::iter()
 				.into_iter()
 				.map(|(pool_id, reward_pool)| {
 					let updated_rewards = reward_pool
@@ -823,8 +824,8 @@ pub mod pallet {
 						})
 						.try_collect()
 						// SAFETY(benluelo): No elements were added to the BTreeMap; the only
-						// operation was `.map()`. This expect call will be unnecessary once this is
-						// merged and we update to whatever version it's included in:
+						// operation was `.map()`. This expect call will be unnecessary once this PR
+						// is merged and we update to whatever version it's included in:
 						// https://github.com/paritytech/substrate/pull/11869
 						.expect("no elements were added; qed;");
 
@@ -834,20 +835,24 @@ pub mod pallet {
 				// https://github.com/paritytech/substrate/blob/cac91f59b9e3fb8fd59842c023f87b4206931993/frame/support/src/storage/types/map.rs,
 				// "If you alter the map while doing this, you'll get undefined results."
 				// hence the double iteration.
-				.collect::<Vec<_>>()
-				.into_iter()
-				.fold(T::WeightInfo::unix_time_now(), |total_weights, (pool_id, reward_pool)| {
-					// 128 bit platforms don't exist as of writing this so this cast should be ok
-					let amount_of_rewards_in_pool = reward_pool.rewards.len() as u64;
+				.collect::<Vec<_>>();
 
-					RewardPools::<T>::insert(pool_id, reward_pool);
+			let mut total_weight = unix_time_now_weight;
 
-					total_weights +
-						(amount_of_rewards_in_pool * T::WeightInfo::reward_acumulation_hook_reward_update_calculation()) +
+			for (pool_id, reward_pool) in updated_pools {
+				// 128 bit platforms don't exist as of writing this so this usize -> u64 cast should
+				// be ok
+				let amount_of_rewards_in_pool = reward_pool.rewards.len() as u64;
+
+				RewardPools::<T>::insert(pool_id, reward_pool);
+
+				total_weight += (amount_of_rewards_in_pool * T::WeightInfo::reward_acumulation_hook_reward_update_calculation()) +
 						// REVIEW(benluelo): I'm assuming that `StorageMap::iter` does one read per item, I could be wrong though
 						T::DbWeight::get().reads(1) +
 						T::DbWeight::get().writes(1)
-				})
+			}
+
+			total_weight
 		}
 	}
 
