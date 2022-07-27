@@ -18,7 +18,6 @@ use frame_support::{
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
-use sp_std::collections::btree_map::BTreeMap;
 
 fn get_reward_pool<T: Config>(
 	owner: T::AccountId,
@@ -178,7 +177,7 @@ benchmarks! {
 	}: _(RawOrigin::Signed(user), position_id, validated_ratio)
 
 	reward_acumulation_hook_reward_update_calculation {
-		let now = T::UnixTime::now();
+		let now = T::UnixTime::now().as_secs();
 
 		let reward = Reward {
 			asset_id: 1_u128.into(),
@@ -186,13 +185,13 @@ benchmarks! {
 			total_dilution_adjustment: 0.into(),
 			max_rewards: 1_000_000.into(),
 			reward_rate: RewardRate::per_second(10_000),
-			last_updated_timestamp: now.as_secs(),
+			last_updated_timestamp: now,
 			claimed_rewards: 0_u128.into()
 		};
 
-		let now = now + std::time::Duration::from_secs(12);
+		let now = now + 12;
 	}: {
-		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), reward, now.as_secs());
+		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), reward, now);
 	}
 
 	unix_time_now {}: {
