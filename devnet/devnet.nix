@@ -5,62 +5,10 @@
   polkadot,
 }:
 let
-  polkadot-launch = pkgs.callPackage ../.nix/polkadot-launch.nix {};
-
-  polkadot-bin = pkgs.stdenv.mkDerivation {
-    name = "polkadot-${polkadot.version}";
-    version = polkadot.version;
-    src = fetchurl {
-      url = "https://github.com/paritytech/polkadot/releases/download/v${polkadot.version}/polkadot";
-      sha256 = polkadot.hash;
-    };
-    nativeBuildInputs = [
-      pkgs.autoPatchelfHook
-    ];
-    buildInputs = [ pkgs.stdenv.cc.cc ];
-    dontUnpack = true;
-    installPhase = ''
-      mkdir -p $out/bin
-      cp $src $out/bin/polkadot
-      chmod +x $out/bin/polkadot
-    '';
-  };
-
-  composable-bin = pkgs.stdenv.mkDerivation rec {
-    name = "composable-${composable.name}-${composable.version}";
-    version = composable.version;
-    src = fetchurl {
-      url = "https://storage.googleapis.com/composable-binaries/community-releases/${composable.name}/${name}.tar.gz";
-      sha256 = composable.hash;
-    };
-    nativeBuildInputs = [
-      pkgs.autoPatchelfHook
-    ];
-    buildInputs = [ pkgs.stdenv.cc.cc pkgs.zlib ];
-    installPhase = ''
-      tar -xvf $src
-      mkdir -p $out/bin
-      mv release/composable $out/bin
-      mv doc $out
-    '';
-  };
-
-  composable-book = pkgs.stdenv.mkDerivation {
-    name = "composable-book";
-    src = fetchFromGitHub {
-      owner = "ComposableFi";
-      repo = "composable";
-      rev = composable.version;
-      sha256 = composable.revhash;
-    };
-    buildInputs = [ pkgs.mdbook ];
-    phases = [ "installPhase" ];
-    installPhase = ''
-      mkdir -p $out/book
-      cd $src/book
-      mdbook build --dest-dir $out/book
-    '';
-  };
+  polkadot-launch = pkgs.callPackage ../.nix/polkadot-launch.nix { };
+  polkadot-bin = pkgs.callPackage ../.nix/polkadot-bin.nix { inherit polkadot; };
+  composable-bin = pkgs.callPackage ../.nix/composable-bin.nix { inherit composable; };
+  composable-book = pkgs.callPackage ../.nix/composable-book.nix { inherit composable; };
 
   make-node = tmp-directory: node-type: { name, wsPort, port }: {
     inherit name;

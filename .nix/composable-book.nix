@@ -1,7 +1,7 @@
-{pkgs}:
+{pkgs, composable}:
 pkgs.stdenv.mkDerivation {
     name = "composable-book";
-    src = fetchFromGitHub {
+    src = pkgs.fetchFromGitHub {
       owner = "ComposableFi";
       repo = "composable";
       rev = composable.version;

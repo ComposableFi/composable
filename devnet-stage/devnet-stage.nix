@@ -6,9 +6,9 @@
 }:
 let
   polkadot-launch = pkgs.callPackage ../.nix/polkadot-launch.nix { };
-  polkadot-bin = pkgs.callPackage ../.nix/polkadot-bin.nix { polkadot };
-  composable-bin = pkgs.callPackage ../.nix/composable-bin.nix { composable };
-  composable-book = pkgs.callPackage ../.nix/composable-book.nix { composable };
+  polkadot-bin = pkgs.callPackage ../.nix/polkadot-bin.nix { inherit polkadot; };
+  composable-bin = pkgs.callPackage ../.nix/composable-bin.nix { inherit composable; };
+  composable-book = pkgs.callPackage ../.nix/composable-book.nix { inherit composable; };
 
   make-node = tmp-directory: node-type: { name, wsPort, port }: {
     inherit name;
