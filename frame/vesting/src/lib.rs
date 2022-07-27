@@ -51,7 +51,7 @@ use frame_support::{
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
 use orml_traits::{MultiCurrency, MultiLockableCurrency};
 use sp_runtime::{
-	traits::{BlockNumberProvider, CheckedAdd, One, Saturating, StaticLookup, Zero},
+	traits::{BlockNumberProvider, CheckedAdd, CheckedSub, One, Saturating, StaticLookup, Zero},
 	ArithmeticError, DispatchResult,
 };
 use sp_std::{convert::TryInto, fmt::Debug, vec::Vec};
@@ -193,7 +193,7 @@ pub mod module {
 			who: AccountIdOf<T>,
 			asset: AssetIdOf<T>,
 			locked_amount: BalanceOf<T>,
-			vesting_schedule_id: T::VestingScheduleId,
+			vesting_schedule_id: Option<T::VestingScheduleId>,
 		},
 		/// Updated vesting schedules. \[who\]
 		VestingSchedulesUpdated { who: AccountIdOf<T> },
@@ -292,7 +292,7 @@ pub mod module {
 		pub fn claim(
 			origin: OriginFor<T>,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: T::VestingScheduleId,
+			vesting_schedule_id: Option<T::VestingScheduleId>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let locked_amount = Self::do_claim(&who, asset, vesting_schedule_id)?;
@@ -338,7 +338,7 @@ pub mod module {
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: T::VestingScheduleId,
+			vesting_schedule_id: Option<T::VestingScheduleId>,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let who = T::Lookup::lookup(dest)?;
@@ -400,24 +400,37 @@ impl<T: Config> Pallet<T> {
 	fn do_claim(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-		vesting_schedule_id: T::VestingScheduleId,
+		vesting_schedule_id: Option<T::VestingScheduleId>,
 	) -> Result<BalanceOf<T>, DispatchError> {
 		let (locked, locked_map) = Self::locked_balance(who, asset);
-		let locked_for_id = locked_map
-			.get(&vesting_schedule_id)
-			.ok_or(Error::<T>::VestingScheduleNotFound)?;
-		if locked_for_id.is_zero() {
-			// TODO: only remove vesting schedule with vesting_schedule_id
+
+		if locked.is_zero() {
 			// cleanup the storage and unlock the fund
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
 		} else {
-			T::Currency::set_lock(VESTING_LOCK_ID, asset, who, *locked_for_id)?;
+			match vesting_schedule_id {
+				// update the locked amount
+				Some(id) => {
+					let locked_for_id =
+						locked_map.get(&id).ok_or(Error::<T>::VestingScheduleNotFound)?;
+
+					let mut bounded_schedules = <VestingSchedules<T>>::get(who, asset);
+					bounded_schedules.retain(|s| s.vesting_schedule_id != id);
+					<VestingSchedules<T>>::insert(who, asset, &bounded_schedules);
+					let new_locked =
+						locked.checked_sub(locked_for_id).ok_or(ArithmeticError::Overflow)?;
+					T::Currency::set_lock(VESTING_LOCK_ID, asset, who, new_locked)?;
+				},
+				None => {
+					T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked)?;
+				},
+			}
 		}
 		Ok(locked)
 	}
 
-	/// Returns locked balance based on current block number.
+	/// Returns total locked balance and balance per vesting schedule, based on current block number
 	fn locked_balance(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,

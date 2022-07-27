@@ -45,7 +45,7 @@ fn vesting_from_chain_spec_works() {
 			  +------+------+-----+
 			*/
 			VestingSchedule {
-				vesting_schedule_id: 1_u128,
+				vesting_schedule_id: 2_u128,
 				window: BlockNumberBased { start: 2_u64 + 3_u64, period: 3_u64 },
 				period_count: 3_u32,
 				per_period: 5_u64,
@@ -67,7 +67,7 @@ fn vesting_from_chain_spec_works() {
 			  +---------+-----------+-------+-------|
 			*/
 			VestingSchedule {
-				vesting_schedule_id: 1_u128,
+				vesting_schedule_id: 3_u128,
 				window: MomentBased { start: 40000_u64, period: 50000_u64 },
 				period_count: 3_u32,
 				per_period: 5_u64,
@@ -77,33 +77,33 @@ fn vesting_from_chain_spec_works() {
 		assert_eq!(Vesting::vesting_schedules(&CHARLIE, MockCurrencyId::BTC), schedules);
 		System::set_block_number(1);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, None));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 30));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 31).is_err());
 
 		System::set_block_number(11);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, None));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 45));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 46).is_err());
 
 		System::set_block_number(14);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, None));
 		// Block number based schedules are unlocked from block 14 onwards.
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 50));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 51).is_err());
 
 		System::set_block_number(25);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, None));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 60));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 61).is_err());
 
 		System::set_block_number(34);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 		// everything unlocked
-		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, None));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 65));
 	});
 }
@@ -306,7 +306,7 @@ fn cannot_use_fund_if_not_claimed() {
 		System::set_block_number(21);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &BOB, 59).is_err());
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(1_u128)));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &BOB, 59));
 	});
 }
@@ -463,7 +463,8 @@ fn claim_works() {
 		// remain locked if not claimed
 		assert!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 10).is_err());
 		// unlocked after claiming
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, None));
+		// TODO: test with Some(1_u128)
 		assert!(VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
 		assert_ok!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 10));
 		// more are still locked
@@ -471,7 +472,7 @@ fn claim_works() {
 
 		System::set_block_number(21);
 		// claim more
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, None));
 		assert!(!VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
 		assert_ok!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 10));
 		// all used up
@@ -485,7 +486,8 @@ fn claim_works() {
 #[test]
 fn claim_for_works() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
+		// Add schedule 1
+		let schedule_1 = VestingSchedule {
 			vesting_schedule_id: 1_u128,
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
@@ -496,24 +498,89 @@ fn claim_for_works() {
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule,
+			schedule_1,
 		));
 
-		assert_ok!(Vesting::claim_for(Origin::signed(ALICE), BOB, MockCurrencyId::BTC));
+		// Add schedule 2
+		let schedule_2 = VestingSchedule {
+			vesting_schedule_id: 2_u128,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
+			period_count: 2_u32,
+			per_period: 15_u64,
+		};
+		assert_ok!(Vesting::vested_transfer(
+			Origin::root(),
+			ALICE,
+			BOB,
+			MockCurrencyId::BTC,
+			schedule_2,
+		));
 
+		// Locked balance should be 2*10 + 2*15 = 50
 		assert_eq!(
 			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
-			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 20_u64 })
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 50_u64 })
+		);
+
+		// Claim for schedule 1
+		assert_ok!(Vesting::claim_for(
+			Origin::signed(ALICE),
+			BOB,
+			MockCurrencyId::BTC,
+			Some(1_u128)
+		));
+
+		// Locked balance should be 2*15 = 30
+		assert_eq!(
+			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 30_u64 })
 		);
 		assert!(VestingSchedules::<Runtime>::contains_key(&BOB, MockCurrencyId::BTC));
 
 		System::set_block_number(21);
 		assert_eq!(
 			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
-			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 20_u64 })
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 30_u64 })
 		);
-		assert_ok!(Vesting::claim_for(Origin::signed(ALICE), BOB, MockCurrencyId::BTC));
-		// no locks anymore
+
+		// Claim for schedule 2
+		assert_ok!(Vesting::claim_for(
+			Origin::signed(ALICE),
+			BOB,
+			MockCurrencyId::BTC,
+			Some(2_u128)
+		));
+
+		// There should not be any locks left
+		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC), vec![]);
+		assert!(!VestingSchedules::<Runtime>::contains_key(&BOB, MockCurrencyId::BTC));
+
+		// Add schedule 3
+		let schedule_3 = VestingSchedule {
+			vesting_schedule_id: 3_u128,
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
+			period_count: 2_u32,
+			per_period: 3_u64,
+		};
+		assert_ok!(Vesting::vested_transfer(
+			Origin::root(),
+			ALICE,
+			BOB,
+			MockCurrencyId::BTC,
+			schedule_3,
+		));
+
+		// Locked balance should be 2*3 = 6
+		assert_eq!(
+			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 6_u64 })
+		);
+		assert!(VestingSchedules::<Runtime>::contains_key(&BOB, MockCurrencyId::BTC));
+
+		// Claim for all schedules
+		assert_ok!(Vesting::claim_for(Origin::signed(ALICE), BOB, MockCurrencyId::BTC, None));
+
+		// There should not be any locks left
 		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC), vec![]);
 		assert!(!VestingSchedules::<Runtime>::contains_key(&BOB, MockCurrencyId::BTC));
 	});
@@ -536,7 +603,12 @@ fn claim_for_works_moment_based() {
 			schedule,
 		));
 
-		assert_ok!(Vesting::claim_for(Origin::signed(ALICE), BOB, MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim_for(
+			Origin::signed(ALICE),
+			BOB,
+			MockCurrencyId::BTC,
+			Some(1_u128)
+		));
 		assert_eq!(
 			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
 			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 20_u64 })
@@ -548,7 +620,12 @@ fn claim_for_works_moment_based() {
 			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
 			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 20_u64 })
 		);
-		assert_ok!(Vesting::claim_for(Origin::signed(ALICE), BOB, MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim_for(
+			Origin::signed(ALICE),
+			BOB,
+			MockCurrencyId::BTC,
+			Some(1_u128)
+		));
 		// no locks anymore
 		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC), vec![]);
 		assert!(!VestingSchedules::<Runtime>::contains_key(&BOB, MockCurrencyId::BTC));
@@ -607,12 +684,12 @@ fn update_vesting_schedules_works() {
 
 		System::set_block_number(11);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, None));
 		assert!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 1).is_err());
 
 		System::set_block_number(21);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, None));
 		assert_ok!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 20));
 
 		// empty vesting schedules cleanup the storage and unlock the fund
@@ -674,7 +751,7 @@ fn multiple_vesting_schedule_claim_works() {
 		));
 
 		let schedule2 = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+			vesting_schedule_id: 2_u128,
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 3_u32,
 			per_period: 10_u64,
@@ -693,11 +770,11 @@ fn multiple_vesting_schedule_claim_works() {
 		);
 
 		System::set_block_number(21);
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(1_u128)));
 		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), vec![schedule2]);
 
 		System::set_block_number(31);
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(2_u128)));
 		assert!(!VestingSchedules::<Runtime>::contains_key(&BOB, MockCurrencyId::BTC));
 
 		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC), vec![]);
