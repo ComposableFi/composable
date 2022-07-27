@@ -80,7 +80,7 @@ fn test_reward_update_calculation() {
 }
 
 #[test]
-// takes about 25 secs to run
+// takes about 3 minutes to run
 fn test_acumulate_rewards_hook() {
 	new_test_ext().execute_with(|| {
 		type A = Currency<97, 12>;
@@ -90,27 +90,31 @@ fn test_acumulate_rewards_hook() {
 		type E = Currency<101, 12>;
 		type F = Currency<102, 12>;
 
-		const ONE_YEAR_OF_BLOCKS: u64 = 60 * 60 * 24 * 365 / (blocks(1) as u64);
+		const fn block_seconds(block_number: u64) -> u128 {
+			((MILLISECS_PER_BLOCK / 1_000) * block_number) as u128
+		}
+
+		const ONE_YEAR_OF_BLOCKS: u64 = 60 * 60 * 24 * 365 / (block_seconds(1) as u64);
 
 		let mut current_block = System::block_number();
 
-		// 2 micro-A per second, capped at 10 A
-		// cap will be hit after 500_000 seconds
+		// 0.000_002 A per second, capped at 0.1 A
+		// cap will be hit after 50_000 seconds (8334 blocks)
 		let a_a_reward_rate = A::units(2) / 1_000_000;
-		let a_a_max_rewards = A::units(1);
+		let a_a_max_rewards = A::units(1) / 10;
 
-		// 2 micro-B per second, capped at 0.5 B
-		// cap will be hit after 250_000 seconds
+		// 0.000_002 B per second, capped at 0.05 B
+		// cap will be hit after 25_000 seconds (4167 blocks)
 		let a_b_reward_rate = B::units(2) / 1_000_000;
-		let a_b_max_rewards = B::units(5) / 10;
+		let a_b_max_rewards = B::units(5) / 100;
 
 		// 2 D per second, capped at 100k D
-		// cap will be hit after 50_000 seconds
+		// cap will be hit after 5_000 seconds (834 blocks)
 		let c_d_reward_rate = D::units(2);
-		let c_d_max_rewards = D::units(100_000);
+		let c_d_max_rewards = D::units(10_000);
 
-		// 5 milli-E per second, capped at 10 E
-		// cap will be hit after 2_000 seconds
+		// 0.005 E per second, capped at 10 E
+		// cap will be hit after 2_000 seconds (334 blocks)
 		let c_e_reward_rate = E::units(5) / 1_000;
 		let c_e_max_rewards = E::units(10);
 
@@ -208,103 +212,148 @@ fn test_acumulate_rewards_hook() {
 				);
 			}
 
+			assert!(all_rewards.is_empty(), "not all pools were tested, missing {all_rewards:#?}");
+		}
+
+		fn check_events(mut expected_events: Vec<crate::Event<Test>>) {
+			dbg!(System::events());
+			for record in System::events() {
+				match record.event {
+					Event::StakingRewards(staking_event) => {
+						let idx = expected_events
+							.iter()
+							.position(|e| e.eq(&&staking_event))
+							.expect(&format!("unexpected event: {staking_event:#?}"));
+
+						expected_events.remove(idx);
+					},
+					_ => {},
+				}
+			}
+
 			assert!(
-				all_rewards.is_empty(),
-				"not all pools were tested, missing {:#?}",
-				all_rewards
+				expected_events.is_empty(),
+				"not all expected events were emtted, missing {expected_events:#?}",
 			);
 		}
 
-		const fn blocks(amount: u64) -> u128 {
-			((MILLISECS_PER_BLOCK / 1_000) * amount) as u128
+		fn progress_to_block(block: u64, counter: &mut u64) {
+			assert!(
+				block > *counter,
+				"cannot progress backwards: currently at {counter}, requested {block}"
+			);
+
+			let new_blocks = block - *counter;
+			process_and_progress_blocks::<StakingRewards, Test>(new_blocks.try_into().unwrap());
+
+			*counter = System::block_number();
+			assert_eq!(
+				*counter, block,
+				r#"sanity check; counter and block should be the same at this point.
+				found:
+				    counter: {counter},
+				    block:   {block}"#
+			);
 		}
 
-		next_block::<StakingRewards, Test>();
+		{
+			progress_to_block(1, &mut current_block);
 
-		current_block = System::block_number();
-		assert_eq!(current_block, 1);
+			check_rewards(&[
+				(
+					ALICE,
+					A::ID,
+					&[
+						(A::ID, a_a_reward_rate * block_seconds(current_block)),
+						(B::ID, a_b_reward_rate * block_seconds(current_block)),
+					],
+				),
+				(
+					BOB,
+					C::ID,
+					&[
+						(D::ID, c_d_reward_rate * block_seconds(current_block)),
+						(E::ID, c_e_reward_rate * block_seconds(current_block)),
+					],
+				),
+			]);
 
-		check_rewards(&[
-			(
-				ALICE,
-				A::ID,
-				&[
-					(A::ID, a_a_reward_rate * blocks(current_block)),
-					(B::ID, a_b_reward_rate * blocks(current_block)),
-				],
-			),
-			(
-				BOB,
-				C::ID,
-				&[
-					(D::ID, c_d_reward_rate * blocks(current_block)),
-					(E::ID, c_e_reward_rate * blocks(current_block)),
-				],
-			),
-		]);
+			check_events(vec![]);
+		}
 
-		process_and_progress_blocks::<StakingRewards, Test>(9);
+		{
+			progress_to_block(10, &mut current_block);
 
-		current_block = System::block_number();
-		assert_eq!(current_block, 10);
+			check_rewards(&[
+				(
+					ALICE,
+					A::ID,
+					&[
+						(A::ID, a_a_reward_rate * block_seconds(current_block)),
+						(B::ID, a_b_reward_rate * block_seconds(current_block)),
+					],
+				),
+				(
+					BOB,
+					C::ID,
+					&[
+						(D::ID, c_d_reward_rate * block_seconds(current_block)),
+						(E::ID, c_e_reward_rate * block_seconds(current_block)),
+					],
+				),
+			]);
 
-		check_rewards(&[
-			(
-				ALICE,
-				A::ID,
-				&[
-					(A::ID, a_a_reward_rate * blocks(current_block)),
-					(B::ID, a_b_reward_rate * blocks(current_block)),
-				],
-			),
-			(
-				BOB,
-				C::ID,
-				&[
-					(D::ID, c_d_reward_rate * blocks(current_block)),
-					(E::ID, c_e_reward_rate * blocks(current_block)),
-				],
-			),
-		]);
+			check_events(vec![]);
+		}
 
-		process_and_progress_blocks::<StakingRewards, Test>(490);
+		{
+			progress_to_block(334, &mut current_block);
 
-		current_block = System::block_number();
-		assert_eq!(current_block, 500);
-		// current block: 500
+			check_rewards(&[
+				(
+					ALICE,
+					A::ID,
+					&[
+						(A::ID, a_a_reward_rate * block_seconds(current_block)),
+						(B::ID, a_b_reward_rate * block_seconds(current_block)),
+					],
+				),
+				(
+					BOB,
+					C::ID,
+					&[
+						(D::ID, c_d_reward_rate * block_seconds(current_block)),
+						(E::ID, c_e_max_rewards),
+					],
+				),
+			]);
 
-		check_rewards(&[
-			(
-				ALICE,
-				A::ID,
-				&[
-					(A::ID, a_a_reward_rate * blocks(current_block)),
-					(B::ID, a_b_reward_rate * blocks(current_block)),
-				],
-			),
-			(
-				BOB,
-				C::ID,
-				&[(D::ID, c_d_reward_rate * blocks(current_block)), (E::ID, c_e_max_rewards)],
-			),
-		]);
+			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
+				pool_id: 2,
+				asset_id: E::ID,
+			}]);
+		}
 
-		process_and_progress_blocks::<StakingRewards, Test>(8000);
+		{
+			progress_to_block(834, &mut current_block);
 
-		current_block = System::block_number();
-		assert_eq!(current_block, 8500);
+			check_rewards(&[
+				(
+					ALICE,
+					A::ID,
+					&[
+						(A::ID, a_a_reward_rate * block_seconds(current_block)),
+						(B::ID, a_b_reward_rate * block_seconds(current_block)),
+					],
+				),
+				(BOB, C::ID, &[(D::ID, c_d_max_rewards), (E::ID, c_e_max_rewards)]),
+			]);
 
-		check_rewards(&[
-			(
-				ALICE,
-				A::ID,
-				&[
-					(A::ID, a_a_reward_rate * blocks(current_block)),
-					(B::ID, a_b_reward_rate * blocks(current_block)),
-				],
-			),
-			(BOB, C::ID, &[(D::ID, c_d_max_rewards), (E::ID, c_e_max_rewards)]),
-		]);
+			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
+				pool_id: 2,
+				asset_id: D::ID,
+			}]);
+		}
 
 		// add a new, zero-reward pool
 		StakingRewards::create_reward_pool(
@@ -329,30 +378,41 @@ fn test_acumulate_rewards_hook() {
 		)
 		.unwrap();
 
-		process_and_progress_blocks::<StakingRewards, Test>(33500);
+		{
+			progress_to_block(4167, &mut current_block);
 
-		current_block = System::block_number();
-		assert_eq!(current_block, 42000);
+			check_rewards(&[
+				(
+					ALICE,
+					A::ID,
+					&[
+						(A::ID, a_a_reward_rate * block_seconds(current_block)),
+						(B::ID, a_b_max_rewards),
+					],
+				),
+				(BOB, C::ID, &[(D::ID, c_d_max_rewards), (E::ID, c_e_max_rewards)]),
+				(CHARLIE, F::ID, &[(F::ID, 0)]),
+			]);
 
-		check_rewards(&[
-			(
-				ALICE,
-				A::ID,
-				&[(A::ID, a_a_reward_rate * blocks(current_block)), (B::ID, a_b_max_rewards)],
-			),
-			(BOB, C::ID, &[(D::ID, c_d_max_rewards), (E::ID, c_e_max_rewards)]),
-			(CHARLIE, F::ID, &[(F::ID, 0)]),
-		]);
+			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
+				pool_id: 1,
+				asset_id: B::ID,
+			}]);
+		}
 
-		process_and_progress_blocks::<StakingRewards, Test>(41334);
+		{
+			progress_to_block(8334, &mut current_block);
 
-		current_block = System::block_number();
-		assert_eq!(current_block, 83334);
+			check_rewards(&[
+				(ALICE, A::ID, &[(A::ID, a_a_max_rewards), (B::ID, a_b_max_rewards)]),
+				(BOB, C::ID, &[(D::ID, c_d_max_rewards), (E::ID, c_e_max_rewards)]),
+				(CHARLIE, F::ID, &[(F::ID, 0)]),
+			]);
 
-		check_rewards(&[
-			(ALICE, A::ID, &[(A::ID, a_a_max_rewards), (B::ID, a_b_max_rewards)]),
-			(BOB, C::ID, &[(D::ID, c_d_max_rewards), (E::ID, c_e_max_rewards)]),
-			(CHARLIE, F::ID, &[(F::ID, 0)]),
-		]);
+			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
+				pool_id: 1,
+				asset_id: A::ID,
+			}]);
+		}
 	});
 }
