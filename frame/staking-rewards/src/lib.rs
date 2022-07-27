@@ -746,7 +746,6 @@ pub mod pallet {
 			Ok((rewards_btree_map, reductions))
 		}
 
-		// TODO: tests
 		pub(crate) fn reward_acumulation_hook_reward_update_calculation(
 			pool_id: T::RewardPoolId,
 			reward: Reward<T::AssetId, T::Balance>,
@@ -758,7 +757,10 @@ pub mod pallet {
 						RewardRatePeriod::PerSecond => 1,
 					};
 
-					// SAFETY(benluelo): Usage of Div::div: RewardRate::period is non-zero here.
+					// SAFETY(benluelo): Usage of Div::div:
+					//
+					// Integer division can only fail if rhs == 0, and
+					// reward_rate_period_seconds is non-zero here as defined above.
 					let periods_surpassed = elapsed_time.div(reward_rate_period_seconds);
 
 					if periods_surpassed.is_zero() {
@@ -772,10 +774,14 @@ pub mod pallet {
 							new_total_rewards.into()
 						} else {
 							// saturate at max_rewards, but emit an error first
-							Self::deposit_event(Event::<T>::MaxRewardsAccumulated {
-								pool_id,
-								asset_id: reward.asset_id,
-							});
+							// only emit if the previous total_rewards wasn't at the max_rewards
+							// (i.e. the event would have been emitted already)
+							if reward.total_rewards < reward.max_rewards {
+								Self::deposit_event(Event::<T>::MaxRewardsAccumulated {
+									pool_id,
+									asset_id: reward.asset_id,
+								});
+							}
 							reward.max_rewards
 						};
 
@@ -798,7 +804,6 @@ pub mod pallet {
 			}
 		}
 
-		// TODO: tests
 		pub(crate) fn acumulate_rewards_hook() -> Weight {
 			let now = T::UnixTime::now().as_secs();
 
