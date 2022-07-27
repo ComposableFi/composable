@@ -522,7 +522,6 @@ pub mod pallet {
 			let keep_alive = false;
 			let stake = Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
 			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
-			ensure!(!stake.reductions.is_empty(), Error::<T>::ReductionConfigProblem);
 			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
 				T::UnixTime::now().as_secs();
 			let pool_id = stake.reward_pool_id;
