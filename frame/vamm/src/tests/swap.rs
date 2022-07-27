@@ -2,12 +2,13 @@ use crate::{
 	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
+		constants::RUN_CASES,
 		helpers::{create_vamm, run_for_seconds, run_to_block, swap_config},
 		helpers_propcompose::{
 			any_swap_config, any_vamm_state, balance_range_lower_half, balance_range_upper_half,
 			multiple_swaps, then_and_now,
 		},
-		TestSwapConfig, TestVammConfig, RUN_CASES,
+		types::{TestSwapConfig, TestVammConfig},
 	},
 };
 use composable_traits::vamm::{

@@ -1,10 +1,11 @@
 use crate::{
 	mock::{Balance, TestPallet},
 	tests::{
+		constants::{MAXIMUM_RESERVE, MINIMUM_RESERVE, RUN_CASES, ZERO_RESERVE},
 		helpers::{
 			any_sane_asset_amount, any_time, any_vamm_id, limited_peg, multiple_swap_configs,
 		},
-		Decimal, Timestamp, VammId, MAXIMUM_RESERVE, MINIMUM_RESERVE, RUN_CASES, ZERO_RESERVE,
+		types::{Decimal, Timestamp, VammId},
 	},
 	types::VammState,
 };

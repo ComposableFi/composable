@@ -3,7 +3,7 @@ use crate::{
 		Balance, ExtBuilder, Moment, Origin, System as SystemPallet, TestPallet,
 		Timestamp as TimestampPallet,
 	},
-	tests::{Decimal, TestSwapConfig, TestVammConfig, Timestamp, VammId},
+	tests::types::{Decimal, TestSwapConfig, TestVammConfig, Timestamp, VammId},
 };
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait, VammConfig};
 use frame_support::{assert_ok, pallet_prelude::Hooks};
@@ -48,6 +48,10 @@ pub fn run_for_seconds(seconds: u64) {
 
 pub fn as_decimal(x: u128) -> Decimal {
 	Decimal::from_inner(x.saturating_mul(Decimal::DIV))
+}
+
+pub const fn as_decimal_inner(x: u128) -> Balance {
+	x * Decimal::DIV
 }
 
 pub fn as_decimal_from_fraction(n: u128, d: u128) -> Decimal {

@@ -2,8 +2,9 @@ use crate::{
 	mock::{ExtBuilder, MockRuntime, TestPallet},
 	pallet::Error,
 	tests::{
+		constants::RUN_CASES,
 		helpers::{any_sane_asset_amount, as_decimal, as_decimal_from_fraction, run_for_seconds},
-		Timestamp, RUN_CASES,
+		types::Timestamp,
 	},
 	types::VammState,
 };

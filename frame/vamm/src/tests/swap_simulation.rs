@@ -2,9 +2,14 @@ use crate::{
 	mock::{ExtBuilder, MockRuntime, TestPallet},
 	pallet::{Error, VammMap},
 	tests::{
+		constants::{
+			DEFAULT_BASE_REQUIRED_FOR_REMOVING_QUOTE, DEFAULT_BASE_RETURNED_AFTER_ADDING_QUOTE,
+			DEFAULT_QUOTE_REQUIRED_FOR_REMOVING_BASE, DEFAULT_QUOTE_RETURNED_AFTER_ADDING_BASE,
+			RUN_CASES,
+		},
 		helpers::{run_for_seconds, with_swap_context},
 		helpers_propcompose::{any_swap_config, any_vamm_state},
-		TestSwapConfig, TestVammConfig,
+		types::{TestSwapConfig, TestVammConfig},
 	},
 };
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait};
@@ -98,7 +103,7 @@ fn should_not_modify_runtime_storage_remove_quote() {
 fn should_return_correct_value_add_base() {
 	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
 		assert_eq!(
-			SwapOutput { output: 39215686274509804, negative: false },
+			SwapOutput { output: DEFAULT_QUOTE_RETURNED_AFTER_ADDING_BASE, negative: false },
 			TestPallet::swap_simulation(&SwapConfig {
 				asset: AssetType::Quote,
 				direction: Direction::Add,
@@ -113,7 +118,7 @@ fn should_return_correct_value_add_base() {
 fn should_return_correct_value_remove_base() {
 	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
 		assert_eq!(
-			SwapOutput { output: 50000000000000000000, negative: false },
+			SwapOutput { output: DEFAULT_QUOTE_REQUIRED_FOR_REMOVING_BASE, negative: false },
 			TestPallet::swap_simulation(&SwapConfig {
 				asset: AssetType::Base,
 				direction: Direction::Remove,
@@ -128,7 +133,7 @@ fn should_return_correct_value_remove_base() {
 fn should_return_correct_value_add_quote() {
 	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
 		assert_eq!(
-			SwapOutput { output: 39215686274509804, negative: false },
+			SwapOutput { output: DEFAULT_BASE_RETURNED_AFTER_ADDING_QUOTE, negative: false },
 			TestPallet::swap_simulation(&SwapConfig {
 				asset: AssetType::Quote,
 				direction: Direction::Add,
@@ -143,7 +148,7 @@ fn should_return_correct_value_add_quote() {
 fn should_return_correct_value_remove_quote() {
 	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
 		assert_eq!(
-			SwapOutput { output: 40816326530612244, negative: true },
+			SwapOutput { output: DEFAULT_BASE_REQUIRED_FOR_REMOVING_QUOTE, negative: true },
 			TestPallet::swap_simulation(&SwapConfig {
 				asset: AssetType::Quote,
 				direction: Direction::Remove,
@@ -159,7 +164,7 @@ fn should_return_correct_value_remove_quote() {
 // -------------------------------------------------------------------------------------------------
 
 proptest! {
-	#![proptest_config(ProptestConfig::with_cases(1))]
+	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	fn should_not_update_runtime_storage(
 		mut vamm_state in any_vamm_state(),
