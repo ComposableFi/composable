@@ -1,11 +1,8 @@
-use crate as pallet_pablo_strategy;
-use crate::mock::account_id::AccountId;
 use frame_support::{
 	parameter_types,
 	traits::{Everything, GenesisBuild},
 	PalletId,
 };
-
 use frame_system::{EnsureRoot, EnsureSigned};
 use orml_traits::parameter_type_with_key;
 use pallet_collective::EnsureProportionAtLeast;
@@ -16,6 +13,9 @@ use sp_runtime::{
 	traits::{ConvertInto, IdentityLookup},
 	Permill,
 };
+
+use crate as pallet_pablo_strategy;
+use crate::mock::account_id::AccountId;
 
 pub type Amount = i128;
 pub type BlockNumber = u64;

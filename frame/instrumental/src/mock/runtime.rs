@@ -1,4 +1,3 @@
-use crate as pallet_instrumental;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, GenesisBuild},
@@ -15,6 +14,8 @@ use sp_runtime::{
 	traits::{ConvertInto, IdentityLookup},
 	Permill,
 };
+
+use crate as pallet_instrumental;
 
 pub type BlockNumber = u64;
 pub type Balance = u128;

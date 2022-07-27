@@ -1,13 +1,3 @@
-use super::runtime::{
-	Call, CollectiveInstrumental, Event, Instrumental, MockRuntime, Origin, System, VaultId,
-};
-use crate::{
-	mock::{
-		account_id::{AccountId, ALICE, BOB},
-		runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
-	},
-	Config,
-};
 use composable_traits::{
 	defi::CurrencyPair,
 	dex::Amm,
@@ -22,6 +12,17 @@ use sp_core::{Encode, H256};
 use sp_runtime::{
 	traits::{BlakeTwo256, Hash},
 	Permill, Perquintill,
+};
+
+use super::runtime::{
+	Call, CollectiveInstrumental, Event, Instrumental, MockRuntime, Origin, System, VaultId,
+};
+use crate::{
+	mock::{
+		account_id::{AccountId, ALICE, BOB},
+		runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
+	},
+	Config,
 };
 
 pub fn create_pool<BAS, BAM, QAS, QAM, F, BW>(
