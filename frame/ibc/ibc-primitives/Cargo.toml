@@ -7,6 +7,12 @@ version = "0.1.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", features = [
+  "derive",
+], default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "09ac302cedc33f3e1c100541bfa0a33ee2751679", default-features = false, features = [
+  "ics11_beefy",
+] }
 ripemd = { version = "0.1.1", default-features = false }
 scale-info = { version = '2.1.1', default-features = false }
 serde = { version = "1.0.136", features = ["derive"], optional = true }
@@ -18,19 +24,6 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-base58 = "0.2.0"
-
-[dependencies.ibc]
-git = "https://github.com/ComposableFi/ibc-rs"
-rev = "09ac302cedc33f3e1c100541bfa0a33ee2751679"
-default-features = false
-features = ["ics11_beefy"]
-
-[dependencies.codec]
-package = "parity-scale-codec"
-version = "3.0.0"
-features = ["derive"]
-default-features = false
 
 [features]
 default = ['std']

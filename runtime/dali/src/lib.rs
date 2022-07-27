@@ -21,6 +21,7 @@
 #[cfg(all(feature = "std", feature = "wasm-builder"))]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+mod governance;
 mod weights;
 mod xcmp;
 
@@ -30,10 +31,11 @@ use orml_traits::parameter_type_with_key;
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
-	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
-	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
-	Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, Signature,
-	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	governance::native::{EnsureRootOrHalfNativeCouncil, NativeTreasury},
+	impls::DealWithFees,
+	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
+	BlockNumber, BondOfferId, Hash, Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId,
+	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
@@ -91,7 +93,7 @@ use system::{
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 pub use xcmp::XcmConfig;
 
-use crate::xcmp::XcmRouter;
+use crate::{governance::PreimageByteDeposit, xcmp::XcmRouter};
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -129,7 +131,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 2400,
-	impl_version: 4,
+	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 0,
@@ -358,7 +360,7 @@ impl WeightToFeePolynomial for WeightToFee {
 
 impl transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
@@ -472,8 +474,8 @@ impl oracle::Config for Runtime {
 	type MinStake = MinStake;
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
-	type AddOracle = EnsureRootOrHalfCouncil;
-	type RewardOrigin = EnsureRootOrHalfCouncil;
+	type AddOracle = EnsureRootOrHalfNativeCouncil;
+	type RewardOrigin = EnsureRootOrHalfNativeCouncil;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type TreasuryAccount = TreasuryAccount;
@@ -555,7 +557,7 @@ parameter_types! {
 impl collator_selection::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type UpdateOrigin = EnsureRootOrHalfNativeCouncil;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
 	type MinCandidates = MinCandidates;
@@ -618,55 +620,6 @@ parameter_types! {
 	pub const MaxApprovals: u32 = 30;
 }
 
-impl treasury::Config for Runtime {
-	type PalletId = TreasuryPalletId;
-	type Currency = Balances;
-	type ApproveOrigin = EnsureRootOrHalfCouncil;
-	type RejectOrigin = EnsureRootOrHalfCouncil;
-	type Event = Event;
-	type OnSlash = Treasury;
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ProposalBondMaximum;
-	type SpendPeriod = SpendPeriod;
-	type Burn = Burn;
-	type MaxApprovals = MaxApprovals;
-	type BurnDestination = ();
-	type WeightInfo = weights::treasury::WeightInfo<Runtime>;
-	// TODO: add bounties?
-	type SpendFunds = ();
-}
-
-parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
-	pub const CouncilMaxProposals: u32 = 100;
-	pub const CouncilMaxMembers: u32 = 100;
-}
-
-impl membership::Config<membership::Instance1> for Runtime {
-	type Event = Event;
-	type AddOrigin = EnsureRootOrHalfCouncil;
-	type RemoveOrigin = EnsureRootOrHalfCouncil;
-	type SwapOrigin = EnsureRootOrHalfCouncil;
-	type ResetOrigin = EnsureRootOrHalfCouncil;
-	type PrimeOrigin = EnsureRootOrHalfCouncil;
-	type MembershipInitialized = Council;
-	type MembershipChanged = Council;
-	type MaxMembers = CouncilMaxMembers;
-	type WeightInfo = weights::membership::WeightInfo<Runtime>;
-}
-
-impl collective::Config<CouncilInstance> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
-	type MotionDuration = CouncilMotionDuration;
-	type MaxProposals = CouncilMaxProposals;
-	type MaxMembers = CouncilMaxMembers;
-	type DefaultVote = collective::PrimeDefaultVote;
-	type WeightInfo = weights::collective::WeightInfo<Runtime>;
-}
-
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
 	RuntimeBlockWeights::get().max_block;
@@ -715,58 +668,6 @@ impl pallet_proxy::Config for Runtime {
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = ProxyPrice;
 	type AnnouncementDepositFactor = ProxyPrice;
-}
-
-parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
-	pub const VotingPeriod: BlockNumber = 5 * DAYS;
-	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
-
-	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
-	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
-	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
-	// TODO: prod value
-	pub PreimageByteDeposit: Balance = CurrencyId::milli::<Balance>();
-	pub const InstantAllowed: bool = true;
-	pub const MaxVotes: u32 = 100;
-	pub const MaxProposals: u32 = 100;
-}
-
-impl democracy::Config for Runtime {
-	type Proposal = Call;
-	type Event = Event;
-	type Currency = Balances;
-	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
-	type VotingPeriod = VotingPeriod;
-	type VoteLockingPeriod = EnactmentPeriod;
-	type MinimumDeposit = MinimumDeposit;
-
-	// TODO: prod values
-	type ExternalOrigin = EnsureRootOrHalfCouncil;
-	type ExternalMajorityOrigin = EnsureRootOrHalfCouncil;
-	type ExternalDefaultOrigin = EnsureRootOrHalfCouncil;
-
-	type FastTrackOrigin = EnsureRootOrHalfCouncil;
-	type InstantOrigin = EnsureRootOrHalfCouncil;
-	type InstantAllowed = InstantAllowed;
-
-	type FastTrackVotingPeriod = FastTrackVotingPeriod;
-	type CancellationOrigin = EnsureRootOrHalfCouncil;
-	type BlacklistOrigin = EnsureRootOrHalfCouncil;
-	type CancelProposalOrigin = EnsureRootOrHalfCouncil;
-	type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
-	type OperationalPreimageOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
-	type Slash = Treasury;
-
-	type CooloffPeriod = CooloffPeriod;
-	type MaxProposals = MaxProposals;
-	type MaxVotes = MaxVotes;
-	type PalletsOrigin = OriginCaller;
-
-	type PreimageByteDeposit = PreimageByteDeposit;
-	type Scheduler = Scheduler;
-	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -819,7 +720,7 @@ impl vault::Config for Runtime {
 impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRootOrHalfCouncil;
+	type AddOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
 	type Balance = Balance;
 }
@@ -829,16 +730,10 @@ impl assets_registry::Config for Runtime {
 	type LocalAssetId = CurrencyId;
 	type CurrencyFactory = CurrencyFactory;
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
-	type UpdateAssetRegistryOrigin = EnsureRootOrHalfCouncil;
-	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
+	type UpdateAssetRegistryOrigin = EnsureRootOrHalfNativeCouncil;
+	type ParachainOrGovernanceOrigin = EnsureRootOrHalfNativeCouncil;
 	type Balance = Balance;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
-}
-
-impl governance_registry::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type WeightInfo = ();
 }
 
 impl assets::Config for Runtime {
@@ -849,7 +744,7 @@ impl assets::Config for Runtime {
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
 }
@@ -865,7 +760,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type RewardAsset = Assets;
-	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
@@ -896,7 +791,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type PalletId = StakingRewardsPalletId;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
-	type RewardPoolCreationOrigin = EnsureRootOrHalfCouncil;
+	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 }
 
@@ -935,7 +830,7 @@ impl vesting::Config for Runtime {
 	type Event = Event;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = EnsureRootOrHalfCouncil;
+	type VestedTransferOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
@@ -948,7 +843,7 @@ parameter_types! {
 }
 
 impl bonded_finance::Config for Runtime {
-	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type BondOfferId = BondOfferId;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Currency = Assets;
@@ -980,7 +875,7 @@ impl dutch_auction::Config for Runtime {
 	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
 	type PositionExistentialDeposit = NativeExistentialDeposit;
 	type XcmOrigin = Origin;
-	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type XcmSender = XcmRouter;
 }
 
@@ -999,7 +894,7 @@ impl mosaic::Config for Runtime {
 	type BudgetPenaltyDecayer = mosaic::BudgetPenaltyDecayer<Balance, BlockNumber>;
 	type NetworkId = u32;
 	type RemoteAssetId = MosaicRemoteAssetId;
-	type ControlOrigin = EnsureRootOrHalfCouncil;
+	type ControlOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
 	type RemoteAmmId = u128; // TODO: Swap to U256?
 	type AmmMinimumAmountOut = u128;
@@ -1020,7 +915,7 @@ impl liquidations::Config for Runtime {
 	type OrderId = OrderId;
 	type WeightInfo = weights::liquidations::WeightInfo<Runtime>;
 	type PalletId = LiquidationsPalletId;
-	type CanModifyStrategies = EnsureRootOrHalfCouncil;
+	type CanModifyStrategies = EnsureRootOrHalfNativeCouncil;
 	type XcmSender = XcmRouter;
 	type MaxLiquidationStrategiesAmount = frame_support::traits::ConstU32<10>;
 }
@@ -1076,7 +971,8 @@ impl pablo::Config for Runtime {
 	type LbpMaxInitialWeight = LbpMaxInitialWeight;
 	type LbpMinFinalWeight = LbpMinFinalWeight;
 	type PoolCreationOrigin = EnsureRootOrHalfCouncil;
-	type EnableTwapOrigin = EnsureRootOrHalfCouncil;
+	// TODO: consider making it is own origin
+	type EnableTwapOrigin = EnsureRootOrHalfNativeCouncil;
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
@@ -1096,7 +992,8 @@ impl dex_router::Config for Runtime {
 	type PoolId = PoolId;
 	type Pablo = Pablo;
 	type PalletId = DexRouterPalletID;
-	type UpdateRouteOrigin = EnsureRootOrHalfCouncil;
+	// TODO: consider making it is own origin
+	type UpdateRouteOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
 }
 
@@ -1136,7 +1033,7 @@ where
 		}
 		// Do SS58 decoding instead
 		else {
-			let bytes = ibc_primitives::runtime_interface::ss58_to_account_id_32(acc_str)
+			let bytes = ibc_primitives::runtime_interface::ibc::ss58_to_account_id_32(acc_str)
 				.map_err(|_| "Invalid SS58 address")?;
 			Ok(Self(bytes.into()))
 		}
@@ -1203,23 +1100,28 @@ construct_runtime!(
 		Aura: aura::{Pallet, Storage, Config<T>} = 23,
 		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
 
-		// Governance utilities
-		Council: collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 30,
-		CouncilMembership: membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
-		Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 32,
-		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
-		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
-		Utility: utility::{Pallet, Call, Event} = 35,
-		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		// Runtime Native token Governance utilities
+		Council: collective::<Instance1> = 30,
+		CouncilMembership: membership::<Instance1> = 31,
+		Treasury: treasury::<Instance1> = 32,
+		Democracy: democracy::<Instance1> = 33,
+		TechnicalCollective: collective::<Instance2> = 70,
+		TechnicalMembership: membership::<Instance2> = 71,
+
+
+		// helpers/utilities
+		Scheduler: scheduler = 34,
+		Utility: utility = 35,
+		Preimage: preimage = 36,
 		Proxy: pallet_proxy = 37,
 
 		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
-		RelayerXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
-		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 44,
-		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 45,
+		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
+		RelayerXcm: pallet_xcm = 41,
+		CumulusXcm: cumulus_pallet_xcm = 42,
+		DmpQueue: cumulus_pallet_dmp_queue = 43,
+		XTokens: orml_xtokens = 44,
+		UnknownTokens: orml_unknown_tokens = 45,
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
@@ -1239,12 +1141,12 @@ construct_runtime!(
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
 
-		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
+		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 140,
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
-		IbcPing: pallet_ibc_ping::{Pallet, Call, Storage, Event<t>} = 101,
-		Transfer: ibc_transfer::{Pallet, Call, Storage, Event<t>} = 102,
-		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 103
+		IbcPing: pallet_ibc_ping = 151,
+		Transfer: ibc_transfer = 152,
+		Ibc: pallet_ibc = 153
 	}
 );
 
@@ -1300,7 +1202,6 @@ mod benches {
 		[membership, CouncilMembership]
 		[treasury, Treasury]
 		[scheduler, Scheduler]
-		[democracy, Democracy]
 		[collective, Council]
 		[utility, Utility]
 		[identity, Identity]

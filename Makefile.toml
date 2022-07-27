@@ -73,9 +73,10 @@ cargo +stable test --package local-integration-tests --features local-integratio
 workspace = false
 
 [tasks.check-ci]
+env = { SKIP_WASM_BUILD = 1 }
 script = '''
-SKIP_WASM_BUILD=1 cargo +nightly-$NIGHTLY_VERSION check --benches --all --features runtime-benchmarks # checks all rust crates with default-features, tests, benchmarks
-SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly-$NIGHTLY_VERSION clippy --all-targets --tests -- -D warnings
+cargo +nightly-$NIGHTLY_VERSION check --benches --all --features runtime-benchmarks # checks all rust crates with default-features, tests, benchmarks
+env -u RUSTFLAGS cargo +nightly-$NIGHTLY_VERSION clippy --all-targets --tests -- -D warnings
 '''
 workspace = false
 

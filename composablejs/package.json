@@ -1,26 +1,10 @@
 {
-  "name": "@composable",
+  "name": "composable",
   "version": "0.1.0",
   "private": true,
   "license": "Public Domain",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "exports": {
-    "./types/*": [
-      "./dist/packages/types/dist/**/*.js",
-      "./dist/packages/types/dist/**/*.d.ts"
-    ],
-    "./utils/*": [
-      "./dist/packages/utils/dist/**/*.js",
-      "./dist/packages/utils/dist/**/*.d.ts"
-    ],
-    "./oracle_setup/*": [
-      "./dist/packages/oracle_setup/dist/**/*.js",
-      "./dist/packages/oracle_setup/dist/**/*.d.ts"
-    ]
-  },
   "scripts": {
-    "build": "tsc -b -f tsconfig.json",
+    "build": "npx lerna run build",
     "lint": "eslint 'packages/**/*.ts' --ext .ts,.tsx",
     "prettier": "prettier ./packages --write"
   },

@@ -382,7 +382,6 @@ pub mod pallet {
 			log::trace!(target: "pallet_ibc", "[pallet_ibc_deliver]: logs: {:?}", logs);
 			log::trace!(target: "pallet_ibc", "[pallet_ibc_deliver]: errors: {:?}", errors);
 
-			// todo: consolidate into one.
 			Self::deposit_event(events.into());
 			Self::deposit_event(errors.into());
 			Ok(())

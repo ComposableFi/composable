@@ -1,5 +1,6 @@
 use common::{AccountId, AuraId};
 use cumulus_primitives_core::ParaId;
+use once_cell::sync::Lazy;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -13,8 +14,17 @@ pub mod dali;
 
 pub mod picasso;
 
+const DEFAULT_PARA_ID: u32 = 2000;
+
 // Parachin ID.
-const PARA_ID: ParaId = ParaId::new(2000);
+static PARA_ID: Lazy<ParaId> = Lazy::new(|| {
+	ParaId::new(
+		std::env::var("COMPOSABLE_PARA_ID")
+			.unwrap_or_else(|_| DEFAULT_PARA_ID.to_string())
+			.parse::<u32>()
+			.unwrap_or(DEFAULT_PARA_ID),
+	)
+});
 
 /// The extensions for the [`ChainSpec`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
@@ -111,9 +121,9 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 					),
 				],
 				dev_accounts(),
-				PARA_ID,
+				*PARA_ID,
 				common::NativeExistentialDeposit::get(),
-				picasso_runtime::TreasuryAccount::get(),
+				picasso_runtime::governance::TreasuryAccount::get(),
 			)
 		},
 		vec![],
@@ -121,7 +131,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: PARA_ID.into() },
+		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(*PARA_ID) },
 	)
 }
 
@@ -155,7 +165,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 					),
 				],
 				dev_accounts(),
-				PARA_ID,
+				*PARA_ID,
 				common::NativeExistentialDeposit::get(),
 				dali_runtime::TreasuryAccount::get(),
 			)
@@ -165,7 +175,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: PARA_ID.into() },
+		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(*PARA_ID) },
 	)
 }
 
@@ -199,7 +209,7 @@ pub fn composable_dev() -> composable::ChainSpec {
 					),
 				],
 				dev_accounts(),
-				PARA_ID,
+				*PARA_ID,
 				composable_runtime::ExistentialDeposit::get(),
 				composable_runtime::TreasuryAccount::get(),
 			)
@@ -209,7 +219,7 @@ pub fn composable_dev() -> composable::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "westend_local_testnet".into(), para_id: PARA_ID.into() },
+		Extensions { relay_chain: "westend_local_testnet".into(), para_id: u32::from(*PARA_ID) },
 	)
 }
 

@@ -7,7 +7,7 @@ extends:
   - "prettier"
 parser: "@typescript-eslint/parser"
 parserOptions:
-  project: ["./tsconfig.json", "./packages/types/tsconfig.json", "./packages/utils/tsconfig.json", "./packages/oracle_setup/tsconfig.json"]
+  project: ["./tsconfig-base.json", "./packages/types/tsconfig.json", "./packages/utils/tsconfig.json", "./packages/oracle_setup/tsconfig.json", "./packages/bootstrap_pallets/tsconfig.json"]
 plugins:
   - "@typescript-eslint"
 rules: {}
