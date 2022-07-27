@@ -75,7 +75,7 @@ pub mod pallet {
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
 			RedeemableAssets, RemoveLiquiditySimulationResult, RewardPoolType, StableSwapPoolInfo,
-			StakingRewardPool, FIVE_YEAR_BLOCKS, MAX_REWARDS, REWARD_PERCENTAGE,
+			StakingRewardPool, MAX_REWARDS, REWARD_PERCENTAGE,
 		},
 		staking::{
 			lock::LockConfig, ManageStaking, ProtocolStaking, RewardConfig, RewardPoolConfiguration,
@@ -87,7 +87,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
-			Time,
+			Time, TryCollect,
 		},
 		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
@@ -390,6 +390,9 @@ pub mod pallet {
 		>;
 
 		type WeightInfo: WeightInfo;
+
+		#[pallet::constant]
+		type MsPerBlock: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -649,24 +652,27 @@ pub mod pallet {
 		> {
 			let max_rewards: T::Balance = T::Convert::convert(MAX_REWARDS);
 			let reward_rate = Perbill::zero();
-			let rewards = BTreeMap::from([
+			let reward_configs = [
 				(pair.base, RewardConfig { asset_id: pair.base, max_rewards, reward_rate }),
 				(pair.quote, RewardConfig { asset_id: pair.quote, max_rewards, reward_rate }),
-			]);
-			let reward_configs = RewardConfigsOf::<T>::try_from(rewards)
-				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
-			let duration_presets = BTreeMap::from([
-				(ONE_WEEK, Perbill::from_percent(1)),
-				(ONE_MONTH, Perbill::from_percent(10)),
-			]);
-			let duration_presets = BoundedBTreeMap::try_from(duration_presets)
-				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			]
+			.into_iter()
+			.try_collect()
+			.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let duration_presets =
+				[(ONE_WEEK, Perbill::from_percent(1)), (ONE_MONTH, Perbill::from_percent(10))]
+					.into_iter()
+					.try_collect()
+					.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
+
+			let five_years_block = 5 * 365 * 24 * 60 * 60 / T::MsPerBlock::get();
+			let end_block =
+				frame_system::Pallet::<T>::current_block_number() + five_years_block.into();
 			Ok(RewardPoolConfiguration::<_, _, _, _, _>::RewardRateBasedIncentive {
 				owner: Self::account_id(pool_id),
 				asset_id: primitives::currency::CurrencyId::PBLO.0.into(),
-				end_block: frame_system::Pallet::<T>::current_block_number() +
-					FIVE_YEAR_BLOCKS.into(),
+				end_block,
 				reward_configs,
 				lock,
 			})
@@ -687,24 +693,26 @@ pub mod pallet {
 			let max_rewards: T::Balance = T::Convert::convert(MAX_REWARDS);
 			let reward_rate = Perbill::from_percent(REWARD_PERCENTAGE);
 			let pblo_asset_id: T::AssetId = primitives::currency::CurrencyId::PBLO.0.into();
-			let rewards = BTreeMap::from([(
+			let reward_configs = [(
 				pblo_asset_id,
 				RewardConfig { asset_id: pblo_asset_id, max_rewards, reward_rate },
-			)]);
-			let reward_configs = RewardConfigsOf::<T>::try_from(rewards)
-				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
-			let duration_presets = BTreeMap::from([
-				(ONE_WEEK, Perbill::from_percent(1)),
-				(ONE_MONTH, Perbill::from_percent(10)),
-			]);
-			let duration_presets = BoundedBTreeMap::try_from(duration_presets)
-				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			)]
+			.into_iter()
+			.try_collect()
+			.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let duration_presets =
+				[(ONE_WEEK, Perbill::from_percent(1)), (ONE_MONTH, Perbill::from_percent(10))]
+					.into_iter()
+					.try_collect()
+					.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
+			let five_years_block = 5 * 365 * 24 * 60 * 60 / T::MsPerBlock::get();
+			let end_block =
+				frame_system::Pallet::<T>::current_block_number() + five_years_block.into();
 			Ok(RewardPoolConfiguration::<_, _, _, _, _>::RewardRateBasedIncentive {
 				owner: Self::account_id(pool_id),
 				asset_id: Self::lp_token(*pool_id)?,
-				end_block: frame_system::Pallet::<T>::current_block_number() +
-					FIVE_YEAR_BLOCKS.into(),
+				end_block,
 				reward_configs,
 				lock,
 			})
@@ -870,9 +878,7 @@ pub mod pallet {
 			if !fees.protocol_fee.is_zero() {
 				let staking_reward_pools = StakingRewardPools::<T>::get(&pool_id)
 					.ok_or(Error::<T>::StakingPoolConfigError)?;
-				let staking_reward_pools_ref: &Vec<StakingRewardPool<T::RewardPoolId>> =
-					staking_reward_pools.as_ref();
-				for staking_reward_pool in staking_reward_pools_ref {
+				for staking_reward_pool in staking_reward_pools {
 					if staking_reward_pool.pool_type == RewardPoolType::PBLO {
 						T::ProtocolStaking::transfer_reward(
 							who,

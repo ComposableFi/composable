@@ -57,6 +57,7 @@ describe("[SHORT] rpc.assets Tests", function () {
       "LAYR",
       "CROWD_LOAN",
       "KSM",
+      "PBLO",
       "kUSD",
       "USDT",
       "USDC"

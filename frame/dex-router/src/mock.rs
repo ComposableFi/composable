@@ -164,9 +164,9 @@ impl pallet_timestamp::Config for Test {
 }
 
 parameter_types! {
-	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
-	pub const MaxStakingDurationPresets : u32 = 10;
-	pub const MaxRewardConfigsPerPool : u32 = 10;
+	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
+	pub const MaxStakingDurationPresets: u32 = 10;
+	pub const MaxRewardConfigsPerPool: u32 = 10;
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -187,7 +187,8 @@ impl pallet_staking_rewards::Config for Test {
 }
 
 parameter_types! {
-	pub const MaxStakingRewardPools : u32 = 10;
+	pub const MaxStakingRewardPools: u32 = 10;
+	pub const MillisecsPerBlock: u32 = 12000;
 }
 
 impl pallet_pablo::Config for Test {
@@ -215,6 +216,7 @@ impl pallet_pablo::Config for Test {
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
 	type ManageStaking = StakingRewards;
 	type ProtocolStaking = StakingRewards;
+	type MsPerBlock = MillisecsPerBlock;
 }
 
 parameter_types! {
