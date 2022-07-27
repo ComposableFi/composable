@@ -58,10 +58,10 @@ impl<T: Config> Pallet<T> {
 
 	/// Checks if the following properties hold after performing a swap:
 	///
-	/// * Swapped amount respects limit specified in
+	/// * Swapped amount respects the limit specified in
 	/// [`SwapConfig::output_amount_limit`].
-	/// * Base asses was not completely drained.
-	/// * Quote asses was not completely drained.
+	/// * Base assets was not completely drained.
+	/// * Quote assets was not completely drained.
 	///
 	/// # Errors
 	///
@@ -110,7 +110,6 @@ impl<T: Config> Pallet<T> {
 		base_twap: T::Decimal,
 		now: &Option<T::Moment>,
 	) -> Result<(), DispatchError> {
-		// Sanity Checks
 		// New desired twap value can't be zero.
 		ensure!(!base_twap.is_zero(), Error::<T>::NewTwapValueIsZero);
 

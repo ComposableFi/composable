@@ -10,7 +10,7 @@ impl<T: Config> Pallet<T> {
 	/// # Assumptions or Requirements
 	/// In order to compute the invariant, both `base` and `quote` amounts must
 	/// be greater than zero, as it's strictly forbidden for a vamm to have a
-	/// invariant equal zero.
+	/// invariant equal to zero.
 	///
 	/// # Errors
 	///
@@ -36,7 +36,7 @@ impl<T: Config> Pallet<T> {
 		Ok(invariant)
 	}
 
-	/// Performs an exponential moving average (EMA) calculation following the formula:
+	/// Calculates the exponential moving average (EMA) following the formula:
 	///
 	/// - `ema = ((x1 * w1) + (x2 * w2)) / (w1 + w2)`
 	///
