@@ -375,10 +375,9 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
-		let total_amount = Self::locked_balance(to, asset)
-			.0
-			.checked_add(&schedule_amount)
-			.ok_or(ArithmeticError::Overflow)?;
+		let (locked, _) = Self::locked_balance(to, asset);
+
+		let total_amount = locked.checked_add(&schedule_amount).ok_or(ArithmeticError::Overflow)?;
 
 		T::Currency::transfer(asset, from, to, schedule_amount)?;
 		T::Currency::set_lock(VESTING_LOCK_ID, asset, to, total_amount)?;
