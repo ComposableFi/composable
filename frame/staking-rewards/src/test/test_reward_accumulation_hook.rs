@@ -40,7 +40,7 @@ fn test_reward_update_calculation() {
 			|reward, (expected_total_rewards_units, current_block_number)| {
 				System::set_block_number(current_block_number);
 
-				let reward = Pallet::<Test>::reward_acumulation_hook_reward_update_calculation(
+				let reward = Pallet::<Test>::reward_accumulation_hook_reward_update_calculation(
 					POOL_ID,
 					reward,
 					now + (SECONDS_PER_BLOCK * current_block_number),
@@ -60,7 +60,7 @@ fn test_reward_update_calculation() {
 
 		let current_block = (expected.len() + 1) as u64;
 
-		let reward = Pallet::<Test>::reward_acumulation_hook_reward_update_calculation(
+		let reward = Pallet::<Test>::reward_accumulation_hook_reward_update_calculation(
 			POOL_ID,
 			reward,
 			now + (SECONDS_PER_BLOCK * current_block),

@@ -87,7 +87,7 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 
-	fn reward_acumulation_hook_reward_update_calculation() -> Weight {
+	fn reward_accumulation_hook_reward_update_calculation() -> Weight {
 		10_000
 	}
 

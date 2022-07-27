@@ -746,7 +746,7 @@ pub mod pallet {
 			Ok((rewards_btree_map, reductions))
 		}
 
-		pub(crate) fn reward_acumulation_hook_reward_update_calculation(
+		pub(crate) fn reward_accumulation_hook_reward_update_calculation(
 			pool_id: T::RewardPoolId,
 			reward: Reward<T::AssetId, T::Balance>,
 			now: u64,
@@ -817,7 +817,7 @@ pub mod pallet {
 						.map(|(asset_id, reward)| {
 							(
 								asset_id,
-								Self::reward_acumulation_hook_reward_update_calculation(
+								Self::reward_accumulation_hook_reward_update_calculation(
 									pool_id, reward, now,
 								),
 							)
@@ -846,7 +846,7 @@ pub mod pallet {
 
 				RewardPools::<T>::insert(pool_id, reward_pool);
 
-				total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_acumulation_hook_reward_update_calculation()) +
+				total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_accumulation_hook_reward_update_calculation()) +
 						// NOTE: `StorageMap::iter` does one read per item
 						T::DbWeight::get().reads(1) +
 						T::DbWeight::get().writes(1)

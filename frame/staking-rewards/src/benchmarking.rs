@@ -176,7 +176,7 @@ benchmarks! {
 
 	}: _(RawOrigin::Signed(user), position_id, validated_ratio)
 
-	reward_acumulation_hook_reward_update_calculation {
+	reward_accumulation_hook_reward_update_calculation {
 		let now = T::UnixTime::now().as_secs();
 
 		let reward = Reward {
@@ -193,7 +193,7 @@ benchmarks! {
 
 		let now = now + seconds_per_block;
 	}: {
-		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), reward, now);
+		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(1.into(), reward, now);
 	}
 
 	unix_time_now {}: {
