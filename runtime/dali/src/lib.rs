@@ -1683,7 +1683,7 @@ impl_runtime_apis! {
 				raw_events.find_map(|e| {
 					let frame_system::EventRecord{ event, phase, ..} = *e;
 					match (event, phase) {
-						(Event::Ibc(pallet_ibc::Event::IbcEvents{ events }), frame_system::Phase::ApplyExtrinsic(index)) if index == idx => Some(events),
+						(Event::Ibc(pallet_ibc::Event::Events{ events }), frame_system::Phase::ApplyExtrinsic(index)) if index == idx => Some(events),
 						_ => None
 					}
 				}).unwrap_or_default()
@@ -1693,7 +1693,7 @@ impl_runtime_apis! {
 					let frame_system::EventRecord{ event, ..} = *e;
 
 					match event {
-						Event::Ibc(pallet_ibc::Event::IbcEvents{ events }) => {
+						Event::Ibc(pallet_ibc::Event::Events{ events }) => {
 								Some(events)
 							},
 						_ => None
