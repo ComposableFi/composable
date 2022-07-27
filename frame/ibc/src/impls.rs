@@ -791,7 +791,7 @@ where
 			dest_channel: packet.destination_channel.to_string().as_bytes().to_vec(),
 			sequence: packet.sequence.into(),
 		};
-		Self::deposit_event(Event::<T>::IbcEvents { events: vec![event] });
+		Self::deposit_event(Event::<T>::Events { events: vec![event] });
 		Ok(())
 	}
 

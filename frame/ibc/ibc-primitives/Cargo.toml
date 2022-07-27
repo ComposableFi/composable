@@ -22,7 +22,7 @@ base58 = "0.2.0"
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "09ac302cedc33f3e1c100541bfa0a33ee2751679"
+rev = "963151c8b9a1ff4b5e8fb0e2be029f14da64d580"
 default-features = false
 features = ["ics11_beefy"]
 
