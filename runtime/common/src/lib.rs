@@ -23,6 +23,7 @@ pub use constants::*;
 use frame_support::parameter_types;
 use num_traits::CheckedMul;
 use primitives::currency::CurrencyId;
+use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, FixedPointNumber};
 pub use types::*;
 
@@ -212,4 +213,10 @@ pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = Cu
 	// 3. use hardcoded values
 	// 4. else 1_000_000_u128
 	.unwrap_or(1_000_000_u128)
+}
+
+parameter_types! {
+	/// NOTE: do not reduce, as it will tell that some already stored vectors has smaller range of values
+	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
+	pub const MaxStringSize: u32 = 100;
 }

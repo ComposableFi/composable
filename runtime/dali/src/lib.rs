@@ -31,12 +31,14 @@ use orml_traits::parameter_type_with_key;
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
-	governance::native::{EnsureRootOrHalfNativeCouncil, NativeTreasury},
+	governance::native::{
+		EnsureRootOrHalfNativeCouncil, EnsureRootOrOneThirdNativeTechnical, NativeTreasury,
+	},
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, Hash, Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId,
-	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	BlockNumber, BondOfferId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
+	NativeExistentialDeposit, PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -810,7 +812,7 @@ impl call_filter::Config for Runtime {
 	type UpdateOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type Hook = ();
 	type WeightInfo = ();
-	type MaxStringSize = ConstU32<128>;
+	type MaxStringSize = MaxStringSize;
 }
 
 parameter_types! {
