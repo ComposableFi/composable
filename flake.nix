@@ -24,14 +24,17 @@
       overlays = [ (import rust-overlay) ];
       pkgs = import nixpkgs { inherit system overlays; };
       rust-toolchain = import ./.nix/rust-toolchain.nix;
-    in {
+    in rec {
+      devnet-spec = pkgs.callPackage ./devnet/default.nix { inherit nixpkgs; devnet = "devnet"; };
       nixopsConfigurations.default =
-        let pkgs = import nixpkgs {};
-        in (pkgs.callPackage ./devnet/default.nix { inherit nixpkgs; }).machines;
+        let 
+          pkgs = import nixpkgs {};
+        in 
+          devnet-spec.machines;
 
       packages = 
         let
-          devnet = pkgs.callPackage ./devnet { inherit nixpkgs; };
+          devnet = pkgs.callPackage ./.nix/devnet.nix { composable = devnet-spec.composable-repo; polkadot = devnet-spec.polkadot-repo;};
           latest-book = pkgs.callPackage ./book {};
         in {
           dali-script = devnet.dali.script;
@@ -70,7 +73,7 @@
               python3
               openssl.dev
               pkg-config
-              (rust-bin.nightly."2022-02-01".default.override {
+              (rust-bin.${rust-toolchain.toolchain.channel-name}.${rust-toolchain.toolchain.channel-date}.default.override {
                 targets = [ "wasm32-unknown-unknown" ];
               })
             ];

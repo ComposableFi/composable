@@ -67,6 +67,8 @@ in {
     inherit (latest-dali) composable;
     inherit (latest-dali) polkadot;
   });
+  composable-repo = composable;
+  polkadot-repo = polkadot;
 
   picasso = (pkgs.callPackage ./devnet.nix {
     inherit (latest-picasso) composable;

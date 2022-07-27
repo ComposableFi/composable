@@ -21,7 +21,7 @@
             };
           in {
             packages = with pkgs; {
-              rust = rust-bin."nightly-2022-02-01".default;
+              rust = rust-bin."nightly-2022-04-18".default;
             };
           }
     );

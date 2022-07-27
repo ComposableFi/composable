@@ -1,6 +1,8 @@
 { composable,
   polkadot,
   credentials,
+  devnet,
+  devnet-nix,
 }:
 let
   machine-name = "composable-devnet-${composable.spec}";
@@ -20,7 +22,7 @@ in {
   };
   "${machine-name}" = { pkgs, resources, ... }:
     let
-      devnet = pkgs.callPackage ./devnet.nix {
+      devnet = pkgs.callPackage devnet-nix {
         inherit composable;
         inherit polkadot;
       };
