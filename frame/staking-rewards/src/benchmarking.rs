@@ -42,11 +42,14 @@ fn get_reward_pool<T: Config>(
 
 fn lock_config<T: Config>(
 ) -> LockConfig<BoundedBTreeMap<DurationSeconds, Perbill, T::MaxStakingDurationPresets>> {
-	let mut duration_presets = BTreeMap::new();
-	duration_presets.insert(ONE_HOUR, Perbill::from_percent(1));
-	duration_presets.insert(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32));
 	LockConfig {
-		duration_presets: BoundedBTreeMap::try_from(duration_presets).unwrap(),
+		duration_presets: [
+			(ONE_HOUR, Perbill::from_percent(1)),                // 1%
+			(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32)), // 0.1%
+		]
+		.into_iter()
+		.try_collect()
+		.unwrap(),
 		unlock_penalty: Perbill::from_percent(5),
 	}
 }
