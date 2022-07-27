@@ -10,7 +10,7 @@ After starting local nodes wait up to 2 minutes until all will be wired.
 
 2. `2-download-polkadot-relay.sh`
 
-3. `4-build-composable-collator.sh`
+3. `4-build-acala-collator.sh`
 
 4. run `yarn` to build the runner
 

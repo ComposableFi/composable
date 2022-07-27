@@ -53,7 +53,7 @@ impl HostFunctionsProvider for HostFunctions {
 		key: &[u8],
 	) -> Result<(), Ics02ClientError> {
 		let root = H256::from_slice(root);
-		runtime_interface::blake2_256_verify_non_membership_proof(&root, proof, key)
+		runtime_interface::ibc::blake2_256_verify_non_membership_proof(&root, proof, key)
 			.then(|| ())
 			.ok_or_else(|| {
 				Ics02ClientError::beefy(Ics11Error::ics23_error(Ics23Error::verification_failure()))
@@ -69,18 +69,18 @@ impl HostFunctionsProvider for HostFunctions {
 	}
 
 	fn sha2_512(message: &[u8]) -> [u8; 64] {
-		runtime_interface::sha2_512(message)
+		runtime_interface::ibc::sha2_512(message)
 	}
 
 	fn sha2_512_truncated(message: &[u8]) -> [u8; 32] {
-		runtime_interface::sha2_512_truncated(message)
+		runtime_interface::ibc::sha2_512_truncated(message)
 	}
 
 	fn sha3_512(message: &[u8]) -> [u8; 64] {
-		runtime_interface::sha3_512(message)
+		runtime_interface::ibc::sha3_512(message)
 	}
 
 	fn ripemd160(message: &[u8]) -> [u8; 20] {
-		runtime_interface::ripemd160(message)
+		runtime_interface::ibc::ripemd160(message)
 	}
 }

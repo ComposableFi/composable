@@ -6,8 +6,8 @@
   "private": false,
   "scripts": {
     "start": "yarn oraclesetup",
-    "build": "tsc -b -f tsconfig.json",
-    "oraclesetup": "npx ts-node -P tsconfig.json src/index.ts",
+    "build": "tsc --build",
+    "oraclesetup": "npx ts-node -P tsconfig.json src/main.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint 'src/*.ts' --fix-dry-run ",
     "clean": "find ./src -name '*.js' -or -name '*.js.map'  -or -name '*.d.ts' -type f -delete"
@@ -19,8 +19,6 @@
   ],
   "license": "Public Domain",
   "dependencies": {
-    "@composable/types": "*",
-    "@composable/utils": "*",
     "@polkadot/api": "^8.11.3",
     "@polkadot/keyring": "^9.7.2",
     "@polkadot/types": "^8.11.3",
