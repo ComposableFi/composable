@@ -842,11 +842,11 @@ pub mod pallet {
 			for (pool_id, reward_pool) in updated_pools {
 				// 128 bit platforms don't exist as of writing this so this usize -> u64 cast should
 				// be ok
-				let amount_of_rewards_in_pool = reward_pool.rewards.len() as u64;
+				let number_of_rewards_in_pool = reward_pool.rewards.len() as u64;
 
 				RewardPools::<T>::insert(pool_id, reward_pool);
 
-				total_weight += (amount_of_rewards_in_pool * T::WeightInfo::reward_acumulation_hook_reward_update_calculation()) +
+				total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_acumulation_hook_reward_update_calculation()) +
 						// REVIEW(benluelo): I'm assuming that `StorageMap::iter` does one read per item, I could be wrong though
 						T::DbWeight::get().reads(1) +
 						T::DbWeight::get().writes(1)

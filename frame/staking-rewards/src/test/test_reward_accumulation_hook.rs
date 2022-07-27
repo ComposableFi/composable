@@ -179,7 +179,17 @@ fn test_acumulate_rewards_hook() {
 			StakingRewards::create_reward_pool(Origin::root(), cfg).unwrap();
 		}
 
-		fn check_rewards(expected: &[(Public, u128, &[(u128, u128)])]) {
+		fn check_rewards(
+			expected: &[(
+				Public, // pool owner
+				u128,   // pool asset_id
+				// pool rewards
+				&[(
+					u128, // reward_asset_id
+					u128, // expected_total_rewards
+				)],
+			)],
+		) {
 			let mut all_rewards = RewardPools::<Test>::iter().collect::<BTreeMap<_, _>>();
 
 			for ((owner, asset_id, rewards), pool_id) in expected.into_iter().zip(1..) {
