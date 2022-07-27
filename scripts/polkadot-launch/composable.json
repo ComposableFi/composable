@@ -1,4 +1,4 @@
-{
+../../{
   "relaychain": {
     "bin": "../../../polkadot/target/release/polkadot",
     "chain": "rococo-local",
@@ -51,7 +51,7 @@
   },
   "parachains": [
     {
-      "bin": "/Users/seun/Projects/composable/target/release/composable",
+      "bin": "../../target/release/composable",
       "chain": "dali-2001",
       "nodes": [
         {
@@ -75,7 +75,7 @@
       ]
     },
     {
-      "bin": "/Users/seun/Projects/composable/target/release/composable",
+      "bin": "../../target/release/composable",
       "chain": "dali-2000",
       "nodes": [
         {
