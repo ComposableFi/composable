@@ -246,10 +246,10 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]
 	pub enum Event<T> {
-		/// Raw Ibc events
-		IbcEvents { events: Vec<events::IbcEvent> },
-		/// Ibc errors
-		IbcErrors { errors: Vec<errors::IbcError> },
+		/// Events emitted by the ibc subsystem
+		Events { events: Vec<events::IbcEvent> },
+		/// Errors emitted by the ibc subsystem
+		Errors { errors: Vec<errors::IbcError> },
 	}
 
 	/// Errors inform users that something went wrong.
