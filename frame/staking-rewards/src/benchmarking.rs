@@ -189,7 +189,9 @@ benchmarks! {
 			claimed_rewards: 0_u128.into()
 		};
 
-		let now = now + 12;
+		let seconds_per_block = 12;
+
+		let now = now + seconds_per_block;
 	}: {
 		let reward = Pallet::<T>::reward_acumulation_hook_reward_update_calculation(1.into(), reward, now);
 	}
