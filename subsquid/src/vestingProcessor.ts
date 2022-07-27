@@ -19,15 +19,7 @@ interface VestingScheduleAddedEvent {
 function getVestingScheduleAddedEvent(
   event: VestingVestingScheduleAddedEvent
 ): VestingScheduleAddedEvent {
-  if (event.isV2400) {
-    const { from, to, asset, schedule } = event.asV2400;
-
-    return { from, to, asset, schedule };
-  }
-
-  const { from, to, asset, schedule } = event.asLatest;
-
-  return { from, to, asset, schedule };
+  return event.asV2400 ?? event.asLatest;
 }
 
 /**

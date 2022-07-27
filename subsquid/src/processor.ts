@@ -143,10 +143,5 @@ interface TransferEvent {
 
 function getTransferEvent(ctx: EventHandlerContext): TransferEvent {
   const event = new BalancesTransferEvent(ctx);
-  if (event.isV2400) {
-    const { from, to, amount } = event.asV2400;
-    return { from, to, amount };
-  }
-  const { from, to, amount } = event.asLatest;
-  return { from, to, amount };
+  return event.asV2400 ?? event.asLatest;
 }

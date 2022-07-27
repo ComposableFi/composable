@@ -70,11 +70,7 @@ interface PoolCreatedEvent {
 }
 
 function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
-  if (event.isV2400) {
-    const { owner, poolId, assets } = event.asV2400;
-    return { owner, poolId, assets };
-  }
-  const { owner, poolId, assets } = event.asLatest;
+  const { owner, poolId, assets } = event.asV2400 ?? event.asLatest;
   return { owner, poolId, assets };
 }
 
@@ -162,11 +158,8 @@ interface LiquidityAddedEvent {
 function getLiquidityAddedEvent(
   event: PabloLiquidityAddedEvent
 ): LiquidityAddedEvent {
-  if (event.isV2400) {
-    const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV2400;
-    return { who, poolId, baseAmount, quoteAmount, mintedLp };
-  }
-  const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asLatest;
+  const { who, poolId, baseAmount, quoteAmount, mintedLp } =
+    event.asV2400 ?? event.asLatest;
   return { who, poolId, baseAmount, quoteAmount, mintedLp };
 }
 
@@ -262,13 +255,8 @@ interface LiquidityRemovedEvent {
 function getLiquidityRemovedEvent(
   event: PabloLiquidityRemovedEvent
 ): LiquidityRemovedEvent {
-  if (event.isV2400) {
-    const { who, poolId, baseAmount, quoteAmount, totalIssuance } =
-      event.asV2400;
-    return { who, poolId, baseAmount, quoteAmount, totalIssuance };
-  }
   const { who, poolId, baseAmount, quoteAmount, totalIssuance } =
-    event.asLatest;
+    event.asV2400 ?? event.asLatest;
   return { who, poolId, baseAmount, quoteAmount, totalIssuance };
 }
 
@@ -367,13 +355,8 @@ interface SwappedEvent {
 }
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
-  if (event.isV2400) {
-    const { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee } =
-      event.asV2400;
-    return { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee };
-  }
   const { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee } =
-    event.asLatest;
+    event.asV2400 ?? event.asLatest;
   return { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee };
 }
 
@@ -511,11 +494,7 @@ interface PoolDeletedEvent {
 }
 
 function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
-  if (event.isV2400) {
-    const { poolId, baseAmount, quoteAmount } = event.asV2400;
-    return { poolId, baseAmount, quoteAmount };
-  }
-  const { poolId, baseAmount, quoteAmount } = event.asLatest;
+  const { poolId, baseAmount, quoteAmount } = event.asV2400 ?? event.asLatest;
   return { poolId, baseAmount, quoteAmount };
 }
 
