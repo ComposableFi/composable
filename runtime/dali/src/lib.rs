@@ -970,7 +970,7 @@ impl pablo::Config for Runtime {
 	type LbpMaxSaleDuration = LbpMaxSaleDuration;
 	type LbpMaxInitialWeight = LbpMaxInitialWeight;
 	type LbpMinFinalWeight = LbpMinFinalWeight;
-	type PoolCreationOrigin = EnsureRootOrHalfCouncil;
+	type PoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	// TODO: consider making it is own origin
 	type EnableTwapOrigin = EnsureRootOrHalfNativeCouncil;
 	type TWAPInterval = TWAPInterval;
