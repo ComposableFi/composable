@@ -1137,7 +1137,7 @@ pub struct AccountToAddr;
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
 		match a.strip_prefix("0x") {
-			Some(account_id) => Ok(AccountId::try_from(hex::decode(account_id).map_err(|_| ())?)
+			Some(account_id) => Ok(<[u8; 32]>::try_from(hex::decode(account_id).map_err(|_| ())?)
 				.map_err(|_| ())?
 				.into()),
 			_ => Err(()),
@@ -1293,10 +1293,10 @@ construct_runtime!(
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
 		IbcPing: pallet_ibc_ping = 151,
 		Transfer: ibc_transfer = 152,
-		Ibc: pallet_ibc = 153
+		Ibc: pallet_ibc = 153,
 
 	  // Cosmwasm support
-	  Cosmwasm: cosmwasm::{Pallet, Call, Storage, Event<T>} = 180
+	  Cosmwasm: cosmwasm = 180
 	}
 );
 
