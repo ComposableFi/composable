@@ -531,6 +531,11 @@ proptest! {
 		swap_config.vamm_id = 0;
 		swap_config.asset = AssetType::Base;
 
+		// Set correct values for test.
+		swap_config.direction = Direction::Remove;
+		swap_config.vamm_id = 0;
+		swap_config.asset = AssetType::Base;
+
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
@@ -553,6 +558,11 @@ proptest! {
 
 		// Disable output limit check
 		swap_config.output_amount_limit = Some(0);
+
+		// Set correct values for test.
+		swap_config.direction = Direction::Remove;
+		swap_config.vamm_id = 0;
+		swap_config.asset = AssetType::Quote;
 
 		// Set correct values for test.
 		swap_config.direction = Direction::Remove;

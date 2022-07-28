@@ -776,9 +776,10 @@ pub mod pallet {
 		///
 		/// # Overview
 		/// In order for the caller to update the time weighted average price of
-		/// the base asset, it has to request it to the Vamm Pallet. The pallet will
-		/// perform the needed sanity checks and update the runtime storage with
-		/// the desired twap value, returning it in case of success.
+		/// the base asset, it has to send the request to the Vamm Pallet. The
+		/// pallet will perform the needed sanity checks and update the runtime
+		/// storage with the desired twap value, returning it in case of
+		/// success.
 		///
 		/// This function can also compute the new twap value using an
 		/// Exponential Moving Average algorithm rather than blindly seting it
