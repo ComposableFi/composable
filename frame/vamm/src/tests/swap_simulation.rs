@@ -173,7 +173,7 @@ proptest! {
 
 		with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
 			let vamm_state_before = TestPallet::get_vamm(swap_config.vamm_id).unwrap();
-			TestPallet::swap_simulation(&swap_config);
+			assert_storage_noop!(TestPallet::swap_simulation(&swap_config));
 			let vamm_state_after = TestPallet::get_vamm(swap_config.vamm_id).unwrap();
 			assert_eq!(vamm_state_before, vamm_state_after);
 		});
