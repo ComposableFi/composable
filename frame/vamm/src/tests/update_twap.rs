@@ -2,7 +2,8 @@ use crate::{
 	mock::{Balance, Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error},
 	tests::{
-		any_sane_asset_amount, any_vamm_state, as_decimal, run_for_seconds, twap_update_delay,
+		helpers::{any_sane_asset_amount, as_decimal, run_for_seconds, twap_update_delay},
+		helpers_propcompose::any_vamm_state,
 		Decimal, Timestamp, RUN_CASES,
 	},
 	VammState,
@@ -145,8 +146,8 @@ fn should_succeed_updating_twap_correctly() {
 fn should_update_twap_correctly() {
 	ExtBuilder::default().build().execute_with(|| {
 		let vamm_creation = TestPallet::create(&VammConfig {
-			base_asset_reserves: 10_u128.pow(18) * 2,
-			quote_asset_reserves: 10_u128.pow(18) * 50,
+			base_asset_reserves: as_decimal(2).into_inner(),
+			quote_asset_reserves: as_decimal(50).into_inner(),
 			peg_multiplier: 1,
 			twap_period: 3600,
 		});

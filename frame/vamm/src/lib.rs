@@ -259,7 +259,9 @@ pub mod pallet {
 	}
 
 	/// Data relating to the state of a virtual market.
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug, Default)]
+	#[derive(
+		Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug, Default,
+	)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub struct VammState<Balance, Moment, Decimal> {
 		/// The total amount of base asset present in the vamm.
@@ -298,7 +300,7 @@ pub mod pallet {
 		/// [`base_asset_twap`](VammState::base_asset_twap).
 		pub twap_timestamp: Moment,
 
-		/// The frequency with which the vamm must have it's funding rebalance.
+		/// The frequency with which the vamm must have its funding rebalanced.
 		/// (Used only for twap calculations.)
 		pub twap_period: Moment,
 	}
@@ -670,9 +672,10 @@ pub mod pallet {
 		///
 		/// # Overview
 		/// In order for the caller to update the time weighted average price of
-		/// the base asset, it has to request it to the Vamm Pallet. The pallet will
-		/// perform the needed sanity checks and update the runtime storage with
-		/// the desired twap value, returning it in case of success.
+		/// the base asset, it has to send the request to the Vamm Pallet. The
+		/// pallet will perform the needed sanity checks and update the runtime
+		/// storage with the desired twap value, returning it in case of
+		/// success.
 		///
 		/// This function can also compute the new twap value using an
 		/// Exponential Moving Average algorithm rather than blindly seting it
@@ -808,7 +811,19 @@ pub mod pallet {
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
 			// Perform twap update before swapping assets.
-			Self::update_twap(config.vamm_id, None).ok();
+			//
+			// HACK: Find a better way to extract and match this message value
+			// from `Result`.
+			match Self::update_twap(config.vamm_id, None) {
+				Ok(_) => Ok(()),
+				Err(e) => match e {
+					DispatchError::Module(m) => match m.message {
+						Some("AssetTwapTimestampIsMoreRecent") => Ok(()),
+						_ => Err(e),
+					},
+					_ => Err(e),
+				},
+			}?;
 
 			// Perform required sanity checks.
 			Self::swap_sanity_check(config, &vamm_state)?;
@@ -1193,11 +1208,11 @@ pub mod pallet {
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
-						config.input_amount <= vamm_state.base_asset_reserves,
+						config.input_amount < vamm_state.base_asset_reserves,
 						Error::<T>::InsufficientFundsForTrade
 					),
 					AssetType::Quote => ensure!(
-						config.input_amount <= vamm_state.quote_asset_reserves,
+						config.input_amount < vamm_state.quote_asset_reserves,
 						Error::<T>::InsufficientFundsForTrade
 					),
 				},

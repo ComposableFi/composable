@@ -1,11 +1,16 @@
 use crate::{
 	mock::{ExtBuilder, MockRuntime, TestPallet, VammId},
 	pallet::Error,
-	tests::{get_vamm_state, run_for_seconds, Timestamp, VammState, RUN_CASES},
+	tests::{
+		helpers::{as_decimal, run_for_seconds},
+		helpers_propcompose::any_vamm_state,
+		Timestamp, VammState, RUN_CASES,
+	},
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait};
 use frame_support::{assert_noop, assert_ok, assert_storage_noop};
 use proptest::prelude::*;
+use sp_runtime::FixedPointNumber;
 
 // -------------------------------------------------------------------------------------------------
 //                                            Unit Tests
@@ -28,8 +33,8 @@ fn should_fail_if_vamm_does_not_exist() {
 #[test]
 fn should_fail_if_vamm_is_closed() {
 	let vamm_state = VammState {
-		base_asset_reserves: (10_u128.pow(18) * 4), // 4 units in decimal
-		quote_asset_reserves: (10_u128.pow(18) * 8), // 8 units in decimal
+		base_asset_reserves: as_decimal(4).into_inner(),
+		quote_asset_reserves: as_decimal(8).into_inner(),
 		peg_multiplier: 1,
 		closed: Some(Timestamp::MIN),
 		..Default::default()
@@ -61,7 +66,7 @@ proptest! {
 	// ----------------------------------------------------------------------------------------------------
 	#[test]
 	fn should_succeed_not_modifying_storage_base(
-		vamm_state in get_vamm_state(Default::default())
+		vamm_state in any_vamm_state()
 	) {
 		ExtBuilder {
 			vamm_count: 1,
@@ -74,7 +79,7 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_vamm_does_not_exist_base(
-		vamm_state in get_vamm_state(Default::default()),
+		vamm_state in any_vamm_state(),
 		vamm_id in 1..=VammId::MAX
 	) {
 		ExtBuilder {
@@ -90,7 +95,7 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_vamm_is_closed_base(
-		mut vamm_state in get_vamm_state(Default::default()),
+		mut vamm_state in any_vamm_state(),
 		closed in (0..18446744073709551_u64).prop_map(Some),
 	) {
 		// Make sure the market will be closed.
@@ -118,7 +123,7 @@ proptest! {
 	// ----------------------------------------------------------------------------------------------------
 	#[test]
 	fn should_succeed_not_modifying_storage_quote(
-		vamm_state in get_vamm_state(Default::default())
+		vamm_state in any_vamm_state()
 	) {
 		ExtBuilder {
 			vamm_count: 1,
@@ -131,7 +136,7 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_vamm_does_not_exist_quote(
-		vamm_state in get_vamm_state(Default::default()),
+		vamm_state in any_vamm_state(),
 		vamm_id in 1..=VammId::MAX
 	) {
 		ExtBuilder {
@@ -147,7 +152,7 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_vamm_is_closed_quote(
-		mut vamm_state in get_vamm_state(Default::default()),
+		mut vamm_state in any_vamm_state(),
 		closed in (0..18446744073709551_u64).prop_map(Some),
 	) {
 		// Make sure the market will be closed.
