@@ -133,7 +133,10 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 /// should exist for each position when stored in the runtime storage.
 /// TODO refer to the relevant section in the design doc.
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct Stake<RewardPoolId, Balance, Reductions> {
+pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
+	/// Protocol or the user account that owns this stake
+	pub owner: AccountId,
+
 	/// Reward Pool ID from which pool to allocate rewards for this
 	pub reward_pool_id: RewardPoolId,
 
@@ -218,11 +221,7 @@ pub trait Staking {
 	/// * `instance_id` the ID uniquely identifying the NFT from which we will compute the available
 	///   rewards.
 	/// * `to` the account to transfer the final claimed rewards to.
-	fn unstake(
-		who: &Self::AccountId,
-		position: &Self::PositionId,
-		remove_amount: Self::Balance,
-	) -> DispatchResult;
+	fn unstake(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
 
 	/// `ratio` - how much of share to retain in the original position.
 	fn split(

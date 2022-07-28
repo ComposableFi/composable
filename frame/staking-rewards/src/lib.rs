@@ -110,6 +110,12 @@ pub mod pallet {
 			/// Extended amount
 			amount: T::Balance,
 		},
+		Unstaked {
+			/// Owner of the stake.
+			owner: T::AccountId,
+			/// Position Id of newly created stake.
+			position_id: T::PositionId,
+		},
 		/// Split stake position into two positions
 		SplitPosition { positions: Vec<T::PositionId> },
 	}
@@ -134,6 +140,8 @@ pub mod pallet {
 		MaxRewardLimitReached,
 		/// Only pool owner can add new reward asset.
 		OnlyPoolOwnerCanAddNewReward,
+		/// only the owner of stake can unstake it
+		OnlyStakeOwnerCanUnstake,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -239,6 +247,7 @@ pub mod pallet {
 
 	/// Abstraction over Stake type
 	type StakeOf<T> = Stake<
+		<T as frame_system::Config>::AccountId,
 		<T as Config>::RewardPoolId,
 		<T as Config>::Balance,
 		Reductions<
@@ -280,7 +289,7 @@ pub mod pallet {
 		/// Create a new reward pool based on the config.
 		///
 		/// Emits `RewardPoolCreated` event when successful.
-		#[pallet::weight(T::WeightInfo::create_reward_pool())]
+		#[pallet::weight(T::WeightInfo::create_reward_pool(T::MaxRewardConfigsPerPool::get()))]
 		#[transactional]
 		pub fn create_reward_pool(
 			origin: OriginFor<T>,
@@ -301,7 +310,7 @@ pub mod pallet {
 					);
 					let pool_id = RewardPoolCount::<T>::increment()?;
 					let mut rewards = BTreeMap::new();
-					for (_, reward_config) in initial_reward_config.into_iter().enumerate() {
+					for reward_config in initial_reward_config.into_iter() {
 						rewards.insert(reward_config.0, Reward::from(reward_config.1));
 					}
 					RewardPools::<T>::insert(
@@ -332,7 +341,7 @@ pub mod pallet {
 		/// Create a new stake.
 		///
 		/// Emits `Staked` event when successful.
-		#[pallet::weight(T::WeightInfo::stake())]
+		#[pallet::weight(T::WeightInfo::stake(T::MaxRewardConfigsPerPool::get()))]
 		pub fn stake(
 			origin: OriginFor<T>,
 			pool_id: T::RewardPoolId,
@@ -350,7 +359,7 @@ pub mod pallet {
 		/// Extend an existing stake.
 		///
 		/// Emits `StakeExtended` event when successful.
-		#[pallet::weight(T::WeightInfo::extend())]
+		#[pallet::weight(T::WeightInfo::extend(T::MaxRewardConfigsPerPool::get()))]
 		pub fn extend(
 			origin: OriginFor<T>,
 			position: T::PositionId,
@@ -363,7 +372,18 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(T::WeightInfo::split())]
+		/// Remove a stake.
+		///
+		/// Emits `Unstaked` event when successful.
+		#[pallet::weight(T::WeightInfo::unstake(T::MaxRewardConfigsPerPool::get()))]
+		pub fn unstake(origin: OriginFor<T>, position_id: T::PositionId) -> DispatchResult {
+			let owner = ensure_signed(origin)?;
+			<Self as Staking>::unstake(&owner, &position_id)?;
+
+			Ok(())
+		}
+
+		#[pallet::weight(T::WeightInfo::split(T::MaxRewardConfigsPerPool::get()))]
 		pub fn split(
 			origin: OriginFor<T>,
 			position: T::PositionId,
@@ -408,6 +428,7 @@ pub mod pallet {
 				Self::compute_rewards_and_reductions(boosted_amount, &rewards_pool)?;
 
 			let new_position = Stake {
+				owner: who.clone(),
 				reward_pool_id: *pool_id,
 				stake: amount,
 				share: boosted_amount,
@@ -493,12 +514,73 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn unstake(
-			_who: &Self::AccountId,
-			_position: &Self::PositionId,
-			_remove_amount: Self::Balance,
-		) -> DispatchResult {
-			Err("Not implemented".into())
+		fn unstake(who: &Self::AccountId, position_id: &Self::PositionId) -> DispatchResult {
+			let keep_alive = false;
+			let stake = Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
+			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
+			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
+				T::UnixTime::now().as_secs();
+			let pool_id = stake.reward_pool_id;
+			let mut rewards_pool =
+				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+
+			let mut inner_rewards = rewards_pool.rewards.into_inner();
+			for (asset_id, reward) in inner_rewards.iter_mut() {
+				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
+				let claim = if rewards_pool.total_shares == Zero::zero() {
+					Zero::zero()
+				} else {
+					reward
+						.total_rewards
+						.safe_mul(&stake.share)?
+						.safe_div(&rewards_pool.total_shares)?
+						.safe_sub(&inflation)?
+				};
+				let claim = if early_unlock {
+					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim)
+				} else {
+					claim
+				};
+				let claim = sp_std::cmp::min(
+					claim,
+					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
+				);
+				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
+				T::Assets::transfer(
+					reward.asset_id,
+					&Self::pool_account_id(&pool_id),
+					&stake.owner,
+					claim,
+					keep_alive,
+				)?;
+			}
+			rewards_pool.rewards =
+				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+			rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
+
+			let stake_with_penalty = if early_unlock {
+				(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(stake.stake)
+			} else {
+				stake.stake
+			};
+
+			T::Assets::transfer(
+				rewards_pool.asset_id,
+				&Self::pool_account_id(&pool_id),
+				&stake.owner,
+				stake_with_penalty,
+				keep_alive,
+			)?;
+
+			RewardPools::<T>::insert(pool_id, rewards_pool);
+			Stakes::<T>::remove(position_id);
+
+			Self::deposit_event(Event::<T>::Unstaked {
+				owner: who.clone(),
+				position_id: *position_id,
+			});
+
+			Ok(())
 		}
 
 		#[transactional]
