@@ -1,12 +1,5 @@
-{ pkgs, nixpkgs, devnet,  }:
+{ pkgs, nixpkgs, devnet-input, devnet-gce, ops-config }:
 let
-  # NOTE: can unify, either use json for input and for composition or can use nix for both
-  devnet-json = "${devnet}.json";
-  bins = (if builtins.pathExists  then
-    builtins.fromJSON (builtins.readFile devnet)
-  else
-    throw
-    "devnet is not found at `${devnet-json}`, please follow the README.md instructions.");
   mk-composable = spec:
     def: def // {
       inherit spec;
@@ -87,20 +80,16 @@ in {
     });
   });
 
-  machines = let
-    ops-config = if builtins.pathExists ./ops.json then
-      builtins.fromJSON (builtins.readFile ./ops.json)
-    else
-      throw
-      "Operations credentials `ops.json` definition missng, please follow the README.md instructions.";
-    credentials = {
-      project = ops-config.project_id;
-      serviceAccount = ops-config.client_email;
-      accessKey = ops-config.private_key;
-    };
+  machines = 
+    let    
+      credentials = {
+        project = ops-config.project_id;
+        serviceAccount = ops-config.client_email;
+        accessKey = ops-config.private_key;
+      };
   in builtins.foldl' (machines:
     { composable, polkadot }:
-    machines // import ./devnet-gce.nix {
+    machines // devnet-gce {
       inherit credentials;
       inherit composable;
       inherit polkadot;
