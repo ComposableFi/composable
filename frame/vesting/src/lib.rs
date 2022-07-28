@@ -41,7 +41,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
-use composable_traits::vesting::{VestedTransfer, VestingSchedule};
+use composable_traits::vesting::{VestedTransfer, VestingBalance, VestingSchedule};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -84,7 +84,7 @@ pub mod module {
 		},
 		math::safe::SafeAdd,
 	};
-	use composable_traits::vesting::{VestingSchedule, VestingWindow};
+	use composable_traits::vesting::{VestingBalance, VestingSchedule, VestingWindow};
 	use frame_support::traits::Time;
 	use orml_traits::{MultiCurrency, MultiLockableCurrency};
 	use sp_runtime::traits::AtLeast32Bit;
@@ -104,6 +104,7 @@ pub mod module {
 		MomentOf<T>,
 		BalanceOf<T>,
 	>;
+	pub(crate) type VestingBalanceOf<T> = VestingBalance<BalanceOf<T>>;
 	pub type ScheduledItem<T> = (
 		AssetIdOf<T>,
 		<T as frame_system::Config>::AccountId,
@@ -401,7 +402,9 @@ impl<T: Config> Pallet<T> {
 		asset: AssetIdOf<T>,
 		vesting_schedule_id: Option<T::VestingScheduleId>,
 	) -> Result<BalanceOf<T>, DispatchError> {
-		let (locked, locked_map) = Self::locked_balance(who, asset);
+		let (locked, vesting_map) = Self::locked_balance(who, asset);
+		println!("locked: {:?}", locked);
+		println!("vesting_map: {:?}", vesting_map);
 
 		if locked.is_zero() {
 			// cleanup the storage and unlock the fund
@@ -411,21 +414,36 @@ impl<T: Config> Pallet<T> {
 			match vesting_schedule_id {
 				// update the locked amount
 				Some(id) => {
-					let locked_for_id =
-						locked_map.get(&id).ok_or(Error::<T>::VestingScheduleNotFound)?;
+					let balance_for_id = vesting_map.get(&id);
 
-					let mut bounded_schedules = <VestingSchedules<T>>::get(who, asset);
-					bounded_schedules.retain(|s| s.vesting_schedule_id != id);
-					<VestingSchedules<T>>::insert(who, asset, &bounded_schedules);
-					let new_locked =
-						locked.checked_sub(locked_for_id).ok_or(ArithmeticError::Overflow)?;
-					T::Currency::set_lock(VESTING_LOCK_ID, asset, who, new_locked)?;
+					match balance_for_id {
+						Some(balance) => {
+							let available_for_id = balance.available_balance;
+							let locked_for_id = balance.locked_balance;
+							let mut bounded_schedules = <VestingSchedules<T>>::get(who, asset);
+							bounded_schedules.retain(|s| {
+								s.vesting_schedule_id != id || !locked_for_id.is_zero()
+							});
+							<VestingSchedules<T>>::insert(who, asset, &bounded_schedules);
+							// let new_locked = locked
+							// 	.checked_sub(&available_for_id)
+							// 	.ok_or(ArithmeticError::Overflow)?;
+							// println!("locked: {:?}", locked);
+							// println!("available_for_id: {:?}", available_for_id);
+							// println!("new_locked: {:?}", new_locked);
+							T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked)?;
+						},
+						_ => {
+							// TODO: error?
+						},
+					}
 				},
 				None => {
 					T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked)?;
 				},
 			}
 		}
+
 		Ok(locked)
 	}
 
@@ -433,19 +451,26 @@ impl<T: Config> Pallet<T> {
 	fn locked_balance(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-	) -> (BalanceOf<T>, BTreeMap<T::VestingScheduleId, BalanceOf<T>>) {
+	) -> (BalanceOf<T>, BTreeMap<T::VestingScheduleId, VestingBalanceOf<T>>) {
 		let mut vesting_schedule_totals = BTreeMap::new();
 		<VestingSchedules<T>>::mutate_exists(who, asset, |maybe_schedules| {
 			let total = if let Some(schedules) = maybe_schedules.as_mut() {
 				let mut total: BalanceOf<T> = Zero::zero();
 				schedules.retain(|s| {
-					let amount = s.locked_amount(
+					let locked_amount = s.locked_amount(
 						frame_system::Pallet::<T>::current_block_number(),
 						T::Time::now(),
 					);
-					total = total.saturating_add(amount);
-					vesting_schedule_totals.insert(s.vesting_schedule_id, amount);
-					!amount.is_zero()
+					let available_amount = s.total_amount().unwrap() - locked_amount;
+					total = total.saturating_add(locked_amount);
+					vesting_schedule_totals.insert(
+						s.vesting_schedule_id,
+						VestingBalance {
+							available_balance: available_amount,
+							locked_balance: locked_amount,
+						},
+					);
+					!locked_amount.is_zero()
 				});
 				total
 			} else {
