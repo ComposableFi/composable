@@ -65,6 +65,12 @@ pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasC
 	pub per_period: Balance,
 }
 
+#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub struct VestingBalance<Balance> {
+	pub available_balance: Balance,
+	pub locked_balance: Balance,
+}
+
 pub enum VestingWindowResult<BlockNumber, Moment> {
 	MomentResult(Moment),
 	BlockNumberResult(BlockNumber),
