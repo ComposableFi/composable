@@ -69,7 +69,7 @@ export const useAddLiquidity = () => {
   };
 
   const canSupply = () => {
-    return assetOneAmountBn.lt(balanceOne) && assetTwoAmountBn.lt(balanceTwo);
+    return assetOneAmountBn.lte(balanceOne) && assetTwoAmountBn.lte(balanceTwo);
   };
 
   useEffect(() => {

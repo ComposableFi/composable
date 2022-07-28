@@ -15,7 +15,6 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { BoxProps } from "@mui/system";
 import BigNumber from "bignumber.js";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
