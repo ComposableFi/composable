@@ -49,9 +49,9 @@ describe("[SHORT] rpc.assets Tests", function () {
   it("rpc.assets.listAssets Tests", async function () {
     if (!testConfiguration.enabledTests.rpc.listAssets__success) this.skip();
     const result = await RpcAssetsTests.rpcListAssetsTest(api);
-    expect(result).to.have.lengthOf(7);
+    expect(result).to.have.lengthOf(8);
     result.every(i => expect(i).to.have.all.keys("id", "name"));
-    expect(result.map(e => e.id.toNumber())).to.include.members([1, 2, 3, 4, 129, 130, 131]);
+    expect(result.map(e => e.id.toNumber())).to.include.members([1, 2, 3, 4, 5, 129, 130, 131]);
     expect(result.map(e => hex_to_ascii(e.name.toString()))).to.include.members([
       "PICA",
       "LAYR",
