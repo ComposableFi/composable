@@ -30,10 +30,11 @@
           pkgs = import nixpkgs {};
         in 
           devnet-spec.machines;
-
+      devnet-gce  = import ./devnet/devnet-gce.nix {inherit devnet-spec;};
+      devnet-binaries = { composable = devnet-spec.composable-repo; polkadot = devnet-spec.polkadot-repo;};
       packages = 
         let
-          devnet-deploy = pkgs.callPackage ./.nix/devnet-deploy.nix { composable = devnet-spec.composable-repo; polkadot = devnet-spec.polkadot-repo;};
+          devnet-deploy = pkgs.callPackage ./.nix/devnet-deploy.nix {inherit devnet-binaries; inherit devnet-gce;};
           latest-book = pkgs.callPackage ./book {};
         in {
           dali-script = devnet-deploy.dali.script;

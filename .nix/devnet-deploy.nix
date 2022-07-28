@@ -1,4 +1,4 @@
-{ pkgs, nixpkgs, devnet-input, devnet-gce, ops-config }:
+{ pkgs, nixpkgs, devnet-gce, ops-config, devnet-binaries }:
 let
   mk-composable = spec:
     def: def // {
@@ -51,7 +51,7 @@ let
     ({ composable, polkadot }: {
       composable = mk-composable spec composable;
       polkadot = mk-polkadot "rococo-local" polkadot;
-    }) bins;
+    }) devnet-binaries;
   latest-dali = mk-latest "dali-dev";
   latest-picasso = mk-latest "picasso-dev";
 in {
@@ -59,8 +59,6 @@ in {
     inherit (latest-dali) composable;
     inherit (latest-dali) polkadot;
   });
-  composable-repo = composable;
-  polkadot-repo = polkadot;
 
   picasso = (pkgs.callPackage ../.nix/devnet-spec.nix {
     inherit (latest-picasso) composable;
