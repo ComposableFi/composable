@@ -38,7 +38,7 @@ impl<T: frame_system::Config> vault::WeightInfo for WeightInfo<T> {
 	// Storage: Vault LpTokensToVaults (r:0 w:1)
 	// Storage: Vault Vaults (r:0 w:1)
 	fn create() -> Weight {
-		(159_365_000 as Weight)
+		(151_775_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -48,7 +48,7 @@ impl<T: frame_system::Config> vault::WeightInfo for WeightInfo<T> {
 	// Storage: Vault CapitalStructure (r:2 w:0)
 	// Storage: System Account (r:1 w:1)
 	fn deposit() -> Weight {
-		(166_251_000 as Weight)
+		(161_031_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -57,33 +57,33 @@ impl<T: frame_system::Config> vault::WeightInfo for WeightInfo<T> {
 	// Storage: Vault CapitalStructure (r:2 w:0)
 	// Storage: Tokens TotalIssuance (r:2 w:1)
 	fn withdraw() -> Weight {
-		(147_376_000 as Weight)
+		(140_949_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	fn emergency_shutdown() -> Weight {
-		(30_572_000 as Weight)
+		(29_642_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	fn start_() -> Weight {
-		(30_746_000 as Weight)
+		(28_745_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn add_surcharge() -> Weight {
-		(82_809_000 as Weight)
+		(80_615_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Vault Vaults (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn claim_surcharge() -> Weight {
-		(77_699_000 as Weight)
+		(74_854_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -91,7 +91,7 @@ impl<T: frame_system::Config> vault::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:0)
 	// Storage: Vault LpTokensToVaults (r:0 w:1)
 	fn delete_tombstoned() -> Weight {
-		(27_682_000 as Weight)
+		(27_003_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}

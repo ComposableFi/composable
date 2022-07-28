@@ -36,9 +36,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	fn claim(s: u32, ) -> Weight {
-		(78_229_000 as Weight)
+		(73_301_000 as Weight)
 			// Standard Error: 6_000
-			.saturating_add((2_683_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((2_770_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -47,7 +47,7 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn vested_transfer() -> Weight {
-		(134_898_000 as Weight)
+		(132_842_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -56,9 +56,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Vesting VestingSchedules (r:0 w:1)
 	fn update_vesting_schedules(s: u32, ) -> Weight {
-		(73_860_000 as Weight)
+		(70_561_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((129_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((151_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -68,9 +68,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	fn claim_for(s: u32, ) -> Weight {
-		(70_680_000 as Weight)
+		(70_158_000 as Weight)
 			// Standard Error: 4_000
-			.saturating_add((2_475_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((2_576_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}

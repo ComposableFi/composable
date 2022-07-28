@@ -33,7 +33,7 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn as_multi_threshold_1(z: u32, ) -> Weight {
-		(34_378_000 as Weight)
+		(35_438_000 as Weight)
 			// Standard Error: 0
 			.saturating_add((1_000 as Weight).saturating_mul(z as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
@@ -41,9 +41,9 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	fn as_multi_create(s: u32, z: u32, ) -> Weight {
-		(72_636_000 as Weight)
-			// Standard Error: 4_000
-			.saturating_add((248_000 as Weight).saturating_mul(s as Weight))
+		(68_970_000 as Weight)
+			// Standard Error: 6_000
+			.saturating_add((266_000 as Weight).saturating_mul(s as Weight))
 			// Standard Error: 0
 			.saturating_add((2_000 as Weight).saturating_mul(z as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
@@ -53,9 +53,9 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	// Storage: Multisig Calls (r:1 w:1)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	fn as_multi_create_store(s: u32, z: u32, ) -> Weight {
-		(72_891_000 as Weight)
+		(79_283_000 as Weight)
 			// Standard Error: 6_000
-			.saturating_add((307_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((261_000 as Weight).saturating_mul(s as Weight))
 			// Standard Error: 0
 			.saturating_add((3_000 as Weight).saturating_mul(z as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
@@ -63,9 +63,9 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	fn as_multi_approve(s: u32, z: u32, ) -> Weight {
-		(45_733_000 as Weight)
-			// Standard Error: 3_000
-			.saturating_add((231_000 as Weight).saturating_mul(s as Weight))
+		(42_980_000 as Weight)
+			// Standard Error: 4_000
+			.saturating_add((226_000 as Weight).saturating_mul(s as Weight))
 			// Standard Error: 0
 			.saturating_add((2_000 as Weight).saturating_mul(z as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
@@ -74,9 +74,9 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: Multisig Calls (r:1 w:1)
 	fn as_multi_approve_store(s: u32, z: u32, ) -> Weight {
-		(76_142_000 as Weight)
-			// Standard Error: 6_000
-			.saturating_add((274_000 as Weight).saturating_mul(s as Weight))
+		(70_292_000 as Weight)
+			// Standard Error: 5_000
+			.saturating_add((277_000 as Weight).saturating_mul(s as Weight))
 			// Standard Error: 0
 			.saturating_add((3_000 as Weight).saturating_mul(z as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
@@ -87,29 +87,29 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn as_multi_complete(s: u32, z: u32, ) -> Weight {
-		(85_583_000 as Weight)
-			// Standard Error: 23_000
-			.saturating_add((620_000 as Weight).saturating_mul(s as Weight))
+		(89_628_000 as Weight)
+			// Standard Error: 6_000
+			.saturating_add((492_000 as Weight).saturating_mul(s as Weight))
 			// Standard Error: 0
-			.saturating_add((5_000 as Weight).saturating_mul(z as Weight))
+			.saturating_add((4_000 as Weight).saturating_mul(z as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: unknown [0x3a65787472696e7369635f696e646578] (r:1 w:0)
 	fn approve_as_multi_create(s: u32, ) -> Weight {
-		(68_275_000 as Weight)
-			// Standard Error: 4_000
-			.saturating_add((269_000 as Weight).saturating_mul(s as Weight))
+		(65_484_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((246_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: Multisig Calls (r:1 w:0)
 	fn approve_as_multi_approve(s: u32, ) -> Weight {
-		(40_604_000 as Weight)
+		(38_850_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((252_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((227_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -118,18 +118,18 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn approve_as_multi_complete(s: u32, ) -> Weight {
-		(130_016_000 as Weight)
-			// Standard Error: 7_000
-			.saturating_add((532_000 as Weight).saturating_mul(s as Weight))
+		(124_398_000 as Weight)
+			// Standard Error: 6_000
+			.saturating_add((487_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 	// Storage: Multisig Multisigs (r:1 w:1)
 	// Storage: Multisig Calls (r:1 w:1)
 	fn cancel_as_multi(s: u32, ) -> Weight {
-		(100_318_000 as Weight)
-			// Standard Error: 3_000
-			.saturating_add((260_000 as Weight).saturating_mul(s as Weight))
+		(98_124_000 as Weight)
+			// Standard Error: 4_000
+			.saturating_add((247_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}

@@ -34,7 +34,7 @@ impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: Liquidations StrategyIndex (r:1 w:1)
 	// Storage: Liquidations Strategies (r:0 w:1)
 	fn add_liquidation_strategy() -> Weight {
-		(9_318_000 as Weight)
+		(8_886_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -45,9 +45,9 @@ impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
 	fn sell(x: u32, ) -> Weight {
-		(118_613_000 as Weight)
-			// Standard Error: 89_000
-			.saturating_add((4_257_000 as Weight).saturating_mul(x as Weight))
+		(113_297_000 as Weight)
+			// Standard Error: 94_000
+			.saturating_add((4_255_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(x as Weight)))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))

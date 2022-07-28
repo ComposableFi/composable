@@ -36,9 +36,9 @@ impl<T: frame_system::Config> scheduler::WeightInfo for WeightInfo<T> {
 	// Storage: Preimage StatusFor (r:1 w:1)
 	// Storage: Scheduler Lookup (r:0 w:1)
 	fn on_initialize_periodic_named_resolved(s: u32, ) -> Weight {
-		(20_021_000 as Weight)
-			// Standard Error: 139_000
-			.saturating_add((55_629_000 as Weight).saturating_mul(s as Weight))
+		(20_678_000 as Weight)
+			// Standard Error: 78_000
+			.saturating_add((50_614_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(s as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -49,9 +49,9 @@ impl<T: frame_system::Config> scheduler::WeightInfo for WeightInfo<T> {
 	// Storage: Preimage StatusFor (r:1 w:1)
 	// Storage: Scheduler Lookup (r:0 w:1)
 	fn on_initialize_named_resolved(s: u32, ) -> Weight {
-		(14_382_000 as Weight)
-			// Standard Error: 41_000
-			.saturating_add((43_823_000 as Weight).saturating_mul(s as Weight))
+		(20_155_000 as Weight)
+			// Standard Error: 87_000
+			.saturating_add((39_591_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(s as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -61,9 +61,9 @@ impl<T: frame_system::Config> scheduler::WeightInfo for WeightInfo<T> {
 	// Storage: Preimage PreimageFor (r:1 w:1)
 	// Storage: Preimage StatusFor (r:1 w:1)
 	fn on_initialize_periodic_resolved(s: u32, ) -> Weight {
-		(16_337_000 as Weight)
-			// Standard Error: 66_000
-			.saturating_add((48_103_000 as Weight).saturating_mul(s as Weight))
+		(15_360_000 as Weight)
+			// Standard Error: 74_000
+			.saturating_add((43_354_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(s as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -73,9 +73,9 @@ impl<T: frame_system::Config> scheduler::WeightInfo for WeightInfo<T> {
 	// Storage: Preimage PreimageFor (r:1 w:1)
 	// Storage: Preimage StatusFor (r:1 w:1)
 	fn on_initialize_resolved(s: u32, ) -> Weight {
-		(20_956_000 as Weight)
-			// Standard Error: 58_000
-			.saturating_add((40_452_000 as Weight).saturating_mul(s as Weight))
+		(14_858_000 as Weight)
+			// Standard Error: 53_000
+			.saturating_add((36_782_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().reads((2 as Weight).saturating_mul(s as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -85,9 +85,9 @@ impl<T: frame_system::Config> scheduler::WeightInfo for WeightInfo<T> {
 	// Storage: Preimage PreimageFor (r:1 w:0)
 	// Storage: Scheduler Lookup (r:0 w:1)
 	fn on_initialize_named_aborted(s: u32, ) -> Weight {
-		(17_098_000 as Weight)
-			// Standard Error: 31_000
-			.saturating_add((19_252_000 as Weight).saturating_mul(s as Weight))
+		(14_391_000 as Weight)
+			// Standard Error: 20_000
+			.saturating_add((17_379_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(s as Weight)))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
@@ -96,9 +96,9 @@ impl<T: frame_system::Config> scheduler::WeightInfo for WeightInfo<T> {
 	// Storage: Scheduler Agenda (r:2 w:2)
 	// Storage: Preimage PreimageFor (r:1 w:0)
 	fn on_initialize_aborted(s: u32, ) -> Weight {
-		(17_724_000 as Weight)
-			// Standard Error: 23_000
-			.saturating_add((12_624_000 as Weight).saturating_mul(s as Weight))
+		(14_199_000 as Weight)
+			// Standard Error: 102_000
+			.saturating_add((10_850_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(s as Weight)))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
@@ -106,9 +106,9 @@ impl<T: frame_system::Config> scheduler::WeightInfo for WeightInfo<T> {
 	// Storage: Scheduler Agenda (r:2 w:2)
 	// Storage: Scheduler Lookup (r:0 w:1)
 	fn on_initialize_periodic_named(s: u32, ) -> Weight {
-		(27_720_000 as Weight)
-			// Standard Error: 46_000
-			.saturating_add((30_844_000 as Weight).saturating_mul(s as Weight))
+		(26_345_000 as Weight)
+			// Standard Error: 36_000
+			.saturating_add((26_738_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(s as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -116,9 +116,9 @@ impl<T: frame_system::Config> scheduler::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: Scheduler Agenda (r:2 w:2)
 	fn on_initialize_periodic(s: u32, ) -> Weight {
-		(31_974_000 as Weight)
-			// Standard Error: 71_000
-			.saturating_add((23_358_000 as Weight).saturating_mul(s as Weight))
+		(25_012_000 as Weight)
+			// Standard Error: 27_000
+			.saturating_add((19_911_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(s as Weight)))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -127,53 +127,53 @@ impl<T: frame_system::Config> scheduler::WeightInfo for WeightInfo<T> {
 	// Storage: Scheduler Agenda (r:1 w:1)
 	// Storage: Scheduler Lookup (r:0 w:1)
 	fn on_initialize_named(s: u32, ) -> Weight {
-		(22_044_000 as Weight)
-			// Standard Error: 106_000
-			.saturating_add((19_593_000 as Weight).saturating_mul(s as Weight))
+		(27_804_000 as Weight)
+			// Standard Error: 21_000
+			.saturating_add((16_143_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(s as Weight)))
 	}
 	// Storage: Scheduler Agenda (r:1 w:1)
 	fn on_initialize(s: u32, ) -> Weight {
-		(24_705_000 as Weight)
+		(25_299_000 as Weight)
 			// Standard Error: 31_000
-			.saturating_add((16_482_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((13_616_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Scheduler Agenda (r:1 w:1)
 	fn schedule(s: u32, ) -> Weight {
-		(37_355_000 as Weight)
-			// Standard Error: 5_000
-			.saturating_add((184_000 as Weight).saturating_mul(s as Weight))
+		(33_258_000 as Weight)
+			// Standard Error: 11_000
+			.saturating_add((257_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Scheduler Agenda (r:1 w:1)
 	// Storage: Scheduler Lookup (r:0 w:1)
 	fn cancel(s: u32, ) -> Weight {
-		(36_578_000 as Weight)
-			// Standard Error: 10_000
-			.saturating_add((3_656_000 as Weight).saturating_mul(s as Weight))
+		(35_302_000 as Weight)
+			// Standard Error: 35_000
+			.saturating_add((2_828_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Scheduler Lookup (r:1 w:1)
 	// Storage: Scheduler Agenda (r:1 w:1)
 	fn schedule_named(s: u32, ) -> Weight {
-		(43_587_000 as Weight)
+		(41_835_000 as Weight)
 			// Standard Error: 4_000
-			.saturating_add((218_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((201_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Scheduler Lookup (r:1 w:1)
 	// Storage: Scheduler Agenda (r:1 w:1)
 	fn cancel_named(s: u32, ) -> Weight {
-		(40_397_000 as Weight)
-			// Standard Error: 12_000
-			.saturating_add((3_657_000 as Weight).saturating_mul(s as Weight))
+		(38_565_000 as Weight)
+			// Standard Error: 9_000
+			.saturating_add((2_828_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}

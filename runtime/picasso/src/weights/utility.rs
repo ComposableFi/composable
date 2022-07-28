@@ -33,31 +33,31 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn batch(c: u32, ) -> Weight {
-		(44_236_000 as Weight)
+		(33_127_000 as Weight)
 			// Standard Error: 11_000
-			.saturating_add((10_272_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((10_269_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn as_derivative() -> Weight {
-		(10_326_000 as Weight)
+		(9_893_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn batch_all(c: u32, ) -> Weight {
-		(40_853_000 as Weight)
-			// Standard Error: 11_000
-			.saturating_add((10_836_000 as Weight).saturating_mul(c as Weight))
+		(48_693_000 as Weight)
+			// Standard Error: 13_000
+			.saturating_add((10_837_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	fn dispatch_as() -> Weight {
-		(21_681_000 as Weight)
+		(21_101_000 as Weight)
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn force_batch(c: u32, ) -> Weight {
-		(42_985_000 as Weight)
-			// Standard Error: 13_000
-			.saturating_add((10_290_000 as Weight).saturating_mul(c as Weight))
+		(4_012_000 as Weight)
+			// Standard Error: 16_000
+			.saturating_add((10_289_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 }
