@@ -23,10 +23,10 @@ serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.45"
 
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "80f13fdcdee978217e0ccabfe6d83e790c425ee7", default-features = false, features = [
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "790283269964b908da05cb9c3932a6a480563d62", default-features = false, features = [
   "ics11_beefy",
 ] }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "80f13fdcdee978217e0ccabfe6d83e790c425ee7", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "790283269964b908da05cb9c3932a6a480563d62", default-features = false }
 ibc-runtime-api = { path = "../ibc-runtime-api" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
