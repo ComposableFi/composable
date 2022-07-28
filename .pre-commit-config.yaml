@@ -21,7 +21,7 @@ repos:
         types: [rust]
       - id: clearing-house::cargo-test
         name: clearing-house::cargo-test
-        entry: cargo +nightly nextest run --fail-fast --all-features --tests -p pallet-clearing-house
+        entry: cargo +nightly nextest run --fail-fast --failure-output=never --success-output=never --status-level=fail -p pallet-clearing-house
         language: system
         pass_filenames: false
         files: ^frame/(clearing-house/|composable-traits/src/(clearing_house.rs|vamm.rs))
@@ -36,7 +36,7 @@ repos:
         pass_filenames: false
         files: ^frame/vamm/
         types: [rust]
-        stages: [push, manual]
+        stages: [commit, push, manual]
       - id: vamm::cargo-check
         name: vamm::cargo-check
         entry: cargo +nightly check --all-targets -p pallet-vamm
@@ -47,7 +47,7 @@ repos:
         stages: [push, manual]
       - id: vamm::cargo-test
         name: vamm::cargo-test
-        entry: cargo +nightly nextest run --fail-fast --all-features --tests -p pallet-vamm
+        entry: cargo +nightly nextest run --fail-fast --failure-output=never --success-output=never --status-level=fail -p pallet-vamm
         language: system
         pass_filenames: false
         files: ^frame/vamm/
@@ -89,7 +89,7 @@ repos:
         stages: [push, manual]
       - id: composable-traits::cargo-test
         name: composable-traits::cargo-test
-        entry: cargo +nightly test --all-features --tests -p composable-traits
+        entry: cargo +nightly nextest run --fail-fast --failure-output=never --success-output=never --status-level=fail -p composable-traits
         language: system
         pass_filenames: false
         files: ^frame/composable-traits/
@@ -131,7 +131,7 @@ repos:
         stages: [push, manual]
       - id: composable-maths::cargo-test
         name: composable-maths::cargo-test
-        entry: cargo +nightly test --all-features --tests -p composable-maths
+        entry: cargo +nightly nextest run --fail-fast --failure-output=never --success-output=never --status-level=fail -p composable-maths
         language: system
         pass_filenames: false
         files: ^frame/composable-maths/
