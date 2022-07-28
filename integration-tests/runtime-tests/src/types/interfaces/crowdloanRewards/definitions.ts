@@ -141,8 +141,6 @@ export default {
     },
     FrameSupportScheduleMaybeHashed: "Null",
     FrameSupportScheduleLookupError: "Null",
-    PalletCurrencyFactoryRanges: "Null",
-    PalletCurrencyFactoryRangesRange: "Null",
     PalletLiquidationsLiquidationStrategyConfiguration: "Null",
     CommonMosaicRemoteAssetId: "Null",
     ComposableTraitsDexConsantProductPoolInfo: "Null",
@@ -160,7 +158,14 @@ export default {
       ownerFee: "Permill"
     },
     ComposableSupportEthereumAddress: "Null",
-    ComposableTraitsAssetsBasicAssetMetadata: "Null",
+    ComposableTraitsAssetsBasicAssetMetadata: {
+      symbol: {
+        inner: "Null"
+      },
+      name: {
+        inner: "Null"
+      }
+    },
     ComposableTraitsDexDexRoute: "Null",
     ComposableTraitsLendingRepayStrategy: "Null",
     ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
@@ -189,6 +194,9 @@ export default {
     ComposableTraitsStakingRewardPool: "Null",
     ComposableTraitsStakingRewardPoolConfiguration: "Null",
     IbcTransferPalletParams: "Null",
-    IbcTransferTransferParams: "Null"
+    IbcTransferTransferParams: "Null",
+    ComposableTraitsOracleRewardTracker: "Null",
+    ComposableTraitsStakingStake: "Null"
+
   }
 };
