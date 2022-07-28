@@ -1,4 +1,4 @@
-../../{
+{
   "relaychain": {
     "bin": "../../../polkadot/target/release/polkadot",
     "chain": "rococo-local",
