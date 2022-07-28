@@ -37,6 +37,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
 		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
+		is_single_asset: bool,
 	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
@@ -58,6 +59,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
 		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
+		is_single_asset: bool,
 	) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
@@ -118,6 +120,7 @@ pub trait Amm {
 		lp_amount: Self::Balance,
 		min_base_amount: Self::Balance,
 		min_quote_amount: Self::Balance,
+		is_single_asset: bool,
 	) -> Result<(), DispatchError>;
 
 	/// Perform an exchange.

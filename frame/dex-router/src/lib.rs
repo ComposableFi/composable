@@ -255,6 +255,7 @@ pub mod pallet {
 			lp_amount: T::Balance,
 			min_base_amount: T::Balance,
 			min_quote_amount: T::Balance,
+			is_single_asset: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let _ = <Self as Amm>::remove_liquidity(
@@ -263,6 +264,7 @@ pub mod pallet {
 				lp_amount,
 				min_base_amount,
 				min_quote_amount,
+				is_single_asset,
 			)?;
 			Ok(())
 		}
@@ -441,6 +443,7 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
 			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
+			is_single_asset: bool,
 		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
@@ -448,6 +451,7 @@ pub mod pallet {
 					pool_id,
 					lp_amount,
 					min_expected_amounts,
+					is_single_asset,
 				),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
@@ -458,6 +462,7 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
 			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
+			is_single_asset: bool,
 		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
@@ -466,6 +471,7 @@ pub mod pallet {
 					pool_id,
 					lp_amount,
 					min_expected_amounts,
+					is_single_asset,
 				),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
@@ -608,6 +614,7 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 			min_base_amount: Self::Balance,
 			min_quote_amount: Self::Balance,
+			is_single_asset: bool,
 		) -> Result<(), DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
@@ -617,6 +624,7 @@ pub mod pallet {
 					lp_amount,
 					min_base_amount,
 					min_quote_amount,
+					is_single_asset,
 				),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}

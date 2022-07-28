@@ -149,7 +149,7 @@ benchmarks! {
 			  false
 		));
 		let lp_amount = T::Assets::balance(get_lp_token::<T>(pool_id), &owner);
-	  }: _(RawOrigin::Signed(owner), pool_id, lp_amount, (0_u128).into(), (0_u128).into())
+	  }: _(RawOrigin::Signed(owner), pool_id, lp_amount, (0_u128).into(), (0_u128).into(), false)
 
 	remove_liquidity_lbp {
 		let unit = 1_000_000_000_000u128;
@@ -196,7 +196,7 @@ benchmarks! {
 		let user = account("user", 0, 0);
 		assert_ok!(T::Assets::mint_into(usdt, &user, unit.into()));
 		frame_system::Pallet::<T>::set_block_number(end);
-	}: remove_liquidity(RawOrigin::Signed(owner), pool_id, (0_u128).into(), (0_u128).into(), (0_u128).into())
+	}: remove_liquidity(RawOrigin::Signed(owner), pool_id, (0_u128).into(), (0_u128).into(), (0_u128).into(), false)
 
 	buy {
 		let usdc: T::AssetId = 100.into();

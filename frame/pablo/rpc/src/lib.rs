@@ -49,6 +49,7 @@ where
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>,
 		min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		is_single_asset: SafeRpcWrapper<bool>,
 		at: Option<BlockHash>,
 	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
 }
@@ -132,6 +133,7 @@ where
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>,
 		min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		is_single_asset: SafeRpcWrapper<bool>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>
 	{
@@ -141,7 +143,7 @@ where
 
 		// calling ../../runtime-api
 		let runtime_api_result =
-			api.simulate_remove_liquidity(&at, who, pool_id, lp_amount, min_expected_amounts);
+			api.simulate_remove_liquidity(&at, who, pool_id, lp_amount, min_expected_amounts, is_single_asset);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,

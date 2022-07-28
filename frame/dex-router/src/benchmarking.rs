@@ -256,6 +256,6 @@ benchmarks! {
 		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
 		pallet_dex_router::Pallet::<T>::add_liquidity(origin.clone().into(), currency_pair, usdc_amount.into(), usdt_amount.into(), 0_u128.into(), false).expect("add_liquidity failed");
 		// remove 1 lp_token
-	} : _(origin, currency_pair, 1_u128.into(), 0_u128.into(), 0_u128.into())
+	} : _(origin, currency_pair, 1_u128.into(), 0_u128.into(), 0_u128.into(), false)
 }
 impl_benchmark_test_suite!(DexRouter, crate::mock::new_test_ext(), crate::mock::Test);

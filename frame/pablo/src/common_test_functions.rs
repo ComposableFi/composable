@@ -90,7 +90,7 @@ pub fn common_add_remove_lp(
 	});
 	let lp = Tokens::balance(lp_token, &BOB);
 	assert!(expected_lp_check(next_base_amount, next_quote_amount, lp));
-	assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), actual_pool_id, lp, 0, 0));
+	assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), actual_pool_id, lp, 0, 0, false));
 	let lp = Tokens::balance(lp_token, &BOB);
 	// all lp tokens must have been burnt
 	assert_eq!(lp, 0_u128);
@@ -221,7 +221,7 @@ pub fn common_remove_lp_failure(
 	let lp = Tokens::balance(lp_token, &BOB);
 	// error as trying to redeem more tokens than lp
 	assert_noop!(
-		Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp + 1, 0, 0),
+		Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp + 1, 0, 0, false),
 		TokenError::NoFunds
 	);
 	let min_expected_base_amount = base_amount + 1;
@@ -234,6 +234,7 @@ pub fn common_remove_lp_failure(
 			lp,
 			min_expected_base_amount,
 			min_expected_quote_amount,
+			false,
 		),
 		crate::Error::<Test>::CannotRespectMinimumRequested
 	);
