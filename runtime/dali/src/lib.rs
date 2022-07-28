@@ -1132,14 +1132,14 @@ impl pallet_ibc_ping::Config for Runtime {
 }
 
 /// Native <-> Cosmwasm account mapping
+/// TODO(hussein-aitlahcen): Probably nicer to have SS58 representation here.
 pub struct AccountToAddr;
 impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
 	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
 		match a.strip_prefix("0x") {
-			Some(account_id) =>
-				Ok(TryInto::<[u8; 32]>::try_into(hex::decode(account_id).map_err(|_| ())?)
-					.map_err(|_| ())?
-					.into()),
+			Some(account_id) => Ok(AccountId::try_from(hex::decode(account_id).map_err(|_| ())?)
+				.map_err(|_| ())?
+				.into()),
 			_ => Err(()),
 		}
 	}

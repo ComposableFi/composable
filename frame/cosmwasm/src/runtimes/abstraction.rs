@@ -29,6 +29,7 @@ impl<T: Config> CosmwasmAccount<T> {
 	}
 }
 
+#[allow(clippy::from_over_into)]
 impl<T: Config> Into<String> for CosmwasmAccount<T> {
 	fn into(self) -> String {
 		Pallet::<T>::account_to_cosmwasm_addr(self.1)
@@ -42,6 +43,7 @@ impl<T: Config + VMPallet> TryFrom<String> for CosmwasmAccount<T> {
 	}
 }
 
+#[allow(clippy::from_over_into)]
 impl<T: Config> Into<Addr> for CosmwasmAccount<T> {
 	fn into(self) -> Addr {
 		Addr::unchecked(Into::<String>::into(self))
