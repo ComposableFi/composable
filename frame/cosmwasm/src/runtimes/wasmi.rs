@@ -1,7 +1,6 @@
 use super::abstraction::{CosmwasmAccount, Gas};
 use crate::{runtimes::abstraction::GasOutcome, Config, ContractInfoOf, Pallet};
 use alloc::string::String;
-use core::marker::PhantomData;
 use cosmwasm_minimal_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo};
 use cosmwasm_vm::{
 	executor::{cosmwasm_call, ExecutorError, InstantiateInput, MigrateInput, QueryInput},
@@ -15,8 +14,8 @@ use cosmwasm_vm::{
 	vm::{VMBase, VmErrorOf, VmGas},
 };
 use cosmwasm_vm_wasmi::{
-	WasmiHostFunction, WasmiHostFunctionIndex, WasmiInput, WasmiModule, WasmiModuleExecutor,
-	WasmiOutput, WasmiVM, WasmiVMError,
+	WasmiHostFunction, WasmiHostFunctionIndex, WasmiHostModule, WasmiInput, WasmiModule,
+	WasmiModuleExecutor, WasmiModuleName, WasmiOutput, WasmiVM, WasmiVMError,
 };
 use parity_wasm::elements::{self, External, Internal, Module, Type, ValueType};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
@@ -30,7 +29,7 @@ pub enum CosmwasmVMError<T: Config> {
 	Pallet(crate::Error<T>),
 	AccountConversionFailure,
 	Aborted(String),
-	ReadlyViolation,
+	ReadOnlyViolation,
 	OutOfGas,
 	Unsupported,
 }
@@ -83,38 +82,80 @@ impl<T: Config> CanResume for CosmwasmVMError<T> {
 	}
 }
 
+/// Initial storage mutability.
+pub enum InitialStorageMutability {
+	/// The storage is currently readonly, any operation trying to mutate it will result in a
+	/// [`CosmwasmVMError::ReadOnlyViolation`]
+	ReadOnly,
+	/// Mutable operations on the storage are currently allowed.
+	ReadWrite,
+}
+
+/// VM shared cache
 pub struct CosmwasmVMCache {
+	/// Code cache, a mapping from a CosmWasm contract code id to the baking code.
 	pub code: BTreeMap<CosmwasmCodeId, Vec<u8>>,
 }
 
+/// VM shared state
 pub struct CosmwasmVMShared {
-	pub readonly: u32,
+	/// Readonly depth, used to determine whether the storage is currently readonly or not.
+	/// Whenever a contract call `query`, we increment this counter before the call and decrement
+	/// after the call. A value of 0 mean that the contract is able to mutate the storage.
+	/// A value > 0 mean that the storage is readonly.
+	pub storage_readonly_depth: u32,
+	/// VM depth, i.e. how many contracts has been loaded and are currently running.
 	pub depth: u32,
+	/// Shared Gas metering.
 	pub gas: Gas,
+	/// Shared cache.
 	pub cache: CosmwasmVMCache,
 }
 
 impl CosmwasmVMShared {
-	pub fn readonly(&self) -> bool {
-		self.readonly == 0
+	/// Whether the storage is currently readonly.
+	pub fn storage_is_readonly(&self) -> bool {
+		self.storage_readonly_depth == 0
 	}
+	/// Increase storage readonly depth.
+	/// Hapenning when a contract call the querier.
 	pub fn push_readonly(&mut self) {
-		self.readonly += 1;
+		self.storage_readonly_depth += 1;
 	}
+	/// Decrease storage readonly depth.
+	/// Hapenning when a querier exit.
 	pub fn pop_readonly(&mut self) {
-		self.readonly -= 1;
+		self.storage_readonly_depth -= 1;
 	}
 }
 
+/// Cosmwasm VM instance data.
+/// This structure hold the state for a single contract.
+/// Note that all [`CosmwasmVM`] share the same [`CosmWasmVMShared`] structure.
 pub struct CosmwasmVM<'a, T: Config> {
-	pub host_functions: BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<Self>>,
+	/// NOTE(hussein-aitlahcen): would be nice to move the host functions to the shared structure.
+	/// but we can't do it, otherwise we introduce a dependency do the lifetime `'a` here. This
+	/// lifetime is used by the host function and when reusing the shared structure for sub-calls,
+	/// the lifetime would be different (lifetime of children live longer than the initial one,
+	/// hence we'll face a compilation issue). This could be solved with HKT or unsafe host
+	/// functions (raw pointer without lifetime). Host functions by index.
+	pub host_functions_by_index:
+		BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<CosmwasmVM<'a, T>>>,
+	/// Host functions by (module, name).
+	pub host_functions_by_name: BTreeMap<WasmiModuleName, WasmiHostModule<CosmwasmVM<'a, T>>>,
+
+	/// Currently executing Wasmi module. A.k.a. contract instance from Wasmi perspective.
 	pub executing_module: WasmiModule,
+	/// CosmWasm [`Env`] for the executing contract.
 	pub cosmwasm_env: Env,
+	/// CosmWasm [`MessageInfo`] for the executing contract.
 	pub cosmwasm_message_info: MessageInfo,
+	/// Executing contract address.
 	pub contract_address: CosmwasmAccount<T>,
+	/// Executing contract metadatas.
 	pub contract_info: ContractInfoOf<T>,
+	/// State shared accross all contracts within a single transaction.
 	pub shared: &'a mut CosmwasmVMShared,
-	pub _marker: PhantomData<T>,
 }
 
 impl<'a, T: Config> Has<Env> for CosmwasmVM<'a, T> {
@@ -122,6 +163,7 @@ impl<'a, T: Config> Has<Env> for CosmwasmVM<'a, T> {
 		self.cosmwasm_env.clone()
 	}
 }
+
 impl<'a, T: Config> Has<MessageInfo> for CosmwasmVM<'a, T> {
 	fn get(&self) -> MessageInfo {
 		self.cosmwasm_message_info.clone()
@@ -132,13 +174,11 @@ impl<'a, T: Config> WasmiModuleExecutor for CosmwasmVM<'a, T> {
 	fn executing_module(&self) -> WasmiModule {
 		self.executing_module.clone()
 	}
-}
-
-impl<'a, T: Config> Has<BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<Self>>>
-	for CosmwasmVM<'a, T>
-{
-	fn get(&self) -> BTreeMap<WasmiHostFunctionIndex, WasmiHostFunction<Self>> {
-		self.host_functions.clone()
+	fn host_function(
+		&self,
+		index: WasmiHostFunctionIndex,
+	) -> Option<&WasmiHostFunction<CosmwasmVM<'a, T>>> {
+		self.host_functions_by_index.get(&index)
 	}
 }
 
@@ -357,7 +397,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn all_balance(&mut self, account: &Self::Address) -> Result<Vec<Coin>, Self::Error> {
 		log::debug!(target: "runtime::contracts", "all balance: {}", Into::<String>::into(account.clone()));
-		//  TODO: support iterating over all tokens???
+		//  TODO(hussein-aitlahcen): support iterating over all tokens???
 		Err(CosmwasmVMError::Unsupported)
 	}
 
@@ -370,9 +410,9 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		Ok(ContractInfoResponse {
 			code_id,
 			creator: CosmwasmAccount::<T>::new(info.instantiator.clone()).into(),
-			admin: info.admin.clone().map(|admin| CosmwasmAccount::<T>::new(admin).into()),
+			admin: info.admin.map(|admin| CosmwasmAccount::<T>::new(admin).into()),
 			pinned,
-			// TODO: IBC
+			// TODO(hussein-aitlahcen): IBC
 			ibc_port: None,
 		})
 	}
@@ -391,8 +431,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		value: Self::StorageValue,
 	) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "db_write");
-		if self.shared.readonly() {
-			Err(CosmwasmVMError::ReadlyViolation)
+		if self.shared.storage_is_readonly() {
+			Err(CosmwasmVMError::ReadOnlyViolation)
 		} else {
 			Pallet::<T>::do_db_write(self, &key, &value)?;
 			Ok(())
@@ -401,8 +441,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn db_remove(&mut self, key: Self::StorageKey) -> Result<(), Self::Error> {
 		log::debug!(target: "runtime::contracts", "db_remove");
-		if self.shared.readonly() {
-			Err(CosmwasmVMError::ReadlyViolation)
+		if self.shared.storage_is_readonly() {
+			Err(CosmwasmVMError::ReadOnlyViolation)
 		} else {
 			Pallet::<T>::do_db_remove(self, &key);
 			Ok(())
@@ -417,8 +457,9 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	fn charge(&mut self, value: VmGas) -> Result<(), Self::Error> {
 		let gas_to_charge = match value {
 			VmGas::Instrumentation { metered } => metered as u64,
-			// TODO: gas for each operations
-			_ => 1u64,
+			// TODO(hussein-aitlahcen): benchmarking required to compute _base_ gas for each
+			// operations.
+			_ => 1_u64,
 		};
 		self.charge_raw(gas_to_charge)
 	}
@@ -523,14 +564,11 @@ impl<'a> CodeValidation<'a> {
 			.map(|is| is.entries())
 			.unwrap_or(&[])
 			.iter()
-			.filter(|entry| match *entry.external() {
-				External::Function(_) => true,
-				_ => false,
-			})
+			.filter(|entry| matches!(*entry.external(), External::Function(_)))
 			.count();
 		for (requirement, name, signature) in expected_exports {
-			match export_entries.iter().find(|e| &e.field() == name) {
-				Some(export) => {
+			match (requirement, export_entries.iter().find(|e| &e.field() == name)) {
+				(_, Some(export)) => {
 					let fn_idx = match export.internal() {
 						Internal::Function(ref fn_idx) => Ok(*fn_idx),
 						_ => Err(ValidationError::ExportMustBeAFunction(name)),
@@ -541,11 +579,11 @@ impl<'a> CodeValidation<'a> {
 					}?;
 					let func_ty_idx = func_entries
 						.get(fn_idx as usize)
-						.ok_or_else(|| ValidationError::ExportDoesNotExists(name))?
+						.ok_or(ValidationError::ExportDoesNotExists(name))?
 						.type_ref();
 					let Type::Function(ref func_ty) = types
 						.get(func_ty_idx as usize)
-						.ok_or_else(|| ValidationError::ExportWithoutSignature(name))?;
+						.ok_or(ValidationError::ExportWithoutSignature(name))?;
 					if signature != &func_ty.params() {
 						return Err(ValidationError::ExportWithWrongSignature {
 							export_name: name,
@@ -554,11 +592,9 @@ impl<'a> CodeValidation<'a> {
 						})
 					}
 				},
-				None if *requirement == ExportRequirement::Mandatory =>
+				(ExportRequirement::Mandatory, None) =>
 					return Err(ValidationError::MissingMandatoryExport(name)),
-				None => {
-					// Not mandatory
-				},
+				(ExportRequirement::Optional, None) => {},
 			}
 		}
 		Ok(self)
@@ -579,9 +615,8 @@ impl<'a> CodeValidation<'a> {
 			}?;
 			let import_name = import.field();
 			let import_module = import.module();
-			let Type::Function(_) = types
-				.get(*type_idx as usize)
-				.ok_or_else(|| ValidationError::ImportWithoutSignature)?;
+			let Type::Function(_) =
+				types.get(*type_idx as usize).ok_or(ValidationError::ImportWithoutSignature)?;
 			if let Some((m, f)) =
 				import_banlist.iter().find(|(m, f)| m == &import_module && f == &import_name)
 			{

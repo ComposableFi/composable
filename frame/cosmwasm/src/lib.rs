@@ -7,10 +7,11 @@
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
-		clippy::panic
+		clippy::panic,
+		clippy::unseparated_literal_suffix,
+		clippy::disallowed_types
 	)
 )]
-#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(
 	bad_style,
@@ -43,6 +44,7 @@ pub mod runtimes;
 pub mod types;
 pub mod weights;
 
+#[allow(clippy::too_many_arguments)]
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{
@@ -51,7 +53,7 @@ pub mod pallet {
 			abstraction::{CosmwasmAccount, Gas, VMPallet},
 			wasmi::{
 				CodeValidation, CosmwasmVM, CosmwasmVMCache, CosmwasmVMError, CosmwasmVMShared,
-				ExportRequirement, ValidationError,
+				ExportRequirement, InitialStorageMutability, ValidationError,
 			},
 		},
 		types::{CodeInfo, ContractInfo},
@@ -72,8 +74,13 @@ pub mod pallet {
 		TransactionInfo,
 	};
 	use cosmwasm_vm::{
-		executor::{ExecuteInput, InstantiateInput},
+		executor::{
+			AllocateInput, AsFunctionName, DeallocateInput, ExecuteInput, InstantiateInput,
+			MigrateInput, QueryInput, ReplyInput,
+		},
+		memory::PointerOf,
 		system::{cosmwasm_system_entrypoint, CosmwasmCodeId},
+		vm::VmMessageCustomOf,
 	};
 	use cosmwasm_vm_wasmi::{host_functions, new_wasmi_vm, WasmiImportResolver, WasmiVM};
 	use frame_support::{
@@ -160,6 +167,10 @@ pub mod pallet {
 		UnknownDenom,
 		StackOverflow,
 		NotEnoughFundsForUpload,
+		ContractNonceOverflow,
+		NonceOverflow,
+		RefcountOverflow,
+		VMDepthOverflow,
 	}
 
 	#[pallet::config]
@@ -292,17 +303,18 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	/// A mapping from an original code hash to the original code, untouched by instrumentation.
+	/// A mapping from an original code id to the original code, untouched by instrumentation.
 	#[pallet::storage]
 	pub(crate) type PristineCode<T: Config> =
 		StorageMap<_, Twox64Concat, CosmwasmCodeId, BoundedVec<u8, MaxCodeSizeOf<T>>>;
 
-	/// A mapping between an original code hash and instrumented wasm code, ready for execution.
+	/// A mapping between an original code id and instrumented wasm code, ready for execution.
 	#[pallet::storage]
 	pub(crate) type InstrumentedCode<T: Config> =
 		StorageMap<_, Twox64Concat, CosmwasmCodeId, ContractInstrumentedCodeOf<T>>;
 
-	/// Momotonic counter incremented on code creation.
+	/// Monotonic counter incremented on code creation.
+	#[allow(clippy::disallowed_types)]
 	#[pallet::storage]
 	pub(crate) type CurrentCodeId<T: Config> =
 		StorageValue<_, CosmwasmCodeId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
@@ -319,12 +331,14 @@ pub mod pallet {
 
 	/// This is a **monotonic** counter incremented on contract instantiation.
 	/// The purpose of this nonce is just to make sure that contract trie are unique.
+	#[allow(clippy::disallowed_types)]
 	#[pallet::storage]
 	pub(crate) type CurrentNonce<T: Config> =
 		StorageValue<_, u64, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	/// A mapping between a contract and it's nonce.
 	/// The nonce is a monotonic counter incremented when the contract instantiate another contract.
+	#[allow(clippy::disallowed_types)]
 	#[pallet::storage]
 	pub(crate) type ContractNonce<T: Config> =
 		StorageMap<_, Identity, AccountIdOf<T>, u64, ValueQuery>;
@@ -348,7 +362,7 @@ pub mod pallet {
 		/// - `origin` the original dispatching the extrinsic.
 		/// - `code` the actual wasm code.
 		#[transactional]
-		#[pallet::weight(0)]
+		#[pallet::weight(T::WeightInfo::upload())]
 		pub fn upload(origin: OriginFor<T>, code: ContractCodeOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			Self::do_upload(&who, code)?;
@@ -382,7 +396,7 @@ pub mod pallet {
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let mut shared = Self::do_create_vm_shared(gas, false);
+			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let outcome = Self::do_extrinsic_instantiate(
 				&mut shared,
 				who,
@@ -419,7 +433,7 @@ pub mod pallet {
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let mut shared = Self::do_create_vm_shared(gas, false);
+			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
 			let outcome = Self::do_extrinsic_execute(&mut shared, who, contract, funds, message);
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
@@ -468,15 +482,15 @@ pub mod pallet {
 				!ContractToInfo::<T>::contains_key(&contract),
 				Error::<T>::ContractAlreadyExists
 			);
-			let nonce =
-				CurrentNonce::<T>::increment().expect("2305843009 contracts per human; qed;");
+			let nonce = CurrentNonce::<T>::increment().map_err(|_| Error::<T>::NonceOverflow)?;
 			let trie_id = Self::derive_contract_trie_id(&contract, nonce);
 			let contract_info =
 				ContractInfoOf::<T> { instantiator, code_id, trie_id, admin, label };
 			ContractToInfo::<T>::insert(&contract, &contract_info);
 			CodeIdToInfo::<T>::try_mutate(code_id, |entry| -> Result<(), Error<T>> {
 				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
-				code_info.refcount += 1;
+				code_info.refcount =
+					code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
 				Ok(())
 			})?;
 			Self::deposit_event(Event::<T>::Instantiated {
@@ -486,23 +500,29 @@ pub mod pallet {
 			Ok((contract, contract_info))
 		}
 
-		/// Create the VM shared state. Including readonly stack, VM depth, gas metering limits and
+		/// Create the shared VM state. Including readonly stack, VM depth, gas metering limits and
 		/// code cache.
 		///
 		/// This state is shared accross all VMs (all contracts loaded within a single call) and is
 		/// used to optimize some operations as well as track shared state (readonly storage while
 		/// doing a `query` etc...)
-		pub(crate) fn do_create_vm_shared(gas: u64, readonly: bool) -> CosmwasmVMShared {
+		pub(crate) fn do_create_vm_shared(
+			gas: u64,
+			storage_mutability: InitialStorageMutability,
+		) -> CosmwasmVMShared {
 			CosmwasmVMShared {
-				readonly: if readonly { 1 } else { 0 },
+				storage_readonly_depth: match storage_mutability {
+					InitialStorageMutability::ReadOnly => 1,
+					InitialStorageMutability::ReadWrite => 0,
+				},
 				depth: 0,
 				gas: Gas::new(T::MaxFrames::get(), gas),
 				cache: CosmwasmVMCache { code: Default::default() },
 			}
 		}
 
-		pub(crate) fn do_extrinsic_instantiate<'a>(
-			shared: &'a mut CosmwasmVMShared,
+		pub(crate) fn do_extrinsic_instantiate(
+			shared: &mut CosmwasmVMShared,
 			instantiator: AccountIdOf<T>,
 			code_id: CosmwasmCodeId,
 			salt: &[u8],
@@ -524,8 +544,8 @@ pub mod pallet {
 			)
 		}
 
-		pub(crate) fn do_extrinsic_execute<'a>(
-			shared: &'a mut CosmwasmVMShared,
+		pub(crate) fn do_extrinsic_execute(
+			shared: &mut CosmwasmVMShared,
 			sender: AccountIdOf<T>,
 			contract: AccountIdOf<T>,
 			funds: FundsOf<T>,
@@ -545,8 +565,8 @@ pub mod pallet {
 
 		/// Wrapper around [`Pallet::<T>::cosmwasm_call`] for extrinsics.
 		/// It's purpose is converting the input and emit events based on the result.
-		pub(crate) fn do_extrinsic_dispatch<'a, F>(
-			shared: &'a mut CosmwasmVMShared,
+		pub(crate) fn do_extrinsic_dispatch<F>(
+			shared: &mut CosmwasmVMShared,
 			entrypoint: EntryPoint,
 			sender: AccountIdOf<T>,
 			contract: AccountIdOf<T>,
@@ -568,7 +588,7 @@ pub mod pallet {
 				.collect::<Vec<_>>();
 			Self::cosmwasm_call(shared, sender, contract.clone(), info, cosmwasm_funds, call).map(
 				|(data, events)| {
-					for CosmwasmEvent { ty, attributes } in events.clone() {
+					for CosmwasmEvent { ty, attributes } in events {
 						Self::deposit_event(Event::<T>::Emitted {
 							contract: contract.clone(),
 							ty: ty.into(),
@@ -583,15 +603,15 @@ pub mod pallet {
 					Self::deposit_event(Event::<T>::Executed {
 						contract,
 						entrypoint,
-						data: data.clone().map(Into::into),
+						data: data.map(Into::into),
 					});
 				},
 			)
 		}
 
-		/// Low-level cosmwasm call over the VM. Transfer the `funds` before calling the callback.
-		pub(crate) fn cosmwasm_call<'a, F, R>(
-			shared: &'a mut CosmwasmVMShared,
+		/// Low-level cosmwasm call over the VM. Transfers the `funds` before calling the callback.
+		pub(crate) fn cosmwasm_call<F, R>(
+			shared: &mut CosmwasmVMShared,
 			sender: AccountIdOf<T>,
 			contract: AccountIdOf<T>,
 			info: ContractInfoOf<T>,
@@ -601,9 +621,8 @@ pub mod pallet {
 		where
 			F: for<'x> FnOnce(&'x mut WasmiVM<CosmwasmVM<'x, T>>) -> Result<R, CosmwasmVMError<T>>,
 		{
-			// Transfer funds.
 			Self::do_transfer(&sender, &contract, &funds, false)?;
-			let mut vm = Self::cosmwasm_new_vm(shared, sender, contract.clone(), info, funds)?;
+			let mut vm = Self::cosmwasm_new_vm(shared, sender, contract, info, funds)?;
 			call(&mut vm)
 		}
 
@@ -614,7 +633,7 @@ pub mod pallet {
 			remaining_gas: u64,
 		) -> DispatchResultWithPostInfo {
 			let post_info = PostDispatchInfo {
-				actual_weight: Some(initial_gas - remaining_gas),
+				actual_weight: Some(initial_gas.saturating_sub(remaining_gas)),
 				pays_fee: Pays::Yes,
 			};
 			match outcome {
@@ -645,8 +664,8 @@ pub mod pallet {
 		/// This nonce is used in contract instantiation (contract -> contract).
 		/// Consequently, we track a nonce for each instantiated contracts.
 		pub(crate) fn next_contract_nonce(contract: &AccountIdOf<T>) -> Result<u64, Error<T>> {
-			ContractNonce::<T>::try_mutate(contract, |nonce| {
-				*nonce = nonce.checked_add(1).expect("2305843009 contracts per human; qed;");
+			ContractNonce::<T>::try_mutate(contract, |nonce| -> Result<u64, Error<T>> {
+				*nonce = nonce.checked_add(1).ok_or(Error::<T>::ContractNonceOverflow)?;
 				Ok(*nonce)
 			})
 		}
@@ -654,7 +673,6 @@ pub mod pallet {
 		/// Current instrumentation version
 		const INSTRUMENTATION_VERSION: u16 = 1;
 
-		///
 		/// V1 exports, verified w.r.t https://github.com/CosmWasm/cosmwasm/#exports
 		/// The format is (required, function_name, function_signature)
 		const V1_EXPORTS: &'static [(
@@ -665,12 +683,20 @@ pub mod pallet {
 			// We support v1+
 			(ExportRequirement::Mandatory, "interface_version_8", &[]),
 			// Memory related exports.
-			(ExportRequirement::Mandatory, "allocate", &[parity_wasm::elements::ValueType::I32]),
-			(ExportRequirement::Mandatory, "deallocate", &[parity_wasm::elements::ValueType::I32]),
+			(
+				ExportRequirement::Mandatory,
+				AllocateInput::<PointerOf<CosmwasmVM<T>>>::NAME,
+				&[parity_wasm::elements::ValueType::I32],
+			),
+			(
+				ExportRequirement::Mandatory,
+				DeallocateInput::<PointerOf<CosmwasmVM<T>>>::NAME,
+				&[parity_wasm::elements::ValueType::I32],
+			),
 			// Contract execution exports.
 			(
 				ExportRequirement::Mandatory,
-				"instantiate",
+				InstantiateInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 				// extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 				&[
 					parity_wasm::elements::ValueType::I32,
@@ -680,7 +706,7 @@ pub mod pallet {
 			),
 			(
 				ExportRequirement::Mandatory,
-				"execute",
+				ExecuteInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 				// extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 				&[
 					parity_wasm::elements::ValueType::I32,
@@ -690,19 +716,19 @@ pub mod pallet {
 			),
 			(
 				ExportRequirement::Mandatory,
-				"query",
+				QueryInput::NAME,
 				// extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
 				&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 			),
 			(
 				ExportRequirement::Optional,
-				"migrate",
+				MigrateInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 				// extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
 				&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 			),
 			(
 				ExportRequirement::Optional,
-				"reply",
+				ReplyInput::<VmMessageCustomOf<CosmwasmVM<T>>>::NAME,
 				// extern "C" fn reply(env_ptr: u32, msg_ptr: u32) -> u32;
 				&[parity_wasm::elements::ValueType::I32, parity_wasm::elements::ValueType::I32],
 			),
@@ -732,7 +758,7 @@ pub mod pallet {
 			module: &parity_wasm::elements::Module,
 		) -> Result<(), Error<T>> {
 			let validation: Result<(), ValidationError> = (|| {
-				let _ = CodeValidation::new(&module)
+				let _ = CodeValidation::new(module)
 					.validate_base()?
 					.validate_memory_limit()?
 					.validate_table_size_limit(T::CodeTableSizeLimit::get())?
@@ -845,9 +871,7 @@ pub mod pallet {
 				transaction: frame_system::Pallet::<T>::extrinsic_index()
 					.map(|index| TransactionInfo { index }),
 				contract: CosmwasmContractInfo {
-					address: Addr::unchecked(Into::<String>::into(
-						cosmwasm_contract_address.clone(),
-					)),
+					address: Addr::unchecked(Into::<String>::into(cosmwasm_contract_address)),
 				},
 			}
 		}
@@ -878,11 +902,11 @@ pub mod pallet {
 		pub(crate) fn cosmwasm_asset_to_native_asset(
 			denom: String,
 		) -> Result<AssetIdOf<T>, Error<T>> {
-			Ok(T::AssetToDenom::convert(denom).map_err(|_| Error::<T>::UnknownDenom)?)
+			T::AssetToDenom::convert(denom).map_err(|_| Error::<T>::UnknownDenom)
 		}
 
 		/// Create a new CosmWasm VM. One instance is created per contract but all of them share the
-		/// same [`CosmwasmVMShared`] structure.
+		/// same [`CosmwasmVMShared<'a, T>`] structure.
 		///
 		/// Prior to instantiating the VM. The depth is checked against [`T::MaxFrames`] and the
 		/// contract code is loaded from the shared state if cached. If the code is not in cache, we
@@ -894,7 +918,7 @@ pub mod pallet {
 			info: ContractInfoOf<T>,
 			funds: Vec<Coin>,
 		) -> Result<WasmiVM<CosmwasmVM<'a, T>>, CosmwasmVMError<T>> {
-			shared.depth += 1;
+			shared.depth = shared.depth.checked_add(1).ok_or(Error::<T>::VMDepthOverflow)?;
 			ensure!(shared.depth <= T::MaxFrames::get(), Error::<T>::StackOverflow);
 			let code = match shared.cache.code.entry(info.code_id) {
 				Entry::Vacant(v) => {
@@ -912,7 +936,7 @@ pub mod pallet {
 			};
 			let host_functions_definitions =
 				WasmiImportResolver(host_functions::definitions::<CosmwasmVM<'a, T>>());
-			let module = new_wasmi_vm(&host_functions_definitions, &code)
+			let module = new_wasmi_vm(&host_functions_definitions, code)
 				.map_err(|_| Error::<T>::VmCreation)?;
 			let cosmwasm_sender_address: CosmwasmAccount<T> = CosmwasmAccount::new(sender);
 			let cosmwasm_contract_address: CosmwasmAccount<T> = CosmwasmAccount::new(contract);
@@ -924,9 +948,9 @@ pub mod pallet {
 			log::debug!(target: "runtime::contracts", "cosmwasm_new_vm: {:#?}", env);
 			log::debug!(target: "runtime::contracts", "cosmwasm_new_vm: {:#?}", message_info);
 			Ok(WasmiVM(CosmwasmVM::<'a, T> {
-				host_functions: host_functions_definitions
+				host_functions_by_name: host_functions_definitions.0.clone(),
+				host_functions_by_index: host_functions_definitions
 					.0
-					.clone()
 					.into_iter()
 					.flat_map(|(_, modules)| modules.into_iter().map(|(_, function)| function))
 					.collect(),
@@ -936,7 +960,6 @@ pub mod pallet {
 				contract_address: cosmwasm_contract_address,
 				contract_info: info,
 				shared,
-				_marker: PhantomData,
 			}))
 		}
 
@@ -952,7 +975,7 @@ pub mod pallet {
 			f: impl FnOnce(ChildInfo, [u8; 32]) -> R,
 		) -> R {
 			let child_trie = Self::contract_child_trie(trie_id.as_ref());
-			f(child_trie, blake2_256(&key))
+			f(child_trie, blake2_256(key))
 		}
 
 		/// Compute the gas required to read the given entry.
@@ -960,10 +983,7 @@ pub mod pallet {
 		/// Equation: len(entry(trie, key)) x [`T::ContractStorageByteReadPrice`]
 		pub(crate) fn do_db_read_gas(trie_id: &ContractTrieIdOf<T>, key: &[u8]) -> u64 {
 			Self::with_db_entry(trie_id, key, |child_trie, entry| {
-				let bytes_to_read = match storage::child::len(&child_trie, &entry) {
-					Some(current_len) => current_len,
-					None => 0,
-				};
+				let bytes_to_read = storage::child::len(&child_trie, &entry).unwrap_or(0);
 				u64::from(bytes_to_read)
 					.saturating_mul(T::ContractStorageByteReadPrice::get().into())
 			})
@@ -1025,7 +1045,7 @@ pub mod pallet {
 			let price = Self::do_db_write_gas(&vm.contract_info.trie_id, key, value);
 			vm.charge_raw(price)?;
 			Self::with_db_entry(&vm.contract_info.trie_id, key, |child_trie, entry| {
-				storage::child::put_raw(&child_trie, &entry, &value)
+				storage::child::put_raw(&child_trie, &entry, value)
 			});
 			Ok(())
 		}
