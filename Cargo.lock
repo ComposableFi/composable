@@ -16031,8 +16031,7 @@ dependencies = [
 [[package]]
 name = "traitobject"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efd1f82c56340fdf16f2a953d7bda4f8fdffba13d93b00844c25572110b26079"
+source = "git+https://github.com/reem/rust-traitobject.git?rev=b3471a15917b2caf5a8b27debb0b4b390fc6634f#b3471a15917b2caf5a8b27debb0b4b390fc6634f"
 
 [[package]]
 name = "trie-db"
