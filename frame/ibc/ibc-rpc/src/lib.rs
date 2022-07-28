@@ -84,6 +84,7 @@ pub struct ConnHandshakeProof {
 
 /// A type that could be a block number or a block hash
 #[derive(Clone, Hash, Debug, PartialEq, Eq, Copy, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum BlockNumberOrHash<Hash> {
 	/// Block hash
 	Hash(Hash),
