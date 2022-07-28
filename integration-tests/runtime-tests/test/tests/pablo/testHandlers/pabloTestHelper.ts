@@ -26,7 +26,7 @@ mintedLPTokens = BigInt(0);
  * @param baseAssetId
  * @param quoteAssetId
  * @param fee
- * @param ownerFee
+ * @param baseWeight
  */
 export async function createConsProdPool(
   api: ApiPromise,
@@ -54,7 +54,7 @@ export async function createConsProdPool(
   return resultPoolId.toNumber();
 }
 
-export async function addFundstoThePool(
+export async function addFundsToPool(
   api: ApiPromise,
   poolId: number,
   walletId: KeyringPair,
@@ -65,6 +65,8 @@ export async function addFundstoThePool(
   baseAdded: u128;
   quoteAdded: u128;
   walletIdResult: AccountId32;
+  mintedLPTokens: bigint;
+  addedPool: u128;
 }> {
   const pool = api.createType("u128", poolId);
   const baseAmountParam = api.createType("u128", baseAmount);
@@ -82,7 +84,7 @@ export async function addFundstoThePool(
   mintedLPTokens += BigInt(returnedLPTokens.toString(10));
   baseAmountTotal += BigInt(baseAdded.toString(10));
   quoteAmountTotal += BigInt(quoteAdded.toString(10));
-  return { walletIdResult, baseAdded, quoteAdded, returnedLPTokens };
+  return { walletIdResult, baseAdded, quoteAdded, returnedLPTokens, mintedLPTokens, addedPool };
 }
 
 export async function buyFromPool(
@@ -106,6 +108,7 @@ export async function buyFromPool(
   constantProductk = baseAmountTotal * quoteAmountTotal;
   const expectedConversion = constantProductk / (baseAmountTotal - amountToBuy) - quoteAmountTotal;
   const {
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     data: [retPoolId, accountId, baseArg, quoteArg, baseAmount, quoteAmount, ownerFee]
   } = await sendAndWaitForSuccess(
     api,
@@ -129,6 +132,7 @@ export async function sellToPool(
   const minMintAmount = api.createType("u128", 0);
   const keepAliveParam = api.createType("bool", false);
   const {
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     data: [result, ownerAccount, ...rest]
   } = await sendAndWaitForSuccess(
     api,
@@ -150,6 +154,7 @@ export async function removeLiquidityFromPool(
   const minBaseParam = api.createType("u128", 0);
   const minQuoteAmountParam = api.createType("u128", 0);
   const {
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     data: [resultPoolId, resultWallet, resultBase, resultQuote, remainingLpTokens]
   } = await sendAndWaitForSuccess(
     api,
@@ -178,6 +183,7 @@ export async function swapTokenPairs(
   const minReceiveParam = api.createType("u128", minReceiveAmount);
   const keepAliveParam = api.createType("bool", true);
   const {
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     data: [resultPoolId, resultWallet, baseAsset, quoteAsset, returnedBaseAmount, returnedQuoteAmount, feeInfo]
   } = await sendAndWaitForSuccess(
     api,
@@ -287,6 +293,7 @@ export async function transferTokens(
   );
   return accountId.toString();
 }
+
 /***
  * Creates LiquidityBootstrappingPool
  * @param sender
@@ -369,6 +376,7 @@ export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair
   }
   await sendWithBatchAndWaitForSuccess(api, wallet, api.events.pablo.PoolCreated.is, tx, false);
 }
+
 /***
  Creates stableSwapPool
  @param sender: User sending tx- KeyringPair
@@ -405,6 +413,7 @@ export async function createStableSwapPool(
   const resultPoolId = returnedPoolId.toNumber() as number;
   return { resultPoolId };
 }
+
 export async function createMultipleStableSwapPools(api: ApiPromise, wallet: KeyringPair): Promise<void> {
   const tx = [];
   for (let i = 0; i < 50; i++) {

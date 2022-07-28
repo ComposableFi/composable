@@ -590,9 +590,17 @@ declare module '@polkadot/api-base/types/events' {
        **/
       AssetInfoChange: AugmentedEvent<ApiType, [u128, Percent, u32, u32, u32, u128, u128]>;
       /**
+       * Oracle rewarded. \[oracle_address, asset_id, price\]
+       **/
+      OracleRewarded: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
        * Price submitted by oracle. \[oracle_address, asset_id, price\]
        **/
       PriceSubmitted: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
+       * Rewarding Started \[rewarding start timestamp]
+       **/
+      RewardingAdjustment: AugmentedEvent<ApiType, [u64]>;
       /**
        * Signer was set. \[signer, controller\]
        **/
@@ -609,10 +617,6 @@ declare module '@polkadot/api-base/types/events' {
        * Stake removed. \[removed_by, amount, block_number\]
        **/
       StakeRemoved: AugmentedEvent<ApiType, [AccountId32, u128, u32]>;
-      /**
-       * Oracle rewarded. \[oracle_address, asset_id, price\]
-       **/
-      UserRewarded: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
       /**
        * Oracle slashed. \[oracle_address, asset_id, amount\]
        **/
@@ -891,6 +895,7 @@ declare module '@polkadot/api-base/types/events' {
        * Split stake position into two positions
        **/
       SplitPosition: AugmentedEvent<ApiType, [Vec<u128>]>;
+      StakeAmountExtended: AugmentedEvent<ApiType, [u128, u128]>;
       Staked: AugmentedEvent<ApiType, [u16, AccountId32, u128, u64, u128, bool]>;
       /**
        * Generic event

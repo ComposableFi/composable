@@ -1796,7 +1796,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `DepositEvent` event when successful.
        **/
-      addAssetAndInfo: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, threshold: Percent | AnyNumber | Uint8Array, minAnswers: u32 | AnyNumber | Uint8Array, maxAnswers: u32 | AnyNumber | Uint8Array, blockInterval: u32 | AnyNumber | Uint8Array, reward: u128 | AnyNumber | Uint8Array, slash: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, Percent, u32, u32, u32, u128, u128]>;
+      addAssetAndInfo: AugmentedSubmittable<(assetId: u128 | AnyNumber | Uint8Array, threshold: Percent | AnyNumber | Uint8Array, minAnswers: u32 | AnyNumber | Uint8Array, maxAnswers: u32 | AnyNumber | Uint8Array, blockInterval: u32 | AnyNumber | Uint8Array, rewardWeight: u128 | AnyNumber | Uint8Array, slash: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, Percent, u32, u32, u32, u128, u128]>;
       /**
        * call to add more stake from a controller
        * 
@@ -1805,6 +1805,15 @@ declare module '@polkadot/api-base/types/submittable' {
        * Emits `StakeAdded` event when successful.
        **/
       addStake: AugmentedSubmittable<(stake: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
+      /**
+       * Call to start rewarding Oracles.
+       * - `annual_cost_per_oracle`: Annual cost of an Oracle.
+       * - `num_ideal_oracles`: Number of ideal Oracles. This in fact should be higher than the
+       * actual ideal number so that the Oracles make a profit under ideal conditions.
+       * 
+       * Emits `RewardRateSet` event when successful.
+       **/
+      adjustRewards: AugmentedSubmittable<(annualCostPerOracle: u128 | AnyNumber | Uint8Array, numIdealOracles: u8 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u8]>;
       /**
        * Call to reclaim stake after proper time has passed, called from controller
        * 
@@ -2355,6 +2364,12 @@ declare module '@polkadot/api-base/types/submittable' {
        * Emits `RewardPoolCreated` event when successful.
        **/
       createRewardPool: AugmentedSubmittable<(poolConfig: ComposableTraitsStakingRewardPoolConfiguration | { RewardRateBasedIncentive: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsStakingRewardPoolConfiguration]>;
+      /**
+       * Extend an existing stake.
+       * 
+       * Emits `StakeExtended` event when successful.
+       **/
+      extend: AugmentedSubmittable<(position: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128]>;
       split: AugmentedSubmittable<(position: u128 | AnyNumber | Uint8Array, ratio: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, Permill]>;
       /**
        * Create a new stake.

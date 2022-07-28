@@ -6,7 +6,7 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { ApiPromise } from "@polkadot/api";
 import {
-  addFundstoThePool,
+  addFundsToPool,
   buyFromPool,
   createStableSwapPool,
   getPoolInfo,
@@ -42,7 +42,7 @@ describe("StableSwapDex Test Suite", function () {
     quoteStableAssetId2: number,
     falseQuoteAssetId: number;
   let baseAssetAmount: bigint, quoteAssetAmount: bigint, lpTokens: bigint;
-  let fee: number, ownerFee: number;
+  let fee: number;
   let spotPrice1: number, spotPrice2: number;
   let removedAssetAmount1: BN, removedAssetAmount2: BN;
 
@@ -62,7 +62,6 @@ describe("StableSwapDex Test Suite", function () {
     baseAssetAmount = Pica(250000);
     quoteAssetAmount = Pica(250000);
     fee = 10000;
-    ownerFee = 50000;
     await mintAssetsToWallet(api, walletId1, sudoKey, [1, baseStableAssetId, quoteStableAssetId, quoteStableAssetId2]);
     await mintAssetsToWallet(api, walletId2, sudoKey, [1, baseStableAssetId, quoteStableAssetId, quoteStableAssetId2]);
     await mintAssetsToWallet(api, walletId3, sudoKey, [1]);
@@ -121,13 +120,13 @@ describe("StableSwapDex Test Suite", function () {
     this.timeout(3 * 60 * 1000);
 
     it("Given that users have sufficient funds, User1 can addLiquidity to StableSwapPool", async function () {
-      const result = await addFundstoThePool(api, poolId1, walletId1, baseAssetAmount, quoteAssetAmount);
+      const result = await addFundsToPool(api, poolId1, walletId1, baseAssetAmount, quoteAssetAmount);
       lpTokens = result.returnedLPTokens.toBigInt();
       expect(result.quoteAdded.toBigInt()).to.be.equal(quoteAssetAmount);
     });
 
     it("Given that users have sufficient funds, User2 can addLiquidity to StableSwapPool", async function () {
-      const result = await addFundstoThePool(api, poolId2, walletId2, baseAssetAmount, quoteAssetAmount);
+      const result = await addFundsToPool(api, poolId2, walletId2, baseAssetAmount, quoteAssetAmount);
       expect(result.quoteAdded.toBigInt()).to.be.equal(quoteAssetAmount);
     });
 
@@ -135,7 +134,7 @@ describe("StableSwapDex Test Suite", function () {
       "Given that users have sufficient funds, User2 can add liquidity and the amount added not adjusted by " +
         "Constantproduct Formula if asset amounts are close to eachother",
       async function () {
-        const result = await addFundstoThePool(api, poolId2, walletId2, Pica(100), Pica(500));
+        const result = await addFundsToPool(api, poolId2, walletId2, Pica(100), Pica(500));
         expect(result.quoteAdded.toBigInt()).to.be.equal(Pica(500));
       }
     );
@@ -144,7 +143,7 @@ describe("StableSwapDex Test Suite", function () {
       "Given that users have sufficient funds, User1 can add liquidity and the amount added not adjusted by " +
         "Constantproduct Formula",
       async function () {
-        const result = await addFundstoThePool(api, poolId1, walletId1, Pica(100), Pica(500));
+        const result = await addFundsToPool(api, poolId1, walletId1, Pica(100), Pica(500));
         expect(result.quoteAdded.toBigInt()).to.be.equal(Pica(500));
       }
     );

@@ -454,9 +454,17 @@ declare module '@polkadot/api-base/types/errors' {
     };
     ibc: {
       /**
+       * Channel not found
+       **/
+      ChannelNotFound: AugmentedError<ApiType>;
+      /**
        * Client state not found
        **/
       ClientStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Connection not found
+       **/
+      ConnectionNotFound: AugmentedError<ApiType>;
       /**
        * Client consensus state not found for height
        **/
@@ -481,6 +489,18 @@ declare module '@polkadot/api-base/types/errors' {
        * Other forms of errors
        **/
       Other: AugmentedError<ApiType>;
+      /**
+       * Packet Acknowledgment wasn't found
+       **/
+      PacketAcknowledgmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet commitment wasn't found
+       **/
+      PacketCommitmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet receipt wasn't found
+       **/
+      PacketReceiptNotFound: AugmentedError<ApiType>;
       /**
        * Error processing ibc messages
        **/
@@ -806,6 +826,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Price already submitted
        **/
       AlreadySubmitted: AugmentedError<ApiType>;
+      /**
+       * Annual rewarding cost too high
+       **/
+      AnnualRewardLessThanAlreadyRewarded: AugmentedError<ApiType>;
       ArithmeticError: AugmentedError<ApiType>;
       /**
        * Error avoids a panic
@@ -855,9 +879,17 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       MaxPrices: AugmentedError<ApiType>;
       /**
+       * Price weight must sum to 100
+       **/
+      MustSumTo100: AugmentedError<ApiType>;
+      /**
        * No Permission
        **/
       NoPermission: AugmentedError<ApiType>;
+      /**
+       * Rewarding has not started
+       **/
+      NoRewardTrackerSet: AugmentedError<ApiType>;
       /**
        * No stake for oracle
        **/
@@ -1158,10 +1190,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       MaxRewardLimitReached: AugmentedError<ApiType>;
       /**
-       * No position found for given id.
-       **/
-      NoPositionFound: AugmentedError<ApiType>;
-      /**
        * Not enough assets for a stake.
        **/
       NotEnoughAssets: AugmentedError<ApiType>;
@@ -1181,6 +1209,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Rewards pool not found.
        **/
       RewardsPoolNotFound: AugmentedError<ApiType>;
+      /**
+       * No stake found for given id.
+       **/
+      StakeNotFound: AugmentedError<ApiType>;
       /**
        * Unimplemented reward pool type.
        **/

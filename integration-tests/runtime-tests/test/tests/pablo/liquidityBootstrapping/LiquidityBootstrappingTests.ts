@@ -6,7 +6,7 @@ import { getDevWallets } from "@composable/utils/walletHelper";
 import { ApiPromise } from "@polkadot/api";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import {
-  addFundstoThePool,
+  addFundsToPool,
   buyFromPool,
   createLBPool,
   createMultipleLBPools,
@@ -115,7 +115,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
     });
 
     it("Users can add liquidity to the LB pool before the sale started", async function () {
-      const result = await addFundstoThePool(api, poolId1, walletId1, baseAmount, quoteAmount);
+      const result = await addFundsToPool(api, poolId1, walletId1, baseAmount, quoteAmount);
       expect(result.baseAdded.toBigInt()).to.be.equal(baseAmount);
       expect(result.quoteAdded.toBigInt()).to.be.equal(quoteAmount);
     });

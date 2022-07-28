@@ -185,6 +185,9 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     ibc: {
+      /**
+       * Expected blocktime
+       **/
       expectedBlockTime: u64 & AugmentedConst<ApiType>;
       /**
        * Generic const
@@ -320,6 +323,8 @@ declare module '@polkadot/api-base/types/consts' {
     oracle: {
       maxHistory: u32 & AugmentedConst<ApiType>;
       maxPrePrices: u32 & AugmentedConst<ApiType>;
+      msPerBlock: u64 & AugmentedConst<ApiType>;
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       twapWindow: u16 & AugmentedConst<ApiType>;
       /**
        * Generic const

@@ -103,6 +103,9 @@ export interface ComposableTraitsLendingUpdateInput extends Null {}
 /** @name ComposableTraitsOraclePrice */
 export interface ComposableTraitsOraclePrice extends Null {}
 
+/** @name ComposableTraitsOracleRewardTracker */
+export interface ComposableTraitsOracleRewardTracker extends Null {}
+
 /** @name ComposableTraitsStakingRewardPool */
 export interface ComposableTraitsStakingRewardPool extends Null {}
 
