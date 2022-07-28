@@ -152,7 +152,7 @@ fn test_dex_demo() {
 			epsilon
 		));
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
-		assert_ok!(Pablo::remove_liquidity(Origin::signed(ALICE), pool_id, lp, 0, 0));
+		assert_ok!(Pablo::remove_liquidity(Origin::signed(ALICE), pool_id, lp, 0, 0, false));
 
 		// Alice should get back a different amount of tokens.
 		let alice_usdc = Tokens::balance(USDC, &ALICE);
@@ -598,6 +598,7 @@ proptest! {
 			lp,
 			0,
 			0,
+			false,
 				));
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 		let bob_usdt = Tokens::balance(USDT, &BOB);

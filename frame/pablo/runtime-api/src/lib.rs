@@ -37,6 +37,7 @@ sp_api::decl_runtime_apis! {
 			pool_id: SafeRpcWrapper<PoolId>,
 			lp_amount: SafeRpcWrapper<Balance>,
 			min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+			is_single_asset: SafeRpcWrapper<bool>,
 		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
 	}
 }

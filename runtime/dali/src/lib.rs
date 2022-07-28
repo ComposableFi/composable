@@ -1454,17 +1454,23 @@ impl_runtime_apis! {
 			pool_id: SafeRpcWrapper<PoolId>,
 			lp_amount: SafeRpcWrapper<Balance>,
 			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+			is_single_asset: SafeRpcWrapper<bool>,
 		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
 			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
 			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
-			let simulte_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
-				.unwrap_or_else(|_|
-					RemoveLiquiditySimulationResult{
-						assets: BTreeMap::from([
-									(currency_pair.base, Zero::zero()),
-									(currency_pair.quote, Zero::zero()),
-									(lp_token, Zero::zero())
+			let simulte_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(
+				&who.0,
+				pool_id.0,
+				lp_amount.0,
+				min_expected_amounts,
+				is_single_asset.0
+			).unwrap_or_else(|_|
+				RemoveLiquiditySimulationResult {
+					assets: BTreeMap::from([
+						(currency_pair.base, Zero::zero()),
+						(currency_pair.quote, Zero::zero()),
+						(lp_token, Zero::zero())
 						])
 					}
 				);

@@ -158,7 +158,7 @@ fn test() {
 		));
 
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
-		assert_ok!(<Pablo as Amm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0));
+		assert_ok!(<Pablo as Amm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0, false));
 
 		// Alice should get back a different amount of tokens.
 		let alice_btc = Tokens::balance(BTC, &ALICE);
@@ -211,6 +211,7 @@ fn test_redeemable_assets() {
 			pool_id,
 			lp,
 			BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
+			false,
 		)
 		.expect("redeemable_assets failed");
 		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
@@ -716,7 +717,7 @@ proptest! {
 		  let expected_lp_tokens = safe_multiply_by_rational(term1, btc_value, term2).expect("multiply_by_rational failed");
 		  let lp_token = Tokens::balance(pool.lp_token, &BOB);
 		  prop_assert_ok!(default_acceptable_computation_error(expected_lp_tokens, lp_token));
-		  prop_assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp_token, 0, 0));
+		  prop_assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp_token, 0, 0, false));
 		  let btc_value_redeemed = Tokens::balance(BTC, &BOB);
 		  let usdt_value_redeemed = Tokens::balance(USDT, &BOB);
 		  prop_assert_ok!(default_acceptable_computation_error(btc_value_redeemed, btc_value));

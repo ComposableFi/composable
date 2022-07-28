@@ -440,7 +440,14 @@ fn unsupported_operation_test() {
 			Error::<Test>::UnsupportedOperation
 		);
 		assert_noop!(
-			<DexRouter as AmmTrait>::remove_liquidity(&EVE, currency_pair, unit, 0_u128, 0_u128,),
+			<DexRouter as AmmTrait>::remove_liquidity(
+				&EVE,
+				currency_pair,
+				unit,
+				0_u128,
+				0_u128,
+				false
+			),
 			Error::<Test>::UnsupportedOperation
 		);
 	});
@@ -515,7 +522,8 @@ fn single_pool_route_test() {
 			currency_pair,
 			lp_amount,
 			0_u128,
-			0_u128
+			0_u128,
+			false,
 		));
 		let bob_eth_amount = Tokens::balance(ETH, &EVE);
 		let bob_usdc_amount = Tokens::balance(USDC, &EVE);
