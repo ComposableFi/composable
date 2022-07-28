@@ -749,6 +749,7 @@ pub struct BaseCallFilter;
 
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
+		// TODO: not up to date as whole composable setup
 		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
 	}
 }

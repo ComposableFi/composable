@@ -31,12 +31,14 @@ use orml_traits::parameter_type_with_key;
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
-	governance::native::{EnsureRootOrHalfNativeCouncil, NativeTreasury},
+	governance::native::{
+		EnsureRootOrHalfNativeCouncil, EnsureRootOrOneThirdNativeTechnical, NativeTreasury,
+	},
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, Hash, Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId,
-	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
-	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	BlockNumber, BondOfferId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
+	NativeExistentialDeposit, PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -76,7 +78,7 @@ pub use frame_support::{
 
 use codec::{Codec, Encode, EncodeLike};
 use frame_support::{
-	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade},
+	traits::{fungibles, ConstU32, EqualPrivilegeOnly, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
@@ -232,7 +234,7 @@ impl system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 impl randomness_collective_flip::Config for Runtime {}
@@ -595,7 +597,7 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
@@ -798,24 +800,16 @@ impl pallet_staking_rewards::Config for Runtime {
 
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
-
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
-		}
-		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
+		!(call_filter::Pallet::<Runtime>::contains(call) ||
+			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
 	}
-}
-
-parameter_types! {
-  #[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
-	pub const MaxStringSize: u32 = 100;
 }
 
 impl call_filter::Config for Runtime {
 	type Event = Event;
-	type UpdateOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type Hook = ();
 	type WeightInfo = ();
 	type MaxStringSize = MaxStringSize;
@@ -918,7 +912,7 @@ impl liquidations::Config for Runtime {
 	type PalletId = LiquidationsPalletId;
 	type CanModifyStrategies = EnsureRootOrHalfNativeCouncil;
 	type XcmSender = XcmRouter;
-	type MaxLiquidationStrategiesAmount = frame_support::traits::ConstU32<10>;
+	type MaxLiquidationStrategiesAmount = ConstU32<10>;
 }
 
 parameter_types! {
