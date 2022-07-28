@@ -16,7 +16,7 @@ pub const ONE_HOUR: DurationSeconds = 60 * 60;
 /// accounts to length of year)
 pub const SECONDS_PER_YEAR_NAIVE: DurationSeconds = 365 * 24 * ONE_HOUR;
 
-#[derive(Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, TypeInfo)]
+#[derive(Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub enum TimeReleaseFunction {
 	LinearDecrease(LinearDecrease),
 	StairstepExponentialDecrease(StairstepExponentialDecrease),

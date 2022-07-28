@@ -1,3 +1,4 @@
+#![cfg(any(feature = "runtime-benchmarks", feature = "std"))]
 use core::ops::Mul;
 
 use composable_support::math::safe::SafeAdd;

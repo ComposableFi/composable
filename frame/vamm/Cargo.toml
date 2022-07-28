@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["matheus@composable.finance", "Composable Finance Developers"]
 homepage = "https://composable.finance"
 edition = "2021"
+description = "A Virtual Automated Market Maker Substrate Pallet, providing functionality to manage virtual AMMs."
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]

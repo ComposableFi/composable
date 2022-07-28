@@ -10,7 +10,7 @@ pub mod pallet {
 	use composable_maths::labs::numbers::{FixedPointMath, UnsignedMath};
 	use composable_traits::{
 		defi::DeFiComposableConfig,
-		vamm::{AssetType, Direction, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm},
+		vamm::{AssetType, Direction, SwapConfig, SwapOutput, Vamm},
 	};
 	use frame_support::pallet_prelude::*;
 	use scale_info::TypeInfo;
@@ -160,7 +160,6 @@ pub mod pallet {
 		type Moment = T::Moment;
 		type MovePriceConfig = MovePriceConfig;
 		type SwapConfig = SwapConfig<Self::VammId, Self::Balance>;
-		type SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>;
 		type VammConfig = VammConfig;
 		type VammId = T::VammId;
 
@@ -217,19 +216,18 @@ pub mod pallet {
 		}
 
 		fn swap_simulation(
-			config: &Self::SwapSimulationConfig,
-		) -> Result<Self::Balance, DispatchError> {
-			let Self::SwapSimulationConfig { vamm_id, asset, input_amount, direction } =
-				config.clone();
+			config: &Self::SwapConfig,
+		) -> Result<SwapOutput<Self::Balance>, DispatchError> {
+			let Self::SwapConfig { vamm_id, asset, input_amount, direction, .. } = config.clone();
 			let swap_output = <Self as Vamm>::swap(&Self::SwapConfig {
 				vamm_id,
 				asset,
 				input_amount,
 				direction,
-				output_amount_limit: 0_u32.into(),
+				output_amount_limit: None,
 			})
 			.map_err(|_| Error::<T>::FailedToSimulateSwap)?;
-			Ok(swap_output.output)
+			Ok(swap_output)
 		}
 
 		fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError> {

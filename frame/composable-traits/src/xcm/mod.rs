@@ -24,7 +24,7 @@ pub type OrderId = QueryId;
 
 /// Strongly typed sibling location to `Transact` via XCM.
 /// Shortcut to more complicate way to set it via `xcm::latest::Junction`.
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmTransactConfiguration {
 	pub parachain_id: polkadot_parachain::primitives::Id,
 	pub method_id: CumulusMethodId,
@@ -131,7 +131,7 @@ pub struct SellOrderResponse {
 
 // Next relation must hold:
 // Sell minimal price  <= initial price <= final price
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum SellResponse {
 	Initial(XcmSellInitialResponseTransact),
 	Final(XcmSellInitialResponseTransact),

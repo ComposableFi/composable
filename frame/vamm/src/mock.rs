@@ -139,7 +139,7 @@ pub struct ExtBuilder {
 	pub vamm_count: VammId,
 	pub vamms: Vec<(
 		VammId,
-		pallet_vamm::VammState<
+		pallet_vamm::types::VammState<
 			<MockRuntime as pallet_vamm::Config>::Balance,
 			<MockRuntime as pallet_vamm::Config>::Moment,
 			<MockRuntime as pallet_vamm::Config>::Decimal,

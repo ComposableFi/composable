@@ -51,7 +51,6 @@ type Market = <TestPallet as Instruments>::Market;
 type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type Position = <TestPallet as Instruments>::Position;
 type SwapConfig = <VammPallet as Vamm>::SwapConfig;
-type SwapSimulationConfig = <VammPallet as Vamm>::SwapSimulationConfig;
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
@@ -432,7 +431,7 @@ prop_compose! {
 		asset in any_asset_type(),
 		input_amount in any::<Balance>(),
 		direction in any_vamm_direction(),
-		output_amount_limit in any::<Balance>(),
+		output_amount_limit in any::<Option<Balance>>(),
 	) -> SwapConfig {
 		SwapConfig {
 			vamm_id, asset, input_amount, direction, output_amount_limit
@@ -446,8 +445,9 @@ prop_compose! {
 		asset in any_asset_type(),
 		input_amount in any::<Balance>(),
 		direction in any_vamm_direction(),
-	) -> SwapSimulationConfig {
-		SwapSimulationConfig { vamm_id, asset, input_amount, direction }
+		output_amount_limit in Just(None),
+	) -> SwapConfig {
+		SwapConfig { vamm_id, asset, input_amount, direction, output_amount_limit }
 	}
 }
 
@@ -468,7 +468,7 @@ proptest! {
 				asset: AssetType::Quote,
 				input_amount: as_balance(100),
 				direction: VammDirection::Add,
-				output_amount_limit: as_balance(100),
+				output_amount_limit: Some(as_balance(100)),
 			})
 			.unwrap();
 			assert_eq!(output.output, as_balance(100));
@@ -480,7 +480,7 @@ proptest! {
 				asset: AssetType::Quote,
 				input_amount: as_balance(100),
 				direction: VammDirection::Add,
-				output_amount_limit: as_balance(90),
+				output_amount_limit: Some(as_balance(90)),
 			})
 			.unwrap();
 			// Buying base asset with slippage gets you less
@@ -492,7 +492,7 @@ proptest! {
 				asset: AssetType::Base,
 				input_amount: as_balance(100),
 				direction: VammDirection::Add,
-				output_amount_limit: as_balance(90),
+				output_amount_limit: Some(as_balance(90)),
 			})
 			.unwrap();
 			// Selling base asset with slippage gets you less
@@ -504,7 +504,7 @@ proptest! {
 				asset: AssetType::Quote,
 				input_amount: as_balance(100),
 				direction: VammDirection::Remove,
-				output_amount_limit: as_balance(90),
+				output_amount_limit: Some(as_balance(90)),
 			})
 			.unwrap();
 			// Shorting base asset with slippage gets you less
@@ -581,7 +581,7 @@ proptest! {
 					asset: AssetType::Quote,
 					input_amount: as_balance(100),
 					direction: VammDirection::Add,
-					output_amount_limit: as_balance(1),
+					output_amount_limit: Some(as_balance(1)),
 				}));
 				assert_ok!(VammPallet::get_price(vamm_id, AssetType::Base), factor * 100.into());
 			});

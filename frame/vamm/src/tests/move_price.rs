@@ -1,7 +1,12 @@
 use crate::{
 	mock::{ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{Error, Event, VammMap},
-	tests::{any_move_price_config, any_vamm_state, run_for_seconds, Timestamp, RUN_CASES},
+	tests::{
+		constants::RUN_CASES,
+		helpers::run_for_seconds,
+		helpers_propcompose::{any_move_price_config, any_vamm_state},
+		types::Timestamp,
+	},
 };
 use composable_traits::vamm::Vamm as VammTrait;
 use frame_support::{assert_noop, assert_ok};
@@ -30,7 +35,7 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			assert_ok!(TestPallet::move_price(&move_price_config));
-		})
+		});
 	}
 
 	#[test]
@@ -53,7 +58,7 @@ proptest! {
 				TestPallet::move_price(&move_price_config),
 				Error::<MockRuntime>::VammDoesNotExist
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -80,7 +85,7 @@ proptest! {
 				TestPallet::move_price(&move_price_config),
 				Error::<MockRuntime>::VammIsClosed
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -106,7 +111,7 @@ proptest! {
 				TestPallet::move_price(&move_price_config),
 				Error::<MockRuntime>::BaseAssetReserveIsZero
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -132,7 +137,7 @@ proptest! {
 				TestPallet::move_price(&move_price_config),
 				Error::<MockRuntime>::QuoteAssetReserveIsZero
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -159,7 +164,7 @@ proptest! {
 				move_price_config.base_asset_reserves,
 				move_price_config.quote_asset_reserves).unwrap()
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -193,8 +198,8 @@ proptest! {
 						move_price_config.quote_asset_reserves
 					).unwrap(),
 				}.into()
-			)
-		})
+			);
+		});
 	}
 
 	#[test]
@@ -220,6 +225,6 @@ proptest! {
 					move_price_config.quote_asset_reserves
 				).unwrap()
 			);
-		})
+		});
 	}
 }

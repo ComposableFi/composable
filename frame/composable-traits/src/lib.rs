@@ -4,9 +4,9 @@
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
+		clippy::panic,
 		clippy::todo,
 		clippy::unwrap_used,
-		clippy::panic
 	)
 )] // allow in tests
 #![deny(clippy::unseparated_literal_suffix)]

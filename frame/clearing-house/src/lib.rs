@@ -169,7 +169,7 @@ pub mod pallet {
 		defi::DeFiComposableConfig,
 		oracle::Oracle,
 		time::DurationSeconds,
-		vamm::{AssetType, SwapConfig, SwapSimulationConfig, Vamm},
+		vamm::{AssetType, SwapConfig, Vamm},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -258,7 +258,6 @@ pub mod pallet {
 		type Vamm: Vamm<
 			Balance = Self::Balance,
 			SwapConfig = SwapConfig<Self::VammId, Self::Balance>,
-			SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>,
 			VammConfig = Self::VammConfig,
 			VammId = Self::VammId,
 		>;
@@ -284,7 +283,6 @@ pub mod pallet {
 	type VammConfigOf<T> = <T as Config>::VammConfig;
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
-	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type MarketConfigOf<T> =
 		MarketConfig<AssetIdOf<T>, BalanceOf<T>, DecimalOf<T>, VammConfigOf<T>>;
 
@@ -1865,7 +1863,7 @@ pub mod pallet {
 				asset: AssetType::Base,
 				input_amount: base_amount,
 				direction: direction.into(),
-				output_amount_limit: quote_limit,
+				output_amount_limit: Some(quote_limit),
 			})?
 			.output)
 		}
@@ -1881,7 +1879,7 @@ pub mod pallet {
 				asset: AssetType::Quote,
 				input_amount: quote_abs_decimal.into_balance()?,
 				direction: direction.into(),
-				output_amount_limit: base_limit,
+				output_amount_limit: Some(base_limit),
 			})?
 			.output)
 		}
@@ -1932,14 +1930,15 @@ pub mod pallet {
 			position: &Position<T>,
 			position_direction: Direction,
 		) -> Result<T::Decimal, DispatchError> {
-			let sim_swapped = T::Vamm::swap_simulation(&SwapSimulationConfigOf::<T> {
+			let sim_swapped = T::Vamm::swap_simulation(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
 				input_amount: position.base_asset_amount.into_balance()?,
 				direction: position_direction.into(),
+				output_amount_limit: None,
 			})?;
 
-			Self::decimal_from_swapped(sim_swapped, position_direction)
+			Self::decimal_from_swapped(sim_swapped.output, position_direction)
 		}
 
 		/// Compute how much to withdraw from the collateral and insurance accounts.
