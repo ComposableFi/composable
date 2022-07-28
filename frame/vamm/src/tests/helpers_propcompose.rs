@@ -1,12 +1,13 @@
 use crate::{
 	mock::{Balance, TestPallet},
-	pallet::VammState,
 	tests::{
+		constants::{MAXIMUM_RESERVE, MINIMUM_RESERVE, RUN_CASES, ZERO_RESERVE},
 		helpers::{
 			any_sane_asset_amount, any_time, any_vamm_id, limited_peg, multiple_swap_configs,
 		},
-		Decimal, Timestamp, VammId, MAXIMUM_RESERVE, MINIMUM_RESERVE, RUN_CASES, ZERO_RESERVE,
+		types::{Decimal, Timestamp, VammId},
 	},
+	types::VammState,
 };
 use composable_traits::vamm::{
 	AssetType, Direction, MovePriceConfig, SwapConfig, MINIMUM_TWAP_PERIOD,
@@ -201,7 +202,7 @@ prop_compose! {
 			asset,
 			input_amount,
 			direction,
-			output_amount_limit,
+			output_amount_limit: Some(output_amount_limit),
 		}
 	}
 }

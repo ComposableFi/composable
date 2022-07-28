@@ -99,7 +99,7 @@ package "pallet-virtual-amm" {
         ~ ""get_price(vamm: VammId, asset: VammAsset)""
         ~ ""get_twap(vamm: VammId)""
         ~ ""swap(config: SwapConfig)""
-        ~ ""swap_simulation(config: SwapSimulationConfig)""
+        ~ ""swap_simulation(config: SwapConfig)""
         ~ ""move_price(vamm: VammId, base_asset_amount: u128, quote_asset_amount: u128)""
         ~ ""move_to_price(vamm: VammId, target_price: u128)""
     }

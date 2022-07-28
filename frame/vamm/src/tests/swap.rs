@@ -2,12 +2,13 @@ use crate::{
 	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
+		constants::RUN_CASES,
 		helpers::{create_vamm, run_for_seconds, run_to_block, swap_config},
 		helpers_propcompose::{
 			any_swap_config, any_vamm_state, balance_range_lower_half, balance_range_upper_half,
 			multiple_swaps, then_and_now,
 		},
-		TestSwapConfig, TestVammConfig, RUN_CASES,
+		types::{TestSwapConfig, TestVammConfig},
 	},
 };
 use composable_traits::vamm::{
@@ -55,7 +56,7 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_base() {
 			}
 			.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -95,7 +96,7 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_quote() {
 			}
 			.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -135,7 +136,7 @@ fn should_succeed_returning_correct_values_and_emitting_events_remove_base() {
 			}
 			.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -175,7 +176,7 @@ fn should_succeed_returning_correct_values_and_emitting_events_remove_quote() {
 			}
 			.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -205,7 +206,7 @@ fn should_update_twap_when_adding_base_asset() {
 		System::assert_has_event(
 			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -235,7 +236,7 @@ fn should_update_twap_when_removing_base_asset() {
 		System::assert_has_event(
 			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -265,7 +266,7 @@ fn should_update_twap_when_adding_quote_asset() {
 		System::assert_has_event(
 			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
 		);
-	})
+	});
 }
 
 #[test]
@@ -295,7 +296,7 @@ fn should_update_twap_when_removing_quote_asset() {
 		System::assert_has_event(
 			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
 		);
-	})
+	});
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -319,7 +320,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::VammDoesNotExist
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -344,7 +345,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::VammIsClosed
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -360,7 +361,7 @@ proptest! {
 		// `Overflow`, `Underflow`, etc.
 		swap_config.input_amount = 0;
 
-		swap_config.output_amount_limit = limit;
+		swap_config.output_amount_limit = Some(limit);
 		swap_config.vamm_id = VammId::zero();
 
 		ExtBuilder {
@@ -371,7 +372,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::SwappedAmountLessThanMinimumLimit
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -383,7 +384,7 @@ proptest! {
 		vamm_state.closed = None;
 
 		// Disable output limit check.
-		swap_config.output_amount_limit = Balance::zero();
+		swap_config.output_amount_limit = Some(Balance::zero());
 
 		// Ensure always the correct vamm.
 		swap_config.vamm_id = VammId::zero();
@@ -418,7 +419,7 @@ proptest! {
 					}.into()
 				);
 			}
-		})
+		});
 	}
 
 	#[test]
@@ -435,7 +436,7 @@ proptest! {
 		vamm_state.twap_period = MINIMUM_TWAP_PERIOD.into();
 
 		// Disable output limit check.
-		swap_config.output_amount_limit = Balance::zero();
+		swap_config.output_amount_limit = None;
 
 		swap_config.vamm_id = VammId::zero();
 
@@ -451,7 +452,7 @@ proptest! {
 					Event::UpdatedTwap { vamm_id: 0, base_twap: new_vamm_state.base_asset_twap }.into(),
 				);
 			}
-		})
+		});
 	}
 
 	#[test]
@@ -479,7 +480,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::InsufficientFundsForTrade
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -507,7 +508,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::InsufficientFundsForTrade
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -523,7 +524,12 @@ proptest! {
 		swap_config.input_amount = 0;
 
 		// Disable output limit check
-		swap_config.output_amount_limit = 0;
+		swap_config.output_amount_limit = Some(0);
+
+		// Set correct values for test.
+		swap_config.direction = Direction::Remove;
+		swap_config.vamm_id = 0;
+		swap_config.asset = AssetType::Base;
 
 		// Set correct values for test.
 		swap_config.direction = Direction::Remove;
@@ -535,7 +541,7 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			assert_ok!(TestPallet::swap(&swap_config));
-		})
+		});
 	}
 
 	#[test]
@@ -551,7 +557,12 @@ proptest! {
 		swap_config.input_amount = 0;
 
 		// Disable output limit check
-		swap_config.output_amount_limit = 0;
+		swap_config.output_amount_limit = Some(0);
+
+		// Set correct values for test.
+		swap_config.direction = Direction::Remove;
+		swap_config.vamm_id = 0;
+		swap_config.asset = AssetType::Quote;
 
 		// Set correct values for test.
 		swap_config.direction = Direction::Remove;
@@ -563,7 +574,7 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			assert_ok!(TestPallet::swap(&swap_config));
-		})
+		});
 	}
 
 	#[test]
@@ -591,7 +602,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::TradeExtrapolatesMaximumSupportedAmount
 			);
-		})
+		});
 	}
 
 	#[test]
@@ -619,7 +630,7 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::TradeExtrapolatesMaximumSupportedAmount
 			);
-		})
+		});
 	}
 }
 
@@ -628,9 +639,9 @@ proptest! {
 	#[test]
 	fn multiple_swaps_dont_diverge_from_original_invariant(
 		mut vamm_state in any_vamm_state(),
-		swap_config in multiple_swaps()
+		mut swap_config in multiple_swaps()
 	) {
-		// Ensure vamm is always open
+		// Ensure vamm is always open.
 		vamm_state.closed = None;
 
 		ExtBuilder {
@@ -638,7 +649,9 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
-			for x in swap_config.iter() {
+			for x in swap_config.iter_mut() {
+				// Ensure we always perform operation on an existing vamm.
+				x.vamm_id = Zero::zero();
 				TestPallet::swap(x);
 			}
 			let vamm_after_swap = VammMap::<MockRuntime>::get(0);
@@ -666,7 +679,7 @@ proptest! {
 		mut vamm_state in any_vamm_state(),
 		mut swap_config in multiple_swaps()
 	) {
-		// Ensure vamm is always open
+		// Ensure vamm is always open.
 		vamm_state.closed = None;
 
 		ExtBuilder {
@@ -675,6 +688,8 @@ proptest! {
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for mut x in swap_config.iter_mut() {
+				// Ensure we always perform operation on an existing vamm.
+				x.vamm_id = Zero::zero();
 				// Make swaps only for base asset
 				x.asset = AssetType::Base;
 				TestPallet::swap(x);
@@ -714,6 +729,8 @@ proptest! {
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for mut x in swap_config.iter_mut() {
+				// Ensure we always perform operation on an existing vamm.
+				x.vamm_id = Zero::zero();
 				// Make swaps only for quote asset
 				x.asset = AssetType::Quote;
 				TestPallet::swap(x);

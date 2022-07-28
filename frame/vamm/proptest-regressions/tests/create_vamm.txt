@@ -7,3 +7,4 @@
 cc 08259b803fb582a1260fa91f758f527add3b8ff6aa8a90c22277f7983fb247d1 # shrinks to (base_asset_reserves, quote_asset_reserves, peg_multiplier) = (1, 1, 1)
 cc 0aca75a55fed30e6a51ad47fa6a3396bd058903870ae1fed1718e5b5944b605f # shrinks to vamm_config = VammConfig { base_asset_reserves: 100000000000001, quote_asset_reserves: 1, peg_multiplier: 1, twap_period: 11 }
 cc 163ab221fa1c6e8254583603b639932231f9ad3caf61045bf326819353ca6274 # shrinks to vamm_config = VammConfig { base_asset_reserves: 1000000000000000001, quote_asset_reserves: 1, peg_multiplier: 1, twap_period: 11 }
+cc 0aca75a55fed30e6a51ad47fa6a3396bd058903870ae1fed1718e5b5944b605f # shrinks to vamm_config = VammConfig { base_asset_reserves: 100000000000001, quote_asset_reserves: 1, peg_multiplier: 1, twap_period: 11 }
