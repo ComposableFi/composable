@@ -154,6 +154,7 @@ pub struct StakingRewardPool<RewardPoolId> {
 	pub pool_type: RewardPoolType,
 }
 
+// TODO: Perhaps we need a way to not have a max reward for a pool.
 pub const MAX_REWARDS: u128 = 100_000_000_000_000_000_000_000_u128;
 pub const REWARD_PERCENTAGE: u32 = 10;
 
