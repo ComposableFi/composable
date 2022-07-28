@@ -51,5 +51,5 @@ I make sure that:
 - <https://docs.substrate.io/tutorials/get-started/forkless-upgrade/>
 - <https://github.com/paritytech/substrate/blob/master/frame/system/src/lib.rs>
 - <https://paritytech.github.io/substrate/master/sp_version/struct.RuntimeVersion.html>
-- check explainers
+- Parith Technical explainers
 - [governance](../doc/governance.md)
