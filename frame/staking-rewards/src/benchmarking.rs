@@ -13,7 +13,7 @@ use composable_traits::{
 };
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::{
-	traits::{fungibles::Mutate, UnixTime},
+	traits::{fungibles::Mutate, Get, TryCollect, UnixTime},
 	BoundedBTreeMap,
 };
 use frame_system::{EventRecord, RawOrigin};
@@ -56,18 +56,20 @@ fn lock_config<T: Config>(
 fn reward_config<T: Config>(
 	reward_count: u32,
 ) -> BoundedBTreeMap<T::AssetId, RewardConfig<T::AssetId, T::Balance>, T::MaxRewardConfigsPerPool> {
-	let mut asset_id = 101;
-	let mut rewards = BTreeMap::new();
-	for _ in 0..reward_count {
-		let config = RewardConfig {
-			asset_id: asset_id.into(),
-			max_rewards: 100_u128.into(),
-			reward_rate: RewardRate::per_second(1_u128),
-		};
-		rewards.insert(asset_id.into(), config);
-		asset_id += 1;
-	}
-	BoundedBTreeMap::try_from(rewards).unwrap()
+	(0..reward_count)
+		.map(|asset_id| {
+			let asset_id: u128 = (asset_id + 101).into();
+			(
+				asset_id.into(),
+				RewardConfig {
+					asset_id: asset_id.into(),
+					max_rewards: 100_u128.into(),
+					reward_rate: RewardRate::per_second(1_u128),
+				},
+			)
+		})
+		.try_collect()
+		.unwrap()
 }
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
