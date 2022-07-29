@@ -23,6 +23,7 @@ import BalancesUpdater from "@/updaters/assets/balances/Updater";
 import ApolloUpdater from "@/updaters/assets/apollo/Updater";
 import AuctionsUpdater from "@/updaters/auctions/Updater";
 import BondsUpdater from "@/updaters/bonds/Updater";
+import WalletUpdater from "@/updaters/wallet/Updater";
 
 import * as definitions from "defi-interfaces/definitions";
 import { SnackbarProvider } from "notistack";
@@ -146,6 +147,7 @@ export default function MyApp(props: MyAppProps) {
                   <ApolloUpdater />
                   <PoolsUpdater />
                   <BondsUpdater />
+                  <WalletUpdater />
                 </>
                 <ExecutorProvider>
                   <Component {...pageProps} />
