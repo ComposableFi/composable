@@ -81,8 +81,7 @@
 
         src = let
           blacklist = [
-            "nix"
-            "nix-crane"
+            "nix"            
             ".config"
             ".devcontainer"
             ".github"
