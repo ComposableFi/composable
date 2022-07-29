@@ -29,8 +29,8 @@ use governance::*;
 
 use common::{
 	governance::native::*, impls::DealWithFees, multi_existential_deposits, AccountId,
-	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, Hash, Moment,
-	NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, Hash, MaxStringSize,
+	Moment, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
 	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
@@ -114,7 +114,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 1400,
+	spec_version: 1401,
 	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -216,7 +216,7 @@ impl system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 impl randomness_collective_flip::Config for Runtime {}
@@ -560,7 +560,7 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
@@ -620,7 +620,7 @@ impl currency_factory::Config for Runtime {
 parameter_types! {
 	pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	pub const InitialPayment: Perbill = Perbill::from_percent(25);
-	pub const VestingStep: Moment = (7 * DAYS as Moment) * MILLISECS_PER_BLOCK;
+	pub const VestingStep: Moment = (7 * DAYS as Moment) * (MILLISECS_PER_BLOCK as Moment);
 	pub const Prefix: &'static [u8] = b"picasso-";
 }
 
@@ -678,11 +678,19 @@ impl bonded_finance::Config for Runtime {
 
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
-
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
+		!(call_filter::Pallet::<Runtime>::contains(call) ||
+			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
 	}
+}
+
+impl call_filter::Config for Runtime {
+	type Event = Event;
+	type UpdateOrigin = EnsureRootOrOneThirdNativeTechnical;
+	type Hook = ();
+	type WeightInfo = ();
+	type MaxStringSize = MaxStringSize;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -742,6 +750,8 @@ construct_runtime!(
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 59,
+
+		CallFilter: call_filter = 100,
 	}
 );
 

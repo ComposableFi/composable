@@ -31,11 +31,14 @@ use orml_traits::parameter_type_with_key;
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
-	governance::native::{EnsureRootOrHalfNativeCouncil, NativeTreasury},
+	governance::native::{
+		EnsureRootOrHalfNativeCouncil, EnsureRootOrOneThirdNativeTechnical, NativeTreasury,
+	},
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, Hash, Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId,
-	Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	BlockNumber, BondOfferId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
+	NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
@@ -76,7 +79,7 @@ pub use frame_support::{
 
 use codec::{Codec, Encode, EncodeLike};
 use frame_support::{
-	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade},
+	traits::{fungibles, ConstU32, EqualPrivilegeOnly, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
@@ -130,7 +133,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2400,
+	spec_version: 2401,
 	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -231,7 +234,7 @@ impl system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 impl randomness_collective_flip::Config for Runtime {}
@@ -461,7 +464,7 @@ parameter_types! {
 	pub const MaxPrePrices: u32 = 40;
 	pub const TwapWindow: u16 = 3;
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
-	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
+	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK as u64;
 }
 
 impl oracle::Config for Runtime {
@@ -594,7 +597,7 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
@@ -781,8 +784,8 @@ parameter_types! {
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = u16;
-	type PositionId = u128;
+	type RewardPoolId = RewardPoolId;
+	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
 	type CurrencyFactory = CurrencyFactory;
@@ -797,24 +800,16 @@ impl pallet_staking_rewards::Config for Runtime {
 
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
-
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		if call_filter::Pallet::<Runtime>::contains(call) {
-			return false
-		}
-		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
+		!(call_filter::Pallet::<Runtime>::contains(call) ||
+			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
 	}
-}
-
-parameter_types! {
-  #[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
-	pub const MaxStringSize: u32 = 100;
 }
 
 impl call_filter::Config for Runtime {
 	type Event = Event;
-	type UpdateOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = EnsureRootOrOneThirdNativeTechnical;
 	type Hook = ();
 	type WeightInfo = ();
 	type MaxStringSize = MaxStringSize;
@@ -917,7 +912,7 @@ impl liquidations::Config for Runtime {
 	type PalletId = LiquidationsPalletId;
 	type CanModifyStrategies = EnsureRootOrHalfNativeCouncil;
 	type XcmSender = XcmRouter;
-	type MaxLiquidationStrategiesAmount = frame_support::traits::ConstU32<10>;
+	type MaxLiquidationStrategiesAmount = ConstU32<10>;
 }
 
 parameter_types! {
@@ -953,7 +948,9 @@ parameter_types! {
   pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
   pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
   pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
-  pub TWAPInterval: u64 = MILLISECS_PER_BLOCK * 10;
+  pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
+  pub const MaxStakingRewardPools: u32 = 10;
+  pub const MillisecsPerBlock: u32 = MILLISECS_PER_BLOCK;
 }
 
 impl pablo::Config for Runtime {
@@ -976,6 +973,13 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
+	type RewardPoolId = RewardPoolId;
+	type MaxStakingRewardPools = MaxStakingRewardPools;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type ManageStaking = StakingRewards;
+	type ProtocolStaking = StakingRewards;
+	type MsPerBlock = MillisecsPerBlock;
 }
 
 parameter_types! {

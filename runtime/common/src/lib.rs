@@ -23,6 +23,7 @@ pub use constants::*;
 use frame_support::parameter_types;
 use num_traits::CheckedMul;
 use primitives::currency::CurrencyId;
+use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, FixedPointNumber};
 pub use types::*;
 
@@ -97,6 +98,10 @@ mod types {
 	}
 
 	pub type NftInstanceId = u128;
+
+	pub type RewardPoolId = u16;
+
+	pub type PositionId = u128;
 }
 
 /// Common constants of statemint and statemine
@@ -111,8 +116,8 @@ mod constants {
 	/// slot_duration()`.
 	///
 	/// Change this to adjust the block time.
-	pub const MILLISECS_PER_BLOCK: u64 = 12000;
-	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+	pub const MILLISECS_PER_BLOCK: u32 = 12000;
+	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK as u64;
 
 	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -212,4 +217,10 @@ pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = Cu
 	// 3. use hardcoded values
 	// 4. else 1_000_000_u128
 	.unwrap_or(1_000_000_u128)
+}
+
+parameter_types! {
+	/// NOTE: do not reduce, as it will tell that some already stored vectors has smaller range of values
+	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
+	pub const MaxStringSize: u32 = 100;
 }

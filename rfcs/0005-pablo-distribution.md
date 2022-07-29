@@ -310,7 +310,12 @@ while at the same time subtracting it from the total fees paid out
 already to liquidity providers. Refer [Trading Fee Inflation to Avoid
 Dilution of LPs](#appendix-a-trading-fee-inflation-to-avoid-dilution-of-lps).
 
-#### 5.2.3. PBLO Staker Trading Fee Distribution
+#### 5.2.3. PBLO Staker Pool Creation
+
+When creating new Pablo pool, the creator should have option to create n PBLO staking pool.
+This newly created stking pool will receive rewards from trading fees from Pablo pool as mention in section 5.2.4
+
+#### 5.2.4. PBLO Staker Trading Fee Distribution
 
 This is the reward a `PBLO` staker receives from the trading fees of
 Pablo pools. It is equal to the protocol fee charged on Pablo pools.

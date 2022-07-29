@@ -16,7 +16,14 @@ export interface CommonMosaicRemoteAssetId extends Null {}
 export interface ComposableSupportEthereumAddress extends Null {}
 
 /** @name ComposableTraitsAssetsBasicAssetMetadata */
-export interface ComposableTraitsAssetsBasicAssetMetadata extends Null {}
+export interface ComposableTraitsAssetsBasicAssetMetadata extends Struct {
+  readonly symbol: {
+    readonly inner: Null;
+  } & Struct;
+  readonly name: {
+    readonly inner: Null;
+  } & Struct;
+}
 
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
@@ -102,6 +109,9 @@ export interface ComposableTraitsLendingUpdateInput extends Null {}
 
 /** @name ComposableTraitsOraclePrice */
 export interface ComposableTraitsOraclePrice extends Null {}
+
+/** @name ComposableTraitsOracleRewardTracker */
+export interface ComposableTraitsOracleRewardTracker extends Null {}
 
 /** @name ComposableTraitsStakingRewardPool */
 export interface ComposableTraitsStakingRewardPool extends Null {}
@@ -237,12 +247,6 @@ export interface PalletCrowdloanRewardsModelsReward extends Null {}
 
 /** @name PalletCrowdloanRewardsReward */
 export interface PalletCrowdloanRewardsReward extends Null {}
-
-/** @name PalletCurrencyFactoryRanges */
-export interface PalletCurrencyFactoryRanges extends Null {}
-
-/** @name PalletCurrencyFactoryRangesRange */
-export interface PalletCurrencyFactoryRangesRange extends Null {}
 
 /** @name PalletDemocracyConviction */
 export interface PalletDemocracyConviction extends Null {}
