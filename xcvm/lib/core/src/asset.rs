@@ -69,7 +69,7 @@ pub struct ETH;
 pub struct USDT;
 pub struct USDC;
 
-/// List of XCVM compatible networks.
+/// List of XCVM compatible assets.
 /// The order matter and must not be changed, adding a network on the right is safe.
 pub type Assets = (InvalidAsset, (PICA, (ETH, (USDT, (USDC, ())))));
 
@@ -151,7 +151,7 @@ impl Amount {
 				.saturating_mul(FixedU128::<U16>::from_num(*x as u128).saturating_div(FixedU128::<
 					U16,
 				>::from_num(
-					100
+					u32::MAX
 				)))
 				.to_num(),
 		}
