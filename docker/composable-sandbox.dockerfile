@@ -3,7 +3,7 @@ FROM composablefi/ci-linux:2022-04-18 as builder
 COPY . /build
 WORKDIR /build
 
-RUN cargo build --release
+RUN cargo +nightly build --release
 
 # ===== SECOND STAGE ======
 
