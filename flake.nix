@@ -294,13 +294,13 @@
             imageDigest = "sha256:269cbbb2056243e2a88e21501d9a8166d1825d42abf6b67846b49b1856f4b133";
             sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
             finalImageTag = "0.202.7-bullseye";             
-          });
-          
+          });          
+
           codespace-container = dockerTools.buildLayeredImage {
             name = "composable-codespace";
             fromImage = packages.codespace-base-container;
+            # be very carefull with this, so this must be version compatible with base and what vscode will inject
             contents = [                                          
-              # be very carefull with this, so this must be version compatible with base and what vscode will inject
               # ISSUE: for some reason stable overrides nighly, need to set different order somehow
               #rust-stable
               rust-nightly-dev
@@ -310,7 +310,7 @@
               nodejs
               bottom
               packages.mdbook
-              packages.taplo
+              packages.taplo              
               ];
           };
 
