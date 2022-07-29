@@ -1,0 +1,16 @@
+@startuml
+skinparam responseMessageBelowArrow true
+'autoactivate on
+!theme mars
+
+participant "Client" as client
+participant "Vamm" as vamm
+database "Storage" as svamm
+
+client -> vamm++: Swap simulation request
+vamm -[#green]> svamm++: Get vamm
+svamm --> vamm--: vamm
+vamm -> vamm: Sanity checks
+vamm -> vamm: Compute simulation
+vamm --> client--: Asset amount
+@enduml

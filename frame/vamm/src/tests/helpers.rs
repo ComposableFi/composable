@@ -1,8 +1,9 @@
 use crate::{
 	mock::{
-		Balance, Moment, Origin, System as SystemPallet, TestPallet, Timestamp as TimestampPallet,
+		Balance, ExtBuilder, Moment, Origin, System as SystemPallet, TestPallet,
+		Timestamp as TimestampPallet,
 	},
-	tests::{Decimal, Timestamp, VammId},
+	tests::types::{Decimal, TestSwapConfig, TestVammConfig, Timestamp, VammId},
 };
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait, VammConfig};
 use frame_support::{assert_ok, pallet_prelude::Hooks};
@@ -47,6 +48,10 @@ pub fn run_for_seconds(seconds: u64) {
 
 pub fn as_decimal(x: u128) -> Decimal {
 	Decimal::from_inner(x.saturating_mul(Decimal::DIV))
+}
+
+pub const fn as_decimal_inner(x: u128) -> Balance {
+	x * Decimal::DIV
 }
 
 pub fn as_decimal_from_fraction(n: u128, d: u128) -> Decimal {
@@ -113,7 +118,7 @@ pub fn swap_config() -> BoxedStrategy<SwapConfig<VammId, Balance>> {
 			asset,
 			input_amount,
 			direction,
-			output_amount_limit,
+			output_amount_limit: Some(output_amount_limit),
 		})
 		.boxed()
 }
@@ -124,6 +129,17 @@ pub fn multiple_swap_configs(max_swaps: usize) -> Vec<BoxedStrategy<SwapConfig<V
 		swaps.push(swap_config());
 	}
 	swaps
+}
+
+pub fn with_swap_context(
+	vamm_config: TestVammConfig<Balance, Moment>,
+	swap_config: TestSwapConfig<VammId, Balance>,
+	execute: impl FnOnce(SwapConfig<VammId, Balance>),
+) {
+	ExtBuilder::default().build().execute_with(|| {
+		create_vamm(&vamm_config.into());
+		execute(swap_config.into());
+	});
 }
 
 // ----------------------------------------------------------------------------------------------------

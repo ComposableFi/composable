@@ -1,7 +1,7 @@
 use crate::{
 	mock::{MockRuntime, TestPallet},
 	pallet::Error,
-	tests::{helpers::as_decimal, helpers_propcompose::balance_range, RUN_CASES},
+	tests::{constants::RUN_CASES, helpers::as_decimal, helpers_propcompose::balance_range},
 };
 use frame_support::{assert_err, assert_ok};
 use proptest::prelude::*;
