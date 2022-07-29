@@ -1,9 +1,8 @@
 use crate::primitives::SignedCommitment;
-use crate::test_utils::Crypto;
-use crate::test_utils::{get_initial_client_state, get_mmr_update, get_parachain_headers};
 use crate::BeefyClientError;
 use crate::{
-    runtime, BeefyLightClient, MmrUpdateProof, ParachainsUpdateProof, SignatureWithAuthorityIndex,
+    queries::utils::{ClientWrapper, Crypto},
+    BeefyLightClient, MmrUpdateProof, ParachainsUpdateProof, SignatureWithAuthorityIndex,
 };
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf};
@@ -22,15 +21,15 @@ async fn test_verify_mmr_with_proof() {
         .build::<subxt::DefaultConfig>()
         .await
         .unwrap();
-
-    let api =
-        client.clone().to_runtime_api::<runtime::api::RuntimeApi<
-            subxt::DefaultConfig,
-            subxt::PolkadotExtrinsicParams<_>,
-        >>();
+    let para_url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9988".to_string());
+    let para_client = subxt::ClientBuilder::new()
+        .set_url(para_url)
+        .build::<subxt::DefaultConfig>()
+        .await
+        .unwrap();
 
     let mut count = 0;
-    let mut client_state = get_initial_client_state(Some(&api)).await;
+    let mut client_state = ClientWrapper::get_initial_client_state(Some(&client)).await;
     let mut subscription: Subscription<String> = client
         .rpc()
         .client
@@ -41,6 +40,13 @@ async fn test_verify_mmr_with_proof() {
         )
         .await
         .unwrap();
+
+    let parachain_client = ClientWrapper {
+        relay_client: client,
+        para_client,
+        beefy_activation_block: 0,
+        para_id: 2000,
+    };
 
     while let Some(Ok(commitment)) = subscription.next().await {
         if count == 100 {
@@ -71,7 +77,10 @@ async fn test_verify_mmr_with_proof() {
             signed_commitment.commitment
         );
 
-        let mmr_update = get_mmr_update(&client, signed_commitment.clone()).await;
+        let mmr_update = parachain_client
+            .fetch_mmr_update_proof_for(signed_commitment.clone())
+            .await
+            .unwrap();
 
         client_state = beef_light_client
             .verify_mmr_root_with_proof(client_state.clone(), mmr_update.clone())
@@ -140,11 +149,24 @@ async fn should_fail_with_incomplete_signature_threshold() {
         authority_proof: vec![],
     };
 
-    assert_eq!(
-        beef_light_client
-            .verify_mmr_root_with_proof(get_initial_client_state(None).await, mmr_update),
-        Err(BeefyClientError::IncompleteSignatureThreshold)
+    let res = beef_light_client.verify_mmr_root_with_proof(
+        ClientWrapper::<subxt::DefaultConfig>::get_initial_client_state(None).await,
+        mmr_update,
     );
+
+    match res {
+        Err(BeefyClientError::IncompleteSignatureThreshold) => {}
+        Err(err) => panic!(
+            "Expected {:?}  found {:?}",
+            BeefyClientError::IncompleteSignatureThreshold,
+            err
+        ),
+        Ok(val) => panic!(
+            "Expected {:?}  found {:?}",
+            BeefyClientError::IncompleteSignatureThreshold,
+            val
+        ),
+    }
 }
 
 #[tokio::test]
@@ -184,11 +206,27 @@ async fn should_fail_with_invalid_validator_set_id() {
         authority_proof: vec![],
     };
 
-    assert_eq!(
-        beef_light_client
-            .verify_mmr_root_with_proof(get_initial_client_state(None).await, mmr_update),
-        Err(BeefyClientError::InvalidMmrUpdate)
+    let res = beef_light_client.verify_mmr_root_with_proof(
+        ClientWrapper::<subxt::DefaultConfig>::get_initial_client_state(None).await,
+        mmr_update,
     );
+    match res {
+        Err(BeefyClientError::AuthoritySetMismatch {
+            current_set_id,
+            next_set_id,
+            commitment_set_id,
+        }) if current_set_id == 0 && next_set_id == 1 && commitment_set_id == 3 => {}
+        Err(err) => panic!(
+            "Expected {:?}  found {:?}",
+            BeefyClientError::AuthoritySetMismatch {
+                current_set_id: 0,
+                next_set_id: 1,
+                commitment_set_id: 3
+            },
+            err
+        ),
+        Ok(val) => panic!("Found {:?}", val),
+    }
 }
 
 #[tokio::test]
@@ -206,13 +244,9 @@ async fn verify_parachain_headers() {
         .build::<subxt::DefaultConfig>()
         .await
         .unwrap();
-    let api =
-        client.clone().to_runtime_api::<runtime::api::RuntimeApi<
-            subxt::DefaultConfig,
-            subxt::PolkadotExtrinsicParams<_>,
-        >>();
+
     let mut count = 1;
-    let mut client_state = get_initial_client_state(Some(&api)).await;
+    let mut client_state = ClientWrapper::get_initial_client_state(Some(&client)).await;
     let mut subscription: Subscription<String> = client
         .rpc()
         .client
@@ -223,6 +257,13 @@ async fn verify_parachain_headers() {
         )
         .await
         .unwrap();
+
+    let parachain_client = ClientWrapper {
+        relay_client: client,
+        para_client,
+        beefy_activation_block: 0,
+        para_id: 2000,
+    };
 
     while let Some(Ok(commitment)) = subscription.next().await {
         if count == 100 {
@@ -255,19 +296,19 @@ async fn verify_parachain_headers() {
 
         let block_number = signed_commitment.commitment.block_number;
 
-        let (parachain_headers, batch_proof) = get_parachain_headers(
-            &client,
-            &para_client,
-            block_number,
-            client_state.latest_beefy_height,
-        )
-        .await;
+        let (parachain_headers, batch_proof) = parachain_client
+            .fetch_finalized_parachain_headers_at(block_number, client_state.latest_beefy_height)
+            .await
+            .unwrap();
         let parachain_update_proof = ParachainsUpdateProof {
             parachain_headers,
             mmr_proof: batch_proof,
         };
 
-        let mmr_update = get_mmr_update(&client, signed_commitment).await;
+        let mmr_update = parachain_client
+            .fetch_mmr_update_proof_for(signed_commitment)
+            .await
+            .unwrap();
 
         client_state = beef_light_client
             .verify_mmr_root_with_proof(client_state, mmr_update)

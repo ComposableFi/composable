@@ -15,16 +15,14 @@
 
 //! Beefy Light Client Implementation
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(not(feature = "mocks"), deny(missing_docs))]
+#![cfg_attr(not(feature = "prover"), deny(missing_docs))]
 
 use core::marker::PhantomData;
 
 pub mod error;
 pub mod primitives;
-#[cfg(any(test, feature = "mocks"))]
-pub mod runtime;
-#[cfg(any(test, feature = "mocks"))]
-pub mod test_utils;
+#[cfg(any(test, feature = "prover"))]
+pub mod queries;
 #[cfg(test)]
 mod tests;
 pub mod traits;
@@ -38,9 +36,9 @@ use crate::traits::{ClientState, HostFunctions};
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::MmrLeaf;
 use codec::Encode;
-use sp_core::crypto::ByteArray;
+use frame_support::sp_runtime::app_crypto::ByteArray;
+use frame_support::sp_runtime::traits::Convert;
 use sp_core::H256;
-use sp_runtime::traits::Convert;
 
 use sp_std::prelude::*;
 use sp_std::vec;
@@ -78,7 +76,11 @@ impl<Crypto: HostFunctions + Clone> BeefyLightClient<Crypto> {
 
         if current_authority_set.id != validator_set_id && next_authority_set.id != validator_set_id
         {
-            return Err(BeefyClientError::InvalidMmrUpdate);
+            return Err(BeefyClientError::AuthoritySetMismatch {
+                current_set_id: current_authority_set.id,
+                next_set_id: next_authority_set.id,
+                commitment_set_id: validator_set_id,
+            });
         }
 
         // Extract root hash from signed commitment and validate it
@@ -92,10 +94,13 @@ impl<Crypto: HostFunctions + Clone> BeefyLightClient<Crypto> {
                 if root.len() == HASH_LENGTH {
                     root
                 } else {
-                    return Err(BeefyClientError::InvalidRootHash);
+                    return Err(BeefyClientError::InvalidRootHash {
+                        root_hash: root.clone(),
+                        len: root.len() as u64,
+                    });
                 }
             } else {
-                return Err(BeefyClientError::InvalidMmrUpdate);
+                return Err(BeefyClientError::MmrRootHashNotFound);
             }
         };
 
@@ -152,13 +157,23 @@ impl<Crypto: HostFunctions + Clone> BeefyLightClient<Crypto> {
                 }
                 authorities_changed = true;
             }
-            _ => return Err(BeefyClientError::InvalidMmrUpdate),
+            _ => {
+                return Err(BeefyClientError::AuthoritySetMismatch {
+                    current_set_id: current_authority_set.id,
+                    next_set_id: next_authority_set.id,
+                    commitment_set_id: validator_set_id,
+                })
+            }
         }
 
         let latest_beefy_height = trusted_client_state.latest_beefy_height;
 
-        if mmr_update.signed_commitment.commitment.block_number <= latest_beefy_height {
-            return Err(BeefyClientError::InvalidMmrUpdate);
+        let commitment_block_number = mmr_update.signed_commitment.commitment.block_number;
+        if commitment_block_number <= latest_beefy_height {
+            return Err(BeefyClientError::OutdatedCommitment {
+                latest_beefy_height,
+                commitment_block_number,
+            });
         }
 
         // Move on to verify mmr_proof
@@ -250,7 +265,7 @@ impl<Crypto: HostFunctions + Clone> BeefyLightClient<Crypto> {
 }
 
 /// Calculate the leaf index for this block number
-fn get_leaf_index_for_block_number(activation_block: u32, block_number: u32) -> u32 {
+pub fn get_leaf_index_for_block_number(activation_block: u32, block_number: u32) -> u32 {
     // calculate the leaf index for this leaf.
     if activation_block == 0 {
         // in this case the leaf index is the same as the block number - 1 (leaf index starts at 0)

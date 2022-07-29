@@ -7,12 +7,22 @@ authors = ["Composable developers"]
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
+[build-dependencies]
+subxt-codegen = "0.22.0"
+jsonrpsee = { version = "0.15.0", features = ["async-client", "client-ws-transport", "http-client"] }
+frame-metadata = { version = "15.0.0", features = ["v14", "std"] }
+syn = "1.0.98"
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+color-eyre = "0.6.2"
+hex = "0.4.3"
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
+
 [dependencies]
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-runtime = { default-features = false,  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-runtime = { default-features = false,  version = "6.0.0" }
+sp-core = { default-features = false, version = "6.0.0" }
 sp-core-hashing = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 beefy-mmr = { package = "pallet-beefy-mmr", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 pallet-mmr = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 pallet-mmr-primitives = { package = "sp-mmr-primitives", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
@@ -21,19 +31,19 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 rs_merkle = { version = "1.2.0", default-features = false }
 mmr-lib= { package = "ckb-merkle-mountain-range", version = "0.3.2", default-features = false }
 derive_more = { version = "0.99.17", default-features = false, features = ["from"]  }
-# Mock deps
-subxt = { version = "0.21.0", optional = true }
+# Optional deps
+subxt = { version = "0.22.0", optional = true }
 tokio = { version = "1.17.0", features = ["full"], optional = true }
 hex-literal = { version = "0.3.4", optional = true }
 serde_json = { version = "1.0.74", optional = true }
 pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
+hex = { version = "0.4.3", optional = true }
 
 [dev-dependencies]
-subxt = "0.21.0"
 tokio = { version = "1.17.0", features = ["full"] }
+subxt = "0.22.0"
 hex-literal = "0.3.4"
 serde_json = "1.0.74"
 pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
@@ -55,6 +65,7 @@ std = [
     "pallet-mmr/std",
     "pallet-mmr-primitives/std",
     "rs_merkle/std",
-    "mmr-lib/std"
+    "mmr-lib/std",
+    "frame-support/std"
 ]
-mocks = ["std", "subxt", "hex-literal", "serde_json", "pallet-mmr-rpc", "frame-support", "sp-io", "sp-trie"]
+prover = ["std", "subxt", "hex-literal", "serde_json", "pallet-mmr-rpc", "sp-io", "sp-trie", "hex"]
