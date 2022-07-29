@@ -1,11 +1,10 @@
-{ composable,
-  polkadot,
+{ devnet-spec,
   credentials,
-  devnet-spec,
+  devnet,
   devnet-nix,
 }:
 let
-  machine-name = "composable-devnet-${composable.spec}";
+  machine-name = "composable-devnet-${devnet-spec.composable.spec}";
 in {
   resources.gceNetworks.composable-devnet = credentials // {
     name = "composable-devnet-network";
@@ -23,8 +22,8 @@ in {
   "${machine-name}" = { pkgs, resources, ... }:
     let
       devnet = pkgs.callPackage devnet-nix {
-        inherit composable;
-        inherit polkadot;
+        inherit (devnet-spec) composable;
+        inherit (devnet-spec) polkadot;
       };
     in {
       deployment = {
@@ -53,7 +52,7 @@ in {
         serviceConfig = {
           Type = "simple";
           User = "root";
-          ExecStart = "${devnet.script}/bin/run-${composable.spec}";
+          ExecStart = "${devnet.script}/bin/run-${devnet-spec.composable.spec}";
           Restart = "always";
           RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
         };
@@ -64,7 +63,7 @@ in {
       };
       services.nginx =
         let
-          runtimeName = pkgs.lib.removeSuffix "-dev" composable.spec;
+          runtimeName = pkgs.lib.removeSuffix "-dev" devnet-spec.composable.spec;
           domain = "${runtimeName}.devnets.composablefinance.ninja";
           virtualConfig =
               let
@@ -73,9 +72,9 @@ in {
                     name = prefix + node.name;
                   }));
                 routified-composable-nodes =
-                  routify-nodes "parachain/" composable.nodes;
+                  routify-nodes "parachain/" devnet-spec.composable.nodes;
                 routified-polkadot-nodes =
-                  routify-nodes "relaychain/" polkadot.nodes;
+                  routify-nodes "relaychain/" devnet-spec.polkadot.nodes;
                 routified-nodes =
                   routified-composable-nodes ++ routified-polkadot-nodes;
               in

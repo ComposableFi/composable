@@ -1,101 +1,117 @@
-{ pkgs, devnet-gce, ops-config, devnet-input }:
+{ devnet-spec,
+  credentials,
+  devnet,
+  devnet-nix,
+}:
 let
-  mk-composable = spec:
-    def: def // {
-      inherit spec;
-      nodes = [
-        {
-          name = "alice";
-          wsPort = 9944;
-          port = 30444;
-        }
-        {
-          name = "bob";
-          wsPort = 9955;
-          port = 30555;
-        }
-        {
-          name = "charlie";
-          wsPort = 9966;
-          port = 30666;
-        }
-        {
-          name = "dave";
-          wsPort = 9977;
-          port = 30777;
-        }
-      ];
-    };
-  mk-polkadot = spec:
-    def: def // {
-      inherit spec;
-      nodes = [
-        {
-          name = "alice";
-          wsPort = 9988;
-          port = 31100;
-        }
-        {
-          name = "bob";
-          wsPort = 9997;
-          port = 31200;
-        }
-        {
-          name = "charlie";
-          wsPort = 9996;
-          port = 31300;
-        }
-      ];
-    };
-  mk-latest = spec:
-    ({ composable, polkadot }: {
-      composable = mk-composable spec composable;
-      polkadot = mk-polkadot "rococo-local" polkadot;
-    }) devnet-binaries;
-  latest-dali = mk-latest "dali-dev";
-  latest-picasso = mk-latest "picasso-dev";
+  machine-name = "composable-devnet-${devnet-spec.composable.spec}";
 in {
-  dali = (pkgs.callPackage ../.nix/devnet-spec.nix {
-    inherit (latest-dali) composable;
-    inherit (latest-dali) polkadot;
-    inherit devnet-input;
-  });
-
-  picasso = (pkgs.callPackage ../.nix/devnet-spec.nix {
-    inherit (latest-picasso) composable;
-    inherit (latest-picasso) polkadot;
-    inherit devnet-input;
-  });
-
-  nixops = (pkgs.nixopsUnstable.override {
-    overrides = (self: super: {
-      # FIXME: probably useless once 2.0 is stable
-      nixops = super.nixops.overridePythonAttrs (_: {
-        src = pkgs.fetchgit {
-          url = "https://github.com/NixOS/nixops";
-          rev = "35ac02085169bc2372834d6be6cf4c1bdf820d09";
-          sha256 = "1jh0jrxyywjqhac2dvpj7r7isjv68ynbg7g6f6rj55raxcqc7r3j";
-        };
-      });
-    });
-  });
-
-  machines = 
-    let    
-      credentials = {
-        project = ops-config.project_id;
-        serviceAccount = ops-config.client_email;
-        accessKey = ops-config.private_key;
+  resources.gceNetworks.composable-devnet = credentials // {
+    name = "composable-devnet-network";
+    firewall = {
+      allow-http = {
+        targetTags = [ "http" ];
+        allowed.tcp = [ 80 ];
       };
-  in builtins.foldl' (machines:
-    { composable, polkadot }:
-    machines // devnet-gce {
-      inherit credentials;
-      inherit composable;
-      inherit polkadot;
-    }) {
-      inherit pkgs;
-      network.description = "Composable Devnet";
-      network.storage.legacy = { };
-    } [ latest-dali latest-picasso ];
+      allow-https = {
+        targetTags = [ "https" ];
+        allowed.tcp =  [ 443 ];
+      };
+    };
+  };
+  "${machine-name}" = { pkgs, resources, ... }:
+    let
+      devnet = pkgs.callPackage devnet-nix {
+        inherit (devnet-spec) composable;
+        inherit (devnet-spec) polkadot;
+      };
+    in {
+      deployment = {
+        targetEnv = "gce";
+        gce = credentials // {
+          machineName = machine-name;
+          network = resources.gceNetworks.composable-devnet;
+          region = "europe-central2-c";
+          instanceType = "n2-standard-4";
+          rootDiskSize = 50;
+          tags = [
+            "http"
+            "https"
+          ];
+        };
+      };
+      nix = {
+        gc.automatic = true;
+        autoOptimiseStore = true;
+      };
+      networking.firewall.allowedTCPPorts = [ 80 443 ];
+      systemd.services.composable-devnet = {
+        wantedBy = [ "multi-user.target" ];
+        after = [ "network.target" ];
+        description = "Composable Devnet";
+        serviceConfig = {
+          Type = "simple";
+          User = "root";
+          ExecStart = "${devnet.script}/bin/run-${devnet-spec.composable.spec}";
+          Restart = "always";
+          RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
+        };
+      };
+      security.acme = {
+        acceptTerms = true;
+        email = "hussein@composable.finance";
+      };
+      services.nginx =
+        let
+          runtimeName = pkgs.lib.removeSuffix "-dev" devnet-spec.composable.spec;
+          domain = "${runtimeName}.devnets.composablefinance.ninja";
+          virtualConfig =
+              let
+                routify-nodes = prefix:
+                  map (node: (node // {
+                    name = prefix + node.name;
+                  }));
+                routified-composable-nodes =
+                  routify-nodes "parachain/" devnet-spec.composable.nodes;
+                routified-polkadot-nodes =
+                  routify-nodes "relaychain/" devnet-spec.polkadot.nodes;
+                routified-nodes =
+                  routified-composable-nodes ++ routified-polkadot-nodes;
+              in
+                {
+                  enableACME = true;
+                  forceSSL = true;
+                  locations = builtins.foldl' (x: y: x // y) {
+                    "= /doc/" = {
+                      return = "301 https://${domain}/doc/composable/index.html";
+                    };
+                    "= /doc" = {
+                      return = "301 https://${domain}/doc/composable/index.html";
+                    };
+                    "/doc/" = {
+                      root = devnet.documentation;
+                    };
+                    "/" = {
+                      root = "${devnet.book}/book";
+                    };
+                  } (map (node: {
+                    "/${node.name}" = {
+                      proxyPass = "http://127.0.0.1:${builtins.toString node.wsPort}";
+                      proxyWebsockets = true;
+                      extraConfig = ''
+                        proxy_set_header Origin "";
+                        proxy_set_header Host 127.0.0.1:${builtins.toString node.wsPort};
+                      '';
+                    };
+                  }) routified-nodes);
+                };
+        in {
+          enable = true;
+          enableReload = true;
+          recommendedOptimisation = true;
+          recommendedGzipSettings = true;
+          serverNamesHashBucketSize = 128;
+          virtualHosts."${domain}" = virtualConfig;
+        };
+    };
 }

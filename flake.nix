@@ -25,12 +25,11 @@
       rust-toolchain = import ./.nix/rust-toolchain.nix;
     in rec {
       devnet-input = builtins.fromJSON (builtins.readFile ./devnet/devnet.json);      
-      devnet-gce  = import ./devnet/devnet-gce.nix {inherit devnet-spec;};
-      ops-config = builtins.fromJSON (builtins.readFile ./devnet/ops.json);
+      gce-input = builtins.fromJSON (builtins.readFile ./devnet/ops.json);
 
       packages = 
         let
-          devnet-deploy = pkgs.callPackage ./.nix/devnet-deploy {inherit devnet-input; inherit devnet-gce; inherit ops-config;};
+          devnet-deploy = pkgs.callPackage ./.nix/devnet.nix {inherit devnet-input; inherit gce-input;};
           nixopsConfigurations.default =
             let 
               pkgs = import nixpkgs {};
