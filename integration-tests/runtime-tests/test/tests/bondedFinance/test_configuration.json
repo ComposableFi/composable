@@ -21,6 +21,7 @@
       "enabled": true,
       "cancel_by_creator": true,
       "cancel_by_sudo": true
-    }
+    },
+    "HAL04": true
   }
 }
