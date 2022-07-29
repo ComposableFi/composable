@@ -20,7 +20,7 @@ import {
 import { useAppSelector } from "@/hooks/store";
 import BigNumber from "bignumber.js";
 import { getSigner, useExecutor, useParachainApi, useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
+import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils/constants";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { useSnackbar } from "notistack";
 import { resetAddLiquiditySlice, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
@@ -60,10 +60,6 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
   const executor = useExecutor();
 
   const addLiquiditySlice = useAddLiquiditySlice();
-
-  const {
-    amount,
-  } = useAppSelector((state) => state.pool.currentSupply);
 
   const onConfirmSupply = async () => {
     if (
@@ -142,7 +138,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
         </Box>
 
         <Typography variant="h5" mt={1.75}>
-          {`${amount}`}
+          {`${lpReceiveAmount.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}`}
         </Typography>
 
         <Typography variant="body1" color="text.secondary" mt={1.75}>

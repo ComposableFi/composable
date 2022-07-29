@@ -7,13 +7,14 @@ import {
 
 import BigNumber from "bignumber.js";
 import { MockedAsset } from "@/store/assets/assets.types";
+import millify from "millify";
 
 export type PreviewDetailsProps = {
   token1: MockedAsset | undefined,
   token2: MockedAsset | undefined,
   lpToRemove: BigNumber,
-  expectedRecieveAmountToken1: BigNumber,
-  expectedRecieveAmountToken2: BigNumber,
+  expectedReceiveAmountToken1: BigNumber,
+  expectedReceiveAmountToken2: BigNumber,
   price1: BigNumber,
   price2: BigNumber,
 } & BoxProps;
@@ -22,8 +23,8 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
   token1,
   token2,
   lpToRemove,
-  expectedRecieveAmountToken1,
-  expectedRecieveAmountToken2,
+  expectedReceiveAmountToken1,
+  expectedReceiveAmountToken2,
   price1,
   price2,
   ...rest
@@ -31,9 +32,8 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
 
   return (
     <Box {...rest}>
-
       <Label BalanceProps={{
-        balance: `${lpToRemove.eq(0) ? '-' : lpToRemove}`,
+        balance: `${lpToRemove.eq(0) ? '-' : millify(lpToRemove.toNumber())}`,
         BalanceTypographyProps: {
           variant: "body1",
         },
@@ -59,7 +59,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
 
       <Label mt={3}
         BalanceProps={{
-          balance: `${expectedRecieveAmountToken1.toFormat()}`,
+          balance: `${millify(expectedReceiveAmountToken1.toNumber())}`,
           BalanceTypographyProps: {
             variant: "body1",
           },
@@ -71,7 +71,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
       <Label
         mt={3}
         BalanceProps={{
-          balance: `${expectedRecieveAmountToken2.toFormat()}`,
+          balance: `${millify(expectedReceiveAmountToken2.toNumber())}`,
           BalanceTypographyProps: {
             variant: "body1",
           },

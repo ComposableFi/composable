@@ -1,4 +1,3 @@
-import { AssetId } from "@/defi/polkadot/types";
 import { StoreSlice } from "../types";
 import {
   PoolsSlice,
@@ -6,7 +5,7 @@ import {
 } from "./pools.types";
 import {
   putLiquidityBootstrappingPoolSpotPrice,
-  putPoolsList,
+  setPoolsListVerified,
 } from "./pools.utils";
 
 const createPoolsSlice: StoreSlice<PoolsSlice> = (set) => ({
@@ -25,12 +24,10 @@ const createPoolsSlice: StoreSlice<PoolsSlice> = (set) => ({
       unVerified: [],
     },
     setPoolsList: (
-      pool: AnyPoolArray,
-      poolType: "StableSwap" | "ConstantProduct" | "LiquidityBootstrapping",
-      verified: boolean
+      pools: AnyPoolArray
     ) =>
       set((prev: PoolsSlice) => ({
-        pools: putPoolsList(prev.pools, pool, poolType, verified),
+        pools: setPoolsListVerified(prev.pools, pools),
       })),
     setLiquidityBootstrappingPoolSpotPrice: (
       poolId: number,

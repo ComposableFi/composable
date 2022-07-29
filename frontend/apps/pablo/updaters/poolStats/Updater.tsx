@@ -13,7 +13,6 @@ const Updater = () => {
   const allLpRewardingPools = useAllLpTokenRewardingPools();
 
   useEffect(() => {
-    console.log(`[PoolStatsUpdater] Update Stats Effect (1)`);
     if (allLpRewardingPools.length) {
       let promises: Promise<PabloPoolQueryResponse[]>[] = [];
 
@@ -47,8 +46,6 @@ const Updater = () => {
   }, [allLpRewardingPools, putPoolStats]);
 
   useEffect(() => {
-    console.log(`[PoolStatsUpdater] Update Value Effect (2)`);
-
     if (allLpRewardingPools.length) {
       allLpRewardingPools.forEach((i) => {
 

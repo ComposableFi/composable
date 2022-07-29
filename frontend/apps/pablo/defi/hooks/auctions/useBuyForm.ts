@@ -1,14 +1,20 @@
+import { fetchAuctionTrades } from "@/defi/subsquid/auctions/helpers";
 import { LiquidityBootstrappingPool } from "@/defi/types";
-import { DEFAULT_NETWORK_ID, fetchSpotPrice, uniswapCalculator } from "@/defi/utils";
-import { fetchAuctions, fetchTrades } from "@/defi/utils/pablo/auctions";
+import { calculator, DEFAULT_NETWORK_ID, fetchSpotPrice } from "@/defi/utils";
+import { fetchAuctions } from "@/defi/utils/pablo/auctions";
 import { useAppSelector } from "@/hooks/store";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { useAssetBalance } from "@/store/assets/hooks";
 import useStore from "@/store/useStore";
-import BigNumber from "bignumber.js"
+import BigNumber from "bignumber.js";
 import { useSnackbar } from "notistack";
-import { useCallback, useMemo, useState } from "react";
-import { useDotSamaContext, useParachainApi, usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useDotSamaContext,
+  useParachainApi,
+  usePendingExtrinsic,
+  useSelectedAccount,
+} from "substrate-react";
 import { useAsset } from "../assets/useAsset";
 
 export const useBuyForm = (): {
@@ -18,8 +24,8 @@ export const useBuyForm = (): {
   setIsValidBaseInput: (validity: boolean) => void;
   isValidQuoteInput: boolean;
   setIsValidQuoteInput: (validity: boolean) => void;
-  quoteAsset: MockedAsset | undefined,
-  baseAsset: MockedAsset | undefined,
+  quoteAsset: MockedAsset | undefined;
+  baseAsset: MockedAsset | undefined;
   minimumReceived: BigNumber;
   baseAmount: BigNumber;
   quoteAmount: BigNumber;
@@ -27,20 +33,23 @@ export const useBuyForm = (): {
   slippageAmount: BigNumber;
   selectedAuction: LiquidityBootstrappingPool;
   isBuyButtonDisabled: boolean;
+  isProcessing: boolean;
   refreshAuctionData: () => void;
   isPendingBuy: boolean;
-  onChangeTokenAmount: (changedSide: "quote" | "base", amount: BigNumber) => Promise<{
-    minReceive: BigNumber;
-    tokenOutAmount: BigNumber;
-    feeCharged: BigNumber;
-    slippageAmount: BigNumber;
-  }>
+  onChangeTokenAmount: (
+    changedSide: "quote" | "base",
+    amount: BigNumber
+  ) => Promise<void>;
 } => {
   const { enqueueSnackbar } = useSnackbar();
   const { extensionStatus } = useDotSamaContext();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const { auctions: { activeLBP }, putStatsActiveLBP, putHistoryActiveLBP } = useStore();
+  const {
+    auctions: { activeLBP },
+    putStatsActiveLBP,
+    putHistoryActiveLBP,
+  } = useStore();
   const slippage = useAppSelector(
     (state) => state.settings.transactionSettings.tolerance
   );
@@ -48,8 +57,14 @@ export const useBuyForm = (): {
   const baseAsset = useAsset(activeLBP.pair.base.toString());
   const quoteAsset = useAsset(activeLBP.pair.quote.toString());
 
-  const balanceBase = useAssetBalance(DEFAULT_NETWORK_ID, baseAsset ? baseAsset.network[DEFAULT_NETWORK_ID] : "none")
-  const balanceQuote = useAssetBalance(DEFAULT_NETWORK_ID, quoteAsset ? quoteAsset.network[DEFAULT_NETWORK_ID] : "none")
+  const balanceBase = useAssetBalance(
+    DEFAULT_NETWORK_ID,
+    baseAsset ? baseAsset.network[DEFAULT_NETWORK_ID] : "none"
+  );
+  const balanceQuote = useAssetBalance(
+    DEFAULT_NETWORK_ID,
+    quoteAsset ? quoteAsset.network[DEFAULT_NETWORK_ID] : "none"
+  );
 
   const [isValidBaseInput, setIsValidBaseInput] = useState(false);
   const [isValidQuoteInput, setIsValidQuoteInput] = useState(false);
@@ -61,47 +76,50 @@ export const useBuyForm = (): {
   const [tokenAmounts, setTokenAmounts] = useState({
     baseAmount: new BigNumber(0),
     quoteAmount: new BigNumber(0),
-  })
+  });
 
-  const resetTokenAmounts = () => setTokenAmounts({
-    baseAmount: new BigNumber(0),
-    quoteAmount: new BigNumber(0)
-  })
+  const resetTokenAmounts = () =>
+    setTokenAmounts({
+      baseAmount: new BigNumber(0),
+      quoteAmount: new BigNumber(0),
+    });
+
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    if (selectedAccount) {
+      setIsProcessing(true);
+      resetTokenAmounts();
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 500);
+    }
+  }, [selectedAccount]);
 
   const onChangeTokenAmount = async (
     changedSide: "base" | "quote",
     amount: BigNumber
   ) => {
     try {
-      if (
-        parachainApi &&
-        activeLBP
-      ) {
+      setIsProcessing(true);
+      if (parachainApi && activeLBP) {
         const { base, quote } = activeLBP.pair;
         const { feeRate } = activeLBP.feeConfig;
         let feePercentage = new BigNumber(feeRate).toNumber();
-  
+
         let pair = { base: base.toString(), quote: quote.toString() };
-  
-        const oneBaseInQuote = await fetchSpotPrice(
+        const spotPrice = await fetchSpotPrice(
           parachainApi,
           pair,
           activeLBP.poolId
         );
         const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
-          uniswapCalculator(
-            changedSide,
-            false,
-            amount,
-            oneBaseInQuote,
-            slippage,
-            feePercentage
-          );
-  
+          calculator(changedSide, amount, spotPrice, slippage, feePercentage);
+
         if (changedSide === "base" && tokenOutAmount.gt(balanceQuote)) {
-          throw new Error('Insufficient Balance');
+          throw new Error("Insufficient Balance");
         }
-  
+
         setTokenAmounts({
           quoteAmount: changedSide === "base" ? tokenOutAmount : amount,
           baseAmount: changedSide === "quote" ? tokenOutAmount : amount,
@@ -109,25 +127,17 @@ export const useBuyForm = (): {
         setMinimumReceived(minReceive);
         setFeeCharged(feeChargedAmount);
         setSlippageAmount(slippageAmount);
-        return {
-          minReceive,
-          tokenOutAmount,
-          feeCharged,
-          slippageAmount,
-        };
       } else {
-        throw new Error('Invalid LBP');
+        throw new Error("Invalid LBP");
       }
     } catch (err: any) {
       console.error(err.message);
       enqueueSnackbar(err.message);
       resetTokenAmounts();
-      return {
-        minReceive: new BigNumber(0),
-        tokenOutAmount: new BigNumber(0),
-        feeCharged: new BigNumber(0),
-        slippageAmount: new BigNumber(0),
-      };
+    } finally {
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 500);
     }
   };
 
@@ -135,14 +145,14 @@ export const useBuyForm = (): {
     const { poolId } = activeLBP;
     if (parachainApi && poolId !== -1) {
       const stats = await fetchAuctions(parachainApi, activeLBP);
-      const trades = await fetchTrades(activeLBP);
+      const trades = await fetchAuctionTrades(activeLBP);
       putStatsActiveLBP(stats);
       putHistoryActiveLBP(trades);
     }
-  }, [activeLBP, putHistoryActiveLBP, putStatsActiveLBP, parachainApi])
+  }, [activeLBP, putHistoryActiveLBP, putStatsActiveLBP, parachainApi]);
 
   const { baseAmount, quoteAmount } = tokenAmounts;
-  
+
   const isPendingBuy = usePendingExtrinsic(
     "exchange",
     "dexRouter",
@@ -150,9 +160,13 @@ export const useBuyForm = (): {
   );
 
   const isBuyButtonDisabled = useMemo(() => {
-    return extensionStatus !== "connected" || !isValidBaseInput || !isValidQuoteInput || isPendingBuy
-  }, [isValidBaseInput, isValidQuoteInput, extensionStatus, isPendingBuy])
-
+    return (
+      extensionStatus !== "connected" ||
+      !isValidBaseInput ||
+      !isValidQuoteInput ||
+      isPendingBuy
+    );
+  }, [isValidBaseInput, isValidQuoteInput, extensionStatus, isPendingBuy]);
 
   return {
     balanceBase,
@@ -172,6 +186,7 @@ export const useBuyForm = (): {
     selectedAuction: activeLBP,
     refreshAuctionData,
     onChangeTokenAmount,
-    isPendingBuy
-  }
-}
+    isPendingBuy,
+    isProcessing,
+  };
+};

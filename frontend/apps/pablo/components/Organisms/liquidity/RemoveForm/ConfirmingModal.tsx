@@ -76,7 +76,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
         executor.execute(
           parachainApi.tx.pablo.removeLiquidity(
             parachainApi.createType('u128', poolId), // Pool ID
-            parachainApi.createType('u128', lpRemoveAmount.toString()), // LP Receive
+            parachainApi.createType('u128', lpRemoveAmount.dp(0).toString()), // LP Receive
             parachainApi.createType('u128', 0), // Min Base
             parachainApi.createType('u128', 0) // Min Quote
           ),

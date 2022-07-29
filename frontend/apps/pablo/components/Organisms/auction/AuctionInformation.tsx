@@ -11,6 +11,8 @@ import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { useAuctionSpotPrice } from "@/defi/hooks/auctions";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { LiquidityBootstrappingPool } from "@/defi/types";
+import useBlockNumber from "@/defi/hooks/useBlockNumber";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 export type AuctionInformationProps = {
   auction: LiquidityBootstrappingPool;
@@ -27,11 +29,12 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
   ...rest
 }) => {
   const theme = useTheme();
-  const currentTimestamp = Date.now();
+
+  const currentBlock = useBlockNumber(DEFAULT_NETWORK_ID);
   const isActive: boolean =
-    auction.sale.start <= currentTimestamp &&
-    auction.sale.end >= currentTimestamp;
-  const isEnded: boolean = auction.sale.end < currentTimestamp;
+    currentBlock.gte(auction.sale.startBlock) &&
+    currentBlock.lte(auction.sale.endBlock);
+  const isEnded: boolean = currentBlock.gt(auction.sale.endBlock);
 
   const standardPageSize = {
     xs: 12,

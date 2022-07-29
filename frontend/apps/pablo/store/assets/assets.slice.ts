@@ -62,8 +62,8 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
       karura: "none",
       picasso: "130",
     },
-  },
-];
+  }
+]
 
 const createAssetsSlice: StoreSlice<AssetsSlice> = (set) => ({
   supportedAssets: SUPPORTED_ASSETS,

@@ -6,36 +6,26 @@ import {
 import produce from "immer";
 import { PoolsSlice } from "./pools.types";
 
-export const putPoolsList = (
+export const setPoolsListVerified = (
   liquidityPoolsSlice: PoolsSlice["pools"],
-  poolsList:
-    | ConstantProductPool[]
-    | LiquidityBootstrappingPool[]
-    | StableSwapPool[],
-  poolType: "StableSwap" | "ConstantProduct" | "LiquidityBootstrapping",
-  verified: boolean
+  poolsList: Array<
+    ConstantProductPool | LiquidityBootstrappingPool | StableSwapPool
+  >
 ) => {
   return produce(liquidityPoolsSlice, (draft) => {
-    if (poolType === "ConstantProduct") {
-      if (verified)
-        draft.constantProductPools.verified =
-          poolsList as ConstantProductPool[];
-      if (!verified)
-        draft.constantProductPools.unVerified =
-          poolsList as ConstantProductPool[];
-    } else if (poolType === "LiquidityBootstrapping") {
-      if (verified)
-        draft.liquidityBootstrappingPools.verified =
-          poolsList as LiquidityBootstrappingPool[];
-      if (!verified)
-        draft.liquidityBootstrappingPools.unVerified =
-          poolsList as LiquidityBootstrappingPool[];
-    } else if (poolType === "StableSwap") {
-      if (verified)
-        draft.stableSwapPools.verified = poolsList as StableSwapPool[];
-      if (!verified)
-        draft.stableSwapPools.unVerified = poolsList as StableSwapPool[];
-    }
+    draft.constantProductPools.verified = [];
+    draft.stableSwapPools.verified = [];
+    draft.liquidityBootstrappingPools.verified = [];
+
+    poolsList.forEach((pool) => {
+      if ((pool as LiquidityBootstrappingPool).sale) {
+        draft.liquidityBootstrappingPools.verified.push(pool as LiquidityBootstrappingPool);
+      } else if ((pool as ConstantProductPool).baseWeight) {
+        draft.constantProductPools.verified.push(pool as ConstantProductPool);
+      } else if ((pool as StableSwapPool).amplificationCoefficient) {
+        draft.stableSwapPools.verified.push(pool as StableSwapPool);
+      }
+    });
   });
 };
 

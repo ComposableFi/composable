@@ -15,7 +15,6 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { BoxProps } from "@mui/system";
 import BigNumber from "bignumber.js";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -25,16 +24,17 @@ import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
-import { fetchSpotPrice, toChainUnits } from "@/defi/utils";
-import { useParachainApi } from "substrate-react";
+import { fetchSpotPrice, fromRemoveLiquiditySimulationResult, toChainUnits } from "@/defi/utils";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 
-export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
+export const RemoveLiquidityForm = ({ ...rest }) => {
   const theme = useTheme();
   const router = useRouter();
   const dispatch = useDispatch();
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { poolId } = useRemoveLiquidityState();
   const { lpBalance, baseAsset, quoteAsset } = useLiquidityPoolDetails(poolId);
 
@@ -73,23 +73,53 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     }
   }, [poolId, baseAsset, quoteAsset, parachainApi]);
 
-  // useEffect(() => {
-  //   if (parachainApi && debouncedPercentage > 0 && lpBalance.gt(0)) {
-  //     const selectedLpAmount = toChainUnits(
-  //       lpBalance.times(debouncedPercentage / 100)
-  //     );
-  //     (parachainApi.rpc as any).pablo
-  //       .redeemableAssetForGivenLpTokens(poolId, selectedLpAmount)
-  //       .then((response: any) => {
-  //         console.log(response);
-  //       }).catch((err: any) => {
-  //         console.error(err)
-  //       });
-  //   } else {
-  //     setExpectedRemoveAmountBase(new BigNumber(0));
-  //     setExpectedRemoveAmountQuote(new BigNumber(0));
-  //   }
-  // }, [parachainApi, debouncedPercentage, lpBalance, poolId]);
+  useEffect(() => {
+    if (
+      parachainApi &&
+      debouncedPercentage > 0 &&
+      lpBalance.gt(0) &&
+      selectedAccount &&
+      baseAsset &&
+      quoteAsset
+    ) {
+      const selectedLpAmount = toChainUnits(
+        lpBalance.times(debouncedPercentage / 100)
+      );
+
+      const b = baseAsset.network[DEFAULT_NETWORK_ID].toString();
+      const q = quoteAsset.network[DEFAULT_NETWORK_ID].toString();
+
+      // @ts-ignore
+      parachainApi.rpc.pablo
+        .simulateRemoveLiquidity(
+          parachainApi.createType("AccountId32", selectedAccount.address),
+          parachainApi.createType("PalletPabloPoolId", poolId.toString()),
+          selectedLpAmount.dp(0).toString(),
+          {
+            [b]: "0",
+            [q]: "0",
+          }
+        )
+        .then((response: any) => {
+          const remove = fromRemoveLiquiditySimulationResult(response.toJSON())
+          setExpectedRemoveAmountBase(remove[b])
+          setExpectedRemoveAmountQuote(remove[q])
+        })
+        .catch((err: any) => {
+          setExpectedRemoveAmountBase(new BigNumber(0))
+          setExpectedRemoveAmountQuote(new BigNumber(0))
+          console.error(err);
+        });
+    }
+  }, [
+    parachainApi,
+    debouncedPercentage,
+    lpBalance,
+    poolId,
+    selectedAccount,
+    baseAsset,
+    quoteAsset,
+  ]);
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -114,7 +144,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
   useEffect(() => {
     dispatch(setMessage({}));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -200,8 +230,8 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           mt={4}
           token1={baseAsset}
           token2={quoteAsset}
-          expectedRecieveAmountToken1={expectedRemoveAmountBase}
-          expectedRecieveAmountToken2={expectedRemoveAmountQuote}
+          expectedReceiveAmountToken1={expectedRemoveAmountBase}
+          expectedReceiveAmountToken2={expectedRemoveAmountQuote}
           price1={priceOfBase}
           price2={priceOfQuote}
         />

@@ -11,6 +11,7 @@ export const HOURS = 60 * MINUTES;
 export const DAYS = 24 * HOURS;
 
 export const APOLLO_UPDATE_BLOCKS = 6;
+export const DEFAULT_UI_FORMAT_DECIMALS = 4;
 
 export const DUMMY_LAUNCH_DESCRIPTION = (
   name: string = "Picasso",

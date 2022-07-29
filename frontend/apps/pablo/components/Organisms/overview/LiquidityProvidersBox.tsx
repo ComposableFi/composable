@@ -5,16 +5,15 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
   BoxProps,
 } from "@mui/material";
-import { PairAsset } from "@/components/Atoms";
 import React from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "../BoxWrapper";
 import { usePoolsWithLpBalance } from "@/store/hooks/overview/usePoolsWithLpBalance";
 import { NoPositionsPlaceholder } from "./NoPositionsPlaceholder";
 import { OVERVIEW_ERRORS } from "./errors";
+import LiquidityProviderPositionRow from "./LiquidityProviderPositionRow";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -37,18 +36,18 @@ const tableHeaders: TableHeader[] = [
 export const LiquidityProvidersBox: React.FC<BoxProps> = ({
   ...boxProps
 }) => {
-  const liquidityProvided = usePoolsWithLpBalance();
+  const pools = usePoolsWithLpBalance();
 
   return (
     <BoxWrapper
       title="Liquidity provider positions"
       {...boxProps}
     >
-      {liquidityProvided.length === 0 && (
+      {pools.length === 0 && (
         <NoPositionsPlaceholder text={OVERVIEW_ERRORS.NO_BOND} />
       )}
 
-      {liquidityProvided.length > 0 && <TableContainer>
+      {pools.length > 0 && <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
@@ -60,34 +59,8 @@ export const LiquidityProvidersBox: React.FC<BoxProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {liquidityProvided.map(({baseAsset, quoteAsset, apr, lpPrice, totalVolume, lpBalance}) => (
-              <TableRow key={`${baseAsset?.symbol}-${quoteAsset?.symbol}`}>
-                <TableCell align="left">
-                  {baseAsset && quoteAsset && 
-                  <PairAsset
-                    assets={[
-                      {icon: baseAsset.icon, label: baseAsset.symbol},
-                      {icon: quoteAsset.icon, label: quoteAsset.symbol},
-                    ]}
-                    separator="/"
-                  />
-                  }
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body1">${lpPrice ? lpPrice.toFormat(2) : " - "}</Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body1">{lpBalance.toFormat(2)}</Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body1">
-                    ${lpPrice.times(lpBalance).toFormat(2)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body1">{apr.toFormat(2)}%</Typography>
-                </TableCell>
-              </TableRow>
+            {pools.map((pool, index) => (
+              <LiquidityProviderPositionRow pool={pool} key={index} />
             ))}
           </TableBody>
         </Table>

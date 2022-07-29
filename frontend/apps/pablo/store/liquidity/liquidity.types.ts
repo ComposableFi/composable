@@ -1,16 +1,10 @@
+import BigNumber from "bignumber.js";
+
 export interface LiquiditySlice {
-    poolLiquidity: {
-        [poolId: number]: {
-            tokenAmounts: {
-                baseAmount: string;
-                quoteAmount: string;
-            },
-            value: {
-                baseValue: string;
-                quoteValue: string;
-            }
-        }
-    },
+    liquidityInPool: Record<string, {
+        baseAmount: BigNumber;
+        quoteAmount: BigNumber;
+    }>,
     userProvidedLiquidity: {
         [poolId: number]: {
             tokenAmounts: {
@@ -22,8 +16,8 @@ export interface LiquiditySlice {
     userLpBalances: {
         [poolId: number]: string;
     },
-    setTokenAmountInLiquidityPool: (poolId: number, amounts: { baseAmount?: string; quoteAmount?: string }) => void;
-    setTokenValueInLiquidityPool: (poolId: number, amounts: { baseValue?: string; quoteValue?: string }) => void;
+    putLiquidityInPoolRecord: (record: Record<string, { baseAmount: BigNumber; quoteAmount: BigNumber }>) => void;
+    updatePoolLiquidity: (poolId: string, amounts: { baseAmount: BigNumber; quoteAmount: BigNumber }) => void;
     setUserProvidedTokenAmountInLiquidityPool: (poolId: number, amounts: { baseAmount?: string; quoteAmount?: string }) => void;
     updateUserProvidedTokenAmountInLiquidityPool: (poolId: number, amounts: { baseAmount?: string; quoteAmount?: string }) => void;
     setUserLpBalance: (poolId: number, balance: string) => void;

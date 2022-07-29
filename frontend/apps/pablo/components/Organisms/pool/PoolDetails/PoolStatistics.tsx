@@ -9,6 +9,9 @@ import {
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { PoolDetailsProps } from "./index";
 import { BaseAsset } from "@/components/Atoms";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import millify from "millify";
+import { calculatePoolTotalValueLocked } from "@/defi/utils";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -16,16 +19,11 @@ const twoColumnPageSize = {
 };
 
 type ItemProps = {
-  label: string,
-  value?: string,
+  label: string;
+  value?: string;
 } & BoxProps;
 
-const Item: React.FC<ItemProps> = ({
-  label,
-  value,
-  children,
-  ...boxProps
-}) => {
+const Item: React.FC<ItemProps> = ({ label, value, children, ...boxProps }) => {
   const theme = useTheme();
   return (
     <Box
@@ -39,7 +37,8 @@ const Item: React.FC<ItemProps> = ({
       sx={{
         background: theme.palette.gradient.secondary,
       }}
-      {...boxProps}>
+      {...boxProps}
+    >
       <Typography variant="body1" color="text.secondary">
         {label}
       </Typography>
@@ -51,26 +50,36 @@ const Item: React.FC<ItemProps> = ({
       {children && children}
     </Box>
   );
-}
+};
 
 export const PoolStatistics: React.FC<PoolDetailsProps> = ({
   poolId,
   ...boxProps
 }) => {
-  const {
-    poolStats,
-    tokensLocked,
-  } = useLiquidityPoolDetails(poolId);
+  const { pool, poolStats, tokensLocked } = useLiquidityPoolDetails(poolId);
+
+  const baseAssetPriceUSD = useUSDPriceByAssetId(
+    pool?.pair.base.toString() ?? "-1"
+  );
+  const quoteAssetPriceUSD = useUSDPriceByAssetId(
+    pool?.pair.quote.toString() ?? "-1"
+  );
 
   return (
     <Box {...boxProps}>
       <Grid container spacing={4}>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Pool value" value={`$${
-            tokensLocked.value.baseValue.plus(
-              tokensLocked.value.quoteValue
-            ).toFixed(2)
-          }`} />
+          <Item
+            label="Pool value"
+            value={`$${millify(
+              calculatePoolTotalValueLocked(
+                tokensLocked.tokenAmounts.baseAmount,
+                tokensLocked.tokenAmounts.quoteAmount,
+                baseAssetPriceUSD,
+                quoteAssetPriceUSD
+              ).toNumber()
+            )}`}
+          />
         </Grid>
         <Grid item {...twoColumnPageSize}>
           <Item label="Rewards left" py={2}>
@@ -95,10 +104,12 @@ export const PoolStatistics: React.FC<PoolDetailsProps> = ({
           <Item label="APR" value={`${poolStats.apr}%`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Transactions (24H)" value={`${poolStats._24HrTransactionCount}`} />
+          <Item
+            label="Transactions (24H)"
+            value={`${poolStats._24HrTransactionCount}`}
+          />
         </Grid>
       </Grid>
     </Box>
   );
 };
-

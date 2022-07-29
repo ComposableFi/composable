@@ -1,7 +1,7 @@
-import { DEFAULT_NETWORK_ID, matchAssetByPicassoId } from "@/defi/utils";
+import { matchAssetByPicassoId } from "@/defi/utils";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { LiquidityBootstrappingPool } from "@/defi/types";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 
@@ -9,9 +9,12 @@ type LBPWithAssets = LiquidityBootstrappingPool & { spotPrice: BigNumber; } & { 
 
 export const useLiquidityBootstrappingPools =
   (): {
+    auctionsTableLimit: number,
     liquidityBootstrappingPools: LBPWithAssets[];
     setActiveAuctionsPool: (lbPool: LiquidityBootstrappingPool) => void;
   } => {
+    const [auctionsTableLimit, setAuctionsTableLimit] = useState(4);
+
     const {
       pools: {
         liquidityBootstrappingPools: { verified, spotPrices },
@@ -43,5 +46,5 @@ export const useLiquidityBootstrappingPools =
       return pools;
     }, [verified, spotPrices, supportedAssets]);
 
-    return { liquidityBootstrappingPools: lbPools, setActiveAuctionsPool };
+    return { liquidityBootstrappingPools: lbPools, setActiveAuctionsPool, auctionsTableLimit };
   };
