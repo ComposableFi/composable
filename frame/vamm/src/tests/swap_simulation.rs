@@ -3,9 +3,8 @@ use crate::{
 	pallet::{Error, VammMap},
 	tests::{
 		constants::{
-			DEFAULT_BASE_REQUIRED_FOR_REMOVING_QUOTE, DEFAULT_BASE_RETURNED_AFTER_ADDING_QUOTE,
-			DEFAULT_QUOTE_REQUIRED_FOR_REMOVING_BASE, DEFAULT_QUOTE_RETURNED_AFTER_ADDING_BASE,
-			RUN_CASES,
+			BASE_REQUIRED_FOR_REMOVING_QUOTE, BASE_RETURNED_AFTER_ADDING_QUOTE,
+			QUOTE_REQUIRED_FOR_REMOVING_BASE, QUOTE_RETURNED_AFTER_ADDING_BASE, RUN_CASES,
 		},
 		helpers::{run_for_seconds, with_swap_context},
 		helpers_propcompose::{any_swap_config, any_vamm_state},
@@ -104,11 +103,11 @@ fn should_return_correct_value_add_base() {
 	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
 		assert_ok!(
 			TestPallet::swap_simulation(&SwapConfig {
-				asset: AssetType::Quote,
+				asset: AssetType::Base,
 				direction: Direction::Add,
 				..swap_config
 			}),
-			SwapOutput { output: DEFAULT_QUOTE_RETURNED_AFTER_ADDING_BASE, negative: false }
+			SwapOutput { output: QUOTE_RETURNED_AFTER_ADDING_BASE, negative: false }
 		);
 	});
 }
@@ -122,7 +121,7 @@ fn should_return_correct_value_remove_base() {
 				direction: Direction::Remove,
 				..swap_config
 			}),
-			SwapOutput { output: DEFAULT_QUOTE_REQUIRED_FOR_REMOVING_BASE, negative: false }
+			SwapOutput { output: QUOTE_REQUIRED_FOR_REMOVING_BASE, negative: true }
 		);
 	});
 }
@@ -136,7 +135,7 @@ fn should_return_correct_value_add_quote() {
 				direction: Direction::Add,
 				..swap_config
 			}),
-			SwapOutput { output: DEFAULT_BASE_RETURNED_AFTER_ADDING_QUOTE, negative: false }
+			SwapOutput { output: BASE_RETURNED_AFTER_ADDING_QUOTE, negative: false }
 		);
 	});
 }
@@ -150,7 +149,7 @@ fn should_return_correct_value_remove_quote() {
 				direction: Direction::Remove,
 				..swap_config
 			}),
-			SwapOutput { output: DEFAULT_BASE_REQUIRED_FOR_REMOVING_QUOTE, negative: true }
+			SwapOutput { output: BASE_REQUIRED_FOR_REMOVING_QUOTE, negative: true }
 		);
 	});
 }

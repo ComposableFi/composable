@@ -2,7 +2,14 @@ use crate::{
 	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
-		constants::RUN_CASES,
+		constants::{
+			BASE_ASSET_RESERVES_AFTER_ADDING_BASE, BASE_ASSET_RESERVES_AFTER_ADDING_QUOTE,
+			BASE_ASSET_RESERVES_AFTER_REMOVING_BASE, BASE_ASSET_RESERVES_AFTER_REMOVING_QUOTE,
+			BASE_REQUIRED_FOR_REMOVING_QUOTE, BASE_RETURNED_AFTER_ADDING_QUOTE,
+			QUOTE_ASSET_RESERVES_AFTER_ADDING_BASE, QUOTE_ASSET_RESERVES_AFTER_ADDING_QUOTE,
+			QUOTE_ASSET_RESERVES_AFTER_REMOVING_BASE, QUOTE_ASSET_RESERVES_AFTER_REMOVING_QUOTE,
+			QUOTE_REQUIRED_FOR_REMOVING_BASE, QUOTE_RETURNED_AFTER_ADDING_BASE, RUN_CASES,
+		},
 		helpers::{create_vamm, run_for_seconds, run_to_block, swap_config},
 		helpers_propcompose::{
 			any_swap_config, any_vamm_state, balance_range_lower_half, balance_range_upper_half,
@@ -35,9 +42,9 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_base() {
 
 		let swap = TestPallet::swap(&swap_config.into());
 		let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
-		assert_ok!(swap, SwapOutput { output: 16666666666666666667, negative: false });
-		assert_eq!(vamm_after_swap.base_asset_reserves, 3000000000000000000);
-		assert_eq!(vamm_after_swap.quote_asset_reserves, 33333333333333333333);
+		assert_ok!(swap, SwapOutput { output: QUOTE_RETURNED_AFTER_ADDING_BASE, negative: false });
+		assert_eq!(vamm_after_swap.base_asset_reserves, BASE_ASSET_RESERVES_AFTER_ADDING_BASE);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, QUOTE_ASSET_RESERVES_AFTER_ADDING_BASE);
 		assert_eq!(
 			vamm_after_swap.base_asset_reserves,
 			vamm_config.base_asset_reserves + swap_config.input_amount
@@ -75,9 +82,9 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_quote() {
 
 		let swap = TestPallet::swap(&swap_config.into());
 		let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
-		assert_ok!(swap, SwapOutput { output: 39215686274509804, negative: false });
-		assert_eq!(vamm_after_swap.base_asset_reserves, 1960784313725490196);
-		assert_eq!(vamm_after_swap.quote_asset_reserves, 51000000000000000000);
+		assert_ok!(swap, SwapOutput { output: BASE_RETURNED_AFTER_ADDING_QUOTE, negative: false });
+		assert_eq!(vamm_after_swap.base_asset_reserves, BASE_ASSET_RESERVES_AFTER_ADDING_QUOTE);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, QUOTE_ASSET_RESERVES_AFTER_ADDING_QUOTE);
 		assert_eq!(
 			vamm_after_swap.quote_asset_reserves,
 			vamm_config.quote_asset_reserves + swap_config.input_amount
@@ -115,9 +122,9 @@ fn should_succeed_returning_correct_values_and_emitting_events_remove_base() {
 
 		let swap = TestPallet::swap(&swap_config.into());
 		let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
-		assert_ok!(swap, SwapOutput { output: 50000000000000000000, negative: false });
-		assert_eq!(vamm_after_swap.base_asset_reserves, 1000000000000000000);
-		assert_eq!(vamm_after_swap.quote_asset_reserves, 100000000000000000000);
+		assert_ok!(swap, SwapOutput { output: QUOTE_REQUIRED_FOR_REMOVING_BASE, negative: true });
+		assert_eq!(vamm_after_swap.base_asset_reserves, BASE_ASSET_RESERVES_AFTER_REMOVING_BASE);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, QUOTE_ASSET_RESERVES_AFTER_REMOVING_BASE);
 		assert_eq!(
 			vamm_after_swap.quote_asset_reserves,
 			vamm_config.quote_asset_reserves + swap.unwrap().output
@@ -155,9 +162,9 @@ fn should_succeed_returning_correct_values_and_emitting_events_remove_quote() {
 
 		let swap = TestPallet::swap(&swap_config.into());
 		let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
-		assert_ok!(swap, SwapOutput { output: 40816326530612244, negative: true });
-		assert_eq!(vamm_after_swap.base_asset_reserves, 2040816326530612244);
-		assert_eq!(vamm_after_swap.quote_asset_reserves, 49000000000000000000);
+		assert_ok!(swap, SwapOutput { output: BASE_REQUIRED_FOR_REMOVING_QUOTE, negative: true });
+		assert_eq!(vamm_after_swap.base_asset_reserves, BASE_ASSET_RESERVES_AFTER_REMOVING_QUOTE);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, QUOTE_ASSET_RESERVES_AFTER_REMOVING_QUOTE);
 		assert_eq!(
 			vamm_after_swap.base_asset_reserves,
 			vamm_config.base_asset_reserves + swap.unwrap().output

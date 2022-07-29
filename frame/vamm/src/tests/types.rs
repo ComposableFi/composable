@@ -2,8 +2,7 @@ use crate::{
 	mock::MockRuntime,
 	pallet::{self},
 	tests::constants::{
-		DEFAULT_BASE_ASSET_RESERVES, DEFAULT_INPUT_AMOUNT, DEFAULT_PEG_MULTIPLIER,
-		DEFAULT_QUOTE_ASSET_RESERVES, DEFAULT_TWAP_PERIOD,
+		BASE_ASSET_RESERVES, INPUT_AMOUNT, PEG_MULTIPLIER, QUOTE_ASSET_RESERVES, TWAP_PERIOD,
 	},
 };
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, VammConfig};
@@ -28,7 +27,7 @@ impl Default for TestSwapConfig<VammId, Balance> {
 		TestSwapConfig {
 			vamm_id: Zero::zero(),
 			asset: AssetType::Base,
-			input_amount: DEFAULT_INPUT_AMOUNT,
+			input_amount: INPUT_AMOUNT,
 			direction: Direction::Add,
 			output_amount_limit: Zero::zero(),
 		}
@@ -58,10 +57,10 @@ pub struct TestVammConfig<Balance, Moment> {
 impl Default for TestVammConfig<Balance, Timestamp> {
 	fn default() -> TestVammConfig<Balance, Timestamp> {
 		TestVammConfig {
-			base_asset_reserves: DEFAULT_BASE_ASSET_RESERVES,
-			quote_asset_reserves: DEFAULT_QUOTE_ASSET_RESERVES,
-			peg_multiplier: DEFAULT_PEG_MULTIPLIER,
-			twap_period: DEFAULT_TWAP_PERIOD,
+			base_asset_reserves: BASE_ASSET_RESERVES,
+			quote_asset_reserves: QUOTE_ASSET_RESERVES,
+			peg_multiplier: PEG_MULTIPLIER,
+			twap_period: TWAP_PERIOD,
 		}
 	}
 }

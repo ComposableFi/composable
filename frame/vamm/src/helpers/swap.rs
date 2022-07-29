@@ -158,6 +158,10 @@ impl<T: Config> Pallet<T> {
 			&config.direction,
 			vamm_state,
 		)?;
+		let negative = match config.direction {
+			Direction::Add => false,
+			Direction::Remove => true,
+		};
 		let swap_output = SwapOutput {
 			output: Self::calculate_quote_asset_amount_swapped(
 				&initial_quote_asset_reserve,
@@ -165,7 +169,7 @@ impl<T: Config> Pallet<T> {
 				&config.direction,
 				vamm_state,
 			)?,
-			negative: false,
+			negative,
 		};
 
 		Ok(ComputeSwap {
