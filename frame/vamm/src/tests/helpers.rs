@@ -54,12 +54,6 @@ pub const fn as_decimal_inner(x: u128) -> Balance {
 	x * Decimal::DIV
 }
 
-pub fn as_decimal_from_fraction(n: u128, d: u128) -> Decimal {
-	let n = as_decimal(n);
-	let d = as_decimal(d);
-	n / d
-}
-
 // ----------------------------------------------------------------------------------------------------
 //                                    Vamm Specific Helper Functions
 // ----------------------------------------------------------------------------------------------------

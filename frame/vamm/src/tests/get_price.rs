@@ -3,7 +3,7 @@ use crate::{
 	pallet::Error,
 	tests::{
 		constants::RUN_CASES,
-		helpers::{any_sane_asset_amount, as_decimal, as_decimal_from_fraction, run_for_seconds},
+		helpers::{any_sane_asset_amount, as_decimal, run_for_seconds},
 		types::Timestamp,
 	},
 	types::VammState,
@@ -11,7 +11,7 @@ use crate::{
 use composable_traits::vamm::{AssetType, Vamm as VammTrait};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
-use sp_runtime::FixedPointNumber;
+use sp_runtime::{FixedPointNumber, FixedU128};
 
 // -------------------------------------------------------------------------------------------------
 //                                           Unit Tests
@@ -69,7 +69,10 @@ fn should_succeed_returning_correct_price() {
 		.build()
 		.execute_with(|| {
 			assert_ok!(TestPallet::get_price(0, AssetType::Base), as_decimal(2));
-			assert_ok!(TestPallet::get_price(0, AssetType::Quote), as_decimal_from_fraction(5, 10));
+			assert_ok!(
+				TestPallet::get_price(0, AssetType::Quote),
+				FixedU128::saturating_from_rational(5, 10)
+			);
 		});
 }
 

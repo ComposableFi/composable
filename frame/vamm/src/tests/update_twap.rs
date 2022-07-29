@@ -3,10 +3,7 @@ use crate::{
 	pallet::{self, Error},
 	tests::{
 		constants::RUN_CASES,
-		helpers::{
-			any_sane_asset_amount, as_decimal, as_decimal_from_fraction, run_for_seconds,
-			twap_update_delay,
-		},
+		helpers::{any_sane_asset_amount, as_decimal, run_for_seconds, twap_update_delay},
 		helpers_propcompose::any_vamm_state,
 		types::{Decimal, Timestamp},
 	},
@@ -16,7 +13,7 @@ use composable_tests_helpers::test::helper::default_acceptable_computation_error
 use composable_traits::vamm::{Vamm as VammTrait, VammConfig};
 use frame_support::{assert_noop, assert_ok, assert_storage_noop};
 use proptest::prelude::*;
-use sp_runtime::FixedPointNumber;
+use sp_runtime::{FixedPointNumber, FixedU128};
 
 // ----------------------------------------------------------------------------------------------------
 //                                           Prop Compose
@@ -38,8 +35,8 @@ prop_compose! {
 
 #[test]
 fn should_succeed_computing_correct_reciprocal_twap() {
-	assert_eq!(as_decimal(2).reciprocal().unwrap(), as_decimal_from_fraction(50, 100));
-	assert_eq!(as_decimal(50).reciprocal().unwrap(), as_decimal_from_fraction(2, 100));
+	assert_eq!(as_decimal(2).reciprocal().unwrap(), FixedU128::saturating_from_rational(50, 100));
+	assert_eq!(as_decimal(50).reciprocal().unwrap(), FixedU128::saturating_from_rational(2, 100));
 }
 
 #[test]
