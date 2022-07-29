@@ -8,4 +8,5 @@ HASH=$(nix-prefetch-url ${URL})
 echo "Hash: ${HASH}"
 REVISION_HASH=$(nix-prefetch-git --url https://github.com/ComposableFi/composable --rev ${REVISION} --quiet | jq -r .sha256)
 echo "Revision Hash: ${REVISION_HASH}"
-echo $(cat devnet-stage.json | jq --arg version ${REVISION} '.composable.version = $version' | jq --arg hash ${HASH} '.composable.hash = $hash'| jq --arg revhash ${REVISION_HASH} '.composable.revhash = $revhash') > devnet-stage.json
+
+echo $(cat devnet.json | jq --arg version ${REVISION} '.composable.version = $version' | jq --arg hash ${HASH} '.composable.hash = $hash'| jq --arg revhash ${REVISION_HASH} '.composable.revhash = $revhash') > devnet.json

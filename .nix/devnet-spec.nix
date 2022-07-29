@@ -5,10 +5,10 @@
 }:
 let
   description = "Specification builder for target runner of relay chain and relevant parachains and relevant information";
-  polkadot-launch = pkgs.callPackage ./polkadot-launch { };
-  polkadot-bin = pkgs.callPackage ./polkadot-bin { inherit polkadot; };
-  composable-bin = pkgs.callPackage ./composable-bin { inherit composable; };
-  composable-book = pkgs.callPackage ./composable-book { inherit composable; };
+  polkadot-launch = pkgs.callPackage ./polkadot-launch.nix { };
+  polkadot-bin = pkgs.callPackage ./polkadot-bin.nix { inherit polkadot; };
+  composable-bin = pkgs.callPackage ./composable-bin.nix { inherit composable; };
+  composable-book = pkgs.callPackage ./composable-book.nix { inherit composable; };
 
   make-node = tmp-directory: node-type: { name, wsPort, port }: {
     inherit name;

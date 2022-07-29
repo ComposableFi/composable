@@ -29,7 +29,7 @@
 
       packages = 
         let
-          devnet-deploy = pkgs.callPackage ./.nix/devnet.nix {inherit devnet-input; inherit gce-input;};
+          devnet-deploy = pkgs.callPackage ./.nix/devnet.nix {inherit devnet-input; inherit gce-input; inherit nixpkgs;};
           nixopsConfigurations.default =
             let 
               pkgs = import nixpkgs {};

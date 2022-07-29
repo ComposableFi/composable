@@ -1,11 +1,6 @@
 { pkgs, nixpkgs, devnet-input, gce-input }:
 let
   description = "Derives Dali and Picasso releases from remote branches with relevant remote depoyments and documentation";
-  bins = (if builtins.pathExists denvnet-input then
-    builtins.fromJSON (builtins.readFile denvnet-input)
-  else
-    throw
-    "Devnet `${denvnet-input}` definition missing, please follow the README.md instructions.");
   mk-composable = spec:
     def: def // {
       inherit spec;
@@ -57,16 +52,16 @@ let
     ({ composable, polkadot }: {
       composable = mk-composable spec composable;
       polkadot = mk-polkadot "rococo-local" polkadot;
-    }) bins;
+    }) devnet-input;
   latest-dali = mk-latest "dali-dev";
   latest-picasso = mk-latest "picasso-dev";
 in {
-  dali = (pkgs.callPackage ./devnet-spec {
+  dali = (pkgs.callPackage ./devnet-spec.nix {
     inherit (latest-dali) composable;
     inherit (latest-dali) polkadot;
   });
 
-  picasso = (pkgs.callPackage ./devnet-spec {
+  picasso = (pkgs.callPackage ./devnet-spec.nix {
     inherit (latest-picasso) composable;
     inherit (latest-picasso) polkadot;
   });
@@ -85,15 +80,10 @@ in {
   });
 
   machines = let
-    conf = if builtins.pathExists ./ops.json then
-      builtins.fromJSON (builtins.readFile ./ops.json)
-    else
-      throw
-      "Operations credentials `ops.json` definition missng, please follow the README.md instructions.";
     credentials = {
-      project = conf.project_id;
-      serviceAccount = conf.client_email;
-      accessKey = conf.private_key;
+      project = gce-input.project_id;
+      serviceAccount = gce-input.client_email;
+      accessKey = gce-input.private_key;
     };
   in builtins.foldl' (machines:
     { composable, polkadot }:

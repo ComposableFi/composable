@@ -9,6 +9,4 @@ Unit test can be run with flake here. Unit tests run fast and do not depend on r
 
 ## Guidelines
 
-When `import` or `callPackage` do not suffix it with `.nix` as it allows to expand any file to folder with `default.nix`.
-
 Variables which are input from external non `nix` files (examples, json/yaml/toml) to be suffixed with `-input`. Inputs prevent early validation of packages without instationation.  
