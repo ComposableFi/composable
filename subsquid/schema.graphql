@@ -92,11 +92,14 @@ type Schedule {
 
 type VestingSchedule @entity {
   id: ID!
+  "account that initiates the schedule"
+  from: String!
+  "chain event ID"
   eventId: String!
   "{accoundId}-{assetId}"
   scheduleId: String!
   "'To' account for the vesting schedule"
-  beneficiary: String!
+  to: String!
   "Vesting schedule"
   schedule: Schedule!
 }

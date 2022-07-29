@@ -14,7 +14,7 @@ import {
   createVestingSchedule,
   processVestingScheduleAddedEvent,
 } from "../src/vestingProcessor";
-import { VestingSchedule as VestingScheduleType } from "../src/types/v2300";
+import { VestingSchedule as VestingScheduleType } from "../src/types/v2400";
 import { VestingVestingScheduleAddedEvent } from "../src/types/events";
 import { expect } from "chai";
 
@@ -34,29 +34,32 @@ const MOCK_VESTING_SCHEDULE: VestingScheduleType = {
 /**
  * Check if vesting schedule has expected values
  * @param vestingSchedule
- * @param beneficiary
+ * @param to
  * @param eventId
  * @param assetId
  * @param schedule
  */
 function assertVestingSchedule(
   vestingSchedule: VestingSchedule,
-  beneficiary: string,
+  to: string,
+  from: string,
   eventId: string,
   assetId: string,
   schedule: Schedule
 ) {
-  const expectedScheduleId = `${beneficiary}-${assetId}`;
+  const expectedScheduleId = `${to}-${assetId}`;
+  expect(vestingSchedule.from).to.equal(from);
   expect(vestingSchedule.eventId).to.equal(eventId);
   expect(vestingSchedule.scheduleId).to.equal(expectedScheduleId);
-  expect(vestingSchedule.beneficiary).to.equal(beneficiary);
+  expect(vestingSchedule.to).to.equal(to);
   expect(vestingSchedule.schedule).to.deep.equal(schedule);
 }
 
 async function assertVestingScheduleAddedEvent(
   ctx: EventHandlerContext,
   storeMock: Store,
-  beneficiary: Uint8Array,
+  from: Uint8Array,
+  to: Uint8Array,
   assetId: string,
   schedule: Schedule
 ) {
@@ -64,7 +67,8 @@ async function assertVestingScheduleAddedEvent(
   const [arg] = capture(storeMock.save).last();
   assertVestingSchedule(
     arg as unknown as VestingSchedule,
-    encodeAccount(beneficiary),
+    encodeAccount(to),
+    encodeAccount(from),
     ctx.event.id,
     assetId,
     schedule
@@ -85,7 +89,7 @@ function createVestingScheduleAddedEvent(
     schedule,
   };
 
-  when(eventMock.asV2300).thenReturn(evt);
+  when(eventMock.asV2400).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
 
   let event = instance(eventMock);
@@ -135,8 +139,9 @@ describe("Vesting schedule added", () => {
     await assertVestingScheduleAddedEvent(
       ctx,
       storeMock,
+      MOCK_ADDRESS_FROM,
       MOCK_ADDRESS_TO,
-      event.asV2300.asset.toString(),
+      event.asV2400.asset.toString(),
       schedule
     );
 
