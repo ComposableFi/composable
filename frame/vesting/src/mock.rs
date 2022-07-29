@@ -163,6 +163,7 @@ impl Config for Runtime {
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type VestingScheduleId = u128;
 }
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
