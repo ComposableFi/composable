@@ -403,40 +403,24 @@ impl<T: Config> Pallet<T> {
 		vesting_schedule_id: Option<T::VestingScheduleId>,
 	) -> Result<BalanceOf<T>, DispatchError> {
 		let (locked, vesting_map) = Self::locked_balance(who, asset);
-		println!("locked: {:?}", locked);
-		println!("vesting_map: {:?}", vesting_map);
-
 		if locked.is_zero() {
 			// cleanup the storage and unlock the fund
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
 		} else {
 			match vesting_schedule_id {
-				// update the locked amount
 				Some(id) => {
-					let balance_for_id = vesting_map.get(&id);
-
-					match balance_for_id {
-						Some(balance) => {
-							let available_for_id = balance.available_balance;
-							let locked_for_id = balance.locked_balance;
-							let mut bounded_schedules = <VestingSchedules<T>>::get(who, asset);
-							bounded_schedules.retain(|s| {
-								s.vesting_schedule_id != id || !locked_for_id.is_zero()
-							});
-							<VestingSchedules<T>>::insert(who, asset, &bounded_schedules);
-							// let new_locked = locked
-							// 	.checked_sub(&available_for_id)
-							// 	.ok_or(ArithmeticError::Overflow)?;
-							// println!("locked: {:?}", locked);
-							// println!("available_for_id: {:?}", available_for_id);
-							// println!("new_locked: {:?}", new_locked);
-							T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked)?;
-						},
-						_ => {
-							// TODO: error?
-						},
+					// update the locked amount
+					let mut new_locked = locked.clone();
+					for (key, balance) in vesting_map.iter() {
+						if key != &id {
+							new_locked = new_locked
+								.checked_add(&balance.available_balance)
+								.ok_or(ArithmeticError::Overflow)?;
+						}
 					}
+					println!("new_locked: {:?}", new_locked);
+					T::Currency::set_lock(VESTING_LOCK_ID, asset, who, new_locked)?;
 				},
 				None => {
 					T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked)?;
