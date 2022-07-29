@@ -48,9 +48,12 @@ pub fn assert_last_event<Runtime: Config>(generic_event: <Runtime as Config>::Ev
 
 /// Asserts the event wasn't dispatched.
 pub fn assert_no_event<Runtime: Config>(event: <Runtime as Config>::Event) {
-	assert!(frame_system::Pallet::<Runtime>::events()
-		.iter()
-		.all(|record| record.event != event));
+	assert!(
+		frame_system::Pallet::<Runtime>::events()
+			.iter()
+			.all(|record| record.event != event),
+		"provided event was dispatched unexpectedly!"
+	);
 }
 
 /// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified

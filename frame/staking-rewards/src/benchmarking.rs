@@ -1,23 +1,23 @@
 //! Benchmarks
 use crate::{validation::ValidSplitRatio, *};
+
 use composable_support::{abstractions::utils::increment::Increment, validation::Validated};
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
-		Reductions, RewardConfig, RewardPoolConfiguration,
+		Reductions, Reward, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		Stake,
+		RewardRate, Stake,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::{
-	traits::{fungibles::Mutate, Get},
+	traits::{fungibles::Mutate, Get, TryCollect, UnixTime},
 	BoundedBTreeMap,
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
-use sp_std::collections::btree_map::BTreeMap;
 
 fn get_reward_pool<T: Config>(
 	owner: T::AccountId,
@@ -41,11 +41,14 @@ fn get_reward_pool<T: Config>(
 
 fn lock_config<T: Config>(
 ) -> LockConfig<BoundedBTreeMap<DurationSeconds, Perbill, T::MaxStakingDurationPresets>> {
-	let mut duration_presets = BTreeMap::new();
-	duration_presets.insert(ONE_HOUR, Perbill::from_percent(1));
-	duration_presets.insert(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32));
 	LockConfig {
-		duration_presets: BoundedBTreeMap::try_from(duration_presets).unwrap(),
+		duration_presets: [
+			(ONE_HOUR, Perbill::from_percent(1)),                // 1%
+			(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32)), // 0.1%
+		]
+		.into_iter()
+		.try_collect()
+		.unwrap(),
 		unlock_penalty: Perbill::from_percent(5),
 	}
 }
@@ -53,18 +56,20 @@ fn lock_config<T: Config>(
 fn reward_config<T: Config>(
 	reward_count: u32,
 ) -> BoundedBTreeMap<T::AssetId, RewardConfig<T::AssetId, T::Balance>, T::MaxRewardConfigsPerPool> {
-	let mut asset_id = 101;
-	let mut rewards = BTreeMap::new();
-	for _ in 0..reward_count {
-		let config = RewardConfig {
-			asset_id: asset_id.into(),
-			max_rewards: 100_u128.into(),
-			reward_rate: Perbill::from_percent(10),
-		};
-		rewards.insert(asset_id.into(), config);
-		asset_id += 1;
-	}
-	BoundedBTreeMap::try_from(rewards).unwrap()
+	(0..reward_count)
+		.map(|asset_id| {
+			let asset_id: u128 = (asset_id + 101).into();
+			(
+				asset_id.into(),
+				RewardConfig {
+					asset_id: asset_id.into(),
+					max_rewards: 100_u128.into(),
+					reward_rate: RewardRate::per_second(1_u128),
+				},
+			)
+		})
+		.try_collect()
+		.unwrap()
 }
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
@@ -77,7 +82,12 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 
 benchmarks! {
 	where_clause {
-		where T::BlockNumber: From<u32>, T::Balance: From<u128>, T::AssetId: From<u128>, T::RewardPoolId: From<u16>, T::PositionId: From<u128>,
+		where
+			T::BlockNumber: From<u32>,
+			T::Balance: From<u128>,
+			T::AssetId: From<u128>,
+			T::RewardPoolId: From<u16>,
+			T::PositionId: From<u128>,
 	}
 
 	create_reward_pool {
@@ -152,8 +162,8 @@ benchmarks! {
 		let new_stake = Stake::<T::AccountId, T::RewardPoolId, T::Balance, Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>> {
 			owner: user.clone(),
 			reward_pool_id: 1_u16.into(),
-			stake: 1000_000_000_000_000_u128.into(),
-			share: 1000_000_000_000_000_u128.into(),
+			stake: 1_000_000_000_000_000_u128.into(),
+			share: 1_000_000_000_000_000_u128.into(),
 			reductions: Reductions::<_,_,_>::new(),
 			lock: Lock {
 				started_at: 10000_u64,
@@ -167,6 +177,30 @@ benchmarks! {
 		let validated_ratio = Validated::<Permill, ValidSplitRatio>::new(ratio).unwrap();
 
 	}: _(RawOrigin::Signed(user), position_id, validated_ratio)
+
+	reward_accumulation_hook_reward_update_calculation {
+		let now = T::UnixTime::now().as_secs();
+
+		let reward = Reward {
+			asset_id: 1_u128.into(),
+			total_rewards: 0_u128.into(),
+			total_dilution_adjustment: 0.into(),
+			max_rewards: 1_000_000.into(),
+			reward_rate: RewardRate::per_second(10_000),
+			last_updated_timestamp: now,
+			claimed_rewards: 0_u128.into()
+		};
+
+		let seconds_per_block = 12;
+
+		let now = now + seconds_per_block;
+	}: {
+		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(1.into(), reward, now);
+	}
+
+	unix_time_now {}: {
+		T::UnixTime::now()
+	}
 
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
 }

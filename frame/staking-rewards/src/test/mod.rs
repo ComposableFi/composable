@@ -3,20 +3,23 @@ use crate::{
 	test::{prelude::H256, runtime::*},
 	Config, RewardPools, StakeCount, Stakes,
 };
-use composable_support::abstractions::utils::increment::Increment;
+use composable_support::{abstractions::utils::increment::Increment, validation::TryIntoValidated};
 use composable_tests_helpers::test::currency::{CurrencyId, BTC, PICA, USDT};
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
 		ProtocolStaking, Reductions, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		Rewards, Stake, Staking,
+		RewardRate, Stake, Staking,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
 use frame_support::{
 	assert_err, assert_noop, assert_ok,
-	traits::fungibles::{Inspect, Mutate},
+	traits::{
+		fungibles::{Inspect, Mutate},
+		TryCollect,
+	},
 	BoundedBTreeMap,
 };
 use frame_system::EventRecord;
@@ -27,6 +30,9 @@ use sp_std::collections::btree_map::BTreeMap;
 
 mod prelude;
 mod runtime;
+
+#[cfg(test)]
+mod test_reward_accumulation_hook;
 
 #[test]
 fn test_create_reward_pool() {
@@ -624,11 +630,14 @@ fn get_reward_pool_config_invalid_end_block() -> RewardPoolConfiguration<
 
 fn default_lock_config(
 ) -> LockConfig<BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingDurationPresets>> {
-	let mut duration_presets = BTreeMap::new();
-	duration_presets.insert(ONE_HOUR, Perbill::from_percent(1));
-	duration_presets.insert(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32));
 	LockConfig {
-		duration_presets: BoundedBTreeMap::try_from(duration_presets).unwrap(),
+		duration_presets: [
+			(ONE_HOUR, Perbill::from_percent(1)),                // 1%
+			(ONE_MINUTE, Perbill::from_rational(1_u32, 10_u32)), // 0.1%
+		]
+		.into_iter()
+		.try_collect()
+		.unwrap(),
 		unlock_penalty: Perbill::from_percent(5),
 	}
 }
@@ -638,7 +647,7 @@ fn default_reward_config(
 	let config = RewardConfig {
 		asset_id: USDT::ID,
 		max_rewards: 100_u128,
-		reward_rate: Perbill::from_percent(10),
+		reward_rate: RewardRate::per_second(10_u128),
 	};
 	let mut rewards = BTreeMap::new();
 	rewards.insert(USDT::ID, config);
