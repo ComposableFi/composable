@@ -41,7 +41,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
-use composable_traits::vesting::{VestedTransfer, VestingBalance, VestingSchedule};
+use composable_traits::vesting::{VestedTransfer, VestingSchedule};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -55,7 +55,6 @@ use sp_runtime::{
 	ArithmeticError, DispatchResult,
 };
 use sp_std::{convert::TryInto, fmt::Debug, vec::Vec};
-use std::collections::BTreeMap;
 
 mod weights;
 
@@ -84,7 +83,7 @@ pub mod module {
 		},
 		math::safe::SafeAdd,
 	};
-	use composable_traits::vesting::{VestingBalance, VestingSchedule, VestingWindow};
+	use composable_traits::vesting::{VestingSchedule, VestingWindow};
 	use frame_support::traits::Time;
 	use orml_traits::{MultiCurrency, MultiLockableCurrency};
 	use sp_runtime::traits::AtLeast32Bit;
@@ -104,7 +103,6 @@ pub mod module {
 		MomentOf<T>,
 		BalanceOf<T>,
 	>;
-	pub(crate) type VestingBalanceOf<T> = VestingBalance<BalanceOf<T>>;
 	pub type ScheduledItem<T> = (
 		AssetIdOf<T>,
 		<T as frame_system::Config>::AccountId,
@@ -256,6 +254,7 @@ pub mod module {
 						window: window.clone(),
 						period_count: *period_count,
 						per_period: *per_period,
+						already_claimed: BalanceOf::<T>::zero(),
 					})
 					.expect("Max vesting schedules exceeded");
 				let total_amount = bounded_schedules
@@ -376,7 +375,7 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
-		let (locked, _) = Self::locked_balance(to, asset);
+		let locked = Self::locked_balance(to, asset, None);
 
 		let total_amount = locked.checked_add(&schedule_amount).ok_or(ArithmeticError::Overflow)?;
 
@@ -402,30 +401,14 @@ impl<T: Config> Pallet<T> {
 		asset: AssetIdOf<T>,
 		vesting_schedule_id: Option<T::VestingScheduleId>,
 	) -> Result<BalanceOf<T>, DispatchError> {
-		let (locked, vesting_map) = Self::locked_balance(who, asset);
+		let locked = Self::locked_balance(who, asset, vesting_schedule_id);
 
 		if locked.is_zero() {
 			// cleanup the storage and unlock the fund
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
 		} else {
-			match vesting_schedule_id {
-				Some(id) => {
-					// update the locked amount
-					let mut new_locked = locked.clone();
-					for (key, balance) in vesting_map.iter() {
-						if key != &id {
-							new_locked = new_locked
-								.checked_add(&balance.available_amount)
-								.ok_or(ArithmeticError::Overflow)?;
-						}
-					}
-					T::Currency::set_lock(VESTING_LOCK_ID, asset, who, new_locked)?;
-				},
-				None => {
-					T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked)?;
-				},
-			}
+			T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked)?;
 		}
 
 		Ok(locked)
@@ -435,24 +418,64 @@ impl<T: Config> Pallet<T> {
 	fn locked_balance(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-	) -> (BalanceOf<T>, BTreeMap<T::VestingScheduleId, VestingBalanceOf<T>>) {
-		let mut vesting_schedule_totals = BTreeMap::new();
+		vesting_schedule_id: Option<T::VestingScheduleId>,
+	) -> BalanceOf<T> {
 		<VestingSchedules<T>>::mutate_exists(who, asset, |maybe_schedules| {
 			let total = if let Some(schedules) = maybe_schedules.as_mut() {
 				let mut total: BalanceOf<T> = Zero::zero();
+
+				for schedule in schedules.iter_mut() {
+					let locked_amount = schedule.locked_amount(
+						frame_system::Pallet::<T>::current_block_number(),
+						T::Time::now(),
+					);
+
+					let total_amount = schedule.total_amount().unwrap();
+					let available_amount = total_amount.saturating_sub(locked_amount);
+
+					match vesting_schedule_id {
+						Some(id) =>
+							if schedule.vesting_schedule_id == id {
+								schedule.already_claimed = available_amount;
+							},
+						None => {
+							schedule.already_claimed = available_amount;
+						},
+					};
+				}
+
 				schedules.retain(|s| {
 					let locked_amount = s.locked_amount(
 						frame_system::Pallet::<T>::current_block_number(),
 						T::Time::now(),
 					);
-					let available_amount = s.total_amount().unwrap() - locked_amount;
-					total = total.saturating_add(locked_amount);
-					vesting_schedule_totals.insert(
-						s.vesting_schedule_id,
-						VestingBalance { available_amount, locked_amount },
-					);
-					!locked_amount.is_zero()
+
+					let total_amount = s.total_amount().unwrap();
+
+					let retain = match vesting_schedule_id {
+						Some(id) =>
+							if s.vesting_schedule_id != id {
+								total = total
+									.saturating_add(total_amount)
+									.saturating_sub(s.already_claimed);
+								true
+							} else {
+								total = total
+									.saturating_add(total_amount)
+									.saturating_sub(s.already_claimed);
+								!locked_amount.is_zero()
+							},
+						None => {
+							total = total
+								.saturating_add(total_amount)
+								.saturating_sub(s.already_claimed);
+							!locked_amount.is_zero()
+						},
+					};
+
+					retain
 				});
+
 				total
 			} else {
 				Zero::zero()
@@ -460,7 +483,7 @@ impl<T: Config> Pallet<T> {
 			if total.is_zero() {
 				*maybe_schedules = None;
 			}
-			(total, vesting_schedule_totals)
+			total
 		})
 	}
 
