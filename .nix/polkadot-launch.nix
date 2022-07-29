@@ -18,4 +18,4 @@ in pkgs.mkYarnPackage {
   postInstall = ''
     chmod +x $out/bin/polkadot-launch
   '';
-};
+}
