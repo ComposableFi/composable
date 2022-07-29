@@ -208,7 +208,6 @@ runtime-benchmarks = [
   "dex-router/runtime-benchmarks",
   "common/runtime-benchmarks",
   "pallet-ibc/runtime-benchmarks",
-  "pallet-proxy/runtime-benchmarks",
   "ibc-transfer/runtime-benchmarks",
   "pallet-staking-rewards/runtime-benchmarks",
   "cosmwasm/runtime-benchmarks",
