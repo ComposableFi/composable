@@ -63,7 +63,7 @@ lto = true
 # - in case of not official release from trusted soruce, use exact git commit (`rev`) to avoid catching up new version in # case of lock update from less trusted source than our main
 [patch.crates-io]
 # https://github.com/ComposableFi/composable/security/dependabot/35
-traitobject = { git = "https://github.com/reem/rust-traitobject.git", rev = "b3471a15917b2caf5a8b27debb0b4b390fc6634f"}
+traitobject = { git = "https://github.com/reem/rust-traitobject.git", rev = "b3471a15917b2caf5a8b27debb0b4b390fc6634f" }
 # https://github.com/paritytech/parity-scale-codec/issues/348
 parity-scale-codec = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-3.1.2" }
 # parity-scale-codec-derive = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-derive-3.1.2" }
