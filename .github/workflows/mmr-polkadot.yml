@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - mmr-polkadot
-      - andor0/update-composable-sandbox # tmp
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
