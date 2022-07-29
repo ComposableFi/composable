@@ -1,11 +1,11 @@
-{ pkgs, nixpkgs, denvnet-json, ops-json }:
+{ pkgs, nixpkgs, devnet-input, gce-input }:
 let
-  description
-  bins = (if builtins.pathExists denvnet-json then
-    builtins.fromJSON (builtins.readFile denvnet-json)
+  description = "Derives Dali and Picasso releases from remote branches with relevant remote depoyments and documentation";
+  bins = (if builtins.pathExists denvnet-input then
+    builtins.fromJSON (builtins.readFile denvnet-input)
   else
     throw
-    "Devnet `${denvnet-json}` definition missing, please follow the README.md instructions.");
+    "Devnet `${denvnet-input}` definition missing, please follow the README.md instructions.");
   mk-composable = spec:
     def: def // {
       inherit spec;
@@ -61,12 +61,12 @@ let
   latest-dali = mk-latest "dali-dev";
   latest-picasso = mk-latest "picasso-dev";
 in {
-  dali = (pkgs.callPackage ./devnet.nix {
+  dali = (pkgs.callPackage ./devnet-spec {
     inherit (latest-dali) composable;
     inherit (latest-dali) polkadot;
   });
 
-  picasso = (pkgs.callPackage ./devnet-spec.nix {
+  picasso = (pkgs.callPackage ./devnet-spec {
     inherit (latest-picasso) composable;
     inherit (latest-picasso) polkadot;
   });
