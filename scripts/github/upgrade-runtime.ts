@@ -29,7 +29,7 @@ async function main() {
     let bytes = fs.readFileSync(argv.path).toString('hex')
     let call = api.tx.system.setCode(`0x${bytes}`)
 
-    let unsub = await api.tx.sudo.sudoUncheckedWeight(call, 1)
+    const unsub = await api.tx.sudo.sudoUncheckedWeight(call, 1)
         .signAndSend(root, (result) => {
                 console.log(`Current status is ${result.status}`);
                 if (result.status.isInBlock) {
@@ -41,6 +41,23 @@ async function main() {
                 }
             }
         )
+
+    let parachainEvents = 0
+    const unsubscribe = await api.query.system.events(events => {
+        events.forEach((event) => {
+            // parachain_system is index 10 (0x0a00 in hex) in all runtimes
+            // we're watching to see if we get the parachainSystem.ValidationFunctionStored
+            // and parachainSystem.ValidationFunctionApplied events from parachain_system
+            if (event.event.index.toString() === "0x0a00") {
+                parachainEvents += 1
+                console.log(JSON.stringify(event, undefined, 4))
+            }
+        })
+
+        if (parachainEvents === 2) {
+            unsubscribe()
+        }
+    })
 }
 
 main()
