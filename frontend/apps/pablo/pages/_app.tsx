@@ -14,17 +14,7 @@ import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import createEmotionCache from "@/styles/createEmotionCache";
 
-import PoolsUpdater from "@/updaters/pools/Updater";
-import LiquidityUpdater from "@/updaters/liquidity/Updater";
-import LiquidityBootstrappingUpdater from "@/updaters/pools/Updater";
-
-import PoolStatsUpdater from "@/updaters/poolStats/Updater";
-import BalancesUpdater from "@/updaters/assets/balances/Updater";
-import ApolloUpdater from "@/updaters/assets/apollo/Updater";
-import AuctionsUpdater from "@/updaters/auctions/Updater";
-import BondsUpdater from "@/updaters/bonds/Updater";
-import WalletUpdater from "@/updaters/wallet/Updater";
-
+import BaseUpdater from "@/updaters/BaseUpdater";
 import * as definitions from "defi-interfaces/definitions";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components";
@@ -138,17 +128,7 @@ export default function MyApp(props: MyAppProps) {
                 ]}
                 appName={APP_NAME}
               >
-                <>
-                  <AuctionsUpdater />
-                  <LiquidityBootstrappingUpdater />
-                  <BalancesUpdater />
-                  <LiquidityUpdater />
-                  <PoolStatsUpdater />
-                  <ApolloUpdater />
-                  <PoolsUpdater />
-                  <BondsUpdater />
-                  <WalletUpdater />
-                </>
+                <BaseUpdater />
                 <ExecutorProvider>
                   <Component {...pageProps} />
                 </ExecutorProvider>
