@@ -83,6 +83,9 @@ export interface ComposableTraitsDexDexRoute extends Null {}
 /** @name ComposableTraitsDexStableSwapPoolInfo */
 export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
 
+/** @name ComposableTraitsDexStakingRewardPool */
+export interface ComposableTraitsDexStakingRewardPool extends Null {}
+
 /** @name ComposableTraitsGovernanceSignedRawOrigin */
 export interface ComposableTraitsGovernanceSignedRawOrigin extends Enum {
   readonly isRoot: boolean;
@@ -106,12 +109,6 @@ export interface ComposableTraitsLendingRepayStrategy extends Null {}
 
 /** @name ComposableTraitsLendingUpdateInput */
 export interface ComposableTraitsLendingUpdateInput extends Null {}
-
-/** @name ComposableTraitsOraclePrice */
-export interface ComposableTraitsOraclePrice extends Null {}
-
-/** @name ComposableTraitsOracleRewardTracker */
-export interface ComposableTraitsOracleRewardTracker extends Null {}
 
 /** @name ComposableTraitsStakingRewardPool */
 export interface ComposableTraitsStakingRewardPool extends Null {}
@@ -338,21 +335,6 @@ export interface PalletMosaicRelayerStaleRelayer extends Struct {
     readonly account: AccountId32;
   } & Struct;
   } & Struct;
-}
-
-/** @name PalletOracleAssetInfo */
-export interface PalletOracleAssetInfo extends Null {}
-
-/** @name PalletOraclePrePrice */
-export interface PalletOraclePrePrice extends Null {}
-
-/** @name PalletOraclePrice */
-export interface PalletOraclePrice extends Null {}
-
-/** @name PalletOracleWithdraw */
-export interface PalletOracleWithdraw extends Struct {
-  readonly stake: u128;
-  readonly unlockBlock: u32;
 }
 
 /** @name PalletPreimageRequestStatus */

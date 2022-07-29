@@ -1,6 +1,10 @@
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
+import { AssetId, Balance, BlockNumber, Percent } from "@polkadot/types/interfaces/runtime";
+import { Result, u128, u32 } from "@polkadot/types-codec";
+import { IEvent } from "@polkadot/types/types";
+import { expect } from "chai";
 
 /**
  * Tests tx.oracle.addAssetAndInfo with provided parameters that should succeed.
@@ -24,13 +28,47 @@ export async function txOracleAddAssetAndInfoSuccessTest(
   blockInterval,
   reward,
   slash
-) {
+): Promise<IEvent<[u128, Percent, u32, u32, BlockNumber, Balance, Balance]>> {
   return await sendAndWaitForSuccess(
     api,
     sudoKey,
-    api.events.sudo.Sudid.is,
+    api.events.oracle.AssetInfoChange.is,
     api.tx.sudo.sudo(
       api.tx.oracle.addAssetAndInfo(assetId, threshold, minAnswers, maxAnswers, blockInterval, reward, slash)
     )
   );
+}
+
+/**
+ *
+ */
+export async function verifyOracleCreation(
+  api: ApiPromise,
+  resultData: IEvent<[u128, Percent, u32, u32, BlockNumber, Balance, Balance]>,
+  expectedData: {
+    threshold: Percent;
+    minAnswers: u32;
+    maxAnswers: u32;
+    blockInterval: BlockNumber;
+    rewardWeight: Balance;
+    slash: Balance;
+  }
+) {
+  // 1. Comparing result from creation with oracle stats on chain.
+  const oracleStatsWrapped = await api.query.oracle.assetsInfo(resultData.data[0]);
+  const oracleStats = oracleStatsWrapped.unwrap();
+  expect(oracleStats.threshold.toString()).to.be.equal(resultData.data[1].toString());
+  expect(oracleStats.minAnswers.toString()).to.be.equal(resultData.data[2].toString());
+  expect(oracleStats.maxAnswers.toString()).to.be.equal(resultData.data[3].toString());
+  expect(oracleStats.blockInterval.toString()).to.be.equal(resultData.data[4].toString());
+  expect(oracleStats.rewardWeight.toString()).to.be.equal(resultData.data[5].toString());
+  expect(oracleStats.slash.toString()).to.be.equal(resultData.data[6].toString());
+
+  // 2. Comparing oracle stats on chain, with intended parameters.
+  expect(oracleStats.threshold.toString()).to.be.equal(expectedData.threshold.toString());
+  expect(oracleStats.minAnswers.toString()).to.be.equal(expectedData.minAnswers.toString());
+  expect(oracleStats.maxAnswers.toString()).to.be.equal(expectedData.maxAnswers.toString());
+  expect(oracleStats.blockInterval.toString()).to.be.equal(expectedData.blockInterval.toString());
+  expect(oracleStats.rewardWeight.toString()).to.be.equal(expectedData.rewardWeight.toString());
+  expect(oracleStats.slash.toString()).to.be.equal(expectedData.slash.toString());
 }

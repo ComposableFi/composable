@@ -893,11 +893,16 @@ declare module '@polkadot/api-base/types/events' {
        **/
       RewardPoolCreated: AugmentedEvent<ApiType, [u16, AccountId32, u32]>;
       /**
+       * Reward transfer event.
+       **/
+      RewardTransferred: AugmentedEvent<ApiType, [AccountId32, u16, u128, u128]>;
+      /**
        * Split stake position into two positions
        **/
       SplitPosition: AugmentedEvent<ApiType, [Vec<u128>]>;
       StakeAmountExtended: AugmentedEvent<ApiType, [u128, u128]>;
       Staked: AugmentedEvent<ApiType, [u16, AccountId32, u128, u64, u128, bool]>;
+      Unstaked: AugmentedEvent<ApiType, [AccountId32, u128]>;
       /**
        * Generic event
        **/
@@ -946,6 +951,72 @@ declare module '@polkadot/api-base/types/events' {
        * On on-chain remark happened.
        **/
       Remarked: AugmentedEvent<ApiType, [AccountId32, H256]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    technicalCollective: {
+      /**
+       * A motion was approved by the required threshold.
+       **/
+      Approved: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * A proposal was closed because its threshold was reached or after its duration was up.
+       **/
+      Closed: AugmentedEvent<ApiType, [H256, u32, u32]>;
+      /**
+       * A motion was not approved by the required threshold.
+       **/
+      Disapproved: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * A motion was executed; result will be `Ok` if it returned without error.
+       **/
+      Executed: AugmentedEvent<ApiType, [H256, Result<Null, SpRuntimeDispatchError>]>;
+      /**
+       * A single member did some action; result will be `Ok` if it returned without error.
+       **/
+      MemberExecuted: AugmentedEvent<ApiType, [H256, Result<Null, SpRuntimeDispatchError>]>;
+      /**
+       * A motion (given hash) has been proposed (by given account) with a threshold (given
+       * `MemberCount`).
+       **/
+      Proposed: AugmentedEvent<ApiType, [AccountId32, u32, H256, u32]>;
+      /**
+       * A motion (given hash) has been voted on by given account, leaving
+       * a tally (yes votes and no votes given respectively as `MemberCount`).
+       **/
+      Voted: AugmentedEvent<ApiType, [AccountId32, H256, bool, u32, u32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    technicalMembership: {
+      /**
+       * Phantom member, never used.
+       **/
+      Dummy: AugmentedEvent<ApiType, []>;
+      /**
+       * One of the members' keys changed.
+       **/
+      KeyChanged: AugmentedEvent<ApiType, []>;
+      /**
+       * The given member was added; see the transaction for who.
+       **/
+      MemberAdded: AugmentedEvent<ApiType, []>;
+      /**
+       * The given member was removed; see the transaction for who.
+       **/
+      MemberRemoved: AugmentedEvent<ApiType, []>;
+      /**
+       * The membership was reset; see the transaction for who the new set is.
+       **/
+      MembersReset: AugmentedEvent<ApiType, []>;
+      /**
+       * Two members were swapped; see the transaction for who.
+       **/
+      MembersSwapped: AugmentedEvent<ApiType, []>;
       /**
        * Generic event
        **/

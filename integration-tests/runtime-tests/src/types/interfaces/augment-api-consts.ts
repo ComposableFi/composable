@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { ApiTypes } from '@polkadot/api-base/types';
-import type { Bytes, Option, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Bytes, Option, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
 import type { AccountId32, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
@@ -105,6 +105,11 @@ declare module '@polkadot/api-base/types/consts' {
        * Period in blocks where an external proposal may not be re-submitted after being vetoed.
        **/
       cooloffPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * Runtime unique identifier for locking currency.
+       * May be equivalent to PalletId.
+       **/
+      democracyId: U8aFixed & AugmentedConst<ApiType>;
       /**
        * The period between a proposal being approved and enacted.
        * 
@@ -348,6 +353,7 @@ declare module '@polkadot/api-base/types/consts' {
        * Minimum duration for a sale.
        **/
       lbpMinSaleDuration: u32 & AugmentedConst<ApiType>;
+      msPerBlock: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * The interval between TWAP computations.
