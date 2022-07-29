@@ -51,7 +51,7 @@ use frame_support::{
 use frame_system::{ensure_root, ensure_signed, pallet_prelude::*};
 use orml_traits::{MultiCurrency, MultiLockableCurrency};
 use sp_runtime::{
-	traits::{BlockNumberProvider, CheckedAdd, CheckedSub, One, Saturating, StaticLookup, Zero},
+	traits::{BlockNumberProvider, CheckedAdd, One, Saturating, StaticLookup, Zero},
 	ArithmeticError, DispatchResult,
 };
 use sp_std::{convert::TryInto, fmt::Debug, vec::Vec};
@@ -403,6 +403,7 @@ impl<T: Config> Pallet<T> {
 		vesting_schedule_id: Option<T::VestingScheduleId>,
 	) -> Result<BalanceOf<T>, DispatchError> {
 		let (locked, vesting_map) = Self::locked_balance(who, asset);
+
 		if locked.is_zero() {
 			// cleanup the storage and unlock the fund
 			<VestingSchedules<T>>::remove(who, asset);
@@ -415,11 +416,10 @@ impl<T: Config> Pallet<T> {
 					for (key, balance) in vesting_map.iter() {
 						if key != &id {
 							new_locked = new_locked
-								.checked_add(&balance.available_balance)
+								.checked_add(&balance.available_amount)
 								.ok_or(ArithmeticError::Overflow)?;
 						}
 					}
-					println!("new_locked: {:?}", new_locked);
 					T::Currency::set_lock(VESTING_LOCK_ID, asset, who, new_locked)?;
 				},
 				None => {
@@ -449,10 +449,7 @@ impl<T: Config> Pallet<T> {
 					total = total.saturating_add(locked_amount);
 					vesting_schedule_totals.insert(
 						s.vesting_schedule_id,
-						VestingBalance {
-							available_balance: available_amount,
-							locked_balance: locked_amount,
-						},
+						VestingBalance { available_amount, locked_amount },
 					);
 					!locked_amount.is_zero()
 				});
