@@ -208,11 +208,9 @@ fn should_update_twap_when_adding_base_asset() {
 		run_for_seconds(vamm_state_initial.twap_period);
 		assert_ok!(TestPallet::swap(&swap_config.into()));
 
-		// Ensure event for update twap was emitted
+		// Ensure twap was updated
 		let vamm_state = TestPallet::get_vamm(0).unwrap();
-		System::assert_has_event(
-			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
-		);
+		assert_ne!(vamm_state_initial.twap_timestamp, vamm_state.twap_timestamp);
 	});
 }
 
@@ -238,11 +236,9 @@ fn should_update_twap_when_removing_base_asset() {
 		run_for_seconds(vamm_state_initial.twap_period);
 		assert_ok!(TestPallet::swap(&swap_config.into()));
 
-		// Ensure event for update twap was emitted
+		// Ensure twap was updated
 		let vamm_state = TestPallet::get_vamm(0).unwrap();
-		System::assert_has_event(
-			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
-		);
+		assert_ne!(vamm_state_initial.twap_timestamp, vamm_state.twap_timestamp);
 	});
 }
 
@@ -268,11 +264,9 @@ fn should_update_twap_when_adding_quote_asset() {
 		run_for_seconds(vamm_state_initial.twap_period);
 		assert_ok!(TestPallet::swap(&swap_config.into()));
 
-		// Ensure event for update twap was emitted
+		// Ensure twap was updated
 		let vamm_state = TestPallet::get_vamm(0).unwrap();
-		System::assert_has_event(
-			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
-		);
+		assert_ne!(vamm_state_initial.twap_timestamp, vamm_state.twap_timestamp);
 	});
 }
 
@@ -298,11 +292,9 @@ fn should_update_twap_when_removing_quote_asset() {
 		run_for_seconds(vamm_state_initial.twap_period);
 		assert_ok!(TestPallet::swap(&swap_config.into()));
 
-		// Ensure event for update twap was emitted
+		// Ensure twap was updated
 		let vamm_state = TestPallet::get_vamm(0).unwrap();
-		System::assert_has_event(
-			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
-		);
+		assert_ne!(vamm_state_initial.twap_timestamp, vamm_state.twap_timestamp);
 	});
 }
 
@@ -430,7 +422,7 @@ proptest! {
 	}
 
 	#[test]
-	fn should_succeed_updating_twap_and_emitting_update_twap_event(
+	fn should_succeed_updating_twap_when_performing_swap(
 		mut vamm_state in any_vamm_state(),
 		mut swap_config in swap_config(),
 	) {
@@ -454,10 +446,9 @@ proptest! {
 			// For event emission.
 			run_for_seconds(vamm_state.twap_period);
 			if TestPallet::swap(&swap_config).is_ok() {
-				let new_vamm_state = TestPallet::get_vamm(0).unwrap();
-				System::assert_has_event(
-					Event::UpdatedTwap { vamm_id: 0, base_twap: new_vamm_state.base_asset_twap }.into(),
-				);
+				// Ensure twap was updated
+				let vamm_state_after = TestPallet::get_vamm(0).unwrap();
+				assert_ne!(vamm_state.twap_timestamp, vamm_state_after.twap_timestamp);
 			}
 		});
 	}

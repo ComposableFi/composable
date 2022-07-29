@@ -5,6 +5,8 @@ use sp_runtime::traits::Saturating;
 
 impl<T: Config> Pallet<T> {
 	/// Performs runtime storage changes, effectively updating the asset twap.
+	/// This `update_twap` variation can't accept any error to occur, expecting
+	/// all properties described in [`update_twap`](Self::update_twap) to hold.
 	///
 	/// # Errors
 	///
@@ -14,20 +16,32 @@ impl<T: Config> Pallet<T> {
 	pub fn do_update_twap(
 		vamm_id: T::VammId,
 		vamm_state: &mut VammStateOf<T>,
-		base_twap: T::Decimal,
+		base_twap: Option<T::Decimal>,
 		now: &Option<T::Moment>,
 	) -> Result<T::Decimal, DispatchError> {
-		// Sanity checks must pass before updating runtime storage.
-		Self::sanity_check_before_update_twap(vamm_state, base_twap, now)?;
+		Self::internal_update_twap(vamm_id, vamm_state, base_twap, now, false)
+	}
 
-		let now = Self::now(now);
-		vamm_state.base_asset_twap = base_twap;
-		vamm_state.twap_timestamp = now;
-
-		// Update runtime storage.
-		VammMap::<T>::insert(&vamm_id, vamm_state);
-
-		Ok(base_twap)
+	/// *Tries to* perform runtime storage changes, effectively updating the
+	/// asset twap.  Diferently than [`do_update_twap`] though, this variation
+	/// accepts one specific error to occur, therefore not honoring all
+	/// properties described in [`update_twap`](Self::update_twap). The property
+	/// that can be violated using this variation is that the current twap
+	/// timestamp can in fact be more recent than the current time.
+	///
+	/// # Errors
+	///
+	/// * All errors returned by
+	/// [`sanity_check_before_update_twap`](Self::sanity_check_before_update_twap),
+	/// except [`Error::<T>::AssetTwapTimestampIsMoreRecent`].
+	#[transactional]
+	pub fn try_update_twap(
+		vamm_id: T::VammId,
+		vamm_state: &mut VammStateOf<T>,
+		base_twap: Option<T::Decimal>,
+		now: &Option<T::Moment>,
+	) -> Result<T::Decimal, DispatchError> {
+		Self::internal_update_twap(vamm_id, vamm_state, base_twap, now, true)
 	}
 
 	/// Handles the optional value for `base_twap` parameter in function
@@ -51,6 +65,32 @@ impl<T: Config> Pallet<T> {
 				vamm_state.base_asset_twap,
 			),
 		}
+	}
+
+	/// Efectively mutate runtime storage and
+	/// [`VammState`](../types/struct.VammState.html#structfield.base_asset_reserves).
+	fn internal_update_twap(
+		vamm_id: T::VammId,
+		vamm_state: &mut VammStateOf<T>,
+		base_twap: Option<T::Decimal>,
+		now: &Option<T::Moment>,
+		try_update: bool,
+	) -> Result<T::Decimal, DispatchError> {
+		// Handle optional value.
+		let base_twap = Self::handle_base_twap(base_twap, vamm_state)?;
+
+		// Sanity checks must pass before updating runtime storage.
+		Self::sanity_check_before_update_twap(vamm_state, base_twap, now, try_update)?;
+
+		// Update VammState.
+		let now = Self::now(now);
+		vamm_state.base_asset_twap = base_twap;
+		vamm_state.twap_timestamp = now;
+
+		// Update runtime storage.
+		VammMap::<T>::insert(&vamm_id, vamm_state);
+
+		Ok(base_twap)
 	}
 
 	fn calculate_twap(

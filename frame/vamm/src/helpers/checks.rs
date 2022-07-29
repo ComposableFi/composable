@@ -108,6 +108,7 @@ impl<T: Config> Pallet<T> {
 		vamm_state: &VammStateOf<T>,
 		base_twap: T::Decimal,
 		now: &Option<T::Moment>,
+		try_update: bool,
 	) -> Result<(), DispatchError> {
 		// New desired twap value can't be zero.
 		ensure!(!base_twap.is_zero(), Error::<T>::NewTwapValueIsZero);
@@ -115,11 +116,13 @@ impl<T: Config> Pallet<T> {
 		// Vamm must be open.
 		ensure!(!Self::is_vamm_closed(vamm_state, now), Error::<T>::VammIsClosed);
 
-		// Only update asset's twap if time has passed since last update.
-		ensure!(
-			Self::now(now) > vamm_state.twap_timestamp,
-			Error::<T>::AssetTwapTimestampIsMoreRecent
-		);
+		if !try_update {
+			// Only update asset's twap if time has passed since last update.
+			ensure!(
+				Self::now(now) > vamm_state.twap_timestamp,
+				Error::<T>::AssetTwapTimestampIsMoreRecent
+			);
+		}
 
 		Ok(())
 	}

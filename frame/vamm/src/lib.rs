@@ -834,16 +834,13 @@ pub mod pallet {
 			// Retrieve vamm state.
 			let mut vamm_state = Self::get_vamm_state(&vamm_id)?;
 
-			// Handle optional value.
-			let base_twap = Self::handle_base_twap(base_twap, &vamm_state)?;
-
 			// Delegate update twap to internal functions.
-			Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, &None)?;
+			let output = Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, &None)?;
 
 			// Deposit updated twap event into blockchain.
-			Self::deposit_event(Event::<T>::UpdatedTwap { vamm_id, base_twap });
+			Self::deposit_event(Event::<T>::UpdatedTwap { vamm_id, base_twap: output });
 
-			Ok(base_twap)
+			Ok(output)
 		}
 
 		/// Performs the swap of the desired asset against the vamm.
@@ -904,20 +901,8 @@ pub mod pallet {
 			// Get Vamm state.
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
-			// Perform twap update before swapping assets.
-			//
-			// HACK: Find a better way to extract and match this message value
-			// from `Result`.
-			match Self::update_twap(config.vamm_id, None) {
-				Ok(_) => Ok(()),
-				Err(e) => match e {
-					DispatchError::Module(m) => match m.message {
-						Some("AssetTwapTimestampIsMoreRecent") => Ok(()),
-						_ => Err(e),
-					},
-					_ => Err(e),
-				},
-			}?;
+			// Tries to update twap before swapping assets.
+			Self::try_update_twap(config.vamm_id, &mut vamm_state, None, &None)?;
 
 			// Delegate swap to helper function.
 			let amount_swapped = Self::do_swap(config, &mut vamm_state)?;
