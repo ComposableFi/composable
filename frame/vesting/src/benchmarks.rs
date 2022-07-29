@@ -58,6 +58,7 @@ where
 		window: BlockNumberBased { start, period },
 		period_count,
 		per_period,
+		already_claimed: BalanceOf::<T>::zero(),
 	}
 }
 

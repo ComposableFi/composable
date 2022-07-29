@@ -370,6 +370,7 @@ pub mod pallet {
 								},
 								period_count: 1,
 								per_period: reward_share,
+								already_claimed: BalanceOf::<T>::zero(),
 							},
 						)?;
 						let vesting_schedule_id = VestingScheduleCount::<T>::increment()?;
@@ -388,6 +389,7 @@ pub mod pallet {
 										},
 										period_count: 1,
 										per_period: value,
+										already_claimed: BalanceOf::<T>::zero(),
 									},
 								)?;
 							},
