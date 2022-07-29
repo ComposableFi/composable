@@ -22,12 +22,12 @@ use frame_support::{
 	assert_ok,
 	traits::{fungibles::Mutate, Hooks},
 };
-use itertools::Itertools;
 use proptest::{prelude::*, strategy::Strategy};
 use sp_runtime::{DispatchError, Perquintill};
 use std::{collections::BTreeMap, ops::Range};
 
 mod block_producer;
+mod block_producer2;
 mod buy_option;
 mod create_option;
 mod create_vault;
@@ -379,11 +379,11 @@ impl OptionInitializer for sp_io::TestExternalities {
 // ----------------------------------------------------------------------------------------------------
 
 pub fn random_account() -> impl Strategy<Value = AccountId> {
-	prop::sample::select(&[ALICE, BOB, CHARLIE, DAVE, EVEN] as &[_])
+	prop::sample::select([ALICE, BOB, CHARLIE, DAVE, EVEN].as_slice())
 }
 
 pub fn random_asset() -> impl Strategy<Value = AssetId> {
-	prop::sample::select(&ASSETS as &[_])
+	prop::sample::select(ASSETS.as_slice())
 }
 
 pub fn random_initial_balances_simpl(

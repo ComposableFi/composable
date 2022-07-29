@@ -1,14 +1,11 @@
 use super::{
-	block_producer::{BlockProducer, BlocksConfig, BlocksData, Run},
+	block_producer2::{BlockProducer, BlocksConfig, BlocksData, Run},
 	random_initial_balances_simpl, random_option_config, OptionConfig, VaultInitializer, UNIT,
 };
-use crate::mock::{
+use crate::mocks::{
 	accounts::{account_id_from_u64, AccountId},
 	assets::AssetId,
-	runtime::{
-		Balance, Event, ExtBuilder, MockRuntime, Moment, OptionId, Origin, System, Timestamp,
-		TokenizedOptions,
-	},
+	runtime::{Balance, ExtBuilder, MockRuntime, Moment, OptionId, Origin, TokenizedOptions},
 };
 use composable_traits::tokenized_options::TokenizedOptions as TokenizedOptionsTrait;
 use proptest::prelude::{
@@ -22,9 +19,7 @@ fn balance_strategy(max: Balance) -> impl Strategy<Value = Balance> + Clone {
 }
 
 proptest! {
-	#![proptest_config(ProptestConfig {
-		cases: 1, .. ProptestConfig::default()
-	})]
+	#![proptest_config(ProptestConfig::with_cases(1))]
 	#[test]
 	fn total_proptest(
 		(balances, option_configs, blocks_data, option_id_pool) in random_values(
@@ -88,11 +83,38 @@ fn do_total_proptest(
 	option_id_pool: OptionIdPool,
 ) {
 	let mut block_producer = BlockProducer::new(blocks_data);
+	let mut successful = 0;
+	let mut window_errors = 0;
+	let mut other_errors = 0;
 	while let Some(mut block) = block_producer.next_block() {
 		if block.is_initial() {
 			initialize_options(std::mem::take(&mut option_configs), option_id_pool.clone());
 		}
 		while let Some((_extrinsic, _result)) = block.call_next_extrinsic() {
+			match _result {
+				Ok(_) => successful += 1,
+				// Err(err) => match err {
+				// 	sp_runtime::DispatchError::Other(_) => todo!(),
+				// 	sp_runtime::DispatchError::CannotLookup => todo!(),
+				// 	sp_runtime::DispatchError::BadOrigin => todo!(),
+				// 	sp_runtime::DispatchError::Module(_) => todo!(),
+				// 	sp_runtime::DispatchError::ConsumerRemaining => todo!(),
+				// 	sp_runtime::DispatchError::NoProviders => todo!(),
+				// 	sp_runtime::DispatchError::TooManyConsumers => todo!(),
+				// 	sp_runtime::DispatchError::Token(_) => todo!(),
+				// 	sp_runtime::DispatchError::Arithmetic(_) => todo!(),
+				// 	sp_runtime::DispatchError::Transactional(_) => todo!(),
+				// },
+				Err(sp_runtime::DispatchError::Module(sp_runtime::ModuleError {
+					message, ..
+				})) => match message {
+					Some("NotIntoDepositWindow")
+					| Some("NotIntoPurchaseWindow")
+					| Some("NotIntoExerciseWindow") => window_errors += 1,
+					_ => other_errors += 1,
+				},
+				Err(_err) => other_errors += 1,
+			}
 			// if _result.is_ok() {
 			// 	dbg!(_extrinsic);
 			// }
@@ -103,18 +125,21 @@ fn do_total_proptest(
 			// }
 		}
 		drop(block);
-		for event in System::events() {
-			let event = event.event;
-			if matches!(
-				event,
-				Event::TokenizedOptions(crate::Event::SellOption { .. })
-					| Event::TokenizedOptions(crate::Event::DeleteSellOption { .. })
-					| Event::TokenizedOptions(crate::Event::BuyOption { .. })
-			) {
-				dbg!(event);
-			}
-		}
+		// for event in System::events() {
+		// 	let event = event.event;
+		// 	if matches!(
+		// 		event,
+		// 		Event::TokenizedOptions(crate::Event::SellOption { .. })
+		// 			| Event::TokenizedOptions(crate::Event::DeleteSellOption { .. })
+		// 			| Event::TokenizedOptions(crate::Event::BuyOption { .. })
+		// 	) {
+		// 		dbg!(event);
+		// 	}
+		// }
 	}
+	dbg!(successful);
+	dbg!(window_errors);
+	dbg!(other_errors);
 }
 
 fn initialize_options(

@@ -1,5 +1,5 @@
 use super::{
-	block_producer::{BlockProducer, BlocksConfig, BlocksData, Run},
+	block_producer::{BlockProducer, BlocksConfig},
 	random_epoch, OptionsConfigBuilder, VaultInitializer,
 };
 use crate::{
@@ -10,8 +10,7 @@ use crate::{
 };
 use composable_traits::tokenized_options::TokenizedOptions as TokenizedOptionsTrait;
 use frame_support::assert_ok;
-use proptest::prelude::{prop, proptest, Just, ProptestConfig, Strategy};
-use sp_runtime::DispatchResult;
+use proptest::prelude::{prop, proptest, ProptestConfig, Strategy};
 use std::{collections::HashMap, ops::Range};
 
 fn random_epochs(
@@ -23,27 +22,24 @@ fn random_epochs(
 }
 
 proptest! {
-	#![proptest_config(ProptestConfig {
-		cases: 10, .. ProptestConfig::default()
-	})]
+	#![proptest_config(ProptestConfig::with_cases(1))]
 	#[test]
 	fn test_time_management(
 		epochs in random_epochs(50..200, 0..1000, 10..100),
-		blocks_data in BlocksData::<TokenizedOptionsBlocksConfig>::generate(100..500, 10..50, 0..1, Just(EmptyExtrinsic))
+		block_producer in BlockProducer::<TokenizedOptionsBlocksConfig>::generate(100..500, 10..50, true)
 	) {
 		ExtBuilder::default()
 			.build()
 			.initialize_oracle_prices()
 			.initialize_all_vaults()
-			.execute_with(|| do_test_time_management(epochs, blocks_data));
+			.execute_with(|| do_test_time_management(epochs, block_producer));
 	}
 }
 
 fn do_test_time_management(
 	mut epochs: Vec<Epoch<Moment>>,
-	blocks_data: BlocksData<TokenizedOptionsBlocksConfig>,
+	mut block_producer: BlockProducer<TokenizedOptionsBlocksConfig>,
 ) {
-	let mut block_producer = BlockProducer::new(blocks_data);
 	let mut tester = Tester::default();
 	while let Some(block) = block_producer.next_block() {
 		if block.is_initial() {
@@ -122,14 +118,4 @@ enum TokenizedOptionsBlocksConfig {}
 impl BlocksConfig for TokenizedOptionsBlocksConfig {
 	type Runtime = MockRuntime;
 	type Hooked = TokenizedOptions;
-	type Extrinsic = EmptyExtrinsic;
-}
-
-#[derive(Clone, Debug)]
-struct EmptyExtrinsic;
-
-impl Run for EmptyExtrinsic {
-	fn run(&self) -> DispatchResult {
-		Ok(())
-	}
 }
