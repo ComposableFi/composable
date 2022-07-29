@@ -53,8 +53,8 @@ describe("DexRouter Tests", function () {
   });
   it("Hallborn Fix Validation", async function () {
     this.timeout(5 * 60 * 1000);
-    poolId = await createConsProdPool(api, walletId1, walletId1, eth, usdc, fee, baseWeight);
-    poolId2 = await createConsProdPool(api, walletId1, walletId1, usdt, eth, fee, baseWeight);
+    poolId = await createConsProdPool(api, sudoKey, walletId1, eth, usdc, fee, baseWeight);
+    poolId2 = await createConsProdPool(api, sudoKey, walletId1, usdt, eth, fee, baseWeight);
     const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
       base: usdt,
       quote: usdc
@@ -66,8 +66,8 @@ describe("DexRouter Tests", function () {
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair, route))
     );
-    const badPool1 = await createConsProdPool(api, walletId2, walletId2, badAsset, usdc, fee, baseWeight);
-    const badPool2 = await createConsProdPool(api, walletId2, walletId2, usdt, badAsset, fee, baseWeight);
+    const badPool1 = await createConsProdPool(api, sudoKey, walletId2, badAsset, usdc, fee, baseWeight);
+    const badPool2 = await createConsProdPool(api, sudoKey, walletId2, usdt, badAsset, fee, baseWeight);
     const badRoute = api.createType("Vec<u128>", [api.createType("u128", badPool1), api.createType("u128", badPool2)]);
     await sendAndWaitForSuccess(
       api,

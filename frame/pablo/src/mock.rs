@@ -1,9 +1,12 @@
 #![cfg(test)]
 
 use crate as pablo;
-use frame_support::{parameter_types, traits::Everything, PalletId};
-use frame_system as system;
-use frame_system::EnsureSigned;
+use frame_support::{
+	ord_parameter_types, parameter_types,
+	traits::{EnsureOneOf, Everything},
+	PalletId,
+};
+use frame_system::{self as system, EnsureRoot, EnsureSignedBy};
 use orml_traits::parameter_type_with_key;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
@@ -12,7 +15,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 	Permill,
 };
-use system::EnsureRoot;
 
 pub type CurrencyId = u128;
 pub type BlockNumber = u64;
@@ -169,6 +171,10 @@ impl pallet_staking_rewards::Config for Test {
 	type WeightInfo = ();
 }
 
+ord_parameter_types! {
+	pub const RootAccount: AccountId = ALICE;
+}
+
 parameter_types! {
 	pub const MaxStakingRewardPools: u32 = 10;
 	pub const MillisecsPerBlock: u32 = 12000;
@@ -188,7 +194,10 @@ impl pablo::Config for Test {
 	type LbpMaxSaleDuration = MaxSaleDuration;
 	type LbpMaxInitialWeight = MaxInitialWeight;
 	type LbpMinFinalWeight = MinFinalWeight;
-	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
+	type PoolCreationOrigin = EnsureOneOf<
+		EnsureSignedBy<RootAccount, AccountId>, // for tests
+		EnsureRoot<AccountId>,                  // for benchmarks
+	>;
 	type EnableTwapOrigin = EnsureRoot<AccountId>;
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;

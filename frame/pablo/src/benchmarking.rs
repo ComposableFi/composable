@@ -53,7 +53,7 @@ benchmarks! {
 		let fee = Permill::from_percent(1);
 		let protocol_fee = Permill::from_percent(1);
 		let stable_swap_pool_init = stable_swap_init_config::<T>(owner.clone(), pair, amplification_factor, fee);
-	  } : _(RawOrigin::Signed(owner), stable_swap_pool_init)
+	  } : _(RawOrigin::Root, stable_swap_pool_init)
 
 	create_lbp {
 		let unit = 1_000_000_000_000u128;
@@ -77,7 +77,7 @@ benchmarks! {
 					protocol_fee_rate: Permill::zero()
 			}
 		};
-	  }: create(RawOrigin::Signed(owner), PoolInitConfiguration::LiquidityBootstrapping(pool))
+	  }: create(RawOrigin::Root, PoolInitConfiguration::LiquidityBootstrapping(pool))
 
 	add_liquidity {
 		let usdc: T::AssetId = 100.into();
