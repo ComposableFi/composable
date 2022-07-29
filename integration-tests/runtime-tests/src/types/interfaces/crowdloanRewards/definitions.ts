@@ -1,5 +1,4 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { DefinitionRpc } from "@polkadot/types/types";
 
 export default {
   rpc: {
@@ -61,7 +60,14 @@ export default {
     ComposableTraitsVestingVestingSchedule: "Null",
     CumulusPalletDmpQueuePageIndexData: "Null",
     PalletDutchAuctionTakeOrder: "Null",
-    ComposableTraitsGovernanceSignedRawOrigin: "Null",
+    ComposableTraitsGovernanceSignedRawOrigin: {
+      _enum: {
+        Root: "Null",
+        Signed: "AccountId32",
+        isSigned: "bool",
+        asSigned: "AccountId32"
+      }
+    },
     PalletIdentityRegistration: "Null",
     PalletIdentityRegistrarInfo: "Null",
     PalletOracleAssetInfo: "Null",
@@ -72,6 +78,9 @@ export default {
     PalletOraclePrePrice: "Null",
     PalletOraclePrice: "Null",
     PolkadotPrimitivesV1AbridgedHostConfiguration: "Null",
+    PolkadotPrimitivesV2PersistedValidationData: "Null",
+    PolkadotPrimitivesV2UpgradeRestriction: "Null",
+    PolkadotPrimitivesV2AbridgedHostConfiguration: "Null",
     CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot: "Null",
     PolkadotPrimitivesV1PersistedValidationData: "PersistedValidationData",
     PalletSchedulerScheduledV2: "Null",
@@ -84,6 +93,7 @@ export default {
       frozen: "u128"
     },
     OrmlTokensBalanceLock: "Null",
+    OrmlTokensReserveData: "Null",
     PalletTreasuryProposal: "Null",
     PalletVaultModelsStrategyOverview: "Null",
     PalletVaultModelsVaultInfo: "Null",
@@ -155,6 +165,30 @@ export default {
     ComposableTraitsLendingRepayStrategy: "Null",
     ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
     SpTrieStorageProof: "Null",
-    ComposableTraitsXcmAssetsForeignMetadata: "Null"
+    ComposableTraitsXcmAssetsForeignMetadata: "Null",
+    FrameSystemAccountInfo: {
+      nonce: "Null",
+      consumers: "Null",
+      providers: "Null",
+      sufficients: "Null",
+      data: {
+        free: "u128",
+        reserved: "u128",
+        miscFrozen: "u128",
+        feeFrozen: "u128"
+      }
+    },
+    PalletIbcPingSendPingParams: "Null",
+    IbcTraitOpenChannelParams: "Null",
+    PalletIbcConnectionParams: "Null",
+    PalletIbcAny: "Null",
+    PalletIbcIbcConsensusState: "Null",
+    PalletIbcEventsIbcEvent: "Null",
+    PalletIbcErrorsIbcError: "Null",
+    PalletMosaicAmmSwapInfo: "Null",
+    ComposableTraitsStakingRewardPool: "Null",
+    ComposableTraitsStakingRewardPoolConfiguration: "Null",
+    IbcTransferPalletParams: "Null",
+    IbcTransferTransferParams: "Null"
   }
 };

@@ -39,7 +39,7 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult, DispatchError,
 };
-use sp_std::{marker::PhantomData, prelude::*};
+use sp_std::marker::PhantomData;
 use xcm::latest::{prelude::*, Error};
 use xcm_builder::{
 	AccountId32Aliases, AllowKnownQueryResponses, AllowSubscriptionsFrom,
@@ -251,21 +251,21 @@ parameter_types! {
 }
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |location: MultiLocation| -> Balance {
+	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
 		#[allow(clippy::match_ref_pats)] // false positive
 		#[allow(clippy::match_single_binding)]
 		match (location.parents, location.first_interior()) {
 			// relay KSM
-			(1, None) => 400_000_000_000,
+			(1, None) => Some(400_000_000_000),
 
 			// if amount is not enough, it should be trapped by target chain or discarded as spam, so bear the risk
 			// we use Acala's team XTokens which are opinionated - PANIC in case of zero
 			(1, Some(Parachain(id)))  =>  {
 				let location = XcmAssetLocation::new(location.clone());
-				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).unwrap_or(u128::MAX)
+				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
 			},
-			_ => u128::MAX,
-			}
+			_ => Some(u128::MAX),
+		}
 	};
 }
 

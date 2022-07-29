@@ -13,7 +13,7 @@ use ibc::{
 		},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 		ics26_routing::context::{
-			Acknowledgement as GenericAcknowledgement, Module, ModuleOutput, OnRecvPacketAck,
+			Acknowledgement as GenericAcknowledgement, Module, ModuleOutputBuilder, OnRecvPacketAck,
 		},
 	},
 	signer::Signer,
@@ -39,8 +39,8 @@ pub const PORT_ID: &str = "ping";
 )]
 pub struct SendPingParams {
 	pub data: Vec<u8>,
-	pub timeout_height_offset: u64,
-	pub timeout_timestamp_offset: u64,
+	pub timeout_height: u64,
+	pub timeout_timestamp: u64,
 	pub channel_id: Vec<u8>,
 	pub dest_port_id: Vec<u8>,
 	pub dest_channel_id: Vec<u8>,
@@ -115,12 +115,11 @@ pub mod pallet {
 			ensure_root(origin)?;
 			let send_packet = SendPacketData {
 				data: params.data,
-				timeout_height_offset: params.timeout_height_offset,
-				timeout_timestamp_offset: params.timeout_timestamp_offset,
+				revision_number: None,
+				timeout_height: params.timeout_height,
+				timeout_timestamp: params.timeout_timestamp,
 				port_id: PORT_ID.as_bytes().to_vec(),
 				channel_id: params.channel_id,
-				dest_port_id: params.dest_port_id,
-				dest_channel_id: params.dest_channel_id,
 			};
 			T::IbcHandler::send_packet(send_packet).map_err(|_| Error::<T>::PacketSendError)?;
 			Self::deposit_event(Event::<T>::PacketSent);
@@ -176,7 +175,7 @@ impl<T: Config> core::fmt::Debug for IbcHandler<T> {
 impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 	fn on_chan_open_init(
 		&mut self,
-		_output: &mut ModuleOutput,
+		_output: &mut ModuleOutputBuilder,
 		_order: Order,
 		_connection_hops: &[ConnectionId],
 		_port_id: &PortId,
@@ -190,12 +189,13 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 
 	fn on_chan_open_try(
 		&mut self,
-		_output: &mut ModuleOutput,
+		_output: &mut ModuleOutputBuilder,
 		_order: Order,
 		_connection_hops: &[ConnectionId],
 		port_id: &PortId,
 		channel_id: &ChannelId,
 		counterparty: &Counterparty,
+		_version: &Version,
 		counterparty_version: &Version,
 	) -> Result<Version, Ics04Error> {
 		log::info!("Channel initialised {:?}, {:?}, {:?}", channel_id, port_id, counterparty);
@@ -204,7 +204,7 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 
 	fn on_chan_open_ack(
 		&mut self,
-		_output: &mut ModuleOutput,
+		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
 		counterparty_version: &Version,
@@ -220,7 +220,7 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 
 	fn on_chan_open_confirm(
 		&mut self,
-		_output: &mut ModuleOutput,
+		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
@@ -230,7 +230,7 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 
 	fn on_chan_close_init(
 		&mut self,
-		_output: &mut ModuleOutput,
+		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
@@ -240,7 +240,7 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 
 	fn on_chan_close_confirm(
 		&mut self,
-		_output: &mut ModuleOutput,
+		_output: &mut ModuleOutputBuilder,
 		port_id: &PortId,
 		channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
@@ -250,18 +250,18 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 
 	fn on_recv_packet(
 		&self,
-		_output: &mut ModuleOutput,
+		_output: &mut ModuleOutputBuilder,
 		packet: &Packet,
 		_relayer: &Signer,
 	) -> OnRecvPacketAck {
 		let success = "ping-success".as_bytes().to_vec();
 		log::info!("Received Packet {:?}", packet);
-		OnRecvPacketAck::Successful(Box::new(PingAcknowledgement(success)), Box::new(|_| {}))
+		OnRecvPacketAck::Successful(Box::new(PingAcknowledgement(success)), Box::new(|_| Ok(())))
 	}
 
 	fn on_acknowledgement_packet(
 		&mut self,
-		_output: &mut ModuleOutput,
+		_output: &mut ModuleOutputBuilder,
 		packet: &Packet,
 		acknowledgement: &Acknowledgement,
 		_relayer: &Signer,
@@ -272,7 +272,7 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 
 	fn on_timeout_packet(
 		&mut self,
-		_output: &mut ModuleOutput,
+		_output: &mut ModuleOutputBuilder,
 		packet: &Packet,
 		_relayer: &Signer,
 	) -> Result<(), Ics04Error> {

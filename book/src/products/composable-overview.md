@@ -1,5 +1,7 @@
 # Composable Overview
 
+---
+
 ## Problems with a multi-chain DeFi environment
 
 Composable Finance seeks to solve the challenge of siloed and fragmented 

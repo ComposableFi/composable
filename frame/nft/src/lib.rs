@@ -41,10 +41,8 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_support::{collections::vec::bounded::BiBoundedVec, math::safe::SafeAdd};
-	use composable_traits::financial_nft::{
-		AttributeKey, AttributeValue, FinancialNftProvider, NftClass,
-	};
+	use composable_support::math::safe::SafeAdd;
+	use composable_traits::nft::{Key, NftClass, ReferenceNft, Value};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -82,6 +80,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type MaxProperties: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -138,8 +137,9 @@ pub mod pallet {
 	>;
 
 	impl<T: Config> Pallet<T> {
+		#[allow(dead_code)] // TODO: remove it when it will be used
 		pub(crate) fn get_next_nft_id(
-			class: &<Self as Inspect<AccountIdOf<T>>>::ClassId,
+			class: &<Self as Inspect<AccountIdOf<T>>>::CollectionId,
 		) -> Result<u128, DispatchError> {
 			NftId::<T>::try_mutate(class, |x| -> Result<u128, DispatchError> {
 				let id = *x;
@@ -150,30 +150,30 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Inspect<AccountIdOf<T>> for Pallet<T> {
-		type ClassId = NftClass;
-		type InstanceId = NftInstanceId;
+		type CollectionId = NftClass;
+		type ItemId = NftInstanceId;
 
-		fn owner(class: &Self::ClassId, instance: &Self::InstanceId) -> Option<AccountIdOf<T>> {
+		fn owner(class: &Self::CollectionId, instance: &Self::ItemId) -> Option<AccountIdOf<T>> {
 			Instance::<T>::get((class, instance)).map(|(owner, _)| owner)
 		}
 
 		fn attribute(
-			class: &Self::ClassId,
-			instance: &Self::InstanceId,
+			class: &Self::CollectionId,
+			instance: &Self::ItemId,
 			key: &[u8],
 		) -> Option<Vec<u8>> {
 			Instance::<T>::get((class, instance))
 				.and_then(|(_, instance_attributes)| instance_attributes.get(key).cloned())
 		}
 
-		fn class_attribute(class: &Self::ClassId, key: &[u8]) -> Option<Vec<u8>> {
+		fn collection_attribute(class: &Self::CollectionId, key: &[u8]) -> Option<Vec<u8>> {
 			Class::<T>::get(class).and_then(|(_, _, attributes)| attributes.get(key).cloned())
 		}
 	}
 
 	impl<T: Config> Create<AccountIdOf<T>> for Pallet<T> {
-		fn create_class(
-			class: &Self::ClassId,
+		fn create_collection(
+			class: &Self::CollectionId,
 			who: &AccountIdOf<T>,
 			admin: &AccountIdOf<T>,
 		) -> DispatchResult {
@@ -185,8 +185,8 @@ pub mod pallet {
 
 	impl<T: Config> Transfer<AccountIdOf<T>> for Pallet<T> {
 		fn transfer(
-			class: &Self::ClassId,
-			instance: &Self::InstanceId,
+			class: &Self::CollectionId,
+			instance: &Self::ItemId,
 			destination: &AccountIdOf<T>,
 		) -> DispatchResult {
 			Instance::<T>::try_mutate((class, instance), |entry| match entry {
@@ -221,8 +221,8 @@ pub mod pallet {
 
 	impl<T: Config> Mutate<AccountIdOf<T>> for Pallet<T> {
 		fn mint_into(
-			class: &Self::ClassId,
-			instance: &Self::InstanceId,
+			class: &Self::CollectionId,
+			instance: &Self::ItemId,
 			who: &AccountIdOf<T>,
 		) -> DispatchResult {
 			ensure!(Self::instance((class, instance)).is_none(), Error::<T>::InstanceAlreadyExists);
@@ -236,8 +236,8 @@ pub mod pallet {
 		}
 
 		fn burn(
-			class: &Self::ClassId,
-			instance: &Self::InstanceId,
+			class: &Self::CollectionId,
+			instance: &Self::ItemId,
 			_maybe_check_owner: Option<&AccountIdOf<T>>,
 		) -> DispatchResult {
 			Instance::<T>::try_mutate_exists((class, instance), |entry| -> DispatchResult {
@@ -272,8 +272,8 @@ pub mod pallet {
 		}
 
 		fn set_attribute(
-			class: &Self::ClassId,
-			instance: &Self::InstanceId,
+			class: &Self::CollectionId,
+			instance: &Self::ItemId,
 			key: &[u8],
 			value: &[u8],
 		) -> DispatchResult {
@@ -287,8 +287,8 @@ pub mod pallet {
 		}
 
 		fn set_typed_attribute<K: Encode, V: Encode>(
-			class: &Self::ClassId,
-			instance: &Self::InstanceId,
+			class: &Self::CollectionId,
+			instance: &Self::ItemId,
 			key: &K,
 			value: &V,
 		) -> DispatchResult {
@@ -297,7 +297,11 @@ pub mod pallet {
 			})
 		}
 
-		fn set_class_attribute(class: &Self::ClassId, key: &[u8], value: &[u8]) -> DispatchResult {
+		fn set_collection_attribute(
+			class: &Self::CollectionId,
+			key: &[u8],
+			value: &[u8],
+		) -> DispatchResult {
 			Class::<T>::try_mutate(class, |entry| match entry {
 				Some((_, _, class)) => {
 					class.insert(key.into(), value.into());
@@ -307,42 +311,41 @@ pub mod pallet {
 			})
 		}
 
-		fn set_typed_class_attribute<K: Encode, V: Encode>(
-			class: &Self::ClassId,
+		fn set_typed_collection_attribute<K: Encode, V: Encode>(
+			class: &Self::CollectionId,
 			key: &K,
 			value: &V,
 		) -> DispatchResult {
-			key.using_encoded(|k| value.using_encoded(|v| Self::set_class_attribute(class, k, v)))
+			key.using_encoded(|k| {
+				value.using_encoded(|v| Self::set_collection_attribute(class, k, v))
+			})
 		}
 	}
 
-	impl<T: Config> FinancialNftProvider<AccountIdOf<T>> for Pallet<T> {
-		/// actually burns sNFT and creates new NFTs.
-		/// uses bases shared metadata and override as described by `overrides`
-		/// count `overrides` is equal to count of splits
-		fn split(
-			_instance: &Self::InstanceId,
-			_overrides: BiBoundedVec<BTreeMap<AttributeKey, AttributeValue>, 1, 16>,
-		) -> Result<BiBoundedVec<Self::InstanceId, 1, 16>, DispatchError> {
+	impl<T: Config> ReferenceNft<T::AccountId> for Pallet<T> {
+		type MaxProperties = T::MaxProperties;
+
+		fn reference_mint_into<NFTProvider, NFT>(
+			_class: &Self::CollectionId,
+			_instance: &Self::ItemId,
+			_who: &T::AccountId,
+			_reference: composable_traits::nft::Reference,
+		) -> DispatchResult {
 			Err(DispatchError::Other("no implemented"))
 		}
 
-		fn mint_nft<K: Encode, V: Encode>(
-			class: &Self::ClassId,
-			who: &AccountIdOf<T>,
-			key: &K,
-			value: &V,
-		) -> Result<Self::InstanceId, DispatchError> {
-			let instance = Self::get_next_nft_id(&NftClass::STAKING)?;
-			Self::mint_into(class, &instance, who)?;
-			Self::set_typed_attribute(class, &instance, key, value)?;
-			Ok(instance)
+		fn mint_new_into(
+			_class: &Self::CollectionId,
+			_who: &T::AccountId,
+			_properties: frame_support::BoundedBTreeMap<Key, Value, Self::MaxProperties>,
+		) -> Result<Self::ItemId, DispatchError> {
+			Err(DispatchError::Other("no implemented"))
 		}
 	}
 
 	/// Returns a closure that inserts the given value into the contained set, initializing the set
 	/// if the `Option` is `None`.
-	fn insert_or_init_and_insert<T: Ord>(t: T) -> impl FnOnce(&'_ mut Option<BTreeSet<T>>) -> () {
+	fn insert_or_init_and_insert<T: Ord>(t: T) -> impl FnOnce(&'_ mut Option<BTreeSet<T>>) {
 		move |x: &mut Option<BTreeSet<T>>| match x {
 			Some(instances) => {
 				instances.insert(t);

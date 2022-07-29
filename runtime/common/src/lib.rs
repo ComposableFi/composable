@@ -97,6 +97,8 @@ mod types {
 			MosaicRemoteAssetId::EthereumTokenAddress(x)
 		}
 	}
+
+	pub type NftInstanceId = u128;
 }
 
 /// Common constants of statemint and statemine

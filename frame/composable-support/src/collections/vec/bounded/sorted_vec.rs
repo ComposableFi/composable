@@ -277,7 +277,8 @@ pub mod test {
 		pub const Four: u32 = 4;
 	}
 
-	frame_support::generate_storage_alias! { Prefix, Foo => Value<BoundedSortedVec<u32, Seven>> }
+	#[frame_support::storage_alias]
+	type Foo = StorageValue<Prefix, BoundedSortedVec<u32, Seven>>;
 
 	#[test]
 	fn store_works() {

@@ -1,5 +1,5 @@
 {
-  description = "Composable Finance";
+  description = "Composable Finance Local Networks Lancher and documentation Book";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";

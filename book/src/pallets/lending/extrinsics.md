@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-04-22T18:59:06.870541092Z -->
+<!-- Generated at 2022-06-25T22:31:58.560425458Z -->
 
 # Lending Pallet Extrinsics
 
@@ -39,7 +39,7 @@ Withdraw collateral from market.
 
 * `origin` : Sender of this extrinsic.
 * `market_id` : Market index from which collateral will be withdraw.
-* `amount` : Amount of collateral to be withdrawed.
+* `amount` : Amount of collateral to be withdrawn.
 
 ## Borrow
 
@@ -55,21 +55,24 @@ Borrow asset against deposited collateral.
 
 [`repay_borrow`](https://dali.devnets.composablefinance.ninja/doc/pallet_lending/pallet/enum.Call.html#variant.repay_borrow)
 
-Repay borrow for beneficiary account.
+Repay part or all of the borrow in the given market.
+
+### Parameters
 
 * `origin` : Sender of this extrinsic. (Also the user who repays beneficiary's borrow.)
-* `market_id` : Market index to which user wants to repay borrow.
-* `beneficiary` : AccountId which has borrowed asset. (This can be same or different
-  than
-  origin).
-* `repay_amount` : Amount which user wants to borrow.
+* `market_id` : \[`MarketIndex`\] of the market being repaid.
+* `beneficiary` : \[`AccountId`\] of the account who is in debt to (has borrowed assets
+  from) the market. This can be same or different from the `origin`, allowing one
+  account to pay off another's debts.
+* `amount`: The amount to repay. See \[`RepayStrategy`\] for more information.
 
 ## Liquidate
 
 [`liquidate`](https://dali.devnets.composablefinance.ninja/doc/pallet_lending/pallet/enum.Call.html#variant.liquidate)
 
-Check if borrow for `borrower` account is required to be liquidated, initiate
+Check if borrows for the `borrowers` accounts are required to be liquidated, initiate
 liquidation.
 
 * `origin` : Sender of this extrinsic.
 * `market_id` : Market index from which `borrower` has taken borrow.
+* `borrowers` : Vector of borrowers accounts' ids.

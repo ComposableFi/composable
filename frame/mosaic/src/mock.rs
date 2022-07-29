@@ -22,6 +22,8 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type AssetId = u128;
 pub type RemoteAssetId = [u8; 20];
+pub type RemoteAmmId = u128;
+pub type AmmMinimumAmountOut = u128;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -94,6 +96,8 @@ impl orml_tokens::Config for Test {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
+	type OnKilledTokenAccount = ();
+	type OnNewTokenAccount = ();
 }
 
 parameter_types! {
@@ -113,6 +117,8 @@ impl pallet_mosaic::Config for Test {
 	type RemoteAssetId = RemoteAssetId;
 	type ControlOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
+	type RemoteAmmId = RemoteAmmId;
+	type AmmMinimumAmountOut = AmmMinimumAmountOut;
 }
 
 // Build genesis storage according to the mock runtime.

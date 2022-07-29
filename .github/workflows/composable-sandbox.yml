@@ -1,4 +1,4 @@
-name: "composable-sandbox Docker image"
+name: "Build composable-sandbox Docker image"
 
 on:
   workflow_dispatch:
@@ -45,5 +45,5 @@ jobs:
     - name: Build Docker image
       run: make containerize-composable-sandbox
 
-    - name:  Docker push
+    - name: Push Docker image
       run: make push-composable-sandbox

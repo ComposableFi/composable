@@ -4,16 +4,18 @@
 
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::dex::PriceAggregate;
+use composable_traits::dex::{PriceAggregate, RemoveLiquiditySimulationResult};
+use sp_std::collections::btree_map::BTreeMap;
 
 // Pablo Runtime API declaration. Implemented for each runtime at
 // `runtime/<runtime-name>/src/lib.rs`.
 sp_api::decl_runtime_apis! {
-	pub trait PabloRuntimeApi<PoolId, AssetId, Balance>
+	pub trait PabloRuntimeApi<AccountId, PoolId, AssetId, Balance>
 	where
 		PoolId: Codec,
-		AssetId: Codec,
+		AssetId: Codec + sp_std::cmp::Ord,
 		Balance: Codec,
+		AccountId: Codec,
 	{
 		/// Retrieve the price(s) from the given pool calculated for the given `base_asset_id`
 		/// and `quote_asset_id` pair.
@@ -24,10 +26,17 @@ sp_api::decl_runtime_apis! {
 			amount: Balance
 		) -> PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
 
-		fn expected_lp_tokens_given_liquidity(
+		fn simulate_add_liquidity(
+			who: SafeRpcWrapper<AccountId>,
 			pool_id: SafeRpcWrapper<PoolId>,
-			base_asset_amount: SafeRpcWrapper<Balance>,
-			quote_asset_amount: SafeRpcWrapper<Balance>,
+			amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 		) -> SafeRpcWrapper<Balance>;
+
+		fn simulate_remove_liquidity(
+			who: SafeRpcWrapper<AccountId>,
+			pool_id: SafeRpcWrapper<PoolId>,
+			lp_amount: SafeRpcWrapper<Balance>,
+			min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
 	}
 }

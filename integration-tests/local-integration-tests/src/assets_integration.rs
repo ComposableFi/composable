@@ -63,7 +63,7 @@ fn assets_registry_works_for_identity() {
 
 	fn picasso_reserve_account() -> AccountId {
 		use sp_runtime::traits::AccountIdConversion;
-		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account()
+		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating()
 	}
 
 	This::execute_with(|| {

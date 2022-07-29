@@ -22,9 +22,9 @@ This proposal suggest to open bidirectional HRMP channel between Picasso and Sta
 3. Accept channel form Statemine to Picasso
 4. Make USDT priceable on Picasso
 
-All steps are SCALE encoded and can be decoded and exectued by named consensuses.
+All steps are SCALE encoded and can be decoded and executed by named consensuses.
 
-Proposa follows same steps as other chains did.
+Proposal follows same steps as other chains did.
 
 ## Preparation
 

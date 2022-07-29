@@ -31,6 +31,7 @@ run_benchmarks() {
     --chain="$CHAIN" \
     --execution=wasm \
     --wasm-execution=compiled \
+    --wasm-instantiation-strategy=legacy-instance-reuse \
     --pallet="*" \
     --extrinsic='*' \
     --steps=$steps \

@@ -24,8 +24,8 @@ services:
       - FORCE_HEIGHT=true # starting block height
       # - WS_PROVIDER_ENDPOINT_URI=wss://kusama-rpc.polkadot.io/
       # - WS_PROVIDER_ENDPOINT_URI=wss://127.0.0.1:9988
-      - WS_PROVIDER_ENDPOINT_URI=wss://dali.devnets.composablefinance.ninja/parachain/alice
-
+      # - WS_PROVIDER_ENDPOINT_URI=wss://dali.devnets.composablefinance.ninja/parachain/alice
+      - WS_PROVIDER_ENDPOINT_URI=ws://host.docker.internal:9988
     # # If your chain uses custom types you need to provide those
     # # as detailed here - https://polkadot.js.org/docs/api/start/types.extend
     # #

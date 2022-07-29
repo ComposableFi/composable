@@ -1,3 +1,6 @@
+//! Test runtime.
+//! Consider to set minimal values (duration, times, and limits) to be easy to test within day of
+//! work. Example, use several hours, instead of several days.
 #![cfg_attr(
 	not(test),
 	warn(
@@ -36,10 +39,10 @@ use common::{
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
-	defi::Rate,
-	dex::{Amm, PriceAggregate},
+	defi::{CurrencyPair, Rate},
+	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
 };
-use primitives::currency::CurrencyId;
+use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -81,7 +84,7 @@ use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use sp_std::fmt::Debug;
+use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -126,8 +129,8 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2300,
-	impl_version: 2,
+	spec_version: 2400,
+	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 0,
@@ -272,7 +275,7 @@ impl identity::Config for Runtime {
 parameter_types! {
 	pub DepositBase: u64 = CurrencyId::unit();
 	pub DepositFactor: u64 = 32 * CurrencyId::milli::<u64>();
-	pub const MaxSignatories: u16 = 5;
+	pub const MaxSignatories: u16 = 100;
 }
 
 impl multisig::Config for Runtime {
@@ -455,25 +458,35 @@ parameter_types! {
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
 	pub const MaxPrePrices: u32 = 40;
+	pub const TwapWindow: u16 = 3;
+	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
+	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
 }
 
 impl oracle::Config for Runtime {
-	type Currency = Balances;
 	type Event = Event;
-	type AuthorityId = oracle::crypto::BathurstStId;
+	type Balance = Balance;
+	type Currency = Balances;
 	type AssetId = CurrencyId;
 	type PriceValue = Balance;
-	type StakeLock = StakeLock;
+	type AuthorityId = oracle::crypto::BathurstStId;
 	type MinStake = MinStake;
+	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type AddOracle = EnsureRootOrHalfCouncil;
+	type RewardOrigin = EnsureRootOrHalfCouncil;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
+	type TreasuryAccount = TreasuryAccount;
 	type MaxHistory = MaxHistory;
+	type TwapWindow = TwapWindow;
 	type MaxPrePrices = MaxPrePrices;
+	type MsPerBlock = MsPerBlock;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
-	type TreasuryAccount = TreasuryAccount;
+	type Moment = Moment;
+	type Time = Timestamp;
+	type PalletId = OraclePalletId;
 }
 
 // Parachain stuff.
@@ -559,14 +572,14 @@ impl collator_selection::Config for Runtime {
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
 	fn contains(a: &AccountId) -> bool {
-		let account: AccountId = TreasuryPalletId::get().into_account();
-		let account2: AccountId = PotId::get().into_account();
+		let account: AccountId = TreasuryPalletId::get().into_account_truncating();
+		let account2: AccountId = PotId::get().into_account_truncating();
 		vec![&account, &account2].contains(&a)
 	}
 }
 
 parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
+	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
 }
 
 type ReserveIdentifier = [u8; 8];
@@ -582,6 +595,8 @@ impl orml_tokens::Config for Runtime {
 	type ReserveIdentifier = ReserveIdentifier;
 	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 parameter_types! {
@@ -837,6 +852,7 @@ impl assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 parameter_types! {
@@ -860,6 +876,29 @@ impl crowdloan_rewards::Config for Runtime {
 	type PalletId = CrowdloanRewardsId;
 	type Moment = Moment;
 	type Time = Timestamp;
+}
+
+parameter_types! {
+	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
+	pub const MaxStakingDurationPresets : u32 = 10;
+	pub const MaxRewardConfigsPerPool : u32 = 10;
+}
+
+impl pallet_staking_rewards::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type RewardPoolId = u16;
+	type PositionId = u128;
+	type AssetId = CurrencyId;
+	type Assets = Assets;
+	type CurrencyFactory = CurrencyFactory;
+	type UnixTime = Timestamp;
+	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
+	type PalletId = StakingRewardsPalletId;
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type RewardPoolCreationOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -963,6 +1002,8 @@ impl mosaic::Config for Runtime {
 	type RemoteAssetId = MosaicRemoteAssetId;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
+	type RemoteAmmId = u128; // TODO: Swap to U256?
+	type AmmMinimumAmountOut = u128;
 }
 
 pub type LiquidationStrategyId = u32;
@@ -982,6 +1023,7 @@ impl liquidations::Config for Runtime {
 	type PalletId = LiquidationsPalletId;
 	type CanModifyStrategies = EnsureRootOrHalfCouncil;
 	type XcmSender = XcmRouter;
+	type MaxLiquidationStrategiesAmount = frame_support::traits::ConstU32<10>;
 }
 
 parameter_types! {
@@ -1013,7 +1055,7 @@ impl lending::Config for Runtime {
 
 parameter_types! {
   pub PabloId: PalletId = PalletId(*b"pall_pab");
-  pub LbpMinSaleDuration: BlockNumber = DAYS;
+  pub LbpMinSaleDuration: BlockNumber = 3 * HOURS;
   pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
   pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
   pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
@@ -1063,14 +1105,71 @@ parameter_types! {
 	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
 }
 
+#[derive(Clone)]
+pub struct IbcAccount(AccountId);
+
+impl sp_runtime::traits::IdentifyAccount for IbcAccount {
+	type AccountId = AccountId;
+	fn into_account(self) -> Self::AccountId {
+		self.0
+	}
+}
+
+impl TryFrom<pallet_ibc::Signer> for IbcAccount
+where
+	AccountId: From<[u8; 32]>,
+{
+	type Error = &'static str;
+
+	/// Convert a signer to an IBC account.
+	/// Only valid hex strings are supported for now.
+	fn try_from(signer: pallet_ibc::Signer) -> Result<Self, Self::Error> {
+		let acc_str = signer.as_ref();
+		if acc_str.starts_with("0x") {
+			match acc_str.strip_prefix("0x") {
+				Some(hex_string) => TryInto::<[u8; 32]>::try_into(
+					hex::decode(hex_string).map_err(|_| "Error decoding invalid hex string")?,
+				)
+				.map_err(|_| "Invalid account id hex string")
+				.map(|acc| Self(acc.into())),
+				_ => Err("Signer does not hold a valid hex string"),
+			}
+		}
+		// Do SS58 decoding instead
+		else {
+			let bytes = ibc_primitives::runtime_interface::ibc::ss58_to_account_id_32(acc_str)
+				.map_err(|_| "Invalid SS58 address")?;
+			Ok(Self(bytes.into()))
+		}
+	}
+}
+
+parameter_types! {
+	pub TransferPalletID: PalletId = PalletId(*b"transfer");
+}
+
+impl ibc_transfer::Config for Runtime {
+	type Event = Event;
+	type MultiCurrency = Assets;
+	type IbcHandler = Ibc;
+	type AccountIdConversion = IbcAccount;
+	type AssetRegistry = AssetsRegistry;
+	type CurrencyFactory = CurrencyFactory;
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type PalletId = TransferPalletID;
+	type WeightInfo = crate::weights::ibc_transfer::WeightInfo<Self>;
+}
+
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type Event = Event;
 	type Currency = Balances;
-	const INDEXING_PREFIX: &'static [u8] = b"ibc";
-	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
+	const INDEXING_PREFIX: &'static [u8] = b"ibc/";
+	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
+	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
+	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 impl pallet_ibc_ping::Config for Runtime {
@@ -1125,7 +1224,7 @@ construct_runtime!(
 
 		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
-		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
+		CurrencyFactory: currency_factory = 53,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
@@ -1139,11 +1238,14 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
+		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
+
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
 		IbcPing: pallet_ibc_ping::{Pallet, Call, Storage, Event<t>} = 101,
-		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 102
+		Transfer: ibc_transfer::{Pallet, Call, Storage, Event<t>} = 102,
+		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 103
 	}
 );
 
@@ -1212,12 +1314,13 @@ mod benches {
 		[mosaic, Mosaic]
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
-		//FIXME: broken with dali [lending, Lending]
 		[lending, Lending]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
+		[pallet_staking_rewards, StakingRewards]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
+		[ibc_transfer, Transfer]
 	);
 }
 
@@ -1252,7 +1355,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance> for Runtime {
+	impl pablo_runtime_api::PabloRuntimeApi<Block, AccountId, PoolId, CurrencyId, Balance> for Runtime {
 		fn prices_for(
 			pool_id: PoolId,
 			base_asset_id: CurrencyId,
@@ -1279,19 +1382,49 @@ impl_runtime_apis! {
 			})
 		}
 
-		fn expected_lp_tokens_given_liquidity(
+		fn simulate_add_liquidity(
+			who: SafeRpcWrapper<AccountId>,
 			pool_id: SafeRpcWrapper<PoolId>,
-			base_asset_amount: SafeRpcWrapper<Balance>,
-			quote_asset_amount: SafeRpcWrapper<Balance>,
+			amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> SafeRpcWrapper<Balance> {
+			let amounts: BTreeMap<CurrencyId, Balance> = amounts.iter().map(|(k, v)| (k.0,v.0)).collect();
 			SafeRpcWrapper(
-				<Pablo as Amm>::amount_of_lp_token_for_added_liquidity(
+				<Pablo as Amm>::simulate_add_liquidity(
+					&who.0,
 					pool_id.0,
-					base_asset_amount.0,
-					quote_asset_amount.0,
+					amounts,
 				)
 				.unwrap_or_else(|_| Zero::zero())
 			)
+		}
+
+		fn simulate_remove_liquidity(
+			who: SafeRpcWrapper<AccountId>,
+			pool_id: SafeRpcWrapper<PoolId>,
+			lp_amount: SafeRpcWrapper<Balance>,
+			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
+			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
+			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
+			let simulte_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
+				.unwrap_or_else(|_|
+					RemoveLiquiditySimulationResult{
+						assets: BTreeMap::from([
+									(currency_pair.base, Zero::zero()),
+									(currency_pair.quote, Zero::zero()),
+									(lp_token, Zero::zero())
+						])
+					}
+				);
+			let mut new_map = BTreeMap::new();
+			for (k,v) in simulte_remove_liquidity_result.assets.iter() {
+				new_map.insert(SafeRpcWrapper(*k), SafeRpcWrapper(*v));
+			}
+			RemoveLiquiditySimulationResult{
+				assets: new_map
+			}
+
 		}
 	}
 
@@ -1440,16 +1573,16 @@ impl_runtime_apis! {
 			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
 		}
 
-		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
-			Ibc::build_trie_inputs().ok()
-		}
-
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
 			Ibc::query_balance_with_address(addr).ok()
 		}
 
 		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
 			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
+		}
+
+		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>> {
+			Ibc::get_offchain_acks(channel_id, port_id, seqs).ok()
 		}
 
 		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
@@ -1465,7 +1598,7 @@ impl_runtime_apis! {
 		}
 
 		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
-			Ibc::clients().ok()
+			Some(Ibc::clients())
 		}
 
 		fn connection(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryConnectionResponse>{
@@ -1532,12 +1665,29 @@ impl_runtime_apis! {
 			Ibc::packet_receipt(channel_id, port_id, seq).ok()
 		}
 
-		fn denom_trace(_denom: Vec<u8>) -> Option<ibc_primitives::QueryDenomTraceResponse> {
-			None
+		fn denom_trace(asset_id: u128) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+			Transfer::get_denom_trace(asset_id)
 		}
 
-		fn denom_traces(_offset: Vec<u8>, _limit: u64, _height: u32) -> Option<ibc_primitives::QueryDenomTracesResponse> {
-			None
+		fn denom_traces(key: Option<u128>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
+			Transfer::get_denom_traces(key, offset, limit, count_total)
+		}
+
+		fn block_events() -> Vec<pallet_ibc::events::IbcEvent> {
+			let events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter().filter_map(|e| {
+				let frame_system::EventRecord{ event, ..} = *e;
+				match event {
+					Event::Ibc(pallet_ibc::Event::IbcEvents{ events }) => {
+						Some(events)
+					},
+					_ => None
+				}
+			});
+
+			events.fold(vec![], |mut events, ev| {
+				events.extend(ev);
+				events
+			})
 		}
 	}
 	#[cfg(feature = "runtime-benchmarks")]

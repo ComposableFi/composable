@@ -1,5 +1,7 @@
 # Cubic: The Vault Pallet
 
+---
+
 The second pallet Composable is creating for our infrastructure (following our 
 oracle pallet, Apollo) is for vaults, a critical DeFi component. The concept of 
 a vault pallet does not currently exist in Polkadot. The hope is therefore that 

@@ -109,6 +109,13 @@ Start development by defining the schema of the target database via `schema.grap
 Schema definition consists of regular graphql type declarations annotated with custom directives.
 Full description of `schema.graphql` dialect is available [here](https://docs.subsquid.io/schema-spec).
 
+#### Entity Requirements
+
+Entities *must* include the following fields:
+- id: Random UUID for the database
+- eventId: ID associated with the chain (can be obtained from `ctx.event.id`)
+- [unique id associated with the entity]: Any id that can be associated with the on-chain entity. When possible, this must come directly from the chain events (like `offerId` for bond offers). Otherwise, it can be created as a unique concatenation of available data separated by a dash (`-`), like `${accountId}-${assetId}` for vesting schedules.
+
 ### 2. Generate TypeORM classes
 
 Mapping developers use TypeORM [EntityManager](https://typeorm.io/#/working-with-entity-manager)
@@ -148,7 +155,7 @@ npx sqd db create
 This is an optional part, but it is very advisable. 
 
 Event, call and runtime storage data comes to mapping handlers as a raw untyped json. 
-While it is possible to work with raw untyped json data, it's extemely error-prone and moreover the json structure may change over time due to runtime upgrades.
+While it is possible to work with raw untyped json data, it's extremely error-prone and moreover the json structure may change over time due to runtime upgrades.
 
 Squid framework provides tools for generation of type-safe, spec version aware wrappers around events, calls and runtime storage items. Typegen generates type-safe classes in `types/events.ts`, `types/calls.ts` and `types/storage.ts` respectively, with constructors taking `XXXContext` interfaces as the only argument. All historical runtime upgrades are accounted out of the box. A typical usage is as follows (see `src/processor.ts`):
 

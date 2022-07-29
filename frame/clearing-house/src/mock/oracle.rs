@@ -38,6 +38,7 @@ pub mod pallet {
 		type Timestamp: Default;
 		type LocalAssets: LocalAssets<Self::AssetId>;
 		type MaxAnswerBound: Get<u32>;
+		type TwapWindow: Get<u16>;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -114,6 +115,7 @@ pub mod pallet {
 		type Timestamp = T::Timestamp;
 		type LocalAssets = T::LocalAssets;
 		type MaxAnswerBound = T::MaxAnswerBound;
+		type TwapWindow = T::TwapWindow;
 
 		fn is_supported(asset: Self::AssetId) -> Result<bool, DispatchError> {
 			if let Some(support) = Self::supports_assets() {
@@ -133,15 +135,12 @@ pub mod pallet {
 			})
 		}
 
-		fn get_twap(
-			of: Self::AssetId,
-			weighting: Vec<Self::Balance>,
+		/// Get the time weighted price for the `amount` of `asset_id`.
+		fn get_twap_for_amount(
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			if let Some(twap) = Self::hardcoded_twap() {
-				Ok(twap)
-			} else {
-				Err(Error::<T>::CantComputeTwap.into())
-			}
+			unimplemented!()
 		}
 
 		fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<Ratio, DispatchError> {

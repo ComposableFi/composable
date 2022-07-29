@@ -1,5 +1,7 @@
 # Polkadot - A Brief Overview
 
+---
+
 A TL;DR explainer of the Polkadot infrastructure
 
 Sometimes referred to as the ‘blockchain of blockchains’, Polkadot is an 

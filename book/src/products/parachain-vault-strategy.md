@@ -2,49 +2,52 @@
 
 ---
 
-Composable developed its parachain vault strategy initially for procuring its Kusama parachain, Picasso. This strategy was then revamped for procuring our eponymous Polkadot Parachain, Composable. More details on this repurposing can be [found here](./parachain-vault-strategy/vault-strategy-expansion.html).  
+Composable initially developed its parachain vault strategy for procuring its Kusama parachain, Picasso. This strategy was then revamped for procuring our eponymous Polkadot parachain, Composable. Now, this strategy has been repurposed again, and upon the launch of Mosaic phase 2, users will be able to migrate their staked funds to Mosaic, where they can earn attractive yield by providing liquidity in the system’s single-sided vaults.
 
-## For transparency, we are continuing to publicize the parachain vault approach we took when bidding for a Kusama parachain. This strategy is no longer being implemented to support Kusama parachian procurement, as this milestone has already been achieved. Please note that the information in italicized text below is outdated for this reason:
 
-*To receive and maintain a Polkadot parachain, it must be purchased in an auction with the chain’s native DOT token, and maintained with continued DOT stakings. Similarly, to receive a Kusama parachain, it must be purchased with its native KSM token and maintained with KSM stakings. We implement strategies to ensure that we obtain enough KSM/DOT to secure the parachain.*
+## Previous Uses of the Vault Strategy
 
-*To maximize our chances of winning a parachain slot, we are working on rewarding users who help us stake KSM/DOT with a novel ETH vault strategy.*
+Our team at Composable created the Parachain Vault Strategy as a unique way to incentivize user contributions to the tokens needed for obtaining a parachain at auction (KSM and DOT). 
 
-### *Limitations of Present Parachain Strategies:*
+Users were able to stake ETH or any ERC-20 token asset in an unlocked multisig vault. While the assets were in the vault, the ERC-20 tokens were farmed to increase yield. 50% of the yield was collected by the Composable Treasury and automatically routed to buying more KSM/DOT in a centralized manner in addition to increasing the user’s stake in our parachain. These KSM/DOT were used to secure our parachains on both Kusama and Polkadot. The rest of the yield was returned to the user as a reward. 
 
-*Typically, projects seeking a parachain rely on Polkadot’s crowdloaning functionality instead of funding the project entirely themselves or relying on limited grants. This crowdloaning mechanism asks users to migrate their assets over to Polkadot and stake them in the ecosystem. The same goes for Kusama. Ultimately, KSM and DOT are largely used as assets that are locked up in some manner or another. This is a far cry from the complex DeFi world where receipt tokens and yield farming allow for a trader’s assets to work for them. Overall, this means that the actual contributors of KSM/DOT are not very well rewarded for performing this essential functionality.*
+These strategies provided users with yield, exposure to our parachain auction, and LAYR, as the first set of strategies spanning both the Ethereum and Polkadot ecosystems. As Composable Labs has been active in the incubation of projects utilizing Composable’s stack, and given that Composable’s strategies had a large user base, it made sense to give our earliest contributors and community members access to projects incubated by Composable Labs. That’s why Composable also offered vault strategy stakers tokens from projects incubated by Composable Labs, which was mutually beneficial for the following reasons:
 
-### *The Composable Strategy:*
-In contrast, Composable is always looking for unconventional ways to increase capital efficiency and benefit our users. That is why we are allowing our supporters to help us in parachain procurement—and earn yield at the same time.
+Stakers were able to get upside from the ecosystem that Composable is building, as well as earnings in LAYR.
 
-***Our new solution allows for participation in our parachain with ETH or any ERC-20 token asset, rather than purchasing KSM/DOT and locking them up.** With our novel approach, we expand our ability to stake KSM/DOT and allow users to continue gaining profits on their staked assets.*
+Our incubation projects obtained an initial token holder base that will allow them to galvanize initial support as they go to market and ramp up for full releases.
 
-*In our system, users will deposit their ETH in an unlocked multisig vault. While the asset is in the vault, the ERC-20 tokens will be routed through our yield farming strategies to increase gains. Composable will then use the earned gains to purchase DOT and KSM in a centralized manner. KSM (for the Kusama parachain) and DOT (for the Polkadot parachain) presently do not have an existing method for purchase. However, Composable expects leading players like THORChain and others to be able to unlock this capability. This KSM/DOT tokens will be used to secure our parachain auction spot and allow for the continuation of the protocol.*
+During this initial vault strategy, we also introduced boosts to incentivize long-term staking. The boost offered major rewards: up to a 25% increase on users’ earned LAYR tokens (based on nominal amount), vested over one year. The full 25% amount was earned only after staking for the full program duration, with lower boosts delivered proportional to the number of days staked. Composable deployed this boost to users who stayed staked/deposited in our vault strategy beyond the initial staking period, with maximal rewards being delivered to those staking for 90 days. Withdrawing from the parachain vault strategy caused the user to forfeit the boost that was proportional to the amount withdrawn and the time they staked. 
 
-*50% of the yield from the strategy (regardless of the particular vault) will be collected by the Composable Treasury and automatically routed to buying more KSM/DOT and increasing the user’s stake in our parachain. When the Treasury purchases KSM, the details of these purchases (such as assets sold/bought) will be logged and reported transparently.*
+This vault strategy was initially launched on Tuesday 29th June at 10am CET. Users of these initial iterations of this vault have since been able to earn STRM and ANGL rewards in addition to their LAYR rewards, with STRM being the native token of Instrumental Finance and ANGL being the native token of Angular Finance. STRM tokens have already been distributed to earners in this strategy, and LAYR and ANGL tokens will be distributed upon their respective token generation events (TGEs), including any earnings generated from boosts.
 
-*The rest of the yield will be returned to the user as a reward for staking. Rewards are assuming a price of 1.05 for LAYR Tokens, and out of the tokens earned, 50% are available on TGE, and the rest are vested over six months.*
+[Instrumental Finance](instrumental.finance) was the first protocol that began tapping into the user base that Composable has built. This extinct program commenced the incentivization of the vaults from 3pm CET, October 18th, 2021 until December 6th, 2021, 12:00 UTC.
 
-*Users will also receive a receipt token (parachain Auction Tokens, or pAT) memorializing their stake in the vault, which can be further used to mint Equal Cash (EQLC), our multi-layer stablecoin. The current lock time is presently 0.*
+_The incentivization program went as follows:_
 
-*There will be a configurable 1% withdrawal fee for users of this strategy, which can be configured upon agreement by the forum. This uniquely beneficial strategy is depicted below, using DOT as the example, but also applying to our KSM strategy:*
 
-![Uniquely Beneficial Strategy](./parachain-vault-strategy/uniquely-beneficial-strategy.png)
 
-**Strategy Benefits:**
+* Instrumental Finance’s total Instrumental Token (STRM) supply is 100m tokens, with an initial FDV of $30m.
+* The program ran for 8 weeks, during which time 5% of Instrumental token (STRM) was distributed.
+* During the first 7 days, 3,250,000 tokens will be distributed. Afterwards, the second week saw 1,500,000 tokens distributed. Thereafter for the remainder of the program, 250,000 tokens were distributed.
 
-*In return for staking in our ETH vault, users receive the following value adds:*
+[Angular Finance](https://www.angular.finance/) was the second protocol to leverage our extinct vault strategies to generate traction and distribute its native tokens — ANGL. Angular Finance began incentivizing the vaults starting at 13:00pm CET on December 6, 2021 and ended on the 31st of January.
 
-- *Exposure to Composable Tokens*
-- *Exposure to Kusama/Polkadot parachain auctions*
-- *Exposure to KSM/DOT*
-- *Yield on staking*
-- *Yield on Composable Farming*
-- *Minting Equal Cash off a receipt token (parachain Auction Tokens, or pAT) from the vault*
-- *Further vaults for use of EQLC*
+**Below are details of the Angular incentivization program that is now expired:**
 
-*This incentive model simplifies user experience significantly, as well as improves incentives and capital efficiency. All the user has to do is show up with digital assets—we will do all the work to yield farm and create KSM/DOT on the back-end while the user is rewarded.*
 
-*Staking KSM/DOT for parachains has a built-in opportunity cost—meaning rewards for KSM/DOT stakers are limited in current models. Our goal is to remove this cost with the issuance of receipt tokens (parachain Auction Tokens, or pAT) and the implementation of strategies for maximizing yield.*
 
-*With our ETH vault, users can get cross-chain exposure while supporting our parachain. This is an entirely new mechanism that allows for parachain auctions to be more participatory, as anyone with an Ethereum asset can show up and join. Thus, we believe our novel methodology for procuring and running a parachain has the potential to change the Polkadot landscape completely.*
+* Angular Finance’s total token supply is 100m tokens, with an initial FDV of $25m
+* The program ran for eight weeks, during which time 5% of ANGL tokens will be distributed.
+* During the first 7 days, 3,250,000 tokens will be distributed. The following week saw the distribution of 1,500,000 tokens, and the remaining duration of the program distributed 250,000 tokens.
+
+
+## Migration of Vault Strategy Funds to Mosaic
+
+As mentioned, the launch of Mosaic phase 2 will unlock users’ ability to migrate funds from their participation in our vault strategy onto Mosaic. Once this migration period ends, the vault strategies will end.
+
+In addition to the fees that liquidity providers (LPs) can earn from users transferring tokens via Mosaic, Composable will be incentivizing asset migration with boosted rewards on stablecoin and wETH vaults. Ahead of Mosaic’s phase 2 launch, the migration process will soon be displayed on Composable’s strategies page with a clear breakdown of the initial steps for users to ensure a smooth transition.
+
+Users who participated in the original Composable vault strategies will also receive incentives in the form of LAYR tokens to incentivize a smooth migration. Hence, we see the migration as a mutually beneficial transition that allows Mosaic to launch with sufficient total value locked (TVL) while rewarding our users for continuing to support our core products.
+
+Through these internal adjustments, Composable is setting both its projects and supporters up for success. We appreciate everyone who has contributed to our vault strategies up to this point, and we look forward to providing more yield as our infrastructure and projects progress.

@@ -1,0 +1,9 @@
+{
+  "enabledTests": {
+    "tx": {
+      "enabled": true,
+      "set__success": true,
+      "remove__success": true
+    }
+  }
+}

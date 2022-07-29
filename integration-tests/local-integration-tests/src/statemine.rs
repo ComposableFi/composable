@@ -1,19 +1,11 @@
 // //! Tests parachain to parachain xcm communication between Statemine and This.
-// use crate::relaychain::kusama_test_net::*;
-// use crate::setup::*;
-// use cumulus_primitives_core::ParaId;
-
-// use frame_support::assert_ok;
-// use module_asset_registry::AssetMetadata;
-// pub use orml_traits::GetByKey;
-// use polkadot_parachain::primitives::Sibling;
-// use xcm::v1::{Junction, MultiLocation};
-// use xcm_emulator::TestExt;
 
 pub const UNIT: Balance = 1_000_000_000_000;
 pub const TEN: Balance = 10 * UNIT;
-pub const FEE_WEIGHT: Balance = 4_000_000_000;
-//pub const FEE_STATEMINE: Balance = 10_666_664;
+// NOTE: alternative to having that found via test, it could be reading directly into storage/config
+// of polkadot and statemine NOTE: or try some basic simulate tests to get only fees out of runs
+pub const APPROXIMATE_FEE_WEIGHT: Balance = 4_000_000_000;
+pub const FEE_STATEMINE: Balance = 10_666_664;
 pub const FEE_KUSAMA: Balance = 106_666_660;
 
 use crate::{helpers::simtest, kusama_test_net::*, prelude::*};
@@ -66,16 +58,18 @@ fn transfer_native_from_relay_chain_to_statemine() {
 
 /// Statemine issues custom token
 #[test]
+#[ignore = "#CU-363g6rf"]
 fn this_chain_statemine_transfers_back_and_forth_work() {
 	simtest();
 	let this_parachain_account: AccountId =
-		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account();
-	let this_para_id: AccountId = ParaId::from(THIS_PARA_ID).into_account();
-	let state_mine_para_id: AccountId = ParaId::from(STATEMINE_PARA_ID).into_account();
+		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
+	let this_para_id: AccountId = ParaId::from(THIS_PARA_ID).into_account_truncating();
+	let state_mine_para_id: AccountId = ParaId::from(STATEMINE_PARA_ID).into_account_truncating();
 
-	// minimum asset should be: FEE_WEIGHT+FEE_KUSAMA+max(KUSAMA_ED,STATEMINE_ED+FEE_STATEMINE).
-	// but due to current half fee, sender asset should at lease: FEE_WEIGHT + 2 * FEE_KUSAMA
-	let relay_native_asset_amount = 3 * FEE_WEIGHT + 3 * FEE_KUSAMA;
+	// minimum asset should be:
+	// APPROXIMATE_FEE_WEIGHT+FEE_KUSAMA+max(KUSAMA_ED,STATEMINE_ED+FEE_STATEMINE). but due to
+	// current half fee, sender asset should at lease: APPROXIMATE_FEE_WEIGHT + 2 * FEE_KUSAMA
+	let relay_native_asset_amount = 3 * APPROXIMATE_FEE_WEIGHT + 3 * FEE_KUSAMA;
 	let remote_asset_id = 3451561; // magic number to avoid zero defaults and easy to find
 	let foreign_asset_id_on_this = register_statemine_asset(remote_asset_id);
 	let accounted_native_balance = statemine_side(TEN + relay_native_asset_amount, remote_asset_id);
@@ -105,15 +99,16 @@ fn this_chain_statemine_transfers_back_and_forth_work() {
 		assert_eq!(9 * UNIT, Assets::balance(remote_asset_id, &this_parachain_account));
 
 		assert_eq!(
-			1003989333336, // approx. UNIT + FEE_WEIGHT - FEE_STATEMINE,
+			1003989333336, // approx. UNIT + APPROXIMATE_FEE_WEIGHT - FEE_STATEMINE,
 			Balances::free_balance(&AccountId::from(BOB))
 		);
 		let new_balance = Balances::free_balance(&this_parachain_account);
 		assert!(accounted_native_balance <= new_balance);
 		//old value 10016522666636
 		assert_eq!(
-			10016599690386, /* approximately this UNIT + asset_amount - FEE_WEIGHT - FEE_KUSAMA
-			                 * - FEE_STATEMINE - FEE_WEIGHT, */
+			10016599690386, /* approximately this UNIT + asset_amount - APPROXIMATE_FEE_WEIGHT -
+			                 * FEE_KUSAMA
+			                 * - FEE_STATEMINE - APPROXIMATE_FEE_WEIGHT, */
 			new_balance,
 		);
 	});
@@ -127,8 +122,15 @@ fn this_chain_side(fee_amount: u128, foreign_asset_id_on_this: CurrencyId) {
 		let bob_statemine_asset_amount =
 			Tokens::free_balance(foreign_asset_id_on_this, &AccountId::from(BOB));
 		// approx. TEN - fee
-		// TODO: simulate tests to get only fees so can do little bit better than hardcode
-		assert_eq!(9_999_936_000_000, bob_statemine_asset_amount,);
+		assert!(
+			bob_statemine_asset_amount < TEN &&
+				bob_statemine_asset_amount > TEN - FEE_STATEMINE - APPROXIMATE_FEE_WEIGHT,
+			"Fee taken up to some limit {:?} < {:?} && {:?} > {:?}",
+			bob_statemine_asset_amount,
+			TEN,
+			bob_statemine_asset_amount,
+			TEN - FEE_STATEMINE - APPROXIMATE_FEE_WEIGHT
+		);
 		// ensure sender has enough KSM balance to be charged as fee
 		assert_ok!(Tokens::deposit(CurrencyId::RELAY_NATIVE, &AccountId::from(BOB), TEN));
 		assert!(fee_amount != 0);
@@ -149,7 +151,7 @@ fn this_chain_side(fee_amount: u128, foreign_asset_id_on_this: CurrencyId) {
 				)
 				.into()
 			),
-			4 * FEE_WEIGHT as u64
+			4 * APPROXIMATE_FEE_WEIGHT as u64
 		));
 
 		assert_eq!(
@@ -170,7 +172,7 @@ fn statemine_side(
 ) -> Balance {
 	use statemine_runtime::*;
 	let target_parachain: AccountId =
-		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account();
+		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account_truncating();
 
 	Statemine::execute_with(|| {
 		let origin = Origin::signed(ALICE.into());
@@ -275,15 +277,4 @@ fn general_index_asset() {
 	let asset_id: u128 = 11;
 	let asset_id = hex::encode(asset_id.encode());
 	assert_eq!(&asset_id, "0b000000000000000000000000000000");
-}
-
-/// just have chain at hand
-/// https://substrate.stackexchange.com/questions/1200/how-to-calculate-sovereignaccount-for-parachain/1210#1210
-#[test]
-fn parachain_account_id() {
-	use base58::*;
-	let account_id =
-		hex::decode("7061726127080000000000000000000000000000000000000000000000000000").unwrap();
-	let account_id = account_id.to_base58();
-	assert_eq!(&account_id, "8ZgqzCPXjjjavhJpqifQEsfGAG69F7yPe3XH3D7XJUqD");
 }

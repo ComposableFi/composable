@@ -1,24 +1,46 @@
-name: "Frontend (Pablo) Checks - Tests"
+name: Frontend (Picasso) - Checks - ESLint
+
 on:
+  push:
+    paths:
+      - 'frontend/apps/picasso**'
   pull_request:
     branches:
       - main
-    paths:
-      - 'frontend/ui-pablo/*'
-  push:
-    paths:
-      - 'frontend/ui-pablo/*'
 
 jobs:
-  coverage:
+  Lint_Suggestions:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Install modules
-        run: yarn install
-        working-directory: frontend/ui-pablo
-
-      - name: Run tests
-        run: yarn test
-        working-directory: frontend/ui-pablo
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          always-auth: true
+          registry-url: 'https://registry.npmjs.org'
+      - run: yarn --cwd frontend install --ignore-scripts
+        env:
+          CI: true
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Yarn lint - Lint
+        run: yarn --filter=picasso lint
+        working-directory: frontend
+      - name: Save Code Linting Report JSON
+        # npm script for ESLint
+        # eslint --output-file eslint_report.json --format json src
+        # See https://eslint.org/docs/user-guide/command-line-interface#options
+        run: yarn --filter=picasso lint:report
+        working-directory: "frontend"
+        # Continue to the next step even if this fails
+        continue-on-error: false
+      - name: Annotate Code Linting Results
+        uses: ataylorme/eslint-annotate-action@1.2.0
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          report-json: "frontend/apps/picasso/eslint_report.json"
+      - name: Upload ESLint report
+        uses: actions/upload-artifact@v2
+        with:
+          name: "eslint_report.json"
+          path: "frontend/apps/picasso/eslint_report.json"

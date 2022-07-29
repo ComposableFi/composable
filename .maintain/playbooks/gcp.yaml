@@ -1,7 +1,7 @@
 ---
 plugin: gcp_compute
 projects:
-  - composable-ops-5568
+  - dali-rococo
 hostname:
   - name
 keyed_groups:
@@ -14,6 +14,6 @@ groups:
   testnode: "testnode' in (labels|list)"
 filters: []
 auth_kind: serviceaccount
-service_account_file: /opt/ansible/inventory/new.json
+service_account_file: /opt/ansible/inventory/dali-rococo.json
 vars:
   - ansible_python_interpreter: /usr/bin/python3

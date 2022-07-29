@@ -31,7 +31,7 @@ source"*
 
 ## Extrinsic Paramater Sources
 
-*Document sources of extrinsic paramaters, hard coded, calculated on the front
+*Document sources of extrinsic parameters, hard coded, calculated on the front
 end, user provided*
 
 ## Pricing Sources

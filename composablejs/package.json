@@ -1,0 +1,42 @@
+{
+  "name": "@composable",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Public Domain",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    "./types/*": [
+      "./dist/packages/types/dist/**/*.js",
+      "./dist/packages/types/dist/**/*.d.ts"
+    ],
+    "./utils/*": [
+      "./dist/packages/utils/dist/**/*.js",
+      "./dist/packages/utils/dist/**/*.d.ts"
+    ],
+    "./oracle_setup/*": [
+      "./dist/packages/oracle_setup/dist/**/*.js",
+      "./dist/packages/oracle_setup/dist/**/*.d.ts"
+    ]
+  },
+  "scripts": {
+    "build": "tsc -b -f tsconfig.json",
+    "lint": "eslint 'packages/**/*.ts' --ext .ts,.tsx",
+    "prettier": "prettier ./packages --write"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "yarn": "^1.10.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.30.5",
+    "@typescript-eslint/parser": "^5.30.5",
+    "eslint": "^8.19.0",
+    "eslint-config-prettier": "^8.5.0",
+    "lerna": "^5.1.7",
+    "prettier": "^2.7.1",
+    "typescript": "^4.7.4"
+  }
+}

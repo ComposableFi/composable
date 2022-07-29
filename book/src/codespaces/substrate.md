@@ -1,5 +1,7 @@
 # Substrate
 
+---
+
 ## Editing pallets
 
 Simply scroll to the pallet you want to edit in the `frame/` directory, and start editing it. `rust-analyzer` may need a few minutes to index (progress can be seen in the bottom status bar), and then you should have nice code analysis.

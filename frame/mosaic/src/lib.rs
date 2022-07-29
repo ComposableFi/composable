@@ -25,6 +25,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[allow(clippy::too_many_arguments)]
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{
@@ -58,6 +59,8 @@ pub mod pallet {
 	pub(crate) type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::AssetId;
 	pub(crate) type NetworkIdOf<T> = <T as Config>::NetworkId;
 	pub(crate) type RemoteAssetIdOf<T> = <T as Config>::RemoteAssetId;
+	pub(crate) type RemoteAmmIdOf<T> = <T as Config>::RemoteAmmId;
+	pub(crate) type AmmMinimumAmountOutOf<T> = <T as Config>::AmmMinimumAmountOut;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -91,8 +94,20 @@ pub mod pallet {
 		/// A type representing a remote asset ID.
 		type RemoteAssetId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
 
-		/// Origin capable of setting the relayer. Inteded to be RootOrHalfCouncil, as it is also
-		/// used as the origin capable of stopping attackers.
+		/// A type representing a remote AMM ID.
+		type RemoteAmmId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
+
+		// A type representing the type of the minimum amount out after a AMM Swap.
+		type AmmMinimumAmountOut: IsType<u128>
+			+ FullCodec
+			+ MaxEncodedLen
+			+ TypeInfo
+			+ Clone
+			+ Debug
+			+ PartialEq;
+
+		/// Origin capable of setting the relayer and AMM IDs. Intended to be RootOrHalfCouncil, as
+		/// it is also used as the origin capable of stopping attackers.
 		type ControlOrigin: EnsureOrigin<Self::Origin>;
 
 		/// Weight implementation used for extrinsics.
@@ -111,6 +126,19 @@ pub mod pallet {
 	pub enum TransactionType {
 		Incoming,
 		Outgoing,
+	}
+
+	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq)]
+	pub struct AmmSwapInfo<N, R, M> {
+		pub destination_token_out_address: EthereumAddress,
+		pub destination_amm: RemoteAmm<N, R>,
+		pub minimum_amount_out: M,
+	}
+
+	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq)]
+	pub struct RemoteAmm<N, R> {
+		pub network_id: N,
+		pub amm_id: R,
 	}
 
 	/// The information required for an assets to be transferred between chains.
@@ -182,6 +210,21 @@ pub mod pallet {
 	#[pallet::getter(fn nonce)]
 	#[allow(clippy::disallowed_types)]
 	pub type Nonce<T: Config> = StorageValue<_, u128, ValueQuery>;
+
+	/// Remote AMM IDs that exist (NetworkId, AmmId).
+	/// Note that this is actually a set that does bookkeeping of valid AmmIds.
+	/// Therefore, the value type is (), because it is irrelevant for our use case.
+	#[pallet::storage]
+	#[pallet::getter(fn amm_ids)]
+	pub type RemoteAmmWhitelist<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		NetworkIdOf<T>,
+		Blake2_128Concat,
+		RemoteAmmIdOf<T>,
+		(),
+		OptionQuery,
+	>;
 
 	#[pallet::type_value]
 	pub fn TimeLockPeriodOnEmpty<T: Config>() -> BlockNumberOf<T> {
@@ -260,6 +303,11 @@ pub mod pallet {
 			network_id: NetworkIdOf<T>,
 			remote_asset_id: RemoteAssetIdOf<T>,
 			amount: BalanceOf<T>,
+			swap_to_native: bool,
+			source_user_account: AccountIdOf<T>,
+			amm_swap_info:
+				Option<AmmSwapInfo<NetworkIdOf<T>, RemoteAmmIdOf<T>, AmmMinimumAmountOutOf<T>>>,
+			minimum_amount_out: BalanceOf<T>,
 		},
 		/// User claimed outgoing tx that was not (yet) picked up by the relayer
 		StaleTxClaimed {
@@ -345,6 +393,9 @@ pub mod pallet {
 		NoOutgoingTx,
 		AmountMismatch,
 		AssetNotMapped,
+		RemoteAmmIdNotFound,
+		RemoteAmmIdAlreadyExists,
+		DestinationAmmIdNotWhitelisted,
 	}
 
 	#[pallet::call]
@@ -358,6 +409,7 @@ pub mod pallet {
 		///
 		/// [controlorigin]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
 		#[pallet::weight(T::WeightInfo::set_relayer())]
+		#[transactional]
 		pub fn set_relayer(
 			origin: OriginFor<T>,
 			relayer: T::AccountId,
@@ -376,6 +428,7 @@ pub mod pallet {
 		///  - Only callable by the current Relayer.
 		///  - The Time To Live (TTL) must be greater than the [`MinimumTTL`](Config::MinimumTTL)
 		#[pallet::weight(T::WeightInfo::rotate_relayer())]
+		#[transactional]
 		pub fn rotate_relayer(
 			origin: OriginFor<T>,
 			new: T::AccountId,
@@ -399,6 +452,7 @@ pub mod pallet {
 		///
 		/// Only callable by the current Relayer
 		#[pallet::weight(T::WeightInfo::set_network())]
+		#[transactional]
 		pub fn set_network(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
@@ -447,12 +501,20 @@ pub mod pallet {
 		///   an error.
 		#[pallet::weight(T::WeightInfo::transfer_to())]
 		#[transactional]
+		// allowing too many arguments to keep the api simple for the Relayer team
+		#[allow(clippy::too_many_arguments)]
 		pub fn transfer_to(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
 			asset_id: AssetIdOf<T>,
 			address: EthereumAddress,
 			amount: BalanceOf<T>,
+			minimum_amount_out: BalanceOf<T>,
+			swap_to_native: bool,
+			source_user_account: AccountIdOf<T>,
+			amm_swap_info: Option<
+				AmmSwapInfo<NetworkIdOf<T>, RemoteAmmIdOf<T>, AmmMinimumAmountOutOf<T>>,
+			>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
@@ -474,6 +536,17 @@ pub mod pallet {
 				now,
 			)?;
 
+			// Ensure that users can only swap using a whitelisted destination amm id
+			if let Some(swap_info) = &amm_swap_info {
+				ensure!(
+					RemoteAmmWhitelist::<T>::contains_key(
+						&swap_info.destination_amm.network_id,
+						&swap_info.destination_amm.amm_id
+					),
+					Error::<T>::DestinationAmmIdNotWhitelisted
+				);
+			}
+
 			let id = generate_id::<T>(&caller, &network_id, &asset_id, &address, &amount, &now);
 			Self::deposit_event(Event::<T>::TransferOut {
 				id,
@@ -482,6 +555,10 @@ pub mod pallet {
 				asset_id,
 				network_id,
 				remote_asset_id,
+				swap_to_native,
+				source_user_account,
+				amm_swap_info,
+				minimum_amount_out,
 			});
 
 			Ok(().into())
@@ -549,6 +626,7 @@ pub mod pallet {
 		///
 		/// Only callable by the current Relayer
 		#[pallet::weight(T::WeightInfo::timelocked_mint())]
+		#[transactional]
 		pub fn timelocked_mint(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
@@ -585,6 +663,7 @@ pub mod pallet {
 		///
 		/// This can only be called by the [`ControlOrigin`](Config::ControlOrigin)
 		#[pallet::weight(T::WeightInfo::set_timelock_duration())]
+		#[transactional]
 		pub fn set_timelock_duration(
 			origin: OriginFor<T>,
 			period: Validated<BlockNumberOf<T>, ValidTimeLockPeriod<T::MinimumTimeLockPeriod>>,
@@ -629,6 +708,7 @@ pub mod pallet {
 
 		/// Collects funds deposited by the Relayer into the owner's account
 		#[pallet::weight(T::WeightInfo::claim_to())]
+		#[transactional]
 		pub fn claim_to(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
@@ -651,6 +731,7 @@ pub mod pallet {
 		/// - `AssetMappingDeleted`
 		/// - `AssetMappingUpdated`
 		#[pallet::weight(T::WeightInfo::update_asset_mapping())]
+		#[transactional]
 		pub fn update_asset_mapping(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
@@ -714,6 +795,46 @@ pub mod pallet {
 			}
 			Ok(().into())
 		}
+
+		/// Adds a remote AMM for a specific Network
+		#[pallet::weight(T::WeightInfo::add_remote_amm_id())]
+		#[transactional]
+		pub fn add_remote_amm_id(
+			origin: OriginFor<T>,
+			network_id: NetworkIdOf<T>,
+			amm_id: RemoteAmmIdOf<T>,
+		) -> DispatchResultWithPostInfo {
+			T::ControlOrigin::ensure_origin(origin)?;
+
+			ensure!(
+				!RemoteAmmWhitelist::<T>::contains_key(&network_id, &amm_id),
+				Error::<T>::RemoteAmmIdAlreadyExists,
+			);
+
+			RemoteAmmWhitelist::<T>::insert(network_id, amm_id, ());
+
+			Ok(().into())
+		}
+
+		/// Removes a remote AMM for a specific Network
+		#[pallet::weight(T::WeightInfo::remove_remote_amm_id())]
+		#[transactional]
+		pub fn remove_remote_amm_id(
+			origin: OriginFor<T>,
+			network_id: NetworkIdOf<T>,
+			amm_id: RemoteAmmIdOf<T>,
+		) -> DispatchResultWithPostInfo {
+			T::ControlOrigin::ensure_origin(origin)?;
+
+			ensure!(
+				RemoteAmmWhitelist::<T>::contains_key(&network_id, &amm_id),
+				Error::<T>::RemoteAmmIdNotFound
+			);
+
+			RemoteAmmWhitelist::<T>::remove(network_id, amm_id);
+
+			Ok(().into())
+		}
 	}
 
 	#[pallet::extra_constants]
@@ -726,7 +847,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// AccountId of the pallet, used to store all funds before actually moving them.
 		pub(crate) fn sub_account_id(sub_account: SubAccount<T>) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account(sub_account.to_id())
+			T::PalletId::get().into_sub_account_truncating(sub_account.to_id())
 		}
 
 		/// Queries storage, returning the account_id of the current relayer.

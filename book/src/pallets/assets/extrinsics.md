@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-04-22T18:59:06.826905122Z -->
+<!-- Generated at 2022-06-25T22:31:58.551650789Z -->
 
 # Assets Pallet Extrinsics
 

@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-04-22T18:59:06.843542559Z -->
+<!-- Generated at 2022-06-25T22:31:58.333372989Z -->
 
 # Oracle Pallet Extrinsics
 

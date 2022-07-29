@@ -4,21 +4,28 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/ui-pablo/*'
+      - 'frontend/apps/pablo/*'
+      - 'frontend/apps/pablo-storybook/*'
   push:
     paths:
-      - 'frontend/ui-pablo/*'
+      - 'frontend/apps/pablo/*'
+      - 'frontend/apps/pablo-storybook/*'
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Install modules
-        run: yarn install --no-scripts
-        working-directory: frontend/ui-pablo
-
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          always-auth: true
+          registry-url: 'https://registry.npmjs.org'
+      - run: yarn install --ignore-scripts
+        working-directory: frontend
+        env:
+          CI: true
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Run tests
-        run: yarn test
-        working-directory: frontend/ui-pablo
+        run: yarn --filter=pablo test
+        working-directory: frontend

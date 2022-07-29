@@ -1,5 +1,7 @@
 # Apollo: The Oracle Pallet
 
+---
+
 The first pallet being built on the Picasso parachain is an MEV-resistant oracle 
 pallet, Apollo. Composable is constructing this pallet as a means of kicking off 
 development on Picasso, while delivering essential oracle functionalities and 

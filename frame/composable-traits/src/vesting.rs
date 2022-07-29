@@ -1,4 +1,4 @@
-use codec::HasCompact;
+use codec::{HasCompact, MaxEncodedLen};
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::AtLeast32Bit;

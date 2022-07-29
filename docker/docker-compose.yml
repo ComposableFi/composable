@@ -14,7 +14,7 @@ services:
             testing_net:
                 ipv4_address: 172.28.1.1
     watchtower:
-        image: containrrr/watchtower
+        image: "containrrr/watchtower"
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
             - ~/.docker/config.json:/config.json
@@ -27,7 +27,7 @@ services:
             - "9945:9945"
         volumes:
             - "polkadot-data-bob:/bob"
-        command: node-template --telemetry-url 'ws://172.28.1.10:8000/submit 0' --validator --unsafe-ws-external --rpc-methods Unsafe --unsafe-rpc-external --rpc-cors all --ws-port 9945 --pruning archive --bob --bootnodes /ip4/172.28.1.1/tcp/30333/p2p/12D3KooWCJC43YRmb5WJcJmskPSxbkWY4Vp6jPKdFeggnXPxgBCw --port 30334
+        command: "node-template --telemetry-url 'ws://172.28.1.10:8000/submit 0' --validator --unsafe-ws-external --rpc-methods Unsafe --unsafe-rpc-external --rpc-cors all --ws-port 9945 --pruning archive --bob --bootnodes /ip4/172.28.1.1/tcp/30333/p2p/12D3KooWCJC43YRmb5WJcJmskPSxbkWY4Vp6jPKdFeggnXPxgBCw --port 30334"
         depends_on:
             - telemetry-backend
         networks:
@@ -41,7 +41,7 @@ services:
             - "9946:9946"
         volumes:
             - "polkadot-data-charlie:/charlie"
-        command: node-template --telemetry-url 'ws://172.28.1.10:8000/submit 0' --validator --unsafe-ws-external --rpc-methods Unsafe --unsafe-rpc-external --rpc-cors all --ws-port 9946 --pruning archive --charlie --bootnodes /ip4/172.28.1.1/tcp/30333/p2p/12D3KooWCJC43YRmb5WJcJmskPSxbkWY4Vp6jPKdFeggnXPxgBCw --port 30335
+        command: "node-template --telemetry-url 'ws://172.28.1.10:8000/submit 0' --validator --unsafe-ws-external --rpc-methods Unsafe --unsafe-rpc-external --rpc-cors all --ws-port 9946 --pruning archive --charlie --bootnodes /ip4/172.28.1.1/tcp/30333/p2p/12D3KooWCJC43YRmb5WJcJmskPSxbkWY4Vp6jPKdFeggnXPxgBCw --port 30335"
         depends_on:
             - telemetry-backend
         networks:
@@ -55,7 +55,7 @@ services:
             - "9947:9947"
         volumes:
             - "polkadot-data-dave:/dave"
-        command: node-template --telemetry-url 'ws://172.28.1.10:8000/submit 0' --validator --unsafe-ws-external --rpc-methods Unsafe --unsafe-rpc-external --rpc-cors all --ws-port 9947 --pruning archive --dave --bootnodes /ip4/172.28.1.1/tcp/30333/p2p/12D3KooWCJC43YRmb5WJcJmskPSxbkWY4Vp6jPKdFeggnXPxgBCw --port 30336
+        command: "node-template --telemetry-url 'ws://172.28.1.10:8000/submit 0' --validator --unsafe-ws-external --rpc-methods Unsafe --unsafe-rpc-external --rpc-cors all --ws-port 9947 --pruning archive --dave --bootnodes /ip4/172.28.1.1/tcp/30333/p2p/12D3KooWCJC43YRmb5WJcJmskPSxbkWY4Vp6jPKdFeggnXPxgBCw --port 30336"
         depends_on:
             - telemetry-backend
         networks:
@@ -69,7 +69,7 @@ services:
             - "9948:9948"
         volumes:
             - "polkadot-data-eve:/eve"
-        command: node-template --telemetry-url 'ws://172.28.1.10:8000/submit 0' --validator --unsafe-ws-external --rpc-methods Unsafe --unsafe-rpc-external --rpc-cors all --ws-port 9948 --pruning archive --eve --bootnodes /ip4/172.28.1.1/tcp/30333/p2p/12D3KooWCJC43YRmb5WJcJmskPSxbkWY4Vp6jPKdFeggnXPxgBCw --port 30337
+        command: "node-template --telemetry-url 'ws://172.28.1.10:8000/submit 0' --validator --unsafe-ws-external --rpc-methods Unsafe --unsafe-rpc-external --rpc-cors all --ws-port 9948 --pruning archive --eve --bootnodes /ip4/172.28.1.1/tcp/30333/p2p/12D3KooWCJC43YRmb5WJcJmskPSxbkWY4Vp6jPKdFeggnXPxgBCw --port 30337"
         depends_on:
             - telemetry-backend
         networks:
@@ -83,7 +83,7 @@ services:
             - "9949:9949"
         volumes:
             - "polkadot-data-ferdie:/ferdie"
-        command: node-template --telemetry-url 'ws://172.28.1.10:8000/submit 0' --validator --unsafe-ws-external --rpc-methods Unsafe --unsafe-rpc-external --rpc-cors all --ws-port 9949 --pruning archive --ferdie --bootnodes /ip4/172.28.1.1/tcp/30333/p2p/12D3KooWCJC43YRmb5WJcJmskPSxbkWY4Vp6jPKdFeggnXPxgBCw --port 30338
+        command: "node-template --telemetry-url 'ws://172.28.1.10:8000/submit 0' --validator --unsafe-ws-external --rpc-methods Unsafe --unsafe-rpc-external --rpc-cors all --ws-port 9949 --pruning archive --ferdie --bootnodes /ip4/172.28.1.1/tcp/30333/p2p/12D3KooWCJC43YRmb5WJcJmskPSxbkWY4Vp6jPKdFeggnXPxgBCw --port 30338"
         depends_on:
             - telemetry-backend
         networks:

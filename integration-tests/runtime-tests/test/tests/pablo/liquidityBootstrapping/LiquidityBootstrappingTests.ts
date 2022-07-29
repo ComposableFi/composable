@@ -49,7 +49,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
     //Gets latest block number
     const latestHead = await api.rpc.chain.getFinalizedHead();
     const latestBlock = (await api.rpc.chain.getHeader(latestHead)).number;
-    startTime = latestBlock.toNumber() + 12;
+    startTime = latestBlock.toNumber() + 24;
     //Should be a number between 216000 - 7200
     endTime = startTime + 7300;
     //Max Initial weight is 95%, here it is passed as 50%

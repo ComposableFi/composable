@@ -68,13 +68,13 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::SafeArithmetic;
+	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
-			StableSwapPoolInfo,
+			RedeemableAssets, RemoveLiquiditySimulationResult, StableSwapPoolInfo,
 		},
 	};
 	use core::fmt::Debug;
@@ -101,7 +101,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
 		ArithmeticError, FixedPointNumber, Permill,
 	};
-	use sp_std::vec::Vec;
+	use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolInitConfiguration<AccountId, AssetId, BlockNumber> {
@@ -218,12 +218,22 @@ pub mod pallet {
 			/// Charged fees.
 			fee: Fee<T::AssetId, T::Balance>,
 		},
+		/// TWAP updated.
+		TwapUpdated {
+			/// Pool id on which exchange done.
+			pool_id: T::PoolId,
+			/// TWAP Timestamp
+			timestamp: MomentOf<T>,
+			/// Map of asset_id -> twap
+			twaps: BTreeMap<T::AssetId, Rate>,
+		},
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		PoolNotFound,
 		NotEnoughLiquidity,
+		NotEnoughLpToken,
 		PairMismatch,
 		MustBeOwner,
 		InvalidSaleState,
@@ -235,6 +245,8 @@ pub mod pallet {
 		InvalidFees,
 		AmpFactorMustBeGreaterThanZero,
 		MissingAmount,
+		MissingMinExpectedAmount,
+		MoreThanTwoAssetsNotYetSupported,
 		NoLpTokenForLbp,
 		WeightsMustBeNonZero,
 		WeightsMustSumToOne,
@@ -259,7 +271,7 @@ pub mod pallet {
 			+ Ord;
 
 		/// Type representing the Balance of an account.
-		type Balance: BalanceLike;
+		type Balance: BalanceLike + SafeSub;
 
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
@@ -488,10 +500,10 @@ pub mod pallet {
 			let current_timestamp = T::Time::now();
 			let rate_base = Self::do_get_exchange_rate(pool_id, PriceRatio::NotSwapped)?;
 			let rate_quote = Self::do_get_exchange_rate(pool_id, PriceRatio::Swapped)?;
-			let (base_price_cumulative, quote_price_cumulative) = (
-				compute_initial_price_cumulative::<T::Convert, _>(rate_base)?,
-				compute_initial_price_cumulative::<T::Convert, _>(rate_quote)?,
-			);
+			let base_price_cumulative =
+				compute_initial_price_cumulative::<T::Convert, _>(rate_base)?;
+			let quote_price_cumulative =
+				compute_initial_price_cumulative::<T::Convert, _>(rate_quote)?;
 			TWAPState::<T>::insert(
 				pool_id,
 				TimeWeightedAveragePrice {
@@ -542,6 +554,18 @@ pub mod pallet {
 				);
 				if result.is_ok() {
 					weight += 1;
+					if let Some(updated_twap) = TWAPState::<T>::get(pool_id) {
+						if let Ok(currency_pair) = Self::currency_pair(pool_id) {
+							Self::deposit_event(Event::<T>::TwapUpdated {
+								pool_id,
+								timestamp: updated_twap.timestamp,
+								twaps: BTreeMap::from([
+									(currency_pair.base, updated_twap.base_twap),
+									(currency_pair.quote, updated_twap.quote_twap),
+								]),
+							});
+						}
+					}
 				}
 			}
 			weight
@@ -580,7 +604,8 @@ pub mod pallet {
 					pair,
 				),
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
-					let validated_pool_config = Validated::new(pool_config.clone())?;
+					let validated_pool_config =
+						Validated::new(pool_config.clone()).map_err(DispatchError::Other)?;
 					(
 						pool_config.owner,
 						LiquidityBootstrapping::<T>::do_create_pool(validated_pool_config)?,
@@ -599,7 +624,7 @@ pub mod pallet {
 		}
 
 		pub(crate) fn account_id(pool_id: &T::PoolId) -> T::AccountId {
-			T::PalletId::get().into_sub_account(pool_id)
+			T::PalletId::get().into_sub_account_truncating(pool_id)
 		}
 
 		pub(crate) fn do_get_exchange_rate(
@@ -616,6 +641,16 @@ pub mod pallet {
 				T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 			let pool_quote_asset_under_management =
 				T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+
+			ensure!(
+				pool_base_asset_under_management > Zero::zero(),
+				Error::<T>::NotEnoughLiquidity
+			);
+			ensure!(
+				pool_quote_asset_under_management > Zero::zero(),
+				Error::<T>::NotEnoughLiquidity
+			);
+
 			Ok(Rate::checked_from_rational(
 				pool_base_asset_under_management,
 				pool_quote_asset_under_management,
@@ -624,7 +659,7 @@ pub mod pallet {
 		}
 
 		fn update_twap(pool_id: T::PoolId) -> Result<(), DispatchError> {
-			// update price cumulatives
+			let currency_pair = Self::currency_pair(pool_id)?; // update price cumulatives
 			let (base_price_cumulative, quote_price_cumulative) =
 				PriceCumulativeState::<T>::try_mutate(
 					pool_id,
@@ -636,16 +671,28 @@ pub mod pallet {
 				quote_price_cumulative != T::Balance::zero()
 			{
 				// update TWAP
-				let _ = TWAPState::<T>::try_mutate(
+				let updated_twap = TWAPState::<T>::try_mutate(
 					pool_id,
-					|prev_twap_state| -> Result<(), DispatchError> {
+					|prev_twap_state| -> Result<Option<TWAPStateOf<T>>, DispatchError> {
 						update_twap_state::<T>(
 							base_price_cumulative,
 							quote_price_cumulative,
 							prev_twap_state,
 						)
+						.map_or_else(|_| Ok(None), |_| Ok(prev_twap_state.clone()))
 					},
-				);
+				)?;
+				if let Some(updated_twap) = updated_twap {
+					Self::deposit_event(Event::<T>::TwapUpdated {
+						pool_id,
+						timestamp: updated_twap.timestamp,
+						twaps: BTreeMap::from([
+							(currency_pair.base, updated_twap.base_twap),
+							(currency_pair.quote, updated_twap.quote_twap),
+						]),
+					});
+				}
+				return Ok(())
 			}
 			Ok(())
 		}
@@ -695,42 +742,152 @@ pub mod pallet {
 			}
 		}
 
-		fn amount_of_lp_token_for_added_liquidity(
+		fn simulate_add_liquidity(
+			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			base_amount: Self::Balance,
-			quote_amount: Self::Balance,
+			amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
+			let currency_pair = Self::currency_pair(pool_id)?;
+			ensure!(amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
+			let base_amount = *amounts.get(&currency_pair.base).ok_or(Error::<T>::MissingAmount)?;
+			let quote_amount =
+				*amounts.get(&currency_pair.quote).ok_or(Error::<T>::MissingAmount)?;
+			ensure!(
+				T::Assets::reducible_balance(currency_pair.base, who, false) >= base_amount,
+				Error::<T>::NotEnoughLiquidity
+			);
+			ensure!(
+				T::Assets::reducible_balance(currency_pair.quote, who, false) >= quote_amount,
+				Error::<T>::NotEnoughLiquidity
+			);
+
+			lp_for_liquidity::<T>(pool, pool_account, base_amount, quote_amount)
+		}
+
+		fn redeemable_assets_for_lp_tokens(
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
+		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			let currency_pair = Self::currency_pair(pool_id)?;
+			ensure!(min_expected_amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
+			let min_base_amount = *min_expected_amounts
+				.get(&currency_pair.base)
+				.ok_or(Error::<T>::MissingMinExpectedAmount)?;
+			let min_quote_amount = *min_expected_amounts
+				.get(&currency_pair.quote)
+				.ok_or(Error::<T>::MissingMinExpectedAmount)?;
 			match pool {
-				PoolConfiguration::StableSwap(pool) =>
-					StableSwap::<T>::calculate_mint_amount_and_fees(
-						&pool,
-						&pool_account,
-						&base_amount,
-						&quote_amount,
-					)
-					.map(|x| x.0),
-				PoolConfiguration::ConstantProduct(pool) => {
+				PoolConfiguration::StableSwap(StableSwapPoolInfo { pair, lp_token, .. }) |
+				PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
+					pair,
+					lp_token,
+					..
+				}) => {
 					let pool_base_aum =
-						T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
+						T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 					let pool_quote_aum =
-						T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
+						T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+					let lp_issued = T::Assets::total_issuance(lp_token);
 
-					let lp_total_issuance =
-						T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-					let (_, amount_of_lp_token_to_mint) = compute_deposit_lp(
-						lp_total_issuance,
-						T::Convert::convert(base_amount),
-						T::Convert::convert(quote_amount),
+					let base_amount = T::Convert::convert(safe_multiply_by_rational(
+						T::Convert::convert(lp_amount),
 						pool_base_aum,
+						T::Convert::convert(lp_issued),
+					)?);
+					let quote_amount = T::Convert::convert(safe_multiply_by_rational(
+						T::Convert::convert(lp_amount),
 						pool_quote_aum,
-					)?;
-
-					Ok(T::Convert::convert(amount_of_lp_token_to_mint))
+						T::Convert::convert(lp_issued),
+					)?);
+					ensure!(
+						base_amount >= min_base_amount && quote_amount >= min_quote_amount,
+						Error::<T>::CannotRespectMinimumRequested
+					);
+					Ok(RedeemableAssets {
+						assets: BTreeMap::from([
+							(pair.base, base_amount),
+							(pair.quote, quote_amount),
+						]),
+					})
 				},
-				PoolConfiguration::LiquidityBootstrapping(_) =>
-					Err(Error::<T>::NoLpTokenForLbp.into()),
+
+				// for LBP just return 0 for both balances as it does not have LP Token
+				PoolConfiguration::LiquidityBootstrapping(LiquidityBootstrappingPoolInfo {
+					pair,
+					..
+				}) => Ok(RedeemableAssets {
+					assets: BTreeMap::from([
+						(pair.base, Self::Balance::zero()),
+						(pair.quote, Self::Balance::zero()),
+					]),
+				}),
+			}
+		}
+
+		fn simulate_remove_liquidity(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
+		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
+			ensure!(min_expected_amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
+			let redeemable_assets =
+				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_expected_amounts)?;
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			match pool {
+				PoolConfiguration::StableSwap(StableSwapPoolInfo { pair, lp_token, .. }) |
+				PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
+					pair,
+					lp_token,
+					..
+				}) => {
+					let base_amount = *redeemable_assets
+						.assets
+						.get(&pair.base)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					let quote_amount = *redeemable_assets
+						.assets
+						.get(&pair.quote)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					let lp_issued = T::Assets::total_issuance(lp_token);
+					let total_issuance = lp_issued.safe_sub(&lp_amount)?;
+
+					ensure!(
+						T::Assets::reducible_balance(pair.base, &pool_account, false) > base_amount,
+						Error::<T>::NotEnoughLiquidity
+					);
+					ensure!(
+						T::Assets::reducible_balance(pair.quote, &pool_account, false) >
+							quote_amount,
+						Error::<T>::NotEnoughLiquidity
+					);
+					ensure!(
+						T::Assets::reducible_balance(lp_token, who, false) > lp_amount,
+						Error::<T>::NotEnoughLpToken
+					);
+					Ok(RemoveLiquiditySimulationResult {
+						assets: BTreeMap::from([
+							(pair.base, base_amount),
+							(pair.quote, quote_amount),
+							(lp_token, total_issuance),
+						]),
+					})
+				},
+				PoolConfiguration::LiquidityBootstrapping(LiquidityBootstrappingPoolInfo {
+					pair,
+					..
+				}) => Ok(RemoveLiquiditySimulationResult {
+					assets: BTreeMap::from([
+						(pair.base, Self::Balance::zero()),
+						(pair.quote, Self::Balance::zero()),
+					]),
+				}),
 			}
 		}
 
@@ -827,18 +984,35 @@ pub mod pallet {
 			min_base_amount: Self::Balance,
 			min_quote_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
+			let currency_pair = Self::currency_pair(pool_id)?;
+			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(
+				pool_id,
+				lp_amount,
+				BTreeMap::from([
+					(currency_pair.base, min_base_amount),
+					(currency_pair.quote, min_quote_amount),
+				]),
+			)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
 				PoolConfiguration::StableSwap(info) => {
+					let base_amount = *redeemable_assets
+						.assets
+						.get(&info.pair.base)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					let quote_amount = *redeemable_assets
+						.assets
+						.get(&info.pair.quote)
+						.ok_or(Error::<T>::InvalidAsset)?;
 					let (base_amount, quote_amount, updated_lp) =
 						StableSwap::<T>::remove_liquidity(
 							who,
 							info,
 							pool_account,
 							lp_amount,
-							min_base_amount,
-							min_quote_amount,
+							base_amount,
+							quote_amount,
 						)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
@@ -850,13 +1024,21 @@ pub mod pallet {
 					});
 				},
 				PoolConfiguration::ConstantProduct(info) => {
+					let base_amount = *redeemable_assets
+						.assets
+						.get(&info.pair.base)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					let quote_amount = *redeemable_assets
+						.assets
+						.get(&info.pair.quote)
+						.ok_or(Error::<T>::InvalidAsset)?;
 					let (base_amount, quote_amount, updated_lp) = Uniswap::<T>::remove_liquidity(
 						who,
 						info,
 						pool_account,
 						lp_amount,
-						min_base_amount,
-						min_quote_amount,
+						base_amount,
+						quote_amount,
 					)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
@@ -879,6 +1061,7 @@ pub mod pallet {
 							min_quote_amount,
 						)?;
 					Self::update_twap(pool_id)?;
+					Pools::<T>::remove(pool_id);
 					Self::deposit_event(Event::PoolDeleted { pool_id, base_amount, quote_amount });
 				},
 			}
@@ -1060,5 +1243,43 @@ pub mod pallet {
 		// implemented as of now.
 		let spot_price = <Pallet<T> as Amm>::get_exchange_value(pool_id, base_asset_id, amount)?;
 		Ok(PriceAggregate { pool_id, base_asset_id, quote_asset_id, spot_price })
+	}
+
+	fn lp_for_liquidity<T: Config>(
+		pool_config: PoolConfiguration<T::AccountId, T::AssetId, T::BlockNumber>,
+		pool_account: T::AccountId,
+		base_amount: T::Balance,
+		quote_amount: T::Balance,
+	) -> Result<T::Balance, DispatchError> {
+		match pool_config {
+			PoolConfiguration::StableSwap(pool) => {
+				let (amount_of_lp_token_to_mint, ..) =
+					StableSwap::<T>::calculate_mint_amount_and_fees(
+						&pool,
+						&pool_account,
+						&base_amount,
+						&quote_amount,
+					)?;
+				Ok(amount_of_lp_token_to_mint)
+			},
+			PoolConfiguration::ConstantProduct(pool) => {
+				let pool_base_aum =
+					T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
+				let pool_quote_aum =
+					T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
+
+				let lp_total_issuance =
+					T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
+				let (_, amount_of_lp_token_to_mint) = compute_deposit_lp(
+					lp_total_issuance,
+					T::Convert::convert(base_amount),
+					T::Convert::convert(quote_amount),
+					pool_base_aum,
+					pool_quote_aum,
+				)?;
+				Ok(T::Convert::convert(amount_of_lp_token_to_mint))
+			},
+			PoolConfiguration::LiquidityBootstrapping(_pool) => Ok(T::Balance::zero()),
+		}
 	}
 }

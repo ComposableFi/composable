@@ -8,13 +8,9 @@ use crate::{
 	oracle::Oracle as OracleTrait,
 	time::Timestamp,
 };
-use composable_support::validation::{TryIntoValidated, Validate, Validated};
-use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
+use frame_support::{pallet_prelude::*, sp_std::vec::Vec};
 use scale_info::TypeInfo;
-use sp_runtime::{
-	traits::{One, Zero},
-	Percent,
-};
+use sp_runtime::{traits::Zero, Percent, Perquintill};
 
 use self::math::*;
 
@@ -33,9 +29,6 @@ pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
-pub struct UpdateInputValid;
-
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
 pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	/// Collateral factor of market
@@ -45,28 +38,8 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	pub under_collateralized_warn_percent: Percent,
 	/// liquidation engine id
 	pub liquidators: Vec<LiquidationStrategyId>,
-	pub interest_rate_model: InterestRateModel,
 	/// Count of blocks until throw error PriceIsTooOld
 	pub max_price_age: BlockNumber,
-}
-
-impl<LiquidationStrategyId, BlockNumber>
-	Validate<UpdateInput<LiquidationStrategyId, BlockNumber>, UpdateInputValid> for UpdateInputValid
-{
-	fn validate(
-		update_input: UpdateInput<LiquidationStrategyId, BlockNumber>,
-	) -> Result<UpdateInput<LiquidationStrategyId, BlockNumber>, &'static str> {
-		if update_input.collateral_factor < MoreThanOneFixedU128::one() {
-			return Err("Collateral factor must be more than one.")
-		}
-
-		let interest_rate_model = update_input
-			.interest_rate_model
-			.try_into_validated::<InteresteRateModelIsValid>()?
-			.value();
-
-		Ok(UpdateInput { interest_rate_model, ..update_input })
-	}
 }
 
 /// input to create market extrinsic
@@ -81,69 +54,7 @@ pub struct CreateInput<LiquidationStrategyId, AssetId, BlockNumber> {
 	pub currency_pair: CurrencyPair<AssetId>,
 	/// Reserve factor of market borrow vault.
 	pub reserved_factor: Perquintill,
-}
-
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
-pub struct MarketModelValid;
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
-pub struct CurrencyPairIsNotSame;
-
-impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
-	Validate<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, MarketModelValid>
-	for MarketModelValid
-{
-	fn validate(
-		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
-	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
-		let updatable = create_input.updatable.try_into_validated::<UpdateInputValid>()?.value();
-		Ok(CreateInput { updatable, ..create_input })
-	}
-}
-
-impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
-	Validate<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, CurrencyPairIsNotSame>
-	for CurrencyPairIsNotSame
-{
-	fn validate(
-		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
-	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
-		if create_input.currency_pair.base == create_input.currency_pair.quote {
-			Err("Base and quote currencies supposed to be different in currency pair")
-		} else {
-			Ok(create_input)
-		}
-	}
-}
-
-#[derive(RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
-pub struct AssetIsSupportedByOracle<Oracle: OracleTrait>(PhantomData<Oracle>);
-
-impl<Oracle: OracleTrait> Copy for AssetIsSupportedByOracle<Oracle> {}
-impl<Oracle: OracleTrait> Clone for AssetIsSupportedByOracle<Oracle> {
-	fn clone(&self) -> Self {
-		*self
-	}
-}
-
-impl<LiquidationStrategyId, Asset: Copy, BlockNumber, Oracle: OracleTrait<AssetId = Asset>>
-	Validate<
-		CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
-		AssetIsSupportedByOracle<Oracle>,
-	> for AssetIsSupportedByOracle<Oracle>
-{
-	fn validate(
-		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
-	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
-		ensure!(
-			Oracle::is_supported(create_input.borrow_asset())?,
-			"Borrow asset is not supported by oracle"
-		);
-		ensure!(
-			Oracle::is_supported(create_input.collateral_asset())?,
-			"Collateral asset is not supported by oracle"
-		);
-		Ok(create_input)
-	}
+	pub interest_rate_model: InterestRateModel,
 }
 
 impl<LiquidationStrategyId, AssetId: Copy, BlockNumber>
@@ -158,18 +69,6 @@ impl<LiquidationStrategyId, AssetId: Copy, BlockNumber>
 
 	pub fn reserved_factor(&self) -> Perquintill {
 		self.reserved_factor
-	}
-}
-
-#[derive(RuntimeDebug, PartialEq, Eq, TypeInfo, Default, Copy, Clone)]
-pub struct BalanceGreaterThenZero;
-impl<B> Validate<B, BalanceGreaterThenZero> for BalanceGreaterThenZero
-where
-	B: Zero + PartialOrd,
-{
-	fn validate(balance: B) -> Result<B, &'static str> {
-		ensure!(balance > B::zero(), "Can not deposit zero collateral");
-		Ok(balance)
 	}
 }
 
@@ -334,14 +233,17 @@ pub trait Lending: DeFiEngine {
 	/// but the lending Market would have all the lendable funds in a single vault.
 	///
 	/// Returned `MarketId` is mapped one to one with (deposit VaultId, collateral VaultId)
-	fn create(
+	fn create_market(
 		manager: Self::AccountId,
-		config: Validated<
-			CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId, Self::BlockNumber>,
-			(MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle<Self::Oracle>),
-		>,
+		config: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId, Self::BlockNumber>,
 		keep_alive: bool,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
+
+	fn update_market(
+		manager: Self::AccountId,
+		market_id: Self::MarketId,
+		input: UpdateInput<Self::LiquidationStrategyId, Self::BlockNumber>,
+	) -> DispatchResultWithPostInfo;
 
 	/// [`AccountId`][Self::AccountId] of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
@@ -350,7 +252,7 @@ pub trait Lending: DeFiEngine {
 	fn deposit_collateral(
 		market_id: &Self::MarketId,
 		account_id: &Self::AccountId,
-		amount: Validated<Self::Balance, BalanceGreaterThenZero>,
+		amount: Self::Balance,
 		keep_alive: bool,
 	) -> Result<(), DispatchError>;
 

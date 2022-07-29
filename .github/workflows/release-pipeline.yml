@@ -109,7 +109,8 @@ jobs:
           RELEASE_VERSION: ${{ steps.release_drafter.outputs.tag_name }}
         run: |
           RELEASE_VERSION=${RELEASE_VERSION:1} make version
-          .maintain/client_release.sh
+          cargo build --release -p composable
+          echo "client_release=1" >> "$GITHUB_ENV"
 
       # This uploads the client binary built in the previous step to the release draft
       # DO NOT REMOVE

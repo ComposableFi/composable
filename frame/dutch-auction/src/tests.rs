@@ -4,9 +4,10 @@ use crate::mock::{currency::*, runtime::*};
 use composable_traits::{
 	defi::{LiftedFixedBalance, Sell, Take},
 	time::{LinearDecrease, TimeReleaseFunction},
+	xcm::XcmSellRequest,
 };
 use frame_support::{
-	assert_ok,
+	assert_noop, assert_ok,
 	traits::{
 		fungible::{self, Mutate as NativeMutate},
 		fungibles::{Inspect, Mutate},
@@ -40,6 +41,34 @@ pub fn new_test_externalities() -> sp_io::TestExternalities {
 
 // ensure that we take extra for sell, at least amount to remove
 #[test]
+fn xcm_sell_with_same_asset() {
+	new_test_externalities().execute_with(|| {
+		let seller = AccountId::from_raw(ALICE.0);
+		let sell = Sell::new(BTC, BTC, 1, fixed(1000));
+		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
+		let configuration_id = 1;
+		DutchAuction::add_configuration(
+			Origin::signed(seller),
+			configuration_id,
+			configuration.clone(),
+		)
+		.unwrap();
+		let order_id = crate::OrdersIndex::<Runtime>::get();
+		let request = XcmSellRequest {
+			order_id: order_id.into(),
+			order: sell,
+			from_to: ALICE.0,
+			configuration: configuration_id,
+		};
+		assert_noop!(
+			DutchAuction::xcm_sell(Origin::signed(seller), request),
+			sp_runtime::DispatchError::Other("Auction creation with the same asset."),
+		);
+	});
+}
+
+// ensure that we take extra for sell, at least amount to remove
+#[test]
 fn setup_sell() {
 	new_test_externalities().execute_with(|| {
 		Tokens::mint_into(PICA, &ALICE, 1_000_000_000_000_000_000_000).unwrap();
@@ -53,10 +82,12 @@ fn setup_sell() {
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		let not_reserved = Assets::reserved_balance(BTC, &ALICE);
 		let gas = Assets::balance(PICA, &ALICE);
-		let treasury = Assets::balance(PICA, &DutchAuctionPalletId::get().into_account());
+		let treasury =
+			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account_truncating());
 		DutchAuction::ask(Origin::signed(seller), sell, configuration).unwrap();
 		let treasury_added =
-			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account()) - treasury;
+			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account_truncating()) -
+				treasury;
 		assert!(treasury_added > 0);
 		let ask_gas = <Runtime as pallet_dutch_auction::Config>::WeightInfo::ask() as u128;
 		assert!(treasury_added >= ask_gas);

@@ -162,8 +162,34 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// creates asset using `CurrencyFactory`,
-		/// raises `AssetRegistered` event
+		/// Creates asset using `CurrencyFactory`.
+		/// Raises `AssetRegistered` event
+		///
+		/// Sets only required fields by `CurrencyFactory`, to upsert metadata use referenced
+		/// pallet.
+		///
+		/// # Parameters:
+		///
+		/// `ratio` -  allows `bring you own gas` fees.
+		/// Set to `None` to prevent payment in this asset, only transferring.
+		/// Setting to some will NOT start minting tokens with specified ratio.
+		/// Foreign assets will be put into parachain treasury as is.
+		///
+		/// ```python
+		/// # if cross chain message wants to pay tx fee with non native token
+		/// # then amount of native token would be:
+		/// amount_of_native_token = amount_of_foreign_token * ratio
+		/// ```
+		///
+		/// Examples:
+		///  
+		/// - One to one conversion is 10^18 integer.
+		///
+		/// - 10*10^18 will tell that for 1 foreign asset can `buy` 10 local native.
+		///
+		/// `decimals` - remote number of decimals on other(remote) chain
+		///
+		/// `ed` - same meaning as in `CurrencyFactory`
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,
@@ -185,6 +211,7 @@ pub mod pallet {
 
 		/// Given well existing asset, update its remote information.
 		/// Use with caution as it allow reroute assets location.
+		/// See `register_asset` for parameters meaning.
 		#[pallet::weight(<T as Config>::WeightInfo::update_asset())]
 		pub fn update_asset(
 			origin: OriginFor<T>,

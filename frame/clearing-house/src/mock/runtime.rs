@@ -15,6 +15,7 @@ use frame_support::{
 use frame_system as system;
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use orml_traits::parameter_type_with_key;
+use primitives::currency::ValidateCurrencyId;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -159,6 +160,8 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = Everything;
 	type MaxReserves = frame_support::traits::ConstU32<2>; // copied from 'frame/assets/src/mocks.rs'
 	type ReserveIdentifier = ReserveIdentifier;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -195,6 +198,7 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -213,6 +217,7 @@ impl mock_vamm::Config for Runtime {
 
 parameter_types! {
 	pub const MaxAnswerBound: u32 = 5;
+	pub const TwapWindow: u16 = 3;
 }
 
 impl mock_oracle::Config for Runtime {
@@ -221,6 +226,7 @@ impl mock_oracle::Config for Runtime {
 	type Timestamp = u64;
 	type LocalAssets = ();
 	type MaxAnswerBound = MaxAnswerBound;
+	type TwapWindow = TwapWindow;
 }
 
 // ----------------------------------------------------------------------------------------------------
