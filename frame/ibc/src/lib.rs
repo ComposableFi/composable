@@ -379,7 +379,8 @@ pub mod pallet {
 				},
 			);
 
-			log::trace!(target: "pallet_ibc", "[pallet_ibc_deliver]: logs: {:?}", logs);
+			log::trace!(target: "pallet_ibc", "logs: {:#?}", logs);
+			log::trace!(target: "pallet_ibc", "errors: {:#?}", errors);
 
 			// todo: consolidate into one.
 			if !events.is_empty() {
