@@ -69,7 +69,7 @@ const Status = () => {
             openPolkadotModal();
           }}
           network="polkadot"
-          label={selectedAccount !== -1 && accounts.length ? accounts[selectedAccount].name : "Connect account"}
+          label={selectedAccount !== -1 && accounts.length ? accounts[selectedAccount].name : "Select account"}
         />
       </Box>
     );
