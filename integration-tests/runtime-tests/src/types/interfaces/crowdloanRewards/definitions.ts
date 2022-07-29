@@ -145,8 +145,34 @@ export default {
     CommonMosaicRemoteAssetId: "Null",
     ComposableTraitsDexConsantProductPoolInfo: "Null",
     ComposableTraitsLendingMarketConfig: "Null",
-    ComposableTraitsLendingCreateInput: "Null",
-    ComposableTraitsLendingUpdateInput: "Null",
+    ComposableTraitsLendingCreateInput: {
+      updatable: "ComposableTraitsLendingUpdateInput",
+      currencyPair: "ComposableTraitsDefiCurrencyPairCurrencyId",
+      reservedFactor: "Perquintill",
+      interestRateModel: "ComposableTraitsLendingMathInterestRateModel"
+    },
+    ComposableTraitsLendingUpdateInput: {
+      collateralFactor: "FixedU128",
+      underCollateralizedWarnPercent: "Percent",
+      liquidators: "Vec<u32>",
+      maxPriceAge: "u32"
+    },
+    ComposableTraitsLendingMathInterestRateModel: {
+      _enum: {
+        Jump: "ComposableTraitsLendingMathJumpModel",
+        Curve: "ComposableTraitsLendingMathCurveModel",
+
+      }
+    },
+    ComposableTraitsLendingMathJumpModel: {
+      baseRate: "u128",
+      jumpRate: "u128",
+      fullRate: "u128",
+      targetUtilization: "Percent"
+    },
+    ComposableTraitsLendingMathCurveModel: {
+      baseRate: "u128"
+    },
     ComposableTraitsDexStableSwapPoolInfo: "Null",
     ComposableTraitsOraclePrice: "Null",
     PalletLiquidityBootstrappingPool: "Null",
