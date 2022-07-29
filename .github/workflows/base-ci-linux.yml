@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - base-ci-linux
+      # NOTE: should be released from protected branch as it is used to assemble releases
+      - main
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
@@ -14,6 +15,7 @@ env:
 
 jobs:
   build-and-publish:
+    if: contains(github.event.pull_request.labels.*.name, 'base-ci-linux')
     runs-on: 
       - self-hosted
       - linux
