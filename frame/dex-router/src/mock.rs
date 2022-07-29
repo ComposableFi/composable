@@ -18,6 +18,8 @@ pub type Amount = i128;
 pub type PoolId = u128;
 pub type BlockNumber = u64;
 pub type AccountId = u128;
+pub type RewardPoolId = u16;
+pub type PositionId = u128;
 
 #[allow(dead_code)]
 pub static ALICE: AccountId = 1;
@@ -53,6 +55,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		Pablo : pallet_pablo::{Pallet, Call, Storage, Event<T>},
+		StakingRewards: pallet_staking_rewards::{Pallet, Storage, Call, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>},
@@ -160,6 +163,34 @@ impl pallet_timestamp::Config for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
+	pub const MaxStakingDurationPresets: u32 = 10;
+	pub const MaxRewardConfigsPerPool: u32 = 10;
+}
+
+impl pallet_staking_rewards::Config for Test {
+	type Event = Event;
+	type Balance = Balance;
+	type RewardPoolId = RewardPoolId;
+	type PositionId = PositionId;
+	type AssetId = AssetId;
+	type Assets = Tokens;
+	type CurrencyFactory = LpTokenFactory;
+	type UnixTime = Timestamp;
+	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
+	type PalletId = StakingRewardsPalletId;
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
+	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub const MaxStakingRewardPools: u32 = 10;
+	pub const MillisecsPerBlock: u32 = 12000;
+}
+
 impl pallet_pablo::Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
@@ -179,6 +210,13 @@ impl pallet_pablo::Config for Test {
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
+	type RewardPoolId = RewardPoolId;
+	type MaxStakingRewardPools = MaxStakingRewardPools;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type ManageStaking = StakingRewards;
+	type ProtocolStaking = StakingRewards;
+	type MsPerBlock = MillisecsPerBlock;
 }
 
 parameter_types! {

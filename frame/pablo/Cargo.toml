@@ -32,6 +32,7 @@ sp-core = { default-features = false, git = "https://github.com/paritytech/subst
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+primitives = { path = "../../runtime/primitives", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
@@ -41,6 +42,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 proptest = { version = "1.0" }
+pallet-staking-rewards = { path= "../staking-rewards"}
 
 [features]
 default = ["std"]

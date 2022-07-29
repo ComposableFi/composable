@@ -98,6 +98,10 @@ mod types {
 	}
 
 	pub type NftInstanceId = u128;
+
+	pub type RewardPoolId = u16;
+
+	pub type PositionId = u128;
 }
 
 /// Common constants of statemint and statemine
@@ -112,8 +116,8 @@ mod constants {
 	/// slot_duration()`.
 	///
 	/// Change this to adjust the block time.
-	pub const MILLISECS_PER_BLOCK: u64 = 12000;
-	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+	pub const MILLISECS_PER_BLOCK: u32 = 12000;
+	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK as u64;
 
 	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);

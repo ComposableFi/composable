@@ -25,7 +25,7 @@ use frame_support::{
 	},
 };
 use proptest::prelude::*;
-use sp_runtime::{traits::IntegerSquareRoot, DispatchError, Permill};
+use sp_runtime::{traits::IntegerSquareRoot, DispatchError, Perbill, Permill};
 use sp_std::collections::btree_map::BTreeMap;
 
 fn create_pool(
@@ -429,6 +429,59 @@ fn fees() {
             println!("alice_usdt_bal {:?}, expected_alice_usdt_bal {:?}", alice_usdt_bal, expected_alice_usdt_bal);
         }
 		assert_ok!(default_acceptable_computation_error(expected_alice_usdt_bal, alice_usdt_bal));
+
+	});
+}
+#[test]
+fn staking_pool_test() {
+	new_test_ext().execute_with(|| {
+	System::set_block_number(1);
+		let unit = 1_000_000_000_000_u128;
+		let initial_btc = 1_00_u128 * unit;
+		let btc_price = 45_000_u128;
+		let initial_usdt = initial_btc * btc_price;
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
+			pair: CurrencyPair::new(BTC, USDT),
+			fee: Permill::from_float(0.05),
+			base_weight: Permill::from_percent(50),
+		};
+
+		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+		assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+		// Add the liquidity
+		assert_ok!(<Pablo as Amm>::add_liquidity(
+			&ALICE,
+			pool_id,
+			initial_btc,
+			initial_usdt,
+			0,
+			false
+		));
+        // make sure a Staking pool is created.
+	assert_has_event::<Test, _>(|e| {
+		matches!(e.event,
+            mock::Event::StakingRewards(pallet_staking_rewards::Event::RewardPoolCreated { owner, .. })
+            if owner == Pablo::account_id(&pool_id) )
+	});
+
+		let bob_usdt = 45_000_u128 * unit;
+        let trading_fee = Perbill::from_float(0.05).mul_floor(bob_usdt);
+        let protocol_fee = Perbill::from_float(0.2).mul_floor(trading_fee);
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+
+		assert_ok!(<Pablo as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, 0_u128, false));
+        // lp_fee is taken from quote 
+		// from lp_fee 20 % (default) (as per owner_fee) goes to staking pool
+	assert_has_event::<Test, _>(|e| {
+        println!("{:?}", e.event);
+		matches!(e.event,
+            mock::Event::StakingRewards(pallet_staking_rewards::Event::RewardTransferred { from, reward_currency, reward_increment, ..})
+            if from == BOB && reward_currency == USDT && reward_increment == protocol_fee)
+	});
 
 	});
 }

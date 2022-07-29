@@ -787,7 +787,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let mut rewarded_oracles = BTreeSet::new();
 			for answer in pre_prices {
-				// TODO vim: duplicated code could be refactored to do these accuracy calculations once
+				// TODO vim: duplicated code could be refactored to do these accuracy calculations
+				// once
 				let accuracy: Percent = if answer.price < price {
 					PerThing::from_rational(answer.price, price)
 				} else {
