@@ -1,4 +1,4 @@
-{ pkgs, nixpkgs, devnet-gce, ops-config, devnet-binaries }:
+{ pkgs, devnet-gce, ops-config, devnet-input }:
 let
   mk-composable = spec:
     def: def // {
@@ -58,11 +58,13 @@ in {
   dali = (pkgs.callPackage ../.nix/devnet-spec.nix {
     inherit (latest-dali) composable;
     inherit (latest-dali) polkadot;
+    inherit devnet-input;
   });
 
   picasso = (pkgs.callPackage ../.nix/devnet-spec.nix {
     inherit (latest-picasso) composable;
     inherit (latest-picasso) polkadot;
+    inherit devnet-input;
   });
 
   nixops = (pkgs.nixopsUnstable.override {
@@ -92,7 +94,7 @@ in {
       inherit composable;
       inherit polkadot;
     }) {
-      inherit nixpkgs;
+      inherit pkgs;
       network.description = "Composable Devnet";
       network.storage.legacy = { };
     } [ latest-dali latest-picasso ];

@@ -24,17 +24,18 @@
       pkgs = import nixpkgs { inherit system overlays; };
       rust-toolchain = import ./.nix/rust-toolchain.nix;
     in rec {
-      devnet-spec = pkgs.callPackage ./.nix/devnet-spec.nix { inherit nixpkgs; devnet = "devnet"; };
-      nixopsConfigurations.default =
-        let 
-          pkgs = import nixpkgs {};
-        in 
-          devnet-spec.machines;
+      devnet-input = builtins.fromJSON (builtins.readFile ./devnet/devnet.json);      
       devnet-gce  = import ./devnet/devnet-gce.nix {inherit devnet-spec;};
-      devnet-binaries = { composable = devnet-spec.composable-repo; polkadot = devnet-spec.polkadot-repo;};
+      ops-config = builtins.fromJSON (builtins.readFile ./devnet/ops.json);
+
       packages = 
         let
-          devnet-deploy = pkgs.callPackage ./.nix/devnet-deploy.nix {inherit devnet-binaries; inherit devnet-gce;};
+          devnet-deploy = pkgs.callPackage ./.nix/devnet-deploy {inherit devnet-input; inherit devnet-gce; inherit ops-config;};
+          nixopsConfigurations.default =
+            let 
+              pkgs = import nixpkgs {};
+            in 
+              devnet-deploy.machines;
           latest-book = pkgs.callPackage ./book {};
         in {
           dali-script = devnet-deploy.dali.script;

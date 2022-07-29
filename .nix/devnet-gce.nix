@@ -1,7 +1,7 @@
 { composable,
   polkadot,
   credentials,
-  devnet,
+  devnet-spec,
   devnet-nix,
 }:
 let

@@ -6,6 +6,11 @@ Shells are organized roughly according GitHub teams.
 
 ## Setup
 
+Install Nix + Flakes
+1. https://nixos.org/download.html
+2. https://nixos.wiki/wiki/Flakes
+
+
 ```shell
 nix-env --install --attr nixpkgs.cachix
 cachix use composable-community
