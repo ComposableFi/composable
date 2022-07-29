@@ -4,9 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches:
-       # NOTE: should be released from protected branch as it is used to assemble releases
+      # NOTE: should be released from protected branch as it is used to assemble releases
       - main
-      - andor0/new-ci-linix # tmp
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
@@ -16,7 +15,7 @@ env:
 
 jobs:
   build-and-publish:
-    # if: contains(github.event.pull_request.labels.*.name, 'base-ci-linux')
+    if: contains(github.event.pull_request.labels.*.name, 'base-ci-linux')
     runs-on: 
       - self-hosted
       - linux
