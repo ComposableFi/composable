@@ -11,9 +11,9 @@ RUN rustup toolchain install ${NIGHTLY_VERSION} && \
     rustup component add rustfmt && \
     rustup component add rustfmt --toolchain ${NIGHTLY_VERSION} && \
     rustup target install wasm32-unknown-unknown --toolchain ${NIGHTLY_VERSION} && \
-    cargo +${NIGHTLY_VERSION} install -f cargo-llvm-cov --version 0.3.0 && \
+    cargo +${NIGHTLY_VERSION} install -f cargo-llvm-cov --version 0.4.11 && \
     rustup component add llvm-tools-preview --toolchain=${NIGHTLY_VERSION} && \
-    cargo install taplo-cli --version v0.6.9 && \
+    cargo install taplo-cli --version 0.6.9 && \
     cargo install cargo-spellcheck --version 0.11.3 && \
     cargo install mdbook --version 0.4.21 && \
     cargo install subxt-cli --version 0.22.0 && \
