@@ -1,3 +1,5 @@
+import { useEagerConnect } from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useMobile, useTablet } from "@/hooks/responsive";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import MenuIcon from "@mui/icons-material/Menu";

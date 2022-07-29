@@ -78,7 +78,7 @@ export const DotSamaContextProvider = ({
     { [chainId in RelayChainId]: RelaychainApi }
   >(RELAYCHAIN_PROVIDERS_DEFAULT);
 
-  const activate = async (): Promise<any[] | undefined> => {
+  const activate = async (selectDefaultAccount: boolean = true): Promise<any[] | undefined> => {
     setExtension(s => {
       s.extensionStatus = 'connecting';
       return s;
@@ -126,8 +126,10 @@ export const DotSamaContextProvider = ({
           return { ...s };
         });
 
-        // setting default account
-        setSelectedAccount(accounts.length ? 0 : -1);
+        if (selectDefaultAccount) {
+          // setting default account
+          setSelectedAccount(accounts.length ? 0 : -1);
+        }
       } catch (e) {
         console.error(e);
         continue;
