@@ -17,7 +17,7 @@ import BN from "bn.js";
  * 2. The other way around with KSM.
  * 3. Again from Picasso/Dali to RelayChain with PICA.
  */
-describe("[SHORT] tx.xcmp Tests", function () {
+describe("[SHORT][LAUNCH] tx.xcmp Tests", function () {
   if (!testConfiguration.enabledTests.enabled) return;
 
   let api: ApiPromise;

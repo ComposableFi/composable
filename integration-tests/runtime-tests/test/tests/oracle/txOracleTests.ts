@@ -22,7 +22,7 @@ import { getDevWallets } from "@composable/utils/walletHelper";
  * Contains all TX tests for the pallet:
  * Oracle
  */
-describe("tx.oracle Tests", function () {
+describe("[LAUNCH] tx.oracle Tests", function () {
   if (!testConfiguration.enabledTests.enabled) return;
 
   let api: ApiPromise;
