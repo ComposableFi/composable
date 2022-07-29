@@ -153,6 +153,26 @@ pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
 	pub lock: Lock,
 }
 
+pub trait ManageStakingPool {
+	type AccountId;
+	type AssetId;
+	type BlockNumber;
+	type Balance;
+	type RewardConfigsLimit;
+	type StakingDurationPresetsLimit;
+	type RewardPoolId;
+
+	fn crete_staking_pool(
+		pool_config: RewardPoolConfiguration<
+			Self::AccountId,
+			Self::AssetId,
+			Self::BlockNumber,
+			RewardConfigs<Self::AssetId, Self::Balance, Self::RewardConfigsLimit>,
+			StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
+		>,
+	) -> Result<Self::RewardPoolId, DispatchError>;
+}
+
 /// implemented by instances which know their share of something bigger
 pub trait Shares {
 	type Balance;

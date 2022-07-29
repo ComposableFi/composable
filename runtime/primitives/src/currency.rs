@@ -110,6 +110,7 @@ impl CurrencyId {
 
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(4);
+		pub const PBLO: CurrencyId = CurrencyId(5);
 
 		/// Karura stable coin(Karura Dollar), not native.
 		#[allow(non_upper_case_globals)]

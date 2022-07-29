@@ -296,45 +296,7 @@ pub mod pallet {
 			pool_config: RewardPoolConfigurationOf<T>,
 		) -> DispatchResult {
 			T::RewardPoolCreationOrigin::ensure_origin(origin)?;
-			let (owner, pool_id, end_block) = match pool_config {
-				RewardRateBasedIncentive {
-					owner,
-					asset_id,
-					reward_configs: initial_reward_config,
-					end_block,
-					lock,
-				} => {
-					ensure!(
-						end_block > frame_system::Pallet::<T>::current_block_number(),
-						Error::<T>::EndBlockMustBeInTheFuture
-					);
-					let pool_id = RewardPoolCount::<T>::increment()?;
-					let mut rewards = BTreeMap::new();
-					for reward_config in initial_reward_config.into_iter() {
-						rewards.insert(reward_config.0, Reward::from(reward_config.1));
-					}
-					RewardPools::<T>::insert(
-						pool_id,
-						RewardPool {
-							owner: owner.clone(),
-							asset_id,
-							rewards: BoundedBTreeMap::<
-								T::AssetId,
-								Reward<T::AssetId, T::Balance>,
-								T::MaxRewardConfigsPerPool,
-							>::try_from(rewards)
-							.map_err(|_| Error::<T>::RewardConfigProblem)?,
-							total_shares: T::Balance::zero(),
-							claimed_shares: T::Balance::zero(),
-							end_block,
-							lock,
-						},
-					);
-					Ok((owner, pool_id, end_block))
-				},
-				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
-			}?;
-			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
+			let _ = <Self as ManageStakingPool>::crete_staking_pool(pool_config)?;
 			Ok(())
 		}
 
@@ -392,6 +354,68 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			<Self as Staking>::split(&who, &position, ratio.value())?;
 			Ok(())
+		}
+	}
+
+	impl<T: Config> ManageStakingPool for Pallet<T> {
+		type AssetId = T::AssetId;
+		type AccountId = T::AccountId;
+		type BlockNumber = <T as frame_system::Config>::BlockNumber;
+		type Balance = T::Balance;
+		type RewardConfigsLimit = T::MaxRewardConfigsPerPool;
+		type StakingDurationPresetsLimit = T::MaxStakingDurationPresets;
+		type RewardPoolId = T::RewardPoolId;
+
+		#[transactional]
+		fn crete_staking_pool(
+			pool_config: RewardPoolConfiguration<
+				Self::AccountId,
+				Self::AssetId,
+				Self::BlockNumber,
+				RewardConfigs<Self::AssetId, Self::Balance, Self::RewardConfigsLimit>,
+				StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
+			>,
+		) -> Result<Self::RewardPoolId, DispatchError> {
+			let (owner, pool_id, end_block) = match pool_config {
+				RewardRateBasedIncentive {
+					owner,
+					asset_id,
+					reward_configs: initial_reward_config,
+					end_block,
+					lock,
+				} => {
+					ensure!(
+						end_block > frame_system::Pallet::<T>::current_block_number(),
+						Error::<T>::EndBlockMustBeInTheFuture
+					);
+					let pool_id = RewardPoolCount::<T>::increment()?;
+					let mut rewards = BTreeMap::new();
+					for (_, reward_config) in initial_reward_config.into_iter().enumerate() {
+						rewards.insert(reward_config.0, Reward::from(reward_config.1));
+					}
+					RewardPools::<T>::insert(
+						pool_id,
+						RewardPool {
+							owner: owner.clone(),
+							asset_id,
+							rewards: BoundedBTreeMap::<
+								T::AssetId,
+								Reward<T::AssetId, T::Balance>,
+								T::MaxRewardConfigsPerPool,
+							>::try_from(rewards)
+							.map_err(|_| Error::<T>::RewardConfigProblem)?,
+							total_shares: T::Balance::zero(),
+							claimed_shares: T::Balance::zero(),
+							end_block,
+							lock,
+						},
+					);
+					Ok((owner, pool_id, end_block))
+				},
+				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
+			}?;
+			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
+			Ok(pool_id)
 		}
 	}
 

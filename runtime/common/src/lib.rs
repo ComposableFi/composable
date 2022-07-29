@@ -98,6 +98,10 @@ mod types {
 	}
 
 	pub type NftInstanceId = u128;
+
+	pub type RewardPoolId = u16;
+
+	pub type PositionId = u128;
 }
 
 /// Common constants of statemint and statemine

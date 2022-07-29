@@ -74,7 +74,12 @@ pub mod pallet {
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
-			RedeemableAssets, RemoveLiquiditySimulationResult, StableSwapPoolInfo,
+			RedeemableAssets, RemoveLiquiditySimulationResult, RewardPoolType, StableSwapPoolInfo,
+			StakingRewardPool,
+		},
+		staking::{
+			lock::LockConfig, ManageStakingPool, ProtocolStaking, RewardConfig,
+			RewardPoolConfiguration,
 		},
 	};
 	use core::fmt::Debug;
@@ -84,7 +89,7 @@ pub mod pallet {
 			fungibles::{Inspect, Mutate, Transfer},
 			Time,
 		},
-		transactional, PalletId, RuntimeDebug,
+		transactional, BoundedBTreeMap, PalletId, RuntimeDebug,
 	};
 
 	use crate::liquidity_bootstrapping::LiquidityBootstrapping;
@@ -99,9 +104,9 @@ pub mod pallet {
 	};
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
-		ArithmeticError, FixedPointNumber, Permill,
+		ArithmeticError, FixedPointNumber, Perbill, Permill,
 	};
-	use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+	use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolInitConfiguration<AccountId, AssetId, BlockNumber> {
@@ -147,6 +152,11 @@ pub mod pallet {
 		<T as frame_system::Config>::AccountId,
 		<T as Config>::AssetId,
 		<T as frame_system::Config>::BlockNumber,
+	>;
+
+	type StakingRewardPoolsOf<T> = BoundedVec<
+		StakingRewardPool<<T as Config>::RewardPoolId>,
+		<T as Config>::MaxStakingRewardPools,
 	>;
 	pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
 	pub(crate) type TWAPStateOf<T> = TimeWeightedAveragePrice<MomentOf<T>, <T as Config>::Balance>;
@@ -250,6 +260,7 @@ pub mod pallet {
 		NoLpTokenForLbp,
 		WeightsMustBeNonZero,
 		WeightsMustSumToOne,
+		StakingPoolConfigError,
 	}
 
 	#[pallet::config]
@@ -268,6 +279,7 @@ pub mod pallet {
 			+ Debug
 			+ Default
 			+ TypeInfo
+			+ From<u128>
 			+ Ord;
 
 		/// Type representing the Balance of an account.
@@ -333,6 +345,42 @@ pub mod pallet {
 		#[pallet::constant]
 		type TWAPInterval: Get<MomentOf<Self>>;
 
+		type RewardPoolId: FullCodec
+			+ MaxEncodedLen
+			+ Default
+			+ Debug
+			+ TypeInfo
+			+ Eq
+			+ PartialEq
+			+ Ord
+			+ Copy
+			+ Zero
+			+ One
+			+ SafeArithmetic;
+
+		type MaxStakingRewardPools: Get<u32>;
+
+		type MaxRewardConfigsPerPool: Get<u32>;
+
+		type MaxStakingDurationPresets: Get<u32>;
+
+		type ManageStakingPool: ManageStakingPool<
+			AccountId = AccountIdOf<Self>,
+			AssetId = <Self as Config>::AssetId,
+			BlockNumber = <Self as frame_system::Config>::BlockNumber,
+			Balance = Self::Balance,
+			RewardConfigsLimit = Self::MaxRewardConfigsPerPool,
+			StakingDurationPresetsLimit = Self::MaxStakingDurationPresets,
+			RewardPoolId = Self::RewardPoolId,
+		>;
+
+		type ProtocolStaking: ProtocolStaking<
+			AccountId = AccountIdOf<Self>,
+			AssetId = <Self as Config>::AssetId,
+			Balance = Self::Balance,
+			RewardPoolId = Self::RewardPoolId,
+		>;
+
 		type WeightInfo: WeightInfo;
 	}
 
@@ -365,6 +413,11 @@ pub mod pallet {
 	#[pallet::unbounded]
 	pub type PriceCumulativeState<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::PoolId, PriceCumulativeStateOf<T>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn staking_reward_pools)]
+	pub type StakingRewardPools<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, StakingRewardPoolsOf<T>, OptionQuery>;
 
 	pub(crate) enum PriceRatio {
 		Swapped,
@@ -574,6 +627,59 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		#[transactional]
+		fn create_staking_reward_pool(
+			pool_id: &T::PoolId,
+			pair: CurrencyPair<T::AssetId>,
+		) -> DispatchResult {
+			let mut rewards = BTreeMap::new();
+			rewards.insert(
+				pair.base,
+				RewardConfig {
+					asset_id: pair.base,
+					max_rewards: T::Convert::convert(1_000_000_000_000_000_00_000_000_u128),
+					reward_rate: Perbill::from_percent(10),
+				},
+			);
+			rewards.insert(
+				pair.quote,
+				RewardConfig {
+					asset_id: pair.quote,
+					max_rewards: T::Convert::convert(1_000_000_000_000_000_00_000_000_u128),
+					reward_rate: Perbill::from_percent(10),
+				},
+			);
+			let reward_configs = BoundedBTreeMap::<
+				T::AssetId,
+				RewardConfig<T::AssetId, T::Balance>,
+				T::MaxRewardConfigsPerPool,
+			>::try_from(rewards)
+			.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let mut duration_presets = BTreeMap::new();
+			duration_presets.insert(3600_u64, Perbill::from_percent(1));
+			duration_presets.insert(60_u64, Perbill::from_rational(1_u32, 10_u32));
+			let duration_presets = BoundedBTreeMap::try_from(duration_presets)
+				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let lock = LockConfig { duration_presets, unlock_penalty: Perbill::from_percent(5) };
+			let pool_config = RewardPoolConfiguration::<_, _, _, _, _>::RewardRateBasedIncentive {
+				owner: Self::account_id(pool_id),
+				asset_id: primitives::currency::CurrencyId::PBLO.0.into(),
+				end_block: frame_system::Pallet::<T>::current_block_number() + 26280000_u32.into(),
+				reward_configs,
+				lock,
+			};
+			let staking_reward_pool_id = T::ManageStakingPool::crete_staking_pool(pool_config)?;
+			let staking_reward_pool = StakingRewardPool {
+				pool_id: staking_reward_pool_id,
+				pool_type: RewardPoolType::PBLO,
+			};
+			let staking_reward_pools = BoundedVec::try_from(vec![staking_reward_pool])
+				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+
+			StakingRewardPools::<T>::insert(pool_id, staking_reward_pools);
+			Ok(())
+		}
+
+		#[transactional]
 		pub fn do_create_pool(
 			init_config: PoolInitConfigurationOf<T>,
 		) -> Result<T::PoolId, DispatchError> {
@@ -583,26 +689,26 @@ pub mod pallet {
 					pair,
 					amplification_coefficient,
 					fee,
-				} => (
-					owner.clone(),
-					StableSwap::<T>::do_create_pool(
+				} => {
+					let pool_id = StableSwap::<T>::do_create_pool(
 						&owner,
 						pair,
 						amplification_coefficient,
 						FeeConfig::default_from(fee),
-					)?,
-					pair,
-				),
-				PoolInitConfiguration::ConstantProduct { owner, pair, fee, base_weight } => (
-					owner.clone(),
-					Uniswap::<T>::do_create_pool(
+					)?;
+					Self::create_staking_reward_pool(&pool_id, pair)?;
+					(owner.clone(), pool_id, pair)
+				},
+				PoolInitConfiguration::ConstantProduct { owner, pair, fee, base_weight } => {
+					let pool_id = Uniswap::<T>::do_create_pool(
 						&owner,
 						pair,
 						FeeConfig::default_from(fee),
 						base_weight,
-					)?,
-					pair,
-				),
+					)?;
+					Self::create_staking_reward_pool(&pool_id, pair)?;
+					(owner.clone(), pool_id, pair)
+				},
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
 					let validated_pool_config =
 						Validated::new(pool_config.clone()).map_err(DispatchError::Other)?;
@@ -700,11 +806,34 @@ pub mod pallet {
 		#[transactional]
 		fn disburse_fees(
 			who: &T::AccountId,
+			pool_id: &T::PoolId,
 			owner: &T::AccountId,
 			fees: &Fee<T::AssetId, T::Balance>,
 		) -> Result<(), DispatchError> {
 			if !fees.owner_fee.is_zero() {
 				T::Assets::transfer(fees.asset_id, who, owner, fees.owner_fee, false)?;
+			}
+			if !fees.protocol_fee.is_zero() {
+				let staking_reward_pools = StakingRewardPools::<T>::get(&pool_id)
+					.ok_or(Error::<T>::StakingPoolConfigError)?;
+				let staking_reward_pools_ref: &Vec<StakingRewardPool<T::RewardPoolId>> =
+					staking_reward_pools.as_ref();
+				for staking_reward_pool in staking_reward_pools_ref {
+					match staking_reward_pool.pool_type {
+						RewardPoolType::PBLO => {
+							T::ProtocolStaking::transfer_reward(
+								who,
+								&staking_reward_pool.pool_id,
+								fees.asset_id,
+								fees.protocol_fee,
+							)?;
+						},
+						RewardPoolType::LP => {
+							// TODO: implement.
+							continue
+						},
+					}
+				}
 			}
 			// TODO other fees handling
 			Ok(())
@@ -941,8 +1070,8 @@ pub mod pallet {
 							keep_alive,
 						)?;
 					// imbalance fees
-					Self::disburse_fees(&pool_account, &info.owner, &base_fee)?;
-					Self::disburse_fees(&pool_account, &info.owner, &quote_fee)?;
+					Self::disburse_fees(&pool_account, &pool_id, &info.owner, &base_fee)?;
+					Self::disburse_fees(&pool_account, &pool_id, &info.owner, &quote_fee)?;
 					(added_base_amount, added_quote_amount, minted_lp)
 				},
 				PoolConfiguration::ConstantProduct(info) => Uniswap::<T>::add_liquidity(
@@ -1150,7 +1279,7 @@ pub mod pallet {
 					(base_amount, info.owner, fees)
 				},
 			};
-			Self::disburse_fees(who, &owner, &fees)?;
+			Self::disburse_fees(who, &pool_id, &owner, &fees)?;
 			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
