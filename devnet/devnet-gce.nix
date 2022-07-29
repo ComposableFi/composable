@@ -32,7 +32,7 @@ in {
           network = resources.gceNetworks.composable-devnet;
           region = "europe-central2-c";
           instanceType = "n2-standard-4";
-          rootDiskSize = 50;
+          rootDiskSize = 200;
           tags = [
             "http"
             "https"
