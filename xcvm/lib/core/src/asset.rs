@@ -7,7 +7,8 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use crate::abstraction::IndexOf;
 
 /// Newtype for XCVM assets ID. Must be unique for each asset and must never change.
-/// This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.
+/// This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on
+/// how it is computed.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
 	Copy,
@@ -39,27 +40,27 @@ impl From<u32> for AssetID {
 }
 
 impl From<PICA> for AssetID {
-    fn from(_: PICA) -> Self {
-      PICA::ID
-    }
+	fn from(_: PICA) -> Self {
+		PICA::ID
+	}
 }
 
-impl From<ETH> for AssetID  {
-    fn from(_: ETH) -> Self {
-      ETH::ID
-    }
+impl From<ETH> for AssetID {
+	fn from(_: ETH) -> Self {
+		ETH::ID
+	}
 }
 
 impl From<USDT> for AssetID {
-    fn from(_: USDT) -> Self {
-      USDT::ID
-    }
+	fn from(_: USDT) -> Self {
+		USDT::ID
+	}
 }
 
 impl From<USDC> for AssetID {
-    fn from(_: USDC) -> Self {
-      USDC::ID
-    }
+	fn from(_: USDC) -> Self {
+		USDC::ID
+	}
 }
 
 pub struct InvalidAsset;
@@ -92,7 +93,6 @@ impl Asset for USDT {
 impl Asset for USDC {
 	const ID: AssetID = AssetID(<Assets as IndexOf<Self, _>>::INDEX as u32);
 }
-
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
@@ -212,3 +212,4 @@ mod tests {
 		assert_eq!(USDT::ID, AssetID(3));
 		assert_eq!(USDC::ID, AssetID(4));
 	}
+}

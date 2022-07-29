@@ -5,7 +5,8 @@ use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
 /// Newtype for XCVM networks ID. Must be unique for each network and must never change.
-/// This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.
+/// This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on
+/// how it is computed.
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
 	Copy,
@@ -48,7 +49,8 @@ impl From<Juno> for NetworkID {
 	}
 }
 
-/// The index 0 must not be used for safety purpose, we hence introduce an invalid network at this index.
+/// The index 0 must not be used for safety purpose, we hence introduce an invalid network at this
+/// index.
 pub struct InvalidNetwork;
 /// Composable Picasso (Kusama parachain)
 pub struct Picasso;
