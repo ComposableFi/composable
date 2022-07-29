@@ -90,7 +90,7 @@ export default function MyApp(props: MyAppProps) {
               <PalletsContextProvider>
                 <ApolloProvider client={apolloClient}>
                   <SubstrateBalancesUpdater
-                    substrateChains={Object.values(SUBSTRATE_NETWORKS)}
+                    substrateNetworks={Object.values(SUBSTRATE_NETWORKS)}
                   />
                   <CrowdloanRewardsUpdater />
                   <SnackbarProvider

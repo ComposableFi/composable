@@ -16,7 +16,7 @@ import { NoAssetsCover } from "./NoAssetsCover";
 import { SubstrateAsset } from "@/stores/defi/polkadot/balances/slice";
 
 export type MyAssetsTableProps = TableContainerProps & {
-  assets?: SubstrateAsset[];
+  assets?: any;
 };
 
 export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ assets }) => {
@@ -34,7 +34,7 @@ export const MyAssetsTable: React.FC<MyAssetsTableProps> = ({ assets }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {assets.map((row) => {
+            {assets.map((row: any) => {
               if (row.symbol) {
                 return (
                   <TableRow key={row.symbol}>

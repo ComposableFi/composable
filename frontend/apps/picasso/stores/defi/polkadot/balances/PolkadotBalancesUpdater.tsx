@@ -11,6 +11,10 @@ import { useContext, useEffect } from "react";
 
 import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
+import {
+  fetchBalanceByAssetId,
+  fetchKaruraBalanceByAssetId,
+} from "@/defi/polkadot/pallets/Balance";
 
 export async function updateBalances(
   account: string,
@@ -42,24 +46,23 @@ export async function updateBalances(
 }
 
 const PolkadotBalancesUpdater = ({
-  substrateChains,
+  substrateNetworks,
 }: {
-  substrateChains: SubstrateNetwork[];
+  substrateNetworks: SubstrateNetwork[];
 }) => {
-  const { updateBalance, clearBalance } = useStore(
-    ({ substrateBalances }) => substrateBalances
-  );
+  const { updateBalance, clearBalance, updateAssetBalance, ...assets } =
+    useStore(({ substrateBalances }) => substrateBalances);
   const { selectedAccount, parachainProviders } = useContext(ParachainContext);
   const picassoProvider = usePicassoProvider();
 
   useEffect(() => {
     if (selectedAccount !== -1 && picassoProvider.accounts.length) {
-      Object.entries(parachainProviders).forEach(([id, chain]) => {
+      Object.entries(parachainProviders).forEach(([chainId, chain]) => {
         if (picassoProvider.accounts[selectedAccount] && chain.parachainApi) {
           updateBalances(
             picassoProvider.accounts[selectedAccount].address,
             chain.parachainApi,
-            id,
+            chainId,
             updateBalance
           ).catch((err) => {
             console.error(err);
@@ -71,13 +74,60 @@ const PolkadotBalancesUpdater = ({
     }
   }, [
     selectedAccount,
-    substrateChains,
+    substrateNetworks,
     picassoProvider.accounts.length,
     picassoProvider.accounts,
     parachainProviders,
     updateBalance,
     clearBalance,
   ]);
+
+  useEffect(() => {
+    if (selectedAccount !== -1 && picassoProvider.accounts.length) {
+      Object.entries(parachainProviders).forEach(([chainId, chain]) => {
+        if (chain.parachainApi) {
+          Object.values(assets[chainId as SubstrateNetworkId].assets).forEach(
+            (asset) => {
+              if (!asset.meta.supportedNetwork[chainId as SubstrateNetworkId]) {
+                return;
+              }
+              switch (chainId) {
+                case "picasso":
+                  fetchBalanceByAssetId(
+                    chain.parachainApi!,
+                    chain.accounts[selectedAccount].address,
+                    String(
+                      asset.meta.supportedNetwork[chainId as SubstrateNetworkId]
+                    )
+                  ).then((balance) => {
+                    updateAssetBalance({
+                      substrateNetworkId: chainId as SubstrateNetworkId,
+                      assetId: asset.meta.assetId,
+                      balance,
+                    });
+                  });
+                  break;
+                case "karura":
+                  fetchKaruraBalanceByAssetId(
+                    chain.parachainApi!,
+                    chain.accounts[selectedAccount].address,
+                    String(asset.meta.symbol)
+                  ).then((balance) => {
+                    updateAssetBalance({
+                      substrateNetworkId: chainId as SubstrateNetworkId,
+                      assetId: asset.meta.assetId,
+                      balance,
+                    });
+                  });
+                default:
+                  break;
+              }
+            }
+          );
+        }
+      });
+    }
+  }, [selectedAccount]);
 
   return null;
 };
