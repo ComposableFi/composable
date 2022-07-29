@@ -46,7 +46,7 @@ jobs:
       group: check-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: composablefi/ci-linux:2022-04-18
+      image: composablefi/ci-linux:2022-07-29
     steps:
       - name: Clean up
         continue-on-error: true
@@ -73,7 +73,7 @@ jobs:
       group: testcov-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: composablefi/ci-linux:2022-04-18
+      image: composablefi/ci-linux:2022-07-29
     steps:
       - name: Clean up
         continue-on-error: true
@@ -107,7 +107,7 @@ jobs:
       group: benchmarking-runtime-compat-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: composablefi/ci-linux:2022-04-18
+      image: composablefi/ci-linux:2022-07-29
     strategy:
       matrix:
         runtime: ["dali-dev", "picasso-dev", "composable-dev"]
@@ -162,7 +162,7 @@ jobs:
       group: tests-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: composablefi/ci-linux:2022-04-18
+      image: composablefi/ci-linux:2022-07-29
     steps:
       - name: Clean up
         continue-on-error: true
@@ -192,7 +192,7 @@ jobs:
       group: lint-${{ github.ref }}
       cancel-in-progress: true
     container:
-      image: composablefi/ci-linux:2022-04-18
+      image: composablefi/ci-linux:2022-07-29
     steps:
       - uses: actions/checkout@v2
       - name: Rustup show
