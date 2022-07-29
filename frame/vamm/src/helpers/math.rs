@@ -16,7 +16,6 @@ impl<T: Config> Pallet<T> {
 	///
 	/// * [`Error::<T>::BaseAssetReserveIsZero`]
 	/// * [`Error::<T>::QuoteAssetReserveIsZero`]
-	/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
 	/// * [`Error::<T>::InvariantIsZero`]
 	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
 	pub fn compute_invariant(base: T::Balance, quote: T::Balance) -> Result<U256, DispatchError> {
@@ -27,9 +26,7 @@ impl<T: Config> Pallet<T> {
 
 		let base_u256 = Self::balance_to_u256(base)?;
 		let quote_u256 = Self::balance_to_u256(quote)?;
-		let invariant = base_u256
-			.checked_mul(quote_u256)
-			.ok_or(Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset)?;
+		let invariant = base_u256.checked_mul(quote_u256).ok_or(ArithmeticError::Overflow)?;
 
 		ensure!(!invariant.is_zero(), Error::<T>::InvariantIsZero);
 

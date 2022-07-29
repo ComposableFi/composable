@@ -456,16 +456,6 @@ pub mod pallet {
 		/// * [`Pallet::compute_swap`]
 		/// * [`Pallet::sanity_check_after_swap`]
 		SwappedAmountLessThanMinimumLimit,
-		/// Tried to derive invariant from [`base`](VammState::base_asset_reserves) and
-		/// [`quote`](VammState::quote_asset_reserves) asset, but the
-		/// computation was not successful.
-		///
-		/// ## Occurrences
-		///
-		/// * [`Pallet::create`]
-		/// * [`Pallet::move_price`]
-		/// * [`Pallet::compute_invariant`]
-		FailedToDeriveInvariantFromBaseAndQuoteAsset,
 		/// Tried to perform swap operation but it would drain all
 		/// [`base`](VammState::base_asset_reserves) asset reserves.
 		///
@@ -609,7 +599,6 @@ pub mod pallet {
 		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
 		/// * [`Error::<T>::InvariantIsZero`]
 		/// * [`Error::<T>::PegMultiplierIsZero`]
-		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
 		/// * [`Error::<T>::FundingPeriodTooSmall`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		///
@@ -1043,7 +1032,6 @@ pub mod pallet {
 		/// * [`Error::<T>::BaseAssetReserveIsZero`]
 		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
 		/// * [`Error::<T>::InvariantIsZero`]
-		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
 		///
 		/// # Runtime
 		/// `O(1)`
