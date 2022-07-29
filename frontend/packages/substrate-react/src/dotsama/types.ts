@@ -37,7 +37,7 @@ export interface DotSamaContext {
   parachainProviders: { [chainId in ParachainId]: ParachainApi };
   relaychainProviders: { [chainId in RelayChainId]: RelaychainApi };
   extensionStatus: DotSamaExtensionStatus;
-  activate?: () => Promise<any[] | undefined>;
+  activate?: (setDefaultAccount?: boolean) => Promise<any[] | undefined>;
   deactivate?: () => Promise<void>;
   selectedAccount: number;
   setSelectedAccount?: (account: number) => void;

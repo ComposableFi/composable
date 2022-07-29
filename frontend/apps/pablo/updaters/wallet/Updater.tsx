@@ -18,13 +18,14 @@ const Updater = () => {
 
   useEffect(() => {
     if (selectedAccount) {
+      console.log("setting selectedAddress: ", selectedAccount.address);
       localStorage.setItem("selectedAddress", selectedAccount.address);
     }
   }, [selectedAccount]);
 
   useEffect(() => {
     if (parachainApi !== undefined && activate !== undefined) {
-      activate();
+      activate(false);
     }
   }, [parachainApi, activate]);
 

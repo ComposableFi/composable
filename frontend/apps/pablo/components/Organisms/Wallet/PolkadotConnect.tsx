@@ -94,7 +94,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
   const { extensionStatus, activate } = useDotSamaContext();
 
   const handleConnectPolkadot = async () => {
-    if (activate) await activate();
+    if (activate) await activate(false);
   };
 
   return (
