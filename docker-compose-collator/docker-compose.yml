@@ -1,0 +1,85 @@
+version: "3.7"
+
+services:
+  composable_node:
+    image: composablefi/composable:latest
+    container_name: composable_node
+    volumes:
+      - ./composable-data:/data
+    ports:
+      - 9944:9944
+      - 30334:30334
+      - 30333:30333
+      - 9615:9615
+    restart: unless-stopped
+    command:  >
+      /usr/local/bin/composable
+      --collator
+      --chain=picasso
+      --base-path /data
+      --unsafe-ws-external
+      --unsafe-rpc-external
+      --listen-addr=/ip4/0.0.0.0/tcp/30334
+      --prometheus-external
+      --prometheus-port 9615
+      --execution wasm
+      --
+      --execution=wasm
+      --listen-addr=/ip4/0.0.0.0/tcp/30333
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "10"
+    networks:
+      - composable_network
+
+  prometheus:
+    image: prom/prometheus:v2.34.0
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    command:
+      - --config.file=/home/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yml:/home/prometheus/prometheus.yml
+    restart: always
+    networks:
+      - composable_network
+ 
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.39.3
+    container_name: cadvisor
+    ports:
+      - 8080:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    restart: unless-stopped
+    privileged: true
+    networks:
+      - composable_network
+
+  grafana:
+    image: grafana/grafana:8.4.4
+    container_name: grafana
+    #user: "0"
+    user: "$UID:$GID"
+    ports:
+      - 3000:3000
+    volumes:
+      - ./gfdata:/var/lib/grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    networks:
+      - composable_network
+
+networks:
+  composable_network:
+    name: composable_network
+    driver: bridge
