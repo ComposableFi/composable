@@ -424,53 +424,47 @@ impl<T: Config> Pallet<T> {
 			let total = if let Some(schedules) = maybe_schedules.as_mut() {
 				let mut total: BalanceOf<T> = Zero::zero();
 
+				// TODO: update this inside the next `retain` loop
+				// update the claimed amount for each vesting schedule
 				for schedule in schedules.iter_mut() {
 					let locked_amount = schedule.locked_amount(
 						frame_system::Pallet::<T>::current_block_number(),
 						T::Time::now(),
 					);
-
-					let total_amount = schedule.total_amount().unwrap();
+					let total_amount = schedule.total_amount().unwrap_or(locked_amount);
 					let available_amount = total_amount.saturating_sub(locked_amount);
 
 					match vesting_schedule_id {
 						Some(id) =>
 							if schedule.vesting_schedule_id == id {
+								// if the schedule id is specified, we update the claimed amount for
+								// the specified schedule
 								schedule.already_claimed = available_amount;
 							},
 						None => {
+							// otherwise, we update the claimed amount for all schedules
 							schedule.already_claimed = available_amount;
 						},
 					};
 				}
 
+				// remove the vesting schedules that have already been claimed
 				schedules.retain(|s| {
 					let locked_amount = s.locked_amount(
 						frame_system::Pallet::<T>::current_block_number(),
 						T::Time::now(),
 					);
+					let total_amount = s.total_amount().unwrap_or(locked_amount);
 
-					let total_amount = s.total_amount().unwrap();
+					total = total.saturating_add(total_amount).saturating_sub(s.already_claimed);
 
 					let retain = match vesting_schedule_id {
-						Some(id) =>
-							if s.vesting_schedule_id != id {
-								total = total
-									.saturating_add(total_amount)
-									.saturating_sub(s.already_claimed);
-								true
-							} else {
-								total = total
-									.saturating_add(total_amount)
-									.saturating_sub(s.already_claimed);
-								!locked_amount.is_zero()
-							},
-						None => {
-							total = total
-								.saturating_add(total_amount)
-								.saturating_sub(s.already_claimed);
-							!locked_amount.is_zero()
-						},
+						// if the schedule id is specified, we retain all vesting schedules, except
+						// the specified one in the case that it has some locked balance left
+						Some(id) => s.vesting_schedule_id != id || !locked_amount.is_zero(),
+						// otherwise, we retain all vesting schedules that have
+						// some locked balance left
+						None => !locked_amount.is_zero(),
 					};
 
 					retain
