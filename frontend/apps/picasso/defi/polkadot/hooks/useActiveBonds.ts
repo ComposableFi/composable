@@ -1,10 +1,11 @@
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { useEffect } from "react";
-import { usePicassoProvider } from "@/defi/polkadot/hooks/index";
+import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks/index";
 import { ApiPromise } from "@polkadot/api";
 import { unwrapNumberOrHex } from "shared";
 import { useStore } from "@/stores/root";
 import { Codec } from "@polkadot/types-codec/types";
+import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 
 type VestingAccount = { name: string; address: string };
 
@@ -46,16 +47,23 @@ const bondedVestingSchedule = (bond: BondOffer) => (address: string) => (
   };
 };
 
-export function useOpenPositions(account: VestingAccount | undefined) {
-  const bonds = useStore<BondOffer[]>(state => state.bonds.bonds);
-  const updateOpenPositions = useStore(
-    state => state.bonds.updateOpenPositions
-  );
+export function useActiveBonds() {
+  const account = useSelectedAccount();
+  const {
+    bonds,
+    updateOpenPositions,
+    activeBonds,
+  } = useStore<{
+    bonds: BondOffer[];
+    updateOpenPositions: (openPositions: any) => void;
+    activeBonds: ActiveBond[];
+  }>(state => ({
+    bonds: state.bonds.bonds,
+    updateOpenPositions: state.bonds.updateOpenPositions,
+    activeBonds: state.bonds.openPositions,
+  }));
   const { parachainApi } = usePicassoProvider();
 
-  // traverse to all bonds
-  // get all reward assets
-  // fetch each reward asset and create a new ar
   async function fetchVestingSchedules(api: ApiPromise, acc: VestingAccount) {
     const allVesting = bonds
       .flatMap(
@@ -78,4 +86,6 @@ export function useOpenPositions(account: VestingAccount | undefined) {
 
     return () => unsub();
   }, [parachainApi, bonds, account]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return activeBonds;
 }
