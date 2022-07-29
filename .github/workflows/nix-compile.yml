@@ -38,7 +38,7 @@ jobs:
           name: composable-community
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps --no-update-lock-file
 
   tests:
     needs: common-deps
@@ -63,7 +63,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          nix flake check -L --keep-going
+          nix flake check --no-update-lock-file --keep-going
 
   package-node:
     needs: common-deps
@@ -88,7 +88,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node --no-update-lock-file
 
   package-price-feed:
     needs: common-deps
@@ -113,7 +113,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file
 
   devnet-container:
     needs: package-node
@@ -140,7 +140,7 @@ jobs:
       - run: |
           # TODO: upload docker image
           # Only on trigger by user?
-          nix build .#devnet-container -L
+          nix build .#devnet-container --no-update-lock-file
 
   codespace-devcontainer:
     # NOTE: so we want new container be publish iff all is ready and works

@@ -1,2 +1,2 @@
 # definition of parachain
-builtins.fromJSON (builtins.readFile ./../scripts/polkadot-launch/composable.json)
+builtins.fromJSON (builtins.readFile ./composable.json)
