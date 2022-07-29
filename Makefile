@@ -123,7 +123,7 @@ push-mmr-polkadot:
 
 containerize-ci-linux:
 	@docker build -f docker/ci-linux.dockerfile \
-		-t ${REPO}/ci-linux:2022-04-18  \
+		-t ${REPO}/ci-linux:2022-07-29  \
 		.
 
 push-ci-linux:
@@ -131,11 +131,11 @@ push-ci-linux:
 
 containerize-base-ci-linux:
 	@docker build -f docker/base-ci-linux.dockerfile \
-		-t ${REPO}/base-ci-linux:1.60.0  \
+		-t ${REPO}/base-ci-linux:1.62.1  \
 		.
 
 push-base-ci-linux:
-	@docker push ${REPO}/base-ci-linux:1.60.0
+	@docker push ${REPO}/base-ci-linux:1.62.1
 
 stop:
 	@docker-compose down
