@@ -97,7 +97,7 @@ const Overview: NextPage = () => {
 
             {/* My Assets Tab Pannels */}
             <TabPanel value={tabValue} index={0}>
-              <MyAssetsTable assets={assets as SubstrateAsset[]} />
+              <MyAssetsTable assets={assets} />
             </TabPanel>
 
             {/* My Staking Tab Pannels */}
@@ -105,7 +105,7 @@ const Overview: NextPage = () => {
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />
               </Box>
-              <MyAssetsTable assets={assets as SubstrateAsset[]} />
+              <MyAssetsTable assets={assets} />
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>

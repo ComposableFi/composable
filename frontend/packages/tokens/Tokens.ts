@@ -109,5 +109,23 @@ export const TOKENS: { [key in TokenId]: Token } = {
     symbol: "ANGL",
     decimalsToDisplay: 4,
   },
+  kar: {
+    id: "kar",
+    icon: "/tokens/karura.svg",
+    symbol: "KAR",
+    decimalsToDisplay: 18,
+  },
+  ausd: {
+    id: "ausd",
+    icon: "/tokens/ausd.svg",
+    symbol: "AUSD",
+    decimalsToDisplay: 4,
+  },
+  kusd: {
+    id: "kusd",
+    icon: "/tokens/kusd.svg",
+    symbol: "KUSD",
+    decimalsToDisplay: 4,
+  },
 };
 export const getToken = (tokenId: TokenId): Token => TOKENS[tokenId];

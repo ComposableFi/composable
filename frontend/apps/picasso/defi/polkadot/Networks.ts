@@ -15,9 +15,9 @@ export const SUBSTRATE_NETWORKS: {
     symbol: "KSM",
     logo: "/networks/kusama.svg",
   },
-  "kusama-2019": {
+  picasso: {
     relayChain: "kusama",
-    parachainId: 2019,
+    parachainId: 2087,
     name: "Picasso",
     wsUrl: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019!,
     tokenId: "pica",
@@ -27,8 +27,22 @@ export const SUBSTRATE_NETWORKS: {
     symbol: "PICA",
     logo: "/networks/picasso.svg",
   },
+  karura: {
+    relayChain: "kusama",
+    parachainId: 2000,
+    name: "Karura",
+    wsUrl: process.env.SUBSTRATE_PROVIDER_URL_KARURA!,
+    tokenId: "kar",
+    ss58Format: 49,
+    subscanUrl: "",
+    decimals: 18,
+    symbol: "KAR",
+    logo: "/networks/karura.svg",
+  },
 };
-export const SUBSTRATE_NETWORK_IDS = Object.keys(SUBSTRATE_NETWORKS);
+export const SUBSTRATE_NETWORK_IDS: Array<SubstrateNetworkId> = Object.keys(
+  SUBSTRATE_NETWORKS
+) as Array<SubstrateNetworkId>;
 
 export const getSubstrateNetwork = (
   networkId: SubstrateNetworkId

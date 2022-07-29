@@ -1,94 +1,411 @@
-import React from "react";
+import React, { useContext, useMemo } from "react";
 import { NextPage } from "next";
-import { Box, Button, Grid, Theme, Typography } from "@mui/material";
-import { SwapHoriz } from "@mui/icons-material";
-
+import { Button, Grid, Typography } from "@mui/material";
 import { useStore } from "@/stores/root";
 import Default from "@/components/Templates/Default";
 import {
-  FeeDisplay,
-  NetworkSelect,
-  RecipientDropdown,
-  TextSwitch,
-  TokenDropdownCombinedInput
-} from "@/components";
-import { PageTitle } from "@/components";
-import { TokenId } from "tokens";
-import { formatToken } from "shared";
-
-const gridContainerStyle = {
-  mx: "auto"
-};
-
-const gridItemStyle = (pt: string = "2rem") => ({
-  xs: 12,
-  sx: { pt }
-});
-
-const networksStyle = (theme: Theme) =>
-  ({
-    alignItems: "flex-end",
-    flexDirection: "row",
-    gap: "2rem",
-    [theme.breakpoints.down("sm")]: {
-      flexDirection: "column",
-      alignItems: "initial",
-      gap: "1.5rem"
-    },
-    "& > *": { flex: 1 }
-  } as const);
-
-const swapButtonStyle = (theme: Theme) => ({
-  maxWidth: "4rem",
-  minWidth: "4rem",
-  [theme.breakpoints.down("sm")]: {
-    maxWidth: "3.5rem",
-    minWidth: "3.5rem",
-    alignSelf: "center"
-  }
-});
-
-const amountInputStyle = {
-  "& .MuiOutlinedInput-input": {
-    textAlign: "center"
-  }
-};
+  gridContainerStyle,
+  gridItemStyle,
+} from "@/components/Organisms/Transfer/transfer-styles";
+import { Header } from "@/components/Organisms/Transfer/Header";
+import { TransferNetworkSelector } from "@/components/Organisms/Transfer/TransferNetworkSelector";
+import { AmountTokenDropdown } from "@/components/Organisms/Transfer/AmountTokenDropdown";
+import { TransferRecipientDropdown } from "@/components/Organisms/Transfer/TransferRecipientDropdown";
+import { TransferFeeDisplay } from "@/components/Organisms/Transfer/TransferFeeDisplay";
+import { TransferKeepAliveSwitch } from "@/components/Organisms/Transfer/TransferKeepAliveSwitch";
+import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
+import { toChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
+import { getSigner, useExecutor } from "substrate-react";
+import { APP_NAME } from "@/defi/polkadot/constants";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { useSnackbar } from "notistack";
+import { Assets } from "@/defi/polkadot/Assets";
+import { balance } from "@/stores/defi/stats/dummyData";
+import { getTransferToken } from "@/components/Organisms/Transfer/utils";
 
 const Transfers: NextPage = () => {
-  const {
-    networks,
-    amount,
-    recipients,
-    keepAlive,
-    fee,
-    flipKeepAlive,
-    updateAmount,
-    updateNetworks,
-    updateRecipient
-  } = useStore(({ transfers }) => transfers);
+  const { enqueueSnackbar } = useSnackbar();
+  const tokenId = useStore((state) => state.transfers.tokenId);
+  const amount = useStore((state) => state.transfers.amount);
+  const selectedRecipient = useStore(
+    (state) => state.transfers.recipients.selected
+  );
+  const from = useStore((state) => state.transfers.networks.from);
+  const to = useStore((state) => state.transfers.networks.to);
 
-  const handleSwapClick = () =>
-    updateNetworks({ from: networks.to, to: networks.from });
+  const assets = useStore(
+    ({ substrateBalances }) => substrateBalances[from].assets
+  );
 
-  const handleUpdateFromValue = (value: string) =>
-    updateNetworks({ ...networks, from: value });
+  const native = useStore(
+    ({ substrateBalances }) => substrateBalances[from].native
+  );
 
-  const handleUpdateToValue = (value: string) =>
-    updateNetworks({ ...networks, to: value });
+  const isNativeToNetwork = useMemo(() => {
+    return assets[getTransferToken(from, to)].meta.supportedNetwork[from] === 1;
+  }, [from, to, assets]);
+  const balance = isNativeToNetwork ? native.balance : assets[tokenId].balance;
 
-  const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    updateAmount({ ...amount, value: +event.target.value });
+  const account = useSelectedAccount();
 
-  const handleTokenChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    updateAmount({ ...amount, tokenId: event.target.value as TokenId });
+  const providers = useAllParachainProviders();
 
-  const handleMaxClick = () =>
-    updateAmount({ ...amount, value: amount.balance });
+  const executor = useExecutor();
 
-  const handleRecipientChange = (value: string) => updateRecipient(value);
+  const handleTransferFromKusamaToPicasso = async () => {
+    const api = providers[from].parachainApi;
 
-  const handleKeepAliveChange = (_: React.ChangeEvent<HTMLInputElement>) =>
-    flipKeepAlive();
+    if (!api || !executor || !account) {
+      console.error("No API or Executor or account", {
+        api,
+        executor,
+        account,
+      });
+      return;
+    }
+    const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
+      ? selectedRecipient
+      : account.address;
+
+    const TARGET_PARACHAIN_ID = SUBSTRATE_NETWORKS[to].parachainId;
+
+    const destination = api.createType("XcmVersionedMultiLocation", {
+      V0: api.createType("XcmV0MultiLocation", {
+        X1: api.createType("XcmV0Junction", {
+          Parachain: api.createType("Compact<u32>", TARGET_PARACHAIN_ID),
+        }),
+      }),
+    });
+
+    // Setting the wallet receiving the funds
+    const beneficiary = api.createType("XcmVersionedMultiLocation", {
+      V0: api.createType("XcmV0MultiLocation", {
+        X1: api.createType("XcmV0Junction", {
+          AccountId32: {
+            network: api.createType("XcmV0JunctionNetworkId", "Any"),
+            id: api.createType("AccountId32", TARGET_ACCOUNT_ADDRESS),
+          },
+        }),
+      }),
+    });
+
+    const paraAmount = api.createType(
+      "Compact<u128>",
+      toChainIdUnit(amount).toString()
+    );
+
+    // Setting up the asset & amount
+    const assets = api.createType("XcmVersionedMultiAssets", {
+      V0: [
+        api.createType("XcmV0MultiAsset", {
+          ConcreteFungible: {
+            id: api.createType("XcmV0MultiLocation", "Null"),
+            amount: paraAmount,
+          },
+        }),
+      ],
+    });
+
+    // Setting the asset which will be used for fees (0 refers to first in asset list)
+    const feeAssetItem = api.createType("u32", 0);
+    const signer = await getSigner(APP_NAME, account.address);
+    await executor.execute(
+      api.tx.xcmPallet.reserveTransferAssets(
+        destination,
+        beneficiary,
+        assets,
+        feeAssetItem
+      ),
+      account.address,
+      api,
+      signer,
+      (txHash) => {
+        enqueueSnackbar("Transfer executed", {
+          persist: true,
+          description: `Transaction hash: ${txHash}`,
+          variant: "info",
+          isCloseable: true,
+        });
+      },
+      (txHash) => {
+        enqueueSnackbar("Transfer executed successfully.", {
+          persist: true,
+          variant: "success",
+          isCloseable: true,
+        });
+      },
+      (err) => {
+        enqueueSnackbar("Transfer failed", {
+          persist: true,
+          description: `Error: ${err}`,
+          variant: "error",
+          isCloseable: true,
+        });
+      }
+    );
+  };
+  const handleTransferFromPicassoToKusama = async () => {
+    const api = providers[from].parachainApi;
+
+    if (!api || !executor || !account) {
+      console.error("No API or Executor or account", {
+        api,
+        executor,
+        account,
+      });
+      return;
+    }
+    const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
+      ? selectedRecipient
+      : account.address;
+
+    // Set amount to transfer
+    const amountToTransfer = api.createType(
+      "u128",
+      toChainIdUnit(amount).toString()
+    );
+    // Set destination. Should have 2 Junctions, first to parent and then to wallet
+    const destination = api.createType("XcmVersionedMultiLocation", {
+      V0: api.createType("XcmV0MultiLocation", {
+        X2: [
+          api.createType("XcmV0Junction", "Parent"),
+          api.createType("XcmV0Junction", {
+            AccountId32: {
+              network: api.createType("XcmV0JunctionNetworkId", "Any"),
+              id: api.createType("AccountId32", TARGET_ACCOUNT_ADDRESS),
+            },
+          }),
+        ],
+      }),
+    });
+
+    // Set dest weight
+    const destWeight = api.createType("u64", 900000000000); // > 9000000000
+    const ksmAssetID = api.createType("SafeRpcWrapper", 4);
+    const signer = await getSigner(APP_NAME, account.address);
+
+    await executor.execute(
+      api.tx.xTokens.transfer(
+        ksmAssetID,
+        amountToTransfer,
+        destination,
+        destWeight
+      ),
+      account.address,
+      api,
+      signer,
+      (txHash) => {
+        enqueueSnackbar("Transfer executed", {
+          persist: true,
+          description: `Transaction hash: ${txHash}`,
+          variant: "info",
+          isCloseable: true,
+        });
+      },
+      (txHash) => {
+        enqueueSnackbar("Transfer executed successfully.", {
+          persist: true,
+          variant: "success",
+          isCloseable: true,
+        });
+      },
+      (err) => {
+        enqueueSnackbar("Transfer failed", {
+          persist: true,
+          description: `Error: ${err}`,
+          variant: "error",
+          isCloseable: true,
+        });
+      }
+    );
+  };
+  const handleTransferFromKaruraToPicasso = async () => {
+    const api = providers[from].parachainApi;
+
+    if (!api || !executor || !account) {
+      console.error("No API or Executor or account", {
+        api,
+        executor,
+        account,
+      });
+      return;
+    }
+    const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
+      ? selectedRecipient
+      : account.address;
+
+    // Set amount to transfer
+    const amountToTransfer = api.createType(
+      "u128",
+      toChainIdUnit(amount).toString()
+    );
+
+    // Set destination. Should have 2 Junctions, first to parent and then to wallet
+    const destination = api.createType("XcmVersionedMultiLocation", {
+      V0: api.createType("XcmV0MultiLocation", {
+        X3: [
+          api.createType("XcmV0Junction", "Parent"),
+          api.createType("XcmV0Junction", {
+            Parachain: api.createType(
+              "Compact<u32>",
+              SUBSTRATE_NETWORKS[to].parachainId
+            ),
+          }),
+          api.createType("XcmV0Junction", {
+            AccountId32: {
+              network: api.createType("XcmV0JunctionNetworkId", "Any"),
+              id: api.createType("AccountId32", TARGET_ACCOUNT_ADDRESS),
+            },
+          }),
+        ],
+      }),
+    });
+
+    const currencyId = api.createType("AcalaPrimitivesCurrencyCurrencyId", {
+      Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", "KUSD"),
+    });
+
+    const destWeight = api.createType("u64", 900000000000); // > 9000000000
+
+    const signer = await getSigner(APP_NAME, account.address);
+
+    await executor.execute(
+      api.tx.xTokens.transfer(
+        currencyId,
+        amountToTransfer,
+        destination,
+        destWeight
+      ),
+      account.address,
+      api,
+      signer,
+      (txHash) => {
+        enqueueSnackbar("Transfer executed", {
+          persist: true,
+          description: `Transaction hash: ${txHash}`,
+          variant: "info",
+          isCloseable: true,
+        });
+      },
+      (txHash) => {
+        enqueueSnackbar("Transfer executed successfully.", {
+          persist: true,
+          variant: "success",
+          isCloseable: true,
+        });
+      },
+      (err) => {
+        enqueueSnackbar("Transfer failed", {
+          persist: true,
+          description: `Error: ${err}`,
+          variant: "error",
+          isCloseable: true,
+        });
+      }
+    );
+  };
+  const handleTransferFromPicassoToKarura = async () => {
+    const api = providers[from].parachainApi;
+
+    if (!api || !executor || !account) {
+      console.error("No API or Executor or account", {
+        api,
+        executor,
+        account,
+      });
+      return;
+    }
+    const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
+      ? selectedRecipient
+      : account.address;
+
+    // Set amount to transfer
+    const amountToTransfer = api.createType(
+      "u128",
+      toChainIdUnit(amount).toString()
+    );
+
+    // Set destination. Should have 2 Junctions, first to parent and then to wallet
+    const destination = api.createType("XcmVersionedMultiLocation", {
+      V0: api.createType("XcmV0MultiLocation", {
+        X3: [
+          api.createType("XcmV0Junction", "Parent"),
+          api.createType("XcmV0Junction", {
+            Parachain: api.createType(
+              "Compact<u32>",
+              SUBSTRATE_NETWORKS[to].parachainId
+            ),
+          }),
+          api.createType("XcmV0Junction", {
+            AccountId32: {
+              network: api.createType("XcmV0JunctionNetworkId", "Any"),
+              id: api.createType("AccountId32", TARGET_ACCOUNT_ADDRESS),
+            },
+          }),
+        ],
+      }),
+    });
+
+    const kusdAssetId = api.createType(
+      "CurrencyId",
+      Assets.kusd.supportedNetwork.picasso
+    );
+
+    const destWeight = api.createType("u64", 900000000000); // > 9000000000
+
+    const signer = await getSigner(APP_NAME, account.address);
+
+    await executor.execute(
+      api.tx.xTokens.transfer(
+        kusdAssetId,
+        amountToTransfer,
+        destination,
+        destWeight
+      ),
+      account.address,
+      api,
+      signer,
+      (txHash) => {
+        enqueueSnackbar("Transfer executed", {
+          persist: true,
+          description: `Transaction hash: ${txHash}`,
+          variant: "info",
+          isCloseable: true,
+        });
+      },
+      (txHash) => {
+        enqueueSnackbar("Transfer executed successfully.", {
+          persist: true,
+          variant: "success",
+          isCloseable: true,
+        });
+      },
+      (err) => {
+        enqueueSnackbar("Transfer failed", {
+          persist: true,
+          description: `Error: ${err}`,
+          variant: "error",
+          isCloseable: true,
+        });
+      }
+    );
+  };
+
+  const handleTransfer = async () => {
+    switch (`${from}-${to}`) {
+      case "kusama-picasso":
+        return handleTransferFromKusamaToPicasso();
+      case "picasso-kusama":
+        return handleTransferFromPicassoToKusama();
+      case "karura-picasso":
+        return handleTransferFromKaruraToPicasso();
+      case "picasso-karura":
+        return handleTransferFromPicassoToKarura();
+      default:
+        return Promise.resolve();
+    }
+  };
 
   return (
     <Default>
@@ -101,101 +418,30 @@ const Transfers: NextPage = () => {
         justifyContent="center"
       >
         <Grid item {...gridItemStyle("6rem")}>
-          <PageTitle
-            title="Transfers"
-            subtitle="You will be able to move assets on any available Kusama chains."
-            textAlign="center"
-          />
+          <Header />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <Box display="flex" sx={networksStyle}>
-            <NetworkSelect
-              LabelProps={{ mainLabelProps: { label: "From network" } }}
-              options={networks.options}
-              value={networks.from}
-              searchable
-              substrateNetwork
-              setValue={handleUpdateFromValue}
-            />
-            <Button
-              sx={swapButtonStyle}
-              variant="outlined"
-              size="large"
-              onClick={handleSwapClick}
-            >
-              <SwapHoriz />
-            </Button>
-            <NetworkSelect
-              LabelProps={{ mainLabelProps: { label: "To network" } }}
-              options={networks.options}
-              value={networks.to}
-              searchable
-              substrateNetwork
-              setValue={handleUpdateToValue}
-            />
-          </Box>
+          <TransferNetworkSelector />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <TokenDropdownCombinedInput
-            buttonLabel="Max"
-            value={amount.value}
-            LabelProps={{
-              mainLabelProps: {
-                label: "Amount"
-              },
-              balanceLabelProps: {
-                label: "Balance:",
-                balanceText: formatToken(amount.balance, amount.tokenId)
-              }
-            }}
-            ButtonProps={{
-              onClick: handleMaxClick
-            }}
-            InputProps={{
-              sx: amountInputStyle
-            }}
-            CombinedSelectProps={{
-              value: amount.tokenId,
-              options: amount.options,
-              onChange: handleTokenChange
-            }}
-            onChange={handleAmountChange}
-          />
+          <AmountTokenDropdown />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
-          <RecipientDropdown
-            value={recipients.selected}
-            expanded={false}
-            options={recipients.options}
-            setValue={handleRecipientChange}
-          />
+          <TransferRecipientDropdown />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
-          <FeeDisplay
-            label="Fee"
-            feeText={formatToken(fee, amount.tokenId)}
-            TooltipProps={{
-              title: "Fee tooltip title"
-            }}
-          />
+          <TransferFeeDisplay />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <TextSwitch
-            label="Keep alive"
-            checked={keepAlive}
-            TooltipProps={{
-              title:
-                "This will prevent account of being removed due to low balance."
-            }}
-            onChange={handleKeepAliveChange}
-          />
+          <TransferKeepAliveSwitch />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
           <Button
             variant="contained"
             color="primary"
-            disabled={amount.value <= 0 || amount.value > amount.balance}
+            disabled={amount.lte(0) || amount.gt(balance)}
             fullWidth
+            onClick={handleTransfer}
           >
             <Typography variant="button">Transfer</Typography>
           </Button>
