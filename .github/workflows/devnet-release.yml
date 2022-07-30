@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - nix/dz/fusion
+      - ci-via-nix
 
 jobs:
   deploy-devnet:
