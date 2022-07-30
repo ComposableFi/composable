@@ -21,6 +21,10 @@
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ rust-overlay.overlays.default ];
+          allowUnsupportedSystem = true; 
+          permittedInsecurePackages = [
+                "openjdk-headless-16+36"
+          ];
         };
         overlays = [ (import rust-overlay) ];        
         rust-toolchain = import ./.nix/rust-toolchain.nix;
@@ -350,7 +354,6 @@
               plantuml
               graphviz
               pandoc
-              adoc
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };

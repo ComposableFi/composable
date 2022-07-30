@@ -16,9 +16,9 @@
         packages =  {
           default = pkgs.nano;
         };
-        nixopsConfigurations = {
-          default = 42;
-        };
+        # nixopsConfigurations = {
+        #   default = 42;
+        # };
         apps = {
           default = {
             type = "app";

@@ -10,6 +10,7 @@ let
   composable-bin = pkgs.callPackage ./composable-bin.nix { inherit composable; };
   composable-book = pkgs.callPackage ./composable-book.nix { inherit composable; };
 
+  # TODO: move this builder to polkadot-launch folder
   make-node = tmp-directory: node-type: { name, wsPort, port }: {
     inherit name;
     inherit wsPort;
