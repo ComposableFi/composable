@@ -21,9 +21,9 @@
         pkgs = import nixpkgs {
           inherit system;
           overlays = [ rust-overlay.overlays.default ];
-          allowUnsupportedSystem = true; 
+          allowUnsupportedSystem = true; # we do not tirgger this on mac
           permittedInsecurePackages = [
-                "openjdk-headless-16+36"
+                "openjdk-headless-16+36" # something depends on it
           ];
         };
         overlays = [ (import rust-overlay) ];        
@@ -179,7 +179,7 @@
         nixopsConfigurations = {
           default = devnet-deploy.machines;
         };
-        packages = {
+        packages = rec {
           inherit wasm-optimizer;
           inherit common-deps;
           dali-runtime = mk-optimized-runtime "dali";
