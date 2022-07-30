@@ -174,9 +174,9 @@
         devnet-input = builtins.fromJSON (builtins.readFile ./devnet/devnet.json);      
         gce-input = builtins.fromJSON (builtins.readFile ./devnet/ops.json);
         devnet-deploy = pkgs.callPackage ./.nix/devnet.nix {inherit devnet-input; inherit gce-input; inherit nixpkgs;};
-        nixopsConfigurations.default = devnet-deploy.machines;
         codespace-base-container = pkgs.callPackage ./.devcontainer/nix/codespace-base-container.nix {inherit system;};
       in rec {
+        nixopsConfigurations.default = devnet-deploy.machines;
         packages = {
           inherit wasm-optimizer;
           inherit common-deps;

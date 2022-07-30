@@ -72,7 +72,7 @@ jobs:
         then
           gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
         else
-          nix develop .#sre --command nixops create -d devnet-gce --show-trace
+          nix develop .#sre --command nixops create --deployment devnet-gce --show-trace
         fi
       env:
         NIXOPS_STATE_URL: "gs://composable-state"
@@ -83,7 +83,7 @@ jobs:
 
     - name: Deploy
       run: |
-        nix develop .#sre --command nixops deploy --check --confirm -d devnet-gce --show-trace
+        nix develop .#sre --command nixops deploy --check --confirm --deployment devnet-gce --show-trace
       env:
         NIXOPS_STATE: "deployment.nixops"
 
