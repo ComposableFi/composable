@@ -332,7 +332,7 @@
           program = "${packages.devnet}/bin/composable-devnet";
         };
 
-        devShells = {
+        devShells = rec {
           developers = mkShell {
             buildInputs = with packages; [
               rust-stable
@@ -357,7 +357,19 @@
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
 
-          developers-xcmp = self.developers // mkShell {
+          sre = developers // mkShell {
+            buildInputs = with packages; [
+                packages.nixops 
+                # TODO: replace fetching binries with approciate cachix builds
+                # TODO: binaries are referenced by git commit hash (so can retarted to git easy)
+                packages.dali-script 
+                packages.picasso-script
+                packages.dali-composable-book # book deploy couuld be secure deployed too
+            ];
+            NIX_PATH = "nixpkgs=${pkgs.path}";
+          };
+
+          developers-xcvm = developers // mkShell {
             buildInputs = with packages; [
               # TODO: hasura
               # TODO: junod

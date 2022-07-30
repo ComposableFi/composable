@@ -2,7 +2,7 @@
 pkgs.stdenv.mkDerivation {
     name = "polkadot-${polkadot.version}";
     version = polkadot.version;
-    src = fetchurl {
+    src = pkgs.fetchurl {
       url = "https://github.com/paritytech/polkadot/releases/download/v${polkadot.version}/polkadot";
       sha256 = polkadot.hash;
     };

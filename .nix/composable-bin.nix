@@ -2,7 +2,7 @@
 pkgs.stdenv.mkDerivation rec {
     name = "composable-${composable.name}-${composable.version}";
     version = composable.version;
-    src = fetchurl {
+    src = pkgs.fetchurl {
       url = "https://storage.googleapis.com/composable-binaries/community-releases/${composable.name}/${name}.tar.gz";
       sha256 = composable.hash;
     };
