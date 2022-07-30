@@ -22,7 +22,7 @@
         apps = {
           default = {
             type = "app";
-            program = "${pkgs.neovim}/bin/vi";
+            program = "ls ${pkgs.neovim}/bin/";
           };
         };
       }    
