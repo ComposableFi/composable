@@ -34,6 +34,18 @@ impl Default for TestSwapConfig<VammId, Balance> {
 	}
 }
 
+impl From<SwapConfig<VammId, Balance>> for TestSwapConfig<VammId, Balance> {
+	fn from(v: SwapConfig<VammId, Balance>) -> Self {
+		Self {
+			vamm_id: v.vamm_id,
+			asset: v.asset,
+			input_amount: v.input_amount,
+			direction: v.direction,
+			output_amount_limit: v.output_amount_limit.unwrap_or_default(),
+		}
+	}
+}
+
 impl From<TestSwapConfig<VammId, Balance>> for SwapConfig<VammId, Balance> {
 	fn from(v: TestSwapConfig<VammId, Balance>) -> Self {
 		Self {
@@ -46,7 +58,7 @@ impl From<TestSwapConfig<VammId, Balance>> for SwapConfig<VammId, Balance> {
 	}
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct TestVammConfig<Balance, Moment> {
 	pub base_asset_reserves: Balance,
 	pub quote_asset_reserves: Balance,
@@ -61,6 +73,17 @@ impl Default for TestVammConfig<Balance, Timestamp> {
 			quote_asset_reserves: QUOTE_ASSET_RESERVES,
 			peg_multiplier: PEG_MULTIPLIER,
 			twap_period: TWAP_PERIOD,
+		}
+	}
+}
+
+impl From<VammConfig<Balance, Timestamp>> for TestVammConfig<Balance, Timestamp> {
+	fn from(v: VammConfig<Balance, Timestamp>) -> Self {
+		Self {
+			base_asset_reserves: v.base_asset_reserves,
+			quote_asset_reserves: v.quote_asset_reserves,
+			peg_multiplier: v.peg_multiplier,
+			twap_period: v.twap_period,
 		}
 	}
 }

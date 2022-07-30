@@ -25,7 +25,7 @@ fn should_fail_if_vamm_does_not_exist() {
 	with_swap_context(
 		TestVammConfig::default(),
 		TestSwapConfig { vamm_id: One::one(), ..Default::default() },
-		|swap_config| {
+		|_, swap_config| {
 			assert_noop!(
 				TestPallet::swap_simulation(&swap_config),
 				Error::<MockRuntime>::VammDoesNotExist
@@ -56,7 +56,7 @@ fn should_fail_if_vamm_is_closed() {
 
 #[test]
 fn should_not_modify_runtime_storage_add_base() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
+	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 		assert_storage_noop!(TestPallet::swap_simulation(&SwapConfig {
 			asset: AssetType::Base,
 			direction: Direction::Add,
@@ -67,7 +67,7 @@ fn should_not_modify_runtime_storage_add_base() {
 
 #[test]
 fn should_not_modify_runtime_storage_remove_base() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
+	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 		assert_storage_noop!(TestPallet::swap_simulation(&SwapConfig {
 			asset: AssetType::Base,
 			direction: Direction::Remove,
@@ -78,7 +78,7 @@ fn should_not_modify_runtime_storage_remove_base() {
 
 #[test]
 fn should_not_modify_runtime_storage_add_quote() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
+	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 		assert_storage_noop!(TestPallet::swap_simulation(&SwapConfig {
 			asset: AssetType::Quote,
 			direction: Direction::Add,
@@ -89,7 +89,7 @@ fn should_not_modify_runtime_storage_add_quote() {
 
 #[test]
 fn should_not_modify_runtime_storage_remove_quote() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
+	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 		assert_storage_noop!(TestPallet::swap_simulation(&SwapConfig {
 			asset: AssetType::Quote,
 			direction: Direction::Remove,
@@ -100,7 +100,7 @@ fn should_not_modify_runtime_storage_remove_quote() {
 
 #[test]
 fn should_return_correct_value_add_base() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
+	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 		assert_ok!(
 			TestPallet::swap_simulation(&SwapConfig {
 				asset: AssetType::Base,
@@ -114,7 +114,7 @@ fn should_return_correct_value_add_base() {
 
 #[test]
 fn should_return_correct_value_remove_base() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
+	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 		assert_ok!(
 			TestPallet::swap_simulation(&SwapConfig {
 				asset: AssetType::Base,
@@ -128,7 +128,7 @@ fn should_return_correct_value_remove_base() {
 
 #[test]
 fn should_return_correct_value_add_quote() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
+	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 		assert_ok!(
 			TestPallet::swap_simulation(&SwapConfig {
 				asset: AssetType::Quote,
@@ -142,7 +142,7 @@ fn should_return_correct_value_add_quote() {
 
 #[test]
 fn should_return_correct_value_remove_quote() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
+	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 		assert_ok!(
 			TestPallet::swap_simulation(&SwapConfig {
 				asset: AssetType::Quote,
@@ -170,7 +170,7 @@ proptest! {
 		// Ensure we always perform operation on an existing vamm.
 		swap_config.vamm_id = Zero::zero();
 
-		with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |swap_config| {
+		with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 			let vamm_state_before = TestPallet::get_vamm(swap_config.vamm_id).unwrap();
 			assert_storage_noop!(TestPallet::swap_simulation(&swap_config));
 			let vamm_state_after = TestPallet::get_vamm(swap_config.vamm_id).unwrap();
