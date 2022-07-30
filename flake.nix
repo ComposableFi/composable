@@ -16,6 +16,11 @@
     };
   };
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay }:
+    {  
+      nixopsConfigurations = {
+          default = "likely need to be root level stuff";
+        };
+    } //
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
