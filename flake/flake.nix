@@ -9,6 +9,22 @@
   };
   outputs = { self, nixpkgs, flake-utils}: 
   flake-utils.lib.eachDefaultSystem(system: 
-    nixopsConfigurations.default = null;
+  
+      let 
+        pkgs = import nixpkgs { inherit system; };
+      in {
+        packages =  {
+          default = pkgs.nano;
+        };
+        nixopsConfigurations = {
+          default = 42;
+        };
+        apps = {
+          default = {
+            type = "app";
+            program = "${pkgs.neovim}/bin/vi";
+          };
+        };
+      }    
   );
 }

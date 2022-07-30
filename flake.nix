@@ -165,18 +165,16 @@
             '';
           };
 
-        # Current polkadot version
-        polkadot = {
-          version = "0.9.24";
-          hash = "sha256-k+6mXjAsHbS4gnHljGmEkMcok77zBd8jhyp56mXyKgI=";
-        };
+        polkadot = import ./.nix/polkadot-version.nix;
        
         devnet-input = builtins.fromJSON (builtins.readFile ./devnet/devnet.json);      
         gce-input = builtins.fromJSON (builtins.readFile ./devnet/ops.json);
         devnet-deploy = pkgs.callPackage ./.nix/devnet.nix {inherit devnet-input; inherit gce-input; inherit nixpkgs;};
         codespace-base-container = pkgs.callPackage ./.devcontainer/nix/codespace-base-container.nix {inherit system;};
       in rec {
-        nixopsConfigurations.default = devnet-deploy.machines;
+        nixopsConfigurations = {
+          default = devnet-deploy.machines;
+        };
         packages = {
           inherit wasm-optimizer;
           inherit common-deps;
@@ -248,7 +246,7 @@
             '';
           };
 
-          polkadot-launch = pkgs.callPackage ./.nix/polkadot-launch.nix {};
+          polkadot-launch = pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix {};
           devnet = let
             original-config = import ./scripts/polkadot-launch/composable.nix;
             patched-config = lib.recursiveUpdate original-config {
