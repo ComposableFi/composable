@@ -52,6 +52,7 @@ jobs:
 
     - uses: Swatinem/rust-cache@v1
 
+    # TODO: replace with nix as it runs without for 1.5 hour
     - name: Build & Push
       run: |
         cargo build --release
@@ -73,7 +74,7 @@ jobs:
         then
           gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
         else
-          nix develop .#sre --command nixops create --deployment devnet-gce --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/ 
+          nix develop .#sre --override-input flake-utils ./.nix/override-input/flake-utils/  --show-trace --command nixops create --deployment devnet-gce  
         fi
       env:
         NIXOPS_STATE_URL: "gs://composable-state"
@@ -84,7 +85,7 @@ jobs:
 
     - name: Deploy
       run: |
-        nix develop .#sre --command nixops deploy --check --confirm --deployment devnet-gce --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/ 
+        nix develop .#sre --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/ --command nixops deploy --check --confirm --deployment devnet-gce 
       env:
         NIXOPS_STATE: "deployment.nixops"
 

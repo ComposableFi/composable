@@ -36,6 +36,8 @@ jobs:
         with:
           toolchain: stable
 
+      # TODO: replace with new nix build and outputs
+      # TODO: srtool does not use lock and not deterministic
       - name: Install srtool
         run: |
           # TODO: use nix
@@ -82,7 +84,7 @@ jobs:
           asset_path: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.compressed.wasm
           asset_name: dali_runtime.wasm
           asset_content_type: application/octet-stream
-
+      # TODO: use nix output
       - name: Upload Picasso wasm
         id: upload-picasso-wasm
         if: env.picasso_wasm == 1
@@ -93,6 +95,7 @@ jobs:
           asset_name: picasso_runtime.wasm
           asset_content_type: application/octet-stream
 
+      # TODO: use nix output
       - name: Upload Composable wasm
         id: upload-composable-wasm
         if: env.composable_wasm == 1
