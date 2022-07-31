@@ -5,11 +5,17 @@
       eachDefaultSystem = f : 
         let 
           system = "x86_64-linux";
-          ret = f system;                    
+          outputs = f system;       
+          appendSystem = attrs: key:  
+            # https://github.com/numtide/flake-utils/issues/77
+            if key == "nixopsConfigurations" then
+              { ${key} = outputs.${key}; }
+            else
+              { ${key} = { ${system} = outputs.${key}; };};           
         in 
-         # maps `packages` 
-         # into `packages.${system}.packages`
-         builtins.foldl' (attrs: key: { ${key} = { ${system} = ret.${key}; };}) {} (builtins.attrNames ret);
+         # maps `packages.foobar` 
+         # into `packages.${system}.foobar`
+         builtins.foldl' appendSystem {} (builtins.attrNames outputs);
     };
   };
 }
