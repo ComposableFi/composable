@@ -18,7 +18,7 @@
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay }:
     {  
       nixopsConfigurations = {
-          default = { wow = "qwe" }; # devnet-deploy.machines;
+          default = { wow = "qwe"; }; # devnet-deploy.machines;
         };
     } //
     flake-utils.lib.eachDefaultSystem (system:
@@ -182,7 +182,7 @@
         codespace-base-container = pkgs.callPackage ./.devcontainer/nix/codespace-base-container.nix {inherit system;};
       in rec {
         nixopsConfigurations = {
-          default = { wow = "asd" }; # devnet-deploy.machines;
+          default = { wow = "asd"; }; # devnet-deploy.machines;
         };
         packages = rec {
           inherit wasm-optimizer;
