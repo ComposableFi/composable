@@ -62,8 +62,8 @@ jobs:
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - run: |
-          ./nix-validate.sh
+      - run: |          
+          chmod +x  ./nix-validate.sh && ./nix-validate.sh
 
   package-node:
     needs: common-deps
