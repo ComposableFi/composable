@@ -9,9 +9,9 @@
           appendSystem = attrs: key:  
             # https://github.com/numtide/flake-utils/issues/77
             if key == "nixopsConfigurations" then
-              { ${key} = outputs.${key}; }
+              { ${key} = outputs.${key}; } // attrs
             else
-              { ${key} = { ${system} = outputs.${key}; };};           
+              { ${key} = { ${system} = outputs.${key}; };} // attrs;           
         in 
          # maps `packages.foobar` 
          # into `packages.${system}.foobar`
