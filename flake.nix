@@ -14,26 +14,14 @@
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    #system-override = { system  = "asd"; };
-      # if args.system != null then 
-      #   args.system
-      # else
-      #   null;
   };
-  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay}:
-  let
-      eachSystem  = 
-         if self != null then 
-             flake-utils.lib.eachDefaultSystem
-         else
-          flake-utils.lib.eachDefaultSystem; 
-  in 
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay }:
     {  
       nixopsConfigurations = {
-          default = "likely need to be root level stuff";
+          default = { wow = "qwe" }; # devnet-deploy.machines;
         };
     } //
-    eachSystem (system:
+    flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
@@ -194,7 +182,7 @@
         codespace-base-container = pkgs.callPackage ./.devcontainer/nix/codespace-base-container.nix {inherit system;};
       in rec {
         nixopsConfigurations = {
-          default = devnet-deploy.machines;
+          default = { wow = "asd" }; # devnet-deploy.machines;
         };
         packages = rec {
           inherit wasm-optimizer;
