@@ -1,5 +1,9 @@
 {
+  description = "Pure Nix flake utility functions";
   outputs = { self }: {
-    packages = {};
+    lib = {
+      eachDefaultSystem = iterator : 
+         [iterator("42")];
+    };
   };
 }

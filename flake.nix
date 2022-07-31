@@ -14,14 +14,26 @@
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    #system-override = { system  = "asd"; };
+      # if args.system != null then 
+      #   args.system
+      # else
+      #   null;
   };
-  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay}:
+  let
+      eachSystem  = 
+         if self != null then 
+             flake-utils.lib.eachDefaultSystem
+         else
+          flake-utils.lib.eachDefaultSystem; 
+  in 
     {  
       nixopsConfigurations = {
           default = "likely need to be root level stuff";
         };
     } //
-    flake-utils.lib.eachDefaultSystem (system:
+    eachSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
