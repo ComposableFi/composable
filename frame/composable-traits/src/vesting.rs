@@ -15,6 +15,7 @@ pub trait VestedTransfer {
 	type Balance: HasCompact;
 	type MinVestedTransfer: Get<Self::Balance>;
 	type VestingScheduleId;
+	type VestingScheduleCount;
 
 	/// Transfer `asset` from `from` to `to` vested based on `schedule`.
 	fn vested_transfer(
