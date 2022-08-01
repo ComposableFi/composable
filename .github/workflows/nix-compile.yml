@@ -188,7 +188,7 @@ jobs:
           docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
           docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer
 
-  deploy-devnet:
+  nixops-deploy-devnet:
       runs-on:   
         - self-hosted
         - linux
