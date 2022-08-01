@@ -35,7 +35,7 @@ jobs:
             nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
-          name: composable-community
+          name: ${{  env.NIX_CACHIX }}
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps --no-update-lock-file
@@ -187,3 +187,91 @@ jobs:
           docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:$COMMIT_SHA
           docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
           docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer
+
+  deploy-devnet:
+      runs-on:   
+        - self-hosted
+        - linux
+        - x64
+        - sre
+      container:
+        image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee    
+      # concurrency:
+      #   group: deploy-devnet
+      #   cancel-in-progress: false
+      steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: false
+          fetch-depth: 0
+        run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf          
+
+      - uses: google-github-actions/setup-gcloud@v0
+        with:
+          service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+          export_default_credentials: true
+
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx python
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{  env.NIX_CACHIX }}
+
+      - name: Set env
+        run: |
+          echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV
+
+      - uses: Swatinem/rust-cache@v1
+
+      - name: Build & Push
+        run: |
+          nix build .#composable-node
+          ls result
+          ls result/bin
+          tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable target/doc
+          gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
+          rm -rf target
+
+      - name: Load state
+        run: |
+          cd devnet
+
+          ./update.sh $RELEASE_VERSION
+          jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
+
+          cd ..
+
+          if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE;
+          then
+            gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
+          else
+            nix develop .#sre --override-input flake-utils ./.nix/override-input/flake-utils/  --show-trace --command nixops create --deployment devnet-gce  
+          fi
+        env:
+          NIXOPS_STATE_URL: "gs://composable-state"
+          NIXOPS_STATE: "deployment.nixops"
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_DEVNET_SERVICE_ACCOUNT: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT }}
+          GCP_DEVNET_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT_KEY }}
+
+      - name: Deploy
+        run: |
+          nix develop .#sre --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/ --command nixops deploy --check --confirm --deployment devnet-gce 
+        env:
+          NIXOPS_STATE: "deployment.nixops"
+
+      - name: Store state
+        if: always()
+        run: |
+          # TODO: document what happens if Deploy passed, but Store was stopped - how stat reconciled
+          # TODO: consider running state save in same step as it is unseparable from deploy
+          gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/
+        env:
+          NIXOPS_STATE: "deployment.nixops"
+          NIXOPS_STATE_URL: "gs://composable-state"
+          

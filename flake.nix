@@ -186,11 +186,13 @@
           dali-runtime = mk-optimized-runtime "dali";
           picasso-runtime = mk-optimized-runtime "picasso";
           composable-runtime = mk-optimized-runtime "composable";
+          
           price-feed = crane-stable.buildPackage (common-args // {
             pnameSuffix = "-price-feed";
             cargoArtifacts = common-deps;
             cargoBuildCommand = "cargo build --release -p price-feed";
           });
+          
           composable-node = with packages;
             crane-stable.buildPackage (common-args // {
               pnameSuffix = "-node";
@@ -206,6 +208,25 @@
                 cp target/release/composable $out/bin/composable
               '';
             });
+
+          # composable-node-doc = with packages;
+          #   crane-stable.buildPackage (common-args // {
+          #     pnameSuffix = "-node";
+          #     cargoArtifacts = common-deps;
+          #     cargoBuildCommand =
+          #       "cargo doc --release";
+          #     DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+          #     PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+          #     COMPOSABLE_RUNTIME =
+          #       "${composable-runtime}/lib/runtime.optimized.wasm";
+          #     installPhase = ''
+          #       mkdir -p $out/bin
+          #       cp target/release/composable $out/bin/composable
+          #     '';
+          #   });           
+          # cargo build --release
+          # cargo doc --release
+          # tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable target/doc           
 
           # also mdbook has releases for all targets,
           # so it simple to build it as it is rust
@@ -380,11 +401,11 @@
 
         # Applications runnable with `nix run`
         # https://github.com/NixOS/nix/issues/5560
-        apps = {
-          # nix run .#devnet
-          type = "app";
-          program = "${packages.devnet}/bin/composable-devnet";
-        };
+        # apps = {
+        #   # nix run .#devnet
+        #   type = "app";
+        #   program = "${packages.devnet}/bin/composable-devnet";
+        # };
       });
     in
       eachSystemOutputs
