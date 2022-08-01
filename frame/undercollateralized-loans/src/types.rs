@@ -1,4 +1,4 @@
-use crate::{Config, strategies::repayment_strategies::RepaymentStrategy};
+use crate::{strategies::repayment_strategies::RepaymentStrategy, Config};
 use composable_traits::{
 	defi::DeFiComposableConfig,
 	undercollateralized_loans::{
@@ -20,9 +20,8 @@ pub(crate) type LoanInputOf<T> = LoanInput<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::Balance,
 	<T as frame_system::Config>::BlockNumber,
-    RepaymentStrategy,
-    Percent,
-
+	RepaymentStrategy,
+	Percent,
 >;
 
 pub(crate) type MarketInfoOf<T> = MarketInfo<
@@ -37,7 +36,7 @@ pub(crate) type LoanInfoOf<T> = LoanInfo<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::Balance,
 	<T as frame_system::Config>::BlockNumber,
-    RepaymentStrategy,
+	RepaymentStrategy,
 	Percent,
 >;
 
@@ -52,7 +51,7 @@ pub(crate) type LoanConfigOf<T> = LoanConfig<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::Balance,
 	<T as frame_system::Config>::BlockNumber,
-    RepaymentStrategy,
+	RepaymentStrategy,
 	Percent,
 >;
 

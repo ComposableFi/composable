@@ -1,4 +1,4 @@
-use crate::{types, Config, Pallet, strategies::repayment_strategies::RepaymentStrategy};
+use crate::{strategies::repayment_strategies::RepaymentStrategy, types, Config, Pallet};
 use codec::Encode;
 use composable_support::validation::TryIntoValidated;
 use composable_traits::undercollateralized_loans::{
@@ -13,7 +13,7 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 	type LiquidationStrategyId = T::LiquidationStrategyId;
 	type VaultId = T::VaultId;
 	type Percent = Percent;
-    type RepaymentStrategy = RepaymentStrategy;
+	type RepaymentStrategy = RepaymentStrategy;
 	fn create_market(
 		manager: Self::AccountId,
 		input: MarketInput<
@@ -28,7 +28,13 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 	}
 
 	fn create_loan(
-		input: LoanInput<Self::AccountId, Self::Balance, Self::BlockNumber, Self::RepaymentStrategy, Self::Percent>,
+		input: LoanInput<
+			Self::AccountId,
+			Self::Balance,
+			Self::BlockNumber,
+			Self::RepaymentStrategy,
+			Self::Percent,
+		>,
 	) -> Result<LoanConfigOf<T>, DispatchError> {
 		Self::do_create_loan(input.try_into_validated()?)
 	}
@@ -38,7 +44,13 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 		loan_account_id: Self::AccountId,
 		keep_alive: bool,
 	) -> Result<
-		LoanInfo<Self::AccountId, Self::Balance, Self::BlockNumber, Self::RepaymentStrategy, Self::Percent>,
+		LoanInfo<
+			Self::AccountId,
+			Self::Balance,
+			Self::BlockNumber,
+			Self::RepaymentStrategy,
+			Self::Percent,
+		>,
 		DispatchError,
 	> {
 		Self::do_borrow(borrower_account_id, loan_account_id, keep_alive)

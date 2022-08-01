@@ -1,8 +1,8 @@
 use crate::{
 	currency::{BTC, NORMALIZED, USDT},
 	mocks::{general as runtime, general::*},
+	strategies::repayment_strategies::RepaymentStrategy,
 	types::{LoanConfigOf, MarketInfoOf, MarketInputOf},
-    strategies::repayment_strategies::RepaymentStrategy,
 };
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
@@ -109,7 +109,7 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 		interest: Percent::from_percent(5),
 		payment_frequency: 10,
 		loan_maturity: 100,
-        repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature, 
+		repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature,
 	};
 	crate::Pallet::<Runtime>::do_create_loan(loan_input.try_into_validated().unwrap()).unwrap()
 }

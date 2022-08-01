@@ -18,7 +18,7 @@ fn can_create_loan() {
 			interest: Percent::from_percent(5),
 			payment_frequency: 10,
 			loan_maturity: 100,
-            repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature, 
+			repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature,
 		};
 		assert_ok!(pallet_undercollateralized_loans::Pallet::<Runtime>::create_loan(
 			origin, loan_input

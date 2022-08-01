@@ -1,7 +1,7 @@
-use crate::defi::{CurrencyPair, DeFiEngine}; 
+use crate::defi::{CurrencyPair, DeFiEngine};
 use composable_support::math::safe::SafeAdd;
 use frame_support::pallet_prelude::*;
-use sp_runtime::{ArithmeticError, Perquintill, traits::Zero};
+use sp_runtime::{traits::Zero, ArithmeticError, Perquintill};
 use sp_std::collections::btree_set::BTreeSet;
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct MarketConfig<AccountId, AssetId, BlockNumber, VaultId>
@@ -98,7 +98,7 @@ where
 	Balance: Clone + Eq + PartialEq,
 	BlockNumber: Clone + Eq + PartialEq,
 	Percent: Clone + Eq + PartialEq,
-    RepaymentStrategy: Clone,
+	RepaymentStrategy: Clone,
 {
 	/// Loan account id.
 	account_id: AccountId,
@@ -117,19 +117,20 @@ where
 	payment_frequency: BlockNumber,
 	/// Activated loan lifetime in the terms of block numbers.
 	maturity: BlockNumber,
-    /// Payment strategie which should be applyed.
-    /// For instance borrower have to pay principal when loan is mature (one strategy),
-    /// or he may pay principal partially, simultaneously with interest payments.   
-    repayment_strategy: RepaymentStrategy,
+	/// Payment strategie which should be applyed.
+	/// For instance borrower have to pay principal when loan is mature (one strategy),
+	/// or he may pay principal partially, simultaneously with interest payments.   
+	repayment_strategy: RepaymentStrategy,
 }
 
-impl<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent> LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
+impl<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
+	LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
 where
 	AccountId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
 	BlockNumber: Clone + Eq + PartialEq,
-	Percent: Clone + Eq + PartialEq, 
-    RepaymentStrategy: Clone,
+	Percent: Clone + Eq + PartialEq,
+	RepaymentStrategy: Clone,
 {
 	pub fn new(
 		account_id: AccountId,
@@ -140,7 +141,7 @@ where
 		interest: Percent,
 		payment_frequency: BlockNumber,
 		maturity: BlockNumber,
-        repayment_strategy: RepaymentStrategy,
+		repayment_strategy: RepaymentStrategy,
 	) -> Self {
 		Self {
 			account_id,
@@ -151,7 +152,7 @@ where
 			interest,
 			payment_frequency,
 			maturity,
-            repayment_strategy,
+			repayment_strategy,
 		}
 	}
 
@@ -195,10 +196,10 @@ where
 		&self.maturity
 	}
 
-    /// Get a reference to the loan config's payment strategy.
-    pub fn repayment_strategy(&self) -> &RepaymentStrategy {
-        &self.repayment_strategy
-    }
+	/// Get a reference to the loan config's payment strategy.
+	pub fn repayment_strategy(&self) -> &RepaymentStrategy {
+		&self.repayment_strategy
+	}
 }
 
 // some fields are hiden since they should be immutable
@@ -250,26 +251,27 @@ where
 	Balance: Clone + Eq + PartialEq,
 	BlockNumber: Clone + Eq + PartialEq,
 	Percent: Clone + Eq + PartialEq,
-    RepaymentStrategy: Clone,
+	RepaymentStrategy: Clone,
 {
 	/// Loan configuration defines loan terms
 	config: LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>,
 	/// Principal should be returned before this block.
 	end_block: BlockNumber,
-    /// How much principal was repaid. 
-    pub repaid_principal: Balance,
+	/// How much principal was repaid.
+	pub repaid_principal: Balance,
 }
 
-impl<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent> LoanInfo<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
+impl<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
+	LoanInfo<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
 where
 	AccountId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq + Zero,
 	BlockNumber: SafeAdd + Clone + Eq + PartialEq,
 	Percent: Clone + Eq + PartialEq,
-    RepaymentStrategy: Clone,
+	RepaymentStrategy: Clone,
 {
 	pub fn new(
-        config: LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>,
+		config: LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>,
 		start_block: BlockNumber,
 	) -> Result<Self, ArithmeticError> {
 		let end_block = start_block.safe_add(config.maturity())?;
@@ -277,7 +279,9 @@ where
 	}
 
 	/// Get a reference to the loan info's config.
-	pub fn config(&self) -> &LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent> {
+	pub fn config(
+		&self,
+	) -> &LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent> {
 		&self.config
 	}
 
@@ -332,10 +336,10 @@ pub struct LoanInput<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent
 	pub payment_frequency: BlockNumber,
 	/// Loan shoud be paid back after this amount of blocks.
 	pub loan_maturity: BlockNumber,
-    /// Payment strategie which should be applyed.
-    /// For instance borrower have to pay principal when loan is mature (one strategy),
-    /// or he may pay principal partially, simultaneously with interest payments.   
-    pub repayment_strategy: RepaymentStrategy,
+	/// Payment strategie which should be applyed.
+	/// For instance borrower have to pay principal when loan is mature (one strategy),
+	/// or he may pay principal partially, simultaneously with interest payments.   
+	pub repayment_strategy: RepaymentStrategy,
 }
 
 pub trait UndercollateralizedLoans: DeFiEngine {
@@ -343,7 +347,7 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	type LiquidationStrategyId: Clone + Eq + PartialEq;
 	type Percent: Clone + Eq + PartialEq;
 	type VaultId: Clone + Eq + PartialEq;
-    type RepaymentStrategy: Clone;
+	type RepaymentStrategy: Clone;
 
 	fn create_market(
 		manager: Self::AccountId,
@@ -366,9 +370,21 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	>;
 
 	fn create_loan(
-		input: LoanInput<Self::AccountId, Self::Balance, Self::BlockNumber, Self::RepaymentStrategy, Self::Percent>,
+		input: LoanInput<
+			Self::AccountId,
+			Self::Balance,
+			Self::BlockNumber,
+			Self::RepaymentStrategy,
+			Self::Percent,
+		>,
 	) -> Result<
-		LoanConfig<Self::AccountId, Self::Balance, Self::BlockNumber, Self::RepaymentStrategy, Self::Percent>,
+		LoanConfig<
+			Self::AccountId,
+			Self::Balance,
+			Self::BlockNumber,
+			Self::RepaymentStrategy,
+			Self::Percent,
+		>,
 		DispatchError,
 	>;
 
@@ -377,7 +393,13 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 		loan_account_id: Self::AccountId,
 		keep_alive: bool,
 	) -> Result<
-		LoanInfo<Self::AccountId, Self::Balance, Self::BlockNumber, Self::RepaymentStrategy, Self::Percent>,
+		LoanInfo<
+			Self::AccountId,
+			Self::Balance,
+			Self::BlockNumber,
+			Self::RepaymentStrategy,
+			Self::Percent,
+		>,
 		DispatchError,
 	>;
 

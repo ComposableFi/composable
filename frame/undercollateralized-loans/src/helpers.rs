@@ -1,7 +1,10 @@
 use crate::{
+	strategies::repayment_strategies::{
+		interest_periodically_principal_when_mature_strategy, principal_only_fake_strategy,
+		RepaymentResult, RepaymentStrategy,
+	},
 	types::{LoanConfigOf, LoanInfoOf, MarketConfigOf, MarketInfoOf, MarketInputOf},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
-    strategies::repayment_strategies::{RepaymentStrategy, RepaymentResult, interest_periodically_principal_when_mature_strategy, principal_only_fake_strategy}, 
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
 };
 use composable_support::{math::safe::SafeAdd, validation::Validated};
@@ -24,7 +27,7 @@ use frame_support::{
 };
 use sp_runtime::{
 	traits::{One, Saturating, Zero},
-	DispatchError, Perquintill, TransactionOutcome, Percent,
+	DispatchError, Percent, Perquintill, TransactionOutcome,
 };
 
 // #generalization
@@ -117,7 +120,7 @@ impl<T: Config> Pallet<T> {
 				config_input.interest,
 				config_input.payment_frequency,
 				config_input.loan_maturity,
-                config_input.repayment_strategy,
+				config_input.repayment_strategy,
 			);
 			crate::NonActiveLoansStorage::<T>::insert(loan_account_id, loan_config.clone());
 			Ok(loan_config)
@@ -155,15 +158,13 @@ impl<T: Config> Pallet<T> {
 		T::MultiCurrency::transfer(borrow_asset_id, source, destination, amount, keep_alive)?;
 		// Set start block number equals to the current block number.
 		// Calculate end block number before which pricnipal should be returned.
-	    let start_block_number = frame_system::Pallet::<T>::block_number();	
-        let loan_info =
-			LoanInfo::new(loan_config.clone(), start_block_number)?;
+		let start_block_number = frame_system::Pallet::<T>::block_number();
+		let loan_info = LoanInfo::new(loan_config.clone(), start_block_number)?;
 		// Register activated loan.
 		crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_info.clone());
 		// Remove loan configuration from the non-activated loans storage.
 		crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
-      let next_payment_block =
-			start_block_number.safe_add(loan_config.payment_frequency())?;
+		let next_payment_block = start_block_number.safe_add(loan_config.payment_frequency())?;
 		crate::PaymentsScheduleStorage::<T>::mutate(next_payment_block, |loans_accounts_set| {
 			loans_accounts_set.insert(loan_account_id);
 		});
@@ -178,8 +179,8 @@ impl<T: Config> Pallet<T> {
 		keep_alive: bool,
 	) -> Result<T::Balance, DispatchError> {
 		// Get loan's info.
-	    let loan_info = Self::get_loan_info_via_account_id(&loan_account_id)?;
-        // Get account id of market which holds this loan.
+		let loan_info = Self::get_loan_info_via_account_id(&loan_account_id)?;
+		// Get account id of market which holds this loan.
 		let market_account_id = loan_info.config().market_account_id();
 		let market_info = Self::get_market_info_via_account_id(market_account_id)?;
 		let borrow_asset_id = market_info.config().borrow_asset();
@@ -194,32 +195,32 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_liquidate() -> () {}
-    // Close a loan since it is paid. 	
-    pub(crate) fn close_loan(loan_account_id: &T::AccountId, keep_alive: bool) -> () {
-        let loan_info =  match Self::get_loan_info_via_account_id(loan_account_id) {
-            Ok(loan_info) => loan_info,
-            Err(_) => return (),
-        };
-        let borrower_account_id = loan_info.config().borrower_account_id();
-        let collateral_amount = loan_info.config().collateral();
-        let market_account_id = loan_info.config().market_account_id();
+	// Close a loan since it is paid.
+	pub(crate) fn close_loan(loan_account_id: &T::AccountId, keep_alive: bool) -> () {
+		let loan_info = match Self::get_loan_info_via_account_id(loan_account_id) {
+			Ok(loan_info) => loan_info,
+			Err(_) => return (),
+		};
+		let borrower_account_id = loan_info.config().borrower_account_id();
+		let collateral_amount = loan_info.config().collateral();
+		let market_account_id = loan_info.config().market_account_id();
 		let market_info = match Self::get_market_info_via_account_id(market_account_id) {
-            Ok(market_info) => market_info,
-            Err(_) => return (),
-        };
+			Ok(market_info) => market_info,
+			Err(_) => return (),
+		};
 		let collateral_asset_id = market_info.config().collateral_asset();
-    	// Transfer collateral to borrower's account. 
-		 T::MultiCurrency::transfer(
+		// Transfer collateral to borrower's account.
+		T::MultiCurrency::transfer(
 			*collateral_asset_id,
 			loan_account_id,
 			borrower_account_id,
 			*collateral_amount,
 			keep_alive,
 		);
-        crate::LoansStorage::<T>::remove(loan_account_id); 
-    }
-	
-    // Check if borrower's account is in whitelist of the particular market.
+		crate::LoansStorage::<T>::remove(loan_account_id);
+	}
+
+	// Check if borrower's account is in whitelist of the particular market.
 	pub(crate) fn is_borrower_account_whitelisted(
 		borrower_account_id_ref: &T::AccountId,
 		market_account_id_ref: &T::AccountId,
@@ -232,11 +233,11 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn calculate_initial_pool_size(
 		borrow_asset: <T::Oracle as composable_traits::oracle::Oracle>::AssetId,
 	) -> Result<<T as DeFiComposableConfig>::Balance, DispatchError> {
-        T::Oracle::get_price_inverse(borrow_asset, T::OracleMarketCreationStake::get())
+		T::Oracle::get_price_inverse(borrow_asset, T::OracleMarketCreationStake::get())
 	}
 
-    // Check if provided account id belongs to market manager.
-    pub(crate) fn is_market_manager_account(
+	// Check if provided account id belongs to market manager.
+	pub(crate) fn is_market_manager_account(
 		account_id: &T::AccountId,
 		market_account_id_ref: &T::AccountId,
 	) -> Result<bool, DispatchError> {
@@ -297,32 +298,41 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn check_payments(block_nubmer: T::BlockNumber, keep_alive: bool) -> () {
-        // Retrive collection of loans(loans' accounts ids) which have to be paid now	
-        let loans_accounts_ids = crate::PaymentsScheduleStorage::<T>::try_get(block_nubmer).unwrap_or_default(); 
-        for loan_account_id in loans_accounts_ids {
-            let loan_info = match Self::get_loan_info_via_account_id(&loan_account_id) {
-                Ok(loan_info) => loan_info,
-                // TODO: @mikolaichuk: add event emmition. 
-                Err(_) => continue
-            };
-            let repayment_result: RepaymentResult<T> = match loan_info.config().repayment_strategy() {
-                RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature => interest_periodically_principal_when_mature_strategy::apply(loan_info, block_nubmer, keep_alive),
-                RepaymentStrategy::PrincipalOnlyWhenMature => principal_only_fake_strategy::apply(loan_info, keep_alive),
-            };
-            
-            match repayment_result {
-                // Failed not beacuse of user fault. 
-                // Should not happend at all.
-                RepaymentResult::Failed(_) => (),
-                RepaymentResult::InterestIsPaidInTime(_) => (),
-                RepaymentResult::InterestIsNotPaidInTime(_) => Self::do_liquidate(),
-                RepaymentResult::PrincipalAndLastInterestPaymentArePaidBackInTime(_) => Self::close_loan(&loan_account_id, keep_alive),
-                RepaymentResult::PrincipalAndLastInterestPaymentAreNotPaidBackInTime(_) => Self::do_liquidate(),
-            }
-            // We do not need information regarding this date anymore. 
-            crate::PaymentsScheduleStorage::<T>::remove(block_nubmer);
-        };
-        
+		// Retrive collection of loans(loans' accounts ids) which have to be paid now
+		let loans_accounts_ids =
+			crate::PaymentsScheduleStorage::<T>::try_get(block_nubmer).unwrap_or_default();
+		for loan_account_id in loans_accounts_ids {
+			let loan_info = match Self::get_loan_info_via_account_id(&loan_account_id) {
+				Ok(loan_info) => loan_info,
+				// TODO: @mikolaichuk: add event emmition.
+				Err(_) => continue,
+			};
+			let repayment_result: RepaymentResult<T> = match loan_info.config().repayment_strategy()
+			{
+				RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature =>
+					interest_periodically_principal_when_mature_strategy::apply(
+						loan_info,
+						block_nubmer,
+						keep_alive,
+					),
+				RepaymentStrategy::PrincipalOnlyWhenMature =>
+					principal_only_fake_strategy::apply(loan_info, keep_alive),
+			};
+
+			match repayment_result {
+				// Failed not beacuse of user fault.
+				// Should not happend at all.
+				RepaymentResult::Failed(_) => (),
+				RepaymentResult::InterestIsPaidInTime(_) => (),
+				RepaymentResult::InterestIsNotPaidInTime(_) => Self::do_liquidate(),
+				RepaymentResult::PrincipalAndLastInterestPaymentArePaidBackInTime(_) =>
+					Self::close_loan(&loan_account_id, keep_alive),
+				RepaymentResult::PrincipalAndLastInterestPaymentAreNotPaidBackInTime(_) =>
+					Self::do_liquidate(),
+			}
+			// We do not need information regarding this date anymore.
+			crate::PaymentsScheduleStorage::<T>::remove(block_nubmer);
+		}
 	}
 	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
 	// If vault is balanced we will do nothing.
@@ -383,14 +393,11 @@ impl<T: Config> Pallet<T> {
 		crate::MarketsStorage::<T>::try_get(market_account_id_ref)
 			.map_err(|_| crate::Error::<T>::MarketDoesNotExist)
 	}
-    
-    pub(crate) fn get_loan_info_via_account_id(
-            loan_account_id_ref: &T::AccountId,
-    ) -> Result<LoanInfoOf<T>, crate::Error<T>> {
- 		crate::LoansStorage::<T>::try_get(loan_account_id_ref)
-			.map_err(|_| crate::Error::<T>::ThereIsNoSuchActiveLoan)
-	       
-    }
 
-    
+	pub(crate) fn get_loan_info_via_account_id(
+		loan_account_id_ref: &T::AccountId,
+	) -> Result<LoanInfoOf<T>, crate::Error<T>> {
+		crate::LoansStorage::<T>::try_get(loan_account_id_ref)
+			.map_err(|_| crate::Error::<T>::ThereIsNoSuchActiveLoan)
+	}
 }

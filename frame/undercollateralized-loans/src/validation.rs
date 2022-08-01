@@ -74,8 +74,10 @@ where
 pub struct LoanInputIsValid<Loans: UndercollateralizedLoans>(PhantomData<Loans>);
 
 impl<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy, Loans>
-	Validate<LoanInput<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>, LoanInputIsValid<Loans>>
-	for LoanInputIsValid<Loans>
+	Validate<
+		LoanInput<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>,
+		LoanInputIsValid<Loans>,
+	> for LoanInputIsValid<Loans>
 where
 	Balance: Zero + PartialOrd,
 	BlockNumber: Zero + Rem<Output = BlockNumber> + PartialOrd + PartialEq + Copy,
@@ -84,7 +86,8 @@ where
 {
 	fn validate(
 		input: LoanInput<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>,
-	) -> Result<LoanInput<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>, &'static str> {
+	) -> Result<LoanInput<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>, &'static str>
+	{
 		// Check that principal balance	> 0
 		let principal = input.principal.try_into_validated::<BalanceGreaterThenZero>()?.value();
 		// Check that collateral balance > 0

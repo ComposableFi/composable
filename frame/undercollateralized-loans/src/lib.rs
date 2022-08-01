@@ -74,7 +74,10 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
-	use sp_runtime::{FixedPointNumber, traits::{One, Zero}};
+	use sp_runtime::{
+		traits::{One, Zero},
+		FixedPointNumber,
+	};
 	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, ops::AddAssign};
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
@@ -235,8 +238,8 @@ pub mod pallet {
 		ThisUserIsNotAllowedToExecuteThisContract,
 		// There is no active loan with such account id.
 		ThereIsNoSuchActiveLoan,
-        // When we try treat the loan which already shoul be paid.
-        CurrentBlockNumberExceedsFinalBlockNumberForTheLoan,
+		// When we try treat the loan which already shoul be paid.
+		CurrentBlockNumberExceedsFinalBlockNumberForTheLoan,
 	}
 
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
@@ -281,9 +284,9 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		// TODO: @mikolaichuk: add weights calculation
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
-		    // TODO: @mikolaichuk: should it be true or false?	
+			// TODO: @mikolaichuk: should it be true or false?
 			Self::treat_vaults_balance(block_number);
-            Self::check_payments(block_number, true);
+			Self::check_payments(block_number, true);
 			1000
 		}
 	}
