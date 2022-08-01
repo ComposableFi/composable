@@ -193,15 +193,15 @@
             cargoBuildCommand = "cargo build --release -p price-feed";
           });
           
+          # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
           composable-node = with packages;
             crane-nightly.buildPackage (common-args // {
               pnameSuffix = "-node";
               cargoArtifacts = common-deps;
               #outputs = [ "bin" "out" "doc" ];
               cargoBuildCommand = ''
-                cargo build --release -p pallet-call-filter
-                # cargo build --release -p composable --features builtin-wasm
-                cargo doc --release -p pallet-call-filter
+                cargo build --release -p composable --features builtin-wasm
+                cargo doc --release
                 '';
               DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
@@ -210,7 +210,7 @@
               installPhase = ''
                 mkdir -p $out/bin
                 #mkdir -p $out/doc
-                cp -r target/release/* $out/bin
+                cp target/release/composable $out/bin/composable
                 #cp -r target/doc/* $out/doc
               '';
             });
