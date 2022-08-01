@@ -20,7 +20,7 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
     if (parachainApi !== undefined && activate !== undefined) {
       activate(false);
     }
-  }, [parachainApi, activate]);
+  }, [activate, parachainApi]);
 
   useEffect(() => {
     if (selectedAccount) {

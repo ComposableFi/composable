@@ -14,18 +14,17 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import useStore from "@/store/useStore";
-import { useDotSamaContext, useParachainApi } from "substrate-react";
+import { useDotSamaContext, useParachainApi, useEagerConnect } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useAssetsWithBalance } from "@/defi/hooks";
-import { useEagerConnect } from "substrate-react";
 
 const Status = () => {
-  useEagerConnect(DEFAULT_NETWORK_ID);
+  const { extensionStatus, selectedAccount } = useDotSamaContext();
   const theme = useTheme();
   const assetsWithBalance = useAssetsWithBalance(DEFAULT_NETWORK_ID)
-
+  
   const { openPolkadotModal } = useStore();
-  const { extensionStatus, selectedAccount } = useDotSamaContext();
+  useEagerConnect(DEFAULT_NETWORK_ID);
   const { accounts } = useParachainApi(DEFAULT_NETWORK_ID);
   const [selectedAsset, setSelectedAsset] = useState<string>("");
 
@@ -33,7 +32,7 @@ const Status = () => {
     if (assetsWithBalance.length > 0) {
       setSelectedAsset(assetsWithBalance[0].symbol)
     }
-  }, [assetsWithBalance])
+  }, [assetsWithBalance]);
 
   if (extensionStatus === 'connected') {
     return (
