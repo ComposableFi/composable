@@ -75,14 +75,13 @@ jobs:
 
         ./update.sh $RELEASE_VERSION
         jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
-
+        cat ops.json
         cd ..
 
         if gsutil -q stat $NIXOPS_STATE_URL/$NIXOPS_STATE;
         then
           gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
         else
-          cat ops.json
           nix develop .#sre --override-input flake-utils ./.nix/override-input/flake-utils/  --show-trace --command nixops create --deployment devnet-gce  
         fi
       env:

@@ -1,5 +1,9 @@
 { pkgs, nixpkgs, devnet-input, gce-input }:
 let
+  assert gce-input.project_id != null "Remote credentials must be supplied"
+  assert gce-input.client_email != null "Remote credentials must be supplied"
+  assert gce-input.private_key != null "Remote credentials must be supplied"
+
   description = "Derives Dali and Picasso releases from remote branches with relevant remote depoyments and documentation";
   mk-composable = spec:
     def: def // {

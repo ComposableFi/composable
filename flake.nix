@@ -201,7 +201,7 @@
               cargoBuildCommand = ''
                 cargo build --release -p pallet-call-filter
                 # cargo build --release -p composable --features builtin-wasm
-                cargo doc --release
+                cargo doc --release -p pallet-call-filter
                 '';
               DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
@@ -209,8 +209,8 @@
                  "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                mkdir -p $out/doc
-                cp -r target/release/* $out/bin/
+                #mkdir -p $out/doc
+                cp -r target/release/* $out/bin
                 #cp -r target/doc/* $out/doc
               '';
             });
