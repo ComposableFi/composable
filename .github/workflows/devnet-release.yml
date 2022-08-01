@@ -18,7 +18,10 @@ jobs:
       group: deploy-devnet
       cancel-in-progress: false
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        clean: false
+        fetch-depth: 0
 
     - uses: google-github-actions/setup-gcloud@v0
       with:
