@@ -1,25 +1,30 @@
-use crate::error::BeefyClientError;
-use crate::primitives::{ParachainHeader, PartialMmrLeaf, SignedCommitment};
-use crate::queries::helpers::{
-    fetch_timestamp_extrinsic_with_proof, hash_authority_addresses, prove_parachain_headers,
-    ParaHeadsProof, TimeStampExtWithProof,
-};
-use crate::queries::relay_chain_queries::{fetch_beefy_justification, fetch_mmr_batch_proof};
-use crate::traits::{ClientState, HostFunctions};
-use crate::{get_leaf_index_for_block_number, queries::runtime, MerkleHasher, MmrUpdateProof};
+pub mod error;
+pub mod helpers;
+pub mod relay_chain_queries;
+pub mod runtime;
+
+use beefy_client_primitives::{get_leaf_index_for_block_number, MerkleHasher, MmrUpdateProof};
+use beefy_client_primitives::{ClientState, HostFunctions};
+use beefy_client_primitives::{ParachainHeader, PartialMmrLeaf, SignedCommitment};
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf};
 use codec::{Decode, Encode};
+use error::Error;
+use helpers::{
+    fetch_timestamp_extrinsic_with_proof, hash_authority_addresses, prove_parachain_headers,
+    ParaHeadsProof, TimeStampExtWithProof,
+};
 use hex_literal::hex;
 use pallet_mmr_primitives::BatchProof;
+use relay_chain_queries::{fetch_beefy_justification, fetch_mmr_batch_proof};
 use sp_core::H256;
 use sp_io::crypto;
 use sp_runtime::{generic::Header, traits::BlakeTwo256};
 use subxt::sp_core::keccak_256;
 use subxt::{Client, Config};
 
-use super::helpers::{prove_authority_set, AuthorityProofWithSignatures};
-use super::relay_chain_queries::{
+use helpers::{prove_authority_set, AuthorityProofWithSignatures};
+use relay_chain_queries::{
     fetch_finalized_parachain_heads, fetch_mmr_leaf_proof, FinalizedParaHeads,
 };
 
@@ -108,7 +113,7 @@ where
         &self,
         commitment_block_number: u32,
         latest_beefy_height: u32,
-    ) -> Result<(Vec<ParachainHeader>, BatchProof<H256>), BeefyClientError> {
+    ) -> Result<(Vec<ParachainHeader>, BatchProof<H256>), Error> {
         let FinalizedParaHeads {
             leaf_indices,
             raw_finalized_heads: finalized_blocks,
@@ -139,7 +144,7 @@ where
             let parent_block: u32 = leaf.parent_number_and_hash.0.into();
             let leaf_block_number = (parent_block + 1) as u64;
             let para_headers = finalized_blocks.get(&leaf_block_number).ok_or_else(|| {
-                BeefyClientError::Custom(format!(
+                Error::Custom(format!(
                     "[get_parachain_headers] Para Headers not found for relay chain block {}",
                     leaf_block_number
                 ))
@@ -194,7 +199,7 @@ where
             u32,
             beefy_primitives::crypto::Signature,
         >,
-    ) -> Result<MmrUpdateProof, BeefyClientError> {
+    ) -> Result<MmrUpdateProof, Error> {
         let api = self
             .relay_client
             .clone()
@@ -248,7 +253,7 @@ where
     pub async fn construct_beefy_client_state(
         &self,
         beefy_activation_block: u32,
-    ) -> Result<ClientState, BeefyClientError> {
+    ) -> Result<ClientState, Error> {
         let api = self
             .relay_client
             .clone()

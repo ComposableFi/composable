@@ -15,24 +15,19 @@
 
 //! Beefy Light Client Implementation
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(not(feature = "prover"), deny(missing_docs))]
 
 use core::marker::PhantomData;
 
 pub mod error;
-pub mod primitives;
-#[cfg(any(test, feature = "prover"))]
-pub mod queries;
 #[cfg(test)]
 mod tests;
-pub mod traits;
 
 use crate::error::BeefyClientError;
-use crate::primitives::{
-    BeefyNextAuthoritySet, MmrUpdateProof, ParachainsUpdateProof, SignatureWithAuthorityIndex,
-    HASH_LENGTH,
+use beefy_client_primitives::{get_leaf_index_for_block_number, MerkleHasher, NodesUtils};
+use beefy_client_primitives::{
+    BeefyNextAuthoritySet, ClientState, HostFunctions, MmrUpdateProof, ParachainsUpdateProof,
+    SignatureWithAuthorityIndex, HASH_LENGTH,
 };
-use crate::traits::{ClientState, HostFunctions};
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::MmrLeaf;
 use codec::Encode;
@@ -264,77 +259,8 @@ impl<Crypto: HostFunctions + Clone> BeefyLightClient<Crypto> {
     }
 }
 
-/// Calculate the leaf index for this block number
-pub fn get_leaf_index_for_block_number(activation_block: u32, block_number: u32) -> u32 {
-    // calculate the leaf index for this leaf.
-    if activation_block == 0 {
-        // in this case the leaf index is the same as the block number - 1 (leaf index starts at 0)
-        block_number - 1
-    } else {
-        // in this case the leaf index is activation block - current block number.
-        activation_block - (block_number + 1)
-    }
-}
-
-/// Merkle Hasher for mmr library
-#[derive(Clone)]
-pub struct MerkleHasher<T: HostFunctions>(PhantomData<T>);
-
-impl<T: HostFunctions + Clone> mmr_lib::Merge for MerkleHasher<T> {
-    type Item = H256;
-
-    fn merge(left: &Self::Item, right: &Self::Item) -> Self::Item {
-        let mut concat = left.as_bytes().to_vec();
-        concat.extend_from_slice(right.as_bytes());
-        T::keccak_256(&*concat).into()
-    }
-}
-
-impl<T: HostFunctions + Clone> rs_merkle::Hasher for MerkleHasher<T> {
-    type Hash = [u8; 32];
-    fn hash(data: &[u8]) -> Self::Hash {
-        T::keccak_256(data)
-    }
-}
-
 /// Validate signatures against threshold
 fn validate_sigs_against_threshold(set: &BeefyNextAuthoritySet<H256>, sigs_len: usize) -> bool {
     let threshold = ((2 * set.len) / 3) + 1;
     sigs_len >= threshold as usize
-}
-
-/// MMR nodes & size -related utilities.
-pub struct NodesUtils {
-    no_of_leaves: u64,
-}
-
-impl NodesUtils {
-    /// Create new instance of MMR nodes utilities for given number of leaves.
-    pub fn new(no_of_leaves: u64) -> Self {
-        Self { no_of_leaves }
-    }
-
-    /// Calculate number of peaks in the MMR.
-    pub fn number_of_peaks(&self) -> u64 {
-        self.number_of_leaves().count_ones() as u64
-    }
-
-    /// Return the number of leaves in the MMR.
-    pub fn number_of_leaves(&self) -> u64 {
-        self.no_of_leaves
-    }
-
-    /// Calculate the total size of MMR (number of nodes).
-    pub fn size(&self) -> u64 {
-        2 * self.no_of_leaves - self.number_of_peaks()
-    }
-
-    /// Calculate maximal depth of the MMR.
-    pub fn _depth(&self) -> u32 {
-        if self.no_of_leaves == 0 {
-            return 0;
-        }
-
-        64 - self.no_of_leaves.next_power_of_two().leading_zeros()
-    }
 }

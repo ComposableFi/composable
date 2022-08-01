@@ -31,6 +31,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 rs_merkle = { version = "1.2.0", default-features = false }
 mmr-lib= { package = "ckb-merkle-mountain-range", version = "0.3.2", default-features = false }
 derive_more = { version = "0.99.17", default-features = false, features = ["from"]  }
+beefy-client-primitives = { package = "primitives", path = "./primitives", default-features = false }
 # Optional deps
 subxt = { version = "0.22.0", optional = true }
 tokio = { version = "1.17.0", features = ["full"], optional = true }
@@ -50,6 +51,7 @@ pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "po
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+beefy-queries = { path = "./beefy-queries" }
 
 [features]
 default = ["std"]
@@ -66,6 +68,12 @@ std = [
     "pallet-mmr-primitives/std",
     "rs_merkle/std",
     "mmr-lib/std",
-    "frame-support/std"
+    "frame-support/std",
+    "beefy-client-primitives/std",
 ]
-prover = ["std", "subxt", "hex-literal", "serde_json", "pallet-mmr-rpc", "sp-io", "sp-trie", "hex"]
+
+[workspace]
+members = [
+    "beefy-queries",
+    "primitives"
+]

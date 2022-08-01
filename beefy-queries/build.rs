@@ -49,16 +49,11 @@ fn codegen<I: Input>(encoded: &mut I) -> color_eyre::Result<String> {
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
-    let build_enabled = env::var("PROVER_ENABLED")
-        .map(|v| v == "1")
-        .unwrap_or(false);
-    if build_enabled {
-        let metadata = fetch_metadata_ws().await?;
-        let code = codegen(&mut &metadata[..])?;
-        let out_dir = env::var_os("OUT_DIR").unwrap();
-        let dest_path = Path::new(&out_dir).join("subxt_codegen.rs");
-        fs::write(&dest_path, &code)?;
-    }
+    let metadata = fetch_metadata_ws().await?;
+    let code = codegen(&mut &metadata[..])?;
+    let out_dir = env::var_os("OUT_DIR").unwrap();
+    let dest_path = Path::new(&out_dir).join("subxt_codegen.rs");
+    fs::write(&dest_path, &code)?;
 
     Ok(())
 }

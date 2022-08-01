@@ -1,15 +1,15 @@
+use crate::error::Error;
+use beefy_client_primitives::get_leaf_index_for_block_number;
 use beefy_primitives::{SignedCommitment, VersionedFinalityProof};
 use codec::{Decode, Encode};
 use pallet_mmr_rpc::{LeafBatchProof, LeafProof};
 use sp_core::H256;
-use sp_runtime::traits::Header as HeaderT;
+use sp_runtime::traits::Header;
 use std::collections::BTreeMap;
 use subxt::{
     rpc::{rpc_params, ClientT},
     Client, Config,
 };
-
-use crate::{error::BeefyClientError, get_leaf_index_for_block_number};
 
 use super::runtime;
 
@@ -25,7 +25,7 @@ pub async fn fetch_finalized_parachain_heads<T: Config>(
     latest_beefy_height: u32,
     para_id: u32,
     beefy_activation_block: u32,
-) -> Result<FinalizedParaHeads, BeefyClientError>
+) -> Result<FinalizedParaHeads, Error>
 where
     u32: From<<T as subxt::Config>::BlockNumber>,
 {
@@ -55,7 +55,7 @@ where
         .block_hash(Some(previous_finalized_block_number))
         .await?
         .ok_or_else(|| {
-            BeefyClientError::Custom(
+            Error::Custom(
                 "Failed to get previous finalized beefy block hash from block number".to_string(),
             )
         })?;
@@ -72,7 +72,7 @@ where
             .header(Some(changes.block))
             .await?
             .ok_or_else(|| {
-                BeefyClientError::Custom(format!(
+                Error::Custom(format!(
                     "[get_parachain_headers] block not found {:?}",
                     changes.block
                 ))
@@ -115,7 +115,7 @@ pub async fn fetch_beefy_justification<T: Config>(
         SignedCommitment<u32, beefy_primitives::crypto::Signature>,
         T::Hash,
     ),
-    BeefyClientError,
+    Error,
 > {
     let latest_beefy_finalized: <T as Config>::Hash = client
         .rpc()
@@ -151,7 +151,7 @@ pub async fn fetch_mmr_batch_proof<T: Config>(
     client: &Client<T>,
     leaf_indices: Vec<u32>,
     block_hash: Option<T::Hash>,
-) -> Result<LeafBatchProof<H256>, BeefyClientError> {
+) -> Result<LeafBatchProof<H256>, Error> {
     let proof: LeafBatchProof<H256> = client
         .rpc()
         .client
@@ -168,7 +168,7 @@ pub async fn fetch_mmr_leaf_proof<T: Config>(
     client: &Client<T>,
     leaf_index: u64,
     block_hash: Option<T::Hash>,
-) -> Result<LeafProof<H256>, BeefyClientError> {
+) -> Result<LeafProof<H256>, Error> {
     let proof: LeafProof<H256> = client
         .rpc()
         .client

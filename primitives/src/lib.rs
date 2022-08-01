@@ -1,10 +1,40 @@
 //! Primitive types used in the library
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
+use core::marker::PhantomData;
+
 use beefy_primitives::mmr::MmrLeafVersion;
 pub use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf};
 use codec::{Decode, Encode};
 use sp_core::H256;
 use sp_std::prelude::*;
+
+#[derive(sp_std::fmt::Debug, Encode, Decode, PartialEq, Eq, Clone)]
+/// Client state definition for the light client
+pub struct ClientState {
+    /// Latest beefy height
+    pub latest_beefy_height: u32,
+    /// Latest mmr root hash
+    pub mmr_root_hash: H256,
+    /// Authorities for the current session
+    pub current_authorities: BeefyNextAuthoritySet<H256>,
+    /// Authorities for the next session
+    pub next_authorities: BeefyNextAuthoritySet<H256>,
+    /// Beefy activation block
+    pub beefy_activation_block: u32,
+}
+
+/// Host functions required by the light client for signature verification
+pub trait HostFunctions {
+    /// Keccak 256 hash function
+    fn keccak_256(input: &[u8]) -> [u8; 32];
+    /// Compressed Ecdsa public key recovery from a signature
+    fn secp256k1_ecdsa_recover_compressed(
+        signature: &[u8; 65],
+        value: &[u8; 32],
+    ) -> Option<Vec<u8>>;
+}
 
 /// Hash length definition for hashing algorithms used
 pub const HASH_LENGTH: usize = 32;
@@ -54,6 +84,7 @@ pub struct PartialMmrLeaf {
     /// Next beefy authorities
     pub beefy_next_authority_set: BeefyNextAuthoritySet<H256>,
 }
+
 #[derive(sp_std::fmt::Debug, Clone, PartialEq, Eq, Encode, Decode)]
 /// Parachain header definition
 pub struct ParachainHeader {
@@ -83,4 +114,64 @@ pub struct ParachainsUpdateProof {
     pub parachain_headers: Vec<ParachainHeader>,
     /// Mmr Batch proof for parachain headers
     pub mmr_proof: pallet_mmr_primitives::BatchProof<H256>,
+}
+
+/// MMR nodes & size -related utilities.
+pub struct NodesUtils {
+    no_of_leaves: u64,
+}
+
+impl NodesUtils {
+    /// Create new instance of MMR nodes utilities for given number of leaves.
+    pub fn new(no_of_leaves: u64) -> Self {
+        Self { no_of_leaves }
+    }
+
+    /// Calculate number of peaks in the MMR.
+    pub fn number_of_peaks(&self) -> u64 {
+        self.number_of_leaves().count_ones() as u64
+    }
+
+    /// Return the number of leaves in the MMR.
+    pub fn number_of_leaves(&self) -> u64 {
+        self.no_of_leaves
+    }
+
+    /// Calculate the total size of MMR (number of nodes).
+    pub fn size(&self) -> u64 {
+        2 * self.no_of_leaves - self.number_of_peaks()
+    }
+}
+
+/// Merkle Hasher for mmr library
+#[derive(Clone)]
+pub struct MerkleHasher<T: HostFunctions>(PhantomData<T>);
+
+impl<T: HostFunctions + Clone> mmr_lib::Merge for MerkleHasher<T> {
+    type Item = H256;
+
+    fn merge(left: &Self::Item, right: &Self::Item) -> Self::Item {
+        let mut concat = left.as_bytes().to_vec();
+        concat.extend_from_slice(right.as_bytes());
+        T::keccak_256(&*concat).into()
+    }
+}
+
+impl<T: HostFunctions + Clone> rs_merkle::Hasher for MerkleHasher<T> {
+    type Hash = [u8; 32];
+    fn hash(data: &[u8]) -> Self::Hash {
+        T::keccak_256(data)
+    }
+}
+
+/// Calculate the leaf index for this block number
+pub fn get_leaf_index_for_block_number(activation_block: u32, block_number: u32) -> u32 {
+    // calculate the leaf index for this leaf.
+    if activation_block == 0 {
+        // in this case the leaf index is the same as the block number - 1 (leaf index starts at 0)
+        block_number - 1
+    } else {
+        // in this case the leaf index is activation block - current block number.
+        activation_block - (block_number + 1)
+    }
 }

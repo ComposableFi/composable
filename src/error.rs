@@ -44,15 +44,6 @@ pub enum BeefyClientError {
     InvalidMerkleProof,
     /// Mmr Error
     MmrVerificationError(mmr_lib::Error),
-    #[cfg(any(test, feature = "prover"))]
-    /// subxt error
-    Subxt(subxt::BasicError),
-    #[cfg(any(test, feature = "prover"))]
-    /// subxt rpc error
-    SubxtRRpc(subxt::rpc::RpcError),
-    #[cfg(any(test, feature = "prover"))]
-    /// Trie error
-    TrieProof(Box<sp_trie::TrieError<sp_trie::LayoutV0<sp_runtime::traits::BlakeTwo256>>>),
     /// Codec error
     Codec(codec::Error),
     /// Custom error

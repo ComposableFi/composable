@@ -171,6 +171,7 @@ name = "beefy-generic-client"
 version = "0.1.0"
 dependencies = [
  "beefy-primitives",
+ "beefy-queries",
  "ckb-merkle-mountain-range",
  "color-eyre",
  "derive_more",
@@ -183,6 +184,7 @@ dependencies = [
  "pallet-mmr",
  "pallet-mmr-rpc",
  "parity-scale-codec",
+ "primitives",
  "rs_merkle",
  "serde_json",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -215,6 +217,38 @@ dependencies = [
  "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
  "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+]
+
+[[package]]
+name = "beefy-queries"
+version = "0.1.0"
+dependencies = [
+ "beefy-primitives",
+ "color-eyre",
+ "derive_more",
+ "frame-metadata",
+ "frame-support",
+ "hex",
+ "hex-literal",
+ "jsonrpsee 0.15.0",
+ "pallet-beefy-mmr",
+ "pallet-mmr",
+ "pallet-mmr-rpc",
+ "parity-scale-codec",
+ "primitives",
+ "rs_merkle",
+ "serde_json",
+ "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-core-hashing 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-mmr-primitives",
+ "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "subxt",
+ "subxt-codegen",
+ "syn",
+ "tokio",
 ]
 
 [[package]]
@@ -411,6 +445,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 
 [[package]]
+name = "convert_case"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
 name = "core-foundation"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -570,8 +610,10 @@ version = "0.99.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb810d30a7c1953f91334de7244731fc3f3c10d7fe163338a35b9f640960321"
 dependencies = [
+ "convert_case",
  "proc-macro2",
  "quote",
+ "rustc_version",
  "syn",
 ]
 
@@ -2202,6 +2244,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "primitives"
+version = "0.1.0"
+dependencies = [
+ "beefy-primitives",
+ "ckb-merkle-mountain-range",
+ "parity-scale-codec",
+ "rs_merkle",
+ "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-mmr-primitives",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+]
+
+[[package]]
 name = "proc-macro-crate"
 version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2466,6 +2521,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e75f6a532d0fd9f7f13144f392b6ad56a32696bfcd9c78f797f16bbb6f072d6"
 
 [[package]]
+name = "rustc_version"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
+dependencies = [
+ "semver",
+]
+
+[[package]]
 name = "rustls"
 version = "0.20.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2635,6 +2699,12 @@ dependencies = [
  "core-foundation-sys",
  "libc",
 ]
+
+[[package]]
+name = "semver"
+version = "1.0.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2333e6df6d6598f2b1974829f853c2b4c5f4a6e503c10af918081aa6f8564e1"
 
 [[package]]
 name = "serde"

@@ -1,3 +1,6 @@
+use crate::error::Error;
+use crate::Crypto;
+use beefy_client_primitives::{MerkleHasher, SignatureWithAuthorityIndex};
 use codec::{Decode, Encode};
 use frame_support::sp_runtime::traits::Convert;
 use sp_core::keccak_256;
@@ -5,11 +8,6 @@ use sp_runtime::traits::BlakeTwo256;
 use sp_trie::{generate_trie_proof, TrieDBMut, TrieMut};
 use std::collections::BTreeMap;
 use subxt::{Client, Config};
-
-use crate::{
-    error::BeefyClientError, primitives::SignatureWithAuthorityIndex, queries::utils::Crypto,
-    MerkleHasher,
-};
 
 pub struct TimeStampExtWithProof {
     pub ext: Vec<u8>,
@@ -32,9 +30,9 @@ pub struct ParaHeadsProof {
 pub async fn fetch_timestamp_extrinsic_with_proof<T: Config>(
     client: &Client<T>,
     block_hash: Option<T::Hash>,
-) -> Result<TimeStampExtWithProof, BeefyClientError> {
+) -> Result<TimeStampExtWithProof, Error> {
     let block = client.rpc().block(block_hash).await?.ok_or_else(|| {
-        BeefyClientError::Custom(format!(
+        Error::Custom(format!(
             "[get_parachain_headers] Block with hash :{:?} not found",
             block_hash
         ))
@@ -85,7 +83,7 @@ pub fn prove_parachain_headers(
     // Map of para ids to to finalized head data
     finalized_para_heads: &BTreeMap<ParaId, HeadData>,
     para_id: u32,
-) -> Result<ParaHeadsProof, BeefyClientError> {
+) -> Result<ParaHeadsProof, Error> {
     let mut index = None;
     let mut parachain_leaves = vec![];
     // Values are already sorted by key which is the para_id
@@ -113,7 +111,7 @@ pub fn prove_parachain_headers(
     let para_head = finalized_para_heads
         .get(&para_id)
         .ok_or_else(|| {
-            BeefyClientError::Custom(format!(
+            Error::Custom(format!(
                 "[get_parachain_headers] Para Header not found for para id {}",
                 para_id
             ))
@@ -123,7 +121,7 @@ pub fn prove_parachain_headers(
         parachain_heads_proof: proof,
         para_head,
         heads_leaf_index: index.ok_or_else(|| {
-            BeefyClientError::Custom("[get_parachain_headers] heads leaf index is None".to_string())
+            Error::Custom("[get_parachain_headers] heads leaf index is None".to_string())
         })? as u32,
         heads_total_count: parachain_leaves.len() as u32,
     })
@@ -136,7 +134,7 @@ pub fn prove_authority_set(
         beefy_primitives::crypto::Signature,
     >,
     authority_address_hashes: Vec<[u8; 32]>,
-) -> Result<AuthorityProofWithSignatures, BeefyClientError> {
+) -> Result<AuthorityProofWithSignatures, Error> {
     let signatures = signed_commitment
         .signatures
         .iter()
@@ -176,9 +174,7 @@ pub fn prove_authority_set(
 }
 
 /// Hash encoded authority public keys
-pub fn hash_authority_addresses(
-    encoded_public_keys: Vec<Vec<u8>>,
-) -> Result<Vec<[u8; 32]>, BeefyClientError> {
+pub fn hash_authority_addresses(encoded_public_keys: Vec<Vec<u8>>) -> Result<Vec<[u8; 32]>, Error> {
     let authority_address_hashes = encoded_public_keys
         .into_iter()
         .map(|x| {

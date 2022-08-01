@@ -1,12 +1,12 @@
-use crate::primitives::SignedCommitment;
 use crate::BeefyClientError;
-use crate::{
-    queries::utils::{ClientWrapper, Crypto},
-    BeefyLightClient, MmrUpdateProof, ParachainsUpdateProof, SignatureWithAuthorityIndex,
+use crate::BeefyLightClient;
+use beefy_client_primitives::{
+    MmrUpdateProof, ParachainsUpdateProof, SignatureWithAuthorityIndex, SignedCommitment,
 };
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf};
 use beefy_primitives::Payload;
+use beefy_queries::{ClientWrapper, Crypto};
 use frame_support::assert_ok;
 use pallet_mmr_primitives::Proof;
 use sp_core::bytes::to_hex;

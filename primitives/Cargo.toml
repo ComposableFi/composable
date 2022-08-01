@@ -1,0 +1,27 @@
+[package]
+name = "primitives"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-core = { default-features = false, version = "6.0.0" }
+beefy-primitives = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+rs_merkle = { version = "1.2.0", default-features = false }
+mmr-lib= { package = "ckb-merkle-mountain-range", version = "0.3.2", default-features = false }
+pallet-mmr-primitives = { package = "sp-mmr-primitives", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+
+[features]
+default = ["std"]
+std = [
+    "sp-std/std",
+    "sp-core/std",
+    "beefy-primitives/std",
+    "codec/std",
+    "rs_merkle/std",
+    "mmr-lib/std",
+    "pallet-mmr-primitives/std",
+]
