@@ -201,7 +201,7 @@
               #outputs = [ "bin" "out" "doc" ];
               cargoBuildCommand = ''
                 cargo build --release -p composable --features builtin-wasm
-                cargo doc --release
+                #cargo doc --release
                 '';
               DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";

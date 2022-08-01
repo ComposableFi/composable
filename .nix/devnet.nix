@@ -1,10 +1,9 @@
 { pkgs, nixpkgs, devnet-input, gce-input }:
-let
   assert gce-input != null;
   assert gce-input.project_id != null;
   assert gce-input.client_email != null;
   assert gce-input.private_key != null;
-
+let
   description = "Derives Dali and Picasso releases from remote branches with relevant remote depoyments and documentation";
   mk-composable = spec:
     def: def // {
