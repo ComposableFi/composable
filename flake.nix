@@ -197,24 +197,46 @@
             crane-nightly.buildPackage (common-args // {
               pnameSuffix = "-node";
               cargoArtifacts = common-deps;
-              #outputs = [ "bin" "out" "doc" ];
+              outputs = [ "out" "doc" ];
               cargoBuildCommand = ''
-                cargo build --release -p composable-support
-                # cargo build --release -p composable --features builtin-wasm
+                # cargo build --release -p pallet-call-filter
+                cargo build --release -p composable --features builtin-wasm
                 cargo doc --release
+                #mkdir -p target/doc
+                #echo "42" > target/doc/README.txt
                 '';
-              # DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-              # PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-              # COMPOSABLE_RUNTIME =
-              #   "${composable-runtime}/lib/runtime.optimized.wasm";
+                DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+                PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+                COMPOSABLE_RUNTIME =
+                  "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                mkdir -p $out/doc
-                cp -r target/release/* $out/bin/
-                cp -r target/doc/* $out/doc
+                mkdir -p $outputDoc
+                cp -r target/release/* $out/bin
+                cp -r target/doc/* $outputDoc
               '';
             });
 
+
+          # composable-node = with packages;
+          #   crane-nightly.buildPackage (common-args // {
+          #     pnameSuffix = "-node";
+          #     cargoArtifacts = common-deps;
+          #     cargoBuildCommand = ''
+          #       cargo build --release -p composable --features builtin-wasm
+          #       cargo doc --release
+          #       '';
+          #     DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+          #     PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+          #     COMPOSABLE_RUNTIME =
+          #       "${composable-runtime}/lib/runtime.optimized.wasm";
+          #     installPhase = ''
+          #       mkdir -p $out/bin
+          #       mkdir -p $out/doc
+          #       cp -r target/release/* $out/bin/
+          #       cp -r target/doc/* $out/doc
+          #     '';
+          #   });
 
           # also mdbook has releases for all targets,
           # so it simple to build it as it is rust
