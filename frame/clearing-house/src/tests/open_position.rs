@@ -19,7 +19,7 @@ use crate::{
 		with_markets_context, with_trading_context, Market, MarketConfig,
 	},
 };
-use composable_maths::labs::numbers::{IntoBalance, IntoSigned};
+use composable_maths::labs::numbers::{TryIntoBalance, TryIntoSigned};
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
@@ -52,7 +52,7 @@ prop_compose! {
 		a_inner in 0..b.into_inner(),
 		b in Just(b),
 	) -> (FixedI128, FixedI128) {
-		(FixedU128::from_inner(a_inner).into_signed().unwrap(), b.into_signed().unwrap())
+		(FixedU128::from_inner(a_inner).try_into_signed().unwrap(), b.try_into_signed().unwrap())
 	}
 }
 
@@ -839,7 +839,7 @@ proptest! {
 			));
 
 			// Try reversing while leaving a small resulting position in the opposite direction
-			let eps_balance: Balance = eps.into_balance().unwrap();
+			let eps_balance: Balance = eps.try_into_balance().unwrap();
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,

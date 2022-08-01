@@ -161,8 +161,8 @@ pub mod pallet {
 	};
 	use codec::FullCodec;
 	use composable_maths::labs::numbers::{
-		self, FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, TryClamp,
-		UnsignedMath,
+		self, FixedPointMath, TryClamp, TryFromBalance, TryIntoBalance, TryIntoDecimal,
+		TryIntoSigned, UnsignedMath,
 	};
 	use composable_traits::{
 		clearing_house::{ClearingHouse, Instruments},
@@ -1099,7 +1099,7 @@ pub mod pallet {
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let mut market = Self::try_get_market(market_id)?;
-			let mut quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
+			let mut quote_abs_amount_decimal = T::Decimal::try_from_balance(quote_asset_amount)?;
 			ensure!(
 				quote_abs_amount_decimal >= market.minimum_trade_size,
 				Error::<T>::TradeSizeTooSmall
@@ -1347,7 +1347,7 @@ pub mod pallet {
 
 		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
 			let vamm_twap: Self::Decimal = T::Vamm::get_twap(market.vamm_id, AssetType::Base)
-				.and_then(|p| p.into_signed().map_err(|e| e.into()))?;
+				.and_then(|p| p.try_into_signed().map_err(|e| e.into()))?;
 
 			let mut price_spread = vamm_twap.try_sub(&market.last_oracle_twap)?;
 
@@ -1435,7 +1435,7 @@ pub mod pallet {
 						collateral_asset_id,
 						&collateral_account,
 						&fee_pool_account,
-						uncapped_funding.into_balance()?,
+						uncapped_funding.try_into_balance()?,
 						false,
 					)?;
 				} else {
@@ -1445,7 +1445,7 @@ pub mod pallet {
 					// - Fee Pool usage for funding payments per call to `update_funding`
 					let usable_fees: T::Decimal =
 						-T::Assets::balance(collateral_asset_id, &fee_pool_account)
-							.into_decimal()?;
+							.try_into_decimal()?;
 					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
 
 					// Since we're dealing with negatives, we check if the uncapped funding is
@@ -1473,7 +1473,7 @@ pub mod pallet {
 						collateral_asset_id,
 						&fee_pool_account,
 						&collateral_account,
-						capped_funding.into_balance()?,
+						capped_funding.try_into_balance()?,
 						false,
 					)?;
 				};
@@ -1560,7 +1560,7 @@ pub mod pallet {
 						&position,
 						info.direction,
 						&mut market,
-						info.base_asset_value.into_balance()?,
+						info.base_asset_value.try_into_balance()?,
 					)?;
 					Markets::<T>::insert(&position.market_id, market);
 
@@ -1569,7 +1569,7 @@ pub mod pallet {
 					let fee_decimal = base_asset_value_share.try_mul(&maximum_fee)?;
 					margin.try_sub_mut(&fee_decimal)?;
 					margin_requirement.try_sub_mut(&info.margin_requirement_maintenance)?;
-					fees.try_add_mut(&fee_decimal.into_balance()?)?;
+					fees.try_add_mut(&fee_decimal.try_into_balance()?)?;
 					collateral = Self::updated_balance(
 						&collateral,
 						&info
@@ -1651,7 +1651,7 @@ pub mod pallet {
 						closed_share.try_mul(&info.margin_requirement_partial)?;
 					let realized_pnl = exit_value.try_sub(&entry_value)?;
 
-					fees.try_add_mut(&fee_decimal.into_balance()?)?;
+					fees.try_add_mut(&fee_decimal.try_into_balance()?)?;
 					collateral =
 						Self::updated_balance(&collateral, &realized_pnl.try_sub(&fee_decimal)?)?;
 					margin.try_sub_mut(&fee_decimal)?;
@@ -1757,7 +1757,7 @@ pub mod pallet {
 			index_price: &T::Decimal,
 		) -> Result<T::Decimal, DispatchError> {
 			let mark_price: T::Decimal =
-				T::Vamm::get_price(market.vamm_id, AssetType::Base)?.into_signed()?;
+				T::Vamm::get_price(market.vamm_id, AssetType::Base)?.try_into_signed()?;
 
 			let divergence = mark_price.try_sub(index_price)?.try_div(index_price)?;
 			Ok(divergence)
@@ -1811,7 +1811,7 @@ pub mod pallet {
 			margin: T::Balance,
 		) -> Result<bool, DispatchError> {
 			let mut min_equity = T::Decimal::zero();
-			let mut equity: T::Decimal = margin.into_decimal()?;
+			let mut equity: T::Decimal = margin.try_into_decimal()?;
 			for position in positions.iter() {
 				if let Some(direction) = position.direction() {
 					// Should always succeed
@@ -1877,7 +1877,7 @@ pub mod pallet {
 			Ok(T::Vamm::swap(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Quote,
-				input_amount: quote_abs_decimal.into_balance()?,
+				input_amount: quote_abs_decimal.try_into_balance()?,
 				direction: direction.into(),
 				output_amount_limit: Some(base_limit),
 			})?
@@ -1908,7 +1908,7 @@ pub mod pallet {
 			swapped: T::Balance,
 			direction: Direction,
 		) -> Result<T::Decimal, DispatchError> {
-			let abs: T::Decimal = swapped.into_decimal()?;
+			let abs: T::Decimal = swapped.try_into_decimal()?;
 			Ok(match direction {
 				Long => abs,
 				Short => abs.neg(),
@@ -1933,7 +1933,7 @@ pub mod pallet {
 			let sim_swapped = T::Vamm::swap_simulation(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
-				input_amount: position.base_asset_amount.into_balance()?,
+				input_amount: position.base_asset_amount.try_into_balance()?,
 				direction: position_direction.into(),
 				output_amount_limit: None,
 			})?;
@@ -1966,7 +1966,7 @@ pub mod pallet {
 			balance: &T::Balance,
 			delta: &T::Decimal,
 		) -> Result<T::Balance, DispatchError> {
-			let abs_delta = delta.into_balance()?;
+			let abs_delta = delta.try_into_balance()?;
 
 			Ok(match delta.is_positive() {
 				true => balance.try_add(&abs_delta)?,
@@ -2064,7 +2064,7 @@ pub mod pallet {
 								&position,
 								position_direction,
 								&mut market,
-								quote_abs_amount_decimal.into_balance()?,
+								quote_abs_amount_decimal.try_into_balance()?,
 							)?;
 
 							new_position = None;
@@ -2209,7 +2209,7 @@ pub mod pallet {
 			market: &mut Market<T>,
 			quote_asset_amount_limit: T::Balance,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			let base_swapped = position.base_asset_amount.into_balance()?;
+			let base_swapped = position.base_asset_amount.try_into_balance()?;
 			let quote_swapped = Self::swap_base(
 				market,
 				position_direction,
@@ -2218,7 +2218,7 @@ pub mod pallet {
 			)?;
 
 			let entry_value = position.quote_asset_notional_amount;
-			let quote_amount_decimal: T::Decimal = quote_swapped.into_decimal()?;
+			let quote_amount_decimal: T::Decimal = quote_swapped.try_into_decimal()?;
 			let exit_value = match position_direction {
 				Long => quote_amount_decimal,
 				Short => quote_amount_decimal.neg(),
@@ -2280,13 +2280,13 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			if pnl.is_positive() {
 				// take the opportunity to settle any outstanding profits
-				outstanding_profits.try_add_mut(&pnl.into_balance()?)?;
+				outstanding_profits.try_add_mut(&pnl.try_into_balance()?)?;
 				let realized_profits = cmp::min(*outstanding_profits, market.available_profits);
 				collateral.try_add_mut(&realized_profits)?;
 				outstanding_profits.try_sub_mut(&realized_profits)?;
 				market.available_profits.try_sub_mut(&realized_profits)?;
 			} else {
-				let losses = pnl.into_balance()?;
+				let losses = pnl.try_into_balance()?;
 				let outstanding_profits_lost = cmp::min(*outstanding_profits, losses);
 				let realized_losses = losses.saturating_sub(outstanding_profits_lost);
 				outstanding_profits.try_sub_mut(&outstanding_profits_lost)?;
@@ -2303,7 +2303,7 @@ pub mod pallet {
 			quote_abs_amount: &T::Decimal,
 		) -> Result<T::Balance, ArithmeticError> {
 			quote_abs_amount
-				.into_balance()?
+				.try_into_balance()?
 				.try_mul(&market.taker_fee)?
 				.try_div(&BASIS_POINT_DENOMINATOR.into())
 		}

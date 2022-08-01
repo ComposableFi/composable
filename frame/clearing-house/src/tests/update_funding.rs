@@ -15,7 +15,9 @@ use crate::{
 	},
 	Direction, Error, Event,
 };
-use composable_maths::labs::numbers::{FixedPointMath, FromBalance, FromUnsigned, IntoDecimal};
+use composable_maths::labs::numbers::{
+	FixedPointMath, TryFromBalance, TryFromUnsigned, TryIntoDecimal,
+};
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
 	time::{DurationSeconds, ONE_HOUR},
@@ -347,8 +349,8 @@ proptest! {
 			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
 
 			let new_market = TestPallet::get_market(&market_id).unwrap();
-			let delta = FixedI128::from_unsigned(vamm_twap).unwrap()
-				- FixedI128::from_unsigned(oracle_twap).unwrap();
+			let delta = FixedI128::try_from_unsigned(vamm_twap).unwrap()
+				- FixedI128::try_from_unsigned(oracle_twap).unwrap();
 			let update_weight: FixedI128 = (config.funding_frequency, config.funding_period).into();
 
 			assert_eq!(new_market.funding_rate_ts, old_market.funding_rate_ts + ONE_HOUR);
@@ -482,7 +484,7 @@ proptest! {
 
 			let market = TestPallet::get_market(&market_id).unwrap();
 			// Bob owes 5% of his position in funding
-			let bob_funding = FixedI128::from_balance(bob_position / 20).unwrap();
+			let bob_funding = FixedI128::try_from_balance(bob_position / 20).unwrap();
 			assert_eq!(
 				<TestPallet as Instruments>::unrealized_funding(
 					&market,
@@ -493,7 +495,7 @@ proptest! {
 			// Alice can't realize her PnL based on the index price, but she should be owed the same
 			// amount in funding payments. However, Bob's position + the Fee Pool cannot cover the
 			// whole amount, so she is paid less
-			let bob_and_fees = bob_funding + initial_fee_pool.into_decimal().unwrap();
+			let bob_and_fees = bob_funding + initial_fee_pool.try_into_decimal().unwrap();
 			let alice_funding = <TestPallet as Instruments>::unrealized_funding(
 				&market,
 				&get_position(&ALICE, &market_id)
@@ -503,7 +505,7 @@ proptest! {
 
 			// System is airtight: all transfers are accounted for and no funds are left without a
 			// destination
-			let fee_pool_decimal = get_market_fee_pool(&market_id).into_decimal().unwrap();
+			let fee_pool_decimal = get_market_fee_pool(&market_id).try_into_decimal().unwrap();
 			assert_eq!(alice_funding + fee_pool_decimal, bob_and_fees);
 		});
 	}

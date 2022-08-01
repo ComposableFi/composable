@@ -1,5 +1,5 @@
 use crate::{Config, Pallet, VammStateOf};
-use composable_maths::labs::numbers::IntoDecimal;
+use composable_maths::labs::numbers::TryIntoDecimal;
 use composable_traits::vamm::AssetType;
 use frame_support::pallet_prelude::*;
 use sp_runtime::{ArithmeticError, FixedPointNumber};
@@ -37,6 +37,6 @@ impl<T: Config> Pallet<T> {
 
 		let price = Self::u256_to_balance(price_u256)?;
 
-		Ok(price.into_decimal()?)
+		Ok(price.try_into_decimal()?)
 	}
 }
