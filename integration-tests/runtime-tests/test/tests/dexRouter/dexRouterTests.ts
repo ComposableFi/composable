@@ -47,7 +47,6 @@ describe("DexRouterPallet Tests", function () {
     usdt = 6;
     usdc = 7;
     dai = 9;
-    badAsset = 51;
     //sets the fee to 1.00%/Type Permill
     fee = 10000;
     baseWeight = 500000;
@@ -58,7 +57,7 @@ describe("DexRouterPallet Tests", function () {
     await mintAssetsToWallet(api, walletId2, sudoKey, [1, eth, usdc, usdt, dai]);
   });
 
-  before("Create pools", async function()  {
+  before("Creating pools", async function()  {
     poolId1 = await createConsProdPool(api, walletId1, walletId1, usdt, eth, fee, baseWeight);
     poolId2 = await createConsProdPool(api, walletId1, walletId1, usdt, usdc, fee, baseWeight);
     poolId3 = await createConsProdPool(api, walletId1, walletId1, usdc, dai, fee, baseWeight);
@@ -128,14 +127,14 @@ describe("DexRouterPallet Tests", function () {
     await sendAndWaitForSuccess(
         api,
         walletId2,
-        api.events.pablo.LiquidityAdded.is, // not sure if this is correct. Will know when tx succeed
+        api.events.pablo.LiquidityAdded.is, // verify
         api.tx.dexRouter.addLiquidity(assetPair, baseAmount, quoteAmount, minMintAmount, keepAlive)
     );
     //get final pool info
     const finalPool1Info = await getPoolInfo(api, "ConstantProduct", poolId1);   
     //Asertions
     expect(initialPool1Info.weights[0].gt(finalPool1Info.weights[0])).to.be.true;
-    expect(initialPool1Info.weights[1].lt(finalPool1Info.weights[1])).to.be.true;
+    expect(initialPool1Info.weights[1].gt(finalPool1Info.weights[1])).to.be.true;
   });
 
   it("Remove liquidity from the underlying pablo pool (USDT-USDC)", async function() {
@@ -154,14 +153,14 @@ describe("DexRouterPallet Tests", function () {
     await sendAndWaitForSuccess(
       api,
       walletId2,
-      api.events.pablo.LiquidityRemoved.is, // not sure if this is correct. Will know when tx succeed
+      api.events.pablo.LiquidityRemoved.is, // verify
       api.tx.dexRouter.removeLiquidity(assetPair, lpAmount, minBaseAmount, minQuoteAmount)
     );
     //get final pool info
     const finalPool1Info = await getPoolInfo(api, "ConstantProduct", poolId1);
     //Asertions
     expect(initialPool1Info.weights[0].lt(finalPool1Info.weights[0])).to.be.true;
-    expect(initialPool1Info.weights[1].gt(finalPool1Info.weights[1])).to.be.true;
+    expect(initialPool1Info.weights[1].lt(finalPool1Info.weights[1])).to.be.true;
   });
 
   it("Buy amount of quote asset (ETH) via route found in router", async function() {
@@ -186,7 +185,7 @@ describe("DexRouterPallet Tests", function () {
     await sendAndWaitForSuccess(
         api,
         walletId2,
-        api.events.pablo.Swapped.is, // not sure if this is correct. Will know when tx succeed
+        api.events.pablo.Swapped.is, // verify
         api.tx.dexRouter.buy(assetPair, amount, minReceive)
     )
     //get final data
