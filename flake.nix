@@ -391,6 +391,7 @@
       //
       {
         nixopsConfigurations = {
+          # instead of rerusive merge, just do simpler
           x86_64-linux.default = eachSystemOutputs.nixopsConfigurations.x86_64-linux.default; 
           default = eachSystemOutputs.nixopsConfigurations.x86_64-linux.default;
         };
