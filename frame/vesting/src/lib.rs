@@ -421,9 +421,7 @@ impl<T: Config> Pallet<T> {
 		vesting_schedule_id: Option<T::VestingScheduleId>,
 	) -> BalanceOf<T> {
 		<VestingSchedules<T>>::mutate_exists(who, asset, |maybe_schedules| {
-			let total = if let Some(schedules) = maybe_schedules.as_mut() {
-				let mut total: BalanceOf<T> = Zero::zero();
-
+			let total = if let Some(schedules) = maybe_schedules {
 				// TODO: update this inside the next `retain` loop
 				// update the claimed amount for each vesting schedule
 				for schedule in schedules.iter_mut() {
@@ -448,6 +446,8 @@ impl<T: Config> Pallet<T> {
 					};
 				}
 
+				let mut total: BalanceOf<T> = Zero::zero();
+
 				// remove the vesting schedules that have already been claimed
 				schedules.retain(|s| {
 					let locked_amount = s.locked_amount(
@@ -458,25 +458,21 @@ impl<T: Config> Pallet<T> {
 
 					total = total.saturating_add(total_amount).saturating_sub(s.already_claimed);
 
-					let retain = match vesting_schedule_id {
+					match vesting_schedule_id {
 						// if the schedule id is specified, we retain all vesting schedules, except
 						// the specified one in the case that it has some locked balance left
 						Some(id) => s.vesting_schedule_id != id || !locked_amount.is_zero(),
 						// otherwise, we retain all vesting schedules that have
 						// some locked balance left
 						None => !locked_amount.is_zero(),
-					};
-
-					retain
+					}
 				});
 
 				total
 			} else {
+				*maybe_schedules = None;
 				Zero::zero()
 			};
-			if total.is_zero() {
-				*maybe_schedules = None;
-			}
 			total
 		})
 	}
