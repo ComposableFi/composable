@@ -203,7 +203,7 @@ pub trait DeFiEngine {
 	/// The balance type of an account
 	type Balance: BalanceLike;
 	/// The user account identifier type for the runtime
-	type AccountId;
+	type AccountId: Eq + Clone;
 }
 
 /// take nothing

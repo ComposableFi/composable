@@ -8812,6 +8812,49 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-undercollateralized-loans"
+version = "0.0.1"
+dependencies = [
+ "composable-support",
+ "composable-tests-helpers",
+ "composable-traits",
+ "cumulus-pallet-xcm",
+ "frame-benchmarking",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "hex-literal",
+ "log 0.4.17",
+ "num-traits",
+ "once_cell",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets 0.0.1",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-dutch-auction",
+ "pallet-liquidations",
+ "pallet-oracle",
+ "pallet-timestamp",
+ "pallet-vault",
+ "parity-scale-codec",
+ "primitives",
+ "proptest",
+ "rand 0.7.3",
+ "scale-info",
+ "serde",
+ "smallvec 1.8.0",
+ "sp-application-crypto 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-arithmetic 5.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-core 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-io 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-keystore 0.12.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-runtime 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "xcm",
+]
+
+[[package]]
 name = "pallet-uniques"
 version = "4.0.0-dev"
 source = "git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e#8df0a39f51b672c773b306923f65f8dde74b850e"

@@ -52,6 +52,7 @@ pub mod oracle;
 pub mod privilege;
 pub mod staking;
 pub mod time;
+pub mod undercollateralized_loans;
 pub mod vault;
 pub mod vesting;
 pub mod xcm;
