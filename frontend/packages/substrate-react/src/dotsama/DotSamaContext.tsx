@@ -83,11 +83,6 @@ export const DotSamaContextProvider = ({
     selectDefaultAccount: boolean = true
   ): Promise<any[] | undefined> => {
     setExtensionStatus("connecting");
-    // setExtension((s) => {
-    //   console.log('extensionStatus', "connecting")
-    //   s.extensionStatus = "connecting";
-    //   return s;
-    // });
 
     let extensionExists = true;
     let inectedExtesions;
@@ -122,11 +117,10 @@ export const DotSamaContextProvider = ({
             address: x.address,
             name: x.meta.name ?? i.toFixed(),
           }));
-          return s;
+          return { ... s };
         });
 
         if (selectDefaultAccount) {
-          // setting default account
           setSelectedAccount(accounts.length ? 0 : -1);
         }
       } catch (e) {
@@ -141,17 +135,6 @@ export const DotSamaContextProvider = ({
   const deactivate = async (): Promise<void> => {
     setExtensionStatus("initializing");
     setSelectedAccount(-1);
-
-    // for (let i = 0; i < supportedParachains.length; i++) {
-    //   setParachainProviders((s) => {
-    //     const { chainId } = supportedParachains[i];
-    //     s[chainId].accounts = [];
-    //     return { ...s };
-    //   });
-
-      
-    //   return Promise.resolve();
-    // }
   };
 
 
