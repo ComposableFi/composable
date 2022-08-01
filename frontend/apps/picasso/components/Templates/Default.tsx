@@ -7,7 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 import Toolbar from "@mui/material/Toolbar";
 import { NavBar } from "../Molecules";
-import { alpha, Breadcrumbs, useTheme } from "@mui/material";
+import { alpha, Breadcrumbs, Typography, useTheme } from "@mui/material";
 import { useTablet } from "@/hooks/responsive";
 import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { MetamaskConnect } from "../Organisms/Wallet/MetamaskConnect";
@@ -40,7 +40,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
   };
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <CssBaseline />
       <AppBar
         position="fixed"
@@ -132,6 +132,18 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
       >
         <Toolbar />
         {children}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            height: theme.spacing(2),
+          }}
+        >
+          <Typography variant="caption">
+            v{process.env.NEXT_PUBLIC_WEBSITE_VERSION}
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );

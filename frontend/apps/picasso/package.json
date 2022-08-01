@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "prestart": "export NEXT_PUBLIC_WEBSITE_VERSION=$(date '+%Y%m%d%H%M')",
+    "predev": "export NEXT_PUBLIC_WEBSITE_VERSION=$(date '+%Y%m%d%H%M')",
+    "prebuild": "export NEXT_PUBLIC_WEBSITE_VERSION=$(date '+%Y%m%d%H%M')",
     "dev": "node_modules/.bin/next dev",
     "build": "node_modules/.bin/next build",
     "start": "node_modules/.bin/next start",
