@@ -75,10 +75,11 @@ pub mod pallet {
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
 			RedeemableAssets, RemoveLiquiditySimulationResult, RewardPoolType, StableSwapPoolInfo,
-			StakingRewardPool, MAX_REWARDS, REWARD_PERCENTAGE,
+			StakingRewardPool, MAX_REWARDS,
 		},
 		staking::{
-			lock::LockConfig, ManageStaking, ProtocolStaking, RewardConfig, RewardPoolConfiguration,
+			lock::LockConfig, ManageStaking, ProtocolStaking, RewardConfig,
+			RewardPoolConfiguration, RewardRate,
 		},
 		time::{ONE_MONTH, ONE_WEEK},
 	};
@@ -651,9 +652,16 @@ pub mod pallet {
 			DispatchError,
 		> {
 			let max_rewards: T::Balance = T::Convert::convert(MAX_REWARDS);
-			let reward_rate = Perbill::zero();
+			let reward_rate = RewardRate::per_second(T::Convert::convert(0));
 			let reward_configs = [
-				(pair.base, RewardConfig { asset_id: pair.base, max_rewards, reward_rate }),
+				(
+					pair.base,
+					RewardConfig {
+						asset_id: pair.base,
+						max_rewards,
+						reward_rate: reward_rate.clone(),
+					},
+				),
 				(pair.quote, RewardConfig { asset_id: pair.quote, max_rewards, reward_rate }),
 			]
 			.into_iter()
@@ -691,7 +699,9 @@ pub mod pallet {
 			DispatchError,
 		> {
 			let max_rewards: T::Balance = T::Convert::convert(MAX_REWARDS);
-			let reward_rate = Perbill::from_percent(REWARD_PERCENTAGE);
+			// let reward_rate = Perbill::from_percent(REWARD_PERCENTAGE); not sure how this
+			// translates to the new model
+			let reward_rate = RewardRate::per_second(T::Convert::convert(0));
 			let pblo_asset_id: T::AssetId = primitives::currency::CurrencyId::PBLO.0.into();
 			let reward_configs = [(
 				pblo_asset_id,
