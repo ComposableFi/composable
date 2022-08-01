@@ -3,9 +3,11 @@
 #[cfg(test)]
 use crate::Pallet as Vesting;
 use crate::{
-	AssetIdOf, BalanceOf, BlockNumberOf, Call, Config, Pallet, VestedTransfer, VestingScheduleOf,
+	AssetIdOf, BalanceOf, BlockNumberOf, Call, Config, Pallet, VestedTransfer,
+	VestingScheduleCount, VestingScheduleOf, Zero,
 };
 use codec::Decode;
+use composable_support::abstractions::utils::increment::Increment;
 use composable_traits::vesting::{VestingSchedule, VestingWindow::BlockNumberBased};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
 use frame_support::traits::{fungibles::Mutate, Get};
@@ -47,18 +49,17 @@ fn vesting_schedule<T>(
 	period: BlockNumberOf<T>,
 	period_count: u32,
 	per_period: BalanceOf<T>,
-	vesting_schedule_id: u128,
 ) -> VestingScheduleOf<T>
 where
 	T: Config,
 	BalanceOf<T>: From<u64>,
 {
 	VestingSchedule {
-		vesting_schedule_id,
+		vesting_schedule_id: VestingScheduleCount::<T>::increment().unwrap(),
 		window: BlockNumberBased { start, period },
 		period_count,
 		per_period,
-		already_claimed: BalanceOf::<T>::zero(),
+		already_claimed: Zero::zero(),
 	}
 }
 
@@ -87,14 +88,13 @@ benchmarks! {
 			PERIOD.into(),
 			PERIOD_COUNT,
 			per_period.into(),
-			VestingScheduleCount::<T>::get().increment()?
 		);
 		for i in 0 .. s {
 			let source = create_account::<T>("source", i);
 			fund_account::<T>(&source, asset_id.clone(), FUNDING.into());
 			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &source, &caller, schedule.clone()).unwrap();
 		}
-	}: _(RawOrigin::Signed(caller), asset_id)
+	}: _(RawOrigin::Signed(caller), asset_id, None)
 
 	vested_transfer {
 		let asset_id = asset::<T>();
@@ -106,7 +106,7 @@ benchmarks! {
 			START_BLOCK_NUMBER.into(),
 			PERIOD.into(),
 			PERIOD_COUNT,
-			per_period.into()
+			per_period.into(),
 		);
 	}: _(RawOrigin::Root, T::Lookup::unlookup(from), dest, asset_id, schedule)
 
@@ -124,7 +124,7 @@ benchmarks! {
 				START_BLOCK_NUMBER.into(),
 				PERIOD.into(),
 				PERIOD_COUNT,
-				per_period.into()
+				per_period.into(),
 			));
 		}
 	}: _(RawOrigin::Root, dest_look_up, asset_id, schedules)
@@ -138,7 +138,7 @@ benchmarks! {
 			START_BLOCK_NUMBER.into(),
 			PERIOD.into(),
 			PERIOD_COUNT,
-			per_period.into()
+			per_period.into(),
 		);
 		let dest = create_account::<T>("dest", 1);
 		let dest_look_up = T::Lookup::unlookup(dest.clone());
@@ -146,7 +146,7 @@ benchmarks! {
 			fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
 			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &caller, &dest, schedule.clone()).unwrap();
 		}
-	}: _(RawOrigin::Signed(caller), dest_look_up, asset_id)
+	}: _(RawOrigin::Signed(caller), dest_look_up, asset_id, None)
 }
 
 impl_benchmark_test_suite!(Vesting, crate::mock::ExtBuilder::build(), crate::mock::Runtime);
