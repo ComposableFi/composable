@@ -194,23 +194,24 @@
           });
           
           composable-node = with packages;
-            crane-stable.buildPackage (common-args // {
+            crane-nightly.buildPackage (common-args // {
               pnameSuffix = "-node";
               cargoArtifacts = common-deps;
-              outputs = [ "bin" "out" "doc" ];
+              #outputs = [ "bin" "out" "doc" ];
               cargoBuildCommand = ''
-                cargo build --release -p composable --features builtin-wasm
+                cargo build --release -p composable-support
+                # cargo build --release -p composable --features builtin-wasm
                 cargo doc --release
                 '';
-              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-              COMPOSABLE_RUNTIME =
-                "${composable-runtime}/lib/runtime.optimized.wasm";
+              # DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+              # PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+              # COMPOSABLE_RUNTIME =
+              #   "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
                 mkdir -p $out/doc
-                cp target/release/composable $out/bin/composable
-                cp target/doc/* $out/doc
+                cp -r target/release/* $out/bin/
+                cp -r target/doc/* $out/doc
               '';
             });
 
