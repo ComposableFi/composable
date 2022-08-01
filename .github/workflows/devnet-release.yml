@@ -9,11 +9,12 @@ on:
 
 jobs:
   deploy-devnet:
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
+    # issue with checkout, so not using hosted runner
+    runs-on: ubuntu-latest
+      # - self-hosted
+      # - linux
+      # - x64
+      # - sre
     concurrency:
       group: deploy-devnet
       cancel-in-progress: false
