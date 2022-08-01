@@ -385,11 +385,11 @@
           type = "app";
           program = "${packages.devnet}/bin/composable-devnet";
         };
-        
       });
     in
+      eachSystemOutputs
+      //
       {
         nixopsConfigurations.default = eachSystemOutputs.nixopsConfigurations.x86_64-linux.default;
-      }
-      // eachSystemOutputs;
+      };
 }
