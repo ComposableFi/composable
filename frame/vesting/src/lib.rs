@@ -358,6 +358,7 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 	type Balance = BalanceOf<T>;
 	type MinVestedTransfer = T::MinVestedTransfer;
 	type VestingScheduleId = T::VestingScheduleId;
+	type VestingScheduleCount = VestingScheduleCount<T>;
 
 	#[transactional]
 	fn vested_transfer(

@@ -117,7 +117,7 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_vesting::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -173,6 +173,8 @@ pub mod pallet {
 
 		/// Weights
 		type WeightInfo: WeightInfo;
+
+		// type VestingScheduleCountOf<T> = <T as pallet_vesting::Config>::VestingScheduleCount;
 	}
 
 	#[pallet::pallet]
@@ -209,7 +211,7 @@ pub mod pallet {
 		/// parameter.
 		///
 		/// Emits a `NewOffer`.
-		#[pallet::weight(T::WeightInfo::offer())]
+		#[pallet::weight(<T as Config>::WeightInfo::offer())]
 		pub fn offer(
 			origin: OriginFor<T>,
 			offer: Validated<
@@ -237,7 +239,7 @@ pub mod pallet {
 		///
 		/// Emits a `NewBond`.
 		/// Possibily Emits a `OfferCompleted`.
-		#[pallet::weight(T::WeightInfo::bond())]
+		#[pallet::weight(<T as Config>::WeightInfo::bond())]
 		pub fn bond(
 			origin: OriginFor<T>,
 			offer_id: T::BondOfferId,
@@ -257,7 +259,7 @@ pub mod pallet {
 		/// The dispatch origin for this call must be _Signed_ and the sender must be `AdminOrigin`
 		///
 		/// Emits a `OfferCancelled`.
-		#[pallet::weight(T::WeightInfo::cancel())]
+		#[pallet::weight(<T as Config>::WeightInfo::cancel())]
 		#[transactional]
 		pub fn cancel(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {
 			let (issuer, offer) = Self::get_offer(offer_id)?;
@@ -274,7 +276,7 @@ pub mod pallet {
 			let offer_account = Self::account_id(offer_id);
 			// NOTE(hussein-aitlahcen): no need to keep the offer account alive
 			T::NativeCurrency::transfer(&offer_account, &issuer, T::Stake::get(), false)?;
-			T::Currency::transfer(
+			<T as Config>::Currency::transfer(
 				offer.reward.asset,
 				&offer_account,
 				&issuer,
@@ -304,7 +306,7 @@ pub mod pallet {
 			let beneficiary = offer.beneficiary.clone();
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
-			T::Currency::transfer(
+			<T as Config>::Currency::transfer(
 				offer.reward.asset,
 				from,
 				&offer_account,
@@ -348,7 +350,7 @@ pub mod pallet {
 							.map_err(|_| ArithmeticError::Overflow)?,
 						);
 						let offer_account = Self::account_id(offer_id);
-						T::Currency::transfer(
+						<T as Config>::Currency::transfer(
 							offer.asset,
 							from,
 							&offer.beneficiary,
@@ -356,7 +358,8 @@ pub mod pallet {
 							keep_alive,
 						)?;
 						let current_block = frame_system::Pallet::<T>::current_block_number();
-						let vesting_schedule_id = VestingScheduleCount::<T>::increment()?;
+						let vesting_schedule_id =
+							<T as pallet_vesting::Config>::VestingScheduleCount::increment()?;
 						// Schedule the vesting of the reward.
 						T::Vesting::vested_transfer(
 							offer.reward.asset,
@@ -373,7 +376,8 @@ pub mod pallet {
 								already_claimed: BalanceOf::<T>::zero(),
 							},
 						)?;
-						let vesting_schedule_id = VestingScheduleCount::<T>::increment()?;
+						let vesting_schedule_id =
+							<T as pallet_vesting::Config>::VestingScheduleCount::increment()?;
 						match offer.maturity {
 							BondDuration::Finite { return_in } => {
 								// Schedule the return of the bonded amount
