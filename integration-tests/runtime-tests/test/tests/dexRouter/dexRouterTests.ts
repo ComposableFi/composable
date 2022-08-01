@@ -5,7 +5,7 @@ import { getDevWallets } from "@composable/utils/walletHelper";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { expect } from "chai";
-import { createConsProdPool, getPoolInfo } from "../dexRouter/testHandlers/dexRouterHelper";
+import { createConsProdPool, getPoolBalance, getPoolInfo } from "../dexRouter/testHandlers/dexRouterHelper";
 import BN from "bn.js";
 
 // DEX router pallet integration test
@@ -17,20 +17,12 @@ import BN from "bn.js";
 //  - buy
 //  - exchange
 //  - sell
-// Tests:
-//  - Create route for pablo pool
-//  - Add liquidity to underlying pablo pool
-//  - Remove liquidity from the underlying pablo pool
-//  - Buy amount of quote asset via route found in router
-//  - *Exchange amount of quote asset via route found in router
-//  - *Sell amount of quote asset via route found in router
 
 
 
 describe("DexRouterPallet Tests", function () {
   let api: ApiPromise;
   let eth: number, usdt: number, usdc: number, dai: number;
-  let badAsset: number;
   let walletId1: KeyringPair, walletId2: KeyringPair, sudoKey: KeyringPair;
   let fee: number, baseWeight: number;
   let poolId1: number, poolId2: number, poolId3: number;
@@ -59,8 +51,8 @@ describe("DexRouterPallet Tests", function () {
 
   before("Creating pools", async function()  {
     poolId1 = await createConsProdPool(api, walletId1, walletId1, usdt, eth, fee, baseWeight);
-    poolId2 = await createConsProdPool(api, walletId1, walletId1, usdt, usdc, fee, baseWeight);
-    poolId3 = await createConsProdPool(api, walletId1, walletId1, usdc, dai, fee, baseWeight);
+    poolId2 = await createConsProdPool(api, walletId1, walletId1, usdc, usdt, fee, baseWeight);
+    poolId3 = await createConsProdPool(api, walletId1, walletId1, dai, usdc, fee, baseWeight);
   });
 
   after("Closing the connection", async function () {
@@ -70,12 +62,12 @@ describe("DexRouterPallet Tests", function () {
   it("Create route for pablo pools", async function() {
     this.timeout(5 * 60 * 1000);
 
-    // Link (USDT-ETH) <-> (USDT-USDC)
+    // create route for pool 1 (USDT-ETH)
     const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
-      base: eth,
-      quote: usdc
+      base: usdt,
+      quote: eth
     });
-    const route = api.createType("Vec<u128>", [api.createType("u128", poolId1), api.createType("u128", poolId2)]);
+    const route = api.createType("Vec<u128>", [api.createType("u128", poolId1)]);
     await sendAndWaitForSuccess(
       api,
       sudoKey,
@@ -83,104 +75,161 @@ describe("DexRouterPallet Tests", function () {
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair, route))
     ); 
 
-    // Link (USDT-USDC) <-> (USDC-DAI)
+    // create route for pool 2 (USDC-USDT)
     const assetPair2 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
-      base: usdt,
-      quote: dai
+      base: usdc,
+      quote: usdt
     });
-    const route2 = api.createType("Vec<u128>", [api.createType("u128", poolId2), api.createType("u128", poolId3)]);
+    const route2 = api.createType("Vec<u128>", [api.createType("u128", poolId2)]);
     await sendAndWaitForSuccess(
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair2, route2))
     ); 
-
-    // Link (USDT-ETH) <-> (USDC-DAI)
+    
+    // create route for pool 3 (DAI-USDC)
     const assetPair3 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
-      base: eth,
-      quote: dai
+      base: dai,
+      quote: usdc
     });
-    const route3 = api.createType("Vec<u128>", [api.createType("u128", poolId1), api.createType("u128", poolId3)]);
+    const route3 = api.createType("Vec<u128>", [api.createType("u128", poolId3)]);
     await sendAndWaitForSuccess(
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair3, route3))
     ); 
-  });
 
-  it("Add liquidity to underlying pablo pool (USDT-USDC)", async function() {
-    this.timeout(5 * 60 * 1000);
-    //get initial pool info
-    const initialPool1Info = await getPoolInfo(api, "ConstantProduct", poolId1);
-    //set tx parameters
-    const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
-        base: usdt,
-        quote: usdc
+    // create route for USDC-ETH pair (pool 1 <--> pool 2)
+    const assetPair4 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
+      base: usdc,
+      quote: eth
     });
-    const baseAmount = api.createType("u128", 10000);
-    const quoteAmount = api.createType("u128", 10000);
-    const minMintAmount = api.createType("u128", 1000);
-    const keepAlive = api.createType("bool", false);
-    //extrinsic call
-    await sendAndWaitForSuccess(
-        api,
-        walletId2,
-        api.events.pablo.LiquidityAdded.is, // verify
-        api.tx.dexRouter.addLiquidity(assetPair, baseAmount, quoteAmount, minMintAmount, keepAlive)
-    );
-    //get final pool info
-    const finalPool1Info = await getPoolInfo(api, "ConstantProduct", poolId1);   
-    //Asertions
-    expect(initialPool1Info.weights[0].gt(finalPool1Info.weights[0])).to.be.true;
-    expect(initialPool1Info.weights[1].gt(finalPool1Info.weights[1])).to.be.true;
-  });
-
-  it("Remove liquidity from the underlying pablo pool (USDT-USDC)", async function() {
-    this.timeout(5 * 60 * 1000);
-    //get initial pool info
-    const initialPool1Info = await getPoolInfo(api, "ConstantProduct", poolId1);
-    //set tx parameters
-    const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
-        base: usdt,
-        quote: usdc
-    });
-    const lpAmount = api.createType("u128", 100000);
-    const minBaseAmount = api.createType("u128", 10000);
-    const minQuoteAmount = api.createType("u128", 10000);
-    //extrinsic call
+    const route4 = api.createType("Vec<u128>", [api.createType("u128", poolId1), api.createType("u128", poolId2)]);
     await sendAndWaitForSuccess(
       api,
-      walletId2,
-      api.events.pablo.LiquidityRemoved.is, // verify
-      api.tx.dexRouter.removeLiquidity(assetPair, lpAmount, minBaseAmount, minQuoteAmount)
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair4, route4))
     );
-    //get final pool info
-    const finalPool1Info = await getPoolInfo(api, "ConstantProduct", poolId1);
-    //Asertions
-    expect(initialPool1Info.weights[0].lt(finalPool1Info.weights[0])).to.be.true;
-    expect(initialPool1Info.weights[1].lt(finalPool1Info.weights[1])).to.be.true;
+    
+    // create route for DAI-ETH pair (pool 2 <--> pool3)
+    const assetPair5 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
+      base: dai,
+      quote: usdt
+    });
+    const route5 = api.createType("Vec<u128>", [api.createType("u128", poolId2), api.createType("u128", poolId3)]);
+    await sendAndWaitForSuccess(
+      api,
+      sudoKey,
+      api.events.sudo.Sudid.is,
+      api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair5, route5))
+    );
+        
+
   });
 
-  it("Buy amount of quote asset (ETH) via route found in router", async function() {
+  it("Add liquidity to pablo pool (USDT-ETH)", async function() {
     this.timeout(5 * 60 * 1000);
-    //get initial data
-    const initialPool1Info = await getPoolInfo(api, "ConstantProduct", poolId1);
-    const initialPool2Info = await getPoolInfo(api, "ConstantProduct", poolId2);
-    const initialETHbalance = new BN(
-      (await api.rpc.assets.balanceOf('5', walletId2.publicKey)).toString()
-    )
-    const initialUSDCbalance = new BN(
-      (await api.rpc.assets.balanceOf('7', walletId2.publicKey)).toString()
-    )
+    const USDTAmount = 1000000000000000;
+    const ETHAmount = 1000000000000000;
+    const minimumMint = 0;
+    //set tx parameters
+    const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
+        base: usdt,
+        quote: eth
+    });
+    const baseAmount = api.createType("u128", USDTAmount);
+    const quoteAmount = api.createType("u128", ETHAmount);
+    const minMintAmount = api.createType("u128", minimumMint);
+    const keepAlive = api.createType("bool", false);
+    //extrinsic call
+    const { data: [sender, poolid, baseAmountInTransfer, quoteAmountIntransfer, mintedLp] } = await sendAndWaitForSuccess(
+        api,
+        walletId2,
+        api.events.pablo.LiquidityAdded.is,
+        api.tx.dexRouter.addLiquidity(assetPair, baseAmount, quoteAmount, minMintAmount, keepAlive)
+    );
+    //Asertions
+    expect(baseAmountInTransfer.toString()).to.be.equal(baseAmount.toString());
+    expect(quoteAmountIntransfer.toString()).to.be.equal(quoteAmount.toString());
+    expect((new BN(mintedLp)).gt(new BN(minimumMint))).to.be.true;
+
+  });
+
+  it("Add liquidity to pablo pool (USDC-USDT)", async function() {
+    this.timeout(5 * 60 * 1000);
+    const USDCAmount = 1000000000000000;
+    const USDTAmount = 1000000000000000;
+    const minimumMint = 0;
     //set tx parameters
     const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
         base: usdc,
-        quote: eth
+        quote: usdt
     });
-    const amount = api.createType("u128", 100000);
-    const minReceive = api.createType("u128", 9000);
+    const baseAmount = api.createType("u128", USDCAmount);
+    const quoteAmount = api.createType("u128", USDTAmount);
+    const minMintAmount = api.createType("u128", minimumMint);
+    const keepAlive = api.createType("bool", false);
+    //extrinsic call
+    const { data: [poolAddress, poolid, baseAmountInTransfer, quoteAmountIntransfer, mintedLp] } = await sendAndWaitForSuccess(
+        api,
+        walletId2,
+        api.events.pablo.LiquidityAdded.is,
+        api.tx.dexRouter.addLiquidity(assetPair, baseAmount, quoteAmount, minMintAmount, keepAlive)
+    );
+    //Asertions
+    expect(baseAmountInTransfer.toString()).to.be.equal(baseAmount.toString());
+    expect(quoteAmountIntransfer.toString()).to.be.equal(quoteAmount.toString());
+    expect((new BN(mintedLp)).gt(new BN(minimumMint))).to.be.true;
+
+  });
+
+  it("Remove liquidity from pablo pool (USDC-USDT)", async function() {
+    this.timeout(5 * 60 * 1000);
+    const assetAmount = 10000000000000;
+    const minUSDCAmount = 1000000000000;
+    const minUSDTAmount = 1000000000000;
+    //set tx parameters
+    const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
+        base: usdc,
+        quote: usdt
+    });
+    const lpAmount = api.createType("u128", assetAmount);
+    const minBaseAmount = api.createType("u128", minUSDCAmount);
+    const minQuoteAmount = api.createType("u128", minUSDTAmount);
+    //extrinsic call
+    const { data: [poolAddress, poolId, baseAmountInTransfer, quoteAmountIntransfer, totalIssuance]} = await sendAndWaitForSuccess(
+      api,
+      walletId2,
+      api.events.pablo.LiquidityRemoved.is,
+      api.tx.dexRouter.removeLiquidity(assetPair, lpAmount, minBaseAmount, minQuoteAmount)
+    );
+    //Asertions
+    expect(new BN(baseAmountInTransfer.toString()).gt(new BN(minUSDCAmount.toString()))).to.be.true;
+    expect(new BN(quoteAmountIntransfer.toString()).gt(new BN(minUSDCAmount.toString()))).to.be.true;
+
+  });
+
+  it("Buy ETH via route found in router (1 hop)", async function() {
+    this.timeout(5 * 60 * 1000);
+    //get initial data
+    const initialETHbalance = new BN(
+      (await api.rpc.assets.balanceOf(eth.toString(), walletId2.publicKey)).toString()
+    )
+    const initialUSDCbalance = new BN(
+      (await api.rpc.assets.balanceOf(usdc.toString(), walletId2.publicKey)).toString()
+    )
+
+    //set tx parameters
+    const ETHAmount = 1000000000000
+    const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
+        base: eth,
+        quote: usdc
+    });
+    const amount = api.createType("u128", ETHAmount);
+    const minReceive = api.createType("u128", 0);
     //extrinsic call
     await sendAndWaitForSuccess(
         api,
@@ -189,29 +238,90 @@ describe("DexRouterPallet Tests", function () {
         api.tx.dexRouter.buy(assetPair, amount, minReceive)
     )
     //get final data
-    const finalPool1Info = await getPoolInfo(api, "ConstantProduct", poolId1);
-    const finalPool2Info = await getPoolInfo(api, "ConstantProduct", poolId2);
     const finalETHbalance = new BN(
-      (await api.rpc.assets.balanceOf('5', walletId2.publicKey)).toString()
+      (await api.rpc.assets.balanceOf(eth.toString(), walletId2.publicKey)).toString()
     )
     const finalUSDCbalance = new BN(
-      (await api.rpc.assets.balanceOf('7', walletId2.publicKey)).toString()
+      (await api.rpc.assets.balanceOf(usdc.toString(), walletId2.publicKey)).toString()
     )
-    //compare balances on wallet and pool
-    expect(initialPool1Info.weights[0].gt(finalPool1Info.weights[0])).to.be.true;
-    expect(initialPool2Info.weights[0].gt(finalPool2Info.weights[0])).to.be.true;
+    //Assertions
     expect(initialETHbalance.lt(finalETHbalance)).to.be.true;
     expect(initialUSDCbalance.gt(finalUSDCbalance)).to.be.true;
   });
 
-  it("Exchange amount of quote asset via route found in router", async function() {
+  it("Exchange ETH for USDC via route found in router (1 hop)", async function() {
     this.timeout(5 * 60 * 1000);
+    //get initial data
+    const initialETHbalance = new BN(
+      (await api.rpc.assets.balanceOf(eth.toString(), walletId2.publicKey)).toString()
+    )
+    const initialUSDCbalance = new BN(
+      (await api.rpc.assets.balanceOf(usdc.toString(), walletId2.publicKey)).toString()
+    )
 
+    //set tx parameters
+    const ETHAmount = 1000;
+    const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
+        base: eth,
+        quote: usdc
+    });
+    const amount = api.createType("u128", ETHAmount);
+    const minReceive = api.createType("u128", 0);
+    //extrinsic call
+    await sendAndWaitForSuccess(
+        api,
+        walletId2,
+        api.events.pablo.Swapped.is, // verify
+        api.tx.dexRouter.exchange(assetPair, amount, minReceive)
+    )
+    //get final data
+    const finalETHbalance = new BN(
+      (await api.rpc.assets.balanceOf(eth.toString(), walletId2.publicKey)).toString()
+    )
+    const finalUSDCbalance = new BN(
+      (await api.rpc.assets.balanceOf(usdc.toString(), walletId2.publicKey)).toString()
+    )
+    //Assertions
+    expect(initialETHbalance.lt(finalETHbalance)).to.be.true;
+    expect(initialUSDCbalance.gt(finalUSDCbalance)).to.be.true;
   });
 
-  it("Sell amount of quote asset via route found in router", async function() {
+  it("Sell ETH via route found in router (1 hop)", async function() {
     this.timeout(5 * 60 * 1000);
+    this.timeout(5 * 60 * 1000);
+    //get initial data
+    const initialETHbalance = new BN(
+      (await api.rpc.assets.balanceOf(eth.toString(), walletId2.publicKey)).toString()
+    )
+    const initialUSDCbalance = new BN(
+      (await api.rpc.assets.balanceOf(usdc.toString(), walletId2.publicKey)).toString()
+    )
 
+    //set tx parameters
+    const ETHAmount = 1000;
+    const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
+        base: usdc,
+        quote: eth
+    });
+    const amount = api.createType("u128", ETHAmount);
+    const minReceive = api.createType("u128", 0);
+    //extrinsic call
+    await sendAndWaitForSuccess(
+        api,
+        walletId2,
+        api.events.pablo.Swapped.is, // verify
+        api.tx.dexRouter.sell(assetPair, amount, minReceive)
+    )
+    //get final data
+    const finalETHbalance = new BN(
+      (await api.rpc.assets.balanceOf(eth.toString(), walletId2.publicKey)).toString()
+    )
+    const finalUSDCbalance = new BN(
+      (await api.rpc.assets.balanceOf(usdc.toString(), walletId2.publicKey)).toString()
+    )
+    //Assertions
+    expect(initialETHbalance.gt(finalETHbalance)).to.be.true;
+    expect(initialUSDCbalance.lt(finalUSDCbalance)).to.be.true;
   });
 
 });

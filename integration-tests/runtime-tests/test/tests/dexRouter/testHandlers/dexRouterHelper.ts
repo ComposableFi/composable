@@ -49,7 +49,7 @@ export async function createConsProdPool(
     }
   });
   const {
-    data: [resultPoolId, accountMaybe]
+    data: [resultPoolId, resultPoolAddress]
   } = await sendAndWaitForSuccess(api, walletId, api.events.pablo.PoolCreated.is, api.tx.pablo.create(pool));
   return resultPoolId.toNumber();
 }
