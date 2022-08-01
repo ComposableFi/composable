@@ -136,7 +136,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
           }}
         >
           <Typography variant="caption">
-            v{process.env.NEXT_PUBLIC_WEBSITE_VERSION}
+            {process.env.WEBSITE_VERSION}
           </Typography>
         </Box>
       </Box>
