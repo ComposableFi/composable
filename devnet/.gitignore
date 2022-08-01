@@ -1,4 +1,4 @@
 *.log
-ops.json
+#ops.json
 deployment.nixops
 deployment.nixops.bak
