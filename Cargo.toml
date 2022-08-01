@@ -7,6 +7,12 @@ authors = ["Composable developers"]
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
+[workspace]
+members = [
+    "beefy-queries",
+    "primitives"
+]
+
 [build-dependencies]
 subxt-codegen = "0.22.0"
 jsonrpsee = { version = "0.15.0", features = ["async-client", "client-ws-transport", "http-client"] }
@@ -32,15 +38,6 @@ rs_merkle = { version = "1.2.0", default-features = false }
 mmr-lib= { package = "ckb-merkle-mountain-range", version = "0.3.2", default-features = false }
 derive_more = { version = "0.99.17", default-features = false, features = ["from"]  }
 beefy-client-primitives = { package = "primitives", path = "./primitives", default-features = false }
-# Optional deps
-subxt = { version = "0.22.0", optional = true }
-tokio = { version = "1.17.0", features = ["full"], optional = true }
-hex-literal = { version = "0.3.4", optional = true }
-serde_json = { version = "1.0.74", optional = true }
-pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", optional = true }
-hex = { version = "0.4.3", optional = true }
 
 [dev-dependencies]
 tokio = { version = "1.17.0", features = ["full"] }
@@ -70,10 +67,4 @@ std = [
     "mmr-lib/std",
     "frame-support/std",
     "beefy-client-primitives/std",
-]
-
-[workspace]
-members = [
-    "beefy-queries",
-    "primitives"
 ]
