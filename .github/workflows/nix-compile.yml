@@ -228,7 +228,8 @@ jobs:
       - name: Build & Push
         run: |
           nix build .#composable-node --no-update-lock-file
-          tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz result/bin/composable result/doc
+          tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz result/bin/composable 
+          #result/doc
           gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
 
       - name: Load state
