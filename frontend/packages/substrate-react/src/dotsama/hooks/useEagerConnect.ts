@@ -10,17 +10,17 @@ import { useDotSamaContext } from "./useDotSamaContext";
  * app
  */
 export const useEagerConnect = (chainId: ParachainId): boolean => {
-  const { activate, setSelectedAccount } = useDotSamaContext();
+  const { activate, setSelectedAccount, extensionStatus } = useDotSamaContext();
   const { parachainApi, accounts } = useParachainApi(chainId);
   const [hasTriedEagerConnect, setHasTriedEagerConnect] =
     useState<boolean>(false);
   const selectedAccount = useSelectedAccount(chainId);
 
   useEffect(() => {
-    if (parachainApi !== undefined && activate !== undefined) {
+    if (parachainApi !== undefined && activate !== undefined && !hasTriedEagerConnect && extensionStatus === "initializing") {
       activate(false);
     }
-  }, [activate, parachainApi]);
+  }, [activate, parachainApi, hasTriedEagerConnect, extensionStatus]);
 
   useEffect(() => {
     if (selectedAccount) {
@@ -33,7 +33,8 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
       accounts.length > 0 &&
       !hasTriedEagerConnect &&
       parachainApi !== undefined &&
-      setSelectedAccount
+      setSelectedAccount && 
+      extensionStatus === 'connected'
     ) {
       const storedAccount = localStorage.getItem("selectedAccount");
       const accountIndex = accounts.findIndex(
@@ -45,7 +46,7 @@ export const useEagerConnect = (chainId: ParachainId): boolean => {
       }
       setHasTriedEagerConnect(true);
     }
-  }, [hasTriedEagerConnect, parachainApi, accounts, setSelectedAccount]);
+  }, [hasTriedEagerConnect, parachainApi, accounts, setSelectedAccount, extensionStatus]);
 
   return hasTriedEagerConnect;
 };

@@ -77,13 +77,17 @@ export const DotSamaContextProvider = ({
     [chainId in RelayChainId]: RelaychainApi;
   }>(RELAYCHAIN_PROVIDERS_DEFAULT);
 
+  const [extensionStatus, setExtensionStatus] = useState<DotSamaExtensionStatus>('initializing');
+
   const activate = async (
     selectDefaultAccount: boolean = true
   ): Promise<any[] | undefined> => {
-    setExtension((s) => {
-      s.extensionStatus = "connecting";
-      return s;
-    });
+    setExtensionStatus("connecting");
+    // setExtension((s) => {
+    //   console.log('extensionStatus', "connecting")
+    //   s.extensionStatus = "connecting";
+    //   return s;
+    // });
 
     let extensionExists = true;
     let inectedExtesions;
@@ -97,17 +101,11 @@ export const DotSamaContextProvider = ({
     }
 
     if (!extensionExists) {
-      setExtension((s) => {
-        s.extensionStatus = "no_extension";
-        return s;
-      });
+      setExtensionStatus('no_extension');
       return inectedExtesions;
     }
 
-    setExtension((s) => {
-      s.extensionStatus = "connected";
-      return s;
-    });
+    setExtensionStatus('connected');
 
     for (let i = 0; i < supportedParachains.length; i++) {
       const { chainId } = supportedParachains[i];
@@ -141,33 +139,21 @@ export const DotSamaContextProvider = ({
   };
 
   const deactivate = async (): Promise<void> => {
-    setExtension((s) => {
-      s.extensionStatus = "initializing";
-      return s;
-    });
+    setExtensionStatus("initializing");
+    setSelectedAccount(-1);
 
-    for (let i = 0; i < supportedParachains.length; i++) {
-      setParachainProviders((s) => {
-        const { chainId } = supportedParachains[i];
-        s[chainId].accounts = [];
-        return { ...s };
-      });
+    // for (let i = 0; i < supportedParachains.length; i++) {
+    //   setParachainProviders((s) => {
+    //     const { chainId } = supportedParachains[i];
+    //     s[chainId].accounts = [];
+    //     return { ...s };
+    //   });
 
-      setSelectedAccount(-1);
-
-      return Promise.resolve();
-    }
+      
+    //   return Promise.resolve();
+    // }
   };
 
-  const [extension, setExtension] = useState<{
-    extensionStatus: DotSamaExtensionStatus;
-    activate: () => Promise<any[] | undefined>;
-    deactivate: () => Promise<void>;
-  }>({
-    extensionStatus: "initializing",
-    activate,
-    deactivate,
-  });
 
   useEffect(() => {
     for (let i = 0; i < supportedParachains.length; i++) {
@@ -186,7 +172,9 @@ export const DotSamaContextProvider = ({
         parachainProviders,
         setSelectedAccount,
         selectedAccount,
-        ...extension,
+        activate,
+        deactivate,
+        extensionStatus,
       }}
     >
       {children}
