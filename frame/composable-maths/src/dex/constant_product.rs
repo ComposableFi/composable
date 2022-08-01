@@ -210,6 +210,10 @@ where
 /// - `weight` the weight of asset;
 /// - `lp_amount` the amount redeemed LP tokens;
 /// - `lp_supply` the total LP already issued to other LP providers.
+///
+/// FIXME(saruman9): What should we do when a pool does not have sufficient liquidity? If we use
+/// this formula, then we get an entire amount from a pool, but this may not be enough without a
+/// second asset.
 #[inline(always)]
 pub fn compute_asset_for_redeemable_lp_tokens<T: PerThing>(
 	balance: u128,

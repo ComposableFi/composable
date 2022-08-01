@@ -219,6 +219,20 @@ fn test_redeemable_assets() {
 
 		assert_ok!(default_acceptable_computation_error(base_amount, initial_btc));
 		assert_ok!(default_acceptable_computation_error(quote_amount, initial_usdt));
+
+		// For a single asset, this will not work correctly, because we don't have enough liquidity
+		// in the pool
+		let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_lp_tokens(
+			pool_id,
+			lp,
+			BTreeMap::from([(BTC, initial_btc), (USDT, 0_u128)]),
+			true,
+		)
+		.expect("redeemable_assets_for_lp_tokens failed");
+		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
+		let quote_amount = *redeemable_assets.assets.get(&USDT).expect("Invalid asset");
+		assert_ok!(default_acceptable_computation_error(base_amount, initial_btc));
+		assert_ok!(default_acceptable_computation_error(quote_amount, 0_u128));
 	});
 }
 
@@ -271,8 +285,7 @@ fn test_add_liquidity_with_disproportionate_amount() {
 		assert_ok!(Tokens::mint_into(USDC, &ALICE, base_amount));
 		assert_ok!(Tokens::mint_into(USDT, &ALICE, quote_amount));
 
-		// Add the liquidity, user tries to provide more quote_amount compare to
-        // pool's ratio
+		// Add the liquidity, user tries to provide more quote_amount compare to pool's ratio
 		assert_ok!(<Pablo as Amm>::add_liquidity(
 			&ALICE,
 			pool,
@@ -281,14 +294,16 @@ fn test_add_liquidity_with_disproportionate_amount() {
 			0,
 			false
 		));
-	assert_last_event::<Test, _>(|e| {
-		matches!(e.event,
-            mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, base_amount, quote_amount, .. })
-            if who == ALICE
-            && pool_id == pool
-            && base_amount == 30_u128 * unit
-            && quote_amount == 30_u128 * unit)
-	});
+		assert_last_event::<Test, _>(|e| {
+			matches!(e.event,
+				mock::Event::Pablo(crate::Event::LiquidityAdded {
+					who, pool_id, base_amount, quote_amount, ..
+				})
+				if who == ALICE
+				&& pool_id == pool
+				&& base_amount == 30_u128 * unit
+				&& quote_amount == 30_u128 * unit)
+		});
 	});
 }
 
@@ -382,7 +397,50 @@ fn add_liquidity_single_asset() {
 	})
 }
 
-//
+#[test]
+fn remove_liquidity_single_asset() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_btc = 100_u128 * unit;
+		let btc_price = 20_000_u128;
+		let initial_usdt = initial_btc * btc_price;
+		let pool_id =
+			create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
+
+		let base_amount = 10 * unit;
+		let quote_amount = 0;
+		assert_ok!(Tokens::mint_into(BTC, &ALICE, base_amount));
+		assert_ok!(<Pablo as Amm>::add_liquidity(
+			&ALICE,
+			pool_id,
+			base_amount,
+			quote_amount,
+			0,
+			false
+		));
+
+		let pool = get_pool(pool_id);
+		let lp_amount = 100000000000000;
+		let calculated_total_issuance = Tokens::total_issuance(pool.lp_token) - lp_amount;
+		// 110000000000000*(1-(1-(100000000000000/14832396970046637))^(1/.5))
+		let manually_calculated_base_amount = 1478239697830;
+
+		assert_ok!(<Pablo as Amm>::remove_liquidity(&ALICE, pool_id, lp_amount, 0, 0, true));
+		assert_last_event::<Test, _>(|e| {
+			matches!(e.event,
+				mock::Event::Pablo(crate::Event::LiquidityRemoved {
+					who, pool_id, base_amount, quote_amount, total_issuance
+				})
+				if who == ALICE
+				&& pool_id == pool_id
+				&& quote_amount == 0
+				&& default_acceptable_computation_error(base_amount,
+					manually_calculated_base_amount).is_ok()
+				&& total_issuance == calculated_total_issuance)
+		});
+	})
+}
+
 // - test error if trying to remove > lp than we have
 #[test]
 fn remove_lp_failure() {
