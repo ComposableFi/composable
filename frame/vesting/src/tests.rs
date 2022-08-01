@@ -31,7 +31,7 @@ fn vesting_from_chain_spec_works() {
 				window: BlockNumberBased { start: 2_u64, period: 3_u64 },
 				period_count: 1_u32,
 				per_period: 5_u64,
-				already_claimed: 0_u64.into(),
+				already_claimed: 0_u64,
 			},
 			/*
 			  +------+------+-----+
@@ -50,7 +50,7 @@ fn vesting_from_chain_spec_works() {
 				window: BlockNumberBased { start: 2_u64 + 3_u64, period: 3_u64 },
 				period_count: 3_u32,
 				per_period: 5_u64,
-				already_claimed: 0_u64.into(),
+				already_claimed: 0_u64,
 			},
 			/*
 			  +---------+-----------+-----------+
@@ -73,7 +73,7 @@ fn vesting_from_chain_spec_works() {
 				window: MomentBased { start: 40000_u64, period: 50000_u64 },
 				period_count: 3_u32,
 				per_period: 5_u64,
-				already_claimed: 0_u64.into(),
+				already_claimed: 0_u64,
 			},
 		];
 
@@ -121,7 +121,7 @@ fn vested_transfer_self_vest_ko() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(
@@ -146,7 +146,7 @@ fn vested_transfer_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -177,7 +177,7 @@ fn vested_transfer_trait_emits_vesting_schedule_added_event() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 
 		assert_ok!(<Vesting as VestedTransfer>::vested_transfer(
@@ -207,7 +207,7 @@ fn vested_transfer_for_moment_based_schedule_works() {
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -234,7 +234,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -252,7 +252,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 			window: BlockNumberBased { start: 10_u64, period: 13_u64 },
 			period_count: 1_u32,
 			per_period: 7_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -267,7 +267,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 			window: MomentBased { start: 72000_u64, period: 5000_u64 },
 			period_count: 2_u32,
 			per_period: 7_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -292,7 +292,7 @@ fn cannot_use_fund_if_not_claimed() {
 			window: BlockNumberBased { start: 10_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 50_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -306,7 +306,7 @@ fn cannot_use_fund_if_not_claimed() {
 			window: MomentBased { start: 1000_u64, period: 5000_u64 },
 			period_count: 1_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -331,7 +331,7 @@ fn vested_transfer_fails_if_zero_period_count() {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 0_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::root(), ALICE, BOB, MockCurrencyId::BTC, schedule,),
@@ -348,7 +348,7 @@ fn vested_transfer_fails_if_zero_period() {
 			window: BlockNumberBased { start: 1_u64, period: 0_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::root(), ALICE, BOB, MockCurrencyId::BTC, schedule,),
@@ -360,7 +360,7 @@ fn vested_transfer_fails_if_zero_period() {
 			window: MomentBased { start: 1_u64, period: 0_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::root(), ALICE, BOB, MockCurrencyId::BTC, schedule,),
@@ -377,7 +377,7 @@ fn vested_transfer_fails_if_transfer_err() {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::root(), BOB, ALICE, MockCurrencyId::BTC, schedule,),
@@ -394,7 +394,7 @@ fn vested_transfer_fails_if_overflow() {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 2_u32,
 			per_period: u64::MAX,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::root(), ALICE, BOB, MockCurrencyId::BTC, schedule,),
@@ -406,7 +406,7 @@ fn vested_transfer_fails_if_overflow() {
 			window: BlockNumberBased { start: u64::MAX, period: 1_u64 },
 			period_count: 2_u32,
 			per_period: 1_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(
@@ -424,7 +424,7 @@ fn vested_transfer_fails_if_overflow() {
 			window: MomentBased { start: u64::MAX, period: 1_u64 },
 			period_count: 2_u32,
 			per_period: 1_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(
@@ -447,7 +447,7 @@ fn vested_transfer_fails_if_bad_origin() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(
@@ -470,7 +470,7 @@ fn claim_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -514,7 +514,7 @@ fn claim_with_id_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -530,7 +530,7 @@ fn claim_with_id_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 15_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -546,7 +546,7 @@ fn claim_with_id_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 3_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -676,7 +676,7 @@ fn claim_for_with_id_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -692,7 +692,7 @@ fn claim_for_with_id_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 15_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -764,7 +764,7 @@ fn claim_for_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -809,7 +809,7 @@ fn claim_for_works_moment_based() {
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -856,7 +856,7 @@ fn update_vesting_schedules_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -871,7 +871,7 @@ fn update_vesting_schedules_works() {
 			window: MomentBased { start: 0_u64, period: 60000_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -886,14 +886,14 @@ fn update_vesting_schedules_works() {
 			window: BlockNumberBased { start: 0_u64, period: 20_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		let updated_moment_based_schedule = VestingSchedule {
 			vesting_schedule_id: 1_u128,
 			window: MomentBased { start: 0_u64, period: 120000_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::update_vesting_schedules(
 			Origin::root(),
@@ -945,7 +945,7 @@ fn vested_transfer_check_for_min() {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 1_u32,
 			per_period: 3_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(Origin::root(), BOB, ALICE, MockCurrencyId::BTC, schedule,),
@@ -962,7 +962,7 @@ fn multiple_vesting_schedule_claim_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -977,7 +977,7 @@ fn multiple_vesting_schedule_claim_works() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 3_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
@@ -1012,14 +1012,14 @@ fn exceeding_maximum_schedules_should_fail() {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		let moment_schedule = VestingSchedule {
 			vesting_schedule_id: 1_u128,
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64.into(),
+			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),

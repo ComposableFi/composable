@@ -149,6 +149,7 @@ mod tests {
 			window: MomentBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
+			already_claimed: 0_u64,
 		};
 		assert!(!vesting_schedule_time_based.is_zero_period());
 		vesting_schedule_time_based.window = MomentBased { start: 1, period: 0 };
@@ -159,6 +160,7 @@ mod tests {
 			window: BlockNumberBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
+			already_claimed: 0_u64,
 		};
 		assert!(!vesting_schedule_block_number_based.is_zero_period());
 		vesting_schedule_block_number_based.window = BlockNumberBased { start: 1, period: 0 };
@@ -172,6 +174,7 @@ mod tests {
 			window: MomentBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
+			already_claimed: 0_u64,
 		};
 		match vesting_schedule_time_based.end() {
 			None => {},
@@ -185,6 +188,7 @@ mod tests {
 			window: BlockNumberBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
+			already_claimed: 0_u64,
 		};
 		match vesting_schedule_block_number_based.end() {
 			None => {},
@@ -202,6 +206,7 @@ mod tests {
 			window: BlockNumberBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
+			already_claimed: 0_u64,
 		};
 		assert_eq!(vesting_schedule.total_amount().unwrap(), 100)
 	}
@@ -214,6 +219,7 @@ mod tests {
 			window: MomentBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
+			already_claimed: 0_u64,
 		};
 		assert_eq!(vesting_schedule_time_based.locked_amount(1, 1), 100);
 		assert_eq!(vesting_schedule_time_based.locked_amount(1, 11), 99);
@@ -224,6 +230,7 @@ mod tests {
 			window: BlockNumberBased { start: 1u64, period: 10u64 },
 			period_count: 100,
 			per_period: 1u64,
+			already_claimed: 0_u64,
 		};
 		assert_eq!(vesting_schedule_block_number_based.locked_amount(1, 1), 100);
 		assert_eq!(vesting_schedule_block_number_based.locked_amount(11, 1), 99);
