@@ -343,6 +343,7 @@
               mdbook
               taplo
               python3
+              nodejs
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
