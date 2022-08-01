@@ -178,9 +178,13 @@ pub fn common_remove_lp_failure(
 	quote_amount: Balance,
 ) {
 	let pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
+	let mut is_constant_product = false;
 	let pair = match init_config {
 		PoolInitConfiguration::StableSwap { pair, .. } => pair,
-		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
+		PoolInitConfiguration::ConstantProduct { pair, .. } => {
+			is_constant_product = true;
+			pair
+		},
 		PoolInitConfiguration::LiquidityBootstrapping(pool) => pool.pair,
 	};
 	// Mint the tokens
@@ -224,6 +228,13 @@ pub fn common_remove_lp_failure(
 		Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp + 1, 0, 0, false),
 		TokenError::NoFunds
 	);
+	// single asset
+	if is_constant_product {
+		assert_noop!(
+			Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp + 1, 0, 0, true),
+			TokenError::NoFunds
+		);
+	}
 	let min_expected_base_amount = base_amount + 1;
 	let min_expected_quote_amount = quote_amount + 1;
 	// error as expected values are more than actual redeemed values.
@@ -238,6 +249,20 @@ pub fn common_remove_lp_failure(
 		),
 		crate::Error::<Test>::CannotRespectMinimumRequested
 	);
+	// single asset: minimum quote amount should be zero
+	if is_constant_product {
+		assert_noop!(
+			Pablo::remove_liquidity(
+				Origin::signed(BOB),
+				pool_id,
+				lp,
+				min_expected_base_amount,
+				1,
+				true,
+			),
+			crate::Error::<Test>::CannotRespectMinimumRequested
+		);
+	}
 }
 
 pub fn common_exchange_failure(
