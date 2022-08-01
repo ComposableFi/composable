@@ -197,36 +197,23 @@
             crane-stable.buildPackage (common-args // {
               pnameSuffix = "-node";
               cargoArtifacts = common-deps;
-              cargoBuildCommand =
-                "cargo build --release -p composable --features builtin-wasm";
+              outputs = [ "bin" "out" "doc" ];
+              cargoBuildCommand = ''
+                cargo build --release -p composable --features builtin-wasm
+                cargo doc --release
+                '';
               DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
                 "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
+                mkdir -p $out/doc
                 cp target/release/composable $out/bin/composable
+                cp target/doc/* $out/doc
               '';
             });
 
-          # composable-node-doc = with packages;
-          #   crane-stable.buildPackage (common-args // {
-          #     pnameSuffix = "-node";
-          #     cargoArtifacts = common-deps;
-          #     cargoBuildCommand =
-          #       "cargo doc --release";
-          #     DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-          #     PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-          #     COMPOSABLE_RUNTIME =
-          #       "${composable-runtime}/lib/runtime.optimized.wasm";
-          #     installPhase = ''
-          #       mkdir -p $out/bin
-          #       cp target/release/composable $out/bin/composable
-          #     '';
-          #   });           
-          # cargo build --release
-          # cargo doc --release
-          # tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable target/doc           
 
           # also mdbook has releases for all targets,
           # so it simple to build it as it is rust

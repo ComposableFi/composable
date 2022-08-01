@@ -82,6 +82,7 @@ jobs:
         then
           gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
         else
+          cat ops.json
           nix develop .#sre --override-input flake-utils ./.nix/override-input/flake-utils/  --show-trace --command nixops create --deployment devnet-gce  
         fi
       env:

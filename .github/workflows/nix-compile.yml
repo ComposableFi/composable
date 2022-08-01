@@ -211,24 +211,24 @@ jobs:
           installCommand: |
             echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf 
             nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs && nix-channel --update            
-            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3
+            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3  nixpkgs.google-cloud-sdk
             echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV            
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{  env.NIX_CACHIX }}
 
+      #TODO: use nix tool and just oneliner to dump credentials, no need tasks
+      #TODO: and this task is deprecated
       - uses: google-github-actions/setup-gcloud@v0
         with:
           service_account_key: ${{ secrets.GCP_CREDENTIALS }}
-          export_default_credentials: true
+          export_default_credentials: true 
 
       - uses: Swatinem/rust-cache@v1
 
       - name: Build & Push
         run: |
           nix build .#composable-node
-          ls result
-          ls result/bin
-          tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable target/doc
+          tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz result/bin/composable result/doc
           gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
           rm -rf target
 
@@ -245,6 +245,7 @@ jobs:
           then
             gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
           else
+            cat  ops.json
             nix develop .#sre --override-input flake-utils ./.nix/override-input/flake-utils/  --show-trace --command nixops create --deployment devnet-gce  
           fi
         env:
