@@ -16,7 +16,8 @@
     };
   };
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay }:
-    flake-utils.lib.eachDefaultSystem (system:
+    let 
+      eachSystemOutputs = flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
@@ -327,12 +328,6 @@
           });
         };
 
-        # Applications runnable with `nix run`
-        apps = {
-          # nix run .#devnet
-          type = "app";
-          program = "${packages.devnet}/bin/composable-devnet";
-        };
 
         devShells = rec {
           developers = mkShell {
@@ -382,5 +377,19 @@
           
           default = developers;
         };
+
+        # Applications runnable with `nix run`
+        # https://github.com/NixOS/nix/issues/5560
+        apps = {
+          # nix run .#devnet
+          type = "app";
+          program = "${packages.devnet}/bin/composable-devnet";
+        };
+        
       });
+    in
+      {
+        nixopsConfigurations.default = eachSystemOutputs.nixopsConfigurations.x86_64-linux.default;
+      }
+      // eachSystemOutputs;
 }

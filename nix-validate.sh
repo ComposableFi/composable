@@ -1,3 +1,4 @@
+# https://github.com/NixOS/nix/issues/5560
 nix flake show --allow-import-from-derivation --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/   --show-trace
 # with default systems errors with
 # auto-patchelf-hook, spidermonkey-78.15.0  is not supported on ‘aarch64-darwin’
