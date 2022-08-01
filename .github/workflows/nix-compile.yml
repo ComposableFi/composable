@@ -210,9 +210,8 @@ jobs:
           skipPush: true
           installCommand: |
             echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf 
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx python
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs && nix-channel --update            
+            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3
             echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV            
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{  env.NIX_CACHIX }}
