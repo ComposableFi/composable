@@ -55,7 +55,7 @@ let
     }) devnet-input;
   latest-dali = mk-latest "dali-dev";
   latest-picasso = mk-latest "picasso-dev";
-in {
+in rec {
   dali = (pkgs.callPackage ./devnet-spec.nix {
     inherit (latest-dali) composable;
     inherit (latest-dali) polkadot;
@@ -88,9 +88,10 @@ in {
   in builtins.foldl' (machines:
     { composable, polkadot }:
     machines // import ./devnet-gce.nix {
-      inherit credentials;
+      inherit gce-input;
       inherit composable;
       inherit polkadot;
+      devnet-spec = dali;
     }) {
       inherit nixpkgs;
       network.description = "Composable Devnet";
