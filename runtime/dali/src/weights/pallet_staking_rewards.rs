@@ -94,4 +94,8 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 		(3_776_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
+
+	fn update_rewards_pool(_r: u32) -> Weight {
+        10_000
+    }
 }

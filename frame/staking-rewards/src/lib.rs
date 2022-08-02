@@ -46,9 +46,8 @@ use sp_std::ops::{Add, Div, Mul};
 use crate::prelude::*;
 use composable_support::math::safe::SafeSub;
 use composable_traits::staking::{Reward, RewardUpdate};
-use frame_support::{transactional, BoundedBTreeMap};
+use frame_support::{traits::UnixTime, transactional, BoundedBTreeMap};
 pub use pallet::*;
-use sp_runtime::DispatchError;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -89,8 +88,8 @@ pub mod pallet {
 	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, vec, vec::Vec};
 
 	use crate::{
-		prelude::*, reward_accumulation_calculation, validation::ValidSplitRatio,
-		RewardAccumulationCalculationError,
+		prelude::*, reward_accumulation_calculation, update_rewards_pool,
+		validation::ValidSplitRatio, RewardAccumulationCalculationError,
 	};
 
 	pub use crate::weights::WeightInfo;
@@ -174,6 +173,9 @@ pub mod pallet {
 		OnlyPoolOwnerCanAddNewReward,
 		/// only the owner of stake can unstake it
 		OnlyStakeOwnerCanUnstake,
+		/// Reward asset not found in reward pool.
+		RewardAssetNotFound,
+		BackToTheFuture,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -394,6 +396,20 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			<Self as Staking>::split(&who, &position, ratio.value())?;
 			Ok(())
+		}
+
+		#[pallet::weight(T::WeightInfo::update_rewards_pool(reward_updates.len() as u32))]
+		pub fn update_rewards_pool(
+			origin: OriginFor<T>,
+			pool_id: T::RewardPoolId,
+			reward_updates: BoundedBTreeMap<
+				AssetIdOf<T>,
+				RewardUpdate<BalanceOf<T>>,
+				T::MaxRewardConfigsPerPool,
+			>,
+		) -> DispatchResult {
+			ensure_signed(origin)?;
+			update_rewards_pool::<T>(pool_id, reward_updates)
 		}
 	}
 
@@ -758,7 +774,7 @@ pub mod pallet {
 
 			match reward_accumulation_calculation::<T>(reward, now_seconds) {
 				Ok(reward) => reward,
-				Err(RewardAccumulationError(reward)) => {
+				Err(BackToTheFuture(reward)) => {
 					Self::deposit_event(Event::<T>::RewardAccumulationError {
 						pool_id,
 						asset_id: reward.asset_id,
@@ -921,6 +937,45 @@ pub mod pallet {
 	}
 }
 
+#[transactional]
+fn update_rewards_pool<T: Config>(
+	pool_id: T::RewardPoolId,
+	reward_updates: BoundedBTreeMap<
+		AssetIdOf<T>,
+		RewardUpdate<BalanceOf<T>>,
+		T::MaxRewardConfigsPerPool,
+	>,
+) -> DispatchResult {
+	RewardPools::<T>::try_mutate(pool_id, |pool| {
+		let pool = pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
+
+		let now_seconds = T::UnixTime::now().as_secs();
+
+		for (asset_id, update) in reward_updates {
+			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
+
+			let new_reward = match reward_accumulation_calculation::<T>(reward.clone(), now_seconds)
+			{
+				Ok(reward) => reward,
+				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) =>
+					return Err(Error::<T>::BackToTheFuture.into()),
+				Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(reward)) => {
+					Pallet::<T>::deposit_event(Event::<T>::MaxRewardsAccumulated {
+						pool_id,
+						asset_id: reward.asset_id,
+					});
+					continue
+				},
+				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) =>
+					continue,
+			};
+
+			*reward = Reward { reward_rate: update.reward_rate, ..new_reward };
+		}
+
+		Ok(())
+	})
+}
 
 pub(crate) fn reward_accumulation_calculation<T: Config>(
 	reward: Reward<T::AssetId, T::Balance>,
@@ -968,13 +1023,13 @@ pub(crate) fn reward_accumulation_calculation<T: Config>(
 				}
 			}
 		},
-		Err(_) => Err(RewardAccumulationCalculationError::RewardAccumulationError(reward)),
+		Err(_) => Err(RewardAccumulationCalculationError::BackToTheFuture(reward)),
 	}
 }
 
 pub(crate) enum RewardAccumulationCalculationError<T: Config> {
-	/// An error occured while calculating the reward accumulation.
-	RewardAccumulationError(Reward<T::AssetId, T::Balance>),
+	/// T::UnixTime::now() returned a value in the past.
+	BackToTheFuture(Reward<T::AssetId, T::Balance>),
 	/// The `max_rewards` for this reward was hit during this calculation.
 	MaxRewardsAccumulated(Reward<T::AssetId, T::Balance>),
 	/// The `max_rewards` were hit previously; i.e. `total_rewards == max_rewards` at the start of

@@ -7,7 +7,7 @@ use composable_traits::{
 		lock::{Lock, LockConfig},
 		Reductions, Reward, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		RewardRate, Stake,
+		RewardRate, RewardUpdate, Stake,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -18,6 +18,9 @@ use frame_support::{
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
+use sp_std::collections::btree_map::BTreeMap;
+
+pub const BASE_ASSET_ID: u128 = 101;
 
 fn get_reward_pool<T: Config>(
 	owner: T::AccountId,
@@ -58,7 +61,7 @@ fn reward_config<T: Config>(
 ) -> BoundedBTreeMap<T::AssetId, RewardConfig<T::AssetId, T::Balance>, T::MaxRewardConfigsPerPool> {
 	(0..reward_count)
 		.map(|asset_id| {
-			let asset_id: u128 = (asset_id + 101).into();
+			let asset_id = (asset_id as u128) + BASE_ASSET_ID;
 			(
 				asset_id.into(),
 				RewardConfig {
@@ -201,6 +204,24 @@ benchmarks! {
 	unix_time_now {}: {
 		T::UnixTime::now()
 	}
+
+	update_rewards_pool {
+		let r in 1 .. T::MaxRewardConfigsPerPool::get();
+		frame_system::Pallet::<T>::set_block_number(1.into());
+		let user: T::AccountId = account("user", 0, 0);
+		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user.clone(), r)).unwrap();
+
+		let updates = (0..r).map(|r| (
+			((r as u128) + BASE_ASSET_ID).into(),
+			RewardUpdate {
+				reward_rate: RewardRate::per_second(5)
+			}
+		))
+		.into_iter()
+		.collect::<BTreeMap<_, _>>()
+		.try_into()
+		.unwrap();
+	}: _(RawOrigin::Signed(user), pool_id, updates)
 
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
 }
