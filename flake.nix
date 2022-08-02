@@ -9,7 +9,8 @@
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
+      # different version (we likely have old and conflicts)
+      # inputs.flake-utils.follows = "flake-utils";
     };
     crane = {
       url = "github:ipetkov/crane";
@@ -221,49 +222,11 @@
               '';
             });
 
-          # also mdbook has releases for all targets,
-          # so it simple to build it as it is rust
-          # and also we then can have fork easy
-          # and nix allows to use any version of rust
-          # so if will need to special docs for substrate, we will have it
-          # and, anyway cargo install also compiles
-          mdbook = with packages; 
-            crane-stable.buildPackage {
-              src = fetchFromGitHub {
-                owner = "rust-lang";
-                repo = "mdBook";
-                rev = "40c06f5e774924bef97d339cf8c64343c9056d86";
-                hash = "sha256-ggcyOsA4cyo5l87cZmOMI0w1gCzmWy9NRJiWxjBdB1E=";
-              };          
-            };
 
-          taplo = with packages; 
-            crane-stable.buildPackage {
-              src = fetchFromGitHub {
-                owner = "tamasfe";
-                repo = "taplo";
-                rev = "eeb62dcbada89f13de73cfc063ffe67a890c4bc6";
-                hash = "sha256-ggcyOsA4cyo5l87cZmOMI0w1gCzmWy9NRJiWxjBdB1E=";
-              };          
-            };            
+          taplo = pkgs.callPackage ./.nix/taplo.nix { inherit crane-stable;};
+          mdbook = pkgs.callPackage ./.nix/mdbook.nix { inherit crane-stable;};
           composable-book = import ./book/default.nix { crane = crane-stable; inherit (pkgs) cargo stdenv; inherit mdbook; };
-          polkadot-node = stdenv.mkDerivation {
-            name = "polkadot-${polkadot.version}";
-            version = polkadot.version;
-            src = fetchurl {
-              url =
-                "https://github.com/paritytech/polkadot/releases/download/v${polkadot.version}/polkadot";
-              sha256 = polkadot.hash;
-            };
-            nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-            buildInputs = [ pkgs.stdenv.cc.cc ];
-            dontUnpack = true;
-            installPhase = ''
-              mkdir -p $out/bin
-              cp $src $out/bin/polkadot
-              chmod +x $out/bin/polkadot
-            '';
-          };
+          polkadot-node = pkgs.callPackage ./.nix/polkadot-bin.nix { inherit polkadot;};
 
           polkadot-launch = pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix {};
           devnet = let

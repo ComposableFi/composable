@@ -16,9 +16,4 @@ pkgs.stdenv.mkDerivation {
       cp $src $out/bin/polkadot
       chmod +x $out/bin/polkadot
     '';
-    ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
-    LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
-      pkgs.stdenv.cc.cc.lib
-      pkgs.llvmPackages.libclang.lib
-    ];        
   }
