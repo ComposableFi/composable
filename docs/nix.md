@@ -1,6 +1,6 @@
 # Overview
 
-`nix` ecosystem replaces fully or partially `cargo install`, `rustup`, `cargo make`, `docker build`, `sh`, `rust-cache`, `sccache`, specific `github actions`, parts of `github workflow runs`  etc.
+`nix` ecosystem replaces fully or partially `cargo install`, `rustup`, `cargo make`, `docker build`, `sh`, `rust-cache`, `sccache`, `github actions`, `github workflow runs`, etc.
 
 If to target `nixos` then `ansible`, `ssh`, `terraform`.
 

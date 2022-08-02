@@ -70,13 +70,8 @@ in rec {
     inherit (latest-picasso) polkadot;
   });
  
-  machines = let
-    credentials = {
-      project = gce-input.project_id;
-      serviceAccount = gce-input.client_email;
-      accessKey = gce-input.private_key;
-    };
-  in builtins.foldl' (machines:
+  machines =
+   builtins.foldl' (machines:
     { composable, polkadot }:
     machines // import ./devnet-gce.nix {
       inherit gce-input;

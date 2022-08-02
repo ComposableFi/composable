@@ -2,6 +2,7 @@
   description = "Composable Finance Local Networks Lancher and documentation Book";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    #ASD   nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils = {
       url = "github:numtide/flake-utils";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -317,6 +318,7 @@
               nodejs
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
+            #ASD HISTFILE=toString ./.history;
           };
 
           technical-writers = mkShell {
