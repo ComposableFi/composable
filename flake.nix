@@ -212,36 +212,21 @@
             });
 
 
-       extrinsics-docs-scraper = with packages;
+          extrinsics-docs-scraper = with packages;
             crane-stable.buildPackage (common-args // {
               pname = "extrinsics-docs-scraper";
               cargoArtifacts = common-deps;
-              cargoBuildCommand =
-                "cargo build --release -p composable --features builtin-wasm";
+               cargoBuildCommand = "cd utils/extrinsics-docs-scraper/ && cargo build && cd ../..";
               DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
                 "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
+                cp utils/extrinsics-docs-scraper/target/debug/extrinsics-docs-scraper $out/bin
               '';
             });
-
-          # extrinsics-docs-scraper = with packages;
-          #   crane-stable.buildPackage (common-args // {
-          #     pnameSuffix = "-extrinsics-docs-scraper";
-          #     cargoArtifacts = common-deps;
-          #     #outputs = [ "bin" "out" "doc" ];
-          #     cargoBuildCommand = 
-          #     "cd utils/extrinsics-docs-scraper/ && cargo build && cd ../..";
-          #     installPhase = ''
-          #       mkdir -p $out/bin
-          #       #mkdir -p $out/doc
-          #       cp -r utils/extrinsics-docs-scraper/target/debug/* $out/bin
-          #       $cp -r utils/extrinsics-docs-scraper/target/doc/* $out/doc
-          #     '';
-          #   });
+            
 
           # also mdbook has releases for all targets,
           # so it simple to build it as it is rust
