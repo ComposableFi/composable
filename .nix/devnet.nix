@@ -1,4 +1,4 @@
-{ pkgs, nixpkgs, devnet-input, gce-input }:
+{ pkgs, nixpkgs, devnet-input, gce-input}:
   assert gce-input != null;
   assert gce-input.project_id != null;
   assert gce-input.client_email != null;
@@ -69,9 +69,7 @@ in rec {
     inherit (latest-picasso) composable;
     inherit (latest-picasso) polkadot;
   });
-
-  nixops = pkgs.callPackage ./nixops.nix {};
-
+ 
   machines = let
     credentials = {
       project = gce-input.project_id;

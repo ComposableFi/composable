@@ -1,7 +1,7 @@
 {
   description = "Composable Finance Local Networks Lancher and documentation Book";
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils = {
       url = "github:numtide/flake-utils";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -9,13 +9,22 @@
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
     crane = {
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # NOTE: gives weird error
+    # nixops-flake = {
+    #   url = "github:NixOS/nixops?rev=35ac02085169bc2372834d6be6cf4c1bdf820d09";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    #   inputs.utils.follows = "flake-utils";
+    # };
   };
-  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay
+  #, nixops-flake 
+  }:
     let 
       eachSystemOutputs = flake-utils.lib.eachDefaultSystem (system:
       let
@@ -27,6 +36,7 @@
                 "openjdk-headless-16+36" # something depends on it
           ];
         };
+        nixops = pkgs.callPackage ./.nix/nixops.nix {};
         overlays = [ (import rust-overlay) ];        
         rust-toolchain = import ./.nix/rust-toolchain.nix;
       in with pkgs;
@@ -318,8 +328,7 @@
           dali-script = devnet-deploy.dali.script;
           picasso-script = devnet-deploy.picasso.script;
           dali-composable-book = devnet-deploy.dali.composable-book;
-          inherit (devnet-deploy) nixops;
-
+    
           default = packages.composable-node;
         };
 
@@ -361,7 +370,7 @@
           sre = developers // mkShell {
             buildInputs = with packages; [
                 nodejs
-                packages.nixops 
+                nixops
                 # TODO: replace fetching binries with approciate cachix builds
                 # TODO: binaries are referenced by git commit hash (so can retarted to git easy)
                 packages.dali-script 

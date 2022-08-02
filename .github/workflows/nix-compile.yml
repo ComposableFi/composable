@@ -232,14 +232,12 @@ jobs:
           # NOTE: temporary move here until 100% nix
           mkdir -p target/release
           mkdir -p target/doc
-          mv result/bin/composable target/release/composable 
+          cp result/bin/composable target/release/composable 
+          # TODO: derive archieve instead of direct tar call
           tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable target/doc
           gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
 
-      - name: Load state
-        run: |
           cd devnet
-
           ./update.sh $RELEASE_VERSION
           jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
           cat  ops.json
@@ -251,18 +249,14 @@ jobs:
           else            
             nix develop .#sre --override-input flake-utils ./.nix/override-input/flake-utils/  --show-trace --command nixops create --deployment devnet-gce  
           fi
+          
+          nix develop .#sre --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/ --command nixops deploy --check --confirm --deployment devnet-gce --debug --show-trace
         env:
           NIXOPS_STATE_URL: "gs://composable-state"
           NIXOPS_STATE: "deployment.nixops"
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_DEVNET_SERVICE_ACCOUNT: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT }}
           GCP_DEVNET_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT_KEY }}
-
-      - name: Deploy
-        run: |
-          nix develop .#sre --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/ --command nixops deploy --check --confirm --deployment devnet-gce 
-        env:
-          NIXOPS_STATE: "deployment.nixops"
 
       - name: Store state
         if: always()

@@ -10,6 +10,7 @@ pkgs.stdenv.mkDerivation rec {
     nativeBuildInputs = [
       pkgs.autoPatchelfHook
     ];
+    autoPatchelfIgnoreMissingDeps = [ "*" ]; 
     buildInputs = [ pkgs.stdenv.cc.cc pkgs.zlib pkgs.rocksdb ];
     installPhase = ''
       tar -xvf $src
