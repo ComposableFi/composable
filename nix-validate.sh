@@ -1,3 +1,4 @@
+# TODO: move inside nix as check (so that it uses exact version definedhere)
 # https://github.com/NixOS/nix/issues/5560
 nix flake show --allow-import-from-derivation --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/   --show-trace
 # with default systems errors with

@@ -211,23 +211,6 @@
               '';
             });
 
-
-          extrinsics-docs-scraper = with packages;
-            crane-stable.buildPackage (common-args // {
-              pname = "extrinsics-docs-scraper";
-              cargoArtifacts = common-deps;
-               cargoBuildCommand = "cd utils/extrinsics-docs-scraper/ && cargo build && cd ../..";
-              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-              COMPOSABLE_RUNTIME =
-                "${composable-runtime}/lib/runtime.optimized.wasm";
-              installPhase = ''
-                mkdir -p $out/bin
-                cp utils/extrinsics-docs-scraper/target/debug/extrinsics-docs-scraper $out/bin
-              '';
-            });
-            
-
           # also mdbook has releases for all targets,
           # so it simple to build it as it is rust
           # and also we then can have fork easy
