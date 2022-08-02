@@ -11,7 +11,7 @@ use sp_runtime::{
 	ArithmeticError, PerThing,
 };
 
-/// From https://balancer.fi/whitepaper.pdf, equation (2)
+/// From <https://balancer.fi/whitepaper.pdf>, equation (2)
 /// Compute the spot price of an asset pair.
 /// - `wi` the weight on the quote asset
 /// - `wo` the weight of the base asset
@@ -49,7 +49,7 @@ where
 	spot_price.safe_mul(&base_unit)?.to_u128().ok_or(ArithmeticError::Overflow)
 }
 
-/// From https://balancer.fi/whitepaper.pdf, equation (15)
+/// From <https://balancer.fi/whitepaper.pdf>, equation (15)
 /// Compute the amount of base asset (out) given the quote asset (in).
 /// - `wi` the weight on the quote asset
 /// - `wo` the weight of the base asset
@@ -86,7 +86,7 @@ where
 	Ok(ao)
 }
 
-/// From https://balancer.fi/whitepaper.pdf, equation (20)
+/// From <https://balancer.fi/whitepaper.pdf>, equation (20)
 /// Compute the amount of quote asset (in) given the expected amount of base asset (out).
 /// - `wi` the weight on the quote asset
 /// - `wo` the weight of the base asset
@@ -123,7 +123,7 @@ where
 	Ok(ai)
 }
 
-/// https://uniswap.org/whitepaper.pdf, equation (13)
+/// <https://uniswap.org/whitepaper.pdf>, equation (13)
 /// Compute the initial share of an LP provider.
 /// - `base_amount` the base asset amount deposited.
 /// - `quote_amount` the quote asset amount deposited.
@@ -138,7 +138,7 @@ pub fn compute_first_deposit_lp(
 		.safe_mul(&quote_amount.integer_sqrt_checked().ok_or(ArithmeticError::Overflow)?)
 }
 
-/// https://uniswap.org/whitepaper.pdf, equation (12)
+/// <https://uniswap.org/whitepaper.pdf>, equation (12)
 /// Compute the share of an LP provider for an existing, non-empty pool.
 /// - `lp_total_issuance` the total LP already issued to other LP providers.
 /// - `base_amount` the base amount provided by the current LP provider.

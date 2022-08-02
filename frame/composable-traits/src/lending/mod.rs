@@ -343,7 +343,7 @@ pub trait Lending: DeFiEngine {
 		keep_alive: bool,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
-	/// [`AccountId`][Self::AccountId] of the market instance
+	/// [`AccountId`](../defi/trait.DeFiEngine.html#associatedtype.AccountId) of the market instance
 	fn account_id(market_id: &Self::MarketId) -> Self::AccountId;
 
 	/// Deposit collateral in order to borrow.

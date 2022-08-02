@@ -58,7 +58,8 @@ impl<T: Config> Pallet<T> {
 	/// Checks if the following properties hold after performing a swap:
 	///
 	/// * Swapped amount respects the limit specified in
-	/// [`SwapConfig::output_amount_limit`].
+	/// [`SwapConfig::output_amount_limit`](
+	/// ../../composable_traits/vamm/struct.SwapConfig.html#structfield.output_amount_limit).
 	/// * Base assets was not completely drained.
 	/// * Quote assets was not completely drained.
 	///

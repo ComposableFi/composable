@@ -6,12 +6,14 @@ use sp_runtime::traits::Saturating;
 impl<T: Config> Pallet<T> {
 	/// Performs runtime storage changes, effectively updating the asset twap.
 	/// This `update_twap` variation can't accept any error to occur, expecting
-	/// all properties described in [`update_twap`](Self::update_twap) to hold.
+	/// all properties described in
+	/// [`update_twap`](struct.Pallet.html#method.update_twap) to hold.
 	///
 	/// # Errors
 	///
 	/// * All errors returned by
-	/// [`sanity_check_before_update_twap`](Self::sanity_check_before_update_twap).
+	/// [`sanity_check_before_update_twap`](
+	/// struct.Pallet.html#method.sanity_check_before_update_twap).
 	#[transactional]
 	pub fn do_update_twap(
 		vamm_id: T::VammId,
@@ -23,17 +25,21 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// *Tries to* perform runtime storage changes, effectively updating the
-	/// asset twap.  Diferently than [`do_update_twap`] though, this variation
+	/// asset twap.  Diferently than [`do_update_twap`](Self::do_update_twap) though, this variation
 	/// accepts one specific error to occur, therefore not honoring all
-	/// properties described in [`update_twap`](Self::update_twap). The property
-	/// that can be violated using this variation is that the current twap
-	/// timestamp can in fact be more recent than the current time.
+	/// properties described in
+	/// [`update_twap`](../pallet/struct.Pallet.html#method.update_twap). The
+	/// property that can be violated using this variation is that the current
+	/// twap timestamp can in fact be more recent than the current time.
 	///
 	/// # Errors
 	///
 	/// * All errors returned by
-	/// [`sanity_check_before_update_twap`](Self::sanity_check_before_update_twap),
-	/// except [`Error::<T>::AssetTwapTimestampIsMoreRecent`].
+	/// [`sanity_check_before_update_twap`](
+	/// struct.Pallet.html#method.sanity_check_before_update_twap),
+	/// except
+	/// [`Error::<T>::AssetTwapTimestampIsMoreRecent`](
+	/// ../pallet/enum.Error.html#variant.AssetTwapTimestampIsMoreRecent).
 	#[transactional]
 	pub fn try_update_twap(
 		vamm_id: T::VammId,

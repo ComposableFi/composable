@@ -261,7 +261,7 @@ impl InterestRate for CurveModel {
 }
 
 /// The dynamic interest rate curve based on control theory
-/// https://www.delphidigital.io/reports/dynamic-interest-rate-model-based-on-control-theory/
+/// <https://www.delphidigital.io/reports/dynamic-interest-rate-model-based-on-control-theory/>
 /// PID Controller (proportional-integral-derivative controller)
 /// Error term is calculated as `et = uo - ut`.
 /// Proportional term is calculated as `pt = kp * et`.
@@ -372,8 +372,8 @@ const EXPECTED_COEFFICIENTS_SUM: u16 = 100;
 /// The double exponent interest rate model
 /// Interest based on a polynomial of the utilization of the market.
 /// Interest = C_0 + C_1 * U^(2^2) + C_2 * U^(2^4) + C_3 * U^(2^8) ...
-/// For reference check https://github.com/dydxprotocol/solo/blob/master/contracts/external/interestsetters/DoubleExponentInterestSetter.sol
-/// https://web.archive.org/web/20210518033618/https://help.dydx.exchange/en/articles/2924246-how-do-interest-rates-work
+/// For reference check <https://github.com/dydxprotocol/solo/blob/master/contracts/external/interestsetters/DoubleExponentInterestSetter.sol>
+/// <https://web.archive.org/web/20210518033618/https://help.dydx.exchange/en/articles/2924246-how-do-interest-rates-work>
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct DoubleExponentModel {

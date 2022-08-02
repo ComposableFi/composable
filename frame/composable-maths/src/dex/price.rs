@@ -7,7 +7,7 @@ use sp_runtime::{
 };
 
 /// Uniswap V2 TWAP
-/// https://docs.uniswap.org/protocol/V2/concepts/core-concepts/oracles
+/// <https://docs.uniswap.org/protocol/V2/concepts/core-concepts/oracles>
 
 /// Executes `compute_next_price_cumulative` with `previous_timestamp = 0`
 /// `current_timestamp =  1` and `previous_price_cumulative = 0`

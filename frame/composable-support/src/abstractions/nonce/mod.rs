@@ -1,12 +1,10 @@
-use sp_std::marker::PhantomData;
-
 use crate::abstractions::utils::{increment::Incrementor, start_at::StartAtValue};
-
 use codec::FullCodec;
 use frame_support::{
 	pallet_prelude::StorageValue,
 	traits::{Get, StorageInstance},
 };
+use sp_std::marker::PhantomData;
 
 #[cfg(test)]
 mod test_storage_nonce;
@@ -36,7 +34,7 @@ mod test_storage_nonce;
 #[allow(clippy::disallowed_types)]
 pub type ValueQuery = frame_support::pallet_prelude::ValueQuery;
 
-/// An extension trait for [`StorageValue`]s that are used as a [nonce](nonce).
+/// An extension trait for [`StorageValue`]s that are used as a [nonce](Nonce).
 ///
 /// [nonce]: <https://www.investopedia.com/terms/n/nonce.asp>
 pub trait Increment<T, S, I>: 'static
@@ -130,7 +128,7 @@ where
 ///
 /// # Example
 ///
-/// A nonce that starts at zero, incrementing using [`SafeAdd`]:
+/// A nonce that starts at zero, incrementing using [`SafeAdd`](../../math/safe/trait.SafeAdd.html):
 ///
 /// ```rust,ignore
 /// #[pallet::storage]

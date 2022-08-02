@@ -13,7 +13,7 @@ pub trait Incrementor<T: 'static>: Sealed + 'static {
 	fn increment(value: T) -> Self::Output;
 }
 
-/// [Increment] with [`WrappingNext`].
+/// [Increment](../../nonce/trait.Increment.html) with [`WrappingNext`].
 pub struct WrappingIncrement {}
 
 impl<T> Incrementor<T> for WrappingIncrement
@@ -27,7 +27,7 @@ where
 	}
 }
 
-/// [Increment] with [`SafeAdd`].
+/// [Increment](../../nonce/trait.Increment.html) with [`SafeAdd`].
 pub struct SafeIncrement {}
 
 impl<T> Incrementor<T> for SafeIncrement
@@ -41,7 +41,7 @@ where
 	}
 }
 
-/// [Increment] up to a maximum value.
+/// [Increment](../../nonce/trait.Increment.html) up to a maximum value.
 pub struct IncrementToMax<M: 'static, E: 'static, PE: 'static> {
 	#[doc(hidden)]
 	_marker: PhantomData<(M, E, PE)>,

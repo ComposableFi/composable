@@ -1,4 +1,4 @@
-//! https://github.com/ergoplatform/bounded-vec/issues/13
+//! <https://github.com/ergoplatform/bounded-vec/issues/13>
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]

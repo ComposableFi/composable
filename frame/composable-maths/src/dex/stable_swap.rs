@@ -79,7 +79,7 @@ pub fn compute_d(
 	Err(DispatchError::Other("could not compute d"))
 }
 
-/// See https://github.com/equilibrium-eosdt/equilibrium-curve-amm/blob/master/docs/deducing-get_y-formulas.pdf
+/// See <https://github.com/equilibrium-eosdt/equilibrium-curve-amm/blob/master/docs/deducing-get_y-formulas.pdf>
 /// for detailed explanation about formulas this function uses.
 ///
 /// # Notes
