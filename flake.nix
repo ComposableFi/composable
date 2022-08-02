@@ -193,15 +193,14 @@
             cargoBuildCommand = "cargo build --release -p price-feed";
           });
           
+          # NOTE: with docs, non nighly fails but nighly fails too...
           # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
           composable-node = with packages;
-            crane-nightly.buildPackage (common-args // {
+            crane-stable.buildPackage (common-args // {
               pnameSuffix = "-node";
               cargoArtifacts = common-deps;
-              #outputs = [ "bin" "out" "doc" ];
               cargoBuildCommand = ''
                 cargo build --release -p composable --features builtin-wasm
-                #cargo doc --release
                 '';
               DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
@@ -209,32 +208,28 @@
                  "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                #mkdir -p $out/doc
                 cp target/release/composable $out/bin/composable
-                #cp -r target/doc/* $out/doc
               '';
             });
 
-
-          # composable-node = with packages;
-          #   crane-nightly.buildPackage (common-args // {
-          #     pnameSuffix = "-node";
-          #     cargoArtifacts = common-deps;
-          #     cargoBuildCommand = ''
-          #       cargo build --release -p composable --features builtin-wasm
-          #       cargo doc --release
-          #       '';
-          #     DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-          #     PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-          #     COMPOSABLE_RUNTIME =
-          #       "${composable-runtime}/lib/runtime.optimized.wasm";
-          #     installPhase = ''
-          #       mkdir -p $out/bin
-          #       mkdir -p $out/doc
-          #       cp -r target/release/* $out/bin/
-          #       cp -r target/doc/* $out/doc
-          #     '';
-          #   });
+          composable-node-docs = with packages;
+            crane-stable.buildPackage (common-args // {
+              pnameSuffix = "-node";
+              #cargoArtifacts = common-deps;
+              outputs = [ "bin" "out" "doc" ];
+              cargoBuildCommand = ''
+                cd utils/extrinsics-docs-scraper/
+                cargo build
+                cargo doc
+                cd ../..
+                '';
+              installPhase = ''
+                mkdir -p $out/bin
+                mkdir -p $out/doc
+                cp -r utils/extrinsics-docs-scraper/target/debug/* $out/bin
+                cp -r utils/extrinsics-docs-scraper/target/doc/* $out/doc
+              '';
+            });
 
           # also mdbook has releases for all targets,
           # so it simple to build it as it is rust
