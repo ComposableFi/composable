@@ -92,7 +92,7 @@ where
 }
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub struct LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
+pub struct LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
 where
 	AccountId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
@@ -123,8 +123,8 @@ where
 	repayment_strategy: RepaymentStrategy,
 }
 
-impl<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
-	LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
+impl<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
+	LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
 where
 	AccountId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
@@ -245,7 +245,7 @@ where
 
 // Some fields are hiden since they should be immutable
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub struct LoanInfo<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
+pub struct LoanInfo<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
 where
 	AccountId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
@@ -254,15 +254,15 @@ where
 	RepaymentStrategy: Clone,
 {
 	/// Loan configuration defines loan terms
-	config: LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>,
+	config: LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>,
 	/// Principal should be returned before this block.
 	end_block: BlockNumber,
 	/// How much principal was repaid.
 	pub repaid_principal: Balance,
 }
 
-impl<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
-	LoanInfo<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>
+impl<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
+	LoanInfo<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
 where
 	AccountId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq + Zero,
@@ -271,7 +271,7 @@ where
 	RepaymentStrategy: Clone,
 {
 	pub fn new(
-		config: LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent>,
+		config: LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>,
 		start_block: BlockNumber,
 	) -> Result<Self, ArithmeticError> {
 		let end_block = start_block.safe_add(config.maturity())?;
@@ -281,7 +281,7 @@ where
 	/// Get a reference to the loan info's config.
 	pub fn config(
 		&self,
-	) -> &LoanConfig<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent> {
+	) -> &LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy> {
 		&self.config
 	}
 
@@ -321,7 +321,7 @@ impl<AccountId, AssetId: Copy, BlockNumber, LiquidationStrategyId>
 }
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
-pub struct LoanInput<AccountId, Balance, BlockNumber, RepaymentStrategy, Percent> {
+pub struct LoanInput<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy> {
 	/// Loan belongs to this market.
 	pub market_account_id: AccountId,
 	/// This account id have to be whitelisted.
@@ -374,16 +374,16 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 			Self::AccountId,
 			Self::Balance,
 			Self::BlockNumber,
-			Self::RepaymentStrategy,
 			Self::Percent,
+			Self::RepaymentStrategy,
 		>,
 	) -> Result<
 		LoanConfig<
 			Self::AccountId,
 			Self::Balance,
 			Self::BlockNumber,
-			Self::RepaymentStrategy,
 			Self::Percent,
+			Self::RepaymentStrategy,
 		>,
 		DispatchError,
 	>;
@@ -397,8 +397,8 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 			Self::AccountId,
 			Self::Balance,
 			Self::BlockNumber,
-			Self::RepaymentStrategy,
 			Self::Percent,
+			Self::RepaymentStrategy,
 		>,
 		DispatchError,
 	>;
