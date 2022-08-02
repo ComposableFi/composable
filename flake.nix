@@ -360,6 +360,7 @@
 
           sre = developers // mkShell {
             buildInputs = with packages; [
+                nodejs
                 packages.nixops 
                 # TODO: replace fetching binries with approciate cachix builds
                 # TODO: binaries are referenced by git commit hash (so can retarted to git easy)

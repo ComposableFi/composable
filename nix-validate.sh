@@ -9,4 +9,4 @@ nix flake show --allow-import-from-derivation --show-trace --override-input flak
 # not clear why there are such weird deps nor how to override configs in nix, not via export env
 nix flake check --override-input flake-utils ./.nix/override-input/flake-utils/ --no-update-lock-file --keep-going
 # TODO: on it too for fail fast before build
-# nixops deploy --dry-run
+# nixops deploy --dry-run  --debug --keep-going --show-trace
