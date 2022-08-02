@@ -925,8 +925,8 @@ pub mod pallet {
 		///  - `config`: Specification for swaps.
 		///
 		/// ## Returns
-		/// The asset amount taking into account slippage and price move due to
-		/// trade size.
+		/// The *expected* asset amount returned after a swap, taking into
+		/// account slippage due to trade size.
 		///
 		/// ## Assumptions or Requirements
 		/// * The requested [`VammId`](Config::VammId) must exist.
