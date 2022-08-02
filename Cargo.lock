@@ -645,21 +645,29 @@ dependencies = [
 [[package]]
 name = "beefy-generic-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/beefy-rs?branch=master#156e6b68760464967cec0684ce689ad5244ea560"
+source = "git+https://github.com/ComposableFi/beefy-rs?branch=master#8ce29f5da370f76bc8908b638bc221569c81eb17"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
+ "color-eyre 0.6.2",
  "derive_more",
+ "frame-metadata",
+ "frame-support",
+ "hex",
+ "jsonrpsee 0.15.1",
  "pallet-beefy-mmr",
  "pallet-mmr",
  "parity-scale-codec",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?branch=master)",
  "rs_merkle",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-core-hashing 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-mmr-primitives",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "subxt-codegen 0.22.0",
+ "syn 1.0.98",
+ "tokio",
 ]
 
 [[package]]
@@ -1468,7 +1476,34 @@ dependencies = [
  "eyre",
  "indenter",
  "once_cell",
- "owo-colors",
+ "owo-colors 1.3.0",
+]
+
+[[package]]
+name = "color-eyre"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a667583cca8c4f8436db8de46ea8233c42a7d9ae424a82d338f2e4675229204"
+dependencies = [
+ "backtrace",
+ "color-spantrace",
+ "eyre",
+ "indenter",
+ "once_cell",
+ "owo-colors 3.4.0",
+ "tracing-error",
+]
+
+[[package]]
+name = "color-spantrace"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ba75b3d9449ecdccb27ecbc479fdc0b87fa2dd43d2f8298f9bf0e59aacc8dce"
+dependencies = [
+ "once_cell",
+ "owo-colors 3.4.0",
+ "tracing-core",
+ "tracing-error",
 ]
 
 [[package]]
@@ -1507,7 +1542,7 @@ dependencies = [
  "pallet-treasury",
  "parity-scale-codec",
  "polkadot-primitives",
- "primitives",
+ "primitives 0.1.0",
  "scale-info",
  "serde",
  "sp-consensus-aura",
@@ -1524,7 +1559,7 @@ dependencies = [
 name = "composable"
 version = "1.0.0"
 dependencies = [
- "color-eyre",
+ "color-eyre 0.5.11",
  "composable-node",
 ]
 
@@ -1590,7 +1625,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-service",
- "primitives",
+ "primitives 0.1.0",
  "sc-basic-authorship",
  "sc-chain-spec",
  "sc-cli",
@@ -1692,7 +1727,7 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
- "primitives",
+ "primitives 0.1.0",
  "scale-info",
  "simnode-runtime-apis",
  "smallvec 1.9.0",
@@ -2810,7 +2845,7 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
- "primitives",
+ "primitives 0.1.0",
  "scale-info",
  "simnode-runtime-apis",
  "smallvec 1.9.0",
@@ -4491,7 +4526,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=790283269964b908da05cb9c3932a6a480563d62#790283269964b908da05cb9c3932a6a480563d62"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=6caccc984bf350cc2a6fdd2560d2264ff9fc5ff3#6caccc984bf350cc2a6fdd2560d2264ff9fc5ff3"
 dependencies = [
  "beefy-generic-client",
  "beefy-primitives",
@@ -4504,6 +4539,7 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "primitive-types",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?branch=master)",
  "prost 0.10.4",
  "prost-types 0.10.1",
  "ripemd",
@@ -4553,7 +4589,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=790283269964b908da05cb9c3932a6a480563d62#790283269964b908da05cb9c3932a6a480563d62"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=6caccc984bf350cc2a6fdd2560d2264ff9fc5ff3#6caccc984bf350cc2a6fdd2560d2264ff9fc5ff3"
 dependencies = [
  "base64 0.13.0",
  "bytes 1.2.0",
@@ -4629,7 +4665,7 @@ dependencies = [
  "log 0.4.17",
  "pallet-balances",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.1.0",
  "scale-info",
  "serde_json",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -4956,7 +4992,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d02a921aa22006ed979c2e1c407fd21302ac6049e5b544634ec5ec41516363d"
 dependencies = [
  "jsonrpsee-core 0.11.0",
- "jsonrpsee-http-client",
+ "jsonrpsee-http-client 0.11.0",
  "jsonrpsee-proc-macros 0.11.0",
  "jsonrpsee-types 0.11.0",
 ]
@@ -4984,6 +5020,18 @@ checksum = "11e017217fcd18da0a25296d3693153dd19c8a6aadab330b3595285d075385d1"
 dependencies = [
  "jsonrpsee-client-transport 0.14.0",
  "jsonrpsee-core 0.14.0",
+]
+
+[[package]]
+name = "jsonrpsee"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8bd0d559d5e679b1ab2f869b486a11182923863b1b3ee8b421763cdd707b783a"
+dependencies = [
+ "jsonrpsee-client-transport 0.15.1",
+ "jsonrpsee-core 0.15.1",
+ "jsonrpsee-http-client 0.15.1",
+ "jsonrpsee-types 0.15.1",
 ]
 
 [[package]]
@@ -5038,6 +5086,27 @@ dependencies = [
  "http",
  "jsonrpsee-core 0.14.0",
  "jsonrpsee-types 0.14.0",
+ "pin-project 1.0.11",
+ "rustls-native-certs",
+ "soketto",
+ "thiserror",
+ "tokio",
+ "tokio-rustls",
+ "tokio-util 0.7.3",
+ "tracing",
+ "webpki-roots",
+]
+
+[[package]]
+name = "jsonrpsee-client-transport"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8752740ecd374bcbf8b69f3e80b0327942df76f793f8d4e60d3355650c31fb74"
+dependencies = [
+ "futures-util",
+ "http",
+ "jsonrpsee-core 0.15.1",
+ "jsonrpsee-types 0.15.1",
  "pin-project 1.0.11",
  "rustls-native-certs",
  "soketto",
@@ -5140,6 +5209,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "jsonrpsee-core"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f3dc3e9cf2ba50b7b1d7d76a667619f82846caa39e8e8daa8a4962d74acaddca"
+dependencies = [
+ "anyhow",
+ "async-lock",
+ "async-trait",
+ "beef",
+ "futures-channel",
+ "futures-timer",
+ "futures-util",
+ "hyper 0.14.20",
+ "jsonrpsee-types 0.15.1",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-futures",
+]
+
+[[package]]
 name = "jsonrpsee-http-client"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5156,6 +5249,26 @@ dependencies = [
  "thiserror",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-http-client"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52f7c0e2333ab2115c302eeb4f137c8a4af5ab609762df68bbda8f06496677c9"
+dependencies = [
+ "async-trait",
+ "hyper 0.14.20",
+ "hyper-rustls",
+ "jsonrpsee-core 0.15.1",
+ "jsonrpsee-types 0.15.1",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-futures",
 ]
 
 [[package]]
@@ -5248,6 +5361,20 @@ name = "jsonrpsee-types"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3bcf76cd316f5d3ad48138085af1f45e2c58c98e02f0779783dbb034d43f7c86"
+dependencies = [
+ "anyhow",
+ "beef",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "jsonrpsee-types"
+version = "0.15.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e290bba767401b646812f608c099b922d8142603c9e73a50fb192d3ac86f4a0d"
 dependencies = [
  "anyhow",
  "beef",
@@ -6280,7 +6407,7 @@ dependencies = [
  "polkadot-parachain",
  "polkadot-primitives",
  "polkadot-runtime-parachains",
- "primitives",
+ "primitives 0.1.0",
  "scale-info",
  "smallvec 1.9.0",
  "sp-api",
@@ -7255,6 +7382,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2386b4ebe91c2f7f51082d4cefa145d030e33a1842a96b12e4885cc3c01f7a55"
 
 [[package]]
+name = "owo-colors"
+version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "decf7381921fea4dcb2549c5667eda59b3ec297ab7e2b5fc33eac69d2e7da87b"
+
+[[package]]
 name = "p256"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7359,7 +7492,7 @@ dependencies = [
  "pallet-balances",
  "pallet-governance-registry",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.1.0",
  "proptest",
  "scale-info",
  "sp-api",
@@ -7861,7 +7994,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "polkadot-parachain",
- "primitives",
+ "primitives 0.1.0",
  "proptest",
  "scale-info",
  "serde",
@@ -8012,7 +8145,7 @@ dependencies = [
  "pallet-timestamp",
  "parachain-info",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.1.0",
  "prost 0.10.4",
  "scale-info",
  "serde",
@@ -8133,7 +8266,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-vault",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.1.0",
  "proptest",
  "rand 0.7.3",
  "scale-info",
@@ -8171,7 +8304,7 @@ dependencies = [
  "pallet-dutch-auction",
  "pallet-timestamp",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.1.0",
  "proptest",
  "scale-info",
  "smallvec 1.9.0",
@@ -8661,7 +8794,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-timestamp",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.1.0",
  "proptest",
  "scale-info",
  "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
@@ -9343,7 +9476,7 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
- "primitives",
+ "primitives 0.1.0",
  "scale-info",
  "simnode-runtime-apis",
  "smallvec 1.9.0",
@@ -10685,7 +10818,7 @@ dependencies = [
  "lazy_static",
  "log 0.4.17",
  "parity-scale-codec",
- "primitives",
+ "primitives 0.1.0",
  "serde",
  "serde_json",
  "signal-hook",
@@ -10723,6 +10856,20 @@ dependencies = [
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "xcm",
+]
+
+[[package]]
+name = "primitives"
+version = "0.1.0"
+source = "git+https://github.com/ComposableFi/beefy-rs?branch=master#8ce29f5da370f76bc8908b638bc221569c81eb17"
+dependencies = [
+ "beefy-primitives",
+ "ckb-merkle-mountain-range",
+ "parity-scale-codec",
+ "rs_merkle",
+ "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-mmr-primitives",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
 [[package]]
@@ -12908,7 +13055,7 @@ dependencies = [
  "thiserror",
  "tracing",
  "tracing-log",
- "tracing-subscriber",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -14550,7 +14697,7 @@ dependencies = [
  "sp-std 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "tracing",
  "tracing-core",
- "tracing-subscriber",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -14562,7 +14709,7 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "tracing",
  "tracing-core",
- "tracing-subscriber",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -15925,6 +16072,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tracing-error"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d686ec1c0f384b1277f097b2f279a2ecc11afe8c133c1aabf036a27cb4cd206e"
+dependencies = [
+ "tracing",
+ "tracing-subscriber 0.3.11",
+]
+
+[[package]]
 name = "tracing-futures"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15990,7 +16147,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.9.0",
  "regex",
  "serde",
  "serde_json",
@@ -16001,6 +16158,17 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
+]
+
+[[package]]
+name = "tracing-subscriber"
+version = "0.3.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bc28f93baff38037f64e6f43d34cfa1605f27a49c34e8a04c5e78b0babf2596"
+dependencies = [
+ "sharded-slab",
+ "thread_local",
+ "tracing-core",
 ]
 
 [[package]]
@@ -16173,7 +16341,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.3",
- "rand 0.8.5",
+ "rand 0.6.5",
  "static_assertions",
 ]
 
