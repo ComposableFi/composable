@@ -1,7 +1,7 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use composable_tests_helpers::test::{
-	block::{next_block, process_and_progress_blocks},
+	block::process_and_progress_blocks,
 	helper::{assert_last_event, assert_no_event},
 };
 
