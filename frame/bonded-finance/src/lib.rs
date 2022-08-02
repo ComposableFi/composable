@@ -210,7 +210,7 @@ pub mod pallet {
 		/// parameter.
 		///
 		/// Emits a `NewOffer`.
-		#[pallet::weight(<T as Config>::WeightInfo::offer())]
+		#[pallet::weight(T::WeightInfo::offer())]
 		pub fn offer(
 			origin: OriginFor<T>,
 			offer: Validated<
@@ -238,7 +238,7 @@ pub mod pallet {
 		///
 		/// Emits a `NewBond`.
 		/// Possibily Emits a `OfferCompleted`.
-		#[pallet::weight(<T as Config>::WeightInfo::bond())]
+		#[pallet::weight(T::WeightInfo::bond())]
 		pub fn bond(
 			origin: OriginFor<T>,
 			offer_id: T::BondOfferId,
@@ -258,7 +258,7 @@ pub mod pallet {
 		/// The dispatch origin for this call must be _Signed_ and the sender must be `AdminOrigin`
 		///
 		/// Emits a `OfferCancelled`.
-		#[pallet::weight(<T as Config>::WeightInfo::cancel())]
+		#[pallet::weight(T::WeightInfo::cancel())]
 		#[transactional]
 		pub fn cancel(origin: OriginFor<T>, offer_id: T::BondOfferId) -> DispatchResult {
 			let (issuer, offer) = Self::get_offer(offer_id)?;
@@ -275,7 +275,7 @@ pub mod pallet {
 			let offer_account = Self::account_id(offer_id);
 			// NOTE(hussein-aitlahcen): no need to keep the offer account alive
 			T::NativeCurrency::transfer(&offer_account, &issuer, T::Stake::get(), false)?;
-			<T as Config>::Currency::transfer(
+			T::Currency::transfer(
 				offer.reward.asset,
 				&offer_account,
 				&issuer,
@@ -305,7 +305,7 @@ pub mod pallet {
 			let beneficiary = offer.beneficiary.clone();
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
-			<T as Config>::Currency::transfer(
+			T::Currency::transfer(
 				offer.reward.asset,
 				from,
 				&offer_account,
@@ -349,7 +349,7 @@ pub mod pallet {
 							.map_err(|_| ArithmeticError::Overflow)?,
 						);
 						let offer_account = Self::account_id(offer_id);
-						<T as Config>::Currency::transfer(
+						T::Currency::transfer(
 							offer.asset,
 							from,
 							&offer.beneficiary,
