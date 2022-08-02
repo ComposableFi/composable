@@ -195,7 +195,7 @@
           serviceAccount = file.client_email;
           accessKey = file.private_key;
         };
-        gce-input = gce-to-nix service-account-credential-key-file-input
+        gce-input = gce-to-nix service-account-credential-key-file-input;
 
         devnet-deploy = pkgs.callPackage ./.nix/devnet.nix {inherit devnet-input; inherit gce-input; inherit nixpkgs;};
         codespace-base-container = pkgs.callPackage ./.devcontainer/nix/codespace-base-container.nix {inherit system;};
