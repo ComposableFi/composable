@@ -3,6 +3,7 @@ use composable_support::math::safe::SafeAdd;
 use frame_support::pallet_prelude::*;
 use sp_runtime::{traits::Zero, ArithmeticError, Perquintill};
 use sp_std::collections::btree_set::BTreeSet;
+
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct MarketConfig<AccountId, AssetId, BlockNumber, VaultId>
 where

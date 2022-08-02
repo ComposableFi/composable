@@ -162,7 +162,8 @@ pub mod pallet {
 		type MaxMarketsCounterValue: Get<Self::Counter>;
 		type MaxLoansPerMarketCounterValue: Get<Self::Counter>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
-	}
+        type PaymentTimestamp:  From<i64> + Parameter;	
+    }
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
