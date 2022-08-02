@@ -140,6 +140,10 @@ pub trait TryReciprocal: FixedPointNumber {
 	fn try_reciprocal(self) -> Result<Self, ArithmeticError>;
 }
 
+pub trait IntoU256<T> {
+	fn into_u256(self) -> U256;
+}
+
 // -------------------------------------------------------------------------------------------------
 //                                              Impls
 // -------------------------------------------------------------------------------------------------
@@ -316,6 +320,15 @@ where
 impl<T: FixedPointNumber> TryReciprocal for T {
 	fn try_reciprocal(self) -> Result<T, ArithmeticError> {
 		self.reciprocal().ok_or(DivisionByZero)
+	}
+}
+
+impl<B> IntoU256<B> for B
+where
+	B: Into<u128>,
+{
+	fn into_u256(self) -> U256 {
+		U256::from(self.into())
 	}
 }
 
