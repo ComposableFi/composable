@@ -325,7 +325,7 @@ fn cannot_use_fund_if_not_claimed() {
 		System::set_block_number(21);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &BOB, 59).is_err());
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(4_u128)));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, None));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &BOB, 59));
 	});
 }
