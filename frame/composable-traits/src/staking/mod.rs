@@ -1,3 +1,5 @@
+use core::num::NonZeroU64;
+
 use crate::{
 	staking::lock::{Lock, LockConfig},
 	time::DurationSeconds,
@@ -64,6 +66,24 @@ impl<Balance> RewardRate<Balance> {
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
 pub enum RewardRatePeriod {
 	PerSecond,
+}
+
+impl RewardRatePeriod {
+	/// Returns the length of the period in seconds.
+	pub fn as_secs(&self) -> NonZeroU64 {
+		match self {
+			RewardRatePeriod::PerSecond =>
+				sp_std::num::NonZeroU64::new(1).expect("1 is non-zero; qed;"),
+		}
+	}
+}
+
+/// A reward update states the new reward and reward_rate for a given asset
+#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
+pub struct RewardUpdate<Balance> {
+	/// The rewarding rate that increases the pool `total_reward`
+	/// at a given time.
+	pub reward_rate: RewardRate<Balance>,
 }
 
 /// Abstraction over the asset to reduction map stored for staking.

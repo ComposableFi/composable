@@ -41,7 +41,14 @@ mod test;
 mod validation;
 pub mod weights;
 
+use sp_std::ops::{Add, Div, Mul};
+
+use crate::prelude::*;
+use composable_support::math::safe::SafeSub;
+use composable_traits::staking::{Reward, RewardUpdate};
+use frame_support::{transactional, BoundedBTreeMap};
 pub use pallet::*;
+use sp_runtime::DispatchError;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -79,16 +86,12 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider},
 		PerThing, Perbill,
 	};
-	use sp_std::{
-		cmp::max,
-		collections::btree_map::BTreeMap,
-		fmt::Debug,
-		ops::{Add, Div, Mul},
-		vec,
-		vec::Vec,
-	};
+	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, vec, vec::Vec};
 
-	use crate::{prelude::*, validation::ValidSplitRatio};
+	use crate::{
+		prelude::*, reward_accumulation_calculation, validation::ValidSplitRatio,
+		RewardAccumulationCalculationError,
+	};
 
 	pub use crate::weights::WeightInfo;
 
@@ -749,63 +752,32 @@ pub mod pallet {
 		pub(crate) fn reward_accumulation_hook_reward_update_calculation(
 			pool_id: T::RewardPoolId,
 			reward: Reward<T::AssetId, T::Balance>,
-			now: u64,
+			now_seconds: u64,
 		) -> Reward<T::AssetId, T::Balance> {
-			match now.safe_sub(&reward.last_updated_timestamp) {
-				Ok(elapsed_time) => {
-					let reward_rate_period_seconds = match reward.reward_rate.period {
-						RewardRatePeriod::PerSecond => 1,
-					};
+			use RewardAccumulationCalculationError::*;
 
-					// SAFETY(benluelo): Usage of Div::div:
-					//
-					// Integer division can only fail if rhs == 0, and
-					// reward_rate_period_seconds is non-zero here as defined above.
-					let periods_surpassed = elapsed_time.div(reward_rate_period_seconds);
-
-					if periods_surpassed.is_zero() {
-						reward
-					} else {
-						let new_total_rewards = u128::from(periods_surpassed)
-							.saturating_mul(reward.reward_rate.amount.into())
-							.saturating_add(reward.total_rewards.into());
-
-						let new_total_rewards = if new_total_rewards <= reward.max_rewards.into() {
-							new_total_rewards.into()
-						} else {
-							// saturate at max_rewards, but emit an error first
-							// only emit if the previous total_rewards wasn't at the max_rewards
-							// (i.e. the event would have been emitted already)
-							if reward.total_rewards < reward.max_rewards {
-								Self::deposit_event(Event::<T>::MaxRewardsAccumulated {
-									pool_id,
-									asset_id: reward.asset_id,
-								});
-							}
-							reward.max_rewards
-						};
-
-						Reward {
-							total_rewards: new_total_rewards,
-							last_updated_timestamp: reward
-								.last_updated_timestamp
-								.add(periods_surpassed.mul(reward_rate_period_seconds)),
-							..reward
-						}
-					}
-				},
-				Err(_) => {
+			match reward_accumulation_calculation::<T>(reward, now_seconds) {
+				Ok(reward) => reward,
+				Err(RewardAccumulationError(reward)) => {
 					Self::deposit_event(Event::<T>::RewardAccumulationError {
 						pool_id,
 						asset_id: reward.asset_id,
 					});
 					reward
 				},
+				Err(MaxRewardsAccumulated(reward)) => {
+					Self::deposit_event(Event::<T>::MaxRewardsAccumulated {
+						pool_id,
+						asset_id: reward.asset_id,
+					});
+					reward
+				},
+				Err(MaxRewardsAccumulatedPreviously(reward)) => reward,
 			}
 		}
 
 		pub(crate) fn acumulate_rewards_hook() -> Weight {
-			let now = T::UnixTime::now().as_secs();
+			let now_seconds = T::UnixTime::now().as_secs();
 			let unix_time_now_weight = T::WeightInfo::unix_time_now();
 
 			let updated_pools = RewardPools::<T>::iter()
@@ -818,7 +790,9 @@ pub mod pallet {
 							(
 								asset_id,
 								Self::reward_accumulation_hook_reward_update_calculation(
-									pool_id, reward, now,
+									pool_id,
+									reward,
+									now_seconds,
 								),
 							)
 						})
@@ -945,4 +919,65 @@ pub mod pallet {
 			})
 		}
 	}
+}
+
+
+pub(crate) fn reward_accumulation_calculation<T: Config>(
+	reward: Reward<T::AssetId, T::Balance>,
+	now_seconds: u64,
+) -> Result<Reward<T::AssetId, T::Balance>, RewardAccumulationCalculationError<T>> {
+	match now_seconds.safe_sub(&reward.last_updated_timestamp) {
+		Ok(elapsed_time) => {
+			let reward_rate_period_seconds = reward.reward_rate.period.as_secs();
+
+			// SAFETY(benluelo): Usage of Div::div:
+			//
+			// Integer division can only fail if rhs == 0, and
+			// reward_rate_period_seconds is a NonZeroU64 here.
+			let periods_surpassed = elapsed_time.div(reward_rate_period_seconds.get());
+
+			if periods_surpassed.is_zero() {
+				Ok(reward)
+			} else {
+				let new_total_rewards = u128::from(periods_surpassed)
+					.saturating_mul(reward.reward_rate.amount.into())
+					.saturating_add(reward.total_rewards.into());
+
+				let last_updated_timestamp = reward
+					.last_updated_timestamp
+					.add(periods_surpassed.mul(reward_rate_period_seconds.get()));
+
+				if new_total_rewards <= reward.max_rewards.into() {
+					Ok(Reward {
+						total_rewards: new_total_rewards.into(),
+						last_updated_timestamp,
+						..reward
+					})
+				} else {
+					if reward.total_rewards < reward.max_rewards {
+						Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(Reward {
+							total_rewards: reward.max_rewards,
+							last_updated_timestamp,
+							..reward
+						}))
+					} else {
+						Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(
+							reward,
+						))
+					}
+				}
+			}
+		},
+		Err(_) => Err(RewardAccumulationCalculationError::RewardAccumulationError(reward)),
+	}
+}
+
+pub(crate) enum RewardAccumulationCalculationError<T: Config> {
+	/// An error occured while calculating the reward accumulation.
+	RewardAccumulationError(Reward<T::AssetId, T::Balance>),
+	/// The `max_rewards` for this reward was hit during this calculation.
+	MaxRewardsAccumulated(Reward<T::AssetId, T::Balance>),
+	/// The `max_rewards` were hit previously; i.e. `total_rewards == max_rewards` at the start of
+	/// this calculation.
+	MaxRewardsAccumulatedPreviously(Reward<T::AssetId, T::Balance>),
 }
