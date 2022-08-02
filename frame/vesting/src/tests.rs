@@ -4,7 +4,7 @@
 
 use super::*;
 use composable_traits::vesting::{
-	VestingSchedule,
+	VestingSchedule, VestingScheduleInput,
 	VestingWindow::{BlockNumberBased, MomentBased},
 };
 use frame_support::{assert_noop, assert_ok, error::BadOrigin, traits::fungibles::Mutate};
@@ -116,12 +116,10 @@ fn vested_transfer_self_vest_ko() {
 	ExtBuilder::build().execute_with(|| {
 		System::set_block_number(1);
 
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(
@@ -129,7 +127,7 @@ fn vested_transfer_self_vest_ko() {
 				ALICE,
 				ALICE,
 				MockCurrencyId::BTC,
-				schedule.clone(),
+				schedule_input,
 			),
 			Error::<Runtime>::TryingToSelfVest
 		);
@@ -141,26 +139,32 @@ fn vested_transfer_works() {
 	ExtBuilder::build().execute_with(|| {
 		System::set_block_number(1);
 
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule.clone(),
+			schedule_input.clone(),
 		));
+		let schedule = VestingSchedule {
+			vesting_schedule_id: 4_u128,
+			window: schedule_input.window,
+			period_count: schedule_input.period_count,
+			per_period: schedule_input.per_period,
+			already_claimed: 0_u64,
+		};
 		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), vec![schedule.clone()]);
 		System::assert_last_event(Event::Vesting(crate::Event::VestingScheduleAdded {
 			from: ALICE,
 			to: BOB,
 			asset: MockCurrencyId::BTC,
 			schedule,
+			vesting_schedule_id: 4_u128,
 		}));
 	});
 }
@@ -172,8 +176,14 @@ fn vested_transfer_trait_emits_vesting_schedule_added_event() {
 
 		assert_ok!(Tokens::mint_into(MockCurrencyId::ETH, &ALICE, 100));
 
+		let schedule_input = VestingScheduleInput {
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
+			period_count: 1_u32,
+			per_period: 100_u64,
+		};
+
 		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+			vesting_schedule_id: 4_u128,
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
@@ -184,7 +194,7 @@ fn vested_transfer_trait_emits_vesting_schedule_added_event() {
 			MockCurrencyId::ETH,
 			&ALICE,
 			&BOB,
-			schedule.clone(),
+			schedule_input,
 		));
 
 		System::assert_last_event(Event::Vesting(crate::Event::VestingScheduleAdded {
@@ -192,6 +202,7 @@ fn vested_transfer_trait_emits_vesting_schedule_added_event() {
 			to: BOB,
 			asset: MockCurrencyId::ETH,
 			schedule,
+			vesting_schedule_id: 4_u128,
 		}));
 	});
 }
@@ -202,8 +213,13 @@ fn vested_transfer_for_moment_based_schedule_works() {
 		System::set_block_number(1);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 
+		let schedule_input = VestingScheduleInput {
+			window: MomentBased { start: 0_u64, period: 10_u64 },
+			period_count: 1_u32,
+			per_period: 100_u64,
+		};
 		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+			vesting_schedule_id: 4_u128,
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
@@ -214,7 +230,7 @@ fn vested_transfer_for_moment_based_schedule_works() {
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule.clone(),
+			schedule_input.clone(),
 		));
 		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), vec![schedule.clone()]);
 		System::assert_last_event(Event::Vesting(crate::Event::VestingScheduleAdded {
@@ -222,6 +238,7 @@ fn vested_transfer_for_moment_based_schedule_works() {
 			to: BOB,
 			asset: MockCurrencyId::BTC,
 			schedule,
+			vesting_schedule_id: 4_u128,
 		}));
 	});
 }
@@ -229,52 +246,46 @@ fn vested_transfer_for_moment_based_schedule_works() {
 #[test]
 fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule,
+			schedule_input,
 		));
 
 		System::set_block_number(12);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 
-		let another_schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let another_schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 10_u64, period: 13_u64 },
 			period_count: 1_u32,
 			per_period: 7_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			another_schedule,
+			another_schedule_input,
 		));
 
-		let moment_based_schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let moment_based_schedule_input = VestingScheduleInput {
 			window: MomentBased { start: 72000_u64, period: 5000_u64 },
 			period_count: 2_u32,
 			per_period: 7_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			moment_based_schedule,
+			moment_based_schedule_input,
 		));
 
 		assert_eq!(
@@ -287,38 +298,34 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 #[test]
 fn cannot_use_fund_if_not_claimed() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 10_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 50_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule,
+			schedule_input,
 		));
-		let moment_based_schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let moment_based_schedule_input = VestingScheduleInput {
 			window: MomentBased { start: 1000_u64, period: 5000_u64 },
 			period_count: 1_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			moment_based_schedule,
+			moment_based_schedule_input,
 		));
 		System::set_block_number(21);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &BOB, 59).is_err());
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(1_u128)));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(4_u128)));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &BOB, 59));
 	});
 }
@@ -326,15 +333,19 @@ fn cannot_use_fund_if_not_claimed() {
 #[test]
 fn vested_transfer_fails_if_zero_period_count() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 0_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64,
 		};
 		assert_noop!(
-			Vesting::vested_transfer(Origin::root(), ALICE, BOB, MockCurrencyId::BTC, schedule,),
+			Vesting::vested_transfer(
+				Origin::root(),
+				ALICE,
+				BOB,
+				MockCurrencyId::BTC,
+				schedule_input,
+			),
 			Error::<Runtime>::ZeroVestingPeriodCount
 		);
 	});
@@ -343,27 +354,35 @@ fn vested_transfer_fails_if_zero_period_count() {
 #[test]
 fn vested_transfer_fails_if_zero_period() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 1_u64, period: 0_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64,
 		};
 		assert_noop!(
-			Vesting::vested_transfer(Origin::root(), ALICE, BOB, MockCurrencyId::BTC, schedule,),
+			Vesting::vested_transfer(
+				Origin::root(),
+				ALICE,
+				BOB,
+				MockCurrencyId::BTC,
+				schedule_input,
+			),
 			Error::<Runtime>::ZeroVestingPeriod
 		);
 
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: MomentBased { start: 1_u64, period: 0_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64,
 		};
 		assert_noop!(
-			Vesting::vested_transfer(Origin::root(), ALICE, BOB, MockCurrencyId::BTC, schedule,),
+			Vesting::vested_transfer(
+				Origin::root(),
+				ALICE,
+				BOB,
+				MockCurrencyId::BTC,
+				schedule_input,
+			),
 			Error::<Runtime>::ZeroVestingPeriod
 		);
 	});
@@ -372,15 +391,19 @@ fn vested_transfer_fails_if_zero_period() {
 #[test]
 fn vested_transfer_fails_if_transfer_err() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64,
 		};
 		assert_noop!(
-			Vesting::vested_transfer(Origin::root(), BOB, ALICE, MockCurrencyId::BTC, schedule,),
+			Vesting::vested_transfer(
+				Origin::root(),
+				BOB,
+				ALICE,
+				MockCurrencyId::BTC,
+				schedule_input,
+			),
 			orml_tokens::Error::<Runtime>::BalanceTooLow,
 		);
 	});
@@ -389,24 +412,10 @@ fn vested_transfer_fails_if_transfer_err() {
 #[test]
 fn vested_transfer_fails_if_overflow() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 2_u32,
 			per_period: u64::MAX,
-			already_claimed: 0_u64,
-		};
-		assert_noop!(
-			Vesting::vested_transfer(Origin::root(), ALICE, BOB, MockCurrencyId::BTC, schedule,),
-			ArithmeticError::Overflow,
-		);
-
-		let another_schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
-			window: BlockNumberBased { start: u64::MAX, period: 1_u64 },
-			period_count: 2_u32,
-			per_period: 1_u64,
-			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(
@@ -414,17 +423,15 @@ fn vested_transfer_fails_if_overflow() {
 				ALICE,
 				BOB,
 				MockCurrencyId::BTC,
-				another_schedule,
+				schedule_input,
 			),
 			ArithmeticError::Overflow,
 		);
 
-		let moment_based_schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
-			window: MomentBased { start: u64::MAX, period: 1_u64 },
+		let another_schedule_input = VestingScheduleInput {
+			window: BlockNumberBased { start: u64::MAX, period: 1_u64 },
 			period_count: 2_u32,
 			per_period: 1_u64,
-			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(
@@ -432,7 +439,23 @@ fn vested_transfer_fails_if_overflow() {
 				ALICE,
 				BOB,
 				MockCurrencyId::BTC,
-				moment_based_schedule,
+				another_schedule_input,
+			),
+			ArithmeticError::Overflow,
+		);
+
+		let moment_based_schedule_input = VestingScheduleInput {
+			window: MomentBased { start: u64::MAX, period: 1_u64 },
+			period_count: 2_u32,
+			per_period: 1_u64,
+		};
+		assert_noop!(
+			Vesting::vested_transfer(
+				Origin::root(),
+				ALICE,
+				BOB,
+				MockCurrencyId::BTC,
+				moment_based_schedule_input,
 			),
 			ArithmeticError::Overflow,
 		);
@@ -442,12 +465,10 @@ fn vested_transfer_fails_if_overflow() {
 #[test]
 fn vested_transfer_fails_if_bad_origin() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
-			already_claimed: 0_u64,
 		};
 		assert_noop!(
 			Vesting::vested_transfer(
@@ -455,7 +476,7 @@ fn vested_transfer_fails_if_bad_origin() {
 				CHARLIE,
 				BOB,
 				MockCurrencyId::BTC,
-				schedule,
+				schedule_input,
 			),
 			BadOrigin
 		);
@@ -465,27 +486,24 @@ fn vested_transfer_fails_if_bad_origin() {
 #[test]
 fn claim_works() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule,
+			schedule_input,
 		));
 
 		System::set_block_number(11);
 		// remain locked if not claimed
 		assert!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 10).is_err());
 		// unlocked after claiming
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(1_u128)));
-		// TODO: test with Some(1_u128)
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(4_u128)));
 		assert!(VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
 		assert_ok!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 10));
 		// more are still locked
@@ -508,52 +526,46 @@ fn claim_works() {
 #[test]
 fn claim_with_id_works() {
 	ExtBuilder::build().execute_with(|| {
-		// Add schedule 1
-		let schedule_1 = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		// Add schedule 4
+		let schedule_4_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule_1,
+			schedule_4_input,
 		));
 
-		// Add schedule 2
-		let schedule_2 = VestingSchedule {
-			vesting_schedule_id: 2_u128,
+		// Add schedule 5
+		let schedule_5_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 15_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule_2,
+			schedule_5_input,
 		));
 
-		// Add schedule 3
-		let schedule_3 = VestingSchedule {
-			vesting_schedule_id: 3_u128,
+		// Add schedule 6
+		let schedule_6_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 3_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule_3,
+			schedule_6_input,
 		));
 
 		// Locked balance should be 2*10 + 2*15 + 2*3 = 56
@@ -563,12 +575,12 @@ fn claim_with_id_works() {
 			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 56_u64 })
 		);
 
-		// Claim for schedule 1
+		// Claim for schedule 4
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(1_u128)
+			Some(4_u128)
 		));
 
 		// Nothing should be claimed, so locked balance should still be 2*10 + 2*15 + 2*3 = 56
@@ -584,15 +596,15 @@ fn claim_with_id_works() {
 
 		println!("locks: {:?}", Tokens::locks(&BOB, MockCurrencyId::BTC).get(0));
 
-		// Claim for schedule 2
+		// Claim for schedule 5
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(2_u128)
+			Some(5_u128)
 		));
 
-		// Half of schedule 2 should be claimed
+		// Half of schedule 5 should be claimed
 		// Locked balance should be (2*10 + 2*15 + 2*3) - 15 = 41
 		//                                              ----
 		assert_eq!(
@@ -600,12 +612,12 @@ fn claim_with_id_works() {
 			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 41_u64 })
 		);
 
-		// Claim for schedule 3
+		// Claim for schedule 6
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(3_u128)
+			Some(6_u128)
 		));
 
 		// Half of schedule 3 should be claimed
@@ -619,15 +631,15 @@ fn claim_with_id_works() {
 		// Set block 21, in which all schedules have vested
 		System::set_block_number(21);
 
-		// Claim for schedule 1
+		// Claim for schedule 4
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(1_u128)
+			Some(4_u128)
 		));
 
-		// All of schedule 1 should be claimed
+		// All of schedule 4 should be claimed
 		// Locked balance should be (2*10 + 2*15 + 2*3) - 15 - 3 - 2*10 = 18
 		//                                                       ------
 		assert_eq!(
@@ -635,17 +647,15 @@ fn claim_with_id_works() {
 			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 18_u64 })
 		);
 
-		// Claim for schedule 3
-		println!("schedule 3 start");
+		// Claim for schedule 6
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(3_u128)
+			Some(6_u128)
 		));
-		println!("schedule 3 end");
 
-		// All of schedule 3 should be claimed
+		// All of schedule 6 should be claimed
 		// Locked balance should be (2*10 + 2*15 + 2*3) - 15 - 3 - 2*10 - 3 = 15
 		//                                                              ---
 		assert_eq!(
@@ -653,15 +663,15 @@ fn claim_with_id_works() {
 			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 15_u64 })
 		);
 
-		// Claim remaining for schedule 2
+		// Claim remaining for schedule 5
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(2_u128)
+			Some(5_u128)
 		));
 
-		// All of schedule 2 should be claimed
+		// All of schedule 5 should be claimed
 		// Nothing left, so locked balance should be None
 		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC).get(0), None);
 	});
@@ -670,36 +680,32 @@ fn claim_with_id_works() {
 #[test]
 fn claim_for_with_id_works() {
 	ExtBuilder::build().execute_with(|| {
-		// Add schedule 1
-		let schedule_1 = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		// Add schedule 4
+		let schedule_4_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule_1,
+			schedule_4_input,
 		));
 
-		// Add schedule 2
-		let schedule_2 = VestingSchedule {
-			vesting_schedule_id: 2_u128,
+		// Add schedule 5
+		let schedule_5_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 15_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule_2,
+			schedule_5_input,
 		));
 
 		// Locked balance should be 2*10 + 2*15 = 50
@@ -708,12 +714,12 @@ fn claim_for_with_id_works() {
 			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 50_u64 })
 		);
 
-		// Claim for schedule 1
+		// Claim for schedule 4
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(1_u128)
+			Some(4_u128)
 		));
 
 		// Nothing should be claimed, so locked balance should still be 2*10 + 2*15 = 50
@@ -725,15 +731,15 @@ fn claim_for_with_id_works() {
 
 		System::set_block_number(21);
 
-		// Claim for schedule 2
+		// Claim for schedule 5
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(2_u128)
+			Some(5_u128)
 		));
 
-		// All of schedule 2 should be claimed
+		// All of schedule 5 should be claimed
 		// Locked balance should be (2*10 + 2*15) - 2*15 = 20
 		//                                        ------
 		assert_eq!(
@@ -741,12 +747,12 @@ fn claim_for_with_id_works() {
 			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 20_u64 })
 		);
 
-		// Claim for schedule 1
+		// Claim for schedule 4
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(1_u128)
+			Some(4_u128)
 		));
 
 		// There should not be any locks left
@@ -758,20 +764,18 @@ fn claim_for_with_id_works() {
 #[test]
 fn claim_for_works() {
 	ExtBuilder::build().execute_with(|| {
-		// Add schedule 1
-		let schedule_1 = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		// Add schedule 4
+		let schedule_4_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule_1,
+			schedule_4_input,
 		));
 
 		// Locked balance should be 2*10 = 20
@@ -780,7 +784,7 @@ fn claim_for_works() {
 			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 20_u64 })
 		);
 
-		// Claim for schedule 1
+		// Claim all schedules
 		assert_ok!(Vesting::claim_for(Origin::signed(ALICE), BOB, MockCurrencyId::BTC, None));
 
 		// Nothing should be claimed, so locked balance should still be 2*10 = 20
@@ -792,7 +796,7 @@ fn claim_for_works() {
 
 		System::set_block_number(21);
 
-		// Claim for schedule 1
+		// Claim for all schedules
 		assert_ok!(Vesting::claim_for(Origin::signed(ALICE), BOB, MockCurrencyId::BTC, None));
 
 		// There should not be any locks left
@@ -804,26 +808,24 @@ fn claim_for_works() {
 #[test]
 fn claim_for_works_moment_based() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule,
+			schedule_input,
 		));
 
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(1_u128)
+			Some(4_u128)
 		));
 		assert_eq!(
 			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
@@ -840,7 +842,7 @@ fn claim_for_works_moment_based() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(1_u128)
+			Some(4_u128)
 		));
 		// no locks anymore
 		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC), vec![]);
@@ -851,45 +853,41 @@ fn claim_for_works_moment_based() {
 #[test]
 fn update_vesting_schedules_works() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule,
+			schedule_input,
 		));
 
-		let moment_based_schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let moment_based_schedule_input = VestingScheduleInput {
 			window: MomentBased { start: 0_u64, period: 60000_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			moment_based_schedule,
+			moment_based_schedule_input,
 		));
 
 		let updated_schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+			vesting_schedule_id: 4_u128,
 			window: BlockNumberBased { start: 0_u64, period: 20_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
 			already_claimed: 0_u64,
 		};
 		let updated_moment_based_schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+			vesting_schedule_id: 5_u128,
 			window: MomentBased { start: 0_u64, period: 120000_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -940,15 +938,19 @@ fn update_vesting_schedules_fails_if_unexpected_existing_locks() {
 #[test]
 fn vested_transfer_check_for_min() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let schedule_input = VestingScheduleInput {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 1_u32,
 			per_period: 3_u64,
-			already_claimed: 0_u64,
 		};
 		assert_noop!(
-			Vesting::vested_transfer(Origin::root(), BOB, ALICE, MockCurrencyId::BTC, schedule,),
+			Vesting::vested_transfer(
+				Origin::root(),
+				BOB,
+				ALICE,
+				MockCurrencyId::BTC,
+				schedule_input,
+			),
 			Error::<Runtime>::AmountLow
 		);
 	});
@@ -957,8 +959,13 @@ fn vested_transfer_check_for_min() {
 #[test]
 fn multiple_vesting_schedule_claim_works() {
 	ExtBuilder::build().execute_with(|| {
+		let schedule_input = VestingScheduleInput {
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
 		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+			vesting_schedule_id: 4_u128,
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -969,11 +976,16 @@ fn multiple_vesting_schedule_claim_works() {
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule.clone(),
+			schedule_input,
 		));
 
+		let schedule2_input = VestingScheduleInput {
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
+			period_count: 3_u32,
+			per_period: 10_u64,
+		};
 		let schedule2 = VestingSchedule {
-			vesting_schedule_id: 2_u128,
+			vesting_schedule_id: 5_u128,
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 3_u32,
 			per_period: 10_u64,
@@ -984,7 +996,7 @@ fn multiple_vesting_schedule_claim_works() {
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule2.clone(),
+			schedule2_input,
 		));
 
 		assert_eq!(
@@ -993,11 +1005,11 @@ fn multiple_vesting_schedule_claim_works() {
 		);
 
 		System::set_block_number(21);
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(1_u128)));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(4_u128)));
 		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), vec![schedule2]);
 
 		System::set_block_number(31);
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(2_u128)));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(5_u128)));
 		assert!(!VestingSchedules::<Runtime>::contains_key(&BOB, MockCurrencyId::BTC));
 
 		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC), vec![]);
@@ -1007,40 +1019,43 @@ fn multiple_vesting_schedule_claim_works() {
 #[test]
 fn exceeding_maximum_schedules_should_fail() {
 	ExtBuilder::build().execute_with(|| {
+		let schedule_input = VestingScheduleInput {
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
 		let schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+			vesting_schedule_id: 4_u128,
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
 			already_claimed: 0_u64,
 		};
-		let moment_schedule = VestingSchedule {
-			vesting_schedule_id: 1_u128,
+		let moment_schedule_input = VestingScheduleInput {
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
-			already_claimed: 0_u64,
 		};
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule.clone(),
+			schedule_input.clone(),
 		));
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			schedule.clone(),
+			schedule_input.clone(),
 		));
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
 			BOB,
 			MockCurrencyId::BTC,
-			moment_schedule,
+			moment_schedule_input,
 		));
 		assert_noop!(
 			Vesting::vested_transfer(
@@ -1048,7 +1063,7 @@ fn exceeding_maximum_schedules_should_fail() {
 				ALICE,
 				BOB,
 				MockCurrencyId::BTC,
-				schedule.clone(),
+				schedule_input,
 			),
 			Error::<Runtime>::MaxVestingSchedulesExceeded
 		);

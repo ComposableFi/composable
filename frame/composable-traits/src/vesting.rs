@@ -22,12 +22,7 @@ pub trait VestedTransfer {
 		asset: Self::AssetId,
 		from: &Self::AccountId,
 		to: &Self::AccountId,
-		schedule: VestingSchedule<
-			Self::VestingScheduleId,
-			Self::BlockNumber,
-			Self::Moment,
-			Self::Balance,
-		>,
+		schedule: VestingScheduleInput<Self::BlockNumber, Self::Moment, Self::Balance>,
 	) -> DispatchResult;
 }
 
@@ -66,6 +61,17 @@ pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasC
 	pub per_period: Balance,
 	/// Amout already claimed
 	pub already_claimed: Balance,
+}
+
+#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct VestingScheduleInput<BlockNumber, Moment, Balance: HasCompact> {
+	pub window: VestingWindow<BlockNumber, Moment>,
+	/// Number of vest
+	pub period_count: u32,
+	/// Amount of tokens to release per vest
+	#[codec(compact)]
+	pub per_period: Balance,
 }
 
 pub enum VestingWindowResult<BlockNumber, Moment> {

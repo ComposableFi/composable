@@ -41,7 +41,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
-use composable_traits::vesting::{VestedTransfer, VestingSchedule};
+use composable_support::abstractions::utils::increment::Increment;
+use composable_traits::vesting::{VestedTransfer, VestingSchedule, VestingScheduleInput};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -83,7 +84,7 @@ pub mod module {
 		},
 		math::safe::SafeAdd,
 	};
-	use composable_traits::vesting::{VestingSchedule, VestingWindow};
+	use composable_traits::vesting::{VestingSchedule, VestingScheduleInput, VestingWindow};
 	use frame_support::traits::Time;
 	use orml_traits::{MultiCurrency, MultiLockableCurrency};
 	use sp_runtime::traits::AtLeast32Bit;
@@ -103,6 +104,8 @@ pub mod module {
 		MomentOf<T>,
 		BalanceOf<T>,
 	>;
+	pub(crate) type VestingScheduleInputOf<T> =
+		VestingScheduleInput<BlockNumberOf<T>, MomentOf<T>, BalanceOf<T>>;
 	pub type ScheduledItem<T> = (
 		AssetIdOf<T>,
 		<T as frame_system::Config>::AccountId,
@@ -186,6 +189,7 @@ pub mod module {
 			to: AccountIdOf<T>,
 			asset: AssetIdOf<T>,
 			schedule: VestingScheduleOf<T>,
+			vesting_schedule_id: T::VestingScheduleId,
 		},
 		/// Claimed vesting. \[who, locked_amount\]
 		Claimed {
@@ -307,12 +311,12 @@ pub mod module {
 			from: <T::Lookup as StaticLookup>::Source,
 			beneficiary: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
-			schedule: VestingScheduleOf<T>,
+			schedule_input: VestingScheduleInputOf<T>,
 		) -> DispatchResult {
 			T::VestedTransferOrigin::ensure_origin(origin)?;
 			let from = T::Lookup::lookup(from)?;
 			let to = T::Lookup::lookup(beneficiary)?;
-			<Self as VestedTransfer>::vested_transfer(asset, &from, &to, schedule)?;
+			<Self as VestedTransfer>::vested_transfer(asset, &from, &to, schedule_input)?;
 
 			Ok(())
 		}
@@ -365,14 +369,18 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 		asset: Self::AssetId,
 		from: &Self::AccountId,
 		to: &Self::AccountId,
-		schedule: VestingSchedule<
-			Self::VestingScheduleId,
-			Self::BlockNumber,
-			Self::Moment,
-			Self::Balance,
-		>,
+		schedule_input: VestingScheduleInput<Self::BlockNumber, Self::Moment, Self::Balance>,
 	) -> frame_support::dispatch::DispatchResult {
 		ensure!(from != to, Error::<T>::TryingToSelfVest);
+
+		let vesting_schedule_id = Self::VestingScheduleCount::increment()?; // VestingScheduleCount::<T>::increment()?;
+		let schedule: VestingScheduleOf<T> = VestingSchedule {
+			vesting_schedule_id,
+			window: schedule_input.window,
+			period_count: schedule_input.period_count,
+			per_period: schedule_input.per_period,
+			already_claimed: Zero::zero(),
+		};
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
@@ -390,6 +398,7 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 			to: to.clone(),
 			asset,
 			schedule,
+			vesting_schedule_id,
 		});
 
 		Ok(())
