@@ -239,6 +239,8 @@ jobs:
 
           cd devnet
           ./update.sh $RELEASE_VERSION
+          # TODO: what the adhoc hec is that?
+          # TODO: just use path to GOOGLE_APPLICATION_CREDENTIALS
           jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
           cat  ops.json
           cd ..
@@ -249,7 +251,7 @@ jobs:
           else            
             nix develop .#sre --override-input flake-utils ./.nix/override-input/flake-utils/  --show-trace --command nixops create --deployment devnet-gce  
           fi
-          
+
           nix develop .#sre --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/ --command nixops deploy --check --confirm --deployment devnet-gce --debug --show-trace
         env:
           NIXOPS_STATE_URL: "gs://composable-state"

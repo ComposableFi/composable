@@ -183,9 +183,20 @@
           };
 
         polkadot = import ./.nix/polkadot-version.nix;
-       
+        
         devnet-input = builtins.fromJSON (builtins.readFile ./devnet/devnet.json);      
-        gce-input = builtins.fromJSON (builtins.readFile ./devnet/ops.json);
+
+        # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
+        # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file        
+        service-account-credential-key-file-input = builtins.fromJSON (builtins.readFile ./devnet/ops.json);
+        gce-to-nix = file: 
+        {
+          project = file.project_id;
+          serviceAccount = file.client_email;
+          accessKey = file.private_key;
+        };
+        gce-input = gce-to-nix service-account-credential-key-file-input
+
         devnet-deploy = pkgs.callPackage ./.nix/devnet.nix {inherit devnet-input; inherit gce-input; inherit nixpkgs;};
         codespace-base-container = pkgs.callPackage ./.devcontainer/nix/codespace-base-container.nix {inherit system;};
       in rec {
@@ -338,9 +349,12 @@
                 nixops
                 # TODO: replace fetching binries with approciate cachix builds
                 # TODO: binaries are referenced by git commit hash (so can retarted to git easy)
-                packages.dali-script 
                 packages.picasso-script
+                packages.dali-script 
                 packages.dali-composable-book # book deploy couuld be secure deployed too
+                python3
+                google-cloud-sdk
+                jq
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
@@ -348,8 +362,12 @@
           developers-xcvm = developers // mkShell {
             buildInputs = with packages; [
               # TODO: hasura
-              # TODO: junod
+              # TODO: junod client
+              # TODO: junod server
               # TODO: solc
+              # TODO: script to run all
+              # TODO: compose export
+                packages.dali-script 
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
