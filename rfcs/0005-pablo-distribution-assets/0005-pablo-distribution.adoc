@@ -489,7 +489,7 @@ start
 :rewards_pool = readStorage(assetId);
 while (reward = reward_update.rewards.has_next) is (yes)
     :assert max_reward not exceeded;
-    :reward.total_rewards += reward_update[reward.asset_id].amount;
+    :reward.total_rewards += rewards_pool[reward.asset_id].amount;
     :reward.total_rewards += elapsed_time * reward.reward_rate;
     :reward.reward_rate = reward_update[reward.asset_id].rate;
 endwhile (no)
