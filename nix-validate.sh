@@ -7,6 +7,6 @@ nix flake show --allow-import-from-derivation --show-trace --override-input flak
 # and openjdk-headless-16+36 is too old 
 # asks to set export NIXPKGS_ALLOW_INSECURE=1
 # not clear why there are such weird deps nor how to override configs in nix, not via export env
-nix flake check --override-input flake-utils ./.nix/override-input/flake-utils/  --keep-going
+nix flake check --override-input flake-utils ./.nix/override-input/flake-utils/ --no-update-lock-file --keep-going
 # TODO: on it too for fail fast before build
 # nixops deploy --dry-run  --debug --keep-going --show-trace
