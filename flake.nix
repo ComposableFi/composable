@@ -199,35 +199,31 @@
             crane-stable.buildPackage (common-args // {
               pnameSuffix = "-node";
               cargoArtifacts = common-deps;
-              cargoBuildCommand = ''
-                cargo build --release -p composable --features builtin-wasm
-                '';
+              cargoBuildCommand =
+                "cargo build --release -p composable --features builtin-wasm";
               DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
-                 "${composable-runtime}/lib/runtime.optimized.wasm";
+                "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable
               '';
             });
 
-          composable-node-docs = with packages;
+
+          extrinsics-docs-scraper = with packages;
             crane-stable.buildPackage (common-args // {
-              pnameSuffix = "-node";
-              #cargoArtifacts = common-deps;
-              outputs = [ "bin" "out" "doc" ];
-              cargoBuildCommand = ''
-                cd utils/extrinsics-docs-scraper/
-                cargo build
-                cargo doc
-                cd ../..
-                '';
+              pnameSuffix = "-extrinsics-docs-scraper";
+              cargoArtifacts = common-deps;
+              #outputs = [ "bin" "out" "doc" ];
+              cargoBuildCommand = 
+              "cd utils/extrinsics-docs-scraper/ && cargo build && cd ../..";
               installPhase = ''
                 mkdir -p $out/bin
-                mkdir -p $out/doc
+                #mkdir -p $out/doc
                 cp -r utils/extrinsics-docs-scraper/target/debug/* $out/bin
-                cp -r utils/extrinsics-docs-scraper/target/doc/* $out/doc
+                $cp -r utils/extrinsics-docs-scraper/target/doc/* $out/doc
               '';
             });
 
