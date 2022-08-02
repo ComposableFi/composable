@@ -118,3 +118,24 @@ export function calculatePoolTotalValueLocked(
 ): BigNumber {
   return baseAmount.times(basePrice).plus(quoteAmount.times(quotePrice));
 }
+
+export function calcaulateConstantProductSpotPrice(
+  baseBalance: BigNumber,
+  quoteBalance: BigNumber,
+  baseWeight: BigNumber
+): BigNumber {
+  let quoteWeight = new BigNumber(100).minus(baseWeight).div(100);
+  baseWeight = baseWeight.div(100);
+  let num = quoteBalance.div(quoteWeight);
+  let den = baseBalance.div(baseWeight);
+
+  return num.div(den);
+}
+
+export function calculateChangePercent(
+  new_price: BigNumber,
+  old_price: BigNumber
+): BigNumber {
+  let difference = new_price.minus(old_price).div(old_price);
+  return difference.times(100);
+}

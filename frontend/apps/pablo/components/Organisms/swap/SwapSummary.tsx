@@ -1,4 +1,4 @@
-import { Box, BoxProps } from "@mui/material";
+import { Box, BoxProps, TypographyProps } from "@mui/material";
 import BigNumber from "bignumber.js";
 import { Label } from "@/components";
 import { MockedAsset } from "@/store/assets/assets.types";
@@ -11,8 +11,8 @@ export type SwapSummaryProps = {
   baseAsset: MockedAsset | undefined;
 
   minimumReceived: BigNumber;
-  // priceImpact: number,
-  // PriceImpactProps?: TypographyProps,
+  priceImpact: BigNumber,
+  PriceImpactProps?: TypographyProps,
   baseAssetAmount: BigNumber;
   quoteAssetAmount: BigNumber;
   feeCharged: BigNumber;
@@ -25,8 +25,8 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
   minimumReceived,
   baseAssetAmount,
   quoteAssetAmount,
-  // priceImpact,
-  // PriceImpactProps,
+  priceImpact,
+  PriceImpactProps,
   feeCharged,
   spotPrice,
   ...boxProps
@@ -103,6 +103,20 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
         }}
         BalanceProps={{
           balance: `${estimatedGas.toFixed(4)} PICA`,
+          // BalanceTypographyProps: {
+          //   color: "primary.main",
+          //   ...PriceImpactProps,
+          // },
+        }}
+        mb={2}
+      />
+      <Label
+        label="Price Impact"
+        TooltipProps={{
+          title: "Price Impact",
+        }}
+        BalanceProps={{
+          balance: `${priceImpact.toFixed(4)} %`,
           // BalanceTypographyProps: {
           //   color: "primary.main",
           //   ...PriceImpactProps,
