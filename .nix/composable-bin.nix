@@ -3,6 +3,7 @@ pkgs.stdenv.mkDerivation rec {
     name = "composable-${composable.name}-${composable.version}";
     version = composable.version;
     src = pkgs.fetchurl {
+      # TODO: remove - use cachix for builds - or pure buildsfrom repo
       url = "https://storage.googleapis.com/composable-binaries/community-releases/${composable.name}/${name}.tar.gz";
       sha256 = composable.hash;
     };
@@ -16,4 +17,9 @@ pkgs.stdenv.mkDerivation rec {
       mv release/composable $out/bin
       mv doc $out
     '';
+    ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
+    LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
+      pkgs.stdenv.cc.cc.lib
+      pkgs.llvmPackages.libclang.lib
+    ];  
   }
