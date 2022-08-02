@@ -1,7 +1,12 @@
 use crate::{Config, Error, Pallet};
+use composable_maths::labs::numbers::IntoU256;
 use frame_support::pallet_prelude::*;
 use sp_core::U256;
-use sp_runtime::{traits::Zero, ArithmeticError, FixedPointNumber};
+use sp_runtime::{
+	traits::Zero,
+	ArithmeticError::{DivisionByZero, Overflow},
+	FixedPointNumber,
+};
 
 impl<T: Config> Pallet<T> {
 	/// Returns the vamm invariant (aka. `K`), given `base` and `quote` asset
@@ -24,9 +29,9 @@ impl<T: Config> Pallet<T> {
 		ensure!(!base.is_zero(), Error::<T>::BaseAssetReserveIsZero);
 		ensure!(!quote.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
 
-		let base_u256 = Self::balance_to_u256(base)?;
-		let quote_u256 = Self::balance_to_u256(quote)?;
-		let invariant = base_u256.checked_mul(quote_u256).ok_or(ArithmeticError::Overflow)?;
+		let base_u256 = base.into_u256();
+		let quote_u256 = quote.into_u256();
+		let invariant = base_u256.checked_mul(quote_u256).ok_or(Overflow)?;
 
 		ensure!(!invariant.is_zero(), Error::<T>::InvariantIsZero);
 
@@ -56,64 +61,18 @@ impl<T: Config> Pallet<T> {
 	) -> Result<T::Decimal, DispatchError> {
 		let w1_u256 = U256::from(w1.into());
 		let w2_u256 = U256::from(w2.into());
-		let denominator = w1_u256.checked_add(w2_u256).ok_or(ArithmeticError::Overflow)?;
-		let xw1 = Self::balance_to_u256(x1.into_inner())?
-			.checked_mul(w1_u256)
-			.ok_or(ArithmeticError::Overflow)?;
-		let xw2 = Self::balance_to_u256(x2.into_inner())?
-			.checked_mul(w2_u256)
-			.ok_or(ArithmeticError::Overflow)?;
+		let denominator = w1_u256.checked_add(w2_u256).ok_or(Overflow)?;
+		let xw1 = x1.into_inner().into_u256().checked_mul(w1_u256).ok_or(Overflow)?;
+		let xw2 = x2.into_inner().into_u256().checked_mul(w2_u256).ok_or(Overflow)?;
 
 		let twap_u256 = xw1
 			.checked_add(xw2)
-			.ok_or(ArithmeticError::Overflow)?
+			.ok_or(Overflow)?
 			.checked_div(denominator)
-			.ok_or(ArithmeticError::DivisionByZero)?;
-		let twap = Self::balance_to_decimal(Self::u256_to_balance(twap_u256)?);
-		Ok(twap)
-	}
+			.ok_or(DivisionByZero)?;
 
-	// TODO(Cardosaum): Create trait for U256 in `labs::numbers` implementing conversion between
-	// balance, decimal and U256.
-	/// Converts a [`Balance`](Config::Balance) into a [`Decimal`](Config::Decimal)
-	/// value.
-	pub fn balance_to_decimal(value: T::Balance) -> T::Decimal {
-		T::Decimal::from_inner(value)
-	}
+		let twap_u128: u128 = twap_u256.try_into()?;
 
-	/// Converts a [`Balance`](Config::Balance) into a [`u128`] value.
-	///
-	/// # Errors
-	///
-	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
-	pub fn balance_to_u128(value: T::Balance) -> Result<u128, DispatchError> {
-		Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
-	}
-
-	/// Converts a [`Balance`](Config::Balance) into a [`U256`] value.
-	///
-	/// # Errors
-	///
-	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
-	pub fn balance_to_u256(value: T::Balance) -> Result<U256, DispatchError> {
-		Ok(U256::from(Self::balance_to_u128(value)?))
-	}
-
-	/// Converts a [`U256`] into a [`u128`] value.
-	///
-	/// # Errors
-	///
-	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
-	pub fn u256_to_u128(value: U256) -> Result<u128, DispatchError> {
-		Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
-	}
-
-	/// Converts a [`U256`] into a [`Balance`](Config::Balance) value.
-	///
-	/// # Errors
-	///
-	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
-	pub fn u256_to_balance(value: U256) -> Result<T::Balance, DispatchError> {
-		Ok(Self::u256_to_u128(value)?.try_into().ok().ok_or(ArithmeticError::Overflow)?)
+		Ok(T::Decimal::from_inner(twap_u128.into()))
 	}
 }

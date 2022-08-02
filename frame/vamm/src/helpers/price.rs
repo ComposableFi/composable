@@ -1,5 +1,5 @@
 use crate::{Config, Pallet, VammStateOf};
-use composable_maths::labs::numbers::TryIntoDecimal;
+use composable_maths::labs::numbers::IntoU256;
 use composable_traits::vamm::AssetType;
 use frame_support::pallet_prelude::*;
 use sp_runtime::{ArithmeticError, FixedPointNumber};
@@ -14,10 +14,10 @@ impl<T: Config> Pallet<T> {
 		vamm_state: &VammStateOf<T>,
 		asset_type: AssetType,
 	) -> Result<T::Decimal, DispatchError> {
-		let precision = Self::balance_to_u256(T::Decimal::DIV)?;
-		let base_u256 = Self::balance_to_u256(vamm_state.base_asset_reserves)?;
-		let quote_u256 = Self::balance_to_u256(vamm_state.quote_asset_reserves)?;
-		let peg_u256 = Self::balance_to_u256(vamm_state.peg_multiplier)?;
+		let precision = T::Decimal::DIV.into_u256();
+		let base_u256 = vamm_state.base_asset_reserves.into_u256();
+		let quote_u256 = vamm_state.quote_asset_reserves.into_u256();
+		let peg_u256 = vamm_state.peg_multiplier.into_u256();
 
 		let price_u256 = match asset_type {
 			AssetType::Base => quote_u256
@@ -35,8 +35,7 @@ impl<T: Config> Pallet<T> {
 				.ok_or(ArithmeticError::DivisionByZero)?,
 		};
 
-		let price = Self::u256_to_balance(price_u256)?;
-
-		Ok(price.try_into_decimal()?)
+		let price_u128: u128 = price_u256.try_into()?;
+		Ok(T::Decimal::from_inner(price_u128.into()))
 	}
 }

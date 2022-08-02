@@ -1,8 +1,8 @@
 use crate::{Config, Error, Event, Pallet, SwapConfigOf, SwapOutputOf, VammMap, VammStateOf};
-use composable_maths::labs::numbers::UnsignedMath;
+use composable_maths::labs::numbers::{IntoU256, UnsignedMath};
 use composable_traits::vamm::{AssetType, Direction, SwapOutput};
 use frame_support::{pallet_prelude::*, transactional};
-use sp_runtime::ArithmeticError;
+use sp_runtime::ArithmeticError::DivisionByZero;
 use std::cmp::Ordering;
 
 // TODO(Cardosaum): Document this struct:
@@ -189,19 +189,20 @@ impl<T: Config> Pallet<T> {
 			Direction::Add => input_asset_amount.try_add(swap_amount)?,
 			Direction::Remove => input_asset_amount.try_sub(swap_amount)?,
 		};
-		let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
+		let new_input_amount_u256 = new_input_amount.into_u256();
 
 		// TODO(Cardosaum): Maybe it would be worth to create another sanity
 		// check in the helper function tracking the inputs and verify if
 		// they would result in a division by zero? (Doing this we could
 		// present a better error message for the caller).
-		let new_output_amount_u256 = vamm_state
-			.invariant
-			.checked_div(new_input_amount_u256)
-			.ok_or(ArithmeticError::DivisionByZero)?;
-		let new_output_amount = Self::u256_to_balance(new_output_amount_u256)?;
+		let new_output_amount_u256 =
+			vamm_state.invariant.checked_div(new_input_amount_u256).ok_or(DivisionByZero)?;
+		let new_output_amount_u128: u128 = new_output_amount_u256.try_into()?;
 
-		Ok(CalculateSwapAsset { input_amount: new_input_amount, output_amount: new_output_amount })
+		Ok(CalculateSwapAsset {
+			input_amount: new_input_amount,
+			output_amount: new_output_amount_u128.into(),
+		})
 	}
 
 	fn calculate_quote_asset_amount_swapped(
