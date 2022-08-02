@@ -165,20 +165,7 @@ checksum = "bb07d2053ccdbe10e2af2995a2f116c1330396493dc1269f6a91d0ae82e19704"
 
 [[package]]
 name = "approx"
-<<<<<<< HEAD
 version = "0.5.1"
-=======
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0e60b75072ecd4168020818c0107f2857bb6c4e64252d8d3983f6263b40a5c3"
-dependencies = [
- "num-traits",
-]
-
-[[package]]
-name = "approx"
-version = "0.5.0"
->>>>>>> All-Asset Deposit functionality added
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cab112f0a86d568ea0e627cc1d6be74a1e9cd55214684db5561995f6dad897c6"
 dependencies = [
@@ -3309,16 +3296,7 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e43f2f1833d64e33f15592464d6fdd70f349dda7b1a53088eb83cd94014008c5"
 dependencies = [
-<<<<<<< HEAD
  "futures 0.3.21",
-=======
- "ethbloom",
- "fixed-hash",
- "impl-rlp",
- "impl-serde",
- "primitive-types 0.10.1",
- "uint",
->>>>>>> All-Asset Deposit functionality added
 ]
 
 [[package]]
@@ -7917,11 +7895,7 @@ dependencies = [
 [[package]]
 name = "pallet-elections-phragmen"
 version = "5.0.0-dev"
-<<<<<<< HEAD
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24#bfd2a3a1d26d0f34da6fc0e6478b07e2b126f8f4"
-=======
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.13#afb74de23dfe2994e7ce38c0870efb9734e966f7"
->>>>>>> All-Asset Deposit functionality added
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -9045,15 +9019,9 @@ dependencies = [
  "hashbrown 0.12.1",
  "impl-trait-for-tuples",
  "parity-util-mem-derive",
-<<<<<<< HEAD
  "parking_lot 0.12.1",
  "primitive-types",
  "smallvec 1.9.0",
-=======
- "parking_lot 0.11.2",
- "primitive-types 0.10.1",
- "smallvec 1.8.0",
->>>>>>> All-Asset Deposit functionality added
  "winapi 0.3.9",
 ]
 
@@ -10739,21 +10707,7 @@ dependencies = [
 
 [[package]]
 name = "primitive-types"
-<<<<<<< HEAD
 version = "0.11.1"
-=======
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3824ae2c5e27160113b9e029a10ec9e3f0237bad8029f69c7724393c9fdefd8"
-dependencies = [
- "fixed-hash",
- "uint",
-]
-
-[[package]]
-name = "primitive-types"
-version = "0.10.1"
->>>>>>> All-Asset Deposit functionality added
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e28720988bff275df1f51b171e1b2a18c30d194c4d2b61defdacecd625a5d94a"
 dependencies = [
@@ -13956,13 +13910,8 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "parity-util-mem",
-<<<<<<< HEAD
  "parking_lot 0.12.1",
  "primitive-types",
-=======
- "parking_lot 0.11.2",
- "primitive-types 0.10.1",
->>>>>>> All-Asset Deposit functionality added
  "rand 0.7.3",
  "regex",
  "scale-info",
@@ -14382,7 +14331,6 @@ checksum = "158bf0305c75a50fc0e334b889568f519a126e32b87900c3f4251202dece7b4b"
 dependencies = [
  "impl-trait-for-tuples",
  "parity-scale-codec",
-<<<<<<< HEAD
  "primitive-types",
  "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime-interface-proc-macro 5.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -14407,15 +14355,6 @@ dependencies = [
  "sp-storage 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-tracing 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-wasm-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-=======
- "primitive-types 0.10.1",
- "sp-externalities",
- "sp-runtime-interface-proc-macro",
- "sp-std",
- "sp-storage",
- "sp-tracing",
- "sp-wasm-interface",
->>>>>>> All-Asset Deposit functionality added
  "static_assertions",
 ]
 
@@ -14944,18 +14883,7 @@ dependencies = [
 name = "stdweb-internal-runtime"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-<<<<<<< HEAD
 checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
-=======
-checksum = "05bdbb8e4e78216a85785a85d3ec3183144f98d0097b9281802c019bb07a6f05"
-dependencies = [
- "approx 0.5.0",
- "lazy_static",
- "nalgebra",
- "num-traits",
- "rand 0.8.4",
-]
->>>>>>> All-Asset Deposit functionality added
 
 [[package]]
 name = "strsim"
@@ -16180,12 +16108,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if 1.0.0",
-<<<<<<< HEAD
  "digest 0.10.3",
  "rand 0.8.5",
-=======
- "rand 0.8.4",
->>>>>>> All-Asset Deposit functionality added
  "static_assertions",
 ]
 
