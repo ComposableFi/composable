@@ -1,6 +1,5 @@
-import { calcaulateProvidedLiquidity } from "@/defi/utils";
+import { calculateProvidedLiquidity } from "@/defi/utils";
 import { liquidityTransactionsByAddressAndPool } from "../pools/queries";
-import BigNumber from "bignumber.js";
 
 export async function fetchLiquidityProvided(
   accountId: string,
@@ -37,7 +36,7 @@ export async function fetchLiquidityProvided(
 
     if (error) throw new Error(error.message);
     let { pabloTransactions } = data;
-    let liquidityProvided = calcaulateProvidedLiquidity(pabloTransactions);
+    let liquidityProvided = calculateProvidedLiquidity(pabloTransactions);
 
     liquidityRecord[poolId].baseAmount = liquidityProvided.baseAmountProvided.toString();
     liquidityRecord[poolId].quoteAmount = liquidityProvided.quoteAmountProvided.toString();
