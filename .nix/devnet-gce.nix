@@ -4,10 +4,6 @@
   composable,
   devnet-spec,
 }:
-  assert gce-input != null;
-  assert gce-input.project_id != null;
-  assert gce-input.client_email != null;
-  assert gce-input.private_key != null;
 let
   description = "What machines we will deploy on GCE";
   machine-name = "composable-devnet-${composable.spec}";
