@@ -7,7 +7,6 @@ use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf};
 use beefy_primitives::Payload;
 use beefy_queries::{ClientWrapper, Crypto};
-use frame_support::assert_ok;
 use pallet_mmr_primitives::Proof;
 use sp_core::bytes::to_hex;
 use subxt::rpc::{rpc_params, JsonValue, Subscription, SubscriptionClientT};
@@ -300,6 +299,7 @@ async fn verify_parachain_headers() {
             .fetch_finalized_parachain_headers_at(block_number, client_state.latest_beefy_height)
             .await
             .unwrap();
+
         let parachain_update_proof = ParachainsUpdateProof {
             parachain_headers,
             mmr_proof: batch_proof,
@@ -312,10 +312,11 @@ async fn verify_parachain_headers() {
 
         client_state = beef_light_client
             .verify_mmr_root_with_proof(client_state, mmr_update)
-            .unwrap();
+            .expect("verify_mmr_root_with_proof should not panic!");
 
-        assert_ok!(beef_light_client
-            .verify_parachain_headers(client_state.clone(), parachain_update_proof));
+        beef_light_client
+            .verify_parachain_headers(client_state.clone(), parachain_update_proof)
+            .expect("verify_parachain_headers should not panic!");
 
         println!(
             "\nSuccessfully verified parachain headers for block number: {}\n",

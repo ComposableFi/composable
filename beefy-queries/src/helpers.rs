@@ -91,22 +91,23 @@ pub fn prove_parachain_headers(
         let pair = (*key, header.clone());
         let leaf_hash = keccak_256(pair.encode().as_slice());
         parachain_leaves.push(leaf_hash);
-        if key == &para_id {
+        if *key == para_id {
             index = Some(idx);
         }
     }
 
+    let heads_leaf_index = index.ok_or_else(|| {
+        Error::Custom("[get_parachain_headers] heads leaf index is None".to_string())
+    })? as u32;
+
     let tree = rs_merkle::MerkleTree::<MerkleHasher<Crypto>>::from_leaves(&parachain_leaves);
 
-    let proof = if let Some(index) = index {
-        tree.proof(&[index])
-            .proof_hashes()
-            .into_iter()
-            .map(|item| item.clone())
-            .collect::<Vec<_>>()
-    } else {
-        vec![]
-    };
+    let proof = tree
+        .proof(&[heads_leaf_index as usize])
+        .proof_hashes()
+        .into_iter()
+        .map(|item| item.clone())
+        .collect::<Vec<_>>();
 
     let para_head = finalized_para_heads
         .get(&para_id)
@@ -120,9 +121,7 @@ pub fn prove_parachain_headers(
     Ok(ParaHeadsProof {
         parachain_heads_proof: proof,
         para_head,
-        heads_leaf_index: index.ok_or_else(|| {
-            Error::Custom("[get_parachain_headers] heads leaf index is None".to_string())
-        })? as u32,
+        heads_leaf_index,
         heads_total_count: parachain_leaves.len() as u32,
     })
 }

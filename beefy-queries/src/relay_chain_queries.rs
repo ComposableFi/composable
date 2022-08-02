@@ -40,7 +40,7 @@ where
     let storage_prefix = frame_support::storage::storage_prefix(b"Paras", b"Heads");
     let mut para_header_keys = Vec::new();
 
-    for para_id in para_ids {
+    for para_id in para_ids.iter() {
         let encoded_para_id = para_id.encode();
 
         let mut full_key = storage_prefix.clone().to_vec();
@@ -80,13 +80,14 @@ where
 
         let mut heads = BTreeMap::new();
 
-        for (key, value) in changes.changes {
-            if let Some(storage_data) = value {
-                let key = key.0.to_vec();
-                let para_id = u32::decode(&mut &key[40..])?;
-                let head_data: runtime::api::runtime_types::polkadot_parachain::primitives::HeadData =
-                        Decode::decode(&mut &*storage_data.0)?;
-                heads.insert(para_id, head_data.0);
+        for para_id in para_ids.iter() {
+            if let Some(head) = api
+                .storage()
+                .paras()
+                .heads(para_id, Some(header.hash()))
+                .await?
+            {
+                heads.insert(para_id.0, head.0);
             }
         }
 

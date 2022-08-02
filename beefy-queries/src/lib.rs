@@ -19,7 +19,9 @@ use pallet_mmr_primitives::BatchProof;
 use relay_chain_queries::{fetch_beefy_justification, fetch_mmr_batch_proof};
 use sp_core::H256;
 use sp_io::crypto;
+use sp_runtime::traits::Header as HeaderT;
 use sp_runtime::{generic::Header, traits::BlakeTwo256};
+use subxt::rpc::{rpc_params, ClientT};
 use subxt::sp_core::keccak_256;
 use subxt::{Client, Config};
 
@@ -81,10 +83,22 @@ where
         }
         // Get initial validator set
         // In development mode validators are the same for all sessions only validator set_id changes
+        let client = client.expect("Client should be defined");
         let api = client
-            .expect("Client should be defined")
             .clone()
             .to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+        let latest_beefy_finalized: <T as Config>::Hash = client
+            .rpc()
+            .client
+            .request("beefy_getFinalizedHead", rpc_params!())
+            .await
+            .unwrap();
+        let header = client
+            .rpc()
+            .header(Some(latest_beefy_finalized))
+            .await
+            .unwrap()
+            .unwrap();
         let validator_set_id = api.storage().beefy().validator_set_id(None).await.unwrap();
         let next_val_set = api
             .storage()
@@ -92,8 +106,9 @@ where
             .beefy_next_authorities(None)
             .await
             .expect("Authorirty set should be defined");
+        let latest_beefy_height: u64 = (*header.number()).into();
         ClientState {
-            latest_beefy_height: 0,
+            latest_beefy_height: latest_beefy_height as u32,
             mmr_root_hash: Default::default(),
             current_authorities: BeefyNextAuthoritySet {
                 id: validator_set_id,
@@ -132,6 +147,7 @@ where
             .rpc()
             .block_hash(Some(subxt_block_number))
             .await?;
+
 
         let batch_proof =
             fetch_mmr_batch_proof(&self.relay_client, leaf_indices, block_hash).await?;

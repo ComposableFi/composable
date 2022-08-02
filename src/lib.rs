@@ -186,7 +186,11 @@ impl<Crypto: HostFunctions + Clone> BeefyLightClient<Crypto> {
 
         let root = proof.calculate_root(vec![(leaf_pos, node.into())])?;
         if root != mmr_root_hash {
-            return Err(BeefyClientError::InvalidMmrProof);
+            return Err(BeefyClientError::InvalidMmrProof {
+                expected: mmr_root_hash,
+                found: root,
+                location: "verifying_latest_mmr_leaf",
+            });
         }
 
         trusted_client_state.latest_beefy_height =
@@ -253,7 +257,11 @@ impl<Crypto: HostFunctions + Clone> BeefyLightClient<Crypto> {
 
         let root = proof.calculate_root(mmr_leaves)?;
         if root != trusted_client_state.mmr_root_hash {
-            return Err(BeefyClientError::InvalidMmrProof);
+            return Err(BeefyClientError::InvalidMmrProof {
+                expected: trusted_client_state.mmr_root_hash,
+                found: root,
+                location: "verifying_parachain_headers_inclusion",
+            });
         }
         Ok(())
     }

@@ -1,6 +1,8 @@
 //! Light client error definition
 use codec::alloc::string::String;
+use sp_core::H256;
 use sp_std::prelude::*;
+
 #[derive(sp_std::fmt::Debug, derive_more::From)]
 /// Error definition for the light client
 pub enum BeefyClientError {
@@ -37,7 +39,11 @@ pub enum BeefyClientError {
         len: u64,
     },
     /// Some invalid mmr proof
-    InvalidMmrProof,
+    InvalidMmrProof {
+        expected: H256,
+        found: H256,
+        location: &'static str,
+    },
     /// Invalid authority proof
     InvalidAuthorityProof,
     /// Invalid merkle proof
