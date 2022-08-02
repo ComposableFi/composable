@@ -58,7 +58,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
-		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
+		vesting::{VestedTransfer, VestingScheduleInput, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -69,7 +69,6 @@ pub mod pallet {
 		transactional, PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-	use pallet_vesting::VestingScheduleCount;
 	use scale_info::TypeInfo;
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
@@ -358,26 +357,20 @@ pub mod pallet {
 							keep_alive,
 						)?;
 						let current_block = frame_system::Pallet::<T>::current_block_number();
-						let vesting_schedule_id =
-							<T as pallet_vesting::Config>::VestingScheduleCount::increment()?;
 						// Schedule the vesting of the reward.
 						T::Vesting::vested_transfer(
 							offer.reward.asset,
 							&offer_account,
 							from,
-							VestingSchedule {
-								vesting_schedule_id,
+							VestingScheduleInput {
 								window: BlockNumberBased {
 									start: current_block,
 									period: offer.reward.maturity,
 								},
 								period_count: 1,
 								per_period: reward_share,
-								already_claimed: BalanceOf::<T>::zero(),
 							},
 						)?;
-						let vesting_schedule_id =
-							<T as pallet_vesting::Config>::VestingScheduleCount::increment()?;
 						match offer.maturity {
 							BondDuration::Finite { return_in } => {
 								// Schedule the return of the bonded amount
@@ -385,15 +378,13 @@ pub mod pallet {
 									offer.asset,
 									&offer.beneficiary,
 									from,
-									VestingSchedule {
-										vesting_schedule_id,
+									VestingScheduleInput {
 										window: BlockNumberBased {
 											start: current_block,
 											period: return_in,
 										},
 										period_count: 1,
 										per_period: value,
-										already_claimed: BalanceOf::<T>::zero(),
 									},
 								)?;
 							},
