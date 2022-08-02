@@ -4,11 +4,11 @@
 use crate::Pallet as Vesting;
 use crate::{
 	AssetIdOf, BalanceOf, BlockNumberOf, Call, Config, Pallet, VestedTransfer,
-	VestingScheduleCount, VestingScheduleOf, Zero,
+	VestingScheduleNonce, VestingScheduleOf, Zero,
 };
 use codec::Decode;
 use composable_support::abstractions::utils::increment::Increment;
-use composable_traits::vesting::{VestingSchedule, VestingWindow::BlockNumberBased};
+use composable_traits::vesting::{VestingScheduleNonce, VestingWindow::BlockNumberBased};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
 use frame_support::traits::{fungibles::Mutate, Get};
 use frame_system::RawOrigin;
@@ -55,7 +55,7 @@ where
 	BalanceOf<T>: From<u64>,
 {
 	VestingSchedule {
-		vesting_schedule_id: VestingScheduleCount::<T>::increment().unwrap(),
+		vesting_schedule_id: VestingScheduleNonce::<T>::increment().unwrap(),
 		window: BlockNumberBased { start, period },
 		period_count,
 		per_period,

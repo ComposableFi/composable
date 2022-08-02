@@ -1,7 +1,7 @@
 use codec::{HasCompact, MaxEncodedLen};
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
-use sp_runtime::traits::AtLeast32Bit;
+use sp_runtime::traits::{AtLeast32Bit, Zero};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ pub trait VestedTransfer {
 	type Balance: HasCompact;
 	type MinVestedTransfer: Get<Self::Balance>;
 	type VestingScheduleId;
-	type VestingScheduleCount;
+	type VestingScheduleNonce;
 
 	/// Transfer `asset` from `from` to `to` vested based on `schedule`.
 	fn vested_transfer(
@@ -141,6 +141,19 @@ impl<
 		self.per_period
 			.checked_mul(&unrealized.into())
 			.expect("ensured non-overflow total amount; qed")
+	}
+
+	pub fn from_input(
+		vesting_schedule_id: VestingScheduleId,
+		vesting_schedule_input: VestingScheduleInput<BlockNumber, Moment, Balance>,
+	) -> VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance> {
+		VestingSchedule {
+			vesting_schedule_id,
+			window: vesting_schedule_input.window,
+			per_period: vesting_schedule_input.per_period,
+			period_count: vesting_schedule_input.period_count,
+			already_claimed: Zero::zero(),
+		}
 	}
 }
 

@@ -172,8 +172,6 @@ pub mod pallet {
 
 		/// Weights
 		type WeightInfo: WeightInfo;
-
-		// type VestingScheduleCountOf<T> = <T as pallet_vesting::Config>::VestingScheduleCount;
 	}
 
 	#[pallet::pallet]

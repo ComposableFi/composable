@@ -185,15 +185,15 @@ pub mod module {
 			from: AccountIdOf<T>,
 			to: AccountIdOf<T>,
 			asset: AssetIdOf<T>,
-			schedule: VestingScheduleOf<T>,
 			vesting_schedule_id: T::VestingScheduleId,
+			schedule: VestingScheduleOf<T>,
 		},
 		/// Claimed vesting. \[who, locked_amount\]
 		Claimed {
 			who: AccountIdOf<T>,
 			asset: AssetIdOf<T>,
-			locked_amount: BalanceOf<T>,
 			vesting_schedule_id: Option<T::VestingScheduleId>,
+			locked_amount: BalanceOf<T>,
 		},
 		/// Updated vesting schedules. \[who\]
 		VestingSchedulesUpdated { who: AccountIdOf<T> },
@@ -221,7 +221,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn vesting_schedules_count)]
 	#[allow(clippy::disallowed_types)] // nonce, ValueQuery is OK
-	pub type VestingScheduleCount<T: Config> =
+	pub type VestingScheduleNonce<T: Config> =
 		StorageValue<_, T::VestingScheduleId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	#[pallet::genesis_config]
@@ -241,7 +241,7 @@ pub mod module {
 		fn build(&self) {
 			self.vesting.iter().for_each(|(asset, who, window, period_count, per_period)| {
 				let mut bounded_schedules = VestingSchedules::<T>::get(who, asset);
-				let vesting_schedule_id = match VestingScheduleCount::<T>::increment() {
+				let vesting_schedule_id = match VestingScheduleNonce::<T>::increment() {
 					Ok(id) => id,
 					Err(_) => {
 						// TODO: throw MaxVestingSchedulesExceeded error
@@ -359,7 +359,7 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 	type Balance = BalanceOf<T>;
 	type MinVestedTransfer = T::MinVestedTransfer;
 	type VestingScheduleId = T::VestingScheduleId;
-	type VestingScheduleCount = VestingScheduleCount<T>;
+	type VestingScheduleNonce = VestingScheduleNonce<T>;
 
 	#[transactional]
 	fn vested_transfer(
@@ -370,14 +370,8 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 	) -> frame_support::dispatch::DispatchResult {
 		ensure!(from != to, Error::<T>::TryingToSelfVest);
 
-		let vesting_schedule_id = Self::VestingScheduleCount::increment()?; // VestingScheduleCount::<T>::increment()?;
-		let schedule: VestingScheduleOf<T> = VestingSchedule {
-			vesting_schedule_id,
-			window: schedule_input.window,
-			period_count: schedule_input.period_count,
-			per_period: schedule_input.per_period,
-			already_claimed: Zero::zero(),
-		};
+		let vesting_schedule_id = Self::VestingScheduleNonce::increment()?;
+		let schedule = VestingSchedule::from_input(vesting_schedule_id, schedule_input);
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 

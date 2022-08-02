@@ -151,13 +151,7 @@ fn vested_transfer_works() {
 			MockCurrencyId::BTC,
 			schedule_input.clone(),
 		));
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 4_u128,
-			window: schedule_input.window,
-			period_count: schedule_input.period_count,
-			per_period: schedule_input.per_period,
-			already_claimed: 0_u64,
-		};
+		let schedule = VestingSchedule::from_input(4_u128, schedule_input.clone());
 		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), vec![schedule.clone()]);
 		System::assert_last_event(Event::Vesting(crate::Event::VestingScheduleAdded {
 			from: ALICE,
@@ -182,13 +176,7 @@ fn vested_transfer_trait_emits_vesting_schedule_added_event() {
 			per_period: 100_u64,
 		};
 
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 4_u128,
-			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
-			period_count: 1_u32,
-			per_period: 100_u64,
-			already_claimed: 0_u64,
-		};
+		let schedule = VestingSchedule::from_input(4_u128, schedule_input.clone());
 
 		assert_ok!(<Vesting as VestedTransfer>::vested_transfer(
 			MockCurrencyId::ETH,
@@ -218,13 +206,7 @@ fn vested_transfer_for_moment_based_schedule_works() {
 			period_count: 1_u32,
 			per_period: 100_u64,
 		};
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 4_u128,
-			window: MomentBased { start: 0_u64, period: 10_u64 },
-			period_count: 1_u32,
-			per_period: 100_u64,
-			already_claimed: 0_u64,
-		};
+		let schedule = VestingSchedule::from_input(4_u128, schedule_input.clone());
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
@@ -365,16 +347,11 @@ fn vested_transfer_fails_if_zero_period() {
 				ALICE,
 				BOB,
 				MockCurrencyId::BTC,
-				schedule_input,
+				schedule_input.clone(),
 			),
 			Error::<Runtime>::ZeroVestingPeriod
 		);
 
-		let schedule_input = VestingScheduleInput {
-			window: MomentBased { start: 1_u64, period: 0_u64 },
-			period_count: 1_u32,
-			per_period: 100_u64,
-		};
 		assert_noop!(
 			Vesting::vested_transfer(
 				Origin::root(),
@@ -964,13 +941,7 @@ fn multiple_vesting_schedule_claim_works() {
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 4_u128,
-			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
-			period_count: 2_u32,
-			per_period: 10_u64,
-			already_claimed: 0_u64,
-		};
+		let schedule = VestingSchedule::from_input(4_u128, schedule_input.clone());
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
@@ -984,13 +955,8 @@ fn multiple_vesting_schedule_claim_works() {
 			period_count: 3_u32,
 			per_period: 10_u64,
 		};
-		let schedule2 = VestingSchedule {
-			vesting_schedule_id: 5_u128,
-			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
-			period_count: 3_u32,
-			per_period: 10_u64,
-			already_claimed: 0_u64,
-		};
+		let schedule2 = VestingSchedule::from_input(5_u128, schedule2_input.clone());
+
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
@@ -1024,13 +990,7 @@ fn exceeding_maximum_schedules_should_fail() {
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
-		let schedule = VestingSchedule {
-			vesting_schedule_id: 4_u128,
-			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
-			period_count: 2_u32,
-			per_period: 10_u64,
-			already_claimed: 0_u64,
-		};
+		let schedule = VestingSchedule::from_input(4_u128, schedule_input.clone());
 		let moment_schedule_input = VestingScheduleInput {
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
