@@ -18,7 +18,7 @@ pub enum RepaymentResult<T: crate::Config> {
 	PrincipalAndLastInterestPaymentAreNotPaidBackInTime(DispatchError),
 }
 
-/// Borrower pays interest with payment frequency, and pays back principal when the loan is mature.
+/// Borrower pays interest regulary, and pays back principal when the loan is mature.
 pub mod interest_periodically_principal_when_mature_strategy {
 	use crate::{types, Config};
 	use composable_support::math::safe::SafeAdd;
@@ -50,24 +50,8 @@ pub mod interest_periodically_principal_when_mature_strategy {
 		};
 		let market_config = market_info.config();
 		let borrow_asset_id = market_config.borrow_asset();
-		let next_payment_block_number = match current_block_number
-			.safe_add(loan_config.payment_frequency())
-		{
-			Err(error) => return super::RepaymentResult::Failed(error.into()),
-			Ok(block_number) if block_number > *loan_info.end_block() =>
-				return super::RepaymentResult::Failed(
-					crate::Error::<T>::CurrentBlockNumberExceedsFinalBlockNumberForTheLoan.into(),
-				),
-			Ok(block_number) => block_number,
-		};
-		// Update payments schedule.
-		crate::PaymentsScheduleStorage::<T>::mutate(
-			next_payment_block_number,
-			|loans_accounts_set| {
-				loans_accounts_set.insert(loan_account_id.clone());
-			},
-		);
-		match T::MultiCurrency::transfer(
+		
+        match T::MultiCurrency::transfer(
 			*borrow_asset_id,
 			loan_account_id,
 			market_account_id,

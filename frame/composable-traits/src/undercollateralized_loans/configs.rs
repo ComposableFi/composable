@@ -114,8 +114,6 @@ where
 	collateral: Balance,
 	/// Interest rate per payment.
 	interest: Percent,
-	/// How often borrowers have to pay interest.
-	payment_frequency: BlockNumber,
     /// Activated loan lifetime in the terms of block numbers.
 	maturity: BlockNumber,
 	/// Payment strategie which should be applyed.
@@ -140,7 +138,6 @@ where
 		principal: Balance,
 		collateral: Balance,
 		interest: Percent,
-		payment_frequency: BlockNumber,
 		maturity: BlockNumber,
 		repayment_strategy: RepaymentStrategy,
 	) -> Self {
@@ -151,7 +148,6 @@ where
 			principal,
 			collateral,
 			interest,
-			payment_frequency,
 			maturity,
 			repayment_strategy,
 		}
@@ -185,11 +181,6 @@ where
 	/// Get a mutable reference to the loan config's interest.
 	pub fn interest(&self) -> &Percent {
 		&self.interest
-	}
-
-	/// Get a reference to the loan config's payment frequency.
-	pub fn payment_frequency(&self) -> &BlockNumber {
-		&self.payment_frequency
 	}
 
 	/// Get a reference to the loan config's maturity.
@@ -334,7 +325,6 @@ pub struct LoanInput<AccountId, Balance, BlockNumber, Date, Percent, RepaymentSt
 	/// Interest rate per block.
 	pub interest: Percent,
 	/// How often borrowers have to pay interest.
-	pub payment_frequency: BlockNumber,
     pub payment_schedule: Vec<Payment<Date, Percent>>,
 	/// Loan shoud be paid back after this amount of blocks.
 	pub loan_maturity: BlockNumber,

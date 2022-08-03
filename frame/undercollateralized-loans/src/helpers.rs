@@ -118,7 +118,6 @@ impl<T: Config> Pallet<T> {
 				config_input.principal,
 				config_input.collateral,
 				config_input.interest,
-				config_input.payment_frequency,
 				config_input.loan_maturity,
 				config_input.repayment_strategy,
 			);
@@ -164,10 +163,6 @@ impl<T: Config> Pallet<T> {
 		crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_info.clone());
 		// Remove loan configuration from the non-activated loans storage.
 		crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
-		let next_payment_block = start_block_number.safe_add(loan_config.payment_frequency())?;
-		crate::PaymentsScheduleStorage::<T>::mutate(next_payment_block, |loans_accounts_set| {
-			loans_accounts_set.insert(loan_account_id);
-		});
 		Ok(loan_info)
 	}
 

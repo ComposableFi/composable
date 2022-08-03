@@ -94,11 +94,6 @@ where
 		let collateral = input.collateral.try_into_validated::<BalanceGreaterThenZero>()?.value();
 		// Check that interest rate > 0
 		ensure!(input.interest > Percent::zero(), "Can not create loan with zero interest rate.");
-		// Check that payment frequency > 0
-		ensure!(
-			input.payment_frequency > BlockNumber::zero(),
-			"Can not create loan with zero payment frequency."
-		);
 		// Checks that the borrower's account is included in the market's whitelis of borrowers.
 		ensure!(
 			Loans::is_borrower_account_whitelisted(
@@ -107,12 +102,7 @@ where
 			)?,
 			"Mentioned borrower is not included in the market's whitelist of borrowers."
 		);
-		//Checks that last interest payment happens when the loan is mature.
-		ensure!(
-			input.loan_maturity % input.payment_frequency == BlockNumber::zero(),
-			"Last interest payment and loan's mature do not fit to each other."
-		);
-
+        
 		Ok(LoanInput { principal, collateral, ..input })
 	}
 }
