@@ -18,8 +18,11 @@ use ibc::{
 	},
 	signer::Signer,
 };
-use ibc_trait::CallbackWeight;
-use scale_info::prelude::string::{String, ToString};
+use ibc_trait::{CallbackWeight, IbcTrait};
+use scale_info::prelude::{
+	format,
+	string::{String, ToString},
+};
 use sp_std::{marker::PhantomData, prelude::*, vec};
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
@@ -56,7 +59,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use ibc::core::ics04_channel::channel::{ChannelEnd, Order, State};
 	use ibc_primitives::SendPacketData;
-	use ibc_trait::{connection_id_from_bytes, port_id_from_bytes, IbcTrait, OpenChannelParams};
+	use ibc_trait::{connection_id_from_bytes, port_id_from_bytes, OpenChannelParams};
 
 	/// Our pallet's configuration trait. All our types and constants go in here. If the
 	/// pallet is dependent on specific other pallets, then their configuration traits
@@ -256,7 +259,14 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 	) -> OnRecvPacketAck {
 		let success = "ping-success".as_bytes().to_vec();
 		log::info!("Received Packet {:?}", packet);
-		OnRecvPacketAck::Successful(Box::new(PingAcknowledgement(success)), Box::new(|_| Ok(())))
+		let packet = packet.clone();
+		OnRecvPacketAck::Successful(
+			Box::new(PingAcknowledgement(success.clone())),
+			Box::new(move |_| {
+				T::IbcHandler::write_acknowlegdement(&packet, success)
+					.map_err(|e| format!("{:?}", e))
+			}),
+		)
 	}
 
 	fn on_acknowledgement_packet(
