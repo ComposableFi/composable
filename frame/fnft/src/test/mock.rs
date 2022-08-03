@@ -3,6 +3,7 @@
 use composable_tests_helpers::test::block::{process_and_progress_blocks, MILLISECS_PER_BLOCK};
 use frame_support::{
 	parameter_types,
+	PalletId,
 	traits::{ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
@@ -28,10 +29,15 @@ frame_support::construct_runtime!(
 	}
 );
 
+parameter_types! {
+	pub const FNFTPalletId: PalletId = PalletId(*b"pal_fnft");
+}
 impl crate::Config for MockRuntime {
 	type Event = Event;
 
 	type MaxProperties = ConstU32<16>;
+	type FinancialNFTCollectionId = u128;
+	type PalletId = FNFTPalletId;
 }
 
 impl pallet_timestamp::Config for MockRuntime {

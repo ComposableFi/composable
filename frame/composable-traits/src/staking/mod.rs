@@ -13,7 +13,6 @@ use sp_runtime::{DispatchError, Perbill, Permill};
 
 pub mod lock;
 pub mod math;
-pub mod nft;
 
 /// Abstraction over the map of possible lock durations and corresponding reward multipliers.
 pub type StakingDurationToRewardsMultiplierConfig<Limit> =
@@ -301,40 +300,35 @@ pub trait Staking {
 	) -> Result<[Self::PositionId; 2], DispatchError>;
 }
 
-pub trait StakingReward {
+/// Interface for managing staking through financial NFTs.
+pub trait StakingFinancialNFT {
 	type AccountId;
-	type AssetId;
+	type CollectionId;
+	type InstanceId;
 	type Balance;
-	type PositionId;
 
-	/// Claim the current rewards.
-	///
-	/// Arguments
-	///
-	/// * `who` the actual account triggering this claim.
-	/// * `instance_id` the ID uniquely identifying the NFT from which we will compute the available
-	///   rewards.
-	/// * `to` the account to transfer the rewards to.
-	/// Return amount if reward asset which was staked asset claimed.
-	fn claim_rewards(
+	/// Extend the stake of an existing position represented by a financial NFT.
+	fn extend(
 		who: &Self::AccountId,
-		instance_id: &Self::PositionId,
-	) -> Result<(Self::AssetId, Self::Balance), DispatchError>;
-
-	/// Transfer a reward to the staking rewards protocol.
-	///
-	/// Arguments
-	///
-	/// * `asset` the protocol asset to reward.
-	/// * `reward_asset` the reward asset to transfer.
-	/// * `from` the account to transfer the reward from.
-	/// * `amount` the amount of reward to transfer.
-	/// * `keep_alive` whether to keep alive or not the `from` account while transferring the
-	///   reward.
-	fn claim_reward(
-		who: &Self::AccountId,
-		instance_id: &Self::PositionId,
+		collection: Self::CollectionId,
+		instance: Self::InstanceId,
 		amount: Self::Balance,
 		keep_alive: bool,
+	) -> Result<Self::InstanceId, DispatchError>;
+
+	/// Unstake an actual staked position, represented by a financial NFT.
+	fn burn(
+		who: &Self::AccountId,
+		collection: Self::CollectionId,
+		instance: Self::InstanceId,
+		remove_amount: Self::Balance,
 	) -> DispatchResult;
+
+	/// `ratio` - how much of share to retain in the original position.
+	fn split(
+		who: &Self::AccountId,
+		collection: Self::CollectionId,
+		instance: Self::InstanceId,
+		ratio: Permill,
+	) -> Result<[Self::InstanceId; 2], DispatchError>;
 }

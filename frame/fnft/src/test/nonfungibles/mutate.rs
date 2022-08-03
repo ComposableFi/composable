@@ -20,29 +20,29 @@ mod mint_into {
 	#[test]
 	fn success() {
 		new_test_ext().execute_with(|| {
-			const NEW_NFT_ID: NftInstanceId = 1;
+			const NEW_NFT_ID: FinancialNFTInstanceId = 1;
 
-			Pallet::<MockRuntime>::mint_into(&NftClass::STAKING, &NEW_NFT_ID, &ALICE).unwrap();
+			Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftCreated {
-				class_id: NftClass::STAKING,
+			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTCreated {
+				collection_id: TEST_COLLECTION_ID,
 				instance_id: NEW_NFT_ID,
 			}));
 
 			assert_eq!(
-				ClassInstances::<MockRuntime>::get(&NftClass::STAKING).unwrap(),
+				CollectionInstances::<MockRuntime>::get(TEST_COLLECTION_ID).unwrap(),
 				BTreeSet::from([NEW_NFT_ID]),
-				"STAKING class should only have one instance"
+				"class should only have one instance"
 			);
 
 			assert_eq!(
 				OwnerInstances::<MockRuntime>::get(&ALICE).unwrap(),
-				BTreeSet::from([(NftClass::STAKING, NEW_NFT_ID)]),
+				BTreeSet::from([(TEST_COLLECTION_ID, NEW_NFT_ID)]),
 				"ALICE should only have one instance"
 			);
 
 			assert_eq!(
-				Instance::<MockRuntime>::get(&(NftClass::STAKING, NEW_NFT_ID)).unwrap(),
+				Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, NEW_NFT_ID)).unwrap(),
 				(ALICE, BTreeMap::new()),
 				"owner should be ALICE, with no attributes"
 			);
@@ -53,17 +53,17 @@ mod mint_into {
 	#[test]
 	fn already_exists() {
 		new_test_ext().execute_with(|| {
-			const NEW_NFT_ID: NftInstanceId = 1;
+			const NEW_NFT_ID: FinancialNFTInstanceId = 1;
 
-			Pallet::<MockRuntime>::mint_into(&NftClass::STAKING, &NEW_NFT_ID, &ALICE).unwrap();
+			Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftCreated {
-				class_id: NftClass::STAKING,
+			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTCreated {
+				collection_id: TEST_COLLECTION_ID,
 				instance_id: NEW_NFT_ID,
 			}));
 
 			assert_noop!(
-				Pallet::<MockRuntime>::mint_into(&NftClass::STAKING, &NEW_NFT_ID, &ALICE),
+				Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE),
 				DispatchError::from(crate::Error::<MockRuntime>::InstanceAlreadyExists)
 			);
 		})
@@ -110,7 +110,7 @@ mod set_attribute {
 			let value = Value { a: 10, b: true };
 
 			add_attributes_and_assert(
-				&NftClass::STAKING,
+				TEST_COLLECTION_ID,
 				&nft_to_add_attribute_to,
 				ALICE,
 				&[(key.clone(), value)],
@@ -120,7 +120,7 @@ mod set_attribute {
 			let value2 = Value { a: 20, b: false };
 
 			add_attributes_and_assert(
-				&NftClass::STAKING,
+				TEST_COLLECTION_ID,
 				&nft_to_add_attribute_to,
 				ALICE,
 				&[(key2, value2)],
@@ -129,7 +129,7 @@ mod set_attribute {
 			for should_not_be_mutated_nft_id in other_nft_ids {
 				assert_eq!(
 					Instance::<MockRuntime>::get(&(
-						NftClass::STAKING,
+						TEST_COLLECTION_ID,
 						should_not_be_mutated_nft_id
 					)),
 					Some((ALICE, BTreeMap::from([]))),
@@ -147,7 +147,7 @@ mod set_attribute {
 
 			assert_noop!(
 				Pallet::<MockRuntime>::set_attribute(
-					&NftClass::STAKING,
+					&TEST_COLLECTION_ID,
 					&1,
 					&key.encode(),
 					&value.encode()
@@ -161,7 +161,7 @@ mod set_attribute {
 
 			assert_noop!(
 				Pallet::<MockRuntime>::set_attribute(
-					&NftClass::STAKING,
+					&TEST_COLLECTION_ID,
 					&(new_nft_id + 1),
 					&key.encode(),
 					&value.encode()
@@ -198,16 +198,20 @@ mod burn_from {
 
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
-			assert_ok!(Pallet::<MockRuntime>::burn(&NftClass::STAKING, &nft_to_burn, Some(&ALICE)));
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftBurned {
-				class_id: NftClass::STAKING,
+			assert_ok!(Pallet::<MockRuntime>::burn(
+				&TEST_COLLECTION_ID,
+				&nft_to_burn,
+				Some(&ALICE)
+			));
+			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTBurned {
+				collection_id: TEST_COLLECTION_ID,
 				instance_id: nft_to_burn,
 			}));
 
 			assert_eq!(
-				ClassInstances::<MockRuntime>::get(&NftClass::STAKING).unwrap(),
+				CollectionInstances::<MockRuntime>::get(TEST_COLLECTION_ID).unwrap(),
 				BTreeSet::from(new_nft_ids),
-				"STAKING class should have all of the original NFTs except for the one burned"
+				"class should have all of the original NFTs except for the one burned"
 			);
 
 			assert_eq!(
@@ -217,7 +221,7 @@ mod burn_from {
 			);
 
 			assert_eq!(
-				Instance::<MockRuntime>::get(&(NftClass::STAKING, nft_to_burn)),
+				Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, nft_to_burn)),
 				None,
 				"instance should not exist"
 			);
@@ -231,16 +235,16 @@ mod burn_from {
 
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
-			assert_ok!(Pallet::<MockRuntime>::burn(&NftClass::STAKING, &new_id, Some(&ALICE)));
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftBurned {
-				class_id: NftClass::STAKING,
+			assert_ok!(Pallet::<MockRuntime>::burn(&TEST_COLLECTION_ID, &new_id, Some(&ALICE)));
+			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTBurned {
+				collection_id: TEST_COLLECTION_ID,
 				instance_id: new_id,
 			}));
 
 			assert_eq!(
-				ClassInstances::<MockRuntime>::get(&NftClass::STAKING).unwrap(),
+				CollectionInstances::<MockRuntime>::get(TEST_COLLECTION_ID).unwrap(),
 				BTreeSet::new(),
-				"STAKING class should not have any instances"
+				"class should not have any instances"
 			);
 
 			assert_eq!(
@@ -250,7 +254,7 @@ mod burn_from {
 			);
 
 			assert_eq!(
-				Instance::<MockRuntime>::get(&(NftClass::STAKING, new_id)),
+				Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, new_id)),
 				None,
 				"instance should not exist"
 			);
@@ -262,7 +266,7 @@ mod burn_from {
 	mod not_found {
 		use composable_tests_helpers::test::helper::assert_last_event;
 
-		use composable_traits::nft::NftClass;
+		use crate::test::nonfungibles::mutate::burn_from::TEST_COLLECTION_ID;
 		use frame_support::{assert_noop, assert_ok, traits::tokens::nonfungibles::Mutate};
 		use sp_runtime::DispatchError;
 
@@ -280,7 +284,7 @@ mod burn_from {
 		fn none_minted() {
 			new_test_ext().execute_with(|| {
 				assert_noop!(
-					Pallet::<MockRuntime>::burn(&NftClass::STAKING, &1, Some(&ALICE)),
+					Pallet::<MockRuntime>::burn(&TEST_COLLECTION_ID, &1, Some(&ALICE)),
 					DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 				);
 			})
@@ -293,7 +297,7 @@ mod burn_from {
 				let [_new_nft_ids @ .., last_nft_minted] = mint_many_nfts_and_assert::<10>(ALICE);
 				assert_noop!(
 					Pallet::<MockRuntime>::burn(
-						&NftClass::STAKING,
+						&TEST_COLLECTION_ID,
 						&(last_nft_minted + 1),
 						Some(&ALICE)
 					),
@@ -310,17 +314,17 @@ mod burn_from {
 				let [nft_to_burn, _new_nft_ids @ ..] = mint_many_nfts_and_assert::<10>(ALICE);
 
 				assert_ok!(Pallet::<MockRuntime>::burn(
-					&NftClass::STAKING,
+					&TEST_COLLECTION_ID,
 					&nft_to_burn,
 					Some(&ALICE)
 				));
-				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftBurned {
-					class_id: NftClass::STAKING,
+				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTBurned {
+					collection_id: TEST_COLLECTION_ID,
 					instance_id: nft_to_burn,
 				}));
 
 				assert_noop!(
-					Pallet::<MockRuntime>::burn(&NftClass::STAKING, &nft_to_burn, Some(&ALICE)),
+					Pallet::<MockRuntime>::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)),
 					DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 				);
 			})
@@ -334,17 +338,17 @@ mod burn_from {
 				let nft_to_burn = mint_nft_and_assert();
 
 				assert_ok!(Pallet::<MockRuntime>::burn(
-					&NftClass::STAKING,
+					&TEST_COLLECTION_ID,
 					&nft_to_burn,
 					Some(&ALICE)
 				));
-				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftBurned {
-					class_id: NftClass::STAKING,
+				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTBurned {
+					collection_id: TEST_COLLECTION_ID,
 					instance_id: nft_to_burn,
 				}));
 
 				assert_noop!(
-					Pallet::<MockRuntime>::burn(&NftClass::STAKING, &nft_to_burn, Some(&ALICE)),
+					Pallet::<MockRuntime>::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)),
 					DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 				);
 			})

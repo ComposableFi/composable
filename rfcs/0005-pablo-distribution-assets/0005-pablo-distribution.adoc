@@ -138,6 +138,12 @@ g -up-> UC12
 . The system SHOULD support converting a reward accumulated in one asset type to another based on a preferred reward asset type configuration. Eg: Given a reward accumulated is in Acala it should be able to convert that to one of PBLO or PICA using the Pablo DEX pools.
 ** This is to handle cases where a Pablo pool fees are in a different asset type than what is preferred.
 
+=== Financial NFT Requirements
+
+. Each staked position MUST be represented as a https://todo.link[fNFT].
+. Owning a PBLO staked position fNFT(xPBLO) MUST allow voting for protocol governance based on the xPBLO granted.
+. Each staked position plus its rewards MUST be transferable by transferring the ownership of its NFT including the voting rights.
+
 == Method
 
 === System Overview
@@ -146,20 +152,19 @@ g -up-> UC12
 ----
 skinparam component {
   backgroundColor<<exists>> LightGreen
-  backgroundColor<<remove>> Red
+  backgroundColor<<todo>> Red
 }
 
 node "Pallet-Staking-Rewards\n(Pallet-Rewards?)" {
     StakingReward - [Reward Logic]
     Staking - [Position Storage/Logic]
     Node "BatchProcess" {
-        [RewardDisbursementHook]
         [RewardsConfig] --> [RewardAccumulationHook]
     }
 }
 
-[fNFT Storage/Logic] <<exists>>
-[RewardDisbursementHook] <<remove>>
+[fNFT Storage/Logic] <<todo>>
+
 
 node "Pallet-Pablo" {
     [Pool] --> StakingReward : transfer\ntrading fees\nfor PBLO stakers
