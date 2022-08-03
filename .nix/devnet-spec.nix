@@ -64,5 +64,9 @@ in {
       ${polkadot-launch}/bin/polkadot-launch ${devnet-polkalaunch-config}
     '';
   documentation = "${composable-bin}/share";
-  inherit composable-book;
+  
+  inherit 
+    composable
+    polkadot
+    composable-book;
 }

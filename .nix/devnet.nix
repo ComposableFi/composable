@@ -72,15 +72,13 @@ in rec {
  
   machines =
    builtins.foldl' (machines:
-    { composable, polkadot }:
+    devnet:
     machines // import ./devnet-gce.nix {
       inherit gce-input;
-      inherit composable;
-      inherit polkadot;
-      devnet-spec = dali;
+      inherit devnet;
     }) {
       inherit nixpkgs;
       network.description = "Composable Devnet";
       network.storage.legacy = { };
-    } [ latest-dali latest-picasso ];
+    } [ dali picasso ];
 }
