@@ -20,7 +20,8 @@ pub(crate) type LoanInputOf<T> = LoanInput<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::Balance,
 	<T as frame_system::Config>::BlockNumber,
-	Percent,
+    <T as Config>::Date,	
+    Percent,
 	RepaymentStrategy,
 >;
 

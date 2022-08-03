@@ -14,7 +14,8 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 	type VaultId = T::VaultId;
 	type Percent = Percent;
 	type RepaymentStrategy = RepaymentStrategy;
-	fn create_market(
+    type Date = T::Date;	
+    fn create_market(
 		manager: Self::AccountId,
 		input: MarketInput<
 			Self::AccountId,
@@ -32,7 +33,8 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 			Self::AccountId,
 			Self::Balance,
 			Self::BlockNumber,
-			Self::Percent,
+			Self::Date,
+            Self::Percent,
 			Self::RepaymentStrategy,
 		>,
 	) -> Result<LoanConfigOf<T>, DispatchError> {

@@ -13,7 +13,7 @@ use composable_traits::{
 use frame_support::{
 	assert_ok,
 	dispatch::DispatchResultWithPostInfo,
-	traits::{fungibles::Mutate, OriginTrait},
+	traits::{fungibles::Mutate},
 	BoundedVec,
 };
 use pallet_vault::models::VaultInfo;
@@ -108,6 +108,7 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 		collateral: 5,
 		interest: Percent::from_percent(5),
 		payment_frequency: 10,
+        payment_schedule: vec![], 
 		loan_maturity: 100,
 		repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature,
 	};

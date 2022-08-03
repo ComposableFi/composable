@@ -75,8 +75,8 @@ pub mod pallet {
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
 	use sp_runtime::{
-		traits::{One, Zero},
-		FixedPointNumber,
+		traits::One,
+		Percent,
 	};
 	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, ops::AddAssign};
 
@@ -162,7 +162,7 @@ pub mod pallet {
 		type MaxMarketsCounterValue: Get<Self::Counter>;
 		type MaxLoansPerMarketCounterValue: Get<Self::Counter>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
-        type PaymentTimestamp:  From<i64> + Parameter;	
+        type Date:  From<i64> + Parameter;	
     }
 
 	#[pallet::pallet]
@@ -213,7 +213,20 @@ pub mod pallet {
 		<T as DeFiComposableConfig>::MayBeAssetId,
 		OptionQuery,
 	>;
-	// TODO: @mikolaichuk: storages for borrowers' strikes (local for paricular market and global
+	
+    // Payments schedule storage.
+    // Maps payment dat and loan account id to interest rate for this payment.
+	#[pallet::storage]
+	pub type ScheduleStorage<T: Config> = StorageDoubleMap<
+		_,
+		Twox64Concat,
+		T::Date,
+        Twox64Concat,
+		T::AccountId,
+		Percent,
+		OptionQuery,
+	>;
+		// TODO: @mikolaichuk: storages for borrowers' strikes (local for paricular market and global
 	// for all markets).
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -285,8 +298,8 @@ pub mod pallet {
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		// TODO: @mikolaichuk: add weights calculation
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
-			// TODO: @mikolaichuk: should it be true or false?
 			Self::treat_vaults_balance(block_number);
+			// TODO: @mikolaichuk: should it be true or false?
 			Self::check_payments(block_number, true);
 			1000
 		}

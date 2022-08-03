@@ -17,6 +17,7 @@ fn can_create_loan() {
 			collateral: 5,
 			interest: Percent::from_percent(5),
 			payment_frequency: 10,
+            payment_schedule: vec![], 
 			loan_maturity: 100,
 			repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature,
 		};

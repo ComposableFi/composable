@@ -49,7 +49,7 @@ pub type OrderId = u32;
 pub type Moment = u64;
 pub type VaultId = u64;
 pub type CurrencyId = crate::currency::CurrencyId;
-pub type PaymentTimestamp = i64; 
+pub type Date = i64; 
 
 pub static ALICE: Lazy<AccountId> = Lazy::new(|| {
 	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000000"))
@@ -377,7 +377,7 @@ impl pallet_undercollateralized_loans::Config for Runtime {
 	type MaxLoansPerMarketCounterValue = CounterValue;
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type UnixTime = Timestamp;
-    type PaymentTimestamp = PaymentTimestamp;
+    type Date = Date;
 }
 
 parameter_type_with_key! {
