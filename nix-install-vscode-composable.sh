@@ -21,7 +21,7 @@ echo "Installing via script at $url  and using $channel channel"
 # easy to cat what is going on
 curl --location $url > ./nix-install.sh
 chmod +x ./nix-install.sh 
-mkdir -m 0755 /nix && chown $(whoami) /nix
+mkdir --mode=0755 /nix && chown $(whoami) /nix
 ./nix-install.sh --no-daemon
 rm ./nix-install.sh
 echo "ensure nix can be executed if it is not"
@@ -40,7 +40,7 @@ chmod +x ~/.nix-profile/etc/profile.d/nix.sh
 
 echo "Flakes and commands support"
 # not using global /etc/nix/nix.conf
-mkdir -p /home/$(whoami)/.config/nix/
+mkdir --parents /home/$(whoami)/.config/nix/
 echo "experimental-features = nix-command flakes" > /home/$(whoami)/.config/nix/nix.conf
 
 echo "Ensure user is on same binaries we are"
