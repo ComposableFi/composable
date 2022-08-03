@@ -512,4 +512,52 @@ mod tests {
 			}
 		);
 	}
+
+	#[test]
+	fn calculate_fee_for_single_asset() {
+		const UNIT: u128 = 1_000_000_000_000_u128;
+		let amount = 1_000_000_u128 * UNIT;
+		let f = FeeConfig {
+			fee_rate: Permill::from_percent(1),
+			owner_fee_rate: Permill::from_percent(1),
+			protocol_fee_rate: Permill::from_percent(1),
+		};
+		let weight = Permill::from_percent(50);
+		assert_eq!(
+			f.calculate_fees_for_single_asset(1, weight, amount),
+			Fee {
+				fee: 5000_000_000_000_000_u128,        // 5000
+				lp_fee: 4950_000_000_000_000_u128,     // 4950
+				owner_fee: 49_5_00_000_000_000_u128,   // 49.5
+				protocol_fee: 0_5_00_000_000_000_u128, // 0.5
+				asset_id: 1
+			}
+		);
+
+		let f_default = FeeConfig::default_from(Permill::from_perthousand(3));
+		let weight_default = Permill::from_percent(30);
+		assert_eq!(
+			f_default.calculate_fees_for_single_asset(1, weight_default, amount),
+			Fee {
+				fee: 2100 * UNIT,
+				lp_fee: 1680 * UNIT,
+				owner_fee: 0,
+				protocol_fee: 420 * UNIT,
+				asset_id: 1
+			}
+		);
+
+		let f2 = f.mul(Permill::from_percent(50));
+		let weight_f2 = Permill::from_percent(99);
+		assert_eq!(
+			f2.calculate_fees_for_single_asset(1, weight_f2, amount),
+			Fee {
+				fee: 50000000000000,
+				lp_fee: 49500000000000,
+				owner_fee: 495000000000,
+				protocol_fee: 5000000000,
+				asset_id: 1
+			}
+		);
+	}
 }
