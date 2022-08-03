@@ -1008,18 +1008,14 @@ pub(crate) fn reward_accumulation_calculation<T: Config>(
 						last_updated_timestamp,
 						..reward
 					})
+				} else if reward.total_rewards < reward.max_rewards {
+					Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(Reward {
+						total_rewards: reward.max_rewards,
+						last_updated_timestamp,
+						..reward
+					}))
 				} else {
-					if reward.total_rewards < reward.max_rewards {
-						Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(Reward {
-							total_rewards: reward.max_rewards,
-							last_updated_timestamp,
-							..reward
-						}))
-					} else {
-						Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(
-							reward,
-						))
-					}
+					Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(reward))
 				}
 			}
 		},
