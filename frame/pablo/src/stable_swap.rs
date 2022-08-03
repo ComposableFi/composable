@@ -125,8 +125,8 @@ impl<T: Config> StableSwap<T> {
 
 	pub fn add_liquidity(
 		who: &T::AccountId,
-		pool_info: StableSwapPoolInfo<T::AccountId, T::AssetId>,
-		pool_account: T::AccountId,
+		pool_info: &StableSwapPoolInfo<T::AccountId, T::AssetId>,
+		pool_account: &T::AccountId,
 		base_amount: T::Balance,
 		quote_amount: T::Balance,
 		min_mint_amount: T::Balance,
@@ -145,15 +145,15 @@ impl<T: Config> StableSwap<T> {
 		ensure!(base_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
 		ensure!(quote_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
 		let (mint_amount, base_fee, quote_fee) = Self::calculate_mint_amount_and_fees(
-			&pool_info,
-			&pool_account,
+			pool_info,
+			pool_account,
 			&base_amount,
 			&quote_amount,
 		)?;
 
 		ensure!(mint_amount >= min_mint_amount, Error::<T>::CannotRespectMinimumRequested);
-		T::Assets::transfer(pool_info.pair.base, who, &pool_account, base_amount, keep_alive)?;
-		T::Assets::transfer(pool_info.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
+		T::Assets::transfer(pool_info.pair.base, who, pool_account, base_amount, keep_alive)?;
+		T::Assets::transfer(pool_info.pair.quote, who, pool_account, quote_amount, keep_alive)?;
 		T::Assets::mint_into(pool_info.lp_token, who, mint_amount)?;
 		Ok((base_amount, quote_amount, mint_amount, base_fee, quote_fee))
 	}
@@ -245,7 +245,7 @@ impl<T: Config> StableSwap<T> {
 				new_quote_balance,
 				amplification_coefficient,
 			)?;
-			// minted LP is propotional to the delta of the pool invariant caused by imbalanced
+			// minted LP is proportional to the delta of the pool invariant caused by imbalanced
 			// liquidity
 			let mint_amount = T::Convert::convert(safe_multiply_by_rational(
 				T::Convert::convert(total_lp_issued),

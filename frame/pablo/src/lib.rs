@@ -1183,8 +1183,8 @@ pub mod pallet {
 					let (added_base_amount, added_quote_amount, minted_lp, base_fee, quote_fee) =
 						StableSwap::<T>::add_liquidity(
 							who,
-							info.clone(),
-							pool_account.clone(),
+							&info,
+							&pool_account,
 							base_amount,
 							quote_amount,
 							min_mint_amount,
@@ -1195,20 +1195,25 @@ pub mod pallet {
 					Self::disburse_fees(&pool_account, &pool_id, &info.owner, &quote_fee)?;
 					(added_base_amount, added_quote_amount, minted_lp)
 				},
-				PoolConfiguration::ConstantProduct(info) => Uniswap::<T>::add_liquidity(
-					who,
-					info,
-					pool_account,
-					base_amount,
-					quote_amount,
-					min_mint_amount,
-					keep_alive,
-				)?,
+				PoolConfiguration::ConstantProduct(info) => {
+					let (added_base_amount, added_quote_amount, minted_lp, fee) =
+						Uniswap::<T>::add_liquidity(
+							who,
+							&info,
+							&pool_account,
+							base_amount,
+							quote_amount,
+							min_mint_amount,
+							keep_alive,
+						)?;
+					Self::disburse_fees(&pool_account, &info.owner, &fee)?;
+					(added_base_amount, added_quote_amount, minted_lp)
+				},
 				PoolConfiguration::LiquidityBootstrapping(info) =>
 					LiquidityBootstrapping::<T>::add_liquidity(
 						who,
 						info,
-						pool_account,
+						&pool_account,
 						base_amount,
 						quote_amount,
 						min_mint_amount,

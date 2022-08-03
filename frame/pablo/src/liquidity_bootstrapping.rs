@@ -159,7 +159,7 @@ impl<T: Config> LiquidityBootstrapping<T> {
 	pub(crate) fn add_liquidity(
 		who: &T::AccountId,
 		pool: LiquidityBootstrappingPoolInfoOf<T>,
-		pool_account: AccountIdOf<T>,
+		pool_account: &AccountIdOf<T>,
 		base_amount: T::Balance,
 		quote_amount: T::Balance,
 		_: T::Balance,
@@ -173,8 +173,8 @@ impl<T: Config> LiquidityBootstrapping<T> {
 
 		// NOTE(hussein-aitlahcen): as we only allow the owner to provide liquidity, we don't
 		// mint any LP.
-		T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
-		T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
+		T::Assets::transfer(pool.pair.base, who, pool_account, base_amount, keep_alive)?;
+		T::Assets::transfer(pool.pair.quote, who, pool_account, quote_amount, keep_alive)?;
 
 		Ok((base_amount, quote_amount, T::Balance::zero()))
 	}
