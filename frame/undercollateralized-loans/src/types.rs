@@ -19,9 +19,9 @@ pub(crate) type MarketInputOf<T> = MarketInput<
 pub(crate) type LoanInputOf<T> = LoanInput<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::Balance,
-    <T as Config>::TimeMeasure,	
     Percent,
 	RepaymentStrategy,
+    <T as Config>::TimeMeasure,	
 >;
 
 pub(crate) type MarketInfoOf<T> = MarketInfo<
@@ -42,9 +42,9 @@ pub(crate) type MarketConfigOf<T> = MarketConfig<
 pub(crate) type LoanConfigOf<T> = LoanConfig<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::Balance,
-	<T as Config>::TimeMeasure,
 	Percent,
 	RepaymentStrategy,
+	<T as Config>::TimeMeasure,
 >;
 
 #[derive(Encode, Decode)]

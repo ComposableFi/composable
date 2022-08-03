@@ -1,5 +1,4 @@
 use crate::defi::CurrencyPair;
-use composable_support::collections::vec::bounded::BiBoundedVec;
 use composable_support::math::safe::SafeAdd;
 use frame_support::pallet_prelude::*;
 use sp_runtime::{traits::Zero, ArithmeticError, Perquintill};
@@ -95,13 +94,13 @@ where
 }
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub struct LoanConfig<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy>
+pub struct LoanConfig<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure>
 where
 	AccountId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
 	TimeMeasure: Clone + Eq + PartialEq,
 	Percent: Clone + Eq + PartialEq,
-	RepaymentStrategy: Clone,
+	RepaymentStrategy: Clone + Eq + PartialEq,
 {
 	/// Loan account id.
 	account_id: AccountId,
@@ -126,14 +125,14 @@ where
 	repayment_strategy: RepaymentStrategy,
 }
 
-impl<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy>
-	LoanConfig<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy>
+impl<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure>
+	LoanConfig<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure>
 where
 	AccountId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
 	TimeMeasure: Clone + Eq + PartialEq + Ord,
 	Percent: Clone + Eq + PartialEq,
-	RepaymentStrategy: Clone,
+	RepaymentStrategy: Clone + Eq + PartialEq,
 {
 	pub fn new(
 		account_id: AccountId,
@@ -258,7 +257,7 @@ where
 	Balance: Clone + Eq + PartialEq,
 	BlockNumber: Clone + Eq + PartialEq,
 	Percent: Clone + Eq + PartialEq,
-	RepaymentStrategy: Clone,
+	RepaymentStrategy: Clone + Eq + PartialEq,
 {
 	/// Loan configuration defines loan terms
 	config: LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>,
@@ -271,7 +270,8 @@ where
 	Balance: Clone + Eq + PartialEq + Zero,
 	BlockNumber: SafeAdd + Clone + Eq + PartialEq,
 	Percent: Clone + Eq + PartialEq,
-	RepaymentStrategy: Clone,
+	RepaymentStrategy: Clone + Eq + PartialEq,
+
 {
 	pub fn new(
 		config: LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>,
@@ -317,7 +317,7 @@ impl<AccountId, AssetId: Copy, BlockNumber, LiquidationStrategyId>
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
-pub struct LoanInput<AccountId, Balance,TimeMeasure, Percent, RepaymentStrategy> {
+pub struct LoanInput<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure> {
 	/// Loan belongs to this market.
 	pub market_account_id: AccountId,
 	/// This account id have to be whitelisted.
@@ -334,10 +334,5 @@ pub struct LoanInput<AccountId, Balance,TimeMeasure, Percent, RepaymentStrategy>
 	pub repayment_strategy: RepaymentStrategy,
 }
 
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
-pub struct Payment<TimeMeasure, Percent> {
-    pub date: TimeMeasure,
-    pub rate: Percent,
-}
 
 

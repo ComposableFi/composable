@@ -3,7 +3,7 @@ use crate::{
 //		interest_periodically_principal_when_mature_strategy, principal_only_fake_strategy,
 		RepaymentResult, RepaymentStrategy,
 	},
-	types::{LoanConfigOf, MarketConfigOf, MarketInfoOf, MarketInputOf},
+	types::{LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
 };
@@ -13,7 +13,7 @@ use composable_traits::{
 	defi::DeFiComposableConfig,
 	oracle::Oracle,
 	undercollateralized_loans::{
-		LoanConfig, LoanInput, MarketConfig, MarketInfo, UndercollateralizedLoans,
+		LoanConfig, MarketConfig, MarketInfo, UndercollateralizedLoans,
 	},
 	vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
 };
@@ -99,7 +99,7 @@ impl<T: Config> Pallet<T> {
 	// TODO: @mikolaichuk: check why LoanInputOf does not work here
 	pub(crate) fn do_create_loan(
 		input: Validated<
-			LoanInput<T::AccountId, T::Balance, T::TimeMeasure, Percent, RepaymentStrategy>,
+			LoanInputOf<T>,
 			LoanInputIsValid<crate::Pallet<T>>,
 		>,
 	) -> Result<LoanConfigOf<T>, DispatchError> {

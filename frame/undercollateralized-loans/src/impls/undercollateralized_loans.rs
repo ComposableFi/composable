@@ -32,9 +32,9 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 		input: LoanInput<
 			Self::AccountId,
 			Self::Balance,
-			Self::TimeMeasure,
             Self::Percent,
 			Self::RepaymentStrategy,
+			Self::TimeMeasure,
 		>,
 	) -> Result<LoanConfigOf<T>, DispatchError> {
 		Self::do_create_loan(input.try_into_validated()?)
@@ -48,9 +48,9 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 		LoanConfig<
 			Self::AccountId,
 			Self::Balance,
-			Self::TimeMeasure,
 			Self::Percent,
 			Self::RepaymentStrategy,
+			Self::TimeMeasure,
 		>,
 		DispatchError,
 	> {
