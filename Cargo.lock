@@ -177,6 +177,7 @@ dependencies = [
  "derive_more",
  "frame-metadata",
  "frame-support",
+ "futures",
  "hex",
  "hex-literal",
  "jsonrpsee 0.15.1",

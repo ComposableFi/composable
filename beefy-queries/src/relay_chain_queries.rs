@@ -37,17 +37,13 @@ where
         .to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
 
     let para_ids = api.storage().paras().parachains(block_hash).await?;
-    let storage_prefix = frame_support::storage::storage_prefix(b"Paras", b"Heads");
-    let mut para_header_keys = Vec::new();
-
-    for para_id in para_ids.iter() {
+    let parachain_header_storage_key = {
+        let mut storage_key = frame_support::storage::storage_prefix(b"Paras", b"Heads").to_vec();
         let encoded_para_id = para_id.encode();
-
-        let mut full_key = storage_prefix.clone().to_vec();
-        full_key.extend_from_slice(sp_core::hashing::twox_64(&encoded_para_id).as_slice());
-        full_key.extend_from_slice(&encoded_para_id);
-        para_header_keys.push(subxt::sp_core::storage::StorageKey(full_key));
-    }
+        storage_key.extend_from_slice(sp_core::hashing::twox_64(&encoded_para_id).as_slice());
+        storage_key.extend_from_slice(&encoded_para_id);
+        storage_key
+    };
 
     let previous_finalized_block_number: subxt::BlockNumber = (latest_beefy_height + 1).into();
     let previous_finalized_hash = client
@@ -62,7 +58,12 @@ where
 
     let change_set = client
         .storage()
-        .query_storage(para_header_keys, previous_finalized_hash, block_hash)
+        .query_storage(
+            // we are interested only in the blocks where our parachain header changes.
+            vec![sp_core::storage::StorageKey(parachain_header_storage_key)],
+            previous_finalized_hash,
+            block_hash,
+        )
         .await?;
     let mut finalized_blocks = BTreeMap::new();
     let mut leaf_indices = vec![];
@@ -91,9 +92,6 @@ where
             }
         }
 
-        if !heads.contains_key(&para_id) {
-            continue;
-        }
         let block_number = u32::from(*header.number());
         finalized_blocks.insert(block_number as u64, heads);
         leaf_indices.push(get_leaf_index_for_block_number(

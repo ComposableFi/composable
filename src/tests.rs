@@ -10,6 +10,7 @@ use beefy_queries::{ClientWrapper, Crypto};
 use pallet_mmr_primitives::Proof;
 use sp_core::bytes::to_hex;
 use subxt::rpc::{rpc_params, JsonValue, Subscription, SubscriptionClientT};
+use futures::stream::StreamExt;
 
 #[tokio::test]
 async fn test_verify_mmr_with_proof() {
@@ -27,9 +28,8 @@ async fn test_verify_mmr_with_proof() {
         .await
         .unwrap();
 
-    let mut count = 0;
     let mut client_state = ClientWrapper::get_initial_client_state(Some(&client)).await;
-    let mut subscription: Subscription<String> = client
+    let subscription: Subscription<String> = client
         .rpc()
         .client
         .subscribe(
@@ -47,10 +47,8 @@ async fn test_verify_mmr_with_proof() {
         para_id: 2000,
     };
 
-    while let Some(Ok(commitment)) = subscription.next().await {
-        if count == 100 {
-            break;
-        }
+    let mut subscription_stream = subscription.enumerate().take(100);
+    while let Some((count, Ok(commitment))) = subscription_stream.next().await {
         let recv_commitment: sp_core::Bytes =
             serde_json::from_value(JsonValue::String(commitment)).unwrap();
         let signed_commitment: beefy_primitives::SignedCommitment<
@@ -108,7 +106,6 @@ async fn test_verify_mmr_with_proof() {
             client_state.latest_beefy_height,
             to_hex(&client_state.mmr_root_hash[..], false)
         );
-        count += 1;
     }
 }
 
@@ -244,9 +241,8 @@ async fn verify_parachain_headers() {
         .await
         .unwrap();
 
-    let mut count = 1;
     let mut client_state = ClientWrapper::get_initial_client_state(Some(&client)).await;
-    let mut subscription: Subscription<String> = client
+    let subscription: Subscription<String> = client
         .rpc()
         .client
         .subscribe(
@@ -264,10 +260,8 @@ async fn verify_parachain_headers() {
         para_id: 2000,
     };
 
-    while let Some(Ok(commitment)) = subscription.next().await {
-        if count == 100 {
-            break;
-        }
+    let mut subscription_stream = subscription.enumerate().take(100);
+    while let Some((count, Ok(commitment))) = subscription_stream.next().await {
         let recv_commitment: sp_core::Bytes =
             serde_json::from_value(JsonValue::String(commitment)).unwrap();
         let signed_commitment: beefy_primitives::SignedCommitment<
@@ -322,7 +316,5 @@ async fn verify_parachain_headers() {
             "\nSuccessfully verified parachain headers for block number: {}\n",
             client_state.latest_beefy_height,
         );
-
-        count += 1;
     }
 }

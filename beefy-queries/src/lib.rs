@@ -148,7 +148,6 @@ where
             .block_hash(Some(subxt_block_number))
             .await?;
 
-
         let batch_proof =
             fetch_mmr_batch_proof(&self.relay_client, leaf_indices, block_hash).await?;
 

@@ -50,6 +50,7 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 beefy-queries = { path = "./beefy-queries" }
 hex = "0.4.3"
+futures = "0.3.21"
 
 [features]
 default = ["std"]
