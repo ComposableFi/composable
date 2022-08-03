@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-07-05T22:23:23.979589572Z -->
+<!-- Generated at 2022-08-03T23:36:28.596446Z -->
 
 # Staking Rewards Pallet Extrinsics
 
@@ -10,3 +10,25 @@
 Create a new reward pool based on the config.
 
 Emits `RewardPoolCreated` event when successful.
+
+## Stake
+
+[`stake`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.stake)
+
+Create a new stake.
+
+Emits `Staked` event when successful.
+
+## Extend
+
+[`extend`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.extend)
+
+Extend an existing stake.
+
+Emits `StakeExtended` event when successful.
+
+## Split
+
+[`split`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.split)
+
+No documentation available at this time.
