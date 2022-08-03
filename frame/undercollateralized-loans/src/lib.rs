@@ -164,7 +164,7 @@ pub mod pallet {
 	    // Each payments schedule can not have more than this amount of payments. 
         type MaxPaymentsAmountValue: Get<u32>;
         type OracleMarketCreationStake: Get<Self::Balance>;
-        type TimeMeasure:  From<i64> + Parameter + Default;	
+        type TimeMeasure:  From<i64> + Parameter + Ord;	
     }
 
 	#[pallet::pallet]

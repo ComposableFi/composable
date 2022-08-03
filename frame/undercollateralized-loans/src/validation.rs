@@ -91,8 +91,6 @@ where
 		let principal = input.principal.try_into_validated::<BalanceGreaterThenZero>()?.value();
 		// Check that collateral balance > 0
 		let collateral = input.collateral.try_into_validated::<BalanceGreaterThenZero>()?.value();
-		// Check that interest rate > 0
-		ensure!(input.interest > Percent::zero(), "Can not create loan with zero interest rate.");
 		// Checks that the borrower's account is included in the market's whitelis of borrowers.
 		ensure!(
 			Loans::is_borrower_account_whitelisted(

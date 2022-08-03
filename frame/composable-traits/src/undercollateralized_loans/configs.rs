@@ -1,8 +1,10 @@
 use crate::defi::CurrencyPair;
+use composable_support::collections::vec::bounded::BiBoundedVec;
 use composable_support::math::safe::SafeAdd;
 use frame_support::pallet_prelude::*;
 use sp_runtime::{traits::Zero, ArithmeticError, Perquintill};
 use sp_std::collections::btree_set::BTreeSet;
+use sp_std::collections::btree_map::BTreeMap;
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct MarketConfig<AccountId, AssetId, BlockNumber, VaultId>
@@ -112,22 +114,24 @@ where
 	principal: Balance,
 	/// Amount of assets which should be putted as collateral.
 	collateral: Balance,
-	/// Interest rate per payment.
-	interest: Percent,
-    /// Activated loan lifetime in the terms of block numbers.
-	maturity: TimeMeasure,
-	/// Payment strategie which should be applyed.
+    /// Schedule of payments 
+    schedule: BTreeMap<TimeMeasure, Percent>,	
+    /// The moment of the first interest payment. 
+    first_payment_moment: TimeMeasure,
+    /// The moment of the last interest payment and principal repayment. 
+    last_payment_moment: TimeMeasure,
+    /// Payment strategy which should be applyed.
 	/// For instance borrower have to pay principal when loan is mature (one strategy),
 	/// or he may pay principal partially, simultaneously with interest payments.   
 	repayment_strategy: RepaymentStrategy,
 }
 
-impl<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
-	LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
+impl<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy>
+	LoanConfig<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy>
 where
 	AccountId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
-	BlockNumber: Clone + Eq + PartialEq,
+	TimeMeasure: Clone + Eq + PartialEq + Ord,
 	Percent: Clone + Eq + PartialEq,
 	RepaymentStrategy: Clone,
 {
@@ -137,19 +141,24 @@ where
 		borrower_account_id: AccountId,
 		principal: Balance,
 		collateral: Balance,
-		interest: Percent,
-		maturity: BlockNumber,
+        schedule: Vec<(TimeMeasure, Percent)>,	
 		repayment_strategy: RepaymentStrategy,
 	) -> Self {
-		Self {
+	    let schedule: BTreeMap<TimeMeasure, Percent> = schedule.into_iter().collect();
+        // We are sure thate BTreeMap is not empty
+        // TODO: @mikolaichuk: May be it would be better to use BiBoundedVec as input here.
+        let first_payment_moment = schedule.keys().min().unwrap().clone();
+        let last_payment_moment = schedule.keys().max().unwrap().clone();
+        Self {
 			account_id,
 			market_account_id,
 			borrower_account_id,
 			principal,
 			collateral,
-			interest,
-			maturity,
-			repayment_strategy,
+		    schedule,
+            first_payment_moment,
+            last_payment_moment,
+            repayment_strategy,
 		}
 	}
 
@@ -177,22 +186,28 @@ where
 	pub fn collateral(&self) -> &Balance {
 		&self.collateral
 	}
+    
+	/// Get a reference to the loan payment schedule.
+    pub fn schedule(&self) -> &BTreeMap<TimeMeasure, Percent> {
+        &self.schedule
+    }
+    
+	/// Get a reference to the loan first payment moment. 
+    pub fn first_payment_moment(&self) -> &TimeMeasure {
+        &self.first_payment_moment
+    }
 
-	/// Get a mutable reference to the loan config's interest.
-	pub fn interest(&self) -> &Percent {
-		&self.interest
-	}
-
-	/// Get a reference to the loan config's maturity.
-	pub fn maturity(&self) -> &BlockNumber {
-		&self.maturity
-	}
+	/// Get a reference to the loan last payment moment. 
+    pub fn last_payment_moment(&self) -> &TimeMeasure {
+        &self.last_payment_moment
+    }
 
 	/// Get a reference to the loan config's payment strategy.
 	pub fn repayment_strategy(&self) -> &RepaymentStrategy {
 		&self.repayment_strategy
 	}
-}
+
+   }
 
 // some fields are hiden since they should be immutable
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
@@ -275,13 +290,13 @@ where
 /// input to create market extrinsic
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub struct MarketInput<AccountId, AssetId, BlockNumber, LiquidationStrategyId> {
-	/// collateral currency and borrow currency.
+	/// Collateral currency and borrow currency.
 	pub currency_pair: CurrencyPair<AssetId>,
 	/// Reserve factor of market borrow vault.
 	pub reserved_factor: Perquintill,
-	// TODO: @mikolaichuk: BoundedVec
-	pub whitelist: BTreeSet<AccountId>,
-	/// liquidation engine id.
+    /// List of trusted borrowers	
+    pub whitelist: BTreeSet<AccountId>,
+	/// Liquidation engine id.
 	pub liquidation_strategies: Vec<LiquidationStrategyId>,
 	/// Count of blocks until throw error PriceIsTooOld.
 	pub max_price_age: BlockNumber,
@@ -302,7 +317,7 @@ impl<AccountId, AssetId: Copy, BlockNumber, LiquidationStrategyId>
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
-pub struct LoanInput<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy> {
+pub struct LoanInput<AccountId, Balance,TimeMeasure, Percent, RepaymentStrategy> {
 	/// Loan belongs to this market.
 	pub market_account_id: AccountId,
 	/// This account id have to be whitelisted.
@@ -311,10 +326,8 @@ pub struct LoanInput<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy
 	pub principal: Balance,
 	/// Amount of assets which should be deposited as collateral.
 	pub collateral: Balance,
-	/// Interest rate per block.
-	pub interest: Percent,
 	/// How often borrowers have to pay interest.
-    pub payment_schedule: Vec<Payment<TimeMeasure, Percent>>,
+    pub payment_schedule: Vec<(TimeMeasure, Percent)>,
 	/// Payment strategie which should be applyed.
 	/// For instance borrower have to pay principal when loan is mature (one strategy),
 	/// or he may pay principal partially, simultaneously with interest payments.   

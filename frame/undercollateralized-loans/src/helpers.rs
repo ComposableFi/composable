@@ -117,8 +117,7 @@ impl<T: Config> Pallet<T> {
 				config_input.borrower_account_id,
 				config_input.principal,
 				config_input.collateral,
-				config_input.interest,
-				T::TimeMeasure::default(),
+                config_input.payment_schedule,
 				config_input.repayment_strategy,
 			);
 			crate::NonActiveLoansStorage::<T>::insert(loan_account_id, loan_config.clone());
