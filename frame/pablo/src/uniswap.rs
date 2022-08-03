@@ -95,28 +95,27 @@ impl<T: Config> Uniswap<T> {
 
 	pub(crate) fn add_liquidity(
 		who: &T::AccountId,
-		pool: ConstantProductPoolInfo<T::AccountId, T::AssetId>,
-		pool_account: T::AccountId,
+		pool: &ConstantProductPoolInfo<T::AccountId, T::AssetId>,
+		pool_account: &T::AccountId,
 		base_amount: T::Balance,
 		quote_amount: T::Balance,
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
-	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
+	) -> Result<(T::Balance, T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
 		ensure!(base_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
 		// single asset case
 		if quote_amount.is_zero() {
 			return Self::add_liquidity_single_asset(
 				who,
-				&pool,
-				&pool_account,
+				pool,
+				pool_account,
 				base_amount,
 				min_mint_amount,
 				keep_alive,
 			)
 		}
-		let pool_base_aum = T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
-		let pool_quote_aum =
-			T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
+		let pool_base_aum = T::Convert::convert(T::Assets::balance(pool.pair.base, pool_account));
+		let pool_quote_aum = T::Convert::convert(T::Assets::balance(pool.pair.quote, pool_account));
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 		let (quote_amount, amount_of_lp_token_to_mint) = compute_deposit_lp(
@@ -135,10 +134,10 @@ impl<T: Config> Uniswap<T> {
 			Error::<T>::CannotRespectMinimumRequested
 		);
 
-		T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
-		T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
+		T::Assets::transfer(pool.pair.base, who, pool_account, base_amount, keep_alive)?;
+		T::Assets::transfer(pool.pair.quote, who, pool_account, quote_amount, keep_alive)?;
 		T::Assets::mint_into(pool.lp_token, who, amount_of_lp_token_to_mint)?;
-		Ok((base_amount, quote_amount, amount_of_lp_token_to_mint))
+		Ok((base_amount, quote_amount, amount_of_lp_token_to_mint, Fee::zero(pool.pair.base)))
 	}
 
 	fn add_liquidity_single_asset(
@@ -148,12 +147,18 @@ impl<T: Config> Uniswap<T> {
 		amount: T::Balance,
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
-	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
+	) -> Result<(T::Balance, T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
 		let pool_base_aum = T::Convert::convert(T::Assets::balance(pool.pair.base, pool_account));
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
+		let fee = pool.fee_config.calculate_fees_for_single_asset(
+			pool.pair.base,
+			pool.base_weight,
+			amount,
+		);
 
 		let amount_of_lp_token_to_mint = compute_deposit_lp_single_asset(
-			T::Convert::convert(amount),
+			// TODO(saruman9): should we use safe operation here?
+			T::Convert::convert(amount) - T::Convert::convert(fee.fee),
 			pool_base_aum,
 			pool.base_weight,
 			lp_total_issuance,
@@ -164,10 +169,10 @@ impl<T: Config> Uniswap<T> {
 			Error::<T>::CannotRespectMinimumRequested
 		);
 
-		T::Assets::transfer(pool.pair.base, who, &pool_account, amount, keep_alive)?;
+		T::Assets::transfer(pool.pair.base, who, &pool_account, amount - fee.fee, keep_alive)?;
 		T::Assets::mint_into(pool.lp_token, who, amount_of_lp_token_to_mint)?;
 
-		Ok((amount, T::Balance::zero(), amount_of_lp_token_to_mint))
+		Ok((amount, T::Balance::zero(), amount_of_lp_token_to_mint, fee))
 	}
 
 	pub(crate) fn remove_liquidity(

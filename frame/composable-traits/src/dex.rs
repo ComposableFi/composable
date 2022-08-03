@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use sp_arithmetic::traits::Saturating;
 use sp_runtime::{
 	traits::{CheckedMul, CheckedSub},
-	ArithmeticError, DispatchError, Permill,
+	ArithmeticError, DispatchError, PerThing, Permill,
 };
 use sp_std::{collections::btree_map::BTreeMap, ops::Mul, vec::Vec};
 
@@ -225,7 +225,25 @@ impl FeeConfig {
 		asset_id: AssetId,
 		amount: Balance,
 	) -> Fee<AssetId, Balance> {
-		let fee: Balance = self.fee_rate.mul_floor(amount);
+		let fee = self.fee_rate.mul_floor(amount);
+		self.inner_calculate_fees(asset_id, fee)
+	}
+
+	pub fn calculate_fees_for_single_asset<AssetId: AssetIdLike, Balance: BalanceLike>(
+		&self,
+		asset_id: AssetId,
+		weight: Permill,
+		amount: Balance,
+	) -> Fee<AssetId, Balance> {
+		let fee = self.fee_rate.mul(weight.left_from_one()).mul_floor(amount);
+		self.inner_calculate_fees(asset_id, fee)
+	}
+
+	fn inner_calculate_fees<AssetId: AssetIdLike, Balance: BalanceLike>(
+		&self,
+		asset_id: AssetId,
+		fee: Balance,
+	) -> Fee<AssetId, Balance> {
 		let owner_fee: Balance = self.owner_fee_rate.mul_floor(fee);
 		let protocol_fee: Balance = self.protocol_fee_rate.mul_floor(owner_fee);
 		Fee {
