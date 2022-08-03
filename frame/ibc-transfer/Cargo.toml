@@ -21,7 +21,7 @@ composable-traits = { default-features = false, path = "../composable-traits" }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false, optional = true }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "6caccc984bf350cc2a6fdd2560d2264ff9fc5ff3", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "f88119c01284245d1fb5535bfe3ae8cd1d5fdc96", default-features = false }
 ibc-primitives = { path = "../ibc/ibc-primitives", default-features = false }
 ibc-trait = { path = "../ibc/ibc-trait", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
