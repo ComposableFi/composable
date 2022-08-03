@@ -67,9 +67,9 @@ in {
                     name = prefix + node.name;
                   }));
                 routified-composable-nodes =
-                  routify-nodes "parachain/" composable.nodes;
+                  routify-nodes "parachain/" devnet.composable.nodes;
                 routified-polkadot-nodes =
-                  routify-nodes "relaychain/" polkadot.nodes;
+                  routify-nodes "relaychain/" devnet.polkadot.nodes;
                 routified-nodes =
                   routified-composable-nodes ++ routified-polkadot-nodes;
               in
