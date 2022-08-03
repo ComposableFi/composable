@@ -192,8 +192,9 @@ jobs:
   nixops-deploy-devnet:
       # ISSUE: sre custom runners has issues with permission of checkout and ssh hangs - do not use
       runs-on: ubuntu-latest
-      container:
-        image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee    
+      # ISSUE: we have some issues with SSH on nixos
+      # container:
+      #   image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee    
       # concurrency:
       #   group: deploy-devnet
       #   cancel-in-progress: false
@@ -202,17 +203,6 @@ jobs:
         with:
           clean: false
           fetch-depth: 0                 
-
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf 
-            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs && nix-channel --update         
-            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3  nixpkgs.google-cloud-sdk nixpkgs.jq
-            echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV            
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: ${{  env.NIX_CACHIX }}
 
       #TODO: use nix tool and just oneliner to dump credentials, no need tasks
       #TODO: and this task is deprecated
@@ -223,6 +213,12 @@ jobs:
 
       - name: Build & Push
         run: |
+          chmod +x ./nix-install-vscode-composable.sh
+          ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
+          source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH" 
+          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
+          nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3  nixpkgs.google-cloud-sdk nixpkgs.jq          
+          echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV                  
           nix build .#composable-node --no-update-lock-file
           # NOTE: temporary move here until 100% nix
           mkdir -p target/release
@@ -247,6 +243,11 @@ jobs:
           fi
 
           nix develop .#sre --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/ --command nixops deploy --check --confirm --deployment devnet-gce --debug --show-trace
+          
+          # TODO: document what happens if Deploy passed, but Store was stopped - how stat reconciled
+          # TODO: consider running state save in same step as it is unseparable from deploy
+          gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/
+
         env:
           NIXOPS_STATE_URL: "gs://composable-state"
           NIXOPS_STATE: "deployment.nixops"
@@ -254,13 +255,5 @@ jobs:
           GCP_DEVNET_SERVICE_ACCOUNT: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT }}
           GCP_DEVNET_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT_KEY }}
 
-      - name: Store state
-        if: always()
-        run: |
-          # TODO: document what happens if Deploy passed, but Store was stopped - how stat reconciled
-          # TODO: consider running state save in same step as it is unseparable from deploy
-          gsutil cp $NIXOPS_STATE $NIXOPS_STATE_URL/
-        env:
-          NIXOPS_STATE: "deployment.nixops"
-          NIXOPS_STATE_URL: "gs://composable-state"
+
           

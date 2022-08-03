@@ -1,12 +1,31 @@
 # install nix under `whoami` user targeting composable cache
-echo "Installing via script at $1  and using $2 channel"
+# works:
+# - ci runners
+# - dev containers
+#
+# does not work:
+# - on nixos
+# - if there is no home folder of current user
+# - under root
+
+set -o errexit -o pipefail
+
+url=${1:-https://releases.nixos.org/nix/nix-2.10.3/install}
+channel=${2:-https://nixos.org/channels/nixpkgs-22.05-darwin}
+cachix=${3:-composable-community}
+
+echo "Installing via script at $url  and using $channel channel"
 
 # so we avoid using symbols which may not execute well in shells
 # easy to cat what is going on
-curl --location $1 > ./nix-install.sh
+curl --location $url > ./nix-install.sh
 chmod +x ./nix-install.sh 
-./nix-install.sh
-chmod +x ~/.nix-profile/bin
+./nix-install.sh --no-daemon
+rm ./nix-install.sh
+echo "ensure nix can be executed if it is not"
+chmod +x ~/.nix-profile/bin/nix-channel
+chmod +x ~/.nix-profile/bin/nix-env
+chmod +x ~/.nix-profile/bin/nix
 
 echo "Force nix upon user"
 echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc
@@ -17,15 +36,13 @@ export PATH="/home/$(whoami)/.nix-profile/bin:$PATH"
 chmod +x ~/.nix-profile/etc/profile.d/nix.sh
 ~/.nix-profile/etc/profile.d/nix.sh
 
-# NOTE: for some reason installed stuff is not executable...
-chmod +x ~/.nix-profile/bin/nix-channel
-chmod +x ~/.nix-profile/bin/nix-env
+echo "Flakes and commands support"
+echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
 
 echo "Ensure user is on same binaries we are"
-nix-channel --add $2 nixpkgs
-nix-channel --update                
+nix-channel --add $channel nixpkgs && nix-channel --update                
 nix-env --install --attr nixpkgs.cachix
 chmod +x ~/.nix-profile/bin/cachix
 
 echo "Cachix"
-cachix use composable-community       
+cachix use $cachix       
