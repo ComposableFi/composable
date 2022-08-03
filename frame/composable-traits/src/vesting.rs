@@ -1,7 +1,13 @@
+use core::fmt::Debug;
+
 use codec::{HasCompact, MaxEncodedLen};
+use composable_support::math::safe::SafeMul;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
-use sp_runtime::traits::{AtLeast32Bit, Zero};
+use sp_runtime::{
+	traits::{AtLeast32Bit, Zero},
+	ArithmeticError,
+};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -46,8 +52,18 @@ pub enum VestingWindow<BlockNumber, Moment> {
 
 /// VestingScheduleId type for claiming.
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub enum Schedules<Id, MaxVestingSchedules> {
+#[derive(
+	CloneNoBound,
+	Encode,
+	Decode,
+	PartialEqNoBound,
+	EqNoBound,
+	RuntimeDebugNoBound,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+#[scale_info(skip_type_params(MaxVestingSchedules))]
+pub enum Schedules<Id: Clone + Eq + PartialEq + Debug, MaxVestingSchedules: Get<u32>> {
 	All,
 	Many(BoundedVec<Id, MaxVestingSchedules>),
 }
@@ -121,8 +137,8 @@ impl<
 	}
 
 	/// Returns all locked amount, `None` if calculation overflows.
-	pub fn total_amount(&self) -> Option<Balance> {
-		self.per_period.checked_mul(&self.period_count.into())
+	pub fn total_amount(&self) -> Result<Balance, ArithmeticError> {
+		self.per_period.safe_mul(&self.period_count.into())
 	}
 
 	/// Returns locked amount for a given schedule of VestingWindow.
