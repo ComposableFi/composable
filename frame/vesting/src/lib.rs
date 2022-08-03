@@ -42,7 +42,9 @@
 #![allow(clippy::unused_unit)]
 
 use composable_support::abstractions::utils::increment::Increment;
-use composable_traits::vesting::{VestedTransfer, VestingSchedule, VestingScheduleInput};
+use composable_traits::vesting::{
+	Schedules, VestedTransfer, VestingSchedule, VestingScheduleInput,
+};
 use frame_support::{
 	ensure,
 	pallet_prelude::*,
@@ -55,7 +57,7 @@ use sp_runtime::{
 	traits::{BlockNumberProvider, CheckedAdd, One, Saturating, StaticLookup, Zero},
 	ArithmeticError, DispatchResult,
 };
-use sp_std::{convert::TryInto, fmt::Debug, vec::Vec};
+use sp_std::{convert::TryInto, vec::Vec};
 
 mod weights;
 
@@ -143,17 +145,14 @@ pub mod module {
 		type Time: Time<Moment = Self::Moment>;
 
 		/// The ID of a vesting schedule.
-		type VestingScheduleId: Copy
-			+ Clone
-			+ Eq
-			+ Debug
+		type VestingScheduleId: Member
+			+ Copy
 			+ Zero
 			+ SafeAdd
 			+ One
 			+ Ord
 			+ FullCodec
 			+ MaxEncodedLen
-			+ MaybeSerializeDeserialize
 			+ TypeInfo;
 	}
 
@@ -192,7 +191,7 @@ pub mod module {
 		Claimed {
 			who: AccountIdOf<T>,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: Option<T::VestingScheduleId>,
+			vesting_schedule_id: Schedules<T::VestingScheduleId>,
 			locked_amount: BalanceOf<T>,
 		},
 		/// Updated vesting schedules. \[who\]
@@ -293,10 +292,10 @@ pub mod module {
 		pub fn claim(
 			origin: OriginFor<T>,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: Option<T::VestingScheduleId>,
+			vesting_schedule_id: Schedules<T::VestingScheduleId>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let locked_amount = Self::do_claim(&who, asset, vesting_schedule_id)?;
+			let locked_amount = Self::do_claim(&who, asset, vesting_schedule_id.clone())?;
 
 			Self::deposit_event(Event::Claimed { who, asset, locked_amount, vesting_schedule_id });
 			Ok(())
@@ -339,11 +338,11 @@ pub mod module {
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: Option<T::VestingScheduleId>,
+			vesting_schedule_id: Schedules<T::VestingScheduleId>,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let who = T::Lookup::lookup(dest)?;
-			let locked_amount = Self::do_claim(&who, asset, vesting_schedule_id)?;
+			let locked_amount = Self::do_claim(&who, asset, vesting_schedule_id.clone())?;
 
 			Self::deposit_event(Event::Claimed { who, asset, locked_amount, vesting_schedule_id });
 			Ok(())
@@ -375,7 +374,7 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
-		let locked = Self::locked_balance(to, asset, None);
+		let locked = Self::locked_balance(to, asset, Schedules::All);
 
 		let total_amount = locked.checked_add(&schedule_amount).ok_or(ArithmeticError::Overflow)?;
 
@@ -400,7 +399,7 @@ impl<T: Config> Pallet<T> {
 	fn do_claim(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-		vesting_schedule_id: Option<T::VestingScheduleId>,
+		vesting_schedule_id: Schedules<T::VestingScheduleId>, // Option<T::VestingScheduleId>,
 	) -> Result<BalanceOf<T>, DispatchError> {
 		let locked = Self::locked_balance(who, asset, vesting_schedule_id);
 
@@ -419,7 +418,7 @@ impl<T: Config> Pallet<T> {
 	fn locked_balance(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-		vesting_schedule_id: Option<T::VestingScheduleId>,
+		vesting_schedule_id: Schedules<T::VestingScheduleId>,
 	) -> BalanceOf<T> {
 		<VestingSchedules<T>>::mutate_exists(who, asset, |maybe_schedules| {
 			let total = if let Some(schedules) = maybe_schedules {
@@ -434,13 +433,13 @@ impl<T: Config> Pallet<T> {
 					let available_amount = total_amount.saturating_sub(locked_amount);
 
 					match vesting_schedule_id {
-						Some(id) =>
+						Schedules::One(id) =>
 							if schedule.vesting_schedule_id == id {
 								// if the schedule id is specified, we update the claimed amount for
 								// the specified schedule
 								schedule.already_claimed = available_amount;
 							},
-						None => {
+						Schedules::All => {
 							// otherwise, we update the claimed amount for all schedules
 							schedule.already_claimed = available_amount;
 						},
@@ -462,10 +461,11 @@ impl<T: Config> Pallet<T> {
 					match vesting_schedule_id {
 						// if the schedule id is specified, we retain all vesting schedules, except
 						// the specified one in the case that it has some locked balance left
-						Some(id) => s.vesting_schedule_id != id || !locked_amount.is_zero(),
+						Schedules::One(id) =>
+							s.vesting_schedule_id != id || !locked_amount.is_zero(),
 						// otherwise, we retain all vesting schedules that have
 						// some locked balance left
-						None => !locked_amount.is_zero(),
+						Schedules::All => !locked_amount.is_zero(),
 					}
 				});
 

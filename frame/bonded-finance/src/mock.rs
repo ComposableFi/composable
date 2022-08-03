@@ -7,7 +7,7 @@ use frame_support::{
 	construct_runtime,
 	pallet_prelude::*,
 	parameter_types,
-	traits::{EnsureOrigin, Everything, VestingSchedule},
+	traits::{EnsureOrigin, Everything},
 	PalletId,
 };
 use frame_system::{EnsureRoot, RawOrigin};

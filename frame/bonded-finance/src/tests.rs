@@ -4,7 +4,10 @@
 
 use super::*;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
-use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
+use composable_traits::{
+	bonded_finance::{BondDuration, BondOffer, BondOfferReward},
+	vesting::Schedules,
+};
 use frame_support::{
 	error::BadOrigin,
 	traits::{
@@ -172,7 +175,7 @@ proptest! {
 											  0
 									  );
 									  System::set_block_number(return_in);
-									  prop_assert_ok!(Vesting::claim(Origin::signed(BOB), offer.asset, None));
+									  prop_assert_ok!(Vesting::claim(Origin::signed(BOB), offer.asset, Schedules::All));
 									  prop_assert_eq!(
 											  Tokens::balance(offer.asset, &BOB),
 											  offer.total_price().expect("impossible; qed;")
@@ -282,8 +285,8 @@ proptest! {
 
 					  System::set_block_number(offer.reward.maturity);
 
-					  prop_assert_ok!(Vesting::claim(Origin::signed(BOB), offer.reward.asset, None));
-					  prop_assert_ok!(Vesting::claim(Origin::signed(CHARLIE), offer.reward.asset, None));
+					  prop_assert_ok!(Vesting::claim(Origin::signed(BOB), offer.reward.asset, Schedules::All));
+					  prop_assert_ok!(Vesting::claim(Origin::signed(CHARLIE), offer.reward.asset, Schedules::All));
 
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &BOB, bob_reward) == WithdrawConsequence::Success);
 					  prop_assert!(Tokens::can_withdraw(offer.reward.asset, &CHARLIE, charlie_reward) == WithdrawConsequence::Success);

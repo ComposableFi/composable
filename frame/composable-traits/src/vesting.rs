@@ -44,6 +44,14 @@ pub enum VestingWindow<BlockNumber, Moment> {
 	},
 }
 
+// TODO: add description
+#[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+pub enum Schedules<Id> {
+	All,
+	One(Id),
+}
+
 /// The vesting schedule.
 ///
 /// Benefits would be granted gradually, `per_period` amount every `window.period`

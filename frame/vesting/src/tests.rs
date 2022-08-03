@@ -80,33 +80,33 @@ fn vesting_from_chain_spec_works() {
 		assert_eq!(Vesting::vesting_schedules(&CHARLIE, MockCurrencyId::BTC), schedules);
 		System::set_block_number(1);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, Schedules::All));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 30));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 31).is_err());
 
 		System::set_block_number(11);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, Schedules::All));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 45));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 46).is_err());
 
 		System::set_block_number(14);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, Schedules::All));
 		// Block number based schedules are unlocked from block 14 onwards.
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 50));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 51).is_err());
 
 		System::set_block_number(25);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, Schedules::All));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 60));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 61).is_err());
 
 		System::set_block_number(34);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 		// everything unlocked
-		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim(Origin::signed(CHARLIE), MockCurrencyId::BTC, Schedules::All));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 65));
 	});
 }
@@ -307,7 +307,7 @@ fn cannot_use_fund_if_not_claimed() {
 		System::set_block_number(21);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &BOB, 59).is_err());
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Schedules::All));
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &BOB, 59));
 	});
 }
@@ -480,7 +480,11 @@ fn claim_works() {
 		// remain locked if not claimed
 		assert!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 10).is_err());
 		// unlocked after claiming
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(4_u128)));
+		assert_ok!(Vesting::claim(
+			Origin::signed(BOB),
+			MockCurrencyId::BTC,
+			Schedules::One(4_u128)
+		));
 		assert!(VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
 		assert_ok!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 10));
 		// more are still locked
@@ -488,7 +492,7 @@ fn claim_works() {
 
 		System::set_block_number(21);
 		// claim more
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Schedules::All));
 		println!("{:?}", VestingSchedules::<Runtime>::get(BOB, MockCurrencyId::BTC));
 		assert!(!VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
 		assert_ok!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 10));
@@ -557,7 +561,7 @@ fn claim_with_id_works() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(4_u128)
+			Schedules::One(4_u128)
 		));
 
 		// Nothing should be claimed, so locked balance should still be 2*10 + 2*15 + 2*3 = 56
@@ -578,7 +582,7 @@ fn claim_with_id_works() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(5_u128)
+			Schedules::One(5_u128)
 		));
 
 		// Half of schedule 5 should be claimed
@@ -594,7 +598,7 @@ fn claim_with_id_works() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(6_u128)
+			Schedules::One(6_u128)
 		));
 
 		// Half of schedule 3 should be claimed
@@ -613,7 +617,7 @@ fn claim_with_id_works() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(4_u128)
+			Schedules::One(4_u128)
 		));
 
 		// All of schedule 4 should be claimed
@@ -629,7 +633,7 @@ fn claim_with_id_works() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(6_u128)
+			Schedules::One(6_u128)
 		));
 
 		// All of schedule 6 should be claimed
@@ -645,7 +649,7 @@ fn claim_with_id_works() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(5_u128)
+			Schedules::One(5_u128)
 		));
 
 		// All of schedule 5 should be claimed
@@ -696,7 +700,7 @@ fn claim_for_with_id_works() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(4_u128)
+			Schedules::One(4_u128)
 		));
 
 		// Nothing should be claimed, so locked balance should still be 2*10 + 2*15 = 50
@@ -713,7 +717,7 @@ fn claim_for_with_id_works() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(5_u128)
+			Schedules::One(5_u128)
 		));
 
 		// All of schedule 5 should be claimed
@@ -729,7 +733,7 @@ fn claim_for_with_id_works() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(4_u128)
+			Schedules::One(4_u128)
 		));
 
 		// There should not be any locks left
@@ -762,7 +766,12 @@ fn claim_for_works() {
 		);
 
 		// Claim all schedules
-		assert_ok!(Vesting::claim_for(Origin::signed(ALICE), BOB, MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim_for(
+			Origin::signed(ALICE),
+			BOB,
+			MockCurrencyId::BTC,
+			Schedules::All
+		));
 
 		// Nothing should be claimed, so locked balance should still be 2*10 = 20
 		assert_eq!(
@@ -774,7 +783,12 @@ fn claim_for_works() {
 		System::set_block_number(21);
 
 		// Claim for all schedules
-		assert_ok!(Vesting::claim_for(Origin::signed(ALICE), BOB, MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim_for(
+			Origin::signed(ALICE),
+			BOB,
+			MockCurrencyId::BTC,
+			Schedules::All
+		));
 
 		// There should not be any locks left
 		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC), vec![]);
@@ -802,7 +816,7 @@ fn claim_for_works_moment_based() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(4_u128)
+			Schedules::One(4_u128)
 		));
 		assert_eq!(
 			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
@@ -819,7 +833,7 @@ fn claim_for_works_moment_based() {
 			Origin::signed(ALICE),
 			BOB,
 			MockCurrencyId::BTC,
-			Some(4_u128)
+			Schedules::One(4_u128)
 		));
 		// no locks anymore
 		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC), vec![]);
@@ -879,12 +893,12 @@ fn update_vesting_schedules_works() {
 
 		System::set_block_number(11);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Schedules::All));
 		assert!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 1).is_err());
 
 		System::set_block_number(21);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, None));
+		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Schedules::All));
 		assert_ok!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 20));
 
 		// empty vesting schedules cleanup the storage and unlock the fund
@@ -971,11 +985,19 @@ fn multiple_vesting_schedule_claim_works() {
 		);
 
 		System::set_block_number(21);
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(4_u128)));
+		assert_ok!(Vesting::claim(
+			Origin::signed(BOB),
+			MockCurrencyId::BTC,
+			Schedules::One(4_u128)
+		));
 		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), vec![schedule2]);
 
 		System::set_block_number(31);
-		assert_ok!(Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, Some(5_u128)));
+		assert_ok!(Vesting::claim(
+			Origin::signed(BOB),
+			MockCurrencyId::BTC,
+			Schedules::One(5_u128)
+		));
 		assert!(!VestingSchedules::<Runtime>::contains_key(&BOB, MockCurrencyId::BTC));
 
 		assert_eq!(Tokens::locks(&BOB, MockCurrencyId::BTC), vec![]);
