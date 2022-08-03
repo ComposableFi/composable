@@ -250,7 +250,8 @@ where
 	/// Principal should be returned before this block.
 	end_block: BlockNumber,
 	/// How much principal was repaid.
-	pub repaid_principal: Balance,
+    /// TODO: @mikolaichuk debt-tokens?	
+    pub repaid_principal: Balance,
 }
 
 impl<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
@@ -313,7 +314,7 @@ impl<AccountId, AssetId: Copy, BlockNumber, LiquidationStrategyId>
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
-pub struct LoanInput<AccountId, Balance, BlockNumber, Date, Percent, RepaymentStrategy> {
+pub struct LoanInput<AccountId, Balance, BlockNumber, TimeMeasure, Percent, RepaymentStrategy> {
 	/// Loan belongs to this market.
 	pub market_account_id: AccountId,
 	/// This account id have to be whitelisted.
@@ -325,7 +326,7 @@ pub struct LoanInput<AccountId, Balance, BlockNumber, Date, Percent, RepaymentSt
 	/// Interest rate per block.
 	pub interest: Percent,
 	/// How often borrowers have to pay interest.
-    pub payment_schedule: Vec<Payment<Date, Percent>>,
+    pub payment_schedule: Vec<Payment<TimeMeasure, Percent>>,
 	/// Loan shoud be paid back after this amount of blocks.
 	pub loan_maturity: BlockNumber,
 	/// Payment strategie which should be applyed.
@@ -335,8 +336,8 @@ pub struct LoanInput<AccountId, Balance, BlockNumber, Date, Percent, RepaymentSt
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
-pub struct Payment<Date, Percent> {
-    pub date: Date,
+pub struct Payment<TimeMeasure, Percent> {
+    pub date: TimeMeasure,
     pub rate: Percent,
 }
 

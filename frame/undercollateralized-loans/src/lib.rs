@@ -162,7 +162,7 @@ pub mod pallet {
 		type MaxMarketsCounterValue: Get<Self::Counter>;
 		type MaxLoansPerMarketCounterValue: Get<Self::Counter>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
-        type Date:  From<i64> + Parameter;	
+        type TimeMeasure:  From<i64> + Parameter;	
     }
 
 	#[pallet::pallet]
@@ -220,7 +220,7 @@ pub mod pallet {
 	pub type ScheduleStorage<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		T::Date,
+		T::TimeMeasure,
         Twox64Concat,
 		T::AccountId,
 		Percent,

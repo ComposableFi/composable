@@ -99,7 +99,7 @@ impl<T: Config> Pallet<T> {
 	// TODO: @mikolaichuk: check why LoanInputOf does not work here
 	pub(crate) fn do_create_loan(
 		input: Validated<
-			LoanInput<T::AccountId, T::Balance, T::BlockNumber, T::Date, Percent, RepaymentStrategy>,
+			LoanInput<T::AccountId, T::Balance, T::BlockNumber, T::TimeMeasure, Percent, RepaymentStrategy>,
 			LoanInputIsValid<crate::Pallet<T>>,
 		>,
 	) -> Result<LoanConfigOf<T>, DispatchError> {

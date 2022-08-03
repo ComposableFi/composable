@@ -10,7 +10,7 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	type Percent: Clone + Eq + PartialEq;
 	type VaultId: Clone + Eq + PartialEq;
 	type RepaymentStrategy: Clone;
-    type Date;
+    type TimeMeasure;
 
 	fn create_market(
 		manager: Self::AccountId,
@@ -37,7 +37,7 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 			Self::AccountId,
 			Self::Balance,
 			Self::BlockNumber,
-		    Self::Date,	
+		    Self::TimeMeasure,	
             Self::Percent,
 			Self::RepaymentStrategy,
 		>,
