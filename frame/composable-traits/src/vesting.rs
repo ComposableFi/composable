@@ -44,7 +44,7 @@ pub enum VestingWindow<BlockNumber, Moment> {
 	},
 }
 
-// TODO: add description
+/// VestingScheduleId type for claiming
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 pub enum Schedules<Id> {
@@ -71,6 +71,9 @@ pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasC
 	pub already_claimed: Balance,
 }
 
+/// Vesting schedule input
+///
+/// This is used for creating a VestingSchedule
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct VestingScheduleInput<BlockNumber, Moment, Balance: HasCompact> {

@@ -240,13 +240,8 @@ pub mod module {
 		fn build(&self) {
 			self.vesting.iter().for_each(|(asset, who, window, period_count, per_period)| {
 				let mut bounded_schedules = VestingSchedules::<T>::get(who, asset);
-				let vesting_schedule_id = match VestingScheduleNonce::<T>::increment() {
-					Ok(id) => id,
-					Err(_) => {
-						// TODO: throw MaxVestingSchedulesExceeded error
-						return
-					},
-				};
+				let vesting_schedule_id =
+					VestingScheduleNonce::<T>::increment().expect("Max vesting schedules exceeded");
 
 				bounded_schedules
 					.try_push(VestingSchedule {
