@@ -1,13 +1,14 @@
+use alloc::string::{String, ToString};
+use codec::Codec;
 use ibc::{
 	clients::{host_functions::HostFunctionsProvider, ics11_beefy::error::Error as Ics11Error},
-	core::{
-		ics02_client::error::Error as Ics02ClientError,
-		ics23_commitment::error::Error as Ics23Error,
-	},
+	core::ics02_client::error::Error as Ics02ClientError,
 };
 use ibc_primitives::runtime_interface;
-use sp_core::{storage::StateVersion, H256};
+use sp_core::{Hasher, H256};
+use sp_runtime::traits::BlakeTwo256;
 use sp_std::prelude::*;
+use sp_trie::{ LayoutV0, StorageProof, Trie, TrieDB};
 
 #[derive(Clone, Default)]
 pub struct HostFunctions;
@@ -28,7 +29,7 @@ impl HostFunctionsProvider for HostFunctions {
 		let public_key = if let Ok(pub_key) = sp_core::ed25519::Public::try_from(pubkey) {
 			pub_key
 		} else {
-			return false
+			return false;
 		};
 		sp_io::crypto::ed25519_verify(&signature, msg, &public_key)
 	}
@@ -40,11 +41,12 @@ impl HostFunctionsProvider for HostFunctions {
 		value: &[u8],
 	) -> Result<(), Ics02ClientError> {
 		let root = H256::from_slice(root);
-		sp_io::trie::blake2_256_verify_proof(root, proof, key, value, StateVersion::V0)
-			.then(|| ())
-			.ok_or_else(|| {
-				Ics02ClientError::beefy(Ics11Error::ics23_error(Ics23Error::verification_failure()))
-			})
+		let proof = StorageProof::new(proof.into_iter().map(Clone::clone));
+		let items = vec![(key.to_vec(), Some(value.to_vec()))];
+		read_proof_check::<BlakeTwo256, _>(root, proof, items)
+			.map_err(|e| Ics02ClientError::beefy(Ics11Error::verification_error(e.to_string())))?;
+
+		Ok(())
 	}
 
 	fn verify_non_membership_trie_proof(
@@ -53,11 +55,12 @@ impl HostFunctionsProvider for HostFunctions {
 		key: &[u8],
 	) -> Result<(), Ics02ClientError> {
 		let root = H256::from_slice(root);
-		runtime_interface::blake2_256_verify_non_membership_proof(&root, proof, key)
-			.then(|| ())
-			.ok_or_else(|| {
-				Ics02ClientError::beefy(Ics11Error::ics23_error(Ics23Error::verification_failure()))
-			})
+		let proof = StorageProof::new(proof.into_iter().map(Clone::clone));
+		let items = vec![(key.to_vec(), None)];
+		read_proof_check::<BlakeTwo256, _>(root, proof, items)
+			.map_err(|e| Ics02ClientError::beefy(Ics11Error::verification_error(e.to_string())))?;
+
+		Ok(())
 	}
 
 	fn sha256_digest(data: &[u8]) -> [u8; 32] {
@@ -83,4 +86,36 @@ impl HostFunctionsProvider for HostFunctions {
 	fn ripemd160(message: &[u8]) -> [u8; 20] {
 		runtime_interface::ripemd160(message)
 	}
+}
+
+#[derive(derive_more::From, derive_more::Display)]
+pub enum Error<H: Hasher> {
+	#[display(fmt = "Trie Error: {:?}", _0)]
+	Trie(Box<sp_trie::TrieError<LayoutV0<H>>>),
+	#[display(fmt = "Error verifying key: {key:?}, Expected: {expected:?}, Got: {got:?}")]
+	ValueMismatch { key: Option<String>, expected: Option<Vec<u8>>, got: Option<Vec<u8>> },
+}
+
+pub fn read_proof_check<H, I>(root: H::Out, proof: StorageProof, items: I) -> Result<(), Error<H>>
+where
+	H: Hasher,
+	H::Out: Ord + Codec + 'static,
+	I: IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
+{
+	let memory_db = proof.into_memory_db::<H>();
+	let trie = TrieDB::<LayoutV0<H>>::new(&memory_db, &root)?;
+	
+
+	for (key, value) in items {
+		let recovered = trie.get(key.as_ref())?;
+		if recovered != value {
+			Err(Error::ValueMismatch {
+				key: String::from_utf8(key).ok(),
+				expected: value,
+				got: recovered,
+			})?
+		}
+	}
+
+	Ok(())
 }

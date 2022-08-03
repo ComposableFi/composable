@@ -54,6 +54,7 @@ primitives = { path = "../../runtime/primitives", default-features = false }
 transfer = { package = "ibc-transfer", path = "../ibc-transfer", default-features = false }
 
 sha2 = { version = "0.10.2", default-features = false }
+derive_more = { version = "0.99.17", default-features = false, features = ["from", "display"]  }
 
 [dev-dependencies]
 assets-registry = { package = "pallet-assets-registry", path = "../assets-registry" }
