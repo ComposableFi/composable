@@ -51,8 +51,8 @@ pub mod validation;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::{
-		LoanConfigOf, LoanId, LoanInfoOf, LoanInputOf, MarketInfoOf, MarketInputOf,
-	};
+		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf,
+    };
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
@@ -161,8 +161,10 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 		type MaxMarketsCounterValue: Get<Self::Counter>;
 		type MaxLoansPerMarketCounterValue: Get<Self::Counter>;
-		type OracleMarketCreationStake: Get<Self::Balance>;
-        type TimeMeasure:  From<i64> + Parameter;	
+	    // Each payments schedule can not have more than this amount of payments. 
+        type MaxPaymentsAmountValue: Get<u32>;
+        type OracleMarketCreationStake: Get<Self::Balance>;
+        type TimeMeasure:  From<i64> + Parameter + Default;	
     }
 
 	#[pallet::pallet]
@@ -189,7 +191,7 @@ pub mod pallet {
 	// Loans storage. AccountId is id of loan's account.
 	#[pallet::storage]
 	pub type LoansStorage<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, LoanInfoOf<T>, OptionQuery>;
+		StorageMap<_, Twox64Concat, T::AccountId, LoanConfigOf<T>, OptionQuery>;
 
 	// Payments schedule. Keeps sets of loans which have to be paid before the particular block
 	// number.
@@ -226,14 +228,15 @@ pub mod pallet {
 		Percent,
 		OptionQuery,
 	>;
-		// TODO: @mikolaichuk: storages for borrowers' strikes (local for paricular market and global
+  
+	// TODO: @mikolaichuk: storages for borrowers' strikes (local for paricular market and global
 	// for all markets).
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		MarketCreated { market_info: MarketInfoOf<T> },
 		LoanCreated { loan_config: LoanConfigOf<T> },
-		LoanContractWasExecuted { loan_info: LoanInfoOf<T> },
+		LoanContractWasExecuted { loan_config: LoanConfigOf<T> },
 	}
 
 	#[allow(missing_docs)]
@@ -250,8 +253,8 @@ pub mod pallet {
 		ThisUserIsNotAllowedToCreateTheLoanInTheMarket,
 		// Nont-authorized user tried to execute loan contract.
 		ThisUserIsNotAllowedToExecuteThisContract,
-		// There is no active loan with such account id.
-		ThereIsNoSuchActiveLoan,
+		// There is no loan with such account id.
+		ThereIsNoSuchLoan,
 		// When we try treat the loan which already shoul be paid.
 		CurrentBlockNumberExceedsFinalBlockNumberForTheLoan,
 	}
@@ -300,7 +303,7 @@ pub mod pallet {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
 			Self::treat_vaults_balance(block_number);
 			// TODO: @mikolaichuk: should it be true or false?
-			Self::check_payments(block_number, true);
+			//Self::check_payments(block_number, true);
 			1000
 		}
 	}
@@ -344,9 +347,9 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let loan_info =
+			let loan_config =
 				<Self as UndercollateralizedLoans>::borrow(who, loan_account, keep_alive)?;
-			let event = Event::<T>::LoanContractWasExecuted { loan_info };
+			let event = Event::<T>::LoanContractWasExecuted { loan_config };
 			Self::deposit_event(event);
 			Ok(())
 		}

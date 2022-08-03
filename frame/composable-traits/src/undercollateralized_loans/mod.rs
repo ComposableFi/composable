@@ -5,14 +5,14 @@ pub use configs::*;
 pub mod configs;
 
 pub trait UndercollateralizedLoans: DeFiEngine {
-	type BlockNumber: Clone + Eq + PartialEq;
+    type BlockNumber: Clone + Eq + PartialEq;
 	type LiquidationStrategyId: Clone + Eq + PartialEq;
 	type Percent: Clone + Eq + PartialEq;
 	type VaultId: Clone + Eq + PartialEq;
 	type RepaymentStrategy: Clone;
-    type TimeMeasure;
+    type TimeMeasure: Clone + Eq + PartialEq;
 
-	fn create_market(
+    fn create_market(
 		manager: Self::AccountId,
 		input: MarketInput<
 			Self::AccountId,
@@ -36,7 +36,6 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 		input: LoanInput<
 			Self::AccountId,
 			Self::Balance,
-			Self::BlockNumber,
 		    Self::TimeMeasure,	
             Self::Percent,
 			Self::RepaymentStrategy,
@@ -45,7 +44,7 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 		LoanConfig<
 			Self::AccountId,
 			Self::Balance,
-			Self::BlockNumber,
+			Self::TimeMeasure,
 			Self::Percent,
 			Self::RepaymentStrategy,
 		>,
@@ -57,10 +56,10 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 		loan_account_id: Self::AccountId,
 		keep_alive: bool,
 	) -> Result<
-		LoanInfo<
+		LoanConfig<
 			Self::AccountId,
 			Self::Balance,
-			Self::BlockNumber,
+			Self::TimeMeasure,
 			Self::Percent,
 			Self::RepaymentStrategy,
 		>,

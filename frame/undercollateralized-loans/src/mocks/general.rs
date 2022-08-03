@@ -378,6 +378,7 @@ impl pallet_undercollateralized_loans::Config for Runtime {
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type UnixTime = Timestamp;
     type TimeMeasure = TimeMeasure;
+    type MaxPaymentsAmountValue = ConstU32<100>;
 }
 
 parameter_type_with_key! {

@@ -2,7 +2,7 @@ use crate::{strategies::repayment_strategies::RepaymentStrategy, types, Config, 
 use codec::Encode;
 use composable_support::validation::TryIntoValidated;
 use composable_traits::undercollateralized_loans::{
-	LoanInfo, LoanInput, MarketInput, UndercollateralizedLoans,
+	LoanConfig, LoanInput, MarketInput, UndercollateralizedLoans,
 };
 use frame_support::traits::Get;
 use sp_runtime::{traits::AccountIdConversion, DispatchError, Percent};
@@ -32,7 +32,6 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 		input: LoanInput<
 			Self::AccountId,
 			Self::Balance,
-			Self::BlockNumber,
 			Self::TimeMeasure,
             Self::Percent,
 			Self::RepaymentStrategy,
@@ -46,10 +45,10 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 		loan_account_id: Self::AccountId,
 		keep_alive: bool,
 	) -> Result<
-		LoanInfo<
+		LoanConfig<
 			Self::AccountId,
 			Self::Balance,
-			Self::BlockNumber,
+			Self::TimeMeasure,
 			Self::Percent,
 			Self::RepaymentStrategy,
 		>,

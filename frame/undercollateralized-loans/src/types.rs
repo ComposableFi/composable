@@ -19,7 +19,6 @@ pub(crate) type MarketInputOf<T> = MarketInput<
 pub(crate) type LoanInputOf<T> = LoanInput<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::Balance,
-	<T as frame_system::Config>::BlockNumber,
     <T as Config>::TimeMeasure,	
     Percent,
 	RepaymentStrategy,
@@ -33,14 +32,6 @@ pub(crate) type MarketInfoOf<T> = MarketInfo<
 	<T as Config>::VaultId,
 >;
 
-pub(crate) type LoanInfoOf<T> = LoanInfo<
-	<T as frame_system::Config>::AccountId,
-	<T as DeFiComposableConfig>::Balance,
-	<T as frame_system::Config>::BlockNumber,
-	Percent,
-	RepaymentStrategy,
->;
-
 pub(crate) type MarketConfigOf<T> = MarketConfig<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::MayBeAssetId,
@@ -51,7 +42,7 @@ pub(crate) type MarketConfigOf<T> = MarketConfig<
 pub(crate) type LoanConfigOf<T> = LoanConfig<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::Balance,
-	<T as frame_system::Config>::BlockNumber,
+	<T as Config>::TimeMeasure,
 	Percent,
 	RepaymentStrategy,
 >;

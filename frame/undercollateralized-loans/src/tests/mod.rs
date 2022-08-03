@@ -108,7 +108,7 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 		collateral: 5,
 		interest: Percent::from_percent(5),
         payment_schedule: vec![], 
-		loan_maturity: 100,
+		//loan_maturity: 100,
 		repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature,
 	};
 	crate::Pallet::<Runtime>::do_create_loan(loan_input.try_into_validated().unwrap()).unwrap()

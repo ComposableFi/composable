@@ -1,9 +1,9 @@
 use crate::{
 	strategies::repayment_strategies::{
-		interest_periodically_principal_when_mature_strategy, principal_only_fake_strategy,
+//		interest_periodically_principal_when_mature_strategy, principal_only_fake_strategy,
 		RepaymentResult, RepaymentStrategy,
 	},
-	types::{LoanConfigOf, LoanInfoOf, MarketConfigOf, MarketInfoOf, MarketInputOf},
+	types::{LoanConfigOf, MarketConfigOf, MarketInfoOf, MarketInputOf},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
 };
@@ -13,7 +13,7 @@ use composable_traits::{
 	defi::DeFiComposableConfig,
 	oracle::Oracle,
 	undercollateralized_loans::{
-		LoanConfig, LoanInfo, LoanInput, MarketConfig, MarketInfo, UndercollateralizedLoans,
+		LoanConfig, LoanInput, MarketConfig, MarketInfo, UndercollateralizedLoans,
 	},
 	vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
 };
@@ -99,7 +99,7 @@ impl<T: Config> Pallet<T> {
 	// TODO: @mikolaichuk: check why LoanInputOf does not work here
 	pub(crate) fn do_create_loan(
 		input: Validated<
-			LoanInput<T::AccountId, T::Balance, T::BlockNumber, T::TimeMeasure, Percent, RepaymentStrategy>,
+			LoanInput<T::AccountId, T::Balance, T::TimeMeasure, Percent, RepaymentStrategy>,
 			LoanInputIsValid<crate::Pallet<T>>,
 		>,
 	) -> Result<LoanConfigOf<T>, DispatchError> {
@@ -118,7 +118,7 @@ impl<T: Config> Pallet<T> {
 				config_input.principal,
 				config_input.collateral,
 				config_input.interest,
-				config_input.loan_maturity,
+				T::TimeMeasure::default(),
 				config_input.repayment_strategy,
 			);
 			crate::NonActiveLoansStorage::<T>::insert(loan_account_id, loan_config.clone());
@@ -133,7 +133,7 @@ impl<T: Config> Pallet<T> {
 		borrower_account_id: T::AccountId,
 		loan_account_id: T::AccountId,
 		keep_alive: bool,
-	) -> Result<LoanInfoOf<T>, DispatchError> {
+	) -> Result<LoanConfigOf<T>, DispatchError> {
 		let loan_config = crate::NonActiveLoansStorage::<T>::try_get(loan_account_id.clone())
 			.map_err(|_| Error::<T>::LoanDoesNotExist)?;
 		// Check if borrower is authorized to execute this loan agreement.
@@ -158,12 +158,12 @@ impl<T: Config> Pallet<T> {
 		// Set start block number equals to the current block number.
 		// Calculate end block number before which pricnipal should be returned.
 		let start_block_number = frame_system::Pallet::<T>::block_number();
-		let loan_info = LoanInfo::new(loan_config.clone(), start_block_number)?;
+		//let loan_info = LoanInfo::new(loan_config.clone())?;
 		// Register activated loan.
-		crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_info.clone());
+		crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_config.clone());
 		// Remove loan configuration from the non-activated loans storage.
 		crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
-		Ok(loan_info)
+		Ok(loan_config)
 	}
 
 	// Repay any amount of money
@@ -174,9 +174,9 @@ impl<T: Config> Pallet<T> {
 		keep_alive: bool,
 	) -> Result<T::Balance, DispatchError> {
 		// Get loan's info.
-		let loan_info = Self::get_loan_info_via_account_id(&loan_account_id)?;
+		let loan_config = Self::get_loan_config_via_account_id(&loan_account_id)?;
 		// Get account id of market which holds this loan.
-		let market_account_id = loan_info.config().market_account_id();
+		let market_account_id = loan_config.market_account_id();
 		let market_info = Self::get_market_info_via_account_id(market_account_id)?;
 		let borrow_asset_id = market_info.config().borrow_asset();
 		// Transfer 'amount' of assets from the payer account to the loan account
@@ -191,7 +191,8 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn do_liquidate() -> () {}
 	// Close a loan since it is paid.
-	pub(crate) fn close_loan(loan_account_id: &T::AccountId, keep_alive: bool) -> () {
+    /*	
+    pub(crate) fn close_loan(loan_account_id: &T::AccountId, keep_alive: bool) -> () {
 		let loan_info = match Self::get_loan_info_via_account_id(loan_account_id) {
 			Ok(loan_info) => loan_info,
 			Err(_) => return (),
@@ -214,7 +215,7 @@ impl<T: Config> Pallet<T> {
 		);
 		crate::LoansStorage::<T>::remove(loan_account_id);
 	}
-
+*/
 	// Check if borrower's account is in whitelist of the particular market.
 	pub(crate) fn is_borrower_account_whitelisted(
 		borrower_account_id_ref: &T::AccountId,
@@ -292,6 +293,7 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
+/*
 	pub(crate) fn check_payments(block_nubmer: T::BlockNumber, keep_alive: bool) -> () {
 		// Retrive collection of loans(loans' accounts ids) which have to be paid now
 		let loans_accounts_ids =
@@ -329,7 +331,8 @@ impl<T: Config> Pallet<T> {
 			crate::PaymentsScheduleStorage::<T>::remove(block_nubmer);
 		}
 	}
-	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
+*/
+    // Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
 	// If vault is balanced we will do nothing.
 	// #generalization
 	fn available_funds(
@@ -389,10 +392,10 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| crate::Error::<T>::MarketDoesNotExist)
 	}
 
-	pub(crate) fn get_loan_info_via_account_id(
+	pub(crate) fn get_loan_config_via_account_id(
 		loan_account_id_ref: &T::AccountId,
-	) -> Result<LoanInfoOf<T>, crate::Error<T>> {
+	) -> Result<LoanConfigOf<T>, crate::Error<T>> {
 		crate::LoansStorage::<T>::try_get(loan_account_id_ref)
-			.map_err(|_| crate::Error::<T>::ThereIsNoSuchActiveLoan)
+			.map_err(|_| crate::Error::<T>::ThereIsNoSuchLoan)
 	}
 }

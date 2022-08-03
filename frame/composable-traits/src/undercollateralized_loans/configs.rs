@@ -93,11 +93,11 @@ where
 }
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub struct LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
+pub struct LoanConfig<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy>
 where
 	AccountId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
-	BlockNumber: Clone + Eq + PartialEq,
+	TimeMeasure: Clone + Eq + PartialEq,
 	Percent: Clone + Eq + PartialEq,
 	RepaymentStrategy: Clone,
 {
@@ -115,7 +115,7 @@ where
 	/// Interest rate per payment.
 	interest: Percent,
     /// Activated loan lifetime in the terms of block numbers.
-	maturity: BlockNumber,
+	maturity: TimeMeasure,
 	/// Payment strategie which should be applyed.
 	/// For instance borrower have to pay principal when loan is mature (one strategy),
 	/// or he may pay principal partially, simultaneously with interest payments.   
@@ -235,7 +235,7 @@ where
 	}
 }
 
-// Some fields are hiden since they should be immutable
+// This entity can be usde if we need add mutable field to the loan's configuration. 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct LoanInfo<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
 where
@@ -247,11 +247,6 @@ where
 {
 	/// Loan configuration defines loan terms
 	config: LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>,
-	/// Principal should be returned before this block.
-	end_block: BlockNumber,
-	/// How much principal was repaid.
-    /// TODO: @mikolaichuk debt-tokens?	
-    pub repaid_principal: Balance,
 }
 
 impl<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>
@@ -265,10 +260,8 @@ where
 {
 	pub fn new(
 		config: LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy>,
-		start_block: BlockNumber,
 	) -> Result<Self, ArithmeticError> {
-		let end_block = start_block.safe_add(config.maturity())?;
-		Ok(Self { config, end_block, repaid_principal: Balance::zero() })
+		Ok(Self { config })
 	}
 
 	/// Get a reference to the loan info's config.
@@ -276,11 +269,6 @@ where
 		&self,
 	) -> &LoanConfig<AccountId, Balance, BlockNumber, Percent, RepaymentStrategy> {
 		&self.config
-	}
-
-	/// Get a reference to the loan info's end block.
-	pub fn end_block(&self) -> &BlockNumber {
-		&self.end_block
 	}
 }
 
@@ -314,7 +302,7 @@ impl<AccountId, AssetId: Copy, BlockNumber, LiquidationStrategyId>
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
-pub struct LoanInput<AccountId, Balance, BlockNumber, TimeMeasure, Percent, RepaymentStrategy> {
+pub struct LoanInput<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy> {
 	/// Loan belongs to this market.
 	pub market_account_id: AccountId,
 	/// This account id have to be whitelisted.
@@ -327,8 +315,6 @@ pub struct LoanInput<AccountId, Balance, BlockNumber, TimeMeasure, Percent, Repa
 	pub interest: Percent,
 	/// How often borrowers have to pay interest.
     pub payment_schedule: Vec<Payment<TimeMeasure, Percent>>,
-	/// Loan shoud be paid back after this amount of blocks.
-	pub loan_maturity: BlockNumber,
 	/// Payment strategie which should be applyed.
 	/// For instance borrower have to pay principal when loan is mature (one strategy),
 	/// or he may pay principal partially, simultaneously with interest payments.   

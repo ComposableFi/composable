@@ -73,20 +73,19 @@ where
 #[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Clone, Copy)]
 pub struct LoanInputIsValid<Loans: UndercollateralizedLoans>(PhantomData<Loans>);
 
-impl<AccountId, Balance, BlockNumber, TimeMeasure, Percent, RepaymentStrategy, Loans>
+impl<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy, Loans>
 	Validate<
-		LoanInput<AccountId, Balance, BlockNumber, TimeMeasure, Percent, RepaymentStrategy>,
+		LoanInput<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy>,
 		LoanInputIsValid<Loans>,
 	> for LoanInputIsValid<Loans>
 where
 	Balance: Zero + PartialOrd,
-	BlockNumber: Zero + Rem<Output = BlockNumber> + PartialOrd + PartialEq + Copy,
 	Percent: Zero + PartialOrd,
 	Loans: UndercollateralizedLoans + DeFiEngine<AccountId = AccountId>,
 {
 	fn validate(
-		input: LoanInput<AccountId, Balance, BlockNumber, TimeMeasure, Percent, RepaymentStrategy>,
-	) -> Result<LoanInput<AccountId, Balance, BlockNumber, TimeMeasure, Percent, RepaymentStrategy>, &'static str>
+		input: LoanInput<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy>,
+	) -> Result<LoanInput<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy>, &'static str>
 	{
 		// Check that principal balance	> 0
 		let principal = input.principal.try_into_validated::<BalanceGreaterThenZero>()?.value();
