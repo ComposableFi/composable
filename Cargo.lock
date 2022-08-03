@@ -7977,6 +7977,7 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
+ "pallet-proxy",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",

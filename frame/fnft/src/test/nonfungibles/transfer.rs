@@ -10,14 +10,11 @@ use frame_support::{
 };
 use sp_runtime::DispatchError;
 
-use crate::{
-	test::{
-		mock::{new_test_ext, Event, MockRuntime},
-		prelude::*,
-		ALICE, BOB, CHARLIE,
-	},
-	FinancialNFTInstanceId, Instance, OwnerInstances, Pallet,
-};
+use crate::{test::{
+	mock::{new_test_ext, Event, MockRuntime},
+	prelude::*,
+	ALICE, BOB, CHARLIE,
+}, Instance, OwnerInstances, Pallet, FinancialNFTInstanceIdOf};
 
 /// Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
 #[test]
@@ -122,7 +119,7 @@ fn many() {
 		let [c0, c1, c2, c3, c4, c5, c6, c7, c8, c9] = charlies_nfts;
 
 		fn assert_owners<const AMOUNT: usize>(
-			checks: [(u128, &[FinancialNFTInstanceId], &str); AMOUNT],
+			checks: [(u128, &[FinancialNFTInstanceIdOf<MockRuntime>], &str); AMOUNT],
 		) {
 			for (who, nfts, msg) in checks {
 				assert_eq!(

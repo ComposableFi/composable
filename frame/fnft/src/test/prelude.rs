@@ -9,23 +9,19 @@ use std::{
 	fmt,
 };
 
-use crate::{
-	pallet::{CollectionInstances, Event as NftEvent, Instance, OwnerInstances},
-	test::{
-		mock::{Event, MockRuntime},
-		ALICE,
-	},
-	AccountIdOf, FinancialNFTInstanceId, Pallet,
-};
+use crate::{pallet::{CollectionInstances, Event as NftEvent, Instance, OwnerInstances}, test::{
+	mock::{Event, MockRuntime},
+	ALICE,
+}, AccountIdOf, Pallet, FinancialNFTInstanceIdOf};
 
-pub const TEST_COLLECTION_ID: u128 = 1;
+pub const TEST_COLLECTION_ID: u16 = 1;
 
 /// Mints a single NFT into ALICE and checks that it was created properly, returning the id of the
 /// newly created NFT.
 ///
 /// NOTE: Only call once per test!
-pub(crate) fn mint_nft_and_assert() -> FinancialNFTInstanceId {
-	let created_nft_id = 1_u128;
+pub(crate) fn mint_nft_and_assert() -> FinancialNFTInstanceIdOf<MockRuntime> {
+	let created_nft_id = 1_u64;
 	assert_ok!(Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &created_nft_id, &ALICE));
 
 	assert_last_event::<MockRuntime>(Event::Nft(NftEvent::FinancialNFTCreated {
@@ -55,12 +51,12 @@ pub(crate) fn mint_nft_and_assert() -> FinancialNFTInstanceId {
 }
 
 /// The id of the NFT minted in [`mint_into_and_assert`].
-const NEW_NFT_ID: FinancialNFTInstanceId = 1;
+const NEW_NFT_ID: FinancialNFTInstanceIdOf<MockRuntime> = 1;
 /// Mints a single NFT with an instance id of `1` into ALICE and checks that it was created
 /// properly, returning the id of the newly created NFT for convenience.
 ///
 /// NOTE: Only call once per test!
-pub(crate) fn mint_into_and_assert() -> FinancialNFTInstanceId {
+pub(crate) fn mint_into_and_assert() -> FinancialNFTInstanceIdOf<MockRuntime> {
 	Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
 	assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTCreated {
@@ -93,7 +89,7 @@ pub(crate) fn mint_into_and_assert() -> FinancialNFTInstanceId {
 /// returning the ids of the newly created NFTs.
 pub(crate) fn mint_many_nfts_and_assert<const AMOUNT: usize>(
 	who: AccountIdOf<MockRuntime>,
-) -> [FinancialNFTInstanceId; AMOUNT] {
+) -> [FinancialNFTInstanceIdOf<MockRuntime>; AMOUNT] {
 	let new_nfts_ids = [0; AMOUNT].map(|_| {
 		let new_nft_id = Pallet::<MockRuntime>::get_next_nft_id(&TEST_COLLECTION_ID).unwrap();
 		Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &new_nft_id, &who).unwrap();
@@ -118,8 +114,8 @@ pub(crate) fn mint_many_nfts_and_assert<const AMOUNT: usize>(
 
 /// Creates a BTreeSet from the provided [`NftInstanceId`]s.
 pub(crate) fn to_btree(
-	nfts: &[FinancialNFTInstanceId],
-) -> BTreeSet<(u128, FinancialNFTInstanceId)> {
+	nfts: &[FinancialNFTInstanceIdOf<MockRuntime>],
+) -> BTreeSet<(u16, FinancialNFTInstanceIdOf<MockRuntime>)> {
 	nfts.into_iter().copied().map(|id| (TEST_COLLECTION_ID, id)).collect()
 }
 
@@ -130,8 +126,8 @@ pub(crate) fn add_attributes_and_assert<
 	K: Encode,
 	V: Encode + Decode + PartialEq + fmt::Debug + Clone,
 >(
-	class: u128,
-	instance: &FinancialNFTInstanceId,
+	class: u16,
+	instance: &FinancialNFTInstanceIdOf<MockRuntime>,
 	owner: u128,
 	attributes: &[(K, V)],
 ) {

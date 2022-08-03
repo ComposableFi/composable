@@ -63,7 +63,7 @@ pub(crate) fn failure() {
 
 		// class attribute check
 		assert_eq!(
-			Pallet::<MockRuntime>::collection_attribute(&255_u128, &1_u32.encode()),
+			Pallet::<MockRuntime>::collection_attribute(&255_u16, &1_u32.encode()),
 			None,
 			"class does not exist, there should be no attributes"
 		);

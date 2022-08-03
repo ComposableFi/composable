@@ -20,7 +20,7 @@ mod mint_into {
 	#[test]
 	fn success() {
 		new_test_ext().execute_with(|| {
-			const NEW_NFT_ID: FinancialNFTInstanceId = 1;
+			const NEW_NFT_ID: FinancialNFTInstanceIdOf<MockRuntime> = 1;
 
 			Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
@@ -53,7 +53,7 @@ mod mint_into {
 	#[test]
 	fn already_exists() {
 		new_test_ext().execute_with(|| {
-			const NEW_NFT_ID: FinancialNFTInstanceId = 1;
+			const NEW_NFT_ID: FinancialNFTInstanceIdOf<MockRuntime> = 1;
 
 			Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 

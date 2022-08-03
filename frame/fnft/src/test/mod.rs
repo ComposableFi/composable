@@ -48,7 +48,7 @@ mod nonfungibles {
 	fn create() {
 		new_test_ext().execute_with(|| {
 			assert_eq!(
-				Pallet::<MockRuntime>::create_collection(&255_u128, &ALICE, &BOB),
+				Pallet::<MockRuntime>::create_collection(&255_u16, &ALICE, &BOB),
 				Ok(()),
 				"class creation should be successful"
 			);
@@ -60,7 +60,7 @@ mod nonfungibles {
 			);
 
 			assert_eq!(
-				Pallet::<MockRuntime>::create_collection(&255_u128, &ALICE, &BOB),
+				Pallet::<MockRuntime>::create_collection(&255_u16, &ALICE, &BOB),
 				Err(Error::<MockRuntime>::CollectionAlreadyExists.into()),
 				"should not be able to create class that already exists"
 			);

@@ -41,37 +41,40 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use core::fmt::Debug;
+	use codec::FullCodec;
 	use composable_support::math::safe::SafeAdd;
 	use composable_traits::currency::AssetIdLike;
 	use frame_support::{pallet_prelude::*, PalletId, traits::{
 		tokens::nonfungibles::{Create, Inspect, Mutate, Transfer},
 		IsType,
 	}};
+	use sp_arithmetic::traits::One;
 	use sp_runtime::traits::{AccountIdConversion, Zero};
 	use sp_std::{
 		collections::{btree_map::BTreeMap, btree_set::BTreeSet},
 		vec::Vec,
 	};
-	use composable_traits::fnft::FinancialNFT;
+	use composable_traits::{fnft::FinancialNFT, account_proxy::ProxyType};
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type FinancialNFTCollectionIdOf<T> = <T as Config>::FinancialNFTCollectionId;
-	pub(crate) type FinancialNFTInstanceId = u128;
+	pub(crate) type FinancialNFTInstanceIdOf<T> = <T as Config>::FinancialNFTInstanceId;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		FinancialNFTCreated {
 			collection_id: FinancialNFTCollectionIdOf<T>,
-			instance_id: FinancialNFTInstanceId,
+			instance_id: FinancialNFTInstanceIdOf<T>,
 		},
 		FinancialNFTBurned {
 			collection_id: FinancialNFTCollectionIdOf<T>,
-			instance_id: FinancialNFTInstanceId,
+			instance_id: FinancialNFTInstanceIdOf<T>,
 		},
 		FinancialNFTTransferred {
 			collection_id: FinancialNFTCollectionIdOf<T>,
-			instance_id: FinancialNFTInstanceId,
+			instance_id: FinancialNFTInstanceIdOf<T>,
 			to: AccountIdOf<T>,
 		},
 	}
@@ -86,7 +89,7 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + pallet_proxy::Config {
 
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -98,8 +101,20 @@ pub mod pallet {
 			+ AssetIdLike
 			+ MaybeSerializeDeserialize
 			+ Ord
-			+ From<u128>
 			+ Into<u128>;
+
+		type FinancialNFTInstanceId: FullCodec
+			+ Debug
+			+ SafeAdd
+			+ MaxEncodedLen
+			+ Default
+			+ TypeInfo
+			+ Eq
+			+ PartialEq
+			+ Ord
+			+ Copy
+			+ Zero
+			+ One;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -116,13 +131,13 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		FinancialNFTCollectionIdOf<T>,
-		FinancialNFTInstanceId,
+		FinancialNFTInstanceIdOf<T>,
 		ValueQuery,
 		NftIdOnEmpty<T>,
 	>;
 
 	#[pallet::type_value]
-	pub fn NftIdOnEmpty<T: Config>() -> FinancialNFTInstanceId {
+	pub fn NftIdOnEmpty<T: Config>() -> FinancialNFTInstanceIdOf<T> {
 		Zero::zero()
 	}
 
@@ -131,7 +146,7 @@ pub mod pallet {
 	pub type Instance<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		(FinancialNFTCollectionIdOf<T>, FinancialNFTInstanceId),
+		(FinancialNFTCollectionIdOf<T>, FinancialNFTInstanceIdOf<T>),
 		(AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
 		OptionQuery,
 	>;
@@ -143,7 +158,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		FinancialNFTCollectionIdOf<T>,
-		BTreeSet<FinancialNFTInstanceId>,
+		BTreeSet<FinancialNFTInstanceIdOf<T>>,
 		OptionQuery,
 	>;
 
@@ -154,7 +169,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		AccountIdOf<T>,
-		BTreeSet<(FinancialNFTCollectionIdOf<T>, FinancialNFTInstanceId)>,
+		BTreeSet<(FinancialNFTCollectionIdOf<T>, FinancialNFTInstanceIdOf<T>)>,
 		OptionQuery,
 	>;
 
@@ -173,20 +188,24 @@ pub mod pallet {
 		#[allow(dead_code)] // TODO: remove it when it will be used
 		pub(crate) fn get_next_nft_id(
 			collection: &<Self as Inspect<AccountIdOf<T>>>::CollectionId,
-		) -> Result<FinancialNFTInstanceId, DispatchError> {
+		) -> Result<FinancialNFTInstanceIdOf<T>, DispatchError> {
 			FinancialNFTId::<T>::try_mutate(
 				collection,
-				|x| -> Result<FinancialNFTInstanceId, DispatchError> {
+				|x| -> Result<FinancialNFTInstanceIdOf<T>, DispatchError> {
 					let id = *x;
-					*x = x.safe_add(&1)?;
+					*x = x.safe_add(&FinancialNFTInstanceIdOf::<T>::one())?;
 					Ok(id)
 				},
 			)
 		}
+
+		fn get_proxy_type() -> <T as pallet_proxy::Config>::ProxyType  {
+			<T as pallet_proxy::Config>::ProxyType::decode(&mut &ProxyType::Governance.encode()[..]).expect("valid")
+		}
 	}
 
 	impl<T: Config> Inspect<AccountIdOf<T>> for Pallet<T> {
-		type ItemId = FinancialNFTInstanceId;
+		type ItemId = FinancialNFTInstanceIdOf<T>;
 		type CollectionId = FinancialNFTCollectionIdOf<T>;
 
 		fn owner(
@@ -279,6 +298,17 @@ pub mod pallet {
 			);
 			CollectionInstances::<T>::mutate(collection, insert_or_init_and_insert(*instance));
 			OwnerInstances::<T>::mutate(who, insert_or_init_and_insert((*collection, *instance)));
+
+			// Set the owner as the proxy for certain types of actions for the financial NFT account
+			// TODO (vim): Consider forking/upstreaming in a trait for pallet-proxy instead of direct dependency
+			let proxy_type = Self::get_proxy_type();
+			let asset_account = <Self as FinancialNFT<AccountIdOf<T>>>::asset_account(collection, instance);
+			<pallet_proxy::Pallet<T>>::add_proxy_delegate(
+				&asset_account,
+				who.clone(),
+				proxy_type,
+				frame_system::Pallet::<T>::block_number()
+			)?;
 
 			Self::deposit_event(Event::FinancialNFTCreated {
 				collection_id: *collection,
@@ -381,8 +411,9 @@ pub mod pallet {
 	impl<T: Config> FinancialNFT<AccountIdOf<T>> for Pallet<T> {
 
 		/// TODO (vim): Assess the probability of collision in generating accounts
+		///   with collection id type u128 and instance id type u128 this definitely collides
 		fn asset_account(collection: &Self::CollectionId, instance: &Self::ItemId) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account_truncating((collection, instance))
+			T::PalletId::get().into_sub_account_truncating( (collection, instance))
 		}
 	}
 
