@@ -1,4 +1,5 @@
 use alloc::string::{String, ToString};
+use alloc::format;
 use codec::Codec;
 use ibc::{
 	clients::{host_functions::HostFunctionsProvider, ics11_beefy::error::Error as Ics11Error},
@@ -44,7 +45,7 @@ impl HostFunctionsProvider for HostFunctions {
 		let proof = StorageProof::new(proof.into_iter().map(Clone::clone));
 		let items = vec![(key.to_vec(), Some(value.to_vec()))];
 		let child_info = ChildInfo::new_default(b"/ibc");
-		
+
 		read_child_proof_check::<BlakeTwo256, _>(root, proof, child_info, items)
 			.map_err(|e| Ics02ClientError::beefy(Ics11Error::verification_error(e.to_string())))?;
 
@@ -65,6 +66,20 @@ impl HostFunctionsProvider for HostFunctions {
 			.map_err(|e| Ics02ClientError::beefy(Ics11Error::verification_error(e.to_string())))?;
 
 		Ok(())
+	}
+
+	fn verify_timestamp_extrinsic(
+		root: &[u8; 32],
+		proof: &[Vec<u8>],
+		key: &[u8],
+		value: &[u8],
+	) -> Result<(), Ics02ClientError> {
+		sp_trie::verify_trie_proof::<LayoutV0<BlakeTwo256>, _, _, _>(
+			&H256::from_slice(&root[..]),
+			proof,
+			&vec![(key, Some(value))],
+		)
+		.map_err(|_| Ics02ClientError::beefy(Ics11Error::verification_error(format!("extrinsic proof verification failed"))))
 	}
 
 	fn sha256_digest(data: &[u8]) -> [u8; 32] {

@@ -15,7 +15,6 @@ use composable_traits::{
 	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
 };
 use frame_support::{
-	storage::{child, child::ChildInfo},
 	traits::Currency,
 };
 use ibc::{
@@ -77,12 +76,6 @@ where
 	T: Send + Sync,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
-	/// WARNING: Pretty expensive function. Only call this after all changes to the ics23 key store
-	/// have been made. This recalculates the root hash of the ics23 key store.
-	pub(crate) fn extract_ibc_commitment_root() -> Vec<u8> {
-		child::root(&ChildInfo::new_default(T::CHILD_TRIE_KEY), sp_core::storage::StateVersion::V0)
-	}
-
 	// IBC Runtime Api helper methods
 	/// Get a channel state
 	pub fn channel(

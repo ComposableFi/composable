@@ -138,7 +138,6 @@ pub mod pallet {
 	use composable_traits::defi::DeFiComposableConfig;
 	pub use ibc::signer::Signer;
 	use ibc_trait::client_id_from_bytes;
-	use sp_runtime::{generic::DigestItem, SaturatedConversion};
 	use tendermint_proto::Protobuf;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -293,45 +292,6 @@ pub mod pallet {
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 		T: Send + Sync,
 	{
-		fn on_finalize(_n: BlockNumberFor<T>) {
-			let root = Pallet::<T>::extract_ibc_commitment_root();
-			let height = impls::host_height::<T>();
-			let timestamp = T::TimeProvider::now().as_nanos().saturated_into::<u64>();
-			let ibc_cs = IbcConsensusState { timestamp, commitment_root: root.clone() };
-			let res = HostConsensusStates::<T>::try_mutate::<_, &'static str, _>(|val| {
-				// Try inserting the new consensus state, if the bounded map has reached it's
-				// limit this operation is a noop and just returns an error containing the
-				// values that we tried inserting if not the value is inserted successfully
-				// without any error
-				if let Err((height, ibc_cs)) = val.try_insert(height, ibc_cs) {
-					// If map is full, remove the oldest consensus state
-					// Get the key to the oldest state
-					let key = val.keys().cloned().next().ok_or("No keys in map")?;
-					// Prune the oldest consensus state.
-					val.remove(&key).ok_or("Unable to prune map")?;
-					// Insert the new consensus state.
-					val.try_insert(height, ibc_cs)
-						.map_err(|_| "Failed to insert new consensus state")?;
-				}
-				Ok(())
-			});
-			if res.is_err() {
-				log::error!("[pallet_ibc_on_finalize]: Failed to insert new consensus state");
-			}
-			let log = DigestItem::Consensus(IBC_DIGEST_ID, root);
-			<frame_system::Pallet<T>>::deposit_log(log);
-		}
-
-		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
-			<T as Config>::WeightInfo::on_finalize(
-				ClientCounter::<T>::get(),
-				ConnectionCounter::<T>::get(),
-				ChannelCounter::<T>::get(),
-				PacketCounter::<T>::get(),
-				AcknowledgementCounter::<T>::get(),
-				PacketReceiptCounter::<T>::get(),
-			)
-		}
 
 		fn offchain_worker(_n: BlockNumberFor<T>) {
 			let _ = Pallet::<T>::packet_cleanup();
