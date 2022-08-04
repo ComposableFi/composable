@@ -432,37 +432,48 @@ impl<T: Config> Pallet<T> {
 					let ids_to_claim: Vec<_> = match vesting_schedule_ids {
 						Schedules::All => schedules.keys().copied().collect(),
 						Schedules::Many(ids) => ids.into_inner(),
+						Schedules::One(id) => vec![id],
 					};
+
+					let mut ids_to_remove = vec![];
 
 					let mut total_locked_amount: BalanceOf<T> = Zero::zero();
 
 					for id_to_claim in ids_to_claim {
-						let should_be_removed = {
-							let schedule = schedules
-								.get_mut(&id_to_claim)
-								.ok_or(Error::<T>::VestingScheduleNotFound)?;
-							let locked_amount = schedule.locked_amount(
-								frame_system::Pallet::<T>::current_block_number(),
-								T::Time::now(),
-							);
+						let schedule = schedules
+							.get_mut(&id_to_claim)
+							.ok_or(Error::<T>::VestingScheduleNotFound)?;
+						let locked_amount = schedule.locked_amount(
+							frame_system::Pallet::<T>::current_block_number(),
+							T::Time::now(),
+						);
 
-							let total_amount = schedule.total_amount()?;
-							let available_amount = total_amount.safe_sub(&locked_amount)?;
+						let total_amount = schedule.total_amount()?;
+						let available_amount = total_amount.safe_sub(&locked_amount)?;
 
-							// if the schedule id is specified, we update the claimed
-							// amount for the specified schedule
-							schedule.already_claimed = available_amount;
+						// if the schedule id is specified, we update the claimed
+						// amount for the specified schedule
+						schedule.already_claimed = available_amount;
 
-							total_locked_amount = total_locked_amount
-								.safe_add(&total_amount.safe_sub(&schedule.already_claimed)?)?;
-
-							locked_amount.is_zero()
-						};
-
-						if should_be_removed {
-							// ignored since we know the item is in the map
-							let _ = schedules.remove(&id_to_claim);
+						if locked_amount.is_zero() {
+							ids_to_remove.push(id_to_claim);
 						}
+					}
+
+					let all_ids: Vec<_> = schedules.keys().copied().collect();
+					for schedule_id in all_ids {
+						let schedule = schedules
+							.get_mut(&schedule_id)
+							.ok_or(Error::<T>::VestingScheduleNotFound)?;
+
+						let total_amount = schedule.total_amount()?;
+
+						total_locked_amount = total_locked_amount
+							.safe_add(&total_amount.safe_sub(&schedule.already_claimed)?)?;
+					}
+
+					for id_to_remove in ids_to_remove {
+						schedules.remove(&id_to_remove);
 					}
 
 					Ok(total_locked_amount)
@@ -484,6 +495,11 @@ impl<T: Config> Pallet<T> {
 			return Ok(())
 		}
 
+		ensure!(
+			schedules.len() as u32 <= T::MaxVestingSchedules::get(),
+			Error::<T>::MaxVestingSchedulesExceeded
+		);
+
 		let bounded_schedules: BoundedBTreeMap<_, _, _> = schedules
 			.into_iter()
 			.map(|schedule| VestingScheduleNonce::<T>::increment().map(|id| (id, schedule)))
@@ -494,7 +510,7 @@ impl<T: Config> Pallet<T> {
 		let total_amount =
 			bounded_schedules.iter().try_fold::<_, _, Result<BalanceOf<T>, DispatchError>>(
 				Zero::zero(),
-				|acc_amount, (id, schedule)| {
+				|acc_amount, (_, schedule)| {
 					let amount = ensure_valid_vesting_schedule::<T>(schedule)?;
 					Ok(acc_amount + amount)
 				},
