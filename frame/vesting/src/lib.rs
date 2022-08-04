@@ -433,21 +433,18 @@ impl<T: Config> Pallet<T> {
 		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 	) -> Result<BalanceOf<T>, DispatchError> {
 		<VestingSchedules<T>>::try_mutate_exists(who, asset, |maybe_schedules| {
+			let mut total_locked_amount: BalanceOf<T> = Zero::zero();
 			match maybe_schedules {
 				Some(schedules) => {
-					let ids_to_claim: Vec<_> = match vesting_schedule_ids {
+					match vesting_schedule_ids {
 						VestingScheduleIdSet::All => schedules.keys().copied().collect(),
 						VestingScheduleIdSet::Many(ids) => ids.into_inner(),
 						VestingScheduleIdSet::One(id) => vec![id],
-					};
-
-					let mut ids_to_remove = vec![];
-
-					let mut total_locked_amount: BalanceOf<T> = Zero::zero();
-
-					for id_to_claim in ids_to_claim {
+					}
+					.iter()
+					.map(|id_to_claim| {
 						let schedule = schedules
-							.get_mut(&id_to_claim)
+							.get_mut(id_to_claim)
 							.ok_or(Error::<T>::VestingScheduleNotFound)?;
 						let locked_amount = schedule.locked_amount(
 							frame_system::Pallet::<T>::current_block_number(),
@@ -457,14 +454,17 @@ impl<T: Config> Pallet<T> {
 						let total_amount = schedule.total_amount()?;
 						let available_amount = total_amount.safe_sub(&locked_amount)?;
 
-						// if the schedule id is specified, we update the claimed
-						// amount for the specified schedule
+						// update claimed amount for specified schedules
 						schedule.already_claimed = available_amount;
 
 						if locked_amount.is_zero() {
-							ids_to_remove.push(id_to_claim);
+							// remove fully claimed schedules
+							schedules.remove(&id_to_claim);
 						}
-					}
+
+						Ok(())
+					})
+					.collect::<Result<Vec<_>, DispatchError>>()?;
 
 					let all_ids: Vec<_> = schedules.keys().copied().collect();
 					for schedule_id in all_ids {
@@ -476,10 +476,6 @@ impl<T: Config> Pallet<T> {
 
 						total_locked_amount = total_locked_amount
 							.safe_add(&total_amount.safe_sub(&schedule.already_claimed)?)?;
-					}
-
-					for id_to_remove in ids_to_remove {
-						schedules.remove(&id_to_remove);
 					}
 
 					Ok(total_locked_amount)
