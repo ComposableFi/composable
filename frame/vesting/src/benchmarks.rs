@@ -109,7 +109,7 @@ benchmarks! {
 			fund_account::<T>(&source, asset_id.clone(), FUNDING.into());
 			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &source, &caller, schedule_input.clone()).unwrap();
 		}
-	}: _(RawOrigin::Signed(caller), asset_id, Schedules::All)
+	}: _(RawOrigin::Signed(caller), asset_id, VestingScheduleIdSet::All)
 
 	vested_transfer {
 		let asset_id = asset::<T>();
@@ -161,7 +161,7 @@ benchmarks! {
 			fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
 			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &caller, &dest, schedule_input.clone()).unwrap();
 		}
-	}: _(RawOrigin::Signed(caller), dest_look_up, asset_id, Schedules::All)
+	}: _(RawOrigin::Signed(caller), dest_look_up, asset_id, VestingScheduleIdSet::All)
 }
 
 impl_benchmark_test_suite!(Vesting, crate::mock::ExtBuilder::build(), crate::mock::Runtime);

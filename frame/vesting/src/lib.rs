@@ -298,7 +298,7 @@ pub mod module {
 			vesting_schedule_id: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_claim(&who, asset, vesting_schedule_id.clone())?;
+			Self::do_claim(&who, asset, vesting_schedule_id)?;
 
 			Ok(())
 		}
@@ -344,7 +344,7 @@ pub mod module {
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let who = T::Lookup::lookup(dest)?;
-			Self::do_claim(&who, asset, vesting_schedule_id.clone())?;
+			Self::do_claim(&who, asset, vesting_schedule_id)?;
 
 			Ok(())
 		}
@@ -459,7 +459,7 @@ impl<T: Config> Pallet<T> {
 
 						if locked_amount.is_zero() {
 							// remove fully claimed schedules
-							schedules.remove(&id_to_claim);
+							schedules.remove(id_to_claim);
 						}
 
 						Ok(())
@@ -474,7 +474,7 @@ impl<T: Config> Pallet<T> {
 						.iter()
 						.map(|schedule_id| {
 							let schedule = schedules
-								.get_mut(&schedule_id)
+								.get_mut(schedule_id)
 								.ok_or(Error::<T>::VestingScheduleNotFound)?;
 
 							let total_amount = schedule.total_amount()?;
