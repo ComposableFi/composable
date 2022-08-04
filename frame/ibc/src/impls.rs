@@ -14,10 +14,7 @@ use composable_traits::{
 	defi::DeFiComposableConfig,
 	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
 };
-use frame_support::{
-	storage::{child, child::ChildInfo},
-	traits::Currency,
-};
+use frame_support::traits::Currency;
 use ibc::{
 	applications::transfer::{
 		acknowledgement::{Acknowledgement as Ics20Acknowledgement, ACK_SUCCESS_B64},
@@ -77,12 +74,6 @@ where
 	T: Send + Sync,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
-	/// WARNING: Pretty expensive function. Only call this after all changes to the ics23 key store
-	/// have been made. This recalculates the root hash of the ics23 key store.
-	pub(crate) fn extract_ibc_commitment_root() -> Vec<u8> {
-		child::root(&ChildInfo::new_default(T::CHILD_TRIE_KEY), sp_core::storage::StateVersion::V0)
-	}
-
 	// IBC Runtime Api helper methods
 	/// Get a channel state
 	pub fn channel(
@@ -703,7 +694,7 @@ where
 		};
 		let res = ibc::core::ics26_routing::handler::deliver::<
 			_,
-			crate::host_functions::HostFunctions,
+			crate::host_functions::HostFunctions<T>,
 		>(&mut ctx, msg)
 		.map_err(|_| IbcHandlerError::ChannelInitError)?;
 		Self::deposit_event(res.events.into());
@@ -814,7 +805,7 @@ where
 		.encode_vec();
 		let msg = ibc_proto::google::protobuf::Any { type_url: TYPE_URL.to_string(), value: msg };
 		let mut ctx = crate::routing::Context::<T>::new();
-		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions>(
+		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions<T>>(
 			&mut ctx, msg,
 		)
 		.unwrap();

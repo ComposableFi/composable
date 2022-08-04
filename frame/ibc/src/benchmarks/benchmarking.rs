@@ -164,7 +164,7 @@ benchmarks! {
 		// the proofs that will be submitted
 		let value = create_client_update().encode_vec();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_conn_open_try::<T>();
 		// Update consensus state with the new root that we'll enable proofs to be correctly verified
@@ -205,7 +205,7 @@ benchmarks! {
 
 		let value = create_client_update().encode_vec();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_conn_open_ack::<T>();
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
@@ -247,7 +247,7 @@ benchmarks! {
 		// the proofs that will be submitted
 		let value = create_client_update().encode_vec();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_conn_open_confirm::<T>();
 		// Update consensus state with the new root that we'll enable proofs to be correctly verified
@@ -331,7 +331,7 @@ benchmarks! {
 		let value = create_client_update().encode_vec();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
@@ -353,7 +353,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_chan_open_try();
 		// Update consensus root for light client
@@ -395,7 +395,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
@@ -416,7 +416,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_chan_open_ack();
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
@@ -457,7 +457,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
@@ -512,7 +512,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
@@ -566,7 +566,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
@@ -625,7 +625,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
@@ -687,7 +687,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
@@ -747,7 +747,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
@@ -782,79 +782,6 @@ benchmarks! {
 		}
 	}
 
-	on_finalize {
-		// counter for clients
-		let a in 1..50;
-		// counter for connections
-		let b in 1..50;
-		// counter for channels
-		let c in 1..50;
-		// counter for packet commitments
-		let d in 1..50;
-		// counter for packet acknowledgements
-		let e in 1..50;
-		// counter for packet receipts
-		let f in 1..50;
-		let mut ctx = crate::routing::Context::<T>::new();
-		for i in 1..a {
-			let (mock_client_state, mock_cs_state) = create_mock_state();
-			let mock_client_state = AnyClientState::Tendermint(mock_client_state);
-			let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
-			let client_id = ClientId::new(mock_client_state.client_type(), i.into()).unwrap();
-			ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
-			ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
-			ctx.store_consensus_state(client_id, Height::new(0, 1), mock_cs_state).unwrap();
-		}
-
-		for j in 1..b {
-			let connection_id = ConnectionId::new(j.into());
-			let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
-			let delay_period = core::time::Duration::from_nanos(1000);
-			let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
-			let connection_counterparty = Counterparty::new(client_id.clone(), Some(ConnectionId::new(j.into())), commitment_prefix);
-			let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
-			ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
-		}
-
-		for k in 1..c {
-			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-			let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(k.into())));
-			let channel_end = ChannelEnd::new(
-				ibc::core::ics04_channel::channel::State::Open,
-				ibc::core::ics04_channel::channel::Order::Unordered,
-				counterparty_channel,
-				vec![ConnectionId::new(k.into())],
-				ibc::core::ics04_channel::Version::default()
-			);
-
-			ctx.store_channel((port_id.clone(), ChannelId::new(k.into())), &channel_end).unwrap();
-		}
-
-		for l in 1..d {
-			let commitment = vec![0;32];
-			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-			let channel_id = ChannelId::new(0);
-			PacketCommitment::<T>::insert((port_id.clone(), channel_id, (l as u64).into()), commitment.into())
-		}
-
-		for m in 1..e {
-			let ack = vec![0;32];
-			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-			let channel_id = ChannelId::new(0);
-			Acknowledgements::<T>::insert((port_id.clone(), channel_id, (m as u64).into()), ack.into())
-		}
-
-		for n in 1..f {
-			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-			let channel_id = ChannelId::new(0);
-			PacketReceipt::<T>::insert((port_id.clone(), channel_id, (n as u64).into()), b"Ok".to_vec())
-		}
-
-	}: { PalletIbc::<T>::on_finalize(0u32.into())}
-	verify {
-		let commitment_roots = HostConsensusStates::<T>::get();
-		assert_eq!(commitment_roots.len(), 1);
-	}
 
 	initiate_connection {
 		let mut ctx = routing::Context::<T>::new();
