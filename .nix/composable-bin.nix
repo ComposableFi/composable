@@ -22,6 +22,7 @@ pkgs.stdenv.mkDerivation rec {
     LD_LIBRARY_PATH = pkgs.lib.strings.makeLibraryPath [
       pkgs.stdenv.cc.cc.lib
       pkgs.llvmPackages.libclang.lib
+      pkgs.rocksdb
     ];  
   }
 # TODO: try https://github.com/NixOS/nixpkgs/blob/bc08bb87fa533af4e237f44fd86a8c9af65f55d5/pkgs/development/libraries/rocksdb/default.nix
