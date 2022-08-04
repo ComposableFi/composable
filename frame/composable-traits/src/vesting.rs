@@ -63,7 +63,7 @@ pub enum VestingWindow<BlockNumber, Moment> {
 	TypeInfo,
 )]
 #[scale_info(skip_type_params(MaxVestingSchedules))]
-pub enum Schedules<Id: Clone + Eq + PartialEq + Debug, MaxVestingSchedules: Get<u32>> {
+pub enum VestingScheduleIdSet<Id: Clone + Eq + PartialEq + Debug, MaxVestingSchedules: Get<u32>> {
 	All,
 	One(Id),
 	Many(BoundedVec<Id, MaxVestingSchedules>),

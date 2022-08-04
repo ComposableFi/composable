@@ -46,7 +46,7 @@ use composable_support::{
 	math::safe::{SafeAdd, SafeSub},
 };
 use composable_traits::vesting::{
-	Schedules, VestedTransfer, VestingSchedule, VestingScheduleInput,
+	VestedTransfer, VestingSchedule, VestingScheduleIdSet, VestingScheduleInput,
 };
 use frame_support::{
 	ensure,
@@ -60,7 +60,7 @@ use sp_runtime::{
 	traits::{BlockNumberProvider, One, StaticLookup, Zero},
 	ArithmeticError, DispatchResult,
 };
-use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, vec::Vec};
+use sp_std::{collections::btree_map::BTreeMap, convert::TryInto, vec, vec::Vec};
 
 mod weights;
 
@@ -194,7 +194,7 @@ pub mod module {
 		Claimed {
 			who: AccountIdOf<T>,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: Schedules<T::VestingScheduleId, T::MaxVestingSchedules>,
+			vesting_schedule_id: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 			locked_amount: BalanceOf<T>,
 		},
 		/// Updated vesting schedules. \[who\]
@@ -294,7 +294,7 @@ pub mod module {
 		pub fn claim(
 			origin: OriginFor<T>,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: Schedules<T::VestingScheduleId, T::MaxVestingSchedules>,
+			vesting_schedule_id: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let locked_amount = Self::do_claim(&who, asset, vesting_schedule_id.clone())?;
@@ -340,7 +340,7 @@ pub mod module {
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: Schedules<T::VestingScheduleId, T::MaxVestingSchedules>,
+			vesting_schedule_id: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let who = T::Lookup::lookup(dest)?;
@@ -376,7 +376,7 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
-		let locked = Self::locked_balance(to, asset, Schedules::All)?;
+		let locked = Self::locked_balance(to, asset, VestingScheduleIdSet::All)?;
 
 		let total_amount = locked.safe_add(&schedule_amount)?;
 
@@ -405,9 +405,9 @@ impl<T: Config> Pallet<T> {
 	fn do_claim(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-		vesting_schedule_id: Schedules<T::VestingScheduleId, T::MaxVestingSchedules>, /* Option<T::VestingScheduleId>, */
+		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>, /* Option<T::VestingScheduleId>, */
 	) -> Result<BalanceOf<T>, DispatchError> {
-		let locked = Self::locked_balance(who, asset, vesting_schedule_id)?;
+		let locked = Self::locked_balance(who, asset, vesting_schedule_ids)?;
 
 		if locked.is_zero() {
 			// cleanup the storage and unlock the fund
@@ -424,15 +424,15 @@ impl<T: Config> Pallet<T> {
 	fn locked_balance(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-		vesting_schedule_ids: Schedules<T::VestingScheduleId, T::MaxVestingSchedules>,
+		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 	) -> Result<BalanceOf<T>, DispatchError> {
 		<VestingSchedules<T>>::try_mutate_exists(who, asset, |maybe_schedules| {
 			match maybe_schedules {
 				Some(schedules) => {
 					let ids_to_claim: Vec<_> = match vesting_schedule_ids {
-						Schedules::All => schedules.keys().copied().collect(),
-						Schedules::Many(ids) => ids.into_inner(),
-						Schedules::One(id) => vec![id],
+						VestingScheduleIdSet::All => schedules.keys().copied().collect(),
+						VestingScheduleIdSet::Many(ids) => ids.into_inner(),
+						VestingScheduleIdSet::One(id) => vec![id],
 					};
 
 					let mut ids_to_remove = vec![];

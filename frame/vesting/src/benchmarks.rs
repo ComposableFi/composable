@@ -9,7 +9,7 @@ use crate::{
 use codec::Decode;
 use composable_support::abstractions::utils::increment::Increment;
 use composable_traits::vesting::{
-	Schedules, VestingSchedule, VestingScheduleInput, VestingWindow::BlockNumberBased,
+	VestingSchedule, VestingScheduleIdSet, VestingScheduleInput, VestingWindow::BlockNumberBased,
 };
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
 use frame_support::traits::{fungibles::Mutate, Get};
