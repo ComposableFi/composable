@@ -384,6 +384,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             baseAsset={selectedAssetTwo}
           />
           <PreviewModal
+            priceImpact={priceImpact}
             onConfirmSwap={onConfirmSwap}
             minimumReceived={minimumReceived}
             baseAssetAmount={assetTwoAmount}
