@@ -28,10 +28,10 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// *Tries to* perform runtime storage changes, effectively updating the
-	/// asset twap.  Differently than [`do_update_twap`](Self::do_update_twap)
-	/// though, this variation does *not* throw an error if the current twap
-	/// timestamp is more recent than the current time, returning from the call
-	/// without modifying storage if this condition is true.
+	/// asset twap. Contrary to [`do_update_twap`](Self::do_update_twap), this
+	/// variation does *not* throw an error if the current twap timestamp is
+	/// more recent than the current time, returning from the call without
+	/// modifying storage if this condition is true.
 	///
 	/// # Errors
 	///
@@ -74,7 +74,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	/// Efectively mutate runtime storage and
+	/// Effectively mutate runtime storage and
 	/// [`VammState`](../types/struct.VammState.html#structfield.base_asset_reserves).
 	fn internal_update_twap(
 		vamm_id: T::VammId,
