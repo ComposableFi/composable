@@ -21,7 +21,6 @@ pub(crate) type LoanInputOf<T> = LoanInput<
 	<T as DeFiComposableConfig>::Balance,
 	Percent,
 	RepaymentStrategy,
-	TimeMeasure,
 >;
 
 pub(crate) type MarketInfoOf<T> = MarketInfo<

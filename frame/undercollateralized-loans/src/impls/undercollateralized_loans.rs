@@ -29,13 +29,7 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 	}
 
 	fn create_loan(
-		input: LoanInput<
-			Self::AccountId,
-			Self::Balance,
-			Self::Percent,
-			Self::RepaymentStrategy,
-			Self::TimeMeasure,
-		>,
+		input: LoanInput<Self::AccountId, Self::Balance, Self::Percent, Self::RepaymentStrategy>,
 	) -> Result<LoanConfigOf<T>, DispatchError> {
 		Self::do_create_loan(input.try_into_validated()?)
 	}

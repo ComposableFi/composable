@@ -7,7 +7,7 @@ use composable_traits::{
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::Zero;
-use sp_std::ops::Rem;
+
 #[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
 pub struct CurrencyPairIsNotSame;
 
@@ -73,20 +73,17 @@ where
 #[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Clone, Copy)]
 pub struct LoanInputIsValid<Loans: UndercollateralizedLoans>(PhantomData<Loans>);
 
-impl<AccountId, Balance, TimeMeasure, Percent, RepaymentStrategy, Loans>
-	Validate<
-		LoanInput<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure>,
-		LoanInputIsValid<Loans>,
-	> for LoanInputIsValid<Loans>
+impl<AccountId, Balance, Percent, RepaymentStrategy, Loans>
+	Validate<LoanInput<AccountId, Balance, Percent, RepaymentStrategy>, LoanInputIsValid<Loans>>
+	for LoanInputIsValid<Loans>
 where
 	Balance: Zero + PartialOrd,
 	Percent: Zero + PartialOrd,
 	Loans: UndercollateralizedLoans + DeFiEngine<AccountId = AccountId>,
 {
 	fn validate(
-		input: LoanInput<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure>,
-	) -> Result<LoanInput<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure>, &'static str>
-	{
+		input: LoanInput<AccountId, Balance, Percent, RepaymentStrategy>,
+	) -> Result<LoanInput<AccountId, Balance, Percent, RepaymentStrategy>, &'static str> {
 		// Check that principal balance	> 0
 		let principal = input.principal.try_into_validated::<BalanceGreaterThenZero>()?.value();
 		// Check that collateral balance > 0
@@ -99,6 +96,9 @@ where
 			)?,
 			"Mentioned borrower is not included in the market's whitelist of borrowers."
 		);
+		// Check if payment schedule is empty.
+		// We should have at least one payment.
+		ensure!(input.payment_schedule.len() > 0, "Payment schedule is empty.");
 
 		Ok(LoanInput { principal, collateral, ..input })
 	}

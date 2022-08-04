@@ -1,6 +1,6 @@
 use crate::defi::CurrencyPair;
 use frame_support::pallet_prelude::*;
-use sp_runtime::{traits::Zero, ArithmeticError, Perquintill};
+use sp_runtime::Perquintill;
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
@@ -276,7 +276,7 @@ impl<AccountId, AssetId: Copy, BlockNumber, LiquidationStrategyId>
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
-pub struct LoanInput<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure> {
+pub struct LoanInput<AccountId, Balance, Percent, RepaymentStrategy> {
 	/// Loan belongs to this market.
 	pub market_account_id: AccountId,
 	/// This account id have to be whitelisted.
@@ -286,7 +286,7 @@ pub struct LoanInput<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure
 	/// Amount of assets which should be deposited as collateral.
 	pub collateral: Balance,
 	/// How often borrowers have to pay interest.
-	pub payment_schedule: Vec<(TimeMeasure, Percent)>,
+	pub payment_schedule: Vec<(String, Percent)>,
 	/// Payment strategie which should be applyed.
 	/// For instance borrower have to pay principal when loan is mature (one strategy),
 	/// or he may pay principal partially, simultaneously with interest payments.   

@@ -33,13 +33,7 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	>;
 
 	fn create_loan(
-		input: LoanInput<
-			Self::AccountId,
-			Self::Balance,
-			Self::Percent,
-			Self::RepaymentStrategy,
-			Self::TimeMeasure,
-		>,
+		input: LoanInput<Self::AccountId, Self::Balance, Self::Percent, Self::RepaymentStrategy>,
 	) -> Result<
 		LoanConfig<
 			Self::AccountId,

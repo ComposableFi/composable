@@ -161,6 +161,8 @@ pub mod pallet {
 		// Each payments schedule can not have more than this amount of payments.
 		type MaxPaymentsAmountValue: Get<u32>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
+		// TODO: @mikoalichuk: can we use String?
+		type ScheduleTimestampStringFormat: Get<String>;
 	}
 
 	#[pallet::pallet]
@@ -195,16 +197,9 @@ pub mod pallet {
 	pub type PaymentsScheduleStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::BlockNumber, BTreeSet<T::AccountId>, ValueQuery>;
 
-	// Non-active loans storage.
-	// Configs of approved but not executed loans are stored here.
-	// AccountId is id of loan's account.
-	#[pallet::storage]
-	pub type NonActiveLoansStorage<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, LoanConfigOf<T>, OptionQuery>;
-
 	// Use hashmap as a set.
 	#[pallet::storage]
-	pub type NonActiveLoansStorageSet<T: Config> =
+	pub type NonActiveLoansStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
 
 	// Maps market's account id to market's debt token
@@ -225,7 +220,7 @@ pub mod pallet {
 		Twox64Concat,
 		T::AccountId,
 		Twox64Concat,
-        TimeMeasure,
+		TimeMeasure,
 		Percent,
 		OptionQuery,
 	>;
@@ -247,7 +242,7 @@ pub mod pallet {
 		ExceedMaxMarketsCounterValue,
 		// We can not work with zero prices.
 		PriceOfInitialBorrowVaultShouldBeGreaterThanZero,
-		// If wrong account id provided.
+		// If wrong account id of market or loan is provided.
 		MarketDoesNotExist,
 		LoanDoesNotExistOrWasActivated,
 		// Only market manager account allowed to create loans for the market.
@@ -256,13 +251,13 @@ pub mod pallet {
 		ThisUserIsNotAllowedToExecuteThisContract,
 		// There is no loan with such account id.
 		ThereIsNoSuchLoan,
-		// When we try treat the loan which already shoul be paid.
-		CurrentBlockNumberExceedsFinalBlockNumberForTheLoan,
 		// Out-of-range number of seconds in provided timestamp.
 		OutOfRangeNumberSecondInTimestamp,
-        // Whet borrower tried to activate a loan after first payment day.
-        TheLoanContractIsExpired,
-    }
+		// It is not possible to parse timestamp.
+		IncorrectTimestampFormat,
+		// When borrower tried to activate a loan after first payment day.
+		TheLoanContractIsExpired,
+	}
 
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
 	#[pallet::storage]

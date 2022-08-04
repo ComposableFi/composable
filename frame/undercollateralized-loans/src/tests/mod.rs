@@ -4,6 +4,7 @@ use crate::{
 	strategies::repayment_strategies::RepaymentStrategy,
 	types::{LoanConfigOf, MarketInfoOf, MarketInputOf},
 };
+use chrono::{NaiveDate, NaiveDateTime};
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, DeFiEngine, MoreThanOneFixedU128, Rate},
@@ -103,7 +104,11 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 		borrower_account_id: *BOB,
 		principal: 1000,
 		collateral: 5,
-		payment_schedule: vec![],
+		payment_schedule: vec![
+			("01.01.2222".to_string(), Percent::from_percent(5)),
+			("01.02.2222".to_string(), Percent::from_percent(5)),
+			("01.03.2222".to_string(), Percent::from_percent(5)),
+		],
 		repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature,
 	};
 	crate::Pallet::<Runtime>::do_create_loan(loan_input.try_into_validated().unwrap()).unwrap()

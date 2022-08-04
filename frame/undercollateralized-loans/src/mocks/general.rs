@@ -28,7 +28,7 @@ use sp_runtime::{
 		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicTrait, IdentifyAccount, IdentityLookup,
 		Verify,
 	},
-	DispatchError, Percent,
+	DispatchError,
 };
 use xcm::latest::SendXcm;
 
@@ -326,6 +326,7 @@ impl pallet_vault::Config for Runtime {
 parameter_types! {
 	pub UncollateralizedLoansPalletId: PalletId = PalletId(*b"ucLoans!");
 	pub UncollateralizedLoanId: LoanId = LoanId(*b"UCloanID");
+	pub ScheduleTimestampStringFormat: String = String::from("%d.%m.%Y");
 	pub OracleMarketCreationStake: Balance = NORMALIZED::ONE;
 }
 
@@ -377,6 +378,7 @@ impl pallet_undercollateralized_loans::Config for Runtime {
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type UnixTime = Timestamp;
 	type MaxPaymentsAmountValue = ConstU32<100>;
+	type ScheduleTimestampStringFormat = ScheduleTimestampStringFormat;
 }
 
 parameter_type_with_key! {

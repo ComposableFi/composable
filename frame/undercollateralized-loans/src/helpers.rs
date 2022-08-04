@@ -4,7 +4,7 @@ use crate::{
 		RepaymentResult,
 		RepaymentStrategy,
 	},
-	types::{LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf},
+	types::{LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf, TimeMeasure},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
 };
@@ -20,7 +20,7 @@ use frame_support::{
 	ensure,
 	storage::with_transaction,
 	traits::{
-		fungibles::{Inspect, Transfer, Mutate},
+		fungibles::{Inspect, Mutate, Transfer},
 		Get, UnixTime,
 	},
 };
@@ -29,7 +29,7 @@ use sp_runtime::{
 	DispatchError, Percent, Perquintill, TransactionOutcome,
 };
 
-use chrono::{NaiveDateTime, Utc};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
 
 // #generalization
 impl<T: Config> Pallet<T> {
@@ -102,6 +102,9 @@ impl<T: Config> Pallet<T> {
 		input: Validated<LoanInputOf<T>, LoanInputIsValid<crate::Pallet<T>>>,
 	) -> Result<LoanConfigOf<T>, DispatchError> {
 		let config_input = input.value();
+		// Convert schedule timestamps from string to seconds have passed from the beginning of UNIX
+		// epoche.
+		let schedule = Self::convert_schedule_timestamps(&config_input.payment_schedule)?;
 		// Create non-activated loan and increment loans' counter.
 		// This loan have to be activated by borrower further.
 		crate::LoansCounterStorage::<T>::try_mutate(|counter| {
@@ -113,12 +116,11 @@ impl<T: Config> Pallet<T> {
 				config_input.borrower_account_id,
 				config_input.principal,
 				config_input.collateral,
-				config_input.payment_schedule,
+				schedule,
 				config_input.repayment_strategy,
 			);
-			crate::NonActiveLoansStorage::<T>::insert(loan_account_id.clone(), loan_config.clone());
-			crate::NonActiveLoansStorageSet::<T>::insert(loan_account_id, ());
-
+			crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_config.clone());
+			crate::NonActiveLoansStorage::<T>::insert(loan_account_id, ());
 			Ok(loan_config)
 		})
 	}
@@ -134,7 +136,7 @@ impl<T: Config> Pallet<T> {
 		// Check if loan's account id is in non-activated loans list.
 		// If it is not, loan does not exist or was already activated.
 		ensure!(
-			crate::NonActiveLoansStorageSet::<T>::contains_key(loan_account_id.clone()),
+			crate::NonActiveLoansStorage::<T>::contains_key(loan_account_id.clone()),
 			Error::<T>::LoanDoesNotExistOrWasActivated
 		);
 		let loan_config = Self::get_loan_config_via_account_id(&loan_account_id)?;
@@ -143,20 +145,20 @@ impl<T: Config> Pallet<T> {
 			*loan_config.borrower_account_id() == borrower_account_id,
 			Error::<T>::ThisUserIsNotAllowedToExecuteThisContract
 		);
-	    // Check if borrower tries to activate expired loan.  	
-        let today = Utc::today().naive_utc();
+		// Check if borrower tries to activate expired loan.
+		let today = Utc::today().naive_utc();
 		let first_payment_date =
 			NaiveDateTime::from_timestamp_opt(*loan_config.first_payment_moment(), 0)
 				.ok_or(Error::<T>::OutOfRangeNumberSecondInTimestamp)?
 				.date();
-        // Loan should be activated before the first payment date.
-        if today >= first_payment_date {
-            crate::NonActiveLoansStorageSet::<T>::remove(loan_account_id.clone());
-            crate::LoansStorage::<T>::remove(loan_account_id.clone());
-            Err(Error::<T>::TheLoanContractIsExpired)?;
-        }
-        // Obtain market's configuration. 
-        let market_info = Self::get_market_info_via_account_id(loan_config.market_account_id())?;
+		// Loan should be activated before the first payment date.
+		if today >= first_payment_date {
+			crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
+			crate::LoansStorage::<T>::remove(loan_account_id.clone());
+			Err(Error::<T>::TheLoanContractIsExpired)?;
+		}
+		// Obtain market's configuration.
+		let market_info = Self::get_market_info_via_account_id(loan_config.market_account_id())?;
 		let market_config = market_info.config();
 		// Transfer collateral from the borrower's account to the loan's account.
 		let collateral_asset_id = *market_config.collateral_asset();
@@ -170,23 +172,20 @@ impl<T: Config> Pallet<T> {
 		let destination = &borrower_account_id;
 		let amount = *loan_config.principal();
 		T::MultiCurrency::transfer(borrow_asset_id, source, destination, amount, keep_alive)?;
-	    // Mint 'principal' amount of debt tokens to the loan's account.
-        // We use these tokens to indicate which part of principal is not refunded yet.
-	    let debt_token_id =
-			crate::DebtTokenForMarketStorage::<T>::get(loan_config.market_account_id()).ok_or(Error::<T>::MarketDoesNotExist)?;
-        <T as Config>::MultiCurrency::mint_into(
-			debt_token_id,
-			&loan_account_id,
-			amount,
-		)?;
+		// Mint 'principal' amount of debt tokens to the loan's account.
+		// We use these tokens to indicate which part of principal is not refunded yet.
+		let debt_token_id =
+			crate::DebtTokenForMarketStorage::<T>::get(loan_config.market_account_id())
+				.ok_or(Error::<T>::MarketDoesNotExist)?;
+		<T as Config>::MultiCurrency::mint_into(debt_token_id, &loan_account_id, amount)?;
 		// Loan is active now.
-        // Remove loan configuration from the non-activated loans accounts ids storage.
-		crate::NonActiveLoansStorageSet::<T>::remove(loan_account_id.clone());
-	    // Build payment schedule
-        for (timestamp, interest_rate) in loan_config.schedule(){
-            crate::ScheduleStorage::<T>::insert(loan_account_id.clone(), timestamp, interest_rate); 
-        }
-        Ok(loan_config)
+		// Remove loan configuration from the non-activated loans accounts ids storage.
+		crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
+		// Build payment schedule.
+		for (timestamp, interest_rate) in loan_config.schedule() {
+			crate::ScheduleStorage::<T>::insert(loan_account_id.clone(), timestamp, interest_rate);
+		}
+		Ok(loan_config)
 	}
 
 	// Repay any amount of money
@@ -420,5 +419,21 @@ impl<T: Config> Pallet<T> {
 	) -> Result<LoanConfigOf<T>, crate::Error<T>> {
 		crate::LoansStorage::<T>::try_get(loan_account_id_ref)
 			.map_err(|_| crate::Error::<T>::ThereIsNoSuchLoan)
+	}
+
+	pub(crate) fn convert_schedule_timestamps(
+		schedule: &Vec<(String, Percent)>,
+	) -> Result<Vec<(TimeMeasure, Percent)>, crate::Error<T>> {
+		let mut output = vec![];
+		for (timestamp, percent) in schedule {
+			output.push((
+				NaiveDate::parse_from_str(&timestamp, &T::ScheduleTimestampStringFormat::get())
+					.map_err(|_| crate::Error::<T>::IncorrectTimestampFormat)?
+					.and_time(NaiveTime::default())
+					.timestamp(),
+				*percent,
+			));
+		}
+		Ok(output)
 	}
 }

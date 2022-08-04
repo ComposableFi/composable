@@ -1,7 +1,7 @@
 use super::{create_test_market_input_config, prelude::*};
 use crate::currency::*;
 use composable_traits::undercollateralized_loans::LoanInput;
-/*
+
 #[test]
 fn can_create_market() {
 	new_test_ext().execute_with(|| {
@@ -24,4 +24,3 @@ fn can_create_market() {
 		));
 	})
 }
-*/
