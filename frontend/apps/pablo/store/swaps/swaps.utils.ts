@@ -1,5 +1,4 @@
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
-import { uniswapCalculator } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import produce from "immer";
 import { SwapSide, SwapsSlice } from "./swaps.types";

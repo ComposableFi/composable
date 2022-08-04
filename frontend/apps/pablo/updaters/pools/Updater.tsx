@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
 import { fetchPools } from "@/defi/utils";
@@ -13,63 +13,38 @@ const Updater = () => {
     pools: { setPoolsList },
   } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+
+  const updatePools = useCallback(() => {
+    if (parachainApi) {
+      fetchPools(parachainApi).then((pools) => {
+        setPoolsList([
+          ...pools.liquidityBootstrapping.verified,
+          ...pools.constantProduct.verified,
+          ...pools.stableSwap.verified,
+        ]);
+      });
+    }
+  }, [parachainApi, setPoolsList]);
+
   /**
    * Populate all pools
    * from the pallet
    */
   useEffect(() => {
-    if (parachainApi) {
-      fetchPools(parachainApi).then((pools) => {
-        console.log("fetchPools", pools);
-        setPoolsList(pools.constantProduct.verified, "ConstantProduct", true);
-        // setPoolsList(pools.constantProduct.unVerified, "ConstantProduct", false)
-        setPoolsList(pools.stableSwap.verified, "StableSwap", true);
-        // setPoolsList(pools.stableSwap.unVerified, "StableSwap", false)
-        setPoolsList(
-          pools.liquidityBootstrapping.verified,
-          "LiquidityBootstrapping",
-          true
-        );
-        // setPoolsList(pools.liquidityBootstrapping.unVerified, "LiquidityBootstrapping", false)
-      });
-    }
-  }, [parachainApi, setPoolsList]);
+      updatePools();
+  }, [updatePools]);
 
   const router = useRouter();
 
   useEffect(() => {
-    if (parachainApi) {
-      const handleRouteChange = (url: string, params: any) => {
-        if (url === "/pool") {
-          fetchPools(parachainApi).then((pools) => {
-            console.log("fetchPools", pools);
-            setPoolsList(
-              pools.constantProduct.verified,
-              "ConstantProduct",
-              true
-            );
-            // setPoolsList(pools.constantProduct.unVerified, "ConstantProduct", false)
-            setPoolsList(pools.stableSwap.verified, "StableSwap", true);
-            // setPoolsList(pools.stableSwap.unVerified, "StableSwap", false)
-            setPoolsList(
-              pools.liquidityBootstrapping.verified,
-              "LiquidityBootstrapping",
-              true
-            );
-            // setPoolsList(pools.liquidityBootstrapping.unVerified, "LiquidityBootstrapping", false)
-          });
-        }
-      };
-
-      router.events.on("routeChangeStart", handleRouteChange);
+      router.events.on("routeChangeStart", updatePools);
 
       // If the component is unmounted, unsubscribe
       // from the event with the `off` method:
       return () => {
-        router.events.off("routeChangeStart", handleRouteChange);
+        router.events.off("routeChangeStart", updatePools);
       };
-    }
-  }, [parachainApi, router, setPoolsList]);
+  }, [router, updatePools]);
 
   return null;
 };

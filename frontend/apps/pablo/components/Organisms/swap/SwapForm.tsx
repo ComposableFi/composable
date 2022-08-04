@@ -52,7 +52,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     assetOneAmount,
     assetTwoAmount,
     onChangeTokenAmount,
-    updateSpotPrice,
     minimumReceived,
     feeCharged,
     spotPrice,
@@ -64,6 +63,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     assetOneInputValid,
     assetTwoInputValid,
     flipAssetSelection,
+    isProcessing,
+    percentageToSwap
   } = useSwaps();
 
   const initiateSwapTx = usePabloSwap({
@@ -84,9 +85,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       });
   };
 
-  const percentageToSwap = useAppSelector(
-    (state) => state.swap.percentageToSwap
-  );
   const isSwapPreviewModalOpen = useAppSelector(
     (state) => state.ui.isSwapPreviewModalOpen
   );
@@ -124,21 +122,11 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     }
   }, [isConfirmed, dispatch]);
 
-  const [isProcessing, setIsProcessing] = useState(false);
-
   const onSettingHandler = () => {
     dispatch(openTransactionSettingsModal());
   };
 
-  const handleDebounceFn = async (side: "base" | "quote", value: BigNumber) => {
-    setIsProcessing(true);
-    await onChangeTokenAmount(side, value);
-    setTimeout(() => {
-      setIsProcessing(false);
-    }, 500);
-  };
-
-  const debouncedTokenAmountUpdate = _.debounce(handleDebounceFn, 1000);
+  const debouncedTokenAmountUpdate = _.debounce(onChangeTokenAmount, 1000);
 
   return (
     <Box
@@ -184,7 +172,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           setValid={setAssetOneInputValid}
           noBorder
           value={assetOneAmount}
-          onMouseDown={(evt) => setIsProcessing(false)}
           setValue={(val) => {
             if (isProcessing) return;
             debouncedTokenAmountUpdate("quote", val);
@@ -206,16 +193,17 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
           ButtonProps={{
-            onClick: () => {},
+            onClick: () => {
+              const balanceLimit = balance1.multipliedBy(percentageToSwap / 100);
+              if (!isProcessing && balanceLimit.gt(0)) {
+                debouncedTokenAmountUpdate("quote", balanceLimit);
+              }
+            },
           }}
           CombinedSelectProps={{
             value: selectedAssetOneId,
             setValue: (val) => {
-              setIsProcessing(true);
               changeAsset("quote", val);
-              setTimeout(() => {
-                setIsProcessing(false);
-              }, 500);
             },
             dropdownModal: true,
             dropdownForceWidth: 320,
@@ -272,7 +260,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         >
           <SwapVertRounded
             onClick={() => {
-              setIsProcessing(true);
               flipAssetSelection();
             }}
           />
@@ -286,7 +273,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           setValid={setAssetTwoInputValid}
           noBorder
           value={assetTwoAmount}
-          onMouseDown={(evt) => setIsProcessing(false)}
           setValue={(val) => {
             if (isProcessing) return;
             debouncedTokenAmountUpdate("base", val);
@@ -300,11 +286,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           CombinedSelectProps={{
             value: selectedAssetTwoId,
             setValue: (val) => {
-              setIsProcessing(true);
               changeAsset("base", val);
-              setTimeout(() => {
-                setIsProcessing(false);
-              }, 500);
             },
             dropdownModal: true,
             dropdownForceWidth: 320,
@@ -342,7 +324,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         </Typography>
       )}
 
-      <Box
+      {/* <Box
         mt={4}
         display="flex"
         justifyContent="center"
@@ -353,8 +335,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         {valid && selectedAssetOne && selectedAssetTwo && (
           <>
             <Typography variant="body2">
-              1 {selectedAssetOne.symbol} = {spotPrice.toFixed()}{" "}
-              {selectedAssetTwo.symbol}
+              1 {selectedAssetTwo.symbol} = {spotPrice.toFixed()}{" "}
+              {selectedAssetOne.symbol}
             </Typography>
             <Tooltip
               title={`1 ${selectedAssetOne?.symbol} = ${spotPrice.toFixed()} ${
@@ -366,7 +348,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             </Tooltip>
           </>
         )}
-      </Box>
+      </Box> */}
 
       <Box mt={4}>
         <Button

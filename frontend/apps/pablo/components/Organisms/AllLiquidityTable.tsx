@@ -11,14 +11,15 @@ import {
   Tooltip,
 } from "@mui/material";
 import Image from "next/image";
-import { PairAsset } from "../Atoms";
 import { useAppDispatch } from "@/hooks/store";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
-import { useLiquidityPoolsListWithOpenPositions } from "@/store/hooks/useLiquidityPoolsListWithOpenPositions";
-import { useLiquidityPoolsList } from "@/store/hooks/useLiquidityPoolsList";
+
+import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
+import LiquidityPoolRow from "./pool/LiquidityPoolRow";
+import { usePoolsWithLpBalance } from "@/store/hooks/overview/usePoolsWithLpBalance";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -49,24 +50,20 @@ export type AllLiquidityTableProps = {
 export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
   flow,
 }) => {
-  const userPools = useLiquidityPoolsListWithOpenPositions();
-  const list = useLiquidityPoolsList();
-  let pools: ReturnType<typeof useLiquidityPoolsList>;
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const [startIndex, setStartIndex] = useState(0);
 
   const [showNoPools, setShowNoPools] = useState(true);
-
-  if (flow === "all") {
-    pools = list;
-  } else {
+  let pools = useAllLpTokenRewardingPools();
+  const userPools = usePoolsWithLpBalance();
+  if (flow !== "all") {
     pools = userPools;
   }
 
   const router = useRouter();
 
-  const handleRowClick = (e: React.MouseEvent, poolId: number) => {
+  const handleRowClick = (e: React.MouseEvent, poolId: string) => {
     e.preventDefault();
     router.push(`/pool/select/${poolId}`);
   };
@@ -120,61 +117,7 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
           </TableHead>
           <TableBody>
             {pools.map((row, index) => (
-              <TableRow
-                onClick={(e) => {
-                  handleRowClick(e, row.poolId);
-                }}
-                key={index}
-                sx={{ cursor: "pointer" }}
-              >
-                <TableCell align="left">
-                  {row.baseAsset && row.quoteAsset && (
-                    <PairAsset
-                      assets={[
-                        {
-                          icon: row.baseAsset.icon,
-                          label: row.baseAsset.symbol,
-                        },
-                        {
-                          icon: row.quoteAsset.icon,
-                          label: row.quoteAsset.symbol,
-                        },
-                      ]}
-                      separator="/"
-                    />
-                  )}
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">
-                    ${row.totalValueLocked.toFixed(2)}
-                  </Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">{row.apr.toFixed(2)}%</Typography>
-                </TableCell>
-                <TableCell align="left">
-                  {row.dailyRewards.map((item) => {
-                    return (
-                      <Box key={item.assetId} display="flex">
-                        <PairAsset
-                          assets={[
-                            {
-                              icon: item.icon,
-                              label: item.symbol,
-                            },
-                          ]}
-                          label={item.rewardAmount}
-                        />
-                      </Box>
-                    );
-                  })}
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">
-                    ${row.totalVolume.toFixed(2)}
-                  </Typography>
-                </TableCell>
-              </TableRow>
+              <LiquidityPoolRow liquidityPool={row} key={index} handleRowClick={handleRowClick} />
             ))}
           </TableBody>
         </Table>

@@ -38,9 +38,7 @@ export interface PoolsSlice {
             unVerified: StableSwapPool[];
         },
         setPoolsList: (
-            pool: ConstantProductPool[] | LiquidityBootstrappingPool[] | StableSwapPool[],
-            poolType: "StableSwap" | "ConstantProduct" | "LiquidityBootstrapping",
-            verified: boolean
+            pools: AnyPoolArray
         ) => void;
         setLiquidityBootstrappingPoolSpotPrice: (
             poolId: number,
@@ -49,4 +47,4 @@ export interface PoolsSlice {
     }
 }
 
-export type AnyPoolArray = ConstantProductPool[] | StableSwapPool[] | LiquidityBootstrappingPool[]
+export type AnyPoolArray = Array<ConstantProductPool | LiquidityBootstrappingPool | StableSwapPool>

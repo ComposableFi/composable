@@ -84,6 +84,7 @@ const Pool: NextPage = () => {
                   <Typography variant="h6">Your Liquidity</Typography>
                   <Box>
                     <Button
+                      disabled={true}
                       sx={{ marginRight: 2 }}
                       onClick={handleCreatePair}
                       variant="outlined"

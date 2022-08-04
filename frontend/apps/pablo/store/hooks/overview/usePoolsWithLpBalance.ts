@@ -1,32 +1,28 @@
 import BigNumber from "bignumber.js";
 import { useMemo } from "react";
 import useStore from "@/store/useStore";
-import { useLiquidityPoolsList } from "../useLiquidityPoolsList";
+import { useAllLpTokenRewardingPools } from "../useAllLpTokenRewardingPools";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 
-export const usePoolsWithLpBalance = () => {
+export interface StableSwapPoolWithLpBalance extends StableSwapPool { lpBalance: BigNumber }
+export interface ConstantProductPoolWithLpBalance extends StableSwapPool { lpBalance: BigNumber }
+
+export const usePoolsWithLpBalance = (): Array<StableSwapPoolWithLpBalance & ConstantProductPoolWithLpBalance> => {
     const {
-        apollo,
         userLpBalances
     } = useStore();
-    const liquidityPoolsWithStats = useLiquidityPoolsList();
+    const lpRewardingPools = useAllLpTokenRewardingPools();
 
-    const liquidityProviderPositions = useMemo(() => {
-        return liquidityPoolsWithStats.map(lp => {
-            let lpBalance = new BigNumber(0);
-            let lpPrice = new BigNumber(0);
-            if (userLpBalances[lp.poolId]) {
-                lpBalance = new BigNumber(userLpBalances[lp.poolId])
+    const lpPools = useMemo(() => {
+        return lpRewardingPools.map(i => {
+            if (userLpBalances[i.poolId]) {
+                if (new BigNumber(userLpBalances[i.poolId]).gt(0)) {
+                    return { ...i, lpBalance: new BigNumber(userLpBalances[i.poolId]) };
+                }
             }
-            if (apollo[lp.lpTokenAssetId]) {
-                lpPrice = new BigNumber(apollo[lp.lpTokenAssetId])
-            }
-            return {
-                ... lp,
-                lpBalance,
-                lpPrice
-            }
-        }).filter(i => i.lpBalance.gt(0))
-    }, [apollo, liquidityPoolsWithStats, userLpBalances]);
+            return null;
+        }).filter(i => i !== null);
+    }, [lpRewardingPools, userLpBalances]);
 
-    return liquidityProviderPositions
+    return lpPools;
 }
