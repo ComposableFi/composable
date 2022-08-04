@@ -1,8 +1,10 @@
 # How the XCVM works
 
+*For more details, head to the XCVM technical specification on [GitHub](https://github.com/ComposableFi/composable/blob/main/xcvm/SPEC.md).*
+
 ---
 
-​Virtual machines are abstracted away from activities required for cross-chain operations such as security, finality in different networks, fee calculation, and provide a simple interface for developers to build on. The security and finality are dependent on the bridging technology used and fees will vary according to network traffic. 
+Virtual machines are abstracted away from activities required for cross-chain operations such as security, finality in different networks, fee calculation, and provide a simple interface for developers to build on. The security and finality are dependent on the bridging technology used and fees will vary according to network traffic. 
 
 ![how_the_xcvm_works](how-xcvm-works.jpg "How the XCVM works")
 
