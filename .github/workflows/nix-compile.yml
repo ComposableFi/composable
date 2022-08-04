@@ -218,14 +218,14 @@ jobs:
           source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH" 
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
           nix-env -iA nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3  nixpkgs.google-cloud-sdk nixpkgs.jq          
-          echo "RELEASE_VERSION=$GITHUB_SHA" >> $GITHUB_ENV                  
+          RELEASE_VERSION=$(git rev-parse HEAD)                  
           nix build .#composable-node --no-update-lock-file
           # NOTE: temporary move here until 100% nix
           mkdir -p target/release
           mkdir -p target/doc
           cp result/bin/composable target/release/composable 
           # TODO: derive archieve instead of direct tar call
-          tar -czvf composable-picasso-${{ env.RELEASE_VERSION }}.tar.gz target/release/composable target/doc
+          tar -czvf composable-picasso-$RELEASE_VERSION.tar.gz target/release/composable target/doc
           gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
 
           cd devnet
