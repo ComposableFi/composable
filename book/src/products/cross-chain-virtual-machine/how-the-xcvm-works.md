@@ -13,4 +13,4 @@ The XCVM combines different bridging protocols, such as IBC, XCM, and Mosaic Pha
 For example, let’s say a user wants to borrow with USDC (collateral) on Angular Finance, a secondary pallet on Picasso, and invest into a liquidity pool on SushiSwap. Thanks to our technology, this process can occur cross-chain-and-layer. Upon instruction and orchestration by the Composable XCVM, the Routing Layer selects the optimal route for the user’s desired outcome, which propagates communication cross-ecosystem, and to our transfer availability layer, Mosaic, which then facilitates the transfer of the borrowed asset to a liquidity pool on SushiSwap, with settlement being recognized on our parachain. This process, as facilitated by Composable and the XCVM, is depicted below:
 
 ![cross_chain_lending_example_composable_xcvm](cross-chain-lending-example-composable-xcvm.jpg "An cross-chain lending example using the Composable XCVM")
-*An cross-chain lending example using the Composable  XCVM*
+*An cross-chain lending example using the Composable XCVM*
