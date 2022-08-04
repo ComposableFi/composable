@@ -25,8 +25,8 @@ use frame_support::{
 	},
 };
 use proptest::prelude::*;
-use sp_runtime::{traits::IntegerSquareRoot, DispatchError, Perbill, Permill};
-use sp_std::collections::btree_map::BTreeMap;
+use sp_runtime::{traits::IntegerSquareRoot, DispatchError, PerThing, Perbill, Permill};
+use sp_std::{collections::btree_map::BTreeMap, ops::Mul};
 
 fn create_pool(
 	base_asset: AssetId,
@@ -35,6 +35,7 @@ fn create_pool(
 	quote_amount: Balance,
 	lp_fee: Permill,
 	protocol_fee: Permill,
+	base_weight: Permill,
 ) -> PoolId {
 	System::set_block_number(1);
 	let actual_pool_id = Uniswap::<Test>::do_create_pool(
@@ -45,7 +46,7 @@ fn create_pool(
 			owner_fee_rate: protocol_fee,
 			protocol_fee_rate: Permill::zero(),
 		},
-		Permill::from_percent(50),
+		base_weight,
 	)
 	.expect("pool creation failed");
 
@@ -271,6 +272,7 @@ fn test_add_liquidity_with_disproportionate_amount() {
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdc = 2500_u128 * unit;
 		let initial_usdt = 2500_u128 * unit;
+		let base_weight = Permill::from_percent(50);
 		let pool = create_pool(
 			USDC,
 			USDT,
@@ -278,6 +280,7 @@ fn test_add_liquidity_with_disproportionate_amount() {
 			initial_usdt,
 			Permill::from_percent(1),
 			Permill::zero(),
+			base_weight,
 		);
 
 		let base_amount = 30_u128 * unit;
@@ -347,8 +350,16 @@ fn add_liquidity_single_asset() {
 		let initial_btc = 100_u128 * unit;
 		let btc_price = 20_000_u128;
 		let initial_usdt = initial_btc * btc_price;
-		let pool_id =
-			create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
+		let weight = Permill::from_percent(50);
+		let pool_id = create_pool(
+			BTC,
+			USDT,
+			initial_btc,
+			initial_usdt,
+			Permill::zero(),
+			Permill::zero(),
+			weight,
+		);
 
 		let base_amount = 10 * unit;
 		let quote_amount = 0;
@@ -369,7 +380,7 @@ fn add_liquidity_single_asset() {
 		));
 
 		let new_lp_total_issuance = Tokens::total_issuance(pool.lp_token);
-		//  sqrt(100*10^12*20000*100*10^12) * ((1+(10*10^12/(100*10^12)))^.5 - 1)
+		// sqrt(100*10^12*20000*100*10^12) * ((1+(10*10^12/(100*10^12)))^.5 - 1)
 		let manually_calculated_minted_lp = 690261350460375;
 
 		assert_last_event::<Test, _>(|e| {
@@ -398,14 +409,88 @@ fn add_liquidity_single_asset() {
 }
 
 #[test]
+fn add_liquidity_with_fee_single_asset() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_btc = 100_u128 * unit;
+		let btc_price = 20_000_u128;
+		let initial_usdt = initial_btc * btc_price;
+		let lp_fee = Permill::from_percent(5);
+		let weight = Permill::from_percent(50);
+		let pool_id =
+			create_pool(BTC, USDT, initial_btc, initial_usdt, lp_fee, Permill::zero(), weight);
+
+		let base_amount = 10 * unit;
+		let quote_amount = 0;
+		assert_ok!(Tokens::mint_into(BTC, &ALICE, base_amount));
+
+		let pool = get_pool(pool_id);
+		let lp_total_issuance = Tokens::total_issuance(pool.lp_token);
+		let lp_alice = Tokens::balance(pool.lp_token, &ALICE);
+		assert_eq!(lp_total_issuance, lp_alice);
+
+		assert_ok!(<Pablo as Amm>::add_liquidity(
+			&ALICE,
+			pool_id,
+			base_amount,
+			quote_amount,
+			0,
+			false
+		));
+
+		let new_lp_total_issuance = Tokens::total_issuance(pool.lp_token);
+		// sqrt(100*10^12*20000*100*10^12) * ((1+((10*10^12-10*10^12*.5*.05)/(100*10^12)))^.5 - 1)
+		let manually_calculated_minted_lp = 673396766298103;
+		let fee = lp_fee.mul(weight.left_from_one()).mul_floor(base_amount);
+		let base_amount_without_fee = base_amount - fee;
+
+		assert_last_event::<Test, _>(|e| {
+			matches!(e.event,
+				mock::Event::Pablo(crate::Event::LiquidityAdded {
+					who, pool_id, base_amount, quote_amount, minted_lp
+				})
+				if who == ALICE
+				&& pool_id == pool_id
+				&& base_amount == base_amount
+				&& quote_amount == 0
+				&& minted_lp == new_lp_total_issuance - lp_total_issuance
+				&& default_acceptable_computation_error(minted_lp, manually_calculated_minted_lp)
+					.is_ok())
+		});
+
+		let pool_account_id = Pablo::account_id(&pool_id);
+		assert_eq!(
+			Tokens::balance(pool.pair.base, &pool_account_id),
+			initial_btc + base_amount_without_fee
+		);
+		assert_eq!(Tokens::balance(pool.pair.quote, &pool_account_id), initial_usdt);
+		// TODO(saruman9): balance should be zero, but not now, because `disburse_fees` not yet
+		// implemented
+		assert_eq!(Tokens::balance(BTC, &ALICE), fee);
+		assert_ok!(default_acceptable_computation_error(
+			Tokens::balance(pool.lp_token, &ALICE),
+			lp_alice + manually_calculated_minted_lp
+		));
+	})
+}
+
+#[test]
 fn remove_liquidity_single_asset() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 100_u128 * unit;
 		let btc_price = 20_000_u128;
 		let initial_usdt = initial_btc * btc_price;
-		let pool_id =
-			create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
+		let weight = Permill::from_percent(50);
+		let pool_id = create_pool(
+			BTC,
+			USDT,
+			initial_btc,
+			initial_usdt,
+			Permill::zero(),
+			Permill::zero(),
+			weight,
+		);
 
 		let base_amount = 10 * unit;
 		let quote_amount = 0;
@@ -492,8 +577,16 @@ fn high_slippage() {
 		let initial_btc = 1_00_u128 * unit;
 		let btc_price = 45_000_u128;
 		let initial_usdt = initial_btc * btc_price;
-		let pool_id =
-			create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
+		let base_weight = Permill::from_percent(50);
+		let pool_id = create_pool(
+			BTC,
+			USDT,
+			initial_btc,
+			initial_usdt,
+			Permill::zero(),
+			Permill::zero(),
+			base_weight,
+		);
 		let bob_btc = 99_u128 * unit;
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(BTC, &BOB, bob_btc));
@@ -516,7 +609,9 @@ fn fees() {
 		let initial_usdt = initial_btc * btc_price;
 		let lp_fee = Permill::from_float(0.05);
 		let owner_fee = Permill::from_float(0.01);
-		let pool_id = create_pool(BTC, USDT, initial_btc, initial_usdt, lp_fee, owner_fee);
+		let base_weight = Permill::from_percent(50);
+		let pool_id =
+			create_pool(BTC, USDT, initial_btc, initial_usdt, lp_fee, owner_fee, base_weight);
 		let bob_usdt = 45_000_u128 * unit;
 		let quote_usdt = bob_usdt - lp_fee.mul_floor(bob_usdt);
 		let expected_btc_value = <Pablo as Amm>::get_exchange_value(pool_id, USDT, quote_usdt)
@@ -525,27 +620,22 @@ fn fees() {
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
 		assert_ok!(<Pablo as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, 0_u128, false));
-		let price = pallet::prices_for::<Test>(
-			pool_id,
-			BTC,
-			USDT,
-			1 * unit,
-		).unwrap();
+		let price = pallet::prices_for::<Test>(pool_id, BTC, USDT, 1 * unit).unwrap();
 		assert_eq!(price.spot_price, 46_326_729_585_161_862);
 		let btc_balance = Tokens::balance(BTC, &BOB);
-        sp_std::if_std! {
-            println!("expected_btc_value {:?}, btc_balance {:?}", expected_btc_value, btc_balance);
-        }
+		sp_std::if_std! {
+			println!("expected_btc_value {:?}, btc_balance {:?}", expected_btc_value, btc_balance);
+		}
 		assert_ok!(default_acceptable_computation_error(expected_btc_value, btc_balance));
-        // lp_fee is taken from quote
+		// lp_fee is taken from quote
 		// from lp_fee 1 % (as per owner_fee) goes to pool owner (ALICE)
-        let alice_usdt_bal = Tokens::balance(USDT, &ALICE);
-        let expected_alice_usdt_bal = owner_fee.mul_floor(lp_fee.mul_floor(bob_usdt));
-        sp_std::if_std! {
-            println!("alice_usdt_bal {:?}, expected_alice_usdt_bal {:?}", alice_usdt_bal, expected_alice_usdt_bal);
-        }
+		let alice_usdt_bal = Tokens::balance(USDT, &ALICE);
+		let expected_alice_usdt_bal = owner_fee.mul_floor(lp_fee.mul_floor(bob_usdt));
+		sp_std::if_std! {
+			println!("alice_usdt_bal {:?}, expected_alice_usdt_bal {:?}",
+			alice_usdt_bal, expected_alice_usdt_bal);
+		}
 		assert_ok!(default_acceptable_computation_error(expected_alice_usdt_bal, alice_usdt_bal));
-
 	});
 }
 #[test]
@@ -590,7 +680,7 @@ fn staking_pool_test() {
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
 		assert_ok!(<Pablo as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, 0_u128, false));
-        // lp_fee is taken from quote 
+        // lp_fee is taken from quote
 		// from lp_fee 20 % (default) (as per owner_fee) goes to staking pool
 	assert_has_event::<Test, _>(|e| {
         println!("{:?}", e.event);
@@ -725,6 +815,7 @@ proptest! {
 		  let initial_usdt = initial_btc * btc_price;
 		  let btc_value = btc_value as u128 * unit;
 		  let usdt_value = btc_value * btc_price;
+		  let base_weight = Permill::from_percent(50);
 		  let pool_id = create_pool(
 			  BTC,
 			  USDT,
@@ -732,6 +823,7 @@ proptest! {
 			  initial_usdt,
 			  Permill::zero(),
 			  Permill::zero(),
+			  base_weight,
 		  );
 		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 		  prop_assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, usdt_value, 0_u128, false));
@@ -758,6 +850,7 @@ proptest! {
 		  let initial_usdt = initial_btc * btc_price;
 		  let btc_value = btc_value as u128 * unit;
 		  let usdt_value = btc_value * btc_price;
+		  let base_weight = Permill::from_percent(50);
 		  let pool_id = create_pool(
 			  BTC,
 			  USDT,
@@ -765,6 +858,7 @@ proptest! {
 			  initial_usdt,
 			  Permill::zero(),
 			  Permill::zero(),
+			  base_weight,
 		  );
 		  let pool = get_pool(pool_id);
 		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
@@ -794,6 +888,7 @@ proptest! {
 		  let btc_price = 45_000_u128;
 		  let initial_usdt = initial_btc * btc_price;
 		  let usdt_value = usdt_value as u128 * unit;
+		  let base_weight = Permill::from_percent(50);
 		  let pool_id = create_pool(
 			  BTC,
 			  USDT,
@@ -801,6 +896,7 @@ proptest! {
 			  initial_usdt,
 			  Permill::from_float(0.025),
 			  Permill::zero(),
+			  base_weight,
 		  );
 		  let pool = get_pool(pool_id);
 		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
@@ -883,8 +979,16 @@ mod twap {
 			let unit = 1_000_000_000_000_u128;
 			let initial_btc = 100_u128 * unit;
 			let initial_usdt = 100_u128 * unit;
-			let pool_id =
-				create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
+			let base_weight = Permill::from_percent(50);
+			let pool_id = create_pool(
+				BTC,
+				USDT,
+				initial_btc,
+				initial_usdt,
+				Permill::zero(),
+				Permill::zero(),
+				base_weight,
+			);
 
 			System::set_block_number(0);
 			assert_eq!(Pablo::twap(pool_id), None);
@@ -953,8 +1057,16 @@ mod twap {
 			let unit = 1_000_000_000_000_u128;
 			let initial_btc = 100_u128 * unit;
 			let initial_usdt = 100_u128 * unit;
-			let pool_identifier =
-				create_pool(BTC, USDT, initial_btc, initial_usdt, Permill::zero(), Permill::zero());
+			let base_weight = Permill::from_percent(50);
+			let pool_identifier = create_pool(
+				BTC,
+				USDT,
+				initial_btc,
+				initial_usdt,
+				Permill::zero(),
+				Permill::zero(),
+				base_weight,
+			);
 
 			let mut min_base_price = Rate::from_float(99999999.0);
 			let mut min_quote_price = Rate::from_float(99999999.0);

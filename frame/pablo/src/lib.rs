@@ -1204,7 +1204,7 @@ pub mod pallet {
 							min_mint_amount,
 							keep_alive,
 						)?;
-					Self::disburse_fees(&pool_account, &info.owner, &fee)?;
+					Self::disburse_fees(&pool_account, &pool_id, &info.owner, &fee)?;
 					(added_base_amount, added_quote_amount, minted_lp)
 				},
 				PoolConfiguration::LiquidityBootstrapping(info) =>

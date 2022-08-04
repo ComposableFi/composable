@@ -466,7 +466,7 @@ where
 mod tests {
 	use crate::dex::{Fee, FeeConfig};
 	use sp_arithmetic::Permill;
-	use std::ops::Mul;
+	use sp_std::ops::Mul;
 
 	#[test]
 	fn calculate_fee() {
