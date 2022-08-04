@@ -26,9 +26,11 @@ pub fn common_add_remove_lp(
 ) {
 	System::set_block_number(System::block_number() + 1);
 	let actual_pool_id = Pablo::do_create_pool(init_config.clone()).expect("pool creation failed");
-	assert_has_event::<Test, _>(
-		|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
-	);
+	assert_has_event::<Test, _>(|e| {
+		matches!(e.event,
+			mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. })
+			if pool_id == actual_pool_id)
+	});
 	let pair = match init_config {
 		PoolInitConfiguration::StableSwap { pair, .. } => pair,
 		PoolInitConfiguration::ConstantProduct { pair, .. } => pair,
@@ -50,11 +52,13 @@ pub fn common_add_remove_lp(
 	));
 	assert_last_event::<Test, _>(|e| {
 		matches!(e.event,
-            mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, base_amount, quote_amount, .. })
-            if who == ALICE
-            && pool_id == actual_pool_id
-            && base_amount == init_base_amount
-            && quote_amount == init_quote_amount)
+			mock::Event::Pablo(crate::Event::LiquidityAdded {
+				who, pool_id, base_amount, quote_amount, ..
+			})
+			if who == ALICE
+			&& pool_id == actual_pool_id
+			&& base_amount == init_base_amount
+			&& quote_amount == init_quote_amount)
 	});
 
 	let pool = Pablo::pools(actual_pool_id).expect("pool not found");
@@ -82,7 +86,9 @@ pub fn common_add_remove_lp(
 	));
 	assert_last_event::<Test, _>(|e| {
 		matches!(e.event,
-            mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, base_amount, quote_amount, .. })
+			mock::Event::Pablo(crate::Event::LiquidityAdded {
+				who, pool_id, base_amount, quote_amount, ..
+			})
 			if who == BOB
 				&& pool_id == actual_pool_id
 				&& base_amount == next_base_amount
@@ -335,16 +341,15 @@ mod create {
 	fn signed_user_can_create() {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(1);
-			assert_ok!(
-				Pablo::create(
-					Origin::signed(ALICE),
-					PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())
-				)
-			);
-			assert_has_event::<Test, _>(
-				|e|
-					matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == 0)
-			);
+			assert_ok!(Pablo::create(
+				Origin::signed(ALICE),
+				PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())
+			));
+			assert_has_event::<Test, _>(|e| {
+				matches!(e.event,
+					mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. })
+					if pool_id == 0)
+			});
 		});
 	}
 }
