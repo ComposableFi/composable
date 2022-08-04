@@ -99,7 +99,7 @@ where
 			)?,
 			"Mentioned borrower is not included in the market's whitelist of borrowers."
 		);
-        
+
 		Ok(LoanInput { principal, collateral, ..input })
 	}
 }

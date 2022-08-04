@@ -1,7 +1,8 @@
 use crate::{
 	strategies::repayment_strategies::{
-//		interest_periodically_principal_when_mature_strategy, principal_only_fake_strategy,
-		RepaymentResult, RepaymentStrategy,
+		//		interest_periodically_principal_when_mature_strategy, principal_only_fake_strategy,
+		RepaymentResult,
+		RepaymentStrategy,
 	},
 	types::{LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
@@ -12,16 +13,14 @@ use composable_traits::{
 	currency::CurrencyFactory,
 	defi::DeFiComposableConfig,
 	oracle::Oracle,
-	undercollateralized_loans::{
-		LoanConfig, MarketConfig, MarketInfo, UndercollateralizedLoans,
-	},
+	undercollateralized_loans::{LoanConfig, MarketConfig, MarketInfo, UndercollateralizedLoans},
 	vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
 };
 use frame_support::{
 	ensure,
 	storage::with_transaction,
 	traits::{
-		fungibles::{Inspect, Transfer},
+		fungibles::{Inspect, Transfer, Mutate},
 		Get, UnixTime,
 	},
 };
@@ -29,6 +28,8 @@ use sp_runtime::{
 	traits::{One, Saturating, Zero},
 	DispatchError, Percent, Perquintill, TransactionOutcome,
 };
+
+use chrono::{NaiveDateTime, Utc};
 
 // #generalization
 impl<T: Config> Pallet<T> {
@@ -98,16 +99,11 @@ impl<T: Config> Pallet<T> {
 	// Create non-active loan, which should be activated via borrower.
 	// TODO: @mikolaichuk: check why LoanInputOf does not work here
 	pub(crate) fn do_create_loan(
-		input: Validated<
-			LoanInputOf<T>,
-			LoanInputIsValid<crate::Pallet<T>>,
-		>,
+		input: Validated<LoanInputOf<T>, LoanInputIsValid<crate::Pallet<T>>>,
 	) -> Result<LoanConfigOf<T>, DispatchError> {
 		let config_input = input.value();
 		// Create non-activated loan and increment loans' counter.
 		// This loan have to be activated by borrower further.
-		// TODO: @mikolaichuk:  unactivated loans may have lifetime.
-		//                      once loan's lifetime expired the loan should be terminated.
 		crate::LoansCounterStorage::<T>::try_mutate(|counter| {
 			*counter += T::Counter::one();
 			let loan_account_id = Self::loan_account_id(*counter);
@@ -117,10 +113,12 @@ impl<T: Config> Pallet<T> {
 				config_input.borrower_account_id,
 				config_input.principal,
 				config_input.collateral,
-                config_input.payment_schedule,
+				config_input.payment_schedule,
 				config_input.repayment_strategy,
 			);
-			crate::NonActiveLoansStorage::<T>::insert(loan_account_id, loan_config.clone());
+			crate::NonActiveLoansStorage::<T>::insert(loan_account_id.clone(), loan_config.clone());
+			crate::NonActiveLoansStorageSet::<T>::insert(loan_account_id, ());
+
 			Ok(loan_config)
 		})
 	}
@@ -133,36 +131,62 @@ impl<T: Config> Pallet<T> {
 		loan_account_id: T::AccountId,
 		keep_alive: bool,
 	) -> Result<LoanConfigOf<T>, DispatchError> {
-		let loan_config = crate::NonActiveLoansStorage::<T>::try_get(loan_account_id.clone())
-			.map_err(|_| Error::<T>::LoanDoesNotExist)?;
+		// Check if loan's account id is in non-activated loans list.
+		// If it is not, loan does not exist or was already activated.
+		ensure!(
+			crate::NonActiveLoansStorageSet::<T>::contains_key(loan_account_id.clone()),
+			Error::<T>::LoanDoesNotExistOrWasActivated
+		);
+		let loan_config = Self::get_loan_config_via_account_id(&loan_account_id)?;
 		// Check if borrower is authorized to execute this loan agreement.
 		ensure!(
 			*loan_config.borrower_account_id() == borrower_account_id,
 			Error::<T>::ThisUserIsNotAllowedToExecuteThisContract
 		);
-		let market_info = Self::get_market_info_via_account_id(loan_config.market_account_id())?;
+	    // Check if borrower tries to activate expired loan.  	
+        let today = Utc::today().naive_utc();
+		let first_payment_date =
+			NaiveDateTime::from_timestamp_opt(*loan_config.first_payment_moment(), 0)
+				.ok_or(Error::<T>::OutOfRangeNumberSecondInTimestamp)?
+				.date();
+        // Loan should be activated before the first payment date.
+        if today >= first_payment_date {
+            crate::NonActiveLoansStorageSet::<T>::remove(loan_account_id.clone());
+            crate::LoansStorage::<T>::remove(loan_account_id.clone());
+            Err(Error::<T>::TheLoanContractIsExpired)?;
+        }
+        // Obtain market's configuration. 
+        let market_info = Self::get_market_info_via_account_id(loan_config.market_account_id())?;
 		let market_config = market_info.config();
-		// Transfer collateral from the borrower's account to the loan account.
+		// Transfer collateral from the borrower's account to the loan's account.
 		let collateral_asset_id = *market_config.collateral_asset();
 		let source = &borrower_account_id;
 		let destination = &loan_account_id;
 		let amount = *loan_config.collateral();
 		T::MultiCurrency::transfer(collateral_asset_id, source, destination, amount, keep_alive)?;
-		// Transfer borrowed assets from market account to the borrower account.
+		// Transfer borrowed assets from market's account to the borrower's account.
 		let borrow_asset_id = *market_config.borrow_asset();
 		let source = market_config.account_id();
 		let destination = &borrower_account_id;
 		let amount = *loan_config.principal();
 		T::MultiCurrency::transfer(borrow_asset_id, source, destination, amount, keep_alive)?;
-		// Set start block number equals to the current block number.
-		// Calculate end block number before which pricnipal should be returned.
-		let start_block_number = frame_system::Pallet::<T>::block_number();
-		//let loan_info = LoanInfo::new(loan_config.clone())?;
-		// Register activated loan.
-		crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_config.clone());
-		// Remove loan configuration from the non-activated loans storage.
-		crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
-		Ok(loan_config)
+	    // Mint 'principal' amount of debt tokens to the loan's account.
+        // We use these tokens to indicate which part of principal is not refunded yet.
+	    let debt_token_id =
+			crate::DebtTokenForMarketStorage::<T>::get(loan_config.market_account_id()).ok_or(Error::<T>::MarketDoesNotExist)?;
+        <T as Config>::MultiCurrency::mint_into(
+			debt_token_id,
+			&loan_account_id,
+			amount,
+		)?;
+		// Loan is active now.
+        // Remove loan configuration from the non-activated loans accounts ids storage.
+		crate::NonActiveLoansStorageSet::<T>::remove(loan_account_id.clone());
+	    // Build payment schedule
+        for (timestamp, interest_rate) in loan_config.schedule(){
+            crate::ScheduleStorage::<T>::insert(loan_account_id.clone(), timestamp, interest_rate); 
+        }
+        Ok(loan_config)
 	}
 
 	// Repay any amount of money
@@ -190,31 +214,31 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn do_liquidate() -> () {}
 	// Close a loan since it is paid.
-    /*	
-    pub(crate) fn close_loan(loan_account_id: &T::AccountId, keep_alive: bool) -> () {
-		let loan_info = match Self::get_loan_info_via_account_id(loan_account_id) {
-			Ok(loan_info) => loan_info,
-			Err(_) => return (),
-		};
-		let borrower_account_id = loan_info.config().borrower_account_id();
-		let collateral_amount = loan_info.config().collateral();
-		let market_account_id = loan_info.config().market_account_id();
-		let market_info = match Self::get_market_info_via_account_id(market_account_id) {
-			Ok(market_info) => market_info,
-			Err(_) => return (),
-		};
-		let collateral_asset_id = market_info.config().collateral_asset();
-		// Transfer collateral to borrower's account.
-		T::MultiCurrency::transfer(
-			*collateral_asset_id,
-			loan_account_id,
-			borrower_account_id,
-			*collateral_amount,
-			keep_alive,
-		);
-		crate::LoansStorage::<T>::remove(loan_account_id);
-	}
-*/
+	/*
+		pub(crate) fn close_loan(loan_account_id: &T::AccountId, keep_alive: bool) -> () {
+			let loan_info = match Self::get_loan_info_via_account_id(loan_account_id) {
+				Ok(loan_info) => loan_info,
+				Err(_) => return (),
+			};
+			let borrower_account_id = loan_info.config().borrower_account_id();
+			let collateral_amount = loan_info.config().collateral();
+			let market_account_id = loan_info.config().market_account_id();
+			let market_info = match Self::get_market_info_via_account_id(market_account_id) {
+				Ok(market_info) => market_info,
+				Err(_) => return (),
+			};
+			let collateral_asset_id = market_info.config().collateral_asset();
+			// Transfer collateral to borrower's account.
+			T::MultiCurrency::transfer(
+				*collateral_asset_id,
+				loan_account_id,
+				borrower_account_id,
+				*collateral_amount,
+				keep_alive,
+			);
+			crate::LoansStorage::<T>::remove(loan_account_id);
+		}
+	*/
 	// Check if borrower's account is in whitelist of the particular market.
 	pub(crate) fn is_borrower_account_whitelisted(
 		borrower_account_id_ref: &T::AccountId,
@@ -292,46 +316,46 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
-/*
-	pub(crate) fn check_payments(block_nubmer: T::BlockNumber, keep_alive: bool) -> () {
-		// Retrive collection of loans(loans' accounts ids) which have to be paid now
-		let loans_accounts_ids =
-			crate::PaymentsScheduleStorage::<T>::try_get(block_nubmer).unwrap_or_default();
-		for loan_account_id in loans_accounts_ids {
-			let loan_info = match Self::get_loan_info_via_account_id(&loan_account_id) {
-				Ok(loan_info) => loan_info,
-				// TODO: @mikolaichuk: add event emmition.
-				Err(_) => continue,
-			};
-			let repayment_result: RepaymentResult<T> = match loan_info.config().repayment_strategy()
-			{
-				RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature =>
-					interest_periodically_principal_when_mature_strategy::apply(
-						loan_info,
-						block_nubmer,
-						keep_alive,
-					),
-				RepaymentStrategy::PrincipalOnlyWhenMature =>
-					principal_only_fake_strategy::apply(loan_info, keep_alive),
-			};
+	/*
+		pub(crate) fn check_payments(block_nubmer: T::BlockNumber, keep_alive: bool) -> () {
+			// Retrive collection of loans(loans' accounts ids) which have to be paid now
+			let loans_accounts_ids =
+				crate::PaymentsScheduleStorage::<T>::try_get(block_nubmer).unwrap_or_default();
+			for loan_account_id in loans_accounts_ids {
+				let loan_info = match Self::get_loan_info_via_account_id(&loan_account_id) {
+					Ok(loan_info) => loan_info,
+					// TODO: @mikolaichuk: add event emmition.
+					Err(_) => continue,
+				};
+				let repayment_result: RepaymentResult<T> = match loan_info.config().repayment_strategy()
+				{
+					RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature =>
+						interest_periodically_principal_when_mature_strategy::apply(
+							loan_info,
+							block_nubmer,
+							keep_alive,
+						),
+					RepaymentStrategy::PrincipalOnlyWhenMature =>
+						principal_only_fake_strategy::apply(loan_info, keep_alive),
+				};
 
-			match repayment_result {
-				// Failed not beacuse of user fault.
-				// Should not happend at all.
-				RepaymentResult::Failed(_) => (),
-				RepaymentResult::InterestIsPaidInTime(_) => (),
-				RepaymentResult::InterestIsNotPaidInTime(_) => Self::do_liquidate(),
-				RepaymentResult::PrincipalAndLastInterestPaymentArePaidBackInTime(_) =>
-					Self::close_loan(&loan_account_id, keep_alive),
-				RepaymentResult::PrincipalAndLastInterestPaymentAreNotPaidBackInTime(_) =>
-					Self::do_liquidate(),
+				match repayment_result {
+					// Failed not beacuse of user fault.
+					// Should not happend at all.
+					RepaymentResult::Failed(_) => (),
+					RepaymentResult::InterestIsPaidInTime(_) => (),
+					RepaymentResult::InterestIsNotPaidInTime(_) => Self::do_liquidate(),
+					RepaymentResult::PrincipalAndLastInterestPaymentArePaidBackInTime(_) =>
+						Self::close_loan(&loan_account_id, keep_alive),
+					RepaymentResult::PrincipalAndLastInterestPaymentAreNotPaidBackInTime(_) =>
+						Self::do_liquidate(),
+				}
+				// We do not need information regarding this date anymore.
+				crate::PaymentsScheduleStorage::<T>::remove(block_nubmer);
 			}
-			// We do not need information regarding this date anymore.
-			crate::PaymentsScheduleStorage::<T>::remove(block_nubmer);
 		}
-	}
-*/
-    // Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
+	*/
+	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
 	// If vault is balanced we will do nothing.
 	// #generalization
 	fn available_funds(
@@ -369,7 +393,7 @@ impl<T: Config> Pallet<T> {
 		<T::Vault as StrategicVault>::deposit(&config.borrow_asset_vault(), market_account, balance)
 	}
 
-	// TODO: @mikolaichuk: Implements logic when vault is stopped, tombstoned or epsent.
+	// TODO: @mikolaichuk: Implement logic when vault is stopped, tombstoned or epsent.
 	// #generalization
 	fn handle_must_liquidate(
 		_market_config: &MarketConfigOf<T>,

@@ -6,7 +6,7 @@ use composable_traits::undercollateralized_loans::{
 };
 use frame_support::traits::Get;
 use sp_runtime::{traits::AccountIdConversion, DispatchError, Percent};
-use types::{LoanConfigOf, MarketInfoOf};
+use types::{LoanConfigOf, MarketInfoOf, TimeMeasure};
 
 impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 	type BlockNumber = T::BlockNumber;
@@ -14,8 +14,8 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 	type VaultId = T::VaultId;
 	type Percent = Percent;
 	type RepaymentStrategy = RepaymentStrategy;
-    type TimeMeasure = T::TimeMeasure;	
-    fn create_market(
+	type TimeMeasure = TimeMeasure;
+	fn create_market(
 		manager: Self::AccountId,
 		input: MarketInput<
 			Self::AccountId,
@@ -32,7 +32,7 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 		input: LoanInput<
 			Self::AccountId,
 			Self::Balance,
-            Self::Percent,
+			Self::Percent,
 			Self::RepaymentStrategy,
 			Self::TimeMeasure,
 		>,

@@ -51,8 +51,8 @@ pub mod interest_periodically_principal_when_mature_strategy {
 		};
 		let market_config = market_info.config();
 		let borrow_asset_id = market_config.borrow_asset();
-		
-        match T::MultiCurrency::transfer(
+
+		match T::MultiCurrency::transfer(
 			*borrow_asset_id,
 			loan_account_id,
 			market_account_id,

@@ -1,18 +1,18 @@
 use crate::defi::DeFiEngine;
-use frame_support::pallet_prelude::*;
 pub use configs::*;
+use frame_support::pallet_prelude::*;
 
 pub mod configs;
 
 pub trait UndercollateralizedLoans: DeFiEngine {
-    type BlockNumber: Clone + Eq + PartialEq;
+	type BlockNumber: Clone + Eq + PartialEq;
 	type LiquidationStrategyId: Clone + Eq + PartialEq;
 	type Percent: Clone + Eq + PartialEq;
 	type VaultId: Clone + Eq + PartialEq;
 	type RepaymentStrategy: Clone + Eq + PartialEq;
-    type TimeMeasure: Clone + Eq + PartialEq;
+	type TimeMeasure: Clone + Eq + PartialEq;
 
-    fn create_market(
+	fn create_market(
 		manager: Self::AccountId,
 		input: MarketInput<
 			Self::AccountId,
@@ -36,9 +36,9 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 		input: LoanInput<
 			Self::AccountId,
 			Self::Balance,
-            Self::Percent,
+			Self::Percent,
 			Self::RepaymentStrategy,
-		    Self::TimeMeasure,	
+			Self::TimeMeasure,
 		>,
 	) -> Result<
 		LoanConfig<

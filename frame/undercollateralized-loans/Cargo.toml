@@ -41,6 +41,8 @@ rand = { version = "0.7.2", optional = true }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
+chrono = {version = "0.4.19", default-features = false}
+
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }

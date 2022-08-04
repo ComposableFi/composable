@@ -1,13 +1,13 @@
 use crate::{strategies::repayment_strategies::RepaymentStrategy, Config};
 use composable_traits::{
 	defi::DeFiComposableConfig,
-	undercollateralized_loans::{
-		LoanConfig, LoanInfo, LoanInput, MarketConfig, MarketInfo, MarketInput,
-	},
+	undercollateralized_loans::{LoanConfig, LoanInput, MarketConfig, MarketInfo, MarketInput},
 };
 use frame_support::pallet_prelude::*;
 use sp_core::TypeId;
 use sp_runtime::Percent;
+
+pub(crate) type TimeMeasure = i64;
 
 pub(crate) type MarketInputOf<T> = MarketInput<
 	<T as frame_system::Config>::AccountId,
@@ -19,9 +19,9 @@ pub(crate) type MarketInputOf<T> = MarketInput<
 pub(crate) type LoanInputOf<T> = LoanInput<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::Balance,
-    Percent,
+	Percent,
 	RepaymentStrategy,
-    <T as Config>::TimeMeasure,	
+	TimeMeasure,
 >;
 
 pub(crate) type MarketInfoOf<T> = MarketInfo<
@@ -44,7 +44,7 @@ pub(crate) type LoanConfigOf<T> = LoanConfig<
 	<T as DeFiComposableConfig>::Balance,
 	Percent,
 	RepaymentStrategy,
-	<T as Config>::TimeMeasure,
+	TimeMeasure,
 >;
 
 #[derive(Encode, Decode)]

@@ -11,10 +11,7 @@ use composable_traits::{
 	undercollateralized_loans::{LoanInput, MarketInput},
 };
 use frame_support::{
-	assert_ok,
-	dispatch::DispatchResultWithPostInfo,
-	traits::{fungibles::Mutate},
-	BoundedVec,
+	assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate, BoundedVec,
 };
 use pallet_vault::models::VaultInfo;
 use sp_runtime::{FixedPointNumber, Percent, Perquintill};
@@ -106,7 +103,7 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 		borrower_account_id: *BOB,
 		principal: 1000,
 		collateral: 5,
-        payment_schedule: vec![], 
+		payment_schedule: vec![],
 		repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature,
 	};
 	crate::Pallet::<Runtime>::do_create_loan(loan_input.try_into_validated().unwrap()).unwrap()

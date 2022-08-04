@@ -51,8 +51,8 @@ pub mod validation;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::{
-		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf,
-    };
+		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, TimeMeasure,
+	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
@@ -74,10 +74,7 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
-	use sp_runtime::{
-		traits::One,
-		Percent,
-	};
+	use sp_runtime::{traits::One, Percent};
 	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, ops::AddAssign};
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
@@ -161,11 +158,10 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 		type MaxMarketsCounterValue: Get<Self::Counter>;
 		type MaxLoansPerMarketCounterValue: Get<Self::Counter>;
-	    // Each payments schedule can not have more than this amount of payments. 
-        type MaxPaymentsAmountValue: Get<u32>;
-        type OracleMarketCreationStake: Get<Self::Balance>;
-        type TimeMeasure:  From<i64> + Parameter + Ord;	
-    }
+		// Each payments schedule can not have more than this amount of payments.
+		type MaxPaymentsAmountValue: Get<u32>;
+		type OracleMarketCreationStake: Get<Self::Balance>;
+	}
 
 	#[pallet::pallet]
 	#[pallet::without_storage_info]
@@ -206,6 +202,11 @@ pub mod pallet {
 	pub type NonActiveLoansStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, LoanConfigOf<T>, OptionQuery>;
 
+	// Use hashmap as a set.
+	#[pallet::storage]
+	pub type NonActiveLoansStorageSet<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
+
 	// Maps market's account id to market's debt token
 	#[pallet::storage]
 	pub type DebtTokenForMarketStorage<T: Config> = StorageMap<
@@ -215,20 +216,20 @@ pub mod pallet {
 		<T as DeFiComposableConfig>::MayBeAssetId,
 		OptionQuery,
 	>;
-	
-    // Payments schedule storage.
-    // Maps payment dat and loan account id to interest rate for this payment.
+
+	// Payments schedule storage.
+	// Maps payment moment and loan account id to interest rate for this payment.
 	#[pallet::storage]
 	pub type ScheduleStorage<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		T::TimeMeasure,
-        Twox64Concat,
 		T::AccountId,
+		Twox64Concat,
+        TimeMeasure,
 		Percent,
 		OptionQuery,
 	>;
-  
+
 	// TODO: @mikolaichuk: storages for borrowers' strikes (local for paricular market and global
 	// for all markets).
 	#[pallet::event]
@@ -248,7 +249,7 @@ pub mod pallet {
 		PriceOfInitialBorrowVaultShouldBeGreaterThanZero,
 		// If wrong account id provided.
 		MarketDoesNotExist,
-		LoanDoesNotExist,
+		LoanDoesNotExistOrWasActivated,
 		// Only market manager account allowed to create loans for the market.
 		ThisUserIsNotAllowedToCreateTheLoanInTheMarket,
 		// Nont-authorized user tried to execute loan contract.
@@ -257,7 +258,11 @@ pub mod pallet {
 		ThereIsNoSuchLoan,
 		// When we try treat the loan which already shoul be paid.
 		CurrentBlockNumberExceedsFinalBlockNumberForTheLoan,
-	}
+		// Out-of-range number of seconds in provided timestamp.
+		OutOfRangeNumberSecondInTimestamp,
+        // Whet borrower tried to activate a loan after first payment day.
+        TheLoanContractIsExpired,
+    }
 
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
 	#[pallet::storage]
