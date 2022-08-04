@@ -1,4 +1,4 @@
-import { calculateProvidedLiquidity } from "@/defi/utils";
+import { calcaulateProvidedLiquidity } from "@/defi/utils";
 import { liquidityTransactionsByAddressAndPool } from "@/defi/subsquid/pools/queries";
 import { useEffect, useMemo, useState } from "react";
 import { useSelectedAccount } from "substrate-react";

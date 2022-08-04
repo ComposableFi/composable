@@ -64,7 +64,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     assetTwoInputValid,
     flipAssetSelection,
     isProcessing,
-    percentageToSwap
+    percentageToSwap,
+    priceImpact
   } = useSwaps();
 
   const initiateSwapTx = usePabloSwap({
@@ -363,6 +364,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
 
       {valid && (
         <SwapSummary
+          priceImpact={priceImpact}
           mt={4}
           spotPrice={spotPrice}
           baseAssetAmount={assetTwoAmount}
