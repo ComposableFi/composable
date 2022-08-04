@@ -398,19 +398,6 @@ pub mod pallet {
 		/// * [`Pallet::move_price`]
 		/// * [`Pallet::get_vamm_state`]
 		VammDoesNotExist,
-		/// Tried to retrieve a Vamm but the function failed.
-		///
-		/// ## Occurrences
-		///
-		/// * [`Pallet::get_price`]
-		/// * [`Pallet::get_twap`]
-		/// * [`Pallet::update_twap`]
-		/// * [`Pallet::swap`]
-		/// * [`Pallet::swap_simulation`]
-		/// * [`Pallet::move_price`]
-		/// * [`Pallet::do_swap`]
-		/// * [`Pallet::get_vamm_state`]
-		FailToRetrieveVamm,
 		/// Tried to execute a trade but the Vamm didn't have enough funds to
 		/// fulfill it.
 		///
@@ -692,7 +679,6 @@ pub mod pallet {
 		///
 		/// ## Errors
 		/// * [`Error::<T>::VammDoesNotExist`]
-		/// * [`Error::<T>::FailToRetrieveVamm`]
 		/// * [`Error::<T>::VammIsClosed`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
@@ -746,7 +732,6 @@ pub mod pallet {
 		///
 		/// ## Errors
 		/// * [`Error::<T>::VammDoesNotExist`]
-		/// * [`Error::<T>::FailToRetrieveVamm`]
 		/// * [`Error::<T>::VammIsClosed`]
 		///
 		/// # Runtime
@@ -825,7 +810,6 @@ pub mod pallet {
 		///
 		/// ## Errors
 		/// * [`Error::<T>::VammDoesNotExist`]
-		/// * [`Error::<T>::FailToRetrieveVamm`]
 		/// * [`Error::<T>::VammIsClosed`]
 		/// * [`Error::<T>::NewTwapValueIsZero`]
 		/// * [`Error::<T>::AssetTwapTimestampIsMoreRecent`]
@@ -892,7 +876,6 @@ pub mod pallet {
 		///
 		/// ## Errors
 		/// * [`Error::<T>::VammDoesNotExist`]
-		/// * [`Error::<T>::FailToRetrieveVamm`]
 		/// * [`Error::<T>::VammIsClosed`]
 		/// * [`Error::<T>::InsufficientFundsForTrade`]
 		/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
@@ -951,7 +934,6 @@ pub mod pallet {
 		///
 		/// ## Errors
 		/// * [`Error::<T>::VammDoesNotExist`]
-		/// * [`Error::<T>::FailToRetrieveVamm`]
 		/// * [`Error::<T>::VammIsClosed`]
 		/// * [`Error::<T>::InsufficientFundsForTrade`]
 		/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
@@ -1021,7 +1003,6 @@ pub mod pallet {
 		///
 		/// ## Errors
 		/// * [`Error::<T>::VammDoesNotExist`]
-		/// * [`Error::<T>::FailToRetrieveVamm`]
 		/// * [`Error::<T>::VammIsClosed`]
 		/// * [`Error::<T>::BaseAssetReserveIsZero`]
 		/// * [`Error::<T>::QuoteAssetReserveIsZero`]

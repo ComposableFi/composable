@@ -7,11 +7,9 @@ impl<T: Config> Pallet<T> {
 	/// # Errors
 	///
 	/// * [`Error::<T>::VammDoesNotExist`]
-	/// * [`Error::<T>::FailToRetrieveVamm`]
 	pub fn get_vamm_state(vamm_id: &T::VammId) -> Result<VammStateOf<T>, DispatchError> {
-		// Requested vamm must exists and be retrievable.
-		ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
-		VammMap::<T>::get(vamm_id).ok_or_else(|| Error::<T>::FailToRetrieveVamm.into())
+		// Requested vamm must exist and be retrievable.
+		VammMap::<T>::get(vamm_id).ok_or_else(|| Error::<T>::VammDoesNotExist.into())
 	}
 
 	/// Returns a boolean informing if the vamm is closed or not.

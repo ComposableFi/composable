@@ -38,7 +38,6 @@ impl<T: Config> Pallet<T> {
 	/// # Errors
 	///
 	/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
-	/// * [`Error::<T>::FailToRetrieveVamm`]
 	/// * [`Error::<T>::InsufficientFundsForTrade`]
 	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
@@ -60,7 +59,7 @@ impl<T: Config> Pallet<T> {
 				v.quote_asset_reserves = quote_asset_reserves;
 				Ok(())
 			},
-			None => Err(Error::<T>::FailToRetrieveVamm),
+			None => Err(Error::<T>::VammDoesNotExist),
 		})?;
 
 		// Deposit swap event into blockchain.
@@ -82,7 +81,6 @@ impl<T: Config> Pallet<T> {
 	/// # Errors
 	///
 	/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
-	/// * [`Error::<T>::FailToRetrieveVamm`]
 	/// * [`Error::<T>::InsufficientFundsForTrade`]
 	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
