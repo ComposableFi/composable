@@ -62,7 +62,7 @@ jobs:
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
-      - run: |          
+      - run: |
           # TODO: replace with nix checking derivation which does all
           chmod +x  ./nix-validate.sh && ./nix-validate.sh
 

@@ -1,1 +1,0 @@
-export ASD=42
