@@ -889,7 +889,9 @@ proptest! {
 		btc_value in 1..u32::MAX,
 		base_weight in 1..100_u32,
 		lp_fee in 0..100_u32,
-		protocol_fee in 0..100_u32,
+		// TODO(saruman9): when `disburse_fees` are implemented, expand the range to 100 and
+		// consider the fees for checks
+		protocol_fee in 0..50_u32,
 	) {
 		new_test_ext().execute_with(|| {
 			let unit = 1_000_000_000_000_u128;
