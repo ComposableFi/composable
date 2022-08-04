@@ -1,3 +1,4 @@
+// TODO: @mikolaichuk: rewrite to iterators.
 use crate::{
 	strategies::repayment_strategies::{
 		//		interest_periodically_principal_when_mature_strategy, principal_only_fake_strategy,
@@ -182,8 +183,10 @@ impl<T: Config> Pallet<T> {
 		// Remove loan configuration from the non-activated loans accounts ids storage.
 		crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
 		// Build payment schedule.
-		for (timestamp, interest_rate) in loan_config.schedule() {
-			crate::ScheduleStorage::<T>::insert(loan_account_id.clone(), timestamp, interest_rate);
+		for timestamp in loan_config.schedule().keys() {
+			crate::ScheduleStorage::<T>::mutate(timestamp, |loans_accounts_ids| {
+				loans_accounts_ids.insert(loan_account_id.clone())
+			});
 		}
 		Ok(loan_config)
 	}

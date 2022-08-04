@@ -215,15 +215,8 @@ pub mod pallet {
 	// Payments schedule storage.
 	// Maps payment moment and loan account id to interest rate for this payment.
 	#[pallet::storage]
-	pub type ScheduleStorage<T: Config> = StorageDoubleMap<
-		_,
-		Twox64Concat,
-		T::AccountId,
-		Twox64Concat,
-		TimeMeasure,
-		Percent,
-		OptionQuery,
-	>;
+	pub type ScheduleStorage<T: Config> =
+		StorageMap<_, Twox64Concat, TimeMeasure, BTreeSet<T::AccountId>, ValueQuery>;
 
 	// TODO: @mikolaichuk: storages for borrowers' strikes (local for paricular market and global
 	// for all markets).
