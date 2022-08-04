@@ -536,7 +536,14 @@ fn claim_works() {
 			MockCurrencyId::BTC,
 			VestingScheduleIdSet::All
 		));
-		println!("{:?}", VestingSchedules::<Runtime>::get(BOB, MockCurrencyId::BTC));
+
+		System::assert_last_event(Event::Vesting(crate::Event::Claimed {
+			who: BOB,
+			asset: MockCurrencyId::BTC,
+			locked_amount: 0,
+			vesting_schedule_ids: VestingScheduleIdSet::All,
+		}));
+
 		assert!(!VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
 		assert_ok!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 10));
 		// all used up

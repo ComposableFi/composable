@@ -194,7 +194,8 @@ pub mod module {
 		Claimed {
 			who: AccountIdOf<T>,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
+			vesting_schedule_ids:
+				VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 			locked_amount: BalanceOf<T>,
 		},
 		/// Updated vesting schedules. \[who\]
@@ -297,9 +298,8 @@ pub mod module {
 			vesting_schedule_id: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let locked_amount = Self::do_claim(&who, asset, vesting_schedule_id.clone())?;
+			Self::do_claim(&who, asset, vesting_schedule_id.clone())?;
 
-			Self::deposit_event(Event::Claimed { who, asset, locked_amount, vesting_schedule_id });
 			Ok(())
 		}
 
@@ -344,9 +344,8 @@ pub mod module {
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let who = T::Lookup::lookup(dest)?;
-			let locked_amount = Self::do_claim(&who, asset, vesting_schedule_id.clone())?;
+			Self::do_claim(&who, asset, vesting_schedule_id.clone())?;
 
-			Self::deposit_event(Event::Claimed { who, asset, locked_amount, vesting_schedule_id });
 			Ok(())
 		}
 	}
@@ -406,18 +405,25 @@ impl<T: Config> Pallet<T> {
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
 		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>, /* Option<T::VestingScheduleId>, */
-	) -> Result<BalanceOf<T>, DispatchError> {
-		let locked = Self::locked_balance(who, asset, vesting_schedule_ids)?;
+	) -> Result<(), DispatchError> {
+		let locked_amount = Self::locked_balance(who, asset, vesting_schedule_ids.clone())?;
 
-		if locked.is_zero() {
+		if locked_amount.is_zero() {
 			// cleanup the storage and unlock the fund
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
 		} else {
-			T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked)?;
+			T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked_amount)?;
 		}
 
-		Ok(locked)
+		Self::deposit_event(Event::Claimed {
+			who: who.clone(),
+			asset,
+			locked_amount,
+			vesting_schedule_ids,
+		});
+
+		Ok(())
 	}
 
 	/// Returns total locked balance and balance per vesting schedule, based on current block number
