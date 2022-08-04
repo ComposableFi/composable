@@ -311,6 +311,7 @@ export function useSwaps(): {
         : new BigNumber(0),
     quoteBalance: poolQuoteBalance,
     baseBalance: poolBaseBalance,
+    amplificationCoefficient: selectedPool && "amplificationCoefficient" in selectedPool ? new BigNumber(selectedPool.amplificationCoefficient) : new BigNumber(0)
   });
 
   /**

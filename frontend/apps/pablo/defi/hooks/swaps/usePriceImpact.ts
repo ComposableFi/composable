@@ -1,6 +1,7 @@
 import {
   calcaulateConstantProductSpotPrice,
   calculateChangePercent,
+  compute_spot_price_stable_swap,
 } from "@/defi/utils";
 import { usePrevious } from "@/hooks/usePrevious";
 import { useEffect, useMemo, useState } from "react";
@@ -12,6 +13,7 @@ type PriceImpactProps = {
   baseWeight: BigNumber;
   baseBalance: BigNumber;
   quoteBalance: BigNumber;
+  amplificationCoefficient: BigNumber;
   isConstantProductPool: boolean;
 };
 
@@ -21,6 +23,7 @@ export function usePriceImpact({
   baseWeight,
   baseBalance,
   quoteBalance,
+  amplificationCoefficient,
   isConstantProductPool,
 }: PriceImpactProps) {
   const [priceImpact, setPriceImpact] = useState(new BigNumber(0));
@@ -39,32 +42,51 @@ export function usePriceImpact({
 
   useEffect(() => {
     if (
-      isConstantProductPool &&
       amountIsChanged
     ) {
-      if (
-        tokenInAmount.gt(0) &&
-        tokenOutAmount.gt(0) &&
-        baseWeight.gt(0) &&
-        baseBalance.gt(0) &&
-        quoteBalance.gt(0)
-      ) {
-        let currentSpotPrice = calcaulateConstantProductSpotPrice(
-          baseBalance,
-          quoteBalance,
-          baseWeight
-        );
-        let spotPriceAfterTrade = calcaulateConstantProductSpotPrice(
-          baseBalance.minus(tokenOutAmount),
-          quoteBalance.plus(tokenInAmount),
-          baseWeight
-        );
-  
-        setPriceImpact(
-          calculateChangePercent(spotPriceAfterTrade, currentSpotPrice)
-        );
+      if (isConstantProductPool) {
+        if (
+          tokenInAmount.gt(0) &&
+          tokenOutAmount.gt(0) &&
+          baseWeight.gt(0) &&
+          baseBalance.gt(0) &&
+          quoteBalance.gt(0)
+        ) {
+          let currentSpotPrice = calcaulateConstantProductSpotPrice(
+            baseBalance,
+            quoteBalance,
+            baseWeight
+          );
+          let spotPriceAfterTrade = calcaulateConstantProductSpotPrice(
+            baseBalance.minus(tokenOutAmount),
+            quoteBalance.plus(tokenInAmount),
+            baseWeight
+          );
+    
+          setPriceImpact(
+            calculateChangePercent(spotPriceAfterTrade, currentSpotPrice)
+          );
+        } else {
+          setPriceImpact(new BigNumber(0));
+        }
       } else {
-        setPriceImpact(new BigNumber(0));
+        if (
+          tokenInAmount.gt(0) &&
+          tokenOutAmount.gt(0) &&
+          baseBalance.gt(0) &&
+          quoteBalance.gt(0)
+        ) {
+          try {
+            let currentSpotPrice = compute_spot_price_stable_swap(baseBalance, quoteBalance, amplificationCoefficient, new BigNumber(1));
+            let changedSpotPrice = compute_spot_price_stable_swap(baseBalance.minus(tokenOutAmount), quoteBalance.plus(tokenInAmount), amplificationCoefficient, new BigNumber(1));
+            setPriceImpact(calculateChangePercent(changedSpotPrice, currentSpotPrice));
+          } catch (err) {
+            console.error(err);
+            setPriceImpact(new BigNumber(0));
+          }
+        } else {
+          setPriceImpact(new BigNumber(0));
+        }
       }
     }
   }, [
@@ -74,6 +96,7 @@ export function usePriceImpact({
     baseWeight,
     baseBalance,
     quoteBalance,
+    amplificationCoefficient,
     isConstantProductPool,
   ]);
 
