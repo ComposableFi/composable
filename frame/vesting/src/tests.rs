@@ -17,7 +17,10 @@ fn vesting_from_chain_spec_works() {
 		// From the vesting below, only 20 out of 50 are locked at block 0.
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 30));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 31).is_err());
-		let schedules = vec![
+		let mut schedules: BoundedBTreeMap<_, VestingSchedule<_, _, _, _>, MaxVestingSchedule> =
+			BoundedBTreeMap::new();
+		assert_ok!(schedules.try_insert(
+			4_u128,
 			/*
 				+------+------+-----+
 				|block |vested|total|
@@ -33,6 +36,9 @@ fn vesting_from_chain_spec_works() {
 				per_period: 5_u64,
 				already_claimed: 0_u64,
 			},
+		));
+		assert_ok!(schedules.try_insert(
+			5_u128,
 			/*
 			  +------+------+-----+
 			  |block |vested|total|
@@ -52,6 +58,9 @@ fn vesting_from_chain_spec_works() {
 				per_period: 5_u64,
 				already_claimed: 0_u64,
 			},
+		));
+		assert_ok!(schedules.try_insert(
+			6_u128,
 			/*
 			  +---------+-----------+-----------+
 			  |block    |timestamp  |vested | total |
@@ -75,7 +84,7 @@ fn vesting_from_chain_spec_works() {
 				per_period: 5_u64,
 				already_claimed: 0_u64,
 			},
-		];
+		));
 
 		assert_eq!(Vesting::vesting_schedules(&CHARLIE, MockCurrencyId::BTC), schedules);
 		System::set_block_number(1);
@@ -152,7 +161,10 @@ fn vested_transfer_works() {
 			schedule_input.clone(),
 		));
 		let schedule = VestingSchedule::from_input(4_u128, schedule_input.clone());
-		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), vec![schedule.clone()]);
+		let mut schedules: BoundedBTreeMap<_, VestingSchedule<_, _, _, _>, MaxVestingSchedule> =
+			BoundedBTreeMap::new();
+		assert_ok!(schedules.try_insert(4_u128, schedule.clone()));
+		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), schedules);
 		System::assert_last_event(Event::Vesting(crate::Event::VestingScheduleAdded {
 			from: ALICE,
 			to: BOB,
@@ -214,7 +226,10 @@ fn vested_transfer_for_moment_based_schedule_works() {
 			MockCurrencyId::BTC,
 			schedule_input.clone(),
 		));
-		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), vec![schedule.clone()]);
+		let mut schedules: BoundedBTreeMap<_, VestingSchedule<_, _, _, _>, MaxVestingSchedule> =
+			BoundedBTreeMap::new();
+		assert_ok!(schedules.try_insert(4_u128, schedule.clone()));
+		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), schedules);
 		System::assert_last_event(Event::Vesting(crate::Event::VestingScheduleAdded {
 			from: ALICE,
 			to: BOB,
@@ -955,7 +970,6 @@ fn multiple_vesting_schedule_claim_works() {
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
-		let schedule = VestingSchedule::from_input(4_u128, schedule_input.clone());
 		assert_ok!(Vesting::vested_transfer(
 			Origin::root(),
 			ALICE,
@@ -979,10 +993,11 @@ fn multiple_vesting_schedule_claim_works() {
 			schedule2_input,
 		));
 
-		assert_eq!(
-			Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC),
-			vec![schedule, schedule2.clone()]
-		);
+		let mut schedules: BoundedBTreeMap<_, VestingSchedule<_, _, _, _>, MaxVestingSchedule> =
+			BoundedBTreeMap::new();
+		assert_ok!(schedules.try_insert(5_u128, schedule2.clone()));
+
+		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), schedules.clone(),);
 
 		System::set_block_number(21);
 		assert_ok!(Vesting::claim(
@@ -990,7 +1005,7 @@ fn multiple_vesting_schedule_claim_works() {
 			MockCurrencyId::BTC,
 			Schedules::One(4_u128)
 		));
-		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), vec![schedule2]);
+		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), schedules);
 
 		System::set_block_number(31);
 		assert_ok!(Vesting::claim(
