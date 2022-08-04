@@ -3,9 +3,10 @@ import { makeClient } from "../makeClient";
 export const queryPoolTransactionsByType = (
   poolId: number,
   transactionType: "SWAP" | "ADD_LIQUIDITY" | "CREATE_POOL" | "REMOVE_LIQUIDITY",
-  limit: number = 50
+  limit: number = 50,
+  orderBy: "ASC" | "DESC" = "DESC"
 ) => makeClient().query(`query queryPoolTransactionsByType {
-  pabloTransactions(limit: ${limit}, orderBy: receivedTimestamp_DESC, where: {
+  pabloTransactions(limit: ${limit}, orderBy: receivedTimestamp_${orderBy}, where: {
     transactionType_eq: ${transactionType},
     pool: {poolId_eq: ${poolId.toString()}}
   }) {
@@ -17,12 +18,13 @@ export const queryPoolTransactionsByType = (
     quoteAssetId
     receivedTimestamp
     who
+    blockNumber
   }
 }`).toPromise();
 
 export const liquidityTransactionsByAddressAndPool = (
   who: string,
-  poolId: number
+  poolId: number | string
 ) => makeClient().query(`query queryAddOrRemoveLiquidityTransactionsByUserAddress {
   pabloTransactions(
     orderBy: receivedTimestamp_ASC,where: {
