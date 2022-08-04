@@ -241,7 +241,7 @@ dependencies = [
  "serde_json",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-core-hashing 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-io 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-mmr-primitives",
  "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
@@ -2241,6 +2241,7 @@ version = "0.1.0"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
+ "derive_more",
  "parity-scale-codec",
  "rs_merkle",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",

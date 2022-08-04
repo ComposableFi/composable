@@ -46,31 +46,28 @@ pub async fn fetch_timestamp_extrinsic_with_proof<T: Config>(
 
     let (ext, proof) = {
         if extrinsics.is_empty() {
-            (vec![], vec![])
-        } else {
-            let timestamp_ext = extrinsics[0].clone();
-
-            let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
-
-            let root = {
-                let mut root = Default::default();
-                let mut trie = <TrieDBMut<sp_trie::LayoutV0<BlakeTwo256>>>::new(&mut db, &mut root);
-
-                for (i, ext) in extrinsics.into_iter().enumerate() {
-                    let key = codec::Compact(i as u32).encode();
-                    trie.insert(&key, &ext)?;
-                }
-                *trie.root()
-            };
-
-            let key = codec::Compact::<u32>(0u32).encode();
-            let extrinsic_proof = generate_trie_proof::<sp_trie::LayoutV0<BlakeTwo256>, _, _, _>(
-                &db,
-                root,
-                vec![&key],
-            )?;
-            (timestamp_ext, extrinsic_proof)
+            return Err(From::from("Block has no extrinsics".to_string()));
         }
+        let timestamp_ext = extrinsics[0].clone();
+
+        let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
+
+        let root = {
+            let mut root = Default::default();
+            let mut trie = <TrieDBMut<sp_trie::LayoutV0<BlakeTwo256>>>::new(&mut db, &mut root);
+
+            for (i, ext) in extrinsics.into_iter().enumerate() {
+                let key = codec::Compact(i as u32).encode();
+                trie.insert(&key, &ext)?;
+            }
+            *trie.root()
+        };
+
+        let key = codec::Compact::<u32>(0u32).encode();
+        let extrinsic_proof =
+            generate_trie_proof::<sp_trie::LayoutV0<BlakeTwo256>, _, _, _>(&db, root, vec![&key])?;
+
+        (timestamp_ext, extrinsic_proof)
     };
 
     Ok(TimeStampExtWithProof { ext, proof })

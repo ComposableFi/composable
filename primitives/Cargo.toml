@@ -13,6 +13,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 rs_merkle = { version = "1.2.0", default-features = false }
 mmr-lib= { package = "ckb-merkle-mountain-range", version = "0.3.2", default-features = false }
 pallet-mmr-primitives = { package = "sp-mmr-primitives", default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+derive_more = { version = "0.99.17", default-features = false, features = ["from"]  }
 
 [features]
 default = ["std"]

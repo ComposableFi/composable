@@ -53,6 +53,5 @@ pub enum BeefyClientError {
     /// Codec error
     Codec(codec::Error),
     /// Custom error
-    #[from(ignore)]
     Custom(String),
 }

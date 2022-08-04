@@ -2,11 +2,12 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::marker::PhantomData;
-
+pub mod error;
 use beefy_primitives::mmr::MmrLeafVersion;
 pub use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf};
 use codec::{Decode, Encode};
+use core::marker::PhantomData;
+use error::BeefyClientError;
 use sp_core::H256;
 use sp_std::prelude::*;
 
@@ -34,6 +35,14 @@ pub trait HostFunctions {
         signature: &[u8; 65],
         value: &[u8; 32],
     ) -> Option<Vec<u8>>;
+
+    /// parity trie_db proof verification using BlakeTwo256 Hasher
+    fn verify_timestamp_extrinsic(
+        root: H256,
+        proof: &[Vec<u8>],
+        key: &[u8],
+        value: &[u8],
+    ) -> Result<(), BeefyClientError>;
 }
 
 /// Hash length definition for hashing algorithms used

@@ -1,16 +1,16 @@
-use crate::BeefyClientError;
 use crate::BeefyLightClient;
 use beefy_client_primitives::{
-    MmrUpdateProof, ParachainsUpdateProof, SignatureWithAuthorityIndex, SignedCommitment,
+    error::BeefyClientError, MmrUpdateProof, ParachainsUpdateProof, SignatureWithAuthorityIndex,
+    SignedCommitment,
 };
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf};
 use beefy_primitives::Payload;
 use beefy_queries::{ClientWrapper, Crypto};
+use futures::stream::StreamExt;
 use pallet_mmr_primitives::Proof;
 use sp_core::bytes::to_hex;
 use subxt::rpc::{rpc_params, JsonValue, Subscription, SubscriptionClientT};
-use futures::stream::StreamExt;
 
 #[tokio::test]
 async fn test_verify_mmr_with_proof() {
@@ -21,7 +21,7 @@ async fn test_verify_mmr_with_proof() {
         .build::<subxt::DefaultConfig>()
         .await
         .unwrap();
-    let para_url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9988".to_string());
+    let para_url = std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9988".to_string());
     let para_client = subxt::ClientBuilder::new()
         .set_url(para_url)
         .build::<subxt::DefaultConfig>()
@@ -234,7 +234,7 @@ async fn verify_parachain_headers() {
         .build::<subxt::DefaultConfig>()
         .await
         .unwrap();
-    let para_url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9988".to_string());
+    let para_url = std::env::var("PARA_NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9188".to_string());
     let para_client = subxt::ClientBuilder::new()
         .set_url(para_url)
         .build::<subxt::DefaultConfig>()
@@ -252,6 +252,11 @@ async fn verify_parachain_headers() {
         )
         .await
         .unwrap();
+
+    println!("Waiting for parachain to start producing blocks");
+    let block_sub = para_client.rpc().subscribe_blocks().await.unwrap();
+    block_sub.take(2).collect::<Vec<_>>().await;
+    println!("Parachain has started producing blocks");
 
     let parachain_client = ClientWrapper {
         relay_client: client,
