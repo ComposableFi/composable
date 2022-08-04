@@ -12,3 +12,8 @@ dali-runtime = { path = "../dali/", default-features = false }
 [lib]
 crate-type = ["cdylib"]
 name = "dali_runtime"
+
+[features]
+runtime-benchmarks = [
+    "dali-runtime/runtime-benchmarks"
+]

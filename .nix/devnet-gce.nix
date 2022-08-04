@@ -4,7 +4,7 @@
 }:
 let
   description = "What machines we will deploy on GCE";
-  machine-name = "composable-devnet-${devnet.composable.spec}";
+  machine-name = "composable-devnet-${devnet.composable.chain}";
 in {
   resources.gceNetworks.composable-devnet = gce-input // {
     name = "composable-devnet-network";
@@ -47,7 +47,7 @@ in {
         serviceConfig = {
           Type = "simple";
           User = "root";
-          ExecStart = "${devnet.script}/bin/run-${devnet.composable.spec}";
+          ExecStart = "${devnet.script}/bin/run-${devnet.composable.chain}";
           Restart = "always";
           RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
         };
@@ -58,7 +58,7 @@ in {
       };
       services.nginx =
         let
-          runtimeName = pkgs.lib.removeSuffix "-dev" devnet.composable.spec;
+          runtimeName = pkgs.lib.removeSuffix "-dev" devnet.composable.chain;
           domain = "${runtimeName}.devnets.composablefinance.ninja";
           virtualConfig =
               let

@@ -12,3 +12,8 @@ composable-runtime = { path = "../composable/", default-features = false }
 [lib]
 crate-type = ["cdylib"]
 name = "composable_runtime"
+
+[features]
+runtime-benchmarks = [
+    "composable-runtime/runtime-benchmarks"
+]
