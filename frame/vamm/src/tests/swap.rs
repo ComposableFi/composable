@@ -18,7 +18,7 @@ use crate::{
 			any_swap_config, any_vamm_state, balance_range_lower_half, balance_range_upper_half,
 			multiple_swaps, then_and_now,
 		},
-		types::{TestSwapConfig, TestVammConfig},
+		types::{TestSwapConfig, TestVammConfig, Timestamp},
 	},
 };
 use composable_traits::vamm::{
@@ -28,6 +28,7 @@ use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_core::U256;
 use sp_runtime::traits::Zero;
+use std::cmp::Ordering::Less;
 
 // -------------------------------------------------------------------------------------------------
 //                                            Unit Tests
@@ -468,6 +469,7 @@ proptest! {
 	fn should_succeed_updating_twap_when_performing_swap(
 		mut vamm_state in any_vamm_state(),
 		mut swap_config in swap_config(),
+		delta in Timestamp::MIN..=Timestamp::MAX,
 	) {
 		// Ensure vamm is open before start operation to swap assets.
 		vamm_state.closed = None;
@@ -486,12 +488,23 @@ proptest! {
 			vamm_state,
 			swap_config,
 			|swap_config| {
-				// For event emission.
-				run_for_seconds(vamm_state.twap_period);
-				if TestPallet::swap(&swap_config).is_ok() {
-					// Ensure twap was updated
-					let vamm_state_after = TestPallet::get_vamm(0).unwrap();
-					assert_ne!(vamm_state.twap_timestamp, vamm_state_after.twap_timestamp);
+				run_for_seconds(delta);
+				let swap_output = TestPallet::swap(&swap_config);
+				match vamm_state.twap_period.cmp(&delta) {
+					Less => {
+						if swap_output.is_ok() {
+							// Ensure twap was updated
+							let vamm_state_after = TestPallet::get_vamm(0).unwrap();
+							assert_ne!(vamm_state.twap_timestamp, vamm_state_after.twap_timestamp);
+						}
+					},
+					_ => {
+						if swap_output.is_ok() {
+							// Ensure twap was *not* updated
+							let vamm_state_after = TestPallet::get_vamm(0).unwrap();
+							assert_eq!(vamm_state.twap_timestamp, vamm_state_after.twap_timestamp);
+						}
+					}
 				}
 			}
 		)
