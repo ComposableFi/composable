@@ -2,6 +2,13 @@ use crate::{Config, Error, Pallet, SwapConfigOf, VammStateOf};
 use composable_traits::vamm::{AssetType, Direction, SwapOutput};
 use frame_support::pallet_prelude::*;
 use sp_runtime::traits::{CheckedAdd, Zero};
+use std::cmp::Ordering::Greater;
+
+#[derive(Debug)]
+pub enum SanityCheckUpdateTwap {
+	Proceed,
+	Abort,
+}
 
 impl<T: Config> Pallet<T> {
 	/// Checks if the following properties hold before performing a swap:
@@ -110,21 +117,28 @@ impl<T: Config> Pallet<T> {
 		base_twap: T::Decimal,
 		now: &Option<T::Moment>,
 		try_update: bool,
-	) -> Result<(), DispatchError> {
+	) -> Result<SanityCheckUpdateTwap, DispatchError> {
 		// New desired twap value can't be zero.
 		ensure!(!base_twap.is_zero(), Error::<T>::NewTwapValueIsZero);
 
 		// Vamm must be open.
 		ensure!(!Self::is_vamm_closed(vamm_state, now), Error::<T>::VammIsClosed);
 
-		if !try_update {
-			// Only update asset's twap if time has passed since last update.
-			ensure!(
-				Self::now(now) > vamm_state.twap_timestamp,
-				Error::<T>::AssetTwapTimestampIsMoreRecent
-			);
+		match Self::now(now).cmp(&vamm_state.twap_timestamp) {
+			Greater => Ok(SanityCheckUpdateTwap::Proceed),
+			_ => {
+				match try_update {
+					true => {
+						// Abort runtime storage update operation.
+						Ok(SanityCheckUpdateTwap::Abort)
+					},
+					false => {
+						// We need to throw an error warning caller that one
+						// property of the swap operation was violated.
+						Err(Error::<T>::AssetTwapTimestampIsMoreRecent.into())
+					},
+				}
+			},
 		}
-
-		Ok(())
 	}
 }

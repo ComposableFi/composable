@@ -315,6 +315,29 @@ fn should_update_twap_when_removing_quote_asset() {
 	);
 }
 
+#[test]
+fn should_not_update_twap_if_current_twap_timestamp_is_more_recent() {
+	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
+		let vamm_state_t0 = TestPallet::get_vamm(0).unwrap();
+
+		// In the first swap the current time was more recent then the time when
+		// the twap update happened, so we must ensure we updated the twap
+		// timestamp.
+		let delay = vamm_state_t0.twap_period - 1;
+		run_for_seconds(delay);
+		assert_ok!(TestPallet::swap(&swap_config));
+		let vamm_state_t1 = TestPallet::get_vamm(0).unwrap();
+		assert_eq!(vamm_state_t1.twap_timestamp, vamm_state_t0.twap_timestamp + delay);
+		assert_ne!(vamm_state_t0.twap_timestamp, vamm_state_t1.twap_timestamp);
+
+		// In the second swap the time didn't pass between operations, so we
+		// can't allow the twap value to be updated again.
+		assert_ok!(TestPallet::swap(&swap_config));
+		let vamm_state_t2 = TestPallet::get_vamm(0).unwrap();
+		assert_eq!(vamm_state_t1.twap_timestamp, vamm_state_t2.twap_timestamp);
+	});
+}
+
 // -------------------------------------------------------------------------------------------------
 //                                             Proptests
 // -------------------------------------------------------------------------------------------------

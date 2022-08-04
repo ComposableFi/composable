@@ -496,6 +496,15 @@ pub mod pallet {
 		/// * [`Pallet::do_update_twap`]
 		/// * [`Pallet::sanity_check_before_update_twap`]
 		NewTwapValueIsZero,
+		/// Tried to update twap value, but a function call responsible to
+		/// return a new twap value didn't do so. As the called function should
+		/// return a value always, not doing so must be an error.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::update_twap`]
+		/// * [`Pallet::do_update_twap`]
+		InternalUpdateTwapDidNotReturnValue,
 		/// Tried to create a vamm with a
 		/// [`twap_period`](VammState::twap_period) smaller than the
 		/// minimum allowed one specified by
