@@ -1,3 +1,5 @@
+use core::ops::{AddAssign, DivAssign, MulAssign, Sub, SubAssign};
+
 use crate::{
 	liquidity_bootstrapping_tests::valid_pool,
 	mock,
@@ -11,8 +13,12 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use frame_system::EventRecord;
+use rust_decimal::{
+	prelude::{FromPrimitive, ToPrimitive},
+	Decimal, MathematicalOps,
+};
 use sp_core::H256;
-use sp_runtime::TokenError;
+use sp_runtime::{traits::One, PerThing, Permill, TokenError};
 
 /// `expected_lp_check` takes base_amount, quote_amount and lp_tokens in order and returns
 /// true if lp_tokens are expected for given base_amount, quote_amount.
@@ -333,6 +339,32 @@ where
 	F: FnOnce(&EventRecord<mock::Event, H256>) -> bool,
 {
 	assert!(matcher(System::events().last().expect("events expected")));
+}
+
+pub fn calculate_lp_for_single_deposit(
+	lp_supply: Balance,
+	amount: Balance,
+	weight: Permill,
+	fee: Permill,
+	balance: Balance,
+) -> u128 {
+	let fee = fee.mul_floor(weight.left_from_one().mul_floor(amount));
+	let lp_supply = Decimal::from_u128(lp_supply).expect("convert to decimal");
+	let amount = Decimal::from_u128(amount).expect("convert to decimal");
+	let mut weight = Decimal::from_u32(weight.deconstruct().into()).expect("convert to decimal");
+	let full_perthing =
+		Decimal::from_u32(Permill::one().deconstruct().into()).expect("full_perthing");
+	weight.div_assign(full_perthing);
+	let fee = Decimal::from_u128(fee).expect("convert to decimal");
+	let balance = Decimal::from_u128(balance).expect("convert to decimal");
+
+	let mut result = amount.sub(fee);
+	result.div_assign(balance);
+	result.add_assign(Decimal::one());
+	result = result.powd(weight);
+	result.sub_assign(Decimal::one());
+	result.mul_assign(lp_supply);
+	result.to_u128().expect("convert to u128")
 }
 
 mod create {

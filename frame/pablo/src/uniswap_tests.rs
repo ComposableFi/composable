@@ -879,6 +879,57 @@ proptest! {
 	}
 
 	#[test]
+	fn add_remove_liquidity_single_asset_proptest(
+		btc_value in 1..u32::MAX,
+	) {
+		new_test_ext().execute_with(|| {
+			let unit = 1_000_000_000_000_u128;
+			let initial_btc = 1_000_000_000_000_u128 * unit;
+			let btc_price = 20_000_u128;
+			let initial_usdt = initial_btc * btc_price;
+			let btc_value = btc_value as u128 * unit;
+			let usdt_value = 0_u128; // use only one asset for deposit
+			let base_weight = Permill::from_percent(50); // TODO(saruman9): make as parameter
+			let lp_fee = Permill::from_percent(10); // TODO(saruman9): make as parameter
+			let protocol_fee = Permill::from_percent(10); // TODO(saruman9): make as parameter
+			let pool_id = create_pool(
+				BTC,
+				USDT,
+				initial_btc,
+				initial_usdt,
+				lp_fee,
+				protocol_fee,
+				base_weight,
+			);
+			let pool = get_pool(pool_id);
+			let lp_supply = Tokens::total_issuance(pool.lp_token);
+
+			prop_assert_ok!(Tokens::mint_into(BTC, &BOB, btc_value));
+			prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
+
+			prop_assert_ok!(
+				Pablo::add_liquidity(Origin::signed(BOB), pool_id, btc_value, usdt_value, 0, false)
+			);
+
+			let expected_lp_tokens = calculate_lp_for_single_deposit(
+				lp_supply, btc_value, base_weight, lp_fee, initial_btc);
+			let lp_amount = Tokens::balance(pool.lp_token, &BOB);
+
+			prop_assert_ok!(default_acceptable_computation_error(expected_lp_tokens, lp_amount));
+
+			prop_assert_ok!(
+				Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp_amount, 0, 0, true));
+
+			let btc_value_redeemed = Tokens::balance(BTC, &BOB);
+			let usdt_value_redeemed = Tokens::balance(USDT, &BOB);
+
+			prop_assert_ok!(default_acceptable_computation_error(btc_value_redeemed, btc_value));
+			prop_assert_ok!(default_acceptable_computation_error(usdt_value_redeemed, usdt_value));
+			Ok(())
+		})?;
+	}
+
+	#[test]
 	fn swap_proptest(
 		usdt_value in 1..u32::MAX,
 	) {
