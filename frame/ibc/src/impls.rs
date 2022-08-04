@@ -14,9 +14,7 @@ use composable_traits::{
 	defi::DeFiComposableConfig,
 	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
 };
-use frame_support::{
-	traits::Currency,
-};
+use frame_support::traits::Currency;
 use ibc::{
 	applications::transfer::{
 		acknowledgement::{Acknowledgement as Ics20Acknowledgement, ACK_SUCCESS_B64},
@@ -696,7 +694,7 @@ where
 		};
 		let res = ibc::core::ics26_routing::handler::deliver::<
 			_,
-			crate::host_functions::HostFunctions,
+			crate::host_functions::HostFunctions<T>,
 		>(&mut ctx, msg)
 		.map_err(|_| IbcHandlerError::ChannelInitError)?;
 		Self::deposit_event(res.events.into());
@@ -807,7 +805,7 @@ where
 		.encode_vec();
 		let msg = ibc_proto::google::protobuf::Any { type_url: TYPE_URL.to_string(), value: msg };
 		let mut ctx = crate::routing::Context::<T>::new();
-		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions>(
+		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions<T>>(
 			&mut ctx, msg,
 		)
 		.unwrap();

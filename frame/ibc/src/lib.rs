@@ -54,6 +54,7 @@ pub mod ics20;
 mod ics23;
 mod port;
 pub mod routing;
+mod state_machine;
 
 pub const IBC_DIGEST_ID: [u8; 4] = *b"/IBC";
 pub const MODULE_ID: &str = "pallet_ibc";
@@ -292,7 +293,6 @@ pub mod pallet {
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 		T: Send + Sync,
 	{
-
 		fn offchain_worker(_n: BlockNumberFor<T>) {
 			let _ = Pallet::<T>::packet_cleanup();
 		}
@@ -326,7 +326,7 @@ pub mod pallet {
 			let (events, logs, errors) = messages.into_iter().fold(
 				(vec![], vec![], vec![]),
 				|(mut events, mut logs, mut errors), msg| {
-					match ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(
+					match ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(
 						&mut ctx, msg,
 					) {
 						Ok(MsgReceipt { events: temp_events, log: temp_logs }) => {
@@ -365,7 +365,7 @@ pub mod pallet {
 			let msg = ibc_proto::google::protobuf::Any { type_url, value: msg.value };
 
 			let MsgReceipt { events, log } =
-				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
+				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg)
 					.map_err(|_| Error::<T>::ProcessingError)?;
 
 			log::trace!(target: "pallet_ibc", "[pallet_ibc_deliver]: logs: {:?}", log);
@@ -419,7 +419,7 @@ pub mod pallet {
 			};
 			let mut ctx = routing::Context::<T>::new();
 			let result =
-				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
+				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg)
 					.map_err(|_| Error::<T>::ProcessingError)?;
 			Self::deposit_event(result.events.into());
 			Ok(())

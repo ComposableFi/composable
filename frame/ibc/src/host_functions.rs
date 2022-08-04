@@ -1,20 +1,28 @@
-use alloc::string::{String, ToString};
-use alloc::format;
-use codec::Codec;
+use crate::{state_machine, Config};
+use alloc::{format, string::ToString};
 use ibc::{
 	clients::{host_functions::HostFunctionsProvider, ics11_beefy::error::Error as Ics11Error},
 	core::ics02_client::error::Error as Ics02ClientError,
 };
 use ibc_primitives::runtime_interface;
-use sp_core::{storage::ChildInfo, Hasher, H256};
+use sp_core::{storage::ChildInfo, H256};
 use sp_runtime::traits::BlakeTwo256;
-use sp_std::prelude::*;
-use sp_trie::{KeySpacedDB, LayoutV0, StorageProof, Trie, TrieDB};
+use sp_std::{marker::PhantomData, prelude::*};
+use sp_trie::{LayoutV0, StorageProof};
 
-#[derive(Clone, Default)]
-pub struct HostFunctions;
+#[derive(Clone)]
+pub struct HostFunctions<T>(PhantomData<T>);
 
-impl HostFunctionsProvider for HostFunctions {
+impl<T: Clone> Default for HostFunctions<T> {
+	fn default() -> Self {
+		Self(PhantomData::default())
+	}
+}
+
+impl<T> HostFunctionsProvider for HostFunctions<T>
+where
+	T: Config + Send + Sync + 'static,
+{
 	fn keccak_256(input: &[u8]) -> [u8; 32] {
 		sp_io::hashing::keccak_256(input)
 	}
@@ -30,7 +38,7 @@ impl HostFunctionsProvider for HostFunctions {
 		let public_key = if let Ok(pub_key) = sp_core::ed25519::Public::try_from(pubkey) {
 			pub_key
 		} else {
-			return false;
+			return false
 		};
 		sp_io::crypto::ed25519_verify(&signature, msg, &public_key)
 	}
@@ -44,9 +52,9 @@ impl HostFunctionsProvider for HostFunctions {
 		let root = H256::from_slice(root);
 		let proof = StorageProof::new(proof.into_iter().map(Clone::clone));
 		let items = vec![(key.to_vec(), Some(value.to_vec()))];
-		let child_info = ChildInfo::new_default(b"/ibc");
+		let child_info = ChildInfo::new_default(T::CHILD_TRIE_KEY);
 
-		read_child_proof_check::<BlakeTwo256, _>(root, proof, child_info, items)
+		state_machine::read_child_proof_check::<BlakeTwo256, _>(root, proof, child_info, items)
 			.map_err(|e| Ics02ClientError::beefy(Ics11Error::verification_error(e.to_string())))?;
 
 		Ok(())
@@ -62,7 +70,7 @@ impl HostFunctionsProvider for HostFunctions {
 		let items = vec![(key.to_vec(), None)];
 		let child_info = ChildInfo::new_default(b"/ibc");
 
-		read_child_proof_check::<BlakeTwo256, _>(root, proof, child_info, items)
+		state_machine::read_child_proof_check::<BlakeTwo256, _>(root, proof, child_info, items)
 			.map_err(|e| Ics02ClientError::beefy(Ics11Error::verification_error(e.to_string())))?;
 
 		Ok(())
@@ -79,7 +87,11 @@ impl HostFunctionsProvider for HostFunctions {
 			proof,
 			&vec![(key, Some(value))],
 		)
-		.map_err(|_| Ics02ClientError::beefy(Ics11Error::verification_error(format!("extrinsic proof verification failed"))))
+		.map_err(|_| {
+			Ics02ClientError::beefy(Ics11Error::verification_error(format!(
+				"extrinsic proof verification failed"
+			)))
+		})
 	}
 
 	fn sha256_digest(data: &[u8]) -> [u8; 32] {
@@ -105,58 +117,4 @@ impl HostFunctionsProvider for HostFunctions {
 	fn ripemd160(message: &[u8]) -> [u8; 20] {
 		runtime_interface::ripemd160(message)
 	}
-}
-
-#[derive(derive_more::From, derive_more::Display)]
-pub enum Error<H: Hasher> {
-	#[display(fmt = "Trie Error: {:?}", _0)]
-	Trie(Box<sp_trie::TrieError<LayoutV0<H>>>),
-	#[display(fmt = "Error verifying key: {key:?}, Expected: {expected:?}, Got: {got:?}")]
-	ValueMismatch { key: Option<String>, expected: Option<Vec<u8>>, got: Option<Vec<u8>> },
-	#[display(fmt = "Couldn't find child root in proofs")]
-	ChildRootNotFound,
-}
-
-/// Lifted directly from [sp-state-machine](https://github.com/paritytech/substrate/blob/b27c470eaff379f512d1dec052aff5d551ed3b03/primitives/state-machine/src/lib.rs#L1138-L1161)
-pub fn read_child_proof_check<H, I>(
-	root: H::Out,
-	proof: StorageProof,
-	child_info: ChildInfo,
-	items: I,
-) -> Result<(), Error<H>>
-where
-	H: Hasher,
-	H::Out: Ord + Codec + 'static,
-	I: IntoIterator<Item = (Vec<u8>, Option<Vec<u8>>)>,
-{
-	let memory_db = proof.into_memory_db::<H>();
-	let trie = TrieDB::<LayoutV0<H>>::new(&memory_db, &root)?;
-	let child_root = trie
-		.get(child_info.prefixed_storage_key().as_slice())?
-		.map(|r| {
-			let mut hash = H::Out::default();
-
-			// root is fetched from DB, not writable by runtime, so it's always valid.
-			hash.as_mut().copy_from_slice(&r[..]);
-
-			hash
-		})
-		.ok_or_else(|| Error::<H>::ChildRootNotFound)?;
-
-	let child_db = KeySpacedDB::new(&memory_db, child_info.keyspace());
-	let child_trie = TrieDB::<LayoutV0<H>>::new(&child_db, &child_root)?;
-
-	for (key, value) in items {
-		let recovered = child_trie.get(&key)?;
-
-		if recovered != value {
-			Err(Error::ValueMismatch {
-				key: String::from_utf8(key).ok(),
-				expected: value,
-				got: recovered,
-			})?
-		}
-	}
-
-	Ok(())
 }
