@@ -33,7 +33,14 @@ let
           nodes =
             map (node:
               (make-node tmp-directory "parachain" node) // {
-                flags = ["--" "--execution=wasm"];
+                flags = 
+                [
+                  "--" 
+                  "--unsafe-ws-external"
+                  "--rpc-cors=all"
+                  "--execution=wasm"
+                  "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
+                  ];
               }) composable.nodes;
         }
       ];
@@ -49,7 +56,8 @@ let
       name = "devnet-polkalaunch.json";
       text = builtins.toJSON (
         make-polkalaunch-config
-          { inherit tmp-directory;
+          { 
+            inherit tmp-directory;
             relaychain-spec = polkadot.spec;
             relaychain-bin = "${polkadot-bin}/bin/polkadot";
             parachain-spec = composable.spec;

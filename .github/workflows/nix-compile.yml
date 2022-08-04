@@ -144,8 +144,7 @@ jobs:
           nix build .#devnet-container --no-update-lock-file
 
   codespace-devcontainer:
-    # NOTE: so we want new container be publish iff all is ready and works
-    # needs: package-node
+    needs: package-node
     runs-on:
       - self-hosted
       - linux
@@ -189,15 +188,17 @@ jobs:
           docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
           docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer
 
-  nixops-deploy-devnet:
+  deploy-devnet:
+      name: "Devnet(Rococo Local Dali Dev) Deploy"
+      needs: package-node
       # ISSUE: sre custom runners has issues with permission of checkout and ssh hangs - do not use
       runs-on: ubuntu-latest
       # ISSUE: we have some issues with SSH on nixos
       # container:
       #   image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee    
-      # concurrency:
-      #   group: deploy-devnet
-      #   cancel-in-progress: false
+      concurrency:
+        group: deploy-devnet
+        cancel-in-progress: false
       steps:
       - uses: actions/checkout@v3
         with:

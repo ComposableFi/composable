@@ -6,7 +6,6 @@ Configurations external to this repository checkout, either 3rd party or not in 
 
 Unit test can be run with flake here. Unit tests run fast and do not depend on remote.
 
-
 ## Guidelines
 
 Variables which are input from external non `nix` files (examples, json/yaml/toml) to be suffixed with `-input`. Inputs prevent early validation of packages without instantiation.  
@@ -22,4 +21,4 @@ So for rust dependencies, we use source by default.
 
 Because we use cachix, build as fast as binary.
 
-Also Rust(and Go) are projects with tendency toward deterministic builds.
+Also Rust(and Go) are projects with a tendency toward deterministic builds.

@@ -54,6 +54,7 @@ integration-tests/runtime-tests/ @ComposableFi/testers
 ## Nix
 
 .nix/ @dzmitry-lahoda @hussein-aitlahcen @cor
+flake.nix @dzmitry-lahoda @hussein-aitlahcen @cor
 
 # ComposableJS
 composablejs/ @ComposableFi/parachain
