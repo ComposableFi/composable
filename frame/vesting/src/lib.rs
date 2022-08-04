@@ -466,17 +466,25 @@ impl<T: Config> Pallet<T> {
 					})
 					.collect::<Result<Vec<_>, DispatchError>>()?;
 
-					let all_ids: Vec<_> = schedules.keys().copied().collect();
-					for schedule_id in all_ids {
-						let schedule = schedules
-							.get_mut(&schedule_id)
-							.ok_or(Error::<T>::VestingScheduleNotFound)?;
+					// loop through all schedules and accumulate locked value
+					schedules
+						.keys()
+						.copied()
+						.collect::<Vec<_>>()
+						.iter()
+						.map(|schedule_id| {
+							let schedule = schedules
+								.get_mut(&schedule_id)
+								.ok_or(Error::<T>::VestingScheduleNotFound)?;
 
-						let total_amount = schedule.total_amount()?;
+							let total_amount = schedule.total_amount()?;
 
-						total_locked_amount = total_locked_amount
-							.safe_add(&total_amount.safe_sub(&schedule.already_claimed)?)?;
-					}
+							total_locked_amount = total_locked_amount
+								.safe_add(&total_amount.safe_sub(&schedule.already_claimed)?)?;
+
+							Ok(())
+						})
+						.collect::<Result<Vec<_>, DispatchError>>()?;
 
 					Ok(total_locked_amount)
 				},
