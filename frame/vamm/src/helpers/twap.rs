@@ -115,11 +115,6 @@ impl<T: Config> Pallet<T> {
 		let weight_now: T::Moment = now.saturating_sub(last_twap_timestamp).max(1_u64.into());
 		let weight_last_twap: T::Moment = twap_period.saturating_sub(weight_now).max(1_u64.into());
 
-		Self::calculate_exponential_moving_average(
-			new_price,
-			weight_now,
-			old_price,
-			weight_last_twap,
-		)
+		Self::calculate_weighted_average(new_price, weight_now, old_price, weight_last_twap)
 	}
 }

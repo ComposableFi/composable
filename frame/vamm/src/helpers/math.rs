@@ -53,7 +53,7 @@ impl<T: Config> Pallet<T> {
 	/// # Errors
 	///
 	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
-	pub fn calculate_exponential_moving_average(
+	pub fn calculate_weighted_average(
 		x1: T::Decimal,
 		w1: T::Moment,
 		x2: T::Decimal,
