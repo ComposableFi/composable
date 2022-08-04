@@ -12,3 +12,8 @@ picasso-runtime = { path = "../picasso/", default-features = false }
 [lib]
 crate-type = ["cdylib"]
 name = "picasso_runtime"
+
+[features]
+runtime-benchmarks = [
+    "picasso-runtime/runtime-benchmarks"
+]

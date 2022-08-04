@@ -154,12 +154,16 @@
 
         # Common dependencies, all dependencies listed that are out of this repo
         common-deps = crane-stable.buildDepsOnly (common-args // { });
+        common-deps-nightly = crane-nightly.buildDepsOnly (common-args // { });
+        common-args-with-benchmarks = common-args // { cargoExtraArgs = "--features=runtime-benchmarks --features=builtin-wasm";};
+        common-deps-with-benchmarks = crane-stable.buildDepsOnly common-args-with-benchmarks;
 
         # Build a wasm runtime, unoptimized
         mk-runtime = name:
           let file-name = "${name}_runtime.wasm";
           in crane-nightly.buildPackage (common-args // {
             pname = "${name}-runtime";
+            cargoArtifacts = common-deps-nightly;
             cargoBuildCommand =
               "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown";
             # From parity/wasm-builder
@@ -198,6 +202,59 @@
 
         devnet-deploy = pkgs.callPackage ./.nix/devnet.nix {inherit devnet-input; inherit gce-input; inherit nixpkgs;};
         codespace-base-container = pkgs.callPackage ./.devcontainer/nix/codespace-base-container.nix {inherit system;};
+
+        dali-runtime = mk-optimized-runtime "dali";   
+        picasso-runtime = mk-optimized-runtime "picasso";
+        composable-runtime = mk-optimized-runtime "composable";
+
+         # NOTE: with docs, non nighly fails but nighly fails too...
+          # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
+        composable-node = with packages;
+          crane-stable.buildPackage (common-args // {
+            pnameSuffix = "-node";
+            cargoArtifacts = common-deps;
+            cargoBuildCommand =
+              "cargo build --release --package composable --features builtin-wasm";
+            DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+            PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+            COMPOSABLE_RUNTIME =
+              "${composable-runtime}/lib/runtime.optimized.wasm";
+            installPhase = ''
+              mkdir -p $out/bin
+              cp target/release/composable $out/bin/composable
+            '';
+          });
+
+        composable-node-with-benchmarks = crane-stable.cargoBuild (common-args-with-benchmarks // {
+          pnameSuffix = "-node";
+          cargoArtifacts = common-deps-with-benchmarks;
+          cargoBuildCommand =
+            "cargo build --release --package composable";
+          DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+          PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+          COMPOSABLE_RUNTIME = "${composable-runtime}/lib/runtime.optimized.wasm";
+          installPhase = ''
+            mkdir -p $out/bin
+            cp target/release/composable $out/bin/composable
+          '';
+        });      
+
+        run-with-benchmarks = chain :  pkgs.writeShellScriptBin "run-benchmarks-once" ''
+            ${pkgs.findutils}/bin/find . -name composable
+            which ${composable-node-with-benchmarks}/bin/composable
+            ${composable-node-with-benchmarks}/bin/composable benchmark pallet \
+              --chain="${chain}" \
+              --execution=wasm \
+              --wasm-execution=compiled \
+              --wasm-instantiation-strategy=legacy-instance-reuse \
+              --pallet="*" \
+              --extrinsic='*' \
+              --steps=1 \
+              --repeat=1 \
+              --output=$out \
+              --log error
+          '';
+
       in rec {
         nixopsConfigurations = {
           default = devnet-deploy.machines;
@@ -205,35 +262,17 @@
         packages = rec {
           inherit wasm-optimizer;
           inherit common-deps;
-          dali-runtime = mk-optimized-runtime "dali";
-          picasso-runtime = mk-optimized-runtime "picasso";
-          composable-runtime = mk-optimized-runtime "composable";
-          
+          inherit dali-runtime;
+          inherit picasso-runtime;
+          inherit composable-runtime;
+          inherit composable-node;
+
           price-feed = crane-stable.buildPackage (common-args // {
             pnameSuffix = "-price-feed";
             cargoArtifacts = common-deps;
             cargoBuildCommand = "cargo build --release -p price-feed";
           });
           
-          # NOTE: with docs, non nighly fails but nighly fails too...
-          # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
-          composable-node = with packages;
-            crane-stable.buildPackage (common-args // {
-              pnameSuffix = "-node";
-              cargoArtifacts = common-deps;
-              cargoBuildCommand =
-                "cargo build --release -p composable --features builtin-wasm";
-              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-              COMPOSABLE_RUNTIME =
-                "${composable-runtime}/lib/runtime.optimized.wasm";
-              installPhase = ''
-                mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
-              '';
-            });
-
-
           taplo = pkgs.callPackage ./.nix/taplo.nix { inherit crane-stable;};
           mdbook = pkgs.callPackage ./.nix/mdbook.nix { inherit crane-stable;};
           composable-book = import ./book/default.nix { crane = crane-stable; inherit (pkgs) cargo stdenv; inherit mdbook; };
@@ -311,13 +350,18 @@
           tests = crane-stable.cargoBuild (common-args // {
             pnameSuffix = "-tests";
             cargoArtifacts = common-deps;
-            cargoBuildCommand = "cargo test --workspace --release";
+            cargoBuildCommand = "cargo test --workspace --release";            
           });
+          # TODO: on on next runs and replace bash version with this
+          dali-dev-benchmarks = run-with-benchmarks "dali-dev";
+          picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
+          composable-dev-benchmarks = run-with-benchmarks "composable-dev";
         };
 
 
         devShells = rec {
           developers = mkShell {
+            inputsFrom = builtins.attrValues self.checks;
             buildInputs = with packages; [
               # with nix developers are empowered for local dry run of most ci
               rust-stable
@@ -329,8 +373,8 @@
               nodejs
               nixpkgs-fmt
               nixops
-              google-cloud-sdk
               jq
+              google-cloud-sdk # devs can list container images or binary releases
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
             HISTFILE = toString ./.history;
@@ -346,41 +390,54 @@
             ];
             NIX_PATH = "nixpkgs=${pkgs.path}";
           };
-
-          sre = developers // mkShell {
-            buildInputs = with packages; [                                
-                # TODO: replace fetching binries with approciate cachix builds
-                # TODO: binaries are referenced by git commit hash (so can retarted to git easy)
+            
+          sre = developers.overrideAttrs (oldAttrs : rec  {
+            buildInputs = oldAttrs.buildInputs ++ 
+            [
                 packages.picasso-script
+                # TODO: replace fetching binries with approciate cachix builds
+                # TODO: binaries are referenced by git commit hash (so can retarted to git easy)                
                 packages.dali-script 
-                packages.dali-composable-book # book deploy couuld be secure deployed too                                                
+                packages.dali-composable-book # book deploy couuld be secure deployed too                                                        
             ];
-            NIX_PATH = "nixpkgs=${pkgs.path}";
-          };
+          });       
 
-          developers-xcvm = developers // mkShell {
-            buildInputs = with packages; [
-              # TODO: hasura
-              # TODO: junod client
-              # TODO: junod server
-              # TODO: solc
-              # TODO: script to run all
-              # TODO: compose export
-                packages.dali-script 
-            ];
-            NIX_PATH = "nixpkgs=${pkgs.path}";
-          };
+          # developers-xcvm = developers // mkShell {
+          #   buildInputs = with packages; [
+          #     # TODO: hasura
+          #     # TODO: junod client
+          #     # TODO: junod server
+          #     # TODO: solc
+          #     # TODO: script to run all
+          #     # TODO: compose export
+          #       packages.dali-script 
+          #   ];
+          #   NIX_PATH = "nixpkgs=${pkgs.path}";
+          # };
           
           default = developers;
         };
 
         # Applications runnable with `nix run`
         # https://github.com/NixOS/nix/issues/5560
-        # apps = {
-        #   # nix run .#devnet
-        #   type = "app";
-        #   program = "${packages.devnet}/bin/composable-devnet";
-        # };
+        apps = rec {
+          devnet = {
+              # nix run .#devnet
+              type = "app";
+              program = "${packages.devnet}/bin/composable-devnet";    
+          };
+          # TODO: move list of chains out of here and do fold
+          benchmarks-once-composable = flake-utils.lib.mkApp {
+            drv = run-with-benchmarks "composable-dev";
+          };
+          benchmarks-once-dali = flake-utils.lib.mkApp {
+            drv = run-with-benchmarks "dali-dev";
+          };
+          benchmarks-once-picasso = flake-utils.lib.mkApp {
+            drv = run-with-benchmarks "picasso-dev";
+          };
+          default = devnet;
+        };
       });
     in
       eachSystemOutputs

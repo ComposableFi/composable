@@ -47,6 +47,7 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' }}
         run: make push-composable-sandbox
 
+      # TODO: most of the time of tests is building docker!!! nixify all and run on that
       - name: Push Docker image without latest tag
         if: ${{ github.ref != 'refs/heads/main' }}
         run: make push-composable-sandbox-without-latest-tag

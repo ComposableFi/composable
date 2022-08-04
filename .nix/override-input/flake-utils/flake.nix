@@ -16,6 +16,16 @@
          # maps `packages.foobar` 
          # into `packages.${system}.foobar`
          builtins.foldl' appendSystem {} (builtins.attrNames outputs);
+      # Returns the structure used by `nix app`
+      mkApp =
+        { drv
+        , name ? drv.pname or drv.name
+        , exePath ? drv.passthru.exePath or "/bin/${name}"
+        }:
+        {
+          type = "app";
+          program = "${drv}${exePath}";
+        };         
     };
   };
 }

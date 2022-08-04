@@ -24,6 +24,7 @@ on:
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
+# TODO: migrate most of these to nix
 jobs:
   spellcheck:
     runs-on: ubuntu-latest
@@ -138,7 +139,14 @@ jobs:
         env:
           RUST_BACKTRACE: full
         run: |
-          cargo build --release -p composable --features=runtime-benchmarks
+          cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+          cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+          cargo +nightly build --release -p dali-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+          export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.wasm)
+          export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm)
+          export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.wasm)
+
+          cargo build --release -p composable --features=runtime-benchmarks --features=builtin-wasm
           ./target/release/composable benchmark pallet \
             --chain="${{ matrix.runtime }}" \
             --execution=wasm \

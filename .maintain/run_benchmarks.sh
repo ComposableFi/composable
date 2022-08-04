@@ -13,12 +13,23 @@ VERSIONS_FILES=(
   "runtime/composable/src/weights,composable-dev,composable"
 )
 
-steps=$1
-repeat=$2
+steps=${1:-1}
+repeat=${2:-1}
 
-/home/runner/.cargo/bin/rustup install nightly
-/home/runner/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
-/home/runner/.cargo/bin/cargo build --release -p composable --features=runtime-benchmarks
+/home/$(whoami)/.cargo/bin/rustup install nightly
+/home/$(whoami)/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
+
+# NOTE: dirty hack until nix migration
+cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+cargo +nightly build --release -p dali-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+
+export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.wasm)
+export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm)
+export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.wasm)
+
+# TODO: use nix
+/home/$(whoami)/.cargo/bin/cargo build --release --package composable --features=runtime-benchmarks --features=builtin-wasm
 
 run_benchmarks() {
   OUTPUT=$1
