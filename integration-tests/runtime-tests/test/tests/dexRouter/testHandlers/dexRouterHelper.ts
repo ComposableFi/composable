@@ -49,8 +49,8 @@ export async function createConsProdPool(
     }
   });
   const {
-    data: [resultPoolId, resultPoolAddress]
-  } = await sendAndWaitForSuccess(api, walletId, api.events.pablo.PoolCreated.is, api.tx.pablo.create(pool));
+    data: [resultPoolId]
+  } = await sendAndWaitForSuccess(api, walletId, api.events.sudo.Sudid.is, api.tx.sudo.sudo(api.tx.pablo.create(pool)));
   return resultPoolId.toNumber();
 }
 
@@ -219,7 +219,7 @@ export async function getPoolInfo(api: ApiPromise, poolType: string, poolId: num
   const poolS = "as" + poolType;
   const baseWeight = pool[poolS].baseWeight.toNumber();
   const quoteWeight = pool[poolS].quoteWeight.toNumber();
-  const weights = {baseWeight, quoteWeight}
+  const weights = { baseWeight, quoteWeight };
   return { weights };
 }
 
@@ -289,6 +289,7 @@ export async function transferTokens(
   );
   return accountId.toString();
 }
+
 /***
  * Creates LiquidityBootstrappingPool
  * @param sender
@@ -371,6 +372,7 @@ export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair
   }
   await sendWithBatchAndWaitForSuccess(api, wallet, api.events.pablo.PoolCreated.is, tx, false);
 }
+
 /***
  Creates stableSwapPool
  @param sender: User sending tx- KeyringPair
@@ -407,6 +409,7 @@ export async function createStableSwapPool(
   const resultPoolId = returnedPoolId.toNumber() as number;
   return { resultPoolId };
 }
+
 export async function createMultipleStableSwapPools(api: ApiPromise, wallet: KeyringPair): Promise<void> {
   const tx = [];
   for (let i = 0; i < 50; i++) {
