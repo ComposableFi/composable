@@ -23,7 +23,7 @@ use scale_info::{prelude::format, TypeInfo};
 use sp_std::{prelude::*, str::FromStr};
 use xcm::v1::{Junction, Junctions, MultiLocation};
 
-#[derive(RuntimeDebug, Clone, PartialEq, Eq)]
+#[derive(core::fmt::Debug, Clone, PartialEq, Eq)]
 /// Error definition for module
 pub enum Error {
 	/// Failed to register a new packet

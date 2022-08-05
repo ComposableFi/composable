@@ -42,6 +42,9 @@ pub const PORT_ID: &str = "ping";
 )]
 pub struct SendPingParams {
 	pub data: Vec<u8>,
+	// Revision number for the light client this channel is attached to
+	// Required if the counterparty chain is a parachain
+	pub revision_number: Option<u64>,
 	pub timeout_height: u64,
 	pub timeout_timestamp: u64,
 	pub channel_id: Vec<u8>,
@@ -118,14 +121,14 @@ pub mod pallet {
 			ensure_root(origin)?;
 			let send_packet = SendPacketData {
 				data: params.data,
-				revision_number: None,
+				revision_number: params.revision_number,
 				timeout_height: params.timeout_height,
 				timeout_timestamp: params.timeout_timestamp,
 				port_id: PORT_ID.as_bytes().to_vec(),
 				channel_id: params.channel_id,
 			};
 			T::IbcHandler::send_packet(send_packet).map_err(|e| {
-				log::trace!(target: "pallet_ibc_ping", "[send_ping] error: {:#?}", e);
+				log::trace!(target: "pallet_ibc_ping", "[send_ping] error: {:?}", e);
 				Error::<T>::PacketSendError
 			})?;
 			Self::deposit_event(Event::<T>::PacketSent);
