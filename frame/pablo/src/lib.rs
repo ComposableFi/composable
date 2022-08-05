@@ -25,6 +25,7 @@
 	allow(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
+		clippy::identity_op,
 		clippy::indexing_slicing,
 		clippy::panic,
 		clippy::todo,
@@ -523,7 +524,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::add_liquidity(
+			<Self as Amm>::add_liquidity(
 				&who,
 				pool_id,
 				base_amount,
@@ -547,7 +548,7 @@ pub mod pallet {
 			is_single_asset: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::remove_liquidity(
+			<Self as Amm>::remove_liquidity(
 				&who,
 				pool_id,
 				lp_amount,

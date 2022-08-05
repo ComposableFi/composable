@@ -169,7 +169,7 @@ impl<T: Config> Uniswap<T> {
 			Error::<T>::CannotRespectMinimumRequested
 		);
 
-		T::Assets::transfer(pool.pair.base, who, &pool_account, amount_without_fee, keep_alive)?;
+		T::Assets::transfer(pool.pair.base, who, pool_account, amount_without_fee, keep_alive)?;
 		T::Assets::mint_into(pool.lp_token, who, amount_of_lp_token_to_mint)?;
 
 		Ok((amount, T::Balance::zero(), amount_of_lp_token_to_mint, fee))

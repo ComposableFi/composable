@@ -351,9 +351,8 @@ pub fn calculate_lp_for_single_deposit(
 	let fee = fee.mul_floor(weight.left_from_one().mul_floor(amount));
 	let lp_supply = Decimal::from_u128(lp_supply).expect("convert to decimal");
 	let amount = Decimal::from_u128(amount).expect("convert to decimal");
-	let mut weight = Decimal::from_u32(weight.deconstruct().into()).expect("convert to decimal");
-	let full_perthing =
-		Decimal::from_u32(Permill::one().deconstruct().into()).expect("full_perthing");
+	let mut weight = Decimal::from_u32(weight.deconstruct()).expect("convert to decimal");
+	let full_perthing = Decimal::from_u32(Permill::one().deconstruct()).expect("full_perthing");
 	weight.div_assign(full_perthing);
 	let fee = Decimal::from_u128(fee).expect("convert to decimal");
 	let balance = Decimal::from_u128(balance).expect("convert to decimal");

@@ -91,6 +91,7 @@ fn with_pool<T>(
 	})
 }
 
+#[allow(clippy::too_many_arguments)]
 fn within_sale_with_liquidity<T>(
 	owner: AccountId,
 	sale_duration: BlockNumber,
@@ -300,7 +301,7 @@ mod add_liquidity {
 				pool_id,
 				initial_project_tokens,
 				initial_usdt,
-				0_128,
+				0_u128,
 				false
 			));
 		});
@@ -332,7 +333,7 @@ mod add_liquidity {
 						pool_id,
 						initial_project_tokens,
 						initial_usdt,
-						0_128,
+						0_u128,
 						false
 					),
 					Error::<Test>::InvalidSaleState
