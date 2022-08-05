@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-import { fromChainIdUnit } from "./BondedFinance";
+import { fromChainIdUnit } from "shared";
 
 export const fetchBalanceByAssetId = async (
   api: ApiPromise,

@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-import { fromChainIdUnit } from "picasso/defi/polkadot/pallets/BondedFinance";
+import { fromChainIdUnit } from "./unit";
 import { unwrapNumberOrHex } from "shared";
 
 export const getExistentialDeposit = (api: ApiPromise): BigNumber =>

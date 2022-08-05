@@ -5,7 +5,7 @@ import { AnyComponentMap, EnqueueSnackbar } from "notistack";
 import { Assets } from "@/defi/polkadot/Assets";
 import { getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
-import { toChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
+import { toChainIdUnit } from "shared";
 
 export type TransferHandlerArgs = {
   api: ApiPromise;

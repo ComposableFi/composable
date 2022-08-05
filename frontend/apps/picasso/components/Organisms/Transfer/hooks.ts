@@ -3,7 +3,7 @@ import { useEffect, useMemo } from "react";
 import { getTransferToken } from "@/components/Organisms/Transfer/utils";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import BigNumber from "bignumber.js";
-import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
+import { fromChainIdUnit } from "shared";
 
 export const useExistentialDeposit = () => {
   const tokenId = useStore((state) => state.transfers.tokenId);

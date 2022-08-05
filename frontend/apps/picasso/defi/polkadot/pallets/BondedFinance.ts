@@ -12,6 +12,7 @@ import Executor from "substrate-react/dist/extrinsics/Executor";
 import { getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { fromChainIdUnit } from "shared";
 
 export function createArrayOfLength(length: number): number[] {
   return Array.from(Array(length).keys());
@@ -111,19 +112,6 @@ function getAssets(asset: string): Token[] | Token {
   return Array.isArray(tokens)
     ? tokens.map((token) => TOKENS[token])
     : TOKENS[tokens];
-}
-
-export function toChainIdUnit(value: number | BigNumber) {
-  const bigNumberValue =
-    typeof value === "number" ? new BigNumber(value) : value;
-
-  return bigNumberValue.multipliedBy(10 ** 12);
-}
-
-export function fromChainIdUnit(value: number | BigNumber) {
-  return (typeof value === "number" ? new BigNumber(value) : value).dividedBy(
-    10 ** 12
-  );
 }
 
 function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {

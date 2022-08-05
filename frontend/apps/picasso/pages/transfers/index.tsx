@@ -14,7 +14,7 @@ import { TransferRecipientDropdown } from "@/components/Organisms/Transfer/Trans
 import { TransferFeeDisplay } from "@/components/Organisms/Transfer/TransferFeeDisplay";
 import { TransferKeepAliveSwitch } from "@/components/Organisms/Transfer/TransferKeepAliveSwitch";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
-import { toChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
+import { toChainIdUnit } from "shared";
 import { useExecutor } from "substrate-react";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";

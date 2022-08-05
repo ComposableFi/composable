@@ -1,16 +1,12 @@
 import { MessageAction } from "@/components/Molecules/Snackbar/Action";
 import { Message } from "@/components/Molecules/Snackbar/Message";
 import { themeOverride } from "@/components/Molecules/Snackbar/themeOverride";
-import { SNACKBAR_TIMEOUT_DURATION } from "@/constants";
 import { CheckCircle, Error } from "@mui/icons-material";
 import { Alert, AlertColor, Box } from "@mui/material";
 import { ThemeProvider, useTheme } from "@mui/material/styles";
 import {
   CustomContentProps,
-  OptionsWithExtraProps,
   SharedProps,
-  SnackbarKey,
-  SnackbarMessage,
   useSnackbar,
   VariantType,
 } from "notistack";
@@ -74,7 +70,7 @@ const ThemeResponsiveSnackbarComp = forwardRef<
         setWidth(0);
         closeSnackbar(id);
       }
-    }, [closeSnackbar, id]);
+    }, [closeSnackbar, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     return (
       <ThemeProvider theme={theme}>

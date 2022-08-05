@@ -8,3 +8,4 @@ export * from "./number";
 export * from "./string";
 export * from "./stringToNumber";
 export * from "./defi/getExistentialDeposit";
+export * from "./defi/unit";
