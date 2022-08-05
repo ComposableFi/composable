@@ -82,7 +82,7 @@ describe("StableSwapDex Test Suite", function () {
     it("[SHORT] Given that users have sufficient funds, User1 can create StableswapPool", async function () {
       const result = await createStableSwapPool(
         api,
-        walletId1,
+        sudoKey,
         walletId1,
         baseStableAssetId,
         quoteStableAssetId,
@@ -96,7 +96,7 @@ describe("StableSwapDex Test Suite", function () {
     it("Given that users have sufficient funds, User2 can create StableswapPool", async function () {
       const result = await createStableSwapPool(
         api,
-        walletId2,
+        sudoKey,
         walletId2,
         baseStableAssetId,
         quoteStableAssetId2,
@@ -108,7 +108,7 @@ describe("StableSwapDex Test Suite", function () {
     });
 
     it("Given that users have no funds in their wallets, they can create a StableSwap Pool", async function () {
-      const result = await createStableSwapPool(api, walletId2, walletId2, 140, 150, ampCoefficient + 40000, fee);
+      const result = await createStableSwapPool(api, sudoKey, walletId2, 140, 150, ampCoefficient + 40000, fee);
       expect(result.resultPoolId).to.be.a("number");
     });
   });

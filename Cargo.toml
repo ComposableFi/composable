@@ -63,7 +63,7 @@ lto = true
 # - in case of not official release from trusted soruce, use exact git commit (`rev`) to avoid catching up new version in # case of lock update from less trusted source than our main
 [patch.crates-io]
 # https://github.com/ComposableFi/composable/security/dependabot/35
-traitobject = { git = "https://github.com/reem/rust-traitobject.git", rev = "b3471a15917b2caf5a8b27debb0b4b390fc6634f"}
+traitobject = { git = "https://github.com/reem/rust-traitobject.git", rev = "b3471a15917b2caf5a8b27debb0b4b390fc6634f" }
 # https://github.com/paritytech/parity-scale-codec/issues/348
 parity-scale-codec = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-3.1.2" }
 # parity-scale-codec-derive = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-derive-3.1.2" }
@@ -102,6 +102,7 @@ pallet-child-bounties = { git = "https://github.com/dzmitry-lahoda-forks/substra
 pallet-collective = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-democracy = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-election-provider-multi-phase = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
+pallet-election-provider-support-benchmarking = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-elections-phragmen = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-gilt = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-grandpa = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
@@ -113,6 +114,8 @@ pallet-mmr = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = 
 pallet-mmr-rpc = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-multisig = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-nicks = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
+pallet-nomination-pools = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
+pallet-nomination-pools-benchmarking = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-offences = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-offences-benchmarking = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-preimage = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
@@ -173,6 +176,7 @@ sc-rpc-server = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev
 sc-service = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 sc-state-db = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 sc-sync-state-rpc = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
+sc-sysinfo = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 sc-telemetry = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 sc-tracing = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 sc-tracing-proc-macro = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
@@ -231,41 +235,37 @@ sp-wasm-interface = { git = "https://github.com/dzmitry-lahoda-forks/substrate",
 substrate-build-script-utils = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 substrate-frame-rpc-system = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 substrate-prometheus-endpoint = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
-substrate-wasm-builder = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
-pallet-nomination-pools-benchmarking = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
-pallet-nomination-pools = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
-pallet-election-provider-support-benchmarking = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
-sc-sysinfo = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 substrate-state-trie-migration-rpc = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
+substrate-wasm-builder = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 try-runtime-cli = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 
 
 # https://github.com/paritytech/polkadot/pull/5783
 [patch."https://github.com/paritytech/polkadot"]
-xcm ={ git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-xcm-builder ={ git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-xcm-executor ={ git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-pallet-xcm ={ git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-parachain ={ git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-primitives = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-cli = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-service = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-kusama-runtime =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-core-primitives =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-runtime-parachains =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-runtime-common =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-node-subsystem-types =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-runtime-constants =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-kusama-runtime-constants =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-tracing-gum = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+kusama-runtime = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+kusama-runtime-constants = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
 orchestra = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-node-core-parachains-inherent =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-node-jaeger =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-node-metrics =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-node-network-protocol =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-node-primitives =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-node-subsystem =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-overseer =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-runtime =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-prioritized-metered-channel =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
-polkadot-client =  { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+pallet-xcm = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-cli = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-client = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-core-primitives = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-node-core-parachains-inherent = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-node-jaeger = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-node-metrics = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-node-network-protocol = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-node-primitives = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-node-subsystem = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-node-subsystem-types = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-overseer = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-parachain = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-primitives = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-runtime = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-runtime-common = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-runtime-constants = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-runtime-parachains = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+polkadot-service = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+prioritized-metered-channel = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+tracing-gum = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+xcm = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+xcm-builder = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }
+xcm-executor = { git = "https://github.com/dzmitry-lahoda-forks/polkadot", rev = "5b387256a6876195c9258b02ba4e259bc70f2ef7" }

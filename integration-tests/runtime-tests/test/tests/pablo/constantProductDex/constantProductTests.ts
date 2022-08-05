@@ -87,19 +87,19 @@ describe("tx.constantProductDex Tests", function () {
     this.timeout(2 * 60 * 1000);
 
     it("[SHORT] Given that users are on the chain, users can create a ConstantProduct pool", async function () {
-      poolId = await createConsProdPool(api, walletId1, walletId1, baseAssetId, quoteAssetId, fee, baseWeight);
+      poolId = await createConsProdPool(api, sudoKey, walletId1, baseAssetId, quoteAssetId, fee, baseWeight);
       //verify if the pool is created
       expect(poolId).to.be.a("number");
     });
 
     it("Given that users are on the chain, users can create another ConstantProduct pool with different assetIds", async function () {
-      poolId2 = await createConsProdPool(api, walletId2, walletId2, baseAssetId, baseAsset2, fee, baseWeight);
+      poolId2 = await createConsProdPool(api, sudoKey, walletId2, baseAssetId, baseAsset2, fee, baseWeight);
       //verify if the pool is created
       expect(poolId2).to.be.a("number");
     });
 
     it("Given that users have no active balance on assets, users can create ConstantProduct Pool", async function () {
-      const result = await createConsProdPool(api, walletId2, walletId2, 50, 60, fee, baseWeight);
+      const result = await createConsProdPool(api, sudoKey, walletId2, 50, 60, fee, baseWeight);
       expect(result).to.be.a("number");
     });
 

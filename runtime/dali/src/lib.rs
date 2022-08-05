@@ -37,8 +37,9 @@ use common::{
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
 	BlockNumber, BondOfferId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
-	NativeExistentialDeposit, PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -82,7 +83,6 @@ use frame_support::{
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
-use frame_system::EnsureSigned;
 use scale_info::TypeInfo;
 use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
@@ -464,7 +464,7 @@ parameter_types! {
 	pub const MaxPrePrices: u32 = 40;
 	pub const TwapWindow: u16 = 3;
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
-	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
+	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK as u64;
 }
 
 impl oracle::Config for Runtime {
@@ -784,8 +784,8 @@ parameter_types! {
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = u16;
-	type PositionId = u128;
+	type RewardPoolId = RewardPoolId;
+	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
 	type CurrencyFactory = CurrencyFactory;
@@ -948,7 +948,9 @@ parameter_types! {
   pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
   pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
   pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
-  pub TWAPInterval: u64 = MILLISECS_PER_BLOCK * 10;
+  pub TWAPInterval: u64 = (MILLISECS_PER_BLOCK as u64) * 10;
+  pub const MaxStakingRewardPools: u32 = 10;
+  pub const MillisecsPerBlock: u32 = MILLISECS_PER_BLOCK;
 }
 
 impl pablo::Config for Runtime {
@@ -965,12 +967,19 @@ impl pablo::Config for Runtime {
 	type LbpMaxSaleDuration = LbpMaxSaleDuration;
 	type LbpMaxInitialWeight = LbpMaxInitialWeight;
 	type LbpMinFinalWeight = LbpMinFinalWeight;
-	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
+	type PoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	// TODO: consider making it is own origin
 	type EnableTwapOrigin = EnsureRootOrHalfNativeCouncil;
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
+	type RewardPoolId = RewardPoolId;
+	type MaxStakingRewardPools = MaxStakingRewardPools;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type ManageStaking = StakingRewards;
+	type ProtocolStaking = StakingRewards;
+	type MsPerBlock = MillisecsPerBlock;
 }
 
 parameter_types! {

@@ -1,7 +1,9 @@
-use crate::staking::lock::{Lock, LockConfig};
-use codec::{Decode, Encode};
+use crate::{
+	staking::lock::{Lock, LockConfig},
+	time::DurationSeconds,
+};
 
-use crate::time::DurationSeconds;
+use codec::{Decode, Encode};
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
@@ -39,7 +41,29 @@ pub struct Reward<AssetId, Balance> {
 
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
-	pub reward_rate: Perbill,
+	pub reward_rate: RewardRate<Balance>,
+
+	/// The last time the reward was updated, in seconds.
+	pub last_updated_timestamp: u64,
+}
+
+#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
+pub struct RewardRate<Balance> {
+	/// The period that the rewards are handed out in.
+	pub period: RewardRatePeriod,
+	/// The amount that is rewarded each period.
+	pub amount: Balance,
+}
+
+impl<Balance> RewardRate<Balance> {
+	pub fn per_second<B: Into<Balance>>(amount: B) -> Self {
+		Self { period: RewardRatePeriod::PerSecond, amount: amount.into() }
+	}
+}
+
+#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
+pub enum RewardRatePeriod {
+	PerSecond,
 }
 
 /// Abstraction over the asset to reduction map stored for staking.
@@ -58,6 +82,7 @@ impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
 			total_dilution_adjustment: Zero::zero(),
 			max_rewards: reward_config.max_rewards,
 			reward_rate: reward_config.reward_rate,
+			last_updated_timestamp: 0,
 		}
 	}
 }
@@ -102,7 +127,7 @@ pub struct RewardConfig<AssetId, Balance> {
 
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
-	pub reward_rate: Perbill,
+	pub reward_rate: RewardRate<Balance>,
 }
 
 pub type RewardConfigs<AssetId, Balance, Limit> =
@@ -151,6 +176,28 @@ pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
 
 	/// The lock period for the stake.
 	pub lock: Lock,
+}
+
+/// Trait to provide interface to manage staking reward pool.
+pub trait ManageStaking {
+	type AccountId;
+	type AssetId;
+	type BlockNumber;
+	type Balance;
+	type RewardConfigsLimit;
+	type StakingDurationPresetsLimit;
+	type RewardPoolId;
+
+	/// Create a staking reward pool from configurations passed as inputs.
+	fn create_staking_pool(
+		pool_config: RewardPoolConfiguration<
+			Self::AccountId,
+			Self::AssetId,
+			Self::BlockNumber,
+			RewardConfigs<Self::AssetId, Self::Balance, Self::RewardConfigsLimit>,
+			StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
+		>,
+	) -> Result<Self::RewardPoolId, DispatchError>;
 }
 
 /// implemented by instances which know their share of something bigger

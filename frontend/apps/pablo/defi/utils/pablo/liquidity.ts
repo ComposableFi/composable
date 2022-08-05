@@ -78,7 +78,7 @@ export async function fetchAndUpdatePoolLiquidity(
   }
 }
 
-export function calcaulateProvidedLiquidity(
+export function calculateProvidedLiquidity(
   transactions: {
     baseAssetId: string;
     baseAssetAmount: string;
