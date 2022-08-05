@@ -29,7 +29,7 @@ fn create_stable_swap_pool<T: Config>(
 	pair: CurrencyPair<T::AssetId>,
 ) -> T::PoolId {
 	let stable_swap_pool_init =
-		stable_swap_init_config::<T>(owner.clone(), pair, 1000_u16, Permill::from_percent(1));
+		stable_swap_init_config::<T>(owner, pair, 1000_u16, Permill::from_percent(1));
 	Pablo::<T>::do_create_pool(stable_swap_pool_init).expect("impossible; qed;")
 }
 
@@ -38,7 +38,7 @@ fn get_lp_token<T: Config>(pool_id: T::PoolId) -> T::AssetId {
 	match pool_info {
 		StableSwap(pool) => pool.lp_token,
 		ConstantProduct(pool) => pool.lp_token,
-		LiquidityBootstrapping(_) => panic!("Not implemented"),
+		LiquidityBootstrapping(_) => unimplemented!(),
 	}
 }
 
@@ -52,22 +52,22 @@ benchmarks! {
 		let amplification_factor = 100_u16;
 		let fee = Permill::from_percent(1);
 		let protocol_fee = Permill::from_percent(1);
-		let stable_swap_pool_init = stable_swap_init_config::<T>(owner.clone(), pair, amplification_factor, fee);
+		let stable_swap_pool_init = stable_swap_init_config::<T>(owner, pair, amplification_factor, fee);
 	  } : _(RawOrigin::Root, stable_swap_pool_init)
 
 	create_lbp {
-		let unit = 1_000_000_000_000u128;
+		let unit = 1_000_000_000_000_u128;
 		let project_token: T::AssetId = 9999.into();
 		let usdt: T::AssetId = 1.into();
 		let pair = CurrencyPair::new(project_token, usdt);
 		let owner: T::AccountId = whitelisted_caller();
 		let fee = Permill::from_perthousand(1);
 		let pool = LiquidityBootstrappingPoolInfo {
-			owner: owner.clone(),
+			owner,
 			pair,
 			sale: Sale {
-				start: T::BlockNumber::from(100u32),
-				end: T::BlockNumber::from(21600u32 + 100u32),
+				start: T::BlockNumber::from(100_u32),
+				end: T::BlockNumber::from(21600_u32 + 100_u32),
 				initial_weight: Permill::from_percent(92),
 				final_weight: Permill::from_percent(50),
 			},
@@ -94,7 +94,7 @@ benchmarks! {
 	  }: _(RawOrigin::Signed(owner), pool_id, initial_usdc, initial_usdt, 0.into(), false)
 
 	add_liquidity_lbp {
-		let unit = 1_000_000_000_000u128;
+		let unit = 1_000_000_000_000_u128;
 		let project_token: T::AssetId = 9999.into();
 		let usdt: T::AssetId = 1.into();
 		let pair = CurrencyPair::new(project_token, usdt);
@@ -104,8 +104,8 @@ benchmarks! {
 			owner: owner.clone(),
 			pair,
 			sale: Sale {
-				start: T::BlockNumber::from(100u32),
-				end: T::BlockNumber::from(21600u32 + 100u32),
+				start: T::BlockNumber::from(100_u32),
+				end: T::BlockNumber::from(21600_u32 + 100_u32),
 				initial_weight: Permill::from_percent(92),
 				final_weight: Permill::from_percent(50),
 			},
@@ -152,20 +152,20 @@ benchmarks! {
 	  }: _(RawOrigin::Signed(owner), pool_id, lp_amount, (0_u128).into(), (0_u128).into(), false)
 
 	remove_liquidity_lbp {
-		let unit = 1_000_000_000_000u128;
+		let unit = 1_000_000_000_000_u128;
 		let project_token: T::AssetId = 9999.into();
 		let usdt: T::AssetId = 1.into();
 		let pair = CurrencyPair::new(project_token, usdt);
 		let owner: T::AccountId = whitelisted_caller();
 		let fee = Permill::from_perthousand(1);
-		let start = T::BlockNumber::from(100u32);
-		let end = T::BlockNumber::from(21600u32 + 100u32);
+		let start = T::BlockNumber::from(100_u32);
+		let end = T::BlockNumber::from(21600_u32 + 100_u32);
 		let pool = LiquidityBootstrappingPoolInfo {
 			owner: owner.clone(),
 			pair,
 			sale: Sale {
-				start: start,
-				end: end,
+				start,
+				end,
 				initial_weight: Permill::from_percent(92),
 				final_weight: Permill::from_percent(50),
 			},

@@ -978,7 +978,7 @@ proptest! {
 
 	#[test]
 	fn weights_sum_to_one(
-		base_weight_in_percent in 1..100u32,
+		base_weight_in_percent in 1..100_u32,
 	) {
 		new_test_ext().execute_with(|| {
 			let pool_init_config = PoolInitConfiguration::ConstantProduct {

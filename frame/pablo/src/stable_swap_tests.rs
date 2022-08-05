@@ -145,20 +145,15 @@ fn test_dex_demo() {
 
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 
-		assert_ok!(acceptable_computation_error(
-			bob_usdc.into(),
-			swap_usdc.into(),
-			precision,
-			epsilon
-		));
+		assert_ok!(acceptable_computation_error(bob_usdc, swap_usdc, precision, epsilon));
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
 		assert_ok!(Pablo::remove_liquidity(Origin::signed(ALICE), pool_id, lp, 0, 0, false));
 
 		// Alice should get back a different amount of tokens.
 		let alice_usdc = Tokens::balance(USDC, &ALICE);
 		let alice_usdt = Tokens::balance(USDT, &ALICE);
-		assert_ok!(default_acceptable_computation_error(alice_usdc.into(), initial_usdc.into()));
-		assert_ok!(default_acceptable_computation_error(alice_usdt.into(), initial_usdt.into()));
+		assert_ok!(default_acceptable_computation_error(alice_usdc, initial_usdc));
+		assert_ok!(default_acceptable_computation_error(alice_usdt, initial_usdt));
 	});
 }
 
@@ -423,7 +418,7 @@ fn fees() {
 //
 // - test high slippage scenario
 // trying to exchange a large value, will result in high_slippage scenario
-// there should be substential difference between expected exchange value and received amount.
+// there should be substantial difference between expected exchange value and received amount.
 #[test]
 fn high_slippage() {
 	new_test_ext().execute_with(|| {
@@ -439,7 +434,7 @@ fn high_slippage() {
 			Permill::zero(),
 			Permill::zero(),
 		);
-		let bob_usdt = 1_000_000_000_00_u128 * unit;
+		let bob_usdt = 100_000_000_000_u128 * unit;
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 

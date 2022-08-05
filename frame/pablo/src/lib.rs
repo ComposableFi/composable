@@ -25,6 +25,7 @@
 	allow(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
+		clippy::identity_op,
 		clippy::indexing_slicing,
 		clippy::panic,
 		clippy::todo,
