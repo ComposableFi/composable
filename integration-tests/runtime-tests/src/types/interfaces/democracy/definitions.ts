@@ -1,7 +1,16 @@
 export default {
   rpc: {},
   types: {
-    PalletDemocracyVoteVoting: "Null",
+    PalletDemocracyVoteVoting: {
+      direct: {
+        votes: "Vec<Null>",
+        delegations: {
+          votes: "u128",
+          capital: "u128",
+          prior: "Null"
+        }
+      }
+    },
     PalletDemocracyVoteThreshold: "Null",
     PalletDemocracyPreimageStatus: "Null",
     PalletDemocracyReferendumInfo: "Null",
