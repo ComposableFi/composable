@@ -9,6 +9,8 @@ import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import BN from "bn.js";
 import exp from "constants";
 import { before } from "mocha";
+import { PalletDemocracyPreimageStatus } from "@composable/types/interfaces";
+import { Option } from "@polkadot/types-codec";
 
 const getProposalHash = (api: ApiPromise, proposal) => {
   return null;
@@ -80,17 +82,23 @@ describe.only("[SHORT] Democracy Tests", function () {
   // ToDo: Change to hashing a function directly for better readability.
   const proposalHashOne = "0xcbf6e77875268d88955338afb3538de93bb8cdb0caebbec60e9a0936cb1076b4";
 
-  // Proposal to mint 999_999_999 KSM into Alice.
+  // Proposal to mint 999_999_999 KSM into Alice. Used for external proposal test.
   const proposalHashTwo = "0x0a4bbd9f97fc9303c331e548b6f3e17d759cb9c52386f07384ff5e284b8b79a8";
+
+  // Proposal to mint 999_999_999 KSM into Dave. Used for external proposal default test.
+  const proposalHashThree = "0x4696077c56d369271d482e769036e543187551b5044dee8cca8cee344680ac60";
 
   // Proposal to set the chains timestamp to 0. Will be blacklisted by sudo.
   const proposalToBlackList = "0x5a121beb1148b31fc56f3d26f80800fd9eb4a90435a72d3cc74c42bc72bca9b8";
 
-  // Proposal to move all sender funds to Eve. Will be blacklisted by sudo.
+  // Proposal to move all sender funds to Eve. Will be externally proposed, vetoed and blacklisted by sudo.
   const externalProposalToVetoAndBlacklist = "0xdc3ea549546a1fff28397c102f9471bbf6140cb82ebd8e027e55c3275663ece9";
 
   // Proposal to mint 999_999_999_999 PICA into Bob. The preimage will be submitted and then reaped from chain.
   const proposalToReapPreImage = "0x8ebd35936272482c15bf7f151c994fa83bc70212036d061333eef67bae317ee3";
+
+  // Proposal to burn 999_999_999_999 PICA from Dave. To be emergency cancelled.
+  const proposalToEmergencyCancel = "0x8184fbd37fd31f72c8938e3779773ab6261de4ab51478c717ea758efec0dcf2a";
 
   before("Setting up the tests", async function () {
     this.timeout(60 * 1000);
@@ -148,18 +156,114 @@ describe.only("[SHORT] Democracy Tests", function () {
           }
           return e;
         })
-        .then(({ data: [resultProposalHash, resultWho, resultDeposit] }) => {
+        .then(async function ({ data: [resultProposalHash, resultWho, resultDeposit] }) {
+          await waitForBlocks(api);
           expect(resultWho.toString()).to.be.equal(api.createType("AccountId32", walletAlice.publicKey).toString());
           console.debug(resultProposalHash.toString());
           console.debug(resultWho.toString());
           console.debug(resultDeposit.toString());
+          const preImageResult = <Option<PalletDemocracyPreimageStatus>>(
+            await api.query.democracy.preimages(resultProposalHash)
+          );
+          expect(preImageResult.unwrapOr("ERROR")).to.be.not.be.equal("ERROR");
         });
     });
   });
 
-  describe("democracy.noteImminentPreimage", function () {});
-  describe("democracy.noteImminentPreimageOperational", function () {});
-  describe("democracy.notePreimageOperational", function () {});
+  describe("democracy.notePreimageOperational", function () {
+    it("A user can submit a preimage for a proposal", async function () {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      await sendAndWaitForSuccess(
+        api,
+        walletAlice,
+        api.events.democracy.PreimageNoted.is,
+        api.tx.democracy.notePreimageOperational(proposalHashOne)
+      )
+        .catch(e => {
+          if (e.message.includes("Preimage already noted")) {
+            console.warn("      Skipping test: Preimage already noted!");
+            this.skip();
+          }
+          return e;
+        })
+        .then(async function ({ data: [resultProposalHash, resultWho, resultDeposit] }) {
+          await waitForBlocks(api);
+          expect(resultWho.toString()).to.be.equal(api.createType("AccountId32", walletAlice.publicKey).toString());
+          console.debug(resultProposalHash.toString());
+          console.debug(resultWho.toString());
+          console.debug(resultDeposit.toString());
+          const preImageResult = <Option<PalletDemocracyPreimageStatus>>(
+            await api.query.democracy.preimages(resultProposalHash)
+          );
+          expect(preImageResult.unwrapOr("ERROR")).to.be.not.be.equal("ERROR");
+        });
+    });
+  });
+
+  describe("democracy.noteImminentPreimage", function () {
+    it("A user can submit an imminent preimage for a proposal", async function () {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      await sendAndWaitForSuccess(
+        api,
+        walletAlice,
+        api.events.democracy.PreimageNoted.is,
+        api.tx.democracy.noteImminentPreimage(proposalHashOne)
+      )
+        .catch(e => {
+          if (e.message.includes("Preimage already noted")) {
+            console.warn("      Skipping test: Preimage already noted!");
+            this.skip();
+          }
+          return e;
+        })
+        .then(async function ({ data: [resultProposalHash, resultWho, resultDeposit] }) {
+          await waitForBlocks(api);
+          expect(resultWho.toString()).to.be.equal(api.createType("AccountId32", walletAlice.publicKey).toString());
+          console.debug(resultProposalHash.toString());
+          console.debug(resultWho.toString());
+          console.debug(resultDeposit.toString());
+          const preImageResult = <Option<PalletDemocracyPreimageStatus>>(
+            await api.query.democracy.preimages(resultProposalHash)
+          );
+          expect(preImageResult.unwrapOr("ERROR")).to.be.not.be.equal("ERROR");
+        });
+    });
+  });
+  describe("democracy.noteImminentPreimageOperational", function () {
+    it("A user can submit a preimage for a proposal", async function () {
+      if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1) this.skip();
+      this.timeout(2 * 60 * 1000);
+
+      await sendAndWaitForSuccess(
+        api,
+        walletAlice,
+        api.events.democracy.PreimageNoted.is,
+        api.tx.democracy.noteImminentPreimageOperational(proposalHashOne)
+      )
+        .catch(e => {
+          if (e.message.includes("Preimage already noted")) {
+            console.warn("      Skipping test: Preimage already noted!");
+            this.skip();
+          }
+          return e;
+        })
+        .then(async function ({ data: [resultProposalHash, resultWho, resultDeposit] }) {
+          await waitForBlocks(api);
+          expect(resultWho.toString()).to.be.equal(api.createType("AccountId32", walletAlice.publicKey).toString());
+          console.debug(resultProposalHash.toString());
+          console.debug(resultWho.toString());
+          console.debug(resultDeposit.toString());
+          const preImageResult = <Option<PalletDemocracyPreimageStatus>>(
+            await api.query.democracy.preimages(resultProposalHash)
+          );
+          expect(preImageResult.unwrapOr("ERROR")).to.be.not.be.equal("ERROR");
+        });
+    });
+  });
 
   describe("democracy.propose", function () {
     it("A user can propose a previously submitted preimage", async function () {
@@ -184,36 +288,34 @@ describe.only("[SHORT] Democracy Tests", function () {
   describe("democracy.externalPropose", function () {
     it("Sudo can propose an external proposal", async function () {
       this.timeout(2 * 60 * 1000);
-      const propCountBefore = await api.query.democracy.publicPropCount();
       const {
         data: [result]
       } = await sendAndWaitForSuccess(
         api,
         walletAlice,
         api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(api.tx.democracy.externalPropose(proposalHashOne))
+        api.tx.sudo.sudo(api.tx.democracy.externalPropose(proposalHashTwo))
       );
-      const propCountAfter = await api.query.democracy.publicPropCount();
       expect(result.isOk).to.be.true;
-      expect(propCountAfter).to.be.bignumber.equal(propCountBefore.addn(1));
-      console.debug(result.toString());
+      // ToDo: Find better verification!
+      const lastProposalWasExternal = await api.query.democracy.lastTabledWasExternal();
+      expect(lastProposalWasExternal).to.be.true;
     });
+    7;
   });
   describe("democracy.externalProposeDefault", function () {
     it("Sudo can propose an external proposal", async function () {
       this.timeout(2 * 60 * 1000);
-      const propCountBefore = await api.query.democracy.publicPropCount();
       const {
         data: [result]
       } = await sendAndWaitForSuccess(
         api,
         walletAlice,
         api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(api.tx.democracy.externalProposeDefault(proposalHashOne))
+        api.tx.sudo.sudo(api.tx.democracy.externalProposeDefault(proposalHashThree))
       );
-      const propCountAfter = await api.query.democracy.publicPropCount();
+      // ToDo: Find better verification!
       expect(result.isOk).to.be.true;
-      expect(propCountAfter).to.be.bignumber.equal(propCountBefore.addn(1));
       console.debug(result.toString());
     });
   });
@@ -312,10 +414,10 @@ describe.only("[SHORT] Democracy Tests", function () {
       } = await sendAndWaitForSuccess(
         api,
         walletAlice,
-        api.events.sudo.Sudid.is,
+        api.events.democracy.Cancelled.is,
         api.tx.sudo.sudo(api.tx.democracy.cancelProposal(proposalId))
       );
-      expect(result.isOk).to.be.true;
+      expect(result).to.not.be.an("Error");
     });
   });
 
@@ -420,14 +522,29 @@ describe.only("[SHORT] Democracy Tests", function () {
             })
           )
         )
-      ]).then(function ([result1, result2, result3, result4, result5]) {
+      ]).then(function ([result1, result2, result3, result4, result5, result6]) {
         console.debug(result1.toString());
         console.debug(result2.toString());
         console.debug(result3.toString());
+        console.debug(result4.toString());
+        console.debug(result5.toString());
+        console.debug(result6.toString());
         return [result1, result2, result3];
       });
-      const x = await api.query.democracy.votingOf(proposalId2);
-      console.debug(x.toString());
+      await waitForBlocks(api);
+      const voteWalletAlice = await api.query.democracy.votingOf(walletAlice.publicKey);
+      const voteWalletBob = await api.query.democracy.votingOf(walletBob.publicKey);
+      const voteWalletCharlie = await api.query.democracy.votingOf(walletCharlie.publicKey);
+      const voteWalletDave = await api.query.democracy.votingOf(walletDave.publicKey);
+      const voteWalletEve = await api.query.democracy.votingOf(walletEve.publicKey);
+      const voteWalletFerdie = await api.query.democracy.votingOf(walletFerdie.publicKey);
+
+      console.debug(voteWalletAlice.toString());
+      console.debug(voteWalletBob.toString());
+      console.debug(voteWalletCharlie.toString());
+      console.debug(voteWalletDave.toString());
+      console.debug(voteWalletEve.toString());
+      console.debug(voteWalletFerdie.toString());
     });
   });
 
@@ -444,9 +561,11 @@ describe.only("[SHORT] Democracy Tests", function () {
         api.tx.democracy.removeVote(proposalId2)
       );
       expect(result).to.be.not.an("Error");
+      const voteWalletFerdie = await api.query.democracy.votingOf(walletFerdie.publicKey);
+      console.debug(voteWalletFerdie.toString());
     });
   });
-  describe("democracy.removeOtherVote", function () {
+  describe("!!!!democracy.removeOtherVote", function () {
     it("Sudo can remove other users' votes", async function () {
       this.timeout(2 * 60 * 1000);
 
@@ -455,10 +574,12 @@ describe.only("[SHORT] Democracy Tests", function () {
       } = await sendAndWaitForSuccess(
         api,
         walletAlice,
-        api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(api.tx.democracy.removeOtherVote(walletEve.address, proposalId2))
+        api.events.democracy.Vetoed.is,
+        api.tx.democracy.removeOtherVote(walletEve.address, proposalId2)
       );
-      expect(result.isOk).to.be.true;
+      expect(result).to.be.not.an("Error");
+      const voteWalletEve = await api.query.democracy.votingOf(walletEve.publicKey);
+      console.debug(voteWalletEve.toString());
     });
   });
 
@@ -489,6 +610,7 @@ describe.only("[SHORT] Democracy Tests", function () {
         api.tx.sudo.sudo(api.tx.democracy.fastTrack(proposalHashOne, 4, 0))
       );
       expect(result.isOk).to.be.true;
+      await waitForBlocks(api);
     });
 
     it("Sudo can cancel a referendum", async function () {
@@ -514,8 +636,8 @@ describe.only("[SHORT] Democracy Tests", function () {
       } = await sendAndWaitForSuccess(
         api,
         walletAlice,
-        api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(api.tx.democracy.externalProposeMajority(proposalHashOne))
+        api.events.democracy.Proposed.is,
+        api.tx.sudo.sudo(api.tx.democracy.externalProposeMajority(proposalToEmergencyCancel))
       );
       expect(proposalId).to.not.be.an("Error");
       emergencyCancelId = proposalId.toNumber();
@@ -525,7 +647,7 @@ describe.only("[SHORT] Democracy Tests", function () {
         api,
         walletAlice,
         api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(api.tx.democracy.fastTrack(proposalHashOne, 4, 0))
+        api.tx.sudo.sudo(api.tx.democracy.fastTrack(proposalToEmergencyCancel, 4, 0))
       );
       expect(result.isOk).to.be.true;
       await waitForBlocks(api);
@@ -543,6 +665,8 @@ describe.only("[SHORT] Democracy Tests", function () {
         api.tx.sudo.sudo(api.tx.democracy.emergencyCancel(emergencyCancelId))
       );
       expect(result.isOk).to.be.true;
+      const cancelResult = await api.query.democracy.cancellations(proposalToEmergencyCancel);
+      expect(cancelResult).to.be.true;
     });
   });
 
@@ -557,6 +681,8 @@ describe.only("[SHORT] Democracy Tests", function () {
         api.events.democracy.PreimageNoted.is,
         api.tx.democracy.notePreimage(proposalToReapPreImage)
       );
+      expect(result).to.not.be.an("Error");
+      await waitForBlocks(api);
     });
     it("Sudo can reap a preimage", async function () {
       this.timeout(2 * 60 * 1000);
@@ -565,10 +691,11 @@ describe.only("[SHORT] Democracy Tests", function () {
       } = await sendAndWaitForSuccess(
         api,
         walletAlice,
-        api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(api.tx.democracy.reapPreimage(proposalToReapPreImage, 0))
+        api.events.democracy.PreimageReaped.is,
+        api.tx.democracy.reapPreimage(proposalToReapPreImage, 0)
       );
-      expect(result.isOk).to.be.true;
+      expect(result).to.not.be.an("Error");
+      // ToDo: Improve verification!
     });
   });
   describe("democracy.unlock", function () {
@@ -588,15 +715,25 @@ describe.only("[SHORT] Democracy Tests", function () {
   describe("democracy.vetoExternal", function () {
     before("Create external proposal", async function () {});
 
-    it("Sudo can veto an external proposal", async function () {
+    it("!!! Sudo can veto an external proposal", async function () {
       this.timeout(2 * 60 * 1000);
+
+      const {
+        data: [firstProposalResult]
+      } = await sendAndWaitForSuccess(
+        api,
+        walletAlice,
+        api.events.democracy.Proposed.is,
+        api.tx.democracy.externalPropose(externalProposalToVetoAndBlacklist)
+      );
+      expect(firstProposalResult).to.not.be.an("Error");
       const {
         data: [result]
       } = await sendAndWaitForSuccess(
         api,
         walletAlice,
         api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(api.tx.democracy.vetoExternal(externalProposalToVetoAndBlacklist))
+        api.tx.democracy.vetoExternal(externalProposalToVetoAndBlacklist)
       );
       expect(result.isOk).to.be.true;
       const {
