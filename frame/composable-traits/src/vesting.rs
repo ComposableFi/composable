@@ -64,8 +64,11 @@ pub enum VestingWindow<BlockNumber, Moment> {
 )]
 #[scale_info(skip_type_params(MaxVestingSchedules))]
 pub enum VestingScheduleIdSet<Id: Clone + Eq + PartialEq + Debug, MaxVestingSchedules: Get<u32>> {
+	/// Every vesting schedule for a given account/asset pair
 	All,
+	/// One vesting schedule
 	One(Id),
+	/// Multiple vesting schedules
 	Many(BoundedVec<Id, MaxVestingSchedules>),
 }
 
