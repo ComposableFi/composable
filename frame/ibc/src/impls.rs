@@ -603,7 +603,12 @@ where
 					None
 				}
 			})
-			.ok_or(IbcHandlerError::ConnectionIdError)?;
+			.ok_or(IbcHandlerError::ConnectionIdError {
+				msg: Some(format!(
+					"Failed to find a connection id for channel_id {:?}",
+					String::from_utf8(channel_id.clone()).ok()
+				)),
+			})?;
 
 		let client_id = ConnectionClient::<T>::iter()
 			.find_map(
@@ -615,13 +620,22 @@ where
 					}
 				},
 			)
-			.ok_or(IbcHandlerError::ClientIdError)?;
+			.ok_or(IbcHandlerError::ClientIdError {
+				msg: Some("Failed to find client id for connection id".to_string()),
+			})?;
 		let client_id =
-			client_id_from_bytes(client_id).map_err(|_| IbcHandlerError::DecodingError)?;
+			client_id_from_bytes(client_id).map_err(|_| IbcHandlerError::DecodingError {
+				msg: Some("Failed to decode client id from bytes".to_string()),
+			})?;
 		let client_state =
-			ClientStates::<T>::get(&client_id).ok_or(IbcHandlerError::ClientStateError)?;
-		let client_state = AnyClientState::decode_vec(&client_state)
-			.map_err(|_| IbcHandlerError::ClientStateError)?;
+			ClientStates::<T>::get(&client_id).ok_or(IbcHandlerError::ClientStateError {
+				msg: Some(format!("Falied to get client state for {}", client_id)),
+			})?;
+		let client_state = AnyClientState::decode_vec(&client_state).map_err(|_| {
+			IbcHandlerError::ClientStateError {
+				msg: Some(format!("Failed to decode client state for {}", client_id)),
+			}
+		})?;
 		Ok(client_state.chain_id().version())
 	}
 
@@ -636,23 +650,41 @@ where
 		};
 		let mut ctx = Context::<T>::new();
 		let source_port =
-			port_id_from_bytes(port_id).map_err(|_| IbcHandlerError::ChannelOrPortError)?;
+			port_id_from_bytes(port_id).map_err(|_| IbcHandlerError::ChannelOrPortError {
+				msg: Some("Failed to decode source port_id from bytes".to_string()),
+			})?;
 		let source_channel =
-			channel_id_from_bytes(channel_id).map_err(|_| IbcHandlerError::ChannelOrPortError)?;
-		let next_seq_send = NextSequenceSend::<T>::get(source_port.clone(), source_channel)
-			.ok_or(IbcHandlerError::SendPacketError)?;
+			channel_id_from_bytes(channel_id).map_err(|_| IbcHandlerError::ChannelOrPortError {
+				msg: Some("Failed to decode source channel_id from bytes".to_string()),
+			})?;
+		let next_seq_send = NextSequenceSend::<T>::get(source_port.clone(), source_channel).ok_or(
+			IbcHandlerError::SendPacketError {
+				msg: Some(format!("Failed to get next_sequence_send for {}", source_channel)),
+			},
+		)?;
 		let sequence = Sequence::from(next_seq_send);
-		let source_channel_end = ctx
-			.channel_end(&(source_port.clone(), source_channel))
-			.map_err(|_| IbcHandlerError::ChannelOrPortError)?;
+		let source_channel_end =
+			ctx.channel_end(&(source_port.clone(), source_channel)).map_err(|_| {
+				IbcHandlerError::ChannelOrPortError {
+					msg: Some(format!(
+						"Failed to fetch Channel end for channel {} from storage",
+						source_channel
+					)),
+				}
+			})?;
 
 		let destination_port = source_channel_end.counterparty().port_id().clone();
-		let destination_channel = *source_channel_end
-			.counterparty()
-			.channel_id()
-			.ok_or(IbcHandlerError::ChannelOrPortError)?;
+		let destination_channel = *source_channel_end.counterparty().channel_id().ok_or(
+			IbcHandlerError::ChannelOrPortError {
+				msg: Some(
+					"Failed to find counterparty channel_id in source channel end".to_string(),
+				),
+			},
+		)?;
 		let timestamp = ibc::timestamp::Timestamp::from_nanoseconds(data.timeout_timestamp)
-			.map_err(|_| IbcHandlerError::TimestampOrHeightError)?;
+			.map_err(|_| IbcHandlerError::TimestampOrHeightError {
+				msg: Some("Failed to convert timeout timestamp".to_string()),
+			})?;
 		let packet = Packet {
 			sequence,
 			source_port,
@@ -666,9 +698,9 @@ where
 
 		let send_packet_result =
 			ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet)
-				.map_err(|_| IbcHandlerError::SendPacketError)?;
+				.map_err(|e| IbcHandlerError::SendPacketError { msg: Some(e.to_string()) })?;
 		ctx.store_packet_result(send_packet_result.result)
-			.map_err(|_| IbcHandlerError::SendPacketError)?;
+			.map_err(|e| IbcHandlerError::SendPacketError { msg: Some(e.to_string()) })?;
 		Self::deposit_event(send_packet_result.events.into());
 		Ok(())
 	}
@@ -678,14 +710,16 @@ where
 		channel_end: ChannelEnd,
 	) -> Result<ChannelId, IbcHandlerError> {
 		let mut ctx = crate::routing::Context::<T>::new();
-		let channel_counter =
-			ctx.channel_counter().map_err(|_| IbcHandlerError::ChannelInitError)?;
+		let channel_counter = ctx
+			.channel_counter()
+			.map_err(|e| IbcHandlerError::ChannelInitError { msg: Some(e.to_string()) })?;
 		let channel_id = ChannelId::new(channel_counter);
 		// Signer does not matter in this case
 		let value = MsgChannelOpenInit {
 			port_id,
 			channel: channel_end,
-			signer: Signer::from_str(MODULE_ID).map_err(|_| IbcHandlerError::ChannelInitError)?,
+			signer: Signer::from_str(MODULE_ID)
+				.map_err(|_| IbcHandlerError::ChannelInitError { msg: None })?,
 		}
 		.encode_vec();
 		let msg = ibc_proto::google::protobuf::Any {
@@ -696,7 +730,7 @@ where
 			_,
 			crate::host_functions::HostFunctions<T>,
 		>(&mut ctx, msg)
-		.map_err(|_| IbcHandlerError::ChannelInitError)?;
+		.map_err(|e| IbcHandlerError::ChannelInitError { msg: Some(e.to_string()) })?;
 		Self::deposit_event(res.events.into());
 		Ok(channel_id)
 	}
@@ -709,7 +743,7 @@ where
 		let mut handler_output = HandlerOutputBuilder::default();
 		let mut ctx = Context::<T>::default();
 		send_transfer::<_, _>(&mut ctx, &mut handler_output, msg)
-			.map_err(|_| IbcHandlerError::SendTransferError)?;
+			.map_err(|e| IbcHandlerError::SendTransferError { msg: Some(e.to_string()) })?;
 		let result = handler_output.with_result(());
 		Self::deposit_event(result.events.into());
 		Ok(())
@@ -720,11 +754,15 @@ where
 		packet: &Packet,
 	) -> Result<(), IbcHandlerError> {
 		let mut ctx = Context::<T>::default();
-		let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
-			.map_err(|_| IbcHandlerError::DecodingError)?;
+		let packet_data: PacketData =
+			serde_json::from_slice(packet.data.as_slice()).map_err(|e| {
+				IbcHandlerError::DecodingError {
+					msg: Some(format!("Failed to decode packet data {:?}", e)),
+				}
+			})?;
 		process_recv_packet(&ctx, output, packet, packet_data)
 			.and_then(|write_fn| write_fn(&mut ctx).map_err(Ics20Error::unknown_msg_type))
-			.map_err(|_| IbcHandlerError::ReceivePacketError)
+			.map_err(|e| IbcHandlerError::ReceivePacketError { msg: Some(e.to_string()) })
 	}
 
 	fn on_ack_packet(
@@ -733,8 +771,12 @@ where
 		ack: &Acknowledgement,
 	) -> Result<(), IbcHandlerError> {
 		let mut ctx = Context::<T>::default();
-		let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
-			.map_err(|_| IbcHandlerError::DecodingError)?;
+		let packet_data: PacketData =
+			serde_json::from_slice(packet.data.as_slice()).map_err(|e| {
+				IbcHandlerError::DecodingError {
+					msg: Some(format!("Failed to decode packet data {:?}", e)),
+				}
+			})?;
 		let ack = String::from_utf8(ack.as_ref().to_vec())
 			.map(|val| {
 				if val.as_bytes() == ACK_SUCCESS_B64 {
@@ -743,9 +785,11 @@ where
 					Ics20Acknowledgement::Error(val)
 				}
 			})
-			.map_err(|_| IbcHandlerError::DecodingError)?;
+			.map_err(|e| IbcHandlerError::DecodingError {
+				msg: Some(format!("Failed to decode acknowledgement data {:?}", e)),
+			})?;
 		process_ack_packet(&mut ctx, packet, &packet_data, &ack)
-			.map_err(|_| IbcHandlerError::AcknowledgementError)
+			.map_err(|e| IbcHandlerError::AcknowledgementError { msg: Some(e.to_string()) })
 	}
 
 	fn on_timeout_packet(
@@ -753,10 +797,14 @@ where
 		packet: &Packet,
 	) -> Result<(), IbcHandlerError> {
 		let mut ctx = Context::<T>::default();
-		let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
-			.map_err(|_| IbcHandlerError::DecodingError)?;
+		let packet_data: PacketData =
+			serde_json::from_slice(packet.data.as_slice()).map_err(|e| {
+				IbcHandlerError::DecodingError {
+					msg: Some(format!("Failed to decode packet data {:?}", e)),
+				}
+			})?;
 		process_timeout_packet(&mut ctx, packet, &packet_data)
-			.map_err(|_| IbcHandlerError::TimeoutError)
+			.map_err(|e| IbcHandlerError::TimeoutError { msg: Some(e.to_string()) })
 	}
 
 	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
@@ -765,13 +813,15 @@ where
 			(packet.source_port.clone(), packet.source_channel, packet.sequence),
 			ack.clone(),
 		)
-		.map_err(|_| IbcHandlerError::AcknowledgementError)?;
+		.map_err(|e| IbcHandlerError::AcknowledgementError {
+			msg: Some(format!("Failed to store acknowledgement off chain {:?}", e)),
+		})?;
 		let ack = ctx.ack_commitment(ack.into());
 		ctx.store_packet_acknowledgement(
 			(packet.source_port.clone(), packet.source_channel, packet.sequence),
 			ack,
 		)
-		.map_err(|_| IbcHandlerError::WriteAcknowledgementError)?;
+		.map_err(|e| IbcHandlerError::WriteAcknowledgementError { msg: Some(e.to_string()) })?;
 		let host_height = ctx.host_height();
 		let event = IbcEvent::WriteAcknowledgement {
 			revision_height: host_height.revision_height,
