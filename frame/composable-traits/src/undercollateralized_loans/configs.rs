@@ -118,7 +118,7 @@ where
 	/// The moment of the last interest payment and principal repayment.
 	last_payment_moment: TimeMeasure,
 	/// Payment strategy which should be applyed.
-	/// For instance borrower have to pay principal when loan is mature (one strategy),
+	/// For instance, borrower have to pay principal when loan is mature (one strategy),
 	/// or he may pay principal partially, simultaneously with interest payments.   
 	repayment_strategy: RepaymentStrategy,
 }
@@ -202,6 +202,13 @@ where
 	/// Get a reference to the loan config's payment strategy.
 	pub fn repayment_strategy(&self) -> &RepaymentStrategy {
 		&self.repayment_strategy
+	}
+
+	pub fn get_interest_rate_for_particular_moment(
+		&self,
+		moment: &TimeMeasure,
+	) -> Option<&Percent> {
+		self.schedule.get(moment)
 	}
 }
 

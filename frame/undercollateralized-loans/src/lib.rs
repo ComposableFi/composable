@@ -226,7 +226,8 @@ pub mod pallet {
 		MarketCreated { market_info: MarketInfoOf<T> },
 		LoanCreated { loan_config: LoanConfigOf<T> },
 		LoanContractWasExecuted { loan_config: LoanConfigOf<T> },
-	}
+        LoanWasNotFoundInTeStorage { loan_account_id: T::AccountId },	
+    }
 
 	#[allow(missing_docs)]
 	#[pallet::error]
@@ -235,7 +236,7 @@ pub mod pallet {
 		ExceedMaxMarketsCounterValue,
 		// We can not work with zero prices.
 		PriceOfInitialBorrowVaultShouldBeGreaterThanZero,
-		// If wrong account id of market or loan is provided.
+		// If wrong account id of market or loan was provided.
 		MarketDoesNotExist,
 		LoanDoesNotExistOrWasActivated,
 		// Only market manager account allowed to create loans for the market.
@@ -250,6 +251,12 @@ pub mod pallet {
 		IncorrectTimestampFormat,
 		// When borrower tried to activate a loan after first payment day.
 		TheLoanContractIsExpired,
+		// This should not happens.
+		// Error added for debug.
+		CollateralCanNotBeTransferedBackToTheBorrowersAccount,
+		// When we try to retrieve interest rate for the date which is not present in the payment
+		// schedule for particular loan.
+		ThereIsNoSuchMomentInTheLoanPaymentSchedule,
 	}
 
 	/// The timestamp of the previous block or defaults to timestamp at genesis.

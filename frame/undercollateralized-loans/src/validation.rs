@@ -70,6 +70,7 @@ where
 	}
 }
 
+// TODO: @mikolaichuk: add validation of payment schedule.
 #[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Clone, Copy)]
 pub struct LoanInputIsValid<Loans: UndercollateralizedLoans>(PhantomData<Loans>);
 

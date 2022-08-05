@@ -30,7 +30,7 @@ logic:
 
 //now borrower can activate the loan 
 //he calls fn borrow()
-borrow():
++borrow():
 	if loan !exists (exist = should be in non_active_loan_storage):
 		return. 
 	if loan can not be activated (today is the first payment day or larger):
@@ -61,7 +61,7 @@ fn liquidate():
 	call terminate()
 ___
 
-fn terminate():
++fn terminate_activated_loan():
 	we remove information about loan from the loan_schedule storage:
 		get loan schedule from loan_info -> loan_config()	
 		go throw the dates in schedule, for each date: 
@@ -77,8 +77,12 @@ fn terminate():
 			collect loan_account_id
 	remove collected ids from non_active_loans_storage.
 					
+---
 
-
++fn close_loan_contract():
+	transfer collateral from loans account to borrowers account.
+	fn terminate_activated_loan()
+---
 
 
 let today = Utc::today().naive_utc();

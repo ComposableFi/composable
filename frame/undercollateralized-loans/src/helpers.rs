@@ -1,7 +1,8 @@
 // TODO: @mikolaichuk: rewrite to iterators.
+//
 use crate::{
 	strategies::repayment_strategies::{
-		//		interest_periodically_principal_when_mature_strategy, principal_only_fake_strategy,
+		interest_periodically_principal_when_mature, principal_only,
 		RepaymentResult,
 		RepaymentStrategy,
 	},
@@ -159,8 +160,8 @@ impl<T: Config> Pallet<T> {
 			Err(Error::<T>::TheLoanContractIsExpired)?;
 		}
 		// Obtain market's configuration.
-		let market_info = Self::get_market_info_via_account_id(loan_config.market_account_id())?;
-		let market_config = market_info.config();
+		let market_config =
+			Self::get_market_config_via_account_id(loan_config.market_account_id())?;
 		// Transfer collateral from the borrower's account to the loan's account.
 		let collateral_asset_id = *market_config.collateral_asset();
 		let source = &borrower_account_id;
@@ -215,39 +216,38 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_liquidate() -> () {}
-	// Close a loan since it is paid.
-	/*
-		pub(crate) fn close_loan(loan_account_id: &T::AccountId, keep_alive: bool) -> () {
-			let loan_info = match Self::get_loan_info_via_account_id(loan_account_id) {
-				Ok(loan_info) => loan_info,
-				Err(_) => return (),
-			};
-			let borrower_account_id = loan_info.config().borrower_account_id();
-			let collateral_amount = loan_info.config().collateral();
-			let market_account_id = loan_info.config().market_account_id();
-			let market_info = match Self::get_market_info_via_account_id(market_account_id) {
-				Ok(market_info) => market_info,
-				Err(_) => return (),
-			};
-			let collateral_asset_id = market_info.config().collateral_asset();
-			// Transfer collateral to borrower's account.
-			T::MultiCurrency::transfer(
-				*collateral_asset_id,
-				loan_account_id,
-				borrower_account_id,
-				*collateral_amount,
-				keep_alive,
-			);
-			crate::LoansStorage::<T>::remove(loan_account_id);
-		}
-	*/
-	// Check if borrower's account is in whitelist of the particular market.
+
+	// Close loan contract since loan is paid.
+	pub(crate) fn close_loan_contract(
+		loan_account_id_ref: &T::AccountId,
+		keep_alive: bool,
+	) -> Result<(T::AccountId, Vec<TimeMeasure>), crate::Error<T>> {
+		let loan_config = Self::get_loan_config_via_account_id(loan_account_id_ref)?;
+		let borrower_account_id = loan_config.borrower_account_id();
+		let collateral_amount = loan_config.collateral();
+		let market_account_id = loan_config.market_account_id();
+		let market_config = Self::get_market_config_via_account_id(market_account_id)?;
+		let collateral_asset_id = market_config.collateral_asset();
+		// Transfer collateral to borrower's account.
+		T::MultiCurrency::transfer(
+			*collateral_asset_id,
+			loan_account_id_ref,
+			borrower_account_id,
+			*collateral_amount,
+			keep_alive,
+		)
+		.map_err(|_| crate::Error::<T>::CollateralCanNotBeTransferedBackToTheBorrowersAccount)?;
+		// Remove all information about the loan.
+		let payments_moments = Self::terminate_activated_loan(loan_account_id_ref)?;
+		Ok((loan_account_id_ref.clone(), payments_moments))
+	}
+
+	// Check if borrower's account is whitelisted for particular market.
 	pub(crate) fn is_borrower_account_whitelisted(
 		borrower_account_id_ref: &T::AccountId,
 		market_account_id_ref: &T::AccountId,
 	) -> Result<bool, DispatchError> {
-		let market_info = Self::get_market_info_via_account_id(market_account_id_ref)?;
-		let market_config = market_info.config();
+		let market_config = Self::get_market_config_via_account_id(market_account_id_ref)?;
 		Ok(market_config.whitelist().contains(borrower_account_id_ref))
 	}
 
@@ -257,13 +257,12 @@ impl<T: Config> Pallet<T> {
 		T::Oracle::get_price_inverse(borrow_asset, T::OracleMarketCreationStake::get())
 	}
 
-	// Check if provided account id belongs to market manager.
+	// Check if provided account id belongs to the market manager.
 	pub(crate) fn is_market_manager_account(
 		account_id: &T::AccountId,
 		market_account_id_ref: &T::AccountId,
 	) -> Result<bool, DispatchError> {
-		let market_info = Self::get_market_info_via_account_id(market_account_id_ref)?;
-		let market_config = market_info.config();
+		let market_config = Self::get_market_config_via_account_id(market_account_id_ref)?;
 		Ok(market_config.manager() == account_id)
 	}
 
@@ -318,28 +317,34 @@ impl<T: Config> Pallet<T> {
 			}
 		});
 	}
-
-	/*
-		pub(crate) fn check_payments(block_nubmer: T::BlockNumber, keep_alive: bool) -> () {
-			// Retrive collection of loans(loans' accounts ids) which have to be paid now
+	
+		pub(crate) fn check_payments(keep_alive: bool) -> () {
+		    let today = Self::today();	
+            // Retrive collection of loans(loans' accounts ids) which have to be paid now.
+            // If nothing found we will get empty set.
 			let loans_accounts_ids =
-				crate::PaymentsScheduleStorage::<T>::try_get(block_nubmer).unwrap_or_default();
-			for loan_account_id in loans_accounts_ids {
-				let loan_info = match Self::get_loan_info_via_account_id(&loan_account_id) {
-					Ok(loan_info) => loan_info,
-					// TODO: @mikolaichuk: add event emmition.
-					Err(_) => continue,
+				crate::ScheduleStorage::<T>::try_get(today).unwrap_or_default();
+		    
+            let mut garbage_loans_ids = vec![];	
+            for loan_account_id in loans_accounts_ids {
+			    // Treat situation when non-existend loan's id is in global schedule.
+                let loan_config = match Self::get_loan_config_via_account_id(&loan_account_id) {
+					Ok(loan_config) => loan_config,
+					Err(_) =>  {
+                        garbage_loans_ids.push(loan_account_id);
+                        continue;
+                    },
 				};
-				let repayment_result: RepaymentResult<T> = match loan_info.config().repayment_strategy()
+				let repayment_result: RepaymentResult<T> = match loan_config.repayment_strategy()
 				{
 					RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature =>
-						interest_periodically_principal_when_mature_strategy::apply(
-							loan_info,
-							block_nubmer,
+						interest_periodically_principal_when_mature::apply(
+							loan_config,
+							&today,
 							keep_alive,
 						),
 					RepaymentStrategy::PrincipalOnlyWhenMature =>
-						principal_only_fake_strategy::apply(loan_info, keep_alive),
+						principal_only::apply(loan_config, &today, keep_alive),
 				};
 
 				match repayment_result {
@@ -349,15 +354,15 @@ impl<T: Config> Pallet<T> {
 					RepaymentResult::InterestIsPaidInTime(_) => (),
 					RepaymentResult::InterestIsNotPaidInTime(_) => Self::do_liquidate(),
 					RepaymentResult::PrincipalAndLastInterestPaymentArePaidBackInTime(_) =>
-						Self::close_loan(&loan_account_id, keep_alive),
+                    {Self::close_loan_contract(&loan_account_id, keep_alive); ()},
 					RepaymentResult::PrincipalAndLastInterestPaymentAreNotPaidBackInTime(_) =>
 						Self::do_liquidate(),
 				}
 				// We do not need information regarding this date anymore.
-				crate::PaymentsScheduleStorage::<T>::remove(block_nubmer);
+				crate::ScheduleStorage::<T>::remove(today);
 			}
 		}
-	*/
+	
 	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
 	// If vault is balanced we will do nothing.
 	// #generalization
@@ -418,6 +423,13 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| crate::Error::<T>::MarketDoesNotExist)
 	}
 
+	pub(crate) fn get_market_config_via_account_id(
+		market_account_id_ref: &T::AccountId,
+	) -> Result<MarketConfigOf<T>, crate::Error<T>> {
+		let market_info = Self::get_market_info_via_account_id(market_account_id_ref)?;
+		Ok(market_info.config().clone())
+	}
+
 	pub(crate) fn get_loan_config_via_account_id(
 		loan_account_id_ref: &T::AccountId,
 	) -> Result<LoanConfigOf<T>, crate::Error<T>> {
@@ -442,16 +454,14 @@ impl<T: Config> Pallet<T> {
 		Ok(output)
 	}
 
-	// Removes expaired non-active loans.
-	// Expired non-active loans are loans which were not activated by borrower
-	// and first payment date of which is less or equal to the current date.
+	// Removes expired non-active loans.
+	// Expired non-active loans are loans which were not activated by borrower.
+	// First payment date of such loans is less or equal to the current date.
 	pub(crate) fn terminate_non_active_loans() -> Result<Vec<T::AccountId>, crate::Error<T>> {
-		let today = Utc::today().naive_utc().and_time(NaiveTime::default()).timestamp();
-
 		let mut removed_non_active_accounts_ids = vec![];
 		for non_active_loan_account_id in crate::NonActiveLoansStorage::<T>::iter_keys() {
 			let loan_config = Self::get_loan_config_via_account_id(&non_active_loan_account_id)?;
-			if today >= *loan_config.first_payment_moment() {
+			if Self::today() >= *loan_config.first_payment_moment() {
 				crate::LoansStorage::<T>::remove(non_active_loan_account_id.clone());
 				removed_non_active_accounts_ids.push(non_active_loan_account_id);
 			}
@@ -462,22 +472,26 @@ impl<T: Config> Pallet<T> {
 		Ok(removed_non_active_accounts_ids)
 	}
 
-    // Remove all information about activated loan.	
-    pub(crate) fn terminate_active_loan(
+	// Remove all information about activated loan.
+	pub(crate) fn terminate_activated_loan(
 		loan_account_id_ref: &T::AccountId,
 	) -> Result<Vec<TimeMeasure>, crate::Error<T>> {
 		// Get payment moments for the loan.
-		let payment_moments: Vec<TimeMeasure> = Self::get_loan_config_via_account_id(loan_account_id_ref)?
-			.schedule()
-			.keys()
-			.map(|&payment_moment| payment_moment)
-			.collect();
-	    // Remove account id from global payment schedule for each payment date.	
-        payment_moments.iter().for_each(|payment_moment| {
+		let payment_moments: Vec<TimeMeasure> =
+			Self::get_loan_config_via_account_id(loan_account_id_ref)?
+				.schedule()
+				.keys()
+				.map(|&payment_moment| payment_moment)
+				.collect();
+		// Remove account id from global payment schedule for each payment date.
+		payment_moments.iter().for_each(|payment_moment| {
 			crate::ScheduleStorage::<T>::mutate(payment_moment, |loans_accounts_ids| {
 				loans_accounts_ids.remove(loan_account_id_ref)
 			});
 		});
 		Ok(payment_moments)
 	}
+    pub(crate) fn today() -> TimeMeasure {
+		 Utc::today().naive_utc().and_time(NaiveTime::default()).timestamp()
+    }
 }
