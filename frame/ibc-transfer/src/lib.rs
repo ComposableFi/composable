@@ -308,7 +308,10 @@ pub mod pallet {
 				)
 				.map_err(|_| Error::<T>::InvalidTimestamp)?,
 			};
-			T::IbcHandler::send_transfer(data).map_err(|_| Error::<T>::TransferFailed)?;
+			T::IbcHandler::send_transfer(data).map_err(|e| {
+				log::trace!(target: "ibc_transfer", "[transfer]: error: {:?}", e);
+				Error::<T>::TransferFailed
+			})?;
 
 			Self::deposit_event(Event::<T>::TokenTransferInitiated {
 				from: origin,

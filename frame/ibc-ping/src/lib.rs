@@ -124,7 +124,10 @@ pub mod pallet {
 				port_id: PORT_ID.as_bytes().to_vec(),
 				channel_id: params.channel_id,
 			};
-			T::IbcHandler::send_packet(send_packet).map_err(|_| Error::<T>::PacketSendError)?;
+			T::IbcHandler::send_packet(send_packet).map_err(|e| {
+				log::trace!(target: "pallet_ibc_ping", "[send_ping] error: {:?}", e);
+				Error::<T>::PacketSendError
+			})?;
 			Self::deposit_event(Event::<T>::PacketSent);
 			Ok(())
 		}

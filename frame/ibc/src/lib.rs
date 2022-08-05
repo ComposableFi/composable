@@ -316,7 +316,9 @@ pub mod pallet {
 				.into_iter()
 				.filter_map(|message| {
 					let type_url = String::from_utf8(message.type_url.clone()).ok()?;
-					if type_url.as_str() == CREATE_CLIENT_TYPE_URL {
+					if type_url.as_str() == CREATE_CLIENT_TYPE_URL ||
+						type_url.as_str() == CONNECTION_OPEN_INIT_TYPE_URL
+					{
 						return None
 					}
 					Some(Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value }))
