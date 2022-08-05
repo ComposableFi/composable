@@ -64,9 +64,8 @@ use sp_blockchain::HeaderBackend;
 use sp_core::{blake2_256, storage::ChildInfo};
 use sp_runtime::{
 	generic::BlockId,
-	traits::{BlakeTwo256, Block as BlockT, Header as HeaderT},
+	traits::{Block as BlockT, Header as HeaderT},
 };
-use sp_trie::TrieMut;
 use tendermint_proto::Protobuf;
 pub mod events;
 use events::filter_map_pallet_event;
@@ -108,26 +107,6 @@ pub struct Proof {
 	pub proof: Vec<u8>,
 	/// Height at which proof was recovered
 	pub height: ibc_proto::ibc::core::client::v1::Height,
-}
-
-/// Generate trie proof given inputs to trie and keys
-pub fn generate_raw_proof(inputs: Vec<(Vec<u8>, Vec<u8>)>, keys: Vec<Vec<u8>>) -> Result<Vec<u8>> {
-	let keys = keys.iter().collect::<Vec<_>>();
-	let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
-	let root = {
-		let mut root = sp_core::H256::default();
-		let mut trie =
-			<sp_trie::TrieDBMut<sp_trie::LayoutV0<BlakeTwo256>>>::new(&mut db, &mut root);
-		for (key, value) in inputs {
-			trie.insert(&*key, &*value)
-				.map_err(|_| runtime_error_into_rpc_error("Failed to generate proof"))?;
-		}
-		*trie.root()
-	};
-
-	sp_trie::generate_trie_proof::<sp_trie::LayoutV0<BlakeTwo256>, _, _, _>(&db, root, keys)
-		.map(|proof| proof.encode())
-		.map_err(|_| runtime_error_into_rpc_error("Failed to generate proof"))
 }
 
 /// IBC RPC methods.
