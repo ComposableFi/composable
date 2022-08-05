@@ -67,7 +67,7 @@ const Transfers: NextPage = () => {
   ) => {
     const api = providers[from].parachainApi;
 
-    if (!api || !executor || !account || feeItem.length === 0) {
+    if (!api || !executor || !account || (hasFeeItem && feeItem.length === 0)) {
       console.error("No API or Executor or account", {
         api,
         executor,
@@ -88,7 +88,10 @@ const Transfers: NextPage = () => {
       ).toString()
     );
 
-    const feeItemId = assets[feeItem as AssetId].meta.supportedNetwork[from];
+    const feeItemId =
+      hasFeeItem && feeItem.length > 0
+        ? assets[feeItem as AssetId].meta.supportedNetwork[from]
+        : null;
 
     const signerAddress = account.address;
 

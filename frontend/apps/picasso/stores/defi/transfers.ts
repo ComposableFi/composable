@@ -19,11 +19,15 @@ interface TransfersState {
   amount: BigNumber;
   tokenId: AssetId;
   recipients: Recipients;
-  fee: BigNumber | number;
   keepAlive: boolean;
   feeItem: AssetId | "";
   hasFeeItem: boolean;
   existentialDeposit: BigNumber;
+  fee: {
+    class: string;
+    partialFee: BigNumber;
+    weight: BigNumber;
+  };
 }
 
 const networks = Object.keys(SUBSTRATE_NETWORKS).map((networkId) => ({
@@ -41,11 +45,15 @@ const initialState: TransfersState = {
   recipients: {
     selected: "",
   },
-  fee: 0.5,
   hasFeeItem: false,
   feeItem: "",
   keepAlive: true,
   existentialDeposit: new BigNumber(0),
+  fee: {
+    class: "Normal",
+    partialFee: new BigNumber(0),
+    weight: new BigNumber(0),
+  },
 };
 
 export interface TransfersSlice {
@@ -57,6 +65,11 @@ export interface TransfersSlice {
     flipKeepAlive: () => void;
     toggleHasFee: () => void;
     setFeeItem: (data: AssetId) => void;
+    updateFee: (data: {
+      class: string;
+      weight: BigNumber;
+      partialFee: BigNumber;
+    }) => void;
     updateExistentialDeposit: (data: BigNumber) => void;
   };
 }
@@ -120,6 +133,16 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (
     updateExistentialDeposit: (data: BigNumber) =>
       set((state) => {
         state.transfers.existentialDeposit = data;
+
+        return state;
+      }),
+    updateFee: (data: {
+      class: string;
+      weight: BigNumber;
+      partialFee: BigNumber;
+    }) =>
+      set((state) => {
+        state.transfers.fee = data;
 
         return state;
       }),

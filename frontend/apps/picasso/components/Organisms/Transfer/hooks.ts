@@ -40,18 +40,29 @@ export const useExistentialDeposit = () => {
       updateExistentialDeposit(nativeTo.existentialDeposit);
     } else {
       const api = allProviders[from]?.parachainApi;
-      if (api) {
-        api.query.currencyFactory
-          .assetEd(assets[tokenId].meta.supportedNetwork[from])
-          .then((ed) => {
-            const existentialString = ed.toString();
-            const existentialValue = fromChainIdUnit(
-              new BigNumber(existentialString)
-            );
-            updateExistentialDeposit(
-              existentialValue.isNaN() ? new BigNumber(0) : existentialValue
-            );
-          });
+      switch (from) {
+        case "karura":
+          if (["kusd", "ausd"].includes(tokenId)) {
+            updateExistentialDeposit(new BigNumber(1));
+          }
+          break;
+        case "picasso":
+          if (api) {
+            api.query.currencyFactory
+              .assetEd(assets[tokenId].meta.supportedNetwork[from])
+              .then((ed) => {
+                const existentialString = ed.toString();
+                const existentialValue = fromChainIdUnit(
+                  new BigNumber(existentialString)
+                );
+                updateExistentialDeposit(
+                  existentialValue.isNaN() ? new BigNumber(0) : existentialValue
+                );
+              });
+          }
+          break;
+        default:
+          break;
       }
     }
   }, [
