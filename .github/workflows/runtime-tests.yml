@@ -43,6 +43,7 @@ jobs:
       - name: Build Docker image
         run: make containerize-composable-sandbox
 
+      # ISSUE: that is crazy, we push new sandbox without testing it....
       - name: Push Docker image
         if: ${{ github.ref == 'refs/heads/main' }}
         run: make push-composable-sandbox
