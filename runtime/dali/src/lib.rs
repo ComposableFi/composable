@@ -1230,17 +1230,17 @@ mod benches {
 	);
 }
 
-impl_runtime_apis! {
-	impl lending_runtime_api::LendingRuntimeApi<Block, MarketId> for Runtime {
-		fn current_interest_rate(_market_id: MarketId) -> SafeRpcWrapper<Rate> {
-			SafeRpcWrapper(
-				// TODO: Actually implement this
-				Rate::max_value()
-				// lending::BorrowIndex::<Runtime>::get(market_id)
-				// 	.unwrap_or_else(Rate::zero)
-			)
-		}
-	}
+impl_runtime_apis! {	
+	// impl lending_runtime_api::LendingRuntimeApi<Block, MarketId> for Runtime {
+	// 	fn current_interest_rate(_market_id: MarketId) -> SafeRpcWrapper<Rate> {
+	// 		SafeRpcWrapper(
+	// 			// TODO: Actually implement this
+	// 			Rate::max_value()
+	// 			// lending::BorrowIndex::<Runtime>::get(market_id)
+	// 			// 	.unwrap_or_else(Rate::zero)
+	// 		)
+	// 	}
+	// }
 
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
