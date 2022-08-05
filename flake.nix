@@ -355,7 +355,7 @@
             pname = "local-integration-tests";
             cargoArtifacts = common-deps;
             cargoBuildCommand = "cargo test --package local-integration-tests";            
-            cargoExtraArgs = "--features local-integration-tests --features picasso --no-default-features";
+            cargoExtraArgs = "--features local-integration-tests --features picasso --features develop --features std --no-default-features";
           });
           # # TODO: on on next runs and replace bash version with this
           # dali-dev-benchmarks = run-with-benchmarks "dali-dev";

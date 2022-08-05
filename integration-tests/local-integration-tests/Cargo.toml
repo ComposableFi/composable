@@ -117,7 +117,7 @@ polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", 
 statemine-runtime = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.24" }
 xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "651af78d6d7521dc76e1f6bb257af485f8a454c7", default-features = false }
 
-#dali-runtime = { package = "dali-runtime", path = "../../runtime/dali", default-features = false, optional = true }
+dali-runtime = { package = "dali-runtime", path = "../../runtime/dali", default-features = false, optional = true }
 picasso-runtime = { package = "picasso-runtime", path = "../../runtime/picasso", default-features = false, optional = true }
 
 [dev-dependencies]
@@ -129,7 +129,7 @@ hex = "0.4.3"
 dali = ["std", "develop", "local-integration-tests"]
 default = ["std", "develop", "local-integration-tests", "dali"]
 local-integration-tests = [
-  #"dali-runtime/local-integration-tests",
+  "dali-runtime/local-integration-tests",
   "picasso-runtime/local-integration-tests",
 ]
 picasso = ["std", "develop", "local-integration-tests"]
@@ -167,7 +167,7 @@ std = [
   "democracy/std",
   "scheduler/std",
   "common/std",
-  #"dali-runtime/std",
+  "dali-runtime/std",
   "picasso-runtime/std",
   "primitives/std",
   "collective/std",
@@ -220,7 +220,7 @@ runtime-benchmarks = [
   "democracy/runtime-benchmarks",
   "utility/runtime-benchmarks",
   "kusama-runtime/runtime-benchmarks",
-  #"dali-runtime/runtime-benchmarks",
+  "dali-runtime/runtime-benchmarks",
   "picasso-runtime/runtime-benchmarks",
   "polkadot-primitives/runtime-benchmarks",
   "polkadot-runtime-parachains/runtime-benchmarks",

@@ -6237,6 +6237,7 @@ dependencies = [
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
+ "dali-runtime",
  "env_logger",
  "frame-benchmarking",
  "frame-executive",
