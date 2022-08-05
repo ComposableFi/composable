@@ -6,6 +6,7 @@ on:
     branches:
        # NOTE: should be released from protected branch as it is used to assemble releases   
       - main
+      - ci-via-nix
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
