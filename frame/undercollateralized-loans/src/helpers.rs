@@ -2,15 +2,14 @@
 //
 use crate::{
 	strategies::repayment_strategies::{
-		interest_periodically_principal_when_mature, principal_only,
-		RepaymentResult,
+		interest_periodically_principal_when_mature, principal_only, RepaymentResult,
 		RepaymentStrategy,
 	},
 	types::{LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf, TimeMeasure},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
 };
-use composable_support::{math::safe::SafeAdd, validation::Validated};
+use composable_support::validation::Validated;
 use composable_traits::{
 	currency::CurrencyFactory,
 	defi::DeFiComposableConfig,
@@ -317,52 +316,52 @@ impl<T: Config> Pallet<T> {
 			}
 		});
 	}
-	
-		pub(crate) fn check_payments(keep_alive: bool) -> () {
-		    let today = Self::today();	
-            // Retrive collection of loans(loans' accounts ids) which have to be paid now.
-            // If nothing found we will get empty set.
-			let loans_accounts_ids =
-				crate::ScheduleStorage::<T>::try_get(today).unwrap_or_default();
-		    
-            let mut garbage_loans_ids = vec![];	
-            for loan_account_id in loans_accounts_ids {
-			    // Treat situation when non-existend loan's id is in global schedule.
-                let loan_config = match Self::get_loan_config_via_account_id(&loan_account_id) {
-					Ok(loan_config) => loan_config,
-					Err(_) =>  {
-                        garbage_loans_ids.push(loan_account_id);
-                        continue;
-                    },
-				};
-				let repayment_result: RepaymentResult<T> = match loan_config.repayment_strategy()
-				{
-					RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature =>
-						interest_periodically_principal_when_mature::apply(
-							loan_config,
-							&today,
-							keep_alive,
-						),
-					RepaymentStrategy::PrincipalOnlyWhenMature =>
-						principal_only::apply(loan_config, &today, keep_alive),
-				};
 
-				match repayment_result {
-					// Failed not beacuse of user fault.
-					// Should not happend at all.
-					RepaymentResult::Failed(_) => (),
-					RepaymentResult::InterestIsPaidInTime(_) => (),
-					RepaymentResult::InterestIsNotPaidInTime(_) => Self::do_liquidate(),
-					RepaymentResult::PrincipalAndLastInterestPaymentArePaidBackInTime(_) =>
-                    {Self::close_loan_contract(&loan_account_id, keep_alive); ()},
-					RepaymentResult::PrincipalAndLastInterestPaymentAreNotPaidBackInTime(_) =>
-						Self::do_liquidate(),
-				}
-				// We do not need information regarding this date anymore.
-				crate::ScheduleStorage::<T>::remove(today);
+	pub(crate) fn check_payments(keep_alive: bool) -> () {
+		let today = Self::today();
+		// Retrive collection of loans(loans' accounts ids) which have to be paid now.
+		// If nothing found we will get empty set.
+		let loans_accounts_ids = crate::ScheduleStorage::<T>::try_get(today).unwrap_or_default();
+
+		let mut garbage_loans_ids = vec![];
+		for loan_account_id in loans_accounts_ids {
+			// Treat situation when non-existend loan's id is in global schedule.
+			let loan_config = match Self::get_loan_config_via_account_id(&loan_account_id) {
+				Ok(loan_config) => loan_config,
+				Err(_) => {
+					garbage_loans_ids.push(loan_account_id);
+					continue
+				},
+			};
+			let repayment_result: RepaymentResult<T> = match loan_config.repayment_strategy() {
+				RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature =>
+					interest_periodically_principal_when_mature::apply(
+						loan_config,
+						&today,
+						keep_alive,
+					),
+				RepaymentStrategy::PrincipalOnlyWhenMature =>
+					principal_only::apply(loan_config, &today, keep_alive),
+			};
+
+			match repayment_result {
+				// Failed not beacuse of user fault.
+				// Should not happens at all.
+				RepaymentResult::Failed(_) => (),
+				RepaymentResult::InterestIsPaidInTime(_) => (),
+				RepaymentResult::InterestIsNotPaidInTime(_) => Self::do_liquidate(),
+				RepaymentResult::PrincipalAndLastInterestPaymentArePaidBackInTime(_) => {
+					Self::close_loan_contract(&loan_account_id, keep_alive);
+					()
+				},
+				RepaymentResult::PrincipalAndLastInterestPaymentAreNotPaidBackInTime(_) =>
+					Self::do_liquidate(),
 			}
+			// We do not need information regarding this date anymore.
+			crate::ScheduleStorage::<T>::remove(today);
 		}
-	
+	}
+
 	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
 	// If vault is balanced we will do nothing.
 	// #generalization
@@ -401,7 +400,7 @@ impl<T: Config> Pallet<T> {
 		<T::Vault as StrategicVault>::deposit(&config.borrow_asset_vault(), market_account, balance)
 	}
 
-	// TODO: @mikolaichuk: Implement logic when vault is stopped, tombstoned or epsent.
+	// TODO: @mikolaichuk: Implement logic when vault is stopped, tombstoned or does not exist.
 	// #generalization
 	fn handle_must_liquidate(
 		_market_config: &MarketConfigOf<T>,
@@ -491,7 +490,7 @@ impl<T: Config> Pallet<T> {
 		});
 		Ok(payment_moments)
 	}
-    pub(crate) fn today() -> TimeMeasure {
-		 Utc::today().naive_utc().and_time(NaiveTime::default()).timestamp()
-    }
+	pub(crate) fn today() -> TimeMeasure {
+		Utc::today().naive_utc().and_time(NaiveTime::default()).timestamp()
+	}
 }

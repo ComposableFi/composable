@@ -75,6 +75,63 @@ pub mod interest_periodically_principal_when_mature {
 	}
 }
 
+// Borrower pays interest regulary, and pays back principal when the loan is mature.
+pub mod interest_and_principal_periodically {
+	use crate::{
+		types::{LoanConfigOf, TimeMeasure},
+		Config,
+	};
+	use frame_support::traits::fungibles::Transfer;
+
+	pub fn apply<T: Config>(
+		loan_config: LoanConfigOf<T>,
+		current_moment: &TimeMeasure,
+		keep_alive: bool,
+	) -> super::RepaymentResult<T> {
+		let interest_rate =
+			match loan_config.get_interest_rate_for_particular_moment(current_moment) {
+				Some(interest_rate) => interest_rate,
+				None =>
+					return super::RepaymentResult::Failed(
+						crate::Error::<T>::ThereIsNoSuchMomentInTheLoanPaymentSchedule.into(),
+					),
+			};
+		// Will not overflow since we multiply to interest rate.
+		let mut payment_amount = *interest_rate * *loan_config.principal();
+		let mut is_principal_payment = false;
+		// If it is time to repay principal
+		if current_moment == loan_config.last_payment_moment() {
+			payment_amount += *loan_config.principal();
+			is_principal_payment = true;
+		}
+		let loan_account_id = loan_config.account_id();
+		let market_account_id = loan_config.market_account_id();
+		let market_info = crate::Pallet::<T>::get_market_info_via_account_id(&market_account_id);
+		let market_info = match market_info {
+			Ok(market_info) => market_info,
+			Err(error) => return super::RepaymentResult::Failed(error.into()),
+		};
+		let market_config = market_info.config();
+		let borrow_asset_id = market_config.borrow_asset();
+		match T::MultiCurrency::transfer(
+			*borrow_asset_id,
+			loan_account_id,
+			market_account_id,
+			payment_amount,
+			keep_alive,
+		) {
+			Ok(balance) if is_principal_payment =>
+				super::RepaymentResult::PrincipalAndLastInterestPaymentArePaidBackInTime(balance),
+			Ok(balance) => super::RepaymentResult::InterestIsPaidInTime(balance),
+			Err(error) if is_principal_payment =>
+				super::RepaymentResult::PrincipalAndLastInterestPaymentAreNotPaidBackInTime(
+					error.into(),
+				),
+			Err(error) => super::RepaymentResult::InterestIsNotPaidInTime(error.into()),
+		}
+	}
+}
+
 // Borrower pays back only principal, wheh the loan is mature.
 // Fake strategy, just for example.
 // TODO: @mikolaichuk: remove this strategy.

@@ -226,8 +226,8 @@ pub mod pallet {
 		MarketCreated { market_info: MarketInfoOf<T> },
 		LoanCreated { loan_config: LoanConfigOf<T> },
 		LoanContractWasExecuted { loan_config: LoanConfigOf<T> },
-        LoanWasNotFoundInTeStorage { loan_account_id: T::AccountId },	
-    }
+		LoanWasNotFoundInTeStorage { loan_account_id: T::AccountId },
+	}
 
 	#[allow(missing_docs)]
 	#[pallet::error]
@@ -303,7 +303,7 @@ pub mod pallet {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
 			Self::treat_vaults_balance(block_number);
 			// TODO: @mikolaichuk: should it be true or false?
-			//Self::check_payments(block_number, true);
+			Self::check_payments(true);
 			1000
 		}
 	}

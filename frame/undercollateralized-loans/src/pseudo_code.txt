@@ -85,6 +85,5 @@ ___
 ---
 
 
-let today = Utc::today().naive_utc();
 
 
