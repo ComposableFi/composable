@@ -98,7 +98,10 @@ pub mod pallet {
 
 	use crate::liquidity_bootstrapping::LiquidityBootstrapping;
 	use composable_maths::dex::{
-		constant_product::{compute_asset_for_redeemable_lp_tokens, compute_deposit_lp},
+		constant_product::{
+			compute_asset_for_redeemable_lp_tokens, compute_deposit_lp,
+			compute_deposit_lp_single_asset,
+		},
 		price::compute_initial_price_cumulative,
 	};
 	use composable_support::validation::Validated;
@@ -1521,20 +1524,33 @@ pub mod pallet {
 				Ok(amount_of_lp_token_to_mint)
 			},
 			PoolConfiguration::ConstantProduct(pool) => {
+				let base_amount = T::Convert::convert(base_amount);
 				let pool_base_aum =
 					T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
-				let pool_quote_aum =
-					T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
-
 				let lp_total_issuance =
 					T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-				let (_, amount_of_lp_token_to_mint) = compute_deposit_lp(
-					lp_total_issuance,
-					T::Convert::convert(base_amount),
-					T::Convert::convert(quote_amount),
-					pool_base_aum,
-					pool_quote_aum,
-				)?;
+
+				let amount_of_lp_token_to_mint = if quote_amount.is_zero() {
+					let weight = pool.base_weight;
+					compute_deposit_lp_single_asset(
+						base_amount,
+						pool_base_aum,
+						weight,
+						lp_total_issuance,
+					)?
+				} else {
+					let pool_quote_aum =
+						T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
+
+					let (_, amount_of_lp_token_to_mint) = compute_deposit_lp(
+						lp_total_issuance,
+						base_amount,
+						T::Convert::convert(quote_amount),
+						pool_base_aum,
+						pool_quote_aum,
+					)?;
+					amount_of_lp_token_to_mint
+				};
 				Ok(T::Convert::convert(amount_of_lp_token_to_mint))
 			},
 			PoolConfiguration::LiquidityBootstrapping(_pool) => Ok(T::Balance::zero()),
