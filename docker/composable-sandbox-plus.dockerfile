@@ -1,5 +1,6 @@
 FROM composablefi/ci-linux:2022-04-18 as builder
 
+# ISSUE: we already copied context when started build, what the heck we are roing here? it slows down builds
 COPY . /build
 WORKDIR /build
 
