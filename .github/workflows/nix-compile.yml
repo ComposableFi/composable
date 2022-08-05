@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - ci-via-nix
+      - releases      
       - main
   pull_request:
     paths-ignore:
@@ -11,7 +12,8 @@ on:
     branches:
       - main
       - develop
-      - releases    
+      - releases  
+      - ci-via-nix  
 
 env:
   NIX_CACHIX: composable-community
