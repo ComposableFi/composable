@@ -435,19 +435,6 @@ describe.only("[SHORT] Democracy Tests", function () {
       console.debug(voteWalletDave.toString());
       console.debug(voteWalletEve.toString());
       console.debug(voteWalletFerdie.toString());
-      let count = 0;
-      const unsubscribe = await api.query.system.events(function (events) {
-        console.log(`EVENTS: ${events.toString()}`);
-        events.forEach(event => {
-          if (event.event.section.toString() === "democracy") {
-            if (event.event.method.toString() === "Passed") unsubscribe();
-            if (event.event.method.toString() === "NotPassed") throw new Error("Referendum failed");
-          }
-        });
-        if (++count === 16) {
-          unsubscribe();
-        }
-      });
     });
   });
 
@@ -464,9 +451,29 @@ describe.only("[SHORT] Democracy Tests", function () {
         api.tx.democracy.removeVote(proposalId2)
       );
       expect(result).to.be.not.an("Error");
-      const voteWalletFerdie = await api.query.democracy.votingOf(walletFerdie.publicKey);
-      console.debug(voteWalletFerdie.toString());
-      expect(voteWalletFerdie.direct.votes.length).to.equal(0);
+      //const voteWalletFerdie = await api.query.democracy.votingOf(walletFerdie.publicKey);
+      //console.debug(voteWalletFerdie.toString());
+      //expect(voteWalletFerdie.direct.votes.length).to.equal(0);
+    });
+  });
+
+  describe("Referendum should succeed", function () {
+    it("Waiting for referendum succession", async function () {
+      this.timeout(2 * 60 * 1000);
+      let success = false;
+      do {
+        const currentEvents = await api.query.system.events();
+        currentEvents.forEach(event => {
+          if (event.event.section.toString() === "democracy") {
+            if (event.event.method.toString() === "Passed") {
+              success = true;
+              return;
+            }
+            if (event.event.method.toString() === "NotPassed") throw new Error("Referendum failed");
+          }
+        });
+      } while (!success);
+      expect(success).to.be.true;
     });
   });
 
