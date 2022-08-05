@@ -266,6 +266,7 @@ impl<T: Config> Pallet<T> {
 		let market_config = market_info.config();
 		Ok(market_config.manager() == account_id)
 	}
+
 	// TODO: @mikolaichuk: Add weights calculation
 	// #generalization
 	pub(crate) fn treat_vaults_balance(block_number: T::BlockNumber) -> () {
@@ -424,6 +425,7 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| crate::Error::<T>::ThereIsNoSuchLoan)
 	}
 
+	// Convert timestamps from strings to seconds have passed from 01.01.1970.
 	pub(crate) fn convert_schedule_timestamps(
 		schedule: &Vec<(String, Percent)>,
 	) -> Result<Vec<(TimeMeasure, Percent)>, crate::Error<T>> {
@@ -438,5 +440,44 @@ impl<T: Config> Pallet<T> {
 			));
 		}
 		Ok(output)
+	}
+
+	// Removes expaired non-active loans.
+	// Expired non-active loans are loans which were not activated by borrower
+	// and first payment date of which is less or equal to the current date.
+	pub(crate) fn terminate_non_active_loans() -> Result<Vec<T::AccountId>, crate::Error<T>> {
+		let today = Utc::today().naive_utc().and_time(NaiveTime::default()).timestamp();
+
+		let mut removed_non_active_accounts_ids = vec![];
+		for non_active_loan_account_id in crate::NonActiveLoansStorage::<T>::iter_keys() {
+			let loan_config = Self::get_loan_config_via_account_id(&non_active_loan_account_id)?;
+			if today >= *loan_config.first_payment_moment() {
+				crate::LoansStorage::<T>::remove(non_active_loan_account_id.clone());
+				removed_non_active_accounts_ids.push(non_active_loan_account_id);
+			}
+		}
+		removed_non_active_accounts_ids
+			.iter()
+			.for_each(|account_id| crate::NonActiveLoansStorage::<T>::remove(account_id));
+		Ok(removed_non_active_accounts_ids)
+	}
+
+    // Remove all information about activated loan.	
+    pub(crate) fn terminate_active_loan(
+		loan_account_id_ref: &T::AccountId,
+	) -> Result<Vec<TimeMeasure>, crate::Error<T>> {
+		// Get payment moments for the loan.
+		let payment_moments: Vec<TimeMeasure> = Self::get_loan_config_via_account_id(loan_account_id_ref)?
+			.schedule()
+			.keys()
+			.map(|&payment_moment| payment_moment)
+			.collect();
+	    // Remove account id from global payment schedule for each payment date.	
+        payment_moments.iter().for_each(|payment_moment| {
+			crate::ScheduleStorage::<T>::mutate(payment_moment, |loans_accounts_ids| {
+				loans_accounts_ids.remove(loan_account_id_ref)
+			});
+		});
+		Ok(payment_moments)
 	}
 }

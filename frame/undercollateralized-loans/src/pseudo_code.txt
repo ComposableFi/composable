@@ -70,7 +70,7 @@ fn terminate():
 	we remove entry form loans_storage
 ---
 
-fn terminate_non_active_loan():
++fn terminate_non_active_loan():
 	for each loan_account_id in the non_active_loans_storage:
 			if first date <= current date:
 			remove entry from loans_storage.
