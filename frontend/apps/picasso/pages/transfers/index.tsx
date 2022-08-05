@@ -1,94 +1,130 @@
-import React from "react";
+import { useMemo } from "react";
 import { NextPage } from "next";
-import { Box, Button, Grid, Theme, Typography } from "@mui/material";
-import { SwapHoriz } from "@mui/icons-material";
-
+import { Button, Grid, Typography } from "@mui/material";
 import { useStore } from "@/stores/root";
 import Default from "@/components/Templates/Default";
 import {
-  FeeDisplay,
-  NetworkSelect,
-  RecipientDropdown,
-  TextSwitch,
-  TokenDropdownCombinedInput
-} from "@/components";
-import { PageTitle } from "@/components";
-import { TokenId } from "tokens";
-import { formatToken } from "shared";
-
-const gridContainerStyle = {
-  mx: "auto"
-};
-
-const gridItemStyle = (pt: string = "2rem") => ({
-  xs: 12,
-  sx: { pt }
-});
-
-const networksStyle = (theme: Theme) =>
-  ({
-    alignItems: "flex-end",
-    flexDirection: "row",
-    gap: "2rem",
-    [theme.breakpoints.down("sm")]: {
-      flexDirection: "column",
-      alignItems: "initial",
-      gap: "1.5rem"
-    },
-    "& > *": { flex: 1 }
-  } as const);
-
-const swapButtonStyle = (theme: Theme) => ({
-  maxWidth: "4rem",
-  minWidth: "4rem",
-  [theme.breakpoints.down("sm")]: {
-    maxWidth: "3.5rem",
-    minWidth: "3.5rem",
-    alignSelf: "center"
-  }
-});
-
-const amountInputStyle = {
-  "& .MuiOutlinedInput-input": {
-    textAlign: "center"
-  }
-};
+  gridContainerStyle,
+  gridItemStyle,
+} from "@/components/Organisms/Transfer/transfer-styles";
+import { Header } from "@/components/Organisms/Transfer/Header";
+import { TransferNetworkSelector } from "@/components/Organisms/Transfer/TransferNetworkSelector";
+import { AmountTokenDropdown } from "@/components/Organisms/Transfer/AmountTokenDropdown";
+import { TransferRecipientDropdown } from "@/components/Organisms/Transfer/TransferRecipientDropdown";
+import { TransferFeeDisplay } from "@/components/Organisms/Transfer/TransferFeeDisplay";
+import { TransferKeepAliveSwitch } from "@/components/Organisms/Transfer/TransferKeepAliveSwitch";
+import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
+import { toChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
+import { useExecutor } from "substrate-react";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { useSnackbar } from "notistack";
+import {
+  getTransferToken,
+  TransferHandlerArgs,
+  transferKaruraPicasso,
+  transferKusamaPicasso,
+  transferPicassoKarura,
+  transferPicassoKusama,
+} from "@/components/Organisms/Transfer/utils";
+import { TransferExistentialDeposit } from "@/components/Organisms/Transfer/TransferExistentialDeposit";
+import { TransferFeeItem } from "@/components/Organisms/Transfer/TransferFeeItem";
+import { AssetId } from "@/defi/polkadot/types";
 
 const Transfers: NextPage = () => {
-  const {
-    networks,
-    amount,
-    recipients,
-    keepAlive,
-    fee,
-    flipKeepAlive,
-    updateAmount,
-    updateNetworks,
-    updateRecipient
-  } = useStore(({ transfers }) => transfers);
+  const { enqueueSnackbar } = useSnackbar();
+  const tokenId = useStore((state) => state.transfers.tokenId);
+  const amount = useStore((state) => state.transfers.amount);
+  const selectedRecipient = useStore(
+    (state) => state.transfers.recipients.selected
+  );
 
-  const handleSwapClick = () =>
-    updateNetworks({ from: networks.to, to: networks.from });
+  const from = useStore((state) => state.transfers.networks.from);
+  const to = useStore((state) => state.transfers.networks.to);
+  const assets = useStore(
+    ({ substrateBalances }) => substrateBalances[from].assets
+  );
+  const { hasFeeItem, feeItem } = useStore(({ transfers }) => transfers);
+  const native = useStore(
+    ({ substrateBalances }) => substrateBalances[from].native
+  );
+  const keepAlive = useStore((state) => state.transfers.keepAlive);
+  const existentialDeposit = useStore(
+    ({ substrateBalances }) => substrateBalances[from].native.existentialDeposit
+  );
 
-  const handleUpdateFromValue = (value: string) =>
-    updateNetworks({ ...networks, from: value });
+  const isNativeToNetwork = useMemo(() => {
+    return assets[getTransferToken(from, to)].meta.supportedNetwork[from] === 1;
+  }, [from, to, assets]);
+  const balance = isNativeToNetwork ? native.balance : assets[tokenId].balance;
 
-  const handleUpdateToValue = (value: string) =>
-    updateNetworks({ ...networks, to: value });
+  const account = useSelectedAccount();
+  const providers = useAllParachainProviders();
+  const executor = useExecutor();
 
-  const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    updateAmount({ ...amount, value: +event.target.value });
+  const prepareAndCall = async (
+    transferHandler: (args: TransferHandlerArgs) => Promise<void>
+  ) => {
+    const api = providers[from].parachainApi;
 
-  const handleTokenChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    updateAmount({ ...amount, tokenId: event.target.value as TokenId });
+    if (!api || !executor || !account || feeItem.length === 0) {
+      console.error("No API or Executor or account", {
+        api,
+        executor,
+        account,
+      });
+      return;
+    }
+    const TARGET_ACCOUNT_ADDRESS = selectedRecipient.length
+      ? selectedRecipient
+      : account.address;
 
-  const handleMaxClick = () =>
-    updateAmount({ ...amount, value: amount.balance });
+    const TARGET_PARACHAIN_ID = SUBSTRATE_NETWORKS[to].parachainId;
+    // Set amount to transfer
+    const amountToTransfer = api.createType(
+      "u128",
+      toChainIdUnit(
+        keepAlive ? amount.minus(existentialDeposit) : amount
+      ).toString()
+    );
 
-  const handleRecipientChange = (value: string) => updateRecipient(value);
+    const feeItemId = assets[feeItem as AssetId].meta.supportedNetwork[from];
 
-  const handleKeepAliveChange = (_: React.ChangeEvent<HTMLInputElement>) =>
-    flipKeepAlive();
+    const signerAddress = account.address;
+
+    await transferHandler({
+      api,
+      targetChain: TARGET_PARACHAIN_ID,
+      targetAccount: TARGET_ACCOUNT_ADDRESS,
+      amount: amountToTransfer,
+      executor,
+      enqueueSnackbar,
+      signerAddress,
+      hasFeeItem,
+      feeItemId,
+    });
+  };
+
+  const handleTransfer = async () => {
+    let networkSpecificHandler = (_args: TransferHandlerArgs) =>
+      Promise.resolve();
+    switch (`${from}-${to}`) {
+      case "kusama-picasso":
+        networkSpecificHandler = transferKusamaPicasso;
+        break;
+      case "picasso-kusama":
+        networkSpecificHandler = transferPicassoKusama;
+        break;
+      case "karura-picasso":
+        networkSpecificHandler = transferKaruraPicasso;
+        break;
+      case "picasso-karura":
+        networkSpecificHandler = transferPicassoKarura;
+        break;
+    }
+
+    return prepareAndCall(networkSpecificHandler);
+  };
 
   return (
     <Default>
@@ -101,101 +137,36 @@ const Transfers: NextPage = () => {
         justifyContent="center"
       >
         <Grid item {...gridItemStyle("6rem")}>
-          <PageTitle
-            title="Transfers"
-            subtitle="You will be able to move assets on any available Kusama chains."
-            textAlign="center"
-          />
+          <Header />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <Box display="flex" sx={networksStyle}>
-            <NetworkSelect
-              LabelProps={{ mainLabelProps: { label: "From network" } }}
-              options={networks.options}
-              value={networks.from}
-              searchable
-              substrateNetwork
-              setValue={handleUpdateFromValue}
-            />
-            <Button
-              sx={swapButtonStyle}
-              variant="outlined"
-              size="large"
-              onClick={handleSwapClick}
-            >
-              <SwapHoriz />
-            </Button>
-            <NetworkSelect
-              LabelProps={{ mainLabelProps: { label: "To network" } }}
-              options={networks.options}
-              value={networks.to}
-              searchable
-              substrateNetwork
-              setValue={handleUpdateToValue}
-            />
-          </Box>
+          <TransferNetworkSelector />
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <TokenDropdownCombinedInput
-            buttonLabel="Max"
-            value={amount.value}
-            LabelProps={{
-              mainLabelProps: {
-                label: "Amount"
-              },
-              balanceLabelProps: {
-                label: "Balance:",
-                balanceText: formatToken(amount.balance, amount.tokenId)
-              }
-            }}
-            ButtonProps={{
-              onClick: handleMaxClick
-            }}
-            InputProps={{
-              sx: amountInputStyle
-            }}
-            CombinedSelectProps={{
-              value: amount.tokenId,
-              options: amount.options,
-              onChange: handleTokenChange
-            }}
-            onChange={handleAmountChange}
-          />
+          <AmountTokenDropdown />
+        </Grid>
+        <Grid item {...gridItemStyle()}>
+          <TransferFeeItem />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
-          <RecipientDropdown
-            value={recipients.selected}
-            expanded={false}
-            options={recipients.options}
-            setValue={handleRecipientChange}
-          />
+          <TransferRecipientDropdown />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
-          <FeeDisplay
-            label="Fee"
-            feeText={formatToken(fee, amount.tokenId)}
-            TooltipProps={{
-              title: "Fee tooltip title"
-            }}
-          />
+          {providers[from]?.parachainApi && <TransferFeeDisplay />}
         </Grid>
         <Grid item {...gridItemStyle()}>
-          <TextSwitch
-            label="Keep alive"
-            checked={keepAlive}
-            TooltipProps={{
-              title:
-                "This will prevent account of being removed due to low balance."
-            }}
-            onChange={handleKeepAliveChange}
-          />
+          <TransferKeepAliveSwitch />
+        </Grid>
+        <Grid item {...gridItemStyle()}>
+          <TransferExistentialDeposit network={from} />
         </Grid>
         <Grid item {...gridItemStyle("1.5rem")}>
           <Button
             variant="contained"
             color="primary"
-            disabled={amount.value <= 0 || amount.value > amount.balance}
+            disabled={amount.lte(0) || amount.gt(balance)}
             fullWidth
+            onClick={handleTransfer}
           >
             <Typography variant="button">Transfer</Typography>
           </Button>

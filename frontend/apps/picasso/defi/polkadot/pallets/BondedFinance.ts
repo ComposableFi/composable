@@ -36,7 +36,7 @@ export async function fetchBonds(api: ApiPromise) {
     ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
   >[] = await Promise.all(
     createArrayOfLength(bondOfferCount.toNumber()).map(
-      index => api.query.bondedFinance.bondOffers(index + 1) // index + 1 is offerId
+      (index) => api.query.bondedFinance.bondOffers(index + 1) // index + 1 is offerId
     )
   );
   const allBonds = await bonds.reduce(
@@ -58,7 +58,7 @@ export async function fetchBonds(api: ApiPromise) {
         ...bondOffer,
         price,
         rewardPrice,
-        offerId: index + 1
+        offerId: index + 1,
       };
 
       return [...prev, bondTransformer(beneficiary, newBondOffer)];
@@ -68,7 +68,7 @@ export async function fetchBonds(api: ApiPromise) {
 
   return {
     bonds: allBonds,
-    bondOfferCount
+    bondOfferCount,
   };
 }
 
@@ -81,7 +81,7 @@ async function fetchBondPrice(
 
   const [assetPriceResult, rewardAssetPriceResult] = await Promise.allSettled([
     fetchAssetPrice(asset, api),
-    fetchAssetPrice(reward_asset, api)
+    fetchAssetPrice(reward_asset, api),
   ]);
 
   const nbOfBonds = stringToBigNumber(bond.nbOfBonds.toString());
@@ -97,7 +97,7 @@ async function fetchBondPrice(
             stringToBigNumber(bond.reward.amount.toString())
           ).dividedBy(nbOfBonds)
         )
-      : new BigNumber(0)
+      : new BigNumber(0),
   ];
 }
 
@@ -109,7 +109,7 @@ function getAssets(asset: string): Token[] | Token {
     : mapped;
 
   return Array.isArray(tokens)
-    ? tokens.map(token => TOKENS[token])
+    ? tokens.map((token) => TOKENS[token])
     : TOKENS[tokens];
 }
 
@@ -145,10 +145,10 @@ function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
       amount: fromChainIdUnit(
         stringToBigNumber(bondOffer.reward.amount.toString())
       ),
-      maturity: new BigNumber(bondOffer.reward.maturity)
+      maturity: new BigNumber(bondOffer.reward.maturity),
     },
     price: bondOffer.price,
-    rewardPrice: bondOffer.rewardPrice
+    rewardPrice: bondOffer.rewardPrice,
   };
 }
 
@@ -218,7 +218,7 @@ export async function purchaseBond({
   enqueueSnackbar,
   setOpen,
   setOpen2nd,
-  handleFormReset
+  handleFormReset,
 }: PurchaseBond) {
   if (parachainApi && account && executor) {
     try {
@@ -238,7 +238,7 @@ export async function purchaseBond({
               variant: "info",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
             });
             setOpen(false);
             setOpen2nd(false);
@@ -248,17 +248,17 @@ export async function purchaseBond({
               variant: "success",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
             });
             handleFormReset();
           }
         )
-        .catch(err => {
+        .catch((err) => {
           enqueueSnackbar("Bond transaction failed", {
             variant: "error",
             isClosable: true,
             description: err.message,
-            persist: true
+            persist: true,
           });
         });
     } catch (e) {

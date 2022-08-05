@@ -28,7 +28,9 @@ export const ClaimForm = () => {
     bond?.toString() ?? ""
   );
   const { enqueueSnackbar } = useSnackbar();
-  const openBonds = useStore<ActiveBond[]>(state => state.bonds.openPositions);
+  const openBonds = useStore<ActiveBond[]>(
+    (state) => state.bonds.openPositions
+  );
   const activeBond = openBonds.find((b: ActiveBond) =>
     findCurrentBond(b, bond?.toString() ?? "")
   );
@@ -40,30 +42,30 @@ export const ClaimForm = () => {
         parachainApi,
         account,
         executor,
-        assetId: activeBond.bond.reward.assetId
+        assetId: activeBond.bond.reward.assetId,
       },
-      txHash => {
+      (txHash) => {
         enqueueSnackbar("Claim was successful", {
           variant: "success",
           isClosable: true,
           persist: true,
-          url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash
+          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
         });
       },
-      msg => {
+      (msg) => {
         enqueueSnackbar("An error occurred while processing transaction", {
           variant: "error",
           isClosable: true,
           persist: true,
-          description: "Failed with: " + msg
+          description: "Failed with: " + msg,
         });
       },
-      txHash => {
+      (txHash) => {
         enqueueSnackbar("Processing Claim", {
           variant: "info",
           isClosable: true,
           persist: true,
-          url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash
+          url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
         });
       }
     );
@@ -79,7 +81,7 @@ export const ClaimForm = () => {
         borderRadius: "0.75rem",
         padding: "3rem",
         width: "50%",
-        minWidth: "50%"
+        minWidth: "50%",
       }}
     >
       <Typography
@@ -97,7 +99,7 @@ export const ClaimForm = () => {
         maxValue={new BigNumber(0)}
         disabled={true}
         LabelProps={{
-          mainLabelProps: { label: "Amount" }
+          mainLabelProps: { label: "Amount" },
         }}
         InputProps={{
           startAdornment: (
@@ -108,12 +110,12 @@ export const ClaimForm = () => {
                 <TokenAsset tokenId={activeBond.bond.reward.asset.id} />
               )}
             </InputAdornment>
-          )
+          ),
         }}
       />
       <Button
         sx={{
-          mt: theme.spacing(4)
+          mt: theme.spacing(4),
         }}
         variant="contained"
         fullWidth
