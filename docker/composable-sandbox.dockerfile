@@ -7,10 +7,10 @@ RUN cargo +nightly build --release -p composable-runtime-wasm --target wasm32-un
 RUN cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
 RUN cargo +nightly build --release -p dali-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
 
-RUN DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.wasm) && \
-	PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm) && \
-	COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.wasm) && \
-	cargo build --release
+RUN export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.wasm) && \
+	export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm) && \
+	export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.wasm) && \
+	cargo build --release --features=builtin-wasm
 
 # ===== SECOND STAGE ======
 

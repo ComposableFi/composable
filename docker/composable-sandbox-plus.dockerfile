@@ -3,7 +3,14 @@ FROM composablefi/ci-linux:2022-04-18 as builder
 COPY . /build
 WORKDIR /build
 
-RUN cargo build --release
+RUN cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+RUN cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+RUN cargo +nightly build --release -p dali-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+
+RUN export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.wasm) && \
+	export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm) && \
+	export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.wasm) && \
+	cargo build --release --features=builtin-wasm
 
 # ===== SECOND STAGE ======
 

@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - composable-sandbox
+      - ci-via-nix
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'

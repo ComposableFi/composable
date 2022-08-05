@@ -2,9 +2,16 @@ name: "Nix pipeline"
 on:
   push:
     branches:
-      - nix/dz/fusion     
       - ci-via-nix
       - main
+  pull_request:
+    paths-ignore:
+      # TODO: actually check and built UI too
+      - frontend/**
+    branches:
+      - main
+      - develop
+      - releases    
 
 env:
   NIX_CACHIX: composable-community
