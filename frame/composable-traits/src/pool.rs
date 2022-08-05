@@ -1,7 +1,10 @@
 use codec::Codec;
 use frame_support::{
 	pallet_prelude::*,
-	sp_std::fmt::Debug,
+	sp_std::{
+		fmt::Debug,
+		vec::Vec,
+	},
 };
 use scale_info::TypeInfo;
 
