@@ -48,9 +48,9 @@ describe("DexRouterPallet Tests", function () {
   });
 
   before("Creating pools", async function()  {
-    poolId1 = await createConsProdPool(api, walletId1, walletId1, usdt, eth, fee, baseWeight);
-    poolId2 = await createConsProdPool(api, walletId1, walletId1, usdc, usdt, fee, baseWeight);
-    poolId3 = await createConsProdPool(api, walletId1, walletId1, dai, usdc, fee, baseWeight);
+    poolId1 = await createConsProdPool(api, sudoKey, walletId1, usdt, eth, fee, baseWeight);
+    poolId2 = await createConsProdPool(api, sudoKey, walletId1, usdc, usdt, fee, baseWeight);
+    poolId3 = await createConsProdPool(api, sudoKey, walletId1, dai, usdc, fee, baseWeight);
   });
 
   after("Closing the connection", async function () {
