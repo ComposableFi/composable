@@ -7159,23 +7159,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-rewards"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5#b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-io 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-runtime 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
-]
-
-[[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5#b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5"
@@ -8696,12 +8679,13 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "once_cell",
- "orml-rewards",
  "orml-tokens",
  "orml-traits",
  "pallet-assets 0.0.1",
  "pallet-balances",
  "pallet-currency-factory",
+ "pallet-fnft",
+ "pallet-proxy",
  "pallet-timestamp",
  "parity-scale-codec",
  "primitives",

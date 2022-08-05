@@ -1,13 +1,12 @@
 #![cfg(test)]
 
 use composable_tests_helpers::test::block::{process_and_progress_blocks, MILLISECS_PER_BLOCK};
+use composable_traits::account_proxy::ProxyType;
 use frame_support::{
 	parameter_types,
+	traits::{ConstU32, ConstU64, Everything, InstanceFilter},
 	PalletId,
-	traits::{ConstU32, ConstU64, Everything},
 };
-use composable_traits::account_proxy::ProxyType;
-use frame_support::traits::InstanceFilter;
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -109,10 +108,7 @@ impl InstanceFilter<Call> for ProxyType {
 	fn filter(&self, c: &Call) -> bool {
 		match self {
 			ProxyType::Any => true,
-			ProxyType::NonTransfer => matches!(
-				c,
-				Call::System(..)
-			),
+			ProxyType::NonTransfer => matches!(c, Call::System(..)),
 			ProxyType::Governance => matches!(
 				c,
 				// TODO democracy
@@ -132,7 +128,7 @@ impl InstanceFilter<Call> for ProxyType {
 			// 	c,
 			// 	Call::Auctions(..) | Call::Crowdloan(..) | Call::Registrar(..) | Call::Slots(..)
 			// ),
-			_ => false
+			_ => false,
 		}
 	}
 	fn is_superset(&self, o: &Self) -> bool {

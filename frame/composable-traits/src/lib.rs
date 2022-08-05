@@ -35,6 +35,7 @@
 	unused_extern_crates
 )]
 
+pub mod account_proxy;
 pub mod airdrop;
 pub mod assets;
 pub mod bonded_finance;
@@ -55,4 +56,3 @@ pub mod time;
 pub mod vault;
 pub mod vesting;
 pub mod xcm;
-pub mod account_proxy;

@@ -133,6 +133,13 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 
 	// possible lock config for this pool
 	pub lock: LockConfig<DurationPresets>,
+
+	// TODO (vim): Introduce asset ids for financial NFT as well as the shares of the pool
+	// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
+	// pub share_asset_id: AssetId;
+
+	// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
+	// pub financial_nft_asset_id: AssetId;
 }
 
 /// Default transfer limit on new asset added as rewards.
@@ -173,6 +180,12 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 		reward_configs: RewardConfigs,
 		// possible lock config for this reward
 		lock: LockConfig<DurationPresets>,
+		// TODO (vim): Introduce asset ids for financial NFT as well as the shares of the pool
+		// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
+		// share_asset_id: AssetId,
+
+		// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
+		// financial_nft_asset_id: AssetId
 	},
 }
 
@@ -182,6 +195,8 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
 	/// Protocol or the user account that owns this stake
+	// TODO (vim): Remove the owner and track the financial NFT ID
+	// 	pub financial_nft_id: ItemId
 	pub owner: AccountId,
 
 	/// Reward Pool ID from which pool to allocate rewards for this

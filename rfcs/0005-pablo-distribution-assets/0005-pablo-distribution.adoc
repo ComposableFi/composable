@@ -155,16 +155,22 @@ skinparam component {
   backgroundColor<<todo>> Red
 }
 
+node "Pallet-FNFT" {
+    FinancialNFT - [FNFT Logic]
+    Mutate - [FNFT Logic]
+    Create - [FNFT Logic]
+}
+
 node "Pallet-Staking-Rewards\n(Pallet-Rewards?)" {
     StakingReward - [Reward Logic]
     Staking - [Position Storage/Logic]
     Node "BatchProcess" {
         [RewardsConfig] --> [RewardAccumulationHook]
     }
+    [Position Storage/Logic] -down-> FinancialNFT
+    [Position Storage/Logic] -down-> Mutate
+    [Position Storage/Logic] -down-> Create
 }
-
-[fNFT Storage/Logic] <<todo>>
-
 
 node "Pallet-Pablo" {
     [Pool] --> StakingReward : transfer\ntrading fees\nfor PBLO stakers
@@ -414,6 +420,9 @@ while (reward = rewards_pool.rewards.has_next) is (yes)
     :new_position.reductions[reward.asset_id] += inflation;
 endwhile (no)
 :rewards_pool.total_shares += boosted_amount;
+:mint fnft;
+:transfer stake to fnft account and lock;
+:mint shares into to fnft account and lock;
 :save(new_position);
 :save(rewards_pool);
 stop
@@ -443,6 +452,8 @@ endwhile (no)
 :existing_position = readStorage(positionId);
 :merged_position = existing_position + new_position;
 note right: as per section 5.3.1.4
+:transfer extended stake to fnft account and lock;
+:mint shares into to fnft account and lock;
 :save(merged_position);
 :save(rewards_pool);
 stop
@@ -457,6 +468,9 @@ start
 :position = readStorage(positionId);
 :splits = split(position, ratio);
 note right: as per section 5.3.1.5
+:mint split fnft;
+:transfer split stake to fnft account and lock;
+:transfer split shares into to fnft account and lock;
 :save(...splits);
 stop
 ----
@@ -477,7 +491,8 @@ while (reward = rewards_pool.rewards.has_next) is (yes)
     :transfer(claim);
     :reward.claimed_rewards += claim;
 endwhile (no)
-:transfer(position.stake);
+:transfer stake from fnft account to nft owner;
+:burn fnft with the shares;
 :remove(position);
 :rewards_pool.claimed_shares += position.shares;
 :save(rewards_pool);

@@ -51,7 +51,7 @@ std = [
   "composable-traits/std",
   "composable-support/std",
   "composable-tests-helpers/std",
-  "pallet-proxy/std"
+  "pallet-proxy/std",
 ]
 
 runtime-benchmarks = [

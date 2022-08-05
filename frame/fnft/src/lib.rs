@@ -41,21 +41,24 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use core::fmt::Debug;
 	use codec::FullCodec;
 	use composable_support::math::safe::SafeAdd;
-	use composable_traits::currency::AssetIdLike;
-	use frame_support::{pallet_prelude::*, PalletId, traits::{
-		tokens::nonfungibles::{Create, Inspect, Mutate, Transfer},
-		IsType,
-	}};
+	use composable_traits::{account_proxy::ProxyType, currency::AssetIdLike, fnft::FinancialNFT};
+	use core::fmt::Debug;
+	use frame_support::{
+		pallet_prelude::*,
+		traits::{
+			tokens::nonfungibles::{Create, Inspect, Mutate, Transfer},
+			IsType,
+		},
+		PalletId,
+	};
 	use sp_arithmetic::traits::One;
 	use sp_runtime::traits::{AccountIdConversion, Zero};
 	use sp_std::{
 		collections::{btree_map::BTreeMap, btree_set::BTreeSet},
 		vec::Vec,
 	};
-	use composable_traits::{fnft::FinancialNFT, account_proxy::ProxyType};
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type FinancialNFTCollectionIdOf<T> = <T as Config>::FinancialNFTCollectionId;
@@ -90,7 +93,6 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_proxy::Config {
-
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -185,22 +187,12 @@ pub mod pallet {
 	>;
 
 	impl<T: Config> Pallet<T> {
-		#[allow(dead_code)] // TODO: remove it when it will be used
-		pub(crate) fn get_next_nft_id(
-			collection: &<Self as Inspect<AccountIdOf<T>>>::CollectionId,
-		) -> Result<FinancialNFTInstanceIdOf<T>, DispatchError> {
-			FinancialNFTId::<T>::try_mutate(
-				collection,
-				|x| -> Result<FinancialNFTInstanceIdOf<T>, DispatchError> {
-					let id = *x;
-					*x = x.safe_add(&FinancialNFTInstanceIdOf::<T>::one())?;
-					Ok(id)
-				},
-			)
-		}
-
-		fn get_proxy_type() -> <T as pallet_proxy::Config>::ProxyType  {
-			<T as pallet_proxy::Config>::ProxyType::decode(&mut &ProxyType::Governance.encode()[..]).expect("valid")
+		fn get_proxy_type() -> <T as pallet_proxy::Config>::ProxyType {
+			// TODO (vim): Cleanup the following when pallet-proxy has been forked and integrated
+			// 	ProxyType needs to be available to be shared across pallets to refer to it, while
+			// also being injected into the runtimes.
+			<T as pallet_proxy::Config>::ProxyType::decode(&mut &ProxyType::Governance.encode()[..])
+				.expect("valid")
 		}
 	}
 
@@ -270,6 +262,7 @@ pub mod pallet {
 					);
 					*owner = destination.clone();
 
+					// TODO (vim): Re-proxy NFT account to the transferee
 					Self::deposit_event(Event::FinancialNFTTransferred {
 						collection_id: *collection,
 						instance_id: *instance,
@@ -300,14 +293,15 @@ pub mod pallet {
 			OwnerInstances::<T>::mutate(who, insert_or_init_and_insert((*collection, *instance)));
 
 			// Set the owner as the proxy for certain types of actions for the financial NFT account
-			// TODO (vim): Consider forking/upstreaming in a trait for pallet-proxy instead of direct dependency
+			// TODO (vim): Fork-in a trait for pallet-proxy instead of direct dependency
 			let proxy_type = Self::get_proxy_type();
-			let asset_account = <Self as FinancialNFT<AccountIdOf<T>>>::asset_account(collection, instance);
+			let asset_account =
+				<Self as FinancialNFT<AccountIdOf<T>>>::asset_account(collection, instance);
 			<pallet_proxy::Pallet<T>>::add_proxy_delegate(
 				&asset_account,
 				who.clone(),
 				proxy_type,
-				frame_system::Pallet::<T>::block_number()
+				frame_system::Pallet::<T>::block_number(),
 			)?;
 
 			Self::deposit_event(Event::FinancialNFTCreated {
@@ -349,6 +343,7 @@ pub mod pallet {
 				},
 			});
 
+			// TODO (vim): Remove account proxy ??
 			Self::deposit_event(Event::FinancialNFTBurned {
 				collection_id: *collection,
 				instance_id: *instance,
@@ -409,11 +404,27 @@ pub mod pallet {
 	}
 
 	impl<T: Config> FinancialNFT<AccountIdOf<T>> for Pallet<T> {
-
 		/// TODO (vim): Assess the probability of collision in generating accounts
 		///   with collection id type u128 and instance id type u128 this definitely collides
-		fn asset_account(collection: &Self::CollectionId, instance: &Self::ItemId) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account_truncating( (collection, instance))
+		///   because the seed is longer than the account ID
+		fn asset_account(
+			collection: &Self::CollectionId,
+			instance: &Self::ItemId,
+		) -> AccountIdOf<T> {
+			T::PalletId::get().into_sub_account_truncating((collection, instance))
+		}
+
+		fn get_next_nft_id(
+			collection: &<Self as Inspect<AccountIdOf<T>>>::CollectionId,
+		) -> Result<Self::ItemId, DispatchError> {
+			FinancialNFTId::<T>::try_mutate(
+				collection,
+				|x| -> Result<FinancialNFTInstanceIdOf<T>, DispatchError> {
+					let id = *x;
+					*x = x.safe_add(&FinancialNFTInstanceIdOf::<T>::one())?;
+					Ok(id)
+				},
+			)
 		}
 	}
 

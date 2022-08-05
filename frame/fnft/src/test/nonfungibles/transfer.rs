@@ -10,11 +10,14 @@ use frame_support::{
 };
 use sp_runtime::DispatchError;
 
-use crate::{test::{
-	mock::{new_test_ext, Event, MockRuntime},
-	prelude::*,
-	ALICE, BOB, CHARLIE,
-}, Instance, OwnerInstances, Pallet, FinancialNFTInstanceIdOf};
+use crate::{
+	test::{
+		mock::{new_test_ext, Event, MockRuntime},
+		prelude::*,
+		ALICE, BOB, CHARLIE,
+	},
+	FinancialNFTInstanceIdOf, Instance, OwnerInstances, Pallet,
+};
 
 /// Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
 #[test]

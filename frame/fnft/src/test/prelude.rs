@@ -1,5 +1,6 @@
 use codec::{Decode, Encode};
 use composable_tests_helpers::test::helper::assert_last_event;
+use composable_traits::fnft::FinancialNFT;
 use frame_support::{
 	assert_ok,
 	traits::tokens::nonfungibles::{Inspect, Mutate},
@@ -9,10 +10,14 @@ use std::{
 	fmt,
 };
 
-use crate::{pallet::{CollectionInstances, Event as NftEvent, Instance, OwnerInstances}, test::{
-	mock::{Event, MockRuntime},
-	ALICE,
-}, AccountIdOf, Pallet, FinancialNFTInstanceIdOf};
+use crate::{
+	pallet::{CollectionInstances, Event as NftEvent, Instance, OwnerInstances},
+	test::{
+		mock::{Event, MockRuntime},
+		ALICE,
+	},
+	AccountIdOf, FinancialNFTInstanceIdOf, Pallet,
+};
 
 pub const TEST_COLLECTION_ID: u16 = 1;
 

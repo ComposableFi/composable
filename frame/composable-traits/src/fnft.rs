@@ -7,6 +7,7 @@ use composable_support::collections::vec::bounded::BiBoundedVec;
 use core::fmt::Debug;
 use frame_support::traits::tokens::nonfungibles::Inspect;
 use scale_info::TypeInfo;
+use sp_runtime::DispatchError;
 
 pub type Key = BiBoundedVec<u8, 1, 64>;
 pub type Value = BiBoundedVec<u8, 1, 256>;
@@ -18,6 +19,10 @@ pub trait FinancialNFT<AccountId>: Inspect<AccountId> {
 	/// future returns minus any liabilities. Future returns and liabilities should be queried
 	/// through the originating financial NFT protocol.
 	fn asset_account(collection: &Self::CollectionId, instance: &Self::ItemId) -> AccountId;
+
+	/// Retrieve the next valid financial NFT ID for the given collection in order to
+	/// mint a new NFT.
+	fn get_next_nft_id(collection: &Self::CollectionId) -> Result<Self::ItemId, DispatchError>;
 }
 
 /// Trait to be implemented by protocol supporting financial NFTs.
@@ -25,15 +30,23 @@ pub trait FinancialNFTProtocol {
 	/// Type for identifying an item.
 	type ItemId;
 
-	/// Asset ID type.
+	/// Asset ID type. This is the type used for financial NFT collection IDs. Following
+	/// https://github.com/paritytech/xcm-format#6-universal-asset-identifiers setting collection
+	/// IDs as asset IDs (asset class), allows universal identifiers for all asset classes
+	/// across eco system projects. Refer xcm::..::MultiLocation
 	type AssetId;
 
 	/// Balance type.
 	type Balance;
 
-	/// Asset ID mapping the financial NFT to the financial NFT protocol. This is generally the
-	/// asset type that is locked into the financial NFT account at creation.
-	fn protocol_asset_id() -> Self::AssetId;
+	/// Returns the set of Asset IDs mapping the originated financial NFT collections to
+	/// the financial NFT protocol. Used to identify the financial NFT protocol to route operations
+	/// related to a given financial NFT.
+	///
+	/// Eg: for staking rewards if
+	/// 	the fNFT collectionId(assetId) of issued fNFTs for staking positions of a particular reward
+	/// 	pool a is x and for another b is y. Then this function returns vec![x, y].
+	fn financial_nft_asset_ids() -> Vec<Self::AssetId>;
 
 	/// The value of the financial NFT is the sum total of balances of all asset types in its
 	/// account plus the future returns minus any liabilities.
