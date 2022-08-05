@@ -346,15 +346,21 @@
 
         # Derivations built when running `nix flake check`
         checks = {
-          tests = crane-stable.cargoBuild (common-args // {
-            pnameSuffix = "-tests";
+          # tests = crane-stable.cargoBuild (common-args // {
+          #   pnameSuffix = "-tests";
+          #   cargoArtifacts = common-deps;
+          #   cargoBuildCommand = "cargo test --workspace --release";            
+          # });
+          picasso-integraion-tests = crane-stable.cargoBuild (common-args // {
+            pname = "local-integration-tests";
             cargoArtifacts = common-deps;
-            cargoBuildCommand = "cargo test --workspace --release";            
+            cargoBuildCommand = "cargo test --package local-integration-tests";            
+            cargoExtraArgs = "--features local-integration-tests --features picasso --no-default-features";
           });
-          # TODO: on on next runs and replace bash version with this
-          dali-dev-benchmarks = run-with-benchmarks "dali-dev";
-          picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
-          composable-dev-benchmarks = run-with-benchmarks "composable-dev";
+          # # TODO: on on next runs and replace bash version with this
+          # dali-dev-benchmarks = run-with-benchmarks "dali-dev";
+          # picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
+          # composable-dev-benchmarks = run-with-benchmarks "composable-dev";
         };
 
 
