@@ -23,41 +23,41 @@ use scale_info::{prelude::format, TypeInfo};
 use sp_std::{prelude::*, str::FromStr};
 use xcm::v1::{Junction, Junctions, MultiLocation};
 
-#[derive(RuntimeDebug, Clone, PartialEq, Eq, TypeInfo, Encode, Decode)]
+#[derive(RuntimeDebug, Clone, PartialEq, Eq)]
 /// Error definition for module
 pub enum Error {
 	/// Failed to register a new packet
-	SendPacketError,
+	SendPacketError { msg: Option<String> },
 	/// An error involving the connection id
-	ConnectionIdError,
+	ConnectionIdError { msg: Option<String> },
 	/// An error involving the client id
-	ClientIdError,
+	ClientIdError { msg: Option<String> },
 	/// An error involving channel or port
-	ChannelOrPortError,
+	ChannelOrPortError { msg: Option<String> },
 	/// An error involving Client state
-	ClientStateError,
+	ClientStateError { msg: Option<String> },
 	/// An Error Involving the Timestamp and height
-	TimestampOrHeightError,
+	TimestampOrHeightError { msg: Option<String> },
 	/// Failed to register a token transfer packet
-	SendTransferError,
+	SendTransferError { msg: Option<String> },
 	/// Ics20 receive packet processing error
-	ReceivePacketError,
+	ReceivePacketError { msg: Option<String> },
 	/// Write acknowledgement error
-	WriteAcknowledgementError,
+	WriteAcknowledgementError { msg: Option<String> },
 	/// Ics20 packet acknowledgement processing error
-	AcknowledgementError,
+	AcknowledgementError { msg: Option<String> },
 	/// Ics20 packet timeout processing error
-	TimeoutError,
+	TimeoutError { msg: Option<String> },
 	/// Failed to bind port
-	BindPortError,
+	BindPortError { msg: Option<String> },
 	/// Failed to intialize a new channel
-	ChannelInitError,
+	ChannelInitError { msg: Option<String> },
 	/// Failed to decode a value
-	DecodingError,
+	DecodingError { msg: Option<String> },
 	/// Failed to decode commitment prefix
 	ErrorDecodingPrefix,
 	/// Some other error
-	Other,
+	Other { msg: Option<String> },
 }
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
@@ -81,7 +81,7 @@ impl TryFrom<&OpenChannelParams> for Order {
 			0 => Ok(Order::None),
 			1 => Ok(Order::Unordered),
 			2 => Ok(Order::Ordered),
-			_ => Err(Error::Other),
+			_ => Err(Error::Other { msg: None }),
 		}
 	}
 }
@@ -199,32 +199,40 @@ impl CallbackWeight for () {
 
 /// Get port_id from raw bytes
 pub fn port_id_from_bytes(port: Vec<u8>) -> Result<PortId, Error> {
-	PortId::from_str(&String::from_utf8(port).map_err(|_| Error::DecodingError)?)
-		.map_err(|_| Error::DecodingError)
+	PortId::from_str(&String::from_utf8(port).map_err(|_| Error::DecodingError { msg: None })?)
+		.map_err(|_| Error::DecodingError { msg: None })
 }
 
 /// Get channel_id from raw bytes
 pub fn channel_id_from_bytes(channel: Vec<u8>) -> Result<ChannelId, Error> {
-	ChannelId::from_str(&String::from_utf8(channel).map_err(|_| Error::DecodingError)?)
-		.map_err(|_| Error::DecodingError)
+	ChannelId::from_str(
+		&String::from_utf8(channel).map_err(|_| Error::DecodingError { msg: None })?,
+	)
+	.map_err(|_| Error::DecodingError { msg: None })
 }
 
 /// Get connection_id from raw bytes
 pub fn connection_id_from_bytes(connection: Vec<u8>) -> Result<ConnectionId, Error> {
-	ConnectionId::from_str(&String::from_utf8(connection).map_err(|_| Error::DecodingError)?)
-		.map_err(|_| Error::DecodingError)
+	ConnectionId::from_str(
+		&String::from_utf8(connection).map_err(|_| Error::DecodingError { msg: None })?,
+	)
+	.map_err(|_| Error::DecodingError { msg: None })
 }
 
 /// Get client_id from raw bytes
 pub fn client_id_from_bytes(client_id: Vec<u8>) -> Result<ClientId, Error> {
-	ClientId::from_str(&String::from_utf8(client_id).map_err(|_| Error::DecodingError)?)
-		.map_err(|_| Error::DecodingError)
+	ClientId::from_str(
+		&String::from_utf8(client_id).map_err(|_| Error::DecodingError { msg: None })?,
+	)
+	.map_err(|_| Error::DecodingError { msg: None })
 }
 
 /// Get client_type from raw bytes
 pub fn client_type_from_bytes(client_type: Vec<u8>) -> Result<ClientType, Error> {
-	ClientType::from_str(&String::from_utf8(client_type).map_err(|_| Error::DecodingError)?)
-		.map_err(|_| Error::DecodingError)
+	ClientType::from_str(
+		&String::from_utf8(client_type).map_err(|_| Error::DecodingError { msg: None })?,
+	)
+	.map_err(|_| Error::DecodingError { msg: None })
 }
 
 /// Get trie key by applying the commitment prefix to the path

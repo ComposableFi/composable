@@ -269,10 +269,6 @@ pub mod pallet {
 			};
 
 			let account_id_32: AccountId32 = origin.clone().into();
-			// Convert the user account into an SS58 string
-			// SS58Codec is only implemented for AccountId32 in std
-			// implementing it in wasm would require compiling the ss58 registry in the runtime,
-			// which is not ideal Hence, the reason for delegating this to a host function
 			let from = runtime_interface::account_id_to_ss58(account_id_32.into())
 				.and_then(|val| {
 					String::from_utf8(val).map_err(|_| SS58CodecError::InvalidAccountId)
@@ -308,7 +304,10 @@ pub mod pallet {
 				)
 				.map_err(|_| Error::<T>::InvalidTimestamp)?,
 			};
-			T::IbcHandler::send_transfer(data).map_err(|_| Error::<T>::TransferFailed)?;
+			T::IbcHandler::send_transfer(data).map_err(|e| {
+				log::trace!(target: "ibc_transfer", "[transfer]: error: {:?}", e);
+				Error::<T>::TransferFailed
+			})?;
 
 			Self::deposit_event(Event::<T>::TokenTransferInitiated {
 				from: origin,
@@ -545,7 +544,8 @@ impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T> {
 		OnRecvPacketAck::Successful(
 			Box::new(Ics20Acknowledgement::success()),
 			Box::new(move |_ctx| {
-				T::IbcHandler::write_acknowlegdement(&packet, ack).map_err(|e| format!("{:?}", e))
+				T::IbcHandler::write_acknowlegdement(&packet, ack)
+					.map_err(|e| format!("[on_recv_packet] {:#?}", e))
 			}),
 		)
 	}
@@ -557,8 +557,11 @@ impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T> {
 		acknowledgement: &Acknowledgement,
 		_relayer: &Signer,
 	) -> Result<(), Ics04Error> {
-		T::IbcHandler::on_ack_packet(output, packet, acknowledgement).map_err(|_| {
-			Ics04Error::app_module("[ibc-transfer]: Error processing acknowledgement".to_string())
+		T::IbcHandler::on_ack_packet(output, packet, acknowledgement).map_err(|e| {
+			Ics04Error::app_module(format!(
+				"[ibc-transfer]: Error processing acknowledgement {:#?}",
+				e
+			))
 		})
 	}
 
@@ -568,8 +571,11 @@ impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T> {
 		packet: &Packet,
 		_relayer: &Signer,
 	) -> Result<(), Ics04Error> {
-		T::IbcHandler::on_timeout_packet(output, packet).map_err(|_| {
-			Ics04Error::app_module("[ibc-transfer]: Error processing timeout packet".to_string())
+		T::IbcHandler::on_timeout_packet(output, packet).map_err(|e| {
+			Ics04Error::app_module(format!(
+				"[ibc-transfer]: Error processing timeout packet {:#?}",
+				e
+			))
 		})
 	}
 }

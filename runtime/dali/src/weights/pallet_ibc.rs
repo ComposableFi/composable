@@ -197,25 +197,6 @@ impl<T: frame_system::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(10 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
-	// Storage: unknown [0x3a6368696c645f73746f726167653a64656661756c743a6962632f] (r:1 w:0)
-	// Storage: Timestamp Now (r:1 w:0)
-	// Storage: Ibc HostConsensusStates (r:1 w:1)
-	// Storage: System Digest (r:1 w:1)
-	fn on_finalize(a: u32, b: u32, c: u32, d: u32, _e: u32, f: u32, ) -> Weight {
-		(24_577_000 as Weight)
-			// Standard Error: 9_000
-			.saturating_add((263_000 as Weight).saturating_mul(a as Weight))
-			// Standard Error: 9_000
-			.saturating_add((183_000 as Weight).saturating_mul(b as Weight))
-			// Standard Error: 9_000
-			.saturating_add((96_000 as Weight).saturating_mul(c as Weight))
-			// Standard Error: 9_000
-			.saturating_add((73_000 as Weight).saturating_mul(d as Weight))
-			// Standard Error: 9_000
-			.saturating_add((73_000 as Weight).saturating_mul(f as Weight))
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(2 as Weight))
-	}
 	// Storage: Ibc ConnectionCounter (r:1 w:1)
 	// Storage: ParachainInfo ParachainId (r:1 w:0)
 	// Storage: Ibc ConnectionClient (r:1 w:1)
