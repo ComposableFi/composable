@@ -353,7 +353,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999n }
+              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999_999n }
             })
           )
         ),
@@ -364,7 +364,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999n }
+              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999_999n }
             })
           )
         ),
@@ -375,7 +375,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999n }
+              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999_999n }
             })
           )
         ),
@@ -386,7 +386,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999n }
+              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999_999n }
             })
           )
         ),
@@ -397,7 +397,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999n }
+              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999_999n }
             })
           )
         ),
@@ -451,6 +451,7 @@ describe.only("[SHORT] Democracy Tests", function () {
         api.tx.democracy.removeVote(proposalId2)
       );
       expect(result).to.be.not.an("Error");
+      // ToDo: Get check work!
       //const voteWalletFerdie = await api.query.democracy.votingOf(walletFerdie.publicKey);
       //console.debug(voteWalletFerdie.toString());
       //expect(voteWalletFerdie.direct.votes.length).to.equal(0);
