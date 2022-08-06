@@ -240,9 +240,7 @@
           '';
         });      
 
-        run-with-benchmarks = chain :  pkgs.writeShellScriptBin "run-benchmarks-once" ''
-            ${pkgs.findutils}/bin/find . -name composable
-            which ${composable-node-with-benchmarks}/bin/composable
+        run-with-benchmarks = chain : pkgs.writeShellScriptBin "run-benchmarks-once" ''
             ${composable-node-with-benchmarks}/bin/composable benchmark pallet \
               --chain="${chain}" \
               --execution=wasm \
@@ -349,12 +347,16 @@
         # Derivations built when running `nix flake check`
         checks = {
           # TODO: how to avoid run some tests? simpltes is read workspace, get all members, and filter out by mask integration
-          # tests = crane-stable.cargoBuild (common-attrs // {
-          #   pnameSuffix = "-tests";
-          #   doCheck = true;
-          #   cargoArtifacts = common-deps;
-          #   cargoBuildCommand = "cargo test --workspace --release";      
-          # });
+          tests = crane-stable.cargoBuild (common-attrs // {
+            pnameSuffix = "-tests";
+            doCheck = true;
+            cargoArtifacts = common-deps;
+            cargoBuildCommand = "cargo test --workspace --release";      
+          });
+          dali-dev-benchmarks = run-with-benchmarks "dali-dev";
+          picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
+          composable-dev-benchmarks = run-with-benchmarks "composable-dev";
+
           picasso-integration-tests = crane-stable.cargoBuild (common-attrs // {
             pname = "local-integration-tests";
             cargoArtifacts = common-deps;
@@ -369,9 +371,6 @@
             cargoBuildCommand = "cargo test --package local-integration-tests";            
             cargoExtraArgs = "--features local-integration-tests --features dali --features std --no-default-features";
           });
-          # dali-dev-benchmarks = run-with-benchmarks "dali-dev";
-          # picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
-          # composable-dev-benchmarks = run-with-benchmarks "composable-dev";
         };
 
 

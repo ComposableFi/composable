@@ -133,37 +133,6 @@ jobs:
       #   id: check_runtime
       #   run: .maintain/check_runtime.sh
 
-      - name: Run single pass benchmarking
-        # only run this step if there are runtime changes
-        # if: env.RUNTIME_CHECK == 1
-        env:
-          RUST_BACKTRACE: full
-        run: |
-          # NOTE: dirty hack until nix migration
-          cargo +nightly build --release -p wasm-optimizer
-          cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
-          cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
-          cargo +nightly build --release -p dali-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
-          ./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/dali_runtime.wasm --output ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm
-          ./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm --output ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm
-          ./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/composable_runtime.wasm --output ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm
-          export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm)
-          export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm)
-          export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm)
-
-          cargo build --release -p composable --features=runtime-benchmarks --features=builtin-wasm
-          ./target/release/composable benchmark pallet \
-            --chain="${{ matrix.runtime }}" \
-            --execution=wasm \
-            --wasm-execution=compiled \
-            --wasm-instantiation-strategy=legacy-instance-reuse \
-            --pallet="*" \
-            --extrinsic='*' \
-            --steps=1 \
-            --repeat=1 \
-            --log error
-
-
   substrate-tests:
     name: Unit Tests 
     runs-on:
