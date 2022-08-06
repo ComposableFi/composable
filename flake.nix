@@ -345,29 +345,32 @@
         };
 
         # Derivations built when running `nix flake check`
+        # TODO: pass --argstr and depending on it enable only part of checks (unit tests, local simulator tests, benches), and ensure existing run in parallel
+        # TODO: because test runs are long        
         checks = {
           # TODO: how to avoid run some tests? simpltes is read workspace, get all members, and filter out by mask integration
-          tests = crane-stable.cargoBuild (common-attrs // {
-            pnameSuffix = "-tests";
-            doCheck = true;
-            cargoArtifacts = common-deps;
-            cargoBuildCommand = "cargo test --workspace --release";      
-          });
-          dali-dev-benchmarks = run-with-benchmarks "dali-dev";
-          picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
-          composable-dev-benchmarks = run-with-benchmarks "composable-dev";
+          # tests = crane-stable.cargoBuild (common-attrs // {
+          #   pnameSuffix = "-tests";
+          #   doCheck = true;
+          #   cargoArtifacts = common-deps;
+          #   cargoBuildCommand = "cargo test --workspace --release";      
+          # });
 
-          picasso-integration-tests = crane-stable.cargoBuild (common-attrs // {
+          # dali-dev-benchmarks = run-with-benchmarks "dali-dev";
+          # picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
+          # composable-dev-benchmarks = run-with-benchmarks "composable-dev";
+
+          picasso-integration-tests = crane-nightly.cargoBuild (common-attrs // {
             pname = "local-integration-tests";
-            cargoArtifacts = common-deps;
+            cargoArtifacts = common-deps-nightly;
             doCheck = true;
             cargoBuildCommand = "cargo test --package local-integration-tests";            
             cargoExtraArgs = "--features local-integration-tests --features picasso --features std --no-default-features";
           });
-          dali-integration-tests = crane-stable.cargoBuild (common-attrs // {
+          dali-integration-tests = crane-nightly.cargoBuild (common-attrs // {
             pname = "local-integration-tests";
             doCheck = true;
-            cargoArtifacts = common-deps;
+            cargoArtifacts = common-deps-nightly;
             cargoBuildCommand = "cargo test --package local-integration-tests";            
             cargoExtraArgs = "--features local-integration-tests --features dali --features std --no-default-features";
           });
