@@ -1,7 +1,10 @@
 use crate::defi::CurrencyPair;
 use frame_support::pallet_prelude::*;
 use sp_runtime::Perquintill;
-use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
+use sp_std::{
+    vec::Vec,
+    collections::{btree_map::BTreeMap, btree_set::BTreeSet}
+};
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct MarketConfig<AccountId, AssetId, BlockNumber, VaultId>

@@ -74,7 +74,7 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
-	use sp_runtime::{traits::One, Percent};
+	use sp_runtime::traits::One;
 	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, ops::AddAssign};
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
@@ -161,8 +161,6 @@ pub mod pallet {
 		// Each payments schedule can not have more than this amount of payments.
 		type MaxPaymentsAmountValue: Get<u32>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
-		// TODO: @mikoalichuk: can we use String?
-		type ScheduleTimestampStringFormat: Get<String>;
 	}
 
 	#[pallet::pallet]
@@ -251,7 +249,7 @@ pub mod pallet {
 		IncorrectTimestampFormat,
 		// When borrower tried to activate a loan after first payment day.
 		TheLoanContractIsExpired,
-		// This should not happens.
+		// Tis should not happens.
 		// Error added for debug.
 		CollateralCanNotBeTransferedBackToTheBorrowersAccount,
 		// When we try to retrieve interest rate for the date which is not present in the payment

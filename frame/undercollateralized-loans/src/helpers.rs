@@ -1,5 +1,3 @@
-// TODO: @mikolaichuk: rewrite to iterators.
-//
 use crate::{
 	strategies::repayment_strategies::{
 		interest_periodically_principal_when_mature, principal_only, RepaymentResult,
@@ -30,6 +28,7 @@ use sp_runtime::{
 	DispatchError, Percent, Perquintill, TransactionOutcome,
 };
 
+use sp_std::vec::Vec;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
 
 // #generalization
@@ -443,7 +442,7 @@ impl<T: Config> Pallet<T> {
 		let mut output = vec![];
 		for (timestamp, percent) in schedule {
 			output.push((
-				NaiveDate::parse_from_str(&timestamp, &T::ScheduleTimestampStringFormat::get())
+				NaiveDate::parse_from_str(&timestamp, "%d.%m.%Y")
 					.map_err(|_| crate::Error::<T>::IncorrectTimestampFormat)?
 					.and_time(NaiveTime::default())
 					.timestamp(),
