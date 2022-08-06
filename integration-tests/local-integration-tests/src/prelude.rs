@@ -11,10 +11,10 @@ pub use xcm::latest::prelude::*;
 pub type LocalAssetId = CurrencyId;
 
 #[cfg(feature = "dali")]
-pub use dali_runtime as sthis_runtime;
+pub use dali_runtime as this_runtime;
 
 #[cfg(feature = "dali")]
-pub use dali_runtime as ssibling_runtime;
+pub use dali_runtime as sibling_runtime;
 
 #[cfg(feature = "dali")]
 pub use dali_runtime::{MaxInstructions, UnitWeightCost, Weight, XcmConfig};

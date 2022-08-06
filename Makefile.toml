@@ -60,7 +60,7 @@ workspace = false
 [tasks.run-local-integration-tests] # TODO: remove and use nix
 script = '''
 # we cannot use toolchain setting as different parts of codebase require different compiler
-cargo +stable test --package local-integration-tests --features local-integration-tests --features picasso  --no-default-features
+cargo +stable test --package local-integration-tests --features local-integration-tests --features picasso --no-default-features
 '''
 workspace = false
 

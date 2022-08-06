@@ -67,7 +67,7 @@
         # Crane pinned to nightly Rust
         crane-nightly = crane-lib.overrideToolchain rust-nightly;
 
-        wasm-optimizer = crane-stable.buildPackage (common-args // {
+        wasm-optimizer = crane-stable.buildPackage (common-attrs // {
           cargoCheckCommand = "true";
           pname = "wasm-optimizer";
           cargoArtifacts = common-deps;
@@ -130,7 +130,7 @@
         };
 
         # Common env required to build the node
-        common-args = {
+        common-attrs = {
           inherit src;
           buildInputs = [ openssl zstd ];
           nativeBuildInputs = [ clang pkg-config ]
@@ -152,15 +152,15 @@
         };
 
         # Common dependencies, all dependencies listed that are out of this repo
-        common-deps = crane-stable.buildDepsOnly (common-args // { });
-        common-deps-nightly = crane-nightly.buildDepsOnly (common-args // { });
-        common-args-with-benchmarks = common-args // { cargoExtraArgs = "--features=runtime-benchmarks --features=builtin-wasm";};
-        common-deps-with-benchmarks = crane-stable.buildDepsOnly common-args-with-benchmarks;
+        common-deps = crane-stable.buildDepsOnly (common-attrs // { });
+        common-deps-nightly = crane-nightly.buildDepsOnly (common-attrs // { });
+        common-attrs-with-benchmarks = common-attrs // { cargoExtraArgs = "--features=runtime-benchmarks --features=builtin-wasm";};
+        common-deps-with-benchmarks = crane-stable.buildDepsOnly common-attrs-with-benchmarks;
 
         # Build a wasm runtime, unoptimized
         mk-runtime = name:
           let file-name = "${name}_runtime.wasm";
-          in crane-nightly.buildPackage (common-args // {
+          in crane-nightly.buildPackage (common-attrs // {
             pname = "${name}-runtime";
             cargoArtifacts = common-deps-nightly;
             cargoBuildCommand =
@@ -209,7 +209,7 @@
          # NOTE: with docs, non nighly fails but nighly fails too...
           # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
         composable-node = with packages;
-          crane-stable.buildPackage (common-args // {
+          crane-stable.buildPackage (common-attrs // {
             pnameSuffix = "-node";
             cargoArtifacts = common-deps;
             cargoBuildCommand =
@@ -224,7 +224,7 @@
             '';
           });
 
-        composable-node-with-benchmarks = crane-stable.cargoBuild (common-args-with-benchmarks // {
+        composable-node-with-benchmarks = crane-stable.cargoBuild (common-attrs-with-benchmarks // {
           pnameSuffix = "-node";
           cargoArtifacts = common-deps-with-benchmarks;
           cargoBuildCommand =
@@ -266,7 +266,7 @@
           inherit composable-runtime;
           inherit composable-node;
 
-          price-feed = crane-stable.buildPackage (common-args // {
+          price-feed = crane-stable.buildPackage (common-attrs // {
             pnameSuffix = "-price-feed";
             cargoArtifacts = common-deps;
             cargoBuildCommand = "cargo build --release -p price-feed";
@@ -346,18 +346,27 @@
 
         # Derivations built when running `nix flake check`
         checks = {
-          # tests = crane-stable.cargoBuild (common-args // {
+          # TODO: how to avoid run some tests? simpltes is read workspace, get all members, and filter out by mask integration
+          # tests = crane-stable.cargoBuild (common-attrs // {
           #   pnameSuffix = "-tests";
+          #   doCheck = true;
           #   cargoArtifacts = common-deps;
-          #   cargoBuildCommand = "cargo test --workspace --release";            
+          #   cargoBuildCommand = "cargo test --workspace --release";      
           # });
-          picasso-integraion-tests = crane-stable.cargoBuild (common-args // {
+          picasso-integration-tests = crane-stable.cargoBuild (common-attrs // {
             pname = "local-integration-tests";
             cargoArtifacts = common-deps;
+            doCheck = true;
             cargoBuildCommand = "cargo test --package local-integration-tests";            
             cargoExtraArgs = "--features local-integration-tests --features picasso --features develop --features std --no-default-features";
           });
-          # # TODO: on on next runs and replace bash version with this
+          dali-integration-tests = crane-stable.cargoBuild (common-attrs // {
+            pname = "local-integration-tests";
+            doCheck = true;
+            cargoArtifacts = common-deps;
+            cargoBuildCommand = "cargo test --package local-integration-tests";            
+            cargoExtraArgs = "--features local-integration-tests --features dali --features develop --features std --no-default-features";
+          });
           # dali-dev-benchmarks = run-with-benchmarks "dali-dev";
           # picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
           # composable-dev-benchmarks = run-with-benchmarks "composable-dev";
