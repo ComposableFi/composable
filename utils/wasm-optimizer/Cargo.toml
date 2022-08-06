@@ -8,6 +8,4 @@ authors = ["Hussein Ait Lahcen <hussein.aitlahcen@gmail.com>"]
 [dependencies]
 clap = { version = "3.2", features = ["derive"] }
 wasm-gc-api = "0.1.11"
-sp-maybe-compressed-blob = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.24" }
-
-[workspace]
+sp-maybe-compressed-blob = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
