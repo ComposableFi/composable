@@ -91,7 +91,8 @@
           procps
         ];
 
-        src = let
+        # source relevant to build rust only
+        rust-src = let
           blacklist = [
             "nix"            
             ".config"
@@ -113,6 +114,7 @@
             "setup"
             "subsquid"
             "runtime-tests"
+            "flake.nix"
           ];
         in lib.cleanSourceWith {
           filter = lib.cleanSourceFilter;
@@ -131,7 +133,7 @@
 
         # Common env required to build the node
         common-attrs = {
-          inherit src;
+          src = rust-src;
           buildInputs = [ openssl zstd ];
           nativeBuildInputs = [ clang pkg-config ]
             ++ lib.optional stdenv.isDarwin (with darwin.apple_sdk.frameworks; [
@@ -358,14 +360,14 @@
             cargoArtifacts = common-deps;
             doCheck = true;
             cargoBuildCommand = "cargo test --package local-integration-tests";            
-            cargoExtraArgs = "--features local-integration-tests --features picasso --features develop --features std --no-default-features";
+            cargoExtraArgs = "--features local-integration-tests --features picasso --features std --no-default-features";
           });
           dali-integration-tests = crane-stable.cargoBuild (common-attrs // {
             pname = "local-integration-tests";
             doCheck = true;
             cargoArtifacts = common-deps;
             cargoBuildCommand = "cargo test --package local-integration-tests";            
-            cargoExtraArgs = "--features local-integration-tests --features dali --features develop --features std --no-default-features";
+            cargoExtraArgs = "--features local-integration-tests --features dali --features std --no-default-features";
           });
           # dali-dev-benchmarks = run-with-benchmarks "dali-dev";
           # picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
