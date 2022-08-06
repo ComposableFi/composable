@@ -67,20 +67,16 @@
         # Crane pinned to nightly Rust
         crane-nightly = crane-lib.overrideToolchain rust-nightly;
 
-        # Wasm optimizer, used to replicate build.rs behavior in an explicit fashion
-        wasm-optimizer = crane-stable.buildPackage {
+        wasm-optimizer = crane-stable.buildPackage (common-args // {
           cargoCheckCommand = "true";
-          src = let customFilter = name: type: true;
-          in lib.cleanSourceWith {
-            filter = lib.cleanSourceFilter;
-            src = lib.cleanSourceWith {
-              filter =
-                nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-                ./utils/wasm-optimizer;
-              src = ./utils/wasm-optimizer;
-            };
-          };
-        };
+          pname = "wasm-optimizer";
+          cargoArtifacts = common-deps;
+          cargoBuildCommand =
+              "cargo build --release --package wasm-optimizer";
+          version = "0.1.0";
+          # NOTE: we copy more then needed, but tht is simpler to setup, we depend pn substrae for sure so
+        });
+
 
         # for containers which are intented for testing, debug and development (including running isolated runtime)
         container-tools =     
@@ -118,14 +114,17 @@
             "subsquid"
             "runtime-tests"
           ];
-          customFilter = name: type:
-            !(type == "directory" && builtins.elem (baseNameOf name) blacklist);
         in lib.cleanSourceWith {
           filter = lib.cleanSourceFilter;
           src = lib.cleanSourceWith {
-            filter =
-              nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-              ./.;
+            filter = let 
+              customFilter = name: type:
+                !(type == "directory" && builtins.elem (baseNameOf name) blacklist);
+              in 
+                nix-gitignore.gitignoreFilterPure 
+                    customFilter
+                    [ ./.gitignore ]
+                    ./.;
             src = ./.;
           };
         };

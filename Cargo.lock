@@ -16616,6 +16616,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "wasm-optimizer"
+version = "0.1.0"
+dependencies = [
+ "clap 3.2.5",
+ "sp-maybe-compressed-blob",
+ "wasm-gc-api",
+]
+
+[[package]]
 name = "wasm-timer"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

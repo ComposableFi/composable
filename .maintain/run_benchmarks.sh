@@ -20,13 +20,16 @@ repeat=${2:-1}
 /home/$(whoami)/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 
 # NOTE: dirty hack until nix migration
+cargo +nightly build --release -p wasm-optimizer
 cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
 cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
 cargo +nightly build --release -p dali-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
-
-export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.wasm)
-export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm)
-export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.wasm)
+./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/dali_runtime.wasm --output ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm
+./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm --output ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm
+./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/composable_runtime.wasm --output ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm
+export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm)
+export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm)
+export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm)
 
 # TODO: use nix
 /home/$(whoami)/.cargo/bin/cargo build --release --package composable --features=runtime-benchmarks --features=builtin-wasm

@@ -1,3 +1,2 @@
 target
-# TODO: uncomment and check, unliely we need node_modules
-#node_modules
+node_modules

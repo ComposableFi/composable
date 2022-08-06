@@ -50,6 +50,7 @@ members = [
   "simnode/simnode-tests",
   "simnode/common",
   "utils/xcmp",
+  "utils/wasm-optimizer",
 ]
 
 [profile.release]
