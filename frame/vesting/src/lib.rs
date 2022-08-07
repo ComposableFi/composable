@@ -404,36 +404,76 @@ impl<T: Config> Pallet<T> {
 	fn do_claim(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
-		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>, /* Option<T::VestingScheduleId>, */
+		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 	) -> Result<(), DispatchError> {
-		let locked_amount = Self::locked_balance(who, asset, vesting_schedule_ids.clone())?;
+		let current_locked_amount = Self::locked_balance(who, asset, VestingScheduleIdSet::All)?;
+		let balance_to_claim = Self::balance_to_claim(who, asset, vesting_schedule_ids.clone())?;
 
-		if locked_amount.is_zero() {
+		let new_locked_amount = current_locked_amount.safe_sub(&balance_to_claim)?;
+
+		if new_locked_amount.is_zero() {
 			// cleanup the storage and unlock the fund
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
 		} else {
-			T::Currency::set_lock(VESTING_LOCK_ID, asset, who, locked_amount)?;
+			T::Currency::set_lock(VESTING_LOCK_ID, asset, who, new_locked_amount.clone())?;
 		}
 
 		Self::deposit_event(Event::Claimed {
 			who: who.clone(),
 			asset,
-			locked_amount,
+			locked_amount: new_locked_amount,
 			vesting_schedule_ids,
 		});
 
 		Ok(())
 	}
 
-	/// Returns total locked balance and balance per vesting schedule, based on current block number
+	/// Returns total locked balance for a given account, asset and vesting schedules, based on
+	/// current block number
 	fn locked_balance(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
 		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 	) -> Result<BalanceOf<T>, DispatchError> {
+		let maybe_schedules = <VestingSchedules<T>>::try_get(who, asset)
+			.map_err(|_| Error::<T>::VestingScheduleNotFound);
+
+		let total_locked = match maybe_schedules {
+			Ok(schedules) => match vesting_schedule_ids {
+				VestingScheduleIdSet::All => schedules.keys().copied().collect(),
+				VestingScheduleIdSet::Many(ids) => ids.into_inner(),
+				VestingScheduleIdSet::One(id) => vec![id],
+			}
+			.iter()
+			.try_fold::<_, _, Result<BalanceOf<T>, DispatchError>>(
+				Zero::zero(),
+				|accumulated_amount, schedule_id| {
+					let schedule =
+						schedules.get(schedule_id).ok_or(Error::<T>::VestingScheduleNotFound)?;
+					let total_amount = ensure_valid_vesting_schedule::<T>(schedule)?;
+
+					let amount = total_amount.safe_sub(&schedule.already_claimed)?;
+
+					Ok(accumulated_amount + amount)
+				},
+			)?,
+			_ => Zero::zero(),
+		};
+
+		Ok(total_locked)
+	}
+
+	/// Returns balance available to claim for a given account, asset and vesting schedules, based
+	/// on current block number
+	/// It also updates the already claimed balance and removes completely vested schedules
+	fn balance_to_claim(
+		who: &AccountIdOf<T>,
+		asset: AssetIdOf<T>,
+		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
+	) -> Result<BalanceOf<T>, DispatchError> {
 		<VestingSchedules<T>>::try_mutate_exists(who, asset, |maybe_schedules| {
-			let mut total_locked_amount: BalanceOf<T> = Zero::zero();
+			let mut total_balance_to_claim: BalanceOf<T> = Zero::zero();
 			match maybe_schedules {
 				Some(schedules) => {
 					match vesting_schedule_ids {
@@ -446,16 +486,26 @@ impl<T: Config> Pallet<T> {
 						let schedule = schedules
 							.get_mut(id_to_claim)
 							.ok_or(Error::<T>::VestingScheduleNotFound)?;
+
+						// Total amount for vesting schedule
+						let total_amount = ensure_valid_vesting_schedule::<T>(schedule)?;
+						// Currently locked amount
 						let locked_amount = schedule.locked_amount(
 							frame_system::Pallet::<T>::current_block_number(),
 							T::Time::now(),
 						);
+						// All balance that is not locked, including both claimed and unclaimed
+						let unlocked_amount = total_amount.safe_sub(&locked_amount)?;
+						// Balance that is not locked and has not been claimed yet
+						let available_amount =
+							unlocked_amount.safe_sub(&schedule.already_claimed)?;
 
-						let total_amount = schedule.total_amount()?;
-						let available_amount = total_amount.safe_sub(&locked_amount)?;
+						// Update claimed amount for specified schedules
+						schedule.already_claimed =
+							schedule.already_claimed.safe_add(&available_amount)?;
 
-						// update claimed amount for specified schedules
-						schedule.already_claimed = available_amount;
+						total_balance_to_claim =
+							total_balance_to_claim.safe_add(&available_amount)?;
 
 						if locked_amount.is_zero() {
 							// remove fully claimed schedules
@@ -466,27 +516,7 @@ impl<T: Config> Pallet<T> {
 					})
 					.collect::<Result<Vec<_>, DispatchError>>()?;
 
-					// loop through all schedules and accumulate locked value
-					schedules
-						.keys()
-						.copied()
-						.collect::<Vec<_>>()
-						.iter()
-						.map(|schedule_id| {
-							let schedule = schedules
-								.get_mut(schedule_id)
-								.ok_or(Error::<T>::VestingScheduleNotFound)?;
-
-							let total_amount = schedule.total_amount()?;
-
-							total_locked_amount = total_locked_amount
-								.safe_add(&total_amount.safe_sub(&schedule.already_claimed)?)?;
-
-							Ok(())
-						})
-						.collect::<Result<Vec<_>, DispatchError>>()?;
-
-					Ok(total_locked_amount)
+					Ok(total_balance_to_claim)
 				},
 				None => Ok(Zero::zero()),
 			}

@@ -625,8 +625,6 @@ fn claim_with_id_works() {
 		// Set block 11, which is halfway through all schedules
 		System::set_block_number(11);
 
-		println!("locks: {:?}", Tokens::locks(&BOB, MockCurrencyId::BTC).get(0));
-
 		// Claim for schedule 5
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),
