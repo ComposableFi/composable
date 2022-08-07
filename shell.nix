@@ -6,3 +6,6 @@
 ) {
   src =  ./.;
 }).shellNix
+
+# alternave is 
+# (builtins.getFlake ("git+file://" + toString ./.)).devShell.${builtins.currentSystem}
