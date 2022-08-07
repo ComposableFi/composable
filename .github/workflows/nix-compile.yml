@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - ci-via-nix
+      - releases      
       - main
   pull_request:
     paths-ignore:
@@ -11,7 +12,8 @@ on:
     branches:
       - main
       - develop
-      - releases    
+      - releases  
+      - ci-via-nix  
 
 env:
   NIX_CACHIX: composable-community
@@ -32,6 +34,7 @@ jobs:
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
+      # TODO: do composable-nix-os which has experimental-features, proper channel, and cachix installed with composable cache 
       - uses: actions/checkout@v3
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
@@ -198,14 +201,11 @@ jobs:
   deploy-devnet:
       name: "Devnet(Rococo Local Dali Dev) Deploy"
       needs: package-node
-      # ISSUE: sre custom runners has issues with permission of checkout and ssh hangs - do not use
       runs-on: ubuntu-latest
-      # ISSUE: we have some issues with SSH on nixos
-      # container:
-      #   image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee    
-      # concurrency:
-      #   group: deploy-devnet
-      #   cancel-in-progress: false
+      # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
+      concurrency:
+        group: nix-deploy-devnet
+        cancel-in-progress: false
       steps:
       - uses: actions/checkout@v3
         with:
