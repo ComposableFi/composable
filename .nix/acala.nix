@@ -4,12 +4,11 @@ with pkgs;
 
 mkDerivation {
 	name = "acala";
-  src = pkgs.fetchFromGitHub {
-                owner = "AcalaNetwork";
-                repo = "Acala";
-                rev = "e9d2b3caa0663c1d3e7d4d6e7d3faef4a569099c";
-                hash = "sha256-7oQxYDX+hMSrXZdwWbF1tkahSr1olze1HaCOjCvfWsc=";
-              };     
+	src = builtins.fetchGit {
+    url = "https://github.com/AcalaNetwork/Acala.git";
+		rev = "e9d2b3caa0663c1d3e7d4d6e7d3faef4a569099c";
+		submodules = true;
+  };	
 	installPhase = ''
 	  ls
 		mkdir --parents $out/bin && make init
