@@ -68,6 +68,8 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
+pub use governance::TreasuryAccount;
+
 use codec::{Codec, Encode, EncodeLike};
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
