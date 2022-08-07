@@ -266,6 +266,7 @@
           inherit composable-runtime;
           inherit composable-node;
 
+          acala = pkgs.callPackage ./.nix/acala.nix {};
           price-feed = crane-stable.buildPackage (common-attrs // {
             pnameSuffix = "-price-feed";
             cargoArtifacts = common-deps;
