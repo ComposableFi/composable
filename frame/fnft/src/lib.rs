@@ -92,7 +92,7 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_proxy::Config {
+	pub trait Config: frame_system::Config + pallet_account_proxy::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -187,11 +187,11 @@ pub mod pallet {
 	>;
 
 	impl<T: Config> Pallet<T> {
-		fn get_proxy_type() -> <T as pallet_proxy::Config>::ProxyType {
+		fn get_proxy_type() -> <T as pallet_account_proxy::Config>::ProxyType {
 			// TODO (vim): Cleanup the following when pallet-proxy has been forked and integrated
 			// 	ProxyType needs to be available to be shared across pallets to refer to it, while
 			// also being injected into the runtimes.
-			<T as pallet_proxy::Config>::ProxyType::decode(&mut &ProxyType::Governance.encode()[..])
+			<T as pallet_account_proxy::Config>::ProxyType::decode(&mut &ProxyType::Governance.encode()[..])
 				.expect("valid")
 		}
 	}
@@ -297,7 +297,7 @@ pub mod pallet {
 			let proxy_type = Self::get_proxy_type();
 			let asset_account =
 				<Self as FinancialNFT<AccountIdOf<T>>>::asset_account(collection, instance);
-			<pallet_proxy::Pallet<T>>::add_proxy_delegate(
+			<pallet_account_proxy::Pallet<T>>::add_proxy_delegate(
 				&asset_account,
 				who.clone(),
 				proxy_type,

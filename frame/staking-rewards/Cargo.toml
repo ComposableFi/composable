@@ -39,7 +39,7 @@ pallet-assets = { path = "../assets" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-fnft = { path = "../fnft" }
-pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+pallet-account-proxy = { path = "../../frame/account-proxy", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 primitives = { path = "../../runtime/primitives", default-features = false }
 proptest = "1.0"

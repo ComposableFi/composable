@@ -27,7 +27,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Nft: crate::{Pallet, Storage , Event<T>},
-		Proxy: pallet_proxy::{Pallet, Call, Storage , Event<T>},
+		Proxy: pallet_account_proxy::{Pallet, Call, Storage , Event<T>},
 	}
 );
 
@@ -57,7 +57,7 @@ parameter_types! {
 	pub ProxyPrice: u32 = 0;
 }
 
-impl pallet_proxy::Config for MockRuntime {
+impl pallet_account_proxy::Config for MockRuntime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = ();

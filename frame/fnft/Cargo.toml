@@ -18,7 +18,7 @@ version = "3.0.0"
 [dependencies]
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+pallet-account-proxy = { path = "../../frame/account-proxy", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
@@ -51,7 +51,7 @@ std = [
   "composable-traits/std",
   "composable-support/std",
   "composable-tests-helpers/std",
-  "pallet-proxy/std",
+  "pallet-account-proxy/std",
 ]
 
 runtime-benchmarks = [

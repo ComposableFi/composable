@@ -52,7 +52,7 @@ frame_support::construct_runtime!(
 		Tokens: orml_tokens,
 		Assets: pallet_assets,
 		FinancialNFT: pallet_fnft,
-		Proxy: pallet_proxy,
+		Proxy: pallet_account_proxy,
 		StakingRewards: pallet_staking_rewards,
 	}
 );
@@ -206,7 +206,7 @@ parameter_types! {
 	pub ProxyPrice: u32 = 0;
 }
 
-impl pallet_proxy::Config for Test {
+impl pallet_account_proxy::Config for Test {
 	type Event = Event;
 	type Call = Call;
 	type Currency = ();

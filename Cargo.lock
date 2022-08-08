@@ -2763,6 +2763,7 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",
+ "pallet-account-proxy",
  "pallet-airdrop",
  "pallet-assets 0.0.1",
  "pallet-assets-registry",
@@ -2792,7 +2793,6 @@ dependencies = [
  "pallet-oracle",
  "pallet-pablo",
  "pallet-preimage",
- "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
@@ -7316,6 +7316,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-account-proxy"
+version = "4.0.0-dev"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-utility",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-io 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-runtime 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+]
+
+[[package]]
 name = "pallet-airdrop"
 version = "0.0.1"
 dependencies = [
@@ -7960,7 +7978,7 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
- "pallet-proxy",
+ "pallet-account-proxy",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -8515,7 +8533,7 @@ dependencies = [
 [[package]]
 name = "pallet-proxy"
 version = "4.0.0-dev"
-source = "git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e#8df0a39f51b672c773b306923f65f8dde74b850e"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8681,11 +8699,11 @@ dependencies = [
  "once_cell",
  "orml-tokens",
  "orml-traits",
+ "pallet-account-proxy",
  "pallet-assets 0.0.1",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-fnft",
- "pallet-proxy",
  "pallet-timestamp",
  "parity-scale-codec",
  "primitives",

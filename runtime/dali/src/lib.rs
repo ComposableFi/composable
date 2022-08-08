@@ -660,7 +660,7 @@ parameter_types! {
 	pub ProxyPrice: Balance = 0;
 }
 
-impl pallet_proxy::Config for Runtime {
+impl pallet_account_proxy::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = Assets;
