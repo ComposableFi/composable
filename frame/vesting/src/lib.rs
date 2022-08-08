@@ -464,7 +464,7 @@ impl<T: Config> Pallet<T> {
 						schedules.remove(schedule_id);
 					}
 
-					Ok(accumulated_amount + locked_amount)
+					Ok(accumulated_amount.safe_add(&locked_amount)?)
 				},
 			)?,
 			_ => Zero::zero(),
@@ -498,7 +498,7 @@ impl<T: Config> Pallet<T> {
 
 					let amount = total_amount.safe_sub(&schedule.already_claimed)?;
 
-					Ok(accumulated_amount + amount)
+					Ok(accumulated_amount.safe_add(&amount)?)
 				},
 			)?,
 			_ => Zero::zero(),
