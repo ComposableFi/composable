@@ -197,6 +197,7 @@ pub mod module {
 			vesting_schedule_ids:
 				VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 			locked_amount: BalanceOf<T>,
+			claimed_amount: BalanceOf<T>,
 		},
 		/// Updated vesting schedules. \[who\]
 		VestingSchedulesUpdated { who: AccountIdOf<T> },
@@ -423,6 +424,7 @@ impl<T: Config> Pallet<T> {
 			who: who.clone(),
 			asset,
 			locked_amount: new_locked_amount,
+			claimed_amount: balance_to_claim,
 			vesting_schedule_ids,
 		});
 

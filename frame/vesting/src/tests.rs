@@ -524,6 +524,14 @@ fn claim_works() {
 			MockCurrencyId::BTC,
 			VestingScheduleIdSet::One(4_u128)
 		));
+		System::assert_last_event(Event::Vesting(crate::Event::Claimed {
+			who: BOB,
+			asset: MockCurrencyId::BTC,
+			locked_amount: 10,
+			claimed_amount: 10,
+			vesting_schedule_ids: VestingScheduleIdSet::One(4_u128),
+		}));
+
 		assert!(VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
 		assert_ok!(Tokens::transfer(Origin::signed(BOB), ALICE, MockCurrencyId::BTC, 10));
 		// more are still locked
@@ -541,6 +549,7 @@ fn claim_works() {
 			who: BOB,
 			asset: MockCurrencyId::BTC,
 			locked_amount: 0,
+			claimed_amount: 10,
 			vesting_schedule_ids: VestingScheduleIdSet::All,
 		}));
 
