@@ -9,10 +9,9 @@ mod network;
 mod program;
 mod protocol;
 
-use core::marker::PhantomData;
-
 pub use crate::{asset::*, instruction::*, network::*, program::*, protocol::*};
 use alloc::{collections::VecDeque, vec::Vec};
+use core::marker::PhantomData;
 
 #[inline]
 pub fn serialize_json<T: serde::Serialize>(
@@ -31,7 +30,7 @@ pub fn deserialize_json<T: serde::de::DeserializeOwned>(
 #[derive(Clone)]
 pub struct ProgramBuilder<CurrentNetwork: Network, Account, Assets> {
 	pub tag: Option<Vec<u8>>,
-	pub instructions: VecDeque<Instruction<NetworkID, Vec<u8>, Account, Assets>>,
+	pub instructions: VecDeque<Instruction<NetworkId, Vec<u8>, Account, Assets>>,
 	pub _marker: PhantomData<CurrentNetwork>,
 }
 
@@ -95,7 +94,7 @@ where
 	}
 
 	#[inline]
-	pub fn build(self) -> Program<VecDeque<Instruction<NetworkID, Vec<u8>, Account, Assets>>> {
+	pub fn build(self) -> Program<VecDeque<Instruction<NetworkId, Vec<u8>, Account, Assets>>> {
 		Program { tag: self.tag, instructions: self.instructions }
 	}
 }
