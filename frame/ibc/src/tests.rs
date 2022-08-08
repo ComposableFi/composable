@@ -216,9 +216,8 @@ fn should_send_ping_packet() {
 			data: "ping".as_bytes().to_vec(),
 			timeout_height: 10,
 			timeout_timestamp: ibc::timestamp::Timestamp::now().nanoseconds() + 10000u64,
-			channel_id: "channel-0".as_bytes().to_vec(),
-			dest_port_id: "ping".as_bytes().to_vec(),
-			dest_channel_id: "channel-1".as_bytes().to_vec(),
+			channel_id: 0,
+			revision_number: None,
 		};
 
 		assert_ok!(Ping::send_ping(Origin::root(), params));

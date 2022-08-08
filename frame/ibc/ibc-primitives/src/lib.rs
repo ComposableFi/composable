@@ -28,11 +28,22 @@ pub struct SendPacketData {
 	/// This value should be in nano seconds
 	pub timeout_timestamp: u64,
 	/// port id as utf8 string bytes
-	pub port_id: Vec<u8>,
+	pub port_id: PortId,
 	/// channel id as utf8 string bytes
-	pub channel_id: Vec<u8>,
+	pub channel_id: ChannelId,
 }
-#[derive(codec::Encode, codec::Decode, Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(
+	codec::Encode,
+	Default,
+	Debug,
+	codec::Decode,
+	Clone,
+	PartialEq,
+	Eq,
+	Ord,
+	PartialOrd,
+	scale_info::TypeInfo,
+)]
 pub struct OffchainPacketType {
 	pub sequence: u64,
 	pub source_port: Vec<u8>,
