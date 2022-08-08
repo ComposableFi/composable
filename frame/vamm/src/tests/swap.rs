@@ -11,8 +11,8 @@ use crate::{
 			QUOTE_REQUIRED_FOR_REMOVING_BASE, QUOTE_RETURNED_AFTER_ADDING_BASE, RUN_CASES,
 		},
 		helpers::{
-			run_for_seconds, run_to_block, swap_config, with_existent_vamm_swap_contex,
-			with_swap_context,
+			as_decimal_inner, run_for_seconds, run_to_block, swap_config,
+			with_existent_vamm_swap_contex, with_swap_context,
 		},
 		helpers_propcompose::{
 			any_swap_config, any_vamm_state, balance_range_lower_half, balance_range_upper_half,
@@ -26,6 +26,7 @@ use composable_traits::vamm::{
 };
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
+use rstest::rstest;
 use sp_core::U256;
 use sp_runtime::traits::Zero;
 
@@ -338,6 +339,31 @@ fn should_not_update_twap_if_current_twap_timestamp_is_more_recent() {
 		assert_eq!(vamm_state_t1.twap_timestamp, vamm_state_t2.twap_timestamp);
 		assert_eq!(vamm_state_t1.base_asset_twap, vamm_state_t2.base_asset_twap);
 	});
+}
+
+#[rstest]
+#[case(Timestamp::MIN)]
+#[case(0)]
+#[case(1)]
+#[case(10)]
+#[case(100)]
+#[case(1000)]
+#[case(10000)]
+fn should_update_twap_if_twap_period_has_passed(#[case] delta: Timestamp) {
+	with_swap_context(
+		TestVammConfig { base_asset_reserves: as_decimal_inner(42), ..Default::default() },
+		TestSwapConfig { input_amount: as_decimal_inner(30), ..Default::default() },
+		|_, swap_config| {
+			let vamm_state_t0 = TestPallet::get_vamm(0).unwrap();
+			run_for_seconds(delta.saturating_add(vamm_state_t0.twap_period));
+			assert_ok!(TestPallet::swap(&swap_config));
+			run_for_seconds(delta.saturating_add(vamm_state_t0.twap_period));
+			assert_ok!(TestPallet::swap(&swap_config));
+			let vamm_state_t1 = TestPallet::get_vamm(0).unwrap();
+			assert_ne!(vamm_state_t0.twap_timestamp, vamm_state_t1.twap_timestamp);
+			assert_ne!(vamm_state_t0.base_asset_twap, vamm_state_t1.base_asset_twap);
+		},
+	);
 }
 
 // -------------------------------------------------------------------------------------------------

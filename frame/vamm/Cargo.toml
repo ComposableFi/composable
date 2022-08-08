@@ -34,6 +34,7 @@ composable-tests-helpers = { version = "0.0.1", path = "../composable-tests-help
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 proptest = "1.0"
+rstest = "0.15.0"
 
 [features]
 default = ["std"]
