@@ -5,7 +5,6 @@ use composable_traits::{
 };
 use frame_support::pallet_prelude::*;
 use sp_core::TypeId;
-use sp_runtime::Percent;
 
 pub(crate) type TimeMeasure = i64;
 
@@ -19,7 +18,6 @@ pub(crate) type MarketInputOf<T> = MarketInput<
 pub(crate) type LoanInputOf<T> = LoanInput<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::Balance,
-	Percent,
 	RepaymentStrategy,
 >;
 
@@ -40,8 +38,8 @@ pub(crate) type MarketConfigOf<T> = MarketConfig<
 
 pub(crate) type LoanConfigOf<T> = LoanConfig<
 	<T as frame_system::Config>::AccountId,
+	<T as DeFiComposableConfig>::MayBeAssetId,
 	<T as DeFiComposableConfig>::Balance,
-	Percent,
 	RepaymentStrategy,
 	TimeMeasure,
 >;

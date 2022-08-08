@@ -7,6 +7,7 @@ use sp_runtime::DispatchError;
 pub enum RepaymentStrategy {
 	InterestPeriodicallyPrincipalWhenMature,
 	PrincipalOnlyWhenMature,
+    EmptyStrategy,
 }
 
 // This enum is used since we do not want to return an Error in the on_initalize() function.
@@ -18,7 +19,16 @@ pub enum RepaymentResult<T: crate::Config> {
 	PrincipalAndLastInterestPaymentAreNotPaidBackInTime(DispatchError),
 }
 
+
+pub mod empty_strategy {
+    use crate::Config;
+    pub fn apply<T:Config>() -> super::RepaymentResult<T> {
+        super::RepaymentResult::Failed("some error".into())
+    }
+}
+
 // Borrower pays interest regulary, and pays back principal when the loan is mature.
+/*
 pub mod interest_periodically_principal_when_mature {
 	use crate::{
 		types::{LoanConfigOf, TimeMeasure},
@@ -177,3 +187,4 @@ pub mod principal_only {
 		}
 	}
 }
+*/

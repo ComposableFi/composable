@@ -1,7 +1,6 @@
 use super::{create_test_loan, create_test_market, prelude::*};
 use crate::{currency::BTC, strategies::repayment_strategies::RepaymentStrategy};
 use composable_traits::undercollateralized_loans::LoanInput;
-use sp_runtime::Percent;
 
 #[test]
 fn can_create_loan() {
@@ -16,7 +15,7 @@ fn can_create_loan() {
 			borrower_account_id: *BOB,
 			principal: 1000,
 			collateral: 5,
-			payment_schedule: vec![("24.08.1991".to_string(), Percent::from_percent(5))],
+			payment_schedule: vec![("24.08.1991".to_string(), 100)],
 			repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature,
 		};
 		assert_ok!(pallet_undercollateralized_loans::Pallet::<Runtime>::create_loan(
@@ -40,5 +39,5 @@ fn can_execute_loan_contract() {
 			loan_account_id,
 			true
 		));
-	});
+});
 }

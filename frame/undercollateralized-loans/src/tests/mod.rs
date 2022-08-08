@@ -105,9 +105,9 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 		principal: 1000,
 		collateral: 5,
 		payment_schedule: vec![
-			("01.01.2222".to_string(), Percent::from_percent(5)),
-			("01.02.2222".to_string(), Percent::from_percent(5)),
-			("01.03.2222".to_string(), Percent::from_percent(5)),
+			("01.01.2222".to_string(), 100),
+			("01.02.2222".to_string(), 100),
+			("01.03.2222".to_string(), 100),
 		],
 		repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature,
 	};

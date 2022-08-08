@@ -21,9 +21,9 @@ where
 	/// The vault containing the borrow asset.
 	borrow_asset_vault: VaultId,
 	/// The asset being used as collateral.
-	collateral_asset: AssetId,
+	collateral_asset_id: AssetId,
 	/// The asset being used as borrow asset.
-	borrow_asset: AssetId,
+	borrow_asset_id: AssetId,
 	/// Number of blocks until invalidate oracle's price.
 	max_price_age: BlockNumber,
 	/// Borrowers which are allowed to use the service.
@@ -42,8 +42,8 @@ where
 		account_id: AccountId,
 		manager: AccountId,
 		borrow_asset_vault: VaultId,
-		borrow_asset: AssetId,
-		collateral_asset: AssetId,
+		borrow_asset_id: AssetId,
+		collateral_asset_id: AssetId,
 		max_price_age: BlockNumber,
 		whitelist: BTreeSet<AccountId>,
 	) -> Self {
@@ -51,8 +51,8 @@ where
 			account_id,
 			manager,
 			borrow_asset_vault,
-			borrow_asset,
-			collateral_asset,
+			borrow_asset_id,
+			collateral_asset_id,
 			max_price_age,
 			whitelist,
 		}
@@ -73,13 +73,13 @@ where
 	}
 
 	/// Get a reference to the market config's borrow asset.
-	pub fn borrow_asset(&self) -> &AssetId {
-		&self.borrow_asset
+	pub fn borrow_asset_id(&self) -> &AssetId {
+		&self.borrow_asset_id
 	}
 
 	/// Get a reference to the market config's collateral asset.
-	pub fn collateral_asset(&self) -> &AssetId {
-		&self.collateral_asset
+	pub fn collateral_asset_id(&self) -> &AssetId {
+		&self.collateral_asset_id
 	}
 
 	/// Get a reference to the market config's max price age.
@@ -95,12 +95,12 @@ where
 }
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub struct LoanConfig<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure>
+pub struct LoanConfig<AccountId, AssetId, Balance, RepaymentStrategy, TimeMeasure>
 where
 	AccountId: Clone + Eq + PartialEq,
+	AssetId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
 	TimeMeasure: Clone + Eq + PartialEq,
-	Percent: Clone + Eq + PartialEq,
 	RepaymentStrategy: Clone + Eq + PartialEq,
 {
 	/// Loan account id.
@@ -110,12 +110,16 @@ where
 	/// Borrower account id.
 	/// Should be whitelisted.
 	borrower_account_id: AccountId,
+    /// The asset being used as collateral.
+	collateral_asset_id: AssetId,
+	/// The asset being used as borrow asset.
+	borrow_asset_id: AssetId,
 	/// Amount of borrowed money.  
 	principal: Balance,
 	/// Amount of assets which should be putted as collateral.
 	collateral: Balance,
 	/// Schedule of payments
-	schedule: BTreeMap<TimeMeasure, Percent>,
+	schedule: BTreeMap<TimeMeasure, Balance>,
 	/// The moment of the first interest payment.
 	first_payment_moment: TimeMeasure,
 	/// The moment of the last interest payment and principal repayment.
@@ -126,25 +130,27 @@ where
 	repayment_strategy: RepaymentStrategy,
 }
 
-impl<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure>
-	LoanConfig<AccountId, Balance, Percent, RepaymentStrategy, TimeMeasure>
+impl<AccountId, AssetId, Balance, RepaymentStrategy, TimeMeasure>
+	LoanConfig<AccountId, AssetId, Balance, RepaymentStrategy, TimeMeasure>
 where
 	AccountId: Clone + Eq + PartialEq,
-	Balance: Clone + Eq + PartialEq,
+    AssetId: Clone + Eq + PartialEq,	
+    Balance: Clone + Eq + PartialEq,
 	TimeMeasure: Clone + Eq + PartialEq + Ord,
-	Percent: Clone + Eq + PartialEq,
 	RepaymentStrategy: Clone + Eq + PartialEq,
 {
 	pub fn new(
 		account_id: AccountId,
 		market_account_id: AccountId,
 		borrower_account_id: AccountId,
-		principal: Balance,
+	    collateral_asset_id: AssetId, 	
+        borrow_asset_id: AssetId, 
+        principal: Balance,
 		collateral: Balance,
-		schedule: Vec<(TimeMeasure, Percent)>,
+		schedule: Vec<(TimeMeasure, Balance)>,
 		repayment_strategy: RepaymentStrategy,
 	) -> Self {
-		let schedule: BTreeMap<TimeMeasure, Percent> = schedule.into_iter().collect();
+		let schedule: BTreeMap<TimeMeasure, Balance> = schedule.into_iter().collect();
 		// We are sure thate BTreeMap is not empty
 		// TODO: @mikolaichuk: May be it would be better to use BiBoundedVec as input here.
 		let first_payment_moment = schedule.keys().min().unwrap().clone();
@@ -153,7 +159,9 @@ where
 			account_id,
 			market_account_id,
 			borrower_account_id,
-			principal,
+		    collateral_asset_id,
+            borrow_asset_id,
+            principal,
 			collateral,
 			schedule,
 			first_payment_moment,
@@ -176,6 +184,14 @@ where
 	pub fn borrower_account_id(&self) -> &AccountId {
 		&self.borrower_account_id
 	}
+    
+    pub fn collateral_asset_id(&self) -> &AssetId {
+        &self.collateral_asset_id
+    }
+
+    pub fn borrow_asset_id(&self) -> &AssetId {
+        &self.borrow_asset_id
+    }
 
 	/// Get a reference to the loan config's principal.
 	pub fn principal(&self) -> &Balance {
@@ -188,7 +204,7 @@ where
 	}
 
 	/// Get a reference to the loan payment schedule.
-	pub fn schedule(&self) -> &BTreeMap<TimeMeasure, Percent> {
+	pub fn schedule(&self) -> &BTreeMap<TimeMeasure, Balance> {
 		&self.schedule
 	}
 
@@ -207,10 +223,10 @@ where
 		&self.repayment_strategy
 	}
 
-	pub fn get_interest_rate_for_particular_moment(
+	pub fn get_payment_for_particular_moment(
 		&self,
 		moment: &TimeMeasure,
-	) -> Option<&Percent> {
+	) -> Option<&Balance> {
 		self.schedule.get(moment)
 	}
 }
@@ -286,7 +302,7 @@ impl<AccountId, AssetId: Copy, BlockNumber, LiquidationStrategyId>
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
-pub struct LoanInput<AccountId, Balance, Percent, RepaymentStrategy> {
+pub struct LoanInput<AccountId, Balance, RepaymentStrategy> {
 	/// Loan belongs to this market.
 	pub market_account_id: AccountId,
 	/// This account id have to be whitelisted.
@@ -296,7 +312,7 @@ pub struct LoanInput<AccountId, Balance, Percent, RepaymentStrategy> {
 	/// Amount of assets which should be deposited as collateral.
 	pub collateral: Balance,
 	/// How often borrowers have to pay interest.
-	pub payment_schedule: Vec<(String, Percent)>,
+	pub payment_schedule: Vec<(String, Balance)>,
 	/// Payment strategie which should be applyed.
 	/// For instance borrower have to pay principal when loan is mature (one strategy),
 	/// or he may pay principal partially, simultaneously with interest payments.   

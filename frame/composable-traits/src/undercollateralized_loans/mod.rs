@@ -7,7 +7,6 @@ pub mod configs;
 pub trait UndercollateralizedLoans: DeFiEngine {
 	type BlockNumber: Clone + Eq + PartialEq;
 	type LiquidationStrategyId: Clone + Eq + PartialEq;
-	type Percent: Clone + Eq + PartialEq;
 	type VaultId: Clone + Eq + PartialEq;
 	type RepaymentStrategy: Clone + Eq + PartialEq;
 	type TimeMeasure: Clone + Eq + PartialEq;
@@ -33,12 +32,12 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	>;
 
 	fn create_loan(
-		input: LoanInput<Self::AccountId, Self::Balance, Self::Percent, Self::RepaymentStrategy>,
+		input: LoanInput<Self::AccountId, Self::Balance, Self::RepaymentStrategy>,
 	) -> Result<
 		LoanConfig<
 			Self::AccountId,
+			Self::MayBeAssetId,
 			Self::Balance,
-			Self::Percent,
 			Self::RepaymentStrategy,
 			Self::TimeMeasure,
 		>,
@@ -52,8 +51,8 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	) -> Result<
 		LoanConfig<
 			Self::AccountId,
+			Self::MayBeAssetId,
 			Self::Balance,
-			Self::Percent,
 			Self::RepaymentStrategy,
 			Self::TimeMeasure,
 		>,

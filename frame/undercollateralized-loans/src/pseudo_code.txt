@@ -38,7 +38,7 @@ logic:
 		return.
 	Collateral is deposited on the loans account and asset is withdrawed. 
 	Debt tokens are minted to the loans account.
-	Loans account_id revomed form the set of non_active_loans_storage.	
+	Loans account_id removed form the set of non_active_loans_storage.	
 	loan schedule placed in the loan_schedule_storage.
 ---
 

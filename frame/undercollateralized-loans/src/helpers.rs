@@ -1,6 +1,9 @@
+// TODO: @mikolaichuk:  Move today calculation into on_init().
+// TODO: @mikolaichuk:  Copy fields from market config to loan config, to avoid additiona request to
+//                      market config.
 use crate::{
 	strategies::repayment_strategies::{
-		interest_periodically_principal_when_mature, principal_only, RepaymentResult,
+		RepaymentResult,
 		RepaymentStrategy,
 	},
 	types::{LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf, TimeMeasure},
@@ -25,7 +28,7 @@ use frame_support::{
 };
 use sp_runtime::{
 	traits::{One, Saturating, Zero},
-	DispatchError, Percent, Perquintill, TransactionOutcome,
+	DispatchError, Perquintill, TransactionOutcome,
 };
 
 use sp_std::vec::Vec;
@@ -104,7 +107,10 @@ impl<T: Config> Pallet<T> {
 		let config_input = input.value();
 		// Convert schedule timestamps from string to seconds have passed from the beginning of UNIX
 		// epoche.
-		let schedule = Self::convert_schedule_timestamps(&config_input.payment_schedule)?;
+	    let schedule = Self::convert_schedule_timestamps(&config_input.payment_schedule)?;
+        // Get market config. Unwrapped since we have checked market existence during input
+        // validation process. 
+        let market_config = Self::get_market_config_via_account_id(&config_input.market_account_id)?;
 		// Create non-activated loan and increment loans' counter.
 		// This loan have to be activated by borrower further.
 		crate::LoansCounterStorage::<T>::try_mutate(|counter| {
@@ -114,10 +120,12 @@ impl<T: Config> Pallet<T> {
 				loan_account_id.clone(),
 				config_input.market_account_id,
 				config_input.borrower_account_id,
-				config_input.principal,
+                market_config.collateral_asset_id().clone(),
+				market_config.borrow_asset_id().clone(),
+                config_input.principal,
 				config_input.collateral,
-				schedule,
-				config_input.repayment_strategy,
+                schedule, 	
+                config_input.repayment_strategy,
 			);
 			crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_config.clone());
 			crate::NonActiveLoansStorage::<T>::insert(loan_account_id, ());
@@ -157,18 +165,15 @@ impl<T: Config> Pallet<T> {
 			crate::LoansStorage::<T>::remove(loan_account_id.clone());
 			Err(Error::<T>::TheLoanContractIsExpired)?;
 		}
-		// Obtain market's configuration.
-		let market_config =
-			Self::get_market_config_via_account_id(loan_config.market_account_id())?;
 		// Transfer collateral from the borrower's account to the loan's account.
-		let collateral_asset_id = *market_config.collateral_asset();
+		let collateral_asset_id = *loan_config.collateral_asset_id();
 		let source = &borrower_account_id;
 		let destination = &loan_account_id;
 		let amount = *loan_config.collateral();
 		T::MultiCurrency::transfer(collateral_asset_id, source, destination, amount, keep_alive)?;
 		// Transfer borrowed assets from market's account to the borrower's account.
-		let borrow_asset_id = *market_config.borrow_asset();
-		let source = market_config.account_id();
+		let borrow_asset_id = *loan_config.borrow_asset_id();
+		let source = loan_config.market_account_id();
 		let destination = &borrower_account_id;
 		let amount = *loan_config.principal();
 		T::MultiCurrency::transfer(borrow_asset_id, source, destination, amount, keep_alive)?;
@@ -199,10 +204,7 @@ impl<T: Config> Pallet<T> {
 	) -> Result<T::Balance, DispatchError> {
 		// Get loan's info.
 		let loan_config = Self::get_loan_config_via_account_id(&loan_account_id)?;
-		// Get account id of market which holds this loan.
-		let market_account_id = loan_config.market_account_id();
-		let market_info = Self::get_market_info_via_account_id(market_account_id)?;
-		let borrow_asset_id = market_info.config().borrow_asset();
+		let borrow_asset_id = loan_config.borrow_asset_id();
 		// Transfer 'amount' of assets from the payer account to the loan account
 		T::MultiCurrency::transfer(
 			*borrow_asset_id,
@@ -224,8 +226,7 @@ impl<T: Config> Pallet<T> {
 		let borrower_account_id = loan_config.borrower_account_id();
 		let collateral_amount = loan_config.collateral();
 		let market_account_id = loan_config.market_account_id();
-		let market_config = Self::get_market_config_via_account_id(market_account_id)?;
-		let collateral_asset_id = market_config.collateral_asset();
+		let collateral_asset_id = loan_config.collateral_asset_id();
 		// Transfer collateral to borrower's account.
 		T::MultiCurrency::transfer(
 			*collateral_asset_id,
@@ -319,33 +320,18 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn check_payments(keep_alive: bool) -> () {
 		let today = Self::today();
 		// Retrive collection of loans(loans' accounts ids) which have to be paid now.
-		// If nothing found we will get empty set.
+		// If nothing found we get empty set.
 		let loans_accounts_ids = crate::ScheduleStorage::<T>::try_get(today).unwrap_or_default();
 
-		let mut garbage_loans_ids = vec![];
 		for loan_account_id in loans_accounts_ids {
-			// Treat situation when non-existend loan's id is in global schedule.
+			// Treat situation when non-existent loan's id is in global schedule.
 			let loan_config = match Self::get_loan_config_via_account_id(&loan_account_id) {
 				Ok(loan_config) => loan_config,
-				Err(_) => {
-					garbage_loans_ids.push(loan_account_id);
-					continue
-				},
+				Err(_) => continue,
 			};
-			let repayment_result: RepaymentResult<T> = match loan_config.repayment_strategy() {
-				RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature =>
-					interest_periodically_principal_when_mature::apply(
-						loan_config,
-						&today,
-						keep_alive,
-					),
-				RepaymentStrategy::PrincipalOnlyWhenMature =>
-					principal_only::apply(loan_config, &today, keep_alive),
-			};
-
+		    	
+            let repayment_result: RepaymentResult<T> = RepaymentResult::Failed("".into());
 			match repayment_result {
-				// Failed not beacuse of user fault.
-				// Should not happens at all.
 				RepaymentResult::Failed(_) => (),
 				RepaymentResult::InterestIsPaidInTime(_) => (),
 				RepaymentResult::InterestIsNotPaidInTime(_) => Self::do_liquidate(),
@@ -360,8 +346,19 @@ impl<T: Config> Pallet<T> {
 			crate::ScheduleStorage::<T>::remove(today);
 		}
 	}
-
-	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
+/*
+    fn check_payment(loan_config: &LoanConfigOf<T>, today: i64, keep_alive: bool) -> RepaymentResult<T> {
+        let payment_amount = match loan_config.get_payment_for_particular_moment(&today) {
+            Some(payment_amount) => payment_amount, 
+            None => return RepaymentResult::Failed(crate::Error::<T>::ThereIsNoSuchMomentInTheLoanPaymentSchedule.into()),
+        };
+        let market_account_id = loan_config.market_account_id();
+        let borrow_asset_id = Self::get_market_config_via_account_id(market_account_id).borrow_aset(); 
+        let loan_account_id = loan_config.account_id();
+        T::MultiCurrency::transfer(borrow_asset_id, loan_account_id, market_account_id, payment_amount, keep_alive) 
+    }
+*/
+    // Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
 	// If vault is balanced we will do nothing.
 	// #generalization
 	fn available_funds(
@@ -437,16 +434,16 @@ impl<T: Config> Pallet<T> {
 
 	// Convert timestamps from strings to seconds have passed from 01.01.1970.
 	pub(crate) fn convert_schedule_timestamps(
-		schedule: &Vec<(String, Percent)>,
-	) -> Result<Vec<(TimeMeasure, Percent)>, crate::Error<T>> {
+		schedule: &Vec<(String, T::Balance)>,
+	) -> Result<Vec<(TimeMeasure, T::Balance)>, crate::Error<T>> {
 		let mut output = vec![];
-		for (timestamp, percent) in schedule {
+		for (timestamp, payment_amount) in schedule {
 			output.push((
 				NaiveDate::parse_from_str(&timestamp, "%d.%m.%Y")
 					.map_err(|_| crate::Error::<T>::IncorrectTimestampFormat)?
 					.and_time(NaiveTime::default())
 					.timestamp(),
-				*percent,
+				*payment_amount,
 			));
 		}
 		Ok(output)
