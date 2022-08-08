@@ -200,10 +200,8 @@ describe.only("[SHORT] Democracy Tests", function () {
         api.tx.democracy.propose(proposalHashOne, 100_000_000_000_000)
       );
       const propCountAfter = await api.query.democracy.publicPropCount();
-      // ToDo: Add verification!
       expect(propCountAfter).to.be.bignumber.equal(propCountBefore.addn(1));
       proposalId1 = result.toNumber();
-      console.debug(result.toString());
     });
   });
 
@@ -220,7 +218,6 @@ describe.only("[SHORT] Democracy Tests", function () {
         api.events.democracy.Seconded.is,
         api.tx.democracy.second(proposalId1, secondsUpperBound)
       );
-      // ToDo: Add verification!
       expect(resultSeconder.toString()).to.be.equal(api.createType("AccountId32", walletCharlie.publicKey).toString());
       expect(resultPropIndex).to.be.bignumber.equal(new BN(proposalId1));
     });
@@ -237,22 +234,6 @@ describe.only("[SHORT] Democracy Tests", function () {
         api.tx.democracy.delegate(walletBob.address, api.createType("PalletDemocracyConviction"), 100_000_000_000_000n)
       );
       console.debug(result.toString());
-    });
-  });
-
-  describe("democracy.undelegate", function () {
-    it("A user can undelegate their voting power", async function () {
-      this.timeout(2 * 60 * 1000);
-
-      const {
-        data: [result]
-      } = await sendAndWaitForSuccess(
-        api,
-        walletCharlie,
-        api.events.democracy.Undelegated.is,
-        api.tx.democracy.undelegate()
-      );
-      console.log(result.toString());
     });
   });
 
@@ -358,9 +339,11 @@ describe.only("[SHORT] Democracy Tests", function () {
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
               Standard: {
-                aye: true,
-                conviction: api.createType("Conviction", "Locked5x"),
-                balance: 99_999_999_999_999_999_999n
+                vote: {
+                  conviction: null,
+                  aye: true
+                },
+                balance: 99_999_999_999_900_000_000n
               }
             })
           )
@@ -373,24 +356,11 @@ describe.only("[SHORT] Democracy Tests", function () {
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
               Standard: {
-                aye: true,
-                conviction: api.createType("Conviction", "Locked5x"),
-                balance: 99_999_999_999_999_999_999n
-              }
-            })
-          )
-        ),
-        sendAndWaitForSuccess(
-          api,
-          walletCharlie,
-          api.events.democracy.Voted.is,
-          api.tx.democracy.vote(
-            proposalId2,
-            api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: {
-                aye: true,
-                conviction: api.createType("Conviction", "Locked5x"),
-                balance: 99_999_999_999_999_999_999n
+                vote: {
+                  conviction: null,
+                  aye: true
+                },
+                balance: 99_999_999_999_900_000_000n
               }
             })
           )
@@ -403,9 +373,11 @@ describe.only("[SHORT] Democracy Tests", function () {
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
               Standard: {
-                aye: true,
-                conviction: api.createType("Conviction", "Locked5x"),
-                balance: 99_999_999_999_999_999_999n
+                vote: {
+                  conviction: null,
+                  aye: true
+                },
+                balance: 99_999_999_999_900_000_000n
               }
             })
           )
@@ -418,9 +390,11 @@ describe.only("[SHORT] Democracy Tests", function () {
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
               Standard: {
-                aye: true,
-                conviction: api.createType("Conviction", "Locked5x"),
-                balance: 99_999_999_999_999_999_999n
+                vote: {
+                  conviction: null,
+                  aye: true
+                },
+                balance: 99_999_999_999_900_000_000n
               }
             })
           )
@@ -432,18 +406,23 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: false, conviction: null, balance: 999_999_999_999n }
+              Standard: {
+                vote: {
+                  conviction: null,
+                  aye: "Nay"
+                },
+                balance: 99_999_999_999_900_000_000n
+              }
             })
           )
         )
-      ]).then(function ([result1, result2, result3, result4, result5, result6]) {
+      ]).then(function ([result1, result2, result3, result4, result5]) {
         console.debug(result1.toString());
         console.debug(result2.toString());
         console.debug(result3.toString());
         console.debug(result4.toString());
         console.debug(result5.toString());
-        console.debug(result6.toString());
-        return [result1, result2, result3];
+        return [result1, result2, result3, result4, result5];
       });
       await waitForBlocks(api);
       const voteWalletAlice = await api.query.democracy.votingOf(walletAlice.publicKey);
@@ -502,34 +481,22 @@ describe.only("[SHORT] Democracy Tests", function () {
     });
   });
 
-  describe("democracy.reapPreimage", function () {
-    before("Submit preimage", async function () {
+  describe("democracy.undelegate", function () {
+    it("A user can undelegate their voting power", async function () {
       this.timeout(2 * 60 * 1000);
+
       const {
         data: [result]
       } = await sendAndWaitForSuccess(
         api,
-        walletAlice,
-        api.events.democracy.PreimageNoted.is,
-        api.tx.democracy.notePreimage(proposalToReapPreImage)
+        walletCharlie,
+        api.events.democracy.Undelegated.is,
+        api.tx.democracy.undelegate()
       );
-      expect(result).to.not.be.an("Error");
-      await waitForBlocks(api);
-    });
-    it("Sudo can reap a preimage", async function () {
-      this.timeout(2 * 60 * 1000);
-      const {
-        data: [result]
-      } = await sendAndWaitForSuccess(
-        api,
-        walletAlice,
-        api.events.democracy.PreimageReaped.is,
-        api.tx.democracy.reapPreimage(proposalToReapPreImage, 0)
-      );
-      expect(result).to.not.be.an("Error");
-      // ToDo: Improve verification!
+      console.log(result.toString());
     });
   });
+
   describe("democracy.clearPublicProposals", function () {
     it("Sudo can clear public proposals", async function () {
       this.timeout(2 * 60 * 1000);
