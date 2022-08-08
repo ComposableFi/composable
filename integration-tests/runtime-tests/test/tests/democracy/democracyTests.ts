@@ -119,6 +119,10 @@ describe.only("[SHORT] Democracy Tests", function () {
     this.timeout(2 * 60 * 1000);
     await mintAssetsToWallet(api, walletAlice, walletAlice, [1]);
     await mintAssetsToWallet(api, walletBob, walletAlice, [1]);
+    await mintAssetsToWallet(api, walletCharlie, walletAlice, [1]);
+    await mintAssetsToWallet(api, walletDave, walletAlice, [1]);
+    await mintAssetsToWallet(api, walletEve, walletAlice, [1]);
+    await mintAssetsToWallet(api, walletFerdie, walletAlice, [1]);
   });
 
   before("Setting up council members", async function () {
@@ -478,10 +482,6 @@ describe.only("[SHORT] Democracy Tests", function () {
     });
   });
 
-  describe("democracy.cancelQueued", function () {
-    it("Sudo can cancel a proposal queued for enactment", async function () {});
-  });
-
   describe("democracy.reapPreimage", function () {
     before("Submit preimage", async function () {
       this.timeout(2 * 60 * 1000);
@@ -508,22 +508,6 @@ describe.only("[SHORT] Democracy Tests", function () {
       );
       expect(result).to.not.be.an("Error");
       // ToDo: Improve verification!
-    });
-  });
-  describe("democracy.unlock", function () {
-    it("Sudo can unlock a proposal", async function () {
-      this.timeout(2 * 60 * 1000);
-      const walletFundsBefore = await api.rpc.assets.balanceOf("1", walletFerdie.address);
-      const {
-        data: [result]
-      } = await sendAndWaitForSuccess(
-        api,
-        walletFerdie,
-        api.events.system.ExtrinsicSuccess.is,
-        api.tx.democracy.unlock(walletFerdie.publicKey)
-      );
-      const walletFundsAfter = await api.rpc.assets.balanceOf("1", walletFerdie.address);
-      expect(new BN(walletFundsAfter.toString())).to.be.bignumber.greaterThan(new BN(walletFundsBefore.toString()));
     });
   });
   describe("democracy.clearPublicProposals", function () {
