@@ -19,7 +19,7 @@ repeat=${2:-1}
 /home/$(whoami)/.cargo/bin/rustup install nightly
 /home/$(whoami)/.cargo/bin/rustup target add wasm32-unknown-unknown --toolchain nightly
 
-# NOTE: dirty hack until nix migration
+# NOTE: decide prio and responsible for migration to nix after https://github.com/ComposableFi/composable/issues/1426
 cargo +nightly build --release -p wasm-optimizer
 cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
 cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks

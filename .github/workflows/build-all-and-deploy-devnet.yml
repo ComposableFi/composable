@@ -1,4 +1,4 @@
-name: "Nix pipeline"
+name: "Build all and deploy Devnet"
 on:
   push:
     branches:
@@ -160,6 +160,7 @@ jobs:
       - linux
       - x64
       - sre
+  
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -198,9 +199,55 @@ jobs:
           docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
           docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer
 
+
+  devnet-integration-tests:
+      name: "Devnet integration tests"
+      needs: codespace-devcontainer
+      runs-on: ubuntu-latest
+      concurrency:
+        group: runtime-tests-${{ github.ref }}
+        cancel-in-progress: true
+      steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: false
+          fetch-depth: 0                 
+      - name: Build & Push
+        run: |
+          chmod +x ./nix-install-vscode-composable.sh
+          ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
+          source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH" 
+          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}         
+  
+      - name: Prepare a test environment
+        run: |
+          # TODO: use nix
+          cd integration-tests/runtime-tests
+          curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
+          chmod +x ./docker-compose
+
+          tag=$(git rev-parse --short=9 HEAD)
+
+          sed -ri "s/\\$\\{TAG\\}/$tag/" docker-compose-ci.yml
+          echo "composablefi/composable-sandbox:$tag will be used"
+          ./docker-compose -f docker-compose-ci.yml up -d
+
+      - name: Wait when the node will be started
+        timeout-minutes: 5
+        run: |
+          cd integration-tests/runtime-tests
+          echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
+          time ../../scripts/wait_for_polkadot_launch.sh
+
+      - name: Run tests
+        run: |
+          cd integration-tests/runtime-tests
+          docker run --rm -v$(pwd):/build -e "ENDPOINT=composable:9988" -e "ENDPOINT_RELAYCHAIN=composable:9944" --workdir /build --network runtime-tests_default --entrypoint=/build/dockerRun.sh node:16.14
+          
+
   deploy-devnet:
       name: "Devnet(Rococo Local Dali Dev) Deploy"
-      needs: package-node
+      if: github.event_name == 'pull_request'
       runs-on: ubuntu-latest
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
       concurrency:
@@ -232,14 +279,13 @@ jobs:
           mkdir -p target/release
           mkdir -p target/doc
           cp result/bin/composable target/release/composable 
-          # TODO: derive archieve instead of direct tar call
+          # TODO: derive archive instead of direct tar call
           tar -czvf composable-picasso-$RELEASE_VERSION.tar.gz target/release/composable target/doc
           gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
 
           cd devnet
-          ./update.sh $RELEASE_VERSION
-          # TODO: what the adhoc hec is that?
-          # TODO: just use path to GOOGLE_APPLICATION_CREDENTIALS
+          ./update.sh $RELEASE_VERSION          
+          # TODO: run gsutils and find same json in GOOGLE_APPLICATION_CREDENTIALS path, decide prio and responsible after https://github.com/ComposableFi/composable/issues/1426
           jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
           cd ..
 

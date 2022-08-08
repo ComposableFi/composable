@@ -4,7 +4,10 @@ This is a guide on how to run things locally or in an isolated environment with 
 
 After starting local nodes wait up to 2 minutes until all will be wired.
 
-## Prepare 
+## Prepare
+
+
+OBSOLETE: Use nix to build and run networks
 
 1. `1-build-composable-collator.sh`
 
