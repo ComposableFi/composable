@@ -28,7 +28,10 @@ fn compact_wasm_file(input: &Path, output: &Path) {
 fn compress_wasm(input: &Path, output: &Path) {
 	use sp_maybe_compressed_blob::CODE_BLOB_BOMB_LIMIT;
 	let data = std::fs::read(input).expect("Failed to read WASM binary");
-	if let Some(compressed) = sp_maybe_compressed_blob::compress(&data, CODE_BLOB_BOMB_LIMIT) {
-		std::fs::write(output, &compressed[..]).expect("Failed to write WASM binary");
+	match sp_maybe_compressed_blob::compress(&data, CODE_BLOB_BOMB_LIMIT) {
+		Some(compressed) => {
+			std::fs::write(output, &compressed[..]).expect("Failed to write WASM binary")
+		},
+		None => panic!("WASM bomb limit exceeded."),
 	}
 }
