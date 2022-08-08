@@ -18,8 +18,8 @@ import { Option } from "@polkadot/types-codec";
  *
  * Queries:
  *
- * - Blacklist(H256) : Option<(u32, Vec<AccountId32>)>
- * - Cancellations(H256) : bool
+ * - blacklist(H256) : Option<(u32, Vec<AccountId32>)>
+ * - cancellations(H256) : bool
  * - depositOf(u32) : Option<Vec<AccountId32>, u128)>
  * - lastTableWasExternal : bool
  * - lowestUnbaked : u32
@@ -55,7 +55,7 @@ import { Option } from "@polkadot/types-codec";
  * - removeOtherVote(target, index)
  * - removeVote(index)
  * - second(proposal, secondsUpperBound)
- * - Undelegate
+ * - undelegate
  * - unlock(target)
  * - vetoExternal(proposalHash)
  * - vote(refIndex, vote)
