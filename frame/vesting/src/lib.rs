@@ -416,7 +416,7 @@ impl<T: Config> Pallet<T> {
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
 		} else {
-			T::Currency::set_lock(VESTING_LOCK_ID, asset, who, new_locked_amount.clone())?;
+			T::Currency::set_lock(VESTING_LOCK_ID, asset, who, new_locked_amount)?;
 		}
 
 		Self::deposit_event(Event::Claimed {
