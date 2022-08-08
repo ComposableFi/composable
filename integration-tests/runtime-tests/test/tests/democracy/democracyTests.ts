@@ -116,7 +116,7 @@ describe.only("[SHORT] Democracy Tests", function () {
   });
 
   before("Providing funds", async function () {
-    this.timeout(2 * 60 * 1000);
+    this.timeout(5 * 60 * 1000);
     await mintAssetsToWallet(api, walletAlice, walletAlice, [1]);
     await mintAssetsToWallet(api, walletBob, walletAlice, [1]);
     await mintAssetsToWallet(api, walletCharlie, walletAlice, [1]);
