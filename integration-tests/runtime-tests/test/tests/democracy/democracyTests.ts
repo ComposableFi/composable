@@ -357,7 +357,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999_999n }
+              Standard: { aye: true, conviction: null, balance: 99_999_999_999_999_999_999n }
             })
           )
         ),
@@ -368,7 +368,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999_999n }
+              Standard: { aye: true, conviction: null, balance: 99_999_999_999_999_999_999n }
             })
           )
         ),
@@ -379,7 +379,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999_999n }
+              Standard: { aye: true, conviction: null, balance: 99_999_999_999_999_999_999n }
             })
           )
         ),
@@ -390,7 +390,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999_999n }
+              Standard: { aye: true, conviction: null, balance: 99_999_999_999_999_999_999n }
             })
           )
         ),
@@ -401,7 +401,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: true, conviction: null, balance: 999_999_999_999_999_999_999n }
+              Standard: { aye: true, conviction: null, balance: 99_999_999_999_999_999_999n }
             })
           )
         ),
@@ -412,7 +412,7 @@ describe.only("[SHORT] Democracy Tests", function () {
           api.tx.democracy.vote(
             proposalId2,
             api.createType("PalletDemocracyVoteAccountVote", {
-              Standard: { aye: false, conviction: null, balance: 999_999_999_999_999n }
+              Standard: { aye: false, conviction: null, balance: 999_999_999_999n }
             })
           )
         )
@@ -464,7 +464,7 @@ describe.only("[SHORT] Democracy Tests", function () {
 
   describe("Referendum should succeed", function () {
     it("Waiting for referendum succession", async function () {
-      this.timeout(2 * 60 * 1000);
+      this.timeout(5 * 60 * 1000);
       let success = false;
       do {
         const currentEvents = await api.query.system.events();
