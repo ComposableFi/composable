@@ -1,12 +1,9 @@
-// TODO: @mikolaichuk:  Move today calculation into on_init().
-// TODO: @mikolaichuk:  Copy fields from market config to loan config, to avoid additiona request to
-//                      market config.
+// TODO: @mikolaichuk:  Move `today` calculation into on_init().
 use crate::{
-	strategies::repayment_strategies::{
-		RepaymentResult,
-		RepaymentStrategy,
+	types::{
+		LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf, RepaymentResult,
+		TimeMeasure,
 	},
-	types::{LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf, TimeMeasure},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
 };
@@ -22,6 +19,7 @@ use frame_support::{
 	ensure,
 	storage::with_transaction,
 	traits::{
+		fungible::{Inspect as NativeInspect, Transfer as NativeTransfer},
 		fungibles::{Inspect, Mutate, Transfer},
 		Get, UnixTime,
 	},
@@ -31,8 +29,8 @@ use sp_runtime::{
 	DispatchError, Perquintill, TransactionOutcome,
 };
 
-use sp_std::vec::Vec;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use sp_std::vec::Vec;
 
 // #generalization
 impl<T: Config> Pallet<T> {
@@ -107,10 +105,11 @@ impl<T: Config> Pallet<T> {
 		let config_input = input.value();
 		// Convert schedule timestamps from string to seconds have passed from the beginning of UNIX
 		// epoche.
-	    let schedule = Self::convert_schedule_timestamps(&config_input.payment_schedule)?;
-        // Get market config. Unwrapped since we have checked market existence during input
-        // validation process. 
-        let market_config = Self::get_market_config_via_account_id(&config_input.market_account_id)?;
+		let schedule = Self::convert_schedule_timestamps(&config_input.payment_schedule)?;
+		// Get market config. Unwrapped since we have checked market existence during input
+		// validation process.
+		let market_config =
+			Self::get_market_config_via_account_id(&config_input.market_account_id)?;
 		// Create non-activated loan and increment loans' counter.
 		// This loan have to be activated by borrower further.
 		crate::LoansCounterStorage::<T>::try_mutate(|counter| {
@@ -120,12 +119,11 @@ impl<T: Config> Pallet<T> {
 				loan_account_id.clone(),
 				config_input.market_account_id,
 				config_input.borrower_account_id,
-                market_config.collateral_asset_id().clone(),
+				market_config.collateral_asset_id().clone(),
 				market_config.borrow_asset_id().clone(),
-                config_input.principal,
+				config_input.principal,
 				config_input.collateral,
-                schedule, 	
-                config_input.repayment_strategy,
+				schedule,
 			);
 			crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_config.clone());
 			crate::NonActiveLoansStorage::<T>::insert(loan_account_id, ());
@@ -165,6 +163,14 @@ impl<T: Config> Pallet<T> {
 			crate::LoansStorage::<T>::remove(loan_account_id.clone());
 			Err(Error::<T>::TheLoanContractIsExpired)?;
 		}
+		// Transfer minimum amount of native asset from the borrower's account to the loan's account
+		// to ensure loan account existence.
+		T::NativeCurrency::transfer(
+			&borrower_account_id,
+			&loan_account_id,
+			T::NativeCurrency::minimum_balance(),
+			keep_alive,
+		)?;
 		// Transfer collateral from the borrower's account to the loan's account.
 		let collateral_asset_id = *loan_config.collateral_asset_id();
 		let source = &borrower_account_id;
@@ -215,30 +221,44 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	pub(crate) fn do_liquidate() -> () {}
+	pub(crate) fn do_liquidate(loan_config: &LoanConfigOf<T>) -> () {
+		Self::deposit_event(crate::Event::<T>::TheLoanWasSentToLiquidation {
+			loan_config: loan_config.clone(),
+		});
+	}
 
 	// Close loan contract since loan is paid.
-	pub(crate) fn close_loan_contract(
-		loan_account_id_ref: &T::AccountId,
-		keep_alive: bool,
-	) -> Result<(T::AccountId, Vec<TimeMeasure>), crate::Error<T>> {
-		let loan_config = Self::get_loan_config_via_account_id(loan_account_id_ref)?;
-		let borrower_account_id = loan_config.borrower_account_id();
-		let collateral_amount = loan_config.collateral();
-		let market_account_id = loan_config.market_account_id();
-		let collateral_asset_id = loan_config.collateral_asset_id();
+	pub(crate) fn close_loan_contract(loan_config: &LoanConfigOf<T>, keep_alive: bool) {
 		// Transfer collateral to borrower's account.
 		T::MultiCurrency::transfer(
-			*collateral_asset_id,
-			loan_account_id_ref,
-			borrower_account_id,
-			*collateral_amount,
+			*loan_config.collateral_asset_id(),
+			loan_config.market_account_id(),
+			loan_config.borrower_account_id(),
+			*loan_config.collateral(),
 			keep_alive,
 		)
-		.map_err(|_| crate::Error::<T>::CollateralCanNotBeTransferedBackToTheBorrowersAccount)?;
+	    // May happens if borrower's account died for some reason.
+        // TODO: @mikolaichuk: what we are going to with such situation? 
+        // Can we transfer collateral at market account in this case?
+        // Perhaps we have to allow manager to transfer collateral to any account in such cases? 
+        .map_err(|error| log::error!("Collateral was not transferred back to the borrower's account due to the following error: {:?}", error));
+		// Transfer borrowed assets to the borrower's account.
+		// If borrower has transferred extra money by mistake we have to return them.
+		let loan_account_borrow_asset_balance =
+			T::MultiCurrency::balance(*loan_config.borrow_asset_id(), loan_config.account_id());
+		T::MultiCurrency::transfer(
+			*loan_config.borrow_asset_id(),
+			loan_config.market_account_id(),
+			loan_config.borrower_account_id(),
+            loan_account_borrow_asset_balance,
+			keep_alive,
+		)
+	    // May happens if borrower's account died for some reason.
+        .map_err(|error| log::error!("Remainded borrow asset was not transferred back to the borrower's account due to the following error: {:?}", error));
+
 		// Remove all information about the loan.
-		let payments_moments = Self::terminate_activated_loan(loan_account_id_ref)?;
-		Ok((loan_account_id_ref.clone(), payments_moments))
+		Self::terminate_activated_loan(loan_config);
+		Self::deposit_event(crate::Event::<T>::LoanWasClosed { loan_config: loan_config.clone() });
 	}
 
 	// Check if borrower's account is whitelisted for particular market.
@@ -329,36 +349,50 @@ impl<T: Config> Pallet<T> {
 				Ok(loan_config) => loan_config,
 				Err(_) => continue,
 			};
-		    	
-            let repayment_result: RepaymentResult<T> = RepaymentResult::Failed("".into());
-			match repayment_result {
-				RepaymentResult::Failed(_) => (),
-				RepaymentResult::InterestIsPaidInTime(_) => (),
-				RepaymentResult::InterestIsNotPaidInTime(_) => Self::do_liquidate(),
-				RepaymentResult::PrincipalAndLastInterestPaymentArePaidBackInTime(_) => {
-					Self::close_loan_contract(&loan_account_id, keep_alive);
-					()
-				},
-				RepaymentResult::PrincipalAndLastInterestPaymentAreNotPaidBackInTime(_) =>
-					Self::do_liquidate(),
+			match Self::check_payment(&loan_config, today, keep_alive) {
+				RepaymentResult::Failed(error) => log::error!(
+					"Payment check for loan {:?} were failed becasue of the following error: {:?}",
+					loan_account_id,
+					error
+				),
+				RepaymentResult::PaymentMadeOnTime => (),
+				RepaymentResult::LastPaymentMadeOnTime =>
+					Self::close_loan_contract(&loan_config, keep_alive),
+				RepaymentResult::PaymentIsOverdue => Self::do_liquidate(&loan_config),
 			}
 			// We do not need information regarding this date anymore.
 			crate::ScheduleStorage::<T>::remove(today);
 		}
 	}
-/*
-    fn check_payment(loan_config: &LoanConfigOf<T>, today: i64, keep_alive: bool) -> RepaymentResult<T> {
-        let payment_amount = match loan_config.get_payment_for_particular_moment(&today) {
-            Some(payment_amount) => payment_amount, 
-            None => return RepaymentResult::Failed(crate::Error::<T>::ThereIsNoSuchMomentInTheLoanPaymentSchedule.into()),
-        };
-        let market_account_id = loan_config.market_account_id();
-        let borrow_asset_id = Self::get_market_config_via_account_id(market_account_id).borrow_aset(); 
-        let loan_account_id = loan_config.account_id();
-        T::MultiCurrency::transfer(borrow_asset_id, loan_account_id, market_account_id, payment_amount, keep_alive) 
-    }
-*/
-    // Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
+
+	// Check if a payment is succeed.
+	fn check_payment(
+		loan_config: &LoanConfigOf<T>,
+		today: i64,
+		keep_alive: bool,
+	) -> RepaymentResult {
+		let payment_amount = match loan_config.get_payment_for_particular_moment(&today) {
+			Some(payment_amount) => payment_amount,
+			None =>
+				return RepaymentResult::Failed(
+					crate::Error::<T>::ThereIsNoSuchMomentInTheLoanPaymentSchedule.into(),
+				),
+		};
+		match T::MultiCurrency::transfer(
+			*loan_config.borrow_asset_id(),
+			loan_config.account_id(),
+			loan_config.market_account_id(),
+			*payment_amount,
+			keep_alive,
+		) {
+			Ok(_) if *loan_config.last_payment_moment() == today =>
+				return RepaymentResult::LastPaymentMadeOnTime,
+			Ok(_) => return RepaymentResult::PaymentMadeOnTime,
+			Err(_) => return RepaymentResult::PaymentIsOverdue,
+		}
+	}
+
+	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
 	// If vault is balanced we will do nothing.
 	// #generalization
 	fn available_funds(
@@ -449,10 +483,11 @@ impl<T: Config> Pallet<T> {
 		Ok(output)
 	}
 
-	// Removes expired non-active loans.
-	// Expired non-active loans are loans which were not activated by borrower.
-	// First payment date of such loans is less or equal to the current date.
-	pub(crate) fn terminate_non_active_loans() -> Result<Vec<T::AccountId>, crate::Error<T>> {
+	// Removes expired non-activated loans.
+	// Expired non-activated loans are loans which were not activated by borrower before first
+	// payment date.
+	pub(crate) fn terminate_non_activated_expired_loans(
+	) -> Result<Vec<T::AccountId>, crate::Error<T>> {
 		let mut removed_non_active_accounts_ids = vec![];
 		for non_active_loan_account_id in crate::NonActiveLoansStorage::<T>::iter_keys() {
 			let loan_config = Self::get_loan_config_via_account_id(&non_active_loan_account_id)?;
@@ -464,27 +499,34 @@ impl<T: Config> Pallet<T> {
 		removed_non_active_accounts_ids
 			.iter()
 			.for_each(|account_id| crate::NonActiveLoansStorage::<T>::remove(account_id));
+		Self::deposit_event(crate::Event::<T>::NonActivatedExpiredLoansWereTerminated {
+			loans_ids: removed_non_active_accounts_ids.clone(),
+		});
 		Ok(removed_non_active_accounts_ids)
 	}
 
 	// Remove all information about activated loan.
-	pub(crate) fn terminate_activated_loan(
-		loan_account_id_ref: &T::AccountId,
-	) -> Result<Vec<TimeMeasure>, crate::Error<T>> {
+	pub(crate) fn terminate_activated_loan(loan_config: &LoanConfigOf<T>) {
 		// Get payment moments for the loan.
 		let payment_moments: Vec<TimeMeasure> =
-			Self::get_loan_config_via_account_id(loan_account_id_ref)?
-				.schedule()
-				.keys()
-				.map(|&payment_moment| payment_moment)
-				.collect();
+			loan_config.schedule().keys().map(|&payment_moment| payment_moment).collect();
 		// Remove account id from global payment schedule for each payment date.
 		payment_moments.iter().for_each(|payment_moment| {
 			crate::ScheduleStorage::<T>::mutate(payment_moment, |loans_accounts_ids| {
-				loans_accounts_ids.remove(loan_account_id_ref)
+				loans_accounts_ids.remove(loan_config.account_id())
 			});
 		});
-		Ok(payment_moments)
+		// TODO: @mikolaichuk: What we suppose to do if borrower's account is died.
+		T::NativeCurrency::transfer(
+			loan_config.account_id(),
+			loan_config.borrower_account_id(),
+			T::NativeCurrency::minimum_balance(),
+			false,
+		)
+		.map_err(|error| log::error!("Fee was not transferred back to the borrowers account"));
+		Self::deposit_event(crate::Event::<T>::LoanWasTerminated {
+			loan_config: loan_config.clone(),
+		})
 	}
 	pub(crate) fn today() -> TimeMeasure {
 		Utc::today().naive_utc().and_time(NaiveTime::default()).timestamp()

@@ -44,7 +44,6 @@ pub mod tests;
 pub mod currency;
 pub mod helpers;
 pub mod impls;
-pub mod strategies;
 pub mod types;
 pub mod validation;
 
@@ -66,7 +65,7 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
-			fungible::{Inspect as NativeTransfer, Transfer as NativeInspect},
+			fungible::{Inspect as NativeInspect, Transfer as NativeTransfer},
 			fungibles::{InspectHold, Mutate, MutateHold, Transfer},
 			UnixTime,
 		},
@@ -225,6 +224,10 @@ pub mod pallet {
 		LoanCreated { loan_config: LoanConfigOf<T> },
 		LoanContractWasExecuted { loan_config: LoanConfigOf<T> },
 		LoanWasNotFoundInTeStorage { loan_account_id: T::AccountId },
+		LoanWasTerminated { loan_config: LoanConfigOf<T> },
+		LoanWasClosed { loan_config: LoanConfigOf<T> },
+		NonActivatedExpiredLoansWereTerminated { loans_ids: Vec<T::AccountId> },
+		TheLoanWasSentToLiquidation { loan_config: LoanConfigOf<T> },
 	}
 
 	#[allow(missing_docs)]
@@ -332,8 +335,7 @@ pub mod pallet {
 				Error::<T>::ThisUserIsNotAllowedToCreateTheLoanInTheMarket,
 			);
 			let loan_config = <Self as UndercollateralizedLoans>::create_loan(input)?;
-			let event = Event::<T>::LoanCreated { loan_config };
-			Self::deposit_event(event);
+			Self::deposit_event(Event::<T>::LoanCreated { loan_config });
 			Ok(())
 		}
 
@@ -347,8 +349,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let loan_config =
 				<Self as UndercollateralizedLoans>::borrow(who, loan_account, keep_alive)?;
-			let event = Event::<T>::LoanContractWasExecuted { loan_config };
-			Self::deposit_event(event);
+			Self::deposit_event(Event::<T>::LoanContractWasExecuted { loan_config });
 			Ok(())
 		}
 	}

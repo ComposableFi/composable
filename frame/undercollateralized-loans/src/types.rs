@@ -1,4 +1,4 @@
-use crate::{strategies::repayment_strategies::RepaymentStrategy, Config};
+use crate::Config;
 use composable_traits::{
 	defi::DeFiComposableConfig,
 	undercollateralized_loans::{LoanConfig, LoanInput, MarketConfig, MarketInfo, MarketInput},
@@ -8,6 +8,14 @@ use sp_core::TypeId;
 
 pub(crate) type TimeMeasure = i64;
 
+// This enum is used since we do not want to return an Error in the on_initalize() function.
+pub enum RepaymentResult {
+	Failed(DispatchError),
+	PaymentMadeOnTime,
+	LastPaymentMadeOnTime,
+	PaymentIsOverdue,
+}
+
 pub(crate) type MarketInputOf<T> = MarketInput<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::MayBeAssetId,
@@ -15,11 +23,8 @@ pub(crate) type MarketInputOf<T> = MarketInput<
 	<T as Config>::LiquidationStrategyId,
 >;
 
-pub(crate) type LoanInputOf<T> = LoanInput<
-	<T as frame_system::Config>::AccountId,
-	<T as DeFiComposableConfig>::Balance,
-	RepaymentStrategy,
->;
+pub(crate) type LoanInputOf<T> =
+	LoanInput<<T as frame_system::Config>::AccountId, <T as DeFiComposableConfig>::Balance>;
 
 pub(crate) type MarketInfoOf<T> = MarketInfo<
 	<T as frame_system::Config>::AccountId,
@@ -40,7 +45,6 @@ pub(crate) type LoanConfigOf<T> = LoanConfig<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::MayBeAssetId,
 	<T as DeFiComposableConfig>::Balance,
-	RepaymentStrategy,
 	TimeMeasure,
 >;
 

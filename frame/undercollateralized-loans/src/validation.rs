@@ -1,3 +1,4 @@
+use codec::FullCodec;
 use composable_support::validation::{TryIntoValidated, Validate};
 use composable_traits::{
 	defi::DeFiEngine,
@@ -7,7 +8,6 @@ use composable_traits::{
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::Zero;
-use codec::FullCodec;
 
 #[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
 pub struct CurrencyPairIsNotSame;
@@ -75,19 +75,17 @@ where
 #[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Clone, Copy)]
 pub struct LoanInputIsValid<Loans: UndercollateralizedLoans>(PhantomData<Loans>);
 
-impl<AccountId, Balance, RepaymentStrategy, Loans>
-	Validate<LoanInput<AccountId, Balance, RepaymentStrategy>, LoanInputIsValid<Loans>>
+impl<AccountId, Balance, Loans> Validate<LoanInput<AccountId, Balance>, LoanInputIsValid<Loans>>
 	for LoanInputIsValid<Loans>
 where
 	Balance: Zero + PartialOrd,
 	Loans: UndercollateralizedLoans + DeFiEngine<AccountId = AccountId>,
-    AccountId: Clone + Eq + PartialEq + FullCodec,
-    
+	AccountId: Clone + Eq + PartialEq + FullCodec,
 {
 	fn validate(
-		input: LoanInput<AccountId, Balance, RepaymentStrategy>,
-	) -> Result<LoanInput<AccountId, Balance, RepaymentStrategy>, &'static str> {
-        // Check that principal balance	> 0
+		input: LoanInput<AccountId, Balance>,
+	) -> Result<LoanInput<AccountId, Balance>, &'static str> {
+		// Check that principal balance	> 0
 		let principal = input.principal.try_into_validated::<BalanceGreaterThenZero>()?.value();
 		// Check that collateral balance > 0
 		let collateral = input.collateral.try_into_validated::<BalanceGreaterThenZero>()?.value();

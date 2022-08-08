@@ -2,8 +2,8 @@ use crate::defi::CurrencyPair;
 use frame_support::pallet_prelude::*;
 use sp_runtime::Perquintill;
 use sp_std::{
-    vec::Vec,
-    collections::{btree_map::BTreeMap, btree_set::BTreeSet}
+	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+	vec::Vec,
 };
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
@@ -95,13 +95,12 @@ where
 }
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub struct LoanConfig<AccountId, AssetId, Balance, RepaymentStrategy, TimeMeasure>
+pub struct LoanConfig<AccountId, AssetId, Balance, TimeMeasure>
 where
 	AccountId: Clone + Eq + PartialEq,
 	AssetId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
 	TimeMeasure: Clone + Eq + PartialEq,
-	RepaymentStrategy: Clone + Eq + PartialEq,
 {
 	/// Loan account id.
 	account_id: AccountId,
@@ -110,7 +109,7 @@ where
 	/// Borrower account id.
 	/// Should be whitelisted.
 	borrower_account_id: AccountId,
-    /// The asset being used as collateral.
+	/// The asset being used as collateral.
 	collateral_asset_id: AssetId,
 	/// The asset being used as borrow asset.
 	borrow_asset_id: AssetId,
@@ -124,31 +123,24 @@ where
 	first_payment_moment: TimeMeasure,
 	/// The moment of the last interest payment and principal repayment.
 	last_payment_moment: TimeMeasure,
-	/// Payment strategy which should be applyed.
-	/// For instance, borrower have to pay principal when loan is mature (one strategy),
-	/// or he may pay principal partially, simultaneously with interest payments.   
-	repayment_strategy: RepaymentStrategy,
 }
 
-impl<AccountId, AssetId, Balance, RepaymentStrategy, TimeMeasure>
-	LoanConfig<AccountId, AssetId, Balance, RepaymentStrategy, TimeMeasure>
+impl<AccountId, AssetId, Balance, TimeMeasure> LoanConfig<AccountId, AssetId, Balance, TimeMeasure>
 where
 	AccountId: Clone + Eq + PartialEq,
-    AssetId: Clone + Eq + PartialEq,	
-    Balance: Clone + Eq + PartialEq,
+	AssetId: Clone + Eq + PartialEq,
+	Balance: Clone + Eq + PartialEq,
 	TimeMeasure: Clone + Eq + PartialEq + Ord,
-	RepaymentStrategy: Clone + Eq + PartialEq,
 {
 	pub fn new(
 		account_id: AccountId,
 		market_account_id: AccountId,
 		borrower_account_id: AccountId,
-	    collateral_asset_id: AssetId, 	
-        borrow_asset_id: AssetId, 
-        principal: Balance,
+		collateral_asset_id: AssetId,
+		borrow_asset_id: AssetId,
+		principal: Balance,
 		collateral: Balance,
 		schedule: Vec<(TimeMeasure, Balance)>,
-		repayment_strategy: RepaymentStrategy,
 	) -> Self {
 		let schedule: BTreeMap<TimeMeasure, Balance> = schedule.into_iter().collect();
 		// We are sure thate BTreeMap is not empty
@@ -159,14 +151,13 @@ where
 			account_id,
 			market_account_id,
 			borrower_account_id,
-		    collateral_asset_id,
-            borrow_asset_id,
-            principal,
+			collateral_asset_id,
+			borrow_asset_id,
+			principal,
 			collateral,
 			schedule,
 			first_payment_moment,
 			last_payment_moment,
-			repayment_strategy,
 		}
 	}
 
@@ -184,14 +175,14 @@ where
 	pub fn borrower_account_id(&self) -> &AccountId {
 		&self.borrower_account_id
 	}
-    
-    pub fn collateral_asset_id(&self) -> &AssetId {
-        &self.collateral_asset_id
-    }
 
-    pub fn borrow_asset_id(&self) -> &AssetId {
-        &self.borrow_asset_id
-    }
+	pub fn collateral_asset_id(&self) -> &AssetId {
+		&self.collateral_asset_id
+	}
+
+	pub fn borrow_asset_id(&self) -> &AssetId {
+		&self.borrow_asset_id
+	}
 
 	/// Get a reference to the loan config's principal.
 	pub fn principal(&self) -> &Balance {
@@ -218,15 +209,7 @@ where
 		&self.last_payment_moment
 	}
 
-	/// Get a reference to the loan config's payment strategy.
-	pub fn repayment_strategy(&self) -> &RepaymentStrategy {
-		&self.repayment_strategy
-	}
-
-	pub fn get_payment_for_particular_moment(
-		&self,
-		moment: &TimeMeasure,
-	) -> Option<&Balance> {
+	pub fn get_payment_for_particular_moment(&self, moment: &TimeMeasure) -> Option<&Balance> {
 		self.schedule.get(moment)
 	}
 }
@@ -302,7 +285,7 @@ impl<AccountId, AssetId: Copy, BlockNumber, LiquidationStrategyId>
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
-pub struct LoanInput<AccountId, Balance, RepaymentStrategy> {
+pub struct LoanInput<AccountId, Balance> {
 	/// Loan belongs to this market.
 	pub market_account_id: AccountId,
 	/// This account id have to be whitelisted.
@@ -313,8 +296,4 @@ pub struct LoanInput<AccountId, Balance, RepaymentStrategy> {
 	pub collateral: Balance,
 	/// How often borrowers have to pay interest.
 	pub payment_schedule: Vec<(String, Balance)>,
-	/// Payment strategie which should be applyed.
-	/// For instance borrower have to pay principal when loan is mature (one strategy),
-	/// or he may pay principal partially, simultaneously with interest payments.   
-	pub repayment_strategy: RepaymentStrategy,
 }

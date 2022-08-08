@@ -1,7 +1,6 @@
 use crate::{
 	currency::{BTC, NORMALIZED, USDT},
 	mocks::{general as runtime, general::*},
-	strategies::repayment_strategies::RepaymentStrategy,
 	types::{LoanConfigOf, MarketInfoOf, MarketInputOf},
 };
 use chrono::{NaiveDate, NaiveDateTime};
@@ -109,7 +108,6 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 			("01.02.2222".to_string(), 100),
 			("01.03.2222".to_string(), 100),
 		],
-		repayment_strategy: RepaymentStrategy::InterestPeriodicallyPrincipalWhenMature,
 	};
 	crate::Pallet::<Runtime>::do_create_loan(loan_input.try_into_validated().unwrap()).unwrap()
 }
