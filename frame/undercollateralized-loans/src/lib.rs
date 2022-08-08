@@ -228,9 +228,9 @@ pub mod pallet {
 		LoanWasClosed { loan_config: LoanConfigOf<T> },
 		NonActivatedExpiredLoansWereTerminated { loans_ids: Vec<T::AccountId> },
 		TheLoanWasSentToLiquidation { loan_config: LoanConfigOf<T> },
-        // TODO: @mikolaichuk: add loan information and amount by itself. 
-        SomeAmountWasRepaid,	
-    }
+		// TODO: @mikolaichuk: add loan information and amount by itself.
+		SomeAmountWasRepaid,
+	}
 
 	#[allow(missing_docs)]
 	#[pallet::error]
@@ -354,13 +354,13 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::LoanContractWasExecuted { loan_config });
 			Ok(())
 		}
-		
-        #[pallet::weight(1000)]
+
+		#[pallet::weight(1000)]
 		#[transactional]
 		pub fn repay(
 			origin: OriginFor<T>,
 			loan_account: T::AccountId,
-            repay_amount: T::Balance,
+			repay_amount: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
@@ -368,5 +368,5 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::SomeAmountWasRepaid);
 			Ok(())
 		}
-    }
+	}
 }

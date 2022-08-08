@@ -58,13 +58,12 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 		Self::is_borrower_account_whitelisted(borrower_account_id_ref, market_id_ref)
 	}
 
-    fn repay(
+	fn repay(
 		payer_account_id: Self::AccountId,
 		loan_account_id: Self::AccountId,
-	    repay_amount: Self::Balance, 	
-        keep_alive: bool,
-	) -> Result<Self::Balance, DispatchError>
-	 {
-       Self::do_repay(payer_account_id, loan_account_id, repay_amount, keep_alive) 
-    }
+		repay_amount: Self::Balance,
+		keep_alive: bool,
+	) -> Result<Self::Balance, DispatchError> {
+		Self::do_repay(payer_account_id, loan_account_id, repay_amount, keep_alive)
+	}
 }
