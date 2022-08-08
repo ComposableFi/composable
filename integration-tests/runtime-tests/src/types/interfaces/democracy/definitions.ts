@@ -2,12 +2,24 @@ export default {
   rpc: {},
   types: {
     PalletDemocracyVoteVoting: {
-      direct: {
-        votes: "Vec<Null>",
-        delegations: {
-          votes: "u128",
-          capital: "u128",
+      _enum: {
+        delegating: {
+          balance: "Balance",
+          target: "AccountId32",
+          conviction: "Null",
+          delegations: {
+            votes: "Null",
+            capital: "Null"
+          },
           prior: "Null"
+        },
+        direct: {
+          votes: "Vec<Null>",
+          delegations: {
+            votes: "u128",
+            capital: "u128",
+            prior: "Null"
+          }
         }
       }
     },
