@@ -324,7 +324,7 @@ describe.only("[SHORT] Democracy Tests", function () {
         api,
         walletAlice,
         api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(api.tx.democracy.externalProposeMajority(proposalHashOne))
+        api.tx.sudo.sudo(api.tx.democracy.externalProposeMajority(proposalHashTwo))
       );
       expect(proposalId).to.not.be.an("Error");
       proposalId2 = proposalId.toNumber();
@@ -339,7 +339,7 @@ describe.only("[SHORT] Democracy Tests", function () {
         api,
         walletAlice,
         api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(api.tx.democracy.fastTrack(proposalHashOne, 8, 0))
+        api.tx.sudo.sudo(api.tx.democracy.fastTrack(proposalHashTwo, 8, 0))
       );
       expect(result.isOk).to.be.true;
     });
