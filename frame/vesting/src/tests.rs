@@ -676,6 +676,16 @@ fn claim_with_id_works() {
 			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 18_u64 })
 		);
 
+		let schedules: BoundedBTreeMap<u128, _, _> =
+			VestingSchedules::<Runtime>::get(&BOB, MockCurrencyId::BTC);
+
+		// Schedule 4 should be removed
+		assert!(!schedules.contains_key(&4_u128));
+
+		// Schedules 5 and 6 should NOT be removed
+		assert!(schedules.contains_key(&5_u128));
+		assert!(schedules.contains_key(&6_u128));
+
 		// Claim for schedule 6
 		assert_ok!(Vesting::claim_for(
 			Origin::signed(ALICE),

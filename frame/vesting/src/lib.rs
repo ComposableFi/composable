@@ -406,8 +406,8 @@ impl<T: Config> Pallet<T> {
 		asset: AssetIdOf<T>,
 		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 	) -> Result<(), DispatchError> {
-		let current_locked_amount = Self::locked_balance(who, asset, VestingScheduleIdSet::All)?;
-		let balance_to_claim = Self::balance_to_claim(who, asset, vesting_schedule_ids.clone())?;
+		let current_locked_amount = Self::unclaimed_balance(who, asset, VestingScheduleIdSet::All)?;
+		let balance_to_claim = Self::available_balance(who, asset, vesting_schedule_ids.clone())?;
 
 		let new_locked_amount = current_locked_amount.safe_sub(&balance_to_claim)?;
 
@@ -429,6 +429,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Claims all available balance
 	/// Returns total locked balance for a given account, asset and vesting schedules, based on
 	/// current block number
 	fn locked_balance(
@@ -440,6 +441,46 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| Error::<T>::VestingScheduleNotFound);
 
 		let total_locked = match maybe_schedules {
+			Ok(mut schedules) => match vesting_schedule_ids {
+				VestingScheduleIdSet::All => schedules.keys().copied().collect(),
+				VestingScheduleIdSet::Many(ids) => ids.into_inner(),
+				VestingScheduleIdSet::One(id) => vec![id],
+			}
+			.iter()
+			.try_fold::<_, _, Result<BalanceOf<T>, DispatchError>>(
+				Zero::zero(),
+				|accumulated_amount, schedule_id| {
+					let schedule =
+						schedules.get(schedule_id).ok_or(Error::<T>::VestingScheduleNotFound)?;
+
+					let locked_amount = schedule.locked_amount(
+						frame_system::Pallet::<T>::current_block_number(),
+						T::Time::now(),
+					);
+
+					if locked_amount.is_zero() {
+						schedules.remove(schedule_id);
+					}
+
+					Ok(accumulated_amount + locked_amount)
+				},
+			)?,
+			_ => Zero::zero(),
+		};
+
+		Ok(total_locked)
+	}
+
+	/// Returns total unclaimed balance for a given account, asset and vesting schedules
+	fn unclaimed_balance(
+		who: &AccountIdOf<T>,
+		asset: AssetIdOf<T>,
+		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
+	) -> Result<BalanceOf<T>, DispatchError> {
+		let maybe_schedules = <VestingSchedules<T>>::try_get(who, asset)
+			.map_err(|_| Error::<T>::VestingScheduleNotFound);
+
+		let total_unclaimed = match maybe_schedules {
 			Ok(schedules) => match vesting_schedule_ids {
 				VestingScheduleIdSet::All => schedules.keys().copied().collect(),
 				VestingScheduleIdSet::Many(ids) => ids.into_inner(),
@@ -451,7 +492,7 @@ impl<T: Config> Pallet<T> {
 				|accumulated_amount, schedule_id| {
 					let schedule =
 						schedules.get(schedule_id).ok_or(Error::<T>::VestingScheduleNotFound)?;
-					let total_amount = ensure_valid_vesting_schedule::<T>(schedule)?;
+					let total_amount = schedule.total_amount()?;
 
 					let amount = total_amount.safe_sub(&schedule.already_claimed)?;
 
@@ -461,13 +502,13 @@ impl<T: Config> Pallet<T> {
 			_ => Zero::zero(),
 		};
 
-		Ok(total_locked)
+		Ok(total_unclaimed)
 	}
 
 	/// Returns balance available to claim for a given account, asset and vesting schedules, based
 	/// on current block number
 	/// It also updates the already claimed balance and removes completely vested schedules
-	fn balance_to_claim(
+	fn available_balance(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
 		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
