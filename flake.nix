@@ -1,5 +1,6 @@
 {
-  description = "Composable Finance Local Networks Lancher and documentation Book";
+  # see ./docs/nix.md for design guidelines of nix organization
+  description = "Composable Finance Local Networks Lancher and documentation Book";  
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils = {

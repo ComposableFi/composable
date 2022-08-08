@@ -1,3 +1,3 @@
 # Overview
 
-The Nix based devcontainer. Is maintained to be the same as CI and DevNet
+The Nix based devcontainer. Has the same environment as available in CI and on devnet

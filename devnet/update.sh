@@ -1,5 +1,6 @@
 #!/usr/bin/env nix-shell
 #! nix-shell -i bash -p nix-prefetch-scripts jq
+# TODO: nix it after prio and plan https://github.com/ComposableFi/composable/issues/1426
 REVISION=$1
 echo "Revision: ${REVISION}"
 URL="https://storage.googleapis.com/composable-binaries/community-releases/picasso/composable-picasso-${REVISION}.tar.gz"
