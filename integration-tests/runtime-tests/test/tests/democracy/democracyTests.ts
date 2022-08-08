@@ -60,7 +60,7 @@ import { Option } from "@polkadot/types-codec";
  * - vetoExternal(proposalHash)
  * - vote(refIndex, vote)
  */
-describe.only("Democracy Tests", function () {
+describe("Democracy Tests", function () {
   if (!testConfiguration.enabledTests.query.enabled) return;
 
   let api: ApiPromise;
