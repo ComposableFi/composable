@@ -5,8 +5,21 @@ const withTM = require("next-transpile-modules")([
   "substrate-react",
   "@web3-react/core",
   "shared",
-  "tokens"
+  "tokens",
 ]);
+
+function getVersion() {
+  const date = new Date();
+
+  return (
+    "v" +
+    date.getUTCFullYear().toString() +
+    (date.getUTCMonth() + 1).toString().padStart(2, "0") +
+    date.getUTCDay().toString().padStart(2, "0") +
+    date.getUTCHours().toString().padStart(2, "0") +
+    date.getUTCMinutes().toString().padStart(2, "0")
+  );
+}
 
 const nextConfig = {
   reactStrictMode: true,
@@ -21,6 +34,7 @@ const nextConfig = {
     RPC_URL_1285: process.env.RPC_URL_1285,
     RPC_URL_250: process.env.RPC_URL_250,
     SUBSQUID_URL: process.env.SUBSQUID_URL,
+    WEBSITE_VERSION: getVersion(),
   },
   pwa: {
     dest: "public",

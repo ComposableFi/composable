@@ -8,6 +8,8 @@ import {
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import { getHumanizedDateDiff } from "shared";
 import { LiquidityBootstrappingPool } from "@/defi/types";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import useBlockNumber from "@/defi/hooks/useBlockNumber";
 
 export type AuctionStatusIndicatorProps = {
   auction: LiquidityBootstrappingPool,
@@ -21,12 +23,11 @@ export const AuctionStatusIndicator: React.FC<AuctionStatusIndicatorProps> = ({
   LabelProps,
   ...rest
 }) => {
-
+  const blockNumber = useBlockNumber(DEFAULT_NETWORK_ID);
   const theme = useTheme();
-  const currentTimestamp = Date.now();
-  const isActive: boolean = auction.sale.start <= currentTimestamp 
-                    && auction.sale.end >= currentTimestamp;
-  const isEnded: boolean = auction.sale.end < currentTimestamp;
+  const isActive: boolean = blockNumber.gte(auction.sale.startBlock) 
+                    && blockNumber.lte(auction.sale.endBlock);
+  const isEnded: boolean = blockNumber.gt(auction.sale.endBlock);
 
   const getLabel = () => {
     if (!!label) {

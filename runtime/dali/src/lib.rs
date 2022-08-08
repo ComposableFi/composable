@@ -83,7 +83,6 @@ use frame_support::{
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
-use frame_system::EnsureSigned;
 use scale_info::TypeInfo;
 use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
@@ -968,7 +967,7 @@ impl pablo::Config for Runtime {
 	type LbpMaxSaleDuration = LbpMaxSaleDuration;
 	type LbpMaxInitialWeight = LbpMaxInitialWeight;
 	type LbpMinFinalWeight = LbpMinFinalWeight;
-	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
+	type PoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	// TODO: consider making it is own origin
 	type EnableTwapOrigin = EnsureRootOrHalfNativeCouncil;
 	type TWAPInterval = TWAPInterval;

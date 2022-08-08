@@ -15,8 +15,13 @@ import { DonutChart } from "@/components/Atoms/DonutChart";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { PoolDetailsProps } from "./index";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
-import { setManualPoolSearch, setPool } from "@/store/addLiquidity/addLiquidity.slice";
+import {
+  setManualPoolSearch,
+  setPool,
+} from "@/store/addLiquidity/addLiquidity.slice";
 import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { calculatePoolTotalValueLocked } from "@/defi/utils";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -50,7 +55,15 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   const theme = useTheme();
   const { setRemoveLiquidity } = useRemoveLiquidityState();
   const poolDetails = useLiquidityPoolDetails(poolId);
-  const liquidityProvided = useUserProvidedLiquidityByPool(poolId)
+
+  const baseAssetPriceUSD = useUSDPriceByAssetId(
+    poolDetails.pool?.pair.base.toString() ?? "-1"
+  );
+  const quoteAssetPriceUSD = useUSDPriceByAssetId(
+    poolDetails.pool?.pair.quote.toString() ?? "-1"
+  );
+
+  const liquidityProvided = useUserProvidedLiquidityByPool(poolId);
 
   const donutChartData = useAppSelector(
     (state) => state.pool.selectedPoolLiquidityChartData
@@ -67,7 +80,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   const handleRemoveLiquidity = () => {
     if (poolDetails.baseAsset && poolDetails.quoteAsset) {
       setRemoveLiquidity({
-        poolId
+        poolId,
       });
       router.push("/pool/remove-liquidity");
     }
@@ -77,8 +90,11 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
     liquidityProvided.value.quoteValue
   );
 
-  const totalValueLocked = poolDetails.tokensLocked.value.baseValue.plus(
-    poolDetails.tokensLocked.value.quoteValue
+  const totalValueLocked = calculatePoolTotalValueLocked(
+    poolDetails.tokensLocked.tokenAmounts.baseAmount,
+    poolDetails.tokensLocked.tokenAmounts.baseAmount,
+    baseAssetPriceUSD,
+    quoteAssetPriceUSD
   );
 
   const remaining = totalValueLocked.minus(totalValueProvided);
@@ -87,7 +103,9 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
     <BoxWrapper {...boxProps}>
       <Grid container>
         <Grid item {...twoColumnPageSize}>
-          <Typography variant="h5">{`$${totalValueProvided.toFormat(2)}`}</Typography>
+          <Typography variant="h5">{`$${totalValueProvided.toFormat(
+            2
+          )}`}</Typography>
           <Typography variant="body1" color="text.secondary">
             Liquidity Provided
           </Typography>
@@ -153,9 +171,17 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
                   />
                 </Item>
               )}
-              <Item value={`${
-                totalValueProvided.eq(0) ? "0" : totalValueLocked.div(totalValueProvided).times(100).toFixed(2)
-              }%`} mt={4}>
+              <Item
+                value={`${
+                  totalValueProvided.eq(0)
+                    ? "0"
+                    : totalValueProvided
+                        .div(totalValueLocked)
+                        .times(100)
+                        .toFixed(2)
+                }%`}
+                mt={4}
+              >
                 <Typography variant="body1">Pool share</Typography>
               </Item>
             </Box>
