@@ -5,8 +5,8 @@
       url = "path:../";
     };
   };
-  outputs = {self, composable} : 
-  {
-    nixopsConfigurations.default = composable.nixopsConfigurations.x86_64-linux.default;
-  };   
+  outputs = { self, composable }:
+    {
+      nixopsConfigurations.default = composable.nixopsConfigurations.x86_64-linux.default;
+    };
 }
