@@ -406,14 +406,7 @@ describe("Democracy Tests", function () {
             })
           )
         )
-      ]).then(function ([result1, result2, result3, result4, result5]) {
-        console.debug(result1.toString());
-        console.debug(result2.toString());
-        console.debug(result3.toString());
-        console.debug(result4.toString());
-        console.debug(result5.toString());
-        return [result1, result2, result3, result4, result5];
-      });
+      ]);
       await waitForBlocks(api);
       const voteWalletAlice = await api.query.democracy.votingOf(testWallet1.publicKey);
       const voteWalletBob = await api.query.democracy.votingOf(testWallet2.publicKey);
@@ -424,16 +417,10 @@ describe("Democracy Tests", function () {
 
       expect(voteWalletAlice.asDirect.votes.length).to.equal(1);
       expect(voteWalletBob.asDirect.votes.length).to.equal(1);
-      expect(voteWalletCharlie.asDelegating).to.not.be("Undefined");
+      expect(voteWalletCharlie.asDelegating).to.not.be.an("Undefined");
       expect(voteWalletDave.asDirect.votes.length).to.equal(1);
       expect(voteWalletEve.asDirect.votes.length).to.equal(1);
       expect(voteWalletFerdie.asDirect.votes.length).to.equal(1);
-      console.debug(voteWalletAlice.toString());
-      console.debug(voteWalletBob.toString());
-      console.debug(voteWalletCharlie.toString());
-      console.debug(voteWalletDave.toString());
-      console.debug(voteWalletEve.toString());
-      console.debug(voteWalletFerdie.toString());
     });
   });
 
