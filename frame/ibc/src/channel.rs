@@ -204,13 +204,10 @@ where
 	) -> Result<Timestamp, ICS04Error> {
 		let encoded_height = height.encode_vec();
 		let client_id_bytes = client_id.as_bytes().to_vec();
-		let timestamp =
-			ClientUpdateTime::<T>::get(&client_id_bytes, &encoded_height).ok_or_else(|| {
-				ICS04Error::implementation_specific(format!(
-					"[client_update_time]:  client update timestamp not found for {} at height: {}",
-					client_id, height
-				))
-			})?;
+		let timestamp = ClientUpdateTime::<T>::get(&client_id_bytes, &encoded_height).ok_or_else(|| ICS04Error::implementation_specific(format!(
+			"[client_update_time]:  client update timestamp not found for {} at height: {}",
+			client_id, height
+		)))?;
 
 		log::trace!(target: "pallet_ibc", "in channel: [client_update_time] >> height = {:?}, timestamp = {:?}", height,  timestamp);
 		Timestamp::from_nanoseconds(timestamp).map_err(|e| {
@@ -228,13 +225,10 @@ where
 	) -> Result<Height, ICS04Error> {
 		let encoded_height = height.encode_vec();
 		let client_id_bytes = client_id.as_bytes().to_vec();
-		let host_height = ClientUpdateHeight::<T>::get(&client_id_bytes, &encoded_height)
-			.ok_or_else(|| {
-				ICS04Error::implementation_specific(format!(
-					"[client_update_time]:  client update height not found for {} at height: {}",
-					client_id, height
-				))
-			})?;
+		let host_height = ClientUpdateHeight::<T>::get(&client_id_bytes, &encoded_height).ok_or_else(|| ICS04Error::implementation_specific(format!(
+			"[client_update_time]:  client update height not found for {} at height: {}",
+			client_id, height
+		)))?;
 
 		log::trace!(target: "pallet_ibc", "in channel: [client_update_height] >> height = {:?}, host height {:?}", height,  host_height);
 		Height::decode_vec(&host_height).map_err(|e| {
