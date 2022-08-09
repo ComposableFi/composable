@@ -455,7 +455,8 @@ impl<T: Config> Pallet<T> {
 		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 	) -> Result<(), DispatchError> {
 		let current_locked_amount = Self::unclaimed_balance(who, asset, VestingScheduleIdSet::All)?;
-		let balance_to_claim = Self::available_balance(who, asset, vesting_schedule_ids.clone())?;
+		let balance_to_claim =
+			Self::unlocked_claimable_balance(who, asset, vesting_schedule_ids.clone())?;
 
 		let new_locked_amount = current_locked_amount.safe_sub(&balance_to_claim)?;
 
@@ -554,7 +555,7 @@ impl<T: Config> Pallet<T> {
 	/// Returns balance available to claim for a given account, asset and vesting schedules, based
 	/// on current block number
 	/// It also updates the already claimed balance and removes completely vested schedules
-	fn available_balance(
+	fn unlocked_claimable_balance(
 		who: &AccountIdOf<T>,
 		asset: AssetIdOf<T>,
 		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
@@ -613,7 +614,7 @@ impl<T: Config> Pallet<T> {
 		schedules: Vec<VestingScheduleOf<T>>,
 	) -> DispatchResult {
 		// empty vesting schedules cleanup the storage and unlock the fund
-		if schedules.len().is_zero() {
+		if schedules.is_empty() {
 			<VestingSchedules<T>>::remove(who, asset);
 			T::Currency::remove_lock(VESTING_LOCK_ID, asset, who)?;
 			return Ok(())
