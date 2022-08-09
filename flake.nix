@@ -85,7 +85,7 @@
 
           # source relevant to build rust only
           rust-src = let
-            blacklist = [
+            dir-blacklist = [
               "nix"
               ".config"
               ".devcontainer"
@@ -106,15 +106,18 @@
               "setup"
               "subsquid"
               "runtime-tests"
-              "flake.nix"
+              "composablejs"
             ];
+            file-blacklist = [ "flake.nix" "flake.lock" ];
           in lib.cleanSourceWith {
             filter = lib.cleanSourceFilter;
             src = lib.cleanSourceWith {
               filter = let
                 customFilter = name: type:
-                  !(type == "directory"
-                    && builtins.elem (baseNameOf name) blacklist);
+                  (!(type == "directory"
+                    && builtins.elem (baseNameOf name) dir-blacklist))
+                  && (!(type == "file"
+                    && builtins.elem (baseNameOf name) file-blacklist));
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
               ./.;
               src = ./.;
@@ -182,25 +185,19 @@
               '';
             };
 
-          devnet-input =
-            builtins.fromJSON (builtins.readFile ./devnet/devnet.json);
-
           # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
           # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
           service-account-credential-key-file-input =
             builtins.fromJSON (builtins.readFile ./devnet/ops.json);
+
           gce-to-nix = file: {
             project = file.project_id;
             serviceAccount = file.client_email;
             accessKey = file.private_key;
           };
+
           gce-input = gce-to-nix service-account-credential-key-file-input;
 
-          devnet-deploy = pkgs.callPackage ./.nix/devnet.nix {
-            inherit devnet-input;
-            inherit gce-input;
-            inherit nixpkgs;
-          };
           codespace-base-container =
             pkgs.callPackage ./.devcontainer/nix/codespace-base-container.nix {
               inherit system;
@@ -258,8 +255,46 @@
                 --log error
             '';
 
+          mk-devnet =
+            { polkadot-launch, composable-node, polkadot-node, chain-spec }:
+            let
+              original-config = import ./scripts/polkadot-launch/composable.nix;
+              patched-config = lib.recursiveUpdate original-config {
+                relaychain = { bin = "${polkadot-node}/bin/polkadot"; };
+                parachains = builtins.map (parachain:
+                  parachain // {
+                    bin = "${composable-node}/bin/composable";
+                    chain = "${chain-spec}";
+                  }) original-config.parachains;
+              };
+              config = writeTextFile {
+                name = "devnet-${chain-spec}-config.json";
+                text = builtins.toJSON patched-config;
+              };
+            in {
+              inherit chain-spec;
+              parachain-nodes = builtins.map (parachain: parachain.nodes)
+                patched-config.parachains;
+              relaychain-nodes = patched-config.relaychain.nodes;
+              script = writeShellApplication {
+                name = "composable-devnet-${chain-spec}";
+                text = ''
+                  rm -rf /tmp/polkadot-launch
+                  ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
+                '';
+              };
+            };
+
         in rec {
-          nixopsConfigurations = { default = devnet-deploy.machines; };
+          nixopsConfigurations = {
+            default = (pkgs.callPackage ./.nix/devnet.nix {
+              inherit nixpkgs;
+              inherit gce-input;
+              inherit (packages) devnet-dali devnet-picasso;
+              book = packages.composable-book;
+            });
+          };
+
           packages = rec {
             inherit wasm-optimizer;
             inherit common-deps;
@@ -268,6 +303,18 @@
             inherit composable-runtime;
             inherit composable-node;
 
+            runtime-tests = stdenv.mkDerivation {
+              name = "runtime-tests";
+              src = builtins.filterSource
+                (path: type: baseNameOf path != "node_modules")
+                ./integration-tests/runtime-tests;
+              dontUnpack = true;
+              installPhase = ''
+                mkdir $out/
+                cp -r $src/* $out/
+              '';
+            };
+
             price-feed = crane-stable.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
@@ -275,8 +322,10 @@
             });
 
             taplo = pkgs.callPackage ./.nix/taplo.nix { inherit crane-stable; };
+
             mdbook =
               pkgs.callPackage ./.nix/mdbook.nix { inherit crane-stable; };
+
             composable-book = import ./book/default.nix {
               crane = crane-stable;
               inherit (pkgs) cargo stdenv;
@@ -319,43 +368,34 @@
             polkadot-launch =
               pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix
               { };
-            devnet = let
-              original-config = import ./scripts/polkadot-launch/composable.nix;
-              patched-config = lib.recursiveUpdate original-config {
-                relaychain = {
-                  bin = "${packages.polkadot-node}/bin/polkadot";
-                };
-                parachains = builtins.map (parachain:
-                  parachain // {
-                    bin = "${packages.composable-node}/bin/composable";
-                  }) original-config.parachains;
-              };
-              config = writeTextFile {
-                name = "devnet-config.json";
-                text = "${builtins.toJSON patched-config}";
-              };
-            in writeShellApplication {
-              name = "composable-devnet";
-              text = ''
-                rm -rf /tmp/polkadot-launch
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config} --verbose
-              '';
+
+            # Dali devnet
+            devnet-dali = mk-devnet {
+              inherit (packages) polkadot-launch composable-node polkadot-node;
+              chain-spec = "dali-dev";
             };
+
+            # Picasso devnet
+            devnet-picasso = mk-devnet {
+              inherit (packages) polkadot-launch composable-node polkadot-node;
+              chain-spec = "picasso-dev";
+            };
+
+            # Dali devnet container
             devnet-container = dockerTools.buildLayeredImage {
               name = "composable-devnet-container";
               contents = [
                 # just allow to bash into it and run with custom entries
-                packages.devnet
+                packages.devnet-dali.script
                 packages.polkadot-launch
               ] ++ container-tools;
               config = {
-                Cmd = [ "${packages.devnet}/bin/composable-devnet" ];
+                Cmd = [ "${packages.devnet-dali.script}/bin/composable-devnet" ];
               };
             };
 
             # TODO: inherit and provide script to run all stuff
             # devnet-container-xcvm
-
             codespace-container = dockerTools.buildLayeredImage {
               name = "composable-codespace";
               fromImage = codespace-base-container;
@@ -379,10 +419,6 @@
               fromImage = codespace-container;
               contents = [ go ];
             };
-
-            dali-script = devnet-deploy.dali.script;
-            picasso-script = devnet-deploy.picasso.script;
-            dali-composable-book = devnet-deploy.dali.composable-book;
 
             default = packages.composable-node;
           };
@@ -488,9 +524,14 @@
           # Applications runnable with `nix run`
           # https://github.com/NixOS/nix/issues/5560
           apps = rec {
-            devnet = {
+            devnet-dali = {
               type = "app";
-              program = "${packages.devnet}/bin/composable-devnet";
+              program = "${packages.devnet-dali.script}/bin/composable-devnet";
+            };
+            devnet-picasso = {
+              type = "app";
+              program =
+                "${packages.devnet-picasso.script}/bin/composable-devnet";
             };
             price-feed = {
               type = "app";
@@ -513,7 +554,7 @@
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "picasso-dev";
             };
-            default = devnet;
+            default = devnet-dali.script;
           };
         });
     in eachSystemOutputs // {
