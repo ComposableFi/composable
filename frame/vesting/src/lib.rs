@@ -292,18 +292,42 @@ pub mod module {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Unlock any vested funds of the origin account.
+		///
+		/// The dispatch origin for this call must be _Signed_ and the sender must have funds still
+		/// locked under this pallet.
+		///
+		/// - `asset`: The asset associated with the vesting schedule
+		/// - `vesting_schedule_ids`: The ids of the vesting schedules to be claimed
+		///
+		/// Emits `Claimed`.
 		#[pallet::weight(<T as Config>::WeightInfo::claim((<T as Config>::MaxVestingSchedules::get() / 2) as u32))]
 		pub fn claim(
 			origin: OriginFor<T>,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
+			vesting_schedule_ids: VestingScheduleIdSet<
+				T::VestingScheduleId,
+				T::MaxVestingSchedules,
+			>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			Self::do_claim(&who, asset, vesting_schedule_id)?;
+			Self::do_claim(&who, asset, vesting_schedule_ids)?;
 
 			Ok(())
 		}
 
+		/// Create a vested transfer.
+		///
+		/// The dispatch origin for this call must be _Signed_.
+		///
+		/// - `from`: The account sending the vested funds.
+		/// - `beneficiary`: The account receiving the vested funds.
+		/// - `asset`: The asset associated with this vesting schedule.
+		/// - `schedule_input`: The vesting schedule data attached to the transfer.
+		///
+		/// Emits `VestingScheduleAdded`.
+		///
+		/// NOTE: This will unlock all schedules through the current block.
 		#[pallet::weight(<T as Config>::WeightInfo::vested_transfer())]
 		pub fn vested_transfer(
 			origin: OriginFor<T>,
@@ -320,6 +344,15 @@ pub mod module {
 			Ok(())
 		}
 
+		/// Update vesting schedules
+		///
+		/// The dispatch origin for this call must be _Signed_.
+		///
+		/// - `who`: The account whose vested funds should be updated.
+		/// - `asset`: The asset associated with the vesting schedules.
+		/// - `vesting_schedules`: The updated vesting schedules.
+		///
+		/// Emits `VestingSchedulesUpdated`.
 		#[pallet::weight(<T as Config>::WeightInfo::update_vesting_schedules(vesting_schedules.len() as u32))]
 		pub fn update_vesting_schedules(
 			origin: OriginFor<T>,
@@ -336,16 +369,29 @@ pub mod module {
 			Ok(())
 		}
 
+		/// Unlock any vested funds of a `target` account.
+		///
+		/// The dispatch origin for this call must be _Signed_.
+		///
+		/// - `dest`: The account whose vested funds should be unlocked. Must have funds still
+		/// locked under this pallet.
+		/// - `asset`: The asset associated with the vesting schedule.
+		/// - `vesting_schedule_ids`: The ids of the vesting schedules to be claimed.
+		///
+		/// Emits `Claimed`.
 		#[pallet::weight(<T as Config>::WeightInfo::claim((<T as Config>::MaxVestingSchedules::get() / 2) as u32))]
 		pub fn claim_for(
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
-			vesting_schedule_id: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
+			vesting_schedule_ids: VestingScheduleIdSet<
+				T::VestingScheduleId,
+				T::MaxVestingSchedules,
+			>,
 		) -> DispatchResult {
 			let _ = ensure_signed(origin)?;
 			let who = T::Lookup::lookup(dest)?;
-			Self::do_claim(&who, asset, vesting_schedule_id)?;
+			Self::do_claim(&who, asset, vesting_schedule_ids)?;
 
 			Ok(())
 		}
