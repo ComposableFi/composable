@@ -1,4 +1,4 @@
-//! This stuff is copied over originally from Polkadot runtime configuration for pallet-proxy
+//! API extracted from pallet-proxy.
 
 use frame_support::pallet_prelude::*;
 
@@ -17,50 +17,91 @@ use frame_support::pallet_prelude::*;
 	scale_info::TypeInfo,
 )]
 pub enum ProxyType {
-	Any = 0,
-	NonTransfer = 1,
-	Governance = 2,
-	Staking = 3,
-	// Skip 4 as it is now removed (was SudoBalances)
-	IdentityJudgement = 5,
-	CancelProxy = 6,
-	Auction = 7,
-}
-
-#[cfg(test)]
-mod proxy_type_tests {
-	use super::*;
-	use codec::Encode;
-
-	#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug)]
-	pub enum OldProxyType {
-		Any,
-		NonTransfer,
-		Governance,
-		Staking,
-		SudoBalances,
-		IdentityJudgement,
-	}
-
-	#[test]
-	fn proxy_type_decodes_correctly() {
-		for (i, j) in vec![
-			(OldProxyType::Any, ProxyType::Any),
-			(OldProxyType::NonTransfer, ProxyType::NonTransfer),
-			(OldProxyType::Governance, ProxyType::Governance),
-			(OldProxyType::Staking, ProxyType::Staking),
-			(OldProxyType::IdentityJudgement, ProxyType::IdentityJudgement),
-		]
-		.into_iter()
-		{
-			assert_eq!(i.encode(), j.encode());
-		}
-		assert!(ProxyType::decode(&mut &OldProxyType::SudoBalances.encode()[..]).is_err());
-	}
+	Any,
+	Governance,
+	CancelProxy,
 }
 
 impl Default for ProxyType {
 	fn default() -> Self {
 		Self::Any
 	}
+}
+/// TODO (vim): Upstream the following APIs to Substrate/pallet-proxy and use.
+/// The parameters under which a particular account has a proxy relationship with some other
+/// account.
+#[derive(
+	Encode,
+	Decode,
+	Clone,
+	Copy,
+	Eq,
+	PartialEq,
+	Ord,
+	PartialOrd,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+pub struct ProxyDefinition<AccountId, ProxyType, BlockNumber> {
+	/// The account which may act on behalf of another.
+	pub delegate: AccountId,
+	/// A value defining the subset of calls that it is allowed to make.
+	pub proxy_type: ProxyType,
+	/// The number of blocks that an announcement must be in place for before the corresponding
+	/// call may be dispatched. If zero, then no announcement is needed.
+	pub delay: BlockNumber,
+}
+
+/// API into pallet-account-proxy. Provides functions to manage delegation of operations of
+/// one account to another.
+pub trait AccountProxy {
+	
+	type AccountId;
+	
+	type ProxyType;
+	
+	type BlockNumber;
+
+	/// Register a proxy account for the delegator that is able to make calls on its behalf.
+	///
+	/// Parameters:
+	/// - `delegator`: The delegator account.
+	/// - `delegatee`: The account that the `delegator` would like to make a proxy.
+	/// - `proxy_type`: The permissions allowed for this proxy account.
+	/// - `delay`: The announcement period required of the initial proxy. Will generally be
+	/// zero.
+	fn add_proxy_delegate(
+		delegator: &Self::AccountId,
+		delegatee: Self::AccountId,
+		proxy_type: Self::ProxyType,
+		delay: Self::BlockNumber,
+	) -> DispatchResult;
+
+	/// Unregister a proxy account for the delegator.
+	///
+	/// Parameters:
+	/// - `delegator`: The delegator account.
+	/// - `delegatee`: The account that the `delegator` would like to make a proxy.
+	/// - `proxy_type`: The permissions allowed for this proxy account.
+	/// - `delay`: The announcement period required of the initial proxy. Will generally be
+	/// zero.
+	fn remove_proxy_delegate(
+		delegator: &Self::AccountId,
+		delegatee: Self::AccountId,
+		proxy_type: Self::ProxyType,
+		delay: Self::BlockNumber,
+	) -> DispatchResult;
+
+	/// Find any existing proxy between the given accounts.
+	///
+	/// Parameters:
+	/// - `real`: The delegator account.
+	/// - `delegate`: The account that the `delegator` has a proxy to.
+	/// - `force_proxy_type`: Only find proxies of this type.
+	fn find_proxy(
+		real: &Self::AccountId,
+		delegate: &Self::AccountId,
+		force_proxy_type: Option<Self::ProxyType>,
+	) -> Result<ProxyDefinition<Self::AccountId, Self::ProxyType, Self::BlockNumber>, DispatchError>;
 }

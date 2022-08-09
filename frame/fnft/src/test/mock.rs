@@ -13,6 +13,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use composable_traits::fnft::FNFTAccountProxyType;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -40,6 +41,9 @@ impl crate::Config for MockRuntime {
 	type MaxProperties = ConstU32<16>;
 	type FinancialNFTCollectionId = u16;
 	type FinancialNFTInstanceId = u64;
+	type ProxyType = ProxyType;
+	type AccountProxy = Proxy;
+	type ProxyTypeSelector = FNFTAccountProxyType;
 	type PalletId = FNFTPalletId;
 }
 
@@ -101,33 +105,18 @@ impl system::Config for MockRuntime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 impl InstanceFilter<Call> for ProxyType {
 	fn filter(&self, c: &Call) -> bool {
 		match self {
 			ProxyType::Any => true,
-			ProxyType::NonTransfer => matches!(c, Call::System(..)),
 			ProxyType::Governance => matches!(
 				c,
 				// TODO democracy
 				Call::System(..)
 			),
-			// ProxyType::Staking => {
-			// 	matches!(c, Call::Staking(..) | Call::Session(..) | Call::Utility(..))
-			// },
-			// ProxyType::IdentityJudgement => matches!(
-			// 	c,
-			// 	Call::Identity(pallet_identity::Call::provide_judgement { .. }) | Call::Utility(..)
-			// ),
-			// ProxyType::CancelProxy => {
-			// 	matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement { .. }))
-			// },
-			// ProxyType::Auction => matches!(
-			// 	c,
-			// 	Call::Auctions(..) | Call::Crowdloan(..) | Call::Registrar(..) | Call::Slots(..)
-			// ),
 			_ => false,
 		}
 	}
@@ -136,7 +125,6 @@ impl InstanceFilter<Call> for ProxyType {
 			(x, y) if x == y => true,
 			(ProxyType::Any, _) => true,
 			(_, ProxyType::Any) => false,
-			(ProxyType::NonTransfer, _) => true,
 			_ => false,
 		}
 	}

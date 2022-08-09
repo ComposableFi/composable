@@ -8,6 +8,8 @@ use core::fmt::Debug;
 use frame_support::traits::tokens::nonfungibles::Inspect;
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
+use sp_std::vec::Vec;
+use crate::account_proxy::ProxyType;
 
 pub type Key = BiBoundedVec<u8, 1, 64>;
 pub type Value = BiBoundedVec<u8, 1, 256>;
@@ -68,4 +70,16 @@ pub struct FinancialNFTVersion(u8);
 
 impl FinancialNFTVersion {
 	pub const VERSION_1: FinancialNFTVersion = FinancialNFTVersion(1);
+}
+
+pub trait FNFTAccountProxyTypeSelector<T> {
+	/// Return the selected account proxy types
+	fn get_proxy_types() -> Vec<T>;
+}
+
+pub struct FNFTAccountProxyType;
+impl FNFTAccountProxyTypeSelector<ProxyType> for FNFTAccountProxyType {
+	fn get_proxy_types() -> Vec<ProxyType> {
+		[ProxyType::Governance, ProxyType::CancelProxy].into()
+	}
 }

@@ -52,36 +52,13 @@ use sp_std::prelude::*;
 pub use weights::WeightInfo;
 
 pub use pallet::*;
+use composable_traits::account_proxy::{ProxyDefinition, AccountProxy};
 
 type CallHashOf<T> = <<T as Config>::CallHasher as Hash>::Output;
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
 
-/// The parameters under which a particular account has a proxy relationship with some other
-/// account.
-#[derive(
-	Encode,
-	Decode,
-	Clone,
-	Copy,
-	Eq,
-	PartialEq,
-	Ord,
-	PartialOrd,
-	RuntimeDebug,
-	MaxEncodedLen,
-	TypeInfo,
-)]
-pub struct ProxyDefinition<AccountId, ProxyType, BlockNumber> {
-	/// The account which may act on behalf of another.
-	pub delegate: AccountId,
-	/// A value defining the subset of calls that it is allowed to make.
-	pub proxy_type: ProxyType,
-	/// The number of blocks that an announcement must be in place for before the corresponding
-	/// call may be dispatched. If zero, then no announcement is needed.
-	pub delay: BlockNumber,
-}
 
 /// Details surrounding a specific instance of an announcement to make a call.
 #[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -121,7 +98,7 @@ pub mod pallet {
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
 
-		/// A kind of proxy; specified with the proxy and passed in to the `IsProxyable` fitler.
+		/// A kind of proxy; specified with the proxy and passed in to the `IsProxyable` filter.
 		/// The instance filter determines whether a given call may be proxied under this type.
 		///
 		/// IMPORTANT: `Default` must be provided and MUST BE the the *most permissive* value.
@@ -661,88 +638,6 @@ impl<T: Config> Pallet<T> {
 			.expect("infinite length input; no invalid inputs for type; qed")
 	}
 
-	/// Register a proxy account for the delegator that is able to make calls on its behalf.
-	///
-	/// Parameters:
-	/// - `delegator`: The delegator account.
-	/// - `delegatee`: The account that the `delegator` would like to make a proxy.
-	/// - `proxy_type`: The permissions allowed for this proxy account.
-	/// - `delay`: The announcement period required of the initial proxy. Will generally be
-	/// zero.
-	pub fn add_proxy_delegate(
-		delegator: &T::AccountId,
-		delegatee: T::AccountId,
-		proxy_type: T::ProxyType,
-		delay: T::BlockNumber,
-	) -> DispatchResult {
-		ensure!(delegator != &delegatee, Error::<T>::NoSelfProxy);
-		Proxies::<T>::try_mutate(delegator, |(ref mut proxies, ref mut deposit)| {
-			let proxy_def = ProxyDefinition {
-				delegate: delegatee.clone(),
-				proxy_type: proxy_type.clone(),
-				delay,
-			};
-			let i = proxies.binary_search(&proxy_def).err().ok_or(Error::<T>::Duplicate)?;
-			proxies.try_insert(i, proxy_def).map_err(|_| Error::<T>::TooMany)?;
-			let new_deposit = Self::deposit(proxies.len() as u32);
-			if new_deposit > *deposit {
-				T::Currency::reserve(delegator, new_deposit - *deposit)?;
-			} else if new_deposit < *deposit {
-				T::Currency::unreserve(delegator, *deposit - new_deposit);
-			}
-			*deposit = new_deposit;
-			Self::deposit_event(Event::<T>::ProxyAdded {
-				delegator: delegator.clone(),
-				delegatee,
-				proxy_type,
-				delay,
-			});
-			Ok(())
-		})
-	}
-
-	/// Unregister a proxy account for the delegator.
-	///
-	/// Parameters:
-	/// - `delegator`: The delegator account.
-	/// - `delegatee`: The account that the `delegator` would like to make a proxy.
-	/// - `proxy_type`: The permissions allowed for this proxy account.
-	/// - `delay`: The announcement period required of the initial proxy. Will generally be
-	/// zero.
-	pub fn remove_proxy_delegate(
-		delegator: &T::AccountId,
-		delegatee: T::AccountId,
-		proxy_type: T::ProxyType,
-		delay: T::BlockNumber,
-	) -> DispatchResult {
-		Proxies::<T>::try_mutate_exists(delegator, |x| {
-			let (mut proxies, old_deposit) = x.take().ok_or(Error::<T>::NotFound)?;
-			let proxy_def = ProxyDefinition {
-				delegate: delegatee.clone(),
-				proxy_type: proxy_type.clone(),
-				delay,
-			};
-			let i = proxies.binary_search(&proxy_def).ok().ok_or(Error::<T>::NotFound)?;
-			proxies.remove(i);
-			let new_deposit = Self::deposit(proxies.len() as u32);
-			if new_deposit > old_deposit {
-				T::Currency::reserve(delegator, new_deposit - old_deposit)?;
-			} else if new_deposit < old_deposit {
-				T::Currency::unreserve(delegator, old_deposit - new_deposit);
-			}
-			if !proxies.is_empty() {
-				*x = Some((proxies, new_deposit))
-			}
-			Self::deposit_event(Event::<T>::ProxyRemoved {
-				delegator: delegator.clone(),
-				delegatee,
-				proxy_type,
-				delay,
-			});
-			Ok(())
-		})
-	}
-
 	pub fn deposit(num_proxies: u32) -> BalanceOf<T> {
 		if num_proxies == 0 {
 			Zero::zero()
@@ -791,18 +686,6 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub fn find_proxy(
-		real: &T::AccountId,
-		delegate: &T::AccountId,
-		force_proxy_type: Option<T::ProxyType>,
-	) -> Result<ProxyDefinition<T::AccountId, T::ProxyType, T::BlockNumber>, DispatchError> {
-		let f = |x: &ProxyDefinition<T::AccountId, T::ProxyType, T::BlockNumber>| -> bool {
-			&x.delegate == delegate &&
-				force_proxy_type.as_ref().map_or(true, |y| &x.proxy_type == y)
-		};
-		Ok(Proxies::<T>::get(real).0.into_iter().find(f).ok_or(Error::<T>::NotProxy)?)
-	}
-
 	fn do_proxy(
 		def: ProxyDefinition<T::AccountId, T::ProxyType, T::BlockNumber>,
 		real: T::AccountId,
@@ -830,5 +713,108 @@ impl<T: Config> Pallet<T> {
 		});
 		let e = call.dispatch(origin);
 		Self::deposit_event(Event::ProxyExecuted { result: e.map(|_| ()).map_err(|e| e.error) });
+	}
+}
+
+impl<T: Config> AccountProxy for Pallet<T> {
+
+	type AccountId = T::AccountId;
+
+	type BlockNumber = T::BlockNumber;
+
+	type ProxyType = T::ProxyType;
+
+	/// Register a proxy account for the delegator that is able to make calls on its behalf.
+	///
+	/// Parameters:
+	/// - `delegator`: The delegator account.
+	/// - `delegatee`: The account that the `delegator` would like to make a proxy.
+	/// - `proxy_type`: The permissions allowed for this proxy account.
+	/// - `delay`: The announcement period required of the initial proxy. Will generally be
+	/// zero.
+	fn add_proxy_delegate(
+		delegator: &T::AccountId,
+		delegatee: T::AccountId,
+		proxy_type: T::ProxyType,
+		delay: T::BlockNumber,
+	) -> DispatchResult {
+		ensure!(delegator != &delegatee, Error::<T>::NoSelfProxy);
+		Proxies::<T>::try_mutate(delegator, |(ref mut proxies, ref mut deposit)| {
+			let proxy_def = ProxyDefinition {
+				delegate: delegatee.clone(),
+				proxy_type: proxy_type.clone(),
+				delay,
+			};
+			let i = proxies.binary_search(&proxy_def).err().ok_or(Error::<T>::Duplicate)?;
+			proxies.try_insert(i, proxy_def).map_err(|_| Error::<T>::TooMany)?;
+			let new_deposit = Self::deposit(proxies.len() as u32);
+			if new_deposit > *deposit {
+				T::Currency::reserve(delegator, new_deposit - *deposit)?;
+			} else if new_deposit < *deposit {
+				T::Currency::unreserve(delegator, *deposit - new_deposit);
+			}
+			*deposit = new_deposit;
+			Self::deposit_event(Event::<T>::ProxyAdded {
+				delegator: delegator.clone(),
+				delegatee,
+				proxy_type,
+				delay,
+			});
+			Ok(())
+		})
+	}
+
+	/// Unregister a proxy account for the delegator.
+	///
+	/// Parameters:
+	/// - `delegator`: The delegator account.
+	/// - `delegatee`: The account that the `delegator` would like to make a proxy.
+	/// - `proxy_type`: The permissions allowed for this proxy account.
+	/// - `delay`: The announcement period required of the initial proxy. Will generally be
+	/// zero.
+	fn remove_proxy_delegate(
+		delegator: &T::AccountId,
+		delegatee: T::AccountId,
+		proxy_type: T::ProxyType,
+		delay: T::BlockNumber,
+	) -> DispatchResult {
+		Proxies::<T>::try_mutate_exists(delegator, |x| {
+			let (mut proxies, old_deposit) = x.take().ok_or(Error::<T>::NotFound)?;
+			let proxy_def = ProxyDefinition {
+				delegate: delegatee.clone(),
+				proxy_type: proxy_type.clone(),
+				delay,
+			};
+			let i = proxies.binary_search(&proxy_def).ok().ok_or(Error::<T>::NotFound)?;
+			proxies.remove(i);
+			let new_deposit = Self::deposit(proxies.len() as u32);
+			if new_deposit > old_deposit {
+				T::Currency::reserve(delegator, new_deposit - old_deposit)?;
+			} else if new_deposit < old_deposit {
+				T::Currency::unreserve(delegator, old_deposit - new_deposit);
+			}
+			if !proxies.is_empty() {
+				*x = Some((proxies, new_deposit))
+			}
+			Self::deposit_event(Event::<T>::ProxyRemoved {
+				delegator: delegator.clone(),
+				delegatee,
+				proxy_type,
+				delay,
+			});
+			Ok(())
+		})
+	}
+
+	fn find_proxy(
+		real: &T::AccountId,
+		delegate: &T::AccountId,
+		force_proxy_type: Option<T::ProxyType>,
+	) -> Result<ProxyDefinition<T::AccountId, T::ProxyType, T::BlockNumber>, DispatchError> {
+		let f = |x: &ProxyDefinition<T::AccountId, T::ProxyType, T::BlockNumber>| -> bool {
+			&x.delegate == delegate &&
+				force_proxy_type.as_ref().map_or(true, |y| &x.proxy_type == y)
+		};
+		Ok(Proxies::<T>::get(real).0.into_iter().find(f).ok_or(Error::<T>::NotProxy)?)
 	}
 }

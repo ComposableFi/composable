@@ -43,7 +43,7 @@ pub use pallet::*;
 pub mod pallet {
 	use codec::FullCodec;
 	use composable_support::math::safe::SafeAdd;
-	use composable_traits::{account_proxy::ProxyType, currency::AssetIdLike, fnft::FinancialNFT};
+	use composable_traits::{currency::AssetIdLike, fnft::{FinancialNFT, FNFTAccountProxyTypeSelector}, account_proxy::AccountProxy};
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,
@@ -92,7 +92,7 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_account_proxy::Config {
+	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -117,6 +117,22 @@ pub mod pallet {
 			+ Copy
 			+ Zero
 			+ One;
+
+		type ProxyType: Parameter
+			+ Member
+			+ Ord
+			+ PartialOrd
+			+ Default
+			+ MaxEncodedLen;
+
+		/// Used for setting the owning account of a fNFT as the delegate for the fNFT asset_account
+		type AccountProxy: AccountProxy<
+			AccountId=Self::AccountId,
+			ProxyType=Self::ProxyType,
+			BlockNumber=Self::BlockNumber
+		>;
+
+		type ProxyTypeSelector: FNFTAccountProxyTypeSelector<Self::ProxyType>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -185,16 +201,6 @@ pub mod pallet {
 		(AccountIdOf<T>, AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
 		OptionQuery,
 	>;
-
-	impl<T: Config> Pallet<T> {
-		fn get_proxy_type() -> <T as pallet_account_proxy::Config>::ProxyType {
-			// TODO (vim): Cleanup the following when pallet-proxy has been forked and integrated
-			// 	ProxyType needs to be available to be shared across pallets to refer to it, while
-			// also being injected into the runtimes.
-			<T as pallet_account_proxy::Config>::ProxyType::decode(&mut &ProxyType::Governance.encode()[..])
-				.expect("valid")
-		}
-	}
 
 	impl<T: Config> Inspect<AccountIdOf<T>> for Pallet<T> {
 		type ItemId = FinancialNFTInstanceIdOf<T>;
@@ -293,16 +299,16 @@ pub mod pallet {
 			OwnerInstances::<T>::mutate(who, insert_or_init_and_insert((*collection, *instance)));
 
 			// Set the owner as the proxy for certain types of actions for the financial NFT account
-			// TODO (vim): Fork-in a trait for pallet-proxy instead of direct dependency
-			let proxy_type = Self::get_proxy_type();
-			let asset_account =
-				<Self as FinancialNFT<AccountIdOf<T>>>::asset_account(collection, instance);
-			<pallet_account_proxy::Pallet<T>>::add_proxy_delegate(
-				&asset_account,
-				who.clone(),
-				proxy_type,
-				frame_system::Pallet::<T>::block_number(),
-			)?;
+			// TODO (vim): Make sure that asset_account has the min deposit for proxying in the runtime
+			let asset_account = <Self as FinancialNFT<AccountIdOf<T>>>::asset_account(collection, instance);
+			for proxy_type in T::ProxyTypeSelector::get_proxy_types() {
+				T::AccountProxy::add_proxy_delegate(
+					&asset_account,
+					who.clone(),
+					proxy_type.clone(),
+					frame_system::Pallet::<T>::block_number(),
+				)?;
+			}
 
 			Self::deposit_event(Event::FinancialNFTCreated {
 				collection_id: *collection,

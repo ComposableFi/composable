@@ -7319,6 +7319,7 @@ dependencies = [
 name = "pallet-account-proxy"
 version = "4.0.0-dev"
 dependencies = [
+ "composable-traits",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
