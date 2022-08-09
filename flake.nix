@@ -294,11 +294,11 @@
               src = pkgs.fetchFromGitHub {
                 repo = "polkadot";
                 owner = "paritytech";
-                rev = "v{version}";
+                rev = "v${version}";
                 hash = "sha256-Vv8lnmGNdhKjMGmzBJVJvmR2rD3BsbaDD7LajkKxpXc=";
               };
               cargoSha256 =
-                "sha256-u95gwG64dZxMrmp+eq6SOQyYIZsETiur7WwEyPxz3V0=";
+                "sha256-53iEC0WQy/tkToTDqolXzR6sjfe2xolBlIjQXDGhsYc=";
               doCheck = false;
               buildInputs = [ openssl zstd ];
               nativeBuildInputs = [ rust-nightly clang pkg-config ]

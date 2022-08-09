@@ -78,7 +78,7 @@ jobs:
           # TODO: replace with nix checking derivation which does all
           chmod +x  ./nix-validate.sh && ./nix-validate.sh
 
-  package-node:
+  package-composable-node:
     needs: common-deps
     runs-on:
       - self-hosted
@@ -103,6 +103,32 @@ jobs:
           name: composable-community
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node --no-update-lock-file
+
+  package-polkadot-node:
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#polkadot-node --no-update-lock-file
 
   package-price-feed:
     needs: common-deps
@@ -131,7 +157,9 @@ jobs:
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file
 
   devnet-container:
-    needs: package-node
+    needs:
+      - package-composable-node
+      - package-polkadot-node
     runs-on:
       - self-hosted
       - linux
@@ -159,7 +187,9 @@ jobs:
           nix build .#devnet-container --no-update-lock-file
 
   codespace-devcontainer:
-    needs: package-node
+    needs:
+      - package-composable-node
+      - package-polkadot-node
     runs-on:
       - self-hosted
       - linux
@@ -206,7 +236,9 @@ jobs:
 
   deploy-devnet:
       name: "Devnet(Rococo Local Dali Dev) Deploy"
-      needs: package-node
+      needs:
+        - package-composable-node
+        - package-polkadot-node
       runs-on: ubuntu-latest
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
       concurrency:
