@@ -21,7 +21,7 @@ export function concatU8a(a: Uint8Array, b: Uint8Array): Uint8Array {
   return c;
 }
 
-export function toMomentChartFormat(chartRange: ChartRange): string {
+export function toMomentChartLabel(chartRange: ChartRange): string {
   return {
     "24h": FORMAT_1D,
     "1w": FORMAT_1w,

@@ -14,6 +14,7 @@ export const FORMAT_1D = "hh:mm";
 export const FORMAT_1w = "DD/MM";
 export const FORMAT_1M = "MM/YYYY";
 
+export const MAX_CHART_LABELS = 5;
 export const APOLLO_UPDATE_BLOCKS = 6;
 export const DEFAULT_UI_FORMAT_DECIMALS = 4;
 

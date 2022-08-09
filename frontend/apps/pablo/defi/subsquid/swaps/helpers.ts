@@ -1,7 +1,8 @@
 import {
   ChartRange,
+  MAX_CHART_LABELS,
   processSubsquidChartData,
-  toMomentChartFormat,
+  toMomentChartLabel,
 } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import moment from "moment";
@@ -12,20 +13,19 @@ export function getChartLabels(
   chartSeries: [number, number][],
   chartRange: ChartRange
 ): string[] {
-  let MAX_LABELS = 5;
 
-  if (chartSeries.length < MAX_LABELS) {
+  if (chartSeries.length < MAX_CHART_LABELS) {
     return chartSeries.map((i) =>
-      moment(i[0]).format(toMomentChartFormat(chartRange))
+      moment(i[0]).format(toMomentChartLabel(chartRange))
     );
   }
 
-  let steps = Math.floor(chartSeries.length / MAX_LABELS);
+  let steps = Math.floor(chartSeries.length / MAX_CHART_LABELS);
 
   let labels = [];
   for (let step = 0; step < chartSeries.length; step += steps) {
     labels.push(
-      moment(chartSeries[step][0]).format(toMomentChartFormat(chartRange))
+      moment(chartSeries[step][0]).format(toMomentChartLabel(chartRange))
     );
   }
 
