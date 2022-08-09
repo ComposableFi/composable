@@ -564,7 +564,7 @@ impl<T: Config> Pallet<T> {
 			match maybe_schedules {
 				Some(schedules) => {
 					vesting_schedule_ids
-						.into_all_ids(&schedules)
+						.into_all_ids(schedules)
 						.iter()
 						.map(|id_to_claim| {
 							let schedule = schedules
@@ -602,7 +602,7 @@ impl<T: Config> Pallet<T> {
 
 					Ok(total_balance_to_claim)
 				},
-				None => return Err(Error::<T>::VestingScheduleNotFound.into()),
+				None => Err(Error::<T>::VestingScheduleNotFound.into()),
 			}
 		})
 	}
