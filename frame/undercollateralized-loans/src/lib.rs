@@ -265,11 +265,6 @@ pub mod pallet {
 		ThereIsNoSuchMomentInTheLoanPaymentSchedule,
 	}
 
-	/// The timestamp of the previous block or defaults to timestamp at genesis.
-	// TODO: @mikolaichuk: remove this.
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // LastBlockTimestamp is set on genesis (see below) so it will always be set.
-	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
 	#[derive(Default)]
@@ -279,8 +274,6 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			let now = T::UnixTime::now().as_secs() as Timestamp;
-			// INVARIANT: Don't remove this, required to use `ValueQuery` in LastBlockTimestamp.
-			LastBlockTimestamp::<T>::put(now);
 			let current_date_timestamp = crate::Pallet::<T>::get_date_aligned_timestamp(now);
 			CurrentDateStorage::<T>::put(current_date_timestamp);
 		}

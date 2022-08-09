@@ -316,7 +316,6 @@ impl<T: Config> Pallet<T> {
 				.peekable();
 
 			if errors.peek().is_none() {
-				crate::LastBlockTimestamp::<T>::put(now);
 				TransactionOutcome::Commit(Ok(1000))
 			} else {
 				errors.for_each(|e| {
