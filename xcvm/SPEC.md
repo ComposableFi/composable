@@ -221,8 +221,6 @@ sequenceDiagram
     XCVM Interpreter->>Opaque Contract: Call
     XCVM Interpreter->>Gateway: Spawn
     XCVM Interpreter->>Gateway: Query
-    XCVM Interpreter->>XCVM Interpreter: Commit
-    XCVM Interpreter->>XCVM Interpreter: Abort
 ```
 
 ##### Call Instruction and Late Bindings
