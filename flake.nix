@@ -390,7 +390,8 @@
                 packages.polkadot-launch
               ] ++ container-tools;
               config = {
-                Cmd = [ "${packages.devnet-dali.script}/bin/composable-devnet" ];
+                Cmd =
+                  [ "${packages.devnet-dali.script}/bin/composable-devnet" ];
               };
             };
 
@@ -495,15 +496,8 @@
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
-            sre = developers.overrideAttrs (oldAttrs: rec {
-              buildInputs = oldAttrs.buildInputs ++ [
-                packages.picasso-script
-                # TODO: replace fetching binries with approciate cachix builds
-                # TODO: binaries are referenced by git commit hash (so can retarted to git easy)
-                packages.dali-script
-                packages.dali-composable-book # book deploy couuld be secure deployed too
-              ];
-            });
+            sre = developers.overrideAttrs
+              (oldAttrs: rec { buildInputs = oldAttrs.buildInputs ++ [ ]; });
 
             # developers-xcvm = developers // mkShell {
             #   buildInputs = with packages; [
