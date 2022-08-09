@@ -422,8 +422,8 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
-		let locked =
-			Self::locked_balance(to, asset, VestingScheduleIdSet::All).unwrap_or(Zero::zero());
+		let locked = Self::locked_balance(to, asset, VestingScheduleIdSet::All)
+			.unwrap_or_else(|_| Zero::zero());
 
 		let total_amount = locked.safe_add(&schedule_amount)?;
 
