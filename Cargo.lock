@@ -1553,6 +1553,8 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "proptest",
+ "proptest-derive",
+ "rstest",
  "rust_decimal",
  "scale-info",
  "sp-arithmetic",
