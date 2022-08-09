@@ -8,7 +8,7 @@ use sp_runtime::{
 	traits::{AtLeast32Bit, Zero},
 	ArithmeticError,
 };
-use sp_std::collections::btree_map::BTreeMap;
+use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
