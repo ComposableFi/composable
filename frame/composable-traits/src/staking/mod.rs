@@ -94,7 +94,10 @@ pub type Rewards<AssetId, Balance, Limit> =
 	BoundedBTreeMap<AssetId, Reward<AssetId, Balance>, Limit>;
 
 impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
-	pub fn from(reward_config: RewardConfig<AssetId, Balance>) -> Reward<AssetId, Balance> {
+	pub fn from_config(
+		reward_config: RewardConfig<AssetId, Balance>,
+		now_seconds: u64,
+	) -> Reward<AssetId, Balance> {
 		Reward {
 			asset_id: reward_config.asset_id,
 			total_rewards: Zero::zero(),
@@ -102,7 +105,7 @@ impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
 			total_dilution_adjustment: Zero::zero(),
 			max_rewards: reward_config.max_rewards,
 			reward_rate: reward_config.reward_rate,
-			last_updated_timestamp: 0,
+			last_updated_timestamp: now_seconds,
 		}
 	}
 }

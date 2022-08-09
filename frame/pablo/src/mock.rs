@@ -167,6 +167,7 @@ impl pallet_staking_rewards::Config for Test {
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
+	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
 }
 
 parameter_types! {

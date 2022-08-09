@@ -149,6 +149,9 @@ pub mod pallet {
 			pool_id: T::RewardPoolId,
 			asset_id: T::AssetId,
 		},
+		RewardPoolUpdated {
+			pool_id: T::RewardPoolId,
+		},
 	}
 
 	#[pallet::error]
@@ -248,6 +251,9 @@ pub mod pallet {
 
 		/// Required origin for reward pool creation.
 		type RewardPoolCreationOrigin: EnsureOrigin<Self::Origin>;
+
+		/// Required origin for reward pool creation.
+		type RewardPoolUpdateOrigin: EnsureOrigin<Self::Origin>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -408,7 +414,7 @@ pub mod pallet {
 				T::MaxRewardConfigsPerPool,
 			>,
 		) -> DispatchResult {
-			ensure_signed(origin)?;
+			T::RewardPoolUpdateOrigin::ensure_origin(origin)?;
 			update_rewards_pool::<T>(pool_id, reward_updates)
 		}
 	}
@@ -444,22 +450,25 @@ pub mod pallet {
 						end_block > frame_system::Pallet::<T>::current_block_number(),
 						Error::<T>::EndBlockMustBeInTheFuture
 					);
+
 					let pool_id = RewardPoolCount::<T>::increment()?;
-					let mut rewards = BTreeMap::new();
-					for (_, reward_config) in initial_reward_config.into_iter().enumerate() {
-						rewards.insert(reward_config.0, Reward::from(reward_config.1));
-					}
+
+					let now_seconds = T::UnixTime::now().as_secs();
+
+					let rewards = initial_reward_config
+						.into_iter()
+						.map(|(asset_id, amount)| {
+							(asset_id, Reward::from_config(amount, now_seconds))
+						})
+						.try_collect()
+						.expect("No items were added; qed;");
+
 					RewardPools::<T>::insert(
 						pool_id,
 						RewardPool {
 							owner: owner.clone(),
 							asset_id,
-							rewards: BoundedBTreeMap::<
-								T::AssetId,
-								Reward<T::AssetId, T::Balance>,
-								T::MaxRewardConfigsPerPool,
-							>::try_from(rewards)
-							.map_err(|_| Error::<T>::RewardConfigProblem)?,
+							rewards,
 							total_shares: T::Balance::zero(),
 							claimed_shares: T::Balance::zero(),
 							end_block,
@@ -973,6 +982,8 @@ fn update_rewards_pool<T: Config>(
 			*reward = Reward { reward_rate: update.reward_rate, ..new_reward };
 		}
 
+		Pallet::<T>::deposit_event(Event::<T>::RewardPoolUpdated { pool_id });
+
 		Ok(())
 	})
 }
@@ -990,6 +1001,8 @@ pub(crate) fn reward_accumulation_calculation<T: Config>(
 			// Integer division can only fail if rhs == 0, and
 			// reward_rate_period_seconds is a NonZeroU64 here.
 			let periods_surpassed = elapsed_time.div(reward_rate_period_seconds.get());
+
+			dbg!(periods_surpassed);
 
 			if periods_surpassed.is_zero() {
 				Ok(reward)

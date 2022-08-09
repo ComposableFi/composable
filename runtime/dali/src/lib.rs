@@ -797,6 +797,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
+	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
 }
 
 /// The calls we permit to be executed by extrinsics
