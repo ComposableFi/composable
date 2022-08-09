@@ -154,8 +154,8 @@ pub mod pallet {
 	};
 	use crate::{
 		types::{
-			AccountSummary, OracleStatus, PositionInfo, TradeResponse, TraderPositionState,
-			BASIS_POINT_DENOMINATOR,
+			AccountSummary, OracleStatus, PositionInfo, ShutdownStatus, TradeResponse,
+			TraderPositionState, BASIS_POINT_DENOMINATOR,
 		},
 		weights::WeightInfo,
 	};
@@ -509,6 +509,8 @@ pub mod pallet {
 		MarketClosed,
 		/// Raised when querying a market with an invalid or nonexistent market Id.
 		MarketIdNotFound,
+		/// Attempted to open a position in a market in the process of shutting down.
+		MarketShuttingDown,
 		/// Raised when creating a new position but exceeding the maximum number of positions for
 		/// an account.
 		MaxPositionsExceeded,
@@ -1154,6 +1156,8 @@ pub mod pallet {
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let mut market = Self::try_get_market(market_id)?;
+			Self::ensure_market_is_open_to_new_orders(&market)?;
+
 			let mut quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
 			ensure!(
 				quote_abs_amount_decimal >= market.minimum_trade_size,
@@ -1791,12 +1795,20 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
+		fn ensure_market_is_open_to_new_orders(market: &Market<T>) -> Result<(), DispatchError> {
+			let now = T::UnixTime::now().as_secs();
+			match market.shutdown_status(now) {
+				ShutdownStatus::Open => Ok(()),
+				ShutdownStatus::Closed => Err(Error::<T>::MarketClosed.into()),
+				ShutdownStatus::Closing => Err(Error::<T>::MarketShuttingDown.into()),
+			}
+		}
+
 		fn ensure_market_open(market: &Market<T>) -> Result<(), DispatchError> {
 			let now = T::UnixTime::now().as_secs();
-			if market.is_closed(now) {
-				Err(Error::<T>::MarketClosed.into())
-			} else {
-				Ok(())
+			match market.shutdown_status(now) {
+				ShutdownStatus::Closed => Err(Error::<T>::MarketClosed.into()),
+				_ => Ok(()),
 			}
 		}
 

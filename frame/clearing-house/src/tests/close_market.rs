@@ -1,6 +1,6 @@
 use crate::{
 	mock::{
-		accounts::ALICE,
+		accounts::{ALICE, BOB},
 		runtime::{MarketId, Origin, Runtime, TestPallet, Vamm as VammPallet},
 	},
 	tests::{
@@ -35,6 +35,15 @@ prop_compose! {
 		close_position in (close_market + 1)..=MAX_DURATION_SECONDS,
 	) -> (DurationSeconds, DurationSeconds) {
 		(close_position, close_market)
+	}
+}
+
+prop_compose! {
+	fn invalid_open_close_times()(close_market in 10..=MAX_DURATION_SECONDS)(
+		close_market in Just(close_market),
+		open_position in 1..close_market,
+	) -> (DurationSeconds, DurationSeconds) {
+		(open_position, close_market)
 	}
 }
 
@@ -99,6 +108,33 @@ proptest! {
 			// Alice closes her position
 			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
 		});
+	}
+
+	#[test]
+	fn should_not_allow_opening_positions_after_close_market_call(
+		(position_time, close_time) in invalid_open_close_times(),
+	) {
+		let config = MarketConfig::default();
+		let collateral = as_balance(100);
+
+		with_trading_context(config, collateral, |market_id| {
+			// First, market close is programmed to a future time
+			assert_ok!(TestPallet::close_market(Origin::signed(BOB), market_id, close_time));
+
+			// Time passes, but it's still earlier than the market close
+			run_to_time(position_time);
+			// Alice tries to open a position, but is blocked
+			assert_noop!(
+				TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Long,
+					as_balance(100),
+					as_balance(0)
+				),
+				Error::<Runtime>::MarketShuttingDown
+			);
+		})
 	}
 
 	#[test]

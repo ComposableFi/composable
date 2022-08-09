@@ -260,14 +260,28 @@ impl<T: Config> Market<T> {
 			.ok_or_else(|| ArithmeticError::Overflow.into())
 	}
 
-	/// Returns whether the market is closed at the given timestamp.
-	pub fn is_closed(&self, now: DurationSeconds) -> bool {
+	/// Returns the current market status w.r.t. closure.
+	pub fn shutdown_status(&self, now: DurationSeconds) -> ShutdownStatus {
 		if let Some(closed_ts) = self.closed_ts {
-			now >= closed_ts
+			if now >= closed_ts {
+				ShutdownStatus::Closed
+			} else {
+				ShutdownStatus::Closing
+			}
 		} else {
-			false
+			ShutdownStatus::Open
 		}
 	}
+}
+
+/// Describes the current market status w.r.t. closure.
+pub enum ShutdownStatus {
+	/// The market is open.
+	Open,
+	/// The market is closed.
+	Closed,
+	/// The market is closing at a future time.
+	Closing,
 }
 
 /// Contains the index price and its validity.
