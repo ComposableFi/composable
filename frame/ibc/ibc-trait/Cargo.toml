@@ -13,7 +13,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 composable-traits = { default-features = false, path = "../../composable-traits" }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 hex = { version = "0.4.3", default-features = false }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b62b5ddb88f255a67a8dc20ee9eef6d218c4fc00", default-features = false, features = [
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "2e8d5b4f823b7e7d8e5f03d91d22593a59be8f33", default-features = false, features = [
   "ics11_beefy",
 ] }
 ibc-primitives = { path = "../ibc-primitives", default-features = false }
