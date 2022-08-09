@@ -4,6 +4,7 @@ use composable_traits::{
 	governance::{GovernanceRegistry, SignedRawOrigin},
 };
 
+use composable_traits::fnft::{FNFTAccountProxyType, FNFTAccountProxyTypeSelector};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, InstanceFilter},
@@ -17,7 +18,6 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
-use composable_traits::fnft::{FNFTAccountProxyType, FNFTAccountProxyTypeSelector};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

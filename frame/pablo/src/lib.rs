@@ -51,6 +51,7 @@ mod uniswap_tests;
 pub mod weights;
 
 mod liquidity_bootstrapping;
+mod mock_fnft;
 mod stable_swap;
 mod twap;
 mod types;

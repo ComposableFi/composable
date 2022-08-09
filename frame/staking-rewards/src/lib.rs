@@ -73,7 +73,6 @@ pub mod pallet {
 		time::DurationSeconds,
 	};
 	use frame_support::{
-		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			tokens::{nonfungibles, WithdrawConsequence},

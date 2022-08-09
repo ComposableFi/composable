@@ -170,6 +170,8 @@ impl pallet_staking_rewards::Config for Test {
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
+	type FinancialNFTInstanceId = u64;
+	type FinancialNFT = pablo::mock_fnft::MockFNFT;
 }
 
 ord_parameter_types! {
