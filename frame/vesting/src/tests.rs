@@ -564,6 +564,84 @@ fn claim_works() {
 }
 
 #[test]
+fn claim_nonexistent_schedules() {
+	ExtBuilder::build().execute_with(|| {
+		// Claim schedule 10, which does not exist
+		assert_noop!(
+			Vesting::claim(
+				Origin::signed(BOB),
+				MockCurrencyId::BTC,
+				VestingScheduleIdSet::One(10_u128)
+			),
+			Error::<Runtime>::VestingScheduleNotFound
+		);
+
+		// Claim all schedules
+		assert_noop!(
+			Vesting::claim(Origin::signed(BOB), MockCurrencyId::BTC, VestingScheduleIdSet::All,),
+			Error::<Runtime>::VestingScheduleNotFound
+		);
+
+		// Add schedule 4
+		let schedule_4_input = VestingScheduleInput {
+			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
+			period_count: 2_u32,
+			per_period: 10_u64,
+		};
+		assert_ok!(Vesting::vested_transfer(
+			Origin::root(),
+			ALICE,
+			BOB,
+			MockCurrencyId::BTC,
+			schedule_4_input,
+		));
+
+		// Locked balance should be 2*10 = 20
+		//                          ----
+		assert_eq!(
+			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 20_u64 })
+		);
+
+		System::set_block_number(11);
+
+		// Claim schedules 4 and 10
+		let claim_schedules =
+			BoundedVec::<u128, MaxVestingSchedule>::try_from(vec![4_u128, 10_u128]).unwrap();
+
+		assert_noop!(
+			Vesting::claim(
+				Origin::signed(BOB),
+				MockCurrencyId::BTC,
+				VestingScheduleIdSet::Many(claim_schedules),
+			),
+			Error::<Runtime>::VestingScheduleNotFound
+		);
+
+		// Locked balance should still be 2*10 = 20
+		//                          ----
+		assert_eq!(
+			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 20_u64 })
+		);
+
+		// Claim schedule 4
+		assert_ok!(Vesting::claim(
+			Origin::signed(BOB),
+			MockCurrencyId::BTC,
+			VestingScheduleIdSet::One(4_u128),
+		));
+
+		// Locked balance should be 20 - 10 = 10
+		//                             ----
+		assert_eq!(
+			Tokens::locks(&BOB, MockCurrencyId::BTC).get(0),
+			Some(&BalanceLock { id: VESTING_LOCK_ID, amount: 10_u64 })
+		);
+	});
+}
+
+#[test]
 fn claim_with_id_works() {
 	ExtBuilder::build().execute_with(|| {
 		// Add schedule 4

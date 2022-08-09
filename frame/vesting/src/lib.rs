@@ -422,7 +422,8 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 
-		let locked = Self::locked_balance(to, asset, VestingScheduleIdSet::All)?;
+		let locked =
+			Self::locked_balance(to, asset, VestingScheduleIdSet::All).unwrap_or(Zero::zero());
 
 		let total_amount = locked.safe_add(&schedule_amount)?;
 
@@ -513,7 +514,7 @@ impl<T: Config> Pallet<T> {
 					Ok(accumulated_amount.safe_add(&locked_amount)?)
 				},
 			)?,
-			_ => Zero::zero(),
+			_ => return Err(Error::<T>::VestingScheduleNotFound.into()),
 		};
 
 		Ok(total_locked)
@@ -547,7 +548,7 @@ impl<T: Config> Pallet<T> {
 					Ok(accumulated_amount.safe_add(&amount)?)
 				},
 			)?,
-			_ => Zero::zero(),
+			_ => return Err(Error::<T>::VestingScheduleNotFound.into()),
 		};
 
 		Ok(total_unclaimed)
@@ -607,7 +608,7 @@ impl<T: Config> Pallet<T> {
 
 					Ok(total_balance_to_claim)
 				},
-				None => Ok(Zero::zero()),
+				None => return Err(Error::<T>::VestingScheduleNotFound.into()),
 			}
 		})
 	}
