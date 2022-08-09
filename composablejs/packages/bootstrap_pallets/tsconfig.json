@@ -102,10 +102,10 @@
     "rootDir": "src",
     "paths": {
       "@composable/bootstrap_pallets/*": ["src/*"],
+      "@polkadot/api/augment": ["../types/src/augment-api.ts"],
+      "@polkadot/types/augment": ["../types/src/augment-types.ts"],
       "@composable/types": ["../types/src"],
       "@composable/types/*": ["../types/src/*"],
-      "@polkadot/api/augment": ["../types/src/augment-api.ts"],
-      "@polkadot/types/augment": ["../types/src/augment-types.ts"]
     },
   },
   "references": [

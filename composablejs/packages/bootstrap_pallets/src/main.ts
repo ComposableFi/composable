@@ -1,3 +1,5 @@
+import "@composable/types/augment-api";
+import "@composable/types/augment-types";
 import dotenv from "dotenv";
 dotenv.config();
 import { cryptoWaitReady } from "@polkadot/util-crypto";
