@@ -204,7 +204,7 @@ Payload ::= bytes
 Bindings ::= [(u16, BindingValue)]
 BindingValue ::= Self | Relayer | Result | Balance | AssetId
 Spawn ::= Network BridgeSecurity Salt Program Assets
-Query ::= Network Salt
+Query ::= (Network Salt | Identity ) BridgeSecurity Program
 Account ::= bytes
 ```
 
@@ -248,32 +248,11 @@ Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of
 
 #### Handling Balances
 
-Amounts of assets can be specified using the `Balance` type. This allows foreign programs to specify sending a part of the total amount of funds using `Ratio`, or express the amounts in the canonical unit of the asset: `Unit`,  or if the caller is aware of the number of decimals of the assets on the destination side: `Absolute`.
+The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. For example, the swap call of the following smart contract snippet expects a `to` address to receive the funds after a trade. 
 
 #### Querying 
 
-Registers are persisted after `Program` invocations and `Query`able from other chains. Querying does not alter the registry state, so multiple `Query` invocations will always return the same `IP` and `Result`.  
-
-A query returns a `QueryResult`:
-
-```
-QueryResult ::= Header Data 
-Header ::= Hash Number
-Data ::= 
-    Assets
-    | (Result, IP)
-    | bytes
-```
-
-To inspect a Query result from an XCVM program, use `Call` to a contract with the capabilities to handle it properly.
-
-```
-Query Ethereum 1                    // Pauses execution, which will be resumed once the 
-                                    // result values have been loaded.
-Call 0xmy_contract_on_this_chain    // my_contract_on_this_chain can inspect the Result Register of his                             
-                                    // instance and do something with the actual result
-```
-
+Registers are persisted after `Program` invocations and `Query`able from other chains. Querying does not alter the registry state, so multiple `Query` invocations will always return the same data.  
 
 ### Fees
 
@@ -383,3 +362,37 @@ Spawn XYZ BridgeSecurity::Deterministic 0 [
        ] { USDC: ALL },                         // We send over all our USDC back to ABC.
    ] { DOT: UNIT 100 },                         // We send over 100 DOT from ABC to XYZ.
 ```
+
+### Self-Referential Calls
+
+Many contracts have public functions with a `to` parameter, which indicates where funds should be sent to. Uniswap for example has the following interface for doing a [call](https://github.com/Uniswap/v2-core/blob/ee547b17853e71ed4e0101ccfd52e70d5acded58/contracts/interfaces/IUniswapV2Callee.sol#L4):
+
+```solidity
+function uniswapV2Call(address sender, uint amount0, uint amount1, bytes calldata data) external;
+```
+
+To properly construct this call and return funds to the interpreter instance, the `sender` parameter needs to be set to the interpreter's address. Normally this is an easy operation, as you can simply call the contract and pass `self`. However, from another chain, this is more difficult, as the address of the instance is unknown. There are three approaches to figuring out the interpreter's address:
+
+#### CREATE2
+
+The EVM has a specific [instruction](https://docs.openzeppelin.com/cli/2.8/deploying-with-create2#create2) which can be used to determine what the address of a contract will be based on keccak(0xFF, sender, salt, bytecode). In our case, the sender is the `XCVM Router` for that specific chain and known beforehand, the salt is the `Account, Salt` pair from the spawn call, and the bytecode is known beforehand as well. This means that when constructing the encoded uniswapV2Call, we can compute the `to` parameter on the origin chain. `CREATE2` is not available everywhere, however.
+
+#### Remote Instantiation First
+
+If we're not dynamically creating more remote interpreter instances (such as an instance per user), we can simply create noop `Spawn`s, and have an administrator set the correct addresses for each remote instance. This is a bit more centralized, but if performed correctly a solid approach.
+
+#### Querying
+
+If the number of remote interpreter instances is dynamic, and we cannot have off-chain actors provide address information, the best solution is to `Query` for the address.
+
+```
+Query XYZ BridgeSecurity::Deterministic 0 [     // Creates the new instance if it does not exist yet.
+    Call 0xMyLocalContract      // At this stage, the address is in the local Result register.
+    Transfer Relayer ...        // We still need to pay a fee, which we will do on the return trip.
+]
+```
+
+
+
+
+
