@@ -3,7 +3,7 @@ import React, { createContext, useEffect, useState } from "react";
 import type { InjectedExtension } from "@polkadot/extension-inject/types";
 import { getChainId } from "./utils";
 
-import * as definitions from "defi-interfaces/definitions";
+import * as definitions from "defi-interfaces/generated/definitions";
 
 export interface ParachainApi {
   chainId: string;

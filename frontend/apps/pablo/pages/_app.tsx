@@ -24,7 +24,7 @@ import ApolloUpdater from "@/updaters/assets/apollo/Updater";
 import AuctionsUpdater from "@/updaters/auctions/Updater";
 import BondsUpdater from "@/updaters/bonds/Updater";
 
-import * as definitions from "defi-interfaces/definitions";
+import * as definitions from "defi-interfaces/generated/definitions";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components";
 import { SNACKBAR_TIMEOUT_DURATION } from "@/constants";
