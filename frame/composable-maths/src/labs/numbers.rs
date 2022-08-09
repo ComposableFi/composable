@@ -72,6 +72,36 @@ pub trait UnsignedMath: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + Unsi
 	}
 }
 
+pub trait SignedMath: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + Signed {
+	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_sub(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_mul(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_div(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_add_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_add(other)?;
+		Ok(())
+	}
+
+	fn try_sub_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_sub(other)?;
+		Ok(())
+	}
+
+	fn try_mul_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_mul(other)?;
+		Ok(())
+	}
+
+	fn try_div_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_div(other)?;
+		Ok(())
+	}
+}
+
 pub trait FixedPointMath: FixedPointNumber {
 	/// Like [`sp_runtime::traits::CheckedAdd`], but returning a [`Result`] with [`ArithmeticError`]
 	/// in case of failures
@@ -168,6 +198,70 @@ where
 
 	fn try_div(&self, other: &Self) -> Result<Self, ArithmeticError> {
 		self.checked_div(other).ok_or(DivisionByZero)
+	}
+}
+
+impl<T> SignedMath for T
+where
+	T: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + Signed,
+{
+	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		// sign(a) sign(other) | CheckedAdd
+		// --------------------------------
+		//      -1          -1 | Underflow
+		//      -1           1 | Ok
+		//       1          -1 | Ok
+		//       1           1 | Overflow
+		self.checked_add(other).ok_or_else(|| match self.is_positive() {
+			true => Overflow,
+			false => Underflow,
+		})
+	}
+
+	fn try_sub(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		// sign(a) sign(other) | CheckedSub
+		// --------------------------------
+		//      -1          -1 | Ok
+		//      -1           1 | Underflow
+		//       1          -1 | Overflow
+		//       1           1 | Ok
+		self.checked_sub(other).ok_or_else(|| match self.is_positive() {
+			true => Overflow,
+			false => Underflow,
+		})
+	}
+
+	fn try_mul(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		// sign(a) sign(other) | CheckedMul
+		// --------------------------------
+		//      -1          -1 | Overflow
+		//      -1           1 | Underflow
+		//       1          -1 | Underflow
+		//       1           1 | Overflow
+		self.checked_mul(other)
+			.ok_or_else(|| match self.is_negative() ^ other.is_negative() {
+				true => Underflow,
+				false => Overflow,
+			})
+	}
+
+	fn try_div(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		// sign(a) sign(other) | CheckedDiv
+		// --------------------------------
+		//      -1          -1 | Overflow
+		//      -1           1 | Underflow
+		//       1          -1 | Underflow
+		//       1           1 | Overflow
+		//    -1/1           0 | DivisionByZero
+		if other.is_zero() {
+			return Err(DivisionByZero)
+		}
+
+		self.checked_div(other)
+			.ok_or_else(|| match self.is_negative() ^ other.is_negative() {
+				true => Underflow,
+				false => Overflow,
+			})
 	}
 }
 
