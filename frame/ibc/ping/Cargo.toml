@@ -16,7 +16,6 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 
-<<<<<<< HEAD:frame/ibc/ping/Cargo.toml
 ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "6da3fa79f6475637a2ca0c27c3c91a53452cea36", default-features = false }
 ibc-primitives = { path = "../primitives", default-features = false }
 
@@ -25,17 +24,6 @@ package = "parity-scale-codec"
 version = "3.0.0"
 features = ["derive"]
 default-features = false
-
-[dev-dependencies]
-balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
-
-[dev-dependencies.ibc]
-git = "https://github.com/ComposableFi/ibc-rs"
-rev = "6da3fa79f6475637a2ca0c27c3c91a53452cea36"
-default-features = false
-features = ["ics11_beefy"]
 
 [features]
 default = ['std']
