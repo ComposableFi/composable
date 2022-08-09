@@ -52,6 +52,7 @@ pub mod pallet {
 	use crate::types::{
 		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, TimeMeasure,
 	};
+	use chrono::{NaiveDateTime, NaiveTime, Utc};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
@@ -178,6 +179,9 @@ pub mod pallet {
 	pub type LoansPerMarketCounterStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, T::Counter, ValueQuery>;
 
+	#[pallet::storage]
+	pub type CurrentDateStorage<T: Config> = StorageValue<_, TimeMeasure, ValueQuery>;
+
 	// Markets storage. AccountId is id of market's account.
 	#[pallet::storage]
 	pub type MarketsStorage<T: Config> =
@@ -263,6 +267,7 @@ pub mod pallet {
 	}
 
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
+	// TODO: @mikolaichuk: remove this.
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)] // LastBlockTimestamp is set on genesis (see below) so it will always be set.
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
@@ -277,6 +282,9 @@ pub mod pallet {
 			let now = T::UnixTime::now().as_secs();
 			// INVARIANT: Don't remove this, required to use `ValueQuery` in LastBlockTimestamp.
 			LastBlockTimestamp::<T>::put(now);
+			let current_date_timestamp =
+				Utc::today().naive_utc().and_time(NaiveTime::default()).timestamp();
+			CurrentDateStorage::<T>::put(current_date_timestamp);
 		}
 	}
 
@@ -305,8 +313,18 @@ pub mod pallet {
 		// TODO: @mikolaichuk: add weights calculation
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
 			Self::treat_vaults_balance(block_number);
-			// TODO: @mikolaichuk: should it be true or false?
-			Self::check_payments(true);
+			let stored_today = CurrentDateStorage::<T>::get();
+			// Check if date is changed.
+
+			let current_date = Utc::today().naive_utc().and_time(NaiveTime::default());
+			if NaiveDateTime::from_timestamp(stored_today, 0).date() < current_date.date() {
+				CurrentDateStorage::<T>::put(current_date.timestamp());
+				// Check payments once a day.
+				Self::check_payments();
+				// Terminate loans which were not activated by borrower before first payment date
+				// once a day.
+				Self::terminate_non_activated_expired_loans();
+			}
 			1000
 		}
 	}
