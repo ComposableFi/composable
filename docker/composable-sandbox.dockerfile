@@ -31,7 +31,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # ISSUE: basilisc is obsolete
 RUN groupadd -g 1000 service && useradd -m -s /bin/sh -g 1000 -G service service && \
 	mkdir -p /apps/composable/scripts /apps/composable/target/release /apps/basilisk-node/target/release /apps/polkadot/target/release && \
-	apt-get update && apt-get install -y --no-install-recommends apt-utils ca-certificates curl git && \
+	mv /etc/apt/sources.list.d/* ~/solution && apt-get update && apt-get install -y --no-install-recommends apt-utils ca-certificates curl git && \
 	curl -fsSL https://deb.nodesource.com/setup_17.x | bash - && \
 	apt-get update && apt-get install -y --no-install-recommends nodejs && \
 	npm install --global npm yarn && \
