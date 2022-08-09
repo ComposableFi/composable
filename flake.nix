@@ -182,8 +182,6 @@
               '';
             };
 
-          polkadot = import ./.nix/polkadot-version.nix;
-
           devnet-input =
             builtins.fromJSON (builtins.readFile ./devnet/devnet.json);
 
@@ -284,8 +282,39 @@
               inherit (pkgs) cargo stdenv;
               inherit mdbook;
             };
-            polkadot-node =
-              pkgs.callPackage ./.nix/polkadot-bin.nix { inherit polkadot; };
+
+            # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
+            polkadot-node = rustPlatform.buildRustPackage rec {
+              # HACK: break the nix sandbox so we can build the runtimes. This
+              # requires Nix to have `sandbox = relaxed` in its config.
+              # We don't realy care because polkadot is only used for local devnet.
+              __noChroot = true;
+              name = "polkadot-v${version}";
+              version = "0.9.24";
+              src = pkgs.fetchFromGitHub {
+                repo = "polkadot";
+                owner = "paritytech";
+                rev = "v{version}";
+                hash = "sha256-Vv8lnmGNdhKjMGmzBJVJvmR2rD3BsbaDD7LajkKxpXc=";
+              };
+              cargoSha256 =
+                "sha256-u95gwG64dZxMrmp+eq6SOQyYIZsETiur7WwEyPxz3V0=";
+              doCheck = false;
+              buildInputs = [ openssl zstd ];
+              nativeBuildInputs = [ rust-nightly clang pkg-config ]
+                ++ lib.optional stdenv.isDarwin
+                (with darwin.apple_sdk.frameworks; [
+                  Security
+                  SystemConfiguration
+                ]);
+              LD_LIBRARY_PATH = lib.strings.makeLibraryPath [
+                stdenv.cc.cc.lib
+                llvmPackages.libclang.lib
+              ];
+              LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
+              PROTOC = "${protobuf}/bin/protoc";
+              ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+            };
 
             polkadot-launch =
               pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix
