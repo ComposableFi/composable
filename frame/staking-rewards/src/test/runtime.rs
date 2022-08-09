@@ -17,6 +17,7 @@ use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
 };
+use composable_traits::fnft::FNFTAccountProxyType;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -196,6 +197,9 @@ impl pallet_fnft::Config for Test {
 	type MaxProperties = ConstU32<16>;
 	type FinancialNFTCollectionId = CurrencyId;
 	type FinancialNFTInstanceId = FinancialNFTInstanceId;
+	type ProxyType = ProxyType;
+	type AccountProxy = Proxy;
+	type ProxyTypeSelector = FNFTAccountProxyType;
 	type PalletId = FNFTPalletId;
 }
 
@@ -251,7 +255,6 @@ impl InstanceFilter<Call> for ProxyType {
 	fn filter(&self, c: &Call) -> bool {
 		match self {
 			ProxyType::Any => true,
-			ProxyType::NonTransfer => matches!(c, Call::System(..)),
 			ProxyType::Governance => matches!(
 				c,
 				// TODO democracy
@@ -279,7 +282,6 @@ impl InstanceFilter<Call> for ProxyType {
 			(x, y) if x == y => true,
 			(ProxyType::Any, _) => true,
 			(_, ProxyType::Any) => false,
-			(ProxyType::NonTransfer, _) => true,
 			_ => false,
 		}
 	}

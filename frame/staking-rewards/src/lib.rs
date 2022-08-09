@@ -51,6 +51,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	pub use crate::weights::WeightInfo;
 	use composable_support::{
 		abstractions::{
 			nonce::Nonce,
@@ -64,7 +65,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
-		fnft::FinancialNFTProtocol,
+		fnft::{FinancialNFT, FinancialNFTProtocol},
 		staking::{
 			RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
 			DEFAULT_MAX_REWARDS,
@@ -87,14 +88,11 @@ pub mod pallet {
 		PerThing, Perbill,
 	};
 	use sp_std::{cmp::max, fmt::Debug, vec, vec::Vec};
-	use composable_traits::fnft::FinancialNFT;
 
 	use crate::{
 		prelude::*, reward_accumulation_calculation, update_rewards_pool,
 		validation::ValidSplitRatio, RewardAccumulationCalculationError,
 	};
-
-	pub use crate::weights::WeightInfo;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
@@ -240,7 +238,8 @@ pub mod pallet {
 			+ One;
 
 		type FinancialNFT: nonfungibles::Mutate<AccountIdOf<Self>>
-			+ nonfungibles::Create<AccountIdOf<Self>> + FinancialNFT<AccountIdOf<Self>>;
+			+ nonfungibles::Create<AccountIdOf<Self>>
+			+ FinancialNFT<AccountIdOf<Self>>;
 
 		/// Is used to create staked asset per `Self::RewardPoolId`
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
@@ -569,8 +568,8 @@ pub mod pallet {
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
 			};
-			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and lock it.
-			// T::Assets::mint_into(rewards_pool.share_asset_id fnft_account, amount)?;
+			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and
+			// lock it. T::Assets::mint_into(rewards_pool.share_asset_id fnft_account, amount)?;
 
 			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
 			rewards_pool.rewards = rewards;
@@ -582,8 +581,8 @@ pub mod pallet {
 			// let next_nft_id = T::FinancialNFT::get_next_nft_id(reward_pool.fnft_collection_id)?;
 			// T::FinancialNFT::mint_into(reward_pool.fnft_collection_id, next_nft_id)?;
 			// FNFTToPositionId<T>::insert(next_nft_id, position_id);
-			// let fnft_account = T::FinancialNFT::asset_account(reward_pool.fnft_collection_id, next_nft_id);
-			// TODO (vim): transfer the staked amount to the NFT account and lock it
+			// let fnft_account = T::FinancialNFT::asset_account(reward_pool.fnft_collection_id,
+			// next_nft_id); TODO (vim): transfer the staked amount to the NFT account and lock it
 			// T::Assets::transfer(rewards_pool.asset_id, who, fnft_account, amount)?;
 			T::Assets::transfer(
 				rewards_pool.asset_id,
@@ -642,7 +641,8 @@ pub mod pallet {
 			}
 
 			// TODO (vim): transfer the staked amount to the NFT account and lock it
-			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and lock it.
+			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and
+			// lock it.
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				who,
@@ -707,7 +707,8 @@ pub mod pallet {
 				stake.stake
 			};
 
-			// TODO (vim): Unlock staked amount on financial NFT account and transfer from that account to the owner of the NFT
+			// TODO (vim): Unlock staked amount on financial NFT account and transfer from that
+			// account to the owner of the NFT
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				&Self::pool_account_id(&pool_id),

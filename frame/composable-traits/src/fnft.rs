@@ -2,6 +2,7 @@
 //!
 //! A financial NFT Allows management of financial positions as represented by a NFT.
 
+use crate::account_proxy::ProxyType;
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::collections::vec::bounded::BiBoundedVec;
 use core::fmt::Debug;
@@ -9,7 +10,6 @@ use frame_support::traits::tokens::nonfungibles::Inspect;
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
-use crate::account_proxy::ProxyType;
 
 pub type Key = BiBoundedVec<u8, 1, 64>;
 pub type Value = BiBoundedVec<u8, 1, 256>;

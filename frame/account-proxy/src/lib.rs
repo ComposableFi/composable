@@ -49,16 +49,16 @@ use sp_runtime::{
 	DispatchResult,
 };
 use sp_std::prelude::*;
+use sp_std::vec;
 pub use weights::WeightInfo;
 
+use composable_traits::account_proxy::{AccountProxy, ProxyDefinition};
 pub use pallet::*;
-use composable_traits::account_proxy::{ProxyDefinition, AccountProxy};
 
 type CallHashOf<T> = <<T as Config>::CallHasher as Hash>::Output;
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
 
 /// Details surrounding a specific instance of an announcement to make a call.
 #[derive(Encode, Decode, Clone, Copy, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
@@ -717,7 +717,6 @@ impl<T: Config> Pallet<T> {
 }
 
 impl<T: Config> AccountProxy for Pallet<T> {
-
 	type AccountId = T::AccountId;
 
 	type BlockNumber = T::BlockNumber;

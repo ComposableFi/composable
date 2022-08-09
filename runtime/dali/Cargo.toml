@@ -84,9 +84,9 @@ liquidations = { package = "pallet-liquidations", path = "../../frame/liquidatio
 mosaic = { package = "pallet-mosaic", path = "../../frame/mosaic", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 pablo = { package = "pallet-pablo", path = "../../frame/pablo", default-features = false }
+pallet-account-proxy = { path = "../../frame/account-proxy", default-features = false }
 pallet-fnft = { path = "../../frame/fnft", default-features = false }
 pallet-staking-rewards = { path = "../../frame/staking-rewards", default-features = false }
-pallet-account-proxy = { path = "../../frame/account-proxy", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }

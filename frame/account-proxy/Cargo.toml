@@ -1,31 +1,34 @@
 [package]
-name = "pallet-account-proxy"
-version = "0.0.1"
-authors = ["Parity Technologies <admin@parity.io>", "Composable Finance Developers"]
-edition = "2021"
-license = "Apache-2.0"
-homepage = "https://substrate.io"
-repository = "https://github.com/paritytech/substrate/"
+authors = [
+  "Parity Technologies <admin@parity.io>",
+  "Composable Finance Developers",
+]
 description = "FRAME pallet-proxy forked as pallet-account-proxy for Composable Finance"
+edition = "2021"
+homepage = "https://substrate.io"
+license = "Apache-2.0"
+name = "pallet-account-proxy"
 readme = "README.md"
+repository = "https://github.com/paritytech/substrate/"
+version = "0.0.1"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-	"derive",
+  "derive",
 ] }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
+frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 scale-info = { version = "2.1.1", default-features = false, features = [
-	"derive",
+  "derive",
 ] }
 serde = { version = '1.0.136', optional = true }
 sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-frame-support = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
-frame-system = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.24" }
 
 composable-traits = { path = "../composable-traits", default-features = false }
 
@@ -36,19 +39,19 @@ sp-core = { default-features = false, git = "https://github.com/paritytech/subst
 
 [features]
 default = ["std"]
-std = [
-	"codec/std",
-	"frame-support/std",
-	"frame-system/std",
-	"scale-info/std",
-	"sp-io/std",
-	"sp-runtime/std",
-	"sp-std/std",
-	"composable-traits/std"
-]
 runtime-benchmarks = [
-	"frame-benchmarking/runtime-benchmarks",
-	"frame-support/runtime-benchmarks",
-	"frame-system/runtime-benchmarks",
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+]
+std = [
+  "codec/std",
+  "frame-support/std",
+  "frame-system/std",
+  "scale-info/std",
+  "sp-io/std",
+  "sp-runtime/std",
+  "sp-std/std",
+  "composable-traits/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

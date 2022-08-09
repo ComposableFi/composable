@@ -133,7 +133,6 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 
 	// possible lock config for this pool
 	pub lock: LockConfig<DurationPresets>,
-
 	// TODO (vim): Introduce asset ids for financial NFT as well as the shares of the pool
 	// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
 	// pub share_asset_id: AssetId;

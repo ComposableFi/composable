@@ -56,11 +56,10 @@ pub struct ProxyDefinition<AccountId, ProxyType, BlockNumber> {
 /// API into pallet-account-proxy. Provides functions to manage delegation of operations of
 /// one account to another.
 pub trait AccountProxy {
-	
 	type AccountId;
-	
+
 	type ProxyType;
-	
+
 	type BlockNumber;
 
 	/// Register a proxy account for the delegator that is able to make calls on its behalf.

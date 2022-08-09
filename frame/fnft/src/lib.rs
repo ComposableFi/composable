@@ -43,7 +43,11 @@ pub use pallet::*;
 pub mod pallet {
 	use codec::FullCodec;
 	use composable_support::math::safe::SafeAdd;
-	use composable_traits::{currency::AssetIdLike, fnft::{FinancialNFT, FNFTAccountProxyTypeSelector}, account_proxy::AccountProxy};
+	use composable_traits::{
+		account_proxy::AccountProxy,
+		currency::AssetIdLike,
+		fnft::{FNFTAccountProxyTypeSelector, FinancialNFT},
+	};
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,
@@ -118,18 +122,13 @@ pub mod pallet {
 			+ Zero
 			+ One;
 
-		type ProxyType: Parameter
-			+ Member
-			+ Ord
-			+ PartialOrd
-			+ Default
-			+ MaxEncodedLen;
+		type ProxyType: Parameter + Member + Ord + PartialOrd + Default + MaxEncodedLen;
 
 		/// Used for setting the owning account of a fNFT as the delegate for the fNFT asset_account
 		type AccountProxy: AccountProxy<
-			AccountId=Self::AccountId,
-			ProxyType=Self::ProxyType,
-			BlockNumber=Self::BlockNumber
+			AccountId = Self::AccountId,
+			ProxyType = Self::ProxyType,
+			BlockNumber = Self::BlockNumber,
 		>;
 
 		type ProxyTypeSelector: FNFTAccountProxyTypeSelector<Self::ProxyType>;
@@ -299,8 +298,10 @@ pub mod pallet {
 			OwnerInstances::<T>::mutate(who, insert_or_init_and_insert((*collection, *instance)));
 
 			// Set the owner as the proxy for certain types of actions for the financial NFT account
-			// TODO (vim): Make sure that asset_account has the min deposit for proxying in the runtime
-			let asset_account = <Self as FinancialNFT<AccountIdOf<T>>>::asset_account(collection, instance);
+			// TODO (vim): Make sure that asset_account has the min deposit for proxying in the
+			// runtime
+			let asset_account =
+				<Self as FinancialNFT<AccountIdOf<T>>>::asset_account(collection, instance);
 			for proxy_type in T::ProxyTypeSelector::get_proxy_types() {
 				T::AccountProxy::add_proxy_delegate(
 					&asset_account,
