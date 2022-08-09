@@ -1,4 +1,8 @@
-import { ChartRange, processSubsquidChartData } from "@/defi/utils";
+import {
+  ChartRange,
+  processSubsquidChartData,
+  toMomentChartFormat,
+} from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import moment from "moment";
 import { queryPoolTransactionsByType } from "../pools/queries";
@@ -8,21 +12,11 @@ export function getChartLabels(
   chartSeries: [number, number][],
   chartRange: ChartRange
 ): string[] {
-  let FORMAT_1D = "hh:mm";
-  let FORMAT_1w = "DD/MM";
-  let FORMAT_1M = "MM/YYYY";
-
   let MAX_LABELS = 5;
 
   if (chartSeries.length < MAX_LABELS) {
     return chartSeries.map((i) =>
-      moment(i[0]).format(
-        chartRange === "24h"
-          ? FORMAT_1D
-          : chartRange === "1w"
-          ? FORMAT_1w
-          : FORMAT_1M
-      )
+      moment(i[0]).format(toMomentChartFormat(chartRange))
     );
   }
 
@@ -31,13 +25,7 @@ export function getChartLabels(
   let labels = [];
   for (let step = 0; step < chartSeries.length; step += steps) {
     labels.push(
-      moment(chartSeries[step][0]).format(
-        chartRange === "24h"
-          ? FORMAT_1D
-          : chartRange === "1w"
-          ? FORMAT_1w
-          : FORMAT_1M
-      )
+      moment(chartSeries[step][0]).format(toMomentChartFormat(chartRange))
     );
   }
 
