@@ -259,6 +259,11 @@ jobs:
 
       - name: Build & Push
         run: |
+          chmod +x ./nix-install-vscode-composable.sh
+          ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
+          source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH"
+          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
+          nix-env -iA nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3  nixpkgs.google-cloud-sdk nixpkgs.jq
           cd devnet
           # TODO: run gsutils and find same json in GOOGLE_APPLICATION_CREDENTIALS path, decide prio and responsible after https://github.com/ComposableFi/composable/issues/1426
           jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
