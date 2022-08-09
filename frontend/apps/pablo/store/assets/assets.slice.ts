@@ -6,7 +6,7 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
   {
     decimals: 12,
     symbol: "PICA",
-    icon: "/tokens/picasso.svg",
+    icon: "/tokens/pica.svg",
     name: "Picasso",
     network: {
       karura: "none",
@@ -16,7 +16,7 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
   {
     decimals: 12,
     symbol: "KSM",
-    icon: "/networks/kusama.svg",
+    icon: "/networks/ksm.svg",
     name: "Kusama",
     network: {
       karura: "none",
@@ -26,7 +26,7 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
   {
     decimals: 12,
     symbol: "KUSD",
-    icon: "/tokens/usd-coin-usdc.svg",
+    icon: "/tokens/usdc.svg",
     name: "K-USD",
     network: {
       karura: "none",
@@ -36,7 +36,7 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
   {
     decimals: 12,
     symbol: "PBLO",
-    icon: "/tokens/pablo.svg",
+    icon: "/tokens/pblo.svg",
     name: "Pablo",
     network: {
       karura: "none",
@@ -46,7 +46,7 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
   {
     decimals: 12,
     symbol: "USDC",
-    icon: "/tokens/usd-coin-usdc.svg",
+    icon: "/tokens/usdc.svg",
     name: "USD Coin",
     network: {
       karura: "none",
@@ -56,7 +56,7 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
   {
     decimals: 12,
     symbol: "USDT",
-    icon: "/tokens/usd-coin-usdc.svg",
+    icon: "/tokens/usdt.svg",
     name: "USD Tether",
     network: {
       karura: "none",
