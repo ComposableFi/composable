@@ -404,6 +404,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Updates the reward pool configuration.
+		///
+		/// Emits `RewardPoolUpdated` when successful.
 		#[pallet::weight(T::WeightInfo::update_rewards_pool(reward_updates.len() as u32))]
 		pub fn update_rewards_pool(
 			origin: OriginFor<T>,
