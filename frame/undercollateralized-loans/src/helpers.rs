@@ -1,8 +1,7 @@
-// TODO: @mikolaichuk:  Move `today` calculation into on_init().
 use crate::{
 	types::{
 		LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf, RepaymentResult,
-		TimeMeasure,
+		Timestamp,
 	},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
@@ -29,7 +28,7 @@ use sp_runtime::{
 	DispatchError, Perquintill, TransactionOutcome,
 };
 
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use sp_std::vec::Vec;
 
 // #generalization
@@ -153,11 +152,8 @@ impl<T: Config> Pallet<T> {
 		);
 		// Check if borrower tries to activate expired loan.
 	    // Need this check since we remove expired loans only once a day.	
-        let today = Self::today_date();
-		let first_payment_date =
-			NaiveDateTime::from_timestamp_opt(*loan_config.first_payment_moment(), 0)
-				.ok_or(Error::<T>::OutOfRangeNumberSecondInTimestamp)?
-				.date();
+        let today = Self::current_date();
+		let first_payment_date = Self::date_from_timestamp(*loan_config.first_payment_moment());
 		// Loan should be activated before the first payment date.
 		if today >= first_payment_date {
 			crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
@@ -239,7 +235,7 @@ impl<T: Config> Pallet<T> {
 			keep_alive,
 		)
 	    // May happens if borrower's account died for some reason.
-        // TODO: @mikolaichuk: what we are going to with such situation? 
+        // TODO: @mikolaichuk: what we are going to with such situations? 
         // Can we transfer collateral at market account in this case?
         // Perhaps we have to allow manager to transfer collateral to any account in such cases? 
         .map_or_else(|error| log::error!("Collateral was not transferred back to the borrower's account due to the following error: {:?}", error), |_| ());
@@ -337,7 +333,7 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
-	pub(crate) fn check_payments(today: TimeMeasure) -> () {
+	pub(crate) fn check_payments(today: Timestamp) -> () {
 		// Retrive collection of loans(loans' accounts ids) which have to be paid now.
 		// If nothing found we get empty set.
 		let loans_accounts_ids = crate::ScheduleStorage::<T>::try_get(today).unwrap_or_default();
@@ -435,11 +431,11 @@ impl<T: Config> Pallet<T> {
 	}
 
 	// #generalization
-	pub(crate) fn now() -> u64 {
-		T::UnixTime::now().as_secs()
+	pub(crate) fn now() -> Timestamp {
+		T::UnixTime::now().as_secs() as Timestamp
 	}
-
-	// #generalization
+	
+    // #generalization
 	pub(crate) fn get_market_info_via_account_id(
 		market_account_id_ref: &T::AccountId,
 	) -> Result<MarketInfoOf<T>, crate::Error<T>> {
@@ -464,7 +460,7 @@ impl<T: Config> Pallet<T> {
 	// Convert timestamps from strings to seconds have passed from 01.01.1970.
 	pub(crate) fn convert_schedule_timestamps(
 		schedule: &Vec<(String, T::Balance)>,
-	) -> Vec<(TimeMeasure, T::Balance)> {
+	) -> Vec<(Timestamp, T::Balance)> {
 		let mut schedule_with_converted_timestamps = vec![];
 		for (timestamp, payment_amount) in schedule {
 			schedule_with_converted_timestamps.push((
@@ -482,7 +478,7 @@ impl<T: Config> Pallet<T> {
 	// Removes expired non-activated loans.
 	// Expired non-activated loans are loans which were not activated by borrower before first
 	// payment date.
-	pub(crate) fn terminate_non_activated_expired_loans() {
+	pub(crate) fn terminate_non_activated_expired_loans(today: Timestamp) {
 		let mut removed_non_active_accounts_ids = vec![];
 		for non_active_loan_account_id in crate::NonActiveLoansStorage::<T>::iter_keys() {
 			// If, for some reason, loan is not presented in the loans storage
@@ -492,7 +488,7 @@ impl<T: Config> Pallet<T> {
 			{
 			    // If current date is larger then the loan first payment date, then this loan is
                 // expired.	
-                if Self::today_date() >= Self::timestamp_to_date(*loan_config.first_payment_moment()) {
+                if today >= *loan_config.first_payment_moment() {
 					crate::LoansStorage::<T>::remove(non_active_loan_account_id.clone());
 				}
 				removed_non_active_accounts_ids.push(non_active_loan_account_id);
@@ -509,7 +505,7 @@ impl<T: Config> Pallet<T> {
 	// Remove all information about activated loan.
 	pub(crate) fn terminate_activated_loan(loan_config: &LoanConfigOf<T>) {
 		// Get payment moments for the loan.
-		let payment_moments: Vec<TimeMeasure> =
+		let payment_moments: Vec<Timestamp> =
 			loan_config.schedule().keys().map(|&payment_moment| payment_moment).collect();
 		// Remove account id from the global payment schedule for each payment date.
 		payment_moments.iter().for_each(|payment_moment| {
@@ -530,16 +526,20 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub(crate) fn today_timestamp() -> TimeMeasure {
+	pub(crate) fn current_day_timestamp() -> Timestamp {
 	    crate::CurrentDateStorage::<T>::get()
 	}
-    
-    pub(crate) fn today_date() -> NaiveDate {
-	    Self::timestamp_to_date(Self::today_timestamp()) 
+
+    pub(crate) fn current_date() -> NaiveDate {
+	    Self::date_from_timestamp(Self::current_day_timestamp()) 
 	}
-    
-    pub(crate) fn timestamp_to_date(timestamp: TimeMeasure) -> NaiveDate {
+
+    pub(crate) fn date_from_timestamp(timestamp: Timestamp) -> NaiveDate {
         NaiveDateTime::from_timestamp(timestamp, 0).date()
+    }
+
+    pub(crate) fn get_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
+        Self::date_from_timestamp(timestamp).and_time(NaiveTime::default()).timestamp()
     }
 
 }

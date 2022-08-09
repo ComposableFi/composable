@@ -95,12 +95,12 @@ where
 }
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub struct LoanConfig<AccountId, AssetId, Balance, TimeMeasure>
+pub struct LoanConfig<AccountId, AssetId, Balance, Timestamp>
 where
 	AccountId: Clone + Eq + PartialEq,
 	AssetId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
-	TimeMeasure: Clone + Eq + PartialEq,
+	Timestamp: Clone + Eq + PartialEq,
 {
 	/// Loan account id.
 	account_id: AccountId,
@@ -118,19 +118,19 @@ where
 	/// Amount of assets which should be putted as collateral.
 	collateral: Balance,
 	/// Schedule of payments
-	schedule: BTreeMap<TimeMeasure, Balance>,
+	schedule: BTreeMap<Timestamp, Balance>,
 	/// The moment of the first interest payment.
-	first_payment_moment: TimeMeasure,
+	first_payment_moment: Timestamp,
 	/// The moment of the last interest payment and principal repayment.
-	last_payment_moment: TimeMeasure,
+	last_payment_moment: Timestamp,
 }
 
-impl<AccountId, AssetId, Balance, TimeMeasure> LoanConfig<AccountId, AssetId, Balance, TimeMeasure>
+impl<AccountId, AssetId, Balance, Timestamp> LoanConfig<AccountId, AssetId, Balance, Timestamp>
 where
 	AccountId: Clone + Eq + PartialEq,
 	AssetId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
-	TimeMeasure: Clone + Eq + PartialEq + Ord,
+	Timestamp: Clone + Eq + PartialEq + Ord,
 {
 	pub fn new(
 		account_id: AccountId,
@@ -140,9 +140,9 @@ where
 		borrow_asset_id: AssetId,
 		principal: Balance,
 		collateral: Balance,
-		schedule: Vec<(TimeMeasure, Balance)>,
+		schedule: Vec<(Timestamp, Balance)>,
 	) -> Self {
-		let schedule: BTreeMap<TimeMeasure, Balance> = schedule.into_iter().collect();
+		let schedule: BTreeMap<Timestamp, Balance> = schedule.into_iter().collect();
 		// We are sure thate BTreeMap is not empty
 		// TODO: @mikolaichuk: May be it would be better to use BiBoundedVec as input here.
 		let first_payment_moment = schedule.keys().min().unwrap().clone();
@@ -195,21 +195,21 @@ where
 	}
 
 	/// Get a reference to the loan payment schedule.
-	pub fn schedule(&self) -> &BTreeMap<TimeMeasure, Balance> {
+	pub fn schedule(&self) -> &BTreeMap<Timestamp, Balance> {
 		&self.schedule
 	}
 
 	/// Get a reference to the loan first payment moment.
-	pub fn first_payment_moment(&self) -> &TimeMeasure {
+	pub fn first_payment_moment(&self) -> &Timestamp {
 		&self.first_payment_moment
 	}
 
 	/// Get a reference to the loan last payment moment.
-	pub fn last_payment_moment(&self) -> &TimeMeasure {
+	pub fn last_payment_moment(&self) -> &Timestamp {
 		&self.last_payment_moment
 	}
 
-	pub fn get_payment_for_particular_moment(&self, moment: &TimeMeasure) -> Option<&Balance> {
+	pub fn get_payment_for_particular_moment(&self, moment: &Timestamp) -> Option<&Balance> {
 		self.schedule.get(moment)
 	}
 }

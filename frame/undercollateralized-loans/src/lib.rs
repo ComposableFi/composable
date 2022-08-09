@@ -52,7 +52,7 @@ const TIMESTAMP_STRING_FORMAT: &str = "%d-%m-%Y";
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::{
-		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, TimeMeasure,
+		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, Timestamp,
 	};
 	use chrono::{NaiveDateTime, NaiveTime, Utc};
 	use codec::{Codec, FullCodec};
@@ -61,7 +61,6 @@ pub mod pallet {
 		defi::{DeFiComposableConfig, DeFiEngine},
 		liquidation::Liquidation,
 		oracle::Oracle,
-		time::Timestamp,
 		undercollateralized_loans::UndercollateralizedLoans,
 		vault::StrategicVault,
 	};
@@ -182,7 +181,7 @@ pub mod pallet {
 		StorageMap<_, Twox64Concat, T::AccountId, T::Counter, ValueQuery>;
 
 	#[pallet::storage]
-	pub type CurrentDateStorage<T: Config> = StorageValue<_, TimeMeasure, ValueQuery>;
+	pub type CurrentDateStorage<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	// Markets storage. AccountId is id of market's account.
 	#[pallet::storage]
@@ -219,7 +218,7 @@ pub mod pallet {
 	// Maps payment moment and loan account id to interest rate for this payment.
 	#[pallet::storage]
 	pub type ScheduleStorage<T: Config> =
-		StorageMap<_, Twox64Concat, TimeMeasure, BTreeSet<T::AccountId>, ValueQuery>;
+		StorageMap<_, Twox64Concat, Timestamp, BTreeSet<T::AccountId>, ValueQuery>;
 
 	// TODO: @mikolaichuk: storages for borrowers' strikes (local for paricular market and global
 	// for all markets).
@@ -252,12 +251,10 @@ pub mod pallet {
 		ThisUserIsNotAllowedToCreateTheLoanInTheMarket,
 		// Nont-authorized user tried to execute loan contract.
 		ThisUserIsNotAllowedToExecuteThisContract,
-		// There is no loan with such account id.
+		// There is no loan with such account id in the storage.
 		ThereIsNoSuchLoan,
 		// Out-of-range number of seconds in provided timestamp.
 		OutOfRangeNumberSecondInTimestamp,
-		// It is not possible to parse timestamp.
-		IncorrectTimestampFormat,
 		// When borrower tried to activate a loan after first payment day.
 		TheLoanContractIsExpired,
 		// Tis should not happens.
@@ -281,11 +278,10 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			let now = T::UnixTime::now().as_secs();
+			let now = T::UnixTime::now().as_secs() as Timestamp;
 			// INVARIANT: Don't remove this, required to use `ValueQuery` in LastBlockTimestamp.
 			LastBlockTimestamp::<T>::put(now);
-			let current_date_timestamp =
-				Utc::today().naive_utc().and_time(NaiveTime::default()).timestamp();
+			let current_date_timestamp = crate::Pallet::<T>::get_date_aligned_timestamp(now);
 			CurrentDateStorage::<T>::put(current_date_timestamp);
 		}
 	}
@@ -315,18 +311,18 @@ pub mod pallet {
 		// TODO: @mikolaichuk: add weights calculation
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
 			Self::treat_vaults_balance(block_number);
-			let stored_today = CurrentDateStorage::<T>::get();
+            let now = Self::now();
+			let stored_current_day_timestamp = CurrentDateStorage::<T>::get();
 			// Check if date is changed.
-
-			let current_date = Utc::today().naive_utc().and_time(NaiveTime::default());
-			if NaiveDateTime::from_timestamp(stored_today, 0).date() < current_date.date() {
-			    let current_date_timestamp = current_date.timestamp();	
-                CurrentDateStorage::<T>::put(current_date_timestamp);
-				// Check payments once a day.
-				Self::check_payments(current_date_timestamp);
+            let stored_date = Self::date_from_timestamp(stored_current_day_timestamp);
+            let date = Self::date_from_timestamp(now);
+			if stored_date < date {
+			    let current_date_aligned_timestamp = Self::get_date_aligned_timestamp(now);
+                CurrentDateStorage::<T>::put(current_date_aligned_timestamp);	
+                Self::check_payments(current_date_aligned_timestamp);
 				// Terminate loans which were not activated by borrower before first payment date
 				// once a day.
-				Self::terminate_non_activated_expired_loans();
+				Self::terminate_non_activated_expired_loans(current_date_aligned_timestamp);
 			}
 			1000
 		}

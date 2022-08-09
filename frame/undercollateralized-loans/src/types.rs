@@ -6,7 +6,8 @@ use composable_traits::{
 use frame_support::pallet_prelude::*;
 use sp_core::TypeId;
 
-pub(crate) type TimeMeasure = i64;
+// use i64 since NaiveDateTime timestamp is i64.
+pub(crate) type Timestamp = i64;
 
 // This enum is used since we do not want to return an Error in the on_initalize() function.
 pub enum RepaymentResult {
@@ -45,7 +46,7 @@ pub(crate) type LoanConfigOf<T> = LoanConfig<
 	<T as frame_system::Config>::AccountId,
 	<T as DeFiComposableConfig>::MayBeAssetId,
 	<T as DeFiComposableConfig>::Balance,
-	TimeMeasure,
+	Timestamp,
 >;
 
 #[derive(Encode, Decode)]

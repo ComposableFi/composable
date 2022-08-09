@@ -8,7 +8,7 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	type BlockNumber: Clone + Eq + PartialEq;
 	type LiquidationStrategyId: Clone + Eq + PartialEq;
 	type VaultId: Clone + Eq + PartialEq;
-	type TimeMeasure: Clone + Eq + PartialEq;
+	type Timestamp: Clone + Eq + PartialEq;
 
 	fn create_market(
 		manager: Self::AccountId,
@@ -33,7 +33,7 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	fn create_loan(
 		input: LoanInput<Self::AccountId, Self::Balance>,
 	) -> Result<
-		LoanConfig<Self::AccountId, Self::MayBeAssetId, Self::Balance, Self::TimeMeasure>,
+		LoanConfig<Self::AccountId, Self::MayBeAssetId, Self::Balance, Self::Timestamp>,
 		DispatchError,
 	>;
 
@@ -42,7 +42,7 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 		loan_account_id: Self::AccountId,
 		keep_alive: bool,
 	) -> Result<
-		LoanConfig<Self::AccountId, Self::MayBeAssetId, Self::Balance, Self::TimeMeasure>,
+		LoanConfig<Self::AccountId, Self::MayBeAssetId, Self::Balance, Self::Timestamp>,
 		DispatchError,
 	>;
 

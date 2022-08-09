@@ -8,7 +8,7 @@ use composable_traits::{
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::Zero;
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveTime};
 
 #[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
 pub struct CurrencyPairIsNotSame;
@@ -72,7 +72,6 @@ where
 	}
 }
 
-// TODO: @mikolaichuk: add validation of payment schedule.
 #[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Clone, Copy)]
 pub struct LoanInputIsValid<Loans: UndercollateralizedLoans>(PhantomData<Loans>);
 
@@ -103,9 +102,12 @@ where
 		ensure!(input.payment_schedule.len() > 0, "Payment schedule is empty.");
 		// Check if all timestamps have correct format.
 		for (payment_moment, _) in input.payment_schedule.iter() {
-			ensure!(NaiveDate::parse_from_str(payment_moment, crate::TIMESTAMP_STRING_FORMAT).is_ok(),
-            "Payments schedule contains incorrect formated timestamp"
+		    let naive_date = NaiveDate::parse_from_str(payment_moment, crate::TIMESTAMP_STRING_FORMAT);
+            ensure!(naive_date.is_ok(),
+            "Payments schedule contains incorrect formated timestamp."
              );
+            let naive_date: Result<crate::types::Timestamp, _> = naive_date.unwrap().and_time(NaiveTime::default()).timestamp().try_into(); 
+            ensure!(naive_date.is_ok(), "Payment schedule contains unreachable timestamp.");
 		}
 
 		Ok(LoanInput { principal, collateral, ..input })
