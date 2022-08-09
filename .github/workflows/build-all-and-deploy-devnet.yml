@@ -25,6 +25,75 @@ env:
   NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
 
 jobs:
+  common-deps-darwin:
+    runs-on:
+      - macos-latest
+    steps:
+      # TODO: do composable-nix-os which has experimental-features, proper channel, and cachix installed with composable cache
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            sandbox = false
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          name: ${{  env.NIX_CACHIX }}
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps --no-update-lock-file
+
+  package-composable-node-darwin:
+    needs: common-deps-darwin
+    runs-on:
+      - macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            sandbox = false
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node --no-update-lock-file
+
+  package-polkadot-node-darwin:
+    needs: common-deps-darwin
+    runs-on:
+      - macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v17
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            sandbox = false
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#polkadot-node --no-update-lock-file
+
   common-deps:
     runs-on:
       - self-hosted
