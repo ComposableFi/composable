@@ -59,6 +59,7 @@ std = [
   "frame-support/std",
   "composable-traits/std",
   "composable-support/std",
+  "pallet-account-proxy/std"
 ]
 
 runtime-benchmarks = [
