@@ -1,4 +1,2 @@
-// Auto-generated via `yarn polkadot-types-from-defs`, do not edit
-/* eslint-disable */
-
-export * from './types';
+import "./generated/types-lookup";
+export * from "./generated";

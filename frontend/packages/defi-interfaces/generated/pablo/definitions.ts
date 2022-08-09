@@ -22,61 +22,11 @@ export default {
         {
           name: "at",
           type: "Hash",
-          isOptional: true,
+          isOptional: true
         }
       ],
       type: "PalletPabloPriceAggregate"
-    },
-    simulateAddLiquidity: {
-      description: "Get the price(in quote asset) for the given asset pair in the given pool for the given amount",
-      params: [
-        {
-          name: "who",
-          type: "AccountId32"
-        },
-        {
-          name: "poolId",
-          type: "PalletPabloPoolId"
-        },
-        {
-          name: "amounts",
-          type: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
-        },
-        {
-          name: "at",
-          type: "Hash",
-          isOptional: true,
-        }
-      ],
-      type: "CustomRpcBalance"
-    },
-    simulateRemoveLiquidity: {
-      description: "Get the price(in quote asset) for the given asset pair in the given pool for the given amount",
-      params: [
-        {
-          name: "who",
-          type: "AccountId32"
-        },
-        {
-          name: "poolId",
-          type: "PalletPabloPoolId"
-        },
-        {
-          name: "lpAmount",
-          type: "CustomRpcBalance"
-        },
-        {
-          name: "minExpectedAmounts",
-          type: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
-        },
-        {
-          name: "at",
-          type: "Hash",
-          isOptional: true,
-        }
-      ],
-      type: "RemoveLiquiditySimulationResult"
-    },
+    }
   },
   types: {
     PalletPabloPoolInitConfiguration: "PalletPabloPoolConfiguration",
@@ -86,14 +36,13 @@ export default {
           owner: "AccountId32",
           pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
           amplification_coefficient: "u16",
-          fee: "Permill",
-          ownerFee: "Permill"
+          fee: "Permill"
         },
         ConstantProduct: {
           owner: "AccountId32",
           pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
           fee: "Permill",
-          ownerFee: "Permill"
+          baseWeight: "Permill"
         },
         LiquidityBootstrapping: {
           owner: "AccountId32",
@@ -104,7 +53,11 @@ export default {
             initial_weight: "Permill",
             final_weight: "Permill"
           },
-          fee: "Permill",
+          feeConfig: {
+            feeRate: "Permill",
+            ownerFeeRate: "Permill",
+            protocolFeeRate: "Permill"
+          }
         }
       }
     },
@@ -115,10 +68,14 @@ export default {
       poolId: "PalletPabloPoolId",
       baseAssetId: "CustomRpcCurrencyId",
       quoteAssetId: "CustomRpcCurrencyId",
-      spotPrice: "CustomRpcBalance",
+      spotPrice: "CustomRpcBalance"
     },
-    RemoveLiquiditySimulationResult: {
-      assets: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
+    ComposableTraitsDexFee: {
+      fee: "u128",
+      lp_fee: "u128",
+      owner_fee: "u128",
+      protocol_fee: "u128",
+      asset_id: "u128"
     }
-  },
+  }
 };
