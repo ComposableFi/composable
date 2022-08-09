@@ -104,9 +104,9 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 		principal: 1000,
 		collateral: 5,
 		payment_schedule: vec![
-			("01.01.2222".to_string(), 100),
-			("01.02.2222".to_string(), 100),
-			("01.03.2222".to_string(), 100),
+			("01-01-2222".to_string(), 100),
+			("01-02-2222".to_string(), 100),
+			("01-03-2222".to_string(), 100),
 		],
 	};
 	crate::Pallet::<Runtime>::do_create_loan(loan_input.try_into_validated().unwrap()).unwrap()

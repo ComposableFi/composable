@@ -47,6 +47,8 @@ pub mod impls;
 pub mod types;
 pub mod validation;
 
+const TIMESTAMP_STRING_FORMAT: &str = "%d-%m-%Y";
+
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::{
@@ -318,9 +320,10 @@ pub mod pallet {
 
 			let current_date = Utc::today().naive_utc().and_time(NaiveTime::default());
 			if NaiveDateTime::from_timestamp(stored_today, 0).date() < current_date.date() {
-				CurrentDateStorage::<T>::put(current_date.timestamp());
+			    let current_date_timestamp = current_date.timestamp();	
+                CurrentDateStorage::<T>::put(current_date_timestamp);
 				// Check payments once a day.
-				Self::check_payments();
+				Self::check_payments(current_date_timestamp);
 				// Terminate loans which were not activated by borrower before first payment date
 				// once a day.
 				Self::terminate_non_activated_expired_loans();

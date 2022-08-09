@@ -15,7 +15,7 @@ fn can_create_loan() {
 			borrower_account_id: *BOB,
 			principal: 1000,
 			collateral: 5,
-			payment_schedule: vec![("24.08.1991".to_string(), 100)],
+			payment_schedule: vec![("24-08-1991".to_string(), 100)],
 		};
 		assert_ok!(pallet_undercollateralized_loans::Pallet::<Runtime>::create_loan(
 			origin, loan_input

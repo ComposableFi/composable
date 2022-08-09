@@ -105,7 +105,7 @@ impl<T: Config> Pallet<T> {
 		let config_input = input.value();
 		// Convert schedule timestamps from string to seconds have passed from the beginning of UNIX
 		// epoche.
-		let schedule = Self::convert_schedule_timestamps(&config_input.payment_schedule);
+		let schedule = Self::convert_schedule_timestamps(&config_input.payment_schedule)?;
 		// Get market config. Unwrapped since we have checked market existence during input
 		// validation process.
 		let market_config =
@@ -153,7 +153,7 @@ impl<T: Config> Pallet<T> {
 		);
 		// Check if borrower tries to activate expired loan.
 	    // Need this check since we remove expired loans only once a day.	
-        let today = Self::today_date();
+        let today = NaiveDateTime::from_timestamp(Self::today(), 0).date();
 		let first_payment_date =
 			NaiveDateTime::from_timestamp_opt(*loan_config.first_payment_moment(), 0)
 				.ok_or(Error::<T>::OutOfRangeNumberSecondInTimestamp)?
@@ -464,19 +464,18 @@ impl<T: Config> Pallet<T> {
 	// Convert timestamps from strings to seconds have passed from 01.01.1970.
 	pub(crate) fn convert_schedule_timestamps(
 		schedule: &Vec<(String, T::Balance)>,
-	) -> Vec<(TimeMeasure, T::Balance)> {
-		let mut schedule_with_converted_timestamps = vec![];
+	) -> Result<Vec<(TimeMeasure, T::Balance)>, crate::Error<T>> {
+		let mut output = vec![];
 		for (timestamp, payment_amount) in schedule {
-			schedule_with_converted_timestamps.push((
-				NaiveDate::parse_from_str(&timestamp, crate::TIMESTAMP_STRING_FORMAT)
-                    // Unwrapped since timestamps' format 
-                    .expect("This method never panics.")
+			output.push((
+				NaiveDate::parse_from_str(&timestamp, "%d.%m.%Y")
+					.map_err(|_| crate::Error::<T>::IncorrectTimestampFormat)?
 					.and_time(NaiveTime::default())
 					.timestamp(),
 				*payment_amount,
 			));
 		}
-	    schedule_with_converted_timestamps	
+		Ok(output)
 	}
 
 	// Removes expired non-activated loans.
@@ -490,9 +489,7 @@ impl<T: Config> Pallet<T> {
 			if let Ok(loan_config) =
 				Self::get_loan_config_via_account_id(&non_active_loan_account_id)
 			{
-			    // If current date is larger then the loan first payment date, then this loan is
-                // expired.	
-                if Self::today_date() >= Self::timestamp_to_date(*loan_config.first_payment_moment()) {
+				if Self::today() >= *loan_config.first_payment_moment() {
 					crate::LoansStorage::<T>::remove(non_active_loan_account_id.clone());
 				}
 				removed_non_active_accounts_ids.push(non_active_loan_account_id);
@@ -530,16 +527,7 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	pub(crate) fn today_timestamp() -> TimeMeasure {
-	    crate::CurrentDateStorage::<T>::get()
+	pub(crate) fn today() -> TimeMeasure {
+		crate::CurrentDateStorage::<T>::get()
 	}
-    
-    pub(crate) fn today_date() -> NaiveDate {
-	    Self::timestamp_to_date(Self::today_timestamp()) 
-	}
-    
-    pub(crate) fn timestamp_to_date(timestamp: TimeMeasure) -> NaiveDate {
-        NaiveDateTime::from_timestamp(timestamp, 0).date()
-    }
-
 }

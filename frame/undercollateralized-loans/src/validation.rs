@@ -8,6 +8,7 @@ use composable_traits::{
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::Zero;
+use chrono::NaiveDate;
 
 #[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
 pub struct CurrencyPairIsNotSame;
@@ -100,6 +101,12 @@ where
 		// Check if payment schedule is empty.
 		// We should have at least one payment.
 		ensure!(input.payment_schedule.len() > 0, "Payment schedule is empty.");
+		// Check if all timestamps have correct format.
+		for (payment_moment, _) in input.payment_schedule.iter() {
+			ensure!(NaiveDate::parse_from_str(payment_moment, crate::TIMESTAMP_STRING_FORMAT).is_ok(),
+            "Payments schedule contains incorrect formated timestamp"
+             );
+		}
 
 		Ok(LoanInput { principal, collateral, ..input })
 	}
