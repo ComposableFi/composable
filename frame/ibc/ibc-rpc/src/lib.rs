@@ -1118,7 +1118,7 @@ where
 			.next_seq_recv(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence recv"))?;
 		let mut keys = vec![result.trie_key];
 		let child_trie_key = api
 			.child_trie_key(&at)
@@ -1163,7 +1163,7 @@ where
 			)
 			.ok()
 			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching packet commitment"))?;
 		let mut keys = vec![result.trie_key];
 		let child_trie_key = api
 			.child_trie_key(&at)
@@ -1208,7 +1208,7 @@ where
 			)
 			.ok()
 			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching packet acknowledgement"))?;
 		let mut keys = vec![result.trie_key];
 		let child_trie_key = api
 			.child_trie_key(&at)
@@ -1248,7 +1248,7 @@ where
 			.packet_receipt(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec(), seq)
 			.ok()
 			.flatten()
-			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching packet receipt"))?;
 		let mut keys = vec![result.trie_key];
 		let child_trie_key = api
 			.child_trie_key(&at)

@@ -263,6 +263,7 @@ where
 		key: (PortId, ChannelId, Sequence),
 		commitment: PacketCommitmentType,
 	) -> Result<(), ICS04Error> {
+		log::trace!(target: "pallet_ibc", "in channel : [store_packet_commitment] >> packet_commitment = {:#?}", commitment);
 		<PacketCommitment<T>>::insert((key.0.clone(), key.1, key.2), commitment);
 		if let Some(val) = PacketCounter::<T>::get().checked_add(1) {
 			PacketCounter::<T>::put(val);
