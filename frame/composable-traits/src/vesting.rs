@@ -8,6 +8,7 @@ use sp_runtime::{
 	traits::{AtLeast32Bit, Zero},
 	ArithmeticError,
 };
+use sp_std::collections::btree_map::BTreeMap;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -70,6 +71,23 @@ pub enum VestingScheduleIdSet<Id: Clone + Eq + PartialEq + Debug, MaxVestingSche
 	One(Id),
 	/// Multiple vesting schedules
 	Many(BoundedVec<Id, MaxVestingSchedules>),
+}
+
+impl<Id: Clone + Copy + Eq + PartialEq + Debug, MaxVestingSchedules: Get<u32>>
+	VestingScheduleIdSet<Id, MaxVestingSchedules>
+{
+	/// Returns a `Vec` containing all the ids of the schedules to be claimed. A reference to all
+	/// claimable schedules is passed in case `Self` is `All`.
+	pub fn into_all_ids<BlockNumber, Moment, Balance: HasCompact>(
+		self,
+		all_schedules: &BTreeMap<Id, VestingSchedule<Id, BlockNumber, Moment, Balance>>,
+	) -> Vec<Id> {
+		match self {
+			VestingScheduleIdSet::All => all_schedules.keys().copied().collect(),
+			VestingScheduleIdSet::Many(ids) => ids.into_inner(),
+			VestingScheduleIdSet::One(id) => vec![id],
+		}
+	}
 }
 
 /// The vesting schedule.
