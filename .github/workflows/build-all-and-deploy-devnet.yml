@@ -1,4 +1,4 @@
-name: "Build all and deploy Devnet"
+name: "Build, Test, Deploy"
 on:
   push:
     branches:
@@ -25,75 +25,6 @@ env:
   NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
 
 jobs:
-  common-deps-darwin:
-    runs-on:
-      - macos-latest
-    steps:
-      # TODO: do composable-nix-os which has experimental-features, proper channel, and cachix installed with composable cache
-      - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v17
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: |
-            sandbox = relaxed
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          name: ${{  env.NIX_CACHIX }}
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps --no-update-lock-file
-
-  package-composable-node-darwin:
-    needs: common-deps-darwin
-    runs-on:
-      - macos-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v17
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: |
-            sandbox = relaxed
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node --no-update-lock-file
-
-  package-polkadot-node-darwin:
-    needs: common-deps-darwin
-    runs-on:
-      - macos-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v17
-        with:
-          nix_path: nixpkgs=channel:nixos-unstable
-          extra_nix_config: |
-            sandbox = relaxed
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#polkadot-node --no-update-lock-file
-
   common-deps:
     runs-on:
       - self-hosted
@@ -328,23 +259,7 @@ jobs:
 
       - name: Build & Push
         run: |
-          chmod +x ./nix-install-vscode-composable.sh
-          ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
-          source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH"
-          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
-          nix-env -iA nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3  nixpkgs.google-cloud-sdk nixpkgs.jq
-          RELEASE_VERSION=$(git rev-parse HEAD)
-          nix build .#composable-node --no-update-lock-file
-          # NOTE: temporary move here until 100% nix
-          mkdir -p target/release
-          mkdir -p target/doc
-          cp result/bin/composable target/release/composable
-          # TODO: derive archive instead of direct tar call
-          tar -czvf composable-picasso-$RELEASE_VERSION.tar.gz target/release/composable target/doc
-          gsutil mv *.tar.gz gs://composable-binaries/community-releases/picasso/
-
           cd devnet
-          ./update.sh $RELEASE_VERSION
           # TODO: run gsutils and find same json in GOOGLE_APPLICATION_CREDENTIALS path, decide prio and responsible after https://github.com/ComposableFi/composable/issues/1426
           jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
           cd ..

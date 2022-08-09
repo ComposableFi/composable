@@ -5,5 +5,5 @@
 # so with nix it is easier to build own (nix+curl+websockat)
 # also nix allows build multi parachains, unlike composable
 # produce json/js code so instead of copy paste, people will just reference host spec
-# will be decided when we have more XCMP/XCVM stuff from devops and devs sides done and see obstacles 
+# will be decided when we have more XCMP/XCVM stuff from devops and devs sides done and see obstacles
 builtins.fromJSON (builtins.readFile ./composable.json)
