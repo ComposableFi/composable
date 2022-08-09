@@ -4,7 +4,7 @@ FROM composablefi/ci-linux:2022-04-18 as builder
 COPY . /build
 WORKDIR /build
 
-# NOTE: decide prio and responsible for migration to nix after https://github.com/ComposableFi/composable/issues/1426
+# NOTE: dirty hack until nix migration
 RUN cargo +nightly build --release -p wasm-optimizer
 RUN cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
 RUN cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
@@ -28,8 +28,9 @@ LABEL description="Docker image with Composable"
 ENV DEBIAN_FRONTEND=noninteractive
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# ISSUE: basilisc is obsolete
 RUN groupadd -g 1000 service && useradd -m -s /bin/sh -g 1000 -G service service && \
-	mkdir -p /apps/composable/scripts /apps/composable/target/release /apps/polkadot/target/release && \
+	mkdir -p /apps/composable/scripts /apps/composable/target/release /apps/basilisk-node/target/release /apps/polkadot/target/release && \
 	apt-get update && apt-get install -y --no-install-recommends apt-utils ca-certificates curl git && \
 	curl -fsSL https://deb.nodesource.com/setup_17.x | bash - && \
 	apt-get update && apt-get install -y --no-install-recommends nodejs && \
