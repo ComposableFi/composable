@@ -4,7 +4,7 @@
 
 use super::*;
 use composable_traits::vesting::{
-	VestingSchedule, VestingScheduleInput,
+	VestingSchedule, VestingScheduleInfo,
 	VestingWindow::{BlockNumberBased, MomentBased},
 };
 use frame_support::{assert_noop, assert_ok, error::BadOrigin, traits::fungibles::Mutate};
@@ -145,7 +145,7 @@ fn vested_transfer_self_vest_ko() {
 	ExtBuilder::build().execute_with(|| {
 		System::set_block_number(1);
 
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
@@ -168,7 +168,7 @@ fn vested_transfer_works() {
 	ExtBuilder::build().execute_with(|| {
 		System::set_block_number(1);
 
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
@@ -202,7 +202,7 @@ fn vested_transfer_trait_emits_vesting_schedule_added_event() {
 
 		assert_ok!(Tokens::mint_into(MockCurrencyId::ETH, &ALICE, 100));
 
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
@@ -233,7 +233,7 @@ fn vested_transfer_for_moment_based_schedule_works() {
 		System::set_block_number(1);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
@@ -263,7 +263,7 @@ fn vested_transfer_for_moment_based_schedule_works() {
 #[test]
 fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -279,7 +279,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 		System::set_block_number(12);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 
-		let another_schedule_input = VestingScheduleInput {
+		let another_schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 10_u64, period: 13_u64 },
 			period_count: 1_u32,
 			per_period: 7_u64,
@@ -292,7 +292,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 			another_schedule_input,
 		));
 
-		let moment_based_schedule_input = VestingScheduleInput {
+		let moment_based_schedule_input = VestingScheduleInfo {
 			window: MomentBased { start: 72000_u64, period: 5000_u64 },
 			period_count: 2_u32,
 			per_period: 7_u64,
@@ -315,7 +315,7 @@ fn add_new_vesting_schedule_merges_with_current_locked_balance_and_until() {
 #[test]
 fn cannot_use_fund_if_not_claimed() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 10_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 50_u64,
@@ -327,7 +327,7 @@ fn cannot_use_fund_if_not_claimed() {
 			MockCurrencyId::BTC,
 			schedule_input,
 		));
-		let moment_based_schedule_input = VestingScheduleInput {
+		let moment_based_schedule_input = VestingScheduleInfo {
 			window: MomentBased { start: 1000_u64, period: 5000_u64 },
 			period_count: 1_u32,
 			per_period: 10_u64,
@@ -354,7 +354,7 @@ fn cannot_use_fund_if_not_claimed() {
 #[test]
 fn vested_transfer_fails_if_zero_period_count() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 0_u32,
 			per_period: 100_u64,
@@ -375,7 +375,7 @@ fn vested_transfer_fails_if_zero_period_count() {
 #[test]
 fn vested_transfer_fails_if_zero_period() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 1_u64, period: 0_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
@@ -407,7 +407,7 @@ fn vested_transfer_fails_if_zero_period() {
 #[test]
 fn vested_transfer_fails_if_transfer_err() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
@@ -428,7 +428,7 @@ fn vested_transfer_fails_if_transfer_err() {
 #[test]
 fn vested_transfer_fails_if_overflow() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 2_u32,
 			per_period: u64::MAX,
@@ -444,7 +444,7 @@ fn vested_transfer_fails_if_overflow() {
 			ArithmeticError::Overflow,
 		);
 
-		let another_schedule_input = VestingScheduleInput {
+		let another_schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: u64::MAX, period: 1_u64 },
 			period_count: 2_u32,
 			per_period: 1_u64,
@@ -460,7 +460,7 @@ fn vested_transfer_fails_if_overflow() {
 			ArithmeticError::Overflow,
 		);
 
-		let moment_based_schedule_input = VestingScheduleInput {
+		let moment_based_schedule_input = VestingScheduleInfo {
 			window: MomentBased { start: u64::MAX, period: 1_u64 },
 			period_count: 2_u32,
 			per_period: 1_u64,
@@ -481,7 +481,7 @@ fn vested_transfer_fails_if_overflow() {
 #[test]
 fn vested_transfer_fails_if_bad_origin() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 1_u32,
 			per_period: 100_u64,
@@ -502,7 +502,7 @@ fn vested_transfer_fails_if_bad_origin() {
 #[test]
 fn claim_works() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -583,7 +583,7 @@ fn claim_nonexistent_schedules() {
 		);
 
 		// Add schedule 4
-		let schedule_4_input = VestingScheduleInput {
+		let schedule_4_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -645,7 +645,7 @@ fn claim_nonexistent_schedules() {
 fn claim_with_id_works() {
 	ExtBuilder::build().execute_with(|| {
 		// Add schedule 4
-		let schedule_4_input = VestingScheduleInput {
+		let schedule_4_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -659,7 +659,7 @@ fn claim_with_id_works() {
 		));
 
 		// Add schedule 5
-		let schedule_5_input = VestingScheduleInput {
+		let schedule_5_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 15_u64,
@@ -673,7 +673,7 @@ fn claim_with_id_works() {
 		));
 
 		// Add schedule 6
-		let schedule_6_input = VestingScheduleInput {
+		let schedule_6_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 3_u64,
@@ -807,7 +807,7 @@ fn claim_with_id_works() {
 fn claim_with_multiple_ids_works() {
 	ExtBuilder::build().execute_with(|| {
 		// Add schedule 4
-		let schedule_4_input = VestingScheduleInput {
+		let schedule_4_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -821,7 +821,7 @@ fn claim_with_multiple_ids_works() {
 		));
 
 		// Add schedule 5
-		let schedule_5_input = VestingScheduleInput {
+		let schedule_5_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 15_u64,
@@ -835,7 +835,7 @@ fn claim_with_multiple_ids_works() {
 		));
 
 		// Add schedule 6
-		let schedule_6_input = VestingScheduleInput {
+		let schedule_6_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 3_u64,
@@ -919,7 +919,7 @@ fn claim_with_multiple_ids_works() {
 fn claim_for_with_id_works() {
 	ExtBuilder::build().execute_with(|| {
 		// Add schedule 4
-		let schedule_4_input = VestingScheduleInput {
+		let schedule_4_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -933,7 +933,7 @@ fn claim_for_with_id_works() {
 		));
 
 		// Add schedule 5
-		let schedule_5_input = VestingScheduleInput {
+		let schedule_5_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 15_u64,
@@ -1003,7 +1003,7 @@ fn claim_for_with_id_works() {
 fn claim_for_works() {
 	ExtBuilder::build().execute_with(|| {
 		// Add schedule 4
-		let schedule_4_input = VestingScheduleInput {
+		let schedule_4_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -1056,7 +1056,7 @@ fn claim_for_works() {
 #[test]
 fn claim_for_works_moment_based() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -1101,7 +1101,7 @@ fn claim_for_works_moment_based() {
 #[test]
 fn update_vesting_schedules_works() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -1114,7 +1114,7 @@ fn update_vesting_schedules_works() {
 			schedule_input,
 		));
 
-		let moment_based_schedule_input = VestingScheduleInput {
+		let moment_based_schedule_input = VestingScheduleInfo {
 			window: MomentBased { start: 0_u64, period: 60000_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -1194,7 +1194,7 @@ fn update_vesting_schedules_fails_if_unexpected_existing_locks() {
 #[test]
 fn vested_transfer_check_for_min() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 1_u64, period: 1_u64 },
 			period_count: 1_u32,
 			per_period: 3_u64,
@@ -1215,7 +1215,7 @@ fn vested_transfer_check_for_min() {
 #[test]
 fn multiple_vesting_schedule_claim_works() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
@@ -1229,7 +1229,7 @@ fn multiple_vesting_schedule_claim_works() {
 			schedule_input,
 		));
 
-		let schedule2_input = VestingScheduleInput {
+		let schedule2_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 3_u32,
 			per_period: 10_u64,
@@ -1280,13 +1280,13 @@ fn multiple_vesting_schedule_claim_works() {
 #[test]
 fn exceeding_maximum_schedules_should_fail() {
 	ExtBuilder::build().execute_with(|| {
-		let schedule_input = VestingScheduleInput {
+		let schedule_input = VestingScheduleInfo {
 			window: BlockNumberBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,
 		};
 		let schedule = VestingSchedule::from_input(4_u128, schedule_input.clone());
-		let moment_schedule_input = VestingScheduleInput {
+		let moment_schedule_input = VestingScheduleInfo {
 			window: MomentBased { start: 0_u64, period: 10_u64 },
 			period_count: 2_u32,
 			per_period: 10_u64,

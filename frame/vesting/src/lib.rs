@@ -46,7 +46,7 @@ use composable_support::{
 	math::safe::{SafeAdd, SafeSub},
 };
 use composable_traits::vesting::{
-	VestedTransfer, VestingSchedule, VestingScheduleIdSet, VestingScheduleInput,
+	VestedTransfer, VestingSchedule, VestingScheduleIdSet, VestingScheduleInfo,
 };
 use frame_support::{
 	ensure,
@@ -86,7 +86,7 @@ pub mod module {
 		},
 		math::safe::SafeAdd,
 	};
-	use composable_traits::vesting::{VestingSchedule, VestingScheduleInput, VestingWindow};
+	use composable_traits::vesting::{VestingSchedule, VestingScheduleInfo, VestingWindow};
 	use frame_support::{traits::Time, BoundedBTreeMap};
 	use orml_traits::{MultiCurrency, MultiLockableCurrency};
 	use sp_runtime::traits::AtLeast32Bit;
@@ -106,8 +106,8 @@ pub mod module {
 		MomentOf<T>,
 		BalanceOf<T>,
 	>;
-	pub(crate) type VestingScheduleInputOf<T> =
-		VestingScheduleInput<BlockNumberOf<T>, MomentOf<T>, BalanceOf<T>>;
+	pub(crate) type VestingScheduleInfoOf<T> =
+		VestingScheduleInfo<BlockNumberOf<T>, MomentOf<T>, BalanceOf<T>>;
 	pub type ScheduledItem<T> = (
 		AssetIdOf<T>,
 		<T as frame_system::Config>::AccountId,
@@ -323,7 +323,7 @@ pub mod module {
 		/// - `from`: The account sending the vested funds.
 		/// - `beneficiary`: The account receiving the vested funds.
 		/// - `asset`: The asset associated with this vesting schedule.
-		/// - `schedule_input`: The vesting schedule data attached to the transfer.
+		/// - `schedule_info`: The vesting schedule data attached to the transfer.
 		///
 		/// Emits `VestingScheduleAdded`.
 		///
@@ -334,12 +334,12 @@ pub mod module {
 			from: <T::Lookup as StaticLookup>::Source,
 			beneficiary: <T::Lookup as StaticLookup>::Source,
 			asset: AssetIdOf<T>,
-			schedule_input: VestingScheduleInputOf<T>,
+			schedule_info: VestingScheduleInfoOf<T>,
 		) -> DispatchResult {
 			T::VestedTransferOrigin::ensure_origin(origin)?;
 			let from = T::Lookup::lookup(from)?;
 			let to = T::Lookup::lookup(beneficiary)?;
-			<Self as VestedTransfer>::vested_transfer(asset, &from, &to, schedule_input)?;
+			<Self as VestedTransfer>::vested_transfer(asset, &from, &to, schedule_info)?;
 
 			Ok(())
 		}
@@ -413,12 +413,12 @@ impl<T: Config> VestedTransfer for Pallet<T> {
 		asset: Self::AssetId,
 		from: &Self::AccountId,
 		to: &Self::AccountId,
-		schedule_input: VestingScheduleInput<Self::BlockNumber, Self::Moment, Self::Balance>,
+		schedule_info: VestingScheduleInfo<Self::BlockNumber, Self::Moment, Self::Balance>,
 	) -> frame_support::dispatch::DispatchResult {
 		ensure!(from != to, Error::<T>::TryingToSelfVest);
 
 		let vesting_schedule_id = Self::VestingScheduleNonce::increment()?;
-		let schedule = VestingSchedule::from_input(vesting_schedule_id, schedule_input);
+		let schedule = VestingSchedule::from_input(vesting_schedule_id, schedule_info);
 
 		let schedule_amount = ensure_valid_vesting_schedule::<T>(&schedule)?;
 

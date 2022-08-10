@@ -29,7 +29,7 @@ pub trait VestedTransfer {
 		asset: Self::AssetId,
 		from: &Self::AccountId,
 		to: &Self::AccountId,
-		schedule: VestingScheduleInput<Self::BlockNumber, Self::Moment, Self::Balance>,
+		schedule: VestingScheduleInfo<Self::BlockNumber, Self::Moment, Self::Balance>,
 	) -> DispatchResult;
 }
 
@@ -114,7 +114,7 @@ pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasC
 /// This is used for creating a VestingSchedule
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct VestingScheduleInput<BlockNumber, Moment, Balance: HasCompact> {
+pub struct VestingScheduleInfo<BlockNumber, Moment, Balance: HasCompact> {
 	pub window: VestingWindow<BlockNumber, Moment>,
 	/// Number of vest
 	pub period_count: u32,
@@ -194,7 +194,7 @@ impl<
 
 	pub fn from_input(
 		vesting_schedule_id: VestingScheduleId,
-		vesting_schedule_input: VestingScheduleInput<BlockNumber, Moment, Balance>,
+		vesting_schedule_input: VestingScheduleInfo<BlockNumber, Moment, Balance>,
 	) -> VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance> {
 		VestingSchedule {
 			vesting_schedule_id,

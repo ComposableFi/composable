@@ -4,14 +4,14 @@
 use crate::Pallet as Vesting;
 use crate::{
 	AssetIdOf, BalanceOf, BlockNumberOf, Call, Config, Pallet, VestedTransfer,
-	VestingScheduleInputOf, VestingScheduleNonce, VestingScheduleOf, Zero,
+	VestingScheduleInfoOf, VestingScheduleNonce, VestingScheduleOf, Zero,
 };
 use codec::Decode;
 use composable_support::abstractions::utils::increment::Increment;
 use composable_traits::vesting::{
-	VestingSchedule, VestingScheduleIdSet, VestingScheduleInput, VestingWindow::BlockNumberBased,
+	VestingSchedule, VestingScheduleIdSet, VestingScheduleInfo, VestingWindow::BlockNumberBased,
 };
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, vec, whitelisted_caller};
+use frame_benchmarking::{account, benchmarks, vec, whitelisted_caller};
 use frame_support::traits::{fungibles::Mutate, Get};
 use frame_system::RawOrigin;
 use sp_runtime::traits::{StaticLookup, TrailingZeroInput};
@@ -46,17 +46,17 @@ where
 	caller
 }
 
-fn vesting_schedule_input<T>(
+fn vesting_schedule_info<T>(
 	start: BlockNumberOf<T>,
 	period: BlockNumberOf<T>,
 	period_count: u32,
 	per_period: BalanceOf<T>,
-) -> VestingScheduleInputOf<T>
+) -> VestingScheduleInfoOf<T>
 where
 	T: Config,
 	BalanceOf<T>: From<u64>,
 {
-	VestingScheduleInput { window: BlockNumberBased { start, period }, period_count, per_period }
+	VestingScheduleInfo { window: BlockNumberBased { start, period }, period_count, per_period }
 }
 
 fn vesting_schedule<T>(
@@ -99,7 +99,7 @@ benchmarks! {
 		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
 		let per_period = T::MinVestedTransfer::get();
-		let schedule_input = vesting_schedule_input::<T>(
+		let schedule_info = vesting_schedule_info::<T>(
 			START_BLOCK_NUMBER.into(),
 			PERIOD.into(),
 			PERIOD_COUNT,
@@ -108,7 +108,7 @@ benchmarks! {
 		for i in 0 .. s {
 			let source = create_account::<T>("source", i);
 			fund_account::<T>(&source, asset_id.clone(), FUNDING.into());
-			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &source, &caller, schedule_input.clone()).unwrap();
+			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &source, &caller, schedule_info.clone()).unwrap();
 		}
 	}: _(RawOrigin::Signed(caller), asset_id, VestingScheduleIdSet::All)
 
@@ -118,13 +118,13 @@ benchmarks! {
 		fund_account::<T>(&from, asset_id.clone(), FUNDING.into());
 		let dest = T::Lookup::unlookup(create_account::<T>("dest", 1));
 		let per_period = T::MinVestedTransfer::get();
-		let schedule_input = vesting_schedule_input::<T>(
+		let schedule_info = vesting_schedule_info::<T>(
 			START_BLOCK_NUMBER.into(),
 			PERIOD.into(),
 			PERIOD_COUNT,
 			per_period.into(),
 		);
-	}: _(RawOrigin::Root, T::Lookup::unlookup(from), dest, asset_id, schedule_input)
+	}: _(RawOrigin::Root, T::Lookup::unlookup(from), dest, asset_id, schedule_info)
 
 	update_vesting_schedules {
 		let s in 0 .. T::MaxVestingSchedules::get();
@@ -150,7 +150,7 @@ benchmarks! {
 		let asset_id = asset::<T>();
 		let caller: T::AccountId = whitelisted_caller();
 		let per_period = T::MinVestedTransfer::get();
-		let schedule_input = vesting_schedule_input::<T>(
+		let schedule_info = vesting_schedule_info::<T>(
 			START_BLOCK_NUMBER.into(),
 			PERIOD.into(),
 			PERIOD_COUNT,
@@ -160,7 +160,7 @@ benchmarks! {
 		let dest_look_up = T::Lookup::unlookup(dest.clone());
 		for i in 0 .. s {
 			fund_account::<T>(&caller, asset_id.clone(), FUNDING.into());
-			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &caller, &dest, schedule_input.clone()).unwrap();
+			<Pallet<T> as VestedTransfer>::vested_transfer(asset_id.clone(), &caller, &dest, schedule_info.clone()).unwrap();
 		}
 	}: _(RawOrigin::Signed(caller), dest_look_up, asset_id, VestingScheduleIdSet::All)
 
