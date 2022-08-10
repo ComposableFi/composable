@@ -221,7 +221,7 @@ benchmarks! {
 		.collect::<BTreeMap<_, _>>()
 		.try_into()
 		.unwrap();
-	}: _(RawOrigin::Signed(user), pool_id, updates)
+	}: _(RawOrigin::Root, pool_id, updates)
 
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
 }
