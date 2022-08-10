@@ -85,7 +85,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider},
 		PerThing, Perbill,
 	};
-	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, vec, vec::Vec};
+	use sp_std::{cmp::max, fmt::Debug, vec, vec::Vec};
 
 	use crate::{
 		prelude::*, reward_accumulation_calculation, update_rewards_pool,
@@ -1004,8 +1004,6 @@ pub(crate) fn reward_accumulation_calculation<T: Config>(
 			// Integer division can only fail if rhs == 0, and
 			// reward_rate_period_seconds is a NonZeroU64 here.
 			let periods_surpassed = elapsed_time.div(reward_rate_period_seconds.get());
-
-			dbg!(periods_surpassed);
 
 			if periods_surpassed.is_zero() {
 				Ok(reward)
