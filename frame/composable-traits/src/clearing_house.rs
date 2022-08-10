@@ -154,9 +154,19 @@ pub trait ClearingHouse {
 	/// # Parameters
 	/// - `market_id`: the market to close
 	/// - `when`: the timestamp after which the market is to be closed
-	fn close_market(
+	fn close_market(market_id: Self::MarketId, when: Self::Timestamp) -> Result<(), DispatchError>;
+
+	/// Settle a position in a closed market.
+	///
+	/// To be called by users who didn't close their positions before the market closed.
+	///
+	/// # Parameters
+	///
+	/// - `account_id`: the trader's account Id
+	/// - `market_id`: the market Id
+	fn settle_position(
+		account_id: Self::AccountId,
 		market_id: Self::MarketId,
-		when: Self::Timestamp,
 	) -> Result<(), DispatchError>;
 }
 

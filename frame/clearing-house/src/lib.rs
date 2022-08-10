@@ -489,6 +489,13 @@ pub mod pallet {
 			/// Amount of collateral withdrawn.
 			amount: T::Balance,
 		},
+		/// Position settled by user.
+		SettledPosition {
+			/// Id of the user.
+			user: T::AccountId,
+			/// Id of the corresponding market.
+			market: T::MarketId,
+		},
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -964,7 +971,8 @@ pub mod pallet {
 		/// [`close_position`](Self::close_position) up until the `when` timestamp. After that time,
 		/// all trading calls will fail.
 		///
-		/// Users can settled their positions after the market close by calling TODO(0xangelo)
+		/// Users can settled their positions after the market close by calling
+		/// [`settle_position`](Self::settle_position).
 		///
 		/// TODO(0xangelo): add sequence diagram
 		///
@@ -985,7 +993,7 @@ pub mod pallet {
 		///
 		/// ## State Changes
 		///
-		/// Updates the [`Market.closed_ts`](Market::closed_ts) of the target market.
+		/// - [`Markets`]: updates the [`closed_ts`](Market::closed_ts) field of the market
 		///
 		/// ## Errors
 		///
@@ -1002,6 +1010,48 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			<Self as ClearingHouse>::close_market(market_id, when)?;
+			Ok(())
+		}
+
+		/// Settles a position in a closed market.
+		///
+		/// # Overview
+		///
+		/// This should be utilized by the user after the market is closed if it still has a
+		/// position in it. This function calculates a settlement price based on the vAMM and
+		/// settles the user's position against it.
+		///
+		/// # Parameters
+		///
+		/// - `market_id`: the market to be settled
+		///
+		/// # Assumptions or Requirements
+		///
+		/// - The market must exist
+		/// - The market must already be closed
+		/// - The user must have a position in the market (with non-zero base asset amount)
+		///
+		/// # Emits
+		///
+		/// - [`SettledPosition`](Event::<T>::SettledPosition)
+		///
+		/// # State Changes
+		///
+		/// - [`Collateral`]: funding settled, settled value added (if any)
+		/// - [`Positions`]: the position is removed
+		///
+		/// # Errors
+		///
+		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
+		/// - [`PositionNotFound`](Error::<T>::PositionNotFound)
+		///
+		/// # Weight/Runtime
+		///
+		/// `O(1)`
+		#[pallet::weight(<T as Config>::WeightInfo::settle_position())]
+		pub fn settle_position(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
+			let account_id = ensure_signed(origin)?;
+			<Self as ClearingHouse>::settle_position(account_id, market_id)?;
 			Ok(())
 		}
 	}
@@ -1421,6 +1471,16 @@ pub mod pallet {
 			market.closed_ts = Some(when);
 			Markets::<T>::insert(&market_id, market);
 			Self::deposit_event(Event::<T>::CloseMarket { market_id, when });
+			Ok(())
+		}
+
+		fn settle_position(
+			account_id: Self::AccountId,
+			market_id: Self::MarketId,
+		) -> Result<(), DispatchError> {
+			let market = Self::try_get_market(&market_id)?;
+			let mut positions = Self::get_positions(account_id);
+			let (position, position_index) = Self::try_get_position(&mut positions, &market_id)?;
 			Ok(())
 		}
 	}

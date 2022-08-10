@@ -38,6 +38,7 @@ pub mod deposit_collateral;
 pub mod instruments;
 pub mod liquidate;
 pub mod open_position;
+pub mod settle_position;
 pub mod update_funding;
 pub mod withdraw_collateral;
 
