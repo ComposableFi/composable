@@ -287,6 +287,7 @@ pub mod pallet {
 		WeightsMustBeNonZero,
 		WeightsMustSumToOne,
 		StakingPoolConfigError,
+		NoAvailableLPtokensForSingleAssetWithdraw,
 	}
 
 	#[pallet::config]
@@ -575,14 +576,28 @@ pub mod pallet {
 			is_single_asset: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			<Self as Amm>::remove_liquidity(
-				&who,
-				pool_id,
-				lp_amount,
-				min_base_amount,
-				min_quote_amount,
-				is_single_asset,
-			)?;
+			match AccountsDepositedOneAsset::<T>::try_get(&who, &pool_id) {
+				Ok(lp_available) => {
+					<Self as Amm>::remove_liquidity_single_asset(
+						&who,
+						pool_id,
+						lp_available,
+						lp_amount,
+						min_base_amount,
+						min_quote_amount,
+					)?;
+				},
+				_ => {
+					<Self as Amm>::remove_liquidity(
+						&who,
+						pool_id,
+						lp_amount,
+						min_base_amount,
+						min_quote_amount,
+						is_single_asset,
+					)?;
+				},
+			}
 			Ok(())
 		}
 
@@ -1320,6 +1335,76 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		fn remove_liquidity_single_asset(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			lp_available: Self::Balance,
+			lp_amount: Self::Balance,
+			min_base_amount: Self::Balance,
+			min_quote_amount: Self::Balance,
+		) -> Result<(), DispatchError> {
+			let mut lp_redeemed = lp_amount;
+			let pool = Self::get_pool(pool_id)?;
+			if lp_amount > lp_available {
+				<Self as Amm>::remove_liquidity(
+					&who,
+					pool_id,
+					lp_redeemed.safe_sub(&lp_available)?,
+					min_base_amount,
+					min_quote_amount,
+					false,
+				)?;
+				lp_redeemed = lp_available;
+			}
+			match pool {
+				PoolConfiguration::StableSwap(_info) => {
+					// TODO(belousm): add functionality for withdrawing funds to a Stable Swap.
+					<Self as Amm>::remove_liquidity(
+						&who,
+						pool_id,
+						lp_redeemed,
+						min_base_amount,
+						min_quote_amount,
+						true,
+					)?;
+				},
+				PoolConfiguration::ConstantProduct(_info) => {
+					// TODO(belousm): ask @saruman9 about this case
+					// Duplication of code above.
+					// Is it worth it to call some other functionality in the product constants to
+					// withdraw single asset?
+					<Self as Amm>::remove_liquidity(
+						&who,
+						pool_id,
+						lp_redeemed,
+						min_base_amount,
+						min_quote_amount,
+						true,
+					)?;
+				},
+				PoolConfiguration::LiquidityBootstrapping(_info) => {
+					// TODO(belousm): add functionality for withdrawing funds to a Liquidity
+					// Bootstrapping.
+					<Self as Amm>::remove_liquidity(
+						&who,
+						pool_id,
+						lp_redeemed,
+						min_base_amount,
+						min_quote_amount,
+						true,
+					)?;
+				},
+			}
+			Self::update_accounts_deposited_one_asset_storage(
+				who.clone(),
+				pool_id,
+				lp_redeemed,
+				SingleAssetAccountsStorageAction::Withdrawing,
+			)?;
+			Ok(())
+		}
+
+		#[transactional]
 		fn remove_liquidity(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
@@ -1338,6 +1423,12 @@ pub mod pallet {
 				]),
 				is_single_asset,
 			)?;
+			if is_single_asset {
+				ensure!(
+					AccountsDepositedOneAsset::<T>::contains_key(&who, &pool_id),
+					Error::<T>::NoAvailableLPtokensForSingleAssetWithdraw
+				);
+			}
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
@@ -1377,14 +1468,6 @@ pub mod pallet {
 						.assets
 						.get(&info.pair.quote)
 						.ok_or(Error::<T>::InvalidAsset)?;
-					if base_amount.is_zero() || quote_amount.is_zero() {
-						Self::update_accounts_deposited_one_asset_storage(
-							who.clone(),
-							pool_id,
-							lp_amount,
-							SingleAssetAccountsStorageAction::Withdrawing,
-						)?;
-					}
 					let (base_amount, quote_amount, updated_lp) = Uniswap::<T>::remove_liquidity(
 						who,
 						info,

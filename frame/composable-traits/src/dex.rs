@@ -100,9 +100,9 @@ pub trait Amm {
 
 	/// Update accounts deposited one asset storage.
 	/// `lp_amount` - amount of LP token to deposit/withdraw,
-	/// `action` - withdraw or deposit LP token. 
+	/// `action` - withdraw or deposit LP token.
 	fn update_accounts_deposited_one_asset_storage(
-		who: Self::AccountId, 
+		who: Self::AccountId,
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
 		action: SingleAssetAccountsStorageAction,
@@ -118,6 +118,19 @@ pub trait Amm {
 		quote_amount: Self::Balance,
 		min_mint_amount: Self::Balance,
 		keep_alive: bool,
+	) -> Result<(), DispatchError>;
+
+	/// Withdraw coins of ine type from the pool.
+	/// Withdrawal amount are based on current deposit ratios.
+	/// `amount` - quantity of LP tokens to burn in the withdrawal,
+	/// `min_amounts` - minimum amounts of underlying coin to receive.
+	fn remove_liquidity_single_asset(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		lp_available: Self::Balance,
+		lp_amount: Self::Balance,
+		min_base_amount: Self::Balance,
+		min_quote_amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
 	/// Withdraw coins from the pool.

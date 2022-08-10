@@ -921,7 +921,6 @@ proptest! {
 			prop_assert_ok!(
 				Pablo::add_liquidity(Origin::signed(BOB), pool_id, btc_value, usdt_value, 0, false)
 			);
-
 			let expected_lp_tokens = calculate_lp_for_single_deposit(
 				lp_supply, btc_value, base_weight, lp_fee, initial_btc);
 			let lp_amount = Tokens::balance(pool.lp_token, &BOB);
