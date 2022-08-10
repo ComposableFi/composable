@@ -280,6 +280,7 @@ pub mod pallet {
 
 		/// The `AssetId` used by the pallet. Corresponds the the Ids used by the Currency pallet.
 		type AssetId: FullCodec
+			+ MaxEncodedLen
 			+ Eq
 			+ PartialEq
 			+ Copy
@@ -300,6 +301,7 @@ pub mod pallet {
 		/// The ID used to uniquely represent Pools
 		type PoolId: AddAssign
 			+ FullCodec
+			+ MaxEncodedLen
 			+ One
 			+ Eq
 			+ PartialEq
@@ -495,6 +497,7 @@ pub mod pallet {
 
 	/// Custom [dispatch errors](https://docs.substrate.io/v3/runtime/events-and-errors/) of this pallet.
 	/// The following errors are very verbose and try to give as much context to why they arise.
+	#[allow(missing_docs)]
 	#[pallet::error]
 	pub enum Error<T> {
 		/// A Pool config, or deposit, containing an asset more than once was provided.
