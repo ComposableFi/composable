@@ -299,6 +299,12 @@
                 --output=$out \
                 --log error
             '';
+          docs-renders = [
+                mdbook
+                plantuml
+                graphviz
+                pandoc
+          ];
 
         in
         rec {
@@ -466,7 +472,6 @@
                 rust-stable
                 wasm-optimizer
                 composable-node
-                mdbook
                 taplo
                 python3
                 nodejs
@@ -474,18 +479,14 @@
                 jq
                 google-cloud-sdk # devs can list container images or binary releases
                 nix-tree
-              ];
+              ] ++ docs-renders;
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
             technical-writers = mkShell {
               buildInputs = with packages; [
-                mdbook
                 python3
-                plantuml
-                graphviz
-                pandoc
-              ];
+              ] ++ docs-renders;
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 

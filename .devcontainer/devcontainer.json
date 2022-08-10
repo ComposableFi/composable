@@ -67,7 +67,10 @@
 		"streetsidesoftware.code-spell-checker",
 		"zxh404.vscode-proto3",
 		"rangav.vscode-thunder-client",
-		"adam-bender.commit-message-editor"
+		"adam-bender.commit-message-editor",
+		"jebbs.plantuml",
+		"bierner.markdown-mermaid",
+		"bpruitt-goddard.mermaid-markdown-syntax-highlighting",
 	],
 	"remoteUser": "vscode",
 }
