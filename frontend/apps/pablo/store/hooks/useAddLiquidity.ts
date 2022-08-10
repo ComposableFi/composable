@@ -167,5 +167,6 @@ export const useAddLiquidity = () => {
     invalidTokenPair,
     canSupply,
     findPoolManually,
+    pool
   };
 };
