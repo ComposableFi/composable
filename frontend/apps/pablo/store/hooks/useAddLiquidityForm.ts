@@ -13,7 +13,7 @@ import { fromChainUnits, toChainUnits } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
 import { useFilteredAssetListDropdownOptions } from "@/defi/hooks/assets/useFilteredAssetListDropdownOptions";
 
-export const useAddLiquidity = () => {
+export const useAddLiquidityForm = () => {
   const [valid, setValid] = useState<boolean>(false);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
@@ -167,5 +167,6 @@ export const useAddLiquidity = () => {
     invalidTokenPair,
     canSupply,
     findPoolManually,
+    pool
   };
 };
