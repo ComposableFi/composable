@@ -1,0 +1,92 @@
+# Overview
+
+Bring your own gas(`BYOG`) on Picasso parachain use cases.
+
+BYOG allows owners of nonnative tokens to execute transactions by paying fees in foreign currencies.
+
+On Picasso and [other Dotsama parachains](https://wiki.acala.network/learn/flexible-fees), such mechanisms are built into the runtime. 
+
+`On ramps` and [meta transactions](https://docs.polygon.technology/docs/category/meta-transactions) handle such possibilities on other chains. 
+
+## Current state
+
+Any cross-chain (XCMP) transactions will choose what assets to use to pay for the transaction.
+
+Direct native transactions will check several hardcoded foreign assets by a predefined order and try to pay using these on behalf of a user.
+
+In the future, native transaction assets will be configurable and share ratio definitions with XCMP. In addition, direct Pablo-based swaps from an asset to PICA will be available later.
+
+No dynamic fees are enabled now. 
+
+Minting, burns, and airdrops are out of the scope of this feature.
+
+Fees are small now, but later we will have a way to show the exact fee for a transaction paid in any possible asset.
+
+## How much does my transaction cost?
+
+When a transaction is executed, its `weight` is known and is roughly equal to compute resources it consumes.
+
+Weight is converted into an appropriate amount of PICA by the polynomial formula.
+
+Formula dynamically changes depending on desired target load of the network.
+
+From now and later will say that transactions are paid directly in PICA for simplicity.
+
+For details of fees, see later chapter.
+
+## How can one pay for a transaction when one has USD/KSM?
+
+If a user account has enough PICA to pay for direct transactions and the user-specified PICA as payment assets in the case of XCMP, 
+the appropriate amount of PICA would be moved to the `native treasury.`
+
+If a user has not enough PICA to pay and [keep the account alive](../rfcs/0002-rent-deposit.md) or a user specified USD/KSM as payment in case of XCMP, 
+an appropriate amount of foreign assets will be calculated and transferred to the treasury. 
+
+The amount would be defined by the configured or hardcoded ratio of PICA to USD/KSM. 
+If there is no ratio defined, a transaction will fail.
+
+Later, Pablo governed and native governance approved DEX will be checked for direct swaps of PICA to USD/KSM.
+
+In this case, the native treasury will get PICA. 
+Pablo will get foreign assets.
+If there is no direct mapping approved mapping, configured or hardcoded ratios will be used as before.
+The transaction will fail if slippage is unacceptable or the pool is empty. It will not try to use configured or hardcoded ratio.
+
+The currency in which users can pay on Picassis is `payment currency`.
+
+## Direct native transaction specific
+
+Later user will be able to configure his preferred payment token by default. If the user peeks at such a token, then direct transactions are paid only in this token. No other tokens are tried. 
+
+Switching configuration is paid in a token to which configuration is switched. User does ED enough to clear to reset the configuration to default later.
+
+
+## XCMP specific 
+
+If a user tried to pay in a currency that is not payment, it would be trapped in a binary blob.
+
+If the user overpaid for a transaction, the remaining goes to the user's account on Picasso. The whole amount goes to the user account if the payment is too small.
+
+
+## Fee calculator
+
+Here is an example of the fee for transferring some KSM from Karura:
+
+1. Fee on Karura for XCMP.
+2. Price for XCMP on Picasso. It consists of a base fee and some formula of cost per instruction.
+3. Transaction fee on Picasso
+4. DEX swap fee
+
+All these fees change dynamically depending on network load, upgraded when the runtime is upgraded (and dependencies of runtime), and pool or native fee formulas configuration changes. 
+
+There is no unified view of all fees. So if there will be, given fees prediction should be less than one order of magnitude error.
+
+## References
+
+### Pallets
+
+- transaction-fees
+- xcmp
+- pablo
+- assets-registry
+- currency-factory
