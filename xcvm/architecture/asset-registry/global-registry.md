@@ -41,7 +41,7 @@ AssetData ::= AssetId LocalId Decimals
 Decimals ::= u8
 ```
 
-Where `Decimals` can be used to identify the decimal point location. This is especially important when bridging between fastly different ecosystems, where for example 1 USDC could be expressed as `100` in one ecosystem, and `1_000_000` in another.
+Where `Decimals` can be used to identify the decimal point location. This is especially important when bridging between vastly different ecosystems, where for example 1 USDC could be expressed as `100` in one ecosystem, and `1_000_000` in another.
 
 ## Updating the Registry
 
