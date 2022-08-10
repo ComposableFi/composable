@@ -277,7 +277,7 @@
                 patched-config.parachains;
               relaychain-nodes = patched-config.relaychain.nodes;
               script = writeShellApplication {
-                name = "composable-devnet-${chain-spec}";
+                name = "run-devnet-${chain-spec}";
                 text = ''
                   rm -rf /tmp/polkadot-launch
                   ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
@@ -548,7 +548,7 @@
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "picasso-dev";
             };
-            default = devnet-dali.script;
+            default = devnet-dali;
           };
         });
     in eachSystemOutputs // {
