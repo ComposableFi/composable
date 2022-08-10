@@ -177,7 +177,7 @@ pub mod pallet {
 		traits::{fungibles::Inspect, tokens::fungibles::Transfer, GenesisBuild, UnixTime},
 		transactional, Blake2_128Concat, PalletId, Twox64Concat,
 	};
-	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
+	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Signed;
 	use sp_runtime::{
 		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
@@ -420,6 +420,13 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		/// A close time was set for a market.
+		CloseMarket {
+			/// Market identifier.
+			market_id: T::MarketId,
+			/// Close time.
+			when: DurationSeconds,
+		},
 		/// Margin successfully added to account.
 		MarginAdded {
 			/// Account id that received the deposit.
@@ -491,6 +498,8 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
+		/// Attempted to set a market close time in the past or current block.
+		CloseTimeMustBeAfterCurrentTime,
 		/// Attempted to create a new market but the funding period is not a multiple of the
 		/// funding frequency.
 		FundingPeriodNotMultipleOfFrequency,
@@ -949,48 +958,49 @@ pub mod pallet {
 		/// # Overview
 		///
 		/// If successful, all trading calls to this market are blocked after the timestamp `when`
-		/// passed to this extrinsic.
+		/// passed to this extrinsic. This should allow time for users to close their positions
+		/// normally before the market closes. No one can open positions in this market after the
+		/// extrinsic has been successfully executed, only call
+		/// [`close_position`](Self::close_position) up until the `when` timestamp. After that time,
+		/// all trading calls will fail.
 		///
-		/// This should allow time for users to close their positions normally before the market
-		/// closes.
+		/// Users can settled their positions after the market close by calling TODO(0xangelo)
 		///
-		/// TODO(0xangelo):
-		/// - describe who's allowed to call this extrinsic
-		/// - describe any limitations on what the `when` value is allowed to be
-		/// - describe how remaining positions can be settled after the market is closed (which
-		///   extrinsic traders should use)
-		/// - add sequence diagram
+		/// TODO(0xangelo): add sequence diagram
 		///
 		/// ## Parameters
 		///
-		/// TODO(0xangelo):
+		/// - `market_id`: the market to be closed
+		/// - `when`: the timestamp at which the market will be closed
 		///
 		/// ## Assumptions or Requirements
 		///
-		/// TODO(0xangelo):
+		/// - Only root (for now) can call this extrinsic
+		/// - The `when` parameter must be a timestamp strictly larger than the current block
+		///   timestamp
 		///
 		/// ## Emits
 		///
-		/// TODO(0xangelo):
+		/// - [`CloseMarket`](Event::<T>::CloseMarket)
 		///
 		/// ## State Changes
 		///
-		/// TODO(0xangelo):
+		/// Updates the [`Market.closed_ts`](Market::closed_ts) of the target market.
 		///
 		/// ## Errors
 		///
-		/// TODO(0xangelo):
+		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
 		///
 		/// ## Weight/Runtime
 		///
-		/// TODO(0xangelo):
+		/// O(1)
 		#[pallet::weight(<T as Config>::WeightInfo::close_market())]
 		pub fn close_market(
 			origin: OriginFor<T>,
 			market_id: T::MarketId,
 			when: DurationSeconds,
 		) -> DispatchResult {
-			ensure_signed(origin)?;
+			ensure_root(origin)?;
 			<Self as ClearingHouse>::close_market(market_id, when)?;
 			Ok(())
 		}
@@ -1405,8 +1415,12 @@ pub mod pallet {
 			when: Self::Timestamp,
 		) -> Result<(), DispatchError> {
 			let mut market = Self::try_get_market(&market_id)?;
+			let now = T::UnixTime::now().as_secs();
+			ensure!(when > now, Error::<T>::CloseTimeMustBeAfterCurrentTime);
+
 			market.closed_ts = Some(when);
 			Markets::<T>::insert(&market_id, market);
+			Self::deposit_event(Event::<T>::CloseMarket { market_id, when });
 			Ok(())
 		}
 	}

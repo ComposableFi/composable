@@ -1,6 +1,6 @@
 use crate::{
 	mock::{
-		accounts::{ALICE, BOB},
+		accounts::ALICE,
 		runtime::{MarketId, Origin, Runtime, TestPallet, Vamm as VammPallet},
 	},
 	tests::{
@@ -11,8 +11,21 @@ use crate::{
 	Error,
 };
 use composable_traits::time::DurationSeconds;
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, error::BadOrigin};
 use proptest::prelude::*;
+
+// ----------------------------------------------------------------------------------------------------
+//                                             Unit Tests
+// ----------------------------------------------------------------------------------------------------
+
+#[test]
+fn only_root_can_close_market() {
+	with_market_context(Default::default(), Default::default(), |market_id| {
+		assert_noop!(TestPallet::close_market(Origin::signed(ALICE), market_id, 1), BadOrigin);
+
+		assert_ok!(TestPallet::close_market(Origin::root(), market_id, 1));
+	})
+}
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Prop Compose
@@ -47,11 +60,32 @@ prop_compose! {
 	}
 }
 
+prop_compose! {
+	fn time_a_before_time_b()(time_b in 1..=MAX_DURATION_SECONDS)(time_a in 0..time_b) -> (DurationSeconds, DurationSeconds) {
+		(time_a, time_a)
+	}
+}
+
 // --------------------------------------------------------------------------------------------------
 //                                         Property Tests
 // --------------------------------------------------------------------------------------------------
 
 proptest! {
+	#[test]
+	fn close_time_should_be_after_current_time(
+		(close_time, curr_time) in time_a_before_time_b()
+	) {
+		let config = MarketConfig::default();
+
+		with_market_context(ExtBuilder::default(), config, |market_id| {
+			run_to_time(curr_time);
+			assert_noop!(
+				TestPallet::close_market(Origin::root(), market_id, close_time),
+				Error::<Runtime>::CloseTimeMustBeAfterCurrentTime
+			);
+		})
+	}
+
 	#[test]
 	fn updates_market_state(time in any::<DurationSeconds>()) {
 		let config = MarketConfig::default();
@@ -59,7 +93,7 @@ proptest! {
 		with_market_context(ExtBuilder::default(), config, |market_id| {
 			let market_before = get_market(&market_id);
 
-			assert_ok!(TestPallet::close_market(Origin::signed(ALICE), market_id, time));
+			assert_ok!(TestPallet::close_market(Origin::root(), market_id, time));
 
 			let market_after = get_market(&market_id);
 
@@ -74,7 +108,7 @@ proptest! {
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
-			TestPallet::close_market(Origin::signed(ALICE), market_id, time),
+			TestPallet::close_market(Origin::root(), market_id, time),
 				Error::<Runtime>::MarketIdNotFound
 			);
 		});
@@ -100,7 +134,7 @@ proptest! {
 			));
 
 			// In the same block, market close is programmed to a future time
-			assert_ok!(TestPallet::close_market(Origin::signed(ALICE), market_id, market_time));
+			assert_ok!(TestPallet::close_market(Origin::root(), market_id, market_time));
 
 			// Time passes, but it's still earlier than the market close
 			run_to_time(position_time);
@@ -119,7 +153,7 @@ proptest! {
 
 		with_trading_context(config, collateral, |market_id| {
 			// First, market close is programmed to a future time
-			assert_ok!(TestPallet::close_market(Origin::signed(BOB), market_id, close_time));
+			assert_ok!(TestPallet::close_market(Origin::root(), market_id, close_time));
 
 			// Time passes, but it's still earlier than the market close
 			run_to_time(position_time);
@@ -157,7 +191,7 @@ proptest! {
 			));
 
 			// In the same block, market close is programmed to a future time
-			assert_ok!(TestPallet::close_market(Origin::signed(ALICE), market_id, market_time));
+			assert_ok!(TestPallet::close_market(Origin::root(), market_id, market_time));
 
 			// Time passes and now it's after the market close
 			run_to_time(position_time);
