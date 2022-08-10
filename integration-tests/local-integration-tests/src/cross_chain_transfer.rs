@@ -777,13 +777,15 @@ fn sibling_trap_assets_works() {
 	// TODO: create  foreign asset via factory
 	// TODO: set key for it to allow transfer
 	// TODO: parametrize test. ISSUE: how to solve DEX swap paying for transfer?
-	let sibling_non_native_amount =
-		assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
+
 	let some_native_amount = 1_000_000_000;
 	let this_liveness_native_amount = enough_weight();
 	let this_native_asset = CurrencyId::PICA;
 
-	let this_native_treasury_amount = This::execute_with(|| {
+	let (this_native_treasury_amount, sibling_non_native_amount) = This::execute_with(|| {
+		let sibling_non_native_amount =
+		assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
+
 		assert_ok!(Assets::deposit(any_asset, &sibling_account(), sibling_non_native_amount));
 		let _ =
 			<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
@@ -813,7 +815,7 @@ fn sibling_trap_assets_works() {
 			Ratio::checked_from_integer::<u128>(1),
 			None
 		));
-		balance
+		(balance, sibling_non_native_amount)
 	});
 
 	// buy execution via native token, and try withdraw on this some amount

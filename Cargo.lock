@@ -2707,6 +2707,7 @@ dependencies = [
  "orml-xtokens",
  "pablo-runtime-api",
  "pallet-account-proxy",
+ "pallet-asset-tx-payment",
  "pallet-assets 0.0.1",
  "pallet-assets-registry",
  "pallet-aura",

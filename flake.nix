@@ -154,7 +154,17 @@
               "runtime-tests"
               "composablejs"
             ];
-            file-blacklist = [ "flake.nix" "flake.lock" ];
+            file-blacklist = [ 
+              # does not makes sence to black list,
+              # if we changed some version of tooling(seldom), we want to rebuild
+              # so if we changed version of tooling, nix itself will detect invalidation and rebuild
+              # "flake.lock"
+              
+              # assumption that nix is final builder, 
+              # so there would not  .*.nix <- build.rs <- *.nix for example
+              # and if *.nix changed, nix itself will detect only relevant cache invalidations 
+              "*.nix"
+              ];
           in lib.cleanSourceWith {
             filter = lib.cleanSourceFilter;
             src = lib.cleanSourceWith {
@@ -233,7 +243,7 @@
             };
 
           devcontainer-base-image =
-            callPackage ./.nix/devcontainer-base-image.nix { inherit system; };
+            callPackage ./.devcontainer/devcontainer-base-image.nix { inherit system; };
 
           dali-runtime = mk-optimized-runtime {
             name = "dali";
@@ -452,30 +462,25 @@
               '';
             };
 
-            # TODO: inherit and provide script to run all stuff
-            # devnet-container-xcvm
-            # NOTE: The devcontainer is currently broken for aarch64.
-            # Please use the developers devShell instead
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
               # be very carefull with this, so this must be version compatible with base and what vscode will inject
               contents = [
-                rust-nightly
+                #rust-nightly
                 cachix
                 rustup # just if it wants to make ad hoc updates
-                nix
-                helix
+                #helix
                 clang
-                nodejs
-                cmake
-                nixpkgs-fmt
-                yarn
-                bottom
-                mdbook
-                taplo
-                go
-                libclang
+                #nodejs
+                #cmake
+                #nixpkgs-fmt
+                #yarn
+                #bottom
+                #mdbook
+                #taplo
+                #go
+                #libclang
                 gcc
                 openssl
                 gnumake
