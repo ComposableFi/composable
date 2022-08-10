@@ -965,7 +965,6 @@ fn update_rewards_pool<T: Config>(
 
 		for (asset_id, update) in reward_updates {
 			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
-
 			let new_reward = match reward_accumulation_calculation::<T>(reward.clone(), now_seconds)
 			{
 				Ok(reward) => reward,
