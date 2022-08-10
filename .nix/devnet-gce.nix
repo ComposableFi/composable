@@ -40,7 +40,7 @@ in {
       serviceConfig = {
         Type = "simple";
         User = "root";
-        ExecStart = "${devnet.script}/bin/run-devnet-${devnet.chain-spec}";
+        ExecStart = "${devnet.script}";
         Restart = "always";
         RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
       };

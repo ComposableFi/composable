@@ -276,13 +276,10 @@
               parachain-nodes = builtins.map (parachain: parachain.nodes)
                 patched-config.parachains;
               relaychain-nodes = patched-config.relaychain.nodes;
-              script = writeShellApplication {
-                name = "run-devnet-${chain-spec}";
-                text = ''
-                  rm -rf /tmp/polkadot-launch
-                  ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
-                '';
-              };
+              script = writeShellScript "run-devnet-${chain-spec}" ''
+                rm -rf /tmp/polkadot-launch
+                ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
+              '';
             };
 
         in rec {
@@ -389,10 +386,7 @@
                 packages.devnet-dali.script
                 packages.polkadot-launch
               ] ++ container-tools;
-              config = {
-                Cmd =
-                  [ "${packages.devnet-dali.script}/bin/composable-devnet" ];
-              };
+              config = { Cmd = [ "${packages.devnet-dali.script}" ]; };
             };
 
             # TODO: inherit and provide script to run all stuff
@@ -520,12 +514,11 @@
           apps = rec {
             devnet-dali = {
               type = "app";
-              program = "${packages.devnet-dali.script}/bin/composable-devnet-dali-dev";
+              program = "${packages.devnet-dali.script}";
             };
             devnet-picasso = {
               type = "app";
-              program =
-                "${packages.devnet-picasso.script}/bin/composable-devnet-picasso-dev";
+              program = "${packages.devnet-picasso.script}";
             };
             price-feed = {
               type = "app";
