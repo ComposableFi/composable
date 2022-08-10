@@ -2,7 +2,7 @@
 # https://github.com/numtide/flake-utils/blob/master/default.nix
 system:
 let
-  supported-nix-to-container-images = {
+  base-images = {
     # NOTE: we peeky container version to make these work version compatible with nix and native packaging/scripts
     x86_64-linux = {
       arch = "amd64";
@@ -22,7 +22,7 @@ let
       sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
     };
   };
-in if builtins.hasAttr system supported-nix-to-container-images then
-  supported-nix-to-container-images.${system}
+in if builtins.hasAttr system base-images then
+  base-images.${system}
 else
-  supported-nix-to-container-images.x86_64-linux
+  base-images.x86_64-linux

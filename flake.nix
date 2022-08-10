@@ -198,8 +198,8 @@
 
           gce-input = gce-to-nix service-account-credential-key-file-input;
 
-          codespace-base-container =
-            pkgs.callPackage ./.nix/codespace-base-container.nix {
+          devcontainer-base-image =
+            pkgs.callPackage ./.nix/devcontainer-base-image.nix {
               inherit system;
             };
 
@@ -391,9 +391,9 @@
 
             # TODO: inherit and provide script to run all stuff
             # devnet-container-xcvm
-            codespace-container = dockerTools.buildLayeredImage {
-              name = "composable-codespace";
-              fromImage = codespace-base-container;
+            devcontainer = dockerTools.buildLayeredImage {
+              name = "composable-devcontainer";
+              fromImage = devcontainer-base-image;
               # be very carefull with this, so this must be version compatible with base and what vscode will inject
               contents = [
                 # ISSUE: for some reason stable overrides nighly, need to set different order somehow
@@ -412,13 +412,13 @@
                 bottom
                 packages.mdbook
                 packages.taplo
+                go
+                libclang 
+                gcc 
+                openssl
+                gnumake
+                pkg-config
               ];
-            };
-
-            codespace-container-xcvm = dockerTools.buildLayeredImage {
-              name = "composable-codespace-xcvm";
-              fromImage = codespace-container;
-              contents = [ go ];
             };
 
             default = packages.composable-node;

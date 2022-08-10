@@ -4,8 +4,8 @@
 		"dockerfile": "Dockerfile"
 	},
 	"hostRequirements": {
-		"memory": "32gb",
-		"cpus": 16
+		"memory": "20gb",
+		"cpus": 8
 	},
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
