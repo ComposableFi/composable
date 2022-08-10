@@ -58,7 +58,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
-		vesting::{VestedTransfer, VestingScheduleInput, VestingWindow::BlockNumberBased},
+		vesting::{VestedTransfer, VestingScheduleInfo, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -360,7 +360,7 @@ pub mod pallet {
 							offer.reward.asset,
 							&offer_account,
 							from,
-							VestingScheduleInput {
+							VestingScheduleInfo {
 								window: BlockNumberBased {
 									start: current_block,
 									period: offer.reward.maturity,
@@ -376,7 +376,7 @@ pub mod pallet {
 									offer.asset,
 									&offer.beneficiary,
 									from,
-									VestingScheduleInput {
+									VestingScheduleInfo {
 										window: BlockNumberBased {
 											start: current_block,
 											period: return_in,
