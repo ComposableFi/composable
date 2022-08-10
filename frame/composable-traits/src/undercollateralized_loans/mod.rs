@@ -31,7 +31,7 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	>;
 
 	fn create_loan(
-		input: LoanInput<Self::AccountId, Self::Balance>,
+		input: LoanInput<Self::AccountId, Self::Balance, Self::Timestamp>,
 	) -> Result<
 		LoanConfig<Self::AccountId, Self::MayBeAssetId, Self::Balance, Self::Timestamp>,
 		DispatchError,

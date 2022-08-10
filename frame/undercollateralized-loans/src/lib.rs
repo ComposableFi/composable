@@ -47,14 +47,9 @@ pub mod impls;
 pub mod types;
 pub mod validation;
 
-const TIMESTAMP_STRING_FORMAT: &str = "%d-%m-%Y";
-
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::types::{
-		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, Timestamp,
-	};
-	use chrono::{NaiveDateTime, NaiveTime, Utc};
+	use crate::types::{LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, Timestamp};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
@@ -265,7 +260,6 @@ pub mod pallet {
 		ThereIsNoSuchMomentInTheLoanPaymentSchedule,
 	}
 
-
 	#[pallet::genesis_config]
 	#[derive(Default)]
 	pub struct GenesisConfig {}
@@ -304,15 +298,15 @@ pub mod pallet {
 		// TODO: @mikolaichuk: add weights calculation
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
 			Self::treat_vaults_balance(block_number);
-            let now = Self::now();
+			let now = Self::now();
 			let stored_current_day_timestamp = CurrentDateStorage::<T>::get();
 			// Check if date is changed.
-            let stored_date = Self::date_from_timestamp(stored_current_day_timestamp);
-            let date = Self::date_from_timestamp(now);
+			let stored_date = Self::date_from_timestamp(stored_current_day_timestamp);
+			let date = Self::date_from_timestamp(now);
 			if stored_date < date {
-			    let current_date_aligned_timestamp = Self::get_date_aligned_timestamp(now);
-                CurrentDateStorage::<T>::put(current_date_aligned_timestamp);	
-                Self::check_payments(current_date_aligned_timestamp);
+				let current_date_aligned_timestamp = Self::get_date_aligned_timestamp(now);
+				CurrentDateStorage::<T>::put(current_date_aligned_timestamp);
+				Self::check_payments(current_date_aligned_timestamp);
 				// Terminate loans which were not activated by borrower before first payment date
 				// once a day.
 				Self::terminate_non_activated_expired_loans(current_date_aligned_timestamp);

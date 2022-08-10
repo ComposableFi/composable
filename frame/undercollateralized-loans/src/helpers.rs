@@ -102,13 +102,17 @@ impl<T: Config> Pallet<T> {
 		input: Validated<LoanInputOf<T>, LoanInputIsValid<crate::Pallet<T>>>,
 	) -> Result<LoanConfigOf<T>, DispatchError> {
 		let config_input = input.value();
-		// Convert schedule timestamps from string to seconds have passed from the beginning of UNIX
-		// epoche.
-		let schedule = Self::convert_schedule_timestamps(&config_input.payment_schedule);
 		// Get market config. Unwrapped since we have checked market existence during input
 		// validation process.
 		let market_config =
 			Self::get_market_config_via_account_id(&config_input.market_account_id)?;
+		// Align schedule timstamps to the beginign of the day.
+		// 24.08.1991 08:45:03 -> 24.08.1991 00:00:00
+		let schedule = config_input
+			.payment_schedule
+			.into_iter()
+			.map(|(timestamp, balance)| (Self::get_date_aligned_timestamp(timestamp), balance))
+			.collect();
 		// Create non-activated loan and increment loans' counter.
 		// This loan have to be activated by borrower further.
 		crate::LoansCounterStorage::<T>::try_mutate(|counter| {
@@ -151,8 +155,8 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::ThisUserIsNotAllowedToExecuteThisContract
 		);
 		// Check if borrower tries to activate expired loan.
-	    // Need this check since we remove expired loans only once a day.	
-        let today = Self::current_date();
+		// Need this check since we remove expired loans only once a day.
+		let today = Self::current_date();
 		let first_payment_date = Self::date_from_timestamp(*loan_config.first_payment_moment());
 		// Loan should be activated before the first payment date.
 		if today >= first_payment_date {
@@ -433,8 +437,8 @@ impl<T: Config> Pallet<T> {
 	pub(crate) fn now() -> Timestamp {
 		T::UnixTime::now().as_secs() as Timestamp
 	}
-	
-    // #generalization
+
+	// #generalization
 	pub(crate) fn get_market_info_via_account_id(
 		market_account_id_ref: &T::AccountId,
 	) -> Result<MarketInfoOf<T>, crate::Error<T>> {
@@ -456,24 +460,6 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| crate::Error::<T>::ThereIsNoSuchLoan)
 	}
 
-	// Convert timestamps from strings to seconds have passed from 01.01.1970.
-	pub(crate) fn convert_schedule_timestamps(
-		schedule: &Vec<(String, T::Balance)>,
-	) -> Vec<(Timestamp, T::Balance)> {
-		let mut schedule_with_converted_timestamps = vec![];
-		for (timestamp, payment_amount) in schedule {
-			schedule_with_converted_timestamps.push((
-				NaiveDate::parse_from_str(&timestamp, crate::TIMESTAMP_STRING_FORMAT)
-                    // Unwrapped since timestamps' format 
-                    .expect("This method never panics.")
-					.and_time(NaiveTime::default())
-					.timestamp(),
-				*payment_amount,
-			));
-		}
-	    schedule_with_converted_timestamps	
-	}
-
 	// Removes expired non-activated loans.
 	// Expired non-activated loans are loans which were not activated by borrower before first
 	// payment date.
@@ -485,9 +471,9 @@ impl<T: Config> Pallet<T> {
 			if let Ok(loan_config) =
 				Self::get_loan_config_via_account_id(&non_active_loan_account_id)
 			{
-			    // If current date is larger then the loan first payment date, then this loan is
-                // expired.	
-                if today >= *loan_config.first_payment_moment() {
+				// If current date is larger then the loan first payment date, then this loan is
+				// expired.
+				if today >= *loan_config.first_payment_moment() {
 					crate::LoansStorage::<T>::remove(non_active_loan_account_id.clone());
 				}
 				removed_non_active_accounts_ids.push(non_active_loan_account_id);
@@ -526,19 +512,18 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn current_day_timestamp() -> Timestamp {
-	    crate::CurrentDateStorage::<T>::get()
+		crate::CurrentDateStorage::<T>::get()
 	}
 
-    pub(crate) fn current_date() -> NaiveDate {
-	    Self::date_from_timestamp(Self::current_day_timestamp()) 
+	pub(crate) fn current_date() -> NaiveDate {
+		Self::date_from_timestamp(Self::current_day_timestamp())
 	}
 
-    pub(crate) fn date_from_timestamp(timestamp: Timestamp) -> NaiveDate {
-        NaiveDateTime::from_timestamp(timestamp, 0).date()
-    }
+	pub(crate) fn date_from_timestamp(timestamp: Timestamp) -> NaiveDate {
+		NaiveDateTime::from_timestamp(timestamp, 0).date()
+	}
 
-    pub(crate) fn get_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
-        Self::date_from_timestamp(timestamp).and_time(NaiveTime::default()).timestamp()
-    }
-
+	pub(crate) fn get_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
+		Self::date_from_timestamp(timestamp).and_time(NaiveTime::default()).timestamp()
+	}
 }

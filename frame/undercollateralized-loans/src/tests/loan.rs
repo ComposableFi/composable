@@ -1,4 +1,4 @@
-use super::{create_test_loan, create_test_market, prelude::*};
+use super::{create_test_loan, create_test_market, parse_timestamp, prelude::*};
 use crate::currency::BTC;
 use composable_traits::undercollateralized_loans::LoanInput;
 
@@ -15,7 +15,7 @@ fn can_create_loan() {
 			borrower_account_id: *BOB,
 			principal: 1000,
 			collateral: 5,
-			payment_schedule: vec![("24-08-1991".to_string(), 100)],
+			payment_schedule: vec![(parse_timestamp("24-08-1991"), 100)],
 		};
 		assert_ok!(pallet_undercollateralized_loans::Pallet::<Runtime>::create_loan(
 			origin, loan_input

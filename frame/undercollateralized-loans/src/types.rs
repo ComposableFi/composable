@@ -24,8 +24,11 @@ pub(crate) type MarketInputOf<T> = MarketInput<
 	<T as Config>::LiquidationStrategyId,
 >;
 
-pub(crate) type LoanInputOf<T> =
-	LoanInput<<T as frame_system::Config>::AccountId, <T as DeFiComposableConfig>::Balance>;
+pub(crate) type LoanInputOf<T> = LoanInput<
+	<T as frame_system::Config>::AccountId,
+	<T as DeFiComposableConfig>::Balance,
+	Timestamp,
+>;
 
 pub(crate) type MarketInfoOf<T> = MarketInfo<
 	<T as frame_system::Config>::AccountId,

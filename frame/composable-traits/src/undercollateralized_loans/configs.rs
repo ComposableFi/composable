@@ -285,7 +285,7 @@ impl<AccountId, AssetId: Copy, BlockNumber, LiquidationStrategyId>
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
-pub struct LoanInput<AccountId, Balance> {
+pub struct LoanInput<AccountId, Balance, Timestamp> {
 	/// Loan belongs to this market.
 	pub market_account_id: AccountId,
 	/// This account id have to be whitelisted.
@@ -295,5 +295,5 @@ pub struct LoanInput<AccountId, Balance> {
 	/// Amount of assets which should be deposited as collateral.
 	pub collateral: Balance,
 	/// How often borrowers have to pay interest.
-	pub payment_schedule: Vec<(String, Balance)>,
+	pub payment_schedule: Vec<(Timestamp, Balance)>,
 }

@@ -3,7 +3,7 @@ use crate::{
 	mocks::{general as runtime, general::*},
 	types::{LoanConfigOf, MarketInfoOf, MarketInputOf},
 };
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, DeFiEngine, MoreThanOneFixedU128, Rate},
@@ -95,6 +95,13 @@ pub fn create_test_market() -> MarketInfoOf<Runtime> {
 	info
 }
 
+pub fn parse_timestamp(string: &str) -> crate::types::Timestamp {
+	NaiveDate::parse_from_str(string, "%d-%m-%Y")
+		.unwrap()
+		.and_time(NaiveTime::default())
+		.timestamp()
+}
+
 pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 	let market_info = create_test_market();
 	let market_account_id = market_info.config().account_id().clone();
@@ -104,9 +111,9 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 		principal: 1000,
 		collateral: 5,
 		payment_schedule: vec![
-			("01-01-2222".to_string(), 100),
-			("01-02-2222".to_string(), 100),
-			("01-03-2222".to_string(), 100),
+			(parse_timestamp("01-01-2222"), 100),
+			(parse_timestamp("01-02-2222"), 100),
+			(parse_timestamp("01-03-2222"), 100),
 		],
 	};
 	crate::Pallet::<Runtime>::do_create_loan(loan_input.try_into_validated().unwrap()).unwrap()
