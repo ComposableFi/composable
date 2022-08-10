@@ -1,7 +1,7 @@
 { pkgs ? import <nixpkgs>, system ? builtins.defaultSystem}:
 with pkgs;
 let 
-   nix-to-container-image = import ../../.nix/nix-to-container-image.nix;
+   nix-to-container-image = import ./devcontainer-base-images.nix;
 in  
 # image which will be base for remote development
 # we do not start from nixos:

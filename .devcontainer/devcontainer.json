@@ -1,5 +1,5 @@
 {
-	"name": "Rust",
+	"name": "Composable Devcontainer",
 	"build": {
 		"dockerfile": "Dockerfile"
 	},

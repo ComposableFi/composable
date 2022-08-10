@@ -199,7 +199,7 @@
           gce-input = gce-to-nix service-account-credential-key-file-input;
 
           codespace-base-container =
-            pkgs.callPackage ./.devcontainer/nix/codespace-base-container.nix {
+            pkgs.callPackage ./.nix/codespace-base-container.nix {
               inherit system;
             };
 
@@ -402,7 +402,13 @@
                 cachix
                 rust-analyzer
                 rustup # just if it wants to make ad hoc updates
+                nix
+                helix
+                clang
                 nodejs
+                cmake
+                nixpkgs-fmt
+                yarn
                 bottom
                 packages.mdbook
                 packages.taplo
