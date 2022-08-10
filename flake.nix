@@ -520,12 +520,12 @@
           apps = rec {
             devnet-dali = {
               type = "app";
-              program = "${packages.devnet-dali.script}/bin/composable-devnet";
+              program = "${packages.devnet-dali.script}/bin/composable-devnet-dali-dev";
             };
             devnet-picasso = {
               type = "app";
               program =
-                "${packages.devnet-picasso.script}/bin/composable-devnet";
+                "${packages.devnet-picasso.script}/bin/composable-devnet-picasso-dev";
             };
             price-feed = {
               type = "app";
