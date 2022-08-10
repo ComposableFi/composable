@@ -8525,7 +8525,7 @@ dependencies = [
  "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=17a791edf431d7d7aee1ea3dfaeeb7bc21944301)",
  "pallet-balances",
  "pallet-vault",
- "parity-scale-codec 2.3.1",
+ "parity-scale-codec 3.1.2",
  "proptest 0.9.6",
  "scale-info 1.0.0",
  "serde",
