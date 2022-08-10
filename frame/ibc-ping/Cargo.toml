@@ -21,13 +21,13 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "2e8d5b4f823b7e7d8e5f03d91d22593a59be8f33", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "1f1f06b0dab92802f64f97b77380c800899a2be7", default-features = false }
 ibc-primitives = { path = "../ibc/ibc-primitives", default-features = false }
 ibc-trait = { path = "../ibc/ibc-trait", default-features = false }
 
 [dev-dependencies]
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "2e8d5b4f823b7e7d8e5f03d91d22593a59be8f33", features = [
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "1f1f06b0dab92802f64f97b77380c800899a2be7", features = [
   "mocks",
 ] }
 pallet-ibc = { path = "../ibc" }

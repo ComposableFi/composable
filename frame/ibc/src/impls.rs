@@ -824,11 +824,7 @@ where
 		let event = IbcEvent::WriteAcknowledgement {
 			revision_height: host_height.revision_height,
 			revision_number: host_height.revision_number,
-			port_id: packet.source_port.as_bytes().to_vec(),
-			channel_id: packet.source_channel.to_string().as_bytes().to_vec(),
-			dest_port: packet.destination_port.as_bytes().to_vec(),
-			dest_channel: packet.destination_channel.to_string().as_bytes().to_vec(),
-			sequence: packet.sequence.into(),
+			packet: packet.clone().into(),
 		};
 		Self::deposit_event(Event::<T>::Events { events: vec![event] });
 		Ok(())
