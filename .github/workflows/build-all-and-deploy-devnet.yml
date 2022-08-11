@@ -235,25 +235,14 @@ jobs:
           source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH" 
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}         
   
-      - name: Prepare a test environment
-        run: |
-          # TODO: use nix
-          cd integration-tests/runtime-tests
-          curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
-          chmod +x ./docker-compose
-
-          tag=$(git rev-parse --short=9 HEAD)
-
-          sed -ri "s/\\$\\{TAG\\}/$tag/" docker-compose-ci.yml
-          echo "composablefi/devnet-container:$tag will be used"
-          ./docker-compose -f docker-compose-ci.yml up -d
 
       - name: Wait when the node will be started
         timeout-minutes: 5
         run: |
+          ( nix run .#devnet 2>&1 & ) | tee logfile.log &
+          ( tail --follow --lines=0  logfile.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
           cd integration-tests/runtime-tests
           echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
-          time ../../scripts/wait_for_polkadot_launch.sh
 
       - name: Run tests
         run: |
