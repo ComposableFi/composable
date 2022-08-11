@@ -3,7 +3,7 @@
   description =
     "Composable Finance Local Networks Lancher and documentation Book";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils = {
       url = "github:numtide/flake-utils";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -11,36 +11,73 @@
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
-      # different version (we likely have old and conflicts)
-      # inputs.flake-utils.follows = "flake-utils";
+      inputs.flake-utils.follows = "flake-utils";
     };
     crane = {
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
-    # NOTE: gives weird error
-    # nixops-flake = {
-    #   url = "github:NixOS/nixops?rev=35ac02085169bc2372834d6be6cf4c1bdf820d09";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    #   inputs.utils.follows = "flake-utils";
-    # };
   };
-  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, # nixpkgs-fmt,
-    #, nixops-flake
-    }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay }:
     let
+      # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
+      # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
+      service-account-credential-key-file-input =
+        builtins.fromJSON (builtins.readFile ./devnet/ops.json);
+
+      gce-to-nix = { project_id, client_email, private_key }: {
+        project = project_id;
+        serviceAccount = client_email;
+        accessKey = private_key;
+      };
+
+      gce-input = gce-to-nix service-account-credential-key-file-input;
+
+      mk-devnet = { lib, writeTextFile, writeShellApplication, polkadot-launch
+        , composable-node, polkadot-node, chain-spec }:
+        let
+          original-config = import ./scripts/polkadot-launch/composable.nix;
+          patched-config = lib.recursiveUpdate original-config {
+            relaychain = { bin = "${polkadot-node}/bin/polkadot"; };
+            parachains = builtins.map (parachain:
+              parachain // {
+                bin = "${composable-node}/bin/composable";
+                chain = "${chain-spec}";
+              }) original-config.parachains;
+          };
+          config = writeTextFile {
+            name = "devnet-${chain-spec}-config.json";
+            text = builtins.toJSON patched-config;
+          };
+        in {
+          inherit chain-spec;
+          parachain-nodes = builtins.concatMap (parachain: parachain.nodes)
+            patched-config.parachains;
+          relaychain-nodes = patched-config.relaychain.nodes;
+          script = writeShellApplication {
+            name = "run-devnet-${chain-spec}";
+            text = ''
+              rm -rf /tmp/polkadot-launch
+              ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
+            '';
+          };
+        };
+
       eachSystemOutputs = flake-utils.lib.eachDefaultSystem (system:
         let
           pkgs = import nixpkgs {
             inherit system;
             overlays = [ rust-overlay.overlays.default ];
             allowUnsupportedSystem = true; # we do not tirgger this on mac
-            permittedInsecurePackages = [
-              "openjdk-headless-16+36" # something depends on it
-            ];
+            config = {
+              permittedInsecurePackages = [
+                "openjdk-headless-16+36"
+                "openjdk-headless-15.0.1-ga"
+              ];
+            };
           };
-          nixops = pkgs.callPackage ./.nix/nixops.nix { };
-          overlays = [ (import rust-overlay) ];
+          overlays = [ rust-overlay.overlay ];
           rust-toolchain = import ./.nix/rust-toolchain.nix;
         in with pkgs;
         let
@@ -185,21 +222,8 @@
               '';
             };
 
-          # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
-          # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
-          service-account-credential-key-file-input =
-            builtins.fromJSON (builtins.readFile ./devnet/ops.json);
-
-          gce-to-nix = file: {
-            project = file.project_id;
-            serviceAccount = file.client_email;
-            accessKey = file.private_key;
-          };
-
-          gce-input = gce-to-nix service-account-credential-key-file-input;
-
           devcontainer-base-image =
-            pkgs.callPackage ./.nix/devcontainer-base-image.nix {
+            callPackage ./.nix/devcontainer-base-image.nix {
               inherit system;
             };
 
@@ -241,7 +265,7 @@
             });
 
           run-with-benchmarks = chain:
-            pkgs.writeShellScriptBin "run-benchmarks-once" ''
+            writeShellScriptBin "run-benchmarks-once" ''
               ${composable-node-with-benchmarks}/bin/composable benchmark pallet \
                 --chain="${chain}" \
                 --execution=wasm \
@@ -255,43 +279,7 @@
                 --log error
             '';
 
-          mk-devnet =
-            { polkadot-launch, composable-node, polkadot-node, chain-spec }:
-            let
-              original-config = import ./scripts/polkadot-launch/composable.nix;
-              patched-config = lib.recursiveUpdate original-config {
-                relaychain = { bin = "${polkadot-node}/bin/polkadot"; };
-                parachains = builtins.map (parachain:
-                  parachain // {
-                    bin = "${composable-node}/bin/composable";
-                    chain = "${chain-spec}";
-                  }) original-config.parachains;
-              };
-              config = writeTextFile {
-                name = "devnet-${chain-spec}-config.json";
-                text = builtins.toJSON patched-config;
-              };
-            in {
-              inherit chain-spec;
-              parachain-nodes = builtins.map (parachain: parachain.nodes)
-                patched-config.parachains;
-              relaychain-nodes = patched-config.relaychain.nodes;
-              script = writeShellScript "run-devnet-${chain-spec}" ''
-                rm -rf /tmp/polkadot-launch
-                ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
-              '';
-            };
-
         in rec {
-          nixopsConfigurations = {
-            default = (pkgs.callPackage ./.nix/devnet.nix {
-              inherit nixpkgs;
-              inherit gce-input;
-              inherit (packages) devnet-dali devnet-picasso;
-              book = packages.composable-book;
-            });
-          };
-
           packages = rec {
             inherit wasm-optimizer;
             inherit common-deps;
@@ -318,14 +306,13 @@
               cargoBuildCommand = "cargo build --release -p price-feed";
             });
 
-            taplo = pkgs.callPackage ./.nix/taplo.nix { inherit crane-stable; };
+            taplo = callPackage ./.nix/taplo.nix { inherit crane-stable; };
 
-            mdbook =
-              pkgs.callPackage ./.nix/mdbook.nix { inherit crane-stable; };
+            mdbook = callPackage ./.nix/mdbook.nix { inherit crane-stable; };
 
             composable-book = import ./book/default.nix {
               crane = crane-stable;
-              inherit (pkgs) cargo stdenv;
+              inherit cargo stdenv;
               inherit mdbook;
             };
 
@@ -337,7 +324,7 @@
               __noChroot = true;
               name = "polkadot-v${version}";
               version = "0.9.24";
-              src = pkgs.fetchFromGitHub {
+              src = fetchFromGitHub {
                 repo = "polkadot";
                 owner = "paritytech";
                 rev = "v${version}";
@@ -363,30 +350,27 @@
             };
 
             polkadot-launch =
-              pkgs.callPackage ./scripts/polkadot-launch/polkadot-launch.nix
-              { };
+              callPackage ./scripts/polkadot-launch/polkadot-launch.nix { };
 
             # Dali devnet
-            devnet-dali = mk-devnet {
+            devnet-dali = (callPackage mk-devnet {
               inherit (packages) polkadot-launch composable-node polkadot-node;
               chain-spec = "dali-dev";
-            };
+            }).script;
 
             # Picasso devnet
-            devnet-picasso = mk-devnet {
+            devnet-picasso = (callPackage mk-devnet {
               inherit (packages) polkadot-launch composable-node polkadot-node;
               chain-spec = "picasso-dev";
-            };
+            }).script;
 
             # Dali devnet container
             devnet-container = dockerTools.buildLayeredImage {
               name = "composable-devnet-container";
-              contents = [
-                # just allow to bash into it and run with custom entries
-                packages.devnet-dali.script
-                packages.polkadot-launch
-              ] ++ container-tools;
-              config = { Cmd = [ "${packages.devnet-dali.script}" ]; };
+              contents = container-tools;
+              config = {
+                Cmd = [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+              };
             };
 
             # TODO: inherit and provide script to run all stuff
@@ -413,8 +397,8 @@
                 packages.mdbook
                 packages.taplo
                 go
-                libclang 
-                gcc 
+                libclang
+                gcc
                 openssl
                 gnumake
                 pkg-config
@@ -477,12 +461,10 @@
                 python3
                 nodejs
                 nixpkgs-fmt
-                nixops
                 jq
                 google-cloud-sdk # devs can list container images or binary releases
               ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
-              HISTFILE = toString ./.history;
             };
 
             technical-writers = mkShell {
@@ -496,8 +478,10 @@
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
-            sre = developers.overrideAttrs
-              (oldAttrs: rec { buildInputs = oldAttrs.buildInputs ++ [ ]; });
+            sre = mkShell {
+              buildInputs = [ nixopsUnstable ];
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            };
 
             # developers-xcvm = developers // mkShell {
             #   buildInputs = with packages; [
@@ -520,11 +504,12 @@
           apps = rec {
             devnet-dali = {
               type = "app";
-              program = "${packages.devnet-dali.script}";
+              program = "${packages.devnet-dali}/bin/run-devnet-dali-dev";
             };
             devnet-picasso = {
               type = "app";
-              program = "${packages.devnet-picasso.script}";
+              program =
+                "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
             };
             price-feed = {
               type = "app";
@@ -549,13 +534,26 @@
             };
             default = devnet-dali;
           };
+
         });
     in eachSystemOutputs // {
       nixopsConfigurations = {
-        # instead of rerusive merge, just do simpler
-        x86_64-linux.default =
-          eachSystemOutputs.nixopsConfigurations.x86_64-linux.default;
-        default = eachSystemOutputs.nixopsConfigurations.x86_64-linux.default;
+        default = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        in import ./.nix/devnet.nix {
+          inherit nixpkgs;
+          inherit gce-input;
+          devnet-dali = pkgs.callPackage mk-devnet {
+            inherit (eachSystemOutputs.packages.x86_64-linux)
+              polkadot-launch composable-node polkadot-node;
+            chain-spec = "dali-dev";
+          };
+          devnet-picasso = pkgs.callPackage mk-devnet {
+            inherit (eachSystemOutputs.packages.x86_64-linux)
+              polkadot-launch composable-node polkadot-node;
+            chain-spec = "picasso-dev";
+          };
+          book = eachSystemOutputs.packages.x86_64-linux.composable-book;
+        };
       };
     };
 }

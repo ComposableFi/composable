@@ -105,7 +105,6 @@ jobs:
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node --no-update-lock-file
 
   package-polkadot-node:
-    needs: common-deps
     runs-on:
       - self-hosted
       - linux
