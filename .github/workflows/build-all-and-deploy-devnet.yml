@@ -220,6 +220,8 @@ jobs:
       name: "Devnet integration tests"
       needs: devnet-container
       runs-on: ubuntu-latest
+      container:
+        image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee      
       concurrency:
         group: runtime-tests-${{ github.ref }}
         cancel-in-progress: true
@@ -227,16 +229,19 @@ jobs:
       - uses: actions/checkout@v3
         with:
           clean: false
-          fetch-depth: 0                 
-      - name: Build & Push
-        run: |
-          chmod +x ./nix-install-vscode-composable.sh
-          ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
-          source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH" 
-          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}         
-          nix-env -iA nixpkgs.nodejs 
-  
-
+          fetch-depth: 0  
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx nixpkgs.nodejs
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{  env.NIX_CACHIX }}
+              
       - name: Wait when the node will be started
         timeout-minutes: 5
         run: |
