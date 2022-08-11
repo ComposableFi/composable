@@ -236,8 +236,9 @@ jobs:
           nix-env -iA nixpkgs.nodejs
           nix --version
           ( nix run .#devnet 2>&1 & ) | tee logfile.log &
-          ( tail --follow --lines=0  logfile.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
-          cd integration-tests/runtime-tests
+          timeout 300 bash -c '( tail --follow --lines=0  logfile.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"'
+          EXITCODE=$?
+          test $EXITCODE -eq 0 && echo "started" || exit $EXITCODE
           echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
           cd integration-tests/runtime-tests
           chmod +x ./dockerRun.sh
