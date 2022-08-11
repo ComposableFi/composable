@@ -272,10 +272,10 @@ jobs:
           then
             gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
           else
-            nix develop .#sre --override-input flake-utils ./.nix/override-input/flake-utils/  --show-trace --command nixops create --deployment devnet-gce
+            nix develop .#sre  --show-trace --command nixops create --deployment devnet-gce --show-trace
           fi
 
-          nix develop .#sre --show-trace --override-input flake-utils ./.nix/override-input/flake-utils/ --command nixops deploy --check --confirm --deployment devnet-gce --debug --show-trace
+          nix develop .#sre --show-trace --command nixops deploy --check --confirm --deployment devnet-gce --debug --show-trace
 
           # TODO: document what happens if Deploy passed, but Store was stopped - how stat reconciled
           # TODO: consider running state save in same step as it is unseparable from deploy
