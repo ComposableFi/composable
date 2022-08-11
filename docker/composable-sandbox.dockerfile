@@ -1,4 +1,4 @@
-FROM composablefi/ci-linux:2022-04-18 as builder
+FROM composablefi/ci-linux:2022-07-29 as builder
 
 COPY . /build
 WORKDIR /build
