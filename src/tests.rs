@@ -1,4 +1,3 @@
-use crate::BeefyLightClient;
 use beefy_client_primitives::{
     error::BeefyClientError, MmrUpdateProof, ParachainsUpdateProof, SignatureWithAuthorityIndex,
     SignedCommitment,
@@ -6,7 +5,7 @@ use beefy_client_primitives::{
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::{BeefyNextAuthoritySet, MmrLeaf};
 use beefy_primitives::Payload;
-use beefy_queries::{ClientWrapper, Crypto};
+use beefy_prover::{ClientWrapper, Crypto};
 use futures::stream::StreamExt;
 use pallet_mmr_primitives::Proof;
 use sp_core::bytes::to_hex;
@@ -14,7 +13,6 @@ use subxt::rpc::{rpc_params, JsonValue, Subscription, SubscriptionClientT};
 
 #[tokio::test]
 async fn test_verify_mmr_with_proof() {
-    let mut beef_light_client = BeefyLightClient::<Crypto>::new();
     let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
     let client = subxt::ClientBuilder::new()
         .set_url(url)
@@ -79,9 +77,9 @@ async fn test_verify_mmr_with_proof() {
             .await
             .unwrap();
 
-        client_state = beef_light_client
-            .verify_mmr_root_with_proof(client_state.clone(), mmr_update.clone())
-            .unwrap();
+        client_state =
+            crate::verify_mmr_root_with_proof::<Crypto>(client_state.clone(), mmr_update.clone())
+                .unwrap();
 
         let mmr_root_hash = signed_commitment
             .commitment
@@ -111,7 +109,6 @@ async fn test_verify_mmr_with_proof() {
 
 #[tokio::test]
 async fn should_fail_with_incomplete_signature_threshold() {
-    let mut beef_light_client = BeefyLightClient::<Crypto>::new();
     let mmr_update = MmrUpdateProof {
         signed_commitment: SignedCommitment {
             commitment: beefy_primitives::Commitment {
@@ -145,7 +142,7 @@ async fn should_fail_with_incomplete_signature_threshold() {
         authority_proof: vec![],
     };
 
-    let res = beef_light_client.verify_mmr_root_with_proof(
+    let res = crate::verify_mmr_root_with_proof::<Crypto>(
         ClientWrapper::<subxt::DefaultConfig>::get_initial_client_state(None).await,
         mmr_update,
     );
@@ -167,8 +164,6 @@ async fn should_fail_with_incomplete_signature_threshold() {
 
 #[tokio::test]
 async fn should_fail_with_invalid_validator_set_id() {
-    let mut beef_light_client = BeefyLightClient::<Crypto>::new();
-
     let mmr_update = MmrUpdateProof {
         signed_commitment: SignedCommitment {
             commitment: beefy_primitives::Commitment {
@@ -202,7 +197,7 @@ async fn should_fail_with_invalid_validator_set_id() {
         authority_proof: vec![],
     };
 
-    let res = beef_light_client.verify_mmr_root_with_proof(
+    let res = crate::verify_mmr_root_with_proof::<Crypto>(
         ClientWrapper::<subxt::DefaultConfig>::get_initial_client_state(None).await,
         mmr_update,
     );
@@ -227,7 +222,6 @@ async fn should_fail_with_invalid_validator_set_id() {
 
 #[tokio::test]
 async fn verify_parachain_headers() {
-    let mut beef_light_client = BeefyLightClient::<Crypto>::new();
     let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
     let client = subxt::ClientBuilder::new()
         .set_url(url)
@@ -309,12 +303,10 @@ async fn verify_parachain_headers() {
             .await
             .unwrap();
 
-        client_state = beef_light_client
-            .verify_mmr_root_with_proof(client_state, mmr_update)
+        client_state = crate::verify_mmr_root_with_proof::<Crypto>(client_state, mmr_update)
             .expect("verify_mmr_root_with_proof should not panic!");
 
-        beef_light_client
-            .verify_parachain_headers(client_state.clone(), parachain_update_proof)
+        crate::verify_parachain_headers::<Crypto>(client_state.clone(), parachain_update_proof)
             .expect("verify_parachain_headers should not panic!");
 
         println!(

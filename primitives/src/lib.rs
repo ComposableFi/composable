@@ -40,7 +40,6 @@ pub trait HostFunctions {
     fn verify_timestamp_extrinsic(
         root: H256,
         proof: &[Vec<u8>],
-        key: &[u8],
         value: &[u8],
     ) -> Result<(), BeefyClientError>;
 }

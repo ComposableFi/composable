@@ -51,9 +51,11 @@ impl HostFunctions for Crypto {
     fn verify_timestamp_extrinsic(
         root: H256,
         proof: &[Vec<u8>],
-        key: &[u8],
         value: &[u8],
     ) -> Result<(), beefy_client_primitives::error::BeefyClientError> {
+        // Timestamp extrinsic should be the first inherent and hence the first extrinsic
+        // https://github.com/paritytech/substrate/blob/d602397a0bbb24b5d627795b797259a44a5e29e9/primitives/trie/src/lib.rs#L99-L101
+        let key = codec::Compact(0u32).encode();
         sp_trie::verify_trie_proof::<LayoutV0<BlakeTwo256>, _, _, _>(
             &root,
             proof,

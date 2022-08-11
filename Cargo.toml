@@ -1,5 +1,5 @@
 [package]
-name = "beefy-generic-client"
+name = "beefy-light-client"
 version = "0.1.0"
 edition = "2021"
 authors = ["Composable developers"]
@@ -9,7 +9,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [workspace]
 members = [
-    "beefy-queries",
+    "prover",
     "primitives"
 ]
 
@@ -48,7 +48,7 @@ pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "po
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-beefy-queries = { path = "./beefy-queries" }
+beefy-prover = { path = "prover" }
 hex = "0.4.3"
 futures = "0.3.21"
 

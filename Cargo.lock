@@ -167,11 +167,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "beefy-generic-client"
+name = "beefy-light-client"
 version = "0.1.0"
 dependencies = [
  "beefy-primitives",
- "beefy-queries",
+ "beefy-prover",
  "ckb-merkle-mountain-range",
  "color-eyre",
  "derive_more",
@@ -221,7 +221,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "beefy-queries"
+name = "beefy-prover"
 version = "0.1.0"
 dependencies = [
  "beefy-primitives",
