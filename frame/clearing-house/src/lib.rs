@@ -1396,6 +1396,7 @@ pub mod pallet {
 		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
 			let mut market = Self::try_get_market(market_id)?;
 			let now = T::UnixTime::now().as_secs();
+			Self::ensure_market_is_open_at(&market, now)?;
 
 			ensure!(
 				Self::is_funding_update_time(&market, now)?,
@@ -1871,7 +1872,14 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn ensure_market_is_open_to_new_orders(market: &Market<T>) -> Result<(), DispatchError> {
 			let now = T::UnixTime::now().as_secs();
-			match market.shutdown_status(now) {
+			Self::ensure_market_is_open_at(market, now)
+		}
+
+		fn ensure_market_is_open_at(
+			market: &Market<T>,
+			when: DurationSeconds,
+		) -> Result<(), DispatchError> {
+			match market.shutdown_status(when) {
 				ShutdownStatus::Open => Ok(()),
 				ShutdownStatus::Closed => Err(Error::<T>::MarketClosed.into()),
 				ShutdownStatus::Closing => Err(Error::<T>::MarketShuttingDown.into()),
