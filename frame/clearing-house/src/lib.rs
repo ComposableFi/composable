@@ -1480,8 +1480,36 @@ pub mod pallet {
 			market_id: Self::MarketId,
 		) -> Result<(), DispatchError> {
 			let market = Self::try_get_market(&market_id)?;
-			let mut positions = Self::get_positions(account_id);
+			let mut collateral = Self::get_collateral(&account_id).unwrap_or_else(Zero::zero);
+			let mut positions = Self::get_positions(&account_id);
 			let (position, position_index) = Self::try_get_position(&mut positions, &market_id)?;
+
+			if position.direction().is_some() {
+				// Funding is settled as is
+				Self::settle_funding(position, &market, &mut collateral)?;
+
+				// Compute average entry price
+				let open_price =
+					position.quote_asset_notional_amount.try_div(&position.base_asset_amount)?;
+				// Ask settlement price from the vAMM
+				let settlement_price: T::Decimal =
+					T::Vamm::get_settlement_price(market.vamm_id)?.into_signed()?;
+				// If settlement price is 0, everyone keeps their collateral
+				if !settlement_price.is_zero() {
+					let settled_value = position
+						.base_asset_amount
+						.try_mul(&settlement_price.try_sub(&open_price)?)?;
+
+					collateral = Self::updated_balance(&collateral, &settled_value)?;
+				}
+
+				// Remove position from storage
+				positions.swap_remove(position_index);
+
+				Collateral::<T>::insert(&account_id, collateral);
+				Markets::<T>::insert(&market_id, market);
+				Positions::<T>::insert(&account_id, positions);
+			}
 			Ok(())
 		}
 	}

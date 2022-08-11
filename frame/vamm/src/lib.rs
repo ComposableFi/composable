@@ -1077,5 +1077,9 @@ pub mod pallet {
 			// Return new invariant.
 			Ok(invariant)
 		}
+
+		fn get_settlement_price(vamm_id: Self::VammId) -> Result<Self::Decimal, DispatchError> {
+			todo!()
+		}
 	}
 }

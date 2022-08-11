@@ -1,14 +1,16 @@
 use crate::{
 	mock::{
 		accounts::ALICE,
-		runtime::{ExtBuilder, Origin, Runtime, TestPallet},
+		runtime::{ExtBuilder, Origin, Runtime, TestPallet, Vamm as VammPallet},
 	},
-	tests::run_to_block,
+	tests::{
+		as_balance, get_market, get_position, run_to_block, run_to_time, with_market_context,
+		with_trading_context,
+	},
+	Direction::*,
 	Error,
 };
 use frame_support::{assert_noop, assert_ok};
-
-use super::with_market_context;
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Unit Tests
@@ -35,5 +37,26 @@ fn should_fail_if_user_has_no_position_in_market() {
 			TestPallet::settle_position(Origin::signed(ALICE), market_id),
 			Error::<Runtime>::PositionNotFound
 		);
+	});
+}
+
+#[test]
+fn should_close_user_position_in_market() {
+	with_trading_context(Default::default(), as_balance(100), |market_id| {
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(100),
+			0
+		));
+
+		assert_ok!(TestPallet::close_market(Origin::root(), market_id, 10));
+		let market = get_market(&market_id);
+		VammPallet::set_settlement_price_of(&market.vamm_id, Some(0.into()));
+		run_to_time(10);
+
+		assert_ok!(TestPallet::settle_position(Origin::signed(ALICE), market_id));
+		assert!(get_position(&ALICE, &market_id).is_none());
 	});
 }
