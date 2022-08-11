@@ -58,6 +58,25 @@
       "baseWeight": "500000"
     }
   ],
+  "stakingRewardPools": {
+    "assetId": "",
+    "endBlock": "1000",
+    "rewardConfigs": {
+      "assetId": "",
+      "maxRewards": "",
+      "rewardRate": {
+        "period": "PerSecond",
+        "amount": ""
+      }
+    },
+    "locK": {
+      "durationPresets": {
+        "2592000": "1000000000",
+        "5184000": "1000000000"
+      },
+      "unlockPenalty": "1000000000"
+    }
+  },
   "crowdloanRewards": {
     "palletAccountId": "5w3oyasYQg6vkbxZKeMG8Dz2evBw1P7Xr7xhVwk4qwwFkm8u",
     "rewardsPerAccount": "1000000000000000",
