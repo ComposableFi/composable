@@ -234,6 +234,7 @@ jobs:
           ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
           source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH" 
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}         
+          nix-env -iA nixpkgs.nodejs 
   
 
       - name: Wait when the node will be started
@@ -247,9 +248,11 @@ jobs:
       - name: Run tests
         run: |
           cd integration-tests/runtime-tests
-          docker run --rm -v$(pwd):/build -e "ENDPOINT=composable:9988" -e "ENDPOINT_RELAYCHAIN=composable:9944" --workdir /build --network runtime-tests_default --entrypoint=/build/dockerRun.sh node:16.14
+          export ENDPOINT=127.0.0.1:9988 &&
+          export ENDPOINT_RELAYCHAIN=composable:9944 &&
+          chmod +x ./dockerRun.sh
+          ./dockerRun.sh
           
-
   deploy-devnet:
       name: "Devnet(Rococo Local Dali Dev) Deploy"
       if: github.event_name == 'pull_request'
@@ -277,7 +280,7 @@ jobs:
           ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
           source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH" 
           cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
-          nix-env -iA nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3  nixpkgs.google-cloud-sdk nixpkgs.jq          
+          nix-env -iA nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3  nixpkgs.google-cloud-sdk nixpkgs.jq           
           RELEASE_VERSION=$(git rev-parse HEAD)                  
           nix build .#composable-node --no-update-lock-file
           # NOTE: temporary move here until 100% nix
