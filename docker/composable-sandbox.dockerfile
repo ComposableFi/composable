@@ -9,7 +9,7 @@ RUN cargo build --release
 
 FROM composablefi/mmr-polkadot:latest as mmr-polkadot
 
-FROM ubuntu:21.10
+FROM ubuntu:22.04
 LABEL description="Docker image with Composable"
 
 ENV DEBIAN_FRONTEND=noninteractive
