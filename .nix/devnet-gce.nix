@@ -30,7 +30,7 @@ in {
     };
     nix = {
       gc.automatic = true;
-      autoOptimiseStore = true;
+      settings = { auto-optimise-store = true; };
     };
     networking.firewall.allowedTCPPorts = [ 80 443 ];
     systemd.services.composable-devnet = {
@@ -40,17 +40,17 @@ in {
       serviceConfig = {
         Type = "simple";
         User = "root";
-        ExecStart = "${devnet.script}";
+        ExecStart = "${devnet.script}/bin/run-devnet-${devnet.chain-spec}";
         Restart = "always";
         RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
       };
     };
     security.acme = {
       acceptTerms = true;
-      email = "hussein@composable.finance";
+      defaults = { email = "hussein@composable.finance"; };
     };
     services.nginx = let
-      runtimeName = pkgs.lib.removeSuffix "-dev" devnet.composable.chain;
+      runtimeName = pkgs.lib.removeSuffix "-dev" devnet.chain-spec;
       domain = "${runtimeName}.devnets.composablefinance.ninja";
       virtualConfig = let
         routify-nodes = prefix:
