@@ -673,11 +673,8 @@ pub mod pallet {
 
 			Self::deposit_event(Event::AirdropCreated { airdrop_id, by: creator_id });
 
-			match start {
-				Some(moment) => {
-					Self::start_airdrop_at(airdrop_id, moment)?;
-				},
-				None => {},
+			if let Some(moment) = start {
+				Self::start_airdrop_at(airdrop_id, moment)?;
 			}
 
 			Ok(())
@@ -918,7 +915,7 @@ pub mod pallet {
 							);
 
 							// Update Airdrop and fund status
-							(*fund).claimed = fund.claimed.saturating_add(available_to_claim);
+							fund.claimed = fund.claimed.saturating_add(available_to_claim);
 
 							Ok((available_to_claim, *fund))
 						},
@@ -989,17 +986,13 @@ pub mod pallet {
 						))
 					})?;
 
-				match Associations::<T>::get(airdrop_id, reward_account) {
+				if let Some(associated_account) = Associations::<T>::get(airdrop_id, reward_account)
+				{
 					// Validity Error if the account is already associated to another
-					Some(associated_account) =>
-						if associated_account != identity {
-							return InvalidTransaction::Custom(
-								ValidityError::AlreadyAssociated as u8,
-							)
+					if associated_account != identity {
+						return InvalidTransaction::Custom(ValidityError::AlreadyAssociated as u8)
 							.into()
-						},
-					// Association will be created during the transaction
-					None => {},
+					}
 				}
 
 				// Validity Error if there are no funds for this recipient
