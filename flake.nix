@@ -74,6 +74,7 @@
               permittedInsecurePackages = [
                 "openjdk-headless-16+36"
                 "openjdk-headless-15.0.1-ga"
+                "openjdk-headless-14.0.2-ga"
               ];
             };
           };
