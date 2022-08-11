@@ -523,6 +523,8 @@ pub mod pallet {
 		/// Raised when performing an operation (opening/closing a position) on a market that is
 		/// not open.
 		MarketClosed,
+		/// Attempted to settle a position before the market close time.
+		MarketNotClosed,
 		/// Raised when querying a market with an invalid or nonexistent market Id.
 		MarketIdNotFound,
 		/// Attempted to open a position in a market in the process of shutting down.
@@ -1480,6 +1482,14 @@ pub mod pallet {
 			market_id: Self::MarketId,
 		) -> Result<(), DispatchError> {
 			let market = Self::try_get_market(&market_id)?;
+			ensure!(
+				matches!(
+					market.shutdown_status(T::UnixTime::now().as_secs()),
+					ShutdownStatus::Closed
+				),
+				Error::<T>::MarketNotClosed
+			);
+
 			let mut collateral = Self::get_collateral(&account_id).unwrap_or_else(Zero::zero);
 			let mut positions = Self::get_positions(&account_id);
 			let (position, position_index) = Self::try_get_position(&mut positions, &market_id)?;

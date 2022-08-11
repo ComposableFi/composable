@@ -4,7 +4,7 @@ use crate::{
 		runtime::{ExtBuilder, Origin, Runtime, TestPallet, Vamm as VammPallet},
 	},
 	tests::{
-		as_balance, get_market, get_position, run_to_block, run_to_time, with_market_context,
+		as_balance, get_market, get_position, run_to_time, with_market_context,
 		with_trading_context,
 	},
 	Direction::*,
@@ -32,12 +32,42 @@ fn should_fail_if_user_has_no_position_in_market() {
 		// Market is set to close 10 seconds from now.
 		assert_ok!(TestPallet::close_market(Origin::root(), market_id, 10));
 
-		run_to_block(10);
+		run_to_time(10);
 		assert_noop!(
 			TestPallet::settle_position(Origin::signed(ALICE), market_id),
 			Error::<Runtime>::PositionNotFound
 		);
 	});
+}
+
+#[test]
+fn should_fail_if_market_is_not_closed() {
+	with_trading_context(Default::default(), as_balance(100), |market_id| {
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(100),
+			0
+		));
+
+		VammPallet::set_settlement_price_of(&get_market(&market_id).vamm_id, Some(0.into()));
+
+		assert_noop!(
+			TestPallet::settle_position(Origin::signed(ALICE), market_id),
+			Error::<Runtime>::MarketNotClosed
+		);
+
+		assert_ok!(TestPallet::close_market(Origin::root(), market_id, 10));
+		run_to_time(5);
+		assert_noop!(
+			TestPallet::settle_position(Origin::signed(ALICE), market_id),
+			Error::<Runtime>::MarketNotClosed
+		);
+
+		run_to_time(10);
+		assert_ok!(TestPallet::settle_position(Origin::signed(ALICE), market_id));
+	})
 }
 
 #[test]
