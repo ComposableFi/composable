@@ -126,33 +126,6 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file
 
-  devnet-container:
-    needs: package-node
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    container:
-      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-    steps:
-      - uses: actions/checkout@v3
-      - run: |
-          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
-      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
-        with:
-          skipPush: true
-          installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
-            nix-channel --update
-            nix-env -iA nixpkgs.cachix
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-          name: composable-community
-      - run: |
-          # TODO: upload docker image
-          # Only on trigger by user?
-          nix build .#devnet-container --no-update-lock-file
-
   codespace-devcontainer:
     needs: package-node
     runs-on:
@@ -198,9 +171,99 @@ jobs:
           docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
           docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer
 
+  devnet-container:
+    needs: package-node
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{  env.NIX_CACHIX }}
+      - run: |
+          # TODO: either make nixos to be devcontainer and use buildx https://github.com/microsoft/vscode-dev-containers/issues/947 
+          # TODO: or use nix remote build 
+          # TODO: to produce arm image
+          # NOTE: building on qemu action failed (also it was emulating arm, still complained building wrong system - not reported)
+          # NOTE: used manual install, so better to use this in future https://github.com/uraimo/run-on-arch-action/pull/83
+          # NOTE: build arm on x86 failed and documented to fail          
+          nix build .#devnet-container --no-update-lock-file -L
+      - uses: docker/login-action@v1 
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }} 
+      - run: |
+          docker load --input ./result
+          # update soon https://github.com/actions/checkout/issues/760
+          git config --global --add safe.directory /__w/composable/composable
+          COMMIT_SHA=$(git rev-parse --short=9 HEAD)
+          DOCKER_IMAGE_HASH=$(docker images | tail --lines=1 | tr --squeeze-repeats  ' ' |  cut --delimiter " " --fields 3)
+          # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
+          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/devnet-container:$COMMIT_SHA
+          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/devnet-container:latest
+          docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/devnet-container
+
+  devnet-integration-tests:
+      name: "Devnet integration tests"
+      needs: devnet-container
+      runs-on: ubuntu-latest
+      concurrency:
+        group: runtime-tests-${{ github.ref }}
+        cancel-in-progress: true
+      steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: false
+          fetch-depth: 0                 
+      - name: Build & Push
+        run: |
+          chmod +x ./nix-install-vscode-composable.sh
+          ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
+          source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH" 
+          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}         
+  
+      - name: Prepare a test environment
+        run: |
+          # TODO: use nix
+          cd integration-tests/runtime-tests
+          curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
+          chmod +x ./docker-compose
+
+          tag=$(git rev-parse --short=9 HEAD)
+
+          sed -ri "s/\\$\\{TAG\\}/$tag/" docker-compose-ci.yml
+          echo "composablefi/devnet-container:$tag will be used"
+          ./docker-compose -f docker-compose-ci.yml up -d
+
+      - name: Wait when the node will be started
+        timeout-minutes: 5
+        run: |
+          cd integration-tests/runtime-tests
+          echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
+          time ../../scripts/wait_for_polkadot_launch.sh
+
+      - name: Run tests
+        run: |
+          cd integration-tests/runtime-tests
+          docker run --rm -v$(pwd):/build -e "ENDPOINT=composable:9988" -e "ENDPOINT_RELAYCHAIN=composable:9944" --workdir /build --network runtime-tests_default --entrypoint=/build/dockerRun.sh node:16.14
+          
+
   deploy-devnet:
       name: "Devnet(Rococo Local Dali Dev) Deploy"
-      needs: package-node
+      if: github.event_name == 'pull_request'
       runs-on: ubuntu-latest
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
       concurrency:
