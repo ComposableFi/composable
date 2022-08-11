@@ -11,7 +11,16 @@
     "pablo.Swapped",
     "bondedFinance.NewOffer",
     "bondedFinance.NewBond",
-    "vesting.VestingScheduleAdded"
+    "vesting.VestingScheduleAdded",
+
+    "balances.Slashed",
+    "stakingRewards.RewardPoolCreated",
+    "stakingRewards.Staked",
+    "stakingRewards.StakeAmountExtended",
+    "stakingRewards.Unstaked",
+    "stakingRewards.SplitPosition",
+    "bondedFinance.OfferCancelled"
+
   ],
   "calls": []
 }

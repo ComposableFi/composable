@@ -1,4 +1,5 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
+import { randomUUID } from "crypto";
 import { VestingSchedule as VestingScheduleType } from "./types/v2401";
 import { Schedule, ScheduleWindow, VestingSchedule } from "./model";
 import { VestingVestingScheduleAddedEvent } from "./types/events";

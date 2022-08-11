@@ -2,6 +2,37 @@ import assert from 'assert'
 import {EventContext, Result, deprecateLatest} from './support'
 import * as v2401 from './v2401'
 
+export class BalancesSlashedEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'balances.Slashed')
+  }
+
+  /**
+   * Some amount was removed from the account (e.g. for misbehavior).
+   */
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('balances.Slashed') === 'e84a34a6a3d577b31f16557bd304282f4fe4cbd7115377f4687635dc48e52ba5'
+  }
+
+  /**
+   * Some amount was removed from the account (e.g. for misbehavior).
+   */
+  get asV2401(): {who: v2401.AccountId32, amount: bigint} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {who: v2401.AccountId32, amount: bigint} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
 export class BalancesTransferEvent {
   constructor(private ctx: EventContext) {
     assert(this.ctx.event.name === 'balances.Transfer')
@@ -90,6 +121,37 @@ export class BondedFinanceNewOfferEvent {
   }
 
   get asLatest(): {offerId: bigint, beneficiary: v2401.AccountId32} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
+export class BondedFinanceOfferCancelledEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'bondedFinance.OfferCancelled')
+  }
+
+  /**
+   * An offer has been cancelled by the `AdminOrigin`.
+   */
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('bondedFinance.OfferCancelled') === 'a31df34b423037e305dbc2946d691428051e98fb362268dc0e78aff52ab30840'
+  }
+
+  /**
+   * An offer has been cancelled by the `AdminOrigin`.
+   */
+  get asV2401(): {offerId: bigint} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {offerId: bigint} {
     deprecateLatest()
     return this.asV2401
   }
@@ -250,22 +312,22 @@ export class PabloSwappedEvent {
   }
 }
 
-export class VestingVestingScheduleAddedEvent {
+export class StakingRewardsRewardPoolCreatedEvent {
   constructor(private ctx: EventContext) {
-    assert(this.ctx.event.name === 'vesting.VestingScheduleAdded')
+    assert(this.ctx.event.name === 'stakingRewards.RewardPoolCreated')
   }
 
   /**
-   * Added new vesting schedule. \[from, to, schedule\]
+   * Pool with specified id `T::RewardPoolId` was created successfully by `T::AccountId`.
    */
   get isV2401(): boolean {
-    return this.ctx._chain.getEventHash('vesting.VestingScheduleAdded') === 'ac3aff306fccf810884a6ba689559f06a58eea19d7d29c25ddfc8e0c9362b5b0'
+    return this.ctx._chain.getEventHash('stakingRewards.RewardPoolCreated') === '65ddfe6bd5114575add99772fc840fc81f1a4956cba667c1387b46b1a72ac5f7'
   }
 
   /**
-   * Added new vesting schedule. \[from, to, schedule\]
+   * Pool with specified id `T::RewardPoolId` was created successfully by `T::AccountId`.
    */
-  get asV2401(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, vestingScheduleId: bigint, schedule: v2401.VestingSchedule} {
+  get asV2401(): {poolId: number, owner: v2401.AccountId32, endBlock: number} {
     assert(this.isV2401)
     return this.ctx._chain.decodeEvent(this.ctx.event)
   }
@@ -275,7 +337,144 @@ export class VestingVestingScheduleAddedEvent {
     return this.isV2401
   }
 
-  get asLatest(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, vestingScheduleId: bigint, schedule: v2401.VestingSchedule} {
+  get asLatest(): {poolId: number, owner: v2401.AccountId32, endBlock: number} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
+export class StakingRewardsSplitPositionEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'stakingRewards.SplitPosition')
+  }
+
+  /**
+   * Split stake position into two positions
+   */
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('stakingRewards.SplitPosition') === 'b44b7ccb72650884a149209cc011dd3a9e5b934fe2585edec6829f7875462c3f'
+  }
+
+  /**
+   * Split stake position into two positions
+   */
+  get asV2401(): {positions: bigint[]} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {positions: bigint[]} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
+export class StakingRewardsStakeAmountExtendedEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'stakingRewards.StakeAmountExtended')
+  }
+
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('stakingRewards.StakeAmountExtended') === '9b62bc61f3b135250dbe07edc824ed6e892ce57d5e350302f3f80b5a1d202768'
+  }
+
+  get asV2401(): {positionId: bigint, amount: bigint} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {positionId: bigint, amount: bigint} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
+export class StakingRewardsStakedEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'stakingRewards.Staked')
+  }
+
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('stakingRewards.Staked') === '43d4a37b9b82b265c35ef7f96b6116dbc7e6c1632ef08bf12571a895aaef83aa'
+  }
+
+  get asV2401(): {poolId: number, owner: v2401.AccountId32, amount: bigint, durationPreset: bigint, positionId: bigint, keepAlive: boolean} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {poolId: number, owner: v2401.AccountId32, amount: bigint, durationPreset: bigint, positionId: bigint, keepAlive: boolean} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
+export class StakingRewardsUnstakedEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'stakingRewards.Unstaked')
+  }
+
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('stakingRewards.Unstaked') === 'a77303deb074b7208720e047715198fb967f6c69ff250d6b1a1a5a58a1a0e665'
+  }
+
+  get asV2401(): {owner: v2401.AccountId32, positionId: bigint} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {owner: v2401.AccountId32, positionId: bigint} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
+export class VestingVestingScheduleAddedEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'vesting.VestingScheduleAdded')
+  }
+
+  /**
+   * Added new vesting schedule. \[from, to, schedule\]
+   */
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('vesting.VestingScheduleAdded') === 'c5e29260a72cc5736d41a9413a02519d99775ae811581363c8cbdf2433143a79'
+  }
+
+  /**
+   * Added new vesting schedule. \[from, to, schedule\]
+   */
+  get asV2401(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, schedule: v2401.VestingSchedule} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, schedule: v2401.VestingSchedule} {
     deprecateLatest()
     return this.asV2401
   }

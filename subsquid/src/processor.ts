@@ -24,6 +24,11 @@ import {
   processSwappedEvent,
 } from "./pabloProcessor";
 import {
+  processRewardPoolCreatedEvent,
+  processSlashedEvent,
+  processTransferEvent,
+} from "./picassoProcessor";
+import {
   processNewBondEvent,
   processNewOfferEvent,
 } from "./bondedFinanceProcessor";
@@ -128,24 +133,61 @@ processor.addEventHandler("balances.Transfer", async (ctx) => {
       date: new Date(ctx.block.timestamp),
     })
   );
+
+  await processTransferEvent(ctx);
+});
+
+processor.addEventHandler("balances.Slashed", async (ctx) => {
+  await processSlashedEvent(ctx);
 });
 
 processor.addEventHandler("bondedFinance.NewOffer", async (ctx) => {
   const event = new BondedFinanceNewOfferEvent(ctx);
 
   await processNewOfferEvent(ctx, event);
+  // TODO: process event for Picasso
 });
 
 processor.addEventHandler("bondedFinance.NewBond", async (ctx) => {
   const event = new BondedFinanceNewBondEvent(ctx);
 
   await processNewBondEvent(ctx, event);
+  // TODO: process event for Picasso
+});
+
+processor.addEventHandler("bondedFinance.OfferCancelled", async (ctx) => {
+  // await processOfferCancelledEvent(ctx);
+  // TODO
 });
 
 processor.addEventHandler("vesting.VestingScheduleAdded", async (ctx) => {
   const event = new VestingVestingScheduleAddedEvent(ctx);
 
   await processVestingScheduleAddedEvent(ctx, event);
+});
+
+processor.addEventHandler("stakingRewards.RewardPoolCreated", async (ctx) => {
+  await processRewardPoolCreatedEvent(ctx);
+});
+
+processor.addEventHandler("stakingRewards.Staked", async (ctx) => {
+  // await processStakedEvent(ctx);
+  // TODO
+});
+
+processor.addEventHandler("stakingRewards.StakeAmountExtended", async (ctx) => {
+  // await processStakeAmountExtendedEvent(ctx);
+  // TODO
+});
+
+processor.addEventHandler("stakingRewards.Unstaked", async (ctx) => {
+  // await processUnstakedEvent(ctx);
+  // TODO
+});
+
+processor.addEventHandler("stakingRewards.SplitPosition", async (ctx) => {
+  // await processSplitPositionEvent(ctx);
+  // TODO
 });
 
 processor.run();

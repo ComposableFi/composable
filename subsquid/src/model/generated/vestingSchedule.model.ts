@@ -11,11 +11,17 @@ export class VestingSchedule {
   @PrimaryColumn_()
   id!: string
 
-  @Column_("text", {nullable: false})
-  eventId!: string
-
+  /**
+   * account that initiates the schedule
+   */
   @Column_("text", {nullable: false})
   from!: string
+
+  /**
+   * chain event ID
+   */
+  @Column_("text", {nullable: false})
+  eventId!: string
 
   /**
    * {accountId}-{assetId}

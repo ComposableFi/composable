@@ -103,3 +103,49 @@ type VestingSchedule @entity {
   "Vesting schedule"
   schedule: Schedule!
 }
+
+type PicassoAccount @entity {
+  "Account address"
+  id: ID!
+  eventId: String!
+  "Last transaction"
+  transactionId: String!
+  balance: BigInt!
+  transactions: [PicassoTransaction!]! @derivedFrom(field: "who")
+}
+
+enum PicassoTransactionType {
+  CROWDLOAN_REWARDS_INITIALIZED,
+  CROWDLOAN_REWARDS_ASSOCIATED,
+  CROWDLOAN_REWARDS_CLAIMED,
+  BALANCES_TRANSFER,
+  BALANCES_SLASHED,
+  STAKING_REWARDS_REWARD_POOL_CREATED,
+  STAKING_REWARDS_STAKED,
+  STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
+  STAKING_REWARDS_UNSTAKE,
+  STAKING_REWARDS_SPLIT_POSITION,
+  BONDED_FINANCE_NEW_OFFER,
+  BONDED_FINANCE_NEW_BOND,
+  BONDED_FINANCE_OFFER_CANCELLED,
+}
+
+type PicassoTransaction @entity {
+  "ID of the event that was used to derive this transaction"
+  id: ID!
+  eventId: String!
+  transactionId: String!
+  who: PicassoAccount!
+  transactionType: PicassoTransactionType!
+#  baseAssetId: BigInt!
+#  baseAssetAmount: BigInt!
+#  quoteAssetId: BigInt!
+#  quoteAssetAmount: BigInt!
+  blockNumber: BigInt!
+#  spotPrice: String!
+#  "Optional: Only certain transaction types have fees charged by Pablo. Does NOT include the collected extrinsic execution fee."
+#  fee: String!
+  fee: BigInt!
+  "Unix timestamp in ms"
+  timestamp: BigInt!
+}
