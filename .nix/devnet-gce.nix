@@ -1,11 +1,12 @@
-{ composable,
-  polkadot,
-  credentials,
+{ 
+  gce-input,
+  devnet,
 }:
 let
-  machine-name = "composable-devnet-${composable.spec}";
+  description = "What machines we will deploy on GCE";
+  machine-name = "composable-devnet-${devnet.composable.chain}";
 in {
-  resources.gceNetworks.composable-devnet = credentials // {
+  resources.gceNetworks.composable-devnet = gce-input // {
     name = "composable-devnet-network";
     firewall = {
       allow-http = {
@@ -19,15 +20,10 @@ in {
     };
   };
   "${machine-name}" = { pkgs, resources, ... }:
-    let
-      devnet = pkgs.callPackage ./devnet.nix {
-        inherit composable;
-        inherit polkadot;
-      };
-    in {
+    {
       deployment = {
         targetEnv = "gce";
-        gce = credentials // {
+        gce = gce-input // {
           machineName = machine-name;
           network = resources.gceNetworks.composable-devnet;
           region = "europe-central2-c";
@@ -51,7 +47,7 @@ in {
         serviceConfig = {
           Type = "simple";
           User = "root";
-          ExecStart = "${devnet.script}/bin/run-${composable.spec}";
+          ExecStart = "${devnet.script}/bin/run-${devnet.composable.chain}";
           Restart = "always";
           RuntimeMaxSec = "86400"; # 1 day lease period for rococo, restart it
         };
@@ -62,7 +58,7 @@ in {
       };
       services.nginx =
         let
-          runtimeName = pkgs.lib.removeSuffix "-dev" composable.spec;
+          runtimeName = pkgs.lib.removeSuffix "-dev" devnet.composable.chain;
           domain = "${runtimeName}.devnets.composablefinance.ninja";
           virtualConfig =
               let
@@ -71,9 +67,9 @@ in {
                     name = prefix + node.name;
                   }));
                 routified-composable-nodes =
-                  routify-nodes "parachain/" composable.nodes;
+                  routify-nodes "parachain/" devnet.composable.nodes;
                 routified-polkadot-nodes =
-                  routify-nodes "relaychain/" polkadot.nodes;
+                  routify-nodes "relaychain/" devnet.polkadot.nodes;
                 routified-nodes =
                   routified-composable-nodes ++ routified-polkadot-nodes;
               in
@@ -91,7 +87,7 @@ in {
                       root = devnet.documentation;
                     };
                     "/" = {
-                      root = "${devnet.book}/book";
+                      root = "${devnet.composable-book}/book";
                     };
                   } (map (node: {
                     "/${node.name}" = {

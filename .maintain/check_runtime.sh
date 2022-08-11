@@ -5,6 +5,15 @@
 # "auto-fail" the PR if there isn't a change in the runtime/src/lib.rs file
 # that alters the version.
 
+# TODO: it was disabled on old pipeline, rewive it based on source/git src filters of nix
+# FIXME: actually broken: https://github.com/ComposableFi/composable/runs/5570301249?check_suite_focus=true
+# - name: Check for runtime changes
+#   env:
+#     BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+#     GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+#   id: check_runtime
+#   run: .maintain/check_runtime.sh
+
 set -e # fail on any error
 
 #shellcheck source=../common/lib.sh

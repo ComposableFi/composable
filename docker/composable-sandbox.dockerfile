@@ -1,9 +1,22 @@
 FROM composablefi/ci-linux:2022-04-18 as builder
 
+# ISSUE: we already copied context when started build, what the heck we are roing here? it slows down builds
 COPY . /build
 WORKDIR /build
 
-RUN cargo build --release
+# NOTE: decide prio and responsible for migration to nix after https://github.com/ComposableFi/composable/issues/1426
+RUN cargo +nightly build --release -p wasm-optimizer
+RUN cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+RUN cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+RUN cargo +nightly build --release -p dali-runtime-wasm --target wasm32-unknown-unknown --features=runtime-benchmarks
+RUN ./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/dali_runtime.wasm --output ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm
+RUN ./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm --output ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm
+RUN ./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/composable_runtime.wasm --output ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm
+
+RUN export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm) && \
+	export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm) && \
+	export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm) && \
+	cargo build --release --features=builtin-wasm
 
 # ===== SECOND STAGE ======
 
@@ -16,7 +29,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN groupadd -g 1000 service && useradd -m -s /bin/sh -g 1000 -G service service && \
-	mkdir -p /apps/composable/scripts /apps/composable/target/release /apps/basilisk-node/target/release /apps/polkadot/target/release && \
+	mkdir -p /apps/composable/scripts /apps/composable/target/release /apps/polkadot/target/release && \
 	apt-get update && apt-get install -y --no-install-recommends apt-utils ca-certificates curl git && \
 	curl -fsSL https://deb.nodesource.com/setup_17.x | bash - && \
 	apt-get update && apt-get install -y --no-install-recommends nodejs && \

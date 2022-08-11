@@ -43,16 +43,19 @@ jobs:
       - name: Build Docker image
         run: make containerize-composable-sandbox
 
+      # ISSUE: that is crazy, we push new sandbox without testing it....
       - name: Push Docker image
         if: ${{ github.ref == 'refs/heads/main' }}
         run: make push-composable-sandbox
 
+      # TODO: most of the time of tests is building docker!!! nixify all and run on that
       - name: Push Docker image without latest tag
         if: ${{ github.ref != 'refs/heads/main' }}
         run: make push-composable-sandbox-without-latest-tag
 
       - name: Prepare a test environment
         run: |
+          # TODO: use nix
           cd integration-tests/runtime-tests
           curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
           chmod +x ./docker-compose

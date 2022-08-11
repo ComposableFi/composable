@@ -22,6 +22,9 @@ build:
 clean:
 	@cargo clean
 
+release:
+	./build-composable-node.sh
+
 .PHONY: build-release
 build-release:
 	cargo build --locked --features with-all-runtime --profile production --workspace --exclude runtime-integration-tests --exclude e2e-tests --exclude test-service
