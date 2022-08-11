@@ -1,7 +1,33 @@
-# Name Service
+# XCVM Interpreter
 
-The goal of the application you are building is to let users buy names and to set a value these names resolve to.
-The owner of a given name will be the current highest bidder. In this section, you will learn how these simple
- requirements translate to application design.
+The XCVM interpreter contract interprets the XCVM programs. Available instructions are:
 
-Here is the tutorial for this application: [tutorial](https://docs.cosmwasm.com/tutorials/name-service/intro)
+### Call 
+Which is used to call a contract. See that the encoded payload must be in a format:
+```
+{
+	"address": "contract-addr",
+	"payload": "json-encoded ExecuteMsg struct"
+}
+```
+
+### Transfer
+Queries `asset-registry`, gets the contract address and then executes that contract to do the transfer.
+
+### Spawn
+Emits `spawn` even with the given parameters.
+
+## Compile
+
+```sh
+RUSTFLAGS='-C link-arg=-s' cargo b --package=xcvm-interpreter --target=wasm32-unknown-unknown --profile="cosmwasm-contracts"
+```
+
+* `-C link-arg=-s` is used for stripping the binary which reduces the binary size drastically.
+* `--profile="cosmwasm-contracts"` must be used for cosmwasm contracts.
+
+## Test
+
+```sh
+cargo test --package="xcvm-interpreter"
+```

@@ -31,8 +31,8 @@ serde = { version = "1.0.137", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0.31" }
 cw20 = { git = "https://github.com/CosmWasm/cw-plus.git" }
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "4e175eaeffd625041bdecd251c0068a365def453" }
-xcvm-core = { path = "../../../lib/core", features = ["std"]}
-xcvm-asset-registry = { path = "../asset-registry" }
+xcvm-core = { path = "../../../lib/core", features = ["std"] }
+xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
 
 [dev-dependencies]
 cw-multi-test = "0.13.2"

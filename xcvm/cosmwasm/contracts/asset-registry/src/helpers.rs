@@ -11,8 +11,8 @@ use crate::msg::ExecuteMsg;
 pub struct AssetRegistryContract(pub Addr);
 
 impl AssetRegistryContract {
-    pub fn addr(&self) -> Addr {
-        self.0.clone()
+    pub fn addr(&self) -> &Addr {
+        &self.0
     }
 
     pub fn call<T: Into<ExecuteMsg>>(&self, msg: T) -> StdResult<CosmosMsg> {
