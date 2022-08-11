@@ -185,7 +185,7 @@ jobs:
           # Only on trigger by user?
           nix build .#devnet-container --no-update-lock-file
 
-  codespace-devcontainer:
+  devcontainer:
     needs:
       - package-composable-node
       - package-polkadot-node
@@ -217,7 +217,7 @@ jobs:
           # NOTE: building on qemu action failed (also it was emulating arm, still complained building wrong system - not reported)
           # NOTE: used manual install, so better to use this in future https://github.com/uraimo/run-on-arch-action/pull/83
           # NOTE: build arm on x86 failed and documented to fail
-          nix build .#packages.x86_64-linux.codespace-container
+          nix build .#packages.x86_64-linux.devcontainer -L --show-trace
       - uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
