@@ -228,9 +228,7 @@ jobs:
         with:
           clean: false
           fetch-depth: 0                 
-      - name: Build & Push
-        timeout-minutes: 7
-        run: |
+      - run: |
           chmod +x ./nix-install-vscode-composable.sh
           ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
           source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH" 
@@ -241,9 +239,6 @@ jobs:
           ( tail --follow --lines=0  logfile.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
           cd integration-tests/runtime-tests
           echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
-
-      - name: Run tests
-        run: |
           cd integration-tests/runtime-tests
           chmod +x ./dockerRun.sh
           export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && ./dockerRun.sh
