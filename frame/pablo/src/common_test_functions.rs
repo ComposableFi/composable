@@ -240,7 +240,6 @@ pub fn common_remove_lp_failure(
 		Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp + 1, 0, 0, false),
 		TokenError::NoFunds
 	);
-	println!("LP token: {:?}", lp + 1);
 	// single asset
 	if is_constant_product {
 		assert_noop!(
