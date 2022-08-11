@@ -1,5 +1,6 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
 import * as marshal from "./marshal"
+import {PicassoAccount} from "./picassoAccount.model"
 import {PicassoTransactionType} from "./_picassoTransactionType"
 
 @Entity_()
@@ -8,35 +9,33 @@ export class PicassoTransaction {
     Object.assign(this, props)
   }
 
-  @PrimaryColumn_()
-  id!: string
-
   /**
    * ID of the event that was used to derive this transaction
    */
+  @PrimaryColumn_()
+  id!: string
+
   @Column_("text", {nullable: false})
   eventId!: string
 
-  /**
-   * ID of account that executed transaction
-   */
   @Column_("text", {nullable: false})
-  accountId!: string
+  transactionId!: string
 
-  /**
-   * Type of transaction
-   */
-  @Column_("varchar", {length: 43, nullable: false})
+  @Index_()
+  @ManyToOne_(() => PicassoAccount, {nullable: false})
+  who!: PicassoAccount
+
+  @Column_("varchar", {length: 37, nullable: false})
   transactionType!: PicassoTransactionType
 
-  /**
-   * Block in which transaction was registered
-   */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint
 
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  fee!: bigint
+
   /**
-   * Timestamp of the block in which this transaction was registered
+   * Unix timestamp in ms
    */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   timestamp!: bigint

@@ -14,7 +14,6 @@
     "vesting.VestingScheduleAdded",
     "vesting.Claimed",
     "vesting.VestingSchedulesUpdated",
-
     "balances.Slashed",
     "balances.Deposit",
     "balances.Withdraw",

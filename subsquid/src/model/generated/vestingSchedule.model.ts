@@ -23,20 +23,17 @@ export class VestingSchedule {
   @Column_("text", {nullable: false})
   eventId!: string
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  scheduleId!: bigint
+  /**
+   * {accoundId}-{assetId}
+   */
+  @Column_("text", {nullable: false})
+  scheduleId!: string
 
   /**
    * 'To' account for the vesting schedule
    */
   @Column_("text", {nullable: false})
   to!: string
-
-  /**
-   * Asset ID
-   */
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  asset!: bigint
 
   /**
    * Vesting schedule
