@@ -39,6 +39,7 @@ jobs:
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -49,7 +50,7 @@ jobs:
           name: ${{  env.NIX_CACHIX }}
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps --no-update-lock-file
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps --no-update-lock-file --show-trace -L
 
   tests:
     needs: common-deps
@@ -65,6 +66,7 @@ jobs:
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -92,6 +94,7 @@ jobs:
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -102,7 +105,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node --no-update-lock-file
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node --no-update-lock-file --show-trace -L
 
   package-polkadot-node:
     runs-on:
@@ -117,6 +120,7 @@ jobs:
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -127,7 +131,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#polkadot-node --no-update-lock-file
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#polkadot-node --no-update-lock-file --show-trace -L
 
   package-price-feed:
     needs: common-deps
@@ -143,6 +147,7 @@ jobs:
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -153,7 +158,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
 
   devnet-container:
     needs:
@@ -171,6 +176,7 @@ jobs:
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -183,7 +189,7 @@ jobs:
       - run: |
           # TODO: upload docker image
           # Only on trigger by user?
-          nix build .#devnet-container --no-update-lock-file
+          nix build .#devnet-container --no-update-lock-file --show-trace -L
 
   devcontainer:
     needs:
@@ -201,6 +207,7 @@ jobs:
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -217,7 +224,7 @@ jobs:
           # NOTE: building on qemu action failed (also it was emulating arm, still complained building wrong system - not reported)
           # NOTE: used manual install, so better to use this in future https://github.com/uraimo/run-on-arch-action/pull/83
           # NOTE: build arm on x86 failed and documented to fail
-          nix build .#packages.x86_64-linux.devcontainer -L --show-trace
+          nix build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
       - uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -272,10 +279,10 @@ jobs:
           then
             gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
           else
-            nix develop .#sre  --show-trace --command nixops create --deployment devnet-gce --show-trace
+            nix develop .#sre --show-trace -L --command nixops create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 
           fi
 
-          nix develop .#sre --show-trace --command nixops deploy --check --confirm --deployment devnet-gce --debug --show-trace
+          nix develop .#sre --show-trace -L --command nixops deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 
 
           # TODO: document what happens if Deploy passed, but Store was stopped - how stat reconciled
           # TODO: consider running state save in same step as it is unseparable from deploy
