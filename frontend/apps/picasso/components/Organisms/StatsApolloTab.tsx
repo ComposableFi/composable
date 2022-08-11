@@ -10,7 +10,7 @@ export const StatsApolloTab: React.FC<any> = () => {
       sx={{
         padding: 6,
         backgroundColor: "rgba(255, 255, 255, 0.02)",
-        borderRadius: 1,
+        borderRadius: 1
       }}
     >
       <ApolloTable assets={assets} />

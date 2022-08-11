@@ -22,14 +22,7 @@ type AssetProps = {
   changeValue: number;
 };
 
-const tableHeaderTitles = [
-  "Asset",
-  "Binance",
-  "Pablo",
-  "Aggregated",
-  "Apollo",
-  "Change (24hr)"
-];
+const tableHeaderTitles = ["Asset", "Binance", "Apollo", "Change (24hr)"];
 
 export const ApolloTable: React.FC<ApolloTableProps> = ({
   assets,
@@ -56,12 +49,6 @@ export const ApolloTable: React.FC<ApolloTableProps> = ({
                 </TableCell>
                 <TableCell align="left">
                   ${formatNumber(asset.binanceValue)}
-                </TableCell>
-                <TableCell align="left">
-                  ${formatNumber(asset.pabloValue)}
-                </TableCell>
-                <TableCell align="left">
-                  ${formatNumber(asset.aggregatedValue)}
                 </TableCell>
                 <TableCell align="left">
                   ${formatNumber(asset.apolloValue)}
