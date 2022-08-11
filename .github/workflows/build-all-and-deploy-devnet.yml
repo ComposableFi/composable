@@ -248,10 +248,8 @@ jobs:
       - name: Run tests
         run: |
           cd integration-tests/runtime-tests
-          export ENDPOINT=127.0.0.1:9988 &&
-          export ENDPOINT_RELAYCHAIN=composable:9944 &&
           chmod +x ./dockerRun.sh
-          ./dockerRun.sh
+          export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && ./dockerRun.sh
           
   deploy-devnet:
       name: "Devnet(Rococo Local Dali Dev) Deploy"
