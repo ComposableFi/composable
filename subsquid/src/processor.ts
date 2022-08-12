@@ -25,9 +25,16 @@ import {
 } from "./pabloProcessor";
 import {
   processRewardPoolCreatedEvent,
-  processSlashedEvent,
-  processTransferEvent,
+  processSplitPositionEvent,
+  processStakeAmountExtendedEvent,
+  processStakedEvent,
+  processUnstakedEvent,
 } from "./picassoProcessor";
+import {
+  processTransferEvent,
+  processDepositEvent,
+  processWithdrawEvent,
+} from "./balancesProcessor";
 import {
   processNewBondEvent,
   processNewOfferEvent,
@@ -100,45 +107,15 @@ processor.addEventHandler("pablo.Swapped", async (ctx) => {
 });
 
 processor.addEventHandler("balances.Transfer", async (ctx) => {
-  const transfer = getTransferEvent(ctx);
-  const tip = ctx.extrinsic?.tip || 0n;
-  const from = ss58.codec("picasso").encode(transfer.from);
-  const to = ss58.codec("picasso").encode(transfer.to);
-
-  const fromAcc = await getOrCreate(ctx.store, Account, from);
-  fromAcc.balance = fromAcc.balance || 0n;
-  fromAcc.balance -= transfer.amount;
-  fromAcc.balance -= tip;
-  await ctx.store.save(fromAcc);
-
-  const toAcc = await getOrCreate(ctx.store, Account, to);
-  toAcc.balance = toAcc.balance || 0n;
-  toAcc.balance += transfer.amount;
-  await ctx.store.save(toAcc);
-
-  await ctx.store.save(
-    new HistoricalBalance({
-      id: `${ctx.event.id}-to`,
-      account: fromAcc,
-      balance: fromAcc.balance,
-      date: new Date(ctx.block.timestamp),
-    })
-  );
-
-  await ctx.store.save(
-    new HistoricalBalance({
-      id: `${ctx.event.id}-from`,
-      account: toAcc,
-      balance: toAcc.balance,
-      date: new Date(ctx.block.timestamp),
-    })
-  );
-
   await processTransferEvent(ctx);
 });
 
-processor.addEventHandler("balances.Slashed", async (ctx) => {
-  await processSlashedEvent(ctx);
+processor.addEventHandler("balances.Withdraw", async (ctx) => {
+  await processWithdrawEvent(ctx);
+});
+
+processor.addEventHandler("balances.Deposit", async (ctx) => {
+  await processDepositEvent(ctx);
 });
 
 processor.addEventHandler("bondedFinance.NewOffer", async (ctx) => {
@@ -171,23 +148,19 @@ processor.addEventHandler("stakingRewards.RewardPoolCreated", async (ctx) => {
 });
 
 processor.addEventHandler("stakingRewards.Staked", async (ctx) => {
-  // await processStakedEvent(ctx);
-  // TODO
+  await processStakedEvent(ctx);
 });
 
 processor.addEventHandler("stakingRewards.StakeAmountExtended", async (ctx) => {
-  // await processStakeAmountExtendedEvent(ctx);
-  // TODO
+  await processStakeAmountExtendedEvent(ctx);
 });
 
 processor.addEventHandler("stakingRewards.Unstaked", async (ctx) => {
-  // await processUnstakedEvent(ctx);
-  // TODO
+  await processUnstakedEvent(ctx);
 });
 
 processor.addEventHandler("stakingRewards.SplitPosition", async (ctx) => {
-  // await processSplitPositionEvent(ctx);
-  // TODO
+  await processSplitPositionEvent(ctx);
 });
 
 processor.run();

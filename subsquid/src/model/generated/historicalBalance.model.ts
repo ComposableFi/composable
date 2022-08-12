@@ -11,6 +11,12 @@ export class HistoricalBalance {
   @PrimaryColumn_()
   id!: string
 
+  @Column_("text", {nullable: false})
+  eventId!: string
+
+  @Column_("text", {nullable: false})
+  transactionId!: string
+
   @Index_()
   @ManyToOne_(() => Account, {nullable: false})
   account!: Account
