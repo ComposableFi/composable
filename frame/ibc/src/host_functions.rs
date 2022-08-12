@@ -1,5 +1,6 @@
 use crate::{state_machine, Config};
 use alloc::{format, string::ToString};
+use codec::Encode;
 use ibc::{
 	clients::{host_functions::HostFunctionsProvider, ics11_beefy::error::Error as Ics11Error},
 	core::ics02_client::error::Error as Ics02ClientError,
@@ -79,9 +80,11 @@ where
 	fn verify_timestamp_extrinsic(
 		root: &[u8; 32],
 		proof: &[Vec<u8>],
-		key: &[u8],
 		value: &[u8],
 	) -> Result<(), Ics02ClientError> {
+		// Timestamp extrinsic should be the first inherent and hence the first extrinsic
+		// https://github.com/paritytech/substrate/blob/d602397a0bbb24b5d627795b797259a44a5e29e9/primitives/trie/src/lib.rs#L99-L101
+		let key = codec::Compact(0u32).encode();
 		sp_trie::verify_trie_proof::<LayoutV0<BlakeTwo256>, _, _, _>(
 			&H256::from_slice(&root[..]),
 			proof,
