@@ -22,6 +22,7 @@ use ibc::{
 	},
 	signer::Signer,
 	timestamp::Timestamp,
+	Height,
 };
 use scale_info::{prelude::format, TypeInfo};
 #[cfg(not(feature = "std"))]
@@ -34,14 +35,12 @@ pub mod runtime_interface;
 pub struct SendPacketData {
 	/// packet data
 	pub data: Vec<u8>,
-	/// Needed only when packet is been sent to a parachain, this should be the parachain id in
-	/// that case.
-	pub revision_number: Option<u64>,
-	/// Block height on the counterparty chain when this packet should be invalidated.
-	pub timeout_height: u64,
-	/// Timestamp on counterparty chain when this packet should be invalidated
-	/// This value should be in nano seconds
-	pub timeout_timestamp: u64,
+	/// Block height relative to the latest height on the counterparty chain when this packet
+	/// should be invalidated.
+	pub timeout_height_offset: u64,
+	/// Timestamp on counterparty chain relative to latest timestamp when this packet should be
+	/// invalidated This value should be in nano seconds
+	pub timeout_timestamp_offset: u64,
 	/// port id as utf8 string bytes
 	pub port_id: PortId,
 	/// channel id as utf8 string bytes
@@ -321,7 +320,12 @@ impl TryFrom<&OpenChannelParams> for Order {
 /// Captures the functions modules can use to interact with the ibc pallet
 /// Currently allows modules to register packets and crreate channels
 pub trait IbcTrait {
-	fn client_revision_number(port_id: Vec<u8>, channel_id: Vec<u8>) -> Result<u64, Error>;
+	/// Get the latest height and latest timestamp for the client paired to the channel and port
+	/// combination
+	fn latest_height_and_timestamp(
+		port_id: &PortId,
+		channel_id: &ChannelId,
+	) -> Result<(Height, Timestamp), Error>;
 	/// Register a packet to be sent
 	fn send_packet(data: SendPacketData) -> Result<(), Error>;
 	/// Allows a module to open a channel

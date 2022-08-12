@@ -13,6 +13,9 @@ sp_api::decl_runtime_apis! {
 		/// Get parachain id
 		fn para_id() -> u32;
 
+		/// Get timestamp
+		fn timestamp() -> u64;
+
 		/// Returns the balance of this address
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128>;
 

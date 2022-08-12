@@ -111,7 +111,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use ibc::core::{
 		ics02_client::msgs::create_client,
-		ics03_connection::msgs::{conn_open_ack, conn_open_init},
+		ics03_connection::msgs::{conn_open_ack, conn_open_confirm, conn_open_init, conn_open_try},
 	};
 	use ibc_primitives::OffchainPacketType;
 
@@ -282,6 +282,10 @@ pub mod pallet {
 		PacketAcknowledgmentNotFound,
 		/// Error constructing packet
 		SendPacketError,
+		/// Invalid channel id
+		InvalidChannelId,
+		/// Invalid port id
+		InvalidPortId,
 		/// Other forms of errors
 		Other,
 		/// Invalid route
@@ -323,7 +327,9 @@ pub mod pallet {
 					let is_permissioned = matches!(
 						type_url.as_str(),
 						conn_open_init::TYPE_URL |
-							conn_open_ack::TYPE_URL | create_client::TYPE_URL
+							conn_open_ack::TYPE_URL | conn_open_try::TYPE_URL |
+							conn_open_confirm::TYPE_URL | conn_open_ack::TYPE_URL |
+							create_client::TYPE_URL
 					);
 					if is_permissioned {
 						return None
@@ -353,7 +359,9 @@ pub mod pallet {
 					let is_permissioned = matches!(
 						type_url.as_str(),
 						conn_open_init::TYPE_URL |
-							conn_open_ack::TYPE_URL | create_client::TYPE_URL
+							conn_open_ack::TYPE_URL | conn_open_try::TYPE_URL |
+							conn_open_confirm::TYPE_URL | conn_open_ack::TYPE_URL |
+							create_client::TYPE_URL
 					);
 					if !is_permissioned {
 						return None

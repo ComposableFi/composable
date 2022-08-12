@@ -42,16 +42,6 @@ impl<T: frame_system::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
-	// Storage: Ibc ConnectionCounter (r:1 w:1)
-	// Storage: ParachainInfo ParachainId (r:1 w:0)
-	// Storage: Ibc ConnectionClient (r:1 w:1)
-	// Storage: unknown [0x6962632f636c69656e74732f30372d74656e6465726d696e742d302f636c6965] (r:1 w:0)
-	// Storage: unknown [0x6962632f636f6e6e656374696f6e732f636f6e6e656374696f6e2d30] (r:0 w:1)
-	fn connection_open_init() -> Weight {
-		(132_729_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
-	}
 	// Storage: ParachainInfo ParachainId (r:1 w:0)
 	// Storage: System BlockHash (r:2 w:0)
 	// Storage: Ibc HostConsensusStates (r:1 w:0)
@@ -202,7 +192,7 @@ impl<T: frame_system::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc ConnectionClient (r:1 w:1)
 	// Storage: unknown [0x6962632f636c69656e74732f30372d74656e6465726d696e742d302f636c6965] (r:1 w:0)
 	// Storage: unknown [0x6962632f636f6e6e656374696f6e732f636f6e6e656374696f6e2d30] (r:0 w:1)
-	fn initiate_connection() -> Weight {
+	fn conn_open_init() -> Weight {
 		(142_670_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))

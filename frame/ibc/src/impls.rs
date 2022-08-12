@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 use super::*;
 use crate::{
 	events::IbcEvent,
@@ -5,8 +7,8 @@ use crate::{
 	ics23::{
 		acknowledgements::Acknowledgements, channels::Channels, client_states::ClientStates,
 		connections::Connections, consensus_states::ConsensusStates,
-		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
-		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+		next_seq_recv::NextSequenceRecv, packet_commitments::PacketCommitment,
+		reciepts::PacketReceipt,
 	},
 	routing::Context,
 };
@@ -27,10 +29,8 @@ use ibc::{
 		},
 	},
 	core::{
-		ics02_client::{
-			client_state::{AnyClientState, ClientState},
-			context::ClientReader,
-		},
+		ics02_client::{client_state::AnyClientState, context::ClientReader},
+		ics03_connection::context::ConnectionReader,
 		ics04_channel::{
 			channel::ChannelEnd,
 			context::{ChannelKeeper, ChannelReader},
@@ -51,6 +51,7 @@ use ibc::{
 	},
 	handler::HandlerOutputBuilder,
 	signer::Signer,
+	timestamp::Timestamp,
 	Height,
 };
 use ibc_primitives::{
@@ -100,6 +101,13 @@ where
 		if !errors.is_empty() {
 			Self::deposit_event(errors.into())
 		};
+	}
+
+	pub fn timestamp() -> u64 {
+		use frame_support::traits::UnixTime;
+		use sp_runtime::traits::SaturatedConversion;
+		let time = T::TimeProvider::now();
+		time.as_nanos().saturated_into::<u64>()
 	}
 
 	// IBC Runtime Api helper methods
@@ -207,25 +215,33 @@ where
 		Ok(connections)
 	}
 
+	fn channel_client_id(channel_end: &ChannelEnd) -> Result<ClientId, Error<T>> {
+		let ctx = Context::<T>::default();
+		let connection_id = channel_end
+			.connection_hops
+			.get(0)
+			.ok_or_else(|| Error::<T>::ConnectionNotFound)?;
+		let connection_end =
+			ctx.connection_end(connection_id).map_err(|_| Error::<T>::ConnectionNotFound)?;
+		Ok(connection_end.client_id().clone())
+	}
+
 	/// Get client state for client which this channel is bound to
 	pub fn channel_client(
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 	) -> Result<IdentifiedClientState, Error<T>> {
-		for (connection_id, channels) in ChannelsConnection::<T>::iter() {
-			if channels.contains(&(port_id.clone(), channel_id.clone())) {
-				if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
-					.find(|(.., connection_ids)| connection_ids.contains(&connection_id))
-				{
-					let client_id_ = client_id_from_bytes(client_id.clone())
-						.map_err(|_| Error::<T>::DecodingError)?;
-					let client_state = ClientStates::<T>::get(&client_id_)
-						.ok_or(Error::<T>::ClientStateNotFound)?;
-					return Ok(IdentifiedClientState { client_id, client_state })
-				}
-			}
-		}
-		Err(Error::<T>::ClientStateNotFound)
+		let channel_id =
+			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::InvalidChannelId)?;
+		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::InvalidPortId)?;
+		let ctx = Context::<T>::new();
+		let channel_end = ctx
+			.channel_end(&(port_id, channel_id))
+			.map_err(|_| Error::<T>::ChannelNotFound)?;
+		let client_id = Self::channel_client_id(&channel_end)?;
+		let client_state =
+			ClientStates::<T>::get(&client_id).ok_or(Error::<T>::ClientStateNotFound)?;
+		Ok(IdentifiedClientState { client_id: client_id.as_bytes().to_vec(), client_state })
 	}
 
 	/// Get all channel states
@@ -622,73 +638,46 @@ where
 	<T as DeFiComposableConfig>::MayBeAssetId: From<<T as assets::Config>::AssetId>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<primitives::currency::CurrencyId>,
 {
-	fn client_revision_number(
-		port_id: Vec<u8>,
-		channel_id: Vec<u8>,
-	) -> Result<u64, IbcHandlerError> {
-		let connection_id = ChannelsConnection::<T>::iter()
-			.find_map(|(connection, identifiers)| {
-				if identifiers.contains(&(port_id.clone(), channel_id.clone())) {
-					Some(connection)
-				} else {
-					None
+	fn latest_height_and_timestamp(
+		port_id: &PortId,
+		channel_id: &ChannelId,
+	) -> Result<(Height, Timestamp), IbcHandlerError> {
+		let ctx = Context::<T>::new();
+		let source_channel_end =
+			ctx.channel_end(&(port_id.clone(), *channel_id)).map_err(|_| {
+				IbcHandlerError::ChannelOrPortError {
+					msg: Some(format!(
+						"Failed to fetch Channel end for channel {} from storage",
+						channel_id
+					)),
 				}
-			})
-			.ok_or(IbcHandlerError::ConnectionIdError {
-				msg: Some(format!(
-					"Failed to find a connection id for channel_id {:?}",
-					String::from_utf8(channel_id.clone()).ok()
-				)),
 			})?;
-
-		let client_id = ConnectionClient::<T>::iter()
-			.find_map(
-				|(client_id, conns)| {
-					if conns.contains(&connection_id) {
-						Some(client_id)
-					} else {
-						None
-					}
-				},
-			)
-			.ok_or(IbcHandlerError::ClientIdError {
-				msg: Some("Failed to find client id for connection id".to_string()),
-			})?;
-		let client_id =
-			client_id_from_bytes(client_id).map_err(|_| IbcHandlerError::DecodingError {
-				msg: Some("Failed to decode client id from bytes".to_string()),
-			})?;
-		let client_state =
-			ClientStates::<T>::get(&client_id).ok_or(IbcHandlerError::ClientStateError {
-				msg: Some(format!("Falied to get client state for {}", client_id)),
-			})?;
-		let client_state = AnyClientState::decode_vec(&client_state).map_err(|_| {
-			IbcHandlerError::ClientStateError {
-				msg: Some(format!("Failed to decode client state for {}", client_id)),
+		let client_id = Self::channel_client_id(&source_channel_end).map_err(|_| {
+			IbcHandlerError::ClientIdError {
+				msg: Some(format!("Could not find client id for {:?}/{:?}", port_id, channel_id)),
 			}
 		})?;
-		Ok(client_state.chain_id().version())
+
+		let client_state =
+			ctx.client_state(&client_id).map_err(|_| IbcHandlerError::ClientStateError {
+				msg: Some(format!("CLient state not found for {:?}", client_id)),
+			})?;
+		let consensus_state = ctx
+			.consensus_state(&client_id, client_state.latest_height())
+			.map_err(|_| IbcHandlerError::Other {
+				msg: Some(format!(
+					"Consensus state not found for {:?} at {:?}",
+					client_id,
+					client_state.latest_height()
+				)),
+			})?;
+		Ok((client_state.latest_height(), consensus_state.timestamp()))
 	}
 
 	fn send_packet(data: SendPacketData) -> Result<(), IbcHandlerError> {
 		let source_channel = data.channel_id;
 		let source_port = data.port_id;
-
-		let revision_number = if let Some(revision_number) = data.revision_number {
-			revision_number
-		} else {
-			Self::client_revision_number(
-				source_port.as_bytes().to_vec(),
-				source_channel.to_string().as_bytes().to_vec(),
-			)?
-		};
 		let mut ctx = Context::<T>::new();
-		let next_seq_send = NextSequenceSend::<T>::get(source_port.clone(), source_channel).ok_or(
-			IbcHandlerError::SendPacketError {
-				msg: Some(format!("Failed to get next_sequence_send for {}", source_channel)),
-			},
-		)?;
-		let sequence = Sequence::from(next_seq_send);
 		let source_channel_end =
 			ctx.channel_end(&(source_port.clone(), source_channel)).map_err(|_| {
 				IbcHandlerError::ChannelOrPortError {
@@ -698,6 +687,34 @@ where
 					)),
 				}
 			})?;
+		let client_id = Self::channel_client_id(&source_channel_end).map_err(|_| {
+			IbcHandlerError::ClientIdError {
+				msg: Some(format!(
+					"Could not find client id for {:?}/{:?}",
+					source_port, source_channel
+				)),
+			}
+		})?;
+
+		let client_state =
+			ctx.client_state(&client_id).map_err(|_| IbcHandlerError::ClientStateError {
+				msg: Some(format!("CLient state not found for {:?}", client_id)),
+			})?;
+		let consensus_state = ctx
+			.consensus_state(&client_id, client_state.latest_height())
+			.map_err(|_| IbcHandlerError::Other {
+				msg: Some(format!(
+					"Consensus state not found for {:?} at {:?}",
+					client_id,
+					client_state.latest_height()
+				)),
+			})?;
+		let next_seq_send = ctx
+			.get_next_sequence_send(&(source_port.clone(), source_channel))
+			.map_err(|_| IbcHandlerError::SendPacketError {
+				msg: Some(format!("Failed to get next_sequence_send for {}", source_channel)),
+			})?;
+		let sequence = Sequence::from(next_seq_send);
 
 		let destination_port = source_channel_end.counterparty().port_id().clone();
 		let destination_channel = *source_channel_end.counterparty().channel_id().ok_or(
@@ -707,10 +724,11 @@ where
 				),
 			},
 		)?;
-		let timestamp = ibc::timestamp::Timestamp::from_nanoseconds(data.timeout_timestamp)
-			.map_err(|_| IbcHandlerError::TimestampOrHeightError {
-				msg: Some("Failed to convert timeout timestamp".to_string()),
-			})?;
+		let timestamp = (consensus_state.timestamp() +
+			Duration::from_nanos(data.timeout_timestamp_offset))
+		.map_err(|_| IbcHandlerError::TimestampOrHeightError {
+			msg: Some("Failed to convert timeout timestamp".to_string()),
+		})?;
 		let packet = Packet {
 			sequence,
 			source_port,
@@ -718,7 +736,7 @@ where
 			destination_port,
 			destination_channel,
 			data: data.data,
-			timeout_height: Height::new(revision_number, data.timeout_height),
+			timeout_height: client_state.latest_height().add(data.timeout_height_offset),
 			timeout_timestamp: timestamp,
 		};
 
@@ -863,6 +881,7 @@ where
 		use crate::benchmarks::tendermint_benchmark_utils::create_mock_state;
 		use ibc::core::ics02_client::{
 			client_consensus::AnyConsensusState,
+			client_state::ClientState,
 			msgs::create_client::{MsgCreateAnyClient, TYPE_URL},
 		};
 
@@ -870,7 +889,7 @@ where
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Tendermint(mock_client_state),
-			Some(AnyConsensusState::Tendermint(mock_cs_state)),
+			AnyConsensusState::Tendermint(mock_cs_state),
 			Signer::from_str("pallet_ibc").unwrap(),
 		)
 		.unwrap()

@@ -152,16 +152,15 @@ where
 		src_client_id: String,
 	) -> Result<QueryClientStateResponse>;
 
+	/// Query localchain's timestamp in nanoseconds
+	#[method(name = "ibc_queryTimestamp")]
+	fn query_timestamp(&self, height: u32) -> Result<u64>;
+
 	/// Query localchain consensus state
 	#[method(name = "ibc_queryConsensusState")]
 	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
 
 	/// Query client consensus state
-	/// If the light client is a beefy light client, the revision height and revision number must be
-	/// specified And the `latest_consensus_state` field should be set to false, if not an error
-	/// will be returned because the consenssus state will not be found
-	/// For a beefy light client revision number should be the para id and the revision height the
-	/// block height.
 	#[method(name = "ibc_queryClientConsensusState")]
 	fn query_client_consensus_state(
 		&self,
@@ -352,8 +351,8 @@ where
 
 	/// Query Ibc Events that were deposited in a series of blocks
 	/// Using String keys because HashMap fails to deserialize when key is not a String
-	#[method(name = "ibc_queryIbcEvents")]
-	fn query_ibc_events(
+	#[method(name = "ibc_queryEvents")]
+	fn query_events(
 		&self,
 		block_numbers: Vec<BlockNumberOrHash<Hash>>,
 	) -> Result<HashMap<String, Vec<RawIbcEvent>>>;
@@ -489,6 +488,12 @@ where
 		} else {
 			Err(runtime_error_into_rpc_error("Could not get latest height"))
 		}
+	}
+
+	fn query_timestamp(&self, height: u32) -> Result<u64> {
+		let api = self.client.runtime_api();
+		let at = BlockId::Number(height.into());
+		api.timestamp(&at).map_err(runtime_error_into_rpc_error)
 	}
 
 	fn query_balance_with_address(&self, addr: String) -> Result<Coin> {
@@ -1411,7 +1416,7 @@ where
 		}
 	}
 
-	fn query_ibc_events(
+	fn query_events(
 		&self,
 		block_numbers: Vec<BlockNumberOrHash<Block::Hash>>,
 	) -> Result<HashMap<String, Vec<RawIbcEvent>>> {

@@ -97,8 +97,8 @@ benchmarks! {
 		let transfer_params = TransferParams {
 			to:  "bob".to_string().as_bytes().to_vec(),
 			source_channel: channel_id.to_string().as_bytes().to_vec(),
-			timeout_timestamp: 1690894363u64.saturating_mul(1000000000),
-			timeout_height: 2000,
+			timeout_timestamp_offset: 1690894363,
+			timeout_height_offset: 2000,
 			revision_number: None
 		};
 

@@ -1701,6 +1701,10 @@ impl_runtime_apis! {
 				}).flatten().collect()
 			}
 		}
+
+		fn timestamp() -> u64 {
+			Ibc::timestamp()
+		}
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
