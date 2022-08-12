@@ -6,15 +6,12 @@ use crate::{
 	benchmarks::tendermint_benchmark_utils::*,
 	host_functions::HostFunctions,
 	ics23::{
-		acknowledgements::Acknowledgements, client_states::ClientStates,
-		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+		client_states::ClientStates,
 	},
-	pallet::Pallet as PalletIbc,
-	Any, Config, HostConsensusStates,
+	Any, Config
 };
 use core::str::FromStr;
 use frame_benchmarking::{benchmarks, whitelisted_caller};
-use frame_support::traits::Hooks;
 use frame_system::RawOrigin;
 use ibc::{
 	core::{
@@ -34,7 +31,7 @@ use ibc::{
 			context::{ConnectionKeeper, ConnectionReader},
 			msgs::{
 				conn_open_ack::TYPE_URL as CONN_OPEN_ACK_TYPE_URL,
-				conn_open_confirm::TYPE_URL as CONN_OPEN_CONFIRM_TYPE_URL, conn_open_init,
+				conn_open_confirm::TYPE_URL as CONN_OPEN_CONFIRM_TYPE_URL,
 				conn_open_try::TYPE_URL as CONN_TRY_OPEN_TYPE_URL,
 			},
 			version::Version as ConnVersion,
@@ -100,38 +97,6 @@ benchmarks! {
 		let client_state = AnyClientState::decode_vec(&*client_state).unwrap();
 		assert_eq!(client_state.latest_height(), Height::new(0, 2));
 	}
-
-	// create connection
-	connection_open_init {
-		let mut ctx = routing::Context::<T>::new();
-		let (mock_client_state, mock_cs_state) = create_mock_state();
-		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
-		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
-		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
-		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
-		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
-		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
-
-		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
-		let counterparty = Counterparty::new(counterparty_client_id, None, commitment_prefix);
-		let delay_period = core::time::Duration::from_nanos(1000);
-
-		let value = conn_open_init::MsgConnectionOpenInit {
-			client_id: client_id.clone(),
-			counterparty,
-			version: None,
-			delay_period,
-			signer: Signer::from_str(MODULE_ID).unwrap()
-		}.encode_vec();
-
-		let msg = Any { type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(), value };
-		let caller: T::AccountId = whitelisted_caller();
-	}: deliver(RawOrigin::Signed(caller), vec![msg])
-	verify {
-		assert_eq!(ConnectionClient::<T>::get(client_id.as_bytes().to_vec()).len(), 1);
-	}
-
 
 	// connection open try
 	conn_try_open_tendermint {
@@ -821,7 +786,7 @@ benchmarks! {
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Tendermint(mock_client_state),
-			Some(AnyConsensusState::Tendermint(mock_cs_state)),
+			AnyConsensusState::Tendermint(mock_cs_state),
 			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()

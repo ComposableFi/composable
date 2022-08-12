@@ -15,7 +15,6 @@ pub trait WeightInfo {
 	fn create_client() -> Weight;
 	fn initiate_connection() -> Weight;
 	fn update_tendermint_client() -> Weight;
-	fn connection_open_init() -> Weight;
 	fn conn_try_open_tendermint() -> Weight;
 	fn conn_open_ack_tendermint() -> Weight;
 	fn conn_open_confirm_tendermint() -> Weight;
@@ -40,10 +39,6 @@ impl WeightInfo for () {
 	}
 
 	fn update_tendermint_client() -> Weight {
-		0
-	}
-
-	fn connection_open_init() -> Weight {
 		0
 	}
 
@@ -155,16 +150,7 @@ where
 					ClientMsg::UpgradeClient(_) => Weight::default(),
 				},
 				Ics26Envelope::Ics3Msg(msgs) => match msgs {
-					ConnectionMsg::ConnectionOpenInit(msg) => {
-						let client_type = msg.client_id.as_str().rsplit_once('-').and_then(
-							|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
-						);
-						match client_type {
-							Some(ClientType::Tendermint) =>
-								<T as Config>::WeightInfo::connection_open_init(),
-							_ => Weight::default(),
-						}
-					},
+					ConnectionMsg::ConnectionOpenInit(_) => Weight::default(),
 					ConnectionMsg::ConnectionOpenTry(msg) => {
 						let client_type = msg.client_id.as_str().rsplit_once('-').and_then(
 							|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),

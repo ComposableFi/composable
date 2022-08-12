@@ -64,6 +64,8 @@ use sp_std::{prelude::*, str::FromStr};
 
 #[frame_support::pallet]
 pub mod pallet {
+	use core::time::Duration;
+
 	use super::*;
 	use composable_traits::{
 		currency::CurrencyFactory,
@@ -127,9 +129,11 @@ pub mod pallet {
 		/// Source channel on host chain
 		pub source_channel: Vec<u8>,
 		/// Timestamp at which this packet should timeout in counterparty in nanoseconds
-		pub timeout_timestamp: u64,
+		/// relative to the latest time stamp
+		pub timeout_timestamp_offset: u64,
 		/// Block height at which this packet should timeout on counterparty
-		pub timeout_height: u64,
+		/// relative to the latest height
+		pub timeout_height_offset: u64,
 		/// Revision number, only needed when making a transfer to a parachain
 		/// in which case this should be the para id
 		pub revision_number: Option<u64>,
@@ -215,6 +219,8 @@ pub mod pallet {
 		InvalidParams,
 		/// Error opening channel
 		ChannelInitError,
+		/// Latest height and timestamp for a client not found
+		TimestampAndHeightNotFound,
 	}
 
 	#[pallet::storage]
@@ -281,15 +287,9 @@ pub mod pallet {
 			let source_channel = channel_id_from_bytes(params.source_channel.clone())
 				.map_err(|_| Error::<T>::Utf8Error)?;
 			let source_port = PortId::transfer();
-			let revision_number = if let Some(rev_number) = params.revision_number {
-				rev_number
-			} else {
-				T::IbcHandler::client_revision_number(
-					source_port.as_bytes().to_vec(),
-					params.source_channel,
-				)
-				.map_err(|_| Error::<T>::FailedToGetRevisionNumber)?
-			};
+			let (latest_height, latest_timestamp) =
+				T::IbcHandler::latest_height_and_timestamp(&source_port, &source_channel)
+					.map_err(|_| Error::<T>::TimestampAndHeightNotFound)?;
 
 			let data = MsgTransfer {
 				source_port,
@@ -297,10 +297,9 @@ pub mod pallet {
 				token: coin,
 				sender: Signer::from_str(&from).map_err(|_| Error::<T>::Utf8Error)?,
 				receiver: Signer::from_str(&to).map_err(|_| Error::<T>::Utf8Error)?,
-				timeout_height: ibc::Height::new(revision_number, params.timeout_height),
-				timeout_timestamp: ibc::timestamp::Timestamp::from_nanoseconds(
-					params.timeout_timestamp,
-				)
+				timeout_height: latest_height.add(params.timeout_height_offset),
+				timeout_timestamp: (latest_timestamp +
+					Duration::from_nanos(params.timeout_timestamp_offset))
 				.map_err(|_| Error::<T>::InvalidTimestamp)?,
 			};
 			T::IbcHandler::send_transfer(data).map_err(|e| {

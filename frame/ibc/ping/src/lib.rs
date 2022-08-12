@@ -42,11 +42,10 @@ pub const PORT_ID: &str = "ping";
 )]
 pub struct SendPingParams {
 	pub data: Vec<u8>,
-	// Revision number for the light client this channel is attached to
-	// Required if the counterparty chain is a parachain
-	pub revision_number: Option<u64>,
-	pub timeout_height: u64,
-	pub timeout_timestamp: u64,
+	/// Timeout height offset relative to the client latest height
+	pub timeout_height_offset: u64,
+	/// Time out timestamp offset relative to client's latest height
+	pub timeout_timestamp_offset: u64,
 	// Channel counter, for example counter for channel-0 is 0
 	pub channel_id: u64,
 }
@@ -122,9 +121,8 @@ pub mod pallet {
 			let channel_id = ChannelId::new(params.channel_id);
 			let send_packet = SendPacketData {
 				data: params.data,
-				revision_number: params.revision_number,
-				timeout_height: params.timeout_height,
-				timeout_timestamp: params.timeout_timestamp,
+				timeout_height_offset: params.timeout_height_offset,
+				timeout_timestamp_offset: params.timeout_timestamp_offset,
 				port_id: port_id_from_bytes(PORT_ID.as_bytes().to_vec())
 					.expect("Valid port id expected"),
 				channel_id,

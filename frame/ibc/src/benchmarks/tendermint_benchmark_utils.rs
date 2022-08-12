@@ -128,6 +128,9 @@ pub fn create_mock_beefy_client_state() -> (BeefyClientState, BeefyConsensusStat
 		latest_beefy_height: 1,
 		frozen_height: None,
 		beefy_activation_block: 0,
+		latest_para_height: 0,
+		relay_chain: Default::default(),
+		para_id: 2000,
 		authority: Default::default(),
 		next_authority_set: Default::default(),
 	};

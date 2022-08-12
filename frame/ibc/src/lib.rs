@@ -282,6 +282,10 @@ pub mod pallet {
 		PacketAcknowledgmentNotFound,
 		/// Error constructing packet
 		SendPacketError,
+		/// Invalid channel id
+		InvalidChannelId,
+		/// Invalid port id
+		InvalidPortId,
 		/// Other forms of errors
 		Other,
 		/// Invalid route

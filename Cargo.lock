@@ -4550,15 +4550,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-<<<<<<< HEAD
-<<<<<<< HEAD
 source = "git+https://github.com/ComposableFi/ibc-rs?rev=6da3fa79f6475637a2ca0c27c3c91a53452cea36#6da3fa79f6475637a2ca0c27c3c91a53452cea36"
-=======
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=2e8d5b4f823b7e7d8e5f03d91d22593a59be8f33#2e8d5b4f823b7e7d8e5f03d91d22593a59be8f33"
->>>>>>> f3dfb3c0e (update ibc-rs)
-=======
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=1f1f06b0dab92802f64f97b77380c800899a2be7#1f1f06b0dab92802f64f97b77380c800899a2be7"
->>>>>>> 2e6a1d7a0 (keep packet on events of counterparty origin)
 dependencies = [
  "beefy-generic-client",
  "beefy-primitives",
@@ -4625,15 +4617,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-<<<<<<< HEAD
-<<<<<<< HEAD
 source = "git+https://github.com/ComposableFi/ibc-rs?rev=6da3fa79f6475637a2ca0c27c3c91a53452cea36#6da3fa79f6475637a2ca0c27c3c91a53452cea36"
-=======
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=2e8d5b4f823b7e7d8e5f03d91d22593a59be8f33#2e8d5b4f823b7e7d8e5f03d91d22593a59be8f33"
->>>>>>> f3dfb3c0e (update ibc-rs)
-=======
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=1f1f06b0dab92802f64f97b77380c800899a2be7#1f1f06b0dab92802f64f97b77380c800899a2be7"
->>>>>>> 2e6a1d7a0 (keep packet on events of counterparty origin)
 dependencies = [
  "base64 0.13.0",
  "bytes 1.2.1",
@@ -16158,7 +16142,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.9.0",
+ "parking_lot 0.11.2",
  "regex",
  "serde",
  "serde_json",
@@ -16352,7 +16336,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.3",
- "rand 0.6.5",
+ "rand 0.8.5",
  "static_assertions",
 ]
 

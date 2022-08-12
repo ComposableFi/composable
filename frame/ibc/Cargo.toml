@@ -65,6 +65,12 @@ chrono = "0.4.19"
 currency-factory = { package = "pallet-currency-factory", path = "../currency-factory" }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 hex-literal = { version = "0.3.4" }
+<<<<<<< HEAD
+=======
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "6da3fa79f6475637a2ca0c27c3c91a53452cea36", features = [
+  "mocks",
+] }
+>>>>>>> 5898d0ad6 (update pallet ibc)
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }

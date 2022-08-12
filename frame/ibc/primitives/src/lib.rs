@@ -22,6 +22,7 @@ use ibc::{
 	},
 	signer::Signer,
 	timestamp::Timestamp,
+	Height,
 };
 use scale_info::{prelude::format, TypeInfo};
 #[cfg(not(feature = "std"))]
@@ -321,7 +322,12 @@ impl TryFrom<&OpenChannelParams> for Order {
 /// Captures the functions modules can use to interact with the ibc pallet
 /// Currently allows modules to register packets and crreate channels
 pub trait IbcTrait {
-	fn client_revision_number(port_id: Vec<u8>, channel_id: Vec<u8>) -> Result<u64, Error>;
+	/// Get the latest height and latest timestamp for the client paired to the channel and port
+	/// combination
+	fn latest_height_and_timestamp(
+		port_id: &PortId,
+		channel_id: &ChannelId,
+	) -> Result<(Height, Timestamp), Error>;
 	/// Register a packet to be sent
 	fn send_packet(data: SendPacketData) -> Result<(), Error>;
 	/// Allows a module to open a channel
