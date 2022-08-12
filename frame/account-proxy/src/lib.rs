@@ -26,9 +26,39 @@
 //! - [`Config`]
 //! - [`Call`]
 
-// Ensure we're `no_std` when compiling for Wasm.
+#![cfg_attr(
+not(test),
+warn(
+clippy::disallowed_methods,
+clippy::disallowed_types,
+clippy::indexing_slicing,
+clippy::todo,
+clippy::unwrap_used,
+clippy::panic
+)
+)]
+#![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
-
+#![warn(
+bad_style,
+bare_trait_objects,
+const_err,
+improper_ctypes,
+non_shorthand_field_patterns,
+no_mangle_generic_items,
+overflowing_literals,
+path_statements,
+patterns_in_fns_without_body,
+private_in_public,
+unconditional_recursion,
+unused_allocation,
+unused_comparisons,
+unused_parens,
+while_true,
+trivial_casts,
+trivial_numeric_casts,
+unused_extern_crates
+)]
 mod benchmarking;
 mod tests;
 pub mod weights;
@@ -48,8 +78,7 @@ use sp_runtime::{
 	traits::{Dispatchable, Hash, Saturating, TrailingZeroInput, Zero},
 	DispatchResult,
 };
-use sp_std::prelude::*;
-use sp_std::vec;
+use sp_std::{prelude::*, vec};
 pub use weights::WeightInfo;
 
 use composable_traits::account_proxy::{AccountProxy, ProxyDefinition};

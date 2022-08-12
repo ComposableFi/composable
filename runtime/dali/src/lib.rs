@@ -38,8 +38,8 @@ use common::{
 	},
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
-	NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
+	BlockNumber, BondOfferId, FinancialNFTInstanceId, Hash, MaxStringSize, Moment,
+	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -80,7 +80,7 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
-use composable_traits::account_proxy::ProxyType;
+use composable_traits::{account_proxy::ProxyType, fnft::FNFTAccountProxyType};
 use frame_support::{
 	traits::{fungibles, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
@@ -661,11 +661,8 @@ impl InstanceFilter<Call> for ProxyType {
 			ProxyType::Governance => matches!(
 				c,
 				Call::Democracy(..) |
-					Call::Council(..) | Call::TechnicalCommittee(..) |
-					Call::PhragmenElection(..) |
-					Call::Treasury(..) | Call::Bounties(..) |
-					Call::Tips(..) | Call::Utility(..) |
-					Call::ChildBounties(..)
+					Call::Council(..) | Call::TechnicalCollective(..) |
+					Call::Treasury(..) | Call::Utility(..)
 			),
 			ProxyType::CancelProxy => {
 				// TODO (vim): We might not need this
@@ -678,7 +675,6 @@ impl InstanceFilter<Call> for ProxyType {
 			(x, y) if x == y => true,
 			(ProxyType::Any, _) => true,
 			(_, ProxyType::Any) => false,
-			(ProxyType::NonTransfer, _) => true,
 			_ => false,
 		}
 	}
@@ -695,7 +691,7 @@ impl pallet_account_proxy::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = Assets;
-	type ProxyType = ();
+	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
 	type MaxProxies = MaxProxies;
@@ -704,6 +700,21 @@ impl pallet_account_proxy::Config for Runtime {
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = ProxyPrice;
 	type AnnouncementDepositFactor = ProxyPrice;
+}
+
+parameter_types! {
+	pub const FNFTPalletId: PalletId = PalletId(*b"pal_fnft");
+}
+
+impl pallet_fnft::Config for Runtime {
+	type Event = Event;
+	type MaxProperties = ConstU32<16>;
+	type FinancialNFTCollectionId = CurrencyId;
+	type FinancialNFTInstanceId = FinancialNFTInstanceId;
+	type ProxyType = ProxyType;
+	type AccountProxy = Proxy;
+	type ProxyTypeSelector = FNFTAccountProxyType;
+	type PalletId = FNFTPalletId;
 }
 
 parameter_types! {
@@ -831,8 +842,8 @@ impl pallet_staking_rewards::Config for Runtime {
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
 	// TODO (vim): Complete this when fnft is in the runtime.
-	type FinancialNFTInstanceId = ();
-	type FinancialNFT = ();
+	type FinancialNFTInstanceId = u128;
+	type FinancialNFT = FNFT;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -1182,6 +1193,7 @@ construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
+		FNFT: pallet_fnft::{Pallet, Storage, Event<T>} = 68,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 140,
 
@@ -1261,6 +1273,7 @@ mod benches {
 		[pablo, Pablo]
 		[pallet_staking_rewards, StakingRewards]
 		[pallet_account_proxy, Proxy]
+		[pallet_fnft, FNFT]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
 		[ibc_transfer, Transfer]
