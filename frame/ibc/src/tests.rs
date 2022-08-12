@@ -19,7 +19,7 @@ use ibc::{
 	proofs::{ConsensusProof, Proofs},
 	signer::Signer,
 };
-use ibc_trait::OpenChannelParams;
+use ibc_primitives::OpenChannelParams;
 use pallet_ibc_ping::SendPingParams;
 use sp_runtime::AccountId32;
 use std::str::FromStr;

@@ -54,7 +54,7 @@ use ibc::{
 	},
 	signer::Signer,
 };
-use ibc_trait::{CallbackWeight, IbcTrait};
+use ibc_primitives::{CallbackWeight, IbcTrait};
 pub use pallet::*;
 use scale_info::prelude::{
 	format,
@@ -88,7 +88,7 @@ pub mod pallet {
 		signer::Signer,
 	};
 	use ibc_primitives::{runtime_interface, runtime_interface::SS58CodecError};
-	use ibc_trait::{
+	use ibc_primitives::{
 		channel_id_from_bytes, connection_id_from_bytes, port_id_from_bytes, IbcTrait,
 		OpenChannelParams,
 	};
@@ -169,7 +169,7 @@ pub mod pallet {
 				Balance = <Self as DeFiComposableConfig>::Balance,
 				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
 			>;
-		type IbcHandler: ibc_trait::IbcTrait;
+		type IbcHandler: ibc_primitives::IbcTrait;
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;

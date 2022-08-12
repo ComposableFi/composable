@@ -16,7 +16,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", features = [
   "derive",
 ] }
 hex-literal = { version = "0.3.3" }
-ibc-primitives = { path = "../ibc-primitives" }
+ibc-primitives = { path = "../primitives" }
 jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
 pallet-ibc = { path = "../" }
 serde = { version = "1.0.136", features = ["derive"] }
@@ -27,7 +27,7 @@ ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d8dd882ef4338d6fe
   "ics11_beefy",
 ] }
 ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d8dd882ef4338d6fea2ee4cafb37c25e89f45828", default-features = false }
-ibc-runtime-api = { path = "../ibc-runtime-api" }
+ibc-runtime-api = { path = "../runtime-api" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }

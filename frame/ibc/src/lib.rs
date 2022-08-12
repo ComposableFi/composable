@@ -138,7 +138,7 @@ pub mod pallet {
 	use crate::{host_functions::HostFunctions, ics23::client_states::ClientStates};
 	use composable_traits::defi::DeFiComposableConfig;
 	pub use ibc::signer::Signer;
-	use ibc_trait::client_id_from_bytes;
+	use ibc_primitives::client_id_from_bytes;
 	use tendermint_proto::Protobuf;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.

@@ -2791,7 +2791,6 @@ dependencies = [
  "hex-literal",
  "ibc-primitives",
  "ibc-runtime-api",
- "ibc-transfer",
  "lending-runtime-api",
  "orml-tokens",
  "orml-traits",
@@ -2817,6 +2816,7 @@ dependencies = [
  "pallet-governance-registry",
  "pallet-ibc",
  "pallet-ibc-ping",
+ "pallet-ibc-transfer",
  "pallet-identity",
  "pallet-indices",
  "pallet-lending",
@@ -4571,6 +4571,9 @@ name = "ibc-primitives"
 version = "0.1.0"
 dependencies = [
  "base58",
+ "composable-traits",
+ "frame-support",
+ "hex",
  "ibc",
  "parity-scale-codec",
  "ripemd",
@@ -4584,6 +4587,7 @@ dependencies = [
  "sp-runtime-interface 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-trie 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "xcm",
 ]
 
 [[package]]
@@ -4631,45 +4635,6 @@ dependencies = [
  "ibc-primitives",
  "pallet-ibc",
  "sp-api",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "ibc-trait"
-version = "0.1.0"
-dependencies = [
- "composable-traits",
- "frame-support",
- "hex",
- "ibc",
- "ibc-primitives",
- "parity-scale-codec",
- "scale-info",
- "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "xcm",
-]
-
-[[package]]
-name = "ibc-transfer"
-version = "0.1.0"
-dependencies = [
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex",
- "ibc",
- "ibc-primitives",
- "ibc-trait",
- "log 0.4.17",
- "pallet-balances",
- "parity-scale-codec",
- "primitives 0.1.0",
- "scale-info",
- "serde_json",
- "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
@@ -8131,8 +8096,6 @@ dependencies = [
  "ibc",
  "ibc-primitives",
  "ibc-proto",
- "ibc-trait",
- "ibc-transfer",
  "ics23",
  "log 0.4.17",
  "orml-tokens",
@@ -8143,6 +8106,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-governance-registry",
  "pallet-ibc-ping",
+ "pallet-ibc-transfer",
  "pallet-timestamp",
  "parachain-info",
  "parity-scale-codec",
@@ -8173,7 +8137,6 @@ dependencies = [
  "frame-system",
  "ibc",
  "ibc-primitives",
- "ibc-trait",
  "log 0.4.17",
  "pallet-balances",
  "pallet-ibc",
@@ -8185,6 +8148,28 @@ dependencies = [
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "tendermint-proto",
+]
+
+[[package]]
+name = "pallet-ibc-transfer"
+version = "0.1.0"
+dependencies = [
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "hex",
+ "ibc",
+ "ibc-primitives",
+ "log 0.4.17",
+ "pallet-balances",
+ "parity-scale-codec",
+ "primitives 0.1.0",
+ "scale-info",
+ "serde_json",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
 ]
 
 [[package]]
@@ -16149,7 +16134,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.9.0",
  "regex",
  "serde",
  "serde_json",
@@ -16343,7 +16328,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.3",
- "rand 0.8.5",
+ "rand 0.6.5",
  "static_assertions",
 ]
 

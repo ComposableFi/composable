@@ -8,7 +8,7 @@ use ibc::core::{
 	ics24_host::identifier::ClientId,
 	ics26_routing::msgs::Ics26Envelope,
 };
-use ibc_trait::{client_id_from_bytes, CallbackWeight};
+use ibc_primitives::{client_id_from_bytes, CallbackWeight};
 use scale_info::prelude::string::ToString;
 
 pub trait WeightInfo {

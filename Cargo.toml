@@ -34,6 +34,8 @@ exclude = [
 ]
 members = [
   "frame/*",
+  "frame/ibc/transfer",
+  "frame/ibc/ping",
   "integration-tests/local-integration-tests",
   "node",
   "runtime/common",

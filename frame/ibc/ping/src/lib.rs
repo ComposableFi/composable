@@ -18,7 +18,7 @@ use ibc::{
 	},
 	signer::Signer,
 };
-use ibc_trait::{CallbackWeight, IbcTrait};
+use ibc_primitives::{CallbackWeight, IbcTrait};
 use scale_info::prelude::{
 	format,
 	string::{String, ToString},
@@ -62,7 +62,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use ibc::core::ics04_channel::channel::{ChannelEnd, Order, State};
 	use ibc_primitives::SendPacketData;
-	use ibc_trait::{connection_id_from_bytes, port_id_from_bytes, OpenChannelParams};
+	use ibc_primitives::{connection_id_from_bytes, port_id_from_bytes, OpenChannelParams};
 
 	/// Our pallet's configuration trait. All our types and constants go in here. If the
 	/// pallet is dependent on specific other pallets, then their configuration traits
@@ -73,7 +73,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type IbcHandler: ibc_trait::IbcTrait;
+		type IbcHandler: ibc_primitives::IbcTrait;
 	}
 
 	// Simple declaration of the `Pallet` type. It is placeholder we use to implement traits and

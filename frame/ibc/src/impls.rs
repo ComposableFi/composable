@@ -61,7 +61,7 @@ use ibc_primitives::{
 	QueryPacketCommitmentResponse, QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
 	SendPacketData,
 };
-use ibc_trait::{
+use ibc_primitives::{
 	apply_prefix, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
 	port_id_from_bytes, Error as IbcHandlerError, IbcTrait,
 };

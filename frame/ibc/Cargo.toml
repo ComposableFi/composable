@@ -9,14 +9,12 @@ version = "0.0.1"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-  "derive",
-] }
 log = { version = "0.4.0", default-features = false }
-scale-info = { version = "2.1.1", default-features = false, features = [
-  "derive",
-] }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
 serde_json = { version = "1.0.45", default-features = false }
+hex-literal = { version = "0.3.4", optional = true }
+sha2 = { version = "0.10.2", default-features = false }
+derive_more = { version = "0.99.17", default-features = false, features = ["from", "display"]  }
 
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false, optional = true }
@@ -34,10 +32,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24" }
 
-hex-literal = { version = "0.3.4", optional = true }
-
 ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d8dd882ef4338d6fea2ee4cafb37c25e89f45828", default-features = false }
-
 ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false, optional = true }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", optional = true, default-features = false }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", default-features = false }
@@ -45,20 +40,22 @@ tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev 
 # local deps
 assets = { package = "pallet-assets", path = "../assets", default-features = false }
 composable-traits = { default-features = false, path = "../composable-traits" }
-ibc-primitives = { path = "ibc-primitives", default-features = false }
-ibc-trait = { path = "ibc-trait", default-features = false }
-pallet-ibc-ping = { path = "../ibc-ping", default-features = false }
+ibc-primitives = { path = "primitives", default-features = false }
+pallet-ibc-ping = { path = "ping", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
-transfer = { package = "ibc-transfer", path = "../ibc-transfer", default-features = false }
-
-sha2 = { version = "0.10.2", default-features = false }
-derive_more = { version = "0.99.17", default-features = false, features = ["from", "display"]  }
+transfer = { package = "pallet-ibc-transfer", path = "transfer", default-features = false }
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
 rev = "d8dd882ef4338d6fea2ee4cafb37c25e89f45828"
 default-features = false
 features = ["ics11_beefy"]
+
+[dependencies.codec]
+package = "parity-scale-codec"
+version = "3.0.0"
+features = ["derive"]
+default-features = false
 
 [dev-dependencies]
 assets-registry = { package = "pallet-assets-registry", path = "../assets-registry" }
@@ -99,7 +96,6 @@ std = [
   'balances/std',
   "pallet-ibc-ping/std",
   "transfer/std",
-  "ibc-trait/std",
   "parachain-info/std",
   "sha2/std",
   "xcm/std",
@@ -111,7 +107,6 @@ std = [
 runtime-benchmarks = [
   "frame-benchmarking",
   "frame-system/runtime-benchmarks",
-  "ibc-trait/runtime-benchmarks",
   "tendermint",
   "hex-literal",
   "pallet-timestamp",

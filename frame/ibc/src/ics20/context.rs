@@ -14,7 +14,7 @@ use ibc::{
 	},
 	core::ics24_host::identifier::{ChannelId, PortId},
 };
-use ibc_trait::{get_channel_escrow_address, ibc_denom_to_foreign_asset_id};
+use ibc_primitives::{get_channel_escrow_address, ibc_denom_to_foreign_asset_id};
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::{IdentifyAccount, Zero};
 
