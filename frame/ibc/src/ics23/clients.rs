@@ -1,7 +1,7 @@
 use crate::{format, Config};
 use frame_support::storage::{child, child::ChildInfo};
 use ibc::core::ics24_host::{identifier::ClientId, path::ClientTypePath};
-use ibc_trait::apply_prefix;
+use ibc_primitives::apply_prefix;
 use sp_std::{marker::PhantomData, prelude::*};
 
 /// client_id => client_type

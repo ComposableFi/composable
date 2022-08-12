@@ -31,7 +31,6 @@ extern crate alloc;
 
 use codec::{Decode, Encode};
 use frame_system::ensure_signed;
-use ibc::core::ics03_connection::msgs::conn_open_init::TYPE_URL as CONNECTION_OPEN_INIT_TYPE_URL;
 pub use pallet::*;
 use scale_info::{
 	prelude::{
@@ -127,7 +126,8 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use ibc::core::{
-		ics02_client::msgs::create_client::TYPE_URL as CREATE_CLIENT_TYPE_URL,
+		ics02_client::msgs::create_client,
+		ics03_connection::msgs::{conn_open_ack, conn_open_init},
 		ics03_connection::{
 			connection::Counterparty, msgs::conn_open_init::MsgConnectionOpenInit, version::Version,
 		},
@@ -139,7 +139,7 @@ pub mod pallet {
 	use crate::{host_functions::HostFunctions, ics23::client_states::ClientStates};
 	use composable_traits::defi::DeFiComposableConfig;
 	pub use ibc::signer::Signer;
-	use ibc_trait::client_id_from_bytes;
+	use ibc_primitives::client_id_from_bytes;
 	use tendermint_proto::Protobuf;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -343,41 +343,47 @@ pub mod pallet {
 				.into_iter()
 				.filter_map(|message| {
 					let type_url = String::from_utf8(message.type_url.clone()).ok()?;
-					if type_url.as_str() == CREATE_CLIENT_TYPE_URL ||
-						type_url.as_str() == CONNECTION_OPEN_INIT_TYPE_URL
-					{
-						return None
+					let is_permissioned = matches!(
+						type_url.as_str(),
+						conn_open_init::TYPE_URL | conn_open_ack::TYPE_URL | create_client::TYPE_URL
+					);
+					if is_permissioned {
+						return None;
 					}
 					Some(Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value }))
 				})
 				.collect::<Result<Vec<ibc_proto::google::protobuf::Any>, Error<T>>>()?;
 
-			let (events, logs, errors) = messages.into_iter().fold(
-				(vec![], vec![], vec![]),
-				|(mut events, mut logs, mut errors), msg| {
-					match ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(
-						&mut ctx, msg,
-					) {
-						Ok(MsgReceipt { events: temp_events, log: temp_logs }) => {
-							events.extend(temp_events);
-							logs.extend(temp_logs);
-						},
-						Err(e) => errors.push(e),
+			Self::execute_ibc_messages(&mut ctx, messages);
+
+			Ok(())
+		}
+
+		/// We permission the initiation and acceptance of connections, this is for security purposes.
+		/// 
+		/// [see here](https://github.com/ComposableFi/ibc-rs/issues/31)
+		#[pallet::weight(crate::weight::deliver::< T > (messages))]
+		#[frame_support::transactional]
+		pub fn deliver_permissioned(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
+			<T as Config>::AdminOrigin::ensure_origin(origin)?;
+
+			let mut ctx = routing::Context::<T>::new();
+			let messages = messages
+				.into_iter()
+				.filter_map(|message| {
+					let type_url = String::from_utf8(message.type_url.clone()).ok()?;
+					let is_permissioned = matches!(
+						type_url.as_str(),
+						conn_open_init::TYPE_URL | conn_open_ack::TYPE_URL | create_client::TYPE_URL
+					);
+					if !is_permissioned {
+						return None;
 					}
-					(events, logs, errors)
-				},
-			);
+					Some(Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value }))
+				})
+				.collect::<Result<Vec<ibc_proto::google::protobuf::Any>, Error<T>>>()?;
+			Self::execute_ibc_messages(&mut ctx, messages);
 
-			log::trace!(target: "pallet_ibc", "logs: {:#?}", logs);
-			log::trace!(target: "pallet_ibc", "errors: {:#?}", errors);
-
-			// todo: consolidate into one.
-			if !events.is_empty() {
-				Self::deposit_event(events.into())
-			};
-			if !errors.is_empty() {
-				Self::deposit_event(errors.into())
-			};
 			Ok(())
 		}
 
@@ -388,8 +394,8 @@ pub mod pallet {
 			let mut ctx = routing::Context::<T>::new();
 			let type_url =
 				String::from_utf8(msg.type_url.clone()).map_err(|_| Error::<T>::DecodingError)?;
-			if type_url.as_str() != CREATE_CLIENT_TYPE_URL {
-				return Err(Error::<T>::InvalidMessageType.into())
+			if type_url.as_str() != create_client::TYPE_URL {
+				return Err(Error::<T>::InvalidMessageType.into());
 			}
 			let msg = ibc_proto::google::protobuf::Any { type_url, value: msg.value };
 
@@ -412,7 +418,7 @@ pub mod pallet {
 			let client_id =
 				client_id_from_bytes(params.client_id).map_err(|_| Error::<T>::DecodingError)?;
 			if !ClientStates::<T>::contains_key(&client_id) {
-				return Err(Error::<T>::ClientStateNotFound.into())
+				return Err(Error::<T>::ClientStateNotFound.into());
 			}
 
 			let counterparty_client_id = client_id_from_bytes(params.counterparty_client_id)
@@ -443,7 +449,7 @@ pub mod pallet {
 			}
 			.encode_vec();
 			let msg = ibc_proto::google::protobuf::Any {
-				type_url: CONNECTION_OPEN_INIT_TYPE_URL.to_string(),
+				type_url: conn_open_init::TYPE_URL.to_string(),
 				value,
 			};
 			let mut ctx = routing::Context::<T>::new();

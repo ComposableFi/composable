@@ -10,7 +10,7 @@ use ibc::core::{
 		Path,
 	},
 };
-use ibc_trait::apply_prefix;
+use ibc_primitives::apply_prefix;
 use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 
 /// (port_id, channel_id, sequence) => hash

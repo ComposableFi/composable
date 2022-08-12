@@ -22,9 +22,9 @@ tracing-core = "=0.1.26"                                            # https://su
 common = { path = "../runtime/common" }
 composable-runtime = { path = "../runtime/composable", optional = true }
 dali-runtime = { path = "../runtime/dali", optional = true }
-ibc-primitives = { path = "../frame/ibc/ibc-primitives" }
-ibc-rpc = { path = "../frame/ibc/ibc-rpc" }
-ibc-runtime-api = { path = "../frame/ibc/ibc-runtime-api" }
+ibc-primitives = { path = "../frame/ibc/primitives" }
+ibc-rpc = { path = "../frame/ibc/rpc" }
+ibc-runtime-api = { path = "../frame/ibc/runtime-api" }
 picasso-runtime = { path = "../runtime/picasso" }
 primitives = { path = "../runtime/primitives" }
 

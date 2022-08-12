@@ -6,13 +6,8 @@ name = "pallet-ibc-ping"
 version = "0.0.1"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-  "derive",
-] }
 log = { version = "0.4.0", default-features = false }
-scale-info = { version = "2.1.1", default-features = false, features = [
-  "derive",
-] }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
 serde = { version = "1.0.136", default-features = false, features = ["derive"] }
 
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
@@ -21,6 +16,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 
+<<<<<<< HEAD:frame/ibc-ping/Cargo.toml
 ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "1f1f06b0dab92802f64f97b77380c800899a2be7", default-features = false }
 ibc-primitives = { path = "../ibc/ibc-primitives", default-features = false }
 ibc-trait = { path = "../ibc/ibc-trait", default-features = false }
@@ -31,8 +27,29 @@ ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "1f1f06b0dab92802f
   "mocks",
 ] }
 pallet-ibc = { path = "../ibc" }
+=======
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d8dd882ef4338d6fea2ee4cafb37c25e89f45828", default-features = false }
+
+ibc-primitives = { path = "../primitives", default-features = false }
+
+[dependencies.codec]
+package = "parity-scale-codec"
+version = "3.0.0"
+features = ["derive"]
+default-features = false
+
+[dev-dependencies]
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+pallet-ibc = { path = ".." }
+>>>>>>> 08d1c05324963d069ca0bfbe931f5f5a80b8f37f:frame/ibc/ping/Cargo.toml
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
+
+[dev-dependencies.ibc]
+git = "https://github.com/ComposableFi/ibc-rs"
+rev = "d8dd882ef4338d6fea2ee4cafb37c25e89f45828"
+default-features = false
+features = ["ics11_beefy"]
 
 [features]
 default = ['std']
@@ -47,7 +64,6 @@ std = [
   "frame-support/std",
   "sp-std/std",
   "ibc/std",
-  "ibc-trait/std",
   "ibc-primitives/std",
 ]
 

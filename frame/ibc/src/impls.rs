@@ -46,34 +46,64 @@ use ibc::{
 				CommitmentsPath, ConnectionsPath, ReceiptsPath, SeqRecvsPath,
 			},
 		},
-		ics26_routing::context::ModuleOutputBuilder,
+		ics26_routing::{context::ModuleOutputBuilder, handler::MsgReceipt},
 	},
 	handler::HandlerOutputBuilder,
 	signer::Signer,
 	Height,
 };
 use ibc_primitives::{
-	ConnectionHandshake, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
-	OffchainPacketType, PacketState, QueryChannelResponse, QueryChannelsResponse,
-	QueryClientStateResponse, QueryConnectionResponse, QueryConnectionsResponse,
-	QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
+	apply_prefix, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
+	port_id_from_bytes, ConnectionHandshake, Error as IbcHandlerError, IbcTrait, IdentifiedChannel,
+	IdentifiedClientState, IdentifiedConnection, OffchainPacketType, PacketState,
+	QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse, QueryConnectionResponse,
+	QueryConnectionsResponse, QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
 	QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
 	QueryPacketCommitmentResponse, QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
 	SendPacketData,
 };
-use ibc_trait::{
-	apply_prefix, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
-	port_id_from_bytes, Error as IbcHandlerError, IbcTrait,
-};
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;
+use crate::host_functions::HostFunctions;
 
 impl<T: Config> Pallet<T>
 where
 	T: Send + Sync,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
+	pub fn execute_ibc_messages(
+		ctx: &mut Context<T>,
+		messages: Vec<ibc_proto::google::protobuf::Any>,
+	) {
+		let (events, logs, errors) = messages.into_iter().fold(
+			(vec![], vec![], vec![]),
+			|(mut events, mut logs, mut errors), msg| {
+				match ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(
+					ctx, msg,
+				) {
+					Ok(MsgReceipt { events: temp_events, log: temp_logs }) => {
+						events.extend(temp_events);
+						logs.extend(temp_logs);
+					},
+					Err(e) => errors.push(e),
+				}
+				(events, logs, errors)
+			},
+		);
+
+		log::trace!(target: "pallet_ibc", "logs: {:#?}", logs);
+		log::trace!(target: "pallet_ibc", "errors: {:#?}", errors);
+
+		// todo: consolidate into one.
+		if !events.is_empty() {
+			Self::deposit_event(events.into())
+		};
+		if !errors.is_empty() {
+			Self::deposit_event(errors.into())
+		};
+	}
+
 	// IBC Runtime Api helper methods
 	/// Get a channel state
 	pub fn channel(
