@@ -34,23 +34,33 @@
 
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
-      mk-devnet = { lib, writeTextFile, writeShellApplication, polkadot-launch
-        , composable-node, polkadot-node, chain-spec }:
+      mk-devnet =
+        { lib
+        , writeTextFile
+        , writeShellApplication
+        , polkadot-launch
+        , composable-node
+        , polkadot-node
+        , chain-spec
+        }:
         let
           original-config = import ./scripts/polkadot-launch/composable.nix;
           patched-config = lib.recursiveUpdate original-config {
             relaychain = { bin = "${polkadot-node}/bin/polkadot"; };
-            parachains = builtins.map (parachain:
-              parachain // {
-                bin = "${composable-node}/bin/composable";
-                chain = "${chain-spec}";
-              }) original-config.parachains;
+            parachains = builtins.map
+              (parachain:
+                parachain // {
+                  bin = "${composable-node}/bin/composable";
+                  chain = "${chain-spec}";
+                })
+              original-config.parachains;
           };
           config = writeTextFile {
             name = "devnet-${chain-spec}-config.json";
             text = builtins.toJSON patched-config;
           };
-        in {
+        in
+        {
           inherit chain-spec;
           parachain-nodes = builtins.concatMap (parachain: parachain.nodes)
             patched-config.parachains;
@@ -81,7 +91,8 @@
           };
           overlays = [ rust-overlay.overlay ];
           rust-toolchain = import ./.nix/rust-toolchain.nix;
-        in with pkgs;
+        in
+        with pkgs;
         let
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
@@ -123,45 +134,53 @@
             [ coreutils bash procps findutils nettools bottom nix procps ];
 
           # source relevant to build rust only
-          rust-src = let
-            dir-blacklist = [
-              "nix"
-              ".config"
-              ".devcontainer"
-              ".github"
-              ".log"
-              ".maintain"
-              ".tools"
-              ".vscode"
-              "audits"
-              "book"
-              "devnet-stage"
-              "devnet"
-              "docker"
-              "docs"
-              "frontend"
-              "rfcs"
-              "scripts"
-              "setup"
-              "subsquid"
-              "runtime-tests"
-              "composablejs"
-            ];
-            file-blacklist = [ "flake.nix" "flake.lock" ];
-          in lib.cleanSourceWith {
-            filter = lib.cleanSourceFilter;
-            src = lib.cleanSourceWith {
-              filter = let
-                customFilter = name: type:
-                  (!(type == "directory"
-                    && builtins.elem (baseNameOf name) dir-blacklist))
-                  && (!(type == "file"
-                    && builtins.elem (baseNameOf name) file-blacklist));
-              in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-              ./.;
-              src = ./.;
+          rust-src =
+            let
+              dir-blacklist = [
+                "nix"
+                ".config"
+                ".devcontainer"
+                ".github"
+                ".log"
+                ".maintain"
+                ".tools"
+                ".vscode"
+                "audits"
+                "book"
+                "devnet-stage"
+                "devnet"
+                "docker"
+                "docs"
+                "frontend"
+                "rfcs"
+                "scripts"
+                "setup"
+                "subsquid"
+                "runtime-tests"
+                "composablejs"
+              ];
+              file-blacklist = [ "flake.nix" "flake.lock" ];
+            in
+            lib.cleanSourceWith {
+              filter = lib.cleanSourceFilter;
+              src = lib.cleanSourceWith {
+                filter =
+                  let
+                    customFilter = name: type:
+                      (
+                        !(type == "directory"
+                        && builtins.elem (baseNameOf name) dir-blacklist)
+                      )
+                      && (
+                        !(type == "file"
+                        && builtins.elem (baseNameOf name) file-blacklist)
+                      );
+                  in
+                  nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
+                    ./.;
+                src = ./.;
+              };
             };
-          };
 
           # Common env required to build the node
           common-attrs = {
@@ -281,7 +300,8 @@
                 --log error
             '';
 
-        in rec {
+        in
+        rec {
           packages = rec {
             inherit wasm-optimizer;
             inherit common-deps;
@@ -407,39 +427,38 @@
             check-picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
             check-composable-dev-benchmarks = run-with-benchmarks "composable-dev";
 
-            check-picasso-integration-tests = crane-nightly.cargoBuild (common-attrs
+            check-picasso-integration-tests = crane-nightly.cargoNextest (common-attrs
               // {
-                pname = "local-integration-tests";
-                cargoArtifacts = common-deps-nightly;
-                doCheck = true;
-                cargoBuildCommand =
-                  "cargo test --package local-integration-tests";
-                cargoExtraArgs =
-                  "--features local-integration-tests --features picasso --features std --no-default-features";
-              });
-            check-dali-integration-tests = crane-nightly.cargoBuild (common-attrs // {
               pname = "local-integration-tests";
-              doCheck = true;
               cargoArtifacts = common-deps-nightly;
-              cargoBuildCommand =
-                "cargo test --package local-integration-tests";
+              cargoTestCommand = "cargo nextest --package local-integration-tests";
+              doCheck = true;
+              cargoExtraArgs =
+                "--features local-integration-tests --features picasso --features std --no-default-features";
+            });
+            check-dali-integration-tests = crane-nightly.cargoNextest (common-attrs // {
+              pname = "local-integration-tests";
+              cargoArtifacts = common-deps-nightly;
+              doCheck = true;
+              cargoTestCommand = "cargo nextest --package local-integration-tests";
               cargoExtraArgs =
                 "--features local-integration-tests --features dali --features std --no-default-features";
+            });
+
+            unit-tests = crane-stable.cargoNextest (common-attrs // {
+              pnameSuffix = "-tests";
+              cargoArtifacts = common-deps;
+              doCheck = true;
+              # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
+              # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
+              cargoTestCommand  = "cargo nextest --workspace --release --locked --verbose";
             });
 
             default = packages.composable-node;
           };
 
           checks = {
-            unit-tests = crane-stable.cargoBuild (common-attrs // {
-              pnameSuffix = "-tests";
-              doCheck = true;
-              cargoArtifacts = common-deps;
-              # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
-              # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-              cargoBuildCommand =
-                "cargo test --workspace --release --locked --verbose";
-            });
+              # see packages for checks, for now these are more elaborated on how to run
           };
 
           devShells = rec {
@@ -531,24 +550,26 @@
           };
 
         });
-    in eachSystemOutputs // {
+    in
+    eachSystemOutputs // {
       nixopsConfigurations = {
-        default = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        in import ./.nix/devnet.nix {
-          inherit nixpkgs;
-          inherit gce-input;
-          devnet-dali = pkgs.callPackage mk-devnet {
-            inherit (eachSystemOutputs.packages.x86_64-linux)
-              polkadot-launch composable-node polkadot-node;
-            chain-spec = "dali-dev";
+        default =
+          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          in import ./.nix/devnet.nix {
+            inherit nixpkgs;
+            inherit gce-input;
+            devnet-dali = pkgs.callPackage mk-devnet {
+              inherit (eachSystemOutputs.packages.x86_64-linux)
+                polkadot-launch composable-node polkadot-node;
+              chain-spec = "dali-dev";
+            };
+            devnet-picasso = pkgs.callPackage mk-devnet {
+              inherit (eachSystemOutputs.packages.x86_64-linux)
+                polkadot-launch composable-node polkadot-node;
+              chain-spec = "picasso-dev";
+            };
+            book = eachSystemOutputs.packages.x86_64-linux.composable-book;
           };
-          devnet-picasso = pkgs.callPackage mk-devnet {
-            inherit (eachSystemOutputs.packages.x86_64-linux)
-              polkadot-launch composable-node polkadot-node;
-            chain-spec = "picasso-dev";
-          };
-          book = eachSystemOutputs.packages.x86_64-linux.composable-book;
-        };
       };
     };
 }

@@ -55,6 +55,36 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#common-deps --no-update-lock-file --show-trace -L
 
+  check-nix:
+    name: "Check nix"
+    continue-on-error: true
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |          
+          nix flake show --allow-import-from-derivation  --show-trace --fallback -L
+          nix develop .#sre --show-trace -L --command nixops deploy --dry-run --debug --keep-going --show-trace
+
   unit-tests:
     name: "Unit Tests"
     needs: common-deps
@@ -81,8 +111,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          # TODO: replace with nix checking derivation which does all
-          chmod +x  ./nix-validate.sh && ./nix-validate.sh
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#unit-tests --no-update-lock-file --show-trace -L              
 
   check-benchmarks:
     name: "Check benchmarks"
