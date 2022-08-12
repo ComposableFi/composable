@@ -744,7 +744,7 @@ benchmarks! {
 	}
 
 
-	connection_open_init {
+	conn_open_init {
 		let mut ctx = routing::Context::<T>::new();
 		let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
 		pallet_timestamp::Pallet::<T>::set_timestamp(now);
