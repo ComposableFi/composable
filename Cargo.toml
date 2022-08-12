@@ -14,7 +14,7 @@ members = [
 ]
 
 [build-dependencies]
-subxt-codegen = "0.22.0"
+subxt-codegen = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
 jsonrpsee = { version = "0.15.0", features = ["async-client", "client-ws-transport", "http-client"] }
 frame-metadata = { version = "15.0.0", features = ["v14", "std"] }
 syn = "1.0.98"
@@ -41,7 +41,7 @@ beefy-client-primitives = { package = "primitives", path = "./primitives", defau
 
 [dev-dependencies]
 tokio = { version = "1.17.0", features = ["full"] }
-subxt = "0.22.0"
+subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
 hex-literal = "0.3.4"
 serde_json = "1.0.74"
 pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }

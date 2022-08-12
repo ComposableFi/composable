@@ -6,7 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-subxt-codegen = "0.22.0"
+subxt-codegen = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
+
 jsonrpsee = { version = "0.15.0", features = ["async-client", "client-ws-transport", "http-client"] }
 frame-metadata = { version = "15.0.0", features = ["v14", "std"] }
 syn = "1.0.98"
@@ -30,7 +31,7 @@ codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive
 rs_merkle = "1.2.0"
 derive_more = { version = "0.99.17", features = ["from"]  }
 # Optional deps
-subxt = { version = "0.22.0" }
+subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
 hex-literal = { version = "0.3.4" }
 serde_json = { version = "1.0.74" }
 pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
