@@ -1,5 +1,4 @@
 #[cfg(test)]
-
 use composable_traits::fnft::FinancialNFT;
 use frame_support::{
 	dispatch::DispatchResult,
