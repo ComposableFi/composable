@@ -343,9 +343,7 @@ jobs:
       needs:
         - devnet-integration-tests
         - package-polkadot-node
-        - check-dali-dev-benchmarks
-        - check-picasso-dev-benchmarks
-        - check-composable-dev-benchmarks        
+        - check-benchmarks
       runs-on: ubuntu-latest
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
       concurrency:
