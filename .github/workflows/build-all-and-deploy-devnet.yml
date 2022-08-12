@@ -240,10 +240,37 @@ jobs:
           docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
           docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer
 
+  devnet-integration-tests:
+      name: "Devnet integration tests"
+      needs: package-composable-node
+      runs-on: ubuntu-latest      
+      concurrency:
+        group: runtime-tests-${{ github.ref }}
+        cancel-in-progress: true
+      steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: false
+          fetch-depth: 0                 
+      - run: |
+          chmod +x ./nix-install-vscode-composable.sh
+          ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
+          source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH" 
+          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
+          nix-env -iA nixpkgs.nodejs
+          nix --version
+          ( nix run .#devnet 2>&1 & ) | tee logfile.log &
+          ( tail --follow --lines=0  logfile.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
+          echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
+          cd integration-tests/runtime-tests
+          chmod +x ./dockerRun.sh
+          export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && ./dockerRun.sh
+
   deploy-devnet:
       name: "Devnet(Rococo Local Dali Dev) Deploy"
+      if: github.event_name == 'push' && github.ref_name == 'main'
       needs:
-        - package-composable-node
+        - devnet-integration-tests
         - package-polkadot-node
       runs-on: ubuntu-latest
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
