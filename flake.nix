@@ -392,8 +392,8 @@
                 nixpkgs-fmt
                 yarn
                 bottom
-                packages.mdbook
-                packages.taplo
+                mdbook
+                taplo
                 go
                 libclang
                 gcc

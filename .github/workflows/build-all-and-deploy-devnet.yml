@@ -305,7 +305,7 @@ jobs:
           installCommand: |
             nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
             nix-channel --update
-            nix-env -iA nixpkgs.cachix
+            nix-env -iA nixpkgs.cachix nixpkgs.jq
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{  env.NIX_CACHIX }}
 
@@ -316,7 +316,6 @@ jobs:
 
       - name: Build & Push
         run: |
-          nix-env -iA nixpkgs.jq
           cd devnet
           # TODO: run gsutils and find same json in GOOGLE_APPLICATION_CREDENTIALS path, decide prio and responsible after https://github.com/ComposableFi/composable/issues/1426
           jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
