@@ -82,8 +82,7 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |          
-          nix flake show --allow-import-from-derivation  --show-trace --fallback -L
-          nix develop .#sre --show-trace -L --command nixops deploy --dry-run --debug --keep-going --show-trace
+          nix flake show --allow-import-from-derivation  --show-trace --fallback -L        
 
   unit-tests:
     name: "Unit Tests"
@@ -430,3 +429,22 @@ jobs:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_DEVNET_SERVICE_ACCOUNT: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT }}
           GCP_DEVNET_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_DEVNET_SERVICE_ACCOUNT_KEY }}
+
+          # TODO: if not main -> dry run else deploy
+          # Traceback (most recent call last):
+          #   File "/nix/store/7dd5vnx14d0j13lsmzy37hdv8dnc0nhf-python3.9-nixops-2.0.0-pre-7220cbd/bin/.nixops-wrapped", line 9, in <module>
+          #     sys.exit(main())
+          #   File "/nix/store/7mglx4qc8hfbl35y2m1m15wwkw0877xz-python3-3.9.13-env/lib/python3.9/site-packages/nixops/__main__.py", line 56, in main
+          #     args.op(args)
+          #   File "/nix/store/7mglx4qc8hfbl35y2m1m15wwkw0877xz-python3-3.9.13-env/lib/python3.9/site-packages/nixops/script_defs.py", line 710, in op_deploy
+          #     with deployment(args, True, "nixops deploy") as depl:
+          #   File "/nix/store/6v602p5l3c05iiq7jx8y0rjwiv2n8hhj-python3-3.9.13/lib/python3.9/contextlib.py", line 119, in __enter__
+          #     return next(self.gen)
+          #   File "/nix/store/7mglx4qc8hfbl35y2m1m15wwkw0877xz-python3-3.9.13-env/lib/python3.9/site-packages/nixops/script_defs.py", line 73, in deployment
+          #     depl = open_deployment(sf, args)
+          #   File "/nix/store/7mglx4qc8hfbl35y2m1m15wwkw0877xz-python3-3.9.13-env/lib/python3.9/site-packages/nixops/script_defs.py", line 236, in open_deployment
+          #     depl = sf.open_deployment(uuid=args.deployment)
+          #   File "/nix/store/7mglx4qc8hfbl35y2m1m15wwkw0877xz-python3-3.9.13-env/lib/python3.9/site-packages/nixops/statefile.py", line 239, in open_deployment
+          #     raise Exception(
+          # Exception: could not find specified deployment in state file ‘/tmp/nix-shell.QuNDXa/tmpd0tvopatnixops/state.nixops’          
+          # nix develop .#sre --show-trace -L --command nixops deploy --dry-run --debug --keep-going --show-trace
