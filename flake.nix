@@ -403,15 +403,15 @@
               ];
             };
 
+            check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
+            check-picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
+            check-composable-dev-benchmarks = run-with-benchmarks "composable-dev";
+
             default = packages.composable-node;
           };
 
-          # Derivations built when running `nix flake check`
-          # TODO: pass --argstr and depending on it enable only part of checks (unit tests, local simulator tests, benches), and ensure existing run in parallel
-          # TODO: because test runs are long
           checks = {
-            # TODO: how to avoid run some tests? simpltes is read workspace, get all members, and filter out by mask integration
-            tests = crane-stable.cargoBuild (common-attrs // {
+            unit-tests = crane-stable.cargoBuild (common-attrs // {
               pnameSuffix = "-tests";
               doCheck = true;
               cargoArtifacts = common-deps;
@@ -421,9 +421,6 @@
                 "cargo test --workspace --release --locked --verbose";
             });
 
-            dali-dev-benchmarks = run-with-benchmarks "dali-dev";
-            picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
-            composable-dev-benchmarks = run-with-benchmarks "composable-dev";
 
             picasso-integration-tests = crane-nightly.cargoBuild (common-attrs
               // {

@@ -84,6 +84,36 @@ jobs:
           # TODO: replace with nix checking derivation which does all
           chmod +x  ./nix-validate.sh && ./nix-validate.sh
 
+  check-benchmarks:
+    name: "Check benchmarks"
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-dali-dev-benchmarks --no-update-lock-file --show-trace -L       
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-picasso-dev-benchmarks --no-update-lock-file --show-trace -L       
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-composable-dev-benchmarks --no-update-lock-file --show-trace -L       
+
   package-composable-node:
     needs: common-deps
     runs-on:
@@ -284,6 +314,9 @@ jobs:
       needs:
         - devnet-integration-tests
         - package-polkadot-node
+        - check-dali-dev-benchmarks
+        - check-picasso-dev-benchmarks
+        - check-composable-dev-benchmarks        
       runs-on: ubuntu-latest
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
       concurrency:
