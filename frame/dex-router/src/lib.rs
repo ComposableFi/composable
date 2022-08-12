@@ -15,10 +15,12 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(test)]
+mod mock_fnft;
+
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 
-mod mock_fnft;
 pub mod weights;
 
 #[frame_support::pallet]

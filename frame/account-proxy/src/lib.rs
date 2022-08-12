@@ -59,9 +59,14 @@ trivial_casts,
 trivial_numeric_casts,
 unused_extern_crates
 )]
+
+
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
-mod tests;
 pub mod weights;
+
+#[cfg(test)]
+mod tests;
 
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{
