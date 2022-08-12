@@ -16,7 +16,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "ca6f2f4ca3b9c2c90d59f49344437ccf32d15475", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "288a2717031fc0b21c526f05377f000ea5da97c5", default-features = false }
 ibc-primitives = { path = "../primitives", default-features = false }
 
 [dependencies.codec]
@@ -33,7 +33,7 @@ tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev 
 
 [dev-dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "ca6f2f4ca3b9c2c90d59f49344437ccf32d15475"
+rev = "288a2717031fc0b21c526f05377f000ea5da97c5"
 default-features = false
 features = ["ics11_beefy"]
 

@@ -654,7 +654,7 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/beefy-rs?rev=50d53a6e85b0d7e2c1203ae3711f2abd04addd18#50d53a6e85b0d7e2c1203ae3711f2abd04addd18"
+source = "git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee#ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
@@ -667,14 +667,14 @@ dependencies = [
  "pallet-beefy-mmr",
  "pallet-mmr",
  "parity-scale-codec",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=50d53a6e85b0d7e2c1203ae3711f2abd04addd18)",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee)",
  "rs_merkle",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-core-hashing 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-mmr-primitives",
  "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.24)",
- "subxt-codegen 0.22.0",
+ "subxt-codegen 0.21.0 (git+https://github.com/paritytech/subxt?rev=ec23283d75e4b3b894294e351fd7ffa2b4431201)",
  "syn 1.0.99",
  "tokio",
 ]
@@ -4550,7 +4550,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=ca6f2f4ca3b9c2c90d59f49344437ccf32d15475#ca6f2f4ca3b9c2c90d59f49344437ccf32d15475"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=288a2717031fc0b21c526f05377f000ea5da97c5#288a2717031fc0b21c526f05377f000ea5da97c5"
 dependencies = [
  "beefy-light-client",
  "beefy-primitives",
@@ -4563,7 +4563,7 @@ dependencies = [
  "num-traits",
  "parity-scale-codec",
  "primitive-types",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=50d53a6e85b0d7e2c1203ae3711f2abd04addd18)",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee)",
  "prost 0.10.4",
  "prost-types 0.10.1",
  "ripemd",
@@ -4617,7 +4617,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=ca6f2f4ca3b9c2c90d59f49344437ccf32d15475#ca6f2f4ca3b9c2c90d59f49344437ccf32d15475"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=288a2717031fc0b21c526f05377f000ea5da97c5#288a2717031fc0b21c526f05377f000ea5da97c5"
 dependencies = [
  "base64 0.13.0",
  "bytes 1.2.1",
@@ -10866,7 +10866,7 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/beefy-rs?rev=50d53a6e85b0d7e2c1203ae3711f2abd04addd18#50d53a6e85b0d7e2c1203ae3711f2abd04addd18"
+source = "git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee#ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
@@ -15291,7 +15291,7 @@ dependencies = [
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "subxt-macro 0.21.0",
- "subxt-metadata 0.21.0",
+ "subxt-metadata 0.21.0 (git+https://github.com/paritytech/subxt?rev=6d73172560b4c722aeac19695c96c618799d50a2)",
  "thiserror",
 ]
 
@@ -15333,7 +15333,24 @@ dependencies = [
  "proc-macro2 1.0.43",
  "quote 1.0.21",
  "scale-info",
- "subxt-metadata 0.21.0",
+ "subxt-metadata 0.21.0 (git+https://github.com/paritytech/subxt?rev=6d73172560b4c722aeac19695c96c618799d50a2)",
+ "syn 1.0.99",
+]
+
+[[package]]
+name = "subxt-codegen"
+version = "0.21.0"
+source = "git+https://github.com/paritytech/subxt?rev=ec23283d75e4b3b894294e351fd7ffa2b4431201#ec23283d75e4b3b894294e351fd7ffa2b4431201"
+dependencies = [
+ "darling",
+ "frame-metadata",
+ "heck 0.4.0",
+ "parity-scale-codec",
+ "proc-macro-error",
+ "proc-macro2 1.0.43",
+ "quote 1.0.21",
+ "scale-info",
+ "subxt-metadata 0.21.0 (git+https://github.com/paritytech/subxt?rev=ec23283d75e4b3b894294e351fd7ffa2b4431201)",
  "syn 1.0.99",
 ]
 
@@ -15362,7 +15379,7 @@ source = "git+https://github.com/paritytech/subxt?rev=6d73172560b4c722aeac19695c
 dependencies = [
  "darling",
  "proc-macro-error",
- "subxt-codegen 0.21.0",
+ "subxt-codegen 0.21.0 (git+https://github.com/paritytech/subxt?rev=6d73172560b4c722aeac19695c96c618799d50a2)",
  "syn 1.0.99",
 ]
 
@@ -15382,6 +15399,17 @@ dependencies = [
 name = "subxt-metadata"
 version = "0.21.0"
 source = "git+https://github.com/paritytech/subxt?rev=6d73172560b4c722aeac19695c96c618799d50a2#6d73172560b4c722aeac19695c96c618799d50a2"
+dependencies = [
+ "frame-metadata",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "subxt-metadata"
+version = "0.21.0"
+source = "git+https://github.com/paritytech/subxt?rev=ec23283d75e4b3b894294e351fd7ffa2b4431201#ec23283d75e4b3b894294e351fd7ffa2b4431201"
 dependencies = [
  "frame-metadata",
  "parity-scale-codec",
