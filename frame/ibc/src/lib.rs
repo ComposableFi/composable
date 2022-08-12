@@ -64,22 +64,6 @@ pub struct Any {
 	pub value: Vec<u8>,
 }
 
-pub(crate) type RawVersion = (Vec<u8>, Vec<Vec<u8>>);
-
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
-pub struct ConnectionParams {
-	/// A vector of (identifer, features) all encoded as Utf8 string bytes
-	pub version: RawVersion,
-	/// Utf8 client_id bytes
-	pub client_id: Vec<u8>,
-	/// Counterparty client id
-	pub counterparty_client_id: Vec<u8>,
-	/// Counter party commitment prefix
-	pub commitment_prefix: Vec<u8>,
-	/// Delay period in nanoseconds
-	pub delay_period: u64,
-}
-
 impl From<ibc_proto::google::protobuf::Any> for Any {
 	fn from(any: ibc_proto::google::protobuf::Any) -> Self {
 		Self { type_url: any.type_url.as_bytes().to_vec(), value: any.value }
@@ -311,6 +295,7 @@ pub mod pallet {
 		#[frame_support::transactional]
 		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
 			let _sender = ensure_signed(origin)?;
+
 			let mut ctx = routing::Context::<T>::new();
 			let messages = messages
 				.into_iter()
@@ -326,13 +311,12 @@ pub mod pallet {
 					Some(Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value }))
 				})
 				.collect::<Result<Vec<ibc_proto::google::protobuf::Any>, Error<T>>>()?;
-
 			Self::execute_ibc_messages(&mut ctx, messages);
 
 			Ok(())
 		}
 
-		/// We permission the initiation and acceptance of connections, this is for security purposes.
+		/// We permission the initiation and acceptance of connections, this is critical for security.
 		/// 
 		/// [see here](https://github.com/ComposableFi/ibc-rs/issues/31)
 		#[pallet::weight(crate::weight::deliver::< T > (messages))]
@@ -357,79 +341,6 @@ pub mod pallet {
 				.collect::<Result<Vec<ibc_proto::google::protobuf::Any>, Error<T>>>()?;
 			Self::execute_ibc_messages(&mut ctx, messages);
 
-			Ok(())
-		}
-
-		#[pallet::weight(< T as Config >::WeightInfo::create_client())]
-		#[frame_support::transactional]
-		pub fn create_client(origin: OriginFor<T>, msg: Any) -> DispatchResult {
-			<T as Config>::AdminOrigin::ensure_origin(origin)?;
-			let mut ctx = routing::Context::<T>::new();
-			let type_url =
-				String::from_utf8(msg.type_url.clone()).map_err(|_| Error::<T>::DecodingError)?;
-			if type_url.as_str() != create_client::TYPE_URL {
-				return Err(Error::<T>::InvalidMessageType.into());
-			}
-			let msg = ibc_proto::google::protobuf::Any { type_url, value: msg.value };
-
-			let MsgReceipt { events, log } =
-				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg)
-					.map_err(|_| Error::<T>::ProcessingError)?;
-
-			log::trace!(target: "pallet_ibc", "[pallet_ibc_deliver]: logs: {:?}", log);
-			Self::deposit_event(events.into());
-			Ok(())
-		}
-
-		#[pallet::weight(< T as Config >::WeightInfo::initiate_connection())]
-		#[frame_support::transactional]
-		pub fn initiate_connection(
-			origin: OriginFor<T>,
-			params: ConnectionParams,
-		) -> DispatchResult {
-			<T as Config>::AdminOrigin::ensure_origin(origin)?;
-			let client_id =
-				client_id_from_bytes(params.client_id).map_err(|_| Error::<T>::DecodingError)?;
-			if !ClientStates::<T>::contains_key(&client_id) {
-				return Err(Error::<T>::ClientStateNotFound.into());
-			}
-
-			let counterparty_client_id = client_id_from_bytes(params.counterparty_client_id)
-				.map_err(|_| Error::<T>::DecodingError)?;
-			let identifier = params.version.0;
-			let features = params.version.1;
-			let identifier =
-				String::from_utf8(identifier).map_err(|_| Error::<T>::DecodingError)?;
-			let features = features
-				.into_iter()
-				.map(String::from_utf8)
-				.collect::<Result<Vec<_>, _>>()
-				.map_err(|_| Error::<T>::DecodingError)?;
-			let raw_version =
-				ibc_proto::ibc::core::connection::v1::Version { identifier, features };
-			let version: Version = raw_version.try_into().map_err(|_| Error::<T>::DecodingError)?;
-
-			let commitment_prefix: CommitmentPrefix =
-				params.commitment_prefix.try_into().map_err(|_| Error::<T>::DecodingError)?;
-			let counterparty = Counterparty::new(counterparty_client_id, None, commitment_prefix);
-			let delay_period = core::time::Duration::from_nanos(params.delay_period);
-			let value = MsgConnectionOpenInit {
-				client_id,
-				counterparty,
-				version: Some(version),
-				delay_period,
-				signer: Signer::from_str(MODULE_ID).map_err(|_| Error::<T>::DecodingError)?,
-			}
-			.encode_vec();
-			let msg = ibc_proto::google::protobuf::Any {
-				type_url: conn_open_init::TYPE_URL.to_string(),
-				value,
-			};
-			let mut ctx = routing::Context::<T>::new();
-			let result =
-				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg)
-					.map_err(|_| Error::<T>::ProcessingError)?;
-			Self::deposit_event(result.events.into());
 			Ok(())
 		}
 	}
