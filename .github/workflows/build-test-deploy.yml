@@ -360,7 +360,7 @@ jobs:
           name: ${{  env.NIX_CACHIX }}
 
       - run: |
-          ( nix run .#devnet 2>&1 & ) | tee logfile.log &
+          ( nix run .#devnet-dali 2>&1 & ) | tee logfile.log &
           ( tail --follow --lines=0  logfile.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
           echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
           cd integration-tests/runtime-tests          
@@ -373,6 +373,7 @@ jobs:
         - devnet-integration-tests
         - package-polkadot-node
         - check-benchmarks
+        - unit-tests
       runs-on: ubuntu-latest
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
       concurrency:
