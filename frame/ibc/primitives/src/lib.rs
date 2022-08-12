@@ -35,14 +35,12 @@ pub mod runtime_interface;
 pub struct SendPacketData {
 	/// packet data
 	pub data: Vec<u8>,
-	/// Needed only when packet is been sent to a parachain, this should be the parachain id in
-	/// that case.
-	pub revision_number: Option<u64>,
-	/// Block height on the counterparty chain when this packet should be invalidated.
-	pub timeout_height: u64,
-	/// Timestamp on counterparty chain when this packet should be invalidated
-	/// This value should be in nano seconds
-	pub timeout_timestamp: u64,
+	/// Block height relative to the latest height on the counterparty chain when this packet
+	/// should be invalidated.
+	pub timeout_height_offset: u64,
+	/// Timestamp on counterparty chain relative to latest timestamp when this packet should be
+	/// invalidated This value should be in nano seconds
+	pub timeout_timestamp_offset: u64,
 	/// port id as utf8 string bytes
 	pub port_id: PortId,
 	/// channel id as utf8 string bytes

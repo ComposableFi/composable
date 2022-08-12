@@ -83,6 +83,7 @@ fn create_tendermint_header() -> Header {
 	let signed_header = SignedHeader::decode_vec(&*raw_signed_header).unwrap();
 
 	let validator_set = ValidatorSet::decode_vec(&*raw_validator_set).unwrap();
+
 	Header {
 		signed_header,
 		validator_set: validator_set.clone(),

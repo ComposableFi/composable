@@ -111,7 +111,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use ibc::core::{
 		ics02_client::msgs::create_client,
-		ics03_connection::msgs::{conn_open_ack, conn_open_init},
+		ics03_connection::msgs::{conn_open_ack, conn_open_confirm, conn_open_init, conn_open_try},
 	};
 	use ibc_primitives::OffchainPacketType;
 
@@ -326,10 +326,12 @@ pub mod pallet {
 					let type_url = String::from_utf8(message.type_url.clone()).ok()?;
 					let is_permissioned = matches!(
 						type_url.as_str(),
-						conn_open_init::TYPE_URL | conn_open_ack::TYPE_URL | create_client::TYPE_URL
+						conn_open_init::TYPE_URL |
+							conn_open_ack::TYPE_URL | conn_open_try::TYPE_URL |
+							conn_open_confirm::TYPE_URL | create_client::TYPE_URL
 					);
 					if is_permissioned {
-						return None;
+						return None
 					}
 					Some(Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value }))
 				})
@@ -339,8 +341,9 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// We permission the initiation and acceptance of connections, this is critical for security.
-		/// 
+		/// We permission the initiation and acceptance of connections, this is critical for
+		/// security.
+		///
 		/// [see here](https://github.com/ComposableFi/ibc-rs/issues/31)
 		#[pallet::weight(crate::weight::deliver::< T > (messages))]
 		#[frame_support::transactional]
@@ -354,10 +357,12 @@ pub mod pallet {
 					let type_url = String::from_utf8(message.type_url.clone()).ok()?;
 					let is_permissioned = matches!(
 						type_url.as_str(),
-						conn_open_init::TYPE_URL | conn_open_ack::TYPE_URL | create_client::TYPE_URL
+						conn_open_init::TYPE_URL |
+							conn_open_ack::TYPE_URL | conn_open_try::TYPE_URL |
+							conn_open_confirm::TYPE_URL | create_client::TYPE_URL
 					);
 					if !is_permissioned {
-						return None;
+						return None
 					}
 					Some(Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value }))
 				})

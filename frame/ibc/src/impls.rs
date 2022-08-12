@@ -3,11 +3,12 @@ use core::time::Duration;
 use super::*;
 use crate::{
 	events::IbcEvent,
+	host_functions::HostFunctions,
 	ics23::{
 		acknowledgements::Acknowledgements, channels::Channels, client_states::ClientStates,
 		connections::Connections, consensus_states::ConsensusStates,
-		next_seq_recv::NextSequenceRecv,
-		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+		next_seq_recv::NextSequenceRecv, packet_commitments::PacketCommitment,
+		reciepts::PacketReceipt,
 	},
 	routing::Context,
 };
@@ -28,10 +29,7 @@ use ibc::{
 		},
 	},
 	core::{
-		ics02_client::{
-			client_state::AnyClientState,
-			context::ClientReader,
-		},
+		ics02_client::{client_state::AnyClientState, context::ClientReader},
 		ics03_connection::context::ConnectionReader,
 		ics04_channel::{
 			channel::ChannelEnd,
@@ -53,7 +51,8 @@ use ibc::{
 	},
 	handler::HandlerOutputBuilder,
 	signer::Signer,
-	Height, timestamp::Timestamp
+	timestamp::Timestamp,
+	Height,
 };
 use ibc_primitives::{
 	apply_prefix, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
@@ -68,7 +67,6 @@ use ibc_primitives::{
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;
-use crate::host_functions::HostFunctions;
 
 impl<T: Config> Pallet<T>
 where
@@ -82,9 +80,7 @@ where
 		let (events, logs, errors) = messages.into_iter().fold(
 			(vec![], vec![], vec![]),
 			|(mut events, mut logs, mut errors), msg| {
-				match ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(
-					ctx, msg,
-				) {
+				match ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(ctx, msg) {
 					Ok(MsgReceipt { events: temp_events, log: temp_logs }) => {
 						events.extend(temp_events);
 						logs.extend(temp_logs);
@@ -658,10 +654,7 @@ where
 			})?;
 		let client_id = Self::channel_client_id(&source_channel_end).map_err(|_| {
 			IbcHandlerError::ClientIdError {
-				msg: Some(format!(
-					"Could not find client id for {:?}/{:?}",
-					port_id, channel_id
-				)),
+				msg: Some(format!("Could not find client id for {:?}/{:?}", port_id, channel_id)),
 			}
 		})?;
 
@@ -887,8 +880,8 @@ where
 	fn create_client() -> Result<ClientId, IbcHandlerError> {
 		use crate::benchmarks::tendermint_benchmark_utils::create_mock_state;
 		use ibc::core::ics02_client::{
-			client_state::ClientState,
 			client_consensus::AnyConsensusState,
+			client_state::ClientState,
 			msgs::create_client::{MsgCreateAnyClient, TYPE_URL},
 		};
 

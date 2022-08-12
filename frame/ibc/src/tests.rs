@@ -1,4 +1,5 @@
-use crate::{mock::*, Any, ConnectionParams, MODULE_ID};
+use crate::{mock::*, Any, Config, MODULE_ID};
+use core::time::Duration;
 use frame_support::{assert_ok, traits::Get};
 use ibc::{
 	core::{
@@ -8,8 +9,13 @@ use ibc::{
 			height::Height,
 			msgs::create_client::{MsgCreateAnyClient, TYPE_URL},
 		},
-		ics03_connection::{msgs::conn_open_ack, version::Version as ConnVersion},
-		ics04_channel::{channel::Order, msgs::chan_open_ack, Version as ChanVersion},
+		ics03_connection::{
+			connection::Counterparty,
+			msgs::{conn_open_ack, conn_open_init},
+			version::Version as ConnVersion,
+		},
+		ics04_channel::{msgs::chan_open_ack, Version as ChanVersion},
+		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
 	mock::{
@@ -41,25 +47,31 @@ fn initialize_connection() {
 		.unwrap()
 		.encode_vec();
 
+		let commitment_prefix: CommitmentPrefix =
+			<Test as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
+
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 
-		assert_ok!(Ibc::create_client(Origin::root(), msg));
+		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
 
-		let params = ConnectionParams {
-			version: (
-				"1".as_bytes().to_vec(),
-				vec![
-					Order::Ordered.as_str().as_bytes().to_vec(),
-					Order::Unordered.as_str().as_bytes().to_vec(),
-				],
+		let value = conn_open_init::MsgConnectionOpenInit {
+			client_id: client_id.clone(),
+			counterparty: Counterparty::new(
+				counterparty_client_id.clone(),
+				Some(ConnectionId::new(1)),
+				commitment_prefix.clone(),
 			),
-			client_id: client_id.as_bytes().to_vec(),
-			counterparty_client_id: counterparty_client_id.as_bytes().to_vec(),
-			commitment_prefix: "ibc".as_bytes().to_vec(),
-			delay_period: 1000,
+			version: Some(ConnVersion::default()),
+			delay_period: Duration::from_nanos(1000),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		};
 
-		assert_ok!(Ibc::initiate_connection(Origin::root(), params));
+		let msg = Any {
+			type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(),
+			value: value.encode_vec(),
+		};
+
+		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
 	})
 }
 
@@ -80,23 +92,27 @@ fn should_open_a_channel() {
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 
-		assert_ok!(Ibc::create_client(Origin::root(), msg));
-
-		let params = ConnectionParams {
-			version: (
-				"1".as_bytes().to_vec(),
-				vec![
-					Order::Ordered.as_str().as_bytes().to_vec(),
-					Order::Unordered.as_str().as_bytes().to_vec(),
-				],
+		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
+		let commitment_prefix: CommitmentPrefix =
+			<Test as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
+		let value = conn_open_init::MsgConnectionOpenInit {
+			client_id: client_id.clone(),
+			counterparty: Counterparty::new(
+				counterparty_client_id.clone(),
+				Some(ConnectionId::new(1)),
+				commitment_prefix.clone(),
 			),
-			client_id: client_id.as_bytes().to_vec(),
-			counterparty_client_id: counterparty_client_id.as_bytes().to_vec(),
-			commitment_prefix: "ibc".as_bytes().to_vec(),
-			delay_period: 1000,
+			version: Some(ConnVersion::default()),
+			delay_period: Duration::from_nanos(1000),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		};
 
-		assert_ok!(Ibc::initiate_connection(Origin::root(), params));
+		let msg = Any {
+			type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(),
+			value: value.encode_vec(),
+		};
+
+		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
 
 		let params = OpenChannelParams {
 			order: 1,
@@ -128,23 +144,27 @@ fn should_send_ping_packet() {
 		.encode_vec();
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
-		assert_ok!(Ibc::create_client(Origin::root(), msg));
-
-		let params = ConnectionParams {
-			version: (
-				"1".as_bytes().to_vec(),
-				vec![
-					Order::Ordered.as_str().as_bytes().to_vec(),
-					Order::Unordered.as_str().as_bytes().to_vec(),
-				],
+		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
+		let commitment_prefix: CommitmentPrefix =
+			<Test as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
+		let value = conn_open_init::MsgConnectionOpenInit {
+			client_id: client_id.clone(),
+			counterparty: Counterparty::new(
+				counterparty_client_id.clone(),
+				Some(ConnectionId::new(1)),
+				commitment_prefix.clone(),
 			),
-			client_id: client_id.as_bytes().to_vec(),
-			counterparty_client_id: counterparty_client_id.as_bytes().to_vec(),
-			commitment_prefix: "ibc".as_bytes().to_vec(),
-			delay_period: 1000,
+			version: Some(ConnVersion::default()),
+			delay_period: Duration::from_nanos(1000),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		};
 
-		assert_ok!(Ibc::initiate_connection(Origin::root(), params));
+		let msg = Any {
+			type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(),
+			value: value.encode_vec(),
+		};
+
+		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
 
 		crate::Pallet::<Test>::insert_default_consensus_state(1);
 		// Acknowledge connection so it's state is open
@@ -173,7 +193,7 @@ fn should_send_ping_packet() {
 
 		let msg = Any { type_url: conn_open_ack::TYPE_URL.as_bytes().to_vec(), value };
 
-		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])).into(), vec![msg]));
+		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
 
 		let params = OpenChannelParams {
 			order: 1,
@@ -215,7 +235,7 @@ fn should_send_ping_packet() {
 		let params = SendPingParams {
 			data: "ping".as_bytes().to_vec(),
 			timeout_height_offset: 10,
-			timeout_timestamp_offset:10000u64,
+			timeout_timestamp_offset: 10000u64,
 			channel_id: 0,
 		};
 

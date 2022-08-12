@@ -13,7 +13,7 @@ use scale_info::prelude::string::ToString;
 
 pub trait WeightInfo {
 	fn create_client() -> Weight;
-	fn initiate_connection() -> Weight;
+	fn conn_open_init() -> Weight;
 	fn update_tendermint_client() -> Weight;
 	fn conn_try_open_tendermint() -> Weight;
 	fn conn_open_ack_tendermint() -> Weight;
@@ -34,7 +34,7 @@ impl WeightInfo for () {
 		0
 	}
 
-	fn initiate_connection() -> Weight {
+	fn conn_open_init() -> Weight {
 		0
 	}
 
@@ -135,7 +135,7 @@ where
 			// Add benchmarked weight for module callback
 			let temp = match msg {
 				Ics26Envelope::Ics2Msg(msgs) => match msgs {
-					ClientMsg::CreateClient(_) => Weight::default(),
+					ClientMsg::CreateClient(_) => <T as Config>::WeightInfo::create_client(),
 					ClientMsg::UpdateClient(msg) => {
 						let client_type = msg.client_id.as_str().rsplit_once('-').and_then(
 							|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
@@ -150,7 +150,8 @@ where
 					ClientMsg::UpgradeClient(_) => Weight::default(),
 				},
 				Ics26Envelope::Ics3Msg(msgs) => match msgs {
-					ConnectionMsg::ConnectionOpenInit(_) => Weight::default(),
+					ConnectionMsg::ConnectionOpenInit(_) =>
+						<T as Config>::WeightInfo::conn_open_init(),
 					ConnectionMsg::ConnectionOpenTry(msg) => {
 						let client_type = msg.client_id.as_str().rsplit_once('-').and_then(
 							|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
