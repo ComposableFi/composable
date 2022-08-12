@@ -1,6 +1,5 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} from "typeorm"
 import * as marshal from "./marshal"
-import {PicassoAccount} from "./picassoAccount.model"
 import {PicassoTransactionType} from "./_picassoTransactionType"
 
 @Entity_()
@@ -21,9 +20,8 @@ export class PicassoTransaction {
   @Column_("text", {nullable: false})
   transactionId!: string
 
-  @Index_()
-  @ManyToOne_(() => PicassoAccount, {nullable: false})
-  who!: PicassoAccount
+  @Column_("text", {nullable: false})
+  who!: string
 
   @Column_("varchar", {length: 37, nullable: false})
   transactionType!: PicassoTransactionType
@@ -34,9 +32,6 @@ export class PicassoTransaction {
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   fee!: bigint
 
-  /**
-   * Unix timestamp in ms
-   */
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  timestamp!: bigint
+  @Column_("timestamp with time zone", {nullable: false})
+  date!: Date
 }

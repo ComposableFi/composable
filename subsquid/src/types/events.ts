@@ -2,6 +2,37 @@ import assert from 'assert'
 import {EventContext, Result, deprecateLatest} from './support'
 import * as v2401 from './v2401'
 
+export class BalancesDepositEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'balances.Deposit')
+  }
+
+  /**
+   * Some amount was deposited (e.g. for transaction fees).
+   */
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('balances.Deposit') === 'e84a34a6a3d577b31f16557bd304282f4fe4cbd7115377f4687635dc48e52ba5'
+  }
+
+  /**
+   * Some amount was deposited (e.g. for transaction fees).
+   */
+  get asV2401(): {who: v2401.AccountId32, amount: bigint} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {who: v2401.AccountId32, amount: bigint} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
 export class BalancesSlashedEvent {
   constructor(private ctx: EventContext) {
     assert(this.ctx.event.name === 'balances.Slashed')
@@ -59,6 +90,37 @@ export class BalancesTransferEvent {
   }
 
   get asLatest(): {from: v2401.AccountId32, to: v2401.AccountId32, amount: bigint} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
+export class BalancesWithdrawEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'balances.Withdraw')
+  }
+
+  /**
+   * Some amount was withdrawn from the account (e.g. for transaction fees).
+   */
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('balances.Withdraw') === 'e84a34a6a3d577b31f16557bd304282f4fe4cbd7115377f4687635dc48e52ba5'
+  }
+
+  /**
+   * Some amount was withdrawn from the account (e.g. for transaction fees).
+   */
+  get asV2401(): {who: v2401.AccountId32, amount: bigint} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {who: v2401.AccountId32, amount: bigint} {
     deprecateLatest()
     return this.asV2401
   }
