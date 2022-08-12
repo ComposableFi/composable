@@ -10,6 +10,7 @@ const TRANSFER_AMOUNT: u64 = 500;
 
 #[test]
 fn set_only_by_root() {
+	assert_eq!(1,2);
 	new_test_ext().execute_with(|| {
 		GovernanceRegistry::set(Origin::root(), 1, 1).unwrap();
 		ensure_admin_or_governance::<Test>(Origin::root(), &2).unwrap();

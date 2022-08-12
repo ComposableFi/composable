@@ -429,18 +429,18 @@
 
             check-picasso-integration-tests = crane-nightly.cargoNextest (common-attrs
               // {
-              pname = "local-integration-tests";
+              pname = "picasso-local-integration-tests";
               cargoArtifacts = common-deps-nightly;
-              cargoTestCommand = "cargo nextest --package local-integration-tests";
+              cargoTestCommand = "cargo nextest run --package local-integration-tests";
               doCheck = true;
               cargoExtraArgs =
                 "--features local-integration-tests --features picasso --features std --no-default-features";
             });
             check-dali-integration-tests = crane-nightly.cargoNextest (common-attrs // {
-              pname = "local-integration-tests";
+              pname = "dali-local-integration-tests";
               cargoArtifacts = common-deps-nightly;
               doCheck = true;
-              cargoTestCommand = "cargo nextest --package local-integration-tests";
+              cargoTestCommand = "cargo nextest run --package local-integration-tests";
               cargoExtraArgs =
                 "--features local-integration-tests --features dali --features std --no-default-features";
             });
@@ -451,7 +451,7 @@
               doCheck = true;
               # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
               # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-              cargoTestCommand  = "cargo nextest --workspace --release --locked --verbose";
+              cargoTestCommand  = "cargo nextest run --workspace --release --locked --verbose";
             });
 
             default = packages.composable-node;
