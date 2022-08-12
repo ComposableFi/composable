@@ -12,22 +12,17 @@ version = "0.1.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", features = [
-  "derive",
-] }
+codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
 hex-literal = { version = "0.3.3" }
 ibc-primitives = { path = "../primitives" }
 jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
-pallet-ibc = { path = "../" }
+pallet-ibc = { path = ".." }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.45"
 
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "1f1f06b0dab92802f64f97b77380c800899a2be7", default-features = false, features = [
-  "ics11_beefy",
-] }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "d8dd882ef4338d6fea2ee4cafb37c25e89f45828", default-features = false }
-ibc-runtime-api = { path = "../ibc-runtime-api" }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "6da3fa79f6475637a2ca0c27c3c91a53452cea36", default-features = false }
+ibc-runtime-api = { path = "../runtime-api" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
@@ -36,3 +31,9 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
+
+[dependencies.ibc]
+git = "https://github.com/ComposableFi/ibc-rs"
+rev = "6da3fa79f6475637a2ca0c27c3c91a53452cea36"
+default-features = false
+features = ["ics11_beefy"]

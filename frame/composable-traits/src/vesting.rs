@@ -44,12 +44,11 @@ pub enum VestingWindow<BlockNumber, Moment> {
 /// Benefits would be granted gradually, `per_period` amount every `window.period`
 /// of blocks after `window.start`.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub struct VestingSchedule<BlockNumber, Moment, Balance: HasCompact> {
+pub struct VestingSchedule<BlockNumber, Moment, Balance> {
 	pub window: VestingWindow<BlockNumber, Moment>,
 	/// Number of vest
 	pub period_count: u32,
 	/// Amount of tokens to release per vest
-	#[codec(compact)]
 	pub per_period: Balance,
 }
 

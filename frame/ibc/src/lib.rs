@@ -112,19 +112,11 @@ pub mod pallet {
 	use ibc::core::{
 		ics02_client::msgs::create_client,
 		ics03_connection::msgs::{conn_open_ack, conn_open_init},
-		ics03_connection::{
-			connection::Counterparty, msgs::conn_open_init::MsgConnectionOpenInit, version::Version,
-		},
-		ics23_commitment::commitment::CommitmentPrefix,
-		ics26_routing::handler::MsgReceipt,
 	};
 	use ibc_primitives::OffchainPacketType;
 
-	use crate::{host_functions::HostFunctions, ics23::client_states::ClientStates};
 	use composable_traits::defi::DeFiComposableConfig;
 	pub use ibc::signer::Signer;
-	use ibc_primitives::client_id_from_bytes;
-	use tendermint_proto::Protobuf;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
