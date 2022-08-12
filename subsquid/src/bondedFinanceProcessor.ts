@@ -4,8 +4,13 @@ import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
 } from "./types/events";
-import { BondedFinanceBondOffer } from "./model";
-import { encodeAccount } from "./utils";
+import {
+  Account,
+  BondedFinanceBondOffer,
+  PicassoTransactionType,
+} from "./model";
+import { createTransaction, encodeAccount } from "./utils";
+import { getOrCreate } from "./dbHelper";
 
 interface NewOfferEvent {
   offerId: bigint;
@@ -32,10 +37,24 @@ function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
   return { offerId, beneficiary };
 }
 
-export async function processNewOfferEvent(
+async function saveAccountAndTransaction(
   ctx: EventHandlerContext,
-  event: BondedFinanceNewOfferEvent
+  transactionType: PicassoTransactionType
 ) {
+  const signer = ctx.extrinsic?.signer;
+
+  if (signer) {
+    const account = await getOrCreate(ctx.store, Account, signer);
+
+    const tx = createTransaction(ctx, signer, transactionType);
+
+    await ctx.store.save(account);
+    await ctx.store.save(tx);
+  }
+}
+
+export async function processNewOfferEvent(ctx: EventHandlerContext) {
+  const event = new BondedFinanceNewOfferEvent(ctx);
   const { offerId, beneficiary } = getNewOfferEvent(event);
 
   await ctx.store.save(
@@ -47,17 +66,20 @@ export async function processNewOfferEvent(
       beneficiary: encodeAccount(beneficiary),
     })
   );
+
+  await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.BONDED_FINANCE_NEW_OFFER
+  );
 }
 
 /**
  * Updates database with new bond information
  * @param ctx
- * @param event
  */
-export async function processNewBondEvent(
-  ctx: EventHandlerContext,
-  event: BondedFinanceNewBondEvent
-) {
+export async function processNewBondEvent(ctx: EventHandlerContext) {
+  const event = new BondedFinanceNewBondEvent(ctx);
+
   const { offerId, nbOfBonds } = getNewBondEvent(event);
 
   // Get stored information (when possible) about the bond offer
@@ -72,4 +94,17 @@ export async function processNewBondEvent(
   // If offerId is already stored, add to total amount purchased
   stored.totalPurchased += nbOfBonds;
   await ctx.store.save(stored);
+
+  await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.BONDED_FINANCE_NEW_BOND
+  );
+}
+
+// TODO: remove offer from database?
+export async function processOfferCancelledEvent(ctx: EventHandlerContext) {
+  await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.BONDED_FINANCE_OFFER_CANCELLED
+  );
 }

@@ -74,7 +74,7 @@ export async function processTransferEvent(ctx: EventHandlerContext) {
   const event = new BalancesTransferEvent(ctx);
   const transferEvent = getTransferEvent(event);
   const from = encodeAccount(transferEvent.from);
-  const to = encodeAccount(transferEvent.from);
+  const to = encodeAccount(transferEvent.to);
   const tip = ctx.extrinsic?.tip || 0n;
   const { amount } = transferEvent;
 

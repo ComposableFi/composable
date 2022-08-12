@@ -1,21 +1,12 @@
-import * as ss58 from "@subsquid/ss58";
+import { SubstrateProcessor } from "@subsquid/substrate-processor";
 import {
-  EventHandlerContext,
-  SubstrateProcessor,
-} from "@subsquid/substrate-processor";
-import { Account, HistoricalBalance } from "./model";
-import {
-  BalancesTransferEvent,
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
   PabloPoolCreatedEvent,
   PabloPoolDeletedEvent,
   PabloSwappedEvent,
-  BondedFinanceNewBondEvent,
-  BondedFinanceNewOfferEvent,
   VestingVestingScheduleAddedEvent,
 } from "./types/events";
-import { getOrCreate } from "./dbHelper";
 import {
   processLiquidityAddedEvent,
   processLiquidityRemovedEvent,
@@ -38,6 +29,7 @@ import {
 import {
   processNewBondEvent,
   processNewOfferEvent,
+  processOfferCancelledEvent,
 } from "./bondedFinanceProcessor";
 import { processVestingScheduleAddedEvent } from "./vestingProcessor";
 
@@ -119,22 +111,15 @@ processor.addEventHandler("balances.Deposit", async (ctx) => {
 });
 
 processor.addEventHandler("bondedFinance.NewOffer", async (ctx) => {
-  const event = new BondedFinanceNewOfferEvent(ctx);
-
-  await processNewOfferEvent(ctx, event);
-  // TODO: process event for Picasso
+  await processNewOfferEvent(ctx);
 });
 
 processor.addEventHandler("bondedFinance.NewBond", async (ctx) => {
-  const event = new BondedFinanceNewBondEvent(ctx);
-
-  await processNewBondEvent(ctx, event);
-  // TODO: process event for Picasso
+  await processNewBondEvent(ctx);
 });
 
 processor.addEventHandler("bondedFinance.OfferCancelled", async (ctx) => {
-  // await processOfferCancelledEvent(ctx);
-  // TODO
+  await processOfferCancelledEvent(ctx);
 });
 
 processor.addEventHandler("vesting.VestingScheduleAdded", async (ctx) => {
@@ -164,14 +149,3 @@ processor.addEventHandler("stakingRewards.SplitPosition", async (ctx) => {
 });
 
 processor.run();
-
-interface TransferEvent {
-  from: Uint8Array;
-  to: Uint8Array;
-  amount: bigint;
-}
-
-function getTransferEvent(ctx: EventHandlerContext): TransferEvent {
-  const event = new BalancesTransferEvent(ctx);
-  return event.asV2401 ?? event.asLatest;
-}

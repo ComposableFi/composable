@@ -128,6 +128,5 @@ type PicassoTransaction @entity {
   who: String!
   transactionType: PicassoTransactionType!
   blockNumber: BigInt!
-  fee: BigInt!
   date: DateTime!
 }
