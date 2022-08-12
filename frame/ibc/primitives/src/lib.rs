@@ -2,6 +2,7 @@
 
 extern crate alloc;
 
+use alloc::string::{String, ToString};
 use codec::{Decode, Encode};
 use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_support::{weights::Weight, RuntimeDebug};
@@ -19,15 +20,14 @@ use ibc::{
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 		ics26_routing::context::ModuleOutputBuilder,
 	},
-	signer::Signer, 	timestamp::Timestamp,
-
+	signer::Signer,
+	timestamp::Timestamp,
 };
 use scale_info::{prelude::format, TypeInfo};
-use sp_std::{prelude::*, str::FromStr};
-use alloc::string::{String, ToString};
-use xcm::v1::{Junction, Junctions, MultiLocation};
 #[cfg(not(feature = "std"))]
 use sp_std::vec::Vec;
+use sp_std::{prelude::*, str::FromStr};
+use xcm::v1::{Junction, Junctions, MultiLocation};
 
 pub mod runtime_interface;
 
@@ -244,7 +244,6 @@ pub struct ConnectionHandshake {
 	pub height: u64,
 }
 
-
 #[derive(core::fmt::Debug, Clone, PartialEq, Eq)]
 /// Error definition for module
 pub enum Error {
@@ -430,7 +429,7 @@ pub fn channel_id_from_bytes(channel: Vec<u8>) -> Result<ChannelId, Error> {
 	ChannelId::from_str(
 		&String::from_utf8(channel).map_err(|_| Error::DecodingError { msg: None })?,
 	)
-		.map_err(|_| Error::DecodingError { msg: None })
+	.map_err(|_| Error::DecodingError { msg: None })
 }
 
 /// Get connection_id from raw bytes
@@ -438,7 +437,7 @@ pub fn connection_id_from_bytes(connection: Vec<u8>) -> Result<ConnectionId, Err
 	ConnectionId::from_str(
 		&String::from_utf8(connection).map_err(|_| Error::DecodingError { msg: None })?,
 	)
-		.map_err(|_| Error::DecodingError { msg: None })
+	.map_err(|_| Error::DecodingError { msg: None })
 }
 
 /// Get client_id from raw bytes
@@ -446,7 +445,7 @@ pub fn client_id_from_bytes(client_id: Vec<u8>) -> Result<ClientId, Error> {
 	ClientId::from_str(
 		&String::from_utf8(client_id).map_err(|_| Error::DecodingError { msg: None })?,
 	)
-		.map_err(|_| Error::DecodingError { msg: None })
+	.map_err(|_| Error::DecodingError { msg: None })
 }
 
 /// Get client_type from raw bytes
@@ -454,7 +453,7 @@ pub fn client_type_from_bytes(client_type: Vec<u8>) -> Result<ClientType, Error>
 	ClientType::from_str(
 		&String::from_utf8(client_type).map_err(|_| Error::DecodingError { msg: None })?,
 	)
-		.map_err(|_| Error::DecodingError { msg: None })
+	.map_err(|_| Error::DecodingError { msg: None })
 }
 
 /// Get trie key by applying the commitment prefix to the path
@@ -487,4 +486,3 @@ pub fn get_channel_escrow_address(
 	hex_string.insert_str(0, "0x");
 	hex_string.parse::<Signer>().map_err(Ics20Error::signer)
 }
-

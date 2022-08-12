@@ -87,10 +87,9 @@ pub mod pallet {
 		core::ics04_channel::channel::{ChannelEnd, State},
 		signer::Signer,
 	};
-	use ibc_primitives::{runtime_interface, runtime_interface::SS58CodecError};
 	use ibc_primitives::{
-		channel_id_from_bytes, connection_id_from_bytes, port_id_from_bytes, IbcTrait,
-		OpenChannelParams,
+		channel_id_from_bytes, connection_id_from_bytes, port_id_from_bytes, runtime_interface,
+		runtime_interface::SS58CodecError, IbcTrait, OpenChannelParams,
 	};
 	use primitives::currency::CurrencyId;
 	use sp_runtime::{traits::IdentifyAccount, AccountId32};
