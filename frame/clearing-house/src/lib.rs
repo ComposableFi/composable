@@ -973,7 +973,7 @@ pub mod pallet {
 		/// [`close_position`](Self::close_position) up until the `when` timestamp. After that time,
 		/// all trading calls will fail.
 		///
-		/// Users can settled their positions after the market close by calling
+		/// Users can settle their positions after the market close by calling
 		/// [`settle_position`](Self::settle_position).
 		///
 		/// TODO(0xangelo): add sequence diagram
@@ -1315,7 +1315,7 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 		) -> Result<Self::Balance, DispatchError> {
 			let mut market = Self::try_get_market(market_id)?;
-			Self::ensure_market_open(&market)?;
+			Self::ensure_market_is_open(&market)?;
 
 			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
 			let mut positions = Self::get_positions(account_id);
@@ -1924,7 +1924,7 @@ pub mod pallet {
 			}
 		}
 
-		fn ensure_market_open(market: &Market<T>) -> Result<(), DispatchError> {
+		fn ensure_market_is_open(market: &Market<T>) -> Result<(), DispatchError> {
 			let now = T::UnixTime::now().as_secs();
 			match market.shutdown_status(now) {
 				ShutdownStatus::Closed => Err(Error::<T>::MarketClosed.into()),
