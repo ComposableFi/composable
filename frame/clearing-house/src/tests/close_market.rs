@@ -61,8 +61,13 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn time_a_before_time_b()(time_b in 1..=MAX_DURATION_SECONDS)(time_a in 0..time_b) -> (DurationSeconds, DurationSeconds) {
-		(time_a, time_a)
+	fn time_a_before_time_b()(
+		time_b in 1..=MAX_DURATION_SECONDS
+	)(
+		time_a in 0..time_b,
+		time_b in Just(time_b)
+	) -> (DurationSeconds, DurationSeconds) {
+		(time_a, time_b)
 	}
 }
 
