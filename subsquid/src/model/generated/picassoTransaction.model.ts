@@ -29,9 +29,6 @@ export class PicassoTransaction {
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  fee!: bigint
-
   @Column_("timestamp with time zone", {nullable: false})
   date!: Date
 }

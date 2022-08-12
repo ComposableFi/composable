@@ -1,8 +1,5 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import {
-  BondedFinanceNewBondEvent,
-  BondedFinanceNewOfferEvent,
-  BondedFinanceOfferCancelledEvent,
   StakingRewardsRewardPoolCreatedEvent,
   StakingRewardsSplitPositionEvent,
   StakingRewardsStakeAmountExtendedEvent,
@@ -42,20 +39,6 @@ interface SplitPositionEvent {
   positions: bigint[];
 }
 
-interface NewOfferEvent {
-  offerId: bigint;
-  beneficiary: Uint8Array;
-}
-
-interface NewBondEvent {
-  offerId: bigint;
-  nbOfBonds: bigint;
-}
-
-interface OfferCancelledEvent {
-  offerId: bigint;
-}
-
 function getRewardPoolCreatedEvent(
   event: StakingRewardsRewardPoolCreatedEvent
 ): RewardPoolCreatedEvent {
@@ -86,24 +69,6 @@ function getSplitPositionEvent(
 ): SplitPositionEvent {
   const { positions } = event.asV2401 ?? event.asLatest;
   return { positions };
-}
-
-function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
-  const { offerId, beneficiary } = event.asV2401 ?? event.asLatest;
-
-  return { offerId, beneficiary };
-}
-
-function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent {
-  const { offerId, nbOfBonds } = event.asV2401 ?? event.asLatest;
-  return { offerId, nbOfBonds };
-}
-
-function getOfferCancelledEvent(
-  event: BondedFinanceOfferCancelledEvent
-): OfferCancelledEvent {
-  const { offerId } = event.asV2401 ?? event.asLatest;
-  return { offerId };
 }
 
 export async function processRewardPoolCreatedEvent(ctx: EventHandlerContext) {
