@@ -1,4 +1,4 @@
-use crate::{mock::*, Any, MODULE_ID, Error};
+use crate::{ics23::client_states::ClientStates, mock::*, Any, Error, MODULE_ID};
 use frame_support::{assert_ok, traits::Get};
 use ibc::{
 	core::{
@@ -8,8 +8,13 @@ use ibc::{
 			height::Height,
 			msgs::create_client::{MsgCreateAnyClient, TYPE_URL},
 		},
-		ics03_connection::{msgs::conn_open_ack, version::Version as ConnVersion},
+		ics03_connection::{
+			connection::Counterparty,
+			msgs::{conn_open_ack, conn_open_init, conn_open_init::MsgConnectionOpenInit},
+			version::{Version as ConnVersion, Version},
+		},
 		ics04_channel::{channel::Order, msgs::chan_open_ack, Version as ChanVersion},
+		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
 	mock::{
@@ -23,13 +28,7 @@ use ibc_primitives::{client_id_from_bytes, OpenChannelParams};
 use pallet_ibc_ping::SendPingParams;
 use sp_runtime::AccountId32;
 use std::str::FromStr;
-use ibc::core::ics03_connection::connection::Counterparty;
-use ibc::core::ics03_connection::msgs::conn_open_init;
-use ibc::core::ics03_connection::msgs::conn_open_init::MsgConnectionOpenInit;
-use ibc::core::ics03_connection::version::Version;
-use ibc::core::ics23_commitment::commitment::CommitmentPrefix;
 use tendermint_proto::Protobuf;
-use crate::ics23::client_states::ClientStates;
 
 pub(crate) type RawVersion = (Vec<u8>, Vec<Vec<u8>>);
 
@@ -50,22 +49,20 @@ fn initiate_connection<T: crate::Config>(params: ConnectionParams) -> Result<Any
 	let client_id =
 		client_id_from_bytes(params.client_id).map_err(|_| Error::<T>::DecodingError)?;
 	if !ClientStates::<T>::contains_key(&client_id) {
-		return Err(Error::<T>::ClientStateNotFound.into());
+		return Err(Error::<T>::ClientStateNotFound.into())
 	}
 
 	let counterparty_client_id = client_id_from_bytes(params.counterparty_client_id)
 		.map_err(|_| Error::<T>::DecodingError)?;
 	let identifier = params.version.0;
 	let features = params.version.1;
-	let identifier =
-		String::from_utf8(identifier).map_err(|_| Error::<T>::DecodingError)?;
+	let identifier = String::from_utf8(identifier).map_err(|_| Error::<T>::DecodingError)?;
 	let features = features
 		.into_iter()
 		.map(String::from_utf8)
 		.collect::<Result<Vec<_>, _>>()
 		.map_err(|_| Error::<T>::DecodingError)?;
-	let raw_version =
-		ibc_proto::ibc::core::connection::v1::Version { identifier, features };
+	let raw_version = ibc_proto::ibc::core::connection::v1::Version { identifier, features };
 	let version: Version = raw_version.try_into().map_err(|_| Error::<T>::DecodingError)?;
 
 	let commitment_prefix: CommitmentPrefix =
@@ -79,11 +76,8 @@ fn initiate_connection<T: crate::Config>(params: ConnectionParams) -> Result<Any
 		delay_period,
 		signer: Signer::from_str(MODULE_ID).map_err(|_| Error::<T>::DecodingError)?,
 	}
-		.encode_vec();
-	let msg = Any {
-		type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(),
-		value,
-	};
+	.encode_vec();
+	let msg = Any { type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(), value };
 
 	Ok(msg)
 }
@@ -209,9 +203,7 @@ fn should_send_ping_packet() {
 			delay_period: 1000,
 		};
 
-		let msg = initiate_connection::<Test>(
-			params
-		).unwrap();
+		let msg = initiate_connection::<Test>(params).unwrap();
 		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
 
 		crate::Pallet::<Test>::insert_default_consensus_state(1);

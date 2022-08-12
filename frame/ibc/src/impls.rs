@@ -1,6 +1,7 @@
 use super::*;
 use crate::{
 	events::IbcEvent,
+	host_functions::HostFunctions,
 	ics23::{
 		acknowledgements::Acknowledgements, channels::Channels, client_states::ClientStates,
 		connections::Connections, consensus_states::ConsensusStates,
@@ -65,7 +66,6 @@ use ibc_primitives::{
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;
-use crate::host_functions::HostFunctions;
 
 impl<T: Config> Pallet<T>
 where
@@ -79,9 +79,7 @@ where
 		let (events, logs, errors) = messages.into_iter().fold(
 			(vec![], vec![], vec![]),
 			|(mut events, mut logs, mut errors), msg| {
-				match ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(
-					ctx, msg,
-				) {
+				match ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(ctx, msg) {
 					Ok(MsgReceipt { events: temp_events, log: temp_logs }) => {
 						events.extend(temp_events);
 						logs.extend(temp_logs);
