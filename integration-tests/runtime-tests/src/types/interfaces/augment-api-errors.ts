@@ -1,10 +1,16 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+// import type lookup before we augment - in some environments
+// this is required to allow for ambient/previous definitions
+import '@polkadot/api-base/types/errors';
+
+import type { ApiTypes, AugmentedError } from '@polkadot/api-base/types';
+
+export type __AugmentedError<ApiType extends ApiTypes> = AugmentedError<ApiType>;
 
 declare module '@polkadot/api-base/types/errors' {
-  export interface AugmentedErrors<ApiType extends ApiTypes> {
+  interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
       InvalidCurrency: AugmentedError<ApiType>;
@@ -1182,6 +1188,7 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     stakingRewards: {
+      BackToTheFuture: AugmentedError<ApiType>;
       /**
        * Invalid end block number provided for creating a pool.
        **/
@@ -1206,6 +1213,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Error when creating reduction configs.
        **/
       ReductionConfigProblem: AugmentedError<ApiType>;
+      /**
+       * Reward asset not found in reward pool.
+       **/
+      RewardAssetNotFound: AugmentedError<ApiType>;
       /**
        * Error when creating reward configs.
        **/
@@ -1582,6 +1593,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Trying to vest to ourselves
        **/
       TryingToSelfVest: AugmentedError<ApiType>;
+      /**
+       * There is no vesting schedule with a given id
+       **/
+      VestingScheduleNotFound: AugmentedError<ApiType>;
       /**
        * Vesting period is zero
        **/

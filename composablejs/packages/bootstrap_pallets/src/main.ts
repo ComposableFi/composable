@@ -7,6 +7,7 @@ import "@composable/types/augment-types";
 
 import dotenv from "dotenv";
 dotenv.config();
+
 import { cryptoWaitReady } from "@polkadot/util-crypto";
 import * as definitions from "@composable/types/definitions";
 import { getSudoWallet, getSubstrateWallets, createRPC, createTypes, buildApi } from "@composable/bootstrap_pallets/helpers";
@@ -14,6 +15,9 @@ import config from "@composable/bootstrap_pallets/constants/config.json";
 import { bootstrapBondOffers } from "./bootstrap/bondedFinance";
 import { bootstrapPools } from "./bootstrap/pablo";
 import { bootstrapAssets } from "./bootstrap/assets";
+import { bootstrapStakingRewardPools } from "./bootstrap/stakingRewards";
+import { logger } from "@composable/bootstrap_pallets/utils";
+
 
 const main = async () => {
   const rpcUrl = process.env.RPC_URL || "ws://127.0.0.1:9988";
@@ -37,10 +41,15 @@ const main = async () => {
   if (config.bootstrapPools) {
     await bootstrapPools(api, dotWallets, walletSudo);
   }
+  
+  if (config.bootstrapRewardPools) {
+    await bootstrapStakingRewardPools(api, walletSudo);
+  }
 
   if (config.mintAssetsToWallets) {
     await bootstrapAssets(api, walletSudo, config.mintAssets as [string, string, string][]);
   }
+
 
   await api.disconnect();
   process.exit(0);
@@ -48,7 +57,7 @@ const main = async () => {
 
 cryptoWaitReady().then(() => {
   main().catch(err => {
-    console.error(err.message);
+    logger.error(err.message);
     process.exit(0);
   });
 });
