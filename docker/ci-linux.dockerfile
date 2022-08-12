@@ -3,7 +3,7 @@ FROM hadolint/hadolint:latest as hadolint
 
 FROM composablefi/base-ci-linux:1.62.1
 
-ARG NIGHTLY_VERSION=nightly-2022-07-29
+ARG NIGHTLY_VERSION=nightly-2022-08-06
 
 RUN rustup toolchain install ${NIGHTLY_VERSION} && \
     rustup component add clippy && \
@@ -13,7 +13,7 @@ RUN rustup toolchain install ${NIGHTLY_VERSION} && \
     rustup target install wasm32-unknown-unknown --toolchain ${NIGHTLY_VERSION} && \
     cargo +${NIGHTLY_VERSION} install -f cargo-llvm-cov --version 0.3.3 && \
     rustup component add llvm-tools-preview --toolchain=${NIGHTLY_VERSION} && \
-    cargo install taplo-cli --version 0.6.9 && \
+    cargo install taplo-cli --version 0.6.10 && \
     cargo install cargo-spellcheck --version 0.11.3 && \
     cargo install mdbook --version 0.4.21 && \
     cargo install subxt-cli --version 0.22.0 && \

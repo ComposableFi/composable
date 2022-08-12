@@ -123,11 +123,11 @@ push-mmr-polkadot:
 
 containerize-ci-linux:
 	@docker build -f docker/ci-linux.dockerfile \
-		-t ${REPO}/ci-linux:2022-07-29  \
+		-t ${REPO}/ci-linux:2022-08-06  \
 		.
 
 push-ci-linux:
-	@docker push ${REPO}/ci-linux:2022-07-29
+	@docker push ${REPO}/ci-linux:2022-08-06
 
 containerize-base-ci-linux:
 	@docker build -f docker/base-ci-linux.dockerfile \
