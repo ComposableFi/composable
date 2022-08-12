@@ -48,7 +48,7 @@ pub trait FinancialNFTProtocol {
 	/// Eg: for staking rewards if
 	///  the fNFT collectionId(assetId) of issued fNFTs for staking positions of a particular reward
 	///  pool a is x and for another b is y. Then this function returns vec![x, y].
-	fn financial_nft_asset_ids() -> Vec<Self::AssetId>;
+	fn collection_asset_ids() -> Vec<Self::AssetId>;
 
 	/// The value of the financial NFT is the sum total of balances of all asset types in its
 	/// account plus the future returns minus any liabilities.

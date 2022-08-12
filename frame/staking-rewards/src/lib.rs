@@ -509,7 +509,7 @@ pub mod pallet {
 		type AssetId = AssetIdOf<T>;
 		type Balance = BalanceOf<T>;
 
-		fn financial_nft_asset_ids() -> Vec<Self::AssetId> {
+		fn collection_asset_ids() -> Vec<Self::AssetId> {
 			// TODO (vim): Following is a dummy value. Store and retrieve from storage
 			[Self::AssetId::from(1000_u128)].into()
 		}

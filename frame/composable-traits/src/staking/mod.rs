@@ -194,7 +194,7 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
 	/// Protocol or the user account that owns this stake
-	// TODO (vim): Remove the owner and track the financial NFT ID
+	// TODO (vim): Remove the owner and track the financial NFT ID. In order to prevent a direct dependancy to NFTs we can also just use nft ID as position ID.
 	// 	pub financial_nft_id: ItemId
 	pub owner: AccountId,
 
@@ -234,12 +234,6 @@ pub trait ManageStaking {
 			StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
 		>,
 	) -> Result<Self::RewardPoolId, DispatchError>;
-}
-
-/// implemented by instances which know their share of something bigger
-pub trait Shares {
-	type Balance;
-	fn shares(&self) -> Self::Balance;
 }
 
 /// is unaware of concrete positions
