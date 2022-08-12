@@ -103,6 +103,7 @@ proptest! {
 			let market_after = get_market(&market_id);
 
 			assert_ne!(market_before, market_after);
+			assert_eq!(market_after.closed_ts, Some(time));
 		});
 	}
 
