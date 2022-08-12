@@ -27,7 +27,7 @@ use ibc::{
 			context::{ConnectionKeeper, ConnectionReader},
 			msgs::{
 				conn_open_ack::TYPE_URL as CONN_OPEN_ACK_TYPE_URL,
-				conn_open_confirm::TYPE_URL as CONN_OPEN_CONFIRM_TYPE_URL, conn_open_init,
+				conn_open_confirm::TYPE_URL as CONN_OPEN_CONFIRM_TYPE_URL, conn_open_init as conn_open_init_mod,
 				conn_open_try::TYPE_URL as CONN_TRY_OPEN_TYPE_URL,
 			},
 			version::Version as ConnVersion,
@@ -757,7 +757,7 @@ benchmarks! {
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
-		let value = conn_open_init::MsgConnectionOpenInit {
+		let value = conn_open_init_mod::MsgConnectionOpenInit {
 			client_id: client_id.clone(),
 			counterparty: Counterparty::new(
 				counterparty_client_id.clone(),
@@ -770,7 +770,7 @@ benchmarks! {
 		};
 
 		let msg = Any {
-			type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(),
+			type_url: conn_open_init_mod::TYPE_URL.as_bytes().to_vec(),
 			value: value.encode_vec()
 		};
 
