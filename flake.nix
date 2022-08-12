@@ -308,10 +308,6 @@
               cargoBuildCommand = "cargo build --release -p price-feed";
             });
 
-            taplo = callPackage ./.nix/taplo.nix { inherit crane-stable; };
-
-            mdbook = callPackage ./.nix/mdbook.nix { inherit crane-stable; };
-
             composable-book = import ./book/default.nix {
               crane = crane-stable;
               inherit cargo stdenv;
@@ -465,6 +461,7 @@
                 nixpkgs-fmt
                 jq
                 google-cloud-sdk # devs can list container images or binary releases
+                nix-tree
               ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
