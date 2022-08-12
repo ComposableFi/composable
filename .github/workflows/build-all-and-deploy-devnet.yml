@@ -255,9 +255,21 @@ jobs:
         with:
           clean: false
           fetch-depth: 0
+      - uses: cachix/install-nix-action@v17
+        with:
+          extra_nix_config: |
+            sandbox = relaxed
+            narinfo-cache-negative-ttl = 0
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{  env.NIX_CACHIX }}
 
-      #TODO: use nix tool and just oneliner to dump credentials, no need tasks
-      #TODO: and this task is deprecated
       - uses: google-github-actions/setup-gcloud@v0
         with:
           service_account_key: ${{ secrets.GCP_CREDENTIALS }}
@@ -265,11 +277,7 @@ jobs:
 
       - name: Build & Push
         run: |
-          chmod +x ./nix-install-vscode-composable.sh
-          ./nix-install-vscode-composable.sh ${{ env.NIX_INSTALL_SCRIPT }} ${{ env.NIX_NIXPKGS_CHANNEL }} ${{  env.NIX_CACHIX }}
-          source ~/.nix-profile/etc/profile.d/nix.sh && export PATH="/home/$(whoami)/.nix-profile/bin:$PATH"
-          cachix authtoken ${{ secrets.CACHIX_AUTH_TOKEN }}
-          nix-env -iA nixpkgs.docker nixpkgs.docker-buildx nixpkgs.python3  nixpkgs.google-cloud-sdk nixpkgs.jq
+          nix-env -iA nixpkgs.jq
           cd devnet
           # TODO: run gsutils and find same json in GOOGLE_APPLICATION_CREDENTIALS path, decide prio and responsible after https://github.com/ComposableFi/composable/issues/1426
           jq --null-input --arg client_email "$GCP_DEVNET_SERVICE_ACCOUNT" --arg project_id "$GCP_PROJECT_ID" --arg key "\"$GCP_DEVNET_SERVICE_ACCOUNT_KEY\"" '{ "project_id": $project_id, "private_key": ($key | fromjson), "client_email": $client_email }' > ops.json
@@ -279,10 +287,10 @@ jobs:
           then
             gsutil cp $NIXOPS_STATE_URL/$NIXOPS_STATE $NIXOPS_STATE
           else
-            nix develop .#sre --show-trace -L --command nixops create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 
+            nix develop .#sre --show-trace -L --command cachix watch-exec -j 16 -c 0 composable-community nixops -- create --deployment devnet-gce --show-trace --option narinfo-cache-negative-ttl 0 
           fi
 
-          nix develop .#sre --show-trace -L --command nixops deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 
+          nix develop .#sre --show-trace -L --command cachix watch-exec -j 16 -c 0 composable-community nixops -- deploy --check --confirm --deployment devnet-gce --debug --show-trace --option narinfo-cache-negative-ttl 0 
 
           # TODO: document what happens if Deploy passed, but Store was stopped - how stat reconciled
           # TODO: consider running state save in same step as it is unseparable from deploy
