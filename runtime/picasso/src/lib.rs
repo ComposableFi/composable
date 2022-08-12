@@ -654,6 +654,7 @@ impl vesting::Config for Runtime {
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type VestingScheduleId = u128;
 }
 
 parameter_types! {

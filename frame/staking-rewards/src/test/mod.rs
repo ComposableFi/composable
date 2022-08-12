@@ -3,7 +3,7 @@ use crate::{
 	test::{prelude::H256, runtime::*},
 	Config, RewardPools, StakeCount, Stakes,
 };
-use composable_support::{abstractions::utils::increment::Increment, validation::TryIntoValidated};
+use composable_support::abstractions::utils::increment::Increment;
 use composable_tests_helpers::test::currency::{CurrencyId, BTC, PICA, USDT};
 use composable_traits::{
 	staking::{
@@ -31,8 +31,8 @@ use sp_std::collections::btree_map::BTreeMap;
 mod prelude;
 mod runtime;
 
-#[cfg(test)]
 mod test_reward_accumulation_hook;
+mod test_update_reward_pools;
 
 #[test]
 fn test_create_reward_pool() {
@@ -644,14 +644,17 @@ fn default_lock_config(
 
 fn default_reward_config(
 ) -> BoundedBTreeMap<u128, RewardConfig<u128, u128>, MaxRewardConfigsPerPool> {
-	let config = RewardConfig {
-		asset_id: USDT::ID,
-		max_rewards: 100_u128,
-		reward_rate: RewardRate::per_second(10_u128),
-	};
-	let mut rewards = BTreeMap::new();
-	rewards.insert(USDT::ID, config);
-	BoundedBTreeMap::try_from(rewards).unwrap()
+	[(
+		USDT::ID,
+		RewardConfig {
+			asset_id: USDT::ID,
+			max_rewards: 100_u128,
+			reward_rate: RewardRate::per_second(10_u128),
+		},
+	)]
+	.into_iter()
+	.try_collect()
+	.unwrap()
 }
 
 pub fn assert_has_event<T, F>(matcher: F)

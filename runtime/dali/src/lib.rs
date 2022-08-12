@@ -796,6 +796,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
+	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -829,6 +830,7 @@ impl vesting::Config for Runtime {
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type VestingScheduleId = u128;
 }
 
 parameter_types! {
