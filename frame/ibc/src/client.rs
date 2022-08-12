@@ -262,6 +262,7 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		height: Height,
 		timestamp: Timestamp,
 	) -> Result<(), ICS02Error> {
+		log::trace!(target: "pallet_ibc", "in client: [store_update_time] >> Client Height {:?}, Host Timestamp {:?} ", height, timestamp);
 		let height = height.encode_vec();
 		let timestamp = timestamp.nanoseconds();
 		let client_id = client_id.as_bytes().to_vec();
@@ -275,6 +276,7 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		height: Height,
 		host_height: Height,
 	) -> Result<(), ICS02Error> {
+		log::trace!(target: "pallet_ibc", "in client: [store_update_height] >> Client Height {:?}, Host Height {:?} ", height, host_height);
 		let height = height.encode_vec();
 		let host_height = host_height.encode_vec();
 		let client_id = client_id.as_bytes().to_vec();

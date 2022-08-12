@@ -2,7 +2,7 @@ use super::*;
 use core::{str::FromStr, time::Duration};
 use frame_support::traits::Get;
 use ibc_primitives::OffchainPacketType;
-use scale_info::prelude::{collections::BTreeMap, string::ToString};
+use scale_info::prelude::string::ToString;
 
 use crate::{
 	ics23::{
@@ -202,10 +202,17 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Timestamp, ICS04Error> {
-		let height = height.encode_vec();
-		let client_id = client_id.as_bytes().to_vec();
-		let timestamp = ClientUpdateTime::<T>::get(&client_id, &height);
+		let encoded_height = height.encode_vec();
+		let client_id_bytes = client_id.as_bytes().to_vec();
+		let timestamp =
+			ClientUpdateTime::<T>::get(&client_id_bytes, &encoded_height).ok_or_else(|| {
+				ICS04Error::implementation_specific(format!(
+					"[client_update_time]:  client update timestamp not found for {} at height: {}",
+					client_id, height
+				))
+			})?;
 
+		log::trace!(target: "pallet_ibc", "in channel: [client_update_time] >> height = {:?}, timestamp = {:?}", height,  timestamp);
 		Timestamp::from_nanoseconds(timestamp).map_err(|e| {
 			ICS04Error::implementation_specific(format!(
 				"[client_update_time]:  error decoding timestamp from nano seconds: {}",
@@ -219,10 +226,17 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Height, ICS04Error> {
-		let height = height.encode_vec();
-		let client_id = client_id.as_bytes().to_vec();
-		let host_height = ClientUpdateHeight::<T>::get(&client_id, &height);
+		let encoded_height = height.encode_vec();
+		let client_id_bytes = client_id.as_bytes().to_vec();
+		let host_height = ClientUpdateHeight::<T>::get(&client_id_bytes, &encoded_height)
+			.ok_or_else(|| {
+				ICS04Error::implementation_specific(format!(
+					"[client_update_time]:  client update height not found for {} at height: {}",
+					client_id, height
+				))
+			})?;
 
+		log::trace!(target: "pallet_ibc", "in channel: [client_update_height] >> height = {:?}, host height {:?}", height,  host_height);
 		Height::decode_vec(&host_height).map_err(|e| {
 			ICS04Error::implementation_specific(format!(
 				"[client_update_height]: error decoding height: {}",
@@ -255,6 +269,7 @@ where
 		key: (PortId, ChannelId, Sequence),
 		commitment: PacketCommitmentType,
 	) -> Result<(), ICS04Error> {
+		log::trace!(target: "pallet_ibc", "in channel : [store_packet_commitment] >> packet_commitment = {:#?}", commitment);
 		<PacketCommitment<T>>::insert((key.0.clone(), key.1, key.2), commitment);
 		if let Some(val) = PacketCounter::<T>::get().checked_add(1) {
 			PacketCounter::<T>::put(val);
@@ -272,14 +287,16 @@ where
 		let channel_id = key.1.to_string().as_bytes().to_vec();
 		let port_id = key.0.as_bytes().to_vec();
 		let seq = u64::from(key.2);
-		let key = Pallet::<T>::offchain_key(channel_id, port_id);
-		let mut offchain_packets: BTreeMap<u64, OffchainPacketType> =
-			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
-				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
-				.unwrap_or_default();
+		// let key = Pallet::<T>::offchain_key(channel_id, port_id);
+		// let mut offchain_packets: BTreeMap<u64, OffchainPacketType> =
+		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
+		// 		.unwrap_or_default();
 		let offchain_packet: OffchainPacketType = packet.into();
-		offchain_packets.insert(seq, offchain_packet);
-		sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
+		// offchain_packets.insert(seq, offchain_packet);
+		// sp_io::offchain::local_storage_set(sp_core::offchain::StorageKind::PERSISTENT, &key,
+		// offchain_packets.encode().as_slice());
+		<Packets<T>>::insert((channel_id, port_id), seq, offchain_packet);
 		Ok(())
 	}
 

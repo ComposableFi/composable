@@ -118,6 +118,7 @@ pub mod pallet {
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics26_routing::handler::MsgReceipt,
 	};
+	use ibc_primitives::OffchainPacketType;
 
 	use crate::{host_functions::HostFunctions, ics23::client_states::ClientStates};
 	use composable_traits::defi::DeFiComposableConfig;
@@ -163,7 +164,6 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
 	/// client_id , Height => Height
 	pub type ClientUpdateHeight<T: Config> = StorageDoubleMap<
 		_,
@@ -172,14 +172,13 @@ pub mod pallet {
 		Blake2_128Concat,
 		Vec<u8>,
 		Vec<u8>,
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
 	/// client_id , Height => Timestamp
 	pub type ClientUpdateTime<T: Config> =
-		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
+		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, OptionQuery>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -226,6 +225,34 @@ pub mod pallet {
 	/// height => IbcConsensusState
 	pub type HostConsensusStates<T: Config> =
 		StorageValue<_, BoundedBTreeMap<u64, IbcConsensusState, ConstU32<250>>, ValueQuery>;
+
+	// temporary
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	/// (ChannelId, PortId, Sequence) => Packet
+	pub type Packets<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		(Vec<u8>, Vec<u8>),
+		Blake2_128Concat,
+		u64,
+		OffchainPacketType,
+		ValueQuery,
+	>;
+
+	// temporary
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	/// (ChannelId, PortId, Sequence) => Packet
+	pub type RawAcknowledgements<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		(Vec<u8>, Vec<u8>),
+		Blake2_128Concat,
+		u64,
+		Vec<u8>,
+		ValueQuery,
+	>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]

@@ -487,13 +487,14 @@ where
 		let channel_id = key.1.to_string().as_bytes().to_vec();
 		let port_id = key.0.as_bytes().to_vec();
 		let seq = u64::from(key.2);
-		let key = Pallet::<T>::acknowledgements_offchain_key(channel_id, port_id);
-		let mut acks: BTreeMap<u64, Vec<u8>> =
-			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
-				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
-				.unwrap_or_default();
-		acks.insert(seq, ack);
-		sp_io::offchain_index::set(&key, acks.encode().as_slice());
+		// let key = Pallet::<T>::acknowledgements_offchain_key(channel_id, port_id);
+		// let mut acks: BTreeMap<u64, Vec<u8>> =
+		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
+		// 		.unwrap_or_default();
+		// acks.insert(seq, ack);
+		// sp_io::offchain_index::set(&key, acks.encode().as_slice());
+		RawAcknowledgements::<T>::insert((channel_id, port_id), seq, ack);
 		Ok(())
 	}
 
@@ -556,15 +557,16 @@ where
 		port_id: Vec<u8>,
 		sequences: Vec<u64>,
 	) -> Result<Vec<OffchainPacketType>, Error<T>> {
-		let key = Pallet::<T>::offchain_key(channel_id, port_id);
-		let offchain_packets: BTreeMap<u64, OffchainPacketType> =
-			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
-				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
-				.unwrap_or_default();
-		sequences
+		// let key = Pallet::<T>::offchain_key(channel_id, port_id);
+		// let offchain_packets: BTreeMap<u64, OffchainPacketType> =
+		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
+		// 		.unwrap_or_default();
+		let packets = sequences
 			.into_iter()
-			.map(|seq| offchain_packets.get(&seq).cloned().ok_or(Error::<T>::Other))
-			.collect()
+			.map(|seq| Packets::<T>::get((channel_id.clone(), port_id.clone()), seq))
+			.collect();
+		Ok(packets)
 	}
 
 	pub fn get_offchain_acks(
@@ -572,15 +574,16 @@ where
 		port_id: Vec<u8>,
 		sequences: Vec<u64>,
 	) -> Result<Vec<Vec<u8>>, Error<T>> {
-		let key = Pallet::<T>::acknowledgements_offchain_key(channel_id, port_id);
-		let acks: BTreeMap<u64, Vec<u8>> =
-			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
-				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
-				.unwrap_or_default();
-		sequences
+		// let key = Pallet::<T>::acknowledgements_offchain_key(channel_id, port_id);
+		// let acks: BTreeMap<u64, Vec<u8>> =
+		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
+		// 		.unwrap_or_default();
+		let acks = sequences
 			.into_iter()
-			.map(|seq| acks.get(&seq).cloned().ok_or(Error::<T>::Other))
-			.collect()
+			.map(|seq| RawAcknowledgements::<T>::get((channel_id.clone(), port_id.clone()), seq))
+			.collect();
+		Ok(acks)
 	}
 
 	pub fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
@@ -670,23 +673,18 @@ where
 	}
 
 	fn send_packet(data: SendPacketData) -> Result<(), IbcHandlerError> {
-		let channel_id = data.channel_id;
-		let port_id = data.port_id;
+		let source_channel = data.channel_id;
+		let source_port = data.port_id;
 
 		let revision_number = if let Some(revision_number) = data.revision_number {
 			revision_number
 		} else {
-			Self::client_revision_number(port_id.clone(), channel_id.clone())?
+			Self::client_revision_number(
+				source_port.as_bytes().to_vec(),
+				source_channel.to_string().as_bytes().to_vec(),
+			)?
 		};
 		let mut ctx = Context::<T>::new();
-		let source_port =
-			port_id_from_bytes(port_id).map_err(|_| IbcHandlerError::ChannelOrPortError {
-				msg: Some("Failed to decode source port_id from bytes".to_string()),
-			})?;
-		let source_channel =
-			channel_id_from_bytes(channel_id).map_err(|_| IbcHandlerError::ChannelOrPortError {
-				msg: Some("Failed to decode source channel_id from bytes".to_string()),
-			})?;
 		let next_seq_send = NextSequenceSend::<T>::get(source_port.clone(), source_channel).ok_or(
 			IbcHandlerError::SendPacketError {
 				msg: Some(format!("Failed to get next_sequence_send for {}", source_channel)),
@@ -856,11 +854,7 @@ where
 		let event = IbcEvent::WriteAcknowledgement {
 			revision_height: host_height.revision_height,
 			revision_number: host_height.revision_number,
-			port_id: packet.source_port.as_bytes().to_vec(),
-			channel_id: packet.source_channel.to_string().as_bytes().to_vec(),
-			dest_port: packet.destination_port.as_bytes().to_vec(),
-			dest_channel: packet.destination_channel.to_string().as_bytes().to_vec(),
-			sequence: packet.sequence.into(),
+			packet: packet.clone().into(),
 		};
 		Self::deposit_event(Event::<T>::Events { events: vec![event] });
 		Ok(())

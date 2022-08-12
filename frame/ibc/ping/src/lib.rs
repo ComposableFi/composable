@@ -47,9 +47,8 @@ pub struct SendPingParams {
 	pub revision_number: Option<u64>,
 	pub timeout_height: u64,
 	pub timeout_timestamp: u64,
-	pub channel_id: Vec<u8>,
-	pub dest_port_id: Vec<u8>,
-	pub dest_channel_id: Vec<u8>,
+	// Channel counter, for example counter for channel-0 is 0
+	pub channel_id: u64,
 }
 
 // Definition of the pallet logic, to be aggregated at runtime definition through
@@ -120,13 +119,15 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn send_ping(origin: OriginFor<T>, params: SendPingParams) -> DispatchResult {
 			ensure_root(origin)?;
+			let channel_id = ChannelId::new(params.channel_id);
 			let send_packet = SendPacketData {
 				data: params.data,
 				revision_number: params.revision_number,
 				timeout_height: params.timeout_height,
 				timeout_timestamp: params.timeout_timestamp,
-				port_id: PORT_ID.as_bytes().to_vec(),
-				channel_id: params.channel_id,
+				port_id: port_id_from_bytes(PORT_ID.as_bytes().to_vec())
+					.expect("Valid port id expected"),
+				channel_id,
 			};
 			T::IbcHandler::send_packet(send_packet).map_err(|e| {
 				log::trace!(target: "pallet_ibc_ping", "[send_ping] error: {:?}", e);

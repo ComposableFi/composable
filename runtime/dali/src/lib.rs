@@ -1102,7 +1102,7 @@ impl dex_router::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
+	pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK;
 }
 
 #[derive(Clone)]

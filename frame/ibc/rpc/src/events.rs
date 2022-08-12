@@ -37,37 +37,10 @@ where
 			ev.packet = packet;
 			Some(event)
 		},
-		RawIbcEvent::ReceivePacket(ev) => {
-			let channel_id = ev.src_channel_id();
-			let port_id = ev.src_port_id();
-			let sequence = u64::from(ev.packet.sequence);
-			let packets: Vec<ibc_primitives::OffchainPacketType> = api
-				.query_packets(
-					at,
-					channel_id.to_string().as_bytes().to_vec(),
-					port_id.as_bytes().to_vec(),
-					vec![sequence],
-				)
-				.ok()
-				.flatten()?;
-			let packet = packets.get(0)?.clone();
-			let packet: Packet = packet.into();
-			ev.packet = packet;
-			Some(event)
-		},
 		RawIbcEvent::WriteAcknowledgement(ev) => {
 			let channel_id = ev.src_channel_id();
 			let port_id = ev.src_port_id();
 			let sequence = u64::from(ev.packet.sequence);
-			let packets: Vec<ibc_primitives::OffchainPacketType> = api
-				.query_packets(
-					at,
-					channel_id.to_string().as_bytes().to_vec(),
-					port_id.as_bytes().to_vec(),
-					vec![sequence],
-				)
-				.ok()
-				.flatten()?;
 			let acks: Vec<Vec<u8>> = api
 				.query_acknowledgements(
 					at,
@@ -77,10 +50,8 @@ where
 				)
 				.ok()
 				.flatten()?;
-			let packet = packets.get(0)?.clone();
-			let packet: Packet = packet.into();
+
 			let ack = acks.get(0)?.clone();
-			ev.packet = packet;
 			ev.ack = ack;
 			Some(event)
 		},
