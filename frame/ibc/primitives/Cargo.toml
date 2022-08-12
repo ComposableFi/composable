@@ -28,7 +28,7 @@ composable-traits = { default-features = false, path = "../../composable-traits"
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "6da3fa79f6475637a2ca0c27c3c91a53452cea36"
+rev = "a189a3b796cbb84807061180a4ad67c4a1ded8d0"
 default-features = false
 features = ["ics11_beefy"]
 
