@@ -89,6 +89,7 @@ use sp_runtime::{
 	DispatchResult,
 };
 use sp_std::{prelude::*, vec};
+use std::cmp::Ordering;
 pub use weights::WeightInfo;
 
 use composable_traits::account_proxy::{AccountProxy, ProxyDefinition};
@@ -674,11 +675,12 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Option<BalanceOf<T>>, DispatchError> {
 		let new_deposit =
 			if len == 0 { BalanceOf::<T>::zero() } else { base + factor * (len as u32).into() };
-		if new_deposit > old_deposit {
-			T::Currency::reserve(who, new_deposit - old_deposit)?;
-		} else if new_deposit < old_deposit {
-			T::Currency::unreserve(who, old_deposit - new_deposit);
-		}
+		match new_deposit.cmp(&old_deposit) {
+			Ordering::Less => T::Currency::unreserve(who, old_deposit - new_deposit),
+			Ordering::Greater => T::Currency::reserve(who, new_deposit - old_deposit)
+				.map(|_| BalanceOf::<T>::zero())?,
+			_ => BalanceOf::<T>::zero(),
+		};
 		Ok(if len == 0 { None } else { Some(new_deposit) })
 	}
 
