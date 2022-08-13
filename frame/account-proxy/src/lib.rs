@@ -768,11 +768,12 @@ impl<T: Config> AccountProxy for Pallet<T> {
 			let i = proxies.binary_search(&proxy_def).err().ok_or(Error::<T>::Duplicate)?;
 			proxies.try_insert(i, proxy_def).map_err(|_| Error::<T>::TooMany)?;
 			let new_deposit = Self::deposit(proxies.len() as u32);
-			if new_deposit > *deposit {
-				T::Currency::reserve(delegator, new_deposit - *deposit)?;
-			} else if new_deposit < *deposit {
-				T::Currency::unreserve(delegator, *deposit - new_deposit);
-			}
+			match new_deposit.cmp(&*deposit) {
+				Ordering::Greater => T::Currency::reserve(delegator, new_deposit - *deposit)
+					.map(|_| BalanceOf::<T>::zero())?,
+				Ordering::Less => T::Currency::unreserve(delegator, *deposit - new_deposit),
+				_ => BalanceOf::<T>::zero(),
+			};
 			*deposit = new_deposit;
 			Self::deposit_event(Event::<T>::ProxyAdded {
 				delegator: delegator.clone(),
@@ -808,11 +809,12 @@ impl<T: Config> AccountProxy for Pallet<T> {
 			let i = proxies.binary_search(&proxy_def).ok().ok_or(Error::<T>::NotFound)?;
 			proxies.remove(i);
 			let new_deposit = Self::deposit(proxies.len() as u32);
-			if new_deposit > old_deposit {
-				T::Currency::reserve(delegator, new_deposit - old_deposit)?;
-			} else if new_deposit < old_deposit {
-				T::Currency::unreserve(delegator, old_deposit - new_deposit);
-			}
+			match new_deposit.cmp(&old_deposit) {
+				Ordering::Greater => T::Currency::reserve(delegator, new_deposit - old_deposit)
+					.map(|_| BalanceOf::<T>::zero())?,
+				Ordering::Less => T::Currency::unreserve(delegator, old_deposit - new_deposit),
+				_ => BalanceOf::<T>::zero(),
+			};
 			if !proxies.is_empty() {
 				*x = Some((proxies, new_deposit))
 			}
