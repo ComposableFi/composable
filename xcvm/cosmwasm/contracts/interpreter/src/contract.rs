@@ -1,8 +1,8 @@
 use cosmwasm_std::{
-	entry_point, to_binary, wasm_execute, DepsMut, Env, MessageInfo, QueryRequest, Response,
-	StdError, WasmQuery,
+	entry_point, to_binary, CosmosMsg, DepsMut, Env, MessageInfo, QueryRequest, Response, StdError,
+	WasmQuery,
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 
 use crate::{
 	error::ContractError,
@@ -62,17 +62,10 @@ pub fn interpret_program(
 }
 
 pub fn interpret_call(encoded: Vec<u8>, response: Response) -> Result<Response, ContractError> {
-	#[derive(Deserialize)]
-	struct Payload {
-		address: String,
-		msg: String,
-	}
-
-	let payload: Payload =
+	let cosmos_msg: CosmosMsg =
 		serde_json_wasm::from_slice(&encoded).map_err(|_| ContractError::InvalidCallPayload)?;
-	let msg = wasm_execute(payload.address, &payload.msg, vec![])?;
 
-	Ok(response.add_message(msg))
+	Ok(response.add_message(cosmos_msg))
 }
 
 pub fn interpret_spawn(
@@ -155,7 +148,7 @@ mod tests {
 	use super::*;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier},
-		Addr, Attribute, ContractResult, QuerierResult,
+		wasm_execute, Addr, Attribute, ContractResult, QuerierResult,
 	};
 
 	#[test]
@@ -233,25 +226,18 @@ mod tests {
 		)
 		.unwrap();
 
-		let call_payload = r#"{
-            "address": "1234",
-            "msg": "hello world"
-        }"#;
+		let cosmos_msg: CosmosMsg =
+			wasm_execute("1234", &"hello world".to_string(), vec![]).unwrap().into();
+		let msg = serde_json_wasm::to_string(&cosmos_msg).unwrap();
 
 		let program = XCVMProgram {
 			tag: None,
-			instructions: vec![XCVMInstruction::Call {
-				encoded: call_payload.as_bytes().to_owned(),
-			}]
-			.into(),
+			instructions: vec![XCVMInstruction::Call { encoded: msg.as_bytes().into() }].into(),
 		};
 
 		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
 			.unwrap();
-		assert_eq!(
-			res.messages[0].msg,
-			wasm_execute("1234", &"hello world".to_string(), vec![]).unwrap().into()
-		);
+		assert_eq!(res.messages[0].msg, cosmos_msg);
 	}
 
 	#[test]
