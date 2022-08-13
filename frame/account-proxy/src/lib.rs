@@ -30,14 +30,20 @@
 	not(test),
 	warn(
 		clippy::disallowed_methods,
-		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
-		clippy::panic
+		clippy::panic,
+		clippy::unseparated_literal_suffix
 	)
 )]
-#![warn(clippy::unseparated_literal_suffix)]
+#![
+	allow(
+		clippy::boxed_local,
+		// TODO (vim) : remove this by removing use of ValueQuery
+		clippy::disallowed_types
+	)
+]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -204,14 +210,7 @@ pub mod pallet {
 		/// # <weight>
 		/// Weight is a function of the number of proxies the user has (P).
 		/// # </weight>
-		#[pallet::weight({
-			let di = call.get_dispatch_info();
-			(T::WeightInfo::proxy(T::MaxProxies::get())
-				.saturating_add(di.weight)
-				 // AccountData for inner call origin accountdata.
-				.saturating_add(T::DbWeight::get().reads_writes(1, 1)),
-			di.class)
-		})]
+		#[pallet::weight(T::WeightInfo::proxy())]
 		pub fn proxy(
 			origin: OriginFor<T>,
 			real: T::AccountId,
@@ -240,7 +239,7 @@ pub mod pallet {
 		/// # <weight>
 		/// Weight is a function of the number of proxies the user has (P).
 		/// # </weight>
-		#[pallet::weight(T::WeightInfo::add_proxy(T::MaxProxies::get()))]
+		#[pallet::weight(T::WeightInfo::add_proxy())]
 		pub fn add_proxy(
 			origin: OriginFor<T>,
 			delegate: T::AccountId,
@@ -262,7 +261,7 @@ pub mod pallet {
 		/// # <weight>
 		/// Weight is a function of the number of proxies the user has (P).
 		/// # </weight>
-		#[pallet::weight(T::WeightInfo::remove_proxy(T::MaxProxies::get()))]
+		#[pallet::weight(T::WeightInfo::remove_proxy())]
 		pub fn remove_proxy(
 			origin: OriginFor<T>,
 			delegate: T::AccountId,
@@ -283,7 +282,7 @@ pub mod pallet {
 		/// # <weight>
 		/// Weight is a function of the number of proxies the user has (P).
 		/// # </weight>
-		#[pallet::weight(T::WeightInfo::remove_proxies(T::MaxProxies::get()))]
+		#[pallet::weight(T::WeightInfo::remove_proxies())]
 		pub fn remove_proxies(origin: OriginFor<T>) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			let (_, old_deposit) = Proxies::<T>::take(&who);
@@ -315,7 +314,7 @@ pub mod pallet {
 		/// Weight is a function of the number of proxies the user has (P).
 		/// # </weight>
 		/// TODO: Might be over counting 1 read
-		#[pallet::weight(T::WeightInfo::anonymous(T::MaxProxies::get()))]
+		#[pallet::weight(T::WeightInfo::anonymous())]
 		pub fn anonymous(
 			origin: OriginFor<T>,
 			proxy_type: T::ProxyType,
@@ -366,7 +365,7 @@ pub mod pallet {
 		/// # <weight>
 		/// Weight is a function of the number of proxies the user has (P).
 		/// # </weight>
-		#[pallet::weight(T::WeightInfo::kill_anonymous(T::MaxProxies::get()))]
+		#[pallet::weight(T::WeightInfo::kill_anonymous())]
 		pub fn kill_anonymous(
 			origin: OriginFor<T>,
 			spawner: T::AccountId,
@@ -408,7 +407,7 @@ pub mod pallet {
 		/// - A: the number of announcements made.
 		/// - P: the number of proxies the user has.
 		/// # </weight>
-		#[pallet::weight(T::WeightInfo::announce(T::MaxPending::get(), T::MaxProxies::get()))]
+		#[pallet::weight(T::WeightInfo::announce())]
 		pub fn announce(
 			origin: OriginFor<T>,
 			real: T::AccountId,
@@ -462,10 +461,7 @@ pub mod pallet {
 		/// - A: the number of announcements made.
 		/// - P: the number of proxies the user has.
 		/// # </weight>
-		#[pallet::weight(T::WeightInfo::remove_announcement(
-			T::MaxPending::get(),
-			T::MaxProxies::get()
-		))]
+		#[pallet::weight(T::WeightInfo::remove_announcement())]
 		pub fn remove_announcement(
 			origin: OriginFor<T>,
 			real: T::AccountId,
@@ -493,10 +489,7 @@ pub mod pallet {
 		/// - A: the number of announcements made.
 		/// - P: the number of proxies the user has.
 		/// # </weight>
-		#[pallet::weight(T::WeightInfo::reject_announcement(
-			T::MaxPending::get(),
-			T::MaxProxies::get()
-		))]
+		#[pallet::weight(T::WeightInfo::reject_announcement())]
 		pub fn reject_announcement(
 			origin: OriginFor<T>,
 			delegate: T::AccountId,
@@ -527,14 +520,7 @@ pub mod pallet {
 		/// - A: the number of announcements made.
 		/// - P: the number of proxies the user has.
 		/// # </weight>
-		#[pallet::weight({
-			let di = call.get_dispatch_info();
-			(T::WeightInfo::proxy_announced(T::MaxPending::get(), T::MaxProxies::get())
-				.saturating_add(di.weight)
-				 // AccountData for inner call origin accountdata.
-				.saturating_add(T::DbWeight::get().reads_writes(1, 1)),
-			di.class)
-		})]
+		#[pallet::weight(T::WeightInfo::proxy_announced())]
 		pub fn proxy_announced(
 			origin: OriginFor<T>,
 			delegate: T::AccountId,
