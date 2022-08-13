@@ -841,8 +841,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
-	// TODO (vim): Complete this when fnft is in the runtime.
-	type FinancialNFTInstanceId = u128;
+	type FinancialNFTInstanceId = FinancialNFTInstanceId;
 	type FinancialNFT = FNFT;
 }
 
@@ -1273,7 +1272,6 @@ mod benches {
 		[pablo, Pablo]
 		[pallet_staking_rewards, StakingRewards]
 		[pallet_account_proxy, Proxy]
-		[pallet_fnft, FNFT]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
 		[ibc_transfer, Transfer]
