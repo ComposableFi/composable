@@ -5,8 +5,8 @@ import {
   BalancesTransferEvent,
   BalancesWithdrawEvent,
 } from "./types/events";
-import { createTransaction, encodeAccount, saveActivity } from "./utils";
-import { getOrCreate } from "./dbHelper";
+import { encodeAccount } from "./utils";
+import { getOrCreate, saveActivity, saveTransaction } from "./dbHelper";
 import { Account, HistoricalBalance, PicassoTransactionType } from "./model";
 
 interface TransferEvent {
@@ -91,15 +91,13 @@ export async function processTransferEvent(ctx: EventHandlerContext) {
 
   const txId = randomUUID();
 
-  // Create transaction
-  const tx = createTransaction(
+  await saveTransaction(
     ctx,
     from,
     PicassoTransactionType.BALANCES_TRANSFER,
     txId
   );
 
-  await ctx.store.save(tx);
   await ctx.store.save(accountFrom);
   await ctx.store.save(accountTo);
 
@@ -109,8 +107,8 @@ export async function processTransferEvent(ctx: EventHandlerContext) {
   const historicalBalanceTo = createHistoricalBalance(ctx, txId, accountTo);
   await ctx.store.save(historicalBalanceTo);
 
-  await saveActivity(ctx, tx.id, accountFrom.id);
-  await saveActivity(ctx, tx.id, accountTo.id);
+  await saveActivity(ctx, txId, from);
+  await saveActivity(ctx, txId, to);
 }
 
 /**
@@ -138,21 +136,18 @@ export async function processWithdrawEvent(ctx: EventHandlerContext) {
 
   const txId = randomUUID();
 
-  // Create transaction
-  const tx = createTransaction(
+  await saveTransaction(
     ctx,
     who,
     PicassoTransactionType.BALANCES_WITHDRAW,
     txId
   );
-
-  await ctx.store.save(tx);
   await ctx.store.save(account);
 
   const historicalBalance = createHistoricalBalance(ctx, txId, account);
   await ctx.store.save(historicalBalance);
 
-  await saveActivity(ctx, tx.id, who);
+  await saveActivity(ctx, txId, who);
 
   console.log("Finish processing `withdraw`");
 }
@@ -182,8 +177,7 @@ export async function processDepositEvent(ctx: EventHandlerContext) {
 
   const txId = randomUUID();
 
-  // Create transaction
-  const tx = createTransaction(
+  await saveTransaction(
     ctx,
     who,
     PicassoTransactionType.BALANCES_DEPOSIT,
@@ -191,12 +185,11 @@ export async function processDepositEvent(ctx: EventHandlerContext) {
   );
 
   await ctx.store.save(account);
-  await ctx.store.save(tx);
 
   const historicalBalance = createHistoricalBalance(ctx, txId, account);
   await ctx.store.save(historicalBalance);
 
-  await saveActivity(ctx, tx.id, who);
+  await saveActivity(ctx, txId, who);
 
   console.log("Finish processing `deposit`");
 }
