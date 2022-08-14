@@ -4,13 +4,12 @@ import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
 } from "./types/events";
+import { BondedFinanceBondOffer, PicassoTransactionType } from "./model";
 import {
-  Account,
-  BondedFinanceBondOffer,
-  PicassoTransactionType,
-} from "./model";
-import { createTransaction, encodeAccount } from "./utils";
-import { getOrCreate } from "./dbHelper";
+  encodeAccount,
+  saveAccountAndTransaction,
+  saveActivity,
+} from "./utils";
 
 interface NewOfferEvent {
   offerId: bigint;
@@ -35,22 +34,6 @@ function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
   const { offerId, beneficiary } = event.asV2401 ?? event.asLatest;
 
   return { offerId, beneficiary };
-}
-
-async function saveAccountAndTransaction(
-  ctx: EventHandlerContext,
-  transactionType: PicassoTransactionType
-) {
-  const signer = ctx.extrinsic?.signer;
-
-  if (signer) {
-    const account = await getOrCreate(ctx.store, Account, signer);
-
-    const tx = createTransaction(ctx, signer, transactionType);
-
-    await ctx.store.save(account);
-    await ctx.store.save(tx);
-  }
 }
 
 export async function processNewOfferEvent(ctx: EventHandlerContext) {

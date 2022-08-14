@@ -121,12 +121,20 @@ enum PicassoTransactionType {
 }
 
 type PicassoTransaction @entity {
-  "ID of the event that was used to derive this transaction"
   id: ID!
+  "ID of the event that was used to derive this transaction"
   eventId: String!
   transactionId: String!
   who: String!
   transactionType: PicassoTransactionType!
   blockNumber: BigInt!
   date: DateTime!
+}
+
+type Activity @entity {
+  id: ID!
+  eventId: String!
+  transactionId: String!
+  accountId: String!
+  timestamp: BigInt!
 }

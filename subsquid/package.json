@@ -22,8 +22,11 @@
     "@subsquid/ss58": "^0.1.0",
     "@subsquid/substrate-processor": "^0.7.1",
     "big.js": "^6.1.1",
+    "class-validator": "^0.13.2",
     "dotenv": "^16.0.0",
+    "graphql": "^15.8.0",
     "pg": "^8.7.3",
+    "type-graphql": "^1.2.0-rc.1",
     "typeorm": "^0.2.41",
     "ts-mockito": "^2.6.1"
   },

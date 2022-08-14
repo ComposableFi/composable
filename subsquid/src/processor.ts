@@ -20,7 +20,7 @@ import {
   processStakeAmountExtendedEvent,
   processStakedEvent,
   processUnstakedEvent,
-} from "./picassoProcessor";
+} from "./stakingRewardsProcessor";
 import {
   processTransferEvent,
   processDepositEvent,

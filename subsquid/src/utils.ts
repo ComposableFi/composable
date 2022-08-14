@@ -7,7 +7,13 @@ import {
 import { instance, mock } from "ts-mockito";
 import { randomUUID } from "crypto";
 import * as ss58 from "@subsquid/ss58";
-import { Account, PicassoTransaction, PicassoTransactionType } from "./model";
+import {
+  Account,
+  Activity,
+  PicassoTransaction,
+  PicassoTransactionType,
+} from "./model";
+import { getOrCreate } from "./dbHelper";
 
 const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
 
@@ -37,7 +43,7 @@ export function encodeAccount(account: Uint8Array): string {
 }
 
 /**
- * Creates PicassoTransaction
+ * Creates PicassoTransaction in database.
  * @param ctx
  * @param who
  * @param transactionType
@@ -65,5 +71,54 @@ export function updateBalance(account: Account, ctx: EventHandlerContext) {
 
   if (tip) {
     account.balance = BigInt(account.balance || 0n) - BigInt(tip);
+  }
+}
+
+/**
+ * Create or update account and store transaction in database.
+ * @param ctx
+ * @param transactionType
+ */
+export async function saveAccountAndTransaction(
+  ctx: EventHandlerContext,
+  transactionType: PicassoTransactionType
+) {
+  const signer = ctx.extrinsic?.signer;
+
+  if (signer) {
+    const account = await getOrCreate(ctx.store, Account, signer);
+
+    const tx = createTransaction(ctx, signer, transactionType);
+
+    await ctx.store.save(account);
+    await ctx.store.save(tx);
+
+    await saveActivity(ctx, signer);
+  }
+}
+
+/**
+ * Store Activity on the database.
+ * @param ctx
+ * @param transactionId
+ * @param accountId
+ */
+export async function saveActivity(
+  ctx: EventHandlerContext,
+  transactionId: string,
+  accountId?: string
+) {
+  const accId = accountId || ctx.extrinsic?.signer;
+
+  if (accId) {
+    const activity = new Activity({
+      id: randomUUID(),
+      eventId: ctx.event.id,
+      transactionId,
+      accountId: accId,
+      timestamp: BigInt(ctx.block.timestamp),
+    });
+
+    await ctx.store.save(activity);
   }
 }
