@@ -8,12 +8,12 @@ export class PicassoTransaction {
     Object.assign(this, props)
   }
 
-  /**
-   * ID of the event that was used to derive this transaction
-   */
   @PrimaryColumn_()
   id!: string
 
+  /**
+   * ID of the event that was used to derive this transaction
+   */
   @Column_("text", {nullable: false})
   eventId!: string
 

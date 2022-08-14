@@ -5,7 +5,7 @@ import {
   BalancesTransferEvent,
   BalancesWithdrawEvent,
 } from "./types/events";
-import { createTransaction, encodeAccount } from "./utils";
+import { createTransaction, encodeAccount, saveActivity } from "./utils";
 import { getOrCreate } from "./dbHelper";
 import { Account, HistoricalBalance, PicassoTransactionType } from "./model";
 
@@ -108,6 +108,9 @@ export async function processTransferEvent(ctx: EventHandlerContext) {
 
   const historicalBalanceTo = createHistoricalBalance(ctx, txId, accountTo);
   await ctx.store.save(historicalBalanceTo);
+
+  await saveActivity(ctx, tx.id, accountFrom.id);
+  await saveActivity(ctx, tx.id, accountTo.id);
 }
 
 /**
@@ -148,6 +151,8 @@ export async function processWithdrawEvent(ctx: EventHandlerContext) {
 
   const historicalBalance = createHistoricalBalance(ctx, txId, account);
   await ctx.store.save(historicalBalance);
+
+  await saveActivity(ctx, tx.id, who);
 
   console.log("Finish processing `withdraw`");
 }
@@ -190,6 +195,8 @@ export async function processDepositEvent(ctx: EventHandlerContext) {
 
   const historicalBalance = createHistoricalBalance(ctx, txId, account);
   await ctx.store.save(historicalBalance);
+
+  await saveActivity(ctx, tx.id, who);
 
   console.log("Finish processing `deposit`");
 }
