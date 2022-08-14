@@ -5,11 +5,8 @@ import {
   BondedFinanceNewOfferEvent,
 } from "./types/events";
 import { BondedFinanceBondOffer, PicassoTransactionType } from "./model";
-import {
-  encodeAccount,
-  saveAccountAndTransaction,
-  saveActivity,
-} from "./utils";
+import { trySaveAccount, saveActivity, saveTransaction } from "./dbHelper";
+import { encodeAccount } from "./utils";
 
 interface NewOfferEvent {
   offerId: bigint;
@@ -50,10 +47,16 @@ export async function processNewOfferEvent(ctx: EventHandlerContext) {
     })
   );
 
-  await saveAccountAndTransaction(
-    ctx,
-    PicassoTransactionType.BONDED_FINANCE_NEW_OFFER
-  );
+  const accountId = await trySaveAccount(ctx);
+
+  if (accountId) {
+    const txId = await saveTransaction(
+      ctx,
+      accountId,
+      PicassoTransactionType.BONDED_FINANCE_NEW_OFFER
+    );
+    await saveActivity(ctx, txId, accountId);
+  }
 }
 
 /**
@@ -78,16 +81,28 @@ export async function processNewBondEvent(ctx: EventHandlerContext) {
   stored.totalPurchased += nbOfBonds;
   await ctx.store.save(stored);
 
-  await saveAccountAndTransaction(
-    ctx,
-    PicassoTransactionType.BONDED_FINANCE_NEW_BOND
-  );
+  const accountId = await trySaveAccount(ctx);
+
+  if (accountId) {
+    const txId = await saveTransaction(
+      ctx,
+      accountId,
+      PicassoTransactionType.BONDED_FINANCE_NEW_BOND
+    );
+    await saveActivity(ctx, txId, accountId);
+  }
 }
 
 // TODO: remove offer from database?
 export async function processOfferCancelledEvent(ctx: EventHandlerContext) {
-  await saveAccountAndTransaction(
-    ctx,
-    PicassoTransactionType.BONDED_FINANCE_OFFER_CANCELLED
-  );
+  const accountId = await trySaveAccount(ctx);
+
+  if (accountId) {
+    const txId = await saveTransaction(
+      ctx,
+      accountId,
+      PicassoTransactionType.BONDED_FINANCE_OFFER_CANCELLED
+    );
+    await saveActivity(ctx, txId, accountId);
+  }
 }

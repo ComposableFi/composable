@@ -42,83 +42,10 @@ export function encodeAccount(account: Uint8Array): string {
   return ss58.codec("picasso").encode(account);
 }
 
-/**
- * Creates PicassoTransaction in database.
- * @param ctx
- * @param who
- * @param transactionType
- * @param id
- */
-export function createTransaction(
-  ctx: EventHandlerContext,
-  who: string,
-  transactionType: PicassoTransactionType,
-  id?: string
-): PicassoTransaction {
-  return new PicassoTransaction({
-    id: id || randomUUID(),
-    eventId: ctx.event.id,
-    transactionId: ctx.event.id, // TODO: change
-    who,
-    transactionType,
-    blockNumber: BigInt(ctx.block.height),
-    date: new Date(ctx.block.timestamp),
-  });
-}
-
 export function updateBalance(account: Account, ctx: EventHandlerContext) {
   const tip = ctx.extrinsic?.tip;
 
   if (tip) {
     account.balance = BigInt(account.balance || 0n) - BigInt(tip);
-  }
-}
-
-/**
- * Create or update account and store transaction in database.
- * @param ctx
- * @param transactionType
- */
-export async function saveAccountAndTransaction(
-  ctx: EventHandlerContext,
-  transactionType: PicassoTransactionType
-) {
-  const signer = ctx.extrinsic?.signer;
-
-  if (signer) {
-    const account = await getOrCreate(ctx.store, Account, signer);
-
-    const tx = createTransaction(ctx, signer, transactionType);
-
-    await ctx.store.save(account);
-    await ctx.store.save(tx);
-
-    await saveActivity(ctx, signer);
-  }
-}
-
-/**
- * Store Activity on the database.
- * @param ctx
- * @param transactionId
- * @param accountId
- */
-export async function saveActivity(
-  ctx: EventHandlerContext,
-  transactionId: string,
-  accountId?: string
-) {
-  const accId = accountId || ctx.extrinsic?.signer;
-
-  if (accId) {
-    const activity = new Activity({
-      id: randomUUID(),
-      eventId: ctx.event.id,
-      transactionId,
-      accountId: accId,
-      timestamp: BigInt(ctx.block.timestamp),
-    });
-
-    await ctx.store.save(activity);
   }
 }

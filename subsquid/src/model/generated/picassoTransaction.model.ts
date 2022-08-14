@@ -17,11 +17,11 @@ export class PicassoTransaction {
   @Column_("text", {nullable: false})
   eventId!: string
 
+  /**
+   * ID of account that executed transaction
+   */
   @Column_("text", {nullable: false})
-  transactionId!: string
-
-  @Column_("text", {nullable: false})
-  who!: string
+  accountId!: string
 
   @Column_("varchar", {length: 37, nullable: false})
   transactionType!: PicassoTransactionType

@@ -6,9 +6,14 @@ import {
   StakingRewardsStakedEvent,
   StakingRewardsUnstakedEvent,
 } from "./types/events";
-import { getOrCreate } from "./dbHelper";
+import {
+  getOrCreate,
+  saveActivity,
+  saveTransaction,
+  trySaveAccount,
+} from "./dbHelper";
 import { Account, PicassoTransactionType } from "./model";
-import { createTransaction, encodeAccount, updateBalance } from "./utils";
+import { encodeAccount, updateBalance } from "./utils";
 
 interface RewardPoolCreatedEvent {
   poolId: number;
@@ -80,15 +85,18 @@ export async function processRewardPoolCreatedEvent(ctx: EventHandlerContext) {
   const account = await getOrCreate(ctx.store, Account, owner);
   updateBalance(account, ctx);
 
-  // Create transaction
-  const tx = createTransaction(
-    ctx,
-    owner,
-    PicassoTransactionType.STAKING_REWARDS_REWARD_POOL_CREATED
-  );
+  const accountId = await trySaveAccount(ctx, owner);
 
-  await ctx.store.save(account);
-  await ctx.store.save(tx);
+  if (accountId) {
+    const txId = await saveTransaction(
+      ctx,
+      accountId,
+      PicassoTransactionType.STAKING_REWARDS_REWARD_POOL_CREATED
+    );
+
+    await saveActivity(ctx, txId, accountId);
+  }
+
   console.log("Finish processing `reward pool created`");
 }
 
@@ -101,17 +109,20 @@ export async function processStakedEvent(ctx: EventHandlerContext) {
   const account = await getOrCreate(ctx.store, Account, owner);
   updateBalance(account, ctx);
 
-  // Create transaction
-  const tx = createTransaction(
-    ctx,
-    owner,
-    PicassoTransactionType.STAKING_REWARDS_STAKED
-  );
+  const accountId = await trySaveAccount(ctx, owner);
+
+  if (accountId) {
+    const txId = await saveTransaction(
+      ctx,
+      owner,
+      PicassoTransactionType.STAKING_REWARDS_STAKED
+    );
+
+    await saveActivity(ctx, txId, accountId);
+  }
 
   // TODO: when staking is balanced changed or just locked?
 
-  await ctx.store.save(account);
-  await ctx.store.save(tx);
   console.log("Finish processing `staked`");
 }
 
@@ -119,24 +130,19 @@ export async function processStakeAmountExtendedEvent(
   ctx: EventHandlerContext
 ) {
   console.log("Start processing `StakeAmountExtended`");
-  const evt = new StakingRewardsStakeAmountExtendedEvent(ctx);
-  const event = getStakeAmountExtendedEvent(evt);
-  // const owner = encodeAccount(event.); // TODO: owner?
 
-  // const account = await getOrCreate(ctx.store, Account, owner);
-  // updateBalance(account, ctx);
+  const accountId = await trySaveAccount(ctx);
 
-  // Create transaction
-  // const tx = createTransaction(
-  //   ctx,
-  //   account,
-  //   PicassoTransactionType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED
-  // );
-  //
-  // await ctx.store.save(account);
-  // await ctx.store.save(tx);
+  if (accountId) {
+    const txId = await saveTransaction(
+      ctx,
+      accountId,
+      PicassoTransactionType.STAKING_REWARDS_UNSTAKE
+    );
 
-  // TODO?
+    await saveActivity(ctx, txId, accountId);
+  }
+
   console.log("Finish processing `StakeAmountExtended`");
 }
 
@@ -149,25 +155,37 @@ export async function processUnstakedEvent(ctx: EventHandlerContext) {
   const account = await getOrCreate(ctx.store, Account, owner);
   updateBalance(account, ctx);
 
-  // Create transaction
-  const tx = createTransaction(
-    ctx,
-    owner,
-    PicassoTransactionType.STAKING_REWARDS_UNSTAKE
-  );
+  const accountId = await trySaveAccount(ctx, owner);
+
+  if (accountId) {
+    const txId = await saveTransaction(
+      ctx,
+      owner,
+      PicassoTransactionType.STAKING_REWARDS_UNSTAKE
+    );
+
+    await saveActivity(ctx, txId, accountId);
+  }
 
   // TODO: when staking is balanced changed or just unlocked?
-
-  await ctx.store.save(account);
-  await ctx.store.save(tx);
 
   console.log("Finish processing `Unstaked`");
 }
 
 export async function processSplitPositionEvent(ctx: EventHandlerContext) {
   console.log("Start processing `SplitPosition`");
-  const evt = new StakingRewardsSplitPositionEvent(ctx);
-  const event = getSplitPositionEvent(evt);
-  // TODO? need account
+
+  const accountId = await trySaveAccount(ctx);
+
+  if (accountId) {
+    const txId = await saveTransaction(
+      ctx,
+      accountId,
+      PicassoTransactionType.STAKING_REWARDS_UNSTAKE
+    );
+
+    await saveActivity(ctx, txId, accountId);
+  }
+
   console.log("Finish processing `SplitPosition`");
 }

@@ -1,5 +1,12 @@
-import { Store } from "@subsquid/substrate-processor";
-import { PabloPool } from "./model";
+import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
+import {
+  Account,
+  Activity,
+  PabloPool,
+  PicassoTransaction,
+  PicassoTransactionType,
+} from "./model";
+import { randomUUID } from "crypto";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -42,3 +49,83 @@ export async function getOrCreate<T extends { id: string }>(
 export type EntityConstructor<T> = {
   new (...args: any[]): T;
 };
+
+/**
+ * Create or update account and store transaction in database.
+ * When `accountId` is not defined, signer of extrinsic will be used.
+ * When the extrinsic is not signed, it will be a noop.
+ * Returns the `accountId` stored, or undefined if nothing is stored.
+ * @param ctx
+ * @param accountId
+ *
+ * @returns string | undefined
+ */
+export async function trySaveAccount(
+  ctx: EventHandlerContext,
+  accountId?: string
+): Promise<string | undefined> {
+  const accId = accountId || ctx.extrinsic?.signer;
+
+  if (accId) {
+    const account = await getOrCreate(ctx.store, Account, accId);
+    await ctx.store.save(account);
+  }
+
+  return accId;
+}
+
+/**
+ * Create and store PicassoTransaction on database.
+ * If `id` is not defined, a random id will be generated.
+ *
+ * Returns the stored transaction id.
+ * @param ctx
+ * @param accountId
+ * @param transactionType
+ * @param id
+ */
+export async function saveTransaction(
+  ctx: EventHandlerContext,
+  accountId: string,
+  transactionType: PicassoTransactionType,
+  id?: string
+): Promise<string> {
+  // Create transaction
+  const tx = new PicassoTransaction({
+    id: id || randomUUID(),
+    eventId: ctx.event.id,
+    accountId,
+    transactionType,
+    blockNumber: BigInt(ctx.block.height),
+    date: new Date(ctx.block.timestamp),
+  });
+
+  // Store transaction
+  await ctx.store.save(tx);
+
+  return tx.id;
+}
+
+/**
+ * Store Activity on the database.
+ * @param ctx
+ * @param transactionId
+ * @param accountId
+ */
+export async function saveActivity(
+  ctx: EventHandlerContext,
+  transactionId: string,
+  accountId: string
+): Promise<string> {
+  const activity = new Activity({
+    id: randomUUID(),
+    eventId: ctx.event.id,
+    transactionId,
+    accountId,
+    timestamp: BigInt(ctx.block.timestamp),
+  });
+
+  await ctx.store.save(activity);
+
+  return activity.id;
+}
