@@ -1706,10 +1706,16 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "composable-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "composable-runtime",
 ]
 
 [[package]]
@@ -2818,10 +2824,16 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "dali-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "dali-runtime",
 ]
 
 [[package]]
@@ -9389,10 +9401,16 @@ dependencies = [
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-transaction-pool",
  "sp-version",
- "substrate-wasm-builder",
  "xcm",
  "xcm-builder",
  "xcm-executor",
+]
+
+[[package]]
+name = "picasso-runtime-wasm"
+version = "0.1.0"
+dependencies = [
+ "picasso-runtime",
 ]
 
 [[package]]
@@ -16596,6 +16614,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "962e5b0401bbb6c887f54e69b8c496ea36f704df65db73e81fd5ff8dc3e63a9f"
 dependencies = [
  "parity-wasm 0.42.2",
+]
+
+[[package]]
+name = "wasm-optimizer"
+version = "0.1.0"
+dependencies = [
+ "clap 3.2.5",
+ "sp-maybe-compressed-blob",
+ "wasm-gc-api",
 ]
 
 [[package]]
