@@ -13,7 +13,7 @@ export async function bootstrapStakingRewardPools(api: ApiPromise, walletSudo: K
     for (const pool of config.stakingRewardPools) {
         const currentBlock = await api.query.system.number();
         await mintAssetsToWallets(api, [walletSudo], walletSudo, [pool.rewardConfigs.assetId], new BigNumber(pool.rewardConfigs.maxRewards));
-        const stakingRewardPoolConfig = toStakingRewardPoolConfig(api, currentBlock.toString(), pool);
+        const stakingRewardPoolConfig = toStakingRewardPoolConfig(api, currentBlock.toString(), walletSudo, pool);
         await createRewardPool(api, walletSudo, stakingRewardPoolConfig);
     }
 }

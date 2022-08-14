@@ -19,12 +19,7 @@ export async function createRewardPool(
     wallet,
     api.events.sudo.Sudid.is,
     api.tx.sudo.sudo(
-      api.tx.stakingRewards.createRewardPool({
-        RewardRateBasedIncentive: {
-          owner: wallet.publicKey,
-          ...rewardPoolConfig
-        }
-      })
+      api.tx.stakingRewards.createRewardPool(api.createType("ComposableTraitsStakingRewardPoolConfiguration", rewardPoolConfig))
     )
   );
 }
