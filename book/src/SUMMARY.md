@@ -57,6 +57,13 @@
     - [Contracts - Technical Details](./products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details.md)
 
 # 💻 Developer Guides
+- [Codespaces](./codespaces.md)
+    - [Getting Started](./codespaces/getting-started.md)
+    - [Using Codespaces](./codespaces/using-codespaces.md)
+        - [Book](./codespaces/book.md)
+        - [Substrate](./codespaces/substrate.md)
+        - [Frontend](./codespaces/frontend.md)
+        - [Runtime Tests](./codespaces/runtime-tests.md)
 - [Composable SDK](./developer-guides/composable-sdk.md)
 - [Oracle Set-Up Guide](./developer-guides/oracle-set-up-guide/oracle-set-up-guide.md)
 - [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)
@@ -106,12 +113,3 @@
 - [FAQs](./faqs/faqs.md)
 - [Risks & Disclosures](./faqs/risks-disclosures.md)
 
-# 💻 Codespaces
-
-- [Codespaces](./codespaces.md)
-- [Getting Started](./codespaces/getting-started.md)
-- [Using Codespaces](./codespaces/using-codespaces.md)
-  - [Book](./codespaces/book.md)
-  - [Substrate](./codespaces/substrate.md)
-  - [Frontend](./codespaces/frontend.md)
-  - [Runtime Tests](./codespaces/runtime-tests.md)
