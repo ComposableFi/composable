@@ -107,7 +107,7 @@ fn should_handle_both_longs() {
 				0
 			));
 			// Simulate the price move caused by Alice buying
-			VammPallet::set_price_of(&market.vamm_id, Some((103, 100).into()));
+			VammPallet::set_price_of(&market.vamm_id, Some((10302, 10000).into()));
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(BOB),
 				market_id,
@@ -125,7 +125,6 @@ fn should_handle_both_longs() {
 			assert_ok!(TestPallet::settle_position(Origin::signed(ALICE), market_id));
 			assert_ok!(TestPallet::settle_position(Origin::signed(BOB), market_id));
 			let (alice_col, bob_col) = (get_collateral(ALICE), get_collateral(BOB));
-			dbg!((alice_col, bob_col));
 			assert!(alice_col > as_balance(100));
 			assert!(bob_col < as_balance(100));
 

@@ -1502,8 +1502,11 @@ pub mod pallet {
 				let open_price =
 					position.quote_asset_notional_amount.try_div(&position.base_asset_amount)?;
 				// Ask settlement price from the vAMM
+				// WARN: it is up to the vAMM to ensure that the settlement price is such that
+				// traders can pay each other (i.e., no funds have to come from the Insurance Fund)
 				let settlement_price: T::Decimal =
 					T::Vamm::get_settlement_price(market.vamm_id)?.into_signed()?;
+
 				// If settlement price is 0, everyone keeps their collateral
 				if !settlement_price.is_zero() {
 					let settled_value = position
