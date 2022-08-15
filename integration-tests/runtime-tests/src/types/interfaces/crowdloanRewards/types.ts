@@ -87,7 +87,6 @@ export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
 export interface ComposableTraitsGovernanceSignedRawOrigin extends Enum {
   readonly isRoot: boolean;
   readonly isSigned: boolean;
-  readonly asSigned: AccountId32;
   readonly isIsSigned: boolean;
   readonly asIsSigned: bool;
   readonly isAsSigned: boolean;
@@ -251,23 +250,8 @@ export interface PalletCrowdloanRewardsReward extends Null {}
 /** @name PalletDemocracyConviction */
 export interface PalletDemocracyConviction extends Null {}
 
-/** @name PalletDemocracyPreimageStatus */
-export interface PalletDemocracyPreimageStatus extends Null {}
-
-/** @name PalletDemocracyReferendumInfo */
-export interface PalletDemocracyReferendumInfo extends Null {}
-
-/** @name PalletDemocracyReleases */
-export interface PalletDemocracyReleases extends Null {}
-
 /** @name PalletDemocracyVoteAccountVote */
 export interface PalletDemocracyVoteAccountVote extends Null {}
-
-/** @name PalletDemocracyVoteThreshold */
-export interface PalletDemocracyVoteThreshold extends Null {}
-
-/** @name PalletDemocracyVoteVoting */
-export interface PalletDemocracyVoteVoting extends Null {}
 
 /** @name PalletDutchAuctionSellOrder */
 export interface PalletDutchAuctionSellOrder extends Null {}
@@ -354,9 +338,6 @@ export interface PalletOracleWithdraw extends Struct {
   readonly stake: u128;
   readonly unlockBlock: u32;
 }
-
-/** @name PalletPreimageRequestStatus */
-export interface PalletPreimageRequestStatus extends Null {}
 
 /** @name PalletSchedulerReleases */
 export interface PalletSchedulerReleases extends Null {}

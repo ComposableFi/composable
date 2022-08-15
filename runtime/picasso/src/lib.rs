@@ -15,9 +15,11 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-// Make the WASM binary available.
-#[cfg(all(feature = "std", feature = "wasm-builder"))]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+// Make the WASM binary available
+#[cfg(all(feature = "std", feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("PICASSO_RUNTIME")));
+#[cfg(not(feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 pub mod governance;
 mod weights;
@@ -65,6 +67,8 @@ pub use frame_support::{
 	},
 	PalletId, StorageValue,
 };
+
+pub use governance::TreasuryAccount;
 
 use codec::{Codec, Encode, EncodeLike};
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
@@ -654,6 +658,7 @@ impl vesting::Config for Runtime {
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type VestingScheduleId = u128;
 }
 
 parameter_types! {

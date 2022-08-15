@@ -17,6 +17,7 @@ color-eyre = { version = "0.5.11", default-features = false }
 composable-node = { path = "node", features = ["composable", "dali"] }
 
 [features]
+builtin-wasm = ["composable-node/builtin-wasm"]
 composable = ["composable-node/composable"]
 dali = ["composable-node/dali"]
 local-integration-tests = []
@@ -37,8 +38,11 @@ members = [
   "runtime/common",
   "runtime/primitives",
   "runtime/picasso",
+  "runtime/picasso-wasm",
   "runtime/dali",
+  "runtime/dali-wasm",
   "runtime/composable",
+  "runtime/composable-wasm",
   "utils/common",
   "utils/price-feed",
   "utils/collator-sidecar",
@@ -46,6 +50,7 @@ members = [
   "simnode/simnode-tests",
   "simnode/common",
   "utils/xcmp",
+  "utils/wasm-optimizer",
 ]
 
 [profile.release]

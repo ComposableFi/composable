@@ -18,8 +18,10 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available.
-#[cfg(all(feature = "std", feature = "wasm-builder"))]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+#[cfg(all(feature = "std", feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("DALI_RUNTIME")));
+#[cfg(not(feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
 mod governance;
 mod weights;
@@ -796,6 +798,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
+	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -829,6 +832,7 @@ impl vesting::Config for Runtime {
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type VestingScheduleId = u128;
 }
 
 parameter_types! {
