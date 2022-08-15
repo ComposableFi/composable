@@ -88,8 +88,7 @@ use sp_runtime::{
 	traits::{Dispatchable, Hash, Saturating, TrailingZeroInput, Zero},
 	DispatchResult,
 };
-use sp_std::{prelude::*, vec};
-use sp_std::cmp::Ordering;
+use sp_std::{cmp::Ordering, prelude::*, vec};
 pub use weights::WeightInfo;
 
 use composable_traits::account_proxy::{AccountProxy, ProxyDefinition};
