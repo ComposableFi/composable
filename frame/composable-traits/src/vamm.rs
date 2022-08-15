@@ -78,7 +78,7 @@ pub trait Vamm {
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Decode, Default, Encode, MaxEncodedLen, PartialEq, TypeInfo)]
 pub struct VammConfig<Balance, Moment> {
 	/// The total amount of base assets to be set in vamm's creation.
 	pub base_asset_reserves: Balance,

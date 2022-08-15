@@ -7438,6 +7438,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-governance-registry",
  "pallet-timestamp",
+ "pallet-vamm",
  "parity-scale-codec",
  "proptest",
  "scale-info",

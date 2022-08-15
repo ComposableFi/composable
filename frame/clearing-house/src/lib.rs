@@ -130,6 +130,9 @@ pub use pallet::*;
 use composable_traits::clearing_house::Instruments;
 
 #[cfg(test)]
+mod integrations;
+
+#[cfg(test)]
 mod mock;
 
 #[cfg(test)]
