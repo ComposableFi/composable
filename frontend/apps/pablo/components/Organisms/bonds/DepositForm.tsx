@@ -76,7 +76,9 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   const [valid, setValid] = useState<boolean>(false);
 
   const { rewardAsset } = bond;
-  const soldout = bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds.eq(0) : true;
+  const soldout = bond.selectedBondOffer
+    ? bond.selectedBondOffer.nbOfBonds.eq(0)
+    : true;
   const isWrongAmount = bond.roi.lt(0);
 
   const handleDeposit = () => {
@@ -89,7 +91,10 @@ export const DepositForm: React.FC<DepositFormProps> = ({
     handleDeposit();
   };
 
-  const principalBalance = useAssetBalance(DEFAULT_NETWORK_ID, bond.selectedBondOffer ? bond.selectedBondOffer.asset : "0")
+  const principalBalance = useAssetBalance(
+    DEFAULT_NETWORK_ID,
+    bond.selectedBondOffer ? bond.selectedBondOffer.asset : "0"
+  );
   const buttonText = soldout ? "Sold out" : "Deposit";
   const disabled = !valid || soldout;
 
@@ -97,20 +102,25 @@ export const DepositForm: React.FC<DepositFormProps> = ({
 
   const youWillGet = useMemo(() => {
     if (bond.selectedBondOffer) {
-      return bond.rewardAssetPerBond.times(amount.dp(0))
+      return bond.rewardAssetPerBond.times(amount.dp(0));
     }
     return new BigNumber(0);
   }, [amount, bond]);
 
   const maxYouCanBuy = useMemo(() => {
     if (bond.selectedBondOffer) {
-      let amountOfBondsBuyable = principalBalance.div(bond.principalAssetPerBond).decimalPlaces(0, BigNumber.ROUND_FLOOR)
+      let amountOfBondsBuyable = principalBalance
+        .div(bond.principalAssetPerBond)
+        .decimalPlaces(0, BigNumber.ROUND_FLOOR);
       return amountOfBondsBuyable;
     }
     return new BigNumber(0);
   }, [principalBalance, bond]);
 
-  const purchaseBond = usePurchaseBond(bond.selectedBondOffer ? bond.selectedBondOffer.offerId : new BigNumber(-1), amount);
+  const purchaseBond = usePurchaseBond(
+    bond.selectedBondOffer ? bond.selectedBondOffer.offerId : new BigNumber(-1),
+    amount
+  );
 
   const [isTxProcessing, setIsTxProcessing] = useState(false);
 
@@ -120,12 +130,12 @@ export const DepositForm: React.FC<DepositFormProps> = ({
     try {
       await purchaseBond();
       bond.updateBondInfo();
-    } catch(e: any) {
-      console.error(e)
+    } catch (e: any) {
+      console.error(e);
     } finally {
       setIsTxProcessing(false);
     }
-  }
+  };
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -138,7 +148,12 @@ export const DepositForm: React.FC<DepositFormProps> = ({
           setValid={setValid}
           buttonLabel="Max"
           ButtonProps={{
-            onClick: () => setAmount(new BigNumber(bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : 0)),
+            onClick: () =>
+              setAmount(
+                new BigNumber(
+                  bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : 0
+                )
+              ),
             sx: {
               padding: theme.spacing(1),
             },
@@ -147,7 +162,11 @@ export const DepositForm: React.FC<DepositFormProps> = ({
             label: "Amount",
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : new BigNumber(0)} ${principalSymbol} Bonds`,
+              balance: `${
+                bond.selectedBondOffer
+                  ? bond.selectedBondOffer.nbOfBonds
+                  : new BigNumber(0)
+              } ${principalSymbol} Bonds`,
             },
           }}
           disabled={soldout}
@@ -165,25 +184,28 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         </Button>
       </Box>
       <Box mt={6} sx={{ opacity: soldout ? "50%" : "100%" }}>
-        <Label {...defaultLabelProps("Your balance", `${principalBalance.toFixed(2)} ${principalSymbol}`)} />
+        <Label
+          {...defaultLabelProps(
+            "Your balance",
+            `${principalBalance.toFixed(2)} ${principalSymbol}`
+          )}
+        />
         <Label
           {...defaultLabelProps(
             "You will get",
-            `${youWillGet.toFixed(2)} ${
-              rewardAsset?.symbol
-            }`
+            `${youWillGet.toFixed(2)} ${rewardAsset?.symbol}`
           )}
+          mt={2}
+        />
+        <Label
+          {...defaultLabelProps("Max you can buy", `${maxYouCanBuy}`)}
           mt={2}
         />
         <Label
           {...defaultLabelProps(
-            "Max you can buy",
-            `${maxYouCanBuy}`
+            "Vesting period",
+            bond.vestingPeriod ? bond.vestingPeriod : "0"
           )}
-          mt={2}
-        />
-        <Label
-          {...defaultLabelProps("Vesting period", bond.vestingPeriod ? bond.vestingPeriod : "0")}
           mt={2}
         />
         <Label
@@ -194,7 +216,13 @@ export const DepositForm: React.FC<DepositFormProps> = ({
       <PreviewPurchaseModal
         onPurchaseBond={onPurchaseBond}
         bond={bond}
-        rewardableTokens={bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds.toString() : "0"}
+        rewardableTokens={
+          bond.selectedBondOffer
+            ? bond.selectedBondOffer.reward.amount.div(
+                bond.selectedBondOffer.nbOfBonds
+              )
+            : new BigNumber(0)
+        }
         amount={amount}
         setAmount={setAmount}
         open={isOpenPreviewPurchaseModal}

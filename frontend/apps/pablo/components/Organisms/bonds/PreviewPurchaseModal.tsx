@@ -24,7 +24,7 @@ const defaultLabelProps = (label: string, balance: string) =>
 export type PreviewPurchaseModalProps = {
   bond: SelectedBondOffer,
   amount: BigNumber;
-  rewardableTokens: string;
+  rewardableTokens: BigNumber;
   onPurchaseBond: () => Promise<any>;
   setAmount: (v: BigNumber) => any;
 } & ModalProps;
@@ -79,13 +79,13 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
         <Box mt={8}>
           <Label
             {...defaultLabelProps(
-              "Bonding",
-              `${amount} ${[principalSymbol]}`
+              "Amount of Bonds",
+              `${amount}`
             )}
           />
           <Label
             mt={2}
-            {...defaultLabelProps("You will get", `${rewardableTokens} ${bond.rewardAsset?.symbol}`)}
+            {...defaultLabelProps("You will get", `${rewardableTokens.times(amount)} ${bond.rewardAsset?.symbol}`)}
           />
           <Label mt={2} {...defaultLabelProps("Bond Price", `$${bondMarketPrice.toFixed(2)}`)} />
           <Label
