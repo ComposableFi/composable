@@ -25,5 +25,4 @@ Said functions can be used to make transactions across multiple pools to achieve
 Functions to `add_liquidity` and `remove_liquidity` are constrained to only be called on single pool routes.
 
 ## Use Cases
-
-Part of DEX-Router's functionality was implemented in pallet pablo.
+Dex Router is built onto pallet pablo to differentiate pablo pools which should be treated as verified.
