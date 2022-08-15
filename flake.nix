@@ -104,13 +104,7 @@
           # Nightly rust used for wasm runtime compilation
           rust-nightly = rust-bin.selectLatestNightlyWith (toolchain:
             toolchain.default.override {
-              extensions = [ "rust-src" ];
-              targets = [ "wasm32-unknown-unknown" ];
-            });
-
-          rust-nightly-dev = rust-bin.selectLatestNightlyWith (toolchain:
-            toolchain.default.override {
-              extensions = [ "rust-src" "clippy" "rustfmt" ];
+              extensions = [ "rust-src" "clippy" "rustfmt" "rust-analyzer"];
               targets = [ "wasm32-unknown-unknown" ];
             });
 
@@ -404,9 +398,8 @@
               contents = [
                 # ISSUE: for some reason stable overrides nighly, need to set different order somehow
                 #rust-stable
-                rust-nightly-dev
+                rust-nightly
                 cachix
-                rust-analyzer
                 rustup # just if it wants to make ad hoc updates
                 nix
                 helix
@@ -463,11 +456,21 @@
           };
 
           devShells = rec {
-            developers = mkShell {
+            developers = mkShell (common-attrs // {
               inputsFrom = builtins.attrValues self.checks;
               buildInputs = with packages; [
                 # with nix developers are empowered for local dry run of most ci
-                rust-stable
+                llvmPackages_latest.llvm
+                llvmPackages_latest.bintools
+                zlib.out
+                xorriso
+                grub2
+                qemu
+                llvmPackages_latest.lld
+                openssl.dev
+                pkg-config
+                openssl
+                rust-nightly
                 wasm-optimizer
                 rust-analyzer
                 mdbook
@@ -475,13 +478,60 @@
                 taplo
                 python3
                 nodejs
-                nixpkgs-fmt
+                nixpkgs-fmt 
                 jq
                 google-cloud-sdk # devs can list container images or binary releases
                 nix-tree
               ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
+                  
+              # RUSTC_VERSION = "stable";
+              # https://github.com/rust-lang/rust-bindgen#environment-variables
+#              LIBCLANG_PATH= pkgs.lib.makeLibraryPath [ pkgs.llvmPackages_latest.libclang.lib ];
+#              HISTFILE=toString ./.history;
+#                  
+#              SKIP_WASM_BUILD=true;
+              # shellHook = ''
+              #   export PATH=$PATH:~/.cargo/bin
+              #   export PATH=$PATH:~/.rustup/toolchains/$RUSTC_VERSION-aarch64-unknown-linux-gnu/bin/
+              #   rustup target add wasm32-unknown-unknown --toolchain nightly-2022-02-01
+              #   '';
+
+
+              # Disabled because no aarch64 support:
+              #
+              # Add libvmi precompiled library to rustc search path 
+              # RUSTFLAGS = (builtins.map (a: ''-L ${a}/lib'') [ 
+              #   pkgs.libvmi
+              # ]);
+
+
+              # Add libvmi, glibc, clang, glib headers to bindgen search path
+      #        BINDGEN_EXTRA_CLANG_ARGS = 
+      #        # Includes with normal include path
+      #        (builtins.map (a: ''-I"${a}/include"'') [
+      #          # Disabled because no aarch64 support:
+      #          # pkgs.libvmi
+      #          pkgs.glibc.dev 
+      #        ])
+      #        # Includes with special directory paths
+      #        ++ [
+      #          ''-I"${pkgs.llvmPackages_latest.libclang.lib}/lib/clang/${pkgs.llvmPackages_latest.libclang.version}/include"''
+      #          ''-I"${pkgs.glib.dev}/include/glib-2.0"''
+      #          ''-I${pkgs.glib.out}/lib/glib-2.0/include/''
+      #        ];
+      #      
+
+     ##         PROTOC = "${pkgs.protobuf}/bin/protoc";
+     ##         ROCKSDB_LIB_DIR = "${pkgs.rocksdb}/lib";
+
+      #        # Disabled because this would need to depend on the nightly version
+      #        # Certain Rust tools won't work without this
+      #        # This can also be fixed by using oxalica/rust-overlay and specifying the rust-src extension
+      #        # See https://discourse.nixos.org/t/rust-src-not-found-and-other-misadventures-of-developing-rust-on-nixos/11570/3?u=samuela. for more details.
+              # RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";                  
+                  
+             #kkkkkkkkkkk NIX_PATH = "nixpkgs=${pkgs.path}";
+            });
 
             technical-writers = mkShell {
               buildInputs = with packages; [
