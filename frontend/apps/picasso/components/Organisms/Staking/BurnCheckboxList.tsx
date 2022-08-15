@@ -11,6 +11,7 @@ import { formatNumberWithSymbol } from "shared";
 import { WarningAmberRounded } from "@mui/icons-material";
 import { useStore } from "@/stores/root";
 import { FC } from "react";
+import { OpenPosition } from "@/stores/defi/staking";
 
 export const BurnCheckboxList: FC<{
   openBurnModal: () => void;
@@ -27,7 +28,7 @@ export const BurnCheckboxList: FC<{
   const theme = useTheme();
   return (
     <Stack gap={4} marginTop={9}>
-      {openPositions.map(item => (
+      {openPositions.map((item: OpenPosition) => (
         <>
           <Button
             variant="outlined"

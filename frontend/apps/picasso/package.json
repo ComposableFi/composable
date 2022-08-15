@@ -15,7 +15,7 @@
     "lint:report": "eslint --output-file eslint_report.json --format json ."
   },
   "dependencies": {
-    "@apollo/client": "^3.6.9",
+    "@apollo/client ": "^3.6.9",
     "@emotion/cache": "^11.7.1",
     "@emotion/react": "^11.8.2",
     "@emotion/server": "^11.4.0",

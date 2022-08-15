@@ -62,7 +62,7 @@ export const StatsOverviewTab: React.FC<{}> = ({}) => {
         mb={5}
         gap={4}
       >
-        {overviewData.data.map((info, index) => (
+        {overviewData.data.map((info: OverviewDataProps, index: number) => (
           <FeaturedBox
             key={index}
             textAbove={info.name}
@@ -71,7 +71,7 @@ export const StatsOverviewTab: React.FC<{}> = ({}) => {
         ))}
       </Box>
       <Box display="flex" flexDirection="column" gap={4}>
-        {overviewChartData.data.map((info, index) => (
+        {overviewChartData.data.map((info: { data: any }, index: number) => (
           <Chart
             key={index}
             title={info.data.name}

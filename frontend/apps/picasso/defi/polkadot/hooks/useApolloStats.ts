@@ -11,10 +11,12 @@ import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
 
 export function binanceMapPairToSourceSymbol(pair: string) {
-  return {
+  const out = {
     KSMUSDT: "KSM",
     USDCUSDT: "USDC"
   }[pair];
+
+  return out ?? "";
 }
 
 export const useApolloStats = () => {
