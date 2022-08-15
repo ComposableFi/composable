@@ -141,7 +141,8 @@ pub mod pallet {
 			LiquidationStrategyId = Self::LiquidationStrategyId,
 		>;
 
-		type Counter: AddAssign
+	    // TODO: @mikolaichuk: use u128 instead.	
+        type Counter: AddAssign
 			+ One
 			+ FullCodec
 			+ Copy
@@ -155,7 +156,7 @@ pub mod pallet {
 		type MaxMarketsCounterValue: Get<Self::Counter>;
 		type MaxLoansPerMarketCounterValue: Get<Self::Counter>;
 		// Each payments schedule can not have more than this amount of payments.
-		type MaxPaymentsAmountValue: Get<u32>;
+		type MaxPaymentsPerSchedule: Get<u32>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
 	}
 
@@ -170,7 +171,7 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type LoansCounterStorage<T: Config> = StorageValue<_, T::Counter, ValueQuery>;
 
-	// TODO: @mikolaichuk: implement checking of these counters exceeding some max value.
+	// TODO: @mikolaichuk: Checke nonce type in composable-support.
 	#[pallet::storage]
 	pub type LoansPerMarketCounterStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, T::Counter, ValueQuery>;
@@ -222,42 +223,41 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		MarketCreated { market_info: MarketInfoOf<T> },
 		LoanCreated { loan_config: LoanConfigOf<T> },
-		LoanContractWasExecuted { loan_config: LoanConfigOf<T> },
-		LoanWasNotFoundInTeStorage { loan_account_id: T::AccountId },
-		LoanWasTerminated { loan_config: LoanConfigOf<T> },
-		LoanWasClosed { loan_config: LoanConfigOf<T> },
-		NonActivatedExpiredLoansWereTerminated { loans_ids: Vec<T::AccountId> },
-		TheLoanWasSentToLiquidation { loan_config: LoanConfigOf<T> },
+		LoanContractExecuted { loan_config: LoanConfigOf<T> },
+		LoanTerminated { loan_config: LoanConfigOf<T> },
+		LoanClosed { loan_config: LoanConfigOf<T> },
+		NonActivatedExpiredLoansTerminated { loans_ids: Vec<T::AccountId> },
+		LoanSentToLiquidation { loan_config: LoanConfigOf<T> },
 		// TODO: @mikolaichuk: add loan information and amount by itself.
-		SomeAmountWasRepaid,
+		SomeAmountRepaid,
 	}
 
 	#[allow(missing_docs)]
 	#[pallet::error]
 	pub enum Error<T> {
 		// Amount of markets is bounded.
-		ExceedMaxMarketsCounterValue,
+		MaxMarketsReached,
 		// We can not work with zero prices.
 		PriceOfInitialBorrowVaultShouldBeGreaterThanZero,
 		// If wrong account id of market or loan was provided.
 		MarketDoesNotExist,
 		LoanDoesNotExistOrWasActivated,
 		// Only market manager account allowed to create loans for the market.
-		ThisUserIsNotAllowedToCreateTheLoanInTheMarket,
+		NonAuthorizedToCreateLoan,
 		// Nont-authorized user tried to execute loan contract.
-		ThisUserIsNotAllowedToExecuteThisContract,
+		NonAuthorizedToExecuteContract,
 		// There is no loan with such account id in the storage.
-		ThereIsNoSuchLoan,
+		LoanNotFound,
 		// Out-of-range number of seconds in provided timestamp.
-		OutOfRangeNumberSecondInTimestamp,
+		InvalidTimestamp,
 		// When borrower tried to activate a loan after first payment day.
-		TheLoanContractIsExpired,
+		LoanContractIsExpired,
 		// Tis should not happens.
 		// Error added for debug.
 		CollateralCanNotBeTransferedBackToTheBorrowersAccount,
 		// When we try to retrieve interest rate for the date which is not present in the payment
 		// schedule for particular loan.
-		ThereIsNoSuchMomentInTheLoanPaymentSchedule,
+		MomentNotFoundInSchedule,
 	}
 
 	#[pallet::genesis_config]
@@ -338,7 +338,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(
 				Self::is_market_manager_account(&who, &input.market_account_id)?,
-				Error::<T>::ThisUserIsNotAllowedToCreateTheLoanInTheMarket,
+				Error::<T>::NonAuthorizedToCreateLoan,
 			);
 			let loan_config = <Self as UndercollateralizedLoans>::create_loan(input)?;
 			Self::deposit_event(Event::<T>::LoanCreated { loan_config });
@@ -355,7 +355,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let loan_config =
 				<Self as UndercollateralizedLoans>::borrow(who, loan_account, keep_alive)?;
-			Self::deposit_event(Event::<T>::LoanContractWasExecuted { loan_config });
+			Self::deposit_event(Event::<T>::LoanContractExecuted { loan_config });
 			Ok(())
 		}
 
@@ -369,7 +369,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			<Self as UndercollateralizedLoans>::repay(who, loan_account, repay_amount, keep_alive)?;
-			Self::deposit_event(Event::<T>::SomeAmountWasRepaid);
+			Self::deposit_event(Event::<T>::SomeAmountRepaid);
 			Ok(())
 		}
 	}

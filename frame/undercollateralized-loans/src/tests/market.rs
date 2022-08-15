@@ -1,5 +1,6 @@
 use super::{create_test_market_input_config, prelude::*};
 use crate::currency::*;
+
 use composable_traits::undercollateralized_loans::LoanInput;
 
 #[test]
@@ -13,8 +14,8 @@ fn can_create_market() {
 		let collateral_asset = input.currency_pair.base;
 		set_price(borrow_asset, NORMALIZED::ONE);
 		set_price(collateral_asset, NORMALIZED::units(50000));
-		orml_tokens::Pallet::<Runtime>::mint_into(borrow_asset, &manager, NORMALIZED::units(1000));
-		orml_tokens::Pallet::<Runtime>::mint_into(
+		Tokens::mint_into(borrow_asset, &manager, NORMALIZED::units(1000));
+		Tokens::mint_into(
 			collateral_asset,
 			&manager,
 			NORMALIZED::units(1000),

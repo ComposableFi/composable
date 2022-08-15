@@ -111,11 +111,11 @@ where
 	borrower_account_id: AccountId,
 	/// The asset being used as collateral.
 	collateral_asset_id: AssetId,
-	/// The asset being used as borrow asset.
+	/// The asset being used for borrows.
 	borrow_asset_id: AssetId,
 	/// Amount of borrowed money.  
 	principal: Balance,
-	/// Amount of assets which should be putted as collateral.
+	/// Amount of assets which should be used as collateral.
 	collateral: Balance,
 	/// Schedule of payments
 	schedule: BTreeMap<Timestamp, Balance>,
@@ -143,7 +143,7 @@ where
 		schedule: Vec<(Timestamp, Balance)>,
 	) -> Self {
 		let schedule: BTreeMap<Timestamp, Balance> = schedule.into_iter().collect();
-		// We are sure thate BTreeMap is not empty
+		// We are sure that BTreeMap is not empty
 		// TODO: @mikolaichuk: May be it would be better to use BiBoundedVec as input here.
 		let first_payment_moment = schedule.keys().min().unwrap().clone();
 		let last_payment_moment = schedule.keys().max().unwrap().clone();

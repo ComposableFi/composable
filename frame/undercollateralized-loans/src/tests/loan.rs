@@ -29,7 +29,7 @@ fn can_execute_loan_contract() {
 		System::set_block_number(1);
 		let borrower = *BOB;
 		// Borrwer should have some collateral to deposit.
-		orml_tokens::Pallet::<Runtime>::mint_into(BTC::ID, &borrower, BTC::units(10)).unwrap();
+		Tokens::mint_into(BTC::ID, &borrower, BTC::units(10)).unwrap();
 		let origin = Origin::signed(borrower);
 		let loan_config = create_test_loan();
 		let loan_account_id = *loan_config.account_id();

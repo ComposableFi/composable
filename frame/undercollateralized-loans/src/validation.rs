@@ -23,7 +23,7 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber, AccountId>
 		create_input: MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>,
 	) -> Result<MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>, &'static str> {
 		if create_input.currency_pair.base == create_input.currency_pair.quote {
-			Err("Base and quote currencies supposed to be different in currency pair")
+			Err("Base and quote currencies are supposed to be different in currency pair")
 		} else {
 			Ok(create_input)
 		}

@@ -46,7 +46,7 @@ impl<T: Config> Pallet<T> {
 			*counter += T::Counter::one();
 			ensure!(
 				*counter <= T::MaxMarketsCounterValue::get(),
-				Error::<T>::ExceedMaxMarketsCounterValue
+				Error::<T>::MaxMarketsReached,
 			);
 			let market_account_id = Self::market_account_id(*counter);
 			let borrow_asset_vault = T::Vault::create(
@@ -67,7 +67,7 @@ impl<T: Config> Pallet<T> {
 			let initial_pool_size = Self::calculate_initial_pool_size(config_input.borrow_asset())?;
 
 			ensure!(
-				initial_pool_size > T::Balance::zero(),
+				!initial_pool_size.is_zero(),
 				Error::<T>::PriceOfInitialBorrowVaultShouldBeGreaterThanZero
 			);
 
@@ -106,7 +106,7 @@ impl<T: Config> Pallet<T> {
 		// validation process.
 		let market_config =
 			Self::get_market_config_via_account_id(&config_input.market_account_id)?;
-		// Align schedule timstamps to the beginign of the day.
+		// Align schedule timstamps to the beginning of the day.
 		// 24.08.1991 08:45:03 -> 24.08.1991 00:00:00
 		let schedule = config_input
 			.payment_schedule
@@ -152,7 +152,7 @@ impl<T: Config> Pallet<T> {
 		// Check if borrower is authorized to execute this loan agreement.
 		ensure!(
 			*loan_config.borrower_account_id() == borrower_account_id,
-			Error::<T>::ThisUserIsNotAllowedToExecuteThisContract
+			Error::<T>::NonAuthorizedToExecuteContract,
 		);
 		// Check if borrower tries to activate expired loan.
 		// Need this check since we remove expired loans only once a day.
@@ -162,7 +162,7 @@ impl<T: Config> Pallet<T> {
 		if today >= first_payment_date {
 			crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
 			crate::LoansStorage::<T>::remove(loan_account_id.clone());
-			Err(Error::<T>::TheLoanContractIsExpired)?;
+			Err(Error::<T>::LoanContractIsExpired)?;
 		}
 		// Transfer minimum amount of native asset from the borrower's account to the loan's account
 		// to ensure loan account existence.
@@ -223,7 +223,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub(crate) fn do_liquidate(loan_config: &LoanConfigOf<T>) -> () {
-		Self::deposit_event(crate::Event::<T>::TheLoanWasSentToLiquidation {
+		Self::deposit_event(crate::Event::<T>::LoanSentToLiquidation {
 			loan_config: loan_config.clone(),
 		});
 	}
@@ -258,7 +258,7 @@ impl<T: Config> Pallet<T> {
         .map_or_else(|error| log::error!("Remainded borrow asset was not transferred back to the borrower's account due to the following error: {:?}", error), |_| ());
 		// Remove all information about the loan.
 		Self::terminate_activated_loan(loan_config);
-		Self::deposit_event(crate::Event::<T>::LoanWasClosed { loan_config: loan_config.clone() });
+		Self::deposit_event(crate::Event::<T>::LoanClosed { loan_config: loan_config.clone() });
 	}
 
 	// Check if borrower's account is whitelisted for particular market.
@@ -363,13 +363,13 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	// Check if a payment is succeed.
+	// Check if a payment is successful.
 	fn check_payment(loan_config: &LoanConfigOf<T>, today: i64) -> RepaymentResult {
 		let payment_amount = match loan_config.get_payment_for_particular_moment(&today) {
 			Some(payment_amount) => payment_amount,
 			None =>
 				return RepaymentResult::Failed(
-					crate::Error::<T>::ThereIsNoSuchMomentInTheLoanPaymentSchedule.into(),
+					crate::Error::<T>::MomentNotFoundInSchedule.into(),
 				),
 		};
 		match T::MultiCurrency::transfer(
@@ -457,7 +457,7 @@ impl<T: Config> Pallet<T> {
 		loan_account_id_ref: &T::AccountId,
 	) -> Result<LoanConfigOf<T>, crate::Error<T>> {
 		crate::LoansStorage::<T>::try_get(loan_account_id_ref)
-			.map_err(|_| crate::Error::<T>::ThereIsNoSuchLoan)
+			.map_err(|_| crate::Error::<T>::LoanNotFound)
 	}
 
 	// Removes expired non-activated loans.
@@ -482,7 +482,7 @@ impl<T: Config> Pallet<T> {
 		removed_non_active_accounts_ids
 			.iter()
 			.for_each(|account_id| crate::NonActiveLoansStorage::<T>::remove(account_id));
-		Self::deposit_event(crate::Event::<T>::NonActivatedExpiredLoansWereTerminated {
+		Self::deposit_event(crate::Event::<T>::NonActivatedExpiredLoansTerminated {
 			loans_ids: removed_non_active_accounts_ids.clone(),
 		});
 	}
@@ -506,7 +506,7 @@ impl<T: Config> Pallet<T> {
 			false,
 		)
 		.map_or_else(|error| log::error!("Fee was not transferred back to the borrowers account due to the following error: {:?}", error), |_| ());
-		Self::deposit_event(crate::Event::<T>::LoanWasTerminated {
+		Self::deposit_event(crate::Event::<T>::LoanTerminated {
 			loan_config: loan_config.clone(),
 		})
 	}
