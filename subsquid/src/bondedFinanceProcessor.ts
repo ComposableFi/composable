@@ -33,8 +33,11 @@ function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
   return { offerId, beneficiary };
 }
 
-export async function processNewOfferEvent(ctx: EventHandlerContext) {
-  const event = new BondedFinanceNewOfferEvent(ctx);
+export async function processNewOfferEvent(
+  ctx: EventHandlerContext,
+  event: BondedFinanceNewOfferEvent
+) {
+  // const event = new BondedFinanceNewOfferEvent(ctx);
   const { offerId, beneficiary } = getNewOfferEvent(event);
 
   await ctx.store.save(
@@ -62,9 +65,13 @@ export async function processNewOfferEvent(ctx: EventHandlerContext) {
 /**
  * Updates database with new bond information
  * @param ctx
+ * @param event
  */
-export async function processNewBondEvent(ctx: EventHandlerContext) {
-  const event = new BondedFinanceNewBondEvent(ctx);
+export async function processNewBondEvent(
+  ctx: EventHandlerContext,
+  event: BondedFinanceNewBondEvent
+) {
+  // const event = new BondedFinanceNewBondEvent(ctx);
 
   const { offerId, nbOfBonds } = getNewBondEvent(event);
 

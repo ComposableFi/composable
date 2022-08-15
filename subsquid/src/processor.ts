@@ -1,5 +1,7 @@
 import { SubstrateProcessor } from "@subsquid/substrate-processor";
 import {
+  BondedFinanceNewBondEvent,
+  BondedFinanceNewOfferEvent,
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
   PabloPoolCreatedEvent,
@@ -111,11 +113,13 @@ processor.addEventHandler("balances.Deposit", async (ctx) => {
 });
 
 processor.addEventHandler("bondedFinance.NewOffer", async (ctx) => {
-  await processNewOfferEvent(ctx);
+  const event = new BondedFinanceNewOfferEvent(ctx);
+  await processNewOfferEvent(ctx, event);
 });
 
 processor.addEventHandler("bondedFinance.NewBond", async (ctx) => {
-  await processNewBondEvent(ctx);
+  const event = new BondedFinanceNewBondEvent(ctx);
+  await processNewBondEvent(ctx, event);
 });
 
 processor.addEventHandler("bondedFinance.OfferCancelled", async (ctx) => {
