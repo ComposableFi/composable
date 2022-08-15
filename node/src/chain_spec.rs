@@ -15,7 +15,7 @@ pub mod dali;
 
 pub mod picasso;
 
-const DEFAULT_PARA_ID: u32 = 2000;
+const DEFAULT_PARA_ID: u32 = 2087;
 
 // Parachin ID.
 static PARA_ID: Lazy<ParaId> = Lazy::new(|| {

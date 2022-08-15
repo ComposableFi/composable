@@ -2,6 +2,8 @@
   # see ./docs/nix.md for design guidelines of nix organization
   description =
     "Composable Finance systems, tools and releases";
+  # when flake runs, ask for interactie answers first time
+  # nixConfig.sandbox = "relaxed";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils = {
@@ -35,7 +37,9 @@
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
       mk-devnet =
-        { lib
+        { 
+        pkgs,
+        lib
         , writeTextFile
         , writeShellApplication
         , polkadot-launch
@@ -44,13 +48,16 @@
         , chain-spec
         }:
         let
-          original-config = import ./scripts/polkadot-launch/composable.nix;
+          original-config = (pkgs.callPackage ./scripts/polkadot-launch/rococo-local-dali-dev.nix
+          { 
+            polkadot-bin = polkadot-node; 
+            composable-bin = composable-node;   
+          }).result;
+
           patched-config = lib.recursiveUpdate original-config {
-            relaychain = { bin = "${polkadot-node}/bin/polkadot"; };
             parachains = builtins.map
               (parachain:
                 parachain // {
-                  bin = "${composable-node}/bin/composable";
                   chain = "${chain-spec}";
                 })
               original-config.parachains;
@@ -294,8 +301,7 @@
                 --repeat=1 \
                 --output=$out \
                 --log error
-            '';
-
+            '';           
         in
         rec {
           packages = rec {
@@ -331,6 +337,9 @@
             };
 
             # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
+            acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
+                rust-overlay = rust-nightly;
+            };
             polkadot-node = rustPlatform.buildRustPackage rec {
               # HACK: break the nix sandbox so we can build the runtimes. This
               # requires Nix to have `sandbox = relaxed` in its config.
@@ -368,12 +377,14 @@
 
             # Dali devnet
             devnet-dali = (callPackage mk-devnet {
+              inherit pkgs;
               inherit (packages) polkadot-launch composable-node polkadot-node;
               chain-spec = "dali-dev";
             }).script;
 
             # Picasso devnet
             devnet-picasso = (callPackage mk-devnet {
+              inherit pkgs;
               inherit (packages) polkadot-launch composable-node polkadot-node;
               chain-spec = "picasso-dev";
             }).script;
@@ -447,6 +458,28 @@
               # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
               cargoBuildCommand = "cargo test --workspace --release --locked --verbose";
             });
+
+            kusama-picasso-karura =
+              let      
+                 
+                config = (pkgs.callPackage ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix 
+                { 
+                  polkadot-bin = polkadot-node; 
+                  composable-bin = composable-node;   
+                  acala-bin = acala-node;   
+                }).result;              
+                config-file = writeTextFile {
+                  name = "kusama-local-picasso-dev-karura-dev.json";
+                  text = "${builtins.toJSON config}";
+                };
+              in
+              writeShellApplication {
+                name = "kusama-picasso-karura";
+                text = ''
+                  cat ${config-file}
+                  ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+                '';
+              }; 
 
             default = packages.composable-node;
           };
@@ -531,6 +564,13 @@
               program =
                 "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
             };
+
+            kusama-picasso-karura = {
+              # nix run .#devnet
+              type = "app";
+              program = "${packages.kusama-picasso-karura}/bin/kusama-picasso-karura";
+            }; 
+
             price-feed = {
               type = "app";
               program = "${packages.price-feed}/bin/price-feed";
@@ -539,6 +579,11 @@
               type = "app";
               program = "${packages.composable-node}/bin/composable";
             };
+            acala = {
+              type = "app";
+              program = "${packages.acala-node}/bin/acala";
+            };
+            
             polkadot = {
               type = "app";
               program = "${packages.polkadot-node}/bin/polkadot";
@@ -566,11 +611,13 @@
             inherit nixpkgs;
             inherit gce-input;
             devnet-dali = pkgs.callPackage mk-devnet {
+              inherit pkgs;
               inherit (eachSystemOutputs.packages.x86_64-linux)
                 polkadot-launch composable-node polkadot-node;
               chain-spec = "dali-dev";
             };
             devnet-picasso = pkgs.callPackage mk-devnet {
+              inherit pkgs;
               inherit (eachSystemOutputs.packages.x86_64-linux)
                 polkadot-launch composable-node polkadot-node;
               chain-spec = "picasso-dev";
