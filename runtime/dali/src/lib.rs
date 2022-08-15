@@ -38,7 +38,7 @@ use common::{
 	},
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, FinancialNFTInstanceId, Hash, MaxStringSize, Moment,
+	BlockNumber, BondOfferId, FinancialNftInstanceId, Hash, MaxStringSize, Moment,
 	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
@@ -80,7 +80,7 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
-use composable_traits::{account_proxy::ProxyType, fnft::FNFTAccountProxyType};
+use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
 use frame_support::{
 	traits::{fungibles, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
@@ -703,18 +703,18 @@ impl pallet_account_proxy::Config for Runtime {
 }
 
 parameter_types! {
-	pub const FNFTPalletId: PalletId = PalletId(*b"pal_fnft");
+	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
 }
 
 impl pallet_fnft::Config for Runtime {
 	type Event = Event;
 	type MaxProperties = ConstU32<16>;
-	type FinancialNFTCollectionId = CurrencyId;
-	type FinancialNFTInstanceId = FinancialNFTInstanceId;
+	type FinancialNftCollectionId = CurrencyId;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type ProxyType = ProxyType;
 	type AccountProxy = Proxy;
-	type ProxyTypeSelector = FNFTAccountProxyType;
-	type PalletId = FNFTPalletId;
+	type ProxyTypeSelector = FnftAccountProxyType;
+	type PalletId = FnftPalletId;
 }
 
 parameter_types! {
@@ -841,8 +841,8 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
-	type FinancialNFTInstanceId = FinancialNFTInstanceId;
-	type FinancialNFT = FNFT;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
+	type FinancialNft = Fnft;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -1192,7 +1192,7 @@ construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
-		FNFT: pallet_fnft::{Pallet, Storage, Event<T>} = 68,
+		Fnft: pallet_fnft::{Pallet, Storage, Event<T>} = 68,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 140,
 

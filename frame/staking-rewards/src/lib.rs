@@ -65,7 +65,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
-		fnft::{FinancialNFT, FinancialNFTProtocol},
+		fnft::{FinancialNft, FinancialNftProtocol},
 		staking::{
 			RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
 			DEFAULT_MAX_REWARDS,
@@ -223,7 +223,7 @@ pub mod pallet {
 			+ From<u128>
 			+ Into<u128>;
 
-		type FinancialNFTInstanceId: FullCodec
+		type FinancialNftInstanceId: FullCodec
 			+ Debug
 			+ SafeAdd
 			+ MaxEncodedLen
@@ -236,9 +236,9 @@ pub mod pallet {
 			+ Zero
 			+ One;
 
-		type FinancialNFT: nonfungibles::Mutate<AccountIdOf<Self>>
+		type FinancialNft: nonfungibles::Mutate<AccountIdOf<Self>>
 			+ nonfungibles::Create<AccountIdOf<Self>>
-			+ FinancialNFT<AccountIdOf<Self>>;
+			+ FinancialNft<AccountIdOf<Self>>;
 
 		/// Is used to create staked asset per `Self::RewardPoolId`
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
@@ -504,8 +504,8 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> FinancialNFTProtocol for Pallet<T> {
-		type ItemId = T::FinancialNFTInstanceId;
+	impl<T: Config> FinancialNftProtocol for Pallet<T> {
+		type ItemId = T::FinancialNftInstanceId;
 		type AssetId = AssetIdOf<T>;
 		type Balance = BalanceOf<T>;
 
@@ -579,7 +579,7 @@ pub mod pallet {
 			//  2. Map and store the nft_id -> position_id
 			// let next_nft_id = T::FinancialNFT::get_next_nft_id(reward_pool.fnft_collection_id)?;
 			// T::FinancialNFT::mint_into(reward_pool.fnft_collection_id, next_nft_id)?;
-			// FNFTToPositionId<T>::insert(next_nft_id, position_id);
+			// FnftToPositionId<T>::insert(next_nft_id, position_id);
 			// let fnft_account = T::FinancialNFT::asset_account(reward_pool.fnft_collection_id,
 			// next_nft_id); TODO (vim): transfer the staked amount to the NFT account and lock it
 			// T::Assets::transfer(rewards_pool.asset_id, who, fnft_account, amount)?;

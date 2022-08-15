@@ -1,13 +1,13 @@
-use composable_traits::fnft::FinancialNFT;
+use composable_traits::fnft::FinancialNft;
 use frame_support::{
 	dispatch::DispatchResult,
 	traits::tokens::nonfungibles::{Create, Inspect, Mutate},
 };
 use sp_runtime::DispatchError;
 
-pub struct MockFNFT;
+pub struct MockFnft;
 
-impl Inspect<u128> for MockFNFT {
+impl Inspect<u128> for MockFnft {
 	type ItemId = ();
 	type CollectionId = ();
 
@@ -16,7 +16,7 @@ impl Inspect<u128> for MockFNFT {
 	}
 }
 
-impl FinancialNFT<u128> for MockFNFT {
+impl FinancialNft<u128> for MockFnft {
 	fn asset_account(collection: &Self::CollectionId, instance: &Self::ItemId) -> u128 {
 		todo!()
 	}
@@ -26,7 +26,7 @@ impl FinancialNFT<u128> for MockFNFT {
 	}
 }
 
-impl Create<u128> for MockFNFT {
+impl Create<u128> for MockFnft {
 	fn create_collection(
 		collection: &Self::CollectionId,
 		who: &u128,
@@ -36,4 +36,4 @@ impl Create<u128> for MockFNFT {
 	}
 }
 
-impl Mutate<u128> for MockFNFT {}
+impl Mutate<u128> for MockFnft {}

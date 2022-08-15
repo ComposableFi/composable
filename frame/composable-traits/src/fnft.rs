@@ -15,7 +15,7 @@ pub type Key = BiBoundedVec<u8, 1, 64>;
 pub type Value = BiBoundedVec<u8, 1, 256>;
 
 /// Wrap any financial position into the ownership of an NFT
-pub trait FinancialNFT<AccountId>: Inspect<AccountId> {
+pub trait FinancialNft<AccountId>: Inspect<AccountId> {
 	/// ID of the Account which holds the assets owned by a financial NFT. The value of the
 	/// financial NFT is the sum total of balances of all asset types in this account plus the
 	/// future returns minus any liabilities. Future returns and liabilities should be queried
@@ -28,7 +28,7 @@ pub trait FinancialNFT<AccountId>: Inspect<AccountId> {
 }
 
 /// Trait to be implemented by protocol supporting financial NFTs.
-pub trait FinancialNFTProtocol {
+pub trait FinancialNftProtocol {
 	/// Type for identifying an item.
 	type ItemId;
 
@@ -66,19 +66,19 @@ pub trait FinancialNFTProtocol {
 	Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, MaxEncodedLen, TypeInfo,
 )]
 #[repr(transparent)]
-pub struct FinancialNFTVersion(u8);
+pub struct FinancialNftVersion(u8);
 
-impl FinancialNFTVersion {
-	pub const VERSION_1: FinancialNFTVersion = FinancialNFTVersion(1);
+impl FinancialNftVersion {
+	pub const VERSION_1: FinancialNftVersion = FinancialNftVersion(1);
 }
 
-pub trait FNFTAccountProxyTypeSelector<T> {
+pub trait FnftAccountProxyTypeSelector<T> {
 	/// Return the selected account proxy types
 	fn get_proxy_types() -> Vec<T>;
 }
 
-pub struct FNFTAccountProxyType;
-impl FNFTAccountProxyTypeSelector<ProxyType> for FNFTAccountProxyType {
+pub struct FnftAccountProxyType;
+impl FnftAccountProxyTypeSelector<ProxyType> for FnftAccountProxyType {
 	fn get_proxy_types() -> Vec<ProxyType> {
 		[ProxyType::Governance, ProxyType::CancelProxy].into()
 	}

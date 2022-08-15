@@ -309,7 +309,7 @@ pub trait Staking {
 }
 
 /// Interface for managing staking through financial NFTs.
-pub trait StakingFinancialNFT {
+pub trait StakingFinancialNft {
 	type AccountId;
 	type CollectionId;
 	type InstanceId;

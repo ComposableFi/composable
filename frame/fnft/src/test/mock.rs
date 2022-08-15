@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use composable_tests_helpers::test::block::{process_and_progress_blocks, MILLISECS_PER_BLOCK};
-use composable_traits::{account_proxy::ProxyType, fnft::FNFTAccountProxyType};
+use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, ConstU64, Everything, InstanceFilter},
@@ -32,18 +32,18 @@ frame_support::construct_runtime!(
 );
 
 parameter_types! {
-	pub const FNFTPalletId: PalletId = PalletId(*b"pal_fnft");
+	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
 }
 impl crate::Config for MockRuntime {
 	type Event = Event;
 
 	type MaxProperties = ConstU32<16>;
-	type FinancialNFTCollectionId = u16;
-	type FinancialNFTInstanceId = u64;
+	type FinancialNftCollectionId = u16;
+	type FinancialNftInstanceId = u64;
 	type ProxyType = ProxyType;
 	type AccountProxy = Proxy;
-	type ProxyTypeSelector = FNFTAccountProxyType;
-	type PalletId = FNFTPalletId;
+	type ProxyTypeSelector = FnftAccountProxyType;
+	type PalletId = FnftPalletId;
 }
 
 impl pallet_timestamp::Config for MockRuntime {

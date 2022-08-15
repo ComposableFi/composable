@@ -63,7 +63,7 @@ mod types {
 	pub type Balance = u128;
 
 	/// Identifier for a fNFT
-	pub type FinancialNFTInstanceId = u64;
+	pub type FinancialNftInstanceId = u64;
 
 	/// An amount
 	pub type Amount = i128;

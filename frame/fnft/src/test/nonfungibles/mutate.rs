@@ -20,11 +20,11 @@ mod mint_into {
 	#[test]
 	fn success() {
 		new_test_ext().execute_with(|| {
-			const NEW_NFT_ID: FinancialNFTInstanceIdOf<MockRuntime> = 1;
+			const NEW_NFT_ID: FinancialNftInstanceIdOf<MockRuntime> = 1;
 
 			Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTCreated {
+			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftCreated {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: NEW_NFT_ID,
 			}));
@@ -53,11 +53,11 @@ mod mint_into {
 	#[test]
 	fn already_exists() {
 		new_test_ext().execute_with(|| {
-			const NEW_NFT_ID: FinancialNFTInstanceIdOf<MockRuntime> = 1;
+			const NEW_NFT_ID: FinancialNftInstanceIdOf<MockRuntime> = 1;
 
 			Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTCreated {
+			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftCreated {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: NEW_NFT_ID,
 			}));
@@ -203,7 +203,7 @@ mod burn_from {
 				&nft_to_burn,
 				Some(&ALICE)
 			));
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTBurned {
+			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: nft_to_burn,
 			}));
@@ -236,7 +236,7 @@ mod burn_from {
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 			assert_ok!(Pallet::<MockRuntime>::burn(&TEST_COLLECTION_ID, &new_id, Some(&ALICE)));
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTBurned {
+			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: new_id,
 			}));
@@ -318,7 +318,7 @@ mod burn_from {
 					&nft_to_burn,
 					Some(&ALICE)
 				));
-				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTBurned {
+				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
 					collection_id: TEST_COLLECTION_ID,
 					instance_id: nft_to_burn,
 				}));
@@ -342,7 +342,7 @@ mod burn_from {
 					&nft_to_burn,
 					Some(&ALICE)
 				));
-				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTBurned {
+				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
 					collection_id: TEST_COLLECTION_ID,
 					instance_id: nft_to_burn,
 				}));

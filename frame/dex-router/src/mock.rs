@@ -1,5 +1,5 @@
 use crate as dex_router;
-use crate::mock_fnft::MockFNFT;
+use crate::mock_fnft::MockFnft;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -186,8 +186,8 @@ impl pallet_staking_rewards::Config for Test {
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
-	type FinancialNFTInstanceId = u128;
-	type FinancialNFT = MockFNFT;
+	type FinancialNftInstanceId = u128;
+	type FinancialNft = MockFnft;
 }
 
 parameter_types! {

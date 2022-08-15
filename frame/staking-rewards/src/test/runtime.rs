@@ -4,7 +4,7 @@ use composable_traits::{
 	governance::{GovernanceRegistry, SignedRawOrigin},
 };
 
-use composable_traits::fnft::{FNFTAccountProxyType, FNFTAccountProxyTypeSelector};
+use composable_traits::fnft::{FnftAccountProxyType, FnftAccountProxyTypeSelector};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, InstanceFilter},
@@ -25,7 +25,7 @@ type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
-pub type FinancialNFTInstanceId = u64;
+pub type FinancialNftInstanceId = u64;
 pub type RewardPoolId = u16;
 pub type PositionId = u128;
 
@@ -52,7 +52,7 @@ frame_support::construct_runtime!(
 		CurrencyFactory: pallet_currency_factory,
 		Tokens: orml_tokens,
 		Assets: pallet_assets,
-		FinancialNFT: pallet_fnft,
+		FinancialNft: pallet_fnft,
 		Proxy: pallet_account_proxy,
 		StakingRewards: pallet_staking_rewards,
 	}
@@ -188,19 +188,19 @@ impl pallet_assets::Config for Test {
 }
 
 parameter_types! {
-	pub const FNFTPalletId: PalletId = PalletId(*b"pal_fnft");
+	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
 }
 
 impl pallet_fnft::Config for Test {
 	type Event = Event;
 
 	type MaxProperties = ConstU32<16>;
-	type FinancialNFTCollectionId = CurrencyId;
-	type FinancialNFTInstanceId = FinancialNFTInstanceId;
+	type FinancialNftCollectionId = CurrencyId;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type ProxyType = ProxyType;
 	type AccountProxy = Proxy;
-	type ProxyTypeSelector = FNFTAccountProxyType;
-	type PalletId = FNFTPalletId;
+	type ProxyTypeSelector = FnftAccountProxyType;
+	type PalletId = FnftPalletId;
 }
 
 parameter_types! {
@@ -237,8 +237,8 @@ impl pallet_staking_rewards::Config for Test {
 	type RewardPoolId = RewardPoolId;
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
-	type FinancialNFTInstanceId = FinancialNFTInstanceId;
-	type FinancialNFT = FinancialNFT;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
+	type FinancialNft = FinancialNft;
 	type CurrencyFactory = CurrencyFactory;
 	type Assets = Assets;
 	type UnixTime = Timestamp;

@@ -16,7 +16,7 @@ use crate::{
 		prelude::*,
 		ALICE, BOB, CHARLIE,
 	},
-	FinancialNFTInstanceIdOf, Instance, OwnerInstances, Pallet,
+	FinancialNftInstanceIdOf, Instance, OwnerInstances, Pallet,
 };
 
 /// Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
@@ -79,7 +79,7 @@ fn roundtrip() {
 
 		// send one of ALICE's NFTs to BOB
 		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &nft_to_trade, &BOB));
-		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTTransferred {
+		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: nft_to_trade,
 			to: BOB,
@@ -89,7 +89,7 @@ fn roundtrip() {
 
 		// send said NFT back
 		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &nft_to_trade, &ALICE));
-		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTTransferred {
+		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: nft_to_trade,
 			to: ALICE,
@@ -122,7 +122,7 @@ fn many() {
 		let [c0, c1, c2, c3, c4, c5, c6, c7, c8, c9] = charlies_nfts;
 
 		fn assert_owners<const AMOUNT: usize>(
-			checks: [(u128, &[FinancialNFTInstanceIdOf<MockRuntime>], &str); AMOUNT],
+			checks: [(u128, &[FinancialNftInstanceIdOf<MockRuntime>], &str); AMOUNT],
 		) {
 			for (who, nfts, msg) in checks {
 				assert_eq!(
@@ -137,7 +137,7 @@ fn many() {
 
 		// transfer one of ALICE's NFTs to BOB
 		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &a0, &BOB));
-		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTTransferred {
+		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: a0,
 			to: BOB,
@@ -160,7 +160,7 @@ fn many() {
 		// transfer all of CHARLIES's NFTs to BOB
 		for nft_id in charlies_nfts.iter() {
 			assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, nft_id, &BOB));
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTTransferred {
+			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: *nft_id,
 				to: BOB,
@@ -184,7 +184,7 @@ fn many() {
 
 		// transfer one of (what was originally CHARLIES's) NFTs from BOB to ALICE
 		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &c9, &ALICE));
-		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTTransferred {
+		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: c9,
 			to: ALICE,
@@ -206,7 +206,7 @@ fn many() {
 
 		// transfer one of (what was originally CHARLIES's) NFTs from ALICE back to CHARLIE
 		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &c9, &CHARLIE),);
-		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNFTTransferred {
+		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: c9,
 			to: CHARLIE,
