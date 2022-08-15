@@ -89,7 +89,7 @@ use sp_runtime::{
 	DispatchResult,
 };
 use sp_std::{prelude::*, vec};
-use std::cmp::Ordering;
+use sp_std::cmp::Ordering;
 pub use weights::WeightInfo;
 
 use composable_traits::account_proxy::{AccountProxy, ProxyDefinition};
