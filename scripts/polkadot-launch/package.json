@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "composable": "rm -rf /tmp/polkadot-launch && polkadot-launch composable.json --verbose",
-    "rococo-dali-karura": "COMPOSABLE_PARA_ID=2087 polkadot-launch rococo-local-dali-dev-karura-dev.json"
+    "rococo-dali-karura": "COMPOSABLE_PARA_ID=2087 polkadot-launch rococo-local-dali-dev-karura-dev.json",
+    "kusama-picasso-karura": "COMPOSABLE_PARA_ID=2087 polkadot-launch kusama-local-picasso-dev-karura-dev.json"
   },
   "keywords": [],
   "author": "",

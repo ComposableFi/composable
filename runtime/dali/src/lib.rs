@@ -1233,6 +1233,7 @@ mod benches {
 }
 
 impl_runtime_apis! {
+	#[cfg(not(all(test, feature = "local-integration-tests", feature = "std", any(feature = "picasso", feature = "dali"))))]
 	impl lending_runtime_api::LendingRuntimeApi<Block, MarketId> for Runtime {
 		fn current_interest_rate(_market_id: MarketId) -> SafeRpcWrapper<Rate> {
 			SafeRpcWrapper(
