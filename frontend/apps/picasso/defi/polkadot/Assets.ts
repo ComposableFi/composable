@@ -23,8 +23,8 @@ export const Assets: {
     name: "Picasso",
     supportedNetwork: {
       karura: null,
-      picasso: 1,
-    },
+      picasso: 1
+    }
   },
   ksm: {
     decimals: 12,
@@ -34,8 +34,8 @@ export const Assets: {
     name: "Kusama",
     supportedNetwork: {
       karura: null,
-      picasso: 4,
-    },
+      picasso: 4
+    }
   },
   kusd: {
     decimals: 12,
@@ -45,8 +45,8 @@ export const Assets: {
     name: "K-USD",
     supportedNetwork: {
       karura: null,
-      picasso: 129,
-    },
+      picasso: 129
+    }
   },
   layr: {
     decimals: 12,
@@ -56,8 +56,8 @@ export const Assets: {
     name: "LAYER",
     supportedNetwork: {
       karura: null,
-      picasso: 2,
-    },
+      picasso: 2
+    }
   },
   pablo: {
     decimals: 12,
@@ -67,9 +67,20 @@ export const Assets: {
     name: "PABLO",
     supportedNetwork: {
       karura: null,
-      picasso: 2,
-    },
+      picasso: 2
+    }
   },
+  usdc: {
+    decimals: 12,
+    assetId: "usdc",
+    symbol: "USDC",
+    icon: "/tokens/usd-coin-usdc.svg",
+    name: "USDCoin",
+    supportedNetwork: {
+      karura: null,
+      picasso: 100
+    }
+  }
 };
 
 export const AssetsValidForNow: AssetId[] = ["pica", "kusd", "ksm"];
@@ -105,14 +116,14 @@ export const getAssetOptions = (noneTokenLabel?: string) => [
           label: noneTokenLabel,
           icon: undefined,
           disabled: true,
-          hidden: true,
-        },
+          hidden: true
+        }
       ]
     : []),
-  ...Object.values(Assets).map((asset) => ({
+  ...Object.values(Assets).map(asset => ({
     value: asset.assetId,
     label: asset.name,
     shortLabel: asset.symbol,
-    icon: asset.icon,
-  })),
+    icon: asset.icon
+  }))
 ];

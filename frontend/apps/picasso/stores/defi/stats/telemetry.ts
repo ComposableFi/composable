@@ -3,10 +3,6 @@ import { StoreSlice } from "../../types";
 import BigNumber from "bignumber.js";
 
 const MAX_AVERAGE_TIME_LIST_LENGTH = 200;
-export type TelemetryDataProps = {
-  name: string;
-  value: number;
-};
 
 interface TelemetryData {
   finalizedBlock: BigNumber;

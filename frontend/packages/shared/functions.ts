@@ -1,7 +1,4 @@
-export function callIf<T>(
-  subject: T | undefined,
-  fn: (subject: T) => Promise<() => void>
-) {
+export function callIf<T>(subject: T | undefined, fn: (subject: T) => any) {
   if (subject) {
     return fn(subject);
   }
