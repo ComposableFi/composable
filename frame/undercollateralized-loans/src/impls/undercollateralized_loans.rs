@@ -43,6 +43,10 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 		Self::do_borrow(borrower_account_id, loan_account_id, keep_alive)
 	}
 
+    fn check_payment(loan_account_id: &Self::AccountId, timestamp: Self::Timestamp) -> Result<LoanConfigOf<T>, DispatchError> {
+       Self::do_check_payment(loan_account_id, timestamp) 
+    }
+
 	fn market_account_id<S: Encode>(postfix: S) -> Self::AccountId {
 		T::PalletId::get().into_sub_account_truncating(postfix)
 	}

@@ -1,6 +1,6 @@
 use crate::{
 	types::{
-		LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf, RepaymentResult,
+		LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf,
 		Timestamp,
 	},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
@@ -28,8 +28,8 @@ use sp_runtime::{
 	DispatchError, Perquintill, TransactionOutcome,
 };
 
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
-use sp_std::vec::Vec;
+use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
+use sp_std::{vec::Vec, ops::{Add, Sub}};
 
 // #generalization
 impl<T: Config> Pallet<T> {
@@ -156,8 +156,8 @@ impl<T: Config> Pallet<T> {
 		);
 		// Check if borrower tries to activate expired loan.
 		// Need this check since we remove expired loans only once a day.
-		let today = Self::current_date();
-		let first_payment_date = Self::date_from_timestamp(*loan_config.first_payment_moment());
+		let today = Self::get_current_date();
+		let first_payment_date = Self::get_date_from_timestamp(*loan_config.first_payment_moment());
 		// Loan should be activated before the first payment date.
 		if today >= first_payment_date {
 			crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
@@ -229,7 +229,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	// Close loan contract since loan is paid.
-	pub(crate) fn close_loan_contract(loan_config: &LoanConfigOf<T>, keep_alive: bool) {
+	pub(crate) fn do_close_loan_contract(loan_config: &LoanConfigOf<T>, keep_alive: bool) {
 		// Transfer collateral to borrower's account.
 		T::MultiCurrency::transfer(
 			*loan_config.collateral_asset_id(),
@@ -289,7 +289,6 @@ impl<T: Config> Pallet<T> {
 	// #generalization
 	pub(crate) fn treat_vaults_balance(block_number: T::BlockNumber) -> () {
 		let _ = with_transaction(|| {
-			let now = Self::now();
 			let mut errors = crate::MarketsStorage::<T>::iter()
 				.map(|(market_account_id, market_info)| {
 					match Self::available_funds(&market_info.config(), &market_account_id)? {
@@ -336,7 +335,7 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
-	pub(crate) fn check_payments(today: Timestamp) -> () {
+	pub(crate) fn check_payments(today: Timestamp) {
 		// Retrive collection of loans(loans' accounts ids) which have to be paid now.
 		// If nothing found we get empty set.
 		let loans_accounts_ids = crate::ScheduleStorage::<T>::try_get(today).unwrap_or_default();
@@ -347,30 +346,19 @@ impl<T: Config> Pallet<T> {
 				Ok(loan_config) => loan_config,
 				Err(_) => continue,
 			};
-			match Self::check_payment(&loan_config, today) {
-				RepaymentResult::Failed(error) => log::error!(
-					"Payment check for loan {:?} were failed becasue of the following error: {:?}",
-					loan_account_id,
-					error
-				),
-				RepaymentResult::PaymentMadeOnTime => (),
-				RepaymentResult::LastPaymentMadeOnTime =>
-					Self::close_loan_contract(&loan_config, false),
-				RepaymentResult::PaymentIsOverdue => Self::do_liquidate(&loan_config),
-			}
-			// We do not need information regarding this date anymore.
+			
+			Self::do_check_payment(&loan_account_id, today);
+            // We do not need information regarding this date anymore.
 			crate::ScheduleStorage::<T>::remove(today);
 		}
 	}
 
 	// Check if a payment is successful.
-	fn check_payment(loan_config: &LoanConfigOf<T>, today: i64) -> RepaymentResult {
-		let payment_amount = match loan_config.get_payment_for_particular_moment(&today) {
-			Some(payment_amount) => payment_amount,
-			None =>
-				return RepaymentResult::Failed(
-					crate::Error::<T>::MomentNotFoundInSchedule.into(),
-				),
+	pub fn do_check_payment(loan_account_id: &T::AccountId, today: Timestamp) -> Result<LoanConfigOf<T>, DispatchError> {
+	    let loan_config = Self::get_loan_config_via_account_id(loan_account_id)?;	
+        let payment_amount = match loan_config.get_payment_for_particular_moment(&today) {
+ 		Some(payment_amount) => payment_amount,
+		None => return Err(Error::<T>::MomentNotFoundInSchedule.into()),
 		};
 		match T::MultiCurrency::transfer(
 			*loan_config.borrow_asset_id(),
@@ -378,15 +366,23 @@ impl<T: Config> Pallet<T> {
 			loan_config.market_account_id(),
 			*payment_amount,
 			true,
-		) {
-			Ok(_) if *loan_config.last_payment_moment() == today =>
-				return RepaymentResult::LastPaymentMadeOnTime,
-			Ok(_) => return RepaymentResult::PaymentMadeOnTime,
-			Err(_) => return RepaymentResult::PaymentIsOverdue,
-		}
-	}
-
-	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
+ 		) {
+			// Last payment succeed.
+			// Loan contract should be closed.
+ 			Ok(_) if *loan_config.last_payment_moment() == today =>
+				Self::do_close_loan_contract(&loan_config, false),
+			// Payment succeed.
+			// We do nothing and continue to treat the contract.
+			Ok(_) => (),
+			// Payment was failed.
+			// We liquidate the loan.
+			// TODO: @mikolaichuk:  we should give to borrower
+			//                      several attempts.
+			Err(_) => Self::do_liquidate(&loan_config),
+ 		}
+        Ok(loan_config)	
+}
+ 	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
 	// If vault is balanced we will do nothing.
 	// #generalization
 	fn available_funds(
@@ -438,27 +434,6 @@ impl<T: Config> Pallet<T> {
 		T::UnixTime::now().as_secs() as Timestamp
 	}
 
-	// #generalization
-	pub(crate) fn get_market_info_via_account_id(
-		market_account_id_ref: &T::AccountId,
-	) -> Result<MarketInfoOf<T>, crate::Error<T>> {
-		crate::MarketsStorage::<T>::try_get(market_account_id_ref)
-			.map_err(|_| crate::Error::<T>::MarketDoesNotExist)
-	}
-
-	pub(crate) fn get_market_config_via_account_id(
-		market_account_id_ref: &T::AccountId,
-	) -> Result<MarketConfigOf<T>, crate::Error<T>> {
-		let market_info = Self::get_market_info_via_account_id(market_account_id_ref)?;
-		Ok(market_info.config().clone())
-	}
-
-	pub(crate) fn get_loan_config_via_account_id(
-		loan_account_id_ref: &T::AccountId,
-	) -> Result<LoanConfigOf<T>, crate::Error<T>> {
-		crate::LoansStorage::<T>::try_get(loan_account_id_ref)
-			.map_err(|_| crate::Error::<T>::LoanNotFound)
-	}
 
 	// Removes expired non-activated loans.
 	// Expired non-activated loans are loans which were not activated by borrower before first
@@ -487,7 +462,7 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
-	// Remove all information about activated loan.
+	// Remove all information regarding activated loan.
 	pub(crate) fn terminate_activated_loan(loan_config: &LoanConfigOf<T>) {
 		// Get payment moments for the loan.
 		let payment_moments: Vec<Timestamp> =
@@ -510,20 +485,75 @@ impl<T: Config> Pallet<T> {
 			loan_config: loan_config.clone(),
 		})
 	}
-
-	pub(crate) fn current_day_timestamp() -> Timestamp {
-		crate::CurrentDateStorage::<T>::get()
+    // Offchain-worker helpers
+    pub(crate) fn sync_offchain_worker() {
+ 
+    }
+    // Getters helpers
+	// #generalization
+		pub(crate) fn get_market_info_via_account_id(
+		market_account_id_ref: &T::AccountId,
+	) -> Result<MarketInfoOf<T>, crate::Error<T>> {
+		crate::MarketsStorage::<T>::try_get(market_account_id_ref)
+			.map_err(|_| crate::Error::<T>::MarketDoesNotExist)
 	}
 
-	pub(crate) fn current_date() -> NaiveDate {
-		Self::date_from_timestamp(Self::current_day_timestamp())
+	pub(crate) fn get_market_config_via_account_id(
+		market_account_id_ref: &T::AccountId,
+	) -> Result<MarketConfigOf<T>, crate::Error<T>> {
+		let market_info = Self::get_market_info_via_account_id(market_account_id_ref)?;
+		Ok(market_info.config().clone())
 	}
 
-	pub(crate) fn date_from_timestamp(timestamp: Timestamp) -> NaiveDate {
+	pub(crate) fn get_loan_config_via_account_id(
+		loan_account_id_ref: &T::AccountId,
+	) -> Result<LoanConfigOf<T>, crate::Error<T>> {
+		crate::LoansStorage::<T>::try_get(loan_account_id_ref)
+			.map_err(|_| crate::Error::<T>::LoanNotFound)
+	}
+
+    pub(crate) fn get_current_date_timestamp() -> Timestamp {
+ 		crate::CurrentDateStorage::<T>::get()
+ 	}
+    // Get current date from the storage.
+	pub(crate) fn get_current_date() -> NaiveDate {
+		Self::get_date_from_timestamp(Self::get_current_date_timestamp())
+ 	}
+	// Get date from a timestamp
+	pub(crate) fn get_date_from_timestamp(timestamp: Timestamp) -> NaiveDate {
 		NaiveDateTime::from_timestamp(timestamp, 0).date()
 	}
 
+	// Align a timestamp to the beginign of the day.
+	// 24.08.1991 08:45:03 -> 24.08.1991 00:00:00
+	// (in terms of seconds from the beginning of Unix epoche)
 	pub(crate) fn get_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
-		Self::date_from_timestamp(timestamp).and_time(NaiveTime::default()).timestamp()
+		Self::get_date_from_timestamp(timestamp)
+			.and_time(NaiveTime::default())
+			.timestamp()
 	}
+
+	// Returns a next date aligned timestamp.
+	// 24.08.1991 08:45:03 -> 25.08.1991 00:00:00
+	// (in terms of seconds from the beginning of Unix epoche)
+	pub(crate) fn get_next_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
+		Self::get_date_from_timestamp(timestamp)
+			//	Gonna no overflow since we adds only one day.
+		.add(Duration::days(1))
+			.and_time(NaiveTime::default())
+			.timestamp()
+ 	}
+    
+    // Returns a previous date aligned timestamp.
+	// 24.08.1991 08:45:03 -> 23.08.1991 00:00:00
+	// (in terms of seconds from the beginning of Unix epoche)
+	pub(crate) fn get_previous_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
+		Self::get_date_from_timestamp(timestamp)
+			//	Gonna no overflow since we subs only one day.
+			.sub(Duration::days(1))
+			.and_time(NaiveTime::default())
+			.timestamp()
+	}
+
+
 }

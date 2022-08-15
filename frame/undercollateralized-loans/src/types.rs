@@ -6,16 +6,9 @@ use composable_traits::{
 use frame_support::pallet_prelude::*;
 use sp_core::TypeId;
 
+// Seconds from the Unix epoche.
 // use i64 since NaiveDateTime timestamp is i64.
 pub(crate) type Timestamp = i64;
-
-// This enum is used since we do not want to return an Error in the on_initalize() function.
-pub enum RepaymentResult {
-	Failed(DispatchError),
-	PaymentMadeOnTime,
-	LastPaymentMadeOnTime,
-	PaymentIsOverdue,
-}
 
 pub(crate) type MarketInputOf<T> = MarketInput<
 	<T as frame_system::Config>::AccountId,

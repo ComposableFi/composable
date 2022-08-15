@@ -230,6 +230,7 @@ pub mod pallet {
 		LoanSentToLiquidation { loan_config: LoanConfigOf<T> },
 		// TODO: @mikolaichuk: add loan information and amount by itself.
 		SomeAmountRepaid,
+        LoanPaymentWasChecked { loan_config: LoanConfigOf<T>},	
 	}
 
 	#[allow(missing_docs)]
@@ -301,8 +302,8 @@ pub mod pallet {
 			let now = Self::now();
 			let stored_current_day_timestamp = CurrentDateStorage::<T>::get();
 			// Check if date is changed.
-			let stored_date = Self::date_from_timestamp(stored_current_day_timestamp);
-			let date = Self::date_from_timestamp(now);
+			let stored_date = Self::get_date_from_timestamp(stored_current_day_timestamp);
+			let date = Self::get_date_from_timestamp(now);
 			if stored_date < date {
 				let current_date_aligned_timestamp = Self::get_date_aligned_timestamp(now);
 				CurrentDateStorage::<T>::put(current_date_aligned_timestamp);
@@ -313,7 +314,24 @@ pub mod pallet {
 			}
 			1000
 		}
-	}
+
+		fn offchain_worker(_block_number: T::BlockNumber) {
+			use sp_runtime::offchain::{storage_lock::StorageLock, Duration};
+			let current_date_timestamp = Self::get_current_date_timestamp();
+			let next_date_aligned_timestemp =
+				Self::get_next_date_aligned_timestamp(current_date_timestamp);
+			let mut daily_lock = StorageLock::with_deadline(
+				b"undercollateralized_loans::offchain_worker_lock",
+			    // Type conversion is safe here since we do not use dates before the epoche.
+				Duration::from_millis(next_date_aligned_timestemp as u64 * 1000),
+			);
+			match daily_lock.try_lock() {
+				Ok(_) => (),
+				Err(_) => (),
+			};
+		}
+    }
+
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -372,5 +390,19 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::SomeAmountRepaid);
 			Ok(())
 		}
-	}
+	
+        #[pallet::weight(1000)]
+		#[transactional]
+		pub fn check_paymens(
+			origin: OriginFor<T>,
+		    loan_config: LoanConfigOf<T>,
+            timestamp: Timestamp,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			<Self as UndercollateralizedLoans>::check_payment(loan_config.account_id(), timestamp);
+			Self::deposit_event(Event::<T>::LoanPaymentWasChecked {loan_config});
+			Ok(())
+		}
+    }
+
 }
