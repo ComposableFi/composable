@@ -1,19 +1,12 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import {
   StakingRewardsRewardPoolCreatedEvent,
-  StakingRewardsSplitPositionEvent,
-  StakingRewardsStakeAmountExtendedEvent,
   StakingRewardsStakedEvent,
   StakingRewardsUnstakedEvent,
 } from "./types/events";
-import {
-  getOrCreate,
-  saveActivity,
-  saveTransaction,
-  trySaveAccount,
-} from "./dbHelper";
-import { Account, PicassoTransactionType } from "./model";
-import { encodeAccount, updateBalance } from "./utils";
+import { saveActivity, saveTransaction, trySaveAccount } from "./dbHelper";
+import { PicassoTransactionType } from "./model";
+import { encodeAccount } from "./utils";
 
 interface RewardPoolCreatedEvent {
   poolId: number;
@@ -30,18 +23,9 @@ interface StakedEvent {
   keepAlive: boolean;
 }
 
-interface StakeAmountExtendedEvent {
-  positionId: bigint;
-  amount: bigint;
-}
-
 interface UnstakedEvent {
   owner: Uint8Array;
   positionId: bigint;
-}
-
-interface SplitPositionEvent {
-  positions: bigint[];
 }
 
 function getRewardPoolCreatedEvent(
@@ -57,23 +41,9 @@ function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
   return { poolId, owner, amount, durationPreset, positionId, keepAlive };
 }
 
-function getStakeAmountExtendedEvent(
-  event: StakingRewardsStakeAmountExtendedEvent
-): StakeAmountExtendedEvent {
-  const { positionId, amount } = event.asV2401 ?? event.asLatest;
-  return { positionId, amount };
-}
-
 function getUnstakedEvent(event: StakingRewardsUnstakedEvent): UnstakedEvent {
   const { positionId, owner } = event.asV2401 ?? event.asLatest;
   return { positionId, owner };
-}
-
-function getSplitPositionEvent(
-  event: StakingRewardsSplitPositionEvent
-): SplitPositionEvent {
-  const { positions } = event.asV2401 ?? event.asLatest;
-  return { positions };
 }
 
 export async function processRewardPoolCreatedEvent(ctx: EventHandlerContext) {
@@ -81,9 +51,6 @@ export async function processRewardPoolCreatedEvent(ctx: EventHandlerContext) {
   const evt = new StakingRewardsRewardPoolCreatedEvent(ctx);
   const event = getRewardPoolCreatedEvent(evt);
   const owner = encodeAccount(event.owner);
-
-  const account = await getOrCreate(ctx.store, Account, owner);
-  updateBalance(account, ctx);
 
   const accountId = await trySaveAccount(ctx, owner);
 
@@ -96,8 +63,6 @@ export async function processRewardPoolCreatedEvent(ctx: EventHandlerContext) {
 
     await saveActivity(ctx, txId, accountId);
   }
-
-  console.log("Finish processing `reward pool created`");
 }
 
 export async function processStakedEvent(ctx: EventHandlerContext) {
@@ -105,9 +70,6 @@ export async function processStakedEvent(ctx: EventHandlerContext) {
   const evt = new StakingRewardsStakedEvent(ctx);
   const event = getStakedEvent(evt);
   const owner = encodeAccount(event.owner);
-
-  const account = await getOrCreate(ctx.store, Account, owner);
-  updateBalance(account, ctx);
 
   const accountId = await trySaveAccount(ctx, owner);
 
@@ -120,10 +82,6 @@ export async function processStakedEvent(ctx: EventHandlerContext) {
 
     await saveActivity(ctx, txId, accountId);
   }
-
-  // TODO: when staking is balanced changed or just locked?
-
-  console.log("Finish processing `staked`");
 }
 
 export async function processStakeAmountExtendedEvent(
@@ -142,8 +100,6 @@ export async function processStakeAmountExtendedEvent(
 
     await saveActivity(ctx, txId, accountId);
   }
-
-  console.log("Finish processing `StakeAmountExtended`");
 }
 
 export async function processUnstakedEvent(ctx: EventHandlerContext) {
@@ -151,9 +107,6 @@ export async function processUnstakedEvent(ctx: EventHandlerContext) {
   const evt = new StakingRewardsUnstakedEvent(ctx);
   const event = getUnstakedEvent(evt);
   const owner = encodeAccount(event.owner);
-
-  const account = await getOrCreate(ctx.store, Account, owner);
-  updateBalance(account, ctx);
 
   const accountId = await trySaveAccount(ctx, owner);
 
@@ -166,10 +119,6 @@ export async function processUnstakedEvent(ctx: EventHandlerContext) {
 
     await saveActivity(ctx, txId, accountId);
   }
-
-  // TODO: when staking is balanced changed or just unlocked?
-
-  console.log("Finish processing `Unstaked`");
 }
 
 export async function processSplitPositionEvent(ctx: EventHandlerContext) {
@@ -186,6 +135,4 @@ export async function processSplitPositionEvent(ctx: EventHandlerContext) {
 
     await saveActivity(ctx, txId, accountId);
   }
-
-  console.log("Finish processing `SplitPosition`");
 }
