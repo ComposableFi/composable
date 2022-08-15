@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-03T23:36:28.620529Z -->
+<!-- Generated at 2022-08-15T14:18:26.47652Z -->
 
 # Assets Registry Pallet Extrinsics
 
