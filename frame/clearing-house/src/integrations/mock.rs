@@ -36,16 +36,16 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
-		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
-		Assets: pallet_assets::{Pallet, Call, Storage},
+		System: frame_system,
+		Balances: pallet_balances,
+		GovernanceRegistry: governance_registry,
+		Timestamp: pallet_timestamp,
+		Tokens: orml_tokens,
+		LpTokenFactory: pallet_currency_factory,
+		Assets: pallet_assets,
 		Vamm: pallet_vamm,
-		Oracle: mock_oracle::{Pallet, Storage},
-		TestPallet: clearing_house::{Pallet, Call, Storage, Event<T>},
+		Oracle: mock_oracle,
+		TestPallet: clearing_house,
 	}
 );
 
