@@ -1,17 +1,8 @@
 type Account @entity {
   "Account address"
   id: ID!
-  balance: BigInt!
-  historicalBalances: [HistoricalBalance!] @derivedFrom(field: "account")
-}
-
-type HistoricalBalance @entity {
-  id: ID!
+  "Last event involving account"
   eventId: String!
-  transactionId: String!
-  account: Account!
-  balance: BigInt!
-  date: DateTime!
 }
 
 enum PabloTransactionType {
@@ -126,15 +117,22 @@ type PicassoTransaction @entity {
   eventId: String!
   "ID of account that executed transaction"
   accountId: String!
+  "Type of transaction"
   transactionType: PicassoTransactionType!
+  "Block in which transaction was registered"
   blockNumber: BigInt!
-  date: DateTime!
+  "Timestamp of the block in which this transaction was registered"
+  timestamp: BigInt!
 }
 
 type Activity @entity {
   id: ID!
+  "ID of the event associated with this activity"
   eventId: String!
+  "ID of the transaction associated with this activity"
   transactionId: String!
+  "ID of the active account"
   accountId: String!
+  "Timestamp of the block in which this activity occurred"
   timestamp: BigInt!
 }

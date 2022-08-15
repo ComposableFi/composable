@@ -27,17 +27,29 @@ function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent {
   return { offerId, nbOfBonds };
 }
 
+/**
+ * Extracts relevant information about a bond offer
+ * @param event
+ */
 function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
   const { offerId, beneficiary } = event.asV2401 ?? event.asLatest;
 
   return { offerId, beneficiary };
 }
 
+/**
+ * Handle `bondedFinances.NewOffer` event.
+ *   - Create BondedFinanceBondOffer.
+ *   - Create/update Account who deposits funds.
+ *   - Create Transaction.
+ *   - Create Activity.
+ * @param ctx
+ * @param event
+ */
 export async function processNewOfferEvent(
   ctx: EventHandlerContext,
   event: BondedFinanceNewOfferEvent
 ) {
-  // const event = new BondedFinanceNewOfferEvent(ctx);
   const { offerId, beneficiary } = getNewOfferEvent(event);
 
   await ctx.store.save(
@@ -50,16 +62,7 @@ export async function processNewOfferEvent(
     })
   );
 
-  const accountId = await trySaveAccount(ctx);
-
-  if (accountId) {
-    const txId = await saveTransaction(
-      ctx,
-      accountId,
-      PicassoTransactionType.BONDED_FINANCE_NEW_OFFER
-    );
-    await saveActivity(ctx, txId, accountId);
-  }
+  await saveAll(ctx, PicassoTransactionType.BONDED_FINANCE_NEW_OFFER);
 }
 
 /**
@@ -71,8 +74,6 @@ export async function processNewBondEvent(
   ctx: EventHandlerContext,
   event: BondedFinanceNewBondEvent
 ) {
-  // const event = new BondedFinanceNewBondEvent(ctx);
-
   const { offerId, nbOfBonds } = getNewBondEvent(event);
 
   // Get stored information (when possible) about the bond offer
@@ -88,28 +89,22 @@ export async function processNewBondEvent(
   stored.totalPurchased += nbOfBonds;
   await ctx.store.save(stored);
 
-  const accountId = await trySaveAccount(ctx);
-
-  if (accountId) {
-    const txId = await saveTransaction(
-      ctx,
-      accountId,
-      PicassoTransactionType.BONDED_FINANCE_NEW_BOND
-    );
-    await saveActivity(ctx, txId, accountId);
-  }
+  await saveAll(ctx, PicassoTransactionType.BONDED_FINANCE_NEW_BOND);
 }
 
 // TODO: remove offer from database?
 export async function processOfferCancelledEvent(ctx: EventHandlerContext) {
+  await saveAll(ctx, PicassoTransactionType.BONDED_FINANCE_OFFER_CANCELLED);
+}
+
+async function saveAll(
+  ctx: EventHandlerContext,
+  transactionType: PicassoTransactionType
+) {
   const accountId = await trySaveAccount(ctx);
 
   if (accountId) {
-    const txId = await saveTransaction(
-      ctx,
-      accountId,
-      PicassoTransactionType.BONDED_FINANCE_OFFER_CANCELLED
-    );
+    const txId = await saveTransaction(ctx, accountId, transactionType);
     await saveActivity(ctx, txId, accountId);
   }
 }

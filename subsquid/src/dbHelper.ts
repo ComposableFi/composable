@@ -66,10 +66,23 @@ export async function trySaveAccount(
 ): Promise<string | undefined> {
   const accId = accountId || ctx.extrinsic?.signer;
 
-  if (accId) {
-    const account = await getOrCreate(ctx.store, Account, accId);
-    await ctx.store.save(account);
+  if (!accId) {
+    // no-op
+    return;
   }
+
+  let account: Account | undefined = await ctx.store.get(Account, {
+    where: { id: accId },
+  });
+
+  if (!account) {
+    account = new Account();
+  }
+
+  account.id = accId;
+  account.eventId = ctx.event.id;
+
+  await ctx.store.save(account);
 
   return accId;
 }
@@ -97,7 +110,7 @@ export async function saveTransaction(
     accountId,
     transactionType,
     blockNumber: BigInt(ctx.block.height),
-    date: new Date(ctx.block.timestamp),
+    timestamp: BigInt(ctx.block.timestamp),
   });
 
   // Store transaction

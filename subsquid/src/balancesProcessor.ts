@@ -1,13 +1,12 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
-import { randomUUID } from "crypto";
 import {
   BalancesDepositEvent,
   BalancesTransferEvent,
   BalancesWithdrawEvent,
 } from "./types/events";
 import { encodeAccount } from "./utils";
-import { getOrCreate, saveActivity, saveTransaction } from "./dbHelper";
-import { Account, HistoricalBalance, PicassoTransactionType } from "./model";
+import { saveActivity, saveTransaction, trySaveAccount } from "./dbHelper";
+import { PicassoTransactionType } from "./model";
 
 interface TransferEvent {
   from: Uint8Array;
@@ -41,32 +40,11 @@ function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
 }
 
 /**
- * Create HistoricalBalance for an account
- * @param ctx
- * @param transactionId
- * @param account
- */
-function createHistoricalBalance(
-  ctx: EventHandlerContext,
-  transactionId: string,
-  account: Account
-): HistoricalBalance {
-  return new HistoricalBalance({
-    id: randomUUID(),
-    eventId: ctx.event.id,
-    transactionId,
-    account: account,
-    balance: account.balance,
-    date: new Date(ctx.block.timestamp),
-  });
-}
-
-/**
  * Handle `balance.Transfer` event.
- *   - Create/update account who transfers funds, and update balance.
- *   - Create/update account who receives funds, and update balance.
- *   - Create transaction.
- *   - Create HistoricalBalance for both accounts
+ *   - Create/update Account who transfers funds.
+ *   - Create/update Account who receives funds.
+ *   - Create Transaction.
+ *   - Create Activity
  * @param ctx
  */
 export async function processTransferEvent(ctx: EventHandlerContext) {
@@ -75,47 +53,30 @@ export async function processTransferEvent(ctx: EventHandlerContext) {
   const transferEvent = getTransferEvent(event);
   const from = encodeAccount(transferEvent.from);
   const to = encodeAccount(transferEvent.to);
-  const tip = ctx.extrinsic?.tip || 0n;
-  const { amount } = transferEvent;
 
-  const accountFrom = await getOrCreate(ctx.store, Account, from);
-  const accountTo = await getOrCreate(ctx.store, Account, to);
+  const accountFromId = await trySaveAccount(ctx, from);
+  const accountToId = await trySaveAccount(ctx, to);
 
-  // Update balance
-  accountFrom.balance =
-    BigInt(accountFrom.balance || 0n) - BigInt(amount) - BigInt(tip);
+  if (accountFromId) {
+    const txId = await saveTransaction(
+      ctx,
+      from,
+      PicassoTransactionType.BALANCES_TRANSFER
+    );
 
-  accountTo.balance = BigInt(accountTo.balance || 0n) + BigInt(amount);
+    await saveActivity(ctx, txId, from);
 
-  // TODO: get correct initial balance
-
-  const txId = randomUUID();
-
-  await saveTransaction(
-    ctx,
-    from,
-    PicassoTransactionType.BALANCES_TRANSFER,
-    txId
-  );
-
-  await ctx.store.save(accountFrom);
-  await ctx.store.save(accountTo);
-
-  const historicalBalanceFrom = createHistoricalBalance(ctx, txId, accountFrom);
-  await ctx.store.save(historicalBalanceFrom);
-
-  const historicalBalanceTo = createHistoricalBalance(ctx, txId, accountTo);
-  await ctx.store.save(historicalBalanceTo);
-
-  await saveActivity(ctx, txId, from);
-  await saveActivity(ctx, txId, to);
+    if (accountToId) {
+      await saveActivity(ctx, txId, to);
+    }
+  }
 }
 
 /**
  * Handle `balance.Withdraw` event.
- *   - Create/update account who withdraws funds, and update balance.
- *   - Create transaction.
- *   - Create HistoricalBalance.
+ *   - Create/update Account who withdraws funds.
+ *   - Create Transaction.
+ *   - Create Activity.
  * @param ctx
  */
 export async function processWithdrawEvent(ctx: EventHandlerContext) {
@@ -123,40 +84,25 @@ export async function processWithdrawEvent(ctx: EventHandlerContext) {
   const evt = new BalancesWithdrawEvent(ctx);
   const event = getWithdrawEvent(evt);
   const who = encodeAccount(event.who);
-  const tip = ctx.extrinsic?.tip || 0n;
-  const { amount } = event;
 
-  const account = await getOrCreate(ctx.store, Account, who);
+  const accountId = await trySaveAccount(ctx, who);
 
-  // Update balance
-  account.balance =
-    BigInt(account.balance || 0n) - BigInt(amount) - BigInt(tip);
+  if (accountId) {
+    const txId = await saveTransaction(
+      ctx,
+      accountId,
+      PicassoTransactionType.BALANCES_WITHDRAW
+    );
 
-  // TODO: get correct initial balance
-
-  const txId = randomUUID();
-
-  await saveTransaction(
-    ctx,
-    who,
-    PicassoTransactionType.BALANCES_WITHDRAW,
-    txId
-  );
-  await ctx.store.save(account);
-
-  const historicalBalance = createHistoricalBalance(ctx, txId, account);
-  await ctx.store.save(historicalBalance);
-
-  await saveActivity(ctx, txId, who);
-
-  console.log("Finish processing `withdraw`");
+    await saveActivity(ctx, txId, accountId);
+  }
 }
 
 /**
  * Handle `balance.Deposit` event.
- *   - Create/update account who deposits funds, and update balance.
- *   - Create transaction.
- *   - Create HistoricalBalance.
+ *   - Create/update Account who deposits funds.
+ *   - Create Transaction.
+ *   - Create Activity.
  * @param ctx
  */
 export async function processDepositEvent(ctx: EventHandlerContext) {
@@ -164,32 +110,15 @@ export async function processDepositEvent(ctx: EventHandlerContext) {
   const evt = new BalancesDepositEvent(ctx);
   const event = getDepositEvent(evt);
   const who = encodeAccount(event.who);
-  const tip = ctx.extrinsic?.tip || 0n;
-  const { amount } = event;
 
-  const account = await getOrCreate(ctx.store, Account, who);
+  const accountId = await trySaveAccount(ctx, who);
 
-  // Update balance
-  account.balance =
-    BigInt(account.balance || 0n) + BigInt(amount) - BigInt(tip);
-
-  // TODO: get correct initial balance
-
-  const txId = randomUUID();
-
-  await saveTransaction(
-    ctx,
-    who,
-    PicassoTransactionType.BALANCES_DEPOSIT,
-    txId
-  );
-
-  await ctx.store.save(account);
-
-  const historicalBalance = createHistoricalBalance(ctx, txId, account);
-  await ctx.store.save(historicalBalance);
-
-  await saveActivity(ctx, txId, who);
-
-  console.log("Finish processing `deposit`");
+  if (accountId) {
+    const txId = await saveTransaction(
+      ctx,
+      accountId,
+      PicassoTransactionType.BALANCES_DEPOSIT
+    );
+    await saveActivity(ctx, txId, accountId);
+  }
 }

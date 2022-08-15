@@ -7,13 +7,7 @@ import {
 import { instance, mock } from "ts-mockito";
 import { randomUUID } from "crypto";
 import * as ss58 from "@subsquid/ss58";
-import {
-  Account,
-  Activity,
-  PicassoTransaction,
-  PicassoTransactionType,
-} from "./model";
-import { getOrCreate } from "./dbHelper";
+import { Account } from "./model";
 
 const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
 
@@ -40,12 +34,4 @@ export function createAccount(): Uint8Array {
 
 export function encodeAccount(account: Uint8Array): string {
   return ss58.codec("picasso").encode(account);
-}
-
-export function updateBalance(account: Account, ctx: EventHandlerContext) {
-  const tip = ctx.extrinsic?.tip;
-
-  if (tip) {
-    account.balance = BigInt(account.balance || 0n) - BigInt(tip);
-  }
 }

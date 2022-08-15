@@ -1,5 +1,4 @@
 export * from "./account.model"
-export * from "./historicalBalance.model"
 export * from "./pabloTransaction.model"
 export * from "./_pabloTransactionType"
 export * from "./pabloPool.model"

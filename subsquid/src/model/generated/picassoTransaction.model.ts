@@ -23,12 +23,21 @@ export class PicassoTransaction {
   @Column_("text", {nullable: false})
   accountId!: string
 
+  /**
+   * Type of transaction
+   */
   @Column_("varchar", {length: 37, nullable: false})
   transactionType!: PicassoTransactionType
 
+  /**
+   * Block in which transaction was registered
+   */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint
 
-  @Column_("timestamp with time zone", {nullable: false})
-  date!: Date
+  /**
+   * Timestamp of the block in which this transaction was registered
+   */
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  timestamp!: bigint
 }
