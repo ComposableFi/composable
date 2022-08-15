@@ -1,7 +1,11 @@
-use crate::staking::lock::{Lock, LockConfig};
-use codec::{Decode, Encode};
+use core::num::NonZeroU64;
 
-use crate::time::DurationSeconds;
+use crate::{
+	staking::lock::{Lock, LockConfig},
+	time::DurationSeconds,
+};
+
+use codec::{Decode, Encode};
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
@@ -39,7 +43,47 @@ pub struct Reward<AssetId, Balance> {
 
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
-	pub reward_rate: Perbill,
+	pub reward_rate: RewardRate<Balance>,
+
+	/// The last time the reward was updated, in seconds.
+	pub last_updated_timestamp: u64,
+}
+
+#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
+pub struct RewardRate<Balance> {
+	/// The period that the rewards are handed out in.
+	pub period: RewardRatePeriod,
+	/// The amount that is rewarded each period.
+	pub amount: Balance,
+}
+
+impl<Balance> RewardRate<Balance> {
+	pub fn per_second<B: Into<Balance>>(amount: B) -> Self {
+		Self { period: RewardRatePeriod::PerSecond, amount: amount.into() }
+	}
+}
+
+#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
+pub enum RewardRatePeriod {
+	PerSecond,
+}
+
+impl RewardRatePeriod {
+	/// Returns the length of the period in seconds.
+	pub fn as_secs(&self) -> NonZeroU64 {
+		match self {
+			RewardRatePeriod::PerSecond =>
+				sp_std::num::NonZeroU64::new(1).expect("1 is non-zero; qed;"),
+		}
+	}
+}
+
+/// A reward update states the new reward and reward_rate for a given asset
+#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
+pub struct RewardUpdate<Balance> {
+	/// The rewarding rate that increases the pool `total_reward`
+	/// at a given time.
+	pub reward_rate: RewardRate<Balance>,
 }
 
 /// Abstraction over the asset to reduction map stored for staking.
@@ -50,7 +94,10 @@ pub type Rewards<AssetId, Balance, Limit> =
 	BoundedBTreeMap<AssetId, Reward<AssetId, Balance>, Limit>;
 
 impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
-	pub fn from(reward_config: RewardConfig<AssetId, Balance>) -> Reward<AssetId, Balance> {
+	pub fn from_config(
+		reward_config: RewardConfig<AssetId, Balance>,
+		now_seconds: u64,
+	) -> Reward<AssetId, Balance> {
 		Reward {
 			asset_id: reward_config.asset_id,
 			total_rewards: Zero::zero(),
@@ -58,6 +105,7 @@ impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
 			total_dilution_adjustment: Zero::zero(),
 			max_rewards: reward_config.max_rewards,
 			reward_rate: reward_config.reward_rate,
+			last_updated_timestamp: now_seconds,
 		}
 	}
 }
@@ -102,7 +150,7 @@ pub struct RewardConfig<AssetId, Balance> {
 
 	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
-	pub reward_rate: Perbill,
+	pub reward_rate: RewardRate<Balance>,
 }
 
 pub type RewardConfigs<AssetId, Balance, Limit> =

@@ -24,6 +24,7 @@ on:
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
+# TODO: migrate most of these to nix
 jobs:
   spellcheck:
     runs-on: ubuntu-latest
@@ -97,90 +98,6 @@ jobs:
           files: lcov.info
           fail_ci_if_error: false
   
-  substrate-runtime-benchmark:
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: benchmarking-runtime-compat-${{ matrix.runtime }}-${{ github.ref }}
-      cancel-in-progress: true
-    container:
-      image: composablefi/ci-linux:2022-08-06
-    strategy:
-      matrix:
-        runtime: ["dali-dev", "picasso-dev", "composable-dev"]
-    name: Benchmarking / ${{ matrix.runtime }}
-    steps:
-      - name: Clean up
-        continue-on-error: true
-        run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-          docker system prune --force --all --volumes
-      - uses: actions/checkout@v2
-
-      - name: Get branch name
-        id: branch-name
-        uses: tj-actions/branch-names@v5.1
-
-      # FIXME: actually broken: https://github.com/ComposableFi/composable/runs/5570301249?check_suite_focus=true
-      # - name: Check for runtime changes
-      #   env:
-      #     BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-      #     GITHUB_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
-      #   id: check_runtime
-      #   run: .maintain/check_runtime.sh
-
-      - name: Run single pass benchmarking
-        # only run this step if there are runtime changes
-        # if: env.RUNTIME_CHECK == 1
-        env:
-          RUST_BACKTRACE: full
-        run: |
-          cargo build --release -p composable --features=runtime-benchmarks
-          ./target/release/composable benchmark pallet \
-            --chain="${{ matrix.runtime }}" \
-            --execution=wasm \
-            --wasm-execution=compiled \
-            --wasm-instantiation-strategy=legacy-instance-reuse \
-            --pallet="*" \
-            --extrinsic='*' \
-            --steps=1 \
-            --repeat=1 \
-            --log error
-
-
-  substrate-tests:
-    name: Unit Tests 
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: tests-${{ github.ref }}
-      cancel-in-progress: true
-    container:
-      image: composablefi/ci-linux:2022-08-06
-    steps:
-      - name: Clean up
-        continue-on-error: true
-        run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-          docker system prune --force --all --volumes
-      - uses: actions/checkout@v2
-      - name: Rustup show
-        run: |
-          rustup show
-      - uses: actions/checkout@v2
-      - name: Run Test
-        run: |
-          # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
-          # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-          SKIP_WASM_BUILD=1 cargo test --workspace --locked --release --verbose
-
-
   linters:
     name: Linters
     runs-on:

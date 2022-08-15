@@ -16,9 +16,12 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 // TODO: XCMP/governance/.. setups here are outdated
+#[cfg(all(feature = "std", feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("COMPOSABLE_RUNTIME")));
+#[cfg(not(feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = None;
+
 mod weights;
 mod xcmp;
 use common::{
@@ -155,7 +158,7 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 
-	pub const SS58Prefix: u8 = 49;
+	pub const SS58Prefix: u8 = 50;
 }
 
 // Configure FRAME pallets to include in runtime.

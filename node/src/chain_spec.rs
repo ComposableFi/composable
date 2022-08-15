@@ -2,6 +2,7 @@
 use common::{AccountId, AuraId};
 use cumulus_primitives_core::ParaId;
 use once_cell::sync::Lazy;
+use primitives::currency::CurrencyId;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -99,8 +100,8 @@ pub fn composable() -> composable::ChainSpec {
 pub fn picasso_dev() -> picasso::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PICA".into());
-	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("ss58Format".into(), 49.into());
+	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
+	properties.insert("ss58Format".into(), picasso_runtime::SS58Prefix::get().into());
 
 	picasso::ChainSpec::from_genesis(
 		"Local Picasso Testnet",
@@ -143,8 +144,8 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 pub fn dali_dev() -> dali::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "DALI".into());
-	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("ss58Format".into(), 49.into());
+	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
+	properties.insert("ss58Format".into(), dali_runtime::SS58Prefix::get().into());
 
 	dali::ChainSpec::from_genesis(
 		"Local Dali Testnet",
@@ -187,8 +188,8 @@ pub fn dali_dev() -> dali::ChainSpec {
 pub fn composable_dev() -> composable::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "LAYR".into());
-	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("ss58Format".into(), 50.into());
+	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
+	properties.insert("ss58Format".into(), composable_runtime::SS58Prefix::get().into());
 
 	composable::ChainSpec::from_genesis(
 		"Local Composable Testnet",

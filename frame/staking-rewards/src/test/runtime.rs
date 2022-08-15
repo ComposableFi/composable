@@ -1,29 +1,19 @@
 use crate::test::prelude::*;
-use composable_traits::{
-	currency::LocalAssets,
-	governance::{GovernanceRegistry, SignedRawOrigin},
-};
+use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 
-use frame_support::{
-	ord_parameter_types, parameter_types,
-	traits::{Everything, GenesisBuild},
-	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
-	PalletId,
-};
+use frame_support::{ord_parameter_types, parameter_types, traits::Everything, PalletId};
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use orml_traits::{parameter_type_with_key, GetByKey};
 use sp_arithmetic::traits::Zero;
 use sp_runtime::{
-	testing::{Header, TestXt},
-	traits::{
-		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify,
-	},
-	DispatchError, Perbill,
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+
 pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
@@ -207,6 +197,7 @@ impl pallet_staking_rewards::Config for Test {
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
+	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
 }
 
 // Build genesis storage according to the mock runtime.

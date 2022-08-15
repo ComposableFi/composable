@@ -1,3 +1,5 @@
+import BigNumber from "bignumber.js";
+
 export interface LiquidityBootstrappingPoolTrade {
     baseAssetAmount: string;
     baseAssetId: number;
@@ -8,4 +10,5 @@ export interface LiquidityBootstrappingPoolTrade {
     spotPrice: string;
     side: "SELL" | "BUY";
     walletAddress: string;
-} 
+    blockNumber: BigNumber;
+}
