@@ -4,7 +4,7 @@ name = "extrinsics-docs-scraper"
 version = "0.1.0"
 
 [dependencies]
-anyhow = "1.0.56"
+anyhow = "1.0.59"
 cargo_toml = "0.11.5"
 clap = { version = "3.1.8", features = ["derive"] }
 env_logger = { version = "0.9.0", features = ["termcolor"] }
