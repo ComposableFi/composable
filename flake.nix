@@ -462,6 +462,7 @@
                 # with nix developers are empowered for local dry run of most ci
                 llvmPackages_latest.llvm
                 llvmPackages_latest.bintools
+                lldb
                 zlib.out
                 xorriso
                 grub2
