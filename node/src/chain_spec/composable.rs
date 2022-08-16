@@ -62,13 +62,13 @@ pub fn genesis_config(
 			candidacy_bond: existential_deposit * 16,
 			..Default::default()
 		},
-		council_membership: composable_runtime::CouncilMembershipConfig {
-			members: vec![],
-			..Default::default()
-		},
+		council_membership: Default::default(),
 		// council will get its members from council_membership
 		council: Default::default(),
 		democracy: Default::default(),
 		treasury: Default::default(),
+		relayer_xcm: Default::default(),
+		tokens: Default::default(),
+		transaction_payment: Default::default(),
 	}
 }

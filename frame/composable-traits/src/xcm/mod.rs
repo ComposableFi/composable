@@ -78,7 +78,7 @@ impl<Parameters: Encode> XcmCumulusDispatch<Parameters> {
 /// The actualy binary data dispatched into `Call`.
 /// Assets to be liquidated was moved with `xcm::latest::Instruction::TransferReserveAsset` before
 /// in same XCM message.
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellRequest {
 	/// Created on sender side and used to correlate callbacks.
 	/// Receiver tracks origin and `order_id`.

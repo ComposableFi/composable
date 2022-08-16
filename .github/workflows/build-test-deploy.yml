@@ -27,6 +27,7 @@ env:
 
 jobs:
   common-deps:
+    name: "Common dependencies"
     concurrency:
       group: commondeps-${{ github.ref }}
       cancel-in-progress: true
@@ -120,16 +121,19 @@ jobs:
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#unit-tests --no-update-lock-file --show-trace -L              
 
   check-benchmarks:
-    name: "Check benchmarks"
-    needs: common-deps
+    name: "Benchmark"
+    needs: package-composable-bench-node
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
     concurrency:
-      group: checkbenchmarks-${{ github.ref }}
+      group: checkbenchmarks-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
+    strategy:
+      matrix:
+        runtime: [dali, picasso, composable]
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -148,21 +152,21 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-dali-dev-benchmarks --no-update-lock-file --show-trace -L       
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-picasso-dev-benchmarks --no-update-lock-file --show-trace -L       
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-composable-dev-benchmarks --no-update-lock-file --show-trace -L       
+          cachix watch-exec -j 16 -c 0 composable-community nix -- run .#benchmarks-once-${{ matrix.runtime }} --no-update-lock-file --show-trace -L       
 
-  check-runtimes:
-    name: "Check runtimes"
-    needs: common-deps
+  local-integration-tests:
+    name: "Local integration tests"
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
     concurrency:
-      group: checkruntimes-${{ github.ref }}
+      group: local-integration-tests-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
+    strategy:
+      matrix:
+        runtime: [dali, picasso]
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -181,10 +185,10 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-dali-integration-tests --no-update-lock-file --show-trace -L       
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-picasso-integration-tests --no-update-lock-file --show-trace -L       
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-${{ matrix.runtime }}-integration-tests --no-update-lock-file --show-trace -L       
 
   package-composable-node:
+    name: "Package Composable node"
     needs: common-deps
     runs-on:
       - self-hosted
@@ -214,7 +218,38 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node --no-update-lock-file --show-trace -L
 
+  package-composable-bench-node:
+    name: "Package Composable bench node"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: packagecomposablebenchnode-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-bench-node --no-update-lock-file --show-trace -L
+
   package-polkadot-node:
+    name: "Package Polkadot node"
     runs-on:
       - self-hosted
       - linux
@@ -274,9 +309,15 @@ jobs:
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
 
   devnet-container:
+    name: "Docker Devnet"
     needs:
-      - package-composable-node
+      - devnet-integration-tests
       - package-polkadot-node
+      - package-composable-node
+      - check-benchmarks
+      - check-nix
+      - local-integration-tests
+      - unit-tests
     runs-on:
       - self-hosted
       - linux
@@ -308,9 +349,15 @@ jobs:
           nix build .#devnet-container --no-update-lock-file --show-trace -L
 
   devcontainer:
+    name: "Docker Devcontainer"
     needs:
-      - package-composable-node
+      - devnet-integration-tests
       - package-polkadot-node
+      - package-composable-node
+      - check-benchmarks
+      - check-nix
+      - local-integration-tests
+      - unit-tests
     runs-on:
       - self-hosted
       - linux
@@ -361,7 +408,13 @@ jobs:
 
   devnet-integration-tests:
       name: "Devnet integration tests"
-      needs: package-composable-node
+      needs:
+        - package-polkadot-node
+        - package-composable-node
+        - check-benchmarks
+        - check-nix
+        - local-integration-tests
+        - unit-tests
       runs-on: ubuntu-latest      
       concurrency:
         group: runtime-tests-${{ github.ref }}
@@ -402,7 +455,10 @@ jobs:
       needs:
         - devnet-integration-tests
         - package-polkadot-node
+        - package-composable-node
         - check-benchmarks
+        - check-nix
+        - local-integration-tests
         - unit-tests
       runs-on: ubuntu-latest
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
