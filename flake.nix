@@ -479,6 +479,13 @@
               NIX_PATH = "nixpkgs=${pkgs.path}";
             });
 
+            developers-minimal = mkShell (common-attrs // {
+              buildInputs = with packages; [
+                rust-nightly
+              ];
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            });
+
             writers = mkShell {
               buildInputs = with packages; [
                 mdbook
