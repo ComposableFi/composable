@@ -479,6 +479,7 @@
                 python3
                 nodejs
                 nixpkgs-fmt 
+                rnix-lsp
                 jq
                 google-cloud-sdk # devs can list container images or binary releases
                 nix-tree
