@@ -29,7 +29,7 @@ pub fn deserialize_json<T: serde::de::DeserializeOwned>(
 
 #[derive(Clone)]
 pub struct ProgramBuilder<CurrentNetwork: Network, Account, Assets> {
-	pub tag: Option<Vec<u8>>,
+	pub tag: Vec<u8>,
 	pub instructions: VecDeque<Instruction<NetworkId, Vec<u8>, Account, Assets>>,
 	pub _marker: PhantomData<CurrentNetwork>,
 }
@@ -40,7 +40,7 @@ where
 	CurrentNetwork::EncodedCall: Into<Vec<u8>>,
 {
 	#[inline]
-	pub fn new(tag: Option<Vec<u8>>) -> Self {
+	pub fn new(tag: Vec<u8>) -> Self {
 		ProgramBuilder { tag, instructions: VecDeque::new(), _marker: PhantomData }
 	}
 
@@ -53,7 +53,7 @@ where
 	#[inline]
 	pub fn spawn<SpawningNetwork, FinalNetwork, E, F>(
 		self,
-		tag: Option<Vec<u8>>,
+		tag: Vec<u8>,
 		salt: Vec<u8>,
 		assets: Assets,
 		f: F,
@@ -155,10 +155,10 @@ mod tests {
 	#[test]
 	fn can_build() {
 		let program = || -> Result<_, ProgramBuildError> {
-			Ok(ProgramBuilder::<Picasso, (), Funds>::new(Some("Main program".as_bytes().to_vec()))
+			Ok(ProgramBuilder::<Picasso, (), Funds>::new("Main program".as_bytes().to_vec())
 				.call(DummyProtocol1)?
 				.spawn::<Ethereum, _, ProgramBuildError, _>(
-					None,
+					Default::default(),
 					Default::default(),
 					Funds::empty(),
 					|child| {
@@ -175,7 +175,7 @@ mod tests {
 		assert_eq!(
 			program,
 			Program {
-				tag: Some("Main program".as_bytes().to_vec()),
+				tag: "Main program".as_bytes().to_vec(),
 				instructions: VecDeque::from([
 					// Protocol 1 on picasso
 					Instruction::Call { encoded: vec![202, 254, 190, 239] },
@@ -185,7 +185,7 @@ mod tests {
 						salt: Vec::new(),
 						assets: Funds::empty(),
 						program: Program {
-							tag: None,
+							tag: Default::default(),
 							instructions: VecDeque::from([
 								// Protocol 2 on eth
 								Instruction::Call { encoded: vec![222, 173, 192, 222] },
@@ -206,9 +206,9 @@ mod tests {
 	#[test]
 	fn json_iso() {
 		let program = || -> Result<_, ProgramBuildError> {
-			Ok(ProgramBuilder::<Picasso, Vec<u8>, Funds>::new(None)
+			Ok(ProgramBuilder::<Picasso, Vec<u8>, Funds>::new(Default::default())
 				.spawn::<Ethereum, _, ProgramBuildError, _>(
-					None,
+					Default::default(),
 					Vec::new(),
 					Funds::from(BTreeMap::from([(1, 10_000_000_000_000u128)])),
 					|child| Ok(child),

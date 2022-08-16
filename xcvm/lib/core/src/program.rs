@@ -7,6 +7,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Program<Instructions> {
-	pub tag: Option<Vec<u8>>,
+	pub tag: Vec<u8>,
 	pub instructions: Instructions,
 }
