@@ -18,17 +18,7 @@ export function toStakingRewardPoolConfig(
       assetId: api.createType("u128", poolConfig.assetId),
       // end block of the rewards
       endBlock: api.createType("u32", endBlock.toString()),
-      rewardConfigs: api.createType("BTreeMap<u128, ComposableTraitsStakingRewardConfig>", [
-        api.createType("u128", poolConfig.rewardConfigs.assetId),
-        {
-          maxRewards: poolConfig.rewardConfigs.maxRewards,
-          assetId: poolConfig.rewardConfigs.assetId,
-          rewardRate: {
-            PerSecond: { period: 100000 },
-            amount: poolConfig.rewardConfigs.rewardRate.amount
-          }
-        }
-      ]),
+      rewardConfigs: api.createType("BTreeMap<u128, ComposableTraitsStakingRewardConfig>", poolConfig.rewardConfigs),
       locK: {
         // time presets for locking
         durationPresets: api.createType("BTreeMap<u64, Perbill>", poolConfig.locK.durationPresets),

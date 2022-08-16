@@ -64,11 +64,15 @@
       "assetId": "201",
       "endBlock": "1000",
       "rewardConfigs": {
-        "assetId": "1",
-        "maxRewards": "100000000000000000",
-        "rewardRate": {
-          "period": "PerSecond",
-          "amount": "1000000000000000"
+        "1": {
+          "assetId": "1",
+          "maxRewards": "100000000000000000",
+          "rewardRate": {
+            "period": {
+              "PerSecond": "100000"
+            },
+            "amount": "1000000000000000"
+          }
         }
       },
       "locK": {
