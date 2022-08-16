@@ -1,6 +1,4 @@
 import { BigNumberInput, Label } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { BondDetails } from "@/defi/types";
 import {
   Box,
   Button,
@@ -11,10 +9,9 @@ import {
   alpha,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
-import { MockedAsset } from "@/store/assets/assets.types";
 import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
 
 const containerBoxProps = (theme: Theme) => ({
@@ -47,7 +44,7 @@ export type ClaimFormProps = {
 
 export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
-  const { principalAsset, rewardAsset } = bond;
+  const { rewardAsset } = bond;
 
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);

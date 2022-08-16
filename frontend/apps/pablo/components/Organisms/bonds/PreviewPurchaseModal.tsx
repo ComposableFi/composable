@@ -7,7 +7,6 @@ import { closeConfirmingModal } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
-import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
 
 const defaultLabelProps = (label: string, balance: string) =>
   ({
@@ -40,13 +39,12 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const { principalAsset, roi } = bond;
+  const { roi } = bond;
   const handleCancelBond = async () => {
     dispatch(closeConfirmingModal());
   };
 
-  let principalSymbol = usePrincipalAssetSymbol(bond.principalAsset);
-  const principalPriceUSD = useUSDPriceByAssetId(bond.selectedBondOffer ?  bond.selectedBondOffer.asset : "none")
+  const principalPriceUSD = useUSDPriceByAssetId(bond.selectedBondOffer ?  bond.selectedBondOffer.asset : "none");
   const bondMarketPrice = principalPriceUSD.times(bond.principalAssetPerBond);
   const rewardPriceUSD = useUSDPriceByAssetId(bond.selectedBondOffer ?  bond.selectedBondOffer.reward.asset : "none");
   const totalRewardsPrice = rewardPriceUSD.times(bond.rewardAssetPerBond);

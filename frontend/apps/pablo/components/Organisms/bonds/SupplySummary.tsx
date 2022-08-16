@@ -85,7 +85,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
         <BaseAsset
         label={simplePrincipalAsset.symbol}
         icon={simplePrincipalAsset.icon}
-        LabelProps={{ variant: "h4" }}
+        LabelProps={{ variant: "body1" }}
         iconSize={36}
       />
       );
@@ -117,7 +117,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
             <BaseAsset
               label={(rewardAsset as MockedAsset).symbol}
               icon={(rewardAsset as MockedAsset).icon}
-              LabelProps={{ variant: "h4" }}
+              LabelProps={{ variant: "body1" }}
               iconSize={36}
             />
           )}
