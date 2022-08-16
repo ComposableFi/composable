@@ -28,6 +28,9 @@ env:
 jobs:
   spellcheck:
     runs-on: ubuntu-latest
+    concurrency:
+      group: spellcheck-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
       - uses: streetsidesoftware/cspell-action@v2
