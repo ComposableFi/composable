@@ -1,7 +1,7 @@
 {
   # see ./docs/nix.md for design guidelines of nix organization
   description =
-    "Composable Finance Local Networks Lancher and documentation Book";
+    "Composable Finance systems, tools and releases";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils = {
@@ -100,13 +100,7 @@
           # Nightly rust used for wasm runtime compilation
           rust-nightly = rust-bin.selectLatestNightlyWith (toolchain:
             toolchain.default.override {
-              extensions = [ "rust-src" ];
-              targets = [ "wasm32-unknown-unknown" ];
-            });
-
-          rust-nightly-dev = rust-bin.selectLatestNightlyWith (toolchain:
-            toolchain.default.override {
-              extensions = [ "rust-src" "clippy" "rustfmt" ];
+              extensions = [ "rust-src" "clippy" "rustfmt" "rust-analyzer" ];
               targets = [ "wasm32-unknown-unknown" ];
             });
 
@@ -219,7 +213,8 @@
           # Build a wasm runtime, unoptimized
           mk-runtime = name:
             let file-name = "${name}_runtime.wasm";
-            in crane-nightly.buildPackage (common-attrs // {
+            in
+            crane-nightly.buildPackage (common-attrs // {
               pname = "${name}-runtime";
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand =
@@ -232,7 +227,8 @@
           # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
           mk-optimized-runtime = name:
             let runtime = mk-runtime name;
-            in stdenv.mkDerivation {
+            in
+            stdenv.mkDerivation {
               name = "${runtime.name}-optimized";
               phases = [ "installPhase" ];
               installPhase = ''
@@ -393,6 +389,8 @@
 
             # TODO: inherit and provide script to run all stuff
             # devnet-container-xcvm
+            # NOTE: The devcontainer is currently broken for aarch64. 
+            # Please use the developers devShell instead
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
@@ -400,9 +398,8 @@
               contents = [
                 # ISSUE: for some reason stable overrides nighly, need to set different order somehow
                 #rust-stable
-                rust-nightly-dev
+                rust-nightly
                 cachix
-                rust-analyzer
                 rustup # just if it wants to make ad hoc updates
                 nix
                 helix
@@ -454,37 +451,49 @@
             default = packages.composable-node;
           };
 
-          checks = {
-              # see packages for checks, for now these are more elaborated on how to run
-          };
-
           devShells = rec {
-            developers = mkShell {
-              inputsFrom = builtins.attrValues self.checks;
+            developers = mkShell (common-attrs // {
               buildInputs = with packages; [
-                # with nix developers are empowered for local dry run of most ci
-                rust-stable
-                wasm-optimizer
-                composable-node
-                mdbook
-                taplo
-                python3
-                nodejs
-                nixpkgs-fmt
+                bacon
+                google-cloud-sdk
+                grub2
                 jq
-                google-cloud-sdk # devs can list container images or binary releases
+                lldb
+                llvmPackages_latest.bintools
+                llvmPackages_latest.lld
+                llvmPackages_latest.llvm
+                mdbook
                 nix-tree
+                nixpkgs-fmt
+                openssl
+                openssl.dev
+                pkg-config
+                qemu
+                rnix-lsp
+                rust-nightly
+                taplo
+                wasm-optimizer
+                xorriso
+                zlib.out
               ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
+            });
 
-            technical-writers = mkShell {
+            developers-minimal = mkShell (common-attrs // {
+              buildInputs = with packages; [
+                rust-nightly
+              ];
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            });
+
+            writers = mkShell {
               buildInputs = with packages; [
                 mdbook
                 python3
                 plantuml
                 graphviz
                 pandoc
+                nodejs
               ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
@@ -552,7 +561,8 @@
       nixopsConfigurations = {
         default =
           let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          in import ./.nix/devnet.nix {
+          in
+          import ./.nix/devnet.nix {
             inherit nixpkgs;
             inherit gce-input;
             devnet-dali = pkgs.callPackage mk-devnet {
