@@ -8,10 +8,6 @@
       url = "github:numtide/flake-utils";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    flake-compat = {
-        url = "github:edolstra/flake-compat";
-        flake = false;
-    };
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -23,7 +19,7 @@
       inputs.flake-utils.follows = "flake-utils";
     };
   };
-  outputs = { self, nixpkgs, crane, flake-utils, flake-compat,  rust-overlay }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
