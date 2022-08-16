@@ -35,11 +35,13 @@ serde = { version = '1', optional = true }
 
 [dev-dependencies]
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+hex-literal = { version = "0.3.3" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 pallet-assets = { path = '../assets', default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 pallet-currency-factory = { path = "../currency-factory" }
+pallet-oracle = { version = "1.0.0", path = "../oracle" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 pallet-vamm = { version = "0.1.0", path = "../vamm" }
 proptest = "1.0.0"

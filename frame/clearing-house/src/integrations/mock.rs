@@ -1,24 +1,21 @@
 use crate::{
 	self as clearing_house,
-	mock::{
-		accounts::{AccountId, ALICE},
-		assets::{AssetId, PICA},
-		oracle as mock_oracle,
-	},
+	mock::assets::{AssetId, PICA},
 };
 use composable_traits::{defi::DeFiComposableConfig, time::DurationSeconds};
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU16, ConstU32, ConstU64, Everything, GenesisBuild},
+	traits::{ConstU16, ConstU32, ConstU64, EnsureOneOf, Everything, GenesisBuild},
 	PalletId,
 };
 use frame_system as system;
 use frame_system::{EnsureRoot, EnsureSignedBy};
+use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
-use sp_core::H256;
+use sp_core::{sr25519, sr25519::Signature, H256};
 use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	testing::{Header, TestXt},
+	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
 	FixedI128, FixedU128,
 };
 
@@ -44,11 +41,17 @@ frame_support::construct_runtime!(
 		LpTokenFactory: pallet_currency_factory,
 		Assets: pallet_assets,
 		Vamm: pallet_vamm,
-		Oracle: mock_oracle,
+		Oracle: pallet_oracle,
 		TestPallet: clearing_house,
 	}
 );
 
+// ----------------------------------------------------------------------------------------------------
+//                                         Types & Constants
+// ----------------------------------------------------------------------------------------------------
+
+pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+// pub type AccountId = sp_core::sr25519::Public;
 pub type Amount = i64;
 pub type Balance = u128;
 pub type Decimal = FixedI128;
@@ -58,6 +61,11 @@ pub type ReserveIdentifier = [u8; 8]; // copied from 'frame/assets/src/mocks.rs'
 pub type UnsignedDecimal = FixedU128;
 pub type VammId = u64;
 pub type Moment = u64;
+
+pub const ALICE: AccountId = sp_core::sr25519::Public(hex!(
+	"0000000000000000000000000000000000000000000000000000000000000000"
+));
+pub const TREASURY: AccountId = sr25519::Public([10_u8; 32]);
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -213,18 +221,68 @@ impl pallet_vamm::Config for Runtime {
 
 // ----------------------------------------------------------------------------------------------------
 //                                                   Oracle
+// 							This section copied from frame/oracle/src/mocks.rs
 // ----------------------------------------------------------------------------------------------------
+
+pub type Extrinsic = TestXt<Call, ()>;
+
+impl frame_system::offchain::SigningTypes for Runtime {
+	type Public = <Signature as Verify>::Signer;
+	type Signature = Signature;
+}
+
+impl<LocalCall> frame_system::offchain::SendTransactionTypes<LocalCall> for Runtime
+where
+	Call: From<LocalCall>,
+{
+	type OverarchingCall = Call;
+	type Extrinsic = Extrinsic;
+}
+
+impl<LocalCall> frame_system::offchain::CreateSignedTransaction<LocalCall> for Runtime
+where
+	Call: From<LocalCall>,
+{
+	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
+		call: Call,
+		_public: <Signature as Verify>::Signer,
+		_account: AccountId,
+		nonce: u64,
+	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
+		Some((call, (nonce, ())))
+	}
+}
+
+pub type PriceValue = u128;
 
 parameter_types! {
 	pub const MaxAnswerBound: u32 = 5;
+	pub const MaxAssetsCount: u32 = 2;
+	pub const MaxHistory: u32 = 3;
+	pub const MaxPrePrices: u32 = 12;
+	pub const MinStake: u64 = 1;
+	pub const StakeLock: u64 = 1;
+	pub const StalePrice: u64 = 2;
+	pub const TreasuryAccountId : AccountId = TREASURY;
 }
 
-impl mock_oracle::Config for Runtime {
+impl pallet_oracle::Config for Runtime {
+	type Event = Event;
+	type AuthorityId = pallet_oracle::crypto::BathurstStId;
+	type Currency = Balances;
 	type AssetId = AssetId;
-	type Balance = Balance;
-	type Timestamp = u64;
-	type LocalAssets = ();
+	type PriceValue = PriceValue;
+	type StakeLock = StakeLock;
+	type StalePrice = StalePrice;
+	type MinStake = MinStake;
+	type AddOracle = EnsureOneOf<EnsureSignedBy<RootAccount, AccountId>, EnsureRoot<AccountId>>;
 	type MaxAnswerBound = MaxAnswerBound;
+	type MaxAssetsCount = MaxAssetsCount;
+	type MaxHistory = MaxHistory;
+	type MaxPrePrices = MaxPrePrices;
+	type WeightInfo = ();
+	type LocalAssets = ();
+	type TreasuryAccount = TreasuryAccountId;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -265,8 +323,6 @@ pub struct ExtBuilder {
 	pub native_balances: Vec<(AccountId, Balance)>,
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
 	pub collateral_type: Option<AssetId>,
-	pub vamm_id: Option<VammId>,
-	pub vamm_twap: Option<UnsignedDecimal>,
 	pub oracle_asset_support: Option<bool>,
 	pub oracle_price: Option<Balance>,
 	pub oracle_twap: Option<Balance>,
@@ -297,13 +353,6 @@ impl ExtBuilder {
 		pallet_vamm::GenesisConfig::<Runtime>::default()
 			.assimilate_storage(&mut storage)
 			.unwrap();
-
-		let oracle_genesis = mock_oracle::GenesisConfig {
-			price: self.oracle_price,
-			supports_assets: self.oracle_asset_support,
-			twap: self.oracle_twap,
-		};
-		GenesisBuild::<Runtime>::assimilate_storage(&oracle_genesis, &mut storage).unwrap();
 
 		storage.into()
 	}

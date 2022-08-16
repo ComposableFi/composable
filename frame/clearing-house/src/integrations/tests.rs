@@ -7,8 +7,6 @@ impl Default for ExtBuilder {
 			native_balances: vec![],
 			balances: vec![],
 			collateral_type: Some(USDC),
-			vamm_id: Some(0_u64),
-			vamm_twap: Some(100.into()),
 			oracle_asset_support: Some(true),
 			oracle_price: Some(10_000),
 			oracle_twap: Some(10_000),
@@ -21,3 +19,7 @@ impl Default for ExtBuilder {
 fn externalities_builder_works() {
 	ExtBuilder::default().build().execute_with(|| {});
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                         Open position
+// ----------------------------------------------------------------------------------------------------
