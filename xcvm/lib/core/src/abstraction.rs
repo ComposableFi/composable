@@ -10,9 +10,9 @@ pub struct Zero;
 pub struct Succ<T>(PhantomData<T>);
 
 mod _priv {
-  pub trait Sealed {}
-  impl Sealed for super::Zero {}
-  impl<X> Sealed for super::Succ<X> {}
+	pub trait Sealed {}
+	impl Sealed for super::Zero {}
+	impl<X> Sealed for super::Succ<X> {}
 }
 
 pub trait Nat: _priv::Sealed {

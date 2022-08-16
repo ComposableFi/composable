@@ -140,28 +140,22 @@ pub struct Amount {
 }
 
 impl Amount {
-  /// An absolute amount
-  #[inline]
-  pub fn absolute(value: u128) -> Self {
-    Self {
-        intercept: Displayed(value),
-        slope: 0,
-    }
-  }
-  /// A ratio amount, expressed in u128 parts (x / u128::MAX)
-  #[inline]
-  pub fn ratio(parts: u128) -> Self {
-    Self {
-      intercept: Displayed(0),
-      slope: parts,
-    }
-  }
+	/// An absolute amount
+	#[inline]
+	pub fn absolute(value: u128) -> Self {
+		Self { intercept: Displayed(value), slope: 0 }
+	}
+	/// A ratio amount, expressed in u128 parts (x / u128::MAX)
+	#[inline]
+	pub fn ratio(parts: u128) -> Self {
+		Self { intercept: Displayed(0), slope: parts }
+	}
 }
 
 impl Add for Amount {
 	type Output = Self;
 
-  #[inline]
+	#[inline]
 	fn add(self, Self { intercept: Displayed(i_1), slope: s_1 }: Self) -> Self::Output {
 		let Self { intercept: Displayed(i_0), slope: s_0 } = self;
 		Self { intercept: Displayed(i_0.saturating_add(i_1)), slope: s_0.saturating_add(s_1) }
@@ -169,26 +163,26 @@ impl Add for Amount {
 }
 
 impl Zero for Amount {
-  #[inline]
+	#[inline]
 	fn zero() -> Self {
 		Self { intercept: Displayed(0), slope: 0 }
 	}
 
-  #[inline]
+	#[inline]
 	fn is_zero(&self) -> bool {
 		self == &Self::zero()
 	}
 }
 
 impl From<u128> for Amount {
-  #[inline]
+	#[inline]
 	fn from(x: u128) -> Self {
 		Self { intercept: Displayed(x), slope: 0 }
 	}
 }
 
 impl Amount {
-  #[inline]
+	#[inline]
 	pub fn apply(&self, value: u128) -> u128 {
 		let amount = FixedU128::<U16>::from_num(value)
 			.saturating_mul(
@@ -209,7 +203,7 @@ impl Amount {
 pub struct Funds<T = Amount>(pub BTreeMap<AssetId, T>);
 
 impl Funds {
-  #[inline]
+	#[inline]
 	pub fn empty() -> Self {
 		Funds(BTreeMap::new())
 	}
@@ -220,7 +214,7 @@ where
 	U: Into<AssetId>,
 	V: Into<Amount>,
 {
-  #[inline]
+	#[inline]
 	fn from(assets: BTreeMap<U, V>) -> Self {
 		Funds(
 			assets
@@ -236,14 +230,14 @@ where
 	U: Into<AssetId>,
 	V: Into<Amount>,
 {
-  #[inline]
+	#[inline]
 	fn from(x: [(U, V); K]) -> Self {
 		Funds(x.into_iter().map(|(asset, amount)| (asset.into(), amount.into())).collect())
 	}
 }
 
 impl From<Funds> for BTreeMap<u128, Amount> {
-  #[inline]
+	#[inline]
 	fn from(Funds(assets): Funds) -> Self {
 		assets.into_iter().map(|(AssetId(asset), amount)| (asset, amount)).collect()
 	}
