@@ -465,7 +465,7 @@ pub trait DexRouter<AssetId, PoolId, Balance, MaxHops> {
 }
 
 /// Aggregated prices for a given base/quote currency pair in a pool.
-#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct PriceAggregate<PoolId, AssetId, Balance> {
 	pub pool_id: PoolId,
@@ -475,7 +475,7 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 }
 
 /// RedeemableAssets for given amount of lp tokens.
-#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct RedeemableAssets<AssetId, Balance>
 where
@@ -485,7 +485,7 @@ where
 }
 
 /// RemoveLiquiditySimulationResult for given amount of lp tokens.
-#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct RemoveLiquiditySimulationResult<AssetId, Balance>
 where
