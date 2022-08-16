@@ -226,9 +226,7 @@ fn test_redeemable_assets() {
 			<Pablo as Amm>::redeemable_single_asset_for_lp_tokens(pool_id, lp, initial_btc)
 				.expect("redeemable_assets_for_lp_tokens failed");
 		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
-		let quote_amount = *redeemable_assets.assets.get(&USDT).expect("Invalid asset");
 		assert_ok!(default_acceptable_computation_error(base_amount, initial_btc));
-		assert_ok!(default_acceptable_computation_error(quote_amount, 0_u128));
 	});
 }
 

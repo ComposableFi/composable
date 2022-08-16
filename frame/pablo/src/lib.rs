@@ -1433,17 +1433,13 @@ pub mod pallet {
 						.assets
 						.get(&info.pair.base)
 						.ok_or(Error::<T>::InvalidAsset)?;
-					let quote_amount = *redeemable_assets
-						.assets
-						.get(&info.pair.quote)
-						.ok_or(Error::<T>::InvalidAsset)?;
 					let (base_amount, quote_amount, updated_lp) = Uniswap::<T>::remove_liquidity(
 						who,
 						info,
 						pool_account,
 						lp_amount,
 						base_amount,
-						quote_amount,
+						Self::Balance::zero(),
 					)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {

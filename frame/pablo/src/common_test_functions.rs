@@ -259,13 +259,15 @@ pub fn common_remove_lp_failure(
 		),
 		crate::Error::<Test>::CannotRespectMinimumRequested
 	);
+	// 91% (manually calculated)
+	let min_expected_amount = base_amount + (base_amount as f64 * 0.91).trunc().to_u128().unwrap();
 	if is_constant_product {
 		assert_noop!(
 			Pablo::remove_liquidity_single_asset(
 				Origin::signed(BOB),
 				pool_id,
 				lp,
-				min_expected_base_amount,
+				min_expected_amount,
 			),
 			crate::Error::<Test>::CannotRespectMinimumRequested
 		);
