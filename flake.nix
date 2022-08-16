@@ -470,7 +470,6 @@
                 pkg-config
                 qemu
                 rnix-lsp
-                rust-analyzer
                 rust-nightly
                 taplo
                 wasm-optimizer
