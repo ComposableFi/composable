@@ -389,7 +389,8 @@
 
             # TODO: inherit and provide script to run all stuff
             # devnet-container-xcvm
-            # NOTE: The devcontainer is currently broken. Please use the developers devShell
+            # NOTE: The devcontainer is currently broken for aarch64. 
+            # Please use the developers devShell instead
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
