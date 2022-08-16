@@ -1,6 +1,6 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
-import { VestingSchedule as VestingScheduleType } from "./types/v2400";
+import { VestingSchedule as VestingScheduleType } from "./types/v2401";
 import { Schedule, ScheduleWindow, VestingSchedule } from "./model";
 import { VestingVestingScheduleAddedEvent } from "./types/events";
 import { encodeAccount } from "./utils";
@@ -19,7 +19,7 @@ interface VestingScheduleAddedEvent {
 function getVestingScheduleAddedEvent(
   event: VestingVestingScheduleAddedEvent
 ): VestingScheduleAddedEvent {
-  return event.asV2400 ?? event.asLatest;
+  return event.asV2401 ?? event.asLatest;
 }
 
 /**
