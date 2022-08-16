@@ -56,7 +56,7 @@ where
 		log::trace!(target: "pallet_ibc", "in client : [client_state] >> client_id = {:?}", client_id);
 		let data = <ClientStates<T>>::get(client_id)
 			.ok_or_else(|| ICS02Error::client_not_found(client_id.clone()))?;
-		let state = AnyClientState::decode_vec(&*data)
+		let state = AnyClientState::decode_vec(&data)
 			.map_err(|_| ICS02Error::client_not_found(client_id.clone()))?;
 		log::trace!(target: "pallet_ibc", "in client : [client_state] >> any client_state: {:?}", state);
 		Ok(state)
@@ -77,7 +77,7 @@ where
 		let value = <ConsensusStates<T>>::get(client_id.clone(), height)
 			.ok_or_else(|| ICS02Error::consensus_state_not_found(client_id.clone(), height))?;
 
-		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
+		let any_consensus_state = AnyConsensusState::decode_vec(&value)
 			.map_err(|_| ICS02Error::consensus_state_not_found(client_id.clone(), native_height))?;
 		log::trace!(target: "pallet_ibc",
 			"in client : [consensus_state] >> any consensus state = {:?}",

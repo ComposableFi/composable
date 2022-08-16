@@ -27,7 +27,8 @@ use ibc::{
 			context::{ConnectionKeeper, ConnectionReader},
 			msgs::{
 				conn_open_ack::TYPE_URL as CONN_OPEN_ACK_TYPE_URL,
-				conn_open_confirm::TYPE_URL as CONN_OPEN_CONFIRM_TYPE_URL, conn_open_init as conn_open_init_mod,
+				conn_open_confirm::TYPE_URL as CONN_OPEN_CONFIRM_TYPE_URL,
+				conn_open_init as conn_open_init_mod,
 				conn_open_try::TYPE_URL as CONN_TRY_OPEN_TYPE_URL,
 			},
 			version::Version as ConnVersion,

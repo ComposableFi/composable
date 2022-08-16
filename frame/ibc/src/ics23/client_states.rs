@@ -22,7 +22,7 @@ impl<T: Config> ClientStates<T> {
 		child::put(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &client_state_key, &client_state);
 	}
 
-	pub fn contains_key(client_id: &ClientId) -> bool {
+	pub fn _contains_key(client_id: &ClientId) -> bool {
 		let client_state_path = format!("{}", ClientStatePath(client_id.clone()));
 		let client_state_key = apply_prefix(T::CONNECTION_PREFIX, vec![client_state_path]);
 		child::exists(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &client_state_key)

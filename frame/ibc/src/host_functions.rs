@@ -1,5 +1,5 @@
 use crate::{state_machine, Config};
-use alloc::{format, string::ToString};
+use alloc::string::ToString;
 use codec::Encode;
 use ibc::{
 	clients::{host_functions::HostFunctionsProvider, ics11_beefy::error::Error as Ics11Error},
@@ -51,7 +51,7 @@ where
 		value: &[u8],
 	) -> Result<(), Ics02ClientError> {
 		let root = H256::from_slice(root);
-		let proof = StorageProof::new(proof.into_iter().map(Clone::clone));
+		let proof = StorageProof::new(proof.iter().cloned());
 		let items = vec![(key.to_vec(), Some(value.to_vec()))];
 		let child_info = ChildInfo::new_default(T::CHILD_TRIE_KEY);
 
@@ -67,7 +67,7 @@ where
 		key: &[u8],
 	) -> Result<(), Ics02ClientError> {
 		let root = H256::from_slice(root);
-		let proof = StorageProof::new(proof.into_iter().map(Clone::clone));
+		let proof = StorageProof::new(proof.iter().cloned());
 		let items = vec![(key.to_vec(), None)];
 		let child_info = ChildInfo::new_default(b"/ibc");
 
@@ -91,9 +91,9 @@ where
 			&vec![(key, Some(value))],
 		)
 		.map_err(|_| {
-			Ics02ClientError::beefy(Ics11Error::verification_error(format!(
-				"extrinsic proof verification failed"
-			)))
+			Ics02ClientError::beefy(Ics11Error::verification_error(
+				"extrinsic proof verification failed".to_string(),
+			))
 		})
 	}
 

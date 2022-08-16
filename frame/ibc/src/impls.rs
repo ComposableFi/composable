@@ -72,6 +72,7 @@ impl<T: Config> Pallet<T>
 where
 	T: Send + Sync,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
+	<T as DeFiComposableConfig>::MayBeAssetId: From<primitives::currency::CurrencyId>,
 {
 	pub fn execute_ibc_messages(
 		ctx: &mut Context<T>,
@@ -217,10 +218,8 @@ where
 
 	fn channel_client_id(channel_end: &ChannelEnd) -> Result<ClientId, Error<T>> {
 		let ctx = Context::<T>::default();
-		let connection_id = channel_end
-			.connection_hops
-			.get(0)
-			.ok_or_else(|| Error::<T>::ConnectionNotFound)?;
+		let connection_id =
+			channel_end.connection_hops.get(0).ok_or(Error::<T>::ConnectionNotFound)?;
 		let connection_end =
 			ctx.connection_end(connection_id).map_err(|_| Error::<T>::ConnectionNotFound)?;
 		Ok(connection_end.client_id().clone())
@@ -709,12 +708,11 @@ where
 					client_state.latest_height()
 				)),
 			})?;
-		let next_seq_send = ctx
-			.get_next_sequence_send(&(source_port.clone(), source_channel))
-			.map_err(|_| IbcHandlerError::SendPacketError {
-				msg: Some(format!("Failed to get next_sequence_send for {}", source_channel)),
-			})?;
-		let sequence = Sequence::from(next_seq_send);
+		let sequence =
+			ctx.get_next_sequence_send(&(source_port.clone(), source_channel))
+				.map_err(|_| IbcHandlerError::SendPacketError {
+					msg: Some(format!("Failed to get next_sequence_send for {}", source_channel)),
+				})?;
 
 		let destination_port = source_channel_end.counterparty().port_id().clone();
 		let destination_channel = *source_channel_end.counterparty().channel_id().ok_or(
@@ -806,7 +804,10 @@ where
 			})?;
 		process_recv_packet(&ctx, output, packet, packet_data)
 			.and_then(|write_fn| write_fn(&mut ctx).map_err(Ics20Error::unknown_msg_type))
-			.map_err(|e| IbcHandlerError::ReceivePacketError { msg: Some(e.to_string()) })
+			.map_err(|e| {
+				log::trace!(target: "ibc_transfer", "[on_recv_packet]: {:?}", e);
+				IbcHandlerError::ReceivePacketError { msg: Some(e.to_string()) }
+			})
 	}
 
 	fn on_ack_packet(

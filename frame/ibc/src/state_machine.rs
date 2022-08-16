@@ -38,14 +38,13 @@ where
 
 			hash
 		})
-		.ok_or_else(|| Error::<H>::ChildRootNotFound)?;
+		.ok_or(Error::<H>::ChildRootNotFound)?;
 
 	let child_db = KeySpacedDB::new(&memory_db, child_info.keyspace());
 	let child_trie = TrieDB::<LayoutV0<H>>::new(&child_db, &child_root)?;
 
 	for (key, value) in items {
-		let recovered =
-			child_trie.get(&key)?.map(|val| Decode::decode(&mut &val[..]).ok()).flatten();
+		let recovered = child_trie.get(&key)?.and_then(|val| Decode::decode(&mut &val[..]).ok());
 
 		if recovered != value {
 			Err(Error::ValueMismatch {
