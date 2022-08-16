@@ -60,7 +60,7 @@ pub struct Ethereum;
 pub struct Juno;
 
 /// List of networks supported by XCVM.
-/// The order matters and must not be changed, adding a network on the right is safe.
+/// /!\ The order matters and must not be changed, adding a network on the right is safe.
 pub type Networks = (InvalidNetwork, (Picasso, (Ethereum, (Juno, ()))));
 
 /// Type implement network must be part of [`Networks`], otherwise invalid.

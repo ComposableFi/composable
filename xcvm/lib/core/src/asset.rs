@@ -1,10 +1,11 @@
+use crate::abstraction::IndexOf;
 use alloc::{collections::BTreeMap, string::ToString};
 use codec::{Decode, Encode};
+use core::ops::Add;
 use fixed::{types::extra::U16, FixedU128};
+use num::Zero;
 use scale_info::TypeInfo;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-use crate::abstraction::IndexOf;
 
 /// Newtype for XCVM assets ID. Must be unique for each asset and must never change.
 /// This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on
@@ -70,7 +71,7 @@ pub struct USDT;
 pub struct USDC;
 
 /// List of XCVM compatible assets.
-/// The order matter and must not be changed, adding a network on the right is safe.
+/// /!\ The order matters and must not be changed, adding a network on the right is safe.
 pub type Assets = (InvalidAsset, (PICA, (ETH, (USDT, (USDC, ())))));
 
 /// Type implement network must be part of [`Networks`], otherwise invalid.
@@ -132,29 +133,46 @@ impl<T> From<T> for Displayed<T> {
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[serde(rename_all = "snake_case")]
-pub enum Amount {
-	Fixed(Displayed<u128>),
-	Ratio(u128),
+/// See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form
+pub struct Amount {
+	pub intercept: Displayed<u128>,
+	pub slope: u128,
+}
+
+impl Add for Amount {
+	type Output = Self;
+	fn add(self, Self { intercept: Displayed(i_1), slope: s_1 }: Self) -> Self::Output {
+		let Self { intercept: Displayed(i_0), slope: s_0 } = self;
+		Self { intercept: Displayed(i_0.saturating_add(i_1)), slope: s_0.saturating_add(s_1) }
+	}
+}
+
+impl Zero for Amount {
+	fn zero() -> Self {
+		Self { intercept: Displayed(0), slope: 0 }
+	}
+
+	fn is_zero(&self) -> bool {
+		self == &Self::zero()
+	}
 }
 
 impl From<u128> for Amount {
 	fn from(x: u128) -> Self {
-		Amount::Fixed(Displayed(x))
+		Self { intercept: Displayed(x), slope: 0 }
 	}
 }
 
 impl Amount {
 	pub fn apply(&self, value: u128) -> u128 {
-		match self {
-			Amount::Fixed(Displayed(x)) => *x,
-			Amount::Ratio(x) => FixedU128::<U16>::from_num(value)
-				.saturating_mul(FixedU128::<U16>::from_num(*x as u128).saturating_div(FixedU128::<
-					U16,
-				>::from_num(
-					u128::MAX
-				)))
-				.to_num(),
-		}
+		let amount = FixedU128::<U16>::from_num(value)
+			.saturating_mul(
+				FixedU128::<U16>::from_num(self.slope)
+					.saturating_div(FixedU128::<U16>::from_num(u128::MAX)),
+			)
+			.to_num::<u128>()
+			.saturating_add(self.intercept.0);
+		u128::min(value, amount)
 	}
 }
 

@@ -13,6 +13,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 schemars = { version = "0.8.1", optional = true }
 serde = { version = "1", default-features = false, features = [ "derive", "alloc" ] }
 fixed = { version = "1.15", default-features = false }
+num = { version = "0.4", default-features = false }
 
 [features]
 default = []
