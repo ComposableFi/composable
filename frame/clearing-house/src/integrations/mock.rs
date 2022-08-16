@@ -1,7 +1,5 @@
-use crate::{
-	self as clearing_house,
-	mock::assets::{AssetId, PICA},
-};
+pub use crate::mock::assets::*;
+use crate::{self as clearing_house};
 use composable_traits::{defi::DeFiComposableConfig, time::DurationSeconds};
 use frame_support::{
 	ord_parameter_types, parameter_types,
@@ -310,7 +308,7 @@ impl clearing_house::Config for Runtime {
 	type PalletId = TestPalletId;
 	type UnixTime = Timestamp;
 	type Vamm = Vamm;
-	type VammConfig = composable_traits::vamm::VammConfig<Balance, DurationSeconds>;
+	type VammConfig = composable_traits::vamm::VammConfig<Balance, Moment>;
 	type VammId = VammId;
 	type WeightInfo = ();
 }
@@ -323,9 +321,6 @@ pub struct ExtBuilder {
 	pub native_balances: Vec<(AccountId, Balance)>,
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
 	pub collateral_type: Option<AssetId>,
-	pub oracle_asset_support: Option<bool>,
-	pub oracle_price: Option<Balance>,
-	pub oracle_twap: Option<Balance>,
 	pub max_price_divergence: Decimal,
 }
 
