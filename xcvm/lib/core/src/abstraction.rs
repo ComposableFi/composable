@@ -9,7 +9,13 @@ pub struct Zero;
 /// Inductive case, 1 + x
 pub struct Succ<T>(PhantomData<T>);
 
-pub trait Nat {
+mod _priv {
+  pub trait Sealed {}
+  impl Sealed for super::Zero {}
+  impl<X> Sealed for super::Succ<X> {}
+}
+
+pub trait Nat: _priv::Sealed {
 	const VALUE: u8;
 }
 
