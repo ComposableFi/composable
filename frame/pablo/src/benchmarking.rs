@@ -151,29 +151,7 @@ benchmarks! {
 		let lp_amount = T::Assets::balance(get_lp_token::<T>(pool_id), &owner);
 	  }: _(RawOrigin::Signed(owner), pool_id, lp_amount, (0_u128).into(), (0_u128).into())
 
-	remove_liquidity_single_asset {
-		let usdc: T::AssetId = 100.into();
-		let usdt: T::AssetId = 101.into();
-		let owner: T::AccountId = whitelisted_caller();
-		let pool_id = create_stable_swap_pool::<T>(owner.clone(), CurrencyPair::new(usdc, usdt));
-		let unit = 1_000_000_000_000;
-		// 100_000_000 USDC , 100_000_000 USDT
-		let initial_usdc: T::Balance = (100_000_000_u128 * unit).into();
-		let initial_usdt: T::Balance = (100_000_000_u128 * unit).into();
-		// Mint the tokens
-		assert_ok!(T::Assets::mint_into(usdc, &owner, initial_usdc));
-		assert_ok!(T::Assets::mint_into(usdt, &owner, initial_usdt));
-		// Add the liquidity
-		assert_ok!(<Pablo<T> as Amm>::add_liquidity(
-			&owner,
-			  pool_id,
-			  initial_usdc,
-			  initial_usdt,
-			  0.into(),
-			  false
-		));
-		let lp_amount = T::Assets::balance(get_lp_token::<T>(pool_id), &owner);
-	  }: _(RawOrigin::Signed(owner), pool_id, lp_amount, (0_u128).into())
+	// TODO(saruman9): here should be benchmarks for stable swap pool with single asset withdrawal
 
 	remove_liquidity_lbp {
 		let unit = 1_000_000_000_000_u128;
