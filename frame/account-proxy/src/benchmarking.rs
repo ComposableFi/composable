@@ -17,8 +17,6 @@
 
 // Benchmarks for Proxy Pallet
 
-#![cfg(feature = "runtime-benchmarks")]
-
 use super::*;
 use crate::Pallet as Proxy;
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};

@@ -17,8 +17,6 @@
 
 // Tests for Proxy Pallet
 
-#![cfg(test)]
-
 use super::*;
 
 use crate as proxy;
