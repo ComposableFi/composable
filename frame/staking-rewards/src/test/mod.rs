@@ -166,8 +166,8 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
 			.expect("reward_multiplier expected");
-		let inflation = StakingRewards::boosted_amount(reward_multiplier, amount) * total_rewards /
-			total_shares;
+		let inflation = StakingRewards::boosted_amount(reward_multiplier, amount) * total_rewards
+			/ total_shares;
 		assert_eq!(inflation, 502);
 		let reductions = Reductions::try_from(
 			rewards_pool
@@ -360,135 +360,98 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 
 #[test]
 fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
-	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
-		let staker = ALICE;
-		let pool_id = StakingRewards::pool_count();
-		let amount = 100_500u32.into();
-		let duration_preset = ONE_HOUR;
-		let total_rewards = 100;
-		let total_shares = 200;
-		let claim = 50;
+	let staker = ALICE;
+	let amount = 100_500;
+	let duration = ONE_HOUR;
+	let total_rewards = 100;
+	let total_shares = 200;
+	let claim = 50;
 
-		let rewards_pool =
-			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
-		let staked_asset_id = rewards_pool.asset_id;
-		mint_assets(
-			vec![staker, StakingRewards::pool_account_id(&pool_id)],
-			vec![staked_asset_id]
-				.iter()
-				.chain(rewards_pool.rewards.iter().map(|(asset_id, _inflation)| asset_id))
-				.cloned()
-				.collect::<Vec<_>>(),
-			amount * 2,
-		);
-		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
+	with_stake(
+		staker,
+		amount,
+		duration,
+		total_rewards,
+		total_shares,
+		claim,
+		|pool_id, stake_id, unlock_penalty, _, staked_asset_id| {
+			assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
+			assert_eq!(StakingRewards::stakes(stake_id), None);
+			assert_last_event::<Test, _>(|e| {
+				matches!(
+					e.event,
+					Event::StakingRewards(crate::Event::Unstaked { owner, position_id })
+						if owner == staker && position_id == stake_id
+				)
+			});
 
-		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
-		let stake_id = StakingRewards::stake_count();
-		assert_eq!(balance(staked_asset_id, &staker), amount);
-
-		let mut stake = StakingRewards::stakes(stake_id).expect("stake expected");
-		let unlock_penalty = stake.lock.unlock_penalty;
-		stake.reductions = update_reductions(stake.reductions, claim);
-		Stakes::<Test>::insert(stake_id, stake);
-
-		assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
-		assert_eq!(StakingRewards::stakes(stake_id), None);
-		assert_last_event::<Test, _>(|e| {
-			matches!(
-				e.event,
-				Event::StakingRewards(crate::Event::Unstaked { owner, position_id })
-					if owner == staker && position_id == stake_id
-			)
-		});
-
-		let penalty = unlock_penalty.mul_ceil(amount);
-		let claim_with_penalty = (Perbill::one() - unlock_penalty).mul_ceil(claim);
-		let rewards_pool =
-			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
-		assert_eq!(balance(staked_asset_id, &staker), amount * 2 - penalty);
-		assert_eq!(
-			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
-			amount * 2 + penalty
-		);
-		for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
-			assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim_with_penalty);
+			let penalty = unlock_penalty.mul_ceil(amount);
+			let claim_with_penalty = (Perbill::one() - unlock_penalty).mul_ceil(claim);
+			let rewards_pool =
+				StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
+			assert_eq!(balance(staked_asset_id, &staker), amount * 2 - penalty);
 			assert_eq!(
-				balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
-				amount * 2 - claim_with_penalty
+				balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
+				amount * 2 + penalty
 			);
-		}
-	});
+			for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
+				assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim_with_penalty);
+				assert_eq!(
+					balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
+					amount * 2 - claim_with_penalty
+				);
+			}
+		},
+	);
 }
 
 #[test]
 fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
-	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
-		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
-		let staker = ALICE;
-		let pool_id = StakingRewards::pool_count();
-		let amount = 100_500u32.into();
-		let duration_preset = ONE_HOUR;
-		let total_rewards = 100;
-		let total_shares = 200;
-		let claim = 50;
+	let staker = ALICE;
+	let amount = 100_500u32.into();
+	let duration_preset = ONE_HOUR;
+	let total_rewards = 100;
+	let total_shares = 200;
+	let claim = 50;
 
-		let rewards_pool =
-			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
-		let staked_asset_id = rewards_pool.asset_id;
-		mint_assets(
-			vec![staker, StakingRewards::pool_account_id(&pool_id)],
-			vec![staked_asset_id]
-				.iter()
-				.chain(rewards_pool.rewards.iter().map(|(asset_id, _inflation)| asset_id))
-				.cloned()
-				.collect::<Vec<_>>(),
-			amount * 2,
-		);
-		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
-
-		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
-		let stake_id = StakingRewards::stake_count();
-		assert_eq!(balance(staked_asset_id, &staker), amount);
-
-		let mut stake = StakingRewards::stakes(stake_id).expect("stake expected");
-		let unlock_penalty = stake.lock.unlock_penalty;
-		let stake_duration = stake.lock.duration;
-		stake.reductions = update_reductions(stake.reductions, claim);
-		Stakes::<Test>::insert(stake_id, stake);
-
-		let second_in_milliseconds = 1000;
-		Timestamp::set_timestamp(
-			Timestamp::now() + stake_duration * second_in_milliseconds + second_in_milliseconds,
-		);
-		assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
-		assert_eq!(StakingRewards::stakes(stake_id), None);
-		assert_last_event::<Test, _>(|e| {
-			matches!(
-				e.event,
-				Event::StakingRewards(crate::Event::Unstaked { owner, position_id })
-					if owner == staker && position_id == stake_id
-			)
-		});
-
-		let rewards_pool =
-			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
-		assert_eq!(balance(staked_asset_id, &staker), amount * 2);
-		assert_eq!(
-			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
-			amount * 2
-		);
-		for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
-			assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
-			assert_eq!(
-				balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
-				amount * 2 - claim
+	with_stake(
+		staker,
+		amount,
+		duration_preset,
+		total_rewards,
+		total_shares,
+		claim,
+		|pool_id, stake_id, _, stake_duration, staked_asset_id| {
+			let second_in_milliseconds = 1000;
+			Timestamp::set_timestamp(
+				Timestamp::now() + stake_duration * second_in_milliseconds + second_in_milliseconds,
 			);
-		}
-	});
+			assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
+			assert_eq!(StakingRewards::stakes(stake_id), None);
+			assert_last_event::<Test, _>(|e| {
+				matches!(
+					e.event,
+					Event::StakingRewards(crate::Event::Unstaked { owner, position_id })
+						if owner == staker && position_id == stake_id
+				)
+			});
+
+			let rewards_pool =
+				StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
+			assert_eq!(balance(staked_asset_id, &staker), amount * 2);
+			assert_eq!(
+				balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
+				amount * 2
+			);
+			for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
+				assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
+				assert_eq!(
+					balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
+					amount * 2 - claim
+				);
+			}
+		},
+	);
 }
 
 #[test]
@@ -592,6 +555,58 @@ fn test_split_postion() {
             if positions == &vec![1_u128.into(), 2_u128.into()])
 		});
 	});
+}
+
+/// Runs code inside of `new_test_ext().execute_with` closure while creating a stake with the given values.
+///
+/// `execute` closure will provide:
+/// - `pool_id`
+/// - `stake_id`
+/// - `unlock_penalty`
+/// - `stake_duration`
+/// - `staked_asset_id`
+fn with_stake<R>(
+	staker: Public,
+	amount: u128,
+	duration: DurationSeconds,
+	total_rewards: u128,
+	total_shares: u128,
+	claim: u128,
+	execute: impl FnOnce(u16, u128, Perbill, u64, u128) -> R,
+) -> R {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+		let pool_id = StakingRewards::pool_count();
+		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected. QED");
+		let staked_asset_id = rewards_pool.asset_id;
+
+		mint_assets(
+			vec![staker, StakingRewards::pool_account_id(&pool_id)],
+			vec![staked_asset_id]
+				.iter()
+				.chain(rewards_pool.rewards.iter().map(|(asset_id, _)| asset_id))
+				.cloned()
+				.collect::<Vec<_>>(),
+			amount.saturating_mul(2),
+		);
+
+		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
+
+		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration));
+		assert_eq!(balance(staked_asset_id, &staker), amount);
+
+		let stake_id = StakingRewards::stake_count();
+		let mut stake = StakingRewards::stakes(stake_id).expect("stake expected. QED");
+		let unlock_penalty = stake.lock.unlock_penalty;
+		let stake_duration = stake.lock.duration;
+
+		stake.reductions = update_reductions(stake.reductions, claim);
+		Stakes::<Test>::insert(stake_id, stake);
+
+		execute(pool_id, stake_id, unlock_penalty, stake_duration, staked_asset_id)
+	})
 }
 
 fn get_default_reward_pool() -> RewardPoolConfiguration<
