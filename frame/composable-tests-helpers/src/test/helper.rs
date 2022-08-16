@@ -54,7 +54,7 @@ pub fn assert_no_event<Runtime: Config>(event: <Runtime as Config>::Event) {
 		frame_system::Pallet::<Runtime>::events()
 			.iter()
 			.all(|record| record.event != event),
-		"provided event was dispatched unexpectedly!"
+		"Provided event was dispatched unexpectedly!\n\nEvent checked: {event:#?}"
 	);
 }
 

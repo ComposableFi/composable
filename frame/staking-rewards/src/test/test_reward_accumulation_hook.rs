@@ -5,6 +5,7 @@ use composable_tests_helpers::test::{
 	helper::{assert_last_event, assert_no_event},
 };
 use frame_support::traits::TryCollect;
+use pallet_staking_rewards::RewardAccumulationHookError;
 
 use crate::{test::prelude::*, Pallet};
 
@@ -45,13 +46,21 @@ fn test_reward_update_calculation() {
 					now + (SECONDS_PER_BLOCK * current_block_number),
 				);
 
+				for error in [
+					RewardAccumulationHookError::BackToTheFuture,
+					RewardAccumulationHookError::RewardsPotEmpty,
+					RewardAccumulationHookError::RewardsAccountFull,
+				] {
+					assert_no_event::<Test>(Event::StakingRewards(
+						crate::Event::<Test>::RewardAccumulationHookError {
+							pool_id: POOL_ID,
+							asset_id: PICA::ID,
+							error,
+						},
+					));
+				}
+
 				assert_eq!(reward.total_rewards, PICA::units(expected_total_rewards_units));
-				assert_no_event::<Test>(Event::StakingRewards(
-					crate::Event::<Test>::RewardAccumulationError {
-						pool_id: POOL_ID,
-						asset_id: PICA::ID,
-					},
-				));
 
 				reward
 			},
