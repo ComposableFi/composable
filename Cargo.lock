@@ -16760,7 +16760,6 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
- "serde_json",
 ]
 
 [[package]]

@@ -25,39 +25,39 @@ use crate::abstraction::IndexOf;
 	Deserialize,
 )]
 #[repr(transparent)]
-pub struct AssetID(pub u32);
+pub struct AssetId(pub u128);
 
-impl From<AssetID> for u32 {
-	fn from(val: AssetID) -> Self {
+impl From<AssetId> for u128 {
+	fn from(val: AssetId) -> Self {
 		val.0
 	}
 }
 
-impl From<u32> for AssetID {
-	fn from(asset: u32) -> Self {
-		AssetID(asset)
+impl From<u128> for AssetId {
+	fn from(asset: u128) -> Self {
+		AssetId(asset)
 	}
 }
 
-impl From<PICA> for AssetID {
+impl From<PICA> for AssetId {
 	fn from(_: PICA) -> Self {
 		PICA::ID
 	}
 }
 
-impl From<ETH> for AssetID {
+impl From<ETH> for AssetId {
 	fn from(_: ETH) -> Self {
 		ETH::ID
 	}
 }
 
-impl From<USDT> for AssetID {
+impl From<USDT> for AssetId {
 	fn from(_: USDT) -> Self {
 		USDT::ID
 	}
 }
 
-impl From<USDC> for AssetID {
+impl From<USDC> for AssetId {
 	fn from(_: USDC) -> Self {
 		USDC::ID
 	}
@@ -75,23 +75,23 @@ pub type Assets = (InvalidAsset, (PICA, (ETH, (USDT, (USDC, ())))));
 
 /// Type implement network must be part of [`Networks`], otherwise invalid.
 pub trait Asset {
-	const ID: AssetID;
+	const ID: AssetId;
 }
 
 impl Asset for PICA {
-	const ID: AssetID = AssetID(<Assets as IndexOf<Self, _>>::INDEX as u32);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
 }
 
 impl Asset for ETH {
-	const ID: AssetID = AssetID(<Assets as IndexOf<Self, _>>::INDEX as u32);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
 }
 
 impl Asset for USDT {
-	const ID: AssetID = AssetID(<Assets as IndexOf<Self, _>>::INDEX as u32);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
 }
 
 impl Asset for USDC {
-	const ID: AssetID = AssetID(<Assets as IndexOf<Self, _>>::INDEX as u32);
+	const ID: AssetId = AssetId(<Assets as IndexOf<Self, _>>::INDEX as u128);
 }
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
@@ -134,7 +134,7 @@ impl<T> From<T> for Displayed<T> {
 #[serde(rename_all = "snake_case")]
 pub enum Amount {
 	Fixed(Displayed<u128>),
-	Ratio(u32),
+	Ratio(u128),
 }
 
 impl From<u128> for Amount {
@@ -151,7 +151,7 @@ impl Amount {
 				.saturating_mul(FixedU128::<U16>::from_num(*x as u128).saturating_div(FixedU128::<
 					U16,
 				>::from_num(
-					u32::MAX
+					u128::MAX
 				)))
 				.to_num(),
 		}
@@ -163,7 +163,7 @@ impl Amount {
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
-pub struct Funds<T = Amount>(pub BTreeMap<AssetID, T>);
+pub struct Funds<T = Amount>(pub BTreeMap<AssetId, T>);
 
 impl Funds {
 	pub fn empty() -> Self {
@@ -173,7 +173,7 @@ impl Funds {
 
 impl<U, V> From<BTreeMap<U, V>> for Funds
 where
-	U: Into<AssetID>,
+	U: Into<AssetId>,
 	V: Into<Amount>,
 {
 	fn from(assets: BTreeMap<U, V>) -> Self {
@@ -188,7 +188,7 @@ where
 
 impl<U, V, const K: usize> From<[(U, V); K]> for Funds
 where
-	U: Into<AssetID>,
+	U: Into<AssetId>,
 	V: Into<Amount>,
 {
 	fn from(x: [(U, V); K]) -> Self {
@@ -196,9 +196,9 @@ where
 	}
 }
 
-impl From<Funds> for BTreeMap<u32, Amount> {
+impl From<Funds> for BTreeMap<u128, Amount> {
 	fn from(Funds(assets): Funds) -> Self {
-		assets.into_iter().map(|(AssetID(asset), amount)| (asset, amount)).collect()
+		assets.into_iter().map(|(AssetId(asset), amount)| (asset, amount)).collect()
 	}
 }
 
@@ -207,9 +207,9 @@ mod tests {
 	use super::*;
 	#[test]
 	fn asset_ids() {
-		assert_eq!(PICA::ID, AssetID(1));
-		assert_eq!(ETH::ID, AssetID(2));
-		assert_eq!(USDT::ID, AssetID(3));
-		assert_eq!(USDC::ID, AssetID(4));
+		assert_eq!(PICA::ID, AssetId(1));
+		assert_eq!(ETH::ID, AssetId(2));
+		assert_eq!(USDT::ID, AssetId(3));
+		assert_eq!(USDC::ID, AssetId(4));
 	}
 }

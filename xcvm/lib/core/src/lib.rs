@@ -13,20 +13,6 @@ pub use crate::{asset::*, instruction::*, network::*, program::*, protocol::*};
 use alloc::{collections::VecDeque, vec::Vec};
 use core::marker::PhantomData;
 
-#[inline]
-pub fn serialize_json<T: serde::Serialize>(
-	program: &Program<T>,
-) -> Result<Vec<u8>, serde_json::Error> {
-	serde_json::to_vec(program)
-}
-
-#[inline]
-pub fn deserialize_json<T: serde::de::DeserializeOwned>(
-	buffer: &[u8],
-) -> Result<Program<T>, serde_json::Error> {
-	serde_json::from_slice(buffer)
-}
-
 #[derive(Clone)]
 pub struct ProgramBuilder<CurrentNetwork: Network, Account, Assets> {
 	pub tag: Vec<u8>,
@@ -201,22 +187,5 @@ mod tests {
 				])
 			},
 		);
-	}
-
-	#[test]
-	fn json_iso() {
-		let program = || -> Result<_, ProgramBuildError> {
-			Ok(ProgramBuilder::<Picasso, Vec<u8>, Funds>::new(Default::default())
-				.spawn::<Ethereum, _, ProgramBuildError, _>(
-					Default::default(),
-					Vec::new(),
-					Funds::from(BTreeMap::from([(1, 10_000_000_000_000u128)])),
-					|child| Ok(child),
-				)?
-				.build())
-		}()
-		.expect("valid program");
-		let serialized = serialize_json(&program).unwrap();
-		assert_eq!(program, deserialize_json(&serialized).unwrap());
 	}
 }
