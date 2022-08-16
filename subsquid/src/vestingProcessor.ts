@@ -10,6 +10,7 @@ interface VestingScheduleAddedEvent {
   to: Uint8Array;
   asset: bigint;
   schedule: VestingScheduleType;
+  vestingScheduleId: bigint;
 }
 
 /**
