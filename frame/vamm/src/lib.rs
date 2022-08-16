@@ -446,6 +446,19 @@ pub mod pallet {
 		/// * [`Pallet::sanity_check_before_swap`]
 		/// * [`Pallet::sanity_check_before_update_twap`]
 		VammIsClosed,
+		// TODO(Cardosaum): consertar descricao
+		// TODO(Cardosaum): Adicionar nova lista de errors pra essa variante
+		/// Tried to swap assets but the amount returned was less than the minimum expected.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::swap`]
+		/// * [`Pallet::swap_simulation`]
+		/// * [`Pallet::do_swap`]
+		/// * [`Pallet::compute_swap`]
+		/// * [`Pallet::sanity_check_after_swap`]
+		SwappedAmountMoreThanMaximumLimit,
+		// TODO(Cardosaum): consertar descricao
 		/// Tried to swap assets but the amount returned was less than the minimum expected.
 		///
 		/// ## Occurrences

@@ -8,7 +8,7 @@ use crate::{
 			RUN_CASES,
 		},
 		helpers::{run_for_seconds, with_swap_context},
-		helpers_propcompose::{any_swap_config, any_vamm_state},
+		helpers_propcompose::any_swap_config,
 		types::{TestSwapConfig, TestVammConfig},
 	},
 };
@@ -167,11 +167,8 @@ proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	fn should_not_update_runtime_storage(
-		mut vamm_state in any_vamm_state(),
 		mut swap_config in any_swap_config()
 	) {
-		// Ensure vamm is always open.
-		vamm_state.closed = None;
 		// Ensure we always perform operation on an existing vamm.
 		swap_config.vamm_id = Zero::zero();
 

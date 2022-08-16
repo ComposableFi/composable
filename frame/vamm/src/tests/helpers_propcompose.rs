@@ -3,17 +3,17 @@ use crate::{
 	tests::{
 		constants::{MAXIMUM_RESERVE, MINIMUM_RESERVE, RUN_CASES, ZERO_RESERVE},
 		helpers::{
-			any_sane_asset_amount, any_time, any_vamm_id, limited_peg, multiple_swap_configs,
+			any_sane_asset_amount, any_time, any_vamm_id, multiple_swap_configs, one_up_to_,
 		},
 		types::{Decimal, Timestamp, VammId},
 	},
 	types::VammState,
 };
 use composable_traits::vamm::{
-	AssetType, Direction, MovePriceConfig, SwapConfig, MINIMUM_TWAP_PERIOD,
+	AssetType, Direction, MovePriceConfig, SwapConfig, VammConfig, MINIMUM_TWAP_PERIOD,
 };
 use proptest::prelude::*;
-use sp_runtime::traits::One;
+use sp_runtime::{traits::One, FixedPointNumber};
 
 // ----------------------------------------------------------------------------------------------------
 //                                     General Helper Propcomposes
@@ -111,27 +111,13 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn asset_times_peg_dont_overflow()(
-		asset in any_sane_asset_amount()
-	)(peg in limited_peg(asset), asset in Just(asset)) -> (u128, u128) {
-		(asset, peg)
-	}
-}
-
-prop_compose! {
-	fn any_sane_base_quote_peg()(
-		(asset1, peg) in asset_times_peg_dont_overflow()
-	) (
-		peg in Just(peg),
-		asset1 in Just(asset1),
-		asset2 in limited_peg(asset1),
-		first_asset_is_base in any::<bool>()
+	fn any_sane_base_quote_peg()
+	(
+		base in any_sane_asset_amount(),
+		quote in any_sane_asset_amount(),
+		peg in any_sane_asset_amount(),
 	) -> (u128, u128, u128) {
-		if first_asset_is_base {
-			(asset1, asset2, peg)
-		} else {
-			(asset2, asset1, peg)
-		}
+		(base, quote, peg)
 	}
 }
 
@@ -144,6 +130,42 @@ prop_compose! {
 		twap_period in (MINIMUM_TWAP_PERIOD+1).into()..=Timestamp::MAX
 	) -> Timestamp {
 		twap_period
+	}
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                             Vamm Config
+// ----------------------------------------------------------------------------------------------------
+
+prop_compose! {
+	fn limited_quote_peg() (
+		x in 1..=(Balance::MAX/Decimal::DIV),
+	) (
+		y in one_up_to_(x),
+		x in Just(x),
+		first_is_quote in any::<bool>()
+	) -> (Balance, Balance) {
+		if first_is_quote {
+			(x, y)
+		} else {
+			(y, x)
+		}
+	}
+}
+
+prop_compose! {
+	pub fn any_valid_vammconfig() (
+		base_asset_reserves in any_sane_asset_amount(),
+		quote_asset_reserves in any_sane_asset_amount(),
+		peg_multiplier in 1..=100_000_u128,
+		twap_period in valid_twap_period()
+	) -> VammConfig<Balance, Timestamp> {
+		VammConfig {
+			base_asset_reserves,
+			quote_asset_reserves,
+			peg_multiplier,
+			twap_period
+		}
 	}
 }
 

@@ -1,14 +1,15 @@
 use crate::{
 	mock::{
-		Balance, ExtBuilder, Moment, Origin, System as SystemPallet, TestPallet,
+		Balance, ExtBuilder, MockRuntime, Moment, Origin, System as SystemPallet, TestPallet,
 		Timestamp as TimestampPallet,
 	},
+	pallet::VammMap,
 	tests::types::{Decimal, TestSwapConfig, TestVammConfig, Timestamp, VammId},
 };
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait, VammConfig};
 use frame_support::{assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
-use sp_runtime::FixedPointNumber;
+use sp_runtime::{traits::Zero, FixedPointNumber};
 use std::ops::RangeInclusive;
 
 // ----------------------------------------------------------------------------------------------------
@@ -60,6 +61,10 @@ pub fn as_decimal_from_fraction(n: u128, d: u128) -> Decimal {
 	n / d
 }
 
+pub fn one_up_to_(x: Balance) -> RangeInclusive<Balance> {
+	1..=x
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                    Vamm Specific Helper Functions
 // ----------------------------------------------------------------------------------------------------
@@ -87,10 +92,6 @@ fn max_sane_balance() -> u128 {
 pub fn any_sane_asset_amount() -> RangeInclusive<u128> {
 	// From 0.0001 to 1 trilion.
 	min_sane_balance()..=max_sane_balance()
-}
-
-pub fn limited_peg(x: u128) -> RangeInclusive<u128> {
-	1..=(u128::MAX / x)
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -140,6 +141,27 @@ pub fn with_swap_context(
 		create_vamm(&vamm_config.into());
 		execute(swap_config.into());
 	});
+}
+
+pub fn with_swap_context_checking_limit(
+	vamm_config: VammConfig<Balance, Moment>,
+	swap_config: SwapConfig<VammId, Balance>,
+	output_amount_limit: Balance,
+	execute: impl FnOnce(SwapConfig<VammId, Balance>),
+) {
+	ExtBuilder::default().build().execute_with(|| {
+		VammMap::<MockRuntime>::mutate(TestPallet::create(&vamm_config).unwrap(), |vamm_state| {
+			match vamm_state {
+				Some(v) => v.closed = None,
+				None => (),
+			}
+		});
+		execute(SwapConfig {
+			vamm_id: VammId::zero(),
+			output_amount_limit: Some(output_amount_limit),
+			..swap_config
+		});
+	})
 }
 
 // ----------------------------------------------------------------------------------------------------

@@ -20,7 +20,7 @@ pub struct TestSwapConfig<VammId, Balance> {
 	pub asset: AssetType,
 	pub input_amount: Balance,
 	pub direction: Direction,
-	pub output_amount_limit: Balance,
+	pub output_amount_limit: Option<Balance>,
 }
 
 impl Default for TestSwapConfig<VammId, Balance> {
@@ -30,7 +30,7 @@ impl Default for TestSwapConfig<VammId, Balance> {
 			asset: AssetType::Base,
 			input_amount: DEFAULT_INPUT_AMOUNT,
 			direction: Direction::Add,
-			output_amount_limit: Zero::zero(),
+			output_amount_limit: None,
 		}
 	}
 }
@@ -42,12 +42,12 @@ impl From<TestSwapConfig<VammId, Balance>> for SwapConfig<VammId, Balance> {
 			asset: v.asset,
 			input_amount: v.input_amount,
 			direction: v.direction,
-			output_amount_limit: Some(v.output_amount_limit),
+			output_amount_limit: v.output_amount_limit,
 		}
 	}
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct TestVammConfig<Balance, Moment> {
 	pub base_asset_reserves: Balance,
 	pub quote_asset_reserves: Balance,

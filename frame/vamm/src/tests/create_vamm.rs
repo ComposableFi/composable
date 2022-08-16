@@ -1,62 +1,15 @@
-use std::ops::RangeInclusive;
-
 use crate::{
 	mock::{Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error, VammMap},
 	tests::{
 		constants::RUN_CASES,
-		helpers::any_sane_asset_amount,
-		helpers_propcompose::{loop_times, valid_twap_period},
-		types::{Balance, Decimal, TestVammConfig, Timestamp},
+		helpers_propcompose::{any_valid_vammconfig, loop_times},
+		types::{Balance, TestVammConfig, Timestamp},
 	},
 };
 use composable_traits::vamm::{Vamm as VammTrait, VammConfig, MINIMUM_TWAP_PERIOD};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
-use sp_runtime::FixedPointNumber;
-
-// ----------------------------------------------------------------------------------------------------
-//                                               Helpers
-// ----------------------------------------------------------------------------------------------------
-
-fn one_up_to_(x: Balance) -> RangeInclusive<Balance> {
-	1..=x
-}
-
-// ----------------------------------------------------------------------------------------------------
-//                                           Prop Compose
-// ----------------------------------------------------------------------------------------------------
-
-prop_compose! {
-	fn limited_quote_peg() (
-		x in 1..=(Balance::MAX/Decimal::DIV),
-	) (
-		y in one_up_to_(x),
-		x in Just(x),
-		first_is_quote in any::<bool>()
-	) -> (Balance, Balance) {
-		if first_is_quote {
-			(x, y)
-		} else {
-			(y, x)
-		}
-	}
-}
-
-prop_compose! {
-	fn any_valid_vammconfig() (
-		(quote_asset_reserves, peg_multiplier) in limited_quote_peg(),
-		base_asset_reserves in any_sane_asset_amount(),
-		twap_period in  valid_twap_period()
-	) -> VammConfig<Balance, Timestamp> {
-		VammConfig {
-			base_asset_reserves,
-			quote_asset_reserves,
-			peg_multiplier,
-			twap_period
-		}
-	}
-}
 
 // -------------------------------------------------------------------------------------------------
 //                                            Unit Tests

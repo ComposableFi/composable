@@ -48,3 +48,9 @@ pub const DEFAULT_BASE_RETURNED_AFTER_ADDING_QUOTE: Balance = 39215686274509804;
 /// The value we expect to give in return of a swap removing quote with an
 /// amount equal to `DEFAULT_INPUT_AMOUNT`.
 pub const DEFAULT_BASE_REQUIRED_FOR_REMOVING_QUOTE: Balance = 40816326530612244; // 0.0040 units
+/// The value expected to return as output when adding one unit to the existing
+/// vamm.
+pub const DEFAULT_OUTPUT_ADDING_BASE: Balance = 16666666666666666667;
+/// The value expected to return as output when removing one unit to the existing
+/// vamm.
+pub const DEFAULT_OUTPUT_REMOVING_BASE: Balance = 50000000000000000000;
