@@ -95,6 +95,8 @@ type VestingSchedule @entity {
   to: String!
   "Vesting schedule"
   schedule: Schedule!
+  "Claimed amount",
+  claimed: BigInt!
 }
 
 enum PicassoTransactionType {

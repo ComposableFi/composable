@@ -7,6 +7,7 @@ import {
   PicassoTransactionType,
 } from "./model";
 import { randomUUID } from "crypto";
+import { BOB } from "./utils";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -64,7 +65,11 @@ export async function trySaveAccount(
   ctx: EventHandlerContext,
   accountId?: string
 ): Promise<string | undefined> {
-  const accId = accountId || ctx.extrinsic?.signer;
+  let accId = accountId || ctx.extrinsic?.signer;
+
+  if (process.env.npm_lifecycle_event === "test") {
+    accId = BOB;
+  }
 
   if (!accId) {
     // no-op

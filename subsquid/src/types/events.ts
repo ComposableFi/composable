@@ -511,6 +511,37 @@ export class StakingRewardsUnstakedEvent {
   }
 }
 
+export class VestingClaimedEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'vesting.Claimed')
+  }
+
+  /**
+   * Claimed vesting. \[who, locked_amount\]
+   */
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('vesting.Claimed') === '1f29af233c75b3b7d43d3ffbfe7da109a4f7c9f277896999fac76012939a6432'
+  }
+
+  /**
+   * Claimed vesting. \[who, locked_amount\]
+   */
+  get asV2401(): {who: v2401.AccountId32, asset: v2401.CurrencyId, lockedAmount: bigint} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {who: v2401.AccountId32, asset: v2401.CurrencyId, lockedAmount: bigint} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
 export class VestingVestingScheduleAddedEvent {
   constructor(private ctx: EventContext) {
     assert(this.ctx.event.name === 'vesting.VestingScheduleAdded')
@@ -537,6 +568,37 @@ export class VestingVestingScheduleAddedEvent {
   }
 
   get asLatest(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, schedule: v2401.VestingSchedule} {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
+export class VestingVestingSchedulesUpdatedEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'vesting.VestingSchedulesUpdated')
+  }
+
+  /**
+   * Updated vesting schedules. \[who\]
+   */
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('vesting.VestingSchedulesUpdated') === 'b8a0d2208835f6ada60dd21cd93533d703777b3779109a7c6a2f26bad68c2f3b'
+  }
+
+  /**
+   * Updated vesting schedules. \[who\]
+   */
+  get asV2401(): {who: v2401.AccountId32} {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): {who: v2401.AccountId32} {
     deprecateLatest()
     return this.asV2401
   }

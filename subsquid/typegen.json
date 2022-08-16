@@ -12,6 +12,8 @@
     "bondedFinance.NewOffer",
     "bondedFinance.NewBond",
     "vesting.VestingScheduleAdded",
+    "vesting.Claimed",
+    "vesting.VestingSchedulesUpdated",
 
     "balances.Slashed",
     "balances.Deposit",

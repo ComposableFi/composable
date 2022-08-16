@@ -5,11 +5,10 @@ import {
   SubstrateEvent,
 } from "@subsquid/substrate-processor";
 import { instance, mock } from "ts-mockito";
-import { randomUUID } from "crypto";
 import * as ss58 from "@subsquid/ss58";
-import { Account } from "./model";
+import { randomUUID } from "crypto";
 
-const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
+export const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
 
 export function createCtx(
   storeMock: Store,
@@ -17,6 +16,7 @@ export function createCtx(
 ): EventHandlerContext {
   const blockMock: SubstrateBlock = mock<SubstrateBlock>();
   blockMock.height = blockHeight;
+  blockMock.timestamp = 123; // TODO: use better example
   const event: SubstrateEvent = mock<SubstrateEvent>();
   event.id = randomUUID();
   const ctxMock: EventHandlerContext = mock<EventHandlerContext>();
@@ -24,6 +24,9 @@ export function createCtx(
   ctx.store = instance(storeMock);
   ctx.block = blockMock;
   ctx.event = event;
+  if (ctx.extrinsic) {
+    ctx.extrinsic.signer = BOB;
+  }
 
   return ctx;
 }
