@@ -141,9 +141,6 @@ pub mod pallet {
 		/// Block height at which this packet should timeout on counterparty
 		/// relative to the latest height
 		pub timeout_height_offset: u64,
-		/// Revision number, only needed when making a transfer to a parachain
-		/// in which case this should be the para id
-		pub revision_number: Option<u64>,
 	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
