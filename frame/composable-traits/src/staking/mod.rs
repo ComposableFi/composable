@@ -71,8 +71,9 @@ impl RewardRatePeriod {
 	/// Returns the length of the period in seconds.
 	pub fn as_secs(&self) -> NonZeroU64 {
 		match self {
-			RewardRatePeriod::PerSecond =>
-				sp_std::num::NonZeroU64::new(1).expect("1 is non-zero; qed;"),
+			RewardRatePeriod::PerSecond => {
+				sp_std::num::NonZeroU64::new(1).expect("1 is non-zero; qed;")
+			},
 		}
 	}
 }
@@ -306,6 +307,13 @@ pub trait Staking {
 		position: &Self::PositionId,
 		ratio: Permill,
 	) -> Result<[Self::PositionId; 2], DispatchError>;
+
+	/// Claim remaining reward earned up to this point in time.
+	///
+	/// Arguments
+	/// * `who` - the account to transfer the final claimed rewards to.
+	/// * `position` - The uniqely identifying NFT from which we will compute the rewards.
+	fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
 }
 
 /// Interface for managing staking through financial NFTs.
