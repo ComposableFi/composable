@@ -53,7 +53,7 @@ const Bonds: NextPage = () => {
                 >
                   <Typography mb={2}>Your Active Bonds</Typography>
                   <MyBondingsTable
-                    items={activeBonds}
+                    activeBonds={activeBonds}
                     onRowClick={handleActiveBondsClick}
                   />
                 </Box>
