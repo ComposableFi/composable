@@ -71,7 +71,7 @@ pub struct USDT;
 pub struct USDC;
 
 /// List of XCVM compatible assets.
-/// /!\ The order matters and must not be changed, adding a network on the right is safe.
+// /!\ The order matters and must not be changed, adding a network on the right is safe.
 pub type Assets = (InvalidAsset, (PICA, (ETH, (USDT, (USDC, ())))));
 
 /// Type implement network must be part of [`Networks`], otherwise invalid.
