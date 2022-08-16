@@ -330,8 +330,7 @@ pub mod pallet {
 						type_url.as_str(),
 						conn_open_init::TYPE_URL |
 							conn_open_ack::TYPE_URL | conn_open_try::TYPE_URL |
-							conn_open_confirm::TYPE_URL | conn_open_ack::TYPE_URL |
-							create_client::TYPE_URL
+							conn_open_confirm::TYPE_URL | create_client::TYPE_URL
 					);
 					if is_permissioned {
 						return None
@@ -362,8 +361,7 @@ pub mod pallet {
 						type_url.as_str(),
 						conn_open_init::TYPE_URL |
 							conn_open_ack::TYPE_URL | conn_open_try::TYPE_URL |
-							conn_open_confirm::TYPE_URL | conn_open_ack::TYPE_URL |
-							create_client::TYPE_URL
+							conn_open_confirm::TYPE_URL | create_client::TYPE_URL
 					);
 					if !is_permissioned {
 						return None
