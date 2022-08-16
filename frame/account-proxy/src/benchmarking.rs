@@ -239,7 +239,7 @@ benchmarks! {
 
 		add_proxies::<T>(p, Some(anon.clone()))?;
 		ensure!(Proxies::<T>::contains_key(&anon), "anon proxy not created");
-	}: _(RawOrigin::Signed(anon.clone()), caller.clone(), T::ProxyType::default(), 0, height, ext_index)
+	}: _(RawOrigin::Signed(anon.clone()), caller, T::ProxyType::default(), 0, height, ext_index)
 	verify {
 		assert!(!Proxies::<T>::contains_key(&anon));
 	}
