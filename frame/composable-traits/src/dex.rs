@@ -37,7 +37,16 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
 		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
-		is_single_asset: bool,
+	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
+	where
+		Self::AssetId: sp_std::cmp::Ord;
+
+	/// Returns the amount of base asset redeemable for given amount of lp token.
+	// TODO(saruman9): make an asset choosing (base/quote/etc) option
+	fn redeemable_single_asset_for_lp_tokens(
+		pool_id: Self::PoolId,
+		lp_amount: Self::Balance,
+		min_expected_amounts: Self::Balance,
 	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
@@ -59,7 +68,18 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
 		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
-		is_single_asset: bool,
+	) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError>
+	where
+		Self::AssetId: sp_std::cmp::Ord;
+
+	/// Simulate `remove_liquidity_single_asset` computations, on success returns the amount of base
+	/// assets that would be received by removing the given amounts of lp tokens.
+	// TODO(saruman9): make an asset choosing (base/quote/etc) option
+	fn simulate_remove_liquidity_single_asset(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		lp_amount: Self::Balance,
+		min_expected_amount: Self::Balance,
 	) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
@@ -120,7 +140,19 @@ pub trait Amm {
 		lp_amount: Self::Balance,
 		min_base_amount: Self::Balance,
 		min_quote_amount: Self::Balance,
-		is_single_asset: bool,
+	) -> Result<(), DispatchError>;
+
+	/// Withdraw coins from the pool.
+	///
+	/// Withdrawal amount are based on current deposit ratios.
+	///
+	/// - `lp_amount` - quantity of LP tokens to burn in the withdrawal,
+	/// - `min_amount` - minimum amount of underlying coins to receive.
+	fn remove_liquidity_single_asset(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		lp_amount: Self::Balance,
+		min_amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
 	/// Perform an exchange.

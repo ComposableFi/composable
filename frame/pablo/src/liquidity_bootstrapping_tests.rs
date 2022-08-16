@@ -246,7 +246,7 @@ mod remove_liquidity {
 			assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &owner, initial_project_tokens));
 			assert_ok!(Tokens::mint_into(USDT, &owner, initial_usdt));
 			assert_noop!(
-				Pablo::remove_liquidity(Origin::signed(owner), pool_id, 0, 0, 0, false),
+				Pablo::remove_liquidity(Origin::signed(owner), pool_id, 0, 0, 0),
 				Error::<Test>::InvalidSaleState
 			);
 		});
@@ -272,7 +272,7 @@ mod remove_liquidity {
 				assert_ok!(Tokens::mint_into(PROJECT_TOKEN, &owner, initial_project_tokens));
 				assert_ok!(Tokens::mint_into(USDT, &owner, initial_usdt));
 				end_sale();
-				assert_ok!(Pablo::remove_liquidity(Origin::signed(owner), pool_id, 0, 0, 0, false));
+				assert_ok!(Pablo::remove_liquidity(Origin::signed(owner), pool_id, 0, 0, 0));
 				assert_eq!(Tokens::balance(PROJECT_TOKEN, &owner), initial_project_tokens);
 				assert_eq!(Tokens::balance(USDT, &owner), initial_usdt);
 			},

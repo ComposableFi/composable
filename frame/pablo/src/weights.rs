@@ -12,6 +12,7 @@ pub trait WeightInfo {
 	fn add_liquidity() -> Weight;
 	fn add_liquidity_lbp() -> Weight;
 	fn remove_liquidity() -> Weight;
+	fn remove_liquidity_single_asset() -> Weight;
 	fn remove_liquidity_lbp() -> Weight;
 	fn buy() -> Weight;
 	fn sell() -> Weight;
@@ -25,6 +26,7 @@ impl WeightInfo for () {
 	fn add_liquidity() -> Weight {10_000}
 	fn add_liquidity_lbp() -> Weight {10_000}
 	fn remove_liquidity() -> Weight {10_000}
+	fn remove_liquidity_single_asset() -> Weight {10_000}
 	fn remove_liquidity_lbp() -> Weight {10_000}
 	fn buy() -> Weight {10_000}
 	fn sell() -> Weight {10_000}

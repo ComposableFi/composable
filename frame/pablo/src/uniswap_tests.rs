@@ -159,7 +159,7 @@ fn test() {
 		));
 
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
-		assert_ok!(<Pablo as Amm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0, false));
+		assert_ok!(<Pablo as Amm>::remove_liquidity(&ALICE, pool_id, lp, 0, 0));
 
 		// Alice should get back a different amount of tokens.
 		let alice_btc = Tokens::balance(BTC, &ALICE);
@@ -212,7 +212,6 @@ fn test_redeemable_assets() {
 			pool_id,
 			lp,
 			BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
-			false,
 		)
 		.expect("redeemable_assets failed");
 		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
@@ -223,13 +222,9 @@ fn test_redeemable_assets() {
 
 		// For a single asset, this will not work correctly, because we don't have enough liquidity
 		// in the pool
-		let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_lp_tokens(
-			pool_id,
-			lp,
-			BTreeMap::from([(BTC, initial_btc), (USDT, 0_u128)]),
-			true,
-		)
-		.expect("redeemable_assets_for_lp_tokens failed");
+		let redeemable_assets =
+			<Pablo as Amm>::redeemable_single_asset_for_lp_tokens(pool_id, lp, initial_btc)
+				.expect("redeemable_assets_for_lp_tokens failed");
 		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
 		let quote_amount = *redeemable_assets.assets.get(&USDT).expect("Invalid asset");
 		assert_ok!(default_acceptable_computation_error(base_amount, initial_btc));
@@ -510,7 +505,7 @@ fn remove_liquidity_single_asset() {
 		// 110000000000000*(1-(1-(100000000000000/14832396970046637))^(1/.5))
 		let manually_calculated_base_amount = 1478239697830;
 
-		assert_ok!(<Pablo as Amm>::remove_liquidity(&ALICE, pool_id, lp_amount, 0, 0, true));
+		assert_ok!(<Pablo as Amm>::remove_liquidity_single_asset(&ALICE, pool_id, lp_amount, 0));
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
 				mock::Event::Pablo(crate::Event::LiquidityRemoved {
@@ -875,7 +870,7 @@ proptest! {
 			let lp_token = Tokens::balance(pool.lp_token, &BOB);
 			prop_assert_ok!(default_acceptable_computation_error(expected_lp_tokens, lp_token));
 			prop_assert_ok!(
-				Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp_token, 0, 0, false));
+				Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp_token, 0, 0));
 			let btc_value_redeemed = Tokens::balance(BTC, &BOB);
 			let usdt_value_redeemed = Tokens::balance(USDT, &BOB);
 			prop_assert_ok!(default_acceptable_computation_error(btc_value_redeemed, btc_value));
@@ -929,7 +924,7 @@ proptest! {
 			prop_assert_ok!(default_acceptable_computation_error(expected_lp_tokens, lp_amount));
 
 			prop_assert_ok!(
-				Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp_amount, 0, 0, true));
+				Pablo::remove_liquidity_single_asset(Origin::signed(BOB), pool_id, lp_amount, 0));
 
 			let btc_value_redeemed = Tokens::balance(BTC, &BOB);
 			let usdt_value_redeemed = Tokens::balance(USDT, &BOB);
