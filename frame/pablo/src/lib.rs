@@ -548,7 +548,6 @@ pub mod pallet {
 			lp_amount: T::Balance,
 			min_base_amount: T::Balance,
 			min_quote_amount: T::Balance,
-			is_single_asset: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			<Self as Amm>::remove_liquidity(
@@ -557,8 +556,22 @@ pub mod pallet {
 				lp_amount,
 				min_base_amount,
 				min_quote_amount,
-				is_single_asset,
 			)?;
+			Ok(())
+		}
+
+		/// Remove liquidity from the given pool with a single asset.
+		///
+		/// Emits `LiquidityRemoved` event when successful.
+		#[pallet::weight(T::WeightInfo::remove_liquidity_single_asset())]
+		pub fn remove_liquidity_single_asset(
+			origin: OriginFor<T>,
+			pool_id: T::PoolId,
+			lp_amount: T::Balance,
+			min_amount: T::Balance,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			<Self as Amm>::remove_liquidity_single_asset(&who, pool_id, lp_amount, min_amount)?;
 			Ok(())
 		}
 
@@ -970,7 +983,6 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
 			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
-			is_single_asset: bool,
 		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
@@ -990,21 +1002,16 @@ pub mod pallet {
 						T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
 					let lp_issued = T::Assets::total_issuance(lp_token);
 
-					let (base_amount, quote_amount) = if is_single_asset {
-						return Err(Error::<T>::SingleAssetNotYetSupported.into())
-					} else {
-						let base_amount = T::Convert::convert(safe_multiply_by_rational(
-							T::Convert::convert(lp_amount),
-							pool_base_aum,
-							T::Convert::convert(lp_issued),
-						)?);
-						let quote_amount = T::Convert::convert(safe_multiply_by_rational(
-							T::Convert::convert(lp_amount),
-							pool_quote_aum,
-							T::Convert::convert(lp_issued),
-						)?);
-						(base_amount, quote_amount)
-					};
+					let base_amount = T::Convert::convert(safe_multiply_by_rational(
+						T::Convert::convert(lp_amount),
+						pool_base_aum,
+						T::Convert::convert(lp_issued),
+					)?);
+					let quote_amount = T::Convert::convert(safe_multiply_by_rational(
+						T::Convert::convert(lp_amount),
+						pool_quote_aum,
+						T::Convert::convert(lp_issued),
+					)?);
 
 					ensure!(
 						base_amount >= min_base_amount && quote_amount >= min_quote_amount,
@@ -1020,36 +1027,24 @@ pub mod pallet {
 				PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
 					pair,
 					lp_token,
-					base_weight,
 					..
 				}) => {
 					let pool_base_aum =
 						T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 					let lp_issued = T::Convert::convert(T::Assets::total_issuance(lp_token));
 
-					let (base_amount, quote_amount) = if is_single_asset {
-						let base_amount = compute_asset_for_redeemable_lp_tokens(
-							pool_base_aum,
-							base_weight,
-							T::Convert::convert(lp_amount),
-							lp_issued,
-						)?;
-						(T::Convert::convert(base_amount), T::Balance::zero())
-					} else {
-						let pool_quote_aum =
-							T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
-						let base_amount = T::Convert::convert(safe_multiply_by_rational(
-							T::Convert::convert(lp_amount),
-							pool_base_aum,
-							lp_issued,
-						)?);
-						let quote_amount = T::Convert::convert(safe_multiply_by_rational(
-							T::Convert::convert(lp_amount),
-							pool_quote_aum,
-							lp_issued,
-						)?);
-						(base_amount, quote_amount)
-					};
+					let pool_quote_aum =
+						T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+					let base_amount = T::Convert::convert(safe_multiply_by_rational(
+						T::Convert::convert(lp_amount),
+						pool_base_aum,
+						lp_issued,
+					)?);
+					let quote_amount = T::Convert::convert(safe_multiply_by_rational(
+						T::Convert::convert(lp_amount),
+						pool_quote_aum,
+						lp_issued,
+					)?);
 
 					ensure!(
 						base_amount >= min_base_amount && quote_amount >= min_quote_amount,
@@ -1076,20 +1071,60 @@ pub mod pallet {
 			}
 		}
 
+		fn redeemable_single_asset_for_lp_tokens(
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			min_expected_amount: Self::Balance,
+		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			match pool {
+				PoolConfiguration::StableSwap(_) =>
+					Err(Error::<T>::SingleAssetNotYetSupported.into()),
+				PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
+					pair,
+					lp_token,
+					base_weight,
+					..
+				}) => {
+					let pool_base_aum =
+						T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
+					let lp_issued = T::Convert::convert(T::Assets::total_issuance(lp_token));
+
+					let base_amount = compute_asset_for_redeemable_lp_tokens(
+						pool_base_aum,
+						base_weight,
+						T::Convert::convert(lp_amount),
+						lp_issued,
+					)?;
+					let base_amount = T::Convert::convert(base_amount);
+
+					ensure!(
+						base_amount >= min_expected_amount,
+						Error::<T>::CannotRespectMinimumRequested
+					);
+					Ok(RedeemableAssets { assets: BTreeMap::from([(pair.base, base_amount)]) })
+				},
+
+				// for LBP just return 0 for both balances as it does not have LP Token
+				PoolConfiguration::LiquidityBootstrapping(LiquidityBootstrappingPoolInfo {
+					pair,
+					..
+				}) => Ok(RedeemableAssets {
+					assets: BTreeMap::from([(pair.base, Self::Balance::zero())]),
+				}),
+			}
+		}
+
 		fn simulate_remove_liquidity(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
 			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
-			is_single_asset: bool,
 		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
 			ensure!(min_expected_amounts.len() < 3, Error::<T>::MoreThanTwoAssetsNotYetSupported);
-			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(
-				pool_id,
-				lp_amount,
-				min_expected_amounts,
-				is_single_asset,
-			)?;
+			let redeemable_assets =
+				Self::redeemable_assets_for_lp_tokens(pool_id, lp_amount, min_expected_amounts)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
@@ -1127,6 +1162,60 @@ pub mod pallet {
 						assets: BTreeMap::from([
 							(pair.base, base_amount),
 							(pair.quote, quote_amount),
+							(lp_token, total_issuance),
+						]),
+					})
+				},
+				PoolConfiguration::LiquidityBootstrapping(LiquidityBootstrappingPoolInfo {
+					pair,
+					..
+				}) => Ok(RemoveLiquiditySimulationResult {
+					assets: BTreeMap::from([
+						(pair.base, Self::Balance::zero()),
+						(pair.quote, Self::Balance::zero()),
+					]),
+				}),
+			}
+		}
+
+		fn simulate_remove_liquidity_single_asset(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			min_expected_amount: Self::Balance,
+		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
+			let redeemable_assets = Self::redeemable_single_asset_for_lp_tokens(
+				pool_id,
+				lp_amount,
+				min_expected_amount,
+			)?;
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			match pool {
+				PoolConfiguration::StableSwap(StableSwapPoolInfo { pair, lp_token, .. }) |
+				PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
+					pair,
+					lp_token,
+					..
+				}) => {
+					let base_amount = *redeemable_assets
+						.assets
+						.get(&pair.base)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					let lp_issued = T::Assets::total_issuance(lp_token);
+					let total_issuance = lp_issued.safe_sub(&lp_amount)?;
+
+					ensure!(
+						T::Assets::reducible_balance(pair.base, &pool_account, false) > base_amount,
+						Error::<T>::NotEnoughLiquidity
+					);
+					ensure!(
+						T::Assets::reducible_balance(lp_token, who, false) > lp_amount,
+						Error::<T>::NotEnoughLpToken
+					);
+					Ok(RemoveLiquiditySimulationResult {
+						assets: BTreeMap::from([
+							(pair.base, base_amount),
 							(lp_token, total_issuance),
 						]),
 					})
@@ -1240,7 +1329,6 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 			min_base_amount: Self::Balance,
 			min_quote_amount: Self::Balance,
-			is_single_asset: bool,
 		) -> Result<(), DispatchError> {
 			let currency_pair = Self::currency_pair(pool_id)?;
 			let redeemable_assets = Self::redeemable_assets_for_lp_tokens(
@@ -1250,7 +1338,6 @@ pub mod pallet {
 					(currency_pair.base, min_base_amount),
 					(currency_pair.quote, min_quote_amount),
 				]),
-				is_single_asset,
 			)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
@@ -1323,6 +1410,52 @@ pub mod pallet {
 					Pools::<T>::remove(pool_id);
 					Self::deposit_event(Event::PoolDeleted { pool_id, base_amount, quote_amount });
 				},
+			}
+			Ok(())
+		}
+
+		#[transactional]
+		fn remove_liquidity_single_asset(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			min_amount: Self::Balance,
+		) -> Result<(), DispatchError> {
+			let redeemable_assets =
+				Self::redeemable_single_asset_for_lp_tokens(pool_id, lp_amount, min_amount)?;
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			match pool {
+				PoolConfiguration::StableSwap(_) =>
+					return Err(Error::<T>::SingleAssetNotYetSupported.into()),
+				PoolConfiguration::ConstantProduct(info) => {
+					let base_amount = *redeemable_assets
+						.assets
+						.get(&info.pair.base)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					let quote_amount = *redeemable_assets
+						.assets
+						.get(&info.pair.quote)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					let (base_amount, quote_amount, updated_lp) = Uniswap::<T>::remove_liquidity(
+						who,
+						info,
+						pool_account,
+						lp_amount,
+						base_amount,
+						quote_amount,
+					)?;
+					Self::update_twap(pool_id)?;
+					Self::deposit_event(Event::<T>::LiquidityRemoved {
+						pool_id,
+						who: who.clone(),
+						base_amount,
+						quote_amount,
+						total_issuance: updated_lp,
+					});
+				},
+				PoolConfiguration::LiquidityBootstrapping(_) =>
+					return Err(Error::<T>::SingleAssetNotYetSupported.into()),
 			}
 			Ok(())
 		}

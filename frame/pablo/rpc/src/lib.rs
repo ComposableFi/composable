@@ -49,7 +49,16 @@ where
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>,
 		min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
-		is_single_asset: SafeRpcWrapper<bool>,
+		at: Option<BlockHash>,
+	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
+
+	#[method(name = "pablo_simulateRemoveLiquiditySingleAsset")]
+	fn simulate_remove_liquidity_single_asset(
+		&self,
+		who: SafeRpcWrapper<AccountId>,
+		pool_id: SafeRpcWrapper<PoolId>,
+		lp_amount: SafeRpcWrapper<Balance>,
+		min_expected_amount: SafeRpcWrapper<Balance>,
 		at: Option<BlockHash>,
 	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
 }
@@ -133,7 +142,6 @@ where
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>,
 		min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
-		is_single_asset: SafeRpcWrapper<bool>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>
 	{
@@ -143,7 +151,37 @@ where
 
 		// calling ../../runtime-api
 		let runtime_api_result =
-			api.simulate_remove_liquidity(&at, who, pool_id, lp_amount, min_expected_amounts, is_single_asset);
+			api.simulate_remove_liquidity(&at, who, pool_id, lp_amount, min_expected_amounts);
+		runtime_api_result.map_err(|e| {
+			RpcError::Call(CallError::Custom(ErrorObject::owned(
+				9876,
+				"Something wrong",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
+
+	fn simulate_remove_liquidity_single_asset(
+		&self,
+		who: SafeRpcWrapper<AccountId>,
+		pool_id: SafeRpcWrapper<PoolId>,
+		lp_amount: SafeRpcWrapper<Balance>,
+		min_expected_amount: SafeRpcWrapper<Balance>,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>
+	{
+		let api = self.client.runtime_api();
+
+		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+
+		// calling ../../runtime-api
+		let runtime_api_result = api.simulate_remove_liquidity_single_asset(
+			&at,
+			who,
+			pool_id,
+			lp_amount,
+			min_expected_amount,
+		);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,
