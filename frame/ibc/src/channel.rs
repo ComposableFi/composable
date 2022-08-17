@@ -41,7 +41,7 @@ where
 		);
 		let data = <Channels<T>>::get(port_channel_id.0.clone(), port_channel_id.1)
 			.ok_or_else(ICS04Error::missing_channel)?;
-		let channel_end = ChannelEnd::decode_vec(&*data).map_err(|_| {
+		let channel_end = ChannelEnd::decode_vec(&data).map_err(|_| {
 			ICS04Error::channel_not_found(port_channel_id.clone().0, port_channel_id.clone().1)
 		})?;
 		log::trace!(target: "pallet_ibc", "in channel : [channel_end] >> channel_end = {:?}", channel_end);
@@ -194,7 +194,7 @@ where
 
 	/// A hashing function for packet commitments
 	fn hash(&self, value: Vec<u8>) -> Vec<u8> {
-		sp_io::hashing::sha2_256(&*value).to_vec()
+		sp_io::hashing::sha2_256(&value).to_vec()
 	}
 
 	fn client_update_time(

@@ -29,9 +29,10 @@ where
 		port_id: &PortId,
 		channel_id: ChannelId,
 	) -> Result<<Self as Ics20Reader>::AccountId, Ics20Error> {
-		get_channel_escrow_address(port_id, channel_id)?
-			.try_into()
-			.map_err(|_| Ics20Error::parse_account_failure())
+		get_channel_escrow_address(port_id, channel_id)?.try_into().map_err(|_| {
+			log::trace!(target: "ibc_transfer", "Failed to get channel escrow address");
+			Ics20Error::parse_account_failure()
+		})
 	}
 
 	fn get_port(&self) -> Result<ibc::core::ics24_host::identifier::PortId, Ics20Error> {
@@ -142,7 +143,7 @@ where
 			.map_err(|_| {
 				Ics20Error::unknown_msg_type("Error registering local asset id".to_string())
 			})?;
-			transfer::Pallet::<T>::resgister_asset_id(local_asset_id, denom.as_bytes().to_vec());
+			transfer::Pallet::<T>::register_asset_id(local_asset_id, denom.as_bytes().to_vec());
 			local_asset_id.into()
 		};
 
@@ -151,7 +152,10 @@ where
 			&account.clone().into_account(),
 			amount,
 		)
-		.map_err(|_| Ics20Error::invalid_token())?;
+		.map_err(|e| {
+			log::trace!(target: "ibc_transfer", "Failed to mint tokens: {:?}", e);
+			Ics20Error::invalid_token()
+		})?;
 		Ok(())
 	}
 
@@ -169,6 +173,7 @@ where
 		{
 			asset_id
 		} else {
+			log::trace!(target: "ibc_transfer", "Failed to burn unregistered token");
 			return Err(Ics20Error::invalid_token())
 		};
 		<<T as transfer::Config>::MultiCurrency as Mutate<T::AccountId>>::burn_from(
@@ -176,7 +181,10 @@ where
 			&account.clone().into_account(),
 			amount,
 		)
-		.map_err(|_| Ics20Error::invalid_token())?;
+		.map_err(|e| {
+			log::trace!(target: "ibc_transfer", "Failed to burn tokens: {:?}", e);
+			Ics20Error::invalid_token()
+		})?;
 		Ok(())
 	}
 
@@ -199,7 +207,10 @@ where
 						.base_denom()
 						.as_str()
 						.parse::<u128>()
-						.map_err(|_| Ics20Error::invalid_token())?
+						.map_err(|e| {
+							log::trace!(target: "ibc_transfer", "failed to parse currency id from denom: {:?}", e);
+							Ics20Error::invalid_token()
+						})?
 						.into();
 					asset_id
 				};
@@ -209,10 +220,13 @@ where
 				&from.clone().into_account(),
 				&to.clone().into_account(),
 				amount,
-				true,
+				!transfer::Pallet::<T>::is_escrow_address(from.clone().into_account()),
 			)
 			.map(|_| ())
-			.map_err(|_| Ics20Error::invalid_token())
+			.map_err(|e| {
+				log::trace!(target: "ibc_transfer", "failed to transfer native tokens: {:?}", e);
+				Ics20Error::invalid_token()
+			})
 		}
 		let denom = amt.denom.to_string();
 		let foreign_asset_id = ibc_denom_to_foreign_asset_id(&denom);
@@ -222,6 +236,7 @@ where
 		{
 			asset_id
 		} else {
+			log::trace!(target: "ibc_transfer", "Failed to send an unregistered asset");
 			return Err(Ics20Error::invalid_token())
 		};
 		<<T as transfer::Config>::MultiCurrency as Transfer<T::AccountId>>::transfer(
@@ -229,9 +244,13 @@ where
 			&from.clone().into_account(),
 			&to.clone().into_account(),
 			amount,
-			true,
+			// We should only keep escrow addresses alive
+			transfer::Pallet::<T>::is_escrow_address(from.clone().into_account()),
 		)
-		.map_err(|_| Ics20Error::invalid_token())?;
+		.map_err(|e| {
+			log::trace!(target: "ibc_transfer", "Failed to transfer ibc tokens: {:?}", e);
+			Ics20Error::invalid_token()
+		})?;
 		Ok(())
 	}
 }

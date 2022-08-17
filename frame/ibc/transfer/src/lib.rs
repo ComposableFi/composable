@@ -30,7 +30,9 @@
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 mod weight;
+use composable_traits::defi::DeFiComposableConfig;
 use frame_support::dispatch::Weight;
+use primitives::currency::CurrencyId;
 pub use weight::WeightInfo;
 
 use codec::{Decode, Encode};
@@ -39,7 +41,9 @@ use frame_system::ensure_signed;
 use ibc::{
 	applications::transfer::{
 		acknowledgement::{Acknowledgement as Ics20Acknowledgement, ACK_ERR_STR},
-		VERSION,
+		is_receiver_chain_source,
+		packet::PacketData,
+		PrefixedCoin, PrefixedDenom, TracePrefix, VERSION,
 	},
 	core::{
 		ics04_channel::{
@@ -62,6 +66,8 @@ use scale_info::prelude::{
 };
 use sp_std::{prelude::*, str::FromStr};
 
+use sp_runtime::traits::IdentifyAccount;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use core::time::Duration;
@@ -69,7 +75,6 @@ pub mod pallet {
 	use super::*;
 	use composable_traits::{
 		currency::CurrencyFactory,
-		defi::DeFiComposableConfig,
 		xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate},
 	};
 	use frame_support::{
@@ -84,17 +89,19 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use ibc::{
 		applications::transfer::{
-			msgs::transfer::MsgTransfer, Amount, PrefixedCoin, PrefixedDenom,
+			denom::is_sender_chain_source, msgs::transfer::MsgTransfer, Amount, PrefixedDenom,
 		},
 		core::ics04_channel::channel::{ChannelEnd, State},
 		signer::Signer,
 	};
 	use ibc_primitives::{
-		channel_id_from_bytes, connection_id_from_bytes, port_id_from_bytes, runtime_interface,
-		runtime_interface::SS58CodecError, IbcTrait, OpenChannelParams,
+		channel_id_from_bytes, connection_id_from_bytes, get_channel_escrow_address,
+		port_id_from_bytes, runtime_interface, runtime_interface::SS58CodecError, IbcTrait,
+		OpenChannelParams,
 	};
 	use primitives::currency::CurrencyId;
-	use sp_runtime::{traits::IdentifyAccount, AccountId32};
+	use sp_runtime::AccountId32;
+	use sp_std::collections::btree_set::BTreeSet;
 
 	#[derive(
 		frame_support::RuntimeDebug,
@@ -134,9 +141,6 @@ pub mod pallet {
 		/// Block height at which this packet should timeout on counterparty
 		/// relative to the latest height
 		pub timeout_height_offset: u64,
-		/// Revision number, only needed when making a transfer to a parachain
-		/// in which case this should be the para id
-		pub revision_number: Option<u64>,
 	}
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -196,6 +200,14 @@ pub mod pallet {
 		ChannelOpened { channel_id: Vec<u8>, port_id: Vec<u8> },
 		/// Pallet params updated
 		PalletParamsUpdated { send_enabled: bool, receive_enabled: bool },
+		/// Token Transfer Completed
+		IbcTransferCompleted {
+			from: Vec<u8>,
+			to: Vec<u8>,
+			ibc_denom: Vec<u8>,
+			local_asset_id: Option<<T as DeFiComposableConfig>::MayBeAssetId>,
+			amount: <T as DeFiComposableConfig>::Balance,
+		},
 	}
 
 	/// Errors inform users that something went wrong.
@@ -221,6 +233,8 @@ pub mod pallet {
 		ChannelInitError,
 		/// Latest height and timestamp for a client not found
 		TimestampAndHeightNotFound,
+		/// Failed to derive channel escrow address
+		ChannelEscrowAddress,
 	}
 
 	#[pallet::storage]
@@ -240,9 +254,25 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	/// Map of asset id to ibc denom pairs (Vec<u8>, T::AssetId)
+	/// ibc denoms represented as utf8 string bytes
+	pub type IbcDenoms<T: Config> = CountedStorageMap<
+		_,
+		Twox64Concat,
+		Vec<u8>,
+		<T as DeFiComposableConfig>::MayBeAssetId,
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// ChannelIds open from this module
 	pub type ChannelIds<T: Config> = StorageValue<_, Vec<Vec<u8>>, ValueQuery>;
+
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	/// Active Escrow addresses
+	pub type EscrowAddresses<T: Config> = StorageValue<_, BTreeSet<T::AccountId>, ValueQuery>;
 
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
 	// These functions materialize as "extrinsic", which are often compared to transactions.
@@ -290,8 +320,7 @@ pub mod pallet {
 			let (latest_height, latest_timestamp) =
 				T::IbcHandler::latest_height_and_timestamp(&source_port, &source_channel)
 					.map_err(|_| Error::<T>::TimestampAndHeightNotFound)?;
-
-			let data = MsgTransfer {
+			let msg = MsgTransfer {
 				source_port,
 				source_channel,
 				token: coin,
@@ -302,7 +331,28 @@ pub mod pallet {
 					Duration::from_nanos(params.timeout_timestamp_offset))
 				.map_err(|_| Error::<T>::InvalidTimestamp)?,
 			};
-			T::IbcHandler::send_transfer(data).map_err(|e| {
+
+			if is_sender_chain_source(msg.source_port.clone(), msg.source_channel, &msg.token.denom)
+			{
+				// Store escrow address, so we can use this to identify accounts to keep alive when
+				// making transfers in callbacks Escrow addresses do not need to be kept alive
+				let escrow_address =
+					get_channel_escrow_address(&msg.source_port, msg.source_channel)
+						.map_err(|_| Error::<T>::ChannelEscrowAddress)?;
+				let account_id = T::AccountIdConversion::try_from(escrow_address)
+					.map_err(|_| Error::<T>::ChannelEscrowAddress)?
+					.into_account();
+				let _ = EscrowAddresses::<T>::try_mutate::<_, &'static str, _>(|addresses| {
+					if !addresses.contains(&account_id) {
+						addresses.insert(account_id);
+						Ok(())
+					} else {
+						Err("Address already exists")
+					}
+				});
+			}
+
+			T::IbcHandler::send_transfer(msg).map_err(|e| {
 				log::trace!(target: "ibc_transfer", "[transfer]: error: {:?}", e);
 				Error::<T>::TransferFailed
 			})?;
@@ -365,11 +415,41 @@ pub mod pallet {
 			Params::<T>::get().receive_enabled
 		}
 
-		pub fn resgister_asset_id(
+		pub fn register_asset_id(
 			asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
 			denom: Vec<u8>,
 		) {
-			IbcAssetIds::<T>::insert(asset_id, denom)
+			IbcAssetIds::<T>::insert(asset_id, denom.clone());
+			IbcDenoms::<T>::insert(denom, asset_id);
+		}
+
+		pub fn remove_channel_escrow_address(
+			port_id: &PortId,
+			channel_id: ChannelId,
+		) -> Result<(), Ics04Error> {
+			let escrow_address = get_channel_escrow_address(port_id, channel_id).map_err(|_| {
+				Ics04Error::implementation_specific(
+					"Failed to derive channel escrow address for removal".to_string(),
+				)
+			})?;
+			let account_id = T::AccountIdConversion::try_from(escrow_address)
+				.map_err(|_| {
+					Ics04Error::implementation_specific(
+						"Failed to derive channel escrow address for removal".to_string(),
+					)
+				})?
+				.into_account();
+			let _ = EscrowAddresses::<T>::try_mutate::<_, &'static str, _>(|addresses| {
+				addresses.remove(&account_id);
+				Ok(())
+			});
+			Ok(())
+		}
+
+		/// Returns true if address provided is an escrow address
+		pub fn is_escrow_address(address: T::AccountId) -> bool {
+			let set = EscrowAddresses::<T>::get();
+			set.contains(&address)
 		}
 	}
 
@@ -419,6 +499,29 @@ pub mod pallet {
 			}
 		}
 	}
+
+	impl<T: Config> Pallet<T>
+	where
+		<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
+	{
+		pub fn ibc_denom_to_asset_id(
+			full_denom: String,
+			token: PrefixedCoin,
+		) -> Option<<T as DeFiComposableConfig>::MayBeAssetId> {
+			let is_local_asset = token.denom.trace_path().is_empty();
+			if is_local_asset {
+				if let Ok(asset_id) = CurrencyId::to_native_id(token.denom.base_denom().as_str()) {
+					Some(asset_id.into())
+				} else {
+					let asset_id: CurrencyId =
+						token.denom.base_denom().as_str().parse::<u128>().ok()?.into();
+					Some(asset_id.into())
+				}
+			} else {
+				IbcDenoms::<T>::get(full_denom.as_bytes().to_vec())
+			}
+		}
+	}
 }
 
 #[derive(Clone)]
@@ -436,7 +539,10 @@ impl<T: Config> Default for IbcCallbackHandler<T> {
 	}
 }
 
-impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T> {
+impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T>
+where
+	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
+{
 	fn on_chan_open_init(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
@@ -494,7 +600,7 @@ impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T> {
 	fn on_chan_close_init(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
-		_port_id: &PortId,
+		port_id: &PortId,
 		channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
 		let _ = ChannelIds::<T>::try_mutate::<_, (), _>(|channels| {
@@ -506,13 +612,14 @@ impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T> {
 			*channels = rem;
 			Ok(())
 		});
-		Ok(())
+		// Remove escrow address for closed channel if it exists
+		Pallet::<T>::remove_channel_escrow_address(port_id, *channel_id)
 	}
 
 	fn on_chan_close_confirm(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,
-		_port_id: &PortId,
+		port_id: &PortId,
 		channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
 		let _ = ChannelIds::<T>::try_mutate::<_, (), _>(|channels| {
@@ -524,7 +631,8 @@ impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T> {
 			*channels = rem;
 			Ok(())
 		});
-		Ok(())
+		// Remove escrow address for closed channel if it exists
+		Pallet::<T>::remove_channel_escrow_address(port_id, *channel_id)
 	}
 
 	fn on_recv_packet(
@@ -536,6 +644,18 @@ impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T> {
 		let ack = if T::IbcHandler::on_receive_packet(output, packet).is_err() {
 			ACK_ERR_STR.to_string().as_bytes().to_vec()
 		} else {
+			let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
+				.expect("packet data should deserialize successfully");
+			let denom = full_ibc_denom(packet, packet_data.token.clone());
+			let prefixed_denom = PrefixedDenom::from_str(&denom).expect("Should not fail");
+			let token = PrefixedCoin { denom: prefixed_denom, amount: packet_data.token.amount };
+			Pallet::<T>::deposit_event(Event::<T>::IbcTransferCompleted {
+				from: packet_data.sender.to_string().as_bytes().to_vec(),
+				to: packet_data.receiver.to_string().as_bytes().to_vec(),
+				ibc_denom: denom.as_bytes().to_vec(),
+				local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(denom, token),
+				amount: packet_data.token.amount.as_u256().as_u128().into(),
+			});
 			Ics20Acknowledgement::success().as_ref().to_vec()
 		};
 		let packet = packet.clone();
@@ -555,12 +675,29 @@ impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T> {
 		acknowledgement: &Acknowledgement,
 		_relayer: &Signer,
 	) -> Result<(), Ics04Error> {
-		T::IbcHandler::on_ack_packet(output, packet, acknowledgement).map_err(|e| {
-			Ics04Error::app_module(format!(
-				"[ibc-transfer]: Error processing acknowledgement {:#?}",
-				e
-			))
-		})
+		let packet_data: PacketData =
+			serde_json::from_slice(packet.data.as_slice()).map_err(|e| {
+				Ics04Error::implementation_specific(format!("Failed to decode packet data {:?}", e))
+			})?;
+		T::IbcHandler::on_ack_packet(output, packet, acknowledgement)
+			.map(|_| {
+				Pallet::<T>::deposit_event(Event::<T>::IbcTransferCompleted {
+					from: packet_data.sender.to_string().as_bytes().to_vec(),
+					to: packet_data.receiver.to_string().as_bytes().to_vec(),
+					ibc_denom: packet_data.token.denom.to_string().as_bytes().to_vec(),
+					local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(
+						packet_data.token.denom.to_string(),
+						packet_data.token.clone(),
+					),
+					amount: packet_data.token.amount.as_u256().as_u128().into(),
+				})
+			})
+			.map_err(|e| {
+				Ics04Error::app_module(format!(
+					"[ibc-transfer]: Error processing acknowledgement {:#?}",
+					e
+				))
+			})
 	}
 
 	fn on_timeout_packet(
@@ -624,5 +761,19 @@ impl<T: Config> CallbackWeight for WeightHandler<T> {
 
 	fn on_timeout_packet(&self, _packet: &Packet) -> Weight {
 		<T as Config>::WeightInfo::on_timeout_packet()
+	}
+}
+
+pub fn full_ibc_denom(packet: &Packet, mut token: PrefixedCoin) -> String {
+	if is_receiver_chain_source(packet.source_port.clone(), packet.source_channel, &token.denom) {
+		let prefix = TracePrefix::new(packet.source_port.clone(), packet.source_channel);
+
+		token.denom.remove_trace_prefix(&prefix);
+		token.denom.to_string()
+	} else {
+		let prefix = TracePrefix::new(packet.destination_port.clone(), packet.destination_channel);
+
+		token.denom.add_trace_prefix(prefix);
+		token.denom.to_string()
 	}
 }

@@ -298,6 +298,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>
 	where
 		u32: From<<T as frame_system::Config>::BlockNumber>,
+		<T as DeFiComposableConfig>::MayBeAssetId: From<primitives::currency::CurrencyId>,
 		T: Send + Sync,
 	{
 		fn offchain_worker(_n: BlockNumberFor<T>) {
@@ -312,6 +313,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 	where
 		u32: From<<T as frame_system::Config>::BlockNumber>,
+		<T as DeFiComposableConfig>::MayBeAssetId: From<primitives::currency::CurrencyId>,
 		T: Send + Sync,
 	{
 		#[pallet::weight(crate::weight::deliver::< T > (messages))]
@@ -328,8 +330,7 @@ pub mod pallet {
 						type_url.as_str(),
 						conn_open_init::TYPE_URL |
 							conn_open_ack::TYPE_URL | conn_open_try::TYPE_URL |
-							conn_open_confirm::TYPE_URL | conn_open_ack::TYPE_URL |
-							create_client::TYPE_URL
+							conn_open_confirm::TYPE_URL | create_client::TYPE_URL
 					);
 					if is_permissioned {
 						return None
@@ -360,8 +361,7 @@ pub mod pallet {
 						type_url.as_str(),
 						conn_open_init::TYPE_URL |
 							conn_open_ack::TYPE_URL | conn_open_try::TYPE_URL |
-							conn_open_confirm::TYPE_URL | conn_open_ack::TYPE_URL |
-							create_client::TYPE_URL
+							conn_open_confirm::TYPE_URL | create_client::TYPE_URL
 					);
 					if !is_permissioned {
 						return None

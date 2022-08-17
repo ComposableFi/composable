@@ -1,9 +1,11 @@
 use super::*;
+use composable_traits::defi::DeFiComposableConfig;
 use core::borrow::Borrow;
 use ibc::{
 	applications::transfer::MODULE_ID_STR as IBC_TRANSFER_MODULE_ID,
 	core::ics26_routing::context::{Ics26Context, Module, ModuleId, ReaderContext, Router},
 };
+use primitives::currency::CurrencyId;
 use scale_info::prelude::string::ToString;
 
 #[derive(Clone)]
@@ -39,7 +41,10 @@ impl<T: Config> Default for IbcRouter<T> {
 	}
 }
 
-impl<T: Config + Send + Sync> Router for IbcRouter<T> {
+impl<T: Config + Send + Sync> Router for IbcRouter<T>
+where
+	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
+{
 	fn get_route_mut(&mut self, module_id: &impl Borrow<ModuleId>) -> Option<&mut dyn Module> {
 		match module_id.borrow().to_string().as_str() {
 			pallet_ibc_ping::MODULE_ID => Some(&mut self.pallet_ibc_ping),
@@ -59,6 +64,7 @@ impl<T: Config + Send + Sync> Router for IbcRouter<T> {
 impl<T: Config + Send + Sync> Ics26Context for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
+	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
 {
 	type Router = IbcRouter<T>;
 

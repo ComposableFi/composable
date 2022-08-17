@@ -32,7 +32,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24" }
 
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "a189a3b796cbb84807061180a4ad67c4a1ded8d0", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb", default-features = false }
 ics23 = { git = "https://github.com/composablefi/ics23", rev = "b500a5c6068eb53c83c4c6c13bd9d8c25e0bf927", default-features = false, optional = true }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", optional = true, default-features = false }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", default-features = false }
@@ -47,7 +47,7 @@ transfer = { package = "pallet-ibc-transfer", path = "transfer", default-feature
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "a189a3b796cbb84807061180a4ad67c4a1ded8d0"
+rev = "13de07663749a59a424d67bb259a714182df28eb"
 default-features = false
 features = ["ics11_beefy"]
 
@@ -75,7 +75,7 @@ tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a7
 
 [dev-dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "a189a3b796cbb84807061180a4ad67c4a1ded8d0"
+rev = "13de07663749a59a424d67bb259a714182df28eb"
 default-features = false
 features = ["ics11_beefy", "mocks"]
 
