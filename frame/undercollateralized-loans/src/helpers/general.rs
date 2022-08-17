@@ -1,7 +1,7 @@
 use crate::{
 	types::{
 		LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf,
-		Timestamp,
+		Timestamp, PossiblePaymentOutcome, PossiblePaymentsOutcomes,
 	},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
@@ -23,13 +23,18 @@ use frame_support::{
 		Get, UnixTime,
 	},
 };
+
+
 use sp_runtime::{
 	traits::{One, Saturating, Zero},
 	DispatchError, Perquintill, TransactionOutcome,
 };
 
 use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
-use sp_std::{vec::Vec, ops::{Add, Sub}};
+use sp_std::{
+	ops::{Add, Sub},
+	vec::Vec,
+};
 
 // #generalization
 impl<T: Config> Pallet<T> {
@@ -44,10 +49,7 @@ impl<T: Config> Pallet<T> {
 		let config_input = input.value();
 		crate::MarketsCounterStorage::<T>::try_mutate(|counter| {
 			*counter += T::Counter::one();
-			ensure!(
-				*counter <= T::MaxMarketsCounterValue::get(),
-				Error::<T>::MaxMarketsReached,
-			);
+			ensure!(*counter <= T::MaxMarketsCounterValue::get(), Error::<T>::MaxMarketsReached,);
 			let market_account_id = Self::market_account_id(*counter);
 			let borrow_asset_vault = T::Vault::create(
 				Deposit::Existential,
@@ -178,7 +180,7 @@ impl<T: Config> Pallet<T> {
 		let destination = &loan_account_id;
 		let amount = *loan_config.collateral();
 		T::MultiCurrency::transfer(collateral_asset_id, source, destination, amount, keep_alive)?;
-		// Transfer borrowed assets from market's account to the borrower's account.
+		// Transfer borrow assets from market's account to the borrower's account.
 		let borrow_asset_id = *loan_config.borrow_asset_id();
 		let source = loan_config.market_account_id();
 		let destination = &borrower_account_id;
@@ -221,16 +223,34 @@ impl<T: Config> Pallet<T> {
 			keep_alive,
 		)
 	}
-
-	pub(crate) fn do_liquidate(loan_config: &LoanConfigOf<T>) -> () {
-		Self::deposit_event(crate::Event::<T>::LoanSentToLiquidation {
-			loan_config: loan_config.clone(),
-		});
+    
+    pub (crate) fn do_process_payments(possible_payments_outcomes: PossiblePaymentsOutcomes<T>) {
+        for outcome in possible_payments_outcomes {
+           match outcome {
+            PossiblePaymentOutcome::RegularPaymentMaySucceed(_) => todo!(),
+            PossiblePaymentOutcome::LastPaymentMaySucceed(loan_account_id) => {
+                Self::pay_back_borrowed_asset(&loan_account_id, T::Balance::zero());
+            },
+            PossiblePaymentOutcome::PaymentFailed(loan_account_id) => Self::do_liquidate(&loan_account_id),
+        } 
+        }
+    
+    }
+	pub(crate) fn do_liquidate(loan_account_id: &T::AccountId) -> () {
 	}
 
 	// Close loan contract since loan is paid.
-	pub(crate) fn do_close_loan_contract(loan_config: &LoanConfigOf<T>, keep_alive: bool) {
-		// Transfer collateral to borrower's account.
+	pub(crate) fn do_close_loan_contract(loan_account_id: &T::AccountId, keep_alive: bool) {
+	    // Get loan config or do nothig. 
+        let loan_config =  match Self::get_loan_config_via_account_id(loan_account_id) {
+            Ok(loan_config) => loan_config,
+            Err(_) => {
+                log::error!("Tried to close non-existent contract with the following account id: {:?} ", loan_account_id);
+                return
+            },
+        };
+         
+        // Transfer collateral to borrower's account.
 		T::MultiCurrency::transfer(
 			*loan_config.collateral_asset_id(),
 			loan_config.market_account_id(),
@@ -243,21 +263,9 @@ impl<T: Config> Pallet<T> {
         // Can we transfer collateral at market account in this case?
         // Perhaps we have to allow manager to transfer collateral to any account in such cases? 
         .map_or_else(|error| log::error!("Collateral was not transferred back to the borrower's account due to the following error: {:?}", error), |_| ());
-		// Transfer borrowed assets to the borrower's account.
-		// If borrower has transferred extra money by mistake we have to return them.
-		let loan_account_borrow_asset_balance =
-			T::MultiCurrency::balance(*loan_config.borrow_asset_id(), loan_config.account_id());
-		T::MultiCurrency::transfer(
-			*loan_config.borrow_asset_id(),
-			loan_config.market_account_id(),
-			loan_config.borrower_account_id(),
-            loan_account_borrow_asset_balance,
-			keep_alive,
-		)
-	    // May happens if borrower's account died for some reason.
-        .map_or_else(|error| log::error!("Remainded borrow asset was not transferred back to the borrower's account due to the following error: {:?}", error), |_| ());
-		// Remove all information about the loan.
-		Self::terminate_activated_loan(loan_config);
+		
+        // Remove all information about the loan.
+		Self::terminate_activated_loan(&loan_config);
 		Self::deposit_event(crate::Event::<T>::LoanClosed { loan_config: loan_config.clone() });
 	}
 
@@ -335,54 +343,7 @@ impl<T: Config> Pallet<T> {
 		});
 	}
 
-	pub(crate) fn check_payments(today: Timestamp) {
-		// Retrive collection of loans(loans' accounts ids) which have to be paid now.
-		// If nothing found we get empty set.
-		let loans_accounts_ids = crate::ScheduleStorage::<T>::try_get(today).unwrap_or_default();
-
-		for loan_account_id in loans_accounts_ids {
-			// Treat situation when non-existent loan's id is in global schedule.
-			let loan_config = match Self::get_loan_config_via_account_id(&loan_account_id) {
-				Ok(loan_config) => loan_config,
-				Err(_) => continue,
-			};
-			
-			Self::do_check_payment(&loan_account_id, today);
-            // We do not need information regarding this date anymore.
-			crate::ScheduleStorage::<T>::remove(today);
-		}
-	}
-
-	// Check if a payment is successful.
-	pub fn do_check_payment(loan_account_id: &T::AccountId, today: Timestamp) -> Result<LoanConfigOf<T>, DispatchError> {
-	    let loan_config = Self::get_loan_config_via_account_id(loan_account_id)?;	
-        let payment_amount = match loan_config.get_payment_for_particular_moment(&today) {
- 		Some(payment_amount) => payment_amount,
-		None => return Err(Error::<T>::MomentNotFoundInSchedule.into()),
-		};
-		match T::MultiCurrency::transfer(
-			*loan_config.borrow_asset_id(),
-			loan_config.account_id(),
-			loan_config.market_account_id(),
-			*payment_amount,
-			true,
- 		) {
-			// Last payment succeed.
-			// Loan contract should be closed.
- 			Ok(_) if *loan_config.last_payment_moment() == today =>
-				Self::do_close_loan_contract(&loan_config, false),
-			// Payment succeed.
-			// We do nothing and continue to treat the contract.
-			Ok(_) => (),
-			// Payment was failed.
-			// We liquidate the loan.
-			// TODO: @mikolaichuk:  we should give to borrower
-			//                      several attempts.
-			Err(_) => Self::do_liquidate(&loan_config),
- 		}
-        Ok(loan_config)	
-}
- 	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
+	// Check if vault balanced or we have to deposit money to the vault or withdraw money from it.
 	// If vault is balanced we will do nothing.
 	// #generalization
 	fn available_funds(
@@ -434,7 +395,6 @@ impl<T: Config> Pallet<T> {
 		T::UnixTime::now().as_secs() as Timestamp
 	}
 
-
 	// Removes expired non-activated loans.
 	// Expired non-activated loans are loans which were not activated by borrower before first
 	// payment date.
@@ -481,17 +441,24 @@ impl<T: Config> Pallet<T> {
 			false,
 		)
 		.map_or_else(|error| log::error!("Fee was not transferred back to the borrowers account due to the following error: {:?}", error), |_| ());
-		Self::deposit_event(crate::Event::<T>::LoanTerminated {
-			loan_config: loan_config.clone(),
-		})
+		Self::deposit_event(crate::Event::<T>::LoanTerminated { loan_config: loan_config.clone() })
 	}
-    // Offchain-worker helpers
-    pub(crate) fn sync_offchain_worker() {
- 
-    }
-    // Getters helpers
+     
+    // Tansfers borrow asset from loan's account to market's account.
+    pub(crate) fn pay_back_borrowed_asset(loan_account_id: &T::AccountId, payment_amount: T::Balance) -> Result<T::Balance, DispatchError> {
+        let loan_config = Self::get_loan_config_via_account_id(loan_account_id)?; 
+        T::MultiCurrency::transfer(
+			*loan_config.borrow_asset_id(),
+			loan_config.account_id(),
+			loan_config.market_account_id(),
+			payment_amount,
+			true,
+		)
+    } 
+
+	// Getters helpers
 	// #generalization
-		pub(crate) fn get_market_info_via_account_id(
+	pub(crate) fn get_market_info_via_account_id(
 		market_account_id_ref: &T::AccountId,
 	) -> Result<MarketInfoOf<T>, crate::Error<T>> {
 		crate::MarketsStorage::<T>::try_get(market_account_id_ref)
@@ -512,13 +479,13 @@ impl<T: Config> Pallet<T> {
 			.map_err(|_| crate::Error::<T>::LoanNotFound)
 	}
 
-    pub(crate) fn get_current_date_timestamp() -> Timestamp {
- 		crate::CurrentDateStorage::<T>::get()
- 	}
-    // Get current date from the storage.
+	pub(crate) fn get_current_date_timestamp() -> Timestamp {
+		crate::CurrentDateStorage::<T>::get()
+	}
+	// Get current date from the storage.
 	pub(crate) fn get_current_date() -> NaiveDate {
 		Self::get_date_from_timestamp(Self::get_current_date_timestamp())
- 	}
+	}
 	// Get date from a timestamp
 	pub(crate) fn get_date_from_timestamp(timestamp: Timestamp) -> NaiveDate {
 		NaiveDateTime::from_timestamp(timestamp, 0).date()
@@ -533,27 +500,25 @@ impl<T: Config> Pallet<T> {
 			.timestamp()
 	}
 
-	// Returns a next date aligned timestamp.
+	// Returns next date aligned timestamp.
 	// 24.08.1991 08:45:03 -> 25.08.1991 00:00:00
 	// (in terms of seconds from the beginning of Unix epoche)
 	pub(crate) fn get_next_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
-		Self::get_date_from_timestamp(timestamp)
+        Self::get_date_from_timestamp(timestamp)
 			//	Gonna no overflow since we adds only one day.
-		.add(Duration::days(1))
-			.and_time(NaiveTime::default())
-			.timestamp()
- 	}
-    
-    // Returns a previous date aligned timestamp.
-	// 24.08.1991 08:45:03 -> 23.08.1991 00:00:00
-	// (in terms of seconds from the beginning of Unix epoche)
-	pub(crate) fn get_previous_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
-		Self::get_date_from_timestamp(timestamp)
-			//	Gonna no overflow since we subs only one day.
-			.sub(Duration::days(1))
+			.add(Duration::days(1))
 			.and_time(NaiveTime::default())
 			.timestamp()
 	}
 
-
+	// Returns one week before date aligned timestamp.
+	// 24.08.1991 08:45:03 -> 17.08.1991 00:00:00
+	// (in terms of seconds from the beginning of Unix epoche)
+	pub(crate) fn get_one_week_before_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
+		Self::get_date_from_timestamp(timestamp)
+			//	Gonna no overflow since we subs only one day.
+			.sub(Duration::weeks(1))
+			.and_time(NaiveTime::default())
+			.timestamp()
+	}
 }

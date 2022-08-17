@@ -6,9 +6,9 @@ use sp_std::{
 	vec::Vec,
 };
 
-/// MarketConfig structure is used to hold immutable properties of market. 
+/// MarketConfig read-only structure is used to hold immutable properties of market.
 /// Once market is created these properties should not be changed.
-/// Changing of one of these fields may cause significant changes in market's performance 
+/// Changing of one of these fields may cause significant changes in market's performance
 /// or even its disfunction.
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct MarketConfig<AccountId, AssetId, BlockNumber, VaultId>
@@ -98,9 +98,10 @@ where
 	}
 }
 
-/// LoanConfig structure is used to hold immutable properties of loan. 
+/// LoanConfig read-only structure is used to hold immutable properties of loan.
 /// Once loan is created these properties should not be changed.
-/// Changing in one of these fields means changing in the contract's terms after it has been "signed".
+/// Changing of one of these fields means changing in the contract's terms after it has been
+/// "signed".
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct LoanConfig<AccountId, AssetId, Balance, Timestamp>
 where
@@ -125,6 +126,7 @@ where
 	/// Amount of assets which should be used as collateral.
 	collateral: Balance,
 	/// Schedule of payments
+	// TODO: @mikolaichuk: Should be bounded
 	schedule: BTreeMap<Timestamp, Balance>,
 	/// The moment of the first interest payment.
 	first_payment_moment: Timestamp,

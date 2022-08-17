@@ -45,6 +45,25 @@ pub(crate) type LoanConfigOf<T> = LoanConfig<
 	Timestamp,
 >;
 
+pub(crate) type PossiblePaymentsOutcomes<T> = Vec<PossiblePaymentOutcome<<T as frame_system::Config>::AccountId>>;
+
+// This enum is used for off-chain payment checking procedure.
+#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
+pub enum PossiblePaymentOutcome<AccountId> {
+	RegularPaymentMaySucceed(AccountId),
+	LastPaymentMaySucceed(AccountId),
+    // We assume that payment is failed if it is not possible to transfer money from borrower account 
+    // to loan account on the moment of checking.
+    PaymentFailed(AccountId),
+}
+
+#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
+pub enum PaymentOutcome<AccountId> {
+	RegularPaymentSucceed(AccountId),
+	LastPaymentSucceed(AccountId),
+	PaymentFailed(AccountId),
+}
+
 #[derive(Encode, Decode)]
 pub struct LoanId(pub [u8; 8]);
 

@@ -53,12 +53,7 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
-    fn check_payment(loan_account_id: &Self::AccountId, timestamp: Self::Timestamp) -> Result<
-               LoanConfig<Self::AccountId, Self::MayBeAssetId, Self::Balance, Self::Timestamp>,
-               DispatchError,
-     >;
-	
-    fn market_account_id<S: Encode>(postfix: S) -> Self::AccountId;
+	fn market_account_id<S: Encode>(postfix: S) -> Self::AccountId;
 
 	fn loan_account_id<S: Encode>(postfix: S) -> Self::AccountId;
 

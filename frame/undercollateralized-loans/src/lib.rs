@@ -49,7 +49,10 @@ pub mod validation;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::types::{LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, Timestamp};
+	use crate::types::{
+		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, PossiblePaymentOutcome,
+		Timestamp,
+	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		currency::CurrencyFactory,
@@ -68,9 +71,14 @@ pub mod pallet {
 		},
 		transactional, PalletId,
 	};
-	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
+	use frame_system::{
+		ensure_none, ensure_signed, offchain::SendTransactionTypes, pallet_prelude::OriginFor,
+	};
 	use scale_info::TypeInfo;
-	use sp_runtime::traits::One;
+	use sp_runtime::{
+		traits::One,
+		transaction_validity::{TransactionSource, TransactionValidity},
+	};
 	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, ops::AddAssign};
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
@@ -80,7 +88,9 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + DeFiComposableConfig {
+	pub trait Config:
+		frame_system::Config + SendTransactionTypes<Call<Self>> + DeFiComposableConfig
+	{
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -141,8 +151,8 @@ pub mod pallet {
 			LiquidationStrategyId = Self::LiquidationStrategyId,
 		>;
 
-	    // TODO: @mikolaichuk: use u128 instead.	
-        type Counter: AddAssign
+		// TODO: @mikolaichuk: use u128 instead.
+		type Counter: AddAssign
 			+ One
 			+ FullCodec
 			+ Copy
@@ -158,6 +168,7 @@ pub mod pallet {
 		// Each payments schedule can not have more than this amount of payments.
 		type MaxPaymentsPerSchedule: Get<u32>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
+		type CheckPaymentsBatchSize: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -189,15 +200,16 @@ pub mod pallet {
 	pub type LoansStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, LoanConfigOf<T>, OptionQuery>;
 
-	// Payments schedule. Keeps sets of loans which have to be paid before the particular block
-	// number.
-	#[pallet::storage]
-	pub type PaymentsScheduleStorage<T: Config> =
-		StorageMap<_, Twox64Concat, T::BlockNumber, BTreeSet<T::AccountId>, ValueQuery>;
-
 	// Use hashmap as a set.
 	#[pallet::storage]
 	pub type NonActiveLoansStorage<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
+
+	// Storage keeps accounts ids of loans which payments were already checked today.
+	// Prevents double checking and subsiquent unreasonable liquidation.
+	// Use hashmap as a set.
+	#[pallet::storage]
+	pub type CheckedLoansStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
 
 	// Maps market's account id to market's debt token
@@ -216,7 +228,7 @@ pub mod pallet {
 	pub type ScheduleStorage<T: Config> =
 		StorageMap<_, Twox64Concat, Timestamp, BTreeSet<T::AccountId>, ValueQuery>;
 
-	// TODO: @mikolaichuk: storages for borrowers' strikes (local for paricular market and global
+	// TODO: @mikolaichuk: storages for borrowers' strikes (local for particular market and global
 	// for all markets).
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -230,7 +242,7 @@ pub mod pallet {
 		LoanSentToLiquidation { loan_config: LoanConfigOf<T> },
 		// TODO: @mikolaichuk: add loan information and amount by itself.
 		SomeAmountRepaid,
-        LoanPaymentWasChecked { loan_config: LoanConfigOf<T>},	
+		LoanPaymentWasChecked { loan_config: LoanConfigOf<T> },
 	}
 
 	#[allow(missing_docs)]
@@ -297,6 +309,8 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		// TODO: @mikolaichuk: add weights calculation
+        // TODO: @mikolaichuk:  treat untreated loans on chain.
+        //                      then clen yesterday schdule.
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
 			Self::treat_vaults_balance(block_number);
 			let now = Self::now();
@@ -307,7 +321,6 @@ pub mod pallet {
 			if stored_date < date {
 				let current_date_aligned_timestamp = Self::get_date_aligned_timestamp(now);
 				CurrentDateStorage::<T>::put(current_date_aligned_timestamp);
-				Self::check_payments(current_date_aligned_timestamp);
 				// Terminate loans which were not activated by borrower before first payment date
 				// once a day.
 				Self::terminate_non_activated_expired_loans(current_date_aligned_timestamp);
@@ -322,16 +335,33 @@ pub mod pallet {
 				Self::get_next_date_aligned_timestamp(current_date_timestamp);
 			let mut daily_lock = StorageLock::with_deadline(
 				b"undercollateralized_loans::offchain_worker_lock",
-			    // Type conversion is safe here since we do not use dates before the epoche.
+				// Type conversion is safe here since we do not use dates before the epoche.
 				Duration::from_millis(next_date_aligned_timestemp as u64 * 1000),
 			);
 			match daily_lock.try_lock() {
-				Ok(_) => (),
+				Ok(_) => Self::sync_offchain_worker(current_date_timestamp),
 				Err(_) => (),
 			};
 		}
-    }
+	}
 
+	#[pallet::validate_unsigned]
+	impl<T: Config> ValidateUnsigned for Pallet<T> {
+		type Call = Call<T>;
+		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+			// Check if transaction is local.
+			match source {
+				TransactionSource::Local | TransactionSource::InBlock => (),
+				_ => return InvalidTransaction::Call.into(),
+			};
+			// Check if call is allowed.
+			match call {
+				Call::check_payments { .. } => (),
+				_ => return InvalidTransaction::Call.into(),
+			};
+			Ok(ValidTransaction::default())
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -390,19 +420,16 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::SomeAmountRepaid);
 			Ok(())
 		}
-	
-        #[pallet::weight(1000)]
-		#[transactional]
-		pub fn check_paymens(
+
+		#[pallet::weight(1000)]
+		pub fn check_payments(
 			origin: OriginFor<T>,
-		    loan_config: LoanConfigOf<T>,
-            timestamp: Timestamp,
+			outcomes: Vec<PossiblePaymentOutcome<T::AccountId>>,
+			timestamp: Timestamp,
 		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			<Self as UndercollateralizedLoans>::check_payment(loan_config.account_id(), timestamp);
-			Self::deposit_event(Event::<T>::LoanPaymentWasChecked {loan_config});
+			let who = ensure_none(origin)?;
+
 			Ok(())
 		}
-    }
-
+	}
 }

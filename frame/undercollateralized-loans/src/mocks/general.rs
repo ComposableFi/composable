@@ -4,7 +4,6 @@ use crate::{
 	currency::{NORMALIZED, PICA},
 	types::LoanId,
 };
-use chrono::NaiveDate;
 use composable_traits::{
 	currency::{Exponent, LocalAssets},
 	defi::DeFiComposableConfig,
@@ -82,7 +81,7 @@ construct_runtime!(
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
-		UndercollateralizedLoans: pallet_undercollateralized_loans::{Pallet, Call, Config, Storage, Event<T>},
+		UndercollateralizedLoans: pallet_undercollateralized_loans::{Pallet, Call, Config, Storage, Event<T>, ValidateUnsigned},
 	}
 );
 
@@ -377,7 +376,8 @@ impl pallet_undercollateralized_loans::Config for Runtime {
 	type MaxLoansPerMarketCounterValue = CounterValue;
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type UnixTime = Timestamp;
-    type MaxPaymentsPerSchedule = ConstU32<100>;
+	type MaxPaymentsPerSchedule = ConstU32<100>;
+	type CheckPaymentsBatchSize = ConstU32<5>;
 }
 
 parameter_type_with_key! {

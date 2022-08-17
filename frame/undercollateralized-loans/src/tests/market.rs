@@ -15,11 +15,7 @@ fn can_create_market() {
 		set_price(borrow_asset, NORMALIZED::ONE);
 		set_price(collateral_asset, NORMALIZED::units(50000));
 		Tokens::mint_into(borrow_asset, &manager, NORMALIZED::units(1000));
-		Tokens::mint_into(
-			collateral_asset,
-			&manager,
-			NORMALIZED::units(1000),
-		);
+		Tokens::mint_into(collateral_asset, &manager, NORMALIZED::units(1000));
 		assert_ok!(pallet_undercollateralized_loans::Pallet::<Runtime>::create_market(
 			origin, input, true
 		));
