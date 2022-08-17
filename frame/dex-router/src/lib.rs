@@ -296,9 +296,7 @@ pub mod pallet {
 			min_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::remove_liquidity_single_asset(
-				&who, asset_pair, lp_amount, min_amount,
-			)?;
+			<Self as Amm>::remove_liquidity_single_asset(&who, asset_pair, lp_amount, min_amount)?;
 			Ok(())
 		}
 	}

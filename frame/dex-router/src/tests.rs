@@ -166,7 +166,7 @@ fn update_route_origin_tests() {
 			DexRouter::update_route(
 				Origin::signed(ALICE),
 				currency_pair,
-				Some(dex_route.clone().try_into().unwrap())
+				Some(dex_route.try_into().unwrap())
 			),
 			BadOrigin
 		);
@@ -185,7 +185,7 @@ fn halborn_hal11_route_with_cycle() {
 			DexRouter::update_route(
 				Origin::root(),
 				currency_pair,
-				Some(dex_route.clone().try_into().unwrap())
+				Some(dex_route.try_into().unwrap())
 			),
 			Error::<Test>::LoopSuspectedInRouteUpdate
 		);
@@ -199,7 +199,7 @@ fn halborn_hal11_route_with_cycle() {
 			DexRouter::update_route(
 				Origin::root(),
 				currency_pair,
-				Some(dex_route.clone().try_into().unwrap())
+				Some(dex_route.try_into().unwrap())
 			),
 			Error::<Test>::LoopSuspectedInRouteUpdate,
 		);
@@ -209,7 +209,7 @@ fn halborn_hal11_route_with_cycle() {
 			DexRouter::update_route(
 				Origin::root(),
 				CurrencyPair::new(USDC, USDC),
-				Some(dex_route.clone().try_into().unwrap())
+				Some(dex_route.try_into().unwrap())
 			),
 			Error::<Test>::LoopSuspectedInRouteUpdate,
 		);
@@ -286,7 +286,7 @@ fn update_route_tests() {
 		assert_ok!(DexRouter::update_route(
 			Origin::root(),
 			CurrencyPair::new(USDT, USDC),
-			Some(dex_route.clone().try_into().unwrap())
+			Some(dex_route.try_into().unwrap())
 		));
 	});
 }
