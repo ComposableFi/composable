@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
+  BondedFinanceOfferCancelledEvent,
 } from "./types/events";
 import { BondedFinanceBondOffer, PicassoTransactionType } from "./model";
 import { trySaveAccount, saveActivity, saveTransaction } from "./dbHelper";
@@ -18,23 +19,62 @@ interface NewBondEvent {
   nbOfBonds: bigint;
 }
 
+interface OfferCancelledEvent {
+  offerId: bigint;
+}
+
 /**
- * Extracts relevant information about a new bond
+ * Extract relevant information about a bond offer.
  * @param event
  */
-function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent {
+export function getNewOfferEvent(
+  event: BondedFinanceNewOfferEvent
+): NewOfferEvent {
+  const { offerId, beneficiary } = event.asV2401 ?? event.asLatest;
+
+  return { offerId, beneficiary };
+}
+
+/**
+ * Extract relevant information about a new bond.
+ * @param event
+ */
+export function getNewBondEvent(
+  event: BondedFinanceNewBondEvent
+): NewBondEvent {
   const { offerId, nbOfBonds } = event.asV2401 ?? event.asLatest;
   return { offerId, nbOfBonds };
 }
 
 /**
- * Extracts relevant information about a bond offer
+ * Extract relevant information about a new bond.
  * @param event
  */
-function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
-  const { offerId, beneficiary } = event.asV2401 ?? event.asLatest;
+export function getOfferCancelledEvent(
+  event: BondedFinanceOfferCancelledEvent
+): OfferCancelledEvent {
+  const { offerId } = event.asV2401 ?? event.asLatest;
+  return { offerId };
+}
 
-  return { offerId, beneficiary };
+/**
+ * Based on the event, return a new BondedFinanceBondOffer.
+ * @param ctx
+ * @param event
+ */
+export function getNewBondOffer(
+  ctx: EventHandlerContext,
+  event: BondedFinanceNewOfferEvent
+): BondedFinanceBondOffer {
+  const { offerId, beneficiary } = getNewOfferEvent(event);
+
+  return new BondedFinanceBondOffer({
+    id: randomUUID(),
+    eventId: ctx.event.id,
+    offerId: offerId.toString(),
+    totalPurchased: BigInt(0),
+    beneficiary: encodeAccount(beneficiary),
+  });
 }
 
 /**
@@ -44,39 +84,41 @@ function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
  *   - Create Transaction.
  *   - Create Activity.
  * @param ctx
- * @param event
  */
-export async function processNewOfferEvent(
-  ctx: EventHandlerContext,
-  event: BondedFinanceNewOfferEvent
-) {
-  const { offerId, beneficiary } = getNewOfferEvent(event);
+export async function processNewOfferEvent(ctx: EventHandlerContext) {
+  const event = new BondedFinanceNewOfferEvent(ctx);
 
-  await ctx.store.save(
-    new BondedFinanceBondOffer({
-      id: randomUUID(),
-      eventId: ctx.event.id,
-      offerId: offerId.toString(),
-      totalPurchased: BigInt(0),
-      beneficiary: encodeAccount(beneficiary),
-    })
-  );
+  const newOffer = getNewOfferEvent(event);
+
+  await ctx.store.save(newOffer);
 
   await saveAll(ctx, PicassoTransactionType.BONDED_FINANCE_NEW_OFFER);
 }
 
 /**
- * Updates database with new bond information
- * @param ctx
+ * Based on the event, update the BondedFinanceBondOffer.
+ * @param stored
  * @param event
  */
-export async function processNewBondEvent(
-  ctx: EventHandlerContext,
+export function updateBondOffer(
+  stored: BondedFinanceBondOffer,
   event: BondedFinanceNewBondEvent
-) {
-  const { offerId, nbOfBonds } = getNewBondEvent(event);
+): void {
+  const { nbOfBonds } = getNewBondEvent(event);
 
-  // Get stored information (when possible) about the bond offer
+  stored.totalPurchased += nbOfBonds;
+}
+
+/**
+ * Handle `bondedFinance.NewBond` event.
+ * - Update database with new bond information.
+ * @param ctx
+ */
+export async function processNewBondEvent(ctx: EventHandlerContext) {
+  const event = new BondedFinanceNewBondEvent(ctx);
+  const { offerId } = getNewBondEvent(event);
+
+  // Get stored information (when possible) about the bond offer.
   const stored = await ctx.store.get(BondedFinanceBondOffer, {
     where: { offerId: offerId.toString() },
   });
@@ -85,15 +127,42 @@ export async function processNewBondEvent(
     return;
   }
 
-  // If offerId is already stored, add to total amount purchased
-  stored.totalPurchased += nbOfBonds;
+  // If offerId is already stored, add to total amount purchased.
+  updateBondOffer(stored, event);
+
   await ctx.store.save(stored);
 
   await saveAll(ctx, PicassoTransactionType.BONDED_FINANCE_NEW_BOND);
 }
 
-// TODO: remove offer from database?
+/**
+ * Cancel the bond offer.
+ *  - Set `cancelled` to true.
+ * @param stored
+ */
+export function cancelBondOffer(stored: BondedFinanceBondOffer): void {
+  stored.cancelled = true;
+}
+
 export async function processOfferCancelledEvent(ctx: EventHandlerContext) {
+  const event = new BondedFinanceOfferCancelledEvent(ctx);
+  const { offerId } = getOfferCancelledEvent(event);
+
+  // Get stored information (when possible) about the bond offer.
+  const stored = await ctx.store.get(BondedFinanceBondOffer, {
+    where: { offerId: offerId.toString() },
+  });
+
+  if (!stored?.id) {
+    return;
+  }
+
+  // Set bond offer as `cancelled`.
+  cancelBondOffer(stored);
+
+  // Save bond offer.
+  await ctx.store.save(stored);
+
   await saveAll(ctx, PicassoTransactionType.BONDED_FINANCE_OFFER_CANCELLED);
 }
 
@@ -101,10 +170,13 @@ async function saveAll(
   ctx: EventHandlerContext,
   transactionType: PicassoTransactionType
 ) {
+  // Create or update Account.
   const accountId = await trySaveAccount(ctx);
 
   if (accountId) {
+    // Create Transaction.
     const txId = await saveTransaction(ctx, accountId, transactionType);
+    // Create Activity.
     await saveActivity(ctx, txId, accountId);
   }
 }

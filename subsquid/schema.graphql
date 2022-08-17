@@ -69,6 +69,8 @@ type BondedFinanceBondOffer @entity {
   totalPurchased: BigInt!
   "Beneficiary account for the bond offer"
   beneficiary: String!
+  "True if the offer has been cancelled"
+  cancelled: Boolean!
 }
 
 type ScheduleWindow {

@@ -1,5 +1,4 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
-import { randomUUID } from "crypto";
 import { VestingSchedule as VestingScheduleType } from "./types/v2401";
 import { Schedule, ScheduleWindow, VestingSchedule } from "./model";
 import { VestingVestingScheduleAddedEvent } from "./types/events";
@@ -44,21 +43,21 @@ export function createVestingSchedule(
 }
 
 /**
- * Updates database with vesting schedule information
+ * Based on the event, return a new VestingSchedule.
  * @param ctx
  * @param event
  */
-export async function processVestingScheduleAddedEvent(
+export function getNewVestingSchedule(
   ctx: EventHandlerContext,
   event: VestingVestingScheduleAddedEvent
-) {
+): VestingSchedule {
   const { from, to, asset, schedule, vestingScheduleId } =
     getVestingScheduleAddedEvent(event);
 
-  const toAccount = encodeAccount(to);
   const fromAccount = encodeAccount(from);
+  const toAccount = encodeAccount(to);
 
-  const vestingSchedule = new VestingSchedule({
+  return new VestingSchedule({
     id: vestingScheduleId.toString(),
     from: fromAccount,
     eventId: ctx.event.id,
@@ -66,6 +65,18 @@ export async function processVestingScheduleAddedEvent(
     to: toAccount,
     schedule: createVestingSchedule(schedule),
   });
+}
+
+/**
+ * Updates database with vesting schedule information
+ * @param ctx
+ */
+export async function processVestingScheduleAddedEvent(
+  ctx: EventHandlerContext
+): Promise<void> {
+  const event = new VestingVestingScheduleAddedEvent(ctx);
+
+  const vestingSchedule = getNewVestingSchedule(ctx, event);
 
   await ctx.store.save(vestingSchedule);
 }

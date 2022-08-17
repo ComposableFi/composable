@@ -2,6 +2,7 @@ import { SubstrateProcessor } from "@subsquid/substrate-processor";
 import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
+  BondedFinanceOfferCancelledEvent,
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
   PabloPoolCreatedEvent,
@@ -112,25 +113,19 @@ processor.addEventHandler("balances.Deposit", async (ctx) => {
   await processDepositEvent(ctx);
 });
 
-processor.addEventHandler("bondedFinance.NewOffer", async (ctx) => {
-  const event = new BondedFinanceNewOfferEvent(ctx);
-  await processNewOfferEvent(ctx, event);
-});
+processor.addEventHandler("bondedFinance.NewOffer", processNewOfferEvent);
 
-processor.addEventHandler("bondedFinance.NewBond", async (ctx) => {
-  const event = new BondedFinanceNewBondEvent(ctx);
-  await processNewBondEvent(ctx, event);
-});
+processor.addEventHandler("bondedFinance.NewBond", processNewBondEvent);
 
-processor.addEventHandler("bondedFinance.OfferCancelled", async (ctx) => {
-  await processOfferCancelledEvent(ctx);
-});
+processor.addEventHandler(
+  "bondedFinance.OfferCancelled",
+  processOfferCancelledEvent
+);
 
-processor.addEventHandler("vesting.VestingScheduleAdded", async (ctx) => {
-  const event = new VestingVestingScheduleAddedEvent(ctx);
-
-  await processVestingScheduleAddedEvent(ctx, event);
-});
+processor.addEventHandler(
+  "vesting.VestingScheduleAdded",
+  processVestingScheduleAddedEvent
+);
 
 processor.addEventHandler("stakingRewards.RewardPoolCreated", async (ctx) => {
   await processRewardPoolCreatedEvent(ctx);

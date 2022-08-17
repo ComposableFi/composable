@@ -520,13 +520,13 @@ export class VestingClaimedEvent {
    * Claimed vesting. \[who, locked_amount\]
    */
   get isV2401(): boolean {
-    return this.ctx._chain.getEventHash('vesting.Claimed') === '1f29af233c75b3b7d43d3ffbfe7da109a4f7c9f277896999fac76012939a6432'
+    return this.ctx._chain.getEventHash('vesting.Claimed') === 'e4ac31812a3398b2e1a17bbe6dec5fdcd88c09dd233421acc41c26154d9d953e'
   }
 
   /**
    * Claimed vesting. \[who, locked_amount\]
    */
-  get asV2401(): {who: v2401.AccountId32, asset: v2401.CurrencyId, lockedAmount: bigint} {
+  get asV2401(): {who: v2401.AccountId32, asset: v2401.CurrencyId, vestingScheduleIds: v2401.VestingScheduleIdSet, lockedAmount: bigint, claimedAmount: bigint} {
     assert(this.isV2401)
     return this.ctx._chain.decodeEvent(this.ctx.event)
   }
@@ -536,7 +536,7 @@ export class VestingClaimedEvent {
     return this.isV2401
   }
 
-  get asLatest(): {who: v2401.AccountId32, asset: v2401.CurrencyId, lockedAmount: bigint} {
+  get asLatest(): {who: v2401.AccountId32, asset: v2401.CurrencyId, vestingScheduleIds: v2401.VestingScheduleIdSet, lockedAmount: bigint, claimedAmount: bigint} {
     deprecateLatest()
     return this.asV2401
   }
@@ -551,13 +551,13 @@ export class VestingVestingScheduleAddedEvent {
    * Added new vesting schedule. \[from, to, schedule\]
    */
   get isV2401(): boolean {
-    return this.ctx._chain.getEventHash('vesting.VestingScheduleAdded') === 'c5e29260a72cc5736d41a9413a02519d99775ae811581363c8cbdf2433143a79'
+    return this.ctx._chain.getEventHash('vesting.VestingScheduleAdded') === 'ac3aff306fccf810884a6ba689559f06a58eea19d7d29c25ddfc8e0c9362b5b0'
   }
 
   /**
    * Added new vesting schedule. \[from, to, schedule\]
    */
-  get asV2401(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, schedule: v2401.VestingSchedule} {
+  get asV2401(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, vestingScheduleId: bigint, schedule: v2401.VestingSchedule} {
     assert(this.isV2401)
     return this.ctx._chain.decodeEvent(this.ctx.event)
   }
@@ -567,7 +567,7 @@ export class VestingVestingScheduleAddedEvent {
     return this.isV2401
   }
 
-  get asLatest(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, schedule: v2401.VestingSchedule} {
+  get asLatest(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, vestingScheduleId: bigint, schedule: v2401.VestingSchedule} {
     deprecateLatest()
     return this.asV2401
   }

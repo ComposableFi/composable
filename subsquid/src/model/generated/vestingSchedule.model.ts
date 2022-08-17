@@ -40,4 +40,10 @@ export class VestingSchedule {
    */
   @Column_("jsonb", {transformer: {to: obj => obj.toJSON(), from: obj => new Schedule(undefined, marshal.nonNull(obj))}, nullable: false})
   schedule!: Schedule
+
+  /**
+   * Claimed amount
+   */
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  claimed!: bigint
 }

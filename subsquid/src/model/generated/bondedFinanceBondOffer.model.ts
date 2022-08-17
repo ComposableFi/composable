@@ -27,4 +27,10 @@ export class BondedFinanceBondOffer {
    */
   @Column_("text", {nullable: false})
   beneficiary!: string
+
+  /**
+   * True if the offer has been cancelled
+   */
+  @Column_("bool", {nullable: false})
+  cancelled!: boolean
 }

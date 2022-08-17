@@ -1,19 +1,8 @@
 import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
-import { Schedule, VestingSchedule } from "../src/model";
-import {
-  anyOfClass,
-  anything,
-  capture,
-  instance,
-  mock,
-  verify,
-  when,
-} from "ts-mockito";
+import { VestingSchedule } from "../src/model";
+import { anything, instance, mock, when } from "ts-mockito";
 import { createAccount, createCtx, encodeAccount } from "../src/utils";
-import {
-  createVestingSchedule,
-  processVestingScheduleAddedEvent,
-} from "../src/vestingProcessor";
+import { getNewVestingSchedule } from "../src/vestingProcessor";
 import { VestingSchedule as VestingScheduleType } from "../src/types/v2401";
 import { VestingVestingScheduleAddedEvent } from "../src/types/events";
 import { expect } from "chai";
@@ -21,7 +10,7 @@ import { expect } from "chai";
 const MOCK_ADDRESS_FROM = createAccount();
 const MOCK_ADDRESS_TO = createAccount();
 
-const MOCK_VESTING_SCHEDULE: VestingScheduleType = {
+const MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED: VestingScheduleType = {
   window: {
     start: 1,
     period: 10,
@@ -30,12 +19,25 @@ const MOCK_VESTING_SCHEDULE: VestingScheduleType = {
   vestingScheduleId: BigInt(1),
   alreadyClaimed: BigInt(0),
   periodCount: 1,
-  perPeriod: BigInt(100),
+  perPeriod: 100n,
+};
+
+const MOCK_VESTING_SCHEDULE_MOMENT_BASED: VestingScheduleType = {
+  window: {
+    start: 1n,
+    period: 10n,
+    __kind: "MomentBased",
+  },
+  vestingScheduleId: BigInt(1),
+  alreadyClaimed: BigInt(0),
+  periodCount: 1,
+  perPeriod: 100n,
 };
 
 /**
  * Check if vesting schedule has expected values
  * @param vestingSchedule
+ * @param from
  * @param to
  * @param eventId
  * @param assetId
@@ -43,38 +45,34 @@ const MOCK_VESTING_SCHEDULE: VestingScheduleType = {
  */
 function assertVestingSchedule(
   vestingSchedule: VestingSchedule,
-  to: string,
-  from: string,
-  eventId: string,
-  assetId: string,
-  schedule: Schedule
+  from?: string,
+  to?: string,
+  eventId?: string,
+  assetId?: string,
+  schedule?: VestingScheduleType
 ) {
   const expectedScheduleId = `${to}-${assetId}`;
-  expect(vestingSchedule.from).to.equal(from);
-  expect(vestingSchedule.eventId).to.equal(eventId);
-  expect(vestingSchedule.scheduleId).to.equal(expectedScheduleId);
-  expect(vestingSchedule.to).to.equal(to);
-  expect(vestingSchedule.schedule).to.deep.equal(schedule);
-}
+  if (from) expect(vestingSchedule.from).to.equal(from);
+  if (to) expect(vestingSchedule.to).to.equal(to);
+  if (eventId) expect(vestingSchedule.eventId).to.equal(eventId);
+  if (from && assetId)
+    expect(vestingSchedule.scheduleId).to.equal(expectedScheduleId);
+  if (schedule) {
+    expect(vestingSchedule.schedule.window.period).to.equal(
+      BigInt(schedule.window.period)
+    );
+    expect(vestingSchedule.schedule.window.start).to.equal(
+      BigInt(schedule.window.start)
+    );
+    expect(vestingSchedule.schedule.window.kind).to.equal(
+      schedule.window.__kind
+    );
 
-async function assertVestingScheduleAddedEvent(
-  ctx: EventHandlerContext,
-  storeMock: Store,
-  from: Uint8Array,
-  to: Uint8Array,
-  assetId: string,
-  schedule: Schedule
-) {
-  // Assert last save
-  const [arg] = capture(storeMock.save).last();
-  assertVestingSchedule(
-    arg as unknown as VestingSchedule,
-    encodeAccount(to),
-    encodeAccount(from),
-    ctx.event.id,
-    assetId,
-    schedule
-  );
+    expect(vestingSchedule.schedule.periodCount).to.equal(
+      BigInt(schedule.periodCount)
+    );
+    expect(vestingSchedule.schedule.perPeriod).to.equal(schedule.perPeriod);
+  }
 }
 
 function createVestingScheduleAddedEvent(
@@ -126,30 +124,45 @@ describe("Vesting schedule added", () => {
     );
   });
 
-  it("Should add vesting schedule events correctly", async () => {
-    const vestingSchedule = MOCK_VESTING_SCHEDULE;
-
+  it("Should add block number based vesting schedule events", async () => {
     const { event } = createVestingScheduleAddedEvent(
       MOCK_ADDRESS_FROM,
       MOCK_ADDRESS_TO,
       BigInt(2),
-      vestingSchedule,
-      BigInt(1)
+      MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED,
+      BigInt(1),
     );
 
-    await processVestingScheduleAddedEvent(ctx, event);
+    const vestingSchedule = getNewVestingSchedule(ctx, event);
 
-    const schedule = createVestingSchedule(vestingSchedule);
+    assertVestingSchedule(
+      vestingSchedule,
+      encodeAccount(MOCK_ADDRESS_FROM),
+      encodeAccount(MOCK_ADDRESS_TO),
+      undefined,
+      undefined,
+      MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED
+    );
+  });
 
-    await assertVestingScheduleAddedEvent(
-      ctx,
-      storeMock,
+  it("Should add moment based vesting schedule events", async () => {
+    const { event } = createVestingScheduleAddedEvent(
       MOCK_ADDRESS_FROM,
       MOCK_ADDRESS_TO,
-      event.asV2401.asset.toString(),
-      schedule
+      BigInt(2),
+      MOCK_VESTING_SCHEDULE_MOMENT_BASED,
+      BigInt(1),
     );
 
-    verify(storeMock.save(anyOfClass(VestingSchedule))).times(1);
+    const vestingSchedule = getNewVestingSchedule(ctx, event);
+
+    assertVestingSchedule(
+      vestingSchedule,
+      encodeAccount(MOCK_ADDRESS_FROM),
+      encodeAccount(MOCK_ADDRESS_TO),
+      undefined,
+      undefined,
+      MOCK_VESTING_SCHEDULE_MOMENT_BASED
+    );
   });
 });
