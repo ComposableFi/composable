@@ -69,14 +69,16 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
+	use composable_support::math::safe::{
+		safe_multiply_by_rational, SafeAdd, SafeArithmetic, SafeSub,
+	};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
-			RedeemableAssets, RemoveLiquiditySimulationResult, RewardPoolType, StableSwapPoolInfo,
-			StakingRewardPool, MAX_REWARDS,
+			RedeemableAssets, RemoveLiquiditySimulationResult, RewardPoolType,
+			SingleAssetAccountsStorageAction, StableSwapPoolInfo, StakingRewardPool, MAX_REWARDS,
 		},
 		staking::{
 			lock::LockConfig, ManageStaking, ProtocolStaking, RewardConfig,
@@ -251,6 +253,15 @@ pub mod pallet {
 			/// Map of asset_id -> twap
 			twaps: BTreeMap<T::AssetId, Rate>,
 		},
+		/// Balance of assets for withdrawing with single coin updated
+		AccountsDepositedOneAssetUpdated {
+			/// Account of user.
+			who: T::AccountId,
+			/// Pool id on which user deposit/withdraw.
+			pool_id: T::PoolId,
+			/// Avalable amount of LP.
+			balance: T::Balance,
+		},
 	}
 
 	#[pallet::error]
@@ -276,6 +287,7 @@ pub mod pallet {
 		WeightsMustBeNonZero,
 		WeightsMustSumToOne,
 		StakingPoolConfigError,
+		NoAvailableLPtokensForSingleAssetWithdraw,
 	}
 
 	#[pallet::config]
@@ -437,6 +449,19 @@ pub mod pallet {
 	pub type StakingRewardPools<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::PoolId, StakingRewardPoolsOf<T>, OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn accounts)]
+	#[pallet::unbounded]
+	pub type AccountsDepositedOneAsset<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Blake2_128Concat,
+		T::PoolId,
+		T::Balance,
+		ValueQuery,
+	>;
+
 	pub(crate) enum PriceRatio {
 		Swapped,
 		NotSwapped,
@@ -571,6 +596,10 @@ pub mod pallet {
 			min_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+			ensure!(
+				AccountsDepositedOneAsset::<T>::contains_key(&who, &pool_id),
+				Error::<T>::NoAvailableLPtokensForSingleAssetWithdraw
+			);
 			<Self as Amm>::remove_liquidity_single_asset(&who, pool_id, lp_amount, min_amount)?;
 			Ok(())
 		}
@@ -979,6 +1008,60 @@ pub mod pallet {
 			lp_for_liquidity::<T>(pool, pool_account, base_amount, quote_amount)
 		}
 
+		#[transactional]
+		fn update_accounts_deposited_one_asset_storage(
+			who: Self::AccountId,
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			action: SingleAssetAccountsStorageAction,
+		) -> Result<(), DispatchError> {
+			match action {
+				SingleAssetAccountsStorageAction::Depositing =>
+					if AccountsDepositedOneAsset::<T>::contains_key(&who, &pool_id) {
+						let lp_amount = AccountsDepositedOneAsset::<T>::try_mutate(
+							&who,
+							&pool_id,
+							|exist_amount| exist_amount.safe_add(&lp_amount),
+						)?;
+						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
+							who,
+							pool_id,
+							balance: lp_amount,
+						});
+					} else {
+						AccountsDepositedOneAsset::<T>::insert(&who, &pool_id, lp_amount);
+						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
+							who,
+							pool_id,
+							balance: lp_amount,
+						});
+					},
+				SingleAssetAccountsStorageAction::Withdrawing => {
+					let exist_amount = AccountsDepositedOneAsset::<T>::get(&who, &pool_id);
+					if exist_amount == lp_amount {
+						AccountsDepositedOneAsset::<T>::remove(&who, &pool_id);
+						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
+							who,
+							pool_id,
+							balance: Self::Balance::zero(),
+						});
+					} else {
+						let new_lp_amount = AccountsDepositedOneAsset::<T>::try_mutate(
+							&who,
+							&pool_id,
+							|exist_amount| exist_amount.safe_sub(&lp_amount),
+						)?;
+						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
+							who,
+							pool_id,
+							balance: new_lp_amount,
+						});
+					}
+				},
+			}
+			Ok(())
+		}
+
 		fn redeemable_assets_for_lp_tokens(
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
@@ -1072,6 +1155,7 @@ pub mod pallet {
 		}
 
 		fn redeemable_single_asset_for_lp_tokens(
+			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
 			min_expected_amount: Self::Balance,
@@ -1097,8 +1181,11 @@ pub mod pallet {
 						T::Convert::convert(lp_amount),
 						lp_issued,
 					)?;
-					let base_amount = T::Convert::convert(base_amount);
-
+					let mut base_amount = T::Convert::convert(base_amount);
+					let available_amount = AccountsDepositedOneAsset::<T>::get(who, &pool_id);
+					if base_amount > available_amount {
+						base_amount = available_amount;
+					}
 					ensure!(
 						base_amount >= min_expected_amount,
 						Error::<T>::CannotRespectMinimumRequested
@@ -1185,6 +1272,7 @@ pub mod pallet {
 			min_expected_amount: Self::Balance,
 		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let redeemable_assets = Self::redeemable_single_asset_for_lp_tokens(
+				who,
 				pool_id,
 				lp_amount,
 				min_expected_amount,
@@ -1311,6 +1399,14 @@ pub mod pallet {
 						keep_alive,
 					)?,
 			};
+			if added_base_amount.is_zero() || added_quote_amount.is_zero() {
+				Self::update_accounts_deposited_one_asset_storage(
+					who.clone(),
+					pool_id,
+					minted_lp,
+					SingleAssetAccountsStorageAction::Depositing,
+				)?;
+			}
 			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
@@ -1422,7 +1518,7 @@ pub mod pallet {
 			min_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			let redeemable_assets =
-				Self::redeemable_single_asset_for_lp_tokens(pool_id, lp_amount, min_amount)?;
+				Self::redeemable_single_asset_for_lp_tokens(who, pool_id, lp_amount, min_amount)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
@@ -1440,6 +1536,12 @@ pub mod pallet {
 						lp_amount,
 						base_amount,
 						Self::Balance::zero(),
+					)?;
+					Self::update_accounts_deposited_one_asset_storage(
+						who.clone(),
+						pool_id,
+						lp_amount,
+						SingleAssetAccountsStorageAction::Withdrawing,
 					)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {

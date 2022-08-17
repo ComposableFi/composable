@@ -223,7 +223,7 @@ fn test_redeemable_assets() {
 		// For a single asset, this will not work correctly, because we don't have enough liquidity
 		// in the pool
 		let redeemable_assets =
-			<Pablo as Amm>::redeemable_single_asset_for_lp_tokens(pool_id, lp, initial_btc)
+			<Pablo as Amm>::redeemable_single_asset_for_lp_tokens(&ALICE, pool_id, lp, initial_btc)
 				.expect("redeemable_assets_for_lp_tokens failed");
 		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
 		assert_ok!(default_acceptable_computation_error(base_amount, initial_btc));
