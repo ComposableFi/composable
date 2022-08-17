@@ -64,8 +64,8 @@ impl<T: Config> Pallet<T> {
 	/// * Quote assets was not completely drained.
 	///
 	/// # Errors
-	// TODO(Cardosaum): Update list of errors
 	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+	/// * [`Error::<T>::SwappedAmountMoreThanMaximumLimit`]
 	/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
 	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 	pub fn sanity_check_after_swap(
