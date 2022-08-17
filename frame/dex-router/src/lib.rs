@@ -171,7 +171,7 @@ pub mod pallet {
 			route: Option<BoundedVec<T::PoolId, T::MaxHopsInRoute>>,
 		) -> DispatchResult {
 			T::UpdateRouteOrigin::ensure_origin(origin)?;
-			let _ = <Self as DexRouter<
+			<Self as DexRouter<
 				T::AssetId,
 				T::PoolId,
 				T::Balance,
@@ -249,7 +249,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::add_liquidity(
+			<Self as Amm>::add_liquidity(
 				&who,
 				asset_pair,
 				base_amount,
@@ -272,7 +272,7 @@ pub mod pallet {
 			min_quote_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::remove_liquidity(
+			<Self as Amm>::remove_liquidity(
 				&who,
 				asset_pair,
 				lp_amount,
@@ -294,9 +294,7 @@ pub mod pallet {
 			min_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::remove_liquidity_single_asset(
-				&who, asset_pair, lp_amount, min_amount,
-			)?;
+			<Self as Amm>::remove_liquidity_single_asset(&who, asset_pair, lp_amount, min_amount)?;
 			Ok(())
 		}
 	}
