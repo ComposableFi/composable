@@ -549,6 +549,8 @@ while (reward = rewards_pool.rewards.has_next) is (yes)
     :claim = min(claim * (1 - penalty), reward.total_rewards - reward.claimed_rewards);
     :transfer(claim);
     :reward.claimed_rewards += claim;
+    :position.reductions[reward.asset_id] += claim;
+    note right: as per section 5.3.1.1
 endwhile (no)
 :save(rewards_pool);
 stop
