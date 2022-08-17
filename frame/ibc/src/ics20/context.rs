@@ -220,7 +220,7 @@ where
 				&from.clone().into_account(),
 				&to.clone().into_account(),
 				amount,
-				!transfer::Pallet::<T>::is_escrow_address(from.clone().into_account()),
+				false,
 			)
 			.map(|_| ())
 			.map_err(|e| {
@@ -244,8 +244,7 @@ where
 			&from.clone().into_account(),
 			&to.clone().into_account(),
 			amount,
-			// We should only keep escrow addresses alive
-			transfer::Pallet::<T>::is_escrow_address(from.clone().into_account()),
+			false,
 		)
 		.map_err(|e| {
 			log::trace!(target: "ibc_transfer", "Failed to transfer ibc tokens: {:?}", e);
