@@ -117,6 +117,12 @@ pub mod pallet {
 			position_id: T::PositionId,
 			keep_alive: bool,
 		},
+		Claimed {
+			/// Owner of the stake.
+			owner: T::AccountId,
+			/// Position Id.
+			position_id: T::PositionId,
+		},
 		StakeAmountExtended {
 			position_id: T::PositionId,
 			/// Extended amount
@@ -440,6 +446,17 @@ pub mod pallet {
 			T::RewardPoolUpdateOrigin::ensure_origin(origin)?;
 			update_rewards_pool::<T>(pool_id, reward_updates)
 		}
+
+		/// Claim a current reward for some position.
+		///
+		/// Emits `Claimed` event when successful.
+		#[pallet::weight(T::WeightInfo::claim(T::MaxRewardConfigsPerPool::get()))]
+		pub fn claim(origin: OriginFor<T>, position_id: T::PositionId) -> DispatchResult {
+			let owner = ensure_signed(origin)?;
+			<Self as Staking>::claim(&owner, &position_id)?;
+
+			Ok(())
+		}
 	}
 
 	impl<T: Config> ManageStaking for Pallet<T> {
@@ -664,44 +681,20 @@ pub mod pallet {
 			let keep_alive = false;
 			let stake = Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
 			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
-			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
-				T::UnixTime::now().as_secs();
+			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)?
+				>= T::UnixTime::now().as_secs();
 			let pool_id = stake.reward_pool_id;
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
-			let mut inner_rewards = rewards_pool.rewards.into_inner();
-			for (asset_id, reward) in inner_rewards.iter_mut() {
-				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
-				let claim = if rewards_pool.total_shares == Zero::zero() {
-					Zero::zero()
-				} else {
-					reward
-						.total_rewards
-						.safe_mul(&stake.share)?
-						.safe_div(&rewards_pool.total_shares)?
-						.safe_sub(&inflation)?
-				};
-				let claim = if early_unlock {
-					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim)
-				} else {
-					claim
-				};
-				let claim = sp_std::cmp::min(
-					claim,
-					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
-				);
-				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
-				T::Assets::transfer(
-					reward.asset_id,
-					&Self::pool_account_id(&pool_id),
-					&stake.owner,
-					claim,
-					keep_alive,
-				)?;
-			}
-			rewards_pool.rewards = Rewards::try_from(inner_rewards)
-				.expect("Conversion must work as it's the same data structure; qed;");
+			(rewards_pool, _) = Self::collect_rewards(
+				&pool_id,
+				rewards_pool,
+				stake.clone(),
+				early_unlock,
+				keep_alive,
+			)?;
+
 			rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
 
 			let stake_with_penalty = if early_unlock {
@@ -780,9 +773,102 @@ pub mod pallet {
 			});
 			Ok([*position, new_position])
 		}
+
+		#[transactional]
+		fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult {
+			let keep_alive = false;
+
+			let mut stake =
+				Stakes::<T>::try_get(position).map_err(|_| Error::<T>::StakeNotFound)?;
+			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
+
+			let pool_id = stake.reward_pool_id;
+			let mut rewards_pool =
+				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+
+			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)?
+				>= T::UnixTime::now().as_secs();
+
+			(rewards_pool, stake) =
+				Self::collect_rewards(&pool_id, rewards_pool, stake, early_unlock, keep_alive)?;
+
+			RewardPools::<T>::insert(pool_id, rewards_pool);
+
+			Self::deposit_event(Event::<T>::Claimed { owner: who.clone(), position_id: *position });
+
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
+		/// Transfers the rewards a staker has earned while updating the provided `rewards_pool`.
+		///
+		/// # Params
+		/// * `pool_id` - Pool identifier
+		/// * `mut rewards_pool` - Rewards pool to update
+		/// * `stake` - Stake position
+		/// * `early_unlock` - If there should be an early unlock penalty
+		/// * `keep_alive` - If the transaction should be kept alive
+		pub(crate) fn collect_rewards(
+			pool_id: &T::RewardPoolId,
+			mut rewards_pool: RewardPoolOf<T>,
+			mut stake: StakeOf<T>,
+			early_unlock: bool,
+			keep_alive: bool,
+		) -> Result<(RewardPoolOf<T>, StakeOf<T>), DispatchError> {
+			let mut inner_rewards = rewards_pool.rewards.into_inner();
+
+			for (asset_id, reward) in inner_rewards.iter_mut() {
+				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
+				let claim = if rewards_pool.total_shares == Zero::zero() {
+					Zero::zero()
+				} else {
+					reward
+						.total_rewards
+						.safe_mul(&stake.share)?
+						.safe_div(&rewards_pool.total_shares)?
+						.safe_sub(&inflation)?
+				};
+				let claim = if early_unlock {
+					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim)
+				} else {
+					claim
+				};
+				let claim = sp_std::cmp::min(
+					claim,
+					reward.total_rewards.safe_sub(&reward.claimed_rewards)?,
+				);
+
+				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
+
+				// REVIEW: There has to be a better way to do this
+				// Update reductions with what was claimed
+				stake.reductions = stake
+					.clone()
+					.reductions
+					.try_mutate(|inner| match inner.get_mut(asset_id) {
+						Some(inflation) => {
+							*inflation -= claim;
+						},
+						None => (),
+					})
+					.unwrap_or(stake.reductions);
+
+				T::Assets::transfer(
+					reward.asset_id,
+					&Self::pool_account_id(pool_id),
+					&stake.owner,
+					claim,
+					keep_alive,
+				)?;
+			}
+
+			rewards_pool.rewards =
+				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+
+			Ok((rewards_pool, stake))
+		}
+
 		pub(crate) fn pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
 			T::PalletId::get().into_sub_account_truncating(pool_id)
 		}
@@ -949,8 +1035,8 @@ pub mod pallet {
 									reward.total_rewards.safe_add(&reward_increment)?;
 								ensure!(
 									(new_total_reward
-										.safe_sub(&reward.total_dilution_adjustment)?) <=
-										reward.max_rewards,
+										.safe_sub(&reward.total_dilution_adjustment)?)
+										<= reward.max_rewards,
 									Error::<T>::MaxRewardLimitReached
 								);
 								reward.total_rewards = new_total_reward;
@@ -1029,17 +1115,19 @@ fn update_rewards_pool<T: Config>(
 			let new_reward = match reward_accumulation_calculation::<T>(reward.clone(), now_seconds)
 			{
 				Ok(reward) => reward,
-				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) =>
-					return Err(Error::<T>::BackToTheFuture.into()),
+				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) => {
+					return Err(Error::<T>::BackToTheFuture.into())
+				},
 				Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(reward)) => {
 					Pallet::<T>::deposit_event(Event::<T>::MaxRewardsAccumulated {
 						pool_id,
 						asset_id: reward.asset_id,
 					});
+					continue;
+				},
+				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) => {
 					continue
 				},
-				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) =>
-					continue,
 			};
 
 			*reward = Reward { reward_rate: update.reward_rate, ..new_reward };
