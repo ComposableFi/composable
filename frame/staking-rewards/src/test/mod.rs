@@ -373,7 +373,7 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 		duration,
 		total_rewards,
 		total_shares,
-		claim,
+		Some(claim),
 		|pool_id, stake_id, unlock_penalty, _, staked_asset_id| {
 			assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
 			assert_eq!(StakingRewards::stakes(stake_id), None);
@@ -420,7 +420,7 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 		duration_preset,
 		total_rewards,
 		total_shares,
-		claim,
+		Some(claim),
 		|pool_id, stake_id, _, stake_duration, staked_asset_id| {
 			let second_in_milliseconds = 1000;
 			Timestamp::set_timestamp(
@@ -571,7 +571,7 @@ fn with_stake<R>(
 	duration: DurationSeconds,
 	total_rewards: u128,
 	total_shares: u128,
-	claim: u128,
+	claim: Option<u128>,
 	execute: impl FnOnce(u16, u128, Perbill, u64, u128) -> R,
 ) -> R {
 	new_test_ext().execute_with(|| {
@@ -602,8 +602,13 @@ fn with_stake<R>(
 		let unlock_penalty = stake.lock.unlock_penalty;
 		let stake_duration = stake.lock.duration;
 
-		stake.reductions = update_reductions(stake.reductions, claim);
-		Stakes::<Test>::insert(stake_id, stake);
+		match claim {
+			Some(claim) => {
+				stake.reductions = update_reductions(stake.reductions, claim);
+				Stakes::<Test>::insert(stake_id, stake);
+			},
+			None => (),
+		}
 
 		execute(pool_id, stake_id, unlock_penalty, stake_duration, staked_asset_id)
 	})
