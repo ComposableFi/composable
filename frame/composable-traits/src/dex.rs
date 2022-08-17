@@ -44,7 +44,6 @@ pub trait Amm {
 	/// Returns the amount of base asset redeemable for given amount of lp token.
 	// TODO(saruman9): make an asset choosing (base/quote/etc) option
 	fn redeemable_single_asset_for_lp_tokens(
-		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
 		min_expected_amounts: Self::Balance,
