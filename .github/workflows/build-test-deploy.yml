@@ -387,8 +387,11 @@ jobs:
           name: ${{  env.NIX_CACHIX }}
 
       - run: |
+          # start network and wait to start writing log and write success start into log
           ( nix run .#devnet-dali 2>&1 & ) | tee logfile.log &
+          until test -f logfile.log; do sleep 1 && echo "waiting network start "; done;
           ( tail --follow --lines=0  logfile.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
+          
           echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
           cd integration-tests/runtime-tests          
           export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm install -q && npm run test_short
