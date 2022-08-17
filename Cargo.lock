@@ -2763,6 +2763,7 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",
+ "pallet-account-proxy",
  "pallet-airdrop",
  "pallet-assets 0.0.1",
  "pallet-assets-registry",
@@ -2778,6 +2779,7 @@ dependencies = [
  "pallet-democracy 4.0.0-dev",
  "pallet-dex-router",
  "pallet-dutch-auction",
+ "pallet-fnft",
  "pallet-governance-registry",
  "pallet-ibc",
  "pallet-ibc-ping",
@@ -2788,11 +2790,9 @@ dependencies = [
  "pallet-membership",
  "pallet-mosaic",
  "pallet-multisig",
- "pallet-nft",
  "pallet-oracle",
  "pallet-pablo",
  "pallet-preimage",
- "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
@@ -7159,23 +7159,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-rewards"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5#b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-io 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-runtime 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
-]
-
-[[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5#b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5"
@@ -7329,6 +7312,25 @@ dependencies = [
  "composable-traits",
  "parity-scale-codec",
  "sp-api",
+ "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+]
+
+[[package]]
+name = "pallet-account-proxy"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-utility",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-io 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-runtime 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
 ]
 
@@ -7969,6 +7971,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-fnft"
+version = "0.0.1"
+dependencies = [
+ "composable-support",
+ "composable-tests-helpers",
+ "composable-traits",
+ "frame-support",
+ "frame-system",
+ "pallet-account-proxy",
+ "pallet-timestamp",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic 5.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-core 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-io 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-runtime 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+ "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
+]
+
+[[package]]
 name = "pallet-gilt"
 version = "4.0.0-dev"
 source = "git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e#8df0a39f51b672c773b306923f65f8dde74b850e"
@@ -8315,25 +8337,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-nft"
-version = "0.0.1"
-dependencies = [
- "composable-support",
- "composable-tests-helpers",
- "composable-traits",
- "frame-support",
- "frame-system",
- "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-arithmetic 5.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-core 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-io 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-runtime 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
-]
-
-[[package]]
 name = "pallet-nicks"
 version = "4.0.0-dev"
 source = "git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e#8df0a39f51b672c773b306923f65f8dde74b850e"
@@ -8531,7 +8534,7 @@ dependencies = [
 [[package]]
 name = "pallet-proxy"
 version = "4.0.0-dev"
-source = "git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e#8df0a39f51b672c773b306923f65f8dde74b850e"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -8695,12 +8698,13 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "once_cell",
- "orml-rewards",
  "orml-tokens",
  "orml-traits",
+ "pallet-account-proxy",
  "pallet-assets 0.0.1",
  "pallet-balances",
  "pallet-currency-factory",
+ "pallet-fnft",
  "pallet-timestamp",
  "parity-scale-codec",
  "primitives",

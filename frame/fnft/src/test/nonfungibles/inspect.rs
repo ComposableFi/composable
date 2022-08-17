@@ -1,12 +1,11 @@
 use codec::Encode;
 
-use composable_traits::nft::NftClass;
 use frame_support::traits::tokens::nonfungibles::Inspect;
 
 use crate::{
 	test::{
 		mock::{new_test_ext, MockRuntime},
-		prelude::mint_nft_and_assert,
+		prelude::*,
 		ALICE,
 	},
 	Pallet,
@@ -20,19 +19,19 @@ pub(crate) fn success() {
 		let created_nft_id = mint_nft_and_assert();
 
 		// owner check
-		assert_eq!(Pallet::<MockRuntime>::owner(&NftClass::STAKING, &created_nft_id), Some(ALICE));
+		assert_eq!(Pallet::<MockRuntime>::owner(&TEST_COLLECTION_ID, &created_nft_id), Some(ALICE));
 
 		// attribute check
 		assert_eq!(
-			Pallet::<MockRuntime>::attribute(&NftClass::STAKING, &created_nft_id, &1_u32.encode()),
+			Pallet::<MockRuntime>::attribute(&TEST_COLLECTION_ID, &created_nft_id, &1_u32.encode()),
 			Some(1_u32.encode())
 		);
 
 		// class attribute check
 		assert_eq!(
-			Pallet::<MockRuntime>::collection_attribute(&NftClass::STAKING, &1_u32.encode()),
+			Pallet::<MockRuntime>::collection_attribute(&TEST_COLLECTION_ID, &1_u32.encode()),
 			None,
-			"staking class should have no attributes"
+			"class should have no attributes"
 		);
 	})
 }
@@ -46,7 +45,7 @@ pub(crate) fn failure() {
 
 		// owner check
 		assert_eq!(
-			Pallet::<MockRuntime>::owner(&NftClass::STAKING, &(created_nft_id + 1)),
+			Pallet::<MockRuntime>::owner(&TEST_COLLECTION_ID, &(created_nft_id + 1)),
 			None,
 			"NFT does not exist, there should be no owner"
 		);
@@ -54,7 +53,7 @@ pub(crate) fn failure() {
 		// attribute check
 		assert_eq!(
 			Pallet::<MockRuntime>::attribute(
-				&NftClass::STAKING,
+				&TEST_COLLECTION_ID,
 				&(created_nft_id + 1),
 				&1_u32.encode()
 			),
@@ -64,7 +63,7 @@ pub(crate) fn failure() {
 
 		// class attribute check
 		assert_eq!(
-			Pallet::<MockRuntime>::collection_attribute(&NftClass::new(255), &1_u32.encode()),
+			Pallet::<MockRuntime>::collection_attribute(&255_u16, &1_u32.encode()),
 			None,
 			"class does not exist, there should be no attributes"
 		);

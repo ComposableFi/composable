@@ -1,9 +1,11 @@
 #![cfg(test)]
 
 use composable_tests_helpers::test::block::{process_and_progress_blocks, MILLISECS_PER_BLOCK};
+use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, ConstU64, Everything},
+	traits::{ConstU32, ConstU64, Everything, InstanceFilter},
+	PalletId,
 };
 use frame_system as system;
 use sp_core::H256;
@@ -25,13 +27,23 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Nft: crate::{Pallet, Storage , Event<T>},
+		Proxy: pallet_account_proxy::{Pallet, Call, Storage , Event<T>},
 	}
 );
 
+parameter_types! {
+	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
+}
 impl crate::Config for MockRuntime {
 	type Event = Event;
 
 	type MaxProperties = ConstU32<16>;
+	type FinancialNftCollectionId = u16;
+	type FinancialNftInstanceId = u64;
+	type ProxyType = ProxyType;
+	type AccountProxy = Proxy;
+	type ProxyTypeSelector = FnftAccountProxyType;
+	type PalletId = FnftPalletId;
 }
 
 impl pallet_timestamp::Config for MockRuntime {
@@ -39,6 +51,28 @@ impl pallet_timestamp::Config for MockRuntime {
 	type OnTimestampSet = ();
 	type MinimumPeriod = ConstU64<{ MILLISECS_PER_BLOCK / 2 }>;
 	type WeightInfo = ();
+}
+
+parameter_types! {
+	pub MaxProxies : u32 = 4;
+	pub MaxPending : u32 = 32;
+	// just make dali simple to proxy
+	pub ProxyPrice: u32 = 0;
+}
+
+impl pallet_account_proxy::Config for MockRuntime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = ();
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyPrice;
+	type ProxyDepositFactor = ProxyPrice;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = ();
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = ProxyPrice;
+	type AnnouncementDepositFactor = ProxyPrice;
 }
 
 parameter_types! {
@@ -70,7 +104,29 @@ impl system::Config for MockRuntime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
+}
+
+impl InstanceFilter<Call> for ProxyType {
+	fn filter(&self, c: &Call) -> bool {
+		match self {
+			ProxyType::Any => true,
+			ProxyType::Governance => matches!(
+				c,
+				// TODO democracy
+				Call::System(..)
+			),
+			_ => false,
+		}
+	}
+	fn is_superset(&self, o: &Self) -> bool {
+		match (self, o) {
+			(x, y) if x == y => true,
+			(ProxyType::Any, _) => true,
+			(_, ProxyType::Any) => false,
+			_ => false,
+		}
+	}
 }
 
 // Build genesis storage according to the mock runtime.

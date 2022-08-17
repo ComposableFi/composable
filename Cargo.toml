@@ -124,7 +124,6 @@ pallet-nomination-pools-benchmarking = { git = "https://github.com/dzmitry-lahod
 pallet-offences = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-offences-benchmarking = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-preimage = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
-pallet-proxy = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-randomness-collective-flip = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-recovery = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }
 pallet-scheduler = { git = "https://github.com/dzmitry-lahoda-forks/substrate", rev = "8df0a39f51b672c773b306923f65f8dde74b850e" }

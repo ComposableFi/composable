@@ -38,8 +38,8 @@ use common::{
 	},
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
-	NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
+	BlockNumber, BondOfferId, FinancialNftInstanceId, Hash, MaxStringSize, Moment,
+	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -80,8 +80,9 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
+use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
 use frame_support::{
-	traits::{fungibles, ConstU32, EqualPrivilegeOnly, OnRuntimeUpgrade},
+	traits::{fungibles, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
@@ -653,6 +654,32 @@ impl utility::Config for Runtime {
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
+impl InstanceFilter<Call> for ProxyType {
+	fn filter(&self, c: &Call) -> bool {
+		match self {
+			ProxyType::Any => true,
+			ProxyType::Governance => matches!(
+				c,
+				Call::Democracy(..) |
+					Call::Council(..) | Call::TechnicalCollective(..) |
+					Call::Treasury(..) | Call::Utility(..)
+			),
+			ProxyType::CancelProxy => {
+				// TODO (vim): We might not need this
+				matches!(c, Call::Proxy(pallet_account_proxy::Call::reject_announcement { .. }))
+			},
+		}
+	}
+	fn is_superset(&self, o: &Self) -> bool {
+		match (self, o) {
+			(x, y) if x == y => true,
+			(ProxyType::Any, _) => true,
+			(_, ProxyType::Any) => false,
+			_ => false,
+		}
+	}
+}
+
 parameter_types! {
 	pub MaxProxies : u32 = 4;
 	pub MaxPending : u32 = 32;
@@ -660,19 +687,34 @@ parameter_types! {
 	pub ProxyPrice: Balance = 0;
 }
 
-impl pallet_proxy::Config for Runtime {
+impl pallet_account_proxy::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = Assets;
-	type ProxyType = ();
+	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
 	type MaxProxies = MaxProxies;
-	type WeightInfo = ();
+	type WeightInfo = weights::account_proxy::WeightInfo<Runtime>;
 	type MaxPending = MaxPending;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = ProxyPrice;
 	type AnnouncementDepositFactor = ProxyPrice;
+}
+
+parameter_types! {
+	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
+}
+
+impl pallet_fnft::Config for Runtime {
+	type Event = Event;
+	type MaxProperties = ConstU32<16>;
+	type FinancialNftCollectionId = CurrencyId;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
+	type ProxyType = ProxyType;
+	type AccountProxy = Proxy;
+	type ProxyTypeSelector = FnftAccountProxyType;
+	type PalletId = FnftPalletId;
 }
 
 parameter_types! {
@@ -799,6 +841,8 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
+	type FinancialNft = Fnft;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -1121,7 +1165,7 @@ construct_runtime!(
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
 		Preimage: preimage = 36,
-		Proxy: pallet_proxy = 37,
+		Proxy: pallet_account_proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
@@ -1148,6 +1192,7 @@ construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
+		Fnft: pallet_fnft::{Pallet, Storage, Event<T>} = 68,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 140,
 
@@ -1226,6 +1271,7 @@ mod benches {
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[pallet_staking_rewards, StakingRewards]
+		[pallet_account_proxy, Proxy]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
 		[ibc_transfer, Transfer]
