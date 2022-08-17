@@ -158,6 +158,10 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Error when creating reward configs.
 		RewardConfigProblem,
+		/// No duration presets configured.
+		NoDurationPresetsConfigured,
+		/// Too many rewarded asset types per pool violating the storage allowed.
+		TooManyRewardAssetTypes,
 		/// Invalid end block number provided for creating a pool.
 		EndBlockMustBeInTheFuture,
 		/// Unimplemented reward pool type.
@@ -505,7 +509,7 @@ pub mod pallet {
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
 			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
-				.ok_or(Error::<T>::RewardConfigProblem)?;
+				.ok_or(Error::<T>::NoDurationPresetsConfigured)?;
 
 			ensure!(
 				matches!(
@@ -647,7 +651,8 @@ pub mod pallet {
 				)?;
 			}
 			rewards_pool.rewards =
-				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+				Rewards::try_from(inner_rewards)
+					.expect("Conversion must work as it's the same data structure; qed;");
 			rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
 
 			let stake_with_penalty = if early_unlock {
@@ -923,7 +928,7 @@ pub mod pallet {
 								reward_pool
 									.rewards
 									.try_insert(reward_currency, reward)
-									.map_err(|_| Error::<T>::RewardConfigProblem)?;
+									.map_err(|_| Error::<T>::TooManyRewardAssetTypes)?;
 								let pool_account = Self::pool_account_id(pool);
 								T::Assets::transfer(
 									reward_currency,
