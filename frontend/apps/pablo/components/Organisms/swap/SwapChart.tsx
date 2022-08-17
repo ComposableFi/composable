@@ -49,7 +49,6 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   // const onRefreshChart = () => {
   //TODO: refresh Chart Data
   // };
-
   return (
     <Box {...boxProps}>
       <Chart
