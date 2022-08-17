@@ -118,7 +118,7 @@ pub fn generate_raw_proof(inputs: Vec<(Vec<u8>, Vec<u8>)>, keys: Vec<Vec<u8>>) -
 		let mut trie =
 			<sp_trie::TrieDBMut<sp_trie::LayoutV0<BlakeTwo256>>>::new(&mut db, &mut root);
 		for (key, value) in inputs {
-			trie.insert(&*key, &*value)
+			trie.insert(&key, &value)
 				.map_err(|_| runtime_error_into_rpc_error("Failed to generate proof"))?;
 		}
 		*trie.root()
