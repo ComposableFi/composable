@@ -288,6 +288,7 @@ pub mod pallet {
 		WeightsMustSumToOne,
 		StakingPoolConfigError,
 		NoAvailableLPtokensForSingleAssetWithdraw,
+		NotEnoughLpTokenForSingleAssetWithdraw,
 	}
 
 	#[pallet::config]
@@ -1155,7 +1156,6 @@ pub mod pallet {
 		}
 
 		fn redeemable_single_asset_for_lp_tokens(
-			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
 			min_expected_amount: Self::Balance,
@@ -1174,18 +1174,13 @@ pub mod pallet {
 					let pool_base_aum =
 						T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 					let lp_issued = T::Convert::convert(T::Assets::total_issuance(lp_token));
-
 					let base_amount = compute_asset_for_redeemable_lp_tokens(
 						pool_base_aum,
 						base_weight,
 						T::Convert::convert(lp_amount),
 						lp_issued,
 					)?;
-					let mut base_amount = T::Convert::convert(base_amount);
-					let available_amount = AccountsDepositedOneAsset::<T>::get(who, &pool_id);
-					if base_amount > available_amount {
-						base_amount = available_amount;
-					}
+					let base_amount = T::Convert::convert(base_amount);
 					ensure!(
 						base_amount >= min_expected_amount,
 						Error::<T>::CannotRespectMinimumRequested
@@ -1272,7 +1267,6 @@ pub mod pallet {
 			min_expected_amount: Self::Balance,
 		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let redeemable_assets = Self::redeemable_single_asset_for_lp_tokens(
-				who,
 				pool_id,
 				lp_amount,
 				min_expected_amount,
@@ -1517,8 +1511,12 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 			min_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
+			ensure!(
+				AccountsDepositedOneAsset::<T>::get(who, &pool_id) >= lp_amount,
+				Error::<T>::NotEnoughLpTokenForSingleAssetWithdraw
+			);
 			let redeemable_assets =
-				Self::redeemable_single_asset_for_lp_tokens(who, pool_id, lp_amount, min_amount)?;
+				Self::redeemable_single_asset_for_lp_tokens(pool_id, lp_amount, min_amount)?;
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
