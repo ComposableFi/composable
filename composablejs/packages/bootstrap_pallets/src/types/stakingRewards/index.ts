@@ -9,11 +9,6 @@ export type StakingRewardsPoolConfig = {
     // end block of the rewards
     endBlock: u32;
     rewardConfigs: any;
-    locK: {
-      // time presets for locking
-      durationPresets: BTreeMap<u64, Perbill>;
-      // early unlock penalty
-      unlockPenalty: Perbill;
-    };
+    lock: any;
   }
 };

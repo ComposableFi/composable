@@ -19,12 +19,12 @@ export function toStakingRewardPoolConfig(
       // end block of the rewards
       endBlock: api.createType("u32", endBlock.toString()),
       rewardConfigs: api.createType("BTreeMap<u128, ComposableTraitsStakingRewardConfig>", poolConfig.rewardConfigs),
-      locK: {
+      lock: api.createType("ComposableTraitsStakingLockLockConfig", {
         // time presets for locking
         durationPresets: api.createType("BTreeMap<u64, Perbill>", poolConfig.locK.durationPresets),
         // early unlock penalty
         unlockPenalty: api.createType("Perbill", poolConfig.locK.unlockPenalty)
-      }
+      })
     }
   };
 }
