@@ -1,5 +1,5 @@
 import { IKeyringPair } from "@polkadot/types/types";
-import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { sendAndWaitForSuccess, sendWithBatchAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { ApiPromise } from "@polkadot/api";
 import { u64 } from "@polkadot/types-codec";
 
@@ -40,18 +40,17 @@ export async function txBondedFinanceCancelFailureTest(api: ApiPromise, wallet: 
  * Tests tx.bondedFinance.cancel as SUDO with provided parameters that should succeed.
  * @param {ApiPromise} api Connected API Client.
  * @param {IKeyringPair} wallet Connected API Promise w/ sudo rights.
- * @param {u64|number} offerId
+ * @param offerIds array of offer ids to cancel
  * @return Transaction event.
  */
 export async function txBondedFinanceCancelSudoSuccessTest(
   api: ApiPromise,
   wallet: IKeyringPair,
-  offerId: u64 | number
+  offerIds: u64[] | number[]
 ) {
-  return await sendAndWaitForSuccess(
-    api,
-    wallet,
-    api.events.sudo.Sudid.is,
-    api.tx.sudo.sudo(api.tx.bondedFinance.cancel(offerId))
-  );
+  const offers = [];
+  offerIds.forEach(offerId => {
+    offers.push(api.tx.sudo.sudo(api.tx.bondedFinance.cancel(offerId)));
+  });
+  return await sendWithBatchAndWaitForSuccess(api, wallet, api.events.sudo.Sudid.is, offers, false);
 }
