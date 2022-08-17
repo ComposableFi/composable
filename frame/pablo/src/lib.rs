@@ -1022,7 +1022,10 @@ pub mod pallet {
 						let lp_amount = AccountsDepositedOneAsset::<T>::try_mutate(
 							&who,
 							&pool_id,
-							|exist_amount| exist_amount.safe_add(&lp_amount),
+							|exist_amount| -> Result<Self::Balance, DispatchError> {
+								*exist_amount = exist_amount.safe_add(&lp_amount)?;
+								Ok(*exist_amount)
+							},
 						)?;
 						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
 							who,
@@ -1050,7 +1053,10 @@ pub mod pallet {
 						let new_lp_amount = AccountsDepositedOneAsset::<T>::try_mutate(
 							&who,
 							&pool_id,
-							|exist_amount| exist_amount.safe_sub(&lp_amount),
+							|exist_amount| -> Result<Self::Balance, DispatchError> {
+								*exist_amount = exist_amount.safe_sub(&lp_amount)?;
+								Ok(*exist_amount)
+							},
 						)?;
 						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
 							who,
