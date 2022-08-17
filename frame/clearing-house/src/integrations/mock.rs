@@ -52,6 +52,7 @@ pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::Account
 // pub type AccountId = sp_core::sr25519::Public;
 pub type Amount = i64;
 pub type Balance = u128;
+pub type BlockNumber = u64;
 pub type Decimal = FixedI128;
 pub type Integer = i128;
 pub type MarketId = u64;
@@ -62,6 +63,9 @@ pub type Moment = u64;
 
 pub const ALICE: AccountId = sp_core::sr25519::Public(hex!(
 	"0000000000000000000000000000000000000000000000000000000000000000"
+));
+pub const BOB: AccountId = sp_core::sr25519::Public(hex!(
+	"0000000000000000000000000000000000000000000000000000000000000001"
 ));
 pub const TREASURY: AccountId = sr25519::Public([10_u8; 32]);
 
@@ -76,7 +80,7 @@ impl system::Config for Runtime {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
-	type BlockNumber = u64;
+	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = AccountId;
@@ -258,7 +262,7 @@ parameter_types! {
 	pub const MaxAssetsCount: u32 = 2;
 	pub const MaxHistory: u32 = 3;
 	pub const MaxPrePrices: u32 = 12;
-	pub const MinStake: u64 = 1;
+	pub const MinStake: Balance = 1;
 	pub const StakeLock: u64 = 1;
 	pub const StalePrice: u64 = 2;
 	pub const TreasuryAccountId : AccountId = TREASURY;

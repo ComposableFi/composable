@@ -34,6 +34,7 @@ scale-info = { version = "2.1", default-features = false, features = [
 serde = { version = '1', optional = true }
 
 [dev-dependencies]
+composable-support = { version = "0.0.1", path = "../composable-support", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 hex-literal = { version = "0.3.3" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }

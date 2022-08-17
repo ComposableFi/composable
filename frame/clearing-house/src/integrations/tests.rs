@@ -1,12 +1,15 @@
+#![allow(clippy::disallowed_methods)]
 use crate::{
 	integrations::mock::{
-		AssetId, Balance, Decimal, ExtBuilder, Moment, Origin, System, TestPallet, Timestamp,
-		ALICE, DOT, USDC,
+		AssetId, Balance, Decimal, ExtBuilder, Moment, Oracle, Origin, StalePrice, System,
+		TestPallet, Timestamp, ALICE, BOB, DOT, USDC,
 	},
 	MarketConfig as MarketConfigGeneric,
 };
+use composable_support::validation::Validated;
 use composable_traits::time::ONE_HOUR;
 use frame_support::{assert_ok, pallet_prelude::Hooks};
+use sp_runtime::Percent;
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
@@ -53,7 +56,12 @@ impl Default for MarketConfig {
 	fn default() -> Self {
 		Self {
 			asset: DOT,
-			vamm_config: Default::default(),
+			vamm_config: VammConfig {
+				base_asset_reserves: 1_000_000_000_000_000_000,
+				quote_asset_reserves: 100_000_000_000_000_000_000,
+				peg_multiplier: 1,
+				twap_period: ONE_HOUR,
+			},
 			// 10x max leverage to open a position
 			margin_ratio_initial: Decimal::from_float(0.1),
 			// fully liquidate when above 50x leverage
@@ -75,8 +83,35 @@ impl Default for MarketConfig {
 
 #[test]
 fn should_succeed_in_creating_first_market() {
-	ExtBuilder::default().build().execute_with(|| {
-		run_to_block(1);
+	ExtBuilder {
+		native_balances: vec![(ALICE, 1_000_000_000_000_000), (BOB, 1_000_000_000_000_000)],
+		..Default::default()
+	}
+	.build()
+	.execute_with(|| {
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(ALICE),
+			DOT,
+			Validated::new(Percent::from_percent(80)).unwrap(), // threshold
+			Validated::new(1).unwrap(),                         // min_answers
+			Validated::new(3).unwrap(),                         // max_answers
+			Validated::new(StalePrice::get() + 1).unwrap(),     // block_interval
+			5,                                                  // reward
+			5                                                   // slash
+		));
+
+		run_to_block(6);
+
+		assert_ok!(Oracle::set_signer(Origin::signed(ALICE), BOB));
+		assert_ok!(Oracle::set_signer(Origin::signed(BOB), ALICE));
+
+		assert_ok!(Oracle::add_stake(Origin::signed(ALICE), 50));
+		assert_ok!(Oracle::add_stake(Origin::signed(BOB), 50));
+
+		assert_ok!(Oracle::submit_price(Origin::signed(BOB), 100, DOT));
+
+		run_to_block(7);
+		Oracle::on_initialize(7);
 
 		let config = MarketConfig::default();
 		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));

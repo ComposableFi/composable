@@ -7424,6 +7424,7 @@ name = "pallet-clearing-house"
 version = "0.1.0"
 dependencies = [
  "composable-maths",
+ "composable-support",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
