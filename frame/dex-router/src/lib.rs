@@ -3,9 +3,23 @@
 //! Is used to add route to DEX for given asset_id's pair.
 //! It is required to have permissioned approval of routes.
 
-#![cfg_attr(not(test), warn(clippy::disallowed_methods, clippy::indexing_slicing))] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![warn(
+	clippy::disallowed_methods,
+	clippy::disallowed_types,
+	clippy::indexing_slicing,
+	clippy::unseparated_literal_suffix
+)]
+#![cfg_attr(
+	test,
+	allow(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
+		clippy::identity_op,
+		clippy::inconsistent_digit_grouping,
+		clippy::indexing_slicing,
+	)
+)]
 
 pub use pallet::*;
 
