@@ -793,6 +793,7 @@ pub mod pallet {
 				Self::collect_rewards(&pool_id, rewards_pool, stake, early_unlock, keep_alive)?;
 
 			RewardPools::<T>::insert(pool_id, rewards_pool);
+			Stakes::<T>::insert(position, stake);
 
 			Self::deposit_event(Event::<T>::Claimed { owner: who.clone(), position_id: *position });
 
@@ -848,7 +849,7 @@ pub mod pallet {
 					.reductions
 					.try_mutate(|inner| match inner.get_mut(asset_id) {
 						Some(inflation) => {
-							*inflation -= claim;
+							*inflation += claim;
 						},
 						None => (),
 					})

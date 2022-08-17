@@ -557,6 +557,126 @@ fn test_split_postion() {
 	});
 }
 
+mod claim {
+	use super::*;
+
+	#[test]
+	fn should_reward_correct_amount_when_not_early() {
+		let staker = ALICE;
+		let amount = 100_500;
+		let duration_preset = ONE_HOUR;
+		let total_rewards = 100;
+		let total_shares = 200;
+		let claim = 50;
+
+		with_stake(
+			staker,
+			amount,
+			duration_preset,
+			total_rewards,
+			total_shares,
+			Some(claim),
+			|pool_id, stake_id, unlock_penalty, stake_duration, staked_asset_id| {
+				let second_in_milliseconds = 1000;
+				Timestamp::set_timestamp(
+					Timestamp::now()
+						.saturating_add(stake_duration.saturating_mul(second_in_milliseconds))
+						.saturating_add(second_in_milliseconds),
+				);
+
+				let rewards_pool = StakingRewards::pools(StakingRewards::pool_count())
+					.expect("rewards_pool expected");
+
+				assert_ok!(StakingRewards::claim(Origin::signed(staker), stake_id));
+				assert_eq!(balance(staked_asset_id, &staker), amount);
+				for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
+					assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
+					assert_eq!(
+						balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
+						amount * 2 - claim
+					);
+				}
+			},
+		);
+	}
+
+	#[test]
+	fn should_reward_correct_amount_when_early() {
+		let staker = ALICE;
+		let amount = 100_500;
+		let duration_preset = ONE_HOUR;
+		let total_rewards = 100;
+		let total_shares = 200;
+		let claim = 50;
+
+		with_stake(
+			staker,
+			amount,
+			duration_preset,
+			total_rewards,
+			total_shares,
+			Some(claim),
+			|pool_id, stake_id, unlock_penalty, stake_duration, staked_asset_id| {
+				let claim = claim - 2;
+				let rewards_pool = StakingRewards::pools(StakingRewards::pool_count())
+					.expect("rewards_pool expected");
+
+				assert_ok!(StakingRewards::claim(Origin::signed(staker), stake_id));
+				assert_eq!(balance(staked_asset_id, &staker), amount);
+				for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
+					assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
+					assert_eq!(
+						balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
+						amount * 2 - claim
+					);
+				}
+			},
+		);
+	}
+
+	#[test]
+	fn should_not_allow_for_double_claim() {
+		let staker = ALICE;
+		let amount = 100_500;
+		let duration_preset = ONE_HOUR;
+		let total_rewards = 100;
+		let total_shares = 200;
+		let claim = 50;
+
+		with_stake(
+			staker,
+			amount,
+			duration_preset,
+			total_rewards,
+			total_shares,
+			Some(claim),
+			|pool_id, stake_id, unlock_penalty, stake_duration, staked_asset_id| {
+				let second_in_milliseconds = 1000;
+				Timestamp::set_timestamp(
+					Timestamp::now()
+						.saturating_add(stake_duration.saturating_mul(second_in_milliseconds))
+						.saturating_add(second_in_milliseconds),
+				);
+
+				let rewards_pool = StakingRewards::pools(StakingRewards::pool_count())
+					.expect("rewards_pool expected");
+
+				assert_ok!(StakingRewards::claim(Origin::signed(staker), stake_id));
+				assert_ok!(StakingRewards::claim(Origin::signed(staker), stake_id));
+
+				assert_eq!(balance(staked_asset_id, &staker), amount);
+				for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
+					assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
+					assert_eq!(
+						balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
+						amount * 2 - claim
+					);
+				}
+			},
+		);
+	}
+}
+
 /// Runs code inside of `new_test_ext().execute_with` closure while creating a stake with the given values.
 ///
 /// `execute` closure will provide:
