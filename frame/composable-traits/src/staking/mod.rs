@@ -71,9 +71,8 @@ impl RewardRatePeriod {
 	/// Returns the length of the period in seconds.
 	pub fn as_secs(&self) -> NonZeroU64 {
 		match self {
-			RewardRatePeriod::PerSecond => {
-				sp_std::num::NonZeroU64::new(1).expect("1 is non-zero; qed;")
-			},
+			RewardRatePeriod::PerSecond =>
+				sp_std::num::NonZeroU64::new(1).expect("1 is non-zero; qed;"),
 		}
 	}
 }

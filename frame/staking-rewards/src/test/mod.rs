@@ -166,8 +166,8 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
 			.expect("reward_multiplier expected");
-		let inflation = StakingRewards::boosted_amount(reward_multiplier, amount) * total_rewards
-			/ total_shares;
+		let inflation = StakingRewards::boosted_amount(reward_multiplier, amount) * total_rewards /
+			total_shares;
 		assert_eq!(inflation, 502);
 		let reductions = Reductions::try_from(
 			rewards_pool
@@ -677,7 +677,8 @@ mod claim {
 	}
 }
 
-/// Runs code inside of `new_test_ext().execute_with` closure while creating a stake with the given values.
+/// Runs code inside of `new_test_ext().execute_with` closure while creating a stake with the given
+/// values.
 ///
 /// `execute` closure will provide:
 /// - `pool_id`
