@@ -2,11 +2,11 @@
 /* eslint-disable */
 
 import type { Asset } from './assets';
-import type { CustomRpcBalance, CustomRpcCurrencyId } from './common';
+import type { CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from './common';
 import type { PalletPabloPoolId, PalletPabloPriceAggregate } from './pablo';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
-import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u32, u64 } from '@polkadot/types-codec';
+import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u32, u64, BTreeMap } from '@polkadot/types-codec';
 import type { AnyNumber, Codec } from '@polkadot/types-codec/types';
 import type { ExtrinsicOrHash, ExtrinsicStatus } from '@polkadot/types/interfaces/author';
 import type { EpochAuthorship } from '@polkadot/types/interfaces/babe';
@@ -41,6 +41,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       listAssets: AugmentedRpc<(at?: Hash | string | Uint8Array) => Observable<Vec<Asset>>>;
     };
+    //@ts-ignore
     author: {
       /**
        * Returns true if the keystore has private keys for the given public key and key type.
@@ -191,6 +192,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       finalizeBlock: AugmentedRpc<(hash: BlockHash | string | Uint8Array, justification?: Justification) => Observable<bool>>;
     };
+    //@ts-ignore
     eth: {
       /**
        * Returns accounts list.
@@ -371,6 +373,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       subscribeJustifications: AugmentedRpc<() => Observable<JustificationNotification>>;
     };
+    //@ts-ignore
     mmr: {
       /**
        * Generate MMR proof for given leaf index.
@@ -406,6 +409,8 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Get the price(in quote asset) for the given asset pair in the given pool for the given amount
        **/
       pricesFor: AugmentedRpc<(poolId: PalletPabloPoolId | string, baseAssetId: CustomRpcCurrencyId | string, quoteAssetId: CustomRpcCurrencyId | string, amount: CustomRpcBalance | string, at?: Hash | string | Uint8Array) => Observable<PalletPabloPriceAggregate>>;
+      simulateAddLiquidity: AugmentedRpc<(who: AccountId32, poolId: PalletPabloPoolId, amounts: BTreeMap<SafeRpcWrapper, SafeRpcWrapper>, at?: Hash | string | Uint8Array) => Observable<CustomRpcBalance>>;
+      simulateRemoveLiquidity: AugmentedRpc<(who: AccountId32, poolId: PalletPabloPoolId, lpAmounts: CustomRpcBalance, minExpectedAmounts: BTreeMap<SafeRpcWrapper, SafeRpcWrapper>, at?: Hash | string | Uint8Array) => Observable<any>>;
     };
     payment: {
       /**
@@ -423,6 +428,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       methods: AugmentedRpc<() => Observable<RpcMethods>>;
     };
+    // @ts-ignore
     state: {
       /**
        * Perform a call to a builtin on the chain

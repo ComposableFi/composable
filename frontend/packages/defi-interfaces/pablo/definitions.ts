@@ -26,7 +26,57 @@ export default {
         }
       ],
       type: "PalletPabloPriceAggregate"
-    }
+    },
+    simulateAddLiquidity: {
+      description: "Get the price(in quote asset) for the given asset pair in the given pool for the given amount",
+      params: [
+        {
+          name: "who",
+          type: "AccountId32"
+        },
+        {
+          name: "poolId",
+          type: "PalletPabloPoolId"
+        },
+        {
+          name: "amounts",
+          type: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
+        },
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true,
+        }
+      ],
+      type: "CustomRpcBalance"
+    },
+    simulateRemoveLiquidity: {
+      description: "Get the price(in quote asset) for the given asset pair in the given pool for the given amount",
+      params: [
+        {
+          name: "who",
+          type: "AccountId32"
+        },
+        {
+          name: "poolId",
+          type: "PalletPabloPoolId"
+        },
+        {
+          name: "lpAmount",
+          type: "CustomRpcBalance"
+        },
+        {
+          name: "minExpectedAmounts",
+          type: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
+        },
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true,
+        }
+      ],
+      type: "RemoveLiquiditySimulationResult"
+    },
   },
   types: {
     PalletPabloPoolInitConfiguration: "PalletPabloPoolConfiguration",
@@ -76,6 +126,9 @@ export default {
       owner_fee: "u128",
       protocol_fee: "u128",
       asset_id: "u128"
+    },
+    RemoveLiquiditySimulationResult: {
+      assets: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
     }
   }
 };
