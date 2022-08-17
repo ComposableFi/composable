@@ -44,6 +44,7 @@ pub trait Amm {
 	/// Returns the amount of base asset redeemable for given amount of lp token.
 	// TODO(saruman9): make an asset choosing (base/quote/etc) option
 	fn redeemable_single_asset_for_lp_tokens(
+		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
 		min_expected_amounts: Self::Balance,
@@ -117,6 +118,16 @@ pub trait Amm {
 		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
+
+	/// Update accounts deposited one asset storage.
+	/// `lp_amount` - amount of LP token to deposit/withdraw,
+	/// `action` - withdraw or deposit LP token.
+	fn update_accounts_deposited_one_asset_storage(
+		who: Self::AccountId,
+		pool_id: Self::PoolId,
+		lp_amount: Self::Balance,
+		action: SingleAssetAccountsStorageAction,
+	) -> Result<(), DispatchError>;
 
 	/// Deposit coins into the pool
 	/// `amounts` - list of amounts of coins to deposit,
@@ -492,6 +503,13 @@ where
 	AssetId: Ord,
 {
 	pub assets: BTreeMap<AssetId, Balance>,
+}
+
+/// Enum to check whether deposit in SingleAssetAccountsStorage or withdrawal
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
+pub enum SingleAssetAccountsStorageAction {
+	Depositing,
+	Withdrawing,
 }
 
 #[cfg(test)]
