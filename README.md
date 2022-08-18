@@ -36,7 +36,7 @@ To learn more about our ecosystem, vision, and product specifics - visit our
 ## Nix
 
 We use [`nix`](https://nixos.org/) in order to reproducibly build our products. We recommend either installing `nix` or switching to `NixOS`. Alternatively, you can run our packages with just `docker` installed.
-Our packages support both x86 and ARM architectures.
+Our packages support both **x86** and **ARM** architectures.
 
 Once you have `nix` or `NixOS` installed, you should enable the following features:
 ```nix
