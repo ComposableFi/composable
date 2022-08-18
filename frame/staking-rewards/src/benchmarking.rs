@@ -223,5 +223,23 @@ benchmarks! {
 		.unwrap();
 	}: _(RawOrigin::Root, pool_id, updates)
 
+	claim {
+		let r in 1 .. T::MaxRewardConfigsPerPool::get();
+		let asset_id = 100.into();
+		let pool_id = 1_u16.into();
+		let amount = 100_500_u128.into();
+		let duration_preset = ONE_HOUR;
+		let position_id = 1_u128.into();
+		let keep_alive = true;
+		let staker = whitelisted_caller();
+		let pool_owner: T::AccountId = account("owner", 0, 0);
+		<Pallet<T>>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(pool_owner, r))?;
+		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &staker, amount * 2.into())?;
+		<Pallet<T>>::stake(RawOrigin::Signed(staker.clone()).into(), pool_id, amount, duration_preset)?;
+	}: _(RawOrigin::Signed(staker.clone()), position_id)
+	verify {
+		assert_last_event::<T>(Event::Claimed { owner: staker, position_id }.into());
+	}
+
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
 }
