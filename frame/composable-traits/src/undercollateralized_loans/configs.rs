@@ -218,8 +218,8 @@ where
 		&self.last_payment_moment
 	}
 
-	pub fn get_payment_for_particular_moment(&self, moment: &Timestamp) -> Option<&Balance> {
-		self.schedule.get(moment)
+	pub fn get_payment_for_particular_moment(&self, moment: &Timestamp) -> Option<Balance> {
+		self.schedule.get(moment).cloned()
 	}
 }
 

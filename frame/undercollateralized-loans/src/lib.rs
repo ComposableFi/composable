@@ -50,7 +50,7 @@ pub mod validation;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::{
-		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, PossiblePaymentOutcome,
+		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, PaymentsOutcomes,
 		Timestamp,
 	};
 	use codec::{Codec, FullCodec};
@@ -205,11 +205,11 @@ pub mod pallet {
 	pub type NonActiveLoansStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
 
-	// Storage keeps accounts ids of loans which payments were already checked today.
+	// Storage keeps accounts ids of loans which payments were already processed today.
 	// Prevents double checking and subsiquent unreasonable liquidation.
 	// Use hashmap as a set.
 	#[pallet::storage]
-	pub type CheckedLoansStorage<T: Config> =
+	pub type ProcessedLoansStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
 
 	// Maps market's account id to market's debt token
@@ -356,7 +356,7 @@ pub mod pallet {
 			};
 			// Check if call is allowed.
 			match call {
-				Call::check_payments { .. } => (),
+				Call::process_checked_payments { .. } => (),
 				_ => return InvalidTransaction::Call.into(),
 			};
 			Ok(ValidTransaction::default())
@@ -420,11 +420,12 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::SomeAmountRepaid);
 			Ok(())
 		}
-
+        
+        // TODO: @mikolaichuk: check that timestamp is today. 
 		#[pallet::weight(1000)]
-		pub fn check_payments(
+		pub fn process_checked_payments(
 			origin: OriginFor<T>,
-			outcomes: Vec<PossiblePaymentOutcome<T::AccountId>>,
+			outcomes: PaymentsOutcomes<T>,
 			timestamp: Timestamp,
 		) -> DispatchResult {
 			let who = ensure_none(origin)?;
