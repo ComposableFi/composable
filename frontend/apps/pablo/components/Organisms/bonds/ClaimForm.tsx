@@ -12,7 +12,10 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useState } from "react";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
-import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import usePrincipalAssetSymbol from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
+import useBondOfferROI from "@/defi/hooks/bonds/useBondOfferROI";
+import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 
 const containerBoxProps = (theme: Theme) => ({
   p: 4,
@@ -48,6 +51,8 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
 
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
+  const vestingTime = useBondVestingTime(bond.selectedBondOffer);
+  const roi = useBondOfferROI(bond.selectedBondOffer);
 
   const claimable = false;
 
@@ -122,10 +127,10 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
           mt={2}
         />
         <Label
-          {...defaultLabelProps("Vested", `${bond.vestingPeriod} days`)}
+          {...defaultLabelProps("Vested", `${vestingTime}`)}
           mt={2}
         />
-        <Label {...defaultLabelProps("ROI", `${0}%`)} mt={2} />
+        <Label {...defaultLabelProps("ROI", `${roi.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}%`)} mt={2} />
       </Box>
     </Box>
   );

@@ -1,12 +1,13 @@
 import {
   queryTotalPurchasedBondsByBondOfferIds,
   queryVestingSchedulesByAccountId,
+  SubsquidVestingScheduleEntity,
 } from "./queries";
 import BigNumber from "bignumber.js";
 import { ApiPromise } from "@polkadot/api";
 import { stringToBytes } from "micro-base";
 import { u8aToHex } from "@polkadot/util";
-import { compareU8a, fetchVestingSchedule } from "@/defi/utils";
+import { compareU8a } from "@/defi/utils";
 import { BondOffer } from "@/defi/types";
 
 export async function fetchTotalPurchasedBondsByOfferIds(): Promise<
@@ -42,6 +43,26 @@ export async function fetchTotalPurchasedBondsByOfferIds(): Promise<
     return totalPurchasedMap;
   }
 }
+
+export async function fetchSchedulesAdded(
+  accountId: string  
+): Promise<SubsquidVestingScheduleEntity[]> {
+  let schedulesAdded: SubsquidVestingScheduleEntity[] = [];
+  try {
+    const { data, error } = await queryVestingSchedulesByAccountId(accountId);
+    if (error) throw new Error(error.message);
+    if (!data)
+    throw new Error("fetchVestingSchedulesByAccount: Data unavailable.");
+    let { vestingSchedules } = data;
+
+    schedulesAdded = vestingSchedules
+  } catch (err) {
+    console.error(err);
+  } finally {
+    return schedulesAdded;
+  }
+}
+
 
 export async function fetchBondVestingSchedules(
   parachainApi: ApiPromise,
@@ -96,10 +117,6 @@ export async function fetchBondVestingSchedules(
     offers = bondOffers.filter(i => {
       return filteredSchedules.some(fs => fs?.bondOfferId.eq(i.offerId))
     });
-
-
-    const vs = await Promise.all(offers.map(i => fetchVestingSchedule(parachainApi, accountId, i.reward.asset)));
-    console.log('vs', vs);
 
   } catch (err) {
     console.error(err);

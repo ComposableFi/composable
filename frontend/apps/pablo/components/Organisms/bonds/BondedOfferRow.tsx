@@ -1,30 +1,15 @@
 import { PairAsset, BaseAsset } from "@/components/Atoms";
-import { useBlockInterval } from "@/defi/hooks";
 import useBondOfferPrincipalAsset from "@/defi/hooks/bonds/useBondOfferPrincipalAsset";
 import { BondOffer } from "@/defi/types";
 import { TableCell, TableRow, Typography } from "@mui/material";
-import { useMemo } from "react";
-import moment from "moment";
+import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
 
 const BondedOfferRow = ({ bondOffer }: { bondOffer: BondOffer }) => {
   const principalAsset = useBondOfferPrincipalAsset(bondOffer);
   const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
   const { baseAsset, quoteAsset } = lpPrincipalAsset;
-  const blockTime = useBlockInterval();
 
-  const vestingTime = useMemo(() => {
-    if (bondOffer.maturity === "Infinite") {
-      return "Infinite";
-    }
-
-    if (blockTime) {
-      const duration = bondOffer.maturity.Finite.returnIn.times(blockTime.toString()).toNumber();
-      const inDuration = moment.duration(duration);
-      return moment.utc(inDuration.as('milliseconds')).format('HH:mm:ss')
-    }
-
-    return "00:00:00";
-  }, [blockTime, bondOffer])
+  const vestingTime = useBondVestingTime(bondOffer);
 
   return (
     <TableRow sx={{ cursor: "pointer" }}>

@@ -3,10 +3,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 import { MockedAsset } from "@/store/assets/assets.types";
 import {
+  AVERAGE_BLOCK_TIME,
   calculateBondROI,
+  calculateVestingTime,
   decodeBondOffer,
   DEFAULT_NETWORK_ID,
-  fetchVestingPeriod,
   getBondPrincipalAsset,
   matchAssetByPicassoId,
 } from "@/defi/utils";
@@ -20,8 +21,9 @@ export default function useBondOffer(offerId: string) {
   const { bondOffers, supportedAssets, apollo, putBondOffer } = useStore();
   const lpRewardingPools = useAllLpTokenRewardingPools();
 
-  const [selectedBondOffer, setSelectedBondOffer] =
-    useState<BondOffer | undefined>(undefined);
+  const [selectedBondOffer, setSelectedBondOffer] = useState<
+    BondOffer | undefined
+  >(undefined);
 
   useEffect(() => {
     let offer = bondOffers.list.find((o) => o.offerId.toString() === offerId);
@@ -55,17 +57,6 @@ export default function useBondOffer(offerId: string) {
       );
     }
   }, [supportedAssets, selectedBondOffer]);
-
-  const averageBlockTime = useBlockInterval();
-
-  const vestingPeriod = useMemo(() => {
-    if (selectedBondOffer && averageBlockTime) {
-      return fetchVestingPeriod({
-        interval: averageBlockTime.toString(),
-        bondMaturity: selectedBondOffer.maturity,
-      });
-    }
-  }, [selectedBondOffer, averageBlockTime]);
 
   const rewardAssetPerBond = useMemo(() => {
     if (selectedBondOffer) {
@@ -118,7 +109,6 @@ export default function useBondOffer(offerId: string) {
 
   return {
     selectedBondOffer,
-    vestingPeriod,
     principalAsset,
     rewardAsset,
     updateBondInfo,

@@ -22,10 +22,11 @@ import { useDispatch } from "react-redux";
 import { WrongAmountEnteredModal } from "./WrongAmountEnteredModal";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { useAssetBalance } from "@/store/assets/hooks";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
-import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import usePrincipalAssetSymbol from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
 import { usePurchaseBond } from "@/defi/hooks/bonds";
+import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
 
 const containerBoxProps = (theme: Theme) =>
   ({
@@ -99,6 +100,8 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   const disabled = !valid || soldout;
 
   const principalSymbol = usePrincipalAssetSymbol(bond.principalAsset);
+
+  const vestingTime = useBondVestingTime(bond.selectedBondOffer);
 
   const youWillGet = useMemo(() => {
     if (bond.selectedBondOffer) {
@@ -204,12 +207,12 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         <Label
           {...defaultLabelProps(
             "Vesting period",
-            bond.vestingPeriod ? bond.vestingPeriod : "0"
+            vestingTime
           )}
           mt={2}
         />
         <Label
-          {...defaultLabelProps("ROI", `${bond.roi.toNumber()}%`)}
+          {...defaultLabelProps("ROI", `${bond.roi.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}%`)}
           mt={2}
         />
       </Box>

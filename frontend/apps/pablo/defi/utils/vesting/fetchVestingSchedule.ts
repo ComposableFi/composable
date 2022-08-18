@@ -5,10 +5,10 @@ export async function fetchVestingSchedule(
   address: string,
   principalCurrencyId: string
 ) {
-  const [vestingSchedule] = await parachainApi.query.vesting.vestingSchedules(
+  const vestingSchedule = await parachainApi.query.vesting.vestingSchedules(
     address,
     principalCurrencyId
-  ) as any;
+  );
 
   return vestingSchedule ? vestingSchedule.toJSON() : null;
 }
