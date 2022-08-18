@@ -35,7 +35,7 @@ To learn more about our ecosystem, vision, and product specifics - visit our
 
 ## Nix
 
-We use [`nix`](https://nixos.org/) in order to reproducibly build our products. If you do not have `nix` installed yet, then we recommend either installing `nix` or switching to `NixOS`
+We use [`nix`](https://nixos.org/) in order to reproducibly build our products. If you do not have `nix` installed yet, then we recommend either installing `nix` or switching to `NixOS`. Alternatively, you can run our packages with just `docker` installed.
 
 You can use `nix flake show` in order to view all of the packages we provide, such as `composable-node` and `devnet-dali`.
 
@@ -58,5 +58,15 @@ If you want to build/run packages for a local copy, you can do that like this:
 git clone git@github.com:ComposableFi/composable
 cd composable
 nix run ".#devnet-dali"
+```
+
+### Nix within docker
+
+Do you not feel like installing `nix`? You can also use nix within docker like this:
+
+```bash
+docker volume create nix # cache builds
+
+docker run -v nix:/nix -p 9988:9988 -it nixos/nix bash -c "nix run github:ComposableFi/composable#devnet-dali --extra-experimental-features nix-command --extra-experimental-features flakes"
 ```
 
