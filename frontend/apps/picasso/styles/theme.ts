@@ -33,6 +33,9 @@ declare module "@mui/material/styles" {
       lemon: "string";
     };
   }
+  interface CommonColors {
+    darkWhite: "string";
+  }
 }
 
 declare module "@mui/material/Typography" {

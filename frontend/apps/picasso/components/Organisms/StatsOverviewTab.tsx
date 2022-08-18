@@ -6,9 +6,19 @@ import {
   formatNumberWithSymbol,
   formatNumberCompact,
   formatNumberCompactWithToken,
-  formatNumberCompactWithSymbol
+  formatNumberCompactWithSymbol,
+  callIf,
+  unwrapNumberOrHex,
+  humanBalance,
 } from "shared";
 import { OverviewDataProps } from "@/stores/defi/stats/overview";
+import { usePicassoProvider } from "@/defi/polkadot/hooks";
+import { useEffect, useState } from "react";
+import BigNumber from "bignumber.js";
+import { u128 } from "@polkadot/types-codec";
+import { ComposableTraitsOraclePrice } from "defi-interfaces";
+import { Assets } from "@/defi/polkadot/Assets";
+import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
 
 function formatOverviewTitleValue(index: number, info: OverviewDataProps) {
   switch (index) {
@@ -29,76 +39,77 @@ function formatOverviewTitleValue(index: number, info: OverviewDataProps) {
   }
 }
 
-export const StatsOverviewTab: React.FC<{}> = ({}) => {
-  const theme = useTheme();
-  const {
-    overviewData,
-    overviewChartData,
-    setTvlInterval,
-    setDailyActiveUsersInterval
-  } = useStore(({ statsOverview }) => statsOverview);
+const useCirculatingSupply = () => {
+  const { parachainApi } = usePicassoProvider();
+  const [circulatingSupply, setCirculatingSupply] = useState<BigNumber>(
+    new BigNumber(0)
+  );
 
-  function dispatchTVLInterval(selectedInterval: string) {
-    setTvlInterval(
-      overviewChartData.data[0].data.interval.indexOf(selectedInterval)
-    );
-  }
-  function dispatchDailyUsersInterval(selectedInterval: string) {
-    setDailyActiveUsersInterval(
-      overviewChartData.data[1].data.interval.indexOf(selectedInterval)
-    );
-  }
+  useEffect(() => {
+    callIf(parachainApi, (api) => {
+      api.query.balances.totalIssuance((totalIssuance: u128) =>
+        setCirculatingSupply(
+          fromChainIdUnit(unwrapNumberOrHex(totalIssuance.toHex()))
+        )
+      );
+    });
+  }, [parachainApi]);
+
+  return circulatingSupply;
+};
+
+const useMarketCap = () => {
+  const circulatingSupply = useCirculatingSupply();
+  const [picaPrice, setPicaPrice] = useState<BigNumber>(new BigNumber(0));
+  const { parachainApi } = usePicassoProvider();
+  useEffect(() => {
+    callIf(parachainApi, (api) => {
+      api.query.oracle.prices(
+        Assets.pica.supportedNetwork.picasso,
+        (result: ComposableTraitsOraclePrice) => {
+          if (!result.isEmpty) {
+            const { price, block } = result.toJSON() as any;
+            setPicaPrice(fromChainIdUnit(unwrapNumberOrHex(price)));
+          }
+        }
+      );
+    });
+  }, [parachainApi]);
+
+  return circulatingSupply.multipliedBy(picaPrice);
+};
+
+export const StatsOverviewTab: React.FC<{}> = ({}) => {
+  const circulatingSupply = useCirculatingSupply();
+  const marketCap = useMarketCap();
+  const theme = useTheme();
 
   return (
-    <>
-      <Box
-        display="grid"
-        sx={{
-          gridTemplateColumns: {
-            xs: "1fr 1fr",
-            lg: "1fr 1fr 1fr"
-          }
+    <Box
+      display="grid"
+      sx={{
+        gridTemplateColumns: {
+          xs: "1fr 1fr",
+          lg: "1fr 1fr 1fr",
+        },
+      }}
+      mb={5}
+      gap={4}
+    >
+      <FeaturedBox
+        TextAboveProps={{
+          color: theme.palette.common.darkWhite,
         }}
-        mb={5}
-        gap={4}
-      >
-        {overviewData.data.map((info: OverviewDataProps, index: number) => (
-          <FeaturedBox
-            key={index}
-            textAbove={info.name}
-            title={formatOverviewTitleValue(index, info)}
-          />
-        ))}
-      </Box>
-      <Box display="flex" flexDirection="column" gap={4}>
-        {overviewChartData.data.map((info: { data: any }, index: number) => (
-          <Chart
-            key={index}
-            title={info.data.name}
-            totalText={
-              index === 0
-                ? formatNumberWithSymbol(info.data.value, "$")
-                : formatNumber(info.data.value)
-            }
-            changeText={formatNumberWithSymbol(info.data.change, "", "%")}
-            changeTextColor={
-              info.data.change >= 0 ? "featured.lemon" : "error.main"
-            }
-            AreaChartProps={{
-              data: info.data.data[info.data.pickedInterval],
-              height: 90.7,
-              shorthandLabel: "Change",
-              labelFormat: (n: number) => n.toFixed(),
-              color: theme.palette.primary.main
-            }}
-            currentInterval={info.data.interval[info.data.pickedInterval]}
-            onIntervalChange={
-              index === 0 ? dispatchTVLInterval : dispatchDailyUsersInterval
-            }
-            intervals={info.data.interval}
-          />
-        ))}
-      </Box>
-    </>
+        textAbove="Picasso market cap"
+        title={`$${marketCap.toFormat(2)}`}
+      />
+      <FeaturedBox
+        TextAboveProps={{
+          color: theme.palette.common.darkWhite,
+        }}
+        textAbove="Picasso circulating supply"
+        title={`${circulatingSupply.toFormat(0)} PICA`}
+      />
+    </Box>
   );
 };
