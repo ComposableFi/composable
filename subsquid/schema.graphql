@@ -100,8 +100,6 @@ type VestingSchedule @entity {
   asset: BigInt!
   "Vesting schedule"
   schedule: Schedule!
-  "Claimed amount",
-  claimed: BigInt!
 }
 
 enum PicassoTransactionType {

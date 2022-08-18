@@ -23,11 +23,8 @@ export class VestingSchedule {
   @Column_("text", {nullable: false})
   eventId!: string
 
-  /**
-   * {accoundId}-{assetId}
-   */
-  @Column_("text", {nullable: false})
-  scheduleId!: string
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  scheduleId!: bigint
 
   /**
    * 'To' account for the vesting schedule
@@ -36,14 +33,14 @@ export class VestingSchedule {
   to!: string
 
   /**
+   * Asset ID
+   */
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  asset!: bigint
+
+  /**
    * Vesting schedule
    */
   @Column_("jsonb", {transformer: {to: obj => obj.toJSON(), from: obj => new Schedule(undefined, marshal.nonNull(obj))}, nullable: false})
   schedule!: Schedule
-
-  /**
-   * Claimed amount
-   */
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  claimed!: bigint
 }

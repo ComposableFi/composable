@@ -1,5 +1,5 @@
-module.exports = class Init1660732493377 {
-  name = 'Init1660732493377'
+module.exports = class Init1660822266663 {
+  name = 'Init1660822266663'
 
   async up(db) {
     await db.query(`CREATE TABLE "account" ("id" character varying NOT NULL, "event_id" text NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`)
@@ -9,8 +9,8 @@ module.exports = class Init1660732493377 {
     await db.query(`CREATE TABLE "pablo_transaction" ("id" character varying NOT NULL, "event_id" text NOT NULL, "who" text NOT NULL, "transaction_type" character varying(16), "base_asset_id" numeric NOT NULL, "base_asset_amount" numeric NOT NULL, "quote_asset_id" numeric NOT NULL, "quote_asset_amount" numeric NOT NULL, "block_number" numeric NOT NULL, "spot_price" text NOT NULL, "fee" text NOT NULL, "received_timestamp" numeric NOT NULL, "pool_id" character varying NOT NULL, CONSTRAINT "PK_8b040ecc6da14a71ef547ae2ae6" PRIMARY KEY ("id"))`)
     await db.query(`CREATE INDEX "IDX_969a927080f5b6c81b79b40cd8" ON "pablo_transaction" ("pool_id") `)
     await db.query(`CREATE TABLE "bonded_finance_bond_offer" ("id" character varying NOT NULL, "event_id" text NOT NULL, "offer_id" text NOT NULL, "total_purchased" numeric NOT NULL, "beneficiary" text NOT NULL, "cancelled" boolean NOT NULL, CONSTRAINT "PK_1a7a97e3d57a4ac842dc2ef48ba" PRIMARY KEY ("id"))`)
-    await db.query(`CREATE TABLE "vesting_schedule" ("id" character varying NOT NULL, "from" text NOT NULL, "event_id" text NOT NULL, "schedule_id" text NOT NULL, "to" text NOT NULL, "schedule" jsonb NOT NULL, "claimed" numeric NOT NULL, CONSTRAINT "PK_4818b05532ed9058110ed5b5b13" PRIMARY KEY ("id"))`)
-    await db.query(`CREATE TABLE "picasso_transaction" ("id" character varying NOT NULL, "event_id" text NOT NULL, "account_id" text NOT NULL, "transaction_type" character varying(37) NOT NULL, "block_number" numeric NOT NULL, "timestamp" numeric NOT NULL, CONSTRAINT "PK_084881080801746da05dec9ce3b" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE TABLE "vesting_schedule" ("id" character varying NOT NULL, "from" text NOT NULL, "event_id" text NOT NULL, "schedule_id" numeric NOT NULL, "to" text NOT NULL, "asset" numeric NOT NULL, "schedule" jsonb NOT NULL, CONSTRAINT "PK_4818b05532ed9058110ed5b5b13" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE TABLE "picasso_transaction" ("id" character varying NOT NULL, "event_id" text NOT NULL, "account_id" text NOT NULL, "transaction_type" character varying(43) NOT NULL, "block_number" numeric NOT NULL, "timestamp" numeric NOT NULL, CONSTRAINT "PK_084881080801746da05dec9ce3b" PRIMARY KEY ("id"))`)
     await db.query(`CREATE TABLE "activity" ("id" character varying NOT NULL, "event_id" text NOT NULL, "transaction_id" text NOT NULL, "account_id" text NOT NULL, "timestamp" numeric NOT NULL, CONSTRAINT "PK_24625a1d6b1b089c8ae206fe467" PRIMARY KEY ("id"))`)
     await db.query(`ALTER TABLE "pablo_pool_asset" ADD CONSTRAINT "FK_7fd4cdb45620476d1de745a2658" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_969a927080f5b6c81b79b40cd86" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
