@@ -459,9 +459,43 @@
               cargoBuildCommand = "cargo test --workspace --release --locked --verbose";
             });
 
+            cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
+              cargoArtifacts = common-deps-nightly;
+              cargoExtraArgs = "--all --check --verbose";
+            });
+
+            taplo-cli-check = crane-stable.cargoBuild (common-attrs // {
+              buildInputs = [ taplo-cli ];
+              cargoArtifacts = common-deps;
+              cargoBuildCommand = "taplo check";
+              cargoExtraArgs = "--verbose";
+            });
+
+            cargo-clippy-check = crane-nightly.cargoClippy (common-attrs // {
+              cargoArtifacts = common-deps-nightly;
+              cargoExtraArgs = "--all-targets --tests -- -D warnings";
+            });
+
+            cargo-deny-check = crane-nightly.cargoBuild (common-attrs // {
+              buildInputs = [ cargo-deny ];
+              cargoArtifacts = common-deps;
+              cargoBuildCommand = "cargo deny";
+              cargoExtraArgs = "--manifest-path ./frame/composable-support/Cargo.toml check ban";
+            });
+
+            cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
+              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+              COMPOSABLE_RUNTIME = "${composable-runtime}/lib/runtime.optimized.wasm";
+              buildInputs = [ cargo-udeps expat freetype openssl ];
+              cargoArtifacts = common-deps-nightly;
+              cargoBuildCommand = "cargo udeps";
+              cargoExtraArgs = "--workspace --exclude local-integration-tests --all-features";
+            });
+
             kusama-picasso-karura =
               let      
-                 
+
                 config = (pkgs.callPackage ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix 
                 { 
                   polkadot-bin = polkadot-node; 
