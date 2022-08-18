@@ -500,14 +500,12 @@
                 '';
               };
 
+            junod = pkgs.callPackage ./.nix/junod.nix { };
+
             default = packages.composable-node;
           };
 
           devShells = rec {
-
-            junod = pkgs.callPackage ./.nix/junod.nix { };
-
-
             developers = developers-minimal.overrideAttrs (base: {
               buildInputs = with packages;
                 base.buildInputs ++ [
