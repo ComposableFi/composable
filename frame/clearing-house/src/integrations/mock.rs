@@ -49,7 +49,6 @@ frame_support::construct_runtime!(
 // -------------------------------------------------------------------------------------------------
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-// pub type AccountId = sp_core::sr25519::Public;
 pub type Amount = i64;
 pub type Balance = u128;
 pub type BlockNumber = u64;
@@ -223,7 +222,7 @@ impl pallet_vamm::Config for Runtime {
 
 // -------------------------------------------------------------------------------------------------
 //                                             Oracle
-//                      This section copied from frame/oracle/src/mocks.rs
+//                  This section is mostly copied from frame/oracle/src/mocks.rs
 // -------------------------------------------------------------------------------------------------
 
 pub type Extrinsic = TestXt<Call, ()>;

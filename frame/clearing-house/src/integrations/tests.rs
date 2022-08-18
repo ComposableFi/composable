@@ -27,9 +27,9 @@ fn externalities_builder_works() {
 	ExtBuilder::default().build().execute_with(|| {});
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                        Helper Functions
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+//                                  Helper Functions and Traits
+// -------------------------------------------------------------------------------------------------
 
 fn advance_blocks_by(n: BlockNumber) {
 	for _ in 0..n {
@@ -74,16 +74,9 @@ fn set_oracle_for(asset_id: AssetId, price: Balance) {
 
 	assert_ok!(Oracle::submit_price(Origin::signed(BOB), price, asset_id));
 
-	// Advance block so that Oracle finalizes?
+	// Advance block so that Oracle block finalization hook is called
 	advance_blocks_by(1);
 }
-
-// ----------------------------------------------------------------------------------------------------
-//                                        Types & Constants
-// ----------------------------------------------------------------------------------------------------
-
-pub type MarketConfig = MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig>;
-pub type VammConfig = composable_traits::vamm::VammConfig<Balance, Moment>;
 
 impl Default for MarketConfig {
 	fn default() -> Self {
@@ -110,11 +103,18 @@ impl Default for MarketConfig {
 	}
 }
 
+// -------------------------------------------------------------------------------------------------
+//                                      Types & Constants
+// -------------------------------------------------------------------------------------------------
+
+pub type MarketConfig = MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig>;
+pub type VammConfig = composable_traits::vamm::VammConfig<Balance, Moment>;
+
 pub const UNIT: Balance = UnsignedDecimal::DIV;
 
-// ----------------------------------------------------------------------------------------------------
-//                                         Create Market
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+//                                        Create Market
+// -------------------------------------------------------------------------------------------------
 
 proptest! {
 	#[test]
@@ -141,9 +141,9 @@ proptest! {
 	}
 }
 
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 //                                         Open Position
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 
 #[test]
 fn should_succeed_in_opening_first_position() {
