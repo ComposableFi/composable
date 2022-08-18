@@ -150,6 +150,11 @@ export function cancelBondOffer(stored: BondedFinanceBondOffer): void {
   stored.cancelled = true;
 }
 
+/**
+ * Handle `bondedFinance.OfferCancelled` event
+ *  - Set bond offer as `cancelled`
+ * @param ctx
+ */
 export async function processOfferCancelledEvent(ctx: EventHandlerContext) {
   const event = new BondedFinanceOfferCancelledEvent(ctx);
   const { offerId } = getOfferCancelledEvent(event);
