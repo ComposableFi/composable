@@ -134,6 +134,7 @@ jobs:
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#cargo-deny-check --no-update-lock-file --show-trace -L
 
       - name: Cargo udeps
+        # continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.
         run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#cargo-udeps-check --no-update-lock-file --show-trace -L
 

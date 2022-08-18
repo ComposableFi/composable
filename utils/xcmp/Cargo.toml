@@ -23,8 +23,6 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 # TODO: upgrade to latest as it has awesome improvements, but possivble on only on > 0.9.24
 subxt = { git = "https://github.com/paritytech/subxt", rev = "6d73172560b4c722aeac19695c96c618799d50a2" }
 
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-
 sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
