@@ -1,6 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::{fmt::Formatter, write};
+use core::{fmt::Formatter, time::Duration, write};
 use frame_support::dispatch::{DispatchResult, Weight};
 use ibc::{
 	core::{
@@ -18,11 +18,8 @@ use ibc::{
 	},
 	signer::Signer,
 };
-use ibc_primitives::{CallbackWeight, IbcTrait};
-use scale_info::prelude::{
-	format,
-	string::{String, ToString},
-};
+use ibc_primitives::{port_id_from_bytes, CallbackWeight, IbcTrait, SendPacketData};
+use scale_info::prelude::{format, string::String};
 use sp_std::{marker::PhantomData, prelude::*, vec};
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
@@ -59,9 +56,7 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use ibc::core::ics04_channel::channel::{ChannelEnd, Order, State};
-	use ibc_primitives::{
-		connection_id_from_bytes, port_id_from_bytes, OpenChannelParams, SendPacketData,
-	};
+	use ibc_primitives::{connection_id_from_bytes, OpenChannelParams};
 
 	/// Our pallet's configuration trait. All our types and constants go in here. If the
 	/// pallet is dependent on specific other pallets, then their configuration traits
@@ -72,6 +67,8 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// ibc subsystem
 		type IbcHandler: ibc_primitives::IbcTrait;
 	}
 
@@ -106,28 +103,15 @@ pub mod pallet {
 
 			let port_id = port_id_from_bytes(PORT_ID.as_bytes().to_vec())
 				.map_err(|_| Error::<T>::ChannelInitError)?;
-			let channel_id = T::IbcHandler::open_channel(port_id.clone(), channel_end)
+			T::IbcHandler::open_channel(port_id.clone(), channel_end)
 				.map_err(|_| Error::<T>::ChannelInitError)?;
-			Self::deposit_event(Event::<T>::ChannelOpened {
-				channel_id: channel_id.to_string().as_bytes().to_vec(),
-				port_id: port_id.as_bytes().to_vec(),
-			});
 			Ok(())
 		}
 
 		#[pallet::weight(0)]
 		pub fn send_ping(origin: OriginFor<T>, params: SendPingParams) -> DispatchResult {
 			ensure_root(origin)?;
-			let channel_id = ChannelId::new(params.channel_id);
-			let send_packet = SendPacketData {
-				data: params.data,
-				timeout_height_offset: params.timeout_height_offset,
-				timeout_timestamp_offset: params.timeout_timestamp_offset,
-				port_id: port_id_from_bytes(PORT_ID.as_bytes().to_vec())
-					.expect("Valid port id expected"),
-				channel_id,
-			};
-			T::IbcHandler::send_packet(send_packet).map_err(|e| {
+			Self::send_ping_impl(params).map_err(|e| {
 				log::trace!(target: "pallet_ibc_ping", "[send_ping] error: {:?}", e);
 				Error::<T>::PacketSendError
 			})?;
@@ -153,6 +137,21 @@ pub mod pallet {
 		ChannelInitError,
 		/// Error registering packet
 		PacketSendError,
+	}
+}
+
+impl<T: Config> Pallet<T> {
+	pub fn send_ping_impl(params: SendPingParams) -> Result<(), ibc_primitives::Error> {
+		let channel_id = ChannelId::new(params.channel_id);
+		let send_packet = SendPacketData {
+			data: b"ping".to_vec(),
+			timeout_height_offset: params.timeout_height_offset,
+			timeout_timestamp_offset: params.timeout_timestamp_offset,
+			port_id: port_id_from_bytes(PORT_ID.as_bytes().to_vec())
+				.expect("Valid port id expected"),
+			channel_id,
+		};
+		T::IbcHandler::send_packet(send_packet)
 	}
 }
 
@@ -266,6 +265,22 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		let success = "ping-success".as_bytes().to_vec();
 		log::info!("Received Packet {:?}", packet);
 		let packet = packet.clone();
+		{
+			let timeout_timestamp = Duration::from_secs(86400 * 30);
+			let data = match String::from_utf8(packet.data.clone()).ok() {
+				Some(val) if val == "ping" => b"pong".to_vec(),
+				_ => b"ping".to_vec(),
+			};
+			let send_ping_params = SendPingParams {
+				data,
+				timeout_height_offset: 500,
+				timeout_timestamp_offset: timeout_timestamp.as_nanos() as u64,
+				channel_id: packet.destination_channel.sequence(),
+			};
+			if let Err(e) = Pallet::<T>::send_ping_impl(send_ping_params) {
+				log::trace!(target: "pallet_ibc_ping", "[send_ping] error: {:?}", e);
+			}
+		}
 		OnRecvPacketAck::Successful(
 			Box::new(PingAcknowledgement(success.clone())),
 			Box::new(move |_| {
