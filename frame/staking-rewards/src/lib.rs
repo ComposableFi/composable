@@ -681,8 +681,8 @@ pub mod pallet {
 			let keep_alive = false;
 			let stake = Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
 			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
-			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
-				T::UnixTime::now().as_secs();
+			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)?
+				>= T::UnixTime::now().as_secs();
 			let pool_id = stake.reward_pool_id;
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
@@ -786,8 +786,8 @@ pub mod pallet {
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
-			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
-				T::UnixTime::now().as_secs();
+			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)?
+				>= T::UnixTime::now().as_secs();
 
 			(rewards_pool, stake) =
 				Self::collect_rewards(&pool_id, rewards_pool, stake, early_unlock, keep_alive)?;
@@ -847,11 +847,10 @@ pub mod pallet {
 				stake.reductions = stake
 					.clone()
 					.reductions
-					.try_mutate(|inner| match inner.get_mut(asset_id) {
-						Some(inflation) => {
+					.try_mutate(|inner| {
+						if let Some(inflation) = inner.get_mut(asset_id) {
 							*inflation += claim;
-						},
-						None => (),
+						}
 					})
 					.unwrap_or(stake.reductions);
 
@@ -1036,8 +1035,8 @@ pub mod pallet {
 									reward.total_rewards.safe_add(&reward_increment)?;
 								ensure!(
 									(new_total_reward
-										.safe_sub(&reward.total_dilution_adjustment)?) <=
-										reward.max_rewards,
+										.safe_sub(&reward.total_dilution_adjustment)?)
+										<= reward.max_rewards,
 									Error::<T>::MaxRewardLimitReached
 								);
 								reward.total_rewards = new_total_reward;
@@ -1116,17 +1115,19 @@ fn update_rewards_pool<T: Config>(
 			let new_reward = match reward_accumulation_calculation::<T>(reward.clone(), now_seconds)
 			{
 				Ok(reward) => reward,
-				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) =>
-					return Err(Error::<T>::BackToTheFuture.into()),
+				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) => {
+					return Err(Error::<T>::BackToTheFuture.into())
+				},
 				Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(reward)) => {
 					Pallet::<T>::deposit_event(Event::<T>::MaxRewardsAccumulated {
 						pool_id,
 						asset_id: reward.asset_id,
 					});
+					continue;
+				},
+				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) => {
 					continue
 				},
-				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) =>
-					continue,
 			};
 
 			*reward = Reward { reward_rate: update.reward_rate, ..new_reward };
