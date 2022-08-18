@@ -21,7 +21,7 @@ import {
   processPoolCreatedEvent,
   processPoolDeletedEvent,
   processSwappedEvent,
-} from "../src/pabloProcessor";
+} from "../src/processors/pablo";
 import {
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,

@@ -106,11 +106,11 @@ export async function saveTransaction(
   ctx: EventHandlerContext,
   accountId: string,
   transactionType: PicassoTransactionType,
-  id?: string
+  id: string
 ): Promise<string> {
   // Create transaction
   const tx = new PicassoTransaction({
-    id: id || randomUUID(),
+    id,
     eventId: ctx.event.id,
     accountId,
     transactionType,
@@ -146,4 +146,40 @@ export async function saveActivity(
   await ctx.store.save(activity);
 
   return activity.id;
+}
+
+/**
+ * Saves the given Accounts, a Transaction for the first account, and
+ * Activities for every account.
+ * If no account id is provided, it will try to create an account using the
+ * signer of the underlying extrinsic.
+ * If no account is created, it will NOT create any Transaction or Activity
+ * @param ctx
+ * @param transactionType
+ * @param accountId
+ */
+export async function saveAccountAndTransaction(
+  ctx: EventHandlerContext,
+  transactionType: PicassoTransactionType,
+  accountId?: string | string[]
+): Promise<void> {
+  const accountIds: (string | undefined)[] =
+    typeof accountId === "string" ? [accountId] : accountId || [undefined];
+
+  let txId = randomUUID();
+
+  for (let index = 0; index < accountIds.length; index++) {
+    const id = accountIds[index];
+    if (!id) {
+      // no-op
+      return;
+    }
+    const isSaved = await trySaveAccount(ctx, id);
+    if (isSaved) {
+      if (index === 0) {
+        await saveTransaction(ctx, id, transactionType, txId);
+      }
+      await saveActivity(ctx, txId, id);
+    }
+  }
 }

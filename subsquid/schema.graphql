@@ -80,9 +80,11 @@ type ScheduleWindow {
 }
 
 type Schedule {
+  vestingScheduleId: BigInt!
   window: ScheduleWindow!
   periodCount: BigInt!
-  perPeriod:BigInt!
+  perPeriod: BigInt!
+  alreadyClaimed: BigInt!
 }
 
 type VestingSchedule @entity {
@@ -91,14 +93,13 @@ type VestingSchedule @entity {
   from: String!
   "chain event ID"
   eventId: String!
-  "{accountId}-{assetId}"
-  scheduleId: String!
+  scheduleId: BigInt!
   "'To' account for the vesting schedule"
   to: String!
+  "Asset ID"
+  asset: BigInt!
   "Vesting schedule"
   schedule: Schedule!
-  "Claimed amount",
-  claimed: BigInt!
 }
 
 enum PicassoTransactionType {
@@ -113,6 +114,9 @@ enum PicassoTransactionType {
   BONDED_FINANCE_NEW_OFFER,
   BONDED_FINANCE_NEW_BOND,
   BONDED_FINANCE_OFFER_CANCELLED,
+  VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
+  VESTING_SCHEDULES_CLAIMED,
+  VESTING_SCHEDULES_VESTING_SCHEDULES_UPDATED,
 }
 
 type PicassoTransaction @entity {

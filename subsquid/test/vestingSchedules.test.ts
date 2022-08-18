@@ -2,7 +2,7 @@ import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
 import { VestingSchedule } from "../src/model";
 import { anything, instance, mock, when } from "ts-mockito";
 import { createAccount, createCtx, encodeAccount } from "../src/utils";
-import { getNewVestingSchedule } from "../src/vestingProcessor";
+import { getNewVestingSchedule } from "../src/processors/vestingSchedule";
 import { VestingSchedule as VestingScheduleType } from "../src/types/v2401";
 import { VestingVestingScheduleAddedEvent } from "../src/types/events";
 import { expect } from "chai";
@@ -11,27 +11,27 @@ const MOCK_ADDRESS_FROM = createAccount();
 const MOCK_ADDRESS_TO = createAccount();
 
 const MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED: VestingScheduleType = {
+  vestingScheduleId: 3n,
   window: {
     start: 1,
     period: 10,
     __kind: "BlockNumberBased",
   },
-  vestingScheduleId: BigInt(1),
-  alreadyClaimed: BigInt(0),
   periodCount: 1,
   perPeriod: 100n,
+  alreadyClaimed: 10n,
 };
 
 const MOCK_VESTING_SCHEDULE_MOMENT_BASED: VestingScheduleType = {
+  vestingScheduleId: 4n,
   window: {
     start: 1n,
     period: 10n,
     __kind: "MomentBased",
   },
-  vestingScheduleId: BigInt(1),
-  alreadyClaimed: BigInt(0),
   periodCount: 1,
   perPeriod: 100n,
+  alreadyClaimed: 20n,
 };
 
 /**
@@ -40,23 +40,23 @@ const MOCK_VESTING_SCHEDULE_MOMENT_BASED: VestingScheduleType = {
  * @param from
  * @param to
  * @param eventId
- * @param assetId
+ * @param asset
  * @param schedule
+ * @param vestingScheduleId
  */
 function assertVestingSchedule(
   vestingSchedule: VestingSchedule,
   from?: string,
   to?: string,
   eventId?: string,
-  assetId?: string,
-  schedule?: VestingScheduleType
+  asset?: bigint,
+  schedule?: VestingScheduleType,
+  vestingScheduleId?: bigint
 ) {
-  const expectedScheduleId = `${to}-${assetId}`;
   if (from) expect(vestingSchedule.from).to.equal(from);
   if (to) expect(vestingSchedule.to).to.equal(to);
   if (eventId) expect(vestingSchedule.eventId).to.equal(eventId);
-  if (from && assetId)
-    expect(vestingSchedule.scheduleId).to.equal(expectedScheduleId);
+  if (asset) expect(vestingSchedule.asset).to.equal(asset);
   if (schedule) {
     expect(vestingSchedule.schedule.window.period).to.equal(
       BigInt(schedule.window.period)
@@ -72,15 +72,22 @@ function assertVestingSchedule(
       BigInt(schedule.periodCount)
     );
     expect(vestingSchedule.schedule.perPeriod).to.equal(schedule.perPeriod);
+    expect(vestingSchedule.schedule.vestingScheduleId).to.equal(
+      schedule.vestingScheduleId
+    );
+    expect(vestingSchedule.schedule.alreadyClaimed).to.equal(
+      schedule.alreadyClaimed
+    );
   }
+  if (vestingScheduleId)
+    expect(vestingSchedule.scheduleId).to.equal(vestingScheduleId);
 }
 
 function createVestingScheduleAddedEvent(
   from: Uint8Array,
   to: Uint8Array,
   asset: bigint,
-  schedule: VestingScheduleType,
-  vestingScheduleId: bigint
+  schedule: VestingScheduleType
 ) {
   let eventMock = mock(VestingVestingScheduleAddedEvent);
   let evt = {
@@ -88,7 +95,8 @@ function createVestingScheduleAddedEvent(
     to,
     asset,
     schedule,
-    vestingScheduleId
+    vestingScheduleId: schedule.vestingScheduleId,
+    alreadyClaimed: schedule.vestingScheduleId,
   };
 
   when(eventMock.asV2401).thenReturn(evt);
@@ -128,9 +136,8 @@ describe("Vesting schedule added", () => {
     const { event } = createVestingScheduleAddedEvent(
       MOCK_ADDRESS_FROM,
       MOCK_ADDRESS_TO,
-      BigInt(2),
-      MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED,
-      BigInt(1),
+      2n,
+      MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED
     );
 
     const vestingSchedule = getNewVestingSchedule(ctx, event);
@@ -140,8 +147,9 @@ describe("Vesting schedule added", () => {
       encodeAccount(MOCK_ADDRESS_FROM),
       encodeAccount(MOCK_ADDRESS_TO),
       undefined,
-      undefined,
-      MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED
+      2n,
+      MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED,
+      3n
     );
   });
 
@@ -149,9 +157,8 @@ describe("Vesting schedule added", () => {
     const { event } = createVestingScheduleAddedEvent(
       MOCK_ADDRESS_FROM,
       MOCK_ADDRESS_TO,
-      BigInt(2),
-      MOCK_VESTING_SCHEDULE_MOMENT_BASED,
-      BigInt(1),
+      5n,
+      MOCK_VESTING_SCHEDULE_MOMENT_BASED
     );
 
     const vestingSchedule = getNewVestingSchedule(ctx, event);
@@ -161,8 +168,9 @@ describe("Vesting schedule added", () => {
       encodeAccount(MOCK_ADDRESS_FROM),
       encodeAccount(MOCK_ADDRESS_TO),
       undefined,
-      undefined,
-      MOCK_VESTING_SCHEDULE_MOMENT_BASED
+      5n,
+      MOCK_VESTING_SCHEDULE_MOMENT_BASED,
+      4n
     );
   });
 });

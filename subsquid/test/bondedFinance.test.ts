@@ -11,7 +11,7 @@ import {
   cancelBondOffer,
   getNewBondOffer,
   updateBondOffer,
-} from "../src/bondedFinanceProcessor";
+} from "../src/processors/bondedFinance";
 
 const WHO = createAccount();
 const BOB_ADDRESS = createAccount();

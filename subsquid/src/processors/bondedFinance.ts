@@ -4,10 +4,10 @@ import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
   BondedFinanceOfferCancelledEvent,
-} from "./types/events";
-import { BondedFinanceBondOffer, PicassoTransactionType } from "./model";
-import { trySaveAccount, saveActivity, saveTransaction } from "./dbHelper";
-import { encodeAccount } from "./utils";
+} from "../types/events";
+import { BondedFinanceBondOffer, PicassoTransactionType } from "../model";
+import { saveAccountAndTransaction } from "../dbHelper";
+import { encodeAccount } from "../utils";
 
 interface NewOfferEvent {
   offerId: bigint;
@@ -92,7 +92,10 @@ export async function processNewOfferEvent(ctx: EventHandlerContext) {
 
   await ctx.store.save(newOffer);
 
-  await saveAll(ctx, PicassoTransactionType.BONDED_FINANCE_NEW_OFFER);
+  await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.BONDED_FINANCE_NEW_OFFER
+  );
 }
 
 /**
@@ -132,7 +135,10 @@ export async function processNewBondEvent(ctx: EventHandlerContext) {
 
   await ctx.store.save(stored);
 
-  await saveAll(ctx, PicassoTransactionType.BONDED_FINANCE_NEW_BOND);
+  await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.BONDED_FINANCE_NEW_BOND
+  );
 }
 
 /**
@@ -163,20 +169,8 @@ export async function processOfferCancelledEvent(ctx: EventHandlerContext) {
   // Save bond offer.
   await ctx.store.save(stored);
 
-  await saveAll(ctx, PicassoTransactionType.BONDED_FINANCE_OFFER_CANCELLED);
-}
-
-async function saveAll(
-  ctx: EventHandlerContext,
-  transactionType: PicassoTransactionType
-) {
-  // Create or update Account.
-  const accountId = await trySaveAccount(ctx);
-
-  if (accountId) {
-    // Create Transaction.
-    const txId = await saveTransaction(ctx, accountId, transactionType);
-    // Create Activity.
-    await saveActivity(ctx, txId, accountId);
-  }
+  await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.BONDED_FINANCE_OFFER_CANCELLED
+  );
 }

@@ -16,25 +16,28 @@ import {
   processPoolCreatedEvent,
   processPoolDeletedEvent,
   processSwappedEvent,
-} from "./pabloProcessor";
+} from "./processors/pablo";
 import {
   processRewardPoolCreatedEvent,
   processSplitPositionEvent,
   processStakeAmountExtendedEvent,
   processStakedEvent,
   processUnstakedEvent,
-} from "./stakingRewardsProcessor";
+} from "./processors/stakingRewards";
 import {
   processTransferEvent,
   processDepositEvent,
   processWithdrawEvent,
-} from "./balancesProcessor";
+} from "./processors/balances";
 import {
   processNewBondEvent,
   processNewOfferEvent,
   processOfferCancelledEvent,
-} from "./bondedFinanceProcessor";
-import { processVestingScheduleAddedEvent } from "./vestingProcessor";
+} from "./processors/bondedFinance";
+import {
+  processVestingScheduleAddedEvent,
+  processVestingClaimedEvent,
+} from "./processors/vestingSchedule";
 
 const processor = new SubstrateProcessor("composable_dali_dev");
 

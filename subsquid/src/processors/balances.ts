@@ -3,10 +3,10 @@ import {
   BalancesDepositEvent,
   BalancesTransferEvent,
   BalancesWithdrawEvent,
-} from "./types/events";
-import { encodeAccount } from "./utils";
-import { saveActivity, saveTransaction, trySaveAccount } from "./dbHelper";
-import { PicassoTransactionType } from "./model";
+} from "../types/events";
+import { encodeAccount } from "../utils";
+import { saveAccountAndTransaction } from "../dbHelper";
+import { PicassoTransactionType } from "../model";
 
 interface TransferEvent {
   from: Uint8Array;
@@ -54,22 +54,11 @@ export async function processTransferEvent(ctx: EventHandlerContext) {
   const from = encodeAccount(transferEvent.from);
   const to = encodeAccount(transferEvent.to);
 
-  const accountFromId = await trySaveAccount(ctx, from);
-  const accountToId = await trySaveAccount(ctx, to);
-
-  if (accountFromId) {
-    const txId = await saveTransaction(
-      ctx,
-      from,
-      PicassoTransactionType.BALANCES_TRANSFER
-    );
-
-    await saveActivity(ctx, txId, from);
-
-    if (accountToId) {
-      await saveActivity(ctx, txId, to);
-    }
-  }
+  await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.BALANCES_TRANSFER,
+    [from, to]
+  );
 }
 
 /**
@@ -85,17 +74,11 @@ export async function processWithdrawEvent(ctx: EventHandlerContext) {
   const event = getWithdrawEvent(evt);
   const who = encodeAccount(event.who);
 
-  const accountId = await trySaveAccount(ctx, who);
-
-  if (accountId) {
-    const txId = await saveTransaction(
-      ctx,
-      accountId,
-      PicassoTransactionType.BALANCES_WITHDRAW
-    );
-
-    await saveActivity(ctx, txId, accountId);
-  }
+  await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.BALANCES_WITHDRAW,
+    who
+  );
 }
 
 /**
@@ -111,14 +94,9 @@ export async function processDepositEvent(ctx: EventHandlerContext) {
   const event = getDepositEvent(evt);
   const who = encodeAccount(event.who);
 
-  const accountId = await trySaveAccount(ctx, who);
-
-  if (accountId) {
-    const txId = await saveTransaction(
-      ctx,
-      accountId,
-      PicassoTransactionType.BALANCES_DEPOSIT
-    );
-    await saveActivity(ctx, txId, accountId);
-  }
+  await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.BALANCES_DEPOSIT,
+    who
+  );
 }

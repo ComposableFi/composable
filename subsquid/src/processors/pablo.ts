@@ -6,16 +6,16 @@ import {
   PabloPoolCreatedEvent,
   PabloPoolDeletedEvent,
   PabloSwappedEvent,
-} from "./types/events";
-import { get, getLatestPoolByPoolId, getOrCreate } from "./dbHelper";
+} from "../types/events";
+import { get, getLatestPoolByPoolId, getOrCreate } from "../dbHelper";
 import {
   PabloPool,
   PabloPoolAsset,
   PabloTransaction,
   PabloTransactionType,
-} from "./model";
-import { CurrencyPair, Fee } from "./types/v2401";
-import { encodeAccount } from "./utils";
+} from "../model";
+import { CurrencyPair, Fee } from "../types/v2401";
+import { encodeAccount } from "../utils";
 
 function createTransaction(
   ctx: EventHandlerContext,

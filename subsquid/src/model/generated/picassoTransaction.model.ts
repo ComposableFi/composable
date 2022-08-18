@@ -26,7 +26,7 @@ export class PicassoTransaction {
   /**
    * Type of transaction
    */
-  @Column_("varchar", {length: 37, nullable: false})
+  @Column_("varchar", {length: 43, nullable: false})
   transactionType!: PicassoTransactionType
 
   /**
