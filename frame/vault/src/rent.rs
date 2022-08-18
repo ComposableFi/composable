@@ -3,7 +3,7 @@ use composable_traits::vault::Deposit;
 use frame_support::pallet_prelude::*;
 use sp_runtime::{traits::Saturating, SaturatedConversion};
 
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq)]
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, Eq)]
 pub enum Verdict<T: Config> {
 	Exempt,
 	Charge { remaining: BalanceOf<T>, payable: BalanceOf<T> },

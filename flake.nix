@@ -1,7 +1,9 @@
 {
   # see ./docs/nix.md for design guidelines of nix organization
   description =
-    "Composable Finance Local Networks Lancher and documentation Book";
+    "Composable Finance systems, tools and releases";
+  # when flake runs, ask for interactie answers first time
+  # nixConfig.sandbox = "relaxed";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils = {
@@ -35,7 +37,9 @@
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
       mk-devnet =
-        { lib
+        { 
+        pkgs,
+        lib
         , writeTextFile
         , writeShellApplication
         , polkadot-launch
@@ -44,13 +48,16 @@
         , chain-spec
         }:
         let
-          original-config = import ./scripts/polkadot-launch/composable.nix;
+          original-config = (pkgs.callPackage ./scripts/polkadot-launch/rococo-local-dali-dev.nix
+          { 
+            polkadot-bin = polkadot-node; 
+            composable-bin = composable-node;   
+          }).result;
+
           patched-config = lib.recursiveUpdate original-config {
-            relaychain = { bin = "${polkadot-node}/bin/polkadot"; };
             parachains = builtins.map
               (parachain:
                 parachain // {
-                  bin = "${composable-node}/bin/composable";
                   chain = "${chain-spec}";
                 })
               original-config.parachains;
@@ -100,13 +107,7 @@
           # Nightly rust used for wasm runtime compilation
           rust-nightly = rust-bin.selectLatestNightlyWith (toolchain:
             toolchain.default.override {
-              extensions = [ "rust-src" ];
-              targets = [ "wasm32-unknown-unknown" ];
-            });
-
-          rust-nightly-dev = rust-bin.selectLatestNightlyWith (toolchain:
-            toolchain.default.override {
-              extensions = [ "rust-src" "clippy" "rustfmt" ];
+              extensions = [ "rust-src" "clippy" "rustfmt" "rust-analyzer" ];
               targets = [ "wasm32-unknown-unknown" ];
             });
 
@@ -219,7 +220,8 @@
           # Build a wasm runtime, unoptimized
           mk-runtime = name:
             let file-name = "${name}_runtime.wasm";
-            in crane-nightly.buildPackage (common-attrs // {
+            in
+            crane-nightly.buildPackage (common-attrs // {
               pname = "${name}-runtime";
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand =
@@ -232,7 +234,8 @@
           # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
           mk-optimized-runtime = name:
             let runtime = mk-runtime name;
-            in stdenv.mkDerivation {
+            in
+            stdenv.mkDerivation {
               name = "${runtime.name}-optimized";
               phases = [ "installPhase" ];
               installPhase = ''
@@ -298,8 +301,7 @@
                 --repeat=1 \
                 --output=$out \
                 --log error
-            '';
-
+            '';           
         in
         rec {
           packages = rec {
@@ -335,6 +337,9 @@
             };
 
             # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
+            acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
+                rust-overlay = rust-nightly;
+            };
             polkadot-node = rustPlatform.buildRustPackage rec {
               # HACK: break the nix sandbox so we can build the runtimes. This
               # requires Nix to have `sandbox = relaxed` in its config.
@@ -372,12 +377,14 @@
 
             # Dali devnet
             devnet-dali = (callPackage mk-devnet {
+              inherit pkgs;
               inherit (packages) polkadot-launch composable-node polkadot-node;
               chain-spec = "dali-dev";
             }).script;
 
             # Picasso devnet
             devnet-picasso = (callPackage mk-devnet {
+              inherit pkgs;
               inherit (packages) polkadot-launch composable-node polkadot-node;
               chain-spec = "picasso-dev";
             }).script;
@@ -393,6 +400,8 @@
 
             # TODO: inherit and provide script to run all stuff
             # devnet-container-xcvm
+            # NOTE: The devcontainer is currently broken for aarch64. 
+            # Please use the developers devShell instead
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
@@ -400,9 +409,8 @@
               contents = [
                 # ISSUE: for some reason stable overrides nighly, need to set different order somehow
                 #rust-stable
-                rust-nightly-dev
+                rust-nightly
                 cachix
-                rust-analyzer
                 rustup # just if it wants to make ad hoc updates
                 nix
                 helix
@@ -451,40 +459,74 @@
               cargoBuildCommand = "cargo test --workspace --release --locked --verbose";
             });
 
+            kusama-picasso-karura =
+              let      
+                 
+                config = (pkgs.callPackage ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix 
+                { 
+                  polkadot-bin = polkadot-node; 
+                  composable-bin = composable-node;   
+                  acala-bin = acala-node;   
+                }).result;              
+                config-file = writeTextFile {
+                  name = "kusama-local-picasso-dev-karura-dev.json";
+                  text = "${builtins.toJSON config}";
+                };
+              in
+              writeShellApplication {
+                name = "kusama-picasso-karura";
+                text = ''
+                  cat ${config-file}
+                  ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+                '';
+              }; 
+
             default = packages.composable-node;
           };
 
-          checks = {
-              # see packages for checks, for now these are more elaborated on how to run
-          };
-
           devShells = rec {
-            developers = mkShell {
-              inputsFrom = builtins.attrValues self.checks;
+            developers = mkShell (common-attrs // {
               buildInputs = with packages; [
-                # with nix developers are empowered for local dry run of most ci
-                rust-stable
-                wasm-optimizer
-                composable-node
-                mdbook
-                taplo
-                python3
-                nodejs
-                nixpkgs-fmt
+                bacon
+                google-cloud-sdk
+                grub2
                 jq
-                google-cloud-sdk # devs can list container images or binary releases
+                lldb
+                llvmPackages_latest.bintools
+                llvmPackages_latest.lld
+                llvmPackages_latest.llvm
+                mdbook
                 nix-tree
+                nixpkgs-fmt
+                openssl
+                openssl.dev
+                pkg-config
+                qemu
+                rnix-lsp
+                rust-nightly
+                taplo
+                wasm-optimizer
+                xorriso
+                zlib.out
               ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
-            };
+            });
 
-            technical-writers = mkShell {
+            developers-minimal = mkShell (common-attrs // {
+              buildInputs = with packages; [
+                rust-nightly
+              ];
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            });
+
+            writers = mkShell {
               buildInputs = with packages; [
                 mdbook
                 python3
                 plantuml
                 graphviz
                 pandoc
+                nodejs
               ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
@@ -522,6 +564,13 @@
               program =
                 "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
             };
+
+            kusama-picasso-karura = {
+              # nix run .#devnet
+              type = "app";
+              program = "${packages.kusama-picasso-karura}/bin/kusama-picasso-karura";
+            }; 
+
             price-feed = {
               type = "app";
               program = "${packages.price-feed}/bin/price-feed";
@@ -530,6 +579,11 @@
               type = "app";
               program = "${packages.composable-node}/bin/composable";
             };
+            acala = {
+              type = "app";
+              program = "${packages.acala-node}/bin/acala";
+            };
+            
             polkadot = {
               type = "app";
               program = "${packages.polkadot-node}/bin/polkadot";
@@ -552,15 +606,18 @@
       nixopsConfigurations = {
         default =
           let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          in import ./.nix/devnet.nix {
+          in
+          import ./.nix/devnet.nix {
             inherit nixpkgs;
             inherit gce-input;
             devnet-dali = pkgs.callPackage mk-devnet {
+              inherit pkgs;
               inherit (eachSystemOutputs.packages.x86_64-linux)
                 polkadot-launch composable-node polkadot-node;
               chain-spec = "dali-dev";
             };
             devnet-picasso = pkgs.callPackage mk-devnet {
+              inherit pkgs;
               inherit (eachSystemOutputs.packages.x86_64-linux)
                 polkadot-launch composable-node polkadot-node;
               chain-spec = "picasso-dev";

@@ -1,5 +1,7 @@
 # Pallet Overviews
 
+*Please note; the pallets presented are in active development and may not be production ready.*
+
 ---
 
 # Pallets & Integration

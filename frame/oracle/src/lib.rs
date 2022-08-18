@@ -194,13 +194,15 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 	}
 
-	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Eq, TypeInfo, Clone)]
 	pub struct Withdraw<Balance, BlockNumber> {
 		pub stake: Balance,
 		pub unlock_block: BlockNumber,
 	}
 
-	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
+	#[derive(
+		Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, Eq, TypeInfo,
+	)]
 	pub struct PrePrice<PriceValue, BlockNumber, AccountId> {
 		/// The price of an asset, normalized to 12 decimals.
 		pub price: PriceValue,
@@ -210,7 +212,7 @@ pub mod pallet {
 		pub who: AccountId,
 	}
 
-	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Clone, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Eq, Clone, TypeInfo)]
 	pub struct AssetInfo<Percent, BlockNumber, Balance> {
 		pub threshold: Percent,
 		pub min_answers: u32,

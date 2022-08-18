@@ -14,7 +14,7 @@ use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
 
 /// I give `amount` into protocol, but want to some amount within `limit` back. Amount of what
 /// depends on protocol and other higher context.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq, Eq)]
 pub struct Take<Balance> {
 	/// amount of `base`
 	pub amount: Balance,

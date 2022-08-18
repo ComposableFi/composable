@@ -18,7 +18,7 @@ pub struct SellOrder<AssetId, Balance, AccountId, Context, Configuration> {
 }
 
 /// existential deposit context with date of creation
-#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq, Eq)]
 pub struct EDContext<Balance> {
 	pub added_at: Timestamp,
 	pub deposit: Balance,

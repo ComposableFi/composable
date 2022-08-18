@@ -5,7 +5,7 @@ import type { ISubmittableResult, RegistryTypes } from "@polkadot/types/types";
 
 async function main() {
     const url = process.env.NODE_URL ?? "ws://localhost:9944";
-    const paraId = Number(process.env.PARA_ID ?? 2000);
+    const paraId = Number(process.env.PARA_ID ?? 2087);
     const leaseCount = Number(process.env.LEASE_PERIOD ?? 365);
     console.log(`node url: ${url}, para id: ${paraId}, lease period: ${leaseCount} days`);
 
