@@ -20,25 +20,6 @@ import { ComposableTraitsOraclePrice } from "defi-interfaces";
 import { Assets } from "@/defi/polkadot/Assets";
 import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
 
-function formatOverviewTitleValue(index: number, info: OverviewDataProps) {
-  switch (index) {
-    case 0:
-      return formatNumberWithSymbol(info.value, "$");
-    case 1:
-      return formatNumber(info.value);
-    case 2:
-      return formatNumberCompact(info.value);
-    case 3:
-      return formatNumberCompactWithToken(info.value, "pica");
-    case 4:
-      return formatNumberCompactWithSymbol(info.value, "$");
-    case 5:
-      return formatNumberWithSymbol(info.value, "$");
-    default:
-      return undefined;
-  }
-}
-
 const useCirculatingSupply = () => {
   const { parachainApi } = usePicassoProvider();
   const [circulatingSupply, setCirculatingSupply] = useState<BigNumber>(
