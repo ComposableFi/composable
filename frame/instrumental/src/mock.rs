@@ -158,6 +158,10 @@ impl pallet_vault::Config for MockRuntime {
 //                                             Instrumental                                            
 // ----------------------------------------------------------------------------------------------------
 
+parameter_types! {
+	pub const InstrumentalPalletId: PalletId = PalletId(*b"strm____");
+}
+
 impl pallet_instrumental::Config for MockRuntime {
 	type Event = Event;
 	type WeightInfo = ();
@@ -165,6 +169,7 @@ impl pallet_instrumental::Config for MockRuntime {
 	type AssetId = CurrencyId;
 	type VaultId = VaultId;
 	type Vault = Vault;
+	type PalletId = InstrumentalPalletId;
 }
 
 // ----------------------------------------------------------------------------------------------------
