@@ -521,8 +521,8 @@ pub mod pallet {
 					// TODO: Replace into_iter with iter_mut once it's available
 					let rewards = initial_reward_config
 						.into_iter()
-						.map(|(asset_id, amount)| {
-							(asset_id, Reward::from_config(amount, now_seconds))
+						.map(|(asset_id, reward_config)| {
+							(asset_id, Reward::from_config(reward_config, now_seconds))
 						})
 						.try_collect()
 						.expect("No items were added; qed;");
