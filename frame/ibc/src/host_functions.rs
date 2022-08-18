@@ -83,4 +83,12 @@ impl HostFunctionsProvider for HostFunctions {
 	fn ripemd160(message: &[u8]) -> [u8; 20] {
 		runtime_interface::ibc::ripemd160(message)
 	}
+
+	fn verify_timestamp_extrinsic(
+		_: &[u8; 32],
+		_: &[Vec<u8>],
+		_: &[u8],
+	) -> Result<(), ibc::core::ics02_client::error::Error> {
+		Err(Ics02ClientError::beefy(Ics11Error::ics23_error(Ics23Error::verification_failure())))
+	}
 }

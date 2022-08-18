@@ -45,7 +45,7 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 /// input to create market extrinsic
 ///
 /// Input to [`Lending::create()`].
-#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
+#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
 pub struct CreateInput<LiquidationStrategyId, AssetId, BlockNumber> {
 	/// the part of market which can be changed
 	pub updatable: UpdateInput<LiquidationStrategyId, BlockNumber>,

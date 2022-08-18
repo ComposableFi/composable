@@ -5,7 +5,7 @@ use composable_traits::{
 	time::Timestamp,
 };
 
-#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq, Eq)]
 pub struct SellOrder<AssetId, Balance, AccountId, Context, Configuration> {
 	pub from_to: AccountId,
 	pub order: Sell<AssetId, Balance>,
@@ -24,7 +24,7 @@ pub struct EDContext<Balance> {
 	pub deposit: Balance,
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, PartialEq, Eq)]
 pub struct TakeOrder<Balance, AccountId> {
 	pub from_to: AccountId,
 	pub take: Take<Balance>,
