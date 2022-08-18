@@ -35,23 +35,35 @@ To learn more about our ecosystem, vision, and product specifics - visit our
 
 ## Nix
 
-We use [`nix`](https://nixos.org/) in order to reproducibly build our products. If you do not have `nix` installed yet, then we recommend either installing `nix` or switching to `NixOS`. Alternatively, you can run our packages with just `docker` installed.
+We use [`nix`](https://nixos.org/) in order to reproducibly build our products. We recommend either installing `nix` or switching to `NixOS`. Alternatively, you can run our packages with just `docker` installed.
+Our packages support both x86 and ARM architectures.
 
-You can use `nix flake show` in order to view all of the packages we provide, such as `composable-node` and `devnet-dali`.
+Once you have `nix` or `NixOS` installed, you should enable the following features:
+```nix
+nix = {
+  useSandbox = "relaxed";
+  extraOptions = ''
+    experimental-features = nix-command flakes
+  '';
+ };
+```
 
-If you want to run the latest version of  `devnet-dali`, for example, you can simply run the following, _without needing to clone the repository_:
+You can now use `nix flake show` in order to view all of the packages we provide, such as `composable-node` and `devnet-dali`.
+
+If you want to run the latest version of  `devnet-dali`, for example, you can simply run the following:
+(_You do not need to clone the repository in order to run this_)
 
 ```bash
 nix run "github:ComposableFi/composable#devnet-dali"
 ```
 
-If you would like to run an older/pinned version of any package, you can include the commit hash in the url lilke this:
+If you would like to run an older/pinned version of any package, you can include the commit hash in the package identifier lilke this:
 
 ```bash
 nix run "github:ComposableFi/composable/d735de9#devnet-dali"
 ```
 
-If you want to build/run packages for a local copy, you can do that like this:
+If you want to build/run packages based on a local copy of the sources, you can do that like this:
 
 
 ```bash
@@ -69,4 +81,5 @@ docker volume create nix # cache builds
 
 docker run -v nix:/nix -p 9988:9988 -it nixos/nix bash -c "nix run github:ComposableFi/composable#devnet-dali --extra-experimental-features nix-command --extra-experimental-features flakes"
 ```
+
 
