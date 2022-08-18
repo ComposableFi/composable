@@ -37,7 +37,12 @@ To learn more about our ecosystem, vision, and product specifics - visit our
 We use [`nix`](https://nixos.org/) in order to reproducibly build our products. We recommend either installing `nix` or switching to `NixOS`. Alternatively, you can run our packages with just `docker` installed.
 Our packages support both **x86** and **ARM** architectures.
 
+
+### Configuration
+
 Once you have `nix` or `NixOS` installed, you should enable the following features:
+
+#### On NixOS
 ```nix
 {
   nix = {
@@ -48,6 +53,16 @@ Once you have `nix` or `NixOS` installed, you should enable the following featur
   };
 }
 ```
+
+#### On non-NixOS
+Set the contents of `~/.config/nix/nix.conf` to 
+
+```conf
+experimental-features = nix-command flakes
+sandbox = relaxed
+```
+
+### Building and running packages
 
 You can now use `nix flake show` in order to view all of the packages we provide, such as `composable-node` and `devnet-dali`.
 
