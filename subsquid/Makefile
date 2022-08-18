@@ -45,14 +45,14 @@ down:
 	@docker-compose down
 
 rebuild:
-    rm -r lib
-    rm -r db/migration
-    npx sqd db drop
-    npx sqd db create
-    npm run build
-    npx sqd codegen
-    npx sqd db create-migration Init
-    npx sqd db migrate
+	rm -f -r lib
+	rm -f -r db/migrations
+	npx sqd db drop
+	npx sqd db create
+	npm run build
+	npx sqd codegen
+	npx sqd db create-migration Init
+	npx sqd db migrate
 
 
 .PHONY: process serve start codegen migration migrate up down

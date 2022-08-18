@@ -8,7 +8,7 @@ import {
   Root,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { PicassoTransaction, Account } from "../../model";
+import { PicassoTransaction, Account, Activity } from "../../model";
 
 @ObjectType()
 export class OverviewCounter {
@@ -17,6 +17,9 @@ export class OverviewCounter {
 
   @Field(() => Number, { nullable: false })
   accountHoldersCount!: number;
+
+  @Field(() => Number, { nullable: false })
+  activeUsersCount!: number;
 
   constructor(props: Partial<OverviewCounter>) {
     Object.assign(this, props);
@@ -63,12 +66,33 @@ export class OverviewCountResolver
     return accounts?.[0]?.accounts_count || 0;
   }
 
+  @FieldResolver({ name: "activeUsers", defaultValue: 0 })
+  async activeUsersCount(@Root() overviewCounter: OverviewCounter) {
+    const currentTimestamp = new Date().valueOf();
+    const msPerDay = 24 * 60 * 60 * 1_000;
+    const threshold = currentTimestamp - msPerDay;
+
+    const manager = await this.tx();
+
+    let activeUsers: any[] = await manager.getRepository(Activity).query(
+      `
+        SELECT
+          count(distinct account_id) as active_users_count
+        FROM activity
+        WHERE timestamp > ${threshold}
+      `
+    );
+
+    return activeUsers?.[0]?.active_users_count || 0;
+  }
+
   @Query(() => OverviewCounter)
   async overviewCounter(): Promise<OverviewCounter> {
     // Default values
     return new OverviewCounter({
       transactionsCount: 0,
       accountHoldersCount: 0,
+      activeUsersCount: 0,
     });
   }
 }
