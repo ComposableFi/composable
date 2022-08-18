@@ -1,7 +1,7 @@
 import { useMobile, useTablet } from "@/hooks/responsive";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Breadcrumbs, useTheme } from "@mui/material";
+import { Breadcrumbs, Typography, useTheme } from "@mui/material";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -33,7 +33,7 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
   };
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
       <CssBaseline />
       <AppBar
         position="fixed"
@@ -116,6 +116,8 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
         component="main"
         sx={{
           flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
           padding: theme.spacing(1),
           [theme.breakpoints.down("sm")]: {
             padding: theme.spacing(3),
@@ -124,7 +126,19 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
           marginTop: theme.spacing(20),
         }}
       >
-        {children}
+        <Box sx={{ flexGrow: 1 }}>{children}</Box>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            height: theme.spacing(2),
+          }}
+        >
+          <Typography variant="caption">
+            {process.env.WEBSITE_VERSION}
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );

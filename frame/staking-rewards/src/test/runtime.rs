@@ -1,13 +1,13 @@
 use crate::test::prelude::*;
 use composable_traits::{
-	currency::LocalAssets,
+	account_proxy::ProxyType,
 	governance::{GovernanceRegistry, SignedRawOrigin},
 };
 
+use composable_traits::fnft::{FnftAccountProxyType, FnftAccountProxyTypeSelector};
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{Everything, GenesisBuild},
-	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
+	traits::{Everything, InstanceFilter},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
@@ -15,18 +15,17 @@ use hex_literal::hex;
 use orml_traits::{parameter_type_with_key, GetByKey};
 use sp_arithmetic::traits::Zero;
 use sp_runtime::{
-	testing::{Header, TestXt},
-	traits::{
-		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify,
-	},
-	DispatchError, Perbill,
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+
 pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
+pub type FinancialNftInstanceId = u64;
 pub type RewardPoolId = u16;
 pub type PositionId = u128;
 
@@ -53,6 +52,8 @@ frame_support::construct_runtime!(
 		CurrencyFactory: pallet_currency_factory,
 		Tokens: orml_tokens,
 		Assets: pallet_assets,
+		FinancialNft: pallet_fnft,
+		Proxy: pallet_account_proxy,
 		StakingRewards: pallet_staking_rewards,
 	}
 );
@@ -187,6 +188,44 @@ impl pallet_assets::Config for Test {
 }
 
 parameter_types! {
+	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
+}
+
+impl pallet_fnft::Config for Test {
+	type Event = Event;
+
+	type MaxProperties = ConstU32<16>;
+	type FinancialNftCollectionId = CurrencyId;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
+	type ProxyType = ProxyType;
+	type AccountProxy = Proxy;
+	type ProxyTypeSelector = FnftAccountProxyType;
+	type PalletId = FnftPalletId;
+}
+
+parameter_types! {
+	pub MaxProxies : u32 = 4;
+	pub MaxPending : u32 = 32;
+	// just make dali simple to proxy
+	pub ProxyPrice: u32 = 0;
+}
+
+impl pallet_account_proxy::Config for Test {
+	type Event = Event;
+	type Call = Call;
+	type Currency = ();
+	type ProxyType = ProxyType;
+	type ProxyDepositBase = ProxyPrice;
+	type ProxyDepositFactor = ProxyPrice;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = ();
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = ProxyPrice;
+	type AnnouncementDepositFactor = ProxyPrice;
+}
+
+parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets : u32 = 10;
 	pub const MaxRewardConfigsPerPool : u32 = 10;
@@ -198,8 +237,10 @@ impl pallet_staking_rewards::Config for Test {
 	type RewardPoolId = RewardPoolId;
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
-	type Assets = Assets;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
+	type FinancialNft = FinancialNft;
 	type CurrencyFactory = CurrencyFactory;
+	type Assets = Assets;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
@@ -207,6 +248,43 @@ impl pallet_staking_rewards::Config for Test {
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
+	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
+}
+
+impl InstanceFilter<Call> for ProxyType {
+	fn filter(&self, c: &Call) -> bool {
+		match self {
+			ProxyType::Any => true,
+			ProxyType::Governance => matches!(
+				c,
+				// TODO democracy
+				Call::System(..)
+			),
+			// ProxyType::Staking => {
+			// 	matches!(c, Call::Staking(..) | Call::Session(..) | Call::Utility(..))
+			// },
+			// ProxyType::IdentityJudgement => matches!(
+			// 	c,
+			// 	Call::Identity(pallet_identity::Call::provide_judgement { .. }) | Call::Utility(..)
+			// ),
+			// ProxyType::CancelProxy => {
+			// 	matches!(c, Call::Proxy(pallet_proxy::Call::reject_announcement { .. }))
+			// },
+			// ProxyType::Auction => matches!(
+			// 	c,
+			// 	Call::Auctions(..) | Call::Crowdloan(..) | Call::Registrar(..) | Call::Slots(..)
+			// ),
+			_ => false,
+		}
+	}
+	fn is_superset(&self, o: &Self) -> bool {
+		match (self, o) {
+			(x, y) if x == y => true,
+			(ProxyType::Any, _) => true,
+			(_, ProxyType::Any) => false,
+			_ => false,
+		}
+	}
 }
 
 // Build genesis storage according to the mock runtime.

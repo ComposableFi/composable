@@ -11,7 +11,8 @@ export async function fetchSpotPrice(
   poolId: number
 ): Promise<BigNumber> {
   try {
-    const rpcResult = await (api.rpc as any).pablo.pricesFor(
+    // @ts-ignore
+    const rpcResult = await api.rpc.pablo.pricesFor(
       api.createType("PalletPabloPoolId", poolId.toString()),
       api.createType("CustomRpcCurrencyId", pair.base),
       api.createType("CustomRpcCurrencyId", pair.quote),

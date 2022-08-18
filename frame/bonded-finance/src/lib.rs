@@ -58,7 +58,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
-		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
+		vesting::{VestedTransfer, VestingScheduleInfo, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -360,7 +360,7 @@ pub mod pallet {
 							offer.reward.asset,
 							&offer_account,
 							from,
-							VestingSchedule {
+							VestingScheduleInfo {
 								window: BlockNumberBased {
 									start: current_block,
 									period: offer.reward.maturity,
@@ -376,7 +376,7 @@ pub mod pallet {
 									offer.asset,
 									&offer.beneficiary,
 									from,
-									VestingSchedule {
+									VestingScheduleInfo {
 										window: BlockNumberBased {
 											start: current_block,
 											period: return_in,
@@ -395,8 +395,8 @@ pub mod pallet {
 						// offer.nb_of_bonds prior to this
 						// Same goes for reward_share as nb_of_bonds * bond_price <= total_price is
 						// checked by the `Validate` instance of `BondOffer`
-						(*offer).nb_of_bonds -= nb_of_bonds;
-						(*offer).reward.amount -= reward_share;
+						offer.nb_of_bonds -= nb_of_bonds;
+						offer.reward.amount -= reward_share;
 						let new_bond_event = || {
 							Self::deposit_event(Event::<T>::NewBond {
 								offer_id,

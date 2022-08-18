@@ -16,7 +16,14 @@ export interface CommonMosaicRemoteAssetId extends Null {}
 export interface ComposableSupportEthereumAddress extends Null {}
 
 /** @name ComposableTraitsAssetsBasicAssetMetadata */
-export interface ComposableTraitsAssetsBasicAssetMetadata extends Null {}
+export interface ComposableTraitsAssetsBasicAssetMetadata extends Struct {
+  readonly symbol: {
+    readonly inner: Null;
+  } & Struct;
+  readonly name: {
+    readonly inner: Null;
+  } & Struct;
+}
 
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
@@ -80,7 +87,6 @@ export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
 export interface ComposableTraitsGovernanceSignedRawOrigin extends Enum {
   readonly isRoot: boolean;
   readonly isSigned: boolean;
-  readonly asSigned: AccountId32;
   readonly isIsSigned: boolean;
   readonly asIsSigned: bool;
   readonly isAsSigned: boolean;
@@ -102,6 +108,9 @@ export interface ComposableTraitsLendingUpdateInput extends Null {}
 
 /** @name ComposableTraitsOraclePrice */
 export interface ComposableTraitsOraclePrice extends Null {}
+
+/** @name ComposableTraitsOracleRewardTracker */
+export interface ComposableTraitsOracleRewardTracker extends Null {}
 
 /** @name ComposableTraitsStakingRewardPool */
 export interface ComposableTraitsStakingRewardPool extends Null {}
@@ -238,32 +247,11 @@ export interface PalletCrowdloanRewardsModelsReward extends Null {}
 /** @name PalletCrowdloanRewardsReward */
 export interface PalletCrowdloanRewardsReward extends Null {}
 
-/** @name PalletCurrencyFactoryRanges */
-export interface PalletCurrencyFactoryRanges extends Null {}
-
-/** @name PalletCurrencyFactoryRangesRange */
-export interface PalletCurrencyFactoryRangesRange extends Null {}
-
 /** @name PalletDemocracyConviction */
 export interface PalletDemocracyConviction extends Null {}
 
-/** @name PalletDemocracyPreimageStatus */
-export interface PalletDemocracyPreimageStatus extends Null {}
-
-/** @name PalletDemocracyReferendumInfo */
-export interface PalletDemocracyReferendumInfo extends Null {}
-
-/** @name PalletDemocracyReleases */
-export interface PalletDemocracyReleases extends Null {}
-
 /** @name PalletDemocracyVoteAccountVote */
 export interface PalletDemocracyVoteAccountVote extends Null {}
-
-/** @name PalletDemocracyVoteThreshold */
-export interface PalletDemocracyVoteThreshold extends Null {}
-
-/** @name PalletDemocracyVoteVoting */
-export interface PalletDemocracyVoteVoting extends Null {}
 
 /** @name PalletDutchAuctionSellOrder */
 export interface PalletDutchAuctionSellOrder extends Null {}
@@ -350,9 +338,6 @@ export interface PalletOracleWithdraw extends Struct {
   readonly stake: u128;
   readonly unlockBlock: u32;
 }
-
-/** @name PalletPreimageRequestStatus */
-export interface PalletPreimageRequestStatus extends Null {}
 
 /** @name PalletSchedulerReleases */
 export interface PalletSchedulerReleases extends Null {}

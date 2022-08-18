@@ -454,9 +454,17 @@ declare module '@polkadot/api-base/types/errors' {
     };
     ibc: {
       /**
+       * Channel not found
+       **/
+      ChannelNotFound: AugmentedError<ApiType>;
+      /**
        * Client state not found
        **/
       ClientStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Connection not found
+       **/
+      ConnectionNotFound: AugmentedError<ApiType>;
       /**
        * Client consensus state not found for height
        **/
@@ -481,6 +489,18 @@ declare module '@polkadot/api-base/types/errors' {
        * Other forms of errors
        **/
       Other: AugmentedError<ApiType>;
+      /**
+       * Packet Acknowledgment wasn't found
+       **/
+      PacketAcknowledgmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet commitment wasn't found
+       **/
+      PacketCommitmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet receipt wasn't found
+       **/
+      PacketReceiptNotFound: AugmentedError<ApiType>;
       /**
        * Error processing ibc messages
        **/
@@ -806,6 +826,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Price already submitted
        **/
       AlreadySubmitted: AugmentedError<ApiType>;
+      /**
+       * Annual rewarding cost too high
+       **/
+      AnnualRewardLessThanAlreadyRewarded: AugmentedError<ApiType>;
       ArithmeticError: AugmentedError<ApiType>;
       /**
        * Error avoids a panic
@@ -855,9 +879,17 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       MaxPrices: AugmentedError<ApiType>;
       /**
+       * Price weight must sum to 100
+       **/
+      MustSumTo100: AugmentedError<ApiType>;
+      /**
        * No Permission
        **/
       NoPermission: AugmentedError<ApiType>;
+      /**
+       * Rewarding has not started
+       **/
+      NoRewardTrackerSet: AugmentedError<ApiType>;
       /**
        * No stake for oracle
        **/
@@ -925,6 +957,7 @@ declare module '@polkadot/api-base/types/errors' {
       NotEnoughLpToken: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
+      StakingPoolConfigError: AugmentedError<ApiType>;
       WeightsMustBeNonZero: AugmentedError<ApiType>;
       WeightsMustSumToOne: AugmentedError<ApiType>;
       /**
@@ -1158,10 +1191,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       MaxRewardLimitReached: AugmentedError<ApiType>;
       /**
-       * No position found for given id.
-       **/
-      NoPositionFound: AugmentedError<ApiType>;
-      /**
        * Not enough assets for a stake.
        **/
       NotEnoughAssets: AugmentedError<ApiType>;
@@ -1169,6 +1198,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Only pool owner can add new reward asset.
        **/
       OnlyPoolOwnerCanAddNewReward: AugmentedError<ApiType>;
+      /**
+       * only the owner of stake can unstake it
+       **/
+      OnlyStakeOwnerCanUnstake: AugmentedError<ApiType>;
       /**
        * Error when creating reduction configs.
        **/
@@ -1181,6 +1214,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Rewards pool not found.
        **/
       RewardsPoolNotFound: AugmentedError<ApiType>;
+      /**
+       * No stake found for given id.
+       **/
+      StakeNotFound: AugmentedError<ApiType>;
       /**
        * Unimplemented reward pool type.
        **/
@@ -1229,6 +1266,66 @@ declare module '@polkadot/api-base/types/errors' {
        * and the new runtime.
        **/
       SpecVersionNeedsToIncrease: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    technicalCollective: {
+      /**
+       * Members are already initialized!
+       **/
+      AlreadyInitialized: AugmentedError<ApiType>;
+      /**
+       * Duplicate proposals not allowed
+       **/
+      DuplicateProposal: AugmentedError<ApiType>;
+      /**
+       * Duplicate vote ignored
+       **/
+      DuplicateVote: AugmentedError<ApiType>;
+      /**
+       * Account is not a member
+       **/
+      NotMember: AugmentedError<ApiType>;
+      /**
+       * Proposal must exist
+       **/
+      ProposalMissing: AugmentedError<ApiType>;
+      /**
+       * The close call was made too early, before the end of the voting.
+       **/
+      TooEarly: AugmentedError<ApiType>;
+      /**
+       * There can only be a maximum of `MaxProposals` active proposals.
+       **/
+      TooManyProposals: AugmentedError<ApiType>;
+      /**
+       * Mismatched index
+       **/
+      WrongIndex: AugmentedError<ApiType>;
+      /**
+       * The given length bound for the proposal was too low.
+       **/
+      WrongProposalLength: AugmentedError<ApiType>;
+      /**
+       * The given weight bound for the proposal was too low.
+       **/
+      WrongProposalWeight: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    technicalMembership: {
+      /**
+       * Already a member.
+       **/
+      AlreadyMember: AugmentedError<ApiType>;
+      /**
+       * Not a member.
+       **/
+      NotMember: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

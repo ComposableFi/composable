@@ -14,6 +14,9 @@ export interface ComposableTraitsDexFee extends Struct {
   readonly asset_id: u128;
 }
 
+/** @name ComposableTraitsDexStakingRewardPool */
+export interface ComposableTraitsDexStakingRewardPool extends Null {}
+
 /** @name PalletPabloPoolConfiguration */
 export interface PalletPabloPoolConfiguration extends Enum {
   readonly isStableSwap: boolean;
@@ -27,14 +30,8 @@ export interface PalletPabloPoolConfiguration extends Enum {
   readonly asConstantProduct: {
     readonly owner: AccountId32;
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
-    readonly lpToken: u128;
-    readonly feeConfig: {
-    readonly feeRate: Permill;
-    readonly ownerFeeRate: Permill;
-    readonly protocolFeeRate: Permill;
-  } & Struct;
+    readonly fee: Permill;
     readonly baseWeight: Permill;
-    readonly quoteWeight: Permill;
   } & Struct;
   readonly isLiquidityBootstrapping: boolean;
   readonly asLiquidityBootstrapping: {
@@ -59,39 +56,7 @@ export interface PalletPabloPoolConfiguration extends Enum {
 export interface PalletPabloPoolId extends SafeRpcWrapper {}
 
 /** @name PalletPabloPoolInitConfiguration */
-export interface PalletPabloPoolInitConfiguration extends Enum {
-  readonly isStableSwap: boolean;
-  readonly asStableSwap: {
-    readonly owner: AccountId32;
-    readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
-    readonly amplification_coefficient: u16;
-    readonly fee: Permill;
-  } & Struct;
-  readonly isConstantProduct: boolean;
-  readonly asConstantProduct: {
-    readonly owner: AccountId32;
-    readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
-    readonly fee: Permill;
-    readonly baseWeight: Permill;
-  } & Struct;
-  readonly isLiquidityBootstrapping: boolean;
-  readonly asLiquidityBootstrapping: {
-    readonly owner: AccountId32;
-    readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
-    readonly sale: {
-    readonly start: BlockNumber;
-    readonly end: BlockNumber;
-    readonly initial_weight: Permill;
-    readonly final_weight: Permill;
-  } & Struct;
-    readonly feeConfig: {
-    readonly feeRate: Permill;
-    readonly ownerFeeRate: Permill;
-    readonly protocolFeeRate: Permill;
-  } & Struct;
-  } & Struct;
-  readonly type: 'StableSwap' | 'ConstantProduct' | 'LiquidityBootstrapping';
-}
+export interface PalletPabloPoolInitConfiguration extends PalletPabloPoolConfiguration {}
 
 /** @name PalletPabloPriceAggregate */
 export interface PalletPabloPriceAggregate extends Struct {

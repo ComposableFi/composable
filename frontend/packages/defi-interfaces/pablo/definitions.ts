@@ -67,14 +67,15 @@ export default {
         },
         {
           name: "minExpectedAmounts",
-          type: "any"
+          type: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
         },
         {
           name: "at",
           type: "Hash",
           isOptional: true,
         }
-      ]
+      ],
+      type: "RemoveLiquiditySimulationResult"
     },
   },
   types: {
@@ -116,5 +117,8 @@ export default {
       quoteAssetId: "CustomRpcCurrencyId",
       spotPrice: "CustomRpcBalance",
     },
+    RemoveLiquiditySimulationResult: {
+      assets: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
+    }
   },
 };

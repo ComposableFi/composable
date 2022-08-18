@@ -1,8 +1,5 @@
 import { Chart, PairAsset } from "@/components";
-import {
-  Box,
-  useTheme,
-} from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import { useMemo } from "react";
 import { BoxProps } from "@mui/system";
 import { DEFI_CONFIG } from "@/defi/config";
@@ -10,29 +7,37 @@ import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { useSwapsChart } from "@/store/hooks/useSwapsChart";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
+import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 
 const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
 
   const { swaps } = useStore();
-  const {selectedInterval, chartSeries, seriesIntervals, _24hourOldPrice, setSelectedInterval} = useSwapsChart();
+  const {
+    selectedInterval,
+    chartSeries,
+    seriesIntervals,
+    _24hourOldPrice,
+    setSelectedInterval,
+  } = useSwapsChart();
 
   const baseAsset = useAsset(swaps.selectedAssets.base);
   const quoteAsset = useAsset(swaps.selectedAssets.quote);
 
   const changePercent = useMemo(() => {
-    if (swaps.spotPrice.eq(0)) return 0 
-    if (_24hourOldPrice.eq(0)) return 100
-    return new BigNumber(_24hourOldPrice).div(swaps.spotPrice).toNumber()
+    if (swaps.spotPrice.eq(0)) return 0;
+    if (_24hourOldPrice.eq(0)) return 100;
+    return new BigNumber(_24hourOldPrice)
+      .div(swaps.spotPrice)
+      .dp(DEFAULT_UI_FORMAT_DECIMALS)
+      .toNumber();
   }, [swaps.spotPrice, _24hourOldPrice]);
 
   const intervals = DEFI_CONFIG.swapChartIntervals;
 
   const onIntervalChange = (interval: string) => {
-    let i = intervals.find(
-      (i) => i.symbol === interval
-    )
-    if (i) setSelectedInterval(i)
+    let i = intervals.find((i) => i.symbol === interval);
+    if (i) setSelectedInterval(i);
   };
 
   const getCurrentInterval = () => {
@@ -42,9 +47,8 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   // const onRefreshChart = () => {
-    //TODO: refresh Chart Data
+  //TODO: refresh Chart Data
   // };
-
   return (
     <Box {...boxProps}>
       <Chart
@@ -52,21 +56,21 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
         titleComponent={
           <Box>
             <Box pt={2} display="flex" gap={1}>
-              {
-                baseAsset && quoteAsset ? <PairAsset
-                assets={[
-                  {
-                    icon: quoteAsset.icon,
-                    label: quoteAsset.symbol,
-                  },
-                  {
-                    icon: baseAsset.icon,
-                    label: baseAsset.symbol
-                  },
-                ]}
-                separator="-"
-              /> : null
-              }
+              {baseAsset && quoteAsset ? (
+                <PairAsset
+                  assets={[
+                    {
+                      icon: baseAsset.icon,
+                      label: baseAsset.symbol,
+                    },
+                    {
+                      icon: quoteAsset.icon,
+                      label: quoteAsset.symbol,
+                    },
+                  ]}
+                  separator="-"
+                />
+              ) : null}
               {/* <RefreshOutlined
                 sx={{
                   cursor: "pointer",
@@ -79,7 +83,9 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
             </Box>
           </Box>
         }
-        totalText={`${swaps.spotPrice} ${baseAsset ? baseAsset.symbol : ""}`}
+        totalText={`${swaps.spotPrice.dp(DEFAULT_UI_FORMAT_DECIMALS)} ${
+          quoteAsset ? quoteAsset.symbol : ""
+        }`}
         changeTextColor={
           changePercent > 0
             ? theme.palette.featured.main
@@ -88,8 +94,8 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
         changeIntroText={`Past ${getCurrentInterval()?.name}`}
         changeText={
           changePercent > 0
-            ? `+${changePercent}% ${baseAsset ? baseAsset.symbol : ""}`
-            : `${changePercent}% ${baseAsset ? baseAsset.symbol : ""}`
+            ? `+${changePercent}% ${quoteAsset ? quoteAsset.symbol : ""}`
+            : `${changePercent}% ${quoteAsset ? quoteAsset.symbol : ""}`
         }
         AreaChartProps={{
           data: chartSeries,

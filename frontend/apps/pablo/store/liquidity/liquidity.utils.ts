@@ -2,40 +2,36 @@ import BigNumber from "bignumber.js";
 import produce from "immer";
 import { LiquiditySlice } from "./liquidity.types";
 
-export const putTokenAmount = (
-  liquiditySlice: LiquiditySlice["poolLiquidity"],
-  poolId: number,
-  amount: {
-    baseAmount?: string;
-    quoteAmount?: string;
-  }
+export const putLiqudityRecord = (
+  liquiditySlice: LiquiditySlice["liquidityInPool"],
+  liquidityRecord: Record<string, { baseAmount: BigNumber; quoteAmount: BigNumber; }>
 ) => {
   return produce(liquiditySlice, (draft) => {
-    if (!draft[poolId]) {
+    for (const poolId in liquidityRecord) {
       draft[poolId] = {
-        tokenAmounts: {
-          baseAmount: "0",
-          quoteAmount: "0",
-        },
-        value: {
-          baseValue: "0",
-          quoteValue: "0",
-        },
-      };
-    }
-
-    if (amount.baseAmount) {
-      draft[poolId].tokenAmounts.baseAmount = amount.baseAmount;
-    }
-
-    if (amount.quoteAmount) {
-      draft[poolId].tokenAmounts.quoteAmount = amount.quoteAmount;
+        baseAmount: liquidityRecord[poolId].baseAmount,
+        quoteAmount: liquidityRecord[poolId].quoteAmount
+      }
     }
   });
 };
 
+export const updatePoolLiquidity = (
+  liquiditySlice: LiquiditySlice["liquidityInPool"],
+  poolId: string,
+  amounts: { baseAmount: BigNumber; quoteAmount: BigNumber; }
+) => {
+  return produce(liquiditySlice, (draft) => {
+    draft[poolId] = {
+      baseAmount: amounts.baseAmount,
+      quoteAmount: amounts.quoteAmount
+    }
+  });
+};
+
+
 export const addPoolTokenAmount = (
-  liquiditySlice: LiquiditySlice["poolLiquidity"],
+  liquiditySlice: LiquiditySlice["liquidityInPool"],
   poolId: number,
   amount: {
     baseAmount?: string;
@@ -43,34 +39,16 @@ export const addPoolTokenAmount = (
   }
 ) => {
   return produce(liquiditySlice, (draft) => {
-    if (amount.baseAmount) {
-      let prevBase = new BigNumber(0);
-      if (liquiditySlice[poolId]) {
-        prevBase = new BigNumber(
-          liquiditySlice[poolId].tokenAmounts.baseAmount
-        );
-        draft[poolId].tokenAmounts.baseAmount = prevBase
-          .plus(amount.baseAmount)
-          .toString();
-      }
-    }
+    draft[poolId].baseAmount = new BigNumber(liquiditySlice[poolId].baseAmount ?? 0);
+    draft[poolId].baseAmount = draft[poolId].baseAmount.plus(amount.baseAmount ?? 0);
 
-    if (amount.baseAmount) {
-      let prevQuote = new BigNumber(0);
-      if (liquiditySlice[poolId]) {
-        prevQuote = new BigNumber(
-          liquiditySlice[poolId].tokenAmounts.quoteAmount
-        );
-        draft[poolId].tokenAmounts.baseAmount = prevQuote
-          .plus(amount.baseAmount)
-          .toString();
-      }
-    }
+    draft[poolId].quoteAmount = new BigNumber(liquiditySlice[poolId].quoteAmount ?? 0);
+    draft[poolId].quoteAmount = draft[poolId].quoteAmount.plus(amount.quoteAmount ?? 0);
   });
 };
 
 export const removePoolTokenAmount = (
-  liquiditySlice: LiquiditySlice["poolLiquidity"],
+  liquiditySlice: LiquiditySlice["liquidityInPool"],
   poolId: number,
   amount: {
     baseAmount?: string;
@@ -78,63 +56,14 @@ export const removePoolTokenAmount = (
   }
 ) => {
   return produce(liquiditySlice, (draft) => {
-    if (amount.baseAmount) {
-      let prevBase = new BigNumber(0);
-      if (liquiditySlice[poolId]) {
-        prevBase = new BigNumber(
-          liquiditySlice[poolId].tokenAmounts.baseAmount
-        );
-        draft[poolId].tokenAmounts.baseAmount = prevBase
-          .minus(amount.baseAmount)
-          .toString();
-      }
-    }
+    draft[poolId].baseAmount = new BigNumber(liquiditySlice[poolId].baseAmount ?? 0);
+    draft[poolId].baseAmount = draft[poolId].baseAmount.minus(amount.baseAmount ?? 0);
 
-    if (amount.baseAmount) {
-      let prevQuote = new BigNumber(0);
-      if (liquiditySlice[poolId]) {
-        prevQuote = new BigNumber(
-          liquiditySlice[poolId].tokenAmounts.quoteAmount
-        );
-        draft[poolId].tokenAmounts.baseAmount = prevQuote
-          .minus(amount.baseAmount)
-          .toString();
-      }
-    }
+    draft[poolId].quoteAmount = new BigNumber(liquiditySlice[poolId].quoteAmount ?? 0);
+    draft[poolId].quoteAmount = draft[poolId].quoteAmount.minus(amount.quoteAmount ?? 0);
   });
 };
 
-export const putTokenValue = (
-  liquiditySlice: LiquiditySlice["poolLiquidity"],
-  poolId: number,
-  value: {
-    baseValue?: string;
-    quoteValue?: string;
-  }
-) => {
-  return produce(liquiditySlice, (draft) => {
-    if (!liquiditySlice[poolId]) {
-      draft[poolId] = {
-        tokenAmounts: {
-          baseAmount: "0",
-          quoteAmount: "0",
-        },
-        value: {
-          baseValue: "0",
-          quoteValue: "0",
-        },
-      };
-    }
-
-    if (value.baseValue) {
-      draft[poolId].value.baseValue = value.baseValue;
-    }
-
-    if (value.quoteValue) {
-      draft[poolId].value.quoteValue = value.quoteValue;
-    }
-  });
-};
 
 export const putUserProvidedLiquidityTokenAmount = (
   liquiditySlice: LiquiditySlice["userProvidedLiquidity"],

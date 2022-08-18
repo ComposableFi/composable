@@ -1,6 +1,6 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
-import { VestingSchedule as VestingScheduleType } from "./types/v2300";
+import { VestingSchedule as VestingScheduleType } from "./types/v2400";
 import { Schedule, ScheduleWindow, VestingSchedule } from "./model";
 import { VestingVestingScheduleAddedEvent } from "./types/events";
 import { encodeAccount } from "./utils";
@@ -19,15 +19,7 @@ interface VestingScheduleAddedEvent {
 function getVestingScheduleAddedEvent(
   event: VestingVestingScheduleAddedEvent
 ): VestingScheduleAddedEvent {
-  if (event.isV2300) {
-    const { from, to, asset, schedule } = event.asV2300;
-
-    return { from, to, asset, schedule };
-  }
-
-  const { from, to, asset, schedule } = event.asLatest;
-
-  return { from, to, asset, schedule };
+  return event.asV2400 ?? event.asLatest;
 }
 
 /**
@@ -59,15 +51,17 @@ export async function processVestingScheduleAddedEvent(
   ctx: EventHandlerContext,
   event: VestingVestingScheduleAddedEvent
 ) {
-  const { to, asset, schedule } = getVestingScheduleAddedEvent(event);
+  const { from, to, asset, schedule } = getVestingScheduleAddedEvent(event);
 
-  const beneficiary = encodeAccount(to);
+  const toAccount = encodeAccount(to);
+  const fromAccount = encodeAccount(from);
 
   const vestingSchedule = new VestingSchedule({
     id: randomUUID(),
+    from: fromAccount,
     eventId: ctx.event.id,
-    scheduleId: `${beneficiary}-${asset.toString()}`,
-    beneficiary,
+    scheduleId: `${toAccount}-${asset.toString()}`,
+    to: toAccount,
     schedule: createVestingSchedule(schedule),
   });
 

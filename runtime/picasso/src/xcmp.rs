@@ -349,15 +349,15 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type VersionWrapper = RelayerXcm;
 	type ChannelInfo = ParachainSystem;
-	type ControllerOrigin = EnsureRootOrHalfCouncil;
+	type ControllerOrigin = EnsureRootOrHalfNativeTechnical;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	// NOTE: we could consider allowance for some chains (see Acala tests ports  PRs)
-	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
+	type ExecuteOverweightOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = cumulus_pallet_xcmp_queue::weights::SubstrateWeight<Self>;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
+	type ExecuteOverweightOrigin = EnsureRootOrHalfNativeCouncil;
 }

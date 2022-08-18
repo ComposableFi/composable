@@ -16,6 +16,7 @@ Makefile @ComposableFi/sre
 ## Parachain related files
 
 runtime/ @ComposableFi/parachain-leads
+
 node/ @ComposableFi/parachain-leads
 frame/ @ComposableFi/parachain
 integration-tests/ @ComposableFi/parachain @ComposableFi/testers
@@ -49,6 +50,11 @@ integration-tests/runtime-tests/ @ComposableFi/testers
 ## Codespaces
 
 .devcontainer/ @ComposableFi/codespacers @ComposableFi/parachain-leads
+
+## Nix
+
+.nix/ @dzmitry-lahoda @hussein-aitlahcen @cor
+flake.nix @dzmitry-lahoda @hussein-aitlahcen @cor
 
 # ComposableJS
 composablejs/ @ComposableFi/parachain

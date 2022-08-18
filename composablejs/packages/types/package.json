@@ -3,9 +3,10 @@
   "private": false,
   "version": "0.1.0",
   "license": "Public Domain",
-  "main": "dist/interfaces/index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc -b -f tsconfig.json",
+    "build": "tsc",
     "gen": "npm run gen:defs && npm run gen:meta",
     "gen:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package @composable/types --input ./src/interfaces",
     "gen:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package @composable/types --endpoint ws://localhost:9988 --output ./src/interfaces/"

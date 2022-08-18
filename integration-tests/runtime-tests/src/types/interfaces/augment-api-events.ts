@@ -2,7 +2,9 @@
 /* eslint-disable */
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId } from '@composable/types/interfaces/common';
-import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVestingVestingSchedule, ComposableTraitsXcmAssetsXcmAssetLocation, FrameSupportScheduleLookupError, PalletCrowdloanRewardsModelsRemoteAccount, PalletCurrencyFactoryRangesRange, PalletDemocracyVoteAccountVote, PalletDemocracyVoteThreshold, PalletDutchAuctionSellOrder, PalletIbcErrorsIbcError, PalletIbcEventsIbcEvent, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo } from '@composable/types/interfaces/crowdloanRewards';
+import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVestingVestingSchedule, ComposableTraitsXcmAssetsXcmAssetLocation, FrameSupportScheduleLookupError, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyVoteAccountVote, PalletDutchAuctionSellOrder, PalletIbcErrorsIbcError, PalletIbcEventsIbcEvent, PalletMosaicAmmSwapInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo } from '@composable/types/interfaces/crowdloanRewards';
+import type { PalletCurrencyFactoryRangesRange } from '@composable/types/interfaces/currencyFactory';
+import type { PalletDemocracyVoteThreshold } from '@composable/types/interfaces/democracy';
 import type { ComposableTraitsDexFee } from '@composable/types/interfaces/pablo';
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { BTreeMap, Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
@@ -590,9 +592,17 @@ declare module '@polkadot/api-base/types/events' {
        **/
       AssetInfoChange: AugmentedEvent<ApiType, [u128, Percent, u32, u32, u32, u128, u128]>;
       /**
+       * Oracle rewarded. \[oracle_address, asset_id, price\]
+       **/
+      OracleRewarded: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
        * Price submitted by oracle. \[oracle_address, asset_id, price\]
        **/
       PriceSubmitted: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
+       * Rewarding Started \[rewarding start timestamp]
+       **/
+      RewardingAdjustment: AugmentedEvent<ApiType, [u64]>;
       /**
        * Signer was set. \[signer, controller\]
        **/
@@ -609,10 +619,6 @@ declare module '@polkadot/api-base/types/events' {
        * Stake removed. \[removed_by, amount, block_number\]
        **/
       StakeRemoved: AugmentedEvent<ApiType, [AccountId32, u128, u32]>;
-      /**
-       * Oracle rewarded. \[oracle_address, asset_id, price\]
-       **/
-      UserRewarded: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
       /**
        * Oracle slashed. \[oracle_address, asset_id, amount\]
        **/
@@ -883,15 +889,23 @@ declare module '@polkadot/api-base/types/events' {
       [key: string]: AugmentedEvent<ApiType>;
     };
     stakingRewards: {
+      MaxRewardsAccumulated: AugmentedEvent<ApiType, [u16, u128]>;
+      RewardAccumulationError: AugmentedEvent<ApiType, [u16, u128]>;
       /**
        * Pool with specified id `T::RewardPoolId` was created successfully by `T::AccountId`.
        **/
       RewardPoolCreated: AugmentedEvent<ApiType, [u16, AccountId32, u32]>;
       /**
+       * Reward transfer event.
+       **/
+      RewardTransferred: AugmentedEvent<ApiType, [AccountId32, u16, u128, u128]>;
+      /**
        * Split stake position into two positions
        **/
       SplitPosition: AugmentedEvent<ApiType, [Vec<u128>]>;
+      StakeAmountExtended: AugmentedEvent<ApiType, [u128, u128]>;
       Staked: AugmentedEvent<ApiType, [u16, AccountId32, u128, u64, u128, bool]>;
+      Unstaked: AugmentedEvent<ApiType, [AccountId32, u128]>;
       /**
        * Generic event
        **/
@@ -940,6 +954,72 @@ declare module '@polkadot/api-base/types/events' {
        * On on-chain remark happened.
        **/
       Remarked: AugmentedEvent<ApiType, [AccountId32, H256]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    technicalCollective: {
+      /**
+       * A motion was approved by the required threshold.
+       **/
+      Approved: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * A proposal was closed because its threshold was reached or after its duration was up.
+       **/
+      Closed: AugmentedEvent<ApiType, [H256, u32, u32]>;
+      /**
+       * A motion was not approved by the required threshold.
+       **/
+      Disapproved: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * A motion was executed; result will be `Ok` if it returned without error.
+       **/
+      Executed: AugmentedEvent<ApiType, [H256, Result<Null, SpRuntimeDispatchError>]>;
+      /**
+       * A single member did some action; result will be `Ok` if it returned without error.
+       **/
+      MemberExecuted: AugmentedEvent<ApiType, [H256, Result<Null, SpRuntimeDispatchError>]>;
+      /**
+       * A motion (given hash) has been proposed (by given account) with a threshold (given
+       * `MemberCount`).
+       **/
+      Proposed: AugmentedEvent<ApiType, [AccountId32, u32, H256, u32]>;
+      /**
+       * A motion (given hash) has been voted on by given account, leaving
+       * a tally (yes votes and no votes given respectively as `MemberCount`).
+       **/
+      Voted: AugmentedEvent<ApiType, [AccountId32, H256, bool, u32, u32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    technicalMembership: {
+      /**
+       * Phantom member, never used.
+       **/
+      Dummy: AugmentedEvent<ApiType, []>;
+      /**
+       * One of the members' keys changed.
+       **/
+      KeyChanged: AugmentedEvent<ApiType, []>;
+      /**
+       * The given member was added; see the transaction for who.
+       **/
+      MemberAdded: AugmentedEvent<ApiType, []>;
+      /**
+       * The given member was removed; see the transaction for who.
+       **/
+      MemberRemoved: AugmentedEvent<ApiType, []>;
+      /**
+       * The membership was reset; see the transaction for who the new set is.
+       **/
+      MembersReset: AugmentedEvent<ApiType, []>;
+      /**
+       * Two members were swapped; see the transaction for who.
+       **/
+      MembersSwapped: AugmentedEvent<ApiType, []>;
       /**
        * Generic event
        **/

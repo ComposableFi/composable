@@ -7,7 +7,7 @@ Our pallet-democracy is a fork of frame's. Please refer to the docs for most of 
 
 - Proposals are identified by their hash + AssetId.
 - Voting is performed using the proposals AssetId to identify what token to lock.
-- During dispatching, GovernanceRegistry is used to lookup the associated Origin.
+- During dispatching, [GovernanceRegistry](../governance-registry) is used to lookup the associated Origin.
 - Different Currency traits are used, such as MutateHold.
 - Orml traits MultiCurrency, MultiLockableCurrency and MultiReservableCurrency are used to support multiple assets.
 
