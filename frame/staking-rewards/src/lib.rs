@@ -39,9 +39,9 @@ mod prelude;
 #[cfg(test)]
 mod test;
 mod validation;
-pub mod weights
+pub mod weights;
 
-use sp_std::ops::{Sub, Add, Div, Mul};
+use sp_std::ops::{Add, Div, Mul, Sub};
 
 use crate::prelude::*;
 use composable_support::math::safe::SafeSub;
