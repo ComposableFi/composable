@@ -1,15 +1,15 @@
 #![allow(clippy::disallowed_methods)]
-use crate::{
-	integrations::mock::{
-		AssetId, Balance, BlockNumber, Decimal, ExtBuilder, Moment, Oracle, Origin, StalePrice,
-		System, TestPallet, Timestamp, ALICE, BOB, DOT, USDC,
-	},
-	MarketConfig as MarketConfigGeneric,
-};
+use crate::MarketConfig as MarketConfigGeneric;
 use composable_support::validation::Validated;
 use composable_traits::time::ONE_HOUR;
 use frame_support::{assert_ok, pallet_prelude::Hooks};
-use sp_runtime::Percent;
+use proptest::prelude::*;
+use sp_runtime::{FixedPointNumber, Percent};
+
+use super::mock::{
+	AssetId, Balance, BlockNumber, Decimal, ExtBuilder, Moment, Oracle, Origin, StalePrice, System,
+	TestPallet, Timestamp, UnsignedDecimal, ALICE, BOB, DOT, PICA, USDC,
+};
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
@@ -79,7 +79,7 @@ fn set_oracle_for(asset_id: AssetId, price: Balance) {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                            Types
+//                                        Types & Constants
 // ----------------------------------------------------------------------------------------------------
 
 pub type MarketConfig = MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig>;
@@ -110,20 +110,27 @@ impl Default for MarketConfig {
 	}
 }
 
+pub const UNIT: Balance = UnsignedDecimal::DIV;
+
 // ----------------------------------------------------------------------------------------------------
 //                                         Create Market
 // ----------------------------------------------------------------------------------------------------
 
-#[test]
-fn should_succeed_in_creating_first_market() {
-	ExtBuilder {
-		native_balances: vec![(ALICE, 1_000_000_000_000_000), (BOB, 1_000_000_000_000_000)],
-		..Default::default()
+proptest! {
+	#[test]
+	fn should_succeed_in_creating_first_market(
+		asset_id in prop_oneof![Just(DOT), Just(PICA)]
+	) {
+		ExtBuilder {
+			native_balances: vec![(ALICE, UNIT), (BOB, UNIT)],
+			balances: vec![(ALICE, PICA, UNIT), (BOB, PICA, UNIT)],
+			..Default::default()
+		}
+		.build()
+		.execute_with(|| {
+			set_oracle_for(asset_id, 1_000); // 10 in cents
+			let config = MarketConfig { asset: asset_id, ..Default::default() };
+			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+		})
 	}
-	.build()
-	.execute_with(|| {
-		set_oracle_for(DOT, 1_000); // 10 in cents
-		let config = MarketConfig::default();
-		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
-	})
 }
