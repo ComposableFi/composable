@@ -1,3 +1,4 @@
 import * as React from "react";
-export default "svg";
+const svgMock = "svg";
+export default svgMock;
 export const ReactComponent = "div";
