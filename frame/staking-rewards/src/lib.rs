@@ -39,9 +39,9 @@ mod prelude;
 #[cfg(test)]
 mod test;
 mod validation;
-pub mod weights;
+pub mod weights
 
-use sp_std::ops::{Add, Div, Mul};
+use sp_std::ops::{Sub, Add, Div, Mul};
 
 use crate::prelude::*;
 use composable_support::math::safe::SafeSub;
@@ -95,7 +95,7 @@ pub mod pallet {
 	use sp_std::{cmp::max, fmt::Debug, vec, vec::Vec};
 
 	use crate::{
-		prelude::*, reward_accumulation_calculation, update_rewards_pool,
+		add_to_rewards_pot, do_reward_accumulation, prelude::*, update_rewards_pool,
 		validation::ValidSplitRatio, RewardAccumulationCalculationError,
 	};
 
@@ -157,6 +157,11 @@ pub mod pallet {
 		},
 		RewardPoolUpdated {
 			pool_id: T::RewardPoolId,
+		},
+		RewardsPotIncreased {
+			pool_id: T::RewardPoolId,
+			asset_id: T::AssetId,
+			amount: T::Balance,
 		},
 	}
 
@@ -299,7 +304,7 @@ pub mod pallet {
 	}
 
 	/// Abstraction over RewardPoolConfiguration type
-	type RewardPoolConfigurationOf<T> = RewardPoolConfiguration<
+	pub(crate) type RewardPoolConfigurationOf<T> = RewardPoolConfiguration<
 		<T as frame_system::Config>::AccountId,
 		<T as Config>::AssetId,
 		<T as frame_system::Config>::BlockNumber,
@@ -312,7 +317,7 @@ pub mod pallet {
 	>;
 
 	/// Abstraction over RewardPool type
-	type RewardPoolOf<T> = RewardPool<
+	pub(crate) type RewardPoolOf<T> = RewardPool<
 		<T as frame_system::Config>::AccountId,
 		<T as Config>::AssetId,
 		<T as Config>::Balance,
@@ -326,7 +331,7 @@ pub mod pallet {
 	>;
 
 	/// Abstraction over Stake type
-	type StakeOf<T> = Stake<
+	pub(crate) type StakeOf<T> = Stake<
 		<T as frame_system::Config>::AccountId,
 		<T as Config>::RewardPoolId,
 		<T as Config>::Balance,
@@ -460,6 +465,21 @@ pub mod pallet {
 			T::RewardPoolUpdateOrigin::ensure_origin(origin)?;
 			update_rewards_pool::<T>(pool_id, reward_updates)
 		}
+
+		/// Add funds to the reward pool's rewards pot for the specified asset.
+		///
+		/// Emits `RewardsPotIncreased` when successful.
+		#[pallet::weight(10_000)]
+		pub fn add_to_rewards_pot(
+			origin: OriginFor<T>,
+			pool_id: T::RewardPoolId,
+			asset_id: T::AssetId,
+			amount: T::Balance,
+			keep_alive: bool,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			add_to_rewards_pot::<T>(who, pool_id, asset_id, amount, keep_alive)
+		}
 	}
 
 	impl<T: Config> ManageStaking for Pallet<T> {
@@ -498,6 +518,7 @@ pub mod pallet {
 
 					let now_seconds = T::UnixTime::now().as_secs();
 
+					// TODO: Replace into_iter with iter_mut once it's available
 					let rewards = initial_reward_config
 						.into_iter()
 						.map(|(asset_id, amount)| {
@@ -871,12 +892,7 @@ pub mod pallet {
 			let cold_wallet = Self::cold_pool_account_id(&pool_id);
 			let hot_wallet = Self::hot_pool_account_id(&pool_id);
 
-			match reward_accumulation_calculation::<T>(
-				reward,
-				&cold_wallet,
-				&hot_wallet,
-				now_seconds,
-			) {
+			match do_reward_accumulation::<T>(reward, &cold_wallet, &hot_wallet, now_seconds) {
 				Ok(reward) => reward,
 				Err(BackToTheFuture(reward)) => {
 					Self::deposit_event(Event::<T>::RewardAccumulationHookError {
@@ -920,6 +936,7 @@ pub mod pallet {
 			let updated_pools = RewardPools::<T>::iter()
 				.into_iter()
 				.map(|(pool_id, reward_pool)| {
+					// TODO: Replace into_iter with iter_mut once it's available
 					let updated_rewards = reward_pool
 						.rewards
 						.into_iter()
@@ -1059,6 +1076,30 @@ pub mod pallet {
 }
 
 #[transactional]
+fn add_to_rewards_pot<T: Config>(
+	who: T::AccountId,
+	pool_id: T::RewardPoolId,
+	asset_id: T::AssetId,
+	amount: T::Balance,
+	keep_alive: bool,
+) -> DispatchResult {
+	RewardPools::<T>::get(pool_id)
+		.ok_or(Error::<T>::RewardsPoolNotFound)?
+		.rewards
+		.get(&asset_id)
+		.ok_or(Error::<T>::RewardAssetNotFound)?;
+
+	let cold_wallet = Pallet::<T>::cold_pool_account_id(&pool_id);
+
+	T::Assets::transfer(asset_id, &who, &cold_wallet, amount, keep_alive)?;
+	T::Assets::hold(asset_id, &cold_wallet, amount)?;
+
+	Pallet::<T>::deposit_event(Event::<T>::RewardsPotIncreased { pool_id, asset_id, amount });
+
+	Ok(())
+}
+
+#[transactional]
 fn update_rewards_pool<T: Config>(
 	pool_id: T::RewardPoolId,
 	reward_updates: BoundedBTreeMap<
@@ -1077,7 +1118,7 @@ fn update_rewards_pool<T: Config>(
 
 		for (asset_id, update) in reward_updates {
 			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
-			let new_reward = match reward_accumulation_calculation::<T>(
+			let new_reward = match do_reward_accumulation::<T>(
 				reward.clone(),
 				&cold_wallet,
 				&hot_wallet,
@@ -1110,96 +1151,126 @@ fn update_rewards_pool<T: Config>(
 	})
 }
 
-pub(crate) fn reward_accumulation_calculation<T: Config>(
+/// Calculates the update to the reward and transfers the accumulated rewards from the cold wallet
+/// to the hot wallet.
+// REVIEW(benluelo): Consider a mutable reference to `reward` instead of taking ownership and
+// passing it through the function, it may help to avoid some unnecessary clones
+pub(crate) fn do_reward_accumulation<T: Config>(
 	reward: Reward<T::AssetId, T::Balance>,
 	cold_wallet: &T::AccountId,
 	hot_wallet: &T::AccountId,
 	now_seconds: u64,
 ) -> Result<Reward<T::AssetId, T::Balance>, RewardAccumulationCalculationError<T>> {
-	match now_seconds.safe_sub(&reward.last_updated_timestamp) {
-		Ok(elapsed_time) => {
-			let reward_rate_period_seconds = reward.reward_rate.period.as_secs();
+	// match instead of map_err here to avoid cloning reward
+	let elapsed_time = match now_seconds.safe_sub(&reward.last_updated_timestamp) {
+		Ok(elapsed_time) => elapsed_time,
+		Err(_) => return Err(RewardAccumulationCalculationError::BackToTheFuture(reward)),
+	};
 
-			// SAFETY(benluelo): Usage of Div::div:
+	let reward_rate_period_seconds = reward.reward_rate.period.as_secs();
+
+	// SAFETY(benluelo): Usage of Div::div:
+	//
+	// Integer division can only fail if rhs == 0, and reward_rate_period_seconds is a NonZeroU64
+	// here
+	let periods_surpassed = elapsed_time.div(reward_rate_period_seconds.get());
+
+	dbg!(&reward.reward_rate, &periods_surpassed);
+
+	if periods_surpassed.is_zero() {
+		Ok(reward)
+	} else {
+		// saturating is safe here since these values are checked against max_rewards anyways, which
+		// is <= u128::MAX
+		let new_rewards =
+			u128::from(periods_surpassed).saturating_mul(reward.reward_rate.amount.into());
+
+		let new_total_rewards = new_rewards.saturating_add(reward.total_rewards.into());
+
+		let last_updated_timestamp = reward
+			.last_updated_timestamp
+			.add(periods_surpassed.mul(reward_rate_period_seconds.get()));
+
+		if new_total_rewards <= reward.max_rewards.into() {
+			do_cold_to_hot_transfer(reward, cold_wallet, hot_wallet, new_rewards).map(|reward| {
+				Reward { total_rewards: new_total_rewards.into(), last_updated_timestamp, ..reward }
+			})
+		} else
+		// if the new total rewards are less than or equal to the max rewards AND the current total
+		// rewards are less than the max rewards (i.e. the newly accumulated rewards is less than
+		// the the amount that would be accumulated based on the periods surpassed), then transfer
+		// *up to* the max rewards
+		if reward.total_rewards < reward.max_rewards {
+			// SAFETY(benluelo): Usage of Sub::sub:
 			//
-			// Integer division can only fail if rhs == 0, and
-			// reward_rate_period_seconds is a NonZeroU64 here.
-			let periods_surpassed = elapsed_time.div(reward_rate_period_seconds.get());
-
-			if periods_surpassed.is_zero() {
-				Ok(reward)
-			} else {
-				let new_rewards =
-					u128::from(periods_surpassed).saturating_mul(reward.reward_rate.amount.into());
-
-				let new_total_rewards = new_rewards.saturating_add(reward.total_rewards.into());
-
-				let last_updated_timestamp = reward
-					.last_updated_timestamp
-					.add(periods_surpassed.mul(reward_rate_period_seconds.get()));
-
-				if new_total_rewards <= reward.max_rewards.into() {
-					if <T::Assets as InspectHold<AccountIdOf<T>>>::balance_on_hold(
-						reward.asset_id,
-						&cold_wallet,
-					) >= new_rewards.into()
-					{
-						// release funds from cold wallet
-						<T::Assets as MutateHold<AccountIdOf<T>>>::release(
-							reward.asset_id,
-							&cold_wallet,
-							new_rewards.into(),
-							false, // not best effort, entire amount must be released
-						)
-						.expect(
-							"funds should be avaliable to release based on previous check; qed;",
-						);
-
-						// ensure the transfer will succeed
-						if <T::Assets as Inspect<AccountIdOf<T>>>::can_deposit(
-							reward.asset_id,
-							&hot_wallet,
-							new_rewards.into(),
-							false, // amount already exists, will not be minted
-						)
-						.into_result()
-						.is_ok()
-						{
-							// transfer released funds from cold wallet hot wallet
-							<T::Assets as Transfer<AccountIdOf<T>>>::transfer(
-								reward.asset_id,
-								&cold_wallet,
-								&hot_wallet,
-								new_rewards.into(),
-								false, // doesn't need to be kept alive since it's a pallet sub account
-							)
-							.expect(
-								"funds should be avaliable to transfer based on previous release and deposit check; qed;",
-							);
-
-							Ok(Reward {
-								total_rewards: new_total_rewards.into(),
-								last_updated_timestamp,
-								..reward
-							})
-						} else {
-							Err(RewardAccumulationCalculationError::RewardsPotEmpty(reward))
-						}
-					} else {
-						Err(RewardAccumulationCalculationError::RewardsPotEmpty(reward))
-					}
-				} else if reward.total_rewards < reward.max_rewards {
+			// reward.total_rewards is known to be less than reward.max_rewards as per check above
+			let rewards_to_transfer = reward.max_rewards.sub(reward.total_rewards).into();
+			match do_cold_to_hot_transfer(reward, cold_wallet, hot_wallet, rewards_to_transfer) {
+				Ok(reward) => {
+					// return an error, but with the contained reward updated
 					Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(Reward {
 						total_rewards: reward.max_rewards,
 						last_updated_timestamp,
 						..reward
 					}))
-				} else {
-					Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(reward))
-				}
+				},
+				Err(err) => Err(err),
 			}
-		},
-		Err(_) => Err(RewardAccumulationCalculationError::BackToTheFuture(reward)),
+		} else {
+			// at this point, reward.total_rewards is known to be equal to max_rewards which means
+			// that the max rewards was hit previously
+			Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(reward))
+		}
+	}
+}
+
+/// Releases and transfers the specified amount of funds from the cold wallet to the hot wallet.
+fn do_cold_to_hot_transfer<T: Config>(
+	reward: Reward<T::AssetId, T::Balance>,
+	cold_wallet: &T::AccountId,
+	hot_wallet: &T::AccountId,
+	new_rewards: u128,
+) -> Result<Reward<T::AssetId, T::Balance>, RewardAccumulationCalculationError<T>> {
+	if <T::Assets as InspectHold<AccountIdOf<T>>>::balance_on_hold(reward.asset_id, &cold_wallet) >=
+		new_rewards.into()
+	{
+		// release funds from cold wallet
+		T::Assets::release(
+			reward.asset_id,
+			&cold_wallet,
+			new_rewards.into(),
+			false, // not best effort, entire amount must be released
+		)
+		.expect("funds should be avaliable to release based on previous check; qed;");
+
+		// ensure the transfer will succeed
+		if T::Assets::can_deposit(
+			reward.asset_id,
+			&hot_wallet,
+			new_rewards.into(),
+			false, // amount already exists, will not be minted
+		)
+		.into_result()
+		.is_ok()
+		{
+			// transfer released funds from cold wallet hot wallet
+			T::Assets::transfer(
+				reward.asset_id,
+				&cold_wallet,
+				&hot_wallet,
+				new_rewards.into(),
+				false, // doesn't need to be kept alive since it's a pallet sub account
+			)
+			.expect(
+				"funds should be avaliable to transfer based on previous release and deposit check; qed;",
+			);
+
+			Ok(reward)
+		} else {
+			Err(RewardAccumulationCalculationError::RewardsAccountFull(reward))
+		}
+	} else {
+		Err(RewardAccumulationCalculationError::RewardsPotEmpty(reward))
 	}
 }
 
@@ -1215,6 +1286,4 @@ pub(crate) enum RewardAccumulationCalculationError<T: Config> {
 	RewardsPotEmpty(Reward<T::AssetId, T::Balance>),
 	/// The rewards account (hot wallet) for this pool is full.
 	RewardsAccountFull(Reward<T::AssetId, T::Balance>),
-	// /// There was an error transferring or releasing funds.
-	// FundsError(Reward<T::AssetId, T::Balance>, DispatchError),
 }

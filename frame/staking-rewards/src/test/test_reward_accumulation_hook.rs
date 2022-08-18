@@ -1,11 +1,12 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use crate::RewardAccumulationHookError;
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
 	helper::{assert_last_event, assert_no_event},
 };
-use frame_support::traits::TryCollect;
-use pallet_staking_rewards::RewardAccumulationHookError;
+use composable_traits::assets;
+use frame_support::traits::{TryCollect, UnixTime};
 
 use crate::{test::prelude::*, Pallet};
 
@@ -14,38 +15,51 @@ use super::*;
 #[test]
 fn test_reward_update_calculation() {
 	new_test_ext().execute_with(|| {
-		const SECONDS_PER_BLOCK: u64 = 12;
-		const MAX_REWARD_UNITS: u128 = 99;
-		// this is arbitrary since there isn't actually a pool, just the reward update calculation
-		// is being tested
-		const POOL_ID: u16 = 1;
+		const MAX_REWARD_UNITS: u128 = 51;
 
-		let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+		process_and_progress_blocks::<crate::Pallet<Test>, Test>(1);
 
-		let reward = Reward {
+		let now = <<Test as crate::Config>::UnixTime as UnixTime>::now().as_secs();
+
+		let reward_config = RewardConfig {
 			asset_id: PICA::ID,
-			total_rewards: 0,
-			claimed_rewards: 0,
-			total_dilution_adjustment: 0,
 			max_rewards: PICA::units(MAX_REWARD_UNITS),
 			reward_rate: RewardRate::per_second(PICA::units(2)),
-			last_updated_timestamp: now,
 		};
 
+		// just mint a whole bunch of pica
+		mint_assets([ALICE], [PICA::ID], PICA::units(10_000));
+
+		let pool_id = create_rewards_pool_and_assert(RewardRateBasedIncentive {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			end_block: ONE_YEAR_OF_BLOCKS * 10,
+			reward_configs: [(PICA::ID, reward_config)].into_iter().try_collect().unwrap(),
+			lock: default_lock_config(),
+		});
+
+		add_to_rewards_pot_and_assert(ALICE, pool_id, PICA::ID, PICA::units(10_000));
+
 		// the expected total_rewards amount (in units) for each block
-		let expected = [24, 48, 72, 96];
+		let expected = [12, 24, 36, 48];
 
 		let reward = expected.into_iter().zip(1..).fold(
-			reward,
+			RewardPools::<Test>::get(&pool_id)
+				.unwrap()
+				.rewards
+				.get(&PICA::ID)
+				.unwrap()
+				.clone(),
 			|reward, (expected_total_rewards_units, current_block_number)| {
 				System::set_block_number(current_block_number);
 
 				let reward = Pallet::<Test>::reward_accumulation_hook_reward_update_calculation(
-					POOL_ID,
+					pool_id,
 					reward,
-					now + (SECONDS_PER_BLOCK * current_block_number),
+					now.safe_add(&block_seconds(current_block_number).try_into().unwrap()).unwrap(),
 				);
 
+				println!("current block: {current_block_number}");
 				for error in [
 					RewardAccumulationHookError::BackToTheFuture,
 					RewardAccumulationHookError::RewardsPotEmpty,
@@ -53,42 +67,47 @@ fn test_reward_update_calculation() {
 				] {
 					assert_no_event::<Test>(Event::StakingRewards(
 						crate::Event::<Test>::RewardAccumulationHookError {
-							pool_id: POOL_ID,
+							pool_id,
 							asset_id: PICA::ID,
 							error,
 						},
 					));
 				}
 
-				assert_eq!(reward.total_rewards, PICA::units(expected_total_rewards_units));
+				assert_eq!(
+					reward.total_rewards,
+					PICA::units(expected_total_rewards_units),
+					"current block: {current_block_number}"
+				);
 
 				reward
 			},
 		);
 
-		let current_block = (expected.len() + 1) as u64;
+		let current_block_number = (expected.len() + 1) as u64;
 
 		let reward = Pallet::<Test>::reward_accumulation_hook_reward_update_calculation(
-			POOL_ID,
+			pool_id,
 			reward,
-			now + (SECONDS_PER_BLOCK * current_block),
+			now.safe_add(&block_seconds(current_block_number).try_into().unwrap()).unwrap(),
 		);
 
 		// should be capped at max rewards
-		// note that the max rewards is 99 and the reward amount per period is 2 - when the max is
-		// reached, as much as possible up to the max amount rewarded (even if it's a smaller
+		// note that the max rewards is 51 and the reward amount per period is 2 - when the max is
+		// reached, as much as possible up to the max amount is rewarded (even if it's a smaller
 		// increment than amount)
 		assert_eq!(reward.total_rewards, PICA::units(MAX_REWARD_UNITS));
 
 		// should report an error since the max was hit
 		assert_last_event::<Test>(Event::StakingRewards(
-			crate::Event::<Test>::MaxRewardsAccumulated { pool_id: POOL_ID, asset_id: PICA::ID },
+			crate::Event::<Test>::MaxRewardsAccumulated { pool_id, asset_id: PICA::ID },
 		));
 	})
 }
 
 #[test]
 // takes about 3 minutes to run
+// does not do any claiming
 fn test_acumulate_rewards_hook() {
 	new_test_ext().execute_with(|| {
 		type A = Currency<97, 12>;
@@ -98,30 +117,38 @@ fn test_acumulate_rewards_hook() {
 		type E = Currency<101, 12>;
 		type F = Currency<102, 12>;
 
+		const STARTING_BLOCK: u64 = 10;
+
 		let mut current_block = System::block_number();
+
+		progress_to_block(STARTING_BLOCK, &mut current_block);
 
 		// 0.000_002 A per second, capped at 0.1 A
 		// cap will be hit after 50_000 seconds (8334 blocks)
-		let a_a_reward_rate = A::units(2) / 1_000_000;
-		let a_a_max_rewards = A::units(1) / 10;
+		const A_A_REWARD_RATE: u128 = A::units(2) / 1_000_000;
+		const A_A_MAX_REWARDS: u128 = A::units(1) / 10;
+		const A_A_INITIAL_AMOUNT: u128 = A::units(1_000_000);
 
 		// 0.000_002 B per second, capped at 0.05 B
 		// cap will be hit after 25_000 seconds (4167 blocks)
-		let a_b_reward_rate = B::units(2) / 1_000_000;
-		let a_b_max_rewards = B::units(5) / 100;
+		const A_B_REWARD_RATE: u128 = B::units(2) / 1_000_000;
+		const A_B_MAX_REWARDS: u128 = B::units(5) / 100;
+		const A_B_INITIAL_AMOUNT: u128 = A::units(1_000_000);
 
 		// 2 D per second, capped at 100k D
 		// cap will be hit after 5_000 seconds (834 blocks)
-		let c_d_reward_rate = D::units(2);
-		let c_d_max_rewards = D::units(10_000);
+		const C_D_REWARD_RATE: u128 = D::units(2);
+		const C_D_MAX_REWARDS: u128 = D::units(10_000);
+		const C_D_INITIAL_AMOUNT: u128 = A::units(1_000_000);
 
 		// 0.005 E per second, capped at 10 E
 		// cap will be hit after 2_000 seconds (334 blocks)
-		let c_e_reward_rate = E::units(5) / 1_000;
-		let c_e_max_rewards = E::units(10);
+		const C_E_REWARD_RATE: u128 = E::units(5) / 1_000;
+		const C_E_MAX_REWARDS: u128 = E::units(10);
+		const C_E_INITIAL_AMOUNT: u128 = A::units(1_000_000);
 
-		let cfgs = [
-			RewardPoolConfiguration::RewardRateBasedIncentive {
+		let alices_pool_id =
+			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: ALICE,
 				asset_id: A::ID,
 				end_block: current_block + ONE_YEAR_OF_BLOCKS,
@@ -130,16 +157,16 @@ fn test_acumulate_rewards_hook() {
 						A::ID,
 						RewardConfig {
 							asset_id: A::ID,
-							max_rewards: a_a_max_rewards,
-							reward_rate: RewardRate::per_second(a_a_reward_rate),
+							max_rewards: A_A_MAX_REWARDS,
+							reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
 						},
 					),
 					(
 						B::ID,
 						RewardConfig {
 							asset_id: B::ID,
-							max_rewards: a_b_max_rewards,
-							reward_rate: RewardRate::per_second(a_b_reward_rate),
+							max_rewards: A_B_MAX_REWARDS,
+							reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
 						},
 					),
 				]
@@ -147,8 +174,15 @@ fn test_acumulate_rewards_hook() {
 				.try_collect()
 				.unwrap(),
 				lock: default_lock_config(),
-			},
-			RewardPoolConfiguration::RewardRateBasedIncentive {
+			});
+
+		mint_assets([ALICE], [A::ID], A_A_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert(ALICE, alices_pool_id, A::ID, A_A_INITIAL_AMOUNT);
+		mint_assets([ALICE], [B::ID], A_B_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert(ALICE, alices_pool_id, B::ID, A_B_INITIAL_AMOUNT);
+
+		let bobs_pool_id =
+			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: BOB,
 				asset_id: C::ID,
 				end_block: current_block + ONE_YEAR_OF_BLOCKS,
@@ -157,16 +191,16 @@ fn test_acumulate_rewards_hook() {
 						D::ID,
 						RewardConfig {
 							asset_id: D::ID,
-							max_rewards: c_d_max_rewards,
-							reward_rate: RewardRate::per_second(c_d_reward_rate),
+							max_rewards: C_D_MAX_REWARDS,
+							reward_rate: RewardRate::per_second(C_D_REWARD_RATE),
 						},
 					),
 					(
 						E::ID,
 						RewardConfig {
 							asset_id: E::ID,
-							max_rewards: c_e_max_rewards,
-							reward_rate: RewardRate::per_second(c_e_reward_rate),
+							max_rewards: C_E_MAX_REWARDS,
+							reward_rate: RewardRate::per_second(C_E_REWARD_RATE),
 						},
 					),
 				]
@@ -174,15 +208,15 @@ fn test_acumulate_rewards_hook() {
 				.try_collect()
 				.unwrap(),
 				lock: default_lock_config(),
-			},
-		];
+			});
 
-		for cfg in cfgs {
-			StakingRewards::create_reward_pool(Origin::root(), cfg).unwrap();
-		}
+		mint_assets([ALICE], [D::ID], C_D_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert(ALICE, bobs_pool_id, D::ID, C_D_INITIAL_AMOUNT);
+		mint_assets([ALICE], [E::ID], C_E_INITIAL_AMOUNT);
+		add_to_rewards_pot_and_assert(ALICE, bobs_pool_id, E::ID, C_E_INITIAL_AMOUNT);
 
 		fn check_events(mut expected_events: Vec<crate::Event<Test>>) {
-			dbg!(System::events());
+			// dbg!(System::events());
 			for record in System::events() {
 				match record.event {
 					Event::StakingRewards(staking_event) => {
@@ -223,108 +257,242 @@ fn test_acumulate_rewards_hook() {
 		}
 
 		{
-			progress_to_block(1, &mut current_block);
+			progress_to_block(STARTING_BLOCK + 2, &mut current_block);
 
 			check_rewards(&[
-				(
-					ALICE,
-					A::ID,
-					&[
-						(A::ID, a_a_reward_rate * block_seconds(current_block)),
-						(B::ID, a_b_reward_rate * block_seconds(current_block)),
+				CheckRewards {
+					owner: ALICE,
+					pool_id: alices_pool_id,
+					pool_asset_id: A::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: A::ID,
+							expected_total_rewards: A_A_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: A_A_INITIAL_AMOUNT -
+								(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: A_A_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
+						PoolRewards {
+							reward_asset_id: B::ID,
+							expected_total_rewards: A_B_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: A_B_INITIAL_AMOUNT -
+								(A_B_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: A_B_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
 					],
-				),
-				(
-					BOB,
-					C::ID,
-					&[
-						(D::ID, c_d_reward_rate * block_seconds(current_block)),
-						(E::ID, c_e_reward_rate * block_seconds(current_block)),
+				},
+				CheckRewards {
+					owner: BOB,
+					pool_id: bobs_pool_id,
+					pool_asset_id: C::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: D::ID,
+							expected_total_rewards: C_D_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: C_D_INITIAL_AMOUNT -
+								(C_D_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: C_D_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
+						PoolRewards {
+							reward_asset_id: E::ID,
+							expected_total_rewards: C_E_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: C_E_INITIAL_AMOUNT -
+								(C_E_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: C_E_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
 					],
-				),
+				},
 			]);
 
 			check_events(vec![]);
 		}
 
 		{
-			progress_to_block(10, &mut current_block);
+			progress_to_block(STARTING_BLOCK + 10, &mut current_block);
 
 			check_rewards(&[
-				(
-					ALICE,
-					A::ID,
-					&[
-						(A::ID, a_a_reward_rate * block_seconds(current_block)),
-						(B::ID, a_b_reward_rate * block_seconds(current_block)),
+				CheckRewards {
+					owner: ALICE,
+					pool_id: alices_pool_id,
+					pool_asset_id: A::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: A::ID,
+							expected_total_rewards: A_A_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: A_A_INITIAL_AMOUNT -
+								(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: A_A_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
+						PoolRewards {
+							reward_asset_id: B::ID,
+							expected_total_rewards: A_B_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: A_B_INITIAL_AMOUNT -
+								(A_B_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: A_B_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
 					],
-				),
-				(
-					BOB,
-					C::ID,
-					&[
-						(D::ID, c_d_reward_rate * block_seconds(current_block)),
-						(E::ID, c_e_reward_rate * block_seconds(current_block)),
+				},
+				CheckRewards {
+					owner: BOB,
+					pool_id: bobs_pool_id,
+					pool_asset_id: C::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: D::ID,
+							expected_total_rewards: C_D_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: C_D_INITIAL_AMOUNT -
+								(C_D_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: C_D_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
+						PoolRewards {
+							reward_asset_id: E::ID,
+							expected_total_rewards: C_E_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: C_E_INITIAL_AMOUNT -
+								(C_E_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: C_E_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
 					],
-				),
+				},
 			]);
 
 			check_events(vec![]);
 		}
 
 		{
-			progress_to_block(334, &mut current_block);
+			progress_to_block(STARTING_BLOCK + 334, &mut current_block);
 
 			check_rewards(&[
-				(
-					ALICE,
-					A::ID,
-					&[
-						(A::ID, a_a_reward_rate * block_seconds(current_block)),
-						(B::ID, a_b_reward_rate * block_seconds(current_block)),
+				CheckRewards {
+					owner: ALICE,
+					pool_id: alices_pool_id,
+					pool_asset_id: A::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: A::ID,
+							expected_total_rewards: A_A_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: A_A_INITIAL_AMOUNT -
+								(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: A_A_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
+						PoolRewards {
+							reward_asset_id: B::ID,
+							expected_total_rewards: A_B_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: A_B_INITIAL_AMOUNT -
+								(A_B_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: A_B_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
 					],
-				),
-				(
-					BOB,
-					C::ID,
-					&[
-						(D::ID, c_d_reward_rate * block_seconds(current_block)),
-						(E::ID, c_e_max_rewards),
+				},
+				CheckRewards {
+					owner: BOB,
+					pool_id: bobs_pool_id,
+					pool_asset_id: C::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: D::ID,
+							expected_total_rewards: C_D_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: C_D_INITIAL_AMOUNT -
+								(C_D_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: C_D_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
+						PoolRewards {
+							reward_asset_id: E::ID,
+							expected_total_rewards: C_E_MAX_REWARDS,
+							cold_wallet_expected_balance: C_E_INITIAL_AMOUNT - C_E_MAX_REWARDS,
+							hot_wallet_expected_balance: C_E_MAX_REWARDS,
+						},
 					],
-				),
+				},
 			]);
 
 			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: 2,
+				pool_id: bobs_pool_id,
 				asset_id: E::ID,
 			}]);
 		}
 
 		{
-			progress_to_block(834, &mut current_block);
+			progress_to_block(STARTING_BLOCK + 834, &mut current_block);
 
 			check_rewards(&[
-				(
-					ALICE,
-					A::ID,
-					&[
-						(A::ID, a_a_reward_rate * block_seconds(current_block)),
-						(B::ID, a_b_reward_rate * block_seconds(current_block)),
+				CheckRewards {
+					owner: ALICE,
+					pool_id: alices_pool_id,
+					pool_asset_id: A::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: A::ID,
+							expected_total_rewards: A_A_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: A_A_INITIAL_AMOUNT -
+								(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: A_A_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
+						PoolRewards {
+							reward_asset_id: B::ID,
+							expected_total_rewards: A_B_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: A_B_INITIAL_AMOUNT -
+								(A_B_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: A_B_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
 					],
-				),
-				(BOB, C::ID, &[(D::ID, c_d_max_rewards), (E::ID, c_e_max_rewards)]),
+				},
+				CheckRewards {
+					owner: BOB,
+					pool_id: bobs_pool_id,
+					pool_asset_id: C::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: D::ID,
+							expected_total_rewards: C_D_MAX_REWARDS,
+							cold_wallet_expected_balance: C_D_INITIAL_AMOUNT - C_D_MAX_REWARDS,
+							hot_wallet_expected_balance: C_D_MAX_REWARDS,
+						},
+						PoolRewards {
+							reward_asset_id: E::ID,
+							expected_total_rewards: C_E_MAX_REWARDS,
+							cold_wallet_expected_balance: C_E_INITIAL_AMOUNT - C_E_MAX_REWARDS,
+							hot_wallet_expected_balance: C_E_MAX_REWARDS,
+						},
+					],
+				},
 			]);
 
 			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: 2,
+				pool_id: bobs_pool_id,
 				asset_id: D::ID,
 			}]);
 		}
 
 		// add a new, zero-reward pool
-		StakingRewards::create_reward_pool(
-			Origin::root(),
-			RewardPoolConfiguration::RewardRateBasedIncentive {
+		// nothing needs to be added to the rewards pot as there are no rewards
+		let charlies_pool_id =
+			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: CHARLIE,
 				asset_id: F::ID,
 				end_block: current_block + ONE_YEAR_OF_BLOCKS,
@@ -340,73 +508,156 @@ fn test_acumulate_rewards_hook() {
 				.try_collect()
 				.unwrap(),
 				lock: default_lock_config(),
-			},
-		)
-		.unwrap();
+			});
 
 		{
-			progress_to_block(4167, &mut current_block);
+			progress_to_block(STARTING_BLOCK + 4167, &mut current_block);
 
 			check_rewards(&[
-				(
-					ALICE,
-					A::ID,
-					&[
-						(A::ID, a_a_reward_rate * block_seconds(current_block)),
-						(B::ID, a_b_max_rewards),
+				CheckRewards {
+					owner: ALICE,
+					pool_id: alices_pool_id,
+					pool_asset_id: A::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: A::ID,
+							expected_total_rewards: A_A_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+							cold_wallet_expected_balance: A_A_INITIAL_AMOUNT -
+								(A_A_REWARD_RATE * block_seconds(current_block - STARTING_BLOCK)),
+							hot_wallet_expected_balance: A_A_REWARD_RATE *
+								block_seconds(current_block - STARTING_BLOCK),
+						},
+						PoolRewards {
+							reward_asset_id: B::ID,
+							expected_total_rewards: A_B_MAX_REWARDS,
+							cold_wallet_expected_balance: A_B_INITIAL_AMOUNT - A_B_MAX_REWARDS,
+							hot_wallet_expected_balance: A_B_MAX_REWARDS,
+						},
 					],
-				),
-				(BOB, C::ID, &[(D::ID, c_d_max_rewards), (E::ID, c_e_max_rewards)]),
-				(CHARLIE, F::ID, &[(F::ID, 0)]),
+				},
+				CheckRewards {
+					owner: BOB,
+					pool_id: bobs_pool_id,
+					pool_asset_id: C::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: D::ID,
+							expected_total_rewards: C_D_MAX_REWARDS,
+							cold_wallet_expected_balance: C_D_INITIAL_AMOUNT - C_D_MAX_REWARDS,
+							hot_wallet_expected_balance: C_D_MAX_REWARDS,
+						},
+						PoolRewards {
+							reward_asset_id: E::ID,
+							expected_total_rewards: C_E_MAX_REWARDS,
+							cold_wallet_expected_balance: C_E_INITIAL_AMOUNT - C_E_MAX_REWARDS,
+							hot_wallet_expected_balance: C_E_MAX_REWARDS,
+						},
+					],
+				},
+				CheckRewards {
+					owner: CHARLIE,
+					pool_id: charlies_pool_id,
+					pool_asset_id: F::ID,
+					pool_rewards: &[PoolRewards {
+						reward_asset_id: F::ID,
+						expected_total_rewards: 0,
+						cold_wallet_expected_balance: 0,
+						hot_wallet_expected_balance: 0,
+					}],
+				},
 			]);
 
 			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: 1,
+				pool_id: alices_pool_id,
 				asset_id: B::ID,
 			}]);
 		}
 
 		{
-			progress_to_block(8334, &mut current_block);
+			progress_to_block(STARTING_BLOCK + 8334, &mut current_block);
 
 			check_rewards(&[
-				(ALICE, A::ID, &[(A::ID, a_a_max_rewards), (B::ID, a_b_max_rewards)]),
-				(BOB, C::ID, &[(D::ID, c_d_max_rewards), (E::ID, c_e_max_rewards)]),
-				(CHARLIE, F::ID, &[(F::ID, 0)]),
+				CheckRewards {
+					owner: ALICE,
+					pool_id: alices_pool_id,
+					pool_asset_id: A::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: A::ID,
+							expected_total_rewards: A_A_MAX_REWARDS,
+							cold_wallet_expected_balance: A_A_INITIAL_AMOUNT - A_A_MAX_REWARDS,
+							hot_wallet_expected_balance: A_A_MAX_REWARDS,
+						},
+						PoolRewards {
+							reward_asset_id: B::ID,
+							expected_total_rewards: A_B_MAX_REWARDS,
+							cold_wallet_expected_balance: A_B_INITIAL_AMOUNT - A_B_MAX_REWARDS,
+							hot_wallet_expected_balance: A_B_MAX_REWARDS,
+						},
+					],
+				},
+				CheckRewards {
+					owner: BOB,
+					pool_id: bobs_pool_id,
+					pool_asset_id: C::ID,
+					pool_rewards: &[
+						PoolRewards {
+							reward_asset_id: D::ID,
+							expected_total_rewards: C_D_MAX_REWARDS,
+							cold_wallet_expected_balance: C_D_INITIAL_AMOUNT - C_D_MAX_REWARDS,
+							hot_wallet_expected_balance: C_D_MAX_REWARDS,
+						},
+						PoolRewards {
+							reward_asset_id: E::ID,
+							expected_total_rewards: C_E_MAX_REWARDS,
+							cold_wallet_expected_balance: C_E_INITIAL_AMOUNT - C_E_MAX_REWARDS,
+							hot_wallet_expected_balance: C_E_MAX_REWARDS,
+						},
+					],
+				},
+				CheckRewards {
+					owner: CHARLIE,
+					pool_id: charlies_pool_id,
+					pool_asset_id: F::ID,
+					pool_rewards: &[PoolRewards {
+						reward_asset_id: F::ID,
+						expected_total_rewards: 0,
+						cold_wallet_expected_balance: 0,
+						hot_wallet_expected_balance: 0,
+					}],
+				},
 			]);
 
 			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: 1,
+				pool_id: alices_pool_id,
 				asset_id: A::ID,
 			}]);
 		}
 	});
 }
 
-// TODO(benluelo): Consider adding the pool_id to the paramaters, currently this assumes they've
-// been created from 1 on.
-pub(crate) fn check_rewards(
-	expected: &[(
-		Public, // pool owner
-		u128,   // pool asset_id
-		// pool rewards
-		&[(
-			u128, // reward_asset_id
-			u128, // expected_total_rewards
-		)],
-	)],
-) {
+pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 	let mut all_rewards = RewardPools::<Test>::iter().collect::<BTreeMap<_, _>>();
 
-	for ((owner, asset_id, rewards), pool_id) in expected.into_iter().zip(1..) {
+	for CheckRewards { owner, pool_asset_id, pool_rewards, pool_id } in expected.into_iter() {
 		let mut pool = all_rewards
 			.remove(&pool_id)
 			.expect(&format!("pool {pool_id} not present in RewardPools"));
 
 		assert_eq!(pool.owner, *owner, "error at pool {pool_id}");
-		assert_eq!(pool.asset_id, *asset_id, "error at pool {pool_id}");
+		assert_eq!(pool.asset_id, *pool_asset_id, "error at pool {pool_id}");
 
-		for (reward_asset_id, expected_total_rewards) in *rewards {
+		let cold_wallet = StakingRewards::cold_pool_account_id(pool_id);
+		let hot_wallet = StakingRewards::hot_pool_account_id(pool_id);
+
+		for PoolRewards {
+			reward_asset_id,
+			expected_total_rewards,
+			cold_wallet_expected_balance,
+			hot_wallet_expected_balance,
+		} in *pool_rewards
+		{
 			let reward = pool
 				.rewards
 				.remove(&reward_asset_id)
@@ -414,11 +665,31 @@ pub(crate) fn check_rewards(
 
 			assert_eq!(
 				reward.asset_id, *reward_asset_id,
-				"error at pool {pool_id}, asset {reward_asset_id}",
+				r#"error at pool {pool_id}, asset {reward_asset_id}"#,
 			);
 			assert_eq!(
 				reward.total_rewards, *expected_total_rewards,
-				"error at pool {pool_id}, asset {reward_asset_id}",
+				r#"error at pool {pool_id}, asset {reward_asset_id}"#,
+			);
+
+			let cold_wallet_actual_balance = balance(*reward_asset_id, &cold_wallet);
+			assert!(
+				&cold_wallet_actual_balance == cold_wallet_expected_balance,
+				r#"
+error at pool {pool_id}, asset {reward_asset_id}: unexpected cold wallet balance:
+	expected: {cold_wallet_expected_balance}
+	found:    {cold_wallet_actual_balance}
+				"#
+			);
+
+			let hot_wallet_actual_balance = balance(*reward_asset_id, &hot_wallet);
+			assert!(
+				&hot_wallet_actual_balance == hot_wallet_expected_balance,
+				r#"
+error at pool {pool_id}, asset {reward_asset_id}: unexpected hot wallet balance:
+	expected: {hot_wallet_expected_balance}
+	found:    {hot_wallet_actual_balance}
+				"#
 			);
 		}
 
@@ -430,4 +701,18 @@ pub(crate) fn check_rewards(
 	}
 
 	assert!(all_rewards.is_empty(), "not all pools were tested, missing {all_rewards:#?}");
+}
+
+pub(crate) struct CheckRewards<'a> {
+	pub(crate) owner: Public,
+	pub(crate) pool_id: u16,
+	pub(crate) pool_asset_id: u128,
+	pub(crate) pool_rewards: &'a [PoolRewards],
+}
+
+pub(crate) struct PoolRewards {
+	pub(crate) reward_asset_id: u128,
+	pub(crate) expected_total_rewards: u128,
+	pub(crate) cold_wallet_expected_balance: u128,
+	pub(crate) hot_wallet_expected_balance: u128,
 }
