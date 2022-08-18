@@ -1,15 +1,79 @@
 [package]
-name = "ibc-relayer"
+name = "hyperspace"
 version = "0.1.0"
 edition = "2021"
-authors = [""]
+authors = ["Composable Developers"]
 
 [[bin]]
 name = "ibc-relayer"
 path = "./bin/main.rs"
 
+[build-dependencies]
+subxt-codegen = "0.22.0"
+jsonrpsee = { version = "0.15.0", features = ["async-client", "client-ws-transport", "http-client"] }
+frame-metadata = { version = "15.0.0", features = ["v14", "std"] }
+syn = "1.0.98"
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+color-eyre = "0.6.2"
+hex = "0.4.3"
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
+
 [dependencies]
+# crates.io
+anyhow = "1.0.58"
 futures = "0.3.21"
 async-trait = "0.1.53"
-tokio = { version = "1.19.2", features = ["macros"] }
-ibc = { git = "https://github.com/composableFi/ibc-rs.git", branch = "master" }
+log = "0.4.17"
+log4rs = "1.1.1"
+env_logger = "0.9.0"
+hex = "0.4.3"
+tokio = { version = "1.19.2", features = ["macros", "sync"] }
+rs_merkle = "1.2.0"
+codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
+hex-literal = "0.3.4"
+serde_json = "1.0.74"
+derive_more = { version = "0.99", features = ["from"]  }
+serde = {version="1.0.137", features = ["derive"]}
+tokio-stream = { version = "0.1.9", features = ["sync"]}
+thiserror = "1.0.31"
+
+# substrate
+sp-core = "6.0.0"
+sp-runtime = "6.0.0"
+sp-keystore = "0.12.0"
+subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
+beefy-primitives = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+beefy-mmr = { package = "pallet-beefy-mmr", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+pallet-mmr-primitives = { package = "sp-mmr-primitives", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+
+# composable
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb", features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb" }
+tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
+beefy-prover = { git = "https://github.com/ComposableFi/beefy-rs", rev = "ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee" }
+beefy-light-client = { git = "https://github.com/ComposableFi/beefy-rs", rev = "ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee" }
+beefy-light-client-primitives = { package = "primitives", git = "https://github.com/ComposableFi/beefy-rs", rev = "ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee" }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "90eff7225a49f6e8524f15a682ff4f2b780a9053" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "90eff7225a49f6e8524f15a682ff4f2b780a9053" }
+transfer = { package = "pallet-ibc-transfer",  git = "https://github.com/ComposableFi/composable", rev = "90eff7225a49f6e8524f15a682ff4f2b780a9053" }
+ping = { package = "pallet-ibc-ping",  git = "https://github.com/ComposableFi/composable", rev = "90eff7225a49f6e8524f15a682ff4f2b780a9053" }
+ibc-primitives = { git = "https://github.com/ComposableFi/composable", rev = "90eff7225a49f6e8524f15a682ff4f2b780a9053" }
+
+[dev-dependencies]
+derive_more = "0.99.17"
+sp-keyring = "6.0.0"
+clap = {version = "3.2.0", features = ["derive"]}
+state-machine = { package = "sp-state-machine", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+prost = "0.10"
+
+[[test]]
+name = "parachain_ibc_test"
+harness = false
+[[test]]
+name = "parachain_token_transfer"
+harness = false
