@@ -35,11 +35,20 @@
 
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
-      mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
-        , polkadot-launch, composable-node, polkadot-node, chain-spec }:
+      mk-devnet =
+        { pkgs
+        , lib
+        , writeTextFile
+        , writeShellApplication
+        , polkadot-launch
+        , composable-node
+        , polkadot-node
+        , chain-spec
+        }:
         let
           original-config = (pkgs.callPackage
-            ./scripts/polkadot-launch/rococo-local-dali-dev.nix {
+            ./scripts/polkadot-launch/rococo-local-dali-dev.nix
+            {
               polkadot-bin = polkadot-node;
               composable-bin = composable-node;
             }).result;
@@ -53,7 +62,8 @@
             name = "devnet-${chain-spec}-config.json";
             text = builtins.toJSON patched-config;
           };
-        in {
+        in
+        {
           inherit chain-spec;
           parachain-nodes = builtins.concatMap (parachain: parachain.nodes)
             patched-config.parachains;
@@ -84,7 +94,8 @@
           };
           overlays = [ rust-overlay.overlay ];
           rust-toolchain = import ./.nix/rust-toolchain.nix;
-        in with pkgs;
+        in
+        with pkgs;
         let
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
@@ -120,45 +131,53 @@
             [ coreutils bash procps findutils nettools bottom nix procps ];
 
           # source relevant to build rust only
-          rust-src = let
-            dir-blacklist = [
-              "nix"
-              ".config"
-              ".devcontainer"
-              ".github"
-              ".log"
-              ".maintain"
-              ".tools"
-              ".vscode"
-              "audits"
-              "book"
-              "devnet-stage"
-              "devnet"
-              "docker"
-              "docs"
-              "frontend"
-              "rfcs"
-              "scripts"
-              "setup"
-              "subsquid"
-              "runtime-tests"
-              "composablejs"
-            ];
-            file-blacklist = [ "flake.nix" "flake.lock" ];
-          in lib.cleanSourceWith {
-            filter = lib.cleanSourceFilter;
-            src = lib.cleanSourceWith {
-              filter = let
-                customFilter = name: type:
-                  (!(type == "directory"
-                    && builtins.elem (baseNameOf name) dir-blacklist))
-                  && (!(type == "file"
-                    && builtins.elem (baseNameOf name) file-blacklist));
-              in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-              ./.;
-              src = ./.;
+          rust-src =
+            let
+              dir-blacklist = [
+                "nix"
+                ".config"
+                ".devcontainer"
+                ".github"
+                ".log"
+                ".maintain"
+                ".tools"
+                ".vscode"
+                "audits"
+                "book"
+                "devnet-stage"
+                "devnet"
+                "docker"
+                "docs"
+                "frontend"
+                "rfcs"
+                "scripts"
+                "setup"
+                "subsquid"
+                "runtime-tests"
+                "composablejs"
+              ];
+              file-blacklist = [ "flake.nix" "flake.lock" ];
+            in
+            lib.cleanSourceWith {
+              filter = lib.cleanSourceFilter;
+              src = lib.cleanSourceWith {
+                filter =
+                  let
+                    customFilter = name: type:
+                      (
+                        !(type == "directory"
+                        && builtins.elem (baseNameOf name) dir-blacklist)
+                      )
+                      && (
+                        !(type == "file"
+                        && builtins.elem (baseNameOf name) file-blacklist)
+                      );
+                  in
+                  nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
+                    ./.;
+                src = ./.;
+              };
             };
-          };
 
           # Common env required to build the node
           common-attrs = {
@@ -294,7 +313,8 @@
                 --repeat=1
             '';
 
-        in rec {
+        in
+        rec {
           packages = rec {
             inherit wasm-optimizer;
             inherit common-deps;
@@ -458,60 +478,82 @@
                 "cargo test --workspace --release --locked --verbose";
             });
 
-            kusama-picasso-karura = let
-              config = (pkgs.callPackage
-                ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
-                  polkadot-bin = polkadot-node;
-                  composable-bin = composable-node;
-                  acala-bin = acala-node;
-                }).result;
-              config-file = writeTextFile {
-                name = "kusama-local-picasso-dev-karura-dev.json";
-                text = "${builtins.toJSON config}";
+            kusama-picasso-karura =
+              let
+                config = (pkgs.callPackage
+                  ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix
+                  {
+                    polkadot-bin = polkadot-node;
+                    composable-bin = composable-node;
+                    acala-bin = acala-node;
+                  }).result;
+                config-file = writeTextFile {
+                  name = "kusama-local-picasso-dev-karura-dev.json";
+                  text = "${builtins.toJSON config}";
+                };
+              in
+              writeShellApplication {
+                name = "kusama-picasso-karura";
+                text = ''
+                  cat ${config-file}
+                  ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+                '';
               };
-            in writeShellApplication {
-              name = "kusama-picasso-karura";
-              text = ''
-                cat ${config-file}
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-              '';
-            };
+
+            junod = pkgs.callPackage ./.nix/junod.nix { };
 
             default = packages.composable-node;
           };
 
           devShells = rec {
-            developers = mkShell (common-attrs // {
-              buildInputs = with packages; [
-                bacon
-                google-cloud-sdk
-                grub2
-                jq
-                lldb
-                llvmPackages_latest.bintools
-                llvmPackages_latest.lld
-                llvmPackages_latest.llvm
-                mdbook
-                nix-tree
-                nixpkgs-fmt
-                openssl
-                openssl.dev
-                pkg-config
-                qemu
-                rnix-lsp
-                rust-nightly
-                taplo
-                wasm-optimizer
-                xorriso
-                zlib.out
-              ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
+            developers = developers-minimal.overrideAttrs (base: {
+              buildInputs = with packages;
+                base.buildInputs ++ [
+                  bacon
+                  google-cloud-sdk
+                  grub2
+                  jq
+                  lldb
+                  llvmPackages_latest.bintools
+                  llvmPackages_latest.lld
+                  llvmPackages_latest.llvm
+                  mdbook
+                  nix-tree
+                  nixpkgs-fmt
+                  openssl
+                  openssl.dev
+                  pkg-config
+                  qemu
+                  rnix-lsp
+                  rust-nightly
+                  taplo
+                  wasm-optimizer
+                  xorriso
+                  zlib.out
+                ];
             });
 
             developers-minimal = mkShell (common-attrs // {
               buildInputs = with packages; [ rust-nightly ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             });
+
+            developers-xcvm = developers-minimal.overrideAttrs (base: {
+              buildInputs = with packages;
+                base.buildInputs ++
+                [
+                  junod
+                  devnet-dali
+                  # TODO: hasura
+                  # TODO: cosmos explorer
+                  # TODO: some well know wasm contracts deployed                
+                  # TODO: junod server
+                  # TODO: solc
+                  # TODO: script to run all
+                  # TODO: compose export
+                ];
+            });
+
 
             writers = mkShell {
               buildInputs = with packages; [
@@ -529,19 +571,6 @@
               buildInputs = [ nixopsUnstable ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
-
-            # developers-xcvm = developers // mkShell {
-            #   buildInputs = with packages; [
-            #     # TODO: hasura
-            #     # TODO: junod client
-            #     # TODO: junod server
-            #     # TODO: solc
-            #     # TODO: script to run all
-            #     # TODO: compose export
-            #       packages.dali-script
-            #   ];
-            #   NIX_PATH = "nixpkgs=${pkgs.path}";
-            # };
 
             default = developers;
           };
@@ -595,26 +624,28 @@
           };
 
         });
-    in eachSystemOutputs // {
+    in
+    eachSystemOutputs // {
       nixopsConfigurations = {
-        default = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        in import ./.nix/devnet.nix {
-          inherit nixpkgs;
-          inherit gce-input;
-          devnet-dali = pkgs.callPackage mk-devnet {
-            inherit pkgs;
-            inherit (eachSystemOutputs.packages.x86_64-linux)
-              polkadot-launch composable-node polkadot-node;
-            chain-spec = "dali-dev";
+        default =
+          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          in import ./.nix/devnet.nix {
+            inherit nixpkgs;
+            inherit gce-input;
+            devnet-dali = pkgs.callPackage mk-devnet {
+              inherit pkgs;
+              inherit (eachSystemOutputs.packages.x86_64-linux)
+                polkadot-launch composable-node polkadot-node;
+              chain-spec = "dali-dev";
+            };
+            devnet-picasso = pkgs.callPackage mk-devnet {
+              inherit pkgs;
+              inherit (eachSystemOutputs.packages.x86_64-linux)
+                polkadot-launch composable-node polkadot-node;
+              chain-spec = "picasso-dev";
+            };
+            book = eachSystemOutputs.packages.x86_64-linux.composable-book;
           };
-          devnet-picasso = pkgs.callPackage mk-devnet {
-            inherit pkgs;
-            inherit (eachSystemOutputs.packages.x86_64-linux)
-              polkadot-launch composable-node polkadot-node;
-            chain-spec = "picasso-dev";
-          };
-          book = eachSystemOutputs.packages.x86_64-linux.composable-book;
-        };
       };
     };
 }
