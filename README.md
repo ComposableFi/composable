@@ -26,7 +26,37 @@
 [bors-badge]: https://bors.tech/images/badge_small.svg
 [bors-url]: https://app.bors.tech/repositories/45659
 
+ju
 ## Documentation
 
 To learn more about our ecosystem, vision, and product specifics - visit our 
 [mdbook](https://docs.composable.finance).
+
+
+## Nix
+
+We use [`nix`](https://nixos.org/) in order to reproducibly build our products. If you do not have `nix` installed yet, then we recommend either installing `nix` or switching to `NixOS`
+
+You can use `nix flake show` in order to view all of the packages we provide, such as `composable-node` and `devnet-dali`.
+
+If you want to run the latest version of  `devnet-dali`, for example, you can simply run the following, _without needing to clone the repository_:
+
+```bash
+nix run "github:ComposableFi/composable#devnet-dali"
+```
+
+If you would like to run an older/pinned version of any package, you can include the commit hash in the url lilke this:
+
+```bash
+nix run "github:ComposableFi/composable/d735de9#devnet-dali"
+```
+
+If you want to build/run packages for a local copy, you can do that like this:
+
+
+```bash
+git clone git@github.com:ComposableFi/composable
+cd composable
+nix run ".#devnet-dali"
+```
+
