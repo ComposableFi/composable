@@ -24,7 +24,7 @@
     "build:esm": "tsc",
     "build:cjs": "tsc --project tsconfig.cjs.json",
     "start": "tsc --watch",
-    "test": "jest"
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "@0xsequence/multicall": "^0.36.3",
