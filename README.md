@@ -26,7 +26,6 @@
 [bors-badge]: https://bors.tech/images/badge_small.svg
 [bors-url]: https://app.bors.tech/repositories/45659
 
-ju
 ## Documentation
 
 To learn more about our ecosystem, vision, and product specifics - visit our 
