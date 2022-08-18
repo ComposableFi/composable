@@ -154,8 +154,8 @@ pub mod pallet {
 	};
 	use crate::{
 		types::{
-			AccountSummary, OracleStatus, PositionInfo, TradeResponse, TraderPositionState,
-			BASIS_POINT_DENOMINATOR,
+			AccountSummary, OracleStatus, PositionInfo, ShutdownStatus, TradeResponse,
+			TraderPositionState, BASIS_POINT_DENOMINATOR,
 		},
 		weights::WeightInfo,
 	};
@@ -177,7 +177,7 @@ pub mod pallet {
 		traits::{fungibles::Inspect, tokens::fungibles::Transfer, GenesisBuild, UnixTime},
 		transactional, Blake2_128Concat, PalletId, Twox64Concat,
 	};
-	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
+	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Signed;
 	use sp_runtime::{
 		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
@@ -420,6 +420,13 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		/// A close time was set for a market.
+		CloseMarket {
+			/// Market identifier.
+			market_id: T::MarketId,
+			/// Close time.
+			when: DurationSeconds,
+		},
 		/// Margin successfully added to account.
 		MarginAdded {
 			/// Account id that received the deposit.
@@ -482,6 +489,13 @@ pub mod pallet {
 			/// Amount of collateral withdrawn.
 			amount: T::Balance,
 		},
+		/// Position settled by user.
+		SettledPosition {
+			/// Id of the user.
+			user: T::AccountId,
+			/// Id of the corresponding market.
+			market: T::MarketId,
+		},
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -491,6 +505,8 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
+		/// Attempted to set a market close time in the past or current block.
+		CloseTimeMustBeAfterCurrentTime,
 		/// Attempted to create a new market but the funding period is not a multiple of the
 		/// funding frequency.
 		FundingPeriodNotMultipleOfFrequency,
@@ -504,8 +520,15 @@ pub mod pallet {
 		InvalidMarginRatioRequirement,
 		/// Raised when the price returned by the Oracle is nonpositive.
 		InvalidOracleReading,
+		/// Raised when performing an operation (opening/closing a position) on a market that is
+		/// not open.
+		MarketClosed,
+		/// Attempted to settle a position before the market close time.
+		MarketNotClosed,
 		/// Raised when querying a market with an invalid or nonexistent market Id.
 		MarketIdNotFound,
+		/// Attempted to open a position in a market in the process of shutting down.
+		MarketShuttingDown,
 		/// Raised when creating a new position but exceeding the maximum number of positions for
 		/// an account.
 		MaxPositionsExceeded,
@@ -938,6 +961,101 @@ pub mod pallet {
 			<Self as ClearingHouse>::liquidate(&liquidator_id, &user_id)?;
 			Ok(())
 		}
+
+		/// Set a time for market closure.
+		///
+		/// # Overview
+		///
+		/// If successful, all trading calls to this market are blocked after the timestamp `when`
+		/// passed to this extrinsic. This should allow time for users to close their positions
+		/// normally before the market closes. No one can open positions in this market after the
+		/// extrinsic has been successfully executed, only call
+		/// [`close_position`](Self::close_position) up until the `when` timestamp. After that time,
+		/// all trading calls will fail.
+		///
+		/// Users can settle their positions after the market close by calling
+		/// [`settle_position`](Self::settle_position).
+		///
+		/// TODO(0xangelo): add sequence diagram
+		///
+		/// ## Parameters
+		///
+		/// - `market_id`: the market to be closed
+		/// - `when`: the timestamp at which the market will be closed
+		///
+		/// ## Assumptions or Requirements
+		///
+		/// - Only root (for now) can call this extrinsic
+		/// - The `when` parameter must be a timestamp strictly larger than the current block
+		///   timestamp
+		///
+		/// ## Emits
+		///
+		/// - [`CloseMarket`](Event::<T>::CloseMarket)
+		///
+		/// ## State Changes
+		///
+		/// - [`Markets`]: updates the [`closed_ts`](Market::closed_ts) field of the market
+		///
+		/// ## Errors
+		///
+		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
+		///
+		/// ## Weight/Runtime
+		///
+		/// O(1)
+		#[pallet::weight(<T as Config>::WeightInfo::close_market())]
+		pub fn close_market(
+			origin: OriginFor<T>,
+			market_id: T::MarketId,
+			when: DurationSeconds,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			<Self as ClearingHouse>::close_market(market_id, when)?;
+			Ok(())
+		}
+
+		/// Settles a position in a closed market.
+		///
+		/// # Overview
+		///
+		/// This should be utilized by the user after the market is closed if it still has a
+		/// position in it. This function calculates a settlement price based on the vAMM and
+		/// settles the user's position against it.
+		///
+		/// # Parameters
+		///
+		/// - `market_id`: the market to be settled
+		///
+		/// # Assumptions or Requirements
+		///
+		/// - The market must exist
+		/// - The market must already be closed
+		/// - The user must have a position in the market (with non-zero base asset amount)
+		///
+		/// # Emits
+		///
+		/// - [`SettledPosition`](Event::<T>::SettledPosition)
+		///
+		/// # State Changes
+		///
+		/// - [`Collateral`]: funding settled, settled value added (if any)
+		/// - [`Positions`]: the position is removed
+		///
+		/// # Errors
+		///
+		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
+		/// - [`PositionNotFound`](Error::<T>::PositionNotFound)
+		///
+		/// # Weight/Runtime
+		///
+		/// `O(1)`
+		#[pallet::weight(<T as Config>::WeightInfo::settle_position())]
+		pub fn settle_position(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
+			let account_id = ensure_signed(origin)?;
+			<Self as ClearingHouse>::settle_position(account_id, market_id)?;
+			Ok(())
+		}
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -951,6 +1069,7 @@ pub mod pallet {
 		type Direction = Direction;
 		type MarketId = T::MarketId;
 		type MarketConfig = MarketConfigOf<T>;
+		type Timestamp = DurationSeconds;
 
 		fn deposit_collateral(
 			account_id: &Self::AccountId,
@@ -1099,6 +1218,8 @@ pub mod pallet {
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let mut market = Self::try_get_market(market_id)?;
+			Self::ensure_market_is_open_to_new_orders(&market)?;
+
 			let mut quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
 			ensure!(
 				quote_abs_amount_decimal >= market.minimum_trade_size,
@@ -1193,8 +1314,10 @@ pub mod pallet {
 			account_id: &Self::AccountId,
 			market_id: &Self::MarketId,
 		) -> Result<Self::Balance, DispatchError> {
-			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
 			let mut market = Self::try_get_market(market_id)?;
+			Self::ensure_market_is_open(&market)?;
+
+			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
 			let mut positions = Self::get_positions(account_id);
 			let (position, position_index) = Self::try_get_position(&mut positions, market_id)?;
 
@@ -1275,6 +1398,7 @@ pub mod pallet {
 		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
 			let mut market = Self::try_get_market(market_id)?;
 			let now = T::UnixTime::now().as_secs();
+			Self::ensure_market_is_open_at(&market, now)?;
 
 			ensure!(
 				Self::is_funding_update_time(&market, now)?,
@@ -1336,6 +1460,69 @@ pub mod pallet {
 			}
 
 			Self::deposit_event(event);
+			Ok(())
+		}
+
+		fn close_market(
+			market_id: Self::MarketId,
+			when: Self::Timestamp,
+		) -> Result<(), DispatchError> {
+			let mut market = Self::try_get_market(&market_id)?;
+			let now = T::UnixTime::now().as_secs();
+			ensure!(when > now, Error::<T>::CloseTimeMustBeAfterCurrentTime);
+
+			market.closed_ts = Some(when);
+			Markets::<T>::insert(&market_id, market);
+			Self::deposit_event(Event::<T>::CloseMarket { market_id, when });
+			Ok(())
+		}
+
+		fn settle_position(
+			account_id: Self::AccountId,
+			market_id: Self::MarketId,
+		) -> Result<(), DispatchError> {
+			let market = Self::try_get_market(&market_id)?;
+			ensure!(
+				matches!(
+					market.shutdown_status(T::UnixTime::now().as_secs()),
+					ShutdownStatus::Closed
+				),
+				Error::<T>::MarketNotClosed
+			);
+
+			let mut collateral = Self::get_collateral(&account_id).unwrap_or_else(Zero::zero);
+			let mut positions = Self::get_positions(&account_id);
+			let (position, position_index) = Self::try_get_position(&mut positions, &market_id)?;
+
+			if position.direction().is_some() {
+				// Funding is settled as is
+				Self::settle_funding(position, &market, &mut collateral)?;
+
+				// Compute average entry price
+				let open_price =
+					position.quote_asset_notional_amount.try_div(&position.base_asset_amount)?;
+				// Ask settlement price from the vAMM
+				// WARN: it is up to the vAMM to ensure that the settlement price is such that
+				// traders can pay each other (i.e., no funds have to come from the Insurance Fund)
+				let settlement_price: T::Decimal =
+					T::Vamm::get_settlement_price(market.vamm_id)?.into_signed()?;
+
+				// If settlement price is 0, everyone keeps their collateral
+				if !settlement_price.is_zero() {
+					let settled_value = position
+						.base_asset_amount
+						.try_mul(&settlement_price.try_sub(&open_price)?)?;
+
+					collateral = Self::updated_balance(&collateral, &settled_value)?;
+				}
+
+				// Remove position from storage
+				positions.swap_remove(position_index);
+
+				Collateral::<T>::insert(&account_id, collateral);
+				Markets::<T>::insert(&market_id, market);
+				Positions::<T>::insert(&account_id, positions);
+			}
 			Ok(())
 		}
 	}
@@ -1724,6 +1911,30 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
+		fn ensure_market_is_open_to_new_orders(market: &Market<T>) -> Result<(), DispatchError> {
+			let now = T::UnixTime::now().as_secs();
+			Self::ensure_market_is_open_at(market, now)
+		}
+
+		fn ensure_market_is_open_at(
+			market: &Market<T>,
+			when: DurationSeconds,
+		) -> Result<(), DispatchError> {
+			match market.shutdown_status(when) {
+				ShutdownStatus::Open => Ok(()),
+				ShutdownStatus::Closed => Err(Error::<T>::MarketClosed.into()),
+				ShutdownStatus::Closing => Err(Error::<T>::MarketShuttingDown.into()),
+			}
+		}
+
+		fn ensure_market_is_open(market: &Market<T>) -> Result<(), DispatchError> {
+			let now = T::UnixTime::now().as_secs();
+			match market.shutdown_status(now) {
+				ShutdownStatus::Closed => Err(Error::<T>::MarketClosed.into()),
+				_ => Ok(()),
+			}
+		}
+
 		fn check_oracle_guard_rails(
 			market: &Market<T>,
 			oracle_status: &OracleStatus<T>,

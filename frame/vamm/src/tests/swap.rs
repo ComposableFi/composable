@@ -2,8 +2,11 @@ use crate::{
 	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
-		constants::RUN_CASES,
-		helpers::{create_vamm, run_for_seconds, run_to_block, swap_config},
+		constants::{DEFAULT_OUTPUT_ADDING_BASE, DEFAULT_OUTPUT_REMOVING_BASE, RUN_CASES},
+		helpers::{
+			create_vamm, run_for_seconds, run_to_block, swap_config,
+			with_swap_context_checking_limit,
+		},
 		helpers_propcompose::{
 			any_swap_config, any_vamm_state, balance_range_lower_half, balance_range_upper_half,
 			multiple_swaps, then_and_now,
@@ -12,7 +15,7 @@ use crate::{
 	},
 };
 use composable_traits::vamm::{
-	AssetType, Direction, SwapOutput, Vamm as VammTrait, MINIMUM_TWAP_PERIOD,
+	AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait, MINIMUM_TWAP_PERIOD,
 };
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
@@ -299,6 +302,36 @@ fn should_update_twap_when_removing_quote_asset() {
 	});
 }
 
+#[test]
+fn should_fail_if_output_is_less_than_minimum_limit_when_adding_asset() {
+	with_swap_context_checking_limit(
+		TestVammConfig::default().into(),
+		SwapConfig { direction: Direction::Add, ..TestSwapConfig::default().into() },
+		DEFAULT_OUTPUT_ADDING_BASE + 1,
+		|swap_config| {
+			assert_noop!(
+				TestPallet::swap(&swap_config),
+				Error::<MockRuntime>::SwappedAmountLessThanMinimumLimit
+			);
+		},
+	)
+}
+
+#[test]
+fn should_fail_if_output_is_more_than_maximum_limit_when_removing_asset() {
+	with_swap_context_checking_limit(
+		TestVammConfig::default().into(),
+		SwapConfig { direction: Direction::Remove, ..TestSwapConfig::default().into() },
+		DEFAULT_OUTPUT_REMOVING_BASE - 1,
+		|swap_config| {
+			assert_noop!(
+				TestPallet::swap(&swap_config),
+				Error::<MockRuntime>::SwappedAmountMoreThanMaximumLimit
+			);
+		},
+	)
+}
+
 // -------------------------------------------------------------------------------------------------
 //                                             Proptests
 // -------------------------------------------------------------------------------------------------
@@ -344,33 +377,6 @@ proptest! {
 			assert_noop!(
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::VammIsClosed
-			);
-		});
-	}
-
-	#[test]
-	fn should_fail_if_output_is_less_than_minimum_limit(
-		mut vamm_state in any_vamm_state(),
-		mut swap_config in any_swap_config(),
-		limit in balance_range_upper_half(),
-	) {
-		// Ensure vamm is open before start operation to swap assets.
-		vamm_state.closed = None;
-
-		// Ensure input amount will not cause `InsufficientFundsForTrade`,
-		// `Overflow`, `Underflow`, etc.
-		swap_config.input_amount = 0;
-
-		swap_config.output_amount_limit = Some(limit);
-		swap_config.vamm_id = VammId::zero();
-
-		ExtBuilder {
-			vamm_count: 1,
-			vamms: vec![(0, vamm_state)]
-		}.build().execute_with(|| {
-			assert_noop!(
-				TestPallet::swap(&swap_config),
-				Error::<MockRuntime>::SwappedAmountLessThanMinimumLimit
 			);
 		});
 	}

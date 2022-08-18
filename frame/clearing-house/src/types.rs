@@ -78,6 +78,7 @@ impl<T: Config> Position<T> {
 
 /// Data relating to a perpetual contracts market
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
+#[cfg_attr(test, derive(PartialEq, Eq))]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound())]
 pub struct Market<T: Config> {
@@ -139,6 +140,8 @@ pub struct Market<T: Config> {
 	/// Total position, in base asset, of all traders that are short. Must be negative. Used to
 	/// compute parameter adjustment costs and funding payments from/to the Clearing House.
 	pub base_asset_amount_short: T::Decimal,
+	/// Timestamp from which the market is considered closed.
+	pub closed_ts: Option<DurationSeconds>,
 	/// The latest cumulative funding rate for long positions in this market. Must be updated
 	/// periodically.
 	pub cum_funding_rate_long: T::Decimal,
@@ -179,6 +182,7 @@ impl<T: Config> Market<T> {
 			available_profits: Zero::zero(),
 			base_asset_amount_long: Zero::zero(),
 			base_asset_amount_short: Zero::zero(),
+			closed_ts: None,
 			cum_funding_rate_long: Zero::zero(),
 			cum_funding_rate_short: Zero::zero(),
 			funding_rate_ts: T::UnixTime::now().as_secs(),
@@ -255,6 +259,29 @@ impl<T: Config> Market<T> {
 		T::Decimal::checked_from_rational(price_cents, 100)
 			.ok_or_else(|| ArithmeticError::Overflow.into())
 	}
+
+	/// Returns the current market status w.r.t. closure.
+	pub fn shutdown_status(&self, now: DurationSeconds) -> ShutdownStatus {
+		if let Some(closed_ts) = self.closed_ts {
+			if now >= closed_ts {
+				ShutdownStatus::Closed
+			} else {
+				ShutdownStatus::Closing
+			}
+		} else {
+			ShutdownStatus::Open
+		}
+	}
+}
+
+/// Describes the current market status w.r.t. closure.
+pub enum ShutdownStatus {
+	/// The market is open.
+	Open,
+	/// The market is closed.
+	Closed,
+	/// The market is closing at a future time.
+	Closing,
 }
 
 /// Contains the index price and its validity.

@@ -72,6 +72,9 @@ pub trait Vamm {
 		vamm_id: Self::VammId,
 		base_twap: Option<Self::Decimal>,
 	) -> Result<Self::Decimal, DispatchError>;
+
+	/// Computes the settlement price for the specified vamm, if it is closed.
+	fn get_settlement_price(vamm_id: Self::VammId) -> Result<Self::Decimal, DispatchError>;
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.

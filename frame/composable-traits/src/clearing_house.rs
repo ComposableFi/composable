@@ -21,6 +21,8 @@ pub trait ClearingHouse {
 	type MarketId;
 	/// Specification for market creation.
 	type MarketConfig;
+	/// Timestamp type.
+	type Timestamp;
 
 	/// Deposit collateral to a user's account.
 	///
@@ -143,6 +145,28 @@ pub trait ClearingHouse {
 	fn liquidate(
 		liquidator_id: &Self::AccountId,
 		user_id: &Self::AccountId,
+	) -> Result<(), DispatchError>;
+
+	/// Close an existing market.
+	///
+	/// This should be called only when one wishes to completely halt trading on a market for good.
+	///
+	/// # Parameters
+	/// - `market_id`: the market to close
+	/// - `when`: the timestamp after which the market is to be closed
+	fn close_market(market_id: Self::MarketId, when: Self::Timestamp) -> Result<(), DispatchError>;
+
+	/// Settle a position in a closed market.
+	///
+	/// To be called by users who didn't close their positions before the market closed.
+	///
+	/// # Parameters
+	///
+	/// - `account_id`: the trader's account Id
+	/// - `market_id`: the market Id
+	fn settle_position(
+		account_id: Self::AccountId,
+		market_id: Self::MarketId,
 	) -> Result<(), DispatchError>;
 }
 

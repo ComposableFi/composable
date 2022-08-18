@@ -64,8 +64,8 @@ impl<T: Config> Pallet<T> {
 	/// * Quote assets was not completely drained.
 	///
 	/// # Errors
-	///
 	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+	/// * [`Error::<T>::SwappedAmountMoreThanMaximumLimit`]
 	/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
 	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 	pub fn sanity_check_after_swap(
@@ -75,7 +75,16 @@ impl<T: Config> Pallet<T> {
 	) -> Result<(), DispatchError> {
 		// Ensure swapped amount is valid.
 		if let Some(limit) = config.output_amount_limit {
-			ensure!(amount_swapped.output >= limit, Error::<T>::SwappedAmountLessThanMinimumLimit);
+			match config.direction {
+				Direction::Add => ensure!(
+					amount_swapped.output >= limit,
+					Error::<T>::SwappedAmountLessThanMinimumLimit
+				),
+				Direction::Remove => ensure!(
+					amount_swapped.output <= limit,
+					Error::<T>::SwappedAmountMoreThanMaximumLimit
+				),
+			}
 		}
 
 		// Ensure both quote and base assets weren't completely drained from vamm.

@@ -456,6 +456,16 @@ pub mod pallet {
 		/// * [`Pallet::compute_swap`]
 		/// * [`Pallet::sanity_check_after_swap`]
 		SwappedAmountLessThanMinimumLimit,
+		/// Tried to swap assets but the amount returned was more than the maximum expected.
+		///
+		/// ## Occurrences
+		///
+		/// * [`Pallet::swap`]
+		/// * [`Pallet::swap_simulation`]
+		/// * [`Pallet::do_swap`]
+		/// * [`Pallet::compute_swap`]
+		/// * [`Pallet::sanity_check_after_swap`]
+		SwappedAmountMoreThanMaximumLimit,
 		/// Tried to derive invariant from [`base`](VammState::base_asset_reserves) and
 		/// [`quote`](VammState::quote_asset_reserves) asset, but the
 		/// computation was not successful.
@@ -904,6 +914,7 @@ pub mod pallet {
 		/// * [`Error::<T>::BaseAssetReservesWouldBeCompletelyDrained`]
 		/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 		/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+		/// * [`Error::<T>::SwappedAmountMoreThanMaximumLimit`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		/// * [`ArithmeticError::Underflow`](sp_runtime::ArithmeticError)
 		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
@@ -975,6 +986,7 @@ pub mod pallet {
 		/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 		/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
 		/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+		/// * [`Error::<T>::SwappedAmountMoreThanMaximumLimit`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		/// * [`ArithmeticError::Underflow`](sp_runtime::ArithmeticError)
 		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
@@ -1076,6 +1088,10 @@ pub mod pallet {
 
 			// Return new invariant.
 			Ok(invariant)
+		}
+
+		fn get_settlement_price(vamm_id: Self::VammId) -> Result<Self::Decimal, DispatchError> {
+			todo!()
 		}
 	}
 }

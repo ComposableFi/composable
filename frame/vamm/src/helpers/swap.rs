@@ -42,6 +42,7 @@ impl<T: Config> Pallet<T> {
 	/// * [`Error::<T>::InsufficientFundsForTrade`]
 	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+	/// * [`Error::<T>::SwappedAmountMoreThanMaximumLimit`]
 	/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
 	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
 	#[transactional]
@@ -86,6 +87,7 @@ impl<T: Config> Pallet<T> {
 	/// * [`Error::<T>::InsufficientFundsForTrade`]
 	/// * [`Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained`]
 	/// * [`Error::<T>::SwappedAmountLessThanMinimumLimit`]
+	/// * [`Error::<T>::SwappedAmountMoreThanMaximumLimit`]
 	/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
 	/// * [`ArithmeticError`](sp_runtime::ArithmeticError)
 	pub fn compute_swap(

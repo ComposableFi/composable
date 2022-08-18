@@ -41,6 +41,41 @@ fn get_position(account: &AccountId, market_id: &MarketId) -> Position {
 // -------------------------------------------------------------------------------------------------
 
 #[test]
+fn should_fail_if_market_is_not_open() {
+	let config = MarketConfig {
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR,
+		..Default::default()
+	};
+
+	with_market_context(Default::default(), config.clone(), |market_id| {
+		run_for_seconds(config.funding_frequency);
+		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+		assert_ok!(<TestPallet as ClearingHouse>::close_market(
+			market_id,
+			config.funding_frequency * 3
+		));
+
+		// Time now = config.funding_frequency * 2
+		run_for_seconds(config.funding_frequency);
+		// Should fail as market is in the process of closing
+		assert_noop!(
+			<TestPallet as ClearingHouse>::update_funding(&market_id),
+			Error::<Runtime>::MarketShuttingDown
+		);
+
+		// Time now = config.funding_frequency * 3
+		run_for_seconds(config.funding_frequency);
+		// Should fail as market is closed
+		assert_noop!(
+			<TestPallet as ClearingHouse>::update_funding(&market_id),
+			Error::<Runtime>::MarketClosed
+		);
+	})
+}
+
+#[test]
 fn should_update_oracle_and_vamm_twaps() {
 	let config = MarketConfig {
 		funding_frequency: ONE_HOUR,

@@ -30,6 +30,7 @@ use frame_support::{
 use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber, FixedU128};
 
+pub mod close_market;
 pub mod close_position;
 pub mod comp;
 pub mod create_market;
@@ -37,6 +38,7 @@ pub mod deposit_collateral;
 pub mod instruments;
 pub mod liquidate;
 pub mod open_position;
+pub mod settle_position;
 pub mod update_funding;
 pub mod withdraw_collateral;
 

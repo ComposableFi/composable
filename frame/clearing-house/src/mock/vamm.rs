@@ -96,6 +96,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		FailedToCalculatePrice,
+		FailedToCalculateSettlementPrice,
 		FailedToCalculateTwap,
 		FailedToCreateVamm,
 		FailedToExecuteSwap,
@@ -136,6 +137,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn _slippage)]
 	pub type Slippage<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn _settlement_price)]
+	pub type SettlementPrices<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn hardcoded_twap)]
@@ -251,6 +256,11 @@ pub mod pallet {
 
 			Ok(Zero::zero()) // Dummy returns
 		}
+
+		fn get_settlement_price(vamm_id: Self::VammId) -> Result<Self::Decimal, DispatchError> {
+			Self::_settlement_price(&vamm_id)
+				.ok_or_else(|| Error::<T>::FailedToCalculateSettlementPrice.into())
+		}
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -274,6 +284,12 @@ pub mod pallet {
 
 		pub fn set_price_of(vamm_id: &T::VammId, price: Option<T::Decimal>) {
 			Prices::<T>::mutate_exists(vamm_id, |p| {
+				*p = price;
+			});
+		}
+
+		pub fn set_settlement_price_of(vamm_id: &T::VammId, price: Option<T::Decimal>) {
+			SettlementPrices::<T>::mutate_exists(vamm_id, |p| {
 				*p = price;
 			});
 		}
