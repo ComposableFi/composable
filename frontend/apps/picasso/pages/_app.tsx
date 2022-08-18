@@ -72,7 +72,7 @@ export default function MyApp(props: MyAppProps) {
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>
       <BlockchainProvider
-        supportedChains={Object.entries(NETWORKS).map(([netId, net]) => {
+        blockchainInfo={Object.entries(NETWORKS).map(([netId, net]) => {
           return {
             chainId: +netId,
             rpcUrl: net.rpcUrl,
