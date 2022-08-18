@@ -40,12 +40,14 @@ Our packages support both x86 and ARM architectures.
 
 Once you have `nix` or `NixOS` installed, you should enable the following features:
 ```nix
-nix = {
-  useSandbox = "relaxed";
-  extraOptions = ''
-    experimental-features = nix-command flakes
-  '';
- };
+{
+  nix = {
+    useSandbox = "relaxed";
+    extraOptions = ''
+      experimental-features = nix-command flakes
+    '';
+  };
+}
 ```
 
 You can now use `nix flake show` in order to view all of the packages we provide, such as `composable-node` and `devnet-dali`.
