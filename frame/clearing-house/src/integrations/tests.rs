@@ -1,14 +1,14 @@
 #![allow(clippy::disallowed_methods)]
-use crate::MarketConfig as MarketConfigGeneric;
+use crate::{Direction::Long, MarketConfig as MarketConfigGeneric};
 use composable_support::validation::Validated;
 use composable_traits::time::ONE_HOUR;
 use frame_support::{assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
-use sp_runtime::{FixedPointNumber, Percent};
+use sp_runtime::{traits::Zero, FixedPointNumber, Percent};
 
 use super::mock::{
-	AssetId, Balance, BlockNumber, Decimal, ExtBuilder, Moment, Oracle, Origin, StalePrice, System,
-	TestPallet, Timestamp, UnsignedDecimal, ALICE, BOB, DOT, PICA, USDC,
+	AssetId, Balance, BlockNumber, Decimal, ExtBuilder, MarketId, Moment, Oracle, Origin,
+	StalePrice, System, TestPallet, Timestamp, UnsignedDecimal, ALICE, BOB, DOT, PICA, USDC,
 };
 
 impl Default for ExtBuilder {
@@ -90,8 +90,8 @@ impl Default for MarketConfig {
 		Self {
 			asset: DOT,
 			vamm_config: VammConfig {
-				base_asset_reserves: 1_000_000_000_000_000_000,
-				quote_asset_reserves: 100_000_000_000_000_000_000,
+				base_asset_reserves: UNIT * 100,
+				quote_asset_reserves: UNIT * 100_000,
 				peg_multiplier: 1,
 				twap_period: ONE_HOUR,
 			},
@@ -131,6 +131,12 @@ proptest! {
 			set_oracle_for(asset_id, 1_000); // 10 in cents
 			let config = MarketConfig { asset: asset_id, ..Default::default() };
 			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+
+			let market_id = MarketId::zero();
+			let market = TestPallet::get_market(&market_id).unwrap();
+			assert_eq!(market.asset_id, asset_id);
+			assert_eq!(market.last_oracle_price, Decimal::from(10));
+			assert_eq!(market.last_oracle_twap, Decimal::from(10));
 		})
 	}
 }
@@ -138,3 +144,47 @@ proptest! {
 // ----------------------------------------------------------------------------------------------------
 //                                         Open Position
 // ----------------------------------------------------------------------------------------------------
+
+#[test]
+fn should_succeed_in_opening_first_position() {
+	ExtBuilder {
+		native_balances: vec![(ALICE, UNIT), (BOB, UNIT)],
+		balances: vec![(ALICE, PICA, UNIT), (BOB, PICA, UNIT), (BOB, USDC, UNIT * 100)],
+		..Default::default()
+	}
+	.build()
+	.execute_with(|| {
+		set_oracle_for(DOT, 1_000); // 10 in cents
+		let config = MarketConfig {
+			asset: DOT,
+			vamm_config: VammConfig {
+				base_asset_reserves: UNIT * 100,
+				quote_asset_reserves: UNIT * 10_000,
+				peg_multiplier: 10,
+				twap_period: ONE_HOUR,
+			},
+			// 10x max leverage to open a position
+			margin_ratio_initial: Decimal::from_float(0.1),
+			// fully liquidate when above 50x leverage
+			margin_ratio_maintenance: Decimal::from_float(0.02),
+			// partially liquidate when above 25x leverage
+			margin_ratio_partial: Decimal::from_float(0.04),
+			minimum_trade_size: 0.into(),
+			funding_frequency: ONE_HOUR,
+			funding_period: ONE_HOUR * 24,
+			taker_fee: 0,
+			twap_period: ONE_HOUR,
+		};
+		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+
+		assert_ok!(TestPallet::deposit_collateral(Origin::signed(BOB), USDC, UNIT * 100));
+
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(BOB),
+			Zero::zero(),
+			Long,
+			UNIT * 100,
+			0
+		));
+	})
+}

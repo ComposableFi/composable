@@ -1,6 +1,6 @@
 pub use crate::mock::assets::*;
 use crate::{self as clearing_house};
-use composable_traits::{defi::DeFiComposableConfig, time::DurationSeconds};
+use composable_traits::{currency::LocalAssets, defi::DeFiComposableConfig, time::DurationSeconds};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU16, ConstU32, ConstU64, EnsureOneOf, Everything, GenesisBuild},
@@ -257,6 +257,16 @@ where
 
 pub type PriceValue = u128;
 
+pub struct MockLocalAssets;
+
+impl LocalAssets<AssetId> for MockLocalAssets {
+	fn decimals(
+		_currency_id: AssetId,
+	) -> Result<composable_traits::currency::Exponent, sp_runtime::DispatchError> {
+		Ok(18) // We know that all assets have 18 decimals since we're using Fixed(I|U)128
+	}
+}
+
 parameter_types! {
 	pub const MaxAnswerBound: u32 = 5;
 	pub const MaxAssetsCount: u32 = 2;
@@ -283,7 +293,7 @@ impl pallet_oracle::Config for Runtime {
 	type MaxHistory = MaxHistory;
 	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = ();
-	type LocalAssets = ();
+	type LocalAssets = MockLocalAssets;
 	type TreasuryAccount = TreasuryAccountId;
 }
 
