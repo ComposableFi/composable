@@ -88,9 +88,9 @@ cd composable
 nix run ".#devnet-dali"
 ```
 
-### Nix within docker
+### Nix within Docker
 
-Do you not feel like installing `nix`? You can also use nix within docker like this:
+Do you not feel like installing `nix`? You can also use `nix` within `docker`like this:
 
 ```bash
 docker volume create nix # cache builds
