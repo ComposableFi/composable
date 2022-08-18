@@ -7,7 +7,7 @@ import { useContext, useEffect } from "react";
 import { useStore } from "@/stores/root";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
-import { ConnectorType, useConnector } from "@integrations-lib/core";
+import { ConnectorType, useConnector } from "bi-lib";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();

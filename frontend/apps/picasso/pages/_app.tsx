@@ -13,7 +13,7 @@ import SubstrateBalancesUpdater from "@/stores/defi/polkadot/balances/PolkadotBa
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import CrowdloanRewardsUpdater from "@/stores/defi/polkadot/crowdloanRewards/CrowdloanRewardsUpdater";
 import { PalletsContextProvider } from "@/defi/polkadot/context/PalletsContext";
-import { BlockchainProvider } from "@integrations-lib/core";
+import { BlockchainProvider } from "bi-lib";
 import { NETWORKS } from "@/defi/Networks";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components/Molecules/Snackbar";

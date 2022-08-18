@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const withPWA = require("next-pwa");
 const withTM = require("next-transpile-modules")([
-  "@integrations-lib/core",
+  "bi-lib",
   "substrate-react",
   "@web3-react/core",
   "shared",

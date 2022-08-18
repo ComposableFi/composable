@@ -46,7 +46,7 @@
     "react-hotjar": "^4.0.0",
     "substrate-react": "*",
     "zustand": "^4.0.0-beta.2",
-    "@integrations-lib/core": "*",
+    "bi-lib": "*",
     "shared": "*",
     "tokens": "*"
   },

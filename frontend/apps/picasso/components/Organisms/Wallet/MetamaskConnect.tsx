@@ -5,7 +5,7 @@ import { Modal } from "../../Molecules/Modal";
 
 import { useStore } from "@/stores/root";
 import { useTheme, Box, Button, Typography } from "@mui/material";
-import { ConnectorType, useBlockchainProvider, useConnector } from "@integrations-lib/core";
+import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 
 import { Input } from "@/components";
 import { FC } from "react";
