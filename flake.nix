@@ -524,7 +524,7 @@
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
                 "${composable-runtime}/lib/runtime.optimized.wasm";
-              buildInputs = [ cargo-udeps expat freetype openssl ];
+              buildInputs = [ cargo-udeps expat freetype fontconfig openssl ];
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand = "cargo udeps";
               cargoExtraArgs =
