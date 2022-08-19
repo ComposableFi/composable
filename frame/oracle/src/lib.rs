@@ -68,7 +68,6 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use lite_json::json::JsonValue;
-	use primitives::currency::CurrencyId;
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{

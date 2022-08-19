@@ -8441,7 +8441,6 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "parking_lot 0.12.1",
- "primitives",
  "proptest",
  "scale-info",
  "serde",
