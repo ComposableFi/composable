@@ -371,7 +371,6 @@ impl pallet_undercollateralized_loans::Config for Runtime {
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = UncollateralizedLoansPalletId;
 	type LoanId = UncollateralizedLoanId;
-	type Counter = Counter;
 	type MaxMarketsCounterValue = CounterValue;
 	type MaxLoansPerMarketCounterValue = CounterValue;
 	type OracleMarketCreationStake = OracleMarketCreationStake;

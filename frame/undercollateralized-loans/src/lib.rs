@@ -50,9 +50,10 @@ pub mod validation;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::{
-		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, PaymentsOutcomes, Timestamp,
+		Counter, LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, PaymentsOutcomes,
+		Timestamp,
 	};
-	use codec::{Codec, FullCodec};
+	use codec::Codec;
 	use composable_traits::{
 		currency::CurrencyFactory,
 		defi::{DeFiComposableConfig, DeFiEngine},
@@ -150,20 +151,9 @@ pub mod pallet {
 			LiquidationStrategyId = Self::LiquidationStrategyId,
 		>;
 
-		// TODO: @mikolaichuk: use u128 instead.
-		type Counter: AddAssign
-			+ One
-			+ FullCodec
-			+ Copy
-			+ PartialEq
-			+ PartialOrd
-			+ Debug
-			+ Default
-			+ TypeInfo;
-
 		type UnixTime: UnixTime;
-		type MaxMarketsCounterValue: Get<Self::Counter>;
-		type MaxLoansPerMarketCounterValue: Get<Self::Counter>;
+		type MaxMarketsCounterValue: Get<Counter>;
+		type MaxLoansPerMarketCounterValue: Get<Counter>;
 		// Each payments schedule can not have more than this amount of payments.
 		type MaxPaymentsPerSchedule: Get<u32>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
@@ -180,16 +170,18 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
+	// Counting created market. Counter's value is used to generate market's id value.
 	#[pallet::storage]
-	pub type MarketsCounterStorage<T: Config> = StorageValue<_, T::Counter, ValueQuery>;
+	pub type MarketsCounterStorage<T: Config> = StorageValue<_, Counter, ValueQuery>;
 
+	// Counting created loans. Counter's value is used to generate loan's id value.
 	#[pallet::storage]
-	pub type LoansCounterStorage<T: Config> = StorageValue<_, T::Counter, ValueQuery>;
+	pub type LoansCounterStorage<T: Config> = StorageValue<_, Counter, ValueQuery>;
 
-	// TODO: @mikolaichuk: Checke nonce type in composable-support.
+	// Counting amount of loans created within each market.
 	#[pallet::storage]
 	pub type LoansPerMarketCounterStorage<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, T::Counter, ValueQuery>;
+		StorageMap<_, Twox64Concat, T::AccountId, Counter, ValueQuery>;
 
 	#[pallet::storage]
 	pub type CurrentDateStorage<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
@@ -252,6 +244,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		// Amount of markets is bounded.
 		MaxMarketsReached,
+		// Amount of loans per market is bounded.
+		MaxLoansPerMarketReached,
 		// We can not work with zero prices.
 		PriceOfInitialBorrowVaultShouldBeGreaterThanZero,
 		// If wrong account id of market or loan was provided.
@@ -311,8 +305,6 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		// TODO: @mikolaichuk: add weights calculation
-		// TODO: @mikolaichuk:  treat untreated loans on chain.
-		//                      then clen yesterday schdule.
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
 			Self::treat_vaults_balance(block_number);
 			let now = Self::now();
@@ -324,7 +316,7 @@ pub mod pallet {
 				// Check if we have loans which were not processed via off-chain worker,
 				// and process them.
 				Self::last_chance_processing(stored_date_timestamp);
-				// Remove yestarday schedule.
+				// Remove yesterday schedule.
 				crate::ScheduleStorage::<T>::remove(stored_date_timestamp);
 				// Set up current date.
 				let current_date_aligned_timestamp = Self::get_date_aligned_timestamp(now);

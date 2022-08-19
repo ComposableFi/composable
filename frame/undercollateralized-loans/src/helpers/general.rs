@@ -1,7 +1,7 @@
 use crate::{
 	types::{
-		LoanConfigOf, LoanInputOf, MarketInfoOf, MarketInputOf, Payment, PaymentOf, PaymentOutcome,
-		PaymentOutcomeOf, PaymentsOutcomes, Timestamp,
+		Counter, LoanConfigOf, LoanInputOf, MarketInfoOf, MarketInputOf, Payment, PaymentOf,
+		PaymentOutcome, PaymentOutcomeOf, PaymentsOutcomes, Timestamp,
 	},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
@@ -44,8 +44,8 @@ impl<T: Config> Pallet<T> {
 	) -> Result<MarketInfoOf<T>, DispatchError> {
 		let config_input = input.value();
 		crate::MarketsCounterStorage::<T>::try_mutate(|counter| {
-			*counter += T::Counter::one();
-			ensure!(*counter <= T::MaxMarketsCounterValue::get(), Error::<T>::MaxMarketsReached,);
+			*counter += Counter::one();
+			ensure!(*counter <= T::MaxMarketsCounterValue::get(), Error::<T>::MaxMarketsReached);
 			let market_account_id = Self::market_account_id(*counter);
 			let borrow_asset_vault = T::Vault::create(
 				Deposit::Existential,
@@ -114,21 +114,31 @@ impl<T: Config> Pallet<T> {
 		// Create non-activated loan and increment loans' counter.
 		// This loan have to be activated by borrower further.
 		crate::LoansCounterStorage::<T>::try_mutate(|counter| {
-			*counter += T::Counter::one();
-			let loan_account_id = Self::loan_account_id(*counter);
-			let loan_config = LoanConfig::new(
-				loan_account_id.clone(),
-				config_input.market_account_id,
-				config_input.borrower_account_id,
-				market_config.collateral_asset_id().clone(),
-				market_config.borrow_asset_id().clone(),
-				config_input.principal,
-				config_input.collateral,
-				schedule,
-			);
-			crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_config.clone());
-			crate::NonActiveLoansStorage::<T>::insert(loan_account_id, ());
-			Ok(loan_config)
+			*counter += Counter::one();
+			crate::LoansPerMarketCounterStorage::<T>::try_mutate(
+				market_config.account_id(),
+				|loans_per_market_counter| {
+					*loans_per_market_counter += Counter::one();
+					ensure!(
+						*loans_per_market_counter <= T::MaxLoansPerMarketCounterValue::get(),
+						Error::<T>::MaxLoansPerMarketReached
+					);
+					let loan_account_id = Self::loan_account_id(*counter);
+					let loan_config = LoanConfig::new(
+						loan_account_id.clone(),
+						config_input.market_account_id,
+						config_input.borrower_account_id,
+						market_config.collateral_asset_id().clone(),
+						market_config.borrow_asset_id().clone(),
+						config_input.principal,
+						config_input.collateral,
+						schedule,
+					);
+					crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_config.clone());
+					crate::NonActiveLoansStorage::<T>::insert(loan_account_id, ());
+					Ok(loan_config)
+				},
+			)
 		})
 	}
 
@@ -449,7 +459,6 @@ impl<T: Config> Pallet<T> {
 		T::Oracle::get_price_inverse(borrow_asset, T::OracleMarketCreationStake::get())
 	}
 
-	// #generalization
 	pub(crate) fn now() -> Timestamp {
 		T::UnixTime::now().as_secs() as Timestamp
 	}
