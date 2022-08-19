@@ -42,7 +42,6 @@ composable-traits = { path = "../composable-traits", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-primitives = { path = "../../runtime/primitives", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
@@ -66,7 +65,6 @@ std = [
   "sp-core/std",
   "sp-std/std",
   "scale-info/std",
-  "primitives/std",
 ]
 
 runtime-benchmarks = [
