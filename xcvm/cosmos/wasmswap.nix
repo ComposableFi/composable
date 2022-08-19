@@ -1,12 +1,15 @@
-{ buildGoModule, rustPlatform, fetchFromGitHub, patchelf, system, lib }:
-  rustPlatform.buildRustPackage {
+# outputs /lib/wasmswap.wasm
+{ buildGoModule, crane, fetchFromGitHub, patchelf, system, lib }:
+  crane.buildPackage {
     name = "wasmswap";
     src = fetchFromGitHub {
       owner = "Wasmswap";
       repo = "wasmswap-contracts";
-      rev = "1afba37bfd0eda626d11ec710f51b16cb4254167";
-      sha256 = "sha256-/wS+kZFu4RTO1Ump21dM9DpQBxTQ87BlCblE0JYMdiY=";
+      rev = "cbd85f3a0a3636a273a1db136eacd26c6c50b7c8";
+      sha256 = "sha256-CD0NHCXnM/9f8FiSFp9VXPfNuDMx3sYP4i6vdCOd6aE=";
     };
-    cargoHash = "sha256-WMfYsGtzOCxbhyoRRLtHg9H8ckPCByjsBSZCXimj/80=";
+    cargoHash = "sha256-zj6QCY0KdZkDnhFZrrOus7L/0MeXxIrP6i7ZnpsaEC0=";
     doCheck = false;
+    cargoExtraArgs = "--target wasm32-unknown-unknown";
+    cargoCheckCommand = "true";
   }
