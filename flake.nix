@@ -501,6 +501,7 @@
               };
 
             junod = pkgs.callPackage ./.nix/junod.nix { };
+            gex = pkgs.callPackage ./.nix/gex.nix { };
 
             default = packages.composable-node;
           };
@@ -543,9 +544,9 @@
                 base.buildInputs ++
                 [
                   junod
+                  gex
                   devnet-dali
                   # TODO: hasura
-                  # TODO: cosmos explorer
                   # TODO: some well know wasm contracts deployed                
                   # TODO: junod server
                   # TODO: solc
@@ -611,18 +612,19 @@
                                     GAS_LIMIT = 100000000;
                                   };
                                   # TODO: mount proper genesis here as per
+                                  # "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover
                                   # `"wasm":{"codes":[],"contracts":[],"gen_msgs":[],"params":{"code_upload_access":{"address":"","permission":"Everybody"},`
                                   #network_mode 
                                   command = ''
                                     ./setup_and_run.sh juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y
                                   '';
-                                  network_mode = "host";
+                                  #network_mode = "host";
                                   # these ports are open by default
-                                  # ports = [
-                                  #     "1317:1317" # rest
-                                  #     "26656:26656" # p2p
-                                  #     "26657:26657" # rpc
-                                  # ];
+                                  ports = [
+                                      "1317:1317" # rest openapi
+                                      "26656:26656" # p2p
+                                      "26657:26657" # rpc json-rpc
+                                  ];
                                 };
                               };
                             };
