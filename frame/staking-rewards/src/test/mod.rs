@@ -665,6 +665,12 @@ mod claim {
 				// First claim
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), stake_id));
 
+				assert_last_event::<Test, _>(|e| {
+					matches!(&e.event,
+            		Event::StakingRewards(crate::Event::Claimed{ owner, position_id })
+            		if owner == &staker && position_id == &stake_id)
+				});
+
 				let stake = Stakes::<Test>::get(stake_id).expect("expected stake. QED");
 
 				println!("{:?}", stake.reductions);
@@ -698,8 +704,13 @@ mod claim {
 						.saturating_add(second_in_milliseconds),
 				);
 
-				// First claim
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), stake_id));
+
+				assert_last_event::<Test, _>(|e| {
+					matches!(&e.event,
+            		Event::StakingRewards(crate::Event::Claimed{ owner, position_id })
+            		if owner == &staker && position_id == &stake_id)
+				});
 
 				let rewards_pool = StakingRewards::pools(StakingRewards::pool_count())
 					.expect("rewards_pool expected");
