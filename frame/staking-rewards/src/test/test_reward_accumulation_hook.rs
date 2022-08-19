@@ -14,10 +14,8 @@ fn test_reward_update_calculation() {
 	new_test_ext().execute_with(|| {
 		const MAX_REWARDS: u128 = PICA::units(51);
 
-		// works for any value, including 0
-		const STARTING_BLOCK: u64 = 10;
-
-		process_and_progress_blocks::<crate::Pallet<Test>, Test>(STARTING_BLOCK as usize);
+		// block 0 is weird, start at 1 instead
+		process_and_progress_blocks::<crate::Pallet<Test>, Test>(1);
 
 		let now = <<Test as crate::Config>::UnixTime as UnixTime>::now().as_secs();
 
@@ -55,14 +53,17 @@ fn test_reward_update_calculation() {
 			.unwrap()
 			.clone();
 
-		for (current_block_number, expected_total_rewards) in expected {
+		for (block_number, expected_total_rewards) in expected {
+			// to clear events
+			process_and_progress_blocks::<crate::Pallet<Test>, Test>(1);
+
 			StakingRewards::reward_accumulation_hook_reward_update_calculation(
 				pool_id,
 				&mut reward,
-				now.safe_add(&block_seconds(current_block_number).try_into().unwrap()).unwrap(),
+				now.safe_add(&block_seconds(block_number).try_into().unwrap()).unwrap(),
 			);
 
-			println!("blocks surpassed: {}", current_block_number);
+			println!("blocks surpassed: {}", block_number);
 			for error in [
 				RewardAccumulationHookError::BackToTheFuture,
 				RewardAccumulationHookError::RewardsPotEmpty,
@@ -82,7 +83,7 @@ fn test_reward_update_calculation() {
 
 			assert_eq!(
 				reward.total_rewards, expected_total_rewards,
-				"blocks surpassed: {current_block_number}"
+				"blocks surpassed: {block_number}"
 			);
 		}
 
