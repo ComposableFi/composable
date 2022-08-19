@@ -499,17 +499,20 @@
               buildInputs = [ cargo-deny ];
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo deny";
-              cargoExtraArgs = "--manifest-path ./frame/composable-support/Cargo.toml check ban";
+              cargoExtraArgs =
+                "--manifest-path ./frame/composable-support/Cargo.toml check ban";
             });
 
             cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
               DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
-              COMPOSABLE_RUNTIME = "${composable-runtime}/lib/runtime.optimized.wasm";
+              COMPOSABLE_RUNTIME =
+                "${composable-runtime}/lib/runtime.optimized.wasm";
               buildInputs = [ cargo-udeps expat freetype openssl ];
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand = "cargo udeps";
-              cargoExtraArgs = "--workspace --exclude local-integration-tests --all-features";
+              cargoExtraArgs =
+                "--workspace --exclude local-integration-tests --all-features";
             });
 
             kusama-picasso-karura =
