@@ -2,6 +2,7 @@ import { BondOffer } from "@/defi/types";
 import BigNumber from "bignumber.js";
 import { StoreSlice } from "../types";
 import {
+  putBondedOffers,
   putBondOffer,
   putBondOfferROI,
   putBondOffers,
@@ -13,11 +14,16 @@ const createBondsSlice: StoreSlice<BondSlice> = (set) => ({
   bondOffers: {
     list: [],
     totalPurchased: {},
+    bondedOffers: {},
     roi: {},
   },
   setBondOffers: (bondOffers: BondOffer[]) =>
     set((prev: BondSlice) => ({
       bondOffers: putBondOffers(prev.bondOffers, bondOffers),
+    })),
+  putBondedOffers: (offersMap) =>
+    set((prev: BondSlice) => ({
+      bondOffers: putBondedOffers(prev.bondOffers, offersMap),
     })),
   putBondOffer: (bondOffer: BondOffer) =>
     set((prev: BondSlice) => ({

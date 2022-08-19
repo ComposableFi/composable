@@ -1,29 +1,65 @@
-import { BondOffer, BondPrincipalAsset } from "@/defi/types";
+import { BondOffer, BondPrincipalAsset, VestingSchedule } from "@/defi/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 import { MockedAsset } from "@/store/assets/assets.types";
 import {
-  AVERAGE_BLOCK_TIME,
   calculateBondROI,
-  calculateVestingTime,
   decodeBondOffer,
+  decodeVestingSchedule,
   DEFAULT_NETWORK_ID,
   getBondPrincipalAsset,
   matchAssetByPicassoId,
 } from "@/defi/utils";
-import { useParachainApi } from "substrate-react";
-import { useBlockInterval } from "../useBlockInterval";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 
 export default function useBondOffer(offerId: string) {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { bondOffers, supportedAssets, apollo, putBondOffer } = useStore();
   const lpRewardingPools = useAllLpTokenRewardingPools();
 
   const [selectedBondOffer, setSelectedBondOffer] = useState<
     BondOffer | undefined
   >(undefined);
+
+  const vestingScheduleIds = useMemo(() => {
+    if (offerId in bondOffers.bondedOffers) {
+      return bondOffers.bondedOffers[offerId];
+    }
+    return new Set();
+  }, [offerId, bondOffers]);
+
+  const [vestingSchedules, setVestingSchedules] = useState<VestingSchedule[]>(
+    []
+  );
+
+  useEffect(() => {
+    if (
+      parachainApi &&
+      selectedBondOffer &&
+      selectedAccount &&
+      vestingScheduleIds.size > 0
+    ) {
+      parachainApi.query.vesting
+        .vestingSchedules(
+          selectedAccount.address,
+          selectedBondOffer.reward.asset
+        )
+        .then((vestingSchedules) => {
+          const schedules: any = vestingSchedules.toJSON();
+
+          setVestingSchedules(
+            Object.values(schedules)
+              .map((i) => decodeVestingSchedule(i))
+              .filter((i) =>
+                vestingScheduleIds.has(i.vestingScheduleId.toString())
+              )
+          );
+        });
+    }
+  }, [selectedBondOffer, parachainApi, selectedAccount, vestingScheduleIds]);
 
   useEffect(() => {
     let offer = bondOffers.list.find((o) => o.offerId.toString() === offerId);
@@ -115,6 +151,8 @@ export default function useBondOffer(offerId: string) {
     principalAssetPerBond,
     rewardAssetPerBond,
     roi,
+    vestingSchedules,
+    vestingScheduleIds,
   };
 }
 

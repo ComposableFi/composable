@@ -11,12 +11,15 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { InfoOutlined } from "@mui/icons-material";
-import { BondOffer, TableHeader } from "@/defi/types";
+import { TableHeader } from "@/defi/types";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { fetchBondVestingSchedules } from "@/defi/subsquid/bonds/helpers";
+import {
+  createBondOfferIdVestingScheduleIdMap,
+  DEFAULT_NETWORK_ID,
+} from "@/defi/utils";
+import { fetchVestingSchedulesAdded } from "@/defi/subsquid/bonds/helpers";
 import useStore from "@/store/useStore";
 import BondedOfferRow from "./bonds/BondedOfferRow";
 
@@ -39,23 +42,34 @@ const tableHeaders: TableHeader[] = [
 ];
 
 export const YourBondTable: React.FC = () => {
-
-  const { bondOffers } = useStore();
-  const { list } = bondOffers;
+  const { bondOffers, putBondedOffers } = useStore();
+  const { list, bondedOffers } = bondOffers;
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const router = useRouter();  
-  
-  const [myOffers, setMyOffers] = useState<BondOffer[]>([]);
+  const router = useRouter();
+
   useEffect(() => {
     if (selectedAccount && parachainApi) {
-      fetchBondVestingSchedules(parachainApi, list, selectedAccount.address).then(setMyOffers)
+      fetchVestingSchedulesAdded(selectedAccount.address).then(
+        (addedEvents) => {
+          putBondedOffers(
+            createBondOfferIdVestingScheduleIdMap(parachainApi, addedEvents)
+          );
+        }
+      );
     }
-  }, [parachainApi, selectedAccount, list]);
+  }, [selectedAccount, parachainApi, putBondedOffers]);
 
   const handleRowClick = (offerId: number) => {
     router.push(`/bond/select/${offerId}`);
   };
+
+  const myOffers = useMemo(() => {
+    return list.filter((bondOffer) => {
+      const offerId = bondOffer.offerId.toString();
+      return offerId in bondedOffers;
+    });
+  }, [list, bondedOffers]);
 
   if (myOffers.length == 0) {
     return (
@@ -94,7 +108,13 @@ export const YourBondTable: React.FC = () => {
           </TableHead>
           <TableBody>
             {myOffers.map((bond) => (
-              <BondedOfferRow key={bond.offerId.toString()} bondOffer={bond} />
+              <BondedOfferRow
+                key={bond.offerId.toString()}
+                bondOffer={bond}
+                handleBondedOfferRowClick={() =>
+                  handleRowClick(bond.offerId.toNumber())
+                }
+              />
             ))}
           </TableBody>
         </Table>

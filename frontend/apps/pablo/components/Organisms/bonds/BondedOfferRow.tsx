@@ -4,7 +4,7 @@ import { BondOffer } from "@/defi/types";
 import { TableCell, TableRow, Typography } from "@mui/material";
 import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
 
-const BondedOfferRow = ({ bondOffer }: { bondOffer: BondOffer }) => {
+const BondedOfferRow = ({ bondOffer, handleBondedOfferRowClick }: { bondOffer: BondOffer, handleBondedOfferRowClick: () => void }) => {
   const principalAsset = useBondOfferPrincipalAsset(bondOffer);
   const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
   const { baseAsset, quoteAsset } = lpPrincipalAsset;
@@ -12,7 +12,7 @@ const BondedOfferRow = ({ bondOffer }: { bondOffer: BondOffer }) => {
   const vestingTime = useBondVestingTime(bondOffer);
 
   return (
-    <TableRow sx={{ cursor: "pointer" }}>
+    <TableRow sx={{ cursor: "pointer" }} onClick={handleBondedOfferRowClick}>
       <TableCell align="left">
         {baseAsset && quoteAsset ? (
           <PairAsset

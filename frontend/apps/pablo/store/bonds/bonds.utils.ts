@@ -43,3 +43,12 @@ export const putBondOfferROI = (
     draft.roi = roi;
   })
 }
+
+export const putBondedOffers = (
+  bondOffersState: BondSlice["bondOffers"],
+  bondedOffers: Record<string, Set<string>>
+) => {
+  return produce(bondOffersState, (draft) => {
+    draft.bondedOffers = bondedOffers;
+  })
+}
