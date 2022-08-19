@@ -839,7 +839,6 @@ pub mod pallet {
 
 				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
 
-				// REVIEW: There has to be a better way to do this
 				// Update reductions with what was claimed
 				stake.reductions = stake
 					.clone()
