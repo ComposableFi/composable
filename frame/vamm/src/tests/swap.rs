@@ -22,7 +22,8 @@ use crate::{
 	},
 };
 use composable_traits::vamm::{
-	AssetType, Direction, SwapOutput, Vamm as VammTrait, MINIMUM_TWAP_PERIOD,
+	AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait, VammConfig,
+	MINIMUM_TWAP_PERIOD,
 };
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
@@ -31,42 +32,128 @@ use sp_core::U256;
 use sp_runtime::traits::Zero;
 
 // -------------------------------------------------------------------------------------------------
+//                                         Helper Functions
+// -------------------------------------------------------------------------------------------------
+
+fn check_add_base(
+	vamm_config: &VammConfig<Balance, Timestamp>,
+	swap_config: &SwapConfig<VammId, Balance>,
+) -> SwapOutput<Balance> {
+	let swap = TestPallet::swap(swap_config);
+	let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
+	assert_ok!(swap, SwapOutput { output: QUOTE_RETURNED_AFTER_ADDING_BASE, negative: false });
+	assert_eq!(vamm_after_swap.base_asset_reserves, BASE_ASSET_RESERVES_AFTER_ADDING_BASE);
+	assert_eq!(vamm_after_swap.quote_asset_reserves, QUOTE_ASSET_RESERVES_AFTER_ADDING_BASE);
+	assert_eq!(
+		vamm_after_swap.base_asset_reserves,
+		vamm_config.base_asset_reserves + swap_config.input_amount
+	);
+	assert_eq!(
+		vamm_after_swap.quote_asset_reserves + swap.unwrap().output,
+		vamm_config.quote_asset_reserves
+	);
+
+	swap.unwrap()
+}
+
+fn check_add_quote(
+	vamm_config: &VammConfig<Balance, Timestamp>,
+	swap_config: &SwapConfig<VammId, Balance>,
+) -> SwapOutput<Balance> {
+	let swap = TestPallet::swap(swap_config);
+	let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
+	assert_ok!(swap, SwapOutput { output: BASE_RETURNED_AFTER_ADDING_QUOTE, negative: false });
+	assert_eq!(vamm_after_swap.base_asset_reserves, BASE_ASSET_RESERVES_AFTER_ADDING_QUOTE);
+	assert_eq!(vamm_after_swap.quote_asset_reserves, QUOTE_ASSET_RESERVES_AFTER_ADDING_QUOTE);
+	assert_eq!(
+		vamm_after_swap.quote_asset_reserves,
+		vamm_config.quote_asset_reserves + swap_config.input_amount
+	);
+	assert_eq!(
+		vamm_after_swap.base_asset_reserves + swap.unwrap().output,
+		vamm_config.base_asset_reserves
+	);
+
+	swap.unwrap()
+}
+
+fn check_remove_base(
+	vamm_config: &VammConfig<Balance, Timestamp>,
+	swap_config: &SwapConfig<VammId, Balance>,
+) -> SwapOutput<Balance> {
+	let swap = TestPallet::swap(swap_config);
+	let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
+	assert_ok!(swap, SwapOutput { output: QUOTE_REQUIRED_FOR_REMOVING_BASE, negative: true });
+	assert_eq!(vamm_after_swap.base_asset_reserves, BASE_ASSET_RESERVES_AFTER_REMOVING_BASE);
+	assert_eq!(vamm_after_swap.quote_asset_reserves, QUOTE_ASSET_RESERVES_AFTER_REMOVING_BASE);
+	assert_eq!(
+		vamm_after_swap.quote_asset_reserves,
+		vamm_config.quote_asset_reserves + swap.unwrap().output
+	);
+	assert_eq!(
+		vamm_after_swap.base_asset_reserves,
+		vamm_config.base_asset_reserves - swap_config.input_amount
+	);
+
+	swap.unwrap()
+}
+
+fn check_remove_quote(
+	vamm_config: &VammConfig<Balance, Timestamp>,
+	swap_config: &SwapConfig<VammId, Balance>,
+) -> SwapOutput<Balance> {
+	let swap = TestPallet::swap(swap_config);
+	let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
+	assert_ok!(swap, SwapOutput { output: BASE_REQUIRED_FOR_REMOVING_QUOTE, negative: true });
+	assert_eq!(vamm_after_swap.base_asset_reserves, BASE_ASSET_RESERVES_AFTER_REMOVING_QUOTE);
+	assert_eq!(vamm_after_swap.quote_asset_reserves, QUOTE_ASSET_RESERVES_AFTER_REMOVING_QUOTE);
+	assert_eq!(
+		vamm_after_swap.base_asset_reserves,
+		vamm_config.base_asset_reserves + swap.unwrap().output
+	);
+	assert_eq!(
+		vamm_after_swap.quote_asset_reserves,
+		vamm_config.quote_asset_reserves - swap_config.input_amount
+	);
+
+	swap.unwrap()
+}
+// -------------------------------------------------------------------------------------------------
 //                                            Unit Tests
 // -------------------------------------------------------------------------------------------------
 
-#[test]
-fn should_succeed_returning_correct_values_and_emitting_events_add_base() {
+#[rstest]
+#[case(AssetType::Base, Direction::Add)]
+#[case(AssetType::Base, Direction::Remove)]
+#[case(AssetType::Quote, Direction::Add)]
+#[case(AssetType::Quote, Direction::Remove)]
+fn should_succeed_returning_correct_values_and_emitting_events(
+	#[case] asset: AssetType,
+	#[case] direction: Direction,
+) {
 	with_swap_context(
 		TestVammConfig::default(),
-		TestSwapConfig::default(),
+		TestSwapConfig { asset, direction, ..Default::default() },
 		|vamm_config, swap_config| {
 			// For event emission
 			run_to_block(1);
 
-			let swap = TestPallet::swap(&swap_config);
-			let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
-			assert_ok!(
-				swap,
-				SwapOutput { output: QUOTE_RETURNED_AFTER_ADDING_BASE, negative: false }
-			);
-			assert_eq!(vamm_after_swap.base_asset_reserves, BASE_ASSET_RESERVES_AFTER_ADDING_BASE);
-			assert_eq!(
-				vamm_after_swap.quote_asset_reserves,
-				QUOTE_ASSET_RESERVES_AFTER_ADDING_BASE
-			);
-			assert_eq!(
-				vamm_after_swap.base_asset_reserves,
-				vamm_config.base_asset_reserves + swap_config.input_amount
-			);
-			assert_eq!(
-				vamm_after_swap.quote_asset_reserves + swap.unwrap().output,
-				vamm_config.quote_asset_reserves
-			);
+			let swap = match direction {
+				Direction::Add => match asset {
+					AssetType::Base => check_add_base(&vamm_config, &swap_config),
+					AssetType::Quote => check_add_quote(&vamm_config, &swap_config),
+				},
+				Direction::Remove => match asset {
+					AssetType::Base => check_remove_base(&vamm_config, &swap_config),
+					AssetType::Quote => check_remove_quote(&vamm_config, &swap_config),
+				},
+			};
+
 			System::assert_last_event(
 				Event::Swapped {
 					vamm_id: swap_config.vamm_id,
 					input_amount: swap_config.input_amount,
-					output_amount: swap.unwrap(),
+					output_amount: swap,
 					input_asset_type: swap_config.asset,
 					direction: swap_config.direction,
 				}
@@ -76,228 +163,15 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_base() {
 	);
 }
 
-#[test]
-fn should_succeed_returning_correct_values_and_emitting_events_add_quote() {
+#[rstest]
+#[case(AssetType::Base, Direction::Add)]
+#[case(AssetType::Base, Direction::Remove)]
+#[case(AssetType::Quote, Direction::Add)]
+#[case(AssetType::Quote, Direction::Remove)]
+fn should_update_twap(#[case] asset: AssetType, #[case] direction: Direction) {
 	with_swap_context(
 		TestVammConfig::default(),
-		TestSwapConfig { asset: AssetType::Quote, direction: Direction::Add, ..Default::default() },
-		|vamm_config, swap_config| {
-			// For event emission
-			run_to_block(1);
-
-			let swap = TestPallet::swap(&swap_config);
-			let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
-			assert_ok!(
-				swap,
-				SwapOutput { output: BASE_RETURNED_AFTER_ADDING_QUOTE, negative: false }
-			);
-			assert_eq!(vamm_after_swap.base_asset_reserves, BASE_ASSET_RESERVES_AFTER_ADDING_QUOTE);
-			assert_eq!(
-				vamm_after_swap.quote_asset_reserves,
-				QUOTE_ASSET_RESERVES_AFTER_ADDING_QUOTE
-			);
-			assert_eq!(
-				vamm_after_swap.quote_asset_reserves,
-				vamm_config.quote_asset_reserves + swap_config.input_amount
-			);
-			assert_eq!(
-				vamm_after_swap.base_asset_reserves + swap.unwrap().output,
-				vamm_config.base_asset_reserves
-			);
-			System::assert_last_event(
-				Event::Swapped {
-					vamm_id: swap_config.vamm_id,
-					input_amount: swap_config.input_amount,
-					output_amount: swap.unwrap(),
-					input_asset_type: swap_config.asset,
-					direction: swap_config.direction,
-				}
-				.into(),
-			);
-		},
-	);
-}
-
-#[test]
-fn should_succeed_returning_correct_values_and_emitting_events_remove_base() {
-	with_swap_context(
-		TestVammConfig::default(),
-		TestSwapConfig {
-			asset: AssetType::Base,
-			direction: Direction::Remove,
-			..Default::default()
-		},
-		|vamm_config, swap_config| {
-			// For event emission
-			run_to_block(1);
-
-			let swap = TestPallet::swap(&swap_config);
-			let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
-			assert_ok!(
-				swap,
-				SwapOutput { output: QUOTE_REQUIRED_FOR_REMOVING_BASE, negative: true }
-			);
-			assert_eq!(
-				vamm_after_swap.base_asset_reserves,
-				BASE_ASSET_RESERVES_AFTER_REMOVING_BASE
-			);
-			assert_eq!(
-				vamm_after_swap.quote_asset_reserves,
-				QUOTE_ASSET_RESERVES_AFTER_REMOVING_BASE
-			);
-			assert_eq!(
-				vamm_after_swap.quote_asset_reserves,
-				vamm_config.quote_asset_reserves + swap.unwrap().output
-			);
-			assert_eq!(
-				vamm_after_swap.base_asset_reserves,
-				vamm_config.base_asset_reserves - swap_config.input_amount
-			);
-			System::assert_last_event(
-				Event::Swapped {
-					vamm_id: swap_config.vamm_id,
-					input_amount: swap_config.input_amount,
-					output_amount: swap.unwrap(),
-					input_asset_type: swap_config.asset,
-					direction: swap_config.direction,
-				}
-				.into(),
-			);
-		},
-	);
-}
-
-#[test]
-fn should_succeed_returning_correct_values_and_emitting_events_remove_quote() {
-	with_swap_context(
-		TestVammConfig::default(),
-		TestSwapConfig {
-			asset: AssetType::Quote,
-			direction: Direction::Remove,
-			..Default::default()
-		},
-		|vamm_config, swap_config| {
-			// For event emission
-			run_to_block(1);
-
-			let swap = TestPallet::swap(&swap_config);
-			let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
-			assert_ok!(
-				swap,
-				SwapOutput { output: BASE_REQUIRED_FOR_REMOVING_QUOTE, negative: true }
-			);
-			assert_eq!(
-				vamm_after_swap.base_asset_reserves,
-				BASE_ASSET_RESERVES_AFTER_REMOVING_QUOTE
-			);
-			assert_eq!(
-				vamm_after_swap.quote_asset_reserves,
-				QUOTE_ASSET_RESERVES_AFTER_REMOVING_QUOTE
-			);
-			assert_eq!(
-				vamm_after_swap.base_asset_reserves,
-				vamm_config.base_asset_reserves + swap.unwrap().output
-			);
-			assert_eq!(
-				vamm_after_swap.quote_asset_reserves,
-				vamm_config.quote_asset_reserves - swap_config.input_amount
-			);
-			System::assert_last_event(
-				Event::Swapped {
-					vamm_id: swap_config.vamm_id,
-					input_amount: swap_config.input_amount,
-					output_amount: swap.unwrap(),
-					input_asset_type: swap_config.asset,
-					direction: swap_config.direction,
-				}
-				.into(),
-			);
-		},
-	);
-}
-
-#[test]
-fn should_update_twap_when_adding_base_asset() {
-	with_swap_context(
-		TestVammConfig::default(),
-		TestSwapConfig { asset: AssetType::Base, direction: Direction::Add, ..Default::default() },
-		|_, swap_config| {
-			// For event emission
-			run_to_block(1);
-
-			// Get Initial Vamm State
-			let vamm_state_initial = TestPallet::get_vamm(0).unwrap();
-
-			// Perform swap
-			run_for_seconds(vamm_state_initial.twap_period);
-			assert_ok!(TestPallet::swap(&swap_config));
-
-			// Ensure twap was updated
-			let vamm_state = TestPallet::get_vamm(0).unwrap();
-			assert_ne!(vamm_state_initial.twap_timestamp, vamm_state.twap_timestamp);
-		},
-	);
-}
-
-#[test]
-fn should_update_twap_when_removing_base_asset() {
-	with_swap_context(
-		TestVammConfig::default(),
-		TestSwapConfig {
-			asset: AssetType::Base,
-			direction: Direction::Remove,
-			..Default::default()
-		},
-		|_, swap_config| {
-			// For event emission
-			run_to_block(1);
-
-			// Get Initial Vamm State
-			let vamm_state_initial = TestPallet::get_vamm(0).unwrap();
-
-			// Perform swap
-			run_for_seconds(vamm_state_initial.twap_period);
-			assert_ok!(TestPallet::swap(&swap_config));
-
-			// Ensure twap was updated
-			let vamm_state = TestPallet::get_vamm(0).unwrap();
-			assert_ne!(vamm_state_initial.twap_timestamp, vamm_state.twap_timestamp);
-		},
-	);
-}
-
-#[test]
-fn should_update_twap_when_adding_quote_asset() {
-	with_swap_context(
-		TestVammConfig::default(),
-		TestSwapConfig { asset: AssetType::Quote, direction: Direction::Add, ..Default::default() },
-		|_, swap_config| {
-			// For event emission
-			run_to_block(1);
-
-			// Get Initial Vamm State
-			let vamm_state_initial = TestPallet::get_vamm(0).unwrap();
-
-			// Perform swap
-			run_for_seconds(vamm_state_initial.twap_period);
-			assert_ok!(TestPallet::swap(&swap_config));
-
-			// Ensure twap was updated
-			let vamm_state = TestPallet::get_vamm(0).unwrap();
-			assert_ne!(vamm_state_initial.twap_timestamp, vamm_state.twap_timestamp);
-		},
-	);
-}
-
-#[test]
-fn should_update_twap_when_removing_quote_asset() {
-	with_swap_context(
-		TestVammConfig::default(),
-		TestSwapConfig {
-			asset: AssetType::Quote,
-			direction: Direction::Remove,
-			..Default::default()
-		},
+		TestSwapConfig { asset, direction, ..Default::default() },
 		|_, swap_config| {
 			// For event emission
 			run_to_block(1);
