@@ -48,7 +48,7 @@ use composable_support::math::safe::SafeSub;
 use composable_traits::staking::{Reward, RewardUpdate};
 use frame_support::{
 	traits::{
-		fungibles::{Inspect, InspectHold, MutateHold, Transfer},
+		fungibles::{InspectHold, MutateHold, Transfer},
 		UnixTime,
 	},
 	transactional, BoundedBTreeMap,
