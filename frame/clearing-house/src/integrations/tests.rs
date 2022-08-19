@@ -8,9 +8,9 @@ use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedPointNumber, Percent};
 
 use super::mock::{
-	AssetId, Balance, BlockNumber, Decimal, ExtBuilder, MarketId, Moment, Oracle, Origin, Runtime,
-	StalePrice, System, TestPallet, Timestamp, UnsignedDecimal, Vamm, VammId, ALICE, BOB, DOT,
-	PICA, USDC,
+	AccountId, AssetId, Balance, BlockNumber, Decimal, ExtBuilder, MarketId, Moment, Oracle,
+	Origin, Runtime, StalePrice, System, TestPallet, Timestamp, UnsignedDecimal, Vamm, VammId,
+	ALICE, BOB, DOT, PICA, USDC,
 };
 
 impl Default for ExtBuilder {
@@ -80,6 +80,14 @@ fn set_oracle_for(asset_id: AssetId, price: Balance) {
 	advance_blocks_by(1);
 }
 
+fn get_collateral(account_id: &AccountId) -> Balance {
+	TestPallet::get_collateral(account_id).unwrap()
+}
+
+fn get_outstanding_profits(account_id: &AccountId, market_id: &MarketId) -> Balance {
+	TestPallet::outstanding_profits(account_id, market_id).unwrap_or_else(Zero::zero)
+}
+
 fn get_market(market_id: &MarketId) -> Market<Runtime> {
 	TestPallet::get_market(market_id).unwrap()
 }
@@ -98,11 +106,8 @@ impl Default for MarketConfig {
 				peg_multiplier: 1,
 				twap_period: ONE_HOUR,
 			},
-			// 10x max leverage to open a position
 			margin_ratio_initial: Decimal::from_float(0.1),
-			// fully liquidate when above 50x leverage
 			margin_ratio_maintenance: Decimal::from_float(0.02),
-			// partially liquidate when above 25x leverage
 			margin_ratio_partial: Decimal::from_float(0.04),
 			minimum_trade_size: 0.into(),
 			funding_frequency: ONE_HOUR,
@@ -164,7 +169,7 @@ fn should_succeed_in_opening_first_position() {
 	}
 	.build()
 	.execute_with(|| {
-		set_oracle_for(DOT, 1_000); // 10 in cents
+		set_oracle_for(DOT, 1_000);
 		let config = MarketConfig {
 			asset: DOT,
 			vamm_config: VammConfig {
@@ -173,11 +178,8 @@ fn should_succeed_in_opening_first_position() {
 				peg_multiplier: 10,
 				twap_period: ONE_HOUR,
 			},
-			// 10x max leverage to open a position
 			margin_ratio_initial: Decimal::from_float(0.1),
-			// fully liquidate when above 50x leverage
 			margin_ratio_maintenance: Decimal::from_float(0.02),
-			// partially liquidate when above 25x leverage
 			margin_ratio_partial: Decimal::from_float(0.04),
 			minimum_trade_size: 0.into(),
 			funding_frequency: ONE_HOUR,
@@ -202,5 +204,69 @@ fn should_succeed_in_opening_first_position() {
 
 		assert_ne!(get_market(&MarketId::zero()), market);
 		assert_ne!(get_vamm(&market.vamm_id), vamm_state);
+	})
+}
+
+#[test]
+fn should_succeed_with_two_traders_in_a_market() {
+	ExtBuilder {
+		native_balances: vec![(ALICE, UNIT), (BOB, UNIT)],
+		balances: vec![
+			(ALICE, PICA, UNIT),
+			(BOB, PICA, UNIT),
+			(ALICE, USDC, UNIT * 100),
+			(BOB, USDC, UNIT * 100),
+		],
+		..Default::default()
+	}
+	.build()
+	.execute_with(|| {
+		let asset_id = PICA;
+		set_oracle_for(asset_id, 1_000);
+
+		let config = MarketConfig {
+			asset: asset_id,
+			vamm_config: VammConfig {
+				base_asset_reserves: UNIT * 100,
+				quote_asset_reserves: UNIT * 100_000,
+				peg_multiplier: 1,
+				twap_period: ONE_HOUR,
+			},
+			..Default::default()
+		};
+		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+		let market_id = Zero::zero();
+		let market = get_market(&market_id);
+		let vamm_state_before = get_vamm(&market.vamm_id);
+
+		assert_ok!(TestPallet::deposit_collateral(Origin::signed(ALICE), USDC, UNIT * 100));
+		assert_ok!(TestPallet::deposit_collateral(Origin::signed(BOB), USDC, UNIT * 100));
+
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			UNIT * 100,
+			0
+		));
+		assert_ok!(TestPallet::open_position(Origin::signed(BOB), market_id, Long, UNIT * 100, 0));
+
+		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+		assert_ok!(TestPallet::close_position(Origin::signed(BOB), market_id));
+
+		// Alice closes her position in profit, Bob closes his position in loss
+		// However, since Alice closes her position first, there are no realized losses in the
+		// market yet, so her profits are outstanding
+		let alice_col = get_collateral(&ALICE);
+		let alice_outstanding_profits = get_outstanding_profits(&ALICE, &market_id);
+		let bob_col = get_collateral(&BOB);
+		assert!(alice_col > bob_col);
+		assert_eq!(alice_col + alice_outstanding_profits + bob_col, UNIT * 200);
+		// TODO(0xangelo): test if ALICE can withdraw her full collateral + profits
+
+		// vAMM is back to its initial state due to path independence
+		let vamm_state_after = get_vamm(&market.vamm_id);
+		assert_eq!(vamm_state_before.base_asset_reserves, vamm_state_after.base_asset_reserves);
+		assert_eq!(vamm_state_before.quote_asset_reserves, vamm_state_after.quote_asset_reserves);
 	})
 }
