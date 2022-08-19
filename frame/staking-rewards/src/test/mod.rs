@@ -576,12 +576,16 @@ mod claim {
 			total_rewards,
 			total_shares,
 			Some(claim),
-			|pool_id, stake_id, _, stake_duration, staked_asset_id| {
+			|pool_id, stake_id, _, _, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(StakingRewards::pool_count())
 					.expect("rewards_pool expected");
 
+				// Ensure that the value of the staked asset has **not** changed
+				assert_eq!(balance(staked_asset_id, &staker), amount);
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), stake_id));
 				assert_eq!(balance(staked_asset_id, &staker), amount);
+
+				// Ensure that the value of the reward asset has changed
 				for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
 					assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
 					assert_eq!(
@@ -609,24 +613,28 @@ mod claim {
 			total_rewards,
 			total_shares,
 			Some(claim),
-			|pool_id, stake_id, _, stake_duration, staked_asset_id| {
-				let second_in_milliseconds = 1000;
-				Timestamp::set_timestamp(
-					Timestamp::now()
-						.saturating_add(stake_duration.saturating_mul(second_in_milliseconds))
-						.saturating_add(second_in_milliseconds),
-				);
-
+			|pool_id, stake_id, _, _, staked_asset_id| {
 				let rewards_pool = StakingRewards::pools(StakingRewards::pool_count())
 					.expect("rewards_pool expected");
 
 				// First claim
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), stake_id));
+				// Ensure no change in staked asset
 				assert_eq!(balance(staked_asset_id, &staker), amount);
+				// Ensure change in reward asset
+				for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
+					assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
+					assert_eq!(
+						balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
+						amount * 2 - claim
+					);
+				}
+
 				// Second claim, should not change balance
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), stake_id));
+				// Ensure no change in staked asset
 				assert_eq!(balance(staked_asset_id, &staker), amount);
-
+				// Ensure no change in reward asset
 				for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
 					assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
 					assert_eq!(
@@ -654,7 +662,7 @@ mod claim {
 			total_rewards,
 			total_shares,
 			Some(claim),
-			|_, stake_id, _, stake_duration, staked_asset_id| {
+			|_, stake_id, _, stake_duration, _| {
 				let second_in_milliseconds = 1000;
 				Timestamp::set_timestamp(
 					Timestamp::now()
@@ -662,7 +670,6 @@ mod claim {
 						.saturating_add(second_in_milliseconds),
 				);
 
-				// First claim
 				assert_ok!(StakingRewards::claim(Origin::signed(staker), stake_id));
 
 				assert_last_event::<Test, _>(|e| {
@@ -672,8 +679,6 @@ mod claim {
 				});
 
 				let stake = Stakes::<Test>::get(stake_id).expect("expected stake. QED");
-
-				println!("{:?}", stake.reductions);
 
 				assert_eq!(stake.reductions.get(&USDT::ID), Some(&502_u128));
 			},
@@ -696,7 +701,7 @@ mod claim {
 			total_rewards,
 			total_shares,
 			Some(claim),
-			|_, stake_id, _, stake_duration, staked_asset_id| {
+			|_, stake_id, _, stake_duration, _| {
 				let second_in_milliseconds = 1000;
 				Timestamp::set_timestamp(
 					Timestamp::now()
