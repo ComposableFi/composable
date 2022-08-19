@@ -60,9 +60,9 @@ fn test_update_reward_pool() {
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: USDT::ID,
 				expected_total_rewards: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)),
-				cold_wallet_expected_balance: INITIAL_AMOUNT -
+				expected_locked_balance: INITIAL_AMOUNT -
 					(INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)),
-				hot_wallet_expected_balance: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)),
+				expected_unlocked_balance: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)),
 			}],
 		}]);
 
@@ -102,10 +102,10 @@ fn test_update_reward_pool() {
 				reward_asset_id: USDT::ID,
 				expected_total_rewards: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
 					(UPDATED_REWARD_RATE_AMOUNT * block_seconds(1)),
-				cold_wallet_expected_balance: INITIAL_AMOUNT -
+				expected_locked_balance: INITIAL_AMOUNT -
 					((INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
 						(UPDATED_REWARD_RATE_AMOUNT * block_seconds(1))),
-				hot_wallet_expected_balance: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
+				expected_unlocked_balance: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
 					(UPDATED_REWARD_RATE_AMOUNT * block_seconds(1)),
 			}],
 		}]);
@@ -120,10 +120,10 @@ fn test_update_reward_pool() {
 				reward_asset_id: USDT::ID,
 				expected_total_rewards: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
 					(UPDATED_REWARD_RATE_AMOUNT * block_seconds(11)),
-				cold_wallet_expected_balance: INITIAL_AMOUNT -
+				expected_locked_balance: INITIAL_AMOUNT -
 					((INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
 						(UPDATED_REWARD_RATE_AMOUNT * block_seconds(11))),
-				hot_wallet_expected_balance: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
+				expected_unlocked_balance: (INITIAL_REWARD_RATE_AMOUNT * block_seconds(1)) +
 					(UPDATED_REWARD_RATE_AMOUNT * block_seconds(11)),
 			}],
 		}]);

@@ -169,7 +169,6 @@ pub mod pallet {
 	pub enum RewardAccumulationHookError {
 		BackToTheFuture,
 		RewardsPotEmpty,
-		RewardsAccountFull,
 	}
 
 	#[pallet::error]
@@ -203,8 +202,6 @@ pub mod pallet {
 		BackToTheFuture,
 		/// The rewards pot (cold wallet) for this pool is empty.
 		RewardsPotEmpty,
-		/// The rewards account (hot wallet) for this pool is full.
-		RewardsAccuntFull,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -631,7 +628,7 @@ pub mod pallet {
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				who,
-				&Self::hot_pool_account_id(pool_id),
+				&Self::pool_account_id(pool_id),
 				amount,
 				keep_alive,
 			)?;
@@ -690,7 +687,7 @@ pub mod pallet {
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				who,
-				&Self::hot_pool_account_id(&stake.reward_pool_id),
+				&Self::pool_account_id(&stake.reward_pool_id),
 				amount,
 				keep_alive,
 			)?;
@@ -735,7 +732,7 @@ pub mod pallet {
 				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
 				T::Assets::transfer(
 					reward.asset_id,
-					&Self::hot_pool_account_id(&pool_id),
+					&Self::pool_account_id(&pool_id),
 					&stake.owner,
 					claim,
 					keep_alive,
@@ -755,7 +752,7 @@ pub mod pallet {
 			// account to the owner of the NFT
 			T::Assets::transfer(
 				rewards_pool.asset_id,
-				&Self::hot_pool_account_id(&pool_id),
+				&Self::pool_account_id(&pool_id),
 				&stake.owner,
 				stake_with_penalty,
 				keep_alive,
@@ -824,11 +821,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn hot_pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
-			T::PalletId::get().into_sub_account_truncating((b"hot", pool_id))
-		}
-		pub(crate) fn cold_pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
-			T::PalletId::get().into_sub_account_truncating((b"cold", pool_id))
+		pub(crate) fn pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
+			T::PalletId::get().into_sub_account_truncating(pool_id)
 		}
 
 		pub(crate) fn reward_multiplier(
@@ -889,10 +883,9 @@ pub mod pallet {
 		) -> Reward<T::AssetId, T::Balance> {
 			use RewardAccumulationCalculationError::*;
 
-			let cold_wallet = Self::cold_pool_account_id(&pool_id);
-			let hot_wallet = Self::hot_pool_account_id(&pool_id);
+			let pool_account = Self::pool_account_id(&pool_id);
 
-			match do_reward_accumulation::<T>(reward, &cold_wallet, &hot_wallet, now_seconds) {
+			match do_reward_accumulation::<T>(reward, &pool_account, now_seconds) {
 				Ok(reward) => reward,
 				Err(BackToTheFuture(reward)) => {
 					Self::deposit_event(Event::<T>::RewardAccumulationHookError {
@@ -907,14 +900,6 @@ pub mod pallet {
 						pool_id,
 						asset_id: reward.asset_id,
 						error: RewardAccumulationHookError::RewardsPotEmpty,
-					});
-					reward
-				},
-				Err(RewardsAccountFull(reward)) => {
-					Self::deposit_event(Event::<T>::RewardAccumulationHookError {
-						pool_id,
-						asset_id: reward.asset_id,
-						error: RewardAccumulationHookError::RewardsAccountFull,
 					});
 					reward
 				},
@@ -1019,7 +1004,7 @@ pub mod pallet {
 									Error::<T>::MaxRewardLimitReached
 								);
 								reward.total_rewards = new_total_reward;
-								let pool_account = Self::hot_pool_account_id(pool);
+								let pool_account = Self::pool_account_id(pool);
 								T::Assets::transfer(
 									reward_currency,
 									from,
@@ -1050,7 +1035,7 @@ pub mod pallet {
 									.rewards
 									.try_insert(reward_currency, reward)
 									.map_err(|_| Error::<T>::TooManyRewardAssetTypes)?;
-								let pool_account = Self::hot_pool_account_id(pool);
+								let pool_account = Self::pool_account_id(pool);
 								T::Assets::transfer(
 									reward_currency,
 									from,
@@ -1089,10 +1074,10 @@ fn add_to_rewards_pot<T: Config>(
 		.get(&asset_id)
 		.ok_or(Error::<T>::RewardAssetNotFound)?;
 
-	let cold_wallet = Pallet::<T>::cold_pool_account_id(&pool_id);
+	let pool_account = Pallet::<T>::pool_account_id(&pool_id);
 
-	T::Assets::transfer(asset_id, &who, &cold_wallet, amount, keep_alive)?;
-	T::Assets::hold(asset_id, &cold_wallet, amount)?;
+	T::Assets::transfer(asset_id, &who, &pool_account, amount, keep_alive)?;
+	T::Assets::hold(asset_id, &pool_account, amount)?;
 
 	Pallet::<T>::deposit_event(Event::<T>::RewardsPotIncreased { pool_id, asset_id, amount });
 
@@ -1111,36 +1096,29 @@ fn update_rewards_pool<T: Config>(
 	RewardPools::<T>::try_mutate(pool_id, |pool| {
 		let pool = pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-		let cold_wallet = Pallet::<T>::cold_pool_account_id(&pool_id);
-		let hot_wallet = Pallet::<T>::hot_pool_account_id(&pool_id);
+		let hot_wallet = Pallet::<T>::pool_account_id(&pool_id);
 
 		let now_seconds = T::UnixTime::now().as_secs();
 
 		for (asset_id, update) in reward_updates {
 			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
-			let new_reward = match do_reward_accumulation::<T>(
-				reward.clone(),
-				&cold_wallet,
-				&hot_wallet,
-				now_seconds,
-			) {
-				Ok(reward) => reward,
-				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) =>
-					return Err(Error::<T>::BackToTheFuture.into()),
-				Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(reward)) => {
-					Pallet::<T>::deposit_event(Event::<T>::MaxRewardsAccumulated {
-						pool_id,
-						asset_id: reward.asset_id,
-					});
-					continue
-				},
-				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) =>
-					continue,
-				Err(RewardAccumulationCalculationError::RewardsPotEmpty(_)) =>
-					return Err(Error::<T>::RewardsPotEmpty.into()),
-				Err(RewardAccumulationCalculationError::RewardsAccountFull(_)) =>
-					return Err(Error::<T>::RewardsAccuntFull.into()),
-			};
+			let new_reward =
+				match do_reward_accumulation::<T>(reward.clone(), &hot_wallet, now_seconds) {
+					Ok(reward) => reward,
+					Err(RewardAccumulationCalculationError::BackToTheFuture(_)) =>
+						return Err(Error::<T>::BackToTheFuture.into()),
+					Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(reward)) => {
+						Pallet::<T>::deposit_event(Event::<T>::MaxRewardsAccumulated {
+							pool_id,
+							asset_id: reward.asset_id,
+						});
+						continue
+					},
+					Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) =>
+						continue,
+					Err(RewardAccumulationCalculationError::RewardsPotEmpty(_)) =>
+						return Err(Error::<T>::RewardsPotEmpty.into()),
+				};
 
 			*reward = Reward { reward_rate: update.reward_rate, ..new_reward };
 		}
@@ -1157,8 +1135,7 @@ fn update_rewards_pool<T: Config>(
 // passing it through the function, it may help to avoid some unnecessary clones
 pub(crate) fn do_reward_accumulation<T: Config>(
 	reward: Reward<T::AssetId, T::Balance>,
-	cold_wallet: &T::AccountId,
-	hot_wallet: &T::AccountId,
+	pool_account: &T::AccountId,
 	now_seconds: u64,
 ) -> Result<Reward<T::AssetId, T::Balance>, RewardAccumulationCalculationError<T>> {
 	// match instead of map_err here to avoid cloning reward
@@ -1175,7 +1152,7 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 	// here
 	let periods_surpassed = elapsed_time.div(reward_rate_period_seconds.get());
 
-	dbg!(&reward.reward_rate, &periods_surpassed);
+	// dbg!(&reward.reward_rate, &periods_surpassed);
 
 	if periods_surpassed.is_zero() {
 		Ok(reward)
@@ -1192,7 +1169,7 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 			.add(periods_surpassed.mul(reward_rate_period_seconds.get()));
 
 		if new_total_rewards <= reward.max_rewards.into() {
-			do_cold_to_hot_transfer(reward, cold_wallet, hot_wallet, new_rewards).map(|reward| {
+			do_rewards_accumulation_release(reward, pool_account, new_rewards).map(|reward| {
 				Reward { total_rewards: new_total_rewards.into(), last_updated_timestamp, ..reward }
 			})
 		} else
@@ -1205,7 +1182,7 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 			//
 			// reward.total_rewards is known to be less than reward.max_rewards as per check above
 			let rewards_to_transfer = reward.max_rewards.sub(reward.total_rewards).into();
-			match do_cold_to_hot_transfer(reward, cold_wallet, hot_wallet, rewards_to_transfer) {
+			match do_rewards_accumulation_release(reward, pool_account, rewards_to_transfer) {
 				Ok(reward) => {
 					// return an error, but with the contained reward updated
 					Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(Reward {
@@ -1225,50 +1202,22 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 }
 
 /// Releases and transfers the specified amount of funds from the cold wallet to the hot wallet.
-fn do_cold_to_hot_transfer<T: Config>(
+fn do_rewards_accumulation_release<T: Config>(
 	reward: Reward<T::AssetId, T::Balance>,
-	cold_wallet: &T::AccountId,
-	hot_wallet: &T::AccountId,
+	pool_account: &T::AccountId,
 	new_rewards: u128,
 ) -> Result<Reward<T::AssetId, T::Balance>, RewardAccumulationCalculationError<T>> {
-	if <T::Assets as InspectHold<AccountIdOf<T>>>::balance_on_hold(reward.asset_id, &cold_wallet) >=
-		new_rewards.into()
-	{
+	if T::Assets::balance_on_hold(reward.asset_id, &pool_account) >= new_rewards.into() {
 		// release funds from cold wallet
 		T::Assets::release(
 			reward.asset_id,
-			&cold_wallet,
+			&pool_account,
 			new_rewards.into(),
 			false, // not best effort, entire amount must be released
 		)
 		.expect("funds should be avaliable to release based on previous check; qed;");
 
-		// ensure the transfer will succeed
-		if T::Assets::can_deposit(
-			reward.asset_id,
-			&hot_wallet,
-			new_rewards.into(),
-			false, // amount already exists, will not be minted
-		)
-		.into_result()
-		.is_ok()
-		{
-			// transfer released funds from cold wallet hot wallet
-			T::Assets::transfer(
-				reward.asset_id,
-				&cold_wallet,
-				&hot_wallet,
-				new_rewards.into(),
-				false, // doesn't need to be kept alive since it's a pallet sub account
-			)
-			.expect(
-				"funds should be avaliable to transfer based on previous release and deposit check; qed;",
-			);
-
-			Ok(reward)
-		} else {
-			Err(RewardAccumulationCalculationError::RewardsAccountFull(reward))
-		}
+		Ok(reward)
 	} else {
 		Err(RewardAccumulationCalculationError::RewardsPotEmpty(reward))
 	}
@@ -1282,8 +1231,7 @@ pub(crate) enum RewardAccumulationCalculationError<T: Config> {
 	/// The `max_rewards` were hit previously; i.e. `total_rewards == max_rewards` at the start of
 	/// this calculation.
 	MaxRewardsAccumulatedPreviously(Reward<T::AssetId, T::Balance>),
-	/// The rewards pot (cold wallet) for this pool is empty.
+	/// The rewards pot (held balance) for this pool is empty or doesn't have enough to release for
+	/// the rewards accumulated.
 	RewardsPotEmpty(Reward<T::AssetId, T::Balance>),
-	/// The rewards account (hot wallet) for this pool is full.
-	RewardsAccountFull(Reward<T::AssetId, T::Balance>),
 }

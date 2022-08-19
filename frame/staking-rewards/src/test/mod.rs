@@ -130,10 +130,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 			})
 		);
 		assert_eq!(balance(staked_asset_id, &staker), amount);
-		assert_eq!(
-			balance(staked_asset_id, &StakingRewards::hot_pool_account_id(&pool_id)),
-			amount
-		);
+		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
 		assert_last_event::<Test, _>(|e| {
 			matches!(
 				e.event,
@@ -197,10 +194,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 			})
 		);
 		assert_eq!(balance(staked_asset_id, &staker), amount);
-		assert_eq!(
-			balance(staked_asset_id, &StakingRewards::hot_pool_account_id(&pool_id)),
-			amount
-		);
+		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
 		assert_last_event::<Test, _>(|e| {
 			matches!(
 				e.event,
@@ -274,7 +268,7 @@ fn test_extend_stake_amount() {
 		);
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 		assert_eq!(
-			balance(staked_asset_id, &StakingRewards::hot_pool_account_id(&pool_id)),
+			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
 			amount + extend_amount
 		);
 		assert_last_event::<Test, _>(|e| {
@@ -360,10 +354,7 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 
 		let penalty = unlock_penalty.mul_ceil(amount);
 		assert_eq!(balance(staked_asset_id, &staker), amount + (amount - penalty));
-		assert_eq!(
-			balance(staked_asset_id, &StakingRewards::hot_pool_account_id(&pool_id)),
-			penalty
-		);
+		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), penalty);
 	});
 }
 
@@ -384,7 +375,7 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
 		let staked_asset_id = rewards_pool.asset_id;
 		mint_assets(
-			[staker, StakingRewards::hot_pool_account_id(&pool_id)],
+			[staker, StakingRewards::pool_account_id(&pool_id)],
 			rewards_pool
 				.rewards
 				.iter()
@@ -419,13 +410,13 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
 		assert_eq!(balance(staked_asset_id, &staker), amount * 2 - penalty);
 		assert_eq!(
-			balance(staked_asset_id, &StakingRewards::hot_pool_account_id(&pool_id)),
+			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
 			amount * 2 + penalty
 		);
 		for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
 			assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim_with_penalty);
 			assert_eq!(
-				balance(*rewarded_asset_id, &StakingRewards::hot_pool_account_id(&pool_id)),
+				balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
 				amount * 2 - claim_with_penalty
 			);
 		}
@@ -449,7 +440,7 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
 		let staked_asset_id = rewards_pool.asset_id;
 		mint_assets(
-			[staker, StakingRewards::hot_pool_account_id(&pool_id)],
+			[staker, StakingRewards::pool_account_id(&pool_id)],
 			rewards_pool
 				.rewards
 				.iter()
@@ -487,13 +478,13 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
 		assert_eq!(balance(staked_asset_id, &staker), amount * 2);
 		assert_eq!(
-			balance(staked_asset_id, &StakingRewards::hot_pool_account_id(&pool_id)),
+			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
 			amount * 2
 		);
 		for (rewarded_asset_id, _) in rewards_pool.rewards.iter() {
 			assert_eq!(balance(*rewarded_asset_id, &staker), amount * 2 + claim);
 			assert_eq!(
-				balance(*rewarded_asset_id, &StakingRewards::hot_pool_account_id(&pool_id)),
+				balance(*rewarded_asset_id, &StakingRewards::pool_account_id(&pool_id)),
 				amount * 2 - claim
 			);
 		}
