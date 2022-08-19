@@ -50,8 +50,7 @@ pub mod validation;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::{
-		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, PaymentsOutcomes,
-		Timestamp,
+		LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, PaymentsOutcomes, Timestamp,
 	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
@@ -168,7 +167,12 @@ pub mod pallet {
 		// Each payments schedule can not have more than this amount of payments.
 		type MaxPaymentsPerSchedule: Get<u32>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
+		// Amount of loans which can be processed within one tansaction submitted by off-chain
+		// worker.
 		type CheckPaymentsBatchSize: Get<u32>;
+		// Amount of loans which can be processed within one tansaction submitted by off-chain
+		// worker.
+		type CheckNonActivatedLoansBatchSize: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -190,6 +194,11 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type CurrentDateStorage<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
+	// Storage keeps accounts ids of loans which payments were already processed today.
+	// Prevents double checking and subsiquent unreasonable liquidation.
+	#[pallet::storage]
+	pub type ProcessedLoansStorage<T: Config> = StorageValue<_, BTreeSet<T::AccountId>, ValueQuery>;
+
 	// Markets storage. AccountId is id of market's account.
 	#[pallet::storage]
 	pub type MarketsStorage<T: Config> =
@@ -203,13 +212,6 @@ pub mod pallet {
 	// Use hashmap as a set.
 	#[pallet::storage]
 	pub type NonActiveLoansStorage<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
-
-	// Storage keeps accounts ids of loans which payments were already processed today.
-	// Prevents double checking and subsiquent unreasonable liquidation.
-	// Use hashmap as a set.
-	#[pallet::storage]
-	pub type ProcessedLoansStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, (), OptionQuery>;
 
 	// Maps market's account id to market's debt token
@@ -309,21 +311,24 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		// TODO: @mikolaichuk: add weights calculation
-        // TODO: @mikolaichuk:  treat untreated loans on chain.
-        //                      then clen yesterday schdule.
+		// TODO: @mikolaichuk:  treat untreated loans on chain.
+		//                      then clen yesterday schdule.
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
 			Self::treat_vaults_balance(block_number);
 			let now = Self::now();
-			let stored_current_day_timestamp = CurrentDateStorage::<T>::get();
+			let stored_date_timestamp = CurrentDateStorage::<T>::get();
 			// Check if date is changed.
-			let stored_date = Self::get_date_from_timestamp(stored_current_day_timestamp);
+			let stored_date = Self::get_date_from_timestamp(stored_date_timestamp);
 			let date = Self::get_date_from_timestamp(now);
 			if stored_date < date {
+				// Check if we have loans which were not processed via off-chain worker,
+				// and process them.
+				Self::last_chance_processing(stored_date_timestamp);
+				// Remove yestarday schedule.
+				crate::ScheduleStorage::<T>::remove(stored_date_timestamp);
+				// Set up current date.
 				let current_date_aligned_timestamp = Self::get_date_aligned_timestamp(now);
 				CurrentDateStorage::<T>::put(current_date_aligned_timestamp);
-				// Terminate loans which were not activated by borrower before first payment date
-				// once a day.
-				Self::terminate_non_activated_expired_loans(current_date_aligned_timestamp);
 			}
 			1000
 		}
@@ -357,6 +362,7 @@ pub mod pallet {
 			// Check if call is allowed.
 			match call {
 				Call::process_checked_payments { .. } => (),
+				Call::remove_loans { .. } => (),
 				_ => return InvalidTransaction::Call.into(),
 			};
 			Ok(ValidTransaction::default())
@@ -420,16 +426,26 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::SomeAmountRepaid);
 			Ok(())
 		}
-        
-        // TODO: @mikolaichuk: check that timestamp is today. 
+
+		// This method supposed to be called from off-chain worker.
 		#[pallet::weight(1000)]
 		pub fn process_checked_payments(
 			origin: OriginFor<T>,
 			outcomes: PaymentsOutcomes<T>,
-			timestamp: Timestamp,
 		) -> DispatchResult {
-			let who = ensure_none(origin)?;
+			ensure_none(origin)?;
+			Self::do_process_checked_payments(outcomes);
+			Ok(())
+		}
 
+		// This method supposed to be called from off-chain worker.
+		#[pallet::weight(1000)]
+		pub fn remove_loans(
+			origin: OriginFor<T>,
+			loans_accounts_ids: Vec<T::AccountId>,
+		) -> DispatchResult {
+			ensure_none(origin)?;
+			Self::do_remove_non_activated_loans(loans_accounts_ids);
 			Ok(())
 		}
 	}

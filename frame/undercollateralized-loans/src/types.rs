@@ -45,23 +45,26 @@ pub(crate) type LoanConfigOf<T> = LoanConfig<
 	Timestamp,
 >;
 
-pub(crate) type PaymentOutcomeOf<T> = PaymentOutcome<LoanConfigOf<T>, Timestamp>;
+pub(crate) type PaymentOutcomeOf<T> =
+	PaymentOutcome<<T as DeFiComposableConfig>::Balance, LoanConfigOf<T>, Timestamp>;
 pub(crate) type PaymentsOutcomes<T> = Vec<PaymentOutcomeOf<T>>;
-
+pub(crate) type PaymentOf<T> =
+	Payment<<T as DeFiComposableConfig>::Balance, LoanConfigOf<T>, Timestamp>;
 #[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub struct Payment<LoanConfig, Timestamp> {
-    pub loan_config: LoanConfig, 
-    pub timestamp: Timestamp,
+pub struct Payment<Balance, LoanConfig, Timestamp> {
+	pub loan_config: LoanConfig,
+	pub amount: Balance,
+	pub timestamp: Timestamp,
 }
 
 // This enum is used for off-chain payment checking procedure.
 #[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub enum PaymentOutcome<LoanConfig, Timestamp> {
-	RegularPaymentSucceed(Payment<LoanConfig, Timestamp>),
-	LastPaymentSucceed(Payment<LoanConfig, Timestamp>),
-    // We assume that payment is failed if it is not possible to transfer money from borrower account 
-    // to loan account on the moment of checking.
-    PaymentFailed(Payment<LoanConfig, Timestamp>),
+pub enum PaymentOutcome<Balance, LoanConfig, Timestamp> {
+	RegularPaymentSucceed(Payment<Balance, LoanConfig, Timestamp>),
+	LastPaymentSucceed(Payment<Balance, LoanConfig, Timestamp>),
+	// We assume that payment is failed if it is not possible to transfer money from borrower
+	// account to loan account on the moment of checking.
+	PaymentFailed(Payment<Balance, LoanConfig, Timestamp>),
 }
 
 #[derive(Encode, Decode)]

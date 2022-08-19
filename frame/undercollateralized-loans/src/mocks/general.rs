@@ -378,6 +378,7 @@ impl pallet_undercollateralized_loans::Config for Runtime {
 	type UnixTime = Timestamp;
 	type MaxPaymentsPerSchedule = ConstU32<100>;
 	type CheckPaymentsBatchSize = ConstU32<5>;
+	type CheckNonActivatedLoansBatchSize = ConstU32<5>;
 }
 
 parameter_type_with_key! {

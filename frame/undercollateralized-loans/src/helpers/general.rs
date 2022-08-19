@@ -1,7 +1,7 @@
 use crate::{
 	types::{
-		LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf,
-		Timestamp, Payment, PaymentOutcome, PaymentOutcomeOf, PaymentsOutcomes,
+		LoanConfigOf, LoanInputOf, MarketConfigOf, MarketInfoOf, MarketInputOf, Payment, PaymentOf,
+		PaymentOutcome, PaymentOutcomeOf, PaymentsOutcomes, Timestamp,
 	},
 	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
@@ -9,7 +9,8 @@ use crate::{
 use composable_support::validation::Validated;
 use composable_traits::{
 	currency::CurrencyFactory,
-	defi::DeFiComposableConfig,
+	defi::{CurrencyPair, DeFiComposableConfig, Sell},
+	liquidation::Liquidation,
 	oracle::Oracle,
 	undercollateralized_loans::{LoanConfig, MarketConfig, MarketInfo, UndercollateralizedLoans},
 	vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -30,12 +31,8 @@ use sp_runtime::{
 };
 
 use chrono::{Duration, NaiveDate, NaiveDateTime, NaiveTime};
-use sp_std::{
-	ops::{Add, Sub},
-	vec::Vec,
-};
+use sp_std::{ops::Add, vec::Vec};
 
-// #generalization
 impl<T: Config> Pallet<T> {
 	pub(crate) fn do_create_market(
 		manager: T::AccountId,
@@ -222,70 +219,158 @@ impl<T: Config> Pallet<T> {
 			keep_alive,
 		)
 	}
-    
-    pub(crate) fn do_process_checked_payments(possible_payments_outcomes: PaymentsOutcomes<T>) {
-        for outcome in possible_payments_outcomes {
-           match outcome {
-            PaymentOutcome::RegularPaymentSucceed(payment) => Self::process_checked_payment(&payment.loan_config, payment.timestamp),
-            PaymentOutcome::LastPaymentSucceed(payment) => {
-                        Self::process_checked_payment(&payment.loan_config, payment.timestamp); 
-                        Self::do_close_loan_contract(&payment.loan_config); 
-            },
-            PaymentOutcome::PaymentFailed(payment) => Self::do_liquidate(&payment.loan_config),
-            } 
-        }
-    
-    }
-    
-    // Check if particular payment can be performed.
-	pub(crate) fn  pre_process_payment(
+
+	// Process payments wich correctness were checked via off-chain procedures.
+	pub(crate) fn do_process_checked_payments(possible_payments_outcomes: PaymentsOutcomes<T>) {
+		for outcome in possible_payments_outcomes {
+			match outcome {
+				PaymentOutcome::RegularPaymentSucceed(payment) =>
+					Self::process_checked_payment(&payment),
+				PaymentOutcome::LastPaymentSucceed(payment) => {
+					Self::process_checked_payment(&payment);
+					Self::do_close_loan_contract(&payment.loan_config);
+				},
+				PaymentOutcome::PaymentFailed(payment) =>
+					Self::do_process_failed_payment(&payment.loan_config),
+			}
+		}
+	}
+
+	// Process payments which for some reason were not processed EOD.
+	pub(crate) fn do_process_unchecked_payments(
+		loans_accounts_ids: Vec<T::AccountId>,
+		date: Timestamp,
+	) {
+		for loan_account_id in loans_accounts_ids {
+			let loan_config = match Self::get_loan_config_via_account_id(&loan_account_id) {
+				Ok(loan_config) => loan_config,
+				Err(error) => {
+					log::error!("Error: {:?}", error);
+					continue
+				},
+			};
+			let payment = match Self::treat_payment(&loan_config, date) {
+				Some(payment) => payment,
+				None => continue,
+			};
+			match payment {
+				PaymentOutcome::RegularPaymentSucceed(_) => (),
+				PaymentOutcome::LastPaymentSucceed(payment) =>
+					Self::do_close_loan_contract(&payment.loan_config),
+				PaymentOutcome::PaymentFailed(payment) =>
+					Self::do_process_failed_payment(&payment.loan_config),
+			}
+		}
+	}
+
+	// Collects accounts ids of unprocessed loans and process them.
+	// Used at the beginning of the day to proccess loans which
+	// were not processed yesterday for some reason.
+	pub(crate) fn last_chance_processing(date: Timestamp) {
+		let unprocessed_loans_accounts_ids: Vec<_> = crate::ScheduleStorage::<T>::get(date)
+			.difference(&crate::ProcessedLoansStorage::<T>::get())
+			.cloned()
+			.collect();
+		if !unprocessed_loans_accounts_ids.is_empty() {
+			Self::do_process_unchecked_payments(unprocessed_loans_accounts_ids, date);
+		};
+	}
+
+	// In off-chain context: checks that payment will be successful.
+	// In on-chain context: really transfers assets from borrower's account to
+	// market account.
+	pub(crate) fn treat_payment(
 		loan_config: &LoanConfigOf<T>,
 		today: Timestamp,
 	) -> Option<PaymentOutcomeOf<T>> {
-	    // If there is no such date in the local loan's schedule we return None.	
-        let payment_amount = loan_config.get_payment_for_particular_moment(&today)?;
-        let payment = Payment {loan_config: loan_config.clone(), timestamp: today};
-	    // Use to check if payment transfer is possible.
-        // Please note that methods called within off-chain context do not change chain's state. 
-        let outcome = match Self::pay_back_borrowed_asset(&loan_config, payment_amount) {
-            // We have enough money on the loan's account to perform last payment.
+		// If there is no such date in the local loan's schedule we return None.
+		let payment_amount = loan_config.get_payment_for_particular_moment(&today)?;
+		let payment =
+			Payment { loan_config: loan_config.clone(), amount: payment_amount, timestamp: today };
+		// Use to check if payment transfer is possible.
+		// Please note that methods called within off-chain context do not change chain's state.
+		let outcome = match Self::pay_back_borrowed_asset(&loan_config, payment_amount) {
+			// We have enough money on the loan's account to perform last payment.
 			Ok(_) if *loan_config.last_payment_moment() == today =>
 				PaymentOutcome::LastPaymentSucceed(payment),
-            // We have enough money on the loan's account to perform regular payment.
-            Ok(_) => PaymentOutcome::RegularPaymentSucceed(payment),
+			// We have enough money on the loan's account to perform regular payment.
+			Ok(_) => PaymentOutcome::RegularPaymentSucceed(payment),
 			// TODO: @mikolaichuk:  we should give to borrower
 			//                      several attempts.
-	        // Payment is failed.	
-            Err(_) => PaymentOutcome::PaymentFailed(payment),
+			// Payment is failed.
+			Err(_) => PaymentOutcome::PaymentFailed(payment),
 		};
 		Some(outcome)
 	}
 
-    pub fn process_checked_payment(loan_config: &LoanConfigOf<T>, today: Timestamp) {
-                let loan_account_id = loan_config.account_id(); 
-                // Check if the loan was already processed.  
-                if crate::ProcessedLoansStorage::<T>::contains_key(loan_account_id.clone()) {
-                    return
-                };
-                // Get payment amount. 
-                let amount = match loan_config.get_payment_for_particular_moment(&today) {
-                    Some(amount) => amount, 
-                    None =>  { log::error!("Payment moment does not exist in the loan's local payment schedule, loan account id: {:?}, moment: {:?}.", loan_account_id, today);
-                                return }
-                };
-                // We are sure that payment is succeed since it has been checked off-chain.
-                // Nobody except the pallet can withdraw money from the loan's account. 
-                Self::pay_back_borrowed_asset(&loan_config, amount);
-                // Mark processed loan to avoid double processing which can cause loan liquidation.
-                crate::ProcessedLoansStorage::<T>::insert(loan_account_id.clone(),());
-    }
+	//
+	pub fn process_checked_payment(payment: &PaymentOf<T>) {
+		let loan_account_id = payment.loan_config.account_id();
+		// Check if the loan was already processed.
+		// Allows to avoid double processing, which cause unreasonable liquidation.
+		if crate::ProcessedLoansStorage::<T>::get().contains(loan_account_id) {
+			return
+		};
+		// Get payment amount.
+		let amount = match payment.loan_config.get_payment_for_particular_moment(&payment.timestamp)
+		{
+			Some(amount) => amount,
+			None => {
+				log::error!(
+                    "Payment moment does not exist in the loan's local payment schedule, loan account id: {:?}, moment: {:?}.",
+                    loan_account_id, 
+                    payment.timestamp
+                );
+				return
+			},
+		};
+		// We are sure that payment is succeed since it has been checked off-chain.
+		// Nobody except the pallet can withdraw money from the loan's account.
+		Self::pay_back_borrowed_asset(&payment.loan_config, amount).unwrap_or(T::Balance::zero());
+		// Mark processed loan to avoid double processing which can cause loan liquidation.
+		crate::ProcessedLoansStorage::<T>::mutate(|set| set.insert(loan_account_id.clone()));
+	}
 
-	pub(crate) fn do_liquidate(loan_config: &LoanConfigOf<T>) -> () {
+	// Logic we apply if payment is failed.
+	pub(crate) fn do_process_failed_payment(loan_config: &LoanConfigOf<T>) {
+		// TODO: @mikolaichuk:  add credit rating functionality.
+		//                      add event deposit(?)
+		match Self::do_liquidate(loan_config) {
+			Ok(_) => log::info!(
+				"Loan with the following account id: {:?} was successfuly send to liquidation",
+				loan_config.account_id()
+			),
+			Err(error) => log::error!(
+				"Loan with the following account id: {:?} was not send to liquidation. Error: {:?}",
+				loan_config.account_id(),
+				error
+			),
+		};
+	}
+
+	// Send position to liquidation.
+	pub(crate) fn do_liquidate(
+		loan_config: &LoanConfigOf<T>,
+	) -> Result<<T::Liquidation as Liquidation>::OrderId, DispatchError> {
+		let liquidation_strategies =
+			Self::get_market_info_via_account_id(loan_config.market_account_id())?
+				.liquidation_strategies;
+		let unit_price = T::Oracle::get_ratio(CurrencyPair::new(
+			*loan_config.collateral_asset_id(),
+			*loan_config.borrow_asset_id(),
+		))?;
+		let sell = Sell::new(
+			*loan_config.collateral_asset_id(),
+			*loan_config.borrow_asset_id(),
+			*loan_config.collateral(),
+			unit_price,
+		);
+		T::Liquidation::liquidate(loan_config.account_id(), sell, liquidation_strategies)
 	}
 
 	// Close loan contract since loan is paid.
 	pub(crate) fn do_close_loan_contract(loan_config: &LoanConfigOf<T>) {
-        // Transfer collateral to borrower's account.
+		// Transfer collateral to borrower's account.
 		T::MultiCurrency::transfer(
 			*loan_config.collateral_asset_id(),
 			loan_config.market_account_id(),
@@ -298,8 +383,8 @@ impl<T: Config> Pallet<T> {
         // Can we transfer collateral at market account in this case?
         // Perhaps we have to allow manager to transfer collateral to any account in such cases? 
         .map_or_else(|error| log::error!("Collateral was not transferred back to the borrower's account due to the following error: {:?}", error), |_| ());
-		
-        // Remove all information about the loan.
+
+		// Remove all information about the loan.
 		Self::terminate_activated_loan(&loan_config);
 		Self::deposit_event(crate::Event::<T>::LoanClosed { loan_config: loan_config.clone() });
 	}
@@ -430,31 +515,19 @@ impl<T: Config> Pallet<T> {
 		T::UnixTime::now().as_secs() as Timestamp
 	}
 
-	// Removes expired non-activated loans.
-	// Expired non-activated loans are loans which were not activated by borrower before first
-	// payment date.
-	pub(crate) fn terminate_non_activated_expired_loans(today: Timestamp) {
-		let mut removed_non_active_accounts_ids = vec![];
-		for non_active_loan_account_id in crate::NonActiveLoansStorage::<T>::iter_keys() {
-			// If, for some reason, loan is not presented in the loans storage
-			// we just remove it from from the non-active loans set.
-			if let Ok(loan_config) =
-				Self::get_loan_config_via_account_id(&non_active_loan_account_id)
-			{
-				// If current date is larger then the loan first payment date, then this loan is
-				// expired.
-				if today >= *loan_config.first_payment_moment() {
-					crate::LoansStorage::<T>::remove(non_active_loan_account_id.clone());
-				}
-				removed_non_active_accounts_ids.push(non_active_loan_account_id);
-			}
-		}
-		removed_non_active_accounts_ids
-			.iter()
-			.for_each(|account_id| crate::NonActiveLoansStorage::<T>::remove(account_id));
-		Self::deposit_event(crate::Event::<T>::NonActivatedExpiredLoansTerminated {
-			loans_ids: removed_non_active_accounts_ids.clone(),
-		});
+	//Removes a bunch of non-activated loans.
+	//TODO: @mikolaichuk: add Event;
+	pub(crate) fn do_remove_non_activated_loans(loans_accounts_ids: Vec<T::AccountId>) {
+		loans_accounts_ids
+			.into_iter()
+			//Check that loan is non-activated.
+			.filter(|loan_account_id| {
+				crate::NonActiveLoansStorage::<T>::contains_key(loan_account_id)
+			})
+			.for_each(|loan_account_id| {
+				crate::LoansStorage::<T>::remove(loan_account_id.clone());
+				crate::NonActiveLoansStorage::<T>::remove(loan_account_id)
+			});
 	}
 
 	// Remove all information regarding activated loan.
@@ -463,14 +536,17 @@ impl<T: Config> Pallet<T> {
 		let payment_moments: Vec<Timestamp> =
 			loan_config.schedule().keys().map(|key| key.clone()).collect();
 		// Remove account id from the global payment schedule for each payment date.
-        // Go through payment moments extracted from the local loan's payment schedule.
-        // Use moments from the current date only.
-        // TODO: @mikolaichuk: Test this.
-        payment_moments.into_iter().filter(|&moment| moment >= Self::get_current_date_timestamp()).for_each(|payment_moment| {
-			crate::ScheduleStorage::<T>::mutate(payment_moment, |loans_accounts_ids| {
-				loans_accounts_ids.remove(loan_config.account_id())
+		// Go through payment moments extracted from the local loan's payment schedule.
+		// Use moments from the current date only.
+		// TODO: @mikolaichuk: Test this.
+		payment_moments
+			.into_iter()
+			.filter(|&moment| moment >= Self::get_current_date_timestamp())
+			.for_each(|payment_moment| {
+				crate::ScheduleStorage::<T>::mutate(payment_moment, |loans_accounts_ids| {
+					loans_accounts_ids.remove(loan_config.account_id())
+				});
 			});
-		});
 		// TODO: @mikolaichuk: What we suppose to do if borrower's account is died?
 		T::NativeCurrency::transfer(
 			loan_config.account_id(),
@@ -481,20 +557,22 @@ impl<T: Config> Pallet<T> {
 		.map_or_else(|error| log::error!("Fee was not transferred back to the borrower's account due to the following error: {:?}", error), |_| ());
 		Self::deposit_event(crate::Event::<T>::LoanTerminated { loan_config: loan_config.clone() })
 	}
-     
-    // Tansfers borrow asset from loan's account to market's account.
-    pub(crate) fn pay_back_borrowed_asset(loan_config: &LoanConfigOf<T>, payment_amount: T::Balance) -> Result<T::Balance, DispatchError> {
-        T::MultiCurrency::transfer(
+
+	// Tansfers borrow asset from loan's account to market's account.
+	pub(crate) fn pay_back_borrowed_asset(
+		loan_config: &LoanConfigOf<T>,
+		payment_amount: T::Balance,
+	) -> Result<T::Balance, DispatchError> {
+		T::MultiCurrency::transfer(
 			*loan_config.borrow_asset_id(),
 			loan_config.account_id(),
 			loan_config.market_account_id(),
 			payment_amount,
 			true,
 		)
-    } 
+	}
 
 	// Getters helpers
-	// #generalization
 	pub(crate) fn get_market_info_via_account_id(
 		market_account_id_ref: &T::AccountId,
 	) -> Result<MarketInfoOf<T>, crate::Error<T>> {
@@ -541,20 +619,9 @@ impl<T: Config> Pallet<T> {
 	// 24.08.1991 08:45:03 -> 25.08.1991 00:00:00
 	// (in terms of seconds from the beginning of Unix epoche)
 	pub(crate) fn get_next_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
-        Self::get_date_from_timestamp(timestamp)
+		Self::get_date_from_timestamp(timestamp)
 			//	Gonna no overflow since we adds only one day.
 			.add(Duration::days(1))
-			.and_time(NaiveTime::default())
-			.timestamp()
-	}
-
-	// Returns one week before date aligned timestamp.
-	// 24.08.1991 08:45:03 -> 17.08.1991 00:00:00
-	// (in terms of seconds from the beginning of Unix epoche)
-	pub(crate) fn get_one_week_before_date_aligned_timestamp(timestamp: Timestamp) -> Timestamp {
-		Self::get_date_from_timestamp(timestamp)
-			//	Gonna no overflow since we subs only one day.
-			.sub(Duration::weeks(1))
 			.and_time(NaiveTime::default())
 			.timestamp()
 	}
