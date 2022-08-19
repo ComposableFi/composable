@@ -222,6 +222,7 @@ pub mod pallet {
 		/// Reward allocation weight for this asset type out of the total block reward.
 		pub reward_weight: Balance,
 		pub slash: Balance,
+		pub emit_price_changes: bool,
 	}
 
 	type BalanceOf<T> = <T as Config>::Balance;
@@ -529,6 +530,7 @@ pub mod pallet {
 			block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
 			reward_weight: BalanceOf<T>,
 			slash: BalanceOf<T>,
+			emit_price_changes: bool,
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
 
@@ -546,6 +548,7 @@ pub mod pallet {
 				block_interval: *block_interval,
 				reward_weight,
 				slash,
+				emit_price_changes,
 			};
 			// track reward total weight for all assets
 			let mut reward_tracker = RewardTrackerStore::<T>::get().unwrap_or_default();
@@ -991,10 +994,7 @@ pub mod pallet {
 					Self::handle_payout(&pre_prices, price, asset_id, &asset_info)?;
 
 					// Emit `PriceChanged` event when PICA or PABLO prices have changed.
-					if price != last_price &&
-						vec![CurrencyId::PICA, CurrencyId::PBLO]
-							.contains(&CurrencyId(asset_id.into()))
-					{
+					if price != last_price && asset_info.emit_price_changes {
 						Self::deposit_event(Event::PriceChanged(asset_id, price));
 					}
 				}
