@@ -1,14 +1,16 @@
 #![allow(clippy::disallowed_methods)]
-use crate::{Direction::Long, MarketConfig as MarketConfigGeneric};
+use crate::{Direction::Long, Market, MarketConfig as MarketConfigGeneric};
 use composable_support::validation::Validated;
 use composable_traits::time::ONE_HOUR;
 use frame_support::{assert_ok, pallet_prelude::Hooks};
+use pallet_vamm::VammStateOf;
 use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedPointNumber, Percent};
 
 use super::mock::{
-	AssetId, Balance, BlockNumber, Decimal, ExtBuilder, MarketId, Moment, Oracle, Origin,
-	StalePrice, System, TestPallet, Timestamp, UnsignedDecimal, ALICE, BOB, DOT, PICA, USDC,
+	AssetId, Balance, BlockNumber, Decimal, ExtBuilder, MarketId, Moment, Oracle, Origin, Runtime,
+	StalePrice, System, TestPallet, Timestamp, UnsignedDecimal, Vamm, VammId, ALICE, BOB, DOT,
+	PICA, USDC,
 };
 
 impl Default for ExtBuilder {
@@ -76,6 +78,14 @@ fn set_oracle_for(asset_id: AssetId, price: Balance) {
 
 	// Advance block so that Oracle block finalization hook is called
 	advance_blocks_by(1);
+}
+
+fn get_market(market_id: &MarketId) -> Market<Runtime> {
+	TestPallet::get_market(market_id).unwrap()
+}
+
+fn get_vamm(vamm_id: &VammId) -> VammStateOf<Runtime> {
+	Vamm::get_vamm(vamm_id).unwrap()
 }
 
 impl Default for MarketConfig {
@@ -179,6 +189,9 @@ fn should_succeed_in_opening_first_position() {
 
 		assert_ok!(TestPallet::deposit_collateral(Origin::signed(BOB), USDC, UNIT * 100));
 
+		let market = get_market(&MarketId::zero());
+		let vamm_state = get_vamm(&market.vamm_id);
+
 		assert_ok!(TestPallet::open_position(
 			Origin::signed(BOB),
 			Zero::zero(),
@@ -186,5 +199,8 @@ fn should_succeed_in_opening_first_position() {
 			UNIT * 100,
 			0
 		));
+
+		assert_ne!(get_market(&MarketId::zero()), market);
+		assert_ne!(get_vamm(&market.vamm_id), vamm_state);
 	})
 }
