@@ -1,5 +1,5 @@
 use crate::{
-	mock::{AccountId, Call, Extrinsic, *},
+	mock::{AccountId, Call, Event, Extrinsic, *},
 	AssetInfo, Error, PrePrice, Withdraw, *,
 };
 use codec::Decode;
@@ -1365,6 +1365,70 @@ fn on_init() {
 		Oracle::on_initialize(3);
 		assert_eq!(Oracle::pre_prices(0).len(), 2);
 		assert_eq!(Oracle::prices(0), price);
+	});
+}
+
+#[test]
+fn update_price() {
+	new_test_ext().execute_with(|| {
+		let account_2 = get_root_account();
+		let account_1 = get_account_1();
+
+		// Add KSM info.
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			4, // KSM
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(3).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			5,
+			5
+		));
+
+		// Update price for KSM.
+		do_price_update(4, 2);
+
+		// `PriceChanged` Event should NOT be emitted.
+		assert_eq!(System::events(), vec![]);
+
+		// Add PICA info.
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			1, // PICA
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(3).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			5,
+			5
+		));
+
+		// Update price for PICA.
+		do_price_update(1, 3);
+
+		// `PriceChanged` Event should be emitted.
+		System::assert_has_event(Event::Oracle(crate::Event::PriceChanged(1, 101)));
+
+		// Set series of EQUAL prices for PICA into storage.
+		//				 -----
+		for _ in 0..3 {
+			let price = 100_u128;
+			add_price_storage(price, 1, account_1, 2);
+		}
+
+		// Set and initialize block 4.
+		System::set_block_number(4);
+		Oracle::on_initialize(4);
+
+		// `PriceChanged` event for last price (100) should NOT be emitted, as prices didn't
+		// change
+		assert_eq!(
+			System::events()
+				.into_iter()
+				.any(|e| e.event == Event::Oracle(crate::Event::PriceChanged(1, 100))),
+			false
+		);
 	});
 }
 

@@ -40,7 +40,7 @@ pub mod pallet {
 				start_at::ZeroInit,
 			},
 		},
-		math::safe::{safe_multiply_by_rational, SafeDiv},
+		math::safe::{safe_multiply_by_rational, SafeAdd, SafeDiv, SafeSub},
 		validation::Validated,
 	};
 	use composable_traits::{
@@ -68,6 +68,7 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use lite_json::json::JsonValue;
+	use primitives::currency::CurrencyId;
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
@@ -122,7 +123,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Balance: BalanceLike + From<u128>;
+		type Balance: BalanceLike + From<u128> + SafeAdd + SafeSub;
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId, Balance = Self::Balance>;
 		type AssetId: FullCodec
@@ -347,6 +348,8 @@ pub mod pallet {
 		RewardingAdjustment(T::Moment),
 		/// Answer from oracle removed for staleness. \[oracle_address, price\]
 		AnswerPruned(T::AccountId, T::PriceValue),
+		/// Price changed by oracle \[asset_id, price\]
+		PriceChanged(T::AssetId, T::PriceValue),
 	}
 
 	#[pallet::error]
@@ -547,12 +550,14 @@ pub mod pallet {
 			// track reward total weight for all assets
 			let mut reward_tracker = RewardTrackerStore::<T>::get().unwrap_or_default();
 			if let Some(current_asset_info) = Self::asset_info(asset_id) {
-				reward_tracker.total_reward_weight = reward_tracker.total_reward_weight +
-					reward_weight - current_asset_info
-					.reward_weight;
+				reward_tracker.total_reward_weight = reward_tracker
+					.total_reward_weight
+					.safe_add(&reward_weight)?
+					.safe_sub(&current_asset_info.reward_weight)?;
 			} else {
 				AssetsCount::<T>::increment()?;
-				reward_tracker.total_reward_weight += reward_weight;
+				reward_tracker.total_reward_weight =
+					reward_tracker.total_reward_weight.safe_add(&reward_weight)?;
 			}
 			RewardTrackerStore::<T>::set(Option::from(reward_tracker));
 
@@ -966,6 +971,11 @@ pub mod pallet {
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_prices.len() as u32 >= asset_info.min_answers {
 				if let Some(price) = Self::calculate_price(&pre_prices, &asset_info) {
+					let last_price = match pre_prices.last() {
+						Some(pre_price) => pre_price.price,
+						_ => Zero::zero(),
+					};
+
 					Prices::<T>::insert(asset_id, Price { price, block });
 					PriceHistory::<T>::try_mutate(asset_id, |prices| -> DispatchResult {
 						if prices.len() as u32 >= T::MaxHistory::get() {
@@ -981,6 +991,13 @@ pub mod pallet {
 					PrePrices::<T>::remove(asset_id);
 
 					Self::handle_payout(&pre_prices, price, asset_id, &asset_info)?;
+
+					if price != last_price &&
+						vec![CurrencyId::PICA, CurrencyId::PBLO]
+							.contains(&CurrencyId(asset_id.into()))
+					{
+						Self::deposit_event(Event::PriceChanged(asset_id, price));
+					}
 				}
 			}
 			Ok(())
