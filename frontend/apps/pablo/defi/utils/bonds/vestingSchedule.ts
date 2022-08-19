@@ -80,10 +80,10 @@ export function createBondOfferIdVestingScheduleIdMap(
     let bondOfferId = curr.bondOfferId.toString();
 
     if (acc[bondOfferId]) {
-      acc[bondOfferId].add(curr.vestingScheduleId);
+      acc[bondOfferId].add(curr.id);
     } else {
       acc[bondOfferId] = new Set();
-      acc[bondOfferId].add(curr.vestingScheduleId);
+      acc[bondOfferId].add(curr.id);
     }
 
     return acc;

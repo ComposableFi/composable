@@ -9,7 +9,6 @@ import {
   alpha,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useState } from "react";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import usePrincipalAssetSymbol from "@/defi/hooks/bonds/usePrincipalAssetSymbol";

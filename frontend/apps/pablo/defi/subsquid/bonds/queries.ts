@@ -14,7 +14,6 @@ export interface SubsquidVestingScheduleEntity {
   from: string;
   eventId: string;
   to: string;
-  vestingScheduleId: string;
 }
 
 export function queryVestingSchedulesByAccountId(accountId: string): Promise<OperationResult<{
@@ -28,7 +27,6 @@ export function queryVestingSchedulesByAccountId(accountId: string): Promise<Ope
       from
       eventId
       to
-      vestingScheduleId
     }
   }  
   `).toPromise();
