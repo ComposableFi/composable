@@ -1136,16 +1136,16 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 			.add(periods_surpassed.mul(reward_rate_period_seconds.get()));
 
 		if new_total_rewards <= reward.max_rewards.into() {
-			do_release_accumulated_rewards::<T>(&reward, pool_account, new_rewards)?;
+			do_release_accumulated_rewards::<T>(reward, pool_account, new_rewards)?;
 			reward.total_rewards = new_total_rewards.into();
 			reward.last_updated_timestamp = last_updated_timestamp;
 			Ok(())
-		} else
+		}
 		// if the new total rewards are less than or equal to the max rewards AND the current total
 		// rewards are less than the max rewards (i.e. the newly accumulated rewards is less than
 		// the the amount that would be accumulated based on the periods surpassed), then transfer
 		// *up to* the max rewards
-		if reward.total_rewards < reward.max_rewards {
+		else if reward.total_rewards < reward.max_rewards {
 			// SAFETY(benluelo): Usage of Sub::sub:
 			//
 			// reward.total_rewards is known to be less than reward.max_rewards as per check above
