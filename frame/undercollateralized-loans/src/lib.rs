@@ -343,6 +343,7 @@ pub mod pallet {
 				// Type conversion is safe here since we do not use dates before the epoche.
 				Duration::from_millis(next_date_aligned_timestemp as u64 * 1000),
 			);
+			// Run regular procedures once a day.
 			match daily_lock.try_lock() {
 				Ok(_) => Self::sync_offchain_worker(current_date_timestamp),
 				Err(_) => (),
@@ -350,27 +351,35 @@ pub mod pallet {
 		}
 	}
 
+	// Unsigned transactions are disabled by default.
+	// This implimentation allow us to use unsigned transactions.
 	#[pallet::validate_unsigned]
 	impl<T: Config> ValidateUnsigned for Pallet<T> {
 		type Call = Call<T>;
+		// This validate function gurantee that only locall calls (i.e. transcations submitted via
+		// off-chain worker) are allowed.
 		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			// Check if transaction is local.
 			match source {
 				TransactionSource::Local | TransactionSource::InBlock => (),
 				_ => return InvalidTransaction::Call.into(),
 			};
-			// Check if call is allowed.
+			// Only methods mentioned here will be accessible for unsigned transactions.
 			match call {
 				Call::process_checked_payments { .. } => (),
 				Call::remove_loans { .. } => (),
 				_ => return InvalidTransaction::Call.into(),
 			};
+			// TODO: @mikolaichuk: consider higher transaction priority.
 			Ok(ValidTransaction::default())
 		}
 	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		// Market creation. Note that manager has to have initial amount of borrow asset which will
+		// be deposited to market's account. Makret manager provides whitelist of borrowers who
+		// are allowed to borrow money from the market.
 		#[pallet::weight(1000)]
 		#[transactional]
 		pub fn create_market(
@@ -386,6 +395,10 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// Loan can be created only by market's manager. Contract terms should be previously
+		// discussed with borrower. After loan is been created, it's config placed in the loan's
+		// storage. The loan is marked as non-activated until borrower make borrow.To borrow money,
+		// borrower should be provided with loan's account id.
 		#[pallet::weight(1000)]
 		#[transactional]
 		pub fn create_loan(origin: OriginFor<T>, input: LoanInputOf<T>) -> DispatchResult {
@@ -399,6 +412,10 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// To borrow money, user should provide loan's account id.
+		// User will be allowed to borrow if his account is mentioned as borrower's
+		// account in the loan's configuration. Borrower has to have sufficient amount of
+		// collateral on his account. This collateral will be transferred to the loan's account.
 		#[pallet::weight(1000)]
 		#[transactional]
 		pub fn borrow(
@@ -413,6 +430,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// Borrower have to repay his loan as per payment schedule which is mentioned in the loan's
+		// configuration. Assets should be transferred on the loan's account
+		// before payment date.
 		#[pallet::weight(1000)]
 		#[transactional]
 		pub fn repay(
@@ -428,7 +448,7 @@ pub mod pallet {
 		}
 
 		// This method supposed to be called from off-chain worker.
-		#[pallet::weight(1000)]
+		#[pallet::weight(0)]
 		pub fn process_checked_payments(
 			origin: OriginFor<T>,
 			outcomes: PaymentsOutcomes<T>,
@@ -439,7 +459,7 @@ pub mod pallet {
 		}
 
 		// This method supposed to be called from off-chain worker.
-		#[pallet::weight(1000)]
+		#[pallet::weight(0)]
 		pub fn remove_loans(
 			origin: OriginFor<T>,
 			loans_accounts_ids: Vec<T::AccountId>,

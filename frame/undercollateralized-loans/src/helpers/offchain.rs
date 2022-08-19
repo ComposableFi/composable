@@ -14,6 +14,10 @@ impl<T: Config> Pallet<T> {
 		Self::submit_unsigned_remove_loans_transcations(expired_loans_accounts_ids);
 	}
 
+	//===========================================================================================================================
+	//                                              Process payments transactions
+	//===========================================================================================================================
+
 	// Submit unsigned transaction to process checked payments.
 	fn submit_unsigned_process_payments_transcations(
 		possible_payment_outcomes: PaymentsOutcomes<T>,
@@ -51,6 +55,10 @@ impl<T: Config> Pallet<T> {
 		}
 		possible_payments_outcomes
 	}
+
+	//===========================================================================================================================
+	//                                          Removing expired contracts transactions
+	//===========================================================================================================================
 
 	fn submit_unsigned_remove_loans_transcations(non_activated_expired_loans: Vec<T::AccountId>) {
 		// Split loans accounts ids vector to avoid heavy transactions.
