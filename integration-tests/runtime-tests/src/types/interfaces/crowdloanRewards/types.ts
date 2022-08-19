@@ -15,6 +15,12 @@ export interface CommonMosaicRemoteAssetId extends Null {}
 /** @name ComposableSupportEthereumAddress */
 export interface ComposableSupportEthereumAddress extends Null {}
 
+/** @name ComposableTraitsAccountProxyProxyDefinition */
+export interface ComposableTraitsAccountProxyProxyDefinition extends Null {}
+
+/** @name ComposableTraitsAccountProxyProxyType */
+export interface ComposableTraitsAccountProxyProxyType extends Null {}
+
 /** @name ComposableTraitsAssetsBasicAssetMetadata */
 export interface ComposableTraitsAssetsBasicAssetMetadata extends Struct {
   readonly symbol: {
@@ -118,6 +124,9 @@ export interface ComposableTraitsStakingRewardPool extends Null {}
 /** @name ComposableTraitsStakingRewardPoolConfiguration */
 export interface ComposableTraitsStakingRewardPoolConfiguration extends Null {}
 
+/** @name ComposableTraitsStakingRewardUpdate */
+export interface ComposableTraitsStakingRewardUpdate extends Null {}
+
 /** @name ComposableTraitsStakingStake */
 export interface ComposableTraitsStakingStake extends Null {}
 
@@ -126,9 +135,6 @@ export interface ComposableTraitsTimeTimeReleaseFunction extends Null {}
 
 /** @name ComposableTraitsVaultVaultConfig */
 export interface ComposableTraitsVaultVaultConfig extends Null {}
-
-/** @name ComposableTraitsVestingVestingSchedule */
-export interface ComposableTraitsVestingVestingSchedule extends Null {}
 
 /** @name ComposableTraitsXcmAssetsForeignMetadata */
 export interface ComposableTraitsXcmAssetsForeignMetadata extends Null {}
@@ -210,6 +216,9 @@ export interface OrmlTokensBalanceLock extends Null {}
 
 /** @name OrmlTokensReserveData */
 export interface OrmlTokensReserveData extends Null {}
+
+/** @name PalletAccountProxyAnnouncement */
+export interface PalletAccountProxyAnnouncement extends Null {}
 
 /** @name PalletAssetsRegistryCandidateStatus */
 export interface PalletAssetsRegistryCandidateStatus extends Null {}

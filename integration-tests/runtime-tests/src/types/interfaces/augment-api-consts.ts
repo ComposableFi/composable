@@ -189,6 +189,13 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    fnft: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     ibc: {
       /**
        * Expected blocktime

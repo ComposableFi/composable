@@ -159,6 +159,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TooManyCandidates: AugmentedError<ApiType>;
       /**
+       * Too many invulnerables
+       **/
+      TooManyInvulnerables: AugmentedError<ApiType>;
+      /**
        * Unknown error
        **/
       Unknown: AugmentedError<ApiType>;
@@ -226,6 +230,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Not a member.
        **/
       NotMember: AugmentedError<ApiType>;
+      /**
+       * Too many members.
+       **/
+      TooManyMembers: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -371,6 +379,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       VotesExist: AugmentedError<ApiType>;
       /**
+       * Voting period too low
+       **/
+      VotingPeriodLow: AugmentedError<ApiType>;
+      /**
        * Invalid upper bound.
        **/
       WrongUpperBound: AugmentedError<ApiType>;
@@ -437,6 +449,17 @@ declare module '@polkadot/api-base/types/errors' {
       XcmCannotDecodeRemoteParametersToLocalRepresentations: AugmentedError<ApiType>;
       XcmCannotFindLocalIdentifiersAsDecodedFromRemote: AugmentedError<ApiType>;
       XcmNotFoundConfigurationById: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    fnft: {
+      CollectionAlreadyExists: AugmentedError<ApiType>;
+      CollectionNotFound: AugmentedError<ApiType>;
+      InstanceAlreadyExists: AugmentedError<ApiType>;
+      InstanceNotFound: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1182,6 +1205,7 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     stakingRewards: {
+      BackToTheFuture: AugmentedError<ApiType>;
       /**
        * Invalid end block number provided for creating a pool.
        **/
@@ -1190,6 +1214,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Reward's max limit reached.
        **/
       MaxRewardLimitReached: AugmentedError<ApiType>;
+      /**
+       * No duration presets configured.
+       **/
+      NoDurationPresetsConfigured: AugmentedError<ApiType>;
       /**
        * Not enough assets for a stake.
        **/
@@ -1207,6 +1235,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       ReductionConfigProblem: AugmentedError<ApiType>;
       /**
+       * Reward asset not found in reward pool.
+       **/
+      RewardAssetNotFound: AugmentedError<ApiType>;
+      /**
        * Error when creating reward configs.
        **/
       RewardConfigProblem: AugmentedError<ApiType>;
@@ -1218,6 +1250,10 @@ declare module '@polkadot/api-base/types/errors' {
        * No stake found for given id.
        **/
       StakeNotFound: AugmentedError<ApiType>;
+      /**
+       * Too many rewarded asset types per pool violating the storage allowed.
+       **/
+      TooManyRewardAssetTypes: AugmentedError<ApiType>;
       /**
        * Unimplemented reward pool type.
        **/
@@ -1327,6 +1363,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotMember: AugmentedError<ApiType>;
       /**
+       * Too many members.
+       **/
+      TooManyMembers: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -1409,6 +1449,11 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     treasury: {
+      /**
+       * The spend origin is valid but the amount it is allowed to spend is lower than the
+       * amount to be spent.
+       **/
+      InsufficientPermission: AugmentedError<ApiType>;
       /**
        * Proposer's balance is too low.
        **/
@@ -1582,6 +1627,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Trying to vest to ourselves
        **/
       TryingToSelfVest: AugmentedError<ApiType>;
+      /**
+       * There is no vesting schedule with a given id
+       **/
+      VestingScheduleNotFound: AugmentedError<ApiType>;
       /**
        * Vesting period is zero
        **/

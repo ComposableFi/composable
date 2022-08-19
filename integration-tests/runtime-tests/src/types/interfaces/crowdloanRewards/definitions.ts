@@ -51,7 +51,6 @@ export default {
     PalletCrowdloanRewardsReward: "Null",
     CumulusPalletDmpQueueConfigData: "Null",
     PalletDutchAuctionSellOrder: "Null",
-    ComposableTraitsVestingVestingSchedule: "Null",
     CumulusPalletDmpQueuePageIndexData: "Null",
     PalletDutchAuctionTakeOrder: "Null",
     ComposableTraitsGovernanceSignedRawOrigin: {
@@ -190,7 +189,10 @@ export default {
     IbcTransferPalletParams: "Null",
     IbcTransferTransferParams: "Null",
     ComposableTraitsOracleRewardTracker: "Null",
-    ComposableTraitsStakingStake: "Null"
-
+    ComposableTraitsStakingStake: "Null",
+    ComposableTraitsAccountProxyProxyType: "Null",
+    PalletAccountProxyAnnouncement: "Null",
+    ComposableTraitsAccountProxyProxyDefinition: "Null",
+    ComposableTraitsStakingRewardUpdate: "Null",
   }
 };
