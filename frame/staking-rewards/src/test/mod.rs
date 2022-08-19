@@ -4,7 +4,7 @@ use crate::{
 	Config, RewardPools, StakeCount, Stakes,
 };
 use composable_support::abstractions::utils::increment::Increment;
-use composable_tests_helpers::test::currency::{CurrencyId, BTC, PICA, USDT};
+use composable_tests_helpers::test::currency::{CurrencyId, BTC, PICA, USDT, XPICA};
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
@@ -27,6 +27,8 @@ use sp_arithmetic::{Perbill, Permill};
 use sp_core::sr25519::Public;
 use sp_runtime::PerThing;
 use sp_std::collections::btree_map::BTreeMap;
+
+use self::prelude::STAKING_FNFT_COLLECTION_ID;
 
 mod prelude;
 mod runtime;
@@ -591,6 +593,8 @@ fn get_default_reward_pool() -> RewardPoolConfiguration<
 		end_block: 5,
 		reward_configs: default_reward_config(),
 		lock: default_lock_config(),
+		share_asset_id: XPICA::ID,
+		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 	};
 	pool_init_config
 }
@@ -608,6 +612,8 @@ fn get_reward_pool_config_invalid_end_block() -> RewardPoolConfiguration<
 		end_block: 0,
 		reward_configs: default_reward_config(),
 		lock: default_lock_config(),
+		share_asset_id: XPICA::ID,
+		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 	};
 	pool_init_config
 }
