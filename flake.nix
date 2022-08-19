@@ -500,9 +500,9 @@
                 '';
               };
 
-            junod = pkgs.callPackage ./.nix/junod.nix { };
-            gex = pkgs.callPackage ./.nix/gex.nix { };
-
+            junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
+            gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
+            wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix { };
             default = packages.composable-node;
           };
 
@@ -545,6 +545,7 @@
                 [
                   junod
                   gex
+                  # junod wasm swap web interface 
                   devnet-dali
                   # TODO: hasura
                   # TODO: some well know wasm contracts deployed                
@@ -562,7 +563,6 @@
               '';
 
             });
-
 
             writers = mkShell {
               buildInputs = with packages; [
