@@ -553,7 +553,6 @@ pub mod pallet {
 				reward_tracker.total_reward_weight = reward_tracker.total_reward_weight +
 					reward_weight - current_asset_info
 					.reward_weight;
-				reward_tracker.total_reward_weight += reward_weight;
 			} else {
 				AssetsCount::<T>::increment()?;
 				reward_tracker.total_reward_weight += reward_weight;
