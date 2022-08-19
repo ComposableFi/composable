@@ -505,8 +505,9 @@
               '';
             };
 
-            cargo-clippy-check = crane-nightly.cargoClippy (common-attrs // {
+            cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
               cargoArtifacts = common-deps-nightly;
+              cargoBuildCommand = "cargo clippy";
               cargoExtraArgs = "--all-targets --tests -- -D warnings";
             });
 
