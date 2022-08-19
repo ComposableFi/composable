@@ -583,6 +583,8 @@ pub mod pallet {
 					reward_configs: initial_reward_config,
 					end_block,
 					lock,
+					share_asset_id,
+					financial_nft_asset_id,
 				} => {
 					ensure!(
 						end_block > frame_system::Pallet::<T>::current_block_number(),
@@ -616,6 +618,8 @@ pub mod pallet {
 							claimed_shares: T::Balance::zero(),
 							end_block,
 							lock,
+							share_asset_id,
+							financial_nft_asset_id,
 						},
 					);
 					// TODO (vim): Create the financial NFT collection for the rewards pool
