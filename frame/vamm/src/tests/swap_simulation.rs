@@ -8,12 +8,13 @@ use crate::{
 		},
 		helpers::{run_for_seconds, with_swap_context},
 		helpers_propcompose::{any_swap_config, any_vamm_state},
-		types::{TestSwapConfig, TestVammConfig},
+		types::{Balance, TestSwapConfig, TestVammConfig},
 	},
 };
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait};
 use frame_support::{assert_noop, assert_ok, assert_storage_noop};
 use proptest::prelude::*;
+use rstest::rstest;
 use sp_runtime::traits::{One, Zero};
 
 // -------------------------------------------------------------------------------------------------
@@ -54,102 +55,35 @@ fn should_fail_if_vamm_is_closed() {
 	});
 }
 
-#[test]
-fn should_not_modify_runtime_storage_add_base() {
+#[rstest]
+#[case(AssetType::Base, Direction::Add)]
+#[case(AssetType::Base, Direction::Remove)]
+#[case(AssetType::Quote, Direction::Add)]
+#[case(AssetType::Quote, Direction::Remove)]
+fn should_not_modify_runtime_storage(#[case] asset: AssetType, #[case] direction: Direction) {
 	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 		assert_storage_noop!(TestPallet::swap_simulation(&SwapConfig {
-			asset: AssetType::Base,
-			direction: Direction::Add,
+			asset,
+			direction,
 			..swap_config
 		}));
 	});
 }
 
-#[test]
-fn should_not_modify_runtime_storage_remove_base() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
-		assert_storage_noop!(TestPallet::swap_simulation(&SwapConfig {
-			asset: AssetType::Base,
-			direction: Direction::Remove,
-			..swap_config
-		}));
-	});
-}
-
-#[test]
-fn should_not_modify_runtime_storage_add_quote() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
-		assert_storage_noop!(TestPallet::swap_simulation(&SwapConfig {
-			asset: AssetType::Quote,
-			direction: Direction::Add,
-			..swap_config
-		}));
-	});
-}
-
-#[test]
-fn should_not_modify_runtime_storage_remove_quote() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
-		assert_storage_noop!(TestPallet::swap_simulation(&SwapConfig {
-			asset: AssetType::Quote,
-			direction: Direction::Remove,
-			..swap_config
-		}));
-	});
-}
-
-#[test]
-fn should_return_correct_value_add_base() {
+#[rstest]
+#[case(AssetType::Base, Direction::Add, SwapOutput { output: QUOTE_RETURNED_AFTER_ADDING_BASE, negative: false })]
+#[case(AssetType::Base, Direction::Remove, SwapOutput { output: QUOTE_REQUIRED_FOR_REMOVING_BASE, negative: true })]
+#[case(AssetType::Quote, Direction::Add, SwapOutput { output: BASE_RETURNED_AFTER_ADDING_QUOTE, negative: false })]
+#[case(AssetType::Quote, Direction::Remove, SwapOutput { output: BASE_REQUIRED_FOR_REMOVING_QUOTE, negative: true })]
+fn should_return_correct_value(
+	#[case] asset: AssetType,
+	#[case] direction: Direction,
+	#[case] expected: SwapOutput<Balance>,
+) {
 	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
 		assert_ok!(
-			TestPallet::swap_simulation(&SwapConfig {
-				asset: AssetType::Base,
-				direction: Direction::Add,
-				..swap_config
-			}),
-			SwapOutput { output: QUOTE_RETURNED_AFTER_ADDING_BASE, negative: false }
-		);
-	});
-}
-
-#[test]
-fn should_return_correct_value_remove_base() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
-		assert_ok!(
-			TestPallet::swap_simulation(&SwapConfig {
-				asset: AssetType::Base,
-				direction: Direction::Remove,
-				..swap_config
-			}),
-			SwapOutput { output: QUOTE_REQUIRED_FOR_REMOVING_BASE, negative: true }
-		);
-	});
-}
-
-#[test]
-fn should_return_correct_value_add_quote() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
-		assert_ok!(
-			TestPallet::swap_simulation(&SwapConfig {
-				asset: AssetType::Quote,
-				direction: Direction::Add,
-				..swap_config
-			}),
-			SwapOutput { output: BASE_RETURNED_AFTER_ADDING_QUOTE, negative: false }
-		);
-	});
-}
-
-#[test]
-fn should_return_correct_value_remove_quote() {
-	with_swap_context(TestVammConfig::default(), TestSwapConfig::default(), |_, swap_config| {
-		assert_ok!(
-			TestPallet::swap_simulation(&SwapConfig {
-				asset: AssetType::Quote,
-				direction: Direction::Remove,
-				..swap_config
-			}),
-			SwapOutput { output: BASE_REQUIRED_FOR_REMOVING_QUOTE, negative: true }
+			TestPallet::swap_simulation(&SwapConfig { asset, direction, ..swap_config }),
+			expected
 		);
 	});
 }
