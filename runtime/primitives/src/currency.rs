@@ -6,7 +6,7 @@ use core::{fmt::Display, ops::Div, str::FromStr};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	sp_std::{ops::Deref, vec::Vec},
-	RuntimeDebug,
+	RuntimeDebug, WeakBoundedVec,
 };
 
 #[cfg(feature = "std")]
@@ -201,7 +201,7 @@ impl From<u128> for CurrencyId {
 #[cfg(feature = "develop")]
 impl From<CurrencyId> for xcm::latest::Junction {
 	fn from(this: CurrencyId) -> Self {
-		xcm::latest::Junction::GeneralKey(this.encode())
+		xcm::latest::Junction::GeneralKey(WeakBoundedVec::force_from(this.encode(), None))
 	}
 }
 
