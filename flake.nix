@@ -502,48 +502,6 @@
 
             junod = pkgs.callPackage ./.nix/junod.nix { };
 
-
-            devnet-xcvm = pkgs.arion.build {
-              modules = [
-                  ({ pkgs, ...}: {
-                      config = {
-                        project = {
-                          name = "devnet-xcvm";
-                        };
-                        services = {
-                          junod-testing-local = {
-                            service = {
-                              name = "junod-testing-local";
-                              # NOTE: the do not release git hash tags, so not clear how to share client and docker image
-                              image = "ghcr.io/cosmoscontracts/juno:v9.0.0";
-                              environment = {
-                                  STAKE_TOKEN = "ujunox";
-                                  UNSAFE_CORS = "true";
-                                  USER ="juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y";
-                                  GAS_LIMIT = 100000000;
-                              };
-                              # TODO: mount proper genesis here as per
-                              # `"wasm":{"codes":[],"contracts":[],"gen_msgs":[],"params":{"code_upload_access":{"address":"","permission":"Everybody"},`
-                              #network_mode 
-                              command = ''
-                              ./setup_and_run.sh juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y
-                              '';
-                              network_mode = "host";
-                              # these ports are open by default
-                              # ports = [
-                              #     "1317:1317" # rest
-                              #     "26656:26656" # p2p
-                              #     "26657:26657" # rpc
-                              # ];
-                            };
-                          };
-                        };
-                      };
-                  })
-              ];
-              inherit pkgs;
-            };
-
             default = packages.composable-node;
           };
 
@@ -586,20 +544,22 @@
                 [
                   junod
                   devnet-dali
-                  arion
                   # TODO: hasura
                   # TODO: cosmos explorer
                   # TODO: some well know wasm contracts deployed                
                   # TODO: junod server
                   # TODO: solc
+                  # TODO: gex
+                  # TODO: https://github.com/forbole/bdjuno                  
                   # TODO: script to run all
                   # TODO: compose export
-                ];
-                shellHook = ''
-                  # TODO: how to make it work - setup defaul admin client key
-                  #"clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover 
-                '';
-              
+                ]
+              ++ lib.lists.optional (lib.strings.hasSuffix "linux" system) arion;
+              shellHook = ''
+                # TODO: how to make it work - setup defaul admin client key
+                #"clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover 
+              '';
+
             });
 
 
@@ -626,12 +586,59 @@
           # Applications runnable with `nix run`
           # https://github.com/NixOS/nix/issues/5560
           apps = rec {
-            devnet-xcvm-up = {
-              type = "app";
-              program = "${pkgs.writeShellScript "arion-up" ''
-                ${pkgs.arion}/bin/arion --prebuilt-file ${packages.devnet-xcvm} up --remove-orphans
-              ''}"; 
-            };
+            devnet-xcvm-up =
+              let
+                devnet-xcvm =
+
+                  pkgs.arion.build
+                    {
+                      modules = [
+                        ({ pkgs, ... }: {
+                          config = {
+                            project = {
+                              name = "devnet-xcvm";
+                            };
+                            services = {
+                              junod-testing-local = {
+                                service = {
+                                  name = "junod-testing-local";
+                                  # NOTE: the do not release git hash tags, so not clear how to share client and docker image
+                                  image = "ghcr.io/cosmoscontracts/juno:v9.0.0";
+                                  environment = {
+                                    STAKE_TOKEN = "ujunox";
+                                    UNSAFE_CORS = "true";
+                                    USER = "juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y";
+                                    GAS_LIMIT = 100000000;
+                                  };
+                                  # TODO: mount proper genesis here as per
+                                  # `"wasm":{"codes":[],"contracts":[],"gen_msgs":[],"params":{"code_upload_access":{"address":"","permission":"Everybody"},`
+                                  #network_mode 
+                                  command = ''
+                                    ./setup_and_run.sh juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y
+                                  '';
+                                  network_mode = "host";
+                                  # these ports are open by default
+                                  # ports = [
+                                  #     "1317:1317" # rest
+                                  #     "26656:26656" # p2p
+                                  #     "26657:26657" # rpc
+                                  # ];
+                                };
+                              };
+                            };
+                          };
+                        })
+                      ];
+                      inherit pkgs;
+                    }
+                ;
+              in
+              {
+                type = "app";
+                program = "${pkgs.writeShellScript "arion-up" ''
+                ${pkgs.arion}/bin/arion --prebuilt-file ${devnet-xcvm} up --remove-orphans
+              ''}";
+              };
 
             devnet-dali = {
               type = "app";
