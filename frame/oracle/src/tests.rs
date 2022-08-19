@@ -31,7 +31,7 @@ use composable_tests_helpers::{
 };
 use proptest::prelude::*;
 
-use composable_tests_helpers::test::helper::assert_no_event;
+use composable_tests_helpers::test::{block::process_and_progress_blocks, helper::assert_no_event};
 use composable_traits::{oracle::RewardTracker, time::MS_PER_YEAR_NAIVE};
 use sp_core::H256;
 
@@ -1445,9 +1445,8 @@ fn update_price() {
 			add_price_storage(price, 1, account_1, 2);
 		}
 
-		// Set and initialize block 4.
-		System::set_block_number(4);
-		Oracle::on_initialize(4);
+		// Process next block
+		process_and_progress_blocks::<Oracle, Test>(1);
 
 		// `PriceChanged` event for last price (100) should NOT be emitted, as prices didn't
 		// change
