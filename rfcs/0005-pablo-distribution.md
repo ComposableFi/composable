@@ -11,12 +11,13 @@ Table of Contents
         -   [2.2.1. LP Fee Distribution](#-lp-fee-distribution)
 -   [3. Use Cases](#3-use-cases)
 -   [4. Requirements](#4-requirements)
-    -   [4.1. Pablo Liquidity Providers](#41-pablo-liquidity-providers)
-    -   [4.2. PBLO Stakers](#42-pblo-stakers)
-    -   [4.3. PICA Stakers](#43-pica-stakers)
-    -   [4.4. Pablo Governance](#44-pablo-governance)
-    -   [4.5. PICA Governance](#45-pica-governance)
-    -   [4.6. Technical Requirements](#46-technical-requirements)
+    - [4.1. Pablo Liquidity Providers](#41-pablo-liquidity-providers)
+    - [4.2. PBLO Stakers](#42-pblo-stakers)
+    - [4.3. PICA Stakers](#43-pica-stakers)
+    - [4.4. Pablo Governance](#44-pablo-governance)
+    - [4.5. PICA Governance](#45-pica-governance)
+    - [4.6. Technical Requirements](#46-technical-requirements)
+    - [4.7 Financial NFT Requirements](#47-financial-nft-requirements)
 -   [5. Method](#5-method)
     -   [5.1. System Overview](#51-system-overview)
     -   [5.2. Pallet-Pablo](#52-pallet-pablo)
@@ -220,6 +221,14 @@ for brevity.
 
     -   This is to handle cases where a Pablo pool fees are in a
         different asset type than what is preferred.
+
+### 4.7 Financial NFT Requirements
+
+1. Each staked position MUST be represented as a https://todo.link[fNFT].
+2. Owning a PBLO staked position fNFT(xPBLO) MUST allow voting for protocol 
+   governance based on the xPBLO granted.
+3. Each staked position plus its rewards MUST be transferable by transferring 
+   the ownership of its NFT including the voting rights.
 
 ## 5. Method
 

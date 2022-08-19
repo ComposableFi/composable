@@ -1,3 +1,10 @@
+import { ChartRange } from "./charts";
+import {
+  FORMAT_1D,
+  FORMAT_1w,
+  FORMAT_1M,
+} from "./constants"
+
 /**
  * Check if pair is valid
  * @param asset1 Asset id | "none"
@@ -30,4 +37,12 @@ export function compareU8a(a: Uint8Array, b: Uint8Array): boolean {
   })
 
   return equal;
+}
+
+export function toMomentChartLabel(chartRange: ChartRange): string {
+  return {
+    "24h": FORMAT_1D,
+    "1w": FORMAT_1w,
+    "1m": FORMAT_1M
+  }[chartRange];
 }

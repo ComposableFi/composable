@@ -74,7 +74,7 @@ impl<T: Config> Lending for Pallet<T> {
 
 	fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
 		Markets::<T>::iter()
-			.filter_map(|(index, market)| market.borrow_asset_vault.eq(&borrow).then(|| index))
+			.filter_map(|(index, market)| market.borrow_asset_vault.eq(&borrow).then_some(index))
 			.collect()
 	}
 
