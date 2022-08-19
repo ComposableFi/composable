@@ -31,6 +31,7 @@ use composable_tests_helpers::{
 };
 use proptest::prelude::*;
 
+use composable_tests_helpers::test::helper::assert_no_event;
 use composable_traits::{oracle::RewardTracker, time::MS_PER_YEAR_NAIVE};
 use sp_core::H256;
 
@@ -1416,7 +1417,7 @@ fn update_price() {
 		do_price_update(4, 2);
 
 		// `PriceChanged` Event should NOT be emitted.
-		assert_eq!(System::events(), vec![]);
+		assert_no_event::<Test>(Event::Oracle(crate::Event::PriceChanged(0, 101)));
 
 		// Add PICA info.
 		assert_ok!(Oracle::add_asset_and_info(
@@ -1450,12 +1451,7 @@ fn update_price() {
 
 		// `PriceChanged` event for last price (100) should NOT be emitted, as prices didn't
 		// change
-		assert_eq!(
-			System::events()
-				.into_iter()
-				.any(|e| e.event == Event::Oracle(crate::Event::PriceChanged(1, 100))),
-			false
-		);
+		assert_no_event::<Test>(Event::Oracle(crate::Event::PriceChanged(1, 100)));
 	});
 }
 
