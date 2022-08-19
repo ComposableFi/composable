@@ -71,7 +71,6 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
-		helpers_128bit::multiply_by_rational,
 		offchain::{http, Duration},
 		traits::{
 			AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub,
@@ -496,7 +495,7 @@ pub mod pallet {
 			let asset_price_per_unit: u128 = Self::get_price(asset_id, unit)?.price.into();
 
 			let amount: u128 = amount.into();
-			let result = multiply_by_rational(amount, unit.into(), asset_price_per_unit)?;
+			let result = safe_multiply_by_rational(amount, unit.into(), asset_price_per_unit)?;
 			let result: u64 = result.try_into().map_err(|_| ArithmeticError::Overflow)?;
 
 			Ok(result.into())
@@ -1165,9 +1164,7 @@ pub mod pallet {
 			amount: T::PriceValue,
 		) -> Result<T::PriceValue, DispatchError> {
 			let unit = <Self as Oracle>::LocalAssets::unit(asset_id)?;
-			// dbg!(&unit);
-			// dbg!(&amount);
-			let price = multiply_by_rational(price.into(), amount.into(), unit)?;
+			let price = safe_multiply_by_rational(price.into(), amount.into(), unit)?;
 			Ok(price.into())
 		}
 

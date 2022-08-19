@@ -1,7 +1,6 @@
 {
   # see ./docs/nix.md for design guidelines of nix organization
-  description =
-    "Composable Finance systems, tools and releases";
+  description = "Composable Finance systems, tools and releases";
   # when flake runs, ask for interactie answers first time
   # nixConfig.sandbox = "relaxed";
   inputs = {
@@ -37,9 +36,8 @@
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
       mk-devnet =
-        { 
-        pkgs,
-        lib
+        { pkgs
+        , lib
         , writeTextFile
         , writeShellApplication
         , polkadot-launch
@@ -48,18 +46,16 @@
         , chain-spec
         }:
         let
-          original-config = (pkgs.callPackage ./scripts/polkadot-launch/rococo-local-dali-dev.nix
-          { 
-            polkadot-bin = polkadot-node; 
-            composable-bin = composable-node;   
-          }).result;
+          original-config = (pkgs.callPackage
+            ./scripts/polkadot-launch/rococo-local-dali-dev.nix
+            {
+              polkadot-bin = polkadot-node;
+              composable-bin = composable-node;
+            }).result;
 
           patched-config = lib.recursiveUpdate original-config {
             parachains = builtins.map
-              (parachain:
-                parachain // {
-                  chain = "${chain-spec}";
-                })
+              (parachain: parachain // { chain = "${chain-spec}"; })
               original-config.parachains;
           };
           config = writeTextFile {
@@ -187,7 +183,7 @@
           common-attrs = {
             src = rust-src;
             buildInputs = [ openssl zstd ];
-            nativeBuildInputs = [ clang pkg-config ]
+            nativeBuildInputs = [ clang openssl pkg-config ]
               ++ lib.optional stdenv.isDarwin
               (with darwin.apple_sdk.frameworks; [
                 Security
@@ -210,32 +206,29 @@
           common-deps = crane-stable.buildDepsOnly (common-attrs // { });
           common-deps-nightly =
             crane-nightly.buildDepsOnly (common-attrs // { });
-          common-attrs-with-benchmarks = common-attrs // {
-            cargoExtraArgs =
-              "--features=runtime-benchmarks --features=builtin-wasm";
+          common-bench-attrs = common-attrs // {
+            cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
           };
-          common-deps-with-benchmarks =
-            crane-stable.buildDepsOnly common-attrs-with-benchmarks;
+          common-bench-deps =
+            crane-stable.buildDepsOnly (common-bench-attrs // { });
 
           # Build a wasm runtime, unoptimized
-          mk-runtime = name:
+          mk-runtime = name: features:
             let file-name = "${name}_runtime.wasm";
-            in
-            crane-nightly.buildPackage (common-attrs // {
+            in crane-nightly.buildPackage (common-attrs // {
               pname = "${name}-runtime";
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand =
-                "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown";
+                "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown" + lib.strings.optionalString (features != "") (" --features=${features}");
               # From parity/wasm-builder
               RUSTFLAGS =
                 "-Clink-arg=--export=__heap_base -Clink-arg=--import-memory";
             });
 
           # Derive an optimized wasm runtime from a prebuilt one, garbage collection + compression
-          mk-optimized-runtime = name:
-            let runtime = mk-runtime name;
-            in
-            stdenv.mkDerivation {
+          mk-optimized-runtime = { name, features ? "" }:
+            let runtime = mk-runtime name features;
+            in stdenv.mkDerivation {
               name = "${runtime.name}-optimized";
               phases = [ "installPhase" ];
               installPhase = ''
@@ -247,13 +240,32 @@
             };
 
           devcontainer-base-image =
-            callPackage ./.nix/devcontainer-base-image.nix {
-              inherit system;
-            };
+            callPackage ./.nix/devcontainer-base-image.nix { inherit system; };
 
-          dali-runtime = mk-optimized-runtime "dali";
-          picasso-runtime = mk-optimized-runtime "picasso";
-          composable-runtime = mk-optimized-runtime "composable";
+          dali-runtime = mk-optimized-runtime {
+            name = "dali";
+            features = "";
+          };
+          picasso-runtime = mk-optimized-runtime {
+            name = "picasso";
+            features = "";
+          };
+          composable-runtime = mk-optimized-runtime {
+            name = "composable";
+            features = "";
+          };
+          dali-bench-runtime = mk-optimized-runtime {
+            name = "dali";
+            features = "runtime-benchmarks";
+          };
+          picasso-bench-runtime = mk-optimized-runtime {
+            name = "picasso";
+            features = "runtime-benchmarks";
+          };
+          composable-bench-runtime = mk-optimized-runtime {
+            name = "composable";
+            features = "runtime-benchmarks";
+          };
 
           # NOTE: with docs, non nighly fails but nighly fails too...
           # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
@@ -262,7 +274,7 @@
               pnameSuffix = "-node";
               cargoArtifacts = common-deps;
               cargoBuildCommand =
-                "cargo build --release --package composable --features builtin-wasm";
+                "cargo build --release --package composable --features=builtin-wasm";
               DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
               PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
@@ -273,15 +285,15 @@
               '';
             });
 
-          composable-node-with-benchmarks = crane-stable.cargoBuild
-            (common-attrs-with-benchmarks // {
+          composable-bench-node = crane-stable.cargoBuild
+            (common-bench-attrs // {
               pnameSuffix = "-node";
-              cargoArtifacts = common-deps-with-benchmarks;
+              cargoArtifacts = common-bench-deps;
               cargoBuildCommand = "cargo build --release --package composable";
-              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
-              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+              DALI_RUNTIME = "${dali-bench-runtime}/lib/runtime.optimized.wasm";
+              PICASSO_RUNTIME = "${picasso-bench-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
-                "${composable-runtime}/lib/runtime.optimized.wasm";
+                "${composable-bench-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable
@@ -290,27 +302,31 @@
 
           run-with-benchmarks = chain:
             writeShellScriptBin "run-benchmarks-once" ''
-              ${composable-node-with-benchmarks}/bin/composable benchmark pallet \
+              ${composable-bench-node}/bin/composable benchmark pallet \
                 --chain="${chain}" \
                 --execution=wasm \
                 --wasm-execution=compiled \
                 --wasm-instantiation-strategy=legacy-instance-reuse \
                 --pallet="*" \
-                --extrinsic='*' \
+                --extrinsic="*" \
                 --steps=1 \
-                --repeat=1 \
-                --output=$out \
-                --log error
-            '';           
+                --repeat=1
+            '';
+
         in
         rec {
           packages = rec {
             inherit wasm-optimizer;
             inherit common-deps;
+            inherit common-bench-deps;
             inherit dali-runtime;
             inherit picasso-runtime;
             inherit composable-runtime;
+            inherit dali-bench-runtime;
+            inherit picasso-bench-runtime;
+            inherit composable-bench-runtime;
             inherit composable-node;
+            inherit composable-bench-node;
 
             runtime-tests = stdenv.mkDerivation {
               name = "runtime-tests";
@@ -338,7 +354,7 @@
 
             # NOTE: crane can't be used because of how it vendors deps, which is incompatible with some packages in polkadot, an issue must be raised to the repo
             acala-node = pkgs.callPackage ./.nix/acala-bin.nix {
-                rust-overlay = rust-nightly;
+              rust-overlay = rust-nightly;
             };
             polkadot-node = rustPlatform.buildRustPackage rec {
               # HACK: break the nix sandbox so we can build the runtimes. This
@@ -346,15 +362,15 @@
               # We don't realy care because polkadot is only used for local devnet.
               __noChroot = true;
               name = "polkadot-v${version}";
-              version = "0.9.24";
+              version = "0.9.27";
               src = fetchFromGitHub {
                 repo = "polkadot";
                 owner = "paritytech";
                 rev = "v${version}";
-                hash = "sha256-Vv8lnmGNdhKjMGmzBJVJvmR2rD3BsbaDD7LajkKxpXc=";
+                hash = "sha256-LEz3OrVgdFTCnVwzU8C6GeEougaOl2qo7jS9qIdMqAM=";
               };
               cargoSha256 =
-                "sha256-53iEC0WQy/tkToTDqolXzR6sjfe2xolBlIjQXDGhsYc=";
+                "sha256-6y+WK2k1rhqMxMjEJhzJ26WDMKZjXQ+q3ca2hbbeLvA=";
               doCheck = false;
               buildInputs = [ openssl zstd ];
               nativeBuildInputs = [ rust-nightly clang pkg-config ]
@@ -400,7 +416,7 @@
 
             # TODO: inherit and provide script to run all stuff
             # devnet-container-xcvm
-            # NOTE: The devcontainer is currently broken for aarch64. 
+            # NOTE: The devcontainer is currently broken for aarch64.
             # Please use the developers devShell instead
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
@@ -433,30 +449,33 @@
 
             check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
             check-picasso-dev-benchmarks = run-with-benchmarks "picasso-dev";
-            check-composable-dev-benchmarks = run-with-benchmarks "composable-dev";
+            check-composable-dev-benchmarks =
+              run-with-benchmarks "composable-dev";
 
-            check-picasso-integration-tests = crane-nightly.cargoBuild (common-attrs
-              // {
-              pname = "picasso-local-integration-tests";
-              cargoArtifacts = common-deps-nightly;
-              cargoBuildCommand = "cargo test --package local-integration-tests";
-              cargoExtraArgs =
-                "--features local-integration-tests --features picasso --features std --no-default-features --verbose";
-            });
-            check-dali-integration-tests = crane-nightly.cargoBuild (common-attrs // {
-              pname = "dali-local-integration-tests";
-              cargoArtifacts = common-deps-nightly;
-              cargoBuildCommand = "cargo test --package local-integration-tests";
-              cargoExtraArgs =
-                "--features local-integration-tests --features dali --features std --no-default-features --verbose";
-            });
+            check-picasso-integration-tests = crane-nightly.cargoBuild
+              (common-attrs // {
+                pname = "picasso-local-integration-tests";
+                cargoBuildCommand =
+                  "cargo test --package local-integration-tests";
+                cargoExtraArgs =
+                  "--features=local-integration-tests,picasso,std --no-default-features --verbose";
+              });
+            check-dali-integration-tests = crane-nightly.cargoBuild
+              (common-attrs // {
+                pname = "dali-local-integration-tests";
+                cargoBuildCommand =
+                  "cargo test --package local-integration-tests";
+                cargoExtraArgs =
+                  "--features=local-integration-tests,dali,std --no-default-features --verbose";
+              });
 
             unit-tests = crane-stable.cargoBuild (common-attrs // {
               pnameSuffix = "-tests";
               cargoArtifacts = common-deps;
               # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
               # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
-              cargoBuildCommand = "cargo test --workspace --release --locked --verbose";
+              cargoBuildCommand =
+                "cargo test --workspace --release --locked --verbose";
             });
 
             cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
@@ -494,14 +513,14 @@
             });
 
             kusama-picasso-karura =
-              let      
-
-                config = (pkgs.callPackage ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix 
-                { 
-                  polkadot-bin = polkadot-node; 
-                  composable-bin = composable-node;   
-                  acala-bin = acala-node;   
-                }).result;              
+              let
+                config = (pkgs.callPackage
+                  ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix
+                  {
+                    polkadot-bin = polkadot-node;
+                    composable-bin = composable-node;
+                    acala-bin = acala-node;
+                  }).result;
                 config-file = writeTextFile {
                   name = "kusama-local-picasso-dev-karura-dev.json";
                   text = "${builtins.toJSON config}";
@@ -513,45 +532,62 @@
                   cat ${config-file}
                   ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
                 '';
-              }; 
+              };
+
+            junod = pkgs.callPackage ./.nix/junod.nix { };
 
             default = packages.composable-node;
           };
 
           devShells = rec {
-            developers = mkShell (common-attrs // {
-              buildInputs = with packages; [
-                bacon
-                google-cloud-sdk
-                grub2
-                jq
-                lldb
-                llvmPackages_latest.bintools
-                llvmPackages_latest.lld
-                llvmPackages_latest.llvm
-                mdbook
-                nix-tree
-                nixpkgs-fmt
-                openssl
-                openssl.dev
-                pkg-config
-                qemu
-                rnix-lsp
-                rust-nightly
-                taplo
-                wasm-optimizer
-                xorriso
-                zlib.out
-              ];
-              NIX_PATH = "nixpkgs=${pkgs.path}";
+            developers = developers-minimal.overrideAttrs (base: {
+              buildInputs = with packages;
+                base.buildInputs ++ [
+                  bacon
+                  google-cloud-sdk
+                  grub2
+                  jq
+                  lldb
+                  llvmPackages_latest.bintools
+                  llvmPackages_latest.lld
+                  llvmPackages_latest.llvm
+                  mdbook
+                  nix-tree
+                  nixpkgs-fmt
+                  openssl
+                  openssl.dev
+                  pkg-config
+                  qemu
+                  rnix-lsp
+                  rust-nightly
+                  taplo
+                  wasm-optimizer
+                  xorriso
+                  zlib.out
+                ];
             });
 
             developers-minimal = mkShell (common-attrs // {
-              buildInputs = with packages; [
-                rust-nightly
-              ];
+              buildInputs = with packages; [ rust-nightly ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             });
+
+            developers-xcvm = developers-minimal.overrideAttrs (base: {
+              buildInputs = with packages;
+                base.buildInputs ++
+                [
+                  junod
+                  devnet-dali
+                  # TODO: hasura
+                  # TODO: cosmos explorer
+                  # TODO: some well know wasm contracts deployed                
+                  # TODO: junod server
+                  # TODO: solc
+                  # TODO: script to run all
+                  # TODO: compose export
+                ];
+            });
+
 
             writers = mkShell {
               buildInputs = with packages; [
@@ -569,19 +605,6 @@
               buildInputs = [ nixopsUnstable ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
-
-            # developers-xcvm = developers // mkShell {
-            #   buildInputs = with packages; [
-            #     # TODO: hasura
-            #     # TODO: junod client
-            #     # TODO: junod server
-            #     # TODO: solc
-            #     # TODO: script to run all
-            #     # TODO: compose export
-            #       packages.dali-script
-            #   ];
-            #   NIX_PATH = "nixpkgs=${pkgs.path}";
-            # };
 
             default = developers;
           };
@@ -602,8 +625,9 @@
             kusama-picasso-karura = {
               # nix run .#devnet
               type = "app";
-              program = "${packages.kusama-picasso-karura}/bin/kusama-picasso-karura";
-            }; 
+              program =
+                "${packages.kusama-picasso-karura}/bin/kusama-picasso-karura";
+            };
 
             price-feed = {
               type = "app";
@@ -617,7 +641,6 @@
               type = "app";
               program = "${packages.acala-node}/bin/acala";
             };
-            
             polkadot = {
               type = "app";
               program = "${packages.polkadot-node}/bin/polkadot";
@@ -640,8 +663,7 @@
       nixopsConfigurations = {
         default =
           let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          in
-          import ./.nix/devnet.nix {
+          in import ./.nix/devnet.nix {
             inherit nixpkgs;
             inherit gce-input;
             devnet-dali = pkgs.callPackage mk-devnet {

@@ -15,7 +15,7 @@
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 
 // Make the WASM binary available.
 #[cfg(all(feature = "std", feature = "builtin-wasm"))]
@@ -365,6 +365,7 @@ impl WeightToFeePolynomial for WeightToFee {
 }
 
 impl transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
 	type WeightToFee = WeightToFee;
@@ -514,6 +515,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -1131,26 +1133,26 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: system::{Pallet, Call, Config, Storage, Event<T>} = 0,
-		Timestamp: timestamp::{Pallet, Call, Storage, Inherent} = 1,
-		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
-		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
-		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
-		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
-		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
-		Identity: identity::{Call, Event<T>, Pallet, Storage} = 7,
-		Multisig: multisig::{Call, Event<T>, Pallet, Storage} = 8,
+		System: system = 0,
+		Timestamp: timestamp = 1,
+		Sudo: sudo = 2,
+		RandomnessCollectiveFlip: randomness_collective_flip = 3,
+		TransactionPayment: transaction_payment = 4,
+		Indices: indices = 5,
+		Balances: balances = 6,
+		Identity: identity = 7,
+		Multisig: multisig = 8,
 
 		// Parachains stuff
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 11,
+		ParachainSystem: cumulus_pallet_parachain_system = 10,
+		ParachainInfo: parachain_info = 11,
 
 		// Collator support. the order of these 5 are important and shall not change.
-		Authorship: authorship::{Pallet, Call, Storage} = 20,
-		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
-		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: aura::{Pallet, Storage, Config<T>} = 23,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
+		Authorship: authorship = 20,
+		CollatorSelection: collator_selection = 21,
+		Session: session = 22,
+		Aura: aura = 23,
+		AuraExt: cumulus_pallet_aura_ext = 24,
 
 		// Runtime Native token Governance utilities
 		Council: collective::<Instance1> = 30,
@@ -1175,26 +1177,26 @@ construct_runtime!(
 		XTokens: orml_xtokens = 44,
 		UnknownTokens: orml_unknown_tokens = 45,
 
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
-		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
+		Tokens: orml_tokens = 51,
+		Oracle: oracle = 52,
 		CurrencyFactory: currency_factory = 53,
-		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
-		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
-		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
-		Assets: assets::{Pallet, Call, Storage} = 57,
-		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 58,
-		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 59,
-		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
-		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
-		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
-		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
-		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
-		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
-		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
-		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
-		Fnft: pallet_fnft::{Pallet, Storage, Event<T>} = 68,
+		Vault: vault = 54,
+		AssetsRegistry: assets_registry = 55,
+		GovernanceRegistry: governance_registry = 56,
+		Assets: assets = 57,
+		CrowdloanRewards: crowdloan_rewards = 58,
+		Vesting: vesting = 59,
+		BondedFinance: bonded_finance = 60,
+		DutchAuction: dutch_auction = 61,
+		Mosaic: mosaic = 62,
+		Liquidations: liquidations = 63,
+		Lending: lending = 64,
+		Pablo: pablo = 65,
+		DexRouter: dex_router = 66,
+		StakingRewards: pallet_staking_rewards = 67,
+		Fnft: pallet_fnft = 68,
 
-		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 140,
+		CallFilter: call_filter = 140,
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
 		IbcPing: pallet_ibc_ping = 151,
@@ -1250,7 +1252,8 @@ mod benches {
 		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
-		[collator_selection, CollatorSelection]
+    // TODO: broken
+		// [collator_selection, CollatorSelection]
 		[indices, Indices]
 		[membership, CouncilMembership]
 		[treasury, Treasury]
@@ -1273,8 +1276,9 @@ mod benches {
 		[pallet_staking_rewards, StakingRewards]
 		[pallet_account_proxy, Proxy]
 		[dex_router, DexRouter]
-		[pallet_ibc, Ibc]
-		[ibc_transfer, Transfer]
+    // TODO: Broken
+		// [pallet_ibc, Ibc]
+		// [ibc_transfer, Transfer]
 	);
 }
 

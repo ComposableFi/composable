@@ -618,7 +618,13 @@ pub mod pallet {
 			)?;
 
 			// Remove Airdrop and associated data from storage
+
+			// NOTE(hussein-aitlahcen): this is deprecated, but the new API state in the doc that we
+			// can have an infinite limit. while the new `clear_prefix` signature doesn't match this
+			// definition (force u32 as limit). Missing feature or limit is forced? Who know.
+			#[allow(deprecated)]
 			RecipientFunds::<T>::remove_prefix(airdrop_id, None);
+			#[allow(deprecated)]
 			Associations::<T>::remove_prefix(airdrop_id, None);
 			Airdrops::<T>::remove(airdrop_id);
 

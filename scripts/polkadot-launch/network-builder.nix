@@ -16,15 +16,16 @@ let
 in
 rec
 {
-  mk-node = { port, wsPort, nodeKey, flags }:
+  mk-node = { port, wsPort, nodeKey, flags, basePath }:
     {
       name = nodeKey;
-      flags = flags;
-      port = port;
-      wsPort = wsPort;
+      inherit flags;
+      inherit port;
+      inherit wsPort;
+      inherit basePath;
     };
 
-  mk-nodes = { count, port, wsPort, nodeNames, flags }:
+  mk-nodes = { count, port, wsPort, nodeNames, flags, basePath }:
     let
       portsIncrements = lib.lists.range 0 (count - 1);
     in
@@ -36,6 +37,7 @@ rec
             wsPort = wsPort + portIncrement;
             inherit nodeKey;
             inherit flags;
+            basePath = "${basePath}/${nodeKey}";
           }
       )
       portsIncrements
@@ -50,6 +52,7 @@ rec
         inherit wsPort;
         inherit nodeNames;
         inherit flags;
+        basePath = "/tmp/polkadot-launch/${chain}/";
       };
     };
 
