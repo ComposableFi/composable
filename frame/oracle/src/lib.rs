@@ -40,7 +40,7 @@ pub mod pallet {
 				start_at::ZeroInit,
 			},
 		},
-		math::safe::{safe_multiply_by_rational, SafeAdd, SafeDiv, SafeSub},
+		math::safe::{safe_multiply_by_rational, SafeDiv},
 		validation::Validated,
 	};
 	use composable_traits::{
@@ -123,7 +123,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Balance: BalanceLike + From<u128> + SafeAdd + SafeSub;
+		type Balance: BalanceLike + From<u128>;
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId, Balance = Self::Balance>;
 		type AssetId: FullCodec
@@ -550,14 +550,13 @@ pub mod pallet {
 			// track reward total weight for all assets
 			let mut reward_tracker = RewardTrackerStore::<T>::get().unwrap_or_default();
 			if let Some(current_asset_info) = Self::asset_info(asset_id) {
-				reward_tracker.total_reward_weight = reward_tracker
-					.total_reward_weight
-					.safe_add(&reward_weight)?
-					.safe_sub(&current_asset_info.reward_weight)?;
+				reward_tracker.total_reward_weight = reward_tracker.total_reward_weight +
+					reward_weight - current_asset_info
+					.reward_weight;
+				reward_tracker.total_reward_weight += reward_weight;
 			} else {
 				AssetsCount::<T>::increment()?;
-				reward_tracker.total_reward_weight =
-					reward_tracker.total_reward_weight.safe_add(&reward_weight)?;
+				reward_tracker.total_reward_weight += reward_weight;
 			}
 			RewardTrackerStore::<T>::set(Option::from(reward_tracker));
 
@@ -992,6 +991,7 @@ pub mod pallet {
 
 					Self::handle_payout(&pre_prices, price, asset_id, &asset_info)?;
 
+					// Emit `PriceChanged` event when PICA or PABLO prices have changed.
 					if price != last_price &&
 						vec![CurrencyId::PICA, CurrencyId::PBLO]
 							.contains(&CurrencyId(asset_id.into()))
