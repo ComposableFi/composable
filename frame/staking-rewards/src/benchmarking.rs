@@ -207,9 +207,9 @@ benchmarks! {
 
 		let now = now + seconds_per_block;
 
-		let reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
+		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
 	}: {
-		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, reward, now);
+		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, &mut reward, now);
 	}
 
 	unix_time_now {}: {

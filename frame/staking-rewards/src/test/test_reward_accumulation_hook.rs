@@ -1,29 +1,29 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use crate::RewardAccumulationHookError;
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
 	helper::{assert_last_event, assert_no_event},
 };
-use composable_traits::assets;
 use frame_support::traits::{fungibles::InspectHold, TryCollect, UnixTime};
 
-use crate::{test::prelude::*, Pallet};
+use crate::test::prelude::*;
 
 use super::*;
 
 #[test]
 fn test_reward_update_calculation() {
 	new_test_ext().execute_with(|| {
-		const MAX_REWARD_UNITS: u128 = 51;
+		const MAX_REWARDS: u128 = PICA::units(51);
 
-		process_and_progress_blocks::<crate::Pallet<Test>, Test>(1);
+		// works for any value, including 0
+		const STARTING_BLOCK: u64 = 10;
+
+		process_and_progress_blocks::<crate::Pallet<Test>, Test>(STARTING_BLOCK as usize);
 
 		let now = <<Test as crate::Config>::UnixTime as UnixTime>::now().as_secs();
 
 		let reward_config = RewardConfig {
 			asset_id: PICA::ID,
-			max_rewards: PICA::units(MAX_REWARD_UNITS),
+			max_rewards: MAX_REWARDS,
 			reward_rate: RewardRate::per_second(PICA::units(2)),
 		};
 
@@ -40,54 +40,57 @@ fn test_reward_update_calculation() {
 
 		add_to_rewards_pot_and_assert(ALICE, pool_id, PICA::ID, PICA::units(10_000));
 
-		// the expected total_rewards amount (in units) for each block
-		let expected = [12, 24, 36, 48];
+		// the expected total_rewards amount for each block surpassed
+		let expected = [
+			(1, PICA::units(12)),
+			(2, PICA::units(24)),
+			(3, PICA::units(36)),
+			(4, PICA::units(48)),
+		];
 
-		let reward = expected.into_iter().zip(1..).fold(
-			RewardPools::<Test>::get(&pool_id)
-				.unwrap()
-				.rewards
-				.get(&PICA::ID)
-				.unwrap()
-				.clone(),
-			|reward, (expected_total_rewards_units, current_block_number)| {
-				System::set_block_number(current_block_number);
+		let mut reward = RewardPools::<Test>::get(&pool_id)
+			.unwrap()
+			.rewards
+			.get(&PICA::ID)
+			.unwrap()
+			.clone();
 
-				let reward = Pallet::<Test>::reward_accumulation_hook_reward_update_calculation(
-					pool_id,
-					reward,
-					now.safe_add(&block_seconds(current_block_number).try_into().unwrap()).unwrap(),
-				);
+		for (current_block_number, expected_total_rewards) in expected {
+			StakingRewards::reward_accumulation_hook_reward_update_calculation(
+				pool_id,
+				&mut reward,
+				now.safe_add(&block_seconds(current_block_number).try_into().unwrap()).unwrap(),
+			);
 
-				println!("current block: {current_block_number}");
-				for error in [
-					RewardAccumulationHookError::BackToTheFuture,
-					RewardAccumulationHookError::RewardsPotEmpty,
-				] {
-					assert_no_event::<Test>(Event::StakingRewards(
-						crate::Event::<Test>::RewardAccumulationHookError {
-							pool_id,
-							asset_id: PICA::ID,
-							error,
-						},
-					));
-				}
+			println!("blocks surpassed: {}", current_block_number);
+			for error in [
+				RewardAccumulationHookError::BackToTheFuture,
+				RewardAccumulationHookError::RewardsPotEmpty,
+			] {
+				assert_no_event::<Test>(Event::StakingRewards(
+					crate::Event::<Test>::RewardAccumulationHookError {
+						pool_id,
+						asset_id: PICA::ID,
+						error,
+					},
+				));
+			}
 
-				assert_eq!(
-					reward.total_rewards,
-					PICA::units(expected_total_rewards_units),
-					"current block: {current_block_number}"
-				);
+			assert_no_event::<Test>(Event::StakingRewards(
+				crate::Event::<Test>::MaxRewardsAccumulated { pool_id, asset_id: PICA::ID },
+			));
 
-				reward
-			},
-		);
+			assert_eq!(
+				reward.total_rewards, expected_total_rewards,
+				"blocks surpassed: {current_block_number}"
+			);
+		}
 
 		let current_block_number = (expected.len() + 1) as u64;
 
-		let reward = Pallet::<Test>::reward_accumulation_hook_reward_update_calculation(
+		StakingRewards::reward_accumulation_hook_reward_update_calculation(
 			pool_id,
-			reward,
+			&mut reward,
 			now.safe_add(&block_seconds(current_block_number).try_into().unwrap()).unwrap(),
 		);
 
@@ -95,7 +98,7 @@ fn test_reward_update_calculation() {
 		// note that the max rewards is 51 and the reward amount per period is 2 - when the max is
 		// reached, as much as possible up to the max amount is rewarded (even if it's a smaller
 		// increment than amount)
-		assert_eq!(reward.total_rewards, PICA::units(MAX_REWARD_UNITS));
+		assert_eq!(reward.total_rewards, MAX_REWARDS);
 
 		// should report an error since the max was hit
 		assert_last_event::<Test>(Event::StakingRewards(
@@ -105,7 +108,7 @@ fn test_reward_update_calculation() {
 }
 
 #[test]
-// takes about 3 minutes to run
+// takes about 3 minutes to run in debug, 20 seconds in release
 // does not do any claiming
 fn test_accumulate_rewards_hook() {
 	new_test_ext().execute_with(|| {
@@ -248,10 +251,11 @@ fn test_accumulate_rewards_hook() {
 			*counter = System::block_number();
 			assert_eq!(
 				*counter, block,
-				r#"sanity check; counter and block should be the same at this point.
-				found:
-				    counter: {counter},
-				    block:   {block}"#
+				r#"
+sanity check; counter and block should be the same at this point.
+found:
+	counter: {counter},
+	block:   {block}"#
 			);
 
 			println!("current block: {counter}");
