@@ -1,6 +1,6 @@
 use crate::{
 	currency::{BTC, NORMALIZED, USDT},
-	mocks::{general as runtime, general::*},
+	mocks::*,
 	types::{LoanConfigOf, MarketInfoOf, MarketInputOf},
 };
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -26,10 +26,10 @@ pub const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_p
 
 // Bounds for configuration generic type, used in create market helpers.
 pub trait ConfigBound:
-	frame_system::Config<BlockNumber = runtime::BlockNumber>
+	frame_system::Config<BlockNumber = BlockNumber>
 	+ crate::Config
-	+ DeFiComposableConfig<MayBeAssetId = runtime::CurrencyId>
-	+ orml_tokens::Config<CurrencyId = runtime::CurrencyId, Balance = runtime::Balance>
+	+ DeFiComposableConfig<MayBeAssetId = CurrencyId>
+	+ orml_tokens::Config<CurrencyId = CurrencyId, Balance = Balance>
 {
 }
 impl ConfigBound for Runtime {}
@@ -77,7 +77,7 @@ where
 }
 
 pub fn create_test_market_input_config() -> MarketInputOf<Runtime> {
-	let mut borrowers_whitelist: BTreeSet<runtime::AccountId> = BTreeSet::new();
+	let mut borrowers_whitelist: BTreeSet<AccountId> = BTreeSet::new();
 	borrowers_whitelist.insert(*BOB);
 	borrowers_whitelist.insert(*CHARLIE);
 	create_market_input_config::<Runtime>(
