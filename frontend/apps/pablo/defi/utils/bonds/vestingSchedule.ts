@@ -1,20 +1,21 @@
 import { SubsquidVestingScheduleEntity } from "@/defi/subsquid/bonds/queries";
-import { VestingSchedule } from "@/defi/types";
+import { BondOffer, VestingSchedule } from "@/defi/types";
 import { ApiPromise } from "@polkadot/api";
 import { u8aToHex, stringToU8a } from "@polkadot/util";
 import BigNumber from "bignumber.js";
 import { PALLET_TYPE_ID } from "../constants";
 import { compareU8a, concatU8a } from "../misc";
+import { fetchVestingSchedule } from "../vesting";
 
 /**
  * get BondOfferId from VestingSchedule Account
  * returns -1 if invalid account
- * @param vestingScheduleAccount UInt8Array
+ * @param vestingScheduleSubAccount UInt8Array
  * @returns BigNumber
  */
 export function getBondOfferIdByVestingScheduleAccount(
   parachainApi: ApiPromise,
-  vestingScheduleAccount: Uint8Array
+  vestingScheduleSubAccount: Uint8Array
 ): BigNumber {
   let offerId = new BigNumber(-1);
   // @ts-ignore
@@ -25,13 +26,13 @@ export function getBondOfferIdByVestingScheduleAccount(
 
   if (
     compareU8a(
-      vestingScheduleAccount.subarray(0, bondedFiPalletId.length),
+      vestingScheduleSubAccount.subarray(0, bondedFiPalletId.length),
       bondedFiPalletId
     )
   ) {
-    let paddedId = vestingScheduleAccount.subarray(
+    let paddedId = vestingScheduleSubAccount.subarray(
       bondedFiPalletId.length,
-      vestingScheduleAccount.length
+      vestingScheduleSubAccount.length
     );
     let firstNonZeroIndex = -1;
 
@@ -90,43 +91,34 @@ export function createBondOfferIdVestingScheduleIdMap(
   }, {} as Record<string, Set<string>>);
 }
 
-export function calculateClaimableAt(
-  vestingSchedule: VestingSchedule | undefined,
-  currentBlock: BigNumber
-): {
-  claimable: BigNumber;
-  pendingRewards: BigNumber;
-} {
-  let claimable = new BigNumber(0),
-    pendingRewardsToBeClaimed = new BigNumber(0);
+export async function fetchVestingSchedulesByBondOffers(
+  parachainApi: ApiPromise,
+  account: string,
+  bondOffers: BondOffer[],
+  bondedOfferScheduleIds: Record<string, Set<string>>
+): Promise<Record<string, VestingSchedule[]>> {
+  let schedulesMap: Record<string, VestingSchedule[]> = {};
 
-  if (vestingSchedule) {
-    if (vestingSchedule.type === "block") {
-      const { start, period } = vestingSchedule.window;
-      const { perPeriod, alreadyClaimed, periodCount } = vestingSchedule;
+  bondOffers.forEach((offer) => {
+    const offerId = offer.offerId.toString();
+    schedulesMap[offerId] = [];
+  });
 
-      let totalClaimable = perPeriod.times(periodCount);
-      pendingRewardsToBeClaimed = totalClaimable.minus(alreadyClaimed);
-
-      if (currentBlock.gt(start.plus(period.times(periodCount)))) {
-        claimable = pendingRewardsToBeClaimed.gt(perPeriod)
-          ? perPeriod
-          : pendingRewardsToBeClaimed;
-      } else {
-        let startBlock = new BigNumber(start);
-        let rewardedAmount = new BigNumber(0);
-        while (startBlock.lt(currentBlock)) {
-          rewardedAmount = rewardedAmount.plus(perPeriod);
-          startBlock = startBlock.plus(period);
-        }
-
-        claimable = rewardedAmount.minus(alreadyClaimed);
-      }
-    }
+  for (const offer of bondOffers) {
+    const offerId = offer.offerId.toString();
+    const schedules = await fetchVestingSchedule(
+      parachainApi,
+      account,
+      offer.reward.asset
+    );
+    schedulesMap[offerId] = schedules.filter((schedule) =>
+      bondedOfferScheduleIds[offerId]
+        ? bondedOfferScheduleIds[offerId].has(
+            schedule.vestingScheduleId.toString()
+          )
+        : false
+    );
   }
 
-  return {
-    claimable,
-    pendingRewards: pendingRewardsToBeClaimed,
-  };
+  return schedulesMap;
 }

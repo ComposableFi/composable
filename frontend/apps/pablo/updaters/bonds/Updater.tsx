@@ -2,12 +2,14 @@ import { useEffect } from "react";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { calculateBondROI } from "@/defi/utils";
+import { putBondOffersReturnOnInvestmentRecord, useBondOffersSlice } from "@/store/bond/bond.slice";
 
 const Updater = () => {
-  const { bondOffers: { list }, putBondOfferROI, apollo } = useStore();
+  const { apollo } = useStore();
+  const { bondOffers } = useBondOffersSlice();
 
   useEffect(() => {
-    const roiRecord = list.reduce((acc, bondOffer) => {
+    const roiRecord = bondOffers.reduce((acc, bondOffer) => {
       const principalAssetPrinceInUSD = new BigNumber(apollo[bondOffer.asset]) || new BigNumber(0);
       const rewardAssetPriceInUSD = new BigNumber(apollo[bondOffer.reward.asset]) || new BigNumber(0);
       const rewardAssetAmountPerBond = bondOffer.reward.amount.div(bondOffer.nbOfBonds);
@@ -23,8 +25,8 @@ const Updater = () => {
       }
     }, {} as Record<string, BigNumber>);
 
-    putBondOfferROI(roiRecord);
-  }, [apollo, list, putBondOfferROI])
+    putBondOffersReturnOnInvestmentRecord(roiRecord);
+  }, [apollo, bondOffers])
 
   return null;
 };

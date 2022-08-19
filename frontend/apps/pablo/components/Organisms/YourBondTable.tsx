@@ -11,17 +11,11 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { InfoOutlined } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
-import { useParachainApi, useSelectedAccount } from "substrate-react";
-import {
-  createBondOfferIdVestingScheduleIdMap,
-  DEFAULT_NETWORK_ID,
-} from "@/defi/utils";
-import { fetchVestingSchedulesAdded } from "@/defi/subsquid/bonds/helpers";
-import useStore from "@/store/useStore";
 import BondedOfferRow from "./bonds/BondedOfferRow";
+import { useBondOffersSlice } from "@/store/bond/bond.slice";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -42,34 +36,19 @@ const tableHeaders: TableHeader[] = [
 ];
 
 export const YourBondTable: React.FC = () => {
-  const { bondOffers, putBondedOffers } = useStore();
-  const { list, bondedOffers } = bondOffers;
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const { bondOffers, bondedOfferVestingScheduleIds } = useBondOffersSlice();
   const router = useRouter();
 
-  useEffect(() => {
-    if (selectedAccount && parachainApi) {
-      fetchVestingSchedulesAdded(selectedAccount.address).then(
-        (addedEvents) => {
-          putBondedOffers(
-            createBondOfferIdVestingScheduleIdMap(parachainApi, addedEvents)
-          );
-        }
-      );
-    }
-  }, [selectedAccount, parachainApi, putBondedOffers]);
-
+  const myOffers = useMemo(() => {
+    return bondOffers.filter((bondOffer) => {
+      const offerId = bondOffer.offerId.toString();
+      return offerId in bondedOfferVestingScheduleIds;
+    });
+  }, [bondOffers, bondedOfferVestingScheduleIds]);
+  
   const handleRowClick = (offerId: number) => {
     router.push(`/bond/select/${offerId}`);
   };
-
-  const myOffers = useMemo(() => {
-    return list.filter((bondOffer) => {
-      const offerId = bondOffer.offerId.toString();
-      return offerId in bondedOffers;
-    });
-  }, [list, bondedOffers]);
 
   if (myOffers.length == 0) {
     return (

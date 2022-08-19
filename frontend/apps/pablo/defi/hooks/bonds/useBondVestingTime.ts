@@ -4,7 +4,7 @@ import { AVERAGE_BLOCK_TIME, calculateVestingTime } from "@/defi/utils";
 import { useBlockInterval } from "../useBlockInterval";
 import BigNumber from "bignumber.js";
 
-export default function useBondVestingSchedule(
+export default function useBondVestingTime(
   bondOffer: BondOffer | undefined
 ): string {
   const averageBlockTime = useBlockInterval();

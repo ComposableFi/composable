@@ -14,11 +14,24 @@ import React, { useEffect, useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
 import { useRouter } from "next/router";
-import useStore from "@/store/useStore";
-import { DEFAULT_NETWORK_ID, fetchBondOffers } from "@/defi/utils";
-import { fetchTotalPurchasedBondsByOfferIds } from "@/defi/subsquid/bonds/helpers";
-import { useParachainApi } from "substrate-react";
+import {
+  DEFAULT_NETWORK_ID,
+  fetchBondOffers,
+  fetchVestingSchedulesByBondOffers,
+} from "@/defi/utils";
+import {
+  extractUserBondedFinanceVestingScheduleAddedEvents,
+  fetchTotalPurchasedBondsByOfferIds,
+} from "@/defi/subsquid/bonds/helpers";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import BondOfferRow from "./bonds/BondOfferRow";
+import {
+  putBondedOfferBondedVestingScheduleIds,
+  putBondOffersTotalPurchasedCount,
+  putBondedOfferVestingSchedules,
+  useBondOffersSlice,
+  putBondOffers,
+} from "@/store/bond/bond.slice";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -43,25 +56,42 @@ const BOND_LIMIT_TO_SHOW = 4;
 export const AllBondTable: React.FC = () => {
   const theme = useTheme();
   const router = useRouter();
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
 
-  const {
-    bondOffers: { list },
-    setBondOffers,
-    setBondOfferTotalPurchased,
-  } = useStore();
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const { bondOffers, bondedOfferVestingScheduleIds } = useBondOffersSlice();
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
   useEffect(() => {
     if (parachainApi) {
-      fetchBondOffers(parachainApi).then(setBondOffers);
+      fetchBondOffers(parachainApi).then(putBondOffers);
     }
-  }, [parachainApi, setBondOffers]);
+  }, [parachainApi]);
 
   useEffect(() => {
     fetchTotalPurchasedBondsByOfferIds().then(
-      setBondOfferTotalPurchased
+      putBondOffersTotalPurchasedCount
     );
-  }, [setBondOfferTotalPurchased]);
+  }, []);
+
+  useEffect(() => {
+    if (selectedAccount && parachainApi) {
+      extractUserBondedFinanceVestingScheduleAddedEvents(
+        parachainApi,
+        selectedAccount.address
+      ).then(putBondedOfferBondedVestingScheduleIds);
+    }
+  }, [selectedAccount, parachainApi]);
+
+  useEffect(() => {
+    if (selectedAccount && parachainApi) {
+      fetchVestingSchedulesByBondOffers(
+        parachainApi,
+        selectedAccount.address,
+        bondOffers,
+        bondedOfferVestingScheduleIds
+      ).then(putBondedOfferVestingSchedules)
+    }
+  }, [selectedAccount, parachainApi, bondOffers, bondedOfferVestingScheduleIds]);
 
   const [count, setCount] = useState(BOND_LIMIT_TO_SHOW);
   const handleSeeMore = () => {
@@ -92,8 +122,9 @@ export const AllBondTable: React.FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {list.slice(0, count).map((bondOffer, index) => (
+          {bondOffers.slice(0, count).map((bondOffer, index) => (
             <BondOfferRow
+              offerId={bondOffer.offerId.toString()}
               key={bondOffer.offerId.toString()}
               bondOffer={bondOffer}
               handleBondClick={handleBondClick}
@@ -101,7 +132,7 @@ export const AllBondTable: React.FC = () => {
           ))}
         </TableBody>
       </Table>
-      {list.length > count && (
+      {bondOffers.length > count && (
         <Box
           onClick={handleSeeMore}
           mt={4}

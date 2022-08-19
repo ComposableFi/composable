@@ -11,9 +11,7 @@ import {
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
-import usePrincipalAssetSymbol from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
 import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
-import useBondOfferROI from "@/defi/hooks/bonds/useBondOfferROI";
 import {
   calculateClaimableAt,
   DEFAULT_NETWORK_ID,
@@ -21,6 +19,7 @@ import {
 } from "@/defi/utils";
 import useBlockNumber from "@/defi/hooks/useBlockNumber";
 import { useVestingClaim } from "@/defi/hooks";
+import { useBondOfferROI } from "@/store/bond/bond.slice";
 
 const containerBoxProps = (theme: Theme) => ({
   p: 4,
@@ -56,9 +55,9 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
 
   const blockNumber = useBlockNumber(DEFAULT_NETWORK_ID);
   const vestingTime = useBondVestingTime(bond.selectedBondOffer);
-  const roi = useBondOfferROI(bond.selectedBondOffer);
+  const roi = useBondOfferROI(bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-");
 
-  const { pendingRewards, claimable } = calculateClaimableAt(
+  const { pendingRewards, claimable, totalVested } = calculateClaimableAt(
     bond.vestingSchedules[0],
     blockNumber
   );
@@ -69,8 +68,6 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
       ? bond.vestingSchedules[0].vestingScheduleId
       : new BigNumber(0)
   );
-
-  const principalSymbol = usePrincipalAssetSymbol(bond.principalAsset);
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -124,10 +121,10 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
           mt={2}
         />
         <Label
-          {...defaultLabelProps("Time until fully vested", `${0} days`)}
+          {...defaultLabelProps("Time until fully vested", `${vestingTime}`)}
           mt={2}
         />
-        <Label {...defaultLabelProps("Vested", `${vestingTime}`)} mt={2} />
+        <Label {...defaultLabelProps("Vested", `${totalVested.toFixed(2)} ${rewardAsset?.symbol}`)} mt={2} />
         <Label
           {...defaultLabelProps(
             "ROI",

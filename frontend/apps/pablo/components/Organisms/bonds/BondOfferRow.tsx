@@ -1,14 +1,13 @@
-import {
-  TableCell,
-  TableRow,
-  Typography
-} from "@mui/material";
+import { TableCell, TableRow, Typography } from "@mui/material";
 import { PairAsset, BaseAsset } from "@/components/Atoms";
 import useBondOfferPrincipalAsset from "@/defi/hooks/bonds/useBondOfferPrincipalAsset";
-import useBondOfferROI from "@/defi/hooks/bonds/useBondOfferROI";
-import useBondPrice from "@/defi/hooks/bonds/useBondPrice";
-import useTotalPurchasedBondOffer from "@/defi/hooks/bonds/useTotalPurchased";
 import { BondPrincipalAsset, BondOffer } from "@/defi/types";
+import {
+  useBondOfferPriceInAmountOfPrincipalTokens,
+  useBondOfferROI,
+  useBondOfferTotalPurchased,
+} from "@/store/bond/bond.slice";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 
 const BondPrincipalAssetIcon = ({
   principalAsset,
@@ -51,14 +50,18 @@ const BondPrincipalAssetIcon = ({
 const BondOfferRow = ({
   bondOffer,
   handleBondClick,
+  offerId,
 }: {
+  offerId: string;
   bondOffer: BondOffer;
   handleBondClick: (bondOfferId: string) => void;
 }) => {
-  const roi = useBondOfferROI(bondOffer);
-  const totalPurchasedValue = useTotalPurchasedBondOffer(bondOffer);
+  const roi = useBondOfferROI(offerId);
+  const totalPuchasedBonds = useBondOfferTotalPurchased(offerId);
   const principalAsset = useBondOfferPrincipalAsset(bondOffer);
-  const bondPrice = useBondPrice(bondOffer);
+  const principalAmountOfTokensRequiredToBuy =
+    useBondOfferPriceInAmountOfPrincipalTokens(offerId);
+  const principalAssetPriceInUSD = useUSDPriceByAssetId(bondOffer.asset);
 
   return (
     <TableRow
@@ -70,7 +73,12 @@ const BondOfferRow = ({
         <BondPrincipalAssetIcon principalAsset={principalAsset} />
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body2">${bondPrice.toFormat()}</Typography>
+        <Typography variant="body2">
+          $
+          {principalAmountOfTokensRequiredToBuy
+            .times(principalAssetPriceInUSD)
+            .toFormat(2)}
+        </Typography>
       </TableCell>
       <TableCell align="left">
         <Typography variant="body2" color="featured.main">
@@ -79,12 +87,15 @@ const BondOfferRow = ({
       </TableCell>
       <TableCell align="left">
         <Typography variant="body2">
-          ${totalPurchasedValue.toFormat()}
+          $
+          {totalPuchasedBonds
+            .times(principalAmountOfTokensRequiredToBuy)
+            .times(principalAssetPriceInUSD)
+            .toFormat(2)}
         </Typography>
       </TableCell>
     </TableRow>
   );
 };
-
 
 export default BondOfferRow;

@@ -3,12 +3,23 @@ import useBondOfferPrincipalAsset from "@/defi/hooks/bonds/useBondOfferPrincipal
 import { BondOffer } from "@/defi/types";
 import { TableCell, TableRow, Typography } from "@mui/material";
 import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
+import { useAsset } from "@/defi/hooks";
+import { useBondedOfferVestingSchedules } from "@/store/bond/bond.slice";
+import { calculateClaimableAt, DEFAULT_NETWORK_ID } from "@/defi/utils";
+import useBlockNumber from "@/defi/hooks/useBlockNumber";
 
 const BondedOfferRow = ({ bondOffer, handleBondedOfferRowClick }: { bondOffer: BondOffer, handleBondedOfferRowClick: () => void }) => {
+  const rewardAsset = useAsset(bondOffer.reward.asset);
   const principalAsset = useBondOfferPrincipalAsset(bondOffer);
   const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
   const { baseAsset, quoteAsset } = lpPrincipalAsset;
 
+  const vestingSchedules = useBondedOfferVestingSchedules(bondOffer.offerId.toString());
+  const blockNumber = useBlockNumber(DEFAULT_NETWORK_ID);
+  const { pendingRewards, claimable, totalVested } = calculateClaimableAt(
+    vestingSchedules[0],
+    blockNumber
+  );
   const vestingTime = useBondVestingTime(bondOffer);
 
   return (
@@ -34,12 +45,12 @@ const BondedOfferRow = ({ bondOffer, handleBondedOfferRowClick }: { bondOffer: B
       </TableCell>
       <TableCell align="left">
         <Typography variant="body2">
-          {0} CHAOS
+          {claimable.toFixed(2)} {rewardAsset?.symbol}
         </Typography>
       </TableCell>
       <TableCell align="left">
         <Typography variant="body2">
-          {0} CHAOS
+          {pendingRewards.toFixed(2)} {rewardAsset?.symbol}
         </Typography>
       </TableCell>
       <TableCell align="left">
