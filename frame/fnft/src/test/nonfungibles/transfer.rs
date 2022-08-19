@@ -4,6 +4,10 @@ use codec::Encode;
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks, helper::assert_last_event,
 };
+use composable_traits::{
+	account_proxy::{AccountProxy, ProxyType},
+	fnft::FinancialNft,
+};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::tokens::nonfungibles::{Inspect, Transfer},
@@ -83,6 +87,14 @@ fn roundtrip() {
 			instance_id: nft_to_trade,
 			to: BOB,
 		}));
+		// get the asset account of the fNFT
+		let asset_account =
+			Pallet::<MockRuntime>::asset_account(&TEST_COLLECTION_ID, &nft_to_trade);
+		assert_ok!(pallet_account_proxy::Pallet::<MockRuntime>::find_proxy(
+			&asset_account,
+			&BOB,
+			Some(ProxyType::Any)
+		));
 
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
@@ -93,6 +105,11 @@ fn roundtrip() {
 			instance_id: nft_to_trade,
 			to: ALICE,
 		}));
+		assert_ok!(pallet_account_proxy::Pallet::<MockRuntime>::find_proxy(
+			&asset_account,
+			&ALICE,
+			Some(ProxyType::Any)
+		));
 
 		let alice_storage_after_transfer = OwnerInstances::<MockRuntime>::get(&ALICE).unwrap();
 		let bob_storage_after_transfer = OwnerInstances::<MockRuntime>::get(&BOB).unwrap();
@@ -168,18 +185,18 @@ fn many() {
 		}
 
 		assert_owners([
-			(
-				ALICE,
-				&[a1, a2, a3, a4, a5, a6, a7, a8, a9],
-				"ALICE should be unchanged",
-			),
-			(
-				BOB,
-				&[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9],
-				"BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE",
-			),
-			(CHARLIE, &[], "CHARLIE should have no NFTs left after transferring them all to BOB"),
-		]);
+            (
+                ALICE,
+                &[a1, a2, a3, a4, a5, a6, a7, a8, a9],
+                "ALICE should be unchanged",
+            ),
+            (
+                BOB,
+                &[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9],
+                "BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE",
+            ),
+            (CHARLIE, &[], "CHARLIE should have no NFTs left after transferring them all to BOB"),
+        ]);
 
 		// transfer one of (what was originally CHARLIES's) NFTs from BOB to ALICE
 		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &c9, &ALICE));
@@ -190,18 +207,18 @@ fn many() {
 		}));
 
 		assert_owners([
-			(
-				ALICE,
-				&[a1, a2, a3, a4, a5, a6, a7, a8, a9, c9],
-				"ALICE should have their original NFTs except for the one transferred to BOB + one of (what was originally CHARLIES's) NFTs from BOB",
-			),
-			(
-				BOB,
-				&[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8],
-				"BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE except for the one transferred to ALICE",
-			),
-			(CHARLIE, &[], "CHARLIE should be unchanged"),
-		]);
+            (
+                ALICE,
+                &[a1, a2, a3, a4, a5, a6, a7, a8, a9, c9],
+                "ALICE should have their original NFTs except for the one transferred to BOB + one of (what was originally CHARLIES's) NFTs from BOB",
+            ),
+            (
+                BOB,
+                &[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8],
+                "BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE except for the one transferred to ALICE",
+            ),
+            (CHARLIE, &[], "CHARLIE should be unchanged"),
+        ]);
 
 		// transfer one of (what was originally CHARLIES's) NFTs from ALICE back to CHARLIE
 		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &c9, &CHARLIE),);
@@ -212,18 +229,18 @@ fn many() {
 		}));
 
 		assert_owners([
-			(
-				ALICE,
-				&[a1, a2, a3, a4, a5, a6, a7, a8, a9],
-				"ALICE should have their original NFTs except for the one transferred to BOB previously",
-			),
-			(
-				BOB,
-				&[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8],
-				"BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE except for the one transferred to ALICE",
-			),
-			(CHARLIE, &[c9], "CHARLIE should have one of their original NFTs"),
-		])
+            (
+                ALICE,
+                &[a1, a2, a3, a4, a5, a6, a7, a8, a9],
+                "ALICE should have their original NFTs except for the one transferred to BOB previously",
+            ),
+            (
+                BOB,
+                &[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8],
+                "BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE except for the one transferred to ALICE",
+            ),
+            (CHARLIE, &[c9], "CHARLIE should have one of their original NFTs"),
+        ])
 	}
 }
 

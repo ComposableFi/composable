@@ -4,7 +4,11 @@ mod mint_into {
 
 	use composable_tests_helpers::test::helper::assert_last_event;
 
-	use frame_support::{assert_noop, traits::tokens::nonfungibles::Mutate};
+	use composable_traits::{
+		account_proxy::{AccountProxy, ProxyType},
+		fnft::FinancialNft,
+	};
+	use frame_support::{assert_noop, assert_ok, traits::tokens::nonfungibles::Mutate};
 	use sp_runtime::DispatchError;
 
 	use crate::{
@@ -46,6 +50,20 @@ mod mint_into {
 				(ALICE, BTreeMap::new()),
 				"owner should be ALICE, with no attributes"
 			);
+			// get the asset account of the fNFT
+			let asset_account =
+				Pallet::<MockRuntime>::asset_account(&TEST_COLLECTION_ID, &NEW_NFT_ID);
+			// check the proxies
+			assert_ok!(pallet_account_proxy::Pallet::<MockRuntime>::find_proxy(
+				&asset_account,
+				&ALICE,
+				Some(ProxyType::Any)
+			));
+			assert_ok!(pallet_account_proxy::Pallet::<MockRuntime>::find_proxy(
+				&asset_account,
+				&ALICE,
+				Some(ProxyType::CancelProxy)
+			));
 		})
 	}
 
