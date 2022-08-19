@@ -308,7 +308,6 @@ mod burn_from {
 
 		/// Asserts that when some NFTs exist, burning an NFT twice is an error.
 		#[test]
-		#[ignore = "TODO: fix with updates to nft pallet"]
 		fn burn_twice() {
 			new_test_ext().execute_with(|| {
 				let [nft_to_burn, _new_nft_ids @ ..] = mint_many_nfts_and_assert::<10>(ALICE);
@@ -332,7 +331,6 @@ mod burn_from {
 
 		/// Asserts that when burning the last NFT that exists, burning it twice is an error.
 		#[test]
-		#[ignore = "TODO: fix with updates to nft pallet"]
 		fn burn_twice_last_existing() {
 			new_test_ext().execute_with(|| {
 				let nft_to_burn = mint_nft_and_assert();

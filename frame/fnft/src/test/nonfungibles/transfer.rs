@@ -21,7 +21,6 @@ use crate::{
 
 /// Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
 #[test]
-#[ignore = "TODO: fix with updates to nft pallet"]
 fn simple() {
 	new_test_ext().execute_with(|| {
 		let created_nft_id = mint_nft_and_assert();

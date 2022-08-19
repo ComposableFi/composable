@@ -12,7 +12,6 @@ use crate::{
 };
 
 #[test]
-#[ignore = "TODO: fix with updates to nft pallet"]
 /// Tests the pallet's [`Inspect`] implementation returns the expected values (success case)
 pub(crate) fn success() {
 	new_test_ext().execute_with(|| {
@@ -37,7 +36,6 @@ pub(crate) fn success() {
 }
 
 #[test]
-#[ignore = "TODO: fix with updates to nft pallet"]
 /// Asserts that the pallet's [`Inspect`] implementation errors as expected.
 pub(crate) fn failure() {
 	new_test_ext().execute_with(|| {
