@@ -336,7 +336,7 @@
               dontUnpack = true;
               installPhase = ''
                 mkdir $out/
-                cp -r $src/* $out/
+                cp -r $src/. $out/
               '';
             };
 
@@ -489,6 +489,21 @@
               cargoBuildCommand = "taplo check";
               cargoExtraArgs = "--verbose";
             });
+
+            prettier-check = stdenv.mkDerivation {
+              name = "prettier-check";
+              dontUnpack = true;
+              buildInputs = [ nodePackages.prettier runtime-tests ];
+              installPhase = ''
+                mkdir $out
+                prettier \
+                  --config="${runtime-tests}/.prettierrc" \
+                  --ignore-path="${runtime-tests}/.prettierignore" \
+                  --check \
+                  --loglevel=debug \
+                  ${runtime-tests}
+              '';
+            };
 
             cargo-clippy-check = crane-nightly.cargoClippy (common-attrs // {
               cargoArtifacts = common-deps-nightly;

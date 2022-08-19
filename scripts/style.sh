@@ -117,6 +117,6 @@ for arg in "$@"; do
     esac
 done
 
-# cargo_fmt
-# taplo_fmt
+cargo_fmt
+taplo_fmt
 prettier_fmt

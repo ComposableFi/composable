@@ -126,6 +126,10 @@ jobs:
         run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#taplo-cli-check --no-update-lock-file --show-trace -L
 
+      - name: Prettier
+        run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#prettier-check --no-update-lock-file --show-trace -L
+
       - name: Cargo clippy
         run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#cargo-clippy-check --no-update-lock-file --show-trace -L
