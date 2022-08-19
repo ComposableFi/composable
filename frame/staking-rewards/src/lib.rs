@@ -786,11 +786,8 @@ pub mod pallet {
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
-			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)?
-				>= T::UnixTime::now().as_secs();
-
 			(rewards_pool, stake) =
-				Self::collect_rewards(&pool_id, rewards_pool, stake, early_unlock, keep_alive)?;
+				Self::collect_rewards(&pool_id, rewards_pool, stake, false, keep_alive)?;
 
 			RewardPools::<T>::insert(pool_id, rewards_pool);
 			Stakes::<T>::insert(position, stake);

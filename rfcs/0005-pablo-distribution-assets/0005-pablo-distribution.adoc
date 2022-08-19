@@ -542,11 +542,10 @@ start
 ->assetId\npositionId;
 :position = readStorage(positionId);
 :rewards_pool = readStorage(assetId);
-:penalty = reward_pool.lock.unlock_penalty;
 while (reward = rewards_pool.rewards.has_next) is (yes)
     :claim = reward.total_rewards * position.shares /\nrewards_pool.total_shares - position.reductions[reward.asset_id];
     note right: as per section 5.3.1.2
-    :claim = min(claim * (1 - penalty), reward.total_rewards - reward.claimed_rewards);
+    :claim = min(claim, reward.total_rewards - reward.claimed_rewards);
     :transfer(claim);
     :reward.claimed_rewards += claim;
     :position.reductions[reward.asset_id] += claim;
