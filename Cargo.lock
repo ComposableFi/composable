@@ -7424,10 +7424,12 @@ name = "pallet-clearing-house"
 version = "0.1.0"
 dependencies = [
  "composable-maths",
+ "composable-support",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex-literal",
  "log 0.4.17",
  "num-integer",
  "num-traits",
@@ -7437,7 +7439,9 @@ dependencies = [
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-governance-registry",
+ "pallet-oracle",
  "pallet-timestamp",
+ "pallet-vamm",
  "parity-scale-codec",
  "proptest",
  "scale-info",

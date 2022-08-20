@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 5b9aac9838274ffca9f24851fc87d22f70df91ed5a1e76badb68e57436cc8d55 # shrinks to asset_id = 0, asset_info = AssetInfo { threshold: Percent(0), min_answers: 1, max_answers: 1, block_interval: 3, reward: 0, slash: 0 }

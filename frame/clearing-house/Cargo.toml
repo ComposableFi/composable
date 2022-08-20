@@ -1,58 +1,70 @@
 [package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
 name = "pallet-clearing-house"
 version = "0.1.0"
-authors = ["Composable Developers"]
-homepage = "https://composable.finance"
-edition = "2021"
 
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.22' }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.22' }
 
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 
-codec = { default-features = false, features = ["derive"], package = "parity-scale-codec", version = "3.1" }
+codec = { default-features = false, features = [
+  "derive",
+], package = "parity-scale-codec", version = "3.1" }
 composable-maths = { version = "0.0.1", path = "../composable-maths", default-features = false }
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 log = { version = "0.4.14", default-features = false }
 num-integer = "0.1.44"
 num-traits = { version = "0.2.14", default-features = false }
-scale-info = { version = "2.1", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1", default-features = false, features = [
+  "derive",
+] }
 serde = { version = '1', optional = true }
 
 [dev-dependencies]
-proptest = "1.0.0"
+composable-support = { version = "0.0.1", path = "../composable-support", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+hex-literal = { version = "0.3.3" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 pallet-assets = { path = '../assets', default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 pallet-currency-factory = { path = "../currency-factory" }
+pallet-oracle = { version = "1.0.0", path = "../oracle" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+pallet-vamm = { version = "0.1.0", path = "../vamm" }
+proptest = "1.0.0"
 
 [features]
 default = ["std"]
-std = [
-    "frame-support/std",
-    "frame-system/std",
-    "frame-benchmarking/std",
-    "sp-runtime/std",
-    "sp-arithmetic/std",
-    "sp-io/std",
-    "sp-core/std",
-    "sp-std/std",
-    "codec/std",
-    "log/std",
-    "scale-info/std",
-    "serde/std",
+runtime-benchmarks = [
+  "frame-benchmarking",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
 ]
-runtime-benchmarks = ["frame-benchmarking", "frame-support/runtime-benchmarks", "frame-system/runtime-benchmarks"]
+std = [
+  "frame-support/std",
+  "frame-system/std",
+  "frame-benchmarking/std",
+  "sp-runtime/std",
+  "sp-arithmetic/std",
+  "sp-io/std",
+  "sp-core/std",
+  "sp-std/std",
+  "codec/std",
+  "log/std",
+  "scale-info/std",
+  "serde/std",
+]
