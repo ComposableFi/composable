@@ -9,6 +9,9 @@ version = "1.0.0"
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
+[package.metadata.cargo-udeps.ignore]
+normal = ["pallet-timestamp"]
+
 # alias "parity-scale-code" to "codec"
 [dependencies.codec]
 default-features = false
@@ -20,7 +23,7 @@ version = "3.0.0"
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
-pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", optional = true }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
@@ -44,7 +47,6 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 parking_lot = "0.12.0"
 proptest = "1.0.0"
 serde = { version = '1.0.136' }
@@ -69,5 +71,4 @@ runtime-benchmarks = [
   'frame-benchmarking',
   'frame-support/runtime-benchmarks',
   'frame-system/runtime-benchmarks',
-  'pallet-timestamp'
 ]
