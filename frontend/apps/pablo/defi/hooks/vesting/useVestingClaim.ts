@@ -18,7 +18,7 @@ export function useVestingClaim(assetId: string, vestingScheduleId: BigNumber) {
 
   const onVestingClaim = useCallback(
     async () => {
-      if (parachainApi && selectedAccount && executor) {
+      if (parachainApi && selectedAccount && executor && vestingScheduleId.gte(0)) {
         return new Promise(async (res, rej) => {
           try {
             const signer = await getSigner(APP_NAME, selectedAccount.address);

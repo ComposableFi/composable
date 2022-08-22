@@ -3,6 +3,7 @@ import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import {
   calculateBondROI,
+  calculateVestingState,
   DEFAULT_NETWORK_ID,
   fetchBondOffers,
   fetchVestingSchedulesByBondOffers,
@@ -10,31 +11,40 @@ import {
 import {
   putBondedOfferBondedVestingScheduleIds,
   putBondedOfferVestingSchedules,
+  putBondedOfferVestingState,
   putBondOffers,
   putBondOffersReturnOnInvestmentRecord,
   putBondOffersTotalPurchasedCount,
+  resetBondedOfferVestingState,
   useBondOffersSlice,
 } from "@/store/bond/bond.slice";
-import { useParachainApi, useSelectedAccount } from "substrate-react";
+import { useExtrinsics, useParachainApi, useSelectedAccount } from "substrate-react";
 import {
   fetchTotalPurchasedBondsByOfferIds,
   extractUserBondedFinanceVestingScheduleAddedEvents,
 } from "@/defi/subsquid/bonds/helpers";
+import { useBlockInterval } from "@/defi/hooks";
+import useBlockNumber from "@/defi/hooks/useBlockNumber";
+import { AVERAGE_BLOCK_TIME } from "@/defi/utils/constants";
 
 const Updater = () => {
   const { apollo } = useStore();
-  const { bondOffers, bondedOfferVestingScheduleIds } = useBondOffersSlice();
+  const {
+    bondOffers,
+    bondedOfferVestingScheduleIds,
+    bondedOfferVestingSchedules,
+  } = useBondOffersSlice();
 
   useEffect(() => {
     const roiRecord = bondOffers.reduce((acc, bondOffer) => {
-      const principalAssetPrinceInUSD =
+      const principalAssetPrinceInUSD: BigNumber =
         new BigNumber(apollo[bondOffer.asset]) || new BigNumber(0);
       const rewardAssetPriceInUSD =
         new BigNumber(apollo[bondOffer.reward.asset]) || new BigNumber(0);
       const rewardAssetAmountPerBond = bondOffer.reward.amount.div(
         bondOffer.nbOfBonds
       );
-      const principalAssetAmountPerBond = bondOffer.bondPrice;
+      const principalAssetAmountPerBond: BigNumber = bondOffer.bondPrice;
       return {
         ...acc,
         [bondOffer.offerId.toString()]: calculateBondROI(
@@ -70,7 +80,7 @@ const Updater = () => {
   /**
    * Get bondoffers ids and
    * vesting schdule
-   * id map from subsquid
+   * id map from subsquid e.g { "1": ["1","2"] }
    */
   useEffect(() => {
     if (selectedAccount && parachainApi) {
@@ -83,7 +93,8 @@ const Updater = () => {
   /**
    * fetch vesting schedules using
    * the map if any matching ids found
-   * from the chain
+   * from the chain data structure:
+   * { "1": VestingSchedule[] }
    */
   useEffect(() => {
     if (selectedAccount && parachainApi) {
@@ -100,6 +111,25 @@ const Updater = () => {
     bondOffers,
     bondedOfferVestingScheduleIds,
   ]);
+
+  const blockInterval = useBlockInterval();
+  const blockNumber = useBlockNumber(DEFAULT_NETWORK_ID);
+  /**
+   * Calculate and store vesting related
+   * values shown on UI
+   */
+  useEffect(() => {
+    if (Object.keys(bondedOfferVestingSchedules).length > 0) {
+      let vestingState = calculateVestingState(
+        blockNumber,
+        new BigNumber(blockInterval?.toString() ?? AVERAGE_BLOCK_TIME),
+        bondedOfferVestingSchedules
+      );
+      putBondedOfferVestingState(vestingState);
+    } else {
+      resetBondedOfferVestingState();
+    }
+  }, [blockInterval, blockNumber, bondedOfferVestingSchedules]);
 
   return null;
 };

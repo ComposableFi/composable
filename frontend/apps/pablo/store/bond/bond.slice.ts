@@ -2,12 +2,21 @@ import create from "zustand";
 import { BondOffer, VestingSchedule } from "@/defi/types";
 import BigNumber from "bignumber.js";
 
+export interface BondedOfferVestingState {
+  netRewards: BigNumber;
+  claimable: BigNumber;
+  pendingRewards: BigNumber;
+  alreadyClaimed: BigNumber;
+  miliSecondsSinceVestingStart: BigNumber;
+}
+
 export interface BondSlice {
   bondOffers: BondOffer[];
   returnOnInvestmentRecord: Record<string, BigNumber>;
   bondOffersTotalPurchasedCount: Record<string, BigNumber>;
   bondedOfferVestingScheduleIds: Record<string, Set<string>>;
   bondedOfferVestingSchedules: Record<string, VestingSchedule[]>;
+  bondedOffersVestingState: Record<string, BondedOfferVestingState>;
 }
 
 export const useBondOffersSlice = create<BondSlice>(() => ({
@@ -16,6 +25,7 @@ export const useBondOffersSlice = create<BondSlice>(() => ({
   bondOffersTotalPurchasedCount: {},
   bondedOfferVestingScheduleIds: {},
   bondedOfferVestingSchedules: {},
+  bondedOffersVestingState: {},
 }));
 
 export const putBondOffers = (bondOffers: BondOffer[]) =>
@@ -56,6 +66,32 @@ export const putBondOffersTotalPurchasedCount = (
     bondOffersTotalPurchasedCount,
   }));
 
+export const putBondedOfferVestingState = (
+  vestingState: Record<string, BondedOfferVestingState>
+) =>
+  useBondOffersSlice.setState((state) => ({
+    ...state,
+    bondedOffersVestingState: vestingState,
+  }));
+
+export const putBondedOfferVestingStateByOfferId = (
+  offerId: string,
+  vestingState: BondedOfferVestingState
+) =>
+  useBondOffersSlice.setState((state) => ({
+    ...state,
+    bondedOffersVestingState: {
+      ...state.bondedOffersVestingState,
+      [offerId]: vestingState,
+    },
+  }));
+
+export const resetBondedOfferVestingState = () =>
+  useBondOffersSlice.setState((state) => ({
+    ...state,
+    bondedOffersVestingState: {},
+  }));
+
 export const updateExistingBondOffer = (bondOffer: BondOffer) =>
   useBondOffersSlice.setState((state) => ({
     ...state,
@@ -81,3 +117,12 @@ export const useBondedOfferVestingSchedules = (offerId: string) =>
 
 export const useBondedOfferVestingScheduleIds = (offerId: string) =>
   useBondOffersSlice().bondedOfferVestingScheduleIds[offerId] || [];
+
+export const useBondedOfferVestingState = (offerId: string) =>
+  useBondOffersSlice().bondedOffersVestingState[offerId] || {
+    alreadyClaimed: new BigNumber(0),
+    netRewards: new BigNumber(0),
+    claimable: new BigNumber(0),
+    pendingRewards: new BigNumber(0),
+    miliSecondsSinceVestingStart: new BigNumber(0),
+  };

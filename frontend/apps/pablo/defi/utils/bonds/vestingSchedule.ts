@@ -1,11 +1,13 @@
 import { SubsquidVestingScheduleEntity } from "@/defi/subsquid/bonds/queries";
 import { BondOffer, VestingSchedule } from "@/defi/types";
+import { BondedOfferVestingState } from "@/store/bond/bond.slice";
 import { ApiPromise } from "@polkadot/api";
 import { u8aToHex, stringToU8a } from "@polkadot/util";
 import BigNumber from "bignumber.js";
 import { PALLET_TYPE_ID } from "../constants";
 import { compareU8a, concatU8a } from "../misc";
 import { fetchVestingSchedule } from "../vesting";
+import { calculateClaimableAt } from "./vestingTime";
 
 /**
  * get BondOfferId from VestingSchedule Account
@@ -121,4 +123,44 @@ export async function fetchVestingSchedulesByBondOffers(
   }
 
   return schedulesMap;
+}
+
+export function calculateVestingState(
+  blockNumber: BigNumber,
+  blockInterval: BigNumber,
+  bondedOfferSchedules: Record<string, VestingSchedule[]>
+): Record<string, BondedOfferVestingState> {
+  let bondedOfferVestingState = Object.keys(bondedOfferSchedules).reduce(
+    (acc, c) => {
+      const {
+        pendingRewards,
+        totalVested,
+        alreadyClaimed,
+        claimable
+      } = calculateClaimableAt(bondedOfferSchedules[c][0], blockNumber);
+
+      let miliSecondsSinceVestingStart = new BigNumber(0);
+      if (bondedOfferSchedules[c].length > 0) {
+        if(bondedOfferSchedules[c][0].window.start.lt(blockNumber)) {
+          miliSecondsSinceVestingStart = blockInterval.times(
+            blockNumber.minus(bondedOfferSchedules[c][0].window.start)
+          )
+        }
+      }
+
+      return {
+        ...acc,
+        [c]: {
+          alreadyClaimed, 
+          netRewards: totalVested,
+          claimable,
+          pendingRewards,
+          miliSecondsSinceVestingStart,
+        } as BondedOfferVestingState
+      };
+    },
+    {} as Record<string, BondedOfferVestingState>
+  );
+
+  return bondedOfferVestingState;
 }

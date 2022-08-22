@@ -19,7 +19,8 @@ import {
 } from "@/defi/utils";
 import useBlockNumber from "@/defi/hooks/useBlockNumber";
 import { useVestingClaim } from "@/defi/hooks";
-import { useBondOfferROI } from "@/store/bond/bond.slice";
+import { useBondedOfferVestingState, useBondOfferROI } from "@/store/bond/bond.slice";
+import moment from "moment";
 
 const containerBoxProps = (theme: Theme) => ({
   p: 4,
@@ -52,21 +53,15 @@ export type ClaimFormProps = {
 export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
   const { rewardAsset } = bond;
-
-  const blockNumber = useBlockNumber(DEFAULT_NETWORK_ID);
   const vestingTime = useBondVestingTime(bond.selectedBondOffer);
+  const { claimable, miliSecondsSinceVestingStart, pendingRewards} = useBondedOfferVestingState(bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-")
   const roi = useBondOfferROI(bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-");
-
-  const { pendingRewards, claimable, totalVested } = calculateClaimableAt(
-    bond.vestingSchedules[0],
-    blockNumber
-  );
 
   const handleClaim = useVestingClaim(
     bond.selectedBondOffer ? bond.selectedBondOffer.reward.asset : "",
     bond.vestingSchedules.length > 0
       ? bond.vestingSchedules[0].vestingScheduleId
-      : new BigNumber(0)
+      : new BigNumber(-1)
   );
 
   return (
@@ -121,10 +116,10 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
           mt={2}
         />
         <Label
-          {...defaultLabelProps("Time until fully vested", `${vestingTime}`)}
+          {...defaultLabelProps("Time vested", `${moment.duration(miliSecondsSinceVestingStart.toNumber(), "milliseconds").humanize()}`)}
           mt={2}
         />
-        <Label {...defaultLabelProps("Vested", `${totalVested.toFixed(2)} ${rewardAsset?.symbol}`)} mt={2} />
+        <Label {...defaultLabelProps("Vested", `${claimable.toFixed(2)} ${rewardAsset?.symbol}`)} mt={2} />
         <Label
           {...defaultLabelProps(
             "ROI",
