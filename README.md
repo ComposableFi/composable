@@ -40,7 +40,7 @@ Our packages support both **x86** and **ARM** architectures.
 
 ### Configuration
 
-Once you have `nix` or `NixOS` installed, you should enable the following features:
+Once you have `nix` or `NixOS` installed, confirm that your `nix --version` is at least `2.9.1`. After that you should enable the following features:
 
 #### On NixOS
 ```nix
