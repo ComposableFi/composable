@@ -1168,7 +1168,7 @@ construct_runtime!(
 		XTokens: orml_xtokens = 44,
 		UnknownTokens: orml_unknown_tokens = 45,
 
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
+		Tokens: orml_tokens = 51,
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
 		CurrencyFactory: currency_factory = 53,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
