@@ -24,18 +24,20 @@ sp-std = { default-features = false,  git = "https://github.com/paritytech/subst
 
 fixed = "1.9.0"
 hydra-dx-math = { default-features = false, git = "https://github.com/galacticcouncil/HydraDX-math" }
-approx = "0.3.0"
+approx = "0.5.1"
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 vault = { version = "0.0.1", package = "pallet-vault", path = "../vault", default-features = false, optional = true }
 
 num-traits = { version = "0.2.14", default-features = false }
 num-integer = { version = "0.1", default-features = false }
-scale-info = { version = "1.0", default-features = false, features = ["derive"] }
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
 
 # dependendices only for tests
 [dev-dependencies]
-proptest = "0.9.6"
+proptest = "1.0.0"
 serde = "1.0.119"
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "17a791edf431d7d7aee1ea3dfaeeb7bc21944301", default-features = false }
