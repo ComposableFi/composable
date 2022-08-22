@@ -115,7 +115,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
       let amountOfBondsBuyable = principalBalance
         .div(bond.principalAssetPerBond)
         .decimalPlaces(0, BigNumber.ROUND_FLOOR);
-      return amountOfBondsBuyable;
+      return amountOfBondsBuyable.lt(bond.selectedBondOffer.nbOfBonds) ? amountOfBondsBuyable : bond.selectedBondOffer.nbOfBonds;
     }
     return new BigNumber(0);
   }, [principalBalance, bond]);

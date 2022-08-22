@@ -1,51 +1,13 @@
 import { TableCell, TableRow, Typography } from "@mui/material";
-import { PairAsset, BaseAsset } from "@/components/Atoms";
 import useBondOfferPrincipalAsset from "@/defi/hooks/bonds/useBondOfferPrincipalAsset";
-import { BondPrincipalAsset, BondOffer } from "@/defi/types";
+import { BondOffer } from "@/defi/types";
 import {
   useBondOfferPriceInAmountOfPrincipalTokens,
   useBondOfferROI,
   useBondOfferTotalPurchased,
 } from "@/store/bond/bond.slice";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
-
-const BondPrincipalAssetIcon = ({
-  principalAsset,
-}: {
-  principalAsset: BondPrincipalAsset;
-}) => {
-  const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
-  const { baseAsset, quoteAsset } = lpPrincipalAsset;
-
-  if (baseAsset && quoteAsset) {
-    return (
-      <PairAsset
-        assets={[
-          {
-            icon: baseAsset.icon,
-            label: baseAsset.symbol,
-          },
-          {
-            icon: quoteAsset.icon,
-            label: quoteAsset.symbol,
-          },
-        ]}
-        separator="/"
-      />
-    );
-  }
-
-  if (simplePrincipalAsset) {
-    return (
-      <BaseAsset
-        label={simplePrincipalAsset.symbol}
-        icon={simplePrincipalAsset.icon}
-      />
-    );
-  }
-
-  return null;
-};
+import BondPrincipalAssetIcon from "./BondPrincipalAssetIcon";
 
 const BondOfferRow = ({
   bondOffer,
