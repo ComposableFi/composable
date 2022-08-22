@@ -3,7 +3,7 @@ use crate::{
 		Counter, LoanConfigOf, LoanInputOf, MarketInfoOf, MarketInputOf, Payment, PaymentOf,
 		PaymentOutcome, PaymentOutcomeOf, PaymentsOutcomes, Timestamp,
 	},
-	validation::{AssetIsSupportedByOracle, CurrencyPairIsNotSame, LoanInputIsValid},
+	validation::{MarketInputIsValid, LoanInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
 };
 use composable_support::validation::Validated;
@@ -38,7 +38,7 @@ impl<T: Config> Pallet<T> {
 		manager: T::AccountId,
 		input: Validated<
 			MarketInputOf<T>,
-			(CurrencyPairIsNotSame, AssetIsSupportedByOracle<T::Oracle>),
+			MarketInputIsValid<T::Oracle, crate::Pallet<T>>,
 		>,
 		keep_alive: bool,
 	) -> Result<MarketInfoOf<T>, DispatchError> {

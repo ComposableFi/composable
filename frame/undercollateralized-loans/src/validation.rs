@@ -9,40 +9,21 @@ use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::Zero;
 
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
-pub struct CurrencyPairIsNotSame;
-
-impl<LiquidationStrategyId, Asset: Eq, BlockNumber, AccountId>
-	Validate<
-		MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>,
-		CurrencyPairIsNotSame,
-	> for CurrencyPairIsNotSame
-{
-	fn validate(
-		create_input: MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>,
-	) -> Result<MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>, &'static str> {
-		if create_input.currency_pair.base == create_input.currency_pair.quote {
-			Err("Base and quote currencies are supposed to be different in currency pair")
-		} else {
-			Ok(create_input)
-		}
-	}
-}
-
 #[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Clone, Copy)]
-pub struct AssetIsSupportedByOracle<Oracle: OracleTrait>(PhantomData<Oracle>);
+pub struct MarketInputIsValid<Oracle, Loans>(PhantomData<(Oracle, Loans)>);
 
 impl<
 		LiquidationStrategyId,
-		Asset: Copy,
+		Asset: Copy + PartialEq,
 		BlockNumber,
 		Oracle: OracleTrait<AssetId = Asset>,
 		AccountId,
+        Loans: UndercollateralizedLoans,
 	>
 	Validate<
 		MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>,
-		AssetIsSupportedByOracle<Oracle>,
-	> for AssetIsSupportedByOracle<Oracle>
+		MarketInputIsValid<Oracle, Loans>,
+	> for MarketInputIsValid<Oracle, Loans>
 {
 	fn validate(
 		create_input: MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>,
@@ -55,6 +36,14 @@ impl<
 			Oracle::is_supported(create_input.currency_pair.base)?,
 			"Collateral asset is not supported by oracle"
 		);
+		
+        ensure! (create_input.currency_pair.base != create_input.currency_pair.quote, 
+			"Base and quote currencies are supposed to be different in currency pair");
+
+        ensure!(
+            create_input.whitelist.len() < Loans::WhiteListBound::get().try_into().expect("This method never panics!"),
+			"Payment schedule exceeded maximum size."
+            );
 		Ok(create_input)
 	}
 }
@@ -100,6 +89,12 @@ where
 		// Check if payment schedule is empty.
 		// We should have at least one payment.
 		ensure!(input.payment_schedule.len() > 0, "Payment schedule is empty.");
+		// Unwrapped since u32 can be safely converted to usize.
+		ensure!(
+			input.payment_schedule.len() <
+				Loans::ScheduleBound::get().try_into().expect("This method never panics."),
+			"Payment schedule exceeded maximum size."
+		);
 		Ok(LoanInput { principal, collateral, ..input })
 	}
 }

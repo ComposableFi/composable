@@ -378,6 +378,8 @@ impl pallet_undercollateralized_loans::Config for Runtime {
 	type MaxPaymentsPerSchedule = ConstU32<100>;
 	type CheckPaymentsBatchSize = ConstU32<5>;
 	type CheckNonActivatedLoansBatchSize = ConstU32<5>;
+	type WhiteListBound = ConstU32<10>;
+	type ScheduleBound = ConstU32<200>;
 }
 
 parameter_type_with_key! {

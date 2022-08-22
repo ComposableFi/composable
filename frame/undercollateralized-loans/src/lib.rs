@@ -163,6 +163,9 @@ pub mod pallet {
 		// Amount of loans which can be processed within one tansaction submitted by off-chain
 		// worker.
 		type CheckNonActivatedLoansBatchSize: Get<u32>;
+		// Bounds are used during validation.
+		type WhiteListBound: Get<u32>;
+		type ScheduleBound: Get<u32>;
 	}
 
 	#[pallet::pallet]

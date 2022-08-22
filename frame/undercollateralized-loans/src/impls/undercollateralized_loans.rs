@@ -13,6 +13,8 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 	type LiquidationStrategyId = T::LiquidationStrategyId;
 	type VaultId = T::VaultId;
 	type Timestamp = Timestamp;
+	type WhiteListBound = T::WhiteListBound;
+	type ScheduleBound = T::ScheduleBound;
 	fn create_market(
 		manager: Self::AccountId,
 		input: MarketInput<
