@@ -68,7 +68,9 @@ const Updater = () => {
     fetchTotalPurchasedBondsByOfferIds().then(putBondOffersTotalPurchasedCount);
   }, []);
   /**
-   * 
+   * Get bondoffers ids and
+   * vesting schdule
+   * id map from subsquid
    */
   useEffect(() => {
     if (selectedAccount && parachainApi) {
@@ -78,7 +80,11 @@ const Updater = () => {
       ).then(putBondedOfferBondedVestingScheduleIds);
     }
   }, [selectedAccount, parachainApi]);
-
+  /**
+   * fetch vesting schedules using
+   * the map if any matching ids found
+   * from the chain
+   */
   useEffect(() => {
     if (selectedAccount && parachainApi) {
       fetchVestingSchedulesByBondOffers(
