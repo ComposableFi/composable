@@ -167,7 +167,7 @@ describe("Vesting Pallet Tests", function () {
     const windowPeriod = 1;
     const vestingPeriodCount = 40; 
     const perPeriodAmount = 1000000000000;
-    const vestingSchedules: Vec<VestingSchedule> = api.createType("Vec<ComposableTraitsVestingVestingSchedule>", [
+    const vestingSchedules = api.createType("Vec<ComposableTraitsVestingVestingSchedule>", [
       {
         vestingScheduleId: api.createType("u128", vestingScheduleIdSet),
         window: api.createType("ComposableTraitsVestingVestingWindow", {
