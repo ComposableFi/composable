@@ -221,7 +221,7 @@ impl system::Config for Runtime {
 	/// Version of the runtime.
 	type Version = Version;
 	/// The data to be stored in an account.
-	type AccountData = balances::AccountData<Balance>;
+	type AccountData = orml_tokens::AccountData<Balance>;
 
 	/// Converts a module to the index of the module in `construct_runtime!`.
 	///
@@ -314,21 +314,12 @@ parameter_types! {
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
+	/// Native currency Id
+	pub const NativeCurrencyId: u32 = CurrencyId::PICA;
 }
 
-impl balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type Event = Event;
-	type DustRemoval = Treasury;
-	type ExistentialDeposit = common::NativeExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = weights::balances::WeightInfo<Runtime>;
-}
+/// Replacement for pallet_balances.
+type Balances = orml_tokens::CurrencyAdapter<Runtime, NativeCurrencyId>;
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
@@ -1137,7 +1128,6 @@ construct_runtime!(
 		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
 		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
 		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
-		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
 		Identity: identity::{Call, Event<T>, Pallet, Storage} = 7,
 		Multisig: multisig::{Call, Event<T>, Pallet, Storage} = 8,
 
