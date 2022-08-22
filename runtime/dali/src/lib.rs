@@ -20,6 +20,7 @@
 // Make the WASM binary available.
 #[cfg(all(feature = "std", feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("DALI_RUNTIME")));
+
 #[cfg(not(feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
@@ -315,11 +316,11 @@ parameter_types! {
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
 	/// Native currency Id
-	pub const NativeCurrencyId: u32 = CurrencyId::PICA;
+	pub const NativeCurrencyId: CurrencyId = CurrencyId::PICA;
 }
 
 /// Replacement for pallet_balances.
-type Balances = orml_tokens::CurrencyAdapter<Runtime, NativeCurrencyId>;
+pub type Balances = orml_tokens::CurrencyAdapter<Runtime, NativeCurrencyId>;
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
@@ -356,8 +357,10 @@ impl WeightToFeePolynomial for WeightToFee {
 }
 
 impl transaction_payment::Config for Runtime {
-	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
+	type OnChargeTransaction = transaction_payment::CurrencyAdapter<
+		Balances,
+		DealWithFees<Runtime, NativeTreasury, Balances>,
+	>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
@@ -1237,7 +1240,6 @@ mod benches {
 	use frame_benchmarking::define_benchmarks;
 	define_benchmarks!(
 		[frame_system, SystemBench::<Runtime>]
-		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
 		[collator_selection, CollatorSelection]

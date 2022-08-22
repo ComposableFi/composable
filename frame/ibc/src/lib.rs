@@ -122,7 +122,6 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config:
 		frame_system::Config
-		+ balances::Config
 		+ pallet_ibc_ping::Config
 		+ parachain_info::Config
 		+ transfer::Config

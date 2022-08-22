@@ -145,9 +145,7 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config:
-		frame_system::Config + balances::Config + composable_traits::defi::DeFiComposableConfig
-	{
+	pub trait Config: frame_system::Config + composable_traits::defi::DeFiComposableConfig {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// A type for creating local asset Ids
