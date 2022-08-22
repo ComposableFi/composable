@@ -238,6 +238,7 @@ pub mod pallet {
 	// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -295,7 +296,7 @@ pub mod pallet {
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
-		
+
 		/// Converts the `Balance` type to `u128`, which internally is used in calculations.
 		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
@@ -343,7 +344,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
     //                                             Pallet Types                                           
 	// ----------------------------------------------------------------------------------------------------
-
+/*
 	pub type AssetIdOf<T> =
 		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
 	
@@ -454,21 +455,21 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
     //                                            Runtime Events                                          
 	// ----------------------------------------------------------------------------------------------------
-
+*/
 	// Pallets use events to inform users when important changes are made.
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Emitted after a Pool has been successfully created.
-		PoolCreated {
+		PoolCreated /*{
 			/// The Id of the created Pool.
 			pool_id: T::PoolId,
 			/// The configuration info related to the Pool that was created.
 			pool_info: PoolInfoOf<T>,
-		},
+		}*/,
 
 		/// Emitted after a user deposits an all-asset deposit into a pool.
-		AllAssetDeposit {
+		AllAssetDeposit /*{
 			/// The account id of the user issuing the deposit.
 			account: AccountIdOf<T>,
 			/// The pool id of the Pool deposited into.
@@ -477,10 +478,10 @@ pub mod pallet {
 			deposited: Vec<Deposit<T>>,
 			/// The number of LP tokens minted for the deposit.
 			lp_tokens_minted: BalanceOf<T>,
-		},
+		}*/,
 
 		/// Emitted after a user withdraws assets from a pool.
-		AllAssetWithdraw {
+		AllAssetWithdraw /*{
 			/// The account issuing the deposit.
 			account: AccountIdOf<T>,
 			/// The pool deposited into.
@@ -489,9 +490,9 @@ pub mod pallet {
 			withdrawn: Vec<Withdraw<T>>,
 			/// The number of LP tokens burned from the withdraw.
 			lp_tokens_burned: BalanceOf<T>,
-		},
+		}*/,
 	}
-
+/*
 	// ----------------------------------------------------------------------------------------------------
     //                                           Runtime  Errors                                           
 	// ----------------------------------------------------------------------------------------------------
@@ -2220,7 +2221,7 @@ pub mod pallet {
 			// // Convert back to Balance type
 			// Ok(lp_share_of_asset)
 			
-		} 
+		}
 	}
-
+*/
 }
