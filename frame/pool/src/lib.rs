@@ -183,6 +183,7 @@ pub mod pallet {
 
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
+		currency::RangeId,
 		vault::{
 			Deposit as Duration, Vault, VaultConfig,
 		},
@@ -1307,8 +1308,10 @@ pub mod pallet {
 				let pool_account = Self::account_id(&id);
 
 				// Requirement 1) Obtain a new asset id for this pools lp token 
-				let lp_token =
-					{ T::CurrencyFactory::create().map_err(|_| Error::<T>::ErrorCreatingLpTokenForPool)? };
+				let lp_token = {
+					T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::zero())
+						.map_err(|_| Error::<T>::ErrorCreatingLpTokenForPool)?
+				};
 
 				// TODO (Nevin):
 				//  - allow strategies to be supplied during the creation of the vaults
