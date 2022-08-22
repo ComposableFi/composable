@@ -38,15 +38,15 @@ fn advance_blocks_by(n: BlockNumber) {
 		let curr_block = System::block_number();
 		if curr_block > 0 {
 			Timestamp::on_finalize(curr_block);
-			System::on_finalize(curr_block);
 			Oracle::on_finalize(curr_block);
+			System::on_finalize(curr_block);
 		}
 		let next_block = curr_block + 1;
 		System::set_block_number(next_block);
 		// Time is set in milliseconds, so at each block we increment the timestamp by 1000ms = 1s
 		let _ = Timestamp::set(Origin::none(), next_block * 1000);
-		Timestamp::on_initialize(next_block);
 		System::on_initialize(next_block);
+		Timestamp::on_initialize(next_block);
 		Oracle::on_initialize(next_block);
 	}
 }
