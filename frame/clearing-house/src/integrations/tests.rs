@@ -260,7 +260,7 @@ fn should_succeed_with_two_traders_in_a_market() {
 		let alice_col = get_collateral(&ALICE);
 		let alice_outstanding_profits = get_outstanding_profits(&ALICE, &market_id);
 		let bob_col = get_collateral(&BOB);
-		assert!(alice_col > bob_col);
+		assert!(alice_col + alice_outstanding_profits > bob_col);
 		assert_eq!(alice_col + alice_outstanding_profits + bob_col, UNIT * 200);
 		// TODO(0xangelo): test if ALICE can withdraw her full collateral + profits
 
