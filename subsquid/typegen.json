@@ -23,8 +23,8 @@
     "stakingRewards.StakeAmountExtended",
     "stakingRewards.Unstaked",
     "stakingRewards.SplitPosition",
-    "bondedFinance.OfferCancelled"
-
+    "bondedFinance.OfferCancelled",
+    "oracle.PriceChanged"
   ],
   "calls": []
 }

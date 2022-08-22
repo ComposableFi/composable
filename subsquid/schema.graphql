@@ -144,3 +144,23 @@ type Activity @entity {
   "Timestamp of the block in which this activity occurred"
   timestamp: BigInt!
 }
+
+type Asset @entity {
+  id: ID!
+  "ID of the event that added the last price"
+  eventId: String!
+  "ID of the asset"
+  assetId: String!
+  historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
+}
+
+type HistoricalAssetPrice @entity {
+  id: ID!
+  "ID of the event associated with this activity"
+  eventId: String!
+  "ID of the asset"
+  assetId: String!
+  asset: Asset!
+  price: BigInt!
+  timestamp: BigInt!
+}

@@ -219,6 +219,37 @@ export class BondedFinanceOfferCancelledEvent {
   }
 }
 
+export class OraclePriceChangedEvent {
+  constructor(private ctx: EventContext) {
+    assert(this.ctx.event.name === 'oracle.PriceChanged')
+  }
+
+  /**
+   * Price changed by oracle \[asset_id, price\]
+   */
+  get isV2401(): boolean {
+    return this.ctx._chain.getEventHash('oracle.PriceChanged') === 'f7d5bd1431cb954502149f64a8137986d660e0729a3d9731d421496b4298be52'
+  }
+
+  /**
+   * Price changed by oracle \[asset_id, price\]
+   */
+  get asV2401(): [v2401.CurrencyId, bigint] {
+    assert(this.isV2401)
+    return this.ctx._chain.decodeEvent(this.ctx.event)
+  }
+
+  get isLatest(): boolean {
+    deprecateLatest()
+    return this.isV2401
+  }
+
+  get asLatest(): [v2401.CurrencyId, bigint] {
+    deprecateLatest()
+    return this.asV2401
+  }
+}
+
 export class PabloLiquidityAddedEvent {
   constructor(private ctx: EventContext) {
     assert(this.ctx.event.name === 'pablo.LiquidityAdded')

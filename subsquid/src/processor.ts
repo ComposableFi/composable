@@ -1,14 +1,10 @@
 import { SubstrateProcessor } from "@subsquid/substrate-processor";
 import {
-  BondedFinanceNewBondEvent,
-  BondedFinanceNewOfferEvent,
-  BondedFinanceOfferCancelledEvent,
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
   PabloPoolCreatedEvent,
   PabloPoolDeletedEvent,
   PabloSwappedEvent,
-  VestingVestingScheduleAddedEvent,
 } from "./types/events";
 import {
   processLiquidityAddedEvent,
@@ -34,10 +30,8 @@ import {
   processNewOfferEvent,
   processOfferCancelledEvent,
 } from "./processors/bondedFinance";
-import {
-  processVestingScheduleAddedEvent,
-  processVestingClaimedEvent,
-} from "./processors/vestingSchedule";
+import { processVestingScheduleAddedEvent } from "./processors/vestingSchedule";
+import { processOraclePriceChanged } from "./processors/oracle";
 
 const processor = new SubstrateProcessor("composable_dali_dev");
 
@@ -149,5 +143,7 @@ processor.addEventHandler("stakingRewards.Unstaked", async (ctx) => {
 processor.addEventHandler("stakingRewards.SplitPosition", async (ctx) => {
   await processSplitPositionEvent(ctx);
 });
+
+processor.addEventHandler("oracle.PriceChanged", processOraclePriceChanged);
 
 processor.run();
