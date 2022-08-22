@@ -76,16 +76,16 @@ async fn main() {
 
 	loop {
 		// If channel states are open on both chains we can stop listening for events
-		if !test_params_a.should_check && !test_params_b.should_check {
-			println!("Successfully verified packet receipt on both chains");
-			break
-		}
+		// if !test_params_a.should_check && !test_params_b.should_check {
+		// 	println!("Successfully verified packet receipt on both chains");
+		// 	break
+		// }
 
-		let time_elapsed = Instant::now().duration_since(start);
-		if time_elapsed >= Duration::from_secs(1600) {
-			println!("Could not verify packet receipt on either chain after waiting for 20mins");
-			break
-		}
+		// let time_elapsed = Instant::now().duration_since(start);
+		// if time_elapsed >= Duration::from_secs(1600) {
+		// 	println!("Could not verify packet receipt on either chain after waiting for 20mins");
+		// 	break
+		// }
 
 		tokio::select! {
 			result = chain_a_events.next(), if test_params_a.should_check  => {

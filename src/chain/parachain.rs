@@ -245,92 +245,98 @@ where
 		MultiSigner: From<<Self as KeyProvider>::Public>,
 		<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 	{
-		let client_wrapper = ClientWrapper {
-			relay_client: self.relay_client.clone(),
-			para_client: self.para_client.clone(),
-			beefy_activation_block,
-			para_id: self.para_id,
-		};
+		loop {
+			let client_wrapper = ClientWrapper {
+				relay_client: self.relay_client.clone(),
+				para_client: self.para_client.clone(),
+				beefy_activation_block,
+				para_id: self.para_id,
+			};
 
-		let beefy_state = client_wrapper
-			.construct_beefy_client_state(beefy_activation_block)
-			.await
-			.map_err(|e| {
-				Error::from(format!("[construct_beefy_client_state] Failed due to {:?}", e))
-			})?;
+			let beefy_state = client_wrapper
+				.construct_beefy_client_state(beefy_activation_block)
+				.await
+				.map_err(|e| {
+					Error::from(format!("[construct_beefy_client_state] Failed due to {:?}", e))
+				})?;
 
-		let client_state = BeefyClientState {
-			chain_id: ChainId::new("relay-chain".to_string(), 0),
-			relay_chain: Default::default(),
-			mmr_root_hash: beefy_state.mmr_root_hash,
-			latest_beefy_height: beefy_state.latest_beefy_height,
-			frozen_height: None,
-			beefy_activation_block: beefy_state.beefy_activation_block,
-			latest_para_height: 0,
-			para_id: self.para_id,
-			authority: beefy_state.current_authorities,
-			next_authority_set: beefy_state.next_authorities,
-		};
+			let client_state = BeefyClientState {
+				chain_id: ChainId::new("relay-chain".to_string(), 0),
+				relay_chain: Default::default(),
+				mmr_root_hash: beefy_state.mmr_root_hash,
+				latest_beefy_height: beefy_state.latest_beefy_height,
+				frozen_height: None,
+				beefy_activation_block: beefy_state.beefy_activation_block,
+				latest_para_height: 0,
+				para_id: self.para_id,
+				authority: beefy_state.current_authorities,
+				next_authority_set: beefy_state.next_authorities,
+			};
 
-		// TODO: Move this code for consensus state construction to beefy-rs
-		let api = client_wrapper
-			.relay_client
-			.clone()
-			.to_runtime_api::<polkadot::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let subxt_block_number: subxt::BlockNumber = client_state.latest_beefy_height.into();
-		let block_hash = client_wrapper
-			.relay_client
-			.rpc()
-			.block_hash(Some(subxt_block_number))
-			.await
-			.unwrap();
-		let head_data = api
-			.storage()
-			.paras()
-			.heads(
-				&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(
-					client_wrapper.para_id,
-				),
-				block_hash,
-			)
-			.await
-			.unwrap()
-			.unwrap();
-		let decoded_para_head = frame_support::sp_runtime::generic::Header::<
-			u32,
-			frame_support::sp_runtime::traits::BlakeTwo256,
-		>::decode(&mut &*head_data.0)
-		.unwrap();
-		let block_number = decoded_para_head.number;
-		let subxt_block_number: subxt::BlockNumber = block_number.into();
-		let block_hash = client_wrapper
-			.para_client
-			.rpc()
-			.block_hash(Some(subxt_block_number))
-			.await
-			.unwrap();
-
-		let TimeStampExtWithProof { ext: timestamp_extrinsic, proof: extrinsic_proof } =
-			fetch_timestamp_extrinsic_with_proof(&client_wrapper.para_client, block_hash)
+			// TODO: Move this code for consensus state construction to beefy-rs
+			let api = client_wrapper
+				.relay_client
+				.clone()
+				.to_runtime_api::<polkadot::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>(
+				);
+			let subxt_block_number: subxt::BlockNumber = client_state.latest_beefy_height.into();
+			let block_hash =
+				client_wrapper.relay_client.rpc().block_hash(Some(subxt_block_number)).await?;
+			let head_data = api
+				.storage()
+				.paras()
+				.heads(
+					&polkadot::api::runtime_types::polkadot_parachain::primitives::Id(
+						client_wrapper.para_id,
+					),
+					block_hash,
+				)
+				.await?
+				.ok_or_else(|| {
+					Error::Custom(format!(
+						"Couldn't find header for ParaId({}) at relay block {:?}",
+						client_wrapper.para_id, block_hash
+					))
+				})?;
+			let decoded_para_head = frame_support::sp_runtime::generic::Header::<
+				u32,
+				frame_support::sp_runtime::traits::BlakeTwo256,
+			>::decode(&mut &*head_data.0)?;
+			let block_number = decoded_para_head.number;
+			// we can't use the genesis block to construct the initial state.
+			if block_number == 0 {
+				continue
+			}
+			let subxt_block_number: subxt::BlockNumber = block_number.into();
+			let block_hash = client_wrapper
+				.para_client
+				.rpc()
+				.block_hash(Some(subxt_block_number))
 				.await
 				.unwrap();
-		let parachain_header = ParachainHeader {
-			parachain_header: decoded_para_head,
-			partial_mmr_leaf: PartialMmrLeaf {
-				version: Default::default(),
-				parent_number_and_hash: Default::default(),
-				beefy_next_authority_set: Default::default(),
-			},
-			parachain_heads_proof: vec![],
-			heads_leaf_index: 0,
-			heads_total_count: 0,
-			extrinsic_proof,
-			timestamp_extrinsic,
-		};
 
-		let consensus_state = ConsensusState::from_header(parachain_header).unwrap().wrap_any();
+			let TimeStampExtWithProof { ext: timestamp_extrinsic, proof: extrinsic_proof } =
+				fetch_timestamp_extrinsic_with_proof(&client_wrapper.para_client, block_hash)
+					.await
+					.unwrap();
+			let parachain_header = ParachainHeader {
+				parachain_header: decoded_para_head,
+				partial_mmr_leaf: PartialMmrLeaf {
+					version: Default::default(),
+					parent_number_and_hash: Default::default(),
+					beefy_next_authority_set: Default::default(),
+				},
+				parachain_heads_proof: vec![],
+				heads_leaf_index: 0,
+				heads_total_count: 0,
+				extrinsic_proof,
+				timestamp_extrinsic,
+			};
 
-		Ok((client_state.wrap_any(), consensus_state))
+			let consensus_state = ConsensusState::from_header(parachain_header).unwrap().wrap_any();
+
+			return Ok((client_state.wrap_any(), consensus_state))
+		}
 	}
 
 	pub async fn submit_create_client_msg(&self, msg: Any) -> Result<ClientId, Error> {

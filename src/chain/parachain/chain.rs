@@ -116,9 +116,7 @@ where
 			&self.para_client,
 			Deliver { messages: update_client_message },
 		);
-		let _ = update_client_ext
-			.sign_and_submit(&signer, tx_params)
-			.await?;
+		let _ = update_client_ext.sign_and_submit(&signer, tx_params).await?;
 
 		if !permissioned_messages.is_empty() {
 			self.submit_sudo_call(DeliverPermissioned { messages: permissioned_messages })
@@ -135,9 +133,7 @@ where
 				.tip(PlainTip::new(100_000))
 				.era(Era::Immortal, *self.para_client.genesis());
 
-			let _ = ext
-				.sign_and_submit(&signer, tx_params)
-				.await?;
+			let _ = ext.sign_and_submit(&signer, tx_params).await?;
 		}
 
 		Ok(())

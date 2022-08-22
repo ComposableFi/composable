@@ -99,7 +99,13 @@ where
 			beefy_primitives::crypto::Signature,
 		> = codec::Decode::decode(&mut &*recv_commitment)?;
 
-		if signed_commitment.commitment.validator_set_id < beefy_client_state.current_authorities.id {
+		if signed_commitment.commitment.validator_set_id < beefy_client_state.current_authorities.id
+		{
+			log::info!(
+				"Commitment: {:#?}\nClientState: {:#?}",
+				signed_commitment.commitment,
+				beefy_client_state
+			);
 			// If validator set id of signed commitment is less than current validator set id we
 			// have Then commitment is outdated and we skip it.
 			println!(
@@ -114,14 +120,11 @@ where
 		// check if validator set has changed.
 		// If client on counterparty has never been updated since it was created we want to update
 		// it
-		let update_type = if !self.client_update_status() {
-			UpdateType::Mandatory
-		} else {
-			match signed_commitment.commitment.validator_set_id == beefy_client_state.next_authorities.id
-			{
-				true => UpdateType::Mandatory,
-				false => UpdateType::Optional,
-			}
+		let update_type = match signed_commitment.commitment.validator_set_id ==
+			beefy_client_state.next_authorities.id
+		{
+			true => UpdateType::Mandatory,
+			false => UpdateType::Optional,
 		};
 
 		let (parachain_headers, batch_proof) = self
@@ -130,7 +133,8 @@ where
 				&beefy_client_state,
 			)
 			.await?;
-		let mmr_update = self.fetch_mmr_update_proof_for(signed_commitment, &beefy_client_state).await?;
+		let mmr_update =
+			self.fetch_mmr_update_proof_for(signed_commitment, &beefy_client_state).await?;
 		let mmr_size = NodesUtils::new(batch_proof.leaf_count).size();
 		let beefy_header = BeefyHeader {
 			parachain_headers,
@@ -169,16 +173,15 @@ where
 				}
 			})
 			.collect::<Vec<_>>();
-		let beefy_height = beefy_header
-			.mmr_update_proof
-			.as_ref()
-			.expect("Should have mmr update proof")
-			.latest_mmr_leaf
-			.parent_number_and_hash
-			.0 + 1;
-		log::info!("Latest beefy height {beefy_height}, Fetching events from parachain {} for these blocks {finalized_block_numbers:?}", self.para_id);
-		
-		let finalized_block_numbers = finalized_block_numbers.into_iter().map(BlockNumberOrHash::Number).collect();
+		log::info!(
+			"Fetching events from parachain ParaId({}) for blocks {}..{}",
+			self.para_id,
+			finalized_block_numbers[0],
+			finalized_block_numbers.last().unwrap()
+		);
+
+		let finalized_block_numbers =
+			finalized_block_numbers.into_iter().map(BlockNumberOrHash::Number).collect();
 		let events = self.query_events_at(finalized_block_numbers).await?;
 		if self.sender.send(events.clone()).is_err() {
 			log::error!("Failed to push ibc events to stream, no active receiver found");
