@@ -132,8 +132,6 @@ pub struct Market<T: Config> {
 	// ---------------------------------------------------------------------------------------------
 	//                                         Dynamic
 	// ---------------------------------------------------------------------------------------------
-	/// The current total realized losses which haven't been claimed by traders in profit.
-	pub available_profits: T::Balance,
 	/// Total position, in base asset, of all traders that are long. Must be positive. Used to
 	/// compute parameter adjustment costs and funding payments from/to the Clearing House.
 	pub base_asset_amount_long: T::Decimal,
@@ -179,7 +177,6 @@ impl<T: Config> Market<T> {
 			funding_period: config.funding_period,
 			taker_fee: config.taker_fee,
 			twap_period: config.twap_period,
-			available_profits: Zero::zero(),
 			base_asset_amount_long: Zero::zero(),
 			base_asset_amount_short: Zero::zero(),
 			closed_ts: None,
@@ -327,6 +324,7 @@ pub struct TraderPositionState<T: Config> {
 	pub collateral: T::Balance,
 	pub market: Market<T>,
 	pub position: Position<T>,
+	pub available_profits: T::Balance,
 	pub outstanding_profits: T::Balance,
 }
 
@@ -334,6 +332,7 @@ pub struct TradeResponse<T: Config> {
 	pub collateral: T::Balance,
 	pub market: Market<T>,
 	pub position: Option<Position<T>>,
+	pub available_profits: T::Balance,
 	pub outstanding_profits: T::Balance,
 	pub base_swapped: T::Balance,
 	pub is_risk_increasing: bool,

@@ -12,7 +12,7 @@ use crate::{
 	},
 	tests::{
 		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool,
-		get_outstanding_gains, get_position, run_for_seconds, run_to_time,
+		get_outstanding_profits, get_position, run_for_seconds, run_to_time,
 		set_maximum_oracle_mark_divergence, set_oracle_price, set_oracle_twap,
 		traders_in_one_market_context, with_trading_context, Market, MarketConfig,
 	},
@@ -69,7 +69,7 @@ fn should_realize_long_position_gains() {
 
 		VammPallet::set_price(Some(20.into()));
 		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
-		assert_eq!(get_outstanding_gains(ALICE, &market_id), collateral_0);
+		assert_eq!(get_outstanding_profits(ALICE), collateral_0);
 
 		SystemPallet::assert_last_event(
 			Event::PositionClosed { user: ALICE, market: market_id, direction: Long, base }.into(),
@@ -157,7 +157,7 @@ fn should_realize_short_position_gains() {
 
 		VammPallet::set_price(Some(5.into()));
 		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
-		assert_eq!(get_outstanding_gains(ALICE, &market_id), as_balance(50));
+		assert_eq!(get_outstanding_profits(ALICE), as_balance(50));
 
 		SystemPallet::assert_last_event(
 			Event::PositionClosed { user: ALICE, market: market_id, direction: Short, base }.into(),
@@ -334,7 +334,7 @@ fn should_only_update_collateral_with_available_gains() {
 		// gains
 		assert_eq!(get_collateral(BOB), 0);
 		assert_eq!(get_collateral(ALICE), collateral + collateral / 2);
-		assert_eq!(get_outstanding_gains(ALICE, &market_id), collateral / 2);
+		assert_eq!(get_outstanding_profits(ALICE), collateral / 2);
 	});
 }
 

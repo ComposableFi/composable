@@ -84,8 +84,8 @@ fn get_collateral(account_id: &AccountId) -> Balance {
 	TestPallet::get_collateral(account_id).unwrap()
 }
 
-fn get_outstanding_profits(account_id: &AccountId, market_id: &MarketId) -> Balance {
-	TestPallet::outstanding_profits(account_id, market_id).unwrap_or_else(Zero::zero)
+fn get_outstanding_profits(account_id: &AccountId) -> Balance {
+	TestPallet::outstanding_profits(account_id).unwrap_or_else(Zero::zero)
 }
 
 fn get_market(market_id: &MarketId) -> Market<Runtime> {
@@ -258,7 +258,7 @@ fn should_succeed_with_two_traders_in_a_market() {
 		// However, since Alice closes her position first, there are no realized losses in the
 		// market yet, so her profits are outstanding
 		let alice_col = get_collateral(&ALICE);
-		let alice_outstanding_profits = get_outstanding_profits(&ALICE, &market_id);
+		let alice_outstanding_profits = get_outstanding_profits(&ALICE);
 		let bob_col = get_collateral(&BOB);
 		assert!(alice_col + alice_outstanding_profits > bob_col);
 		assert_eq!(alice_col + alice_outstanding_profits + bob_col, UNIT * 200);

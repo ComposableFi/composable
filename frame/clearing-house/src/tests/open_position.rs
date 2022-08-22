@@ -14,7 +14,7 @@ use crate::{
 	},
 	tests::{
 		any_direction, any_price, as_balance, get_collateral, get_market, get_market_fee_pool,
-		get_outstanding_gains, get_position, run_for_seconds, run_to_time, set_fee_pool_depth,
+		get_outstanding_profits, get_position, run_for_seconds, run_to_time, set_fee_pool_depth,
 		set_maximum_oracle_mark_divergence, set_oracle_price, set_oracle_twap,
 		with_markets_context, with_trading_context, Market, MarketConfig,
 	},
@@ -517,7 +517,7 @@ proptest! {
 			// Profits are outstanding since no one realized losses in the market
 			if pnl >= 0 {
 				assert_eq!(get_collateral(ALICE), margin as u128);
-				assert_eq!(get_outstanding_gains(ALICE, &market_id), pnl as u128);
+				assert_eq!(get_outstanding_profits(ALICE), pnl as u128);
 			} else {
 				assert_eq!(get_collateral(ALICE), (margin + pnl).max(0) as u128);
 			}
@@ -572,7 +572,7 @@ proptest! {
 			let pnl = sign * (base_value_to_close as i128) - sign * (entry_value as i128);
 			if pnl >= 0 {
 				assert_eq!(get_collateral(ALICE), quote_amount);
-				assert_eq!(get_outstanding_gains(ALICE, &market_id), pnl as u128);
+				assert_eq!(get_outstanding_profits(ALICE), pnl as u128);
 			} else {
 				assert_eq!(get_collateral(ALICE), (quote_amount as i128 + pnl).max(0) as u128);
 			}
@@ -644,7 +644,7 @@ proptest! {
 			let pnl = sign * (new_base_value as i128) - sign * margin;
 			if pnl >= 0 {
 				assert_eq!(get_collateral(ALICE), margin as u128);
-				assert_eq!(get_outstanding_gains(ALICE, &market_id), pnl as u128);
+				assert_eq!(get_outstanding_profits(ALICE), pnl as u128);
 			} else {
 				assert_eq!(get_collateral(ALICE), (margin + pnl).max(0) as u128);
 			}

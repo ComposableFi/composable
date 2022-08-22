@@ -14,7 +14,7 @@ use crate::{
 		},
 	},
 	tests::{
-		any_balance, as_balance, get_collateral, get_outstanding_gains, run_for_seconds,
+		any_balance, as_balance, get_collateral, get_outstanding_profits, run_for_seconds,
 		set_fee_pool_depth, set_oracle_twap, traders_in_one_market_context, with_market_context,
 		with_trading_context, MarketConfig,
 	},
@@ -59,7 +59,7 @@ fn cannot_withdraw_outstanding_profits() {
 		VammPallet::set_price(Some(20.into()));
 		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
 		// No one realized losses, so profits are outstanding.
-		assert_eq!(get_outstanding_gains(ALICE, &market_id), collateral);
+		assert_eq!(get_outstanding_profits(ALICE), collateral);
 
 		assert_noop!(
 			TestPallet::withdraw_collateral(Origin::signed(ALICE), collateral * 2),
@@ -108,7 +108,7 @@ fn can_withdraw_realized_profits() {
 		// gains
 		assert_eq!(get_collateral(BOB), 0);
 		assert_eq!(get_collateral(ALICE), collateral + collateral / 2);
-		assert_eq!(get_outstanding_gains(ALICE, &market_id), collateral / 2);
+		assert_eq!(get_outstanding_profits(ALICE), collateral / 2);
 
 		// Alice withdraws her realized profits
 		assert_ok!(TestPallet::withdraw_collateral(
