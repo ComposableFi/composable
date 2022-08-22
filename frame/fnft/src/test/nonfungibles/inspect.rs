@@ -2,12 +2,10 @@ use codec::Encode;
 
 use frame_support::traits::tokens::nonfungibles::Inspect;
 
-use crate::{
-	test::{
-		mock::{new_test_ext, Nft},
-		prelude::*,
-		ALICE,
-	},
+use crate::test::{
+	mock::{new_test_ext, Nft},
+	prelude::*,
+	ALICE,
 };
 
 #[test]
@@ -49,11 +47,7 @@ pub(crate) fn failure() {
 
 		// attribute check
 		assert_eq!(
-			Nft::attribute(
-				&TEST_COLLECTION_ID,
-				&(created_nft_id + 1),
-				&1_u32.encode()
-			),
+			Nft::attribute(&TEST_COLLECTION_ID, &(created_nft_id + 1), &1_u32.encode()),
 			None,
 			"NFT does not exist, there should be no attributes"
 		);

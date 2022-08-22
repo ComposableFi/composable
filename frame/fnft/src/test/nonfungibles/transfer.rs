@@ -88,13 +88,8 @@ fn roundtrip() {
 			to: BOB,
 		}));
 		// get the asset account of the fNFT
-		let asset_account =
-			Nft::asset_account(&TEST_COLLECTION_ID, &nft_to_trade);
-		assert_ok!(Proxy::find_proxy(
-			&asset_account,
-			&BOB,
-			Some(ProxyType::Any)
-		));
+		let asset_account = Nft::asset_account(&TEST_COLLECTION_ID, &nft_to_trade);
+		assert_ok!(Proxy::find_proxy(&asset_account, &BOB, Some(ProxyType::Any)));
 
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
@@ -105,11 +100,7 @@ fn roundtrip() {
 			instance_id: nft_to_trade,
 			to: ALICE,
 		}));
-		assert_ok!(Proxy::find_proxy(
-			&asset_account,
-			&ALICE,
-			Some(ProxyType::Any)
-		));
+		assert_ok!(Proxy::find_proxy(&asset_account, &ALICE, Some(ProxyType::Any)));
 
 		let alice_storage_after_transfer = OwnerInstances::<MockRuntime>::get(&ALICE).unwrap();
 		let bob_storage_after_transfer = OwnerInstances::<MockRuntime>::get(&BOB).unwrap();
