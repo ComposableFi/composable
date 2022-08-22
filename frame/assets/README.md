@@ -45,19 +45,17 @@ The transfer functions provided follow generic functionality with some exception
 
 #### Minting, Burning & Governance
 
-Minting can be initialized one of three ways: 
-1. - by simply calling the `mint_into` function, 
-2. - `mint_initialize` which is intended for creating wrapped assets with no associated project,
-3. - `mint_initialize_with_governance` to use the democracy pallet to mint further assets. 
+Minting can be initialized one of three ways:
+1. by simply calling the `mint_into` function
+2. `mint_initialize` which is intended for creating wrapped assets with no associated project
+3. `mint_initialize_with_governance` to use the democracy pallet to mint further assets
 
+When minting, we ensure that the origin is either admin or governance.
 With governance, if the `governance_origin` is set to an owned account we can use signed transactions to keep minting.
-The `governance_origin` can be any `origin` registered in the `GovernanceRegistry` including but not limited to: 
+The `governance_origin` can be any `origin` registered in the `GovernanceRegistry` including but not limited to:
 - a collective
 - a single user
 - sudo
 - multi signature
 
-We `ensure_admin_or_governance` with this function so the origin of instructions is root or an asset is signed by root or by origin.
-
 Using the functionality to `burn_from` we can burn an `amount` of `asset_id` from `dest` account.
-
