@@ -262,7 +262,11 @@ fn should_succeed_with_two_traders_in_a_market() {
 		let bob_col = get_collateral(&BOB);
 		assert!(alice_col + alice_outstanding_profits > bob_col);
 		assert_eq!(alice_col + alice_outstanding_profits + bob_col, UNIT * 200);
-		// TODO(0xangelo): test if ALICE can withdraw her full collateral + profits
+
+		assert_ok!(TestPallet::withdraw_collateral(
+			Origin::signed(ALICE),
+			alice_col + alice_outstanding_profits
+		));
 
 		// vAMM is back to its initial state due to path independence
 		let vamm_state_after = get_vamm(&market.vamm_id);
