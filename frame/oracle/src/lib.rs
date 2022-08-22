@@ -517,6 +517,7 @@ pub mod pallet {
 		/// - `block_interval`: blocks until oracle triggered
 		/// - `reward`: reward amount for correct answer
 		/// - `slash`: slash amount for bad answer
+		/// - `emit_price_changes`: emit PriceChanged event when asset price changes
 		///
 		/// Emits `DepositEvent` event when successful.
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
@@ -992,7 +993,7 @@ pub mod pallet {
 
 					Self::handle_payout(&pre_prices, price, asset_id, &asset_info)?;
 
-					// Emit `PriceChanged` event when PICA or PABLO prices have changed.
+					// Emit `PriceChanged` event when prices have changed, if required.
 					if price != last_price && asset_info.emit_price_changes {
 						Self::deposit_event(Event::PriceChanged(asset_id, price));
 					}
