@@ -190,7 +190,12 @@ export default {
     IbcTransferPalletParams: "Null",
     IbcTransferTransferParams: "Null",
     ComposableTraitsOracleRewardTracker: "Null",
-    ComposableTraitsStakingStake: "Null"
-
+    ComposableTraitsStakingStake: "Null",
+    ComposableTraitsVestingVestingScheduleInfo: "Null",
+    ComposableTraitsVestingVestingScheduleIdSet: "Null",
+    ComposableTraitsStakingRewardUpdate: "Null",
+    ComposableTraitsAccountProxyProxyType: "Null",
+    ComposableTraitsAccountProxyProxyDefinition: "Null",
+    PalletAccountProxyAnnouncement: "Null",
   }
 };
