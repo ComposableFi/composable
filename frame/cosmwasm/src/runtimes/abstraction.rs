@@ -1,14 +1,41 @@
 use crate::{AccountIdOf, Config, Pallet};
-use alloc::{collections::VecDeque, string::String};
+use alloc::{collections::VecDeque, string::String, vec::Vec};
+use codec::Encode;
 use core::marker::PhantomData;
-use cosmwasm_minimal_std::Addr;
+use cosmwasm_minimal_std::{Addr, CanonicalAddr};
 use cosmwasm_vm::vm::VmGasCheckpoint;
+use scale_info::TypeInfo;
 
 pub trait VMPallet {
 	type VmError;
 }
 
 #[derive(Clone, Debug)]
+pub struct CanonicalCosmwasmAccount<T: Config>(pub CosmwasmAccount<T>);
+
+impl<T: Config> From<CosmwasmAccount<T>> for CanonicalCosmwasmAccount<T> {
+	fn from(from: CosmwasmAccount<T>) -> Self {
+		CanonicalCosmwasmAccount(from)
+	}
+}
+
+impl<T: Config + VMPallet> TryFrom<Vec<u8>> for CanonicalCosmwasmAccount<T> {
+	type Error = T::VmError;
+	fn try_from(source: Vec<u8>) -> Result<Self, Self::Error> {
+		Ok(CanonicalCosmwasmAccount(CosmwasmAccount::try_from(
+			String::from_utf8_lossy(&source).into_owned(),
+		)?))
+	}
+}
+
+impl<T: Config> Into<CanonicalAddr> for CanonicalCosmwasmAccount<T> {
+	fn into(self) -> CanonicalAddr {
+        let cosmwasm_account = &self.0;
+		CanonicalAddr::from(cosmwasm_account.1.as_ref())
+	}
+}
+
+#[derive(Clone, Debug, Encode, TypeInfo)]
 pub struct CosmwasmAccount<T: Config>(PhantomData<T>, AccountIdOf<T>);
 
 impl<T: Config> CosmwasmAccount<T> {

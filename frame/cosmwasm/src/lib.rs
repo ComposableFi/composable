@@ -59,7 +59,10 @@ pub mod pallet {
 		types::{CodeInfo, ContractInfo},
 		weights::WeightInfo,
 	};
-	use alloc::{collections::btree_map::Entry, string::String};
+	use alloc::{
+		collections::{btree_map::Entry, BTreeMap},
+		string::String,
+	};
 	use composable_support::abstractions::{
 		nonce::Nonce,
 		utils::{
@@ -86,17 +89,16 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, PostDispatchInfo},
 		pallet_prelude::*,
-		storage::child::ChildInfo,
+		storage::{child::ChildInfo, ChildTriePrefixIterator},
 		traits::{
 			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 			tokens::{AssetId, Balance},
 			Get, ReservableCurrency, UnixTime,
 		},
-		transactional, BoundedBTreeMap, PalletId,
+		transactional, BoundedBTreeMap, PalletId, StorageHasher, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_core::crypto::UncheckedFrom;
-	use sp_io::hashing::blake2_256;
 	use sp_runtime::traits::{Convert, Hash, MaybeDisplay, SaturatedConversion};
 	use sp_std::vec::Vec;
 	use wasm_instrument::gas_metering::ConstantCostRules;
@@ -171,6 +173,9 @@ pub mod pallet {
 		NonceOverflow,
 		RefcountOverflow,
 		VMDepthOverflow,
+		SignatureVerificationError,
+		IteratorIdOverflow,
+		IteratorNotFound,
 	}
 
 	#[pallet::config]
@@ -407,6 +412,7 @@ pub mod pallet {
 				funds,
 				message,
 			);
+			log::debug!(target: "runtime::contracts", "Instantiate Result: {:?}", outcome);
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 
@@ -960,6 +966,7 @@ pub mod pallet {
 				contract_address: cosmwasm_contract_address,
 				contract_info: info,
 				shared,
+				iterators: BTreeMap::new(),
 			}))
 		}
 
@@ -972,10 +979,10 @@ pub mod pallet {
 		pub(crate) fn with_db_entry<R>(
 			trie_id: &ContractTrieIdOf<T>,
 			key: &[u8],
-			f: impl FnOnce(ChildInfo, [u8; 32]) -> R,
+			f: impl FnOnce(ChildInfo, Vec<u8>) -> R,
 		) -> R {
 			let child_trie = Self::contract_child_trie(trie_id.as_ref());
-			f(child_trie, blake2_256(key))
+			f(child_trie, Blake2_128Concat::hash(key))
 		}
 
 		/// Compute the gas required to read the given entry.
@@ -1048,6 +1055,38 @@ pub mod pallet {
 				storage::child::put_raw(&child_trie, &entry, value)
 			});
 			Ok(())
+		}
+
+		/// Create an empty iterator.
+		pub(crate) fn do_db_scan(vm: &mut CosmwasmVM<T>) -> Result<u32, CosmwasmVMError<T>> {
+			let iterator_id = vm.iterators.len() as u32;
+			let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
+			vm.iterators.insert(
+				iterator_id,
+				ChildTriePrefixIterator::<_>::with_prefix_over_key::<Blake2_128Concat>(
+					&child_info,
+					&[],
+				),
+			);
+			Ok(iterator_id)
+		}
+
+		/// Return the next (reversed-key, value) pair and save the state. If the next key
+		/// is `None`, the iterator is removed from the storage.
+		pub(crate) fn do_db_next(
+			vm: &mut CosmwasmVM<T>,
+			iterator_id: u32,
+		) -> Result<Option<(Vec<u8>, Vec<u8>)>, CosmwasmVMError<T>> {
+			let iterator =
+				vm.iterators.get_mut(&iterator_id).ok_or(Error::<T>::IteratorNotFound)?;
+			match iterator.next() {
+				Some((key, value)) => {
+					let price = Self::do_db_read_gas(&vm.contract_info.trie_id, &key);
+					vm.charge_raw(price)?;
+					Ok(Some((key, value)))
+				},
+				None => Ok(None),
+			}
 		}
 
 		/// Remove an entry from the executing contract, no gas is charged for this operation.
