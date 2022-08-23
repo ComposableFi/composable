@@ -340,6 +340,10 @@ pub mod pallet {
 		//     avoid name collisions with other pallets.
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
+
+        // TODO #PoolSize: remove this?
+        #[pallet::constant]
+        type PoolSize: Get<u32>;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -389,7 +393,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pool_assets)]
 	pub type PoolAssets<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::PoolId, Assets<T::AssetId>>;
+		StorageMap<_, Blake2_128Concat, T::PoolId, Assets<T::AssetId, T::PoolSize>>;
 
 /*	/// Weights for each asset in the pool
 	#[pallet::storage]

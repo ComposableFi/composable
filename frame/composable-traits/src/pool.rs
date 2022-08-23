@@ -28,7 +28,7 @@ pub struct Weight<CurrencyId, Percent> {
 }
 
 /// Type alias used for working with a list of [`Weight`](Weight) objects
-pub type WeightsVec<CurrencyId, Percent> = Vec::<Weight<CurrencyId, Percent>>;
+pub type WeightsVec<CurrencyId, Percent, PoolSize> = BoundedVec<Weight<CurrencyId, Percent>, PoolSize>;
 
 /// Struct to maintain the min/max value bounds for some of the Pool's configurable
 ///     parameters.
@@ -49,8 +49,14 @@ impl<T> Bound<T> {
 
 // Does not derive Copy as assets and weights are Vectors (with their 
 //     data resides on the heap) and thus doesn't derive Copy
+//
+// TODO #PoolSize: we do not need both asset_bounds and PoolSize here
+// either:
+// - know the upper bound in the compile time, thus using BoundedVec and removing asset_bounds upper value
+// - want to change it in the runtime, thus we may not use BoundedVec and keep asset_bounds as-is
+// search for 'TODO #PoolSize' in the code for other places to be fixed for this issue
 #[derive(Clone, Encode, Decode, Default, Debug, MaxEncodedLen, PartialEq, TypeInfo)]
-pub struct PoolConfig<AccountId, AssetId, Percent>
+pub struct PoolConfig<AccountId, AssetId, Percent, PoolSize: frame_support::traits::Get<u32>>
 where
 	AccountId: core::cmp::Ord,
 {
@@ -59,11 +65,11 @@ where
 	/// Amount of the fee pool charges for the exchange
 	pub fee: Percent,
 	/// Vector of the Pool's underlying assets
-	pub assets: Assets<AssetId>,
+	pub assets: Assets<AssetId, PoolSize>,
 	/// Min/max bounds on number of assets allowed in the pool
 	pub asset_bounds: Bound<u8>,
 	/// Vector of the Pool's underlying asset weights
-	pub weights: WeightsVec<AssetId, Percent>,
+	pub weights: WeightsVec<AssetId, Percent, PoolSize>,
 	/// Min/max bounds on weights of assets for the pool
 	pub weight_bounds: Bound<Percent>,
 	/// Min/max bounds on amount of assets that can be deposited at once
@@ -107,6 +113,9 @@ pub type Deposit<CurrencyId, Balance> = Reserve<CurrencyId, Balance>;
 pub type Withdraw<CurrencyId, Balance> = Reserve<CurrencyId, Balance>;
 
 pub trait ConstantMeanMarket {
+    // TODO #PoolSize: remove this?
+    type PoolSize: Get<u32>;
+
 	/// Corresponds to the Ids used by the pallet to uniquely identify accounts.
 	type AccountId: core::cmp::Ord;
 	/// Corresponds to the Ids used by the pallet to uniquely identify assets.
@@ -150,7 +159,7 @@ pub trait ConstantMeanMarket {
 	///     for the creation fee.
 	fn create(
 		from: Self::AccountId,
-		config: PoolConfig<Self::AccountId, Self::AssetId, Self::Weight>,
+		config: PoolConfig<Self::AccountId, Self::AssetId, Self::Weight, Self::PoolSize>,
 		creation_fee: Deposit<Self::AssetId, Self::Balance>,
 	) -> Result<Self::PoolId, DispatchError>;
 
