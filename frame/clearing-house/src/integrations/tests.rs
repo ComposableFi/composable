@@ -1,7 +1,12 @@
 #![allow(clippy::disallowed_methods)]
-use crate::{Direction::Long, Market, MarketConfig as MarketConfigGeneric};
+use crate::{
+	Direction::Long, Error, Market, MarketConfig as MarketConfigGeneric, MaxPriceDivergence,
+};
 use composable_support::validation::Validated;
-use composable_traits::time::{DurationSeconds, ONE_HOUR};
+use composable_traits::{
+	time::{DurationSeconds, ONE_HOUR},
+	vamm::Vamm as VammTrait,
+};
 use frame_support::{assert_ok, pallet_prelude::Hooks};
 use pallet_vamm::VammStateOf;
 use proptest::prelude::*;
@@ -138,6 +143,10 @@ impl Default for MarketConfig {
 			twap_period: ONE_HOUR,
 		}
 	}
+}
+
+fn set_maximum_oracle_mark_divergence(fraction: Decimal) {
+	MaxPriceDivergence::<Runtime>::set(fraction);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -443,6 +452,9 @@ mod open_position {
 // -------------------------------------------------------------------------------------------------
 
 mod update_funding {
+	use composable_traits::vamm::AssetType;
+	use frame_support::assert_noop;
+
 	use super::*;
 
 	#[test]
@@ -536,6 +548,51 @@ mod update_funding {
 			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
 			let vamm_after = get_vamm(&market.vamm_id);
 			assert!(vamm_before.base_asset_twap < vamm_after.base_asset_twap);
+		})
+	}
+
+	#[test]
+	fn should_block_update_if_mark_index_too_divergent() {
+		ExtBuilder {
+			native_balances: vec![(ALICE, UNIT), (BOB, UNIT)],
+			balances: vec![(ALICE, USDC, UNIT * 100)],
+			..Default::default()
+		}
+		.build()
+		.execute_with(|| {
+			let asset_id = DOT;
+			set_oracle_for(asset_id, 10_000);
+
+			let config = MarketConfig {
+				asset: asset_id,
+				vamm_config: VammConfig {
+					// Mark price = 111.0
+					base_asset_reserves: UNIT * 10_000,
+					quote_asset_reserves: UNIT * 1_110_000,
+					peg_multiplier: 1,
+					twap_period: ONE_HOUR,
+				},
+				..Default::default()
+			};
+			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config.clone()));
+
+			let market_id = Zero::zero();
+			let market = get_market(&market_id);
+			let vamm = get_vamm(&market.vamm_id);
+			assert_eq!(market.last_oracle_twap, 100.into());
+			assert_eq!(
+				<Vamm as VammTrait>::get_price(market.vamm_id, AssetType::Base).unwrap(),
+				111.into()
+			);
+			assert_eq!(vamm.base_asset_twap, 111.into());
+
+			set_maximum_oracle_mark_divergence((1, 10).into());
+
+			run_to_time(market.last_oracle_ts + config.twap_period);
+			assert_noop!(
+				TestPallet::update_funding(Origin::signed(ALICE), market_id),
+				Error::<Runtime>::OracleMarkTooDivergent
+			);
 		})
 	}
 }
