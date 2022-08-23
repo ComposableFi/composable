@@ -1,8 +1,7 @@
 import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
 import { Asset, HistoricalAssetPrice } from "../src/model";
-import { instance, mock, when } from "ts-mockito";
+import { mock } from "ts-mockito";
 import { createCtx } from "../src/utils";
-import { OraclePriceChangedEvent } from "../src/types/events";
 import { expect } from "chai";
 import { getHistoricalAssetPrice, updateAsset } from "../src/processors/oracle";
 
