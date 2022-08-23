@@ -682,16 +682,18 @@ pub mod pallet {
 			let mut stake =
 				Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
 			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
-			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
+			let is_early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
 				T::UnixTime::now().as_secs();
 			let pool_id = stake.reward_pool_id;
-			// let mut rewards_pool =
-			// 	RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
 			let asset_id = RewardPools::<T>::try_mutate(pool_id, |rewards_pool| {
 				if let Some(rewards_pool) = rewards_pool {
-					(*rewards_pool, _) =
-						Self::collect_rewards(rewards_pool, &mut stake, early_unlock, keep_alive)?;
+					(*rewards_pool, _) = Self::collect_rewards(
+						rewards_pool,
+						&mut stake,
+						is_early_unlock,
+						keep_alive,
+					)?;
 
 					rewards_pool.claimed_shares =
 						rewards_pool.claimed_shares.safe_add(&stake.share)?;
@@ -701,15 +703,7 @@ pub mod pallet {
 				}
 			})?;
 
-			// (rewards_pool, _) = Self::collect_rewards(
-			// 	&pool_id,
-			// 	rewards_pool,
-			// 	stake.clone(),
-			// 	early_unlock,
-			// 	keep_alive,
-			// )?;
-
-			let stake_with_penalty = if early_unlock {
+			let stake_with_penalty = if is_early_unlock {
 				(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(stake.stake)
 			} else {
 				stake.stake
@@ -725,7 +719,6 @@ pub mod pallet {
 				keep_alive,
 			)?;
 
-			// RewardPools::<T>::insert(pool_id, rewards_pool);
 			Stakes::<T>::remove(position_id);
 			// TODO (vim): burn the financial NFT and the shares it holds
 
