@@ -5,6 +5,8 @@ use composable_traits::{
 	defi::DeFiComposableConfig,
 	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
 };
+use alloc::string::{ToString, String};
+use alloc::format;
 use core::{fmt::Formatter, str::FromStr};
 use frame_support::weights::Weight;
 use ibc::{
@@ -29,7 +31,7 @@ use ibc::{
 };
 use ibc_primitives::{CallbackWeight, IbcTrait};
 use primitives::currency::CurrencyId;
-use sp_std::marker::PhantomData;
+use sp_std::{marker::PhantomData, boxed::Box};
 
 #[derive(Clone)]
 pub struct IbcCallbackHandler<T: Config>(PhantomData<T>);
