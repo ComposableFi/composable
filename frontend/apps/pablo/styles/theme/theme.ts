@@ -10,6 +10,7 @@ import {
   accordionOverrides,
   accordionSummaryOverrides,
   alertOverrides,
+  alertTitle,
   appBarOverrides,
   backdropOverrides,
   breadcrumbsOverrides,
@@ -106,6 +107,7 @@ export const createTheme = (mode: PaletteMode) => {
       MuiStepIcon: stepIconOverrides(theme),
       MuiStepConnector: stepConnectorOverrides(theme),
       MuiStepLabel: stepLabelOverrides(theme),
+      MuiAlertTitle: alertTitle(theme),
     },
   });
 };

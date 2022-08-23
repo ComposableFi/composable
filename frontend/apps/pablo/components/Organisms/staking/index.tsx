@@ -46,6 +46,7 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
   const dispatch = useAppDispatch();
   const [tab, setTab] = useState(0);
   const message = useAppSelector((state) => state.ui.message);
+  const shouldShowPortfolio = true; // TODO: Use dynamic values to check if user has open positions for this check
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTab(newValue);
@@ -54,6 +55,9 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
   return (
     <Box {...boxProps}>
       <StakingStatistics />
+      {shouldShowPortfolio && (
+        <XPablosBox mt={8} title="Portfolio" header={tableHeaders} />
+      )}
       <BoxWrapper mt={8}>
         <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
         <TabPanel index={0} value={tab}>
@@ -63,7 +67,7 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
           <UnstakeForm />
         </TabPanel>
       </BoxWrapper>
-      <ClaimableRewards mt={8} />
+      {shouldShowPortfolio && <ClaimableRewards mt={8} />}
 
       {message.text && (
         <Box mt={8}>
