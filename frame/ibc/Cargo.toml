@@ -60,6 +60,7 @@ default-features = false
 [dev-dependencies]
 assets-registry = { package = "pallet-assets-registry", path = "../assets-registry" }
 chrono = "0.4.19"
+hex = "0.4.3"
 currency-factory = { package = "pallet-currency-factory", path = "../currency-factory" }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 hex-literal = { version = "0.3.4" }
@@ -103,7 +104,7 @@ std = [
   "xcm/std",
   "assets/std",
   "primitives/std",
-  "serde_json/std",
+  "serde_json/std"
 ]
 
 runtime-benchmarks = [

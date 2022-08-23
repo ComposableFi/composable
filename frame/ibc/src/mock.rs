@@ -5,6 +5,7 @@ use frame_support::{
 	traits::{ConstU64, Everything},
 };
 use frame_system as system;
+use ibc_primitives::IbcAccount;
 use orml_traits::parameter_type_with_key;
 use sp_core::{
 	offchain::{testing::TestOffchainExt, OffchainDbExt, OffchainWorkerExt},
@@ -22,7 +23,6 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Header = generic::Header<u32, BlakeTwo256>;
 use composable_traits::currency::{CurrencyFactory as CurrencyFactoryTrait, RangeId};
-use ibc::signer::Signer;
 use primitives::currency::ValidateCurrencyId;
 use sp_runtime::traits::{IdentifyAccount, Verify};
 
@@ -55,7 +55,7 @@ frame_support::construct_runtime!(
 
 parameter_types! {
 	pub const BlockHashCount: u32 = 250;
-	pub const SS58Prefix: u8 = 42;
+	pub const SS58Prefix: u8 = 49;
 	pub const ExpectedBlockTime: u64 = 1000;
 	pub const ExistentialDeposit: u64 = 10000;
 }
@@ -173,7 +173,7 @@ impl transfer::Config for Test {
 	type MultiCurrency = Assets;
 	type PalletId = TransferPalletId;
 	type CurrencyFactory = CurrencyFactory;
-	type AccountIdConversion = IbcAccount<Test>;
+	type AccountIdConversion = IbcAccount;
 	type AssetRegistry = AssetsRegistry;
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
@@ -196,23 +196,6 @@ impl assets_registry::Config for Test {
 	type ParachainOrGovernanceOrigin = EnsureRoot<AccountId>;
 	type Balance = Balance;
 	type WeightInfo = ();
-}
-
-#[derive(Clone)]
-pub struct IbcAccount<T: pallet_ibc::Config>(T::AccountId);
-
-impl<T: pallet_ibc::Config> IdentifyAccount for IbcAccount<T> {
-	type AccountId = T::AccountId;
-	fn into_account(self) -> Self::AccountId {
-		self.0
-	}
-}
-
-impl TryFrom<Signer> for IbcAccount<Test> {
-	type Error = &'static str;
-	fn try_from(_: Signer) -> Result<Self, Self::Error> {
-		Ok(IbcAccount(AccountId::new([0; 32])))
-	}
 }
 
 impl pallet_ibc::Config for Test {
