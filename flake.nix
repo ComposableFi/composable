@@ -615,7 +615,7 @@
                                   # "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover
                                   # `"wasm":{"codes":[],"contracts":[],"gen_msgs":[],"params":{"code_upload_access":{"address":"","permission":"Everybody"},`
                                   #network_mode 
-                                  command = ''
+                                  command = ''                                     
                                     ./setup_and_run.sh juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y
                                   '';
                                   #network_mode = "host";
