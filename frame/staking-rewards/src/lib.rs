@@ -679,23 +679,35 @@ pub mod pallet {
 		#[transactional]
 		fn unstake(who: &Self::AccountId, position_id: &Self::PositionId) -> DispatchResult {
 			let keep_alive = false;
-			let stake = Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
+			let mut stake =
+				Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
 			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
 			let early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
 				T::UnixTime::now().as_secs();
 			let pool_id = stake.reward_pool_id;
-			let mut rewards_pool =
-				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+			// let mut rewards_pool =
+			// 	RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
-			(rewards_pool, _) = Self::collect_rewards(
-				&pool_id,
-				rewards_pool,
-				stake.clone(),
-				early_unlock,
-				keep_alive,
-			)?;
+			let asset_id = RewardPools::<T>::try_mutate(pool_id, |rewards_pool| {
+				if let Some(rewards_pool) = rewards_pool {
+					(*rewards_pool, _) =
+						Self::collect_rewards(rewards_pool, &mut stake, early_unlock, keep_alive)?;
 
-			rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
+					rewards_pool.claimed_shares =
+						rewards_pool.claimed_shares.safe_add(&stake.share)?;
+					Ok(rewards_pool.asset_id)
+				} else {
+					Err(DispatchError::from(Error::<T>::RewardsPoolNotFound))
+				}
+			})?;
+
+			// (rewards_pool, _) = Self::collect_rewards(
+			// 	&pool_id,
+			// 	rewards_pool,
+			// 	stake.clone(),
+			// 	early_unlock,
+			// 	keep_alive,
+			// )?;
 
 			let stake_with_penalty = if early_unlock {
 				(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(stake.stake)
@@ -706,14 +718,14 @@ pub mod pallet {
 			// TODO (vim): Unlock staked amount on financial NFT account and transfer from that
 			// account to the owner of the NFT
 			T::Assets::transfer(
-				rewards_pool.asset_id,
+				asset_id,
 				&Self::pool_account_id(&pool_id),
 				&stake.owner,
 				stake_with_penalty,
 				keep_alive,
 			)?;
 
-			RewardPools::<T>::insert(pool_id, rewards_pool);
+			// RewardPools::<T>::insert(pool_id, rewards_pool);
 			Stakes::<T>::remove(position_id);
 			// TODO (vim): burn the financial NFT and the shares it holds
 
@@ -778,19 +790,29 @@ pub mod pallet {
 		fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult {
 			let keep_alive = false;
 
-			let mut stake =
-				Stakes::<T>::try_get(position).map_err(|_| Error::<T>::StakeNotFound)?;
-			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
+			// let mut stake =
+			// 	Stakes::<T>::try_get(position).map_err(|_| Error::<T>::StakeNotFound)?;
+			// ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
 
-			let pool_id = stake.reward_pool_id;
-			let mut rewards_pool =
-				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+			// let pool_id = stake.reward_pool_id;
+			// let mut rewards_pool =
+			// 	RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
-			(rewards_pool, stake) =
-				Self::collect_rewards(&pool_id, rewards_pool, stake, false, keep_alive)?;
-
-			RewardPools::<T>::insert(pool_id, rewards_pool);
-			Stakes::<T>::insert(position, stake);
+			Stakes::<T>::try_mutate(position, |stake| {
+				if let Some(stake) = stake {
+					RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
+						if let Some(rewards_pool) = rewards_pool {
+							(*rewards_pool, *stake) =
+								Self::collect_rewards(rewards_pool, stake, false, keep_alive)?;
+							Ok(())
+						} else {
+							Err(DispatchError::from(Error::<T>::RewardsPoolNotFound))
+						}
+					})
+				} else {
+					Err(DispatchError::from(Error::<T>::StakeNotFound))
+				}
+			})?;
 
 			Self::deposit_event(Event::<T>::Claimed { owner: who.clone(), position_id: *position });
 
@@ -808,12 +830,12 @@ pub mod pallet {
 		/// * `penalize_for_early_unlock` - If there should be an early unlock penalty
 		/// * `keep_alive` - If the transaction should be kept alive
 		pub(crate) fn collect_rewards(
-			pool_id: &T::RewardPoolId,
-			mut rewards_pool: RewardPoolOf<T>,
-			mut stake: StakeOf<T>,
+			rewards_pool: &mut RewardPoolOf<T>,
+			stake: &mut StakeOf<T>,
 			penalize_for_early_unlock: bool,
 			keep_alive: bool,
 		) -> Result<(RewardPoolOf<T>, StakeOf<T>), DispatchError> {
+			let pool_id = &stake.reward_pool_id;
 			for (asset_id, reward) in &mut rewards_pool.rewards {
 				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
 				let claim = if rewards_pool.total_shares == Zero::zero() {
@@ -846,7 +868,7 @@ pub mod pallet {
 							*inflation += claim;
 						}
 					})
-					.unwrap_or(stake.reductions);
+					.unwrap_or_else(|| stake.reductions.clone());
 
 				T::Assets::transfer(
 					reward.asset_id,
@@ -857,7 +879,7 @@ pub mod pallet {
 				)?;
 			}
 
-			Ok((rewards_pool, stake))
+			Ok((rewards_pool.clone(), stake.clone()))
 		}
 
 		pub(crate) fn pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
