@@ -28,11 +28,11 @@ When a transaction is executed, its `weight` is known and roughly equal to the c
 
 Weight is converted into an appropriate amount of PICA by the polynomial formula.
 
-Formula dynamically changes depending on desired target load of the network.
+The formula dynamically changes depending on the desired target load of the network.
 
-From now and later will say that transactions are paid directly in PICA for simplicity.
+From this point onwards we say that transactions are paid directly in PICA for simplicity.
 
-For details of fees, see later chapter.
+For details on fees, see the chapters below.
 
 ## How can one pay for a transaction when one has USD/KSM?
 
