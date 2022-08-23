@@ -47,12 +47,13 @@ If there is no ratio defined, a transaction will fail.
 
 Later, Pablo governed and native governance approved DEX will be checked for direct swaps of PICA to USD/KSM.
 
-In this case, the native treasury will get PICA. 
-Pablo will get foreign assets.
-If there is no direct mapping approved mapping, configured or hardcoded ratios will be used as before.
-The transaction will fail if slippage is unacceptable or the pool is empty. It will not try to use configured or hardcoded ratio.
+In this case:
+- The native treasury will get PICA. 
+- Pablo will get foreign assets.
+- If there is no direct and approved mapping, configured or hardcoded ratios will be used as before.
+- if slippage is unacceptable or the pool is empty the transaction will fail. It will not try to use configured or hardcoded ratio.
 
-The currency in which users can pay on Picassis is `payment currency`.
+The currency in which users can pay on Picasso is `payment currency`.
 
 ## Direct native transaction specific
 
