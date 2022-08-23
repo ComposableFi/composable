@@ -7,15 +7,15 @@ use composable_traits::{
 	time::{DurationSeconds, ONE_HOUR},
 	vamm::Vamm as VammTrait,
 };
-use frame_support::{assert_ok, pallet_prelude::Hooks};
+use frame_support::{assert_ok, pallet_prelude::Hooks, traits::fungibles::Inspect};
 use pallet_vamm::VammStateOf;
 use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedPointNumber, Percent};
 
 use super::mock::{
-	AccountId, AssetId, Balance, BlockNumber, Decimal, ExtBuilder, MarketId, Moment, Oracle,
-	Origin, Runtime, StalePrice, System, TestPallet, Timestamp, UnsignedDecimal, Vamm, VammId,
-	ALICE, BOB, DOT, PICA, USDC,
+	AccountId, AssetId, Assets, Balance, BlockNumber, Decimal, ExtBuilder, MarketId, Moment,
+	Oracle, Origin, Runtime, StalePrice, System, TestPallet, Timestamp, UnsignedDecimal, Vamm,
+	VammId, ALICE, BOB, DOT, PICA, USDC,
 };
 
 impl Default for ExtBuilder {
@@ -117,6 +117,10 @@ fn get_outstanding_profits(account_id: &AccountId) -> Balance {
 
 fn get_market(market_id: &MarketId) -> Market<Runtime> {
 	TestPallet::get_market(market_id).unwrap()
+}
+
+fn get_market_fee_pool(market_id: MarketId) -> Balance {
+	Assets::balance(USDC, &TestPallet::get_fee_pool_account(market_id))
 }
 
 fn get_vamm(vamm_id: &VammId) -> VammStateOf<Runtime> {
@@ -593,6 +597,51 @@ mod update_funding {
 				TestPallet::update_funding(Origin::signed(ALICE), market_id),
 				Error::<Runtime>::OracleMarkTooDivergent
 			);
+		})
+	}
+
+	#[test]
+	fn clearing_house_should_receive_funding() {
+		ExtBuilder {
+			native_balances: vec![(ALICE, UNIT), (BOB, UNIT)],
+			balances: vec![(ALICE, USDC, UNIT * 100)],
+			..Default::default()
+		}
+		.build()
+		.execute_with(|| {
+			let asset_id = DOT;
+			set_oracle_for(asset_id, 1_000);
+
+			let config = MarketConfig {
+				asset: asset_id,
+				vamm_config: VammConfig {
+					base_asset_reserves: UNIT * 10_000,
+					quote_asset_reserves: UNIT * 100_000,
+					peg_multiplier: 1,
+					twap_period: ONE_HOUR,
+				},
+				..Default::default()
+			};
+			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config.clone()));
+
+			assert_ok!(TestPallet::deposit_collateral(Origin::signed(ALICE), USDC, UNIT * 100));
+
+			let market_id = Zero::zero();
+			assert_eq!(get_market_fee_pool(market_id), 0);
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Long,
+				UNIT * 100,
+				0
+			));
+
+			let market = get_market(&market_id);
+			run_to_time(market.last_oracle_ts + config.twap_period);
+			// update_funding updates the vAMM TWAP, which increases since the previous trade pushed
+			// the price upwards
+			assert_ok!(TestPallet::update_funding(Origin::signed(BOB), market_id));
+			assert!(get_market_fee_pool(market_id) > 0);
 		})
 	}
 }
