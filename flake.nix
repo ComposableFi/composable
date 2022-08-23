@@ -558,6 +558,7 @@
                 ]
               ++ lib.lists.optional (lib.strings.hasSuffix "linux" system) arion;
               shellHook = ''
+                junod keys add alice --log_level=trace --home ~/.junod --keyring-dir ~/.junod --keyring-backend=file --recover
                 # TODO: how to make it work - setup defaul admin client key
                 #"clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover 
               '';

@@ -8,6 +8,8 @@ kusama-local.json
 kusama-local-raw.json
 kusama-dev.json
 kusama-dev-raw.json
+rococo-dev.json
+rococo-dev-raw.json
 
 ## logs
 *.log
