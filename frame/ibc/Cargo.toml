@@ -43,6 +43,7 @@ composable-traits = { default-features = false, path = "../composable-traits" }
 ibc-primitives = { path = "primitives", default-features = false }
 pallet-ibc-ping = { path = "ping", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
+common = { path = "../../runtime/common", default-features = false }
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"

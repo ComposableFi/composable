@@ -105,14 +105,22 @@ pub struct PalletParams {
 }
 
 #[derive(
-	frame_support::RuntimeDebug, PartialEq, Eq, scale_info::TypeInfo, Encode, Decode, Clone, Default,
+	frame_support::RuntimeDebug, PartialEq, Eq, scale_info::TypeInfo, Encode, Decode, Clone,
 )]
-pub struct TransferParams {
-	/// Valid utf8 string bytes
-	pub to: Vec<u8>,
+pub enum MultiAddress<AccountId> {
+	Id(AccountId),
+	Raw(Vec<u8>),
+}
+
+#[derive(
+	frame_support::RuntimeDebug, PartialEq, Eq, scale_info::TypeInfo, Encode, Decode, Clone,
+)]
+pub struct TransferParams<AccountId> {
+	/// Account id or valid utf8 string bytes
+	pub to: MultiAddress<AccountId>,
 	/// Source channel on host chain
 	pub source_channel: Vec<u8>,
-	/// Timestamp at which this packet should timeout in counterparty in nanoseconds
+	/// Timestamp at which this packet should timeout in counterparty in seconds
 	/// relative to the latest time stamp
 	pub timeout_timestamp_offset: u64,
 	/// Block height at which this packet should timeout on counterparty
@@ -559,7 +567,7 @@ pub mod pallet {
 		// #[pallet::weight(<T as Config>::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
-			params: TransferParams,
+			params: TransferParams<T::AccountId>,
 			asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
 			amount: <T as DeFiComposableConfig>::Balance,
 		) -> DispatchResult {
@@ -581,7 +589,18 @@ pub mod pallet {
 					String::from_utf8(val).map_err(|_| SS58CodecError::InvalidAccountId)
 				})
 				.map_err(|_| Error::<T>::Utf8Error)?;
-			let to = String::from_utf8(params.to).map_err(|_| Error::<T>::Utf8Error)?;
+			let to = match params.to {
+				MultiAddress::Id(id) => {
+					let account_id_32: AccountId32 = id.clone().into();
+					runtime_interface::account_id_to_ss58(account_id_32.into())
+						.and_then(|val| {
+							String::from_utf8(val).map_err(|_| SS58CodecError::InvalidAccountId)
+						})
+						.map_err(|_| Error::<T>::Utf8Error)?
+				},
+				MultiAddress::Raw(bytes) =>
+					String::from_utf8(bytes).map_err(|_| Error::<T>::Utf8Error)?,
+			};
 			let denom = PrefixedDenom::from_str(&denom).map_err(|_| Error::<T>::InvalidIbcDenom)?;
 			let ibc_amount = Amount::from_str(&format!("{:?}", amount))
 				.map_err(|_| Error::<T>::InvalidAmount)?;
@@ -600,7 +619,7 @@ pub mod pallet {
 				receiver: Signer::from_str(&to).map_err(|_| Error::<T>::Utf8Error)?,
 				timeout_height: latest_height.add(params.timeout_height_offset),
 				timeout_timestamp: (latest_timestamp +
-					Duration::from_nanos(params.timeout_timestamp_offset))
+					Duration::from_secs(params.timeout_timestamp_offset))
 				.map_err(|_| Error::<T>::InvalidTimestamp)?,
 			};
 

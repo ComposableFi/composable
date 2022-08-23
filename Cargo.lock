@@ -8141,6 +8141,7 @@ name = "pallet-ibc"
 version = "0.0.1"
 dependencies = [
  "chrono",
+ "common",
  "composable-traits",
  "derive_more",
  "frame-benchmarking",
