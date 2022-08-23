@@ -95,7 +95,6 @@ vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-fe
 hex = { version = "0.4.0", default-features = false }
 ibc-primitives = { path = "../../frame/ibc/primitives", default-features = false }
 ibc-runtime-api = { path = "../../frame/ibc/runtime-api", default-features = false }
-ibc-transfer = {  package = "pallet-ibc-transfer", path = "../../frame/ibc/transfer", default-features = false }
 pallet-ibc = { path = "../../frame/ibc", default-features = false }
 pallet-ibc-ping = { path = "../../frame/ibc/ping", default-features = false }
 
@@ -172,7 +171,6 @@ runtime-benchmarks = [
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
   "hex-literal",
-  "ibc-transfer/runtime-benchmarks",
   "identity/runtime-benchmarks",
   "indices/runtime-benchmarks",
   "lending/runtime-benchmarks",
@@ -232,7 +230,6 @@ std = [
   "hex/std",
   "ibc-primitives/std",
   "ibc-runtime-api/std",
-  "ibc-transfer/std",
   "identity/std",
   "indices/std",
   "lending/std",

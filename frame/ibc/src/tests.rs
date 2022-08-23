@@ -1,4 +1,6 @@
-use crate::{mock::*, routing::Context, Any, Config, MODULE_ID};
+use crate::{
+	mock::*, routing::Context, Any, Config, MultiAddress, PalletParams, TransferParams, MODULE_ID,
+};
 use core::time::Duration;
 use frame_support::{assert_ok, traits::fungibles::Mutate};
 use ibc::{
@@ -41,7 +43,6 @@ use sp_core::Pair;
 use sp_runtime::{traits::IdentifyAccount, AccountId32};
 use std::str::FromStr;
 use tendermint_proto::Protobuf;
-use transfer::{PalletParams, TransferParams};
 
 fn setup_client_and_consensus_state(port_id: PortId) {
 	// Set up client state and consensus states
@@ -227,23 +228,20 @@ fn send_transfer() {
 
 		let channel_id = ChannelId::new(0);
 		let balance = 100000 * CurrencyId::milli::<u128>();
-		<<Test as transfer::Config>::MultiCurrency as Mutate<
+		<<Test as Config>::MultiCurrency as Mutate<
 			<Test as frame_system::Config>::AccountId,
 		>>::mint_into(CurrencyId::PICA.into(), &AccountId32::new([0; 32]), balance.into())
 		.unwrap();
 
-		IbcTransfer::set_pallet_params(
-			Origin::root(),
-			PalletParams { send_enabled: true, receive_enabled: true },
-		)
-		.unwrap();
+		Ibc::set_params(Origin::root(), PalletParams { send_enabled: true, receive_enabled: true })
+			.unwrap();
 
-		IbcTransfer::transfer(
+		Ibc::transfer(
 			Origin::signed(AccountId32::new([0; 32])),
 			TransferParams {
-				to: ss58_address.as_bytes().to_vec(),
-				source_channel: channel_id.to_string().as_bytes().to_vec(),
-				timeout_timestamp_offset: 1000000000,
+				to: MultiAddress::Raw(ss58_address.as_bytes().to_vec()),
+				source_channel: 0,
+				timeout_timestamp_offset: 1000,
 				timeout_height_offset: 5,
 			},
 			CurrencyId::PICA.into(),
@@ -275,22 +273,19 @@ fn on_deliver_ics20_recv_packet() {
 		let channel_escrow_address =
 			get_channel_escrow_address(&PortId::transfer(), channel_id).unwrap();
 		let channel_escrow_address =
-			<Test as transfer::Config>::AccountIdConversion::try_from(channel_escrow_address)
+			<Test as Config>::AccountIdConversion::try_from(channel_escrow_address)
 				.map_err(|_| ())
 				.unwrap();
 		let channel_escrow_address = channel_escrow_address.into_account();
 
 		// Endow escrow address with tokens
-		<<Test as transfer::Config>::MultiCurrency as Mutate<
+		<<Test as Config>::MultiCurrency as Mutate<
 			<Test as frame_system::Config>::AccountId,
 		>>::mint_into(CurrencyId::PICA.into(), &channel_escrow_address, balance.into())
 		.unwrap();
 
-		IbcTransfer::set_pallet_params(
-			Origin::root(),
-			PalletParams { send_enabled: true, receive_enabled: true },
-		)
-		.unwrap();
+		Ibc::set_params(Origin::root(), PalletParams { send_enabled: true, receive_enabled: true })
+			.unwrap();
 
 		let prefixed_denom = PrefixedDenom::from_str(denom).unwrap();
 		let amt = 1000 * CurrencyId::milli::<u128>();
@@ -335,12 +330,12 @@ fn on_deliver_ics20_recv_packet() {
 
 		let msg = Any { type_url: msg.type_url().as_bytes().to_vec(), value: msg.encode_vec() };
 
-		let account_data = System::account(AccountId32::new(pair.public().0));
+		let account_data = Tokens::accounts(AccountId32::new(pair.public().0), CurrencyId::PICA);
 		// Assert account balance before transfer
-		assert_eq!(account_data.data.free, 0);
+		assert_eq!(account_data.free, 0);
 		Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]).unwrap();
 
-		let account_data = System::account(AccountId32::new(pair.public().0));
-		assert_eq!(account_data.data.free, amt.into())
+		let account_data = Tokens::accounts(AccountId32::new(pair.public().0), CurrencyId::PICA);
+		assert_eq!(account_data.free, amt.into())
 	})
 }

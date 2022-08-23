@@ -22,7 +22,7 @@ impl<T: Config + Send + Sync> Ics20Reader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
-	type AccountId = <T as transfer::Config>::AccountIdConversion;
+	type AccountId = T::AccountIdConversion;
 
 	fn get_channel_escrow_address(
 		&self,
@@ -30,7 +30,7 @@ where
 		channel_id: ChannelId,
 	) -> Result<<Self as Ics20Reader>::AccountId, Ics20Error> {
 		get_channel_escrow_address(port_id, channel_id)?.try_into().map_err(|_| {
-			log::trace!(target: "ibc_transfer", "Failed to get channel escrow address");
+			log::trace!(target: "pallet_ibc", "Failed to get channel escrow address");
 			Ics20Error::parse_account_failure()
 		})
 	}
@@ -41,11 +41,11 @@ where
 	}
 
 	fn is_receive_enabled(&self) -> bool {
-		transfer::Pallet::<T>::is_receive_enabled()
+		Pallet::<T>::is_receive_enabled()
 	}
 
 	fn is_send_enabled(&self) -> bool {
-		transfer::Pallet::<T>::is_send_enabled()
+		Pallet::<T>::is_send_enabled()
 	}
 }
 
@@ -53,64 +53,59 @@ impl<T: Config + Send + Sync> Ics20Keeper for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 	<T as DeFiComposableConfig>::MayBeAssetId:
-		From<<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
+		From<<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
 	<T as DeFiComposableConfig>::MayBeAssetId:
-		From<<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
+		From<<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
 		From<<T as DeFiComposableConfig>::MayBeAssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
 		From<<T as DeFiComposableConfig>::MayBeAssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation:
-		From<XcmAssetLocation>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation:
-		From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation: From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation: From<XcmAssetLocation>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<<T as assets::Config>::AssetId>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
 {
-	type AccountId = <T as transfer::Config>::AccountIdConversion;
+	type AccountId = T::AccountIdConversion;
 }
 
 impl<T: Config + Send + Sync> Ics20Context for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 	<T as DeFiComposableConfig>::MayBeAssetId:
-		From<<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
+		From<<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
 	<T as DeFiComposableConfig>::MayBeAssetId:
-		From<<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
+		From<<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
 		From<<T as DeFiComposableConfig>::MayBeAssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
 		From<<T as DeFiComposableConfig>::MayBeAssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation:
-		From<XcmAssetLocation>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation:
-		From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation: From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation: From<XcmAssetLocation>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<<T as assets::Config>::AssetId>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
 {
-	type AccountId = <T as transfer::Config>::AccountIdConversion;
+	type AccountId = T::AccountIdConversion;
 }
 
-impl<T: Config + Send + Sync> BankKeeper for Context<T>
+impl<T> BankKeeper for Context<T>
 where
-	u32: From<<T as frame_system::Config>::BlockNumber>,
+	T: Config + Send + Sync,
 	<T as DeFiComposableConfig>::Balance: From<u128>,
 	<T as DeFiComposableConfig>::MayBeAssetId:
-		From<<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
+		From<<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
 	<T as DeFiComposableConfig>::MayBeAssetId:
-		From<<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
+		From<<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
 		From<<T as DeFiComposableConfig>::MayBeAssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
 		From<<T as DeFiComposableConfig>::MayBeAssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation:
-		From<XcmAssetLocation>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation:
-		From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation: From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation: From<XcmAssetLocation>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<<T as assets::Config>::AssetId>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
+	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
-	type AccountId = <T as transfer::Config>::AccountIdConversion;
+	type AccountId = T::AccountIdConversion;
 	fn mint_coins(
 		&mut self,
 		account: &Self::AccountId,
@@ -122,19 +117,18 @@ where
 		// Before minting we need to check if the asset has been registered if not we register the
 		// asset before proceeding to mint
 		let asset_id = if let Some(asset_id) =
-			<T as transfer::Config>::AssetRegistry::location_to_asset(
-				foreign_asset_id.clone().into(),
-			) {
+			T::AssetRegistry::location_to_asset(foreign_asset_id.clone().into())
+		{
 			asset_id
 		} else {
-			let local_asset_id = <T as transfer::Config>::CurrencyFactory::create(
+			let local_asset_id = T::CurrencyFactory::create(
 				RangeId::IBC_ASSETS,
 				<T as DeFiComposableConfig>::Balance::zero(),
 			)
 			.map_err(|_| {
 				Ics20Error::unknown_msg_type("Error creating a local asset id".to_string())
 			})?;
-			<T as transfer::Config>::AssetRegistry::set_reserve_location(
+			T::AssetRegistry::set_reserve_location(
 				local_asset_id.into(),
 				foreign_asset_id.into(),
 				None,
@@ -143,17 +137,17 @@ where
 			.map_err(|_| {
 				Ics20Error::unknown_msg_type("Error registering local asset id".to_string())
 			})?;
-			transfer::Pallet::<T>::register_asset_id(local_asset_id, denom.as_bytes().to_vec());
+			Pallet::<T>::register_asset_id(local_asset_id, denom.as_bytes().to_vec());
 			local_asset_id.into()
 		};
 
-		<<T as transfer::Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
+		<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
 			asset_id.into(),
 			&account.clone().into_account(),
 			amount,
 		)
 		.map_err(|e| {
-			log::trace!(target: "ibc_transfer", "Failed to mint tokens: {:?}", e);
+			log::trace!(target: "pallet_ibc", "Failed to mint tokens: {:?}", e);
 			Ics20Error::invalid_token()
 		})?;
 		Ok(())
@@ -168,21 +162,20 @@ where
 		let denom = amt.denom.to_string();
 		let foreign_asset_id = ibc_denom_to_foreign_asset_id(&denom);
 		// Token should be registered already if burning a voucher
-		let asset_id = if let Some(asset_id) =
-			<T as transfer::Config>::AssetRegistry::location_to_asset(foreign_asset_id.into())
-		{
-			asset_id
-		} else {
-			log::trace!(target: "ibc_transfer", "Failed to burn unregistered token");
-			return Err(Ics20Error::invalid_token())
-		};
-		<<T as transfer::Config>::MultiCurrency as Mutate<T::AccountId>>::burn_from(
+		let asset_id =
+			if let Some(asset_id) = T::AssetRegistry::location_to_asset(foreign_asset_id.into()) {
+				asset_id
+			} else {
+				log::trace!(target: "pallet_ibc", "Failed to burn unregistered token");
+				return Err(Ics20Error::invalid_token())
+			};
+		<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::burn_from(
 			asset_id.into(),
 			&account.clone().into_account(),
 			amount,
 		)
 		.map_err(|e| {
-			log::trace!(target: "ibc_transfer", "Failed to burn tokens: {:?}", e);
+			log::trace!(target: "pallet_ibc", "Failed to burn tokens: {:?}", e);
 			Ics20Error::invalid_token()
 		})?;
 		Ok(())
@@ -208,14 +201,14 @@ where
 						.as_str()
 						.parse::<u128>()
 						.map_err(|e| {
-							log::trace!(target: "ibc_transfer", "failed to parse currency id from denom: {:?}", e);
+							log::trace!(target: "pallet_ibc", "failed to parse currency id from denom: {:?}", e);
 							Ics20Error::invalid_token()
 						})?
 						.into();
 					asset_id
 				};
 
-			return <<T as transfer::Config>::MultiCurrency as Transfer<T::AccountId>>::transfer(
+			return <<T as Config>::MultiCurrency as Transfer<T::AccountId>>::transfer(
 				local_asset_id.into(),
 				&from.clone().into_account(),
 				&to.clone().into_account(),
@@ -224,22 +217,21 @@ where
 			)
 			.map(|_| ())
 			.map_err(|e| {
-				log::trace!(target: "ibc_transfer", "failed to transfer native tokens: {:?}", e);
+				log::trace!(target: "pallet_ibc", "failed to transfer native tokens: {:?}", e);
 				Ics20Error::invalid_token()
 			})
 		}
 		let denom = amt.denom.to_string();
 		let foreign_asset_id = ibc_denom_to_foreign_asset_id(&denom);
 		// Token should be registered already if sending an ibc asset
-		let asset_id = if let Some(asset_id) =
-			<T as transfer::Config>::AssetRegistry::location_to_asset(foreign_asset_id.into())
-		{
-			asset_id
-		} else {
-			log::trace!(target: "ibc_transfer", "Failed to send an unregistered asset");
-			return Err(Ics20Error::invalid_token())
-		};
-		<<T as transfer::Config>::MultiCurrency as Transfer<T::AccountId>>::transfer(
+		let asset_id =
+			if let Some(asset_id) = T::AssetRegistry::location_to_asset(foreign_asset_id.into()) {
+				asset_id
+			} else {
+				log::trace!(target: "pallet_ibc", "Failed to send an unregistered asset");
+				return Err(Ics20Error::invalid_token())
+			};
+		<<T as Config>::MultiCurrency as Transfer<T::AccountId>>::transfer(
 			asset_id.into(),
 			&from.clone().into_account(),
 			&to.clone().into_account(),
@@ -247,7 +239,7 @@ where
 			false,
 		)
 		.map_err(|e| {
-			log::trace!(target: "ibc_transfer", "Failed to transfer ibc tokens: {:?}", e);
+			log::trace!(target: "pallet_ibc", "Failed to transfer ibc tokens: {:?}", e);
 			Ics20Error::invalid_token()
 		})?;
 		Ok(())

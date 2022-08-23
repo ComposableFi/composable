@@ -1,51 +1,47 @@
 use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 
-pub type NegativeImbalance<T> =
-	<balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
+pub type NegativeImbalance<T, C> =
+	<C as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 /// Logic for the author to get a portion of fees.
-pub struct ToStakingPot<R, I>(sp_std::marker::PhantomData<(R, I)>);
-impl<R, I: 'static> OnUnbalanced<NegativeImbalance<R>> for ToStakingPot<R, I>
+pub struct ToStakingPot<R, I, C>(sp_std::marker::PhantomData<(R, I, C)>);
+impl<R, C, I: 'static> OnUnbalanced<NegativeImbalance<R, C>> for ToStakingPot<R, I, C>
 where
-	R: balances::Config
-		+ collator_selection::Config
-		+ treasury::Config<I, Currency = balances::Pallet<R>>,
+	R: collator_selection::Config + treasury::Config<I, Currency = C>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v2::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v2::AccountId>,
-	<R as frame_system::Config>::Event: From<balances::Event<R>>,
-	<R as balances::Config>::Balance: From<u128>,
+	C: Currency<<R as frame_system::Config>::AccountId>,
+	C::Balance: From<u128>,
 {
-	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
+	fn on_nonzero_unbalanced(amount: NegativeImbalance<R, C>) {
 		// Collator's get half the fees
 		let (to_collators, half) = amount.ration(50, 50);
 		// 30% gets burned 20% to treasury
 		let (_pre_burn, to_treasury) = half.ration(30, 20);
 
 		let staking_pot = <collator_selection::Pallet<R>>::account_id();
-		<balances::Pallet<R>>::resolve_creating(&staking_pot, to_collators);
+		C::resolve_creating(&staking_pot, to_collators);
 		<treasury::Pallet<R, I> as OnUnbalanced<_>>::on_unbalanced(to_treasury);
 	}
 }
 
 /// OnUnbalanced handler for pallet-transaction-payment.
-pub struct DealWithFees<R, I>(sp_std::marker::PhantomData<(R, I)>);
+pub struct DealWithFees<R, I, C>(sp_std::marker::PhantomData<(R, I, C)>);
 
-impl<R, I: 'static> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R, I>
+impl<R, C, I: 'static> OnUnbalanced<NegativeImbalance<R, C>> for DealWithFees<R, I, C>
 where
-	R: balances::Config
-		+ collator_selection::Config
-		+ treasury::Config<I, Currency = balances::Pallet<R>>,
+	R: collator_selection::Config + treasury::Config<I, Currency = C>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v2::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v2::AccountId>,
-	<R as frame_system::Config>::Event: From<balances::Event<R>>,
-	<R as balances::Config>::Balance: From<u128>,
+	C: Currency<<R as frame_system::Config>::AccountId>,
+	C::Balance: From<u128>,
 {
-	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R>>) {
+	fn on_unbalanceds<B>(mut fees_then_tips: impl Iterator<Item = NegativeImbalance<R, C>>) {
 		if let Some(mut fees) = fees_then_tips.next() {
 			if let Some(tips) = fees_then_tips.next() {
 				tips.merge_into(&mut fees);
 			}
-			<ToStakingPot<R, I> as OnUnbalanced<_>>::on_unbalanced(fees);
+			<ToStakingPot<R, I, C> as OnUnbalanced<_>>::on_unbalanced(fees);
 		}
 	}
 }

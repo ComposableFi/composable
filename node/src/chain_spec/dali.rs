@@ -1,5 +1,6 @@
 use common::{AccountId, AuraId, Balance};
 use dali_runtime::GenesisConfig;
+use primitives::currency::CurrencyId;
 
 use super::{Extensions, ParaId};
 
@@ -27,11 +28,11 @@ pub fn genesis_config(
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
-		balances: dali_runtime::BalancesConfig {
+		tokens: dali_runtime::TokensConfig {
 			// Configure endowed accounts with initial balance.
 			balances: vec![
-				vec![(treasury, existential_deposit)],
-				accounts.iter().cloned().map(|k| (k, 1 << 60)).collect(),
+				vec![(treasury, CurrencyId::PICA, existential_deposit)],
+				accounts.iter().cloned().map(|k| (k, CurrencyId::PICA, 1 << 60)).collect(),
 			]
 			.concat(),
 		},

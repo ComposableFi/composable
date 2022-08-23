@@ -20,6 +20,7 @@
 // Make the WASM binary available.
 #[cfg(all(feature = "std", feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("DALI_RUNTIME")));
+
 #[cfg(not(feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
@@ -221,7 +222,7 @@ impl system::Config for Runtime {
 	/// Version of the runtime.
 	type Version = Version;
 	/// The data to be stored in an account.
-	type AccountData = balances::AccountData<Balance>;
+	type AccountData = orml_tokens::AccountData<Balance>;
 
 	/// Converts a module to the index of the module in `construct_runtime!`.
 	///
@@ -314,21 +315,12 @@ parameter_types! {
 	/// Max locks that can be placed on an account. Capped for storage
 	/// concerns.
 	pub const MaxLocks: u32 = 50;
+	/// Native currency Id
+	pub const NativeCurrencyId: CurrencyId = CurrencyId::PICA;
 }
 
-impl balances::Config for Runtime {
-	type MaxLocks = MaxLocks;
-	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
-	/// The type for recording an account's balance.
-	type Balance = Balance;
-	/// The ubiquitous event type.
-	type Event = Event;
-	type DustRemoval = Treasury;
-	type ExistentialDeposit = common::NativeExistentialDeposit;
-	type AccountStore = System;
-	type WeightInfo = weights::balances::WeightInfo<Runtime>;
-}
+/// Replacement for pallet_balances.
+pub type Balances = orml_tokens::CurrencyAdapter<Runtime, NativeCurrencyId>;
 
 parameter_types! {
 	/// 1 milli-pica/byte should be fine
@@ -365,8 +357,10 @@ impl WeightToFeePolynomial for WeightToFee {
 }
 
 impl transaction_payment::Config for Runtime {
-	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
+	type OnChargeTransaction = transaction_payment::CurrencyAdapter<
+		Balances,
+		DealWithFees<Runtime, NativeTreasury, Balances>,
+	>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
@@ -1053,22 +1047,6 @@ parameter_types! {
 	pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK as u64;
 }
 
-parameter_types! {
-	pub TransferPalletID: PalletId = PalletId(*b"transfer");
-}
-
-impl ibc_transfer::Config for Runtime {
-	type Event = Event;
-	type MultiCurrency = Assets;
-	type IbcHandler = Ibc;
-	type AccountIdConversion = ibc_primitives::IbcAccount;
-	type AssetRegistry = AssetsRegistry;
-	type CurrencyFactory = CurrencyFactory;
-	type AdminOrigin = EnsureRoot<AccountId>;
-	type PalletId = TransferPalletID;
-	type WeightInfo = crate::weights::ibc_transfer::WeightInfo<Self>;
-}
-
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type Event = Event;
@@ -1077,6 +1055,10 @@ impl pallet_ibc::Config for Runtime {
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
 	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
 	type ExpectedBlockTime = ExpectedBlockTime;
+	type MultiCurrency = Assets;
+	type AccountIdConversion = ibc_primitives::IbcAccount;
+	type AssetRegistry = AssetsRegistry;
+	type CurrencyFactory = CurrencyFactory;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
 	type AdminOrigin = EnsureRoot<AccountId>;
 }
@@ -1098,7 +1080,6 @@ construct_runtime!(
 		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
 		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
 		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
-		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
 		Identity: identity::{Call, Event<T>, Pallet, Storage} = 7,
 		Multisig: multisig::{Call, Event<T>, Pallet, Storage} = 8,
 
@@ -1136,7 +1117,7 @@ construct_runtime!(
 		XTokens: orml_xtokens = 44,
 		UnknownTokens: orml_unknown_tokens = 45,
 
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
+		Tokens: orml_tokens = 51,
 		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
 		CurrencyFactory: currency_factory = 53,
 		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
@@ -1159,8 +1140,7 @@ construct_runtime!(
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
 		IbcPing: pallet_ibc_ping = 151,
-		Transfer: ibc_transfer = 152,
-		Ibc: pallet_ibc = 153
+		Ibc: pallet_ibc = 152
 	}
 );
 
@@ -1208,7 +1188,6 @@ mod benches {
 	use frame_benchmarking::define_benchmarks;
 	define_benchmarks!(
 		[frame_system, SystemBench::<Runtime>]
-		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
 		[collator_selection, CollatorSelection]
@@ -1235,7 +1214,6 @@ mod benches {
 		[pallet_account_proxy, Proxy]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
-		[ibc_transfer, Transfer]
 	);
 }
 
@@ -1585,11 +1563,11 @@ impl_runtime_apis! {
 		}
 
 		fn denom_trace(asset_id: u128) -> Option<ibc_primitives::QueryDenomTraceResponse> {
-			Transfer::get_denom_trace(asset_id)
+			Ibc::get_denom_trace(asset_id)
 		}
 
 		fn denom_traces(key: Option<u128>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
-			Transfer::get_denom_traces(key, offset, limit, count_total)
+			Ibc::get_denom_traces(key, offset, limit, count_total)
 		}
 
 		fn block_events(extrinsic_index: Option<u32>) -> Vec<pallet_ibc::events::IbcEvent> {

@@ -376,8 +376,10 @@ impl WeightToFeePolynomial for WeightToFee {
 }
 
 impl transaction_payment::Config for Runtime {
-	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
+	type OnChargeTransaction = transaction_payment::CurrencyAdapter<
+		Balances,
+		DealWithFees<Runtime, NativeTreasury, Balances>,
+	>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
