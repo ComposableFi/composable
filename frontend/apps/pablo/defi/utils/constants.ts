@@ -10,7 +10,7 @@ export const MINUTES = 60 * SECONDS;
 export const HOURS = 60 * MINUTES;
 export const DAYS = 24 * HOURS;
 
-export const FORMAT_1D = "hh:mm";
+export const FORMAT_1D = "hh:mm A";
 export const FORMAT_1w = "DD/MM";
 export const FORMAT_1M = "MM/YYYY";
 
@@ -34,7 +34,6 @@ export const DUMMY_LAUNCH_DESCRIPTION = (
       All other parties are subject to a minimum block by block vesting of ${vestingPeriod}, \
       making the LBP investors the only ones able to participate in ${symbol} or LP staking.`,
 ];
-
 
 export const DEFAULT_SWAP_BASE = "1";
 export const DEFAULT_SWAP_QUOTE = "4";
