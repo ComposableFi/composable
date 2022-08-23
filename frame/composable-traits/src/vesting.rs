@@ -94,7 +94,7 @@ impl<Id: Clone + Copy + Eq + PartialEq + Debug, MaxVestingSchedules: Get<u32>>
 ///
 /// Benefits would be granted gradually, `per_period` amount every `window.period`
 /// of blocks after `window.start`.
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasCompact> {
 	/// Vesting schedule id
@@ -112,7 +112,7 @@ pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasC
 /// Vesting schedule input, which is used to create a VestingSchedule.
 ///
 /// This is used for creating a VestingSchedule
-#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct VestingScheduleInfo<BlockNumber, Moment, Balance: HasCompact> {
 	pub window: VestingWindow<BlockNumber, Moment>,

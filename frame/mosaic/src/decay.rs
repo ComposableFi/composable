@@ -17,7 +17,7 @@ pub trait Decayer<Balance, BlockNumber> {
 }
 
 /// Recommend type for storing the decay function of a penalty.
-#[derive(Decode, Encode, MaxEncodedLen, TypeInfo, Debug, PartialEq, Clone)]
+#[derive(Decode, Encode, MaxEncodedLen, TypeInfo, Debug, PartialEq, Eq, Clone)]
 pub enum BudgetPenaltyDecayer<Balance, BlockNumber> {
 	/// Linear variant of the decay function, which decreases every block.
 	Linear(LinearDecay<Balance, BlockNumber>),
@@ -54,7 +54,7 @@ where
 	}
 }
 
-#[derive(Decode, Encode, MaxEncodedLen, TypeInfo, Default, Debug, PartialEq, Clone)]
+#[derive(Decode, Encode, MaxEncodedLen, TypeInfo, Default, Debug, PartialEq, Eq, Clone)]
 pub struct LinearDecay<Balance, BlockNumber> {
 	/// Factor by which we decay every block.
 	factor: Balance,
