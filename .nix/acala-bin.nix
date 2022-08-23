@@ -8,7 +8,7 @@ mkDerivation {
 	src = pkgs.fetchgit {
     url = "https://github.com/AcalaNetwork/Acala.git";
 		rev = "e9d2b3caa0663c1d3e7d4d6e7d3faef4a569099c";
-		sha256 = "sha256-Cw/92L51P1LmQ34He/7+76pffUz3uU4Tlrt3kd5hNQk=";
+		sha256 = "sha256-buRxUVdyMIAg/FFi/McTbYvGSk8LM7v+HQ09YGSo2dk=";
 		fetchSubmodules = true;
 		deepClone = true;
   };	
