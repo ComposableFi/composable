@@ -19,6 +19,41 @@ function getPriceChangedEvent(
 }
 
 /**
+ * Updates Asset object with last price and event id.
+ * @param ctx
+ * @param asset
+ * @param price
+ */
+export function updateAsset(
+  ctx: EventHandlerContext,
+  asset: Asset,
+  price: bigint
+): void {
+  asset.eventId = ctx.event.id;
+  asset.price = price;
+}
+
+/**
+ * Creates and returns a HistoricalAssetPrice.
+ * @param ctx
+ * @param asset
+ * @param price
+ */
+export function getHistoricalAssetPrice(
+  ctx: EventHandlerContext,
+  asset: Asset,
+  price: bigint
+): HistoricalAssetPrice {
+  return new HistoricalAssetPrice({
+    id: randomUUID(),
+    eventId: ctx.event.id,
+    asset,
+    price,
+    timestamp: BigInt(ctx.block.timestamp),
+  });
+}
+
+/**
  * Handle `oracle.PriceChanged` event.
  *  - Create or update Asset.
  *  - Create HistoricalAssetPrice.
@@ -39,18 +74,14 @@ export async function processOraclePriceChanged(ctx: EventHandlerContext) {
     });
   }
 
+  updateAsset(ctx, asset, price);
+
   asset.eventId = ctx.event.id;
   asset.price = price;
 
   await ctx.store.save(asset);
 
-  const historicalAssetPrice = new HistoricalAssetPrice({
-    id: randomUUID(),
-    eventId: ctx.event.id,
-    asset,
-    price,
-    timestamp: BigInt(ctx.block.timestamp),
-  });
+  const historicalAssetPrice = getHistoricalAssetPrice(ctx, asset, price);
 
   await ctx.store.save(historicalAssetPrice);
 }
