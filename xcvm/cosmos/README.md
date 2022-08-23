@@ -1,3 +1,3 @@
 # Overview
 
-Some cosmos specific stuff of XCVM ecosystem.
+Some Cosmos/Go specific stuff of XCVM ecosystem.

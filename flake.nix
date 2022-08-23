@@ -155,6 +155,7 @@
                 "subsquid"
                 "runtime-tests"
                 "composablejs"
+                "cosmos"
               ];
               file-blacklist = [ "flake.nix" "flake.lock" ];
             in
@@ -501,7 +502,7 @@
               };
 
             junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
-            junod-genesis = pkgs.callPackage ./xcvm/cosmos/genesis.nix { };
+            junod-genesis = pkgs.callPackage ./xcvm/cosmos/genesis.nix { inherit junod; };
             gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
             wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix { crane = crane-nightly;  };
             default = packages.composable-node;            
@@ -547,7 +548,7 @@
                   junod
                   gex
                   # junod wasm swap web interface 
-                  devnet-dali
+                  #devnet-dali
                   # TODO: hasura
                   # TODO: some well know wasm contracts deployed                
                   # TODO: junod server
@@ -559,7 +560,11 @@
                 ]
               ++ lib.lists.optional (lib.strings.hasSuffix "linux" system) arion;
               shellHook = ''
-                 
+                 mkdir --parents ~/.juno/
+                 chmod +rwx ~/.juno
+                 # junod tx wasm store /nix/store/mk2gzspwm8xp9gmzi250s93h0y26ada7-wasmswap/lib/wasmswap.wasm --from alice --gas auto
+                 cp -r ${packages.junod-genesis}/data/.juno/* ~/.juno/
+                 # junod cmds (including read only like list keys) are not side effect free
               '';
 
             });
