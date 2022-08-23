@@ -278,6 +278,74 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#polkadot-node --no-update-lock-file --show-trace -L
 
+  package-kusama-picasso-karura-devnet:
+    name: "Package kusama picasso karura devnet"
+    needs:
+      - package-polkadot-node
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-kusama-picasso-karura-devnet-${{ github.ref }}
+      cancel-in-progress: true
+    continue-on-error: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
+
+  package-xcvm:
+    name: "Package XCVM"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-xcvm-${{ github.ref }}
+      cancel-in-progress: true
+    continue-on-error: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#junod --no-update-lock-file --show-trace -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#gex --no-update-lock-file --show-trace -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#wasmswap --no-update-lock-file --show-trace -L
+
+
+
   package-price-feed:
     needs: common-deps
     runs-on:

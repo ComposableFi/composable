@@ -478,7 +478,7 @@
                 "cargo test --workspace --release --locked --verbose";
             });
 
-            kusama-picasso-karura =
+            kusama-picasso-karura-devnet =
               let
                 config = (pkgs.callPackage
                   ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix
@@ -590,7 +590,6 @@
             devnet-xcvm-up =
               let
                 devnet-xcvm =
-
                   pkgs.arion.build
                     {
                       modules = [
@@ -652,11 +651,11 @@
                 "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
             };
 
-            kusama-picasso-karura = {
+            kusama-picasso-karura-devnet = {
               # nix run .#devnet
               type = "app";
               program =
-                "${packages.kusama-picasso-karura}/bin/kusama-picasso-karura";
+                "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
             };
 
             price-feed = {
