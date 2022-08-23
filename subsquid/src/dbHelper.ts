@@ -2,6 +2,7 @@ import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
 import {
   Account,
   Activity,
+  Asset,
   PabloPool,
   PicassoTransaction,
   PicassoTransactionType,

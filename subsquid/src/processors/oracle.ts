@@ -1,31 +1,56 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
+import { randomUUID } from "crypto";
 import { OraclePriceChangedEvent } from "../types/events";
-import { encodeAccount } from "../utils";
-import { saveAccountAndTransaction } from "../dbHelper";
 import { Asset, HistoricalAssetPrice } from "../model";
 
-interface PriceChangedEvent {}
+console.log("asddsadsa");
+
+interface PriceChangedEvent {
+  assetId: bigint;
+  price: bigint;
+}
 
 function getPriceChangedEvent(
   event: OraclePriceChangedEvent
 ): PriceChangedEvent {
-  const all = event.asV2401 ?? event.asLatest;
-  console.log({ all });
-  return {};
+  const [assetId, price] = event.asV2401 ?? event.asLatest;
+  console.log({ assetId, price });
+  return { assetId, price };
 }
 
 /**
  * Handle `oracle.PriceChanged` event.
+ *  - Create or update Asset.
+ *  - Create HistoricalAssetPrice.
  * @param ctx
  */
 export async function processOraclePriceChanged(ctx: EventHandlerContext) {
   console.log("Process price change");
   const event = new OraclePriceChangedEvent(ctx);
-  const priceChangedEvent = getPriceChangedEvent(event);
+  const { assetId, price } = getPriceChangedEvent(event);
 
-  // await saveAccountAndTransaction(
-  //   ctx,
-  //   PicassoTransactionType.BALANCES_TRANSFER,
-  //   [from, to]
-  // );
+  let asset: Asset | undefined = await ctx.store.get(Asset, {
+    where: { id: assetId.toString() },
+  });
+
+  if (!asset) {
+    asset = new Asset({
+      id: assetId.toString(),
+    });
+  }
+
+  asset.eventId = ctx.event.id;
+  asset.price = price;
+
+  await ctx.store.save(asset);
+
+  const historicalAssetPrice = new HistoricalAssetPrice({
+    id: randomUUID(),
+    eventId: ctx.event.id,
+    asset,
+    price,
+    timestamp: BigInt(ctx.block.timestamp),
+  });
+
+  await ctx.store.save(historicalAssetPrice);
 }

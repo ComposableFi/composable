@@ -20,9 +20,6 @@ export class HistoricalAssetPrice {
   /**
    * ID of the asset
    */
-  @Column_("text", {nullable: false})
-  assetId!: string
-
   @Index_()
   @ManyToOne_(() => Asset, {nullable: false})
   asset!: Asset

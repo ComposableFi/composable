@@ -8,8 +8,8 @@ import {
   Resolver,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { Activity } from "../../model";
 import { IsDateString, Min } from "class-validator";
+import { Activity } from "../../model";
 
 @ObjectType()
 export class ActiveUsers {

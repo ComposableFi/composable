@@ -1,4 +1,5 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, OneToMany as OneToMany_} from "typeorm"
+import * as marshal from "./marshal"
 import {HistoricalAssetPrice} from "./historicalAssetPrice.model"
 
 @Entity_()
@@ -7,6 +8,9 @@ export class Asset {
     Object.assign(this, props)
   }
 
+  /**
+   * ID of the asset in Picasso
+   */
   @PrimaryColumn_()
   id!: string
 
@@ -16,11 +20,8 @@ export class Asset {
   @Column_("text", {nullable: false})
   eventId!: string
 
-  /**
-   * ID of the asset
-   */
-  @Column_("text", {nullable: false})
-  assetId!: string
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  price!: bigint
 
   @OneToMany_(() => HistoricalAssetPrice, e => e.asset)
   historicalPrices!: HistoricalAssetPrice[]

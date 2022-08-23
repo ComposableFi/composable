@@ -146,11 +146,11 @@ type Activity @entity {
 }
 
 type Asset @entity {
+  "ID of the asset in Picasso"
   id: ID!
   "ID of the event that added the last price"
   eventId: String!
-  "ID of the asset"
-  assetId: String!
+  price: BigInt!
   historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
 }
 
@@ -159,7 +159,6 @@ type HistoricalAssetPrice @entity {
   "ID of the event associated with this activity"
   eventId: String!
   "ID of the asset"
-  assetId: String!
   asset: Asset!
   price: BigInt!
   timestamp: BigInt!
