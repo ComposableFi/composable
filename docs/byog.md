@@ -86,8 +86,8 @@ There is no unified view of all fees. So if there will be, given fees prediction
 
 ### Pallets
 
-- transaction-fees
-- xcmp
-- pablo
-- assets-registry
-- currency-factory
+- [transaction-fee](../frame/transaction-fee)
+- [xcmp](https://github.com/open-web3-stack/open-runtime-module-library/tree/master/xtokens)
+- [pablo](../frame/pablo)
+- [assets-registry](../frame/assets-registry)
+- [currency-factory](../frame/currency-factory)
