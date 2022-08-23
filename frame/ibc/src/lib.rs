@@ -118,8 +118,8 @@ pub enum MultiAddress<AccountId> {
 pub struct TransferParams<AccountId> {
 	/// Account id or valid utf8 string bytes
 	pub to: MultiAddress<AccountId>,
-	/// Source channel on host chain
-	pub source_channel: Vec<u8>,
+	/// Source channel identifier on host chain
+	pub source_channel: u64,
 	/// Timestamp at which this packet should timeout in counterparty in seconds
 	/// relative to the latest time stamp
 	pub timeout_timestamp_offset: u64,
@@ -176,12 +176,11 @@ pub mod pallet {
 				channel::{ChannelEnd, Counterparty, Order, State},
 				Version,
 			},
-			ics24_host::identifier::PortId,
+			ics24_host::identifier::{ChannelId, PortId},
 		},
 	};
 	use ibc_primitives::{
-		channel_id_from_bytes, connection_id_from_bytes, get_channel_escrow_address,
-		port_id_from_bytes,
+		connection_id_from_bytes, get_channel_escrow_address, port_id_from_bytes,
 		runtime_interface::{self, SS58CodecError},
 		IbcTrait, OffchainPacketType, OpenChannelParams,
 	};
@@ -605,8 +604,7 @@ pub mod pallet {
 			let ibc_amount = Amount::from_str(&format!("{:?}", amount))
 				.map_err(|_| Error::<T>::InvalidAmount)?;
 			let coin = PrefixedCoin { denom, amount: ibc_amount };
-			let source_channel = channel_id_from_bytes(params.source_channel.clone())
-				.map_err(|_| Error::<T>::Utf8Error)?;
+			let source_channel = ChannelId::new(params.source_channel);
 			let source_port = PortId::transfer();
 			let (latest_height, latest_timestamp) =
 				Pallet::<T>::latest_height_and_timestamp(&source_port, &source_channel)

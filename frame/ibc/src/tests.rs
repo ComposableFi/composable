@@ -240,7 +240,7 @@ fn send_transfer() {
 			Origin::signed(AccountId32::new([0; 32])),
 			TransferParams {
 				to: MultiAddress::Raw(ss58_address.as_bytes().to_vec()),
-				source_channel: channel_id.to_string().as_bytes().to_vec(),
+				source_channel: 0,
 				timeout_timestamp_offset: 1000,
 				timeout_height_offset: 5,
 			},
