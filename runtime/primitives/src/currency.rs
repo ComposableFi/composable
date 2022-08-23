@@ -119,6 +119,15 @@ impl CurrencyId {
 		pub const kUSD: CurrencyId = CurrencyId(129);
 		pub const USDT: CurrencyId = CurrencyId(130);
 		pub const USDC: CurrencyId = CurrencyId(131);
+		/// Wrapped BTC
+		#[allow(non_upper_case_globals)]
+		pub const wBTC: CurrencyId = CurrencyId(132);
+		/// Wrapped ETH
+		#[allow(non_upper_case_globals)]
+		pub const wETH: CurrencyId = CurrencyId(133);
+		/// Acala Dollar
+		#[allow(non_upper_case_globals)]
+		pub const aUSD: CurrencyId = CurrencyId(134);
 
 		// Staked asset LP tokens (1001 - 100_000_000_000)
 		/// Staked asset xPICA Token
