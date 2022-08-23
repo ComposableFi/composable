@@ -682,25 +682,19 @@ pub mod pallet {
 			let mut stake =
 				Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
 			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
-			let is_early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)?
-				>= T::UnixTime::now().as_secs();
+			let is_early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
+				T::UnixTime::now().as_secs();
 			let pool_id = stake.reward_pool_id;
 
 			let asset_id = RewardPools::<T>::try_mutate(pool_id, |rewards_pool| {
-				if let Some(rewards_pool) = rewards_pool {
-					(*rewards_pool, _) = Self::collect_rewards(
-						rewards_pool,
-						&mut stake,
-						is_early_unlock,
-						keep_alive,
-					)?;
+				let rewards_pool = rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-					rewards_pool.claimed_shares =
-						rewards_pool.claimed_shares.safe_add(&stake.share)?;
-					Ok(rewards_pool.asset_id)
-				} else {
-					Err(DispatchError::from(Error::<T>::RewardsPoolNotFound))
-				}
+				(*rewards_pool, _) =
+					Self::collect_rewards(rewards_pool, &mut stake, is_early_unlock, keep_alive)?;
+
+				rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
+
+				Ok::<_, DispatchError>(rewards_pool.asset_id)
 			})?;
 
 			let stake_with_penalty = if is_early_unlock {
@@ -784,19 +778,16 @@ pub mod pallet {
 			let keep_alive = false;
 
 			Stakes::<T>::try_mutate(position, |stake| {
-				if let Some(stake) = stake {
-					RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
-						if let Some(rewards_pool) = rewards_pool {
-							(*rewards_pool, *stake) =
-								Self::collect_rewards(rewards_pool, stake, false, keep_alive)?;
-							Ok(())
-						} else {
-							Err(DispatchError::from(Error::<T>::RewardsPoolNotFound))
-						}
-					})
-				} else {
-					Err(DispatchError::from(Error::<T>::StakeNotFound))
-				}
+				let stake = stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
+				RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
+					let rewards_pool =
+						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
+
+					(*rewards_pool, *stake) =
+						Self::collect_rewards(rewards_pool, stake, false, keep_alive)?;
+
+					Ok::<_, DispatchError>(())
+				})
 			})?;
 
 			Self::deposit_event(Event::<T>::Claimed { owner: who.clone(), position_id: *position });
@@ -1033,8 +1024,8 @@ pub mod pallet {
 									reward.total_rewards.safe_add(&reward_increment)?;
 								ensure!(
 									(new_total_reward
-										.safe_sub(&reward.total_dilution_adjustment)?)
-										<= reward.max_rewards,
+										.safe_sub(&reward.total_dilution_adjustment)?) <=
+										reward.max_rewards,
 									Error::<T>::MaxRewardLimitReached
 								);
 								reward.total_rewards = new_total_reward;
@@ -1113,19 +1104,17 @@ fn update_rewards_pool<T: Config>(
 			let new_reward = match reward_accumulation_calculation::<T>(reward.clone(), now_seconds)
 			{
 				Ok(reward) => reward,
-				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) => {
-					return Err(Error::<T>::BackToTheFuture.into())
-				},
+				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) =>
+					return Err(Error::<T>::BackToTheFuture.into()),
 				Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(reward)) => {
 					Pallet::<T>::deposit_event(Event::<T>::MaxRewardsAccumulated {
 						pool_id,
 						asset_id: reward.asset_id,
 					});
-					continue;
-				},
-				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) => {
 					continue
 				},
+				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) =>
+					continue,
 			};
 
 			*reward = Reward { reward_rate: update.reward_rate, ..new_reward };
