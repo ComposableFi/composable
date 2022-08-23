@@ -1,10 +1,10 @@
 # Overview
 
-Bring your own gas(`BYOG`) on Picasso parachain use cases.
+Use cases of Bring your own gas (`BYOG`) on the Picasso parachain.
 
-BYOG allows owners of nonnative tokens to execute transactions by paying fees in foreign currencies.
+BYOG allows owners of non-native tokens to execute transactions by paying fees in foreign currencies.
 
-On Picasso and [other Dotsama parachains](https://wiki.acala.network/learn/flexible-fees), such mechanisms are built into the runtime. 
+Such mechanisms are built into the runtime on Picasso and [other Dotsama parachains](https://wiki.acala.network/learn/flexible-fees). 
 
 `On ramps` and [meta transactions](https://docs.polygon.technology/docs/category/meta-transactions) handle such possibilities on other chains. 
 
