@@ -28,39 +28,43 @@ log = { version = "0.4.14", default-features = false }
 serde = { version = '1', optional = true }
 
 [dev-dependencies]
-instrumental-strategy = { version = "0.1.0", path = "../instrumental-strategy", default-features = false }
-instrumental-strategy-pablo = { version = "0.1.0", path = "../instrumental-strategy-pablo", default-features = false }
+hex-literal = "0.3.3"
+instrumental-strategy = { path = "../instrumental-strategy", default-features = false }
+instrumental-strategy-pablo = { path = "../instrumental-strategy-pablo", default-features = false }
+itertools = "0.10.3"
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
 pallet-assets = { path = "../assets", default-features = false }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
-pallet-currency-factory = { path = "../currency-factory" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+pallet-currency-factory = { path = "../currency-factory", default-features = false }
+pallet-governance-registry = { path = "../governance-registry", default-features = false }
 pallet-pablo = { path = "../pablo", default-features = false }
 pallet-staking-rewards = { path = "../staking-rewards", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
-pallet-vault = { default-features = false, path = "../vault" }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+pallet-vault = { path = "../vault", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 proptest = "1.0"
-hex-literal = "0.3.3"
-itertools = "0.10.3"
+sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [features]
 default = ["std"]
 std = [
+    "codec/std",
+    "frame-benchmarking/std",
     "frame-support/std",
     "frame-system/std",
-    "frame-benchmarking/std",
-    "sp-runtime/std",
-    "sp-arithmetic/std",
-    "sp-io/std",
-    "sp-core/std",
-    "sp-std/std",
-    "codec/std",
-    "scale-info/std",
-    "primitives/std",
     "log/std",
+    "orml-tokens/std",
+    "orml-traits/std",
+    "pallet-balances/std",
+    "primitives/std",
+    "scale-info/std",
     "serde/std",
+    "sp-arithmetic/std",
+    "sp-core/std",
+    "sp-io/std",
+    "sp-runtime/std",
+    "sp-std/std",
 ]
 
 runtime-benchmarks = [

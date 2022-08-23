@@ -1,16 +1,12 @@
-use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, GenesisBuild},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
-use instrumental::mock::{
-	account_id::{AccountId, ADMIN},
-	currency::{CurrencyId, PICA},
-};
-use orml_traits::{parameter_type_with_key, GetByKey};
-use primitives::currency::ValidateCurrencyId;
+use instrumental::mock::account_id::{AccountId, ADMIN};
+use orml_traits::parameter_type_with_key;
+use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -22,18 +18,17 @@ use super::fnft;
 use crate as instrumental;
 
 pub type Amount = i128;
-pub type BlockNumber = u64;
 pub type Balance = u128;
-pub type PoolId = u128;
-pub type RewardPoolId = u16;
-pub type PositionId = u128;
+pub type BlockNumber = u64;
 pub type Moment = composable_traits::time::Timestamp;
+pub type PoolId = u128;
+pub type PositionId = u128;
+pub type RewardPoolId = u16;
 pub type VaultId = u64;
 
-pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
-pub const NATIVE_ASSET: CurrencyId = PICA::ID;
-pub const MILLISECS_PER_BLOCK: u64 = 12000;
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
+pub const NATIVE_ASSET: CurrencyId = CurrencyId::PICA;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                Config
@@ -129,35 +124,26 @@ impl pallet_currency_factory::Config for MockRuntime {
 	type WeightInfo = ();
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                                Assets
-// ----------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------
+//                                   Governance Registry
+// -----------------------------------------------------------------------------------------------
 
-ord_parameter_types! {
-	pub const RootAccount: AccountId = ADMIN;
+impl pallet_governance_registry::Config for MockRuntime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type WeightInfo = ();
 }
+
+// -------------------------------------------------------------------------------------------------
+//                                              Assets
+// -------------------------------------------------------------------------------------------------
 
 parameter_types! {
 	pub const NativeAssetId: CurrencyId = NATIVE_ASSET;
 }
 
-pub struct NoopRegistry;
-
-impl<CurrencyId, AccountId> GovernanceRegistry<CurrencyId, AccountId> for NoopRegistry {
-	fn set(_k: CurrencyId, _value: SignedRawOrigin<AccountId>) {}
-}
-
-impl<CurrencyId>
-	GetByKey<
-		CurrencyId,
-		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
-	> for NoopRegistry
-{
-	fn get(
-		_k: &CurrencyId,
-	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
-		Ok(SignedRawOrigin::Root)
-	}
+ord_parameter_types! {
+	pub const RootAccount: AccountId = ADMIN;
 }
 
 impl pallet_assets::Config for MockRuntime {
@@ -169,7 +155,7 @@ impl pallet_assets::Config for MockRuntime {
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
-	type GovernanceRegistry = NoopRegistry;
+	type GovernanceRegistry = GovernanceRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
 }
 
@@ -184,8 +170,8 @@ parameter_types! {
 	pub const RentPerBlock: Balance = 1;
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
-	pub const VaultPalletId: PalletId = VAULT_PALLET_ID;
-	  pub const TombstoneDuration: u64 = 42;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+	pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for MockRuntime {
@@ -378,6 +364,7 @@ frame_support::construct_runtime!(
 
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Assets: pallet_assets::{Pallet, Call, Storage},
+		GovernanceRegistry: pallet_governance_registry::{Pallet, Call, Storage, Event<T>},
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		StakingRewards: pallet_staking_rewards::{Pallet, Storage, Call, Event<T>},
 		Pablo: pallet_pablo::{Pallet, Call, Storage, Event<T>},

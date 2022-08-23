@@ -1,11 +1,11 @@
 use composable_traits::vault::Vault as VaultTrait;
 use frame_support::{assert_noop, assert_ok, assert_storage_noop, traits::fungibles::Inspect};
 use itertools::Itertools;
+use primitives::currency::CurrencyId;
 use proptest::prelude::*;
 
 use crate::mock::{
 	account_id::{pick_account, AccountId, ADMIN},
-	currency::{pick_currency, CurrencyId, USDC},
 	helpers::*,
 	runtime::{
 		Assets, Balance, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System, Vault,
@@ -32,9 +32,20 @@ const TOTAL_NUM_OF_ACCOUNTS: usize = 5;
 const NUMBER_OF_PROPTEST_CASES: u32 =
 	3u32 * TOTAL_NUM_OF_ASSETS as u32 * TOTAL_NUM_OF_ACCOUNTS as u32;
 
+fn pick_assets() -> impl Strategy<Value = CurrencyId> {
+	prop_oneof!(
+		Just(CurrencyId::PICA),
+		Just(CurrencyId::LAYR),
+		Just(CurrencyId::CROWD_LOAN),
+		Just(CurrencyId::USDC),
+		Just(CurrencyId::USDT),
+		Just(CurrencyId::kUSD),
+	)
+}
+
 prop_compose! {
 	fn generate_assets()(
-		assets in prop::collection::vec(pick_currency(), 1..=TOTAL_NUM_OF_ASSETS),
+		assets in prop::collection::vec(pick_assets(), 1..=TOTAL_NUM_OF_ASSETS),
 	) -> Vec<CurrencyId>{
 		assets
    }
@@ -118,12 +129,12 @@ mod create {
 	#[test]
 	fn create_extrinsic_updates_storage() {
 		ExtBuilder::default().build().execute_with(|| {
-			assert!(!AssetVault::<MockRuntime>::contains_key(USDC::ID));
+			assert!(!AssetVault::<MockRuntime>::contains_key(CurrencyId::USDC));
 
 			let config = InstrumentalVaultConfigBuilder::default().build();
 			assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
 
-			assert!(AssetVault::<MockRuntime>::contains_key(USDC::ID));
+			assert!(AssetVault::<MockRuntime>::contains_key(CurrencyId::USDC));
 		});
 	}
 
@@ -161,7 +172,7 @@ mod add_liquidity {
 	#[test]
 	fn add_liquidity_extrinsic_emits_event() {
 		ExtBuilder::default()
-			.initialize_balance(ADMIN, USDC::ID, USDC::units(100))
+			.initialize_balance(ADMIN, CurrencyId::USDC, 100 * CurrencyId::unit::<Balance>())
 			.build()
 			.execute_with(|| {
 				System::set_block_number(1);
@@ -171,13 +182,13 @@ mod add_liquidity {
 
 				assert_ok!(Instrumental::add_liquidity(
 					Origin::signed(ADMIN),
-					USDC::ID,
-					USDC::units(100)
+					CurrencyId::USDC,
+					100 * CurrencyId::unit::<Balance>()
 				));
 
 				System::assert_last_event(Event::Instrumental(pallet::Event::AddedLiquidity {
-					asset: USDC::ID,
-					amount: USDC::units(100),
+					asset: CurrencyId::USDC,
+					amount: 100 * CurrencyId::unit::<Balance>(),
 				}));
 			});
 	}
@@ -186,7 +197,11 @@ mod add_liquidity {
 	fn add_liquidity_asset_must_have_an_associated_vault() {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
-				Instrumental::add_liquidity(Origin::signed(ADMIN), USDC::ID, USDC::units(100)),
+				Instrumental::add_liquidity(
+					Origin::signed(ADMIN),
+					CurrencyId::USDC,
+					100 * CurrencyId::unit::<Balance>()
+				),
 				Error::<MockRuntime>::AssetDoesNotHaveAnAssociatedVault
 			);
 		});
@@ -201,8 +216,8 @@ mod add_liquidity {
 
 			assert_storage_noop!(Instrumental::add_liquidity(
 				Origin::signed(ADMIN),
-				USDC::ID,
-				USDC::units(100)
+				CurrencyId::USDC,
+				100 * CurrencyId::unit::<Balance>()
 			));
 		});
 	}
@@ -278,7 +293,7 @@ mod remove_liquidity {
 		let config = InstrumentalVaultConfigBuilder::default().build();
 
 		ExtBuilder::default()
-			.initialize_balance(ADMIN, USDC::ID, USDC::units(100))
+			.initialize_balance(ADMIN, CurrencyId::USDC, 100 * CurrencyId::unit::<Balance>())
 			.build()
 			.initialize_vault(config)
 			.execute_with(|| {
@@ -286,18 +301,18 @@ mod remove_liquidity {
 
 				assert_ok!(Instrumental::add_liquidity(
 					Origin::signed(ADMIN),
-					USDC::ID,
-					USDC::units(100)
+					CurrencyId::USDC,
+					100 * CurrencyId::unit::<Balance>()
 				));
 				assert_ok!(Instrumental::remove_liquidity(
 					Origin::signed(ADMIN),
-					USDC::ID,
-					USDC::units(100)
+					CurrencyId::USDC,
+					100 * CurrencyId::unit::<Balance>()
 				));
 
 				System::assert_last_event(Event::Instrumental(pallet::Event::RemovedLiquidity {
-					asset: USDC::ID,
-					amount: USDC::units(100),
+					asset: CurrencyId::USDC,
+					amount: 100 * CurrencyId::unit::<Balance>(),
 				}));
 			});
 	}
@@ -308,7 +323,11 @@ mod remove_liquidity {
 			System::set_block_number(1);
 
 			assert_noop!(
-				Instrumental::remove_liquidity(Origin::signed(ADMIN), USDC::ID, USDC::units(100)),
+				Instrumental::remove_liquidity(
+					Origin::signed(ADMIN),
+					CurrencyId::USDC,
+					100 * CurrencyId::unit::<Balance>()
+				),
 				Error::<MockRuntime>::AssetDoesNotHaveAnAssociatedVault
 			);
 		});
@@ -398,7 +417,7 @@ mod ext_builder {
 	#[test]
 	fn ext_builder_initialize_balance() {
 		let user = ADMIN;
-		let (asset, balance) = (USDC::ID, USDC::units(100));
+		let (asset, balance) = (CurrencyId::USDC, 100 * CurrencyId::unit::<Balance>());
 
 		ExtBuilder::default()
 			.initialize_balance(user, asset, balance)
@@ -433,7 +452,7 @@ mod spi_io_test_externalities {
 
 	#[test]
 	fn test_externalities_initialize_vault() {
-		let asset = USDC::ID;
+		let asset = CurrencyId::USDC;
 		let config = InstrumentalVaultConfigBuilder::default().asset_id(asset).build();
 
 		ExtBuilder::default().build().initialize_vault(config).execute_with(|| {
@@ -443,10 +462,10 @@ mod spi_io_test_externalities {
 
 	#[test]
 	fn test_externalities_initialize_reserve() {
-		let asset = USDC::ID;
+		let asset = CurrencyId::USDC;
 		let config = InstrumentalVaultConfigBuilder::default().asset_id(asset).build();
 
-		let balance = USDC::units(1_000);
+		let balance = 1000 * CurrencyId::unit::<Balance>();
 		ExtBuilder::default()
 			.build()
 			.initialize_vault(config)
