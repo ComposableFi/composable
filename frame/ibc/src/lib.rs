@@ -591,7 +591,7 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::Utf8Error)?;
 			let to = match params.to {
 				MultiAddress::Id(id) => {
-					let account_id_32: AccountId32 = id.clone().into();
+					let account_id_32: AccountId32 = id.into();
 					runtime_interface::account_id_to_ss58(account_id_32.into())
 						.and_then(|val| {
 							String::from_utf8(val).map_err(|_| SS58CodecError::InvalidAccountId)
