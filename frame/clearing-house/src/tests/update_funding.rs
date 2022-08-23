@@ -1,9 +1,10 @@
 use crate::{
 	mock::{
 		accounts::{AccountId, ALICE, BOB},
+		assets::USDC,
 		runtime::{
-			ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet, TestPallet,
-			Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
+			Assets as AssetsPallet, ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet,
+			TestPallet, Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
 		},
 	},
 	tests::{
@@ -21,7 +22,7 @@ use composable_traits::{
 	time::{DurationSeconds, ONE_HOUR},
 	vamm::{AssetType, Vamm},
 };
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, traits::fungibles::Inspect};
 use proptest::prelude::*;
 use sp_runtime::{FixedI128, FixedU128};
 
@@ -458,16 +459,19 @@ proptest! {
 				net_position,
 			);
 
+			let collateral_balance_before = AssetsPallet::balance(USDC, &TestPallet::get_collateral_account());
 			// 2st TWAP updates here
 			run_for_seconds(config.funding_frequency);
 			set_oracle_twap(&market_id, (101, 100).into()); // 1.01
 			VammPallet::set_twap(Some(1.into()));
 			assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+			let collateral_balance_after = AssetsPallet::balance(USDC, &TestPallet::get_collateral_account());
 
 			// funding rate is 1% ( TWAP_diff * freq / period )
 			// payment = rate * net_position = fee
 			// Whole fee pool is paid back in funding
 			assert_eq!(get_market_fee_pool(&market_id), 0);
+			assert!(collateral_balance_after > collateral_balance_before);
 		});
 	}
 
