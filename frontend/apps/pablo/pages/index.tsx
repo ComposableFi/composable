@@ -25,26 +25,27 @@ const Home: NextPage = () => {
           <Box textAlign="center">
             <PageTitle title="Overview" />
           </Box>
-          <Box mt={8}>
-            <Statistics />
-          </Box>
           {!connected && (
             <>
-              <Grid container gap={2}>
-                <Grid xs={12}>
+              <Grid container>
+                <Grid item xs={12}>
                   <ConnectWalletFeaturedBox
                     mt={8}
-                    p={4}
                     title="Connect wallet"
                     textBelow="To see your portfolio, wallet needs to be connected."
                     ButtonProps={{ label: "Connect Wallet", size: "small" }}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <TVLChart />
+                <Grid item xs={12} mt={8}>
+                  <Statistics />
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <VolumeChart />
+                <Grid container spacing={8}>
+                  <Grid item xs={12} md={6} mt={8}>
+                    <TVLChart />
+                  </Grid>
+                  <Grid item xs={12} md={6} mt={8}>
+                    <VolumeChart />
+                  </Grid>
                 </Grid>
               </Grid>
             </>
@@ -52,10 +53,10 @@ const Home: NextPage = () => {
 
           {connected && (
             <>
-              <WalletBreakdownBox mt={8} />
-              <LiquidityProvidersBox mt={8} />
-              <YourBondsBox mt={8} />
-              <XPablosBox mt={8} />
+              <WalletBreakdownBox mt={8} key="wallet-breakdown" />
+              <LiquidityProvidersBox mt={8} key="liquidity-provider-box" />
+              <YourBondsBox mt={8} key="your-bond-box" />
+              <XPablosBox mt={8} key="xpablos-box" />
             </>
           )}
         </Box>

@@ -28,7 +28,7 @@ export const TVLChart = ({}) => {
         onIntervalChange={onIntervalChange}
         intervals={["1w", "1m", "1y", "All"]}
         currentInterval={"hr"}
-        timeSlots={["hr", "minute"]}
+        timeSlots={["7:00 am", "10:00 am", "1:00 pm", "3:00 pm", "5:00 pm"]}
       />
     </Box>
   );

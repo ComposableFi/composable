@@ -31,19 +31,19 @@ const Updater = () => {
    * from the pallet
    */
   useEffect(() => {
-      updatePools();
+    updatePools();
   }, [updatePools]);
 
   const router = useRouter();
 
   useEffect(() => {
-      router.events.on("routeChangeStart", updatePools);
+    router.events.on("routeChangeStart", updatePools);
 
-      // If the component is unmounted, unsubscribe
-      // from the event with the `off` method:
-      return () => {
-        router.events.off("routeChangeStart", updatePools);
-      };
+    // If the component is unmounted, unsubscribe
+    // from the event with the `off` method:
+    return () => {
+      router.events.off("routeChangeStart", updatePools);
+    };
   }, [router, updatePools]);
 
   return null;

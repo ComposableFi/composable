@@ -1,13 +1,5 @@
-import {
-  Box,
-  useTheme,
-  BoxProps,
-} from "@mui/material";
-import {
-  TabItem,
-  TabPanel,
-  Tabs,
-} from "@/components";
+import { Box, useTheme, BoxProps } from "@mui/material";
+import { TabItem, TabPanel, Tabs } from "@/components";
 import { useState } from "react";
 import { StakingStatistics } from "./Statistics";
 import { XPablosBox } from "../XPablosBox";
@@ -34,7 +26,7 @@ const tableHeaders = [
     header: "fNFT ID",
   },
   {
-    header: "LockedLocked PBLO",
+    header: "Locked PBLO",
   },
   {
     header: "Expiry",
@@ -45,11 +37,12 @@ const tableHeaders = [
   {
     header: "Your xPABLO",
   },
+  {
+    header: "", // kept empty for action column that has no header
+  },
 ];
 
-export const Staking: React.FC<BoxProps> = ({
-  ...boxProps
-}) => {
+export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const [tab, setTab] = useState(0);
@@ -62,11 +55,7 @@ export const Staking: React.FC<BoxProps> = ({
   return (
     <Box {...boxProps}>
       <StakingStatistics />
-      <XPablosBox
-        mt={8}
-        title="Portfolio"
-        header={tableHeaders}
-      />
+      <XPablosBox mt={8} title="Portfolio" header={tableHeaders} />
       <BoxWrapper mt={8}>
         <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
         <TabPanel index={0} value={tab}>
@@ -84,16 +73,12 @@ export const Staking: React.FC<BoxProps> = ({
             severity={message.severity}
             alertTitle={message.title}
             alertText={message.text}
-            AlertTextProps={{color: "text.secondary"}}
+            AlertTextProps={{ color: "text.secondary" }}
             onClose={() => dispatch(setMessage({}))}
             underlined
             action={
               message.link ? (
-                <Link
-                  href={message.link}
-                  target="_blank"
-                  rel="noopener"
-                >
+                <Link href={message.link} target="_blank" rel="noopener">
                   <OpenInNewRoundedIcon />
                 </Link>
               ) : undefined

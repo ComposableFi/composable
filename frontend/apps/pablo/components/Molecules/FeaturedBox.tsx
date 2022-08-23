@@ -67,7 +67,7 @@ export const FeaturedBox: React.FC<FeaturedBoxProps> = ({
         theme.palette.common.white,
         theme.custom.opacity.light
       )}`}
-      borderRadius={isMobile ? undefined : 1}
+      borderRadius={isMobile ? undefined : "32px"}
       {...rest}
     >
       <Box>

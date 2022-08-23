@@ -5,7 +5,7 @@ import {
 } from "@/store/addLiquidity/addLiquidity.slice";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import BigNumber from "bignumber.js";
-import { useState, useMemo, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 import { useAssetBalance } from "../assets/hooks";
@@ -69,7 +69,12 @@ export const useAddLiquidity = () => {
   };
 
   const canSupply = () => {
-    return assetOneAmountBn.lte(balanceOne) && assetTwoAmountBn.lte(balanceTwo);
+    return (
+      !invalidTokenPair() &&
+      !needToSelectToken() &&
+      assetOneAmountBn.lte(balanceOne) &&
+      assetTwoAmountBn.lte(balanceTwo)
+    );
   };
 
   useEffect(() => {
@@ -122,9 +127,12 @@ export const useAddLiquidity = () => {
       const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
 
       if (bnBase.gte(0) && bnQuote.gte(0)) {
-        
-        let b = isReverse ? pool.pair.quote.toString() : pool.pair.base.toString();
-        let q = isReverse ? pool.pair.base.toString() : pool.pair.quote.toString();
+        let b = isReverse
+          ? pool.pair.quote.toString()
+          : pool.pair.base.toString();
+        let q = isReverse
+          ? pool.pair.base.toString()
+          : pool.pair.quote.toString();
 
         // @ts-ignore
         parachainApi.rpc.pablo
@@ -133,7 +141,7 @@ export const useAddLiquidity = () => {
             parachainApi.createType("PalletPabloPoolId", pool.poolId),
             {
               [b]: bnBase.toString(),
-              [q]: bnQuote.toString()
+              [q]: bnQuote.toString(),
             }
           )
           .then((expectedLP: any) => {
@@ -144,7 +152,15 @@ export const useAddLiquidity = () => {
           });
       }
     }
-  }, [parachainApi, assetOneAmount, assetTwoAmount, assetOne, assetTwo, pool, selectedAccount]);
+  }, [
+    parachainApi,
+    assetOneAmount,
+    assetTwoAmount,
+    assetOne,
+    assetTwo,
+    pool,
+    selectedAccount,
+  ]);
 
   return {
     assetOne: _assetOne,

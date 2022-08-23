@@ -1,29 +1,27 @@
-import {
-  Box,
-  useTheme,
-  Button,
-} from "@mui/material";
+import { Box, useTheme, Button } from "@mui/material";
 import { BigNumberInput } from "@/components/Atoms";
 import { useState } from "react";
 import BigNumber from "bignumber.js";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { PoolDetailsProps } from "./index";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
+import { useRouter } from "next/router";
 
 export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
   poolId,
   ...boxProps
 }) => {
-
   const theme = useTheme();
   const poolDetails = useLiquidityPoolDetails(poolId);
+  const router = useRouter();
 
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
 
   const handleStake = () => {
     // TODO: handle stake here
-  }
+    router.push(`/pool/select/${poolId}?modal=rewards`); // After staking, send the user to rewards tab
+  };
 
   return (
     <Box {...boxProps}>
@@ -43,20 +41,27 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
           }}
           LabelProps={{
             label: "Amount to stake",
-            TypographyProps: {color: "text.secondary"},
+            TypographyProps: { color: "text.secondary" },
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
               balance: `${poolDetails.lpBalance} ${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}`,
-              BalanceTypographyProps: {color: "text.secondary"},
+              BalanceTypographyProps: { color: "text.secondary" },
             },
           }}
           EndAdornmentAssetProps={{
-            assets: 
-            poolDetails.baseAsset && poolDetails.quoteAsset ? 
-            [
-              {icon: poolDetails.baseAsset.icon, label: poolDetails.baseAsset.symbol},
-              {icon: poolDetails.quoteAsset.icon, label: poolDetails.quoteAsset.symbol},
-            ] : [],
+            assets:
+              poolDetails.baseAsset && poolDetails.quoteAsset
+                ? [
+                    {
+                      icon: poolDetails.baseAsset.icon,
+                      label: poolDetails.baseAsset.symbol,
+                    },
+                    {
+                      icon: poolDetails.quoteAsset.icon,
+                      label: poolDetails.quoteAsset.symbol,
+                    },
+                  ]
+                : [],
             separator: "/",
           }}
         />
@@ -75,4 +80,3 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
     </Box>
   );
 };
-

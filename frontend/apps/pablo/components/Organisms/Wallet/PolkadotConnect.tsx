@@ -20,7 +20,7 @@ import { useAssetsWithBalance } from "@/defi/hooks";
 
 const Status = () => {
   const theme = useTheme();
-  const assetsWithBalance = useAssetsWithBalance(DEFAULT_NETWORK_ID)
+  const assetsWithBalance = useAssetsWithBalance(DEFAULT_NETWORK_ID);
 
   const { openPolkadotModal } = useStore();
   const { extensionStatus, selectedAccount } = useDotSamaContext();
@@ -29,11 +29,11 @@ const Status = () => {
 
   useEffect(() => {
     if (assetsWithBalance.length > 0) {
-      setSelectedAsset(assetsWithBalance[0].symbol)
+      setSelectedAsset(assetsWithBalance[0].symbol);
     }
-  }, [assetsWithBalance])
+  }, [assetsWithBalance]);
 
-  if (extensionStatus === 'connected') {
+  if (extensionStatus === "connected") {
     return (
       <Box
         sx={{
@@ -47,15 +47,13 @@ const Status = () => {
           value={selectedAsset}
           setValue={setSelectedAsset}
           options={assetsWithBalance.map((asset) => {
-
             return {
               value: asset.symbol,
-              label:
-              asset.balance.lte(1000)
-                  ? asset.balance.toString()
-                  : (asset.balance.div(1000)).toFixed(1) + "K",
+              label: asset.balance.lte(1000)
+                ? asset.balance.toFixed(2)
+                : asset.balance.div(1000).toFixed(2) + "K",
               icon: asset.icon,
-            }
+            };
           })}
           sx={{
             "& .MuiOutlinedInput-root": {
@@ -69,7 +67,11 @@ const Status = () => {
             openPolkadotModal();
           }}
           network="polkadot"
-          label={selectedAccount !== -1 && accounts.length ? accounts[selectedAccount].name : "Connect Wallet"}
+          label={
+            selectedAccount !== -1 && accounts.length
+              ? accounts[selectedAccount].name
+              : "Connect Wallet"
+          }
         />
       </Box>
     );
@@ -90,7 +92,10 @@ const Status = () => {
 export const PolkadotConnect: React.FC<{}> = () => {
   const theme = useTheme();
 
-  const { ui: { isPolkadotModalOpen }, closePolkadotModal } = useStore();
+  const {
+    ui: { isPolkadotModalOpen },
+    closePolkadotModal,
+  } = useStore();
   const { extensionStatus, activate } = useDotSamaContext();
 
   const handleConnectPolkadot = async () => {
@@ -101,7 +106,9 @@ export const PolkadotConnect: React.FC<{}> = () => {
     <>
       <Status />
       <Modal
-        onClose={() => { closePolkadotModal() }}
+        onClose={() => {
+          closePolkadotModal();
+        }}
         open={isPolkadotModalOpen}
         maxWidth="sm"
         dismissible
@@ -171,8 +178,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
                   Your accounts
                 </Typography>
               </Box>
-              <PolkadotAccountForm
-              />
+              <PolkadotAccountForm />
             </>
           )}
           {extensionStatus !== "connected" && extensionStatus === "connecting" && (
