@@ -1,7 +1,7 @@
 #![allow(clippy::disallowed_methods)]
 use crate::{Direction::Long, Market, MarketConfig as MarketConfigGeneric};
 use composable_support::validation::Validated;
-use composable_traits::time::ONE_HOUR;
+use composable_traits::time::{DurationSeconds, ONE_HOUR};
 use frame_support::{assert_ok, pallet_prelude::Hooks};
 use pallet_vamm::VammStateOf;
 use proptest::prelude::*;
@@ -33,40 +33,55 @@ fn externalities_builder_works() {
 //                                  Helper Functions and Traits
 // -------------------------------------------------------------------------------------------------
 
-fn advance_blocks_by(n: BlockNumber) {
-	for _ in 0..n {
-		let curr_block = System::block_number();
+fn advance_blocks_by(blocks: BlockNumber, secs_per_block: DurationSeconds) {
+	let mut curr_block = System::block_number();
+	let mut time = Timestamp::get();
+	for _ in 0..blocks {
 		if curr_block > 0 {
 			Timestamp::on_finalize(curr_block);
 			Oracle::on_finalize(curr_block);
 			System::on_finalize(curr_block);
 		}
-		let next_block = curr_block + 1;
-		System::set_block_number(next_block);
-		// Time is set in milliseconds, so at each block we increment the timestamp by 1000ms = 1s
-		let _ = Timestamp::set(Origin::none(), next_block * 1000);
-		System::on_initialize(next_block);
-		Timestamp::on_initialize(next_block);
-		Oracle::on_initialize(next_block);
+		curr_block += 1;
+		System::set_block_number(curr_block);
+		// Time is set in milliseconds
+		time += 1000 * secs_per_block;
+		let _ = Timestamp::set(Origin::none(), time);
+		System::on_initialize(curr_block);
+		Timestamp::on_initialize(curr_block);
+		Oracle::on_initialize(curr_block);
 	}
 }
 
+fn run_to_time(seconds: DurationSeconds) {
+	let curr_block = System::block_number();
+	if curr_block > 0 {
+		Timestamp::on_finalize(curr_block);
+		Oracle::on_finalize(curr_block);
+		System::on_finalize(curr_block);
+	}
+
+	let next_block = curr_block + 1;
+	System::set_block_number(next_block);
+	// Time is set in milliseconds, so we multiply the seconds by 1000
+	// Should fail if the current time is greater than or equal to the argument
+	let _ = Timestamp::set(Origin::none(), 1_000 * seconds);
+	System::on_initialize(next_block);
+	Timestamp::on_initialize(next_block);
+	Oracle::on_initialize(next_block);
+}
+
 fn set_oracle_for(asset_id: AssetId, price: Balance) {
-	// Must be strictly greater than StalePrice to pass validation below
-	let block_interval = StalePrice::get() + 1;
 	assert_ok!(Oracle::add_asset_and_info(
 		Origin::signed(ALICE),
 		asset_id,
 		Validated::new(Percent::from_percent(80)).unwrap(), // threshold
 		Validated::new(1).unwrap(),                         // min_answers
 		Validated::new(3).unwrap(),                         // max_answers
-		Validated::new(block_interval).unwrap(),            // block_interval
+		Validated::new(ORACLE_BLOCK_INTERVAL).unwrap(),     // block_interval
 		5,                                                  // reward
 		5                                                   // slash
 	));
-
-	// Must be strictly greater than block_interval for price to be considered 'requested'
-	advance_blocks_by(block_interval + 1);
 
 	assert_ok!(Oracle::set_signer(Origin::signed(ALICE), BOB));
 	assert_ok!(Oracle::set_signer(Origin::signed(BOB), ALICE));
@@ -74,10 +89,17 @@ fn set_oracle_for(asset_id: AssetId, price: Balance) {
 	assert_ok!(Oracle::add_stake(Origin::signed(ALICE), 50));
 	assert_ok!(Oracle::add_stake(Origin::signed(BOB), 50));
 
+	update_oracle_for(asset_id, price);
+}
+
+fn update_oracle_for(asset_id: AssetId, price: Balance) {
+	// Must be strictly greater than block interval for price to be considered 'requested'
+	advance_blocks_by(ORACLE_BLOCK_INTERVAL + 1, 1);
+
 	assert_ok!(Oracle::submit_price(Origin::signed(BOB), price, asset_id));
 
 	// Advance block so that Oracle block finalization hook is called
-	advance_blocks_by(1);
+	advance_blocks_by(1, 1);
 }
 
 fn get_collateral(account_id: &AccountId) -> Balance {
@@ -125,6 +147,8 @@ impl Default for MarketConfig {
 pub type MarketConfig = MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig>;
 pub type VammConfig = composable_traits::vamm::VammConfig<Balance, Moment>;
 
+// Must be strictly greater than StalePrice
+pub const ORACLE_BLOCK_INTERVAL: u64 = StalePrice::get() + 1;
 pub const UNIT: Balance = UnsignedDecimal::DIV;
 
 // -------------------------------------------------------------------------------------------------
@@ -273,4 +297,47 @@ fn should_succeed_with_two_traders_in_a_market() {
 		assert_eq!(vamm_state_before.base_asset_reserves, vamm_state_after.base_asset_reserves);
 		assert_eq!(vamm_state_before.quote_asset_reserves, vamm_state_after.quote_asset_reserves);
 	})
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                     Update Funding
+// -------------------------------------------------------------------------------------------------
+
+#[test]
+fn should_update_oracle_twap() {
+	ExtBuilder { native_balances: vec![(ALICE, UNIT), (BOB, UNIT)], ..Default::default() }
+		.build()
+		.execute_with(|| {
+			let asset_id = DOT;
+			set_oracle_for(asset_id, 1_000); // Index price = 10.0
+
+			let config = MarketConfig {
+				asset: asset_id,
+				vamm_config: VammConfig {
+					// Mark price = 10.0
+					base_asset_reserves: UNIT * 10_000,
+					quote_asset_reserves: UNIT * 100_000,
+					peg_multiplier: 1,
+					twap_period: ONE_HOUR,
+				},
+				..Default::default()
+			};
+			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+
+			let market_id = Zero::zero();
+			let market = get_market(&market_id);
+			let vamm = get_vamm(&market.vamm_id);
+
+			assert_eq!(market.last_oracle_price, 10.into());
+			assert_eq!(market.last_oracle_twap, 10.into());
+			assert_eq!(vamm.base_asset_twap, 10.into());
+
+			update_oracle_for(asset_id, 1_100); //  Index price = 11.0
+			run_to_time(market.last_oracle_ts + ONE_HOUR);
+			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+			let market = get_market(&market_id);
+			// Oracle price updates are clipped at 10bps from the previous recorded price
+			assert_eq!(market.last_oracle_price, (1001, 100).into());
+			assert!(market.last_oracle_twap > 10.into());
+		})
 }
