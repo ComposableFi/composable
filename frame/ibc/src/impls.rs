@@ -607,18 +607,6 @@ where
 	}
 }
 
-impl<T: Config> Pallet<T> {
-	#[cfg(any(test, feature = "runtime-benchmarks"))]
-	pub fn insert_default_consensus_state(height: u64) {
-		let state = IbcConsensusState::default();
-		HostConsensusStates::<T>::try_mutate::<_, (), _>(|val| {
-			val.try_insert(height, state).unwrap();
-			Ok(())
-		})
-		.unwrap();
-	}
-}
-
 impl<T: Config + Send + Sync> IbcTrait for Pallet<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,

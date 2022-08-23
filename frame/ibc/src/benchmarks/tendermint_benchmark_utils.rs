@@ -178,7 +178,7 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 		vec![ConnVersion::default()],
 		delay_period,
 	);
-	crate::Pallet::<T>::insert_default_consensus_state(1);
+
 	let (client_state, cs_state) = create_mock_beefy_client_state();
 	let consensus_path = format!(
 		"{}",
@@ -279,7 +279,7 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 		vec![ConnVersion::default()],
 		delay_period,
 	);
-	crate::Pallet::<T>::insert_default_consensus_state(1);
+
 	let (client_state, cs_state) = create_mock_beefy_client_state();
 	let consensus_path = format!(
 		"{}",
@@ -378,7 +378,6 @@ pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOp
 		vec![ConnVersion::default()],
 		delay_period,
 	);
-	crate::Pallet::<T>::insert_default_consensus_state(1);
 	let (.., cs_state) = create_mock_beefy_client_state();
 	let consensus_path = format!(
 		"{}",

@@ -7,7 +7,7 @@ use sp_runtime::AccountId32;
 use sp_runtime_interface::runtime_interface;
 use sp_std::prelude::*;
 
-#[derive(codec::Encode, codec::Decode)]
+#[derive(codec::Encode, codec::Decode, frame_support::RuntimeDebug)]
 pub enum SS58CodecError {
 	/// Invalid SS58 String
 	InvalidString,

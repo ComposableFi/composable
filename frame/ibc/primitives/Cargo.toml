@@ -25,6 +25,7 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24" }
 
 composable-traits = { default-features = false, path = "../../composable-traits" }
+common = {default-features = false, path = "../../../runtime/common"}
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
@@ -58,5 +59,7 @@ std = [
   "composable-traits/std",
   "xcm/std",
   "hex/std",
+  "common/std"
 ]
+mocks = []
 runtime-benchmarks = []

@@ -700,9 +700,8 @@ pub mod pallet {
 					keep_alive,
 				)?;
 			}
-			rewards_pool.rewards =
-				Rewards::try_from(inner_rewards)
-					.expect("Conversion must work as it's the same data structure; qed;");
+			rewards_pool.rewards = Rewards::try_from(inner_rewards)
+				.expect("Conversion must work as it's the same data structure; qed;");
 			rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
 
 			let stake_with_penalty = if early_unlock {

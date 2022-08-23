@@ -87,7 +87,7 @@ impl Default for IbcConsensusState {
 	}
 }
 
-#[cfg(any(test, feature = "runtime-benchmarks"))]
+#[cfg(any(test, feature = "std", feature = "runtime-benchmarks"))]
 pub(crate) mod benchmarks;
 #[cfg(test)]
 mod mock;
