@@ -273,6 +273,7 @@ pub mod pallet {
 			+ Default
 			+ Encode
 			+ Decode
+			+ MaxEncodedLen
 			+ TypeInfo;
 
 		/// The pallet creates new LP tokens for every pool created. It uses `CurrencyFactory`, as
@@ -344,7 +345,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
     //                                             Pallet Types                                           
 	// ----------------------------------------------------------------------------------------------------
-/*
+
 	pub type AssetIdOf<T> =
 		<<T as Config>::Currency as Inspect<<T as SystemConfig>::AccountId>>::AssetId;
 	
@@ -368,7 +369,7 @@ pub mod pallet {
 
 	// type synonym to better represent the `Reserve` type in withdrawals
 	pub type Withdraw<T> = Reserve<AssetIdOf<T>, BalanceOf<T>>;
-	
+
 	// ----------------------------------------------------------------------------------------------------
     //                                           Runtime  Storage                                          
 	// ----------------------------------------------------------------------------------------------------
@@ -382,7 +383,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
 	pub type Pools<T: Config> = 
-		StorageMap<_, Twox64Concat, T::PoolId, PoolInfoOf<T>, ValueQuery>;
+		StorageMap<_, Twox64Concat, T::PoolId, PoolInfoOf<T>>;
 
 	/// Assets tracked by the pool
 	#[pallet::storage]
@@ -390,7 +391,7 @@ pub mod pallet {
 	pub type PoolAssets<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::PoolId, Assets<T::AssetId>>;
 
-	/// Weights for each asset in the pool
+/*	/// Weights for each asset in the pool
 	#[pallet::storage]
 	#[pallet::getter(fn pool_asset_weight)]
 	pub type PoolAssetWeight<T: Config> = StorageDoubleMap<
@@ -461,15 +462,15 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Emitted after a Pool has been successfully created.
-		PoolCreated /*{
+		PoolCreated {
 			/// The Id of the created Pool.
 			pool_id: T::PoolId,
 			/// The configuration info related to the Pool that was created.
 			pool_info: PoolInfoOf<T>,
-		}*/,
+		},
 
 		/// Emitted after a user deposits an all-asset deposit into a pool.
-		AllAssetDeposit /*{
+		AllAssetDeposit {
 			/// The account id of the user issuing the deposit.
 			account: AccountIdOf<T>,
 			/// The pool id of the Pool deposited into.
@@ -478,10 +479,10 @@ pub mod pallet {
 			deposited: Vec<Deposit<T>>,
 			/// The number of LP tokens minted for the deposit.
 			lp_tokens_minted: BalanceOf<T>,
-		}*/,
+		},
 
 		/// Emitted after a user withdraws assets from a pool.
-		AllAssetWithdraw /*{
+		AllAssetWithdraw {
 			/// The account issuing the deposit.
 			account: AccountIdOf<T>,
 			/// The pool deposited into.
@@ -490,9 +491,9 @@ pub mod pallet {
 			withdrawn: Vec<Withdraw<T>>,
 			/// The number of LP tokens burned from the withdraw.
 			lp_tokens_burned: BalanceOf<T>,
-		}*/,
+		},
 	}
-/*
+
 	// ----------------------------------------------------------------------------------------------------
     //                                           Runtime  Errors                                           
 	// ----------------------------------------------------------------------------------------------------
@@ -761,7 +762,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
     //                              Constant Mean Market Trait Implementation                                       
 	// ----------------------------------------------------------------------------------------------------
-
+/*
 	impl<T: Config> ConstantMeanMarket for Pallet<T> {
 		/// Corresponds to the Ids used by the pallet to uniquely identify accounts.
 		type AccountId = AccountIdOf<T>;
@@ -1234,12 +1235,12 @@ pub mod pallet {
 
 			Ok(assets_withdrawn)
 		}
-	}
+	}*/
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                 Helper Functions - Core Functionality                               
 	// ----------------------------------------------------------------------------------------------------
-
+/*
 	impl<T: Config> Pallet<T> {
 		// Helper function for the spot price trait function. Calculates the spot price formula
 		//     spot price = (balance of asset / weight of asset) / (balance of numeraire / weight of numeraire).
