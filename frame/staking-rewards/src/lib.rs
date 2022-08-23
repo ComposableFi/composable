@@ -682,8 +682,8 @@ pub mod pallet {
 			let mut stake =
 				Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
 			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
-			let is_early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
-				T::UnixTime::now().as_secs();
+			let is_early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)?
+				>= T::UnixTime::now().as_secs();
 			let pool_id = stake.reward_pool_id;
 
 			let asset_id = RewardPools::<T>::try_mutate(pool_id, |rewards_pool| {
@@ -783,14 +783,6 @@ pub mod pallet {
 		fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult {
 			let keep_alive = false;
 
-			// let mut stake =
-			// 	Stakes::<T>::try_get(position).map_err(|_| Error::<T>::StakeNotFound)?;
-			// ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
-
-			// let pool_id = stake.reward_pool_id;
-			// let mut rewards_pool =
-			// 	RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
-
 			Stakes::<T>::try_mutate(position, |stake| {
 				if let Some(stake) = stake {
 					RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
@@ -818,9 +810,9 @@ pub mod pallet {
 		///
 		/// # Params
 		/// * `pool_id` - Pool identifier
-		/// * `rewards_pool` - Rewards pool to update
+		/// * `mut rewards_pool` - Rewards pool to update
 		/// * `stake` - Stake position
-		/// * `penalize_for_early_unlock` - If there should be an early unlock penalty
+		/// * `early_unlock` - If there should be an early unlock penalty
 		/// * `keep_alive` - If the transaction should be kept alive
 		pub(crate) fn collect_rewards(
 			rewards_pool: &mut RewardPoolOf<T>,
@@ -1041,8 +1033,8 @@ pub mod pallet {
 									reward.total_rewards.safe_add(&reward_increment)?;
 								ensure!(
 									(new_total_reward
-										.safe_sub(&reward.total_dilution_adjustment)?) <=
-										reward.max_rewards,
+										.safe_sub(&reward.total_dilution_adjustment)?)
+										<= reward.max_rewards,
 									Error::<T>::MaxRewardLimitReached
 								);
 								reward.total_rewards = new_total_reward;
@@ -1121,17 +1113,19 @@ fn update_rewards_pool<T: Config>(
 			let new_reward = match reward_accumulation_calculation::<T>(reward.clone(), now_seconds)
 			{
 				Ok(reward) => reward,
-				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) =>
-					return Err(Error::<T>::BackToTheFuture.into()),
+				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) => {
+					return Err(Error::<T>::BackToTheFuture.into())
+				},
 				Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(reward)) => {
 					Pallet::<T>::deposit_event(Event::<T>::MaxRewardsAccumulated {
 						pool_id,
 						asset_id: reward.asset_id,
 					});
+					continue;
+				},
+				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) => {
 					continue
 				},
-				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) =>
-					continue,
 			};
 
 			*reward = Reward { reward_rate: update.reward_rate, ..new_reward };
