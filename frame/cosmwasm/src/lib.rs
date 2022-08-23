@@ -1092,34 +1092,30 @@ pub mod pallet {
 			vm: &mut CosmwasmVM<T>,
 			iterator_id: u32,
 		) -> Result<Option<(Vec<u8>, Vec<u8>)>, CosmwasmVMError<T>> {
-			ContractStorageIterators::<T>::try_mutate_exists(
-                               &vm.contract_info,
-                               &iterator_id,
-                               |entry| -> Result<Option<(Vec<u8>, Vec<u8>)>, Error<T>> {
-                                       let storage_key_entry = entry.as_mut().ok_or(Error::<T>::IteratorNotFound)?;
-                                       let storage_key = match storage_key_entry {
-                                               Some(storage_key) => storage_key.to_vec(),
-                                               None => Vec::new(),
-                                       };
+			let storage_key_entry =
+				ContractStorageIterators::<T>::try_get(&vm.contract_info, &iterator_id)
+					.map_err(|_| Error::<T>::IteratorNotFound)?;
 
-                                       let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
-                                       let key = sp_io::default_child_storage::next_key(
-                                               child_info.storage_key(),
-                                               &storage_key,
-                                       );
+			let storage_key = match storage_key_entry {
+				Some(storage_key) => storage_key.to_vec(),
+				None => Vec::new(),
+			};
 
-                                       if let Some(key) = key {
-                                               let reversed_key = Blake2_128Concat::reverse(&key).to_vec();
-                                               *storage_key_entry = Some(key.clone().try_into().expect("VM should not accept keys that are larger that the max size, this should never happen."));
-                                               Ok(storage::child::get_raw(&child_info, &key)
-                                                       .map(|value| (reversed_key, value)))
-                                       } else {
-                                               *storage_key_entry = None;
-                                               Ok(None)
-                                       }
-                               },
-                       )
-                       .map_err(Into::into)
+			let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
+            // TODO(aeryz): We should also charge for reading the `next_key`
+			let key =
+				sp_io::default_child_storage::next_key(child_info.storage_key(), &storage_key);
+
+			if let Some(key) = key {
+				let price = Self::do_db_read_gas(&vm.contract_info.trie_id, &key);
+				vm.charge_raw(price)?;
+				let reversed_key = Blake2_128Concat::reverse(&key).to_vec();
+				ContractStorageIterators::<T>::insert(&vm.contract_info, &iterator_id, Some::<BoundedVec<_, _>>(key.clone().try_into().expect("VM should not accept keys that are larger that the max size, this should never happen.")));
+				Ok(storage::child::get_raw(&child_info, &key).map(|value| (reversed_key, value)))
+			} else {
+				ContractStorageIterators::<T>::remove(&vm.contract_info, &iterator_id);
+				Ok(None)
+			}
 		}
 
 		/// Remove an entry from the executing contract, no gas is charged for this operation.
