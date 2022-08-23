@@ -131,13 +131,17 @@ impl CurrencyId {
 
 		// Staked asset LP tokens (1001 - 100_000_000_000)
 		/// Staked asset xPICA Token
-		pub const XPICA: CurrencyId = CurrencyId(1001);
+		#[allow(non_upper_case_globals)]
+		pub const xPICA: CurrencyId = CurrencyId(1001);
 		/// Staked asset xLAYR Token
-		pub const XLAYR: CurrencyId = CurrencyId(1002);
+		#[allow(non_upper_case_globals)]
+		pub const xLAYR: CurrencyId = CurrencyId(1002);
 		/// Staked asset xKSM Token
-		pub const XKSM: CurrencyId = CurrencyId(1004);
+		#[allow(non_upper_case_globals)]
+		pub const xKSM: CurrencyId = CurrencyId(1004);
 		/// Staked asset xPBLO Token
-		pub const XPBLO: CurrencyId = CurrencyId(1005);
+		#[allow(non_upper_case_globals)]
+		pub const xPBLO: CurrencyId = CurrencyId(1005);
 	}
 
 	#[inline(always)]
