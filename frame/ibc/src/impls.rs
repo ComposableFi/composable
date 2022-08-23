@@ -27,6 +27,7 @@ use ibc::{
 			on_ack_packet::process_ack_packet, on_recv_packet::process_recv_packet,
 			on_timeout_packet::process_timeout_packet, send_transfer::send_transfer,
 		},
+		PrefixedCoin,
 	},
 	core::{
 		ics02_client::{client_state::AnyClientState, context::ClientReader},
@@ -34,6 +35,7 @@ use ibc::{
 		ics04_channel::{
 			channel::ChannelEnd,
 			context::{ChannelKeeper, ChannelReader},
+			error::Error as Ics04Error,
 			msgs::{
 				acknowledgement::Acknowledgement,
 				chan_open_init::{MsgChannelOpenInit, TYPE_URL as CHANNEL_OPEN_INIT_TYPE_URL},
@@ -56,14 +58,15 @@ use ibc::{
 };
 use ibc_primitives::{
 	apply_prefix, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
-	port_id_from_bytes, ConnectionHandshake, Error as IbcHandlerError, IbcTrait, IdentifiedChannel,
-	IdentifiedClientState, IdentifiedConnection, OffchainPacketType, PacketState,
-	QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse, QueryConnectionResponse,
-	QueryConnectionsResponse, QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
-	QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
-	QueryPacketCommitmentResponse, QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
-	SendPacketData,
+	get_channel_escrow_address, port_id_from_bytes, ConnectionHandshake, Error as IbcHandlerError,
+	IbcTrait, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection, OffchainPacketType,
+	PacketState, QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse,
+	QueryConnectionResponse, QueryConnectionsResponse, QueryConsensusStateResponse,
+	QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
+	QueryPacketAcknowledgementsResponse, QueryPacketCommitmentResponse,
+	QueryPacketCommitmentsResponse, QueryPacketReceiptResponse, SendPacketData,
 };
+use primitives::currency::CurrencyId;
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;
@@ -71,8 +74,19 @@ use tendermint_proto::Protobuf;
 impl<T: Config> Pallet<T>
 where
 	T: Send + Sync,
+	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
-	<T as DeFiComposableConfig>::MayBeAssetId: From<primitives::currency::CurrencyId>,
+	<T as DeFiComposableConfig>::MayBeAssetId:
+		From<<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
+	<T as DeFiComposableConfig>::MayBeAssetId:
+		From<<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
+		From<<T as DeFiComposableConfig>::MayBeAssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
+		From<<T as DeFiComposableConfig>::MayBeAssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation: From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation: From<XcmAssetLocation>,
+	<T as DeFiComposableConfig>::MayBeAssetId: From<<T as assets::Config>::AssetId>,
 {
 	pub fn execute_ibc_messages(
 		ctx: &mut Context<T>,
@@ -103,7 +117,14 @@ where
 			Self::deposit_event(errors.into())
 		};
 	}
+}
 
+impl<T: Config> Pallet<T>
+where
+	T: Send + Sync,
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+	<T as DeFiComposableConfig>::MayBeAssetId: From<primitives::currency::CurrencyId>,
+{
 	pub fn timestamp() -> u64 {
 		use frame_support::traits::UnixTime;
 		use sp_runtime::traits::SaturatedConversion;
@@ -475,8 +496,8 @@ where
 	pub fn query_balance_with_address(addr: Vec<u8>) -> Result<u128, Error<T>> {
 		let hex_string = String::from_utf8(addr).map_err(|_| Error::<T>::DecodingError)?;
 		let signer = Signer::from_str(&hex_string).map_err(|_| Error::<T>::DecodingError)?;
-		let ibc_acc = <T as transfer::Config>::AccountIdConversion::try_from(signer)
-			.map_err(|_| Error::<T>::DecodingError)?;
+		let ibc_acc =
+			T::AccountIdConversion::try_from(signer).map_err(|_| Error::<T>::DecodingError)?;
 		let account_id = ibc_acc.into_account();
 		let balance = format!("{:?}", T::Currency::free_balance(&account_id));
 		Ok(balance.parse().unwrap_or_default())
@@ -617,23 +638,133 @@ impl<T: Config> Pallet<T> {
 		})
 		.unwrap();
 	}
+
+	pub fn is_send_enabled() -> bool {
+		Params::<T>::get().send_enabled
+	}
+
+	pub fn is_receive_enabled() -> bool {
+		Params::<T>::get().receive_enabled
+	}
+
+	pub fn register_asset_id(asset_id: <T as DeFiComposableConfig>::MayBeAssetId, denom: Vec<u8>) {
+		IbcAssetIds::<T>::insert(asset_id, denom.clone());
+		IbcDenoms::<T>::insert(denom, asset_id);
+	}
+
+	pub fn remove_channel_escrow_address(
+		port_id: &PortId,
+		channel_id: ChannelId,
+	) -> Result<(), Ics04Error> {
+		let escrow_address = get_channel_escrow_address(port_id, channel_id).map_err(|_| {
+			Ics04Error::implementation_specific(
+				"Failed to derive channel escrow address for removal".to_string(),
+			)
+		})?;
+		let account_id = T::AccountIdConversion::try_from(escrow_address)
+			.map_err(|_| {
+				Ics04Error::implementation_specific(
+					"Failed to derive channel escrow address for removal".to_string(),
+				)
+			})?
+			.into_account();
+		let _ = EscrowAddresses::<T>::try_mutate::<_, &'static str, _>(|addresses| {
+			addresses.remove(&account_id);
+			Ok(())
+		});
+		Ok(())
+	}
+
+	/// Returns true if address provided is an escrow address
+	pub fn is_escrow_address(address: T::AccountId) -> bool {
+		let set = EscrowAddresses::<T>::get();
+		set.contains(&address)
+	}
+}
+
+impl<T: Config> Pallet<T>
+where
+	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
+	CurrencyId: From<<T as DeFiComposableConfig>::MayBeAssetId>,
+{
+	pub fn get_denom_trace(asset_id: u128) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+		let asset_id: <T as DeFiComposableConfig>::MayBeAssetId = CurrencyId(asset_id).into();
+		IbcAssetIds::<T>::get(asset_id)
+			.map(|denom| ibc_primitives::QueryDenomTraceResponse { denom })
+	}
+
+	pub fn get_denom_traces(
+		key: Option<u128>,
+		offset: Option<u32>,
+		mut limit: u64,
+		count_total: bool,
+	) -> ibc_primitives::QueryDenomTracesResponse {
+		let mut iterator = if let Some(key) = key {
+			let asset_id: <T as DeFiComposableConfig>::MayBeAssetId = CurrencyId(key).into();
+			let raw_key = asset_id.encode();
+			IbcAssetIds::<T>::iter_from(raw_key).skip(0)
+		} else if let Some(offset) = offset {
+			IbcAssetIds::<T>::iter().skip(offset as usize)
+		} else {
+			IbcAssetIds::<T>::iter().skip(0)
+		};
+
+		let mut denoms = vec![];
+		for (_, denom) in iterator.by_ref() {
+			denoms.push(denom);
+			limit -= 1;
+			if limit == 0 {
+				break
+			}
+		}
+
+		ibc_primitives::QueryDenomTracesResponse {
+			denoms,
+			total: count_total.then(|| IbcAssetIds::<T>::count() as u64),
+			next_key: iterator.next().map(|(key, _)| {
+				let asset_id: CurrencyId = key.into();
+				asset_id.0
+			}),
+		}
+	}
+}
+
+impl<T: Config> Pallet<T>
+where
+	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
+{
+	pub fn ibc_denom_to_asset_id(
+		full_denom: String,
+		token: PrefixedCoin,
+	) -> Option<<T as DeFiComposableConfig>::MayBeAssetId> {
+		let is_local_asset = token.denom.trace_path().is_empty();
+		if is_local_asset {
+			if let Ok(asset_id) = CurrencyId::to_native_id(token.denom.base_denom().as_str()) {
+				Some(asset_id.into())
+			} else {
+				let asset_id: CurrencyId =
+					token.denom.base_denom().as_str().parse::<u128>().ok()?.into();
+				Some(asset_id.into())
+			}
+		} else {
+			IbcDenoms::<T>::get(full_denom.as_bytes().to_vec())
+		}
+	}
 }
 
 impl<T: Config + Send + Sync> IbcTrait for Pallet<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 	<T as DeFiComposableConfig>::MayBeAssetId:
-		From<<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
+		From<<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
 	<T as DeFiComposableConfig>::MayBeAssetId:
-		From<<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
+		From<<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
 		From<<T as DeFiComposableConfig>::MayBeAssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
 		From<<T as DeFiComposableConfig>::MayBeAssetId>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation:
-		From<XcmAssetLocation>,
-	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation:
-		From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation: From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation: From<XcmAssetLocation>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<<T as assets::Config>::AssetId>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<primitives::currency::CurrencyId>,
 {

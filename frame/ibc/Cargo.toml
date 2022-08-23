@@ -43,7 +43,7 @@ composable-traits = { default-features = false, path = "../composable-traits" }
 ibc-primitives = { path = "primitives", default-features = false }
 pallet-ibc-ping = { path = "ping", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
-transfer = { package = "pallet-ibc-transfer", path = "transfer", default-features = false }
+#transfer = { package = "pallet-ibc-transfer", path = "transfer", default-features = false }
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
@@ -97,7 +97,7 @@ std = [
   'ibc-primitives/std',
   'balances/std',
   "pallet-ibc-ping/std",
-  "transfer/std",
+#  "transfer/std",
   "parachain-info/std",
   "sha2/std",
   "xcm/std",

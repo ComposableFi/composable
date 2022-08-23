@@ -1,5 +1,8 @@
 use super::*;
-use composable_traits::defi::DeFiComposableConfig;
+use composable_traits::{
+	defi::DeFiComposableConfig,
+	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
+};
 use core::borrow::Borrow;
 use ibc::{
 	applications::transfer::MODULE_ID_STR as IBC_TRANSFER_MODULE_ID,
@@ -29,14 +32,14 @@ impl<T: Config + Send + Sync> Context<T> {
 #[derive(Clone)]
 pub struct IbcRouter<T: Config> {
 	pallet_ibc_ping: pallet_ibc_ping::IbcHandler<T>,
-	ibc_transfer: transfer::IbcCallbackHandler<T>,
+	ibc_transfer: ics20::IbcCallbackHandler<T>,
 }
 
 impl<T: Config> Default for IbcRouter<T> {
 	fn default() -> Self {
 		Self {
 			pallet_ibc_ping: pallet_ibc_ping::IbcHandler::<T>::default(),
-			ibc_transfer: transfer::IbcCallbackHandler::<T>::default(),
+			ibc_transfer: ics20::IbcCallbackHandler::<T>::default(),
 		}
 	}
 }
@@ -44,6 +47,18 @@ impl<T: Config> Default for IbcRouter<T> {
 impl<T: Config + Send + Sync> Router for IbcRouter<T>
 where
 	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+	<T as DeFiComposableConfig>::MayBeAssetId:
+		From<<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
+	<T as DeFiComposableConfig>::MayBeAssetId:
+		From<<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
+		From<<T as DeFiComposableConfig>::MayBeAssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
+		From<<T as DeFiComposableConfig>::MayBeAssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation: From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation: From<XcmAssetLocation>,
+	<T as DeFiComposableConfig>::MayBeAssetId: From<<T as assets::Config>::AssetId>,
 {
 	fn get_route_mut(&mut self, module_id: &impl Borrow<ModuleId>) -> Option<&mut dyn Module> {
 		match module_id.borrow().to_string().as_str() {
@@ -63,8 +78,19 @@ where
 
 impl<T: Config + Send + Sync> Ics26Context for Context<T>
 where
-	u32: From<<T as frame_system::Config>::BlockNumber>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+	<T as DeFiComposableConfig>::MayBeAssetId:
+		From<<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
+	<T as DeFiComposableConfig>::MayBeAssetId:
+		From<<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
+		From<<T as DeFiComposableConfig>::MayBeAssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
+		From<<T as DeFiComposableConfig>::MayBeAssetId>,
+	<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation: From<XcmAssetLocation>,
+	<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation: From<XcmAssetLocation>,
+	<T as DeFiComposableConfig>::MayBeAssetId: From<<T as assets::Config>::AssetId>,
 {
 	type Router = IbcRouter<T>;
 

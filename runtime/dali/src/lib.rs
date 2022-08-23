@@ -1090,18 +1090,6 @@ parameter_types! {
 	pub TransferPalletID: PalletId = PalletId(*b"transfer");
 }
 
-impl ibc_transfer::Config for Runtime {
-	type Event = Event;
-	type MultiCurrency = Assets;
-	type IbcHandler = Ibc;
-	type AccountIdConversion = IbcAccount;
-	type AssetRegistry = AssetsRegistry;
-	type CurrencyFactory = CurrencyFactory;
-	type AdminOrigin = EnsureRoot<AccountId>;
-	type PalletId = TransferPalletID;
-	type WeightInfo = crate::weights::ibc_transfer::WeightInfo<Self>;
-}
-
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type Event = Event;
@@ -1110,6 +1098,11 @@ impl pallet_ibc::Config for Runtime {
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
 	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
 	type ExpectedBlockTime = ExpectedBlockTime;
+	type MultiCurrency = Assets;
+	type AccountIdConversion = IbcAccount;
+	type AssetRegistry = AssetsRegistry;
+	type CurrencyFactory = CurrencyFactory;
+	// type PalletId = TransferPalletID;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
 	type AdminOrigin = EnsureRoot<AccountId>;
 }
@@ -1191,8 +1184,7 @@ construct_runtime!(
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
 		IbcPing: pallet_ibc_ping = 151,
-		Transfer: ibc_transfer = 152,
-		Ibc: pallet_ibc = 153
+		Ibc: pallet_ibc = 152
 	}
 );
 
@@ -1266,7 +1258,6 @@ mod benches {
 		[pallet_account_proxy, Proxy]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
-		[ibc_transfer, Transfer]
 	);
 }
 
@@ -1616,11 +1607,11 @@ impl_runtime_apis! {
 		}
 
 		fn denom_trace(asset_id: u128) -> Option<ibc_primitives::QueryDenomTraceResponse> {
-			Transfer::get_denom_trace(asset_id)
+			Ibc::get_denom_trace(asset_id)
 		}
 
 		fn denom_traces(key: Option<u128>, offset: Option<u32>, limit: u64, count_total: bool) -> ibc_primitives::QueryDenomTracesResponse {
-			Transfer::get_denom_traces(key, offset, limit, count_total)
+			Ibc::get_denom_traces(key, offset, limit, count_total)
 		}
 
 		fn block_events(extrinsic_index: Option<u32>) -> Vec<pallet_ibc::events::IbcEvent> {

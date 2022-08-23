@@ -2836,7 +2836,6 @@ dependencies = [
  "pallet-governance-registry",
  "pallet-ibc",
  "pallet-ibc-ping",
- "pallet-ibc-transfer",
  "pallet-identity",
  "pallet-indices",
  "pallet-lending",
@@ -8160,7 +8159,6 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-governance-registry",
  "pallet-ibc-ping",
- "pallet-ibc-transfer",
  "pallet-timestamp",
  "parachain-info",
  "parity-scale-codec",
@@ -8195,28 +8193,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "serde",
- "sp-core 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-runtime 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
- "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
-]
-
-[[package]]
-name = "pallet-ibc-transfer"
-version = "0.1.0"
-dependencies = [
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "hex",
- "ibc",
- "ibc-primitives",
- "log 0.4.17",
- "pallet-balances",
- "parity-scale-codec",
- "primitives 0.1.0",
- "scale-info",
- "serde_json",
  "sp-core 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-runtime 6.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
  "sp-std 4.0.0 (git+https://github.com/dzmitry-lahoda-forks/substrate?rev=8df0a39f51b672c773b306923f65f8dde74b850e)",
