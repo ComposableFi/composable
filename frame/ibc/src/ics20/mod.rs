@@ -185,7 +185,7 @@ where
 				let prefixed_denom = PrefixedDenom::from_str(&denom).expect("Should not fail");
 				let token =
 					PrefixedCoin { denom: prefixed_denom, amount: packet_data.token.amount };
-				Pallet::<T>::deposit_event(Event::<T>::TokenTransferCompleted {
+				Pallet::<T>::deposit_event(Event::<T>::TokenReceived {
 					from: packet_data.sender.to_string().as_bytes().to_vec(),
 					to: packet_data.receiver.to_string().as_bytes().to_vec(),
 					ibc_denom: denom.as_bytes().to_vec(),

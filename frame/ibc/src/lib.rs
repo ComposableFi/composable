@@ -383,7 +383,7 @@ pub mod pallet {
 		Events { events: Vec<events::IbcEvent> },
 		/// Errors emitted by the ibc subsystem
 		Errors { errors: Vec<errors::IbcError> },
-		/// A cross-chain token has been started
+		/// An Ibc token tranfer has been started
 		TokenTransferInitiated {
 			from: <T as frame_system::Config>::AccountId,
 			to: Vec<u8>,
@@ -393,8 +393,16 @@ pub mod pallet {
 		ChannelOpened { channel_id: Vec<u8>, port_id: Vec<u8> },
 		/// Pallet params updated
 		ParamsUpdated { send_enabled: bool, receive_enabled: bool },
-		/// Token Transfer Completed
+		/// An outgoing Ibc token transfer has been completed and burnt
 		TokenTransferCompleted {
+			from: Vec<u8>,
+			to: Vec<u8>,
+			ibc_denom: Vec<u8>,
+			local_asset_id: Option<<T as DeFiComposableConfig>::MayBeAssetId>,
+			amount: <T as DeFiComposableConfig>::Balance,
+		},
+		/// Ibc tokens have been received and minted
+		TokenReceived {
 			from: Vec<u8>,
 			to: Vec<u8>,
 			ibc_denom: Vec<u8>,
