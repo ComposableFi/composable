@@ -5,6 +5,9 @@ use frame_support::{
 		fmt::Debug,
 		vec::Vec,
 	},
+	storage::{
+		bounded_vec::BoundedVec
+	}
 };
 use scale_info::TypeInfo;
 
@@ -12,12 +15,13 @@ use fixed::types::U110F18;
 
 /// Unsigned Integer type used for calculations behind the scenes
 pub type FixedBalance = U110F18;
+
 /// Type alias used for working with a list of asset ids
-pub type Assets<AssetId> = Vec<AssetId>;
+pub type Assets<AssetId, PoolSize> = BoundedVec<AssetId, PoolSize>;
 
 /// Holds the id of an asset and how much weight is given to it
 ///     proportional to all underlying Pool assets.
-#[derive(Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Encode, Decode, Default, Debug, MaxEncodedLen, PartialEq, TypeInfo)]
 pub struct Weight<CurrencyId, Percent> {
 	pub asset_id: CurrencyId,
 	pub weight: Percent,
@@ -28,7 +32,7 @@ pub type WeightsVec<CurrencyId, Percent> = Vec::<Weight<CurrencyId, Percent>>;
 
 /// Struct to maintain the min/max value bounds for some of the Pool's configurable
 ///     parameters.
-#[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, PartialOrd, TypeInfo)]
+#[derive(Clone, Copy, Encode, Decode, Default, Debug, MaxEncodedLen, PartialEq, PartialOrd, TypeInfo)]
 pub struct Bound<T>{	
 	pub minimum: Option<T>,
 	pub maximum: Option<T>,
@@ -45,7 +49,7 @@ impl<T> Bound<T> {
 
 // Does not derive Copy as assets and weights are Vectors (with their 
 //     data resides on the heap) and thus doesn't derive Copy
-#[derive(Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Encode, Decode, Default, Debug, MaxEncodedLen, PartialEq, TypeInfo)]
 pub struct PoolConfig<AccountId, AssetId, Percent>
 where
 	AccountId: core::cmp::Ord,
@@ -68,7 +72,7 @@ where
 	pub withdraw_bounds: Bound<Percent>,
 }
 
-#[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Copy, Encode, Decode, Debug, MaxEncodedLen, PartialEq, TypeInfo)]
 pub struct PoolInfo<AccountId, AssetId, Percent> {
 	/// Owner of pool
 	pub owner: AccountId,
