@@ -59,7 +59,7 @@ The currency in which users can pay on Picasso is `payment currency`.
 
 Later user will be able to configure his preferred payment token by default. If the user peeks at such a token, then direct transactions are paid only in this token. No other tokens are tried. 
 
-Switching configuration is paid in a token to which configuration is switched. User does ED enough to clear to reset the configuration to default later.
+Switching configuration is paid in a token to which configuration is switched. The user's existential deposit(ED) must be enough to reset the configuration to default later.
 
 
 ## XCMP specific 
