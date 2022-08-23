@@ -43,7 +43,6 @@ const tableHeaders = [
 ];
 
 export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
-  const theme = useTheme();
   const dispatch = useAppDispatch();
   const [tab, setTab] = useState(0);
   const message = useAppSelector((state) => state.ui.message);
@@ -55,7 +54,6 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
   return (
     <Box {...boxProps}>
       <StakingStatistics />
-      <XPablosBox mt={8} title="Portfolio" header={tableHeaders} />
       <BoxWrapper mt={8}>
         <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
         <TabPanel index={0} value={tab}>
