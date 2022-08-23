@@ -811,7 +811,7 @@ pub mod pallet {
 			pool_id: &T::RewardPoolId,
 			mut rewards_pool: RewardPoolOf<T>,
 			mut stake: StakeOf<T>,
-			early_unlock: bool,
+			penalize_for_early_unlock: bool,
 			keep_alive: bool,
 		) -> Result<(RewardPoolOf<T>, StakeOf<T>), DispatchError> {
 			let mut inner_rewards = rewards_pool.rewards.into_inner();
@@ -827,7 +827,7 @@ pub mod pallet {
 						.safe_div(&rewards_pool.total_shares)?
 						.safe_sub(&inflation)?
 				};
-				let claim = if early_unlock {
+				let claim = if penalize_for_early_unlock {
 					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim)
 				} else {
 					claim
