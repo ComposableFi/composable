@@ -130,6 +130,9 @@ pub fn create_mock_beefy_client_state() -> (BeefyClientState, BeefyConsensusStat
 		beefy_activation_block: 0,
 		authority: Default::default(),
 		next_authority_set: Default::default(),
+		latest_para_height: Default::default(),
+		para_id: Default::default(),
+		relay_chain: Default::default(),
 	};
 
 	let timestamp = ibc::timestamp::Timestamp::from_nanoseconds(1).unwrap();

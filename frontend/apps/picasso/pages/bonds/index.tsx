@@ -2,35 +2,26 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import Default from "@/components/Templates/Default";
 import { alpha, Box, Grid, Typography, useTheme } from "@mui/material";
-import {
-  ConnectWalletFeaturedBox,
-  MyBondingsTable,
-  PageTitle,
-} from "@/components";
+import { ConnectWalletFeaturedBox, MyBondingsTable, PageTitle, } from "@/components";
 import { ConnectToStakeCover } from "@/components/Molecules/ConnectToStakeCover";
 import { AllBondsTable } from "@/components/Molecules/AllBondsTable";
 import { useContext } from "react";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
-import { useSelectedAccount } from "@/defi/polkadot/hooks";
-import { useOpenPositions } from "@/defi/polkadot/hooks/useOpenPositions";
+import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
 import { useStore } from "@/stores/root";
+import { DisconnectedBond } from "@/components/Organisms/Bond/DisconnectedBond";
 
 const standardPageSize = {
   xs: 12,
 };
 
 const Bonds: NextPage = () => {
+  const activeBonds = useActiveBonds();
   const theme = useTheme();
+  const router = useRouter();
   const { extensionStatus } = useContext(ParachainContext);
   const bonds = useStore((state) => state.bonds.bonds);
-  const account = useSelectedAccount();
-  useOpenPositions(account);
-  const openPositions = useStore((state) => {
-    console.log(state.bonds);
-    return state.bonds.openPositions;
-  });
-  const router = useRouter();
 
   const handleActiveBondsClick = (offerId: string) => {
     router.push({
@@ -51,14 +42,7 @@ const Bonds: NextPage = () => {
             />
           </Grid>
           {extensionStatus !== "connected" ? (
-            <>
-              <Grid item {...standardPageSize}>
-                <ConnectWalletFeaturedBox message="To start staking, wallet needs to be connected." />
-              </Grid>
-              <Grid item {...standardPageSize}>
-                <ConnectToStakeCover message="Connect to check your active positions." />
-              </Grid>
-            </>
+            <DisconnectedBond />
           ) : (
             <>
               <Grid item {...standardPageSize}>
@@ -69,7 +53,7 @@ const Bonds: NextPage = () => {
                 >
                   <Typography mb={2}>Your Active Bonds</Typography>
                   <MyBondingsTable
-                    openPositions={openPositions}
+                    activeBonds={activeBonds}
                     onRowClick={handleActiveBondsClick}
                   />
                 </Box>

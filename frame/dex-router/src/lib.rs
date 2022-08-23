@@ -29,6 +29,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(test)]
+mod mock_fnft;
+
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 
@@ -190,8 +193,7 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ =
-				<Self as Amm>::exchange(&who, asset_pair, asset_pair, amount, min_receive, false)?;
+			<Self as Amm>::exchange(&who, asset_pair, asset_pair, amount, min_receive, false)?;
 			Ok(())
 		}
 
@@ -205,7 +207,7 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::sell(
+			<Self as Amm>::sell(
 				&who,
 				asset_pair,
 				asset_pair.base, /* will be ignored */
@@ -226,7 +228,7 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::buy(
+			<Self as Amm>::buy(
 				&who,
 				asset_pair,
 				asset_pair.base, /* will be ignored */
@@ -304,9 +306,6 @@ pub mod pallet {
 			asset_pair: CurrencyPair<T::AssetId>,
 			route: &BoundedVec<T::PoolId, T::MaxHopsInRoute>,
 		) -> Result<(), DispatchError> {
-			sp_std::if_std! {
-				println!("asset_pair.quote {:?} , asset_pair.base {:?}", asset_pair.quote, asset_pair.base);
-			}
 			let mut pair_set = BTreeSet::<CurrencyPair<T::AssetId>>::new();
 			route
 				.iter()
@@ -315,9 +314,6 @@ pub mod pallet {
 				.try_fold(asset_pair.quote, |val, iter| {
 					T::Pablo::currency_pair(*iter).and_then(
 						|pair| -> Result<T::AssetId, DispatchError> {
-							sp_std::if_std! {
-								println!("pool_id {:?} pair.quote {:?} pair.base {:?} val {:?}", *iter, pair.quote, pair.base, val);
-							}
 							if !pair_set.insert(pair) {
 								return Err(Error::<T>::LoopSuspectedInRouteUpdate.into())
 							}
