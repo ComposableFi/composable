@@ -887,7 +887,7 @@ benchmarks! {
 
 	// }:_(RawOrigin::Root, pallet_params)
 	// verify {
-	// 	assert_last_event::<T>(Event::<T>::PalletParamsUpdated {
+	// 	assert_last_event::<T>(Event::<T>::ParamsUpdated {
 	// 		send_enabled: true,
 	// 		receive_enabled: true
 	// 	}.into())
