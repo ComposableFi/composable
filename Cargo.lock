@@ -4607,6 +4607,7 @@ name = "ibc-primitives"
 version = "0.1.0"
 dependencies = [
  "base58",
+ "common",
  "composable-traits",
  "frame-support",
  "hex",
@@ -8145,6 +8146,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "hex",
  "hex-literal",
  "ibc",
  "ibc-primitives",

@@ -394,6 +394,10 @@ pub mod pallet {
 			local_asset_id: Option<<T as DeFiComposableConfig>::MayBeAssetId>,
 			amount: <T as DeFiComposableConfig>::Balance,
 		},
+		/// Ibc transfer failed, received an acknowledgement error, tokens have been refunded
+		RecievedAcknowledgementError,
+		/// On recv packet was not processed successfully processes
+		OnRecvPacketError { msg: Vec<u8> },
 	}
 
 	/// Errors inform users that something went wrong.

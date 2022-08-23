@@ -43,7 +43,6 @@ composable-traits = { default-features = false, path = "../composable-traits" }
 ibc-primitives = { path = "primitives", default-features = false }
 pallet-ibc-ping = { path = "ping", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
-#transfer = { package = "pallet-ibc-transfer", path = "transfer", default-features = false }
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
@@ -60,6 +59,7 @@ default-features = false
 [dev-dependencies]
 assets-registry = { package = "pallet-assets-registry", path = "../assets-registry" }
 chrono = "0.4.19"
+hex = "0.4.3"
 currency-factory = { package = "pallet-currency-factory", path = "../currency-factory" }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 hex-literal = { version = "0.3.4" }
@@ -97,13 +97,12 @@ std = [
   'ibc-primitives/std',
   'balances/std',
   "pallet-ibc-ping/std",
-#  "transfer/std",
   "parachain-info/std",
   "sha2/std",
   "xcm/std",
   "assets/std",
   "primitives/std",
-  "serde_json/std",
+  "serde_json/std"
 ]
 
 runtime-benchmarks = [

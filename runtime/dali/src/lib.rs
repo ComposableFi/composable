@@ -1047,49 +1047,6 @@ parameter_types! {
 	pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK as u64;
 }
 
-#[derive(Clone)]
-pub struct IbcAccount(AccountId);
-
-impl sp_runtime::traits::IdentifyAccount for IbcAccount {
-	type AccountId = AccountId;
-	fn into_account(self) -> Self::AccountId {
-		self.0
-	}
-}
-
-impl TryFrom<pallet_ibc::Signer> for IbcAccount
-where
-	AccountId: From<[u8; 32]>,
-{
-	type Error = &'static str;
-
-	/// Convert a signer to an IBC account.
-	/// Only valid hex strings are supported for now.
-	fn try_from(signer: pallet_ibc::Signer) -> Result<Self, Self::Error> {
-		let acc_str = signer.as_ref();
-		if acc_str.starts_with("0x") {
-			match acc_str.strip_prefix("0x") {
-				Some(hex_string) => TryInto::<[u8; 32]>::try_into(
-					hex::decode(hex_string).map_err(|_| "Error decoding invalid hex string")?,
-				)
-				.map_err(|_| "Invalid account id hex string")
-				.map(|acc| Self(acc.into())),
-				_ => Err("Signer does not hold a valid hex string"),
-			}
-		}
-		// Do SS58 decoding instead
-		else {
-			let bytes = ibc_primitives::runtime_interface::ss58_to_account_id_32(acc_str)
-				.map_err(|_| "Invalid SS58 address")?;
-			Ok(Self(bytes.into()))
-		}
-	}
-}
-
-parameter_types! {
-	pub TransferPalletID: PalletId = PalletId(*b"transfer");
-}
-
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type Event = Event;
@@ -1099,10 +1056,9 @@ impl pallet_ibc::Config for Runtime {
 	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type MultiCurrency = Assets;
-	type AccountIdConversion = IbcAccount;
+	type AccountIdConversion = ibc_primitives::IbcAccount;
 	type AssetRegistry = AssetsRegistry;
 	type CurrencyFactory = CurrencyFactory;
-	// type PalletId = TransferPalletID;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
 	type AdminOrigin = EnsureRoot<AccountId>;
 }

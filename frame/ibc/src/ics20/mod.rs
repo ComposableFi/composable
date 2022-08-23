@@ -1,17 +1,19 @@
 pub mod context;
 
 use crate::{ChannelIds, Config, Event, Pallet};
+use alloc::{
+	format,
+	string::{String, ToString},
+};
 use composable_traits::{
 	defi::DeFiComposableConfig,
 	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
 };
-use alloc::string::{ToString, String};
-use alloc::format;
 use core::{fmt::Formatter, str::FromStr};
 use frame_support::weights::Weight;
 use ibc::{
 	applications::transfer::{
-		acknowledgement::{Acknowledgement as Ics20Acknowledgement, ACK_ERR_STR},
+		acknowledgement::{Acknowledgement as Ics20Acknowledgement, ACK_ERR_STR, ACK_SUCCESS_B64},
 		is_receiver_chain_source,
 		packet::PacketData,
 		PrefixedCoin, PrefixedDenom, TracePrefix, VERSION,
@@ -31,7 +33,7 @@ use ibc::{
 };
 use ibc_primitives::{CallbackWeight, IbcTrait};
 use primitives::currency::CurrencyId;
-use sp_std::{marker::PhantomData, boxed::Box};
+use sp_std::{boxed::Box, marker::PhantomData};
 
 #[derive(Clone)]
 pub struct IbcCallbackHandler<T: Config>(PhantomData<T>);
@@ -162,31 +164,47 @@ where
 		packet: &Packet,
 		_relayer: &Signer,
 	) -> OnRecvPacketAck {
-		let ack = if Pallet::<T>::on_receive_packet(output, packet).is_err() {
-			ACK_ERR_STR.to_string().as_bytes().to_vec()
-		} else {
-			let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
-				.expect("packet data should deserialize successfully");
-			let denom = full_ibc_denom(packet, packet_data.token.clone());
-			let prefixed_denom = PrefixedDenom::from_str(&denom).expect("Should not fail");
-			let token = PrefixedCoin { denom: prefixed_denom, amount: packet_data.token.amount };
-			Pallet::<T>::deposit_event(Event::<T>::TokenTransferCompleted {
-				from: packet_data.sender.to_string().as_bytes().to_vec(),
-				to: packet_data.receiver.to_string().as_bytes().to_vec(),
-				ibc_denom: denom.as_bytes().to_vec(),
-				local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(denom, token),
-				amount: packet_data.token.amount.as_u256().as_u128().into(),
-			});
-			Ics20Acknowledgement::success().as_ref().to_vec()
-		};
-		let packet = packet.clone();
-		OnRecvPacketAck::Successful(
-			Box::new(Ics20Acknowledgement::success()),
-			Box::new(move |_ctx| {
-				Pallet::<T>::write_acknowlegdement(&packet, ack)
+		match Pallet::<T>::on_receive_packet(output, packet) {
+			Err(err) => {
+				Pallet::<T>::deposit_event(Event::<T>::OnRecvPacketError {
+					msg: format!("{:?}", err).as_bytes().to_vec(),
+				});
+				let packet = packet.clone();
+				return OnRecvPacketAck::Nil(Box::new(move |_ctx| {
+					Pallet::<T>::write_acknowlegdement(
+						&packet,
+						format!("{}: {:?}", ACK_ERR_STR, err).as_bytes().to_vec(),
+					)
 					.map_err(|e| format!("[on_recv_packet] {:#?}", e))
-			}),
-		)
+				}))
+			},
+			Ok(_) => {
+				let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
+					.expect("packet data should deserialize successfully");
+				let denom = full_ibc_denom(packet, packet_data.token.clone());
+				let prefixed_denom = PrefixedDenom::from_str(&denom).expect("Should not fail");
+				let token =
+					PrefixedCoin { denom: prefixed_denom, amount: packet_data.token.amount };
+				Pallet::<T>::deposit_event(Event::<T>::TokenTransferCompleted {
+					from: packet_data.sender.to_string().as_bytes().to_vec(),
+					to: packet_data.receiver.to_string().as_bytes().to_vec(),
+					ibc_denom: denom.as_bytes().to_vec(),
+					local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(denom, token),
+					amount: packet_data.token.amount.as_u256().as_u128().into(),
+				});
+				let packet = packet.clone();
+				return OnRecvPacketAck::Successful(
+					Box::new(Ics20Acknowledgement::success()),
+					Box::new(move |_ctx| {
+						T::IbcHandler::write_acknowlegdement(
+							&packet,
+							Ics20Acknowledgement::success().as_ref().to_vec(),
+						)
+						.map_err(|e| format!("[on_recv_packet] {:#?}", e))
+					}),
+				)
+			},
+		};
 	}
 
 	fn on_acknowledgement_packet(
@@ -202,16 +220,22 @@ where
 			})?;
 		Pallet::<T>::on_ack_packet(output, packet, acknowledgement)
 			.map(|_| {
-				Pallet::<T>::deposit_event(Event::<T>::TokenTransferCompleted {
-					from: packet_data.sender.to_string().as_bytes().to_vec(),
-					to: packet_data.receiver.to_string().as_bytes().to_vec(),
-					ibc_denom: packet_data.token.denom.to_string().as_bytes().to_vec(),
-					local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(
-						packet_data.token.denom.to_string(),
-						packet_data.token.clone(),
-					),
-					amount: packet_data.token.amount.as_u256().as_u128().into(),
-				})
+				let ack = String::from_utf8(acknowledgement.as_ref().to_vec())
+					.expect("Should be valid acknowledgement");
+				if ack.as_bytes() == ACK_SUCCESS_B64 {
+					Pallet::<T>::deposit_event(Event::<T>::TokenTransferCompleted {
+						from: packet_data.sender.to_string().as_bytes().to_vec(),
+						to: packet_data.receiver.to_string().as_bytes().to_vec(),
+						ibc_denom: packet_data.token.denom.to_string().as_bytes().to_vec(),
+						local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(
+							packet_data.token.denom.to_string(),
+							packet_data.token.clone(),
+						),
+						amount: packet_data.token.amount.as_u256().as_u128().into(),
+					})
+				} else {
+					Pallet::<T>::deposit_event(Event::<T>::RecievedAcknowledgementError)
+				}
 			})
 			.map_err(|e| {
 				Ics04Error::app_module(format!(

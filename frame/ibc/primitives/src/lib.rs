@@ -4,6 +4,7 @@ extern crate alloc;
 
 use alloc::string::{String, ToString};
 use codec::{Decode, Encode};
+use common::AccountId;
 use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_support::{weights::Weight, RuntimeDebug};
 use ibc::{
@@ -25,6 +26,7 @@ use ibc::{
 	Height,
 };
 use scale_info::{prelude::format, TypeInfo};
+use sp_runtime::traits::IdentifyAccount;
 #[cfg(not(feature = "std"))]
 use sp_std::vec::Vec;
 use sp_std::{prelude::*, str::FromStr};
@@ -500,4 +502,43 @@ pub fn get_channel_escrow_address(
 	let mut hex_string = hex::encode_upper(hash);
 	hex_string.insert_str(0, "0x");
 	hex_string.parse::<Signer>().map_err(Ics20Error::signer)
+}
+
+#[derive(Clone)]
+pub struct IbcAccount(AccountId);
+
+impl IdentifyAccount for IbcAccount {
+	type AccountId = AccountId;
+	fn into_account(self) -> Self::AccountId {
+		self.0
+	}
+}
+
+impl TryFrom<Signer> for IbcAccount
+where
+	AccountId: From<[u8; 32]>,
+{
+	type Error = &'static str;
+
+	/// Convert a signer to an IBC account.
+	/// Only valid hex strings are supported for now.
+	fn try_from(signer: ibc::signer::Signer) -> Result<Self, Self::Error> {
+		let acc_str = signer.as_ref();
+		if acc_str.starts_with("0x") {
+			match acc_str.strip_prefix("0x") {
+				Some(hex_string) => TryInto::<[u8; 32]>::try_into(
+					hex::decode(hex_string).map_err(|_| "Error decoding invalid hex string")?,
+				)
+				.map_err(|_| "Invalid account id hex string")
+				.map(|acc| Self(acc.into())),
+				_ => Err("Signer does not hold a valid hex string"),
+			}
+		}
+		// Do SS58 decoding instead
+		else {
+			let bytes = runtime_interface::ss58_to_account_id_32(acc_str)
+				.map_err(|_| "Invalid SS58 address")?;
+			Ok(Self(bytes.into()))
+		}
+	}
 }
