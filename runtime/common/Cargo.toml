@@ -52,7 +52,10 @@ sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate
 
 [features]
 default = ["std"]
-runtime-benchmarks = []
+runtime-benchmarks = [
+  "collective/runtime-benchmarks",
+  "xcm-builder/runtime-benchmarks",
+]
 std = [
   "codec/std",
   "orml-traits/std",

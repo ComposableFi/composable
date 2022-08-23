@@ -4,12 +4,24 @@
 use super::super::*;
 use crate::{
 	benchmarks::tendermint_benchmark_utils::*, host_functions::HostFunctions,
-	ics23::client_states::ClientStates, Any, Config,
+	ics20::IbcCallbackHandler, ics23::client_states::ClientStates, Any, Config,
+};
+use composable_traits::{
+	currency::{CurrencyFactory, RangeId},
+	defi::DeFiComposableConfig,
+	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
 };
 use core::str::FromStr;
-use frame_benchmarking::{benchmarks, whitelisted_caller};
+use frame_benchmarking::{benchmarks, whitelisted_caller, Zero};
+use frame_support::traits::fungibles::{Inspect, Mutate};
 use frame_system::RawOrigin;
+use ibc_primitives::IbcTrait;
+use sp_runtime::traits::IdentifyAccount;
+
 use ibc::{
+	applications::transfer::{
+		acknowledgement::ACK_ERR_STR, packet::PacketData, Amount, Coin, PrefixedDenom, VERSION,
+	},
 	core::{
 		ics02_client::{
 			client_consensus::AnyConsensusState,
@@ -34,11 +46,11 @@ use ibc::{
 			version::Version as ConnVersion,
 		},
 		ics04_channel::{
-			channel::{ChannelEnd, State as ChannelState},
+			channel::{self, ChannelEnd, Order, State as ChannelState},
 			context::{ChannelKeeper, ChannelReader},
 			error::Error as Ics04Error,
 			msgs::{
-				acknowledgement::TYPE_URL as ACK_PACKET_TYPE_URL,
+				acknowledgement::{Acknowledgement, TYPE_URL as ACK_PACKET_TYPE_URL},
 				chan_close_confirm::TYPE_URL as CHAN_CLOSE_CONFIRM_TYPE_URL,
 				chan_close_init::TYPE_URL as CHAN_CLOSE_INIT_TYPE_URL,
 				chan_open_ack::TYPE_URL as CHAN_OPEN_ACK_TYPE_URL,
@@ -48,16 +60,29 @@ use ibc::{
 				recv_packet::TYPE_URL as RECV_PACKET_TYPE_URL,
 				timeout::TYPE_URL as TIMEOUT_TYPE_URL,
 			},
-			packet::Receipt,
+			packet::{Packet, Receipt},
+			Version,
 		},
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
+		ics26_routing::context::{AsAnyMut, Module, OnRecvPacketAck},
 	},
+	handler::HandlerOutputBuilder,
 	signer::Signer,
+	timestamp::Timestamp,
 };
+use ibc_primitives::{
+	get_channel_escrow_address, ibc_denom_to_foreign_asset_id, OpenChannelParams,
+};
+use primitives::currency::CurrencyId;
 use scale_info::prelude::string::ToString;
+use sp_core::crypto::AccountId32;
 use sp_std::vec;
 use tendermint_proto::Protobuf;
+
+fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
+	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
+}
 
 const TIMESTAMP: u64 = 1650894363;
 
@@ -65,7 +90,29 @@ benchmarks! {
 	where_clause {
 		where u32: From<<T as frame_system::Config>::BlockNumber>,
 				T: Send + Sync + pallet_timestamp::Config<Moment = u64> + parachain_info::Config + Config,
+		CurrencyId: From<<T as DeFiComposableConfig>::MayBeAssetId>,
+		AccountId32: From<T::AccountId>,
+		<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
+		<T as DeFiComposableConfig>::MayBeAssetId:
+			From<<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
+		<T as DeFiComposableConfig>::MayBeAssetId:
+			From<<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
+		<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
+			From<<T as DeFiComposableConfig>::MayBeAssetId>,
+		<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
+			From<<T as DeFiComposableConfig>::MayBeAssetId>,
+		<T::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation:
+			From<XcmAssetLocation>,
+		<T::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation:
+			From<XcmAssetLocation>,
+		<T as DeFiComposableConfig>::MayBeAssetId: From<<T as assets::Config>::AssetId>,
 	}
+
+	// Run these benchmarks via
+	// ```bash
+	// cargo +nightly test -p pallet-ibc  --features=runtime-benchmarks
+	// ```
+	impl_benchmark_test_suite!(Pallet, crate::mock::new_test_ext(), crate::mock::Test);
 
 	// update_client
 	update_tendermint_client {
@@ -800,412 +847,411 @@ benchmarks! {
 
 	// TODO: Fix ICS20 Bencmarks
 
-	// transfer {
-	// 	let caller: T::AccountId = whitelisted_caller();
-	// 	let client_id = <T as Config>::IbcHandler::create_client().unwrap();
-	// 	let connection_id = ConnectionId::new(0);
-	// 	<T as Config>::IbcHandler::create_connection(client_id, connection_id.clone()).unwrap();
-	// 	let port_id = PortId::transfer();
-	// 	let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
-	// 	let channel_end = ChannelEnd::new(
-	// 		State::Init,
-	// 		Order::Unordered,
-	// 		counterparty,
-	// 		vec![connection_id],
-	// 		Version::new(VERSION.to_string()),
-	// 	);
+	transfer {
+		let caller: T::AccountId = whitelisted_caller();
+		let client_id = Pallet::<T>::create_client().unwrap();
+		let connection_id = ConnectionId::new(0);
+		Pallet::<T>::create_connection(client_id, connection_id.clone()).unwrap();
+		let port_id = PortId::transfer();
+		let counterparty = channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
+		let channel_end = ChannelEnd::new(
+			channel::State::Init,
+			Order::Unordered,
+			counterparty,
+			vec![connection_id],
+			Version::new(VERSION.to_string()),
+		);
 
-	// 	let balance = 100000 * CurrencyId::milli::<u128>();
-	// 	let channel_id = <T as Config>::IbcHandler::open_channel(port_id.clone(), channel_end).unwrap();
-	// 	let denom = "transfer/channel-15/uatom";
-	// 	let foreign_asset_id = ibc_denom_to_foreign_asset_id(denom);
-	// 	let asset_id = <T as Config>::CurrencyFactory::create(
-	// 		RangeId::IBC_ASSETS,
-	// 		<T as DeFiComposableConfig>::Balance::zero(),
-	// 	).unwrap();
-	// 	<T as Config>::AssetRegistry::set_reserve_location(
-	// 		asset_id.into(),
-	// 		foreign_asset_id.into(),
-	// 		None,
-	// 		None,
-	// 	).unwrap();
-	// 	<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
-	// 		asset_id.into(),
-	// 		&caller,
-	// 		balance.into(),
-	// 	).unwrap();
-
-
-	// 	let transfer_params = TransferParams {
-	// 		to:  "bob".to_string().as_bytes().to_vec(),
-	// 		source_channel: channel_id.to_string().as_bytes().to_vec(),
-	// 		timeout_timestamp_offset: 1690894363,
-	// 		timeout_height_offset: 2000,
-	// 		revision_number: None
-	// 	};
-
-	// 	Pallet::<T>::resgister_asset_id(asset_id.into(), denom.as_bytes().to_vec());
-	// 	<Params<T>>::put(PalletParams {
-	// 		send_enabled: true,
-	// 		receive_enabled: true
-	// 	});
-
-	// 	let amt = 1000 * CurrencyId::milli::<u128>();
-
-	// }:_(RawOrigin::Signed(caller.clone()), transfer_params, asset_id.into(), amt.into())
-	// verify {
-	// 	assert_eq!(<<T as Config>::MultiCurrency as Inspect<T::AccountId>>::balance(
-	// 		asset_id.into(),
-	// 		&caller
-	// 	), (balance - amt).into());
-	// }
-
-	// open_channel {
-	// 	let client_id = <T as Config>::IbcHandler::create_client().unwrap();
-	// 	let connection_id = ConnectionId::new(0);
-	// 	<T as Config>::IbcHandler::create_connection(client_id, connection_id.clone()).unwrap();
-	// 	let port_id = PortId::transfer();
-	// 	let open_channel_params = OpenChannelParams {
-	// 		connection_id: connection_id.as_bytes().to_vec(),
-	// 		order: 1,
-	// 		counterparty_port_id: port_id.as_bytes().to_vec(),
-	// 		version: vec![]
-	// 	};
-	// }:_(RawOrigin::Root, open_channel_params)
-	// verify {
-	// 	assert_last_event::<T>(Event::<T>::ChannelOpened {
-	// 		channel_id: ChannelId::new(0).to_string().as_bytes().to_vec(),
-	// 		port_id: port_id.as_bytes().to_vec()
-	// 	}.into())
-	// }
-
-	// set_pallet_params {
-	// 	let pallet_params = PalletParams {
-	// 		send_enabled: true,
-	// 		receive_enabled: true
-	// 	};
-
-	// }:_(RawOrigin::Root, pallet_params)
-	// verify {
-	// 	assert_last_event::<T>(Event::<T>::ParamsUpdated {
-	// 		send_enabled: true,
-	// 		receive_enabled: true
-	// 	}.into())
-	// }
-
-	// on_chan_open_init {
-	// 	let mut output = HandlerOutputBuilder::new();
-	// 	let port_id = PortId::transfer();
-	// 	let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
-	// 	let connection_hops = vec![ConnectionId::new(0)];
-	// 	let version = Version::new(VERSION.to_string());
-	// 	let order = Order::Unordered;
-	// 	let channel_id = ChannelId::new(0);
-	// 	let mut handler = IbcCallbackHandler::<T>::default();
-	// }:{
-	// 	handler.on_chan_open_init(&mut output, order, &connection_hops, &port_id, &channel_id, &counterparty, &version).unwrap();
-	// }
-
-	// on_chan_open_try {
-	// 	let mut output = HandlerOutputBuilder::new();
-	// 	let port_id = PortId::transfer();
-	// 	let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
-	// 	let connection_hops = vec![ConnectionId::new(0)];
-	// 	let version = Version::new(VERSION.to_string());
-	// 	let order = Order::Unordered;
-	// 	let channel_id = ChannelId::new(0);
-	// 	let mut handler = IbcCallbackHandler::<T>::default();
-	// }:{
-	// 	handler.on_chan_open_try(&mut output, order, &connection_hops, &port_id, &channel_id, &counterparty, &version, &version).unwrap();
-	// }
-
-	// on_chan_open_ack {
-	// 	let mut output = HandlerOutputBuilder::new();
-	// 	let port_id = PortId::transfer();
-	// 	let version = Version::new(VERSION.to_string());
-	// 	let channel_id = ChannelId::new(0);
-	// 	let mut handler = IbcCallbackHandler::<T>::default();
-	// }:{
-	// 	handler.on_chan_open_ack(&mut output, &port_id, &channel_id, &version).unwrap();
-	// }
-	// verify {
-	// 	assert_eq!(ChannelIds::<T>::get().len(), 1)
-	// }
-
-	// on_chan_open_confirm {
-	// 	let mut output = HandlerOutputBuilder::new();
-	// 	let port_id = PortId::transfer();
-	// 	let channel_id = ChannelId::new(0);
-	// 	let mut handler = IbcCallbackHandler::<T>::default();
-	// }:{
-	// 	handler.on_chan_open_confirm(&mut output, &port_id, &channel_id).unwrap();
-	// }
-	// verify {
-	// 	assert_eq!(ChannelIds::<T>::get().len(), 1)
-	// }
-
-	// on_chan_close_init {
-	// 	let mut output = HandlerOutputBuilder::new();
-	// 	let port_id = PortId::transfer();
-	// 	let channel_id = ChannelId::new(0);
-	// 	let channel_ids = vec![channel_id.to_string().as_bytes().to_vec()];
-	// 	ChannelIds::<T>::put(channel_ids);
-	// 	let mut handler = IbcCallbackHandler::<T>::default();
-	// }:{
-	// 	handler.on_chan_close_init(&mut output, &port_id, &channel_id).unwrap();
-	// }
-	// verify {
-	// 	assert_eq!(ChannelIds::<T>::get().len(), 0)
-	// }
-
-	// on_chan_close_confirm {
-	// 	let mut output = HandlerOutputBuilder::new();
-	// 	let port_id = PortId::transfer();
-	// 	let channel_id = ChannelId::new(0);
-	// 	let channel_ids = vec![channel_id.to_string().as_bytes().to_vec()];
-	// 	ChannelIds::<T>::put(channel_ids);
-	// 	let mut handler = IbcCallbackHandler::<T>::default();
-	// }:{
-	// 	handler.on_chan_close_confirm(&mut output, &port_id, &channel_id).unwrap();
-	// }
-	// verify {
-	// 	assert_eq!(ChannelIds::<T>::get().len(), 0)
-	// }
-
-	// on_recv_packet {
-	// 	let caller: T::AccountId = whitelisted_caller();
-	// 	let client_id = <T as Config>::IbcHandler::create_client().unwrap();
-	// 	let connection_id = ConnectionId::new(0);
-	// 	<T as Config>::IbcHandler::create_connection(client_id, connection_id.clone()).unwrap();
-	// 	let port_id = PortId::transfer();
-	// 	let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
-	// 	let channel_end = ChannelEnd::new(
-	// 		State::Init,
-	// 		Order::Unordered,
-	// 		counterparty,
-	// 		vec![connection_id],
-	// 		Version::new(VERSION.to_string()),
-	// 	);
+		let balance = 100000 * CurrencyId::milli::<u128>();
+		let channel_id = Pallet::<T>::open_channel(port_id.clone(), channel_end).unwrap();
+		let denom = "transfer/channel-15/uatom";
+		let foreign_asset_id = ibc_denom_to_foreign_asset_id(denom);
+		let asset_id = <T as Config>::CurrencyFactory::create(
+			RangeId::IBC_ASSETS,
+			<T as DeFiComposableConfig>::Balance::zero(),
+		).unwrap();
+		<T as Config>::AssetRegistry::set_reserve_location(
+			asset_id.into(),
+			foreign_asset_id.into(),
+			None,
+			None,
+		).unwrap();
+		<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
+			asset_id.into(),
+			&caller,
+			balance.into(),
+		).unwrap();
 
 
-	// 	let balance = 100000 * CurrencyId::milli::<u128>();
-	// 	let channel_id = <T as Config>::IbcHandler::open_channel(port_id.clone(), channel_end).unwrap();
-	// 	let denom = "transfer/channel-1/PICA";
-	// 	let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
-	// 	let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
-	// 	let channel_escrow_address: T::AccountId = channel_escrow_address.into_account();
+		let transfer_params = TransferParams {
+			to:  MultiAddress::Raw("bob".to_string().as_bytes().to_vec()),
+			source_channel: channel_id.sequence(),
+			timeout_timestamp_offset: 1690894363,
+			timeout_height_offset: 2000,
+		};
 
-	// 	<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
-	// 		CurrencyId::PICA.into(),
-	// 		&channel_escrow_address,
-	// 		balance.into(),
-	// 	).unwrap();
+		Pallet::<T>::register_asset_id(asset_id.into(), denom.as_bytes().to_vec());
+		<Params<T>>::put(PalletParams {
+			send_enabled: true,
+			receive_enabled: true
+		});
 
+		let amt = 1000 * CurrencyId::milli::<u128>();
 
-	// 	<Params<T>>::put(PalletParams {
-	// 		send_enabled: true,
-	// 		receive_enabled: true
-	// 	});
+	}:_(RawOrigin::Signed(caller.clone()), transfer_params, asset_id.into(), amt.into())
+	verify {
+		assert_eq!(<<T as Config>::MultiCurrency as Inspect<T::AccountId>>::balance(
+			asset_id.into(),
+			&caller
+		), (balance - amt).into());
+	}
 
-	// 	let raw_user: AccountId32 =  caller.clone().into();
-	// 	let raw_user: &[u8] = raw_user.as_ref();
-	// 	let mut hex_string = hex::encode_upper(raw_user.to_vec());
-	// 	hex_string.insert_str(0, "0x");
-	// 	let prefixed_denom = PrefixedDenom::from_str(denom).unwrap();
-	// 	let amt = 1000 * CurrencyId::milli::<u128>();
-	// 	let coin = Coin {
-	// 		denom: prefixed_denom,
-	// 		amount: Amount::from_str(&format!("{:?}", amt)).unwrap()
-	// 	};
-	// 	let packet_data = PacketData {
-	// 		token: coin,
-	// 		sender: Signer::from_str("alice").unwrap(),
-	// 		receiver: Signer::from_str(&hex_string).unwrap(),
-	// 	};
+	open_transfer_channel {
+		let client_id = Pallet::<T>::create_client().unwrap();
+		let connection_id = ConnectionId::new(0);
+		Pallet::<T>::create_connection(client_id, connection_id.clone()).unwrap();
+		let port_id = PortId::transfer();
+		let open_channel_params = OpenChannelParams {
+			connection_id: connection_id.as_bytes().to_vec(),
+			order: 1,
+			counterparty_port_id: port_id.as_bytes().to_vec(),
+			version: vec![]
+		};
+	}:_(RawOrigin::Root, open_channel_params)
+	verify {
+		assert_last_event::<T>(Event::<T>::ChannelOpened {
+			channel_id: ChannelId::new(0).to_string().as_bytes().to_vec(),
+			port_id: port_id.as_bytes().to_vec()
+		}.into())
+	}
 
-	// 	let data = serde_json::to_vec(&packet_data).unwrap();
-	// 	let packet = Packet {
-	// 		sequence: 0u64.into(),
-	// 		source_port: port_id.clone(),
-	// 		source_channel: ChannelId::new(1),
-	// 		destination_port: port_id,
-	// 		destination_channel: ChannelId::new(0),
-	// 		data,
-	// 		timeout_height: Height::new(2000, 5),
-	// 		timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
-	// 			.unwrap(),
-	// 	 };
-	// 	 let mut handler = IbcCallbackHandler::<T>::default();
-	// 	 let mut output = HandlerOutputBuilder::new();
-	// 	 let signer = Signer::from_str("relayer").unwrap();
-	// }:{
+	set_params {
+		let pallet_params = PalletParams {
+			send_enabled: true,
+			receive_enabled: true
+		};
 
-	// 	let res = handler.on_recv_packet(&mut output, &packet, &signer);
-	// 	match res {
-	// 		OnRecvPacketAck::Successful(_, write_fn) => {
-	// 			write_fn(handler.as_any_mut()).unwrap()
-	// 		}
-	// 		_ => panic!("Expected successful execution")
-	// 	}
+	}:_(RawOrigin::Root, pallet_params)
+	verify {
+		assert_last_event::<T>(Event::<T>::ParamsUpdated {
+			send_enabled: true,
+			receive_enabled: true
+		}.into())
+	}
 
-	//  }
-	// verify {
-	// 	assert_eq!(<<T as Config>::MultiCurrency as Inspect<T::AccountId>>::balance(
-	// 		CurrencyId::PICA.into(),
-	// 		&caller
-	// 	), amt.into());
-	// }
+	on_chan_open_init {
+		let mut output = HandlerOutputBuilder::new();
+		let port_id = PortId::transfer();
+		let counterparty = channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
+		let connection_hops = vec![ConnectionId::new(0)];
+		let version = Version::new(VERSION.to_string());
+		let order = Order::Unordered;
+		let channel_id = ChannelId::new(0);
+		let mut handler = IbcCallbackHandler::<T>::default();
+	}:{
+		handler.on_chan_open_init(&mut output, order, &connection_hops, &port_id, &channel_id, &counterparty, &version).unwrap();
+	}
 
-	// on_acknowledgement_packet {
-	// 	let caller: T::AccountId = whitelisted_caller();
-	// 	let client_id = <T as Config>::IbcHandler::create_client().unwrap();
-	// 	let connection_id = ConnectionId::new(0);
-	// 	<T as Config>::IbcHandler::create_connection(client_id, connection_id.clone()).unwrap();
-	// 	let port_id = PortId::transfer();
-	// 	let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
-	// 	let channel_end = ChannelEnd::new(
-	// 		State::Init,
-	// 		Order::Unordered,
-	// 		counterparty,
-	// 		vec![connection_id],
-	// 		Version::new(VERSION.to_string()),
-	// 	);
+	on_chan_open_try {
+		let mut output = HandlerOutputBuilder::new();
+		let port_id = PortId::transfer();
+		let counterparty = channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
+		let connection_hops = vec![ConnectionId::new(0)];
+		let version = Version::new(VERSION.to_string());
+		let order = Order::Unordered;
+		let channel_id = ChannelId::new(0);
+		let mut handler = IbcCallbackHandler::<T>::default();
+	}:{
+		handler.on_chan_open_try(&mut output, order, &connection_hops, &port_id, &channel_id, &counterparty, &version, &version).unwrap();
+	}
 
+	on_chan_open_ack {
+		let mut output = HandlerOutputBuilder::new();
+		let port_id = PortId::transfer();
+		let version = Version::new(VERSION.to_string());
+		let channel_id = ChannelId::new(0);
+		let mut handler = IbcCallbackHandler::<T>::default();
+	}:{
+		handler.on_chan_open_ack(&mut output, &port_id, &channel_id, &version).unwrap();
+	}
+	verify {
+		assert_eq!(ChannelIds::<T>::get().len(), 1)
+	}
 
-	// 	let balance = 100000 * CurrencyId::milli::<u128>();
-	// 	let channel_id = <T as Config>::IbcHandler::open_channel(port_id.clone(), channel_end).unwrap();
-	// 	let denom = "PICA";
-	// 	let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
-	// 	let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
-	// 	let channel_escrow_address: T::AccountId = channel_escrow_address.into_account();
+	on_chan_open_confirm {
+		let mut output = HandlerOutputBuilder::new();
+		let port_id = PortId::transfer();
+		let channel_id = ChannelId::new(0);
+		let mut handler = IbcCallbackHandler::<T>::default();
+	}:{
+		handler.on_chan_open_confirm(&mut output, &port_id, &channel_id).unwrap();
+	}
+	verify {
+		assert_eq!(ChannelIds::<T>::get().len(), 1)
+	}
 
-	// 	<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
-	// 		CurrencyId::PICA.into(),
-	// 		&channel_escrow_address,
-	// 		balance.into(),
-	// 	).unwrap();
+	on_chan_close_init {
+		let mut output = HandlerOutputBuilder::new();
+		let port_id = PortId::transfer();
+		let channel_id = ChannelId::new(0);
+		let channel_ids = vec![channel_id.to_string().as_bytes().to_vec()];
+		ChannelIds::<T>::put(channel_ids);
+		let mut handler = IbcCallbackHandler::<T>::default();
+	}:{
+		handler.on_chan_close_init(&mut output, &port_id, &channel_id).unwrap();
+	}
+	verify {
+		assert_eq!(ChannelIds::<T>::get().len(), 0)
+	}
 
+	on_chan_close_confirm {
+		let mut output = HandlerOutputBuilder::new();
+		let port_id = PortId::transfer();
+		let channel_id = ChannelId::new(0);
+		let channel_ids = vec![channel_id.to_string().as_bytes().to_vec()];
+		ChannelIds::<T>::put(channel_ids);
+		let mut handler = IbcCallbackHandler::<T>::default();
+	}:{
+		handler.on_chan_close_confirm(&mut output, &port_id, &channel_id).unwrap();
+	}
+	verify {
+		assert_eq!(ChannelIds::<T>::get().len(), 0)
+	}
 
-	// 	<Params<T>>::put(PalletParams {
-	// 		send_enabled: true,
-	// 		receive_enabled: true
-	// 	});
-
-	// 	let raw_user: AccountId32 =  caller.clone().into();
-	// 	let raw_user: &[u8] = raw_user.as_ref();
-	// 	let mut hex_string = hex::encode_upper(raw_user.to_vec());
-	// 	hex_string.insert_str(0, "0x");
-	// 	let prefixed_denom = PrefixedDenom::from_str(denom).unwrap();
-	// 	let amt = 1000 * CurrencyId::milli::<u128>();
-	// 	let coin = Coin {
-	// 		denom: prefixed_denom,
-	// 		amount: Amount::from_str(&format!("{:?}", amt)).unwrap()
-	// 	};
-	// 	let packet_data = PacketData {
-	// 		token: coin,
-	// 		sender: Signer::from_str(&hex_string).unwrap(),
-	// 		receiver: Signer::from_str("alice").unwrap(),
-	// 	};
-
-	// 	let data = serde_json::to_vec(&packet_data).unwrap();
-	// 	let packet = Packet {
-	// 		sequence: 0u64.into(),
-	// 		source_port: port_id.clone(),
-	// 		source_channel: ChannelId::new(0),
-	// 		destination_port: port_id,
-	// 		destination_channel: ChannelId::new(1),
-	// 		data,
-	// 		timeout_height: Height::new(2000, 5),
-	// 		timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
-	// 			.unwrap(),
-	// 	 };
-	// 	 let mut handler = IbcCallbackHandler::<T>::default();
-	// 	 let mut output = HandlerOutputBuilder::new();
-	// 	 let signer = Signer::from_str("relayer").unwrap();
-	// 	 let ack: Acknowledgement = ACK_ERR_STR.to_string().as_bytes().to_vec().into();
-	// }:{
-	//    handler.on_acknowledgement_packet(&mut output, &packet, &ack, &signer).unwrap();
-	// }
-	// verify {
-	// 	assert_eq!(<<T as Config>::MultiCurrency as Inspect<T::AccountId>>::balance(
-	// 		CurrencyId::PICA.into(),
-	// 		&caller
-	// 	), amt.into());
-	// }
-
-	// on_timeout_packet {
-	// 	let caller: T::AccountId = whitelisted_caller();
-	// 	let client_id = <T as Config>::IbcHandler::create_client().unwrap();
-	// 	let connection_id = ConnectionId::new(0);
-	// 	<T as Config>::IbcHandler::create_connection(client_id, connection_id.clone()).unwrap();
-	// 	let port_id = PortId::transfer();
-	// 	let counterparty = Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
-	// 	let channel_end = ChannelEnd::new(
-	// 		State::Init,
-	// 		Order::Unordered,
-	// 		counterparty,
-	// 		vec![connection_id],
-	// 		Version::new(VERSION.to_string()),
-	// 	);
+	on_recv_packet {
+		let caller: T::AccountId = whitelisted_caller();
+		let client_id = Pallet::<T>::create_client().unwrap();
+		let connection_id = ConnectionId::new(0);
+		Pallet::<T>::create_connection(client_id, connection_id.clone()).unwrap();
+		let port_id = PortId::transfer();
+		let counterparty = channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
+		let channel_end = channel::ChannelEnd::new(
+			channel::State::Init,
+			Order::Unordered,
+			counterparty,
+			vec![connection_id],
+			Version::new(VERSION.to_string()),
+		);
 
 
-	// 	let balance = 100000 * CurrencyId::milli::<u128>();
-	// 	let channel_id = <T as Config>::IbcHandler::open_channel(port_id.clone(), channel_end).unwrap();
-	// 	let denom = "PICA";
-	// 	let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
-	// 	let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
-	// 	let channel_escrow_address: T::AccountId = channel_escrow_address.into_account();
+		let balance = 100000 * CurrencyId::milli::<u128>();
+		let channel_id = Pallet::<T>::open_channel(port_id.clone(), channel_end).unwrap();
+		let denom = "transfer/channel-1/PICA";
+		let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
+		let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
+		let channel_escrow_address: T::AccountId = channel_escrow_address.into_account();
 
-	// 	<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
-	// 		CurrencyId::PICA.into(),
-	// 		&channel_escrow_address,
-	// 		balance.into(),
-	// 	).unwrap();
+		<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
+			CurrencyId::PICA.into(),
+			&channel_escrow_address,
+			balance.into(),
+		).unwrap();
 
 
-	// 	<Params<T>>::put(PalletParams {
-	// 		send_enabled: true,
-	// 		receive_enabled: true
-	// 	});
+		<Params<T>>::put(PalletParams {
+			send_enabled: true,
+			receive_enabled: true
+		});
 
-	// 	let raw_user: AccountId32 =  caller.clone().into();
-	// 	let raw_user: &[u8] = raw_user.as_ref();
-	// 	let mut hex_string = hex::encode_upper(raw_user.to_vec());
-	// 	hex_string.insert_str(0, "0x");
-	// 	let prefixed_denom = PrefixedDenom::from_str(denom).unwrap();
-	// 	let amt = 1000 * CurrencyId::milli::<u128>();
-	// 	let coin = Coin {
-	// 		denom: prefixed_denom,
-	// 		amount: Amount::from_str(&format!("{:?}", amt)).unwrap()
-	// 	};
-	// 	let packet_data = PacketData {
-	// 		token: coin,
-	// 		sender: Signer::from_str(&hex_string).unwrap(),
-	// 		receiver: Signer::from_str("alice").unwrap(),
-	// 	};
+		let raw_user: AccountId32 =  caller.clone().into();
+		let raw_user: &[u8] = raw_user.as_ref();
+		let mut hex_string = hex::encode_upper(raw_user.to_vec());
+		hex_string.insert_str(0, "0x");
+		let prefixed_denom = PrefixedDenom::from_str(denom).unwrap();
+		let amt = 1000 * CurrencyId::milli::<u128>();
+		let coin = Coin {
+			denom: prefixed_denom,
+			amount: Amount::from_str(&format!("{:?}", amt)).unwrap()
+		};
+		let packet_data = PacketData {
+			token: coin,
+			sender: Signer::from_str("alice").unwrap(),
+			receiver: Signer::from_str(&hex_string).unwrap(),
+		};
 
-	// 	let data = serde_json::to_vec(&packet_data).unwrap();
-	// 	let packet = Packet {
-	// 		sequence: 0u64.into(),
-	// 		source_port: port_id.clone(),
-	// 		source_channel: ChannelId::new(0),
-	// 		destination_port: port_id,
-	// 		destination_channel: ChannelId::new(1),
-	// 		data,
-	// 		timeout_height: Height::new(2000, 5),
-	// 		timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
-	// 			.unwrap(),
-	// 	 };
-	// 	 let mut handler = IbcCallbackHandler::<T>::default();
-	// 	 let mut output = HandlerOutputBuilder::new();
-	// 	 let signer = Signer::from_str("relayer").unwrap();
-	// }:{
-	// 	handler.on_timeout_packet(&mut output, &packet, &signer).unwrap();
-	// }
-	// verify {
-	// 	assert_eq!(<<T as Config>::MultiCurrency as Inspect<T::AccountId>>::balance(
-	// 		CurrencyId::PICA.into(),
-	// 		&caller
-	// 	), amt.into());
-	// }
+		let data = serde_json::to_vec(&packet_data).unwrap();
+		let packet = Packet {
+			sequence: 0u64.into(),
+			source_port: port_id.clone(),
+			source_channel: ChannelId::new(1),
+			destination_port: port_id,
+			destination_channel: ChannelId::new(0),
+			data,
+			timeout_height: Height::new(2000, 5),
+			timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
+				.unwrap(),
+		 };
+		 let mut handler = IbcCallbackHandler::<T>::default();
+		 let mut output = HandlerOutputBuilder::new();
+		 let signer = Signer::from_str("relayer").unwrap();
+	}:{
+
+		let res = handler.on_recv_packet(&mut output, &packet, &signer);
+		match res {
+			OnRecvPacketAck::Successful(_, write_fn) => {
+				write_fn(handler.as_any_mut()).unwrap()
+			}
+			_ => panic!("Expected successful execution")
+		}
+
+	 }
+	verify {
+		assert_eq!(<<T as Config>::MultiCurrency as Inspect<T::AccountId>>::balance(
+			CurrencyId::PICA.into(),
+			&caller
+		), amt.into());
+	}
+
+	on_acknowledgement_packet {
+		let caller: T::AccountId = whitelisted_caller();
+		let client_id = Pallet::<T>::create_client().unwrap();
+		let connection_id = ConnectionId::new(0);
+		Pallet::<T>::create_connection(client_id, connection_id.clone()).unwrap();
+		let port_id = PortId::transfer();
+		let counterparty = channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
+		let channel_end = channel::ChannelEnd::new(
+			channel::State::Init,
+			Order::Unordered,
+			counterparty,
+			vec![connection_id],
+			Version::new(VERSION.to_string()),
+		);
+
+
+		let balance = 100000 * CurrencyId::milli::<u128>();
+		let channel_id = Pallet::<T>::open_channel(port_id.clone(), channel_end).unwrap();
+		let denom = "PICA";
+		let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
+		let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
+		let channel_escrow_address: T::AccountId = channel_escrow_address.into_account();
+
+		<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
+			CurrencyId::PICA.into(),
+			&channel_escrow_address,
+			balance.into(),
+		).unwrap();
+
+
+		<Params<T>>::put(PalletParams {
+			send_enabled: true,
+			receive_enabled: true
+		});
+
+		let raw_user: AccountId32 =  caller.clone().into();
+		let raw_user: &[u8] = raw_user.as_ref();
+		let mut hex_string = hex::encode_upper(raw_user.to_vec());
+		hex_string.insert_str(0, "0x");
+		let prefixed_denom = PrefixedDenom::from_str(denom).unwrap();
+		let amt = 1000 * CurrencyId::milli::<u128>();
+		let coin = Coin {
+			denom: prefixed_denom,
+			amount: Amount::from_str(&format!("{:?}", amt)).unwrap()
+		};
+		let packet_data = PacketData {
+			token: coin,
+			sender: Signer::from_str(&hex_string).unwrap(),
+			receiver: Signer::from_str("alice").unwrap(),
+		};
+
+		let data = serde_json::to_vec(&packet_data).unwrap();
+		let packet = Packet {
+			sequence: 0u64.into(),
+			source_port: port_id.clone(),
+			source_channel: ChannelId::new(0),
+			destination_port: port_id,
+			destination_channel: ChannelId::new(1),
+			data,
+			timeout_height: Height::new(2000, 5),
+			timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
+				.unwrap(),
+		 };
+		 let mut handler = IbcCallbackHandler::<T>::default();
+		 let mut output = HandlerOutputBuilder::new();
+		 let signer = Signer::from_str("relayer").unwrap();
+		 let ack: Acknowledgement = ACK_ERR_STR.to_string().as_bytes().to_vec().into();
+	}:{
+	   handler.on_acknowledgement_packet(&mut output, &packet, &ack, &signer).unwrap();
+	}
+	verify {
+		assert_eq!(<<T as Config>::MultiCurrency as Inspect<T::AccountId>>::balance(
+			CurrencyId::PICA.into(),
+			&caller
+		), amt.into());
+	}
+
+	on_timeout_packet {
+		let caller: T::AccountId = whitelisted_caller();
+		let client_id = Pallet::<T>::create_client().unwrap();
+		let connection_id = ConnectionId::new(0);
+		Pallet::<T>::create_connection(client_id, connection_id.clone()).unwrap();
+		let port_id = PortId::transfer();
+		let counterparty = channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(1)));
+		let channel_end = channel::ChannelEnd::new(
+			channel::State::Init,
+			Order::Unordered,
+			counterparty,
+			vec![connection_id],
+			Version::new(VERSION.to_string()),
+		);
+
+
+		let balance = 100000 * CurrencyId::milli::<u128>();
+		let channel_id = Pallet::<T>::open_channel(port_id.clone(), channel_end).unwrap();
+		let denom = "PICA";
+		let channel_escrow_address = get_channel_escrow_address(&port_id, channel_id).unwrap();
+		let channel_escrow_address = <T as Config>::AccountIdConversion::try_from(channel_escrow_address).map_err(|_| ()).unwrap();
+		let channel_escrow_address: T::AccountId = channel_escrow_address.into_account();
+
+		<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::mint_into(
+			CurrencyId::PICA.into(),
+			&channel_escrow_address,
+			balance.into(),
+		).unwrap();
+
+
+		<Params<T>>::put(PalletParams {
+			send_enabled: true,
+			receive_enabled: true
+		});
+
+		let raw_user: AccountId32 =  caller.clone().into();
+		let raw_user: &[u8] = raw_user.as_ref();
+		let mut hex_string = hex::encode_upper(raw_user.to_vec());
+		hex_string.insert_str(0, "0x");
+		let prefixed_denom = PrefixedDenom::from_str(denom).unwrap();
+		let amt = 1000 * CurrencyId::milli::<u128>();
+		let coin = Coin {
+			denom: prefixed_denom,
+			amount: Amount::from_str(&format!("{:?}", amt)).unwrap()
+		};
+		let packet_data = PacketData {
+			token: coin,
+			sender: Signer::from_str(&hex_string).unwrap(),
+			receiver: Signer::from_str("alice").unwrap(),
+		};
+
+		let data = serde_json::to_vec(&packet_data).unwrap();
+		let packet = Packet {
+			sequence: 0u64.into(),
+			source_port: port_id.clone(),
+			source_channel: ChannelId::new(0),
+			destination_port: port_id,
+			destination_channel: ChannelId::new(1),
+			data,
+			timeout_height: Height::new(2000, 5),
+			timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
+				.unwrap(),
+		 };
+		 let mut handler = IbcCallbackHandler::<T>::default();
+		 let mut output = HandlerOutputBuilder::new();
+		 let signer = Signer::from_str("relayer").unwrap();
+	}:{
+		handler.on_timeout_packet(&mut output, &packet, &signer).unwrap();
+	}
+	verify {
+		assert_eq!(<<T as Config>::MultiCurrency as Inspect<T::AccountId>>::balance(
+			CurrencyId::PICA.into(),
+			&caller
+		), amt.into());
+	}
 }

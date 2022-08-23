@@ -8165,6 +8165,7 @@ dependencies = [
  "pallet-timestamp",
  "parachain-info",
  "parity-scale-codec",
+ "paste 1.0.8",
  "primitives 0.1.0",
  "prost 0.10.4",
  "scale-info",

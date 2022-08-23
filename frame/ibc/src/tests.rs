@@ -226,7 +226,6 @@ fn send_transfer() {
 		let ss58_address = String::from_utf8(raw_user).unwrap();
 		setup_client_and_consensus_state(PortId::transfer());
 
-		let channel_id = ChannelId::new(0);
 		let balance = 100000 * CurrencyId::milli::<u128>();
 		<<Test as Config>::MultiCurrency as Mutate<
 			<Test as frame_system::Config>::AccountId,
