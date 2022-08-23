@@ -55,10 +55,10 @@ export class AssetsResolver {
     const DAY_IN_MS = 24 * 60 * 60 * 1_000;
     const currentTimestamp = new Date().valueOf();
     const threshold = currentTimestamp - DAY_IN_MS;
-    console.log({ currentTimestamp, threshold });
 
     const manager = await this.tx();
 
+    // Query asset prices.
     const assets: AssetPrice[] = await manager.getRepository(Asset).query(
       `
         SELECT
@@ -68,18 +68,13 @@ export class AssetsResolver {
       `
     );
 
-    let assetsPrices = assets.reduce<Record<string, AssetPrice>>(
-      (acc, curr) => {
-        acc[curr.id] = {
-          id: curr.id,
-          price: curr.price,
-        };
+    // Get asset prices into an object for easier read.
+    let assetsPrices = assets.reduce<Record<string, string>>((acc, curr) => {
+      acc[curr.id] = curr.price;
+      return acc;
+    }, {});
 
-        return acc;
-      },
-      {}
-    );
-
+    // Query the closest historical prices for each asset that are older than the threshold (24h).
     const historicalAssetPrices: HistoricalPrice[] = await manager
       .getRepository(HistoricalAssetPrice)
       .query(
@@ -96,10 +91,11 @@ export class AssetsResolver {
         `
       );
 
+    // Prepare data and format for returning.
     const historicalPrices = historicalAssetPrices.reduce<
       Record<string, AssetData>
     >((acc, curr) => {
-      const price = BigInt(assetsPrices?.[curr.asset_id]?.price || curr.price);
+      const price = BigInt(assetsPrices?.[curr.asset_id] || curr.price);
       const prevPrice = BigInt(curr.price);
       acc[curr.asset_id] = {
         id: curr.asset_id,
