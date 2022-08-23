@@ -24,8 +24,6 @@ use crate::{
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{new_chain_ops, new_partial, PicassoExecutor},
 };
-use codec::Encode;
-use cumulus_client_service::genesis::generate_genesis_block;
 use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::BenchmarkCmd;
 use log::info;
@@ -35,9 +33,8 @@ use sc_cli::{
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::config::{BasePath, PrometheusConfig};
-use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
-use std::{io::Write, net::SocketAddr};
+use sp_runtime::traits::AccountIdConversion;
+use std::net::SocketAddr;
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
@@ -147,17 +144,6 @@ impl SubstrateCli for RelayChainCli {
 	}
 }
 
-//
-#[allow(clippy::borrowed_box)]
-fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<Vec<u8>> {
-	let mut storage = chain_spec.build_storage()?;
-
-	storage
-		.top
-		.remove(sp_core::storage::well_known_keys::CODE)
-		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
-}
-
 macro_rules! construct_async_run {
 	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
 		let runner = $cli.create_runner($cmd)?;
@@ -223,49 +209,20 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
 			Ok(cmd.run(components.0, components.1, None))
 		}),
-		Some(Subcommand::ExportGenesisState(params)) => {
-			let mut builder = sc_cli::LoggerBuilder::new("");
-			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
-			let _ = builder.init();
-
-			let chain_spec = load_spec(&params.chain.clone().unwrap_or_default())?;
-			let state_version = Cli::native_runtime_version(&chain_spec).state_version();
-			let block: Block = generate_genesis_block(&chain_spec, state_version)?;
-			let raw_header = block.header().encode();
-			let output_buf = if params.raw {
-				raw_header
-			} else {
-				format!("0x{:?}", HexDisplay::from(&block.header().encode())).into_bytes()
-			};
-
-			if let Some(output) = &params.output {
-				std::fs::write(output, output_buf)?;
-			} else {
-				std::io::stdout().write_all(&output_buf)?;
-			}
-
-			Ok(())
+		Some(Subcommand::ExportGenesisState(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|_config| {
+				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
+				let state_version = Cli::native_runtime_version(&spec).state_version();
+				cmd.run::<Block>(&*spec, state_version)
+			})
 		},
-		Some(Subcommand::ExportGenesisWasm(params)) => {
-			let mut builder = sc_cli::LoggerBuilder::new("");
-			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
-			let _ = builder.init();
-
-			let raw_wasm_blob =
-				extract_genesis_wasm(&cli.load_spec(&params.chain.clone().unwrap_or_default())?)?;
-			let output_buf = if params.raw {
-				raw_wasm_blob
-			} else {
-				format!("0x{:?}", HexDisplay::from(&raw_wasm_blob)).into_bytes()
-			};
-
-			if let Some(output) = &params.output {
-				std::fs::write(output, output_buf)?;
-			} else {
-				std::io::stdout().write_all(&output_buf)?;
-			}
-
-			Ok(())
+		Some(Subcommand::ExportGenesisWasm(cmd)) => {
+			let runner = cli.create_runner(cmd)?;
+			runner.sync_run(|_config| {
+				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
+				cmd.run(&*spec)
+			})
 		},
 		Some(Subcommand::Benchmark(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
@@ -343,8 +300,10 @@ pub fn run() -> Result<()> {
 						},
 						id => panic!("Unknown Chain: {}", id),
 					}),
-				BenchmarkCmd::Overhead(_) | BenchmarkCmd::Machine(_) =>
-					Err("Unsupported benchmarking command".into()),
+
+				BenchmarkCmd::Overhead(_) |
+				BenchmarkCmd::Extrinsic(_) |
+				BenchmarkCmd::Machine(_) => Err("Unsupported benchmarking command".into()),
 			}
 		},
 		None => {
@@ -367,11 +326,6 @@ pub fn run() -> Result<()> {
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&id);
 
-				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
-				let block: Block = generate_genesis_block(&config.chain_spec, state_version)
-					.map_err(|e| format!("{:?}", e))?;
-				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
-
 				let tokio_handle = config.tokio_handle.clone();
 				let polkadot_config =
 					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, tokio_handle)
@@ -379,7 +333,6 @@ pub fn run() -> Result<()> {
 
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
-				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
 				Ok(crate::service::start_node(config, polkadot_config, collator_options, id)
@@ -474,8 +427,8 @@ impl CliConfiguration<Self> for RelayChainCli {
 		self.base.base.role(is_dev)
 	}
 
-	fn transaction_pool(&self) -> Result<sc_service::config::TransactionPoolOptions> {
-		self.base.base.transaction_pool()
+	fn transaction_pool(&self, x: bool) -> Result<sc_service::config::TransactionPoolOptions> {
+		self.base.base.transaction_pool(x)
 	}
 
 	fn state_cache_child_ratio(&self) -> Result<Option<usize>> {
