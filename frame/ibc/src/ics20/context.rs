@@ -30,7 +30,7 @@ where
 		channel_id: ChannelId,
 	) -> Result<<Self as Ics20Reader>::AccountId, Ics20Error> {
 		get_channel_escrow_address(port_id, channel_id)?.try_into().map_err(|_| {
-			log::trace!(target: "ibc_transfer", "Failed to get channel escrow address");
+			log::trace!(target: "pallet_ibc", "Failed to get channel escrow address");
 			Ics20Error::parse_account_failure()
 		})
 	}
@@ -147,7 +147,7 @@ where
 			amount,
 		)
 		.map_err(|e| {
-			log::trace!(target: "ibc_transfer", "Failed to mint tokens: {:?}", e);
+			log::trace!(target: "pallet_ibc", "Failed to mint tokens: {:?}", e);
 			Ics20Error::invalid_token()
 		})?;
 		Ok(())
@@ -166,7 +166,7 @@ where
 			if let Some(asset_id) = T::AssetRegistry::location_to_asset(foreign_asset_id.into()) {
 				asset_id
 			} else {
-				log::trace!(target: "ibc_transfer", "Failed to burn unregistered token");
+				log::trace!(target: "pallet_ibc", "Failed to burn unregistered token");
 				return Err(Ics20Error::invalid_token())
 			};
 		<<T as Config>::MultiCurrency as Mutate<T::AccountId>>::burn_from(
@@ -175,7 +175,7 @@ where
 			amount,
 		)
 		.map_err(|e| {
-			log::trace!(target: "ibc_transfer", "Failed to burn tokens: {:?}", e);
+			log::trace!(target: "pallet_ibc", "Failed to burn tokens: {:?}", e);
 			Ics20Error::invalid_token()
 		})?;
 		Ok(())
@@ -201,7 +201,7 @@ where
 						.as_str()
 						.parse::<u128>()
 						.map_err(|e| {
-							log::trace!(target: "ibc_transfer", "failed to parse currency id from denom: {:?}", e);
+							log::trace!(target: "pallet_ibc", "failed to parse currency id from denom: {:?}", e);
 							Ics20Error::invalid_token()
 						})?
 						.into();
@@ -217,7 +217,7 @@ where
 			)
 			.map(|_| ())
 			.map_err(|e| {
-				log::trace!(target: "ibc_transfer", "failed to transfer native tokens: {:?}", e);
+				log::trace!(target: "pallet_ibc", "failed to transfer native tokens: {:?}", e);
 				Ics20Error::invalid_token()
 			})
 		}
@@ -228,7 +228,7 @@ where
 			if let Some(asset_id) = T::AssetRegistry::location_to_asset(foreign_asset_id.into()) {
 				asset_id
 			} else {
-				log::trace!(target: "ibc_transfer", "Failed to send an unregistered asset");
+				log::trace!(target: "pallet_ibc", "Failed to send an unregistered asset");
 				return Err(Ics20Error::invalid_token())
 			};
 		<<T as Config>::MultiCurrency as Transfer<T::AccountId>>::transfer(
@@ -239,7 +239,7 @@ where
 			false,
 		)
 		.map_err(|e| {
-			log::trace!(target: "ibc_transfer", "Failed to transfer ibc tokens: {:?}", e);
+			log::trace!(target: "pallet_ibc", "Failed to transfer ibc tokens: {:?}", e);
 			Ics20Error::invalid_token()
 		})?;
 		Ok(())

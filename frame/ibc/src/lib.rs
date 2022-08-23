@@ -621,7 +621,7 @@ pub mod pallet {
 			}
 
 			Pallet::<T>::send_transfer(msg).map_err(|e| {
-				log::trace!(target: "ibc_transfer", "[transfer]: error: {:?}", e);
+				log::trace!(target: "pallet_ibc", "[transfer]: error: {:?}", e);
 				Error::<T>::TransferFailed
 			})?;
 

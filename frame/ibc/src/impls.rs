@@ -936,7 +936,7 @@ where
 		process_recv_packet(&ctx, output, packet, packet_data)
 			.and_then(|write_fn| write_fn(&mut ctx).map_err(Ics20Error::unknown_msg_type))
 			.map_err(|e| {
-				log::trace!(target: "ibc_transfer", "[on_recv_packet]: {:?}", e);
+				log::trace!(target: "pallet_ibc", "[on_recv_packet]: {:?}", e);
 				IbcHandlerError::ReceivePacketError { msg: Some(e.to_string()) }
 			})
 	}
