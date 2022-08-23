@@ -1174,6 +1174,7 @@ parameter_types! {
   pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
   pub const MaxInstantiateSaltSize: u32 = 128;
   pub const MaxFundsAssets: u32 = 32;
+  pub const MaxDbKeySize: u32 = 64 * 1024;
   pub const CodeTableSizeLimit: u32 = 4096;
   pub const CodeGlobalVariableLimit: u32 = 256;
   pub const CodeParameterLimit: u32 = 128;
@@ -1206,6 +1207,7 @@ impl cosmwasm::Config for Runtime {
 	type MaxContractTrieIdSize = MaxContractTrieIdSize;
 	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
 	type MaxFundsAssets = MaxFundsAssets;
+	type MaxDbKeySize = MaxDbKeySize;
 	type CodeTableSizeLimit = CodeTableSizeLimit;
 	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
 	type CodeParameterLimit = CodeParameterLimit;
@@ -1347,7 +1349,7 @@ mod benches {
 		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
-    // TODO: broken
+	// TODO: broken
 		// [collator_selection, CollatorSelection]
 		[indices, Indices]
 		[membership, CouncilMembership]
@@ -1371,7 +1373,7 @@ mod benches {
 		[pallet_staking_rewards, StakingRewards]
 		[pallet_account_proxy, Proxy]
 		[dex_router, DexRouter]
-    // TODO: Broken
+	// TODO: Broken
 		// [pallet_ibc, Ibc]
 		// [ibc_transfer, Transfer]
 	);

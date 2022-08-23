@@ -1,4 +1,4 @@
-use super::abstraction::{CosmwasmAccount, Gas};
+use super::abstraction::{CanonicalCosmwasmAccount, CosmwasmAccount, Gas};
 use crate::{runtimes::abstraction::GasOutcome, Config, ContractInfoOf, Pallet};
 use alloc::string::String;
 use cosmwasm_minimal_std::{Coin, ContractInfoResponse, Empty, Env, MessageInfo};
@@ -18,6 +18,7 @@ use cosmwasm_vm_wasmi::{
 	WasmiModuleExecutor, WasmiModuleName, WasmiOutput, WasmiVM, WasmiVMError,
 };
 use parity_wasm::elements::{self, External, Internal, Module, Type, ValueType};
+use sp_core::{ecdsa, ed25519};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::CanResume;
 use wasmi_validation::{validate_module, PlainValidator};
@@ -32,6 +33,12 @@ pub enum CosmwasmVMError<T: Config> {
 	ReadOnlyViolation,
 	OutOfGas,
 	Unsupported,
+}
+
+impl<T: Config> core::fmt::Display for CosmwasmVMError<T> {
+	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+		write!(f, "{:?}", self)
+	}
 }
 
 impl<T: Config> From<crate::Error<T>> for CosmwasmVMError<T> {
@@ -115,7 +122,7 @@ pub struct CosmwasmVMShared {
 impl CosmwasmVMShared {
 	/// Whether the storage is currently readonly.
 	pub fn storage_is_readonly(&self) -> bool {
-		self.storage_readonly_depth == 0
+		self.storage_readonly_depth > 0
 	}
 	/// Increase storage readonly depth.
 	/// Hapenning when a contract call the querier.
@@ -222,18 +229,19 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	type Output<'x> = WasmiOutput<'x, WasmiVM<Self>>;
 	type QueryCustom = Empty;
 	type MessageCustom = Empty;
-	type CodeId = CosmwasmContractMeta<CosmwasmAccount<T>>;
+	type ContractMeta = CosmwasmContractMeta<CosmwasmAccount<T>>;
+	type CanonicalAddress = CanonicalCosmwasmAccount<T>;
 	type Address = CosmwasmAccount<T>;
 	type StorageKey = Vec<u8>;
 	type StorageValue = Vec<u8>;
 	type Error = CosmwasmVMError<T>;
 
-	fn set_code_id(
+	fn set_contract_meta(
 		&mut self,
 		address: Self::Address,
-		CosmwasmContractMeta { code_id: new_code_id, admin, label }: Self::CodeId,
+		CosmwasmContractMeta { code_id: new_code_id, admin, label }: Self::ContractMeta,
 	) -> Result<(), Self::Error> {
-		log::debug!(target: "runtime::contracts", "set_code_id");
+		log::debug!(target: "runtime::contracts", "set_contract_meta");
 		let contract = address.into_inner();
 		let mut info = Pallet::<T>::contract_info(&contract)?;
 		info.code_id = new_code_id;
@@ -247,7 +255,16 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		Ok(())
 	}
 
-	fn code_id(&mut self, address: Self::Address) -> Result<Self::CodeId, Self::Error> {
+	fn running_contract_meta(&mut self) -> Result<Self::ContractMeta, Self::Error> {
+		log::debug!(target: "runtime::contracts", "contract_meta");
+		Ok(CosmwasmContractMeta {
+			code_id: self.contract_info.code_id,
+			admin: self.contract_info.admin.clone().map(CosmwasmAccount::new),
+			label: String::from_utf8_lossy(&self.contract_info.label).into(),
+		})
+	}
+
+	fn contract_meta(&mut self, address: Self::Address) -> Result<Self::ContractMeta, Self::Error> {
 		log::debug!(target: "runtime::contracts", "code_id");
 		let info = Pallet::<T>::contract_info(address.as_ref())?;
 		Ok(CosmwasmContractMeta {
@@ -255,6 +272,125 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			admin: info.admin.map(CosmwasmAccount::new),
 			label: String::from_utf8_lossy(&info.label.into_inner()).into(),
 		})
+	}
+
+	fn debug(&mut self, message: Vec<u8>) -> Result<(), Self::Error> {
+		log::debug!(target: "runtime::contracts", "[CONTRACT-LOG] {}", String::from_utf8_lossy(&message));
+		Ok(())
+	}
+
+	fn addr_validate(&mut self, input: &str) -> Result<Result<(), Self::Error>, Self::Error> {
+		match Pallet::<T>::cosmwasm_addr_to_account(input.into()) {
+			Ok(_) => Ok(Ok(())),
+			Err(e) => Ok(Err(e)),
+		}
+	}
+
+	fn addr_canonicalize(
+		&mut self,
+		input: &str,
+	) -> Result<Result<Self::CanonicalAddress, Self::Error>, Self::Error> {
+		let account = match Pallet::<T>::cosmwasm_addr_to_account(input.into()) {
+			Ok(account) => account,
+			Err(e) => return Ok(Err(e)),
+		};
+
+		Ok(Ok(CosmwasmAccount::new(account).into()))
+	}
+
+	fn addr_humanize(
+		&mut self,
+		addr: &Self::CanonicalAddress,
+	) -> Result<Result<Self::Address, Self::Error>, Self::Error> {
+		Ok(Ok(addr.0.clone()))
+	}
+
+	fn secp256k1_recover_pubkey(
+		&mut self,
+		message_hash: &[u8],
+		signature: &[u8],
+		_recovery_param: u8,
+	) -> Result<Result<Vec<u8>, ()>, Self::Error> {
+		let signature: [u8; 65] = match signature.try_into() {
+			Ok(signature) => signature,
+			Err(_) => return Ok(Err(())),
+		};
+
+		let message_hash: [u8; 32] = match message_hash.try_into() {
+			Ok(message_hash) => message_hash,
+			Err(_) => return Ok(Err(())),
+		};
+
+        // We used `compressed` function here because the api states that this function
+        // needs to return a public key that can be used in `secp256k1_verify` which 
+        // takes a compressed public key.
+		Ok(sp_io::crypto::secp256k1_ecdsa_recover_compressed(&signature, &message_hash)
+			.map(|val| val.into())
+			.map_err(|_| ()))
+	}
+
+	fn secp256k1_verify(
+		&mut self,
+		message_hash: &[u8],
+		signature: &[u8],
+		public_key: &[u8],
+	) -> Result<bool, Self::Error> {
+		let signature: ecdsa::Signature = match signature.try_into() {
+			Ok(signature) => signature,
+			Err(_) => return Ok(false),
+		};
+
+		let public_key: ecdsa::Public = match public_key.try_into() {
+			Ok(public_key) => public_key,
+			Err(_) => return Ok(false),
+		};
+
+		let message_hash: [u8; 32] = match message_hash.try_into() {
+			Ok(message_hash) => message_hash,
+			Err(_) => return Ok(false),
+		};
+
+		Ok(sp_io::crypto::ecdsa_verify_prehashed(&signature, &message_hash, &public_key))
+	}
+
+	fn ed25519_batch_verify(
+		&mut self,
+		messages: &[&[u8]],
+		signatures: &[&[u8]],
+		public_keys: &[&[u8]],
+	) -> Result<bool, Self::Error> {
+		if messages.len() != signatures.len() || signatures.len() != public_keys.len() {
+			return Ok(false)
+		}
+
+		for ((message, signature), public_key) in
+			messages.iter().zip(signatures.iter()).zip(public_keys.iter())
+		{
+			if self.ed25519_verify(message, signature, public_key)? == false {
+				return Ok(false)
+			}
+		}
+
+		Ok(true)
+	}
+
+	fn ed25519_verify(
+		&mut self,
+		message: &[u8],
+		signature: &[u8],
+		public_key: &[u8],
+	) -> Result<bool, Self::Error> {
+		let signature: ed25519::Signature = match signature.try_into() {
+			Ok(signature) => signature,
+			Err(_) => return Ok(false),
+		};
+
+		let public_key: ed25519::Public = match public_key.try_into() {
+			Ok(public_key) => public_key,
+			Err(_) => return Ok(false),
+		};
+
+		Ok(sp_io::crypto::ed25519_verify(&signature, message, &public_key))
 	}
 
 	fn query_continuation(
@@ -297,11 +433,11 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 
 	fn continue_instantiate(
 		&mut self,
-		CosmwasmContractMeta { code_id, admin, label }: Self::CodeId,
+		CosmwasmContractMeta { code_id, admin, label }: Self::ContractMeta,
 		funds: Vec<Coin>,
 		message: &[u8],
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
-	) -> Result<Option<cosmwasm_minimal_std::Binary>, Self::Error> {
+	) -> Result<(Self::Address, Option<cosmwasm_minimal_std::Binary>), Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_instantiate");
 		let nonce = Pallet::<T>::next_contract_nonce(self.contract_address.as_ref())?;
 		let (contract, info) = Pallet::<T>::do_instantiate_phase1(
@@ -323,6 +459,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			funds,
 			|vm| cosmwasm_system_run::<InstantiateInput, _>(vm, message, event_handler),
 		)
+		.map(|r| (self.contract_address.clone(), r))
 	}
 
 	fn continue_migrate(
@@ -446,6 +583,27 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		} else {
 			Pallet::<T>::do_db_remove(self, &key);
 			Ok(())
+		}
+	}
+
+	fn db_scan(
+		&mut self,
+		_start: Option<Self::StorageKey>,
+		_end: Option<Self::StorageKey>,
+		_order: cosmwasm_minimal_std::Order,
+	) -> Result<u32, Self::Error> {
+		log::debug!(target: "runtime::contracts", "db_scan");
+		Pallet::<T>::do_db_scan(self)
+	}
+
+	fn db_next(
+		&mut self,
+		iterator_id: u32,
+	) -> Result<(Self::StorageKey, Self::StorageValue), Self::Error> {
+		log::debug!(target: "runtime::contracts", "db_next");
+		match Pallet::<T>::do_db_next(self, iterator_id)? {
+			Some(kv_pair) => Ok(kv_pair),
+			None => Ok((Vec::new(), Vec::new())),
 		}
 	}
 
