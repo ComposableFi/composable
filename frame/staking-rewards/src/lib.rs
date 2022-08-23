@@ -805,7 +805,7 @@ pub mod pallet {
 		/// * `pool_id` - Pool identifier
 		/// * `mut rewards_pool` - Rewards pool to update
 		/// * `stake` - Stake position
-		/// * `early_unlock` - If there should be an early unlock penalty
+		/// * `penalize_for_early_unlock` - If there should be an early unlock penalty
 		/// * `keep_alive` - If the transaction should be kept alive
 		pub(crate) fn collect_rewards(
 			pool_id: &T::RewardPoolId,
