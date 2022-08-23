@@ -322,7 +322,7 @@ fn should_update_oracle_twap() {
 				},
 				..Default::default()
 			};
-			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config.clone()));
 
 			let market_id = Zero::zero();
 			let market = get_market(&market_id);
@@ -333,7 +333,7 @@ fn should_update_oracle_twap() {
 			assert_eq!(vamm.base_asset_twap, 10.into());
 
 			update_oracle_for(asset_id, 1_100); //  Index price = 11.0
-			run_to_time(market.last_oracle_ts + ONE_HOUR);
+			run_to_time(market.last_oracle_ts + config.twap_period);
 			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
 			let market = get_market(&market_id);
 			// Oracle price updates are clipped at 10bps from the previous recorded price
