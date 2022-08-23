@@ -59,7 +59,10 @@ pub mod pallet {
 		types::{CodeInfo, ContractInfo},
 		weights::WeightInfo,
 	};
-	use alloc::{collections::btree_map::Entry, string::String};
+	use alloc::{
+		collections::{btree_map::Entry, BTreeMap},
+		string::String,
+	};
 	use composable_support::abstractions::{
 		nonce::Nonce,
 		utils::{
@@ -86,14 +89,13 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, PostDispatchInfo},
 		pallet_prelude::*,
-		storage::child::ChildInfo,
+		storage::{child::ChildInfo, ChildTriePrefixIterator},
 		traits::{
 			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 			tokens::{AssetId, Balance},
 			Get, ReservableCurrency, UnixTime,
 		},
-		transactional, BoundedBTreeMap, PalletId, ReversibleStorageHasher, StorageHasher,
-		Twox64Concat,
+		transactional, BoundedBTreeMap, PalletId, StorageHasher, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_core::crypto::UncheckedFrom;
@@ -119,7 +121,6 @@ pub mod pallet {
 	pub(crate) type MaxContractTrieIdSizeOf<T> = <T as Config>::MaxContractTrieIdSize;
 	pub(crate) type MaxInstantiateSaltSizeOf<T> = <T as Config>::MaxInstantiateSaltSize;
 	pub(crate) type MaxFundsAssetOf<T> = <T as Config>::MaxFundsAssets;
-	pub(crate) type MaxDbKeySizeOf<T> = <T as Config>::MaxDbKeySize;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
 	pub(crate) type ContractInfoOf<T> =
@@ -232,10 +233,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type MaxFundsAssets: Get<u32>;
 
-		/// Max size of a key in DB.
-		#[pallet::constant]
-		type MaxDbKeySize: Get<u32>;
-
 		/// Max wasm table size.
 		#[pallet::constant]
 		type CodeTableSizeLimit: Get<u32>;
@@ -320,21 +317,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub(crate) type InstrumentedCode<T: Config> =
 		StorageMap<_, Twox64Concat, CosmwasmCodeId, ContractInstrumentedCodeOf<T>>;
-
-	#[pallet::storage]
-	pub(crate) type ContractStorageIterators<T: Config> = StorageDoubleMap<
-		_,
-		Twox64Concat,
-		ContractInfoOf<T>,
-		Twox64Concat,
-		u32,
-		Option<BoundedVec<u8, MaxDbKeySizeOf<T>>>,
-	>;
-
-	#[allow(clippy::disallowed_types)]
-	#[pallet::storage]
-	pub(crate) type CurrentIteratorId<T: Config> =
-		StorageValue<_, u32, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	/// Monotonic counter incremented on code creation.
 	#[allow(clippy::disallowed_types)]
@@ -984,6 +966,7 @@ pub mod pallet {
 				contract_address: cosmwasm_contract_address,
 				contract_info: info,
 				shared,
+				iterators: BTreeMap::new(),
 			}))
 		}
 
@@ -1076,12 +1059,14 @@ pub mod pallet {
 
 		/// Create an empty iterator.
 		pub(crate) fn do_db_scan(vm: &mut CosmwasmVM<T>) -> Result<u32, CosmwasmVMError<T>> {
-			let iterator_id =
-				CurrentIteratorId::<T>::increment().map_err(|_| Error::<T>::IteratorIdOverflow)?;
-			ContractStorageIterators::<T>::insert(
-				vm.contract_info.clone(),
+			let iterator_id = vm.iterators.len() as u32;
+			let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
+			vm.iterators.insert(
 				iterator_id,
-				None::<BoundedVec<_, _>>,
+				ChildTriePrefixIterator::<_>::with_prefix_over_key::<Blake2_128Concat>(
+					&child_info,
+					&[],
+				),
 			);
 			Ok(iterator_id)
 		}
@@ -1092,29 +1077,15 @@ pub mod pallet {
 			vm: &mut CosmwasmVM<T>,
 			iterator_id: u32,
 		) -> Result<Option<(Vec<u8>, Vec<u8>)>, CosmwasmVMError<T>> {
-			let storage_key_entry =
-				ContractStorageIterators::<T>::try_get(&vm.contract_info, &iterator_id)
-					.map_err(|_| Error::<T>::IteratorNotFound)?;
-
-			let storage_key = match storage_key_entry {
-				Some(storage_key) => storage_key.to_vec(),
-				None => Vec::new(),
-			};
-
-			let child_info = Self::contract_child_trie(vm.contract_info.trie_id.as_ref());
-            // TODO(aeryz): We should also charge for reading the `next_key`
-			let key =
-				sp_io::default_child_storage::next_key(child_info.storage_key(), &storage_key);
-
-			if let Some(key) = key {
-				let price = Self::do_db_read_gas(&vm.contract_info.trie_id, &key);
-				vm.charge_raw(price)?;
-				let reversed_key = Blake2_128Concat::reverse(&key).to_vec();
-				ContractStorageIterators::<T>::insert(&vm.contract_info, &iterator_id, Some::<BoundedVec<_, _>>(key.clone().try_into().expect("VM should not accept keys that are larger that the max size, this should never happen.")));
-				Ok(storage::child::get_raw(&child_info, &key).map(|value| (reversed_key, value)))
-			} else {
-				ContractStorageIterators::<T>::remove(&vm.contract_info, &iterator_id);
-				Ok(None)
+			let iterator =
+				vm.iterators.get_mut(&iterator_id).ok_or(Error::<T>::IteratorNotFound)?;
+			match iterator.next() {
+				Some((key, value)) => {
+					let price = Self::do_db_read_gas(&vm.contract_info.trie_id, &key);
+					vm.charge_raw(price)?;
+					Ok(Some((key, value)))
+				},
+				None => Ok(None),
 			}
 		}
 

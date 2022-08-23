@@ -17,6 +17,7 @@ use cosmwasm_vm_wasmi::{
 	WasmiHostFunction, WasmiHostFunctionIndex, WasmiHostModule, WasmiInput, WasmiModule,
 	WasmiModuleExecutor, WasmiModuleName, WasmiOutput, WasmiVM, WasmiVMError,
 };
+use frame_support::storage::ChildTriePrefixIterator;
 use parity_wasm::elements::{self, External, Internal, Module, Type, ValueType};
 use sp_core::{ecdsa, ed25519};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
@@ -163,6 +164,8 @@ pub struct CosmwasmVM<'a, T: Config> {
 	pub contract_info: ContractInfoOf<T>,
 	/// State shared accross all contracts within a single transaction.
 	pub shared: &'a mut CosmwasmVMShared,
+	/// Iterator id's to corresponding keys. Keys are used to get the next key.
+	pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,
 }
 
 impl<'a, T: Config> Has<Env> for CosmwasmVM<'a, T> {
@@ -321,9 +324,9 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 			Err(_) => return Ok(Err(())),
 		};
 
-        // We used `compressed` function here because the api states that this function
-        // needs to return a public key that can be used in `secp256k1_verify` which 
-        // takes a compressed public key.
+		// We used `compressed` function here because the api states that this function
+		// needs to return a public key that can be used in `secp256k1_verify` which
+		// takes a compressed public key.
 		Ok(sp_io::crypto::secp256k1_ecdsa_recover_compressed(&signature, &message_hash)
 			.map(|val| val.into())
 			.map_err(|_| ()))
