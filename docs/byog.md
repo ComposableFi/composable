@@ -24,7 +24,7 @@ Fees are small now, but later we will have a way to show the exact fee for a tra
 
 ## How much does my transaction cost?
 
-When a transaction is executed, its `weight` is known and is roughly equal to compute resources it consumes.
+When a transaction is executed, its `weight` is known and roughly equal to the computational resources it consumes.
 
 Weight is converted into an appropriate amount of PICA by the polynomial formula.
 
