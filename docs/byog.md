@@ -64,7 +64,7 @@ Switching configuration is paid in a token to which configuration is switched. T
 
 ## XCMP specific 
 
-If a user tried to pay in a currency that is not payment, it would be trapped in a binary blob.
+If a user tried to pay in a currency that is not `payment currency`, it would be trapped in a binary blob.
 
 If the user overpaid for a transaction, the remaining goes to the user's account on Picasso. The whole amount goes to the user account if the payment is too small.
 
