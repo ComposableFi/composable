@@ -314,6 +314,69 @@ mod open_position {
 			);
 		})
 	}
+
+	#[test]
+	#[ignore = "FIXME: vAMM TWAP isn't updated if last twap timestamp is equal to the current \
+	block's timestamp"]
+	fn should_update_vamm_twap() {
+		ExtBuilder {
+			native_balances: vec![(ALICE, UNIT), (BOB, UNIT)],
+			balances: vec![(ALICE, USDC, UNIT * 100)],
+			..Default::default()
+		}
+		.build()
+		.execute_with(|| {
+			let asset_id = DOT;
+			set_oracle_for(asset_id, 1_000);
+
+			let config = MarketConfig {
+				asset: asset_id,
+				vamm_config: VammConfig {
+					// Mark price = 10.0
+					base_asset_reserves: UNIT * 10_000,
+					quote_asset_reserves: UNIT * 100_000,
+					peg_multiplier: 1,
+					twap_period: ONE_HOUR,
+				},
+				..Default::default()
+			};
+			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+
+			assert_ok!(TestPallet::deposit_collateral(Origin::signed(ALICE), USDC, UNIT * 100));
+
+			let market_id = Zero::zero();
+			let market = get_market(&market_id);
+			let vamm_before = get_vamm(&market.vamm_id);
+
+			assert_eq!(market.last_oracle_price, 10.into());
+			assert_eq!(market.last_oracle_twap, 10.into());
+			assert_eq!(vamm_before.base_asset_twap, 10.into());
+
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Long,
+				UNIT * 100,
+				0
+			));
+			let vamm_after = get_vamm(&market.vamm_id);
+			// open_position should update TWAP before swapping, therefore not changing the mark
+			// TWAP
+			assert_eq!(vamm_before.base_asset_twap, vamm_after.base_asset_twap);
+			let vamm_before = vamm_after;
+
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Long,
+				UNIT * 100,
+				0
+			));
+			let vamm_after = get_vamm(&market.vamm_id);
+			// now the vAMM picks up the change caused by the previous swap
+			assert!(dbg!(vamm_before.base_asset_twap) < dbg!(vamm_after.base_asset_twap));
+		})
+	}
 }
 
 // -------------------------------------------------------------------------------------------------
