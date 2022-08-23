@@ -814,9 +814,7 @@ pub mod pallet {
 			penalize_for_early_unlock: bool,
 			keep_alive: bool,
 		) -> Result<(RewardPoolOf<T>, StakeOf<T>), DispatchError> {
-			let mut inner_rewards = rewards_pool.rewards.into_inner();
-
-			for (asset_id, reward) in inner_rewards.iter_mut() {
+			for (asset_id, reward) in &mut rewards_pool.rewards {
 				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
 				let claim = if rewards_pool.total_shares == Zero::zero() {
 					Zero::zero()
@@ -858,9 +856,6 @@ pub mod pallet {
 					keep_alive,
 				)?;
 			}
-
-			rewards_pool.rewards =
-				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
 
 			Ok((rewards_pool, stake))
 		}
