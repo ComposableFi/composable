@@ -1,9 +1,9 @@
 use crate::{
 	types::{
-		Counter, LoanConfigOf, LoanInputOf, MarketInfoOf, MarketInputOf, Payment, PaymentOf,
+		Counter, LoanConfigOf, LoanInputOf, LoanInfoOf, MarketInfoOf, MarketInputOf, Payment, PaymentOf,
 		PaymentOutcome, PaymentOutcomeOf, PaymentsOutcomes, Timestamp,
 	},
-	validation::{MarketInputIsValid, LoanInputIsValid},
+	validation::{LoanInputIsValid, MarketInputIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
 };
 use composable_support::validation::Validated;
@@ -12,7 +12,7 @@ use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, Sell},
 	liquidation::Liquidation,
 	oracle::Oracle,
-	undercollateralized_loans::{LoanConfig, MarketConfig, MarketInfo, UndercollateralizedLoans},
+	undercollateralized_loans::{LoanConfig, LoanInfo, MarketConfig, MarketInfo, UndercollateralizedLoans},
 	vault::{Deposit, Vault, VaultConfig},
 };
 use frame_support::{
@@ -30,16 +30,14 @@ use sp_runtime::{
 use sp_std::vec::Vec;
 
 impl<T: Config> Pallet<T> {
+
 	//===========================================================================================================================
 	//                                                   "Do" methods
 	//===========================================================================================================================
 
 	pub(crate) fn do_create_market(
 		manager: T::AccountId,
-		input: Validated<
-			MarketInputOf<T>,
-			MarketInputIsValid<T::Oracle, crate::Pallet<T>>,
-		>,
+		input: Validated<MarketInputOf<T>, MarketInputIsValid<T::Oracle, crate::Pallet<T>>>,
 		keep_alive: bool,
 	) -> Result<MarketInfoOf<T>, DispatchError> {
 		let config_input = input.value();
@@ -133,8 +131,14 @@ impl<T: Config> Pallet<T> {
 						config_input.principal,
 						config_input.collateral,
 						schedule,
+                        config_input.activation_date,
 					);
-					crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_config.clone());
+                    let loan_info = LoanInfo::new(
+                        loan_config.clone(),
+                        // last date payment 
+                        loan_config.schedule().keys().max().unwrap().clone()
+                    );
+					crate::LoansStorage::<T>::insert(loan_account_id.clone(), loan_info.clone());
 					crate::NonActiveLoansStorage::<T>::insert(loan_account_id, ());
 					Ok(loan_config)
 				},
@@ -150,24 +154,32 @@ impl<T: Config> Pallet<T> {
 		loan_account_id: T::AccountId,
 		keep_alive: bool,
 	) -> Result<LoanConfigOf<T>, DispatchError> {
-		// Check if loan's account id is in non-activated loans list.
+	    // TODO: @mikolaichuk: move these to validation?
+        
+        // Check if loan's account id is in non-activated loans list.
 		// If it is not, loan does not exist or was already activated.
 		ensure!(
 			crate::NonActiveLoansStorage::<T>::contains_key(loan_account_id.clone()),
 			Error::<T>::LoanDoesNotExistOrWasActivated
 		);
 		let loan_config = Self::get_loan_config_via_account_id(&loan_account_id)?;
+        // Check if borrower's account is not blacklisted due to 
+        // significant numbers of payments failings.
+        ensure!(
+            Self::is_borrower_account_not_blacklisted(&loan_account_id, loan_config.market_account_id()),
+            Error::<T>::BlacklistedBorrowerAccount
+        );
 		// Check if borrower is authorized to execute this loan agreement.
 		ensure!(
 			*loan_config.borrower_account_id() == borrower_account_id,
 			Error::<T>::NonAuthorizedToExecuteContract,
 		);
 		// Check if borrower tries to activate expired loan.
-		// Need this check since we remove expired loans only once a day.
+		// Need this check since expired loans are removed only once a day.
 		let today = Self::get_current_date();
-		let first_payment_date = Self::get_date_from_timestamp(*loan_config.first_payment_moment());
-		// Loan should be activated before the first payment date.
-		if today >= first_payment_date {
+		let activation_moment = Self::get_date_from_timestamp(*loan_config.activation_date());
+		// Loan should be activated before the activation moment.
+		if today >= activation_moment {
 			crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
 			crate::LoansStorage::<T>::remove(loan_account_id.clone());
 			Err(Error::<T>::LoanContractIsExpired)?;
@@ -202,9 +214,9 @@ impl<T: Config> Pallet<T> {
 		// Remove loan configuration from the non-activated loans accounts ids storage.
 		crate::NonActiveLoansStorage::<T>::remove(loan_account_id.clone());
 		// Build payment schedule.
-		for timestamp in loan_config.schedule().keys() {
+		for (timestamp, payment) in loan_config.schedule() {
 			crate::ScheduleStorage::<T>::mutate(timestamp, |loans_accounts_ids| {
-				loans_accounts_ids.insert(loan_account_id.clone())
+				loans_accounts_ids.insert(loan_account_id.clone(), *payment);
 			});
 		}
 		Ok(loan_config)
@@ -241,7 +253,7 @@ impl<T: Config> Pallet<T> {
 					Self::close_loan_contract(&payment.loan_config);
 				},
 				PaymentOutcome::PaymentFailed(payment) =>
-					Self::process_failed_payment(&payment.loan_config),
+					Self::process_failed_payment(&payment),
 			}
 		}
 	}
@@ -269,11 +281,12 @@ impl<T: Config> Pallet<T> {
 	// In on-chain context: really transfers assets from borrower's account to
 	// market account.
 	pub(crate) fn treat_payment(
-		loan_config: &LoanConfigOf<T>,
+		loan_info: &LoanInfoOf<T>,
 		today: Timestamp,
 	) -> Option<PaymentOutcomeOf<T>> {
-		// If there is no such date in the local loan's schedule we return None.
-		let payment_amount = loan_config.get_payment_for_particular_moment(&today)?;
+	    let loan_config = loan_info.config();
+        // If there is no such date in the local loan's schedule we return None.
+		let payment_amount = Self::get_payment_for_particular_moment(today, loan_config.account_id())?;
 		let payment =
 			Payment { loan_config: loan_config.clone(), amount: payment_amount, timestamp: today };
 		// Use to check if payment transfer is possible if off-chain context
@@ -281,7 +294,7 @@ impl<T: Config> Pallet<T> {
 		// Please note that methods called within off-chain context do not change chain's state.
 		let outcome = match Self::pay_back_borrowed_asset(&loan_config, payment_amount) {
 			// We have enough money on the loan's account to perform last payment.
-			Ok(_) if *loan_config.last_payment_moment() == today =>
+			Ok(_) if loan_info.last_payment_date == today =>
 				PaymentOutcome::LastPaymentSucceed(payment),
 			// We have enough money on the loan's account to perform regular payment.
 			Ok(_) => PaymentOutcome::RegularPaymentSucceed(payment),
@@ -303,7 +316,7 @@ impl<T: Config> Pallet<T> {
 			return
 		};
 		// Get payment amount.
-		let amount = match payment.loan_config.get_payment_for_particular_moment(&payment.timestamp)
+		let amount = match Self::get_payment_for_particular_moment(payment.timestamp, loan_account_id)
 		{
 			Some(amount) => amount,
 			None => {
@@ -342,10 +355,26 @@ impl<T: Config> Pallet<T> {
 	//===========================================================================================================================
 
 	// Logic we apply if payment is failed.
-	pub(crate) fn process_failed_payment(loan_config: &LoanConfigOf<T>) {
-		// TODO: @mikolaichuk:  add credit rating functionality.
-		//                      add event deposit(?)
-		match Self::liquidate(loan_config) {
+	pub(crate) fn process_failed_payment(payment: &PaymentOf<T>) {
+        let loan_config = &payment.loan_config; 
+        let mut _market_info = match Self::get_market_info_via_account_id(loan_config.account_id()) {
+            Ok(market_info) => market_info, 
+            Err(error) => return log::error!(
+				"Market was not found. Error: {:?}",
+				error
+			),
+        };
+        //fo.blacklist.contains(loan_config.borrower_account_id());
+        //let updated_counter_value = crate::FailsCounterStorage::<T>::mutate(market_info.config().account_id(), loan_config.borrower_account_id(), |counter| {*counter += 1; *counter});
+        //if updated_counter_value <= T::MaxRepyamentFails::get() {
+            // Shift payment date, check if shift is non-zero. check if shif is Some
+
+         //   crate::ScheduleStorage::<T>::i(payment.timestamp, )
+            
+
+          //  return 
+        //}
+        match Self::liquidate(&loan_config) {
 			Ok(_) => log::info!(
 				"Loan with the following account id: {:?} was successfuly send to liquidation",
 				loan_config.account_id()
@@ -420,7 +449,7 @@ impl<T: Config> Pallet<T> {
 					loans_accounts_ids.remove(loan_config.account_id())
 				});
 			});
-		// TODO: @mikolaichuk: What we suppose to do if borrower's account is died?
+		// TODO: @mikolaichuk: What we suppose to do if borrower's account is dead?
 		T::NativeCurrency::transfer(
 			loan_config.account_id(),
 			loan_config.borrower_account_id(),
@@ -437,12 +466,20 @@ impl<T: Config> Pallet<T> {
 
 	// Check if borrower's account is whitelisted for particular market.
 	pub(crate) fn is_borrower_account_whitelisted(
-		borrower_account_id_ref: &T::AccountId,
-		market_account_id_ref: &T::AccountId,
+		borrower_account_id: &T::AccountId,
+		market_account_id: &T::AccountId,
 	) -> Result<bool, DispatchError> {
-		let market_config = Self::get_market_config_via_account_id(market_account_id_ref)?;
-		Ok(market_config.whitelist().contains(borrower_account_id_ref))
+		let market_config = Self::get_market_config_via_account_id(market_account_id)?;
+		Ok(market_config.whitelist().contains(borrower_account_id))
 	}
+    
+    // Check if borrower's account is blacklisted for particular market.
+	pub(crate) fn is_borrower_account_not_blacklisted(
+		borrower_account_id: &T::AccountId,
+		market_account_id: &T::AccountId,
+	) -> bool {
+        !crate::BlackListPerMakretStorage::<T>::get(market_account_id).contains(borrower_account_id)
+    }
 
 	// Check if provided account id belongs to the market manager.
 	pub(crate) fn is_market_manager_account(

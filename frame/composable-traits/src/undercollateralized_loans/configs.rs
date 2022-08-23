@@ -92,7 +92,6 @@ where
 	}
 
 	/// Get a reference to the market config's whitelist.
-	#[must_use]
 	pub fn whitelist(&self) -> &BTreeSet<AccountId> {
 		&self.whitelist
 	}
@@ -125,13 +124,11 @@ where
 	principal: Balance,
 	/// Amount of assets which should be used as collateral.
 	collateral: Balance,
-	/// Schedule of payments
+	/// Schedule of payments.
 	// TODO: @mikolaichuk: Should be bounded
 	schedule: BTreeMap<Timestamp, Balance>,
-	/// The moment of the first interest payment.
-	first_payment_moment: Timestamp,
-	/// The moment of the last interest payment and principal repayment.
-	last_payment_moment: Timestamp,
+	/// Contract should be activated before this moment. 
+	activation_date: Timestamp,
 }
 
 impl<AccountId, AssetId, Balance, Timestamp> LoanConfig<AccountId, AssetId, Balance, Timestamp>
@@ -150,12 +147,9 @@ where
 		principal: Balance,
 		collateral: Balance,
 		schedule: Vec<(Timestamp, Balance)>,
+        activation_date: Timestamp,
 	) -> Self {
 		let schedule: BTreeMap<Timestamp, Balance> = schedule.into_iter().collect();
-		// We are sure that BTreeMap is not empty
-		// TODO: @mikolaichuk: May be it would be better to use BiBoundedVec as input here.
-		let first_payment_moment = schedule.keys().min().unwrap().clone();
-		let last_payment_moment = schedule.keys().max().unwrap().clone();
 		Self {
 			account_id,
 			market_account_id,
@@ -165,8 +159,7 @@ where
 			principal,
 			collateral,
 			schedule,
-			first_payment_moment,
-			last_payment_moment,
+			activation_date,
 		}
 	}
 
@@ -208,22 +201,13 @@ where
 		&self.schedule
 	}
 
-	/// Get a reference to the loan first payment moment.
-	pub fn first_payment_moment(&self) -> &Timestamp {
-		&self.first_payment_moment
-	}
-
-	/// Get a reference to the loan last payment moment.
-	pub fn last_payment_moment(&self) -> &Timestamp {
-		&self.last_payment_moment
-	}
-
-	pub fn get_payment_for_particular_moment(&self, moment: &Timestamp) -> Option<Balance> {
-		self.schedule.get(moment).cloned()
+	/// Get a reference to the loan activation moment.
+	pub fn activation_date(&self) -> &Timestamp {
+		&self.activation_date
 	}
 }
 
-// some fields are hiden since they should be immutable
+// Some fields are hiden since they should be immutable.
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct MarketInfo<AccountId, AssetId, BlockNumber, LiquidationStrategyId, VaultId>
 where
@@ -234,7 +218,8 @@ where
 	VaultId: Clone + Eq + PartialEq,
 {
 	config: MarketConfig<AccountId, AssetId, BlockNumber, VaultId>,
-	pub liquidation_strategies: Vec<LiquidationStrategyId>,
+    // Ids of liquidation strategies applicable to the market.	
+    pub liquidation_strategies: Vec<LiquidationStrategyId>,
 }
 
 impl<AccountId, AssetId, BlockNumber, LiquidationStrategyId, VaultId>
@@ -252,16 +237,42 @@ where
 	) -> Self {
 		Self { config, liquidation_strategies }
 	}
-
-	/// Get a reference to the market info's config.
+	
+    /// Get a reference to the market info's config.
 	pub fn config(&self) -> &MarketConfig<AccountId, AssetId, BlockNumber, VaultId> {
 		&self.config
 	}
 
-	/// Get a reference to the market info's liquidation strategies.
-	pub fn liquidation_strategies(&self) -> &Vec<LiquidationStrategyId> {
-		&self.liquidation_strategies
-	}
+}
+
+// Some fields are hiden since they should be immutable.
+#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
+pub struct LoanInfo<AccountId, AssetId, Balance, Timestamp>
+where
+	AccountId: Clone + Eq + PartialEq,
+	AssetId: Clone + Eq + PartialEq,
+	Balance: Clone + Eq + PartialEq,
+	Timestamp: Clone + Eq + PartialEq + Ord,
+{
+    config: LoanConfig<AccountId, AssetId, Balance, Timestamp>,
+    pub last_payment_date: Timestamp,
+    pub failed_payments_counter: u32,
+}
+
+impl<AccountId, AssetId, Balance, Timestamp> LoanInfo<AccountId, AssetId, Balance, Timestamp> 
+where
+	AccountId: Clone + Eq + PartialEq,
+	AssetId: Clone + Eq + PartialEq,
+	Balance: Clone + Eq + PartialEq,
+	Timestamp: Clone + Eq + PartialEq + Ord,
+{
+    pub fn new(config: LoanConfig<AccountId, AssetId, Balance, Timestamp>, last_payment_date: Timestamp) -> Self {
+        Self { config, last_payment_date, failed_payments_counter: 0 }
+    }
+
+    pub fn config(&self) -> &LoanConfig<AccountId, AssetId, Balance, Timestamp> {
+        &self.config
+    }
 }
 
 /// input to create market extrinsic
@@ -304,5 +315,7 @@ pub struct LoanInput<AccountId, Balance, Timestamp> {
 	/// Amount of assets which should be deposited as collateral.
 	pub collateral: Balance,
 	/// How often borrowers have to pay interest.
-	pub payment_schedule: Vec<(Timestamp, Balance)>,
+	pub payment_schedule: BTreeMap<Timestamp, Balance>,
+    /// Contratc should be activated before this date.
+    pub activation_date: Timestamp
 }

@@ -61,7 +61,14 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	fn loan_account_id<S: Encode>(postfix: S) -> Self::AccountId;
 
 	fn is_borrower_account_whitelisted(
-		borrower_account_id_ref: &Self::AccountId,
-		market_id_ref: &Self::AccountId,
+		borrower_account_id: &Self::AccountId,
+		market: &Self::AccountId,
 	) -> Result<bool, DispatchError>;
+	
+    fn is_borrower_account_not_blacklisted(
+		borrower_account_id: &Self::AccountId,
+		market: &Self::AccountId,
+	) -> bool;
+
+
 }

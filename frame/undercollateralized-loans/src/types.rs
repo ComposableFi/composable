@@ -1,7 +1,7 @@
 use crate::Config;
 use composable_traits::{
 	defi::DeFiComposableConfig,
-	undercollateralized_loans::{LoanConfig, LoanInput, MarketConfig, MarketInfo, MarketInput},
+	undercollateralized_loans::{LoanConfig, LoanInfo, LoanInput, MarketConfig, MarketInfo, MarketInput},
 };
 use frame_support::pallet_prelude::*;
 use sp_core::TypeId;
@@ -40,6 +40,13 @@ pub(crate) type MarketConfigOf<T> = MarketConfig<
 	<T as DeFiComposableConfig>::MayBeAssetId,
 	<T as frame_system::Config>::BlockNumber,
 	<T as Config>::VaultId,
+>;
+
+pub(crate) type LoanInfoOf<T> = LoanInfo<
+	<T as frame_system::Config>::AccountId,
+	<T as DeFiComposableConfig>::MayBeAssetId,
+	<T as DeFiComposableConfig>::Balance,
+	Timestamp,
 >;
 
 pub(crate) type LoanConfigOf<T> = LoanConfig<

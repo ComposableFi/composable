@@ -50,7 +50,7 @@ pub mod validation;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::types::{
-		Counter, LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, PaymentsOutcomes,
+		Counter, LoanInfoOf, LoanConfigOf, LoanId, LoanInputOf, MarketInfoOf, MarketInputOf, PaymentsOutcomes,
 		Timestamp,
 	};
 	use codec::Codec;
@@ -75,11 +75,16 @@ pub mod pallet {
 		ensure_none, ensure_signed, offchain::SendTransactionTypes, pallet_prelude::OriginFor,
 	};
 	use scale_info::TypeInfo;
-	use sp_runtime::{
-		traits::One,
-		transaction_validity::{TransactionSource, TransactionValidity},
+	use sp_runtime::
+		transaction_validity::{
+			TransactionPriority, TransactionSource, TransactionValidity, ValidTransaction,
 	};
-	use sp_std::{collections::btree_set::BTreeSet, fmt::Debug, ops::AddAssign};
+	use sp_std::{
+        collections::{
+            btree_map::BTreeMap, btree_set::BTreeSet,
+        },
+        fmt::Debug
+    };
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
 		type MayBeAssetId = <T as DeFiComposableConfig>::MayBeAssetId;
@@ -154,8 +159,6 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 		type MaxMarketsCounterValue: Get<Counter>;
 		type MaxLoansPerMarketCounterValue: Get<Counter>;
-		// Each payments schedule can not have more than this amount of payments.
-		type MaxPaymentsPerSchedule: Get<u32>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
 		// Amount of loans which can be processed within one tansaction submitted by off-chain
 		// worker.
@@ -166,6 +169,9 @@ pub mod pallet {
 		// Bounds are used during validation.
 		type WhiteListBound: Get<u32>;
 		type ScheduleBound: Get<u32>;
+        // Borrower may fail repayment not more then this amount of times. 
+        // After this he will placed in the blacklist.
+        type MaxRepyamentFails: Get<u128>;
 	}
 
 	#[pallet::pallet]
@@ -199,11 +205,12 @@ pub mod pallet {
 	pub type MarketsStorage<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, MarketInfoOf<T>, OptionQuery>;
 
-	// Loans storage. AccountId is id of loan's account.
+   // Loans storage. AccountId is id of loan's account.
 	#[pallet::storage]
 	pub type LoansStorage<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, LoanConfigOf<T>, OptionQuery>;
-
+		StorageMap<_, Twox64Concat, T::AccountId, LoanInfoOf<T>, OptionQuery>;
+       
+    
 	// Use hashmap as a set.
 	#[pallet::storage]
 	pub type NonActiveLoansStorage<T: Config> =
@@ -220,13 +227,24 @@ pub mod pallet {
 	>;
 
 	// Payments schedule storage.
-	// Maps payment moment and loan account id to interest rate for this payment.
+	// Maps payment moment  => [loan account id => payment amount] for this payment.
 	#[pallet::storage]
 	pub type ScheduleStorage<T: Config> =
-		StorageMap<_, Twox64Concat, Timestamp, BTreeSet<T::AccountId>, ValueQuery>;
+		StorageMap<_, Twox64Concat, Timestamp, BTreeMap<T::AccountId, T::Balance>, ValueQuery>;
 
-	// TODO: @mikolaichuk: storages for borrowers' strikes (local for particular market and global
-	// for all markets).
+    // Storage for blacklisted borrowers accounts ids which have failed significant amount of
+    // payments. If borrower is within the list it is not possible to create new loan with it's
+    // account's id.	
+    #[pallet::storage]
+	pub type BlackListPerMakretStorage<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, BTreeSet<T::AccountId>, ValueQuery>;
+    
+    // Storage holds failed payments counters for pairs (Market, Borrower). When threshold value is achived, 
+    // borrowers id is added to BlackListPerMarketStorage and BlackListStorage.
+    #[pallet::storage]
+    pub type FailsCounterStorage<T: Config> = 
+        StorageDoubleMap<_, Twox64Concat, T::AccountId, Twox64Concat, T::AccountId, Counter, ValueQuery>;
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -270,6 +288,8 @@ pub mod pallet {
 		// When we try to retrieve interest rate for the date which is not present in the payment
 		// schedule for particular loan.
 		MomentNotFoundInSchedule,
+        // Borrower in question is blacklisted due to payments failing.
+        BlacklistedBorrowerAccount
 	}
 
 	#[pallet::genesis_config]
@@ -333,15 +353,18 @@ pub mod pallet {
 			let current_date_timestamp = Self::get_current_date_timestamp();
 			let next_date_aligned_timestemp =
 				Self::get_next_date_aligned_timestamp(current_date_timestamp);
-			let mut daily_lock = StorageLock::with_deadline(
-				b"undercollateralized_loans::offchain_worker_lock",
+		    
+            // Create daily lock for payments and expired loans checking.	
+            let mut daily_lock = StorageLock::with_deadline(
+				b"UndercollateralizedLoansOffchainWorkerLock",
 				// Type conversion is safe here since we do not use dates before the epoche.
 				Duration::from_millis(next_date_aligned_timestemp as u64 * 1000),
 			);
-			// Run regular procedures once a day.
+			
+            // Run procedures on daily basis.
 			match daily_lock.try_lock() {
 				Ok(_) => Self::sync_offchain_worker(current_date_timestamp),
-				Err(_) => (),
+                Err(_) => (),
 			};
 		}
 	}
@@ -365,8 +388,12 @@ pub mod pallet {
 				Call::remove_loans { .. } => (),
 				_ => return InvalidTransaction::Call.into(),
 			};
-			// TODO: @mikolaichuk: consider higher transaction priority.
-			Ok(ValidTransaction::default())
+			ValidTransaction::with_tag_prefix("UndercollateralizedLoansOffchainWorker")
+			    // Setup maximum priority since we want to run such transaction ASAP.	
+                .priority(TransactionPriority::MAX)
+			    // We want to propagate such transaction to other nodes.	
+                .propagate(true)
+				.build()
 		}
 	}
 

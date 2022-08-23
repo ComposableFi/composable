@@ -13,12 +13,12 @@ use sp_runtime::traits::Zero;
 pub struct MarketInputIsValid<Oracle, Loans>(PhantomData<(Oracle, Loans)>);
 
 impl<
-		LiquidationStrategyId,
-		Asset: Copy + PartialEq,
-		BlockNumber,
 		Oracle: OracleTrait<AssetId = Asset>,
+		Loans: UndercollateralizedLoans,
+		Asset: Copy + PartialEq,
+		LiquidationStrategyId,
+		BlockNumber,
 		AccountId,
-        Loans: UndercollateralizedLoans,
 	>
 	Validate<
 		MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>,
@@ -36,14 +36,15 @@ impl<
 			Oracle::is_supported(create_input.currency_pair.base)?,
 			"Collateral asset is not supported by oracle"
 		);
-		
-        ensure! (create_input.currency_pair.base != create_input.currency_pair.quote, 
-			"Base and quote currencies are supposed to be different in currency pair");
-
-        ensure!(
-            create_input.whitelist.len() < Loans::WhiteListBound::get().try_into().expect("This method never panics!"),
+		ensure!(
+			create_input.currency_pair.base != create_input.currency_pair.quote,
+			"Base and quote currencies are supposed to be different in currency pair"
+		);
+		ensure!(
+			create_input.whitelist.len() <
+				Loans::WhiteListBound::get().try_into().expect("This method never panics!"),
 			"Payment schedule exceeded maximum size."
-            );
+		);
 		Ok(create_input)
 	}
 }
@@ -67,9 +68,10 @@ impl<AccountId, Balance, Loans, Timestamp>
 	Validate<LoanInput<AccountId, Balance, Timestamp>, LoanInputIsValid<Loans>>
 	for LoanInputIsValid<Loans>
 where
-	Balance: Zero + PartialOrd,
 	Loans: UndercollateralizedLoans + DeFiEngine<AccountId = AccountId>,
 	AccountId: Clone + Eq + PartialEq + FullCodec,
+	Balance: Zero + PartialOrd, 
+    Timestamp: Clone + Ord,
 {
 	fn validate(
 		input: LoanInput<AccountId, Balance, Timestamp>,
@@ -86,15 +88,30 @@ where
 			)?,
 			"Mentioned borrower is not included in the market's whitelist of borrowers."
 		);
+    	
+        ensure!(
+			Loans::is_borrower_account_not_blacklisted(
+				&input.borrower_account_id,
+                &input.market_account_id
+			),
+			"Mentioned borrower is presented in the market's blacklist of borrowers."
+		);
+
 		// Check if payment schedule is empty.
 		// We should have at least one payment.
 		ensure!(input.payment_schedule.len() > 0, "Payment schedule is empty.");
-		// Unwrapped since u32 can be safely converted to usize.
+		
+        // Unwrapped since u32 can be safely converted to usize.
 		ensure!(
 			input.payment_schedule.len() <
 				Loans::ScheduleBound::get().try_into().expect("This method never panics."),
 			"Payment schedule exceeded maximum size."
 		);
+       
+        // Unwrapped since we have checked that shcedule is not empty.
+        ensure!(input.activation_date <= input.payment_schedule.keys().min().cloned().expect("This mehtod never panics."),
+            "Contract first date payment is less than activation date."
+            );
 		Ok(LoanInput { principal, collateral, ..input })
 	}
 }

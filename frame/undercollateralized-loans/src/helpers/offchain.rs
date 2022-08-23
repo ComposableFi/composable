@@ -40,16 +40,16 @@ impl<T: Config> Pallet<T> {
 		// If nothing found we get empty set.
 		let mut possible_payments_outcomes = vec![];
 		let loans_accounts_ids = crate::ScheduleStorage::<T>::try_get(today).unwrap_or_default();
-		for loan_account_id in loans_accounts_ids {
-			let loan_config = match Self::get_loan_config_via_account_id(&loan_account_id) {
-				Ok(loan_config) => loan_config,
+		for loan_account_id in loans_accounts_ids.keys() {
+			let loan_info = match Self::get_loan_info_via_account_id(&loan_account_id) {
+				Ok(loan_info) => loan_info,
 				Err(error) => {
 					log::error!("Error: {:?}", error);
 					continue
 				},
 			};
 			// Collect possible payment outcomes.
-			if let Some(possible_payment_outcome) = Self::treat_payment(&loan_config, today) {
+			if let Some(possible_payment_outcome) = Self::treat_payment(&loan_info, today) {
 				possible_payments_outcomes.push(possible_payment_outcome)
 			}
 		}
@@ -75,13 +75,13 @@ impl<T: Config> Pallet<T> {
 	}
 
 	// Collect expired non-activated loans accounts ids.
-	// Expired non-activated loans are loans which were not activated by borrower before first
-	// payment date.
+	// Expired non-activated loans are loans which were not activated by borrower before activation
+    // date.
 	pub(crate) fn collect_non_activated_expired_loans(today: Timestamp) -> Vec<T::AccountId> {
 		let mut expired_loans_accounts_ids = vec![];
 		for non_active_loan_account_id in crate::NonActiveLoansStorage::<T>::iter_keys() {
 			match Self::get_loan_config_via_account_id(&non_active_loan_account_id) {
-				Ok(loan_config) if today > *loan_config.first_payment_moment() =>
+				Ok(loan_config) if today > *loan_config.activation_date() =>
 					expired_loans_accounts_ids.push(loan_config.account_id().clone()),
 				Ok(_) => (),
 				// If loan is marked as non-active but not presented in the loans' storage,

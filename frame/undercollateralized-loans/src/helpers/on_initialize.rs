@@ -5,6 +5,7 @@ use crate::{
 use composable_traits::vault::{FundsAvailability, StrategicVault, Vault};
 use frame_support::{storage::with_transaction, traits::fungibles::Inspect};
 use sp_runtime::{DispatchError, TransactionOutcome};
+use sp_std::collections::btree_set::BTreeSet;
 
 impl<T: Config> Pallet<T> {
 	//===========================================================================================================================
@@ -116,7 +117,8 @@ impl<T: Config> Pallet<T> {
 	// Used at the beginning of the day to proccess loans which
 	// were not processed yesterday for some reason.
 	pub(crate) fn last_chance_processing(date: Timestamp) {
-		let unprocessed_loans_accounts_ids: Vec<_> = crate::ScheduleStorage::<T>::get(date)
+	    let set_of_loans_accounts_ids: BTreeSet<T::AccountId> = crate::ScheduleStorage::<T>::get(date).keys().cloned().collect();
+        let unprocessed_loans_accounts_ids: Vec<_> = set_of_loans_accounts_ids 
 			.difference(&crate::ProcessedLoansStorage::<T>::get())
 			.cloned()
 			.collect();
@@ -131,14 +133,14 @@ impl<T: Config> Pallet<T> {
 		date: Timestamp,
 	) {
 		for loan_account_id in loans_accounts_ids {
-			let loan_config = match Self::get_loan_config_via_account_id(&loan_account_id) {
-				Ok(loan_config) => loan_config,
+			let loan_info = match Self::get_loan_info_via_account_id(&loan_account_id) {
+				Ok(loan_info) => loan_info,
 				Err(error) => {
 					log::error!("Error: {:?}", error);
 					continue
 				},
 			};
-			let payment = match Self::treat_payment(&loan_config, date) {
+			let payment = match Self::treat_payment(&loan_info, date) {
 				Some(payment) => payment,
 				None => continue,
 			};
@@ -147,7 +149,7 @@ impl<T: Config> Pallet<T> {
 				PaymentOutcome::LastPaymentSucceed(payment) =>
 					Self::close_loan_contract(&payment.loan_config),
 				PaymentOutcome::PaymentFailed(payment) =>
-					Self::process_failed_payment(&payment.loan_config),
+					Self::process_failed_payment(&payment),
 			}
 		}
 	}
