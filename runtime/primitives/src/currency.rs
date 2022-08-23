@@ -102,6 +102,7 @@ impl CurrencyId {
 	pub const INVALID: CurrencyId = CurrencyId(0);
 
 	list_assets! {
+		// Native Tokens (1 - 100)
 		/// Runtime native token Kusama
 		pub const PICA: CurrencyId = CurrencyId(1);
 		/// Runtime native token Polkadot
@@ -112,11 +113,22 @@ impl CurrencyId {
 		pub const KSM: CurrencyId = CurrencyId(4);
 		pub const PBLO: CurrencyId = CurrencyId(5);
 
-		/// Karura stable coin (Karura Dollar), not native.
+		// Non-Native Tokens (101 - 1000)
+		/// Karura stable coin(Karura Dollar), not native.
 		#[allow(non_upper_case_globals)]
 		pub const kUSD: CurrencyId = CurrencyId(129);
 		pub const USDT: CurrencyId = CurrencyId(130);
 		pub const USDC: CurrencyId = CurrencyId(131);
+
+		// Staked asset LP tokens (1001 - 100_000_000_000)
+		/// Staked asset xPICA Token
+		pub const XPICA: CurrencyId = CurrencyId(1001);
+		/// Staked asset xLAYR Token
+		pub const XLAYR: CurrencyId = CurrencyId(1002);
+		/// Staked asset xKSM Token
+		pub const XKSM: CurrencyId = CurrencyId(1004);
+		/// Staked asset xPBLO Token
+		pub const XPBLO: CurrencyId = CurrencyId(1005);
 	}
 
 	#[inline(always)]
