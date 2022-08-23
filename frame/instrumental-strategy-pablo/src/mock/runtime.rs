@@ -1,23 +1,29 @@
 use frame_support::{parameter_types, traits::Everything, PalletId};
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureSigned};
 use orml_traits::parameter_type_with_key;
+use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup},
+	Permill,
 };
 
-use crate as pallet_pablo_strategy;
+use super::fnft;
+use crate as instrumental_strategy_pablo;
 
 pub type AccountId = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
 pub type Balance = u128;
-pub type CurrencyId = u128;
-
-pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
+pub type PoolId = u128;
+pub type RewardPoolId = u16;
+pub type PositionId = u128;
+pub type Moment = composable_traits::time::Timestamp;
 pub type VaultId = u64;
 
+pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
 
 // -----------------------------------------------------------------------------------------------
@@ -126,7 +132,7 @@ parameter_types! {
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = VAULT_PALLET_ID;
-	  pub const TombstoneDuration: u64 = 42;
+	pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for MockRuntime {
@@ -150,6 +156,125 @@ impl pallet_vault::Config for MockRuntime {
 }
 
 // -----------------------------------------------------------------------------------------------
+//                                   Governance Registry
+// -----------------------------------------------------------------------------------------------
+
+impl pallet_governance_registry::Config for MockRuntime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type WeightInfo = ();
+}
+
+// -----------------------------------------------------------------------------------------------
+//                                   Assets
+// -----------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
+}
+
+impl pallet_assets::Config for MockRuntime {
+	type NativeAssetId = NativeAssetId;
+	type GenerateCurrencyId = LpTokenFactory;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type NativeCurrency = Balances;
+	type MultiCurrency = Tokens;
+	type WeightInfo = ();
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type CurrencyValidator = ValidateCurrencyId;
+	type GovernanceRegistry = GovernanceRegistry;
+}
+
+// -----------------------------------------------------------------------------------------------
+//                                   Timestamp
+// -----------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+}
+
+impl pallet_timestamp::Config for MockRuntime {
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                          Staking Rewards
+// -------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
+	pub const MaxStakingDurationPresets: u32 = 10;
+	pub const MaxRewardConfigsPerPool: u32 = 10;
+}
+
+impl pallet_staking_rewards::Config for MockRuntime {
+	type Event = Event;
+	type Balance = Balance;
+	type RewardPoolId = RewardPoolId;
+	type PositionId = PositionId;
+	type AssetId = CurrencyId;
+	type Assets = Tokens;
+	type CurrencyFactory = LpTokenFactory;
+	type UnixTime = Timestamp;
+	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
+	type PalletId = StakingRewardsPalletId;
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
+	type WeightInfo = ();
+	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
+	type FinancialNftInstanceId = u64;
+	type FinancialNft = fnft::MockFnft;
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                            Pablo (AMM)
+// -------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const PabloPalletId: PalletId = PalletId(*b"pablo_pa");
+	pub const MinSaleDuration: BlockNumber = 3600 / 12;
+	pub const MaxSaleDuration: BlockNumber = 30 * 24 * 3600 / 12;
+	pub const MaxInitialWeight: Permill = Permill::from_percent(95);
+	pub const MinFinalWeight: Permill = Permill::from_percent(5);
+	pub const TWAPInterval: Moment = MILLISECS_PER_BLOCK * 10;
+	pub const MaxStakingRewardPools: u32 = 10;
+	pub const MillisecsPerBlock: u32 = MILLISECS_PER_BLOCK as u32;
+}
+
+impl pallet_pablo::Config for MockRuntime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Convert = ConvertInto;
+	type CurrencyFactory = LpTokenFactory;
+	type Assets = Assets;
+	type PoolId = PoolId;
+	type PalletId = PabloPalletId;
+	type LocalAssets = LpTokenFactory;
+	type LbpMinSaleDuration = MinSaleDuration;
+	type LbpMaxSaleDuration = MaxSaleDuration;
+	type LbpMaxInitialWeight = MaxInitialWeight;
+	type LbpMinFinalWeight = MinFinalWeight;
+	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
+	type EnableTwapOrigin = EnsureRoot<AccountId>;
+	type Time = Timestamp;
+	type TWAPInterval = TWAPInterval;
+	type WeightInfo = ();
+	type RewardPoolId = RewardPoolId;
+	type MaxStakingRewardPools = MaxStakingRewardPools;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type ManageStaking = StakingRewards;
+	type ProtocolStaking = StakingRewards;
+	type MsPerBlock = MillisecsPerBlock;
+}
+
+// -----------------------------------------------------------------------------------------------
 //                                   Instrumental Pablo Strategy
 // -----------------------------------------------------------------------------------------------
 
@@ -158,7 +283,7 @@ parameter_types! {
 	pub const InstrumentalPabloStrategyPalletId: PalletId = PalletId(*b"strmxpab");
 }
 
-impl pallet_pablo_strategy::Config for MockRuntime {
+impl instrumental_strategy_pablo::Config for MockRuntime {
 	type Event = Event;
 	type WeightInfo = ();
 	type AssetId = CurrencyId;
@@ -166,6 +291,9 @@ impl pallet_pablo_strategy::Config for MockRuntime {
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type MaxAssociatedVaults = MaxAssociatedVaults;
+	type PoolId = PoolId;
+	type Currency = Tokens;
+	type Pablo = Pablo;
 	type PalletId = InstrumentalPabloStrategyPalletId;
 }
 
@@ -185,11 +313,16 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
-
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
-		PabloStrategy: pallet_pablo_strategy::{Pallet, Call, Storage, Event<T>},
+		GovernanceRegistry: pallet_governance_registry::{Pallet, Call, Storage, Event<T>},
+		Assets: pallet_assets::{Pallet, Call, Storage},
+		StakingRewards: pallet_staking_rewards::{Pallet, Storage, Call, Event<T>},
+		Pablo: pallet_pablo::{Pallet, Call, Storage, Event<T>},
+
+		PabloStrategy: instrumental_strategy_pablo::{Pallet, Call, Storage, Event<T>},
 	}
 );
 

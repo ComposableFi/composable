@@ -1,6 +1,7 @@
 // use crate::mock::strategies::*;
 use composable_traits::instrumental::InstrumentalProtocolStrategy;
 use frame_support::{assert_noop, assert_ok};
+use primitives::currency::CurrencyId;
 
 use crate::mock::runtime::{
 	ExtBuilder, InstrumentalStrategy, MockRuntime, PabloStrategy, VaultId, MAX_ASSOCIATED_VAULTS,
@@ -17,7 +18,7 @@ use crate::pallet::Error;
 #[test]
 fn test_get_apy() {
 	ExtBuilder::default().build().execute_with(|| {
-		let asset_id = 0;
+		let asset_id = CurrencyId::PICA;
 
 		assert_eq!(InstrumentalStrategy::get_apy(asset_id), PabloStrategy::get_apy(asset_id));
 	});
