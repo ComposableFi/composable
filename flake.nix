@@ -128,7 +128,7 @@
 
           # for containers which are intented for testing, debug and development (including running isolated runtime)
           container-tools =
-            [ coreutils bash procps findutils nettools bottom nix procps ];
+            [ bash bottom coreutils findutils gawk gnugrep less nettools nix procps ];
 
           # source relevant to build rust only
           rust-src =
@@ -406,12 +406,23 @@
             }).script;
 
             # Dali devnet container
-            devnet-container = dockerTools.buildLayeredImage {
+            devnet-container = dockerTools.buildImage {
               name = "composable-devnet-container";
-              contents = container-tools;
-              config = {
-                Cmd = [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+              tag = "latest";
+              copyToRoot = pkgs.buildEnv {
+                name = "image-root";
+                paths = [ curl websocat ] ++ container-tools;
+                pathsToLink = [ "/bin" ];
               };
+              config = {
+                Entrypoint = [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+                WorkingDir = "/home/polkadot-launch";
+              };
+              runAsRoot = ''
+                mkdir -p /home/polkadot-launch /tmp
+                chown 1000:1000 /home/polkadot-launch
+                chmod 777 /tmp
+              '';
             };
 
             # TODO: inherit and provide script to run all stuff
