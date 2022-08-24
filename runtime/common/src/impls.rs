@@ -261,7 +261,7 @@ mod tests {
 			let fee = Balances::issue(10);
 			let tip = Balances::issue(20);
 
-			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
+			DealWithFees::<Test, _, Balances>::on_unbalanceds(vec![fee, tip].into_iter());
 
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 15);
@@ -276,7 +276,7 @@ mod tests {
 			let fee = Balances::issue(0);
 			let tip = Balances::issue(0);
 
-			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
+			DealWithFees::<Test, _, Balances>::on_unbalanceds(vec![fee, tip].into_iter());
 
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
@@ -290,7 +290,7 @@ mod tests {
 			let fee = Balances::issue(1);
 			let tip = Balances::issue(1);
 
-			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
+			DealWithFees::<Test, _, Balances>::on_unbalanceds(vec![fee, tip].into_iter());
 
 			// Author gets 50% of tip and 50% of fee = 15
 			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 0);
