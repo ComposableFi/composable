@@ -181,7 +181,7 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		let msg = Any { type_url: CONN_TRY_OPEN_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec() };
 		log::trace!(target: "pallet_ibc", "\n\n\n\n\n\n<=============== Begin benchmark ====================>\n\n\n\n\n");
-	}: deliver_permissioned(RawOrigin::Root, vec![msg])
+	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
 		assert_eq!(connection_end.state, State::TryOpen);
@@ -263,7 +263,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let caller: T::AccountId = whitelisted_caller();
 		let msg = Any { type_url: CONN_OPEN_CONFIRM_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec() };
-	}: deliver_permissioned(RawOrigin::Root, vec![msg])
+	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
 		assert_eq!(connection_end.state, State::Open);
@@ -845,7 +845,6 @@ benchmarks! {
 		assert_eq!(ClientCounter::<T>::get(), 1)
 	}
 
-	// TODO: Fix ICS20 Bencmarks
 
 	transfer {
 		let caller: T::AccountId = whitelisted_caller();

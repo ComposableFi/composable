@@ -26,7 +26,7 @@ where
 benchmarks! {
 	where_clause {
 		where
-			T: pallet_assets::Config + DeFiComposableConfig + orml_tokens::Config + pallet_balances::Config + pallet_dutch_auction::Config,
+			T: pallet_assets::Config + DeFiComposableConfig + orml_tokens::Config + pallet_dutch_auction::Config,
 			<T as orml_tokens::Config>::CurrencyId: From<<T as DeFiComposableConfig>::MayBeAssetId>,
 			<T as pallet_dutch_auction::Config>::NativeCurrency: Currency<T::AccountId>,
 				}

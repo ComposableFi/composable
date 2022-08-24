@@ -570,8 +570,7 @@ pub mod pallet {
 		}
 
 		#[frame_support::transactional]
-		#[pallet::weight(0)]
-		// #[pallet::weight(<T as Config>::WeightInfo::transfer())]
+		#[pallet::weight(<T as Config>::WeightInfo::transfer())]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			params: TransferParams<T::AccountId>,
@@ -663,8 +662,7 @@ pub mod pallet {
 		}
 
 		#[frame_support::transactional]
-		#[pallet::weight(0)]
-		// #[pallet::weight(<T as Config>::WeightInfo::open_channel())]
+		#[pallet::weight(<T as Config>::WeightInfo::open_transfer_channel())]
 		pub fn open_transfer_channel(
 			origin: OriginFor<T>,
 			params: OpenChannelParams,
@@ -695,8 +693,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		// #[pallet::weight(<T as Config>::WeightInfo::set_pallet_params())]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_params())]
 		pub fn set_params(origin: OriginFor<T>, params: PalletParams) -> DispatchResult {
 			<T as Config>::AdminOrigin::ensure_origin(origin)?;
 			<Params<T>>::put(params);
