@@ -12226,6 +12226,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "sc-consensus-manual-seal"
+version = "0.10.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27#8eff668a42325aeb4433eace1604f4d286a6ec05"
+dependencies = [
+ "assert_matches",
+ "async-trait",
+ "futures 0.3.23",
+ "jsonrpsee 0.14.0",
+ "log 0.4.17",
+ "parity-scale-codec",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-aura",
+ "sc-consensus-babe",
+ "sc-consensus-epochs",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "serde",
+ "sp-api",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-consensus-babe",
+ "sp-consensus-slots",
+ "sp-core",
+ "sp-inherents",
+ "sp-keystore",
+ "sp-runtime",
+ "sp-timestamp",
+ "substrate-prometheus-endpoint",
+ "thiserror",
+]
+
+[[package]]
 name = "sc-consensus-slots"
 version = "0.10.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.27#2f52be0cd59f1027570cc3fe77f4a48d2284efb8"
@@ -13408,13 +13442,74 @@ dependencies = [
 ]
 
 [[package]]
+name = "simnode-common"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "composable-node",
+ "composable-runtime",
+ "cumulus-primitives-parachain-inherent",
+ "dali-runtime",
+ "derive_more",
+ "frame-benchmarking",
+ "frame-system",
+ "jsonrpsee 0.14.0",
+ "pallet-transaction-payment",
+ "picasso-runtime",
+ "sc-cli",
+ "sc-consensus",
+ "sc-consensus-manual-seal",
+ "sc-executor",
+ "sc-rpc",
+ "sc-service",
+ "simnode-runtime-apis",
+ "sp-api",
+ "sp-consensus-aura",
+ "sp-runtime",
+ "sp-transaction-pool",
+ "substrate-simnode",
+]
+
+[[package]]
 name = "simnode-runtime-apis"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-simnode?rev=eed85119358bc80bbb1aedd98778f370d4932dee#eed85119358bc80bbb1aedd98778f370d4932dee"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=polkadot-v0.9.27#b8b7969c1b8957045966e56a11a5b42a1fda9fa0"
 dependencies = [
  "parity-scale-codec",
  "sp-api",
  "sp-std",
+]
+
+[[package]]
+name = "simnode-tests"
+version = "0.1.0"
+dependencies = [
+ "common",
+ "composable-node",
+ "composable-runtime",
+ "cumulus-pallet-parachain-system",
+ "dali-runtime",
+ "frame-benchmarking",
+ "frame-system",
+ "hex",
+ "num-traits",
+ "pallet-sudo",
+ "parachain-info",
+ "parity-scale-codec",
+ "picasso-runtime",
+ "polkadot-primitives",
+ "sc-cli",
+ "sc-client-api",
+ "sc-executor",
+ "sc-rpc",
+ "sc-service",
+ "simnode-common",
+ "simnode-runtime-apis",
+ "sp-api",
+ "sp-blockchain",
+ "sp-keyring",
+ "sp-runtime",
+ "substrate-simnode",
 ]
 
 [[package]]
@@ -14595,6 +14690,61 @@ dependencies = [
 ]
 
 [[package]]
+name = "substrate-simnode"
+version = "0.1.0"
+source = "git+https://github.com/polytope-labs/substrate-simnode?branch=polkadot-v0.9.27#b8b7969c1b8957045966e56a11a5b42a1fda9fa0"
+dependencies = [
+ "clap 3.2.17",
+ "cumulus-pallet-parachain-system",
+ "cumulus-primitives-parachain-inherent",
+ "cumulus-test-relay-sproof-builder",
+ "frame-system",
+ "futures 0.3.23",
+ "jsonrpsee 0.14.0",
+ "log 0.4.17",
+ "num-traits",
+ "parachain-info",
+ "parity-scale-codec",
+ "polkadot-primitives",
+ "sc-basic-authorship",
+ "sc-cli",
+ "sc-client-api",
+ "sc-consensus",
+ "sc-consensus-babe",
+ "sc-consensus-manual-seal",
+ "sc-executor",
+ "sc-finality-grandpa",
+ "sc-informant",
+ "sc-network",
+ "sc-rpc",
+ "sc-rpc-server",
+ "sc-service",
+ "sc-tracing",
+ "sc-transaction-pool",
+ "sc-transaction-pool-api",
+ "simnode-runtime-apis",
+ "sp-api",
+ "sp-block-builder",
+ "sp-blockchain",
+ "sp-consensus",
+ "sp-consensus-aura",
+ "sp-consensus-babe",
+ "sp-core",
+ "sp-externalities",
+ "sp-finality-grandpa",
+ "sp-inherents",
+ "sp-keyring",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-runtime-interface",
+ "sp-session",
+ "sp-state-machine",
+ "sp-transaction-pool",
+ "sp-wasm-interface",
+ "tokio",
+]
+
+[[package]]
 name = "substrate-state-trie-migration-rpc"
 version = "4.0.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.27#2f52be0cd59f1027570cc3fe77f4a48d2284efb8"
@@ -15541,7 +15691,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.9.0",
  "regex",
  "serde",
  "serde_json",
@@ -15733,9 +15883,9 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
- "rand 0.8.5",
+ "rand 0.6.5",
  "static_assertions",
 ]
 
