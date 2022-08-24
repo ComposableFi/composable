@@ -44,6 +44,8 @@ mod liquidity_bootstrapping_tests;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
+mod mock_fnft;
+#[cfg(test)]
 mod stable_swap_tests;
 #[cfg(test)]
 mod uniswap_tests;
@@ -521,7 +523,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::add_liquidity(
+			<Self as Amm>::add_liquidity(
 				&who,
 				pool_id,
 				base_amount,
@@ -544,7 +546,7 @@ pub mod pallet {
 			min_quote_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::remove_liquidity(
+			<Self as Amm>::remove_liquidity(
 				&who,
 				pool_id,
 				lp_amount,

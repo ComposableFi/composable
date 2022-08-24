@@ -1,12 +1,10 @@
 //! Interfaces to managed assets
 use codec::{Decode, Encode, MaxEncodedLen};
-use frame_support::dispatch::DispatchResult;
+use frame_support::{dispatch::DispatchResult, pallet_prelude::ConstU32, WeakBoundedVec};
 use polkadot_parachain::primitives::Id;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "std")]
-use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
 
 use crate::{currency::Exponent, defi::Ratio};
@@ -119,7 +117,7 @@ pub trait RemoteAssetRegistryMutate {
 		decimals: Option<Exponent>,
 	) -> DispatchResult;
 
-	/// allows change  ratio of how much remote assets is needed for unit of native  
+	/// allows change  ratio of how much remote assets is needed for unit of native
 	fn update_ratio(location: Self::AssetNativeLocation, ration: Option<Ratio>) -> DispatchResult;
 }
 
@@ -264,7 +262,7 @@ pub enum JunctionDef {
 	/// Usage will vary widely owing to its generality.
 	///
 	/// NOTE: Try to avoid using this and instead use a more specific item.
-	GeneralKey(Vec<u8>),
+	GeneralKey(WeakBoundedVec<u8, ConstU32<32>>),
 	/// The unambiguous child.
 	///
 	/// Not currently used except as a fallback when deriving ancestry.
@@ -289,7 +287,7 @@ pub enum NetworkIdDef {
 	/// Unidentified/any.
 	Any,
 	/// Some named network.
-	Named(Vec<u8>),
+	Named(WeakBoundedVec<u8, ConstU32<32>>),
 	/// The Polkadot Relay chain
 	Polkadot,
 	/// Kusama.
@@ -304,7 +302,7 @@ pub enum BodyIdDef {
 	/// The only body in its context.
 	Unit,
 	/// A named body.
-	Named(Vec<u8>),
+	Named(WeakBoundedVec<u8, ConstU32<32>>),
 	/// An indexed body.
 	Index(u32),
 	/// The unambiguous executive body (for Polkadot, this would be the Polkadot council).

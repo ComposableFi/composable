@@ -3,10 +3,10 @@ use frame_support::{pallet_prelude::*, traits::Get};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, Percent};
 
-#[derive(Debug, Decode, Copy, Clone, PartialEq, TypeInfo)]
+#[derive(Debug, Decode, Copy, Clone, PartialEq, Eq, TypeInfo)]
 pub struct ValidMinAnswers;
 
-#[derive(Debug, Copy, Clone, Decode, PartialEq, TypeInfo)]
+#[derive(Debug, Copy, Clone, Decode, PartialEq, Eq, TypeInfo)]
 pub struct ValidThreshhold;
 
 #[derive(Debug, Decode)]
