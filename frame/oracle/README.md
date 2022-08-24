@@ -5,10 +5,10 @@ The Oracle pallet provides functionality for setting up and maintaining an Apoll
 ## Overview
 
 The Oracle provides functions to:
-Add assets and their respective data and submit prices for those assets
-Set a signer to ensure proper calls for transactional functions
-Manage stake associated with signer for operating
-Adjust reward configuration for Oracles
+- Add assets and their respective data and submit prices for those assets
+- Set a signer to ensure proper calls for transactional functions
+- Manage stake associated with signer for operating
+- Adjust reward configuration for Oracles
 
 ## Workflows
 
@@ -24,6 +24,6 @@ Once an Oracle has been set up it will start to `submit_prices` for an asset eve
 ### Stake Management
 
 The Oracle pallet provides basic functionality to manage the stake needed to run an Oracle:
-`add_stake` to add more stake
-`remove_stake` claim to remove stake immediately
-`reclaim_stake` reclaim stake after proper time has passed
+- `add_stake` to add more stake
+- `remove_stake` claim to remove stake immediately
+- `reclaim_stake` reclaim stake after proper time has passed
