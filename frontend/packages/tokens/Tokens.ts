@@ -113,7 +113,7 @@ export const TOKENS: { [key in TokenId]: Token } = {
     id: "kar",
     icon: "/tokens/karura.svg",
     symbol: "KAR",
-    decimalsToDisplay: 18,
+    decimalsToDisplay: 6,
   },
   ausd: {
     id: "ausd",

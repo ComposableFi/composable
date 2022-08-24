@@ -1,5 +1,4 @@
 import {
-  formatToken,
   fromChainIdUnit,
   humanBalance,
   toChainIdUnit,
@@ -18,9 +17,7 @@ import {
   getTransferCallKusamaPicasso,
   getTransferCallPicassoKarura,
   getTransferCallPicassoKusama,
-} from "@/components/Organisms/Transfer/utils";
-import { ApiPromise } from "@polkadot/api";
-import { u128 } from "@polkadot/types-codec";
+} from "@/components/Organisms/Transfer/xcmp";
 import BigNumber from "bignumber.js";
 
 export const TransferFeeDisplay = () => {

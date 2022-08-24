@@ -11,7 +11,7 @@ import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import {
   availableTargetNetwork,
   getTransferToken,
-} from "@/components/Organisms/Transfer/utils";
+} from "@/components/Organisms/Transfer/xcmp";
 
 export const TransferNetworkSelector = () => {
   const { networks, updateNetworks, updateTokenId } = useStore(

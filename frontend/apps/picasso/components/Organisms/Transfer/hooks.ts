@@ -1,6 +1,6 @@
 import { useStore } from "@/stores/root";
 import { useEffect, useMemo } from "react";
-import { getTransferToken } from "@/components/Organisms/Transfer/utils";
+import { getTransferToken } from "@/components/Organisms/Transfer/xcmp";
 import { useAllParachainProviders } from "@/defi/polkadot/context/hooks";
 import BigNumber from "bignumber.js";
 import { fromChainIdUnit } from "shared";

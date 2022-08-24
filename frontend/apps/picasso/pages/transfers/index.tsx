@@ -26,7 +26,7 @@ import {
   transferKusamaPicasso,
   transferPicassoKarura,
   transferPicassoKusama,
-} from "@/components/Organisms/Transfer/utils";
+} from "@/components/Organisms/Transfer/xcmp";
 import { TransferExistentialDeposit } from "@/components/Organisms/Transfer/TransferExistentialDeposit";
 import { TransferFeeItem } from "@/components/Organisms/Transfer/TransferFeeItem";
 import { AssetId } from "@/defi/polkadot/types";
