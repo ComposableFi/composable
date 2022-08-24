@@ -83,7 +83,7 @@ describe("[SHORT] tx.xcmp Tests", function () {
       const destination = relayChainApiClient.createType("XcmVersionedMultiLocation", {
         V0: relayChainApiClient.createType("XcmV0MultiLocation", {
           X1: relayChainApiClient.createType("XcmV0Junction", {
-            Parachain: relayChainApiClient.createType("Compact<u32>", 2000)
+            Parachain: relayChainApiClient.createType("Compact<u32>", 2087)
           })
         })
       });

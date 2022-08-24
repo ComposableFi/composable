@@ -8,7 +8,7 @@ use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::traits::{One, Zero};
 
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
 pub struct UpdateInputValid;
 
 impl<LiquidationStrategyId, BlockNumber>
@@ -25,9 +25,9 @@ impl<LiquidationStrategyId, BlockNumber>
 	}
 }
 
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
 pub struct MarketModelValid;
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
 pub struct CurrencyPairIsNotSame;
 
 impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
@@ -62,7 +62,7 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 	}
 }
 
-#[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Clone, Copy)]
+#[derive(RuntimeDebug, PartialEq, Eq, TypeInfo, Default, Clone, Copy)]
 pub struct AssetIsSupportedByOracle<Oracle: OracleTrait>(PhantomData<Oracle>);
 
 impl<LiquidationStrategyId, Asset: Copy, BlockNumber, Oracle: OracleTrait<AssetId = Asset>>
@@ -86,7 +86,7 @@ impl<LiquidationStrategyId, Asset: Copy, BlockNumber, Oracle: OracleTrait<AssetI
 	}
 }
 
-#[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Copy, Clone)]
+#[derive(RuntimeDebug, PartialEq, Eq, TypeInfo, Default, Copy, Clone)]
 pub struct BalanceGreaterThenZero;
 impl<B> Validate<B, BalanceGreaterThenZero> for BalanceGreaterThenZero
 where
