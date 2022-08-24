@@ -380,7 +380,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Weight: see `begin_block`
 		fn on_initialize(_: T::BlockNumber) -> Weight {
-			Self::acumulate_rewards_hook()
+			Self::accumulate_rewards_hook()
 		}
 	}
 
@@ -920,11 +920,14 @@ pub mod pallet {
 						asset_id: reward.asset_id,
 					});
 				},
-				Err(MaxRewardsAccumulatedPreviously) => {},
+				Err(MaxRewardsAccumulatedPreviously) => {
+					// max rewards were accumulated previously, silently continue since the
+					// MaxRewardsAccumulated event has already been emitted for this pool
+				},
 			}
 		}
 
-		pub(crate) fn acumulate_rewards_hook() -> Weight {
+		pub(crate) fn accumulate_rewards_hook() -> Weight {
 			let now_seconds = T::UnixTime::now().as_secs();
 			let unix_time_now_weight = T::WeightInfo::unix_time_now();
 
@@ -939,12 +942,11 @@ pub mod pallet {
 					);
 				}
 
-				// 128 bit platforms don't exist as of writing this so this usize -> u64 cast
-				// should be ok
+				// reward_pool.rewards is limited T::MaxRewardConfigsPerPool, which is Get<u32>
 				let number_of_rewards_in_pool = reward_pool.rewards.len() as u64;
 
 				total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_accumulation_hook_reward_update_calculation()) +
-					// NOTE: `StorageMap::iter` does one read per item
+					// NOTE: `StorageMap::translate` does one read and one write per item
 					T::DbWeight::get().reads(1) +
 					T::DbWeight::get().writes(1);
 
@@ -1065,9 +1067,9 @@ fn add_to_rewards_pot<T: Config>(
 	T::Assets::transfer(asset_id, &who, &pool_account, amount, keep_alive)?;
 	T::Assets::hold(asset_id, &pool_account, amount)?;
 
-	Pallet::<T>::deposit_event(Event::<T>::RewardsPotIncreased { pool_id, asset_id, amount });
-
 	RewardsPotIsEmpty::<T>::remove(pool_id, asset_id);
+
+	Pallet::<T>::deposit_event(Event::<T>::RewardsPotIncreased { pool_id, asset_id, amount });
 
 	Ok(())
 }
