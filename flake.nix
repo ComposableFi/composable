@@ -559,10 +559,13 @@
                   # TODO: compose export
                 ]
               ++ lib.lists.optional (lib.strings.hasSuffix "linux" system) arion;
+              #  writeScript junod tx wasm store <ANY WASM>
+              # 
               shellHook = ''
                  mkdir --parents ~/.juno/
                  chmod +rwx ~/.juno
-                 # junod tx wasm store /nix/store/mk2gzspwm8xp9gmzi250s93h0y26ada7-wasmswap/lib/wasmswap.wasm --from alice --gas auto
+                 
+                 junod tx wasm store /nix/store/mk2gzspwm8xp9gmzi250s93h0y26ada7-wasmswap/lib/wasmswap.wasm --from alice --gas auto
                  cp -r ${packages.junod-genesis}/data/.juno/* ~/.juno/
                  # junod cmds (including read only like list keys) are not side effect free
               '';
@@ -619,7 +622,10 @@
                                   # "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover
                                   # `"wasm":{"codes":[],"contracts":[],"gen_msgs":[],"params":{"code_upload_access":{"address":"","permission":"Everybody"},`
                                   #network_mode 
-                                  command = ''                                     
+                                  command = ''  
+                                     # junod tx wasm store /nix/store/mk2gzspwm8xp9gmzi250s93h0y26ada7-wasmswap/lib/wasmswap.wasm --gas=auto --from validator --trace --keyring-backend test --chain-id testing                
+                                     # TOOD: genesis here
+                                     GENESIS=${junod-geneis}/data/genesis.json;                   
                                     ./setup_and_run.sh juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y
                                   '';
                                   #network_mode = "host";
