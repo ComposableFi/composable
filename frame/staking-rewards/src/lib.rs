@@ -41,6 +41,12 @@ mod test;
 mod validation;
 pub mod weights;
 
+use sp_std::ops::{Add, Div, Mul};
+
+use crate::prelude::*;
+use composable_support::math::safe::SafeSub;
+use composable_traits::staking::{Reward, RewardUpdate};
+use frame_support::{traits::UnixTime, transactional, BoundedBTreeMap};
 pub use pallet::*;
 
 #[frame_support::pallet]
@@ -54,20 +60,23 @@ pub mod pallet {
 				start_at::ZeroInit,
 			},
 		},
-		math::safe::{SafeArithmetic, SafeDiv, SafeMul, SafeSub},
+		math::safe::{SafeAdd, SafeArithmetic, SafeDiv, SafeMul, SafeSub},
 		validation::Validated,
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
-		staking::{RewardPoolConfiguration::RewardRateBasedIncentive, DEFAULT_MAX_REWARDS},
+		fnft::{FinancialNft, FinancialNftProtocol},
+		staking::{
+			RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
+			DEFAULT_MAX_REWARDS,
+		},
 		time::DurationSeconds,
 	};
 	use frame_support::{
-		pallet_prelude::*,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
-			tokens::WithdrawConsequence,
-			UnixTime,
+			tokens::{nonfungibles, WithdrawConsequence},
+			TryCollect, UnixTime,
 		},
 		transactional, BoundedBTreeMap, PalletId,
 	};
@@ -77,9 +86,12 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider},
 		PerThing, Perbill,
 	};
-	use sp_std::{cmp::max, collections::btree_map::BTreeMap, fmt::Debug, vec, vec::Vec};
+	use sp_std::{cmp::max, fmt::Debug, vec, vec::Vec};
 
-	use crate::{prelude::*, validation::ValidSplitRatio};
+	use crate::{
+		prelude::*, reward_accumulation_calculation, update_rewards_pool,
+		validation::ValidSplitRatio, RewardAccumulationCalculationError,
+	};
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
@@ -117,13 +129,38 @@ pub mod pallet {
 			position_id: T::PositionId,
 		},
 		/// Split stake position into two positions
-		SplitPosition { positions: Vec<T::PositionId> },
+		SplitPosition {
+			positions: Vec<T::PositionId>,
+		},
+		/// Reward transfer event.
+		RewardTransferred {
+			from: T::AccountId,
+			pool: T::RewardPoolId,
+			reward_currency: T::AssetId,
+			/// amount of reward currency transferred.
+			reward_increment: T::Balance,
+		},
+		RewardAccumulationError {
+			pool_id: T::RewardPoolId,
+			asset_id: T::AssetId,
+		},
+		MaxRewardsAccumulated {
+			pool_id: T::RewardPoolId,
+			asset_id: T::AssetId,
+		},
+		RewardPoolUpdated {
+			pool_id: T::RewardPoolId,
+		},
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Error when creating reward configs.
 		RewardConfigProblem,
+		/// No duration presets configured.
+		NoDurationPresetsConfigured,
+		/// Too many rewarded asset types per pool violating the storage allowed.
+		TooManyRewardAssetTypes,
 		/// Invalid end block number provided for creating a pool.
 		EndBlockMustBeInTheFuture,
 		/// Unimplemented reward pool type.
@@ -142,6 +179,9 @@ pub mod pallet {
 		OnlyPoolOwnerCanAddNewReward,
 		/// only the owner of stake can unstake it
 		OnlyStakeOwnerCanUnstake,
+		/// Reward asset not found in reward pool.
+		RewardAssetNotFound,
+		BackToTheFuture,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -187,6 +227,23 @@ pub mod pallet {
 			+ From<u128>
 			+ Into<u128>;
 
+		type FinancialNftInstanceId: FullCodec
+			+ Debug
+			+ SafeAdd
+			+ MaxEncodedLen
+			+ Default
+			+ TypeInfo
+			+ Eq
+			+ PartialEq
+			+ Ord
+			+ Copy
+			+ Zero
+			+ One;
+
+		type FinancialNft: nonfungibles::Mutate<AccountIdOf<Self>>
+			+ nonfungibles::Create<AccountIdOf<Self>>
+			+ FinancialNft<AccountIdOf<Self>>;
+
 		/// Is used to create staked asset per `Self::RewardPoolId`
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
 
@@ -214,6 +271,9 @@ pub mod pallet {
 
 		/// Required origin for reward pool creation.
 		type RewardPoolCreationOrigin: EnsureOrigin<Self::Origin>;
+
+		/// Required origin for reward pool creation.
+		type RewardPoolUpdateOrigin: EnsureOrigin<Self::Origin>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -284,6 +344,14 @@ pub mod pallet {
 	pub type Stakes<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>, OptionQuery>;
 
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		/// Weight: see `begin_block`
+		fn on_initialize(_: T::BlockNumber) -> Weight {
+			Self::acumulate_rewards_hook()
+		}
+	}
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Create a new reward pool based on the config.
@@ -296,45 +364,7 @@ pub mod pallet {
 			pool_config: RewardPoolConfigurationOf<T>,
 		) -> DispatchResult {
 			T::RewardPoolCreationOrigin::ensure_origin(origin)?;
-			let (owner, pool_id, end_block) = match pool_config {
-				RewardRateBasedIncentive {
-					owner,
-					asset_id,
-					reward_configs: initial_reward_config,
-					end_block,
-					lock,
-				} => {
-					ensure!(
-						end_block > frame_system::Pallet::<T>::current_block_number(),
-						Error::<T>::EndBlockMustBeInTheFuture
-					);
-					let pool_id = RewardPoolCount::<T>::increment()?;
-					let mut rewards = BTreeMap::new();
-					for reward_config in initial_reward_config.into_iter() {
-						rewards.insert(reward_config.0, Reward::from(reward_config.1));
-					}
-					RewardPools::<T>::insert(
-						pool_id,
-						RewardPool {
-							owner: owner.clone(),
-							asset_id,
-							rewards: BoundedBTreeMap::<
-								T::AssetId,
-								Reward<T::AssetId, T::Balance>,
-								T::MaxRewardConfigsPerPool,
-							>::try_from(rewards)
-							.map_err(|_| Error::<T>::RewardConfigProblem)?,
-							total_shares: T::Balance::zero(),
-							claimed_shares: T::Balance::zero(),
-							end_block,
-							lock,
-						},
-					);
-					Ok((owner, pool_id, end_block))
-				},
-				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
-			}?;
-			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
+			let _ = <Self as ManageStaking>::create_staking_pool(pool_config)?;
 			Ok(())
 		}
 
@@ -393,6 +423,108 @@ pub mod pallet {
 			<Self as Staking>::split(&who, &position, ratio.value())?;
 			Ok(())
 		}
+
+		/// Updates the reward pool configuration.
+		///
+		/// Emits `RewardPoolUpdated` when successful.
+		#[pallet::weight(T::WeightInfo::update_rewards_pool(reward_updates.len() as u32))]
+		pub fn update_rewards_pool(
+			origin: OriginFor<T>,
+			pool_id: T::RewardPoolId,
+			reward_updates: BoundedBTreeMap<
+				AssetIdOf<T>,
+				RewardUpdate<BalanceOf<T>>,
+				T::MaxRewardConfigsPerPool,
+			>,
+		) -> DispatchResult {
+			T::RewardPoolUpdateOrigin::ensure_origin(origin)?;
+			update_rewards_pool::<T>(pool_id, reward_updates)
+		}
+	}
+
+	impl<T: Config> ManageStaking for Pallet<T> {
+		type AssetId = T::AssetId;
+		type AccountId = T::AccountId;
+		type BlockNumber = <T as frame_system::Config>::BlockNumber;
+		type Balance = T::Balance;
+		type RewardConfigsLimit = T::MaxRewardConfigsPerPool;
+		type StakingDurationPresetsLimit = T::MaxStakingDurationPresets;
+		type RewardPoolId = T::RewardPoolId;
+
+		#[transactional]
+		fn create_staking_pool(
+			pool_config: RewardPoolConfiguration<
+				Self::AccountId,
+				Self::AssetId,
+				Self::BlockNumber,
+				RewardConfigs<Self::AssetId, Self::Balance, Self::RewardConfigsLimit>,
+				StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
+			>,
+		) -> Result<Self::RewardPoolId, DispatchError> {
+			let (owner, pool_id, end_block) = match pool_config {
+				RewardRateBasedIncentive {
+					owner,
+					asset_id,
+					reward_configs: initial_reward_config,
+					end_block,
+					lock,
+				} => {
+					ensure!(
+						end_block > frame_system::Pallet::<T>::current_block_number(),
+						Error::<T>::EndBlockMustBeInTheFuture
+					);
+
+					let pool_id = RewardPoolCount::<T>::increment()?;
+
+					let now_seconds = T::UnixTime::now().as_secs();
+
+					let rewards = initial_reward_config
+						.into_iter()
+						.map(|(asset_id, amount)| {
+							(asset_id, Reward::from_config(amount, now_seconds))
+						})
+						.try_collect()
+						.expect("No items were added; qed;");
+
+					RewardPools::<T>::insert(
+						pool_id,
+						RewardPool {
+							owner: owner.clone(),
+							asset_id,
+							rewards,
+							total_shares: T::Balance::zero(),
+							claimed_shares: T::Balance::zero(),
+							end_block,
+							lock,
+						},
+					);
+					// TODO (vim): Create the financial NFT collection for the rewards pool
+					Ok((owner, pool_id, end_block))
+				},
+				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
+			}?;
+			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
+			Ok(pool_id)
+		}
+	}
+
+	impl<T: Config> FinancialNftProtocol for Pallet<T> {
+		type ItemId = T::FinancialNftInstanceId;
+		type AssetId = AssetIdOf<T>;
+		type Balance = BalanceOf<T>;
+
+		fn collection_asset_ids() -> Vec<Self::AssetId> {
+			// TODO (vim): Following is a dummy value. Store and retrieve from storage
+			[Self::AssetId::from(1000_u128)].into()
+		}
+
+		fn value_of(
+			_collection: &Self::AssetId,
+			_instance: &Self::ItemId,
+		) -> Vec<(Self::AssetId, Self::Balance)> {
+			// TODO (vim): Following is a dummy value. Store and retrieve from storage
+			[(Self::AssetId::from(1001_u128), Self::Balance::zero())].into()
+		}
 	}
 
 	impl<T: Config> Staking for Pallet<T> {
@@ -413,7 +545,7 @@ pub mod pallet {
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
 			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
-				.ok_or(Error::<T>::RewardConfigProblem)?;
+				.ok_or(Error::<T>::NoDurationPresetsConfigured)?;
 
 			ensure!(
 				matches!(
@@ -439,11 +571,22 @@ pub mod pallet {
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
 			};
+			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and
+			// lock it. T::Assets::mint_into(rewards_pool.share_asset_id fnft_account, amount)?;
 
 			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
 			rewards_pool.rewards = rewards;
 
 			let position_id = StakeCount::<T>::increment()?;
+			// TODO (vim):
+			// 	1. Mint the NFT into the relevant NFT collection mapped to the reward pool
+			//  2. Map and store the nft_id -> position_id
+			// let next_nft_id = T::FinancialNFT::get_next_nft_id(reward_pool.fnft_collection_id)?;
+			// T::FinancialNFT::mint_into(reward_pool.fnft_collection_id, next_nft_id)?;
+			// FnftToPositionId<T>::insert(next_nft_id, position_id);
+			// let fnft_account = T::FinancialNFT::asset_account(reward_pool.fnft_collection_id,
+			// next_nft_id); TODO (vim): transfer the staked amount to the NFT account and lock it
+			// T::Assets::transfer(rewards_pool.asset_id, who, fnft_account, amount)?;
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				who,
@@ -500,6 +643,9 @@ pub mod pallet {
 				*inflation = inflation.safe_add(additional_inflation)?;
 			}
 
+			// TODO (vim): transfer the staked amount to the NFT account and lock it
+			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and
+			// lock it.
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				who,
@@ -554,8 +700,8 @@ pub mod pallet {
 					keep_alive,
 				)?;
 			}
-			rewards_pool.rewards =
-				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+			rewards_pool.rewards = Rewards::try_from(inner_rewards)
+				.expect("Conversion must work as it's the same data structure; qed;");
 			rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
 
 			let stake_with_penalty = if early_unlock {
@@ -564,6 +710,8 @@ pub mod pallet {
 				stake.stake
 			};
 
+			// TODO (vim): Unlock staked amount on financial NFT account and transfer from that
+			// account to the owner of the NFT
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				&Self::pool_account_id(&pool_id),
@@ -574,6 +722,7 @@ pub mod pallet {
 
 			RewardPools::<T>::insert(pool_id, rewards_pool);
 			Stakes::<T>::remove(position_id);
+			// TODO (vim): burn the financial NFT and the shares it holds
 
 			Self::deposit_event(Event::<T>::Unstaked {
 				owner: who.clone(),
@@ -622,6 +771,10 @@ pub mod pallet {
 			};
 			let new_position = StakeCount::<T>::increment()?;
 			Stakes::<T>::insert(new_position, new_stake);
+			// TODO (vim):
+			// 	1. Create the new financial NFT for the new position
+			//	2. transfer the split staked amount to the NFT account and lock it
+			//	3. transfer the split share amount to the NFT account and lock it
 			Self::deposit_event(Event::<T>::SplitPosition {
 				positions: vec![*position, new_position],
 			});
@@ -681,7 +834,88 @@ pub mod pallet {
 					.try_insert(*asset_id, inflation)
 					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
 			}
+
 			Ok((rewards_btree_map, reductions))
+		}
+
+		pub(crate) fn reward_accumulation_hook_reward_update_calculation(
+			pool_id: T::RewardPoolId,
+			reward: Reward<T::AssetId, T::Balance>,
+			now_seconds: u64,
+		) -> Reward<T::AssetId, T::Balance> {
+			use RewardAccumulationCalculationError::*;
+
+			match reward_accumulation_calculation::<T>(reward, now_seconds) {
+				Ok(reward) => reward,
+				Err(BackToTheFuture(reward)) => {
+					Self::deposit_event(Event::<T>::RewardAccumulationError {
+						pool_id,
+						asset_id: reward.asset_id,
+					});
+					reward
+				},
+				Err(MaxRewardsAccumulated(reward)) => {
+					Self::deposit_event(Event::<T>::MaxRewardsAccumulated {
+						pool_id,
+						asset_id: reward.asset_id,
+					});
+					reward
+				},
+				Err(MaxRewardsAccumulatedPreviously(reward)) => reward,
+			}
+		}
+
+		pub(crate) fn acumulate_rewards_hook() -> Weight {
+			let now_seconds = T::UnixTime::now().as_secs();
+			let unix_time_now_weight = T::WeightInfo::unix_time_now();
+
+			let updated_pools = RewardPools::<T>::iter()
+				.into_iter()
+				.map(|(pool_id, reward_pool)| {
+					let updated_rewards = reward_pool
+						.rewards
+						.into_iter()
+						.map(|(asset_id, reward)| {
+							(
+								asset_id,
+								Self::reward_accumulation_hook_reward_update_calculation(
+									pool_id,
+									reward,
+									now_seconds,
+								),
+							)
+						})
+						.try_collect()
+						// SAFETY(benluelo): No elements were added to the BTreeMap; the only
+						// operation was `.map()`. This expect call will be unnecessary once this PR
+						// is merged and we update to whatever version it's included in:
+						// https://github.com/paritytech/substrate/pull/11869
+						.expect("no elements were added; qed;");
+
+					(pool_id, RewardPool { rewards: updated_rewards, ..reward_pool })
+				})
+				// NOTE(benluelo): As per these docs on `StorageMap::iter`:
+				// https://github.com/paritytech/substrate/blob/cac91f59b9e3fb8fd59842c023f87b4206931993/frame/support/src/storage/types/map.rs,
+				// "If you alter the map while doing this, you'll get undefined results."
+				// hence the double iteration.
+				.collect::<Vec<_>>();
+
+			let mut total_weight = unix_time_now_weight;
+
+			for (pool_id, reward_pool) in updated_pools {
+				// 128 bit platforms don't exist as of writing this so this usize -> u64 cast should
+				// be ok
+				let number_of_rewards_in_pool = reward_pool.rewards.len() as u64;
+
+				RewardPools::<T>::insert(pool_id, reward_pool);
+
+				total_weight += (number_of_rewards_in_pool * T::WeightInfo::reward_accumulation_hook_reward_update_calculation()) +
+						// NOTE: `StorageMap::iter` does one read per item
+						T::DbWeight::get().reads(1) +
+						T::DbWeight::get().writes(1)
+			}
+
+			total_weight
 		}
 	}
 
@@ -741,12 +975,16 @@ pub mod pallet {
 									claimed_rewards: Zero::zero(),
 									total_dilution_adjustment: T::Balance::zero(),
 									max_rewards: max(reward_increment, DEFAULT_MAX_REWARDS.into()),
-									reward_rate: Perbill::zero(),
+									reward_rate: RewardRate {
+										amount: T::Balance::zero(),
+										period: RewardRatePeriod::PerSecond,
+									},
+									last_updated_timestamp: 0,
 								};
 								reward_pool
 									.rewards
 									.try_insert(reward_currency, reward)
-									.map_err(|_| Error::<T>::RewardConfigProblem)?;
+									.map_err(|_| Error::<T>::TooManyRewardAssetTypes)?;
 								let pool_account = Self::pool_account_id(pool);
 								T::Assets::transfer(
 									reward_currency,
@@ -757,6 +995,12 @@ pub mod pallet {
 								)?;
 							},
 						}
+						Self::deposit_event(Event::RewardTransferred {
+							from: from.clone(),
+							pool: *pool,
+							reward_currency,
+							reward_increment,
+						});
 						Ok(())
 					},
 					None => Err(Error::<T>::UnimplementedRewardPoolConfiguration.into()),
@@ -764,4 +1008,101 @@ pub mod pallet {
 			})
 		}
 	}
+}
+
+#[transactional]
+fn update_rewards_pool<T: Config>(
+	pool_id: T::RewardPoolId,
+	reward_updates: BoundedBTreeMap<
+		AssetIdOf<T>,
+		RewardUpdate<BalanceOf<T>>,
+		T::MaxRewardConfigsPerPool,
+	>,
+) -> DispatchResult {
+	RewardPools::<T>::try_mutate(pool_id, |pool| {
+		let pool = pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
+
+		let now_seconds = T::UnixTime::now().as_secs();
+
+		for (asset_id, update) in reward_updates {
+			let reward = pool.rewards.get_mut(&asset_id).ok_or(Error::<T>::RewardAssetNotFound)?;
+			let new_reward = match reward_accumulation_calculation::<T>(reward.clone(), now_seconds)
+			{
+				Ok(reward) => reward,
+				Err(RewardAccumulationCalculationError::BackToTheFuture(_)) =>
+					return Err(Error::<T>::BackToTheFuture.into()),
+				Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(reward)) => {
+					Pallet::<T>::deposit_event(Event::<T>::MaxRewardsAccumulated {
+						pool_id,
+						asset_id: reward.asset_id,
+					});
+					continue
+				},
+				Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(_)) =>
+					continue,
+			};
+
+			*reward = Reward { reward_rate: update.reward_rate, ..new_reward };
+		}
+
+		Pallet::<T>::deposit_event(Event::<T>::RewardPoolUpdated { pool_id });
+
+		Ok(())
+	})
+}
+
+pub(crate) fn reward_accumulation_calculation<T: Config>(
+	reward: Reward<T::AssetId, T::Balance>,
+	now_seconds: u64,
+) -> Result<Reward<T::AssetId, T::Balance>, RewardAccumulationCalculationError<T>> {
+	match now_seconds.safe_sub(&reward.last_updated_timestamp) {
+		Ok(elapsed_time) => {
+			let reward_rate_period_seconds = reward.reward_rate.period.as_secs();
+
+			// SAFETY(benluelo): Usage of Div::div:
+			//
+			// Integer division can only fail if rhs == 0, and
+			// reward_rate_period_seconds is a NonZeroU64 here.
+			let periods_surpassed = elapsed_time.div(reward_rate_period_seconds.get());
+
+			if periods_surpassed.is_zero() {
+				Ok(reward)
+			} else {
+				let new_total_rewards = u128::from(periods_surpassed)
+					.saturating_mul(reward.reward_rate.amount.into())
+					.saturating_add(reward.total_rewards.into());
+
+				let last_updated_timestamp = reward
+					.last_updated_timestamp
+					.add(periods_surpassed.mul(reward_rate_period_seconds.get()));
+
+				if new_total_rewards <= reward.max_rewards.into() {
+					Ok(Reward {
+						total_rewards: new_total_rewards.into(),
+						last_updated_timestamp,
+						..reward
+					})
+				} else if reward.total_rewards < reward.max_rewards {
+					Err(RewardAccumulationCalculationError::MaxRewardsAccumulated(Reward {
+						total_rewards: reward.max_rewards,
+						last_updated_timestamp,
+						..reward
+					}))
+				} else {
+					Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously(reward))
+				}
+			}
+		},
+		Err(_) => Err(RewardAccumulationCalculationError::BackToTheFuture(reward)),
+	}
+}
+
+pub(crate) enum RewardAccumulationCalculationError<T: Config> {
+	/// T::UnixTime::now() returned a value in the past.
+	BackToTheFuture(Reward<T::AssetId, T::Balance>),
+	/// The `max_rewards` for this reward was hit during this calculation.
+	MaxRewardsAccumulated(Reward<T::AssetId, T::Balance>),
+	/// The `max_rewards` were hit previously; i.e. `total_rewards == max_rewards` at the start of
+	/// this calculation.
+	MaxRewardsAccumulatedPreviously(Reward<T::AssetId, T::Balance>),
 }

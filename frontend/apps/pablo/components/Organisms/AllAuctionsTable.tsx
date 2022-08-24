@@ -11,7 +11,6 @@ import {
   TableContainerProps,
 } from "@mui/material";
 import { BaseAsset } from "@/components/Atoms";
-import { useAppSelector } from "@/hooks/store";
 import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { KeyboardArrowDown } from "@mui/icons-material";
@@ -23,10 +22,10 @@ import { useLiquidityBootstrappingPools } from "@/defi/hooks/auctions";
 export const AllAuctionsTable: React.FC<TableContainerProps> = ({
   ...rest
 }) => {
-  const { liquidityBootstrappingPools, setActiveAuctionsPool } =
+  const { liquidityBootstrappingPools, setActiveAuctionsPool, auctionsTableLimit } =
     useLiquidityBootstrappingPools();
   const theme = useTheme();
-  const limit = useAppSelector((state) => state.auctions.auctionsTableLimit);
+  const limit = auctionsTableLimit;
   const [count, setCount] = useState(limit);
 
   const router = useRouter();

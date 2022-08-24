@@ -213,7 +213,7 @@ pub mod pallet {
 		}
 	}
 
-	#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+	#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 	pub enum LiquidationStrategyConfiguration {
 		DutchAuction(TimeReleaseFunction),
 		Pablo { slippage: Perquintill },

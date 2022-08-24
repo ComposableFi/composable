@@ -16,9 +16,12 @@
 #![recursion_limit = "256"]
 
 // Make the WASM binary available
-#[cfg(feature = "std")]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 // TODO: XCMP/governance/.. setups here are outdated
+#[cfg(all(feature = "std", feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("COMPOSABLE_RUNTIME")));
+#[cfg(not(feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = None;
+
 mod weights;
 mod xcmp;
 use common::{
@@ -48,7 +51,7 @@ use sp_version::RuntimeVersion;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		Contains, EnsureOneOf, Everything, KeyOwnerProofSystem, LockIdentifier, Nothing,
+		Contains, EitherOfDiverse, Everything, KeyOwnerProofSystem, LockIdentifier, Nothing,
 		Randomness, StorageInfo,
 	},
 	weights::{
@@ -78,7 +81,7 @@ use system::{
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 
 pub type CouncilInstance = collective::Instance1;
-pub type EnsureRootOrHalfCouncil = EnsureOneOf<
+pub type EnsureRootOrHalfCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
 	collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
 >;
@@ -155,7 +158,7 @@ parameter_types! {
 		.avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
 		.build_or_panic();
 
-	pub const SS58Prefix: u8 = 49;
+	pub const SS58Prefix: u8 = 50;
 }
 
 // Configure FRAME pallets to include in runtime.
@@ -303,6 +306,7 @@ impl WeightToFeePolynomial for WeightToFee {
 type NativeTreasury = treasury::Instance1;
 
 impl transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
 	type WeightToFee = WeightToFee;
@@ -422,6 +426,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -563,6 +568,7 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type WeightInfo = weights::treasury::WeightInfo<Runtime>;
 	// TODO: add bounties?
 	type SpendFunds = ();
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 }
 
 parameter_types! {
@@ -713,7 +719,7 @@ impl democracy::Config<democracy::Instance1> for Runtime {
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	  pub const InitialPayment: Perbill = Perbill::from_percent(25);
-	  pub const VestingStep: Moment = (7 * DAYS as Moment) * MILLISECS_PER_BLOCK;
+	  pub const VestingStep: Moment = (7 * DAYS as Moment) * (MILLISECS_PER_BLOCK as Moment);
 	  pub const Prefix: &'static [u8] = b"composable-";
 }
 
@@ -761,46 +767,46 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: system::{Pallet, Call, Config, Storage, Event<T>} = 0,
-		Timestamp: timestamp::{Pallet, Call, Storage, Inherent} = 1,
-		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
-		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
-		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
-		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
-		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
+		System: system = 0,
+		Timestamp: timestamp = 1,
+		Sudo: sudo = 2,
+		RandomnessCollectiveFlip: randomness_collective_flip = 3,
+		TransactionPayment: transaction_payment = 4,
+		Indices: indices = 5,
+		Balances: balances = 6,
 
 		// Parachains stuff
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 11,
+		ParachainSystem: cumulus_pallet_parachain_system = 10,
+		ParachainInfo: parachain_info = 11,
 
 		// Collator support. the order of these 5 are important and shall not change.
-		Authorship: authorship::{Pallet, Call, Storage} = 20,
-		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
-		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: aura::{Pallet, Storage, Config<T>} = 23,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
+		Authorship: authorship = 20,
+		CollatorSelection: collator_selection = 21,
+		Session: session = 22,
+		Aura: aura = 23,
+		AuraExt: cumulus_pallet_aura_ext = 24,
 
 		// Governance utilities
-		Council: collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 30,
-		CouncilMembership: membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
+		Council: collective::<Instance1> = 30,
+		CouncilMembership: membership::<Instance1> = 31,
 		Treasury: treasury::<Instance1> = 32,
 		Democracy: democracy::<Instance1> = 33,
-		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
-		Utility: utility::{Pallet, Call, Event} = 35,
-		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Scheduler: scheduler = 34,
+		Utility: utility = 35,
+		Preimage: preimage = 36,
 
 		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
-		RelayerXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
+		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
+		RelayerXcm: pallet_xcm = 41,
+		CumulusXcm: cumulus_pallet_xcm = 42,
+		DmpQueue: cumulus_pallet_dmp_queue = 43,
 
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
+		Tokens: orml_tokens = 52,
 
-		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
-		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
-		Assets: assets::{Pallet, Call, Storage} = 57,
-		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 58,
+		CurrencyFactory: currency_factory = 53,
+		CrowdloanRewards: crowdloan_rewards = 56,
+		Assets: assets = 57,
+		GovernanceRegistry: governance_registry = 58,
 	}
 );
 
@@ -853,7 +859,8 @@ mod benches {
 		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
-		[collator_selection, CollatorSelection]
+    // TODO: broken
+		// [collator_selection, CollatorSelection]
 		[indices, Indices]
 		[membership, CouncilMembership]
 		[treasury, Treasury]

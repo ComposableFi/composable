@@ -1,0 +1,17 @@
+[package]
+edition = "2021"
+name = "dali-runtime-wasm"
+version = "0.1.0"
+
+authors = ["Hussein Ait Lahcen <hussein.aitlahcen@gmail.com>"]
+description = "Dali, Testnet Parachain Runtime WASM Implementation"
+
+[dependencies]
+dali-runtime = { path = "../dali/", default-features = false }
+
+[lib]
+crate-type = ["cdylib"]
+name = "dali_runtime"
+
+[features]
+runtime-benchmarks = ["dali-runtime/runtime-benchmarks"]

@@ -110,6 +110,7 @@ impl CurrencyId {
 
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(4);
+		pub const PBLO: CurrencyId = CurrencyId(5);
 
 		/// Karura stable coin(Karura Dollar), not native.
 		#[allow(non_upper_case_globals)]
@@ -132,7 +133,7 @@ impl CurrencyId {
 	}
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, TypeInfo)]
 pub struct ValidateCurrencyId;
 
 impl Validate<CurrencyId, ValidateCurrencyId> for ValidateCurrencyId {

@@ -49,12 +49,6 @@ export default {
     },
     PalletCollatorSelectionCandidateInfo: "Null",
     PalletCrowdloanRewardsReward: "Null",
-    PalletDemocracyVoteThreshold: "Null",
-    PalletDemocracyPreimageStatus: "Null",
-    PalletDemocracyReferendumInfo: "Null",
-    PalletPreimageRequestStatus: "Null",
-    PalletDemocracyReleases: "Null",
-    PalletDemocracyVoteVoting: "Null",
     CumulusPalletDmpQueueConfigData: "Null",
     PalletDutchAuctionSellOrder: "Null",
     ComposableTraitsVestingVestingSchedule: "Null",
@@ -63,7 +57,7 @@ export default {
     ComposableTraitsGovernanceSignedRawOrigin: {
       _enum: {
         Root: "Null",
-        Signed: "AccountId32",
+        Signed: "",
         isSigned: "bool",
         asSigned: "AccountId32"
       }

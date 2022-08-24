@@ -1,24 +1,24 @@
 import { StoreSlice } from "../types";
 import { LiquiditySlice } from "./liquidity.types";
 import {
-  putTokenAmount,
-  putTokenValue,
+  putLiqudityRecord,
   putUserLpBalance,
   putUserProvidedLiquidityTokenAmount,
   updateUserProvidedLiquidityTokenAmount,
+  updatePoolLiquidity,
 } from "./liquidity.utils";
 
 const createLiquiditySlice: StoreSlice<LiquiditySlice> = (set) => ({
-  poolLiquidity: {},
+  liquidityInPool: {},
   userProvidedLiquidity: {},
   userLpBalances: {},
-  setTokenAmountInLiquidityPool: (poolId: number, amounts) =>
+  putLiquidityInPoolRecord: (record) =>
     set((prev: LiquiditySlice) => ({
-      poolLiquidity: putTokenAmount(prev.poolLiquidity, poolId, amounts),
+      liquidityInPool: putLiqudityRecord(prev.liquidityInPool, record),
     })),
-  setTokenValueInLiquidityPool: (poolId: number, value) =>
+  updatePoolLiquidity: (id, amounts) =>
     set((prev: LiquiditySlice) => ({
-      poolLiquidity: putTokenValue(prev.poolLiquidity, poolId, value),
+      liquidityInPool: updatePoolLiquidity(prev.liquidityInPool, id, amounts),
     })),
   setUserProvidedTokenAmountInLiquidityPool: (poolId: number, amounts) =>
     set((prev: LiquiditySlice) => ({

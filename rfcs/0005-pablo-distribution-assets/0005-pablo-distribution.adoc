@@ -138,6 +138,12 @@ g -up-> UC12
 . The system SHOULD support converting a reward accumulated in one asset type to another based on a preferred reward asset type configuration. Eg: Given a reward accumulated is in Acala it should be able to convert that to one of PBLO or PICA using the Pablo DEX pools.
 ** This is to handle cases where a Pablo pool fees are in a different asset type than what is preferred.
 
+=== Financial NFT Requirements
+
+. Each staked position MUST be represented as a https://todo.link[fNFT].
+. Owning a PBLO staked position fNFT(xPBLO) MUST allow voting for protocol governance based on the xPBLO granted.
+. Each staked position plus its rewards MUST be transferable by transferring the ownership of its NFT including the voting rights.
+
 == Method
 
 === System Overview
@@ -146,20 +152,25 @@ g -up-> UC12
 ----
 skinparam component {
   backgroundColor<<exists>> LightGreen
-  backgroundColor<<remove>> Red
+  backgroundColor<<todo>> Red
+}
+
+node "Pallet-FNFT" {
+    FinancialNFT - [FNFT Logic]
+    Mutate - [FNFT Logic]
+    Create - [FNFT Logic]
 }
 
 node "Pallet-Staking-Rewards\n(Pallet-Rewards?)" {
     StakingReward - [Reward Logic]
     Staking - [Position Storage/Logic]
     Node "BatchProcess" {
-        [RewardDisbursementHook]
         [RewardsConfig] --> [RewardAccumulationHook]
     }
+    [Position Storage/Logic] -down-> FinancialNFT
+    [Position Storage/Logic] -down-> Mutate
+    [Position Storage/Logic] -down-> Create
 }
-
-[fNFT Storage/Logic] <<exists>>
-[RewardDisbursementHook] <<remove>>
 
 node "Pallet-Pablo" {
     [Pool] --> StakingReward : transfer\ntrading fees\nfor PBLO stakers
@@ -409,6 +420,9 @@ while (reward = rewards_pool.rewards.has_next) is (yes)
     :new_position.reductions[reward.asset_id] += inflation;
 endwhile (no)
 :rewards_pool.total_shares += boosted_amount;
+:mint fnft;
+:transfer stake to fnft account and lock;
+:mint shares into to fnft account and lock;
 :save(new_position);
 :save(rewards_pool);
 stop
@@ -438,6 +452,8 @@ endwhile (no)
 :existing_position = readStorage(positionId);
 :merged_position = existing_position + new_position;
 note right: as per section 5.3.1.4
+:transfer extended stake to fnft account and lock;
+:mint shares into to fnft account and lock;
 :save(merged_position);
 :save(rewards_pool);
 stop
@@ -452,6 +468,9 @@ start
 :position = readStorage(positionId);
 :splits = split(position, ratio);
 note right: as per section 5.3.1.5
+:mint split fnft;
+:transfer split stake to fnft account and lock;
+:transfer split shares into to fnft account and lock;
 :save(...splits);
 stop
 ----
@@ -472,7 +491,8 @@ while (reward = rewards_pool.rewards.has_next) is (yes)
     :transfer(claim);
     :reward.claimed_rewards += claim;
 endwhile (no)
-:transfer(position.stake);
+:transfer stake from fnft account to nft owner;
+:burn fnft with the shares;
 :remove(position);
 :rewards_pool.claimed_shares += position.shares;
 :save(rewards_pool);
@@ -489,7 +509,7 @@ start
 :rewards_pool = readStorage(assetId);
 while (reward = reward_update.rewards.has_next) is (yes)
     :assert max_reward not exceeded;
-    :reward.total_rewards += reward_update[reward.asset_id].amount;
+    :reward.total_rewards += rewards_pool[reward.asset_id].amount;
     :reward.total_rewards += elapsed_time * reward.reward_rate;
     :reward.reward_rate = reward_update[reward.asset_id].rate;
 endwhile (no)
