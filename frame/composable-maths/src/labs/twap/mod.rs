@@ -48,14 +48,18 @@
 // 	)
 // )]
 
-// #[cfg(test)]
-// mod tests;
+// TODO(Cardosaum): Make tests, all passing
+#[cfg(test)]
+mod tests;
 
-use crate::labs::numbers::{FixedPointMath, SignedMath};
+use crate::labs::numbers::{FixedPointMath, UnsignedMath};
+use num_traits::CheckedMul;
 use sp_runtime::{
-	traits::AtLeast32Bit,
+	traits::One,
 	ArithmeticError::{self, Overflow},
+	FixedPointNumber, FixedU128,
 };
+use std::cmp::Ordering::Greater;
 
 /// The [`Twap`] value itself, storing both the underlying time weighted average
 /// price and its most recent timestamp.
@@ -66,6 +70,7 @@ use sp_runtime::{
 ///
 /// # List of functions
 ///
+/// // TODO(Cardosaum): Update list of functions
 /// * [`update`](Self::update): Computes new twap, returning it; Does *not*
 /// modifies storage.
 /// * [`update_mut`](Self::update_mut): Computes new twap, changing the old;
@@ -88,28 +93,64 @@ use sp_runtime::{
 /// let mut base_twap_mut = base_twap.clone();
 /// base_twap_mut.update_mut(25.0, new_ts);
 /// ```
-#[derive(Debug, Clone, Copy)]
-pub struct Twap<P, T>
-where
-	P: FixedPointMath + TryFrom<T, Error = ArithmeticError>,
-	T: SignedMath + AtLeast32Bit + Into<i32> + Copy,
-{
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Twap {
 	/// The "time weighted average price", represented by a decimal number.
-	pub twap: P,
+	twap: FixedU128,
 	/// The last time when the [`twap`](Self::twap) value was updated.
-	pub ts: T,
+	ts: u64,
+	period: u64,
+
+	// TODO(Cardosaum): Assess if it's better to have this values hard coded or
+	// dinamic
+	//
+	// TODO(Cardosaum): Make tests with different values for these variables and
+	// assess which would be the best value for them.
+	since_last_min: u64,
+	from_start_min: u64,
 }
 
-impl<'ts, P, T> Twap<P, T>
-where
-	P: FixedPointMath + TryFrom<T, Error = ArithmeticError> + TryFrom<&'ts T>,
-	T: SignedMath + AtLeast32Bit + Into<i32> + 'ts + Copy,
-{
+impl Twap {
+	// TODO(Cardosaum): Update function documentation.
 	/// Creates a new instance of [`Twap`], returning it.
-	pub const fn new(twap: P, ts: T) -> Self {
-		Self { twap, ts }
+	///
+	/// # Examples
+	/// TODO(Cardosaum)
+	pub const fn new(twap: FixedU128, ts: u64, period: u64) -> Self {
+		//  TODO(Cardosaum): Maybe remove this default value?
+		let default_time = 1000; // 1 second
+		Self { twap, ts, period, since_last_min: default_time, from_start_min: default_time }
 	}
 
+	// TODO(Cardosaum): Update function documentation.
+	/// This function updates the [`twap`](Twap::twap) value using the default
+	/// EMA function.
+	///
+	/// # Examples
+	/// TODO(Cardosaum)
+	///
+	/// # Errors
+	/// TODO(Cardosaum)
+	pub fn accumulate(
+		&mut self,
+		price: &FixedU128,
+		now: &u64,
+	) -> Result<FixedU128, ArithmeticError> {
+		// TODO(Cardosaum): Ensure time has passed before updating?
+		// TODO(Cardosaum): If time passes more than period the call will always fail,
+		// how to fix it?
+		let since_last_tmp = now.try_sub(&self.ts)?.max(self.since_last_min);
+		let (since_last, from_start, time) = match self.period.try_sub(&since_last_tmp) {
+			Ok(from_start) => (since_last_tmp, from_start, self.ts),
+			_ => (self.period.try_sub(&self.from_start_min)?, self.from_start_min, *now),
+		};
+
+		self.update_mut(price, from_start, since_last, &time)?;
+		Ok(self.twap)
+	}
+
+	// TODO(Cardosaum): Update function documentation.
+	// TODO(Cardosaum): Change function name (update implies the value will be mutated)
 	/// This function *simulates* the [`twap`](Twap::twap) update, returning the
 	/// value that would be used as the new [`twap`](Twap::twap), but **not**
 	/// modifying the current value.
@@ -117,15 +158,29 @@ where
 	/// # Errors
 	///
 	/// * [`ArithmeticError::Overflow`]
-	pub fn update(&self, price: &P, ts: &'ts T) -> Result<P, ArithmeticError> {
-		// TODO(Cardosaum): Ensure time has passed before updating?
-		let denominator = self.ts.try_add(ts)?;
-		let weighted_twap_t0 = self.twap.try_mul(&self.ts.try_into()?)?;
-		let weighted_twap_t1 = price.try_mul(&ts.try_into().map_err(|_| Overflow)?)?;
+	fn update(
+		&self,
+		price: &FixedU128,
+		from_start: u64,
+		since_last: u64,
+	) -> Result<FixedU128, ArithmeticError> {
+		// TODO(Cardosaum): Create function that convert u64 to FixedU128
+		let unit = FixedU128::DIV;
+		let denominator = FixedU128::from_inner(
+			unit.checked_mul(since_last.try_add(&from_start)?.into()).ok_or(Overflow)?,
+		);
+		let twap_t0 = self.twap.try_mul(&FixedU128::from_inner(
+			unit.checked_mul(from_start.into()).ok_or(Overflow)?,
+		))?;
+		let twap_t1 = price.try_mul(&FixedU128::from_inner(
+			unit.checked_mul(since_last.into()).ok_or(Overflow)?,
+		))?;
 
-		weighted_twap_t0.try_add(&weighted_twap_t1)?.try_div(&denominator.try_into()?)
+		twap_t0.try_add(&twap_t1)?.try_div(&denominator)
 	}
 
+	// TODO(Cardosaum): Update function documentation.
+	// TODO(Cardosaum): `update_mut` and `update` are not good names...
 	/// This function is similar to [`update`](Self::update), but it **does**
 	/// change the current [`twap`](Twap::twap) value, and does not return
 	/// anything in case of a successfull call.
@@ -133,8 +188,14 @@ where
 	/// # Errors
 	///
 	/// * [`ArithmeticError::Overflow`]
-	pub fn update_mut(&mut self, price: &P, ts: &'ts T) -> Result<(), ArithmeticError> {
-		self.twap = self.update(price, ts)?;
+	fn update_mut(
+		&mut self,
+		price: &FixedU128,
+		from_start: u64,
+		since_last: u64,
+		ts: &u64,
+	) -> Result<(), ArithmeticError> {
+		self.twap = self.update(price, from_start, since_last)?;
 		self.ts = *ts;
 		Ok(())
 	}
@@ -142,6 +203,4 @@ where
 	// TODO(Cardosaum): Add internal function trying to update twap using U256
 	// value to prevent overflows. Maybe doing the `U256` try we could recover
 	// from an overflow? (check if that approach actually helps in something)
-
-	// TODO(Cardosaum): Creates an accumulate function?
 }
