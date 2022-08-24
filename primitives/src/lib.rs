@@ -17,8 +17,6 @@ use ibc_proto::{
 use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::KeyTypeId;
 
-pub mod cosmos;
-pub mod parachain;
 use ibc::{
 	core::{
 		ics02_client::{
@@ -32,6 +30,8 @@ use ibc::{
 	signer::Signer,
 	Height,
 };
+
+pub mod error;
 
 pub enum UpdateType {
 	// contains an authority set change.

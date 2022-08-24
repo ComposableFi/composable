@@ -56,7 +56,7 @@ use subxt::{
 };
 use tokio::sync::broadcast::{self, Sender};
 
-use crate::chain::KeyProvider;
+use primitives::KeyProvider;
 
 #[derive(Clone)]
 /// Implements the [`crate::Chain`] trait for parachains.
@@ -107,7 +107,7 @@ pub struct ParachainClientConfig {
 	pub public_key: MultiSigner,
 	/// Reference to keystore
 	pub key_store: SyncCryptoStorePtr,
-	/// 4 byte Key type id  
+	/// 4 byte Key type id
 	pub key_type_id: KeyTypeId,
 }
 

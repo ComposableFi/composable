@@ -1,15 +1,11 @@
 use clap::Parser;
-use hyperspace::{
-	chain::{
-		parachain::{
-			calls::{DeliverPermissioned, OpenChannelParams, OpenPingChannel, OpenTransferChannel},
-			ParachainClient, ParachainClientConfig,
-		},
-		IbcProvider, KeyProvider,
-	},
-	relay,
-};
+use hyperspace::relay;
 use ibc_proto::google::protobuf::Any;
+use parachain::{
+	calls::{DeliverPermissioned, OpenChannelParams, OpenPingChannel, OpenTransferChannel},
+	ParachainClient, ParachainClientConfig,
+};
+use primitives::{IbcProvider, KeyProvider};
 use sp_keystore::{testing::KeyStore, SyncCryptoStore, SyncCryptoStorePtr};
 use sp_runtime::{KeyTypeId, MultiSigner};
 
@@ -221,13 +217,13 @@ pub async fn wait_for_client_and_connection(
 		// If channel states are open on both chains we can stop listening for events
 		if chan_state_a && chan_state_b {
 			println!("Channel handshake completed");
-			break
+			break;
 		}
 
 		let time_elapsed = Instant::now().duration_since(start);
 		if time_elapsed >= Duration::from_secs(1200) {
 			println!("Could not verify connection and channel handshake after waiting 20mins");
-			break
+			break;
 		}
 
 		// Both clients have been updated, we can now start connection handshake

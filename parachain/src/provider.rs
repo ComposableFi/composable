@@ -35,12 +35,9 @@ use sp_runtime::{
 use subxt::{rpc::RpcError, Config};
 
 use super::{error::Error, ParachainClient};
-use crate::{
-	chain::{IbcProvider, KeyProvider, UpdateType},
-	Chain,
-};
 use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 use ibc_rpc::{BlockNumberOrHash, IbcApiClient};
+use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
 use tokio_stream::wrappers::BroadcastStream;
 
@@ -114,14 +111,14 @@ where
 			);
 			return Err(Error::HeaderConstruction(
 				"Received an outdated beefy commitment".to_string(),
-			))
+			));
 		}
 
 		// check if validator set has changed.
 		// If client on counterparty has never been updated since it was created we want to update
 		// it
-		let update_type = match signed_commitment.commitment.validator_set_id ==
-			beefy_client_state.next_authorities.id
+		let update_type = match signed_commitment.commitment.validator_set_id
+			== beefy_client_state.next_authorities.id
 		{
 			true => UpdateType::Mandatory,
 			false => UpdateType::Optional,
@@ -164,8 +161,8 @@ where
 			.parachain_headers
 			.iter()
 			.filter_map(|header| {
-				if (client_state.latest_height().revision_height as u32) <
-					header.parachain_header.number.into()
+				if (client_state.latest_height().revision_height as u32)
+					< header.parachain_header.number.into()
 				{
 					Some(header.parachain_header.number)
 				} else {

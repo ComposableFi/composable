@@ -1,8 +1,6 @@
 use frame_support::storage::child::ChildInfo;
-use hyperspace::chain::{
-	parachain::{ParachainClient, ParachainClientConfig},
-	IbcProvider,
-};
+use parachain::{ParachainClient, ParachainClientConfig};
+use primitives::IbcProvider;
 use sp_core::Hasher;
 use sp_keystore::{testing::KeyStore, SyncCryptoStore, SyncCryptoStorePtr};
 use sp_runtime::{traits::BlakeTwo256, KeyTypeId, MultiSigner};

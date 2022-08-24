@@ -1,13 +1,9 @@
 use futures::StreamExt;
 use ibc::{events::IbcEvent, timestamp::Timestamp};
 
-use hyperspace::{
-	chain::{
-		parachain::calls::{SetPalletParams, Transfer, TransferParams},
-		IbcProvider,
-	},
-	logging,
-};
+use hyperspace::logging;
+use parachain::calls::{SetPalletParams, Transfer, TransferParams};
+use primitives::IbcProvider;
 use transfer::PalletParams;
 
 use std::time::{Duration, Instant};

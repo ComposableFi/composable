@@ -17,7 +17,7 @@ use ibc::core::ics03_connection::msgs::{
 	conn_open_ack, conn_open_confirm, conn_open_init, conn_open_try,
 };
 
-use crate::chain::{Chain, IbcProvider, KeyProvider};
+use primitives::{Chain, IbcProvider, KeyProvider};
 
 use super::{
 	calls::{deliver, Deliver, DeliverPermissioned, RawAny},
@@ -70,10 +70,10 @@ where
 		for msg in messages {
 			if matches!(
 				msg.type_url.as_str(),
-				conn_open_init::TYPE_URL |
-					conn_open_ack::TYPE_URL |
-					conn_open_try::TYPE_URL |
-					conn_open_confirm::TYPE_URL
+				conn_open_init::TYPE_URL
+					| conn_open_ack::TYPE_URL
+					| conn_open_try::TYPE_URL
+					| conn_open_confirm::TYPE_URL
 			) {
 				permissioned_messages.push(msg)
 			} else {

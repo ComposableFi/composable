@@ -1,0 +1,35 @@
+[package]
+name = "hyperspace-primitives"
+version = "0.1.0"
+edition = "2021"
+authors = ["Composable Developers"]
+
+[dependencies]
+# crates.io
+anyhow = "1.0.58"
+futures = "0.3.21"
+async-trait = "0.1.53"
+log = "0.4.17"
+log4rs = "1.1.1"
+env_logger = "0.9.0"
+hex = "0.4.3"
+tokio = { version = "1.19.2", features = ["macros", "sync"] }
+rs_merkle = "1.2.0"
+codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
+hex-literal = "0.3.4"
+serde_json = "1.0.74"
+derive_more = { version = "0.99", features = ["from"]  }
+serde = {version="1.0.137", features = ["derive"]}
+tokio-stream = { version = "0.1.9", features = ["sync"]}
+thiserror = "1.0.31"
+
+# substrate
+sp-core = "6.0.0"
+sp-runtime = "6.0.0"
+sp-keystore = "0.12.0"
+subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
+
+# ibc
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb", features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb" }
+tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }

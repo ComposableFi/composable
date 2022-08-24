@@ -1,10 +1,6 @@
-use crate::{chain::Chain, error::Error};
 use ibc::{
 	core::{
-		ics02_client::{
-			client_state::AnyClientState, header::AnyHeader,
-			msgs::update_client::MsgUpdateAnyClient,
-		},
+		ics02_client::{header::AnyHeader, msgs::update_client::MsgUpdateAnyClient},
 		ics03_connection::{
 			connection::{ConnectionEnd, Counterparty},
 			msgs::{
@@ -13,16 +9,14 @@ use ibc::{
 			},
 		},
 		ics04_channel::{
-			channel::{ChannelEnd, Counterparty as ChannelCounterparty, Order, State},
+			channel::{ChannelEnd, Counterparty as ChannelCounterparty},
 			msgs::{
 				acknowledgement::MsgAcknowledgement, chan_close_confirm::MsgChannelCloseConfirm,
 				chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
-				chan_open_try::MsgChannelOpenTry, recv_packet::MsgRecvPacket, timeout::MsgTimeout,
-				timeout_on_close::MsgTimeoutOnClose,
+				chan_open_try::MsgChannelOpenTry, recv_packet::MsgRecvPacket,
 			},
 		},
 		ics23_commitment::commitment::{CommitmentPrefix, CommitmentProofBytes},
-		ics24_host::path::{ChannelEndsPath, ReceiptsPath, SeqRecvsPath},
 	},
 	events::IbcEvent,
 	proofs::Proofs,
@@ -30,6 +24,7 @@ use ibc::{
 	Height,
 };
 use ibc_proto::google::protobuf::Any;
+use primitives::{error::Error, Chain};
 use tendermint_proto::Protobuf;
 
 /// Provides an interface for decoding messages from [`IbcEvent`]
