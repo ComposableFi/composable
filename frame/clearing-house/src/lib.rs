@@ -186,11 +186,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
 		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
-	use sp_std::{
-		cmp::{self, Ordering},
-		fmt::Debug,
-		ops::Neg,
-	};
+	use sp_std::{cmp::Ordering, fmt::Debug, ops::Neg};
 
 	// ---------------------------------------------------------------------------------------------
 	//                             Declaration Of The Pallet Type
@@ -1129,7 +1125,7 @@ pub mod pallet {
 				let mut outstanding_profits =
 					Self::outstanding_profits(account_id).unwrap_or_else(Zero::zero);
 
-				let realizable_profits = cmp::min(outstanding_profits, available_profits);
+				let realizable_profits = outstanding_profits.min(available_profits);
 				collateral.try_add_mut(&realizable_profits)?;
 				outstanding_profits.try_sub_mut(&realizable_profits)?;
 				available_profits.try_sub_mut(&realizable_profits)?;
@@ -1667,7 +1663,7 @@ pub mod pallet {
 					let usable_fees: T::Decimal =
 						-T::Assets::balance(collateral_asset_id, &fee_pool_account)
 							.into_decimal()?;
-					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
+					let mut capped_funding = uncapped_funding.max(usable_fees);
 
 					// Since we're dealing with negatives, we check if the uncapped funding is
 					// *smaller* (greater in absolute terms) than the capped one
@@ -2495,13 +2491,13 @@ pub mod pallet {
 			if pnl.is_positive() {
 				// take the opportunity to settle any outstanding profits
 				outstanding_profits.try_add_mut(&pnl.into_balance()?)?;
-				let realized_profits = cmp::min(*outstanding_profits, *available_profits);
+				let realized_profits = (*outstanding_profits).min(*available_profits);
 				collateral.try_add_mut(&realized_profits)?;
 				outstanding_profits.try_sub_mut(&realized_profits)?;
 				available_profits.try_sub_mut(&realized_profits)?;
 			} else {
 				let losses = pnl.into_balance()?;
-				let outstanding_profits_lost = cmp::min(*outstanding_profits, losses);
+				let outstanding_profits_lost = (*outstanding_profits).min(losses);
 				let realized_losses = losses.saturating_sub(outstanding_profits_lost);
 				outstanding_profits.try_sub_mut(&outstanding_profits_lost)?;
 				available_profits.try_add_mut(&realized_losses)?;
@@ -2560,8 +2556,8 @@ pub mod pallet {
 				//   surrogate for the last TWAP?
 
 				let now = T::UnixTime::now().as_secs();
-				let since_last = cmp::max(1, now.saturating_sub(market.last_oracle_ts));
-				let from_start = cmp::max(1, market.twap_period.saturating_sub(since_last));
+				let since_last = now.saturating_sub(market.last_oracle_ts).max(1);
+				let from_start = market.twap_period.saturating_sub(since_last).max(1);
 				let new_twap = numbers::weighted_average(
 					&oracle_price,
 					&last_oracle_twap,
