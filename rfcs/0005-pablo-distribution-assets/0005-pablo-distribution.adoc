@@ -517,7 +517,7 @@ start
 ->rewardPoolId\nassetId\nbalance;
 :verify signed;
 :derive pallet sub-account for cold wallet;
-:transfer the funds from\nthe origin(treasury account?);
+:transfer the funds from\nthe origin(treasury account?) to reward pool account and lock;
 end
 ----
 
