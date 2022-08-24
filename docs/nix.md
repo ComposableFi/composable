@@ -1,6 +1,6 @@
 # Overview
 
-Describes set of guiding principles authoring nix and how to start using nix.
+Overview of nix usage and design.
 
 ## Design
 
@@ -20,8 +20,45 @@ Tht helps to ensure ensure locally tested nix is operating well in the CI given 
 ### Where should I put my files?
 
 Nix works well if your workspace(solution) folder has its own ignore files (example, .gitignore).
+
+
 In nix ignores are integrated with `src` filters.
+
 This way you speed up nix builds and get clean separation in monorepo.
+
+### Where should I put nix files?
+
+Root .nix folder can contain 
+configurations external to this repository checkout, 
+either 3rd party or not in this repo composable or not this revision of repo,
+3rd parties either do not have nix configurations 
+or we need heavily patch them.
+
+Other scrips are located in folders on which they act upon, until scope is multifolder or not scoped.
+
+This allows for monorepo with codeowners and proper nix caching.
+
+### Naming
+
+Variables which are input from external non `nix` files (examples, json/yaml/toml) to be suffixed with `-input`. Inputs prevent early validation of packages without instantiation.  
+
+### Source or binary for Rust deps?
+
+Binary may not output all targets, not all commits, not forks and hard to diff changes from release to release and audit security.
+
+Rust can do `cargo install` which is the same as `crane` does - builds from sources.
+
+So for rust dependencies, we use source by default.
+
+Because we use cachix, build as fast as binary.
+
+Also Rust(and Go) are projects with a tendency toward deterministic builds.
+
+
+### How to `unit test` nix?
+
+Also nix lazy, derivation is side effect free, 
+so you can evaluate tree and make nix `statically` typed.
 
 ## Install and run
 
@@ -51,6 +88,10 @@ or
 nix run .#devnet
 ```
 
+## Shells
+
+Organized roughly according GitHub teams.
+
 ### You are Technical writer
 
 You can get all tooling to build book locally:
@@ -69,6 +110,6 @@ nix build .#composable-book
 
 to see live preview.
 
-## Your are XCVM developer
+### Your are XCVM developer
 
 As of now you have to install many manually, but we are working on it.

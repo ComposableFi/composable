@@ -239,7 +239,9 @@ pub fn ibc_denom_to_foreign_asset_id(denom: &str) -> XcmAssetLocation {
 	let hash = sp_io::hashing::sha2_256(denom.as_bytes()).to_vec();
 	XcmAssetLocation::new(MultiLocation {
 		parents: 0,
-		interior: Junctions::X1(Junction::GeneralKey(hash)),
+		interior: Junctions::X1(Junction::GeneralKey(
+			frame_support::storage::weak_bounded_vec::WeakBoundedVec::force_from(hash, None),
+		)),
 	})
 }
 

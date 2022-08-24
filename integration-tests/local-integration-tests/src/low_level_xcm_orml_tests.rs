@@ -179,17 +179,20 @@ fn para_chain_subscribe_version_notify_of_sibling_chain() {
 	This::execute_with(|| {
 		assert!(this_runtime::System::events().iter().any(|r| matches!(
 			r.event,
-			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(
-				Some(_)
-			))
+			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent {
+				message_hash: Some(_)
+			})
 		)));
 	});
 	Sibling::execute_with(|| {
 		assert!(sibling_runtime::System::events().iter().any(|r| matches!(
 			r.event,
-			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(
-				Some(_)
-			)) | this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::Success(Some(_)))
+			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent {
+				message_hash: Some(_)
+			}) | this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::Success {
+				message_hash: Some(_),
+				weight: _
+			})
 		)));
 	});
 }

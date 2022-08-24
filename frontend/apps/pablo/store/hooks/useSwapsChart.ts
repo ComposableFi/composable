@@ -1,9 +1,10 @@
 import { DEFI_CONFIG } from "@/defi/config";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import BigNumber from "bignumber.js";
 import useStore from "../useStore";
 import { ChartRange } from "@/defi/utils/charts";
-import { fetch24HourOldPrice, fetchSwapsChart } from "@/defi/subsquid/swaps/helpers";
+import { fetch24HourOldPrice, fetchSwapsChart, getChartLabels } from "@/defi/subsquid/swaps/helpers";
+import moment from "moment";
 
 export const useSwapsChart = () => {
   const { swaps } = useStore();
@@ -16,17 +17,22 @@ export const useSwapsChart = () => {
   );
   const [_24hourOldPrice, set24HourOldPrice] = useState(new BigNumber(0));
 
-  useEffect(() => {
+  const updateChart = useCallback(() => {
     if (selectedPool && selectedPool.poolId !== -1 && quote !== "none") {
       fetchSwapsChart(
         selectedPool.poolId,
         quote,
         selectedInterval.symbol as ChartRange
       ).then((series) => {
+        setSeriesIntervals(getChartLabels(series, selectedInterval.symbol as ChartRange))
         setChartSeries(series);
       });
     }
   }, [selectedPool, quote, selectedInterval]);
+  
+  useEffect(() => {
+    updateChart();
+  }, [updateChart]);
 
   useEffect(() => {
     if (selectedPool && selectedPool.poolId !== -1 && quote !== "none") {

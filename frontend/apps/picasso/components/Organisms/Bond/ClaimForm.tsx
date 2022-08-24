@@ -2,7 +2,7 @@ import { alpha, useTheme } from "@mui/material/styles";
 import { Box, Button, InputAdornment, Stack, Typography } from "@mui/material";
 import { BigNumberInput, TokenAsset } from "@/components";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { useOpenPositions } from "@/defi/polkadot/hooks/useOpenPositions";
+import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
 import PositionDetailsRow from "@/components/Atom/PositionDetailsRow";
 import { claim, getROI } from "@/defi/polkadot/pallets/BondedFinance";
 import BigNumber from "bignumber.js";
@@ -15,21 +15,19 @@ import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
 import { useSnackbar } from "notistack";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-import { useStore } from "@/stores/root";
 
 export const ClaimForm = () => {
   const theme = useTheme();
   const account = useSelectedAccount();
   const { parachainApi } = usePicassoProvider();
-  useOpenPositions(account);
+  const activeBonds = useActiveBonds();
   const executor = useExecutor();
   const { bond } = router.query;
   const { claimable, vestingTime, vestedTime, pending } = useClaim(
     bond?.toString() ?? ""
   );
   const { enqueueSnackbar } = useSnackbar();
-  const openBonds = useStore<ActiveBond[]>(state => state.bonds.openPositions);
-  const activeBond = openBonds.find((b: ActiveBond) =>
+  const activeBond = activeBonds.find((b: ActiveBond) =>
     findCurrentBond(b, bond?.toString() ?? "")
   );
   if (activeBond === undefined || !parachainApi) return null;
