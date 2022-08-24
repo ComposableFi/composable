@@ -1,10 +1,15 @@
 /// Tests the implementation of [`Mutate::mint_into`].
 mod mint_into {
+	use crate::test::mock::*;
 	use std::collections::{BTreeMap, BTreeSet};
 
 	use composable_tests_helpers::test::helper::assert_last_event;
 
-	use frame_support::{assert_noop, traits::tokens::nonfungibles::Mutate};
+	use composable_traits::{
+		account_proxy::{AccountProxy, ProxyType},
+		fnft::FinancialNft,
+	};
+	use frame_support::{assert_noop, assert_ok, traits::tokens::nonfungibles::Mutate};
 	use sp_runtime::DispatchError;
 
 	use crate::{
@@ -22,7 +27,7 @@ mod mint_into {
 		new_test_ext().execute_with(|| {
 			const NEW_NFT_ID: FinancialNftInstanceIdOf<MockRuntime> = 1;
 
-			Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
+			Nft::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
 			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftCreated {
 				collection_id: TEST_COLLECTION_ID,
@@ -46,6 +51,11 @@ mod mint_into {
 				(ALICE, BTreeMap::new()),
 				"owner should be ALICE, with no attributes"
 			);
+			// get the asset account of the fNFT
+			let asset_account = Nft::asset_account(&TEST_COLLECTION_ID, &NEW_NFT_ID);
+			// check the proxies
+			assert_ok!(Proxy::find_proxy(&asset_account, &ALICE, Some(ProxyType::Any)));
+			assert_ok!(Proxy::find_proxy(&asset_account, &ALICE, Some(ProxyType::CancelProxy)));
 		})
 	}
 
@@ -55,7 +65,7 @@ mod mint_into {
 		new_test_ext().execute_with(|| {
 			const NEW_NFT_ID: FinancialNftInstanceIdOf<MockRuntime> = 1;
 
-			Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
+			Nft::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
 			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftCreated {
 				collection_id: TEST_COLLECTION_ID,
@@ -63,7 +73,7 @@ mod mint_into {
 			}));
 
 			assert_noop!(
-				Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE),
+				Nft::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE),
 				DispatchError::from(crate::Error::<MockRuntime>::InstanceAlreadyExists)
 			);
 		})
@@ -72,6 +82,7 @@ mod mint_into {
 
 /// Tests the implementation of [`Mutate::set_attribute`].
 mod set_attribute {
+	use crate::test::mock::*;
 	use codec::{Decode, Encode};
 	use composable_tests_helpers::test::block::process_and_progress_blocks;
 
@@ -146,12 +157,7 @@ mod set_attribute {
 			let value = Value { a: 10, b: true };
 
 			assert_noop!(
-				Pallet::<MockRuntime>::set_attribute(
-					&TEST_COLLECTION_ID,
-					&1,
-					&key.encode(),
-					&value.encode()
-				),
+				Nft::set_attribute(&TEST_COLLECTION_ID, &1, &key.encode(), &value.encode()),
 				DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 			);
 
@@ -160,7 +166,7 @@ mod set_attribute {
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 			assert_noop!(
-				Pallet::<MockRuntime>::set_attribute(
+				Nft::set_attribute(
 					&TEST_COLLECTION_ID,
 					&(new_nft_id + 1),
 					&key.encode(),
@@ -174,6 +180,7 @@ mod set_attribute {
 
 /// Tests the implementation of [`Mutate::burn_from`].
 mod burn_from {
+	use crate::test::mock::*;
 	use std::collections::BTreeSet;
 
 	use composable_tests_helpers::test::{
@@ -198,11 +205,7 @@ mod burn_from {
 
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
-			assert_ok!(Pallet::<MockRuntime>::burn(
-				&TEST_COLLECTION_ID,
-				&nft_to_burn,
-				Some(&ALICE)
-			));
+			assert_ok!(Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)));
 			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: nft_to_burn,
@@ -235,7 +238,7 @@ mod burn_from {
 
 			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
-			assert_ok!(Pallet::<MockRuntime>::burn(&TEST_COLLECTION_ID, &new_id, Some(&ALICE)));
+			assert_ok!(Nft::burn(&TEST_COLLECTION_ID, &new_id, Some(&ALICE)));
 			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: new_id,
@@ -264,19 +267,17 @@ mod burn_from {
 	/// Error tests for [`Mutate::burn_from`], testing for [`crate::Error::InstanceNotFound`]
 	/// specifically.
 	mod not_found {
+		use crate::test::mock::*;
 		use composable_tests_helpers::test::helper::assert_last_event;
 
 		use crate::test::nonfungibles::mutate::burn_from::TEST_COLLECTION_ID;
 		use frame_support::{assert_noop, assert_ok, traits::tokens::nonfungibles::Mutate};
 		use sp_runtime::DispatchError;
 
-		use crate::{
-			test::{
-				mock::{new_test_ext, Event, MockRuntime},
-				prelude::{mint_many_nfts_and_assert, mint_nft_and_assert},
-				ALICE,
-			},
-			Pallet,
+		use crate::test::{
+			mock::{new_test_ext, Event, MockRuntime},
+			prelude::{mint_many_nfts_and_assert, mint_nft_and_assert},
+			ALICE,
 		};
 
 		/// Asserts that when no NFTs exist, burning an NFT that doesn't exist is an error.
@@ -284,7 +285,7 @@ mod burn_from {
 		fn none_minted() {
 			new_test_ext().execute_with(|| {
 				assert_noop!(
-					Pallet::<MockRuntime>::burn(&TEST_COLLECTION_ID, &1, Some(&ALICE)),
+					Nft::burn(&TEST_COLLECTION_ID, &1, Some(&ALICE)),
 					DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 				);
 			})
@@ -296,11 +297,7 @@ mod burn_from {
 			new_test_ext().execute_with(|| {
 				let [_new_nft_ids @ .., last_nft_minted] = mint_many_nfts_and_assert::<10>(ALICE);
 				assert_noop!(
-					Pallet::<MockRuntime>::burn(
-						&TEST_COLLECTION_ID,
-						&(last_nft_minted + 1),
-						Some(&ALICE)
-					),
+					Nft::burn(&TEST_COLLECTION_ID, &(last_nft_minted + 1), Some(&ALICE)),
 					DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 				);
 			})
@@ -308,23 +305,18 @@ mod burn_from {
 
 		/// Asserts that when some NFTs exist, burning an NFT twice is an error.
 		#[test]
-		#[ignore = "TODO: fix with updates to nft pallet"]
 		fn burn_twice() {
 			new_test_ext().execute_with(|| {
 				let [nft_to_burn, _new_nft_ids @ ..] = mint_many_nfts_and_assert::<10>(ALICE);
 
-				assert_ok!(Pallet::<MockRuntime>::burn(
-					&TEST_COLLECTION_ID,
-					&nft_to_burn,
-					Some(&ALICE)
-				));
+				assert_ok!(Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)));
 				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
 					collection_id: TEST_COLLECTION_ID,
 					instance_id: nft_to_burn,
 				}));
 
 				assert_noop!(
-					Pallet::<MockRuntime>::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)),
+					Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)),
 					DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 				);
 			})
@@ -332,23 +324,18 @@ mod burn_from {
 
 		/// Asserts that when burning the last NFT that exists, burning it twice is an error.
 		#[test]
-		#[ignore = "TODO: fix with updates to nft pallet"]
 		fn burn_twice_last_existing() {
 			new_test_ext().execute_with(|| {
 				let nft_to_burn = mint_nft_and_assert();
 
-				assert_ok!(Pallet::<MockRuntime>::burn(
-					&TEST_COLLECTION_ID,
-					&nft_to_burn,
-					Some(&ALICE)
-				));
+				assert_ok!(Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)));
 				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftBurned {
 					collection_id: TEST_COLLECTION_ID,
 					instance_id: nft_to_burn,
 				}));
 
 				assert_noop!(
-					Pallet::<MockRuntime>::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)),
+					Nft::burn(&TEST_COLLECTION_ID, &nft_to_burn, Some(&ALICE)),
 					DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 				);
 			})

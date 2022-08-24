@@ -127,10 +127,6 @@ jobs:
         run: |
           git config --global --add safe.directory /__w/composable/composable
 
-      - name: Make Style
-        run: |
-          make style-check
-      
       - name: Hadolint
         continue-on-error: true # this step is such a pita
         run: |
@@ -169,21 +165,3 @@ jobs:
           else
             exit 1
           fi
-
-      - name: Cargo clippy
-        run: |
-          SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets --tests -- -D warnings
-
-      - name: Cargo Single Depedency
-        # description: Speed up builds and reduced security check surface
-        run: |
-          cargo +nightly install -f cargo-deny
-          # start from minimal dependency crate
-          cargo +nightly deny --manifest-path ./frame/composable-support/Cargo.toml check ban
-
-      - name: Cargo udeps
-        continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.
-        run: |
-          cargo udeps --version
-          # Compilation of local-integration-tests crate with --all-features doesn't work
-          SKIP_WASM_BUILD=1 cargo +nightly udeps --workspace --exclude local-integration-tests --all-features
