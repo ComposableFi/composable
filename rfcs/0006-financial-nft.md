@@ -46,8 +46,7 @@ Table of Contents
 </tbody>
 </table>
 
-1. Abstract
------------
+## 1. Abstract
 
 This document describes the specification for the Composable Finance’s
 Financial Non-Fungible Tokens (fNFT) protocol.
@@ -107,7 +106,7 @@ In the following example a staker receives a fNFT to represent their
 staking position, which can be freely traded like any other financial
 asset.
 
-<img src="images/images/staking-fnft.png" width="461" height="515" alt="staking fnft" />
+<img src="0006-financial-nft/images/images/staking-fnft.png" width="461" height="515" alt="staking fnft" />
 
 #### 3.1.2. Debt Instruments
 
@@ -115,7 +114,7 @@ In the following example a debt instrument is created and sold buy a
 borrower as an fNFT to a lender. Whoever owns the fNFT receives the
 interest payments and the principle at the end of the loan term.
 
-<img src="images/images/debt-fnft.png" width="392" height="412" alt="debt fnft" />
+<img src="0006-financial-nft/images/images/debt-fnft.png" width="392" height="412" alt="debt fnft" />
 
 #### 3.1.3. Coin Voting Based on fNFT Ownership
 
@@ -123,14 +122,14 @@ In the following example an fNFT with locked assets that has voting
 power is bought by a voter. Again whoever owns the fNFT receives the
 voting power of the underlying assets.
 
-<img src="images/images/coin-voting-fnft.png" width="537" height="307" alt="coin voting fnft" />
+<img src="0006-financial-nft/images/images/coin-voting-fnft.png" width="537" height="307" alt="coin voting fnft" />
 
 ## 4. Specification
 
 This specification consists of two main parts as the following diagram
 shows:
 
-<img src="images/images/spec-parts.png" width="766" height="377" alt="spec parts" />
+<img src="0006-financial-nft/images/images/spec-parts.png" width="766" height="377" alt="spec parts" />
 
 The diagram can be summarised as,
 
