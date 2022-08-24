@@ -284,7 +284,7 @@ pub mod pallet {
 					T::Pablo::currency_pair(*iter).and_then(
 						|pair| -> Result<T::AssetId, DispatchError> {
 							if !pair_set.insert(pair) {
-								return Err(Error::<T>::LoopSuspectedInRouteUpdate.into())
+								return Err(Error::<T>::LoopSuspectedInRouteUpdate.into());
 							}
 							if pair.quote == val {
 								Ok(pair.base)
@@ -387,8 +387,8 @@ pub mod pallet {
 		type PoolId = CurrencyPair<T::AssetId>;
 
 		fn pool_exists(pool_id: Self::PoolId) -> bool {
-			DexRoutes::<T>::contains_key(pool_id.base, pool_id.quote) ||
-				DexRoutes::<T>::contains_key(pool_id.quote, pool_id.base)
+			DexRoutes::<T>::contains_key(pool_id.base, pool_id.quote)
+				|| DexRoutes::<T>::contains_key(pool_id.quote, pool_id.base)
 		}
 
 		fn currency_pair(
@@ -407,6 +407,10 @@ pub mod pallet {
 				[pool_id] => T::Pablo::lp_token(pool_id),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
+		}
+
+		fn x_token(_pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
+			todo!()
 		}
 
 		fn get_exchange_value(
