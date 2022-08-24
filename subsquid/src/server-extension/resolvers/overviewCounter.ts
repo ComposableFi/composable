@@ -54,14 +54,16 @@ export class OverviewCountResolver
   async accountHoldersCount(@Root() overviewCounter: OverviewCounter) {
     const manager = await this.tx();
 
-    let accounts: any[] = await manager.getRepository(Account).query(
-      `
+    let accounts: { accounts_count: number }[] = await manager
+      .getRepository(Account)
+      .query(
+        `
         SELECT
           count(*) as accounts_count
         FROM account
         LIMIT 1
       `
-    );
+      );
 
     return accounts?.[0]?.accounts_count || 0;
   }
@@ -74,14 +76,16 @@ export class OverviewCountResolver
 
     const manager = await this.tx();
 
-    let activeUsers: any[] = await manager.getRepository(Activity).query(
-      `
+    const activeUsers: { active_users_count: number }[] = await manager
+      .getRepository(Activity)
+      .query(
+        `
         SELECT
           count(distinct account_id) as active_users_count
         FROM activity
         WHERE timestamp > ${threshold}
       `
-    );
+      );
 
     return activeUsers?.[0]?.active_users_count || 0;
   }

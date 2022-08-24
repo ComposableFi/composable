@@ -51,7 +51,7 @@ export class AssetsResolver {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @Query(() => [Assets])
-  async assets(): Promise<Assets[]> {
+  async assetsPrices(): Promise<Assets[]> {
     const DAY_IN_MS = 24 * 60 * 60 * 1_000;
     const currentTimestamp = new Date().valueOf();
     const threshold = currentTimestamp - DAY_IN_MS;
