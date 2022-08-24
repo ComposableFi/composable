@@ -486,7 +486,8 @@ start
 :penalty = reward_pool.lock.unlock_penalty;
 :claim(accountId, positionId);
 note right: as per section 5.3.9
-:transfer(position.stake);
+:transfer stake from fnft account to nft owner;
+:burn fnft with the shares;
 :remove(position);
 :rewards_pool.claimed_shares += position.shares;
 :save(rewards_pool);
