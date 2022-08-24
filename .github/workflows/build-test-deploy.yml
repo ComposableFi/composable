@@ -8,9 +8,6 @@ on:
       - staging
       - trying          
   pull_request:
-    paths-ignore:
-      # TODO: actually check and built UI too
-      - frontend/**
     branches:
       - main
       - develop
