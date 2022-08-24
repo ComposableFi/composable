@@ -25,9 +25,15 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 composable-support = { path = "../composable-support", default-features = false }
-cosmwasm-minimal-std = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false , features = ["iterator"]}
-cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false , features = ["iterator"]}
-cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false, features=["iterator"]}
+cosmwasm-minimal-std = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false, features = [
+  "iterator",
+] }
+cosmwasm-vm = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false, features = [
+  "iterator",
+] }
+cosmwasm-vm-wasmi = { git = "https://github.com/ComposableFi/cosmwasm-vm", rev = "298d29c5c37d255dfd69a091843343101362be52", default-features = false, features = [
+  "iterator",
+] }
 log = { version = "0.4.14", default-features = false }
 parity-wasm = { version = "0.45.0", default-features = false }
 serde_json = { version = "1.0.82", default-features = false, features = [

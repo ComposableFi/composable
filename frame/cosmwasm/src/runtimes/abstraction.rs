@@ -30,7 +30,7 @@ impl<T: Config + VMPallet> TryFrom<Vec<u8>> for CanonicalCosmwasmAccount<T> {
 
 impl<T: Config> Into<CanonicalAddr> for CanonicalCosmwasmAccount<T> {
 	fn into(self) -> CanonicalAddr {
-        let cosmwasm_account = &self.0;
+		let cosmwasm_account = &self.0;
 		CanonicalAddr::from(cosmwasm_account.1.as_ref())
 	}
 }
