@@ -403,6 +403,48 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- run .#benchmarks-once-${{ matrix.runtime }} --no-update-lock-file --show-trace -L       
 
+  check-simnode:
+    name: "Simnode"
+    needs: package-simnode-tests
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: check-simnode-${{ matrix.runtime }}-${{ github.ref }}
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        runtime: [picasso, composable]
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.python3 nixpkgs.unzip
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - uses: google-github-actions/setup-gcloud@v0
+        with:
+          service_account_key: ${{ secrets.DEPLOY_DALI }}
+          export_default_credentials: true
+      - run: |
+          FILENAME=$(date -d yesterday +'%m-%d-%Y').zip
+          GS_BUCKET="${{ matrix.runtime }}-data-store"
+          gsutil cp gs://$GS_BUCKET/"$FILENAME" .
+          unzip -o "$FILENAME" -d /tmp/db
+          cachix watch-exec -j 16 -c 0 composable-community nix -- run .#simnode-tests-${{ matrix.runtime }} --no-update-lock-file --show-trace -L
+
   local-integration-tests:
     name: "Local integration tests"
     runs-on:
@@ -435,6 +477,36 @@ jobs:
           name: composable-community
       - run: |
           cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#check-${{ matrix.runtime }}-integration-tests --no-update-lock-file --show-trace -L       
+
+  package-simnode-tests:
+    name: "Package Simnode Tests"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: packagesimnodetests-${{ matrix.runtime }}-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#simnode-tests --no-update-lock-file --show-trace -L
 
   package-composable-node:
     name: "Package Composable node"

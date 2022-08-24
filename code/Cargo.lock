@@ -12232,7 +12232,7 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27#8e
 dependencies = [
  "assert_matches",
  "async-trait",
- "futures 0.3.23",
+ "futures 0.3.21",
  "jsonrpsee 0.14.0",
  "log 0.4.17",
  "parity-scale-codec",
@@ -13454,6 +13454,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-system",
  "jsonrpsee 0.14.0",
+ "pallet-asset-tx-payment",
  "pallet-transaction-payment",
  "picasso-runtime",
  "sc-cli",
@@ -14694,12 +14695,12 @@ name = "substrate-simnode"
 version = "0.1.0"
 source = "git+https://github.com/polytope-labs/substrate-simnode?branch=polkadot-v0.9.27#b8b7969c1b8957045966e56a11a5b42a1fda9fa0"
 dependencies = [
- "clap 3.2.17",
+ "clap 3.2.15",
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
  "cumulus-test-relay-sproof-builder",
  "frame-system",
- "futures 0.3.23",
+ "futures 0.3.21",
  "jsonrpsee 0.14.0",
  "log 0.4.17",
  "num-traits",

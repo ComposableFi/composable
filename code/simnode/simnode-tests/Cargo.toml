@@ -42,3 +42,11 @@ codec = { package = "parity-scale-codec", version = "3.0.0" }
 hex = "0.4.3"
 num-traits = "0.2.14"
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+[features]
+builtin-wasm = [
+  "picasso-runtime/builtin-wasm",
+  "composable-runtime/builtin-wasm",
+  "dali-runtime/builtin-wasm",
+  "node/builtin-wasm",
+]
