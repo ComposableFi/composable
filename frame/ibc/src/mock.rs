@@ -16,7 +16,6 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	MultiSignature,
 };
-use std::time::{Duration, Instant};
 use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -92,15 +91,6 @@ impl pallet_ibc_ping::Config for Test {
 	type IbcHandler = Ibc;
 }
 
-pub struct MockUnixTime;
-
-impl frame_support::traits::UnixTime for MockUnixTime {
-	fn now() -> Duration {
-		let now_time = Instant::now().elapsed();
-		now_time
-	}
-}
-
 impl composable_traits::defi::DeFiComposableConfig for Test {
 	type MayBeAssetId = AssetId;
 	type Balance = Balance;
@@ -135,7 +125,6 @@ impl assets::Config for Test {
 
 parameter_types! {
 	pub const MaxLocks: u32 = 256;
-	pub const TransferPalletId: frame_support::PalletId = frame_support::PalletId(*b"transfer");
 }
 
 parameter_type_with_key! {
@@ -187,11 +176,11 @@ impl assets_registry::Config for Test {
 }
 
 impl pallet_ibc::Config for Test {
-	type TimeProvider = MockUnixTime;
+	type TimeProvider = Timestamp;
 	type Event = Event;
-	const INDEXING_PREFIX: &'static [u8] = b"ibc";
+	const INDEXING_PREFIX: &'static [u8] = b"ibc/";
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc/";
-	const CHILD_TRIE_KEY: &'static [u8] = b"IBC";
+	const CHILD_TRIE_KEY: &'static [u8] = b"ibc/";
 	type Currency = Balances;
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type MultiCurrency = Assets;

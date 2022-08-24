@@ -152,7 +152,7 @@ pub fn create_client_update() -> MsgUpdateAnyClient {
 // Proof generation process for all tendermint benchmarks
 // The process is as follows, we insert the all the required ibc paths and values needed to generate
 // the proof in the context of the benchmark in question, then we extract the root from the tree and
-// also extract a proof for any key we need After this we insert the extracted root inside the avl
+// also extract a proof for any key we need, After this we insert the extracted root inside the avl
 // tree as the value for the commitment prefix. We then get a proof for the commitment prefix.
 // We then extract the new root and use this as the commitment root
 // This new root is then set as the ibc commitment root in the light client consensus state.
