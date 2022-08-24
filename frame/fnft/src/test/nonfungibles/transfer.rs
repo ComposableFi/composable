@@ -4,6 +4,10 @@ use codec::Encode;
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks, helper::assert_last_event,
 };
+use composable_traits::{
+	account_proxy::{AccountProxy, ProxyType},
+	fnft::FinancialNft,
+};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::tokens::nonfungibles::{Inspect, Transfer},
@@ -12,7 +16,7 @@ use sp_runtime::DispatchError;
 
 use crate::{
 	test::{
-		mock::{new_test_ext, Event, MockRuntime},
+		mock::{new_test_ext, Event, MockRuntime, Nft, Proxy},
 		prelude::*,
 		ALICE, BOB, CHARLIE,
 	},
@@ -21,7 +25,6 @@ use crate::{
 
 /// Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
 #[test]
-#[ignore = "TODO: fix with updates to nft pallet"]
 fn simple() {
 	new_test_ext().execute_with(|| {
 		let created_nft_id = mint_nft_and_assert();
@@ -29,12 +32,12 @@ fn simple() {
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 		assert_eq!(
-			Pallet::<MockRuntime>::owner(&TEST_COLLECTION_ID, &created_nft_id),
+			Nft::owner(&TEST_COLLECTION_ID, &created_nft_id),
 			Some(ALICE),
 			"owner before transfer should be ALICE"
 		);
 
-		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &created_nft_id, &BOB));
+		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &created_nft_id, &BOB));
 
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
@@ -57,7 +60,7 @@ fn simple() {
 		);
 
 		assert_eq!(
-			Pallet::<MockRuntime>::owner(&TEST_COLLECTION_ID, &created_nft_id),
+			Nft::owner(&TEST_COLLECTION_ID, &created_nft_id),
 			Some(BOB),
 			"owner of transfered NFT should be BOB after transfer"
 		);
@@ -78,22 +81,26 @@ fn roundtrip() {
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 		// send one of ALICE's NFTs to BOB
-		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &nft_to_trade, &BOB));
+		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &nft_to_trade, &BOB));
 		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: nft_to_trade,
 			to: BOB,
 		}));
+		// get the asset account of the fNFT
+		let asset_account = Nft::asset_account(&TEST_COLLECTION_ID, &nft_to_trade);
+		assert_ok!(Proxy::find_proxy(&asset_account, &BOB, Some(ProxyType::Any)));
 
 		process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
 
 		// send said NFT back
-		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &nft_to_trade, &ALICE));
+		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &nft_to_trade, &ALICE));
 		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: nft_to_trade,
 			to: ALICE,
 		}));
+		assert_ok!(Proxy::find_proxy(&asset_account, &ALICE, Some(ProxyType::Any)));
 
 		let alice_storage_after_transfer = OwnerInstances::<MockRuntime>::get(&ALICE).unwrap();
 		let bob_storage_after_transfer = OwnerInstances::<MockRuntime>::get(&BOB).unwrap();
@@ -136,7 +143,7 @@ fn many() {
 		}
 
 		// transfer one of ALICE's NFTs to BOB
-		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &a0, &BOB));
+		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &a0, &BOB));
 		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: a0,
@@ -159,7 +166,7 @@ fn many() {
 
 		// transfer all of CHARLIES's NFTs to BOB
 		for nft_id in charlies_nfts.iter() {
-			assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, nft_id, &BOB));
+			assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, nft_id, &BOB));
 			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 				collection_id: TEST_COLLECTION_ID,
 				instance_id: *nft_id,
@@ -169,21 +176,21 @@ fn many() {
 		}
 
 		assert_owners([
-			(
-				ALICE,
-				&[a1, a2, a3, a4, a5, a6, a7, a8, a9],
-				"ALICE should be unchanged",
-			),
-			(
-				BOB,
-				&[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9],
-				"BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE",
-			),
-			(CHARLIE, &[], "CHARLIE should have no NFTs left after transferring them all to BOB"),
-		]);
+            (
+                ALICE,
+                &[a1, a2, a3, a4, a5, a6, a7, a8, a9],
+                "ALICE should be unchanged",
+            ),
+            (
+                BOB,
+                &[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9],
+                "BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE",
+            ),
+            (CHARLIE, &[], "CHARLIE should have no NFTs left after transferring them all to BOB"),
+        ]);
 
 		// transfer one of (what was originally CHARLIES's) NFTs from BOB to ALICE
-		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &c9, &ALICE));
+		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &c9, &ALICE));
 		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: c9,
@@ -191,21 +198,21 @@ fn many() {
 		}));
 
 		assert_owners([
-			(
-				ALICE,
-				&[a1, a2, a3, a4, a5, a6, a7, a8, a9, c9],
-				"ALICE should have their original NFTs except for the one transferred to BOB + one of (what was originally CHARLIES's) NFTs from BOB",
-			),
-			(
-				BOB,
-				&[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8],
-				"BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE except for the one transferred to ALICE",
-			),
-			(CHARLIE, &[], "CHARLIE should be unchanged"),
-		]);
+            (
+                ALICE,
+                &[a1, a2, a3, a4, a5, a6, a7, a8, a9, c9],
+                "ALICE should have their original NFTs except for the one transferred to BOB + one of (what was originally CHARLIES's) NFTs from BOB",
+            ),
+            (
+                BOB,
+                &[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8],
+                "BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE except for the one transferred to ALICE",
+            ),
+            (CHARLIE, &[], "CHARLIE should be unchanged"),
+        ]);
 
 		// transfer one of (what was originally CHARLIES's) NFTs from ALICE back to CHARLIE
-		assert_ok!(Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &c9, &CHARLIE),);
+		assert_ok!(Nft::transfer(&TEST_COLLECTION_ID, &c9, &CHARLIE),);
 		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftTransferred {
 			collection_id: TEST_COLLECTION_ID,
 			instance_id: c9,
@@ -213,18 +220,18 @@ fn many() {
 		}));
 
 		assert_owners([
-			(
-				ALICE,
-				&[a1, a2, a3, a4, a5, a6, a7, a8, a9],
-				"ALICE should have their original NFTs except for the one transferred to BOB previously",
-			),
-			(
-				BOB,
-				&[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8],
-				"BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE except for the one transferred to ALICE",
-			),
-			(CHARLIE, &[c9], "CHARLIE should have one of their original NFTs"),
-		])
+            (
+                ALICE,
+                &[a1, a2, a3, a4, a5, a6, a7, a8, a9],
+                "ALICE should have their original NFTs except for the one transferred to BOB previously",
+            ),
+            (
+                BOB,
+                &[a0, b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, c0, c1, c2, c3, c4, c5, c6, c7, c8],
+                "BOB should own their original NFTs + the one transferred from ALICE + all of the ones transferred from CHARLIE except for the one transferred to ALICE",
+            ),
+            (CHARLIE, &[c9], "CHARLIE should have one of their original NFTs"),
+        ])
 	}
 }
 
@@ -233,7 +240,7 @@ fn many() {
 fn instance_not_found() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			Pallet::<MockRuntime>::transfer(&TEST_COLLECTION_ID, &1, &ALICE),
+			Nft::transfer(&TEST_COLLECTION_ID, &1, &ALICE),
 			DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 		);
 	});
