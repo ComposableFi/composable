@@ -209,4 +209,52 @@ impl<T: frame_system::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+
+	fn open_transfer_channel() -> Weight {
+        0
+    }
+
+	fn set_params() -> Weight {
+        0
+    }
+
+	fn transfer() -> Weight {
+        0
+    }
+
+	fn on_chan_open_init() -> Weight {
+        0
+    }
+
+	fn on_chan_open_try() -> Weight {
+        0
+    }
+
+	fn on_recv_packet() -> Weight {
+        0
+    }
+
+	fn on_chan_open_ack() -> Weight {
+        0
+    }
+
+	fn on_chan_open_confirm() -> Weight {
+        0
+    }
+
+	fn on_chan_close_init() -> Weight {
+        0
+    }
+
+	fn on_chan_close_confirm() -> Weight {
+        0
+    }
+
+	fn on_acknowledgement_packet() -> Weight {
+        0
+    }
+
+	fn on_timeout_packet() -> Weight {
+        0
+    }
 }
