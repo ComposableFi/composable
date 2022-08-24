@@ -2,7 +2,7 @@ cut_body_after = "## Checklist"
 delete_merged_branches = true
 required_approvals = 2
 status = [
-  "Check Benchmarks",
+  "Devnet integration tests",
   "Unit Tests (With Coverage)",
   "Unit Tests",
   "Linters",

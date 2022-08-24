@@ -1,5 +1,6 @@
+use sp_arithmetic::Rounding;
 use sp_runtime::{
-	helpers_128bit::multiply_by_rational,
+	helpers_128bit::multiply_by_rational_with_rounding,
 	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Zero},
 	ArithmeticError,
 };
@@ -14,7 +15,7 @@ pub fn safe_multiply_by_rational(a: u128, b: u128, c: u128) -> Result<u128, Arit
 	if c == 0 {
 		Err(ArithmeticError::DivisionByZero)
 	} else {
-		multiply_by_rational(a, b, c).map_err(|_| ArithmeticError::Overflow)
+		multiply_by_rational_with_rounding(a, b, c, Rounding::Down).ok_or(ArithmeticError::Overflow)
 	}
 }
 

@@ -299,7 +299,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         share={share}
       />
 
-      <TransactionSettings />
+      <TransactionSettings showSlippageSelection={false} />
     </Box>
   );
 };

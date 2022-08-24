@@ -159,6 +159,7 @@ impl pallet_vesting::Config for Runtime {
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type VestingScheduleId = u128;
 }
 
 parameter_types! {
@@ -168,17 +169,17 @@ parameter_types! {
 	  pub const MinReward: Balance = MIN_REWARD;
 }
 
-impl pallet::Config for Runtime {
+impl Config for Runtime {
 	type Event = Event;
 	type NativeCurrency = CurrencyAdapter<Runtime, NativeCurrencyId>;
 	type Currency = Tokens;
 	type Vesting = Vesting;
 	type BondOfferId = u64;
+	type Convert = ConvertInto;
 	type PalletId = BondedFinanceId;
 	type Stake = Stake;
 	type MinReward = MinReward;
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type Convert = ConvertInto;
 	type WeightInfo = ();
 }
 

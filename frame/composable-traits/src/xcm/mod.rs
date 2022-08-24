@@ -24,13 +24,13 @@ pub type OrderId = QueryId;
 
 /// Strongly typed sibling location to `Transact` via XCM.
 /// Shortcut to more complicate way to set it via `xcm::latest::Junction`.
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmTransactConfiguration {
 	pub parachain_id: polkadot_parachain::primitives::Id,
 	pub method_id: CumulusMethodId,
 }
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct CumulusMethodId {
 	pub pallet_instance: PalletInstance,
 	pub method_id: u8,
@@ -46,7 +46,7 @@ impl XcmTransactConfiguration {
 	}
 }
 /// must be stored on side of protocol which will be asked to sell
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellRequestTransactConfiguration {
 	/// Used to route XCM message dispatch into right target
 	pub location: XcmTransactConfiguration,
@@ -78,7 +78,7 @@ impl<Parameters: Encode> XcmCumulusDispatch<Parameters> {
 /// The actualy binary data dispatched into `Call`.
 /// Assets to be liquidated was moved with `xcm::latest::Instruction::TransferReserveAsset` before
 /// in same XCM message.
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellRequest {
 	/// Created on sender side and used to correlate callbacks.
 	/// Receiver tracks origin and `order_id`.
@@ -98,7 +98,7 @@ pub struct XcmSellRequest {
 }
 
 /// Optional response if engine did not sold all on first requests
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellInitialResponseTransact {
 	/// Amount of `base` token which was taken by engine to be sold.
 	/// Amount remaining was transfered with `xcm::latest::Instruction::TransferReserveAsset` in
@@ -111,7 +111,7 @@ pub struct XcmSellInitialResponseTransact {
 
 /// Response from enigne, either be first and final, or can be after
 /// `XcmSellInitialResponseTransact`
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellFinalResponseTransact {
 	/// may be less than `XcmSellInitialResponseTransact::total_amount_taken`.
 	/// Would be `Balance::zero()` if cannot sell anything. So sender can switch to other engine.
@@ -121,7 +121,7 @@ pub struct XcmSellFinalResponseTransact {
 	pub price: Balance,
 }
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct SellOrderResponse {
 	/// sender order_id, way to corellate XCM message (like
 	/// `xcm::latest::Instruction::QueryResponse`)
@@ -131,7 +131,7 @@ pub struct SellOrderResponse {
 
 // Next relation must hold:
 // Sell minimal price  <= initial price <= final price
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum SellResponse {
 	Initial(XcmSellInitialResponseTransact),
 	Final(XcmSellInitialResponseTransact),

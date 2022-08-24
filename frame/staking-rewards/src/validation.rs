@@ -3,7 +3,7 @@ use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::Permill;
 
-#[derive(Debug, Copy, Clone, Decode, PartialEq, TypeInfo)]
+#[derive(Debug, Copy, Clone, Decode, PartialEq, Eq, TypeInfo)]
 pub struct ValidSplitRatio;
 
 impl Validate<Permill, ValidSplitRatio> for ValidSplitRatio {
