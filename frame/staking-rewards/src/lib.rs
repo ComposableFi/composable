@@ -1,4 +1,5 @@
 //! Implements staking rewards protocol.
+#![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(
 	not(test),
 	deny(
@@ -10,8 +11,6 @@
 		clippy::panic
 	)
 )]
-#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
-#![cfg_attr(not(feature = "std"), no_std)]
 #![deny(
 	bad_style,
 	bare_trait_objects,
@@ -30,7 +29,9 @@
 	while_true,
 	trivial_casts,
 	trivial_numeric_casts,
-	unused_extern_crates
+	unused_extern_crates,
+	clippy::unseparated_literal_suffix,
+	clippy::disallowed_types
 )]
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
@@ -41,7 +42,11 @@ mod test;
 mod validation;
 pub mod weights;
 
-use sp_std::ops::{Add, Div, Mul, Sub};
+use sp_runtime::SaturatedConversion;
+use sp_std::{
+	cmp,
+	ops::{Div, Sub},
+};
 
 use crate::prelude::*;
 use composable_support::math::safe::SafeSub;
@@ -365,6 +370,11 @@ pub mod pallet {
 	#[pallet::getter(fn stakes)]
 	pub type Stakes<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>, OptionQuery>;
+
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	pub(super) type RewardsPotIsEmpty<T: Config> =
+		StorageDoubleMap<_, Blake2_128Concat, T::RewardPoolId, Blake2_128Concat, T::AssetId, ()>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -895,11 +905,14 @@ pub mod pallet {
 					});
 				},
 				Err(RewardsPotEmpty) => {
-					Self::deposit_event(Event::<T>::RewardAccumulationHookError {
-						pool_id,
-						asset_id: reward.asset_id,
-						error: RewardAccumulationHookError::RewardsPotEmpty,
-					});
+					if !RewardsPotIsEmpty::<T>::contains_key(pool_id, reward.asset_id) {
+						RewardsPotIsEmpty::<T>::insert(pool_id, reward.asset_id, ());
+						Self::deposit_event(Event::<T>::RewardAccumulationHookError {
+							pool_id,
+							asset_id: reward.asset_id,
+							error: RewardAccumulationHookError::RewardsPotEmpty,
+						});
+					}
 				},
 				Err(MaxRewardsAccumulated) => {
 					Self::deposit_event(Event::<T>::MaxRewardsAccumulated {
@@ -1054,6 +1067,8 @@ fn add_to_rewards_pot<T: Config>(
 
 	Pallet::<T>::deposit_event(Event::<T>::RewardsPotIncreased { pool_id, asset_id, amount });
 
+	RewardsPotIsEmpty::<T>::remove(pool_id, asset_id);
+
 	Ok(())
 }
 
@@ -1107,85 +1122,103 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 	pool_account: &T::AccountId,
 	now_seconds: u64,
 ) -> Result<(), RewardAccumulationCalculationError> {
+	if reward.reward_rate.amount.is_zero() {
+		return Ok(())
+	}
+
 	let elapsed_time = now_seconds
 		.safe_sub(&reward.last_updated_timestamp)
 		.map_err(|_| RewardAccumulationCalculationError::BackToTheFuture)?;
 
 	let reward_rate_period_seconds = reward.reward_rate.period.as_secs();
 
-	// SAFETY(benluelo): Usage of Div::div:
-	//
-	// Integer division can only fail if rhs == 0, and reward_rate_period_seconds is a NonZeroU64
-	// here
+	// SAFETY(benluelo): Usage of Div::div: Integer division can only fail if rhs == 0, and
+	// reward_rate_period_seconds is a NonZeroU64 here
 	let periods_surpassed = elapsed_time.div(reward_rate_period_seconds.get());
-
-	// dbg!(&reward.reward_rate, &periods_surpassed);
 
 	if periods_surpassed.is_zero() {
 		Ok(())
 	} else {
+		let total_locked_rewards: u128 =
+			T::Assets::balance_on_hold(reward.asset_id, pool_account).into();
+
+		// the maximum amount repayable given the reward rate.
+		// i.e. if total locked is 50, and the reward rate is 15, then this would be 3
+		//
+		// SAFETY(benluelo): Usage of Div::div: Integer division can only fail if rhs == 0, and
+		// reward.reward_rate.amount is known to be non-zero here as per the check at the beginning
+		// of this function
+		let maximum_releasable_periods = total_locked_rewards.div(reward.reward_rate.amount.into());
+
+		let releasable_periods_surpassed =
+			cmp::min(maximum_releasable_periods, periods_surpassed.into());
+
 		// saturating is safe here since these values are checked against max_rewards anyways, which
 		// is <= u128::MAX
-		let new_rewards =
-			u128::from(periods_surpassed).saturating_mul(reward.reward_rate.amount.into());
+		let newly_accumulated_rewards =
+			u128::saturating_mul(releasable_periods_surpassed, reward.reward_rate.amount.into());
+		let new_total_rewards =
+			newly_accumulated_rewards.saturating_add(reward.total_rewards.into());
 
-		let new_total_rewards = new_rewards.saturating_add(reward.total_rewards.into());
-
-		let last_updated_timestamp = reward
-			.last_updated_timestamp
-			.add(periods_surpassed.mul(reward_rate_period_seconds.get()));
+		// u64::MAX is roughly 584.9 billion years in the future, so saturating at that should be ok
+		let last_updated_timestamp = reward.last_updated_timestamp.saturating_add(
+			reward_rate_period_seconds
+				.get()
+				.saturating_mul(releasable_periods_surpassed.saturated_into::<u64>()),
+		);
 
 		if new_total_rewards <= reward.max_rewards.into() {
-			do_release_accumulated_rewards::<T>(reward, pool_account, new_rewards)?;
-			reward.total_rewards = new_total_rewards.into();
-			reward.last_updated_timestamp = last_updated_timestamp;
-			Ok(())
-		}
-		// if the new total rewards are less than or equal to the max rewards AND the current total
-		// rewards are less than the max rewards (i.e. the newly accumulated rewards is less than
-		// the the amount that would be accumulated based on the periods surpassed), then transfer
-		// *up to* the max rewards
-		else if reward.total_rewards < reward.max_rewards {
-			// SAFETY(benluelo): Usage of Sub::sub:
+			let balance_on_hold = T::Assets::balance_on_hold(reward.asset_id, pool_account);
+			if !balance_on_hold.is_zero() && balance_on_hold >= newly_accumulated_rewards.into() {
+				T::Assets::release(
+					reward.asset_id,
+					pool_account,
+					newly_accumulated_rewards.into(),
+					false, // not best effort, entire amount must be released
+				)
+				.expect("funds should be avaliable to release based on previous check; qed;");
+
+				reward.total_rewards = new_total_rewards.into();
+				reward.last_updated_timestamp = last_updated_timestamp;
+				Ok(())
+			} else {
+				Err(RewardAccumulationCalculationError::RewardsPotEmpty)
+			}
+		} else if reward.total_rewards < reward.max_rewards {
+			// if the new total rewards are less than or equal to the max rewards AND the current
+			// total rewards are less than the max rewards (i.e. the newly accumulated rewards is
+			// less than the the amount that would be accumulated based on the periods surpassed),
+			// then release *up to* the max rewards
 			//
-			// reward.total_rewards is known to be less than reward.max_rewards as per check above
-			let rewards_to_transfer = reward.max_rewards.sub(reward.total_rewards).into();
-			match do_release_accumulated_rewards::<T>(reward, pool_account, rewards_to_transfer) {
-				Ok(()) => {
-					// return an error, but update the reward first
-					reward.total_rewards = reward.max_rewards;
-					reward.last_updated_timestamp = last_updated_timestamp;
-					Err(RewardAccumulationCalculationError::MaxRewardsAccumulated)
-				},
-				Err(err) => Err(err),
+			// REVIEW(benluelo): Should max_rewards be max_periods instead? Review this if the
+			// max_rewards ever becomes updateable in the future.
+
+			// SAFETY(benluelo): Usage of Sub::sub: reward.total_rewards is known to be less than
+			// reward.max_rewards as per check above
+			let rewards_to_release = reward.max_rewards.sub(reward.total_rewards).into();
+
+			let balance_on_hold = T::Assets::balance_on_hold(reward.asset_id, pool_account);
+			if !balance_on_hold.is_zero() && balance_on_hold >= newly_accumulated_rewards.into() {
+				T::Assets::release(
+					reward.asset_id,
+					pool_account,
+					rewards_to_release.into(),
+					false, // not best effort, entire amount must be released
+				)
+				.expect("funds should be avaliable to release based on previous check; qed;");
+
+				// return an error, but update the reward first
+				reward.total_rewards = reward.max_rewards;
+				reward.last_updated_timestamp = last_updated_timestamp;
+				Err(RewardAccumulationCalculationError::MaxRewardsAccumulated)
+			} else {
+				Err(RewardAccumulationCalculationError::RewardsPotEmpty)
 			}
 		} else {
 			// at this point, reward.total_rewards is known to be equal to max_rewards which means
 			// that the max rewards was hit previously
 			Err(RewardAccumulationCalculationError::MaxRewardsAccumulatedPreviously)
 		}
-	}
-}
-
-/// Releases and transfers the specified amount of funds from the cold wallet to the hot wallet.
-fn do_release_accumulated_rewards<T: Config>(
-	reward: &Reward<T::AssetId, T::Balance>,
-	pool_account: &T::AccountId,
-	new_rewards: u128,
-) -> Result<(), RewardAccumulationCalculationError> {
-	if T::Assets::balance_on_hold(reward.asset_id, pool_account) >= new_rewards.into() {
-		// release funds from cold wallet
-		T::Assets::release(
-			reward.asset_id,
-			pool_account,
-			new_rewards.into(),
-			false, // not best effort, entire amount must be released
-		)
-		.expect("funds should be avaliable to release based on previous check; qed;");
-
-		Ok(())
-	} else {
-		Err(RewardAccumulationCalculationError::RewardsPotEmpty)
 	}
 }
 

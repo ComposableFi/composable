@@ -9,6 +9,13 @@ use crate::test::prelude::*;
 
 use super::*;
 
+type A = Currency<97, 12>;
+type B = Currency<98, 12>;
+type C = Currency<99, 12>;
+type D = Currency<100, 12>;
+type E = Currency<101, 12>;
+type F = Currency<102, 12>;
+
 #[test]
 fn test_reward_update_calculation() {
 	new_test_ext().execute_with(|| {
@@ -109,17 +116,125 @@ fn test_reward_update_calculation() {
 }
 
 #[test]
+fn test_accumulate_rewards_pool_empty_refill() {
+	new_test_ext().execute_with(|| {
+		const STARTING_BLOCK: u64 = 10;
+
+		let mut current_block = System::block_number();
+
+		progress_to_block(STARTING_BLOCK, &mut current_block);
+
+		// 0.000_02 A per second, capped at 0.1 A
+		// cap will be hit after 5_000 seconds (834 blocks)
+		const A_A_REWARD_RATE: u128 = A::units(2) / 100_000;
+		const A_A_MAX_REWARDS: u128 = A::units(1) / 10;
+
+		// 0.000_02 B per second, capped at 0.05 B
+		// cap will be hit after 2_500 seconds (417 blocks)
+		const A_B_REWARD_RATE: u128 = B::units(2) / 100_000;
+		const A_B_MAX_REWARDS: u128 = B::units(5) / 100;
+
+		mint_assets([ALICE], [A::ID], A::units(10_000));
+		mint_assets([ALICE], [B::ID], B::units(10_000));
+
+		let pool_id =
+			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
+				owner: ALICE,
+				asset_id: A::ID,
+				end_block: current_block + ONE_YEAR_OF_BLOCKS,
+				reward_configs: [
+					(
+						A::ID,
+						RewardConfig {
+							asset_id: A::ID,
+							max_rewards: A_A_MAX_REWARDS,
+							reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
+						},
+					),
+					(
+						B::ID,
+						RewardConfig {
+							asset_id: B::ID,
+							max_rewards: A_B_MAX_REWARDS,
+							reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
+						},
+					),
+				]
+				.into_iter()
+				.try_collect()
+				.unwrap(),
+				lock: default_lock_config(),
+			});
+
+		progress_to_block(current_block + 1, &mut current_block);
+
+		check_events([
+			crate::Event::<Test>::RewardAccumulationHookError {
+				pool_id,
+				asset_id: A::ID,
+				error: RewardAccumulationHookError::RewardsPotEmpty,
+			},
+			crate::Event::<Test>::RewardAccumulationHookError {
+				pool_id,
+				asset_id: B::ID,
+				error: RewardAccumulationHookError::RewardsPotEmpty,
+			},
+		]);
+
+		progress_to_block(current_block + 1, &mut current_block);
+
+		// RewardsPotEmpty event should only be emitted once, not every block
+		check_events([]);
+
+		add_to_rewards_pot_and_assert(ALICE, pool_id, A::ID, A_A_REWARD_RATE * block_seconds(5));
+
+		check_events([crate::Event::<Test>::RewardsPotIncreased {
+			pool_id,
+			asset_id: A::ID,
+			amount: A_A_REWARD_RATE * block_seconds(5),
+		}]);
+
+		progress_to_block(STARTING_BLOCK + 5, &mut current_block);
+
+		check_rewards(&[CheckRewards {
+			owner: ALICE,
+			pool_id,
+			pool_asset_id: A::ID,
+			pool_rewards: &[
+				PoolRewards {
+					reward_asset_id: A::ID,
+					expected_total_rewards: A_A_REWARD_RATE * block_seconds(5),
+					expected_locked_balance: 0,
+					expected_unlocked_balance: A_A_REWARD_RATE * block_seconds(5),
+				},
+				PoolRewards {
+					reward_asset_id: B::ID,
+					expected_total_rewards: 0,
+					expected_locked_balance: 0,
+					expected_unlocked_balance: 0,
+				},
+			],
+		}]);
+
+		check_events([]);
+
+		assert_eq!(current_block, 15);
+
+		progress_to_block(current_block + 1, &mut current_block);
+
+		check_events([crate::Event::<Test>::RewardAccumulationHookError {
+			pool_id,
+			asset_id: A::ID,
+			error: RewardAccumulationHookError::RewardsPotEmpty,
+		}]);
+	});
+}
+
+#[test]
 // takes about 3 minutes to run in debug, 20 seconds in release
 // does not do any claiming
 fn test_accumulate_rewards_hook() {
 	new_test_ext().execute_with(|| {
-		type A = Currency<97, 12>;
-		type B = Currency<98, 12>;
-		type C = Currency<99, 12>;
-		type D = Currency<100, 12>;
-		type E = Currency<101, 12>;
-		type F = Currency<102, 12>;
-
 		const STARTING_BLOCK: u64 = 10;
 
 		let mut current_block = System::block_number();
@@ -218,50 +333,6 @@ fn test_accumulate_rewards_hook() {
 		mint_assets([ALICE], [E::ID], C_E_INITIAL_AMOUNT);
 		add_to_rewards_pot_and_assert(ALICE, bobs_pool_id, E::ID, C_E_INITIAL_AMOUNT);
 
-		fn check_events(mut expected_events: Vec<crate::Event<Test>>) {
-			// dbg!(System::events());
-			for record in System::events() {
-				match record.event {
-					Event::StakingRewards(staking_event) => {
-						let idx = expected_events
-							.iter()
-							.position(|e| e.eq(&&staking_event))
-							.expect(&format!("unexpected event: {staking_event:#?}"));
-
-						expected_events.remove(idx);
-					},
-					_ => {},
-				}
-			}
-
-			assert!(
-				expected_events.is_empty(),
-				"not all expected events were emtted, missing {expected_events:#?}",
-			);
-		}
-
-		fn progress_to_block(block: u64, counter: &mut u64) {
-			assert!(
-				block > *counter,
-				"cannot progress backwards: currently at {counter}, requested {block}"
-			);
-
-			let new_blocks = block - *counter;
-			process_and_progress_blocks::<StakingRewards, Test>(new_blocks.try_into().unwrap());
-
-			*counter = System::block_number();
-			assert_eq!(
-				*counter, block,
-				r#"
-sanity check; counter and block should be the same at this point.
-found:
-	counter: {counter},
-	block:   {block}"#
-			);
-
-			println!("current block: {counter}");
-		}
-
 		{
 			progress_to_block(STARTING_BLOCK + 2, &mut current_block);
 
@@ -318,7 +389,7 @@ found:
 				},
 			]);
 
-			check_events(vec![]);
+			check_events([]);
 		}
 
 		{
@@ -377,7 +448,7 @@ found:
 				},
 			]);
 
-			check_events(vec![]);
+			check_events([]);
 		}
 
 		{
@@ -433,7 +504,7 @@ found:
 				},
 			]);
 
-			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
+			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
 				pool_id: bobs_pool_id,
 				asset_id: E::ID,
 			}]);
@@ -489,7 +560,7 @@ found:
 				},
 			]);
 
-			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
+			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
 				pool_id: bobs_pool_id,
 				asset_id: D::ID,
 			}]);
@@ -574,7 +645,7 @@ found:
 				},
 			]);
 
-			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
+			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
 				pool_id: alices_pool_id,
 				asset_id: B::ID,
 			}]);
@@ -635,12 +706,57 @@ found:
 				},
 			]);
 
-			check_events(vec![crate::Event::<Test>::MaxRewardsAccumulated {
+			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
 				pool_id: alices_pool_id,
 				asset_id: A::ID,
 			}]);
 		}
 	});
+}
+
+fn check_events(expected_events: impl IntoIterator<Item = crate::Event<Test>>) {
+	// dbg!(System::events());
+	let mut expected_events = expected_events.into_iter().collect::<Vec<_>>();
+	for record in System::events() {
+		match record.event {
+			Event::StakingRewards(staking_event) => {
+				let idx = expected_events
+					.iter()
+					.position(|e| e.eq(&&staking_event))
+					.expect(&format!("unexpected event: {staking_event:#?}"));
+
+				expected_events.remove(idx);
+			},
+			_ => {},
+		}
+	}
+
+	assert!(
+		expected_events.is_empty(),
+		"not all expected events were emtted, missing {expected_events:#?}",
+	);
+}
+
+fn progress_to_block(block: u64, counter: &mut u64) {
+	assert!(
+		block > *counter,
+		"cannot progress backwards: currently at {counter}, requested {block}"
+	);
+
+	let new_blocks = block - *counter;
+	process_and_progress_blocks::<StakingRewards, Test>(new_blocks.try_into().unwrap());
+
+	*counter = System::block_number();
+	assert_eq!(
+		*counter, block,
+		r#"
+sanity check; counter and block should be the same at this point.
+found:
+counter: {counter},
+block:   {block}"#
+	);
+
+	println!("current block: {counter}");
 }
 
 pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
@@ -667,10 +783,8 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 				<Test as frame_system::Config>::AccountId,
 			>>::balance_on_hold(*reward_asset_id, &pool_account);
 
-			let actual_unlocked_balance = <<Test as crate::Config>::Assets as Inspect<
-				<Test as frame_system::Config>::AccountId,
-			>>::balance(*reward_asset_id, &pool_account) -
-				actual_locked_balance;
+			let actual_unlocked_balance =
+				balance(*reward_asset_id, &pool_account) - actual_locked_balance;
 
 			let reward = pool
 				.rewards
@@ -681,9 +795,13 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 				reward.asset_id, *reward_asset_id,
 				r#"error at pool {pool_id}, asset {reward_asset_id}"#,
 			);
-			assert_eq!(
-				reward.total_rewards, *expected_total_rewards,
-				r#"error at pool {pool_id}, asset {reward_asset_id}"#,
+			assert!(
+				&reward.total_rewards == expected_total_rewards,
+				r#"
+error at pool {pool_id}, asset {reward_asset_id}: unexpected total_rewards:
+	expected: {expected_total_rewards}
+	found:    {found_total_rewards}"#,
+				found_total_rewards = reward.total_rewards
 			);
 
 			assert!(
