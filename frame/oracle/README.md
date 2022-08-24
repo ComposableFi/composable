@@ -1,6 +1,6 @@
-# Oracle:
+# Apollo:
 
-The Oracle pallet provides functionality for setting up and maintaining an oracle and submitting prices.
+The Oracle pallet provides functionality for setting up and maintaining an Apollo oracle and submitting prices.
 
 ## Overview:
 
