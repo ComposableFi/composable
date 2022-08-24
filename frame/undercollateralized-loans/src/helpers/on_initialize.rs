@@ -117,8 +117,9 @@ impl<T: Config> Pallet<T> {
 	// Used at the beginning of the day to proccess loans which
 	// were not processed yesterday for some reason.
 	pub(crate) fn last_chance_processing(date: Timestamp) {
-	    let set_of_loans_accounts_ids: BTreeSet<T::AccountId> = crate::ScheduleStorage::<T>::get(date).keys().cloned().collect();
-        let unprocessed_loans_accounts_ids: Vec<_> = set_of_loans_accounts_ids 
+		let set_of_loans_accounts_ids: BTreeSet<T::AccountId> =
+			crate::ScheduleStorage::<T>::get(date).keys().cloned().collect();
+		let unprocessed_loans_accounts_ids: Vec<_> = set_of_loans_accounts_ids
 			.difference(&crate::ProcessedLoansStorage::<T>::get())
 			.cloned()
 			.collect();
@@ -147,9 +148,9 @@ impl<T: Config> Pallet<T> {
 			match payment {
 				PaymentOutcome::RegularPaymentSucceed(_) => (),
 				PaymentOutcome::LastPaymentSucceed(payment) =>
-					Self::close_loan_contract(&payment.loan_config),
+					Self::close_loan_contract(payment.loan_info.config()),
 				PaymentOutcome::PaymentFailed(payment) =>
-					Self::process_failed_payment(&payment),
+					Self::process_failed_payment_logged(&payment),
 			}
 		}
 	}

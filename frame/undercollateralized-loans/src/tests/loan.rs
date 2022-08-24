@@ -10,15 +10,16 @@ fn can_create_loan() {
 		let origin = Origin::signed(manager);
 		let market_info = create_test_market();
 		let market_account_id = market_info.config().account_id().clone();
-	    let mut payment_schedule = BTreeMap::new();
-        payment_schedule.insert(parse_timestamp("24-08-1991"), 100);
-        let loan_input = LoanInput {
+		let mut payment_schedule = BTreeMap::new();
+		payment_schedule.insert(parse_timestamp("24-08-1991"), 100);
+		let loan_input = LoanInput {
 			market_account_id,
 			borrower_account_id: *BOB,
 			principal: 1000,
 			collateral: 5,
 			payment_schedule,
-            activation_date: parse_timestamp("24-08-1991"),
+			activation_date: parse_timestamp("24-08-1991"),
+			failed_payment_treatment: None,
 		};
 		assert_ok!(pallet_undercollateralized_loans::Pallet::<Runtime>::create_loan(
 			origin, loan_input

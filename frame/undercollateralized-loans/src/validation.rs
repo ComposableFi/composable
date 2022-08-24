@@ -70,9 +70,10 @@ impl<AccountId, Balance, Loans, Timestamp>
 where
 	Loans: UndercollateralizedLoans + DeFiEngine<AccountId = AccountId>,
 	AccountId: Clone + Eq + PartialEq + FullCodec,
-	Balance: Zero + PartialOrd, 
-    Timestamp: Clone + Ord,
+	Balance: Zero + PartialOrd,
+	Timestamp: Clone + Ord,
 {
+	// TODO: @mikolaichuk: add validation of shift value T::MaxDateShiftingInDays
 	fn validate(
 		input: LoanInput<AccountId, Balance, Timestamp>,
 	) -> Result<LoanInput<AccountId, Balance, Timestamp>, &'static str> {
@@ -88,30 +89,41 @@ where
 			)?,
 			"Mentioned borrower is not included in the market's whitelist of borrowers."
 		);
-    	
-        ensure!(
+		// Borrower's account should not be included in the market's blacklist.
+		ensure!(
 			Loans::is_borrower_account_not_blacklisted(
 				&input.borrower_account_id,
-                &input.market_account_id
+				&input.market_account_id
 			),
 			"Mentioned borrower is presented in the market's blacklist of borrowers."
 		);
-
 		// Check if payment schedule is empty.
 		// We should have at least one payment.
 		ensure!(input.payment_schedule.len() > 0, "Payment schedule is empty.");
-		
-        // Unwrapped since u32 can be safely converted to usize.
+		// Unwrapped since u32 can be safely converted to usize.
 		ensure!(
 			input.payment_schedule.len() <
 				Loans::ScheduleBound::get().try_into().expect("This method never panics."),
 			"Payment schedule exceeded maximum size."
 		);
-       
-        // Unwrapped since we have checked that shcedule is not empty.
-        ensure!(input.activation_date <= input.payment_schedule.keys().min().cloned().expect("This mehtod never panics."),
-            "Contract first date payment is less than activation date."
-            );
+		// Unwrapped since we have checked that shcedule is not empty.
+		ensure!(
+			input.activation_date <=
+				input.payment_schedule.keys().min().cloned().expect("This mehtod never panics."),
+			"Contract first date payment is less than activation date."
+		);
+		// Failed payments threshold and failed payments shift should not be zero.
+		if let Some(treatment) = &input.failed_payment_treatment {
+			ensure!(
+				treatment.failed_payments_threshold > 0,
+				"Failed payments threshold equals zero."
+			);
+			ensure!(
+				treatment.failed_payments_shift_in_days > 0,
+				" Failed payments shif equals zero."
+			);
+		};
+
 		Ok(LoanInput { principal, collateral, ..input })
 	}
 }

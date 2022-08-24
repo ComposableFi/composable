@@ -1,7 +1,9 @@
 use crate::Config;
 use composable_traits::{
 	defi::DeFiComposableConfig,
-	undercollateralized_loans::{LoanConfig, LoanInfo, LoanInput, MarketConfig, MarketInfo, MarketInput},
+	undercollateralized_loans::{
+		LoanConfig, LoanInfo, LoanInput, MarketConfig, MarketInfo, MarketInput,
+	},
 };
 use frame_support::pallet_prelude::*;
 use sp_core::TypeId;
@@ -57,29 +59,29 @@ pub(crate) type LoanConfigOf<T> = LoanConfig<
 >;
 
 pub(crate) type PaymentOutcomeOf<T> =
-	PaymentOutcome<<T as DeFiComposableConfig>::Balance, LoanConfigOf<T>, Timestamp>;
+	PaymentOutcome<<T as DeFiComposableConfig>::Balance, LoanInfoOf<T>, Timestamp>;
 
 pub(crate) type PaymentsOutcomes<T> = Vec<PaymentOutcomeOf<T>>;
 
 pub(crate) type PaymentOf<T> =
-	Payment<<T as DeFiComposableConfig>::Balance, LoanConfigOf<T>, Timestamp>;
+	Payment<<T as DeFiComposableConfig>::Balance, LoanInfoOf<T>, Timestamp>;
 
 // This structure is used to simplify holding of payment info.
 #[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub struct Payment<Balance, LoanConfig, Timestamp> {
-	pub loan_config: LoanConfig,
+pub struct Payment<Balance, LoanInfo, Timestamp> {
+	pub loan_info: LoanInfo,
 	pub amount: Balance,
 	pub timestamp: Timestamp,
 }
 
 // Used to treat payments outcomes in off-chain and on-chain payments checking procedures.
 #[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
-pub enum PaymentOutcome<Balance, LoanConfig, Timestamp> {
-	RegularPaymentSucceed(Payment<Balance, LoanConfig, Timestamp>),
-	LastPaymentSucceed(Payment<Balance, LoanConfig, Timestamp>),
+pub enum PaymentOutcome<Balance, LoanInfo, Timestamp> {
+	RegularPaymentSucceed(Payment<Balance, LoanInfo, Timestamp>),
+	LastPaymentSucceed(Payment<Balance, LoanInfo, Timestamp>),
 	// We assume that payment is failed if it is not possible to transfer money from borrower
 	// account to loan account on the moment of off-chain checking.
-	PaymentFailed(Payment<Balance, LoanConfig, Timestamp>),
+	PaymentFailed(Payment<Balance, LoanInfo, Timestamp>),
 }
 
 // Used for loan's account ids generation.

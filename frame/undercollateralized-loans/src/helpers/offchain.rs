@@ -76,7 +76,7 @@ impl<T: Config> Pallet<T> {
 
 	// Collect expired non-activated loans accounts ids.
 	// Expired non-activated loans are loans which were not activated by borrower before activation
-    // date.
+	// date.
 	pub(crate) fn collect_non_activated_expired_loans(today: Timestamp) -> Vec<T::AccountId> {
 		let mut expired_loans_accounts_ids = vec![];
 		for non_active_loan_account_id in crate::NonActiveLoansStorage::<T>::iter_keys() {

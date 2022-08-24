@@ -24,5 +24,5 @@ pub use sp_runtime::{
 };
 pub use std::{
 	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
-    ops::{Div, Mul},
-    };
+	ops::{Div, Mul},
+};

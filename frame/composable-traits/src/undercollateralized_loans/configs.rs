@@ -125,10 +125,12 @@ where
 	/// Amount of assets which should be used as collateral.
 	collateral: Balance,
 	/// Schedule of payments.
-	// TODO: @mikolaichuk: Should be bounded
 	schedule: BTreeMap<Timestamp, Balance>,
-	/// Contract should be activated before this moment. 
+	/// Contract should be activated before this moment.
 	activation_date: Timestamp,
+	/// If this filed is None, borrower has to face his obligation in time.
+	/// Otherwise borrower has possibility to postpone payment as per strucure properties.
+	failed_payment_treatment: Option<FailedPaymentTreatment>,
 }
 
 impl<AccountId, AssetId, Balance, Timestamp> LoanConfig<AccountId, AssetId, Balance, Timestamp>
@@ -146,10 +148,10 @@ where
 		borrow_asset_id: AssetId,
 		principal: Balance,
 		collateral: Balance,
-		schedule: Vec<(Timestamp, Balance)>,
-        activation_date: Timestamp,
+		schedule: BTreeMap<Timestamp, Balance>,
+		activation_date: Timestamp,
+		failed_payment_treatment: Option<FailedPaymentTreatment>,
 	) -> Self {
-		let schedule: BTreeMap<Timestamp, Balance> = schedule.into_iter().collect();
 		Self {
 			account_id,
 			market_account_id,
@@ -160,6 +162,7 @@ where
 			collateral,
 			schedule,
 			activation_date,
+			failed_payment_treatment,
 		}
 	}
 
@@ -205,6 +208,25 @@ where
 	pub fn activation_date(&self) -> &Timestamp {
 		&self.activation_date
 	}
+
+	/// Returns `true` if it is possible to delay a payment.
+	pub fn is_payments_relaxed(&self) -> bool {
+		self.failed_payment_treatment.is_some()
+	}
+
+	pub fn failed_payments_threshold(&self) -> Option<u32> {
+		Some(self.failed_payment_treatment.clone()?.failed_payments_threshold)
+	}
+
+	pub fn failed_payments_shift_in_days(&self) -> Option<i64> {
+		Some(self.failed_payment_treatment.clone()?.failed_payments_shift_in_days)
+	}
+
+	// Get next payment date from the local payment schedule.
+	// Note that local schedule make sense for dates equal or larger current date.
+	pub fn get_next_payment_date(&self, date: Timestamp) -> Option<Timestamp> {
+		self.schedule.keys().find(|&payment_date| payment_date > &date).cloned()
+	}
 }
 
 // Some fields are hiden since they should be immutable.
@@ -218,8 +240,8 @@ where
 	VaultId: Clone + Eq + PartialEq,
 {
 	config: MarketConfig<AccountId, AssetId, BlockNumber, VaultId>,
-    // Ids of liquidation strategies applicable to the market.	
-    pub liquidation_strategies: Vec<LiquidationStrategyId>,
+	// Ids of liquidation strategies applicable to the market.
+	pub liquidation_strategies: Vec<LiquidationStrategyId>,
 }
 
 impl<AccountId, AssetId, BlockNumber, LiquidationStrategyId, VaultId>
@@ -237,12 +259,11 @@ where
 	) -> Self {
 		Self { config, liquidation_strategies }
 	}
-	
-    /// Get a reference to the market info's config.
+
+	/// Get a reference to the market info's config.
 	pub fn config(&self) -> &MarketConfig<AccountId, AssetId, BlockNumber, VaultId> {
 		&self.config
 	}
-
 }
 
 // Some fields are hiden since they should be immutable.
@@ -254,25 +275,28 @@ where
 	Balance: Clone + Eq + PartialEq,
 	Timestamp: Clone + Eq + PartialEq + Ord,
 {
-    config: LoanConfig<AccountId, AssetId, Balance, Timestamp>,
-    pub last_payment_date: Timestamp,
-    pub failed_payments_counter: u32,
+	config: LoanConfig<AccountId, AssetId, Balance, Timestamp>,
+	pub last_payment_date: Timestamp,
+	pub failed_payments_counter: u32,
 }
 
-impl<AccountId, AssetId, Balance, Timestamp> LoanInfo<AccountId, AssetId, Balance, Timestamp> 
+impl<AccountId, AssetId, Balance, Timestamp> LoanInfo<AccountId, AssetId, Balance, Timestamp>
 where
 	AccountId: Clone + Eq + PartialEq,
 	AssetId: Clone + Eq + PartialEq,
 	Balance: Clone + Eq + PartialEq,
 	Timestamp: Clone + Eq + PartialEq + Ord,
 {
-    pub fn new(config: LoanConfig<AccountId, AssetId, Balance, Timestamp>, last_payment_date: Timestamp) -> Self {
-        Self { config, last_payment_date, failed_payments_counter: 0 }
-    }
+	pub fn new(
+		config: LoanConfig<AccountId, AssetId, Balance, Timestamp>,
+		last_payment_date: Timestamp,
+	) -> Self {
+		Self { config, last_payment_date, failed_payments_counter: 0 }
+	}
 
-    pub fn config(&self) -> &LoanConfig<AccountId, AssetId, Balance, Timestamp> {
-        &self.config
-    }
+	pub fn config(&self) -> &LoanConfig<AccountId, AssetId, Balance, Timestamp> {
+		&self.config
+	}
 }
 
 /// input to create market extrinsic
@@ -316,6 +340,20 @@ pub struct LoanInput<AccountId, Balance, Timestamp> {
 	pub collateral: Balance,
 	/// How often borrowers have to pay interest.
 	pub payment_schedule: BTreeMap<Timestamp, Balance>,
-    /// Contratc should be activated before this date.
-    pub activation_date: Timestamp
+	/// Contratc should be activated before this date.
+	pub activation_date: Timestamp,
+	/// If this filed is None, borrower has to face his obligation in time.
+	pub failed_payment_treatment: Option<FailedPaymentTreatment>,
+}
+
+/// Structure contains information regarding failed payment behaviour
+#[derive(Encode, Decode, TypeInfo, Clone, Eq, PartialEq, RuntimeDebug)]
+pub struct FailedPaymentTreatment {
+	/// In the case of payment's fail,
+	/// it will be shifted to this amount of days.
+	pub failed_payments_shift_in_days: i64,
+	/// Borrower can fail payment this amount of time.
+	/// If threshold is exceeded the loan liquidates and
+	/// borrower adds to the blacklist.
+	pub failed_payments_threshold: u32,
 }

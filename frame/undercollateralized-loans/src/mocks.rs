@@ -12,7 +12,7 @@ use composable_traits::{
 };
 use frame_support::{
 	construct_runtime, ord_parameter_types, parameter_types,
-	traits::{ConstU128, ConstU16, ConstU32, ConstU64, Everything, GenesisBuild},
+	traits::{ConstI64, ConstU128, ConstU16, ConstU32, ConstU64, Everything, GenesisBuild},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
@@ -379,7 +379,8 @@ impl pallet_undercollateralized_loans::Config for Runtime {
 	type CheckNonActivatedLoansBatchSize = ConstU32<5>;
 	type WhiteListBound = ConstU32<10>;
 	type ScheduleBound = ConstU32<200>;
-    type MaxRepyamentFails = ConstU128<4>;
+	type MaxRepyamentFails = ConstU128<4>;
+	type MaxDateShiftingInDays = ConstI64<365>;
 }
 
 parameter_type_with_key! {

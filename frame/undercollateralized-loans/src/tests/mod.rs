@@ -14,10 +14,7 @@ use frame_support::{
 	assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate, BoundedVec,
 };
 use sp_runtime::{FixedPointNumber, Percent, Perquintill};
-use sp_std::collections::{
-    btree_set::BTreeSet,
-    btree_map::BTreeMap,
-};
+use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 pub mod loan;
 pub mod market;
 pub mod prelude;
@@ -107,18 +104,19 @@ pub fn parse_timestamp(string: &str) -> crate::types::Timestamp {
 pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 	let market_info = create_test_market();
 	let market_account_id = market_info.config().account_id().clone();
-    let mut payment_schedule = BTreeMap::new();
- 	payment_schedule.insert(parse_timestamp("01-01-2222"), 100);
+	let mut payment_schedule = BTreeMap::new();
+	payment_schedule.insert(parse_timestamp("01-01-2222"), 100);
 	payment_schedule.insert(parse_timestamp("01-02-2222"), 100);
 	payment_schedule.insert(parse_timestamp("01-03-2222"), 100);
-	   
-    let loan_input = LoanInput {
+
+	let loan_input = LoanInput {
 		market_account_id,
 		borrower_account_id: *BOB,
 		principal: 1000,
 		collateral: 5,
 		payment_schedule,
-        activation_date: parse_timestamp("01-01-2222"),
+		activation_date: parse_timestamp("01-01-2222"),
+		failed_payment_treatment: None,
 	};
 	crate::Pallet::<Runtime>::do_create_loan(loan_input.try_into_validated().unwrap()).unwrap()
 }
