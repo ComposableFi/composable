@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+import type { ApiTypes } from "@polkadot/api-base/types";
 
 declare module '@polkadot/api-base/types/errors' {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
@@ -437,6 +437,17 @@ declare module '@polkadot/api-base/types/errors' {
       XcmCannotDecodeRemoteParametersToLocalRepresentations: AugmentedError<ApiType>;
       XcmCannotFindLocalIdentifiersAsDecodedFromRemote: AugmentedError<ApiType>;
       XcmNotFoundConfigurationById: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    fnft: {
+      CollectionAlreadyExists: AugmentedError<ApiType>;
+      CollectionNotFound: AugmentedError<ApiType>;
+      InstanceAlreadyExists: AugmentedError<ApiType>;
+      InstanceNotFound: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1182,6 +1193,7 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     stakingRewards: {
+      BackToTheFuture: AugmentedError<ApiType>;
       /**
        * Invalid end block number provided for creating a pool.
        **/
@@ -1190,6 +1202,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Reward's max limit reached.
        **/
       MaxRewardLimitReached: AugmentedError<ApiType>;
+      /**
+       * No duration presets configured.
+       **/
+      NoDurationPresetsConfigured: AugmentedError<ApiType>;
       /**
        * Not enough assets for a stake.
        **/
@@ -1207,6 +1223,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       ReductionConfigProblem: AugmentedError<ApiType>;
       /**
+       * Reward asset not found in reward pool.
+       **/
+      RewardAssetNotFound: AugmentedError<ApiType>;
+      /**
        * Error when creating reward configs.
        **/
       RewardConfigProblem: AugmentedError<ApiType>;
@@ -1218,6 +1238,10 @@ declare module '@polkadot/api-base/types/errors' {
        * No stake found for given id.
        **/
       StakeNotFound: AugmentedError<ApiType>;
+      /**
+       * Too many rewarded asset types per pool violating the storage allowed.
+       **/
+      TooManyRewardAssetTypes: AugmentedError<ApiType>;
       /**
        * Unimplemented reward pool type.
        **/
@@ -1582,6 +1606,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Trying to vest to ourselves
        **/
       TryingToSelfVest: AugmentedError<ApiType>;
+      /**
+       * There is no vesting schedule with a given id
+       **/
+      VestingScheduleNotFound: AugmentedError<ApiType>;
       /**
        * Vesting period is zero
        **/
