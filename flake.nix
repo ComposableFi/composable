@@ -336,7 +336,7 @@
               dontUnpack = true;
               installPhase = ''
                 mkdir $out/
-                cp -r $src/* $out/
+                cp -r $src/. $out/
               '';
             };
 
@@ -476,6 +476,59 @@
               # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
               cargoBuildCommand =
                 "cargo test --workspace --release --locked --verbose";
+            });
+
+            cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
+              cargoArtifacts = common-deps-nightly;
+              cargoExtraArgs = "--all --check --verbose";
+            });
+
+            taplo-cli-check = crane-stable.cargoBuild (common-attrs // {
+              buildInputs = [ taplo-cli ];
+              cargoArtifacts = common-deps;
+              cargoBuildCommand = "taplo check";
+              cargoExtraArgs = "--verbose";
+            });
+
+            prettier-check = stdenv.mkDerivation {
+              name = "prettier-check";
+              dontUnpack = true;
+              buildInputs = [ nodePackages.prettier runtime-tests ];
+              installPhase = ''
+                mkdir $out
+                prettier \
+                  --config="${runtime-tests}/.prettierrc" \
+                  --ignore-path="${runtime-tests}/.prettierignore" \
+                  --check \
+                  --loglevel=debug \
+                  ${runtime-tests}
+              '';
+            };
+
+            cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
+              cargoArtifacts = common-deps-nightly;
+              cargoBuildCommand = "cargo clippy";
+              cargoExtraArgs = "--all-targets --tests -- -D warnings";
+            });
+
+            cargo-deny-check = crane-nightly.cargoBuild (common-attrs // {
+              buildInputs = [ cargo-deny ];
+              cargoArtifacts = common-deps;
+              cargoBuildCommand = "cargo deny";
+              cargoExtraArgs =
+                "--manifest-path ./frame/composable-support/Cargo.toml check ban";
+            });
+
+            cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
+              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+              COMPOSABLE_RUNTIME =
+                "${composable-runtime}/lib/runtime.optimized.wasm";
+              buildInputs = [ cargo-udeps expat freetype fontconfig openssl ];
+              cargoArtifacts = common-deps-nightly;
+              cargoBuildCommand = "cargo udeps";
+              cargoExtraArgs =
+                "--workspace --exclude local-integration-tests --all-features";
             });
 
             kusama-picasso-karura =
