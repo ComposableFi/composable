@@ -7,7 +7,11 @@ use composable_traits::{
 	time::{DurationSeconds, ONE_HOUR},
 	vamm::Vamm as VammTrait,
 };
-use frame_support::{assert_ok, pallet_prelude::Hooks, traits::fungibles::Inspect};
+use frame_support::{
+	assert_ok,
+	pallet_prelude::Hooks,
+	traits::fungibles::{Inspect, Transfer},
+};
 use pallet_vamm::VammStateOf;
 use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedPointNumber, Percent};
@@ -642,6 +646,64 @@ mod update_funding {
 			// the price upwards
 			assert_ok!(TestPallet::update_funding(Origin::signed(BOB), market_id));
 			assert!(get_market_fee_pool(market_id) > 0);
+		})
+	}
+
+	#[test]
+	fn clearing_house_should_pay_funding() {
+		ExtBuilder {
+			native_balances: vec![(ALICE, UNIT), (BOB, UNIT)],
+			balances: vec![(ALICE, USDC, UNIT * 100), (BOB, USDC, UNIT * 1_000_000)],
+			..Default::default()
+		}
+		.build()
+		.execute_with(|| {
+			let asset_id = DOT;
+			// Oracle price (and TWAP) start at 20.0
+			set_oracle_for(asset_id, 2_000);
+
+			// vAMM price (and TWAP start at 10.0)
+			let config = MarketConfig {
+				asset: asset_id,
+				vamm_config: VammConfig {
+					base_asset_reserves: UNIT * 10_000,
+					quote_asset_reserves: UNIT * 100_000,
+					peg_multiplier: 1,
+					twap_period: ONE_HOUR,
+				},
+				..Default::default()
+			};
+			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config.clone()));
+
+			assert_ok!(TestPallet::deposit_collateral(Origin::signed(ALICE), USDC, UNIT * 100));
+
+			let market_id = Zero::zero();
+			assert_eq!(get_market_fee_pool(market_id), 0);
+
+			// Alice goes long, but not enough to bring mark price to index
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Long,
+				UNIT * 100,
+				0
+			));
+
+			// Populate Fee Pool with funds
+			let fee_pool_before = UNIT * 1_000_000;
+			<Assets as Transfer<AccountId>>::transfer(
+				USDC,
+				&BOB,
+				&TestPallet::get_fee_pool_account(market_id),
+				fee_pool_before,
+				false,
+			)
+			.unwrap();
+
+			let market = get_market(&market_id);
+			run_to_time(market.last_oracle_ts + config.twap_period);
+			assert_ok!(TestPallet::update_funding(Origin::signed(BOB), market_id));
+			assert!(get_market_fee_pool(market_id) < fee_pool_before);
 		})
 	}
 }
