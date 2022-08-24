@@ -814,7 +814,7 @@ pub mod pallet {
 			let pool_id = &stake.reward_pool_id;
 			for (asset_id, reward) in &mut rewards_pool.rewards {
 				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
-				let claim = if rewards_pool.total_shares == Zero::zero() {
+				let claim = if rewards_pool.total_shares.is_zero() {
 					Zero::zero()
 				} else {
 					reward
