@@ -68,6 +68,10 @@
 		"zxh404.vscode-proto3",
 		"rangav.vscode-thunder-client",
 		"adam-bender.commit-message-editor",
+
+		"jebbs.plantuml",
+		"bierner.markdown-mermaid",
+		"bpruitt-goddard.mermaid-markdown-syntax-highlighting",
 		// developers-xcvm
 		"humao.rest-client",
 	],

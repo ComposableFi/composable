@@ -312,6 +312,12 @@
                 --steps=1 \
                 --repeat=1
             '';
+          docs-renders = [
+                mdbook
+                plantuml
+                graphviz
+                pandoc
+          ];
 
         in
         rec {
@@ -531,7 +537,7 @@
                 "--workspace --exclude local-integration-tests --all-features";
             });
 
-            kusama-picasso-karura =
+            kusama-picasso-karura-devnet =
               let
                 config = (pkgs.callPackage
                   ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix
@@ -584,7 +590,8 @@
                   wasm-optimizer
                   xorriso
                   zlib.out
-                ];
+                  nix-tree
+                ] ++ docs-renders;
             });
 
             developers-minimal = mkShell (common-attrs // {
@@ -619,13 +626,9 @@
 
             writers = mkShell {
               buildInputs = with packages; [
-                mdbook
                 python3
-                plantuml
-                graphviz
-                pandoc
                 nodejs
-              ];
+              ] ++ doc-renders;
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
@@ -643,7 +646,6 @@
             devnet-xcvm-up =
               let
                 devnet-xcvm =
-
                   pkgs.arion.build
                     {
                       modules = [
@@ -705,11 +707,11 @@
                 "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
             };
 
-            kusama-picasso-karura = {
+            kusama-picasso-karura-devnet = {
               # nix run .#devnet
               type = "app";
               program =
-                "${packages.kusama-picasso-karura}/bin/kusama-picasso-karura";
+                "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
             };
 
             price-feed = {

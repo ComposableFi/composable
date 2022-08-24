@@ -1,0 +1,5 @@
+> picasso-integration-tester@1.0.0 prepare
+> picasso-integration-tester@1.0.0 compile
+> tsc -p . --declaration
+up to date, audited 931 packages in 20s
+117 packages are looking for funding
