@@ -807,7 +807,7 @@ where
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Tendermint(mock_client_state),
-			Some(AnyConsensusState::Tendermint(mock_cs_state)),
+			AnyConsensusState::Tendermint(mock_cs_state),
 			Signer::from_str("pallet_ibc").unwrap(),
 		)
 		.unwrap()

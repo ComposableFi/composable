@@ -226,7 +226,15 @@ impl<
 		match id {
 			CurrencyId::NATIVE => Some(MultiLocation::new(
 				1,
-				X2(Parachain(ThisParaId::get().into()), GeneralKey(id.encode())),
+				X2(
+					Parachain(ThisParaId::get().into()),
+					GeneralKey(
+						frame_support::storage::weak_bounded_vec::WeakBoundedVec::force_from(
+							id.encode(),
+							None,
+						),
+					),
+				),
 			)),
 			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
 			_ => {

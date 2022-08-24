@@ -95,8 +95,9 @@ pub mod pallet {
 	};
 	use num_traits::{One, SaturatingSub};
 	use scale_info::TypeInfo;
+	use sp_arithmetic::Rounding;
 	use sp_runtime::{
-		helpers_128bit::multiply_by_rational,
+		helpers_128bit::multiply_by_rational_with_rounding,
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
 			Zero,
@@ -862,7 +863,8 @@ pub mod pallet {
 			let b = <T::Convert as Convert<T::Balance, u128>>::convert(b);
 			let c = <T::Convert as Convert<T::Balance, u128>>::convert(c);
 
-			let res = multiply_by_rational(a, b, c).map_err(|_| ArithmeticError::Overflow)?;
+			let res = multiply_by_rational_with_rounding(a, b, c, Rounding::Down)
+				.ok_or(ArithmeticError::Overflow)?;
 
 			let res = <T::Convert as Convert<u128, T::Balance>>::convert(res);
 			Ok(res)
