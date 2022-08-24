@@ -63,7 +63,7 @@ function createNewOfferEvent(offerId: string) {
     offerId: BigInt(OFFER_ID_1),
     beneficiary: MOCK_ADDRESS,
   };
-  when(eventMock.asV2400).thenReturn(evt);
+  when(eventMock.asV2401).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
 
   let event = instance(eventMock);
@@ -78,7 +78,7 @@ function createNewBondEvent(offerId: string, nbOfBonds: bigint) {
     who: WHO,
     nbOfBonds,
   };
-  when(eventMock.asV2400).thenReturn(evt);
+  when(eventMock.asV2401).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
 
   let event = instance(eventMock);
@@ -170,7 +170,7 @@ describe("Bonded finance events", () => {
     when(
       storeMock.get<BondedFinanceBondOffer>(BondedFinanceBondOffer, anything())
     ).thenCall((_, { where: { offerId } }) => {
-      return Promise.resolve(totalPurchasedStored[offerId]);
+      return Promise.resolve(totalPurchasedStored[offerId]);  
     });
 
     // Stub store.save() to update the total purchased bonds in the database

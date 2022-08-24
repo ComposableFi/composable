@@ -18,9 +18,11 @@ export interface Fee {
 }
 
 export interface VestingSchedule {
+  vestingScheduleId: bigint
   window: VestingWindow
   periodCount: number
   perPeriod: bigint
+  alreadyClaimed: bigint
 }
 
 export type VestingWindow = VestingWindow_MomentBased | VestingWindow_BlockNumberBased

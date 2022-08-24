@@ -77,7 +77,8 @@ describe("tx.oracle Tests", function () {
         maxAnswers,
         blockInterval,
         reward,
-        slash
+        slash,
+        true
       );
       if (result.isErr) console.debug(result.asErr.toString());
       expect(result.isOk).to.be.true;
