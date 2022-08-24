@@ -308,8 +308,9 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
 
-  devnet-container:
-    name: "Docker Devnet"
+  composable-sandbox:
+    # if: ${{ github.ref == 'refs/heads/main' }}
+    name: "Docker composable-sandbox"
     needs:
       - devnet-integration-tests
       - package-polkadot-node
@@ -324,7 +325,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: devnetcontainer-${{ github.ref }}
+      group: composable-sandbox-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -343,10 +344,14 @@ jobs:
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       - run: |
-          # TODO: upload docker image
-          # Only on trigger by user?
-          nix build .#devnet-container --no-update-lock-file --show-trace -L
+          cachix watch-exec -j 16 -c 0 composable-community nix --nix build .#devnet-container --no-update-lock-file --show-trace -L
+          docker tag composable-devnet-container:latest "${{ env.DOCKER_REPOSITORY_NAME }}/composable-sandbox:latest"
+          docker push "${{ env.DOCKER_REPOSITORY_NAME }}/composable-sandbox:latest"
 
   devcontainer:
     name: "Docker Devcontainer"
