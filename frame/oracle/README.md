@@ -1,8 +1,8 @@
-# Apollo:
+# Apollo
 
 The Oracle pallet provides functionality for setting up and maintaining an Apollo oracle and submitting prices.
 
-## Overview:
+## Overview
 
 The Oracle provides functions to:
 Add assets and their respective data and submit prices for those assets
@@ -10,7 +10,7 @@ Set a signer to ensure proper calls for transactional functions
 Manage stake associated with signer for operating
 Adjust reward configuration for Oracles
 
-## Workflows:
+## Workflows
 
 ### Oracle Configuration
 
