@@ -61,8 +61,8 @@
   ],
   "stakingRewardPools": [
     {
-      "assetId": "201",
-      "endBlock": "1000",
+      "assetId": "100000000001",
+      "endBlock": "5000",
       "rewardConfigs": {
         "1": {
           "assetId": "1",
@@ -116,7 +116,7 @@
     ]
   },
   "mintAssets": [
-    ["5uxGz8eZmbjvVBMpun9nvQ3G8s5cWD5xHnzgU6SHyAnJf9Vy", "1", "50000000000000"],
-    ["5z3wa9ojQra3HqeJthg9Q6hQnsRDsUgH6DC7ZXkb7YXofh3m", "1", "50000000000000"]
+    ["5vXJFVmaBvxe4kwyioUgoDjMDy2NxfLikwz1Q44dknpF9r21", "4", "10000000000000000000"],
+    ["5vXJFVmaBvxe4kwyioUgoDjMDy2NxfLikwz1Q44dknpF9r21", "1", "10000000000000000000"]
   ]
 }
