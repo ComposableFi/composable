@@ -1,0 +1,19 @@
+@startuml
+skinparam responseMessageBelowArrow true
+'autoactivate on
+!theme mars
+
+participant "Client" as client
+participant "Vamm" as vamm
+database "Storage" as svamm
+database "Blockchain" as bc
+
+client -> vamm++: Close vamm request
+vamm -[#green]> svamm++: Get vamm
+svamm --> vamm--: vamm
+vamm -> vamm: Sanity checks
+vamm -> vamm: Close vamm
+vamm -[#red]> svamm: Store updated vamm state
+vamm -[#red]->o bc: Deposit closed event
+vamm --> client--: Return call result
+@enduml

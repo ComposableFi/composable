@@ -75,6 +75,9 @@ pub trait Vamm {
 
 	/// Computes the settlement price for the specified vamm, if it is closed.
 	fn get_settlement_price(vamm_id: Self::VammId) -> Result<Self::Decimal, DispatchError>;
+
+	/// Schedules a closing time for the vamm, after which it will be considered closed.
+	fn close(vamm_id: Self::VammId, closing_time: Self::Moment) -> Result<(), DispatchError>;
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.

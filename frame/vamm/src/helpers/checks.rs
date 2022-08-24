@@ -1,4 +1,7 @@
-use crate::{Config, Error, Pallet, VammStateOf};
+use crate::{
+	types::ClosingState::{Closed, Closing},
+	Config, Error, Pallet, VammStateOf,
+};
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, SwapOutput};
 use frame_support::pallet_prelude::*;
 use sp_runtime::traits::{CheckedAdd, Zero};
@@ -130,6 +133,34 @@ impl<T: Config> Pallet<T> {
 			Self::now(now) > vamm_state.twap_timestamp,
 			Error::<T>::AssetTwapTimestampIsMoreRecent
 		);
+
+		Ok(())
+	}
+
+	/// Checks if the following properties hold before closing a vamm:
+	///
+	/// * Vamm must be open without a schedule time to close in the future.
+	/// * The target closing time must be in the future.
+	///
+	/// # Errors
+	///
+	/// * [`Error::<T>::VammIsClosed`]
+	/// * [`Error::<T>::VammIsClosing`]
+	/// * [`Error::<T>::ClosingDateIsInThePast`]
+	pub fn sanity_check_before_close(
+		vamm_state: &VammStateOf<T>,
+		closing_time: &T::Moment,
+	) -> Result<(), DispatchError> {
+		// Vamm must be open
+		let now = Self::now(&None);
+		match vamm_state.closing_state(&now) {
+			Closed => Err(Error::<T>::VammIsClosed),
+			Closing => Err(Error::<T>::VammIsClosing),
+			_ => Ok(()),
+		}?;
+
+		// Target closing time must be in the future
+		ensure!(closing_time.gt(&now), Error::<T>::ClosingDateIsInThePast);
 
 		Ok(())
 	}

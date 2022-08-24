@@ -1,5 +1,6 @@
 use frame_support::pallet_prelude::*;
 use sp_core::U256;
+use std::cmp::Ordering::Greater;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -47,6 +48,42 @@ pub struct VammState<Balance, Moment, Decimal> {
 	/// The frequency with which the vamm must have its funding rebalanced.
 	/// (Used only for twap calculations.)
 	pub twap_period: Moment,
+}
+
+/// Represents the closing state of the vamm.
+pub enum ClosingState {
+	/// The vamm is open. All functionalities are working without restriction.
+	Open,
+	/// The vamm is open, but in the closing period. In some time in the future
+	/// it will not perform any operation. If the vamm is in this state, some
+	/// functionalities are already limited.
+	Closing,
+	/// The vamm is closed, all functionalities are restricted.
+	Closed,
+}
+
+impl<Balance, Moment, Decimal> VammState<Balance, Moment, Decimal>
+where
+	Moment: Ord,
+{
+	/// Checks if the vamm is [`Open`](ClosingState::Open), in the
+	/// [`Closing`](ClosingState::Closing) period or if it's already
+	/// [`Closed`](ClosingState::Closed).
+	///
+	/// To know in which exact state the vamm is the function requires
+	/// the parameter `reference_time` to perform it's calculations. Usually the
+	/// `reference_time` is the current timestamp, but it can be used to asses
+	/// what would be the state of the vamm in the future (assuming no changes
+	/// regarding closing it) or any past state.
+	pub fn closing_state(&self, reference_time: &Moment) -> ClosingState {
+		match &self.closed {
+			Some(closing_time) => match closing_time.cmp(reference_time) {
+				Greater => ClosingState::Closing,
+				_ => ClosingState::Closed,
+			},
+			None => ClosingState::Open,
+		}
+	}
 }
 
 /// Represents the direction a of a position.

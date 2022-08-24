@@ -24,6 +24,15 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	/// Returns a boolean informing if the vamm is closing or not.
+	pub fn is_vamm_closing(vamm_state: &VammStateOf<T>, now: &Option<T::Moment>) -> bool {
+		let now = Self::now(now);
+		match vamm_state.closed {
+			Some(closing_time) => now < closing_time,
+			None => false,
+		}
+	}
+
 	/// Returns the current timestamp.
 	pub fn now(now: &Option<T::Moment>) -> T::Moment {
 		match now {
