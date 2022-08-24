@@ -22,7 +22,7 @@ pub const ONE_MONTH: DurationSeconds = 4 * ONE_WEEK;
 pub const SECONDS_PER_YEAR_NAIVE: DurationSeconds = 365 * 24 * ONE_HOUR;
 pub const MS_PER_YEAR_NAIVE: DurationSeconds = SECONDS_PER_YEAR_NAIVE * 1000;
 
-#[derive(Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, TypeInfo)]
+#[derive(Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub enum TimeReleaseFunction {
 	LinearDecrease(LinearDecrease),
 	StairstepExponentialDecrease(StairstepExponentialDecrease),
@@ -34,13 +34,13 @@ impl Default for TimeReleaseFunction {
 	}
 }
 
-#[derive(Default, Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, TypeInfo)]
+#[derive(Default, Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub struct LinearDecrease {
 	/// Seconds after start when the amount reaches zero
 	pub total: DurationSeconds,
 }
 
-#[derive(Default, Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, TypeInfo)]
+#[derive(Default, Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub struct StairstepExponentialDecrease {
 	// Length of time between drops
 	pub step: DurationSeconds,

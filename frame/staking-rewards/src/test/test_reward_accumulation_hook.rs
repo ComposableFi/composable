@@ -1,10 +1,9 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use composable_tests_helpers::test::{
-	block::{next_block, process_and_progress_blocks},
+	block::process_and_progress_blocks,
 	helper::{assert_last_event, assert_no_event},
 };
-
 use frame_support::traits::TryCollect;
 
 use crate::{test::prelude::*, Pallet};
@@ -90,12 +89,6 @@ fn test_acumulate_rewards_hook() {
 		type E = Currency<101, 12>;
 		type F = Currency<102, 12>;
 
-		const fn block_seconds(block_number: u64) -> u128 {
-			((MILLISECS_PER_BLOCK / 1_000) * block_number) as u128
-		}
-
-		const ONE_YEAR_OF_BLOCKS: u64 = 60 * 60 * 24 * 365 / (block_seconds(1) as u64);
-
 		let mut current_block = System::block_number();
 
 		// 0.000_002 A per second, capped at 0.1 A
@@ -177,52 +170,6 @@ fn test_acumulate_rewards_hook() {
 
 		for cfg in cfgs {
 			StakingRewards::create_reward_pool(Origin::root(), cfg).unwrap();
-		}
-
-		fn check_rewards(
-			expected: &[(
-				Public, // pool owner
-				u128,   // pool asset_id
-				// pool rewards
-				&[(
-					u128, // reward_asset_id
-					u128, // expected_total_rewards
-				)],
-			)],
-		) {
-			let mut all_rewards = RewardPools::<Test>::iter().collect::<BTreeMap<_, _>>();
-
-			for ((owner, asset_id, rewards), pool_id) in expected.into_iter().zip(1..) {
-				let mut pool = all_rewards
-					.remove(&pool_id)
-					.expect(&format!("pool {pool_id} not present in RewardPools"));
-
-				assert_eq!(pool.owner, *owner, "error at pool {pool_id}");
-				assert_eq!(pool.asset_id, *asset_id, "error at pool {pool_id}");
-
-				for (reward_asset_id, expected_total_rewards) in *rewards {
-					let reward = pool.rewards.remove(&reward_asset_id).expect(&format!(
-						"reward asset {reward_asset_id} not present in pool {pool_id}"
-					));
-
-					assert_eq!(
-						reward.asset_id, *reward_asset_id,
-						"error at pool {pool_id}, asset {reward_asset_id}",
-					);
-					assert_eq!(
-						reward.total_rewards, *expected_total_rewards,
-						"error at pool {pool_id}, asset {reward_asset_id}",
-					);
-				}
-
-				assert!(
-					pool.rewards.is_empty(),
-					"not all pool rewards were tested for pool {pool_id}, missing {:#?}",
-					pool.rewards
-				);
-			}
-
-			assert!(all_rewards.is_empty(), "not all pools were tested, missing {all_rewards:#?}");
 		}
 
 		fn check_events(mut expected_events: Vec<crate::Event<Test>>) {
@@ -425,4 +372,53 @@ fn test_acumulate_rewards_hook() {
 			}]);
 		}
 	});
+}
+
+// TODO(benluelo): Consider adding the pool_id to the paramaters, currently this assumes they've
+// been created from 1 on.
+pub(crate) fn check_rewards(
+	expected: &[(
+		Public, // pool owner
+		u128,   // pool asset_id
+		// pool rewards
+		&[(
+			u128, // reward_asset_id
+			u128, // expected_total_rewards
+		)],
+	)],
+) {
+	let mut all_rewards = RewardPools::<Test>::iter().collect::<BTreeMap<_, _>>();
+
+	for ((owner, asset_id, rewards), pool_id) in expected.into_iter().zip(1..) {
+		let mut pool = all_rewards
+			.remove(&pool_id)
+			.expect(&format!("pool {pool_id} not present in RewardPools"));
+
+		assert_eq!(pool.owner, *owner, "error at pool {pool_id}");
+		assert_eq!(pool.asset_id, *asset_id, "error at pool {pool_id}");
+
+		for (reward_asset_id, expected_total_rewards) in *rewards {
+			let reward = pool
+				.rewards
+				.remove(&reward_asset_id)
+				.expect(&format!("reward asset {reward_asset_id} not present in pool {pool_id}"));
+
+			assert_eq!(
+				reward.asset_id, *reward_asset_id,
+				"error at pool {pool_id}, asset {reward_asset_id}",
+			);
+			assert_eq!(
+				reward.total_rewards, *expected_total_rewards,
+				"error at pool {pool_id}, asset {reward_asset_id}",
+			);
+		}
+
+		assert!(
+			pool.rewards.is_empty(),
+			"not all pool rewards were tested for pool {pool_id}, missing {:#?}",
+			pool.rewards
+		);
+	}
+
+	assert!(all_rewards.is_empty(), "not all pools were tested, missing {all_rewards:#?}");
 }

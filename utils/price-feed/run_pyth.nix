@@ -1,4 +1,4 @@
-with import <nixpkgs> {};
+with import <nixpkgs> { };
 let
   pythd = stdenv.mkDerivation rec {
     name = "pyth-daemon-${version}";
@@ -26,7 +26,8 @@ let
       mv ../pctest/init_key_store.sh $out/bin
     '';
   };
-in mkShell {
+in
+mkShell {
   buildInputs = [ pythd ];
   SOLANA_ENV = "devnet";
   shellHook = ''

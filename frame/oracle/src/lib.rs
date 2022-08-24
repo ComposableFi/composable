@@ -71,7 +71,6 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
-		helpers_128bit::multiply_by_rational,
 		offchain::{http, Duration},
 		traits::{
 			AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub,
@@ -194,13 +193,15 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 	}
 
-	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Eq, TypeInfo, Clone)]
 	pub struct Withdraw<Balance, BlockNumber> {
 		pub stake: Balance,
 		pub unlock_block: BlockNumber,
 	}
 
-	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
+	#[derive(
+		Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, Eq, TypeInfo,
+	)]
 	pub struct PrePrice<PriceValue, BlockNumber, AccountId> {
 		/// The price of an asset, normalized to 12 decimals.
 		pub price: PriceValue,
@@ -210,7 +211,7 @@ pub mod pallet {
 		pub who: AccountId,
 	}
 
-	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Clone, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Eq, Clone, TypeInfo)]
 	pub struct AssetInfo<Percent, BlockNumber, Balance> {
 		pub threshold: Percent,
 		pub min_answers: u32,
@@ -494,7 +495,7 @@ pub mod pallet {
 			let asset_price_per_unit: u128 = Self::get_price(asset_id, unit)?.price.into();
 
 			let amount: u128 = amount.into();
-			let result = multiply_by_rational(amount, unit.into(), asset_price_per_unit)?;
+			let result = safe_multiply_by_rational(amount, unit.into(), asset_price_per_unit)?;
 			let result: u64 = result.try_into().map_err(|_| ArithmeticError::Overflow)?;
 
 			Ok(result.into())
@@ -1163,9 +1164,7 @@ pub mod pallet {
 			amount: T::PriceValue,
 		) -> Result<T::PriceValue, DispatchError> {
 			let unit = <Self as Oracle>::LocalAssets::unit(asset_id)?;
-			// dbg!(&unit);
-			// dbg!(&amount);
-			let price = multiply_by_rational(price.into(), amount.into(), unit)?;
+			let price = safe_multiply_by_rational(price.into(), amount.into(), unit)?;
 			Ok(price.into())
 		}
 

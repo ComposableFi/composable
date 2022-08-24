@@ -3,8 +3,9 @@
 use codec::{Codec, Decode, Encode, FullCodec, MaxEncodedLen};
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
+use sp_arithmetic::Rounding;
 use sp_runtime::{
-	helpers_128bit::multiply_by_rational,
+	helpers_128bit::multiply_by_rational_with_rounding,
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
 	ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 };
@@ -14,7 +15,7 @@ use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
 
 /// I give `amount` into protocol, but want to some amount within `limit` back. Amount of what
 /// depends on protocol and other higher context.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq, Eq)]
 pub struct Take<Balance> {
 	/// amount of `base`
 	pub amount: Balance,
@@ -38,14 +39,19 @@ impl<Balance: MathBalance> Take<Balance> {
 	}
 
 	pub fn quote_amount(&self, amount: Balance) -> Result<Balance, ArithmeticError> {
-		let result = multiply_by_rational(amount.into(), self.limit.into_inner(), Ratio::DIV)
-			.map_err(|_| ArithmeticError::Overflow)?;
+		let result = multiply_by_rational_with_rounding(
+			amount.into(),
+			self.limit.into_inner(),
+			Ratio::DIV,
+			Rounding::Down,
+		)
+		.ok_or(ArithmeticError::Overflow)?;
 		result.try_into().map_err(|_| ArithmeticError::Overflow)
 	}
 }
 
 /// take `quote` currency and give `base` currency
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq, Eq)]
 pub struct Sell<AssetId, Balance> {
 	pub pair: CurrencyPair<AssetId>,
 	pub take: Take<Balance>,

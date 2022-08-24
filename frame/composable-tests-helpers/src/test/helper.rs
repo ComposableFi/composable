@@ -1,6 +1,8 @@
-use frame_support::{assert_ok, dispatch::DispatchResultWithPostInfo};
+use core::fmt::Debug;
+
+use frame_support::assert_ok;
 use frame_system::{Config, EventRecord};
-use sp_runtime::{FixedPointNumber, FixedU128};
+use sp_runtime::{DispatchError, FixedPointNumber, FixedU128};
 
 /// Default is percent
 pub const DEFAULT_PRECISION: u128 = 1000;
@@ -71,8 +73,10 @@ pub fn assert_no_event<Runtime: Config>(event: <Runtime as Config>::Event) {
 pub fn assert_extrinsic_event<
 	Runtime: Config,
 	Event: Into<<Runtime as frame_system::Config>::Event>,
+	T: Debug,
+	E: Into<DispatchError> + Debug,
 >(
-	result: DispatchResultWithPostInfo,
+	result: sp_std::result::Result<T, E>,
 	event: Event,
 ) {
 	assert_ok!(result);

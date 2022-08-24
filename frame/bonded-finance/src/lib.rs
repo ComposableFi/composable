@@ -53,12 +53,12 @@ pub mod pallet {
 				start_at::ZeroInit,
 			},
 		},
-		math::safe::SafeAdd,
+		math::safe::{safe_multiply_by_rational, SafeAdd},
 		validation::Validated,
 	};
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
-		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
+		vesting::{VestedTransfer, VestingScheduleInfo, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -70,11 +70,7 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
-	use sp_runtime::{
-		helpers_128bit::multiply_by_rational,
-		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
-		ArithmeticError,
-	};
+	use sp_runtime::traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero};
 	use sp_std::fmt::Debug;
 
 	use crate::weights::WeightInfo;
@@ -338,14 +334,11 @@ pub mod pallet {
 						// can't overflow, subsumed by `offer.valid()` in
 						// `do_offer`
 						let value = nb_of_bonds * offer.bond_price;
-						let reward_share = T::Convert::convert(
-							multiply_by_rational(
-								T::Convert::convert(nb_of_bonds),
-								T::Convert::convert(offer.reward.amount),
-								T::Convert::convert(offer.nb_of_bonds),
-							)
-							.map_err(|_| ArithmeticError::Overflow)?,
-						);
+						let reward_share = T::Convert::convert(safe_multiply_by_rational(
+							T::Convert::convert(nb_of_bonds),
+							T::Convert::convert(offer.reward.amount),
+							T::Convert::convert(offer.nb_of_bonds),
+						)?);
 						let offer_account = Self::account_id(offer_id);
 						T::Currency::transfer(
 							offer.asset,
@@ -360,7 +353,7 @@ pub mod pallet {
 							offer.reward.asset,
 							&offer_account,
 							from,
-							VestingSchedule {
+							VestingScheduleInfo {
 								window: BlockNumberBased {
 									start: current_block,
 									period: offer.reward.maturity,
@@ -376,7 +369,7 @@ pub mod pallet {
 									offer.asset,
 									&offer.beneficiary,
 									from,
-									VestingSchedule {
+									VestingScheduleInfo {
 										window: BlockNumberBased {
 											start: current_block,
 											period: return_in,
@@ -395,8 +388,8 @@ pub mod pallet {
 						// offer.nb_of_bonds prior to this
 						// Same goes for reward_share as nb_of_bonds * bond_price <= total_price is
 						// checked by the `Validate` instance of `BondOffer`
-						(*offer).nb_of_bonds -= nb_of_bonds;
-						(*offer).reward.amount -= reward_share;
+						offer.nb_of_bonds -= nb_of_bonds;
+						offer.reward.amount -= reward_share;
 						let new_bond_event = || {
 							Self::deposit_event(Event::<T>::NewBond {
 								offer_id,
