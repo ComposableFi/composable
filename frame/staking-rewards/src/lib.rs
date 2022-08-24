@@ -476,7 +476,7 @@ pub mod pallet {
 		/// Add funds to the reward pool's rewards pot for the specified asset.
 		///
 		/// Emits `RewardsPotIncreased` when successful.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(T::WeightInfo::add_to_rewards_pot())]
 		pub fn add_to_rewards_pot(
 			origin: OriginFor<T>,
 			pool_id: T::RewardPoolId,
