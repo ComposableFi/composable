@@ -450,7 +450,7 @@ mod open_position {
 			));
 			let vamm_after = get_vamm(&market.vamm_id);
 			// now the vAMM picks up the change caused by the previous swap
-			assert!(dbg!(vamm_before.base_asset_twap) < dbg!(vamm_after.base_asset_twap));
+			assert!(vamm_before.base_asset_twap < vamm_after.base_asset_twap);
 		})
 	}
 }
