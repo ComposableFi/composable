@@ -836,15 +836,19 @@ pub mod pallet {
 				reward.claimed_rewards = reward.claimed_rewards.safe_add(&claim)?;
 
 				// Update reductions with what was claimed
-				stake.reductions = stake
-					.clone()
-					.reductions
-					.try_mutate(|inner| {
-						if let Some(inflation) = inner.get_mut(asset_id) {
-							*inflation += claim;
-						}
-					})
-					.unwrap_or_else(|| stake.reductions.clone());
+				// stake.reductions = stake
+				// 	.clone()
+				// 	.reductions
+				// 	.try_mutate(|inner| {
+				// 		if let Some(inflation) = inner.get_mut(asset_id) {
+				// 			*inflation += claim;
+				// 		}
+				// 	})
+				// 	.unwrap_or_else(|| stake.reductions.clone());
+
+				if let Some(inflation) = stake.reductions.get_mut(asset_id) {
+					*inflation += claim;
+				}
 
 				T::Assets::transfer(
 					reward.asset_id,
