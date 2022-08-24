@@ -349,7 +349,7 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#devnet-container --no-update-lock-file --show-trace -L
+          cachix watch-exec -j 16 -c 0 composable-community  nix -- build .#devnet-container --no-update-lock-file --show-trace -L
           docker tag composable-devnet-container:latest "${{ env.DOCKER_REPOSITORY_NAME }}/composable-sandbox:latest"
           docker push "${{ env.DOCKER_REPOSITORY_NAME }}/composable-sandbox:latest"
 
