@@ -155,48 +155,6 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 </Box>
                 <Typography variant="button">Polkadot.js</Typography>
               </Button>
-              <Button
-                sx={{
-                  mt: "1rem",
-                }}
-                disabled={true}
-                variant="outlined"
-                color="primary"
-                size="large"
-                fullWidth
-                onClick={() => handleConnectPolkadot()}
-              >
-                <Box sx={{ marginRight: theme.spacing(2) }}>
-                  <Image
-                    src="/networks/polkadot_js.svg"
-                    width="24"
-                    height="24"
-                    alt="Polkadot.js"
-                  />
-                </Box>
-                <Typography variant="button">Talisman</Typography>
-              </Button>
-              <Button
-                sx={{
-                  mt: "1rem",
-                }}
-                disabled={true}
-                variant="outlined"
-                color="primary"
-                size="large"
-                fullWidth
-                onClick={() => handleConnectPolkadot()}
-              >
-                <Box sx={{ marginRight: theme.spacing(2) }}>
-                  <Image
-                    src="/networks/polkadot_js.svg"
-                    width="24"
-                    height="24"
-                    alt="Polkadot.js"
-                  />
-                </Box>
-                <Typography variant="button">Nova</Typography>
-              </Button>
             </>
           )}
 
