@@ -14,6 +14,4 @@ crate-type = ["cdylib"]
 name = "dali_runtime"
 
 [features]
-runtime-benchmarks = [
-    "dali-runtime/runtime-benchmarks"
-]
+runtime-benchmarks = ["dali-runtime/runtime-benchmarks"]

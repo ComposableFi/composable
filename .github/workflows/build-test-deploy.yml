@@ -2,7 +2,6 @@ name: "Build, Test, Deploy"
 on:
   push:
     branches:
-      - ci-via-nix
       - releases
       - main
       # bors related branches. Please do not remove.
@@ -16,7 +15,6 @@ on:
       - main
       - develop
       - releases
-      - ci-via-nix
 
 env:
   NIX_CACHIX: composable-community
@@ -29,6 +27,10 @@ env:
 
 jobs:
   common-deps:
+    name: "Common dependencies"
+    concurrency:
+      group: commondeps-${{ github.ref }}
+      cancel-in-progress: true
     runs-on:
       - self-hosted
       - linux
@@ -64,6 +66,9 @@ jobs:
       - linux
       - x64
       - sre
+    concurrency:
+      group: checknix-${{ github.ref }}
+      cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -92,6 +97,9 @@ jobs:
       - linux
       - x64
       - sre
+    concurrency:
+      group: unittests-${{ github.ref }}
+      cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -113,13 +121,19 @@ jobs:
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#unit-tests --no-update-lock-file --show-trace -L              
 
   check-benchmarks:
-    name: "Check benchmarks"
-    needs: common-deps
+    name: "Benchmark"
+    needs: package-composable-bench-node
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
+    concurrency:
+      group: checkbenchmarks-${{ matrix.runtime }}-${{ github.ref }}
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        runtime: [dali, picasso, composable]
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -138,18 +152,21 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-dali-dev-benchmarks --no-update-lock-file --show-trace -L       
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-picasso-dev-benchmarks --no-update-lock-file --show-trace -L       
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-composable-dev-benchmarks --no-update-lock-file --show-trace -L       
+          cachix watch-exec -j 16 -c 0 composable-community nix -- run .#benchmarks-once-${{ matrix.runtime }} --no-update-lock-file --show-trace -L       
 
-  check-runtimes:
-    name: "Check runtimes"
-    needs: common-deps
+  local-integration-tests:
+    name: "Local integration tests"
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
+    concurrency:
+      group: local-integration-tests-${{ matrix.runtime }}-${{ github.ref }}
+      cancel-in-progress: true
+    strategy:
+      matrix:
+        runtime: [dali, picasso]
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -168,16 +185,19 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-dali-integration-tests --no-update-lock-file --show-trace -L       
-          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-picasso-integration-tests --no-update-lock-file --show-trace -L       
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#check-${{ matrix.runtime }}-integration-tests --no-update-lock-file --show-trace -L       
 
   package-composable-node:
+    name: "Package Composable node"
     needs: common-deps
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
+    concurrency:
+      group: packagecomposablenode-${{ github.ref }}
+      cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -198,12 +218,46 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-node --no-update-lock-file --show-trace -L
 
-  package-polkadot-node:
+  package-composable-bench-node:
+    name: "Package Composable bench node"
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
+    concurrency:
+      group: packagecomposablebenchnode-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#composable-bench-node --no-update-lock-file --show-trace -L
+
+  package-polkadot-node:
+    name: "Package Polkadot node"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: packagepolkadotnode-${{ github.ref }}
+      cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -224,6 +278,74 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#polkadot-node --no-update-lock-file --show-trace -L
 
+  package-kusama-picasso-karura-devnet:
+    name: "Package kusama picasso karura devnet"
+    needs:
+      - package-polkadot-node
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-kusama-picasso-karura-devnet-${{ github.ref }}
+      cancel-in-progress: true
+    continue-on-error: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
+
+  package-xcvm:
+    name: "Package XCVM"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-xcvm-${{ github.ref }}
+      cancel-in-progress: true
+    continue-on-error: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#junod --no-update-lock-file --show-trace -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#gex --no-update-lock-file --show-trace -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#wasmswap --no-update-lock-file --show-trace -L
+
+
+
   package-price-feed:
     needs: common-deps
     runs-on:
@@ -231,6 +353,9 @@ jobs:
       - linux
       - x64
       - sre
+    concurrency:
+      group: packagepricefeed-${{ github.ref }}
+      cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -252,14 +377,23 @@ jobs:
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
 
   devnet-container:
+    name: "Docker Devnet"
     needs:
-      - package-composable-node
+      - devnet-integration-tests
       - package-polkadot-node
+      - package-composable-node
+      - check-benchmarks
+      - check-nix
+      - local-integration-tests
+      - unit-tests
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
+    concurrency:
+      group: devnetcontainer-${{ github.ref }}
+      cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -283,14 +417,23 @@ jobs:
           nix build .#devnet-container --no-update-lock-file --show-trace -L
 
   devcontainer:
+    name: "Docker Devcontainer"
     needs:
-      - package-composable-node
+      - devnet-integration-tests
       - package-polkadot-node
+      - package-composable-node
+      - check-benchmarks
+      - check-nix
+      - local-integration-tests
+      - unit-tests
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
+    concurrency:
+      group: devcontainer-${{ github.ref }}
+      cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -333,7 +476,13 @@ jobs:
 
   devnet-integration-tests:
       name: "Devnet integration tests"
-      needs: package-composable-node
+      needs:
+        - package-polkadot-node
+        - package-composable-node
+        - check-benchmarks
+        - check-nix
+        - local-integration-tests
+        - unit-tests
       runs-on: ubuntu-latest      
       concurrency:
         group: runtime-tests-${{ github.ref }}
@@ -359,8 +508,11 @@ jobs:
           name: ${{  env.NIX_CACHIX }}
 
       - run: |
+          # start network and wait to start writing log and write success start into log
           ( nix run .#devnet-dali 2>&1 & ) | tee logfile.log &
+          until test -f logfile.log; do sleep 1 && echo "waiting network start "; done;
           ( tail --follow --lines=0  logfile.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
+          
           echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
           cd integration-tests/runtime-tests          
           export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm install -q && npm run test_short
@@ -371,7 +523,10 @@ jobs:
       needs:
         - devnet-integration-tests
         - package-polkadot-node
+        - package-composable-node
         - check-benchmarks
+        - check-nix
+        - local-integration-tests
         - unit-tests
       runs-on: ubuntu-latest
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization

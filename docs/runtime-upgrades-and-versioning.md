@@ -1,6 +1,6 @@
 # Overview 
 
-This diagram shows our compile time and runtime dependencies to allow to guide upgrade process.
+This diagram shows our compile time and runtime dependencies to guide the upgrade process.
 
 We have to follow Substrate/Cumulus/Polkadot version and relevant ORML closely.
 

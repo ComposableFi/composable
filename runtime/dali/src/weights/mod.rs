@@ -16,6 +16,7 @@ pub mod mosaic;
 pub mod multisig;
 pub mod oracle;
 // pub mod scheduler;
+pub mod account_proxy;
 pub mod dex_router;
 pub mod ibc_transfer;
 pub mod lending;

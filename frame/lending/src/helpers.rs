@@ -342,7 +342,7 @@ impl<T: Config> Pallet<T> {
 		match <T::Vault as StrategicVault>::available_funds(vault_id, account_id)? {
 			FundsAvailability::Depositable(balance) => balance
 				.is_zero()
-				.then(|| ())
+				.then_some(())
 				.ok_or(Error::<T>::CannotBorrowFromMarketWithUnbalancedVault),
 			FundsAvailability::MustLiquidate => Err(Error::<T>::MarketIsClosing),
 			FundsAvailability::Withdrawable(_) => Ok(()),

@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-07-05T22:23:24.283102649Z -->
+<!-- Generated at 2022-08-15T14:18:26.456087Z -->
 
 # Pablo Pallet Extrinsics
 
