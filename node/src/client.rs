@@ -164,7 +164,9 @@ impl sc_client_api::BlockBackend<Block> for Client {
 	fn requires_full_sync(&self) -> bool {
 		match self {
 			Self::Picasso(client) => client.requires_full_sync(),
+			#[cfg(feature = "dali")]
 			Self::Dali(client) => client.requires_full_sync(),
+			#[cfg(feature = "composable")]
 			Self::Composable(client) => client.requires_full_sync(),
 		}
 	}

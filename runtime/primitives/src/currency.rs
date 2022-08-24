@@ -133,7 +133,7 @@ impl CurrencyId {
 	}
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, TypeInfo)]
 pub struct ValidateCurrencyId;
 
 impl Validate<CurrencyId, ValidateCurrencyId> for ValidateCurrencyId {

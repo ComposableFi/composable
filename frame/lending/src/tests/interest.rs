@@ -89,11 +89,10 @@ fn accrue_interest_base_cases() {
 		.unwrap();
 	// small increments instead one year lead to some loss by design (until we lift calculation to
 	// 256 bit)
-	let error = 25;
+	let error = 75;
 	assert_eq!(
-		accrued_increase,
-		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR_NAIVE as u128 +
-			error
+		accrued_increase + error,
+		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR_NAIVE as u128
 	);
 }
 
