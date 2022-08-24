@@ -28,6 +28,7 @@ composable-traits = { path = "../composable-traits", default-features = false }
 
 [dev-dependencies]
 plotters = "0.3.2"
+polars = "0.23.2"
 proptest = "1.0"
 proptest-derive = "0.3.0"
 rand = "0.8.5"
