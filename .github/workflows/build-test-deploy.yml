@@ -312,13 +312,13 @@ jobs:
     # if: ${{ github.ref == 'refs/heads/main' }}
     name: "Docker composable-sandbox"
     needs:
-      # - devnet-integration-tests
-      # - package-polkadot-node
-      # - package-composable-node
-      # - check-benchmarks
-      # - check-nix
-      # - local-integration-tests
-      # - unit-tests
+      - devnet-integration-tests
+      - package-polkadot-node
+      - package-composable-node
+      - check-benchmarks
+      - check-nix
+      - local-integration-tests
+      - unit-tests
     runs-on:
       - self-hosted
       - linux
