@@ -33,7 +33,7 @@ export async function createConstantProductPool(
   sudoKey: KeyringPair,
   config: PalletPabloPoolInitConfiguration
 ) {
-  return await sendAndWaitForSuccess(api, sudoKey, api.events.sudo.Sudid.is, api.tx.sudo.sudo(api.tx.pablo.create(config)));
+  return await sendAndWaitForSuccess(api, sudoKey, api.events.pablo.PoolCreated.is, api.tx.sudo.sudo(api.tx.pablo.create(config)));
 }
 
 export async function createStableSwapPool(
@@ -55,7 +55,7 @@ export async function createStableSwapPool(
       fee: api.createType("Permill", feeRate)
     }
   });
-  return await sendAndWaitForSuccess(api, sudoKey, api.events.sudo.Sudid.is, api.tx.sudo.sudo(api.tx.pablo.create(pool)));
+  return await sendAndWaitForSuccess(api, sudoKey, api.events.pablo.PoolCreated.is, api.tx.sudo.sudo(api.tx.pablo.create(pool)));
 }
 
 export async function addLiquidity(
