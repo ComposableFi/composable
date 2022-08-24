@@ -1,6 +1,6 @@
 pub mod context;
 
-use crate::{ChannelIds, Config, Event, Pallet};
+use crate::{ChannelIds, Config, Event, Pallet, WeightInfo};
 use alloc::{
 	format,
 	string::{String, ToString},
@@ -270,31 +270,31 @@ impl<T: Config> Default for WeightHandler<T> {
 
 impl<T: Config> CallbackWeight for WeightHandler<T> {
 	fn on_chan_open_init(&self) -> Weight {
-		0
+		<T as Config>::WeightInfo::on_chan_open_init()
 	}
 
 	fn on_chan_open_try(&self) -> Weight {
-		0
+		<T as Config>::WeightInfo::on_chan_open_try()
 	}
 
 	fn on_chan_open_ack(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
-		0
+		<T as Config>::WeightInfo::on_chan_open_ack()
 	}
 
 	fn on_chan_open_confirm(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
-		0
+		<T as Config>::WeightInfo::on_chan_open_confirm()
 	}
 
 	fn on_chan_close_init(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
-		0
+		<T as Config>::WeightInfo::on_chan_close_init()
 	}
 
 	fn on_chan_close_confirm(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
-		0
+		<T as Config>::WeightInfo::on_chan_close_confirm()
 	}
 
 	fn on_recv_packet(&self, _packet: &Packet) -> Weight {
-		0
+		<T as Config>::WeightInfo::on_recv_packet()
 	}
 
 	fn on_acknowledgement_packet(
@@ -302,11 +302,11 @@ impl<T: Config> CallbackWeight for WeightHandler<T> {
 		_packet: &Packet,
 		_acknowledgement: &Acknowledgement,
 	) -> Weight {
-		0
+		<T as Config>::WeightInfo::on_acknowledgement_packet()
 	}
 
 	fn on_timeout_packet(&self, _packet: &Packet) -> Weight {
-		0
+		<T as Config>::WeightInfo::on_timeout_packet()
 	}
 }
 

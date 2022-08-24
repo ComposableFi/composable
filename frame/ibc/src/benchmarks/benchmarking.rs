@@ -845,7 +845,6 @@ benchmarks! {
 		assert_eq!(ClientCounter::<T>::get(), 1)
 	}
 
-	// TODO: Fix ICS20 Bencmarks
 
 	transfer {
 		let caller: T::AccountId = whitelisted_caller();
