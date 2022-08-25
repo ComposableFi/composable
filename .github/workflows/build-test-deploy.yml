@@ -20,7 +20,7 @@ env:
   NIX_CACHIX: composable-community
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
   NIX_CONTAINER_IMAGE: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  DOCKER_REPOSITORY_NAME: composablefi
+  DOCKER_REGISTRY_NAME: composablefi
   # weird, next is implicit dependency of docker action
   DOCKER_USER_OPTION: '$UID:$GID'
   NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
@@ -309,7 +309,7 @@ jobs:
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
 
   composable-sandbox:
-    # if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     name: "Docker composable-sandbox"
     needs:
       - devnet-integration-tests
@@ -355,8 +355,8 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#devnet-container --no-update-lock-file --show-trace -L
           docker load --input ./result
-          docker tag composable-devnet-container:latest "${{ env.DOCKER_REPOSITORY_NAME }}/composable-sandbox:latest"
-          docker push "${{ env.DOCKER_REPOSITORY_NAME }}/composable-sandbox:latest"
+          docker tag composable-devnet-container:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
 
   devcontainer:
     name: "Docker Devcontainer"
@@ -412,9 +412,9 @@ jobs:
           COMMIT_SHA=$(git rev-parse --short=9 HEAD)
           DOCKER_IMAGE_HASH=$(docker images | tail --lines=1 | tr --squeeze-repeats  ' ' |  cut --delimiter " " --fields 3)
           # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
-          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:$COMMIT_SHA
-          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
-          docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer
+          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer:$COMMIT_SHA
+          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer:latest
+          docker push --all-tags ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer
 
   devnet-integration-tests:
       name: "Devnet integration tests"
