@@ -66,6 +66,9 @@
 //! the swap were in fact executed.
 //! * [`update_twap`](pallet/struct.Pallet.html#method.update_twap): Updates the
 //! time weighted average price of the desired asset.
+//! * [`close`](pallet/struct.Pallet.html#method.close): Schedules a closing
+//! date for the desired vamm, after which the vamm will be considered closed
+//! and all operations in it will be halted.
 //!
 //! ### Runtime Storage Objects
 //!
@@ -546,8 +549,8 @@ pub mod pallet {
 		///
 		/// * [`Pallet::create`]
 		FundingPeriodTooSmall,
-		/// Tried to close a vamm with a timestamp that is the past. To close a
-		/// vamm successfully it's required to specify a time in the *future*.
+		/// Tried to close a vamm with a timestamp that is in the past. To close
+		/// a vamm successfully it's required to specify a time in the *future*.
 		///
 		/// ## Occurrences
 		///
