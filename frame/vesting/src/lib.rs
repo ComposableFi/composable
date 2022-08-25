@@ -182,7 +182,8 @@ pub mod module {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Added new vesting schedule. \[from, to, asset, vesting_schedule_id, schedule\]
+		/// Added new vesting schedule. \[from, to, asset, vesting_schedule_id, schedule,
+		/// schedule_amount\]
 		VestingScheduleAdded {
 			from: AccountIdOf<T>,
 			to: AccountIdOf<T>,
