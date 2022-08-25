@@ -867,7 +867,7 @@ impl call_filter::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxVestingSchedule: u32 = 2;
+	pub const MaxVestingSchedule: u32 = 100;
 	pub MinVestedTransfer: u64 = 10 * CurrencyId::unit::<u64>();
 }
 
