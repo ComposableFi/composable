@@ -35,20 +35,11 @@
 
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
-      mk-devnet =
-        { pkgs
-        , lib
-        , writeTextFile
-        , writeShellApplication
-        , polkadot-launch
-        , composable-node
-        , polkadot-node
-        , chain-spec
-        }:
+      mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
+        , polkadot-launch, composable-node, polkadot-node, chain-spec }:
         let
           original-config = (pkgs.callPackage
-            ./scripts/polkadot-launch/rococo-local-dali-dev.nix
-            {
+            ./scripts/polkadot-launch/rococo-local-dali-dev.nix {
               polkadot-bin = polkadot-node;
               composable-bin = composable-node;
             }).result;
@@ -62,8 +53,7 @@
             name = "devnet-${chain-spec}-config.json";
             text = builtins.toJSON patched-config;
           };
-        in
-        {
+        in {
           inherit chain-spec;
           parachain-nodes = builtins.concatMap (parachain: parachain.nodes)
             patched-config.parachains;
@@ -94,8 +84,7 @@
           };
           overlays = [ rust-overlay.overlay ];
           rust-toolchain = import ./.nix/rust-toolchain.nix;
-        in
-        with pkgs;
+        in with pkgs;
         let
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
@@ -127,57 +116,59 @@
           });
 
           # for containers which are intented for testing, debug and development (including running isolated runtime)
-          container-tools =
-            [ bash bottom coreutils findutils gawk gnugrep less nettools nix procps ];
+          container-tools = [
+            bash
+            bottom
+            coreutils
+            findutils
+            gawk
+            gnugrep
+            less
+            nettools
+            nix
+            procps
+          ];
 
           # source relevant to build rust only
-          rust-src =
-            let
-              dir-blacklist = [
-                "nix"
-                ".config"
-                ".devcontainer"
-                ".github"
-                ".log"
-                ".maintain"
-                ".tools"
-                ".vscode"
-                "audits"
-                "book"
-                "devnet-stage"
-                "devnet"
-                "docker"
-                "docs"
-                "frontend"
-                "rfcs"
-                "scripts"
-                "setup"
-                "subsquid"
-                "runtime-tests"
-                "composablejs"
-              ];
-              file-blacklist = [ "flake.nix" "flake.lock" ];
-            in
-            lib.cleanSourceWith {
-              filter = lib.cleanSourceFilter;
-              src = lib.cleanSourceWith {
-                filter =
-                  let
-                    customFilter = name: type:
-                      (
-                        !(type == "directory"
-                        && builtins.elem (baseNameOf name) dir-blacklist)
-                      )
-                      && (
-                        !(type == "file"
-                        && builtins.elem (baseNameOf name) file-blacklist)
-                      );
-                  in
-                  nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-                    ./.;
-                src = ./.;
-              };
+          rust-src = let
+            dir-blacklist = [
+              "nix"
+              ".config"
+              ".devcontainer"
+              ".github"
+              ".log"
+              ".maintain"
+              ".tools"
+              ".vscode"
+              "audits"
+              "book"
+              "devnet-stage"
+              "devnet"
+              "docker"
+              "docs"
+              "frontend"
+              "rfcs"
+              "scripts"
+              "setup"
+              "subsquid"
+              "runtime-tests"
+              "composablejs"
+            ];
+            file-blacklist = [ "flake.nix" "flake.lock" ];
+          in lib.cleanSourceWith {
+            filter = lib.cleanSourceFilter;
+            src = lib.cleanSourceWith {
+              filter = let
+                customFilter = name: type:
+                  (!(type == "directory"
+                    && builtins.elem (baseNameOf name) dir-blacklist))
+                  && (!(type == "file"
+                    && builtins.elem (baseNameOf name) file-blacklist));
+              in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
+              ./.;
+              src = ./.;
             };
+          };
 
           # Common env required to build the node
           common-attrs = {
@@ -219,7 +210,9 @@
               pname = "${name}-runtime";
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand =
-                "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown" + lib.strings.optionalString (features != "") (" --features=${features}");
+                "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown"
+                + lib.strings.optionalString (features != "")
+                (" --features=${features}");
               # From parity/wasm-builder
               RUSTFLAGS =
                 "-Clink-arg=--export=__heap_base -Clink-arg=--import-memory";
@@ -285,13 +278,14 @@
               '';
             });
 
-          composable-bench-node = crane-stable.cargoBuild
-            (common-bench-attrs // {
+          composable-bench-node = crane-stable.cargoBuild (common-bench-attrs
+            // {
               pnameSuffix = "-node";
               cargoArtifacts = common-bench-deps;
               cargoBuildCommand = "cargo build --release --package composable";
               DALI_RUNTIME = "${dali-bench-runtime}/lib/runtime.optimized.wasm";
-              PICASSO_RUNTIME = "${picasso-bench-runtime}/lib/runtime.optimized.wasm";
+              PICASSO_RUNTIME =
+                "${picasso-bench-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
                 "${composable-bench-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
@@ -312,15 +306,9 @@
                 --steps=1 \
                 --repeat=1
             '';
-          docs-renders = [
-                mdbook
-                plantuml
-                graphviz
-                pandoc
-          ];
+          docs-renders = [ mdbook plantuml graphviz pandoc ];
 
-        in
-        rec {
+        in rec {
           packages = rec {
             inherit wasm-optimizer;
             inherit common-deps;
@@ -339,6 +327,18 @@
               src = builtins.filterSource
                 (path: type: baseNameOf path != "node_modules")
                 ./integration-tests/runtime-tests;
+              dontUnpack = true;
+              installPhase = ''
+                mkdir $out/
+                cp -r $src/. $out/
+              '';
+            };
+
+            nix-files = stdenv.mkDerivation {
+              name = "runtime-tests";
+              src = builtins.filterSource
+                (path: type: type != "directory" || baseNameOf path == ".nix")
+                ./.;
               dontUnpack = true;
               installPhase = ''
                 mkdir $out/
@@ -421,7 +421,8 @@
                 pathsToLink = [ "/bin" ];
               };
               config = {
-                Entrypoint = [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+                Entrypoint =
+                  [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
                 WorkingDir = "/home/polkadot-launch";
               };
               runAsRoot = ''
@@ -522,6 +523,24 @@
               '';
             };
 
+            nixfmt-check = stdenv.mkDerivation {
+              name = "nixfmt-check";
+              dontUnpack = true;
+              buildInputs = [ nixfmt nix-files ];
+              installPhase = ''
+                mkdir $out
+                nixfmt --version
+
+                total_exit_code=0
+                for file in $(find ${nix-files} -type f -and -name "*.nix"); do
+                  echo "=== $file ==="
+                  nixfmt --check $file || total_exit_code=$?
+                  echo "==="
+                done
+                exit $total_exit_code
+              '';
+            };
+
             cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand = "cargo clippy";
@@ -548,31 +567,30 @@
                 "--workspace --exclude local-integration-tests --all-features";
             });
 
-            kusama-picasso-karura-devnet =
-              let
-                config = (pkgs.callPackage
-                  ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix
-                  {
-                    polkadot-bin = polkadot-node;
-                    composable-bin = composable-node;
-                    acala-bin = acala-node;
-                  }).result;
-                config-file = writeTextFile {
-                  name = "kusama-local-picasso-dev-karura-dev.json";
-                  text = "${builtins.toJSON config}";
-                };
-              in
-              writeShellApplication {
-                name = "kusama-picasso-karura";
-                text = ''
-                  cat ${config-file}
-                  ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-                '';
+            kusama-picasso-karura-devnet = let
+              config = (pkgs.callPackage
+                ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
+                  polkadot-bin = polkadot-node;
+                  composable-bin = composable-node;
+                  acala-bin = acala-node;
+                }).result;
+              config-file = writeTextFile {
+                name = "kusama-local-picasso-dev-karura-dev.json";
+                text = "${builtins.toJSON config}";
               };
+            in writeShellApplication {
+              name = "kusama-picasso-karura";
+              text = ''
+                cat ${config-file}
+                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+              '';
+            };
 
             junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
             gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
-            wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix { crane = crane-nightly;  };
+            wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix {
+              crane = crane-nightly;
+            };
             default = packages.composable-node;
           };
 
@@ -612,8 +630,7 @@
 
             developers-xcvm = developers-minimal.overrideAttrs (base: {
               buildInputs = with packages;
-                base.buildInputs ++
-                [
+                base.buildInputs ++ [
                   junod
                   gex
                   # junod wasm swap web interface 
@@ -626,8 +643,8 @@
                   # TODO: https://github.com/forbole/bdjuno                  
                   # TODO: script to run all
                   # TODO: compose export
-                ]
-              ++ lib.lists.optional (lib.strings.hasSuffix "linux" system) arion;
+                ] ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
+                arion;
               shellHook = ''
                 # TODO: how to make it work - setup defaul admin client key
                 #"clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover 
@@ -636,10 +653,7 @@
             });
 
             writers = mkShell {
-              buildInputs = with packages; [
-                python3
-                nodejs
-              ] ++ doc-renders;
+              buildInputs = with packages; [ python3 nodejs ] ++ doc-renders;
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
@@ -654,59 +668,53 @@
           # Applications runnable with `nix run`
           # https://github.com/NixOS/nix/issues/5560
           apps = rec {
-            devnet-xcvm-up =
-              let
-                devnet-xcvm =
-                  pkgs.arion.build
-                    {
-                      modules = [
-                        ({ pkgs, ... }: {
-                          config = {
-                            project = {
-                              name = "devnet-xcvm";
+            devnet-xcvm-up = let
+              devnet-xcvm = pkgs.arion.build {
+                modules = [
+                  ({ pkgs, ... }: {
+                    config = {
+                      project = { name = "devnet-xcvm"; };
+                      services = {
+                        junod-testing-local = {
+                          service = {
+                            name = "junod-testing-local";
+                            # NOTE: the do not release git hash tags, so not clear how to share client and docker image
+                            image = "ghcr.io/cosmoscontracts/juno:v9.0.0";
+                            environment = {
+                              STAKE_TOKEN = "ujunox";
+                              UNSAFE_CORS = "true";
+                              USER =
+                                "juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y";
+                              GAS_LIMIT = 100000000;
                             };
-                            services = {
-                              junod-testing-local = {
-                                service = {
-                                  name = "junod-testing-local";
-                                  # NOTE: the do not release git hash tags, so not clear how to share client and docker image
-                                  image = "ghcr.io/cosmoscontracts/juno:v9.0.0";
-                                  environment = {
-                                    STAKE_TOKEN = "ujunox";
-                                    UNSAFE_CORS = "true";
-                                    USER = "juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y";
-                                    GAS_LIMIT = 100000000;
-                                  };
-                                  # TODO: mount proper genesis here as per
-                                  # "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover
-                                  # `"wasm":{"codes":[],"contracts":[],"gen_msgs":[],"params":{"code_upload_access":{"address":"","permission":"Everybody"},`
-                                  #network_mode 
-                                  command = ''
-                                    ./setup_and_run.sh juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y
-                                  '';
-                                  #network_mode = "host";
-                                  # these ports are open by default
-                                  ports = [
-                                      "1317:1317" # rest openapi
-                                      "26656:26656" # p2p
-                                      "26657:26657" # rpc json-rpc
-                                  ];
-                                };
-                              };
-                            };
+                            # TODO: mount proper genesis here as per
+                            # "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover
+                            # `"wasm":{"codes":[],"contracts":[],"gen_msgs":[],"params":{"code_upload_access":{"address":"","permission":"Everybody"},`
+                            #network_mode 
+                            command = ''
+                              ./setup_and_run.sh juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y
+                            '';
+                            #network_mode = "host";
+                            # these ports are open by default
+                            ports = [
+                              "1317:1317" # rest openapi
+                              "26656:26656" # p2p
+                              "26657:26657" # rpc json-rpc
+                            ];
                           };
-                        })
-                      ];
-                      inherit pkgs;
-                    }
-                ;
-              in
-              {
-                type = "app";
-                program = "${pkgs.writeShellScript "arion-up" ''
+                        };
+                      };
+                    };
+                  })
+                ];
+                inherit pkgs;
+              };
+            in {
+              type = "app";
+              program = "${pkgs.writeShellScript "arion-up" ''
                 ${pkgs.arion}/bin/arion --prebuilt-file ${devnet-xcvm} up --remove-orphans
               ''}";
-              };
+            };
 
             devnet-dali = {
               type = "app";
@@ -754,28 +762,26 @@
           };
 
         });
-    in
-    eachSystemOutputs // {
+    in eachSystemOutputs // {
       nixopsConfigurations = {
-        default =
-          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          in import ./.nix/devnet.nix {
-            inherit nixpkgs;
-            inherit gce-input;
-            devnet-dali = pkgs.callPackage mk-devnet {
-              inherit pkgs;
-              inherit (eachSystemOutputs.packages.x86_64-linux)
-                polkadot-launch composable-node polkadot-node;
-              chain-spec = "dali-dev";
-            };
-            devnet-picasso = pkgs.callPackage mk-devnet {
-              inherit pkgs;
-              inherit (eachSystemOutputs.packages.x86_64-linux)
-                polkadot-launch composable-node polkadot-node;
-              chain-spec = "picasso-dev";
-            };
-            book = eachSystemOutputs.packages.x86_64-linux.composable-book;
+        default = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        in import ./.nix/devnet.nix {
+          inherit nixpkgs;
+          inherit gce-input;
+          devnet-dali = pkgs.callPackage mk-devnet {
+            inherit pkgs;
+            inherit (eachSystemOutputs.packages.x86_64-linux)
+              polkadot-launch composable-node polkadot-node;
+            chain-spec = "dali-dev";
           };
+          devnet-picasso = pkgs.callPackage mk-devnet {
+            inherit pkgs;
+            inherit (eachSystemOutputs.packages.x86_64-linux)
+              polkadot-launch composable-node polkadot-node;
+            chain-spec = "picasso-dev";
+          };
+          book = eachSystemOutputs.packages.x86_64-linux.composable-book;
+        };
       };
     };
 }
