@@ -28,7 +28,8 @@ impl<
 	fn validate(
 		create_input: MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>,
 	) -> Result<MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>, &'static str> {
-		ensure!(
+		Oracle::is_supported(create_input.currency_pair.quote)?;
+        ensure!(
 			Oracle::is_supported(create_input.currency_pair.quote)?,
 			"Borrow asset is not supported by oracle"
 		);
@@ -73,7 +74,6 @@ where
 	Balance: Zero + PartialOrd,
 	Timestamp: Clone + Ord,
 {
-	// TODO: @mikolaichuk: add validation of shift value T::MaxDateShiftingInDays
 	fn validate(
 		input: LoanInput<AccountId, Balance, Timestamp>,
 	) -> Result<LoanInput<AccountId, Balance, Timestamp>, &'static str> {
@@ -113,6 +113,7 @@ where
 			"Contract first date payment is less than activation date."
 		);
 		// Delayed payments threshold and failed payments shift should not be zero.
+        // Payments shift is bounded.
 		if let Some(treatment) = &input.delayed_payment_treatment {
 			ensure!(
 				treatment.delayed_payments_threshold > 0,

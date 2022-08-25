@@ -9,7 +9,7 @@ use sp_std::{
 /// MarketConfig read-only structure is used to hold immutable properties of market.
 /// Once market is created these properties should not be changed.
 /// Changing of one of these fields may cause significant changes in market's performance
-/// or even its disfunction.
+/// or even its dysfunction.
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct MarketConfig<AccountId, AssetId, BlockNumber, VaultId>
 where

@@ -103,7 +103,7 @@ pub trait Oracle {
 	fn is_supported(asset: Self::AssetId) -> Result<bool, DispatchError> {
 		let exponent = Self::LocalAssets::decimals(asset)?;
 		let unit: Self::Balance = 10_u64.pow(exponent).into();
-		Self::get_price(asset, unit).map(|_| true)
+        Self::get_price(asset, unit).map(|_| true)
 	}
 
 	/// Get the time weighted price for the `amount` of `asset_id`.

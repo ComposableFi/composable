@@ -257,7 +257,7 @@ impl<T: Config> Pallet<T> {
 					Self::process_checked_payment_logged(&payment);
 					Self::close_loan_contract(payment.loan_info.config());
 				},
-				PaymentOutcome::PaymentFailed(payment) =>
+				PaymentOutcome::PaymentDelayed(payment) =>
 					Self::process_delayed_payment_logged(&payment),
 			}
 		}
@@ -303,7 +303,7 @@ impl<T: Config> Pallet<T> {
 			// We have enough money on the loan's account to perform regular payment.
 			Ok(_) => PaymentOutcome::RegularPaymentSucceed(payment),
 			// Payment is delayed.
-			Err(_) => PaymentOutcome::PaymentFailed(payment),
+			Err(_) => PaymentOutcome::PaymentDelayed(payment),
 		};
 		Some(outcome)
 	}
@@ -354,7 +354,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	//===========================================================================================================================
-	//                                          Failed payments treatment
+	//                                          Delayed payments treatment
 	//===========================================================================================================================
 
 	pub(crate) fn process_delayed_payment_logged(payment: &PaymentOf<T>) {

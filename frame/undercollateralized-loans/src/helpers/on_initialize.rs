@@ -149,7 +149,7 @@ impl<T: Config> Pallet<T> {
 				PaymentOutcome::RegularPaymentSucceed(_) => (),
 				PaymentOutcome::LastPaymentSucceed(payment) =>
 					Self::close_loan_contract(payment.loan_info.config()),
-				PaymentOutcome::PaymentFailed(payment) =>
+				PaymentOutcome::PaymentDelayed(payment) =>
 					Self::process_delayed_payment_logged(&payment),
 			}
 		}

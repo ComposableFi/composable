@@ -1,4 +1,4 @@
-pub use crate::{mocks::*, Error, Event};
+pub use crate::{mocks::*, Error};
 
 pub use crate as pallet_undercollateralized_loans;
 pub use composable_support::validation::{TryIntoValidated, Validated};

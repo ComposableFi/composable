@@ -81,7 +81,7 @@ pub enum PaymentOutcome<Balance, LoanInfo, Timestamp> {
 	LastPaymentSucceed(Payment<Balance, LoanInfo, Timestamp>),
 	// We assume that payment is failed if it is not possible to transfer money from borrower
 	// account to loan account on the moment of off-chain checking.
-	PaymentFailed(Payment<Balance, LoanInfo, Timestamp>),
+	PaymentDelayed(Payment<Balance, LoanInfo, Timestamp>),
 }
 
 // Used for loan's account ids generation.

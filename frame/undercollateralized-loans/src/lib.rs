@@ -157,10 +157,10 @@ pub mod pallet {
 		type MaxMarketsCounterValue: Get<Counter>;
 		type MaxLoansPerMarketCounterValue: Get<Counter>;
 		type OracleMarketCreationStake: Get<Self::Balance>;
-		// Amount of loans which can be processed within one tansaction submitted by off-chain
+		// Amount of loans which can be processed within one transaction submitted by off-chain
 		// worker.
 		type CheckPaymentsBatchSize: Get<u32>;
-		// Amount of loans which can be processed within one tansaction submitted by off-chain
+		// Amount of loans which can be processed within one transaction submitted by off-chain
 		// worker.
 		type CheckNonActivatedLoansBatchSize: Get<u32>;
 		// Bounds are used during validation.
@@ -197,7 +197,7 @@ pub mod pallet {
 	pub type CurrentDateStorage<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	// Storage keeps accounts ids of loans which payments were already processed today.
-	// Prevents double checking and subsiquent unreasonable liquidation.
+	// Prevents double checking and subsequent unreasonable liquidation.
 	#[pallet::storage]
 	pub type ProcessedLoansStorage<T: Config> = StorageValue<_, BTreeSet<T::AccountId>, ValueQuery>;
 
@@ -242,7 +242,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		MarketCreated { market_info: MarketInfoOf<T> },
+		MarketCreated {market_account_id: T::AccountId },
 		LoanCreated { loan_config: LoanConfigOf<T> },
 		LoanContractExecuted { loan_config: LoanConfigOf<T> },
 		LoanTerminated { loan_config: LoanConfigOf<T> },
@@ -268,7 +268,7 @@ pub mod pallet {
 		LoanDoesNotExistOrWasActivated,
 		// Only market manager account allowed to create loans for the market.
 		NonAuthorizedToCreateLoan,
-		// Nont-authorized user tried to execute loan contract.
+		// Non-authorized user tried to execute loan contract.
 		NonAuthorizedToExecuteContract,
 		// There is no loan with such account id in the storage.
 		LoanNotFound,
@@ -276,7 +276,7 @@ pub mod pallet {
 		InvalidTimestamp,
 		// When borrower tried to activate a loan after first payment day.
 		LoanContractIsExpired,
-		// Tis should not happens.
+		// This should not happens.
 		// Error added for debug.
 		CollateralCanNotBeTransferedBackToTheBorrowersAccount,
 		// When we try to retrieve interest rate for the date which is not present in the payment
@@ -353,7 +353,7 @@ pub mod pallet {
 			// Create daily lock for payments and expired loans checking.
 			let mut daily_lock = StorageLock::with_deadline(
 				b"UndercollateralizedLoansOffchainWorkerLock",
-				// Type conversion is safe here since we do not use dates before the epoche.
+				// Type conversion is safe here since we do not use dates before the epoch.
 				Duration::from_millis(next_date_aligned_timestemp as u64 * 1000),
 			);
 
@@ -366,11 +366,11 @@ pub mod pallet {
 	}
 
 	// Unsigned transactions are disabled by default.
-	// This implimentation allow us to use unsigned transactions.
+	// This implementation allow us to use unsigned transactions.
 	#[pallet::validate_unsigned]
 	impl<T: Config> ValidateUnsigned for Pallet<T> {
 		type Call = Call<T>;
-		// This validate function gurantee that only locall calls (i.e. transcations submitted via
+		// This validate function guarantee that only local calls (i.e. transactions submitted via
 		// off-chain worker) are allowed.
 		fn validate_unsigned(source: TransactionSource, call: &Self::Call) -> TransactionValidity {
 			// Check if transaction is local.
@@ -396,7 +396,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		// Market creation. Note that manager has to have initial amount of borrow asset which will
-		// be deposited to market's account. Makret manager provides whitelist of borrowers who
+		// be deposited to market's account. Market manager provides white-list of borrowers who
 		// are allowed to borrow money from the market.
 		#[pallet::weight(1000)]
 		#[transactional]
@@ -408,7 +408,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let market_info =
 				<Self as UndercollateralizedLoans>::create_market(who.clone(), input, keep_alive)?;
-			let event = Event::<T>::MarketCreated { market_info };
+			let event = Event::<T>::MarketCreated { market_account_id: market_info.config().account_id().clone() };
 			Self::deposit_event(event);
 			Ok(())
 		}
