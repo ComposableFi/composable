@@ -51,8 +51,9 @@ where
 	set_price(borrow_asset, NORMALIZED::ONE);
 	set_price(collateral_asset, NORMALIZED::units(NORMALIZED_PRICE));
 
-	orml_tokens::Pallet::<T>::mint_into(borrow_asset, &manager, NORMALIZED::units(1000));
-	orml_tokens::Pallet::<T>::mint_into(collateral_asset, &manager, NORMALIZED::units(100));
+	orml_tokens::Pallet::<T>::mint_into(borrow_asset, &manager, NORMALIZED::units(1000)).unwrap();
+	orml_tokens::Pallet::<T>::mint_into(collateral_asset, &manager, NORMALIZED::units(100))
+		.unwrap();
 	crate::Pallet::<T>::do_create_market(manager, input.try_into_validated().unwrap(), true)
 		.unwrap()
 }
@@ -101,7 +102,7 @@ pub fn parse_timestamp(string: &str) -> crate::types::Timestamp {
 		.timestamp()
 }
 
-pub fn create_test_loan() -> LoanConfigOf<Runtime> {
+fn create_test_loan_input_config() -> LoanInput<AccountId, Balance, crate::types::Timestamp> {
 	let market_info = create_test_market();
 	let market_account_id = market_info.config().account_id().clone();
 	let mut payment_schedule = BTreeMap::new();
@@ -109,7 +110,7 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 	payment_schedule.insert(parse_timestamp("01-02-2222"), 100);
 	payment_schedule.insert(parse_timestamp("01-03-2222"), 100);
 
-	let loan_input = LoanInput {
+	LoanInput {
 		market_account_id,
 		borrower_account_id: *BOB,
 		principal: 1000,
@@ -117,7 +118,11 @@ pub fn create_test_loan() -> LoanConfigOf<Runtime> {
 		payment_schedule,
 		activation_date: parse_timestamp("01-01-2222"),
 		delayed_payment_treatment: None,
-	};
+	}
+}
+
+pub fn create_test_loan() -> LoanConfigOf<Runtime> {
+	let loan_input = create_test_loan_input_config();
 	crate::Pallet::<Runtime>::do_create_loan(loan_input.try_into_validated().unwrap()).unwrap()
 }
 

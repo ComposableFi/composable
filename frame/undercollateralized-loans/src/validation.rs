@@ -28,23 +28,22 @@ impl<
 	fn validate(
 		create_input: MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>,
 	) -> Result<MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>, &'static str> {
-		Oracle::is_supported(create_input.currency_pair.quote)?;
-        ensure!(
-			Oracle::is_supported(create_input.currency_pair.quote)?,
-			"Borrow asset is not supported by oracle"
+		ensure!(
+			Oracle::is_supported(create_input.currency_pair.quote).is_ok(),
+			"Borrow asset is not supported by oracle."
 		);
 		ensure!(
-			Oracle::is_supported(create_input.currency_pair.base)?,
-			"Collateral asset is not supported by oracle"
+			Oracle::is_supported(create_input.currency_pair.base).is_ok(),
+			"Collateral asset is not supported by oracle."
 		);
 		ensure!(
 			create_input.currency_pair.base != create_input.currency_pair.quote,
-			"Base and quote currencies are supposed to be different in currency pair"
+			"Base and quote currencies are supposed to be different in currency pair."
 		);
 		ensure!(
 			create_input.whitelist.len() <
 				Loans::WhiteListBound::get().try_into().expect("This method never panics!"),
-			"Payment schedule exceeded maximum size."
+			"Borrowers white-list exceeded maximum size."
 		);
 		Ok(create_input)
 	}
@@ -81,13 +80,13 @@ where
 		let principal = input.principal.try_into_validated::<BalanceGreaterThenZero>()?.value();
 		// Check that collateral balance > 0
 		let collateral = input.collateral.try_into_validated::<BalanceGreaterThenZero>()?.value();
-		// Checks that the borrower's account is included in the market's whitelis of borrowers.
+		// Checks that the borrower's account is included in the market's white-list of borrowers.
 		ensure!(
 			Loans::is_borrower_account_whitelisted(
 				&input.borrower_account_id,
 				&input.market_account_id
 			)?,
-			"Mentioned borrower is not included in the market's whitelist of borrowers."
+			"Mentioned borrower is not included in the market's white-list of borrowers."
 		);
 		// Borrower's account should not be included in the market's blacklist.
 		ensure!(
@@ -106,14 +105,14 @@ where
 				Loans::ScheduleBound::get().try_into().expect("This method never panics."),
 			"Payment schedule exceeded maximum size."
 		);
-		// Unwrapped since we have checked that shcedule is not empty.
+		// Unwrapped since we have checked that schedule is not empty.
 		ensure!(
 			input.activation_date <=
-				input.payment_schedule.keys().min().cloned().expect("This mehtod never panics."),
+				input.payment_schedule.keys().min().cloned().expect("This method never panics."),
 			"Contract first date payment is less than activation date."
 		);
 		// Delayed payments threshold and failed payments shift should not be zero.
-        // Payments shift is bounded.
+		// Payments shift is bounded.
 		if let Some(treatment) = &input.delayed_payment_treatment {
 			ensure!(
 				treatment.delayed_payments_threshold > 0,
@@ -121,7 +120,7 @@ where
 			);
 			ensure!(
 				treatment.delayed_payments_shift_in_days > 0,
-				"Delayed payments shif equals zero."
+				"Delayed payments shift equals zero."
 			);
 			ensure!(
 				treatment.delayed_payments_shift_in_days < Loans::MaxDateShiftingInDays::get(),

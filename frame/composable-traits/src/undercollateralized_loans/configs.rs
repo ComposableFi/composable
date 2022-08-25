@@ -129,7 +129,7 @@ where
 	/// Contract should be activated before this moment.
 	activation_date: Timestamp,
 	/// If this filed is None, borrower has to face his obligation in time.
-	/// Otherwise borrower has possibility to postpone payment as per strucure properties.
+	/// Otherwise borrower has possibility to postpone payment as per structure properties.
 	delayed_payment_treatment: Option<FailedPaymentTreatment>,
 }
 
@@ -229,7 +229,7 @@ where
 	}
 }
 
-// Some fields are hiden since they should be immutable.
+// Some fields are hidden since they should be immutable.
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct MarketInfo<AccountId, AssetId, BlockNumber, LiquidationStrategyId, VaultId>
 where
@@ -266,7 +266,7 @@ where
 	}
 }
 
-// Some fields are hiden since they should be immutable.
+// Some fields are hidden since they should be immutable.
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, Eq, PartialEq)]
 pub struct LoanInfo<AccountId, AssetId, Balance, Timestamp>
 where
@@ -340,7 +340,7 @@ pub struct LoanInput<AccountId, Balance, Timestamp> {
 	pub collateral: Balance,
 	/// How often borrowers have to pay interest.
 	pub payment_schedule: BTreeMap<Timestamp, Balance>,
-	/// Contratc should be activated before this date.
+	/// Contract should be activated before this date.
 	pub activation_date: Timestamp,
 	/// If this filed is None, borrower has to face his obligation in time.
 	pub delayed_payment_treatment: Option<FailedPaymentTreatment>,

@@ -242,8 +242,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		MarketCreated {market_account_id: T::AccountId },
-		LoanCreated { loan_config: LoanConfigOf<T> },
+		MarketCreated { market_account_id: T::AccountId },
+		LoanCreated { loan_account_id: T::AccountId },
 		LoanContractExecuted { loan_config: LoanConfigOf<T> },
 		LoanTerminated { loan_config: LoanConfigOf<T> },
 		LoanClosed { loan_config: LoanConfigOf<T> },
@@ -408,7 +408,9 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let market_info =
 				<Self as UndercollateralizedLoans>::create_market(who.clone(), input, keep_alive)?;
-			let event = Event::<T>::MarketCreated { market_account_id: market_info.config().account_id().clone() };
+			let event = Event::<T>::MarketCreated {
+				market_account_id: market_info.config().account_id().clone(),
+			};
 			Self::deposit_event(event);
 			Ok(())
 		}
@@ -426,7 +428,9 @@ pub mod pallet {
 				Error::<T>::NonAuthorizedToCreateLoan,
 			);
 			let loan_config = <Self as UndercollateralizedLoans>::create_loan(input)?;
-			Self::deposit_event(Event::<T>::LoanCreated { loan_config });
+			Self::deposit_event(Event::<T>::LoanCreated {
+				loan_account_id: loan_config.account_id().clone(),
+			});
 			Ok(())
 		}
 

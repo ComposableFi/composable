@@ -49,6 +49,8 @@ pub type OrderId = u32;
 pub type Moment = u64;
 pub type VaultId = u64;
 pub type CurrencyId = crate::currency::CurrencyId;
+pub type WhiteListBound = ConstU32<10>;
+pub type ScheduleBound = ConstU32<100>;
 
 pub static ALICE: Lazy<AccountId> = Lazy::new(|| {
 	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000000"))
@@ -377,8 +379,8 @@ impl pallet_undercollateralized_loans::Config for Runtime {
 	type UnixTime = Timestamp;
 	type CheckPaymentsBatchSize = ConstU32<5>;
 	type CheckNonActivatedLoansBatchSize = ConstU32<5>;
-	type WhiteListBound = ConstU32<10>;
-	type ScheduleBound = ConstU32<200>;
+	type WhiteListBound = WhiteListBound;
+	type ScheduleBound = ScheduleBound;
 	type MaxRepyamentFails = ConstU128<4>;
 	type MaxDateShiftingInDays = ConstI64<365>;
 }

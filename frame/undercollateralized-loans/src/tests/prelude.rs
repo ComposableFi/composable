@@ -1,4 +1,4 @@
-pub use crate::{mocks::*, Error};
+pub use crate::{mocks::*, Config, Error};
 
 pub use crate as pallet_undercollateralized_loans;
 pub use composable_support::validation::{TryIntoValidated, Validated};
@@ -11,18 +11,24 @@ pub use composable_traits::{
 		math::{CurveModel, InterestRateModel},
 		Lending as LendingTrait, RepayStrategy, UpdateInput,
 	},
+	undercollateralized_loans::{
+		LoanInput, MarketInput, UndercollateralizedLoans as UndercollateralizedLoansTrait,
+	},
 };
 pub use frame_support::{
 	assert_err, assert_noop, assert_ok,
 	dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo},
-	traits::fungibles::{Inspect, Mutate},
+	traits::{
+		fungibles::{Inspect, Mutate},
+		Get,
+	},
 	weights::Pays,
 };
 pub use sp_core::U256;
 pub use sp_runtime::{
 	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, ModuleError, Percent,
 };
-pub use std::{
+pub use sp_std::{
 	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
 	ops::{Div, Mul},
 };
