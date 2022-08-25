@@ -1,7 +1,7 @@
 use super::*;
 use core::{str::FromStr, time::Duration};
 use frame_support::traits::Get;
-use ibc_primitives::OffchainPacketType;
+use ibc_primitives::PacketInfo;
 use scale_info::prelude::string::ToString;
 
 use crate::{
@@ -10,7 +10,8 @@ use crate::{
 		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
 		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
 	},
-	routing::Context, impls::host_height,
+	impls::host_height,
+	routing::Context,
 };
 use ibc::{
 	core::{
@@ -263,6 +264,7 @@ where
 impl<T: Config + Sync + Send> ChannelKeeper for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
+	Self: ChannelReader,
 {
 	fn store_packet_commitment(
 		&mut self,
@@ -287,14 +289,16 @@ where
 		let channel_id = key.1.to_string().as_bytes().to_vec();
 		let port_id = key.0.as_bytes().to_vec();
 		let seq = u64::from(key.2);
+		let channel_end = ChannelReader::channel_end(self, &(key.0, key.1))?;
 		// let key = Pallet::<T>::offchain_key(channel_id, port_id);
 		// let mut offchain_packets: BTreeMap<u64, OffchainPacketType> =
 		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
 		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
 		// 		.unwrap_or_default();
-		let mut offchain_packet: OffchainPacketType = packet.into();
+		let mut offchain_packet: PacketInfo = packet.into();
 		// Store when packe
-		offchain_packet.created_at = Some(host_height::<T>());
+		offchain_packet.height = Some(host_height::<T>());
+		offchain_packet.channel_order = channel_end.ordering as u8;
 		// offchain_packets.insert(seq, offchain_packet);
 		// sp_io::offchain::local_storage_set(sp_core::offchain::StorageKind::PERSISTENT, &key,
 		// offchain_packets.encode().as_slice());
@@ -312,8 +316,10 @@ where
 		let channel_id = key.1.to_string().as_bytes().to_vec();
 		let port_id = key.0.as_bytes().to_vec();
 		let seq = u64::from(key.2);
-		let mut offchain_packet: OffchainPacketType = packet.into();
-		offchain_packet.created_at = Some(host_height::<T>()); 
+		let channel_end = ChannelReader::channel_end(self, &(key.0, key.1))?;
+		let mut offchain_packet: PacketInfo = packet.into();
+		offchain_packet.height = Some(host_height::<T>());
+		offchain_packet.channel_order = channel_end.ordering as u8;
 		<ReceivePackets<T>>::insert((channel_id, port_id), seq, offchain_packet);
 		Ok(())
 	}

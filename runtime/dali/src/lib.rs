@@ -1474,12 +1474,12 @@ impl_runtime_apis! {
 			Ibc::query_balance_with_address(addr).ok()
 		}
 
-		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
-			Ibc::get_send_packets(channel_id, port_id, seqs).ok()
+		fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+			Ibc::get_send_packet_info(channel_id, port_id, seqs).ok()
 		}
 
-		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>> {
-			Ibc::get_acknowledgements(channel_id, port_id, seqs).ok()
+		fn query_recv_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+			Ibc::get_recv_packet_info(channel_id, port_id, seqs).ok()
 		}
 
 		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {

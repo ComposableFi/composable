@@ -59,7 +59,7 @@ use ibc::{
 use ibc_primitives::{
 	apply_prefix, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
 	get_channel_escrow_address, port_id_from_bytes, ConnectionHandshake, Error as IbcHandlerError,
-	IbcTrait, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection, OffchainPacketType,
+	IbcTrait, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection, PacketInfo,
 	PacketState, QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse,
 	QueryConnectionResponse, QueryConnectionsResponse, QueryConsensusStateResponse,
 	QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
@@ -503,13 +503,13 @@ where
 		Ok(balance.parse().unwrap_or_default())
 	}
 
-	pub fn offchain_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
+	pub fn offchain_send_packet_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
 		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id, b"SEND_PACKET");
 		pair.encode()
 	}
 
-	pub fn acknowledgements_offchain_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
-		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id, b"ACK");
+	pub fn offchain_recv_packet_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
+		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id, b"RECV_PACKET");
 		pair.encode()
 	}
 
@@ -528,8 +528,15 @@ where
 		// 		.unwrap_or_default();
 		// acks.insert(seq, ack);
 		// sp_io::offchain_index::set(&key, acks.encode().as_slice());
-		WriteAcknowledgements::<T>::insert((channel_id, port_id), seq, ack);
-		Ok(())
+		ReceivePackets::<T>::try_mutate::<_, _, _, &'static str, _>(
+			(channel_id, port_id),
+			seq,
+			|packet_info| {
+				packet_info.ack = Some(ack);
+				Ok(())
+			},
+		)
+		.map_err(|_| Error::<T>::WriteAckError)
 	}
 
 	pub(crate) fn packet_cleanup() -> Result<(), Error<T>> {
@@ -539,60 +546,63 @@ where
 			let port_id =
 				port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
 
-			let key = Pallet::<T>::offchain_key(channel_id_bytes.clone(), port_id_bytes.clone());
-			let ack_key = Pallet::<T>::acknowledgements_offchain_key(
+			let key = Pallet::<T>::offchain_send_packet_key(
+				channel_id_bytes.clone(),
+				port_id_bytes.clone(),
+			);
+			let ack_key = Pallet::<T>::offchain_recv_packet_key(
 				channel_id_bytes.clone(),
 				port_id_bytes.clone(),
 			);
 			// Clean up offchain  send packets
-			if let Some(mut offchain_packets) =
+			if let Some(mut send_packets) =
 				sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
-					.and_then(|v| BTreeMap::<u64, OffchainPacketType>::decode(&mut &*v).ok())
+					.and_then(|v| BTreeMap::<u64, PacketInfo>::decode(&mut &*v).ok())
 			{
-				let keys: Vec<u64> = offchain_packets.clone().into_keys().collect();
+				let keys: Vec<u64> = send_packets.clone().into_keys().collect();
 				for key in keys {
 					if !PacketCommitment::<T>::contains_key((
 						port_id.clone(),
 						channel_id,
 						key.into(),
 					)) {
-						let _ = offchain_packets.remove(&key);
+						let _ = send_packets.remove(&key);
 					}
 				}
-				sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
+				sp_io::offchain_index::set(&key, send_packets.encode().as_slice());
 			}
 
 			// Clean up offchain acknowledgements
-			if let Some(mut acks) = sp_io::offchain::local_storage_get(
+			if let Some(mut recv_packets) = sp_io::offchain::local_storage_get(
 				sp_core::offchain::StorageKind::PERSISTENT,
 				&ack_key,
 			)
-			.and_then(|v| BTreeMap::<u64, Vec<u8>>::decode(&mut &*v).ok())
+			.and_then(|v| BTreeMap::<u64, PacketInfo>::decode(&mut &*v).ok())
 			{
-				let keys: Vec<u64> = acks.clone().into_keys().collect();
+				let keys: Vec<u64> = recv_packets.clone().into_keys().collect();
 				for key in keys {
 					if !Acknowledgements::<T>::contains_key((
 						port_id.clone(),
 						channel_id,
 						key.into(),
 					)) {
-						let _ = acks.remove(&key);
+						let _ = recv_packets.remove(&key);
 					}
 				}
-				sp_io::offchain_index::set(&key, acks.encode().as_slice());
+				sp_io::offchain_index::set(&key, recv_packets.encode().as_slice());
 			}
 		}
 
 		Ok(())
 	}
 
-	pub fn get_send_packets(
+	pub fn get_send_packet_info(
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 		sequences: Vec<u64>,
-	) -> Result<Vec<OffchainPacketType>, Error<T>> {
+	) -> Result<Vec<PacketInfo>, Error<T>> {
 		// let key = Pallet::<T>::offchain_key(channel_id, port_id);
-		// let offchain_packets: BTreeMap<u64, OffchainPacketType> =
+		// let offchain_packets: BTreeMap<u64, PacketInfo> =
 		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
 		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
 		// 		.unwrap_or_default();
@@ -603,33 +613,16 @@ where
 		Ok(packets)
 	}
 
-	pub fn get_recv_packets(
+	pub fn get_recv_packet_info(
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 		sequences: Vec<u64>,
-	) -> Result<Vec<OffchainPacketType>, Error<T>> {
+	) -> Result<Vec<PacketInfo>, Error<T>> {
 		let packets = sequences
 			.into_iter()
 			.map(|seq| ReceivePackets::<T>::get((channel_id.clone(), port_id.clone()), seq))
 			.collect();
 		Ok(packets)
-	}
-
-	pub fn get_acknowledgements(
-		channel_id: Vec<u8>,
-		port_id: Vec<u8>,
-		sequences: Vec<u64>,
-	) -> Result<Vec<Vec<u8>>, Error<T>> {
-		// let key = Pallet::<T>::acknowledgements_offchain_key(channel_id, port_id);
-		// let acks: BTreeMap<u64, Vec<u8>> =
-		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
-		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
-		// 		.unwrap_or_default();
-		let acks = sequences
-			.into_iter()
-			.map(|seq| WriteAcknowledgements::<T>::get((channel_id.clone(), port_id.clone()), seq))
-			.collect();
-		Ok(acks)
 	}
 
 	pub fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
@@ -716,7 +709,7 @@ where
 			denoms.push(denom);
 			limit -= 1;
 			if limit == 0 {
-				break;
+				break
 			}
 		}
 
@@ -855,8 +848,8 @@ where
 				),
 			},
 		)?;
-		let timestamp = (consensus_state.timestamp()
-			+ Duration::from_nanos(data.timeout_timestamp_offset))
+		let timestamp = (consensus_state.timestamp() +
+			Duration::from_nanos(data.timeout_timestamp_offset))
 		.map_err(|_| IbcHandlerError::TimestampOrHeightError {
 			msg: Some("Failed to convert timeout timestamp".to_string()),
 		})?;

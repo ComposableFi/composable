@@ -48,6 +48,7 @@ pub struct SendPacketData {
 	/// channel id as utf8 string bytes
 	pub channel_id: ChannelId,
 }
+
 #[derive(
 	codec::Encode,
 	Default,
@@ -60,20 +61,22 @@ pub struct SendPacketData {
 	PartialOrd,
 	scale_info::TypeInfo,
 )]
-pub struct OffchainPacketType {
+pub struct PacketInfo {
+	pub height: Option<u64>,
 	pub sequence: u64,
 	pub source_port: Vec<u8>,
 	pub source_channel: Vec<u8>,
 	pub destination_port: Vec<u8>,
 	pub destination_channel: Vec<u8>,
+	pub channel_order: u8,
 	pub data: Vec<u8>,
 	pub timeout_height: (u64, u64),
 	pub timeout_timestamp: u64,
-	pub created_at: Option<u64>
+	pub ack: Option<Vec<u8>>,
 }
 
-impl From<OffchainPacketType> for Packet {
-	fn from(packet: OffchainPacketType) -> Self {
+impl From<PacketInfo> for Packet {
+	fn from(packet: PacketInfo) -> Self {
 		Self {
 			sequence: Sequence::from(packet.sequence),
 			source_port: PortId::from_str(
@@ -100,7 +103,7 @@ impl From<OffchainPacketType> for Packet {
 	}
 }
 
-impl From<Packet> for OffchainPacketType {
+impl From<Packet> for PacketInfo {
 	fn from(packet: Packet) -> Self {
 		Self {
 			sequence: packet.sequence.into(),
@@ -114,7 +117,9 @@ impl From<Packet> for OffchainPacketType {
 				packet.timeout_height.revision_height,
 			),
 			timeout_timestamp: packet.timeout_timestamp.nanoseconds(),
-			created_at: None
+			height: None,
+			ack: None,
+			channel_order: Default::default(),
 		}
 	}
 }
@@ -256,34 +261,6 @@ pub struct ConnectionHandshake {
 	pub client_state: Vec<u8>,
 	pub trie_keys: Vec<Vec<u8>>,
 	pub height: u64,
-}
-
-pub struct RawPacketInfo {
-	pub height: u64,
-	pub sequence: u64,
-	pub source_port: Vec<u8>,
-	pub source_channel: Vec<u8>,
-	pub dest_port: Vec<u8>,
-	pub dest_channel: Vec<u8>,
-	pub channel_order: u8,
-	pub data: Vec<u8>,
-	pub timeout_height: (u64, u64),
-	pub timeout_timestamp: u64,
-	pub ack: Option<Vec<u8>>,
-}
-
-pub struct PacketInfo {
-	pub height: u64,
-	pub sequence: u64,
-	pub source_port: String,
-	pub source_channel: String,
-	pub dest_port: String,
-	pub dest_channel: String,
-	pub channel_order: String,
-	pub data: Vec<u8>,
-	pub timeout_height: Height,
-	pub timeout_timestamp: u64,
-	pub ack: Option<Vec<u8>>,
 }
 
 #[derive(core::fmt::Debug, Clone, PartialEq, Eq)]

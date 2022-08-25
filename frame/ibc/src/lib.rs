@@ -182,7 +182,7 @@ pub mod pallet {
 	use ibc_primitives::{
 		connection_id_from_bytes, get_channel_escrow_address, port_id_from_bytes,
 		runtime_interface::{self, SS58CodecError},
-		IbcTrait, OffchainPacketType, OpenChannelParams,
+		IbcTrait, OpenChannelParams, PacketInfo,
 	};
 	use primitives::currency::CurrencyId;
 	use sp_runtime::{traits::IdentifyAccount, AccountId32};
@@ -321,7 +321,7 @@ pub mod pallet {
 		(Vec<u8>, Vec<u8>),
 		Blake2_128Concat,
 		u64,
-		OffchainPacketType,
+		PacketInfo,
 		ValueQuery,
 	>;
 
@@ -335,24 +335,9 @@ pub mod pallet {
 		(Vec<u8>, Vec<u8>),
 		Blake2_128Concat,
 		u64,
-		OffchainPacketType,
+		PacketInfo,
 		ValueQuery,
 	>;
-
-	// temporary
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// (ChannelId, PortId, Sequence) => Packet
-	pub type WriteAcknowledgements<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		(Vec<u8>, Vec<u8>),
-		Blake2_128Concat,
-		u64,
-		Vec<u8>,
-		ValueQuery,
-	>;
-
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// Pallet Params used to disable sending or receipt of ibc tokens
@@ -488,6 +473,8 @@ pub mod pallet {
 		TimestampAndHeightNotFound,
 		/// Failed to derive channel escrow address
 		ChannelEscrowAddress,
+		/// Error writing acknowledgement to storage
+		WriteAckError,
 	}
 
 	#[pallet::hooks]
