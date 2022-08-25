@@ -19,7 +19,7 @@ pub type Amount = i128;
 pub type PoolId = u128;
 pub type BlockNumber = u64;
 pub type AccountId = u128;
-pub type RewardPoolId = u16;
+pub type RewardPoolId = u128;
 pub type PositionId = u128;
 
 #[allow(dead_code)]

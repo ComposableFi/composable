@@ -77,7 +77,7 @@ fn test_reward_update_calculation() {
 			] {
 				assert_no_event::<Test>(Event::StakingRewards(
 					crate::Event::<Test>::RewardAccumulationHookError {
-						pool_id,
+						pool_id: PICA::ID,
 						asset_id: PICA::ID,
 						error,
 					},
@@ -110,7 +110,7 @@ fn test_reward_update_calculation() {
 
 		// should report an error since the max was hit
 		assert_last_event::<Test>(Event::StakingRewards(
-			crate::Event::<Test>::MaxRewardsAccumulated { pool_id, asset_id: PICA::ID },
+			crate::Event::<Test>::MaxRewardsAccumulated { pool_id: PICA::ID, asset_id: PICA::ID },
 		));
 	})
 }
@@ -505,7 +505,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: bobs_pool_id,
+				pool_id: C::ID,
 				asset_id: E::ID,
 			}]);
 		}
@@ -561,7 +561,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: bobs_pool_id,
+				pool_id: C::ID,
 				asset_id: D::ID,
 			}]);
 		}
@@ -646,7 +646,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: alices_pool_id,
+				pool_id: C::ID,
 				asset_id: B::ID,
 			}]);
 		}
@@ -707,7 +707,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: alices_pool_id,
+				pool_id: C::ID,
 				asset_id: A::ID,
 			}]);
 		}
@@ -764,8 +764,8 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 
 	for CheckRewards { owner, pool_asset_id, pool_rewards, pool_id } in expected.into_iter() {
 		let mut pool = all_rewards
-			.remove(&pool_id)
-			.expect(&format!("pool {pool_id} not present in RewardPools"));
+			.remove(&asset_id)
+			.expect(&format!("pool {asset_id} not present in RewardPools"));
 
 		assert_eq!(pool.owner, *owner, "error at pool {pool_id}");
 		assert_eq!(pool.asset_id, *pool_asset_id, "error at pool {pool_id}");
@@ -789,7 +789,7 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 			let reward = pool
 				.rewards
 				.remove(&reward_asset_id)
-				.expect(&format!("reward asset {reward_asset_id} not present in pool {pool_id}"));
+				.expect(&format!("reward asset {reward_asset_id} not present in pool {asset_id}"));
 
 			assert_eq!(
 				reward.asset_id, *reward_asset_id,
@@ -823,7 +823,7 @@ error at pool {pool_id}, asset {reward_asset_id}: unexpected unlocked balance:
 
 		assert!(
 			pool.rewards.is_empty(),
-			"not all pool rewards were tested for pool {pool_id}, missing {:#?}",
+			"not all pool rewards were tested for pool {asset_id}, missing {:#?}",
 			pool.rewards
 		);
 	}

@@ -180,6 +180,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Error when creating reward configs.
 		RewardConfigProblem,
+		/// Reward pool already exists
+		RewardsPoolAlreadyExists,
 		/// No duration presets configured.
 		NoDurationPresetsConfigured,
 		/// Too many rewarded asset types per pool violating the storage allowed.
@@ -239,7 +241,8 @@ pub mod pallet {
 			+ Copy
 			+ Zero
 			+ One
-			+ SafeArithmetic;
+			+ SafeArithmetic
+			+ From<u128>;
 
 		/// The position id type.
 		type PositionId: Parameter + Member + Clone + FullCodec + Copy + Zero + One + SafeArithmetic;
@@ -348,12 +351,6 @@ pub mod pallet {
 	#[pallet::generate_store(pub (super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
-
-	#[pallet::storage]
-	#[pallet::getter(fn pool_count)]
-	#[allow(clippy::disallowed_types)]
-	pub type RewardPoolCount<T: Config> =
-		StorageValue<_, T::RewardPoolId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
@@ -521,7 +518,8 @@ pub mod pallet {
 						Error::<T>::EndBlockMustBeInTheFuture
 					);
 
-					let pool_id = RewardPoolCount::<T>::increment()?;
+					let pool_id = T::RewardPoolId::from(asset_id.into());
+					ensure!(!RewardPools::<T>::contains_key(pool_id), Error::<T>::RewardsPoolAlreadyExists);
 
 					let now_seconds = T::UnixTime::now().as_secs();
 

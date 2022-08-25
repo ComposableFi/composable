@@ -4,7 +4,7 @@ use composable_traits::{
 	governance::{GovernanceRegistry, SignedRawOrigin},
 };
 
-use composable_traits::fnft::{FnftAccountProxyType, FnftAccountProxyTypeSelector};
+use composable_traits::fnft::{FnftAccountProxyType};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, InstanceFilter},
@@ -26,7 +26,7 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
 pub type FinancialNftInstanceId = u64;
-pub type RewardPoolId = u16;
+pub type RewardPoolId = u128;
 pub type PositionId = u128;
 
 pub static ALICE: Public =
