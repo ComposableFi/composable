@@ -3,8 +3,6 @@ import { randomUUID } from "crypto";
 import { OraclePriceChangedEvent } from "../types/events";
 import { Asset, HistoricalAssetPrice } from "../model";
 
-console.log("asddsadsa");
-
 interface PriceChangedEvent {
   assetId: bigint;
   price: bigint;
@@ -14,7 +12,6 @@ function getPriceChangedEvent(
   event: OraclePriceChangedEvent
 ): PriceChangedEvent {
   const [assetId, price] = event.asV2401 ?? event.asLatest;
-  console.log({ assetId, price });
   return { assetId, price };
 }
 
@@ -59,18 +56,15 @@ export function getHistoricalAssetPrice(
  *  - Create HistoricalAssetPrice.
  * @param ctx
  */
-export async function processOraclePriceChanged(ctx: EventHandlerContext) {
+export async function processOraclePriceChanged(
+  ctx: EventHandlerContext
+): Promise<void> {
   console.log("Process price change");
   const event = new OraclePriceChangedEvent(ctx);
   const { assetId, price } = getPriceChangedEvent(event);
-  const price2 = BigInt(Math.round(Math.random() * 40));
 
   let asset: Asset | undefined = await ctx.store.get(Asset, {
     where: { id: assetId.toString() },
-  });
-
-  let asset2: Asset | undefined = await ctx.store.get(Asset, {
-    where: { id: "2" },
   });
 
   if (!asset) {
@@ -79,21 +73,15 @@ export async function processOraclePriceChanged(ctx: EventHandlerContext) {
     });
   }
 
-  if (!asset2) {
-    asset2 = new Asset({
-      id: "2",
-    });
-  }
-
   updateAsset(ctx, asset, price);
-  updateAsset(ctx, asset2, price2);
 
   await ctx.store.save(asset);
-  await ctx.store.save(asset2);
 
-  const historicalAssetPrice = getHistoricalAssetPrice(ctx, asset, price);
-  const historicalAssetPrice2 = getHistoricalAssetPrice(ctx, asset2, price2);
+  const historicalAssetPrice: HistoricalAssetPrice = getHistoricalAssetPrice(
+    ctx,
+    asset,
+    price
+  );
 
   await ctx.store.save(historicalAssetPrice);
-  await ctx.store.save(historicalAssetPrice2);
 }
