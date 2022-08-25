@@ -12,7 +12,7 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "@polkadot/api": "^7.12.1",
-    "@polkadot/extension-dapp": "^0.42.0",
+    "@polkadot/extension-dapp": "^0.44.6",
     "bignumber.js": "^9.0.2",
     "react-app-polyfill": "^1.0.0"
   },

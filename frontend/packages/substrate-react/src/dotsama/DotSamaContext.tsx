@@ -1,6 +1,6 @@
 import { ApiPromise } from '@polkadot/api';
 import { WsProvider } from '@polkadot/rpc-provider';
-import React, { useState, useEffect, createContext } from 'react';
+import React, { useState, useEffect, createContext, useMemo } from 'react';
 import {
   DotSamaContext,
   ParachainApi,
@@ -10,6 +10,18 @@ import {
   RelayChainId,
 } from './types';
 import { ParachainNetworks, RelayChainNetworks } from './Networks';
+import type { InjectedExtension, InjectedAccount, InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
+import { decodeAddress, encodeAddress } from '@polkadot/util-crypto';
+
+function mapAccounts(source: string, list: InjectedAccount[], ss58Format?: number): InjectedAccountWithMeta[] {
+  return list.map(({ address, genesisHash, name, type }): InjectedAccountWithMeta => ({
+    address: address.length === 42
+      ? address
+      : encodeAddress(decodeAddress(address), ss58Format),
+    meta: { genesisHash, name, source },
+    type
+  }));
+}
 
 const PARACHAIN_PROVIDERS_DEFAULT: {
   [chainId in ParachainId]: ParachainApi;
@@ -78,18 +90,23 @@ export const DotSamaContextProvider = ({
     { [chainId in RelayChainId]: RelaychainApi }
   >(RELAYCHAIN_PROVIDERS_DEFAULT);
 
-  const activate = async (): Promise<any[] | undefined> => {
+  const [extensionInjected, setInjectedExtension] = useState<InjectedExtension | undefined>(undefined);
+
+  const activate = async (walletId: "talisman" | "polkadot-js" = "talisman"): Promise<any | undefined> => {
     setExtension(s => {
       s.extensionStatus = 'connecting';
       return s;
     });
 
     let extensionExists = true;
-    let inectedExtesions;
+    let injectedExtesion;
     try {
-      const extensionPkg = await import('@polkadot/extension-dapp');
-      inectedExtesions = await extensionPkg.web3Enable(appName);
-      extensionExists = inectedExtesions.length !== 0;
+      if (!(window as any).injectedWeb3) throw new Error('Extension not installed.');
+      
+      let extension = (window as any).injectedWeb3[walletId];
+      if (!extension) throw new Error('Extension not installed.');
+
+      injectedExtesion = await extension.enable(appName) as InjectedExtension;
     } catch (e) {
       console.error(e);
       extensionExists = false;
@@ -100,7 +117,7 @@ export const DotSamaContextProvider = ({
         s.extensionStatus = 'no_extension';
         return s;
       });
-      return inectedExtesions;
+      return injectedExtesion;
     }
 
     setExtension(s => {
@@ -108,18 +125,20 @@ export const DotSamaContextProvider = ({
       return s;
     });
 
+    setInjectedExtension(injectedExtesion);
+
     for (let i = 0; i < supportedParachains.length; i++) {
       const { chainId } = supportedParachains[i];
       const { prefix } = ParachainNetworks[chainId];
 
       try {
-        const extensionPkg = await import('@polkadot/extension-dapp');
-        const accounts = await extensionPkg.web3Accounts({
-          ss58Format: prefix,
-        });
+        let accounts = await injectedExtesion?.accounts.get();
+        if (accounts === undefined) throw new Error('Unable to fetch accounts from extension.');
+        accounts = mapAccounts(walletId, accounts, prefix);
+        if (accounts === undefined) throw new Error('Unable to fetch accounts from extension.');
 
         setParachainProviders(s => {
-          s[chainId].accounts = accounts.map((x, i) => ({
+          s[chainId].accounts = (accounts as InjectedAccountWithMeta[]).map((x, i) => ({
             address: x.address,
             name: x.meta.name ?? i.toFixed(),
           }));
@@ -134,7 +153,7 @@ export const DotSamaContextProvider = ({
       }
     }
 
-    return inectedExtesions;
+    return injectedExtesion;
   };
 
   const deactivate = async (): Promise<void> => {
@@ -222,9 +241,17 @@ export const DotSamaContextProvider = ({
 
   const [selectedAccount, setSelectedAccount] = useState<number | -1>(-1);
 
+  const signer = useMemo(() => {
+    if (extensionInjected) {
+      return extensionInjected.signer
+    }
+    return undefined;
+  }, [extensionInjected]);
+
   return (
     <DotsamaContext.Provider
       value={{
+        signer,
         relaychainProviders,
         parachainProviders,
         setSelectedAccount,
