@@ -220,7 +220,8 @@ impl<T, U: Validate<T, U>> Validated<T, U> {
 impl<T: codec::Decode, U: Validate<T, U>> codec::Decode for Validated<T, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
 		// If validation has failed we'll log the error, and continue as usual.
-		let wrapped_value = <U as Validate<T, U>>::validate(T::decode(input)?).map_err(|err| log::warn!("validation error: {:?}", err));
+		let wrapped_value = <U as Validate<T, U>>::validate(T::decode(input)?)
+			.map_err(|err| log::warn!("validation error: {:?}", err));
 		// Should unwrapping the error fail for whatever reason, we'll return as before.
 		let value = wrapped_value.unwrap_or(<U as Validate<T, U>>::validate(T::decode(input)?)?);
 		Ok(Validated { value, _marker: PhantomData })
