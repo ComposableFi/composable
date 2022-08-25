@@ -414,6 +414,7 @@ jobs:
           # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
           docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer:$COMMIT_SHA
           docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer:latest
+          # TODO: upload a docker image with `latest` tag only from `main` branch (.e.g https://github.com/ComposableFi/composable/blob/98832a7b328680eaf2c83b64f46a02f5522be341/.github/workflows/runtime-tests.yml#L47)
           docker push --all-tags ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer
 
   devnet-integration-tests:
