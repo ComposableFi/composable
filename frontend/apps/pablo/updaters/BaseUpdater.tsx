@@ -7,23 +7,20 @@ import BalancesUpdater from "@/updaters/assets/balances/Updater";
 import ApolloUpdater from "@/updaters/assets/apollo/Updater";
 import AuctionsUpdater from "@/updaters/auctions/Updater";
 import BondsUpdater from "@/updaters/bonds/Updater";
-import { useEagerConnect } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
-const BaseUpdaters = () => {
+const BaseUpdater = () => {
+  return (
+    <>
+      <AuctionsUpdater />
+      <LiquidityBootstrappingUpdater />
+      <BalancesUpdater />
+      <LiquidityUpdater />
+      <PoolStatsUpdater />
+      <ApolloUpdater />
+      <PoolsUpdater />
+      <BondsUpdater />
+    </>
+  );
+};
 
-    return (
-        <>
-        <AuctionsUpdater />
-        <LiquidityBootstrappingUpdater />
-        <BalancesUpdater />
-        <LiquidityUpdater />
-        <PoolStatsUpdater />
-        <ApolloUpdater />
-        <PoolsUpdater />
-        <BondsUpdater />
-      </>
-    )
-}
-
-export default BaseUpdaters;
+export default BaseUpdater;
