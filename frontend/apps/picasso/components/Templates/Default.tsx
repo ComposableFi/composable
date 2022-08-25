@@ -13,6 +13,7 @@ import { PolkadotConnect } from "../Organisms/Wallet/PolkadotConnect";
 import { MetamaskConnect } from "../Organisms/Wallet/MetamaskConnect";
 import { useSnackbar } from "notistack";
 import { useEffect } from "react";
+import { NotificationDrawer } from "@/components/Molecules/PersistentNotification/NotificationDrawer";
 
 type DefaultLayoutProps = {
   breadcrumbs?: React.ReactNode[];
@@ -75,7 +76,9 @@ export const DefaultLayout: React.FC<DefaultLayoutProps> = (props) => {
           <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
             <PolkadotConnect />
             <MetamaskConnect />
+            <NotificationDrawer />
           </Box>
+
           {breadcrumbs && (
             <Breadcrumbs separator="›" aria-label="breadcrumb">
               {breadcrumbs}
