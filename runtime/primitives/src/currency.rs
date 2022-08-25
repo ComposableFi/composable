@@ -201,7 +201,10 @@ impl From<u128> for CurrencyId {
 #[cfg(feature = "develop")]
 impl From<CurrencyId> for xcm::latest::Junction {
 	fn from(this: CurrencyId) -> Self {
-		xcm::latest::Junction::GeneralKey(this.encode())
+		xcm::latest::Junction::GeneralKey(sp_runtime::WeakBoundedVec::force_from(
+			this.encode(),
+			None,
+		))
 	}
 }
 

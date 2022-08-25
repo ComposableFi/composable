@@ -312,6 +312,12 @@
                 --steps=1 \
                 --repeat=1
             '';
+          docs-renders = [
+                mdbook
+                plantuml
+                graphviz
+                pandoc
+          ];
 
         in
         rec {
@@ -336,7 +342,7 @@
               dontUnpack = true;
               installPhase = ''
                 mkdir $out/
-                cp -r $src/* $out/
+                cp -r $src/. $out/
               '';
             };
 
@@ -489,7 +495,60 @@
                 "cargo test --workspace --release --locked --verbose";
             });
 
-            kusama-picasso-karura =
+            cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
+              cargoArtifacts = common-deps-nightly;
+              cargoExtraArgs = "--all --check --verbose";
+            });
+
+            taplo-cli-check = crane-stable.cargoBuild (common-attrs // {
+              buildInputs = [ taplo-cli ];
+              cargoArtifacts = common-deps;
+              cargoBuildCommand = "taplo check";
+              cargoExtraArgs = "--verbose";
+            });
+
+            prettier-check = stdenv.mkDerivation {
+              name = "prettier-check";
+              dontUnpack = true;
+              buildInputs = [ nodePackages.prettier runtime-tests ];
+              installPhase = ''
+                mkdir $out
+                prettier \
+                  --config="${runtime-tests}/.prettierrc" \
+                  --ignore-path="${runtime-tests}/.prettierignore" \
+                  --check \
+                  --loglevel=debug \
+                  ${runtime-tests}
+              '';
+            };
+
+            cargo-clippy-check = crane-nightly.cargoBuild (common-attrs // {
+              cargoArtifacts = common-deps-nightly;
+              cargoBuildCommand = "cargo clippy";
+              cargoExtraArgs = "--all-targets --tests -- -D warnings";
+            });
+
+            cargo-deny-check = crane-nightly.cargoBuild (common-attrs // {
+              buildInputs = [ cargo-deny ];
+              cargoArtifacts = common-deps;
+              cargoBuildCommand = "cargo deny";
+              cargoExtraArgs =
+                "--manifest-path ./frame/composable-support/Cargo.toml check ban";
+            });
+
+            cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
+              DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+              PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+              COMPOSABLE_RUNTIME =
+                "${composable-runtime}/lib/runtime.optimized.wasm";
+              buildInputs = [ cargo-udeps expat freetype fontconfig openssl ];
+              cargoArtifacts = common-deps-nightly;
+              cargoBuildCommand = "cargo udeps";
+              cargoExtraArgs =
+                "--workspace --exclude local-integration-tests --all-features";
+            });
+
+            kusama-picasso-karura-devnet =
               let
                 config = (pkgs.callPackage
                   ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix
@@ -542,7 +601,8 @@
                   wasm-optimizer
                   xorriso
                   zlib.out
-                ];
+                  nix-tree
+                ] ++ docs-renders;
             });
 
             developers-minimal = mkShell (common-attrs // {
@@ -577,13 +637,9 @@
 
             writers = mkShell {
               buildInputs = with packages; [
-                mdbook
                 python3
-                plantuml
-                graphviz
-                pandoc
                 nodejs
-              ];
+              ] ++ doc-renders;
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
@@ -601,7 +657,6 @@
             devnet-xcvm-up =
               let
                 devnet-xcvm =
-
                   pkgs.arion.build
                     {
                       modules = [
@@ -663,11 +718,11 @@
                 "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
             };
 
-            kusama-picasso-karura = {
+            kusama-picasso-karura-devnet = {
               # nix run .#devnet
               type = "app";
               program =
-                "${packages.kusama-picasso-karura}/bin/kusama-picasso-karura";
+                "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
             };
 
             price-feed = {
