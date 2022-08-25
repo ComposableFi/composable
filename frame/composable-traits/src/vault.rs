@@ -70,7 +70,7 @@ pub trait Vault {
 	type AssetId;
 	type Balance;
 	type BlockNumber;
-	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
+	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter + MaxEncodedLen;
 
 	fn token_vault(token: Self::AssetId) -> Result<Self::VaultId, DispatchError>;
 

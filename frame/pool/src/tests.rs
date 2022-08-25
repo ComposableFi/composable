@@ -1,52 +1,48 @@
 // use crate as pallet_pool;
 
 pub use crate::{
-	pallet::{PoolCount, Pools as PoolStorage, PoolAssets, PoolAssetBalance, 
-		PoolAssetTotalBalance, PoolAssetWeight, PoolAssetVault, 
-	},
 	mocks::{
-		currency_factory::{MockCurrencyId, strategy_pick_random_mock_currency},
+		currency_factory::{strategy_pick_random_mock_currency, MockCurrencyId},
 		tests::{
-			ADMIN, ALICE, AccountId, Balance, BOB, CHARLIE, Epsilon, ExtBuilder, MAXIMUM_DEPOSIT,
-			MINIMUM_DEPOSIT, Pools, Test, Tokens, Vaults
+			AccountId, Balance, Epsilon, ExtBuilder, Pools, Test, Tokens, Vaults, ADMIN, ALICE,
+			BOB, CHARLIE, MAXIMUM_DEPOSIT, MINIMUM_DEPOSIT,
 		},
+	},
+	pallet::{
+		PoolAssetBalance, PoolAssetTotalBalance, PoolAssetVault, PoolAssetWeight, PoolAssets,
+		PoolCount, Pools as PoolStorage,
 	},
 };
 
 use composable_traits::{
-	pool::{
-		Bound, ConstantMeanMarket, Deposit, PoolConfig, Reserve, Weight,
-	},
+	pool::{Bound, ConstantMeanMarket, Deposit, PoolConfig, Reserve, Weight},
 	vault::Vault,
 };
 use sp_runtime::DispatchError;
 
-use crate::{Error};
+use crate::Error;
 
 use frame_support::{
 	assert_noop, assert_ok,
+	sp_runtime::Perquintill,
 	traits::{
-		fungibles::{Inspect, Mutate}, 
+		fungibles::{Inspect, Mutate},
 		tokens::WithdrawConsequence,
 	},
-	sp_runtime::Perquintill,
 };
 
-use fixed::{
-	traits::LossyInto,
-	types::U110F18
-};
+use fixed::{traits::LossyInto, types::U110F18};
 use hydra_dx_math::transcendental::pow;
 
 use std::collections::BTreeSet;
 
-use proptest::prelude::*;
 use approx::assert_relative_eq;
+use proptest::prelude::*;
 
 const MAX_POOL_SIZE: u8 = 26;
 
 // ----------------------------------------------------------------------------------------------------
-//                                             Prop Compose                                            
+//                                             Prop Compose
 // ----------------------------------------------------------------------------------------------------
 
 // Create prop Compose Functions
@@ -72,7 +68,7 @@ prop_compose! {
 
 prop_compose! {
 	fn generate_size_bounds()(
-		x in 0u8..5u8, 
+		x in 0u8..5u8,
 		y in 4u8..20u8,
 	) -> Bound<u8> {
 		Bound::new(Some(x), Some(y))
@@ -81,11 +77,11 @@ prop_compose! {
 
 prop_compose! {
 	fn generate_weight_bounds() (
-		minimim in 0u64..30u64, 
+		minimim in 0u64..30u64,
 		maximum in 25u64..100u64,
 	) -> Bound<Perquintill> {
 		Bound::new(
-			Some(Perquintill::from_percent(minimim)), 
+			Some(Perquintill::from_percent(minimim)),
 			Some(Perquintill::from_percent(maximum))
 		)
 	}
@@ -100,7 +96,7 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn generate_native_balance(number_of_assets: usize)(x 
+	fn generate_native_balance(number_of_assets: usize)(x
 		in 0..Pools::required_creation_deposit_for(number_of_assets).unwrap()*2
 	) -> Balance{
 		x
@@ -124,7 +120,7 @@ prop_compose! {
 		mut initial_deposits in generate_n_initial_deposits(n),
 	) -> (Vec<MockCurrencyId>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>) {
 		let mut all_asset_deposits = Vec::new();
-			
+
 		for _ in 0..n {
 			let mut deposit = Vec::new();
 
@@ -152,14 +148,6 @@ prop_compose! {
 		(initial_assets, all_asset_deposits)
 	}
 }
-
-
-
-
-
-
-
-
 
 fn generate_random_weights() -> impl proptest::strategy::Strategy<Value = Vec<Perquintill>> {
 	generate_random_weights_with_size_bounds(MAX_POOL_SIZE as usize, MAX_POOL_SIZE as usize)
@@ -202,13 +190,13 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn generate_equal_weighted_pool_config_and_n_all_asset_deposits(n: usize) 
+	fn generate_equal_weighted_pool_config_and_n_all_asset_deposits(n: usize)
 		(
 			pool_config in generate_equal_weighted_pool_config(),
 			mut initial_deposits in generate_n_initial_deposits(n),
 		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>){
 			let mut all_deposits = Vec::new();
-			
+
 			for _ in 0..n {
 				let mut deposit = Vec::new();
 
@@ -229,21 +217,21 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn generate_equal_weighted_pool_config_and_n_rational_all_asset_deposits(n: usize) 
+	fn generate_equal_weighted_pool_config_and_n_rational_all_asset_deposits(n: usize)
 		(
 			pool_config in generate_equal_weighted_pool_config(),
 			initial_deposits in generate_n_initial_deposits(1),
 			modifiers in prop::collection::vec(0.1f64..5.0f64, n)
 		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>){
 			let mut all_deposits = Vec::new();
-			
+
 			for modifier in modifiers {
 				let mut deposit = Vec::new();
 
 				for (asset, base_deposit) in pool_config.assets.iter().zip(initial_deposits.iter()) {
 					let deposit_amount: f64 = *base_deposit as f64 * modifier;
 					let deposit_amount: u128 = deposit_amount as u128;
-					
+
 					deposit.push(
 						Deposit {
 							asset_id: *asset,
@@ -260,7 +248,7 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn generate_equal_weighted_pool_config_and_n_rational_all_asset_deposits_and_initial_balances(n: usize) 
+	fn generate_equal_weighted_pool_config_and_n_rational_all_asset_deposits_and_initial_balances(n: usize)
 		(
 			pool_config in generate_equal_weighted_pool_config(),
 			initial_deposits in generate_n_initial_deposits(1),
@@ -268,14 +256,14 @@ prop_compose! {
 			modifiers in prop::collection::vec(0.1f64..5.0f64, n)
 		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>, Vec<Vec<Deposit<MockCurrencyId, Balance>>>){
 			let mut all_deposits = Vec::new();
-			
+
 			for modifier in &modifiers {
 				let mut deposit = Vec::new();
 
 				for (asset, base_deposit) in pool_config.assets.iter().zip(initial_deposits.iter()) {
 					let deposit_amount: f64 = *base_deposit as f64 * modifier;
 					let deposit_amount: u128 = deposit_amount as u128;
-					
+
 					deposit.push(
 						Deposit {
 							asset_id: *asset,
@@ -288,14 +276,14 @@ prop_compose! {
 			}
 
 			let mut all_balances = Vec::new();
-			
+
 			for modifier in &modifiers {
 				let mut balance = Vec::new();
 
 				for (asset, base_balance) in pool_config.assets.iter().zip(initial_balances.iter()) {
 					let balance_amount: f64 = *base_balance as f64 * modifier;
 					let balance_amount: u128 = balance_amount as u128;
-					
+
 					balance.push(
 						Deposit {
 							asset_id: *asset,
@@ -320,11 +308,11 @@ prop_compose! {
 			deposit_users in prop::collection::vec(1..=10u128, n),
 		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>, Vec<(AccountId, Vec<Deposit<MockCurrencyId, Balance>>)>){
 			let mut all_deposits = Vec::new();
-			
+
 			for (user, modifier) in deposit_users.iter().zip(deposit_modifiers.iter()) {
 				let mut deposit = Vec::new();
 
-				for (asset, base_deposit) in pool_config.assets.iter().zip(deposit_amounts.iter()) {					
+				for (asset, base_deposit) in pool_config.assets.iter().zip(deposit_amounts.iter()) {
 					let deposit_amount: u128 = *base_deposit * modifier;
 
 					deposit.push(
@@ -356,15 +344,15 @@ prop_compose! {
 			deposit_users in prop::collection::vec(1..=10u128, n),
 			withdraw_ratios in prop::collection::vec(1..=100u64, m),
 			withdraw_users in prop::collection::vec(1..=10u128, m),
-		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>, 
-			Vec<(AccountId, Vec<Deposit<MockCurrencyId, Balance>>)>, 
+		) -> (PoolConfig<AccountId, MockCurrencyId, Perquintill>,
+			Vec<(AccountId, Vec<Deposit<MockCurrencyId, Balance>>)>,
 			Vec<(AccountId, Perquintill)>){
 			let mut all_deposits = Vec::new();
-			
+
 			for (user, modifier) in deposit_users.iter().zip(deposit_modifiers.iter()) {
 				let mut deposit = Vec::new();
 
-				for (asset, base_deposit) in pool_config.assets.iter().zip(deposit_amounts.iter()) {					
+				for (asset, base_deposit) in pool_config.assets.iter().zip(deposit_amounts.iter()) {
 					let deposit_amount: u128 = *base_deposit * modifier;
 
 					deposit.push(
@@ -391,7 +379,7 @@ prop_compose! {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                           Helper Functionality                                          
+//                                           Helper Functionality
 // ----------------------------------------------------------------------------------------------------
 
 pub struct PoolConfigBuilder {
@@ -472,7 +460,7 @@ impl PoolConfigBuilder {
 		self.withdraw_bounds = withdraw_bounds;
 		self
 	}
-	
+
 	fn build(&self) -> PoolConfig<AccountId, MockCurrencyId, Perquintill> {
 		PoolConfig {
 			owner: self.owner,
@@ -509,20 +497,19 @@ impl PoolStateBuilder {
 	fn build(self) -> u64 {
 		let creation_fee = Deposit {
 			asset_id: MockCurrencyId::A,
-			amount: Pools::required_creation_deposit_for(self.config.assets.len()).unwrap(), 
+			amount: Pools::required_creation_deposit_for(self.config.assets.len()).unwrap(),
 		};
 		assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ADMIN, creation_fee.amount));
-	
+
 		let pool_id = Pools::create(ADMIN, self.config, creation_fee).unwrap();
-	
-		self.reserves.iter()
-			.for_each(|reserve| {
-				reserve.iter().for_each(|deposit| {
-					assert_ok!(Tokens::mint_into(deposit.asset_id, &ADMIN, deposit.amount));
-				});
-				
-				assert_ok!(Pools::all_asset_deposit(&ADMIN, &pool_id, reserve.to_vec()));
+
+		self.reserves.iter().for_each(|reserve| {
+			reserve.iter().for_each(|deposit| {
+				assert_ok!(Tokens::mint_into(deposit.asset_id, &ADMIN, deposit.amount));
 			});
+
+			assert_ok!(Pools::all_asset_deposit(&ADMIN, &pool_id, reserve.to_vec()));
+		});
 
 		pool_id
 	}
@@ -530,45 +517,40 @@ impl PoolStateBuilder {
 
 pub struct ValidityCheck {}
 
-fn equal_weight_vector_for(assets: &[MockCurrencyId]) -> Vec<Weight<MockCurrencyId, Perquintill>>{
-	assets.iter()
-		.map(|asset_id|
-			Weight {
-				asset_id: *asset_id,
-				weight: Perquintill::from_rational(1, assets.len() as u64),
-			}
-		)
+fn equal_weight_vector_for(assets: &[MockCurrencyId]) -> Vec<Weight<MockCurrencyId, Perquintill>> {
+	assets
+		.iter()
+		.map(|asset_id| Weight {
+			asset_id: *asset_id,
+			weight: Perquintill::from_rational(1, assets.len() as u64),
+		})
 		.collect()
 }
 
 fn normalize_weights(non_normalized_weights: &mut Vec<Perquintill>) -> Vec<Perquintill> {
-	let sum = non_normalized_weights.iter()
-		.map(|weight| weight.deconstruct())
-		.sum();
-	
-	non_normalized_weights.iter()
-		.map(|weight| 
-			Perquintill::from_rational(weight.deconstruct(), sum)
-		)
+	let sum = non_normalized_weights.iter().map(|weight| weight.deconstruct()).sum();
+
+	non_normalized_weights
+		.iter()
+		.map(|weight| Perquintill::from_rational(weight.deconstruct(), sum))
 		.collect()
 }
 
-fn construct_weight_vector_from(assets: &[MockCurrencyId], weights: &[Perquintill]) -> Vec<Weight<MockCurrencyId, Perquintill>> {
-	assets.iter()
+fn construct_weight_vector_from(
+	assets: &[MockCurrencyId],
+	weights: &[Perquintill],
+) -> Vec<Weight<MockCurrencyId, Perquintill>> {
+	assets
+		.iter()
 		.zip(weights.iter())
-		.map(|(asset_id, weight)|
-			Weight {
-				asset_id: *asset_id,
-				weight: *weight
-			}
-		)
+		.map(|(asset_id, weight)| Weight { asset_id: *asset_id, weight: *weight })
 		.collect()
 }
 
 fn create_pool_with(config: &PoolConfig<AccountId, MockCurrencyId, Perquintill>) -> u64 {
 	let creation_fee = Deposit {
 		asset_id: MockCurrencyId::A,
-		amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(), 
+		amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(),
 	};
 	assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
 
@@ -576,29 +558,29 @@ fn create_pool_with(config: &PoolConfig<AccountId, MockCurrencyId, Perquintill>)
 }
 
 fn deposit_into(
-	pool_id: &u64, 
-	user: &AccountId, 
-	deposits: Vec<Deposit<MockCurrencyId, Balance>>
+	pool_id: &u64,
+	user: &AccountId,
+	deposits: Vec<Deposit<MockCurrencyId, Balance>>,
 ) -> Result<Balance, DispatchError> {
 	for deposit in &deposits {
 		assert_ok!(Tokens::mint_into(deposit.asset_id, user, deposit.amount));
 	}
-	
+
 	<Pools as ConstantMeanMarket>::all_asset_deposit(user, pool_id, deposits)
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                               Create                                              
+//                                               Create
 // ----------------------------------------------------------------------------------------------------
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(10_000))]
+	#![proptest_config(ProptestConfig::with_cases(10_000))]
 
 	#[test]
 	fn creating_a_pool_that_meets_all_requirements_does_not_raise_an_error(
 		initial_assets in generate_initial_assets_without_duplicates(),
 	) {
-		// Tests that if all the conditions are met to create a pool it will be created 
+		// Tests that if all the conditions are met to create a pool it will be created
 		//  |  successfully
 		//  '-> Conditions:
 		//		  i.	∀(i, j) a_i != a_j -- no duplicate assets
@@ -622,12 +604,12 @@ proptest! {
 			// Condition viii
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
-				amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(), 
+				amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(),
 			};
 
 			// Condition ix
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
-		
+
 			assert_ok!(Pools::create(ALICE, config, creation_fee));
 		});
 	}
@@ -643,7 +625,7 @@ proptest! {
 		//		  i.    ∀(i, j) a_i != a_j -- no duplicate assets
 		//		  ii.	min_underlying_tokens ≤ max_underlying_tokens
 		//        iii.  min_underlying_tokens ≤ n ≤ max_underlying_tokens, where n is the number
-		//                 of tokens in the pool		
+		//                 of tokens in the pool
 		//        ...
 
 		ExtBuilder::default().build().execute_with(|| {
@@ -655,7 +637,7 @@ proptest! {
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
-				amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(), 
+				amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(),
 			};
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
@@ -703,7 +685,7 @@ proptest! {
 		//        ...
 
 		// create a random weight vector for the generated initial assets,
-		//     however, at this stage there might be duplicate assets so these 
+		//     however, at this stage there might be duplicate assets so these
 		//     assets will have multiple weights in the weight vector
 		weights.resize(initial_assets.len(), Perquintill::zero());
 		let weights: Vec<Perquintill> = normalize_weights(&mut weights);
@@ -724,27 +706,27 @@ proptest! {
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
-				amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(), 
+				amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(),
 			};
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
-			
+
 			let error = if !Pools::each_asset_has_exactly_one_corresponding_weight(&config.assets, &config.weights) {
 				// Condition iv
 				Some(Error::<Test>::ThereMustBeOneWeightForEachAssetInThePool)
 			} else if !Pools::weights_are_nonnegative(&config.weights) {
 				// Condition v
 				Some(Error::<Test>::PoolWeightsMustBeNonnegative)
-		    } else if !Pools::weights_are_normalized(&config.weights) {
+			} else if !Pools::weights_are_normalized(&config.weights) {
 				// Condition vi
 				Some(Error::<Test>::PoolWeightsMustBeNormalized)
-		    } else if config.weight_bounds.maximum < config.weight_bounds.minimum {
+			} else if config.weight_bounds.maximum < config.weight_bounds.minimum {
 				// Condition vii
 				Some(Error::<Test>::InvalidWeightBounds)
-		    } else if !Pools::weights_are_in_weight_bounds(&config.weights, &config.weight_bounds) {
+			} else if !Pools::weights_are_in_weight_bounds(&config.weights, &config.weight_bounds) {
 				// Condition v
 				Some(Error::<Test>::PoolWeightsAreOutsideOfWeightBounds)
-		    } else {
+			} else {
 				None
 			};
 
@@ -763,11 +745,11 @@ proptest! {
 		user_balance in generate_native_balance(MAX_POOL_SIZE as usize),
 		creation_fee in generate_creation_fee(MAX_POOL_SIZE as usize),
 	) {
-		// Tests that if all the conditions are met to create a pool it will be created 
+		// Tests that if all the conditions are met to create a pool it will be created
 		//  |  successfully
 		//  '-> Conditions:
 		//		  ...
-		//        ix.	creation_fee ≥ (asset_ids.len() + 1) * 
+		//        ix.	creation_fee ≥ (asset_ids.len() + 1) *
 		//                  (creation_deposit + existential_deposit)
 		//        x.	user_balance ≥ creation_fee
 
@@ -779,12 +761,12 @@ proptest! {
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
-				amount: creation_fee, 
+				amount: creation_fee,
 			};
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, user_balance));
-			
-			let required_creatikon_deposit = 
+
+			let required_creatikon_deposit =
 				Pools::required_creation_deposit_for(config.assets.len()).unwrap();
 
 			let error = if user_balance < creation_fee.amount {
@@ -793,7 +775,7 @@ proptest! {
 			} else if creation_fee.amount < required_creatikon_deposit {
 				// Condition x
 				Some(Error::<Test>::CreationFeeIsInsufficient)
-		    } else {
+			} else {
 				None
 			};
 
@@ -810,7 +792,7 @@ proptest! {
 	fn creating_a_pool_with_updates_all_runtime_storage_objects(
 		initial_assets in generate_initial_assets_without_duplicates(),
 	) {
-		// Tests that when a pool is created all related runtime storage objects 
+		// Tests that when a pool is created all related runtime storage objects
 		//  |   are all updated with the Pools values
 		//  '-> Conditions:
 		//       i.   PoolCount is incremented
@@ -830,11 +812,11 @@ proptest! {
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
-				amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(), 
+				amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(),
 			};
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
-		
+
 			let pool_id = Pools::create(ALICE, config.clone(), creation_fee).unwrap();
 
 			// Condition i
@@ -857,7 +839,7 @@ proptest! {
 			// Condition iv
 			for weight in config.weights {
 				assert!(PoolAssetWeight::<Test>::contains_key(pool_id, weight.asset_id));
-				
+
 				assert_eq!(PoolAssetWeight::<Test>::get(pool_id, weight.asset_id), weight.weight);
 			}
 
@@ -867,12 +849,12 @@ proptest! {
 
 				let vault = PoolAssetVault::<Test>::get(pool_id, asset_id);
 				assert_eq!(Vaults::asset_id(&vault).unwrap(), asset_id);
-			
+
 				// Condition vi
 				assert_eq!(PoolAssetBalance::<Test>::get(&pool_id, asset_id), 0);
 				// Condition vii
 				assert_eq!(PoolAssetTotalBalance::<Test>::get(&pool_id, asset_id), 0);
-				
+
 			}
 		});
 	}
@@ -881,7 +863,7 @@ proptest! {
 	fn creating_a_pool_with_n_underlying_assets_tracks_n_seperate_vaults(
 		initial_assets in generate_initial_assets_without_duplicates(),
 	) {
-		// Tests that when a pool is created to track n different assets, 
+		// Tests that when a pool is created to track n different assets,
 		//  |   PoolAssetVault maintains n different
 		//  |   key (pool_id, asset_id) -> value (vault_id) entries, one for each
 		//  |   asset in the pool.
@@ -897,11 +879,11 @@ proptest! {
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
-				amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(), 
+				amount: Pools::required_creation_deposit_for(config.assets.len()).unwrap(),
 			};
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, creation_fee.amount));
-		
+
 			let pool_id = Pools::create(ALICE, config, creation_fee).unwrap();
 
 			// Condition i
@@ -917,7 +899,7 @@ proptest! {
 		creation_fee in generate_creation_fee(MAX_POOL_SIZE as usize),
 		user_balance in generate_native_balance(MAX_POOL_SIZE as usize),
 	) {
-		// Tests that when a user successfully creates a Pool their Creation fee is transfered 
+		// Tests that when a user successfully creates a Pool their Creation fee is transfered
 		//  |  into the Pools account
 		//  |-> Pre-Conditions:
 		//  |     i.   user (U) has at least n ≥ CreationFee native tokens in their account
@@ -926,7 +908,7 @@ proptest! {
 		//        iii. pool (P) has △ native tokens in its account
 
 		// guarantee the user has enough native assets to create the pool
-		let required_creation_fee = 
+		let required_creation_fee =
 			Pools::required_creation_deposit_for(initial_assets.len()).unwrap();
 
 		let creation_fee_amount = creation_fee + required_creation_fee;
@@ -940,11 +922,11 @@ proptest! {
 
 			let creation_fee = Deposit {
 				asset_id: MockCurrencyId::A,
-				amount: creation_fee_amount, 
+				amount: creation_fee_amount,
 			};
 
 			assert_ok!(Tokens::mint_into(MockCurrencyId::A, &ALICE, user_balance));
-			
+
 			// Pre-Condition i
 			assert!(Tokens::balance(MockCurrencyId::A, &ALICE) >= creation_fee_amount);
 
@@ -952,13 +934,13 @@ proptest! {
 
 			// Post-Condition ii
 			assert_eq!(
-				Tokens::balance(MockCurrencyId::A, &ALICE), 
+				Tokens::balance(MockCurrencyId::A, &ALICE),
 				user_balance - creation_fee_amount
 			);
 
 			// Post-Condition iii
 			assert_eq!(
-				Tokens::balance(MockCurrencyId::A, &Pools::account_id(&pool_id)), 
+				Tokens::balance(MockCurrencyId::A, &Pools::account_id(&pool_id)),
 				creation_fee_amount
 			);
 		});
@@ -966,15 +948,22 @@ proptest! {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                          All-Asset Deposit                                          
+//                                          All-Asset Deposit
 // ----------------------------------------------------------------------------------------------------
 
 impl ValidityCheck {
-	pub fn user_does_not_have_balance_trying_to_deposit(user: &AccountId, asset_id: MockCurrencyId, amount: Balance) -> bool {
+	pub fn user_does_not_have_balance_trying_to_deposit(
+		user: &AccountId,
+		asset_id: MockCurrencyId,
+		amount: Balance,
+	) -> bool {
 		Tokens::can_withdraw(asset_id, user, amount) != WithdrawConsequence::Success
 	}
 
-	pub fn deposit_is_within_nonempty_pools_deposit_bounds(pool_id: &u64, deposit: &Deposit<MockCurrencyId, Balance>) -> bool {
+	pub fn deposit_is_within_nonempty_pools_deposit_bounds(
+		pool_id: &u64,
+		deposit: &Deposit<MockCurrencyId, Balance>,
+	) -> bool {
 		let amount = deposit.amount as f64;
 
 		let reserve: Balance = Pools::balance_of(pool_id, &deposit.asset_id).unwrap();
@@ -991,17 +980,22 @@ impl ValidityCheck {
 			None => f64::MAX,
 			Some(maximum) => maximum.deconstruct() as f64 / Perquintill::one().deconstruct() as f64,
 		};
-			
+
 		lower_bound <= reserve_increase && reserve_increase <= upper_bound
 	}
 
-	pub fn deposit_matches_underlying_value_distribution(pool_id: &u64, deposit: &Deposit<MockCurrencyId, Balance>, deposit_total: Balance, reserve_total: Balance) -> bool {
-		let lp_circulating_supply = Pools::lp_circulating_supply(pool_id).unwrap();	
-		if lp_circulating_supply == 0u128 { 
+	pub fn deposit_matches_underlying_value_distribution(
+		pool_id: &u64,
+		deposit: &Deposit<MockCurrencyId, Balance>,
+		deposit_total: Balance,
+		reserve_total: Balance,
+	) -> bool {
+		let lp_circulating_supply = Pools::lp_circulating_supply(pool_id).unwrap();
+		if lp_circulating_supply == 0u128 {
 			return true;
 		}
-		
-		let asset =  deposit.asset_id;
+
+		let asset = deposit.asset_id;
 
 		let deposit = deposit.amount as f64;
 		let deposit_value_distribution = deposit / deposit_total as f64;
@@ -1010,9 +1004,10 @@ impl ValidityCheck {
 		let reserve = reserve as f64;
 		let reserve_value_distribution = reserve / reserve_total as f64;
 
-		let margin_of_error = Epsilon::get().deconstruct() as f64 / Perquintill::one().deconstruct() as f64;
+		let margin_of_error =
+			Epsilon::get().deconstruct() as f64 / Perquintill::one().deconstruct() as f64;
 		let margin_of_error = margin_of_error * reserve_value_distribution;
-		
+
 		let lower_bound = reserve_value_distribution - margin_of_error;
 		let upper_bound = reserve_value_distribution + margin_of_error;
 
@@ -1023,24 +1018,23 @@ impl ValidityCheck {
 			println!("test_upper_bound {:?}\n", upper_bound);
 		}
 
-		lower_bound <= deposit_value_distribution && deposit_value_distribution <= upper_bound 
+		lower_bound <= deposit_value_distribution && deposit_value_distribution <= upper_bound
 	}
 }
 
 fn weighted_geometric_mean(
-	reserves: Vec<Deposit<MockCurrencyId, Balance>>, 
-	weights: Vec<Weight<MockCurrencyId, Perquintill>>
+	reserves: Vec<Deposit<MockCurrencyId, Balance>>,
+	weights: Vec<Weight<MockCurrencyId, Perquintill>>,
 ) -> Result<u128, ()> {
 	let mut invariant_constant: f64 = 1.0;
 
 	for (reserve, weight) in reserves.iter().zip(weights.iter()) {
-
 		let reserve: f64 = reserve.amount as f64;
-		let weight: f64 = 
+		let weight: f64 =
 			weight.weight.deconstruct() as f64 / Perquintill::one().deconstruct() as f64;
 
 		let result = reserve.powf(weight);
-		
+
 		invariant_constant = invariant_constant * result;
 	}
 
@@ -1048,7 +1042,7 @@ fn weighted_geometric_mean(
 }
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(10_000))]
+	#![proptest_config(ProptestConfig::with_cases(10_000))]
 
 	#[test]
 	fn depositing_into_a_pool_transfers_funds_from_issuers_account_and_into_the_underlying_vault_accounts(
@@ -1063,7 +1057,7 @@ proptest! {
 		//  '-> Post-Conditions:
 		//        iii. ∀ deposits d of assets a1 ... an ⇒  user U has balance b_i - △i of asset a_i after the deposit
 		//        iv.  ∀ deposits d of assets a1 ... an ⇒ vault V has balance v_i + △i of asset a_i after the deposit
-		
+
 		// Only tests the state after one deposit
 		let deposits = (&all_asset_deposits[0]).to_vec();
 
@@ -1092,7 +1086,7 @@ proptest! {
 			for deposit in &deposits {
 				let vault_id = PoolAssetVault::<Test>::get(pool_id, deposit.asset_id);
 				let vault_account = Vaults::account_id(&vault_id);
-	
+
 				assert_eq!(Tokens::balance(deposit.asset_id, &vault_account), 0);
 			}
 
@@ -1108,7 +1102,7 @@ proptest! {
 			for deposit in &deposits {
 				let vault_id = PoolAssetVault::<Test>::get(pool_id, deposit.asset_id);
 				let vault_account = Vaults::account_id(&vault_id);
-	
+
 				assert_eq!(Tokens::balance(deposit.asset_id, &vault_account), deposit.amount);
 			}
 
@@ -1119,7 +1113,7 @@ proptest! {
 	fn depositing_into_an_empty_pool_correctly_mints_lp_tokens(
 		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1)
 	) {
-		// Tests that if a user is the first to deposit into a newly created pool they are 
+		// Tests that if a user is the first to deposit into a newly created pool they are
 		//  |  rewarded a number of LP tokens equal to the weighted geometric mean of the
 		//  |  users deposits and Pool's weights
 		//  |-> Pre-Conditions:
@@ -1142,7 +1136,7 @@ proptest! {
 			let pool_id = PoolStateBuilder::default()
 				.config(config.clone())
 				.build();
-			
+
 			// Make the first deposit
 			for deposit in &deposits {
 				assert_ok!(Tokens::mint_into(deposit.asset_id, &ALICE, deposit.amount));
@@ -1150,7 +1144,7 @@ proptest! {
 			assert_ok!(Pools::all_asset_deposit(&ALICE, &pool_id, deposits.clone()));
 
 			// Condition ii
-			let weighted_geometric_mean: f64 = 
+			let weighted_geometric_mean: f64 =
 				invariant(deposits, config.weights).unwrap().to_num::<f64>();
 
 			let lp_token = Pools::lp_token_id(&pool_id).unwrap();
@@ -1164,15 +1158,15 @@ proptest! {
 	fn depositing_into_a_non_empty_pool_with_duplicate_deposits_correctly_mints_lp_tokens(
 		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1)
 	) {
-		// Tests that when a user deposits assets into a non-empty Pool (i.e. their deposit is not 
+		// Tests that when a user deposits assets into a non-empty Pool (i.e. their deposit is not
 		//  |  the Pool's first deposit) the user is rewarded with a number of LP tokens equal to
 		//  |  the increase in the Pools invariant value.
 		//  |-> Pre-Conditions:
 		//  |     i.   Pool P is nonempty
 		//  '-> Post-Conditions:
-		//        ii.  ∀ secondary deposits D into P : User U receives LP_minted tokens, where 
+		//        ii.  ∀ secondary deposits D into P : User U receives LP_minted tokens, where
 		//				   LP_minted = LP_supply * (w_i * (D_i / B_i)) and D_i and B_i refer to the
-		//                 deposited amount and pool's reserve  of asset i, respectively, and w_i 
+		//                 deposited amount and pool's reserve  of asset i, respectively, and w_i
 		//				   refers the Pool's weight of asset i
 
 		prop_assume!(pool_assets.len() >= 2);
@@ -1190,9 +1184,9 @@ proptest! {
 			let pool_id = PoolStateBuilder::default()
 				.config(config.clone())
 				.build();
-				
+
 			let lp_token = Pools::lp_token_id(&pool_id).unwrap();
-			
+
 			// Make the first deposit
 			for deposit in &deposit_1 {
 				assert_ok!(Tokens::mint_into(deposit.asset_id, &ALICE, deposit.amount));
@@ -1221,15 +1215,15 @@ proptest! {
 	fn depositing_into_a_non_empty_pool_correctly_mints_lp_tokens(
 		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(2),
 	) {
-		// Tests that when a user deposits assets into a non-empty Pool (i.e. their deposit is not 
+		// Tests that when a user deposits assets into a non-empty Pool (i.e. their deposit is not
 		//  |  the Pool's first deposit) the user is rewarded with a number of LP tokens equal to
 		//  |  the increase in the Pools invariant value.
 		//  |-> Pre-Conditions:
 		//  |     i.   Pool P is nonempty
 		//  '-> Post-Conditions:
-		//        ii.  ∀ secondary deposits D into P : User U receives LP_minted tokens, where 
+		//        ii.  ∀ secondary deposits D into P : User U receives LP_minted tokens, where
 		//				   LP_minted = LP_supply * (w_i * (D_i / B_i)) and D_i and B_i refer to the
-		//                 deposited amount and pool's reserve  of asset i, respectively, and w_i 
+		//                 deposited amount and pool's reserve  of asset i, respectively, and w_i
 		//				   refers the Pool's weight of asset i
 
 		let deposit_1 = (&all_asset_deposits[0]).to_vec();
@@ -1246,7 +1240,7 @@ proptest! {
 				.build();
 
 			let lp_token = Pools::lp_token_id(&pool_id).unwrap();
-			
+
 			// Make the first deposit
 			for deposit in &deposit_1 {
 				assert_ok!(Tokens::mint_into(deposit.asset_id, &ALICE, deposit.amount));
@@ -1281,7 +1275,7 @@ proptest! {
 	fn depositing_into_a_non_empty_pool_with_an_invalid_deposit_raises_an_error(
 		(config, all_deposits, all_balances) in generate_equal_weighted_pool_config_and_n_rational_all_asset_deposits_and_initial_balances(2),
 	) {
-		// Tests that when a user deposits assets into a non-empty Pool (i.e. their deposit is not 
+		// Tests that when a user deposits assets into a non-empty Pool (i.e. their deposit is not
 		//  |  the Pool's first deposit) the user is rewarded with a number of LP tokens equal to
 		//  |  the increase in the Pools invariant value.
 		//  |-> Pre-Conditions:
@@ -1302,7 +1296,7 @@ proptest! {
 
 		ExtBuilder::default().build().execute_with(|| {
 			let pool_id = create_pool_with(&config);
-			
+
 			// Condition i - Make the first deposit
 			for balance in &deposit_1 {
 				assert_ok!(Tokens::mint_into(balance.asset_id, &ALICE, balance.amount));
@@ -1351,7 +1345,7 @@ proptest! {
 				// Condition v
 				} else if !ValidityCheck::deposit_matches_underlying_value_distribution(
 					&pool_id, deposit, deposit_total, reserve_total
-				) {					
+				) {
 					assert_noop!(
 						<Pools as ConstantMeanMarket>::all_asset_deposit(&BOB, &pool_id, deposit_2.clone()),
 						Error::<Test>::DepositDoesNotMatchUnderlyingValueDistribution
@@ -1373,7 +1367,7 @@ proptest! {
 	fn depositing_an_amount_of_tokens_outside_of_asset_bounds_raises_an_error(
 		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1),
 	) {
-		// Tests that deposits after the initial deposit follow the Pool's deposit bounds set 
+		// Tests that deposits after the initial deposit follow the Pool's deposit bounds set
 		//  |  during Pool creation
 		//  |-> Pre-Conditions:
 		//  |     i.   Pool P is nonempty
@@ -1396,7 +1390,7 @@ proptest! {
 				.assets(&pool_assets)
 				.weights(&equal_weight_vector_for(&pool_assets))
 				.deposit_bounds(Bound {
-					minimum: Some(Perquintill::from_percent(lower_bound)), 
+					minimum: Some(Perquintill::from_percent(lower_bound)),
 					maximum: Some(Perquintill::from_percent(upper_bound))
 				})
 				.build();
@@ -1404,7 +1398,7 @@ proptest! {
 			let pool_id = PoolStateBuilder::default()
 				.config(config.clone())
 				.build();
-						
+
 			// Condition i - Make the first deposit
 			for balance in &deposit_1 {
 				assert_ok!(Tokens::mint_into(balance.asset_id, &ALICE, balance.amount));
@@ -1435,7 +1429,7 @@ proptest! {
 					amount: Perquintill::from_percent(upper_bound * 2) * deposit.amount
 				})
 				.collect::<Vec<Deposit<MockCurrencyId, Balance>>>();
-			
+
 			for balance in &deposit_3 {
 				assert_ok!(Tokens::mint_into(balance.asset_id, &CHARLIE, balance.amount));
 			}
@@ -1469,18 +1463,18 @@ proptest! {
 
 			// Condition i - Initial deposit
 			let _lp_tokens_minted_from_first_deposit = deposit_into(&pool_id, &user_1, deposit_1).unwrap();
-						
+
 			// Second deposit
 			let lp_tokens_minted_from_second_deposit = deposit_into(&pool_id, &user_2, deposit_2).unwrap();
 			let lp_tokens_minted_from_second_deposit: f64 = lp_tokens_minted_from_second_deposit as f64;
-			
+
 			// Third deposit
 			let lp_tokens_minted_from_third_deposit = deposit_into(&pool_id, &user_3, deposit_3).unwrap();
 			let lp_tokens_minted_from_third_deposit: f64 = lp_tokens_minted_from_third_deposit as f64;
 
 			// Condition ii
 			assert_relative_eq!(lp_tokens_minted_from_second_deposit, lp_tokens_minted_from_third_deposit, epsilon = 1.0);
-			
+
 			// Fourth deposit
 			let lp_tokens_minted_from_fourth_deposit = deposit_into(&pool_id, &user_4, deposit_4).unwrap();
 			let lp_tokens_minted_from_fourth_deposit: f64 = lp_tokens_minted_from_fourth_deposit as f64;
@@ -1509,7 +1503,7 @@ proptest! {
 
 		ExtBuilder::default().build().execute_with(|| {
 			let pool_id = create_pool_with(&config);
-			
+
 			for asset_id in &config.assets {
 				// Condition i
 				assert_eq!(PoolAssetBalance::<Test>::get(&pool_id, asset_id), 0);
@@ -1579,7 +1573,7 @@ proptest! {
 			}
 
 			assert_ok!(deposit_into(&pool_id, &ALICE, deposit_1.clone()));
-			
+
 			for deposit in &deposit_1 {
 				let vault_id = PoolAssetVault::<Test>::get(pool_id, deposit.asset_id);
 				let vault_lp_token_id = Vaults::lp_asset_id(&vault_id).unwrap();
@@ -1594,14 +1588,14 @@ proptest! {
 }
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(100))]
+	#![proptest_config(ProptestConfig::with_cases(100))]
 
 	#[test]
 	fn depositing_into_a_nonexistent_pool_raises_an_error(
-		(_pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1),	
+		(_pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1),
 	) {
-		// Tests that when trying to deposit assets into a pool using a pool id 
-		//  |  that doesn't correspond to an active pool, then an error is raised 
+		// Tests that when trying to deposit assets into a pool using a pool id
+		//  |  that doesn't correspond to an active pool, then an error is raised
 		//  '-> Condition
 		//        i. ∀ deposits d ⇒ pool_id must exist
 
@@ -1625,7 +1619,7 @@ proptest! {
 
 	#[test]
 	fn depositing_a_non_all_asset_deposit_as_an_all_asset_deposit_raises_an_error(
-		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1),	
+		(pool_assets, all_asset_deposits) in generate_pool_assets_and_n_all_asset_deposits(1),
 	) {
 		// Tests that when trying to do an all asset deposit all of the Pool's underlying
 		//    assets must be present in the deposit
@@ -1644,7 +1638,7 @@ proptest! {
 			let pool_id = PoolStateBuilder::default()
 				.config(config)
 				.build();
-			
+
 			for deposit in &deposit_1 {
 				assert_ok!(Tokens::mint_into(deposit.asset_id, &ALICE, deposit.amount));
 			}
@@ -1679,7 +1673,7 @@ proptest! {
 				.build();
 
 			// Condition i - tokens are not minted
-			
+
 			assert_noop!(
 				<Pools as ConstantMeanMarket>::all_asset_deposit(&ALICE, &pool_id, deposit_1.clone()),
 				Error::<Test>::IssuerDoesNotHaveBalanceTryingToDeposit
@@ -1689,12 +1683,12 @@ proptest! {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                              Spot Price                                             
+//                                              Spot Price
 // ----------------------------------------------------------------------------------------------------
 
 fn lps_share_of_pool(pool_id: &u64, lp_amount: Balance) -> Vec<Deposit<MockCurrencyId, Balance>> {
 	let assets = PoolAssets::<Test>::get(pool_id).unwrap();
-	
+
 	let lp_amount: f64 = lp_amount as f64;
 	let lp_circulating_supply = Pools::lp_circulating_supply(pool_id).unwrap();
 	let lp_circulating_supply: f64 = lp_circulating_supply as f64;
@@ -1707,14 +1701,9 @@ fn lps_share_of_pool(pool_id: &u64, lp_amount: Balance) -> Vec<Deposit<MockCurre
 		let reserve: f64 = reserve as f64;
 
 		let lp_reserve_share = reserve * (lp_amount / lp_circulating_supply);
-		let lp_reserve_share: Balance = lp_reserve_share as Balance; 
-		
-		lp_total_share.push(
-			Deposit {
-				asset_id: *asset_id,
-				amount: lp_reserve_share,
-			}
-		);
+		let lp_reserve_share: Balance = lp_reserve_share as Balance;
+
+		lp_total_share.push(Deposit { asset_id: *asset_id, amount: lp_reserve_share });
 	}
 
 	lp_total_share
@@ -1722,7 +1711,7 @@ fn lps_share_of_pool(pool_id: &u64, lp_amount: Balance) -> Vec<Deposit<MockCurre
 
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(1_000))]
-	
+
 	#[test]
 	fn spot_price_test_after_one_deposit(
 		(config, all_deposits) in generate_equal_weighted_pool_config_and_n_all_asset_deposits(1),
@@ -1758,19 +1747,19 @@ proptest! {
 
 					let numeraire_balance: f64 = PoolAssetBalance::<Test>::get(pool_id, numeraire.asset_id) as f64;
 					let numeraire_weight: f64 = numeraire.weight.deconstruct() as f64 / Perquintill::one().deconstruct() as f64;
-				
+
 					let expected_spot_price: f64 = (asset_balance / asset_weight) / (numeraire_balance / numeraire_weight);
 
-					let actual_spot_price: f64 = 
+					let actual_spot_price: f64 =
 						Pools::spot_price(&pool_id, &asset.asset_id, &numeraire.asset_id)
 							.unwrap()
 							.to_num::<f64>();
-							
+
 					// Condition ii
 					assert_relative_eq!(expected_spot_price, actual_spot_price, epsilon = 1.0);
 				}
 
-				let actual_spot_price: f64 = 
+				let actual_spot_price: f64 =
 					Pools::spot_price(&pool_id, &asset.asset_id, &asset.asset_id)
 						.unwrap()
 						.to_num::<f64>();
@@ -1794,21 +1783,18 @@ fn spot_price_static_test() {
 	//		  iii. ∀ assets a_i in P : spot_price of a_i in terms of a_i = 1
 
 	ExtBuilder::default().build().execute_with(|| {
-		let initial_assets = vec![
-		    MockCurrencyId::A,
-		    MockCurrencyId::B
-	    ];
-	
+		let initial_assets = vec![MockCurrencyId::A, MockCurrencyId::B];
+
 		let config = PoolConfigBuilder::default()
 			.assets(&initial_assets)
 			.weights(&equal_weight_vector_for(&initial_assets))
 			.build();
-		
+
 		let pool_id = create_pool_with(&config);
 
 		let deposits = vec![
-			Deposit { asset_id: MockCurrencyId::A, amount: 2_000},
-			Deposit { asset_id: MockCurrencyId::B, amount: 1_000}
+			Deposit { asset_id: MockCurrencyId::A, amount: 2_000 },
+			Deposit { asset_id: MockCurrencyId::B, amount: 1_000 },
 		];
 
 		// Condition i
@@ -1821,30 +1807,30 @@ fn spot_price_static_test() {
 			.unwrap()
 			.to_num::<f64>();
 		// Condition ii
-		assert_relative_eq!(2.0, spot_price, epsilon=0.0);
+		assert_relative_eq!(2.0, spot_price, epsilon = 0.0);
 
 		let spot_price = Pools::spot_price(&pool_id, &MockCurrencyId::A, &MockCurrencyId::A)
 			.unwrap()
 			.to_num::<f64>();
 		// Condition iii
-		assert_relative_eq!(1.0, spot_price, epsilon=0.0);
+		assert_relative_eq!(1.0, spot_price, epsilon = 0.0);
 
 		let spot_price = Pools::spot_price(&pool_id, &MockCurrencyId::B, &MockCurrencyId::A)
 			.unwrap()
 			.to_num::<f64>();
 		// Condition ii
-		assert_relative_eq!(0.5, spot_price, epsilon=0.0);
+		assert_relative_eq!(0.5, spot_price, epsilon = 0.0);
 
 		let spot_price = Pools::spot_price(&pool_id, &MockCurrencyId::B, &MockCurrencyId::B)
 			.unwrap()
 			.to_num::<f64>();
 		// Condition iii
-		assert_relative_eq!(1.0, spot_price, epsilon=0.0);
+		assert_relative_eq!(1.0, spot_price, epsilon = 0.0);
 	});
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                          All-Asset Withdraw                                              
+//                                          All-Asset Withdraw
 // ----------------------------------------------------------------------------------------------------
 
 // TODO: (Nevin)
@@ -1856,7 +1842,7 @@ fn spot_price_static_test() {
 //  -  withdrawing_from_a_pools_underlying_vaults_acts_properly
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(10_000))]
+	#![proptest_config(ProptestConfig::with_cases(10_000))]
 
 	#[test]
 	fn withdrawing_all_lp_tokens_from_a_single_user_pool_gives_back_pro_rata_share_of_liquidity_and_burns_lp_tokens(
@@ -1867,8 +1853,8 @@ proptest! {
 		//  |-> Pre-Conditions:
 		//  |     i.   User U has n > 0 LP tokens
 		//  '-> Post-Conditions:
-		//        ii.  ∀ withdraws W of △ LP tokens : user U receives △ / LP circulating supply % 
-		//				   of the Pool's assets 
+		//        ii.  ∀ withdraws W of △ LP tokens : user U receives △ / LP circulating supply %
+		//				   of the Pool's assets
 		//		  iii. User U has n - △ ≥ 0 LP tokens
 
 		// Only tests the state after one deposit
@@ -1879,8 +1865,8 @@ proptest! {
 			let lp_token = Pools::lp_token_id(&pool_id).unwrap();
 
 			let minted_lp_tokens = deposit_into(&pool_id, &user_1, deposit_1.clone()).unwrap();
-			
-			// Condition i			
+
+			// Condition i
 			assert!(minted_lp_tokens > 0);
 
 			// Withdraw assets
@@ -1932,12 +1918,12 @@ proptest! {
 		//  - update comment section
 
 		// Tests that if user deposits into a Pool, thus receiving LP tokens, withdraws using some of the LP tokens
-		//  |  and then deposits the withdrawn amount 
+		//  |  and then deposits the withdrawn amount
 		//  |-> Pre-Conditions:
 		//  |     i.   User U has n > 0 LP tokens
 		//  '-> Post-Conditions:
-		//        ii.  ∀ withdraws W of △ LP tokens : user U receives △ / LP circulating supply % 
-		//				   of the Pool's assets 
+		//        ii.  ∀ withdraws W of △ LP tokens : user U receives △ / LP circulating supply %
+		//				   of the Pool's assets
 		//		  iii. User U has n - △ ≥ 0 LP tokens
 
 		// Only tests the state after one deposit and one withdraw
@@ -1949,20 +1935,20 @@ proptest! {
 
 			// Initial deposit
 			let lp_tokens_minted_from_first_deposit = deposit_into(&pool_id, &user_1, deposit_1).unwrap();
-			
+
 			// First withdraw
 			let lp_tokens_to_withdraw = withdraw_ratio_1 * lp_tokens_minted_from_first_deposit;
 			let assets_withdrawn = Pools::all_asset_withdraw(&user_1, &pool_id, lp_tokens_to_withdraw).unwrap();
-			
+
 			// Second deposit
 			let lp_tokens_minted_from_second_deposit = deposit_into(&pool_id, &user_1, assets_withdrawn).unwrap();
-			
+
 			// Second withdraw
 			let assets_withdrawn = Pools::all_asset_withdraw(&user_1, &pool_id, lp_tokens_minted_from_second_deposit).unwrap();
-			
+
 			// Third deposit
 			let lp_tokens_minted_from_third_deposit = deposit_into(&pool_id, &user_1, assets_withdrawn).unwrap();
-			
+
 			assert_eq!(lp_tokens_minted_from_second_deposit, lp_tokens_minted_from_third_deposit);
 		});
 	}
@@ -1976,8 +1962,8 @@ proptest! {
 		//  |-> Pre-Conditions:
 		//  |     i.   User U has n > 0 LP tokens
 		//  '-> Post-Conditions:
-		//        ii.  ∀ withdraws W of △ LP tokens : user U receives △ / LP circulating supply % 
-		//				   of the Pool's assets 
+		//        ii.  ∀ withdraws W of △ LP tokens : user U receives △ / LP circulating supply %
+		//				   of the Pool's assets
 		//		  iii. User U has n - △ ≥ 0 LP tokens
 
 		// Only tests the state after one deposit
@@ -1989,8 +1975,8 @@ proptest! {
 			let lp_token = Pools::lp_token_id(&pool_id).unwrap();
 
 			let minted_lp_tokens = deposit_into(&pool_id, &user_1, deposit_1.clone()).unwrap();
-			
-			// Condition i			
+
+			// Condition i
 			assert!(minted_lp_tokens > 0);
 
 			// Withdraw assets
@@ -2044,8 +2030,8 @@ proptest! {
 		//  |-> Pre-Conditions:
 		//  |     i.   User U has n > 0 LP tokens
 		//  '-> Post-Conditions:
-		//        ii.  ∀ withdraws W of △ LP tokens : user U receives △ / LP circulating supply % 
-		//				   of the Pool's assets 
+		//        ii.  ∀ withdraws W of △ LP tokens : user U receives △ / LP circulating supply %
+		//				   of the Pool's assets
 		//		  iii. User U has n - △ ≥ 0 LP tokens
 
 		// Only tests the state after one deposit
@@ -2056,8 +2042,8 @@ proptest! {
 			let lp_token = Pools::lp_token_id(&pool_id).unwrap();
 
 			let alices_lp_tokens = deposit_into(&pool_id, &ALICE, deposit_1.clone()).unwrap();
-			
-			// Condition i			
+
+			// Condition i
 			assert!(alices_lp_tokens > 0);
 
 			// Withdraw assets
@@ -2083,8 +2069,8 @@ proptest! {
 		//  |-> Pre-Conditions:
 		//  |     i.   User U has n > 0 LP tokens
 		//  '-> Post-Conditions:
-		//        ii.  ∀ withdraws W of △ LP tokens : user U receives △ / LP circulating supply % 
-		//				   of the Pool's assets 
+		//        ii.  ∀ withdraws W of △ LP tokens : user U receives △ / LP circulating supply %
+		//				   of the Pool's assets
 		//		  iii. User U has n - △ ≥ 0 LP tokens
 
 		// Use the same deposit for all three seperate users
@@ -2110,10 +2096,10 @@ proptest! {
 
 			// Alice withdraws
 			assert_ok!(<Pools as ConstantMeanMarket>::all_asset_withdraw(&ALICE, &pool_id, alices_lp_tokens));
-			
+
 			// Bob withdraws
 			assert_ok!(<Pools as ConstantMeanMarket>::all_asset_withdraw(&BOB, &pool_id, bobs_lp_tokens));
-			
+
 			// Charlie withdraws
 			assert_ok!(<Pools as ConstantMeanMarket>::all_asset_withdraw(&CHARLIE, &pool_id, charlies_lp_tokens));
 
@@ -2174,24 +2160,24 @@ proptest! {
 			let alices_lp_tokens = deposit_into(&pool_id, &ALICE, deposit_1.clone()).unwrap();
 			// Bob deposits
 			let bobs_lp_tokens = deposit_into(&pool_id, &BOB, deposit_1.clone()).unwrap();
-			
+
 			for (asset_1, asset_2) in deposit_1.iter().zip(deposit_2.iter()) {
 				let asset = asset_1.asset_id;
 				let deposited_amount = asset_1.amount + asset_2.amount;
-				
+
 				// Condition i
 				assert_eq!(deposited_amount, PoolAssetBalance::<Test>::get(&pool_id, asset), "storage not correclty updated by depositing");
 				// Condition ii
 				assert_eq!(deposited_amount, PoolAssetTotalBalance::<Test>::get(&pool_id, asset), "storage not correclty updated by depositing");
 			}
-			
+
 			// Alice withdraws
 			assert_ok!(<Pools as ConstantMeanMarket>::all_asset_withdraw(&ALICE, &pool_id, alices_lp_tokens));
-			
+
 			for (asset_1, asset_2) in deposit_1.iter().zip(deposit_2.iter()) {
 				let asset = asset_1.asset_id;
 				let deposited_amount = asset_1.amount + asset_2.amount;
-				
+
 				let alices_balance = Tokens::balance(asset_2.asset_id, &ALICE);
 
 				// Condition iii
@@ -2218,7 +2204,7 @@ proptest! {
 
 			for asset_2 in &deposit_2 {
 				let asset = asset_2.asset_id;
-				
+
 				// Condition iii
 				assert_eq!(0, PoolAssetBalance::<Test>::get(&pool_id, asset), "storage not correclty updated by second withdraw");
 				// Condition iv
@@ -2300,14 +2286,14 @@ proptest! {
 }
 
 proptest! {
-    #![proptest_config(ProptestConfig::with_cases(1_000))]
+	#![proptest_config(ProptestConfig::with_cases(1_000))]
 
 	#[test]
 	fn withdrawing_from_a_pool_that_does_not_exist_raises_an_error(
 		(_config, _all_deposits) in generate_equal_weighted_pool_config_and_n_all_asset_deposits(1),
 	) {
 		// Tests that when trying to withdraw assets from a pool using a pool id that does not
-		//  |  correspond to an active pool, an error is raised 
+		//  |  correspond to an active pool, an error is raised
 		//  '-> Condition
 		//        i. ∀ withdraws w ⇒ pool_id must exist
 
@@ -2338,8 +2324,8 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let pool_id = create_pool_with(&config);
 			let alice_lp_tokens = deposit_into(&pool_id, &ALICE, deposit_1).unwrap();
-			
-			// Condition i			
+
+			// Condition i
 			assert_noop!(
 				<Pools as ConstantMeanMarket>::all_asset_withdraw(&ALICE, &pool_id, alice_lp_tokens + 1),
 				Error::<Test>::IssuerDoesNotHaveBalanceTryingToDeposit
@@ -2374,7 +2360,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let pool_id = create_pool_with(&config);
 			let minted_lp_tokens = deposit_into(&pool_id, &user_1, deposit_1).unwrap();
-			
+
 			let withdraw_lp_tokens = withdraw_ratio_1 * minted_lp_tokens;
 			// update the withdraw ratio incase there was any rounding with the above line
 			let withdraw_ratio_1 = Perquintill::from_rational(withdraw_lp_tokens, minted_lp_tokens);
@@ -2397,7 +2383,7 @@ proptest! {
 // #[test]
 // fn withdraw_transfers_users_share_of_underlying_assets_from_pools_account_into_the_users_account() {
 // 	// Test that when a user deposits assets into the pool, receives lp tokens and
-// 	//  |  deposits those lp tokens back into the pool the user receives their share 
+// 	//  |  deposits those lp tokens back into the pool the user receives their share
 // 	//  |  of the pools assets and it is transfered out of the pools (and vaults) account
 // 	//  '-> Conditions:
 // 	//        i.   User no longer has pools lp tokens
@@ -2444,7 +2430,7 @@ proptest! {
 // 			Deposit {asset_id: MockCurrencyId::C, amount: 1_010},
 // 		];
 // 		assert_ok!(Pools::deposit(Origin::signed(ALICE), pool_id, alices_deposit.clone()));
-		
+
 // 		// Bob deposits
 // 		assert_ok!(Tokens::mint_into(MockCurrencyId::B, &BOB, 505));
 // 		assert_ok!(Tokens::mint_into(MockCurrencyId::C, &BOB, 505));
@@ -2467,7 +2453,7 @@ proptest! {
 
 // 		// Condition i
 // 		assert_eq!(Tokens::balance(pool_lp_token, &ALICE), pool_lp_tokens_received - withdraw);
-		
+
 // 		// Condition ii
 // 		for deposit in &alices_deposit {
 // 			assert_eq!(Tokens::balance(deposit.asset_id, &ALICE), deposit.amount/2);
@@ -2475,7 +2461,7 @@ proptest! {
 
 // 		// Condition iii
 // 		assert_eq!(Tokens::balance(pool_lp_token, &pool_account), 0);
-		
+
 // 		for asset_id in &config.asset_ids {
 // 			let vault_id = PoolAssetVault::<Test>::get(pool_id, *asset_id);
 // 			let vault_account = Vaults::account_id(&vault_id);
@@ -2484,14 +2470,14 @@ proptest! {
 
 // 			// Condition iv
 // 			assert_eq!(
-// 				Tokens::balance(vault_lp_token_id, &pool_account), 
-// 				Tokens::balance(*asset_id, &vault_account) 
+// 				Tokens::balance(vault_lp_token_id, &pool_account),
+// 				Tokens::balance(*asset_id, &vault_account)
 // 			);
 
 // 			// Condition v
 // 			assert_eq!(
-// 				Tokens::balance(*asset_id, &vault_account), 
-// 				1_010, 
+// 				Tokens::balance(*asset_id, &vault_account),
+// 				1_010,
 // 			);
 
 // 			// Condition vi
@@ -2559,7 +2545,7 @@ proptest! {
 // 		assert_ok!(Pools::deposit(Origin::signed(BOB), pool_id, deposits.clone()));
 
 // 		let lp_token_id = PoolIdToPoolInfo::<Test>::get(pool_id).lp_token_id;
-		
+
 // 		// Condition i
 // 		let lp_circulating_supply = Tokens::total_issuance(lp_token_id);
 // 		assert_eq!(
@@ -2590,7 +2576,7 @@ proptest! {
 // 	//  |     i.  Pool P is not equal-weighted
 // 	//  '-> Post-Conditions:                       circulating_supply_lp - deposited_lp
 // 	//        ii. ∀ withdraws w ⇒ wi = bi x (1 - --------------------------------------), where 1 ≤ i ≤ n
-// 	//                                                    circulating_supply_lp         
+// 	//                                                    circulating_supply_lp
 
 // 	ExtBuilder::default().build().execute_with(|| {
 // 		// Pool Creation
@@ -2665,7 +2651,7 @@ proptest! {
 // }
 
 // ----------------------------------------------------------------------------------------------------
-//                                                 Math                                                
+//                                                 Math
 // ----------------------------------------------------------------------------------------------------
 
 pub type FixedBalance = U110F18;
@@ -2712,26 +2698,20 @@ fn fixed_u128() {
 }
 
 fn invariant(
-	reserves: Vec<Deposit<MockCurrencyId, Balance>>, 
-	weights: Vec<Weight<MockCurrencyId, Perquintill>>
+	reserves: Vec<Deposit<MockCurrencyId, Balance>>,
+	weights: Vec<Weight<MockCurrencyId, Perquintill>>,
 ) -> Result<FixedBalance, ()> {
 	let mut invariant_constant: FixedBalance = FixedBalance::from_num(1u8);
 
 	for (reserve, weight) in reserves.iter().zip(weights.iter()) {
-
 		let reserve: FixedBalance = FixedBalance::from_num(reserve.amount);
 		let weight: FixedBalance = FixedBalance::from_num(
-			weight.weight.deconstruct() as f64 / Perquintill::one().deconstruct() as f64
+			weight.weight.deconstruct() as f64 / Perquintill::one().deconstruct() as f64,
 		);
 
-		let result = pow(
-			reserve,
-			weight
-		).unwrap();
-		
-		invariant_constant = invariant_constant.checked_mul(
-			result
-		).unwrap();
+		let result = pow(reserve, weight).unwrap();
+
+		invariant_constant = invariant_constant.checked_mul(result).unwrap();
 	}
 
 	Ok(invariant_constant)
@@ -2740,25 +2720,13 @@ fn invariant(
 #[test]
 fn test_invariant() {
 	let reserves = vec![
-		Deposit {
-			asset_id: MockCurrencyId::A,
-			amount: 100
-		},
-		Deposit {
-			asset_id: MockCurrencyId::B,
-			amount: 100
-		},
+		Deposit { asset_id: MockCurrencyId::A, amount: 100 },
+		Deposit { asset_id: MockCurrencyId::B, amount: 100 },
 	];
 
 	let weights = vec![
-		Weight {
-			asset_id: MockCurrencyId::A,
-			weight: Perquintill::from_percent(50)
-		},
-		Weight {
-			asset_id: MockCurrencyId::B,
-			weight: Perquintill::from_percent(50)
-		},
+		Weight { asset_id: MockCurrencyId::A, weight: Perquintill::from_percent(50) },
+		Weight { asset_id: MockCurrencyId::B, weight: Perquintill::from_percent(50) },
 	];
 
 	let result: f64 = invariant(reserves, weights).unwrap().lossy_into();
