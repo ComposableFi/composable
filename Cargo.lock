@@ -7734,7 +7734,6 @@ dependencies = [
  "cosmwasm-minimal-std",
  "cosmwasm-vm",
  "cosmwasm-vm-wasmi",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log 0.4.17",

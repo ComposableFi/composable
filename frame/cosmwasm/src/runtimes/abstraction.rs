@@ -28,6 +28,7 @@ impl<T: Config + VMPallet> TryFrom<Vec<u8>> for CanonicalCosmwasmAccount<T> {
 	}
 }
 
+#[allow(clippy::from_over_into)]
 impl<T: Config> Into<CanonicalAddr> for CanonicalCosmwasmAccount<T> {
 	fn into(self) -> CanonicalAddr {
 		let cosmwasm_account = &self.0;

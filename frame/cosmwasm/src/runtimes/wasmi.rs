@@ -369,7 +369,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		for ((message, signature), public_key) in
 			messages.iter().zip(signatures.iter()).zip(public_keys.iter())
 		{
-			if self.ed25519_verify(message, signature, public_key)? == false {
+			if !(self.ed25519_verify(message, signature, public_key)?) {
 				return Ok(false)
 			}
 		}
