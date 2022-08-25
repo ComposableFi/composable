@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-07-05T22:23:24.365425336Z -->
+<!-- Generated at 2022-08-15T14:18:26.47652Z -->
 
 # Assets Registry Pallet Extrinsics
 
@@ -7,8 +7,11 @@
 
 [`register_asset`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets_registry/pallet/enum.Call.html#variant.register_asset)
 
-Creates asset using `CurrencyFactory`,
+Creates asset using `CurrencyFactory`.
 Raises `AssetRegistered` event
+
+Sets only required fields by `CurrencyFactory`, to upsert metadata use referenced
+pallet.
 
 ### Parameters:
 

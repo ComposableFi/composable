@@ -10,7 +10,7 @@ use crate::{
 	models::VaultInfo,
 	*,
 };
-use composable_support::validation::Validated;
+use composable_support::{math::safe::safe_multiply_by_rational, validation::Validated};
 use composable_tests_helpers::{
 	prop_assert_acceptable_computation_error, prop_assert_ok,
 	test::helper::default_acceptable_computation_error,
@@ -26,7 +26,7 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
-use sp_runtime::{helpers_128bit::multiply_by_rational, FixedPointNumber, Perbill, Perquintill};
+use sp_runtime::{ArithmeticError, FixedPointNumber, Perbill, Perquintill};
 
 const DEFAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 // dependent on the previous value, both should be changed
@@ -430,7 +430,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 			prop_assert_eq!(Tokens::balance(vault.lp_token_id, &ALICE), 0);
-			assert_noop!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount), Error::<Test>::InsufficientLpTokens);
+			assert_noop!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount), ArithmeticError::Overflow);
 			Ok(())
 		})?;
 	}
@@ -712,13 +712,13 @@ proptest! {
 				let curr_lp_deposited_before_moment = lps_start + idx <= strategy_moment;
 
 				if curr_lp_deposited_before_moment {
-					let strategy_native_tokens_deposit = multiply_by_rational(
+					let strategy_native_tokens_deposit = safe_multiply_by_rational(
 						strategy_deposit / 2,
 						lp_tokens,
 						lp_tokens_total,
 					)
 					.expect("qed;");
-					let strategy_native_tokens_withdraw = multiply_by_rational(
+					let strategy_native_tokens_withdraw = safe_multiply_by_rational(
 						strategy_withdraw_diff / 2,
 						lp_tokens,
 						lp_tokens_total,

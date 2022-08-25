@@ -6,7 +6,7 @@ use scale_info::TypeInfo;
 use sp_runtime::{MultiSignature, RuntimeDebug};
 
 /// A single Airdrop.
-#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, PartialEq, Eq, Copy, Clone, TypeInfo, MaxEncodedLen)]
 pub struct Airdrop<AccountId, Balance, Moment> {
 	/// Creator of the Airdrop.
 	pub creator: AccountId,
@@ -25,7 +25,7 @@ pub struct Airdrop<AccountId, Balance, Moment> {
 }
 
 /// Funds, and related information, to be claimed by an Airdrop recipient.
-#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, PartialEq, Eq, Copy, Clone, TypeInfo, MaxEncodedLen)]
 pub struct RecipientFund<Balance, Period> {
 	/// Total funds committed for this recipient.
 	pub total: Balance,
@@ -38,7 +38,7 @@ pub struct RecipientFund<Balance, Period> {
 }
 
 /// Current State of an [`Airdrop`](Airdrop).
-#[derive(Debug, Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
+#[derive(Debug, Encode, Decode, PartialEq, Eq, Copy, Clone, TypeInfo, MaxEncodedLen)]
 pub enum AirdropState {
 	/// The Airdrop has been created but has not started.
 	Created,
@@ -49,7 +49,7 @@ pub enum AirdropState {
 }
 
 /// Proof that a remote account owns a local recipient account.
-#[derive(Clone, RuntimeDebug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, RuntimeDebug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum Proof<AccountId> {
 	RelayChain(AccountId, MultiSignature),
 	Ethereum(EcdsaSignature),

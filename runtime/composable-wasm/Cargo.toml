@@ -1,0 +1,17 @@
+[package]
+edition = "2021"
+name = "composable-runtime-wasm"
+version = "0.1.0"
+
+authors = ["Hussein Ait Lahcen <hussein.aitlahcen@gmail.com>"]
+description = "Composable, Polkadot Parachain Runtime WASM Implementation"
+
+[dependencies]
+composable-runtime = { path = "../composable/", default-features = false }
+
+[lib]
+crate-type = ["cdylib"]
+name = "composable_runtime"
+
+[features]
+runtime-benchmarks = ["composable-runtime/runtime-benchmarks"]

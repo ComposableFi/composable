@@ -6,27 +6,27 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, rev = "eed85119358bc80bbb1aedd98778f370d4932dee" }
-substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", rev = "eed85119358bc80bbb1aedd98778f370d4932dee" }
+simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "polkadot-v0.9.27" }
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "polkadot-v0.9.27" }
 
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.24" }
-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-
-
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.27" }
+system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 
-parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.24" }
-polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.24" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+
+parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.27" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 common = { path = "../../runtime/common" }
 composable-runtime = { path = "../../runtime/composable" }
@@ -41,4 +41,4 @@ simnode-common = { path = "../common" }
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 hex = "0.4.3"
 num-traits = "0.2.14"
-sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

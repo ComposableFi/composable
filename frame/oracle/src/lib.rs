@@ -71,7 +71,6 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::{
-		helpers_128bit::multiply_by_rational,
 		offchain::{http, Duration},
 		traits::{
 			AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub,
@@ -194,13 +193,15 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 	}
 
-	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Eq, TypeInfo, Clone)]
 	pub struct Withdraw<Balance, BlockNumber> {
 		pub stake: Balance,
 		pub unlock_block: BlockNumber,
 	}
 
-	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
+	#[derive(
+		Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, Eq, TypeInfo,
+	)]
 	pub struct PrePrice<PriceValue, BlockNumber, AccountId> {
 		/// The price of an asset, normalized to 12 decimals.
 		pub price: PriceValue,
@@ -210,7 +211,7 @@ pub mod pallet {
 		pub who: AccountId,
 	}
 
-	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Clone, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Eq, Clone, TypeInfo)]
 	pub struct AssetInfo<Percent, BlockNumber, Balance> {
 		pub threshold: Percent,
 		pub min_answers: u32,
@@ -219,6 +220,7 @@ pub mod pallet {
 		/// Reward allocation weight for this asset type out of the total block reward.
 		pub reward_weight: Balance,
 		pub slash: Balance,
+		pub emit_price_changes: bool,
 	}
 
 	type BalanceOf<T> = <T as Config>::Balance;
@@ -345,6 +347,8 @@ pub mod pallet {
 		RewardingAdjustment(T::Moment),
 		/// Answer from oracle removed for staleness. \[oracle_address, price\]
 		AnswerPruned(T::AccountId, T::PriceValue),
+		/// Price changed by oracle \[asset_id, price\]
+		PriceChanged(T::AssetId, T::PriceValue),
 	}
 
 	#[pallet::error]
@@ -494,7 +498,7 @@ pub mod pallet {
 			let asset_price_per_unit: u128 = Self::get_price(asset_id, unit)?.price.into();
 
 			let amount: u128 = amount.into();
-			let result = multiply_by_rational(amount, unit.into(), asset_price_per_unit)?;
+			let result = safe_multiply_by_rational(amount, unit.into(), asset_price_per_unit)?;
 			let result: u64 = result.try_into().map_err(|_| ArithmeticError::Overflow)?;
 
 			Ok(result.into())
@@ -512,6 +516,7 @@ pub mod pallet {
 		/// - `block_interval`: blocks until oracle triggered
 		/// - `reward`: reward amount for correct answer
 		/// - `slash`: slash amount for bad answer
+		/// - `emit_price_changes`: emit PriceChanged event when asset price changes
 		///
 		/// Emits `DepositEvent` event when successful.
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
@@ -524,6 +529,7 @@ pub mod pallet {
 			block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
 			reward_weight: BalanceOf<T>,
 			slash: BalanceOf<T>,
+			emit_price_changes: bool,
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
 
@@ -541,6 +547,7 @@ pub mod pallet {
 				block_interval: *block_interval,
 				reward_weight,
 				slash,
+				emit_price_changes,
 			};
 			// track reward total weight for all assets
 			let mut reward_tracker = RewardTrackerStore::<T>::get().unwrap_or_default();
@@ -964,6 +971,11 @@ pub mod pallet {
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_prices.len() as u32 >= asset_info.min_answers {
 				if let Some(price) = Self::calculate_price(&pre_prices, &asset_info) {
+					let last_price = match pre_prices.last() {
+						Some(pre_price) => pre_price.price,
+						_ => Zero::zero(),
+					};
+
 					Prices::<T>::insert(asset_id, Price { price, block });
 					PriceHistory::<T>::try_mutate(asset_id, |prices| -> DispatchResult {
 						if prices.len() as u32 >= T::MaxHistory::get() {
@@ -979,6 +991,11 @@ pub mod pallet {
 					PrePrices::<T>::remove(asset_id);
 
 					Self::handle_payout(&pre_prices, price, asset_id, &asset_info)?;
+
+					// Emit `PriceChanged` event when prices have changed, if required.
+					if price != last_price && asset_info.emit_price_changes {
+						Self::deposit_event(Event::PriceChanged(asset_id, price));
+					}
 				}
 			}
 			Ok(())
@@ -1163,9 +1180,7 @@ pub mod pallet {
 			amount: T::PriceValue,
 		) -> Result<T::PriceValue, DispatchError> {
 			let unit = <Self as Oracle>::LocalAssets::unit(asset_id)?;
-			// dbg!(&unit);
-			// dbg!(&amount);
-			let price = multiply_by_rational(price.into(), amount.into(), unit)?;
+			let price = safe_multiply_by_rational(price.into(), amount.into(), unit)?;
 			Ok(price.into())
 		}
 
