@@ -47,49 +47,51 @@ export class ActiveUsersResolver {
   async activeUsers(
     @Arg("params", { validate: true }) input: ActiveUsersInput
   ): Promise<ActiveUsers[]> {
-    let interval_ms = input.intervalMinutes * 60 * 1000;
-    let params: any[] = [interval_ms];
-    let where: string[] = [];
+    const intervalMilliseconds = input.intervalMinutes * 60 * 1000;
+    const params: any[] = [intervalMilliseconds];
+    const where: string[] = [];
     let from: number;
 
     // Set "from" filter
     if (input.dateFrom) {
       from = new Date(input.dateFrom).valueOf();
     } else {
-      let d = new Date();
+      const date = new Date();
       // TODO: define default date
-      d.setDate(d.getDate() - 7);
-      from = d.valueOf();
+      date.setDate(date.getDate() - 7);
+      from = date.valueOf();
     }
-    from = Math.floor(from / interval_ms) * interval_ms;
+    from = Math.floor(from / intervalMilliseconds) * intervalMilliseconds;
     where.push(`timestamp > $${params.push(from)}`);
 
     // Set "to" filter
     if (input.dateTo) {
       let to = new Date(input.dateTo).valueOf();
-      to = Math.ceil(to / interval_ms) * interval_ms;
+      to = Math.ceil(to / intervalMilliseconds) * intervalMilliseconds;
       where.push(`timestamp < $${params.push(to)}`);
     }
 
     const manager = await this.tx();
 
-    let rows: any[] = await manager.getRepository(Activity).query(
-      `
+    let rows: { period: string; count: string }[] = await manager
+      .getRepository(Activity)
+      .query(
+        `
             SELECT
               round(timestamp / $1) * $1 as period,
               count(distinct account_id) as count
             FROM activity
             WHERE ${where.join(" AND ")}
             GROUP BY period
-            order by period DESC
+            ORDER BY period DESC
         `,
-      params
-    );
+        params
+      );
 
     return rows.map(
       (row) =>
         new ActiveUsers({
-          date: new Date(parseInt(row.period)).toISOString(),
+          date: new Date(parseInt(row.period, 10)).toISOString(),
           count: Number(row.count),
         })
     );
