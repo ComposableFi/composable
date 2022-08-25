@@ -13,9 +13,9 @@ use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
-	Perquintill,
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup},
+	Perquintill,
 };
 
 pub type BlockNumber = u64;
@@ -113,7 +113,7 @@ impl pallet_vault::Config for Test {
 parameter_types! {
 	pub const NativeAssetId: MockCurrencyId = MockCurrencyId::A;
 	pub const TestPoolPalletID: PalletId = PalletId(*b"testpool");
-	
+
 	// pub Epsilon: Perquintill = Perquintill::from_float(0.0000000000000001);
 	pub Epsilon: Perquintill = Weight::from_float(0.01);
 }
@@ -172,7 +172,7 @@ construct_runtime!(
 		Vaults: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 
-        Pools: pallet_pool::{Pallet, Call, Storage, Event<T>},
+		Pools: pallet_pool::{Pallet, Call, Storage, Event<T>},
 	}
 );
 

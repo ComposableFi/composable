@@ -1,18 +1,14 @@
 pub use pallet::*;
-pub use proptest::{
-	prelude::*,
-	strategy::Strategy,
-};
-
+pub use proptest::{prelude::*, strategy::Strategy};
 
 #[frame_support::pallet]
 pub mod pallet {
 	use composable_traits::currency::CurrencyFactory;
-	use frame_support::{pallet_prelude::*/*, PalletId*/};
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::OriginFor;
 	use scale_info::TypeInfo;
 
-	use proptest::{prelude::*};
+	use proptest::prelude::*;
 
 	// pub const PALLET_ID: PalletId = PalletId(*b"mck_curf");
 
@@ -93,11 +89,9 @@ pub mod pallet {
 			Just(MockCurrencyId::X),
 			Just(MockCurrencyId::Y),
 			Just(MockCurrencyId::Z),
-
 			any::<u32>().prop_map(MockCurrencyId::LpToken),
 		]
 	}
-
 
 	// impl Strategy for MockCurrencyId {
 	// 	fn new_tree(&self, runner: &mut TestRunner) -> NewTree<Self> {
