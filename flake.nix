@@ -128,7 +128,7 @@
 
           # for containers which are intented for testing, debug and development (including running isolated runtime)
           container-tools =
-            [ coreutils bash procps findutils nettools bottom nix procps ];
+            [ bash bottom coreutils findutils gawk gnugrep less nettools nix procps ];
 
           # source relevant to build rust only
           rust-src =
@@ -312,6 +312,12 @@
                 --steps=1 \
                 --repeat=1
             '';
+          docs-renders = [
+                mdbook
+                plantuml
+                graphviz
+                pandoc
+          ];
 
         in
         rec {
@@ -406,12 +412,23 @@
             }).script;
 
             # Dali devnet container
-            devnet-container = dockerTools.buildLayeredImage {
+            devnet-container = dockerTools.buildImage {
               name = "composable-devnet-container";
-              contents = container-tools;
-              config = {
-                Cmd = [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+              tag = "latest";
+              copyToRoot = pkgs.buildEnv {
+                name = "image-root";
+                paths = [ curl websocat ] ++ container-tools;
+                pathsToLink = [ "/bin" ];
               };
+              config = {
+                Entrypoint = [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+                WorkingDir = "/home/polkadot-launch";
+              };
+              runAsRoot = ''
+                mkdir -p /home/polkadot-launch /tmp
+                chown 1000:1000 /home/polkadot-launch
+                chmod 777 /tmp
+              '';
             };
 
             # TODO: inherit and provide script to run all stuff
@@ -531,7 +548,7 @@
                 "--workspace --exclude local-integration-tests --all-features";
             });
 
-            kusama-picasso-karura =
+            kusama-picasso-karura-devnet =
               let
                 config = (pkgs.callPackage
                   ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix
@@ -584,7 +601,8 @@
                   wasm-optimizer
                   xorriso
                   zlib.out
-                ];
+                  nix-tree
+                ] ++ docs-renders;
             });
 
             developers-minimal = mkShell (common-attrs // {
@@ -619,13 +637,9 @@
 
             writers = mkShell {
               buildInputs = with packages; [
-                mdbook
                 python3
-                plantuml
-                graphviz
-                pandoc
                 nodejs
-              ];
+              ] ++ doc-renders;
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
@@ -643,7 +657,6 @@
             devnet-xcvm-up =
               let
                 devnet-xcvm =
-
                   pkgs.arion.build
                     {
                       modules = [
@@ -705,11 +718,11 @@
                 "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
             };
 
-            kusama-picasso-karura = {
+            kusama-picasso-karura-devnet = {
               # nix run .#devnet
               type = "app";
               program =
-                "${packages.kusama-picasso-karura}/bin/kusama-picasso-karura";
+                "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
             };
 
             price-feed = {
