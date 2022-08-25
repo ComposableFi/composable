@@ -63,9 +63,14 @@ export async function processOraclePriceChanged(ctx: EventHandlerContext) {
   console.log("Process price change");
   const event = new OraclePriceChangedEvent(ctx);
   const { assetId, price } = getPriceChangedEvent(event);
+  const price2 = BigInt(Math.round(Math.random() * 40));
 
   let asset: Asset | undefined = await ctx.store.get(Asset, {
     where: { id: assetId.toString() },
+  });
+
+  let asset2: Asset | undefined = await ctx.store.get(Asset, {
+    where: { id: "2" },
   });
 
   if (!asset) {
@@ -74,14 +79,21 @@ export async function processOraclePriceChanged(ctx: EventHandlerContext) {
     });
   }
 
-  updateAsset(ctx, asset, price);
+  if (!asset2) {
+    asset2 = new Asset({
+      id: "2",
+    });
+  }
 
-  asset.eventId = ctx.event.id;
-  asset.price = price;
+  updateAsset(ctx, asset, price);
+  updateAsset(ctx, asset2, price2);
 
   await ctx.store.save(asset);
+  await ctx.store.save(asset2);
 
   const historicalAssetPrice = getHistoricalAssetPrice(ctx, asset, price);
+  const historicalAssetPrice2 = getHistoricalAssetPrice(ctx, asset2, price2);
 
   await ctx.store.save(historicalAssetPrice);
+  await ctx.store.save(historicalAssetPrice2);
 }

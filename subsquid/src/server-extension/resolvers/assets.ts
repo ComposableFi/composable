@@ -2,6 +2,8 @@ import { Field, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { Asset, HistoricalAssetPrice } from "../../model";
 
+const DAY_IN_MS = 24 * 60 * 60 * 1_000;
+
 @ObjectType()
 export class Assets {
   @Field(() => String, { nullable: false })
@@ -16,8 +18,8 @@ export class Assets {
   @Field(() => BigInt, { nullable: false })
   prevPrice!: bigint;
 
-  @Field(() => Number, { nullable: false })
-  change!: number;
+  @Field(() => Number, { nullable: true })
+  change?: number | undefined | null;
 
   constructor(props: Partial<Assets>) {
     Object.assign(this, props);
@@ -43,7 +45,7 @@ type AssetData = {
   price: bigint;
   prevPrice: bigint;
   timestamp: string;
-  change: number;
+  change?: number | null;
 };
 
 @Resolver()
@@ -52,7 +54,6 @@ export class AssetsResolver {
 
   @Query(() => [Assets])
   async assetsPrices(): Promise<Assets[]> {
-    const DAY_IN_MS = 24 * 60 * 60 * 1_000;
     const currentTimestamp = new Date().valueOf();
     const threshold = currentTimestamp - DAY_IN_MS;
 
@@ -68,13 +69,15 @@ export class AssetsResolver {
       `
     );
 
-    // Get asset prices into an object for easier read.
+    // Get asset prices into an object for easier reading.
     let assetsPrices = assets.reduce<Record<string, string>>((acc, curr) => {
       acc[curr.id] = curr.price;
       return acc;
     }, {});
 
-    // Query the closest historical prices for each asset that are older than the threshold (24h).
+    // Query the closest historical prices for each asset that are older than the threshold (24h),
+    // and the oldest prices that are newer than the threshold. This will allow the data to be
+    // populated when a new asset has been recently added, and therefore has not enough data yet.
     const historicalAssetPrices: HistoricalPrice[] = await manager
       .getRepository(HistoricalAssetPrice)
       .query(
@@ -88,6 +91,13 @@ export class AssetsResolver {
                 WHERE timestamp < ${threshold}
                 GROUP BY asset_id
             )
+            OR timestamp IN (
+                SELECT
+                    MIN(timestamp) as min_timestamp
+                FROM historical_asset_price
+                WHERE timestamp > ${threshold}
+                GROUP BY asset_id
+            )
         `
       );
 
@@ -97,14 +107,25 @@ export class AssetsResolver {
     >((acc, curr) => {
       const price = BigInt(assetsPrices?.[curr.asset_id] || curr.price);
       const prevPrice = BigInt(curr.price);
-      acc[curr.asset_id] = {
-        id: curr.asset_id,
-        eventId: curr.event_id,
-        timestamp: curr.timestamp,
-        price,
-        prevPrice,
-        change: Number((100n * (price - prevPrice)) / prevPrice),
-      };
+      // When getting 2 entries for the same asset, it will keep the oldest, which
+      // represents the price of the asset before the 24h threshold.
+      // Otherwise, it will use the oldest available price from the last 24 hours.
+      if (
+        !acc[curr.asset_id] ||
+        acc[curr.asset_id].timestamp > curr.timestamp
+      ) {
+        acc[curr.asset_id] = {
+          id: curr.asset_id,
+          eventId: curr.event_id,
+          timestamp: curr.timestamp,
+          price,
+          prevPrice,
+          change:
+            prevPrice > 0
+              ? Number((100n * (price - prevPrice)) / prevPrice)
+              : null, // avoid error if dividing by zero
+        };
+      }
 
       return acc;
     }, {});

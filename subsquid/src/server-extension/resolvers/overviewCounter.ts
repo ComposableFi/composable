@@ -5,7 +5,6 @@ import {
   Query,
   Resolver,
   ResolverInterface,
-  Root,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { PicassoTransaction, Account, Activity } from "../../model";
@@ -26,14 +25,14 @@ export class OverviewCounter {
   }
 }
 
-@Resolver((of) => OverviewCounter)
+@Resolver(() => OverviewCounter)
 export class OverviewCountResolver
   implements ResolverInterface<OverviewCounter>
 {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @FieldResolver({ name: "transactionsCount", defaultValue: 0 })
-  async transactionsCount(@Root() overviewCounter: OverviewCounter) {
+  async transactionsCount(): Promise<number> {
     const manager = await this.tx();
 
     let transactions: { transactions_count: number }[] = await manager
@@ -47,11 +46,11 @@ export class OverviewCountResolver
       `
       );
 
-    return transactions?.[0]?.transactions_count || 0;
+    return Promise.resolve(transactions?.[0]?.transactions_count || 0);
   }
 
   @FieldResolver({ name: "accountsHoldersCount", defaultValue: 0 })
-  async accountHoldersCount(@Root() overviewCounter: OverviewCounter) {
+  async accountHoldersCount(): Promise<number> {
     const manager = await this.tx();
 
     let accounts: { accounts_count: number }[] = await manager
@@ -65,11 +64,11 @@ export class OverviewCountResolver
       `
       );
 
-    return accounts?.[0]?.accounts_count || 0;
+    return Promise.resolve(accounts?.[0]?.accounts_count || 0);
   }
 
   @FieldResolver({ name: "activeUsers", defaultValue: 0 })
-  async activeUsersCount(@Root() overviewCounter: OverviewCounter) {
+  async activeUsersCount(): Promise<number> {
     const currentTimestamp = new Date().valueOf();
     const msPerDay = 24 * 60 * 60 * 1_000;
     const threshold = currentTimestamp - msPerDay;
@@ -87,16 +86,18 @@ export class OverviewCountResolver
       `
       );
 
-    return activeUsers?.[0]?.active_users_count || 0;
+    return Promise.resolve(activeUsers?.[0]?.active_users_count || 0);
   }
 
   @Query(() => OverviewCounter)
   async overviewCounter(): Promise<OverviewCounter> {
     // Default values
-    return new OverviewCounter({
-      transactionsCount: 0,
-      accountHoldersCount: 0,
-      activeUsersCount: 0,
-    });
+    return Promise.resolve(
+      new OverviewCounter({
+        transactionsCount: 0,
+        accountHoldersCount: 0,
+        activeUsersCount: 0,
+      })
+    );
   }
 }
