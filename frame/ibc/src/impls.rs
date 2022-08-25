@@ -504,7 +504,7 @@ where
 	}
 
 	pub fn offchain_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
-		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id);
+		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id, b"SEND_PACKET");
 		pair.encode()
 	}
 
@@ -528,7 +528,7 @@ where
 		// 		.unwrap_or_default();
 		// acks.insert(seq, ack);
 		// sp_io::offchain_index::set(&key, acks.encode().as_slice());
-		RawAcknowledgements::<T>::insert((channel_id, port_id), seq, ack);
+		WriteAcknowledgements::<T>::insert((channel_id, port_id), seq, ack);
 		Ok(())
 	}
 
@@ -544,7 +544,7 @@ where
 				channel_id_bytes.clone(),
 				port_id_bytes.clone(),
 			);
-			// Clean up offchain packets
+			// Clean up offchain  send packets
 			if let Some(mut offchain_packets) =
 				sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
 					.and_then(|v| BTreeMap::<u64, OffchainPacketType>::decode(&mut &*v).ok())
@@ -586,7 +586,7 @@ where
 		Ok(())
 	}
 
-	pub fn get_offchain_packets(
+	pub fn get_send_packets(
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 		sequences: Vec<u64>,
@@ -598,12 +598,24 @@ where
 		// 		.unwrap_or_default();
 		let packets = sequences
 			.into_iter()
-			.map(|seq| Packets::<T>::get((channel_id.clone(), port_id.clone()), seq))
+			.map(|seq| SendPackets::<T>::get((channel_id.clone(), port_id.clone()), seq))
 			.collect();
 		Ok(packets)
 	}
 
-	pub fn get_offchain_acks(
+	pub fn get_recv_packets(
+		channel_id: Vec<u8>,
+		port_id: Vec<u8>,
+		sequences: Vec<u64>,
+	) -> Result<Vec<OffchainPacketType>, Error<T>> {
+		let packets = sequences
+			.into_iter()
+			.map(|seq| ReceivePackets::<T>::get((channel_id.clone(), port_id.clone()), seq))
+			.collect();
+		Ok(packets)
+	}
+
+	pub fn get_acknowledgements(
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 		sequences: Vec<u64>,
@@ -615,7 +627,7 @@ where
 		// 		.unwrap_or_default();
 		let acks = sequences
 			.into_iter()
-			.map(|seq| RawAcknowledgements::<T>::get((channel_id.clone(), port_id.clone()), seq))
+			.map(|seq| WriteAcknowledgements::<T>::get((channel_id.clone(), port_id.clone()), seq))
 			.collect();
 		Ok(acks)
 	}
@@ -704,7 +716,7 @@ where
 			denoms.push(denom);
 			limit -= 1;
 			if limit == 0 {
-				break
+				break;
 			}
 		}
 
@@ -843,8 +855,8 @@ where
 				),
 			},
 		)?;
-		let timestamp = (consensus_state.timestamp() +
-			Duration::from_nanos(data.timeout_timestamp_offset))
+		let timestamp = (consensus_state.timestamp()
+			+ Duration::from_nanos(data.timeout_timestamp_offset))
 		.map_err(|_| IbcHandlerError::TimestampOrHeightError {
 			msg: Some("Failed to convert timeout timestamp".to_string()),
 		})?;
@@ -992,7 +1004,11 @@ where
 		let event = IbcEvent::WriteAcknowledgement {
 			revision_height: host_height.revision_height,
 			revision_number: host_height.revision_number,
-			packet: packet.clone().into(),
+			port_id: packet.source_port.as_bytes().to_vec(),
+			channel_id: packet.source_channel.clone().to_string().as_bytes().to_vec(),
+			dest_port: packet.destination_port.as_bytes().to_vec(),
+			dest_channel: packet.destination_channel.to_string().as_bytes().to_vec(),
+			sequence: packet.sequence.clone().into(),
 		};
 		Self::deposit_event(Event::<T>::Events { events: vec![event] });
 		Ok(())

@@ -1475,11 +1475,11 @@ impl_runtime_apis! {
 		}
 
 		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
-			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
+			Ibc::get_send_packets(channel_id, port_id, seqs).ok()
 		}
 
 		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>> {
-			Ibc::get_offchain_acks(channel_id, port_id, seqs).ok()
+			Ibc::get_acknowledgements(channel_id, port_id, seqs).ok()
 		}
 
 		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {

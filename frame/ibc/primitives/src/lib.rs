@@ -69,6 +69,7 @@ pub struct OffchainPacketType {
 	pub data: Vec<u8>,
 	pub timeout_height: (u64, u64),
 	pub timeout_timestamp: u64,
+	pub created_at: Option<u64>
 }
 
 impl From<OffchainPacketType> for Packet {
@@ -113,6 +114,7 @@ impl From<Packet> for OffchainPacketType {
 				packet.timeout_height.revision_height,
 			),
 			timeout_timestamp: packet.timeout_timestamp.nanoseconds(),
+			created_at: None
 		}
 	}
 }
@@ -254,6 +256,34 @@ pub struct ConnectionHandshake {
 	pub client_state: Vec<u8>,
 	pub trie_keys: Vec<Vec<u8>>,
 	pub height: u64,
+}
+
+pub struct RawPacketInfo {
+	pub height: u64,
+	pub sequence: u64,
+	pub source_port: Vec<u8>,
+	pub source_channel: Vec<u8>,
+	pub dest_port: Vec<u8>,
+	pub dest_channel: Vec<u8>,
+	pub channel_order: u8,
+	pub data: Vec<u8>,
+	pub timeout_height: (u64, u64),
+	pub timeout_timestamp: u64,
+	pub ack: Option<Vec<u8>>,
+}
+
+pub struct PacketInfo {
+	pub height: u64,
+	pub sequence: u64,
+	pub source_port: String,
+	pub source_channel: String,
+	pub dest_port: String,
+	pub dest_channel: String,
+	pub channel_order: String,
+	pub data: Vec<u8>,
+	pub timeout_height: Height,
+	pub timeout_timestamp: u64,
+	pub ack: Option<Vec<u8>>,
 }
 
 #[derive(core::fmt::Debug, Clone, PartialEq, Eq)]

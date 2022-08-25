@@ -10,7 +10,7 @@ use crate::{
 		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
 		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
 	},
-	routing::Context,
+	routing::Context, impls::host_height,
 };
 use ibc::{
 	core::{
@@ -278,7 +278,7 @@ where
 		Ok(())
 	}
 
-	fn store_packet(
+	fn store_send_packet(
 		&mut self,
 		key: (PortId, ChannelId, Sequence),
 		packet: ibc::core::ics04_channel::packet::Packet,
@@ -292,11 +292,29 @@ where
 		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
 		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
 		// 		.unwrap_or_default();
-		let offchain_packet: OffchainPacketType = packet.into();
+		let mut offchain_packet: OffchainPacketType = packet.into();
+		// Store when packe
+		offchain_packet.created_at = Some(host_height::<T>());
 		// offchain_packets.insert(seq, offchain_packet);
 		// sp_io::offchain::local_storage_set(sp_core::offchain::StorageKind::PERSISTENT, &key,
 		// offchain_packets.encode().as_slice());
-		<Packets<T>>::insert((channel_id, port_id), seq, offchain_packet);
+		<SendPackets<T>>::insert((channel_id, port_id), seq, offchain_packet);
+		Ok(())
+	}
+
+	fn store_recv_packet(
+		&mut self,
+		key: (PortId, ChannelId, Sequence),
+		packet: ibc::core::ics04_channel::packet::Packet,
+	) -> Result<(), ICS04Error> {
+		// Packets should be stored off chain eventually
+
+		let channel_id = key.1.to_string().as_bytes().to_vec();
+		let port_id = key.0.as_bytes().to_vec();
+		let seq = u64::from(key.2);
+		let mut offchain_packet: OffchainPacketType = packet.into();
+		offchain_packet.created_at = Some(host_height::<T>()); 
+		<ReceivePackets<T>>::insert((channel_id, port_id), seq, offchain_packet);
 		Ok(())
 	}
 
