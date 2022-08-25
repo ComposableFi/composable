@@ -221,7 +221,10 @@ impl<T: codec::Decode, U: Validate<T, U>> codec::Decode for Validated<T, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
 		// If validation has failed we'll log the error, and continue as usual.
 		let value = <U as Validate<T, U>>::validate(T::decode(input)?)
-			.map_err(|err| {log::warn!("validation error: {:?}", err); err})?;
+			.map_err(|err| {
+				log::warn!("validation error: {:?}", err);
+				err
+			})?;
 		Ok(Validated { value, _marker: PhantomData })
 	}
 	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
