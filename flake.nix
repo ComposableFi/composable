@@ -93,7 +93,6 @@
             };
           };
           overlays = [ rust-overlay.overlay ];
-          rust-toolchain = import ./.nix/rust-toolchain.nix;
         in
         with pkgs;
         let
