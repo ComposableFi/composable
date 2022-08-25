@@ -42,7 +42,7 @@ mod test;
 mod validation;
 pub mod weights;
 
-use sp_runtime::SaturatedConversion;
+use sp_runtime::{traits::Saturating, SaturatedConversion};
 use sp_std::{
 	cmp,
 	ops::{Div, Sub},
@@ -1169,7 +1169,10 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 				.saturating_mul(releasable_periods_surpassed.saturated_into::<u64>()),
 		);
 
-		if new_total_rewards <= reward.max_rewards.into() {
+		// TODO(benluelo): This can probably be simplified, review the period calculations
+		if u128::saturating_add(new_total_rewards, reward.total_dilution_adjustment.into()) <=
+			reward.max_rewards.into()
+		{
 			let balance_on_hold = T::Assets::balance_on_hold(reward.asset_id, pool_account);
 			if !balance_on_hold.is_zero() && balance_on_hold >= newly_accumulated_rewards.into() {
 				T::Assets::release(
@@ -1186,14 +1189,18 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 			} else {
 				Err(RewardAccumulationCalculationError::RewardsPotEmpty)
 			}
-		} else if reward.total_rewards < reward.max_rewards {
+		} else if reward.total_rewards.saturating_add(reward.total_dilution_adjustment) <
+			reward.max_rewards
+		{
 			// if the new total rewards are less than or equal to the max rewards AND the current
 			// total rewards are less than the max rewards (i.e. the newly accumulated rewards is
 			// less than the the amount that would be accumulated based on the periods surpassed),
 			// then release *up to* the max rewards
 			//
-			// REVIEW(benluelo): Should max_rewards be max_periods instead? Review this if the
-			// max_rewards ever becomes updateable in the future.
+			// REVIEW(benluelo): Should max_rewards be max_periods instead? Currently, the
+			// max_rewards isn't updatable, and once the max_rewards is hit, it's expected that no
+			// more rewards will be accumulated, so it's ok to not reward an entire period's worth
+			// of rewards. Review this if the max_rewards ever becomes updateable in the future.
 
 			// SAFETY(benluelo): Usage of Sub::sub: reward.total_rewards is known to be less than
 			// reward.max_rewards as per check above
