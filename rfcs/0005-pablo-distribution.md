@@ -17,7 +17,7 @@ Table of Contents
     - [4.4. Pablo Governance](#44-pablo-governance)
     - [4.5. PICA Governance](#45-pica-governance)
     - [4.6. Technical Requirements](#46-technical-requirements)
-    - [4.7 Financial NFT Requirements](#47-financial-nft-requirements)
+    - [4.7. Financial NFT Requirements](#47-financial-nft-requirements)
 -   [5. Method](#5-method)
     -   [5.1. System Overview](#51-system-overview)
     -   [5.2. Pallet-Pablo](#52-pallet-pablo)
@@ -52,9 +52,10 @@ Table of Contents
         -   [5.3.3. Staking](#533-staking)
         -   [5.3.4. Extend Position](#534-extend-position)
         -   [5.3.5. Split Position](#535-split-position)
-        -   [5.3.6. Claim/Unstake](#536-claimunstake)
+        -   [5.3.6. Unstake](#536-unstake)
         -   [5.3.7. Update Reward Pool](#537-update-reward-pool)
         -   [5.3.8. RewardAccumulationHook](#538-rewardaccumulationhook)
+        -   [5.3.9. Claim](#539-claim)
 -   [6. Implementation](#6-implementation)
     -   [6.1. Pallet Pablo: LP Fee + Staking
         Changes](#61-pallet-pablo-lp-fee-staking-changes)
@@ -583,9 +584,9 @@ rewards pool based on these data structures.
 
 <img src="0005-pablo-distribution-assets/images/images/split-position.png" width="426" height="344" alt="split position" />
 
-#### 5.3.6. Claim/Unstake
+#### 5.3.6. Unstake
 
-<img src="0005-pablo-distribution-assets/images/images/claim.png" width="500" height="695" alt="claim" />
+<img src="0005-pablo-distribution-assets/images/images/unstake.png" width="500" height="695" alt="claim" />
 
 #### 5.3.7. Update Reward Pool
 
@@ -596,6 +597,10 @@ rewards pool based on these data structures.
 Following algorithm should be part of the block hook in the pallet.
 
 <img src="0005-pablo-distribution-assets/images/images/staking-rewards-reward-accumulation-hook.png" width="509" height="501" alt="staking rewards reward accumulation hook" />
+
+#### 5.3.9. Claim
+
+<img src="0005-pablo-distribution-assets/images/images/claim.png" width="684" height="642" alt="claim" />
 
 ## 6. Implementation
 
