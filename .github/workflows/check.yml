@@ -10,7 +10,7 @@ on:
       - main
       # bors related branches. Please do not remove.
       - staging
-      - trying      
+      - trying
   pull_request:
     paths-ignore:
       - frontend/**
@@ -18,11 +18,11 @@ on:
       - main
       - develop
       - releases
-  
+
   workflow_dispatch:
 
 env:
-  DOCKER_USER_OPTION: '$UID:$GID'
+  DOCKER_USER_OPTION: "$UID:$GID"
 
 # TODO: migrate most of these to nix
 jobs:
@@ -36,8 +36,8 @@ jobs:
       - uses: streetsidesoftware/cspell-action@v2
         with:
           # When the spellcheck.dic is altered, we'd want to recheck existing files too.
-          incremental_files_only: false 
-          config: 'cspell.yaml'
+          incremental_files_only: false
+          config: "cspell.yaml"
 
   substrate-check:
     name: Check Benchmarks
@@ -100,7 +100,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: lcov.info
           fail_ci_if_error: false
-  
+
   linters:
     name: Linters
     runs-on:

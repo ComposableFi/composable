@@ -93,7 +93,6 @@
             };
           };
           overlays = [ rust-overlay.overlay ];
-          rust-toolchain = import ./.nix/rust-toolchain.nix;
         in
         with pkgs;
         let
@@ -101,11 +100,7 @@
           rust-stable = rust-bin.stable.latest.default;
 
           # Nightly rust used for wasm runtime compilation
-          rust-nightly = rust-bin.selectLatestNightlyWith (toolchain:
-            toolchain.default.override {
-              extensions = [ "rust-src" "clippy" "rustfmt" "rust-analyzer" ];
-              targets = [ "wasm32-unknown-unknown" ];
-            });
+          rust-nightly = rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
           # Crane lib instantiated with current nixpkgs
           crane-lib = crane.mkLib pkgs;
@@ -203,14 +198,14 @@
           };
 
           # Common dependencies, all dependencies listed that are out of this repo
-          common-deps = crane-stable.buildDepsOnly (common-attrs // { });
+          common-deps = crane-nightly.buildDepsOnly (common-attrs // { });
           common-deps-nightly =
             crane-nightly.buildDepsOnly (common-attrs // { });
           common-bench-attrs = common-attrs // {
             cargoExtraArgs = "--features=builtin-wasm,runtime-benchmarks";
           };
           common-bench-deps =
-            crane-stable.buildDepsOnly (common-bench-attrs // { });
+            crane-nightly.buildDepsOnly (common-bench-attrs // { });
 
           # Build a wasm runtime, unoptimized
           mk-runtime = name: features:
@@ -270,7 +265,7 @@
           # NOTE: with docs, non nighly fails but nighly fails too...
           # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
           composable-node = with packages;
-            crane-stable.buildPackage (common-attrs // {
+            crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-node";
               cargoArtifacts = common-deps;
               cargoBuildCommand =
@@ -285,7 +280,7 @@
               '';
             });
 
-          composable-bench-node = crane-stable.cargoBuild
+          composable-bench-node = crane-nightly.cargoBuild
             (common-bench-attrs // {
               pnameSuffix = "-node";
               cargoArtifacts = common-bench-deps;
@@ -346,7 +341,7 @@
               '';
             };
 
-            price-feed = crane-stable.buildPackage (common-attrs // {
+            price-feed = crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo build --release -p price-feed";
@@ -440,8 +435,6 @@
               fromImage = devcontainer-base-image;
               # be very carefull with this, so this must be version compatible with base and what vscode will inject
               contents = [
-                # ISSUE: for some reason stable overrides nighly, need to set different order somehow
-                #rust-stable
                 rust-nightly
                 cachix
                 rustup # just if it wants to make ad hoc updates
@@ -486,7 +479,7 @@
                   "--features=local-integration-tests,dali,std --no-default-features --verbose";
               });
 
-            unit-tests = crane-stable.cargoBuild (common-attrs // {
+            unit-tests = crane-nightly.cargoBuild (common-attrs // {
               pnameSuffix = "-tests";
               cargoArtifacts = common-deps;
               # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
