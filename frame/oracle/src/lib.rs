@@ -220,6 +220,7 @@ pub mod pallet {
 		/// Reward allocation weight for this asset type out of the total block reward.
 		pub reward_weight: Balance,
 		pub slash: Balance,
+		pub emit_price_changes: bool,
 	}
 
 	type BalanceOf<T> = <T as Config>::Balance;
@@ -346,6 +347,8 @@ pub mod pallet {
 		RewardingAdjustment(T::Moment),
 		/// Answer from oracle removed for staleness. \[oracle_address, price\]
 		AnswerPruned(T::AccountId, T::PriceValue),
+		/// Price changed by oracle \[asset_id, price\]
+		PriceChanged(T::AssetId, T::PriceValue),
 	}
 
 	#[pallet::error]
@@ -513,6 +516,7 @@ pub mod pallet {
 		/// - `block_interval`: blocks until oracle triggered
 		/// - `reward`: reward amount for correct answer
 		/// - `slash`: slash amount for bad answer
+		/// - `emit_price_changes`: emit PriceChanged event when asset price changes
 		///
 		/// Emits `DepositEvent` event when successful.
 		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
@@ -525,6 +529,7 @@ pub mod pallet {
 			block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
 			reward_weight: BalanceOf<T>,
 			slash: BalanceOf<T>,
+			emit_price_changes: bool,
 		) -> DispatchResultWithPostInfo {
 			T::AddOracle::ensure_origin(origin)?;
 
@@ -542,6 +547,7 @@ pub mod pallet {
 				block_interval: *block_interval,
 				reward_weight,
 				slash,
+				emit_price_changes,
 			};
 			// track reward total weight for all assets
 			let mut reward_tracker = RewardTrackerStore::<T>::get().unwrap_or_default();
@@ -965,6 +971,11 @@ pub mod pallet {
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_prices.len() as u32 >= asset_info.min_answers {
 				if let Some(price) = Self::calculate_price(&pre_prices, &asset_info) {
+					let last_price = match pre_prices.last() {
+						Some(pre_price) => pre_price.price,
+						_ => Zero::zero(),
+					};
+
 					Prices::<T>::insert(asset_id, Price { price, block });
 					PriceHistory::<T>::try_mutate(asset_id, |prices| -> DispatchResult {
 						if prices.len() as u32 >= T::MaxHistory::get() {
@@ -980,6 +991,11 @@ pub mod pallet {
 					PrePrices::<T>::remove(asset_id);
 
 					Self::handle_payout(&pre_prices, price, asset_id, &asset_info)?;
+
+					// Emit `PriceChanged` event when prices have changed, if required.
+					if price != last_price && asset_info.emit_price_changes {
+						Self::deposit_event(Event::PriceChanged(asset_id, price));
+					}
 				}
 			}
 			Ok(())
