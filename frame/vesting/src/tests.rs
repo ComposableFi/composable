@@ -7,7 +7,11 @@ use composable_traits::vesting::{
 	VestingSchedule, VestingScheduleInfo,
 	VestingWindow::{BlockNumberBased, MomentBased},
 };
-use frame_support::{assert_noop, assert_ok, error::BadOrigin, traits::fungibles::Mutate};
+use frame_support::{
+	assert_noop, assert_ok,
+	error::BadOrigin,
+	traits::{fungibles::Mutate, TryCollect},
+};
 use mock::{Event, *};
 use orml_tokens::BalanceLock;
 
@@ -17,74 +21,77 @@ fn vesting_from_chain_spec_works() {
 		// From the vesting below, only 20 out of 50 are locked at block 0.
 		assert_ok!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 30));
 		assert!(Tokens::ensure_can_withdraw(MockCurrencyId::BTC, &CHARLIE, 31).is_err());
-		let mut schedules: BoundedBTreeMap<_, VestingSchedule<_, _, _, _>, MaxVestingSchedule> =
-			BoundedBTreeMap::new();
-		assert_ok!(schedules.try_insert(
-			1_u128,
-			/*
-				+------+------+-----+
-				|block |vested|total|
-				|      |      |     |
-				+------+------+-----+
-				|5     |5     |5    |
-				+------+------+-----+
-			*/
-			VestingSchedule {
-				vesting_schedule_id: 1_u128,
-				window: BlockNumberBased { start: 2_u64, period: 3_u64 },
-				period_count: 1_u32,
-				per_period: 5_u64,
-				already_claimed: 0_u64,
-			},
-		));
-		assert_ok!(schedules.try_insert(
-			2_u128,
-			/*
-			  +------+------+-----+
-			  |block |vested|total|
-			  |      |      |     |
-			  +------+------+-----+
-			  |8     |5     |5    |
-			  +------+------+-----+
-			  |11    |5     |10   |
-			  +------+------+-----+
-			  |14    |5     |15   |
-			  +------+------+-----+
-			*/
-			VestingSchedule {
-				vesting_schedule_id: 2_u128,
-				window: BlockNumberBased { start: 2_u64 + 3_u64, period: 3_u64 },
-				period_count: 3_u32,
-				per_period: 5_u64,
-				already_claimed: 0_u64,
-			},
-		));
-		assert_ok!(schedules.try_insert(
-			3_u128,
-			/*
-			  +---------+-----------+-----------+
-			  |block    |timestamp  |vested | total |
-			  |         |      	    |      	|       |
-			  +---------+-----------+-------+-------|
-			  |8     	|48000     	|0      |0		|
-			  +---------+-----------+-------+-------|
-			  |14    	|84000      |0      |0		|
-			  +---------+-----------+-------+-------|
-			  |18    	|108000     |5      |5
-			  +---------+-----------+-------+-------|
-			  |25    	|150000     |5      |10		|
-			  +---------+-----------+-------+-------|
-			  |34    	|204000     |5      |15		|
-			  +---------+-----------+-------+-------|
-			*/
-			VestingSchedule {
-				vesting_schedule_id: 3_u128,
-				window: MomentBased { start: 40000_u64, period: 50000_u64 },
-				period_count: 3_u32,
-				per_period: 5_u64,
-				already_claimed: 0_u64,
-			},
-		));
+		let schedules: BoundedBTreeMap<_, _, MaxVestingSchedule> = [
+			(
+				1_u128,
+				/*
+					+------+------+-----+
+					|block |vested|total|
+					|      |      |     |
+					+------+------+-----+
+					|5     |5     |5    |
+					+------+------+-----+
+				*/
+				VestingSchedule {
+					vesting_schedule_id: 1_u128,
+					window: BlockNumberBased { start: 2_u64, period: 3_u64 },
+					period_count: 1_u32,
+					per_period: 5_u64,
+					already_claimed: 0_u64,
+				},
+			),
+			(
+				2_u128,
+				/*
+				  +------+------+-----+
+				  |block |vested|total|
+				  |      |      |     |
+				  +------+------+-----+
+				  |8     |5     |5    |
+				  +------+------+-----+
+				  |11    |5     |10   |
+				  +------+------+-----+
+				  |14    |5     |15   |
+				  +------+------+-----+
+				*/
+				VestingSchedule {
+					vesting_schedule_id: 2_u128,
+					window: BlockNumberBased { start: 2_u64 + 3_u64, period: 3_u64 },
+					period_count: 3_u32,
+					per_period: 5_u64,
+					already_claimed: 0_u64,
+				},
+			),
+			(
+				3_u128,
+				/*
+				  +---------+-----------+-----------+
+				  |block    |timestamp  |vested | total |
+				  |         |      	    |      	|       |
+				  +---------+-----------+-------+-------|
+				  |8     	|48000     	|0      |0		|
+				  +---------+-----------+-------+-------|
+				  |14    	|84000      |0      |0		|
+				  +---------+-----------+-------+-------|
+				  |18    	|108000     |5      |5
+				  +---------+-----------+-------+-------|
+				  |25    	|150000     |5      |10		|
+				  +---------+-----------+-------+-------|
+				  |34    	|204000     |5      |15		|
+				  +---------+-----------+-------+-------|
+				*/
+				VestingSchedule {
+					vesting_schedule_id: 3_u128,
+					window: MomentBased { start: 40000_u64, period: 50000_u64 },
+					period_count: 3_u32,
+					per_period: 5_u64,
+					already_claimed: 0_u64,
+				},
+			),
+		]
+		.into_iter()
+		.try_collect()
+		.unwrap();
 
 		assert_eq!(Vesting::vesting_schedules(&CHARLIE, MockCurrencyId::BTC), schedules);
 		System::set_block_number(1);
@@ -181,9 +188,8 @@ fn vested_transfer_works() {
 			schedule_input.clone(),
 		));
 		let schedule = VestingSchedule::from_input(4_u128, schedule_input.clone());
-		let mut schedules: BoundedBTreeMap<_, VestingSchedule<_, _, _, _>, MaxVestingSchedule> =
-			BoundedBTreeMap::new();
-		assert_ok!(schedules.try_insert(4_u128, schedule.clone()));
+		let schedules: BoundedBTreeMap<_, _, MaxVestingSchedule> =
+			[(4_u128, schedule.clone())].into_iter().try_collect().unwrap();
 		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), schedules);
 		System::assert_last_event(Event::Vesting(crate::Event::VestingScheduleAdded {
 			from: ALICE,
@@ -248,9 +254,9 @@ fn vested_transfer_for_moment_based_schedule_works() {
 			MockCurrencyId::BTC,
 			schedule_input.clone(),
 		));
-		let mut schedules: BoundedBTreeMap<_, VestingSchedule<_, _, _, _>, MaxVestingSchedule> =
-			BoundedBTreeMap::new();
-		assert_ok!(schedules.try_insert(4_u128, schedule.clone()));
+		let schedules: BoundedBTreeMap<_, _, MaxVestingSchedule> =
+			[(4_u128, schedule.clone())].into_iter().try_collect().unwrap();
+
 		assert_eq!(Vesting::vesting_schedules(&BOB, MockCurrencyId::BTC), schedules);
 		System::assert_last_event(Event::Vesting(crate::Event::VestingScheduleAdded {
 			from: ALICE,
@@ -527,9 +533,8 @@ fn claim_works() {
 			MockCurrencyId::BTC,
 			VestingScheduleIdSet::One(4_u128)
 		));
-		let mut amount_claimed_per_schedule: BoundedBTreeMap<_, _, MaxVestingSchedule> =
-			BoundedBTreeMap::new();
-		amount_claimed_per_schedule.try_insert(4_u128, 10).unwrap();
+		let amount_claimed_per_schedule: BoundedBTreeMap<_, _, MaxVestingSchedule> =
+			[(4_u128, 10)].into_iter().try_collect().unwrap();
 		System::assert_last_event(Event::Vesting(crate::Event::Claimed {
 			who: BOB,
 			asset: MockCurrencyId::BTC,
@@ -552,9 +557,8 @@ fn claim_works() {
 			VestingScheduleIdSet::All
 		));
 
-		let mut amount_claimed_per_schedule: BoundedBTreeMap<_, _, MaxVestingSchedule> =
-			BoundedBTreeMap::new();
-		amount_claimed_per_schedule.try_insert(4_u128, 10).unwrap();
+		let amount_claimed_per_schedule: BoundedBTreeMap<_, _, MaxVestingSchedule> =
+			[(4_u128, 10)].into_iter().try_collect().unwrap();
 
 		System::assert_last_event(Event::Vesting(crate::Event::Claimed {
 			who: BOB,

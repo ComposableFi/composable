@@ -182,8 +182,7 @@ pub mod module {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Added new vesting schedule. \[from, to, asset, vesting_schedule_id, schedule,
-		/// schedule_amount\]
+		/// Added new vesting schedule.
 		VestingScheduleAdded {
 			from: AccountIdOf<T>,
 			to: AccountIdOf<T>,
@@ -192,8 +191,7 @@ pub mod module {
 			schedule: VestingScheduleOf<T>,
 			schedule_amount: BalanceOf<T>,
 		},
-		/// Claimed vesting. \[who, asset, vesting_schedule_ids, locked_amount, claimed_amount,
-		/// amount_claimed_per_schedule\]
+		/// Claimed vesting.
 		Claimed {
 			who: AccountIdOf<T>,
 			asset: AssetIdOf<T>,
@@ -204,7 +202,7 @@ pub mod module {
 			amount_claimed_per_schedule:
 				BoundedBTreeMap<T::VestingScheduleId, BalanceOf<T>, T::MaxVestingSchedules>,
 		},
-		/// Updated vesting schedules. \[who\]
+		/// Updated vesting schedules.
 		VestingSchedulesUpdated { who: AccountIdOf<T> },
 	}
 
@@ -610,7 +608,7 @@ impl<T: Config> Pallet<T> {
 								total_balance_to_claim.safe_add(&available_amount)?;
 
 							amount_claimed
-								.try_insert(*id_to_claim, available_amount.clone())
+								.try_insert(*id_to_claim, available_amount)
 								.expect("Max vesting schedules exceeded");
 
 							if locked_amount.is_zero() {
