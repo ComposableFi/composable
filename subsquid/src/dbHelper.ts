@@ -1,13 +1,12 @@
 import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
+import { randomUUID } from "crypto";
 import {
   Account,
   Activity,
-  Asset,
   PabloPool,
   PicassoTransaction,
   PicassoTransactionType,
 } from "./model";
-import { randomUUID } from "crypto";
 import { BOB } from "./utils";
 
 export async function get<T extends { id: string }>(
@@ -167,9 +166,9 @@ export async function saveAccountAndTransaction(
   const accountIds: (string | undefined)[] =
     typeof accountId === "string" ? [accountId] : accountId || [undefined];
 
-  let txId = randomUUID();
+  const txId = randomUUID();
 
-  for (let index = 0; index < accountIds.length; index++) {
+  for (let index = 0; index < accountIds.length; index += 1) {
     const id = accountIds[index];
     if (!id) {
       // no-op

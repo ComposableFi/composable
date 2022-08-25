@@ -93,6 +93,7 @@ type VestingSchedule @entity {
   from: String!
   "chain event ID"
   eventId: String!
+  "Vesting schedule ID from chain"
   scheduleId: BigInt!
   "'To' account for the vesting schedule"
   to: String!
@@ -100,6 +101,8 @@ type VestingSchedule @entity {
   asset: BigInt!
   "Vesting schedule"
   schedule: Schedule!
+  "True if the schedule has been fully claimed"
+  fullyClaimed: Boolean!
 }
 
 enum PicassoTransactionType {

@@ -23,6 +23,9 @@ export class VestingSchedule {
   @Column_("text", {nullable: false})
   eventId!: string
 
+  /**
+   * Vesting schedule ID from chain
+   */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   scheduleId!: bigint
 
@@ -43,4 +46,10 @@ export class VestingSchedule {
    */
   @Column_("jsonb", {transformer: {to: obj => obj.toJSON(), from: obj => new Schedule(undefined, marshal.nonNull(obj))}, nullable: false})
   schedule!: Schedule
+
+  /**
+   * True if the schedule has been fully claimed
+   */
+  @Column_("bool", {nullable: false})
+  fullyClaimed!: boolean
 }

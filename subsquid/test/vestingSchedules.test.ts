@@ -43,6 +43,7 @@ const MOCK_VESTING_SCHEDULE_MOMENT_BASED: VestingScheduleType = {
  * @param asset
  * @param schedule
  * @param vestingScheduleId
+ * @param fullyClaimed
  */
 function assertVestingSchedule(
   vestingSchedule: VestingSchedule,
@@ -51,7 +52,8 @@ function assertVestingSchedule(
   eventId?: string,
   asset?: bigint,
   schedule?: VestingScheduleType,
-  vestingScheduleId?: bigint
+  vestingScheduleId?: bigint,
+  fullyClaimed?: boolean
 ) {
   if (from) expect(vestingSchedule.from).to.equal(from);
   if (to) expect(vestingSchedule.to).to.equal(to);
@@ -81,6 +83,7 @@ function assertVestingSchedule(
   }
   if (vestingScheduleId)
     expect(vestingSchedule.scheduleId).to.equal(vestingScheduleId);
+  if (fullyClaimed) expect(vestingSchedule.fullyClaimed).to.equal(fullyClaimed);
 }
 
 function createVestingScheduleAddedEvent(
@@ -149,7 +152,8 @@ describe("Vesting schedule added", () => {
       undefined,
       2n,
       MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED,
-      3n
+      3n,
+      false
     );
   });
 
@@ -170,7 +174,8 @@ describe("Vesting schedule added", () => {
       undefined,
       5n,
       MOCK_VESTING_SCHEDULE_MOMENT_BASED,
-      4n
+      4n,
+      false
     );
   });
 });

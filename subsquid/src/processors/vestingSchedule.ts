@@ -1,5 +1,4 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
-import { randomUUID } from "crypto";
 import {
   VestingSchedule as VestingScheduleType,
   VestingScheduleIdSet,
@@ -16,6 +15,7 @@ import {
 } from "../types/events";
 import { encodeAccount } from "../utils";
 import { saveAccountAndTransaction } from "../dbHelper";
+import { randomUUID } from "crypto";
 
 interface VestingScheduleAddedEvent {
   from: Uint8Array;
@@ -72,22 +72,26 @@ export function getNewVestingSchedule(
 
   return new VestingSchedule({
     id: randomUUID(),
+    scheduleId: schedule.vestingScheduleId,
     from: fromAccount,
     eventId: ctx.event.id,
-    scheduleId: schedule.vestingScheduleId,
     to: toAccount,
     asset,
     schedule: createVestingSchedule(schedule),
+    fullyClaimed: false,
   });
 }
 
 /**
- * Updates database with vesting schedule information
+ * Handle `vesting.VestingScheduleAdded` event.
+ *  - Create and store VestingSchedule.
+ *  - Create/update account.
+ *  - Create transaction.
  * @param ctx
  */
 export async function processVestingScheduleAddedEvent(
   ctx: EventHandlerContext
-) {
+): Promise<void> {
   const event = new VestingVestingScheduleAddedEvent(ctx);
 
   const vestingSchedule = getNewVestingSchedule(ctx, event);
@@ -119,29 +123,37 @@ function getVestingScheduleClaimedEvent(
   return event.asV2401 ?? event.asLatest;
 }
 
-function updatedClaimedAmount() {
+function updatedClaimedAmount(schedule: VestingSchedule, claimed: bigint) {
   // TODO
 }
 
 /**
- * Updates database with vesting schedule information
+ * Process `vesting.Claimed` event.
+ *  - Update alreadyClaimed amount for each claimed schedule.
  * @param ctx
  * @param event
  */
 export async function processVestingClaimedEvent(
   ctx: EventHandlerContext,
   event: VestingClaimedEvent
-) {
-  const { who, asset, lockedAmount, claimedAmount } =
-    getVestingScheduleClaimedEvent(event);
+): Promise<void> {
+  const {
+    who,
+    // asset, lockedAmount, claimedAmount, vestingScheduleIds
+  } = getVestingScheduleClaimedEvent(event);
 
   // TODO: update claimed amount
+  // this requires the pallet to emit the claimed amount PER SCHEDULE and not just
+  // the total claimed amount
 
-  // const schedule: VestingSchedule | undefined = await ctx.store.get(VestingSchedule, {
-  //   where: {
-  //     // TODO
+  // const schedule: VestingSchedule | undefined = await ctx.store.get(
+  //   VestingSchedule,
+  //   {
+  //     where: {
+  //       id:
+  //     },
   //   }
-  // })
+  // );
 
   await saveAccountAndTransaction(
     ctx,
