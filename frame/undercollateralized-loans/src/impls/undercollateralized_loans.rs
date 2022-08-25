@@ -15,6 +15,7 @@ impl<T: Config> UndercollateralizedLoans for Pallet<T> {
 	type Timestamp = Timestamp;
 	type WhiteListBound = T::WhiteListBound;
 	type ScheduleBound = T::ScheduleBound;
+	type MaxDateShiftingInDays = T::MaxDateShiftingInDays;
 	fn create_market(
 		manager: Self::AccountId,
 		input: MarketInput<

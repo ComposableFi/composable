@@ -133,7 +133,7 @@ impl<T: Config> Pallet<T> {
 						config_input.collateral,
 						schedule,
 						config_input.activation_date,
-						config_input.failed_payment_treatment,
+						config_input.delayed_payment_treatment,
 					);
 					let loan_info = LoanInfo::new(
 						loan_config.clone(),
@@ -258,7 +258,7 @@ impl<T: Config> Pallet<T> {
 					Self::close_loan_contract(payment.loan_info.config());
 				},
 				PaymentOutcome::PaymentFailed(payment) =>
-					Self::process_failed_payment_logged(&payment),
+					Self::process_delayed_payment_logged(&payment),
 			}
 		}
 	}
@@ -302,8 +302,6 @@ impl<T: Config> Pallet<T> {
 				PaymentOutcome::LastPaymentSucceed(payment),
 			// We have enough money on the loan's account to perform regular payment.
 			Ok(_) => PaymentOutcome::RegularPaymentSucceed(payment),
-			// TODO: @mikolaichuk:  we should give to borrower
-			//                      several attempts.
 			// Payment is delayed.
 			Err(_) => PaymentOutcome::PaymentFailed(payment),
 		};
@@ -359,8 +357,8 @@ impl<T: Config> Pallet<T> {
 	//                                          Failed payments treatment
 	//===========================================================================================================================
 
-	pub(crate) fn process_failed_payment_logged(payment: &PaymentOf<T>) {
-		if let Err(error) = Self::process_failed_payment(payment) {
+	pub(crate) fn process_delayed_payment_logged(payment: &PaymentOf<T>) {
+		if let Err(error) = Self::process_delayed_payment(payment) {
 			log::error!(
 				"Payment for loan {:?} was not succesfuly checked due to the following error: {:?}",
 				payment.loan_info.config().account_id(),
@@ -370,7 +368,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	// Logic we apply if payment is delayed.
-	pub(crate) fn process_failed_payment(payment: &PaymentOf<T>) -> Result<(), Error<T>> {
+	pub(crate) fn process_delayed_payment(payment: &PaymentOf<T>) -> Result<(), Error<T>> {
 		let loan_info = &payment.loan_info;
 		let loan_config = loan_info.config();
 
@@ -382,8 +380,8 @@ impl<T: Config> Pallet<T> {
 
 		// If overdues counter exceedes threshold the loan should be liquidated.
 		// Unwrapped since we already checked that payments conditions are relaxed.
-		if loan_info.failed_payments_counter >=
-			loan_config.failed_payments_threshold().expect("This method never panics.")
+		if loan_info.delayed_payments_counter >=
+			loan_config.delayed_payments_threshold().expect("This method never panics.")
 		{
 			Self::perform_liquidation(loan_config);
 		}
@@ -391,7 +389,7 @@ impl<T: Config> Pallet<T> {
 		// Treat payment shifting.
 		crate::LoansStorage::<T>::try_mutate(loan_config.account_id(), |loan_info| {
 			let mut loan_info_updated = loan_info.clone().ok_or(Error::<T>::LoanNotFound)?;
-			loan_info_updated.failed_payments_counter += 1;
+			loan_info_updated.delayed_payments_counter += 1;
 			let loan_config = loan_info_updated.config();
 			// Get next payment date from the loan's local payment schedule.
 			// If date is out of schedule get max timestamp's value.
@@ -400,7 +398,7 @@ impl<T: Config> Pallet<T> {
 			let next_shifted_payment_date = Self::get_shifted_date_aligned_timestamp(
 				payment.timestamp,
 				loan_config
-					.failed_payments_shift_in_days()
+					.delayed_payments_shift_in_days()
 					// Unwrapped since we already checked that payments conditions are relaxed.
 					.expect("This method never fails."),
 			)?;

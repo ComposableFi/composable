@@ -19,7 +19,7 @@ fn can_create_loan() {
 			collateral: 5,
 			payment_schedule,
 			activation_date: parse_timestamp("24-08-1991"),
-			failed_payment_treatment: None,
+			delayed_payment_treatment: None,
 		};
 		assert_ok!(pallet_undercollateralized_loans::Pallet::<Runtime>::create_loan(
 			origin, loan_input

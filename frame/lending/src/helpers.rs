@@ -216,7 +216,6 @@ impl<T: Config> Pallet<T> {
 				// REVIEW: Should we default if there's no collateral? Or should an error (something like "NoCollateralToWithdraw") be returned instead?
 				collateral_balance.unwrap_or_default().safe_sub(&amount)?;
 
-
 			collateral_balance.replace(new_collateral_balance);
 
 			Result::<(), DispatchError>::Ok(())

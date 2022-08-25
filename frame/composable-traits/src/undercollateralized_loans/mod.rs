@@ -9,9 +9,10 @@ pub trait UndercollateralizedLoans: DeFiEngine {
 	type LiquidationStrategyId: Clone + Eq + PartialEq;
 	type VaultId: Clone + Eq + PartialEq;
 	type Timestamp: Clone + Eq + PartialEq;
-	// Bounds are used to validate inputs sensitive to them length.
+	// Bounds are used to validate inputs sensitivity to them length.
 	type WhiteListBound: Get<u32>;
 	type ScheduleBound: Get<u32>;
+	type MaxDateShiftingInDays: Get<i64>;
 
 	fn create_market(
 		manager: Self::AccountId,

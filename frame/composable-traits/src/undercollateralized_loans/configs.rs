@@ -130,7 +130,7 @@ where
 	activation_date: Timestamp,
 	/// If this filed is None, borrower has to face his obligation in time.
 	/// Otherwise borrower has possibility to postpone payment as per strucure properties.
-	failed_payment_treatment: Option<FailedPaymentTreatment>,
+	delayed_payment_treatment: Option<FailedPaymentTreatment>,
 }
 
 impl<AccountId, AssetId, Balance, Timestamp> LoanConfig<AccountId, AssetId, Balance, Timestamp>
@@ -150,7 +150,7 @@ where
 		collateral: Balance,
 		schedule: BTreeMap<Timestamp, Balance>,
 		activation_date: Timestamp,
-		failed_payment_treatment: Option<FailedPaymentTreatment>,
+		delayed_payment_treatment: Option<FailedPaymentTreatment>,
 	) -> Self {
 		Self {
 			account_id,
@@ -162,7 +162,7 @@ where
 			collateral,
 			schedule,
 			activation_date,
-			failed_payment_treatment,
+			delayed_payment_treatment,
 		}
 	}
 
@@ -211,15 +211,15 @@ where
 
 	/// Returns `true` if it is possible to delay a payment.
 	pub fn is_payments_relaxed(&self) -> bool {
-		self.failed_payment_treatment.is_some()
+		self.delayed_payment_treatment.is_some()
 	}
 
-	pub fn failed_payments_threshold(&self) -> Option<u32> {
-		Some(self.failed_payment_treatment.clone()?.failed_payments_threshold)
+	pub fn delayed_payments_threshold(&self) -> Option<u32> {
+		Some(self.delayed_payment_treatment.clone()?.delayed_payments_threshold)
 	}
 
-	pub fn failed_payments_shift_in_days(&self) -> Option<i64> {
-		Some(self.failed_payment_treatment.clone()?.failed_payments_shift_in_days)
+	pub fn delayed_payments_shift_in_days(&self) -> Option<i64> {
+		Some(self.delayed_payment_treatment.clone()?.delayed_payments_shift_in_days)
 	}
 
 	// Get next payment date from the local payment schedule.
@@ -277,7 +277,7 @@ where
 {
 	config: LoanConfig<AccountId, AssetId, Balance, Timestamp>,
 	pub last_payment_date: Timestamp,
-	pub failed_payments_counter: u32,
+	pub delayed_payments_counter: u32,
 }
 
 impl<AccountId, AssetId, Balance, Timestamp> LoanInfo<AccountId, AssetId, Balance, Timestamp>
@@ -291,7 +291,7 @@ where
 		config: LoanConfig<AccountId, AssetId, Balance, Timestamp>,
 		last_payment_date: Timestamp,
 	) -> Self {
-		Self { config, last_payment_date, failed_payments_counter: 0 }
+		Self { config, last_payment_date, delayed_payments_counter: 0 }
 	}
 
 	pub fn config(&self) -> &LoanConfig<AccountId, AssetId, Balance, Timestamp> {
@@ -343,7 +343,7 @@ pub struct LoanInput<AccountId, Balance, Timestamp> {
 	/// Contratc should be activated before this date.
 	pub activation_date: Timestamp,
 	/// If this filed is None, borrower has to face his obligation in time.
-	pub failed_payment_treatment: Option<FailedPaymentTreatment>,
+	pub delayed_payment_treatment: Option<FailedPaymentTreatment>,
 }
 
 /// Structure contains information regarding failed payment behaviour
@@ -351,9 +351,9 @@ pub struct LoanInput<AccountId, Balance, Timestamp> {
 pub struct FailedPaymentTreatment {
 	/// In the case of payment's fail,
 	/// it will be shifted to this amount of days.
-	pub failed_payments_shift_in_days: i64,
+	pub delayed_payments_shift_in_days: i64,
 	/// Borrower can fail payment this amount of time.
 	/// If threshold is exceeded the loan liquidates and
 	/// borrower adds to the blacklist.
-	pub failed_payments_threshold: u32,
+	pub delayed_payments_threshold: u32,
 }

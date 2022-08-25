@@ -112,15 +112,19 @@ where
 				input.payment_schedule.keys().min().cloned().expect("This mehtod never panics."),
 			"Contract first date payment is less than activation date."
 		);
-		// Failed payments threshold and failed payments shift should not be zero.
-		if let Some(treatment) = &input.failed_payment_treatment {
+		// Delayed payments threshold and failed payments shift should not be zero.
+		if let Some(treatment) = &input.delayed_payment_treatment {
 			ensure!(
-				treatment.failed_payments_threshold > 0,
-				"Failed payments threshold equals zero."
+				treatment.delayed_payments_threshold > 0,
+				"Delayed payments threshold equals zero."
 			);
 			ensure!(
-				treatment.failed_payments_shift_in_days > 0,
-				" Failed payments shif equals zero."
+				treatment.delayed_payments_shift_in_days > 0,
+				"Delayed payments shif equals zero."
+			);
+			ensure!(
+				treatment.delayed_payments_shift_in_days < Loans::MaxDateShiftingInDays::get(),
+				"Maximum date shifting exceeded."
 			);
 		};
 
