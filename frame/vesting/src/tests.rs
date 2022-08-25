@@ -191,6 +191,7 @@ fn vested_transfer_works() {
 			asset: MockCurrencyId::BTC,
 			schedule,
 			vesting_schedule_id: 4_u128,
+			schedule_amount: 100,
 		}));
 	});
 }
@@ -223,6 +224,7 @@ fn vested_transfer_trait_emits_vesting_schedule_added_event() {
 			asset: MockCurrencyId::ETH,
 			schedule,
 			vesting_schedule_id: 4_u128,
+			schedule_amount: 100,
 		}));
 	});
 }
@@ -256,6 +258,7 @@ fn vested_transfer_for_moment_based_schedule_works() {
 			asset: MockCurrencyId::BTC,
 			schedule,
 			vesting_schedule_id: 4_u128,
+			schedule_amount: 100,
 		}));
 	});
 }
@@ -524,12 +527,16 @@ fn claim_works() {
 			MockCurrencyId::BTC,
 			VestingScheduleIdSet::One(4_u128)
 		));
+		let mut amount_claimed_per_schedule: BoundedBTreeMap<_, _, MaxVestingSchedule> =
+			BoundedBTreeMap::new();
+		amount_claimed_per_schedule.try_insert(4_u128, 10).unwrap();
 		System::assert_last_event(Event::Vesting(crate::Event::Claimed {
 			who: BOB,
 			asset: MockCurrencyId::BTC,
 			locked_amount: 10,
 			claimed_amount: 10,
 			vesting_schedule_ids: VestingScheduleIdSet::One(4_u128),
+			amount_claimed_per_schedule,
 		}));
 
 		assert!(VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
@@ -545,12 +552,17 @@ fn claim_works() {
 			VestingScheduleIdSet::All
 		));
 
+		let mut amount_claimed_per_schedule: BoundedBTreeMap<_, _, MaxVestingSchedule> =
+			BoundedBTreeMap::new();
+		amount_claimed_per_schedule.try_insert(4_u128, 10).unwrap();
+
 		System::assert_last_event(Event::Vesting(crate::Event::Claimed {
 			who: BOB,
 			asset: MockCurrencyId::BTC,
 			locked_amount: 0,
 			claimed_amount: 10,
 			vesting_schedule_ids: VestingScheduleIdSet::All,
+			amount_claimed_per_schedule,
 		}));
 
 		assert!(!VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
