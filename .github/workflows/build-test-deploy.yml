@@ -17,7 +17,7 @@ env:
   NIX_CACHIX: composable-community
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
   NIX_CONTAINER_IMAGE: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
-  DOCKER_REPOSITORY_NAME: composablefi
+  DOCKER_REGISTRY_NAME: composablefi
   # weird, next is implicit dependency of docker action
   DOCKER_USER_OPTION: '$UID:$GID'
   NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
@@ -427,8 +427,9 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
 
-  devnet-container:
-    name: "Docker Devnet"
+  composable-sandbox:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    name: "Docker composable-sandbox"
     needs:
       - devnet-integration-tests
       - package-polkadot-node
@@ -443,7 +444,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: devnetcontainer-${{ github.ref }}
+      group: composable-sandbox-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -459,13 +460,22 @@ jobs:
           installCommand: |
             nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
             nix-channel --update
-            nix-env -iA nixpkgs.cachix
+            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
+      - uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       - run: |
-          # TODO: upload docker image
-          # Only on trigger by user?
-          nix build .#devnet-container --no-update-lock-file --show-trace -L
+          # enable required features (see https://github.com/cachix/install-nix-action/issues/19)
+          mkdir -p ~/.config/nix
+          echo "system-features = kvm" >> ~/.config/nix/nix.conf
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#devnet-container --no-update-lock-file --show-trace -L
+          docker load --input ./result
+          docker tag composable-devnet-container:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
+          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
 
   devcontainer:
     name: "Docker Devcontainer"
@@ -521,9 +531,10 @@ jobs:
           COMMIT_SHA=$(git rev-parse --short=9 HEAD)
           DOCKER_IMAGE_HASH=$(docker images | tail --lines=1 | tr --squeeze-repeats  ' ' |  cut --delimiter " " --fields 3)
           # TODO: make nix sha256 hash(allow to find by using nix ids) and branch dependant(allow to test from branches) tags
-          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:$COMMIT_SHA
-          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer:latest
-          docker push --all-tags ${{env.DOCKER_REPOSITORY_NAME}}/composable-devcontainer
+          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer:$COMMIT_SHA
+          docker image tag $DOCKER_IMAGE_HASH ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer:latest
+          # TODO: upload a docker image with `latest` tag only from `main` branch
+          docker push --all-tags ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer
 
   devnet-integration-tests:
       name: "Devnet integration tests"
