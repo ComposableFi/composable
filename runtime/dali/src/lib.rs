@@ -23,6 +23,8 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("DALI_RUNTIME
 #[cfg(not(feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
+extern crate alloc;
+
 mod governance;
 mod weights;
 mod xcmp;
@@ -55,8 +57,8 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto,
-		Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, Convert,
+		ConvertInto, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -1127,6 +1129,94 @@ impl pallet_ibc_ping::Config for Runtime {
 	type IbcHandler = Ibc;
 }
 
+/// Native <-> Cosmwasm account mapping
+/// TODO(hussein-aitlahcen): Probably nicer to have SS58 representation here.
+pub struct AccountToAddr;
+impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
+	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
+		match a.strip_prefix("0x") {
+			Some(account_id) => Ok(<[u8; 32]>::try_from(hex::decode(account_id).map_err(|_| ())?)
+				.map_err(|_| ())?
+				.into()),
+			_ => Err(()),
+		}
+	}
+}
+impl Convert<AccountId, alloc::string::String> for AccountToAddr {
+	fn convert(a: AccountId) -> alloc::string::String {
+		alloc::format!("0x{}", hex::encode(a))
+	}
+}
+
+/// Native <-> Cosmwasm asset mapping
+pub struct AssetToDenom;
+impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
+	fn convert(currency_id: alloc::string::String) -> Result<CurrencyId, ()> {
+		core::str::FromStr::from_str(&currency_id).map_err(|_| ())
+	}
+}
+impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
+	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
+		alloc::format!("{}", currency_id)
+	}
+}
+
+parameter_types! {
+  pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
+  pub const ChainId: &'static str = "composable-network-dali";
+  pub const MaxFrames: u32 = 64;
+	pub const MaxCodeSize: u32 = 512 * 1024;
+  pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
+  pub const MaxMessageSize: u32 = 256 * 1024;
+  pub const MaxContractLabelSize: u32 = 64;
+  pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
+  pub const MaxInstantiateSaltSize: u32 = 128;
+  pub const MaxFundsAssets: u32 = 32;
+  pub const CodeTableSizeLimit: u32 = 4096;
+  pub const CodeGlobalVariableLimit: u32 = 256;
+  pub const CodeParameterLimit: u32 = 128;
+  pub const CodeBranchTableSizeLimit: u32 = 256;
+  // Not really required as it's embedded.
+  pub const CodeStackLimit: u32 = u32::MAX;
+
+  // TODO: benchmark for proper values
+  pub const CodeStorageByteDeposit: u32 = 1;
+  pub const ContractStorageByteReadPrice: u32 = 1;
+  pub const ContractStorageByteWritePrice: u32 = 1;
+}
+
+impl cosmwasm::Config for Runtime {
+	type Event = Event;
+	type AccountId = AccountId;
+	type PalletId = CosmwasmPalletId;
+	type MaxFrames = MaxFrames;
+	type MaxCodeSize = MaxCodeSize;
+	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
+	type MaxMessageSize = MaxMessageSize;
+	type AccountToAddr = AccountToAddr;
+	type AssetToDenom = AssetToDenom;
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type Assets = Assets;
+	type NativeAsset = Balances;
+	type ChainId = ChainId;
+	type MaxContractLabelSize = MaxContractLabelSize;
+	type MaxContractTrieIdSize = MaxContractTrieIdSize;
+	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
+	type MaxFundsAssets = MaxFundsAssets;
+	type CodeTableSizeLimit = CodeTableSizeLimit;
+	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
+	type CodeParameterLimit = CodeParameterLimit;
+	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
+	type CodeStackLimit = CodeStackLimit;
+	type CodeStorageByteDeposit = CodeStorageByteDeposit;
+	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
+	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
+	type UnixTime = Timestamp;
+	// TODO: proper weights
+	type WeightInfo = ();
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1201,7 +1291,10 @@ construct_runtime!(
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
 		IbcPing: pallet_ibc_ping = 151,
 		Transfer: ibc_transfer = 152,
-		Ibc: pallet_ibc = 153
+		Ibc: pallet_ibc = 153,
+
+	  // Cosmwasm support
+	  Cosmwasm: cosmwasm = 180
 	}
 );
 
