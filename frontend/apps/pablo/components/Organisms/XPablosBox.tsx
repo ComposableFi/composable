@@ -64,8 +64,8 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {xPablos.map(({tokenId, locked, expiry, multiplier, amount}: XPablo) => (
-              <TableRow key={tokenId}>
+            {xPablos.map(({tokenId, locked, expiry, multiplier, amount}: XPablo, index: number) => (
+              <TableRow key={tokenId + index}>
                 <TableCell align="left">
                   <BaseAsset
                     icon={getToken(tokenId).icon}

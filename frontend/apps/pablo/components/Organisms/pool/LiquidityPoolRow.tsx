@@ -1,6 +1,6 @@
 import { TableCell, TableRow, Box, Typography } from "@mui/material";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
-import { useAsset } from "@/defi/hooks";
+import { useAsset, useAssets } from "@/defi/hooks";
 import { useLiquidityByPool } from "@/store/hooks/useLiquidityByPool";
 import millify from "millify";
 import { PairAsset } from "@/components/Atoms";
@@ -8,8 +8,11 @@ import { useLiquidityPoolStats } from "@/store/hooks/useLiquidityPoolStats";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import {
   calculatePoolTotalValueLocked,
+  DEFAULT_NETWORK_ID,
   DEFAULT_UI_FORMAT_DECIMALS,
 } from "@/defi/utils";
+import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
+import { calculateRewardPerDayByAssetId } from "@/defi/utils/stakingRewards/math";
 
 const LiquidityPoolRow = ({
   liquidityPool,
@@ -18,6 +21,8 @@ const LiquidityPoolRow = ({
   liquidityPool: StableSwapPool | ConstantProductPool;
   handleRowClick: (e: any, poolId: string) => void;
 }) => {
+  const rewardPool = useStakingRewardPool(liquidityPool.lpToken);
+  const rewardAssets = useAssets(rewardPool ? Object.keys(rewardPool.rewards) : []);
   const baseAsset = useAsset(liquidityPool.pair.base.toString());
   const quoteAsset = useAsset(liquidityPool.pair.quote.toString());
 
@@ -73,10 +78,10 @@ const LiquidityPoolRow = ({
         <Typography variant="body2">{0}%</Typography>
       </TableCell>
       <TableCell align="left">
-        {poolStats
-          ? poolStats.dailyRewards.map((item) => {
+        {rewardAssets
+          ? rewardAssets.map((item) => {
               return (
-                <Box key={item.assetId} display="flex">
+                <Box key={item.name} display="flex">
                   <PairAsset
                     assets={[
                       {
@@ -84,7 +89,7 @@ const LiquidityPoolRow = ({
                         label: item.symbol,
                       },
                     ]}
-                    label={item.rewardAmount}
+                    label={calculateRewardPerDayByAssetId(item.network[DEFAULT_NETWORK_ID], rewardPool).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
                   />
                 </Box>
               );

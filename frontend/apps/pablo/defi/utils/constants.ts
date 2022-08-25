@@ -10,6 +10,9 @@ export const MINUTES = 60 * SECONDS;
 export const HOURS = 60 * MINUTES;
 export const DAYS = 24 * HOURS;
 
+export const PERMILL_UNIT = new BigNumber(1_000_000);
+export const PERBILL_UNIT = new BigNumber(1_000_000_000);
+
 export const FORMAT_1D = "hh:mm";
 export const FORMAT_1w = "DD/MM";
 export const FORMAT_1M = "MM/YYYY";

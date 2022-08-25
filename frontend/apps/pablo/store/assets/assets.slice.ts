@@ -40,7 +40,7 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
     name: "Pablo",
     network: {
       karura: "none",
-      picasso: "201",
+      picasso: "5",
     },
   },
   {

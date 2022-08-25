@@ -16,7 +16,6 @@ export async function fetchPool(
   try {
     const pool = await parachainApi.query.pablo.pools(poolId);
     const decodedPool: any = pool.toHuman();
-
     if (!decodedPool) throw new Error("Pool with ID not found");
 
     if ("LiquidityBootstrapping" in decodedPool) {
