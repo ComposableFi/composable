@@ -261,6 +261,10 @@ pub mod pallet {
 			Self::_settlement_price(&vamm_id)
 				.ok_or_else(|| Error::<T>::FailedToCalculateSettlementPrice.into())
 		}
+
+		fn close(vamm_id: T::VammId, closing_time: T::Moment) -> Result<(), DispatchError> {
+			todo!()
+		}
 	}
 
 	// ----------------------------------------------------------------------------------------------------

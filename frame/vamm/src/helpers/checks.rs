@@ -139,7 +139,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Checks if the following properties hold before closing a vamm:
 	///
-	/// * Vamm must be open without a schedule time to close in the future.
+	/// * Vamm must be open without a scheduled time to close in the future.
 	/// * The target closing time must be in the future.
 	///
 	/// # Errors
@@ -160,6 +160,7 @@ impl<T: Config> Pallet<T> {
 		}?;
 
 		// Target closing time must be in the future
+		dbg!(&now, &closing_time);
 		ensure!(closing_time.gt(&now), Error::<T>::ClosingDateIsInThePast);
 
 		Ok(())
