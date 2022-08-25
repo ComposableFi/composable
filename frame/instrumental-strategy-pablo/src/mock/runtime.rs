@@ -19,15 +19,14 @@ use crate as instrumental_strategy_pablo;
 use crate::mock::account_id::AccountId;
 
 pub type Amount = i128;
-pub type BlockNumber = u64;
 pub type Balance = u128;
-pub type PoolId = u128;
-pub type RewardPoolId = u16;
-pub type PositionId = u128;
+pub type BlockNumber = u64;
 pub type Moment = composable_traits::time::Timestamp;
+pub type PoolId = u128;
+pub type PositionId = u128;
+pub type RewardPoolId = u16;
 pub type VaultId = u64;
 
-pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
 const NATIVE_ASSET: CurrencyId = CurrencyId::PICA;
 // These time units are defined in number of blocks.
@@ -164,7 +163,7 @@ parameter_types! {
 	pub const RentPerBlock: Balance = 1;
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
-	pub const VaultPalletId: PalletId = VAULT_PALLET_ID;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
 	pub const TombstoneDuration: u64 = 42;
 }
 

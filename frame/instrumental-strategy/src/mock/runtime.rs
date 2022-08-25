@@ -15,15 +15,14 @@ use crate as instrumental_strategy;
 
 pub type AccountId = u128;
 pub type Amount = i128;
-pub type BlockNumber = u64;
 pub type Balance = u128;
-pub type PoolId = u128;
-pub type RewardPoolId = u16;
-pub type PositionId = u128;
+pub type BlockNumber = u64;
 pub type Moment = composable_traits::time::Timestamp;
+pub type PoolId = u128;
+pub type PositionId = u128;
+pub type RewardPoolId = u16;
 pub type VaultId = u64;
 
-pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 // These time units are defined in number of blocks.
 pub const MILLISECS_PER_BLOCK: Moment = 3000;
 pub const SECS_PER_BLOCK: Moment = MILLISECS_PER_BLOCK / 1000;
@@ -138,8 +137,8 @@ parameter_types! {
 	pub const RentPerBlock: Balance = 1;
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
-	pub const VaultPalletId: PalletId = VAULT_PALLET_ID;
-	  pub const TombstoneDuration: u64 = 42;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+	pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for MockRuntime {

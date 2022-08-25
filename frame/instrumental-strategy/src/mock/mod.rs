@@ -1,6 +1,5 @@
-// FIXME(saruman9): should be deledeted when there is a public interface in Pablo
 #[cfg(test)]
-pub mod fnft;
+pub mod fnft; // FIXME(saruman9): should be deledeted when there is a public interface in Pablo
 #[cfg(test)]
 pub mod runtime;
 #[cfg(test)]

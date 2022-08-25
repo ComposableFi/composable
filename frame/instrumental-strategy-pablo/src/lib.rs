@@ -232,6 +232,19 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Add [`VaultId`](Config::VaultId) to [`AssociatedVaults`](AssociatedVaults) storage.
+		///
+		/// Emits [`AssociatedVault`](Event::AssociatedVault) event when successful.
+		#[pallet::weight(T::WeightInfo::associate_vault())]
+		pub fn associate_vault(
+			origin: OriginFor<T>,
+			vault_id: T::VaultId,
+		) -> DispatchResultWithPostInfo {
+			T::ExternalOrigin::ensure_origin(origin)?;
+			<Self as InstrumentalProtocolStrategy>::associate_vault(&vault_id)?;
+			Ok(().into())
+		}
+
 		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object.
 		///
 		/// Emits [`AssociatedPoolWithAsset`](Event::AssociatedPoolWithAsset) event when successful.
@@ -243,7 +256,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::ExternalOrigin::ensure_origin(origin)?;
 			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
-			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
 			Ok(().into())
 		}
 		/// Occur rebalance of liquidity of each vault.
@@ -280,6 +292,7 @@ pub mod pallet {
 				},
 				Err(_) => Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal }),
 			}
+			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
 			Ok(())
 		}
 

@@ -3,15 +3,26 @@ use composable_traits::{
 	dex::Amm,
 	instrumental::{Instrumental as InstrumentalTrait, InstrumentalVaultConfig},
 };
-use frame_support::{assert_ok, traits::fungibles::Mutate};
+use frame_support::{assert_noop, assert_ok, traits::fungibles::Mutate, weights::GetDispatchInfo};
+use frame_system::EventRecord;
+use pallet_collective::{Error as CollectiveError, Instance1, MemberCount, ProposalIndex};
 use pallet_pablo::PoolInitConfiguration;
 use primitives::currency::CurrencyId;
-use sp_runtime::{Permill, Perquintill};
+use sp_core::{Encode, H256};
+use sp_runtime::{
+	traits::{BlakeTwo256, Hash},
+	Permill, Perquintill,
+};
 
-use super::runtime::{Instrumental, VaultId};
-use crate::mock::{
-	account_id::{AccountId, ALICE, BOB},
-	runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
+use super::runtime::{
+	Call, CollectiveInstrumental, Event, Instrumental, MockRuntime, Origin, System, VaultId,
+};
+use crate::{
+	mock::{
+		account_id::{AccountId, ALICE, BOB},
+		runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
+	},
+	Config,
 };
 
 pub fn create_pool<BAS, BAM, QAS, QAM, F, BW>(
@@ -82,4 +93,66 @@ where
 	let vault_id = <Instrumental as InstrumentalTrait>::create(config);
 	assert_ok!(vault_id);
 	vault_id.unwrap()
+}
+
+pub fn set_admin_members(members: Vec<AccountId>, members_count: MemberCount) {
+	assert_ok!(CollectiveInstrumental::set_members(Origin::root(), members, None, members_count,));
+}
+
+pub fn make_proposal(
+	proposal: Call,
+	account_id: AccountId,
+	threshold: u32,
+	index: ProposalIndex,
+	yes_votes: Option<&[AccountId]>,
+) {
+	let proposal_len: u32 = proposal.using_encoded(|p| p.len() as u32);
+	let proposal_weight = proposal.get_dispatch_info().weight;
+	let hash: H256 = BlakeTwo256::hash_of(&proposal);
+	assert_ok!(CollectiveInstrumental::propose(
+		Origin::signed(account_id),
+		threshold,
+		Box::new(proposal),
+		proposal_len
+	));
+	if threshold > 1 {
+		if let Some(votes) = yes_votes {
+			votes.iter().for_each(|account| {
+				assert_ok!(CollectiveInstrumental::vote(
+					Origin::signed(*account),
+					hash,
+					index,
+					true
+				));
+			});
+			if (votes.len() as u32) < threshold {
+				assert_noop!(
+					CollectiveInstrumental::close(
+						Origin::signed(account_id),
+						hash,
+						index,
+						proposal_weight,
+						proposal_len
+					),
+					CollectiveError::<MockRuntime, Instance1>::TooEarly
+				);
+			} else {
+				assert_ok!(CollectiveInstrumental::close(
+					Origin::signed(account_id),
+					hash,
+					index,
+					proposal_weight,
+					proposal_len
+				));
+			}
+		};
+	}
+}
+
+pub fn assert_has_event<T, F>(matcher: F)
+where
+	T: Config,
+	F: Fn(&EventRecord<Event, H256>) -> bool,
+{
+	assert!(System::events().iter().any(matcher));
 }
