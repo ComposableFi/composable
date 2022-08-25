@@ -14,7 +14,10 @@
 [![Latest Release](https://img.shields.io/github/v/tag/composablefi/composable)][latest-url]
 ![Build][build-badge]
 [![Discord][discord-badge]][discord-url]
-[![Bors Enabled][bors-badge]][bors-url]
+[![Mergify Status][mergify-status]][mergify]
+
+
+
 
 [latest-url]: https://github.com/composablefi/composable/tags
 
@@ -23,8 +26,8 @@
 [discord-badge]: https://img.shields.io/badge/Discord-gray?logo=discord
 [discord-url]: https://discord.gg/pFZn2GCn65
 
-[bors-badge]: https://bors.tech/images/badge_small.svg
-[bors-url]: https://app.bors.tech/repositories/45659
+[mergify]: https://mergify.com
+[mergify-status]: https://img.shields.io/endpoint.svg?url=https://api.mergify.com/v1/badges/ComposableFi/composable&style=flat
 
 ## Documentation
 
