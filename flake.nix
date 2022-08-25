@@ -334,10 +334,10 @@
               '';
             };
 
-            nix-files = stdenv.mkDerivation {
-              name = "runtime-tests";
-              src = builtins.filterSource
-                (path: type: type != "directory" || baseNameOf path == ".nix")
+            all-directories-and-files = stdenv.mkDerivation {
+              name = "all-directories-and-files";
+              src =
+                builtins.filterSource (path: type: baseNameOf path != ".git")
                 ./.;
               dontUnpack = true;
               installPhase = ''
@@ -526,13 +526,13 @@
             nixfmt-check = stdenv.mkDerivation {
               name = "nixfmt-check";
               dontUnpack = true;
-              buildInputs = [ nixfmt nix-files ];
+              buildInputs = [ all-directories-and-files nixfmt ];
               installPhase = ''
                 mkdir $out
                 nixfmt --version
 
                 total_exit_code=0
-                for file in $(find ${nix-files} -type f -and -name "*.nix"); do
+                for file in $(find ${all-directories-and-files} -type f -and -name "*.nix"); do
                   echo "=== $file ==="
                   nixfmt --check $file || total_exit_code=$?
                   echo "==="
