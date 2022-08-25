@@ -5,18 +5,8 @@ edition = "2021"
 authors = ["Composable Developers"]
 
 [[bin]]
-name = "ibc-relayer"
+name = "hyperspace"
 path = "./bin/main.rs"
-
-[build-dependencies]
-subxt-codegen = "0.22.0"
-jsonrpsee = { version = "0.15.0", features = ["async-client", "client-ws-transport", "http-client"] }
-frame-metadata = { version = "15.0.0", features = ["v14", "std"] }
-syn = "1.0.98"
-codec = { package = "parity-scale-codec", version = "3.0.0" }
-color-eyre = "0.6.2"
-hex = "0.4.3"
-tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
 
 [dependencies]
 primitives = { path = "primitives", package = "hyperspace-primitives" }
@@ -29,66 +19,41 @@ anyhow = "1.0.58"
 futures = "0.3.21"
 async-trait = "0.1.53"
 log = "0.4.17"
-log4rs = "1.1.1"
 env_logger = "0.9.0"
 hex = "0.4.3"
 tokio = { version = "1.19.2", features = ["macros", "sync"] }
-rs_merkle = "1.2.0"
-codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
-hex-literal = "0.3.4"
-serde_json = "1.0.74"
-derive_more = { version = "0.99", features = ["from"]  }
-serde = {version="1.0.137", features = ["derive"]}
-tokio-stream = { version = "0.1.9", features = ["sync"]}
-thiserror = "1.0.31"
 
 # ibc
 ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb", features = ["ics11_beefy"] }
 ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
-# composable
-beefy-prover = { git = "https://github.com/ComposableFi/beefy-rs", rev = "ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee", optional = true }
-
 [dev-dependencies]
 derive_more = "0.99.17"
-sp-keyring = "6.0.0"
-clap = {version = "3.2.0", features = ["derive"]}
-state-machine = { package = "sp-state-machine", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 prost = "0.10"
+parachain = { path = "parachain", package = "hyperspace-parachain" }
 
 # substrate
 sp-core = "6.0.0"
 sp-runtime = "6.0.0"
 sp-keystore = "0.12.0"
+sp-keyring = "6.0.0"
+sp-runtime-git = { package = "sp-runtime", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-keyring-git = { package = "sp-keyring", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
-beefy-primitives = {  git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-beefy-mmr = { package = "pallet-beefy-mmr", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-pallet-mmr-primitives = { package = "sp-mmr-primitives", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+state-machine = { package = "sp-state-machine", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 # composable
-beefy-light-client = { git = "https://github.com/ComposableFi/beefy-rs", rev = "ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee" }
-beefy-light-client-primitives = { package = "primitives", git = "https://github.com/ComposableFi/beefy-rs", rev = "ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee" }
-ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "90eff7225a49f6e8524f15a682ff4f2b780a9053" }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "90eff7225a49f6e8524f15a682ff4f2b780a9053" }
-transfer = { package = "pallet-ibc-transfer",  git = "https://github.com/ComposableFi/composable", rev = "90eff7225a49f6e8524f15a682ff4f2b780a9053" }
-ping = { package = "pallet-ibc-ping",  git = "https://github.com/ComposableFi/composable", rev = "90eff7225a49f6e8524f15a682ff4f2b780a9053" }
-ibc-primitives = { git = "https://github.com/ComposableFi/composable", rev = "90eff7225a49f6e8524f15a682ff4f2b780a9053" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb" }
+comosable-primitives = { package = "primitives",  git = "https://github.com/ComposableFi/composable", rev = "f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb" }
+common = { git = "https://github.com/ComposableFi/composable", rev = "f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb" }
 
 [features]
-default = ['std']
-std = []
-parachain = [
-    'dep:parachain',
-    'beefy-prover',
-]
-near = ['dep:near']
-cosmos = ['dep:cosmos']
+parachain = ["dep:parachain"]
+near = ["dep:near"]
+cosmos = ["dep:cosmos"]
 
 [workspace]
 members = [
@@ -98,12 +63,17 @@ members = [
     "near",
 ]
 
-[['cfg(feature = "parachain")'.test]]
+[[test]]
 name = "parachain_ibc_test"
 harness = false
-path = "tests/parachain/parachain_token_transfer.rs"
+path = "tests/parachain/parachain_ibc_test.rs"
 
-[['cfg(feature = "parachain")'.test]]
+[[test]]
 name = "parachain_token_transfer"
 harness = false
 path = "tests/parachain/parachain_token_transfer.rs"
+
+[[test]]
+name = "set_up_transfer_channel"
+harness = false
+path = "tests/parachain/set_up_transfer_channel.rs"

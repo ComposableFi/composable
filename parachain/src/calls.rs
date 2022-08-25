@@ -2,10 +2,10 @@ use codec::{Decode, Encode};
 use subxt::{Client, Config, SubmittableExtrinsic};
 
 use super::polkadot;
+use common::AccountId;
 pub use ibc_primitives::OpenChannelParams;
-pub use pallet_ibc::Any as RawAny;
+pub use pallet_ibc::{Any as RawAny, PalletParams, TransferParams};
 pub use ping::SendPingParams;
-pub use transfer::{PalletParams, TransferParams};
 
 // Statically define Pallet Ibc Calls
 #[derive(Decode)]
@@ -84,13 +84,13 @@ pub fn sudo_call<
 
 #[derive(Encode, Decode, Clone)]
 pub struct Transfer {
-	pub params: TransferParams,
+	pub params: TransferParams<AccountId>,
 	pub asset_id: u128,
 	pub amount: u128,
 }
 
 impl subxt::Call for Transfer {
-	const PALLET: &'static str = "Transfer";
+	const PALLET: &'static str = "Ibc";
 	const FUNCTION: &'static str = "transfer";
 }
 
@@ -108,8 +108,8 @@ pub struct OpenTransferChannel {
 }
 
 impl subxt::Call for OpenTransferChannel {
-	const PALLET: &'static str = "Transfer";
-	const FUNCTION: &'static str = "open_channel";
+	const PALLET: &'static str = "Ibc";
+	const FUNCTION: &'static str = "open_transfer_channel";
 }
 
 #[derive(Encode, Decode, Clone)]
@@ -118,8 +118,8 @@ pub struct SetPalletParams {
 }
 
 impl subxt::Call for SetPalletParams {
-	const PALLET: &'static str = "Transfer";
-	const FUNCTION: &'static str = "set_pallet_params";
+	const PALLET: &'static str = "Ibc";
+	const FUNCTION: &'static str = "set_params";
 }
 
 #[derive(Encode, Decode, Clone)]

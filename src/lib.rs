@@ -1,8 +1,8 @@
+#![warn(unused_variables)]
+
 use futures::StreamExt;
-#[warn(unused_variables)]
 use primitives::Chain;
 
-mod events;
 pub mod logging;
 mod messages;
 

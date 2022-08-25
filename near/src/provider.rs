@@ -15,22 +15,23 @@ use ibc::{
 	events::IbcEvent,
 	Height,
 };
-use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 use ibc_proto::ibc::core::{
 	channel::v1::{
-		QueryChannelResponse, QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
-		QueryPacketCommitmentResponse, QueryPacketReceiptResponse,
+		Packet as RawPacket, QueryChannelResponse, QueryNextSequenceReceiveResponse,
+		QueryPacketAcknowledgementResponse, QueryPacketCommitmentResponse,
+		QueryPacketReceiptResponse,
 	},
 	client::v1::{QueryClientStateResponse, QueryConsensusStateResponse},
 	connection::v1::QueryConnectionResponse,
 };
 use jsonrpsee::core::client::ClientT;
-use near_primitives::types::{BlockId, BlockReference, Finality, FunctionArgs};
-use near_primitives::views::QueryRequest;
+use near_primitives::{
+	types::{BlockId, BlockReference, Finality, FunctionArgs},
+	views::QueryRequest,
+};
 use near_sdk::BlockHeight;
 use primitives::{Chain, IbcProvider, UpdateType};
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 
 #[derive(Serialize)]
 struct Query {

@@ -6,8 +6,8 @@ use sp_runtime::{
 };
 use subxt::{extrinsic::Signer, Config};
 
-use crate::chain::KeyProvider;
 use codec::Decode;
+use primitives::KeyProvider;
 
 /// A [`Signer`] implementation.
 #[derive(Clone)]

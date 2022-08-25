@@ -111,14 +111,14 @@ where
 			);
 			return Err(Error::HeaderConstruction(
 				"Received an outdated beefy commitment".to_string(),
-			));
+			))
 		}
 
 		// check if validator set has changed.
 		// If client on counterparty has never been updated since it was created we want to update
 		// it
-		let update_type = match signed_commitment.commitment.validator_set_id
-			== beefy_client_state.next_authorities.id
+		let update_type = match signed_commitment.commitment.validator_set_id ==
+			beefy_client_state.next_authorities.id
 		{
 			true => UpdateType::Mandatory,
 			false => UpdateType::Optional,
@@ -161,8 +161,8 @@ where
 			.parachain_headers
 			.iter()
 			.filter_map(|header| {
-				if (client_state.latest_height().revision_height as u32)
-					< header.parachain_header.number.into()
+				if (client_state.latest_height().revision_height as u32) <
+					header.parachain_header.number.into()
 				{
 					Some(header.parachain_header.number)
 				} else {

@@ -17,6 +17,7 @@ use codec::{Codec, Decode};
 use error::Error;
 
 use calls::{ibc_transfer, sudo_call, DeliverPermissioned, RawAny, Sudo, Transfer, TransferParams};
+use common::AccountId;
 use ibc_rpc::{BlockNumberOrHash, IbcApiClient};
 use signer::ExtrinsicSigner;
 
@@ -386,7 +387,7 @@ where
 
 	pub async fn transfer_tokens(
 		&self,
-		params: TransferParams,
+		params: TransferParams<AccountId>,
 		asset_id: u128,
 		amount: u128,
 	) -> Result<(), Error> {

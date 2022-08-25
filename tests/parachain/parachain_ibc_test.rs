@@ -7,7 +7,7 @@ use primitives::IbcProvider;
 
 use std::time::{Duration, Instant};
 
-use common::{wait_for_client_and_connection, Args, ChannelToOpen, TestParams};
+use crate::common::{wait_for_client_and_connection, Args, ChannelToOpen, TestParams};
 
 mod common;
 
@@ -57,13 +57,13 @@ async fn main() {
 	loop {
 		if !test_params_a.should_check && !test_params_b.should_check {
 			println!("Successfully verified packet receipt on both chains");
-			break;
+			break
 		}
 
 		let time_elapsed = Instant::now().duration_since(start);
 		if time_elapsed >= Duration::from_secs(1200) {
 			println!("Could not verify packet receipt on either chain after waiting for 20mins");
-			break;
+			break
 		}
 
 		tokio::select! {

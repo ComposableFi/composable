@@ -13,9 +13,7 @@ use subxt::{
 	Config, PolkadotExtrinsicParams, PolkadotExtrinsicParamsBuilder,
 };
 
-use ibc::core::ics03_connection::msgs::{
-	conn_open_ack, conn_open_confirm, conn_open_init, conn_open_try,
-};
+use ibc::core::ics03_connection::msgs::{conn_open_ack, conn_open_init};
 
 use primitives::{Chain, IbcProvider, KeyProvider};
 
@@ -59,22 +57,18 @@ where
 		let signer =
 			ExtrinsicSigner::<T, Self>::new(self.key_store(), self.key_type_id(), public_key);
 
-		let update_client_message = messages.remove(0);
-		let update_client_message = vec![RawAny {
-			type_url: update_client_message.type_url.as_bytes().to_vec(),
-			value: update_client_message.value,
-		}];
+		let update_client_message = {
+			let update_client_message = messages.remove(0);
+			RawAny {
+				type_url: update_client_message.type_url.as_bytes().to_vec(),
+				value: update_client_message.value,
+			}
+		};
 		let mut permissioned_messages = vec![];
 		let mut non_permissioned_messages = vec![];
 
 		for msg in messages {
-			if matches!(
-				msg.type_url.as_str(),
-				conn_open_init::TYPE_URL
-					| conn_open_ack::TYPE_URL
-					| conn_open_try::TYPE_URL
-					| conn_open_confirm::TYPE_URL
-			) {
+			if matches!(msg.type_url.as_str(), conn_open_init::TYPE_URL | conn_open_ack::TYPE_URL) {
 				permissioned_messages.push(msg)
 			} else {
 				non_permissioned_messages.push(msg)
@@ -112,28 +106,17 @@ where
 			.tip(PlainTip::new(100_000))
 			.era(Era::Immortal, *self.para_client.genesis());
 
-		let update_client_ext = deliver::<T, PolkadotExtrinsicParams<T>>(
-			&self.para_client,
-			Deliver { messages: update_client_message },
-		);
+		let mut messages = vec![update_client_message];
+		if !non_permissioned_messages.is_empty() {
+			messages.extend(non_permissioned_messages.into_iter())
+		}
+		let update_client_ext =
+			deliver::<T, PolkadotExtrinsicParams<T>>(&self.para_client, Deliver { messages });
 		let _ = update_client_ext.sign_and_submit(&signer, tx_params).await?;
 
 		if !permissioned_messages.is_empty() {
 			self.submit_sudo_call(DeliverPermissioned { messages: permissioned_messages })
 				.await?;
-		}
-
-		if !non_permissioned_messages.is_empty() {
-			let ext = deliver::<T, PolkadotExtrinsicParams<T>>(
-				&self.para_client,
-				Deliver { messages: non_permissioned_messages },
-			);
-
-			let tx_params = PolkadotExtrinsicParamsBuilder::new()
-				.tip(PlainTip::new(100_000))
-				.era(Era::Immortal, *self.para_client.genesis());
-
-			let _ = ext.sign_and_submit(&signer, tx_params).await?;
 		}
 
 		Ok(())

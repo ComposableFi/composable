@@ -2,13 +2,14 @@ use futures::StreamExt;
 use ibc::{events::IbcEvent, timestamp::Timestamp};
 
 use hyperspace::logging;
-use parachain::calls::{SetPalletParams, Transfer, TransferParams};
+use parachain::calls::{SetPalletParams, TransferParams};
 use primitives::IbcProvider;
-use transfer::PalletParams;
 
+use pallet_ibc::{MultiAddress, PalletParams};
+use sp_runtime_git::{traits::IdentifyAccount, MultiSigner};
 use std::time::{Duration, Instant};
 
-use common::{wait_for_client_and_connection, Args, ChannelToOpen, TestParams};
+use crate::common::{wait_for_client_and_connection, Args, ChannelToOpen, TestParams};
 
 mod common;
 
@@ -21,14 +22,10 @@ async fn main() {
 	let timeout_timestamp =
 		(Timestamp::now() + Duration::from_secs(86400 * 30)).unwrap().nanoseconds();
 	// Send Token from alice to alice on chain b
+	let alice = MultiSigner::from(sp_keyring_git::AccountKeyring::Alice.public());
 	let params = TransferParams {
-		to: {
-			let alice = sp_keyring::AccountKeyring::Alice.public().0;
-			let mut hex_string = hex::encode(alice.to_vec());
-			hex_string.insert_str(0, "0x");
-			hex_string.as_bytes().to_vec()
-		},
-		source_channel: channel_id.to_string().as_bytes().to_vec(),
+		to: MultiAddress::Id(alice.into_account()),
+		source_channel: channel_id.sequence(),
 		timeout_timestamp_offset: timeout_timestamp,
 		timeout_height_offset: 2000,
 	};
@@ -131,7 +128,7 @@ async fn main() {
 									// Send tokens back from chain B
 									// IBC Asset Id on chain b should be 400_000_000_001
 									println!("Sending ibc token back to chain A");
-									client_b.transfer_tokens(params.clone(), 400_000_000_001, 1_111_111_111_111_111).await.unwrap();
+									client_b.transfer_tokens(params.clone(), 1, 1_111_111_111_111_111).await.unwrap();
 									break
 								},
 								_ => continue

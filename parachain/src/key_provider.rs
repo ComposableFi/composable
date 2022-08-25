@@ -4,7 +4,7 @@ use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::KeyTypeId;
 use subxt::Config;
 
-use crate::chain::KeyProvider;
+use primitives::KeyProvider;
 
 use super::ParachainClient;
 

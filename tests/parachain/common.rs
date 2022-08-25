@@ -1,4 +1,3 @@
-use clap::Parser;
 use hyperspace::relay;
 use ibc_proto::google::protobuf::Any;
 use parachain::{
@@ -38,22 +37,14 @@ pub struct TestParams {
 	pub confirmed_receipt: bool,
 }
 
-#[derive(Parser, Debug, Clone)]
-#[clap(author, version, about, long_about = None)]
+#[derive(Debug, Clone)]
 pub struct Args {
-	#[clap(long, value_parser, default_value = "ws://127.0.0.1:9988")]
 	pub chain_a: String,
-	#[clap(long, value_parser, default_value = "ws://127.0.0.1:9188")]
 	pub chain_b: String,
-	#[clap(long, value_parser, default_value = "ws://127.0.0.1:9944")]
 	pub relay_chain: String,
-	#[clap(long, value_parser, default_value = "2001")]
 	pub para_id_a: u32,
-	#[clap(long, value_parser, default_value = "2000")]
 	pub para_id_b: u32,
-	#[clap(long, value_parser, default_value = "ibc/")]
 	pub connection_prefix_a: String,
-	#[clap(long, value_parser, default_value = "ibc/")]
 	pub connection_prefix_b: String,
 }
 
@@ -217,13 +208,13 @@ pub async fn wait_for_client_and_connection(
 		// If channel states are open on both chains we can stop listening for events
 		if chan_state_a && chan_state_b {
 			println!("Channel handshake completed");
-			break;
+			break
 		}
 
 		let time_elapsed = Instant::now().duration_since(start);
 		if time_elapsed >= Duration::from_secs(1200) {
 			println!("Could not verify connection and channel handshake after waiting 20mins");
-			break;
+			break
 		}
 
 		// Both clients have been updated, we can now start connection handshake
