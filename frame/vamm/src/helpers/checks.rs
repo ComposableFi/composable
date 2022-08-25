@@ -160,7 +160,6 @@ impl<T: Config> Pallet<T> {
 		}?;
 
 		// Target closing time must be in the future
-		dbg!(&now, &closing_time);
 		ensure!(closing_time.gt(&now), Error::<T>::ClosingDateIsInThePast);
 
 		Ok(())

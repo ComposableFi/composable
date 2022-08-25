@@ -39,14 +39,12 @@ pub fn run_for_seconds(seconds: u64) {
 	}
 	SystemPallet::set_block_number(SystemPallet::block_number() + 1);
 	// Time is set in milliseconds, so we multiply the seconds by 1_000
-	dbg!(TimestampPallet::now());
 	let _ = TimestampPallet::set(
 		Origin::none(),
 		TimestampPallet::now().saturating_add(seconds.saturating_mul(1_000)),
 	);
 	SystemPallet::on_initialize(SystemPallet::block_number());
 	TimestampPallet::on_initialize(SystemPallet::block_number());
-	dbg!(TimestampPallet::now());
 }
 
 pub fn as_decimal(x: u128) -> Decimal {

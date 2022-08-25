@@ -1,28 +1,14 @@
 use crate::{
-	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
-	pallet::{Error, Event, VammMap},
-	tests::{
-		constants::{DEFAULT_OUTPUT_ADDING_BASE, DEFAULT_OUTPUT_REMOVING_BASE, RUN_CASES},
-		helpers::{
-			create_vamm, run_for_seconds, run_to_block, swap_config,
-			with_swap_context_checking_limit,
-		},
-		helpers_propcompose::{
-			any_swap_config, any_vamm_state, balance_range_lower_half, balance_range_upper_half,
-			multiple_swaps, then_and_now,
-		},
-		types::{TestSwapConfig, TestVammConfig, Timestamp},
-	},
+	mock::{ExtBuilder, MockRuntime, TestPallet},
+	pallet::Error,
+	tests::{constants::RUN_CASES, helpers::run_for_seconds, types::Timestamp},
 	types::VammState,
 };
-use composable_traits::vamm::{
-	AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait, MINIMUM_TWAP_PERIOD,
-};
+use composable_traits::vamm::Vamm as VammTrait;
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use rstest::rstest;
-use sp_core::U256;
-use sp_runtime::traits::Zero;
+use std::cmp::Ordering::Greater;
 
 // -------------------------------------------------------------------------------------------------
 //                                            Unit Tests
@@ -51,10 +37,6 @@ fn should_fail_if_vamm_does_not_exist() {
 #[case(2, None, 0, Err(Error::<MockRuntime>::ClosingDateIsInThePast))]
 #[case(2, None, 1, Err(Error::<MockRuntime>::ClosingDateIsInThePast))]
 #[case(2, None, 2, Err(Error::<MockRuntime>::ClosingDateIsInThePast))]
-// Cases caught by proptest
-// TODO(Cardosaum): Enable this test.
-// #[case(6419055347932622256, None, 18446744073709552,
-// Err(Error::<MockRuntime>::ClosingDateIsInThePast))]
 fn should_fail_if_vamm_is_not_open_otherwise_succeed(
 	#[case] current_time: Timestamp,
 	#[case] vamm_close_at: Option<Timestamp>,
@@ -71,6 +53,7 @@ fn should_fail_if_vamm_is_not_open_otherwise_succeed(
 		match error {
 			Ok(_) => {
 				assert_ok!(TestPallet::close(0, try_close_at));
+				assert_eq!(TestPallet::get_vamm(0).unwrap().closed, Some(try_close_at));
 			},
 			Err(e) => {
 				assert_noop!(TestPallet::close(0, try_close_at), e);
@@ -84,12 +67,10 @@ fn should_fail_if_vamm_is_not_open_otherwise_succeed(
 // -------------------------------------------------------------------------------------------------
 
 proptest! {
-	#![proptest_config(ProptestConfig::with_cases(u32::MAX))]
+	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	#[ignore = "The `run_for_seconds` function has a cap, it seems it only goes until `u32::MAX`\
-				but it should support `u64::MAX`."]
 	fn should_return_correct_result(
-		current_time in any::<Timestamp>(),
+		current_time in Timestamp::MIN..Timestamp::MAX/1000,
 		vamm_close_at in any::<Option<Timestamp>>(),
 		try_close_at in any::<Timestamp>(),
 	) {
@@ -100,29 +81,47 @@ proptest! {
 		.build()
 		.execute_with(|| {
 			run_for_seconds(current_time);
-			// To succeed closing a vamm, we need to satisfy the constraints:
-			// * Vamm must exist (always true in this test)
-			// * Vamm must be open
-			// * Desired closing time must be in the future
-			if current_time < try_close_at && vamm_close_at.is_none() {
-				assert_ok!(TestPallet::close(0, try_close_at));
-			} else if current_time >= try_close_at && vamm_close_at.is_none() {
-				// If we try to close a open vamm with a time that is less than
-				// or equal to the  current time, we should deny it.
-				assert_noop!(TestPallet::close(0, try_close_at), Error::<MockRuntime>::ClosingDateIsInThePast);
-			} else if current_time < try_close_at && current_time < vamm_close_at.unwrap() {
-				// If we try to close a vamm in the future, but it's already
-				// scheduled to close in the future, we deny it with a message
-				// warning about the vamm being in the closing period.
-				assert_noop!(TestPallet::close(0, try_close_at), Error::<MockRuntime>::VammIsClosing);
-			} else if current_time < try_close_at && current_time >= vamm_close_at.unwrap() {
-				// If we try to close a vamm but it's already closed, we deny
-				// the operation with an appropriate message.
-				assert_noop!(TestPallet::close(0, try_close_at), Error::<MockRuntime>::VammIsClosed);
-			} else {
-				dbg!(current_time, vamm_close_at, try_close_at);
-				panic!("We should never find a case like this.");
-			}
+			match vamm_close_at {
+				Some(closed_at) => {
+					match closed_at.cmp(&current_time) {
+						Greater => {
+							// The caller tried to close a vamm that is already
+							// in the closing period, we should deny a new close
+							// call with a message warning about the vamm being
+							// already in the closing period.
+							assert_noop!(TestPallet::close(0, try_close_at),
+										 Error::<MockRuntime>::VammIsClosing);
+						},
+						_ => {
+							// The caller tried to close a vamm that is already
+							// closed, we deny this with an appropriate message.
+							assert_noop!(TestPallet::close(0, try_close_at),
+										 Error::<MockRuntime>::VammIsClosed);
+						}
+					}
+				},
+				None => {
+					match try_close_at.cmp(&current_time) {
+						Greater => {
+							// To succeed closing a vamm, we need to satisfy the constraints:
+							// * Vamm must exist (always true in this test)
+							// * Vamm must be open
+							// (this is true since `vamm_close_at = None`)
+							// * Desired closing time must be in the future
+							// (this is true since `try_close_at > vamm_close_at`)
+							assert_ok!(TestPallet::close(0, try_close_at));
+							assert_eq!(TestPallet::get_vamm(0).unwrap().closed,
+									   Some(try_close_at));
+						},
+						_ => {
+							// The caller tried to close a vamm with a time that
+							// is not in the future, we should deny it.
+							assert_noop!(TestPallet::close(0, try_close_at),
+										 Error::<MockRuntime>::ClosingDateIsInThePast);
+						}
+					}
+				},
+			};
 		})
 	}
 }
