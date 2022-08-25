@@ -93,7 +93,6 @@
             };
           };
           overlays = [ rust-overlay.overlay ];
-          rust-toolchain = import ./.nix/rust-toolchain.nix;
         in
         with pkgs;
         let
@@ -101,11 +100,7 @@
           rust-stable = rust-bin.stable.latest.default;
 
           # Nightly rust used for wasm runtime compilation
-          rust-nightly = rust-bin.selectLatestNightlyWith (toolchain:
-            toolchain.default.override {
-              extensions = [ "rust-src" "clippy" "rustfmt" "rust-analyzer" ];
-              targets = [ "wasm32-unknown-unknown" ];
-            });
+          rust-nightly = rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
           # Crane lib instantiated with current nixpkgs
           crane-lib = crane.mkLib pkgs;
