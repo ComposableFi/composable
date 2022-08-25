@@ -21,6 +21,11 @@ const withTM = require("next-transpile-modules")([
 ]);
 
 const nextConfig = {
+  experimental: {
+    images: {
+      unoptimized: true,
+    },
+  },
   reactStrictMode: true,
   env: {
     SUBSTRATE_PROVIDER_URL_KUSAMA_2019:
