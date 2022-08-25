@@ -19,7 +19,7 @@ pub trait VestedTransfer {
 	type AssetId;
 	type BlockNumber;
 	type Moment;
-	type Balance: HasCompact;
+	type Balance;
 	type MinVestedTransfer: Get<Self::Balance>;
 	type VestingScheduleId;
 	type VestingScheduleNonce;
@@ -78,7 +78,7 @@ impl<Id: Clone + Copy + Eq + PartialEq + Debug, MaxVestingSchedules: Get<u32>>
 {
 	/// Returns a `Vec` containing all the ids of the schedules to be claimed. A reference to all
 	/// claimable schedules is passed in case `Self` is `All`.
-	pub fn into_all_ids<BlockNumber, Moment, Balance: HasCompact>(
+	pub fn into_all_ids<BlockNumber, Moment, Balance>(
 		self,
 		all_schedules: &BTreeMap<Id, VestingSchedule<Id, BlockNumber, Moment, Balance>>,
 	) -> Vec<Id> {
@@ -96,14 +96,13 @@ impl<Id: Clone + Copy + Eq + PartialEq + Debug, MaxVestingSchedules: Get<u32>>
 /// of blocks after `window.start`.
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasCompact> {
+pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance> {
 	/// Vesting schedule id
 	pub vesting_schedule_id: VestingScheduleId,
 	pub window: VestingWindow<BlockNumber, Moment>,
 	/// Number of vest
 	pub period_count: u32,
 	/// Amount of tokens to release per vest
-	#[codec(compact)]
 	pub per_period: Balance,
 	/// Amout already claimed
 	pub already_claimed: Balance,
@@ -114,12 +113,11 @@ pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasC
 /// This is used for creating a VestingSchedule
 #[derive(Clone, Encode, Decode, PartialEq, Eq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct VestingScheduleInfo<BlockNumber, Moment, Balance: HasCompact> {
+pub struct VestingScheduleInfo<BlockNumber, Moment, Balance> {
 	pub window: VestingWindow<BlockNumber, Moment>,
 	/// Number of vest
 	pub period_count: u32,
 	/// Amount of tokens to release per vest
-	#[codec(compact)]
 	pub per_period: Balance,
 }
 
