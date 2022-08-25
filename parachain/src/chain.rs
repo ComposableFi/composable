@@ -5,7 +5,7 @@ use ibc_proto::google::protobuf::Any;
 use sp_runtime::{
 	generic::Era,
 	traits::{Header as HeaderT, IdentifyAccount, Verify},
-	MultiSigner,
+	MultiSignature, MultiSigner,
 };
 use subxt::{
 	extrinsic::PlainTip,
@@ -15,7 +15,7 @@ use subxt::{
 
 use ibc::core::ics03_connection::msgs::{conn_open_ack, conn_open_init};
 
-use primitives::{Chain, IbcProvider, KeyProvider};
+use primitives::{Chain, IbcProvider};
 
 use super::{
 	calls::{deliver, Deliver, DeliverPermissioned, RawAny},
@@ -29,11 +29,10 @@ impl<T: Config + Send + Sync> Chain for ParachainClient<T>
 where
 	u32: From<<<T as Config>::Header as HeaderT>::Number>,
 	u32: From<<T as Config>::BlockNumber>,
-	<T::Signature as Verify>::Signer:
-		From<Self::Public> + IdentifyAccount<AccountId = T::AccountId>,
-	MultiSigner: From<Self::Public>,
+	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
+	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
-	<T as subxt::Config>::Signature: From<<Self as KeyProvider>::Signature>,
+	<T as subxt::Config>::Signature: From<MultiSignature>,
 {
 	async fn finality_notifications(
 		&self,
@@ -53,9 +52,11 @@ where
 	}
 
 	async fn submit_ibc_messages(&self, mut messages: Vec<Any>) -> Result<(), Error> {
-		let public_key = self.public_key();
-		let signer =
-			ExtrinsicSigner::<T, Self>::new(self.key_store(), self.key_type_id(), public_key);
+		let signer = ExtrinsicSigner::<T, Self>::new(
+			self.key_store.clone(),
+			self.key_type_id.clone(),
+			self.public_key.clone(),
+		);
 
 		let update_client_message = {
 			let update_client_message = messages.remove(0);

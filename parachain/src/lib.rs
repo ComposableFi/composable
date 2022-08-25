@@ -48,8 +48,9 @@ use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::{
 	generic::Era,
 	traits::{IdentifyAccount, Verify},
-	KeyTypeId,
+	KeyTypeId, MultiSignature,
 };
+use ss58_registry::Ss58AddressFormat;
 use subxt::{
 	extrinsic::PlainTip,
 	rpc::{rpc_params, ClientT},
@@ -86,6 +87,8 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub key_store: SyncCryptoStorePtr,
 	/// Key type Id
 	pub key_type_id: KeyTypeId,
+	/// used for encoding relayer address.
+	pub ss58_version: Ss58AddressFormat,
 	/// ibc event stream sender
 	pub sender: Sender<Vec<IbcEvent>>,
 	/// Client update status
@@ -108,6 +111,8 @@ pub struct ParachainClientConfig {
 	pub public_key: MultiSigner,
 	/// Reference to keystore
 	pub key_store: SyncCryptoStorePtr,
+	/// used for encoding relayer address.
+	pub ss58_version: u8,
 	/// 4 byte Key type id
 	pub key_type_id: KeyTypeId,
 }
@@ -116,11 +121,10 @@ impl<T: subxt::Config + Send + Sync> ParachainClient<T>
 where
 	u32: From<<<T as subxt::Config>::Header as HeaderT>::Number>,
 	Self: KeyProvider,
-	<T::Signature as Verify>::Signer:
-		From<<Self as KeyProvider>::Public> + IdentifyAccount<AccountId = T::AccountId>,
-	MultiSigner: From<<Self as KeyProvider>::Public>,
+	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
+	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
-	<T as subxt::Config>::Signature: From<<Self as KeyProvider>::Signature>,
+	<T as subxt::Config>::Signature: From<MultiSignature>,
 {
 	pub async fn new(config: ParachainClientConfig) -> Result<Self, Error> {
 		let para_client = subxt::ClientBuilder::new()
@@ -148,6 +152,7 @@ where
 			key_store: config.key_store,
 			key_type_id: config.key_type_id,
 			sender,
+			ss58_version: Ss58AddressFormat::from(config.ss58_version),
 			client_update_status: Arc::new(Mutex::new(false)),
 		})
 	}
@@ -242,8 +247,8 @@ where
 	where
 		Self: KeyProvider,
 		<T::Signature as Verify>::Signer:
-			From<<Self as KeyProvider>::Public> + IdentifyAccount<AccountId = T::AccountId>,
-		MultiSigner: From<<Self as KeyProvider>::Public>,
+			From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
+		MultiSigner: From<MultiSigner>,
 		<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 	{
 		loop {
@@ -341,9 +346,12 @@ where
 	}
 
 	pub async fn submit_create_client_msg(&self, msg: Any) -> Result<ClientId, Error> {
-		let public_key = self.public_key();
-		let signer =
-			ExtrinsicSigner::<T, Self>::new(self.key_store(), self.key_type_id(), public_key);
+		let public_key = self.public_key.clone();
+		let signer = ExtrinsicSigner::<T, Self>::new(
+			self.key_store.clone(),
+			self.key_type_id.clone(),
+			public_key,
+		);
 
 		let ext = sudo_call::<T, subxt::PolkadotExtrinsicParams<T>, _>(
 			&self.para_client,
@@ -391,9 +399,11 @@ where
 		asset_id: u128,
 		amount: u128,
 	) -> Result<(), Error> {
-		let public_key = self.public_key();
-		let signer =
-			ExtrinsicSigner::<T, Self>::new(self.key_store(), self.key_type_id(), public_key);
+		let signer = ExtrinsicSigner::<T, Self>::new(
+			self.key_store.clone(),
+			self.key_type_id.clone(),
+			self.public_key.clone(),
+		);
 
 		let ext = ibc_transfer::<T, subxt::PolkadotExtrinsicParams<T>>(
 			&self.para_client,
@@ -418,9 +428,11 @@ where
 		&self,
 		call: C,
 	) -> Result<(), Error> {
-		let public_key = self.public_key();
-		let signer =
-			ExtrinsicSigner::<T, Self>::new(self.key_store(), self.key_type_id(), public_key);
+		let signer = ExtrinsicSigner::<T, Self>::new(
+			self.key_store.clone(),
+			self.key_type_id.clone(),
+			self.public_key.clone(),
+		);
 
 		let ext = sudo_call::<T, subxt::PolkadotExtrinsicParams<T>, _>(
 			&self.para_client,

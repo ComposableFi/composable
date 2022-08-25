@@ -2435,6 +2435,7 @@ dependencies = [
  "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-state-machine 0.12.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
  "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "ss58-registry",
  "subxt",
  "subxt-codegen 0.22.0",
  "syn",

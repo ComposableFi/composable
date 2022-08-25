@@ -44,12 +44,6 @@ impl Messages {
 		// 1. translate events to messages
 		for event in events {
 			match event {
-				IbcEvent::UpdateClient(update_client) if !chain_b.client_update_status() => {
-					// Update client update status
-					if update_client.client_id() == &chain_b.client_id() {
-						chain_b.set_client_update_status(true)
-					}
-				},
 				IbcEvent::OpenInitConnection(open_init) => {
 					if let Some(connection_id) = open_init.connection_id() {
 						let connection_id = connection_id.clone();

@@ -1,6 +1,5 @@
 use std::pin::Pin;
 
-use codec::Codec;
 use futures::Stream;
 use ibc_proto::{
 	google::protobuf::Any,
@@ -14,15 +13,13 @@ use ibc_proto::{
 		connection::v1::QueryConnectionResponse,
 	},
 };
-use sp_keystore::SyncCryptoStorePtr;
-use sp_runtime::KeyTypeId;
 
 use ibc::{
 	core::{
 		ics02_client::{
 			client_consensus::AnyConsensusState, client_state::AnyClientState, header::AnyHeader,
 		},
-		ics04_channel::packet::{Packet, Sequence},
+		ics04_channel::packet::Packet,
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
@@ -160,53 +157,29 @@ pub trait IbcProvider {
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse, Self::Error>;
 
-	/// Cache packets that have been sent from this chain
-	fn cache_send_packet_seq(&mut self, packet: Packet);
-
-	/// Remove packets with given sequences from cache
-	fn remove_packets(&mut self, seqs: Vec<Sequence>);
-
-	/// Get packet cache
-	fn cached_packets(&self) -> &Vec<Packet>;
-
-	/// Return the chain connection prefix
-	fn connection_prefix(&self) -> CommitmentPrefix;
-
-	/// Apply connecton prefix to path and encode
-	fn apply_prefix(&self, path: String) -> Vec<u8>;
-
 	/// Return the cached consensus height for the given client height
 	async fn consensus_height(&self, client_height: Height) -> Option<Height>;
-
-	/// Return the host chain's light client id on counterparty chain
-	fn client_id(&self) -> ClientId;
 
 	/// Return latest finalized height
 	async fn latest_height(&self) -> Result<Height, Self::Error>;
 
+	/// Return the chain connection prefix
+	fn connection_prefix(&self) -> CommitmentPrefix;
+
+	/// Return the host chain's light client id on counterparty chain
+	fn client_id(&self) -> ClientId;
+
 	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
+	/// Only used in tests.
+	#[cfg(feature = "testing")]
 	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = Self::IbcEvent> + Send + Sync>>;
-
-	/// Check if the client on counterparty chain has been updated since it was created
-	fn client_update_status(&self) -> bool;
-
-	/// Set client update status
-	fn set_client_update_status(&mut self, status: bool);
 }
 
 /// Provides an interface for managing key management for signing.
 pub trait KeyProvider {
-	type Public: Clone;
-	type Signature: Codec;
 	/// Should return the relayer's account id on the host chain as a string in the expected format
 	/// Could be a hexadecimal, bech32 or ss58 string, any format the chain supports
 	fn account_id(&self) -> Signer;
-	/// Public key for the relayer
-	fn public_key(&self) -> Self::Public;
-	/// Return a reference to the keystore
-	fn key_store(&self) -> SyncCryptoStorePtr;
-	/// Key type id for key store access
-	fn key_type_id(&self) -> KeyTypeId;
 }
 
 /// Provides an interface for the chain to the relayer core for submitting IbcEvents as well as

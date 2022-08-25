@@ -111,6 +111,7 @@ pub async fn wait_for_client_and_connection(
 		commitment_prefix: args.connection_prefix_b.as_bytes().to_vec(),
 		public_key: alice_pub_key.clone(),
 		key_store: key_store.clone(),
+		ss58_version: 49,
 		key_type_id,
 	};
 
@@ -122,6 +123,7 @@ pub async fn wait_for_client_and_connection(
 		commitment_prefix: args.connection_prefix_b.as_bytes().to_vec(),
 		public_key: alice_pub_key,
 		key_store,
+		ss58_version: 49,
 		key_type_id,
 	};
 

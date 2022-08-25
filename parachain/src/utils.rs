@@ -22,3 +22,9 @@ pub fn get_updated_client_state(
 
 	client_state
 }
+
+pub fn apply_prefix(mut commitment_prefix: Vec<u8>, path: String) -> Vec<u8> {
+	let path = path.as_bytes().to_vec();
+	commitment_prefix.extend_from_slice(&path);
+	commitment_prefix
+}

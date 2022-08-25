@@ -1,9 +1,7 @@
-use std::pin::Pin;
-
 use super::polkadot;
 use beefy_light_client_primitives::{ClientState, NodesUtils};
 use codec::{Decode, Encode};
-use futures::{Stream, TryStreamExt};
+
 use ibc::{
 	clients::ics11_beefy::header::BeefyHeader,
 	core::{
@@ -12,7 +10,7 @@ use ibc::{
 			client_state::AnyClientState,
 			header::{AnyHeader, Header as IbcHeaderT},
 		},
-		ics04_channel::packet::{Packet, Sequence},
+		ics04_channel::packet::Packet,
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
@@ -30,7 +28,7 @@ use ibc_proto::ibc::core::{
 use sp_runtime::{
 	generic::Header,
 	traits::{BlakeTwo256, Header as HeaderT, IdentifyAccount, Verify},
-	MultiSigner,
+	MultiSignature, MultiSigner,
 };
 use subxt::{rpc::RpcError, Config};
 
@@ -39,8 +37,12 @@ use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 use ibc_rpc::{BlockNumberOrHash, IbcApiClient};
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
-use tokio_stream::wrappers::BroadcastStream;
 
+// needed only for tests
+#[cfg(test)]
+use futures::Stream;
+#[cfg(test)]
+use std::pin::Pin;
 pub type FinalityEvent = Result<String, RpcError>;
 
 #[async_trait::async_trait]
@@ -49,11 +51,10 @@ where
 	u32: From<<<T as Config>::Header as HeaderT>::Number>,
 	u32: From<<T as Config>::BlockNumber>,
 	Self: KeyProvider,
-	<T::Signature as Verify>::Signer:
-		From<<Self as KeyProvider>::Public> + IdentifyAccount<AccountId = T::AccountId>,
-	MultiSigner: From<<Self as KeyProvider>::Public>,
+	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
+	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
-	<T as subxt::Config>::Signature: From<<Self as KeyProvider>::Signature>,
+	<T as subxt::Config>::Signature: From<MultiSignature>,
 {
 	type IbcEvent = Result<Vec<IbcEvent>, String>;
 	type FinalityEvent = FinalityEvent;
@@ -371,35 +372,6 @@ where
 		Ok(res)
 	}
 
-	fn cache_send_packet_seq(&mut self, packet: Packet) {
-		self.packet_cache.push(packet);
-	}
-
-	fn remove_packets(&mut self, seqs: Vec<Sequence>) {
-		self.packet_cache = self
-			.packet_cache
-			.iter()
-			.filter_map(
-				|packet| if !seqs.contains(&packet.sequence) { Some(packet.clone()) } else { None },
-			)
-			.collect();
-	}
-
-	fn cached_packets(&self) -> &Vec<Packet> {
-		&self.packet_cache
-	}
-
-	fn connection_prefix(&self) -> CommitmentPrefix {
-		CommitmentPrefix::try_from(self.commitment_prefix.clone()).expect("Should not fail")
-	}
-
-	fn apply_prefix(&self, path: String) -> Vec<u8> {
-		let mut key_path = vec![self.commitment_prefix.clone()];
-		let path = vec![path.as_bytes().to_vec()];
-		key_path.extend_from_slice(&path);
-		key_path.into_iter().flatten().collect()
-	}
-
 	async fn consensus_height(&self, client_height: Height) -> Option<Height> {
 		let beefy_height = client_height.revision_height as u32;
 		println!("[consensus height]: client_height {:?}", client_height);
@@ -422,10 +394,6 @@ where
 		Some(Height::new(self.para_id.into(), height.into()))
 	}
 
-	fn client_id(&self) -> ClientId {
-		self.client_id()
-	}
-
 	async fn latest_height(&self) -> Result<Height, Self::Error> {
 		let finalized_header = self
 			.para_client
@@ -437,17 +405,20 @@ where
 		Ok(Height::new(self.para_id.into(), latest_height.into()))
 	}
 
+	fn connection_prefix(&self) -> CommitmentPrefix {
+		CommitmentPrefix::try_from(self.commitment_prefix.clone()).expect("Should not fail")
+	}
+
+	fn client_id(&self) -> ClientId {
+		self.client_id()
+	}
+
+	#[cfg(test)]
 	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = Self::IbcEvent> + Send + Sync>> {
+		use futures::TryStreamExt;
+		use tokio_stream::wrappers::BroadcastStream;
+
 		let stream = BroadcastStream::new(self.sender.subscribe());
 		Box::pin(Box::new(stream.map_err(|err| err.to_string())))
-	}
-
-	fn client_update_status(&self) -> bool {
-		*self.client_update_status.lock().unwrap()
-	}
-
-	fn set_client_update_status(&mut self, status: bool) {
-		let mut temp_status = self.client_update_status.lock().unwrap();
-		*temp_status = status;
 	}
 }

@@ -2,7 +2,7 @@ use sp_keystore::{SyncCryptoStore, SyncCryptoStorePtr};
 use sp_runtime::{
 	app_crypto::CryptoTypePublicPair,
 	traits::{IdentifyAccount, Verify},
-	KeyTypeId, MultiSigner,
+	KeyTypeId, MultiSignature, MultiSigner,
 };
 use subxt::{extrinsic::Signer, Config};
 
@@ -23,15 +23,15 @@ pub struct ExtrinsicSigner<T: Config, Provider: KeyProvider> {
 impl<T, P> ExtrinsicSigner<T, P>
 where
 	T: Config,
-	<T::Signature as Verify>::Signer: From<P::Public> + IdentifyAccount<AccountId = T::AccountId>,
+	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
 	P: KeyProvider,
-	MultiSigner: From<P::Public>,
+	MultiSigner: From<MultiSigner>,
 {
 	/// Creates a new [`Signer`] from a key store reference and key type
 	pub fn new(
 		key_store: SyncCryptoStorePtr,
 		key_type_id: KeyTypeId,
-		public_key: P::Public,
+		public_key: MultiSigner,
 	) -> Self {
 		let account_id = <T::Signature as Verify>::Signer::from(public_key.clone()).into_account();
 		Self {
@@ -50,7 +50,7 @@ where
 	T: Config,
 	T::AccountId: Into<T::Address> + Clone + 'static,
 	P: KeyProvider + 'static,
-	<P as KeyProvider>::Signature: Into<T::Signature>,
+	MultiSignature: Into<T::Signature>,
 {
 	fn nonce(&self) -> Option<T::Index> {
 		self.nonce
@@ -77,7 +77,7 @@ where
 				.flatten()
 				.expect("Signing should not fail");
 		let signature =
-			P::Signature::decode(&mut &*encoded_sig).expect("Signature should be valid");
+			MultiSignature::decode(&mut &*encoded_sig).expect("Signature should be valid");
 		signature.into()
 	}
 }
