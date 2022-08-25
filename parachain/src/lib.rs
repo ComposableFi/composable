@@ -124,7 +124,7 @@ where
 	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
 	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
-	<T as subxt::Config>::Signature: From<MultiSignature>,
+	T::Signature: From<MultiSignature>,
 {
 	pub async fn new(config: ParachainClientConfig) -> Result<Self, Error> {
 		let para_client = subxt::ClientBuilder::new()

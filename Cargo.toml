@@ -31,7 +31,7 @@ tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev 
 [dev-dependencies]
 derive_more = "0.99.17"
 prost = "0.10"
-parachain = { path = "parachain", package = "hyperspace-parachain" }
+parachain = { path = "parachain", package = "hyperspace-parachain", features = ["testing"] }
 
 # substrate
 sp-core = "6.0.0"

@@ -70,4 +70,7 @@ sp-keyring = "6.0.0"
 clap = {version = "3.2.0", features = ["derive"]}
 state-machine = { package = "sp-state-machine", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 prost = "0.10"
-primitives = { path = "../primitives", package = "hyperspace-primitives", features = ["testing"] }
+primitives = { path = "../primitives", package = "hyperspace-primitives" }
+
+[features]
+testing = ["primitives/testing"]

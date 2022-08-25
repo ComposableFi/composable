@@ -440,8 +440,6 @@ impl Messages {
 					let value = msg.encode_vec();
 					let msg = Any { value, type_url: msg.type_url() };
 					messages.push(msg);
-					// Cache send packets, so we can track timeouts later on
-					chain_a.cache_send_packet_seq(packet)
 				},
 				IbcEvent::WriteAcknowledgement(write_ack) => {
 					let port_id = &write_ack.packet.source_port.clone();

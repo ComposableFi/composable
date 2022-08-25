@@ -39,10 +39,12 @@ use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
 
 // needed only for tests
-#[cfg(test)]
+#[cfg(feature = "testing")]
 use futures::Stream;
-#[cfg(test)]
+#[cfg(feature = "testing")]
 use std::pin::Pin;
+
+/// Finality event
 pub type FinalityEvent = Result<String, RpcError>;
 
 #[async_trait::async_trait]
@@ -54,7 +56,7 @@ where
 	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
 	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
-	<T as subxt::Config>::Signature: From<MultiSignature>,
+	T::Signature: From<MultiSignature>,
 {
 	type IbcEvent = Result<Vec<IbcEvent>, String>;
 	type FinalityEvent = FinalityEvent;
@@ -413,7 +415,7 @@ where
 		self.client_id()
 	}
 
-	#[cfg(test)]
+	#[cfg(feature = "testing")]
 	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = Self::IbcEvent> + Send + Sync>> {
 		use futures::TryStreamExt;
 		use tokio_stream::wrappers::BroadcastStream;

@@ -50,7 +50,7 @@ where
 	T: Config,
 	T::AccountId: Into<T::Address> + Clone + 'static,
 	P: KeyProvider + 'static,
-	MultiSignature: Into<T::Signature>,
+	T::Signature: From<MultiSignature>,
 {
 	fn nonce(&self) -> Option<T::Index> {
 		self.nonce
@@ -76,8 +76,17 @@ where
 				.ok()
 				.flatten()
 				.expect("Signing should not fail");
-		let signature =
-			MultiSignature::decode(&mut &*encoded_sig).expect("Signature should be valid");
+		let signature: MultiSignature = match self.signer {
+			MultiSigner::Ed25519(_) => sp_core::ed25519::Signature::decode(&mut &encoded_sig[..])
+				.expect("Should decode same signature type as public key; qed")
+				.into(),
+			MultiSigner::Sr25519(_) => sp_core::sr25519::Signature::decode(&mut &encoded_sig[..])
+				.expect("Should decode same signature type as public key; qed")
+				.into(),
+			MultiSigner::Ecdsa(_) => sp_core::ecdsa::Signature::decode(&mut &encoded_sig[..])
+				.expect("Should decode same signature type as public key; qed")
+				.into(),
+		};
 		signature.into()
 	}
 }
