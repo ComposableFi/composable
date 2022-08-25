@@ -26,7 +26,7 @@
 [discord-badge]: https://img.shields.io/badge/Discord-gray?logo=discord
 [discord-url]: https://discord.gg/pFZn2GCn65
 
-[mergify]: https://mergify.com
+[mergify]: https://dashboard.mergify.com/github/ComposableFi/repo/composable/queues
 [mergify-status]: https://img.shields.io/endpoint.svg?url=https://api.mergify.com/v1/badges/ComposableFi/composable&style=flat
 
 ## Documentation
