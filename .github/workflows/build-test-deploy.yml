@@ -329,6 +329,74 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#polkadot-node --no-update-lock-file --show-trace -L
 
+  package-kusama-picasso-karura-devnet:
+    name: "Package kusama picasso karura devnet"
+    needs:
+      - package-polkadot-node
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-kusama-picasso-karura-devnet-${{ github.ref }}
+      cancel-in-progress: true
+    continue-on-error: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
+
+  package-xcvm:
+    name: "Package XCVM"
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-package-xcvm-${{ github.ref }}
+      cancel-in-progress: true
+    continue-on-error: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#junod --no-update-lock-file --show-trace -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#gex --no-update-lock-file --show-trace -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#wasmswap --no-update-lock-file --show-trace -L
+
+
+
   package-price-feed:
     needs: common-deps
     runs-on:
@@ -462,13 +530,11 @@ jobs:
       needs:
         - package-polkadot-node
         - package-composable-node
-        - check-benchmarks
         - check-nix
-        - local-integration-tests
-        - unit-tests
       runs-on: ubuntu-latest      
+      timeout-minutes: 120
       concurrency:
-        group: runtime-tests-${{ github.ref }}
+        group: ${{ github.workflow }}-devnet-integration-tests-${{ github.ref }}
         cancel-in-progress: true
       steps:
       - uses: actions/checkout@v3
@@ -491,14 +557,34 @@ jobs:
           name: ${{  env.NIX_CACHIX }}
 
       - run: |
-          # start network and wait to start writing log and write success start into log
-          ( nix run .#devnet-dali 2>&1 & ) | tee logfile.log &
-          until test -f logfile.log; do sleep 1 && echo "waiting network start "; done;
-          ( tail --follow --lines=0  logfile.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
+          # ideally it does:
+          # start first process
+          # start second if and only if first stdout specific string
+          # first stdout await has timeout, any stderr or exit end stdout timeout and shell exits non zero
+          # if first or second second stderr or non zero exited, then end second and first end and shell non zero exit          
+          # if second timeouted, then in shell non zero exit
+          # more complicated, stderr by regex X times before exit
+          # if second ended success, first stopped gracefully
+          # 
+          # TODO: handle
+          # 🧹 Resolving parachain id...
+          # /nix/store/rfrhfi70ijykigwyaswrwlmfqbxw570g-polkadot-v0.9.27/bin/polkadot build-spec --chain=rococo-local --disable-default-bootnode 
+          # 2022-08-25 02:01:57 Building chain spec    
+          # ⚠ failed to parse the chain spec
+
+          ( nix run .#devnet-dali 2>&1 & ) | tee devnet-dali.log &
+          until test -f devnet-dali.log; do sleep 1 && echo "waiting network start"; done;
+          ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
           
           echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
           cd integration-tests/runtime-tests          
-          export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm install -q && npm run test_short
+          npm install -q
+          ( export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1 &) | tee runtime-tests.log & RUNTIME_TESTS_PID=$!
+          until test -f runtime-tests.log; do sleep 1 && echo "waiting tests start"; done;
+          ( tail --follow --lines=0 runtime-tests.log & ) | ( grep --max-count=1 "API-WS: disconnected from" > stop.log & )
+          (while : ; do if test $(wc --lines stop.log | cut --delimiter " " --fields 1) -gt 0; then kill -9 $RUNTIME_TESTS_PID && echo "Failed" && exit 42; fi; sleep 1; done ) & 
+          wait $RUNTIME_TESTS_PID
+          exit $?
 
   deploy-devnet:
       name: "Devnet(Rococo Local Dali Dev) Deploy"
