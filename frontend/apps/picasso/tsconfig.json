@@ -33,8 +33,11 @@
       ]
     }
   },
-  "include": ["next-env.d.ts",
-    "**/*.ts", "**/*.tsx", ".storybook/mui-decorator.tsx"
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".storybook/mui-decorator.tsx"
   ],
   "exclude": [
     "node_modules",

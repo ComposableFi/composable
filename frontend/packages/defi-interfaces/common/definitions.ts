@@ -13,5 +13,5 @@ export default {
     },
     ComposableTraitsXcmCumulusMethodId: "Null",
     ComposableTraitsXcmXcmSellRequest: "Null"
-  },
+  }
 };
