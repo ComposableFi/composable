@@ -26,7 +26,7 @@ import { u128 } from "@polkadot/types-codec";
  * 2. Bond to newly created offer
  * 3. Cancel offer by sudo
  */
-describe.only("tx.bondedFinance Tests", function () {
+describe("tx.bondedFinance Tests", function () {
   if (!testConfiguration.enabledTests.enabled) return;
   let api: ApiPromise;
   let bondOfferCreatorWallet: KeyringPair, bondOfferBeneficiaryWallet: KeyringPair, bondingWallet: KeyringPair;
@@ -297,7 +297,7 @@ describe.only("tx.bondedFinance Tests", function () {
   describe("tx.bondedFinance.cancel Success Tests", function () {
     if (!testConfiguration.enabledTests.cancel_success.enabled) return;
 
-    it("Sudo cancel second offer", async function () {
+    it("Sudo can cancel second offer", async function () {
       if (!testConfiguration.enabledTests.cancel_success.cancel_by_sudo) this.skip();
       this.timeout(2 * 60 * 1000);
       const {
