@@ -83,8 +83,7 @@
             };
           };
           overlays = [ rust-overlay.overlay ];
-        in
-        with pkgs;
+        in with pkgs;
         let
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
@@ -274,8 +273,8 @@
               '';
             });
 
-          composable-bench-node = crane-nightly.cargoBuild
-            (common-bench-attrs // {
+          composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
+            // {
               pnameSuffix = "-node";
               cargoArtifacts = common-bench-deps;
               cargoBuildCommand = "cargo build --release --package composable";
