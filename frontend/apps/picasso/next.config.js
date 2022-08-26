@@ -1,11 +1,12 @@
 /** @type {import('next').NextConfig} */
 const withPWA = require("next-pwa");
 const withTM = require("next-transpile-modules")([
-  "bi-lib",
   "substrate-react",
   "@web3-react/core",
   "shared",
   "tokens",
+  "bi-lib",
+  "defi-interfaces",
 ]);
 
 function getVersion() {
@@ -22,6 +23,11 @@ function getVersion() {
 }
 
 const nextConfig = {
+  experimental: {
+    images: {
+      unoptimized: true,
+    },
+  },
   reactStrictMode: true,
   env: {
     SUBSTRATE_PROVIDER_URL_KUSAMA_2019:
