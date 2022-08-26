@@ -86,7 +86,7 @@
         let
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ rust-overlay.overlays.default ];
+            overlays = [ rust-overlay.overlays.default nix-npm-buildpackage.overlays.default ];
             allowUnsupportedSystem = true; # we do not tirgger this on mac
             config = {
               permittedInsecurePackages = [
@@ -351,11 +351,13 @@
 
             subsquid-processor =
               let
-                bp = pkgs.callPackage nix-npm-buildpackage {};
                 processor =
-                  bp.buildNpmPackage {
+                  pkgs.buildNpmPackage {
                     extraNodeModulesArgs = {
-                      buildInputs = [ pkgs.pkg-config pkgs.python3 ];
+                      buildInputs = [ pkgs.pkg-config pkgs.python3 pkgs.nodePackages.node-gyp-build pkgs.nodePackages.node-gyp ];
+                      extraEnvVars = {
+                        npm_config_nodedir = "${pkgs.nodejs}";
+                      };
                     };
                     src = ./subsquid;
                     npmBuild = "npm run build";
@@ -363,17 +365,17 @@
                       mkdir $out
                       mv lib $out/
                     '';
-                    dontNpmPrune = true;
+                    dontNpmPrune = false;
                   };
               in
-              writeShellApplication {
+              (writeShellApplication {
                 name = "run-subsquid-processor";
                 text = ''
                   cd ${processor}
                   ${nodejs}/bin/npx sqd db migrate
                   ${nodejs}/bin/node lib/processor.js
                 '';
-              };
+              });
 
             runtime-tests = stdenv.mkDerivation {
               name = "runtime-tests";
