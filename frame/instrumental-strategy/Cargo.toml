@@ -10,7 +10,6 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 codec = { default-features = false, package = "parity-scale-codec", version = "3.0.0", features = ["derive",] }
-frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.27' }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 scale-info = { version = "2.1.2", default-features = false, features = ["derive",] }
@@ -21,7 +20,6 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
-instrumental-strategy-pablo = { version = "0.1.0", path = "../instrumental-strategy-pablo", default-features = false }
 
 log = { version = "0.4.14", default-features = false }
 serde = { version = '1', optional = true }
@@ -33,6 +31,7 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 
+instrumental-strategy-pablo = { version = "0.1.0", path = "../instrumental-strategy-pablo", default-features = false }
 pallet-assets = { path = "../assets", default-features = false }
 pallet-currency-factory = { path = "../currency-factory", default-features = false }
 pallet-governance-registry = { path = "../governance-registry", default-features = false }
@@ -45,7 +44,6 @@ primitives = { path = "../../runtime/primitives", default-features = false }
 default = ["std"]
 std = [
     "codec/std",
-    "frame-benchmarking/std",
     "frame-support/std",
     "frame-system/std",
     "log/std",
@@ -63,7 +61,6 @@ std = [
 ]
 
 runtime-benchmarks = [
-  "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
   "pallet-collective/runtime-benchmarks"

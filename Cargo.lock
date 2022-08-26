@@ -4774,7 +4774,6 @@ name = "instrumental-strategy"
 version = "0.1.0"
 dependencies = [
  "composable-traits",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "instrumental-strategy-pablo",
@@ -4806,7 +4805,6 @@ name = "instrumental-strategy-pablo"
 version = "0.1.0"
 dependencies = [
  "composable-traits",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex-literal",
@@ -8158,7 +8156,6 @@ version = "0.1.0"
 dependencies = [
  "composable-support",
  "composable-traits",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex-literal",
