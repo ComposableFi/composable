@@ -1,9 +1,9 @@
 use super::{
-	create_test_loan, create_test_loan_input_config, parse_timestamp,
+	create_test_loan, create_test_loan_input_config, create_test_market, parse_timestamp,
 	prelude::*,
 };
 use crate::{currency::BTC, validation::LoanInputIsValid};
-use composable_traits::undercollateralized_loans::{LoanInput, DelayedPaymentTreatment};
+use composable_traits::undercollateralized_loans::{DelayedPaymentTreatment, LoanInput};
 
 #[test]
 fn can_create_loan() {
@@ -13,14 +13,12 @@ fn can_create_loan() {
 		let origin = Origin::signed(manager);
 		let loan_input = create_test_loan_input_config();
 		// Check if loan was created successfully.
-		assert_ok!(pallet_undercollateralized_loans::Pallet::<Runtime>::create_loan(
-			origin, loan_input
-		));
+		assert_ok!(UndercollateralizedLoans::create_loan(origin, loan_input));
 		// Check if corresponded event was emitted.
 		let loan_account_id = UndercollateralizedLoans::loan_account_id(1);
 		let event = crate::Event::LoanCreated { loan_account_id };
 		System::assert_has_event(Event::UndercollateralizedLoans(event));
-		// Check if loan's info and config were added to the storage.
+		// Check if loan's info was added to the storage.
 		assert_eq!(
 			*crate::LoansStorage::<Runtime>::get(loan_account_id)
 				.unwrap()
@@ -28,6 +26,8 @@ fn can_create_loan() {
 				.account_id(),
 			loan_account_id
 		);
+		// Check if loan was marked as non-active.
+		assert!(crate::NonActiveLoansStorage::<Runtime>::contains_key(loan_account_id));
 		// Check if loans counter has adequate value.
 		assert_eq!(crate::LoansCounterStorage::<Runtime>::get(), 1)
 	})
@@ -106,44 +106,62 @@ fn test_do_create_market_input_validation() {
 		let first_payment_date = parse_timestamp("01-03-2222");
 		let mut payment_schedule = BTreeMap::new();
 		payment_schedule.insert(first_payment_date, 100);
-		let invalid_loan_input_configuration =
-			LoanInput { payment_schedule, activation_date, ..valid_loan_input_configuration.clone() };
+		let invalid_loan_input_configuration = LoanInput {
+			payment_schedule,
+			activation_date,
+			..valid_loan_input_configuration.clone()
+		};
 		assert_err!(
 			invalid_loan_input_configuration
 				.clone()
 				.try_into_validated::<LoanInputIsValid<UndercollateralizedLoans>>(),
 			"Contract first date payment is less than activation date."
 		);
-       
-        // Check validation of delayed payment treatment input. 
-        let invalid_delayed_payment_treatement = Some(DelayedPaymentTreatment{ delayed_payments_shift_in_days: 1, delayed_payments_threshold: 0 }); 
-		let invalid_loan_input_configuration =
-			LoanInput { delayed_payment_treatment: invalid_delayed_payment_treatement, ..valid_loan_input_configuration.clone() };
+
+		// Check validation of delayed payment treatment input.
+		let invalid_delayed_payment_treatement = Some(DelayedPaymentTreatment {
+			delayed_payments_shift_in_days: 1,
+			delayed_payments_threshold: 0,
+		});
+		let invalid_loan_input_configuration = LoanInput {
+			delayed_payment_treatment: invalid_delayed_payment_treatement,
+			..valid_loan_input_configuration.clone()
+		};
 		assert_err!(
 			invalid_loan_input_configuration
 				.clone()
 				.try_into_validated::<LoanInputIsValid<UndercollateralizedLoans>>(),
-				"Delayed payments threshold equals zero."
+			"Delayed payments threshold equals zero."
 		);
-        let invalid_delayed_payment_treatement = Some(DelayedPaymentTreatment{ delayed_payments_shift_in_days: 0, delayed_payments_threshold: 3 }); 
-		let invalid_loan_input_configuration =
-			LoanInput { delayed_payment_treatment: invalid_delayed_payment_treatement, ..valid_loan_input_configuration.clone() };
+		let invalid_delayed_payment_treatement = Some(DelayedPaymentTreatment {
+			delayed_payments_shift_in_days: 0,
+			delayed_payments_threshold: 3,
+		});
+		let invalid_loan_input_configuration = LoanInput {
+			delayed_payment_treatment: invalid_delayed_payment_treatement,
+			..valid_loan_input_configuration.clone()
+		};
 		assert_err!(
 			invalid_loan_input_configuration
 				.clone()
 				.try_into_validated::<LoanInputIsValid<UndercollateralizedLoans>>(),
-				"Delayed payments shift equals zero."
+			"Delayed payments shift equals zero."
 		);
-        let invalid_delayed_payment_treatement = Some(DelayedPaymentTreatment{ delayed_payments_shift_in_days: <MaxDateShiftingInDays as Get<i64>>::get() + 1, delayed_payments_threshold: 3}); 
-		let invalid_loan_input_configuration =
-			LoanInput { delayed_payment_treatment: invalid_delayed_payment_treatement, ..valid_loan_input_configuration.clone() };
+		let invalid_delayed_payment_treatement = Some(DelayedPaymentTreatment {
+			delayed_payments_shift_in_days: <MaxDateShiftingInDays as Get<i64>>::get() + 1,
+			delayed_payments_threshold: 3,
+		});
+		let invalid_loan_input_configuration = LoanInput {
+			delayed_payment_treatment: invalid_delayed_payment_treatement,
+			..valid_loan_input_configuration.clone()
+		};
 		assert_err!(
 			invalid_loan_input_configuration
 				.clone()
 				.try_into_validated::<LoanInputIsValid<UndercollateralizedLoans>>(),
-				"Maximum date shifting exceeded."
+			"Maximum date shifting exceeded."
 		);
-});
+	});
 }
 
 #[test]
@@ -156,10 +174,29 @@ fn can_execute_loan_contract() {
 		let origin = Origin::signed(borrower);
 		let loan_config = create_test_loan();
 		let loan_account_id = *loan_config.account_id();
-		assert_ok!(pallet_undercollateralized_loans::Pallet::<Runtime>::borrow(
-			origin,
-			loan_account_id,
-			true
-		));
+		assert_ok!(UndercollateralizedLoans::borrow(origin, loan_account_id.clone(), true));
+		// Check if corresponded event was emitted.
+		let event = crate::Event::LoanContractExecuted { loan_account_id };
+		System::assert_has_event(Event::UndercollateralizedLoans(event));
+		// Check if loan's account id was removed from non-active loans list.
+		assert!(!crate::NonActiveLoansStorage::<Runtime>::contains_key(loan_account_id));
+	});
+}
+
+#[test]
+fn test_loan_activation_invalid_inputs() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let borrower = *BOB;
+		let origin = Origin::signed(borrower);
+		// Create fake loan account id.
+		let loan_account_id = UndercollateralizedLoans::loan_account_id(42);
+		assert_err!(
+			UndercollateralizedLoans::borrow(origin, loan_account_id.clone(), true),
+			crate::Error::<Runtime>::LoanDoesNotExistOrWasActivated
+		);
+        // Create loan. 
+        let loan_info = create_test_loan();
+         
 	});
 }

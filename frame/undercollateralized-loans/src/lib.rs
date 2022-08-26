@@ -244,7 +244,7 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		MarketCreated { market_account_id: T::AccountId },
 		LoanCreated { loan_account_id: T::AccountId },
-		LoanContractExecuted { loan_config: LoanConfigOf<T> },
+		LoanContractExecuted { loan_account_id: T::AccountId },
 		LoanTerminated { loan_config: LoanConfigOf<T> },
 		LoanClosed { loan_config: LoanConfigOf<T> },
 		NonActivatedExpiredLoansTerminated { loans_ids: Vec<T::AccountId> },
@@ -448,7 +448,9 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			let loan_config =
 				<Self as UndercollateralizedLoans>::borrow(who, loan_account, keep_alive)?;
-			Self::deposit_event(Event::<T>::LoanContractExecuted { loan_config });
+			Self::deposit_event(Event::<T>::LoanContractExecuted {
+				loan_account_id: loan_config.account_id().clone(),
+			});
 			Ok(())
 		}
 

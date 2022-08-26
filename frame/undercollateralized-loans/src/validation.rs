@@ -3,7 +3,7 @@ use composable_support::validation::{TryIntoValidated, Validate};
 use composable_traits::{
 	defi::DeFiEngine,
 	oracle::Oracle as OracleTrait,
-	undercollateralized_loans::{LoanInput, MarketInput, UndercollateralizedLoans},
+	undercollateralized_loans::{Accounts, LoanInput, MarketInput, UndercollateralizedLoans},
 };
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
@@ -80,23 +80,9 @@ where
 		let principal = input.principal.try_into_validated::<BalanceGreaterThenZero>()?.value();
 		// Check that collateral balance > 0
 		let collateral = input.collateral.try_into_validated::<BalanceGreaterThenZero>()?.value();
-		// Checks that the borrower's account is included in the market's white-list of borrowers.
-		ensure!(
-			Loans::is_borrower_account_whitelisted(
-				&input.borrower_account_id,
-				&input.market_account_id
-			)?,
-			"Mentioned borrower is not included in the market's white-list of borrowers."
-		);
-		// Borrower's account should not be included in the market's blacklist.
-		ensure!(
-			Loans::is_borrower_account_not_blacklisted(
-				&input.borrower_account_id,
-				&input.market_account_id
-			),
-			"Mentioned borrower is presented in the market's blacklist of borrowers."
-		);
-		// Check if payment schedule is empty.
+        // Check that borrower account is whitelisted and not blacklisted. 
+        let accounts = input.accounts.try_into_validated::<AccountsInputsIsValid<Loans>>()?.value();
+      	// Check if payment schedule is empty.
 		// We should have at least one payment.
 		ensure!(input.payment_schedule.len() > 0, "Payment schedule is empty.");
 		// Unwrapped since u32 can be safely converted to usize.
@@ -128,6 +114,35 @@ where
 			);
 		};
 
-		Ok(LoanInput { principal, collateral, ..input })
+		Ok(LoanInput { accounts, principal, collateral, ..input })
 	}
 }
+#[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Copy, Clone)]
+pub struct AccountsInputsIsValid<Loans: UndercollateralizedLoans>(PhantomData<Loans>);
+
+impl<AccountId, Loans> Validate<Accounts<AccountId>, AccountsInputsIsValid<Loans>> for AccountsInputsIsValid<Loans>
+	where Loans: UndercollateralizedLoans + DeFiEngine<AccountId = AccountId>,
+
+{
+	fn validate(accounts: Accounts<AccountId>) -> Result<Accounts<AccountId>, &'static str> {
+		// Checks that the borrower's account is included in the market's white-list of borrowers.
+		ensure!(
+			Loans::is_borrower_account_whitelisted(
+				&accounts.borrower_account_id,
+				&accounts.market_account_id
+			)?,
+			"Mentioned borrower is not included in the market's white-list of borrowers."
+		);
+		// Borrower's account should not be included in the market's blacklist.
+		ensure!(
+			Loans::is_borrower_account_not_blacklisted(
+				&accounts.borrower_account_id,
+				&accounts.market_account_id
+			),
+			"Mentioned borrower is presented in the market's blacklist of borrowers."
+		);
+	Ok(accounts)
+	}
+}
+
+

@@ -318,11 +318,8 @@ pub struct MarketInput<AccountId, AssetId, BlockNumber, LiquidationStrategyId> {
 /// Input to create loan extrinsic.
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
 pub struct LoanInput<AccountId, Balance, Timestamp> {
-	/// Loan belongs to this market.
-	pub market_account_id: AccountId,
-	/// This account id have to be whitelisted.
-	pub borrower_account_id: AccountId,
-	/// Amount of borrowed money.  
+    pub accounts: Accounts<AccountId>,	
+    /// Amount of borrowed money.  
 	pub principal: Balance,
 	/// Amount of assets which should be deposited as collateral.
 	pub collateral: Balance,
@@ -334,6 +331,15 @@ pub struct LoanInput<AccountId, Balance, Timestamp> {
 	pub delayed_payment_treatment: Option<DelayedPaymentTreatment>,
 }
 
+/// Structure contains information regarding market and borrower accounts.
+// Separated structure is used for validation purposes. 
+#[derive(Encode, Decode, TypeInfo, Clone, Eq, PartialEq, RuntimeDebug)]
+pub struct Accounts<AccountId> {
+	/// Loan belongs to this market.
+	pub market_account_id: AccountId,
+	/// This account id have to be whitelisted.
+	pub borrower_account_id: AccountId,
+}
 /// Structure contains information regarding failed payment behaviour.
 #[derive(Encode, Decode, TypeInfo, Clone, Eq, PartialEq, RuntimeDebug)]
 pub struct DelayedPaymentTreatment {

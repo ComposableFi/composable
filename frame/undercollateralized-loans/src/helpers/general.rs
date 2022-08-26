@@ -3,7 +3,7 @@ use crate::{
 		Counter, LoanConfigOf, LoanInfoOf, LoanInputOf, MarketInfoOf, MarketInputOf, Payment,
 		PaymentOf, PaymentOutcome, PaymentOutcomeOf, PaymentsOutcomes, Timestamp,
 	},
-	validation::{LoanInputIsValid, MarketInputIsValid},
+	validation::{LoanInputIsValid, MarketInputIsValid, AccountsInputsIsValid},
 	Config, DebtTokenForMarketStorage, Error, MarketsStorage, Pallet,
 };
 use composable_support::validation::Validated;
@@ -13,7 +13,7 @@ use composable_traits::{
 	liquidation::Liquidation,
 	oracle::Oracle,
 	undercollateralized_loans::{
-		LoanConfig, LoanInfo, MarketConfig, MarketInfo, UndercollateralizedLoans,
+		Accounts, LoanConfig, LoanInfo, MarketConfig, MarketInfo, UndercollateralizedLoans,
 	},
 	vault::{Deposit, Vault, VaultConfig},
 };
@@ -102,7 +102,8 @@ impl<T: Config> Pallet<T> {
 		// Get market config. Unwrapped since we have checked market existence during input
 		// validation process.
 		let market_config =
-			Self::get_market_config_via_account_id(&config_input.market_account_id)?;
+			Self::get_market_config_via_account_id(&config_input.accounts.market_account_id)?;
+		// TODO: @mikolaichuk: test this!
 		// Align schedule timestamps to the beginning of the day.
 		// 24.08.1991 08:45:03 -> 24.08.1991 00:00:00
 		let schedule = config_input
@@ -125,8 +126,8 @@ impl<T: Config> Pallet<T> {
 					let loan_account_id = Self::loan_account_id(*counter);
 					let loan_config = LoanConfig::new(
 						loan_account_id.clone(),
-						config_input.market_account_id,
-						config_input.borrower_account_id,
+						config_input.accounts.market_account_id,
+						config_input.accounts.borrower_account_id,
 						market_config.collateral_asset_id().clone(),
 						market_config.borrow_asset_id().clone(),
 						config_input.principal,
@@ -152,12 +153,14 @@ impl<T: Config> Pallet<T> {
 	/// Activates the loan.
 	/// Supposed to be called from transactional dispatchable function.
 	pub(crate) fn do_borrow(
-		borrower_account_id: T::AccountId,
-		loan_account_id: T::AccountId,
+	    accounts: Validated<Accounts<T::AccountId>, AccountsInputsIsValid<crate::Pallet<T>>>,	
 		keep_alive: bool,
 	) -> Result<LoanConfigOf<T>, DispatchError> {
-		// TODO: @mikolaichuk: move these to validation?
-
+		
+        let market_account_id = accounts.value().market_account_id;
+        let borrower_account_id = accounts.value().borrower_account_id;
+        // TODO: @mikolaichuk: move these to validation?
+        
 		// Check if loan's account id is in non-activated loans list.
 		// If it is not, loan does not exist or was already activated.
 		ensure!(
