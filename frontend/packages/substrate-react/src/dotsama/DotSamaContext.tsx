@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useMemo } from 'react';
+import React, { useState, useEffect, createContext, useMemo } from "react";
 import {
   DotSamaContext,
   ParachainApi,
@@ -7,20 +7,31 @@ import {
   RelaychainApi,
   RelayChainId,
   SupportedWalletId,
-} from './types';
-import { ParachainNetworks, RelayChainNetworks } from './Networks';
-import type { InjectedExtension, InjectedAccount, InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
-import { decodeAddress, encodeAddress } from '@polkadot/util-crypto';
-import { createParachainApis } from './utils';
+} from "./types";
+import { ParachainNetworks, RelayChainNetworks } from "./Networks";
+import type {
+  InjectedExtension,
+  InjectedAccount,
+  InjectedAccountWithMeta,
+} from "@polkadot/extension-inject/types";
+import { decodeAddress, encodeAddress } from "@polkadot/util-crypto";
+import { createParachainApis } from "./utils";
 
-function mapAccounts(source: string, list: InjectedAccount[], ss58Format?: number): InjectedAccountWithMeta[] {
-  return list.map(({ address, genesisHash, name, type }): InjectedAccountWithMeta => ({
-    address: address.length === 42
-      ? address
-      : encodeAddress(decodeAddress(address), ss58Format),
-    meta: { genesisHash, name, source },
-    type
-  }));
+function mapAccounts(
+  source: string,
+  list: InjectedAccount[],
+  ss58Format?: number
+): InjectedAccountWithMeta[] {
+  return list.map(
+    ({ address, genesisHash, name, type }): InjectedAccountWithMeta => ({
+      address:
+        address.length === 42
+          ? address
+          : encodeAddress(decodeAddress(address), ss58Format),
+      meta: { genesisHash, name, source },
+      type,
+    })
+  );
 }
 
 const PARACHAIN_PROVIDERS_DEFAULT: {
@@ -91,30 +102,38 @@ export const DotSamaContextProvider = ({
     [chainId in RelayChainId]: RelaychainApi;
   }>(RELAYCHAIN_PROVIDERS_DEFAULT);
 
-  const [extensionInjected, setInjectedExtension] = useState<InjectedExtension | undefined>(undefined);
-  const [extensionStatus, setExtensionStatus] = useState<DotSamaExtensionStatus>('initializing');
-  const activate = async (walletId: SupportedWalletId = "polkadot-js", selectDefaultAccount: boolean = false): Promise<any | undefined> => {
-    setExtensionStatus('connecting');
+  const [extensionInjected, setInjectedExtension] = useState<
+    InjectedExtension | undefined
+  >(undefined);
+  const [extensionStatus, setExtensionStatus] =
+    useState<DotSamaExtensionStatus>("initializing");
+  const activate = async (
+    walletId: SupportedWalletId = "polkadot-js",
+    selectDefaultAccount: boolean = false
+  ): Promise<any | undefined> => {
+    setExtensionStatus("connecting");
 
     let injectedExtension, extensionError;
     try {
-      if (!window.injectedWeb3) throw new Error('Extension not installed.');
-      
-      let extension = window.injectedWeb3[walletId];
-      if (!extension) throw new Error('Extension not installed.');
+      if (!window.injectedWeb3) throw new Error("Extension not installed.");
 
-      injectedExtension = await extension.enable(appName) as InjectedExtension;
+      let extension = window.injectedWeb3[walletId];
+      if (!extension) throw new Error("Extension not installed.");
+
+      injectedExtension = (await extension.enable(
+        appName
+      )) as InjectedExtension;
     } catch (e) {
       console.error(e);
       extensionError = e;
     }
 
     if (injectedExtension === undefined) {
-      setExtensionStatus('no_extension');
+      setExtensionStatus("no_extension");
       return Promise.reject(extensionError);
     }
 
-    setExtensionStatus('connected');
+    setExtensionStatus("connected");
     localStorage.setItem("wallet-id", walletId);
     setInjectedExtension(injectedExtension);
 
@@ -124,16 +143,20 @@ export const DotSamaContextProvider = ({
 
       try {
         let accounts = await injectedExtension.accounts.get();
-        if (accounts === undefined) throw new Error('Unable to fetch accounts from extension.');
+        if (accounts === undefined)
+          throw new Error("Unable to fetch accounts from extension.");
         accounts = mapAccounts(walletId, accounts, prefix);
-        if (accounts === undefined) throw new Error('Unable to fetch accounts from extension.');
+        if (accounts === undefined)
+          throw new Error("Unable to fetch accounts from extension.");
 
-        setParachainProviders(s => {
-          s[chainId].accounts = (accounts as InjectedAccountWithMeta[]).map((x, i) => ({
-            address: x.address,
-            name: x.meta.name ?? i.toFixed(),
-          }));
-          return { ... s };
+        setParachainProviders((s) => {
+          s[chainId].accounts = (accounts as InjectedAccountWithMeta[]).map(
+            (x, i) => ({
+              address: x.address,
+              name: x.meta.name ?? i.toFixed(),
+            })
+          );
+          return { ...s };
         });
 
         if (selectDefaultAccount) {
@@ -153,20 +176,19 @@ export const DotSamaContextProvider = ({
     setSelectedAccount(-1);
   };
 
-
   useEffect(() => {
-    for (let i = 0; i < supportedParachains.length; i++) {
-      createParachainApis(parachainProviders, supportedParachains).then(
-          setParachainProviders
-      );
-    }
-  }, []); // eslint-disable-line  react-hooks/exhaustive-deps
+    createParachainApis(parachainProviders, supportedParachains).then(
+      setParachainProviders
+    );
+  // only called on first render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [selectedAccount, setSelectedAccount] = useState<number | -1>(-1);
 
   const signer = useMemo(() => {
     if (extensionInjected) {
-      return extensionInjected.signer
+      return extensionInjected.signer;
     }
     return undefined;
   }, [extensionInjected]);
