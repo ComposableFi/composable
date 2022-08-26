@@ -23,6 +23,11 @@ function getVersion() {
 }
 
 const nextConfig = {
+  experimental: {
+    images: {
+      unoptimized: true,
+    },
+  },
   reactStrictMode: true,
   env: {
     SUBSTRATE_PROVIDER_URL_KUSAMA_2019:
