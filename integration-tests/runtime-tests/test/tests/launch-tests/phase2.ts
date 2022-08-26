@@ -124,7 +124,7 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         const baseAsset = ksmAssetId;
         const quoteAsset = usdcAssetId;
         const {
-          data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
+          data: [result]
         } = await pablo.uniswap.createMarket(
           api,
           composableManagerWallet,
@@ -134,6 +134,31 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
           fee,
           baseWeight
         );
+        expect(result).to.be.an("Error");
+      });
+
+      it("Create KSM/USDC uniswap pool by root.", async function () {
+        // ToDo: Update when root can create pools!
+        // Note: Check all pool creations for necessary updates when this is possible.
+        this.timeout(2 * 60 * 1000);
+
+        const fee = 150000;
+        const baseWeight = 500000;
+        const baseAsset = ksmAssetId;
+        const quoteAsset = usdcAssetId;
+        const {
+          data: [resultPoolId, resultManagerWallet, resultCurrencyPair]
+        } = await pablo.uniswap.sudo.sudoCreateMarket(
+          // ToDo: Enable when sudo creation is possible!
+          api,
+          sudoKey,
+          composableManagerWallet.publicKey,
+          baseAsset,
+          quoteAsset,
+          fee,
+          baseWeight
+        );
+        expect(result.isOk).to.be.true;
         expect(resultManagerWallet.toString()).to.be.equal(
           api.createType("AccountId32", composableManagerWallet.publicKey).toString()
         );
@@ -164,33 +189,6 @@ describe.only("[SHORT][LAUNCH2] Picasso/Pablo Launch Plan - Phase 2", function (
         ksmUsdcPoolId = poolId;
         ksmUsdcLpTokenId = lpTokenId;
       });
-
-      it("Create KSM/USDC uniswap pool by root.", async function () {
-        // ToDo: Update when root can create pools!
-        // Note: Check all pool creations for necessary updates when this is possible.
-        this.skip();
-        this.timeout(2 * 60 * 1000);
-
-        const fee = 150000;
-        const baseWeight = 500000;
-        const baseAsset = ksmAssetId;
-        const quoteAsset = usdcAssetId;
-
-        const {
-          data: [result]
-        } = await pablo.uniswap.sudo.sudoCreateMarket(
-          // ToDo: Enable when sudo creation is possible!
-          api,
-          sudoKey,
-          composableManagerWallet.publicKey,
-          baseAsset,
-          quoteAsset,
-          fee,
-          baseWeight
-        );
-        expect(result.isOk).to.be.true;
-      });
-      // ToDo: Add check from above test when sudo creation is possible!
     });
 
     describe("Test 2A pool liquidity", function () {
