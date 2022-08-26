@@ -14,7 +14,8 @@ export type DotSamaExtensionStatus =
   | 'connected'
   | 'no_extension'
   | 'error';
-export interface ConntectedAccount {
+
+  export interface ConntectedAccount {
   address: string;
   name: string;
 }
