@@ -112,7 +112,7 @@ impl CurrencyId {
 		pub const KSM: CurrencyId = CurrencyId(4);
 		pub const PBLO: CurrencyId = CurrencyId(5);
 
-		/// Karura stable coin(Karura Dollar), not native.
+		/// Karura stable coin (Karura Dollar), not native.
 		#[allow(non_upper_case_globals)]
 		pub const kUSD: CurrencyId = CurrencyId(129);
 		pub const USDT: CurrencyId = CurrencyId(130);
