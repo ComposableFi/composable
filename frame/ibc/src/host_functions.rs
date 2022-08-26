@@ -41,7 +41,7 @@ impl HostFunctionsProvider for HostFunctions {
 	) -> Result<(), Ics02ClientError> {
 		let root = H256::from_slice(root);
 		sp_io::trie::blake2_256_verify_proof(root, proof, key, value, StateVersion::V0)
-			.then(|| ())
+			.then_some(())
 			.ok_or_else(|| {
 				Ics02ClientError::beefy(Ics11Error::ics23_error(Ics23Error::verification_failure()))
 			})
@@ -54,7 +54,7 @@ impl HostFunctionsProvider for HostFunctions {
 	) -> Result<(), Ics02ClientError> {
 		let root = H256::from_slice(root);
 		runtime_interface::ibc::blake2_256_verify_non_membership_proof(&root, proof, key)
-			.then(|| ())
+			.then_some(())
 			.ok_or_else(|| {
 				Ics02ClientError::beefy(Ics11Error::ics23_error(Ics23Error::verification_failure()))
 			})
@@ -82,5 +82,13 @@ impl HostFunctionsProvider for HostFunctions {
 
 	fn ripemd160(message: &[u8]) -> [u8; 20] {
 		runtime_interface::ibc::ripemd160(message)
+	}
+
+	fn verify_timestamp_extrinsic(
+		_: &[u8; 32],
+		_: &[Vec<u8>],
+		_: &[u8],
+	) -> Result<(), ibc::core::ics02_client::error::Error> {
+		Err(Ics02ClientError::beefy(Ics11Error::ics23_error(Ics23Error::verification_failure())))
 	}
 }

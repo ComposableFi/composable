@@ -76,6 +76,7 @@ export default {
       owner_fee: "u128",
       protocol_fee: "u128",
       asset_id: "u128"
-    }
+    },
+    ComposableTraitsDexStakingRewardPool: "Null"
   }
 };

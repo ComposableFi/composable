@@ -1,7 +1,36 @@
-import { ChartRange, processSubsquidChartData } from "@/defi/utils";
+import {
+  ChartRange,
+  MAX_CHART_LABELS,
+  processSubsquidChartData,
+  toMomentChartLabel,
+} from "@/defi/utils";
 import BigNumber from "bignumber.js";
+import moment from "moment";
 import { queryPoolTransactionsByType } from "../pools/queries";
 import { query24hOldTransactionByPoolQuoteAsset } from "./queries";
+
+export function getChartLabels(
+  chartSeries: [number, number][],
+  chartRange: ChartRange
+): string[] {
+
+  if (chartSeries.length < MAX_CHART_LABELS) {
+    return chartSeries.map((i) =>
+      moment(i[0]).format(toMomentChartLabel(chartRange))
+    );
+  }
+
+  let steps = Math.floor(chartSeries.length / MAX_CHART_LABELS);
+
+  let labels = [];
+  for (let step = 0; step < chartSeries.length; step += steps) {
+    labels.push(
+      moment(chartSeries[step][0]).format(toMomentChartLabel(chartRange))
+    );
+  }
+
+  return labels;
+}
 
 export async function fetchSwapsChart(
   poolId: number,

@@ -5,9 +5,9 @@ use composable_support::{abstractions::utils::increment::Increment, validation::
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
-		Reductions, Reward, RewardConfig, RewardPoolConfiguration,
+		Reductions, RewardConfig, RewardPoolConfiguration,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
-		RewardRate, Stake,
+		RewardRate, RewardUpdate, Stake,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -18,6 +18,9 @@ use frame_support::{
 };
 use frame_system::{EventRecord, RawOrigin};
 use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
+use sp_std::collections::btree_map::BTreeMap;
+
+pub const BASE_ASSET_ID: u128 = 101;
 
 fn get_reward_pool<T: Config>(
 	owner: T::AccountId,
@@ -58,7 +61,7 @@ fn reward_config<T: Config>(
 ) -> BoundedBTreeMap<T::AssetId, RewardConfig<T::AssetId, T::Balance>, T::MaxRewardConfigsPerPool> {
 	(0..reward_count)
 		.map(|asset_id| {
-			let asset_id: u128 = (asset_id + 101).into();
+			let asset_id = (asset_id as u128) + BASE_ASSET_ID;
 			(
 				asset_id.into(),
 				RewardConfig {
@@ -180,27 +183,68 @@ benchmarks! {
 
 	reward_accumulation_hook_reward_update_calculation {
 		let now = T::UnixTime::now().as_secs();
+		let user: T::AccountId = account("user", 0, 0);
+		let seconds_per_block = 12;
+		let pool_asset_id = 100.into();
+		let reward_asset_id = 1_u128.into();
 
-		let reward = Reward {
+		let reward_config = RewardConfig {
 			asset_id: 1_u128.into(),
-			total_rewards: 0_u128.into(),
-			total_dilution_adjustment: 0.into(),
 			max_rewards: 1_000_000.into(),
 			reward_rate: RewardRate::per_second(10_000),
-			last_updated_timestamp: now,
-			claimed_rewards: 0_u128.into()
 		};
 
-		let seconds_per_block = 12;
+		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(RewardRateBasedIncentive {
+			owner: user,
+			asset_id: pool_asset_id,
+			end_block: 5_u128.saturated_into(),
+			reward_configs: [(reward_asset_id, reward_config)]
+				.into_iter()
+				.try_collect()
+				.unwrap(),
+			lock: lock_config::<T>(),
+		}).unwrap();
 
 		let now = now + seconds_per_block;
+
+		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
 	}: {
-		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(1.into(), reward, now);
+		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, &mut reward, now);
 	}
 
 	unix_time_now {}: {
 		T::UnixTime::now()
 	}
+
+	update_rewards_pool {
+		let r in 1 .. T::MaxRewardConfigsPerPool::get();
+		frame_system::Pallet::<T>::set_block_number(1.into());
+		let user: T::AccountId = account("user", 0, 0);
+		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user.clone(), r)).unwrap();
+
+		let updates = (0..r).map(|r| (
+			((r as u128) + BASE_ASSET_ID).into(),
+			RewardUpdate {
+				reward_rate: RewardRate::per_second(5)
+			}
+		))
+		.into_iter()
+		.collect::<BTreeMap<_, _>>()
+		.try_into()
+		.unwrap();
+	}: _(RawOrigin::Root, pool_id, updates)
+
+	add_to_rewards_pot {
+		frame_system::Pallet::<T>::set_block_number(1.into());
+
+		let asset_id = BASE_ASSET_ID.into();
+		let amount = 100_u128.into();
+
+		let user: T::AccountId = account("user", 0, 0);
+		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(get_reward_pool::<T>(user.clone(), 1)).unwrap();
+		<T::Assets as Mutate<T::AccountId>>::mint_into(asset_id, &user, amount * 2.into())?;
+
+	}: _(RawOrigin::Signed(user), pool_id,  asset_id, amount, true)
 
 	impl_benchmark_test_suite!(Pallet, crate::test::new_test_ext(), crate::test::Test);
 }

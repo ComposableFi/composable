@@ -3,7 +3,7 @@ use crate::{
 	test::{prelude::H256, runtime::*},
 	Config, RewardPools, StakeCount, Stakes,
 };
-use composable_support::{abstractions::utils::increment::Increment, validation::TryIntoValidated};
+use composable_support::abstractions::utils::increment::Increment;
 use composable_tests_helpers::test::currency::{CurrencyId, BTC, PICA, USDT};
 use composable_traits::{
 	staking::{
@@ -31,8 +31,8 @@ use sp_std::collections::btree_map::BTreeMap;
 mod prelude;
 mod runtime;
 
-#[cfg(test)]
 mod test_reward_accumulation_hook;
+mod test_update_reward_pools;
 
 #[test]
 fn test_create_reward_pool() {
@@ -97,7 +97,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
 			.expect("asset_id expected")
 			.asset_id;
-		mint_assets(vec![staker], vec![staked_asset_id], amount * 2);
+		mint_assets([staker], [staked_asset_id], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		assert_eq!(StakingRewards::stake_count(), 1);
@@ -158,7 +158,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
 			.expect("asset_id expected")
 			.asset_id;
-		mint_assets(vec![staker], vec![staked_asset_id], amount * 2);
+		mint_assets([staker], [staked_asset_id], amount * 2);
 		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
@@ -223,7 +223,7 @@ fn test_extend_stake_amount() {
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
 			.expect("asset_id expected")
 			.asset_id;
-		mint_assets(vec![staker], vec![staked_asset_id], amount * 2);
+		mint_assets([staker], [staked_asset_id], amount * 2);
 		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
@@ -308,7 +308,7 @@ fn not_owner_of_stake_can_not_unstake() {
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
 			.expect("asset_id expected")
 			.asset_id;
-		mint_assets(vec![owner, not_owner], vec![staked_asset_id], amount * 2);
+		mint_assets([owner, not_owner], [staked_asset_id], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(owner), pool_id, amount, duration_preset));
 
@@ -334,7 +334,7 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
 			.expect("asset_id expected")
 			.asset_id;
-		mint_assets(vec![staker], vec![staked_asset_id], amount * 2);
+		mint_assets([staker], [staked_asset_id], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let stake_id = StakingRewards::stake_count();
@@ -375,12 +375,12 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
 		let staked_asset_id = rewards_pool.asset_id;
 		mint_assets(
-			vec![staker, StakingRewards::pool_account_id(&pool_id)],
-			vec![staked_asset_id]
+			[staker, StakingRewards::pool_account_id(&pool_id)],
+			rewards_pool
+				.rewards
 				.iter()
-				.chain(rewards_pool.rewards.iter().map(|(asset_id, _inflation)| asset_id))
-				.cloned()
-				.collect::<Vec<_>>(),
+				.map(|(asset_id, _inflation)| *asset_id)
+				.chain([staked_asset_id]),
 			amount * 2,
 		);
 		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
@@ -440,12 +440,12 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 			StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
 		let staked_asset_id = rewards_pool.asset_id;
 		mint_assets(
-			vec![staker, StakingRewards::pool_account_id(&pool_id)],
-			vec![staked_asset_id]
+			[staker, StakingRewards::pool_account_id(&pool_id)],
+			rewards_pool
+				.rewards
 				.iter()
-				.chain(rewards_pool.rewards.iter().map(|(asset_id, _inflation)| asset_id))
-				.cloned()
-				.collect::<Vec<_>>(),
+				.map(|(asset_id, _inflation)| *asset_id)
+				.chain([staked_asset_id]),
 			amount * 2,
 		);
 		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
@@ -644,14 +644,17 @@ fn default_lock_config(
 
 fn default_reward_config(
 ) -> BoundedBTreeMap<u128, RewardConfig<u128, u128>, MaxRewardConfigsPerPool> {
-	let config = RewardConfig {
-		asset_id: USDT::ID,
-		max_rewards: 100_u128,
-		reward_rate: RewardRate::per_second(10_u128),
-	};
-	let mut rewards = BTreeMap::new();
-	rewards.insert(USDT::ID, config);
-	BoundedBTreeMap::try_from(rewards).unwrap()
+	[(
+		USDT::ID,
+		RewardConfig {
+			asset_id: USDT::ID,
+			max_rewards: 100_u128,
+			reward_rate: RewardRate::per_second(10_u128),
+		},
+	)]
+	.into_iter()
+	.try_collect()
+	.unwrap()
 }
 
 pub fn assert_has_event<T, F>(matcher: F)
@@ -670,12 +673,17 @@ where
 	assert!(matcher(System::events().last().expect("events expected")));
 }
 
-fn mint_assets(accounts: Vec<Public>, asset_ids: Vec<u128>, amount: u128) {
-	for account in accounts.iter() {
-		for asset_id in asset_ids.iter() {
+fn mint_assets<'a>(
+	accounts: impl IntoIterator<Item = Public>,
+	asset_ids: impl IntoIterator<Item = u128>,
+	amount: u128,
+) {
+	let asset_ids = Vec::from_iter(asset_ids);
+	for account in accounts {
+		for asset_id in &asset_ids {
 			<<Test as crate::Config>::Assets as Mutate<
 				<Test as frame_system::Config>::AccountId,
-			>>::mint_into(*asset_id, account, amount)
+			>>::mint_into(*asset_id, &account, amount)
 			.expect("an asset minting expected");
 		}
 	}

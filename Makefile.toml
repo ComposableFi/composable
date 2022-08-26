@@ -15,7 +15,7 @@ workspace = false
 [tasks.polkadot]
 script = '''
 if [ ! -d "../polkadot" ] ; then
-    git clone -b v0.9.24 https://github.com/paritytech/polkadot ../polkadot
+    git clone -b v0.9.27 https://github.com/paritytech/polkadot ../polkadot
 fi
 cd ../polkadot && cargo build --release 
 '''
@@ -54,13 +54,6 @@ workspace = false
 [tasks.style]
 script = '''
 make style
-'''
-workspace = false
-
-[tasks.run-local-integration-tests]
-script = '''
-# we cannot use toolchain setting as different parts of codebase require different compiler
-cargo +stable test --package local-integration-tests --features local-integration-tests --no-default-features
 '''
 workspace = false
 

@@ -1,4 +1,4 @@
-with import <nixpkgs> {};
+with import <nixpkgs> { };
 let
   pythd = stdenv.mkDerivation rec {
     name = "pyth-daemon-${version}";

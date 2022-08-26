@@ -6,6 +6,8 @@ After starting local nodes wait up to 2 minutes until all will be wired.
 
 ## Prepare 
 
+OBSOLETE: Use nix to build and run networks
+
 1. `1-build-composable-collator.sh`
 
 2. `2-download-polkadot-relay.sh`
