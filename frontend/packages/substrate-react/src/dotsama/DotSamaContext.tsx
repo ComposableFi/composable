@@ -101,7 +101,7 @@ export const DotSamaContextProvider = ({
     });
 
     let extensionExists = true;
-    let injectedExtesion;
+    let injectedExtesion, extensionError;
     try {
       if (!window.injectedWeb3) throw new Error('Extension not installed.');
       
@@ -112,6 +112,7 @@ export const DotSamaContextProvider = ({
     } catch (e) {
       console.error(e);
       extensionExists = false;
+      extensionError = e;
     }
 
     if (!extensionExists) {
@@ -119,7 +120,7 @@ export const DotSamaContextProvider = ({
         s.extensionStatus = 'no_extension';
         return s;
       });
-      return injectedExtesion;
+      return Promise.reject(extensionError);
     }
 
     setExtension(s => {

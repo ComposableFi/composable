@@ -17,6 +17,7 @@ import useStore from "@/store/useStore";
 import { useDotSamaContext, useParachainApi, SupportedWalletId } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useAssetsWithBalance } from "@/defi/hooks";
+import { useSnackbar } from "notistack";
 
 const WALLETS_SUPPORTED: Array<{ walletId: SupportedWalletId, icon: string, name: string }> = [
   {
@@ -105,9 +106,15 @@ export const PolkadotConnect: React.FC<{}> = () => {
 
   const { ui: { isPolkadotModalOpen }, closePolkadotModal } = useStore();
   const { extensionStatus, activate } = useDotSamaContext();
+  const { enqueueSnackbar } = useSnackbar();
 
   const handleConnectPolkadot = async (walletId: SupportedWalletId) => {
-    if (activate) await activate(walletId);
+    try {
+      if (activate) await activate(walletId);
+    } catch (err: any) {
+      console.log('Logged ', err)
+      enqueueSnackbar(err.message, { variant: "error" } )
+    }
   };
 
   return (
