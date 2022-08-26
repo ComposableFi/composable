@@ -38,7 +38,7 @@ impl<
 		);
 		ensure!(
 			create_input.borrow_asset != create_input.collateral_asset,
-			"Base and quote currencies are supposed to be different in currency pair."
+			"Borrow and collateral currencies are supposed to be different."
 		);
 		ensure!(
 			create_input.whitelist.len() <

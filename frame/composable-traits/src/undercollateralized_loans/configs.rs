@@ -298,11 +298,12 @@ where
 	}
 }
 
-/// input to create market extrinsic
+/// Input to create market extrinsic.
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub struct MarketInput<AccountId, AssetId, BlockNumber, LiquidationStrategyId> {
-	/// Collateral currency and borrow currency.
+	/// Borrow currency.
     pub borrow_asset: AssetId, 
+    /// Collateral currency. 
     pub collateral_asset: AssetId,
 	/// Reserve factor of market borrow vault.
 	pub reserved_factor: Perquintill,
@@ -314,6 +315,7 @@ pub struct MarketInput<AccountId, AssetId, BlockNumber, LiquidationStrategyId> {
 	pub max_price_age: BlockNumber,
 }
 
+/// Input to create loan extrinsic.
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]
 pub struct LoanInput<AccountId, Balance, Timestamp> {
 	/// Loan belongs to this market.
@@ -332,7 +334,7 @@ pub struct LoanInput<AccountId, Balance, Timestamp> {
 	pub delayed_payment_treatment: Option<FailedPaymentTreatment>,
 }
 
-/// Structure contains information regarding failed payment behaviour
+/// Structure contains information regarding failed payment behaviour.
 #[derive(Encode, Decode, TypeInfo, Clone, Eq, PartialEq, RuntimeDebug)]
 pub struct FailedPaymentTreatment {
 	/// In the case of payment's fail,

@@ -1,6 +1,5 @@
 use super::{create_test_market_input_config, prelude::*};
 use crate::{currency::*, validation::MarketInputIsValid};
-use composable_traits::defi::CurrencyPair;
 
 // Check that test market can be created successfully.
 #[test]
@@ -72,7 +71,6 @@ fn test_do_create_market_input_validation() {
 		);
 
 		// Currencies should be different.
-		let currency_pair = CurrencyPair { base: borrow_asset, quote: borrow_asset };
 	    let invalid_borrow_asset = USDT::instance().id();	
         let invalid_collateral_asset = invalid_borrow_asset;
         let invalid_market_input_configuration =
@@ -81,7 +79,7 @@ fn test_do_create_market_input_validation() {
 			invalid_market_input_configuration
 				.clone()
 				.try_into_validated::<MarketInputIsValid<Oracle, UndercollateralizedLoans>>(),
-			"Base and quote currencies are supposed to be different in currency pair."
+			"Borrow and collateral currencies are supposed to be different."
 		);
 
 		// Check borrowers white-list bound validation.
