@@ -1,7 +1,25 @@
 use ibc::core::ics02_client;
 
+use near_jsonrpc_client::errors::JsonRpcError;
+use near_jsonrpc_primitives::types::blocks::RpcBlockError;
+use near_jsonrpc_primitives::types::query::RpcQueryError;
+use near_jsonrpc_primitives::types::transactions::RpcTransactionError;
+use near_jsonrpc_primitives::types::validator::RpcValidatorError;
 use std::io;
 use thiserror::Error;
+
+/// Near RPC error
+#[derive(Error, Debug)]
+pub enum RpcError {
+	#[error("{0}")]
+	Query(#[from] JsonRpcError<RpcQueryError>),
+	#[error("{0}")]
+	Transaction(#[from] JsonRpcError<RpcTransactionError>),
+	#[error("{0}")]
+	Block(#[from] JsonRpcError<RpcBlockError>),
+	#[error("{0}")]
+	Validator(#[from] JsonRpcError<RpcValidatorError>),
+}
 
 /// Error definition for the NEAR client
 #[derive(Error, Debug)]
@@ -12,9 +30,9 @@ pub enum Error {
 	/// Json de/serialization error
 	#[error("Json error: {0}")]
 	Json(#[from] serde_json::Error),
-	/// Jsonrpsee error
-	#[error("Jsonrpsee error: {0}")]
-	Jsonrpsee(#[from] jsonrpsee::core::Error),
+	/// RPC error
+	#[error("RPC error: {0}")]
+	Rpc(#[from] RpcError),
 	/// Update pallet name in call definition
 	#[error("Pallet '{0}' not found in metadata, update static definition of call")]
 	PalletNotFound(&'static str),
@@ -43,5 +61,14 @@ pub enum Error {
 impl From<String> for Error {
 	fn from(error: String) -> Self {
 		Self::Custom(error)
+	}
+}
+
+impl<T> From<JsonRpcError<T>> for Error
+where
+	RpcError: From<JsonRpcError<T>>,
+{
+	fn from(error: JsonRpcError<T>) -> Self {
+		Self::Rpc(RpcError::from(error))
 	}
 }

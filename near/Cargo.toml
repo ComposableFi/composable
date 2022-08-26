@@ -25,6 +25,7 @@ serde = { version="1.0.137", features = ["derive"]}
 tokio-stream = { version = "0.1.9", features = ["sync"]}
 thiserror = "1.0.31"
 jsonrpsee = { version = "0.15.1", features = ["async-client", "jsonrpsee-client-transport", "client-ws-transport", "http-client"] }
+openssl-probe = "0.1.2"
 
 # substrate
 sp-core = "6.0.0"
@@ -43,3 +44,9 @@ near-sdk = { git = "https://github.com/ComposableFi/near-sdk-rs", branch = "mast
 near-lite-client = { git = "https://github.com/ComposableFi/near-rs.git", branch = "main" }
 near-lite-relayer = { git = "https://github.com/ComposableFi/near-rs.git", branch = "main" }
 near-merkle-proofs = { git = "https://github.com/ComposableFi/near-rs.git", branch = "main" }
+near-jsonrpc-client = "0.4.0-beta.0"
+near-jsonrpc-primitives = "0.14.0"
+near-indexer = { git = "https://github.com/composableFi/nearcore" }
+
+[features]
+testing = []

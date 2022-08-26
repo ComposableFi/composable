@@ -97,7 +97,7 @@ where
 		let signed_commitment: beefy_primitives::SignedCommitment<
 			u32,
 			beefy_primitives::crypto::Signature,
-		> = codec::Decode::decode(&mut &*recv_commitment)?;
+		> = Decode::decode(&mut &*recv_commitment)?;
 
 		if signed_commitment.commitment.validator_set_id < beefy_client_state.current_authorities.id
 		{
@@ -114,14 +114,14 @@ where
 			);
 			return Err(Error::HeaderConstruction(
 				"Received an outdated beefy commitment".to_string(),
-			))
+			));
 		}
 
 		// check if validator set has changed.
 		// If client on counterparty has never been updated since it was created we want to update
 		// it
-		let update_type = match signed_commitment.commitment.validator_set_id ==
-			beefy_client_state.next_authorities.id
+		let update_type = match signed_commitment.commitment.validator_set_id
+			== beefy_client_state.next_authorities.id
 		{
 			true => UpdateType::Mandatory,
 			false => UpdateType::Optional,
@@ -164,8 +164,8 @@ where
 			.parachain_headers
 			.iter()
 			.filter_map(|header| {
-				if (client_state.latest_height().revision_height as u32) <
-					header.parachain_header.number.into()
+				if (client_state.latest_height().revision_height as u32)
+					< header.parachain_header.number.into()
 				{
 					Some(header.parachain_header.number)
 				} else {
@@ -372,28 +372,6 @@ where
 		)
 		.await?;
 		Ok(res)
-	}
-
-	async fn consensus_height(&self, client_height: Height) -> Option<Height> {
-		let beefy_height = client_height.revision_height as u32;
-		println!("[consensus height]: client_height {:?}", client_height);
-
-		let subxt_block_number: subxt::BlockNumber = beefy_height.into();
-		let block_hash = self.relay_client.rpc().block_hash(Some(subxt_block_number)).await.ok()?;
-
-		let api = self
-			.relay_client
-			.clone()
-			.to_runtime_api::<polkadot::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-
-		let para_id =
-			polkadot::api::runtime_types::polkadot_parachain::primitives::Id(self.para_id);
-
-		let head_data: polkadot::api::runtime_types::polkadot_parachain::primitives::HeadData =
-			api.storage().paras().heads(&para_id, block_hash).await.ok().flatten()?;
-		let decoded_header = Header::<u32, BlakeTwo256>::decode(&mut &*head_data.0).ok()?;
-		let height: u32 = (*decoded_header.number()).into();
-		Some(Height::new(self.para_id.into(), height.into()))
 	}
 
 	async fn latest_height(&self) -> Result<Height, Self::Error> {

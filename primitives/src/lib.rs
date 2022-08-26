@@ -157,9 +157,6 @@ pub trait IbcProvider {
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse, Self::Error>;
 
-	/// Return the cached consensus height for the given client height
-	async fn consensus_height(&self, client_height: Height) -> Option<Height>;
-
 	/// Return latest finalized height
 	async fn latest_height(&self) -> Result<Height, Self::Error>;
 

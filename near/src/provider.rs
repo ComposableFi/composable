@@ -1,14 +1,16 @@
+#[cfg(feature = "testing")]
+use actix::dev::Stream;
+#[cfg(feature = "testing")]
 use std::pin::Pin;
 
 use super::error::Error;
 use crate::Client;
-use futures::Stream;
 use ibc::{
 	core::{
 		ics02_client::{
 			client_consensus::AnyConsensusState, client_state::AnyClientState, header::AnyHeader,
 		},
-		ics04_channel::packet::{Packet, Sequence},
+		ics04_channel::packet::Packet,
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
@@ -24,7 +26,11 @@ use ibc_proto::ibc::core::{
 	client::v1::{QueryClientStateResponse, QueryConsensusStateResponse},
 	connection::v1::QueryConnectionResponse,
 };
-use jsonrpsee::core::client::ClientT;
+use near_indexer::StreamerMessage;
+use near_jsonrpc_primitives::types::blocks::RpcBlockRequest;
+use near_jsonrpc_primitives::types::query::{QueryResponseKind, RpcQueryRequest};
+use near_jsonrpc_primitives::types::validator::RpcValidatorRequest;
+use near_primitives::types::EpochReference;
 use near_primitives::{
 	types::{BlockId, BlockReference, Finality, FunctionArgs},
 	views::QueryRequest,
@@ -33,23 +39,15 @@ use near_sdk::BlockHeight;
 use primitives::{Chain, IbcProvider, UpdateType};
 use serde::{de::DeserializeOwned, Serialize};
 
-#[derive(Serialize)]
-struct Query {
-	#[serde(flatten)]
-	block: BlockReference,
-	#[serde(flatten)]
-	request: QueryRequest,
-}
-
 impl Client {
 	fn make_contract_query_at<T: Serialize>(
 		&self,
 		at: BlockHeight,
 		method: impl ToString,
 		args: &T,
-	) -> Result<Query, <Self as IbcProvider>::Error> {
-		Ok(Query {
-			block: BlockReference::BlockId(BlockId::Height(at)),
+	) -> Result<RpcQueryRequest, <Self as IbcProvider>::Error> {
+		Ok(RpcQueryRequest {
+			block_reference: BlockReference::BlockId(BlockId::Height(at)),
 			request: QueryRequest::CallFunction {
 				account_id: self.contract_id.clone(),
 				method_name: method.to_string(),
@@ -62,9 +60,9 @@ impl Client {
 		&self,
 		method: impl ToString,
 		args: &T,
-	) -> Result<Query, <Self as IbcProvider>::Error> {
-		Ok(Query {
-			block: BlockReference::Finality(Finality::Final),
+	) -> Result<RpcQueryRequest, <Self as IbcProvider>::Error> {
+		Ok(RpcQueryRequest {
+			block_reference: BlockReference::Finality(Finality::Final),
 			request: QueryRequest::CallFunction {
 				account_id: self.contract_id.clone(),
 				method_name: method.to_string(),
@@ -75,19 +73,25 @@ impl Client {
 
 	async fn send_query<R: DeserializeOwned>(
 		&self,
-		query: Query,
+		query: RpcQueryRequest,
 	) -> Result<R, <Self as IbcProvider>::Error> {
 		self.rpc_client
-			.request("query", Some((&[serde_json::to_value(query)?][..]).into()))
+			.call(query)
 			.await
 			.map_err(|e| e.into())
+			.and_then(|resp| match resp.kind {
+				QueryResponseKind::CallResult(res) => {
+					serde_json::from_slice(&res.result).map_err(|e| e.into())
+				},
+				_ => unreachable!(),
+			})
 	}
 }
 
 #[async_trait::async_trait]
 impl IbcProvider for Client {
 	type IbcEvent = Result<Vec<IbcEvent>, String>;
-	type FinalityEvent = ();
+	type FinalityEvent = StreamerMessage;
 	type Error = Error;
 
 	async fn client_update_header<C>(
@@ -240,47 +244,39 @@ impl IbcProvider for Client {
 		self.send_query(query).await
 	}
 
-	fn cache_send_packet_seq(&mut self, _packet: Packet) {
-		unimplemented!()
-	}
-
-	fn remove_packets(&mut self, _seqs: Vec<Sequence>) {
-		unimplemented!()
-	}
-
-	fn cached_packets(&self) -> &Vec<Packet> {
-		unimplemented!()
+	async fn latest_height(&self) -> Result<Height, Self::Error> {
+		let finalized_block = self
+			.rpc_client
+			.call(RpcBlockRequest { block_reference: BlockReference::Finality(Finality::Final) })
+			.await?;
+		let validator_response = self
+			.rpc_client
+			.call(RpcValidatorRequest {
+				epoch_reference: EpochReference::BlockId(BlockId::Height(
+					finalized_block.header.height,
+				)),
+			})
+			.await?;
+		if validator_response.epoch_start_height > finalized_block.header.height {
+			return Err(Error::Custom(
+				"validator epoch height is greater than finalized header epoch height".to_string(),
+			));
+		}
+		let epoch = validator_response.epoch_height;
+		let latest_height = finalized_block.header.height;
+		Ok(Height::new(epoch, latest_height.into()))
 	}
 
 	fn connection_prefix(&self) -> CommitmentPrefix {
-		unimplemented!()
-	}
-
-	fn apply_prefix(&self, _path: String) -> Vec<u8> {
-		unimplemented!()
-	}
-
-	async fn consensus_height(&self, _client_height: Height) -> Option<Height> {
-		unimplemented!()
+		CommitmentPrefix::try_from(self.commitment_prefix.clone()).expect("Should not fail")
 	}
 
 	fn client_id(&self) -> ClientId {
-		unimplemented!()
+		self.client_id()
 	}
 
-	async fn latest_height(&self) -> Result<Height, Self::Error> {
-		unimplemented!()
-	}
-
+	#[cfg(feature = "testing")]
 	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = Self::IbcEvent> + Send + Sync>> {
-		unimplemented!()
-	}
-
-	fn client_update_status(&self) -> bool {
-		unimplemented!()
-	}
-
-	fn set_client_update_status(&mut self, _status: bool) {
-		unimplemented!()
+		todo!()
 	}
 }
