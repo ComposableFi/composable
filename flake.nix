@@ -19,8 +19,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };
+    nix-npm-buildpackage = {
+      url = "github:serokell/nix-npm-buildpackage";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
-  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay }:
+  outputs =
+    { self, nixpkgs, crane, flake-utils, rust-overlay, nix-npm-buildpackage }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
@@ -35,20 +40,11 @@
 
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
-      mk-devnet =
-        { pkgs
-        , lib
-        , writeTextFile
-        , writeShellApplication
-        , polkadot-launch
-        , composable-node
-        , polkadot-node
-        , chain-spec
-        }:
+      mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
+        , polkadot-launch, composable-node, polkadot-node, chain-spec }:
         let
           original-config = (pkgs.callPackage
-            ./scripts/polkadot-launch/rococo-local-dali-dev.nix
-            {
+            ./scripts/polkadot-launch/rococo-local-dali-dev.nix {
               polkadot-bin = polkadot-node;
               composable-bin = composable-node;
             }).result;
@@ -62,8 +58,7 @@
             name = "devnet-${chain-spec}-config.json";
             text = builtins.toJSON patched-config;
           };
-        in
-        {
+        in {
           inherit chain-spec;
           parachain-nodes = builtins.concatMap (parachain: parachain.nodes)
             patched-config.parachains;
@@ -93,8 +88,7 @@
             };
           };
           overlays = [ rust-overlay.overlay ];
-        in
-        with pkgs;
+        in with pkgs;
         let
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
@@ -122,57 +116,59 @@
           });
 
           # for containers which are intented for testing, debug and development (including running isolated runtime)
-          container-tools =
-            [ bash bottom coreutils findutils gawk gnugrep less nettools nix procps ];
+          container-tools = [
+            bash
+            bottom
+            coreutils
+            findutils
+            gawk
+            gnugrep
+            less
+            nettools
+            nix
+            procps
+          ];
 
           # source relevant to build rust only
-          rust-src =
-            let
-              dir-blacklist = [
-                "nix"
-                ".config"
-                ".devcontainer"
-                ".github"
-                ".log"
-                ".maintain"
-                ".tools"
-                ".vscode"
-                "audits"
-                "book"
-                "devnet-stage"
-                "devnet"
-                "docker"
-                "docs"
-                "frontend"
-                "rfcs"
-                "scripts"
-                "setup"
-                "subsquid"
-                "runtime-tests"
-                "composablejs"
-              ];
-              file-blacklist = [ "flake.nix" "flake.lock" ];
-            in
-            lib.cleanSourceWith {
-              filter = lib.cleanSourceFilter;
-              src = lib.cleanSourceWith {
-                filter =
-                  let
-                    customFilter = name: type:
-                      (
-                        !(type == "directory"
-                        && builtins.elem (baseNameOf name) dir-blacklist)
-                      )
-                      && (
-                        !(type == "file"
-                        && builtins.elem (baseNameOf name) file-blacklist)
-                      );
-                  in
-                  nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-                    ./.;
-                src = ./.;
-              };
+          rust-src = let
+            dir-blacklist = [
+              "nix"
+              ".config"
+              ".devcontainer"
+              ".github"
+              ".log"
+              ".maintain"
+              ".tools"
+              ".vscode"
+              "audits"
+              "book"
+              "devnet-stage"
+              "devnet"
+              "docker"
+              "docs"
+              "frontend"
+              "rfcs"
+              "scripts"
+              "setup"
+              "subsquid"
+              "runtime-tests"
+              "composablejs"
+            ];
+            file-blacklist = [ "flake.nix" "flake.lock" ];
+          in lib.cleanSourceWith {
+            filter = lib.cleanSourceFilter;
+            src = lib.cleanSourceWith {
+              filter = let
+                customFilter = name: type:
+                  (!(type == "directory"
+                    && builtins.elem (baseNameOf name) dir-blacklist))
+                  && (!(type == "regular"
+                    && builtins.elem (baseNameOf name) file-blacklist));
+              in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
+              ./.;
+              src = ./.;
             };
+          };
 
           # Common env required to build the node
           common-attrs = {
@@ -214,7 +210,9 @@
               pname = "${name}-runtime";
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand =
-                "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown" + lib.strings.optionalString (features != "") (" --features=${features}");
+                "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown"
+                + lib.strings.optionalString (features != "")
+                (" --features=${features}");
               # From parity/wasm-builder
               RUSTFLAGS =
                 "-Clink-arg=--export=__heap_base -Clink-arg=--import-memory";
@@ -280,13 +278,14 @@
               '';
             });
 
-          composable-bench-node = crane-nightly.cargoBuild
-            (common-bench-attrs // {
+          composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
+            // {
               pnameSuffix = "-node";
               cargoArtifacts = common-bench-deps;
               cargoBuildCommand = "cargo build --release --package composable";
               DALI_RUNTIME = "${dali-bench-runtime}/lib/runtime.optimized.wasm";
-              PICASSO_RUNTIME = "${picasso-bench-runtime}/lib/runtime.optimized.wasm";
+              PICASSO_RUNTIME =
+                "${picasso-bench-runtime}/lib/runtime.optimized.wasm";
               COMPOSABLE_RUNTIME =
                 "${composable-bench-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
@@ -307,15 +306,9 @@
                 --steps=1 \
                 --repeat=1
             '';
-          docs-renders = [
-                mdbook
-                plantuml
-                graphviz
-                pandoc
-          ];
+          docs-renders = [ mdbook plantuml graphviz pandoc ];
 
-        in
-        rec {
+        in rec {
           packages = rec {
             inherit wasm-optimizer;
             inherit common-deps;
@@ -328,6 +321,26 @@
             inherit composable-bench-runtime;
             inherit composable-node;
             inherit composable-bench-node;
+
+            subsquid-processor = let
+              processor =
+                (pkgs.callPackage nix-npm-buildpackage { }).buildNpmPackage {
+                  src = ./subsquid;
+                  npmBuild = "npm run build";
+                  preInstall = ''
+                    mkdir $out
+                    mv lib $out/
+                  '';
+                  dontNpmPrune = true;
+                };
+            in writeShellApplication {
+              name = "run-subsquid-processor";
+              text = ''
+                cd ${processor}
+                ${nodejs}/bin/npx sqd db migrate
+                ${nodejs}/bin/node lib/processor.js
+              '';
+            };
 
             runtime-tests = stdenv.mkDerivation {
               name = "runtime-tests";
@@ -416,7 +429,8 @@
                 pathsToLink = [ "/bin" ];
               };
               config = {
-                Entrypoint = [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
+                Entrypoint =
+                  [ "${packages.devnet-dali}/bin/run-devnet-dali-dev" ];
                 WorkingDir = "/home/polkadot-launch";
               };
               runAsRoot = ''
@@ -541,31 +555,30 @@
                 "--workspace --exclude local-integration-tests --all-features";
             });
 
-            kusama-picasso-karura-devnet =
-              let
-                config = (pkgs.callPackage
-                  ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix
-                  {
-                    polkadot-bin = polkadot-node;
-                    composable-bin = composable-node;
-                    acala-bin = acala-node;
-                  }).result;
-                config-file = writeTextFile {
-                  name = "kusama-local-picasso-dev-karura-dev.json";
-                  text = "${builtins.toJSON config}";
-                };
-              in
-              writeShellApplication {
-                name = "kusama-picasso-karura";
-                text = ''
-                  cat ${config-file}
-                  ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-                '';
+            kusama-picasso-karura-devnet = let
+              config = (pkgs.callPackage
+                ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
+                  polkadot-bin = polkadot-node;
+                  composable-bin = composable-node;
+                  acala-bin = acala-node;
+                }).result;
+              config-file = writeTextFile {
+                name = "kusama-local-picasso-dev-karura-dev.json";
+                text = "${builtins.toJSON config}";
               };
+            in writeShellApplication {
+              name = "kusama-picasso-karura";
+              text = ''
+                cat ${config-file}
+                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+              '';
+            };
 
             junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
             gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
-            wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix { crane = crane-nightly;  };
+            wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix {
+              crane = crane-nightly;
+            };
             default = packages.composable-node;
           };
 
@@ -605,8 +618,7 @@
 
             developers-xcvm = developers-minimal.overrideAttrs (base: {
               buildInputs = with packages;
-                base.buildInputs ++
-                [
+                base.buildInputs ++ [
                   junod
                   gex
                   # junod wasm swap web interface 
@@ -619,8 +631,8 @@
                   # TODO: https://github.com/forbole/bdjuno                  
                   # TODO: script to run all
                   # TODO: compose export
-                ]
-              ++ lib.lists.optional (lib.strings.hasSuffix "linux" system) arion;
+                ] ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
+                arion;
               shellHook = ''
                 # TODO: how to make it work - setup defaul admin client key
                 #"clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover 
@@ -629,10 +641,7 @@
             });
 
             writers = mkShell {
-              buildInputs = with packages; [
-                python3
-                nodejs
-              ] ++ doc-renders;
+              buildInputs = with packages; [ python3 nodejs ] ++ doc-renders;
               NIX_PATH = "nixpkgs=${pkgs.path}";
             };
 
@@ -647,59 +656,191 @@
           # Applications runnable with `nix run`
           # https://github.com/NixOS/nix/issues/5560
           apps = rec {
-            devnet-xcvm-up =
-              let
-                devnet-xcvm =
-                  pkgs.arion.build
-                    {
-                      modules = [
-                        ({ pkgs, ... }: {
-                          config = {
-                            project = {
-                              name = "devnet-xcvm";
+            devnet-xcvm-up = let
+              devnet-xcvm = pkgs.arion.build {
+                modules = [
+                  ({ pkgs, ... }: {
+                    config = {
+                      project = { name = "devnet-xcvm"; };
+                      services = {
+                        junod-testing-local = {
+                          service = {
+                            name = "junod-testing-local";
+                            # NOTE: the do not release git hash tags, so not clear how to share client and docker image
+                            image = "ghcr.io/cosmoscontracts/juno:v9.0.0";
+                            environment = {
+                              STAKE_TOKEN = "ujunox";
+                              UNSAFE_CORS = "true";
+                              USER =
+                                "juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y";
+                              GAS_LIMIT = 100000000;
                             };
-                            services = {
-                              junod-testing-local = {
-                                service = {
-                                  name = "junod-testing-local";
-                                  # NOTE: the do not release git hash tags, so not clear how to share client and docker image
-                                  image = "ghcr.io/cosmoscontracts/juno:v9.0.0";
-                                  environment = {
-                                    STAKE_TOKEN = "ujunox";
-                                    UNSAFE_CORS = "true";
-                                    USER = "juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y";
-                                    GAS_LIMIT = 100000000;
-                                  };
-                                  # TODO: mount proper genesis here as per
-                                  # "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover
-                                  # `"wasm":{"codes":[],"contracts":[],"gen_msgs":[],"params":{"code_upload_access":{"address":"","permission":"Everybody"},`
-                                  #network_mode 
-                                  command = ''
-                                    ./setup_and_run.sh juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y
-                                  '';
-                                  #network_mode = "host";
-                                  # these ports are open by default
-                                  ports = [
-                                      "1317:1317" # rest openapi
-                                      "26656:26656" # p2p
-                                      "26657:26657" # rpc json-rpc
-                                  ];
-                                };
-                              };
-                            };
+                            # TODO: mount proper genesis here as per
+                            # "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover
+                            # `"wasm":{"codes":[],"contracts":[],"gen_msgs":[],"params":{"code_upload_access":{"address":"","permission":"Everybody"},`
+                            #network_mode 
+                            command = ''
+                              ./setup_and_run.sh juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y
+                            '';
+                            #network_mode = "host";
+                            # these ports are open by default
+                            ports = [
+                              "1317:1317" # rest openapi
+                              "26656:26656" # p2p
+                              "26657:26657" # rpc json-rpc
+                            ];
                           };
-                        })
-                      ];
-                      inherit pkgs;
-                    }
-                ;
-              in
-              {
-                type = "app";
-                program = "${pkgs.writeShellScript "arion-up" ''
+                        };
+                      };
+                    };
+                  })
+                ];
+                inherit pkgs;
+              };
+            in {
+              type = "app";
+              program = "${pkgs.writeShellScript "xcvm-up" ''
                 ${pkgs.arion}/bin/arion --prebuilt-file ${devnet-xcvm} up --remove-orphans
               ''}";
+            };
+
+            subsquid-up = let
+              subsquid-network = pkgs.arion.build {
+                inherit pkgs;
+                modules = [
+                  ({ pkgs, ... }: {
+                    config = {
+                      project = { name = "subsquid-network"; };
+                      services = {
+                        db-squid = {
+                          service = {
+                            name = "postgres";
+                            image = "postgres:14";
+                            network_mode = "host";
+                            environment = {
+                              POSTGRES_USER = "postgres";
+                              POSTGRES_DB = "squid";
+                              POSTGRES_PASSWORD = "squid";
+                            };
+                            command = [ "-p" "23798" ];
+                          };
+                        };
+                        db-archive = {
+                          service = {
+                            name = "postgres";
+                            image = "postgres:14";
+                            network_mode = "host";
+                            environment = {
+                              POSTGRES_USER = "postgres";
+                              POSTGRES_DB = "postgres";
+                              POSTGRES_PASSWORD = "postgres";
+                            };
+                          };
+                        };
+                        indexer = {
+                          service = {
+                            name = "hydra-indexer";
+                            image = "subsquid/hydra-indexer:5";
+                            network_mode = "host";
+                            restart = "unless-stopped";
+                            environment = {
+                              WORKERS_NUMBER = 5;
+                              DB_NAME = "indexer";
+                              DB_HOST = "localhost";
+                              DB_USER = "postgres";
+                              DB_PASS = "postgres";
+                              DB_PORT = 5432;
+                              REDIS_URI = "redis://localhost:6379/0";
+                              FORCE_HEIGHT = "true";
+                              WS_PROVIDER_ENDPOINT_URI = "ws://127.0.0.1:9988";
+                            };
+                            command = [
+                              "sh"
+                              "-c"
+                              "yarn db:bootstrap && yarn start:prod"
+                            ];
+                          };
+                        };
+                        indexer-gateway = {
+                          service = {
+                            name = "hydra-indexer-gateway";
+                            image = "subsquid/hydra-indexer-gateway:5";
+                            network_mode = "host";
+                            restart = "unless-stopped";
+                            environment = {
+                              DEV_MODE = "true";
+                              DB_NAME = "indexer";
+                              DB_HOST = "localhost";
+                              DB_USER = "postgres";
+                              DB_PASS = "postgres";
+                              DB_PORT = 5432;
+                              HYDRA_INDEXER_STATUS_SERVICE =
+                                "http://localhost:8081/status";
+                            };
+                          };
+                        };
+                        indexer-status-service = {
+                          service = {
+                            name = "hydra-indexer-status-service";
+                            image = "subsquid/hydra-indexer-status-service:5";
+                            network_mode = "host";
+                            restart = "unless-stopped";
+                            environment = {
+                              REDIS_URL = "redis://localhost:6379/0";
+                              PORT = 8081;
+                            };
+                          };
+                        };
+                        redis = {
+                          service = {
+                            image = "redis:6.0-alpine";
+                            network_mode = "host";
+                            restart = "always";
+                          };
+                        };
+                        processor = {
+                          image.contents = [ pkgs.bash pkgs.coreutils ];
+                          service = {
+                            restart = "always";
+                            network_mode = "host";
+                            useHostStore = true;
+                            command = [
+                              "bash"
+                              "-c"
+                              ''
+                                ${packages.subsquid-processor}/bin/run-subsquid-processor
+                              ''
+                            ];
+                            environment = {
+                              DB_PORT = 23798;
+                              DB_NAME = "squid";
+                              DB_PASS = "squid";
+                            };
+                          };
+                        };
+                        dali-devnet = {
+                          image.contents = [ pkgs.bash pkgs.coreutils ];
+                          service.useHostStore = true;
+                          service.command = [
+                            "bash"
+                            "-c"
+                            ''
+                              ${packages.devnet-dali}/bin/run-devnet-dali-dev
+                            ''
+                          ];
+                          service.network_mode = "host";
+                        };
+                      };
+                    };
+                  })
+                ];
               };
+            in {
+              type = "app";
+              program = "${pkgs.writeShellScript "subsquid-network-up" ''
+                ${pkgs.arion}/bin/arion --prebuilt-file ${subsquid-network} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+              ''}";
+            };
 
             devnet-dali = {
               type = "app";
@@ -747,28 +888,26 @@
           };
 
         });
-    in
-    eachSystemOutputs // {
+    in eachSystemOutputs // {
       nixopsConfigurations = {
-        default =
-          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          in import ./.nix/devnet.nix {
-            inherit nixpkgs;
-            inherit gce-input;
-            devnet-dali = pkgs.callPackage mk-devnet {
-              inherit pkgs;
-              inherit (eachSystemOutputs.packages.x86_64-linux)
-                polkadot-launch composable-node polkadot-node;
-              chain-spec = "dali-dev";
-            };
-            devnet-picasso = pkgs.callPackage mk-devnet {
-              inherit pkgs;
-              inherit (eachSystemOutputs.packages.x86_64-linux)
-                polkadot-launch composable-node polkadot-node;
-              chain-spec = "picasso-dev";
-            };
-            book = eachSystemOutputs.packages.x86_64-linux.composable-book;
+        default = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        in import ./.nix/devnet.nix {
+          inherit nixpkgs;
+          inherit gce-input;
+          devnet-dali = pkgs.callPackage mk-devnet {
+            inherit pkgs;
+            inherit (eachSystemOutputs.packages.x86_64-linux)
+              polkadot-launch composable-node polkadot-node;
+            chain-spec = "dali-dev";
           };
+          devnet-picasso = pkgs.callPackage mk-devnet {
+            inherit pkgs;
+            inherit (eachSystemOutputs.packages.x86_64-linux)
+              polkadot-launch composable-node polkadot-node;
+            chain-spec = "picasso-dev";
+          };
+          book = eachSystemOutputs.packages.x86_64-linux.composable-book;
+        };
       };
     };
 }
