@@ -1,5 +1,6 @@
 {
-  "name": "kusama-balances",
+  "name": "composable-squid",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "build": "rm -rf lib && tsc",

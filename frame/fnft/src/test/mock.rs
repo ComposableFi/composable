@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use composable_tests_helpers::test::block::{process_and_progress_blocks, MILLISECS_PER_BLOCK};
-use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
+use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyTypeSelector};
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, ConstU64, Everything, InstanceFilter},
@@ -34,6 +34,14 @@ frame_support::construct_runtime!(
 parameter_types! {
 	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
 }
+
+pub struct MockFnftAccountProxyType;
+impl FnftAccountProxyTypeSelector<ProxyType> for MockFnftAccountProxyType {
+	fn get_proxy_types() -> Vec<ProxyType> {
+		[ProxyType::Any, ProxyType::CancelProxy].into()
+	}
+}
+
 impl crate::Config for MockRuntime {
 	type Event = Event;
 
@@ -42,7 +50,7 @@ impl crate::Config for MockRuntime {
 	type FinancialNftInstanceId = u64;
 	type ProxyType = ProxyType;
 	type AccountProxy = Proxy;
-	type ProxyTypeSelector = FnftAccountProxyType;
+	type ProxyTypeSelector = MockFnftAccountProxyType;
 	type PalletId = FnftPalletId;
 }
 
