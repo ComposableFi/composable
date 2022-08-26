@@ -88,7 +88,6 @@ jobs:
 
   cargo-fmt-check:
     name: "Cargo fmt check"
-    needs: common-deps
     runs-on:
       - self-hosted
       - linux
