@@ -2,6 +2,7 @@
 const withPWA = require("next-pwa");
 const withTM = require("next-transpile-modules")([
   "@integrations-lib/core",
+  "defi-interfaces",
   "substrate-react",
   "@web3-react/core",
   "shared",
