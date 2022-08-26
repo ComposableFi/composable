@@ -7,7 +7,7 @@ import { useStore } from "@/stores/root";
 import rewards from "@/defi/polkadot/constants/pica-rewards.json";
 import contributions from "@/defi/polkadot/constants/contributions.json";
 import devRewards from "@/defi/polkadot/constants/pica-rewards-dev.json";
-import { useBlockchainProvider } from "@integrations-lib/core";
+import { useBlockchainProvider } from "bi-lib";
 
 const DEFAULT_EVM_ID = 1;
 

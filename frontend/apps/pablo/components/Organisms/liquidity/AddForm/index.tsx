@@ -22,14 +22,16 @@ import { ConfirmingSupplyModal } from "./ConfirmingSupplyModal";
 import { TransactionSettings } from "../../TransactionSettings";
 import { YourPosition } from "../YourPosition";
 import { PoolShare } from "./PoolShare";
-import {useAddLiquidityForm} from "@/store/hooks/useAddLiquidityForm";
+import { useAddLiquidityForm } from "@/store/hooks/useAddLiquidityForm";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useSnackbar } from "notistack";
 
 export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const isMobile = useMobile();
   const theme = useTheme();
   const router = useRouter();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
 
   const {
     assetList1,
@@ -241,7 +243,15 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
             size="large"
             fullWidth
             disabled={!valid}
-            onClick={() => dispatch(openConfirmSupplyModal())}
+            onClick={() => {
+              if (!pool) {
+                return enqueueSnackbar("Liquidity pool for the selected token pair does not exist.", {
+                  variant: "error",
+                });
+              }
+
+              dispatch(openConfirmSupplyModal());
+            }}
           >
             Supply
           </Button>

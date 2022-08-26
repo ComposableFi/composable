@@ -122,9 +122,12 @@ export const useAddLiquidityForm = () => {
       const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
 
       if (bnBase.gte(0) && bnQuote.gte(0)) {
-        
-        let b = isReverse ? pool.pair.quote.toString() : pool.pair.base.toString();
-        let q = isReverse ? pool.pair.base.toString() : pool.pair.quote.toString();
+        let b = isReverse
+          ? pool.pair.quote.toString()
+          : pool.pair.base.toString();
+        let q = isReverse
+          ? pool.pair.base.toString()
+          : pool.pair.quote.toString();
 
         parachainApi.rpc.pablo
           .simulateAddLiquidity(
@@ -132,7 +135,7 @@ export const useAddLiquidityForm = () => {
             parachainApi.createType("PalletPabloPoolId", pool.poolId),
             parachainApi.createType("BTreeMap<SafeRpcWrapper, SafeRpcWrapper>",{
               [b]: bnBase.toString(),
-              [q]: bnQuote.toString()
+              [q]: bnQuote.toString(),
             })
           )
           .then((expectedLP: any) => {
@@ -143,7 +146,15 @@ export const useAddLiquidityForm = () => {
           });
       }
     }
-  }, [parachainApi, assetOneAmount, assetTwoAmount, assetOne, assetTwo, pool, selectedAccount]);
+  }, [
+    parachainApi,
+    assetOneAmount,
+    assetTwoAmount,
+    assetOne,
+    assetTwo,
+    pool,
+    selectedAccount,
+  ]);
 
   return {
     assetOne: _assetOne,
@@ -166,6 +177,6 @@ export const useAddLiquidityForm = () => {
     invalidTokenPair,
     canSupply,
     findPoolManually,
-    pool
+    pool,
   };
 };
