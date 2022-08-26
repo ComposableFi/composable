@@ -354,6 +354,18 @@
               '';
             };
 
+            all-directories-and-files = stdenv.mkDerivation {
+              name = "all-directories-and-files";
+              src =
+                builtins.filterSource (path: type: baseNameOf path != ".git")
+                ./.;
+              dontUnpack = true;
+              installPhase = ''
+                mkdir $out/
+                cp -r $src/. $out/
+              '';
+            };
+
             price-feed = crane-nightly.buildPackage (common-attrs // {
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
@@ -526,6 +538,24 @@
                   --check \
                   --loglevel=debug \
                   ${runtime-tests}
+              '';
+            };
+
+            nixfmt-check = stdenv.mkDerivation {
+              name = "nixfmt-check";
+              dontUnpack = true;
+              buildInputs = [ all-directories-and-files nixfmt ];
+              installPhase = ''
+                mkdir $out
+                nixfmt --version
+
+                total_exit_code=0
+                for file in $(find ${all-directories-and-files} -type f -and -name "*.nix"); do
+                  echo "=== $file ==="
+                  nixfmt --check $file || total_exit_code=$?
+                  echo "==="
+                done
+                exit $total_exit_code
               '';
             };
 

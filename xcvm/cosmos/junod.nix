@@ -12,8 +12,7 @@ let
     sourceRoot = "source/libwasmvm";
     doCheck = false;
   };
-in
-buildGoModule {
+in buildGoModule {
   name = "junod";
   doCheck = false;
   src = fetchFromGitHub {
@@ -27,7 +26,9 @@ buildGoModule {
     ${patchelf}/bin/patchelf \
       --shrink-rpath \
       --allowed-rpath-prefixes /nix/store \
-      --replace-needed libwasmvm.${builtins.head (lib.strings.split "-" system)}.so libwasmvm.so \
+      --replace-needed libwasmvm.${
+        builtins.head (lib.strings.split "-" system)
+      }.so libwasmvm.so \
       $out/bin/junod
     ${patchelf}/bin/patchelf \
       --add-rpath ${libwasmvm}/lib \
