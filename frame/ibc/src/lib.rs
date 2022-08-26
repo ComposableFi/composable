@@ -155,7 +155,6 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResult,
 		pallet_prelude::*,
-		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			Currency, UnixTime,
@@ -305,12 +304,6 @@ pub mod pallet {
 	pub type ConnectionClient<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<Vec<u8>>, ValueQuery>;
 
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// height => IbcConsensusState
-	pub type HostConsensusStates<T: Config> =
-		StorageValue<_, BoundedBTreeMap<u64, IbcConsensusState, ConstU32<250>>, ValueQuery>;
-
 	// temporary until offchain indexing is fixed
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -374,6 +367,13 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)]
 	/// Active Escrow addresses
 	pub type EscrowAddresses<T: Config> = StorageValue<_, BTreeSet<T::AccountId>, ValueQuery>;
+
+	// temporary until offchain indexing is fixed
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	/// (ChannelId, PortId) => BTreeSet<u64>
+	pub type UndeliveredSequences<T: Config> =
+		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>), BTreeSet<u64>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]

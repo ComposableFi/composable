@@ -161,33 +161,7 @@ where
 	}
 
 	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS02Error> {
-		let bounded_map = HostConsensusStates::<T>::get();
-		let local_state = bounded_map.get(&height.revision_height).ok_or_else(|| {
-			ICS02Error::implementation_specific(format!(
-				"[host_consensus_state]: consensus state not found for host at height {}",
-				height
-			))
-		})?;
-		let timestamp = Timestamp::from_nanoseconds(local_state.timestamp)
-			.map_err(|e| {
-				ICS02Error::implementation_specific(format!(
-					"[host_consensus_state]: error decoding timestamp{}",
-					e
-				))
-			})?
-			.into_tm_time()
-			.ok_or_else(|| {
-				ICS02Error::implementation_specific(
-					"[host_consensus_state]: Could not convert timestamp into tendermint time"
-						.to_string(),
-				)
-			})?;
-		let consensus_state = ibc::clients::ics11_beefy::consensus_state::ConsensusState {
-			timestamp,
-			root: local_state.commitment_root.clone().into(),
-		};
-
-		Ok(AnyConsensusState::Beefy(consensus_state))
+		Err(ICS02Error::consensus_state_not_found(Default::default(), height))
 	}
 
 	fn client_counter(&self) -> Result<u64, ICS02Error> {

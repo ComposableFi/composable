@@ -1482,6 +1482,10 @@ impl_runtime_apis! {
 			Ibc::get_recv_packet_info(channel_id, port_id, seqs).ok()
 		}
 
+		fn undelivered_sequences(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u64> {
+			Ibc::get_undelivered_sequences(channel_id, port_id)
+		}
+
 		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
 			Ibc::client(client_id).ok()
 		}

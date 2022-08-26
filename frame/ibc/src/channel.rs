@@ -272,6 +272,18 @@ where
 		commitment: PacketCommitmentType,
 	) -> Result<(), ICS04Error> {
 		log::trace!(target: "pallet_ibc", "in channel : [store_packet_commitment] >> packet_commitment = {:#?}", commitment);
+		UndeliveredSequences::<T>::try_mutate::<_, _, (), _>(
+			(key.1.to_string().as_bytes(), key.0.as_bytes()),
+			|seqs| {
+				seqs.insert(key.2.into());
+				Ok(())
+			},
+		)
+		.map_err(|_| {
+			ICS04Error::implementation_specific(
+				"Errored while storing packet commitment".to_string(),
+			)
+		})?;
 		<PacketCommitment<T>>::insert((key.0.clone(), key.1, key.2), commitment);
 		if let Some(val) = PacketCounter::<T>::get().checked_add(1) {
 			PacketCounter::<T>::put(val);
@@ -295,14 +307,14 @@ where
 		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
 		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
 		// 		.unwrap_or_default();
-		let mut offchain_packet: PacketInfo = packet.into();
+		let mut packet_info: PacketInfo = packet.into();
 		// Store when packe
-		offchain_packet.height = Some(host_height::<T>());
-		offchain_packet.channel_order = channel_end.ordering as u8;
-		// offchain_packets.insert(seq, offchain_packet);
+		packet_info.height = Some(host_height::<T>());
+		packet_info.channel_order = channel_end.ordering as u8;
+		// offchain_packets.insert(seq, packet_info);
 		// sp_io::offchain::local_storage_set(sp_core::offchain::StorageKind::PERSISTENT, &key,
 		// offchain_packets.encode().as_slice());
-		<SendPackets<T>>::insert((channel_id, port_id), seq, offchain_packet);
+		<SendPackets<T>>::insert((channel_id, port_id), seq, packet_info);
 		Ok(())
 	}
 
@@ -317,10 +329,10 @@ where
 		let port_id = key.0.as_bytes().to_vec();
 		let seq = u64::from(key.2);
 		let channel_end = ChannelReader::channel_end(self, &(key.0, key.1))?;
-		let mut offchain_packet: PacketInfo = packet.into();
-		offchain_packet.height = Some(host_height::<T>());
-		offchain_packet.channel_order = channel_end.ordering as u8;
-		<ReceivePackets<T>>::insert((channel_id, port_id), seq, offchain_packet);
+		let mut packet_info: PacketInfo = packet.into();
+		packet_info.height = Some(host_height::<T>());
+		packet_info.channel_order = channel_end.ordering as u8;
+		<ReceivePackets<T>>::insert((channel_id, port_id), seq, packet_info);
 		Ok(())
 	}
 
@@ -329,6 +341,19 @@ where
 		key: (PortId, ChannelId, Sequence),
 	) -> Result<(), ICS04Error> {
 		// delete packet commitment
+		UndeliveredSequences::<T>::try_mutate::<_, _, (), _>(
+			(key.1.to_string().as_bytes(), key.0.as_bytes()),
+			|seqs| {
+				let seq: u64 = key.2.into();
+				seqs.remove(&seq);
+				Ok(())
+			},
+		)
+		.map_err(|_| {
+			ICS04Error::implementation_specific(
+				"Errored while deleting packet commitment".to_string(),
+			)
+		})?;
 		<PacketCommitment<T>>::remove((key.0.clone(), key.1, key.2));
 
 		if let Some(val) = PacketCounter::<T>::get().checked_sub(1) {

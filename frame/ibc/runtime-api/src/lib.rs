@@ -25,6 +25,9 @@ sp_api::decl_runtime_apis! {
 		/// Query receive packet info
 		fn query_recv_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<PacketInfo>>;
 
+		/// Query receive packet info
+		fn undelivered_sequences(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u64>;
+
 		/// Returns client state at height
 		fn client_state(client_id: Vec<u8>) -> Option<QueryClientStateResponse>;
 

@@ -159,6 +159,10 @@ where
 		port_id: String,
 		seqs: Vec<u64>,
 	) -> Result<Vec<PacketInfo>>;
+
+	#[method(name = "ibc_undeliveredSequences")]
+	fn query_undelivered_sequences(&self, channel_id: String, port_id: String) -> Result<Vec<u64>>;
+
 	/// Generate proof for given key
 	#[method(name = "ibc_queryProof")]
 	fn query_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof>;
@@ -541,6 +545,13 @@ where
 				})
 			})
 			.collect()
+	}
+
+	fn query_undelivered_sequences(&self, channel_id: String, port_id: String) -> Result<Vec<u64>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(self.client.info().best_hash);
+		api.undelivered_sequences(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
+			.map_err(|_| runtime_error_into_rpc_error("Error getting undelivered sequences"))
 	}
 
 	fn query_proof(&self, height: u32, mut keys: Vec<Vec<u8>>) -> Result<Proof> {

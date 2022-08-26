@@ -1,6 +1,6 @@
 use core::fmt::Debug;
 
-use codec::{HasCompact, MaxEncodedLen};
+use codec::MaxEncodedLen;
 use composable_support::math::safe::SafeMul;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;

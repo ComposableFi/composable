@@ -625,6 +625,10 @@ where
 		Ok(packets)
 	}
 
+	pub fn get_undelivered_sequences(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u64> {
+		UndeliveredSequences::<T>::get((channel_id, port_id)).into_iter().collect()
+	}
+
 	pub fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
 		let ctx = Context::<T>::new();
 		// revision number is not used in this case so it's fine to use zero
