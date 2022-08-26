@@ -1,14 +1,14 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes, AugmentedConst, QueryableModuleConsts } from '@polkadot/api/types';
-import type { Bytes, Option, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types';
+import type { ApiTypes } from '@polkadot/api-base/types';
+import type { Bytes, Option, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Codec } from '@polkadot/types-codec/types';
 import type { AccountId32, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSupportWeightsWeightToFeeCoefficient, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
-import type { Codec } from '@polkadot/types/types';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
-declare module '@polkadot/api/types/consts' {
-  export interface AugmentedConsts<ApiType> {
+declare module '@polkadot/api-base/types/consts' {
+  export interface AugmentedConsts<ApiType extends ApiTypes> {
     assets: {
       nativeAssetId: u128 & AugmentedConst<ApiType>;
       /**
@@ -69,13 +69,6 @@ declare module '@polkadot/api/types/consts' {
     };
     callFilter: {
       maxStringSize: u32 & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    constantProductDex: {
-      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -191,6 +184,16 @@ declare module '@polkadot/api/types/consts' {
        **/
       [key: string]: Codec;
     };
+    ibc: {
+      /**
+       * Expected blocktime
+       **/
+      expectedBlockTime: u64 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     identity: {
       /**
        * The amount held on deposit for a registered identity
@@ -256,7 +259,7 @@ declare module '@polkadot/api/types/consts' {
        * 
        * We depend on Oracle to price in Lending. So we know price anyway.
        * We normalized price over all markets and protect from spam all possible pairs equally.
-       * Locking borrow amount ensures manager can create market wit borrow assets, and we force
+       * Locking borrow amount ensures manager can create market with borrow assets, and we force
        * him to really create it.
        * 
        * This solution forces to have amount before creating market.
@@ -277,29 +280,6 @@ declare module '@polkadot/api/types/consts' {
        **/
       [key: string]: Codec;
     };
-    liquidityBootstrapping: {
-      /**
-       * Maximum initial weight.
-       **/
-      maxInitialWeight: Permill & AugmentedConst<ApiType>;
-      /**
-       * Maximum duration for a sale.
-       **/
-      maxSaleDuration: u32 & AugmentedConst<ApiType>;
-      /**
-       * Minimum final weight.
-       **/
-      minFinalWeight: Permill & AugmentedConst<ApiType>;
-      /**
-       * Minimum duration for a sale.
-       **/
-      minSaleDuration: u32 & AugmentedConst<ApiType>;
-      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
     mosaic: {
       /**
        * The minimum period for which we lock outgoing/incoming funds.
@@ -308,7 +288,7 @@ declare module '@polkadot/api/types/consts' {
       /**
        * The minimum time to live before a relayer account rotation.
        **/
-      minimumTtl: u32 & AugmentedConst<ApiType>;
+      minimumTTL: u32 & AugmentedConst<ApiType>;
       timelockPeriod: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
@@ -343,6 +323,9 @@ declare module '@polkadot/api/types/consts' {
     oracle: {
       maxHistory: u32 & AugmentedConst<ApiType>;
       maxPrePrices: u32 & AugmentedConst<ApiType>;
+      msPerBlock: u64 & AugmentedConst<ApiType>;
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      twapWindow: u16 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -375,6 +358,49 @@ declare module '@polkadot/api/types/consts' {
        **/
       [key: string]: Codec;
     };
+    proxy: {
+      /**
+       * The base amount of currency needed to reserve for creating an announcement.
+       * 
+       * This is held when a new storage item holding a `Balance` is created (typically 16
+       * bytes).
+       **/
+      announcementDepositBase: u128 & AugmentedConst<ApiType>;
+      /**
+       * The amount of currency needed per announcement made.
+       * 
+       * This is held for adding an `AccountId`, `Hash` and `BlockNumber` (typically 68 bytes)
+       * into a pre-existing storage value.
+       **/
+      announcementDepositFactor: u128 & AugmentedConst<ApiType>;
+      /**
+       * The maximum amount of time-delayed announcements that are allowed to be pending.
+       **/
+      maxPending: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum amount of proxies allowed for a single account.
+       **/
+      maxProxies: u32 & AugmentedConst<ApiType>;
+      /**
+       * The base amount of currency needed to reserve for creating a proxy.
+       * 
+       * This is held for an additional storage item whose value size is
+       * `sizeof(Balance)` bytes and whose key size is `sizeof(AccountId)` bytes.
+       **/
+      proxyDepositBase: u128 & AugmentedConst<ApiType>;
+      /**
+       * The amount of currency needed per proxy added.
+       * 
+       * This is held for adding 32 bytes plus an instance of `ProxyType` more into a
+       * pre-existing storage value. Thus, when configuring `ProxyDepositFactor` one should take
+       * into account `32 + proxy_type.encode().len()` bytes of data.
+       **/
+      proxyDepositFactor: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     scheduler: {
       /**
        * The maximum weight that may be scheduled per block for any dispatchables of less
@@ -391,8 +417,20 @@ declare module '@polkadot/api/types/consts' {
        **/
       [key: string]: Codec;
     };
-    stableSwapDex: {
+    stakingRewards: {
+      /**
+       * Maximum number of reward configurations per pool.
+       **/
+      maxRewardConfigsPerPool: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximum number of staking duration presets allowed.
+       **/
+      maxStakingDurationPresets: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * the size of batch to take each time trying to release rewards
+       **/
+      releaseRewardsPoolsBatchSize: u8 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -448,6 +486,10 @@ declare module '@polkadot/api/types/consts' {
     tokens: {
       maxLocks: u32 & AugmentedConst<ApiType>;
       /**
+       * The maximum number of named reserves that can exist on an account.
+       **/
+      maxReserves: u32 & AugmentedConst<ApiType>;
+      /**
        * Generic const
        **/
       [key: string]: Codec;
@@ -478,13 +520,12 @@ declare module '@polkadot/api/types/consts' {
        **/
       operationalFeeMultiplier: u8 & AugmentedConst<ApiType>;
       /**
-       * The fee to be paid for making a transaction; the per-byte portion.
+       * Generic const
        **/
-      transactionByteFee: u128 & AugmentedConst<ApiType>;
-      /**
-       * The polynomial that is applied in order to derive fee from weight.
-       **/
-      weightToFee: Vec<FrameSupportWeightsWeightToFeeCoefficient> & AugmentedConst<ApiType>;
+      [key: string]: Codec;
+    };
+    transfer: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -601,9 +642,5 @@ declare module '@polkadot/api/types/consts' {
        **/
       [key: string]: Codec;
     };
-  }
-
-  export interface QueryableConsts<ApiType extends ApiTypes> extends AugmentedConsts<ApiType> {
-    [key: string]: QueryableModuleConsts;
-  }
-}
+  } // AugmentedConsts
+} // declare module
