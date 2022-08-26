@@ -3,7 +3,7 @@ use composable_traits::{defi::Sell, xcm::XcmSellRequest};
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
 pub struct XcmSellRequestValid;
 
 impl Validate<XcmSellRequest, XcmSellRequestValid> for XcmSellRequestValid {
@@ -16,7 +16,7 @@ impl Validate<XcmSellRequest, XcmSellRequestValid> for XcmSellRequestValid {
 	}
 }
 
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
 pub struct SellValid;
 
 impl<AssetId: PartialEq, Balance> Validate<Sell<AssetId, Balance>, SellValid> for SellValid {

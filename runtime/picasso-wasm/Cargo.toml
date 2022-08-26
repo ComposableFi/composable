@@ -1,0 +1,17 @@
+[package]
+edition = "2021"
+name = "picasso-runtime-wasm"
+version = "0.1.0"
+
+authors = ["Hussein Ait Lahcen <hussein.aitlahcen@gmail.com>"]
+description = "Picasso, Kusama Parachain Runtime WASM Implementation"
+
+[dependencies]
+picasso-runtime = { path = "../picasso/", default-features = false }
+
+[lib]
+crate-type = ["cdylib"]
+name = "picasso_runtime"
+
+[features]
+runtime-benchmarks = ["picasso-runtime/runtime-benchmarks"]

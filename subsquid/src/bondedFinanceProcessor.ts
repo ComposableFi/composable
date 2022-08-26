@@ -22,12 +22,12 @@ interface NewBondEvent {
  * @param event
  */
 function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent {
-  const { offerId, nbOfBonds } = event.asV2400 ?? event.asLatest;
+  const { offerId, nbOfBonds } = event.asV2401 ?? event.asLatest;
   return { offerId, nbOfBonds };
 }
 
 function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
-  const { offerId, beneficiary } = event.asV2400 ?? event.asLatest;
+  const { offerId, beneficiary } = event.asV2401 ?? event.asLatest;
 
   return { offerId, beneficiary };
 }

@@ -17,10 +17,23 @@ help:
 	@echo $(print_help_text)
 
 build:
-	@cargo build
+	@cargo +nightly build
 
 clean:
 	@cargo clean
+
+release:
+	cargo +nightly build --release -p wasm-optimizer
+	cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown
+	cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown
+	cargo +nightly build --release -p dali-runtime-wasm --target wasm32-unknown-unknown
+	./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/dali_runtime.wasm --output ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm
+	./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm --output ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm
+	./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/composable_runtime.wasm --output ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm
+	export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm) && \
+	export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm) && \
+	export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm) && \
+	cargo build --release --package composable --features=builtin-wasm
 
 .PHONY: build-release
 build-release:
@@ -123,19 +136,27 @@ push-mmr-polkadot:
 
 containerize-ci-linux:
 	@docker build -f docker/ci-linux.dockerfile \
-		-t ${REPO}/ci-linux:2022-04-18  \
+		-t ${REPO}/ci-linux:2022-08-06  \
 		.
 
 push-ci-linux:
-	@docker push ${REPO}/ci-linux:2022-04-18
+	@docker push ${REPO}/ci-linux:2022-08-06
 
 containerize-base-ci-linux:
 	@docker build -f docker/base-ci-linux.dockerfile \
-		-t ${REPO}/base-ci-linux:1.60.0  \
+		-t ${REPO}/base-ci-linux:1.62.1  \
 		.
 
 push-base-ci-linux:
-	@docker push ${REPO}/base-ci-linux:1.60.0
+	@docker push ${REPO}/base-ci-linux:1.62.1
+
+containerize-lease-period-prolongator:
+	@docker build -f scripts/lease-period-prolongator/Dockerfile \
+		-t ${REPO}/lease-period-prolongator:0.1.0  \
+		scripts/lease-period-prolongator
+
+push-lease-period-prolongator:
+	@docker push ${REPO}/lease-period-prolongator:0.1.0
 
 stop:
 	@docker-compose down
@@ -155,6 +176,7 @@ endif
 .PHONY: containerize-mmr-polkadot push-mmr-polkadot
 .PHONY: containerize-base-ci-linux push-base-ci-linux
 .PHONY: containerize-ci-linux push-ci-linux
+.PHONY: containerize-lease-period-prolongator push-lease-period-prolongator
 
 #----------------------------------------------------------------------
 # UTILITY FUNCTIONS TO remove

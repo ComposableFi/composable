@@ -46,10 +46,10 @@ benchmarks! {
 		let block_interval = Validated::<T::BlockNumber, ValidBlockInterval<T::StalePrice>>::new(T::StalePrice::get() + 1u32.into()).unwrap();
 		let reward: BalanceOf<T> = T::Currency::minimum_balance();
 		let slash: BalanceOf<T> = T::Currency::minimum_balance();
-
+		let emit_price_changes: bool = false;
 	}: {
 		assert_ok!(
-			<Oracle<T>>::add_asset_and_info(RawOrigin::Root.into(), asset_id.into(), threshold, min_answers, max_answers, block_interval, reward, slash)
+			<Oracle<T>>::add_asset_and_info(RawOrigin::Root.into(), asset_id.into(), threshold, min_answers, max_answers, block_interval, reward, slash, emit_price_changes)
 		);
 	}
 	verify {
@@ -121,7 +121,8 @@ benchmarks! {
 			max_answers: T::MaxAnswerBound::get(),
 			block_interval: 0u32.into(),
 			reward_weight: T::Currency::minimum_balance(),
-			slash: T::Currency::minimum_balance()
+			slash: T::Currency::minimum_balance(),
+			emit_price_changes: false,
 		});
 		frame_system::Pallet::<T>::set_block_number(6u32.into());
 		PrePrices::<T>::mutate(asset_id, |current_prices| -> DispatchResult {
@@ -151,7 +152,8 @@ benchmarks! {
 			max_answers: p,
 			block_interval: T::StalePrice::get(),
 			reward_weight: T::Currency::minimum_balance(),
-			slash: T::Currency::minimum_balance()
+			slash: T::Currency::minimum_balance(),
+			emit_price_changes: false,
 		};
 		let pre_prices = (0..p).map(|i| {
 			PrePrice {
@@ -177,7 +179,8 @@ benchmarks! {
 			max_answers: p,
 			block_interval: T::StalePrice::get(),
 			reward_weight: T::Currency::minimum_balance(),
-			slash: T::Currency::minimum_balance()
+			slash: T::Currency::minimum_balance(),
+			emit_price_changes: false,
 		};
 		let pre_prices = (0..p).map(|_| {
 			PrePrice {

@@ -36,7 +36,6 @@ import { getSelectedChartRangeLimitTimestamp, getNextRangeGivenTimestamp } from 
      */
     let withMissingIntervals: [number, number][] = [];
     for (let i = rangeStart.length - 1; i >= 0; i--) {
-  
       let totalValueLocked = 0;
   
       for (let tvlIndex = data.length - 1; tvlIndex >= 0; tvlIndex--) {

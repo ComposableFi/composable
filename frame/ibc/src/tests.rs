@@ -35,7 +35,7 @@ fn initialize_connection() {
 		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
-			Some(AnyConsensusState::Mock(mock_cs_state)),
+			AnyConsensusState::Mock(mock_cs_state),
 			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()
@@ -72,7 +72,7 @@ fn should_open_a_channel() {
 		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
-			Some(AnyConsensusState::Mock(mock_cs_state)),
+			AnyConsensusState::Mock(mock_cs_state),
 			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()
@@ -121,7 +121,7 @@ fn should_send_ping_packet() {
 		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
-			Some(AnyConsensusState::Mock(mock_cs_state)),
+			AnyConsensusState::Mock(mock_cs_state),
 			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()

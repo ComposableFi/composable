@@ -34,7 +34,7 @@ Transfer to [dali-rococo] accounts some amounts.
 
 That to be executed https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c00d0070000e803000000900100 on behalf of  parachain via next
 
-run https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x2900010100020c0004000000000b00a0724e180913000000000b00a0724e180900060102286bee383c00d0070000e803000000900100 
+run https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x2900010100020c0004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00d0070000e803000000900100
 
 ## Accept Picasso to Karura
 

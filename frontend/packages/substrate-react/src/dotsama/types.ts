@@ -16,7 +16,8 @@ export type DotSamaExtensionStatus =
   | 'connected'
   | 'no_extension'
   | 'error';
-export interface ConntectedAccount {
+
+  export interface ConntectedAccount {
   address: string;
   name: string;
 }
@@ -40,7 +41,7 @@ export interface DotSamaContext {
   parachainProviders: { [chainId in ParachainId]: ParachainApi };
   relaychainProviders: { [chainId in RelayChainId]: RelaychainApi };
   extensionStatus: DotSamaExtensionStatus;
-  activate?: (walletId?: SupportedWalletId) => Promise<any | undefined>;
+  activate?: (walletId?: SupportedWalletId, selectedDefaultAccount?: boolean) => Promise<any[] | undefined>;
   deactivate?: () => Promise<void>;
   selectedAccount: number;
   setSelectedAccount?: (account: number) => void;

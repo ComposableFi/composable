@@ -97,7 +97,7 @@ where
 	}
 }
 
-#[derive(Encode, Decode, Debug, TypeInfo, MaxEncodedLen, Clone, PartialEq)]
+#[derive(Encode, Decode, Debug, TypeInfo, MaxEncodedLen, Clone, PartialEq, Eq)]
 pub struct Range<AssetId> {
 	current: AssetId,
 	end: AssetId,
