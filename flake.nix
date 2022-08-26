@@ -719,8 +719,6 @@
             default = developers;
           };
 
-          # Applications runnable with `nix run`
-          # https://github.com/NixOS/nix/issues/5560
           apps =
             let
               arion-pure = import ./.nix/arion-pure.nix { inherit pkgs; inherit packages; };
