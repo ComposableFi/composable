@@ -1,4 +1,3 @@
-use crate::defi::CurrencyPair;
 use frame_support::pallet_prelude::*;
 use sp_runtime::Perquintill;
 use sp_std::{
@@ -303,7 +302,8 @@ where
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub struct MarketInput<AccountId, AssetId, BlockNumber, LiquidationStrategyId> {
 	/// Collateral currency and borrow currency.
-	pub currency_pair: CurrencyPair<AssetId>,
+    pub borrow_asset: AssetId, 
+    pub collateral_asset: AssetId,
 	/// Reserve factor of market borrow vault.
 	pub reserved_factor: Perquintill,
 	/// List of trusted borrowers
@@ -312,20 +312,6 @@ pub struct MarketInput<AccountId, AssetId, BlockNumber, LiquidationStrategyId> {
 	pub liquidation_strategies: Vec<LiquidationStrategyId>,
 	/// Count of blocks until throw error PriceIsTooOld.
 	pub max_price_age: BlockNumber,
-}
-
-impl<AccountId, AssetId: Copy, BlockNumber, LiquidationStrategyId>
-	MarketInput<AccountId, AssetId, BlockNumber, LiquidationStrategyId>
-{
-	pub fn borrow_asset(&self) -> AssetId {
-		self.currency_pair.quote
-	}
-	pub fn collateral_asset(&self) -> AssetId {
-		self.currency_pair.base
-	}
-	pub fn reserved_factor(&self) -> Perquintill {
-		self.reserved_factor
-	}
 }
 
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq, RuntimeDebug)]

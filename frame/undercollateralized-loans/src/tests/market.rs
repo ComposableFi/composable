@@ -10,8 +10,8 @@ fn can_create_market() {
 		let manager = *ALICE;
 		let origin = Origin::signed(manager);
 		let input = create_test_market_input_config();
-		let borrow_asset = input.currency_pair.quote;
-		let collateral_asset = input.currency_pair.base;
+		let borrow_asset = input.borrow_asset;
+		let collateral_asset = input.collateral_asset;
 		set_price(borrow_asset, NORMALIZED::ONE);
 		set_price(collateral_asset, NORMALIZED::units(50000));
 		Tokens::mint_into(borrow_asset, &manager, NORMALIZED::units(1000)).unwrap();
@@ -41,8 +41,8 @@ fn test_do_create_market_input_validation() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		let valid_market_input_configuration = create_test_market_input_config();
-		let borrow_asset = valid_market_input_configuration.currency_pair.quote;
-		let collateral_asset = valid_market_input_configuration.currency_pair.base;
+		let borrow_asset = valid_market_input_configuration.borrow_asset;
+		let collateral_asset = valid_market_input_configuration.collateral_asset;
 		set_price(borrow_asset, NORMALIZED::ONE);
 		set_price(collateral_asset, NORMALIZED::units(50000));
 
@@ -52,19 +52,18 @@ fn test_do_create_market_input_validation() {
 			.try_into_validated::<MarketInputIsValid<Oracle, UndercollateralizedLoans>>());
 
 		// Check validation of assets supporting.
-		let currency_pair =
-			CurrencyPair { base: collateral_asset, quote: INVALID::instance().id() };
-		let invalid_market_input_configuration =
-			MarketInput { currency_pair, ..valid_market_input_configuration.clone() };
+	    let invalid_borrow_asset = INVALID::instance().id();	
+        let invalid_market_input_configuration =
+			MarketInput { borrow_asset: invalid_borrow_asset, ..valid_market_input_configuration.clone() };
 		assert_err!(
 			invalid_market_input_configuration
 				.clone()
 				.try_into_validated::<MarketInputIsValid<Oracle, UndercollateralizedLoans>>(),
 			"Borrow asset is not supported by oracle."
 		);
-		let currency_pair = CurrencyPair { base: INVALID::instance().id(), quote: borrow_asset };
-		let invalid_market_input_configuration =
-			MarketInput { currency_pair, ..valid_market_input_configuration.clone() };
+	    let invalid_collateral_asset = INVALID::instance().id();	
+        let invalid_market_input_configuration =
+			MarketInput { collateral_asset: invalid_collateral_asset, ..valid_market_input_configuration.clone() };
 		assert_err!(
 			invalid_market_input_configuration
 				.clone()
@@ -74,8 +73,10 @@ fn test_do_create_market_input_validation() {
 
 		// Currencies should be different.
 		let currency_pair = CurrencyPair { base: borrow_asset, quote: borrow_asset };
-		let invalid_market_input_configuration =
-			MarketInput { currency_pair, ..valid_market_input_configuration.clone() };
+	    let invalid_borrow_asset = USDT::instance().id();	
+        let invalid_collateral_asset = invalid_borrow_asset;
+        let invalid_market_input_configuration =
+			MarketInput { borrow_asset: invalid_borrow_asset, collateral_asset: invalid_collateral_asset, ..valid_market_input_configuration.clone() };
 		assert_err!(
 			invalid_market_input_configuration
 				.clone()

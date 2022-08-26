@@ -49,19 +49,19 @@ impl<T: Config> Pallet<T> {
 			let borrow_asset_vault = T::Vault::create(
 				Deposit::Existential,
 				VaultConfig {
-					asset_id: config_input.borrow_asset(),
-					reserved: config_input.reserved_factor(),
+					asset_id: config_input.borrow_asset,
+					reserved: config_input.reserved_factor,
 					manager: manager.clone(),
 					strategies: [(
 						market_account_id.clone(),
-						Perquintill::one().saturating_sub(config_input.reserved_factor()),
+						Perquintill::one().saturating_sub(config_input.reserved_factor),
 					)]
 					.into_iter()
 					.collect(),
 				},
 			)?;
 
-			let initial_pool_size = Self::calculate_initial_pool_size(config_input.borrow_asset())?;
+			let initial_pool_size = Self::calculate_initial_pool_size(config_input.borrow_asset)?;
 
 			ensure!(
 				!initial_pool_size.is_zero(),
@@ -69,7 +69,7 @@ impl<T: Config> Pallet<T> {
 			);
 
 			T::MultiCurrency::transfer(
-				config_input.borrow_asset(),
+				config_input.borrow_asset,
 				&manager,
 				&market_account_id,
 				initial_pool_size,
@@ -80,8 +80,8 @@ impl<T: Config> Pallet<T> {
 				market_account_id.clone(),
 				manager,
 				borrow_asset_vault,
-				config_input.borrow_asset(),
-				config_input.collateral_asset(),
+				config_input.borrow_asset,
+				config_input.collateral_asset,
 				config_input.max_price_age,
 				config_input.whitelist,
 			);

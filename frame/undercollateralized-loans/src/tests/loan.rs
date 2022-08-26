@@ -100,7 +100,7 @@ fn test_do_create_market_input_validation() {
 			"Payment schedule exceeded maximum size."
 		);
         
-        // Check activation date value correctness validation. 
+        // Check activation date value validation. 
         // Set first payment date less than activation date. 
         let activation_date = parse_timestamp("02-03-2222");
         let first_payment_date = parse_timestamp("01-03-2222");

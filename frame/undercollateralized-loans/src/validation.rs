@@ -29,15 +29,15 @@ impl<
 		create_input: MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>,
 	) -> Result<MarketInput<LiquidationStrategyId, Asset, BlockNumber, AccountId>, &'static str> {
 		ensure!(
-			Oracle::is_supported(create_input.currency_pair.quote).is_ok(),
+			Oracle::is_supported(create_input.borrow_asset).is_ok(),
 			"Borrow asset is not supported by oracle."
 		);
 		ensure!(
-			Oracle::is_supported(create_input.currency_pair.base).is_ok(),
+			Oracle::is_supported(create_input.collateral_asset).is_ok(),
 			"Collateral asset is not supported by oracle."
 		);
 		ensure!(
-			create_input.currency_pair.base != create_input.currency_pair.quote,
+			create_input.borrow_asset != create_input.collateral_asset,
 			"Base and quote currencies are supposed to be different in currency pair."
 		);
 		ensure!(

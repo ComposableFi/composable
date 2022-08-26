@@ -3,17 +3,17 @@ use crate::{
 	mocks::*,
 	types::{LoanConfigOf, MarketInfoOf, MarketInputOf},
 };
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{NaiveDate, NaiveTime};
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
-	defi::{CurrencyPair, DeFiComposableConfig, DeFiEngine, MoreThanOneFixedU128, Rate},
+	defi::{CurrencyPair, DeFiComposableConfig},
 	oracle,
 	undercollateralized_loans::{LoanInput, MarketInput},
 };
 use frame_support::{
-	assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate, BoundedVec,
+	assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate,
 };
-use sp_runtime::{FixedPointNumber, Percent, Perquintill};
+use sp_runtime::Perquintill;
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 pub mod loan;
 pub mod market;
@@ -46,8 +46,8 @@ pub fn create_market<T, const NORMALIZED_PRICE: CurrencyId>(
 where
 	T: ConfigBound,
 {
-	let borrow_asset = input.currency_pair.quote;
-	let collateral_asset = input.currency_pair.base;
+	let borrow_asset = input.borrow_asset;
+	let collateral_asset = input.collateral_asset;
 	set_price(borrow_asset, NORMALIZED::ONE);
 	set_price(collateral_asset, NORMALIZED::units(NORMALIZED_PRICE));
 
@@ -68,7 +68,8 @@ where
 	T: ConfigBound,
 {
 	MarketInput {
-		currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),
+	    borrow_asset,	
+        collateral_asset,
 		reserved_factor,
 		whitelist,
 		liquidation_strategies: vec![],
