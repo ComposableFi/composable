@@ -542,7 +542,7 @@ jobs:
         - package-polkadot-node
         - package-composable-node
         - check-nix
-      runs-on: ubuntu-latest      
+      runs-on: ubuntu-latest
       timeout-minutes: 120
       concurrency:
         group: ${{ github.workflow }}-devnet-integration-tests-${{ github.ref }}
@@ -683,3 +683,67 @@ jobs:
           #     raise Exception(
           # Exception: could not find specified deployment in state file ‘/tmp/nix-shell.QuNDXa/tmpd0tvopatnixops/state.nixops’          
           # nix develop .#sre --show-trace -L --command nixops deploy --dry-run --debug --keep-going --show-trace
+  deploy-firebase-picasso:
+    name: "Firebase Picasso Web App Deploy"
+    needs:
+      - package-polkadot-node
+      - package-composable-node
+      - check-benchmarks
+      - check-nix
+      - local-integration-tests
+      - unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          always-auth: true
+          registry-url: 'https://registry.npmjs.org'
+      - run: yarn install && yarn export --filter=picasso
+        working-directory: frontend
+        env:
+          SUBSTRATE_PROVIDER_URL_KUSAMA_2019: '${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 }}'
+          SUBSTRATE_PROVIDER_URL_KUSAMA: '${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA }}'
+          SUBSTRATE_PROVIDER_URL_KARURA: '${{ secrets.SUBSTRATE_PROVIDER_URL_KARURA }}'
+          SUBSQUID_URL: '${{ secrets.SUBSQUID_URL }}'
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PICASSO_WEB_APP }}'
+          projectId: picasso
+          entrypoint: frontend/apps/picasso
+  deploy-firebase-pablo:
+    name: "Firebase Pablo Web App Deploy"
+    needs:
+      - package-polkadot-node
+      - package-composable-node
+      - check-benchmarks
+      - check-nix
+      - local-integration-tests
+      - unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          always-auth: true
+          registry-url: 'https://registry.npmjs.org'
+      - run: yarn install && yarn export --filter=pablo
+        working-directory: frontend
+        env:
+          SUBSTRATE_PROVIDER_URL_KUSAMA_2019: '${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 }}'
+          SUBSTRATE_PROVIDER_URL_KUSAMA: '${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA }}'
+          SUBSTRATE_PROVIDER_URL_KARURA: '${{ secrets.SUBSTRATE_PROVIDER_URL_KARURA }}'
+          SUBSQUID_URL: '${{ secrets.SUBSQUID_URL }}'
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PICASSO_WEB_APP }}'
+          projectId: pablo
+          entrypoint: frontend/apps/pablo
+
+
