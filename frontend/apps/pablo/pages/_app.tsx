@@ -1,6 +1,7 @@
 import "defi-interfaces/types-lookup.d";
 import "defi-interfaces/augment-api-tx";
 import "defi-interfaces/augment-api-rpc";
+import "defi-interfaces/augment-api-query";
 import "defi-interfaces/augment-types";
 
 import * as React from "react";
