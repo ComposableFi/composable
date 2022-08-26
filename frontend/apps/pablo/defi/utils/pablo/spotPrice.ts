@@ -11,15 +11,15 @@ export async function fetchSpotPrice(
   poolId: number
 ): Promise<BigNumber> {
   try {
-    // @ts-ignore
-    const rpcResult = await api.rpc.pablo.pricesFor(
+    const pricesFor = await api.rpc.pablo.pricesFor(
       api.createType("PalletPabloPoolId", poolId.toString()),
       api.createType("CustomRpcCurrencyId", pair.base),
       api.createType("CustomRpcCurrencyId", pair.quote),
       api.createType("CustomRpcBalance", toChainUnits(1).toString())
     );
 
-    return fromChainUnits(rpcResult.toJSON().spotPrice);
+    const spotPrice = pricesFor.get("spotPrice");
+    return fromChainUnits(spotPrice ? spotPrice.toString() : "0");
   } catch (err: any) {
     console.error(err);
     return new BigNumber(0);
@@ -35,14 +35,15 @@ export async function fetchSpotPriceInverted(
   poolId: number
 ): Promise<BigNumber> {
   try {
-    const rpcResult = await (api.rpc as any).pablo.pricesFor(
+    const pricesFor = await api.rpc.pablo.pricesFor(
       api.createType("PalletPabloPoolId", poolId.toString()),
       api.createType("CustomRpcCurrencyId", pair.quote),
       api.createType("CustomRpcCurrencyId", pair.base),
       api.createType("CustomRpcBalance", toChainUnits(1).toString())
     );
 
-    return fromChainUnits(rpcResult.toJSON().spotPrice);
+    const spotPrice = pricesFor.get("spotPrice");
+    return fromChainUnits(spotPrice ? spotPrice.toString() : "0");
   } catch (err: any) {
     console.error(err);
     return new BigNumber(0);

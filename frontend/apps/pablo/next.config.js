@@ -18,6 +18,7 @@ const withTM = require("next-transpile-modules")([
   "substrate-react",
   "shared",
   "tokens",
+  "defi-interfaces"
 ]);
 
 const nextConfig = {

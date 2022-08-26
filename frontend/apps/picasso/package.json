@@ -24,7 +24,7 @@
     "@integrations-lib/core": "1.0.68",
     "@mui/icons-material": "^5.5.1",
     "@mui/material": "^5.5.2",
-    "@polkadot/api": "^7.12.1",
+    "@polkadot/api": "^8.3.2",
     "@polkadot/extension-dapp": "^0.42.7",
     "@polkadot/util": "^9.4.1",
     "@svgr/webpack": "^6.1.2",
