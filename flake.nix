@@ -732,7 +732,7 @@
                 name = "devnet-up";
                 runtimeInputs = [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
                 text = ''
-                  arion --prebuilt-file ${arion-pure} up --remove-orphans
+                  arion --prebuilt-file ${arion-pure} up --build --force-recreate -V --always-recreate-deps --remove-orphans
                 '';
               };
 
@@ -789,150 +789,9 @@
                 {
                   type = "app";
                   program = "${pkgs.writeShellScript "arion-up" ''
-                ${pkgs.arion}/bin/arion --prebuilt-file ${devnet-xcvm} up --remove-orphans
+                  ${pkgs.arion}/bin/arion --prebuilt-file ${devnet-xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
               ''}";
-                };
-              subsquid-up =
-                let
-                  subsquid-network = pkgs.arion.build {
-                    inherit pkgs;
-                    modules = [
-                      ({ pkgs, ... }: {
-                        config = {
-                          project = { name = "subsquid-network"; };
-                          services = {
-                            db-squid = {
-                              service = {
-                                name = "postgres";
-                                image = "postgres:14";
-                                network_mode = "host";
-                                environment = {
-                                  POSTGRES_USER = "postgres";
-                                  POSTGRES_DB = "squid";
-                                  POSTGRES_PASSWORD = "squid";
-                                };
-                                command = [ "-p" "23798" ];
-                              };
-                            };
-                            db-archive = {
-                              service = {
-                                name = "postgres";
-                                image = "postgres:14";
-                                network_mode = "host";
-                                environment = {
-                                  POSTGRES_USER = "postgres";
-                                  POSTGRES_DB = "postgres";
-                                  POSTGRES_PASSWORD = "postgres";
-                                };
-                              };
-                            };
-                            indexer = {
-                              service = {
-                                name = "hydra-indexer";
-                                image = "subsquid/hydra-indexer:5";
-                                network_mode = "host";
-                                restart = "unless-stopped";
-                                environment = {
-                                  WORKERS_NUMBER = 5;
-                                  DB_NAME = "indexer";
-                                  DB_HOST = "localhost";
-                                  DB_USER = "postgres";
-                                  DB_PASS = "postgres";
-                                  DB_PORT = 5432;
-                                  REDIS_URI = "redis://localhost:6379/0";
-                                  FORCE_HEIGHT = "true";
-                                  WS_PROVIDER_ENDPOINT_URI = "ws://127.0.0.1:9988";
-                                };
-                                command = [
-                                  "sh"
-                                  "-c"
-                                  "yarn db:bootstrap && yarn start:prod"
-                                ];
-                              };
-                            };
-                            indexer-gateway = {
-                              service = {
-                                name = "hydra-indexer-gateway";
-                                image = "subsquid/hydra-indexer-gateway:5";
-                                network_mode = "host";
-                                restart = "unless-stopped";
-                                environment = {
-                                  DEV_MODE = "true";
-                                  DB_NAME = "indexer";
-                                  DB_HOST = "localhost";
-                                  DB_USER = "postgres";
-                                  DB_PASS = "postgres";
-                                  DB_PORT = 5432;
-                                  HYDRA_INDEXER_STATUS_SERVICE =
-                                    "http://localhost:8081/status";
-                                };
-                              };
-                            };
-                            indexer-status-service = {
-                              service = {
-                                name = "hydra-indexer-status-service";
-                                image = "subsquid/hydra-indexer-status-service:5";
-                                network_mode = "host";
-                                restart = "unless-stopped";
-                                environment = {
-                                  REDIS_URL = "redis://localhost:6379/0";
-                                  PORT = 8081;
-                                };
-                              };
-                            };
-                            redis = {
-                              service = {
-                                image = "redis:6.0-alpine";
-                                network_mode = "host";
-                                restart = "always";
-                              };
-                            };
-                            processor = {
-                              image.contents = [ pkgs.bash pkgs.coreutils ];
-                              service = {
-                                restart = "always";
-                                network_mode = "host";
-                                useHostStore = true;
-                                command = [
-                                  "bash"
-                                  "-c"
-                                  ''
-                                    ${packages.subsquid-processor}/bin/run-subsquid-processor
-                                  ''
-                                ];
-                                environment = {
-                                  DB_PORT = 23798;
-                                  DB_NAME = "squid";
-                                  DB_PASS = "squid";
-                                };
-                              };
-                            };
-                            dali-devnet = {
-                              image.contents = [ pkgs.bash pkgs.coreutils ];
-                              service.useHostStore = true;
-                              service.command = [
-                                "bash"
-                                "-c"
-                                ''
-                                  ${packages.devnet-dali}/bin/run-devnet-dali-dev
-                                ''
-                              ];
-                              service.network_mode = "host";
-                            };
-                          };
-                        };
-                      })
-                    ];
-                  };
-
-                in
-                {
-                  type = "app";
-                  program = "${pkgs.writeShellScript "subsquid-network-up" ''
-                  ${pkgs.arion}/bin/arion --prebuilt-file ${subsquid-network} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-                ''}";
-                };
-
+              };
               devnet-up = {
                 type = "app";
                 program = "${arion-up-program}/bin/devnet-up";
