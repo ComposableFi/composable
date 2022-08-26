@@ -2,8 +2,17 @@
 /* eslint-disable */
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId, CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from '../common';
-import type { Enum, Null, Struct, u16 } from '@polkadot/types-codec';
+import type { Enum, Null, Struct, u128, u16 } from '@polkadot/types-codec';
 import type { AccountId32, BlockNumber, Permill } from '@polkadot/types/interfaces/runtime';
+
+/** @name ComposableTraitsDexFee */
+export interface ComposableTraitsDexFee extends Struct {
+  readonly fee: u128;
+  readonly lp_fee: u128;
+  readonly owner_fee: u128;
+  readonly protocol_fee: u128;
+  readonly asset_id: u128;
+}
 
 /** @name PalletPabloPoolConfiguration */
 export interface PalletPabloPoolConfiguration extends Enum {
@@ -13,14 +22,13 @@ export interface PalletPabloPoolConfiguration extends Enum {
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
     readonly amplification_coefficient: u16;
     readonly fee: Permill;
-    readonly ownerFee: Permill;
   } & Struct;
   readonly isConstantProduct: boolean;
   readonly asConstantProduct: {
     readonly owner: AccountId32;
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
     readonly fee: Permill;
-    readonly ownerFee: Permill;
+    readonly baseWeight: Permill;
   } & Struct;
   readonly isLiquidityBootstrapping: boolean;
   readonly asLiquidityBootstrapping: {
@@ -32,7 +40,11 @@ export interface PalletPabloPoolConfiguration extends Enum {
     readonly initial_weight: Permill;
     readonly final_weight: Permill;
   } & Struct;
-    readonly fee: Permill;
+    readonly feeConfig: {
+    readonly feeRate: Permill;
+    readonly ownerFeeRate: Permill;
+    readonly protocolFeeRate: Permill;
+  } & Struct;
   } & Struct;
   readonly type: 'StableSwap' | 'ConstantProduct' | 'LiquidityBootstrapping';
 }

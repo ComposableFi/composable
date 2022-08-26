@@ -113,7 +113,7 @@
       cron: special_time=hourly
         name=lease-period-prolongator
         user=root
-        job="docker run --rm -i -u$(id -u):$(id -g) -eNODE_URL=wss://{{ domain }}/relaychain andor/lease-period-prolongator:0.1.0"
+        job="docker run --rm -i -u$(id -u):$(id -g) -eNODE_URL=wss://{{ domain }}/relaychain composablefi/lease-period-prolongator:0.1.0"
       become: yes
 
   - name: Install dependencies
