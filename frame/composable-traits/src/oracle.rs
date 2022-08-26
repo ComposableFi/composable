@@ -5,7 +5,7 @@ use crate::{
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
 
 // block timestamped value
-#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Eq, TypeInfo, Clone)]
 pub struct Price<PriceValue, BlockNumber> {
 	/// value
 	pub price: PriceValue,
@@ -13,7 +13,7 @@ pub struct Price<PriceValue, BlockNumber> {
 }
 
 /// Statistics useful for oracle rewarding and tracking.
-#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
+#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, Eq, TypeInfo, Clone)]
 pub struct RewardTracker<Balance, Timestamp> {
 	/// Period which rewarding resets. Most likely a year.
 	pub period: Timestamp,

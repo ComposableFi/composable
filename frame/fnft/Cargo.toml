@@ -1,0 +1,61 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
+name = "pallet-fnft"
+version = "0.0.1"
+
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies.codec]
+default-features = false
+features = ["derive"]
+package = "parity-scale-codec"
+version = "3.0.0"
+
+[dependencies]
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+composable-support = { path = "../composable-support", default-features = false }
+composable-traits = { path = "../composable-traits", default-features = false }
+
+[dev-dependencies]
+composable-tests-helpers = { path = "../composable-tests-helpers" }
+composable-traits = { path = "../composable-traits", features = ["test-utils"] }
+pallet-account-proxy = { path = "../../frame/account-proxy", default-features = false }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+[features]
+default = ["std"]
+std = [
+  "codec/std",
+  "frame-support/std",
+  "frame-system/std",
+  "sp-runtime/std",
+  "sp-io/std",
+  "sp-core/std",
+  "sp-std/std",
+  "sp-arithmetic/std",
+  "scale-info/std",
+  "composable-traits/std",
+  "composable-support/std",
+  "composable-tests-helpers/std",
+  "pallet-account-proxy/std",
+]
+
+runtime-benchmarks = [
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+]

@@ -157,6 +157,7 @@ impl treasury::Config<NativeTreasury> for Runtime {
 	type WeightInfo = weights::treasury::WeightInfo<Runtime>;
 	// TODO: add bounties?
 	type SpendFunds = ();
+	type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 }
 
 impl governance_registry::Config for Runtime {

@@ -403,7 +403,7 @@ pub mod pallet {
 							available_to_claim,
 							false,
 						)?;
-						(*reward).claimed = available_to_claim.saturating_add(reward.claimed);
+						reward.claimed = available_to_claim.saturating_add(reward.claimed);
 						ClaimedRewards::<T>::mutate(|x| *x = x.saturating_add(available_to_claim));
 						Ok(available_to_claim)
 					})

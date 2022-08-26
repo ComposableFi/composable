@@ -250,6 +250,7 @@ mod tests {
 		type WeightInfo = ();
 		// TODO: add bounties?
 		type SpendFunds = ();
+		type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 	}
 
 	pub fn new_test_ext() -> sp_io::TestExternalities {

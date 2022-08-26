@@ -26,7 +26,7 @@ use this_runtime::{
 use num_traits::Zero;
 use orml_traits::currency::MultiCurrency;
 
-use frame_support::{assert_ok, log};
+use frame_support::{assert_ok, log, WeakBoundedVec};
 use primitives::currency::*;
 use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
 use xcm::latest::prelude::*;
@@ -139,7 +139,10 @@ fn transfer_from_this_to_sibling() {
 			CurrencyId::PICA,
 			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
 				1,
-				X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode()))
+				X2(
+					Parachain(SIBLING_PARA_ID),
+					GeneralKey(WeakBoundedVec::force_from(CurrencyId::PICA.encode(), None))
+				)
 			)),
 			Some(Ratio::saturating_from_rational(1, 1)),
 			None,
@@ -186,7 +189,10 @@ fn transfer_from_sibling_to_this() {
 			CurrencyId::PICA,
 			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
 				1,
-				X2(Parachain(THIS_PARA_ID), GeneralKey(CurrencyId::PICA.encode()))
+				X2(
+					Parachain(THIS_PARA_ID),
+					GeneralKey(WeakBoundedVec::force_from(CurrencyId::PICA.encode(), None))
+				)
 			)),
 			Some(Ratio::saturating_from_rational(1, 1)),
 			None,
@@ -646,7 +652,13 @@ fn trap_assets_larger_than_ed_works() {
 				fees: assets,
 				weight_limit: Limited(CurrencyId::unit::<Balance>() as u64),
 			},
-			WithdrawAsset(((0, GeneralKey(CurrencyId::PICA.encode())), native_asset_amount).into()),
+			WithdrawAsset(
+				(
+					(0, GeneralKey(WeakBoundedVec::force_from(CurrencyId::PICA.encode(), None))),
+					native_asset_amount,
+				)
+					.into(),
+			),
 		];
 		assert_ok!(pallet_xcm::Pallet::<kusama_runtime::Runtime>::send_xcm(
 			Here,
@@ -706,7 +718,16 @@ fn trap_assets_lower_than_existential_deposit_works() {
 			BuyExecution { fees: assets, weight_limit: Limited(other_non_native_amount as u64) },
 			WithdrawAsset(
 				(
-					(Parent, X2(Parachain(THIS_PARA_ID), GeneralKey(this_native_asset.encode()))),
+					(
+						Parent,
+						X2(
+							Parachain(THIS_PARA_ID),
+							GeneralKey(WeakBoundedVec::force_from(
+								this_native_asset.encode(),
+								None,
+							)),
+						),
+					),
 					some_native_amount,
 				)
 					.into(),
@@ -780,7 +801,10 @@ fn sibling_trap_assets_works() {
 			);
 		let remote = composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
 			1,
-			X2(Parachain(SIBLING_PARA_ID), GeneralKey(any_asset.encode())),
+			X2(
+				Parachain(SIBLING_PARA_ID),
+				GeneralKey(WeakBoundedVec::force_from(any_asset.encode(), None)),
+			),
 		));
 		assert_ok!(this_runtime::AssetsRegistry::update_asset(
 			RawOrigin::Root.into(),
@@ -795,7 +819,13 @@ fn sibling_trap_assets_works() {
 	// buy execution via native token, and try withdraw on this some amount
 	Sibling::execute_with(|| {
 		let assets: MultiAsset = (
-			(Parent, X2(Parachain(THIS_PARA_ID), GeneralKey(this_native_asset.encode()))),
+			(
+				Parent,
+				X2(
+					Parachain(THIS_PARA_ID),
+					GeneralKey(WeakBoundedVec::force_from(this_native_asset.encode(), None)),
+				),
+			),
 			some_native_amount,
 		)
 			.into();
@@ -809,7 +839,13 @@ fn sibling_trap_assets_works() {
 			},
 			WithdrawAsset(
 				(
-					(Parent, X2(Parachain(SIBLING_PARA_ID), GeneralKey(any_asset.encode()))),
+					(
+						Parent,
+						X2(
+							Parachain(SIBLING_PARA_ID),
+							GeneralKey(WeakBoundedVec::force_from(any_asset.encode(), None)),
+						),
+					),
 					sibling_non_native_amount,
 				) // withdraw into VM holder asset, and do nothing...
 					.into(),

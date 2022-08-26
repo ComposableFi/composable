@@ -15,11 +15,15 @@
 )]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 
 // Make the WASM binary available.
-#[cfg(all(feature = "std", feature = "wasm-builder"))]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+#[cfg(all(feature = "std", feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("DALI_RUNTIME")));
+#[cfg(not(feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = None;
+
+extern crate alloc;
 
 mod governance;
 mod weights;
@@ -36,8 +40,8 @@ use common::{
 	},
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
-	BlockNumber, BondOfferId, Hash, MaxStringSize, Moment, MosaicRemoteAssetId,
-	NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
+	BlockNumber, BondOfferId, FinancialNftInstanceId, Hash, MaxStringSize, Moment,
+	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -53,8 +57,8 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto,
-		Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, Convert,
+		ConvertInto, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -78,8 +82,9 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
+use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
 use frame_support::{
-	traits::{fungibles, ConstU32, EqualPrivilegeOnly, OnRuntimeUpgrade},
+	traits::{fungibles, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
@@ -362,6 +367,7 @@ impl WeightToFeePolynomial for WeightToFee {
 }
 
 impl transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
 	type WeightToFee = WeightToFee;
@@ -511,6 +517,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -651,6 +658,32 @@ impl utility::Config for Runtime {
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
+impl InstanceFilter<Call> for ProxyType {
+	fn filter(&self, c: &Call) -> bool {
+		match self {
+			ProxyType::Any => true,
+			ProxyType::Governance => matches!(
+				c,
+				Call::Democracy(..) |
+					Call::Council(..) | Call::TechnicalCollective(..) |
+					Call::Treasury(..) | Call::Utility(..)
+			),
+			ProxyType::CancelProxy => {
+				// TODO (vim): We might not need this
+				matches!(c, Call::Proxy(pallet_account_proxy::Call::reject_announcement { .. }))
+			},
+		}
+	}
+	fn is_superset(&self, o: &Self) -> bool {
+		match (self, o) {
+			(x, y) if x == y => true,
+			(ProxyType::Any, _) => true,
+			(_, ProxyType::Any) => false,
+			_ => false,
+		}
+	}
+}
+
 parameter_types! {
 	pub MaxProxies : u32 = 4;
 	pub MaxPending : u32 = 32;
@@ -658,19 +691,34 @@ parameter_types! {
 	pub ProxyPrice: Balance = 0;
 }
 
-impl pallet_proxy::Config for Runtime {
+impl pallet_account_proxy::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
 	type Currency = Assets;
-	type ProxyType = ();
+	type ProxyType = ProxyType;
 	type ProxyDepositBase = ProxyPrice;
 	type ProxyDepositFactor = ProxyPrice;
 	type MaxProxies = MaxProxies;
-	type WeightInfo = ();
+	type WeightInfo = weights::account_proxy::WeightInfo<Runtime>;
 	type MaxPending = MaxPending;
 	type CallHasher = BlakeTwo256;
 	type AnnouncementDepositBase = ProxyPrice;
 	type AnnouncementDepositFactor = ProxyPrice;
+}
+
+parameter_types! {
+	pub const FnftPalletId: PalletId = PalletId(*b"pal_fnft");
+}
+
+impl pallet_fnft::Config for Runtime {
+	type Event = Event;
+	type MaxProperties = ConstU32<16>;
+	type FinancialNftCollectionId = CurrencyId;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
+	type ProxyType = ProxyType;
+	type AccountProxy = Proxy;
+	type ProxyTypeSelector = FnftAccountProxyType;
+	type PalletId = FnftPalletId;
 }
 
 parameter_types! {
@@ -796,6 +844,9 @@ impl pallet_staking_rewards::Config for Runtime {
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
+	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
+	type FinancialNft = Fnft;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -816,7 +867,7 @@ impl call_filter::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxVestingSchedule: u32 = 2;
+	pub const MaxVestingSchedule: u32 = 100;
 	pub MinVestedTransfer: u64 = 10 * CurrencyId::unit::<u64>();
 }
 
@@ -829,6 +880,7 @@ impl vesting::Config for Runtime {
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type VestingScheduleId = u128;
 }
 
 parameter_types! {
@@ -1077,32 +1129,120 @@ impl pallet_ibc_ping::Config for Runtime {
 	type IbcHandler = Ibc;
 }
 
+/// Native <-> Cosmwasm account mapping
+/// TODO(hussein-aitlahcen): Probably nicer to have SS58 representation here.
+pub struct AccountToAddr;
+impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
+	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
+		match a.strip_prefix("0x") {
+			Some(account_id) => Ok(<[u8; 32]>::try_from(hex::decode(account_id).map_err(|_| ())?)
+				.map_err(|_| ())?
+				.into()),
+			_ => Err(()),
+		}
+	}
+}
+impl Convert<AccountId, alloc::string::String> for AccountToAddr {
+	fn convert(a: AccountId) -> alloc::string::String {
+		alloc::format!("0x{}", hex::encode(a))
+	}
+}
+
+/// Native <-> Cosmwasm asset mapping
+pub struct AssetToDenom;
+impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
+	fn convert(currency_id: alloc::string::String) -> Result<CurrencyId, ()> {
+		core::str::FromStr::from_str(&currency_id).map_err(|_| ())
+	}
+}
+impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
+	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
+		alloc::format!("{}", currency_id)
+	}
+}
+
+parameter_types! {
+  pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
+  pub const ChainId: &'static str = "composable-network-dali";
+  pub const MaxFrames: u32 = 64;
+	pub const MaxCodeSize: u32 = 512 * 1024;
+  pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
+  pub const MaxMessageSize: u32 = 256 * 1024;
+  pub const MaxContractLabelSize: u32 = 64;
+  pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
+  pub const MaxInstantiateSaltSize: u32 = 128;
+  pub const MaxFundsAssets: u32 = 32;
+  pub const CodeTableSizeLimit: u32 = 4096;
+  pub const CodeGlobalVariableLimit: u32 = 256;
+  pub const CodeParameterLimit: u32 = 128;
+  pub const CodeBranchTableSizeLimit: u32 = 256;
+  // Not really required as it's embedded.
+  pub const CodeStackLimit: u32 = u32::MAX;
+
+  // TODO: benchmark for proper values
+  pub const CodeStorageByteDeposit: u32 = 1;
+  pub const ContractStorageByteReadPrice: u32 = 1;
+  pub const ContractStorageByteWritePrice: u32 = 1;
+}
+
+impl cosmwasm::Config for Runtime {
+	type Event = Event;
+	type AccountId = AccountId;
+	type PalletId = CosmwasmPalletId;
+	type MaxFrames = MaxFrames;
+	type MaxCodeSize = MaxCodeSize;
+	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
+	type MaxMessageSize = MaxMessageSize;
+	type AccountToAddr = AccountToAddr;
+	type AssetToDenom = AssetToDenom;
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type Assets = Assets;
+	type NativeAsset = Balances;
+	type ChainId = ChainId;
+	type MaxContractLabelSize = MaxContractLabelSize;
+	type MaxContractTrieIdSize = MaxContractTrieIdSize;
+	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
+	type MaxFundsAssets = MaxFundsAssets;
+	type CodeTableSizeLimit = CodeTableSizeLimit;
+	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
+	type CodeParameterLimit = CodeParameterLimit;
+	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
+	type CodeStackLimit = CodeStackLimit;
+	type CodeStorageByteDeposit = CodeStorageByteDeposit;
+	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
+	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
+	type UnixTime = Timestamp;
+	// TODO: proper weights
+	type WeightInfo = ();
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: system::{Pallet, Call, Config, Storage, Event<T>} = 0,
-		Timestamp: timestamp::{Pallet, Call, Storage, Inherent} = 1,
-		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
-		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
-		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
-		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
-		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
-		Identity: identity::{Call, Event<T>, Pallet, Storage} = 7,
-		Multisig: multisig::{Call, Event<T>, Pallet, Storage} = 8,
+		System: system = 0,
+		Timestamp: timestamp = 1,
+		Sudo: sudo = 2,
+		RandomnessCollectiveFlip: randomness_collective_flip = 3,
+		TransactionPayment: transaction_payment = 4,
+		Indices: indices = 5,
+		Balances: balances = 6,
+		Identity: identity = 7,
+		Multisig: multisig = 8,
 
 		// Parachains stuff
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 11,
+		ParachainSystem: cumulus_pallet_parachain_system = 10,
+		ParachainInfo: parachain_info = 11,
 
 		// Collator support. the order of these 5 are important and shall not change.
-		Authorship: authorship::{Pallet, Call, Storage} = 20,
-		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
-		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: aura::{Pallet, Storage, Config<T>} = 23,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
+		Authorship: authorship = 20,
+		CollatorSelection: collator_selection = 21,
+		Session: session = 22,
+		Aura: aura = 23,
+		AuraExt: cumulus_pallet_aura_ext = 24,
 
 		// Runtime Native token Governance utilities
 		Council: collective::<Instance1> = 30,
@@ -1117,7 +1257,7 @@ construct_runtime!(
 		Scheduler: scheduler = 34,
 		Utility: utility = 35,
 		Preimage: preimage = 36,
-		Proxy: pallet_proxy = 37,
+		Proxy: pallet_account_proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
@@ -1127,30 +1267,34 @@ construct_runtime!(
 		XTokens: orml_xtokens = 44,
 		UnknownTokens: orml_unknown_tokens = 45,
 
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 51,
-		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 52,
+		Tokens: orml_tokens = 51,
+		Oracle: oracle = 52,
 		CurrencyFactory: currency_factory = 53,
-		Vault: vault::{Pallet, Call, Storage, Event<T>} = 54,
-		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 55,
-		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 56,
-		Assets: assets::{Pallet, Call, Storage} = 57,
-		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 58,
-		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 59,
-		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 60,
-		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 61,
-		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
-		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
-		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
-		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
-		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
-		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
+		Vault: vault = 54,
+		AssetsRegistry: assets_registry = 55,
+		GovernanceRegistry: governance_registry = 56,
+		Assets: assets = 57,
+		CrowdloanRewards: crowdloan_rewards = 58,
+		Vesting: vesting = 59,
+		BondedFinance: bonded_finance = 60,
+		DutchAuction: dutch_auction = 61,
+		Mosaic: mosaic = 62,
+		Liquidations: liquidations = 63,
+		Lending: lending = 64,
+		Pablo: pablo = 65,
+		DexRouter: dex_router = 66,
+		StakingRewards: pallet_staking_rewards = 67,
+		Fnft: pallet_fnft = 68,
 
-		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 140,
+		CallFilter: call_filter = 140,
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
 		IbcPing: pallet_ibc_ping = 151,
 		Transfer: ibc_transfer = 152,
-		Ibc: pallet_ibc = 153
+		Ibc: pallet_ibc = 153,
+
+	  // Cosmwasm support
+	  Cosmwasm: cosmwasm = 180
 	}
 );
 
@@ -1201,7 +1345,8 @@ mod benches {
 		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
-		[collator_selection, CollatorSelection]
+	// TODO: broken
+		// [collator_selection, CollatorSelection]
 		[indices, Indices]
 		[membership, CouncilMembership]
 		[treasury, Treasury]
@@ -1222,9 +1367,11 @@ mod benches {
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[pallet_staking_rewards, StakingRewards]
+		[pallet_account_proxy, Proxy]
 		[dex_router, DexRouter]
-		[pallet_ibc, Ibc]
-		[ibc_transfer, Transfer]
+	// TODO: Broken
+		// [pallet_ibc, Ibc]
+		// [ibc_transfer, Transfer]
 	);
 }
 
