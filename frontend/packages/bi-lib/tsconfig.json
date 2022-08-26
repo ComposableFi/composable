@@ -35,5 +35,6 @@
       "@project/core": ["./src"],
       "@project/core/*": ["./src/*"]
     }
-  }
+  },
+  "include": ["src"]
 }
