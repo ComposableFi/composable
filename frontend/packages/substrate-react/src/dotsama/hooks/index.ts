@@ -1,3 +1,4 @@
+import { Signer } from '@polkadot/api/types';
 import React from 'react';
 import { DotsamaContext } from '../DotSamaContext';
 import {
@@ -30,3 +31,11 @@ export const useSelectedAccount = (
   const { accounts } = parachainProviders[parachainId];
   return selectedAccount !== -1 ? accounts[selectedAccount] : undefined;
 };
+
+export const useSigner = (): Signer | undefined => {
+  const { signer } = React.useContext(
+    DotsamaContext
+  );
+
+  return signer;
+}

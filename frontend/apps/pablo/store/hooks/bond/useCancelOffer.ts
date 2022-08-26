@@ -7,9 +7,11 @@ import {
   useExecutor,
   useParachainApi,
   useSelectedAccount,
+  useSigner,
 } from "substrate-react";
 
 export function useCancelOffer() {
+  const signer = useSigner();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { enqueueSnackbar } = useSnackbar();
@@ -18,8 +20,7 @@ export function useCancelOffer() {
 
   const cancel = useCallback(
     async (offerId: number) => {
-      if (!parachainApi || !selectedAccount || !executor) return null;
-      const signer = await getSigner(APP_NAME, selectedAccount.address);
+      if (!parachainApi || !signer || !selectedAccount || !executor) return null;
 
       try {
         await executor
@@ -44,7 +45,7 @@ export function useCancelOffer() {
         return null;
       }
     },
-    [parachainApi, executor, selectedAccount, enqueueSnackbar]
+    [parachainApi, signer, executor, selectedAccount, enqueueSnackbar]
   );
 
   return cancel;
