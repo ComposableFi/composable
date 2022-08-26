@@ -12,7 +12,7 @@ pkgs.arion.build {
         subsquid-indexer-gateway = import ./services/subsquid-indexer-gateway.nix;
         subsquid-indexer-status-service = import ./services/subsquid-indexer-status-service.nix;
         subsquid-redis = import ./services/subsquid-redis.nix;
-        # subsquid-processor = import ./services/subsquid-processor.nix { inherit pkgs; inherit packages; };
+        subsquid-processor = import ./services/subsquid-processor.nix { inherit pkgs; inherit packages; };
       };
     })
   ];

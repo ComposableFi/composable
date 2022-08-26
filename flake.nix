@@ -365,7 +365,7 @@
                       mkdir $out
                       mv lib $out/
                     '';
-                    dontNpmPrune = false;
+                    dontNpmPrune = true;
                   };
               in
               (writeShellApplication {
