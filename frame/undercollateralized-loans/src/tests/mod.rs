@@ -6,13 +6,11 @@ use crate::{
 use chrono::{NaiveDate, NaiveTime};
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
-	defi::{CurrencyPair, DeFiComposableConfig},
+	defi::DeFiComposableConfig,
 	oracle,
-	undercollateralized_loans::{LoanInput, MarketInput},
+	undercollateralized_loans::{DelayedPaymentTreatment, LoanInput, MarketInput},
 };
-use frame_support::{
-	assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate,
-};
+use frame_support::{assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate};
 use sp_runtime::Perquintill;
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 pub mod loan;
@@ -33,7 +31,6 @@ pub trait ConfigBound:
 }
 impl ConfigBound for Runtime {}
 
-// HELPERS
 /// Helper to get the price of an asset from the Oracle, in USDT cents.
 pub fn get_price(asset_id: CurrencyId, amount: Balance) -> Balance {
 	<Oracle as oracle::Oracle>::get_price(asset_id, amount).unwrap().price
@@ -68,8 +65,8 @@ where
 	T: ConfigBound,
 {
 	MarketInput {
-	    borrow_asset,	
-        collateral_asset,
+		borrow_asset,
+		collateral_asset,
 		reserved_factor,
 		whitelist,
 		liquidation_strategies: vec![],
@@ -110,7 +107,10 @@ fn create_test_loan_input_config() -> LoanInput<AccountId, Balance, crate::types
 	payment_schedule.insert(parse_timestamp("01-01-2222"), 100);
 	payment_schedule.insert(parse_timestamp("01-02-2222"), 100);
 	payment_schedule.insert(parse_timestamp("01-03-2222"), 100);
-
+	let delayed_payment_treatment = Some(DelayedPaymentTreatment {
+		delayed_payments_shift_in_days: 1,
+		delayed_payments_threshold: 3,
+	});
 	LoanInput {
 		market_account_id,
 		borrower_account_id: *BOB,
@@ -118,7 +118,7 @@ fn create_test_loan_input_config() -> LoanInput<AccountId, Balance, crate::types
 		collateral: 5,
 		payment_schedule,
 		activation_date: parse_timestamp("01-01-2222"),
-		delayed_payment_treatment: None,
+		delayed_payment_treatment,
 	}
 }
 

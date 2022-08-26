@@ -129,7 +129,7 @@ where
 	activation_date: Timestamp,
 	/// If this filed is None, borrower has to face his obligation in time.
 	/// Otherwise borrower has possibility to postpone payment as per structure properties.
-	delayed_payment_treatment: Option<FailedPaymentTreatment>,
+	delayed_payment_treatment: Option<DelayedPaymentTreatment>,
 }
 
 impl<AccountId, AssetId, Balance, Timestamp> LoanConfig<AccountId, AssetId, Balance, Timestamp>
@@ -149,7 +149,7 @@ where
 		collateral: Balance,
 		schedule: BTreeMap<Timestamp, Balance>,
 		activation_date: Timestamp,
-		delayed_payment_treatment: Option<FailedPaymentTreatment>,
+		delayed_payment_treatment: Option<DelayedPaymentTreatment>,
 	) -> Self {
 		Self {
 			account_id,
@@ -302,9 +302,9 @@ where
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub struct MarketInput<AccountId, AssetId, BlockNumber, LiquidationStrategyId> {
 	/// Borrow currency.
-    pub borrow_asset: AssetId, 
-    /// Collateral currency. 
-    pub collateral_asset: AssetId,
+	pub borrow_asset: AssetId,
+	/// Collateral currency.
+	pub collateral_asset: AssetId,
 	/// Reserve factor of market borrow vault.
 	pub reserved_factor: Perquintill,
 	/// List of trusted borrowers
@@ -331,12 +331,12 @@ pub struct LoanInput<AccountId, Balance, Timestamp> {
 	/// Contract should be activated before this date.
 	pub activation_date: Timestamp,
 	/// If this filed is None, borrower has to face his obligation in time.
-	pub delayed_payment_treatment: Option<FailedPaymentTreatment>,
+	pub delayed_payment_treatment: Option<DelayedPaymentTreatment>,
 }
 
 /// Structure contains information regarding failed payment behaviour.
 #[derive(Encode, Decode, TypeInfo, Clone, Eq, PartialEq, RuntimeDebug)]
-pub struct FailedPaymentTreatment {
+pub struct DelayedPaymentTreatment {
 	/// In the case of payment's fail,
 	/// it will be shifted to this amount of days.
 	pub delayed_payments_shift_in_days: i64,

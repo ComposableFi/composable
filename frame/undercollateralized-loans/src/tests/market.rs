@@ -51,18 +51,22 @@ fn test_do_create_market_input_validation() {
 			.try_into_validated::<MarketInputIsValid<Oracle, UndercollateralizedLoans>>());
 
 		// Check validation of assets supporting.
-	    let invalid_borrow_asset = INVALID::instance().id();	
-        let invalid_market_input_configuration =
-			MarketInput { borrow_asset: invalid_borrow_asset, ..valid_market_input_configuration.clone() };
+		let invalid_borrow_asset = INVALID::instance().id();
+		let invalid_market_input_configuration = MarketInput {
+			borrow_asset: invalid_borrow_asset,
+			..valid_market_input_configuration.clone()
+		};
 		assert_err!(
 			invalid_market_input_configuration
 				.clone()
 				.try_into_validated::<MarketInputIsValid<Oracle, UndercollateralizedLoans>>(),
 			"Borrow asset is not supported by oracle."
 		);
-	    let invalid_collateral_asset = INVALID::instance().id();	
-        let invalid_market_input_configuration =
-			MarketInput { collateral_asset: invalid_collateral_asset, ..valid_market_input_configuration.clone() };
+		let invalid_collateral_asset = INVALID::instance().id();
+		let invalid_market_input_configuration = MarketInput {
+			collateral_asset: invalid_collateral_asset,
+			..valid_market_input_configuration.clone()
+		};
 		assert_err!(
 			invalid_market_input_configuration
 				.clone()
@@ -71,10 +75,13 @@ fn test_do_create_market_input_validation() {
 		);
 
 		// Currencies should be different.
-	    let invalid_borrow_asset = USDT::instance().id();	
-        let invalid_collateral_asset = invalid_borrow_asset;
-        let invalid_market_input_configuration =
-			MarketInput { borrow_asset: invalid_borrow_asset, collateral_asset: invalid_collateral_asset, ..valid_market_input_configuration.clone() };
+		let invalid_borrow_asset = USDT::instance().id();
+		let invalid_collateral_asset = invalid_borrow_asset;
+		let invalid_market_input_configuration = MarketInput {
+			borrow_asset: invalid_borrow_asset,
+			collateral_asset: invalid_collateral_asset,
+			..valid_market_input_configuration.clone()
+		};
 		assert_err!(
 			invalid_market_input_configuration
 				.clone()

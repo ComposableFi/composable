@@ -1,9 +1,9 @@
 use super::{
-	create_test_loan, create_test_loan_input_config, create_test_market, parse_timestamp,
+	create_test_loan, create_test_loan_input_config, parse_timestamp,
 	prelude::*,
 };
 use crate::{currency::BTC, validation::LoanInputIsValid};
-use composable_traits::undercollateralized_loans::LoanInput;
+use composable_traits::undercollateralized_loans::{LoanInput, DelayedPaymentTreatment};
 
 #[test]
 fn can_create_loan() {
@@ -99,22 +99,51 @@ fn test_do_create_market_input_validation() {
 				.try_into_validated::<LoanInputIsValid<UndercollateralizedLoans>>(),
 			"Payment schedule exceeded maximum size."
 		);
-        
-        // Check activation date value validation. 
-        // Set first payment date less than activation date. 
-        let activation_date = parse_timestamp("02-03-2222");
-        let first_payment_date = parse_timestamp("01-03-2222");
-        let mut payment_schedule = BTreeMap::new();
-        payment_schedule.insert(first_payment_date, 100);
-        let invalid_loan_input_configuration = LoanInput{payment_schedule, activation_date, ..valid_loan_input_configuration};
+
+		// Check activation date value validation.
+		// Set first payment date less than activation date.
+		let activation_date = parse_timestamp("02-03-2222");
+		let first_payment_date = parse_timestamp("01-03-2222");
+		let mut payment_schedule = BTreeMap::new();
+		payment_schedule.insert(first_payment_date, 100);
+		let invalid_loan_input_configuration =
+			LoanInput { payment_schedule, activation_date, ..valid_loan_input_configuration.clone() };
 		assert_err!(
 			invalid_loan_input_configuration
 				.clone()
 				.try_into_validated::<LoanInputIsValid<UndercollateralizedLoans>>(),
 			"Contract first date payment is less than activation date."
 		);
-
-	});
+       
+        // Check validation of delayed payment treatment input. 
+        let invalid_delayed_payment_treatement = Some(DelayedPaymentTreatment{ delayed_payments_shift_in_days: 1, delayed_payments_threshold: 0 }); 
+		let invalid_loan_input_configuration =
+			LoanInput { delayed_payment_treatment: invalid_delayed_payment_treatement, ..valid_loan_input_configuration.clone() };
+		assert_err!(
+			invalid_loan_input_configuration
+				.clone()
+				.try_into_validated::<LoanInputIsValid<UndercollateralizedLoans>>(),
+				"Delayed payments threshold equals zero."
+		);
+        let invalid_delayed_payment_treatement = Some(DelayedPaymentTreatment{ delayed_payments_shift_in_days: 0, delayed_payments_threshold: 3 }); 
+		let invalid_loan_input_configuration =
+			LoanInput { delayed_payment_treatment: invalid_delayed_payment_treatement, ..valid_loan_input_configuration.clone() };
+		assert_err!(
+			invalid_loan_input_configuration
+				.clone()
+				.try_into_validated::<LoanInputIsValid<UndercollateralizedLoans>>(),
+				"Delayed payments shift equals zero."
+		);
+        let invalid_delayed_payment_treatement = Some(DelayedPaymentTreatment{ delayed_payments_shift_in_days: <MaxDateShiftingInDays as Get<i64>>::get() + 1, delayed_payments_threshold: 3}); 
+		let invalid_loan_input_configuration =
+			LoanInput { delayed_payment_treatment: invalid_delayed_payment_treatement, ..valid_loan_input_configuration.clone() };
+		assert_err!(
+			invalid_loan_input_configuration
+				.clone()
+				.try_into_validated::<LoanInputIsValid<UndercollateralizedLoans>>(),
+				"Maximum date shifting exceeded."
+		);
+});
 }
 
 #[test]
