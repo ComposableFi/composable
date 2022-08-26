@@ -1,5 +1,4 @@
-{pkgs, packages, ...}:
-{
+{ pkgs, packages, ... }: {
   image.contents = [ pkgs.bash pkgs.coreutils packages.devnet-dali ];
   service.useHostStore = true;
   service.command = [

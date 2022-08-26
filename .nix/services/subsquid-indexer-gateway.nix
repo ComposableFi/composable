@@ -11,8 +11,7 @@
       DB_USER = "postgres";
       DB_PASS = "postgres";
       DB_PORT = 5432;
-      HYDRA_INDEXER_STATUS_SERVICE =
-        "http://localhost:8081/status";
+      HYDRA_INDEXER_STATUS_SERVICE = "http://localhost:8081/status";
     };
   };
 }

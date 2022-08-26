@@ -1,5 +1,4 @@
-{pkgs, packages, ...}:
-{
+{ pkgs, packages, ... }: {
   image.contents = [ pkgs.bash pkgs.python3 pkgs.coreutils ];
   service = {
     restart = "always";
