@@ -8,6 +8,8 @@ export type AccountType = 'secp256k1' | '*25519';
 
 export type SubstrateChainApiStatus = 'initializing' | 'failed' | 'connected';
 
+export type SupportedWalletId = "talisman" | "polkadot-js";
+
 export type DotSamaExtensionStatus =
   | 'initializing'
   | 'connecting'
@@ -38,7 +40,7 @@ export interface DotSamaContext {
   parachainProviders: { [chainId in ParachainId]: ParachainApi };
   relaychainProviders: { [chainId in RelayChainId]: RelaychainApi };
   extensionStatus: DotSamaExtensionStatus;
-  activate?: (walletId: "talisman" | "polkadot-js") => Promise<any | undefined>;
+  activate?: (walletId?: SupportedWalletId) => Promise<any | undefined>;
   deactivate?: () => Promise<void>;
   selectedAccount: number;
   setSelectedAccount?: (account: number) => void;

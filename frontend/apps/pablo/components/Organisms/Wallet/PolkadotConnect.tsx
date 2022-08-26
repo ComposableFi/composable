@@ -14,9 +14,22 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import useStore from "@/store/useStore";
-import { useDotSamaContext, useParachainApi } from "substrate-react";
+import { useDotSamaContext, useParachainApi, SupportedWalletId } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useAssetsWithBalance } from "@/defi/hooks";
+
+const WALLETS_SUPPORTED: Array<{ walletId: SupportedWalletId, icon: string, name: string }> = [
+  {
+    walletId: "polkadot-js",
+    icon: "/networks/polkadot_js.svg",
+    name: "Polkadot.js"
+  },
+  {
+    walletId: "talisman",
+    icon: "/networks/polkadot_js.svg",
+    name: "Talisman"
+  },
+];
 
 const Status = () => {
   const theme = useTheme();
@@ -93,8 +106,8 @@ export const PolkadotConnect: React.FC<{}> = () => {
   const { ui: { isPolkadotModalOpen }, closePolkadotModal } = useStore();
   const { extensionStatus, activate } = useDotSamaContext();
 
-  const handleConnectPolkadot = async () => {
-    if (activate) await activate();
+  const handleConnectPolkadot = async (walletId: SupportedWalletId) => {
+    if (activate) await activate(walletId);
   };
 
   return (
@@ -135,26 +148,32 @@ export const PolkadotConnect: React.FC<{}> = () => {
               >
                 Select a wallet to connect with.
               </Typography>
-              <Button
-                sx={{
-                  mt: "4rem",
-                }}
-                variant="outlined"
-                color="primary"
-                size="large"
-                fullWidth
-                onClick={() => handleConnectPolkadot()}
-              >
-                <Box sx={{ marginRight: theme.spacing(2) }}>
-                  <Image
-                    src="/networks/polkadot_js.svg"
-                    width="24"
-                    height="24"
-                    alt="Polkadot.js"
-                  />
-                </Box>
-                <Typography variant="button">Polkadot.js</Typography>
-              </Button>
+              {
+                WALLETS_SUPPORTED.map(({ name, walletId, icon }) => {
+                  return (
+                    <Button
+                    sx={{
+                      mt: "4rem",
+                    }}
+                    variant="outlined"
+                    color="primary"
+                    size="large"
+                    fullWidth
+                    onClick={() => handleConnectPolkadot(walletId)}
+                  >
+                    <Box sx={{ marginRight: theme.spacing(2) }}>
+                      <Image
+                        src={icon}
+                        width="24"
+                        height="24"
+                        alt={walletId}
+                      />
+                    </Box>
+                    <Typography variant="button">{name}</Typography>
+                  </Button>
+                  )
+                })
+              }
             </>
           )}
 

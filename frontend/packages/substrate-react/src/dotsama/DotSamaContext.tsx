@@ -8,6 +8,7 @@ import {
   ParachainId,
   RelaychainApi,
   RelayChainId,
+  SupportedWalletId,
 } from './types';
 import { ParachainNetworks, RelayChainNetworks } from './Networks';
 import type { InjectedExtension, InjectedAccount, InjectedAccountWithMeta } from '@polkadot/extension-inject/types';
@@ -62,6 +63,7 @@ const RELAYCHAIN_PROVIDERS_DEFAULT: {
   }, {} as { [chainId in RelayChainId]: RelaychainApi });
 
 export const DotsamaContext = createContext<DotSamaContext>({
+  signer: undefined,
   parachainProviders: PARACHAIN_PROVIDERS_DEFAULT,
   relaychainProviders: RELAYCHAIN_PROVIDERS_DEFAULT,
   extensionStatus: 'initializing',
@@ -92,7 +94,7 @@ export const DotSamaContextProvider = ({
 
   const [extensionInjected, setInjectedExtension] = useState<InjectedExtension | undefined>(undefined);
 
-  const activate = async (walletId: "talisman" | "polkadot-js" = "talisman"): Promise<any | undefined> => {
+  const activate = async (walletId: SupportedWalletId = "polkadot-js"): Promise<any | undefined> => {
     setExtension(s => {
       s.extensionStatus = 'connecting';
       return s;
@@ -101,9 +103,9 @@ export const DotSamaContextProvider = ({
     let extensionExists = true;
     let injectedExtesion;
     try {
-      if (!(window as any).injectedWeb3) throw new Error('Extension not installed.');
+      if (!window.injectedWeb3) throw new Error('Extension not installed.');
       
-      let extension = (window as any).injectedWeb3[walletId];
+      let extension = window.injectedWeb3[walletId];
       if (!extension) throw new Error('Extension not installed.');
 
       injectedExtesion = await extension.enable(appName) as InjectedExtension;
