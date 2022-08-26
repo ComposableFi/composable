@@ -1,10 +1,10 @@
-name: "Build composable-sandbox Docker image"
+name: "lease-period-prolongator Docker image"
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - lease-period-prolongator
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
@@ -43,7 +43,7 @@ jobs:
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
 
     - name: Build Docker image
-      run: make containerize-composable-sandbox
+      run: make containerize-lease-period-prolongator
 
-    - name: Push Docker image
-      run: make push-composable-sandbox
+    - name:  Docker push
+      run: make push-lease-period-prolongator
