@@ -533,14 +533,14 @@ fn claim_works() {
 			MockCurrencyId::BTC,
 			VestingScheduleIdSet::One(4_u128)
 		));
-		let amount_claimed_per_schedule: BoundedBTreeMap<_, _, MaxVestingSchedule> =
+		let claimed_amount_per_schedule: BoundedBTreeMap<_, _, MaxVestingSchedule> =
 			[(4_u128, 10)].into_iter().try_collect().unwrap();
 		System::assert_last_event(Event::Vesting(crate::Event::Claimed {
 			who: BOB,
 			asset: MockCurrencyId::BTC,
 			locked_amount: 10,
 			vesting_schedule_ids: VestingScheduleIdSet::One(4_u128),
-			amount_claimed_per_schedule,
+			claimed_amount_per_schedule,
 		}));
 
 		assert!(VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));
@@ -556,7 +556,7 @@ fn claim_works() {
 			VestingScheduleIdSet::All
 		));
 
-		let amount_claimed_per_schedule: BoundedBTreeMap<_, _, MaxVestingSchedule> =
+		let claimed_amount_per_schedule: BoundedBTreeMap<_, _, MaxVestingSchedule> =
 			[(4_u128, 10)].into_iter().try_collect().unwrap();
 
 		System::assert_last_event(Event::Vesting(crate::Event::Claimed {
@@ -564,7 +564,7 @@ fn claim_works() {
 			asset: MockCurrencyId::BTC,
 			locked_amount: 0,
 			vesting_schedule_ids: VestingScheduleIdSet::All,
-			amount_claimed_per_schedule,
+			claimed_amount_per_schedule,
 		}));
 
 		assert!(!VestingSchedules::<Runtime>::contains_key(BOB, MockCurrencyId::BTC));

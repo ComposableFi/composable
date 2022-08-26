@@ -198,7 +198,7 @@ pub mod module {
 			vesting_schedule_ids:
 				VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 			locked_amount: BalanceOf<T>,
-			amount_claimed_per_schedule:
+			claimed_amount_per_schedule:
 				BoundedBTreeMap<T::VestingScheduleId, BalanceOf<T>, T::MaxVestingSchedules>,
 		},
 		/// Updated vesting schedules.
@@ -459,7 +459,7 @@ impl<T: Config> Pallet<T> {
 		vesting_schedule_ids: VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 	) -> Result<(), DispatchError> {
 		let current_locked_amount = Self::unclaimed_balance(who, asset, VestingScheduleIdSet::All)?;
-		let (balance_to_claim, amount_claimed_per_schedule) =
+		let (balance_to_claim, claimed_amount_per_schedule) =
 			Self::unlocked_claimable_balance(who, asset, vesting_schedule_ids.clone())?;
 
 		let new_locked_amount = current_locked_amount.safe_sub(&balance_to_claim)?;
@@ -477,7 +477,7 @@ impl<T: Config> Pallet<T> {
 			asset,
 			locked_amount: new_locked_amount,
 			vesting_schedule_ids,
-			amount_claimed_per_schedule,
+			claimed_amount_per_schedule,
 		});
 
 		Ok(())
