@@ -198,7 +198,6 @@ pub mod module {
 			vesting_schedule_ids:
 				VestingScheduleIdSet<T::VestingScheduleId, T::MaxVestingSchedules>,
 			locked_amount: BalanceOf<T>,
-			claimed_amount: BalanceOf<T>,
 			amount_claimed_per_schedule:
 				BoundedBTreeMap<T::VestingScheduleId, BalanceOf<T>, T::MaxVestingSchedules>,
 		},
@@ -477,7 +476,6 @@ impl<T: Config> Pallet<T> {
 			who: who.clone(),
 			asset,
 			locked_amount: new_locked_amount,
-			claimed_amount: balance_to_claim,
 			vesting_schedule_ids,
 			amount_claimed_per_schedule,
 		});
@@ -569,7 +567,7 @@ impl<T: Config> Pallet<T> {
 		(BalanceOf<T>, BoundedBTreeMap<T::VestingScheduleId, BalanceOf<T>, T::MaxVestingSchedules>),
 		DispatchError,
 	> {
-		let mut amount_claimed: BoundedBTreeMap<
+		let mut claims_per_schedule: BoundedBTreeMap<
 			T::VestingScheduleId,
 			BalanceOf<T>,
 			T::MaxVestingSchedules,
@@ -607,7 +605,7 @@ impl<T: Config> Pallet<T> {
 							total_balance_to_claim =
 								total_balance_to_claim.safe_add(&available_amount)?;
 
-							amount_claimed
+							claims_per_schedule
 								.try_insert(*id_to_claim, available_amount)
 								.expect("Max vesting schedules exceeded");
 
@@ -620,7 +618,7 @@ impl<T: Config> Pallet<T> {
 						})
 						.collect::<Result<Vec<_>, DispatchError>>()?;
 
-					Ok((total_balance_to_claim, amount_claimed))
+					Ok((total_balance_to_claim, claims_per_schedule))
 				},
 				None => Err(Error::<T>::VestingScheduleNotFound.into()),
 			}

@@ -539,7 +539,6 @@ fn claim_works() {
 			who: BOB,
 			asset: MockCurrencyId::BTC,
 			locked_amount: 10,
-			claimed_amount: 10,
 			vesting_schedule_ids: VestingScheduleIdSet::One(4_u128),
 			amount_claimed_per_schedule,
 		}));
@@ -564,7 +563,6 @@ fn claim_works() {
 			who: BOB,
 			asset: MockCurrencyId::BTC,
 			locked_amount: 0,
-			claimed_amount: 10,
 			vesting_schedule_ids: VestingScheduleIdSet::All,
 			amount_claimed_per_schedule,
 		}));
