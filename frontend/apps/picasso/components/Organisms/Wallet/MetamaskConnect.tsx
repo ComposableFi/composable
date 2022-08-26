@@ -5,7 +5,7 @@ import { Modal } from "../../Molecules/Modal";
 
 import { useStore } from "@/stores/root";
 import { useTheme, Box, Button, Typography } from "@mui/material";
-import { useBlockchainProvider, useConnector } from "@integrations-lib/core";
+import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 
 import { Input } from "@/components";
 import { FC } from "react";
@@ -13,7 +13,7 @@ const DEFAULT_EVM_ID = 1;
 
 const Status = () => {
   const { openMetamaskModal } = useStore(({ ui }) => ui);
-  const { isActive } = useConnector("metamask");
+  const { isActive } = useConnector(ConnectorType.MetaMask);
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const address = account
     ? account.slice(0, 6) + "..." + account.slice(-4)
@@ -57,7 +57,7 @@ const Status = () => {
 export const MetamaskConnect: FC<{}> = () => {
   const { closeMetamaskModal, connectMetamaskWallet, isMetamaskModalOpen } =
     useStore(({ metamask, ui }) => ({ ...metamask, ...ui }));
-  const { isActive, activate, deactivate } = useConnector("metamask");
+  const { isActive, activate, deactivate } = useConnector(ConnectorType.MetaMask);
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const address = account
     ? account.slice(0, 6) + "..." + account.slice(-4)
