@@ -5,11 +5,11 @@
 // this is required to allow for ambient/previous definitions
 import '@polkadot/api-base/types/consts';
 
-import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, PalletCosmwasmInstrumentCostRules, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@composable/types/interfaces/crowdloanRewards';
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
 import type { Bytes, Option, Text, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
 import type { AccountId32, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
@@ -17,16 +17,6 @@ declare module '@polkadot/api-base/types/consts' {
   interface AugmentedConsts<ApiType extends ApiTypes> {
     assets: {
       nativeAssetId: u128 & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    assetTxPayment: {
-      /**
-       * where to allow configuring default asset per user
-       **/
-      useUserConfiguration: bool & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -126,7 +116,7 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       contractStorageByteReadPrice: u32 & AugmentedConst<ApiType>;
       /**
-       * Price of writing a byte in the storage.
+       * Price of writting a byte in the storage.
        **/
       contractStorageByteWritePrice: u32 & AugmentedConst<ApiType>;
       /**
@@ -165,7 +155,6 @@ declare module '@polkadot/api-base/types/consts' {
        * Pallet unique ID.
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      wasmCostRules: PalletCosmwasmInstrumentCostRules & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -181,23 +170,11 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       initialPayment: Perbill & AugmentedConst<ApiType>;
       /**
-       * If claimed amounts should be locked by the pallet
-       **/
-      lockByDefault: bool & AugmentedConst<ApiType>;
-      /**
-       * The unique identifier for locks maintained by this pallet.
-       **/
-      lockId: U8aFixed & AugmentedConst<ApiType>;
-      /**
-       * The percentage of excess funds required to trigger the `OverFunded` event.
-       **/
-      overFundedThreshold: Perbill & AugmentedConst<ApiType>;
-      /**
        * The unique identifier of this pallet.
        **/
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
-       * The arbitrary prefix used for the proof.
+       * The arbitrary prefix used for the proof
        **/
       prefix: Bytes & AugmentedConst<ApiType>;
       /**
@@ -290,7 +267,7 @@ declare module '@polkadot/api-base/types/consts' {
     dutchAuction: {
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
-       * ED taken to create position. Part of if returned when position is liquidated.
+       * ED taken to create position. Part of if returned when position is liqudated.
        **/
       positionExistentialDeposit: u128 & AugmentedConst<ApiType>;
       /**
@@ -300,6 +277,16 @@ declare module '@polkadot/api-base/types/consts' {
     };
     fnft: {
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    ibc: {
+      /**
+       * Expected blocktime
+       **/
+      expectedBlockTime: u64 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -443,16 +430,24 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     pablo: {
+      /**
+       * Maximum initial weight.
+       **/
+      lbpMaxInitialWeight: Permill & AugmentedConst<ApiType>;
+      /**
+       * Maximum duration for a sale.
+       **/
+      lbpMaxSaleDuration: u32 & AugmentedConst<ApiType>;
+      /**
+       * Minimum final weight.
+       **/
+      lbpMinFinalWeight: Permill & AugmentedConst<ApiType>;
+      /**
+       * Minimum duration for a sale.
+       **/
+      lbpMinSaleDuration: u32 & AugmentedConst<ApiType>;
       msPerBlock: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the PBLO asset
-       **/
-      pbloAssetId: u128 & AugmentedConst<ApiType>;
-      /**
-       * AssetId of the PICA asset
-       **/
-      picaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * The interval between TWAP computations.
        **/
@@ -522,7 +517,6 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     stakingRewards: {
-      lockId: U8aFixed & AugmentedConst<ApiType>;
       /**
        * Maximum number of reward configurations per pool.
        **/
@@ -532,17 +526,10 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       maxStakingDurationPresets: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      pbloAssetId: u128 & AugmentedConst<ApiType>;
-      pbloStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
-      picaAssetId: u128 & AugmentedConst<ApiType>;
-      picaStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
       /**
        * the size of batch to take each time trying to release rewards
        **/
       releaseRewardsPoolsBatchSize: u8 & AugmentedConst<ApiType>;
-      treasuryAccount: AccountId32 & AugmentedConst<ApiType>;
-      xPbloAssetId: u128 & AugmentedConst<ApiType>;
-      xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -631,6 +618,13 @@ declare module '@polkadot/api-base/types/consts' {
        * transactions.
        **/
       operationalFeeMultiplier: u8 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    transfer: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

@@ -6,12 +6,12 @@
 import '@polkadot/types/types/registry';
 
 import type { Asset } from '@composable/types/interfaces/assets';
+import type { ComposableTraitsBondedFinanceBondDuration, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsBondedFinanceBondOfferReward } from '@composable/types/interfaces/bondedFinance';
 import type { AssetsBalance, ComposableTraitsDefiCurrencyPairCurrencyId, ComposableTraitsDefiSellCurrencyId, ComposableTraitsXcmCumulusMethodId, ComposableTraitsXcmXcmSellRequest, CurrencyId, CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from '@composable/types/interfaces/common';
-import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyDefinition, ComposableTraitsAccountProxyProxyType, ComposableTraitsAssetsBasicAssetMetadata, ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsAuctionAuctionStepFunction, ComposableTraitsBondedFinanceBondDuration, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsBondedFinanceBondOfferReward, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsCurrencyRational64, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsDexAssetAmount, ComposableTraitsDexConstantProductPoolInfo, ComposableTraitsDexDexRoute, ComposableTraitsDexStableSwapPoolInfo, ComposableTraitsGovernanceSignedRawOrigin, ComposableTraitsLendingCreateInput, ComposableTraitsLendingMarketConfig, ComposableTraitsLendingRepayStrategy, ComposableTraitsLendingUpdateInput, ComposableTraitsOraclePrice, ComposableTraitsOracleRewardTracker, ComposableTraitsStakingRewardPool, ComposableTraitsStakingRewardPoolConfiguration, ComposableTraitsStakingRewardUpdate, ComposableTraitsStakingStake, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsXcmAssetsForeignMetadata, ComposableTraitsXcmAssetsXcmAssetLocation, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueInboundStatus, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueOutboundStatus, CumulusPalletXcmpQueueQueueConfigData, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportPalletId, FrameSupportScheduleLookupError, FrameSupportScheduleMaybeHashed, FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchInfo, FrameSupportWeightsPerDispatchClassU64, FrameSupportWeightsRuntimeDbWeight, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, FrameSystemPhase, IbcTraitOpenChannelParams, IbcTransferPalletParams, IbcTransferTransferParams, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensReserveData, PalletAccountProxyAnnouncement, PalletAssetsRegistryCandidateStatus, PalletAssetsRegistryForeignMetadata, PalletAuthorshipUncleEntryItem, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesReleases, PalletBalancesReserveData, PalletCollatorSelectionCandidateInfo, PalletCollectiveVotes, PalletCosmwasmCodeIdentifier, PalletCosmwasmCodeInfo, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCosmwasmInstrumentCostRules, PalletCrowdloanRewardsModelsEcdsaSignature, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletCrowdloanRewardsModelsReward, PalletCrowdloanRewardsReward, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletDutchAuctionSellOrder, PalletDutchAuctionTakeOrder, PalletIbcAny, PalletIbcConnectionParams, PalletIbcErrorsIbcError, PalletIbcEventsIbcEvent, PalletIbcIbcConsensusState, PalletIbcPingSendPingParams, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletLiquidationsLiquidationStrategyConfiguration, PalletLiquidityBootstrappingPool, PalletMosaicAmmSwapInfo, PalletMosaicAssetInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMosaicRelayerStaleRelayer, PalletMultisigMultisig, PalletMultisigTimepoint, PalletOracleAssetInfo, PalletOraclePrePrice, PalletOraclePrice, PalletOracleWithdraw, PalletSchedulerReleases, PalletSchedulerScheduledV2, PalletSchedulerScheduledV3, PalletStakingRewardsRewardAccumulationHookError, PalletTransactionPaymentReleases, PalletTreasuryProposal, PalletVaultModelsStrategyOverview, PalletVaultModelsVaultInfo, PalletXcmQueryStatus, PalletXcmVersionMigrationStage, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotParachainPrimitivesXcmpMessageFormat, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpConsensusAuraSr25519AppSr25519Public, SpCoreCryptoKeyTypeId, SpRuntimeDigest, SpRuntimeDispatchError, SpRuntimeHeader, SpTrieStorageProof, SpVersionRuntimeVersion, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2WeightLimit, XcmV2Xcm, XcmVersionedMultiAsset, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@composable/types/interfaces/crowdloanRewards';
+import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsAccountProxyProxyDefinition, ComposableTraitsAccountProxyProxyType, ComposableTraitsAssetsBasicAssetMetadata, ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsAuctionAuctionStepFunction, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsDexConsantProductPoolInfo, ComposableTraitsDexConstantProductPoolInfo, ComposableTraitsDexDexRoute, ComposableTraitsDexStableSwapPoolInfo, ComposableTraitsGovernanceSignedRawOrigin, ComposableTraitsLendingCreateInput, ComposableTraitsLendingMarketConfig, ComposableTraitsLendingRepayStrategy, ComposableTraitsLendingUpdateInput, ComposableTraitsOraclePrice, ComposableTraitsOracleRewardTracker, ComposableTraitsStakingRewardPool, ComposableTraitsStakingRewardPoolConfiguration, ComposableTraitsStakingRewardUpdate, ComposableTraitsStakingStake, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet, ComposableTraitsVestingVestingScheduleInfo, ComposableTraitsXcmAssetsForeignMetadata, ComposableTraitsXcmAssetsXcmAssetLocation, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueInboundStatus, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueOutboundStatus, CumulusPalletXcmpQueueQueueConfigData, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportScheduleLookupError, FrameSupportScheduleMaybeHashed, FrameSystemAccountInfo, IbcTraitOpenChannelParams, IbcTransferPalletParams, IbcTransferTransferParams, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensReserveData, PalletAccountProxyAnnouncement, PalletAssetsRegistryCandidateStatus, PalletAssetsRegistryForeignMetadata, PalletCollatorSelectionCandidateInfo, PalletCosmwasmCodeInfo, PalletCosmwasmContractInfo, PalletCosmwasmEntryPoint, PalletCrowdloanRewardsModelsEcdsaSignature, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletCrowdloanRewardsModelsReward, PalletCrowdloanRewardsReward, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletDutchAuctionSellOrder, PalletDutchAuctionTakeOrder, PalletIbcAny, PalletIbcConnectionParams, PalletIbcErrorsIbcError, PalletIbcEventsIbcEvent, PalletIbcIbcConsensusState, PalletIbcPingSendPingParams, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletLiquidationsLiquidationStrategyConfiguration, PalletLiquidityBootstrappingPool, PalletMosaicAmmSwapInfo, PalletMosaicAssetInfo, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, PalletMosaicRelayerStaleRelayer, PalletOracleAssetInfo, PalletOraclePrePrice, PalletOraclePrice, PalletOracleWithdraw, PalletSchedulerReleases, PalletSchedulerScheduledV2, PalletSchedulerScheduledV3, PalletStakingRewardsRewardAccumulationHookError, PalletTreasuryProposal, PalletVaultModelsStrategyOverview, PalletVaultModelsVaultInfo, PolkadotParachainPrimitivesXcmpMessageFormat, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpConsensusAuraSr25519AppSr25519Public, SpTrieStorageProof, XcmVersionedMultiAsset } from '@composable/types/interfaces/crowdloanRewards';
 import type { PalletCurrencyFactoryRanges, PalletCurrencyFactoryRangesRange } from '@composable/types/interfaces/currencyFactory';
 import type { PalletDemocracyPreimageStatus, PalletDemocracyReferendumInfo, PalletDemocracyReleases, PalletDemocracyVoteThreshold, PalletDemocracyVoteVoting, PalletPreimageRequestStatus } from '@composable/types/interfaces/democracy';
 import type { ComposableTraitsDexFee, ComposableTraitsDexStakingRewardPool, PalletPabloPoolConfiguration, PalletPabloPoolId, PalletPabloPoolInitConfiguration, PalletPabloPriceAggregate, PalletPabloPriceCumulative, PalletPabloTimeWeightedAveragePrice } from '@composable/types/interfaces/pablo';
-import type { ComposableTraitsVestingVestingSchedule, ComposableTraitsVestingVestingScheduleIdSet, ComposableTraitsVestingVestingScheduleInfo, VestingWindow } from '@composable/types/interfaces/vesting';
 import type { Data, StorageKey } from '@polkadot/types';
 import type { BitVec, Bool, Bytes, F32, F64, I128, I16, I256, I32, I64, I8, Json, Null, OptionBool, Raw, Text, Type, U128, U16, U256, U32, U64, U8, USize, bool, f32, f64, i128, i16, i256, i32, i64, i8, u128, u16, u256, u32, u64, u8, usize } from '@polkadot/types-codec';
 import type { BlockAttestations, IncludedBlocks, MoreAttestations } from '@polkadot/types/interfaces/attestations';
@@ -30,7 +30,7 @@ import type { StatementKind } from '@polkadot/types/interfaces/claims';
 import type { CollectiveOrigin, MemberCount, ProposalIndex, Votes, VotesTo230 } from '@polkadot/types/interfaces/collective';
 import type { AuthorityId, RawVRFOutput } from '@polkadot/types/interfaces/consensus';
 import type { AliveContractInfo, CodeHash, CodeSource, CodeUploadRequest, CodeUploadResult, CodeUploadResultValue, ContractCallFlags, ContractCallRequest, ContractExecResult, ContractExecResultOk, ContractExecResultResult, ContractExecResultSuccessTo255, ContractExecResultSuccessTo260, ContractExecResultTo255, ContractExecResultTo260, ContractExecResultTo267, ContractInfo, ContractInstantiateResult, ContractInstantiateResultTo267, ContractInstantiateResultTo299, ContractReturnFlags, ContractStorageKey, DeletedContract, ExecReturnValue, Gas, HostFnWeights, HostFnWeightsTo264, InstantiateRequest, InstantiateRequestV1, InstantiateRequestV2, InstantiateReturnValue, InstantiateReturnValueOk, InstantiateReturnValueTo267, InstructionWeights, Limits, LimitsTo264, PrefabWasmModule, RentProjection, Schedule, ScheduleTo212, ScheduleTo258, ScheduleTo264, SeedOf, StorageDeposit, TombstoneContractInfo, TrieId } from '@polkadot/types/interfaces/contracts';
-import type { ContractConstructorSpecLatest, ContractConstructorSpecV0, ContractConstructorSpecV1, ContractConstructorSpecV2, ContractConstructorSpecV3, ContractContractSpecV0, ContractContractSpecV1, ContractContractSpecV2, ContractContractSpecV3, ContractContractSpecV4, ContractCryptoHasher, ContractDiscriminant, ContractDisplayName, ContractEventParamSpecLatest, ContractEventParamSpecV0, ContractEventParamSpecV2, ContractEventSpecLatest, ContractEventSpecV0, ContractEventSpecV1, ContractEventSpecV2, ContractLayoutArray, ContractLayoutCell, ContractLayoutEnum, ContractLayoutHash, ContractLayoutHashingStrategy, ContractLayoutKey, ContractLayoutStruct, ContractLayoutStructField, ContractMessageParamSpecLatest, ContractMessageParamSpecV0, ContractMessageParamSpecV2, ContractMessageSpecLatest, ContractMessageSpecV0, ContractMessageSpecV1, ContractMessageSpecV2, ContractMetadata, ContractMetadataLatest, ContractMetadataV0, ContractMetadataV1, ContractMetadataV2, ContractMetadataV3, ContractMetadataV4, ContractProject, ContractProjectContract, ContractProjectInfo, ContractProjectSource, ContractProjectV0, ContractSelector, ContractStorageLayout, ContractTypeSpec } from '@polkadot/types/interfaces/contractsAbi';
+import type { ContractConstructorSpecLatest, ContractConstructorSpecV0, ContractConstructorSpecV1, ContractConstructorSpecV2, ContractConstructorSpecV3, ContractContractSpecV0, ContractContractSpecV1, ContractContractSpecV2, ContractContractSpecV3, ContractCryptoHasher, ContractDiscriminant, ContractDisplayName, ContractEventParamSpecLatest, ContractEventParamSpecV0, ContractEventParamSpecV2, ContractEventSpecLatest, ContractEventSpecV0, ContractEventSpecV1, ContractEventSpecV2, ContractLayoutArray, ContractLayoutCell, ContractLayoutEnum, ContractLayoutHash, ContractLayoutHashingStrategy, ContractLayoutKey, ContractLayoutStruct, ContractLayoutStructField, ContractMessageParamSpecLatest, ContractMessageParamSpecV0, ContractMessageParamSpecV2, ContractMessageSpecLatest, ContractMessageSpecV0, ContractMessageSpecV1, ContractMessageSpecV2, ContractMetadata, ContractMetadataLatest, ContractMetadataV0, ContractMetadataV1, ContractMetadataV2, ContractMetadataV3, ContractProject, ContractProjectContract, ContractProjectInfo, ContractProjectSource, ContractProjectV0, ContractSelector, ContractStorageLayout, ContractTypeSpec } from '@polkadot/types/interfaces/contractsAbi';
 import type { FundIndex, FundInfo, LastContribution, TrieIndex } from '@polkadot/types/interfaces/crowdloan';
 import type { CollationInfo, CollationInfoV1, ConfigData, MessageId, OverweightIndex, PageCounter, PageIndexData } from '@polkadot/types/interfaces/cumulus';
 import type { BlockStats } from '@polkadot/types/interfaces/dev';
@@ -57,7 +57,7 @@ import type { ProxyAnnouncement, ProxyDefinition, ProxyType } from '@polkadot/ty
 import type { AccountStatus, AccountValidity } from '@polkadot/types/interfaces/purchase';
 import type { ActiveRecovery, RecoveryConfig } from '@polkadot/types/interfaces/recovery';
 import type { RpcMethods } from '@polkadot/types/interfaces/rpc';
-import type { AccountId, AccountId20, AccountId32, AccountId33, AccountIdOf, AccountIndex, Address, AssetId, Balance, BalanceOf, Block, BlockNumber, BlockNumberFor, BlockNumberOf, Call, CallHash, CallHashOf, ChangesTrieConfiguration, ChangesTrieSignal, CodecHash, Consensus, ConsensusEngineId, CrateVersion, Digest, DigestItem, EncodedJustification, ExtrinsicsWeight, Fixed128, Fixed64, FixedI128, FixedI64, FixedU128, FixedU64, H1024, H128, H160, H2048, H256, H32, H512, H64, Hash, Header, HeaderPartial, I32F32, Index, IndicesLookupSource, Justification, Justifications, KeyTypeId, KeyValue, LockIdentifier, LookupSource, LookupTarget, ModuleId, Moment, MultiAddress, MultiSigner, OpaqueCall, Origin, OriginCaller, PalletId, PalletVersion, PalletsOrigin, Pays, PerU16, Perbill, Percent, Permill, Perquintill, Phantom, PhantomData, PreRuntime, Releases, RuntimeDbWeight, Seal, SealV0, SignedBlock, SignedBlockWithJustification, SignedBlockWithJustifications, Slot, SlotDuration, StorageData, StorageInfo, StorageProof, TransactionInfo, TransactionLongevity, TransactionPriority, TransactionStorageProof, TransactionTag, U32F32, ValidatorId, ValidatorIdOf, Weight, WeightMultiplier, WeightV1, WeightV2 } from '@polkadot/types/interfaces/runtime';
+import type { AccountId, AccountId20, AccountId32, AccountIdOf, AccountIndex, Address, AssetId, Balance, BalanceOf, Block, BlockNumber, BlockNumberFor, BlockNumberOf, Call, CallHash, CallHashOf, ChangesTrieConfiguration, ChangesTrieSignal, CodecHash, Consensus, ConsensusEngineId, CrateVersion, Digest, DigestItem, EncodedJustification, ExtrinsicsWeight, Fixed128, Fixed64, FixedI128, FixedI64, FixedU128, FixedU64, H1024, H128, H160, H2048, H256, H32, H512, H64, Hash, Header, HeaderPartial, I32F32, Index, IndicesLookupSource, Justification, Justifications, KeyTypeId, KeyValue, LockIdentifier, LookupSource, LookupTarget, ModuleId, Moment, MultiAddress, MultiSigner, OpaqueCall, Origin, OriginCaller, PalletId, PalletVersion, PalletsOrigin, Pays, PerU16, Perbill, Percent, Permill, Perquintill, Phantom, PhantomData, PreRuntime, Releases, RuntimeDbWeight, Seal, SealV0, SignedBlock, SignedBlockWithJustification, SignedBlockWithJustifications, Slot, SlotDuration, StorageData, StorageInfo, StorageProof, TransactionInfo, TransactionLongevity, TransactionPriority, TransactionStorageProof, TransactionTag, U32F32, ValidatorId, ValidatorIdOf, Weight, WeightMultiplier } from '@polkadot/types/interfaces/runtime';
 import type { Si0Field, Si0LookupTypeId, Si0Path, Si0Type, Si0TypeDef, Si0TypeDefArray, Si0TypeDefBitSequence, Si0TypeDefCompact, Si0TypeDefComposite, Si0TypeDefPhantom, Si0TypeDefPrimitive, Si0TypeDefSequence, Si0TypeDefTuple, Si0TypeDefVariant, Si0TypeParameter, Si0Variant, Si1Field, Si1LookupTypeId, Si1Path, Si1Type, Si1TypeDef, Si1TypeDefArray, Si1TypeDefBitSequence, Si1TypeDefCompact, Si1TypeDefComposite, Si1TypeDefPrimitive, Si1TypeDefSequence, Si1TypeDefTuple, Si1TypeDefVariant, Si1TypeParameter, Si1Variant, SiField, SiLookupTypeId, SiPath, SiType, SiTypeDef, SiTypeDefArray, SiTypeDefBitSequence, SiTypeDefCompact, SiTypeDefComposite, SiTypeDefPrimitive, SiTypeDefSequence, SiTypeDefTuple, SiTypeDefVariant, SiTypeParameter, SiVariant } from '@polkadot/types/interfaces/scaleInfo';
 import type { Period, Priority, SchedulePeriod, SchedulePriority, Scheduled, ScheduledTo254, TaskAddress } from '@polkadot/types/interfaces/scheduler';
 import type { BeefyKey, FullIdentification, IdentificationTuple, Keys, MembershipProof, SessionIndex, SessionKeys1, SessionKeys10, SessionKeys10B, SessionKeys2, SessionKeys3, SessionKeys4, SessionKeys5, SessionKeys6, SessionKeys6B, SessionKeys7, SessionKeys7B, SessionKeys8, SessionKeys8B, SessionKeys9, SessionKeys9B, ValidatorCount } from '@polkadot/types/interfaces/session';
@@ -71,6 +71,7 @@ import type { Multiplier } from '@polkadot/types/interfaces/txpayment';
 import type { TransactionSource, TransactionValidity, ValidTransaction } from '@polkadot/types/interfaces/txqueue';
 import type { ClassDetails, ClassId, ClassMetadata, DepositBalance, DepositBalanceOf, DestroyWitness, InstanceDetails, InstanceId, InstanceMetadata } from '@polkadot/types/interfaces/uniques';
 import type { Multisig, Timepoint } from '@polkadot/types/interfaces/utility';
+import type { VestingInfo } from '@polkadot/types/interfaces/vesting';
 import type { AssetInstance, AssetInstanceV0, AssetInstanceV1, AssetInstanceV2, BodyId, BodyPart, DoubleEncodedCall, Fungibility, FungibilityV0, FungibilityV1, FungibilityV2, InboundStatus, InstructionV2, InteriorMultiLocation, Junction, JunctionV0, JunctionV1, JunctionV2, Junctions, JunctionsV1, JunctionsV2, MultiAsset, MultiAssetFilter, MultiAssetFilterV1, MultiAssetFilterV2, MultiAssetV0, MultiAssetV1, MultiAssetV2, MultiAssets, MultiAssetsV1, MultiAssetsV2, MultiLocation, MultiLocationV0, MultiLocationV1, MultiLocationV2, NetworkId, OriginKindV0, OriginKindV1, OriginKindV2, OutboundStatus, Outcome, QueryId, QueryStatus, QueueConfigData, Response, ResponseV0, ResponseV1, ResponseV2, ResponseV2Error, ResponseV2Result, VersionMigrationStage, VersionedMultiAsset, VersionedMultiAssets, VersionedMultiLocation, VersionedResponse, VersionedXcm, WeightLimitV2, WildFungibility, WildFungibilityV0, WildFungibilityV1, WildFungibilityV2, WildMultiAsset, WildMultiAssetV1, WildMultiAssetV2, Xcm, XcmAssetId, XcmError, XcmErrorV0, XcmErrorV1, XcmErrorV2, XcmOrder, XcmOrderV0, XcmOrderV1, XcmOrderV2, XcmOrigin, XcmOriginKind, XcmV0, XcmV1, XcmV2, XcmVersion, XcmpMessageFormat } from '@polkadot/types/interfaces/xcm';
 
 declare module '@polkadot/types/types/registry' {
@@ -82,7 +83,6 @@ declare module '@polkadot/types/types/registry' {
     AccountId: AccountId;
     AccountId20: AccountId20;
     AccountId32: AccountId32;
-    AccountId33: AccountId33;
     AccountIdOf: AccountIdOf;
     AccountIndex: AccountIndex;
     AccountInfo: AccountInfo;
@@ -246,12 +246,11 @@ declare module '@polkadot/types/types/registry' {
     ComposableTraitsBondedFinanceBondOffer: ComposableTraitsBondedFinanceBondOffer;
     ComposableTraitsBondedFinanceBondOfferReward: ComposableTraitsBondedFinanceBondOfferReward;
     ComposableTraitsCallFilterCallFilterEntry: ComposableTraitsCallFilterCallFilterEntry;
-    ComposableTraitsCurrencyRational64: ComposableTraitsCurrencyRational64;
     ComposableTraitsDefiCurrencyPairCurrencyId: ComposableTraitsDefiCurrencyPairCurrencyId;
     ComposableTraitsDefiSell: ComposableTraitsDefiSell;
     ComposableTraitsDefiSellCurrencyId: ComposableTraitsDefiSellCurrencyId;
     ComposableTraitsDefiTake: ComposableTraitsDefiTake;
-    ComposableTraitsDexAssetAmount: ComposableTraitsDexAssetAmount;
+    ComposableTraitsDexConsantProductPoolInfo: ComposableTraitsDexConsantProductPoolInfo;
     ComposableTraitsDexConstantProductPoolInfo: ComposableTraitsDexConstantProductPoolInfo;
     ComposableTraitsDexDexRoute: ComposableTraitsDexDexRoute;
     ComposableTraitsDexFee: ComposableTraitsDexFee;
@@ -292,7 +291,6 @@ declare module '@polkadot/types/types/registry' {
     ContractContractSpecV1: ContractContractSpecV1;
     ContractContractSpecV2: ContractContractSpecV2;
     ContractContractSpecV3: ContractContractSpecV3;
-    ContractContractSpecV4: ContractContractSpecV4;
     ContractCryptoHasher: ContractCryptoHasher;
     ContractDiscriminant: ContractDiscriminant;
     ContractDisplayName: ContractDisplayName;
@@ -336,7 +334,6 @@ declare module '@polkadot/types/types/registry' {
     ContractMetadataV1: ContractMetadataV1;
     ContractMetadataV2: ContractMetadataV2;
     ContractMetadataV3: ContractMetadataV3;
-    ContractMetadataV4: ContractMetadataV4;
     ContractProject: ContractProject;
     ContractProjectContract: ContractProjectContract;
     ContractProjectInfo: ContractProjectInfo;
@@ -526,19 +523,9 @@ declare module '@polkadot/types/types/registry' {
     Forcing: Forcing;
     ForkTreePendingChange: ForkTreePendingChange;
     ForkTreePendingChangeNode: ForkTreePendingChangeNode;
-    FrameSupportPalletId: FrameSupportPalletId;
     FrameSupportScheduleLookupError: FrameSupportScheduleLookupError;
     FrameSupportScheduleMaybeHashed: FrameSupportScheduleMaybeHashed;
-    FrameSupportTokensMiscBalanceStatus: FrameSupportTokensMiscBalanceStatus;
-    FrameSupportWeightsDispatchInfo: FrameSupportWeightsDispatchInfo;
-    FrameSupportWeightsPerDispatchClassU64: FrameSupportWeightsPerDispatchClassU64;
-    FrameSupportWeightsRuntimeDbWeight: FrameSupportWeightsRuntimeDbWeight;
     FrameSystemAccountInfo: FrameSystemAccountInfo;
-    FrameSystemEventRecord: FrameSystemEventRecord;
-    FrameSystemLastRuntimeUpgradeInfo: FrameSystemLastRuntimeUpgradeInfo;
-    FrameSystemLimitsBlockLength: FrameSystemLimitsBlockLength;
-    FrameSystemLimitsBlockWeights: FrameSystemLimitsBlockWeights;
-    FrameSystemPhase: FrameSystemPhase;
     FullIdentification: FullIdentification;
     FunctionArgumentMetadataLatest: FunctionArgumentMetadataLatest;
     FunctionArgumentMetadataV10: FunctionArgumentMetadataV10;
@@ -805,22 +792,14 @@ declare module '@polkadot/types/types/registry' {
     PalletAccountProxyAnnouncement: PalletAccountProxyAnnouncement;
     PalletAssetsRegistryCandidateStatus: PalletAssetsRegistryCandidateStatus;
     PalletAssetsRegistryForeignMetadata: PalletAssetsRegistryForeignMetadata;
-    PalletAuthorshipUncleEntryItem: PalletAuthorshipUncleEntryItem;
-    PalletBalancesAccountData: PalletBalancesAccountData;
-    PalletBalancesBalanceLock: PalletBalancesBalanceLock;
-    PalletBalancesReleases: PalletBalancesReleases;
-    PalletBalancesReserveData: PalletBalancesReserveData;
     PalletCallMetadataLatest: PalletCallMetadataLatest;
     PalletCallMetadataV14: PalletCallMetadataV14;
     PalletCollatorSelectionCandidateInfo: PalletCollatorSelectionCandidateInfo;
-    PalletCollectiveVotes: PalletCollectiveVotes;
     PalletConstantMetadataLatest: PalletConstantMetadataLatest;
     PalletConstantMetadataV14: PalletConstantMetadataV14;
-    PalletCosmwasmCodeIdentifier: PalletCosmwasmCodeIdentifier;
     PalletCosmwasmCodeInfo: PalletCosmwasmCodeInfo;
     PalletCosmwasmContractInfo: PalletCosmwasmContractInfo;
     PalletCosmwasmEntryPoint: PalletCosmwasmEntryPoint;
-    PalletCosmwasmInstrumentCostRules: PalletCosmwasmInstrumentCostRules;
     PalletCrowdloanRewardsModelsEcdsaSignature: PalletCrowdloanRewardsModelsEcdsaSignature;
     PalletCrowdloanRewardsModelsProof: PalletCrowdloanRewardsModelsProof;
     PalletCrowdloanRewardsModelsRemoteAccount: PalletCrowdloanRewardsModelsRemoteAccount;
@@ -862,8 +841,6 @@ declare module '@polkadot/types/types/registry' {
     PalletMosaicDecayBudgetPenaltyDecayer: PalletMosaicDecayBudgetPenaltyDecayer;
     PalletMosaicNetworkInfo: PalletMosaicNetworkInfo;
     PalletMosaicRelayerStaleRelayer: PalletMosaicRelayerStaleRelayer;
-    PalletMultisigMultisig: PalletMultisigMultisig;
-    PalletMultisigTimepoint: PalletMultisigTimepoint;
     PalletOracleAssetInfo: PalletOracleAssetInfo;
     PalletOraclePrePrice: PalletOraclePrePrice;
     PalletOraclePrice: PalletOraclePrice;
@@ -882,13 +859,10 @@ declare module '@polkadot/types/types/registry' {
     PalletStakingRewardsRewardAccumulationHookError: PalletStakingRewardsRewardAccumulationHookError;
     PalletStorageMetadataLatest: PalletStorageMetadataLatest;
     PalletStorageMetadataV14: PalletStorageMetadataV14;
-    PalletTransactionPaymentReleases: PalletTransactionPaymentReleases;
     PalletTreasuryProposal: PalletTreasuryProposal;
     PalletVaultModelsStrategyOverview: PalletVaultModelsStrategyOverview;
     PalletVaultModelsVaultInfo: PalletVaultModelsVaultInfo;
     PalletVersion: PalletVersion;
-    PalletXcmQueryStatus: PalletXcmQueryStatus;
-    PalletXcmVersionMigrationStage: PalletXcmVersionMigrationStage;
     ParachainDispatchOrigin: ParachainDispatchOrigin;
     ParachainInherentData: ParachainInherentData;
     ParachainProposal: ParachainProposal;
@@ -931,7 +905,6 @@ declare module '@polkadot/types/types/registry' {
     Phase: Phase;
     PhragmenScore: PhragmenScore;
     Points: Points;
-    PolkadotCorePrimitivesOutboundHrmpMessage: PolkadotCorePrimitivesOutboundHrmpMessage;
     PolkadotParachainPrimitivesXcmpMessageFormat: PolkadotParachainPrimitivesXcmpMessageFormat;
     PolkadotPrimitivesV1AbridgedHostConfiguration: PolkadotPrimitivesV1AbridgedHostConfiguration;
     PolkadotPrimitivesV1PersistedValidationData: PolkadotPrimitivesV1PersistedValidationData;
@@ -1130,13 +1103,8 @@ declare module '@polkadot/types/types/registry' {
     SpanIndex: SpanIndex;
     SpanRecord: SpanRecord;
     SpConsensusAuraSr25519AppSr25519Public: SpConsensusAuraSr25519AppSr25519Public;
-    SpCoreCryptoKeyTypeId: SpCoreCryptoKeyTypeId;
     SpecVersion: SpecVersion;
-    SpRuntimeDigest: SpRuntimeDigest;
-    SpRuntimeDispatchError: SpRuntimeDispatchError;
-    SpRuntimeHeader: SpRuntimeHeader;
     SpTrieStorageProof: SpTrieStorageProof;
-    SpVersionRuntimeVersion: SpVersionRuntimeVersion;
     Sr25519Signature: Sr25519Signature;
     StakingLedger: StakingLedger;
     StakingLedgerTo223: StakingLedgerTo223;
@@ -1269,8 +1237,8 @@ declare module '@polkadot/types/types/registry' {
     VersionedResponse: VersionedResponse;
     VersionedXcm: VersionedXcm;
     VersionMigrationStage: VersionMigrationStage;
+    VestingInfo: VestingInfo;
     VestingSchedule: VestingSchedule;
-    VestingWindow: VestingWindow;
     Vote: Vote;
     VoteIndex: VoteIndex;
     Voter: Voter;
@@ -1288,8 +1256,6 @@ declare module '@polkadot/types/types/registry' {
     WeightMultiplier: WeightMultiplier;
     WeightPerClass: WeightPerClass;
     WeightToFeeCoefficient: WeightToFeeCoefficient;
-    WeightV1: WeightV1;
-    WeightV2: WeightV2;
     WildFungibility: WildFungibility;
     WildFungibilityV0: WildFungibilityV0;
     WildFungibilityV1: WildFungibilityV1;
@@ -1320,19 +1286,8 @@ declare module '@polkadot/types/types/registry' {
     XcmpMessageFormat: XcmpMessageFormat;
     XcmV0: XcmV0;
     XcmV1: XcmV1;
-    XcmV1MultiAsset: XcmV1MultiAsset;
-    XcmV1MultiassetMultiAssets: XcmV1MultiassetMultiAssets;
-    XcmV1MultiLocation: XcmV1MultiLocation;
     XcmV2: XcmV2;
-    XcmV2Response: XcmV2Response;
-    XcmV2TraitsError: XcmV2TraitsError;
-    XcmV2TraitsOutcome: XcmV2TraitsOutcome;
-    XcmV2WeightLimit: XcmV2WeightLimit;
-    XcmV2Xcm: XcmV2Xcm;
     XcmVersion: XcmVersion;
     XcmVersionedMultiAsset: XcmVersionedMultiAsset;
-    XcmVersionedMultiAssets: XcmVersionedMultiAssets;
-    XcmVersionedMultiLocation: XcmVersionedMultiLocation;
-    XcmVersionedXcm: XcmVersionedXcm;
   } // InterfaceTypes
 } // declare module
