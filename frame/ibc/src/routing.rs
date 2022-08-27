@@ -31,15 +31,15 @@ impl<T: Config + Send + Sync> Context<T> {
 
 #[derive(Clone)]
 pub struct IbcRouter<T: Config> {
-	pallet_ibc_ping: pallet_ibc_ping::IbcHandler<T>,
-	ibc_transfer: ics20::IbcCallbackHandler<T>,
+	pallet_ibc_ping: pallet_ibc_ping::IbcModule<T>,
+	ibc_transfer: ics20::IbcModule<T>,
 }
 
 impl<T: Config> Default for IbcRouter<T> {
 	fn default() -> Self {
 		Self {
-			pallet_ibc_ping: pallet_ibc_ping::IbcHandler::<T>::default(),
-			ibc_transfer: ics20::IbcCallbackHandler::<T>::default(),
+			pallet_ibc_ping: pallet_ibc_ping::IbcModule::<T>::default(),
+			ibc_transfer: ics20::IbcModule::<T>::default(),
 		}
 	}
 }

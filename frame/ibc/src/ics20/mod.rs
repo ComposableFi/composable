@@ -1,6 +1,6 @@
 pub mod context;
 
-use crate::{ChannelIds, Config, Event, Pallet, WeightInfo};
+use crate::{routing::Context, ChannelIds, Config, Event, Pallet, WeightInfo};
 use alloc::{
 	format,
 	string::{String, ToString},
@@ -14,8 +14,13 @@ use frame_support::weights::Weight;
 use ibc::{
 	applications::transfer::{
 		acknowledgement::{Acknowledgement as Ics20Acknowledgement, ACK_ERR_STR, ACK_SUCCESS_B64},
+		error::Error as Ics20Error,
 		is_receiver_chain_source,
 		packet::PacketData,
+		relay::{
+			on_ack_packet::process_ack_packet, on_recv_packet::process_recv_packet,
+			on_timeout_packet::process_timeout_packet,
+		},
 		PrefixedCoin, PrefixedDenom, TracePrefix, VERSION,
 	},
 	core::{
@@ -31,26 +36,26 @@ use ibc::{
 	},
 	signer::Signer,
 };
-use ibc_primitives::{CallbackWeight, IbcTrait};
+use ibc_primitives::{CallbackWeight, IbcHandler};
 use primitives::currency::CurrencyId;
 use sp_std::{boxed::Box, marker::PhantomData};
 
 #[derive(Clone)]
-pub struct IbcCallbackHandler<T: Config>(PhantomData<T>);
+pub struct IbcModule<T: Config>(PhantomData<T>);
 
-impl<T: Config> core::fmt::Debug for IbcCallbackHandler<T> {
+impl<T: Config> core::fmt::Debug for IbcModule<T> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
 		write!(f, "ibc-transfer")
 	}
 }
 
-impl<T: Config> Default for IbcCallbackHandler<T> {
+impl<T: Config> Default for IbcModule<T> {
 	fn default() -> Self {
 		Self(PhantomData::default())
 	}
 }
 
-impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T>
+impl<T: Config + Send + Sync> Module for IbcModule<T>
 where
 	<T as DeFiComposableConfig>::MayBeAssetId: From<CurrencyId>,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
@@ -164,13 +169,27 @@ where
 		packet: &Packet,
 		_relayer: &Signer,
 	) -> OnRecvPacketAck {
-		match Pallet::<T>::on_receive_packet(output, packet) {
+		let mut ctx = Context::<T>::default();
+		let result = serde_json::from_slice(packet.data.as_slice())
+			.map_err(|e| {
+				Ics04Error::implementation_specific(format!("Failed to decode packet data {:?}", e))
+			})
+			.and_then(|packet_data: PacketData| {
+				process_recv_packet(&ctx, output, packet, packet_data.clone())
+					.and_then(|write_fn| {
+						write_fn(&mut ctx)
+							.map(|_| packet_data)
+							.map_err(Ics20Error::unknown_msg_type)
+					})
+					.map_err(|e| {
+						log::trace!(target: "pallet_ibc", "[on_recv_packet]: {:?}", e);
+						Ics04Error::implementation_specific(e.to_string())
+					})
+			});
+		match result {
 			Err(err) => {
-				Pallet::<T>::deposit_event(Event::<T>::OnRecvPacketError {
-					msg: format!("{:?}", err).as_bytes().to_vec(),
-				});
 				let packet = packet.clone();
-				return OnRecvPacketAck::Nil(Box::new(move |_ctx| {
+				OnRecvPacketAck::Nil(Box::new(move |_ctx| {
 					Pallet::<T>::write_acknowlegdement(
 						&packet,
 						format!("{}: {:?}", ACK_ERR_STR, err).as_bytes().to_vec(),
@@ -178,9 +197,7 @@ where
 					.map_err(|e| format!("[on_recv_packet] {:#?}", e))
 				}))
 			},
-			Ok(_) => {
-				let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
-					.expect("packet data should deserialize successfully");
+			Ok(packet_data) => {
 				let denom = full_ibc_denom(packet, packet_data.token.clone());
 				let prefixed_denom = PrefixedDenom::from_str(&denom).expect("Should not fail");
 				let token =
@@ -193,10 +210,10 @@ where
 					amount: packet_data.token.amount.as_u256().as_u128().into(),
 				});
 				let packet = packet.clone();
-				return OnRecvPacketAck::Successful(
+				OnRecvPacketAck::Successful(
 					Box::new(Ics20Acknowledgement::success()),
 					Box::new(move |_ctx| {
-						T::IbcHandler::write_acknowlegdement(
+						Pallet::<T>::write_acknowlegdement(
 							&packet,
 							Ics20Acknowledgement::success().as_ref().to_vec(),
 						)
@@ -204,59 +221,70 @@ where
 					}),
 				)
 			},
-		};
+		}
 	}
 
 	fn on_acknowledgement_packet(
 		&mut self,
-		output: &mut ModuleOutputBuilder,
+		_output: &mut ModuleOutputBuilder,
 		packet: &Packet,
 		acknowledgement: &Acknowledgement,
 		_relayer: &Signer,
 	) -> Result<(), Ics04Error> {
+		let mut ctx = Context::<T>::default();
 		let packet_data: PacketData =
 			serde_json::from_slice(packet.data.as_slice()).map_err(|e| {
 				Ics04Error::implementation_specific(format!("Failed to decode packet data {:?}", e))
 			})?;
-		Pallet::<T>::on_ack_packet(output, packet, acknowledgement)
-			.map(|_| {
-				let ack = String::from_utf8(acknowledgement.as_ref().to_vec())
-					.expect("Should be valid acknowledgement");
-				if ack.as_bytes() == ACK_SUCCESS_B64 {
-					Pallet::<T>::deposit_event(Event::<T>::TokenTransferCompleted {
-						from: packet_data.sender.to_string().as_bytes().to_vec(),
-						to: packet_data.receiver.to_string().as_bytes().to_vec(),
-						ibc_denom: packet_data.token.denom.to_string().as_bytes().to_vec(),
-						local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(
-							packet_data.token.denom.to_string(),
-							packet_data.token.clone(),
-						),
-						amount: packet_data.token.amount.as_u256().as_u128().into(),
-					})
+		let ack = String::from_utf8(acknowledgement.as_ref().to_vec())
+			.map(|val| {
+				if val.as_bytes() == ACK_SUCCESS_B64 {
+					Ics20Acknowledgement::Success(ACK_SUCCESS_B64.to_vec())
 				} else {
-					Pallet::<T>::deposit_event(Event::<T>::RecievedAcknowledgementError)
+					Ics20Acknowledgement::Error(val)
 				}
 			})
 			.map_err(|e| {
-				Ics04Error::app_module(format!(
-					"[ibc-transfer]: Error processing acknowledgement {:#?}",
+				Ics04Error::implementation_specific(format!(
+					"Failed to decode acknowledgement data {:?}",
 					e
 				))
-			})
+			})?;
+		process_ack_packet(&mut ctx, packet, &packet_data, &ack)
+			.map_err(|e| Ics04Error::implementation_specific(e.to_string()))?;
+
+		match ack {
+			Ics20Acknowledgement::Success(_) =>
+				Pallet::<T>::deposit_event(Event::<T>::TokenTransferCompleted {
+					from: packet_data.sender.to_string().as_bytes().to_vec(),
+					to: packet_data.receiver.to_string().as_bytes().to_vec(),
+					ibc_denom: packet_data.token.denom.to_string().as_bytes().to_vec(),
+					local_asset_id: Pallet::<T>::ibc_denom_to_asset_id(
+						packet_data.token.denom.to_string(),
+						packet_data.token.clone(),
+					),
+					amount: packet_data.token.amount.as_u256().as_u128().into(),
+				}),
+			Ics20Acknowledgement::Error(_) =>
+				Pallet::<T>::deposit_event(Event::<T>::TokenTransferFailed),
+		}
+
+		Ok(())
 	}
 
 	fn on_timeout_packet(
 		&mut self,
-		output: &mut ModuleOutputBuilder,
+		_output: &mut ModuleOutputBuilder,
 		packet: &Packet,
 		_relayer: &Signer,
 	) -> Result<(), Ics04Error> {
-		Pallet::<T>::on_timeout_packet(output, packet).map_err(|e| {
-			Ics04Error::app_module(format!(
-				"[ibc-transfer]: Error processing timeout packet {:#?}",
-				e
-			))
-		})
+		let mut ctx = Context::<T>::default();
+		let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
+			.map_err(|e| Ics04Error::app_module(format!("Failed to decode packet data {:?}", e)))?;
+		process_timeout_packet(&mut ctx, packet, &packet_data)
+			.map_err(|e| Ics04Error::app_module(e.to_string()))?;
+
+		Ok(())
 	}
 }
 

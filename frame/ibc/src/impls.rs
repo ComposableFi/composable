@@ -19,16 +19,7 @@ use composable_traits::{
 };
 use frame_support::traits::Currency;
 use ibc::{
-	applications::transfer::{
-		acknowledgement::{Acknowledgement as Ics20Acknowledgement, ACK_SUCCESS_B64},
-		error::Error as Ics20Error,
-		packet::PacketData,
-		relay::{
-			on_ack_packet::process_ack_packet, on_recv_packet::process_recv_packet,
-			on_timeout_packet::process_timeout_packet, send_transfer::send_transfer,
-		},
-		PrefixedCoin,
-	},
+	applications::transfer::{relay::send_transfer::send_transfer, PrefixedCoin},
 	core::{
 		ics02_client::{client_state::AnyClientState, context::ClientReader},
 		ics03_connection::context::ConnectionReader,
@@ -36,10 +27,7 @@ use ibc::{
 			channel::ChannelEnd,
 			context::{ChannelKeeper, ChannelReader},
 			error::Error as Ics04Error,
-			msgs::{
-				acknowledgement::Acknowledgement,
-				chan_open_init::{MsgChannelOpenInit, TYPE_URL as CHANNEL_OPEN_INIT_TYPE_URL},
-			},
+			msgs::chan_open_init::{MsgChannelOpenInit, TYPE_URL as CHANNEL_OPEN_INIT_TYPE_URL},
 			packet::{Packet, Sequence},
 		},
 		ics24_host::{
@@ -49,7 +37,7 @@ use ibc::{
 				CommitmentsPath, ConnectionsPath, ReceiptsPath, SeqRecvsPath,
 			},
 		},
-		ics26_routing::{context::ModuleOutputBuilder, handler::MsgReceipt},
+		ics26_routing::handler::MsgReceipt,
 	},
 	handler::HandlerOutputBuilder,
 	signer::Signer,
@@ -59,7 +47,7 @@ use ibc::{
 use ibc_primitives::{
 	apply_prefix, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
 	get_channel_escrow_address, port_id_from_bytes, ConnectionHandshake, Error as IbcHandlerError,
-	IbcTrait, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection, OffchainPacketType,
+	IbcHandler, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection, OffchainPacketType,
 	PacketState, QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse,
 	QueryConnectionResponse, QueryConnectionsResponse, QueryConsensusStateResponse,
 	QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
@@ -742,7 +730,7 @@ where
 	}
 }
 
-impl<T: Config + Send + Sync> IbcTrait for Pallet<T>
+impl<T: Config + Send + Sync> IbcHandler for Pallet<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 	<T as DeFiComposableConfig>::MayBeAssetId:
@@ -898,81 +886,6 @@ where
 		Ok(channel_id)
 	}
 
-	fn send_transfer(
-		msg: ibc::applications::transfer::msgs::transfer::MsgTransfer<
-			ibc::applications::transfer::PrefixedCoin,
-		>,
-	) -> Result<(), IbcHandlerError> {
-		let mut handler_output = HandlerOutputBuilder::default();
-		let mut ctx = Context::<T>::default();
-		send_transfer::<_, _>(&mut ctx, &mut handler_output, msg)
-			.map_err(|e| IbcHandlerError::SendTransferError { msg: Some(e.to_string()) })?;
-		let result = handler_output.with_result(());
-		Self::deposit_event(result.events.into());
-		Ok(())
-	}
-
-	fn on_receive_packet(
-		output: &mut ModuleOutputBuilder,
-		packet: &Packet,
-	) -> Result<(), IbcHandlerError> {
-		let mut ctx = Context::<T>::default();
-		let packet_data: PacketData =
-			serde_json::from_slice(packet.data.as_slice()).map_err(|e| {
-				IbcHandlerError::DecodingError {
-					msg: Some(format!("Failed to decode packet data {:?}", e)),
-				}
-			})?;
-		process_recv_packet(&ctx, output, packet, packet_data)
-			.and_then(|write_fn| write_fn(&mut ctx).map_err(Ics20Error::unknown_msg_type))
-			.map_err(|e| {
-				log::trace!(target: "pallet_ibc", "[on_recv_packet]: {:?}", e);
-				IbcHandlerError::ReceivePacketError { msg: Some(e.to_string()) }
-			})
-	}
-
-	fn on_ack_packet(
-		_output: &mut ModuleOutputBuilder,
-		packet: &Packet,
-		ack: &Acknowledgement,
-	) -> Result<(), IbcHandlerError> {
-		let mut ctx = Context::<T>::default();
-		let packet_data: PacketData =
-			serde_json::from_slice(packet.data.as_slice()).map_err(|e| {
-				IbcHandlerError::DecodingError {
-					msg: Some(format!("Failed to decode packet data {:?}", e)),
-				}
-			})?;
-		let ack = String::from_utf8(ack.as_ref().to_vec())
-			.map(|val| {
-				if val.as_bytes() == ACK_SUCCESS_B64 {
-					Ics20Acknowledgement::Success(ACK_SUCCESS_B64.to_vec())
-				} else {
-					Ics20Acknowledgement::Error(val)
-				}
-			})
-			.map_err(|e| IbcHandlerError::DecodingError {
-				msg: Some(format!("Failed to decode acknowledgement data {:?}", e)),
-			})?;
-		process_ack_packet(&mut ctx, packet, &packet_data, &ack)
-			.map_err(|e| IbcHandlerError::AcknowledgementError { msg: Some(e.to_string()) })
-	}
-
-	fn on_timeout_packet(
-		_output: &mut ModuleOutputBuilder,
-		packet: &Packet,
-	) -> Result<(), IbcHandlerError> {
-		let mut ctx = Context::<T>::default();
-		let packet_data: PacketData =
-			serde_json::from_slice(packet.data.as_slice()).map_err(|e| {
-				IbcHandlerError::DecodingError {
-					msg: Some(format!("Failed to decode packet data {:?}", e)),
-				}
-			})?;
-		process_timeout_packet(&mut ctx, packet, &packet_data)
-			.map_err(|e| IbcHandlerError::TimeoutError { msg: Some(e.to_string()) })
-	}
-
 	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
 		let mut ctx = Context::<T>::default();
 		Self::store_raw_acknowledgement(
@@ -995,6 +908,20 @@ where
 			packet: packet.clone().into(),
 		};
 		Self::deposit_event(Event::<T>::Events { events: vec![event] });
+		Ok(())
+	}
+
+	fn send_transfer(
+		msg: ibc::applications::transfer::msgs::transfer::MsgTransfer<
+			ibc::applications::transfer::PrefixedCoin,
+		>,
+	) -> Result<(), IbcHandlerError> {
+		let mut handler_output = HandlerOutputBuilder::default();
+		let mut ctx = Context::<T>::default();
+		send_transfer::<_, _>(&mut ctx, &mut handler_output, msg)
+			.map_err(|e| IbcHandlerError::SendTransferError { msg: Some(e.to_string()) })?;
+		let result = handler_output.with_result(());
+		Self::deposit_event(result.events.into());
 		Ok(())
 	}
 

@@ -182,7 +182,7 @@ pub mod pallet {
 	use ibc_primitives::{
 		connection_id_from_bytes, get_channel_escrow_address, port_id_from_bytes,
 		runtime_interface::{self, SS58CodecError},
-		IbcTrait, OffchainPacketType, OpenChannelParams,
+		IbcHandler, OffchainPacketType, OpenChannelParams,
 	};
 	use primitives::currency::CurrencyId;
 	use sp_runtime::{traits::IdentifyAccount, AccountId32};
@@ -410,7 +410,7 @@ pub mod pallet {
 			amount: <T as DeFiComposableConfig>::Balance,
 		},
 		/// Ibc transfer failed, received an acknowledgement error, tokens have been refunded
-		RecievedAcknowledgementError,
+		TokenTransferFailed, // todo: add more details
 		/// On recv packet was not processed successfully processes
 		OnRecvPacketError { msg: Vec<u8> },
 	}
