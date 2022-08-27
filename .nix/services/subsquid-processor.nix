@@ -6,7 +6,6 @@
   service = {
     restart = "always";
     network_mode = "host";
-    useHostStore = true;
     command = [
       "sh"
       "-c"
