@@ -7,5 +7,9 @@ ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-22.05-darwin
 ARG CACHIX_NAME=composable-community
 
 USER ${USER}
-RUN nix-channel --add ${CHANNEL_URL} nixpkgs && nix-channel --update                
+
+
+RUN nix-channel --add ${CHANNEL_URL} nixpkgs
+RUN nix-channel --update
+RUN nix-env -iA nixpkgs.cachix
 RUN cachix use ${CACHIX_NAME}
