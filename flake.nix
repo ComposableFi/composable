@@ -478,9 +478,18 @@
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
               # be very carefull with this, so this must be version compatible with base and what vscode will inject
-              contents = [
-                # installing nix is broken vi this, 
-                # cachix
+              
+              contents = 
+              subtractLists 
+              # just will not work
+              [ cachix nix docker] 
+              
+              [
+                #  
+                # 
+                # 
+                # 
+
                 rust-nightly
                 curl
                 rustup # just if it wants to make ad hoc updates

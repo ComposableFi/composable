@@ -5,9 +5,10 @@ ARG USER=vscode
 ARG UID=1000
 ARG GID=${UID}
 
-# NOTE: keep in sync with base
+# NOTE: keep in sync with root flake.nix and CI yamls
 ARG NIX_INSTALLER=https://releases.nixos.org/nix/nix-2.10.3/install
 ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-22.05-darwin
+ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-unstable
 
 ARG CACHIX_NAME=composable-community
 
@@ -48,7 +49,7 @@ RUN adduser ${USER} nixbld
 RUN for i in $(seq 1 30); do useradd -ms /bin/bash nixbld$i &&  adduser nixbld$i nixbld; done
 
 # without this line, if our docker has prebuild nix stuff, nix fails to install
-RUN chmod --verbose -R a+rwx /nix
+RUN chmod -R a+rwx /nix
 
 USER ${USER}
 ENV USER=${USER}
