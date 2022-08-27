@@ -47,7 +47,7 @@ use ibc::{
 use ibc_primitives::{
 	apply_prefix, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
 	get_channel_escrow_address, port_id_from_bytes, ConnectionHandshake, Error as IbcHandlerError,
-	IbcHandler, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection, OffchainPacketType,
+	IbcHandler, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection, PacketInfo,
 	PacketState, QueryChannelResponse, QueryChannelsResponse, QueryClientStateResponse,
 	QueryConnectionResponse, QueryConnectionsResponse, QueryConsensusStateResponse,
 	QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
@@ -491,13 +491,13 @@ where
 		Ok(balance.parse().unwrap_or_default())
 	}
 
-	pub fn offchain_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
-		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id);
+	pub fn offchain_send_packet_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
+		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id, b"SEND_PACKET");
 		pair.encode()
 	}
 
-	pub fn acknowledgements_offchain_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
-		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id, b"ACK");
+	pub fn offchain_recv_packet_key(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u8> {
+		let pair = (T::INDEXING_PREFIX.to_vec(), channel_id, port_id, b"RECV_PACKET");
 		pair.encode()
 	}
 
@@ -516,8 +516,15 @@ where
 		// 		.unwrap_or_default();
 		// acks.insert(seq, ack);
 		// sp_io::offchain_index::set(&key, acks.encode().as_slice());
-		RawAcknowledgements::<T>::insert((channel_id, port_id), seq, ack);
-		Ok(())
+		ReceivePackets::<T>::try_mutate::<_, _, _, &'static str, _>(
+			(channel_id, port_id),
+			seq,
+			|packet_info| {
+				packet_info.ack = Some(ack);
+				Ok(())
+			},
+		)
+		.map_err(|_| Error::<T>::WriteAckError)
 	}
 
 	pub(crate) fn packet_cleanup() -> Result<(), Error<T>> {
@@ -527,92 +534,87 @@ where
 			let port_id =
 				port_id_from_bytes(port_id_bytes.clone()).map_err(|_| Error::<T>::DecodingError)?;
 
-			let key = Pallet::<T>::offchain_key(channel_id_bytes.clone(), port_id_bytes.clone());
-			let ack_key = Pallet::<T>::acknowledgements_offchain_key(
+			let key = Pallet::<T>::offchain_send_packet_key(
 				channel_id_bytes.clone(),
 				port_id_bytes.clone(),
 			);
-			// Clean up offchain packets
-			if let Some(mut offchain_packets) =
+			let ack_key = Pallet::<T>::offchain_recv_packet_key(
+				channel_id_bytes.clone(),
+				port_id_bytes.clone(),
+			);
+			// Clean up offchain  send packets
+			if let Some(mut send_packets) =
 				sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
-					.and_then(|v| BTreeMap::<u64, OffchainPacketType>::decode(&mut &*v).ok())
+					.and_then(|v| BTreeMap::<u64, PacketInfo>::decode(&mut &*v).ok())
 			{
-				let keys: Vec<u64> = offchain_packets.clone().into_keys().collect();
+				let keys: Vec<u64> = send_packets.clone().into_keys().collect();
 				for key in keys {
 					if !PacketCommitment::<T>::contains_key((
 						port_id.clone(),
 						channel_id,
 						key.into(),
 					)) {
-						let _ = offchain_packets.remove(&key);
+						let _ = send_packets.remove(&key);
 					}
 				}
-				sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
+				sp_io::offchain_index::set(&key, send_packets.encode().as_slice());
 			}
 
 			// Clean up offchain acknowledgements
-			if let Some(mut acks) = sp_io::offchain::local_storage_get(
+			if let Some(mut recv_packets) = sp_io::offchain::local_storage_get(
 				sp_core::offchain::StorageKind::PERSISTENT,
 				&ack_key,
 			)
-			.and_then(|v| BTreeMap::<u64, Vec<u8>>::decode(&mut &*v).ok())
+			.and_then(|v| BTreeMap::<u64, PacketInfo>::decode(&mut &*v).ok())
 			{
-				let keys: Vec<u64> = acks.clone().into_keys().collect();
+				let keys: Vec<u64> = recv_packets.clone().into_keys().collect();
 				for key in keys {
 					if !Acknowledgements::<T>::contains_key((
 						port_id.clone(),
 						channel_id,
 						key.into(),
 					)) {
-						let _ = acks.remove(&key);
+						let _ = recv_packets.remove(&key);
 					}
 				}
-				sp_io::offchain_index::set(&key, acks.encode().as_slice());
+				sp_io::offchain_index::set(&key, recv_packets.encode().as_slice());
 			}
 		}
 
 		Ok(())
 	}
 
-	pub fn get_offchain_packets(
+	pub fn get_send_packet_info(
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 		sequences: Vec<u64>,
-	) -> Result<Vec<OffchainPacketType>, Error<T>> {
+	) -> Result<Vec<PacketInfo>, Error<T>> {
 		// let key = Pallet::<T>::offchain_key(channel_id, port_id);
-		// let offchain_packets: BTreeMap<u64, OffchainPacketType> =
+		// let offchain_packets: BTreeMap<u64, PacketInfo> =
 		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
 		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
 		// 		.unwrap_or_default();
 		let packets = sequences
 			.into_iter()
-			.map(|seq| Packets::<T>::get((channel_id.clone(), port_id.clone()), seq))
+			.map(|seq| SendPackets::<T>::get((channel_id.clone(), port_id.clone()), seq))
 			.collect();
 		Ok(packets)
 	}
 
-	pub fn get_offchain_acks(
+	pub fn get_recv_packet_info(
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 		sequences: Vec<u64>,
-	) -> Result<Vec<Vec<u8>>, Error<T>> {
-		// let key = Pallet::<T>::acknowledgements_offchain_key(channel_id, port_id);
-		// let acks: BTreeMap<u64, Vec<u8>> =
-		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
-		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
-		// 		.unwrap_or_default();
-		let acks = sequences
+	) -> Result<Vec<PacketInfo>, Error<T>> {
+		let packets = sequences
 			.into_iter()
-			.map(|seq| RawAcknowledgements::<T>::get((channel_id.clone(), port_id.clone()), seq))
+			.map(|seq| ReceivePackets::<T>::get((channel_id.clone(), port_id.clone()), seq))
 			.collect();
-		Ok(acks)
+		Ok(packets)
 	}
 
-	pub fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
-		let ctx = Context::<T>::new();
-		// revision number is not used in this case so it's fine to use zero
-		let height = Height::new(0, height as u64);
-		ctx.host_consensus_state(height).ok().map(|cs_state| cs_state.encode_vec())
+	pub fn get_undelivered_sequences(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u64> {
+		UndeliveredSequences::<T>::get((channel_id, port_id)).into_iter().collect()
 	}
 }
 
@@ -905,7 +907,11 @@ where
 		let event = IbcEvent::WriteAcknowledgement {
 			revision_height: host_height.revision_height,
 			revision_number: host_height.revision_number,
-			packet: packet.clone().into(),
+			port_id: packet.source_port.as_bytes().to_vec(),
+			channel_id: packet.source_channel.clone().to_string().as_bytes().to_vec(),
+			dest_port: packet.destination_port.as_bytes().to_vec(),
+			dest_channel: packet.destination_channel.to_string().as_bytes().to_vec(),
+			sequence: packet.sequence.clone().into(),
 		};
 		Self::deposit_event(Event::<T>::Events { events: vec![event] });
 		Ok(())

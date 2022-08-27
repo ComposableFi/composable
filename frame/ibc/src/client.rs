@@ -19,27 +19,18 @@ use ibc::{
 			context::{ClientKeeper, ClientReader},
 			error::Error as ICS02Error,
 		},
-		ics23_commitment::commitment::CommitmentProofBytes,
 		ics24_host::identifier::ClientId,
 	},
 	timestamp::Timestamp,
 	Height,
 };
-use sp_runtime::SaturatedConversion;
-use sp_runtime::traits::Header;
+use sp_runtime::{traits::Header, SaturatedConversion};
 use tendermint_proto::Protobuf;
-
-/// Connection proof type, used in relayer
-#[derive(Encode, Decode)]
-pub struct ConnectionProof {
-	header: Vec<u8>,
-	extrinsic_with_proof: (Vec<u8>, Vec<Vec<u8>>),
-	connection_proof: Vec<u8>,
-}
 
 impl<T: Config + Send + Sync> ClientReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
+	<T as frame_system::Config>::BlockNumber: From<u32>,
 {
 	fn client_type(&self, client_id: &ClientId) -> Result<ClientType, ICS02Error> {
 		log::trace!(target: "pallet_ibc", "in client : [client_type] >> client_id = {:?}", client_id);
@@ -155,6 +146,7 @@ where
 
 		Ok(None)
 	}
+
 	fn host_height(&self) -> Height {
 		log::trace!(target: "pallet_ibc", "in client: [host_height]");
 		let current_height = host_height::<T>();
@@ -165,7 +157,6 @@ where
 	#[allow(clippy::disallowed_methods)]
 	fn host_timestamp(&self) -> Timestamp {
 		use frame_support::traits::UnixTime;
-		use sp_runtime::traits::SaturatedConversion;
 		let time = T::TimeProvider::now();
 		let ts = Timestamp::from_nanoseconds(time.as_nanos().saturated_into::<u64>())
 			.map_err(|e| panic!("{:?}, caused by {:?} from pallet timestamp_pallet", e, time));
@@ -177,11 +168,19 @@ where
 	fn host_consensus_state(
 		&self,
 		height: Height,
-		proof: &CommitmentProofBytes,
+		proof: Option<Vec<u8>>,
 	) -> Result<AnyConsensusState, ICS02Error> {
+		let proof = proof.ok_or_else(|| ICS02Error::implementation_specific(format!("No host proof supplied")))?;
+		#[derive(Encode, Decode)]
+		struct HostConsensusProof {
+			header: Vec<u8>,
+			extrinsic: Vec<u8>,
+			extrinsic_proof: Vec<Vec<u8>>,
+		}
 		// unfortunately we can't access headers on-chain, but we can verify them using
 		// frame_system's cache of header hashes
-		let header_hash = frame_system::BlockHash::<T>::get(height.revision_height);
+		let block_number = T::BlockNumber::from(height.revision_height as u32);
+		let header_hash = frame_system::BlockHash::<T>::get(block_number);
 		// we don't even have the hash for this height (anymore?)
 		if header_hash == T::Hash::default() {
 			Err(ICS02Error::implementation_specific(format!(
@@ -190,8 +189,19 @@ where
 			)))?
 		}
 
-		let connection_proof: ConnectionProof = codec::Decode::decode(&mut proof.as_bytes())?;
-		let header = T::Header::decode(&mut &connection_proof.header[..])?;
+		let connection_proof: HostConsensusProof = codec::Decode::decode(&mut &proof[..])
+			.map_err(|e| {
+				ICS02Error::implementation_specific(format!(
+					"[host_consensus_state]: Failed to decode proof: {}",
+					e
+				))
+			})?;
+		let header = T::Header::decode(&mut &connection_proof.header[..]).map_err(|e| {
+			ICS02Error::implementation_specific(format!(
+				"[host_consensus_state]: Failed to decode header: {}",
+				e
+			))
+		})?;
 		if header.hash() != header_hash {
 			Err(ICS02Error::implementation_specific(format!(
 				"[host_consensus_state]: Incorrect host consensus state for height {}",
@@ -200,14 +210,14 @@ where
 		}
 		let timestamp = {
 			// verify timestamp extrinsic
-			let proof = &*connection_proof.extrinsic_with_proof.1;
-			let ext = &*connection_proof.extrinsic_with_proof.0;
-			let extrinsic_root = header.extrinsics_root();
-			HostFunctions::<T>::verify_timestamp_extrinsic(extrinsic_root, proof, ext)?;
+			let ext = &*connection_proof.extrinsic;
+			let proof = &*connection_proof.extrinsic_proof;
+			let extrinsic_root = <[u8; 32]>::try_from(header.extrinsics_root().as_ref()).expect("header has been verified; qed");
+			HostFunctions::<T>::verify_timestamp_extrinsic(&extrinsic_root, proof, ext)?;
 
 			let (_, _, timestamp): (u8, u8, Compact<u64>) = codec::Decode::decode(&mut &ext[2..])
-				.map_err(|_| {
-				Error::timestamp_extrinsic("Failed to decode extrinsic".to_string())
+				.map_err(|err| {
+				ICS02Error::implementation_specific(format!("Failed to decode extrinsic: {err}"))
 			})?;
 
 			let duration = core::time::Duration::from_millis(timestamp.into());

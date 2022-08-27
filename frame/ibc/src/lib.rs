@@ -155,7 +155,6 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResult,
 		pallet_prelude::*,
-		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			Currency, UnixTime,
@@ -182,7 +181,7 @@ pub mod pallet {
 	use ibc_primitives::{
 		connection_id_from_bytes, get_channel_escrow_address, port_id_from_bytes,
 		runtime_interface::{self, SS58CodecError},
-		IbcHandler, OffchainPacketType, OpenChannelParams,
+		IbcHandler, OpenChannelParams, PacketInfo,
 	};
 	use primitives::currency::CurrencyId;
 	use sp_runtime::{traits::IdentifyAccount, AccountId32};
@@ -305,17 +304,17 @@ pub mod pallet {
 	pub type ConnectionClient<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<Vec<u8>>, ValueQuery>;
 
-	// temporary
+	// temporary until offchain indexing is fixed
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// (ChannelId, PortId, Sequence) => Packet
-	pub type Packets<T: Config> = StorageDoubleMap<
+	pub type SendPackets<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		(Vec<u8>, Vec<u8>),
 		Blake2_128Concat,
 		u64,
-		OffchainPacketType,
+		PacketInfo,
 		ValueQuery,
 	>;
 
@@ -323,16 +322,15 @@ pub mod pallet {
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// (ChannelId, PortId, Sequence) => Packet
-	pub type RawAcknowledgements<T: Config> = StorageDoubleMap<
+	pub type ReceivePackets<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		(Vec<u8>, Vec<u8>),
 		Blake2_128Concat,
 		u64,
-		Vec<u8>,
+		PacketInfo,
 		ValueQuery,
 	>;
-
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// Pallet Params used to disable sending or receipt of ibc tokens
@@ -369,6 +367,13 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)]
 	/// Active Escrow addresses
 	pub type EscrowAddresses<T: Config> = StorageValue<_, BTreeSet<T::AccountId>, ValueQuery>;
+
+	// temporary until offchain indexing is fixed
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	/// (ChannelId, PortId) => BTreeSet<u64>
+	pub type UndeliveredSequences<T: Config> =
+		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>), BTreeSet<u64>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]
@@ -468,6 +473,8 @@ pub mod pallet {
 		TimestampAndHeightNotFound,
 		/// Failed to derive channel escrow address
 		ChannelEscrowAddress,
+		/// Error writing acknowledgement to storage
+		WriteAckError,
 	}
 
 	#[pallet::hooks]

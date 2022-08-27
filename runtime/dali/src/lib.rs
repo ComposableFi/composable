@@ -1474,20 +1474,20 @@ impl_runtime_apis! {
 			Ibc::query_balance_with_address(addr).ok()
 		}
 
-		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
-			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
+		fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+			Ibc::get_send_packet_info(channel_id, port_id, seqs).ok()
 		}
 
-		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>> {
-			Ibc::get_offchain_acks(channel_id, port_id, seqs).ok()
+		fn query_recv_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+			Ibc::get_recv_packet_info(channel_id, port_id, seqs).ok()
+		}
+
+		fn undelivered_sequences(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u64> {
+			Ibc::get_undelivered_sequences(channel_id, port_id)
 		}
 
 		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
 			Ibc::client(client_id).ok()
-		}
-
-		fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
-			Ibc::host_consensus_state(height)
 		}
 
 		fn client_consensus_state(client_id: Vec<u8>, client_height: Vec<u8>, latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {

@@ -23,8 +23,26 @@ where
 			let channel_id = ev.src_channel_id();
 			let port_id = ev.src_port_id();
 			let sequence = u64::from(ev.packet.sequence);
-			let packets: Vec<ibc_primitives::OffchainPacketType> = api
-				.query_packets(
+			let packets: Vec<ibc_primitives::PacketInfo> = api
+				.query_send_packet_info(
+					at,
+					channel_id.to_string().as_bytes().to_vec(),
+					port_id.as_bytes().to_vec(),
+					vec![sequence],
+				)
+				.ok()
+				.flatten()?;
+			let packet = packets.get(0)?.clone();
+			let packet: Packet = packet.into();
+			ev.packet = packet;
+			Some(event)
+		},
+		RawIbcEvent::ReceivePacket(ev) => {
+			let channel_id = ev.src_channel_id();
+			let port_id = ev.src_port_id();
+			let sequence = u64::from(ev.packet.sequence);
+			let packets: Vec<ibc_primitives::PacketInfo> = api
+				.query_recv_packet_info(
 					at,
 					channel_id.to_string().as_bytes().to_vec(),
 					port_id.as_bytes().to_vec(),
@@ -41,8 +59,8 @@ where
 			let channel_id = ev.src_channel_id();
 			let port_id = ev.src_port_id();
 			let sequence = u64::from(ev.packet.sequence);
-			let acks: Vec<Vec<u8>> = api
-				.query_acknowledgements(
+			let packets: Vec<ibc_primitives::PacketInfo> = api
+				.query_recv_packet_info(
 					at,
 					channel_id.to_string().as_bytes().to_vec(),
 					port_id.as_bytes().to_vec(),
@@ -50,17 +68,17 @@ where
 				)
 				.ok()
 				.flatten()?;
-
-			let ack = acks.get(0)?.clone();
-			ev.ack = ack;
+			let packet_info = packets.get(0)?.clone();
+			ev.ack = packet_info.ack.clone()?;
+			ev.packet = packet_info.into();
 			Some(event)
 		},
 		RawIbcEvent::AcknowledgePacket(ev) => {
 			let channel_id = ev.src_channel_id();
 			let port_id = ev.src_port_id();
 			let sequence = u64::from(ev.packet.sequence);
-			let packets: Vec<ibc_primitives::OffchainPacketType> = api
-				.query_packets(
+			let packets: Vec<ibc_primitives::PacketInfo> = api
+				.query_send_packet_info(
 					at,
 					channel_id.to_string().as_bytes().to_vec(),
 					port_id.as_bytes().to_vec(),
@@ -77,8 +95,8 @@ where
 			let channel_id = ev.src_channel_id();
 			let port_id = ev.src_port_id();
 			let sequence = u64::from(ev.packet.sequence);
-			let packets: Vec<ibc_primitives::OffchainPacketType> = api
-				.query_packets(
+			let packets: Vec<ibc_primitives::PacketInfo> = api
+				.query_send_packet_info(
 					at,
 					channel_id.to_string().as_bytes().to_vec(),
 					port_id.as_bytes().to_vec(),
@@ -95,8 +113,8 @@ where
 			let channel_id = ev.src_channel_id();
 			let port_id = ev.src_port_id();
 			let sequence = u64::from(ev.packet.sequence);
-			let packets: Vec<ibc_primitives::OffchainPacketType> = api
-				.query_packets(
+			let packets: Vec<ibc_primitives::PacketInfo> = api
+				.query_send_packet_info(
 					at,
 					channel_id.to_string().as_bytes().to_vec(),
 					port_id.as_bytes().to_vec(),
