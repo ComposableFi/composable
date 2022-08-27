@@ -305,12 +305,6 @@ pub mod pallet {
 	pub type ConnectionClient<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<Vec<u8>>, ValueQuery>;
 
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// height => IbcConsensusState
-	pub type HostConsensusStates<T: Config> =
-		StorageValue<_, BoundedBTreeMap<u64, IbcConsensusState, ConstU32<250>>, ValueQuery>;
-
 	// temporary
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]

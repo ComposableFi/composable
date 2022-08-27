@@ -31,6 +31,7 @@ impl<T: Config> Connections<T> {
 		);
 	}
 
+	// WARNING: too expensive to be called from an on-chain context, only here for rpc layer.
 	pub fn iter() -> ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)> {
 		let prefix_path = "connections/".to_string();
 		let key = apply_prefix(T::CONNECTION_PREFIX, vec![prefix_path]);

@@ -1,13 +1,16 @@
 use super::*;
+use codec::Compact;
 use core::str::FromStr;
 
 use crate::{
+	host_functions::HostFunctions,
 	ics23::{client_states::ClientStates, clients::Clients, consensus_states::ConsensusStates},
 	impls::host_height,
 	routing::Context,
 };
 use frame_support::traits::Get;
 use ibc::{
+	clients::host_functions::HostFunctionsProvider,
 	core::{
 		ics02_client::{
 			client_consensus::AnyConsensusState,
@@ -16,12 +19,23 @@ use ibc::{
 			context::{ClientKeeper, ClientReader},
 			error::Error as ICS02Error,
 		},
+		ics23_commitment::commitment::CommitmentProofBytes,
 		ics24_host::identifier::ClientId,
 	},
 	timestamp::Timestamp,
 	Height,
 };
+use sp_runtime::SaturatedConversion;
+use sp_runtime::traits::Header;
 use tendermint_proto::Protobuf;
+
+/// Connection proof type, used in relayer
+#[derive(Encode, Decode)]
+pub struct ConnectionProof {
+	header: Vec<u8>,
+	extrinsic_with_proof: (Vec<u8>, Vec<Vec<u8>>),
+	connection_proof: Vec<u8>,
+}
 
 impl<T: Config + Send + Sync> ClientReader for Context<T>
 where
@@ -141,6 +155,13 @@ where
 
 		Ok(None)
 	}
+	fn host_height(&self) -> Height {
+		log::trace!(target: "pallet_ibc", "in client: [host_height]");
+		let current_height = host_height::<T>();
+		let para_id: u32 = parachain_info::Pallet::<T>::get().into();
+		Height::new(para_id.into(), current_height)
+	}
+
 	#[allow(clippy::disallowed_methods)]
 	fn host_timestamp(&self) -> Timestamp {
 		use frame_support::traits::UnixTime;
@@ -153,40 +174,64 @@ where
 		ts.unwrap()
 	}
 
-	fn host_height(&self) -> Height {
-		log::trace!(target: "pallet_ibc", "in client: [host_height]");
-		let current_height = host_height::<T>();
-		let para_id: u32 = parachain_info::Pallet::<T>::get().into();
-		Height::new(para_id.into(), current_height)
-	}
-
-	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS02Error> {
-		let bounded_map = HostConsensusStates::<T>::get();
-		let local_state = bounded_map.get(&height.revision_height).ok_or_else(|| {
-			ICS02Error::implementation_specific(format!(
-				"[host_consensus_state]: consensus state not found for host at height {}",
+	fn host_consensus_state(
+		&self,
+		height: Height,
+		proof: &CommitmentProofBytes,
+	) -> Result<AnyConsensusState, ICS02Error> {
+		// unfortunately we can't access headers on-chain, but we can verify them using
+		// frame_system's cache of header hashes
+		let header_hash = frame_system::BlockHash::<T>::get(height.revision_height);
+		// we don't even have the hash for this height (anymore?)
+		if header_hash == T::Hash::default() {
+			Err(ICS02Error::implementation_specific(format!(
+				"[host_consensus_state]: Unknown height {}",
 				height
-			))
-		})?;
-		let timestamp = Timestamp::from_nanoseconds(local_state.timestamp)
-			.map_err(|e| {
-				ICS02Error::implementation_specific(format!(
-					"[host_consensus_state]: error decoding timestamp{}",
-					e
-				))
-			})?
-			.into_tm_time()
-			.ok_or_else(|| {
-				ICS02Error::implementation_specific(
-					"[host_consensus_state]: Could not convert timestamp into tendermint time"
-						.to_string(),
-				)
+			)))?
+		}
+
+		let connection_proof: ConnectionProof = codec::Decode::decode(&mut proof.as_bytes())?;
+		let header = T::Header::decode(&mut &connection_proof.header[..])?;
+		if header.hash() != header_hash {
+			Err(ICS02Error::implementation_specific(format!(
+				"[host_consensus_state]: Incorrect host consensus state for height {}",
+				height
+			)))?
+		}
+		let timestamp = {
+			// verify timestamp extrinsic
+			let proof = &*connection_proof.extrinsic_with_proof.1;
+			let ext = &*connection_proof.extrinsic_with_proof.0;
+			let extrinsic_root = header.extrinsics_root();
+			HostFunctions::<T>::verify_timestamp_extrinsic(extrinsic_root, proof, ext)?;
+
+			let (_, _, timestamp): (u8, u8, Compact<u64>) = codec::Decode::decode(&mut &ext[2..])
+				.map_err(|_| {
+				Error::timestamp_extrinsic("Failed to decode extrinsic".to_string())
 			})?;
-		let consensus_state = ibc::clients::ics11_beefy::consensus_state::ConsensusState {
-			timestamp,
-			root: local_state.commitment_root.clone().into(),
+
+			let duration = core::time::Duration::from_millis(timestamp.into());
+			Timestamp::from_nanoseconds(duration.as_nanos().saturated_into::<u64>())
+				.map_err(|e| {
+					ICS02Error::implementation_specific(format!(
+						"[host_consensus_state]: error decoding timestamp{}",
+						e
+					))
+				})?
+				.into_tm_time()
+				.ok_or_else(|| {
+					ICS02Error::implementation_specific(
+						"[host_consensus_state]: Could not convert timestamp into tendermint time"
+							.to_string(),
+					)
+				})?
 		};
 
+		// now this header can be trusted
+		let consensus_state = ibc::clients::ics11_beefy::consensus_state::ConsensusState {
+			timestamp,
+			root: header.state_root().as_ref().to_vec().into(),
+		};
 		Ok(AnyConsensusState::Beefy(consensus_state))
 	}
 
@@ -213,14 +258,6 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		let client_type = client_type.as_str().as_bytes().to_vec();
 		<Clients<T>>::insert(&client_id, client_type);
 		Ok(())
-	}
-
-	fn increase_client_counter(&mut self) {
-		log::trace!(target: "pallet_ibc", "in client : [increase_client_counter]");
-		// increment counter
-		if let Some(val) = <ClientCounter<T>>::get().checked_add(1) {
-			<ClientCounter<T>>::put(val);
-		}
 	}
 
 	fn store_client_state(
@@ -254,6 +291,14 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		// todo: pruning
 		ConsensusStates::<T>::insert(client_id, height, data);
 		Ok(())
+	}
+
+	fn increase_client_counter(&mut self) {
+		log::trace!(target: "pallet_ibc", "in client : [increase_client_counter]");
+		// increment counter
+		if let Some(val) = <ClientCounter<T>>::get().checked_add(1) {
+			<ClientCounter<T>>::put(val);
+		}
 	}
 
 	fn store_update_time(
