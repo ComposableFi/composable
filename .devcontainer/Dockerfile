@@ -1,19 +1,27 @@
 #FROM composable-devcontainer:z5r445ng6yd5ixa2znpkvxxwl3yvmh84
 
+# keep in sync with container default shell user
 ARG USER=vscode
 ARG UID=1000
 ARG GID=${UID}
-ARG NIX_INSTALLER=https://releases.nixos.org/nix/nix-2.10.3/install
 
-FROM composablefi/composable-devcontainer:latest
+# NOTE: keep in sync with base
+ARG NIX_INSTALLER=https://releases.nixos.org/nix/nix-2.10.3/install
+ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-22.05-darwin
+
+ARG CACHIX_NAME=composable-community
+
+#FROM composablefi/composable-devcontainer:latest
+FROM composable-devcontainer:qfvbvh1livn0s1xwzy45zpws84vcq15s
 
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]
 
-
+ARG CHANNEL_URL
 ARG USER
 ARG UID
 ARG GID
 ARG NIX_INSTALLER
+ARG CACHIX_NAME
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -22,33 +30,48 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     xz-utils    
 
 RUN usermod --append --groups sudo ${USER} --shell /bin/bash
+RUN usermod --append --groups root ${USER} --shell /bin/bash
 RUN sed --in-place 's/%sudo.*ALL/%sudo   ALL=(ALL:ALL) NOPASSWD:ALL/' /etc/sudoers
-RUN echo "sandbox = false" >> /etc/nix.conf
-RUN echo "experimental-features = nix-command flakes" >> /etc/nix.conf
+RUN mkdir --parents /etc/nix/
+RUN echo "sandbox = false" >> /etc/nix/nix.conf
+RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
+# && mkdir -p /etc/nix && echo 'sandbox = false' > /etc/nix/nix.conf
 RUN mkdir --parents /nix
-# `chown --recursive vscode /nix` does not help
-RUN rm --recursive --force vscode /nix
+RUN curl --location ${NIX_INSTALLER} > /install.sh
+RUN chmod +x /install.sh
+RUN chown --recursive vscode:vscode /nix
+RUN chown --recursive vscode /nix
 
-# NOTE: keep in sync with base
-# ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-22.05-darwin
-# ARG CACHIX_NAME=composable-community
+RUN addgroup --system nixbld
+RUN adduser ${USER} root
+RUN adduser ${USER} nixbld
+RUN for i in $(seq 1 30); do useradd -ms /bin/bash nixbld$i &&  adduser nixbld$i nixbld; done
+# && mkdir -m 0755 /nix
 
-# VOLUME /nix
-USER ${USER}
-ENV USER=${USER}
-RUN curl --location ${NIX_INSTALLER} > ~/install.sh
-RUN chmod +x ~/install.sh
-RUN ~/install.sh
+RUN /install.sh
+RUN source /root/.nix-profile/etc/profile.d/nix.sh && \
+    nix-channel --add ${CHANNEL_URL} nixpkgs && \
+    nix-channel --update 
 
-# no idea why profile was not created, some rule `if in docker ...` may be
-RUN export NIX_PROFILE=$(find /nix -name nix.sh) && \
-    chmod +x $NIX_PROFILE && \
-    echo "source $NIX_PROFILE" >> ~/.bashrc && \
-    echo "source $NIX_PROFILE" >> ~/.profile && \
-    echo "source $NIX_PROFILE" >> ~/.bash_profile
+RUN source /root/.nix-profile/etc/profile.d/nix.sh && \
+    nix-env -iA nixpkgs.cachix
+    
+RUN source /root/.nix-profile/etc/profile.d/nix.sh && \
+    cachix use ${CACHIX_NAME}
 
-#nix-channel --add ${CHANNEL_URL} nixpkgs && \
-#   nix-channel --update 
-#&& \
-# nix-env -iA nixpkgs.cachix && \
-# cachix use ${CACHIX_NAME}
+RUN echo "source /root/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc && \
+    echo "source /root/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile && \
+    echo "source /root/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile
+
+
+
+RUN mkdir --parents /home/vscode/.nix-profile/etc/profile.d/
+RUN cp /root/.nix-profile/etc/profile.d/nix.sh /home/vscode/.nix-profile/etc/profile.d/nix.sh
+RUN chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
+RUN chown --recursive vscode:vscode /home/vscode/.nix-profile/
+
+# USER ${USER}
+# ENV USER=${USER}
+RUN echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bashrc && \
+    echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.profile && \
+    echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bash_profile
