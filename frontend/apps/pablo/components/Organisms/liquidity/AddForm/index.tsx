@@ -22,7 +22,7 @@ import { ConfirmingSupplyModal } from "./ConfirmingSupplyModal";
 import { TransactionSettings } from "../../TransactionSettings";
 import { YourPosition } from "../YourPosition";
 import { PoolShare } from "./PoolShare";
-import { useAddLiquidity } from "@/store/hooks/useAddLiquidity";
+import { useAddLiquidityForm } from "@/store/hooks/useAddLiquidityForm";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useSnackbar } from "notistack";
 
@@ -54,8 +54,8 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     lpReceiveAmount,
     needToSelectToken,
     findPoolManually,
-    pool,
-  } = useAddLiquidity();
+    pool
+  } = useAddLiquidityForm();
 
   const isConfirmSupplyModalOpen = useAppSelector(
     (state) => state.ui.isConfirmSupplyModalOpen
@@ -272,6 +272,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       )}
 
       <ConfirmSupplyModal
+        pool={pool}
         lpReceiveAmount={lpReceiveAmount}
         priceOneInTwo={assetOneAmountBn.div(assetTwoAmountBn)}
         priceTwoInOne={assetTwoAmountBn.div(assetOneAmountBn)}
@@ -296,6 +297,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       /> */}
 
       <ConfirmingSupplyModal
+        pool={pool}
         open={isConfirmingSupplyModalOpen}
         lpReceiveAmount={lpReceiveAmount}
         priceOneInTwo={assetOneAmountBn.div(assetTwoAmountBn)}
