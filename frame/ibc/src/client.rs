@@ -1,16 +1,14 @@
 use super::*;
-use codec::Compact;
 use core::str::FromStr;
 
 use crate::{
-	host_functions::HostFunctions,
 	ics23::{client_states::ClientStates, clients::Clients, consensus_states::ConsensusStates},
 	impls::host_height,
 	routing::Context,
 };
 use frame_support::traits::Get;
 use ibc::{
-	clients::host_functions::HostFunctionsProvider,
+	clients::ics11_beefy::consensus_state::ConsensusState,
 	core::{
 		ics02_client::{
 			client_consensus::AnyConsensusState,
@@ -24,7 +22,7 @@ use ibc::{
 	timestamp::Timestamp,
 	Height,
 };
-use sp_runtime::{traits::Header, SaturatedConversion};
+use sp_runtime::SaturatedConversion;
 use tendermint_proto::Protobuf;
 
 impl<T: Config + Send + Sync> ClientReader for Context<T>
@@ -165,12 +163,31 @@ where
 		ts.unwrap()
 	}
 
+	#[cfg(feature = "runtime-benchmarks")]
+	fn host_consensus_state(
+		&self,
+		_height: Height,
+		_proof: Option<Vec<u8>>,
+	) -> Result<AnyConsensusState, ICS02Error> {
+		let timestamp = Timestamp::from_nanoseconds(1).unwrap();
+		let timestamp = timestamp.into_tm_time().unwrap();
+		return Ok(AnyConsensusState::Beefy(ConsensusState { timestamp, root: vec![].into() }))
+	}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
 	fn host_consensus_state(
 		&self,
 		height: Height,
 		proof: Option<Vec<u8>>,
 	) -> Result<AnyConsensusState, ICS02Error> {
-		let proof = proof.ok_or_else(|| ICS02Error::implementation_specific(format!("No host proof supplied")))?;
+		use crate::host_functions::HostFunctions;
+		use codec::Compact;
+		use ibc::clients::host_functions::HostFunctionsProvider;
+		use sp_runtime::traits::Header;
+
+		let proof = proof.ok_or_else(|| {
+			ICS02Error::implementation_specific(format!("No host proof supplied"))
+		})?;
 		#[derive(Encode, Decode)]
 		struct HostConsensusProof {
 			header: Vec<u8>,
@@ -189,8 +206,8 @@ where
 			)))?
 		}
 
-		let connection_proof: HostConsensusProof = codec::Decode::decode(&mut &proof[..])
-			.map_err(|e| {
+		let connection_proof: HostConsensusProof =
+			codec::Decode::decode(&mut &proof[..]).map_err(|e| {
 				ICS02Error::implementation_specific(format!(
 					"[host_consensus_state]: Failed to decode proof: {}",
 					e
@@ -212,7 +229,8 @@ where
 			// verify timestamp extrinsic
 			let ext = &*connection_proof.extrinsic;
 			let proof = &*connection_proof.extrinsic_proof;
-			let extrinsic_root = <[u8; 32]>::try_from(header.extrinsics_root().as_ref()).expect("header has been verified; qed");
+			let extrinsic_root = <[u8; 32]>::try_from(header.extrinsics_root().as_ref())
+				.expect("header has been verified; qed");
 			HostFunctions::<T>::verify_timestamp_extrinsic(&extrinsic_root, proof, ext)?;
 
 			let (_, _, timestamp): (u8, u8, Compact<u64>) = codec::Decode::decode(&mut &ext[2..])
