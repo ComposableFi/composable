@@ -1,6 +1,6 @@
 import { StoreSlice } from "../types";
 import { UISlice } from "./ui.types";
-import { setPolkadotModalVisibility } from "./ui.utils";
+import { setPolkadotModalVisibility, setUiSlice } from "./ui.utils";
 
 const createUiSlice: StoreSlice<UISlice> = (set) => ({
   ui: {
@@ -12,6 +12,7 @@ const createUiSlice: StoreSlice<UISlice> = (set) => ({
     isConfirmingModalOpen: false,
     isSwapSettingsModalOpen: false,
     isAccountSettingsModalOpen: false,
+    hasTriedEagerConnect: false,
   },
   openPolkadotModal: () =>
     set((prev: UISlice) => ({
@@ -21,6 +22,10 @@ const createUiSlice: StoreSlice<UISlice> = (set) => ({
     set((prev: UISlice) => ({
       ui: setPolkadotModalVisibility(prev.ui, false),
     })),
+  setUiState: (state) =>
+    set((prev: UISlice) => {
+      ui: setUiSlice(prev.ui, state);
+    }),
 });
 
 export default createUiSlice;

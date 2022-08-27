@@ -50,7 +50,12 @@ export async function createConsProdPool(
   });
   const {
     data: [resultPoolId]
-  } = await sendAndWaitForSuccess(api, sudoKey, api.events.pablo.PoolCreated.is, api.tx.sudo.sudo(api.tx.pablo.create(pool)));
+  } = await sendAndWaitForSuccess(
+    api,
+    sudoKey,
+    api.events.pablo.PoolCreated.is,
+    api.tx.sudo.sudo(api.tx.pablo.create(pool))
+  );
   return resultPoolId.toNumber();
 }
 
@@ -401,7 +406,12 @@ export async function createStableSwapPool(
   });
   const {
     data: [returnedPoolId]
-  } = await sendAndWaitForSuccess(api, sudoKey, api.events.pablo.PoolCreated.is, api.tx.sudo.sudo(api.tx.pablo.create(pool)));
+  } = await sendAndWaitForSuccess(
+    api,
+    sudoKey,
+    api.events.pablo.PoolCreated.is,
+    api.tx.sudo.sudo(api.tx.pablo.create(pool))
+  );
   const resultPoolId = returnedPoolId.toNumber() as number;
   return { resultPoolId };
 }

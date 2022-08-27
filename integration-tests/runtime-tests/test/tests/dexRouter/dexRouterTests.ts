@@ -47,7 +47,7 @@ describe("DexRouterPallet Tests", function () {
     await mintAssetsToWallet(api, walletId2, sudoKey, [1, eth, usdc, usdt, dai]);
   });
 
-  before("Creating pools", async function()  {
+  before("Creating pools", async function () {
     poolId1 = await createConsProdPool(api, sudoKey, walletId1, usdt, eth, fee, baseWeight);
     poolId2 = await createConsProdPool(api, sudoKey, walletId1, usdc, usdt, fee, baseWeight);
     poolId3 = await createConsProdPool(api, sudoKey, walletId1, dai, usdc, fee, baseWeight);

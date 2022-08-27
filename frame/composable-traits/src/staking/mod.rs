@@ -1,3 +1,5 @@
+use core::num::NonZeroU64;
+
 use crate::{
 	staking::lock::{Lock, LockConfig},
 	time::DurationSeconds,
@@ -11,7 +13,6 @@ use sp_runtime::{DispatchError, Perbill, Permill};
 
 pub mod lock;
 pub mod math;
-pub mod nft;
 
 /// Abstraction over the map of possible lock durations and corresponding reward multipliers.
 pub type StakingDurationToRewardsMultiplierConfig<Limit> =
@@ -66,6 +67,24 @@ pub enum RewardRatePeriod {
 	PerSecond,
 }
 
+impl RewardRatePeriod {
+	/// Returns the length of the period in seconds.
+	pub fn as_secs(&self) -> NonZeroU64 {
+		match self {
+			RewardRatePeriod::PerSecond =>
+				sp_std::num::NonZeroU64::new(1).expect("1 is non-zero; qed;"),
+		}
+	}
+}
+
+/// A reward update states the new reward and reward_rate for a given asset
+#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
+pub struct RewardUpdate<Balance> {
+	/// The rewarding rate that increases the pool `total_reward`
+	/// at a given time.
+	pub reward_rate: RewardRate<Balance>,
+}
+
 /// Abstraction over the asset to reduction map stored for staking.
 pub type Reductions<AssetId, Balance, Limit> = BoundedBTreeMap<AssetId, Balance, Limit>;
 
@@ -74,7 +93,10 @@ pub type Rewards<AssetId, Balance, Limit> =
 	BoundedBTreeMap<AssetId, Reward<AssetId, Balance>, Limit>;
 
 impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
-	pub fn from(reward_config: RewardConfig<AssetId, Balance>) -> Reward<AssetId, Balance> {
+	pub fn from_config(
+		reward_config: RewardConfig<AssetId, Balance>,
+		now_seconds: u64,
+	) -> Reward<AssetId, Balance> {
 		Reward {
 			asset_id: reward_config.asset_id,
 			total_rewards: Zero::zero(),
@@ -82,7 +104,7 @@ impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
 			total_dilution_adjustment: Zero::zero(),
 			max_rewards: reward_config.max_rewards,
 			reward_rate: reward_config.reward_rate,
-			last_updated_timestamp: 0,
+			last_updated_timestamp: now_seconds,
 		}
 	}
 }
@@ -111,6 +133,12 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 
 	// possible lock config for this pool
 	pub lock: LockConfig<DurationPresets>,
+	// TODO (vim): Introduce asset ids for financial NFT as well as the shares of the pool
+	// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
+	// pub share_asset_id: AssetId;
+
+	// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
+	// pub financial_nft_asset_id: AssetId;
 }
 
 /// Default transfer limit on new asset added as rewards.
@@ -151,6 +179,12 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 		reward_configs: RewardConfigs,
 		// possible lock config for this reward
 		lock: LockConfig<DurationPresets>,
+		// TODO (vim): Introduce asset ids for financial NFT as well as the shares of the pool
+		// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
+		// share_asset_id: AssetId,
+
+		// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
+		// financial_nft_asset_id: AssetId
 	},
 }
 
@@ -160,6 +194,8 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
 	/// Protocol or the user account that owns this stake
+	// TODO (vim): Remove the owner and track the financial NFT ID. In order to prevent a direct
+	// dependancy to NFTs we can also just use nft ID as position ID. 	pub financial_nft_id: ItemId
 	pub owner: AccountId,
 
 	/// Reward Pool ID from which pool to allocate rewards for this
@@ -198,12 +234,6 @@ pub trait ManageStaking {
 			StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
 		>,
 	) -> Result<Self::RewardPoolId, DispatchError>;
-}
-
-/// implemented by instances which know their share of something bigger
-pub trait Shares {
-	type Balance;
-	fn shares(&self) -> Self::Balance;
 }
 
 /// is unaware of concrete positions
@@ -278,40 +308,35 @@ pub trait Staking {
 	) -> Result<[Self::PositionId; 2], DispatchError>;
 }
 
-pub trait StakingReward {
+/// Interface for managing staking through financial NFTs.
+pub trait StakingFinancialNft {
 	type AccountId;
-	type AssetId;
+	type CollectionId;
+	type InstanceId;
 	type Balance;
-	type PositionId;
 
-	/// Claim the current rewards.
-	///
-	/// Arguments
-	///
-	/// * `who` the actual account triggering this claim.
-	/// * `instance_id` the ID uniquely identifying the NFT from which we will compute the available
-	///   rewards.
-	/// * `to` the account to transfer the rewards to.
-	/// Return amount if reward asset which was staked asset claimed.
-	fn claim_rewards(
+	/// Extend the stake of an existing position represented by a financial NFT.
+	fn extend(
 		who: &Self::AccountId,
-		instance_id: &Self::PositionId,
-	) -> Result<(Self::AssetId, Self::Balance), DispatchError>;
-
-	/// Transfer a reward to the staking rewards protocol.
-	///
-	/// Arguments
-	///
-	/// * `asset` the protocol asset to reward.
-	/// * `reward_asset` the reward asset to transfer.
-	/// * `from` the account to transfer the reward from.
-	/// * `amount` the amount of reward to transfer.
-	/// * `keep_alive` whether to keep alive or not the `from` account while transferring the
-	///   reward.
-	fn claim_reward(
-		who: &Self::AccountId,
-		instance_id: &Self::PositionId,
+		collection: Self::CollectionId,
+		instance: Self::InstanceId,
 		amount: Self::Balance,
 		keep_alive: bool,
+	) -> Result<Self::InstanceId, DispatchError>;
+
+	/// Unstake an actual staked position, represented by a financial NFT.
+	fn burn(
+		who: &Self::AccountId,
+		collection: Self::CollectionId,
+		instance: Self::InstanceId,
+		remove_amount: Self::Balance,
 	) -> DispatchResult;
+
+	/// `ratio` - how much of share to retain in the original position.
+	fn split(
+		who: &Self::AccountId,
+		collection: Self::CollectionId,
+		instance: Self::InstanceId,
+		ratio: Permill,
+	) -> Result<[Self::InstanceId; 2], DispatchError>;
 }
