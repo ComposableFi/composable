@@ -135,6 +135,7 @@
           # source relevant to build rust only
           rust-src = let
             dir-blacklist = [
+              ".nix"
               "nix"
               ".config"
               ".devcontainer"
