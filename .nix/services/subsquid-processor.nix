@@ -1,11 +1,14 @@
 { pkgs, packages, ... }: {
-  image.contents = [ pkgs.bash pkgs.python3 pkgs.coreutils ];
+  image = {
+    contents = [ pkgs.coreutils pkgs.python3 packages.subsquid-processor ];
+    enableRecommendedContents = true;
+  };
   service = {
     restart = "always";
     network_mode = "host";
     useHostStore = true;
     command = [
-      "bash"
+      "sh"
       "-c"
       ''
         ${packages.subsquid-processor}/bin/run-subsquid-processor
