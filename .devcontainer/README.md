@@ -22,7 +22,7 @@ First, Microsoft bases images are dynamic and represent sandwich of container bu
 
 Second, fast ARM builders are not yet widespread.
 
-Third, nix likes either root with systemd or non root without systemd, but containers are by default root without systemd.
+Third, nix likes either root with systemd or non root without systemd, but containers are by default root without systemd. Adding channels is user operation, but updating is root one and it fails in docker.
 
 Forth, we want all tools find all stuff on start
 and there is no need to run commands after start. Cooking all before hand is harder.
