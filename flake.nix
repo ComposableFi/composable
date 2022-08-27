@@ -478,8 +478,10 @@
               fromImage = devcontainer-base-image;
               # be very carefull with this, so this must be version compatible with base and what vscode will inject
               contents = [
-                #rust-nightly
-                cachix
+                # installing nix is broken vi this, 
+                # cachix
+                rust-nightly
+                curl
                 rustup # just if it wants to make ad hoc updates
                 #helix
                 clang
@@ -492,11 +494,15 @@
                 #taplo
                 #go
                 #libclang
+                rust-analyzer
                 gcc
                 openssl
                 gnumake
                 pkg-config
               ];
+              fakeRootCommands = ''
+                #chown --recursive vscode:vscode /nix
+              '';
             };
 
             check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
@@ -632,28 +638,28 @@
             developers = developers-minimal.overrideAttrs (base: {
               buildInputs = with packages;
                 base.buildInputs ++ [
-                  bacon
-                  google-cloud-sdk
-                  grub2
-                  jq
-                  lldb
-                  llvmPackages_latest.bintools
-                  llvmPackages_latest.lld
-                  llvmPackages_latest.llvm
-                  mdbook
-                  nix-tree
-                  nixpkgs-fmt
-                  openssl
-                  openssl.dev
-                  pkg-config
-                  qemu
-                  rnix-lsp
+                  # bacon
+                  # google-cloud-sdk
+                  # grub2
+                  # jq
+                  # lldb
+                  # llvmPackages_latest.bintools
+                  # llvmPackages_latest.lld
+                  # llvmPackages_latest.llvm
+                  # mdbook
+                  # nix-tree
+                  # nixpkgs-fmt
+                  # openssl
+                  # openssl.dev
+                  # pkg-config
+                  # qemu
+                  # rnix-lsp
                   rust-nightly
-                  taplo
-                  wasm-optimizer
-                  xorriso
-                  zlib.out
-                  nix-tree
+                  # taplo
+                  # wasm-optimizer
+                  # xorriso
+                  # zlib.out
+                  # nix-tree
                 ] ++ docs-renders;
             });
 

@@ -12,7 +12,7 @@ ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-22.05-darwin
 ARG CACHIX_NAME=composable-community
 
 #FROM composablefi/composable-devcontainer:latest
-FROM composable-devcontainer:qfvbvh1livn0s1xwzy45zpws84vcq15s
+FROM composable-devcontainer:mfqlb4qsqz6wk3lvrz8kfzj137wvlcs5
 
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]
 
@@ -40,38 +40,40 @@ RUN mkdir --parents /nix
 RUN curl --location ${NIX_INSTALLER} > /install.sh
 RUN chmod +x /install.sh
 RUN chown --recursive vscode:vscode /nix
-RUN chown --recursive vscode /nix
+#RUN chown --recursive vscode /nix
 
 RUN addgroup --system nixbld
 RUN adduser ${USER} root
 RUN adduser ${USER} nixbld
 RUN for i in $(seq 1 30); do useradd -ms /bin/bash nixbld$i &&  adduser nixbld$i nixbld; done
-# && mkdir -m 0755 /nix
+
+# without this line, if our docker has prebuild nix stuff, nix fails to install
+RUN chmod --verbose -R a+rwx /nix
+
+USER ${USER}
+ENV USER=${USER}
 
 RUN /install.sh
-RUN source /root/.nix-profile/etc/profile.d/nix.sh && \
+RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-channel --add ${CHANNEL_URL} nixpkgs && \
     nix-channel --update 
 
-RUN source /root/.nix-profile/etc/profile.d/nix.sh && \
+RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-env -iA nixpkgs.cachix
     
-RUN source /root/.nix-profile/etc/profile.d/nix.sh && \
+RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     cachix use ${CACHIX_NAME}
 
-RUN echo "source /root/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc && \
-    echo "source /root/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile && \
-    echo "source /root/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile
+RUN echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc && \
+    echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile && \
+    echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile
 
 
+# RUN mkdir --parents /home/vscode/.nix-profile/etc/profile.d/
+# #RUN cp /root/.nix-profile/etc/profile.d/nix.sh /home/vscode/.nix-profile/etc/profile.d/nix.sh
+# RUN chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
+# RUN chown --recursive vscode:vscode /home/vscode/.nix-profile/
 
-RUN mkdir --parents /home/vscode/.nix-profile/etc/profile.d/
-RUN cp /root/.nix-profile/etc/profile.d/nix.sh /home/vscode/.nix-profile/etc/profile.d/nix.sh
-RUN chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
-RUN chown --recursive vscode:vscode /home/vscode/.nix-profile/
-
-# USER ${USER}
-# ENV USER=${USER}
-RUN echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bashrc && \
-    echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.profile && \
-    echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bash_profile
+# RUN echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bashrc && \
+#     echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.profile && \
+#     echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bash_profile
