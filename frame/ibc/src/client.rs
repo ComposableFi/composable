@@ -196,8 +196,13 @@ where
 		}
 		// unfortunately we can't access headers on-chain, but we can verify them using
 		// frame_system's cache of header hashes
-		let block_number = T::BlockNumber::from(height.revision_height as u32);
-		let header_hash = frame_system::BlockHash::<T>::get(block_number);
+		let height = u32::try_from(height.revision_height).map_err(|_| {
+			ICS02Error::implementation_specific(format!(
+				"[host_consensus_state]: Can't fit height: {} in u32",
+				height
+			))
+		})?;
+		let header_hash = frame_system::BlockHash::<T>::get(T::BlockNumber::from(height));
 		// we don't even have the hash for this height (anymore?)
 		if header_hash == T::Hash::default() {
 			Err(ICS02Error::implementation_specific(format!(
