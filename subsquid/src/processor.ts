@@ -30,7 +30,10 @@ import {
   processNewOfferEvent,
   processOfferCancelledEvent,
 } from "./processors/bondedFinance";
-import { processVestingScheduleAddedEvent } from "./processors/vestingSchedule";
+import {
+  processVestingClaimedEvent,
+  processVestingScheduleAddedEvent,
+} from "./processors/vestingSchedule";
 import { processOraclePriceChanged } from "./processors/oracle";
 
 const processor = new SubstrateProcessor("composable_dali_dev");
@@ -123,6 +126,8 @@ processor.addEventHandler(
   "vesting.VestingScheduleAdded",
   processVestingScheduleAddedEvent
 );
+
+processor.addEventHandler("vesting.Claimed", processVestingClaimedEvent);
 
 processor.addEventHandler("stakingRewards.RewardPoolCreated", async (ctx) => {
   await processRewardPoolCreatedEvent(ctx);

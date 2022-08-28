@@ -151,9 +151,10 @@ export function updatedClaimedAmount(
  * @param event
  */
 export async function processVestingClaimedEvent(
-  ctx: EventHandlerContext,
-  event: VestingClaimedEvent
+  ctx: EventHandlerContext
 ): Promise<void> {
+  const event = new VestingClaimedEvent(ctx);
+
   const { who, claimedAmountPerSchedule } =
     getVestingScheduleClaimedEvent(event);
 
