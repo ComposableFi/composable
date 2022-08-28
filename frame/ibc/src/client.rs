@@ -8,11 +8,11 @@ use crate::{
 };
 use frame_support::traits::Get;
 use ibc::{
-	clients::ics11_beefy::consensus_state::ConsensusState,
+	clients::ics11_beefy::{ consensus_state::ConsensusState},
 	core::{
 		ics02_client::{
 			client_consensus::AnyConsensusState,
-			client_state::AnyClientState,
+			client_state::{AnyClientState, ClientState},
 			client_type::ClientType,
 			context::{ClientKeeper, ClientReader},
 			error::Error as ICS02Error,
@@ -87,6 +87,10 @@ where
 			any_consensus_state
 		);
 		Ok(any_consensus_state)
+	}
+
+	fn host_client_type(&self) -> ClientType {
+		ClientType::Beefy
 	}
 
 	fn next_consensus_state(
@@ -276,7 +280,10 @@ where
 	}
 }
 
-impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
+impl<T: Config + Send + Sync> ClientKeeper for Context<T>
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	fn store_client_type(
 		&mut self,
 		client_id: ClientId,
@@ -359,6 +366,38 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		let host_height = host_height.encode_vec();
 		let client_id = client_id.as_bytes().to_vec();
 		ClientUpdateHeight::<T>::insert(client_id, height, host_height);
+		Ok(())
+	}
+
+	fn validate_self_client(&self, client_state: &AnyClientState) -> Result<(), ICS02Error> {
+		let client_state = match client_state {
+			AnyClientState::Beefy(client_state) => client_state,
+			client => Err(ICS02Error::unknown_client_type(format!("{}", client.client_type())))?,
+		};
+
+		if client_state.is_frozen() {
+			Err(ICS02Error::implementation_specific(format!("client state is frozen")))?
+		}
+
+		if client_state.relay_chain != T::RelayChain::get() {
+			Err(ICS02Error::implementation_specific(format!("relay chain mis-match")))?
+		}
+
+		let self_para_id: u32 = T::ParaId::get().into();
+		if client_state.para_id != self_para_id  {
+			Err(ICS02Error::implementation_specific(format!("para-id mis-match")))?
+		}
+
+		let block_number: u32 = <frame_system::Pallet<T>>::block_number().into();
+
+		// this really shouldn't be possible
+		if client_state.latest_para_height >= block_number {
+			Err(ICS02Error::implementation_specific(format!(
+				"client has latest_para_height {} greater than or equal to chain height {block_number}",
+				client_state.latest_para_height
+			)))?
+		}
+
 		Ok(())
 	}
 }

@@ -30,6 +30,7 @@
 extern crate alloc;
 
 use codec::{Decode, Encode};
+use cumulus_primitives_core::ParaId;
 use frame_system::ensure_signed;
 pub use pallet::*;
 use scale_info::{
@@ -168,6 +169,7 @@ pub mod pallet {
 			is_sender_chain_source, msgs::transfer::MsgTransfer, Amount, PrefixedCoin,
 			PrefixedDenom, VERSION,
 		},
+		clients::ics11_beefy::client_state::RelayChain,
 		core::{
 			ics02_client::msgs::create_client,
 			ics03_connection::msgs::{conn_open_ack, conn_open_init},
@@ -236,6 +238,10 @@ pub mod pallet {
 		/// Expected blocktime
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
+		/// ParaId of the runtime
+		type ParaId: Get<ParaId>;
+		/// Relay chain this runtime is attached to
+		type RelayChain: Get<RelayChain>;
 		/// benchmarking weight info
 		type WeightInfo: WeightInfo;
 		/// Origin allowed to create light clients and initiate connections
