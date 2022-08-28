@@ -48,6 +48,12 @@ export class VestingSchedule {
   schedule!: Schedule
 
   /**
+   * Initial locked amount
+   */
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  totalAmount!: bigint
+
+  /**
    * True if the schedule has been fully claimed
    */
   @Column_("bool", {nullable: false})

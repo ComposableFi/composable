@@ -1,4 +1,5 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
+import { randomUUID } from "crypto";
 import {
   VestingSchedule as VestingScheduleType,
   VestingScheduleIdSet,
@@ -15,13 +16,14 @@ import {
 } from "../types/events";
 import { encodeAccount } from "../utils";
 import { saveAccountAndTransaction } from "../dbHelper";
-import { randomUUID } from "crypto";
 
 interface VestingScheduleAddedEvent {
   from: Uint8Array;
   to: Uint8Array;
   asset: bigint;
+  vestingScheduleId: bigint;
   schedule: VestingScheduleType;
+  scheduleAmount: bigint;
 }
 
 /**
@@ -65,7 +67,8 @@ export function getNewVestingSchedule(
   ctx: EventHandlerContext,
   event: VestingVestingScheduleAddedEvent
 ): VestingSchedule {
-  const { from, to, asset, schedule } = getVestingScheduleAddedEvent(event);
+  const { from, to, asset, schedule, scheduleAmount } =
+    getVestingScheduleAddedEvent(event);
 
   const fromAccount = encodeAccount(from);
   const toAccount = encodeAccount(to);
@@ -78,6 +81,7 @@ export function getNewVestingSchedule(
     to: toAccount,
     asset,
     schedule: createVestingSchedule(schedule),
+    totalAmount: scheduleAmount,
     fullyClaimed: false,
   });
 }
@@ -109,7 +113,7 @@ interface VestingScheduleClaimedEvent {
   who: Uint8Array;
   asset: bigint;
   lockedAmount: bigint;
-  claimedAmount: bigint;
+  claimedAmountPerSchedule: [bigint, bigint][];
   vestingScheduleIds: VestingScheduleIdSet;
 }
 
@@ -123,13 +127,26 @@ function getVestingScheduleClaimedEvent(
   return event.asV2401 ?? event.asLatest;
 }
 
-function updatedClaimedAmount(schedule: VestingSchedule, claimed: bigint) {
-  // TODO
+/**
+ * Update already claimed amount and set the schedule as full claimed when
+ * necessary.
+ * @param vestingSchedule
+ * @param claimed
+ */
+export function updatedClaimedAmount(
+  vestingSchedule: VestingSchedule,
+  claimed: bigint
+): void {
+  vestingSchedule.schedule.alreadyClaimed += claimed;
+  if (vestingSchedule.schedule.alreadyClaimed === vestingSchedule.totalAmount) {
+    vestingSchedule.fullyClaimed = true;
+  }
 }
 
 /**
  * Process `vesting.Claimed` event.
  *  - Update alreadyClaimed amount for each claimed schedule.
+ *  - Set fullyClaimed when whole locked value has been claimed.
  * @param ctx
  * @param event
  */
@@ -137,23 +154,32 @@ export async function processVestingClaimedEvent(
   ctx: EventHandlerContext,
   event: VestingClaimedEvent
 ): Promise<void> {
-  const {
-    who,
-    // asset, lockedAmount, claimedAmount, vestingScheduleIds
-  } = getVestingScheduleClaimedEvent(event);
+  const { who, claimedAmountPerSchedule } =
+    getVestingScheduleClaimedEvent(event);
 
-  // TODO: update claimed amount
-  // this requires the pallet to emit the claimed amount PER SCHEDULE and not just
-  // the total claimed amount
+  for (let i = 0; i < claimedAmountPerSchedule.length; i += 1) {
+    const [id, amount] = claimedAmountPerSchedule[i];
 
-  // const schedule: VestingSchedule | undefined = await ctx.store.get(
-  //   VestingSchedule,
-  //   {
-  //     where: {
-  //       id:
-  //     },
-  //   }
-  // );
+    const schedule: VestingSchedule | undefined = await ctx.store.get(
+      VestingSchedule,
+      {
+        where: {
+          id,
+        },
+      }
+    );
+
+    if (!schedule) {
+      // no-op
+      return;
+    }
+
+    schedule.eventId = ctx.event.id;
+
+    updatedClaimedAmount(schedule, amount);
+
+    await ctx.store.save(schedule);
+  }
 
   await saveAccountAndTransaction(
     ctx,

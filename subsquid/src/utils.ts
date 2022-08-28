@@ -9,6 +9,7 @@ import * as ss58 from "@subsquid/ss58";
 import { randomUUID } from "crypto";
 
 export const BOB = "5woQTSqveJemxVbj4eodiBTSVfC4AAJ8CQS7SoyoyHWW7MA6";
+export const CHARLIE = "5wr4XcyxyJYQb71PbSPxhqujKnsS9UAydBhSypGvFgh2QXBa";
 
 export function createCtx(
   storeMock: Store,

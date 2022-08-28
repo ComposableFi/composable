@@ -101,6 +101,8 @@ type VestingSchedule @entity {
   asset: BigInt!
   "Vesting schedule"
   schedule: Schedule!
+  "Initial locked amount"
+  totalAmount: BigInt!
   "True if the schedule has been fully claimed"
   fullyClaimed: Boolean!
 }
