@@ -645,24 +645,6 @@ where
 		})
 	}
 
-	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse> {
-		let api = self.client.runtime_api();
-
-		let at = BlockId::Number(height.into());
-		let result: Vec<u8> =
-			api.host_consensus_state(&at, height).ok().flatten().ok_or_else(|| {
-				runtime_error_into_rpc_error("Error querying host consensus state")
-			})?;
-		let consensus_state = AnyConsensusState::decode_vec(&result)
-			.map_err(|_| runtime_error_into_rpc_error("Error querying host consensus state"))?;
-
-		Ok(QueryConsensusStateResponse {
-			consensus_state: Some(consensus_state.into()),
-			proof: vec![],
-			proof_height: None,
-		})
-	}
-
 	fn query_client_consensus_state(
 		&self,
 		height: Option<u32>,

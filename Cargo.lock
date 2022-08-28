@@ -4562,7 +4562,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=90adc2b279a70d029d8bf33661d274f06bfca64e#90adc2b279a70d029d8bf33661d274f06bfca64e"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=43d3bbf220c0fd015f42cb475067116e49acb8cb#43d3bbf220c0fd015f42cb475067116e49acb8cb"
 dependencies = [
  "beefy-light-client",
  "beefy-primitives",
@@ -4630,7 +4630,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=90adc2b279a70d029d8bf33661d274f06bfca64e#90adc2b279a70d029d8bf33661d274f06bfca64e"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=43d3bbf220c0fd015f42cb475067116e49acb8cb#43d3bbf220c0fd015f42cb475067116e49acb8cb"
 dependencies = [
  "base64 0.13.0",
  "bytes 1.2.1",
@@ -8143,6 +8143,7 @@ dependencies = [
  "chrono",
  "common",
  "composable-traits",
+ "cumulus-primitives-core",
  "derive_more",
  "frame-benchmarking",
  "frame-support",

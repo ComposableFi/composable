@@ -19,7 +19,6 @@ use ibc::{
 			packet::{Packet, Sequence},
 		},
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
-		ics26_routing::context::ModuleOutputBuilder,
 	},
 	signer::Signer,
 	timestamp::Timestamp,
@@ -328,7 +327,7 @@ impl TryFrom<&OpenChannelParams> for Order {
 
 /// Captures the functions modules can use to interact with the ibc pallet
 /// Currently allows modules to register packets and crreate channels
-pub trait IbcTrait {
+pub trait IbcHandler {
 	/// Get the latest height and latest timestamp for the client paired to the channel and port
 	/// combination
 	fn latest_height_and_timestamp(
@@ -342,22 +341,10 @@ pub trait IbcTrait {
 	/// Modules use this to write acknowledgements into the ibc store
 	/// To be used in a successful execution of OnRecvPacket callback
 	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), Error>;
-	/// These methods are majorly for the ibc token transfer application
-	/// We need these here because the implementation of the ics20 requires access to the context
-	/// which is defined in pallet-ibc, we cannot import the context in pallet-ibc-transfer because
-	/// it would cause a cyclic dependency
 	/// Perform an ibc token transfer
 	fn send_transfer(data: MsgTransfer<PrefixedCoin>) -> Result<(), Error>;
-	/// on receive packet callback for ibc token transfer
-	fn on_receive_packet(output: &mut ModuleOutputBuilder, packet: &Packet) -> Result<(), Error>;
-	/// on acknowledgement packet callback for ibc token transfer
-	fn on_ack_packet(
-		output: &mut ModuleOutputBuilder,
-		packet: &Packet,
-		ack: &Acknowledgement,
-	) -> Result<(), Error>;
-	/// on timeout packet callback for ibc token transfer
-	fn on_timeout_packet(output: &mut ModuleOutputBuilder, packet: &Packet) -> Result<(), Error>;
+
+	/// testing related methods
 	#[cfg(feature = "runtime-benchmarks")]
 	fn create_client() -> Result<ClientId, Error>;
 	#[cfg(feature = "runtime-benchmarks")]

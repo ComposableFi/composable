@@ -53,6 +53,7 @@ impl<T: Config> PacketCommitment<T> {
 		child::exists(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &commitment_key)
 	}
 
+	// WARNING: too expensive to be called from an on-chain context, only here for rpc layer.
 	pub fn iter() -> impl Iterator<Item = ((PortId, ChannelId, Sequence), Vec<u8>)> {
 		let prefix = "commitments/ports/".to_string();
 		let prefix_key = apply_prefix(T::CONNECTION_PREFIX, vec![prefix.clone()]);
