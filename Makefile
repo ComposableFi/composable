@@ -147,7 +147,6 @@ containerize-base-ci-linux:
 		-t ${REPO}/base-ci-linux:1.62.1  \
 		.
 # fastest way to build and debug runtime in simulator
-
 run-local-integration-tests-debug:
 	RUST_BACKTRACE=full \
 	SKIP_WASM_BUILD=1 \

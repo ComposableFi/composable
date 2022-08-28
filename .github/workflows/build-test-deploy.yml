@@ -665,12 +665,7 @@ jobs:
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
           echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
-
-      - name: Cache install Nix packages
-        uses: mtoohey31/cache-flake-attrs@v2
-        with:
-          key: ${{ runner.os }}-nix-${{ hashFiles('./flake.lock', './flake.nix') }}          
-                    
+                             
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true

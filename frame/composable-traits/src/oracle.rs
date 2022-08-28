@@ -31,7 +31,7 @@ pub struct RewardTracker<Balance, Timestamp> {
 /// consensus usually normalized asset is stable coin or native currency
 /// fallback in `Oracle` or `Market`(DEXes) lacks trusted prices
 /// (or initial values before threre is market)
-//TODO: remove and replace with BalanceConversion
+//TODO: integrated with BalanceConversion
 pub trait MinimalOracle {
 	type AssetId: Copy;
 	type Balance: From<u64>;

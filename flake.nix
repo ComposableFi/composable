@@ -40,11 +40,20 @@
 
       gce-input = gce-to-nix service-account-credential-key-file-input;
 
-      mk-devnet = { pkgs, lib, writeTextFile, writeShellApplication
-        , polkadot-launch, composable-node, polkadot-node, chain-spec }:
+      mk-devnet =
+        { pkgs
+        , lib
+        , writeTextFile
+        , writeShellApplication
+        , polkadot-launch
+        , composable-node
+        , polkadot-node
+        , chain-spec
+        }:
         let
           original-config = (pkgs.callPackage
-            ./scripts/polkadot-launch/rococo-local-dali-dev.nix {
+            ./scripts/polkadot-launch/rococo-local-dali-dev.nix
+            {
               polkadot-bin = polkadot-node;
               composable-bin = composable-node;
             }).result;
@@ -58,7 +67,8 @@
             name = "devnet-${chain-spec}-config.json";
             text = builtins.toJSON patched-config;
           };
-        in {
+        in
+        {
           inherit chain-spec;
           parachain-nodes = builtins.concatMap (parachain: parachain.nodes)
             patched-config.parachains;
@@ -91,7 +101,8 @@
             };
           };
           overlays = [ rust-overlay.overlay ];
-        in with pkgs;
+        in
+        with pkgs;
         let
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
@@ -133,56 +144,64 @@
           ];
 
           # source relevant to build rust only
-          rust-src = let
-            dir-blacklist = [
-              ".nix"
-              "nix"
-              ".config"
-              ".devcontainer"
-              ".github"
-              ".log"
-              ".maintain"
-              ".tools"
-              ".vscode"
-              "audits"
-              "book"
-              "devnet-stage"
-              "devnet"
-              "docker"
-              "docs"
-              "frontend"
-              "rfcs"
-              "scripts"
-              "setup"
-              "subsquid"
-              "runtime-tests"
-              "composablejs"
-            ];
-            file-blacklist = [ 
-              # does not makes sence to black list,
-              # if we changed some version of tooling(seldom), we want to rebuild
-              # so if we changed version of tooling, nix itself will detect invalidation and rebuild
-              # "flake.lock"
-              
-              # assumption that nix is final builder, 
-              # so there would not  .*.nix <- build.rs <- *.nix for example
-              # and if *.nix changed, nix itself will detect only relevant cache invalidations 
-              "*.nix"
+          rust-src =
+            let
+              dir-blacklist = [
+                ".nix"
+                "nix"
+                ".config"
+                ".devcontainer"
+                ".github"
+                ".log"
+                ".maintain"
+                ".tools"
+                ".vscode"
+                "audits"
+                "book"
+                "devnet-stage"
+                "devnet"
+                "docker"
+                "docs"
+                "frontend"
+                "rfcs"
+                "scripts"
+                "setup"
+                "subsquid"
+                "runtime-tests"
+                "composablejs"
               ];
-          in lib.cleanSourceWith {
-            filter = lib.cleanSourceFilter;
-            src = lib.cleanSourceWith {
-              filter = let
-                customFilter = name: type:
-                  (!(type == "directory"
-                    && builtins.elem (baseNameOf name) dir-blacklist))
-                  && (!(type == "regular"
-                    && builtins.elem (baseNameOf name) file-blacklist));
-              in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-              ./.;
-              src = ./.;
+              file-blacklist = [
+                # does not makes sence to black list,
+                # if we changed some version of tooling(seldom), we want to rebuild
+                # so if we changed version of tooling, nix itself will detect invalidation and rebuild
+                # "flake.lock"
+
+                # assumption that nix is final builder, 
+                # so there would not  .*.nix <- build.rs <- *.nix for example
+                # and if *.nix changed, nix itself will detect only relevant cache invalidations 
+                "*.nix"
+              ];
+            in
+            lib.cleanSourceWith {
+              filter = lib.cleanSourceFilter;
+              src = lib.cleanSourceWith {
+                filter =
+                  let
+                    customFilter = name: type:
+                      (
+                        !(type == "directory"
+                        && builtins.elem (baseNameOf name) dir-blacklist)
+                      )
+                      && (
+                        !(type == "regular"
+                        && builtins.elem (baseNameOf name) file-blacklist)
+                      );
+                  in
+                  nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
+                    ./.;
+                src = ./.;
+              };
             };
-          };
 
           # Common env required to build the node
           common-attrs = {
@@ -225,8 +244,8 @@
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand =
                 "cargo build --release -p ${name}-runtime-wasm --target wasm32-unknown-unknown"
-                + lib.strings.optionalString (features != "")
-                (" --features=${features}");
+                  + lib.strings.optionalString (features != "")
+                  (" --features=${features}");
               # From parity/wasm-builder
               RUSTFLAGS =
                 "-Clink-arg=--export=__heap_base -Clink-arg=--import-memory";
@@ -294,19 +313,19 @@
 
           composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
             // {
-              pnameSuffix = "-node";
-              cargoArtifacts = common-bench-deps;
-              cargoBuildCommand = "cargo build --release --package composable";
-              DALI_RUNTIME = "${dali-bench-runtime}/lib/runtime.optimized.wasm";
-              PICASSO_RUNTIME =
-                "${picasso-bench-runtime}/lib/runtime.optimized.wasm";
-              COMPOSABLE_RUNTIME =
-                "${composable-bench-runtime}/lib/runtime.optimized.wasm";
-              installPhase = ''
-                mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
-              '';
-            });
+            pnameSuffix = "-node";
+            cargoArtifacts = common-bench-deps;
+            cargoBuildCommand = "cargo build --release --package composable";
+            DALI_RUNTIME = "${dali-bench-runtime}/lib/runtime.optimized.wasm";
+            PICASSO_RUNTIME =
+              "${picasso-bench-runtime}/lib/runtime.optimized.wasm";
+            COMPOSABLE_RUNTIME =
+              "${composable-bench-runtime}/lib/runtime.optimized.wasm";
+            installPhase = ''
+              mkdir -p $out/bin
+              cp target/release/composable $out/bin/composable
+            '';
+          });
 
           run-with-benchmarks = chain:
             writeShellScriptBin "run-benchmarks-once" ''
@@ -322,7 +341,8 @@
             '';
           docs-renders = [ mdbook plantuml graphviz pandoc ];
 
-        in rec {
+        in
+        rec {
           packages = rec {
             inherit wasm-optimizer;
             inherit common-deps;
@@ -336,33 +356,35 @@
             inherit composable-node;
             inherit composable-bench-node;
 
-            subsquid-processor = let
-              processor = pkgs.buildNpmPackage {
-                extraNodeModulesArgs = {
-                  buildInputs = [
-                    pkgs.pkg-config
-                    pkgs.python3
-                    pkgs.nodePackages.node-gyp-build
-                    pkgs.nodePackages.node-gyp
-                  ];
-                  extraEnvVars = { npm_config_nodedir = "${pkgs.nodejs}"; };
+            subsquid-processor =
+              let
+                processor = pkgs.buildNpmPackage {
+                  extraNodeModulesArgs = {
+                    buildInputs = [
+                      pkgs.pkg-config
+                      pkgs.python3
+                      pkgs.nodePackages.node-gyp-build
+                      pkgs.nodePackages.node-gyp
+                    ];
+                    extraEnvVars = { npm_config_nodedir = "${pkgs.nodejs}"; };
+                  };
+                  src = ./subsquid;
+                  npmBuild = "npm run build";
+                  preInstall = ''
+                    mkdir $out
+                    mv lib $out/
+                  '';
+                  dontNpmPrune = true;
                 };
-                src = ./subsquid;
-                npmBuild = "npm run build";
-                preInstall = ''
-                  mkdir $out
-                  mv lib $out/
+              in
+              (writeShellApplication {
+                name = "run-subsquid-processor";
+                text = ''
+                  cd ${processor}
+                  ${nodejs}/bin/npx sqd db migrate
+                  ${nodejs}/bin/node lib/processor.js
                 '';
-                dontNpmPrune = true;
-              };
-            in (writeShellApplication {
-              name = "run-subsquid-processor";
-              text = ''
-                cd ${processor}
-                ${nodejs}/bin/npx sqd db migrate
-                ${nodejs}/bin/node lib/processor.js
-              '';
-            });
+              });
 
             runtime-tests = stdenv.mkDerivation {
               name = "runtime-tests";
@@ -380,7 +402,7 @@
               name = "all-directories-and-files";
               src =
                 builtins.filterSource (path: type: baseNameOf path != ".git")
-                ./.;
+                  ./.;
               dontUnpack = true;
               installPhase = ''
                 mkdir $out/
@@ -477,42 +499,37 @@
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
-              # be very carefull with this, so this must be version compatible with base and what vscode will inject
-              
-              contents = 
-              subtractLists 
-              # just will not work
-              [ cachix nix docker] 
-              
-              [
-                #  
-                # 
-                # 
-                # 
+              contents =
+                subtractLists
+                  # just will not work
+                  [ 
+                    docker # requires root + non root install, and there is one in base image
+                    nix # reqires deep shell integration
+                    cachix
+                  ]
 
-                rust-nightly
-                curl
-                rustup # just if it wants to make ad hoc updates
-                #helix
-                clang
-                #nodejs
-                #cmake
-                #nixpkgs-fmt
-                #yarn
-                #bottom
-                #mdbook
-                #taplo
-                #go
-                #libclang
-                rust-analyzer
-                gcc
-                openssl
-                gnumake
-                pkg-config
-              ];
-              fakeRootCommands = ''
-                #chown --recursive vscode:vscode /nix
-              '';
+                  # be very carefull with this, so this must be version compatible with base and what vscode will inject
+                  [
+                    rust-nightly
+                    curl
+                    rustup # just if it wants to make ad hoc updates
+                    helix
+                    clang
+                    #nodejs
+                    cmake
+                    nixpkgs-fmt
+                    yarn
+                    bottom
+                    mdbook
+                    taplo
+                    go
+                    libclang
+                    rust-analyzer
+                    gcc
+                    openssl
+                    gnumake
+                    pkg-config
+                  ];
             };
 
             check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
@@ -617,24 +634,27 @@
                 "--workspace --exclude local-integration-tests --all-features";
             });
 
-            kusama-picasso-karura-devnet = let
-              config = (pkgs.callPackage
-                ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
-                  polkadot-bin = polkadot-node;
-                  composable-bin = composable-node;
-                  acala-bin = acala-node;
-                }).result;
-              config-file = writeTextFile {
-                name = "kusama-local-picasso-dev-karura-dev.json";
-                text = "${builtins.toJSON config}";
+            kusama-picasso-karura-devnet =
+              let
+                config = (pkgs.callPackage
+                  ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix
+                  {
+                    polkadot-bin = polkadot-node;
+                    composable-bin = composable-node;
+                    acala-bin = acala-node;
+                  }).result;
+                config-file = writeTextFile {
+                  name = "kusama-local-picasso-dev-karura-dev.json";
+                  text = "${builtins.toJSON config}";
+                };
+              in
+              writeShellApplication {
+                name = "kusama-picasso-karura";
+                text = ''
+                  cat ${config-file}
+                  ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+                '';
               };
-            in writeShellApplication {
-              name = "kusama-picasso-karura";
-              text = ''
-                cat ${config-file}
-                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
-              '';
-            };
 
             junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
             gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
@@ -694,7 +714,7 @@
                   # TODO: script to run all
                   # TODO: compose export
                 ] ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
-                arion;
+                  arion;
               shellHook = ''
                 # TODO: how to make it work - setup defaul admin client key
                 #"clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover 
@@ -715,108 +735,112 @@
             default = developers;
           };
 
-          apps = let
-            arion-pure = import ./.nix/arion-pure.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-            arion-up-program = pkgs.writeShellApplication {
-              name = "devnet-up";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${arion-pure} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
+          apps =
+            let
+              arion-pure = import ./.nix/arion-pure.nix {
+                inherit pkgs;
+                inherit packages;
+              };
+              arion-up-program = pkgs.writeShellApplication {
+                name = "devnet-up";
+                runtimeInputs =
+                  [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+                text = ''
+                  arion --prebuilt-file ${arion-pure} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+                '';
+              };
 
-            devnet-xcvm = import ./.nix/arion-xcvm-pure.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-            devnet-xcvm-up-program = pkgs.writeShellApplication {
-              name = "devnet-xcvm-up";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${devnet-xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
-          in rec {
-            devnet-up = {
-              type = "app";
-              program = "${arion-up-program}/bin/devnet-up";
-            };
+              devnet-xcvm = import ./.nix/arion-xcvm-pure.nix {
+                inherit pkgs;
+                inherit packages;
+              };
+              devnet-xcvm-up-program = pkgs.writeShellApplication {
+                name = "devnet-xcvm-up";
+                runtimeInputs =
+                  [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+                text = ''
+                  arion --prebuilt-file ${devnet-xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+                '';
+              };
+            in
+            rec {
+              devnet-up = {
+                type = "app";
+                program = "${arion-up-program}/bin/devnet-up";
+              };
 
-            devnet-xcvm-up = {
-              type = "app";
-              program = "${devnet-xcvm-up-program}/bin/devnet-xcvm-up";
-            };
+              devnet-xcvm-up = {
+                type = "app";
+                program = "${devnet-xcvm-up-program}/bin/devnet-xcvm-up";
+              };
 
-            devnet-dali = {
-              type = "app";
-              program = "${packages.devnet-dali}/bin/run-devnet-dali-dev";
-            };
-            devnet-picasso = {
-              type = "app";
-              program =
-                "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
-            };
+              devnet-dali = {
+                type = "app";
+                program = "${packages.devnet-dali}/bin/run-devnet-dali-dev";
+              };
+              devnet-picasso = {
+                type = "app";
+                program =
+                  "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
+              };
 
-            kusama-picasso-karura-devnet = {
-              type = "app";
-              program =
-                "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
-            };
+              kusama-picasso-karura-devnet = {
+                type = "app";
+                program =
+                  "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
+              };
 
-            price-feed = {
-              type = "app";
-              program = "${packages.price-feed}/bin/price-feed";
-            };
-            composable = {
-              type = "app";
-              program = "${packages.composable-node}/bin/composable";
-            };
-            acala = {
-              type = "app";
-              program = "${packages.acala-node}/bin/acala";
-            };
-            polkadot = {
-              type = "app";
-              program = "${packages.polkadot-node}/bin/polkadot";
-            };
-            # TODO: move list of chains out of here and do fold
-            benchmarks-once-composable = flake-utils.lib.mkApp {
-              drv = run-with-benchmarks "composable-dev";
-            };
-            benchmarks-once-dali =
-              flake-utils.lib.mkApp { drv = run-with-benchmarks "dali-dev"; };
+              price-feed = {
+                type = "app";
+                program = "${packages.price-feed}/bin/price-feed";
+              };
+              composable = {
+                type = "app";
+                program = "${packages.composable-node}/bin/composable";
+              };
+              acala = {
+                type = "app";
+                program = "${packages.acala-node}/bin/acala";
+              };
+              polkadot = {
+                type = "app";
+                program = "${packages.polkadot-node}/bin/polkadot";
+              };
+              # TODO: move list of chains out of here and do fold
+              benchmarks-once-composable = flake-utils.lib.mkApp {
+                drv = run-with-benchmarks "composable-dev";
+              };
+              benchmarks-once-dali =
+                flake-utils.lib.mkApp { drv = run-with-benchmarks "dali-dev"; };
 
-            benchmarks-once-picasso = flake-utils.lib.mkApp {
-              drv = run-with-benchmarks "picasso-dev";
+              benchmarks-once-picasso = flake-utils.lib.mkApp {
+                drv = run-with-benchmarks "picasso-dev";
+              };
+              default = devnet-dali;
             };
-            default = devnet-dali;
-          };
         });
-    in eachSystemOutputs // {
+    in
+    eachSystemOutputs // {
       nixopsConfigurations = {
-        default = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        in import ./.nix/devnet.nix {
-          inherit nixpkgs;
-          inherit gce-input;
-          devnet-dali = pkgs.callPackage mk-devnet {
-            inherit pkgs;
-            inherit (eachSystemOutputs.packages.x86_64-linux)
-              polkadot-launch composable-node polkadot-node;
-            chain-spec = "dali-dev";
+        default =
+          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          in import ./.nix/devnet.nix {
+            inherit nixpkgs;
+            inherit gce-input;
+            devnet-dali = pkgs.callPackage mk-devnet {
+              inherit pkgs;
+              inherit (eachSystemOutputs.packages.x86_64-linux)
+                polkadot-launch composable-node polkadot-node;
+              chain-spec = "dali-dev";
+            };
+            devnet-picasso = pkgs.callPackage mk-devnet {
+              inherit pkgs;
+              inherit (eachSystemOutputs.packages.x86_64-linux)
+                polkadot-launch composable-node polkadot-node;
+              chain-spec = "picasso-dev";
+            };
+            book = eachSystemOutputs.packages.x86_64-linux.composable-book;
           };
-          devnet-picasso = pkgs.callPackage mk-devnet {
-            inherit pkgs;
-            inherit (eachSystemOutputs.packages.x86_64-linux)
-              polkadot-launch composable-node polkadot-node;
-            chain-spec = "picasso-dev";
-          };
-          book = eachSystemOutputs.packages.x86_64-linux.composable-book;
-        };
       };
     };
 }

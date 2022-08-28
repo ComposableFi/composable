@@ -15,7 +15,6 @@ pub trait Airdropper {
 	type Identity;
 	type VestingSchedule;
 
-
 	/// Create a new Airdrop.
 	fn create_airdrop(
 		creator_id: Self::AccountId,
