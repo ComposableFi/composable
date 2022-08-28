@@ -1046,7 +1046,7 @@ impl dex_router::Config for Runtime {
 
 parameter_types! {
 	pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK as u64;
-	pub static RelayChainId: RelayChain = RelayChain::Rococo;
+	pub const RelayChainId: RelayChain = RelayChain::Rococo;
 }
 
 impl pallet_ibc::Config for Runtime {

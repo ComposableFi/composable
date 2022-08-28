@@ -8,7 +8,6 @@ use crate::{
 };
 use frame_support::traits::Get;
 use ibc::{
-	clients::ics11_beefy::consensus_state::ConsensusState,
 	core::{
 		ics02_client::{
 			client_consensus::AnyConsensusState,
@@ -173,6 +172,7 @@ where
 		_height: Height,
 		_proof: Option<Vec<u8>>,
 	) -> Result<AnyConsensusState, ICS02Error> {
+		use ibc::clients::ics11_beefy::consensus_state::ConsensusState;
 		let timestamp = Timestamp::from_nanoseconds(1).unwrap();
 		let timestamp = timestamp.into_tm_time().unwrap();
 		return Ok(AnyConsensusState::Beefy(ConsensusState { timestamp, root: vec![].into() }))
