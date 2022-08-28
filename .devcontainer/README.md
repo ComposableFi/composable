@@ -16,6 +16,18 @@ Keep in sync nix version and config in these:
 
 ## Making container 
 
+
+  # image which will be base for remote development
+  # we do not start from nixos:
+  # - no all people like devcontainer to be nix (gh know better)
+  # - devcontainer has setup in shell for code, users, groups and remote stuff
+  # - it has nice cli/shell setup, unlike bare nixos docker        
+  # we want devcontainer to be built of nix:
+  # - so it has same version or rust as our env and ci
+  # - it has same all tooling we have
+  # - and we do not need to maintain separate script for that
+
+
 Having `nix`ified dev container is hard for several reasons.
 
 First, Microsoft bases images are dynamic and represent sandwich of container build, then runtime build and install (injection) and extensions install. These are not nixos compatible. Generally that process is not reproducible.

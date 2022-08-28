@@ -9,7 +9,7 @@ ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-22.05-darwin
 ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-unstable
 ARG CACHIX_NAME=composable-community
 
-FROM composablefi/composable-devcontainer:latest
+#FROM composablefi/composable-devcontainer:latest
 #FROM composable-devcontainer:mfqlb4qsqz6wk3lvrz8kfzj137wvlcs5
 
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]

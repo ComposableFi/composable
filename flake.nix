@@ -479,7 +479,7 @@
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
-              contents = subtractLists
+              contents = lib.lists.subtractLists
                 # just will not work
                 [
                   docker # requires root + non root install, and there is one in base image
