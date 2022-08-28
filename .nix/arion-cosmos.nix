@@ -11,7 +11,7 @@ pkgs.arion.build {
           port = 9999;
         };
       in {
-        config.project.name = "Composable Finance";
+        config.project.name = "Composable Finance Cosmos devnet";
         config.services = {
           junod = import ./services/junod.nix;
           juno-subql-indexer = import ./services/juno-subql.nix {

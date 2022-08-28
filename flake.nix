@@ -715,7 +715,7 @@
               '';
             };
 
-            devnet-xcvm = import ./.nix/arion-xcvm-pure.nix {
+            devnet-xcvm = import ./.nix/arion-xcvm.nix {
               inherit pkgs;
               inherit packages;
             };

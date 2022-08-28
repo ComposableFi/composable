@@ -1,4 +1,4 @@
-{ pkgs, packages, ... }: {
+{ pkgs, database, packages, ... }: {
   image = {
     contents = [ pkgs.coreutils pkgs.python3 packages.subsquid-processor ];
     enableRecommendedContents = true;
@@ -14,9 +14,11 @@
       ''
     ];
     environment = {
-      DB_PORT = 23798;
-      DB_NAME = "squid";
-      DB_PASS = "squid";
+      DB_NAME = database.name;
+      DB_HOST = database.host;
+      DB_USER = database.user;
+      DB_PASS = database.password;
+      DB_PORT = database.port;
     };
   };
 }
