@@ -784,7 +784,7 @@ fn sibling_trap_assets_works() {
 
 	let (this_native_treasury_amount, sibling_non_native_amount) = This::execute_with(|| {
 		let sibling_non_native_amount =
-		assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
+			assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
 
 		assert_ok!(Assets::deposit(any_asset, &sibling_account(), sibling_non_native_amount));
 		let _ =

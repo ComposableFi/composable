@@ -55,6 +55,8 @@ style-check:
 style:
 	@rustup component add rustfmt 2> /dev/null
 	./scripts/style.sh
+	# enabled as soon as all people get this one
+	#nixfmt $(find . -name "*.nix" -type f | tr "\n" " ")
 
 lint:
 	@rustup component add clippy 2> /dev/null

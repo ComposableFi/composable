@@ -9,8 +9,8 @@ ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-22.05-darwin
 ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-unstable
 ARG CACHIX_NAME=composable-community
 
-FROM composablefi/composable-devcontainer:latest
-#FROM composable-devcontainer:mfqlb4qsqz6wk3lvrz8kfzj137wvlcs5
+#FROM composablefi/composable-devcontainer:latest
+FROM composable-devcontainer:mfqlb4qsqz6wk3lvrz8kfzj137wvlcs5
 
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]
 
@@ -21,6 +21,8 @@ ARG GID
 ARG NIX_INSTALLER
 ARG CACHIX_NAME
 
+# considered nix installer will not work without it, 
+# so can try to install it via nix docker tools but if may have its own issues
 RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
@@ -43,13 +45,9 @@ RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
 
 RUN curl --location ${NIX_INSTALLER} > /install.sh
 RUN chmod +x /install.sh
-RUN chown --recursive vscode:vscode /nix
-# without this line, if our docker has prebuild nix stuff, nix fails to install
-RUN chmod -R a+rwx /nix
 
-USER ${USER}
-ENV USER=${USER}
 
+# what ever install for `root`
 RUN /install.sh
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-channel --add ${CHANNEL_URL} nixpkgs && \
@@ -65,12 +63,24 @@ RUN echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc && \
     echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile && \
     echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile
 
+# not switch to user
+RUN chown --recursive vscode:vscode /nix
+# without this line, if our docker has prebuild nix stuff, nix fails to install
+RUN chmod -R a+rwx /nix
 
-# RUN mkdir --parents /home/vscode/.nix-profile/etc/profile.d/
-# #RUN cp /root/.nix-profile/etc/profile.d/nix.sh /home/vscode/.nix-profile/etc/profile.d/nix.sh
-# RUN chmod +x /home/vscode/.nix-profile/etc/profile.d/nix.sh
-# RUN chown --recursive vscode:vscode /home/vscode/.nix-profile/
+USER ${USER}
+ENV USER=${USER}
+RUN /install.sh
+RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
+    nix-channel --add ${CHANNEL_URL} nixpkgs && \
+    nix-channel --update 
 
-# RUN echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bashrc && \
-#     echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.profile && \
-#     echo "source /home/vscode/.nix-profile/etc/profile.d/nix.sh" >> /home/vscode/.bash_profile
+RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
+    nix-env -iA nixpkgs.cachix
+    
+RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
+    cachix use ${CACHIX_NAME}
+
+RUN echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc && \
+    echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile && \
+    echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile
