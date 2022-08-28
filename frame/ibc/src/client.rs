@@ -8,7 +8,7 @@ use crate::{
 };
 use frame_support::traits::Get;
 use ibc::{
-	clients::ics11_beefy::{ consensus_state::ConsensusState},
+	clients::ics11_beefy::consensus_state::ConsensusState,
 	core::{
 		ics02_client::{
 			client_consensus::AnyConsensusState,
@@ -384,7 +384,7 @@ where
 		}
 
 		let self_para_id: u32 = T::ParaId::get().into();
-		if client_state.para_id != self_para_id  {
+		if client_state.para_id != self_para_id {
 			Err(ICS02Error::implementation_specific(format!("para-id mis-match")))?
 		}
 

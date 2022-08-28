@@ -1,4 +1,5 @@
 use crate::{routing::Context, Config, MODULE_ID};
+use codec::Encode;
 use core::{str::FromStr, time::Duration};
 use frame_support::traits::Get;
 use ibc::{
@@ -21,6 +22,7 @@ use ibc::{
 		},
 		ics03_connection::{
 			connection::{ConnectionEnd, Counterparty, State as ConnState},
+			handler::verify::ConnectionProof,
 			msgs::{
 				conn_open_ack::MsgConnectionOpenAck, conn_open_confirm::MsgConnectionOpenConfirm,
 				conn_open_try::MsgConnectionOpenTry,
@@ -229,6 +231,8 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 	let mut consensus_buf = Vec::new();
 	let mut client_buf = Vec::new();
 	prost::Message::encode(&consensus_proof, &mut consensus_buf).unwrap();
+	let consensus_buf =
+		ConnectionProof { host_proof: vec![], connection_proof: consensus_buf }.encode();
 	prost::Message::encode(&client_proof, &mut client_buf).unwrap();
 	let header = create_tendermint_header();
 	let cs_state = ConsensusState {
@@ -330,6 +334,8 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 	let mut consensus_buf = Vec::new();
 	let mut client_buf = Vec::new();
 	prost::Message::encode(&consensus_proof, &mut consensus_buf).unwrap();
+	let consensus_buf =
+		ConnectionProof { host_proof: vec![], connection_proof: consensus_buf }.encode();
 	prost::Message::encode(&client_proof, &mut client_buf).unwrap();
 	let header = create_tendermint_header();
 	let cs_state = ConsensusState {
