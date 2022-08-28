@@ -663,23 +663,29 @@
                 base.buildInputs ++ [
                   junod
                   gex
-                  # junod wasm swap web interface 
-                  devnet-dali
+                  # junod wasm swap web interface
                   # TODO: hasura
-                  # TODO: some well know wasm contracts deployed                
+                  # TODO: some well know wasm contracts deployed
                   # TODO: junod server
                   # TODO: solc
                   # TODO: gex
-                  # TODO: https://github.com/forbole/bdjuno                  
+                  # TODO: https://github.com/forbole/bdjuno
                   # TODO: script to run all
                   # TODO: compose export
                 ] ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
                 arion;
               shellHook = ''
-                # TODO: how to make it work - setup defaul admin client key
-                #"clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover 
+                echo ""
+                echo ""
+                echo ""
+                echo "==================================================================================================="
+                echo " /!\ Generating alice key, junod will abort if the key is already present (everything is fine.) /!\ "
+                echo "==================================================================================================="
+                echo ""
+                echo ""
+                echo ""
+                echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
               '';
-
             });
 
             writers = mkShell {
@@ -709,7 +715,7 @@
               '';
             };
 
-            devnet-xcvm = import ./.nix/arion-xcvm-pure.nix {
+            devnet-xcvm = import ./.nix/arion-xcvm.nix {
               inherit pkgs;
               inherit packages;
             };
@@ -721,7 +727,23 @@
                 arion --prebuilt-file ${devnet-xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
               '';
             };
+
+            devnet-cosmos = pkgs.callPackage ./.nix/arion-cosmos.nix { };
+            devnet-cosmos-up-program = pkgs.writeShellApplication {
+              name = "devnet-juno-up";
+              runtimeInputs =
+                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+              text = ''
+                arion --prebuilt-file ${devnet-cosmos} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+              '';
+            };
+
           in rec {
+            devnet-cosmos-up = {
+              type = "app";
+              program = "${devnet-cosmos-up-program}/bin/devnet-juno-up";
+            };
+
             devnet-up = {
               type = "app";
               program = "${arion-up-program}/bin/devnet-up";

@@ -5,7 +5,7 @@
     network_mode = "host";
     restart = "unless-stopped";
     environment = {
-      REDIS_URL = "redis://localhost:6379/0";
+      REDIS_URL = "redis://127.0.0.1:6379/0";
       PORT = 8081;
     };
   };
