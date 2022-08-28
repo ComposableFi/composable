@@ -1,8 +1,8 @@
-use super::{
-	create_test_loan, create_test_loan_input_config, create_test_market, parse_timestamp,
-	prelude::*,
+use super::{create_test_loan, create_test_loan_input_config, parse_timestamp, prelude::*};
+use crate::{
+	currency::{BTC, USDT},
+	validation::LoanInputIsValid,
 };
-use crate::{currency::BTC, validation::LoanInputIsValid};
 use composable_traits::undercollateralized_loans::{DelayedPaymentTreatment, LoanInput};
 
 #[test]
@@ -11,7 +11,7 @@ fn can_create_loan() {
 		System::set_block_number(1);
 		let manager = *ALICE;
 		let origin = Origin::signed(manager);
-		let loan_input = create_test_loan_input_config();
+		let loan_input = create_test_loan_input_config(*BOB);
 		// Check if loan was created successfully.
 		assert_ok!(UndercollateralizedLoans::create_loan(origin, loan_input));
 		// Check if corresponded event was emitted.
@@ -38,9 +38,9 @@ fn can_create_loan() {
 fn test_do_create_market_input_validation() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
+		let borrower = *BOB;
 		// This method creates market as well.
-		// Borrower: *BOB,
-		let valid_loan_input_configuration = create_test_loan_input_config();
+		let valid_loan_input_configuration = create_test_loan_input_config(borrower);
 		// Original market input configuration is valid.
 		assert_ok!(valid_loan_input_configuration
 			.clone()
@@ -60,7 +60,7 @@ fn test_do_create_market_input_validation() {
 		// Add loan's borrower *BOB to the blacklist.
 		crate::BlackListPerMakretStorage::<Runtime>::mutate(
 			valid_loan_input_configuration.market_account_id,
-			|set| set.insert(*BOB),
+			|set| set.insert(borrower),
 		);
 		assert_err!(
 			valid_loan_input_configuration
@@ -164,15 +164,16 @@ fn test_do_create_market_input_validation() {
 	});
 }
 
+// TODO: @mikolaichuk: move to the borrow.rs
 #[test]
-fn can_execute_loan_contract() {
+fn authoriezed_borrower_can_execute_loan_contract() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		let borrower = *BOB;
 		// Borrower should have some collateral to deposit.
 		Tokens::mint_into(BTC::ID, &borrower, BTC::units(10)).unwrap();
 		let origin = Origin::signed(borrower);
-		let loan_config = create_test_loan();
+		let loan_config = create_test_loan(borrower);
 		let loan_account_id = *loan_config.account_id();
 		assert_ok!(UndercollateralizedLoans::borrow(origin, loan_account_id.clone(), true));
 		// Check if corresponded event was emitted.
@@ -184,19 +185,104 @@ fn can_execute_loan_contract() {
 }
 
 #[test]
-fn test_loan_activation_invalid_inputs() {
+fn can_not_activate_improper_loan() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		let borrower = *BOB;
+		// Borrower should have some collateral to deposit.
+		Tokens::mint_into(BTC::ID, &borrower, BTC::units(10)).unwrap();
 		let origin = Origin::signed(borrower);
+		// Create loan.
+		let loan_info = create_test_loan(borrower);
 		// Create fake loan account id.
-		let loan_account_id = UndercollateralizedLoans::loan_account_id(42);
+		let fake_loan_account_id = UndercollateralizedLoans::loan_account_id(42);
+		// Try to activate fake loan.
 		assert_err!(
-			UndercollateralizedLoans::borrow(origin, loan_account_id.clone(), true),
+			UndercollateralizedLoans::borrow(origin.clone(), fake_loan_account_id, true),
 			crate::Error::<Runtime>::LoanDoesNotExistOrWasActivated
 		);
-        // Create loan. 
-        let loan_info = create_test_loan();
-         
+		// Activate real loan.
+		let real_loan_account_id = loan_info.account_id();
+		assert_ok!(UndercollateralizedLoans::borrow(
+			origin.clone(),
+			real_loan_account_id.clone(),
+			true
+		));
+		// Try to activate real loan once again.
+		assert_err!(
+			UndercollateralizedLoans::borrow(origin.clone(), real_loan_account_id.clone(), true),
+			crate::Error::<Runtime>::LoanDoesNotExistOrWasActivated
+		);
+		// Create loan once again.
+		let loan_config = create_test_loan(borrower);
+		let loan_account_id = loan_config.account_id();
+		// Add borrower to the blacklist after the loan was created.
+		crate::BlackListPerMakretStorage::<Runtime>::mutate(
+			loan_config.market_account_id(),
+			|set| set.insert(borrower),
+		);
+		// Try to activate loan.
+		assert_err!(
+			UndercollateralizedLoans::borrow(origin.clone(), loan_account_id.clone(), true),
+			crate::Error::<Runtime>::BlacklistedBorrowerAccount
+		);
+		let wrong_borrower = *ALICE;
+		let wrong_origin = Origin::signed(wrong_borrower);
+		// Try to activate loan with non-authorized borrower.
+		assert_err!(
+			UndercollateralizedLoans::borrow(wrong_origin.clone(), loan_account_id.clone(), true),
+			crate::Error::<Runtime>::NonAuthorizedToExecuteContract,
+		);
+	});
+}
+
+#[test]
+fn anybody_can_repay() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let payer = *ALICE;
+		let payer_origin = Origin::signed(payer);
+		let borrower = *BOB;
+        let borrower_origin = Origin::signed(borrower);
+		let repay_amount = 100;
+		// Borrower should have some collateral to deposit.
+		Tokens::mint_into(BTC::ID, &borrower, BTC::units(10)).unwrap();
+		// Payer should have something to repay.
+		Tokens::mint_into(USDT::ID, &payer, USDT::units(repay_amount)).unwrap();
+		let loan_config = create_test_loan(*BOB);
+		let loan_account_id = loan_config.account_id().clone();
+	    // Activate the loan. Otherwise we have nothing to be repaid.
+        assert_ok!(UndercollateralizedLoans::borrow(borrower_origin, loan_account_id.clone(), true));
+		assert_ok!(UndercollateralizedLoans::repay(payer_origin, loan_account_id, repay_amount, true));
+		let event = crate::Event::<Runtime>::SomeAmountRepaid { loan_account_id, repay_amount };
+		System::assert_has_event(Event::UndercollateralizedLoans(event));
+	});
+}
+
+#[test]
+fn does_not_process_wrong_repayments() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let payer = *ALICE;
+		let origin = Origin::signed(payer);
+		let borrower = *BOB;
+		let repay_amount = 100;
+		// Borrower should have some collateral to deposit.
+		Tokens::mint_into(BTC::ID, &borrower, BTC::units(10)).unwrap();
+		// Payer should have something to repay.
+		Tokens::mint_into(USDT::ID, &payer, USDT::units(repay_amount)).unwrap();
+		let loan_config = create_test_loan(*BOB);
+		let loan_account_id = loan_config.account_id().clone();
+       // Try to repay non-activated loan.	
+        assert_err!(
+			UndercollateralizedLoans::repay(origin.clone(), loan_account_id, repay_amount, true),
+			crate::Error::<Runtime>::LoanIsNotActive
+		);
+		let fake_loan_account_id = UndercollateralizedLoans::loan_account_id(42);
+	    // Try to repay fake loan.	
+        assert_err!(
+			UndercollateralizedLoans::repay(origin, fake_loan_account_id, repay_amount, true),
+			crate::Error::<Runtime>::LoanNotFound
+		);
 	});
 }

@@ -100,7 +100,9 @@ pub fn parse_timestamp(string: &str) -> crate::types::Timestamp {
 		.timestamp()
 }
 
-fn create_test_loan_input_config() -> LoanInput<AccountId, Balance, crate::types::Timestamp> {
+fn create_test_loan_input_config(
+	borrower_account_id: AccountId,
+) -> LoanInput<AccountId, Balance, crate::types::Timestamp> {
 	let market_info = create_test_market();
 	let market_account_id = market_info.config().account_id().clone();
 	let mut payment_schedule = BTreeMap::new();
@@ -113,7 +115,7 @@ fn create_test_loan_input_config() -> LoanInput<AccountId, Balance, crate::types
 	});
 	LoanInput {
 		market_account_id,
-		borrower_account_id: *BOB,
+		borrower_account_id,
 		principal: 1000,
 		collateral: 5,
 		payment_schedule,
@@ -122,8 +124,8 @@ fn create_test_loan_input_config() -> LoanInput<AccountId, Balance, crate::types
 	}
 }
 
-pub fn create_test_loan() -> LoanConfigOf<Runtime> {
-	let loan_input = create_test_loan_input_config();
+pub fn create_test_loan(borower_account_id: AccountId) -> LoanConfigOf<Runtime> {
+	let loan_input = create_test_loan_input_config(borower_account_id);
 	crate::Pallet::<Runtime>::do_create_loan(loan_input.try_into_validated().unwrap()).unwrap()
 }
 

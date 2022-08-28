@@ -250,7 +250,7 @@ pub mod pallet {
 		NonActivatedExpiredLoansTerminated { loans_ids: Vec<T::AccountId> },
 		LoanSentToLiquidation { loan_config: LoanConfigOf<T> },
 		// TODO: @mikolaichuk: add loan information and amount by itself.
-		SomeAmountRepaid,
+		SomeAmountRepaid { loan_account_id: T::AccountId, repay_amount: T::Balance },
 		LoanPaymentWasChecked { loan_config: LoanConfigOf<T> },
 	}
 
@@ -286,6 +286,8 @@ pub mod pallet {
 		BlacklistedBorrowerAccount,
 		// Date was shifted too far.
 		DateShiftingExceeded,
+		// When we try repay money to non-activated loan account .
+		LoanIsNotActive,
 	}
 
 	#[pallet::genesis_config]
@@ -435,7 +437,7 @@ pub mod pallet {
 		}
 
 		// To borrow money, user should provide loan's account id.
-		// User will be allowed to borrow if his account is mentioned as borrower's
+		// User is allowed to borrow if his account is mentioned as borrower's
 		// account in the loan's configuration. Borrower has to have sufficient amount of
 		// collateral on his account. This collateral will be transferred to the loan's account.
 		#[pallet::weight(1000)]
@@ -461,13 +463,18 @@ pub mod pallet {
 		#[transactional]
 		pub fn repay(
 			origin: OriginFor<T>,
-			loan_account: T::AccountId,
+			loan_account_id: T::AccountId,
 			repay_amount: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			<Self as UndercollateralizedLoans>::repay(who, loan_account, repay_amount, keep_alive)?;
-			Self::deposit_event(Event::<T>::SomeAmountRepaid);
+			let repay_amount = <Self as UndercollateralizedLoans>::repay(
+				who,
+				loan_account_id.clone(),
+				repay_amount,
+				keep_alive,
+			)?;
+			Self::deposit_event(Event::<T>::SomeAmountRepaid { loan_account_id, repay_amount });
 			Ok(())
 		}
 
