@@ -31,8 +31,7 @@ ARG GID=${UID}
 
 # NOTE: keep in sync with root flake.nix and CI yamls
 ARG NIX_INSTALLER=https://releases.nixos.org/nix/nix-2.10.3/install
-ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-22.05-darwin
-ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-unstable
+ARG CHANNEL_URL=https://github.com/NixOS/nixpkgs/archive/aaa1c973c8c189195e1b1a702d3b74dbcde91538.tar.gz
 ARG CACHIX_NAME=composable-community
 
 # 1. inherit from ms based image for nice shell nd sure that runtime injection of vscode will work
@@ -40,7 +39,6 @@ ARG CACHIX_NAME=composable-community
 # 3. so until CI with arm, people can built it locally on arm
 # 4. docker has no systemd, so not nix out of box daemon (aand nix fails to install if trivial install under root)
 
-#FROM composable-devcontainer:mfqlb4qsqz6wk3lvrz8kfzj137wvlcs5
 FROM composablefi/composable-devcontainer:latest
 
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]
@@ -51,6 +49,12 @@ ARG UID
 ARG GID
 ARG NIX_INSTALLER
 ARG CACHIX_NAME
+
+# NOTE: can we nixify most of this? 
+# yes, but need do much of work (does not seems shardow tools can be used)
+# examples 
+# https://github.com/NixOS/nix/blob/master/docker.nix
+# https://github.com/NixOS/nixpkgs/blob/master/pkgs/build-support/docker/examples.nix
 
 # considered nix installer will not work without it, 
 # so can try to install it via nix docker tools but if may have its own issues
