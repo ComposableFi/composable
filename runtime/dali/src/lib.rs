@@ -1490,10 +1490,6 @@ impl_runtime_apis! {
 			Ibc::client(client_id).ok()
 		}
 
-		fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
-			Ibc::host_consensus_state(height)
-		}
-
 		fn client_consensus_state(client_id: Vec<u8>, client_height: Vec<u8>, latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {
 			Ibc::consensus_state(client_height, client_id, latest_cs).ok()
 		}

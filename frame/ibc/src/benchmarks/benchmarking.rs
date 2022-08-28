@@ -3,8 +3,8 @@
 #[allow(unused)]
 use super::super::*;
 use crate::{
-	benchmarks::tendermint_benchmark_utils::*, host_functions::HostFunctions,
-	ics20::IbcCallbackHandler, ics23::client_states::ClientStates, Any, Config,
+	benchmarks::tendermint_benchmark_utils::*, host_functions::HostFunctions, ics20::IbcModule,
+	ics23::client_states::ClientStates, Any, Config,
 };
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
@@ -15,7 +15,7 @@ use core::str::FromStr;
 use frame_benchmarking::{benchmarks, whitelisted_caller, Zero};
 use frame_support::traits::fungibles::{Inspect, Mutate};
 use frame_system::RawOrigin;
-use ibc_primitives::IbcTrait;
+use ibc_primitives::IbcHandler;
 use sp_runtime::traits::IdentifyAccount;
 
 use ibc::{
@@ -946,7 +946,7 @@ benchmarks! {
 		let version = Version::new(VERSION.to_string());
 		let order = Order::Unordered;
 		let channel_id = ChannelId::new(0);
-		let mut handler = IbcCallbackHandler::<T>::default();
+		let mut handler = IbcModule::<T>::default();
 	}:{
 		handler.on_chan_open_init(&mut output, order, &connection_hops, &port_id, &channel_id, &counterparty, &version).unwrap();
 	}
@@ -959,7 +959,7 @@ benchmarks! {
 		let version = Version::new(VERSION.to_string());
 		let order = Order::Unordered;
 		let channel_id = ChannelId::new(0);
-		let mut handler = IbcCallbackHandler::<T>::default();
+		let mut handler = IbcModule::<T>::default();
 	}:{
 		handler.on_chan_open_try(&mut output, order, &connection_hops, &port_id, &channel_id, &counterparty, &version, &version).unwrap();
 	}
@@ -969,7 +969,7 @@ benchmarks! {
 		let port_id = PortId::transfer();
 		let version = Version::new(VERSION.to_string());
 		let channel_id = ChannelId::new(0);
-		let mut handler = IbcCallbackHandler::<T>::default();
+		let mut handler = IbcModule::<T>::default();
 	}:{
 		handler.on_chan_open_ack(&mut output, &port_id, &channel_id, &version).unwrap();
 	}
@@ -981,7 +981,7 @@ benchmarks! {
 		let mut output = HandlerOutputBuilder::new();
 		let port_id = PortId::transfer();
 		let channel_id = ChannelId::new(0);
-		let mut handler = IbcCallbackHandler::<T>::default();
+		let mut handler = IbcModule::<T>::default();
 	}:{
 		handler.on_chan_open_confirm(&mut output, &port_id, &channel_id).unwrap();
 	}
@@ -995,7 +995,7 @@ benchmarks! {
 		let channel_id = ChannelId::new(0);
 		let channel_ids = vec![channel_id.to_string().as_bytes().to_vec()];
 		ChannelIds::<T>::put(channel_ids);
-		let mut handler = IbcCallbackHandler::<T>::default();
+		let mut handler = IbcModule::<T>::default();
 	}:{
 		handler.on_chan_close_init(&mut output, &port_id, &channel_id).unwrap();
 	}
@@ -1009,7 +1009,7 @@ benchmarks! {
 		let channel_id = ChannelId::new(0);
 		let channel_ids = vec![channel_id.to_string().as_bytes().to_vec()];
 		ChannelIds::<T>::put(channel_ids);
-		let mut handler = IbcCallbackHandler::<T>::default();
+		let mut handler = IbcModule::<T>::default();
 	}:{
 		handler.on_chan_close_confirm(&mut output, &port_id, &channel_id).unwrap();
 	}
@@ -1080,7 +1080,7 @@ benchmarks! {
 			timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
 				.unwrap(),
 		 };
-		 let mut handler = IbcCallbackHandler::<T>::default();
+		 let mut handler = IbcModule::<T>::default();
 		 let mut output = HandlerOutputBuilder::new();
 		 let signer = Signer::from_str("relayer").unwrap();
 	}:{
@@ -1164,7 +1164,7 @@ benchmarks! {
 			timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
 				.unwrap(),
 		 };
-		 let mut handler = IbcCallbackHandler::<T>::default();
+		 let mut handler = IbcModule::<T>::default();
 		 let mut output = HandlerOutputBuilder::new();
 		 let signer = Signer::from_str("relayer").unwrap();
 		 let ack: Acknowledgement = ACK_ERR_STR.to_string().as_bytes().to_vec().into();
@@ -1241,7 +1241,7 @@ benchmarks! {
 			timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
 				.unwrap(),
 		 };
-		 let mut handler = IbcCallbackHandler::<T>::default();
+		 let mut handler = IbcModule::<T>::default();
 		 let mut output = HandlerOutputBuilder::new();
 		 let signer = Signer::from_str("relayer").unwrap();
 	}:{

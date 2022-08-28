@@ -18,7 +18,7 @@ use ibc::{
 	},
 	signer::Signer,
 };
-use ibc_primitives::{port_id_from_bytes, CallbackWeight, IbcTrait, SendPacketData};
+use ibc_primitives::{port_id_from_bytes, CallbackWeight, IbcHandler, SendPacketData};
 use scale_info::prelude::{format, string::String};
 use sp_std::{marker::PhantomData, prelude::*, vec};
 
@@ -69,7 +69,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// ibc subsystem
-		type IbcHandler: ibc_primitives::IbcTrait;
+		type IbcHandler: ibc_primitives::IbcHandler;
 	}
 
 	// Simple declaration of the `Pallet` type. It is placeholder we use to implement traits and
@@ -156,9 +156,9 @@ impl<T: Config> Pallet<T> {
 }
 
 #[derive(Clone)]
-pub struct IbcHandler<T: Config>(PhantomData<T>);
+pub struct IbcModule<T: Config>(PhantomData<T>);
 
-impl<T: Config> Default for IbcHandler<T> {
+impl<T: Config> Default for IbcModule<T> {
 	fn default() -> Self {
 		Self(PhantomData::default())
 	}
@@ -174,13 +174,13 @@ impl AsRef<[u8]> for PingAcknowledgement {
 
 impl GenericAcknowledgement for PingAcknowledgement {}
 
-impl<T: Config> core::fmt::Debug for IbcHandler<T> {
+impl<T: Config> core::fmt::Debug for IbcModule<T> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
 		write!(f, "pallet-ibc-ping")
 	}
 }
 
-impl<T: Config + Send + Sync> Module for IbcHandler<T> {
+impl<T: Config + Send + Sync> Module for IbcModule<T> {
 	fn on_chan_open_init(
 		&mut self,
 		_output: &mut ModuleOutputBuilder,

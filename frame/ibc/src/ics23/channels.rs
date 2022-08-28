@@ -35,6 +35,7 @@ impl<T: Config> Channels<T> {
 		);
 	}
 
+	// WARNING: too expensive to be called from an on-chain context, only here for rpc layer.
 	pub fn iter() -> impl Iterator<Item = (Vec<u8>, Vec<u8>, Vec<u8>)> {
 		let prefix = "channelEnds/ports/".to_string();
 		let key = apply_prefix(T::CONNECTION_PREFIX, vec![prefix.clone()]);
