@@ -27,7 +27,6 @@ std = ["composable-node/std"]
 
 [workspace]
 exclude = [
-  "frame/transaction-fee",
   "utils/extrinsics-docs-scraper",
   "integration-tests",
 ]

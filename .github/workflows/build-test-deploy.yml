@@ -14,13 +14,15 @@ on:
       - releases
 
 env:
-  NIX_CACHIX: composable-community
+  # NOTE: keep in sync with docs
   NIX_NIXPKGS_CHANNEL: https://nixos.org/channels/nixpkgs-22.05-darwin
   NIX_CONTAINER_IMAGE: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
+  
+  NIX_CACHIX: composable-community
   DOCKER_REGISTRY_NAME: composablefi
   # weird, next is implicit dependency of docker action
   DOCKER_USER_OPTION: '$UID:$GID'
-  NIX_INSTALL_SCRIPT: https://releases.nixos.org/nix/nix-2.10.3/install
 
 jobs:
   common-deps:
@@ -46,7 +48,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           name: ${{  env.NIX_CACHIX }}
@@ -78,7 +80,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -108,7 +110,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -138,7 +140,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -168,7 +170,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -198,7 +200,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -229,7 +231,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -260,7 +262,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -291,14 +293,13 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#cargo-udeps-check --no-update-lock-file --show-trace -L
-        # continue-on-error: true # If udeps is reporting false positives, it is okay to continue-on-error.
 
   unit-tests:
     name: "Unit Tests"
@@ -323,7 +324,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -357,7 +358,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -390,7 +391,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -421,7 +422,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -451,7 +452,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -481,7 +482,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -514,7 +515,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -545,7 +546,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -579,7 +580,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -618,7 +619,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -637,23 +638,17 @@ jobs:
           docker tag composable-devnet-container:latest "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
           docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:latest"
 
-  devcontainer:
-    name: "Docker Devcontainer"
+  devcontainer-build:
+    name: "Devcontainer build"
     needs:
-      - devnet-integration-tests
-      - package-polkadot-node
-      - package-composable-node
-      - check-benchmarks
-      - check-nix
-      - local-integration-tests
-      - unit-tests
+      - nixfmt-check
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
     concurrency:
-      group: devcontainer-${{ github.ref }}
+      group: ${{ github.workflow}}-devcontainer-build-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -673,18 +668,50 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: ${{  env.NIX_CACHIX }}
       - run: |
-          # TODO: either make nixos to be devcontainer and use buildx https://github.com/microsoft/vscode-dev-containers/issues/947
-          # TODO: or use nix remote build
-          # TODO: to produce arm image
-          # NOTE: building on qemu action failed (also it was emulating arm, still complained building wrong system - not reported)
-          # NOTE: used manual install, so better to use this in future https://github.com/uraimo/run-on-arch-action/pull/83
-          # NOTE: build arm on x86 failed and documented to fail
-          nix build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
+          cachix watch-exec -j 16 -c 0 composable-community nix -- build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
+
+  devcontainer-publish:
+    name: "Devcontainer publish"
+    needs:
+      - devcontainer-build
+      # - devnet-integration-tests
+      # - package-polkadot-node
+      # - package-composable-node
+      # - check-benchmarks
+      # - local-integration-tests
+      # - unit-tests
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow}}-devcontainer-publish-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf                            
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix nixpkgs.docker nixpkgs.docker-buildx
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: ${{  env.NIX_CACHIX }}
       - uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
       - run: |
+          # really not building, but reading from cache
+          nix build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
           docker load --input ./result
           # update soon https://github.com/actions/checkout/issues/760
           git config --global --add safe.directory /__w/composable/composable
@@ -721,7 +748,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix nixpkgs.nodejs
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
@@ -787,7 +814,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add https://nixos.org/channels/nixpkgs-22.05-darwin nixpkgs
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix nixpkgs.jq
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"

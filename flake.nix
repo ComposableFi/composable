@@ -23,9 +23,13 @@
       url = "github:serokell/nix-npm-buildpackage";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
-  outputs =
-    { self, nixpkgs, crane, flake-utils, rust-overlay, nix-npm-buildpackage }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay
+    , nix-npm-buildpackage, home-manager, ... }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
@@ -96,7 +100,6 @@
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
 
-          # Nightly rust used for wasm runtime compilation
           rust-nightly = rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
           # Crane lib instantiated with current nixpkgs
@@ -158,7 +161,17 @@
               "runtime-tests"
               "composablejs"
             ];
-            file-blacklist = [ "flake.nix" "flake.lock" ];
+            file-blacklist = [
+              # does not makes sence to black list,
+              # if we changed some version of tooling(seldom), we want to rebuild
+              # so if we changed version of tooling, nix itself will detect invalidation and rebuild
+              # "flake.lock"
+
+              # assumption that nix is final builder, 
+              # so there would not  .*.nix <- build.rs <- *.nix for example
+              # and if *.nix changed, nix itself will detect only relevant cache invalidations 
+              "*.nix"
+            ];
           in lib.cleanSourceWith {
             filter = lib.cleanSourceFilter;
             src = lib.cleanSourceWith {
@@ -237,7 +250,9 @@
             };
 
           devcontainer-base-image =
-            callPackage ./.nix/devcontainer-base-image.nix { inherit system; };
+            callPackage ./.devcontainer/devcontainer-base-image.nix {
+              inherit system;
+            };
 
           dali-runtime = mk-optimized-runtime {
             name = "dali";
@@ -325,6 +340,7 @@
             inherit composable-bench-runtime;
             inherit composable-node;
             inherit composable-bench-node;
+            inherit rust-nightly;
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -464,35 +480,13 @@
               '';
             };
 
-            # TODO: inherit and provide script to run all stuff
-            # devnet-container-xcvm
-            # NOTE: The devcontainer is currently broken for aarch64.
-            # Please use the developers devShell instead
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
-              # be very carefull with this, so this must be version compatible with base and what vscode will inject
-              contents = [
-                rust-nightly
-                cachix
-                rustup # just if it wants to make ad hoc updates
-                nix
-                helix
-                clang
-                nodejs
-                cmake
-                nixpkgs-fmt
-                yarn
-                bottom
-                mdbook
-                taplo
-                go
-                libclang
-                gcc
-                openssl
-                gnumake
-                pkg-config
-              ];
+              contents = [ home-manager ];
+
+              # TODO: call here home-manager for this flake.nix (like in ./.devcontainer/Dockefile) 
+              # TODO: it will make Dockerfile oneliner and faster to start          
             };
 
             check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
@@ -560,14 +554,9 @@
               installPhase = ''
                 mkdir $out
                 nixfmt --version
-
-                total_exit_code=0
-                for file in $(find ${all-directories-and-files} -type f -and -name "*.nix"); do
-                  echo "=== $file ==="
-                  nixfmt --check $file || total_exit_code=$?
-                  echo "==="
-                done
-                exit $total_exit_code
+                # note, really can just src with filer by .nix, no need all files 
+                nixfmt --check $(find ${all-directories-and-files} -name "*.nix" -type f | tr "\n" " ")
+                exit $?
               '';
             };
 
@@ -819,6 +808,63 @@
           };
           book = eachSystemOutputs.packages.x86_64-linux.composable-book;
         };
+      };
+      homeConfigurations = {
+
+        vscode.x86_64-linux = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        in with pkgs;
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          modules = [{
+            home = {
+              username = "vscode";
+              homeDirectory = "/home/vscode";
+              stateVersion = "22.05";
+              packages = [
+                cachix
+                eachSystemOutputs.packages.x86_64-linux.rust-nightly
+                docker
+                docker-buildx
+                docker-compose
+              ];
+            };
+            programs = {
+              home-manager.enable = true;
+              direnv = {
+                enable = true;
+                nix-direnv = { enable = true; };
+              };
+            };
+          }];
+        };
+
+        vscode.aarch64-linux = let pkgs = nixpkgs.legacyPackages.aarch64-linux;
+        in with pkgs;
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          modules = [{
+            home = {
+              username = "vscode";
+              homeDirectory = "/home/vscode";
+              stateVersion = "22.05";
+              packages = [
+                cachix
+                eachSystemOutputs.packages.aarch64-linux.rust-nightly
+                docker
+                docker-buildx
+                docker-compose
+              ];
+            };
+            programs = {
+              home-manager.enable = true;
+              direnv = {
+                enable = true;
+                nix-direnv = { enable = true; };
+              };
+            };
+          }];
+        };
+
       };
     };
 }
