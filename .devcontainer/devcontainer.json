@@ -76,4 +76,10 @@
 		"humao.rest-client",
 	],
 	"remoteUser": "vscode",
+	"features": {
+		// NOTE: can replace these features by using official scripts or even later nix 
+		// these are just install/injection after start up
+		"docker-in-docker": "20.10",
+		//"node": "16"
+	}
 }

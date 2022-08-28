@@ -485,6 +485,9 @@
                   docker # requires root + non root install, and there is one in base image
                   nix # reqires deep shell integration
                   cachix
+
+                  # devcontainers inject this one and it has some kind of conflicts to be resolved
+                  nodejs
                 ]
 
                 # be very carefull with this, so this must be version compatible with base and what vscode will inject
@@ -494,7 +497,6 @@
                   rustup # just if it wants to make ad hoc updates
                   helix
                   clang
-                  #nodejs
                   cmake
                   nixpkgs-fmt
                   yarn
