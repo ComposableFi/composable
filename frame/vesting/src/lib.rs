@@ -567,20 +567,29 @@ impl<T: Config> Pallet<T> {
 		(BalanceOf<T>, BoundedBTreeMap<T::VestingScheduleId, BalanceOf<T>, T::MaxVestingSchedules>),
 		DispatchError,
 	> {
-		let mut claims_per_schedule: BoundedBTreeMap<
-			T::VestingScheduleId,
-			BalanceOf<T>,
-			T::MaxVestingSchedules,
-		> = BoundedBTreeMap::new();
-
 		<VestingSchedules<T>>::try_mutate_exists(who, asset, |maybe_schedules| {
-			let mut total_balance_to_claim: BalanceOf<T> = Zero::zero();
 			match maybe_schedules {
-				Some(schedules) => {
-					vesting_schedule_ids
-						.into_all_ids(schedules)
-						.iter()
-						.map(|id_to_claim| {
+				Some(schedules) =>
+					vesting_schedule_ids.into_all_ids(schedules).iter().try_fold::<_, _, Result<
+						(
+							BalanceOf<T>,
+							BoundedBTreeMap<
+								T::VestingScheduleId,
+								BalanceOf<T>,
+								T::MaxVestingSchedules,
+							>,
+						),
+						DispatchError,
+					>>(
+						(
+							Zero::zero(),
+							BoundedBTreeMap::<
+								T::VestingScheduleId,
+								BalanceOf<T>,
+								T::MaxVestingSchedules,
+							>::new(),
+						),
+						|(mut total_balance_to_claim, mut claims_per_schedule), id_to_claim| {
 							let schedule = schedules
 								.get_mut(id_to_claim)
 								.ok_or(Error::<T>::VestingScheduleNotFound)?;
@@ -610,16 +619,13 @@ impl<T: Config> Pallet<T> {
 								.expect("Max vesting schedules exceeded");
 
 							if locked_amount.is_zero() {
-								// remove fully claimed schedules
+								// Remove fully claimed schedules
 								schedules.remove(id_to_claim);
-							}
+							};
 
-							Ok(())
-						})
-						.collect::<Result<Vec<_>, DispatchError>>()?;
-
-					Ok((total_balance_to_claim, claims_per_schedule))
-				},
+							Ok((total_balance_to_claim, claims_per_schedule))
+						},
+					),
 				None => Err(Error::<T>::VestingScheduleNotFound.into()),
 			}
 		})
