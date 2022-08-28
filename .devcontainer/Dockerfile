@@ -2,13 +2,9 @@
 # ## Maintainance
 
 # Keep in sync nix version and config in these:
-
 # - nix version in our docs to install nix on VM/bare metal (usually locally)
-
-# - https://github.com/jmgilman/dev-container
-
-# - https://github.com/cachix/install-nix-action
-
+# - ci used https://github.com/cachix/install-nix-action
+# - flake.nix
 
 # ## References
 
@@ -18,6 +14,8 @@
 # https://www.reddit.com/r/NixOS/comments/uoklud/nix_development_container/
 
 # https://tomferon.com/posts/nix-devcontainer/
+
+# https://github.com/jmgilman/dev-container
 
 # https://github.com/xtruder/nix-devcontainer
 
@@ -42,6 +40,7 @@ ARG CACHIX_NAME=composable-community
 # 3. so until CI with arm, people can built it locally on arm
 # 4. docker has no systemd, so not nix out of box daemon (aand nix fails to install if trivial install under root)
 
+#FROM composable-devcontainer:mfqlb4qsqz6wk3lvrz8kfzj137wvlcs5
 FROM composablefi/composable-devcontainer:latest
 
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]
@@ -77,23 +76,12 @@ RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
 
 RUN curl --location ${NIX_INSTALLER} > /install.sh
 RUN chmod +x /install.sh
+# so you can run docker daemon without knowing """password"""
+RUN passwd --delete root
 
 
 # what ever install for `root`
-RUN /install.sh
-RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
-    nix-channel --add ${CHANNEL_URL} nixpkgs && \
-    nix-channel --update 
-
-RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
-    nix-env -iA nixpkgs.cachix
-    
-RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
-    cachix use ${CACHIX_NAME}
-
-RUN echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bashrc && \
-    echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.profile && \
-    echo "source ~/.nix-profile/etc/profile.d/nix.sh" >> ~/.bash_profile
+# not install under root, if try - later user install
 
 # not switch to user
 RUN chown --recursive vscode:vscode /nix
