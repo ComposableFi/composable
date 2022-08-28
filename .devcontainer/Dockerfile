@@ -1,5 +1,3 @@
-#FROM composable-devcontainer:z5r445ng6yd5ixa2znpkvxxwl3yvmh84
-
 # keep in sync with container default shell user
 ARG USER=vscode
 ARG UID=1000
@@ -9,11 +7,10 @@ ARG GID=${UID}
 ARG NIX_INSTALLER=https://releases.nixos.org/nix/nix-2.10.3/install
 ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-22.05-darwin
 ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-unstable
-
 ARG CACHIX_NAME=composable-community
 
-#FROM composablefi/composable-devcontainer:latest
-FROM composable-devcontainer:mfqlb4qsqz6wk3lvrz8kfzj137wvlcs5
+FROM composablefi/composable-devcontainer:latest
+#FROM composable-devcontainer:mfqlb4qsqz6wk3lvrz8kfzj137wvlcs5
 
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]
 
@@ -30,24 +27,23 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     sudo \
     xz-utils    
 
+# needed by nix
+RUN addgroup --system nixbld
+RUN for i in $(seq 1 30); do useradd -ms /bin/bash nixbld$i &&  adduser nixbld$i nixbld; done
+RUN adduser ${USER} nixbld
+
+# nix just checks user name != root, so we need some root so to do stuff
 RUN usermod --append --groups sudo ${USER} --shell /bin/bash
-RUN usermod --append --groups root ${USER} --shell /bin/bash
+RUN adduser ${USER} root
 RUN sed --in-place 's/%sudo.*ALL/%sudo   ALL=(ALL:ALL) NOPASSWD:ALL/' /etc/sudoers
+
 RUN mkdir --parents /etc/nix/
 RUN echo "sandbox = false" >> /etc/nix/nix.conf
 RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
-# && mkdir -p /etc/nix && echo 'sandbox = false' > /etc/nix/nix.conf
-RUN mkdir --parents /nix
+
 RUN curl --location ${NIX_INSTALLER} > /install.sh
 RUN chmod +x /install.sh
 RUN chown --recursive vscode:vscode /nix
-#RUN chown --recursive vscode /nix
-
-RUN addgroup --system nixbld
-RUN adduser ${USER} root
-RUN adduser ${USER} nixbld
-RUN for i in $(seq 1 30); do useradd -ms /bin/bash nixbld$i &&  adduser nixbld$i nixbld; done
-
 # without this line, if our docker has prebuild nix stuff, nix fails to install
 RUN chmod -R a+rwx /nix
 
