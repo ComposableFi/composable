@@ -32,6 +32,7 @@ use lending::MarketId;
 use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
+use ibc::clients::ics11_beefy::client_state::RelayChain;
 
 use common::{
 	governance::native::{
@@ -1045,6 +1046,7 @@ impl dex_router::Config for Runtime {
 
 parameter_types! {
 	pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK as u64;
+	pub static RelayChainId: RelayChain = RelayChain::Rococo;
 }
 
 impl pallet_ibc::Config for Runtime {
@@ -1060,6 +1062,8 @@ impl pallet_ibc::Config for Runtime {
 	type AssetRegistry = AssetsRegistry;
 	type CurrencyFactory = CurrencyFactory;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
+	type ParaId = parachain_info::Pallet<Runtime>;
+	type RelayChain = RelayChainId;
 	type AdminOrigin = EnsureRoot<AccountId>;
 }
 

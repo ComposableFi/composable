@@ -2807,6 +2807,7 @@ dependencies = [
  "frame-system-rpc-runtime-api",
  "hex",
  "hex-literal",
+ "ibc",
  "ibc-primitives",
  "ibc-runtime-api",
  "lending-runtime-api",
