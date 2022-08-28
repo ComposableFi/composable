@@ -8,6 +8,7 @@ let
       arch = "amd64";
       sha256 = "0vraf6iwbddpcy4l9msks6lmi35k7wfgpafikb56k3qinvvcjm9b";
     };
+
     aarch64-linux = {
       arch = "arm64";
       sha256 = "sha256-TBbDCKlGb+n5V/IqWPuZBef3dZ//Pt7v3gdOvyoOrjU=";

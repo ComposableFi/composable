@@ -576,14 +576,9 @@
               installPhase = ''
                 mkdir $out
                 nixfmt --version
-
-                total_exit_code=0
-                for file in $(find ${all-directories-and-files} -type f -and -name "*.nix"); do
-                  echo "=== $file ==="
-                  nixfmt --check $file || total_exit_code=$?
-                  echo "==="
-                done
-                exit $total_exit_code
+                # note, really can just src with filer by .nix, no need all files 
+                nixfmt --check $(find ${all-directories-and-files} -name "*.nix" -type f | tr "\n" " ")
+                exit $?
               '';
             };
 
