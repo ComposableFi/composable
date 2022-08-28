@@ -594,7 +594,6 @@ jobs:
       - devnet-integration-tests
       - package-polkadot-node
       - package-composable-node
-      - check-benchmarks
       - check-nix
       - local-integration-tests
       - unit-tests
@@ -702,6 +701,14 @@ jobs:
         - package-polkadot-node
         - package-composable-node
         - check-nix
+        - check-benchmarks
+        - nixfmt-check
+        - cargo-clippy-check
+        - cargo-deny-check
+        - cargo-udeps-check
+        - cargo-fmt-check
+        - taplo-cli-check
+        - prettier-check
       runs-on: ubuntu-latest      
       timeout-minutes: 120
       concurrency:
@@ -764,7 +771,6 @@ jobs:
         - devnet-integration-tests
         - package-polkadot-node
         - package-composable-node
-        - check-benchmarks
         - check-nix
         - local-integration-tests
         - unit-tests
