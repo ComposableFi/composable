@@ -1,4 +1,32 @@
+
+# ## Maintainance
+
+# Keep in sync nix version and config in these:
+
+# - nix version in our docs to install nix on VM/bare metal (usually locally)
+
+# - https://github.com/jmgilman/dev-container
+
+# - https://github.com/cachix/install-nix-action
+
+
+# ## References
+
+
+# https://github.com/DavHau/nix-portable
+
+# https://www.reddit.com/r/NixOS/comments/uoklud/nix_development_container/
+
+# https://tomferon.com/posts/nix-devcontainer/
+
+# https://github.com/xtruder/nix-devcontainer
+
+# https://github.com/jetpack-io/devbox
+
+# https://github.com/gitpod-io/template-nix
+
 # keep in sync with container default shell user
+
 ARG USER=vscode
 ARG UID=1000
 ARG GID=${UID}
@@ -9,8 +37,12 @@ ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-22.05-darwin
 ARG CHANNEL_URL=https://nixos.org/channels/nixpkgs-unstable
 ARG CACHIX_NAME=composable-community
 
+# 1. inherit from ms based image for nice shell nd sure that runtime injection of vscode will work
+# 2. base on image built in CI with nix to prevent long start up time (nix shell on start), and share tolling of all shells
+# 3. so until CI with arm, people can built it locally on arm
+# 4. docker has no systemd, so not nix out of box daemon (aand nix fails to install if trivial install under root)
+
 FROM composablefi/composable-devcontainer:latest
-#FROM composable-devcontainer:mfqlb4qsqz6wk3lvrz8kfzj137wvlcs5
 
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]
 

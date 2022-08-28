@@ -639,28 +639,28 @@
             developers = developers-minimal.overrideAttrs (base: {
               buildInputs = with packages;
                 base.buildInputs ++ [
-                  # bacon
-                  # google-cloud-sdk
-                  # grub2
-                  # jq
-                  # lldb
-                  # llvmPackages_latest.bintools
-                  # llvmPackages_latest.lld
-                  # llvmPackages_latest.llvm
-                  # mdbook
-                  # nix-tree
-                  # nixpkgs-fmt
-                  # openssl
-                  # openssl.dev
-                  # pkg-config
-                  # qemu
-                  # rnix-lsp
+                  bacon
+                  google-cloud-sdk
+                  grub2
+                  jq
+                  lldb
+                  llvmPackages_latest.bintools
+                  llvmPackages_latest.lld
+                  llvmPackages_latest.llvm
+                  mdbook
+                  nix-tree
+                  nixpkgs-fmt
+                  openssl
+                  openssl.dev
+                  pkg-config
+                  qemu
+                  rnix-lsp
                   rust-nightly
-                  # taplo
-                  # wasm-optimizer
-                  # xorriso
-                  # zlib.out
-                  # nix-tree
+                  taplo
+                  wasm-optimizer
+                  xorriso
+                  zlib.out
+                  nix-tree
                 ] ++ docs-renders;
             });
 
