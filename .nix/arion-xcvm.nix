@@ -10,11 +10,13 @@ pkgs.arion.build {
           password = "xcvm";
           port = 1337;
         };
+        juno-db-name = "juno";
         juno-db = default-db // {
-          name = "juno";
+          name = juno-db-name;
         };
+        squid-db-name = "squid";
         squid-db = default-db // {
-          name = "squid";
+          name = squid-db-name;
         };
       in {
         config.project.name = "Composable Finance XCVM devnet";
@@ -27,8 +29,8 @@ pkgs.arion.build {
             init-scripts = pkgs.writeTextFile {
               name = "init";
               text = ''
-                CREATE DATABASE juno WITH OWNER xcvm;
-                CREATE DATABASE squid WITH OWNER xcvm;
+                CREATE DATABASE ${juno-db-name} WITH OWNER ${default-db.user};
+                CREATE DATABASE ${squid-db-name} WITH OWNER ${default-db.user};
               '';
               executable = false;
               destination = "/init.sql";

@@ -38,7 +38,7 @@
     };
     command = [
       "-f=/app"
-      "--db-schema=app"
+      "--db-schema=cosmos"
       "--network-endpoint=http://127.0.0.1:26657"
     ];
     volumes = [ "${subql}/:/app" ];

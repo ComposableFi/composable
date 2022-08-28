@@ -15,7 +15,6 @@
       FORCE_HEIGHT = "true";
       WS_PROVIDER_ENDPOINT_URI = "ws://127.0.0.1:9988";
     };
-    command =
-      [ "sh" "-c" "yarn db:bootstrap && yarn start:prod" ];
+    command = [ "sh" "-c" "yarn db:bootstrap && yarn start:prod" ];
   };
 }
