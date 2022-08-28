@@ -188,9 +188,6 @@ where
 	#[method(name = "ibc_queryTimestamp")]
 	fn query_timestamp(&self, height: u32) -> Result<u64>;
 
-	/// Query localchain consensus state
-	#[method(name = "ibc_queryConsensusState")]
-	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
 
 	/// Query client consensus state
 	#[method(name = "ibc_queryClientConsensusState")]
