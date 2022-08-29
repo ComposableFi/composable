@@ -15,12 +15,6 @@ export interface CommonMosaicRemoteAssetId extends Null {}
 /** @name ComposableSupportEthereumAddress */
 export interface ComposableSupportEthereumAddress extends Null {}
 
-/** @name ComposableTraitsAccountProxyProxyDefinition */
-export interface ComposableTraitsAccountProxyProxyDefinition extends Null {}
-
-/** @name ComposableTraitsAccountProxyProxyType */
-export interface ComposableTraitsAccountProxyProxyType extends Null {}
-
 /** @name ComposableTraitsAssetsBasicAssetMetadata */
 export interface ComposableTraitsAssetsBasicAssetMetadata extends Struct {
   readonly symbol: {
@@ -93,6 +87,7 @@ export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
 export interface ComposableTraitsGovernanceSignedRawOrigin extends Enum {
   readonly isRoot: boolean;
   readonly isSigned: boolean;
+  readonly asSigned: AccountId32;
   readonly isIsSigned: boolean;
   readonly asIsSigned: bool;
   readonly isAsSigned: boolean;
@@ -124,9 +119,6 @@ export interface ComposableTraitsStakingRewardPool extends Null {}
 /** @name ComposableTraitsStakingRewardPoolConfiguration */
 export interface ComposableTraitsStakingRewardPoolConfiguration extends Null {}
 
-/** @name ComposableTraitsStakingRewardUpdate */
-export interface ComposableTraitsStakingRewardUpdate extends Null {}
-
 /** @name ComposableTraitsStakingStake */
 export interface ComposableTraitsStakingStake extends Null {}
 
@@ -138,12 +130,6 @@ export interface ComposableTraitsVaultVaultConfig extends Null {}
 
 /** @name ComposableTraitsVestingVestingSchedule */
 export interface ComposableTraitsVestingVestingSchedule extends Null {}
-
-/** @name ComposableTraitsVestingVestingScheduleIdSet */
-export interface ComposableTraitsVestingVestingScheduleIdSet extends Null {}
-
-/** @name ComposableTraitsVestingVestingScheduleInfo */
-export interface ComposableTraitsVestingVestingScheduleInfo extends Null {}
 
 /** @name ComposableTraitsXcmAssetsForeignMetadata */
 export interface ComposableTraitsXcmAssetsForeignMetadata extends Null {}
@@ -226,9 +212,6 @@ export interface OrmlTokensBalanceLock extends Null {}
 /** @name OrmlTokensReserveData */
 export interface OrmlTokensReserveData extends Null {}
 
-/** @name PalletAccountProxyAnnouncement */
-export interface PalletAccountProxyAnnouncement extends Null {}
-
 /** @name PalletAssetsRegistryCandidateStatus */
 export interface PalletAssetsRegistryCandidateStatus extends Null {}
 
@@ -268,8 +251,23 @@ export interface PalletCrowdloanRewardsReward extends Null {}
 /** @name PalletDemocracyConviction */
 export interface PalletDemocracyConviction extends Null {}
 
+/** @name PalletDemocracyPreimageStatus */
+export interface PalletDemocracyPreimageStatus extends Null {}
+
+/** @name PalletDemocracyReferendumInfo */
+export interface PalletDemocracyReferendumInfo extends Null {}
+
+/** @name PalletDemocracyReleases */
+export interface PalletDemocracyReleases extends Null {}
+
 /** @name PalletDemocracyVoteAccountVote */
 export interface PalletDemocracyVoteAccountVote extends Null {}
+
+/** @name PalletDemocracyVoteThreshold */
+export interface PalletDemocracyVoteThreshold extends Null {}
+
+/** @name PalletDemocracyVoteVoting */
+export interface PalletDemocracyVoteVoting extends Null {}
 
 /** @name PalletDutchAuctionSellOrder */
 export interface PalletDutchAuctionSellOrder extends Null {}
@@ -357,6 +355,9 @@ export interface PalletOracleWithdraw extends Struct {
   readonly unlockBlock: u32;
 }
 
+/** @name PalletPreimageRequestStatus */
+export interface PalletPreimageRequestStatus extends Null {}
+
 /** @name PalletSchedulerReleases */
 export interface PalletSchedulerReleases extends Null {}
 
@@ -401,5 +402,14 @@ export interface SpTrieStorageProof extends Null {}
 
 /** @name XcmVersionedMultiAsset */
 export interface XcmVersionedMultiAsset extends Null {}
+
+/** @name ComposableTraitsVestingVestingSchedule */
+export interface ComposableTraitsVestingVestingSchedule extends Null {}
+
+/** @name ComposableTraitsVestingVestingScheduleIdSet */
+export interface ComposableTraitsVestingVestingScheduleIdSet extends Null {}
+
+/** @name ComposableTraitsVestingVestingScheduleInfo */
+export interface ComposableTraitsVestingVestingScheduleInfo extends Null {}
 
 export type PHANTOM_CROWDLOANREWARDS = 'crowdloanRewards';
