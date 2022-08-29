@@ -32,10 +32,11 @@ pub mod pallet {
 	// ---------------------------------------------------------------------------------------------
 
 	use codec::{Codec, FullCodec};
+	use composable_support::math::safe::{SafeDiv, SafeMul, SafeSub};
 	use composable_traits::{
 		dex::Amm,
 		instrumental::{InstrumentalProtocolStrategy, State},
-		vault::{StrategicVault, Vault, FundsAvailability},
+		vault::{FundsAvailability, StrategicVault, Vault},
 	};
 	use frame_support::{
 		dispatch::{DispatchError, DispatchResult},
@@ -44,14 +45,14 @@ pub mod pallet {
 		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
 		transactional, Blake2_128Concat, PalletId, RuntimeDebug,
 	};
-	use rust_decimal::{prelude::FromPrimitive, Decimal};
 	use frame_system::pallet_prelude::OriginFor;
-	use composable_support::math::safe::{SafeMul, SafeSub};
+	use rust_decimal::{prelude::FromPrimitive, Decimal};
 	use sp_runtime::{
 		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero, Convert,
+			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
+			Zero,
 		},
-		Permill, ArithmeticError,
+		ArithmeticError, Permill,
 	};
 	use sp_std::fmt::Debug;
 
@@ -349,19 +350,32 @@ pub mod pallet {
 			Pools::<T>::mutate(asset_id, |pool| {
 				*pool = Some(PoolState { pool_id: pool_id_deduce, state: State::Transferring });
 			});
-			let pertcentage_of_funds = Decimal::from_u32(percentage_of_funds.deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
+			let pertcentage_of_funds = Decimal::from_u32(percentage_of_funds.deconstruct().into())
+				.ok_or(ArithmeticError::Overflow)?;
 			let balance_of_lp_tokens_decimal = T::Convert::convert(balance_of_lp_token);
-			let balance_to_withdraw_per_transaction = T::Convert::convert(balance_of_lp_tokens_decimal.safe_mul(&pertcentage_of_funds)?);
+			let balance_to_withdraw_per_transaction =
+				T::Convert::convert(balance_of_lp_tokens_decimal.safe_mul(&pertcentage_of_funds)?);
 			while balance_of_lp_token > balance_to_withdraw_per_transaction {
-				Self::do_tranferring_funds(&vault_account, new_pool_id, pool_id_deduce, balance_to_withdraw_per_transaction)?;
-				balance_of_lp_token = balance_of_lp_token.safe_sub(&balance_to_withdraw_per_transaction)?;	
+				Self::do_tranferring_funds(
+					&vault_account,
+					new_pool_id,
+					pool_id_deduce,
+					balance_to_withdraw_per_transaction,
+				)?;
+				balance_of_lp_token =
+					balance_of_lp_token.safe_sub(&balance_to_withdraw_per_transaction)?;
 			}
 			if balance_of_lp_token > T::Balance::zero() {
-				Self::do_tranferring_funds(&vault_account, new_pool_id, pool_id_deduce, balance_to_withdraw_per_transaction)?;
+				Self::do_tranferring_funds(
+					&vault_account,
+					new_pool_id,
+					pool_id_deduce,
+					balance_to_withdraw_per_transaction,
+				)?;
 			}
 			Pools::<T>::mutate(asset_id, |pool| {
 				*pool = Some(PoolState { pool_id: new_pool_id, state: State::Normal });
-			});	
+			});
 			Ok(())
 		}
 
@@ -429,12 +443,14 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			balance: T::Balance,
 		) -> DispatchResult {
-			let pool = T::Pablo::get_pool(pool_id)?;
-			// let pool_base_aum =
-			// 		T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
-			// let lp_total_issuance =
-			// 	T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-			todo!();
+			let lp_price = T::Pablo::get_price_of_lp_token(pool_id)?;
+			let lp_redeem = balance.safe_div(&lp_price)?;
+			T::Pablo::remove_liquidity_single_asset(
+				vault_account,
+				pool_id,
+				lp_redeem,
+				T::Balance::zero(),
+			)
 		}
 
 		fn liquidate(vault_account: &T::AccountId, pool_id: T::PoolId) -> DispatchResult {
@@ -452,7 +468,7 @@ pub mod pallet {
 		fn do_tranferring_funds(
 			vault_account: &T::AccountId,
 			new_pool_id: T::PoolId,
-			pool_id_deduce: T::PoolId,	
+			pool_id_deduce: T::PoolId,
 			balance: T::Balance,
 		) -> DispatchResult {
 			Self::deposit(vault_account, pool_id_deduce, balance)?;
