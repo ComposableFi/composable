@@ -1665,6 +1665,7 @@ version = "0.0.1"
 dependencies = [
  "bitflags",
  "composable-support",
+ "fixed",
  "frame-support",
  "frame-system",
  "parity-scale-codec 3.1.5",
