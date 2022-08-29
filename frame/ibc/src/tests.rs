@@ -341,7 +341,7 @@ fn on_deliver_ics20_recv_packet() {
 }
 
 #[test]
-fn should_modify_acknowledgement() {
+fn should_fetch_recv_packet_with_acknowledgement() {
 	let mut ext = new_test_ext();
 	ext.execute_with(|| {
 		frame_system::Pallet::<Test>::set_block_number(1u32.into());
