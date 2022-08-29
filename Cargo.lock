@@ -17139,6 +17139,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "xcvm-router"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus 0.13.4",
+ "schemars",
+ "serde",
+ "thiserror",
+ "xcvm-core",
+ "xcvm-interpreter",
+]
+
+[[package]]
 name = "yamux"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
