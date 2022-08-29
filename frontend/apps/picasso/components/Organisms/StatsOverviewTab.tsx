@@ -1,24 +1,12 @@
 import { Box, useTheme } from "@mui/material";
-import { Chart, FeaturedBox } from "@/components/Molecules";
-import { useStore } from "@/stores/root";
-import {
-  formatNumber,
-  formatNumberWithSymbol,
-  formatNumberCompact,
-  formatNumberCompactWithToken,
-  formatNumberCompactWithSymbol,
-  callIf,
-  unwrapNumberOrHex,
-  humanBalance,
-} from "shared";
-import { OverviewDataProps } from "@/stores/defi/stats/overview";
+import { FeaturedBox } from "@/components/Molecules";
+import { callIf, fromChainIdUnit, unwrapNumberOrHex, } from "shared";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useEffect, useState } from "react";
 import BigNumber from "bignumber.js";
 import { u128 } from "@polkadot/types-codec";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
 import { Assets } from "@/defi/polkadot/Assets";
-import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
 
 const useCirculatingSupply = () => {
   const { parachainApi } = usePicassoProvider();

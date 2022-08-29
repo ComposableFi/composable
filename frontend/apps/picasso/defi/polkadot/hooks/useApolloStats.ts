@@ -3,11 +3,10 @@ import { useStore } from "@/stores/root";
 import { WebsocketClient } from "binance";
 import BigNumber from "bignumber.js";
 import { useEffect } from "react";
-import { callIf, unwrapNumberOrHex } from "shared";
+import { callIf, fromChainIdUnit, unwrapNumberOrHex } from "shared";
 import { Assets } from "@/defi/polkadot/Assets";
 import { AssetId } from "@/defi/polkadot/types";
 import { BN } from "@polkadot/util";
-import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
 import { ComposableTraitsOraclePrice } from "defi-interfaces";
 
 export function binanceMapPairToSourceSymbol(pair: string) {
