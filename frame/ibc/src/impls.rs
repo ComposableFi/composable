@@ -505,26 +505,12 @@ where
 		key: (PortId, ChannelId, Sequence),
 		ack: Vec<u8>,
 	) -> Result<(), Error<T>> {
-		// store packet offchain
 		let channel_id = key.1.to_string().as_bytes().to_vec();
 		let port_id = key.0.as_bytes().to_vec();
 		let seq = u64::from(key.2);
-		// let key = Pallet::<T>::acknowledgements_offchain_key(channel_id, port_id);
-		// let mut acks: BTreeMap<u64, Vec<u8>> =
-		// 	sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
-		// 		.and_then(|v| codec::Decode::decode(&mut &*v).ok())
-		// 		.unwrap_or_default();
-		// acks.insert(seq, ack);
-		// sp_io::offchain_index::set(&key, acks.encode().as_slice());
-		ReceivePackets::<T>::try_mutate::<_, _, _, &'static str, _>(
-			(channel_id, port_id),
-			seq,
-			|packet_info| {
-				packet_info.ack = Some(ack);
-				Ok(())
-			},
-		)
-		.map_err(|_| Error::<T>::WriteAckError)
+		log::trace!(target: "pallet_ibc", "in channel: [store_raw_acknowledgement] >> writing acknowledgement {:?} {:?}", key, ack);
+		WriteAcknowledgements::<T>::insert((channel_id, port_id), seq, ack);
+		Ok(())
 	}
 
 	pub(crate) fn packet_cleanup() -> Result<(), Error<T>> {
@@ -596,7 +582,7 @@ where
 		// 		.unwrap_or_default();
 		let packets = sequences
 			.into_iter()
-			.map(|seq| SendPackets::<T>::get((channel_id.clone(), port_id.clone()), seq))
+			.filter_map(|seq| SendPackets::<T>::get((channel_id.clone(), port_id.clone()), seq))
 			.collect();
 		Ok(packets)
 	}
@@ -608,7 +594,16 @@ where
 	) -> Result<Vec<PacketInfo>, Error<T>> {
 		let packets = sequences
 			.into_iter()
-			.map(|seq| ReceivePackets::<T>::get((channel_id.clone(), port_id.clone()), seq))
+			.filter_map(|seq| {
+				let packet_info =
+					ReceivePackets::<T>::get((channel_id.clone(), port_id.clone()), seq);
+				let ack =
+					WriteAcknowledgements::<T>::get((channel_id.clone(), port_id.clone()), seq);
+				packet_info.map(|mut packet_info| {
+					packet_info.ack = ack;
+					packet_info
+				})
+			})
 			.collect();
 		Ok(packets)
 	}
@@ -891,7 +886,7 @@ where
 	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
 		let mut ctx = Context::<T>::default();
 		Self::store_raw_acknowledgement(
-			(packet.source_port.clone(), packet.source_channel, packet.sequence),
+			(packet.destination_port.clone(), packet.destination_channel, packet.sequence),
 			ack.clone(),
 		)
 		.map_err(|e| IbcHandlerError::AcknowledgementError {
@@ -899,7 +894,7 @@ where
 		})?;
 		let ack = ctx.ack_commitment(ack.into());
 		ctx.store_packet_acknowledgement(
-			(packet.source_port.clone(), packet.source_channel, packet.sequence),
+			(packet.destination_port.clone(), packet.destination_channel, packet.sequence),
 			ack,
 		)
 		.map_err(|e| IbcHandlerError::WriteAcknowledgementError { msg: Some(e.to_string()) })?;

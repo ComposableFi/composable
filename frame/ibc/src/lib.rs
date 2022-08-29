@@ -319,7 +319,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		u64,
 		PacketInfo,
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	// temporary
@@ -333,8 +333,23 @@ pub mod pallet {
 		Blake2_128Concat,
 		u64,
 		PacketInfo,
-		ValueQuery,
+		OptionQuery,
 	>;
+
+	// temporary
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	/// (ChannelId, PortId, Sequence) => Vec<u8>
+	pub type WriteAcknowledgements<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		(Vec<u8>, Vec<u8>),
+		Blake2_128Concat,
+		u64,
+		Vec<u8>,
+		OptionQuery,
+	>;
+
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// Pallet Params used to disable sending or receipt of ibc tokens
