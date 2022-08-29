@@ -46,13 +46,12 @@ pub mod pallet {
 		transactional, Blake2_128Concat, PalletId, RuntimeDebug,
 	};
 	use frame_system::pallet_prelude::OriginFor;
-	use rust_decimal::{prelude::FromPrimitive, Decimal};
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Convert,
 			Zero,
 		},
-		ArithmeticError, Permill,
+		Permill,
 	};
 	use sp_std::fmt::Debug;
 
@@ -127,7 +126,7 @@ pub mod pallet {
 			VaultId = Self::VaultId,
 		>;
 
-		type Convert: Convert<Self::Balance, Decimal> + Convert<Decimal, Self::Balance>;
+		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
 
 		/// The [`Currency`](Config::Currency).
 		///
@@ -350,8 +349,7 @@ pub mod pallet {
 			Pools::<T>::mutate(asset_id, |pool| {
 				*pool = Some(PoolState { pool_id: pool_id_deduce, state: State::Transferring });
 			});
-			let pertcentage_of_funds = Decimal::from_u32(percentage_of_funds.deconstruct().into())
-				.ok_or(ArithmeticError::Overflow)?;
+			let pertcentage_of_funds: u128 = percentage_of_funds.deconstruct().into();
 			let balance_of_lp_tokens_decimal = T::Convert::convert(balance_of_lp_token);
 			let balance_to_withdraw_per_transaction =
 				T::Convert::convert(balance_of_lp_tokens_decimal.safe_mul(&pertcentage_of_funds)?);
