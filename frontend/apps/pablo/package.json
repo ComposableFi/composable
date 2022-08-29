@@ -72,7 +72,6 @@
     "eslint": "^8.14.0",
     "eslint-config-next": "^12.1.5",
     "eslint-config-prettier": "^8.3.0",
-    "firebase-tools": "^11.8.0",
     "jest": "^27.4.5",
     "jest-next-dynamic": "^1.0.1",
     "lint-staged": ">=10",

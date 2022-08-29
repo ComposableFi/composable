@@ -31,6 +31,7 @@
     "@web3-react/injected-connector": "^6.0.7",
     "@web3-react/network-connector": "^6.1.9",
     "apexcharts": "^3.33.1",
+    "bi-lib": "*",
     "bignumber.js": "^9.0.2",
     "bn.js": "^5.2.0",
     "contentful": "^9.1.5",
@@ -46,7 +47,6 @@
     "react-dom": "17.0.2",
     "react-hotjar": "^4.0.0",
     "shared": "*",
-    "bi-lib": "*",
     "substrate-react": "*",
     "tokens": "*",
     "zustand": "^4.0.0-beta.2"
@@ -67,7 +67,6 @@
     "eslint": "^8.12.0",
     "eslint-config-next": "^12.1.1",
     "eslint-config-prettier": "^8.3.0",
-    "firebase-tools": "^11.8.0",
     "jest": "^27.4.5",
     "jest-next-dynamic": "^1.0.1",
     "lint-staged": ">=10",
