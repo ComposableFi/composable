@@ -160,6 +160,7 @@ where
 		seqs: Vec<u64>,
 	) -> Result<Vec<PacketInfo>>;
 
+	/// Get all packet sequences that have not been acknowledged
 	#[method(name = "ibc_undeliveredSequences")]
 	fn query_undelivered_sequences(&self, channel_id: String, port_id: String) -> Result<Vec<u64>>;
 

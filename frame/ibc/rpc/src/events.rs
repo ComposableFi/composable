@@ -38,8 +38,8 @@ where
 			Some(event)
 		},
 		RawIbcEvent::ReceivePacket(ev) => {
-			let channel_id = ev.src_channel_id();
-			let port_id = ev.src_port_id();
+			let channel_id = ev.dst_channel_id();
+			let port_id = ev.dst_port_id();
 			let sequence = u64::from(ev.packet.sequence);
 			let packets: Vec<ibc_primitives::PacketInfo> = api
 				.query_recv_packet_info(
@@ -56,8 +56,8 @@ where
 			Some(event)
 		},
 		RawIbcEvent::WriteAcknowledgement(ev) => {
-			let channel_id = ev.src_channel_id();
-			let port_id = ev.src_port_id();
+			let channel_id = ev.dst_channel_id();
+			let port_id = ev.dst_port_id();
 			let sequence = u64::from(ev.packet.sequence);
 			let packets: Vec<ibc_primitives::PacketInfo> = api
 				.query_recv_packet_info(

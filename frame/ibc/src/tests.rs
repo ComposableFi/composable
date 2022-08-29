@@ -1,5 +1,6 @@
 use crate::{
-	mock::*, routing::Context, Any, Config, MultiAddress, PalletParams, TransferParams, MODULE_ID,
+	mock::*, routing::Context, Any, Config, MultiAddress, Pallet, PalletParams, TransferParams,
+	MODULE_ID,
 };
 use core::time::Duration;
 use frame_support::{assert_ok, traits::fungibles::Mutate};
@@ -36,7 +37,7 @@ use ibc::{
 	signer::Signer,
 	tx_msg::Msg,
 };
-use ibc_primitives::{get_channel_escrow_address, OpenChannelParams};
+use ibc_primitives::{get_channel_escrow_address, IbcHandler, OpenChannelParams};
 use pallet_ibc_ping::SendPingParams;
 use primitives::currency::CurrencyId;
 use sp_core::Pair;
@@ -337,4 +338,49 @@ fn on_deliver_ics20_recv_packet() {
 		let account_data = Tokens::accounts(AccountId32::new(pair.public().0), CurrencyId::PICA);
 		assert_eq!(account_data.free, amt.into())
 	})
+}
+
+#[test]
+fn should_modify_acknowledgement() {
+	let mut ext = new_test_ext();
+	ext.execute_with(|| {
+		frame_system::Pallet::<Test>::set_block_number(1u32.into());
+		let channel_id = ChannelId::new(0);
+		let port_id = PortId::transfer();
+
+		let mut ctx = Context::<Test>::default();
+
+		let channel_end = ChannelEnd::default();
+		ctx.store_channel((port_id.clone(), channel_id), &channel_end).unwrap();
+		let packet = Packet {
+			sequence: 1u64.into(),
+			source_port: port_id.clone(),
+			source_channel: channel_id,
+			destination_port: port_id.clone(),
+			destination_channel: channel_id,
+			data: "hello".as_bytes().to_vec(),
+			timeout_height: Default::default(),
+			timeout_timestamp: Default::default(),
+		};
+
+		ctx.store_recv_packet(
+			(port_id.clone(), channel_id, packet.sequence.clone()),
+			packet.clone(),
+		)
+		.unwrap();
+
+		let ack = "success".as_bytes().to_vec();
+		Pallet::<Test>::write_acknowlegdement(&packet, ack.clone()).unwrap();
+
+		let packet_info = Pallet::<Test>::get_recv_packet_info(
+			channel_id.to_string().as_bytes().to_vec(),
+			port_id.as_bytes().to_vec(),
+			vec![1],
+		)
+		.unwrap()
+		.get(0)
+		.unwrap()
+		.clone();
+		assert_eq!(packet_info.ack, Some(ack))
+	});
 }
