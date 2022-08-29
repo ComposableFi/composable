@@ -33,6 +33,7 @@ RUN echo "narinfo-cache-negative-ttl = 30" >> /etc/nix/nix.conf
 RUN curl --location ${NIX_INSTALLER} > /install.sh
 RUN chmod +x /install.sh
 RUN passwd --delete root
+RUN passwd --delete ${USER}
 
 USER ${USER}
 ENV USER=${USER}
@@ -60,14 +61,15 @@ RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     export ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]') && \
     "$(nix path-info .#homeConfigurations.vscode.${ARCH_OS}.activationPackage)"/activate
 
-RUN source ~/.nix-profile/etc/profile.d/nix.sh && cachix use ${CACHIX_NAME}
+RUN echo "" >> /home/${USER}/nix.conf.base
+RUN echo "sandbox = relaxed" >> /home/${USER}/nix.conf.base
+RUN echo "experimental-features = nix-command flakes" >> /home/${USER}/nix.conf.base
+RUN echo "narinfo-cache-negative-ttl = 30" >> /home/${USER}/nix.conf.base 
+RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
+    cachix use ${CACHIX_NAME} && \
+    echo "" >> /home/${USER}/nix.conf.base && \
+    cat ~/.config/nix/nix.conf  >> /home/${USER}/nix.conf.base 
 
-RUN nix show-config > ~/nix.conf.base
+RUN nix show-config > /home/${USER}/nix.conf.base
 
-USER root
-
-RUN  cat ~/nix.conf.base > /etc/nix/nix.conf
-
-RUN  cat /etc/nix/nix.conf
-
-USER ${USER}
+RUN sudo cat /home/${USER}/nix.conf.base > /etc/nix/nix.conf

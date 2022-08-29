@@ -674,12 +674,12 @@ jobs:
     name: "Devcontainer publish"
     needs:
       - devcontainer-build
-      - devnet-integration-tests
-      - package-polkadot-node
-      - package-composable-node
-      - check-benchmarks
-      - local-integration-tests
-      - unit-tests
+      # - devnet-integration-tests
+      # - package-polkadot-node
+      # - package-composable-node
+      # - check-benchmarks
+      # - local-integration-tests
+      # - unit-tests
     runs-on:
       - self-hosted
       - linux
@@ -695,7 +695,7 @@ jobs:
       - run: |
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
-          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf                            
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
