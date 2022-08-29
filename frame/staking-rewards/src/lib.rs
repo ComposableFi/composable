@@ -78,10 +78,10 @@ pub mod pallet {
 		currency::{BalanceLike, CurrencyFactory},
 		fnft::{FinancialNft, FinancialNftProtocol},
 		staking::{
-			RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
+			lock::LockConfig, RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
 			DEFAULT_MAX_REWARDS,
 		},
-		time::DurationSeconds,
+		time::{DurationSeconds, ONE_MONTH, ONE_WEEK},
 	};
 	use frame_support::{
 		traits::{
@@ -305,6 +305,12 @@ pub mod pallet {
 		/// Required origin for reward pool creation.
 		type RewardPoolUpdateOrigin: EnsureOrigin<Self::Origin>;
 
+		#[pallet::constant]
+		type PicaAssetId: Get<Self::AssetId>;
+
+		#[pallet::constant]
+		type PbloAssetId: Get<Self::AssetId>;
+
 		type WeightInfo: WeightInfo;
 	}
 
@@ -372,6 +378,71 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)]
 	pub(super) type RewardsPotIsEmpty<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, T::RewardPoolId, Blake2_128Concat, T::AssetId, ()>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		_phantom: sp_std::marker::PhantomData<T>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig { _phantom: Default::default() }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			// TODO (vim): Review these with product
+			// PICA staking pool
+			let pica_staking_pool: RewardPoolOf<T> = RewardPool {
+				owner: T::PalletId::get().into_account_truncating(),
+				asset_id: T::PicaAssetId::get(),
+				rewards: Default::default(),
+				total_shares: T::Balance::zero(),
+				claimed_shares: T::Balance::zero(),
+				end_block: T::BlockNumber::zero(),
+				lock: LockConfig {
+					duration_presets: [
+						(ONE_WEEK, Perbill::from_percent(1)),
+						(ONE_MONTH, Perbill::from_percent(10)),
+					]
+					.into_iter()
+					.try_collect()
+					.expect("Genesis config must be correct; qed"),
+					unlock_penalty: Default::default(),
+				},
+			};
+			RewardPools::<T>::insert(
+				T::RewardPoolId::from(T::PicaAssetId::get().into()),
+				pica_staking_pool,
+			);
+			// PBLO staking pool
+			let pblo_staking_pool: RewardPoolOf<T> = RewardPool {
+				owner: T::PalletId::get().into_account_truncating(),
+				asset_id: T::PbloAssetId::get(),
+				rewards: Default::default(),
+				total_shares: T::Balance::zero(),
+				claimed_shares: T::Balance::zero(),
+				end_block: T::BlockNumber::zero(),
+				lock: LockConfig {
+					duration_presets: [
+						(ONE_WEEK, Perbill::from_percent(1)),
+						(ONE_MONTH, Perbill::from_percent(10)),
+					]
+					.into_iter()
+					.try_collect()
+					.expect("Genesis config must be correct; qed"),
+					unlock_penalty: Default::default(),
+				},
+			};
+			RewardPools::<T>::insert(
+				T::RewardPoolId::from(T::PbloAssetId::get().into()),
+				pblo_staking_pool,
+			);
+		}
+	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -1004,10 +1075,11 @@ pub mod pallet {
 							},
 							None => {
 								// new reward asset so only pool owner is allowed to add.
-								ensure!(
-									*from == reward_pool.owner,
-									Error::<T>::OnlyPoolOwnerCanAddNewReward
-								);
+								// TODO (vim): consider enabling this later
+								// ensure!(
+								// 	*from == reward_pool.owner,
+								// 	Error::<T>::OnlyPoolOwnerCanAddNewReward
+								// );
 								let reward = Reward {
 									asset_id: reward_currency,
 									total_rewards: reward_increment,
@@ -1042,7 +1114,7 @@ pub mod pallet {
 						});
 						Ok(())
 					},
-					None => Err(Error::<T>::UnimplementedRewardPoolConfiguration.into()),
+					None => Err(Error::<T>::RewardsPoolNotFound.into()),
 				}
 			})
 		}

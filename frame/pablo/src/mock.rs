@@ -2,7 +2,9 @@
 
 use crate as pablo;
 use frame_support::{
-	ord_parameter_types, parameter_types,
+	ord_parameter_types,
+	pallet_prelude::GenesisBuild,
+	parameter_types,
 	traits::{EnsureOneOf, Everything},
 	PalletId,
 };
@@ -152,6 +154,8 @@ parameter_types! {
 	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets: u32 = 10;
 	pub const MaxRewardConfigsPerPool: u32 = 10;
+	pub const PicaAssetId : CurrencyId = 1;
+	pub const PbloAssetId : CurrencyId = 2;
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -172,6 +176,8 @@ impl pallet_staking_rewards::Config for Test {
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
 	type FinancialNftInstanceId = u64;
 	type FinancialNft = pablo::mock_fnft::MockFnft;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
 }
 
 ord_parameter_types! {
@@ -212,9 +218,15 @@ impl pablo::Config for Test {
 	type ManageStaking = StakingRewards;
 	type ProtocolStaking = StakingRewards;
 	type MsPerBlock = MillisecsPerBlock;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	pallet_staking_rewards::GenesisConfig::<Test>::default()
+		.assimilate_storage(&mut storage)
+		.unwrap();
+	storage.into()
 }

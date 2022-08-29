@@ -229,6 +229,8 @@ parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets : u32 = 10;
 	pub const MaxRewardConfigsPerPool : u32 = 10;
+	pub const PicaAssetId : CurrencyId = 1;
+	pub const PbloAssetId : CurrencyId = 2;
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -249,6 +251,8 @@ impl pallet_staking_rewards::Config for Test {
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
 }
 
 impl InstanceFilter<Call> for ProxyType {
