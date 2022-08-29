@@ -147,7 +147,7 @@ simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/pol
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "049e0c6dfb3bdd836a6a1dd7ebff1cf4ef8ae34f"
+rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3"
 default-features = false
 features = ["ics11_beefy"]
 
