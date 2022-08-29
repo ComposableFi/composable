@@ -55,21 +55,17 @@ COPY --chown=${USER}:${USER} . .
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-env --set-flag priority 10 nix-2.10.3 && \
     export ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]') && \
-    nix build --no-link .#homeConfigurations.vscode.${ARCH_OS}.activationPackage -L --show-trace
-
-RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
-    export ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]') && \
+    nix build --no-link .#homeConfigurations.vscode.${ARCH_OS}.activationPackage -L --show-trace && \
     "$(nix path-info .#homeConfigurations.vscode.${ARCH_OS}.activationPackage)"/activate
 
-RUN echo "" >> /home/${USER}/nix.conf.base
-RUN echo "sandbox = relaxed" >> /home/${USER}/nix.conf.base
-RUN echo "experimental-features = nix-command flakes" >> /home/${USER}/nix.conf.base
-RUN echo "narinfo-cache-negative-ttl = 30" >> /home/${USER}/nix.conf.base 
-RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
-    cachix use ${CACHIX_NAME} && \
+RUN  cachix use ${CACHIX_NAME} && \
     echo "" >> /home/${USER}/nix.conf.base && \
-    cat ~/.config/nix/nix.conf  >> /home/${USER}/nix.conf.base 
-
-RUN nix show-config > /home/${USER}/nix.conf.base
+    echo "sandbox = relaxed" >> /home/${USER}/nix.conf.base && \
+    echo "experimental-features = nix-command flakes" >> /home/${USER}/nix.conf.base && \
+    echo "narinfo-cache-negative-ttl = 30" >> /home/${USER}/nix.conf.base  && \
+    echo "" >> /home/${USER}/nix.conf.base && \
+    cat ~/.config/nix/nix.conf  >> /home/${USER}/nix.conf.base && \ 
+    echo "" >> /home/${USER}/nix.conf.base && \
+    nix show-config >> /home/${USER}/nix.conf.base
 
 RUN sudo cat /home/${USER}/nix.conf.base > /etc/nix/nix.conf
