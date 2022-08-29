@@ -10,8 +10,9 @@ use crate::{
 	state::{Config, CONFIG},
 };
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
+use num::Zero;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{Amount, Funds, Instruction, NetworkID};
+use xcvm_core::{Funds, Instruction, NetworkId};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -69,7 +70,7 @@ pub fn interpret_call(encoded: Vec<u8>, response: Response) -> Result<Response, 
 }
 
 pub fn interpret_spawn(
-	network: NetworkID,
+	network: NetworkId,
 	salt: Vec<u8>,
 	assets: Funds,
 	program: XCVMProgram,
@@ -77,7 +78,7 @@ pub fn interpret_spawn(
 ) -> Result<Response, ContractError> {
 	#[derive(Serialize)]
 	struct SpawnEvent {
-		network: NetworkID,
+		network: NetworkId,
 		salt: Vec<u8>,
 		assets: Funds,
 		program: XCVMProgram,
@@ -109,17 +110,14 @@ pub fn interpret_transfer(
 		)?;
 		let contract = Cw20Contract(cw20_address.addr.clone());
 
-		let transfer_amount = match amount {
-			Amount::Fixed(ref fixed) => {
-				if fixed.0 == 0 {
-					return Err(ContractError::ZeroTransferAmount)
-				}
-				amount.apply(0)
-			},
-			Amount::Ratio(ratio) => {
-				if ratio == 0 {
-					return Err(ContractError::ZeroTransferAmount)
-				}
+		if amount.is_zero() {
+			return Err(ContractError::ZeroTransferAmount)
+		}
+
+		let transfer_amount = {
+			if amount.slope == 0 {
+				amount.intercept.0
+			} else {
 				let query_msg = Cw20QueryMsg::Balance { address: to.clone() };
 				let response: BalanceResponse =
 					deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
@@ -127,7 +125,7 @@ pub fn interpret_transfer(
 						msg: to_binary(&query_msg)?,
 					}))?;
 				amount.apply(response.balance.into())
-			},
+			}
 		};
 
 		response = response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
@@ -195,7 +193,7 @@ mod tests {
 		.unwrap();
 
 		let program = XCVMProgram {
-			tag: None,
+			tag: vec![],
 			instructions: vec![XCVMInstruction::Transfer {
 				to: "asset".into(),
 				assets: Funds::from([(1, 1_u128)]),
@@ -231,7 +229,7 @@ mod tests {
 		let msg = serde_json_wasm::to_string(&cosmos_msg).unwrap();
 
 		let program = XCVMProgram {
-			tag: None,
+			tag: vec![],
 			instructions: vec![XCVMInstruction::Call { encoded: msg.as_bytes().into() }].into(),
 		};
 
@@ -254,13 +252,13 @@ mod tests {
 		.unwrap();
 
 		let program = XCVMProgram {
-			tag: None,
+			tag: vec![],
 			instructions: vec![XCVMInstruction::Spawn {
-				network: NetworkID(1),
+				network: NetworkId(1),
 				salt: vec![],
 				assets: Funds(BTreeMap::new()),
 				program: XCVMProgram {
-					tag: None,
+					tag: vec![],
 					instructions: vec![XCVMInstruction::Call { encoded: vec![] }].into(),
 				},
 			}]
@@ -269,6 +267,6 @@ mod tests {
 
 		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
 			.unwrap();
-		assert_eq!(res.attributes[0], Attribute { key: "spawn".to_string(), value: r#"{"network":1,"salt":[],"assets":{},"program":{"tag":null,"instructions":[{"call":{"encoded":[]}}]}}"#.to_string() });
+		assert_eq!(res.attributes[0], Attribute { key: "spawn".to_string(), value: r#"{"network":1,"salt":[],"assets":{},"program":{"tag":[],"instructions":[{"call":{"encoded":[]}}]}}"#.to_string() });
 	}
 }

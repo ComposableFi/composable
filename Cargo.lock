@@ -1786,6 +1786,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-crypto"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5eb0afef2325df81aadbf9be1233f522ed8f6e91df870c764bc44cca2b1415bd"
+dependencies = [
+ "digest 0.9.0",
+ "ed25519-zebra",
+ "k256",
+ "rand_core 0.6.3",
+ "thiserror",
+]
+
+[[package]]
+name = "cosmwasm-derive"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4b36e527620a2a3e00e46b6e731ab6c9b68d11069c986f7d7be8eba79ef081a4"
+dependencies = [
+ "syn 1.0.98",
+]
+
+[[package]]
 name = "cosmwasm-minimal-std"
 version = "0.1.0"
 source = "git+https://github.com/ComposableFi/cosmwasm-vm?rev=298d29c5c37d255dfd69a091843343101362be52#298d29c5c37d255dfd69a091843343101362be52"
@@ -1793,6 +1815,43 @@ dependencies = [
  "base64 0.13.0",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "cosmwasm-schema"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "772e80bbad231a47a2068812b723a1ff81dd4a0d56c9391ac748177bea3a61da"
+dependencies = [
+ "schemars",
+ "serde_json",
+]
+
+[[package]]
+name = "cosmwasm-std"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "875994993c2082a6fcd406937bf0fca21c349e4a624f3810253a14fa83a3a195"
+dependencies = [
+ "base64 0.13.0",
+ "cosmwasm-crypto",
+ "cosmwasm-derive",
+ "forward_ref",
+ "schemars",
+ "serde",
+ "serde-json-wasm",
+ "thiserror",
+ "uint",
+]
+
+[[package]]
+name = "cosmwasm-storage"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d18403b07304d15d304dad11040d45bbcaf78d603b4be3fb5e2685c16f9229b5"
+dependencies = [
+ "cosmwasm-std",
+ "serde",
 ]
 
 [[package]]
@@ -2671,6 +2730,93 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
 
 [[package]]
+name = "cw-multi-test"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3f9a8ab7c3c29ec93cb7a39ce4b14a05e053153b4a17ef7cf2246af1b7c087e"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-storage-plus 0.13.4",
+ "cw-utils 0.13.4",
+ "derivative",
+ "itertools",
+ "prost 0.9.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-storage-plus"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "648b1507290bbc03a8d88463d7cd9b04b1fa0155e5eef366c4fa052b9caaac7a"
+dependencies = [
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw-storage-plus"
+version = "0.14.0"
+source = "git+https://github.com/CosmWasm/cw-plus.git#28c720d7b22118a53cc51e2b96681435a24e9229"
+dependencies = [
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw-utils"
+version = "0.13.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9dbaecb78c8e8abfd6b4258c7f4fbeb5c49a5e45ee4d910d3240ee8e1d714e1b"
+dependencies = [
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-utils"
+version = "0.14.0"
+source = "git+https://github.com/CosmWasm/cw-plus.git#28c720d7b22118a53cc51e2b96681435a24e9229"
+dependencies = [
+ "cosmwasm-std",
+ "cw2",
+ "schemars",
+ "semver 1.0.12",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw2"
+version = "0.14.0"
+source = "git+https://github.com/CosmWasm/cw-plus.git#28c720d7b22118a53cc51e2b96681435a24e9229"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus 0.14.0",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw20"
+version = "0.14.0"
+source = "git+https://github.com/CosmWasm/cw-plus.git#28c720d7b22118a53cc51e2b96681435a24e9229"
+dependencies = [
+ "cosmwasm-std",
+ "cw-utils 0.14.0",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "dali-runtime"
 version = "0.1.0"
 dependencies = [
@@ -3084,6 +3230,21 @@ dependencies = [
  "rand 0.7.3",
  "serde",
  "sha2 0.9.9",
+ "zeroize",
+]
+
+[[package]]
+name = "ed25519-zebra"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "403ef3e961ab98f0ba902771d29f842058578bb1ce7e3c59dad5a6a93e784c69"
+dependencies = [
+ "curve25519-dalek 3.2.0",
+ "hex",
+ "rand_core 0.6.3",
+ "serde",
+ "sha2 0.9.9",
+ "thiserror",
  "zeroize",
 ]
 
@@ -3516,6 +3677,12 @@ dependencies = [
  "matches",
  "percent-encoding 2.1.0",
 ]
+
+[[package]]
+name = "forward_ref"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c8cbd1169bd7b4a0a20d92b9af7a7e0422888bd38a6f5ec29c1fd8c1558a272e"
 
 [[package]]
 name = "frame-benchmarking"
@@ -4507,7 +4674,7 @@ dependencies = [
  "parity-scale-codec",
  "primitive-types",
  "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee)",
- "prost",
+ "prost 0.10.4",
  "prost-types",
  "ripemd",
  "safe-regex",
@@ -4559,7 +4726,7 @@ source = "git+https://github.com/ComposableFi/ibc-rs?rev=13de07663749a59a424d67b
 dependencies = [
  "base64 0.13.0",
  "bytes 1.2.0",
- "prost",
+ "prost 0.10.4",
  "prost-types",
  "serde",
  "tendermint-proto",
@@ -4647,7 +4814,7 @@ dependencies = [
  "anyhow",
  "bytes 1.2.0",
  "hex",
- "prost",
+ "prost 0.10.4",
  "ripemd160",
  "sha2 0.9.9",
  "sha3 0.9.1",
@@ -5330,6 +5497,7 @@ dependencies = [
  "ecdsa",
  "elliptic-curve",
  "sec1",
+ "sha2 0.9.9",
 ]
 
 [[package]]
@@ -5635,7 +5803,7 @@ dependencies = [
  "libp2p-request-response",
  "libp2p-swarm",
  "log 0.4.17",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "rand 0.8.5",
 ]
@@ -5662,7 +5830,7 @@ dependencies = [
  "multistream-select",
  "parking_lot 0.12.1",
  "pin-project",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "rand 0.8.5",
  "ring",
@@ -5713,7 +5881,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log 0.4.17",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "rand 0.7.3",
  "smallvec 1.9.0",
@@ -5737,7 +5905,7 @@ dependencies = [
  "libp2p-swarm",
  "log 0.4.17",
  "prometheus-client",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "rand 0.7.3",
  "regex",
@@ -5760,7 +5928,7 @@ dependencies = [
  "libp2p-swarm",
  "log 0.4.17",
  "lru 0.7.8",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "prost-codec",
  "smallvec 1.9.0",
@@ -5785,7 +5953,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log 0.4.17",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "rand 0.7.3",
  "sha2 0.10.2",
@@ -5863,7 +6031,7 @@ dependencies = [
  "lazy_static",
  "libp2p-core",
  "log 0.4.17",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "rand 0.8.5",
  "sha2 0.10.2",
@@ -5900,7 +6068,7 @@ dependencies = [
  "futures 0.3.21",
  "libp2p-core",
  "log 0.4.17",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "unsigned-varint",
  "void",
@@ -5936,7 +6104,7 @@ dependencies = [
  "libp2p-swarm",
  "log 0.4.17",
  "pin-project",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "prost-codec",
  "rand 0.8.5",
@@ -5960,7 +6128,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log 0.4.17",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "rand 0.8.5",
  "sha2 0.10.2",
@@ -6914,6 +7082,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43db66d1170d347f9a065114077f7dccb00c1b9478c89384490a3425279a4606"
 dependencies = [
+ "num-bigint 0.4.3",
  "num-complex",
  "num-integer",
  "num-iter",
@@ -8058,7 +8227,7 @@ dependencies = [
  "parachain-info",
  "parity-scale-codec",
  "primitives 0.1.0",
- "prost",
+ "prost 0.10.4",
  "scale-info",
  "serde",
  "serde_json",
@@ -10920,12 +11089,22 @@ dependencies = [
 
 [[package]]
 name = "prost"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "444879275cb4fd84958b1a1d5420d15e6fcf7c235fe47f053c9c2a80aceb6001"
+dependencies = [
+ "bytes 1.2.0",
+ "prost-derive 0.9.0",
+]
+
+[[package]]
+name = "prost"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71adf41db68aa0daaefc69bb30bcd68ded9b9abaad5d1fbb6304c4fb390e083e"
 dependencies = [
  "bytes 1.2.0",
- "prost-derive",
+ "prost-derive 0.10.1",
 ]
 
 [[package]]
@@ -10943,7 +11122,7 @@ dependencies = [
  "log 0.4.17",
  "multimap",
  "petgraph",
- "prost",
+ "prost 0.10.4",
  "prost-types",
  "regex",
  "tempfile",
@@ -10958,9 +11137,22 @@ checksum = "00af1e92c33b4813cc79fda3f2dbf56af5169709be0202df730e9ebc3e4cd007"
 dependencies = [
  "asynchronous-codec",
  "bytes 1.2.0",
- "prost",
+ "prost 0.10.4",
  "thiserror",
  "unsigned-varint",
+]
+
+[[package]]
+name = "prost-derive"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9cc1a3263e07e0bf68e96268f37665207b49560d98739662cdfaae215c720fe"
+dependencies = [
+ "anyhow",
+ "itertools",
+ "proc-macro2 1.0.42",
+ "quote 1.0.20",
+ "syn 1.0.98",
 ]
 
 [[package]]
@@ -10983,7 +11175,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d0a014229361011dc8e69c8a1ec6c2e8d0f2af7c91e3ea3f5b2170298461e68"
 dependencies = [
  "bytes 1.2.0",
- "prost",
+ "prost 0.10.4",
 ]
 
 [[package]]
@@ -11920,7 +12112,7 @@ dependencies = [
  "libp2p",
  "log 0.4.17",
  "parity-scale-codec",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "rand 0.7.3",
  "sc-client-api",
@@ -12459,7 +12651,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "pin-project",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "rand 0.7.3",
  "sc-block-builder",
@@ -12527,7 +12719,7 @@ dependencies = [
  "libp2p",
  "log 0.4.17",
  "parity-scale-codec",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "sc-client-api",
  "sc-network-common",
@@ -12549,7 +12741,7 @@ dependencies = [
  "log 0.4.17",
  "lru 0.7.8",
  "parity-scale-codec",
- "prost",
+ "prost 0.10.4",
  "prost-build",
  "sc-client-api",
  "sc-consensus",
@@ -13134,6 +13326,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc855a42c7967b7c369eb5860f7164ef1f6f81c20c7cc1141f2a604e18723b03"
 dependencies = [
  "serde_derive",
+]
+
+[[package]]
+name = "serde-json-wasm"
+version = "0.4.1"
+source = "git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=4e175eaeffd625041bdecd251c0068a365def453#4e175eaeffd625041bdecd251c0068a365def453"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -14914,7 +15114,7 @@ dependencies = [
  "futures 0.3.21",
  "num-traits",
  "once_cell",
- "prost",
+ "prost 0.10.4",
  "prost-types",
  "serde",
  "serde_bytes",
@@ -14963,7 +15163,7 @@ dependencies = [
  "flex-error",
  "num-derive",
  "num-traits",
- "prost",
+ "prost 0.10.4",
  "prost-types",
  "serde",
  "serde_bytes",
@@ -16894,6 +17094,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "xcvm-asset-registry"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus 0.13.4",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "xcvm-core"
 version = "0.1.0"
 dependencies = [
@@ -16903,6 +17117,25 @@ dependencies = [
  "scale-info",
  "schemars",
  "serde",
+]
+
+[[package]]
+name = "xcvm-interpreter"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-multi-test",
+ "cw-storage-plus 0.13.4",
+ "cw20",
+ "num",
+ "schemars",
+ "serde",
+ "serde-json-wasm",
+ "thiserror",
+ "xcvm-asset-registry",
+ "xcvm-core",
 ]
 
 [[package]]

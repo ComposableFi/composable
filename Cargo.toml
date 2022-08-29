@@ -48,6 +48,7 @@ members = [
   "utils/xcmp",
   "utils/wasm-optimizer",
   "xcvm/lib/*",
+  "xcvm/cosmwasm/contracts/*"
 ]
 
 [profile.release]
@@ -59,6 +60,16 @@ panic = "unwind"
 inherits = "release"
 lto = true
 
+[profile.cosmwasm-contracts]
+inherits = "production"
+rpath = false
+overflow-checks = true
+opt-level = 3
+debug = false
+debug-assertions = false
+panic = "abort"
+
+
 [patch.crates-io]
 sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
@@ -67,6 +78,7 @@ sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", branch = 
 sp-externalities = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-io = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "4e175eaeffd625041bdecd251c0068a365def453" }
 
 [patch."https://github.com/paritytech/subxt"]
 subxt-codegen = { git = "https://github.com/paritytech//subxt", rev = "2fe9a1446d32b93a10804db3304ccaac65f764b8" }
