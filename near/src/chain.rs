@@ -3,8 +3,7 @@ use std::pin::Pin;
 use futures::Stream;
 use ibc::core::ics03_connection::msgs::{conn_open_ack, conn_open_init};
 use ibc_proto::google::protobuf::Any;
-use near_primitives::hash::CryptoHash;
-use near_primitives::transaction::Transaction;
+use near_primitives::{hash::CryptoHash, transaction::Transaction};
 use primitives::{Chain, IbcProvider};
 use tokio_stream::wrappers::ReceiverStream;
 

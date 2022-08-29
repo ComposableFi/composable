@@ -27,12 +27,13 @@ use ibc_proto::ibc::core::{
 	connection::v1::QueryConnectionResponse,
 };
 use near_indexer::StreamerMessage;
-use near_jsonrpc_primitives::types::blocks::RpcBlockRequest;
-use near_jsonrpc_primitives::types::query::{QueryResponseKind, RpcQueryRequest};
-use near_jsonrpc_primitives::types::validator::RpcValidatorRequest;
-use near_primitives::types::EpochReference;
+use near_jsonrpc_primitives::types::{
+	blocks::RpcBlockRequest,
+	query::{QueryResponseKind, RpcQueryRequest},
+	validator::RpcValidatorRequest,
+};
 use near_primitives::{
-	types::{BlockId, BlockReference, Finality, FunctionArgs},
+	types::{BlockId, BlockReference, EpochReference, Finality, FunctionArgs},
 	views::QueryRequest,
 };
 use near_sdk::BlockHeight;
@@ -80,9 +81,8 @@ impl Client {
 			.await
 			.map_err(|e| e.into())
 			.and_then(|resp| match resp.kind {
-				QueryResponseKind::CallResult(res) => {
-					serde_json::from_slice(&res.result).map_err(|e| e.into())
-				},
+				QueryResponseKind::CallResult(res) =>
+					serde_json::from_slice(&res.result).map_err(|e| e.into()),
 				_ => unreachable!(),
 			})
 	}
@@ -260,7 +260,7 @@ impl IbcProvider for Client {
 		if validator_response.epoch_start_height > finalized_block.header.height {
 			return Err(Error::Custom(
 				"validator epoch height is greater than finalized header epoch height".to_string(),
-			));
+			))
 		}
 		let epoch = validator_response.epoch_height;
 		let latest_height = finalized_block.header.height;
@@ -276,7 +276,7 @@ impl IbcProvider for Client {
 	}
 
 	#[cfg(feature = "testing")]
-	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = Self::IbcEvent> + Send + Sync>> {
+	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>> {
 		todo!()
 	}
 }

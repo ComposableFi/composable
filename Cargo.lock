@@ -457,9 +457,9 @@ dependencies = [
 
 [[package]]
 name = "async-global-executor"
-version = "2.2.0"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5262ed948da60dd8956c6c5aca4d4163593dddb7b32d73267c93dab7b2e98940"
+checksum = "0da5b41ee986eed3f524c380e6d64965aea573882a8907682ad100f7859305ca"
 dependencies = [
  "async-channel",
  "async-executor",
@@ -467,7 +467,6 @@ dependencies = [
  "async-lock",
  "blocking",
  "futures-lite",
- "num_cpus",
  "once_cell",
 ]
 
@@ -789,6 +788,34 @@ dependencies = [
 [[package]]
 name = "beefy-light-client"
 version = "0.1.0"
+source = "git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c#cb8cadc8d45bc444367002c77cbd395eff8a741c"
+dependencies = [
+ "beefy-primitives",
+ "ckb-merkle-mountain-range",
+ "color-eyre",
+ "derive_more",
+ "frame-metadata",
+ "frame-support",
+ "hex",
+ "jsonrpsee 0.15.1",
+ "pallet-beefy-mmr",
+ "pallet-mmr",
+ "parity-scale-codec 3.1.5",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c)",
+ "rs_merkle",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-core-hashing 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-mmr-primitives",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "subxt-codegen 0.21.0",
+ "syn",
+ "tokio",
+]
+
+[[package]]
+name = "beefy-light-client"
+version = "0.1.0"
 source = "git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee#ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee"
 dependencies = [
  "beefy-primitives",
@@ -836,7 +863,7 @@ dependencies = [
 [[package]]
 name = "beefy-prover"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee#ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee"
+source = "git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c#cb8cadc8d45bc444367002c77cbd395eff8a741c"
 dependencies = [
  "beefy-primitives",
  "color-eyre",
@@ -850,7 +877,7 @@ dependencies = [
  "pallet-mmr",
  "pallet-mmr-rpc",
  "parity-scale-codec 3.1.5",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee)",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c)",
  "rs_merkle",
  "serde_json",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1380,9 +1407,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.2.17"
+version = "3.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "29e724a68d9319343bb3328c9cc2dfde263f4b3142ee1059a9980580171c954b"
+checksum = "b15f2ea93df33549dbe2e8eecd1ca55269d63ae0b3ba1f55db030817d1c2867f"
 dependencies = [
  "atty",
  "bitflags",
@@ -1397,9 +1424,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.2.17"
+version = "3.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13547f7012c01ab4a0e8f8967730ada8f9fdf419e8b6c792788f39cf4e46eefa"
+checksum = "ea0c8bce528c4be4da13ea6fead8965e95b6073585a2f05204bd8f4119f82a65"
 dependencies = [
  "heck 0.4.0",
  "proc-macro-error",
@@ -1465,7 +1492,7 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.8.30"
-source = "git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb#f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb"
+source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288#8238a96325730fec129ccd82bd910de849472288"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -1480,7 +1507,7 @@ dependencies = [
  "pallet-treasury",
  "parity-scale-codec 3.1.5",
  "polkadot-primitives",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb)",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288)",
  "scale-info",
  "sp-consensus-aura",
  "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
@@ -1495,7 +1522,7 @@ dependencies = [
 [[package]]
 name = "composable-support"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb#f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb"
+source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288#8238a96325730fec129ccd82bd910de849472288"
 dependencies = [
  "frame-support",
  "hex",
@@ -1515,7 +1542,7 @@ dependencies = [
 [[package]]
 name = "composable-traits"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb#f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb"
+source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288#8238a96325730fec129ccd82bd910de849472288"
 dependencies = [
  "bitflags",
  "composable-support",
@@ -2688,9 +2715,9 @@ checksum = "e6d5a32815ae3f33302d95fdcb2ce17862f8c65363dcfd29360480ba1001fc9c"
 
 [[package]]
 name = "futures"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab30e97ab6aacfe635fad58f22c2bb06c8b685f7421eb1e064a729e2a5f481fa"
+checksum = "7f21eda599937fba36daeb58a22e8f5cee2d14c4a17b5b7739c7c8e5e3b8230c"
 dependencies = [
  "futures-channel",
  "futures-core",
@@ -2703,9 +2730,9 @@ dependencies = [
 
 [[package]]
 name = "futures-channel"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bfc52cbddcfd745bf1740338492bb0bd83d76c67b445f91c5fb29fae29ecaa1"
+checksum = "30bdd20c28fadd505d0fd6712cdfcb0d4b5648baf45faef7f852afb2399bb050"
 dependencies = [
  "futures-core",
  "futures-sink",
@@ -2713,15 +2740,15 @@ dependencies = [
 
 [[package]]
 name = "futures-core"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2acedae88d38235936c3922476b10fced7b2b68136f5e3c03c2d5be348a1115"
+checksum = "4e5aa3de05362c3fb88de6531e6296e85cde7739cccad4b9dfeeb7f6ebce56bf"
 
 [[package]]
 name = "futures-executor"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d11aa21b5b587a64682c0094c2bdd4df0076c5324961a40cc3abd7f37930528"
+checksum = "9ff63c23854bee61b6e9cd331d523909f238fc7636290b96826e9cfa5faa00ab"
 dependencies = [
  "futures-core",
  "futures-task",
@@ -2731,9 +2758,9 @@ dependencies = [
 
 [[package]]
 name = "futures-io"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93a66fc6d035a26a3ae255a6d2bca35eda63ae4c5512bef54449113f7a1228e5"
+checksum = "bbf4d2a7a308fd4578637c0b17c7e1c7ba127b8f6ba00b29f717e9655d85eb68"
 
 [[package]]
 name = "futures-lite"
@@ -2752,9 +2779,9 @@ dependencies = [
 
 [[package]]
 name = "futures-macro"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0db9cce532b0eae2ccf2766ab246f114b56b9cf6d445e00c2549fbc100ca045d"
+checksum = "42cd15d1c7456c04dbdf7e88bcd69760d74f3a798d6444e16974b505b0e62f17"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2774,15 +2801,15 @@ dependencies = [
 
 [[package]]
 name = "futures-sink"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca0bae1fe9752cf7fd9b0064c674ae63f97b37bc714d745cbde0afb7ec4e6765"
+checksum = "21b20ba5a92e727ba30e72834706623d94ac93a725410b6a6b6fbc1b07f7ba56"
 
 [[package]]
 name = "futures-task"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "842fc63b931f4056a24d59de13fb1272134ce261816e063e634ad0c15cdc5306"
+checksum = "a6508c467c73851293f390476d4491cf4d227dbabcd4170f3bb6044959b294f1"
 
 [[package]]
 name = "futures-timer"
@@ -2792,9 +2819,9 @@ checksum = "e64b03909df88034c26dc1547e8970b91f98bdb65165d6a4e9110d94263dbb2c"
 
 [[package]]
 name = "futures-util"
-version = "0.3.23"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0828a5471e340229c11c77ca80017937ce3c58cb788a17e5f1c2d5c485a9577"
+checksum = "44fb6cb1be61cc1d2e43b262516aafcf63b241cffdb1d3fa115f91d9c7b09c90"
 dependencies = [
  "futures-channel",
  "futures-core",
@@ -3207,11 +3234,12 @@ dependencies = [
  "hyperspace-near",
  "hyperspace-parachain",
  "hyperspace-primitives",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "log",
  "pallet-ibc",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb)",
+ "parity-scale-codec 3.1.5",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288)",
  "prost 0.10.4",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-keyring 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3245,8 +3273,8 @@ dependencies = [
  "hex",
  "hex-literal",
  "hyperspace-primitives",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "jsonrpsee 0.15.1",
  "log",
  "log4rs",
@@ -3279,7 +3307,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "beefy-light-client",
+ "beefy-light-client 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c)",
  "beefy-primitives",
  "beefy-prover",
  "clap",
@@ -3293,10 +3321,11 @@ dependencies = [
  "hex",
  "hex-literal",
  "hyperspace-primitives",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "ibc-rpc",
+ "itertools",
  "jsonrpsee 0.15.1",
  "log",
  "log4rs",
@@ -3306,7 +3335,7 @@ dependencies = [
  "pallet-mmr",
  "pallet-mmr-rpc",
  "parity-scale-codec 3.1.5",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee)",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c)",
  "prost 0.10.4",
  "rs_merkle",
  "serde",
@@ -3336,8 +3365,8 @@ dependencies = [
  "async-trait",
  "futures",
  "hex",
- "ibc",
- "ibc-proto",
+ "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "parity-scale-codec 3.1.5",
  "sp-keystore 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3361,15 +3390,55 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb#13de07663749a59a424d67bb259a714182df28eb"
+source = "git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3#0438a753ac29c0b9711f00a2e33228d3d45ca5e3"
 dependencies = [
- "beefy-light-client",
+ "beefy-light-client 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c)",
  "beefy-primitives",
  "borsh",
  "bytes",
  "derive_more",
  "flex-error",
- "ibc-proto",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ics23",
+ "num-traits",
+ "parity-scale-codec 3.1.5",
+ "primitive-types 0.11.1",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c)",
+ "prost 0.10.4",
+ "prost-types 0.10.1",
+ "safe-regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2 0.10.2",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-mmr-primitives",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "subtle-encoding",
+ "tendermint",
+ "tendermint-light-client-verifier",
+ "tendermint-proto",
+ "tendermint-rpc",
+ "time 0.3.14",
+ "tracing",
+ "uint",
+]
+
+[[package]]
+name = "ibc"
+version = "0.15.0"
+source = "git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb#13de07663749a59a424d67bb259a714182df28eb"
+dependencies = [
+ "beefy-light-client 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee)",
+ "beefy-primitives",
+ "borsh",
+ "bytes",
+ "derive_more",
+ "flex-error",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
  "ics23",
  "num-traits",
  "parity-scale-codec 3.1.5",
@@ -3401,14 +3470,14 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb#f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb"
+source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288#8238a96325730fec129ccd82bd910de849472288"
 dependencies = [
  "base58",
  "common",
  "composable-traits",
  "frame-support",
  "hex",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "parity-scale-codec 3.1.5",
  "ripemd",
  "scale-info",
@@ -3427,7 +3496,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb#13de07663749a59a424d67bb259a714182df28eb"
+source = "git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3#0438a753ac29c0b9711f00a2e33228d3d45ca5e3"
 dependencies = [
  "base64 0.13.0",
  "bytes",
@@ -3439,15 +3508,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "ibc-proto"
+version = "0.18.0"
+source = "git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb#13de07663749a59a424d67bb259a714182df28eb"
+dependencies = [
+ "base64 0.13.0",
+ "bytes",
+ "prost 0.10.4",
+ "prost-types 0.10.1",
+ "serde",
+ "tendermint-proto",
+]
+
+[[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb#f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb"
+source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288#8238a96325730fec129ccd82bd910de849472288"
 dependencies = [
  "frame-system",
  "hex-literal",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "ibc-runtime-api",
  "jsonrpsee 0.13.1",
  "pallet-ibc",
@@ -3467,7 +3549,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb#f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb"
+source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288#8238a96325730fec129ccd82bd910de849472288"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -4686,9 +4768,9 @@ dependencies = [
 
 [[package]]
 name = "lock_api"
-version = "0.4.7"
+version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "327fa5b6a6940e4699ec49a9beae1ea4845c6bab9314e4f84ac68742139d8c53"
+checksum = "9f80bf5aacaf25cbfc8210d1cfb718f2bf3b11c4c54e5afe36c236853a8ec390"
 dependencies = [
  "autocfg 1.1.0",
  "scopeguard",
@@ -5635,7 +5717,7 @@ dependencies = [
  "log",
  "near-crypto 0.12.0",
  "near-primitives 0.12.0",
- "near-sdk 4.1.0-pre.1",
+ "near-sdk 4.1.0-pre.2",
  "serde",
  "serde-aux",
  "serde_json",
@@ -6187,8 +6269,8 @@ dependencies = [
 
 [[package]]
 name = "near-sdk"
-version = "4.1.0-pre.1"
-source = "git+https://github.com/near/near-sdk-rs?branch=master#fd759fd2906d8f3e7281c6cf33b0c4f88c761443"
+version = "4.1.0-pre.2"
+source = "git+https://github.com/near/near-sdk-rs?branch=master#83cb1c40403e4156bd6d1d258237bbdf03326afc"
 dependencies = [
  "base64 0.13.0",
  "borsh",
@@ -6196,7 +6278,7 @@ dependencies = [
  "near-crypto 0.14.0",
  "near-primitives 0.14.0",
  "near-primitives-core 0.14.0",
- "near-sdk-macros 4.1.0-pre.1",
+ "near-sdk-macros 4.1.0-pre.2",
  "near-sys 0.2.0 (git+https://github.com/near/near-sdk-rs?branch=master)",
  "near-vm-logic 0.14.0",
  "once_cell",
@@ -6218,8 +6300,8 @@ dependencies = [
 
 [[package]]
 name = "near-sdk-macros"
-version = "4.1.0-pre.1"
-source = "git+https://github.com/near/near-sdk-rs?branch=master#fd759fd2906d8f3e7281c6cf33b0c4f88c761443"
+version = "4.1.0-pre.2"
+source = "git+https://github.com/near/near-sdk-rs?branch=master#83cb1c40403e4156bd6d1d258237bbdf03326afc"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -6270,7 +6352,7 @@ source = "git+https://github.com/ComposableFi/near-sdk-rs?branch=master#02cb66f5
 [[package]]
 name = "near-sys"
 version = "0.2.0"
-source = "git+https://github.com/near/near-sdk-rs?branch=master#fd759fd2906d8f3e7281c6cf33b0c4f88c761443"
+source = "git+https://github.com/near/near-sdk-rs?branch=master#83cb1c40403e4156bd6d1d258237bbdf03326afc"
 
 [[package]]
 name = "near-telemetry"
@@ -7038,7 +7120,7 @@ dependencies = [
 [[package]]
 name = "pallet-assets"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb#f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb"
+source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288#8238a96325730fec129ccd82bd910de849472288"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -7047,7 +7129,7 @@ dependencies = [
  "num-traits",
  "orml-traits",
  "parity-scale-codec 3.1.5",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb)",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288)",
  "scale-info",
  "sp-api",
  "sp-arithmetic 5.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
@@ -7166,24 +7248,25 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb#f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb"
+source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288#8238a96325730fec129ccd82bd910de849472288"
 dependencies = [
  "common",
  "composable-traits",
+ "cumulus-primitives-core",
  "derive_more",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "log",
  "pallet-assets",
  "pallet-balances",
  "pallet-ibc-ping",
  "parachain-info",
  "parity-scale-codec 3.1.5",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb)",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288)",
  "scale-info",
  "serde_json",
  "sha2 0.10.2",
@@ -7200,11 +7283,11 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb#f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb"
+source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288#8238a96325730fec129ccd82bd910de849472288"
 dependencies = [
  "frame-support",
  "frame-system",
- "ibc",
+ "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "ibc-primitives",
  "log",
  "parity-scale-codec 3.1.5",
@@ -7537,7 +7620,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d17b78036a60663b797adeaee46f5c9dfebb86948d1255007a1d6be0271ff99"
 dependencies = [
  "instant",
- "lock_api 0.4.7",
+ "lock_api 0.4.8",
  "parking_lot_core 0.8.5",
 ]
 
@@ -7547,7 +7630,7 @@ version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3742b2c103b9f06bc9fff0a37ff4912935851bee6d36f3c02bcc755bcfec228f"
 dependencies = [
- "lock_api 0.4.7",
+ "lock_api 0.4.8",
  "parking_lot_core 0.9.3",
 ]
 
@@ -7859,7 +7942,21 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee#ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee"
+source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288#8238a96325730fec129ccd82bd910de849472288"
+dependencies = [
+ "composable-support",
+ "composable-traits",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+]
+
+[[package]]
+name = "primitives"
+version = "0.1.0"
+source = "git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c#cb8cadc8d45bc444367002c77cbd395eff8a741c"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
@@ -7874,14 +7971,15 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb#f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb"
+source = "git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee#ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee"
 dependencies = [
- "composable-support",
- "composable-traits",
+ "beefy-primitives",
+ "ckb-merkle-mountain-range",
+ "derive_more",
  "parity-scale-codec 3.1.5",
- "scale-info",
- "serde",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "rs_merkle",
+ "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-mmr-primitives",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
 ]
 
@@ -9763,9 +9861,9 @@ dependencies = [
 
 [[package]]
 name = "socket2"
-version = "0.4.4"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "66d72b759436ae32898a2af0a14218dbf55efde3feeb170eb623637db85ee1e0"
+checksum = "10c98bba371b9b22a71a9414e420f92ddeb2369239af08200816169d5e2dd7aa"
 dependencies = [
  "libc",
  "winapi",

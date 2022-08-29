@@ -1,12 +1,12 @@
-use super::polkadot;
 use beefy_light_client_primitives::{ClientState, NodesUtils};
 use codec::{Decode, Encode};
+use itertools::Itertools;
+use std::{collections::HashMap, default::Default, fmt::Display};
 
 use ibc::{
 	clients::ics11_beefy::header::BeefyHeader,
 	core::{
 		ics02_client::{
-			client_consensus::AnyConsensusState,
 			client_state::AnyClientState,
 			header::{AnyHeader, Header as IbcHeaderT},
 		},
@@ -26,26 +26,27 @@ use ibc_proto::ibc::core::{
 	connection::v1::QueryConnectionResponse,
 };
 use sp_runtime::{
-	generic::Header,
-	traits::{BlakeTwo256, Header as HeaderT, IdentifyAccount, Verify},
+	traits::{Header as HeaderT, IdentifyAccount, Verify},
 	MultiSignature, MultiSigner,
 };
-use subxt::{rpc::RpcError, Config};
+use subxt::Config;
 
 use super::{error::Error, ParachainClient};
-use ibc_proto::ibc::core::channel::v1::Packet as RawPacket;
 use ibc_rpc::{BlockNumberOrHash, IbcApiClient};
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
 
-// needed only for tests
+use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 #[cfg(feature = "testing")]
 use futures::Stream;
+use ibc::core::ics02_client::client_type::ClientType;
+use pallet_mmr_primitives::BatchProof;
 #[cfg(feature = "testing")]
 use std::pin::Pin;
 
-/// Finality event
-pub type FinalityEvent = Result<String, RpcError>;
+/// Finality event for parachains
+pub type FinalityEvent =
+	beefy_primitives::SignedCommitment<u32, beefy_primitives::crypto::Signature>;
 
 #[async_trait::async_trait]
 impl<T: Config + Send + Sync> IbcProvider for ParachainClient<T>
@@ -57,16 +58,16 @@ where
 	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
+	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero,
 {
-	type IbcEvent = Result<Vec<IbcEvent>, String>;
 	type FinalityEvent = FinalityEvent;
 	type Error = Error;
 
-	async fn client_update_header<C>(
+	async fn query_latest_ibc_events<C>(
 		&mut self,
-		finality_event: Self::FinalityEvent,
+		signed_commitment: Self::FinalityEvent,
 		counterparty: &C,
-	) -> Result<(AnyHeader, AnyClientState, UpdateType), Self::Error>
+	) -> Result<(AnyHeader, Vec<IbcEvent>, UpdateType), Self::Error>
 	where
 		C: Chain,
 		Self::Error: From<C::Error>,
@@ -92,12 +93,6 @@ where
 				c
 			)))?,
 		};
-		let commitment = finality_event?;
-		let recv_commitment = hex::decode(&commitment[2..])?;
-		let signed_commitment: beefy_primitives::SignedCommitment<
-			u32,
-			beefy_primitives::crypto::Signature,
-		> = Decode::decode(&mut &*recv_commitment)?;
 
 		if signed_commitment.commitment.validator_set_id < beefy_client_state.current_authorities.id
 		{
@@ -108,99 +103,107 @@ where
 			);
 			// If validator set id of signed commitment is less than current validator set id we
 			// have Then commitment is outdated and we skip it.
-			println!(
+			log::warn!(
 				"Skipping outdated commitment \n Received signed commitmment with validator_set_id: {:?}\n Current authority set id: {:?}\n Next authority set id: {:?}\n",
 				signed_commitment.commitment.validator_set_id, beefy_client_state.current_authorities.id, beefy_client_state.next_authorities.id
 			);
-			return Err(Error::HeaderConstruction(
-				"Received an outdated beefy commitment".to_string(),
-			));
+			Err(Error::HeaderConstruction("Received an outdated beefy commitment".to_string()))?
 		}
 
-		// check if validator set has changed.
-		// If client on counterparty has never been updated since it was created we want to update
-		// it
-		let update_type = match signed_commitment.commitment.validator_set_id
-			== beefy_client_state.next_authorities.id
+		// if validator set has changed this is a mandatory update
+		let update_type = match signed_commitment.commitment.validator_set_id ==
+			beefy_client_state.next_authorities.id
 		{
 			true => UpdateType::Mandatory,
 			false => UpdateType::Optional,
 		};
 
-		let (parachain_headers, batch_proof) = self
-			.fetch_finalized_parachain_headers_at(
+		// fetch the new parachain headers that have been finalized
+		let headers = self
+			.query_finalized_parachain_headers_at(
 				signed_commitment.commitment.block_number,
 				&beefy_client_state,
 			)
 			.await?;
-		let mmr_update =
-			self.fetch_mmr_update_proof_for(signed_commitment, &beefy_client_state).await?;
-		let mmr_size = NodesUtils::new(batch_proof.leaf_count).size();
-		let beefy_header = BeefyHeader {
-			parachain_headers,
-			mmr_proofs: batch_proof.items.into_iter().map(|item| item.encode()).collect(),
-			mmr_size,
-			mmr_update_proof: Some(mmr_update),
-		};
-		let header = beefy_header.wrap_any();
-		Ok((header, client_state, update_type))
-	}
 
-	async fn query_latest_ibc_events(
-		&mut self,
-		header: &AnyHeader,
-		client_state: &AnyClientState,
-	) -> Result<Vec<IbcEvent>, Self::Error> {
-		let beefy_header = match header {
-			AnyHeader::Beefy(header) => header,
-			_ => unreachable!(),
-		};
+		log::info!(
+			"Fetching events from {} for blocks {}..{}",
+			self.name(),
+			headers[0].number(),
+			headers.last().unwrap().number()
+		);
 
-		// Get finalized parachain block numbers, but only those higher than the latest para height
-		// recorded in the on chain client state, because in some cases a parachain block that was
-		// already finalized in a former beefy block might still be part of the parachain headers in
-		// a later beefy block, discovered this from previous logs
-		let finalized_block_numbers = beefy_header
-			.parachain_headers
-			.iter()
+		// Get finalized parachain block numbers, but only those higher than the latest para
+		// height recorded in the on-chain client state, because in some cases a parachain
+		// block that was already finalized in a former beefy block might still be part of
+		// the parachain headers in a later beefy block, discovered this from previous logs
+		let finalized_block_numbers = headers
+			.into_iter()
 			.filter_map(|header| {
-				if (client_state.latest_height().revision_height as u32)
-					< header.parachain_header.number.into()
+				if (client_state.latest_height().revision_height as u32) <
+					u32::from(*header.number())
 				{
-					Some(header.parachain_header.number)
+					Some(header)
 				} else {
 					None
 				}
 			})
-			.collect::<Vec<_>>();
-		log::info!(
-			"Fetching events from parachain ParaId({}) for blocks {}..{}",
-			self.para_id,
-			finalized_block_numbers[0],
-			finalized_block_numbers.last().unwrap()
-		);
+			.map(|h| BlockNumberOrHash::Number(From::from(*h.number())))
+			.collect();
 
-		let finalized_block_numbers =
-			finalized_block_numbers.into_iter().map(BlockNumberOrHash::Number).collect();
-		let events = self.query_events_at(finalized_block_numbers).await?;
-		if self.sender.send(events.clone()).is_err() {
-			log::error!("Failed to push ibc events to stream, no active receiver found");
-		}
-		Ok(events)
-	}
-
-	async fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, Self::Error> {
-		let consensus_state_response = IbcApiClient::<u32, H256>::query_consensus_state(
+		// block_number => events
+		let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
 			&*self.para_client.rpc().client,
-			height.revision_height as u32,
+			finalized_block_numbers,
 		)
 		.await?;
-		let consensus_state = consensus_state_response.consensus_state.ok_or_else(|| {
-			Error::Custom("[host_consensus_state] Rpc returned a None value".to_string())
-		})?;
+		// header number is serialized to string
+		let headers_with_events = events
+			.keys()
+			.map(|num| str::parse::<u32>(&*num))
+			.map_ok(T::BlockNumber::from)
+			.collect::<Result<Vec<_>, _>>()?;
+		let events: Vec<IbcEvent> = events.into_values().flatten().collect();
 
-		let consensus_state = AnyConsensusState::try_from(consensus_state)?;
-		Ok(consensus_state)
+		// only query proofs for headers that actually have events
+		let (parachain_headers, batch_proof) = if !events.is_empty() {
+			let (parachain_headers, batch_proof) = self
+				.query_finalized_parachain_headers_with_proof(
+					signed_commitment.commitment.block_number,
+					&beefy_client_state,
+					headers_with_events,
+				)
+				.await?;
+			(parachain_headers, batch_proof)
+		} else {
+			(
+				Default::default(),
+				BatchProof {
+					leaf_indices: Default::default(),
+					leaf_count: 0,
+					items: Default::default(),
+				},
+			)
+		};
+
+		let mmr_update =
+			self.fetch_mmr_update_proof_for(signed_commitment, &beefy_client_state).await?;
+		let mmr_size = NodesUtils::new(batch_proof.leaf_count).size();
+		let beefy_header = BeefyHeader {
+			parachain_headers: Some(parachain_headers),
+			mmr_proofs: batch_proof.items.into_iter().map(|item| item.encode()).collect(),
+			mmr_size,
+			mmr_update_proof: Some(mmr_update),
+		};
+
+		for event in events.iter() {
+			if self.sender.send(event.clone()).is_err() {
+				log::trace!("Failed to push {event:?} to stream, no active receiver found");
+				break
+			}
+		}
+
+		Ok((beefy_header.wrap_any(), events, update_type))
 	}
 
 	async fn query_client_consensus(
@@ -283,7 +286,7 @@ where
 		channel_id: &ChannelId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<Packet>, Self::Error> {
-		let packets: Vec<RawPacket> = IbcApiClient::<u32, H256>::query_packets(
+		let _packets = IbcApiClient::<u32, H256>::query_send_packets(
 			&*self.para_client.rpc().client,
 			channel_id.to_string(),
 			port_id.to_string(),
@@ -297,11 +300,11 @@ where
 			err: e.to_string(),
 		})?;
 
-		let packets = packets
-			.into_iter()
-			.map(|raw_packet| raw_packet.try_into())
-			.collect::<Result<Vec<Packet>, _>>()?;
-		Ok(packets)
+		// let packets = packets
+		// 	.into_iter()
+		// 	.map(|raw_packet| raw_packet.into())
+		// 	.collect();
+		Ok(vec![])
 	}
 
 	async fn query_packet_commitment(
@@ -385,6 +388,38 @@ where
 		Ok(Height::new(self.para_id.into(), latest_height.into()))
 	}
 
+	async fn query_host_consensus_state_proof(
+		&self,
+		height: Height,
+	) -> Result<Option<Vec<u8>>, Self::Error> {
+		let hash = self.para_client.rpc().block_hash(Some(height.revision_height.into())).await?;
+		let header = self
+			.para_client
+			.rpc()
+			.header(hash)
+			.await?
+			.ok_or_else(|| Error::Custom("Latest height query returned None".to_string()))?;
+		let extrinsic_with_proof =
+			fetch_timestamp_extrinsic_with_proof(&self.para_client, Some(header.hash()))
+				.await
+				.map_err(Error::BeefyProver)?;
+
+		// lol should probably export this from pallet-ibc
+		#[derive(Encode, Decode)]
+		struct HostConsensusProof {
+			header: Vec<u8>,
+			extrinsic: Vec<u8>,
+			extrinsic_proof: Vec<Vec<u8>>,
+		}
+
+		let host_consensus_proof = HostConsensusProof {
+			header: header.encode(),
+			extrinsic: extrinsic_with_proof.ext,
+			extrinsic_proof: extrinsic_with_proof.proof,
+		};
+		Ok(Some(host_consensus_proof.encode()))
+	}
+
 	fn connection_prefix(&self) -> CommitmentPrefix {
 		CommitmentPrefix::try_from(self.commitment_prefix.clone()).expect("Should not fail")
 	}
@@ -393,12 +428,17 @@ where
 		self.client_id()
 	}
 
+	fn client_type(&self) -> ClientType {
+		ClientType::Beefy
+	}
+
 	#[cfg(feature = "testing")]
-	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = Self::IbcEvent> + Send + Sync>> {
-		use futures::TryStreamExt;
+	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>> {
+		use futures::StreamExt;
 		use tokio_stream::wrappers::BroadcastStream;
 
-		let stream = BroadcastStream::new(self.sender.subscribe());
-		Box::pin(Box::new(stream.map_err(|err| err.to_string())))
+		let stream =
+			BroadcastStream::new(self.sender.subscribe()).map(|result| result.unwrap_or_default());
+		Box::pin(Box::new(stream))
 	}
 }

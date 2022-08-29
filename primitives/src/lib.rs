@@ -16,9 +16,7 @@ use ibc_proto::{
 
 use ibc::{
 	core::{
-		ics02_client::{
-			client_consensus::AnyConsensusState, client_state::AnyClientState, header::AnyHeader,
-		},
+		ics02_client::{client_type::ClientType, header::AnyHeader},
 		ics04_channel::packet::Packet,
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
@@ -50,34 +48,23 @@ impl UpdateType {
 /// relayed to the counterparty chain.
 #[async_trait::async_trait]
 pub trait IbcProvider {
-	/// IbcEvent type;
-	type IbcEvent;
-
 	/// Finality event type, passed on to [`Chain::query_latest_ibc_events`]
 	type FinalityEvent;
 
 	/// Error type, just needs to implement standard error trait.
 	type Error: std::error::Error + From<String> + Send + Sync + 'static;
 
-	/// Given the finality event, covert it to an [`AnyHeader`]
-	async fn client_update_header<T>(
+	/// Query the latest ibc events finalized by the recent finality event. Use the counterparty
+	/// [`Chain`] to query the on-chain [`ClientState`] so you can scan for new events in between
+	/// the client state and the new finality event.
+	async fn query_latest_ibc_events<T>(
 		&mut self,
 		finality_event: Self::FinalityEvent,
 		counterparty: &T,
-	) -> Result<(AnyHeader, AnyClientState, UpdateType), Self::Error>
+	) -> Result<(AnyHeader, Vec<IbcEvent>, UpdateType), Self::Error>
 	where
 		T: Chain,
 		Self::Error: From<T::Error>;
-
-	/// Query latest ibc events
-	async fn query_latest_ibc_events(
-		&mut self,
-		update_client: &AnyHeader,
-		client_state: &AnyClientState,
-	) -> Result<Vec<IbcEvent>, Self::Error>;
-
-	/// Fetch consensus state of chain
-	async fn host_consensus_state(&self, at: Height) -> Result<AnyConsensusState, Self::Error>;
 
 	/// Query client consensus state with proof
 	/// return the consensus height for the client along with the response
@@ -160,16 +147,26 @@ pub trait IbcProvider {
 	/// Return latest finalized height
 	async fn latest_height(&self) -> Result<Height, Self::Error>;
 
+	/// Return a proof for the host consensus state at the given height to be included in the
+	/// consensus state proof.
+	async fn query_host_consensus_state_proof(
+		&self,
+		height: Height,
+	) -> Result<Option<Vec<u8>>, Self::Error>;
+
 	/// Return the chain connection prefix
 	fn connection_prefix(&self) -> CommitmentPrefix;
 
 	/// Return the host chain's light client id on counterparty chain
 	fn client_id(&self) -> ClientId;
 
+	/// Returns the client type of this chain.
+	fn client_type(&self) -> ClientType;
+
 	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
 	/// Only used in tests.
 	#[cfg(feature = "testing")]
-	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = Self::IbcEvent> + Send + Sync>>;
+	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>>;
 }
 
 /// Provides an interface for managing key management for signing.
@@ -183,12 +180,15 @@ pub trait KeyProvider {
 /// finality notifications
 #[async_trait::async_trait]
 pub trait Chain: IbcProvider + KeyProvider + Send + Sync {
+	/// Name of this chain, used in logs.
+	fn name(&self) -> &str;
+
 	/// Return a stream that yields when new [`IbcEvents`] are ready to be queried.
 	async fn finality_notifications(
 		&self,
 	) -> Pin<Box<dyn Stream<Item = Self::FinalityEvent> + Send + Sync>>;
 
 	/// This should be used to submit new messages [`Vec<Any>`] from a counterparty chain to this
-	/// chain. This should only return when the events have been submitted and finalized.
+	/// chain.
 	async fn submit_ibc_messages(&self, messages: Vec<Any>) -> Result<(), Self::Error>;
 }

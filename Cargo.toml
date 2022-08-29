@@ -22,10 +22,11 @@ log = "0.4.17"
 env_logger = "0.9.0"
 hex = "0.4.3"
 tokio = { version = "1.19.2", features = ["macros", "sync"] }
+codec = { version = "3.0.0", package = "parity-scale-codec" }
 
 # ibc
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3", features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
 [dev-dependencies]
@@ -46,9 +47,9 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 state-machine = { package = "sp-state-machine", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 # composable
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb" }
-comosable-primitives = { package = "primitives",  git = "https://github.com/ComposableFi/composable", rev = "f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb" }
-common = { git = "https://github.com/ComposableFi/composable", rev = "f317fb8f4b3f03e7dc6f7d4c78716fa654e1aebb" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "8238a96325730fec129ccd82bd910de849472288" }
+comosable-primitives = { package = "primitives",  git = "https://github.com/ComposableFi/composable", rev = "8238a96325730fec129ccd82bd910de849472288" }
+common = { git = "https://github.com/ComposableFi/composable", rev = "8238a96325730fec129ccd82bd910de849472288" }
 
 [features]
 parachain = ["dep:parachain"]
