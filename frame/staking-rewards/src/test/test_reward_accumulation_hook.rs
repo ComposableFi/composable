@@ -198,7 +198,6 @@ fn test_accumulate_rewards_pool_empty_refill() {
 
 		check_rewards(&[CheckRewards {
 			owner: ALICE,
-			pool_id,
 			pool_asset_id: A::ID,
 			pool_rewards: &[
 				PoolRewards {
@@ -339,7 +338,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -364,7 +362,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -398,7 +395,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -423,7 +419,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -457,7 +452,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -482,7 +476,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -516,7 +509,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -541,7 +533,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -593,7 +584,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -615,7 +605,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -634,7 +623,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: CHARLIE,
-					pool_id: charlies_pool_id,
 					pool_asset_id: F::ID,
 					pool_rewards: &[PoolRewards {
 						reward_asset_id: F::ID,
@@ -657,7 +645,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -676,7 +663,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -695,7 +681,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: CHARLIE,
-					pool_id: charlies_pool_id,
 					pool_asset_id: F::ID,
 					pool_rewards: &[PoolRewards {
 						reward_asset_id: F::ID,
@@ -762,15 +747,15 @@ block:   {block}"#
 pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 	let mut all_rewards = RewardPools::<Test>::iter().collect::<BTreeMap<_, _>>();
 
-	for CheckRewards { owner, pool_asset_id, pool_rewards, pool_id } in expected.into_iter() {
+	for CheckRewards { owner, pool_asset_id, pool_rewards } in expected.into_iter() {
 		let mut pool = all_rewards
 			.remove(&pool_asset_id)
 			.expect(&format!("pool {pool_asset_id} not present in RewardPools"));
 
-		assert_eq!(pool.owner, *owner, "error at pool {pool_id}");
-		assert_eq!(pool.asset_id, *pool_asset_id, "error at pool {pool_id}");
+		assert_eq!(pool.owner, *owner, "error at pool {pool_asset_id}");
+		assert_eq!(pool.asset_id, *pool_asset_id, "error at pool {pool_asset_id}");
 
-		let pool_account = StakingRewards::pool_account_id(pool_id);
+		let pool_account = StakingRewards::pool_account_id(pool_asset_id);
 
 		for PoolRewards {
 			reward_asset_id,
@@ -792,12 +777,12 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 
 			assert_eq!(
 				reward.asset_id, *reward_asset_id,
-				r#"error at pool {pool_id}, asset {reward_asset_id}"#,
+				r#"error at pool {pool_asset_id}, asset {reward_asset_id}"#,
 			);
 			assert!(
 				&reward.total_rewards == expected_total_rewards,
 				r#"
-error at pool {pool_id}, asset {reward_asset_id}: unexpected total_rewards:
+error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected total_rewards:
 	expected: {expected_total_rewards}
 	found:    {found_total_rewards}"#,
 				found_total_rewards = reward.total_rewards
@@ -806,7 +791,7 @@ error at pool {pool_id}, asset {reward_asset_id}: unexpected total_rewards:
 			assert!(
 				&actual_locked_balance == expected_locked_balance,
 				r#"
-error at pool {pool_id}, asset {reward_asset_id}: unexpected locked balance:
+error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected locked balance:
 	expected: {expected_locked_balance}
 	found:    {actual_locked_balance}"#
 			);
@@ -814,7 +799,7 @@ error at pool {pool_id}, asset {reward_asset_id}: unexpected locked balance:
 			assert!(
 				&actual_unlocked_balance == expected_unlocked_balance,
 				r#"
-error at pool {pool_id}, asset {reward_asset_id}: unexpected unlocked balance:
+error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected unlocked balance:
 	expected: {expected_unlocked_balance}
 	found:    {actual_unlocked_balance}"#
 			);
@@ -832,7 +817,6 @@ error at pool {pool_id}, asset {reward_asset_id}: unexpected unlocked balance:
 
 pub(crate) struct CheckRewards<'a> {
 	pub(crate) owner: Public,
-	pub(crate) pool_id: u128,
 	pub(crate) pool_asset_id: u128,
 	pub(crate) pool_rewards: &'a [PoolRewards],
 }
