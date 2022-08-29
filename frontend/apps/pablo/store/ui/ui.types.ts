@@ -7,10 +7,12 @@ export interface UIState {
     isConfirmingModalOpen: boolean;
     isSwapSettingsModalOpen: boolean;
     isAccountSettingsModalOpen: boolean;
+    hasTriedEagerConnect: boolean;
 }
 
 export interface UISlice {
     ui: UIState,
     openPolkadotModal: () => void,
-    closePolkadotModal: () => void
+    closePolkadotModal: () => void,
+    setUiState: (state: Partial<UISlice["ui"]>) => void;
 }

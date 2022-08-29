@@ -1,3 +1,8 @@
+import "defi-interfaces/types-lookup.d";
+import "defi-interfaces/augment-api-tx";
+import "defi-interfaces/augment-api-rpc";
+import "defi-interfaces/augment-types";
+
 import * as React from "react";
 import { hotjar } from "react-hotjar";
 import Head from "next/head";
@@ -13,7 +18,7 @@ import SubstrateBalancesUpdater from "@/stores/defi/polkadot/balances/PolkadotBa
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import CrowdloanRewardsUpdater from "@/stores/defi/polkadot/crowdloanRewards/CrowdloanRewardsUpdater";
 import { PalletsContextProvider } from "@/defi/polkadot/context/PalletsContext";
-import { BlockchainProvider } from "@integrations-lib/core";
+import { BlockchainProvider } from "bi-lib";
 import { NETWORKS } from "@/defi/Networks";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components/Molecules/Snackbar";
@@ -72,7 +77,7 @@ export default function MyApp(props: MyAppProps) {
         <meta name="viewport" content="initial-scale=1, width=device-width" />
       </Head>
       <BlockchainProvider
-        supportedChains={Object.entries(NETWORKS).map(([netId, net]) => {
+        blockchainInfo={Object.entries(NETWORKS).map(([netId, net]) => {
           return {
             chainId: +netId,
             rpcUrl: net.rpcUrl,
@@ -90,7 +95,7 @@ export default function MyApp(props: MyAppProps) {
               <PalletsContextProvider>
                 <ApolloProvider client={apolloClient}>
                   <SubstrateBalancesUpdater
-                    substrateChains={Object.values(SUBSTRATE_NETWORKS)}
+                    substrateNetworks={Object.values(SUBSTRATE_NETWORKS)}
                   />
                   <CrowdloanRewardsUpdater />
                   <SnackbarProvider

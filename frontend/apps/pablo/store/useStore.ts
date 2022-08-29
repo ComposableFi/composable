@@ -4,7 +4,6 @@ import createAuctionsSlice from "./auctions/auctions.slice";
 import createSwapsSlice from "./swaps/swaps.slice";
 import createPoolsSlice from "./pools/pools.slice";
 import createUiSlice from "./ui/ui.slice";
-import createBondsSlice from "./bonds/bonds.slice";
 
 import createLiquiditySlice from "./liquidity/liquidity.slice";
 import createRemoveLiquiditySlice from "./removeLiquidity/removeLiquidity.slice";
@@ -19,8 +18,6 @@ import { LiquiditySlice } from "@/store/liquidity/liquidity.types";
 import { RemoveLiquiditySlice } from "@/store/removeLiquidity/removeLiquidity.types";
 import { PoolStatsSlice } from "@/store/poolStats/poolStats.types";
 import { CreatePoolSlice } from "@/store/createPool/createPool.types";
-import { BondSlice } from "./bonds/bonds.types";
-
 
 type SliceCombined = UISlice &
   AssetsSlice &
@@ -31,8 +28,8 @@ type SliceCombined = UISlice &
   LiquiditySlice &
   RemoveLiquiditySlice &
   PoolsSlice &
-  PoolStatsSlice &
-  BondSlice
+  PoolStatsSlice
+
 const useStore = create<SliceCombined>(
   // persist(
   (set, _get) => ({
@@ -44,8 +41,7 @@ const useStore = create<SliceCombined>(
     ...createLiquiditySlice(set),
     ...createRemoveLiquiditySlice(set),
     ...createPoolSlice(set),
-    ...createPoolStatsSlice(set),
-    ...createBondsSlice(set),
+    ...createPoolStatsSlice(set)
   })
   // {
   //   name: "pablo",

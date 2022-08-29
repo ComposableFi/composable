@@ -19,7 +19,7 @@ import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
 import { toBaseUnitBN, toTokenUnitsBN } from "shared";
 import { useRouter } from "next/router";
-import { useBlockchainProvider, useConnector } from "@integrations-lib/core";
+import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import { updateBalances } from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { OpenInNewRounded } from "@mui/icons-material";
@@ -29,7 +29,6 @@ import { useSnackbar } from "notistack";
 import BigNumber from "bignumber.js";
 
 const DEFAULT_EVM_ID = 1;
-const PICA_CHAIN_ID = "kusama-2019";
 const APP_NAME = "Picasso UI";
 
 const ERROR_MESSAGES = {
@@ -56,7 +55,7 @@ interface Claimloan {
 export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
-  const { isActive } = useConnector("metamask");
+  const { isActive } = useConnector(ConnectorType.MetaMask);
   const { signer } = useBlockchainProvider(DEFAULT_EVM_ID);
   const executor = useExecutor();
 
@@ -67,8 +66,8 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
     setUserClaimEligibility,
     setUserCrowdloanData,
   } = useStore(({ crowdloanRewards }) => crowdloanRewards);
-  const { updateBalance } = useStore(
-    ({ substrateBalances }) => substrateBalances
+  const updateBalance = useStore(
+    ({ substrateBalances }) => substrateBalances.updateBalance
   );
 
   const { closeKSMClaimModal, openKSMClaimModal } = useStore(({ ui }) => ui);
@@ -85,7 +84,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
   );
   const { extensionStatus } = useContext(ParachainContext);
   const selectedAccount = useSelectedAccount();
-  const {parachainApi, accounts} = usePicassoProvider();
+  const { parachainApi, accounts } = usePicassoProvider();
   const theme = useTheme();
   const [ineligibleText, setIneligibleText] = useState({
     title: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.title,
@@ -118,7 +117,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
     updateBalances(
       account,
       parachainApi,
-      "kusama-2019" as SubstrateNetworkId,
+      "picasso" as SubstrateNetworkId,
       updateBalance
     );
   };
@@ -178,10 +177,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
       }
     }
 
-    if (
-      extensionStatus !== "connected" ||
-      !accounts.length
-    ) {
+    if (extensionStatus !== "connected" || !accounts.length) {
       setIneligibleText((s) => {
         s.textBelow = ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message;
         return s;
@@ -200,12 +196,12 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
 
   let claimedPICA = toTokenUnitsBN(
     crUserData.claimedPICA,
-    SUBSTRATE_NETWORKS[PICA_CHAIN_ID].decimals
+    SUBSTRATE_NETWORKS.picasso.decimals
   );
 
   let claimablePICA = toTokenUnitsBN(
     crUserData.claimablePICA,
-    SUBSTRATE_NETWORKS[PICA_CHAIN_ID].decimals
+    SUBSTRATE_NETWORKS.picasso.decimals
   );
 
   claimablePICA =
@@ -253,14 +249,14 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
             enqueueSnackbar("Claim Processing", {
               variant: "info",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
             });
           },
           (txHash) => {
             enqueueSnackbar("Claim Finalized", {
               variant: "success",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
             });
 
             setUserCrowdloanData(
@@ -268,7 +264,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
               netPICAVested.toString(),
               toBaseUnitBN(
                 toUpdateAmount.toString(),
-                SUBSTRATE_NETWORKS["kusama-2019"].decimals
+                SUBSTRATE_NETWORKS.picasso.decimals
               ).toString()
             );
 
@@ -308,7 +304,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
             enqueueSnackbar("Claim Processing", {
               variant: "info",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + _txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash,
             });
           },
           (_txHash) => {
@@ -317,14 +313,14 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
               netPICAVested.toString(),
               toBaseUnitBN(
                 toUpdateAmount.toString(),
-                SUBSTRATE_NETWORKS["kusama-2019"].decimals
+                SUBSTRATE_NETWORKS.picasso.decimals
               ).toString()
             );
 
             enqueueSnackbar("Claim Finalized", {
               variant: "info",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + _txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash,
             });
             onAssociationSuccess("relayChain", address);
           }
@@ -358,7 +354,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
             enqueueSnackbar("Claim Processing", {
               variant: "info",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + _txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash,
             });
           },
           (_txHash) => {
@@ -367,14 +363,14 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
               netPICAVested.toString(),
               toBaseUnitBN(
                 toUpdateAmount.toString(),
-                SUBSTRATE_NETWORKS["kusama-2019"].decimals
+                SUBSTRATE_NETWORKS.picasso.decimals
               ).toString()
             );
 
             enqueueSnackbar("Claim Finalized", {
               variant: "info",
               isClosable: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + _txHash,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + _txHash,
             });
             onAssociationSuccess("ethereum", address);
           }
@@ -386,7 +382,12 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
   };
 
   const breadcrumbs = [
-    <Link key="Overview" underline="none" color="primary" href="/frontend/fe/apps/picasso/pages">
+    <Link
+      key="Overview"
+      underline="none"
+      color="primary"
+      href="/frontend/fe/apps/picasso/pages"
+    >
       Overview
     </Link>,
     <Link

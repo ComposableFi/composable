@@ -17,7 +17,7 @@ help:
 	@echo $(print_help_text)
 
 build:
-	@cargo build
+	@cargo +nightly build
 
 clean:
 	@cargo clean
