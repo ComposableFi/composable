@@ -123,6 +123,11 @@ impl Twap {
 	}
 
 	// TODO(Cardosaum): Update function documentation.
+	pub const fn get_twap(&self) -> FixedU128 {
+		self.twap
+	}
+
+	// TODO(Cardosaum): Update function documentation.
 	/// This function updates the [`twap`](Twap::twap) value using the default
 	/// EMA function.
 	///
