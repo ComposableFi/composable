@@ -19,7 +19,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };
-    nix-npm-buildpackage = {
+    npm-buildpackage = {
       url = "github:serokell/nix-npm-buildpackage";
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -34,8 +34,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay
-    , nix-npm-buildpackage, arion-src, home-manager, ... }:
+  outputs =
+    { self, nixpkgs, crane, flake-utils, rust-overlay, npm-buildpackage, arion-src }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
@@ -90,8 +90,8 @@
             inherit system;
             overlays = [
               rust-overlay.overlays.default
-              nix-npm-buildpackage.overlays.default
               arion-src.overlay
+              npm-buildpackage.overlays.default
             ];
             allowUnsupportedSystem = true; # we do not tirgger this on mac
             config = {
@@ -488,6 +488,39 @@
               '';
             };
 
+            frontend-static = let bp = pkgs.callPackage npm-buildpackage { }; in
+              bp.buildYarnPackage {
+                nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
+                src = ./frontend;
+                yarnBuildMore = "yarn export";
+                installPhase = ''
+                  mkdir -p $out
+                  mkdir $out/pablo
+                  mkdir $out/picasso
+                  cp -R ./apps/pablo/out/* $out/pablo
+                  cp -R ./apps/picasso/out/* $out/picasso
+                '';
+              };
+            frontend-pablo-server = pkgs.writeShellApplication {
+              name = "frontend-pablo-server";
+              runtimeInputs = [ pkgs.miniserve ];
+              text = ''
+                miniserve -p 8002 --spa --index index.html ${frontend-static}/pablo
+              '';
+            };
+
+            frontend-picasso-server = pkgs.writeShellApplication {
+              name = "frontend-picasso-server";
+              runtimeInputs = [ pkgs.miniserve ];
+              text = ''
+                miniserve -p 8003 --spa --index index.html ${frontend-static}/picasso
+              '';
+            };
+            # TODO: inherit and provide script to run all stuff
+
+            # devnet-container-xcvm
+            # NOTE: The devcontainer is currently broken for aarch64.
+            # Please use the developers devShell instead
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;

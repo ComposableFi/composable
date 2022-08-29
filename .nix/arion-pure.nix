@@ -86,6 +86,15 @@ pkgs.arion.build {
                 relay = dali-container-name;
                 archive = subsquid-indexer-gateway-container-name;
               });
+
+            frontend-picasso = import ./services/frontend-picasso.nix {
+              inherit pkgs;
+              inherit packages;
+            };
+            frontend-pablo = import ./services/frontend-pablo.nix {
+              inherit pkgs;
+              inherit packages;
+            };
           };
         };
       })
