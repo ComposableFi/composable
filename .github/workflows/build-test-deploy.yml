@@ -674,12 +674,12 @@ jobs:
     name: "Devcontainer publish"
     needs:
       - devcontainer-build
-      # - devnet-integration-tests
-      # - package-polkadot-node
-      # - package-composable-node
-      # - check-benchmarks
-      # - local-integration-tests
-      # - unit-tests
+      - devnet-integration-tests
+      - package-polkadot-node
+      - package-composable-node
+      - check-benchmarks
+      - local-integration-tests
+      - unit-tests
     runs-on:
       - self-hosted
       - linux

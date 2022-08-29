@@ -55,7 +55,7 @@ style-check:
 style:
 	@rustup component add rustfmt 2> /dev/null
 	./scripts/style.sh
-	# enabled as soon as all people get this one
+	# TODO: enable as soon as all people nixified
 	#nixfmt $(find . -name "*.nix" -type f | tr "\n" " ")
 
 lint:

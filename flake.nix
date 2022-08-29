@@ -137,7 +137,7 @@
 
           # source relevant to build rust only
           rust-src = let
-            dir-blacklist = [
+            directory-blacklist = [
               ".nix"
               "nix"
               ".config"
@@ -166,21 +166,21 @@
               # if we changed some version of tooling(seldom), we want to rebuild
               # so if we changed version of tooling, nix itself will detect invalidation and rebuild
               # "flake.lock"
-
-              # assumption that nix is final builder, 
-              # so there would not  .*.nix <- build.rs <- *.nix for example
-              # and if *.nix changed, nix itself will detect only relevant cache invalidations 
-              "*.nix"
             ];
           in lib.cleanSourceWith {
             filter = lib.cleanSourceFilter;
             src = lib.cleanSourceWith {
               filter = let
                 customFilter = name: type:
-                  (!(type == "directory"
-                    && builtins.elem (baseNameOf name) dir-blacklist))
-                  && (!(type == "regular"
-                    && builtins.elem (baseNameOf name) file-blacklist));
+                  !((type == "directory"
+                    && builtins.elem (baseNameOf name) directory-blacklist)
+                    || (type == "regular"
+                      && builtins.elem (baseNameOf name) file-blacklist)
+                    # assumption that nix is final builder, 
+                    # so there would no be sandwitch like  .*.nix <- build.rs <- *.nix
+                    # and if *.nix changed, nix itself will detect only relevant cache invalidations 
+                    || (type == "regular"
+                      && lib.strings.hasSuffix ".nix" name));
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
               ./.;
               src = ./.;
@@ -550,12 +550,15 @@
             nixfmt-check = stdenv.mkDerivation {
               name = "nixfmt-check";
               dontUnpack = true;
+
               buildInputs = [ all-directories-and-files nixfmt ];
               installPhase = ''
                 mkdir $out
                 nixfmt --version
                 # note, really can just src with filer by .nix, no need all files 
-                nixfmt --check $(find ${all-directories-and-files} -name "*.nix" -type f | tr "\n" " ")
+                SRC=$(find ${all-directories-and-files} -name "*.nix" -type f | tr "\n" " ")
+                echo $SRC
+                nixfmt --check $SRC
                 exit $?
               '';
             };

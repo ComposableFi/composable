@@ -1,19 +1,12 @@
+FROM mcr.microsoft.com/vscode/devcontainers/base:0.202.7-bullseye
 ARG USER=vscode
 ARG UID=1000
 ARG GID=${UID}
 ARG NIX_INSTALLER=https://releases.nixos.org/nix/nix-2.10.3/install
 ARG CHANNEL_URL=https://github.com/NixOS/nixpkgs/archive/aaa1c973c8c189195e1b1a702d3b74dbcde91538.tar.gz
 ARG CACHIX_NAME=composable-community
-FROM mcr.microsoft.com/vscode/devcontainers/base:0.202.7-bullseye
 
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]
-
-ARG CHANNEL_URL
-ARG USER
-ARG UID
-ARG GID
-ARG NIX_INSTALLER
-ARG CACHIX_NAME
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update
@@ -24,7 +17,6 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     curl \
     sudo \
     xz-utils    
-
 
 RUN addgroup --system nixbld
 RUN for i in $(seq 1 30); do useradd -ms /bin/bash nixbld$i &&  adduser nixbld$i nixbld; done
@@ -37,7 +29,7 @@ RUN sed --in-place 's/%sudo.*ALL/%sudo   ALL=(ALL:ALL) NOPASSWD:ALL/' /etc/sudoe
 RUN mkdir --parents /etc/nix/
 RUN echo "sandbox = relaxed" >> /etc/nix/nix.conf
 RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
-RUN echo "narinfo-cache-negative-ttl = 60" >> /etc/nix/nix.conf 
+RUN echo "narinfo-cache-negative-ttl = 30" >> /etc/nix/nix.conf 
 RUN curl --location ${NIX_INSTALLER} > /install.sh
 RUN chmod +x /install.sh
 RUN passwd --delete root
@@ -69,3 +61,13 @@ RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     "$(nix path-info .#homeConfigurations.vscode.${ARCH_OS}.activationPackage)"/activate
 
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && cachix use ${CACHIX_NAME}
+
+RUN nix show-config > ~/nix.conf.base
+
+USER root
+
+RUN  cat ~/nix.conf.base > /etc/nix/nix.conf
+
+RUN  cat /etc/nix/nix.conf
+
+USER ${USER}
