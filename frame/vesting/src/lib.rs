@@ -568,66 +568,53 @@ impl<T: Config> Pallet<T> {
 		DispatchError,
 	> {
 		<VestingSchedules<T>>::try_mutate_exists(who, asset, |maybe_schedules| {
-			match maybe_schedules {
-				Some(schedules) =>
-					vesting_schedule_ids.into_all_ids(schedules).iter().try_fold::<_, _, Result<
-						(
-							BalanceOf<T>,
-							BoundedBTreeMap<
-								T::VestingScheduleId,
-								BalanceOf<T>,
-								T::MaxVestingSchedules,
-							>,
-						),
-						DispatchError,
-					>>(
-						(
-							Zero::zero(),
-							BoundedBTreeMap::<
-								T::VestingScheduleId,
-								BalanceOf<T>,
-								T::MaxVestingSchedules,
-							>::new(),
-						),
-						|(mut total_balance_to_claim, mut claims_per_schedule), id_to_claim| {
-							let schedule = schedules
-								.get_mut(id_to_claim)
-								.ok_or(Error::<T>::VestingScheduleNotFound)?;
+			let schedules = maybe_schedules.as_mut().ok_or(Error::<T>::VestingScheduleNotFound)?;
+			vesting_schedule_ids.into_all_ids(schedules).iter().try_fold(
+				(
+					BalanceOf::<T>::zero(),
+					BoundedBTreeMap::<
+						T::VestingScheduleId,
+						BalanceOf<T>,
+						T::MaxVestingSchedules,
+					>::new(),
+				),
+				|(mut total_balance_to_claim, mut claims_per_schedule), id_to_claim| {
+					let schedule = schedules
+						.get_mut(id_to_claim)
+						.ok_or(Error::<T>::VestingScheduleNotFound)?;
 
-							// Total amount for vesting schedule
-							let total_amount = ensure_valid_vesting_schedule::<T>(schedule)?;
-							// Currently locked amount
-							let locked_amount = schedule.locked_amount(
-								frame_system::Pallet::<T>::current_block_number(),
-								T::Time::now(),
-							);
-							// All balance that is not locked, including both claimed and unclaimed
-							let unlocked_amount = total_amount.safe_sub(&locked_amount)?;
-							// Balance that is not locked and has not been claimed yet
-							let available_amount =
-								unlocked_amount.safe_sub(&schedule.already_claimed)?;
+					// Total amount for vesting schedule
+					let total_amount = ensure_valid_vesting_schedule::<T>(schedule)?;
+					// Currently locked amount
+					let locked_amount = schedule.locked_amount(
+						frame_system::Pallet::<T>::current_block_number(),
+						T::Time::now(),
+					);
+					// All balance that is not locked, including both claimed and unclaimed
+					let unlocked_amount = total_amount.safe_sub(&locked_amount)?;
+					// Balance that is not locked and has not been claimed yet
+					let available_amount =
+						unlocked_amount.safe_sub(&schedule.already_claimed)?;
 
-							// Update claimed amount for specified schedules
-							schedule.already_claimed =
-								schedule.already_claimed.safe_add(&available_amount)?;
+					// Update claimed amount for specified schedules
+					schedule.already_claimed =
+						schedule.already_claimed.safe_add(&available_amount)?;
 
-							total_balance_to_claim =
-								total_balance_to_claim.safe_add(&available_amount)?;
+					total_balance_to_claim =
+						total_balance_to_claim.safe_add(&available_amount)?;
 
-							claims_per_schedule
-								.try_insert(*id_to_claim, available_amount)
-								.expect("Max vesting schedules exceeded");
+					claims_per_schedule
+						.try_insert(*id_to_claim, available_amount)
+						.expect("Max vesting schedules exceeded");
 
-							if locked_amount.is_zero() {
-								// Remove fully claimed schedules
-								schedules.remove(id_to_claim);
-							};
+					if locked_amount.is_zero() {
+						// Remove fully claimed schedules
+						schedules.remove(id_to_claim);
+					};
 
-							Ok((total_balance_to_claim, claims_per_schedule))
-						},
-					),
-				None => Err(Error::<T>::VestingScheduleNotFound.into()),
-			}
+					Ok((total_balance_to_claim, claims_per_schedule))
+				},
+			)
 		})
 	}
 
