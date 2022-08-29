@@ -92,9 +92,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		let amount = 100_500u32.into();
 		let duration_preset = ONE_HOUR;
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID)
-			.expect("asset_id expected")
-			.asset_id;
+		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
@@ -153,9 +151,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		let total_rewards = 100;
 		let total_shares = 200;
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID)
-			.expect("asset_id expected")
-			.asset_id;
+		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2);
 		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
 
@@ -217,9 +213,7 @@ fn test_extend_stake_amount() {
 		let total_rewards = 100;
 		let total_shares = 200;
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID)
-			.expect("asset_id expected")
-			.asset_id;
+		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2);
 		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
 
@@ -302,9 +296,7 @@ fn not_owner_of_stake_can_not_unstake() {
 		let duration_preset = ONE_HOUR;
 		assert_ne!(owner, not_owner);
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID)
-			.expect("asset_id expected")
-			.asset_id;
+		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([owner, not_owner], [staked_asset_id], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(owner), pool_id, amount, duration_preset));
@@ -328,9 +320,7 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		let amount = 100_500u32.into();
 		let duration_preset = ONE_HOUR;
 
-		let staked_asset_id = StakingRewards::pools(PICA::ID)
-			.expect("asset_id expected")
-			.asset_id;
+		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
 		mint_assets([staker], [staked_asset_id], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
@@ -368,8 +358,7 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 		let total_shares = 200;
 		let claim = 50;
 
-		let rewards_pool =
-			StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
+		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		let staked_asset_id = rewards_pool.asset_id;
 		mint_assets(
 			[staker, StakingRewards::pool_account_id(&pool_id)],
@@ -403,8 +392,7 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 
 		let penalty = unlock_penalty.mul_ceil(amount);
 		let claim_with_penalty = (Perbill::one() - unlock_penalty).mul_ceil(claim);
-		let rewards_pool =
-			StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
+		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		assert_eq!(balance(staked_asset_id, &staker), amount * 2 - penalty);
 		assert_eq!(
 			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
@@ -433,8 +421,7 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 		let total_shares = 200;
 		let claim = 50;
 
-		let rewards_pool =
-			StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
+		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		let staked_asset_id = rewards_pool.asset_id;
 		mint_assets(
 			[staker, StakingRewards::pool_account_id(&pool_id)],
@@ -471,8 +458,7 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 			)
 		});
 
-		let rewards_pool =
-			StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
+		let rewards_pool = StakingRewards::pools(PICA::ID).expect("rewards_pool expected");
 		assert_eq!(balance(staked_asset_id, &staker), amount * 2);
 		assert_eq!(
 			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),

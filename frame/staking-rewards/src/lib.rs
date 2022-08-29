@@ -519,7 +519,10 @@ pub mod pallet {
 					);
 
 					let pool_id = T::RewardPoolId::from(asset_id.into());
-					ensure!(!RewardPools::<T>::contains_key(pool_id), Error::<T>::RewardsPoolAlreadyExists);
+					ensure!(
+						!RewardPools::<T>::contains_key(pool_id),
+						Error::<T>::RewardsPoolAlreadyExists
+					);
 
 					let now_seconds = T::UnixTime::now().as_secs();
 

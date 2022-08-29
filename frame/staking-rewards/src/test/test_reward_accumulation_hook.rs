@@ -646,7 +646,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: C::ID,
+				pool_id: A::ID,
 				asset_id: B::ID,
 			}]);
 		}
@@ -707,7 +707,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: C::ID,
+				pool_id: A::ID,
 				asset_id: A::ID,
 			}]);
 		}
@@ -764,8 +764,8 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 
 	for CheckRewards { owner, pool_asset_id, pool_rewards, pool_id } in expected.into_iter() {
 		let mut pool = all_rewards
-			.remove(&asset_id)
-			.expect(&format!("pool {asset_id} not present in RewardPools"));
+			.remove(&pool_asset_id)
+			.expect(&format!("pool {pool_asset_id} not present in RewardPools"));
 
 		assert_eq!(pool.owner, *owner, "error at pool {pool_id}");
 		assert_eq!(pool.asset_id, *pool_asset_id, "error at pool {pool_id}");
@@ -786,10 +786,9 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 			let actual_unlocked_balance =
 				balance(*reward_asset_id, &pool_account) - actual_locked_balance;
 
-			let reward = pool
-				.rewards
-				.remove(&reward_asset_id)
-				.expect(&format!("reward asset {reward_asset_id} not present in pool {asset_id}"));
+			let reward = pool.rewards.remove(&reward_asset_id).expect(&format!(
+				"reward asset {reward_asset_id} not present in pool {pool_asset_id}"
+			));
 
 			assert_eq!(
 				reward.asset_id, *reward_asset_id,
@@ -823,7 +822,7 @@ error at pool {pool_id}, asset {reward_asset_id}: unexpected unlocked balance:
 
 		assert!(
 			pool.rewards.is_empty(),
-			"not all pool rewards were tested for pool {asset_id}, missing {:#?}",
+			"not all pool rewards were tested for pool {pool_asset_id}, missing {:#?}",
 			pool.rewards
 		);
 	}
@@ -833,7 +832,7 @@ error at pool {pool_id}, asset {reward_asset_id}: unexpected unlocked balance:
 
 pub(crate) struct CheckRewards<'a> {
 	pub(crate) owner: Public,
-	pub(crate) pool_id: u16,
+	pub(crate) pool_id: u128,
 	pub(crate) pool_asset_id: u128,
 	pub(crate) pool_rewards: &'a [PoolRewards],
 }
