@@ -891,7 +891,7 @@ where
 	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
 		let mut ctx = Context::<T>::default();
 		Self::store_raw_acknowledgement(
-			(packet.source_port.clone(), packet.source_channel, packet.sequence),
+			(packet.destination_port.clone(), packet.destination_channel, packet.sequence),
 			ack.clone(),
 		)
 		.map_err(|e| IbcHandlerError::AcknowledgementError {
@@ -899,7 +899,7 @@ where
 		})?;
 		let ack = ctx.ack_commitment(ack.into());
 		ctx.store_packet_acknowledgement(
-			(packet.source_port.clone(), packet.source_channel, packet.sequence),
+			(packet.destination_port.clone(), packet.destination_channel, packet.sequence),
 			ack,
 		)
 		.map_err(|e| IbcHandlerError::WriteAcknowledgementError { msg: Some(e.to_string()) })?;
