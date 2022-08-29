@@ -827,6 +827,8 @@ parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets : u32 = 10;
 	pub const MaxRewardConfigsPerPool : u32 = 10;
+	pub const PicaAssetId : CurrencyId = CurrencyId::PICA;
+	pub const PbloAssetId : CurrencyId = CurrencyId::PBLO;
 }
 
 impl pallet_staking_rewards::Config for Runtime {
@@ -847,8 +849,8 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type FinancialNft = Fnft;
-	type PicaAssetId = CurrencyId::PICA;
-	type PbloAssetId = CurrencyId::PBLO;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -1034,8 +1036,8 @@ impl pablo::Config for Runtime {
 	type ManageStaking = StakingRewards;
 	type ProtocolStaking = StakingRewards;
 	type MsPerBlock = MillisecsPerBlock;
-	type PicaAssetId = CurrencyId::PICA;
-	type PbloAssetId = CurrencyId::PBLO;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
 }
 
 parameter_types! {
