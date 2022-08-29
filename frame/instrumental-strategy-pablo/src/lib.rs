@@ -353,11 +353,11 @@ pub mod pallet {
 			let balance_of_lp_tokens_decimal = T::Convert::convert(balance_of_lp_token);
 			let balance_to_withdraw_per_transaction = T::Convert::convert(balance_of_lp_tokens_decimal.safe_mul(&pertcentage_of_funds)?);
 			while balance_of_lp_token > balance_to_withdraw_per_transaction {
-				Self::do_tranferring_funds()?;
+				Self::do_tranferring_funds(&vault_account, new_pool_id, pool_id_deduce, balance_to_withdraw_per_transaction)?;
 				balance_of_lp_token = balance_of_lp_token.safe_sub(&balance_to_withdraw_per_transaction)?;	
 			}
 			if balance_of_lp_token > T::Balance::zero() {
-				Self::do_tranferring_funds()?;
+				Self::do_tranferring_funds(&vault_account, new_pool_id, pool_id_deduce, balance_to_withdraw_per_transaction)?;
 			}
 			Pools::<T>::mutate(asset_id, |pool| {
 				*pool = Some(PoolState { pool_id: new_pool_id, state: State::Normal });
@@ -396,13 +396,13 @@ pub mod pallet {
 			let pool_id = pool_id_and_state.pool_id;
 			match T::Vault::available_funds(vault_id, &Self::account_id())? {
 				FundsAvailability::Withdrawable(balance) => {
-					Self::withdraw(vault_account, pool_id, balance)?;
+					Self::withdraw(&vault_account, pool_id, balance)?;
 				},
 				FundsAvailability::Depositable(balance) => {
-					Self::deposit(vault_account, pool_id, balance)?;
+					Self::deposit(&vault_account, pool_id, balance)?;
 				},
 				FundsAvailability::MustLiquidate => {
-					Self::liquidate(vault_account, pool_id)?;
+					Self::liquidate(&vault_account, pool_id)?;
 				},
 				FundsAvailability::None => {},
 			};
@@ -410,12 +410,12 @@ pub mod pallet {
 		}
 
 		fn withdraw(
-			vault_account: T::AccountId,
+			vault_account: &T::AccountId,
 			pool_id: T::PoolId,
 			balance: T::Balance,
 		) -> DispatchResult {
 			T::Pablo::add_liquidity(
-				&vault_account,
+				vault_account,
 				pool_id,
 				balance,
 				T::Balance::zero(),
@@ -425,45 +425,38 @@ pub mod pallet {
 		}
 
 		fn deposit(
-			vault_account: T::AccountId,
+			vault_account: &T::AccountId,
 			pool_id: T::PoolId,
 			balance: T::Balance,
 		) -> DispatchResult {
-			// let approximately_lp_token_amount = T::Pablo::simulate_add_liquidity(
-			// 	&vault_account,
-			// 	pool_id,
-			// 	balance,
-			// )?;
-			// let approximately_balance = T::Pablo::simulate_remove_liquidity_single_asset(
-			// 	&vault_account,
-			// 	pool_id,
-			// 	approximately_lp_token_amount,
-			// 	T::Balance::zero(),	
-			// )?;
-			// TODO(belousm): implement functionality which define how much lp tokens to withdraw
+			let pool = T::Pablo::get_pool(pool_id)?;
+			// let pool_base_aum =
+			// 		T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
+			// let lp_total_issuance =
+			// 	T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
 			todo!();
-			// T::Pablo::remove_liquidity_single_asset(
-			// 	&vault_account,
-			// 	pool_id,
-			// 	lp_token_amount,
-			// 	T::Balance::zero(),
-			// )
 		}
 
-		fn liquidate(vault_account: T::AccountId, pool_id: T::PoolId) -> DispatchResult {
+		fn liquidate(vault_account: &T::AccountId, pool_id: T::PoolId) -> DispatchResult {
 			let lp_token_id = T::Pablo::lp_token(pool_id)?;
 			let balance_of_lp_token = T::Currency::balance(lp_token_id, &vault_account);
 			T::Pablo::remove_liquidity_single_asset(
-				&vault_account,
+				vault_account,
 				pool_id,
 				balance_of_lp_token,
 				T::Balance::zero(),
 			)
 		}
 
-
-		fn do_tranferring_funds() -> DispatchResult {
-			// TODO(belousm): implement do_tranferring_funds
+		#[transactional]
+		fn do_tranferring_funds(
+			vault_account: &T::AccountId,
+			new_pool_id: T::PoolId,
+			pool_id_deduce: T::PoolId,	
+			balance: T::Balance,
+		) -> DispatchResult {
+			Self::deposit(vault_account, pool_id_deduce, balance)?;
+			Self::withdraw(vault_account, new_pool_id, balance)?;
 			Ok(())
 		}
 	}
