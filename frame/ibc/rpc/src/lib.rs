@@ -188,7 +188,6 @@ where
 	#[method(name = "ibc_queryTimestamp")]
 	fn query_timestamp(&self, height: u32) -> Result<u64>;
 
-
 	/// Query client consensus state
 	#[method(name = "ibc_queryClientConsensusState")]
 	fn query_client_consensus_state(

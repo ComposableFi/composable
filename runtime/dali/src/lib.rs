@@ -31,8 +31,8 @@ mod xcmp;
 use lending::MarketId;
 use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
-pub use xcmp::{MaxInstructions, UnitWeightCost};
 use ibc::clients::ics11_beefy::client_state::RelayChain;
+pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
 	governance::native::{
