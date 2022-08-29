@@ -355,7 +355,7 @@ impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a BiBoundedVec<T,
 	type IntoIter = core::slice::Iter<'a, T>;
 
 	fn into_iter(self) -> Self::IntoIter {
-		(&self.inner).iter()
+		self.inner.iter()
 	}
 }
 
@@ -364,7 +364,7 @@ impl<'a, T, const L: usize, const U: usize> IntoIterator for &'a mut BiBoundedVe
 	type IntoIter = core::slice::IterMut<'a, T>;
 
 	fn into_iter(self) -> Self::IntoIter {
-		(&mut self.inner).iter_mut()
+		self.inner.iter_mut()
 	}
 }
 

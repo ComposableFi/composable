@@ -1,3 +1,4 @@
+#![allow(clippy::derive_partial_eq_without_eq)] // for ChainSpecGroup
 use common::{AccountId, AuraId};
 use cumulus_primitives_core::ParaId;
 use once_cell::sync::Lazy;
@@ -15,7 +16,7 @@ pub mod dali;
 
 pub mod picasso;
 
-const DEFAULT_PARA_ID: u32 = 2000;
+const DEFAULT_PARA_ID: u32 = 2087;
 
 // Parachin ID.
 static PARA_ID: Lazy<ParaId> = Lazy::new(|| {
@@ -28,7 +29,9 @@ static PARA_ID: Lazy<ParaId> = Lazy::new(|| {
 });
 
 /// The extensions for the [`ChainSpec`].
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
+#[derive(
+	Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension,
+)]
 #[serde(deny_unknown_fields)]
 pub struct Extensions {
 	/// The relay chain of the Parachain.

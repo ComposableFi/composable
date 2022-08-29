@@ -73,7 +73,7 @@ pub mod pallet {
 			vault: VaultIdOf<T>,
 			amount: BalanceOf<T>,
 		) -> DispatchResultWithPostInfo {
-			let _ = ensure_root(origin)?;
+			ensure_root(origin)?;
 			let currency_id = T::Vault::asset_id(&vault)?;
 			T::Currency::mint_into(currency_id, &Self::account_id(), amount)?;
 			Self::deposit_event(Event::RevenueGenerated(amount));
@@ -83,7 +83,7 @@ pub mod pallet {
 		/// Reports the current balance to the vault.
 		#[pallet::weight(10_000)]
 		pub fn report(origin: OriginFor<T>, vault: VaultIdOf<T>) -> DispatchResultWithPostInfo {
-			let _ = ensure_root(origin)?;
+			ensure_root(origin)?;
 			let currency_id = T::Vault::asset_id(&vault)?;
 			let balance = T::Currency::balance(currency_id, &Self::account_id());
 			T::Vault::update_strategy_report(&vault, &Self::account_id(), &balance)?;
@@ -94,10 +94,11 @@ pub mod pallet {
 		/// Queries the vault for the current re-balance strategy and executes it.
 		#[pallet::weight(10_000)]
 		pub fn rebalance(origin: OriginFor<T>, vault: VaultIdOf<T>) -> DispatchResultWithPostInfo {
-			let _ = ensure_root(origin)?;
+			ensure_root(origin)?;
 			let asset_id = T::Vault::asset_id(&vault)?;
 			let task = T::Vault::available_funds(&vault, &Self::account_id())?;
 			let action = match task {
+				FundsAvailability::None => T::Currency::balance(asset_id, &Self::account_id()),
 				FundsAvailability::MustLiquidate => {
 					let balance = T::Currency::balance(asset_id, &Self::account_id());
 					T::Currency::transfer(

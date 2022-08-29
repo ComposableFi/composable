@@ -35,6 +35,7 @@
 	unused_extern_crates
 )]
 
+pub mod account_proxy;
 pub mod airdrop;
 pub mod assets;
 pub mod bonded_finance;
@@ -43,11 +44,11 @@ pub mod call_filter;
 pub mod currency;
 pub mod defi;
 pub mod dex;
+pub mod fnft;
 pub mod governance;
 pub mod lending;
 pub mod liquidation;
 pub mod mosaic;
-pub mod nft;
 pub mod oracle;
 pub mod privilege;
 pub mod staking;

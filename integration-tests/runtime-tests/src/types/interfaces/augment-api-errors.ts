@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+import type { ApiTypes } from "@polkadot/api-base/types";
 
 declare module '@polkadot/api-base/types/errors' {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
@@ -437,6 +437,17 @@ declare module '@polkadot/api-base/types/errors' {
       XcmCannotDecodeRemoteParametersToLocalRepresentations: AugmentedError<ApiType>;
       XcmCannotFindLocalIdentifiersAsDecodedFromRemote: AugmentedError<ApiType>;
       XcmNotFoundConfigurationById: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    fnft: {
+      CollectionAlreadyExists: AugmentedError<ApiType>;
+      CollectionNotFound: AugmentedError<ApiType>;
+      InstanceAlreadyExists: AugmentedError<ApiType>;
+      InstanceNotFound: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -957,6 +968,7 @@ declare module '@polkadot/api-base/types/errors' {
       NotEnoughLpToken: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
+      StakingPoolConfigError: AugmentedError<ApiType>;
       WeightsMustBeNonZero: AugmentedError<ApiType>;
       WeightsMustSumToOne: AugmentedError<ApiType>;
       /**
@@ -1181,6 +1193,7 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     stakingRewards: {
+      BackToTheFuture: AugmentedError<ApiType>;
       /**
        * Invalid end block number provided for creating a pool.
        **/
@@ -1190,6 +1203,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       MaxRewardLimitReached: AugmentedError<ApiType>;
       /**
+       * No duration presets configured.
+       **/
+      NoDurationPresetsConfigured: AugmentedError<ApiType>;
+      /**
        * Not enough assets for a stake.
        **/
       NotEnoughAssets: AugmentedError<ApiType>;
@@ -1198,9 +1215,17 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       OnlyPoolOwnerCanAddNewReward: AugmentedError<ApiType>;
       /**
+       * only the owner of stake can unstake it
+       **/
+      OnlyStakeOwnerCanUnstake: AugmentedError<ApiType>;
+      /**
        * Error when creating reduction configs.
        **/
       ReductionConfigProblem: AugmentedError<ApiType>;
+      /**
+       * Reward asset not found in reward pool.
+       **/
+      RewardAssetNotFound: AugmentedError<ApiType>;
       /**
        * Error when creating reward configs.
        **/
@@ -1213,6 +1238,10 @@ declare module '@polkadot/api-base/types/errors' {
        * No stake found for given id.
        **/
       StakeNotFound: AugmentedError<ApiType>;
+      /**
+       * Too many rewarded asset types per pool violating the storage allowed.
+       **/
+      TooManyRewardAssetTypes: AugmentedError<ApiType>;
       /**
        * Unimplemented reward pool type.
        **/
@@ -1261,6 +1290,66 @@ declare module '@polkadot/api-base/types/errors' {
        * and the new runtime.
        **/
       SpecVersionNeedsToIncrease: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    technicalCollective: {
+      /**
+       * Members are already initialized!
+       **/
+      AlreadyInitialized: AugmentedError<ApiType>;
+      /**
+       * Duplicate proposals not allowed
+       **/
+      DuplicateProposal: AugmentedError<ApiType>;
+      /**
+       * Duplicate vote ignored
+       **/
+      DuplicateVote: AugmentedError<ApiType>;
+      /**
+       * Account is not a member
+       **/
+      NotMember: AugmentedError<ApiType>;
+      /**
+       * Proposal must exist
+       **/
+      ProposalMissing: AugmentedError<ApiType>;
+      /**
+       * The close call was made too early, before the end of the voting.
+       **/
+      TooEarly: AugmentedError<ApiType>;
+      /**
+       * There can only be a maximum of `MaxProposals` active proposals.
+       **/
+      TooManyProposals: AugmentedError<ApiType>;
+      /**
+       * Mismatched index
+       **/
+      WrongIndex: AugmentedError<ApiType>;
+      /**
+       * The given length bound for the proposal was too low.
+       **/
+      WrongProposalLength: AugmentedError<ApiType>;
+      /**
+       * The given weight bound for the proposal was too low.
+       **/
+      WrongProposalWeight: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    technicalMembership: {
+      /**
+       * Already a member.
+       **/
+      AlreadyMember: AugmentedError<ApiType>;
+      /**
+       * Not a member.
+       **/
+      NotMember: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1517,6 +1606,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Trying to vest to ourselves
        **/
       TryingToSelfVest: AugmentedError<ApiType>;
+      /**
+       * There is no vesting schedule with a given id
+       **/
+      VestingScheduleNotFound: AugmentedError<ApiType>;
       /**
        * Vesting period is zero
        **/

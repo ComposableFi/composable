@@ -14,7 +14,7 @@ import {
   createVestingSchedule,
   processVestingScheduleAddedEvent,
 } from "../src/vestingProcessor";
-import { VestingSchedule as VestingScheduleType } from "../src/types/v2400";
+import { VestingSchedule as VestingScheduleType } from "../src/types/v2401";
 import { VestingVestingScheduleAddedEvent } from "../src/types/events";
 import { expect } from "chai";
 
@@ -27,6 +27,8 @@ const MOCK_VESTING_SCHEDULE: VestingScheduleType = {
     period: 10,
     __kind: "BlockNumberBased",
   },
+  vestingScheduleId: BigInt(1),
+  alreadyClaimed: BigInt(0),
   periodCount: 1,
   perPeriod: BigInt(100),
 };
@@ -79,7 +81,8 @@ function createVestingScheduleAddedEvent(
   from: Uint8Array,
   to: Uint8Array,
   asset: bigint,
-  schedule: VestingScheduleType
+  schedule: VestingScheduleType,
+  vestingScheduleId: bigint
 ) {
   let eventMock = mock(VestingVestingScheduleAddedEvent);
   let evt = {
@@ -87,9 +90,10 @@ function createVestingScheduleAddedEvent(
     to,
     asset,
     schedule,
+    vestingScheduleId
   };
 
-  when(eventMock.asV2400).thenReturn(evt);
+  when(eventMock.asV2401).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
 
   let event = instance(eventMock);
@@ -129,7 +133,8 @@ describe("Vesting schedule added", () => {
       MOCK_ADDRESS_FROM,
       MOCK_ADDRESS_TO,
       BigInt(2),
-      vestingSchedule
+      vestingSchedule,
+      BigInt(1)
     );
 
     await processVestingScheduleAddedEvent(ctx, event);
@@ -141,7 +146,7 @@ describe("Vesting schedule added", () => {
       storeMock,
       MOCK_ADDRESS_FROM,
       MOCK_ADDRESS_TO,
-      event.asV2400.asset.toString(),
+      event.asV2401.asset.toString(),
       schedule
     );
 
