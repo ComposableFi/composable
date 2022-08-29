@@ -2,23 +2,19 @@ use std::collections::VecDeque;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{
-    Instruction, Program,
-    Funds, NetworkID
-};
+use xcvm_core::{Funds, Instruction, NetworkId, Program};
 
-pub type XCVMInstruction =
-    Instruction<NetworkID, Vec<u8>, String, Funds>;
+pub type XCVMInstruction = Instruction<NetworkId, Vec<u8>, String, Funds>;
 
 pub type XCVMProgram = Program<VecDeque<XCVMInstruction>>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    pub registry_address: String,
+	pub registry_address: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Execute { program: XCVMProgram },
+	Execute { program: XCVMProgram },
 }
