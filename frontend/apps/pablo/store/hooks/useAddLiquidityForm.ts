@@ -126,15 +126,16 @@ export const useAddLiquidityForm = () => {
         let b = isReverse ? pool.pair.quote.toString() : pool.pair.base.toString();
         let q = isReverse ? pool.pair.base.toString() : pool.pair.quote.toString();
 
-        // @ts-ignore
         parachainApi.rpc.pablo
           .simulateAddLiquidity(
             parachainApi.createType("AccountId32", selectedAccount.address),
             parachainApi.createType("PalletPabloPoolId", pool.poolId),
-            {
-              [b]: bnBase.toString(),
-              [q]: bnQuote.toString()
-            }
+            parachainApi.createType(
+              "BTreeMap<SafeRpcWrapper, SafeRpcWrapper>",
+              {
+                [b]: bnBase.toString(),
+                [q]: bnQuote.toString(),
+              })
           )
           .then((expectedLP: any) => {
             setLpReceiveAmount(fromChainUnits(expectedLP.toString()));
