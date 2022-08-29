@@ -868,7 +868,7 @@ jobs:
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PICASSO_WEB_APP }}'
-          projectId: picasso
+          projectId: picasso-test-70bf7
           entrypoint: frontend/apps/picasso
 
   deploy-pablo-frontend:
