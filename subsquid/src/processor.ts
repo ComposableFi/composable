@@ -101,17 +101,11 @@ processor.addEventHandler("pablo.Swapped", async (ctx) => {
   await processSwappedEvent(ctx, event);
 });
 
-processor.addEventHandler("balances.Transfer", async (ctx) => {
-  await processTransferEvent(ctx);
-});
+processor.addEventHandler("balances.Transfer", processTransferEvent);
 
-processor.addEventHandler("balances.Withdraw", async (ctx) => {
-  await processWithdrawEvent(ctx);
-});
+processor.addEventHandler("balances.Withdraw", processWithdrawEvent);
 
-processor.addEventHandler("balances.Deposit", async (ctx) => {
-  await processDepositEvent(ctx);
-});
+processor.addEventHandler("balances.Deposit", processDepositEvent);
 
 processor.addEventHandler("bondedFinance.NewOffer", processNewOfferEvent);
 
@@ -129,25 +123,24 @@ processor.addEventHandler(
 
 processor.addEventHandler("vesting.Claimed", processVestingClaimedEvent);
 
-processor.addEventHandler("stakingRewards.RewardPoolCreated", async (ctx) => {
-  await processRewardPoolCreatedEvent(ctx);
-});
+processor.addEventHandler(
+  "stakingRewards.RewardPoolCreated",
+  processRewardPoolCreatedEvent
+);
 
-processor.addEventHandler("stakingRewards.Staked", async (ctx) => {
-  await processStakedEvent(ctx);
-});
+processor.addEventHandler("stakingRewards.Staked", processStakedEvent);
 
-processor.addEventHandler("stakingRewards.StakeAmountExtended", async (ctx) => {
-  await processStakeAmountExtendedEvent(ctx);
-});
+processor.addEventHandler(
+  "stakingRewards.StakeAmountExtended",
+  processStakeAmountExtendedEvent
+);
 
-processor.addEventHandler("stakingRewards.Unstaked", async (ctx) => {
-  await processUnstakedEvent(ctx);
-});
+processor.addEventHandler("stakingRewards.Unstaked", processUnstakedEvent);
 
-processor.addEventHandler("stakingRewards.SplitPosition", async (ctx) => {
-  await processSplitPositionEvent(ctx);
-});
+processor.addEventHandler(
+  "stakingRewards.SplitPosition",
+  processSplitPositionEvent
+);
 
 processor.addEventHandler("oracle.PriceChanged", processOraclePriceChanged);
 
