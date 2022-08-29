@@ -34,7 +34,7 @@ pkgs.arion.build {
       in {
         config = {
           project.name = "composable_devnet";
-          networks."${network-name}"= { };
+          networks."${network-name}" = { };
           services = {
             "${db-container-name}" = mk-composable-container
               (import ./services/postgres.nix {

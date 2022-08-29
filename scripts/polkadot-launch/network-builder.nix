@@ -73,8 +73,11 @@ in rec {
       inherit wsPort;
       inherit count;
       inherit nodeNames;
-      flags = [ "--rpc-cors=all" "--beefy" "--enable-offchain-indexing=true" ]
-        ++ flags;
+      flags = let
+        mandatory-flags =
+          [ "--rpc-cors=all" "--beefy" "--enable-offchain-indexing=true" ];
+      in mandatory-flags
+      ++ builtins.filter (flag: !(builtins.elem flag mandatory-flags)) flags;
     };
 
   mk-shared-security-network = { parachains, relaychain }: {

@@ -28,8 +28,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs =
-    { self, nixpkgs, crane, flake-utils, rust-overlay, nix-npm-buildpackage, arion-src }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay
+    , nix-npm-buildpackage, arion-src }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
