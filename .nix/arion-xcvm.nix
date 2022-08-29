@@ -11,13 +11,9 @@ pkgs.arion.build {
           port = 1337;
         };
         juno-db-name = "juno";
-        juno-db = default-db // {
-          name = juno-db-name;
-        };
+        juno-db = default-db // { name = juno-db-name; };
         squid-db-name = "squid";
-        squid-db = default-db // {
-          name = squid-db-name;
-        };
+        squid-db = default-db // { name = squid-db-name; };
       in {
         config.project.name = "Composable Finance XCVM devnet";
         config.services = {
@@ -50,9 +46,7 @@ pkgs.arion.build {
             inherit packages;
           };
           subsquid-indexer =
-            import ./services/subsquid-indexer.nix {
-              database = squid-db;
-            };
+            import ./services/subsquid-indexer.nix { database = squid-db; };
           subsquid-indexer-gateway =
             import ./services/subsquid-indexer-gateway.nix {
               database = squid-db;
