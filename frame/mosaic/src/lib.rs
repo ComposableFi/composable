@@ -578,7 +578,7 @@ pub mod pallet {
 		/// - Amount must be equal or lower than what the user has locked
 		///
 		/// # Note
-		/// - Reclaim period is not reset if not all the funds are moved; menaing that the clock
+		/// - Reclaim period is not reset if not all the funds are moved; meaning that the clock
 		///   remains ticking for the relayer to pick up the rest of the transaction.
 		#[pallet::weight(T::WeightInfo::accept_transfer())]
 		#[transactional]

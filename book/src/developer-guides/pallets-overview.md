@@ -6,9 +6,13 @@
 
 # Pallets & Integration
 
-The world of DeFi (primitives, core and applications) continues to edge towards interoperability and Polkadot comfortably sits at the epicenter of this natural progression. To natively deploy dApps in the DotSama ecosystem, developers need pallets. Substrate-based pallets are modular frameworks that enable anyone to create purpose-built blockchains (as well as dApps) by composing custom or pre-built components. Think of pallets as stackable building blocks that any developer can use to easily build protocols and dApps.
+The world of DeFi (primitives, core and applications) continues to edge towards interoperability and Polkadot comfortably sits at the epicenter of this natural progression. 
+To natively deploy dApps in the DotSama ecosystem, developers need pallets. 
+Substrate-based pallets are modular frameworks that enable anyone to create purpose-built blockchains (as well as dApps) by composing custom or pre-built components. 
+Think of pallets as stackable building blocks that any developer can use to easily build protocols and dApps.
 
-In general, pallets provide a robust and powerful framework to help propel more creativity from developers looking to build the future of DeFi’s primitive, core and application functions. Given that our parachains are the foundational layer that powers our ecosystem, we decided to initially adopt a pallet-centric approach to adding products directly in the runtime of our parachains before launching the Composable XCVM where developers will be able to deploy their applications utilizing cross-chain smart contracts. 
+In general, pallets provide a robust and powerful framework to help propel more creativity from developers looking to build the future of DeFi’s primitive, core and application functions. 
+Given that our parachains are the foundational layer that powers our ecosystem, we decided to initially adopt a pallet-centric approach to adding products directly in the runtime of our parachains before launching the Composable XCVM where developers will be able to deploy their applications utilizing cross-chain smart contracts. 
 
 Developers and projects hold the ability to deploy as pallets on our chain, with governance having the ability to upgrade these pallets into the runtime of our chains:
 

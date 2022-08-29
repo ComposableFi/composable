@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.492176Z -->
+<!-- Generated at 2022-08-29T23:24:06.494151Z -->
 
 # Bonded Finance Pallet Extrinsics
 
@@ -34,7 +34,7 @@ Allows the issuer to ask for their account to be kept alive using the `keep_aliv
 parameter.
 
 Emits a `NewBond`.
-Possibily Emits a `OfferCompleted`.
+Possibly Emits a `OfferCompleted`.
 
 ## Cancel
 

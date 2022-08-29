@@ -166,7 +166,7 @@ sudo apt install docker-ce docker-ce-cli containerd.io
 ### Optional Steps
 
 ```sh
-sudo apt-mark hold docker-ce # prevent the Docker package from being updated, so no sudden updates and process interuption
+sudo apt-mark hold docker-ce # prevent the Docker package from being updated, so no sudden updates and process interruption
 sudo usermod -aG docker $USER # adds docker to sudo group so there's no need to run it from root
 ```
 

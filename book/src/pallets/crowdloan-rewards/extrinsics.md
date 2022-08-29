@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.473516Z -->
+<!-- Generated at 2022-08-29T23:24:06.469244Z -->
 
 # Crowdloan Rewards Pallet Extrinsics
 

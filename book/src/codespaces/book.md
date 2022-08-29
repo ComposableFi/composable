@@ -2,9 +2,11 @@
 
 ---
 
-This book is part of our [monorepo hosted on GitHub](https://github.com/ComposableFi/composable). It is built using [mdBook](https://rust-lang.github.io/mdBook/), and it's contents are located in the `book/` directory.
+This book is part of our [monorepo hosted on GitHub](https://github.com/ComposableFi/composable). 
+It is built using [mdBook](https://rust-lang.github.io/mdBook/), and it's contents are located in the `book/` directory.
 
-The structure is simple: there is a `SUMMARY.md` which lists all of the available pages, and defines the structure of the sidebar. When you add a link to this file, a matching `.md` file will automatically be generated.
+The structure is simple: there is a `SUMMARY.md` which lists all of the available pages, and defines the structure of the sidebar. 
+When you add a link to this file, a matching `.md` file will automatically be generated.
 
 ---
 
@@ -16,7 +18,8 @@ Open the integrated terminal in a Codespace and run the following command:
 make run-book
 ```
 
-A browser will open showing a local copy of this book. Simply edit the contents of the `book/` directory, and your changes will be reflected live in the browser. (Despite running in the cloud, your Codespace will transparently map the ports to your localhost so that you can access the live book at `localhost:3000`.)
+A browser will open showing a local copy of this book. Simply edit the contents of the `book/` directory, and your changes will be reflected live in the browser. 
+(Despite running in the cloud, your Codespace will transparently map the ports to your localhost so that you can access the live book at `localhost:3000`.)
 
 ![Book running locally](./book-running-locally.png)
 *So meta*
@@ -36,7 +39,8 @@ After your changes pass the linter without error, simple create a **pull request
 ---
 
 ## Syntax
-We use [Commonmark flavored markdown syntax](https://commonmark.org/help/), plus [GFM tables](https://github.github.com/gfm/#tables-extension-), [GFM task lists](https://github.github.com/gfm/#task-list-items-extension-), [GFM strikethrough](https://github.github.com/gfm/#strikethrough-extension-), and [footnotes](https://github.com/commonmark/commonmark-spec/wiki/Deployed-Extensions#note). In addition to that, we have some special syntax for **image captions** and **H1 emoji**:
+We use [Commonmark flavored markdown syntax](https://commonmark.org/help/), plus [GFM tables](https://github.github.com/gfm/#tables-extension-), [GFM task lists](https://github.github.com/gfm/#task-list-items-extension-), [GFM strikethrough](https://github.github.com/gfm/#strikethrough-extension-), and [footnotes](https://github.com/commonmark/commonmark-spec/wiki/Deployed-Extensions#note). 
+In addition to that, we have some special syntax for **image captions** and **H1 emoji**:
 
 
 ### Image captions

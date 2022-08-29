@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.465923Z -->
+<!-- Generated at 2022-08-29T23:24:06.448049Z -->
 
 # Dutch Auction Pallet Extrinsics
 

@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.470113Z -->
+<!-- Generated at 2022-08-29T23:24:06.484734Z -->
 
 # Mosaic Pallet Extrinsics
 
@@ -80,7 +80,7 @@ remainder of the transaction.
 
 ### Note
 
-* Reclaim period is not reset if not all the funds are moved; menaing that the clock
+* Reclaim period is not reset if not all the funds are moved; meaning that the clock
   remains ticking for the relayer to pick up the rest of the transaction.
 
 ## Claim Stale To

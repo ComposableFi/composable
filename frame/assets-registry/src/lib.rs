@@ -165,7 +165,7 @@ pub mod pallet {
 		/// Creates asset using `CurrencyFactory`.
 		/// Raises `AssetRegistered` event
 		///
-		/// Sets only required fields by `CurrencyFactory`, to upsert metadata use referenced
+		/// Sets only required fields by `CurrencyFactory`, to insert metadata use referenced
 		/// pallet.
 		///
 		/// # Parameters:

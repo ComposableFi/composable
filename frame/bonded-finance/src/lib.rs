@@ -231,7 +231,7 @@ pub mod pallet {
 		/// parameter.
 		///
 		/// Emits a `NewBond`.
-		/// Possibily Emits a `OfferCompleted`.
+		/// Possibly Emits a `OfferCompleted`.
 		#[pallet::weight(T::WeightInfo::bond())]
 		pub fn bond(
 			origin: OriginFor<T>,

@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.458792Z -->
+<!-- Generated at 2022-08-29T23:24:06.435673Z -->
 
 # Staking Rewards Pallet Extrinsics
 
@@ -27,8 +27,32 @@ Extend an existing stake.
 
 Emits `StakeExtended` event when successful.
 
+## Unstake
+
+[`unstake`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.unstake)
+
+Remove a stake.
+
+Emits `Unstaked` event when successful.
+
 ## Split
 
 [`split`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.split)
 
 No documentation available at this time.
+
+## Update Rewards Pool
+
+[`update_rewards_pool`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.update_rewards_pool)
+
+Updates the reward pool configuration.
+
+Emits `RewardPoolUpdated` when successful.
+
+## Add To Rewards Pot
+
+[`add_to_rewards_pot`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.add_to_rewards_pot)
+
+Add funds to the reward pool's rewards pot for the specified asset.
+
+Emits `RewardsPotIncreased` when successful.

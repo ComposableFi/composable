@@ -14,7 +14,9 @@ Then, give your browser permission to open **Visual Studio Code**:
 ![Open Visual Studio Code](./open-vscode-dialog.png)
 *Open Visual Studio Code*
 
-When you've opend Visual Studio Code, it is very important that you **open the Workspace**. The bad news is that this [cannot yet be done automatically](https://github.community/t/how-to-automatically-open-a-vscode-workspace/154339), but the good news is that it is very easy to do. Scroll down to the file named `composable.code-workspace`, and click on the **"Open Workspace"** button in the lower-right corner:
+When you've opened Visual Studio Code, it is very important that you **open the Workspace**. 
+The bad news is that this [cannot yet be done automatically](https://github.community/t/how-to-automatically-open-a-vscode-workspace/154339), but the good news is that it is very easy to do. 
+Scroll down to the file named `composable.code-workspace`, and click on the **"Open Workspace"** button in the lower-right corner:
 
 ![Open the Workspace](./open-the-workspace.png)
 *Open the Workspace*

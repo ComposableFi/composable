@@ -2,16 +2,24 @@
 
 ---
 
-The final pieces of technology contributing to the construction of Centauri leverage [Parity](https://www.parity.io/)’s Bridge Efficiency Enabling Finality Yielder (BEEFY) and its novel consensus gadget that enables DotSama to be bridged to additional chains via very efficient finality proofs. Parachains get their finality from the Kusama relay chain, and thus BEEFY’s ability to create finality proofs provides finality for Centauri on Picasso and an essential gateway for the bridge infrastructure.
+The final pieces of technology contributing to the construction of Centauri leverage [Parity](https://www.parity.io/)’s Bridge Efficiency Enabling Finality Yielder (BEEFY) and its novel consensus gadget that enables DotSama to be bridged to additional chains via very efficient finality proofs. 
+Parachains get their finality from the Kusama relay chain, and thus BEEFY’s ability to create finality proofs provides finality for Centauri on Picasso and an essential gateway for the bridge infrastructure.
 
-We are also developing a BEEFY light client implementation for Cosmos-IBC (11-BEEFY, spec pending). This product will enable Cosmos chains to follow the finality of the Kusama relay chain (and thus, the finality of Picasso). A single instance of this light client on any Cosmos chain can prove finality for any Kusama parachain, allowing Cosmos chains to verify IBC commitment packets (IBC consensus proofs). The final piece of Centauri is a pallet on Picasso, facilitating the creation of these IBC commitment packets.
+We are also developing a BEEFY light client implementation for Cosmos-IBC (11-BEEFY, spec pending). 
+This product will enable Cosmos chains to follow the finality of the Kusama relay chain (and thus, the finality of Picasso). 
+A single instance of this light client on any Cosmos chain can prove finality for any Kusama parachain, allowing Cosmos chains to verify IBC commitment packets (IBC consensus proofs). 
+The final piece of Centauri is a pallet on Picasso, facilitating the creation of these IBC commitment packets.
 
 
 ## BEEFY Finality Gadget 
 
-With the [BEEFY protocol](https://www.youtube.com/watch?v=ZmIa_4hPRZ8&t=2378s), the authority set produces an extra finality proof for light clients which consists of the MMR root hash of all blocks finalized by [GRANDPA](https://polkadot.network/tag/grandpa/) (the finality gadget implemented for the Polkadot relay chain) at a given height. With the introduction of this protocol, light clients no longer need to be aware of all the headers in a chain for them to be convinced about finality. This drastically reduces the size of the data that light clients must store to follow the chain’s consensus to exactly 124 bytes.
+With the [BEEFY protocol](https://www.youtube.com/watch?v=ZmIa_4hPRZ8&t=2378s), the authority set produces an extra finality proof for light clients which consists of the MMR root hash of all blocks finalized by [GRANDPA](https://polkadot.network/tag/grandpa/) (the finality gadget implemented for the Polkadot relay chain) at a given height. 
+With the introduction of this protocol, light clients no longer need to be aware of all the headers in a chain for them to be convinced about finality. This drastically reduces the size of the data that light clients must store to follow the chain’s consensus to exactly 124 bytes.
 
-A preliminary [specification](https://github.com/paritytech/grandpa-bridge-gadget/blob/td-docs/docs/beefy.md) for BEEFY is already available and is largely implemented, barring a few kinks that need ironing out. At a high level, this is a new protocol that will be added to Polkadot without the need for a hard fork. Thanks to the[ WebAssembly (Wasm)](https://webassembly.org/) runtime and the on-chain governance protocol, this new protocol will produce significantly lighter finality proofs for light clients for both on-chain and off-chain uses. It will achieve this by having the existing GRANDPA authority set periodically vote on the Merkle Mountain Range root hash of all blocks that have been considered final by the network.
+A preliminary [specification](https://github.com/paritytech/grandpa-bridge-gadget/blob/td-docs/docs/beefy.md) for BEEFY is already available and is largely implemented, barring a few kinks that need ironing out. 
+At a high level, this is a new protocol that will be added to Polkadot without the need for a hard fork. 
+Thanks to the[ WebAssembly (Wasm)](https://webassembly.org/) runtime and the on-chain governance protocol, this new protocol will produce significantly lighter finality proofs for light clients for both on-chain and off-chain uses. 
+It will achieve this by having the existing GRANDPA authority set periodically vote on the Merkle Mountain Range root hash of all blocks that have been considered final by the network.
 
 This proof is shown below:
 

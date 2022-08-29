@@ -2,7 +2,8 @@
 
 ---
 
-Composable is releasing the Picasso Network token (PICA) - the native token of the Picasso parachain, which lives solely on the Kusama parachain. **PICA will have critical functionalities including allowing voting on which pallets are implemented first on Picasso, beyond our core pallets such as Apollo (oracle pallet) and Cubic (vaults pallet) that will already be available.**
+Composable is releasing the Picasso Network token (PICA) - the native token of the Picasso parachain, which lives solely on the Kusama parachain. 
+**PICA will have critical functionalities including allowing voting on which pallets are implemented first on Picasso, beyond our core pallets such as Apollo (oracle pallet) and Cubic (vaults pallet) that will already be available.**
 
 The LAYR token will also be created as the native token for all of Composable Finance’s activities on both Ethereum and on Polkadot. 
 
@@ -93,7 +94,7 @@ The Picasso token will be staked in order to produce blocks on our Kusama parach
 
 ### Data Provider Staking:
 
-As mentioned previously, for our oracle to query cryptoeconomically secured data feeds, providers will need to stake the Picasso Network token. This will serve as an additional use case for the Picasso token, which will underpin all the DeFi applications that exist in the network. The slashing mechanism will burn Picasso Network token, and providing data feeds correctly will result in the awarding of Picasso tokens from inflation. This will be balanced by a slashing of a portion of each transaction fee to account for this reward inflation.
+As mentioned previously, for our oracle to query crypto-economically secured data feeds, providers will need to stake the Picasso Network token. This will serve as an additional use case for the Picasso token, which will underpin all the DeFi applications that exist in the network. The slashing mechanism will burn Picasso Network token, and providing data feeds correctly will result in the awarding of Picasso tokens from inflation. This will be balanced by a slashing of a portion of each transaction fee to account for this reward inflation.
 
 ### Network Usage:
 

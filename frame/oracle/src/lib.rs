@@ -696,7 +696,7 @@ pub mod pallet {
 			Self::deposit_event(Event::StakeReclaimed(signer, withdrawal.stake));
 			Ok(().into())
 		}
-		/// Call to submit a price, gas is returned if extrinsic is successfull.
+		/// Call to submit a price, gas is returned if extrinsic is successful.
 		/// Should be called from offchain worker but can be called manually too.
 		///
 		/// This is an operational transaction.

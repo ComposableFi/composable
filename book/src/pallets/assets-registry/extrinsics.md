@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.47652Z -->
+<!-- Generated at 2022-08-29T23:24:06.536798Z -->
 
 # Assets Registry Pallet Extrinsics
 
@@ -10,7 +10,7 @@
 Creates asset using `CurrencyFactory`.
 Raises `AssetRegistered` event
 
-Sets only required fields by `CurrencyFactory`, to upsert metadata use referenced
+Sets only required fields by `CurrencyFactory`, to insert metadata use referenced
 pallet.
 
 ### Parameters:

@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.444116Z -->
+<!-- Generated at 2022-08-29T23:24:06.37778Z -->
 
 # Airdrop Pallet Extrinsics
 

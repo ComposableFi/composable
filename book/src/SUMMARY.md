@@ -65,7 +65,7 @@
         - [Frontend](./codespaces/frontend.md)
         - [Runtime Tests](./codespaces/runtime-tests.md)
 - [Composable SDK](./developer-guides/composable-sdk.md)
-- [Oracle Set-Up Guide](./developer-guides/oracle-set-up-guide/oracle-set-up-guide.md)
+- [Oracle Set-Up Guide](developer-guides/oracle-set-up-guide.md)
 - [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)
 - [Pallets & Integration](./developer-guides/pallets-overview.md)
     - [airdrop](./pallets/airdrop.md)
@@ -100,7 +100,7 @@
 
 # 🌎 ECOSYSTEM
 - [Build on Composable: Ecosystem Development](./ecosystem/build-on-composable-ecosystem-development.md)
-  - [Composable Grants](./ecosystem/build-on-composable-ecosystem-development/composable-grants.md)
+- [Composable Grants](./ecosystem/composable-grants.md)
 - [Business Line Development](./ecosystem/business-line-development.md)
 - [Press Kit](./ecosystem/press-kit.md)
 - [The Composable Team](./ecosystem/the-composable-team.md)
