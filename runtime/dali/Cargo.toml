@@ -145,6 +145,12 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 # simnode support
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, rev = "eed85119358bc80bbb1aedd98778f370d4932dee" }
 
+[dependencies.ibc]
+git = "https://github.com/ComposableFi/ibc-rs"
+rev = "5b4c2726ccda7e5e7b3c6944418b9cdd8988cddf"
+default-features = false
+features = ["ics11_beefy"]
+
 [features]
 builtin-wasm = []
 default = ["std"]
@@ -228,6 +234,7 @@ std = [
   "frame-system/std",
   "governance-registry/std",
   "hex/std",
+  "ibc/std",
   "ibc-primitives/std",
   "ibc-runtime-api/std",
   "identity/std",

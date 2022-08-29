@@ -1,10 +1,12 @@
 use crate::{self as pallet_ibc};
+use cumulus_primitives_core::ParaId;
 use frame_support::{
 	pallet_prelude::ConstU32,
 	parameter_types,
 	traits::{ConstU64, Everything},
 };
 use frame_system as system;
+use ibc::clients::ics11_beefy::client_state::RelayChain;
 use ibc_primitives::IbcAccount;
 use orml_traits::parameter_type_with_key;
 use sp_core::{
@@ -125,6 +127,8 @@ impl assets::Config for Test {
 
 parameter_types! {
 	pub const MaxLocks: u32 = 256;
+	pub static ParachainId: ParaId = ParaId::from(2000);
+	pub static RelayChainId: RelayChain = RelayChain::Rococo;
 }
 
 parameter_type_with_key! {
@@ -189,6 +193,8 @@ impl pallet_ibc::Config for Test {
 	type AssetRegistry = AssetsRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = frame_system::EnsureRoot<AccountId>;
+	type ParaId = ParachainId;
+	type RelayChain = RelayChainId;
 }
 
 impl pallet_timestamp::Config for Test {

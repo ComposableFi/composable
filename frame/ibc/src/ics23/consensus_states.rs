@@ -36,6 +36,7 @@ impl<T: Config> ConsensusStates<T> {
 		child::put(&ChildInfo::new_default(T::CHILD_TRIE_KEY), &key, &consensus_state)
 	}
 
+	// WARNING: too expensive to be called from an on-chain context, only here for rpc layer.
 	pub fn iter_key_prefix(client_id: &ClientId) -> impl Iterator<Item = (Height, Vec<u8>)> {
 		let prefix_path = format!("clients/{}/consensusStates/", client_id);
 		let key = apply_prefix(T::CONNECTION_PREFIX, vec![prefix_path]);

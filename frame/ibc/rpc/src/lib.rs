@@ -21,7 +21,7 @@ use ibc::{
 	core::{
 		ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
 		ics03_connection::connection::ConnectionEnd,
-		ics04_channel::channel::{ChannelEnd, IdentifiedChannelEnd},
+		ics04_channel::channel::{ChannelEnd, IdentifiedChannelEnd, Order},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 	},
 	events::IbcEvent as RawIbcEvent,
@@ -35,13 +35,14 @@ use ibc_proto::{
 		applications::transfer::v1::{QueryDenomTraceResponse, QueryDenomTracesResponse},
 		core::{
 			channel::v1::{
-				Packet, PacketState, QueryChannelResponse, QueryChannelsResponse,
+				PacketState, QueryChannelResponse, QueryChannelsResponse,
 				QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
 				QueryPacketAcknowledgementsResponse, QueryPacketCommitmentResponse,
 				QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
 			},
 			client::v1::{
-				IdentifiedClientState, QueryClientStateResponse, QueryConsensusStateResponse,
+				Height, IdentifiedClientState, QueryClientStateResponse,
+				QueryConsensusStateResponse,
 			},
 			connection::v1::{
 				IdentifiedConnection, QueryConnectionResponse, QueryConnectionsResponse,
@@ -109,6 +110,33 @@ pub struct Proof {
 	pub height: ibc_proto::ibc::core::client::v1::Height,
 }
 
+/// Packet info
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+pub struct PacketInfo {
+	/// Height at which packet event was emitted height
+	pub height: u64,
+	/// Packet sequence
+	pub sequence: u64,
+	/// Source port
+	pub source_port: String,
+	/// Source channel
+	pub source_channel: String,
+	/// Destination port
+	pub destination_port: String,
+	/// Destination channel
+	pub destination_channel: String,
+	/// Channel order
+	pub channel_order: String,
+	/// Opaque packet data
+	pub data: Vec<u8>,
+	/// Timeout height
+	pub timeout_height: Height,
+	/// Timeout timestamp
+	pub timeout_timestamp: u64,
+	/// Packet acknowledgement
+	pub ack: Option<Vec<u8>>,
+}
+
 /// IBC RPC methods.
 #[rpc(client, server)]
 pub trait IbcApi<BlockNumber, Hash>
@@ -116,21 +144,25 @@ where
 	Hash: PartialEq + Eq + std::hash::Hash,
 {
 	/// Query packet data
-	#[method(name = "ibc_queryPackets")]
-	fn query_packets(
+	#[method(name = "ibc_querySendPackets")]
+	fn query_send_packets(
 		&self,
 		channel_id: String,
 		port_id: String,
 		seqs: Vec<u64>,
-	) -> Result<Vec<Packet>>;
-	/// Query raw acknowledgement data
-	#[method(name = "ibc_queryAcknowledgements")]
-	fn query_acknowledgements(
+	) -> Result<Vec<PacketInfo>>;
+	/// Query Recv Packet
+	#[method(name = "ibc_queryRecvPackets")]
+	fn query_recv_packets(
 		&self,
 		channel_id: String,
 		port_id: String,
 		seqs: Vec<u64>,
-	) -> Result<Vec<Vec<u8>>>;
+	) -> Result<Vec<PacketInfo>>;
+
+	#[method(name = "ibc_undeliveredSequences")]
+	fn query_undelivered_sequences(&self, channel_id: String, port_id: String) -> Result<Vec<u64>>;
+
 	/// Generate proof for given key
 	#[method(name = "ibc_queryProof")]
 	fn query_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof>;
@@ -155,10 +187,6 @@ where
 	/// Query localchain's timestamp in nanoseconds
 	#[method(name = "ibc_queryTimestamp")]
 	fn query_timestamp(&self, height: u32) -> Result<u64>;
-
-	/// Query localchain consensus state
-	#[method(name = "ibc_queryConsensusState")]
-	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse>;
 
 	/// Query client consensus state
 	#[method(name = "ibc_queryClientConsensusState")]
@@ -395,16 +423,21 @@ where
 		+ BlockBackend<Block>,
 	C::Api: IbcRuntimeApi<Block>,
 {
-	fn query_packets(
+	fn query_send_packets(
 		&self,
 		channel_id: String,
 		port_id: String,
 		seqs: Vec<u64>,
-	) -> Result<Vec<Packet>> {
+	) -> Result<Vec<PacketInfo>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
-		let packets: Vec<ibc_primitives::OffchainPacketType> = api
-			.query_packets(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec(), seqs)
+		let packets: Vec<ibc_primitives::PacketInfo> = api
+			.query_send_packet_info(
+				&at,
+				channel_id.as_bytes().to_vec(),
+				port_id.as_bytes().to_vec(),
+				seqs,
+			)
 			.ok()
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching packets"))?;
@@ -412,7 +445,7 @@ where
 		packets
 			.into_iter()
 			.map(|packet| {
-				Ok(Packet {
+				Ok(PacketInfo {
 					sequence: packet.sequence,
 					source_port: String::from_utf8(packet.source_port).map_err(|_| {
 						runtime_error_into_rpc_error("Failed to decode source port")
@@ -427,33 +460,94 @@ where
 						|_| runtime_error_into_rpc_error("Failed to decode destination channel"),
 					)?,
 					data: packet.data,
-					timeout_height: Some(ibc_proto::ibc::core::client::v1::Height {
+					timeout_height: ibc_proto::ibc::core::client::v1::Height {
 						revision_number: packet.timeout_height.0,
 						revision_height: packet.timeout_height.1,
-					}),
+					},
 					timeout_timestamp: packet.timeout_timestamp,
+					height: packet.height.ok_or_else(|| {
+						runtime_error_into_rpc_error("Packet info should have a valid height")
+					})?,
+					channel_order: {
+						Order::from_i32(packet.channel_order as i32)
+							.map_err(|_| {
+								runtime_error_into_rpc_error(
+									"Packet info should have a valid channel order",
+								)
+							})?
+							.to_string()
+					},
+					ack: packet.ack,
 				})
 			})
 			.collect()
 	}
 
-	fn query_acknowledgements(
+	fn query_recv_packets(
 		&self,
 		channel_id: String,
 		port_id: String,
 		seqs: Vec<u64>,
-	) -> Result<Vec<Vec<u8>>> {
+	) -> Result<Vec<PacketInfo>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
-		api.query_acknowledgements(
-			&at,
-			channel_id.as_bytes().to_vec(),
-			port_id.as_bytes().to_vec(),
-			seqs,
-		)
-		.ok()
-		.flatten()
-		.ok_or_else(|| runtime_error_into_rpc_error("Error fetching packets"))
+		let packets: Vec<ibc_primitives::PacketInfo> = api
+			.query_recv_packet_info(
+				&at,
+				channel_id.as_bytes().to_vec(),
+				port_id.as_bytes().to_vec(),
+				seqs,
+			)
+			.ok()
+			.flatten()
+			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching packets"))?;
+
+		packets
+			.into_iter()
+			.map(|packet| {
+				Ok(PacketInfo {
+					sequence: packet.sequence,
+					source_port: String::from_utf8(packet.source_port).map_err(|_| {
+						runtime_error_into_rpc_error("Failed to decode source port")
+					})?,
+					source_channel: String::from_utf8(packet.source_channel).map_err(|_| {
+						runtime_error_into_rpc_error("Failed to decode source channel")
+					})?,
+					destination_port: String::from_utf8(packet.destination_port).map_err(|_| {
+						runtime_error_into_rpc_error("Failed to decode destination port")
+					})?,
+					destination_channel: String::from_utf8(packet.destination_channel).map_err(
+						|_| runtime_error_into_rpc_error("Failed to decode destination channel"),
+					)?,
+					data: packet.data,
+					timeout_height: ibc_proto::ibc::core::client::v1::Height {
+						revision_number: packet.timeout_height.0,
+						revision_height: packet.timeout_height.1,
+					},
+					timeout_timestamp: packet.timeout_timestamp,
+					height: packet.height.ok_or_else(|| {
+						runtime_error_into_rpc_error("Packet info should have a valid height")
+					})?,
+					channel_order: {
+						Order::from_i32(packet.channel_order as i32)
+							.map_err(|_| {
+								runtime_error_into_rpc_error(
+									"Packet info should have a valid channel order",
+								)
+							})?
+							.to_string()
+					},
+					ack: packet.ack,
+				})
+			})
+			.collect()
+	}
+
+	fn query_undelivered_sequences(&self, channel_id: String, port_id: String) -> Result<Vec<u64>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(self.client.info().best_hash);
+		api.undelivered_sequences(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
+			.map_err(|_| runtime_error_into_rpc_error("Error getting undelivered sequences"))
 	}
 
 	fn query_proof(&self, height: u32, mut keys: Vec<Vec<u8>>) -> Result<Proof> {
@@ -547,24 +641,6 @@ where
 				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
-		})
-	}
-
-	fn query_consensus_state(&self, height: u32) -> Result<QueryConsensusStateResponse> {
-		let api = self.client.runtime_api();
-
-		let at = BlockId::Number(height.into());
-		let result: Vec<u8> =
-			api.host_consensus_state(&at, height).ok().flatten().ok_or_else(|| {
-				runtime_error_into_rpc_error("Error querying host consensus state")
-			})?;
-		let consensus_state = AnyConsensusState::decode_vec(&result)
-			.map_err(|_| runtime_error_into_rpc_error("Error querying host consensus state"))?;
-
-		Ok(QueryConsensusStateResponse {
-			consensus_state: Some(consensus_state.into()),
-			proof: vec![],
-			proof_height: None,
 		})
 	}
 

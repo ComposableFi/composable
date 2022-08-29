@@ -11,7 +11,6 @@ use ibc::{
 	timestamp::Timestamp,
 	Height,
 };
-use ibc_primitives::OffchainPacketType;
 
 #[derive(
 	Encode, Decode, Clone, PartialEq, Eq, frame_support::RuntimeDebug, scale_info::TypeInfo,
@@ -155,9 +154,15 @@ pub enum IbcEvent {
 		counterparty_channel_id: Option<Vec<u8>>,
 	},
 	/// Receive packet
-	/// The packet for this event is does not originate on this chain, so it's not stored offchain,
-	/// so we need to have it on this event
-	ReceivePacket { revision_height: u64, revision_number: u64, packet: OffchainPacketType },
+	ReceivePacket {
+		revision_height: u64,
+		revision_number: u64,
+		port_id: Vec<u8>,
+		channel_id: Vec<u8>,
+		dest_port: Vec<u8>,
+		dest_channel: Vec<u8>,
+		sequence: u64,
+	},
 	/// Send packet
 	SendPacket {
 		revision_height: u64,
@@ -177,9 +182,15 @@ pub enum IbcEvent {
 		sequence: u64,
 	},
 	/// WriteAcknowledgement
-	/// The packet for this event is does not originate on this chain, so it's not stored offchain,
-	/// so we need to have it on this event
-	WriteAcknowledgement { revision_height: u64, revision_number: u64, packet: OffchainPacketType },
+	WriteAcknowledgement {
+		revision_height: u64,
+		revision_number: u64,
+		port_id: Vec<u8>,
+		channel_id: Vec<u8>,
+		dest_port: Vec<u8>,
+		dest_channel: Vec<u8>,
+		sequence: u64,
+	},
 	/// Timeout packet
 	TimeoutPacket {
 		revision_height: u64,
@@ -379,12 +390,20 @@ impl From<RawIbcEvent> for IbcEvent {
 			RawIbcEvent::ReceivePacket(ev) => IbcEvent::ReceivePacket {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				packet: ev.packet.into(),
+				channel_id: ev.src_channel_id().to_string().as_bytes().to_vec(),
+				port_id: ev.src_port_id().as_bytes().to_vec(),
+				dest_port: ev.dst_port_id().as_bytes().to_vec(),
+				dest_channel: ev.dst_channel_id().to_string().as_bytes().to_vec(),
+				sequence: ev.packet.sequence.into(),
 			},
 			RawIbcEvent::WriteAcknowledgement(ev) => IbcEvent::WriteAcknowledgement {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				packet: ev.packet.into(),
+				channel_id: ev.src_channel_id().to_string().as_bytes().to_vec(),
+				port_id: ev.src_port_id().as_bytes().to_vec(),
+				dest_port: ev.dst_port_id().as_bytes().to_vec(),
+				dest_channel: ev.dst_channel_id().to_string().as_bytes().to_vec(),
+				sequence: ev.packet.sequence.into(),
 			},
 			RawIbcEvent::AcknowledgePacket(ev) => IbcEvent::AcknowledgePacket {
 				revision_height: ev.height().revision_height,
@@ -835,14 +854,40 @@ impl TryFrom<IbcEvent> for RawIbcEvent {
 						.and_then(|channel_id| ChannelId::from_str(&channel_id).ok())
 				}),
 			})),
-			// For some Packet events the full packet that contains the data and will be fetched
-			// from offchain db in the rpc interface, Same goes for acknowledgement
-			// So we can omit packet data here
-			IbcEvent::ReceivePacket { revision_height, revision_number, packet } =>
-				Ok(RawIbcEvent::ReceivePacket(ChannelEvents::ReceivePacket {
-					height: Height::new(revision_number, revision_height),
-					packet: packet.into(),
-				})),
+
+			IbcEvent::ReceivePacket {
+				revision_height,
+				revision_number,
+				port_id,
+				channel_id,
+				dest_port,
+				dest_channel,
+				sequence,
+			} => Ok(RawIbcEvent::ReceivePacket(ChannelEvents::ReceivePacket {
+				height: Height::new(revision_number, revision_height),
+				packet: Packet {
+					sequence: sequence.into(),
+					source_port: PortId::from_str(
+						&String::from_utf8(port_id).map_err(|_| ERROR_STR)?,
+					)
+					.map_err(|_| ERROR_STR)?,
+					source_channel: ChannelId::from_str(
+						&String::from_utf8(channel_id).map_err(|_| ERROR_STR)?,
+					)
+					.map_err(|_| ERROR_STR)?,
+					destination_port: PortId::from_str(
+						&String::from_utf8(dest_port).map_err(|_| ERROR_STR)?,
+					)
+					.map_err(|_| ERROR_STR)?,
+					destination_channel: ChannelId::from_str(
+						&String::from_utf8(dest_channel).map_err(|_| ERROR_STR)?,
+					)
+					.map_err(|_| ERROR_STR)?,
+					data: Default::default(),
+					timeout_height: Height::default(),
+					timeout_timestamp: Timestamp::default(),
+				},
+			})),
 			IbcEvent::SendPacket {
 				revision_height,
 				revision_number,
@@ -901,12 +946,40 @@ impl TryFrom<IbcEvent> for RawIbcEvent {
 					timeout_timestamp: Timestamp::default(),
 				},
 			})),
-			IbcEvent::WriteAcknowledgement { revision_height, revision_number, packet } =>
-				Ok(RawIbcEvent::WriteAcknowledgement(ChannelEvents::WriteAcknowledgement {
-					height: Height::new(revision_number, revision_height),
-					packet: packet.into(),
-					ack: Default::default(),
-				})),
+			IbcEvent::WriteAcknowledgement {
+				revision_height,
+				revision_number,
+				port_id,
+				channel_id,
+				dest_port,
+				dest_channel,
+				sequence,
+			} => Ok(RawIbcEvent::WriteAcknowledgement(ChannelEvents::WriteAcknowledgement {
+				height: Height::new(revision_number, revision_height),
+				packet: Packet {
+					sequence: sequence.into(),
+					source_port: PortId::from_str(
+						&String::from_utf8(port_id).map_err(|_| ERROR_STR)?,
+					)
+					.map_err(|_| ERROR_STR)?,
+					source_channel: ChannelId::from_str(
+						&String::from_utf8(channel_id).map_err(|_| ERROR_STR)?,
+					)
+					.map_err(|_| ERROR_STR)?,
+					destination_port: PortId::from_str(
+						&String::from_utf8(dest_port).map_err(|_| ERROR_STR)?,
+					)
+					.map_err(|_| ERROR_STR)?,
+					destination_channel: ChannelId::from_str(
+						&String::from_utf8(dest_channel).map_err(|_| ERROR_STR)?,
+					)
+					.map_err(|_| ERROR_STR)?,
+					data: Default::default(),
+					timeout_height: Height::default(),
+					timeout_timestamp: Timestamp::default(),
+				},
+				ack: Default::default(),
+			})),
 			IbcEvent::TimeoutPacket {
 				revision_height,
 				revision_number,

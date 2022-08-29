@@ -11,7 +11,7 @@ use ibc::{
 	core::{
 		ics02_client::{
 			client_consensus::AnyConsensusState,
-			client_state::AnyClientState,
+			client_state::{AnyClientState, ClientState},
 			client_type::ClientType,
 			context::{ClientKeeper, ClientReader},
 			error::Error as ICS02Error,
@@ -21,11 +21,13 @@ use ibc::{
 	timestamp::Timestamp,
 	Height,
 };
+use sp_runtime::SaturatedConversion;
 use tendermint_proto::Protobuf;
 
 impl<T: Config + Send + Sync> ClientReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
+	<T as frame_system::Config>::BlockNumber: From<u32>,
 {
 	fn client_type(&self, client_id: &ClientId) -> Result<ClientType, ICS02Error> {
 		log::trace!(target: "pallet_ibc", "in client : [client_type] >> client_id = {:?}", client_id);
@@ -86,6 +88,10 @@ where
 		Ok(any_consensus_state)
 	}
 
+	fn host_client_type(&self) -> ClientType {
+		ClientType::Beefy
+	}
+
 	fn next_consensus_state(
 		&self,
 		client_id: &ClientId,
@@ -141,17 +147,6 @@ where
 
 		Ok(None)
 	}
-	#[allow(clippy::disallowed_methods)]
-	fn host_timestamp(&self) -> Timestamp {
-		use frame_support::traits::UnixTime;
-		use sp_runtime::traits::SaturatedConversion;
-		let time = T::TimeProvider::now();
-		let ts = Timestamp::from_nanoseconds(time.as_nanos().saturated_into::<u64>())
-			.map_err(|e| panic!("{:?}, caused by {:?} from pallet timestamp_pallet", e, time));
-		// Should not panic, if timestamp is invalid after the genesis block then there's a major
-		// error in pallet timestamp
-		ts.unwrap()
-	}
 
 	fn host_height(&self) -> Height {
 		log::trace!(target: "pallet_ibc", "in client: [host_height]");
@@ -160,33 +155,120 @@ where
 		Height::new(para_id.into(), current_height)
 	}
 
-	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS02Error> {
-		let bounded_map = HostConsensusStates::<T>::get();
-		let local_state = bounded_map.get(&height.revision_height).ok_or_else(|| {
+	#[allow(clippy::disallowed_methods)]
+	fn host_timestamp(&self) -> Timestamp {
+		use frame_support::traits::UnixTime;
+		let time = T::TimeProvider::now();
+		let ts = Timestamp::from_nanoseconds(time.as_nanos().saturated_into::<u64>())
+			.map_err(|e| panic!("{:?}, caused by {:?} from pallet timestamp_pallet", e, time));
+		// Should not panic, if timestamp is invalid after the genesis block then there's a major
+		// error in pallet timestamp
+		ts.unwrap()
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn host_consensus_state(
+		&self,
+		_height: Height,
+		_proof: Option<Vec<u8>>,
+	) -> Result<AnyConsensusState, ICS02Error> {
+		use ibc::clients::ics11_beefy::consensus_state::ConsensusState;
+		let timestamp = Timestamp::from_nanoseconds(1).unwrap();
+		let timestamp = timestamp.into_tm_time().unwrap();
+		return Ok(AnyConsensusState::Beefy(ConsensusState { timestamp, root: vec![].into() }))
+	}
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	fn host_consensus_state(
+		&self,
+		height: Height,
+		proof: Option<Vec<u8>>,
+	) -> Result<AnyConsensusState, ICS02Error> {
+		use crate::host_functions::HostFunctions;
+		use codec::Compact;
+		use ibc::clients::host_functions::HostFunctionsProvider;
+		use sp_runtime::traits::Header;
+
+		let proof = proof.ok_or_else(|| {
+			ICS02Error::implementation_specific(format!("No host proof supplied"))
+		})?;
+		#[derive(Encode, Decode)]
+		struct HostConsensusProof {
+			header: Vec<u8>,
+			extrinsic: Vec<u8>,
+			extrinsic_proof: Vec<Vec<u8>>,
+		}
+		// unfortunately we can't access headers on-chain, but we can verify them using
+		// frame_system's cache of header hashes
+		let height = u32::try_from(height.revision_height).map_err(|_| {
 			ICS02Error::implementation_specific(format!(
-				"[host_consensus_state]: consensus state not found for host at height {}",
+				"[host_consensus_state]: Can't fit height: {} in u32",
 				height
 			))
 		})?;
-		let timestamp = Timestamp::from_nanoseconds(local_state.timestamp)
-			.map_err(|e| {
+		let header_hash = frame_system::BlockHash::<T>::get(T::BlockNumber::from(height));
+		// we don't even have the hash for this height (anymore?)
+		if header_hash == T::Hash::default() {
+			Err(ICS02Error::implementation_specific(format!(
+				"[host_consensus_state]: Unknown height {}",
+				height
+			)))?
+		}
+
+		let connection_proof: HostConsensusProof =
+			codec::Decode::decode(&mut &proof[..]).map_err(|e| {
 				ICS02Error::implementation_specific(format!(
-					"[host_consensus_state]: error decoding timestamp{}",
+					"[host_consensus_state]: Failed to decode proof: {}",
 					e
 				))
-			})?
-			.into_tm_time()
-			.ok_or_else(|| {
-				ICS02Error::implementation_specific(
-					"[host_consensus_state]: Could not convert timestamp into tendermint time"
-						.to_string(),
-				)
 			})?;
-		let consensus_state = ibc::clients::ics11_beefy::consensus_state::ConsensusState {
-			timestamp,
-			root: local_state.commitment_root.clone().into(),
+		let header = T::Header::decode(&mut &connection_proof.header[..]).map_err(|e| {
+			ICS02Error::implementation_specific(format!(
+				"[host_consensus_state]: Failed to decode header: {}",
+				e
+			))
+		})?;
+		if header.hash() != header_hash {
+			Err(ICS02Error::implementation_specific(format!(
+				"[host_consensus_state]: Incorrect host consensus state for height {}",
+				height
+			)))?
+		}
+		let timestamp = {
+			// verify timestamp extrinsic
+			let ext = &*connection_proof.extrinsic;
+			let proof = &*connection_proof.extrinsic_proof;
+			let extrinsic_root = <[u8; 32]>::try_from(header.extrinsics_root().as_ref())
+				.expect("header has been verified; qed");
+			HostFunctions::<T>::verify_timestamp_extrinsic(&extrinsic_root, proof, ext)?;
+
+			let (_, _, timestamp): (u8, u8, Compact<u64>) = codec::Decode::decode(&mut &ext[2..])
+				.map_err(|err| {
+				ICS02Error::implementation_specific(format!("Failed to decode extrinsic: {err}"))
+			})?;
+
+			let duration = core::time::Duration::from_millis(timestamp.into());
+			Timestamp::from_nanoseconds(duration.as_nanos().saturated_into::<u64>())
+				.map_err(|e| {
+					ICS02Error::implementation_specific(format!(
+						"[host_consensus_state]: error decoding timestamp{}",
+						e
+					))
+				})?
+				.into_tm_time()
+				.ok_or_else(|| {
+					ICS02Error::implementation_specific(
+						"[host_consensus_state]: Could not convert timestamp into tendermint time"
+							.to_string(),
+					)
+				})?
 		};
 
+		// now this header can be trusted
+		let consensus_state = ibc::clients::ics11_beefy::consensus_state::ConsensusState {
+			timestamp,
+			root: header.state_root().as_ref().to_vec().into(),
+		};
 		Ok(AnyConsensusState::Beefy(consensus_state))
 	}
 
@@ -198,7 +280,10 @@ where
 	}
 }
 
-impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
+impl<T: Config + Send + Sync> ClientKeeper for Context<T>
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	fn store_client_type(
 		&mut self,
 		client_id: ClientId,
@@ -213,14 +298,6 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		let client_type = client_type.as_str().as_bytes().to_vec();
 		<Clients<T>>::insert(&client_id, client_type);
 		Ok(())
-	}
-
-	fn increase_client_counter(&mut self) {
-		log::trace!(target: "pallet_ibc", "in client : [increase_client_counter]");
-		// increment counter
-		if let Some(val) = <ClientCounter<T>>::get().checked_add(1) {
-			<ClientCounter<T>>::put(val);
-		}
 	}
 
 	fn store_client_state(
@@ -256,6 +333,14 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		Ok(())
 	}
 
+	fn increase_client_counter(&mut self) {
+		log::trace!(target: "pallet_ibc", "in client : [increase_client_counter]");
+		// increment counter
+		if let Some(val) = <ClientCounter<T>>::get().checked_add(1) {
+			<ClientCounter<T>>::put(val);
+		}
+	}
+
 	fn store_update_time(
 		&mut self,
 		client_id: ClientId,
@@ -281,6 +366,38 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		let host_height = host_height.encode_vec();
 		let client_id = client_id.as_bytes().to_vec();
 		ClientUpdateHeight::<T>::insert(client_id, height, host_height);
+		Ok(())
+	}
+
+	fn validate_self_client(&self, client_state: &AnyClientState) -> Result<(), ICS02Error> {
+		let client_state = match client_state {
+			AnyClientState::Beefy(client_state) => client_state,
+			client => Err(ICS02Error::unknown_client_type(format!("{}", client.client_type())))?,
+		};
+
+		if client_state.is_frozen() {
+			Err(ICS02Error::implementation_specific(format!("client state is frozen")))?
+		}
+
+		if client_state.relay_chain != T::RelayChain::get() {
+			Err(ICS02Error::implementation_specific(format!("relay chain mis-match")))?
+		}
+
+		let self_para_id: u32 = T::ParaId::get().into();
+		if client_state.para_id != self_para_id {
+			Err(ICS02Error::implementation_specific(format!("para-id mis-match")))?
+		}
+
+		let block_number: u32 = <frame_system::Pallet<T>>::block_number().into();
+
+		// this really shouldn't be possible
+		if client_state.latest_para_height >= block_number {
+			Err(ICS02Error::implementation_specific(format!(
+				"client has latest_para_height {} greater than or equal to chain height {block_number}",
+				client_state.latest_para_height
+			)))?
+		}
+
 		Ok(())
 	}
 }

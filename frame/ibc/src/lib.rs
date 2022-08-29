@@ -30,6 +30,7 @@
 extern crate alloc;
 
 use codec::{Decode, Encode};
+use cumulus_primitives_core::ParaId;
 use frame_system::ensure_signed;
 pub use pallet::*;
 use scale_info::{
@@ -155,7 +156,6 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResult,
 		pallet_prelude::*,
-		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
 			Currency, UnixTime,
@@ -169,9 +169,8 @@ pub mod pallet {
 			is_sender_chain_source, msgs::transfer::MsgTransfer, Amount, PrefixedCoin,
 			PrefixedDenom, VERSION,
 		},
+		clients::ics11_beefy::client_state::RelayChain,
 		core::{
-			ics02_client::msgs::create_client,
-			ics03_connection::msgs::{conn_open_ack, conn_open_init},
 			ics04_channel::{
 				channel::{ChannelEnd, Counterparty, Order, State},
 				Version,
@@ -182,7 +181,7 @@ pub mod pallet {
 	use ibc_primitives::{
 		connection_id_from_bytes, get_channel_escrow_address, port_id_from_bytes,
 		runtime_interface::{self, SS58CodecError},
-		IbcHandler, OffchainPacketType, OpenChannelParams,
+		IbcHandler, OpenChannelParams, PacketInfo,
 	};
 	use primitives::currency::CurrencyId;
 	use sp_runtime::{traits::IdentifyAccount, AccountId32};
@@ -237,6 +236,10 @@ pub mod pallet {
 		/// Expected blocktime
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
+		/// ParaId of the runtime
+		type ParaId: Get<ParaId>;
+		/// Relay chain this runtime is attached to
+		type RelayChain: Get<RelayChain>;
 		/// benchmarking weight info
 		type WeightInfo: WeightInfo;
 		/// Origin allowed to create light clients and initiate connections
@@ -305,23 +308,17 @@ pub mod pallet {
 	pub type ConnectionClient<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<Vec<u8>>, ValueQuery>;
 
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// height => IbcConsensusState
-	pub type HostConsensusStates<T: Config> =
-		StorageValue<_, BoundedBTreeMap<u64, IbcConsensusState, ConstU32<250>>, ValueQuery>;
-
-	// temporary
+	// temporary until offchain indexing is fixed
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// (ChannelId, PortId, Sequence) => Packet
-	pub type Packets<T: Config> = StorageDoubleMap<
+	pub type SendPackets<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		(Vec<u8>, Vec<u8>),
 		Blake2_128Concat,
 		u64,
-		OffchainPacketType,
+		PacketInfo,
 		ValueQuery,
 	>;
 
@@ -329,16 +326,15 @@ pub mod pallet {
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// (ChannelId, PortId, Sequence) => Packet
-	pub type RawAcknowledgements<T: Config> = StorageDoubleMap<
+	pub type ReceivePackets<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		(Vec<u8>, Vec<u8>),
 		Blake2_128Concat,
 		u64,
-		Vec<u8>,
+		PacketInfo,
 		ValueQuery,
 	>;
-
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// Pallet Params used to disable sending or receipt of ibc tokens
@@ -375,6 +371,13 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)]
 	/// Active Escrow addresses
 	pub type EscrowAddresses<T: Config> = StorageValue<_, BTreeSet<T::AccountId>, ValueQuery>;
+
+	// temporary until offchain indexing is fixed
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	/// (ChannelId, PortId) => BTreeSet<u64>
+	pub type UndeliveredSequences<T: Config> =
+		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>), BTreeSet<u64>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]
@@ -474,6 +477,8 @@ pub mod pallet {
 		TimestampAndHeightNotFound,
 		/// Failed to derive channel escrow address
 		ChannelEscrowAddress,
+		/// Error writing acknowledgement to storage
+		WriteAckError,
 	}
 
 	#[pallet::hooks]
@@ -518,49 +523,13 @@ pub mod pallet {
 		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
 			let _sender = ensure_signed(origin)?;
 
+			// todo: reserve a fixed deposit for every client and connection created
+			// so people don't spam our chain with useless clients.
 			let mut ctx = routing::Context::<T>::new();
 			let messages = messages
 				.into_iter()
 				.filter_map(|message| {
 					let type_url = String::from_utf8(message.type_url.clone()).ok()?;
-					let is_permissioned = matches!(
-						type_url.as_str(),
-						conn_open_init::TYPE_URL |
-							conn_open_ack::TYPE_URL | create_client::TYPE_URL
-					);
-					if is_permissioned {
-						return None
-					}
-					Some(Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value }))
-				})
-				.collect::<Result<Vec<ibc_proto::google::protobuf::Any>, Error<T>>>()?;
-			Self::execute_ibc_messages(&mut ctx, messages);
-
-			Ok(())
-		}
-
-		/// We permission the initiation and acceptance of connections, this is critical for
-		/// security.
-		///
-		/// [see here](https://github.com/ComposableFi/ibc-rs/issues/31)
-		#[pallet::weight(crate::weight::deliver::< T > (messages))]
-		#[frame_support::transactional]
-		pub fn deliver_permissioned(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
-			<T as Config>::AdminOrigin::ensure_origin(origin)?;
-
-			let mut ctx = routing::Context::<T>::new();
-			let messages = messages
-				.into_iter()
-				.filter_map(|message| {
-					let type_url = String::from_utf8(message.type_url.clone()).ok()?;
-					let is_permissioned = matches!(
-						type_url.as_str(),
-						conn_open_init::TYPE_URL |
-							conn_open_ack::TYPE_URL | create_client::TYPE_URL
-					);
-					if !is_permissioned {
-						return None
-					}
 					Some(Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value }))
 				})
 				.collect::<Result<Vec<ibc_proto::google::protobuf::Any>, Error<T>>>()?;

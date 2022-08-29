@@ -60,7 +60,7 @@ fn setup_client_and_consensus_state(port_id: PortId) {
 	let mut ctx = Context::<Test>::default();
 
 	let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
-	assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
+	assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
 
 	let connection_id = ConnectionId::new(0);
 	let commitment_prefix: CommitmentPrefix =
@@ -112,7 +112,7 @@ fn initialize_connection() {
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 
-		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
+		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
 
 		let value = conn_open_init::MsgConnectionOpenInit {
 			client_id: client_id.clone(),
@@ -131,7 +131,7 @@ fn initialize_connection() {
 			value: value.encode_vec(),
 		};
 
-		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
+		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
 	})
 }
 
@@ -152,7 +152,7 @@ fn should_open_a_channel() {
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 
-		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
+		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
 		let commitment_prefix: CommitmentPrefix =
 			<Test as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
 		let value = conn_open_init::MsgConnectionOpenInit {
@@ -172,7 +172,7 @@ fn should_open_a_channel() {
 			value: value.encode_vec(),
 		};
 
-		assert_ok!(Ibc::deliver_permissioned(Origin::root(), vec![msg]));
+		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
 
 		let params = OpenChannelParams {
 			order: 1,

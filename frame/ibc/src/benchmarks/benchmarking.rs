@@ -220,7 +220,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let caller: T::AccountId = whitelisted_caller();
 		let msg = Any { type_url: CONN_OPEN_ACK_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec() };
-	}: deliver_permissioned(RawOrigin::Root, vec![msg])
+	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
 		assert_eq!(connection_end.state, State::Open);
@@ -821,8 +821,9 @@ benchmarks! {
 			type_url: conn_open_init_mod::TYPE_URL.as_bytes().to_vec(),
 			value: value.encode_vec()
 		};
+		let caller: T::AccountId = whitelisted_caller();
 
-	}: deliver_permissioned(RawOrigin::Root, vec![msg])
+	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
 		assert_eq!(connection_end.state, State::Init);
@@ -840,7 +841,8 @@ benchmarks! {
 		.encode_vec();
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
-	}: deliver_permissioned(RawOrigin::Root, vec![msg])
+		let caller: T::AccountId = whitelisted_caller();
+	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		assert_eq!(ClientCounter::<T>::get(), 1)
 	}

@@ -31,6 +31,7 @@ mod xcmp;
 use lending::MarketId;
 use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
+use ibc::clients::ics11_beefy::client_state::RelayChain;
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
@@ -1045,6 +1046,7 @@ impl dex_router::Config for Runtime {
 
 parameter_types! {
 	pub const ExpectedBlockTime: u64 = MILLISECS_PER_BLOCK as u64;
+	pub const RelayChainId: RelayChain = RelayChain::Rococo;
 }
 
 impl pallet_ibc::Config for Runtime {
@@ -1060,6 +1062,8 @@ impl pallet_ibc::Config for Runtime {
 	type AssetRegistry = AssetsRegistry;
 	type CurrencyFactory = CurrencyFactory;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
+	type ParaId = parachain_info::Pallet<Runtime>;
+	type RelayChain = RelayChainId;
 	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
@@ -1474,20 +1478,20 @@ impl_runtime_apis! {
 			Ibc::query_balance_with_address(addr).ok()
 		}
 
-		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
-			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
+		fn query_send_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+			Ibc::get_send_packet_info(channel_id, port_id, seqs).ok()
 		}
 
-		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>> {
-			Ibc::get_offchain_acks(channel_id, port_id, seqs).ok()
+		fn query_recv_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::PacketInfo>> {
+			Ibc::get_recv_packet_info(channel_id, port_id, seqs).ok()
+		}
+
+		fn undelivered_sequences(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u64> {
+			Ibc::get_undelivered_sequences(channel_id, port_id)
 		}
 
 		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
 			Ibc::client(client_id).ok()
-		}
-
-		fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
-			Ibc::host_consensus_state(height)
 		}
 
 		fn client_consensus_state(client_id: Vec<u8>, client_height: Vec<u8>, latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {
