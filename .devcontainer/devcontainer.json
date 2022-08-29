@@ -8,6 +8,7 @@
 		"memory": "20gb",
 		"cpus": 8
 	},
+	"postAttachCommand": "sudo chmod 1777 /tmp/",
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"workbench.colorTheme": "GitHub Dark",
@@ -72,7 +73,6 @@
 		"jebbs.plantuml",
 		"bierner.markdown-mermaid",
 		"bpruitt-goddard.mermaid-markdown-syntax-highlighting",
-		
 		// developers-xcvm
 		"humao.rest-client",
 	],
@@ -80,7 +80,7 @@
 	"features": {
 		// NOTE: can replace these features by using official scripts or even later nix 
 		// these are just install/injection after start up
-		"docker-in-docker": "20.10",
+		// "docker-in-docker": "20.10",
 		//"node": "16"
 	}
 }

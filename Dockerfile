@@ -60,11 +60,5 @@ RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
 # NOTE: likely need to split minimal home and overlay on top larger one
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     export ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]') && \
-    "$(nix path-info .#homeConfigurations.vscode.${ARCH_OS}.activationPackage)"/activate && \ 
-    cachix use ${CACHIX_NAME} 
-  
-# RUN echo "" >> /home/${USER}/nix.conf.base && \
-#     echo "" >> /home/${USER}/nix.conf.base && \
-#     cat ~/.config/nix/nix.conf  >> /home/${USER}/nix.conf.base && \ 
-#     echo "" >> /home/${USER}/nix.conf.base && \
-#     nix show-config >> /home/${USER}/nix.conf.base
+    "$(nix path-info .#homeConfigurations.vscode.${ARCH_OS}.activationPackage)"/activate && \
+    cachix use ${CACHIX_NAME}
