@@ -26,6 +26,8 @@ use subxt::rpc::{rpc_params, ClientT};
 use subxt::sp_core::keccak_256;
 use subxt::{Client, Config};
 
+use crate::relay_chain_queries::parachain_header_storage_key;
+use crate::runtime::api::runtime_types::polkadot_parachain::primitives::Id;
 use helpers::{prove_authority_set, AuthorityProofWithSignatures};
 use relay_chain_queries::{
     fetch_finalized_parachain_heads, fetch_mmr_leaf_proof, FinalizedParaHeads,
@@ -141,11 +143,89 @@ where
         }
     }
 
-    pub async fn fetch_finalized_parachain_headers_at(
+    /// Use this fetch all parachain headers finalized at this new
+    /// beefy height.
+    pub async fn query_finalized_parachain_headers_at(
         &self,
         commitment_block_number: u32,
         latest_beefy_height: u32,
-    ) -> Result<(Vec<ParachainHeader>, BatchProof<H256>), Error> {
+    ) -> Result<Vec<T::Header>, Error>
+    where
+        u32: From<T::BlockNumber>,
+        T::BlockNumber: From<u32>,
+    {
+        let subxt_block_number: subxt::BlockNumber = commitment_block_number.into();
+        let block_hash = self
+            .relay_client
+            .rpc()
+            .block_hash(Some(subxt_block_number))
+            .await?;
+        let previous_finalized_block_number: subxt::BlockNumber = (latest_beefy_height + 1).into();
+        let previous_finalized_hash = self
+            .relay_client
+            .rpc()
+            .block_hash(Some(previous_finalized_block_number))
+            .await?
+            .ok_or_else(|| {
+                Error::Custom(
+                    "Failed to get previous finalized beefy block hash from block number"
+                        .to_string(),
+                )
+            })?;
+
+        let api = self
+            .relay_client
+            .clone()
+            .to_runtime_api::<runtime::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+        let change_set = self
+            .relay_client
+            .storage()
+            .query_storage(
+                // we are interested only in the blocks where our parachain header changes.
+                vec![parachain_header_storage_key(self.para_id)],
+                previous_finalized_hash,
+                block_hash,
+            )
+            .await?;
+        let mut headers = vec![];
+        for changes in change_set {
+            let header = self
+                .relay_client
+                .rpc()
+                .header(Some(changes.block))
+                .await?
+                .ok_or_else(|| {
+                    Error::Custom(format!(
+                        "[get_parachain_headers] block not found {:?}",
+                        changes.block
+                    ))
+                })?;
+
+            let head = api
+                .storage()
+                .paras()
+                .heads(&Id(self.para_id), Some(header.hash()))
+                .await?
+                .expect("Header exists in its own changeset; qed");
+
+            let para_header = T::Header::decode(&mut &head.0[..])
+                .map_err(|_| Error::Custom(format!("Failed to decode header")))?;
+            headers.push(para_header);
+        }
+
+        Ok(headers)
+    }
+
+    pub async fn query_finalized_parachain_headers_with_proof(
+        &self,
+        commitment_block_number: u32,
+        latest_beefy_height: u32,
+        headers: Vec<T::BlockNumber>,
+    ) -> Result<(Vec<ParachainHeader>, BatchProof<H256>), Error>
+    where
+        T::BlockNumber: Ord + sp_runtime::traits::Zero,
+    {
+        let header_numbers = headers.into_iter().collect();
         let FinalizedParaHeads {
             leaf_indices,
             raw_finalized_heads: finalized_blocks,
@@ -155,6 +235,7 @@ where
             latest_beefy_height,
             self.para_id,
             self.beefy_activation_block,
+            &header_numbers,
         )
         .await?;
 

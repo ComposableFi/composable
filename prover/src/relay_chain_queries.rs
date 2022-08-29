@@ -5,9 +5,9 @@ use beefy_primitives::{SignedCommitment, VersionedFinalityProof};
 use codec::{Decode, Encode};
 use pallet_mmr_rpc::{LeafBatchProof, LeafProof};
 use sp_core::{storage::StorageKey, H256};
-use sp_runtime::traits::BlakeTwo256;
 use sp_runtime::traits::Header;
-use std::collections::BTreeMap;
+use sp_runtime::traits::Zero;
+use std::collections::{BTreeMap, BTreeSet};
 use subxt::{
     rpc::{rpc_params, ClientT},
     Client, Config,
@@ -25,9 +25,11 @@ pub async fn fetch_finalized_parachain_heads<T: Config>(
     latest_beefy_height: u32,
     para_id: u32,
     beefy_activation_block: u32,
+    header_numbers: &BTreeSet<T::BlockNumber>,
 ) -> Result<FinalizedParaHeads, Error>
 where
     u32: From<<T as subxt::Config>::BlockNumber>,
+    T::BlockNumber: Ord + Zero,
 {
     let subxt_block_number: subxt::BlockNumber = commitment_block_number.into();
     let block_hash = client.rpc().block_hash(Some(subxt_block_number)).await?;
@@ -72,7 +74,6 @@ where
             })?;
 
         let mut heads = BTreeMap::new();
-
         for para_id in para_ids.iter() {
             if let Some(head) = api
                 .storage()
@@ -84,15 +85,15 @@ where
             }
         }
 
-        let para_header: sp_runtime::generic::Header<u32, BlakeTwo256> =
-            Decode::decode(&mut &heads[&para_id][..])
-                .map_err(|_| Error::Custom(format!("Failed to decode header for {para_id}")))?;
-        // skip genesis header
-        if *para_header.number() == 0u32 {
+        let para_header: T::Header = Decode::decode(&mut &heads[&para_id][..])
+            .map_err(|_| Error::Custom(format!("Failed to decode header for {para_id}")))?;
+        let number = *para_header.number();
+        // skip genesis header or any unknown headers
+        if number == Zero::zero() || !header_numbers.contains(&number) {
             continue;
         }
 
-        let block_number = u32::from(*header.number());
+        let block_number = u32::from(number);
         finalized_blocks.insert(block_number as u64, heads);
         leaf_indices.push(get_leaf_index_for_block_number(
             beefy_activation_block,
@@ -177,7 +178,7 @@ pub async fn fetch_mmr_leaf_proof<T: Config>(
     Ok(proof)
 }
 
-fn parachain_header_storage_key(para_id: u32) -> StorageKey {
+pub fn parachain_header_storage_key(para_id: u32) -> StorageKey {
     let mut storage_key = frame_support::storage::storage_prefix(b"Paras", b"Heads").to_vec();
     let encoded_para_id = para_id.encode();
     storage_key.extend_from_slice(sp_core::hashing::twox_64(&encoded_para_id).as_slice());

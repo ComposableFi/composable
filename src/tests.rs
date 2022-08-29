@@ -10,6 +10,7 @@ use futures::stream::StreamExt;
 use pallet_mmr_primitives::Proof;
 use sp_core::bytes::to_hex;
 use subxt::rpc::{rpc_params, JsonValue, Subscription, SubscriptionClientT};
+use subxt::sp_runtime::traits::Header;
 
 #[tokio::test]
 async fn test_verify_mmr_with_proof() {
@@ -288,8 +289,16 @@ async fn verify_parachain_headers() {
 
         let block_number = signed_commitment.commitment.block_number;
 
+        let headers = parachain_client
+            .query_finalized_parachain_headers_at(block_number, client_state.latest_beefy_height)
+            .await
+            .unwrap();
         let (parachain_headers, batch_proof) = parachain_client
-            .fetch_finalized_parachain_headers_at(block_number, client_state.latest_beefy_height)
+            .query_finalized_parachain_headers_with_proof(
+                block_number,
+                client_state.latest_beefy_height,
+                headers.iter().map(|h| *h.number()).collect(),
+            )
             .await
             .unwrap();
 
