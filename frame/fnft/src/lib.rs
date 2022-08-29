@@ -265,9 +265,14 @@ pub mod pallet {
 						destination.clone(),
 						insert_or_init_and_insert((*collection, *instance)),
 					);
+					Self::handle_asset_account_proxy(
+						collection,
+						instance,
+						destination,
+						Some(owner),
+					)?;
 					*owner = destination.clone();
 
-					// TODO (vim): Re-proxy NFT account to the transferee
 					Self::deposit_event(Event::FinancialNftTransferred {
 						collection_id: *collection,
 						instance_id: *instance,
@@ -300,16 +305,7 @@ pub mod pallet {
 			// Set the owner as the proxy for certain types of actions for the financial NFT account
 			// TODO (vim): Make sure that asset_account has the min deposit for proxying in the
 			// runtime
-			let asset_account =
-				<Self as FinancialNft<AccountIdOf<T>>>::asset_account(collection, instance);
-			for proxy_type in T::ProxyTypeSelector::get_proxy_types() {
-				T::AccountProxy::add_proxy_delegate(
-					&asset_account,
-					who.clone(),
-					proxy_type.clone(),
-					frame_system::Pallet::<T>::block_number(),
-				)?;
-			}
+			Self::handle_asset_account_proxy(collection, instance, who, None)?;
 
 			Self::deposit_event(Event::FinancialNftCreated {
 				collection_id: *collection,
@@ -407,6 +403,36 @@ pub mod pallet {
 			key.using_encoded(|k| {
 				value.using_encoded(|v| Self::set_collection_attribute(collection, k, v))
 			})
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		fn handle_asset_account_proxy(
+			collection: &<T as Config>::FinancialNftCollectionId,
+			instance: &<T as Config>::FinancialNftInstanceId,
+			new_delegate: &AccountIdOf<T>,
+			prev_delegate: Option<&AccountIdOf<T>>,
+		) -> DispatchResult {
+			let asset_account =
+				<Self as FinancialNft<AccountIdOf<T>>>::asset_account(collection, instance);
+			for proxy_type in T::ProxyTypeSelector::get_proxy_types() {
+				if let Some(existing_delegate) = prev_delegate {
+					T::AccountProxy::remove_proxy_delegate(
+						&asset_account,
+						existing_delegate.clone(),
+						proxy_type.clone(),
+						T::BlockNumber::zero(),
+					)?;
+				}
+				T::AccountProxy::add_proxy_delegate(
+					&asset_account,
+					new_delegate.clone(),
+					proxy_type.clone(),
+					T::BlockNumber::zero(),
+				)?;
+			}
+
+			Ok(())
 		}
 	}
 

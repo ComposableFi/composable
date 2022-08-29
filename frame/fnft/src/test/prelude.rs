@@ -46,6 +46,13 @@ pub(crate) fn mint_nft_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
 		"ALICE should only have one instance"
 	);
 
+	assert_ok!(Pallet::<MockRuntime>::set_attribute(
+		&TEST_COLLECTION_ID,
+		&created_nft_id,
+		&1_u32.encode(),
+		&1_u32.encode()
+	));
+
 	assert_eq!(
 		Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, created_nft_id)).unwrap(),
 		(ALICE, BTreeMap::from([(1_u32.encode(), 1_u32.encode())])),
