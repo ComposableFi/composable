@@ -89,7 +89,8 @@ describe("HAL02 [Oracle] Tests", function () {
       maxAnswers,
       blockInterval,
       reward,
-      slash
+      slash,
+      true
     );
     expect(result.isOk).to.be.true;
   });

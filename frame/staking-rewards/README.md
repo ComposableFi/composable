@@ -39,7 +39,7 @@ Protocol owner increases total rewards share as time goes.
 Anybody can get and transfer rewarded assets into the pool. This process can be automated.
 
 A `staker` may leave a position, claim rewards, stake more, etc.
-Or she can make [a position to be fNFT](../nft/README.md) and use it as an instrument in other protocols.
+Or she can make [a position to be fNFT](../fnft/README.md) and use it as an instrument in other protocols.
 
 
 ## Protocol
@@ -153,7 +153,7 @@ User share amount, potentially elevated, issued as a new token onto asset accoun
 
 Each staking pool has its asset.
 
-Position with all amounts can be wrapped into [fNFT](../nft/README.md).
+Position with all amounts can be wrapped into [fNFT](../fnft/README.md).
 
 ### Unstake
 

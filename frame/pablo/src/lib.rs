@@ -44,6 +44,8 @@ mod liquidity_bootstrapping_tests;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
+mod mock_fnft;
+#[cfg(test)]
 mod stable_swap_tests;
 #[cfg(test)]
 mod uniswap_tests;

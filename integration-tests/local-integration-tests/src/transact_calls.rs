@@ -6,7 +6,7 @@ use crate::{
 	prelude::*,
 };
 use composable_traits::defi::Sell;
-use frame_support::{assert_ok, log};
+use frame_support::{assert_ok, log, WeakBoundedVec};
 use frame_system::EventRecord;
 use orml_traits::currency::MultiCurrency;
 use primitives::currency::CurrencyId;
@@ -102,7 +102,13 @@ fn dex() {
 
 	Sibling::execute_with(|| {
 		let assets: MultiAsset = (
-			(Parent, X2(Parachain(THIS_PARA_ID), GeneralKey(this_native_asset.encode()))),
+			(
+				Parent,
+				X2(
+					Parachain(THIS_PARA_ID),
+					GeneralKey(WeakBoundedVec::force_from(this_native_asset.encode(), None)),
+				),
+			),
 			some_native_amount,
 		)
 			.into();
@@ -140,7 +146,13 @@ fn dex() {
 
 	Sibling::execute_with(|| {
 		let assets: MultiAsset = (
-			(Parent, X2(Parachain(THIS_PARA_ID), GeneralKey(this_native_asset.encode()))),
+			(
+				Parent,
+				X2(
+					Parachain(THIS_PARA_ID),
+					GeneralKey(WeakBoundedVec::force_from(this_native_asset.encode(), None)),
+				),
+			),
 			some_native_amount,
 		)
 			.into();

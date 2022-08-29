@@ -11,12 +11,13 @@ Table of Contents
         -   [2.2.1. LP Fee Distribution](#-lp-fee-distribution)
 -   [3. Use Cases](#3-use-cases)
 -   [4. Requirements](#4-requirements)
-    -   [4.1. Pablo Liquidity Providers](#41-pablo-liquidity-providers)
-    -   [4.2. PBLO Stakers](#42-pblo-stakers)
-    -   [4.3. PICA Stakers](#43-pica-stakers)
-    -   [4.4. Pablo Governance](#44-pablo-governance)
-    -   [4.5. PICA Governance](#45-pica-governance)
-    -   [4.6. Technical Requirements](#46-technical-requirements)
+    - [4.1. Pablo Liquidity Providers](#41-pablo-liquidity-providers)
+    - [4.2. PBLO Stakers](#42-pblo-stakers)
+    - [4.3. PICA Stakers](#43-pica-stakers)
+    - [4.4. Pablo Governance](#44-pablo-governance)
+    - [4.5. PICA Governance](#45-pica-governance)
+    - [4.6. Technical Requirements](#46-technical-requirements)
+    - [4.7 Financial NFT Requirements](#47-financial-nft-requirements)
 -   [5. Method](#5-method)
     -   [5.1. System Overview](#51-system-overview)
     -   [5.2. Pallet-Pablo](#52-pallet-pablo)
@@ -52,7 +53,10 @@ Table of Contents
         -   [5.3.4. Extend Position](#534-extend-position)
         -   [5.3.5. Split Position](#535-split-position)
         -   [5.3.6. Claim/Unstake](#536-claimunstake)
-        -   [5.3.7. Update Reward Pool](#537-update-reward-pool)
+         -   [5.3.7. Reward Pool Governance](#537-reward-pool-governance)
+            -   [5.3.7.1. Update Reward Allocation Per
+                Pool](#5371-update-reward-allocation-per-pool)
+            -   [5.3.7.2. Update Reward Pool](#5372-update-reward-pool)
         -   [5.3.8. RewardAccumulationHook](#538-rewardaccumulationhook)
 -   [6. Implementation](#6-implementation)
     -   [6.1. Pallet Pablo: LP Fee + Staking
@@ -220,6 +224,14 @@ for brevity.
 
     -   This is to handle cases where a Pablo pool fees are in a
         different asset type than what is preferred.
+
+### 4.7 Financial NFT Requirements
+
+1. Each staked position MUST be represented as a https://todo.link[fNFT].
+2. Owning a PBLO staked position fNFT(xPBLO) MUST allow voting for protocol 
+   governance based on the xPBLO granted.
+3. Each staked position plus its rewards MUST be transferable by transferring 
+   the ownership of its NFT including the voting rights.
 
 ## 5. Method
 
@@ -578,9 +590,32 @@ rewards pool based on these data structures.
 
 <img src="0005-pablo-distribution-assets/images/images/claim.png" width="500" height="695" alt="claim" />
 
-#### 5.3.7. Update Reward Pool
+#### 5.3.7. Reward Pool Governance
 
-<img src="0005-pablo-distribution-assets/images/images/update-reward-pool.png" width="508" height="476" alt="update reward pool" />
+##### 5.3.7.1. Update Reward Allocation Per Pool
+
+Each reward pool would have its own reward pot account.
+
+-   Lock the assets in the pool account so that funds can be claimed
+    only when unlocked.
+
+-   Reward accumulation logic would just release funds from the pool
+    account according to the reward rate.
+
+-   In order to add funds to the pool account, an extrinsic is needed as
+    follows:
+
+    -   Input: rewardPoolId, AssetId, Balance
+
+        For governance proposals, one can query storage to get the
+        reward pool ID and create a proposal to call the above
+        extrinsic.
+
+<img src="0005-pablo-distribution-assets/images/images/transfer-funds-extrinsic.png" width="431" height="302" alt="transfer funds extrinsic" />
+
+##### 5.3.7.2. Update Reward Pool
+
+<img src="0005-pablo-distribution-assets/images/images/update-reward-pool.png" width="497" height="647" alt="update reward pool" />
 
 #### 5.3.8. RewardAccumulationHook
 
