@@ -10,21 +10,24 @@ import {
 import { APP_NAME } from "@/defi/polkadot/constants";
 import BigNumber from "bignumber.js";
 
-export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
+export function useVestingClaim(assetId: string, vestingScheduleId: BigNumber) {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { enqueueSnackbar } = useSnackbar();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const executor = useExecutor();
 
-  const purchaseBond = useCallback(
+  const onVestingClaim = useCallback(
     async () => {
-      if (parachainApi && selectedAccount && executor) {
+      if (parachainApi && selectedAccount && executor && vestingScheduleId.gte(0)) {
         return new Promise(async (res, rej) => {
           try {
             const signer = await getSigner(APP_NAME, selectedAccount.address);
             await executor
               .execute(
-                parachainApi.tx.bondedFinance.bond(offerId.toNumber(), amount.toString(), false),
+                parachainApi.tx.vesting.claim(
+                    assetId,
+                    { One: vestingScheduleId.toString() }
+                ),
                 selectedAccount.address,
                 parachainApi,
                 signer,
@@ -55,10 +58,10 @@ export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
       selectedAccount,
       executor,
       parachainApi,
-      offerId,
-      amount
+      assetId,
+      vestingScheduleId
     ]
   );
 
-  return purchaseBond;
+  return onVestingClaim;
 }
