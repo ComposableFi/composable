@@ -1,12 +1,12 @@
 [package]
 authors = ["Composable Developers"]
 edition = "2021"
-name = "xcvm-asset-registry"
+name = "xcvm-router"
 version = "0.1.0"
 
 exclude = [
   # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
-  "xcvm-asset-registry.wasm",
+  "xcvm-router.wasm",
   "hash.txt",
 ]
 
@@ -25,6 +25,8 @@ cosmwasm-storage = "1.0.0"
 cw-storage-plus = "0.13.2"
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+xcvm-core = { path = "../../../lib/core", features = ["std"] }
+xcvm-interpreter = { path = "../interpreter", features = ["library"] }
 thiserror = { version = "1.0.31" }
 
 [dev-dependencies]
