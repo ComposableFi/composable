@@ -1,4 +1,4 @@
-import { BondOffer, BondPrincipalAsset } from "@/defi/types";
+import { BondOffer, BondPrincipalAsset, VestingSchedule } from "@/defi/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 import { MockedAsset } from "@/store/assets/assets.types";
@@ -6,25 +6,34 @@ import {
   calculateBondROI,
   decodeBondOffer,
   DEFAULT_NETWORK_ID,
-  fetchVestingPeriod,
   getBondPrincipalAsset,
   matchAssetByPicassoId,
 } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
-import { useBlockInterval } from "../useBlockInterval";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
+import {
+  updateExistingBondOffer,
+  useBondedOfferVestingScheduleIds,
+  useBondedOfferVestingSchedules,
+  useBondOffersSlice,
+} from "@/store/bond/bond.slice";
 
 export default function useBondOffer(offerId: string) {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const { bondOffers, supportedAssets, apollo, putBondOffer } = useStore();
+
+  const { supportedAssets, apollo } = useStore();
+  const { bondOffers } = useBondOffersSlice();
+  const vestingScheduleIds = useBondedOfferVestingScheduleIds(offerId);
+  const vestingSchedules = useBondedOfferVestingSchedules(offerId);
   const lpRewardingPools = useAllLpTokenRewardingPools();
 
-  const [selectedBondOffer, setSelectedBondOffer] =
-    useState<BondOffer | undefined>(undefined);
+  const [selectedBondOffer, setSelectedBondOffer] = useState<
+    BondOffer | undefined
+  >(undefined);
 
   useEffect(() => {
-    let offer = bondOffers.list.find((o) => o.offerId.toString() === offerId);
+    let offer = bondOffers.find((o) => o.offerId.toString() === offerId);
     if (offer) {
       setSelectedBondOffer(offer);
     }
@@ -56,17 +65,6 @@ export default function useBondOffer(offerId: string) {
     }
   }, [supportedAssets, selectedBondOffer]);
 
-  const averageBlockTime = useBlockInterval();
-
-  const vestingPeriod = useMemo(() => {
-    if (selectedBondOffer && averageBlockTime) {
-      return fetchVestingPeriod({
-        interval: averageBlockTime.toString(),
-        bondMaturity: selectedBondOffer.maturity,
-      });
-    }
-  }, [selectedBondOffer, averageBlockTime]);
-
   const rewardAssetPerBond = useMemo(() => {
     if (selectedBondOffer) {
       return selectedBondOffer.reward.amount.div(selectedBondOffer.nbOfBonds);
@@ -91,12 +89,13 @@ export default function useBondOffer(offerId: string) {
           bondOffer,
           selectedBondOffer.offerId.toNumber()
         );
-        putBondOffer(decodedOffer);
+
+        updateExistingBondOffer(decodedOffer);
       } catch (err) {
         console.error(err);
       }
     }
-  }, [selectedBondOffer, parachainApi, putBondOffer]);
+  }, [selectedBondOffer, parachainApi]);
 
   const roi = useMemo(() => {
     if (principalAssetPerBond.gt(0) && rewardAssetPerBond.gt(0)) {
@@ -118,13 +117,14 @@ export default function useBondOffer(offerId: string) {
 
   return {
     selectedBondOffer,
-    vestingPeriod,
     principalAsset,
     rewardAsset,
     updateBondInfo,
     principalAssetPerBond,
     rewardAssetPerBond,
     roi,
+    vestingSchedules,
+    vestingScheduleIds,
   };
 }
 

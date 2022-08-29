@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
 import { fetchPools } from "@/defi/utils";
@@ -13,9 +13,11 @@ const Updater = () => {
     pools: { setPoolsList },
   } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const hasFetchedOnce = useRef(false);
 
-  const updatePools = useCallback(() => {
-    if (parachainApi) {
+  const updatePools = useCallback((url) => {
+    if (parachainApi && (!hasFetchedOnce.current || url === "/pool")) {
+      if (!hasFetchedOnce.current) hasFetchedOnce.current = true;
       fetchPools(parachainApi).then((pools) => {
         setPoolsList([
           ...pools.liquidityBootstrapping.verified,
@@ -31,19 +33,19 @@ const Updater = () => {
    * from the pallet
    */
   useEffect(() => {
-    updatePools();
+    updatePools("");
   }, [updatePools]);
 
   const router = useRouter();
 
   useEffect(() => {
-    router.events.on("routeChangeStart", updatePools);
+      router.events.on("routeChangeStart", updatePools);
 
-    // If the component is unmounted, unsubscribe
-    // from the event with the `off` method:
-    return () => {
-      router.events.off("routeChangeStart", updatePools);
-    };
+      // If the component is unmounted, unsubscribe
+      // from the event with the `off` method:
+      return () => {
+        router.events.off("routeChangeStart", updatePools);
+      };
   }, [router, updatePools]);
 
   return null;
