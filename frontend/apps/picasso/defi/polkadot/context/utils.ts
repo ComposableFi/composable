@@ -13,5 +13,4 @@ export const getChainId = (
   }
 
   return Object.keys(SUBSTRATE_NETWORKS)[network];
-  // return relayChain + (parachainId ? "-" + parachainId.toFixed() : "");
 };
