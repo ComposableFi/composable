@@ -23,9 +23,13 @@
       url = "github:serokell/nix-npm-buildpackage";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    arion-src = {
+      url = "github:hercules-ci/arion";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
   outputs =
-    { self, nixpkgs, crane, flake-utils, rust-overlay, nix-npm-buildpackage }:
+    { self, nixpkgs, crane, flake-utils, rust-overlay, nix-npm-buildpackage, arion-src }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
@@ -79,6 +83,7 @@
             overlays = [
               rust-overlay.overlays.default
               nix-npm-buildpackage.overlays.default
+              arion-src.overlay
             ];
             allowUnsupportedSystem = true; # we do not tirgger this on mac
             config = {
@@ -90,7 +95,6 @@
               ];
             };
           };
-          overlays = [ rust-overlay.overlay ];
         in with pkgs;
         let
           # Stable rust for anything except wasm runtime

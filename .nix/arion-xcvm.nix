@@ -17,7 +17,6 @@ pkgs.arion.build {
       in {
         config.project.name = "Composable Finance XCVM devnet";
         config.services = {
-
           # ============ COMMON ===============
           db = import ./services/postgres.nix {
             database = default-db;
