@@ -76,7 +76,10 @@
         let
           pkgs = import nixpkgs {
             inherit system;
-            overlays = [ rust-overlay.overlays.default ];
+            overlays = [
+              rust-overlay.overlays.default
+              nix-npm-buildpackage.overlays.default
+            ];
             allowUnsupportedSystem = true; # we do not tirgger this on mac
             config = {
               permittedInsecurePackages = [
@@ -132,6 +135,7 @@
           # source relevant to build rust only
           rust-src = let
             dir-blacklist = [
+              ".nix"
               "nix"
               ".config"
               ".devcontainer"
@@ -323,24 +327,32 @@
             inherit composable-bench-node;
 
             subsquid-processor = let
-              processor =
-                (pkgs.callPackage nix-npm-buildpackage { }).buildNpmPackage {
-                  src = ./subsquid;
-                  npmBuild = "npm run build";
-                  preInstall = ''
-                    mkdir $out
-                    mv lib $out/
-                  '';
-                  dontNpmPrune = true;
+              processor = pkgs.buildNpmPackage {
+                extraNodeModulesArgs = {
+                  buildInputs = [
+                    pkgs.pkg-config
+                    pkgs.python3
+                    pkgs.nodePackages.node-gyp-build
+                    pkgs.nodePackages.node-gyp
+                  ];
+                  extraEnvVars = { npm_config_nodedir = "${pkgs.nodejs}"; };
                 };
-            in writeShellApplication {
+                src = ./subsquid;
+                npmBuild = "npm run build";
+                preInstall = ''
+                  mkdir $out
+                  mv lib $out/
+                '';
+                dontNpmPrune = true;
+              };
+            in (writeShellApplication {
               name = "run-subsquid-processor";
               text = ''
                 cd ${processor}
                 ${nodejs}/bin/npx sqd db migrate
                 ${nodejs}/bin/node lib/processor.js
               '';
-            };
+            });
 
             runtime-tests = stdenv.mkDerivation {
               name = "runtime-tests";
@@ -651,23 +663,29 @@
                 base.buildInputs ++ [
                   junod
                   gex
-                  # junod wasm swap web interface 
-                  devnet-dali
+                  # junod wasm swap web interface
                   # TODO: hasura
-                  # TODO: some well know wasm contracts deployed                
+                  # TODO: some well know wasm contracts deployed
                   # TODO: junod server
                   # TODO: solc
                   # TODO: gex
-                  # TODO: https://github.com/forbole/bdjuno                  
+                  # TODO: https://github.com/forbole/bdjuno
                   # TODO: script to run all
                   # TODO: compose export
                 ] ++ lib.lists.optional (lib.strings.hasSuffix "linux" system)
                 arion;
               shellHook = ''
-                # TODO: how to make it work - setup defaul admin client key
-                #"clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover 
+                echo ""
+                echo ""
+                echo ""
+                echo "==================================================================================================="
+                echo " /!\ Generating alice key, junod will abort if the key is already present (everything is fine.) /!\ "
+                echo "==================================================================================================="
+                echo ""
+                echo ""
+                echo ""
+                echo "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" | junod keys add alice --recover --keyring-backend test || true
               '';
-
             });
 
             writers = mkShell {
@@ -683,193 +701,57 @@
             default = developers;
           };
 
-          # Applications runnable with `nix run`
-          # https://github.com/NixOS/nix/issues/5560
-          apps = rec {
-            devnet-xcvm-up = let
-              devnet-xcvm = pkgs.arion.build {
-                modules = [
-                  ({ pkgs, ... }: {
-                    config = {
-                      project = { name = "devnet-xcvm"; };
-                      services = {
-                        junod-testing-local = {
-                          service = {
-                            name = "junod-testing-local";
-                            # NOTE: the do not release git hash tags, so not clear how to share client and docker image
-                            image = "ghcr.io/cosmoscontracts/juno:v9.0.0";
-                            environment = {
-                              STAKE_TOKEN = "ujunox";
-                              UNSAFE_CORS = "true";
-                              USER =
-                                "juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y";
-                              GAS_LIMIT = 100000000;
-                            };
-                            # TODO: mount proper genesis here as per
-                            # "clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose" > junod keys add alice --recover
-                            # `"wasm":{"codes":[],"contracts":[],"gen_msgs":[],"params":{"code_upload_access":{"address":"","permission":"Everybody"},`
-                            #network_mode 
-                            command = ''
-                              ./setup_and_run.sh juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y
-                            '';
-                            #network_mode = "host";
-                            # these ports are open by default
-                            ports = [
-                              "1317:1317" # rest openapi
-                              "26656:26656" # p2p
-                              "26657:26657" # rpc json-rpc
-                            ];
-                          };
-                        };
-                      };
-                    };
-                  })
-                ];
-                inherit pkgs;
-              };
-            in {
-              type = "app";
-              program = "${pkgs.writeShellScript "xcvm-up" ''
-                ${pkgs.arion}/bin/arion --prebuilt-file ${devnet-xcvm} up --remove-orphans
-              ''}";
+          apps = let
+            arion-pure = import ./.nix/arion-pure.nix {
+              inherit pkgs;
+              inherit packages;
+            };
+            arion-up-program = pkgs.writeShellApplication {
+              name = "devnet-up";
+              runtimeInputs =
+                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+              text = ''
+                arion --prebuilt-file ${arion-pure} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+              '';
             };
 
-            subsquid-up = let
-              subsquid-network = pkgs.arion.build {
-                inherit pkgs;
-                modules = [
-                  ({ pkgs, ... }: {
-                    config = {
-                      project = { name = "subsquid-network"; };
-                      services = {
-                        db-squid = {
-                          service = {
-                            name = "postgres";
-                            image = "postgres:14";
-                            network_mode = "host";
-                            environment = {
-                              POSTGRES_USER = "postgres";
-                              POSTGRES_DB = "squid";
-                              POSTGRES_PASSWORD = "squid";
-                            };
-                            command = [ "-p" "23798" ];
-                          };
-                        };
-                        db-archive = {
-                          service = {
-                            name = "postgres";
-                            image = "postgres:14";
-                            network_mode = "host";
-                            environment = {
-                              POSTGRES_USER = "postgres";
-                              POSTGRES_DB = "postgres";
-                              POSTGRES_PASSWORD = "postgres";
-                            };
-                          };
-                        };
-                        indexer = {
-                          service = {
-                            name = "hydra-indexer";
-                            image = "subsquid/hydra-indexer:5";
-                            network_mode = "host";
-                            restart = "unless-stopped";
-                            environment = {
-                              WORKERS_NUMBER = 5;
-                              DB_NAME = "indexer";
-                              DB_HOST = "localhost";
-                              DB_USER = "postgres";
-                              DB_PASS = "postgres";
-                              DB_PORT = 5432;
-                              REDIS_URI = "redis://localhost:6379/0";
-                              FORCE_HEIGHT = "true";
-                              WS_PROVIDER_ENDPOINT_URI = "ws://127.0.0.1:9988";
-                            };
-                            command = [
-                              "sh"
-                              "-c"
-                              "yarn db:bootstrap && yarn start:prod"
-                            ];
-                          };
-                        };
-                        indexer-gateway = {
-                          service = {
-                            name = "hydra-indexer-gateway";
-                            image = "subsquid/hydra-indexer-gateway:5";
-                            network_mode = "host";
-                            restart = "unless-stopped";
-                            environment = {
-                              DEV_MODE = "true";
-                              DB_NAME = "indexer";
-                              DB_HOST = "localhost";
-                              DB_USER = "postgres";
-                              DB_PASS = "postgres";
-                              DB_PORT = 5432;
-                              HYDRA_INDEXER_STATUS_SERVICE =
-                                "http://localhost:8081/status";
-                            };
-                          };
-                        };
-                        indexer-status-service = {
-                          service = {
-                            name = "hydra-indexer-status-service";
-                            image = "subsquid/hydra-indexer-status-service:5";
-                            network_mode = "host";
-                            restart = "unless-stopped";
-                            environment = {
-                              REDIS_URL = "redis://localhost:6379/0";
-                              PORT = 8081;
-                            };
-                          };
-                        };
-                        redis = {
-                          service = {
-                            image = "redis:6.0-alpine";
-                            network_mode = "host";
-                            restart = "always";
-                          };
-                        };
-                        processor = {
-                          image.contents = [ pkgs.bash pkgs.coreutils ];
-                          service = {
-                            restart = "always";
-                            network_mode = "host";
-                            useHostStore = true;
-                            command = [
-                              "bash"
-                              "-c"
-                              ''
-                                ${packages.subsquid-processor}/bin/run-subsquid-processor
-                              ''
-                            ];
-                            environment = {
-                              DB_PORT = 23798;
-                              DB_NAME = "squid";
-                              DB_PASS = "squid";
-                            };
-                          };
-                        };
-                        dali-devnet = {
-                          image.contents = [ pkgs.bash pkgs.coreutils ];
-                          service.useHostStore = true;
-                          service.command = [
-                            "bash"
-                            "-c"
-                            ''
-                              ${packages.devnet-dali}/bin/run-devnet-dali-dev
-                            ''
-                          ];
-                          service.network_mode = "host";
-                        };
-                      };
-                    };
-                  })
-                ];
-              };
-            in {
+            devnet-xcvm = import ./.nix/arion-xcvm.nix {
+              inherit pkgs;
+              inherit packages;
+            };
+            devnet-xcvm-up-program = pkgs.writeShellApplication {
+              name = "devnet-xcvm-up";
+              runtimeInputs =
+                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+              text = ''
+                arion --prebuilt-file ${devnet-xcvm} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+              '';
+            };
+
+            devnet-cosmos = pkgs.callPackage ./.nix/arion-cosmos.nix { };
+            devnet-cosmos-up-program = pkgs.writeShellApplication {
+              name = "devnet-juno-up";
+              runtimeInputs =
+                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+              text = ''
+                arion --prebuilt-file ${devnet-cosmos} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+              '';
+            };
+
+          in rec {
+            devnet-cosmos-up = {
               type = "app";
-              program = "${pkgs.writeShellScript "subsquid-network-up" ''
-                ${pkgs.arion}/bin/arion --prebuilt-file ${subsquid-network} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              ''}";
+              program = "${devnet-cosmos-up-program}/bin/devnet-juno-up";
+            };
+
+            devnet-up = {
+              type = "app";
+              program = "${arion-up-program}/bin/devnet-up";
+            };
+
+            devnet-xcvm-up = {
+              type = "app";
+              program = "${devnet-xcvm-up-program}/bin/devnet-xcvm-up";
             };
 
             devnet-dali = {
@@ -883,7 +765,6 @@
             };
 
             kusama-picasso-karura-devnet = {
-              # nix run .#devnet
               type = "app";
               program =
                 "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
@@ -911,12 +792,12 @@
             };
             benchmarks-once-dali =
               flake-utils.lib.mkApp { drv = run-with-benchmarks "dali-dev"; };
+
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "picasso-dev";
             };
             default = devnet-dali;
           };
-
         });
     in eachSystemOutputs // {
       nixopsConfigurations = {
