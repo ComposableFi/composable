@@ -847,6 +847,8 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type FinancialNft = Fnft;
+	type PicaAssetId = CurrencyId::PICA;
+	type PbloAssetId = CurrencyId::PBLO;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -1032,6 +1034,8 @@ impl pablo::Config for Runtime {
 	type ManageStaking = StakingRewards;
 	type ProtocolStaking = StakingRewards;
 	type MsPerBlock = MillisecsPerBlock;
+	type PicaAssetId = CurrencyId::PICA;
+	type PbloAssetId = CurrencyId::PBLO;
 }
 
 parameter_types! {
