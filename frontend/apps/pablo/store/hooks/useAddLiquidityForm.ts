@@ -69,7 +69,7 @@ export const useAddLiquidityForm = () => {
   };
 
   const canSupply = () => {
-    return assetOneAmountBn.lte(balanceOne) && assetTwoAmountBn.lte(balanceTwo);
+    return assetOneAmountBn.lte(balanceOne) && assetTwoAmountBn.lte(balanceTwo) && selectedAccount !== undefined;
   };
 
   useEffect(() => {
