@@ -21,7 +21,6 @@
     "@emotion/react": "^11.8.2",
     "@emotion/server": "^11.4.0",
     "@emotion/styled": "^11.8.1",
-    "@integrations-lib/core": "1.0.68",
     "@mui/icons-material": "^5.5.1",
     "@mui/material": "^5.5.2",
     "@polkadot/api": "^8.3.2",
@@ -48,6 +47,7 @@
     "react-hotjar": "^4.0.0",
     "substrate-react": "*",
     "zustand": "^4.0.0-beta.2",
+    "bi-lib": "*",
     "shared": "*",
     "tokens": "*"
   },

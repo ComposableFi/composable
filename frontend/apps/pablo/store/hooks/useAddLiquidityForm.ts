@@ -13,7 +13,7 @@ import { fromChainUnits, toChainUnits } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
 import { useFilteredAssetListDropdownOptions } from "@/defi/hooks/assets/useFilteredAssetListDropdownOptions";
 
-export const useAddLiquidity = () => {
+export const useAddLiquidityForm = () => {
   const [valid, setValid] = useState<boolean>(false);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
@@ -69,7 +69,7 @@ export const useAddLiquidity = () => {
   };
 
   const canSupply = () => {
-    return assetOneAmountBn.lte(balanceOne) && assetTwoAmountBn.lte(balanceTwo);
+    return assetOneAmountBn.lte(balanceOne) && assetTwoAmountBn.lte(balanceTwo) && selectedAccount !== undefined;
   };
 
   useEffect(() => {
@@ -126,14 +126,15 @@ export const useAddLiquidity = () => {
         let b = isReverse ? pool.pair.quote.toString() : pool.pair.base.toString();
         let q = isReverse ? pool.pair.base.toString() : pool.pair.quote.toString();
 
+        // @ts-ignore
         parachainApi.rpc.pablo
           .simulateAddLiquidity(
             parachainApi.createType("AccountId32", selectedAccount.address),
             parachainApi.createType("PalletPabloPoolId", pool.poolId),
-            parachainApi.createType("BTreeMap<SafeRpcWrapper, SafeRpcWrapper>",{
+            {
               [b]: bnBase.toString(),
               [q]: bnQuote.toString()
-            })
+            }
           )
           .then((expectedLP: any) => {
             setLpReceiveAmount(fromChainUnits(expectedLP.toString()));
@@ -166,5 +167,6 @@ export const useAddLiquidity = () => {
     invalidTokenPair,
     canSupply,
     findPoolManually,
+    pool
   };
 };
