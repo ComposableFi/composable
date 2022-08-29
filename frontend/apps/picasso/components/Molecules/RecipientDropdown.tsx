@@ -36,7 +36,7 @@ const detailsStyle = {
 export type RecipientDropDownProps = {
   value: string;
   expanded: boolean;
-  options: Option[];
+  options: Array<{ value: string, label: string, icon: string }>;
   setValue?: React.Dispatch<React.SetStateAction<any>>;
 };
 

@@ -1,5 +1,4 @@
-import { ParachainId } from "substrate-react/dist/dotsama/types";
-import { AssetId } from "./types";
+import { AssetId, SubstrateNetworkId } from "./types";
 
 export interface AssetMetadata {
   decimals: number;
@@ -8,7 +7,7 @@ export interface AssetMetadata {
   icon: string;
   name: string;
   supportedNetwork: {
-    [networkId in ParachainId]: number | null;
+    [networkId in SubstrateNetworkId]: number | null;
   };
 }
 
@@ -24,6 +23,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 1,
+      kusama: null,
     },
   },
   ksm: {
@@ -35,6 +35,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 4,
+      kusama: 1,
     },
   },
   kusd: {
@@ -44,8 +45,9 @@ export const Assets: {
     icon: "/tokens/usd-coin-usdc.svg",
     name: "K-USD",
     supportedNetwork: {
-      karura: null,
-      picasso: 129,
+      karura: 129,
+      picasso: 300_000_000_001, // After creating the asset id via assetRegistry, this value could be anything.
+      kusama: null,
     },
   },
   layr: {
@@ -57,6 +59,7 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 2,
+      kusama: null,
     },
   },
   pablo: {
@@ -68,51 +71,31 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 2,
+      kusama: null,
+    },
+  },
+  ausd: {
+    decimals: 12,
+    assetId: "ausd",
+    symbol: "AUSD",
+    icon: "/tokens/ausd.svg",
+    name: "Acala USD",
+    supportedNetwork: {
+      karura: 2,
+      picasso: null,
+      kusama: null,
+    },
+  },
+  kar: {
+    decimals: 12,
+    assetId: "kar",
+    symbol: "KAR",
+    icon: "/tokens/karura.svg",
+    name: "Karura",
+    supportedNetwork: {
+      karura: 1,
+      picasso: null,
+      kusama: null,
     },
   },
 };
-
-export const AssetsValidForNow: AssetId[] = ["pica", "kusd", "ksm"];
-
-export const getAsset = (assetId: AssetId): AssetMetadata => Assets[assetId];
-export const getAssetById = (
-  network: ParachainId,
-  assetId: number
-): AssetMetadata | null => {
-  for (const asset in Assets) {
-    if (
-      Assets[asset as AssetId].supportedNetwork[network as ParachainId] ===
-      assetId
-    ) {
-      return Assets[asset as AssetId];
-    }
-  }
-  return null;
-};
-
-export const getAssetOnChainId = (
-  network: ParachainId,
-  assetId: AssetId
-): number | null => {
-  return Assets[assetId].supportedNetwork[network];
-};
-
-export const getAssetOptions = (noneTokenLabel?: string) => [
-  ...(noneTokenLabel
-    ? [
-        {
-          value: "none",
-          label: noneTokenLabel,
-          icon: undefined,
-          disabled: true,
-          hidden: true,
-        },
-      ]
-    : []),
-  ...Object.values(Assets).map((asset) => ({
-    value: asset.assetId,
-    label: asset.name,
-    shortLabel: asset.symbol,
-    icon: asset.icon,
-  })),
-];

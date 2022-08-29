@@ -69,7 +69,7 @@ export const useAddLiquidityForm = () => {
   };
 
   const canSupply = () => {
-    return assetOneAmountBn.lte(balanceOne) && assetTwoAmountBn.lte(balanceTwo);
+    return assetOneAmountBn.lte(balanceOne) && assetTwoAmountBn.lte(balanceTwo) && selectedAccount !== undefined;
   };
 
   useEffect(() => {
@@ -131,10 +131,12 @@ export const useAddLiquidityForm = () => {
           .simulateAddLiquidity(
             parachainApi.createType("AccountId32", selectedAccount.address),
             parachainApi.createType("PalletPabloPoolId", pool.poolId),
-            {
-              [b]: bnBase.toString(),
-              [q]: bnQuote.toString()
-            }
+            parachainApi.createType(
+              "BTreeMap<SafeRpcWrapper, SafeRpcWrapper>",
+              {
+                [b]: bnBase.toString(),
+                [q]: bnQuote.toString(),
+              })
           )
           .then((expectedLP: any) => {
             setLpReceiveAmount(fromChainUnits(expectedLP.toString()));

@@ -1,9 +1,21 @@
 import { useContext } from "react";
 import { useParachainProvider } from "../context/hooks";
 import { ParachainApi, ParachainContext } from "../context/ParachainContext";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export const usePicassoProvider = (): ParachainApi => {
-  const api = useParachainProvider("kusama", 2019);
+  const api = useParachainProvider(
+    "kusama",
+    SUBSTRATE_NETWORKS.picasso.parachainId
+  );
+  return api;
+};
+
+export const useKaruraProvider = (): ParachainApi => {
+  const api = useParachainProvider(
+    "kusama",
+    SUBSTRATE_NETWORKS.karura.parachainId
+  );
   return api;
 };
 

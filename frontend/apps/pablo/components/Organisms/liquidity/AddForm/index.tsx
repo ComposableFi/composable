@@ -237,7 +237,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           </Button>
         )}
 
-        {canSupply() && (
+        {!needToSelectToken() && canSupply() && !invalidTokenPair() && (
           <Button
             variant="contained"
             size="large"

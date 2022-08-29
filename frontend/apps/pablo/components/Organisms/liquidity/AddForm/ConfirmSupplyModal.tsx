@@ -123,9 +123,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={4}
           label={`Pooled ${assetOne?.symbol}`}
           BalanceProps={{
-            title: (
-              <BaseAsset icon={assetOne?.icon} pr={priceOneInTwo.toNumber()} />
-            ),
+            title: <BaseAsset icon={assetOne?.icon} pr={1} />,
             balance: `${assetOneAmount}`,
             BalanceTypographyProps: {
               variant: "body1",
@@ -137,9 +135,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Pooled ${assetTwo?.symbol}`}
           BalanceProps={{
-            title: (
-              <BaseAsset icon={assetTwo?.icon} pr={priceTwoInOne.toNumber()} />
-            ),
+            title: <BaseAsset icon={assetTwo?.icon} pr={1} />,
             balance: `${assetTwoAmount}`,
             BalanceTypographyProps: {
               variant: "body1",
