@@ -21,6 +21,7 @@ pub type BlockNumber = u64;
 pub type AccountId = u128;
 pub type RewardPoolId = u128;
 pub type PositionId = u128;
+pub type CurrencyId = u128;
 
 #[allow(dead_code)]
 pub static ALICE: AccountId = 1;
