@@ -169,22 +169,23 @@ export type PurchaseBond = {
 };
 export type ClaimType = {
   parachainApi: ApiPromise | undefined;
+  vestingScheduleId?: string;
   account: { name: string; address: string } | undefined;
   executor: Executor | undefined;
   assetId: string;
 };
 
 export async function claim(
-  { parachainApi, account, executor, assetId }: ClaimType,
+  { parachainApi, account, executor, assetId, vestingScheduleId }: ClaimType,
   onSuccess: (txHash: string) => void,
   onError: (msg: string) => void,
   onStart: (txHash: string) => void
 ) {
-  if (parachainApi && account && executor) {
+  if (parachainApi && account && executor && vestingScheduleId) {
     try {
       const signer = await getSigner(APP_NAME, account.address);
       await executor.execute(
-        parachainApi.tx.vesting.claim(assetId),
+        parachainApi.tx.vesting.claim(assetId, { One: vestingScheduleId }),
         account.address,
         parachainApi,
         signer,

@@ -403,4 +403,13 @@ export interface SpTrieStorageProof extends Null {}
 /** @name XcmVersionedMultiAsset */
 export interface XcmVersionedMultiAsset extends Null {}
 
+/** @name ComposableTraitsVestingVestingSchedule */
+export interface ComposableTraitsVestingVestingSchedule extends Null {}
+
+/** @name ComposableTraitsVestingVestingScheduleIdSet */
+export interface ComposableTraitsVestingVestingScheduleIdSet extends Null {}
+
+/** @name ComposableTraitsVestingVestingScheduleInfo */
+export interface ComposableTraitsVestingVestingScheduleInfo extends Null {}
+
 export type PHANTOM_CROWDLOANREWARDS = 'crowdloanRewards';

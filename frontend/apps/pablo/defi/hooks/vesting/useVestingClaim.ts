@@ -16,7 +16,7 @@ export function useVestingClaim(assetId: string, vestingScheduleId: BigNumber) {
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const executor = useExecutor();
 
-  const onVestingClaim = useCallback(
+  return useCallback(
     async () => {
       if (parachainApi && selectedAccount && executor && vestingScheduleId.gte(0)) {
         return new Promise(async (res, rej) => {
@@ -62,6 +62,4 @@ export function useVestingClaim(assetId: string, vestingScheduleId: BigNumber) {
       vestingScheduleId
     ]
   );
-
-  return onVestingClaim;
 }
