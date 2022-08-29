@@ -346,6 +346,7 @@ impl<T: Config> Pallet<T> {
 				.ok_or(Error::<T>::CannotBorrowFromMarketWithUnbalancedVault),
 			FundsAvailability::MustLiquidate => Err(Error::<T>::MarketIsClosing),
 			FundsAvailability::Withdrawable(_) => Ok(()),
+			FundsAvailability::None => Ok(()),
 		}?;
 		Ok(())
 	}
@@ -566,6 +567,7 @@ impl<T: Config> Pallet<T> {
 							Self::handle_must_liquidate(&config, &market_account)?;
 							call_counters.handle_must_liquidate += 1;
 						},
+						FundsAvailability::None => {},
 					}
 
 					call_counters.available_funds += 1;

@@ -13,14 +13,12 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
 import {
-  closeConfirmingSupplyModal,
+
   closeConfirmSupplyModal,
-  openConfirmingSupplyModal,
+
 } from "@/stores/ui/uiSlice";
-import { useAppSelector } from "@/hooks/store";
 import BigNumber from "bignumber.js";
 import {
-  getSigner,
   useExecutor,
   useParachainApi,
   useSelectedAccount,
@@ -29,15 +27,10 @@ import {
   DEFAULT_NETWORK_ID,
   DEFAULT_UI_FORMAT_DECIMALS,
 } from "@/defi/utils/constants";
-import { APP_NAME } from "@/defi/polkadot/constants";
-import { useSnackbar } from "notistack";
-import {
-  resetAddLiquiditySlice,
-  useAddLiquiditySlice,
-} from "@/store/addLiquidity/addLiquidity.slice";
 import { useRouter } from "next/router";
 import { MockedAsset } from "@/store/assets/assets.types";
-import { toChainUnits } from "@/defi/utils";
+import { useAddLiquidity } from "@/defi/hooks/pools/addLiquidity/useAddLiquidity";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 
 export interface SupplyModalProps {
   assetOne: MockedAsset | undefined;
@@ -47,6 +40,7 @@ export interface SupplyModalProps {
   lpReceiveAmount: BigNumber;
   priceOneInTwo: BigNumber;
   priceTwoInOne: BigNumber;
+  pool: ConstantProductPool | StableSwapPool | undefined;
   share: BigNumber;
 }
 
@@ -58,10 +52,10 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
   lpReceiveAmount,
   priceOneInTwo,
   priceTwoInOne,
+  pool,
   share,
   ...rest
 }) => {
-  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const dispatch = useDispatch();
   const router = useRouter();
@@ -70,64 +64,17 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const executor = useExecutor();
 
-  const addLiquiditySlice = useAddLiquiditySlice();
-
-  const onConfirmSupply = async () => {
-    if (
-      selectedAccount &&
-      executor &&
-      parachainApi &&
-      assetOne !== null &&
-      assetTwo !== null &&
-      addLiquiditySlice.pool
-    ) {
-      dispatch(closeConfirmSupplyModal());
-
-      let isReverse =
-        addLiquiditySlice.pool.pair.base.toString() !==
-        assetOne?.network.picasso;
-      const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount);
-      const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
-
-      const signer = await getSigner(APP_NAME, selectedAccount.address);
-
-      executor
-        .execute(
-          parachainApi.tx.pablo.addLiquidity(
-            addLiquiditySlice.pool.poolId,
-            bnBase.toString(),
-            bnQuote.toString(),
-            0,
-            true
-          ),
-          selectedAccount.address,
-          parachainApi,
-          signer,
-          (txReady: string) => {
-            dispatch(openConfirmingSupplyModal());
-            console.log("txReady", txReady);
-          },
-          (txHash: string, events) => {
-            console.log("Finalized TX: ", txHash);
-            enqueueSnackbar("Added Liquidity: " + txHash);
-            dispatch(closeConfirmingSupplyModal());
-            router.push(
-              `/pool/select/${addLiquiditySlice.pool?.poolId}?modal=Staking`
-            );
-            resetAddLiquiditySlice();
-          },
-          (errorMessage: string) => {
-            console.log("Tx Error:", errorMessage);
-            enqueueSnackbar("Tx Error: " + errorMessage);
-            dispatch(closeConfirmingSupplyModal());
-          }
-        )
-        .catch((err) => {
-          dispatch(closeConfirmingSupplyModal());
-          console.log("Tx Error:", err);
-        });
-    }
-  };
+  const onConfirmSupply = useAddLiquidity({
+    selectedAccount,
+    executor,
+    parachainApi,
+    assetOne: assetOne ? assetOne.network[DEFAULT_NETWORK_ID] : undefined,
+    assetTwo: assetTwo ? assetTwo.network[DEFAULT_NETWORK_ID] : undefined,
+    assetOneAmount,
+    assetTwoAmount,
+    lpAmountExpected: lpReceiveAmount,
+    pool
+  })
 
   return (
     <Modal onClose={() => dispatch(closeConfirmSupplyModal())} {...rest}>
@@ -178,9 +125,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={4}
           label={`Pooled ${assetOne?.symbol}`}
           BalanceProps={{
-            title: (
-              <BaseAsset icon={assetOne?.icon} pr={priceOneInTwo.toNumber()} />
-            ),
+            title: <BaseAsset icon={assetOne?.icon} pr={1} />,
             balance: `${assetOneAmount}`,
             BalanceTypographyProps: {
               variant: "body1",
@@ -192,9 +137,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Pooled ${assetTwo?.symbol}`}
           BalanceProps={{
-            title: (
-              <BaseAsset icon={assetTwo?.icon} pr={priceTwoInOne.toNumber()} />
-            ),
+            title: <BaseAsset icon={assetTwo?.icon} pr={1} />,
             balance: `${assetTwoAmount}`,
             BalanceTypographyProps: {
               variant: "body1",
