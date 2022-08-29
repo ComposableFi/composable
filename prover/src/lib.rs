@@ -20,7 +20,7 @@ use relay_chain_queries::{fetch_beefy_justification, fetch_mmr_batch_proof};
 use sp_core::H256;
 use sp_io::crypto;
 use sp_runtime::traits::Header as HeaderT;
-use sp_runtime::{generic::Header, traits::BlakeTwo256};
+use sp_runtime::traits::BlakeTwo256;
 use sp_trie::LayoutV0;
 use subxt::rpc::{rpc_params, ClientT};
 use subxt::sp_core::keccak_256;
@@ -269,19 +269,11 @@ where
                 heads_total_count,
             } = prove_parachain_headers(&para_headers, self.para_id)?;
 
-            let decoded_para_head = Header::<u32, BlakeTwo256>::decode(&mut &para_head[..])?;
-            let block_number = decoded_para_head.number;
-            let subxt_block_number: subxt::BlockNumber = block_number.into();
-            let block_hash = self
-                .para_client
-                .rpc()
-                .block_hash(Some(subxt_block_number))
-                .await?;
-
+            let decoded_para_head = T::Header::decode(&mut &para_head[..])?;
             let TimeStampExtWithProof {
                 ext: timestamp_extrinsic,
                 proof: extrinsic_proof,
-            } = fetch_timestamp_extrinsic_with_proof(&self.para_client, block_hash).await?;
+            } = fetch_timestamp_extrinsic_with_proof(&self.para_client, Some(decoded_para_head.hash())).await?;
 
             let header = ParachainHeader {
                 parachain_header: para_head,

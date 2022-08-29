@@ -86,8 +86,7 @@ pub fn prove_parachain_headers(
     // Values are already sorted by key which is the para_id
     for (idx, (key, header)) in finalized_para_heads.iter().enumerate() {
         let pair = (*key, header.clone());
-        let leaf_hash = keccak_256(pair.encode().as_slice());
-        parachain_leaves.push(leaf_hash);
+        parachain_leaves.push(keccak_256(pair.encode().as_slice()));
         if *key == para_id {
             index = Some(idx);
         }

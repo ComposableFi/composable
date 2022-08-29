@@ -61,6 +61,7 @@ where
         .await?;
     let mut finalized_blocks = BTreeMap::new();
     let mut leaf_indices = vec![];
+
     for changes in change_set {
         let header = client
             .rpc()
@@ -74,26 +75,26 @@ where
             })?;
 
         let mut heads = BTreeMap::new();
-        for para_id in para_ids.iter() {
+        for id in para_ids.iter() {
             if let Some(head) = api
                 .storage()
                 .paras()
-                .heads(para_id, Some(header.hash()))
+                .heads(id, Some(header.hash()))
                 .await?
             {
-                heads.insert(para_id.0, head.0);
+                heads.insert(id.0, head.0);
             }
         }
 
         let para_header: T::Header = Decode::decode(&mut &heads[&para_id][..])
             .map_err(|_| Error::Custom(format!("Failed to decode header for {para_id}")))?;
-        let number = *para_header.number();
+        let para_block_number = *para_header.number();
         // skip genesis header or any unknown headers
-        if number == Zero::zero() || !header_numbers.contains(&number) {
+        if para_block_number == Zero::zero() || !header_numbers.contains(&para_block_number) {
             continue;
         }
 
-        let block_number = u32::from(number);
+        let block_number = u32::from(*header.number());
         finalized_blocks.insert(block_number as u64, heads);
         leaf_indices.push(get_leaf_index_for_block_number(
             beefy_activation_block,
