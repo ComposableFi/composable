@@ -66,6 +66,7 @@ pub fn genesis_config(
 		// council will get its members from council_membership
 		council: Default::default(),
 		democracy: Default::default(),
+		staking_rewards: Default::default(),
 		treasury: Default::default(),
 		technical_collective: Default::default(),
 		technical_membership: Default::default(),
