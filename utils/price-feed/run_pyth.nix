@@ -26,8 +26,7 @@ let
       mv ../pctest/init_key_store.sh $out/bin
     '';
   };
-in
-mkShell {
+in mkShell {
   buildInputs = [ pythd ];
   SOLANA_ENV = "devnet";
   shellHook = ''
