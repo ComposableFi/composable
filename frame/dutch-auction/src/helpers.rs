@@ -105,7 +105,12 @@ impl<T: Config> Pallet<T> {
 					parents: 1,
 					interior: X2(
 						AccountId32 { network: Any, id: account },
-						GeneralKey(order.pair.encode()),
+						GeneralKey(
+							frame_support::storage::weak_bounded_vec::WeakBoundedVec::force_from(
+								order.pair.encode(),
+								None,
+							),
+						),
 					),
 				};
 				let asset_id = AssetId::Concrete(asset_id);
@@ -137,7 +142,7 @@ impl<T: Config> Pallet<T> {
 								X3(
 									Parachain(parachain_id.into()),
 									AccountId32 { network: Any, id: account },
-									GeneralKey(order.pair.encode()),
+						      GeneralKey(frame_support::storage::weak_bounded_vec::WeakBoundedVec::force_from(order.pair.encode(), None)),
 								),
 							)
 								.into(),

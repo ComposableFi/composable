@@ -16,6 +16,7 @@ Makefile @ComposableFi/sre
 ## Parachain related files
 
 runtime/ @ComposableFi/parachain-leads
+
 node/ @ComposableFi/parachain-leads
 frame/ @ComposableFi/parachain
 integration-tests/ @ComposableFi/parachain @ComposableFi/testers
@@ -26,7 +27,7 @@ frame/dex-router/ @ComposableFi/parachain-finance
 frame/nft/ @ComposableFi/parachain-finance
 frame/staking-rewards/ @ComposableFi/parachain-finance
 frame/oracle/ @ComposableFi/parachain-finance
-subsquid/ @ComposableFi/parachain-finance
+subsquid/ @ComposableFi/parachain-finance @ComposableFi/blockchain-integrations
 frame/*/rpc/ @ComposableFi/parachain-rpc
 frame/*/runtime-api @ComposableFi/parachain-rpc
 
@@ -50,6 +51,11 @@ integration-tests/runtime-tests/ @ComposableFi/testers
 
 .devcontainer/ @ComposableFi/codespacers @ComposableFi/parachain-leads
 
+## Nix
+
+.nix/ @dzmitry-lahoda @hussein-aitlahcen @cor
+flake.nix @dzmitry-lahoda @hussein-aitlahcen @cor
+
 # ComposableJS
 composablejs/ @ComposableFi/parachain
 
@@ -60,3 +66,12 @@ docs/ @ComposableFi/developers @ComposableFi/technical-writers
 scripts/ @ComposableFi/developers @ComposableFi/sre
 utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
 .config/spellcheck.dic @ComposableFi/developers @ComposableFi/technical-writers
+# Oracle Setup Script
+scripts/oracle-setup @ComposableFi/parachain
+
+# Repository 
+README.md @ComposableFi/technical-writing-reviewers @ComposableFi/core
+SECURITY.md @ComposableFi/security
+REVIEWERS.md @ComposableFi/core
+ARCHITECTURE.md @ComposableFi/core
+LICENSE @ComposableFi/technical-writing-reviewers @ComposableFi/core

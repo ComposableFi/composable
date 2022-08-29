@@ -1,31 +1,32 @@
 import { useEffect } from "react";
 import useStore from "@/store/useStore";
-
-import { DEFAULT_NETWORK_ID, fetchBondOffers } from "@/defi/utils";
-import { useParachainApi } from "substrate-react";
+import BigNumber from "bignumber.js";
+import { calculateBondROI } from "@/defi/utils";
 
 const Updater = () => {
-  const { bondOffers, supportedAssets, apollo } = useStore();
-//   const lpRewardingPools = useAllLpTokenRewardingPools();
-
-  const { putBondOffers } = useStore();
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const { bondOffers: { list }, putBondOfferROI, apollo } = useStore();
 
   useEffect(() => {
-    if (parachainApi) {
-      fetchBondOffers(parachainApi).then((decodedOffers) => {
-        putBondOffers(decodedOffers);
-      });
-    }
-  }, [parachainApi, putBondOffers]);
+    const roiRecord = list.reduce((acc, bondOffer) => {
+      const principalAssetPrinceInUSD = new BigNumber(apollo[bondOffer.asset]) || new BigNumber(0);
+      const rewardAssetPriceInUSD = new BigNumber(apollo[bondOffer.reward.asset]) || new BigNumber(0);
+      const rewardAssetAmountPerBond = bondOffer.reward.amount.div(bondOffer.nbOfBonds);
+      const principalAssetAmountPerBond = bondOffer.bondPrice;
+      return {
+        ...acc,
+        [bondOffer.offerId.toString()]: calculateBondROI(
+          principalAssetPrinceInUSD,
+          rewardAssetPriceInUSD,
+          principalAssetAmountPerBond,
+          rewardAssetAmountPerBond
+        )
+      }
+    }, {} as Record<string, BigNumber>);
 
-  useEffect(() => {
-    const bondOfferIds = bondOffers.list.map(i => (i.offerId.toString()));
-
-    
-  }, [bondOffers.list])
+    putBondOfferROI(roiRecord);
+  }, [apollo, list, putBondOfferROI])
 
   return null;
-}
+};
 
 export default Updater;

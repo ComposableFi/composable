@@ -49,12 +49,6 @@ export default {
     },
     PalletCollatorSelectionCandidateInfo: "Null",
     PalletCrowdloanRewardsReward: "Null",
-    PalletDemocracyVoteThreshold: "Null",
-    PalletDemocracyPreimageStatus: "Null",
-    PalletDemocracyReferendumInfo: "Null",
-    PalletPreimageRequestStatus: "Null",
-    PalletDemocracyReleases: "Null",
-    PalletDemocracyVoteVoting: "Null",
     CumulusPalletDmpQueueConfigData: "Null",
     PalletDutchAuctionSellOrder: "Null",
     ComposableTraitsVestingVestingSchedule: "Null",
@@ -63,7 +57,7 @@ export default {
     ComposableTraitsGovernanceSignedRawOrigin: {
       _enum: {
         Root: "Null",
-        Signed: "AccountId32",
+        Signed: "",
         isSigned: "bool",
         asSigned: "AccountId32"
       }
@@ -141,8 +135,6 @@ export default {
     },
     FrameSupportScheduleMaybeHashed: "Null",
     FrameSupportScheduleLookupError: "Null",
-    PalletCurrencyFactoryRanges: "Null",
-    PalletCurrencyFactoryRangesRange: "Null",
     PalletLiquidationsLiquidationStrategyConfiguration: "Null",
     CommonMosaicRemoteAssetId: "Null",
     ComposableTraitsDexConsantProductPoolInfo: "Null",
@@ -160,7 +152,14 @@ export default {
       ownerFee: "Permill"
     },
     ComposableSupportEthereumAddress: "Null",
-    ComposableTraitsAssetsBasicAssetMetadata: "Null",
+    ComposableTraitsAssetsBasicAssetMetadata: {
+      symbol: {
+        inner: "Null"
+      },
+      name: {
+        inner: "Null"
+      }
+    },
     ComposableTraitsDexDexRoute: "Null",
     ComposableTraitsLendingRepayStrategy: "Null",
     ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
@@ -189,6 +188,14 @@ export default {
     ComposableTraitsStakingRewardPool: "Null",
     ComposableTraitsStakingRewardPoolConfiguration: "Null",
     IbcTransferPalletParams: "Null",
-    IbcTransferTransferParams: "Null"
+    IbcTransferTransferParams: "Null",
+    ComposableTraitsOracleRewardTracker: "Null",
+    ComposableTraitsStakingStake: "Null",
+    ComposableTraitsVestingVestingScheduleInfo: "Null",
+    ComposableTraitsVestingVestingScheduleIdSet: "Null",
+    ComposableTraitsStakingRewardUpdate: "Null",
+    ComposableTraitsAccountProxyProxyType: "Null",
+    ComposableTraitsAccountProxyProxyDefinition: "Null",
+    PalletAccountProxyAnnouncement: "Null",
   }
 };

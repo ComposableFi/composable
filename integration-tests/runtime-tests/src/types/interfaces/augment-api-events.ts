@@ -5,16 +5,16 @@ import type { ComposableTraitsDefiCurrencyPairCurrencyId } from "@composable/typ
 import type {
   CommonMosaicRemoteAssetId,
   ComposableSupportEthereumAddress,
+  ComposableTraitsAccountProxyProxyType,
   ComposableTraitsCallFilterCallFilterEntry,
   ComposableTraitsLendingUpdateInput,
   ComposableTraitsTimeTimeReleaseFunction,
   ComposableTraitsVestingVestingSchedule,
+  ComposableTraitsVestingVestingScheduleIdSet,
   ComposableTraitsXcmAssetsXcmAssetLocation,
   FrameSupportScheduleLookupError,
   PalletCrowdloanRewardsModelsRemoteAccount,
-  PalletCurrencyFactoryRangesRange,
   PalletDemocracyVoteAccountVote,
-  PalletDemocracyVoteThreshold,
   PalletDutchAuctionSellOrder,
   PalletIbcErrorsIbcError,
   PalletIbcEventsIbcEvent,
@@ -22,22 +22,24 @@ import type {
   PalletMosaicDecayBudgetPenaltyDecayer,
   PalletMosaicNetworkInfo
 } from "@composable/types/interfaces/crowdloanRewards";
+import type { PalletCurrencyFactoryRangesRange } from "@composable/types/interfaces/currencyFactory";
+import type { PalletDemocracyVoteThreshold } from "@composable/types/interfaces/democracy";
 import type { ComposableTraitsDexFee } from "@composable/types/interfaces/pablo";
 import type { ApiTypes } from "@polkadot/api-base/types";
 import type {
+  bool,
   BTreeMap,
   Bytes,
   Null,
   Option,
   Result,
-  U8aFixed,
-  Vec,
-  bool,
   u128,
   u16,
   u32,
   u64,
-  u8
+  u8,
+  U8aFixed,
+  Vec
 } from "@polkadot/types-codec";
 import type { ITuple } from "@polkadot/types-codec/types";
 import type { AccountId32, H256, Percent } from "@polkadot/types/interfaces/runtime";
@@ -47,8 +49,8 @@ import type {
   PalletMultisigTimepoint,
   SpRuntimeDispatchError,
   XcmV1MultiAsset,
-  XcmV1MultiLocation,
   XcmV1MultiassetMultiAssets,
+  XcmV1MultiLocation,
   XcmV2Response,
   XcmV2TraitsError,
   XcmV2TraitsOutcome,
@@ -57,7 +59,7 @@ import type {
   XcmVersionedMultiLocation
 } from "@polkadot/types/lookup";
 
-declare module "@polkadot/api-base/types/events" {
+declare module '@polkadot/api-base/types/events' {
   export interface AugmentedEvents<ApiType extends ApiTypes> {
     assetsRegistry: {
       AssetRegistered: AugmentedEvent<ApiType, [u128, ComposableTraitsXcmAssetsXcmAssetLocation]>;
@@ -94,10 +96,7 @@ declare module "@polkadot/api-base/types/events" {
        * Some balance was moved from the reserve of the first account to the second account.
        * Final argument indicates the destination balance type.
        **/
-      ReserveRepatriated: AugmentedEvent<
-        ApiType,
-        [AccountId32, AccountId32, u128, FrameSupportTokensMiscBalanceStatus]
-      >;
+      ReserveRepatriated: AugmentedEvent<ApiType, [AccountId32, AccountId32, u128, FrameSupportTokensMiscBalanceStatus]>;
       /**
        * Some amount was removed from the account (e.g. for misbehavior).
        **/
@@ -127,7 +126,7 @@ declare module "@polkadot/api-base/types/events" {
       /**
        * A new offer has been created.
        **/
-      NewOffer: AugmentedEvent<ApiType, [u128]>;
+      NewOffer: AugmentedEvent<ApiType, [u128, AccountId32]>;
       /**
        * An offer has been cancelled by the `AdminOrigin`.
        **/
@@ -363,32 +362,26 @@ declare module "@polkadot/api-base/types/events" {
     dmpQueue: {
       /**
        * Downward message executed with the given outcome.
-       * \[ id, outcome \]
        **/
       ExecutedDownward: AugmentedEvent<ApiType, [U8aFixed, XcmV2TraitsOutcome]>;
       /**
        * Downward message is invalid XCM.
-       * \[ id \]
        **/
       InvalidFormat: AugmentedEvent<ApiType, [U8aFixed]>;
       /**
        * Downward message is overweight and was placed in the overweight queue.
-       * \[ id, index, required \]
        **/
       OverweightEnqueued: AugmentedEvent<ApiType, [U8aFixed, u64, u64]>;
       /**
        * Downward message from the overweight queue was executed.
-       * \[ index, used \]
        **/
       OverweightServiced: AugmentedEvent<ApiType, [u64, u64]>;
       /**
        * Downward message is unsupported version of XCM.
-       * \[ id \]
        **/
       UnsupportedVersion: AugmentedEvent<ApiType, [U8aFixed]>;
       /**
        * The weight limit for handling downward messages was reached.
-       * \[ id, remaining, required \]
        **/
       WeightExhausted: AugmentedEvent<ApiType, [U8aFixed, u64, u64]>;
       /**
@@ -409,6 +402,15 @@ declare module "@polkadot/api-base/types/events" {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    fnft: {
+      FinancialNftBurned: AugmentedEvent<ApiType, [u128, u64]>;
+      FinancialNftCreated: AugmentedEvent<ApiType, [u128, u64]>;
+      FinancialNftTransferred: AugmentedEvent<ApiType, [u128, u64, AccountId32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     governanceRegistry: {
       GrantRoot: AugmentedEvent<ApiType, [u128]>;
       Remove: AugmentedEvent<ApiType, [u128]>;
@@ -420,10 +422,6 @@ declare module "@polkadot/api-base/types/events" {
     };
     ibc: {
       /**
-       * Initiated a new connection
-       **/
-      ConnectionInitiated: AugmentedEvent<ApiType, []>;
-      /**
        * Ibc errors
        **/
       IbcErrors: AugmentedEvent<ApiType, [Vec<PalletIbcErrorsIbcError>]>;
@@ -431,10 +429,6 @@ declare module "@polkadot/api-base/types/events" {
        * Raw Ibc events
        **/
       IbcEvents: AugmentedEvent<ApiType, [Vec<PalletIbcEventsIbcEvent>]>;
-      /**
-       * Processed incoming ibc messages
-       **/
-      ProcessedIBCMessages: AugmentedEvent<ApiType, []>;
       /**
        * Generic event
        **/
@@ -615,20 +609,7 @@ declare module "@polkadot/api-base/types/events" {
       /**
        * An outgoing tx is created, and locked in the outgoing tx pool.
        **/
-      TransferOut: AugmentedEvent<
-        ApiType,
-        [
-          H256,
-          ComposableSupportEthereumAddress,
-          u128,
-          u32,
-          CommonMosaicRemoteAssetId,
-          u128,
-          bool,
-          AccountId32,
-          Option<PalletMosaicAmmSwapInfo>
-        ]
-      >;
+      TransferOut: AugmentedEvent<ApiType, [H256, ComposableSupportEthereumAddress, u128, u32, CommonMosaicRemoteAssetId, u128, bool, AccountId32, Option<PalletMosaicAmmSwapInfo>, u128]>;
       /**
        * Generic event
        **/
@@ -646,10 +627,7 @@ declare module "@polkadot/api-base/types/events" {
       /**
        * A multisig operation has been executed.
        **/
-      MultisigExecuted: AugmentedEvent<
-        ApiType,
-        [AccountId32, PalletMultisigTimepoint, AccountId32, U8aFixed, Result<Null, SpRuntimeDispatchError>]
-      >;
+      MultisigExecuted: AugmentedEvent<ApiType, [AccountId32, PalletMultisigTimepoint, AccountId32, U8aFixed, Result<Null, SpRuntimeDispatchError>]>;
       /**
        * A new multisig operation has begun.
        **/
@@ -670,9 +648,21 @@ declare module "@polkadot/api-base/types/events" {
        **/
       AssetInfoChange: AugmentedEvent<ApiType, [u128, Percent, u32, u32, u32, u128, u128]>;
       /**
+       * Oracle rewarded. \[oracle_address, asset_id, price\]
+       **/
+      OracleRewarded: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
+       * Price changed by oracle \[asset_id, price\]
+       **/
+      PriceChanged: AugmentedEvent<ApiType, [u128, u128]>;
+      /**
        * Price submitted by oracle. \[oracle_address, asset_id, price\]
        **/
       PriceSubmitted: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      /**
+       * Rewarding Started \[rewarding start timestamp]
+       **/
+      RewardingAdjustment: AugmentedEvent<ApiType, [u64]>;
       /**
        * Signer was set. \[signer, controller\]
        **/
@@ -689,10 +679,6 @@ declare module "@polkadot/api-base/types/events" {
        * Stake removed. \[removed_by, amount, block_number\]
        **/
       StakeRemoved: AugmentedEvent<ApiType, [AccountId32, u128, u32]>;
-      /**
-       * Oracle rewarded. \[oracle_address, asset_id, price\]
-       **/
-      UserRewarded: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
       /**
        * Oracle slashed. \[oracle_address, asset_id, amount\]
        **/
@@ -735,12 +721,10 @@ declare module "@polkadot/api-base/types/events" {
     parachainSystem: {
       /**
        * Downward messages were processed using the given weight.
-       * \[ weight_used, result_mqc_head \]
        **/
       DownwardMessagesProcessed: AugmentedEvent<ApiType, [u64, H256]>;
       /**
        * Some downward messages have been received and will be processed.
-       * \[ count \]
        **/
       DownwardMessagesReceived: AugmentedEvent<ApiType, [u32]>;
       /**
@@ -791,11 +775,11 @@ declare module "@polkadot/api-base/types/events" {
        * Anonymous account has been created by new proxy with given
        * disambiguation index and proxy type.
        **/
-      AnonymousCreated: AugmentedEvent<ApiType, [AccountId32, AccountId32, Null, u16]>;
+      AnonymousCreated: AugmentedEvent<ApiType, [AccountId32, AccountId32, ComposableTraitsAccountProxyProxyType, u16]>;
       /**
        * A proxy was added.
        **/
-      ProxyAdded: AugmentedEvent<ApiType, [AccountId32, AccountId32, Null, u32]>;
+      ProxyAdded: AugmentedEvent<ApiType, [AccountId32, AccountId32, ComposableTraitsAccountProxyProxyType, u32]>;
       /**
        * A proxy was executed correctly, with the given.
        **/
@@ -803,7 +787,7 @@ declare module "@polkadot/api-base/types/events" {
       /**
        * A proxy was removed.
        **/
-      ProxyRemoved: AugmentedEvent<ApiType, [AccountId32, AccountId32, Null, u32]>;
+      ProxyRemoved: AugmentedEvent<ApiType, [AccountId32, AccountId32, ComposableTraitsAccountProxyProxyType, u32]>;
       /**
        * Generic event
        **/
@@ -812,13 +796,13 @@ declare module "@polkadot/api-base/types/events" {
     relayerXcm: {
       /**
        * Some assets have been placed in an asset trap.
-       *
+       * 
        * \[ hash, origin, assets \]
        **/
       AssetsTrapped: AugmentedEvent<ApiType, [H256, XcmV1MultiLocation, XcmVersionedMultiAssets]>;
       /**
        * Execution of an XCM message was attempted.
-       *
+       * 
        * \[ outcome \]
        **/
       Attempted: AugmentedEvent<ApiType, [XcmV2TraitsOutcome]>;
@@ -826,26 +810,26 @@ declare module "@polkadot/api-base/types/events" {
        * Expected query response has been received but the origin location of the response does
        * not match that expected. The query remains registered for a later, valid, response to
        * be received and acted upon.
-       *
+       * 
        * \[ origin location, id, expected location \]
        **/
       InvalidResponder: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64, Option<XcmV1MultiLocation>]>;
       /**
        * Expected query response has been received but the expected origin location placed in
        * storage by this runtime previously cannot be decoded. The query remains registered.
-       *
+       * 
        * This is unexpected (since a location placed in storage in a previously executing
        * runtime should be readable prior to query timeout) and dangerous since the possibly
        * valid response will be dropped. Manual governance intervention is probably going to be
        * needed.
-       *
+       * 
        * \[ origin location, id \]
        **/
       InvalidResponderVersion: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64]>;
       /**
        * Query response has been received and query is removed. The registered notification has
        * been dispatched and executed successfully.
-       *
+       * 
        * \[ id, pallet index, call index \]
        **/
       Notified: AugmentedEvent<ApiType, [u64, u8, u8]>;
@@ -853,14 +837,14 @@ declare module "@polkadot/api-base/types/events" {
        * Query response has been received and query is removed. The dispatch was unable to be
        * decoded into a `Call`; this might be due to dispatch function having a signature which
        * is not `(origin, QueryId, Response)`.
-       *
+       * 
        * \[ id, pallet index, call index \]
        **/
       NotifyDecodeFailed: AugmentedEvent<ApiType, [u64, u8, u8]>;
       /**
        * Query response has been received and query is removed. There was a general error with
        * dispatching the notification call.
-       *
+       * 
        * \[ id, pallet index, call index \]
        **/
       NotifyDispatchError: AugmentedEvent<ApiType, [u64, u8, u8]>;
@@ -868,47 +852,47 @@ declare module "@polkadot/api-base/types/events" {
        * Query response has been received and query is removed. The registered notification could
        * not be dispatched because the dispatch weight is greater than the maximum weight
        * originally budgeted by this runtime for the query result.
-       *
+       * 
        * \[ id, pallet index, call index, actual weight, max budgeted weight \]
        **/
       NotifyOverweight: AugmentedEvent<ApiType, [u64, u8, u8, u64, u64]>;
       /**
        * A given location which had a version change subscription was dropped owing to an error
        * migrating the location to our new XCM format.
-       *
+       * 
        * \[ location, query ID \]
        **/
       NotifyTargetMigrationFail: AugmentedEvent<ApiType, [XcmVersionedMultiLocation, u64]>;
       /**
        * A given location which had a version change subscription was dropped owing to an error
        * sending the notification to it.
-       *
+       * 
        * \[ location, query ID, error \]
        **/
       NotifyTargetSendFail: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64, XcmV2TraitsError]>;
       /**
        * Query response has been received and is ready for taking with `take_response`. There is
        * no registered notification call.
-       *
+       * 
        * \[ id, response \]
        **/
       ResponseReady: AugmentedEvent<ApiType, [u64, XcmV2Response]>;
       /**
        * Received query response has been read and removed.
-       *
+       * 
        * \[ id \]
        **/
       ResponseTaken: AugmentedEvent<ApiType, [u64]>;
       /**
        * A XCM message was sent.
-       *
+       * 
        * \[ origin, destination, message \]
        **/
       Sent: AugmentedEvent<ApiType, [XcmV1MultiLocation, XcmV1MultiLocation, XcmV2Xcm]>;
       /**
        * The supported version of a location has been changed. This might be through an
        * automatic notification or a manual intervention.
-       *
+       * 
        * \[ location, XCM version \]
        **/
       SupportedVersionChanged: AugmentedEvent<ApiType, [XcmV1MultiLocation, u32]>;
@@ -916,13 +900,13 @@ declare module "@polkadot/api-base/types/events" {
        * Query response received which does not match a registered query. This may be because a
        * matching query was never registered, it may be because it is a duplicate response, or
        * because the query timed out.
-       *
+       * 
        * \[ origin location, id \]
        **/
       UnexpectedResponse: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64]>;
       /**
        * An XCM version change notification message has been attempted to be sent.
-       *
+       * 
        * \[ destination, result \]
        **/
       VersionChangeNotified: AugmentedEvent<ApiType, [XcmV1MultiLocation, u32]>;
@@ -965,10 +949,24 @@ declare module "@polkadot/api-base/types/events" {
       [key: string]: AugmentedEvent<ApiType>;
     };
     stakingRewards: {
+      MaxRewardsAccumulated: AugmentedEvent<ApiType, [u16, u128]>;
+      RewardAccumulationError: AugmentedEvent<ApiType, [u16, u128]>;
       /**
        * Pool with specified id `T::RewardPoolId` was created successfully by `T::AccountId`.
        **/
       RewardPoolCreated: AugmentedEvent<ApiType, [u16, AccountId32, u32]>;
+      RewardPoolUpdated: AugmentedEvent<ApiType, [u16]>;
+      /**
+       * Reward transfer event.
+       **/
+      RewardTransferred: AugmentedEvent<ApiType, [AccountId32, u16, u128, u128]>;
+      /**
+       * Split stake position into two positions
+       **/
+      SplitPosition: AugmentedEvent<ApiType, [Vec<u128>]>;
+      StakeAmountExtended: AugmentedEvent<ApiType, [u128, u128]>;
+      Staked: AugmentedEvent<ApiType, [u16, AccountId32, u128, u64, u128, bool]>;
+      Unstaked: AugmentedEvent<ApiType, [AccountId32, u128]>;
       /**
        * Generic event
        **/
@@ -1022,6 +1020,72 @@ declare module "@polkadot/api-base/types/events" {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    technicalCollective: {
+      /**
+       * A motion was approved by the required threshold.
+       **/
+      Approved: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * A proposal was closed because its threshold was reached or after its duration was up.
+       **/
+      Closed: AugmentedEvent<ApiType, [H256, u32, u32]>;
+      /**
+       * A motion was not approved by the required threshold.
+       **/
+      Disapproved: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * A motion was executed; result will be `Ok` if it returned without error.
+       **/
+      Executed: AugmentedEvent<ApiType, [H256, Result<Null, SpRuntimeDispatchError>]>;
+      /**
+       * A single member did some action; result will be `Ok` if it returned without error.
+       **/
+      MemberExecuted: AugmentedEvent<ApiType, [H256, Result<Null, SpRuntimeDispatchError>]>;
+      /**
+       * A motion (given hash) has been proposed (by given account) with a threshold (given
+       * `MemberCount`).
+       **/
+      Proposed: AugmentedEvent<ApiType, [AccountId32, u32, H256, u32]>;
+      /**
+       * A motion (given hash) has been voted on by given account, leaving
+       * a tally (yes votes and no votes given respectively as `MemberCount`).
+       **/
+      Voted: AugmentedEvent<ApiType, [AccountId32, H256, bool, u32, u32]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    technicalMembership: {
+      /**
+       * Phantom member, never used.
+       **/
+      Dummy: AugmentedEvent<ApiType, []>;
+      /**
+       * One of the members' keys changed.
+       **/
+      KeyChanged: AugmentedEvent<ApiType, []>;
+      /**
+       * The given member was added; see the transaction for who.
+       **/
+      MemberAdded: AugmentedEvent<ApiType, []>;
+      /**
+       * The given member was removed; see the transaction for who.
+       **/
+      MemberRemoved: AugmentedEvent<ApiType, []>;
+      /**
+       * The membership was reset; see the transaction for who the new set is.
+       **/
+      MembersReset: AugmentedEvent<ApiType, []>;
+      /**
+       * Two members were swapped; see the transaction for who.
+       **/
+      MembersSwapped: AugmentedEvent<ApiType, []>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     tokens: {
       /**
        * A balance was set by root.
@@ -1056,10 +1120,7 @@ declare module "@polkadot/api-base/types/events" {
        * Some reserved balance was repatriated (moved from reserved to
        * another account).
        **/
-      ReserveRepatriated: AugmentedEvent<
-        ApiType,
-        [u128, AccountId32, AccountId32, u128, FrameSupportTokensMiscBalanceStatus]
-      >;
+      ReserveRepatriated: AugmentedEvent<ApiType, [u128, AccountId32, AccountId32, u128, FrameSupportTokensMiscBalanceStatus]>;
       /**
        * Some balances were slashed (e.g. due to mis-behavior)
        **/
@@ -1210,14 +1271,11 @@ declare module "@polkadot/api-base/types/events" {
       /**
        * Claimed vesting. \[who, locked_amount\]
        **/
-      Claimed: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      Claimed: AugmentedEvent<ApiType, [AccountId32, u128, ComposableTraitsVestingVestingScheduleIdSet, u128, u128]>;
       /**
        * Added new vesting schedule. \[from, to, schedule\]
        **/
-      VestingScheduleAdded: AugmentedEvent<
-        ApiType,
-        [AccountId32, AccountId32, u128, ComposableTraitsVestingVestingSchedule]
-      >;
+      VestingScheduleAdded: AugmentedEvent<ApiType, [AccountId32, AccountId32, u128, u128, ComposableTraitsVestingVestingSchedule]>;
       /**
        * Updated vesting schedules. \[who\]
        **/
@@ -1269,10 +1327,7 @@ declare module "@polkadot/api-base/types/events" {
       /**
        * Transferred `MultiAsset` with fee.
        **/
-      TransferredMultiAssets: AugmentedEvent<
-        ApiType,
-        [AccountId32, XcmV1MultiassetMultiAssets, XcmV1MultiAsset, XcmV1MultiLocation]
-      >;
+      TransferredMultiAssets: AugmentedEvent<ApiType, [AccountId32, XcmV1MultiassetMultiAssets, XcmV1MultiAsset, XcmV1MultiLocation]>;
       /**
        * Generic event
        **/

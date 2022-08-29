@@ -23,7 +23,7 @@ pub fn genesis_config(
 ) -> picasso_runtime::GenesisConfig {
 	picasso_runtime::GenesisConfig {
 		system: picasso_runtime::SystemConfig {
-			code: picasso_runtime::WASM_BINARY
+			code: picasso_runtime::WASM_BINARY_V2
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
@@ -62,13 +62,17 @@ pub fn genesis_config(
 			candidacy_bond: existential_deposit * 16,
 			..Default::default()
 		},
-		council_membership: picasso_runtime::CouncilMembershipConfig {
-			members: vec![],
-			..Default::default()
-		},
+		council_membership: Default::default(),
 		// council will get its members from council_membership
 		council: Default::default(),
 		democracy: Default::default(),
 		treasury: Default::default(),
+		technical_collective: Default::default(),
+		technical_membership: Default::default(),
+		relayer_xcm: Default::default(),
+		assets_registry: Default::default(),
+		tokens: Default::default(),
+		transaction_payment: Default::default(),
+		vesting: Default::default(),
 	}
 }

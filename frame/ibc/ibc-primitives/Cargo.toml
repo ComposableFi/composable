@@ -10,7 +10,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "3.0.0", features = [
   "derive",
 ], default-features = false }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "ec349b3043a6e9ab84d2208d9901314cdfdddd69", default-features = false, features = [
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb", default-features = false, features = [
   "ics11_beefy",
 ] }
 ripemd = { version = "0.1.1", default-features = false }
@@ -18,12 +18,12 @@ scale-info = { version = '2.1.1', default-features = false }
 serde = { version = "1.0.136", features = ["derive"], optional = true }
 sha2 = { version = "0.10.2", default-features = false }
 sha3 = { version = "0.10.1", default-features = false }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
-sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 
 [features]
 default = ['std']

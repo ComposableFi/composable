@@ -76,8 +76,8 @@ describe("HAL02 [Oracle] Tests", function () {
     const minAnswers = api.createType("u32", 3);
     const maxAnswers = api.createType("u32", 5);
     const blockInterval = api.createType("u32", 6);
-    const reward = api.createType("u128", 150000000000);
-    const slash = api.createType("u128", 100000000000);
+    const reward = api.createType("u128", 150000000);
+    const slash = api.createType("u128", 100000000);
     const {
       data: [result]
     } = await txOracleAddAssetAndInfoSuccessTest(
@@ -89,7 +89,8 @@ describe("HAL02 [Oracle] Tests", function () {
       maxAnswers,
       blockInterval,
       reward,
-      slash
+      slash,
+      true
     );
     expect(result.isOk).to.be.true;
   });
@@ -173,48 +174,26 @@ describe("HAL02 [Oracle] Tests", function () {
   });
 
   describe("HAL02: Adding stakes", function () {
-    it("HAL02: Adding stake 1", async function () {
+    it("HAL02: Adding stakes", async function () {
       this.timeout(2 * 60 * 1000);
       const stake = api.createType("u128", 2500000000000);
-      const {
-        data: [result]
-      } = await txOracleAddStakeSuccessTest(api, walletHAL02_1, stake);
+      const [
+        {
+          data: [result]
+        }
+      ] = await Promise.all([
+        txOracleAddStakeSuccessTest(api, walletHAL02_1, stake),
+        txOracleAddStakeSuccessTest(api, walletHAL02_2, stake),
+        txOracleAddStakeSuccessTest(api, walletHAL02_3, stake),
+        txOracleAddStakeSuccessTest(api, walletHAL02_4, stake)
+      ]);
       expect(result).to.not.be.an("Error");
       expect(result.toString()).to.be.equal(api.createType("AccountId32", walletHAL02_2.publicKey).toString());
-    });
-
-    it("HAL02: Adding stake 2", async function () {
-      this.timeout(2 * 60 * 1000);
-      const stake = api.createType("u128", 2500000000000);
-      const {
-        data: [result]
-      } = await txOracleAddStakeSuccessTest(api, walletHAL02_2, stake);
-      expect(result).to.not.be.an("Error");
-      expect(result.toString()).to.be.equal(api.createType("AccountId32", walletHAL02_3.publicKey).toString());
-    });
-
-    it("HAL02: Adding stake 3", async function () {
-      this.timeout(2 * 60 * 1000);
-      const stake = api.createType("u128", 2500000000000);
-      const {
-        data: [result]
-      } = await txOracleAddStakeSuccessTest(api, walletHAL02_3, stake);
-      expect(result).to.not.be.an("Error");
-      expect(result.toString()).to.be.equal(api.createType("AccountId32", walletHAL02_4.publicKey).toString());
-    });
-
-    it("HAL02: Adding stake 4", async function () {
-      this.timeout(2 * 60 * 1000);
-      const stake = api.createType("u128", 2500000000000);
-      const {
-        data: [result]
-      } = await txOracleAddStakeSuccessTest(api, walletHAL02_4, stake);
-      expect(result).to.not.be.an("Error");
-      expect(result.toString()).to.be.equal(api.createType("AccountId32", controllerWallet.publicKey).toString());
     });
   });
 
   describe("HAL02: Test Scenarios", function () {
+    this.retries(0);
     it("HAL02: Scenario 1: Oracle stake of malicious actor should get slashed", async function () {
       this.timeout(10 * 60 * 1000);
 

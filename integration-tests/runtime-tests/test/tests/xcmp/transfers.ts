@@ -17,7 +17,7 @@ import BN from "bn.js";
  * 2. The other way around with KSM.
  * 3. Again from Picasso/Dali to RelayChain with PICA.
  */
-describe("[SHORT] tx.xcmp Tests", function() {
+describe("[SHORT] tx.xcmp Tests", function () {
   if (!testConfiguration.enabledTests.enabled) return;
 
   let api: ApiPromise;
@@ -27,7 +27,7 @@ describe("[SHORT] tx.xcmp Tests", function() {
   let assetId: number;
   let ksmAssetID;
 
-  before(async function() {
+  before(async function () {
     this.timeout(60 * 1000);
     // `getNewConnection()` establishes a new connection to the chain and gives us the ApiPromise & a Keyring.
     const { newClient, newKeyring } = await getNewConnection();
@@ -56,12 +56,12 @@ describe("[SHORT] tx.xcmp Tests", function() {
     ksmAssetID = api.createType("SafeRpcWrapper", assetId) as SafeRpcWrapper;
   });
 
-  before("Providing assets for tests", async function() {
+  before("Providing assets for tests", async function () {
     this.timeout(2 * 60 * 1000);
     await mintAssetsToWallet(api, walletAlice, walletAlice, [1]);
   });
 
-  after(async function() {
+  after(async function () {
     await relayChainApiClient.disconnect();
     await api.disconnect();
   });
@@ -72,18 +72,18 @@ describe("[SHORT] tx.xcmp Tests", function() {
    *
    * Sudo command success is checked with `.isOk`.
    */
-  describe("xcmPallet.reserveTransferAssets Success Test", function() {
+  describe("xcmPallet.reserveTransferAssets Success Test", function () {
     if (!testConfiguration.enabledTests.addAssetAndInfo__success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(10 * 60 * 1000);
-    it("Can transfer asset(kUSD) from relay chain(KSM) to Picasso", async function() {
+    it("Can transfer asset(kUSD) from relay chain(KSM) to Picasso", async function () {
       if (!testConfiguration.enabledTests.addAssetAndInfo__success.add1) this.skip();
 
       // Setting the destination chain to Picasso/Dali
       const destination = relayChainApiClient.createType("XcmVersionedMultiLocation", {
         V0: relayChainApiClient.createType("XcmV0MultiLocation", {
           X1: relayChainApiClient.createType("XcmV0Junction", {
-            Parachain: relayChainApiClient.createType("Compact<u32>", 2000)
+            Parachain: relayChainApiClient.createType("Compact<u32>", 2087)
           })
         })
       });
@@ -157,13 +157,13 @@ describe("[SHORT] tx.xcmp Tests", function() {
   /**
    * Transfers an asset from RelayChain (Rococo Testnet) to Picasso/Dali.
    */
-  describe("xTokens.transfer Success Test", function() {
+  describe("xTokens.transfer Success Test", function () {
     // update name in test_configuration. Ask Dom
     if (!testConfiguration.enabledTests.addAssetAndInfo__success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(10 * 60 * 1000);
 
-    it("Can transfer KSM from Picasso to relay chain", async function() {
+    it("Can transfer KSM from Picasso to relay chain", async function () {
       // update name in test_configuration. Ask Dom
       if (!testConfiguration.enabledTests.addAssetAndInfo__success.add1) this.skip();
 

@@ -12,6 +12,7 @@
 #![deny(clippy::unseparated_literal_suffix, unused_imports, non_snake_case, dead_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod governance;
 pub mod impls;
 pub mod xcmp;
 use core::marker::PhantomData;
@@ -22,6 +23,7 @@ pub use constants::*;
 use frame_support::parameter_types;
 use num_traits::CheckedMul;
 use primitives::currency::CurrencyId;
+use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, FixedPointNumber};
 pub use types::*;
 
@@ -60,6 +62,9 @@ mod types {
 	/// Balance of an account.
 	pub type Balance = u128;
 
+	/// Identifier for a fNFT
+	pub type FinancialNftInstanceId = u64;
+
 	/// An amount
 	pub type Amount = i128;
 
@@ -77,9 +82,6 @@ mod types {
 
 	// Aura consensus authority.
 	pub type AuraId = sp_consensus_aura::sr25519::AuthorityId;
-
-	/// Council Instance
-	pub type CouncilInstance = collective::Instance1;
 
 	/// Concrete header
 	pub type Header = sp_runtime::generic::Header<BlockNumber, sp_runtime::traits::BlakeTwo256>;
@@ -99,16 +101,16 @@ mod types {
 	}
 
 	pub type NftInstanceId = u128;
+
+	pub type RewardPoolId = u16;
+
+	pub type PositionId = u128;
 }
 
 /// Common constants of statemint and statemine
 mod constants {
-	use super::types::{AccountId, BlockNumber, CouncilInstance};
-	use frame_support::{
-		traits::EnsureOneOf,
-		weights::{constants::WEIGHT_PER_SECOND, Weight},
-	};
-	use frame_system::EnsureRoot;
+	use super::types::BlockNumber;
+	use frame_support::weights::{constants::WEIGHT_PER_SECOND, Weight};
 	use sp_runtime::Perbill;
 
 	/// This determines the average expected block time that we are targeting. Blocks will be
@@ -117,8 +119,8 @@ mod constants {
 	/// slot_duration()`.
 	///
 	/// Change this to adjust the block time.
-	pub const MILLISECS_PER_BLOCK: u64 = 12000;
-	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
+	pub const MILLISECS_PER_BLOCK: u32 = 12000;
+	pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK as u64;
 
 	// Time is measured by number of blocks.
 	pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
@@ -135,18 +137,12 @@ mod constants {
 
 	/// We allow for 2 seconds of compute with a 6 second average block time.
 	pub const MAXIMUM_BLOCK_WEIGHT: Weight = WEIGHT_PER_SECOND / 2;
-
-	/// Origin for either root or half of general council
-	pub type EnsureRootOrHalfCouncil = EnsureOneOf<
-		EnsureRoot<AccountId>,
-		collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
-	>;
 }
 
 #[derive(Default)]
 pub struct PriceConverter<AssetsRegistry>(PhantomData<AssetsRegistry>);
 
-pub mod xcmp_errors {
+pub mod cross_chain_errors {
 	pub const ASSET_IS_NOT_PRICEABLE: &str = "Asset is not priceable";
 	pub const AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE: &str =
 		"Amount of asset is more than max possible";
@@ -172,16 +168,16 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
 							payment.into_inner().safe_div(&Ratio::accuracy()).map_err(Into::into)
 						} else {
 							Err(DispatchError::Other(
-								xcmp_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
+								cross_chain_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
 							))
 						}
 					} else {
 						Err(DispatchError::Other(
-							xcmp_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
+							cross_chain_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
 						))
 					}
 				} else {
-					Err(DispatchError::Other(xcmp_errors::ASSET_IS_NOT_PRICEABLE))
+					Err(DispatchError::Other(cross_chain_errors::ASSET_IS_NOT_PRICEABLE))
 				},
 		}
 	}
@@ -224,4 +220,10 @@ pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = Cu
 	// 3. use hardcoded values
 	// 4. else 1_000_000_u128
 	.unwrap_or(1_000_000_u128)
+}
+
+parameter_types! {
+	/// NOTE: do not reduce, as it will tell that some already stored vectors has smaller range of values
+	#[derive(PartialEq, Eq, Copy, Clone, codec::Encode, codec::Decode, codec::MaxEncodedLen, Debug, TypeInfo)]
+	pub const MaxStringSize: u32 = 100;
 }

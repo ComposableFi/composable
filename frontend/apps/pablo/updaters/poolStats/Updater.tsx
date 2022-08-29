@@ -1,6 +1,4 @@
 import { useEffect } from "react";
-import { useParachainApi } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAllLpTokenRewardingPools } from "../../store/hooks/useAllLpTokenRewardingPools";
 import { fetchPoolStats, calculatePoolStats, PabloPoolQueryResponse } from "@/defi/utils/pablo/pools/stats";
 import BigNumber from "bignumber.js";
@@ -12,13 +10,10 @@ import useStore from "@/store/useStore";
  */
 const Updater = () => {
   const { apollo, putPoolStats, poolStats, putPoolStatsValue } = useStore();
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-
   const allLpRewardingPools = useAllLpTokenRewardingPools();
 
   useEffect(() => {
-    console.log(`[PoolStatsUpdater] Update Stats Effect (1)`);
-    if (parachainApi && allLpRewardingPools.length) {
+    if (allLpRewardingPools.length) {
       let promises: Promise<PabloPoolQueryResponse[]>[] = [];
 
       allLpRewardingPools.forEach((pool) => {
@@ -48,11 +43,9 @@ const Updater = () => {
         });
       });
     }
-  }, [parachainApi, allLpRewardingPools, putPoolStats]);
+  }, [allLpRewardingPools, putPoolStats]);
 
   useEffect(() => {
-    console.log(`[PoolStatsUpdater] Update Value Effect (2)`);
-
     if (allLpRewardingPools.length) {
       allLpRewardingPools.forEach((i) => {
 

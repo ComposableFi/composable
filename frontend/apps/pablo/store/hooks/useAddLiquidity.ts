@@ -1,9 +1,12 @@
 import { AssetId } from "@/defi/polkadot/types";
-import { setSelection, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
+import {
+  setSelection,
+  useAddLiquiditySlice,
+} from "@/store/addLiquidity/addLiquidity.slice";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import BigNumber from "bignumber.js";
 import { useState, useMemo, useEffect } from "react";
-import { useParachainApi } from "substrate-react";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 import { useAssetBalance } from "../assets/hooks";
 import { fromChainUnits, toChainUnits } from "@/defi/utils";
@@ -13,22 +16,20 @@ import { useFilteredAssetListDropdownOptions } from "@/defi/hooks/assets/useFilt
 export const useAddLiquidity = () => {
   const [valid, setValid] = useState<boolean>(false);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
   const {
     ui: { assetOne, assetTwo, assetOneAmount, assetTwoAmount },
     pool,
-    findPoolManually
+    findPoolManually,
   } = useAddLiquiditySlice();
 
   const _assetOne = useAsset(assetOne);
   const _assetTwo = useAsset(assetTwo);
 
   const {
-    tokenAmounts: {
-      baseAmount,
-      quoteAmount
-    }
-  } = useLiquidityByPool(pool)
+    tokenAmounts: { baseAmount, quoteAmount },
+  } = useLiquidityByPool(pool);
 
   const assetOneAmountBn = useMemo(
     () => new BigNumber(assetOneAmount),
@@ -68,7 +69,7 @@ export const useAddLiquidity = () => {
   };
 
   const canSupply = () => {
-    return assetOneAmountBn.lt(balanceOne) && assetTwoAmountBn.lt(balanceTwo);
+    return assetOneAmountBn.lte(balanceOne) && assetTwoAmountBn.lte(balanceTwo);
   };
 
   useEffect(() => {
@@ -104,39 +105,46 @@ export const useAddLiquidity = () => {
         .div(new BigNumber(netAum).plus(netUser))
         .times(100);
     }
-  }, [
-    baseAmount,
-    quoteAmount,
-    assetOneAmountBn,
-    assetTwoAmountBn
-  ]);
+  }, [baseAmount, quoteAmount, assetOneAmountBn, assetTwoAmountBn]);
 
   const [lpReceiveAmount, setLpReceiveAmount] = useState(new BigNumber(0));
 
   useEffect(() => {
-    if (parachainApi && assetOne !== "none" && assetTwo !== "none" && pool) {
+    if (
+      parachainApi &&
+      assetOne !== "none" &&
+      assetTwo !== "none" &&
+      pool &&
+      selectedAccount
+    ) {
       let isReverse = pool.pair.base.toString() !== assetOne;
-      const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount)
+      const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount);
       const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
 
       if (bnBase.gte(0) && bnQuote.gte(0)) {
-        (parachainApi.rpc as any).pablo
-          .expectedLpTokensGivenLiquidity(
+        
+        let b = isReverse ? pool.pair.quote.toString() : pool.pair.base.toString();
+        let q = isReverse ? pool.pair.base.toString() : pool.pair.quote.toString();
+
+        // @ts-ignore
+        parachainApi.rpc.pablo
+          .simulateAddLiquidity(
+            parachainApi.createType("AccountId32", selectedAccount.address),
             parachainApi.createType("PalletPabloPoolId", pool.poolId),
-            parachainApi.createType("CustomRpcBalance", bnBase.toString()),
-            parachainApi.createType("CustomRpcBalance", bnBase.toString())
+            {
+              [b]: bnBase.toString(),
+              [q]: bnQuote.toString()
+            }
           )
           .then((expectedLP: any) => {
-            setLpReceiveAmount(
-              fromChainUnits(expectedLP.toString())
-            );
+            setLpReceiveAmount(fromChainUnits(expectedLP.toString()));
           })
           .catch((err: any) => {
             console.log(err);
           });
       }
     }
-  }, [parachainApi, assetOneAmount, assetTwoAmount, assetOne, assetTwo, pool]);
+  }, [parachainApi, assetOneAmount, assetTwoAmount, assetOne, assetTwo, pool, selectedAccount]);
 
   return {
     assetOne: _assetOne,
@@ -158,6 +166,6 @@ export const useAddLiquidity = () => {
     needToSelectToken,
     invalidTokenPair,
     canSupply,
-    findPoolManually
+    findPoolManually,
   };
 };

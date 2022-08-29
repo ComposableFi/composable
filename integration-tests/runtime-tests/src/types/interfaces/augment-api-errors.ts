@@ -3,7 +3,7 @@
 
 import type { ApiTypes } from "@polkadot/api-base/types";
 
-declare module "@polkadot/api-base/types/errors" {
+declare module '@polkadot/api-base/types/errors' {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
@@ -442,6 +442,17 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    fnft: {
+      CollectionAlreadyExists: AugmentedError<ApiType>;
+      CollectionNotFound: AugmentedError<ApiType>;
+      InstanceAlreadyExists: AugmentedError<ApiType>;
+      InstanceNotFound: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     governanceRegistry: {
       /**
        * Not found
@@ -454,9 +465,17 @@ declare module "@polkadot/api-base/types/errors" {
     };
     ibc: {
       /**
+       * Channel not found
+       **/
+      ChannelNotFound: AugmentedError<ApiType>;
+      /**
        * Client state not found
        **/
       ClientStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Connection not found
+       **/
+      ConnectionNotFound: AugmentedError<ApiType>;
       /**
        * Client consensus state not found for height
        **/
@@ -481,6 +500,18 @@ declare module "@polkadot/api-base/types/errors" {
        * Other forms of errors
        **/
       Other: AugmentedError<ApiType>;
+      /**
+       * Packet Acknowledgment wasn't found
+       **/
+      PacketAcknowledgmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet commitment wasn't found
+       **/
+      PacketCommitmentNotFound: AugmentedError<ApiType>;
+      /**
+       * Packet receipt wasn't found
+       **/
+      PacketReceiptNotFound: AugmentedError<ApiType>;
       /**
        * Error processing ibc messages
        **/
@@ -702,7 +733,9 @@ declare module "@polkadot/api-base/types/errors" {
       [key: string]: AugmentedError<ApiType>;
     };
     liquidations: {
+      InvalidLiquidationStrategiesVector: AugmentedError<ApiType>;
       NoLiquidationEngineFound: AugmentedError<ApiType>;
+      OnlyDutchAuctionStrategyIsImplemented: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -804,6 +837,10 @@ declare module "@polkadot/api-base/types/errors" {
        * Price already submitted
        **/
       AlreadySubmitted: AugmentedError<ApiType>;
+      /**
+       * Annual rewarding cost too high
+       **/
+      AnnualRewardLessThanAlreadyRewarded: AugmentedError<ApiType>;
       ArithmeticError: AugmentedError<ApiType>;
       /**
        * Error avoids a panic
@@ -853,9 +890,17 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       MaxPrices: AugmentedError<ApiType>;
       /**
+       * Price weight must sum to 100
+       **/
+      MustSumTo100: AugmentedError<ApiType>;
+      /**
        * No Permission
        **/
       NoPermission: AugmentedError<ApiType>;
+      /**
+       * Rewarding has not started
+       **/
+      NoRewardTrackerSet: AugmentedError<ApiType>;
       /**
        * No stake for oracle
        **/
@@ -923,6 +968,7 @@ declare module "@polkadot/api-base/types/errors" {
       NotEnoughLpToken: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
+      StakingPoolConfigError: AugmentedError<ApiType>;
       WeightsMustBeNonZero: AugmentedError<ApiType>;
       WeightsMustSumToOne: AugmentedError<ApiType>;
       /**
@@ -1147,14 +1193,55 @@ declare module "@polkadot/api-base/types/errors" {
       [key: string]: AugmentedError<ApiType>;
     };
     stakingRewards: {
+      BackToTheFuture: AugmentedError<ApiType>;
       /**
        * Invalid end block number provided for creating a pool.
        **/
       EndBlockMustBeInTheFuture: AugmentedError<ApiType>;
       /**
+       * Reward's max limit reached.
+       **/
+      MaxRewardLimitReached: AugmentedError<ApiType>;
+      /**
+       * No duration presets configured.
+       **/
+      NoDurationPresetsConfigured: AugmentedError<ApiType>;
+      /**
+       * Not enough assets for a stake.
+       **/
+      NotEnoughAssets: AugmentedError<ApiType>;
+      /**
+       * Only pool owner can add new reward asset.
+       **/
+      OnlyPoolOwnerCanAddNewReward: AugmentedError<ApiType>;
+      /**
+       * only the owner of stake can unstake it
+       **/
+      OnlyStakeOwnerCanUnstake: AugmentedError<ApiType>;
+      /**
+       * Error when creating reduction configs.
+       **/
+      ReductionConfigProblem: AugmentedError<ApiType>;
+      /**
+       * Reward asset not found in reward pool.
+       **/
+      RewardAssetNotFound: AugmentedError<ApiType>;
+      /**
        * Error when creating reward configs.
        **/
       RewardConfigProblem: AugmentedError<ApiType>;
+      /**
+       * Rewards pool not found.
+       **/
+      RewardsPoolNotFound: AugmentedError<ApiType>;
+      /**
+       * No stake found for given id.
+       **/
+      StakeNotFound: AugmentedError<ApiType>;
+      /**
+       * Too many rewarded asset types per pool violating the storage allowed.
+       **/
+      TooManyRewardAssetTypes: AugmentedError<ApiType>;
       /**
        * Unimplemented reward pool type.
        **/
@@ -1181,7 +1268,7 @@ declare module "@polkadot/api-base/types/errors" {
       CallFiltered: AugmentedError<ApiType>;
       /**
        * Failed to extract the runtime version from the new runtime.
-       *
+       * 
        * Either calling `Core_version` or decoding `RuntimeVersion` failed.
        **/
       FailedToExtractRuntimeVersion: AugmentedError<ApiType>;
@@ -1203,6 +1290,66 @@ declare module "@polkadot/api-base/types/errors" {
        * and the new runtime.
        **/
       SpecVersionNeedsToIncrease: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    technicalCollective: {
+      /**
+       * Members are already initialized!
+       **/
+      AlreadyInitialized: AugmentedError<ApiType>;
+      /**
+       * Duplicate proposals not allowed
+       **/
+      DuplicateProposal: AugmentedError<ApiType>;
+      /**
+       * Duplicate vote ignored
+       **/
+      DuplicateVote: AugmentedError<ApiType>;
+      /**
+       * Account is not a member
+       **/
+      NotMember: AugmentedError<ApiType>;
+      /**
+       * Proposal must exist
+       **/
+      ProposalMissing: AugmentedError<ApiType>;
+      /**
+       * The close call was made too early, before the end of the voting.
+       **/
+      TooEarly: AugmentedError<ApiType>;
+      /**
+       * There can only be a maximum of `MaxProposals` active proposals.
+       **/
+      TooManyProposals: AugmentedError<ApiType>;
+      /**
+       * Mismatched index
+       **/
+      WrongIndex: AugmentedError<ApiType>;
+      /**
+       * The given length bound for the proposal was too low.
+       **/
+      WrongProposalLength: AugmentedError<ApiType>;
+      /**
+       * The given weight bound for the proposal was too low.
+       **/
+      WrongProposalWeight: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    technicalMembership: {
+      /**
+       * Already a member.
+       **/
+      AlreadyMember: AugmentedError<ApiType>;
+      /**
+       * Not a member.
+       **/
+      NotMember: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1460,6 +1607,10 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       TryingToSelfVest: AugmentedError<ApiType>;
       /**
+       * There is no vesting schedule with a given id
+       **/
+      VestingScheduleNotFound: AugmentedError<ApiType>;
+      /**
        * Vesting period is zero
        **/
       ZeroVestingPeriod: AugmentedError<ApiType>;
@@ -1542,6 +1693,10 @@ declare module "@polkadot/api-base/types/errors" {
        * Invalid transfer destination.
        **/
       InvalidDest: AugmentedError<ApiType>;
+      /**
+       * MinXcmFee not registered for certain reserve location
+       **/
+      MinXcmFeeNotDefined: AugmentedError<ApiType>;
       /**
        * Not cross-chain transfer.
        **/

@@ -27,20 +27,20 @@ export default {
       ],
       type: "PalletPabloPriceAggregate"
     },
-    expectedLpTokensGivenLiquidity: {
-      description: "Get expected amount of LP tokens when providing liquidity to a pool.",
+    simulateAddLiquidity: {
+      description: "Get the price(in quote asset) for the given asset pair in the given pool for the given amount",
       params: [
+        {
+          name: "who",
+          type: "AccountId32"
+        },
         {
           name: "poolId",
           type: "PalletPabloPoolId"
         },
         {
-          name: "baseAssetAmount",
-          type: "CustomRpcBalance"
-        },
-        {
-          name: "quoteAssetAmount",
-          type: "CustomRpcBalance"
+          name: "amounts",
+          type: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
         },
         {
           name: "at",
@@ -49,6 +49,33 @@ export default {
         }
       ],
       type: "CustomRpcBalance"
+    },
+    simulateRemoveLiquidity: {
+      description: "Get the price(in quote asset) for the given asset pair in the given pool for the given amount",
+      params: [
+        {
+          name: "who",
+          type: "AccountId32"
+        },
+        {
+          name: "poolId",
+          type: "PalletPabloPoolId"
+        },
+        {
+          name: "lpAmount",
+          type: "CustomRpcBalance"
+        },
+        {
+          name: "minExpectedAmounts",
+          type: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
+        },
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true,
+        }
+      ],
+      type: "RemoveLiquiditySimulationResult"
     },
   },
   types: {
@@ -90,5 +117,8 @@ export default {
       quoteAssetId: "CustomRpcCurrencyId",
       spotPrice: "CustomRpcBalance",
     },
+    RemoveLiquiditySimulationResult: {
+      assets: "BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>"
+    }
   },
 };

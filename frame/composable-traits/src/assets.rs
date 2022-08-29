@@ -23,7 +23,7 @@ impl BasicAssetMetadata {
 	}
 }
 
-#[derive(Decode, Encode, Debug, Clone, PartialEq)]
+#[derive(Decode, Encode, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct Asset {
 	pub name: Vec<u8>,

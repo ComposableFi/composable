@@ -42,16 +42,16 @@ const chain = (): string => {
   }
 };
 
-const chain_connection_string = chain();
-const archive_connection_string = "http://localhost:4010/v1/graphql";
+const chainConnectionString = chain();
+const archiveConnectionString = "http://localhost:8080/v1/graphql";
 
-console.log(`Chain ${chain_connection_string}`);
-console.log(`Archive ${archive_connection_string}`);
+console.log(`Chain ${chainConnectionString}`);
+console.log(`Archive ${archiveConnectionString}`);
 
 processor.setBatchSize(500);
 processor.setDataSource({
-  archive: archive_connection_string,
-  chain: chain_connection_string,
+  archive: archiveConnectionString,
+  chain: chainConnectionString,
 });
 
 processor.addEventHandler("pablo.PoolCreated", async (ctx) => {
@@ -143,11 +143,5 @@ interface TransferEvent {
 
 function getTransferEvent(ctx: EventHandlerContext): TransferEvent {
   const event = new BalancesTransferEvent(ctx);
-  if (event.isV2300) {
-    const { from, to, amount } = event.asV2300;
-    return { from, to, amount };
-  } else {
-    const { from, to, amount } = event.asLatest;
-    return { from, to, amount };
-  }
+  return event.asV2401 ?? event.asLatest;
 }

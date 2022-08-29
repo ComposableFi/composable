@@ -110,6 +110,7 @@ impl CurrencyId {
 
 		/// Kusama native token
 		pub const KSM: CurrencyId = CurrencyId(4);
+		pub const PBLO: CurrencyId = CurrencyId(5);
 
 		/// Karura stable coin(Karura Dollar), not native.
 		#[allow(non_upper_case_globals)]
@@ -132,7 +133,7 @@ impl CurrencyId {
 	}
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, TypeInfo)]
 pub struct ValidateCurrencyId;
 
 impl Validate<CurrencyId, ValidateCurrencyId> for ValidateCurrencyId {
@@ -200,7 +201,10 @@ impl From<u128> for CurrencyId {
 #[cfg(feature = "develop")]
 impl From<CurrencyId> for xcm::latest::Junction {
 	fn from(this: CurrencyId) -> Self {
-		xcm::latest::Junction::GeneralKey(this.encode())
+		xcm::latest::Junction::GeneralKey(sp_runtime::WeakBoundedVec::force_from(
+			this.encode(),
+			None,
+		))
 	}
 }
 

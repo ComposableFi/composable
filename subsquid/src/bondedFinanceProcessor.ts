@@ -22,23 +22,13 @@ interface NewBondEvent {
  * @param event
  */
 function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent {
-  if (event.isV2300) {
-    const { offerId, nbOfBonds } = event.asV2300;
-    return { offerId, nbOfBonds };
-  }
-
-  const { offerId, nbOfBonds } = event.asLatest;
+  const { offerId, nbOfBonds } = event.asV2401 ?? event.asLatest;
   return { offerId, nbOfBonds };
 }
 
 function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
-  if (event.isV2300) {
-    const { offerId, beneficiary } = event.asV2300;
+  const { offerId, beneficiary } = event.asV2401 ?? event.asLatest;
 
-    return { offerId, beneficiary };
-  }
-
-  const { offerId, beneficiary } = event.asLatest;
   return { offerId, beneficiary };
 }
 

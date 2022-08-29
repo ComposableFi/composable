@@ -21,7 +21,7 @@ mintedLPTokens = BigInt(0);
 /**
  * Creates Constant Product Pool
  * @param api
- * @param walletId
+ * @param sudoKey
  * @param owner
  * @param baseAssetId
  * @param quoteAssetId
@@ -30,7 +30,7 @@ mintedLPTokens = BigInt(0);
  */
 export async function createConsProdPool(
   api: ApiPromise,
-  walletId: KeyringPair,
+  sudoKey: KeyringPair,
   owner: KeyringPair,
   baseAssetId: number,
   quoteAssetId: number,
@@ -50,7 +50,12 @@ export async function createConsProdPool(
   });
   const {
     data: [resultPoolId]
-  } = await sendAndWaitForSuccess(api, walletId, api.events.pablo.PoolCreated.is, api.tx.pablo.create(pool));
+  } = await sendAndWaitForSuccess(
+    api,
+    sudoKey,
+    api.events.pablo.PoolCreated.is,
+    api.tx.sudo.sudo(api.tx.pablo.create(pool))
+  );
   return resultPoolId.toNumber();
 }
 
@@ -371,7 +376,7 @@ export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair
 }
 /***
  Creates stableSwapPool
- @param sender: User sending tx- KeyringPair
+ @param sudoKey: User sending tx- KeyringPair
  @param owner: Owner of the pool - KeyringPair
  @param baseAssetId: CurencyId
  @param quoteAssetId: CurrencyId
@@ -381,7 +386,7 @@ export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair
  */
 export async function createStableSwapPool(
   api: ApiPromise,
-  sender: KeyringPair,
+  sudoKey: KeyringPair,
   owner: KeyringPair,
   baseAssetId: number,
   quoteAssetId: number,
@@ -401,7 +406,12 @@ export async function createStableSwapPool(
   });
   const {
     data: [returnedPoolId]
-  } = await sendAndWaitForSuccess(api, sender, api.events.pablo.PoolCreated.is, api.tx.pablo.create(pool));
+  } = await sendAndWaitForSuccess(
+    api,
+    sudoKey,
+    api.events.pablo.PoolCreated.is,
+    api.tx.sudo.sudo(api.tx.pablo.create(pool))
+  );
   const resultPoolId = returnedPoolId.toNumber() as number;
   return { resultPoolId };
 }

@@ -139,6 +139,7 @@ export class TxMosaicTests {
     const pAssetId = api.createType("u128", assetId);
     const contractAddress = api.createType("[u8;20]", ethAddress);
     const pAmount = api.createType("u128", transferAmount);
+    const pMinimumAmountOut = api.createType("u128", transferAmount * 0.5);
     const pSwapToNative = api.createType("bool", false);
     const pSourceUserAccount = api.createType("AccountId32", relayerWallet.address);
     const pAmmSwapInfo = api.createType("Option<PalletMosaicAmmSwapInfo>", null);
@@ -152,6 +153,7 @@ export class TxMosaicTests {
         pAssetId,
         contractAddress,
         pAmount,
+        pMinimumAmountOut,
         pSwapToNative,
         pSourceUserAccount,
         pAmmSwapInfo,

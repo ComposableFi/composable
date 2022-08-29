@@ -24,6 +24,7 @@ pub trait CallFilter<S: Get<u32>> {
 	fn disable(entry: &CallFilterEntry<S>) -> DispatchResult;
 }
 
+// NOTE: filter by `Call` prefix with pallet id and function id (integers) would be more effective
 /// A call filter entry, product of the pallet name and the extrinsic name.
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct CallFilterEntry<S: Get<u32>> {

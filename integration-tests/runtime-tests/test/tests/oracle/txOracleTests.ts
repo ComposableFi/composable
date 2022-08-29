@@ -22,7 +22,7 @@ import { getDevWallets } from "@composable/utils/walletHelper";
  * Contains all TX tests for the pallet:
  * Oracle
  */
-describe("tx.oracle Tests", function() {
+describe("tx.oracle Tests", function () {
   if (!testConfiguration.enabledTests.enabled) return;
 
   let api: ApiPromise;
@@ -31,7 +31,7 @@ describe("tx.oracle Tests", function() {
   let signedWallet: KeyringPair;
   let controllerWallet: KeyringPair;
 
-  before("Setting up the tests", async function() {
+  before("Setting up the tests", async function () {
     this.timeout(60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
@@ -44,7 +44,7 @@ describe("tx.oracle Tests", function() {
     controllerWallet = devWalletAlice;
   });
 
-  after("Closing the connection", async function() {
+  after("Closing the connection", async function () {
     await api.disconnect();
   });
 
@@ -53,11 +53,11 @@ describe("tx.oracle Tests", function() {
    *
    * Sudo command success is checked with `.isOk`.
    */
-  describe("tx.addAssetAndInfo Success Test", function() {
+  describe("tx.addAssetAndInfo Success Test", function () {
     if (!testConfiguration.enabledTests.addAssetAndInfo__success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(2 * 60 * 1000);
-    it("[SHORT] Can add new asset and info", async function() {
+    it("[SHORT] Can add new asset and info", async function () {
       if (!testConfiguration.enabledTests.addAssetAndInfo__success.add1) this.skip();
       const assetId = api.createType("u128", newAsset1);
       const threshold = api.createType("Percent", 50);
@@ -77,7 +77,8 @@ describe("tx.oracle Tests", function() {
         maxAnswers,
         blockInterval,
         reward,
-        slash
+        slash,
+        true
       );
       if (result.isErr) console.debug(result.asErr.toString());
       expect(result.isOk).to.be.true;
@@ -94,17 +95,17 @@ describe("tx.oracle Tests", function() {
    * resultAccount0: The signer wallets public key.
    * resultAccount1: The controller wallets public key.
    */
-  describe("tx.setSigner Success Test", function() {
+  describe("tx.setSigner Success Test", function () {
     if (!testConfiguration.enabledTests.setSigner__success.enabled) return;
     // Timeout set to 4 minutes
     this.timeout(4 * 60 * 1000);
-    it("Can set signer", async function() {
+    it("Can set signer", async function () {
       if (!testConfiguration.enabledTests.setSigner__success.set1) this.skip();
       await runBeforeTxOracleSetSigner(api, controllerWallet, signedWallet); // Making sure we have funds.
 
       const {
         data: [resultAccount0, resultAccount1]
-      } = await txOracleSetSignerSuccessTest(api, controllerWallet, signedWallet).catch(function(exc) {
+      } = await txOracleSetSignerSuccessTest(api, controllerWallet, signedWallet).catch(function (exc) {
         return { data: [exc] }; /* We can't call this.skip() from here. */
       });
 
@@ -128,11 +129,11 @@ describe("tx.oracle Tests", function() {
    *
    * Result is the signer wallets public key.
    */
-  describe("tx.addStake Success Test", function() {
+  describe("tx.addStake Success Test", function () {
     if (!testConfiguration.enabledTests.addStake__success.enabled) return;
     // Timeout set to 4 minutes
     this.timeout(4 * 60 * 1000);
-    it("Can add stake from creator/controller", async function() {
+    it("Can add stake from creator/controller", async function () {
       if (!testConfiguration.enabledTests.addStake__success.add1) this.skip();
       await runBeforeTxOracleAddStake(api, controllerWallet, controllerWallet, signedWallet); // Preparing the signer to have funds.
       const stake = api.createType("u128", 250000000000);
@@ -150,11 +151,11 @@ describe("tx.oracle Tests", function() {
    *
    * Result is the signer wallets public key.
    */
-  describe("tx.submitPrice Success Test", function() {
+  describe("tx.submitPrice Success Test", function () {
     if (!testConfiguration.enabledTests.submitPrice__success.enabled) return;
     // Timeout set to 4 minutes
     this.timeout(4 * 60 * 1000);
-    it("Can submit new price by signer", async function() {
+    it("Can submit new price by signer", async function () {
       if (!testConfiguration.enabledTests.submitPrice__success.submit1) this.skip();
       const price = api.createType("u128", 10000);
       const assetId = api.createType("u128", newAsset1);
@@ -172,11 +173,11 @@ describe("tx.oracle Tests", function() {
    *
    * Result is the signer wallets public key.
    */
-  describe("tx.removeStake Success Test", function() {
+  describe("tx.removeStake Success Test", function () {
     if (!testConfiguration.enabledTests.removeStake__success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(2 * 60 * 1000);
-    it("Can remove stake", async function() {
+    it("Can remove stake", async function () {
       if (!testConfiguration.enabledTests.removeStake__success.remove1) this.skip();
       const {
         data: [result]
@@ -193,13 +194,13 @@ describe("tx.oracle Tests", function() {
    *
    * Result is the signer wallets public key.
    */
-  describe("tx.reclaimStake Success Test", function() {
+  describe("tx.reclaimStake Success Test", function () {
     if (!testConfiguration.enabledTests.reclaimStake__success.enabled) return;
     let unlockBlock;
     // Timeout set to 20 minutes
     this.timeout(20 * 60 * 1000);
     this.slow(1200000);
-    it("Can reclaim stake", async function() {
+    it("Can reclaim stake", async function () {
       if (!testConfiguration.enabledTests.reclaimStake__success.reclaim1) this.skip();
       // Get the block number at which the funds are unlocked.
       const declaredWithdrawsResult = await api.query.oracle.declaredWithdraws(signedWallet.address);

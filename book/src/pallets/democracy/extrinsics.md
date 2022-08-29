@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-06-25T22:31:58.511350675Z -->
+<!-- Generated at 2022-08-15T14:18:26.489215Z -->
 
 # Democracy Pallet Extrinsics
 

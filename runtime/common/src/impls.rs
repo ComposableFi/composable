@@ -4,12 +4,12 @@ pub type NegativeImbalance<T> =
 	<balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
 
 /// Logic for the author to get a portion of fees.
-pub struct ToStakingPot<R>(sp_std::marker::PhantomData<R>);
-impl<R> OnUnbalanced<NegativeImbalance<R>> for ToStakingPot<R>
+pub struct ToStakingPot<R, I>(sp_std::marker::PhantomData<(R, I)>);
+impl<R, I: 'static> OnUnbalanced<NegativeImbalance<R>> for ToStakingPot<R, I>
 where
 	R: balances::Config
 		+ collator_selection::Config
-		+ treasury::Config<Currency = balances::Pallet<R>>,
+		+ treasury::Config<I, Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v2::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v2::AccountId>,
 	<R as frame_system::Config>::Event: From<balances::Event<R>>,
@@ -23,18 +23,18 @@ where
 
 		let staking_pot = <collator_selection::Pallet<R>>::account_id();
 		<balances::Pallet<R>>::resolve_creating(&staking_pot, to_collators);
-		<treasury::Pallet<R> as OnUnbalanced<_>>::on_unbalanced(to_treasury);
+		<treasury::Pallet<R, I> as OnUnbalanced<_>>::on_unbalanced(to_treasury);
 	}
 }
 
 /// OnUnbalanced handler for pallet-transaction-payment.
-pub struct DealWithFees<R>(sp_std::marker::PhantomData<R>);
+pub struct DealWithFees<R, I>(sp_std::marker::PhantomData<(R, I)>);
 
-impl<R> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R>
+impl<R, I: 'static> OnUnbalanced<NegativeImbalance<R>> for DealWithFees<R, I>
 where
 	R: balances::Config
 		+ collator_selection::Config
-		+ treasury::Config<Currency = balances::Pallet<R>>,
+		+ treasury::Config<I, Currency = balances::Pallet<R>>,
 	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v2::AccountId>,
 	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v2::AccountId>,
 	<R as frame_system::Config>::Event: From<balances::Event<R>>,
@@ -45,7 +45,7 @@ where
 			if let Some(tips) = fees_then_tips.next() {
 				tips.merge_into(&mut fees);
 			}
-			<ToStakingPot<R> as OnUnbalanced<_>>::on_unbalanced(fees);
+			<ToStakingPot<R, I> as OnUnbalanced<_>>::on_unbalanced(fees);
 		}
 	}
 }
@@ -53,7 +53,7 @@ where
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use crate::{Balance, BlockNumber, DAYS};
+	use crate::{governance::native::NativeTreasury, Balance, BlockNumber, DAYS};
 	use collator_selection::IdentityCollator;
 	use frame_support::{
 		ord_parameter_types, parameter_types,
@@ -83,7 +83,7 @@ mod tests {
 		{
 			System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 			Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-			Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 31,
+			Treasury: treasury::<Instance1>::{Pallet, Call, Storage, Config, Event<T>} = 31,
 			CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
 			Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
 			Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
@@ -233,7 +233,7 @@ mod tests {
 		pub const MaxApprovals: u32 = 30;
 	}
 
-	impl treasury::Config for Test {
+	impl treasury::Config<NativeTreasury> for Test {
 		type PalletId = TreasuryPalletId;
 		type Currency = Balances;
 		type ApproveOrigin = EnsureRoot<AccountId>;
@@ -250,6 +250,7 @@ mod tests {
 		type WeightInfo = ();
 		// TODO: add bounties?
 		type SpendFunds = ();
+		type SpendOrigin = frame_support::traits::NeverEnsureOrigin<Balance>;
 	}
 
 	pub fn new_test_ext() -> sp_io::TestExternalities {

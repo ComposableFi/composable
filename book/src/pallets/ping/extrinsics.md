@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-06-25T22:31:58.243887292Z -->
+<!-- Generated at 2022-08-15T14:18:26.434504Z -->
 
 # Ping Pallet Extrinsics
 

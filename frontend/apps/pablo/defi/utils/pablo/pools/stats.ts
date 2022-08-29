@@ -1,4 +1,4 @@
-import { queryPabloPoolById } from "@/updaters/pools/subsquid";
+import { queryPabloPoolById } from "@/defi/subsquid/pools/queries";
 import { DAYS } from "../../constants";
 import BigNumber from "bignumber.js";
 import { fromChainUnits } from "../../units";

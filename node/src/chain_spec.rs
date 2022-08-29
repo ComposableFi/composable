@@ -1,5 +1,8 @@
+#![allow(clippy::derive_partial_eq_without_eq)] // for ChainSpecGroup
 use common::{AccountId, AuraId};
 use cumulus_primitives_core::ParaId;
+use once_cell::sync::Lazy;
+use primitives::currency::CurrencyId;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup, Properties};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
@@ -13,11 +16,22 @@ pub mod dali;
 
 pub mod picasso;
 
+const DEFAULT_PARA_ID: u32 = 2087;
+
 // Parachin ID.
-const PARA_ID: ParaId = ParaId::new(2000);
+static PARA_ID: Lazy<ParaId> = Lazy::new(|| {
+	ParaId::new(
+		std::env::var("COMPOSABLE_PARA_ID")
+			.unwrap_or_else(|_| DEFAULT_PARA_ID.to_string())
+			.parse::<u32>()
+			.unwrap_or(DEFAULT_PARA_ID),
+	)
+});
 
 /// The extensions for the [`ChainSpec`].
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension)]
+#[derive(
+	Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ChainSpecGroup, ChainSpecExtension,
+)]
 #[serde(deny_unknown_fields)]
 pub struct Extensions {
 	/// The relay chain of the Parachain.
@@ -86,8 +100,8 @@ pub fn composable() -> composable::ChainSpec {
 pub fn picasso_dev() -> picasso::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "PICA".into());
-	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("ss58Format".into(), 49.into());
+	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
+	properties.insert("ss58Format".into(), picasso_runtime::SS58Prefix::get().into());
 
 	picasso::ChainSpec::from_genesis(
 		"Local Picasso Testnet",
@@ -111,9 +125,9 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 					),
 				],
 				dev_accounts(),
-				PARA_ID,
+				*PARA_ID,
 				common::NativeExistentialDeposit::get(),
-				picasso_runtime::TreasuryAccount::get(),
+				picasso_runtime::governance::TreasuryAccount::get(),
 			)
 		},
 		vec![],
@@ -121,7 +135,7 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: PARA_ID.into() },
+		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(*PARA_ID) },
 	)
 }
 
@@ -130,8 +144,8 @@ pub fn picasso_dev() -> picasso::ChainSpec {
 pub fn dali_dev() -> dali::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "DALI".into());
-	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("ss58Format".into(), 49.into());
+	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
+	properties.insert("ss58Format".into(), dali_runtime::SS58Prefix::get().into());
 
 	dali::ChainSpec::from_genesis(
 		"Local Dali Testnet",
@@ -155,7 +169,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 					),
 				],
 				dev_accounts(),
-				PARA_ID,
+				*PARA_ID,
 				common::NativeExistentialDeposit::get(),
 				dali_runtime::TreasuryAccount::get(),
 			)
@@ -165,7 +179,7 @@ pub fn dali_dev() -> dali::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: PARA_ID.into() },
+		Extensions { relay_chain: "rococo_local_testnet".into(), para_id: u32::from(*PARA_ID) },
 	)
 }
 
@@ -174,8 +188,8 @@ pub fn dali_dev() -> dali::ChainSpec {
 pub fn composable_dev() -> composable::ChainSpec {
 	let mut properties = Properties::new();
 	properties.insert("tokenSymbol".into(), "LAYR".into());
-	properties.insert("tokenDecimals".into(), 12.into());
-	properties.insert("ss58Format".into(), 50.into());
+	properties.insert("tokenDecimals".into(), CurrencyId::decimals().into());
+	properties.insert("ss58Format".into(), composable_runtime::SS58Prefix::get().into());
 
 	composable::ChainSpec::from_genesis(
 		"Local Composable Testnet",
@@ -199,7 +213,7 @@ pub fn composable_dev() -> composable::ChainSpec {
 					),
 				],
 				dev_accounts(),
-				PARA_ID,
+				*PARA_ID,
 				composable_runtime::ExistentialDeposit::get(),
 				composable_runtime::TreasuryAccount::get(),
 			)
@@ -209,7 +223,7 @@ pub fn composable_dev() -> composable::ChainSpec {
 		None,
 		None,
 		Some(properties),
-		Extensions { relay_chain: "westend_local_testnet".into(), para_id: PARA_ID.into() },
+		Extensions { relay_chain: "westend_local_testnet".into(), para_id: u32::from(*PARA_ID) },
 	)
 }
 

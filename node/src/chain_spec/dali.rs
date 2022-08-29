@@ -23,7 +23,7 @@ pub fn genesis_config(
 ) -> dali_runtime::GenesisConfig {
 	dali_runtime::GenesisConfig {
 		system: dali_runtime::SystemConfig {
-			code: dali_runtime::WASM_BINARY
+			code: dali_runtime::WASM_BINARY_V2
 				.expect("WASM binary was not build, please build it!")
 				.to_vec(),
 		},
@@ -62,13 +62,19 @@ pub fn genesis_config(
 			candidacy_bond: existential_deposit * 16,
 			..Default::default()
 		},
-		council_membership: dali_runtime::CouncilMembershipConfig {
-			members: vec![],
-			..Default::default()
-		},
+		council_membership: Default::default(),
 		// council will get its members from council_membership
 		council: Default::default(),
 		democracy: Default::default(),
 		treasury: Default::default(),
+		technical_collective: Default::default(),
+		technical_membership: Default::default(),
+		relayer_xcm: Default::default(),
+		assets_registry: Default::default(),
+		tokens: Default::default(),
+		transaction_payment: Default::default(),
+		vesting: Default::default(),
+		lending: Default::default(),
+		liquidations: Default::default(),
 	}
 }

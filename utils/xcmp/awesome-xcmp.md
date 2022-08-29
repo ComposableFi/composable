@@ -1,6 +1,6 @@
 # Overview
 
-Resources which allows to grasp  XCM. General undrestanding how bridges work will help too.
+Resources which allows to grasp  XCM. General understanding how bridges work will help too.
 
 ## Terminology
 
@@ -68,3 +68,7 @@ XCMP can be upward (parachain to relay), downward(relay to parachain) and siblin
 - <https://gendal.me/2013/11/24/a-simple-explanation-of-how-money-moves-around-the-banking-system/>
 - <https://medium.com/composable-finance/trustless-bridging-438a6e5c917a>
 - <https://research.csiro.au/blockchainpatterns/general-patterns/blockchain-payment-patterns/token-swap/>
+
+### Operations
+
+<https://docs.substrate.io/reference/how-to-guides/parachains/add-hrmp-channels/>

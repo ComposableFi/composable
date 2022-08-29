@@ -15,17 +15,23 @@
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-// Make the WASM binary available.
-#[cfg(all(feature = "std", feature = "wasm-builder"))]
-include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
+// Make the WASM binary available
+#[cfg(all(feature = "std", feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("PICASSO_RUNTIME")));
+#[cfg(not(feature = "builtin-wasm"))]
+pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
+pub mod governance;
 mod weights;
 mod xcmp;
+
 pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
 
+use governance::*;
+
 use common::{
-	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
-	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
+	governance::native::*, impls::DealWithFees, multi_existential_deposits, AccountId,
+	AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, Hash, MaxStringSize,
 	Moment, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
 	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -61,6 +67,8 @@ pub use frame_support::{
 	},
 	PalletId, StorageValue,
 };
+
+pub use governance::TreasuryAccount;
 
 use codec::{Codec, Encode, EncodeLike};
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
@@ -110,7 +118,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 1400,
+	spec_version: 1401,
 	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -212,7 +220,7 @@ impl system::Config for Runtime {
 	type SS58Prefix = SS58Prefix;
 	/// The action to take on a Runtime Upgrade. Used not default since we're a parachain.
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 impl randomness_collective_flip::Config for Runtime {}
@@ -226,8 +234,8 @@ impl assets_registry::Config for Runtime {
 	type LocalAssetId = CurrencyId;
 	type Balance = Balance;
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
-	type UpdateAssetRegistryOrigin = EnsureRootOrHalfCouncil;
-	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
+	type UpdateAssetRegistryOrigin = EnsureRootOrHalfNativeCouncil;
+	type ParachainOrGovernanceOrigin = EnsureRootOrHalfNativeCouncil;
 	type CurrencyFactory = CurrencyFactory;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 }
@@ -240,15 +248,9 @@ impl assets::Config for Runtime {
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
-	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
 	type CurrencyValidator = ValidateCurrencyId;
-}
-
-impl governance_registry::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type WeightInfo = ();
 }
 
 parameter_types! {
@@ -374,8 +376,9 @@ impl WeightToFeePolynomial for WeightToFee {
 }
 
 impl transaction_payment::Config for Runtime {
+	type Event = Event;
 	type OnChargeTransaction =
-		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
+		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
@@ -481,6 +484,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type XcmpMessageHandler = XcmpQueue;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
+	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}
@@ -529,7 +533,7 @@ parameter_types! {
 impl collator_selection::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
-	type UpdateOrigin = EnsureRootOrHalfCouncil;
+	type UpdateOrigin = EnsureRootOrHalfNativeCouncil;
 	type PotId = PotId;
 	type MaxCandidates = MaxCandidates;
 	type MinCandidates = MinCandidates;
@@ -551,10 +555,6 @@ impl Contains<AccountId> for DustRemovalWhitelist {
 	}
 }
 
-parameter_types! {
-	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account_truncating();
-}
-
 type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
@@ -566,70 +566,10 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
 	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	type OnNewTokenAccount = ();
 	type OnKilledTokenAccount = ();
-}
-
-parameter_types! {
-	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
-	/// Percentage of proposal that most be bonded by the proposer.
-	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub ProposalBondMinimum: Balance = 5000 * CurrencyId::unit::<Balance>();
-	pub ProposalBondMaximum: Balance = 10000 * CurrencyId::unit::<Balance>();
-	pub const SpendPeriod: BlockNumber = 7 * DAYS;
-	pub const Burn: Permill = Permill::from_percent(0);
-
-	pub const MaxApprovals: u32 = 30;
-}
-
-impl treasury::Config for Runtime {
-	type PalletId = TreasuryPalletId;
-	type Currency = Balances;
-	type ApproveOrigin = EnsureRootOrHalfCouncil;
-	type RejectOrigin = EnsureRootOrHalfCouncil;
-	type Event = Event;
-	type OnSlash = Treasury;
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ProposalBondMaximum;
-	type SpendPeriod = SpendPeriod;
-	type Burn = Burn;
-	type MaxApprovals = MaxApprovals;
-	type BurnDestination = ();
-	type WeightInfo = weights::treasury::WeightInfo<Runtime>;
-	type SpendFunds = ();
-}
-
-parameter_types! {
-	pub const CouncilMotionDuration: BlockNumber = 7 * DAYS;
-	pub const CouncilMaxProposals: u32 = 100;
-	pub const CouncilMaxMembers: u32 = 100;
-}
-
-impl membership::Config<membership::Instance1> for Runtime {
-	type Event = Event;
-	type AddOrigin = EnsureRootOrHalfCouncil;
-	type RemoveOrigin = EnsureRootOrHalfCouncil;
-	type SwapOrigin = EnsureRootOrHalfCouncil;
-	type ResetOrigin = EnsureRootOrHalfCouncil;
-	type PrimeOrigin = EnsureRootOrHalfCouncil;
-	type MembershipInitialized = Council;
-	type MembershipChanged = Council;
-	type MaxMembers = CouncilMaxMembers;
-	type WeightInfo = weights::membership::WeightInfo<Runtime>;
-}
-
-impl collective::Config<CouncilInstance> for Runtime {
-	type Origin = Origin;
-	type Proposal = Call;
-	type Event = Event;
-	type MotionDuration = CouncilMotionDuration;
-	type MaxProposals = CouncilMaxProposals;
-	type MaxMembers = CouncilMaxMembers;
-	type DefaultVote = collective::PrimeDefaultVote;
-	type WeightInfo = weights::collective::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -675,64 +615,10 @@ impl utility::Config for Runtime {
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
 }
 
-parameter_types! {
-	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
-	pub const VotingPeriod: BlockNumber = 5 * DAYS;
-	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
-
-	pub MinimumDeposit: Balance = 100 * CurrencyId::unit::<Balance>();
-	pub const EnactmentPeriod: BlockNumber = 2 * DAYS;
-	pub const CooloffPeriod: BlockNumber = 7 * DAYS;
-
-	// Note that Kusama uses 10 millis, however KSM is significantly more expensive
-	// https://github.com/paritytech/polkadot/blob/dc784f9b47e4681897cfd477b4f0760330875a87/runtime/kusama/src/lib.rs#L237
-	// so we increase it by a factor 10. This might still be on the low side.
-	pub PreimageByteDeposit: Balance = CurrencyId::milli::<u128>() * 100_u128;
-	pub const InstantAllowed: bool = true;
-	pub const MaxVotes: u32 = 100;
-	pub const MaxProposals: u32 = 100;
-}
-
-impl democracy::Config for Runtime {
-	type Proposal = Call;
-	type Event = Event;
-	type Currency = Balances;
-	type EnactmentPeriod = EnactmentPeriod;
-	type LaunchPeriod = LaunchPeriod;
-	type VotingPeriod = VotingPeriod;
-	type VoteLockingPeriod = EnactmentPeriod;
-	type MinimumDeposit = MinimumDeposit;
-
-	type ExternalOrigin = EnsureRootOrHalfCouncil;
-	type ExternalMajorityOrigin = EnsureRootOrHalfCouncil;
-	type ExternalDefaultOrigin = EnsureRootOrHalfCouncil;
-
-	type FastTrackOrigin = EnsureRootOrHalfCouncil;
-	type InstantOrigin = EnsureRootOrHalfCouncil;
-	type InstantAllowed = InstantAllowed;
-
-	type FastTrackVotingPeriod = FastTrackVotingPeriod;
-	type CancellationOrigin = EnsureRootOrHalfCouncil;
-	type BlacklistOrigin = EnsureRootOrHalfCouncil;
-	type CancelProposalOrigin = EnsureRootOrHalfCouncil;
-	type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
-	type OperationalPreimageOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
-	type Slash = Treasury;
-
-	type CooloffPeriod = CooloffPeriod;
-	type MaxProposals = MaxProposals;
-	type MaxVotes = MaxVotes;
-	type PalletsOrigin = OriginCaller;
-
-	type PreimageByteDeposit = PreimageByteDeposit;
-	type Scheduler = Scheduler;
-	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
-}
-
 impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
-	type AddOrigin = EnsureRootOrHalfCouncil;
+	type AddOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
 	type Balance = Balance;
 }
@@ -740,7 +626,7 @@ impl currency_factory::Config for Runtime {
 parameter_types! {
 	pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	pub const InitialPayment: Perbill = Perbill::from_percent(25);
-	pub const VestingStep: Moment = (7 * DAYS as Moment) * MILLISECS_PER_BLOCK;
+	pub const VestingStep: Moment = (7 * DAYS as Moment) * (MILLISECS_PER_BLOCK as Moment);
 	pub const Prefix: &'static [u8] = b"picasso-";
 }
 
@@ -748,7 +634,7 @@ impl crowdloan_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
 	type RewardAsset = Assets;
-	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type RelayChainAccountId = sp_runtime::AccountId32;
 	type InitialPayment = InitialPayment;
@@ -770,10 +656,11 @@ impl vesting::Config for Runtime {
 	type Event = Event;
 	type MaxVestingSchedules = MaxVestingSchedule;
 	type MinVestedTransfer = MinVestedTransfer;
-	type VestedTransferOrigin = EnsureRootOrHalfCouncil;
+	type VestedTransferOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::vesting::WeightInfo<Runtime>;
 	type Moment = Moment;
 	type Time = Timestamp;
+	type VestingScheduleId = u128;
 }
 
 parameter_types! {
@@ -783,7 +670,7 @@ parameter_types! {
 }
 
 impl bonded_finance::Config for Runtime {
-	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type AdminOrigin = EnsureRootOrHalfNativeCouncil;
 	type BondOfferId = BondOfferId;
 	type Convert = sp_runtime::traits::ConvertInto;
 	type Currency = Assets;
@@ -798,11 +685,19 @@ impl bonded_finance::Config for Runtime {
 
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
-
 impl Contains<Call> for BaseCallFilter {
 	fn contains(call: &Call) -> bool {
-		!matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Democracy(_) | Call::Treasury(_))
+		!(call_filter::Pallet::<Runtime>::contains(call) ||
+			matches!(call, Call::Tokens(_) | Call::Indices(_) | Call::Treasury(_)))
 	}
+}
+
+impl call_filter::Config for Runtime {
+	type Event = Event;
+	type UpdateOrigin = EnsureRootOrOneThirdNativeTechnical;
+	type Hook = ();
+	type WeightInfo = ();
+	type MaxStringSize = MaxStringSize;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -812,52 +707,58 @@ construct_runtime!(
 		NodeBlock = opaque::Block,
 		UncheckedExtrinsic = UncheckedExtrinsic
 	{
-		System: system::{Pallet, Call, Config, Storage, Event<T>} = 0,
-		Timestamp: timestamp::{Pallet, Call, Storage, Inherent} = 1,
-		Sudo: sudo::{Pallet, Call, Config<T>, Storage, Event<T>} = 2,
-		RandomnessCollectiveFlip: randomness_collective_flip::{Pallet, Storage} = 3,
-		TransactionPayment: transaction_payment::{Pallet, Storage} = 4,
-		Indices: indices::{Pallet, Call, Storage, Config<T>, Event<T>} = 5,
-		Balances: balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 6,
-		Identity: identity::{Call, Event<T>, Pallet, Storage} = 7,
-		Multisig: multisig::{Call, Event<T>, Pallet, Storage} = 8,
+		System: system = 0,
+		Timestamp: timestamp = 1,
+		Sudo: sudo = 2,
+		RandomnessCollectiveFlip: randomness_collective_flip = 3,
+		TransactionPayment: transaction_payment = 4,
+		Indices: indices = 5,
+		Balances: balances = 6,
+		Identity: identity = 7,
+		Multisig: multisig = 8,
 
 		// Parachains stuff
-		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>} = 10,
-		ParachainInfo: parachain_info::{Pallet, Storage, Config} = 11,
+		ParachainSystem: cumulus_pallet_parachain_system = 10,
+		ParachainInfo: parachain_info = 11,
 
 		// Collator support. the order of these 5 are important and shall not change.
-		Authorship: authorship::{Pallet, Call, Storage} = 20,
-		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 21,
-		Session: session::{Pallet, Call, Storage, Event, Config<T>} = 22,
-		Aura: aura::{Pallet, Storage, Config<T>} = 23,
-		AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 24,
+		Authorship: authorship = 20,
+		CollatorSelection: collator_selection = 21,
+		Session: session = 22,
+		Aura: aura = 23,
+		AuraExt: cumulus_pallet_aura_ext = 24,
 
 		// Governance utilities
-		Council: collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 30,
-		CouncilMembership: membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 31,
-		Treasury: treasury::{Pallet, Call, Storage, Config, Event<T>} = 32,
-		Democracy: democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 33,
-		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
-		Utility: utility::{Pallet, Call, Event} = 35,
-		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Council: collective::<Instance1> = 30,
+		CouncilMembership: membership::<Instance1> = 31,
+		Treasury: treasury::<Instance1> = 32,
+		Democracy: democracy::<Instance1> = 33,
+		TechnicalCollective: collective::<Instance2> = 70,
+		TechnicalMembership: membership::<Instance2> = 71,
+
+		// helpers/utilities
+		Scheduler: scheduler = 34,
+		Utility: utility = 35,
+		Preimage: preimage = 36,
 
 		// XCM helpers.
-		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
-		RelayerXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 41,
-		CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 42,
-		DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 43,
-		XTokens: orml_xtokens::{Pallet, Storage, Call, Event<T>} = 44,
-		UnknownTokens: orml_unknown_tokens::{Pallet, Storage, Event} = 45,
+		XcmpQueue: cumulus_pallet_xcmp_queue = 40,
+		RelayerXcm: pallet_xcm = 41,
+		CumulusXcm: cumulus_pallet_xcm = 42,
+		DmpQueue: cumulus_pallet_dmp_queue = 43,
+		XTokens: orml_xtokens = 44,
+		UnknownTokens: orml_unknown_tokens = 45,
 
-		Tokens: orml_tokens::{Pallet, Call, Storage, Event<T>} = 52,
-		CurrencyFactory: currency_factory::{Pallet, Storage, Event<T>} = 53,
-		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 54,
-		Assets: assets::{Pallet, Call, Storage} = 55,
-		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
-		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
-		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
-		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 59,
+		Tokens: orml_tokens = 52,
+		CurrencyFactory: currency_factory = 53,
+		GovernanceRegistry: governance_registry = 54,
+		Assets: assets = 55,
+		CrowdloanRewards: crowdloan_rewards = 56,
+		Vesting: vesting = 57,
+		BondedFinance: bonded_finance = 58,
+		AssetsRegistry: assets_registry = 59,
+
+		CallFilter: call_filter = 100,
 	}
 );
 
@@ -911,12 +812,12 @@ mod benches {
 		[balances, Balances]
 		[session, SessionBench::<Runtime>]
 		[timestamp, Timestamp]
-		[collator_selection, CollatorSelection]
+	// TODO: broken
+		// [collator_selection, CollatorSelection]
 		[indices, Indices]
 		[membership, CouncilMembership]
 		[treasury, Treasury]
 		[scheduler, Scheduler]
-		[democracy, Democracy]
 		[collective, Council]
 		[utility, Utility]
 		[identity, Identity]

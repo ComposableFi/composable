@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-06-25T22:31:58.333372989Z -->
+<!-- Generated at 2022-08-15T14:18:26.464367Z -->
 
 # Oracle Pallet Extrinsics
 
@@ -28,6 +28,18 @@ Call for a signer to be set, called from controller, adds stake.
 * `signer`: signer to tie controller to
 
 Emits `SignerSet` and `StakeAdded` events when successful.
+
+## Adjust Rewards
+
+[`adjust_rewards`](https://dali.devnets.composablefinance.ninja/doc/pallet_oracle/pallet/enum.Call.html#variant.adjust_rewards)
+
+Call to start rewarding Oracles.
+
+* `annual_cost_per_oracle`: Annual cost of an Oracle.
+* `num_ideal_oracles`: Number of ideal Oracles. This in fact should be higher than the
+  actual ideal number so that the Oracles make a profit under ideal conditions.
+
+Emits `RewardRateSet` event when successful.
 
 ## Add Stake
 
@@ -59,11 +71,12 @@ Emits `StakeReclaimed` event when successful.
 
 [`submit_price`](https://dali.devnets.composablefinance.ninja/doc/pallet_oracle/pallet/enum.Call.html#variant.submit_price)
 
-Call to submit a price, gas is returned if all logic gates passed
-Should be called from offchain worker but can be called manually too
-Operational transaction
+Call to submit a price, gas is returned if extrinsic is successfull.
+Should be called from offchain worker but can be called manually too.
 
-* `price`: price to submit
-* `asset_id`: Id for the asset
+This is an operational transaction.
+
+* `price`: price to submit, normalized to 12 decimals
+* `asset_id`: id for the asset
 
 Emits `PriceSubmitted` event when successful.

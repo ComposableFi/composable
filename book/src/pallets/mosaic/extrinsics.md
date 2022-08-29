@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-06-25T22:31:58.301488241Z -->
+<!-- Generated at 2022-08-15T14:18:26.470113Z -->
 
 # Mosaic Pallet Extrinsics
 
@@ -134,3 +134,15 @@ Possibly emits one of:
 * `AssetMappingCreated`
 * `AssetMappingDeleted`
 * `AssetMappingUpdated`
+
+## Add Remote Amm Id
+
+[`add_remote_amm_id`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.add_remote_amm_id)
+
+Adds a remote AMM for a specific Network
+
+## Remove Remote Amm Id
+
+[`remove_remote_amm_id`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.remove_remote_amm_id)
+
+Removes a remote AMM for a specific Network

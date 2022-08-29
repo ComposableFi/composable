@@ -134,6 +134,30 @@ pub trait Amm {
 	) -> Result<Self::Balance, DispatchError>;
 }
 
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug)]
+pub enum RewardPoolType {
+	LP,
+	PBLO,
+}
+
+impl Default for RewardPoolType {
+	fn default() -> Self {
+		RewardPoolType::PBLO
+	}
+}
+
+#[derive(
+	Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, Copy, RuntimeDebug,
+)]
+pub struct StakingRewardPool<RewardPoolId> {
+	pub pool_id: RewardPoolId,
+	pub pool_type: RewardPoolType,
+}
+
+// TODO: Perhaps we need a way to not have a max reward for a pool.
+pub const MAX_REWARDS: u128 = 100_000_000_000_000_000_000_000_u128;
+pub const REWARD_PERCENTAGE: u32 = 10;
+
 /// Pool Fees
 #[derive(
 	Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, Copy, RuntimeDebug,
@@ -388,7 +412,7 @@ pub trait DexRouter<AssetId, PoolId, Balance, MaxHops> {
 }
 
 /// Aggregated prices for a given base/quote currency pair in a pool.
-#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct PriceAggregate<PoolId, AssetId, Balance> {
 	pub pool_id: PoolId,
@@ -398,7 +422,7 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 }
 
 /// RedeemableAssets for given amount of lp tokens.
-#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct RedeemableAssets<AssetId, Balance>
 where
@@ -408,7 +432,7 @@ where
 }
 
 /// RemoveLiquiditySimulationResult for given amount of lp tokens.
-#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, Eq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct RemoveLiquiditySimulationResult<AssetId, Balance>
 where

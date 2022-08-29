@@ -25,7 +25,7 @@ where
 
 		let data = <Connections<T>>::get(conn_id)
 			.ok_or_else(|| ICS03Error::connection_not_found(conn_id.clone()))?;
-		let ret = ConnectionEnd::decode_vec(&*data)
+		let ret = ConnectionEnd::decode_vec(&data)
 			.map_err(|_| ICS03Error::connection_mismatch(conn_id.clone()))?;
 		log::trace!(target: "pallet_ibc", "in connection : [connection_end] >>  connection_end = {:?}", ret);
 		Ok(ret)

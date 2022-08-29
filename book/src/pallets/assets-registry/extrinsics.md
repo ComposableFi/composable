@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-06-25T22:31:58.281456585Z -->
+<!-- Generated at 2022-08-15T14:18:26.47652Z -->
 
 # Assets Registry Pallet Extrinsics
 
@@ -7,8 +7,34 @@
 
 [`register_asset`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets_registry/pallet/enum.Call.html#variant.register_asset)
 
-creates asset using `CurrencyFactory`,
-raises `AssetRegistered` event
+Creates asset using `CurrencyFactory`.
+Raises `AssetRegistered` event
+
+Sets only required fields by `CurrencyFactory`, to upsert metadata use referenced
+pallet.
+
+### Parameters:
+
+`ratio` -  allows `bring you own gas` fees.
+Set to `None` to prevent payment in this asset, only transferring.
+Setting to some will NOT start minting tokens with specified ratio.
+Foreign assets will be put into parachain treasury as is.
+
+````python
+# if cross chain message wants to pay tx fee with non native token
+# then amount of native token would be:
+amount_of_native_token = amount_of_foreign_token * ratio
+````
+
+Examples:
+
+* One to one conversion is 10^18 integer.
+
+* 10\*10^18 will tell that for 1 foreign asset can `buy` 10 local native.
+
+`decimals` - remote number of decimals on other(remote) chain
+
+`ed` - same meaning as in `CurrencyFactory`
 
 ## Update Asset
 
@@ -16,6 +42,7 @@ raises `AssetRegistered` event
 
 Given well existing asset, update its remote information.
 Use with caution as it allow reroute assets location.
+See `register_asset` for parameters meaning.
 
 ## Set Min Fee
 

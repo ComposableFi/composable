@@ -27,7 +27,7 @@ import {
  *    and OwnerFee.
  * Mainly consists of happy path testing.
  */
-describe("tx.constantProductDex Tests", function() {
+describe("tx.constantProductDex Tests", function () {
   if (!pabloTestConfiguration.constantProductTests.enabled) {
     console.log("Constant Product Tests are being skipped...");
     return;
@@ -47,7 +47,7 @@ describe("tx.constantProductDex Tests", function() {
   let transferredTokens: BN;
   let walletId1Account: string, walletId2Account: string;
 
-  before("Initialize variables", async function() {
+  before("Initialize variables", async function () {
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
     const { devWalletAlice, devWalletEve, devWalletFerdie } = getDevWallets(newKeyring);
@@ -69,72 +69,72 @@ describe("tx.constantProductDex Tests", function() {
     baseWeight = 500000;
   });
 
-  before("Minting assets", async function() {
+  before("Minting assets", async function () {
     await mintAssetsToWallet(api, walletId1, sudoKey, [1, baseAssetId, quoteAssetId, baseAsset2, falseQuoteAsset]);
     await mintAssetsToWallet(api, walletId2, sudoKey, [1, baseAssetId, quoteAssetId, baseAsset2, falseQuoteAsset]);
     await mintAssetsToWallet(api, walletId3, sudoKey, [1]);
   });
 
-  after("Closing the connection", async function() {
+  after("Closing the connection", async function () {
     await api.disconnect();
   });
 
-  describe("tx.constantProductDex Create Pool Tests", function() {
+  describe("tx.constantProductDex Create Pool Tests", function () {
     if (!testConfiguration.enabledTests.createPoolTests.enabled) {
       console.log("ConstantProduct create pools tests are being skipped...");
       return;
     }
     this.timeout(2 * 60 * 1000);
 
-    it("[SHORT] Given that users are on the chain, users can create a ConstantProduct pool", async function() {
-      poolId = await createConsProdPool(api, walletId1, walletId1, baseAssetId, quoteAssetId, fee, baseWeight);
+    it("[SHORT] Given that users are on the chain, users can create a ConstantProduct pool", async function () {
+      poolId = await createConsProdPool(api, sudoKey, walletId1, baseAssetId, quoteAssetId, fee, baseWeight);
       //verify if the pool is created
       expect(poolId).to.be.a("number");
     });
 
-    it("Given that users are on the chain, users can create another ConstantProduct pool with different assetIds", async function() {
-      poolId2 = await createConsProdPool(api, walletId2, walletId2, baseAssetId, baseAsset2, fee, baseWeight);
+    it("Given that users are on the chain, users can create another ConstantProduct pool with different assetIds", async function () {
+      poolId2 = await createConsProdPool(api, sudoKey, walletId2, baseAssetId, baseAsset2, fee, baseWeight);
       //verify if the pool is created
       expect(poolId2).to.be.a("number");
     });
 
-    it("Given that users have no active balance on assets, users can create ConstantProduct Pool", async function() {
-      const result = await createConsProdPool(api, walletId2, walletId2, 50, 60, fee, baseWeight);
+    it("Given that users have no active balance on assets, users can create ConstantProduct Pool", async function () {
+      const result = await createConsProdPool(api, sudoKey, walletId2, 50, 60, fee, baseWeight);
       expect(result).to.be.a("number");
     });
 
     it(
       "Given that the chain is up, users can create pools-" +
-      " test creates up to 500 Constant Product pools with valid random fees, random owner fees and random assetIds",
-      async function() {
+        " test creates up to 500 Constant Product pools with valid random fees, random owner fees and random assetIds",
+      async function () {
         await createMultipleCPPools(api, walletId1);
         expect((await api.query.pablo.poolCount()).toNumber()).to.be.greaterThan(500);
       }
     );
   });
 
-  describe("ConstantProductDex Add Liquidity Tests", async function() {
+  describe("ConstantProductDex Add Liquidity Tests", async function () {
     if (!testConfiguration.enabledTests.addLiquidityTests.enabled) {
       console.log("ConstantProductDex add liquidity tests are being skipped...");
       return;
     }
     this.timeout(2 * 60 * 1000);
 
-    it("Given that users has sufficient balance, User1 can send funds to pool", async function() {
+    it("Given that users has sufficient balance, User1 can send funds to pool", async function () {
       const result = await addFundstoThePool(api, poolId, walletId1, baseAmount, quoteAmount);
       expect(BigInt(result.baseAdded.toString(10))).to.be.equal(baseAmount);
       expect(BigInt(result.quoteAdded.toString(10))).to.be.equal(quoteAmount);
       expect(result.walletIdResult.toString()).to.be.equal(walletId1Account);
     });
 
-    it("Given that users have LPTokens, users can transfer LP Tokens to another user", async function() {
+    it("Given that users have LPTokens, users can transfer LP Tokens to another user", async function () {
       const { lpTokenId } = await getPoolInfo(api, "ConstantProduct", poolId);
       await transferTokens(api, walletId1, walletId3, lpTokenId, Pica(7));
       transferredTokens = (await getUserTokens(api, walletId3, lpTokenId)).toBn();
       expect(transferredTokens).to.be.bignumber.greaterThan("0");
     });
 
-    it("Given that users has sufficient balance, users can send funds to pool2", async function() {
+    it("Given that users has sufficient balance, users can send funds to pool2", async function () {
       const result = await addFundstoThePool(api, poolId2, walletId2, baseAmount, quoteAmount);
       //Once funds added to the pool, User is deposited with LP Tokens.
       expect(BigInt(result.baseAdded.toString(10))).to.be.equal(baseAmount);
@@ -144,8 +144,8 @@ describe("tx.constantProductDex Tests", function() {
 
     it(
       "Given that users has sufficient balance, users can add liquidity to the pool and deposited" +
-      " amount is adjusted to maintain asset ratio",
-      async function() {
+        " amount is adjusted to maintain asset ratio",
+      async function () {
         const assetAmount = Pica(30);
         const quoteAmount = Pica(100);
         const result = await addFundstoThePool(api, poolId, walletId2, assetAmount, quoteAmount);
@@ -157,7 +157,7 @@ describe("tx.constantProductDex Tests", function() {
 
     it(
       "Given that users have sufficient balance, users can't provide liquidity with specifying " + "only quote asset",
-      async function() {
+      async function () {
         const baseAmount = Pica(0);
         const quoteAmount = Pica(10000);
         await addFundstoThePool(api, poolId2, walletId1, baseAmount, quoteAmount).catch(error =>
@@ -168,8 +168,8 @@ describe("tx.constantProductDex Tests", function() {
 
     it(
       "Given that users have sufficient balance, " +
-      "Users can provide liquidity with specifying only base asset and quote amount is calculated and received",
-      async function() {
+        "Users can provide liquidity with specifying only base asset and quote amount is calculated and received",
+      async function () {
         const baseAmount = Pica(250);
         const quoteAmount = Pica(0);
         const result = await addFundstoThePool(api, poolId2, walletId1, baseAmount, quoteAmount);
@@ -178,14 +178,14 @@ describe("tx.constantProductDex Tests", function() {
     );
   });
 
-  describe("ConstantProductDex buy and sell tests", async function() {
+  describe("ConstantProductDex buy and sell tests", async function () {
     if (!testConfiguration.enabledTests.buyAndSellTests.enabled) {
       console.log("ConstantProductDex buy and sell tests are being skipped...");
       return;
     }
     this.timeout(2 * 60 * 1000);
 
-    it("Given the pool has sufficient funds, User1 can't completely drain the funds", async function() {
+    it("Given the pool has sufficient funds, User1 can't completely drain the funds", async function () {
       await buyFromPool(api, poolId, walletId1, baseAssetId, Pica(2530)).catch(error =>
         expect(error.message).to.contain("arithmetic")
       );
@@ -193,8 +193,8 @@ describe("tx.constantProductDex Tests", function() {
 
     it(
       "Given that the pool has sufficient funds, " +
-      "user1 can buy from the pool and amounts are adjusted by the constantProductFormula",
-      async function() {
+        "user1 can buy from the pool and amounts are adjusted by the constantProductFormula",
+      async function () {
         const result = await buyFromPool(api, poolId, walletId1, baseAssetId, Pica(30));
         expect(result.accountId.toString()).to.be.equal(walletId1Account);
         //Expected amount is calculated based on the constantProductFormula which is 1:1 for this case.
@@ -207,27 +207,27 @@ describe("tx.constantProductDex Tests", function() {
 
     it(
       "Given that there is available liquidity in the pool, " +
-      "users can't buy from the pool with amounts greater than the available liquidity",
-      async function() {
+        "users can't buy from the pool with amounts greater than the available liquidity",
+      async function () {
         await buyFromPool(api, poolId2, walletId2, baseAsset2, Pica(5000000)).catch(error =>
           expect(error.message).to.contain("Overflow")
         );
       }
     );
 
-    it("Given that users have available funds, users can sell on the pool", async function() {
+    it("Given that users have available funds, users can sell on the pool", async function () {
       const accountIdSeller = await sellToPool(api, poolId, walletId1, baseAssetId, Pica(20));
       expect(accountIdSeller.toString()).to.be.equal(walletId1Account);
     });
 
-    it("Given that users have available funds, users can swap from the pool", async function() {
+    it("Given that users have available funds, users can swap from the pool", async function () {
       const quotedAmount = Pica(12);
       const result = await swapTokenPairs(api, poolId, walletId2, baseAssetId, quoteAssetId, quotedAmount);
       expect(result.returnedQuoteAmount.toBigInt()).to.be.equal(quotedAmount);
     });
   });
 
-  describe("ConstantProductDex Fee and Other Tests", async function() {
+  describe("ConstantProductDex Fee and Other Tests", async function () {
     if (!testConfiguration.enabledTests.feeAndOtherTests.enabled) {
       console.log("ConstantProductDex fee and other tests are being skipped...");
       return;
@@ -236,14 +236,14 @@ describe("tx.constantProductDex Tests", function() {
 
     it(
       "Given that the pool has liquidity and the users have LPTokens, " +
-      "users can remove liquidity from the pool by using LP Tokens",
-      async function() {
+        "users can remove liquidity from the pool by using LP Tokens",
+      async function () {
         const result = await removeLiquidityFromPool(api, poolId, walletId1, Pica(500));
         expect(result.resultBase.toBn()).to.be.bignumber.closeTo(result.resultQuote.toBn(), Pica(15).toString());
       }
     );
 
-    it("Given that LPTokens are transferred to another user, other user can removeLiquidity", async function() {
+    it("Given that LPTokens are transferred to another user, other user can removeLiquidity", async function () {
       const result = await removeLiquidityFromPool(
         api,
         poolId,
@@ -255,7 +255,7 @@ describe("tx.constantProductDex Tests", function() {
 
     it(
       "Given that the users have sufficient balance, " + "users can't buy assets that is not listed in the pool",
-      async function() {
+      async function () {
         await buyFromPool(api, poolId, walletId2, falseQuoteAsset, Pica(10)).catch(error =>
           expect(error.message).to.contain("InvalidAsset")
         );
@@ -264,8 +264,8 @@ describe("tx.constantProductDex Tests", function() {
 
     it(
       "Given that the users have sufficient balance," +
-      " users can't swap illegal token pairs(Non existing assetId in the pool)",
-      async function() {
+        " users can't swap illegal token pairs(Non existing assetId in the pool)",
+      async function () {
         const quotedAmount = Pica(1200);
         // trying to swap from poolId1 between 2 and 23 which should revert with an error
         await swapTokenPairs(api, poolId, walletId2, baseAssetId, falseQuoteAsset, quotedAmount).catch(error =>

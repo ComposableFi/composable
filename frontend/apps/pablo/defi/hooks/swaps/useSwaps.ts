@@ -1,13 +1,15 @@
 import { Option } from "@/components/types";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import {
+  calculator,
   DEFAULT_NETWORK_ID,
   fetchSpotPrice,
   isValidAssetPair,
-  uniswapCalculator,
+  stableSwapCalculator,
 } from "@/defi/utils";
 import { useAppSelector } from "@/hooks/store";
 import { useAsyncEffect } from "@/hooks/useAsyncEffect";
+import { usePrevious } from "@/hooks/usePrevious";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
 import useStore from "@/store/useStore";
@@ -43,16 +45,19 @@ export function useSwaps(): {
   feeCharged: BigNumber;
   spotPrice: BigNumber;
   valid: boolean;
+  percentageToSwap: number;
   asset1PriceUsd: BigNumber;
   asset2PriceUsd: BigNumber;
   setAssetOneInputValid: (validity: boolean) => void;
   setAssetTwoInputValid: (validity: boolean) => void;
   assetOneInputValid: boolean;
   assetTwoInputValid: boolean;
+  isProcessing: boolean;
 } {
   const slippage = useAppSelector(
     (state) => state.settings.transactionSettings.tolerance
   );
+  const previousSlippage = usePrevious(slippage);
 
   const [assetOneInputValid, setAssetOneInputValid] = useState(true);
   const [assetTwoInputValid, setAssetTwoInputValid] = useState(true);
@@ -146,17 +151,19 @@ export function useSwaps(): {
   useAsyncEffect(async () => {
     const dexRoute = await fetchDexRoute();
     if (selectedPool && dexRoute) {
-        if (selectedPool.poolId === dexRoute.toNumber()) {
-           // no need to set the route again if it's the same
-            return;
-        }
-        setDexRoute(dexRoute);
+      if (selectedPool.poolId === dexRoute.toNumber()) {
+        // no need to set the route again if it's the same
+        return;
+      }
+      setDexRoute(dexRoute);
     }
     setDexRoute(dexRoute);
   }, [fetchDexRoute, selectedPool]);
 
   useEffect(() => {
-    if (!dexRoute) { return setSelectedPool(undefined); }
+    if (!dexRoute) {
+      return setSelectedPool(undefined);
+    }
 
     const verifiedConstantProductPools = constantProductPools.verified;
     const verifiedStableSwapPools = stableSwapPools.verified;
@@ -204,76 +211,144 @@ export function useSwaps(): {
   const [feeCharged, setFeeCharged] = useState(new BigNumber(0));
 
   const resetTokenAmounts = useCallback(() => {
-        setTokenAmounts({
-            assetOneAmount:  new BigNumber(0),
-            assetTwoAmount: new BigNumber(0)
-        })
-}, [setTokenAmounts])
+    setTokenAmounts({
+      assetOneAmount: new BigNumber(0),
+      assetTwoAmount: new BigNumber(0),
+    });
+  }, [setTokenAmounts]);
+
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const unsetProcessingDelayed = () => {
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 500);
+  };
 
   const onChangeTokenAmount = async (
     changedSide: "base" | "quote",
     amount: BigNumber
   ) => {
-    if (
-      parachainApi &&
-      selectedPool &&
-      isValidAssetPair(selectedAssetOneId, selectedAssetTwoId)
-    ) {
-      const { base, quote } = selectedPool.pair;
-      const { feeRate } = selectedPool.feeConfig;
-      let feePercentage = new BigNumber(feeRate).toNumber();
-      const isInverse = selectedAssetOneId === base.toString();
-      let pair = { base: base.toString(), quote: quote.toString() };
-
-      const oneBaseInQuote = await fetchSpotPrice(
-        parachainApi,
-        pair,
-        selectedPool.poolId
-      );
-      const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
-        uniswapCalculator(
-          changedSide,
-          isInverse,
-          amount,
-          oneBaseInQuote,
-          slippage,
-          feePercentage
+    try {
+      setIsProcessing(true);
+      if (
+        parachainApi &&
+        selectedPool &&
+        isValidAssetPair(selectedAssetOneId, selectedAssetTwoId)
+      ) {
+        const spotPrice = await fetchSpotPrice(
+          parachainApi,
+          { base: selectedAssetTwoId, quote: selectedAssetOneId },
+          selectedPool.poolId
         );
 
-      setTokenAmounts({
-        assetOneAmount: changedSide === "base" ? amount : tokenOutAmount,
-        assetTwoAmount: changedSide === "quote" ? amount : tokenOutAmount,
-      });
-      setMinimumReceived(minReceive);
-      setFeeCharged(feeChargedAmount);
-      setSlippageAmount(slippageAmount);
-      return {
-        minReceive,
-        tokenOutAmount,
-        feeCharged,
-        slippageAmount,
-      };
-    } else {
-        resetTokenAmounts();
-      console.error(`Registered Pool not found`);
-      enqueueSnackbar(`Registered Pool not found`);
-      return {
-        minReceive: new BigNumber(0),
-        tokenOutAmount: new BigNumber(0),
-        feeCharged: new BigNumber(0),
-        slippageAmount: new BigNumber(0),
-      };
+        const { feeRate } = selectedPool.feeConfig;
+        let feePercentage = new BigNumber(feeRate).toNumber();
+
+        const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
+          "baseWeight" in selectedPool
+            ? calculator(
+                changedSide,
+                amount,
+                spotPrice,
+                slippage,
+                feePercentage
+              )
+            : stableSwapCalculator(
+                changedSide,
+                amount,
+                spotPrice,
+                slippage,
+                feePercentage
+              );
+
+        if (changedSide === "base" && tokenOutAmount.gt(balance1)) {
+          throw new Error("Insufficient balance.");
+        }
+
+        setTokenAmounts({
+          assetOneAmount: changedSide === "base" ? tokenOutAmount : amount,
+          assetTwoAmount: changedSide === "quote" ? tokenOutAmount : amount,
+        });
+        setMinimumReceived(minReceive);
+        setFeeCharged(feeChargedAmount);
+        setSlippageAmount(slippageAmount);
+      } else {
+        throw new Error("Pool not found.");
+      }
+    } catch (err: any) {
+      resetTokenAmounts();
+      console.error(err.message);
+      enqueueSnackbar(err.message);
+    } finally {
+      unsetProcessingDelayed();
     }
+  };
+
+  /**
+   * Effect to update minimum recieved when
+   * there is a change in slippage
+   */
+  useEffect(() => {
+    if (parachainApi && selectedPool) {
+      if (previousSlippage != slippage) {
+        if (minimumReceived.gt(0)) {
+          const { feeRate } = selectedPool.feeConfig;
+          let feePercentage = new BigNumber(feeRate).toNumber();
+
+          const {
+            minReceive,
+          } =
+            "baseWeight" in selectedPool
+              ? calculator(
+                  "quote",
+                  assetOneAmount,
+                  spotPrice,
+                  slippage,
+                  feePercentage
+                )
+              : stableSwapCalculator(
+                  "quote",
+                  assetOneAmount,
+                  spotPrice,
+                  slippage,
+                  feePercentage
+                );
+            setMinimumReceived(minReceive)
+        }
+      }
+    }
+    return;
+  }, [
+    spotPrice,
+    selectedPool,
+    balance1,
+    previousSlippage,
+    minimumReceived,
+    feeCharged,
+    slippageAmount,
+    slippage,
+    parachainApi,
+    assetOneAmount,
+    assetTwoAmount,
+  ]);
+
+  const flipAssets = () => {
+    setIsProcessing(true);
+    flipAssetSelection();
+    unsetProcessingDelayed();
   };
 
   const changeAsset = (
     changedSide: "quote" | "base",
     tokenId: string | "none"
   ) => {
+    setIsProcessing(true);
     changedSide === "quote"
       ? setSelectedAssetOne(tokenId)
       : setSelectedAssetTwo(tokenId);
     resetTokenAmounts();
+    unsetProcessingDelayed();
   };
 
   const valid =
@@ -281,6 +356,8 @@ export function useSwaps(): {
     assetOneInputValid &&
     assetTwoInputValid &&
     !!selectedPool;
+
+  const percentageToSwap = 50;
 
   return {
     balance1,
@@ -309,6 +386,8 @@ export function useSwaps(): {
     setAssetTwoInputValid,
     assetOneInputValid,
     assetTwoInputValid,
-    flipAssetSelection,
+    flipAssetSelection: flipAssets,
+    percentageToSwap,
+    isProcessing,
   };
 }

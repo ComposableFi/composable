@@ -29,7 +29,7 @@ pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
-#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
+#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
 pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	/// Collateral factor of market
 	pub collateral_factor: MoreThanOneFixedU128,
@@ -45,7 +45,7 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 /// input to create market extrinsic
 ///
 /// Input to [`Lending::create()`].
-#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
+#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
 pub struct CreateInput<LiquidationStrategyId, AssetId, BlockNumber> {
 	/// the part of market which can be changed
 	pub updatable: UpdateInput<LiquidationStrategyId, BlockNumber>,
@@ -91,7 +91,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId, Bloc
 /// Different ways that a market can be repaid.
 // REVIEW: Perhaps add an "interest only" strategy?
 // InterestOnly
-#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq)]
+#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
 pub enum RepayStrategy<T> {
 	/// Attempt to repay the entirety of the remaining debt.
 	TotalDebt,
@@ -120,7 +120,7 @@ pub enum RepayStrategy<T> {
 }
 
 /// The total amount of debt for an account on a market, if any.
-#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq)]
+#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
 pub enum TotalDebtWithInterest<T> {
 	/// The account has some amount of debt on the market. Guarranteed to be non-zero.
 	Amount(T),
@@ -373,8 +373,7 @@ pub trait Lending: DeFiEngine {
 	/// Returns the "borrow limit" for an account in `Oracle` price, i.e. the maximum amount an
 	/// account can borrow before going under-collateralized.
 	///
-	/// REVIEW: What?
-	/// The calculation uses indexes from start of block time.
+	/// The calculation uses `indexes` snapshots when market was created and when borrow happened. .
 	///
 	/// The borrow limit is only affected by the prices of the assets and the amount of collateral
 	/// deopsited by the account, and is *specific to this account*. The state of the vault is not
