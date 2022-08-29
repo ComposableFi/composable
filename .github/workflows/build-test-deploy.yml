@@ -641,7 +641,7 @@ jobs:
   devcontainer-build:
     name: "Devcontainer build"
     needs:
-      - nixfmt-check
+      - devcontainer-minimal-build
     runs-on:
       - self-hosted
       - linux
@@ -670,16 +670,48 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
 
+  devcontainer-minimal-build:
+    needs:
+      - nixfmt-check  
+    runs-on: 
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow}}-devcontainer-minimal-build-${{ github.ref }}
+      cancel-in-progress: true  
+    steps:
+    - name: Clean up
+      continue-on-error: true
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+        docker system prune --force --all --volumes
+    - uses: actions/checkout@v3
+      with: 
+        fetch-depth: 0
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
+    - name: composable-devcontainer-minimal
+      run: |
+        git config --global --add safe.directory /__w/composable/composable
+        COMMIT_SHA=$(git rev-parse --short=9 HEAD)
+        docker build --file Dockerfile --tag ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer-minimal:${COMMIT_SHA} --tag ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer-minimal:latest .
+        docker push --all-tags ${{env.DOCKER_REGISTRY_NAME}}/composable-devcontainer-minimal
+
   devcontainer-publish:
     name: "Devcontainer publish"
     needs:
       - devcontainer-build
-      # - devnet-integration-tests
-      # - package-polkadot-node
-      # - package-composable-node
-      # - check-benchmarks
-      # - local-integration-tests
-      # - unit-tests
+      - devnet-integration-tests
+      - package-polkadot-node
+      - package-composable-node
+      - check-benchmarks
+      - local-integration-tests
+      - unit-tests
     runs-on:
       - self-hosted
       - linux

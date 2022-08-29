@@ -2,7 +2,7 @@
 	"name": "Composable Devcontainer",
 	"build": {
 		"dockerfile": "Dockerfile",
-		"context": "../.",
+		"context": "./.",
 	},
 	"hostRequirements": {
 		"memory": "20gb",
