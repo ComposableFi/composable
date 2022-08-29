@@ -6,8 +6,7 @@ let
     rev = "951af7055e2c9abfa7a03ee7848548c1a3efdc16";
     hash = "sha256-ZaCHgkr5lVsGFg/Yvx6QY/zSiIafwSec+oiioOWTZMg=";
   };
-in
-pkgs.mkYarnPackage {
+in pkgs.mkYarnPackage {
   name = "polkadot-launch";
   inherit src;
   packageJSON = "${src}/package.json";

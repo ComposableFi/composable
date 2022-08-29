@@ -23,6 +23,8 @@ pub enum FundsAvailability<Balance> {
 	/// Example, the strategy was removed by the fund manager or governance, so all funds should
 	/// be returned.
 	MustLiquidate,
+	/// When there are no balance that can be withdrawn or deposit and don't need to be liquidated.
+	None,
 }
 
 #[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]

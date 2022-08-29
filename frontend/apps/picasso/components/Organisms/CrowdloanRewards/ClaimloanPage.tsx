@@ -19,7 +19,7 @@ import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { crowdLoanSignableMessage } from "@/utils/crowdloanRewards";
 import { toBaseUnitBN, toTokenUnitsBN } from "shared";
 import { useRouter } from "next/router";
-import { useBlockchainProvider, useConnector } from "@integrations-lib/core";
+import { ConnectorType, useBlockchainProvider, useConnector } from "bi-lib";
 import { updateBalances } from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { OpenInNewRounded } from "@mui/icons-material";
@@ -56,7 +56,7 @@ interface Claimloan {
 export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
-  const { isActive } = useConnector("metamask");
+  const { isActive } = useConnector(ConnectorType.MetaMask);
   const { signer } = useBlockchainProvider(DEFAULT_EVM_ID);
   const executor = useExecutor();
 
