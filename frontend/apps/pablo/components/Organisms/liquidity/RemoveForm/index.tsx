@@ -89,16 +89,15 @@ export const RemoveLiquidityForm = ({ ...rest }) => {
       const b = baseAsset.network[DEFAULT_NETWORK_ID].toString();
       const q = quoteAsset.network[DEFAULT_NETWORK_ID].toString();
 
-      // @ts-ignore
       parachainApi.rpc.pablo
         .simulateRemoveLiquidity(
           parachainApi.createType("AccountId32", selectedAccount.address),
           parachainApi.createType("PalletPabloPoolId", poolId.toString()),
-          selectedLpAmount.dp(0).toString(),
-          {
+          parachainApi.createType("CustomRpcBalance", selectedLpAmount.dp(0).toString()),
+          parachainApi.createType("BTreeMap<SafeRpcWrapper, SafeRpcWrapper>", {
             [b]: "0",
             [q]: "0",
-          }
+          })
         )
         .then((response: any) => {
           const remove = fromRemoveLiquiditySimulationResult(response.toJSON())

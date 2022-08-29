@@ -1,93 +1,76 @@
 import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "../types";
 import BigNumber from "bignumber.js";
-
-import { TOKEN_IDS, TokenId } from "tokens";
-import { SubstrateNetworkId } from "@/defi/polkadot/types";
+import { AssetId, SubstrateNetworkId } from "@/defi/polkadot/types";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 interface Networks {
   options: { networkId: SubstrateNetworkId }[];
-  from: string;
-  to: string;
-}
-
-interface Amount {
-  options: { tokenId: TokenId }[];
-  tokenId: TokenId;
-  value: BigNumber | number;
-  balance: BigNumber | number;
-}
-
-interface Recipient {
-  value: string;
-  label: string;
-  icon: string;
+  from: SubstrateNetworkId;
+  to: SubstrateNetworkId;
 }
 
 interface Recipients {
-  options: Recipient[];
   selected: string;
 }
 
 interface TransfersState {
   networks: Networks;
-  amount: Amount;
+  amount: BigNumber;
+  tokenId: AssetId;
   recipients: Recipients;
-  fee: BigNumber | number;
   keepAlive: boolean;
+  feeItem: AssetId | "";
+  hasFeeItem: boolean;
+  existentialDeposit: BigNumber;
+  fee: {
+    class: string;
+    partialFee: BigNumber;
+    weight: BigNumber;
+  };
 }
 
-const recipients = [
-  {
-    value: "select1",
-    label: "Select 1",
-    icon: "/tokens/eth-mainnet.svg"
-  },
-  {
-    value: "select2",
-    label: "Select 2",
-    icon: "/tokens/eth-mainnet.svg"
-  },
-  {
-    value: "select3",
-    label: "Select 3",
-    icon: "/tokens/eth-mainnet.svg"
-  }
-];
-
-const networks = Object.keys(SUBSTRATE_NETWORKS).map(networkId => ({
-  networkId: networkId as SubstrateNetworkId
+const networks = Object.keys(SUBSTRATE_NETWORKS).map((networkId) => ({
+  networkId: networkId as SubstrateNetworkId,
 }));
-
-const tokens = TOKEN_IDS.map(tokenId => ({ tokenId }));
 
 const initialState: TransfersState = {
   networks: {
     options: networks,
     from: networks[0].networkId,
-    to: networks[1].networkId
+    to: networks[1].networkId,
   },
-  amount: {
-    options: tokens,
-    tokenId: TOKEN_IDS[1],
-    value: 0,
-    balance: 350
-  },
+  tokenId: "ksm",
+  amount: new BigNumber(0),
   recipients: {
-    options: recipients,
-    selected: "select1"
+    selected: "",
   },
-  fee: 0.5,
-  keepAlive: true
+  hasFeeItem: false,
+  feeItem: "",
+  keepAlive: true,
+  existentialDeposit: new BigNumber(0),
+  fee: {
+    class: "Normal",
+    partialFee: new BigNumber(0),
+    weight: new BigNumber(0),
+  },
 };
 
 export interface TransfersSlice {
   transfers: TransfersState & {
     updateNetworks: (data: Omit<Networks, "options">) => void;
-    updateAmount: (data: Omit<Amount, "balance" | "options">) => void;
+    updateAmount: (data: BigNumber) => void;
     updateRecipient: (selected: string) => void;
+    updateTokenId: (data: AssetId) => void;
     flipKeepAlive: () => void;
+    toggleHasFee: () => void;
+    setFeeItem: (data: AssetId) => void;
+    updateFee: (data: {
+      class: string;
+      weight: BigNumber;
+      partialFee: BigNumber;
+    }) => void;
+    updateExistentialDeposit: (data: BigNumber) => void;
   };
 }
 
@@ -98,32 +81,70 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (
     ...initialState,
 
     updateNetworks: (data: Omit<Networks, "options">) => {
-      set(state => {
+      set((state) => {
         state.transfers.networks = { ...state.transfers.networks, ...data };
 
         return state;
       });
     },
-    updateAmount: (data: Omit<Amount, "balance" | "options">) => {
-      set(state => {
-        state.transfers.amount = { ...state.transfers.amount, ...data };
+    updateAmount: (data: BigNumber) =>
+      set((state) => {
+        state.transfers.amount = data;
 
         return state;
-      });
-    },
+      }),
     updateRecipient: (data: string) => {
-      set(state => {
+      set((state) => {
         state.transfers.recipients.selected = data;
 
         return state;
       });
     },
+    updateTokenId: (data: AssetId) => {
+      set((state) => {
+        state.transfers.tokenId = data;
+
+        return state;
+      });
+    },
     flipKeepAlive: () => {
-      set(state => {
+      set((state) => {
         state.transfers.keepAlive = !state.transfers.keepAlive;
 
         return state;
       });
-    }
-  }
+    },
+    setFeeItem: (data: AssetId) =>
+      set((state) => {
+        state.transfers.feeItem = data;
+
+        return state;
+      }),
+    toggleHasFee: () => {
+      set((state) => {
+        state.transfers.hasFeeItem = !state.transfers.hasFeeItem;
+
+        if (!state.transfers.hasFeeItem) {
+          state.transfers.feeItem = "";
+        }
+        return state;
+      });
+    },
+    updateExistentialDeposit: (data: BigNumber) =>
+      set((state) => {
+        state.transfers.existentialDeposit = data;
+
+        return state;
+      }),
+    updateFee: (data: {
+      class: string;
+      weight: BigNumber;
+      partialFee: BigNumber;
+    }) =>
+      set((state) => {
+        state.transfers.fee = data;
+
+        return state;
+      }),
+  },
 });
