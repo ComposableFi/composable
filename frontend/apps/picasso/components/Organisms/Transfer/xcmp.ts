@@ -6,6 +6,8 @@ import { Assets } from "@/defi/polkadot/Assets";
 import { getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { toChainIdUnit } from "shared";
+import { CurrencyId } from "defi-interfaces";
+import { XcmVersionedMultiLocation } from "@polkadot/types/lookup";
 
 export type TransferHandlerArgs = {
   api: ApiPromise;
@@ -120,7 +122,7 @@ export async function getTransferCallPicassoKarura(
     }),
   });
 
-  // TODO: Refactor this logic to parnet
+  // TODO: Refactor this logic to parent
   const transferFunction = !hasFeeItem
     ? api.tx.xTokens.transfer
     : api.tx.xTokens.transferMulticurrencies;
@@ -146,6 +148,7 @@ export async function getTransferCallPicassoKarura(
     ? [kusdAssetId, amount, destination, destWeight]
     : [feeItemAssetID, api.createType("u32", 1), destination, destWeight];
 
+  // @ts-ignore
   const call = transferFunction(...args);
   return { signer, call };
 }
@@ -196,6 +199,7 @@ export async function getTransferCallPicassoKusama(
     ? [ksmAssetID, amount, destination, destWeight]
     : [feeItemAssetID, api.createType("u32", 1), destination, destWeight];
 
+  // @ts-ignore
   const call = transferFunction(...args);
   return { signer, call };
 }
@@ -208,7 +212,7 @@ export async function getTransferCallKaruraPicasso(
   amount: u128
 ) {
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
-  const destination = api.createType("XcmVersionedMultiLocation", {
+  const destination:XcmVersionedMultiLocation = api.createType("XcmVersionedMultiLocation", {
     V0: api.createType("XcmV0MultiLocation", {
       X3: [
         api.createType("XcmV0Junction", "Parent"),
@@ -225,7 +229,7 @@ export async function getTransferCallKaruraPicasso(
     }),
   });
 
-  const currencyId = api.createType("AcalaPrimitivesCurrencyCurrencyId", {
+  const currencyId: CurrencyId = api.createType("AcalaPrimitivesCurrencyCurrencyId", {
     Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", "KUSD"),
   });
 
