@@ -732,22 +732,7 @@
               '';
             };
 
-            devnet-cosmos = pkgs.callPackage ./.nix/arion-cosmos.nix { };
-            devnet-cosmos-up-program = pkgs.writeShellApplication {
-              name = "devnet-juno-up";
-              runtimeInputs =
-                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
-              text = ''
-                arion --prebuilt-file ${devnet-cosmos} up --build --force-recreate -V --always-recreate-deps --remove-orphans
-              '';
-            };
-
           in rec {
-            devnet-cosmos-up = {
-              type = "app";
-              program = "${devnet-cosmos-up-program}/bin/devnet-juno-up";
-            };
-
             devnet-up = {
               type = "app";
               program = "${arion-up-program}/bin/devnet-up";
