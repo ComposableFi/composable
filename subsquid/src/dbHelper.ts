@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import {
   Account,
   Activity,
+  HistoricalLockedValue,
   PabloPool,
   PicassoTransaction,
   PicassoTransactionType,
@@ -162,24 +163,26 @@ export async function saveAccountAndTransaction(
   ctx: EventHandlerContext,
   transactionType: PicassoTransactionType,
   accountId?: string | string[]
-): Promise<void> {
+): Promise<{ transactionId: string }> {
   const accountIds: (string | undefined)[] =
     typeof accountId === "string" ? [accountId] : accountId || [undefined];
 
-  const txId = randomUUID();
+  const transactionId = randomUUID();
 
   for (let index = 0; index < accountIds.length; index += 1) {
     const id = accountIds[index];
     if (!id) {
       // no-op
-      return;
+      return Promise.reject();
     }
     const isSaved = await trySaveAccount(ctx, id);
     if (isSaved) {
       if (index === 0) {
-        await saveTransaction(ctx, id, transactionType, txId);
+        await saveTransaction(ctx, id, transactionType, transactionId);
       }
-      await saveActivity(ctx, txId, id);
+      await saveActivity(ctx, transactionId, id);
     }
   }
+
+  return Promise.resolve({ transactionId });
 }

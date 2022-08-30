@@ -173,9 +173,18 @@ type PicassoStakingPosition @entity {
   id: ID!
   eventId: String!
   positionId: String!
+  transactionId: String!
   poolId: String!
   amount: BigInt!
   owner: String!
   startTimestamp: BigInt!
   endTimestamp: BigInt
+}
+
+type HistoricalLockedValue @entity {
+  id: ID!
+  eventId: String!
+  transactionId: String!
+  amount: BigInt!
+  timestamp: BigInt!
 }

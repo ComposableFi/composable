@@ -8,7 +8,11 @@ import {
   StakingRewardsUnstakedEvent,
 } from "../types/events";
 import { saveAccountAndTransaction } from "../dbHelper";
-import { PicassoStakingPosition, PicassoTransactionType } from "../model";
+import {
+  HistoricalLockedValue,
+  PicassoStakingPosition,
+  PicassoTransactionType,
+} from "../model";
 import { encodeAccount } from "../utils";
 
 interface RewardPoolCreatedEvent {
@@ -79,17 +83,23 @@ function getSplitPositionEvent(
  * @param owner
  * @param amount
  * @param duration
+ * @param eventId
+ * @param transactionId
  */
 export function createPicassoStakingPosition(
   poolId: number,
   positionId: bigint,
   owner: string,
   amount: bigint,
-  duration: bigint
+  duration: bigint,
+  eventId: string,
+  transactionId: string
 ): PicassoStakingPosition {
   const startTimestamp = BigInt(new Date().valueOf());
   return new PicassoStakingPosition({
     id: randomUUID(),
+    eventId,
+    transactionId,
     poolId: poolId.toString(),
     positionId: positionId.toString(),
     owner,
@@ -103,12 +113,18 @@ export function createPicassoStakingPosition(
  * Update position's amount in place.
  * @param position
  * @param newAmount
+ * @param eventId
+ * @param transactionId
  */
 export function extendPicassoStakingPosition(
   position: PicassoStakingPosition,
-  newAmount: bigint
+  newAmount: bigint,
+  eventId: string,
+  transactionId: string
 ): void {
   position.amount = newAmount;
+  position.eventId = eventId;
+  position.transactionId = transactionId;
 }
 
 /**
@@ -118,17 +134,25 @@ export function extendPicassoStakingPosition(
  * @param oldAmount
  * @param newAmount
  * @param newPositionId
+ * @param eventId
+ * @param transactionId
  */
 export function splitPicassoStakingPosition(
   position: PicassoStakingPosition,
   oldAmount: bigint,
   newAmount: bigint,
-  newPositionId: bigint
+  newPositionId: bigint,
+  eventId: string,
+  transactionId: string
 ): PicassoStakingPosition {
   position.amount = oldAmount;
+  position.eventId = eventId;
+  position.transactionId = transactionId;
 
   const newPosition = new PicassoStakingPosition({
     id: randomUUID(),
+    eventId,
+    transactionId,
     poolId: position.poolId,
     positionId: newPositionId.toString(),
     owner: position.owner,
@@ -138,6 +162,45 @@ export function splitPicassoStakingPosition(
   });
 
   return newPosition;
+}
+
+/**
+ * Stores a new HistoricalLockedValue with current locked amount
+ * @param ctx
+ * @param amountLocked
+ * @param eventId
+ * @param transactionId
+ */
+export async function storeHistoricalLockedValue(
+  ctx: EventHandlerContext,
+  amountLocked: bigint,
+  eventId: string,
+  transactionId: string
+): Promise<void> {
+  let lastAmount = 0n;
+
+  const lastLockedValue: { amount: bigint }[] = await ctx.store.query(
+    `
+      SELECT amount
+      FROM historical_locked_value
+      ORDER BY timestamp
+      LIMIT 1
+      `
+  );
+
+  if (lastLockedValue?.[0]) {
+    lastAmount = BigInt(lastLockedValue[0].amount);
+  }
+
+  const historicalLockedValue = new HistoricalLockedValue({
+    id: randomUUID(),
+    eventId,
+    transactionId,
+    amount: lastAmount + amountLocked,
+    timestamp: BigInt(new Date().valueOf()),
+  });
+
+  await ctx.store.save(historicalLockedValue);
 }
 
 /**
@@ -175,23 +238,25 @@ export async function processStakedEvent(
   const owner = encodeAccount(event.owner);
   const { poolId, positionId, amount, durationPreset } = event;
 
+  const { transactionId } = await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.STAKING_REWARDS_STAKED,
+    owner
+  );
+
   const stakingPosition = createPicassoStakingPosition(
     poolId,
     positionId,
     owner,
     amount,
-    durationPreset
+    durationPreset,
+    ctx.event.id,
+    transactionId
   );
 
-  stakingPosition.eventId = ctx.event.id;
+  await storeHistoricalLockedValue(ctx, amount, ctx.event.id, transactionId);
 
   await ctx.store.save(stakingPosition);
-
-  await saveAccountAndTransaction(
-    ctx,
-    PicassoTransactionType.STAKING_REWARDS_STAKED,
-    owner
-  );
 }
 
 /**
@@ -217,12 +282,27 @@ export async function processStakeAmountExtendedEvent(
     return;
   }
 
-  extendPicassoStakingPosition(stakingPosition, amount);
+  const oldAmount = stakingPosition.amount;
+  const amountChanged = amount - oldAmount;
 
-  await saveAccountAndTransaction(
+  const { transactionId } = await saveAccountAndTransaction(
     ctx,
     PicassoTransactionType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
     stakingPosition.owner
+  );
+
+  extendPicassoStakingPosition(
+    stakingPosition,
+    amount,
+    ctx.event.id,
+    transactionId
+  );
+
+  await storeHistoricalLockedValue(
+    ctx,
+    amountChanged,
+    ctx.event.id,
+    transactionId
   );
 }
 
@@ -235,15 +315,33 @@ export async function processStakeAmountExtendedEvent(
 export async function processUnstakedEvent(
   ctx: EventHandlerContext
 ): Promise<void> {
+  // TODO: when does this run?
   console.log("Start processing `Unstaked`");
   const evt = new StakingRewardsUnstakedEvent(ctx);
   const event = getUnstakedEvent(evt);
   const owner = encodeAccount(event.owner);
+  const { positionId } = event;
 
-  await saveAccountAndTransaction(
+  const position = await ctx.store.get(PicassoStakingPosition, {
+    where: { positionId: positionId.toString() },
+  });
+
+  if (!position) {
+    // no-op.
+    return;
+  }
+
+  const { transactionId } = await saveAccountAndTransaction(
     ctx,
     PicassoTransactionType.STAKING_REWARDS_UNSTAKE,
     owner
+  );
+
+  await storeHistoricalLockedValue(
+    ctx,
+    -position.amount,
+    ctx.event.id,
+    transactionId
   );
 }
 
@@ -274,11 +372,19 @@ export async function processSplitPositionEvent(
     return;
   }
 
+  const { transactionId } = await saveAccountAndTransaction(
+    ctx,
+    PicassoTransactionType.STAKING_REWARDS_SPLIT_POSITION,
+    position.owner
+  );
+
   const newPosition = splitPicassoStakingPosition(
     position,
     1n,
     1n,
-    newPositionId
+    newPositionId,
+    ctx.event.id,
+    transactionId
   );
 
   if (!newPosition) {
@@ -286,17 +392,8 @@ export async function processSplitPositionEvent(
     return;
   }
 
-  position.eventId = ctx.event.id;
-  newPosition.eventId = ctx.event.id;
-
   await ctx.store.save(position);
   await ctx.store.save(newPosition);
 
   // TODO: add data about new positions
-
-  await saveAccountAndTransaction(
-    ctx,
-    PicassoTransactionType.STAKING_REWARDS_SPLIT_POSITION,
-    position.owner
-  );
 }

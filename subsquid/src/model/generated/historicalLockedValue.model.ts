@@ -2,8 +2,8 @@ import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} f
 import * as marshal from "./marshal"
 
 @Entity_()
-export class PicassoStakingPosition {
-  constructor(props?: Partial<PicassoStakingPosition>) {
+export class HistoricalLockedValue {
+  constructor(props?: Partial<HistoricalLockedValue>) {
     Object.assign(this, props)
   }
 
@@ -14,23 +14,11 @@ export class PicassoStakingPosition {
   eventId!: string
 
   @Column_("text", {nullable: false})
-  positionId!: string
-
-  @Column_("text", {nullable: false})
   transactionId!: string
-
-  @Column_("text", {nullable: false})
-  poolId!: string
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   amount!: bigint
 
-  @Column_("text", {nullable: false})
-  owner!: string
-
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  startTimestamp!: bigint
-
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: true})
-  endTimestamp!: bigint | undefined | null
+  timestamp!: bigint
 }
