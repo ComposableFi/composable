@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 export default {
   rpc: {
     amountAvailableToClaimFor: {
@@ -17,11 +19,6 @@ export default {
     }
   },
   types: {
-    Codec: {
-      _enum: {
-        isOk: "bool"
-      }
-    },
     ComposableTraitsAssetsXcmAssetLocation: "Null",
     PalletCrowdloanRewardsModelsReward: "Null",
     PalletCrowdloanRewardsModelsRemoteAccount: {
@@ -52,12 +49,6 @@ export default {
     },
     PalletCollatorSelectionCandidateInfo: "Null",
     PalletCrowdloanRewardsReward: "Null",
-    PalletDemocracyVoteThreshold: "Null",
-    PalletDemocracyPreimageStatus: "Null",
-    PalletDemocracyReferendumInfo: "Null",
-    PalletPreimageRequestStatus: "Null",
-    PalletDemocracyReleases: "Null",
-    PalletDemocracyVoteVoting: "Null",
     CumulusPalletDmpQueueConfigData: "Null",
     PalletDutchAuctionSellOrder: "Null",
     ComposableTraitsVestingVestingSchedule: "Null",
@@ -66,7 +57,7 @@ export default {
     ComposableTraitsGovernanceSignedRawOrigin: {
       _enum: {
         Root: "Null",
-        Signed: "AccountId32",
+        Signed: "",
         isSigned: "bool",
         asSigned: "AccountId32"
       }
@@ -144,8 +135,6 @@ export default {
     },
     FrameSupportScheduleMaybeHashed: "Null",
     FrameSupportScheduleLookupError: "Null",
-    PalletCurrencyFactoryRanges: "Null",
-    PalletCurrencyFactoryRangesRange: "Null",
     PalletLiquidationsLiquidationStrategyConfiguration: "Null",
     CommonMosaicRemoteAssetId: "Null",
     ComposableTraitsDexConsantProductPoolInfo: "Null",
@@ -163,7 +152,14 @@ export default {
       ownerFee: "Permill"
     },
     ComposableSupportEthereumAddress: "Null",
-    ComposableTraitsAssetsBasicAssetMetadata: "Null",
+    ComposableTraitsAssetsBasicAssetMetadata: {
+      symbol: {
+        inner: "Null"
+      },
+      name: {
+        inner: "Null"
+      }
+    },
     ComposableTraitsDexDexRoute: "Null",
     ComposableTraitsLendingRepayStrategy: "Null",
     ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
@@ -188,15 +184,18 @@ export default {
     PalletIbcIbcConsensusState: "Null",
     PalletIbcEventsIbcEvent: "Null",
     PalletIbcErrorsIbcError: "Null",
-    BeefyPayloadId: "Null",
-    IbcTransferTransferParams: "Null",
-    IbcTransferPalletParams: "Null",
-    ComposableTraitsStakingRewardPoolConfiguration: "Null",
     PalletMosaicAmmSwapInfo: "Null",
     ComposableTraitsStakingRewardPool: "Null",
-    PalletAirdropModelsIdentity: "Null",
-    PalletAirdropModelsAirdrop: "Null",
-    PalletAirdropModelsRecipientFund: "Null",
-    PalletAirdropModelsProof: "Null"
+    ComposableTraitsStakingRewardPoolConfiguration: "Null",
+    IbcTransferPalletParams: "Null",
+    IbcTransferTransferParams: "Null",
+    ComposableTraitsOracleRewardTracker: "Null",
+    ComposableTraitsStakingStake: "Null",
+    ComposableTraitsVestingVestingScheduleInfo: "Null",
+    ComposableTraitsVestingVestingScheduleIdSet: "Null",
+    ComposableTraitsStakingRewardUpdate: "Null",
+    ComposableTraitsAccountProxyProxyType: "Null",
+    ComposableTraitsAccountProxyProxyDefinition: "Null",
+    PalletAccountProxyAnnouncement: "Null",
   }
 };

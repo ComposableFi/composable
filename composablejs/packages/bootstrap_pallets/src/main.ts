@@ -17,7 +17,7 @@ import { bootstrapPools } from "./bootstrap/pablo";
 import { bootstrapAssets } from "./bootstrap/assets";
 import { bootstrapStakingRewardPools } from "./bootstrap/stakingRewards";
 import { logger } from "@composable/bootstrap_pallets/utils";
-
+// import { updateStakingRewardPoolRewardConfig } from "./lib/pallets/stakingRewards";
 
 const main = async () => {
   const rpcUrl = process.env.RPC_URL || "ws://127.0.0.1:9988";
@@ -50,6 +50,19 @@ const main = async () => {
     await bootstrapAssets(api, walletSudo, config.mintAssets as [string, string, string][]);
   }
 
+  // await updateStakingRewardPoolRewardConfig(
+  //   api,
+  //   walletSudo,
+  //   "100000000001",
+  //   {
+  //     "5": {
+  //       rewardRate: {
+  //         period: "PerSecond",
+  //         amount: api.createType("u128", "")
+  //       }
+  //     }
+  //   }
+  // )
 
   await api.disconnect();
   process.exit(0);

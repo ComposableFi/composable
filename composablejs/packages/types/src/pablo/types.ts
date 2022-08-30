@@ -14,6 +14,9 @@ export interface ComposableTraitsDexFee extends Struct {
   readonly asset_id: u128;
 }
 
+/** @name ComposableTraitsDexStakingRewardPool */
+export interface ComposableTraitsDexStakingRewardPool extends Null {}
+
 /** @name PalletPabloPoolConfiguration */
 export interface PalletPabloPoolConfiguration extends Enum {
   readonly isStableSwap: boolean;
