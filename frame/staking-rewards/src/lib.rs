@@ -75,7 +75,7 @@ pub mod pallet {
 	use frame_support::{
 		traits::{
 			fungibles::{Inspect, Mutate, Transfer},
-			tokens::{nonfungibles, WithdrawConsequence},
+			tokens::{nonfungibles, WithdrawConsequence, DepositConsequence},
 			TryCollect, UnixTime,
 		},
 		transactional, BoundedBTreeMap, PalletId,
@@ -86,7 +86,10 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider},
 		PerThing, Perbill,
 	};
-	use sp_std::{cmp::max, fmt::Debug, vec, vec::Vec};
+	// Review [Andy]
+	// remove fmt::Debug
+	use sp_std::{cmp::max, vec, vec::Vec};
+	use composable_traits::staking::lock::Lock;
 
 	use crate::{
 		prelude::*, reward_accumulation_calculation, update_rewards_pool,
@@ -129,11 +132,19 @@ pub mod pallet {
 			position_id: T::PositionId,
 		},
 		/// Split stake position into two positions
+
+		// Review [Andy]
+		// Could we not use a bounded vector or even an array here for the two positions?
+		// Maybe just clearer as:
+		// `SplitPosition { position_one: T::PositionId, position_two: T::PositionId }`
+		// would imply a small refactor...
 		SplitPosition {
 			positions: Vec<T::PositionId>,
 		},
 		/// Reward transfer event.
 		RewardTransferred {
+			// Revuew [Andy]
+			// Maybe we are missing some documentation around the parameters of this event
 			from: T::AccountId,
 			pool: T::RewardPoolId,
 			reward_currency: T::AssetId,
@@ -141,20 +152,28 @@ pub mod pallet {
 			reward_increment: T::Balance,
 		},
 		RewardAccumulationError {
+			// Review [Andy]
+			// Maybe we are missing some documentation around the parameters of this event
 			pool_id: T::RewardPoolId,
 			asset_id: T::AssetId,
 		},
 		MaxRewardsAccumulated {
+			// Review [Andy]
+			// Maybe we are missing some documentation around the parameters of this event
 			pool_id: T::RewardPoolId,
 			asset_id: T::AssetId,
 		},
 		RewardPoolUpdated {
+			// Review [Andy]
+			// Maybe we are missing some documentation around the parameters of this event
 			pool_id: T::RewardPoolId,
 		},
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
+		// Review [Andy]
+		// Naming could be better here I think, what was the "problem" exactly?
 		/// Error when creating reward configs.
 		RewardConfigProblem,
 		/// No duration presets configured.
@@ -163,12 +182,16 @@ pub mod pallet {
 		TooManyRewardAssetTypes,
 		/// Invalid end block number provided for creating a pool.
 		EndBlockMustBeInTheFuture,
+		// Review [Andy]
+		// At the moment this will never be emitted as an error
 		/// Unimplemented reward pool type.
 		UnimplementedRewardPoolConfiguration,
 		/// Rewards pool not found.
 		RewardsPoolNotFound,
 		/// Error when creating reduction configs.
 		ReductionConfigProblem,
+		// Review [Andy]
+		// maybe InsufficientAssetsToStake?
 		/// Not enough assets for a stake.
 		NotEnoughAssets,
 		/// No stake found for given id.
@@ -181,7 +204,15 @@ pub mod pallet {
 		OnlyStakeOwnerCanUnstake,
 		/// Reward asset not found in reward pool.
 		RewardAssetNotFound,
+		// Review [Andy]
+		// missing documentation
 		BackToTheFuture,
+		// Review [Andy]
+		/// Invalid staking amount
+		StakeIsZero,
+		// Review [Andy]
+		/// Invalid duration specified
+		DurationInvalid,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -192,54 +223,47 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
+		// Review [Andy]
+		// Don't need the bound `Parameter` here
 		/// The reward balance type.
-		type Balance: Parameter
-			+ Member
+		type Balance: Member
 			+ BalanceLike
 			+ FixedPointOperand
 			+ From<u128>
 			+ Into<u128>
 			+ Zero;
-
 		/// The reward pool ID type.
 		/// Type representing the unique ID of a pool.
-		type RewardPoolId: FullCodec
-			+ MaxEncodedLen
-			+ Default
-			+ Debug
-			+ TypeInfo
-			+ Eq
-			+ PartialEq
-			+ Ord
-			+ Copy
-			+ Zero
-			+ One
-			+ SafeArithmetic;
+		// Review [Andy]
+		// could reduce the bounds here
+		type RewardPoolId: Member
+					+ Parameter
+					+ Ord
+					+ Copy
+					+ Zero
+					+ One
+					+ SafeArithmetic;
 
 		/// The position id type.
-		type PositionId: Parameter + Member + Clone + FullCodec + Copy + Zero + One + SafeArithmetic;
+		// Review [Andy]
+		// Remove `FullCodec` and `Clone` bounds
+		type PositionId: Parameter + Member + Copy + Zero + One + SafeArithmetic;
 
-		type AssetId: Parameter
-			+ Member
-			+ AssetIdLike
-			+ MaybeSerializeDeserialize
+		// Review [Andy]
+		// documentation missing here
+		// Remove `Parameter`, `MaybeSerializeDeserialize` bounds
+		type AssetId: Member
+			+ AssetIdLike // Review [Andy] Looks like this could be replaced with frame_support::traits::tokens::AssetId
 			+ Ord
 			+ From<u128>
 			+ Into<u128>;
 
-		type FinancialNftInstanceId: FullCodec
-			+ Debug
-			+ SafeAdd
-			+ MaxEncodedLen
-			+ Default
-			+ TypeInfo
-			+ Eq
-			+ PartialEq
-			+ Ord
-			+ Copy
-			+ Zero
-			+ One;
+		// Review [Andy] documentation missing here
+		// Maybe a lot simpler with the one bound
+		type FinancialNftInstanceId: Parameter;
 
+		// Review [Andy]
+		// Documentation missing here
 		type FinancialNft: nonfungibles::Mutate<AccountIdOf<Self>>
 			+ nonfungibles::Create<AccountIdOf<Self>>
 			+ FinancialNft<AccountIdOf<Self>>;
@@ -254,6 +278,8 @@ pub mod pallet {
 		/// is used for rate based rewarding and position lock timing
 		type UnixTime: UnixTime;
 
+		// Review [Andy]
+		// Doesn't look this is used anywhere
 		/// the size of batch to take each time trying to release rewards
 		#[pallet::constant]
 		type ReleaseRewardsPoolsBatchSize: Get<u8>;
@@ -261,10 +287,14 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
+		// Review [Andy]
+		// Does this need to be u32, maybe u8?
 		/// Maximum number of staking duration presets allowed.
 		#[pallet::constant]
 		type MaxStakingDurationPresets: Get<u32>;
 
+		// Review [Andy]
+		// Does this need to be u32, maybe u8?
 		/// Maximum number of reward configurations per pool.
 		#[pallet::constant]
 		type MaxRewardConfigsPerPool: Get<u32>;
@@ -278,6 +308,9 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
+	// Review [Andy]
+	// Comment on RewardPoolConfiguration - Does it make much sense having this as an enum at
+	// the moment if we only have one configuration type?  Seems to add unnecesary complication
 	/// Abstraction over RewardPoolConfiguration type
 	type RewardPoolConfigurationOf<T> = RewardPoolConfiguration<
 		<T as frame_system::Config>::AccountId,
@@ -341,8 +374,19 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn stakes)]
+	// Review [Andy]
+	// Could be beneficial to use a double map here with the prefix being the reward pool
+	// id as we have this relation embedded in the Stake struct and would help in operations when
+	// we wish to remove a pool and some group update on stakes in a pool.
 	pub type Stakes<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn stakers)]
+	// Review [Andy]
+	// Additional map of stakers and their positions. Do we set a maximum of positions for an account (BoundedVec)?
+	// Could be beneficial in lookup of positions and validation of them at the head of xt
+	pub type Stakers<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, Vec<T::PositionId>>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -380,6 +424,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
 			let keep_alive = true;
+			// Review [Andy]
+			// probably can drop _position_id for _
 			let _position_id =
 				<Self as Staking>::stake(&owner, &pool_id, amount, duration_preset, keep_alive)?;
 
@@ -397,6 +443,8 @@ pub mod pallet {
 		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
 			let keep_alive = true;
+			// Review [Andy]
+			// probably can drop _position_id for _
 			let _position_id = <Self as Staking>::extend(&owner, position, amount, keep_alive)?;
 
 			Ok(())
@@ -420,6 +468,9 @@ pub mod pallet {
 			ratio: Validated<Permill, ValidSplitRatio>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+			// Review [Andy]
+			// looks like we have an array of position id as per comment on the SplitPosition
+			// event above
 			<Self as Staking>::split(&who, &position, ratio.value())?;
 			Ok(())
 		}
@@ -442,6 +493,9 @@ pub mod pallet {
 		}
 	}
 
+	// Review [Andy]
+	// Maybe the ManageStaking trait could be an associated type of the pallet and
+	// decoupling it and allow one to mock it simply.
 	impl<T: Config> ManageStaking for Pallet<T> {
 		type AssetId = T::AssetId;
 		type AccountId = T::AccountId;
@@ -452,6 +506,8 @@ pub mod pallet {
 		type RewardPoolId = T::RewardPoolId;
 
 		#[transactional]
+		// Review [Andy]
+		// could the naming be better, we create a staking pool but return a reward pool
 		fn create_staking_pool(
 			pool_config: RewardPoolConfiguration<
 				Self::AccountId,
@@ -461,53 +517,69 @@ pub mod pallet {
 				StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
 			>,
 		) -> Result<Self::RewardPoolId, DispatchError> {
-			let (owner, pool_id, end_block) = match pool_config {
-				RewardRateBasedIncentive {
-					owner,
-					asset_id,
-					reward_configs: initial_reward_config,
-					end_block,
-					lock,
-				} => {
-					ensure!(
+			// Review [Andy]
+			// this is maybe clearer and we needn't handle the first result
+			return if let RewardRateBasedIncentive {
+				owner,
+				asset_id,
+				reward_configs: initial_reward_config,
+				end_block,
+				lock,
+			} = pool_config {
+
+				let pool_id = RewardPoolCount::<T>::increment()?;
+
+				ensure!(
 						end_block > frame_system::Pallet::<T>::current_block_number(),
 						Error::<T>::EndBlockMustBeInTheFuture
 					);
 
-					let pool_id = RewardPoolCount::<T>::increment()?;
+				// Review [Andy] - ensure we can deposit into the new account for the pool
+				// Would be good to have access to `Balances` for this, but for now.
+				let existential_deposit = 1000u32;
+				T::Assets::can_deposit(asset_id, &Self::pool_account_id(&pool_id), existential_deposit.into(), false)
+					.into_result()?;
 
-					let now_seconds = T::UnixTime::now().as_secs();
+				let now_seconds = T::UnixTime::now().as_secs();
 
-					let rewards = initial_reward_config
-						.into_iter()
-						.map(|(asset_id, amount)| {
-							(asset_id, Reward::from_config(amount, now_seconds))
-						})
-						.try_collect()
-						.expect("No items were added; qed;");
+				let rewards = initial_reward_config
+					.into_iter()
+					.map(|(asset_id, amount)| {
+						(asset_id, Reward::from_config(amount, now_seconds))
+					})
+					.try_collect()
+					.expect("No items were added; qed;");
 
-					RewardPools::<T>::insert(
-						pool_id,
-						RewardPool {
-							owner: owner.clone(),
-							asset_id,
-							rewards,
-							total_shares: T::Balance::zero(),
-							claimed_shares: T::Balance::zero(),
-							end_block,
-							lock,
-						},
-					);
-					// TODO (vim): Create the financial NFT collection for the rewards pool
-					Ok((owner, pool_id, end_block))
-				},
-				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
-			}?;
-			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
-			Ok(pool_id)
+				// Review [Andy]
+				// maybe this could probably be better moved to the caller and the logic
+				// implemented in a type at configuration as mentioned above
+
+				// One question here is whether we really want to have several pools with the same
+				// asset id
+				RewardPools::<T>::insert(
+					pool_id,
+					RewardPool {
+						owner: owner.clone(),
+						asset_id,
+						rewards,
+						total_shares: T::Balance::zero(),
+						claimed_shares: T::Balance::zero(),
+						end_block,
+						lock,
+					},
+				);
+
+				Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
+				Ok(pool_id)
+			} else {
+				Err(Error::<T>::UnimplementedRewardPoolConfiguration.into())
+			}
 		}
 	}
 
+	// Review [Andy]
+	// Maybe the FinancialNftProtocol trait could be an associated type of the pallet and
+	// decoupling it and allow one to mock it simply (as above)
 	impl<T: Config> FinancialNftProtocol for Pallet<T> {
 		type ItemId = T::FinancialNftInstanceId;
 		type AssetId = AssetIdOf<T>;
@@ -527,6 +599,8 @@ pub mod pallet {
 		}
 	}
 
+	// Review [Andy]
+	// Again could be an associated type of the pallet
 	impl<T: Config> Staking for Pallet<T> {
 		type AccountId = T::AccountId;
 		type RewardPoolId = T::RewardPoolId;
@@ -541,12 +615,15 @@ pub mod pallet {
 			duration_preset: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
+			// Review [Andy]
+			// Before anything make sure we validate
+			ensure!(amount > Zero::zero(), Error::<T>::StakeIsZero);
+			ensure!(duration_preset > Zero::zero(), Error::<T>::DurationInvalid);
+
 			let mut rewards_pool =
 				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
-
-			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
-				.ok_or(Error::<T>::NoDurationPresetsConfigured)?;
-
+			// Review [Andy]
+			// Fail sooner if we can
 			ensure!(
 				matches!(
 					T::Assets::can_withdraw(rewards_pool.asset_id, who, amount),
@@ -554,6 +631,9 @@ pub mod pallet {
 				),
 				Error::<T>::NotEnoughAssets
 			);
+
+			let reward_multiplier = Self::reward_multiplier(&rewards_pool, duration_preset)
+				.ok_or(Error::<T>::NoDurationPresetsConfigured)?;
 
 			let boosted_amount = Self::boosted_amount(reward_multiplier, amount);
 			let (rewards, reductions) =
@@ -594,6 +674,9 @@ pub mod pallet {
 				amount,
 				keep_alive,
 			)?;
+
+			// Review [Andy]
+			// this is specific to the pallet and could be handled outside of this function
 			RewardPools::<T>::insert(pool_id, rewards_pool);
 			Stakes::<T>::insert(position_id, new_position);
 
@@ -683,7 +766,9 @@ pub mod pallet {
 						.safe_sub(&inflation)?
 				};
 				let claim = if early_unlock {
-					(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(claim)
+					// Review [Andy]
+					// Drop this into a function for use in tests
+					Self::apply_unlock_penalty(&stake.lock, claim)
 				} else {
 					claim
 				};
@@ -705,7 +790,9 @@ pub mod pallet {
 			rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
 
 			let stake_with_penalty = if early_unlock {
-				(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(stake.stake)
+				// Review [Andy]
+				// Drop this into a function for use in tests
+				Self::apply_unlock_penalty(&stake.lock, stake.stake)
 			} else {
 				stake.stake
 			};
@@ -783,6 +870,12 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
+		// Review [Andy]
+		// fn to apply penalty
+		pub(crate) fn apply_unlock_penalty(lock: &Lock, amount: T::Balance) -> T::Balance {
+			(Perbill::one() - lock.unlock_penalty).mul_ceil(amount)
+		}
+
 		pub(crate) fn pool_account_id(pool_id: &T::RewardPoolId) -> T::AccountId {
 			T::PalletId::get().into_sub_account_truncating(pool_id)
 		}
@@ -865,7 +958,16 @@ pub mod pallet {
 			}
 		}
 
+		// Review [Andy]
+		// this is probably best being batched which I guess is what ReleaseRewardsPoolsBatchSize
+		// is intended for, spelling here `accumulate`
 		pub(crate) fn acumulate_rewards_hook() -> Weight {
+			// Review [Andy]
+			// wouldn't rounding here cause a potential loss of up to 998ms of rewards per block???
+			// Block 1 - ....1501ms -> 2 seconds
+			// Block 2 - ....3499ms -> 3 seconds
+			// Diff (2 - 1)   -     1998ms (2 seconds) -> 1 second
+			// Rounding could happen at a later stage in the calculation
 			let now_seconds = T::UnixTime::now().as_secs();
 			let unix_time_now_weight = T::WeightInfo::unix_time_now();
 
@@ -919,6 +1021,8 @@ pub mod pallet {
 		}
 	}
 
+	// Review [Andy]
+	// could be an associated type in the config of pallet
 	impl<T: Config> ProtocolStaking for Pallet<T> {
 		type AssetId = T::AssetId;
 		type AccountId = T::AccountId;
@@ -940,6 +1044,15 @@ pub mod pallet {
 			reward_currency: Self::AssetId,
 			reward_increment: Self::Balance,
 		) -> DispatchResult {
+			// Review [Andy]
+			// validate assets available first
+			ensure!(
+				matches!(
+					T::Assets::can_withdraw(reward_currency, from, reward_increment),
+					WithdrawConsequence::Success
+				),
+				Error::<T>::NotEnoughAssets
+			);
 			RewardPools::<T>::try_mutate(pool, |reward_pool| {
 				match reward_pool {
 					Some(reward_pool) => {

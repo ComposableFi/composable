@@ -25,7 +25,7 @@ use frame_support::{
 use frame_system::EventRecord;
 use sp_arithmetic::{Perbill, Permill};
 use sp_core::sr25519::Public;
-use sp_runtime::PerThing;
+use sp_runtime::{DispatchError, PerThing};
 use sp_std::collections::btree_map::BTreeMap;
 
 mod prelude;
@@ -33,6 +33,15 @@ mod runtime;
 
 mod test_reward_accumulation_hook;
 mod test_update_reward_pools;
+
+// Review [Andy] Only ROOT can create pools
+#[test]
+fn test_ensure_origin_is_checked_creating_reward_pool() {
+    new_test_ext().execute_with(|| {
+        assert_noop!(StakingRewards::create_reward_pool(Origin::signed(ALICE), get_default_reward_pool()), DispatchError::BadOrigin);
+		assert_noop!(StakingRewards::create_reward_pool(Origin::signed(BOB), get_default_reward_pool()), DispatchError::BadOrigin);
+    });
+}
 
 #[test]
 fn test_create_reward_pool() {
@@ -42,10 +51,12 @@ fn test_create_reward_pool() {
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		assert_eq!(StakingRewards::pool_count(), 1);
 
+		// Review [Andy] describe what we test for
+        let expected_pool_id = 1;
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
             Event::StakingRewards(crate::Event::RewardPoolCreated { owner, pool_id, .. })
-            if owner == ALICE && pool_id == 1)
+            if owner == ALICE && expected_pool_id == pool_id)
 		});
 
 		// invalid end block
@@ -82,6 +93,57 @@ fn stake_in_case_of_low_balance_should_not_work() {
 	});
 }
 
+// Review [Andy]
+// We should validate the stake
+#[test]
+fn should_be_forced_to_stake_something() {
+    new_test_ext().execute_with(|| {
+        assert_eq!(StakingRewards::stake_count(), 0);
+        assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+        let staker = ALICE;
+        let pool_id = StakingRewards::pool_count();
+        let nothing = 0u32.into();
+        let amount = 100_500u32.into();
+        let duration_preset = ONE_HOUR;
+        let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
+            .expect("asset_id expected")
+            .asset_id;
+        mint_assets(vec![staker], vec![staked_asset_id], amount);
+
+        assert_noop!(
+			StakingRewards::stake(Origin::signed(staker), pool_id, nothing, duration_preset),
+			crate::Error::<Test>::StakeIsZero
+		);
+
+        assert_eq!(StakingRewards::stake_count(), 0);
+    });
+}
+
+#[test]
+fn should_not_be_able_to_stake_more() {
+    new_test_ext().execute_with(|| {
+        assert_eq!(StakingRewards::stake_count(), 0);
+        assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
+
+        let staker = ALICE;
+        let pool_id = StakingRewards::pool_count();
+        let amount = 100_500u32.into();
+        let duration_preset = ONE_HOUR;
+        let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
+            .expect("asset_id expected")
+            .asset_id;
+        mint_assets(vec![staker], vec![staked_asset_id], amount);
+
+        assert_noop!(
+			StakingRewards::stake(Origin::signed(staker), pool_id, amount + 1, duration_preset),
+			crate::Error::<Test>::NotEnoughAssets
+		);
+
+        assert_eq!(StakingRewards::stake_count(), 0);
+    });
+}
+
 #[test]
 fn stake_in_case_of_zero_inflation_should_work() {
 	new_test_ext().execute_with(|| {
@@ -91,15 +153,19 @@ fn stake_in_case_of_zero_inflation_should_work() {
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let staker = ALICE;
 		let pool_id = StakingRewards::pool_count();
-		let amount = 100_500u32.into();
+        // Review [Andy]
+		// Just to make this clearer below.  We should be able to stake all that is
+        // above the ED
+        let staked_amount = 100_500u32.into();
+        let original_balance = staked_amount + ExistentialDeposit::get() as u128;
 		let duration_preset = ONE_HOUR;
 
-		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
-			.expect("asset_id expected")
-			.asset_id;
-		mint_assets(vec![staker], vec![staked_asset_id], amount * 2);
+        let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
+            .expect("asset_id expected")
+            .asset_id;
+        mint_assets(vec![staker], vec![staked_asset_id], original_balance);
 
-		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
+		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, staked_amount, duration_preset));
 		assert_eq!(StakingRewards::stake_count(), 1);
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
@@ -119,8 +185,8 @@ fn stake_in_case_of_zero_inflation_should_work() {
 			Some(Stake {
 				owner: staker,
 				reward_pool_id: pool_id,
-				stake: amount,
-				share: StakingRewards::boosted_amount(reward_multiplier, amount),
+				stake: staked_amount,
+				share: StakingRewards::boosted_amount(reward_multiplier, staked_amount),
 				reductions,
 				lock: Lock {
 					started_at: <Test as crate::Config>::UnixTime::now(),
@@ -129,13 +195,13 @@ fn stake_in_case_of_zero_inflation_should_work() {
 				},
 			})
 		);
-		assert_eq!(balance(staked_asset_id, &staker), amount);
-		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount);
+		assert_eq!(balance(staked_asset_id, &staker), staked_amount);
+		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), staked_amount);
 		assert_last_event::<Test, _>(|e| {
 			matches!(
 				e.event,
 				Event::StakingRewards(crate::Event::Staked { pool_id, owner, amount, position_id, ..})
-					if owner == staker && pool_id == 1 && amount == 100_500u32.into() && position_id == 1
+					if owner == staker && pool_id == 1 && amount == staked_amount && position_id == 1
 			)
 		});
 	});
@@ -214,8 +280,9 @@ fn test_extend_stake_amount() {
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let staker = ALICE;
 		let pool_id = StakingRewards::pool_count();
-		let amount = 100_500u32.into();
-		let extend_amount = 100_500u32.into();
+		// Review [Andy] the same thing
+        let amount = 100_500u32.into();
+        let extend_amount = amount;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
 		let total_shares = 200;
@@ -308,7 +375,9 @@ fn not_owner_of_stake_can_not_unstake() {
 		let staked_asset_id = StakingRewards::pools(StakingRewards::pool_count())
 			.expect("asset_id expected")
 			.asset_id;
-		mint_assets(vec![owner, not_owner], vec![staked_asset_id], amount * 2);
+        // Review [Andy]
+		// no need to mint an asset for the other account
+        mint_assets(vec![owner /*, not_owner*/], vec![staked_asset_id], amount * 2);
 
 		assert_ok!(StakingRewards::stake(Origin::signed(owner), pool_id, amount, duration_preset));
 
@@ -338,8 +407,10 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let stake_id = StakingRewards::stake_count();
-		let unlock_penalty =
-			StakingRewards::stakes(stake_id).expect("stake expected").lock.unlock_penalty;
+		// Review [Andy]
+		// See below
+		let lock =
+            StakingRewards::stakes(stake_id).expect("stake expected").lock;
 		assert_eq!(balance(staked_asset_id, &staker), amount);
 
 		assert_ok!(StakingRewards::unstake(Origin::signed(staker), stake_id));
@@ -352,9 +423,13 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 			)
 		});
 
-		let penalty = unlock_penalty.mul_ceil(amount);
-		assert_eq!(balance(staked_asset_id, &staker), amount + (amount - penalty));
-		assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), penalty);
+        // Review [Andy]
+		// making assumption of how this is calculated in the implementation
+        // let penalty = unlock_penalty.mul_ceil(amount);
+        // Using implementation of pallet
+        let reward_after_penalty = StakingRewards::apply_unlock_penalty(&lock, amount);
+        assert_eq!(balance(staked_asset_id, &staker), amount + reward_after_penalty);
+        assert_eq!(balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)), amount - reward_after_penalty);
 	});
 }
 
@@ -500,7 +575,9 @@ fn test_transfer_reward() {
 		assert_ok!(<Tokens as Mutate<<StakingRewards as ProtocolStaking>::AccountId>>::mint_into(
 			USDT::ID,
 			&ALICE,
-			20_000_u128
+            // Review [Andy]
+			// smaller balance so within reward limit to test edges
+			90_u128
 		));
 		assert_ok!(<Tokens as Mutate<<StakingRewards as ProtocolStaking>::AccountId>>::mint_into(
 			BTC::ID,
@@ -518,8 +595,26 @@ fn test_transfer_reward() {
 			USDT::ID,
 			10_u128
 		));
-		// can't transfer more than max_rewards set in the rewards config
-		assert_noop!(
+        // Review [Andy]
+		// fail quickly if no assets
+        assert_noop!(<StakingRewards as ProtocolStaking>::transfer_reward(
+			&ALICE,
+			&1,
+			USDT::ID,
+			81_u128
+		), crate::Error::<Test>::NotEnoughAssets);
+
+        // can't transfer more than max_rewards set in the rewards config
+        // Review [Andy]
+		// first mint more tokens for alice
+        assert_ok!(<Tokens as Mutate<<StakingRewards as ProtocolStaking>::AccountId>>::mint_into(
+			USDT::ID,
+			&ALICE,
+			10_000_u128
+		));
+		// Review [Andy]
+		// and then try to increase reward over configured limit
+        assert_noop!(
 			<StakingRewards as ProtocolStaking>::transfer_reward(&ALICE, &1, USDT::ID, 10_000_u128),
 			crate::Error::<Test>::MaxRewardLimitReached
 		);
@@ -529,7 +624,7 @@ fn test_transfer_reward() {
 			crate::Error::<Test>::OnlyPoolOwnerCanAddNewReward
 		);
 
-		assert_ok!(<StakingRewards as ProtocolStaking>::transfer_reward(
+        assert_ok!(<StakingRewards as ProtocolStaking>::transfer_reward(
 			&ALICE,
 			&1,
 			BTC::ID,

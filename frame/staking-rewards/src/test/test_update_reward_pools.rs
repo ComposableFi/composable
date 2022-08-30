@@ -22,6 +22,8 @@ use super::runtime;
 fn test_update_reward_pool() {
 	new_test_ext().execute_with(|| {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
+		// Review [Andy] fix an initial reward rate
+		let reward_rate = 10_u128;
 
 		StakingRewards::create_reward_pool(
 			Origin::root(),
@@ -34,7 +36,7 @@ fn test_update_reward_pool() {
 					RewardConfig {
 						asset_id: USDT::ID,
 						max_rewards: 1_000_u128,
-						reward_rate: RewardRate::per_second(10_u128),
+						reward_rate: RewardRate::per_second(reward_rate),
 					},
 				)]
 				.into_iter()
@@ -53,10 +55,12 @@ fn test_update_reward_pool() {
 
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
-		check_rewards(&[(ALICE, PICA::ID, &[(USDT::ID, 10 * block_seconds(1))])]);
+		check_rewards(&[(ALICE, PICA::ID, &[(USDT::ID, reward_rate * block_seconds(1))])]);
 
+		// Review [Andy] a new lower reward rate
+		let new_reward_rate = 5_u128;
 		let reward_updates: BoundedBTreeMap<_, _, MaxRewardConfigsPerPool> =
-			[(USDT::ID, RewardUpdate { reward_rate: RewardRate::per_second(5_u128) })]
+			[(USDT::ID, RewardUpdate { reward_rate: RewardRate::per_second(new_reward_rate) })]
 				.into_iter()
 				.try_collect()
 				.unwrap();
@@ -69,11 +73,13 @@ fn test_update_reward_pool() {
 		process_and_progress_blocks::<StakingRewards, Test>(1);
 
 		let pool = StakingRewards::pools(pool_id).unwrap();
+		// Review [Andy] the max rewards
+		let max_rewards = 1_000;
 		assert!(matches!(
 			pool.rewards.get(&USDT::ID).unwrap(),
 			Reward {
-				max_rewards: 1_000,
-				reward_rate: RewardRate { period: RewardRatePeriod::PerSecond, amount: 5 },
+				max_rewards,
+				reward_rate: RewardRate { period: RewardRatePeriod::PerSecond, amount: new_reward_rate },
 				..
 			}
 		));
@@ -81,7 +87,7 @@ fn test_update_reward_pool() {
 		check_rewards(&[(
 			ALICE,
 			PICA::ID,
-			&[(USDT::ID, (10 * block_seconds(1)) + (5 * block_seconds(1)))],
+			&[(USDT::ID, (reward_rate * block_seconds(1)) + (new_reward_rate * block_seconds(1)))],
 		)]);
 
 		process_and_progress_blocks::<StakingRewards, Test>(10);
@@ -89,7 +95,29 @@ fn test_update_reward_pool() {
 		check_rewards(&[(
 			ALICE,
 			PICA::ID,
-			&[(USDT::ID, (10 * block_seconds(1)) + (5 * block_seconds(11)))],
+			&[(USDT::ID, (reward_rate * block_seconds(1)) + (new_reward_rate * block_seconds(11)))],
+		)]);
+
+		// Review [Andy]
+		// Rate of reward that should reach its ceiling and stay there
+		let mega_reward_rate = 100_u128;
+		let reward_updates: BoundedBTreeMap<_, _, MaxRewardConfigsPerPool> =
+			[(USDT::ID, RewardUpdate { reward_rate: RewardRate::per_second(mega_reward_rate) })]
+				.into_iter()
+				.try_collect()
+				.unwrap();
+
+		assert_extrinsic_event::<Test, _, _, _>(
+			StakingRewards::update_rewards_pool(Origin::root(), pool_id, reward_updates),
+			crate::Event::RewardPoolUpdated { pool_id },
+		);
+
+		process_and_progress_blocks::<StakingRewards, Test>(10);
+
+		check_rewards(&[(
+			ALICE,
+			PICA::ID,
+			&[(USDT::ID, max_rewards)],
 		)]);
 	})
 }
