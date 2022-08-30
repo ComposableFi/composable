@@ -7,10 +7,18 @@ import {
   ResolverInterface,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { PicassoTransaction, Account, Activity } from "../../model";
+import {
+  PicassoTransaction,
+  Account,
+  Activity,
+  PicassoStakingPosition,
+} from "../../model";
 
 @ObjectType()
 export class OverviewCounter {
+  @Field(() => BigInt, { nullable: false })
+  totalValueLocked!: bigint;
+
   @Field(() => Number, { nullable: false })
   transactionsCount!: number;
 
@@ -30,6 +38,32 @@ export class OverviewCountResolver
   implements ResolverInterface<OverviewCounter>
 {
   constructor(private tx: () => Promise<EntityManager>) {}
+
+  @FieldResolver({ name: "totalValueLocked", defaultValue: 0 })
+  async totalValueLocked(): Promise<bigint> {
+    const now = new Date().valueOf();
+
+    const manager = await this.tx();
+
+    let picassoStakingPositions: { id: string; amount: number }[] =
+      await manager.getRepository(PicassoStakingPosition).query(
+        `
+        SELECT
+          id, amount
+        FROM picasso_staking_position
+        WHERE end_timestamp > ${now}
+      `
+      );
+
+    const lockedValue = picassoStakingPositions.reduce(
+      (acc, { amount }) => acc + BigInt(amount),
+      0n
+    );
+
+    // TODO: add TVL from other sources
+
+    return Promise.resolve(lockedValue);
+  }
 
   @FieldResolver({ name: "transactionsCount", defaultValue: 0 })
   async transactionsCount(): Promise<number> {
@@ -94,6 +128,7 @@ export class OverviewCountResolver
     // Default values
     return Promise.resolve(
       new OverviewCounter({
+        totalValueLocked: 0n,
         transactionsCount: 0,
         accountHoldersCount: 0,
         activeUsersCount: 0,
