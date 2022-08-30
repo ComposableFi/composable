@@ -1,3 +1,4 @@
+use codec::Encode;
 use ibc::{
 	core::{
 		ics02_client::{

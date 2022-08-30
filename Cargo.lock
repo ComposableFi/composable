@@ -814,34 +814,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "beefy-light-client"
-version = "0.1.0"
-source = "git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee#ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee"
-dependencies = [
- "beefy-primitives",
- "ckb-merkle-mountain-range",
- "color-eyre",
- "derive_more",
- "frame-metadata",
- "frame-support",
- "hex",
- "jsonrpsee 0.15.1",
- "pallet-beefy-mmr",
- "pallet-mmr",
- "parity-scale-codec 3.1.5",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee)",
- "rs_merkle",
- "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-core-hashing 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-mmr-primitives",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "subxt-codegen 0.21.0",
- "syn",
- "tokio",
-]
-
-[[package]]
 name = "beefy-merkle-tree"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
@@ -3224,32 +3196,17 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "common",
- "derive_more",
  "env_logger",
- "frame-support",
  "futures",
  "hex",
  "hyperspace-cosmos",
  "hyperspace-near",
  "hyperspace-parachain",
  "hyperspace-primitives",
- "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
- "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
+ "ibc",
+ "ibc-proto",
  "log",
- "pallet-ibc",
  "parity-scale-codec 3.1.5",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129ccd82bd910de849472288)",
- "prost 0.10.4",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-keyring 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-keyring 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-keystore 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-state-machine 0.12.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "subxt",
  "tendermint-proto",
  "tokio",
 ]
@@ -3273,8 +3230,8 @@ dependencies = [
  "hex",
  "hex-literal",
  "hyperspace-primitives",
- "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
- "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
+ "ibc",
+ "ibc-proto",
  "jsonrpsee 0.15.1",
  "log",
  "log4rs",
@@ -3307,7 +3264,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "async-trait",
- "beefy-light-client 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c)",
+ "beefy-light-client",
  "beefy-primitives",
  "beefy-prover",
  "clap",
@@ -3321,9 +3278,9 @@ dependencies = [
  "hex",
  "hex-literal",
  "hyperspace-primitives",
- "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
+ "ibc",
  "ibc-primitives",
- "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
+ "ibc-proto",
  "ibc-rpc",
  "itertools",
  "jsonrpsee 0.15.1",
@@ -3342,7 +3299,7 @@ dependencies = [
  "serde_json",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-keyring 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-keyring",
  "sp-keystore 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-mmr-primitives",
  "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3365,8 +3322,8 @@ dependencies = [
  "async-trait",
  "futures",
  "hex",
- "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
- "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
+ "ibc",
+ "ibc-proto",
  "parity-scale-codec 3.1.5",
  "sp-keystore 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -3380,10 +3337,17 @@ version = "0.1.0"
 dependencies = [
  "futures",
  "hyperspace",
+ "hyperspace-parachain",
  "hyperspace-primitives",
- "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
- "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
+ "ibc",
+ "ibc-proto",
  "log",
+ "serde_json",
+ "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-keyring",
+ "sp-keystore 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "subxt",
  "tendermint-proto",
  "tokio",
 ]
@@ -3404,60 +3368,20 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3#0438a753ac29c0b9711f00a2e33228d3d45ca5e3"
+source = "git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3#0438a753ac29c0b9711f00a2e33228d3d45ca5e3"
 dependencies = [
- "beefy-light-client 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c)",
+ "beefy-light-client",
  "beefy-primitives",
  "borsh",
  "bytes",
  "derive_more",
  "flex-error",
- "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc-proto",
  "ics23",
  "num-traits",
  "parity-scale-codec 3.1.5",
  "primitive-types 0.11.1",
  "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c)",
- "prost 0.10.4",
- "prost-types 0.10.1",
- "safe-regex",
- "serde",
- "serde_derive",
- "serde_json",
- "sha2 0.10.2",
- "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-io 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-mmr-primitives",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-trie 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "subtle-encoding",
- "tendermint",
- "tendermint-light-client-verifier",
- "tendermint-proto",
- "tendermint-rpc",
- "time 0.3.14",
- "tracing",
- "uint",
-]
-
-[[package]]
-name = "ibc"
-version = "0.15.0"
-source = "git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb#13de07663749a59a424d67bb259a714182df28eb"
-dependencies = [
- "beefy-light-client 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee)",
- "beefy-primitives",
- "borsh",
- "bytes",
- "derive_more",
- "flex-error",
- "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb)",
- "ics23",
- "num-traits",
- "parity-scale-codec 3.1.5",
- "primitive-types 0.11.1",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee)",
  "prost 0.10.4",
  "prost-types 0.10.1",
  "safe-regex",
@@ -3491,7 +3415,7 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "hex",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc",
  "parity-scale-codec 3.1.5",
  "ripemd",
  "scale-info",
@@ -3510,20 +3434,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3#0438a753ac29c0b9711f00a2e33228d3d45ca5e3"
-dependencies = [
- "base64 0.13.0",
- "bytes",
- "prost 0.10.4",
- "prost-types 0.10.1",
- "serde",
- "tendermint-proto",
-]
-
-[[package]]
-name = "ibc-proto"
-version = "0.18.0"
-source = "git+https://github.com/composableFi/ibc-rs?rev=13de07663749a59a424d67bb259a714182df28eb#13de07663749a59a424d67bb259a714182df28eb"
+source = "git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3#0438a753ac29c0b9711f00a2e33228d3d45ca5e3"
 dependencies = [
  "base64 0.13.0",
  "bytes",
@@ -3541,9 +3452,9 @@ source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129
 dependencies = [
  "frame-system",
  "hex-literal",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc",
  "ibc-primitives",
- "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc-proto",
  "ibc-runtime-api",
  "jsonrpsee 0.13.1",
  "pallet-ibc",
@@ -6284,7 +6195,7 @@ dependencies = [
 [[package]]
 name = "near-sdk"
 version = "4.1.0-pre.2"
-source = "git+https://github.com/near/near-sdk-rs?branch=master#74ae3c12f46f0e80b57a15b335afe598c7305a6b"
+source = "git+https://github.com/near/near-sdk-rs?branch=master#a6d876e23e2936c3d684176457c3b6bcd1e435db"
 dependencies = [
  "base64 0.13.0",
  "borsh",
@@ -6315,7 +6226,7 @@ dependencies = [
 [[package]]
 name = "near-sdk-macros"
 version = "4.1.0-pre.2"
-source = "git+https://github.com/near/near-sdk-rs?branch=master#74ae3c12f46f0e80b57a15b335afe598c7305a6b"
+source = "git+https://github.com/near/near-sdk-rs?branch=master#a6d876e23e2936c3d684176457c3b6bcd1e435db"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -6366,7 +6277,7 @@ source = "git+https://github.com/ComposableFi/near-sdk-rs?branch=master#02cb66f5
 [[package]]
 name = "near-sys"
 version = "0.2.0"
-source = "git+https://github.com/near/near-sdk-rs?branch=master#74ae3c12f46f0e80b57a15b335afe598c7305a6b"
+source = "git+https://github.com/near/near-sdk-rs?branch=master#a6d876e23e2936c3d684176457c3b6bcd1e435db"
 
 [[package]]
 name = "near-telemetry"
@@ -7271,9 +7182,9 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc",
  "ibc-primitives",
- "ibc-proto 0.18.0 (git+https://github.com/ComposableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc-proto",
  "log",
  "pallet-assets",
  "pallet-balances",
@@ -7301,7 +7212,7 @@ source = "git+https://github.com/ComposableFi/composable?rev=8238a96325730fec129
 dependencies = [
  "frame-support",
  "frame-system",
- "ibc 0.15.0 (git+https://github.com/ComposableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc",
  "ibc-primitives",
  "log",
  "parity-scale-codec 3.1.5",
@@ -7971,21 +7882,6 @@ dependencies = [
 name = "primitives"
 version = "0.1.0"
 source = "git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c#cb8cadc8d45bc444367002c77cbd395eff8a741c"
-dependencies = [
- "beefy-primitives",
- "ckb-merkle-mountain-range",
- "derive_more",
- "parity-scale-codec 3.1.5",
- "rs_merkle",
- "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "sp-mmr-primitives",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "primitives"
-version = "0.1.0"
-source = "git+https://github.com/ComposableFi/beefy-rs?rev=ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee#ea3c74c7c1f959ba1b90e2508b1b6c1fd9afc7ee"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
@@ -10609,17 +10505,6 @@ dependencies = [
  "lazy_static",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "strum 0.23.0",
-]
-
-[[package]]
-name = "sp-keyring"
-version = "6.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
-dependencies = [
- "lazy_static",
- "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
  "strum 0.23.0",
 ]
 

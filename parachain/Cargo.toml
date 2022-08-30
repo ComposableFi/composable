@@ -53,8 +53,8 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 # composable
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3", features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 beefy-prover = { git = "https://github.com/ComposableFi/beefy-rs", rev = "cb8cadc8d45bc444367002c77cbd395eff8a741c" }
 beefy-light-client = { git = "https://github.com/ComposableFi/beefy-rs", rev = "cb8cadc8d45bc444367002c77cbd395eff8a741c" }

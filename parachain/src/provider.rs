@@ -1,13 +1,15 @@
 use beefy_light_client_primitives::{ClientState, NodesUtils};
 use codec::{Decode, Encode};
 use itertools::Itertools;
-use std::{collections::HashMap, default::Default, fmt::Display};
+use std::{collections::HashMap, default::Default, fmt::Display, str::FromStr};
 
 use ibc::{
+	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
 	clients::ics11_beefy::header::BeefyHeader,
 	core::{
 		ics02_client::{
 			client_state::AnyClientState,
+			client_type::ClientType,
 			header::{AnyHeader, Header as IbcHeaderT},
 		},
 		ics04_channel::packet::Packet,
@@ -17,6 +19,7 @@ use ibc::{
 	events::IbcEvent,
 	Height,
 };
+
 use ibc_proto::ibc::core::{
 	channel::v1::{
 		QueryChannelResponse, QueryNextSequenceReceiveResponse, QueryPacketAcknowledgementResponse,
@@ -36,13 +39,9 @@ use ibc_rpc::{BlockNumberOrHash, IbcApiClient};
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
 
+use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
-#[cfg(feature = "testing")]
-use futures::Stream;
-use ibc::core::ics02_client::client_type::ClientType;
 use pallet_mmr_primitives::BatchProof;
-#[cfg(feature = "testing")]
-use std::pin::Pin;
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -195,26 +194,6 @@ where
 			mmr_size,
 			mmr_update_proof: Some(mmr_update),
 		};
-		let header = beefy_header.wrap_any();
-		Ok((header, client_state, update_type))
-	}
-
-	async fn query_latest_ibc_events(
-		&mut self,
-		header: &AnyHeader,
-		client_state: &AnyClientState,
-	) -> Result<Vec<IbcEvent>, Self::Error> {
-		let beefy_header = match header {
-			AnyHeader::Beefy(header) => header,
-			_ => unreachable!(),
-		};
-
-		for event in events.iter() {
-			if self.sender.send(event.clone()).is_err() {
-				log::trace!("Failed to push {event:?} to stream, no active receiver found");
-				break
-			}
-		}
 
 		Ok((beefy_header.wrap_any(), events, update_type))
 	}
@@ -433,6 +412,21 @@ where
 		Ok(Some(host_consensus_proof.encode()))
 	}
 
+	async fn query_ibc_balance(&self) -> Result<Vec<PrefixedCoin>, Self::Error> {
+		let api = self
+			.para_client
+			.clone()
+			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+
+		let account = self.public_key.clone().into_account();
+		let balance = api.storage().tokens().accounts(&account, &CurrencyId(1), None).await?;
+
+		Ok(vec![PrefixedCoin {
+			denom: PrefixedDenom::from_str("PICA")?,
+			amount: Amount::from_str(&format!("{}", balance.free))?,
+		}])
+	}
+
 	fn connection_prefix(&self) -> CommitmentPrefix {
 		CommitmentPrefix::try_from(self.commitment_prefix.clone()).expect("Should not fail")
 	}
@@ -443,15 +437,5 @@ where
 
 	fn client_type(&self) -> ClientType {
 		ClientType::Beefy
-	}
-
-	#[cfg(feature = "testing")]
-	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>> {
-		use futures::StreamExt;
-		use tokio_stream::wrappers::BroadcastStream;
-
-		let stream =
-			BroadcastStream::new(self.sender.subscribe()).map(|result| result.unwrap_or_default());
-		Box::pin(Box::new(stream))
 	}
 }

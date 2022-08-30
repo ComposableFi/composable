@@ -54,6 +54,9 @@ pub enum Error {
 	/// parse error
 	#[error("Failed to parse block numbers: {0}")]
 	ParseIntError(#[from] ParseIntError),
+	/// Ics-20 errors
+	#[error("Ics-20 error: {0}")]
+	Ics20Error(#[from] ibc::applications::transfer::error::Error),
 }
 
 impl From<String> for Error {

@@ -14,7 +14,10 @@ use ibc_proto::{
 	},
 };
 
+#[cfg(feature = "testing")]
+use ibc::applications::transfer::msgs::transfer::MsgTransfer;
 use ibc::{
+	applications::transfer::PrefixedCoin,
 	core::{
 		ics02_client::{client_type::ClientType, header::AnyHeader},
 		ics04_channel::packet::Packet,
@@ -154,6 +157,9 @@ pub trait IbcProvider {
 		height: Height,
 	) -> Result<Option<Vec<u8>>, Self::Error>;
 
+	/// Should return the list of ibc denoms available to this account to spend.
+	async fn query_ibc_balance(&self) -> Result<Vec<PrefixedCoin>, Self::Error>;
+
 	/// Return the chain connection prefix
 	fn connection_prefix(&self) -> CommitmentPrefix;
 
@@ -162,10 +168,17 @@ pub trait IbcProvider {
 
 	/// Returns the client type of this chain.
 	fn client_type(&self) -> ClientType;
+}
+
+/// Provides an interface that allows us run the hyperspace-testsuite
+/// with [`Chain`] implementations.
+#[cfg(feature = "testing")]
+#[async_trait::async_trait]
+pub trait TestProvider: Chain + Clone + 'static {
+	/// Initiate an ibc transfer on chain.
+	async fn send_transfer(&self, params: MsgTransfer<PrefixedCoin>) -> Result<(), Self::Error>;
 
 	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
-	/// Only used in tests.
-	#[cfg(feature = "testing")]
 	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>>;
 }
 

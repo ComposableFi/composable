@@ -1,7 +1,8 @@
+use crate::utils::{parse_amount, timeout_future};
 use futures::{future, StreamExt};
-use hyperspace_primitives::Chain;
+use hyperspace_primitives::TestProvider;
 use ibc::{
-	applications::transfer::VERSION,
+	applications::transfer::{msgs::transfer::MsgTransfer, Amount, PrefixedCoin, VERSION},
 	core::{
 		ics03_connection::{
 			self, connection::Counterparty, msgs::conn_open_init::MsgConnectionOpenInit,
@@ -17,22 +18,24 @@ use ibc::{
 	tx_msg::Msg,
 };
 use ibc_proto::google::protobuf::Any;
-use std::time::Duration;
+use std::{str::FromStr, time::Duration};
 use tendermint_proto::Protobuf;
 use tokio::task::JoinHandle;
+
+mod utils;
 
 /// this will set up a connection and ics20 channel in-between the two chains.
 /// `connection_delay` should be in seconds.
 async fn setup_connection_and_channel<A, B>(
-	chain_a: A,
-	chain_b: B,
+	chain_a: &A,
+	chain_b: &B,
 	connection_delay: u64,
 ) -> (JoinHandle<()>, ChannelId, ConnectionId)
 where
-	A: Chain + Clone + 'static,
+	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
 	A::Error: From<B::Error>,
-	B: Chain + Clone + 'static,
+	B: TestProvider,
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
@@ -68,11 +71,13 @@ where
 		.await
 		.take_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmConnection(_))))
 		.collect::<Vec<_>>();
-	// 10 minutes
-	let duration = Duration::from_secs(10 * 60);
-	if let Err(_) = tokio::time::timeout(duration.clone(), future).await {
-		panic!("Didn't see OpenConfirmConnection on {} within {duration:?}", chain_b.name())
-	}
+
+	timeout_future(
+		future,
+		10 * 60,
+		format!("Didn't see OpenConfirmConnection on {}", chain_b.name()),
+	)
+	.await;
 
 	log::info!("Connection handshake completed, starting channel handshake");
 
@@ -100,9 +105,9 @@ where
 		.await
 		.take_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmChannel(_))))
 		.collect::<Vec<_>>();
-	if let Err(_) = tokio::time::timeout(duration.clone(), future).await {
-		panic!("Didn't see OpenConfirmChannel on {} within {duration:?}", chain_b.name())
-	}
+
+	timeout_future(future, 10 * 60, format!("Didn't see OpenConfirmChannel on {}", chain_b.name()))
+		.await;
 
 	// channel handshake completed
 	log::info!("Channel handshake completed");
@@ -111,30 +116,73 @@ where
 }
 
 /// Simply send a packet and check that it was acknowledged.
-pub async fn send_packet_and_assert_acknowledgment<A, B>(
-	chain_a: A,
-	chain_b: B,
-)
+pub async fn send_packet_and_assert_acknowledgment<A, B>(chain_a: &A, chain_b: &B)
 where
-	A: Chain + Clone + 'static,
+	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
 	A::Error: From<B::Error>,
-	B: Chain + Clone + 'static,
+	B: TestProvider,
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
-	let (_handle, _channel_id, _connection_id) =
+	let (_handle, channel_id, _connection_id) =
 		setup_connection_and_channel(chain_a, chain_b, 0).await;
+
+	let balance = chain_a
+		.query_ibc_balance()
+		.await
+		.expect("Can't query ibc balance")
+		.pop()
+		.expect("No Ibc balances");
+
+	let amount = parse_amount(balance.amount.to_string());
+	let coin = PrefixedCoin {
+		denom: balance.denom,
+		amount: Amount::from_str(&format!("{}", amount * (70 / 100))).expect("Infallible"),
+	};
+
+	let msg = MsgTransfer {
+		source_port: PortId::transfer(),
+		source_channel: channel_id,
+		token: coin,
+		sender: chain_a.account_id(),
+		receiver: chain_b.account_id(),
+		// using no timeouts
+		timeout_height: Default::default(),
+		timeout_timestamp: Default::default(),
+	};
+	chain_a.send_transfer(msg).await.expect("Failed to send transfer: ");
+
+	let balance = chain_a
+		.query_ibc_balance()
+		.await
+		.expect("Can't query ibc balance")
+		.pop()
+		.expect("No Ibc balances");
+
+	let new_amount = parse_amount(balance.amount.to_string());
+	// assert the new state of the account.
+	assert!(new_amount <= amount * (30 / 100));
+
+	// wait for the acknowledgment
+	let future = chain_a
+		.ibc_events()
+		.await
+		.take_while(|e| future::ready(!matches!(e, IbcEvent::AcknowledgePacket(_))))
+		.collect::<Vec<_>>();
+
+	timeout_future(future, 10 * 60, format!("Didn't see AcknowledgePacket on {}", chain_a.name()))
+		.await;
 }
 
 /// Send a packet using a height timeout that has already passed
 /// and assert the sending chain sees the timeout packet.
-pub async fn send_packet_and_assert_height_timeout<A, B>(chain_a: A, chain_b: B)
+pub async fn send_packet_and_assert_height_timeout<A, B>(chain_a: &A, chain_b: &B)
 where
-	A: Chain + Clone + 'static,
+	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
 	A::Error: From<B::Error>,
-	B: Chain + Clone + 'static,
+	B: TestProvider,
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
@@ -144,12 +192,12 @@ where
 
 /// Send a packet using a timestamp timeout that has already passed
 /// and assert the sending chain sees the timeout packet.
-pub async fn send_packet_and_assert_timestamp_timeout<A, B>(chain_a: A, chain_b: B)
+pub async fn send_packet_and_assert_timestamp_timeout<A, B>(chain_a: &A, chain_b: &B)
 where
-	A: Chain + Clone + 'static,
+	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
 	A::Error: From<B::Error>,
-	B: Chain + Clone + 'static,
+	B: TestProvider,
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
@@ -160,12 +208,12 @@ where
 /// Send a packet over a connection with a connection delay
 /// and assert the sending chain only sees the packet after the
 /// delay has elapsed.
-pub async fn send_packet_with_connection_delay<A, B>(chain_a: A, chain_b: B)
+pub async fn send_packet_with_connection_delay<A, B>(chain_a: &A, chain_b: &B)
 where
-	A: Chain + Clone + 'static,
+	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
 	A::Error: From<B::Error>,
-	B: Chain + Clone + 'static,
+	B: TestProvider,
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {

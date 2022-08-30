@@ -7,10 +7,14 @@ pub mod calls;
 pub mod chain;
 pub mod error;
 pub mod key_provider;
+pub(crate) mod parachain;
 pub(crate) mod polkadot;
 pub mod provider;
 pub mod signer;
 pub mod utils;
+
+#[cfg(feature = "testing")]
+pub mod test_provider;
 
 use codec::{Codec, Decode};
 use error::Error;

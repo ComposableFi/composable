@@ -1,1 +1,1 @@
-include!(concat!(env!("OUT_DIR"), "/subxt_codegen.rs"));
+include!(concat!(env!("OUT_DIR"), "/polkadot.rs"));
