@@ -19,10 +19,10 @@ reward for the bond, buyers will always get their share of the reward.
 
 - Staking. User locks amount for some period of time, gets reward in the end or vested. Stake
   returns to user in the end.
-- Vesting. User offers amount and ensure that recepients has 'ticket' tokens to bond to get
+- Vesting. User offers amount and ensure that recipients have 'ticket' tokens to bond to get
   reward.
 - Sell/Exchange/Trade. User makes bond offer, other users takes offer in exchange for other
-  amount..
+  amount.
 
 ## Sample Use Case
 
@@ -97,4 +97,3 @@ However, this will not cancel currently vested rewards.
 ## Technical Notes
 
 * This pallet implements the `composable_traits::bonded_finance::BondedFinance` trait.
-

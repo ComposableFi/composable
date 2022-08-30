@@ -10,7 +10,7 @@ import { ApiPromise } from "@polkadot/api";
  * StableSwap ConstantProduct and LiquidityBootsrapping Pools
  */
 
-let constantProductk: bigint;
+let constantProductK: bigint;
 let baseAmountTotal: bigint;
 let quoteAmountTotal: bigint;
 let mintedLPTokens: bigint;
@@ -103,8 +103,8 @@ export async function buyFromPool(
   const amountParam = api.createType("u128", amountToBuy);
   const keepAlive = api.createType("bool", true);
   const minMintAmount = api.createType("u128", 0);
-  constantProductk = baseAmountTotal * quoteAmountTotal;
-  const expectedConversion = constantProductk / (baseAmountTotal - amountToBuy) - quoteAmountTotal;
+  constantProductK = baseAmountTotal * quoteAmountTotal;
+  const expectedConversion = constantProductK / (baseAmountTotal - amountToBuy) - quoteAmountTotal;
   const {
     data: [retPoolId, accountId, baseArg, quoteArg, baseAmount, quoteAmount, ownerFee]
   } = await sendAndWaitForSuccess(

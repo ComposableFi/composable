@@ -228,7 +228,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
-	/// counter for packet reciepts
+	/// counter for packet receipts
 	pub type PacketReceiptCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]

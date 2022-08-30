@@ -245,7 +245,7 @@ impl<T: Config> StableSwap<T> {
 				new_quote_balance,
 				amplification_coefficient,
 			)?;
-			// minted LP is propotional to the delta of the pool invariant caused by imbalanced
+			// minted LP is proportional to the delta of the pool invariant caused by imbalanced
 			// liquidity
 			let mint_amount = T::Convert::convert(safe_multiply_by_rational(
 				T::Convert::convert(total_lp_issued),

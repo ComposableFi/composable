@@ -5,7 +5,7 @@ use crate::{
 		acknowledgements::Acknowledgements, channels::Channels, client_states::ClientStates,
 		connections::Connections, consensus_states::ConsensusStates,
 		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
-		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+		packet_commitments::PacketCommitment, receipts::PacketReceipt,
 	},
 	routing::Context,
 };

@@ -254,7 +254,7 @@ impl InterestRate for CurveModel {
 /// https://www.delphidigital.io/reports/dynamic-interest-rate-model-based-on-control-theory/
 /// PID Controller (proportional-integral-derivative controller)
 /// Error term is calculated as `et = uo - ut`.
-/// Propertional term is calculated as `pt = kp * et`.
+/// Proportional term is calculated as `pt = kp * et`.
 /// Integral term is calculated as `it = it_1 + ki * et`, here `it_1` is previous_integral_term.
 /// Derivative term is calculated as `dt = kd * (et - et_1)`. here `et_1` is previous_error_value.
 /// Control value is calculated as `ut = pt + it + dt`.

@@ -138,7 +138,7 @@ fn main() -> anyhow::Result<()> {
 								.get(&*changed_file_path)
 								.with_context(|| {
 									format!(
-										"recieved event about non-watched file \"{}\"",
+										"received event about non-watched file \"{}\"",
 										&changed_file_path.to_string_lossy()
 									)
 								})?;
