@@ -896,7 +896,7 @@ jobs:
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PABLO_WEB_APP }}'
-          projectId: pablo
+          projectId: pablo-afa5d
           entrypoint: frontend/apps/pablo
 
 
