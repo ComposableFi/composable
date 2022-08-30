@@ -1,6 +1,6 @@
 # [Overview](https://app.clickup.com/20465559/v/dc/kghwq-20761/kghwq-3621)
 
-See overview of more bussiness and architectural state of lending and all know features.
+See overview of more business and architectural state of lending and all know features.
 
 ## Technical Reference
 

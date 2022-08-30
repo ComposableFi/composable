@@ -256,7 +256,7 @@ impl<
 	}
 }
 
-// must be non assositated consta to allow for pattern match
+// must be a non-associated const to allow for pattern matching
 pub const RELAY_LOCATION: MultiLocation = MultiLocation { parents: 1, interior: Here };
 
 /// covderts remote asset to local

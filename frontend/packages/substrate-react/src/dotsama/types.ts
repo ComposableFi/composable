@@ -15,7 +15,7 @@ export type DotSamaExtensionStatus =
   | 'no_extension'
   | 'error';
 
-  export interface ConntectedAccount {
+  export interface ConnectedAccount {
   address: string;
   name: string;
 }
@@ -24,7 +24,7 @@ export interface SubstratechainApi {
   parachainApi: ApiPromise | undefined;
   apiStatus: SubstrateChainApiStatus;
   prefix: number;
-  accounts: ConntectedAccount[];
+  accounts: ConnectedAccount[];
 }
 export interface ParachainApi extends SubstratechainApi {
   chainId: ParachainId;

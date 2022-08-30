@@ -509,7 +509,7 @@ pub mod pallet {
 		/// Create the shared VM state. Including readonly stack, VM depth, gas metering limits and
 		/// code cache.
 		///
-		/// This state is shared accross all VMs (all contracts loaded within a single call) and is
+		/// This state is shared across all VMs (all contracts loaded within a single call) and is
 		/// used to optimize some operations as well as track shared state (readonly storage while
 		/// doing a `query` etc...)
 		pub(crate) fn do_create_vm_shared(

@@ -31,7 +31,7 @@ export const useUserProvidedLiquidityByPool = (
   const {
     apollo,
     /**
-     * acutal provided liquidity from zustand
+     * actual provided liquidity from zustand
      */
     userProvidedLiquidity,
     /**

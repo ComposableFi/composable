@@ -122,7 +122,7 @@ pub enum RepayStrategy<T> {
 /// The total amount of debt for an account on a market, if any.
 #[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
 pub enum TotalDebtWithInterest<T> {
-	/// The account has some amount of debt on the market. Guarranteed to be non-zero.
+	/// The account has some amount of debt on the market. Guaranteed to be non-zero.
 	Amount(T),
 	/// The account has not borrowed from the market yet, or has paid off their debts. There is no
 	/// interest or principal left to repay.

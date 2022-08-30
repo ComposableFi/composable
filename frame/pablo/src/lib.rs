@@ -558,7 +558,7 @@ pub mod pallet {
 		pub fn enable_twap(origin: OriginFor<T>, pool_id: T::PoolId) -> DispatchResult {
 			T::EnableTwapOrigin::ensure_origin(origin)?;
 			if TWAPState::<T>::contains_key(pool_id) {
-				// pool_id is alread enabled for TWAP
+				// pool_id is already enabled for TWAP
 				return Ok(())
 			}
 			let current_timestamp = T::Time::now();

@@ -31,12 +31,12 @@ pub fn new_test_externalities() -> sp_io::TestExternalities {
 		.assimilate_storage(&mut storage)
 		.unwrap();
 
-	let mut externatlities = sp_io::TestExternalities::new(storage);
-	externatlities.execute_with(|| {
+	let mut externalities = sp_io::TestExternalities::new(storage);
+	externalities.execute_with(|| {
 		System::set_block_number(42);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 	});
-	externatlities
+	externalities
 }
 
 // ensure that we take extra for sell, at least amount to remove

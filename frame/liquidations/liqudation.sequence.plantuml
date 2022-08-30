@@ -32,5 +32,5 @@ note right
 end note
 pallet_liquidations --> pallet_engine_hydra: XCM  ReserveTransfer + Transact Sell
 pallet_engine_hydra --> pallet_liquidations : XCM ReserveTransfer + Trasact Sell results
-pallet_liquidations -> pallet_dutch_action: Final attemp
+pallet_liquidations -> pallet_dutch_action: Final attempt
 @enduml

@@ -8,7 +8,7 @@ import useStore from './store/useStore';
  * use useStore methods via executor
  *
  * exectuor would expose execute and executeUnsigned
- * methods to be able to execute extrsinsic calls
+ * methods to be able to execute extrinsic calls
  */
 const ExecutorContext = React.createContext({
   executor: undefined as Executor | undefined,

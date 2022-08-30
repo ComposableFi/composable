@@ -109,7 +109,7 @@ pub mod pallet {
 		AirdropDoesNotExist,
 		AirdropIsNotEnabled,
 		ArithmiticError,
-		AssociatedWithAnohterAccount,
+		AssociatedWithAnotherAccount,
 		BackToTheFuture,
 		NotAirdropCreator,
 		NothingToClaim,
@@ -178,7 +178,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type Prefix: Get<&'static [u8]>;
 
-		/// The stake required to craete an Airdrop
+		/// The stake required to create an Airdrop
 		#[pallet::constant]
 		type Stake: Get<BalanceOf<Self>>;
 
@@ -387,7 +387,7 @@ pub mod pallet {
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
-		/// * `AssociatedWithAnohterAccount` - Associated with a different account
+		/// * `AssociatedWithAnotherAccount` - Associated with a different account
 		/// * `ArithmiticError` - Overflow while totaling claimed funds
 		/// * `InvalidProof`
 		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
@@ -407,7 +407,7 @@ pub mod pallet {
 				Some(associated_account) => {
 					ensure!(
 						associated_account == identity,
-						Error::<T>::AssociatedWithAnohterAccount
+						Error::<T>::AssociatedWithAnotherAccount
 					);
 				},
 				// If no association exists, create a new one

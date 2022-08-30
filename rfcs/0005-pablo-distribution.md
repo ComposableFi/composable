@@ -388,7 +388,7 @@ Reward per calculation epoch <img src="0005-pablo-distribution-assets/images/ste
 Previous total reward pool before the current epoch <img src="0005-pablo-distribution-assets/images/stem-53fadade13e71b863963af9a23b28b71.png" width="25" height="8" alt="stem 53fadade13e71b863963af9a23b28b71" /></span>
 
 Assuming there is a per epoch calculation which adds to the pool, the
-total reward pool for the current epoc,
+total reward pool for the current epoch,
 
 <img src="0005-pablo-distribution-assets/images/stem-667bfb2c3da043fcfff3288c44c1cc6e.png" width="103" height="10" alt="stem 667bfb2c3da043fcfff3288c44c1cc6e" /></span>
 
@@ -515,7 +515,7 @@ representing a staking position,
         pub lock: Lock,
     }
 
-Which is referred to in the algorithms in the followin sections.
+Which is referred to in the algorithms in the following sections.
 
 Now in order to allow redeeming the above staking position, following
 data structures is to be tracked in the staking rewards pallet,

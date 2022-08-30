@@ -417,7 +417,7 @@ pub mod pallet {
 		},
 		/// Event emitted when a liquidation is initiated for a loan.
 		LiquidationInitiated { market_id: MarketIndex, borrowers: Vec<T::AccountId> },
-		/// Event emitted to warn that loan may go under collaterlized soon.
+		/// Event emitted to warn that loan may go under collateralized soon.
 		MayGoUnderCollateralizedSoon { market_id: MarketIndex, account: T::AccountId },
 	}
 

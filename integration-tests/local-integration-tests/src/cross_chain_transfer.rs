@@ -314,7 +314,7 @@ fn transfer_to_sibling() {
 		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(ALICE)), alice_remaining);
 	});
 
-	// TODO: also XCM not failes, it really fails with not enough balance, not clear so what balance
+	// TODO: also XCM not fails, it really fails with not enough balance, not clear so what balance
 	// is needed to transfer
 	Sibling::execute_with(|| {
 		assert_eq!(

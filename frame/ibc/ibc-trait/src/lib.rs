@@ -87,7 +87,7 @@ impl TryFrom<&OpenChannelParams> for Order {
 }
 
 /// Captures the functions modules can use to interact with the ibc pallet
-/// Currently allows modules to register packets and crreate channels
+/// Currently allows modules to register packets and create channels
 pub trait IbcTrait {
 	fn client_revision_number(port_id: Vec<u8>, channel_id: Vec<u8>) -> Result<u64, Error>;
 	/// Register a packet to be sent

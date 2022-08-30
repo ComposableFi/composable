@@ -98,7 +98,7 @@ pub trait Amm {
 
 	/// Deposit coins into the pool
 	/// `amounts` - list of amounts of coins to deposit,
-	/// `min_mint_amount` - minimum amout of LP tokens to mint from the deposit.
+	/// `min_mint_amount` - minimum amount of LP tokens to mint from the deposit.
 	fn add_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,

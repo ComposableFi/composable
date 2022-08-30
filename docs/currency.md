@@ -75,7 +75,7 @@ For more details, read XCVM documentation regarding security and the risks of ch
 
 ETH was transferred from Etherium to Acala and then to this parachain as AETH. At the same time, METH was transferred from Moonbeam. Moonbeam was then hacked, and the hacker minted a large amount of unbacked METH.
 In this the case DEX (market) would react and skew the price of AETH to be higher than METH.
-More mild form of non equivalence would be becasue of network congestion.
+More mild form of non equivalence would be because of network congestion.
 Imagine Acala transfer prices are several time more of Moonbeam. In this case  AETH will be less liquid than METH, so it price may be lower.
 
 ### Remote currency identifiers

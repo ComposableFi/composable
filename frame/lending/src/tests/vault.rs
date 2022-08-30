@@ -89,7 +89,7 @@ fn generate_accounts(amount: u128) -> Vec<AccountId> {
 
 prop_compose! {
 	// Generates following inputs:
-	// borrowers_amount: amount of borrwers envolved in the test,
+	// borrowers_amount: amount of borrowers envolved in the test,
 	// borrowed_amount_per_borrower: personal borrow size,
 	// reserved_factor: part of assets which should hold on vault's account
 	fn inputs_for_test_vault_balance()

@@ -144,11 +144,11 @@ pub mod pallet {
 			// TODO: make it validated
 			// TODO: User parachains pallet to validate parachain is connected
 			// TODO: use hardocded swap interface to validate native token is supported
-			configuraiton: LiquidationStrategyConfiguration,
+			configuration: LiquidationStrategyConfiguration,
 		) -> DispatchResultWithPostInfo {
 			T::CanModifyStrategies::ensure_origin(origin)?;
 			let index = StrategyIndex::<T>::increment();
-			Strategies::<T>::insert(index, configuraiton);
+			Strategies::<T>::insert(index, configuration);
 			Ok(().into())
 		}
 

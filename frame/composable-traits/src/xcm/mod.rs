@@ -53,7 +53,7 @@ pub struct XcmSellRequestTransactConfiguration {
 	/// Taken from storage and put as paramter into call.
 	/// Some preconfigured way of sell on other chain.
 	/// Example, some specific slippage or amount limits, or number of blocks it should take before
-	/// cancelation. Must be set by owners of engine and chose by thoose who governs caller side
+	/// cancellation. Must be set by owners of engine and chose by thoose who governs caller side
 	pub configuration_id: u128,
 	/// native token fee to pay on `engine` chain
 	pub fee: Balance,
@@ -75,7 +75,7 @@ impl<Parameters: Encode> XcmCumulusDispatch<Parameters> {
 	}
 }
 
-/// The actualy binary data dispatched into `Call`.
+/// The actual binary data dispatched into `Call`.
 /// Assets to be liquidated was moved with `xcm::latest::Instruction::TransferReserveAsset` before
 /// in same XCM message.
 #[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -109,21 +109,21 @@ pub struct XcmSellInitialResponseTransact {
 	pub order_id: OrderId,
 }
 
-/// Response from enigne, either be first and final, or can be after
+/// Response from engine, either be first and final, or can be after
 /// `XcmSellInitialResponseTransact`
 #[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellFinalResponseTransact {
 	/// may be less than `XcmSellInitialResponseTransact::total_amount_taken`.
 	/// Would be `Balance::zero()` if cannot sell anything. So sender can switch to other engine.
 	pub total_amount_taken: Balance,
-	/// Price `total_amount_taken` in `quote`. Must be larger or eququal than
+	/// Price `total_amount_taken` in `quote`. Must be larger than or equal to
 	/// `XcmSellInitialResponseTransact::minimal_price`
 	pub price: Balance,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct SellOrderResponse {
-	/// sender order_id, way to corellate XCM message (like
+	/// sender order_id, way to correlate XCM message (like
 	/// `xcm::latest::Instruction::QueryResponse`)
 	pub order_id: OrderId,
 	pub body: SellResponse,

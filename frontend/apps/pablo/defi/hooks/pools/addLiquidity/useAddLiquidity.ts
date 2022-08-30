@@ -13,7 +13,7 @@ import BigNumber from "bignumber.js";
 import router from "next/router";
 import { useSnackbar } from "notistack";
 import { useDispatch } from "react-redux";
-import { ConntectedAccount } from "substrate-react/dist/dotsama/types";
+import { ConnectedAccount } from "substrate-react/dist/dotsama/types";
 import Executor from "substrate-react/dist/extrinsics/Executor";
 
 export const useAddLiquidity = ({
@@ -27,7 +27,7 @@ export const useAddLiquidity = ({
   lpAmountExpected,
   pool,
 }: {
-  selectedAccount: ConntectedAccount | undefined;
+  selectedAccount: ConnectedAccount | undefined;
   executor: Executor | undefined;
   parachainApi: ApiPromise | undefined;
   assetOne: string | undefined;

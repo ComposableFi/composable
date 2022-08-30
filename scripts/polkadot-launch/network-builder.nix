@@ -2,7 +2,7 @@
 # 
 # package operates in next assumptions:
 # 1. we good to have all nodes to be equal regarding logging/storage/networking per chain
-# 2. alloacte node names equal to owners sudo keys according well know keyring
+# 2. alloacate node names equal to owners sudo keys according well know keyring
 # 3. it is possible to allocate range of prots to each node starting from some base
 { pkgs }:
 with pkgs;

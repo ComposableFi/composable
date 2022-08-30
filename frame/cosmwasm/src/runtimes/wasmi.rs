@@ -164,7 +164,7 @@ pub struct CosmwasmVM<'a, T: Config> {
 	pub contract_address: CosmwasmAccount<T>,
 	/// Executing contract metadatas.
 	pub contract_info: ContractInfoOf<T>,
-	/// State shared accross all contracts within a single transaction.
+	/// State shared across all contracts within a single transaction.
 	pub shared: &'a mut CosmwasmVMShared,
 	/// Iterator id's to corresponding keys. Keys are used to get the next key.
 	pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,

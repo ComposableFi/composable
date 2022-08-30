@@ -74,7 +74,7 @@
     - [assets](./pallets/assets.md)
         - [Extrinsics](./pallets/assets/extrinsics.md)
     - [bonded-finance](./pallets/bonded-finance.md)
-        - [Extrinsiscs](./pallets/bonded-finance/extrinsics.md)
+        - [Extrinsics](./pallets/bonded-finance/extrinsics.md)
     - [crowdloan-rewards](./pallets/crowdloan-rewards.md)
         - [Extrinsics](./pallets/crowdloan-rewards/extrinsics.md)
     - [currency-factory](./pallets/currency-factory.md)
@@ -112,4 +112,3 @@
 # ❓ FAQS
 - [FAQs](./faqs/faqs.md)
 - [Risks & Disclosures](./faqs/risks-disclosures.md)
-

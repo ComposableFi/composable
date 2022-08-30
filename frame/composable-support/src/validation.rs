@@ -72,7 +72,7 @@ use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 use sp_std::ops::Deref;
 
-/// Black box that embbed the validated value.
+/// Black box that embeds the validated value.
 /// Validated during construction or serde.
 #[derive(Default, Copy, Clone)]
 pub struct Validated<T, U> {

@@ -283,7 +283,7 @@ pub mod pallet {
 		Other,
 		/// Invalid route
 		InvalidRoute,
-		/// Invalid message for extirnsic
+		/// Invalid message for extrinsic
 		InvalidMessageType,
 	}
 

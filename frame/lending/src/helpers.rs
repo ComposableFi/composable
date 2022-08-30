@@ -260,7 +260,7 @@ impl<T: Config> Pallet<T> {
 		Ok(().into())
 	}
 
-	/// Returns pair of market's id and market (as 'MarketConfing') via market's id
+	/// Returns pair of market's id and market (as 'MarketConfig') via market's id
 	/// - `market_id` : Market index as a key in 'Markets' storage
 	pub(crate) fn get_market(
 		market_id: &MarketIndex,

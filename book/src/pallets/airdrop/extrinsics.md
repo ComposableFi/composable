@@ -148,7 +148,7 @@ Callable by any unsigned origin.
 
 * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 * `AirdropIsNotEnabled` - The Airdrop has not been enabled
-* `AssociatedWithAnohterAccount` - Associated with a different account
+* `AssociatedWithAnotherAccount` - Associated with a different account
 * `ArithmiticError` - Overflow while totaling claimed funds
 * `InvalidProof`
 * `RecipientNotFound` - No recipient associated with the `identity` could be found.

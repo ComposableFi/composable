@@ -28119,7 +28119,7 @@ pub mod api {
 			type DispatchError = runtime_types::sp_runtime::DispatchError;
 			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 			pub struct AddLiquidationStrategy {
-				pub configuraiton:
+				pub configuration:
 					runtime_types::pallet_liquidations::pallet::LiquidationStrategyConfiguration,
 			}
 			impl ::subxt::Call for AddLiquidationStrategy {
@@ -28152,7 +28152,7 @@ pub mod api {
 				}
 				pub fn add_liquidation_strategy(
 					&self,
-					configuraiton : runtime_types :: pallet_liquidations :: pallet :: LiquidationStrategyConfiguration,
+					configuration : runtime_types :: pallet_liquidations :: pallet :: LiquidationStrategyConfiguration,
 				) -> Result<
 					::subxt::SubmittableExtrinsic<
 						'a,
@@ -28175,7 +28175,7 @@ pub mod api {
 							111u8, 241u8, 22u8, 236u8, 90u8, 29u8, 29u8, 208u8, 101u8, 13u8, 206u8,
 							164u8, 31u8, 111u8, 23u8, 239u8, 7u8, 225u8, 117u8, 109u8, 30u8, 135u8,
 						] {
-						let call = AddLiquidationStrategy { configuraiton };
+						let call = AddLiquidationStrategy { configuration };
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
 					} else {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
@@ -28864,7 +28864,7 @@ pub mod api {
 				const EVENT: &'static str = "LiquidationInitiated";
 			}
 			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
-			#[doc = "Event emitted to warn that loan may go under collaterlized soon."]
+			#[doc = "Event emitted to warn that loan may go under collateralized soon."]
 			pub struct MayGoUnderCollateralizedSoon {
 				pub market_id: runtime_types::pallet_lending::types::MarketIndex,
 				pub account: ::subxt::sp_core::crypto::AccountId32,
@@ -38139,7 +38139,7 @@ pub mod api {
 					#[doc = "Invalid route"]
 					InvalidRoute,
 					#[codec(index = 9)]
-					#[doc = "Invalid message for extirnsic"]
+					#[doc = "Invalid message for extrinsic"]
 					InvalidMessageType,
 				}
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
@@ -39233,7 +39233,7 @@ pub mod api {
 						borrowers: ::std::vec::Vec<::subxt::sp_core::crypto::AccountId32>,
 					},
 					#[codec(index = 7)]
-					#[doc = "Event emitted to warn that loan may go under collaterlized soon."]
+					#[doc = "Event emitted to warn that loan may go under collateralized soon."]
 					MayGoUnderCollateralizedSoon {
 						market_id: runtime_types::pallet_lending::types::MarketIndex,
 						account: ::subxt::sp_core::crypto::AccountId32,
@@ -39258,7 +39258,7 @@ pub mod api {
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 				#[doc = "Contains one variant per dispatchable that can be called by an extrinsic."]
 				pub enum Call {
-					# [codec (index = 0)] add_liquidation_strategy { configuraiton : runtime_types :: pallet_liquidations :: pallet :: LiquidationStrategyConfiguration , } , # [codec (index = 1)] sell { order : runtime_types :: composable_traits :: defi :: Sell < runtime_types :: primitives :: currency :: CurrencyId , :: core :: primitive :: u128 > , configuration : :: std :: vec :: Vec < :: core :: primitive :: u32 > , } , }
+					# [codec (index = 0)] add_liquidation_strategy { configuration : runtime_types :: pallet_liquidations :: pallet :: LiquidationStrategyConfiguration , } , # [codec (index = 1)] sell { order : runtime_types :: composable_traits :: defi :: Sell < runtime_types :: primitives :: currency :: CurrencyId , :: core :: primitive :: u128 > , configuration : :: std :: vec :: Vec < :: core :: primitive :: u32 > , } , }
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 				#[doc = "\n\t\t\tCustom [dispatch errors](https://docs.substrate.io/v3/runtime/events-and-errors)\n\t\t\tof this pallet.\n\t\t\t"]
 				pub enum Error {

@@ -225,7 +225,7 @@ pub mod pallet {
 	>;
 
 	/// orders are handled locally, but if these came from remote,
-	/// these should be notified approtiately
+	/// these should be notified appropriately
 	#[pallet::storage]
 	#[pallet::getter(fn get_local_order_id_to_remote)]
 	pub type LocalOrderIdToRemote<T: Config> = StorageMap<
@@ -249,7 +249,7 @@ pub mod pallet {
 
 	/// set of reusable auction configurations
 	#[pallet::storage]
-	#[pallet::getter(fn configuraitons)]
+	#[pallet::getter(fn configurations)]
 	pub type Configurations<T: Config> =
 		StorageMap<_, Twox64Concat, ConfigurationId, TimeReleaseFunction, OptionQuery>;
 

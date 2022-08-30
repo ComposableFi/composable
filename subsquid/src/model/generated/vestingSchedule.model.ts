@@ -18,7 +18,7 @@ export class VestingSchedule {
   from!: string
 
   /**
-   * {accoundId}-{assetId}
+   * {accountId}-{assetId}
    */
   @Column_("text", {nullable: false})
   scheduleId!: string
