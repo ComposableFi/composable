@@ -256,16 +256,16 @@ export class VestingVestingScheduleAddedEvent {
   }
 
   /**
-   * Added new vesting schedule. \[from, to, schedule\]
+   * Added new vesting schedule.
    */
   get isV2401(): boolean {
-    return this.ctx._chain.getEventHash('vesting.VestingScheduleAdded') === 'ac3aff306fccf810884a6ba689559f06a58eea19d7d29c25ddfc8e0c9362b5b0'
+    return this.ctx._chain.getEventHash('vesting.VestingScheduleAdded') === '76bb06af4efc9a40f5604bfe9dbe980d1cec79e966fe1f641bb9475c65a6808d'
   }
 
   /**
-   * Added new vesting schedule. \[from, to, schedule\]
+   * Added new vesting schedule.
    */
-  get asV2401(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, vestingScheduleId: bigint, schedule: v2401.VestingSchedule} {
+  get asV2401(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, vestingScheduleId: bigint, schedule: v2401.VestingSchedule, scheduleAmount: bigint} {
     assert(this.isV2401)
     return this.ctx._chain.decodeEvent(this.ctx.event)
   }
@@ -275,7 +275,7 @@ export class VestingVestingScheduleAddedEvent {
     return this.isV2401
   }
 
-  get asLatest(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, vestingScheduleId: bigint, schedule: v2401.VestingSchedule} {
+  get asLatest(): {from: v2401.AccountId32, to: v2401.AccountId32, asset: v2401.CurrencyId, vestingScheduleId: bigint, schedule: v2401.VestingSchedule, scheduleAmount: bigint} {
     deprecateLatest()
     return this.asV2401
   }

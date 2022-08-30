@@ -1,19 +1,19 @@
 {
-  "bootstrapPools": false,
+  "bootstrapPools": true,
   "bootstrapBonds": false,
   "bootstrapCrowdloanRewards": false,
-  "bootstrapRewardPools": true,
-  "mintAssetsToWallets": false,
+  "bootstrapRewardPools": false,
+  "mintAssetsToWallets": true,
   "bondOffers": [
     {
       "asset": "4",
       "bondPrice": "100000000000000",
       "nbOfBonds": "10",
-      "maturity": { "Finite": { "returnIn": "100" } },
+      "maturity": { "Finite": { "returnIn": "1440" } },
       "reward": {
         "asset": "201",
         "amount": "1000000000000000",
-        "maturity": "20"
+        "maturity": "1440"
       }
     }
   ],
@@ -28,32 +28,7 @@
       },
       "pair": {
         "base": "1",
-        "quote": "129"
-      },
-      "sale": {
-        "start": "0",
-        "end": "7200",
-        "initialWeight": "750000",
-        "finalWeight": "250000"
-      },
-      "feeConfig": {
-        "feeRate": "10000",
-        "ownerFeeRate": "10000",
-        "protocolFeeRate": "10000"
-      },
-      "startDelay": "25"
-    },
-    {
-      "addDexRoute": true,
-      "addLiquidity": true,
-      "enableTwap": true,
-      "liquidityAmount": {
-        "base": "100000000000000000",
-        "quote": "100000000000000000"
-      },
-      "pair": {
-        "base": "4",
-        "quote": "129"
+        "quote": "4"
       },
       "fee": "10000",
       "baseWeight": "500000"

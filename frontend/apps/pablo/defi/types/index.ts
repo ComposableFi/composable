@@ -65,22 +65,6 @@ export type BondDetails = {
   vested_term: number;
 };
 
-export type Supply = {
-  tokenId1: TokenId | 'none';
-  tokenId2: TokenId | 'none';
-  balance1: BigNumber;
-  balance2: BigNumber;
-  pooledAmount1: BigNumber;
-  pooledAmount2: BigNumber;
-  approvedToken1: boolean;
-  approvedToken2: boolean;
-  price1: BigNumber;
-  price2: BigNumber;
-  share: BigNumber;
-  amount: BigNumber;
-  confirmed: boolean;
-};
-
 export type Liquidity = {
   tokenId1: TokenId | 'none';
   tokenId2: TokenId | 'none';
@@ -101,24 +85,6 @@ export type PoolInfo = {
   tokenWeight2: BigNumber;
   initialSwapFee: BigNumber;
   createdAt?: number;
-};
-
-export type PoolDetails = {
-  tokenId1: TokenId;
-  tokenId2: TokenId;
-  tokenWeight1: BigNumber;
-  tokenWeight2: BigNumber;
-  initialSwapFee: BigNumber;
-  createdAt?: number;
-  poolValue: BigNumber;
-  poolAmount: BigNumber;
-  rewardValue: BigNumber;
-  rewardsLeft: {tokenId: TokenId, value: BigNumber}[],
-  volume: BigNumber,
-  fee24h: BigNumber,
-  apr: number,
-  transactions24h: number,
-  tvlChartData: PoolTVLChartData,
 };
 
 export type TransactionSettings = {

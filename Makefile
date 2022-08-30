@@ -17,7 +17,7 @@ help:
 	@echo $(print_help_text)
 
 build:
-	@cargo build
+	@cargo +nightly build
 
 clean:
 	@cargo clean
@@ -150,6 +150,14 @@ containerize-base-ci-linux:
 push-base-ci-linux:
 	@docker push ${REPO}/base-ci-linux:1.62.1
 
+containerize-lease-period-prolongator:
+	@docker build -f scripts/lease-period-prolongator/Dockerfile \
+		-t ${REPO}/lease-period-prolongator:0.1.0  \
+		scripts/lease-period-prolongator
+
+push-lease-period-prolongator:
+	@docker push ${REPO}/lease-period-prolongator:0.1.0
+
 stop:
 	@docker-compose down
 
@@ -168,6 +176,7 @@ endif
 .PHONY: containerize-mmr-polkadot push-mmr-polkadot
 .PHONY: containerize-base-ci-linux push-base-ci-linux
 .PHONY: containerize-ci-linux push-ci-linux
+.PHONY: containerize-lease-period-prolongator push-lease-period-prolongator
 
 #----------------------------------------------------------------------
 # UTILITY FUNCTIONS TO remove

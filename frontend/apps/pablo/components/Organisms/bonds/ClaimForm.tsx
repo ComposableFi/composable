@@ -1,6 +1,4 @@
 import { BigNumberInput, Label } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { BondDetails } from "@/defi/types";
 import {
   Box,
   Button,
@@ -11,11 +9,18 @@ import {
   alpha,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
-import { MockedAsset } from "@/store/assets/assets.types";
-import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
+import {
+  calculateClaimableAt,
+  DEFAULT_NETWORK_ID,
+  DEFAULT_UI_FORMAT_DECIMALS,
+} from "@/defi/utils";
+import useBlockNumber from "@/defi/hooks/useBlockNumber";
+import { useVestingClaim } from "@/defi/hooks";
+import { useBondedOfferVestingState, useBondOfferROI } from "@/store/bond/bond.slice";
+import moment from "moment";
 
 const containerBoxProps = (theme: Theme) => ({
   p: 4,
@@ -47,29 +52,26 @@ export type ClaimFormProps = {
 
 export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
-  const { principalAsset, rewardAsset } = bond;
+  const { rewardAsset } = bond;
+  const vestingTime = useBondVestingTime(bond.selectedBondOffer);
+  const { claimable, miliSecondsSinceVestingStart, pendingRewards} = useBondedOfferVestingState(bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-")
+  const roi = useBondOfferROI(bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-");
 
-  const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
-  const [valid, setValid] = useState<boolean>(false);
-
-  const claimable = false;
-
-  const handleClaim = () => {
-    //TODO: handle deposit here
-  };
-
-  const principalSymbol = usePrincipalAssetSymbol(bond.principalAsset);
+  const handleClaim = useVestingClaim(
+    bond.selectedBondOffer ? bond.selectedBondOffer.reward.asset : "",
+    bond.vestingSchedules.length > 0
+      ? bond.vestingSchedules[0].vestingScheduleId
+      : new BigNumber(-1)
+  );
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
       <Typography variant="h6">Claim</Typography>
       <Box mt={6}>
         <BigNumberInput
-          disabled={!claimable}
-          value={amount}
-          setValue={setAmount}
-          maxValue={new BigNumber(0)}
-          setValid={setValid}
+          disabled={true}
+          value={claimable}
+          maxValue={claimable}
           EndAdornmentAssetProps={{
             assets: rewardAsset
               ? [{ icon: rewardAsset.icon, label: rewardAsset.symbol }]
@@ -77,19 +79,12 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
             separator: "/",
             LabelProps: { variant: "body1" },
           }}
-          buttonLabel="Max"
-          ButtonProps={{
-            onClick: () => setAmount(new BigNumber(0)),
-            sx: {
-              padding: theme.spacing(1),
-            },
-          }}
           LabelProps={{
             label: "Amount",
             BalanceProps: claimable
               ? {
                   title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: `${0} ${principalSymbol}`,
+                  balance: `${claimable.toFixed(2)} ${rewardAsset?.symbol}`,
                 }
               : undefined,
           }}
@@ -100,7 +95,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
           variant="contained"
           size="large"
           fullWidth
-          disabled={!claimable || !valid}
+          disabled={claimable.lte(0)}
           onClick={handleClaim}
         >
           Claim
@@ -108,27 +103,30 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
       </Box>
       <Box mt={6}>
         <Label
-          {...defaultLabelProps("Pending Rewards", `${0} LP`)}
+          {...defaultLabelProps(
+            "Pending Rewards",
+            `${pendingRewards.toFixed(2)} ${rewardAsset?.symbol}`
+          )}
         />
         <Label
           {...defaultLabelProps(
             "Claimable Rewards",
-            `${0} ${rewardAsset?.symbol}`
+            `${claimable.toFixed(2)} ${rewardAsset?.symbol}`
           )}
           mt={2}
         />
+        <Label
+          {...defaultLabelProps("Time vested", `${moment.duration(miliSecondsSinceVestingStart.toNumber(), "milliseconds").humanize()}`)}
+          mt={2}
+        />
+        <Label {...defaultLabelProps("Vested", `${claimable.toFixed(2)} ${rewardAsset?.symbol}`)} mt={2} />
         <Label
           {...defaultLabelProps(
-            "Time until fully vested",
-            `${0} days`
+            "ROI",
+            `${roi.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}%`
           )}
           mt={2}
         />
-        <Label
-          {...defaultLabelProps("Vested", `${bond.vestingPeriod} days`)}
-          mt={2}
-        />
-        <Label {...defaultLabelProps("ROI", `${0}%`)} mt={2} />
       </Box>
     </Box>
   );

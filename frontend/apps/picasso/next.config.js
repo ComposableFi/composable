@@ -1,11 +1,12 @@
 /** @type {import('next').NextConfig} */
 const withPWA = require("next-pwa");
 const withTM = require("next-transpile-modules")([
-  "@integrations-lib/core",
   "substrate-react",
   "@web3-react/core",
   "shared",
   "tokens",
+  "bi-lib",
+  "defi-interfaces",
 ]);
 
 function getVersion() {
@@ -22,11 +23,17 @@ function getVersion() {
 }
 
 const nextConfig = {
+  experimental: {
+    images: {
+      unoptimized: true,
+    },
+  },
   reactStrictMode: true,
   env: {
     SUBSTRATE_PROVIDER_URL_KUSAMA_2019:
       process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019,
     SUBSTRATE_PROVIDER_URL_KUSAMA: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA,
+    SUBSTRATE_PROVIDER_URL_KARURA: process.env.SUBSTRATE_PROVIDER_URL_KARURA,
     RPC_URL_1: process.env.RPC_URL_1,
     RPC_URL_42161: process.env.RPC_URL_42161,
     RPC_URL_137: process.env.RPC_URL_137,

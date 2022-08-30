@@ -1,13 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-// import type lookup before we augment - in some environments
-// this is required to allow for ambient/previous definitions
-import '@polkadot/api-base/types/errors';
-
-import type { ApiTypes, AugmentedError } from '@polkadot/api-base/types';
-
-export type __AugmentedError<ApiType extends ApiTypes> = AugmentedError<ApiType>;
+import type { ApiTypes } from "@polkadot/api-base/types";
 
 declare module '@polkadot/api-base/types/errors' {
   interface AugmentedErrors<ApiType extends ApiTypes> {
@@ -443,6 +437,17 @@ declare module '@polkadot/api-base/types/errors' {
       XcmCannotDecodeRemoteParametersToLocalRepresentations: AugmentedError<ApiType>;
       XcmCannotFindLocalIdentifiersAsDecodedFromRemote: AugmentedError<ApiType>;
       XcmNotFoundConfigurationById: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    fnft: {
+      CollectionAlreadyExists: AugmentedError<ApiType>;
+      CollectionNotFound: AugmentedError<ApiType>;
+      InstanceAlreadyExists: AugmentedError<ApiType>;
+      InstanceNotFound: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1198,6 +1203,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       MaxRewardLimitReached: AugmentedError<ApiType>;
       /**
+       * No duration presets configured.
+       **/
+      NoDurationPresetsConfigured: AugmentedError<ApiType>;
+      /**
        * Not enough assets for a stake.
        **/
       NotEnoughAssets: AugmentedError<ApiType>;
@@ -1229,6 +1238,10 @@ declare module '@polkadot/api-base/types/errors' {
        * No stake found for given id.
        **/
       StakeNotFound: AugmentedError<ApiType>;
+      /**
+       * Too many rewarded asset types per pool violating the storage allowed.
+       **/
+      TooManyRewardAssetTypes: AugmentedError<ApiType>;
       /**
        * Unimplemented reward pool type.
        **/

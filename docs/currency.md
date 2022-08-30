@@ -1,3 +1,11 @@
+---
+tags:
+  - assets
+  - tokens
+  - funds
+lastmod: 2022-08-23T15:33:24.815Z
+---
+
 # Overview
 
 This document describes various aspects of currency as they relate to composable finance. All these aspects are, in some form, embedded into our protocols.
