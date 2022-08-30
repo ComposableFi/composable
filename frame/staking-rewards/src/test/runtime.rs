@@ -4,7 +4,7 @@ use composable_traits::{
 	governance::{GovernanceRegistry, SignedRawOrigin},
 };
 
-use composable_traits::fnft::{FnftAccountProxyType, FnftAccountProxyTypeSelector};
+use composable_traits::fnft::FnftAccountProxyType;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, InstanceFilter},
@@ -26,7 +26,7 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
 pub type FinancialNftInstanceId = u64;
-pub type RewardPoolId = u16;
+pub type RewardPoolId = u128;
 pub type PositionId = u128;
 
 pub static ALICE: Public =
@@ -229,6 +229,8 @@ parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets : u32 = 10;
 	pub const MaxRewardConfigsPerPool : u32 = 10;
+	pub const PicaAssetId : CurrencyId = 1;
+	pub const PbloAssetId : CurrencyId = 2;
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -249,6 +251,8 @@ impl pallet_staking_rewards::Config for Test {
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
 }
 
 impl InstanceFilter<Call> for ProxyType {
