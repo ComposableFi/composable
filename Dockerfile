@@ -14,12 +14,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     ca-certificates \
     curl \
     sudo \
-    xz-utils \
-    acl
-
-RUN addgroup --system nixbld
-RUN for i in $(seq 1 30); do useradd -ms /bin/bash nixbld$i &&  adduser nixbld$i nixbld; done
-RUN adduser ${USER} nixbld
+    xz-utils
 
 RUN usermod --append --groups sudo ${USER} --shell /bin/bash
 RUN adduser ${USER} root
@@ -34,9 +29,10 @@ RUN passwd --delete root
 USER ${USER}
 ENV USER=${USER}
 
-RUN curl --location ${NIX_INSTALLER} > /install.sh && \
-         chmod +x /install.sh  && \
-         /install.sh
+RUN curl --location ${NIX_INSTALLER} > ~/install.sh && \
+         chmod +x ~/install.sh  && \
+         ~/install.sh
+
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-channel --add ${CHANNEL_URL} nixpkgs && \
     nix-channel --update 

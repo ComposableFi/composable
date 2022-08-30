@@ -887,6 +887,8 @@
                 docker
                 docker-buildx
                 docker-compose
+                acl
+                direnv
               ];
             };
             programs = {
