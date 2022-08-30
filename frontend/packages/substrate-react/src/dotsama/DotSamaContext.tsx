@@ -17,6 +17,8 @@ import type {
 import { decodeAddress, encodeAddress } from "@polkadot/util-crypto";
 import { createParachainApis } from "./utils";
 
+const truncate_regex = /^([a-zA-Z0-9]{4})[a-zA-Z0-9]+([a-zA-Z0-9]{4})$/;
+
 function mapAccounts(
   source: string,
   list: InjectedAccount[],
@@ -108,7 +110,7 @@ export const DotSamaContextProvider = ({
   const [extensionStatus, setExtensionStatus] =
     useState<DotSamaExtensionStatus>("initializing");
   const activate = async (
-    walletId: SupportedWalletId = "polkadot-js",
+    walletId: SupportedWalletId = SupportedWalletId.Polkadotjs,
     selectDefaultAccount: boolean = false
   ): Promise<any | undefined> => {
     setExtensionStatus("connecting");
@@ -151,10 +153,14 @@ export const DotSamaContextProvider = ({
 
         setParachainProviders((s) => {
           s[chainId].accounts = (accounts as InjectedAccountWithMeta[]).map(
-            (x, i) => ({
-              address: x.address,
-              name: x.meta.name ?? i.toFixed(),
-            })
+            (x, _i) => {
+              const regexMatch = x.address.match(truncate_regex);
+              const nameFallback = regexMatch ? `${regexMatch[1]}...${regexMatch[2]}` : x.address;
+              return {
+                address: x.address,
+                name: x.meta.name ?? nameFallback,
+              }
+            }
           );
           return { ...s };
         });

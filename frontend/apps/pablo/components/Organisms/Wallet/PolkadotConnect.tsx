@@ -21,13 +21,13 @@ import { useSnackbar } from "notistack";
 
 const WALLETS_SUPPORTED: Array<{ walletId: SupportedWalletId, icon: string, name: string }> = [
   {
-    walletId: "polkadot-js",
+    walletId: SupportedWalletId.Polkadotjs,
     icon: "/networks/polkadot_js.svg",
     name: "Polkadot.js"
   },
   {
-    walletId: "talisman",
-    icon: "/networks/polkadot_js.svg",
+    walletId: SupportedWalletId.Talisman,
+    icon: "/logos/talisman.svg",
     name: "Talisman"
   },
 ];
@@ -112,7 +112,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
       if (activate) await activate(walletId);
     } catch (err: any) {
       console.log('Logged ', err)
-      enqueueSnackbar(err.message, { variant: "error" } )
+      enqueueSnackbar(err.message, { variant: "error", persist: true } )
     }
   };
 
@@ -164,6 +164,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
                     variant="outlined"
                     color="primary"
                     size="large"
+                    key={walletId}
                     fullWidth
                     onClick={() => handleConnectPolkadot(walletId)}
                   >

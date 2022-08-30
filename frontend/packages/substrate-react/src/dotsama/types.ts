@@ -8,7 +8,10 @@ export type AccountType = 'secp256k1' | '*25519';
 
 export type SubstrateChainApiStatus = 'initializing' | 'failed' | 'connected';
 
-export type SupportedWalletId = "talisman" | "polkadot-js";
+export enum SupportedWalletId {
+  Talisman = "talisman",
+  Polkadotjs = "polkadot-js"
+};
 
 export type DotSamaExtensionStatus =
   | 'initializing'
