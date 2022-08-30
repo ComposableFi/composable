@@ -1,6 +1,7 @@
+#[cfg(not(feature = "library"))]
+use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	entry_point, to_binary, CosmosMsg, DepsMut, Env, MessageInfo, QueryRequest, Response, StdError,
-	WasmQuery,
+	to_binary, CosmosMsg, DepsMut, Env, MessageInfo, QueryRequest, Response, StdError, WasmQuery,
 };
 use serde::Serialize;
 
@@ -22,12 +23,10 @@ pub fn instantiate(
 	msg: InstantiateMsg,
 ) -> Result<Response, StdError> {
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
-
 	let config = Config { registry_address };
-
 	CONFIG.save(deps.storage, &config)?;
 
-	Ok(Response::default())
+	Ok(Response::new().set_data(to_binary(&(msg.network_id.0, msg.user_id))?))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -115,7 +114,7 @@ pub fn interpret_transfer(
 		}
 
 		let transfer_amount = {
-			if amount.slope == 0 {
+			if amount.slope.0 == 0 {
 				amount.intercept.0
 			} else {
 				let query_msg = Cw20QueryMsg::Balance { address: to.clone() };
@@ -148,12 +147,17 @@ mod tests {
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier},
 		wasm_execute, Addr, Attribute, ContractResult, QuerierResult,
 	};
+	use xcvm_core::Picasso;
 
 	#[test]
 	fn proper_instantiation() {
 		let mut deps = mock_dependencies();
 
-		let msg = InstantiateMsg { registry_address: "addr".to_string() };
+		let msg = InstantiateMsg {
+			registry_address: "addr".to_string(),
+			network_id: Picasso.into(),
+			user_id: vec![],
+		};
 		let info = mock_info("sender", &vec![]);
 
 		let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -188,7 +192,11 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			InstantiateMsg { registry_address: "addr".into() },
+			InstantiateMsg {
+				registry_address: "addr".into(),
+				network_id: Picasso.into(),
+				user_id: vec![],
+			},
 		)
 		.unwrap();
 
@@ -220,7 +228,11 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			InstantiateMsg { registry_address: "addr".into() },
+			InstantiateMsg {
+				registry_address: "addr".into(),
+				network_id: Picasso.into(),
+				user_id: vec![],
+			},
 		)
 		.unwrap();
 
@@ -247,14 +259,18 @@ mod tests {
 			deps.as_mut(),
 			mock_env(),
 			info.clone(),
-			InstantiateMsg { registry_address: "addr".into() },
+			InstantiateMsg {
+				registry_address: "addr".into(),
+				network_id: Picasso.into(),
+				user_id: vec![],
+			},
 		)
 		.unwrap();
 
 		let program = XCVMProgram {
 			tag: vec![],
 			instructions: vec![XCVMInstruction::Spawn {
-				network: NetworkId(1),
+				network: Picasso.into(),
 				salt: vec![],
 				assets: Funds(BTreeMap::new()),
 				program: XCVMProgram {

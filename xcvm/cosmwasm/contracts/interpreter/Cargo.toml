@@ -28,6 +28,7 @@ cosmwasm-storage = "1.0.0"
 cw-storage-plus = "0.13.2"
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+serde_json = "1"
 thiserror = { version = "1.0.31" }
 cw20 = { git = "https://github.com/CosmWasm/cw-plus.git" }
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "4e175eaeffd625041bdecd251c0068a365def453" }
