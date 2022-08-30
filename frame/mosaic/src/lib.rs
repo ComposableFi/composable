@@ -922,8 +922,8 @@ pub mod pallet {
 							amount,
 						)?;
 
-						// No remaing funds need to be transferred for this asset, so we can delete
-						// the storage item.
+						// No remaining funds need to be transferred for this asset, so we can
+						// delete the storage item.
 						if amount == balance {
 							*maybe_tx = None;
 							Self::deposit_event(Event::<T>::TransferAccepted {

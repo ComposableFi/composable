@@ -14,7 +14,7 @@ There are several options to develop XCM related functional.
 
 ## About option 2
 
-- Can refactory pallet during XCM integration and simplify it, so it is not increase total complexity of pallet
+- Can refactor pallet during XCM integration and simplify it, so it is not increase total complexity of pallet
 - It will take more time to setup pallet for testing, therefor, XCM functionality must not prevent testing non XCM
 - All XCM related testing will be done in full runtime simulator (until test do not use runtime at all)
 - We already have Etherium aware kind of pallets (so it is not clear how other integrations will look like)

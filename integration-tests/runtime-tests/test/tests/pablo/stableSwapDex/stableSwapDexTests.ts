@@ -234,7 +234,7 @@ describe("StableSwapDex Test Suite", function () {
   });
 
   describe("StableSwapDex liquidityremoval and other tests", async function () {
-    if (!testConfiguration.enabledTests.liquidityRemovalandOtherTests.enabled) {
+    if (!testConfiguration.enabledTests.liquidityRemovalAndOtherTests.enabled) {
       console.log("StableSwap liquidity removal and other tests are being skipped...");
       return;
     }

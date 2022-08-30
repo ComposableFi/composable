@@ -816,9 +816,9 @@ pub mod pallet {
 						BalanceStatus::Free,
 					);
 					match result {
-						Ok(remaning_val) =>
-							if remaning_val > BalanceOf::<T>::zero() {
-								log::warn!("Only slashed {:?}", slash_amount - remaning_val);
+						Ok(remaining_val) =>
+							if remaining_val > BalanceOf::<T>::zero() {
+								log::warn!("Only slashed {:?}", slash_amount - remaining_val);
 							},
 						Err(e) => {
 							log::warn!("Failed to slash {:?} due to {:?}", answer.who, e);
