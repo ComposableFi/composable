@@ -557,7 +557,7 @@ pub mod pallet {
 
 			Ok(())
 		}
-    
+
 		/// Add funds to the reward pool's rewards pot for the specified asset.
 		///
 		/// Emits `RewardsPotIncreased` when successful.
