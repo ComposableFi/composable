@@ -781,13 +781,13 @@
                 "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
             };
 
-            devnet.kusama.picasso-karura = {
+            devnet-kusama-picasso-karura = {
               type = "app";
               program =
                 "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
             };
 
-            devnet.kusama.dali-karura = {
+            devnet-kusama-dali-karura = {
               type = "app";
               program =
                 "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";

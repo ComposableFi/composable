@@ -8,9 +8,7 @@
 		"memory": "20gb",
 		"cpus": 8
 	},
-	"postCreateCommand": "sudo setfacl --remove-default  /tmp",
-	//"postCreateCommand": "sudo chmod 1777 /tmp/ && sudo setfacl --remove-default  /tmp",
-	// Set *default* container specific settings.json values on container create.
+	"postCreateCommand": "sudo chmod 1777 /tmp/ && sudo setfacl --remove-default  /tmp",
 	"settings": {
 		"workbench.colorTheme": "GitHub Dark",
 		"workbench.iconTheme": "vscode-icons",
