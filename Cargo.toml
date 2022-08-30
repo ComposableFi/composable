@@ -69,7 +69,6 @@ debug = false
 debug-assertions = false
 panic = "abort"
 
-
 [patch.crates-io]
 sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
@@ -78,7 +77,7 @@ sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", branch = 
 sp-externalities = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-io = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
-serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "4e175eaeffd625041bdecd251c0068a365def453" }
+serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
 
 [patch."https://github.com/paritytech/subxt"]
 subxt-codegen = { git = "https://github.com/paritytech//subxt", rev = "2fe9a1446d32b93a10804db3304ccaac65f764b8" }

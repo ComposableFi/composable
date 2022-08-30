@@ -1839,7 +1839,7 @@ dependencies = [
  "forward_ref",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.4.1 (git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=1608a13d2a2ba90605d9626a51ff6667aca5a2d6)",
  "thiserror",
  "uint",
 ]
@@ -13331,6 +13331,14 @@ dependencies = [
 [[package]]
 name = "serde-json-wasm"
 version = "0.4.1"
+source = "git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=1608a13d2a2ba90605d9626a51ff6667aca5a2d6#1608a13d2a2ba90605d9626a51ff6667aca5a2d6"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "serde-json-wasm"
+version = "0.4.1"
 source = "git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=4e175eaeffd625041bdecd251c0068a365def453#4e175eaeffd625041bdecd251c0068a365def453"
 dependencies = [
  "serde",
@@ -17132,7 +17140,8 @@ dependencies = [
  "num",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde-json-wasm 0.4.1 (git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=4e175eaeffd625041bdecd251c0068a365def453)",
+ "serde_json",
  "thiserror",
  "xcvm-asset-registry",
  "xcvm-core",
@@ -17147,9 +17156,12 @@ dependencies = [
  "cosmwasm-storage",
  "cw-multi-test",
  "cw-storage-plus 0.13.4",
+ "cw20",
  "schemars",
  "serde",
+ "serde-json-wasm 0.4.1 (git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=1608a13d2a2ba90605d9626a51ff6667aca5a2d6)",
  "thiserror",
+ "xcvm-asset-registry",
  "xcvm-core",
  "xcvm-interpreter",
 ]
