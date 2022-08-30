@@ -1,4 +1,4 @@
-use futures::StreamExt;
+use futures::{future, StreamExt};
 use hyperspace_primitives::Chain;
 use ibc::{
 	applications::transfer::VERSION,
@@ -61,13 +61,17 @@ where
 		.expect("Connection creation failed");
 
 	log::info!("Wait till both chains have completed connection handshake");
+
 	// wait till both chains have completed connection handshake
-	let mut chain_b_events = chain_b.ibc_events().await;
-	while let Some(ev) = chain_b_events.next().await {
-		// connection handshake completed.
-		if matches!(ev, IbcEvent::OpenConfirmConnection(_)) {
-			break
-		}
+	let future = chain_b
+		.ibc_events()
+		.await
+		.take_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmConnection(_))))
+		.collect::<Vec<_>>();
+	// 10 minutes
+	let duration = Duration::from_secs(10 * 60);
+	if let Err(_) = tokio::time::timeout(duration.clone(), future).await {
+		panic!("Didn't see OpenConfirmConnection on {} within {duration:?}", chain_b.name())
 	}
 
 	log::info!("Connection handshake completed, starting channel handshake");
@@ -91,13 +95,16 @@ where
 
 	// wait till both chains have completed channel handshake
 	log::info!("Wait till both chains have completed channel handshake");
-	while let Some(ev) = chain_b_events.next().await {
-		// channel handshake completed
-		if matches!(ev, IbcEvent::OpenConfirmChannel(_)) {
-			break
-		}
+	let future = chain_b
+		.ibc_events()
+		.await
+		.take_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmChannel(_))))
+		.collect::<Vec<_>>();
+	if let Err(_) = tokio::time::timeout(duration.clone(), future).await {
+		panic!("Didn't see OpenConfirmChannel on {} within {duration:?}", chain_b.name())
 	}
 
+	// channel handshake completed
 	log::info!("Channel handshake completed");
 
 	(handle, channel_id, connection_id)
@@ -107,7 +114,7 @@ where
 pub async fn send_packet_and_assert_acknowledgment<A, B>(
 	chain_a: A,
 	chain_b: B,
-) -> (JoinHandle<()>, ChannelId, ConnectionId)
+)
 where
 	A: Chain + Clone + 'static,
 	A::FinalityEvent: Send + Sync,
@@ -122,10 +129,7 @@ where
 
 /// Send a packet using a height timeout that has already passed
 /// and assert the sending chain sees the timeout packet.
-pub async fn send_packet_and_assert_height_timeout<A, B>(
-	chain_a: A,
-	chain_b: B,
-)
+pub async fn send_packet_and_assert_height_timeout<A, B>(chain_a: A, chain_b: B)
 where
 	A: Chain + Clone + 'static,
 	A::FinalityEvent: Send + Sync,
@@ -140,10 +144,7 @@ where
 
 /// Send a packet using a timestamp timeout that has already passed
 /// and assert the sending chain sees the timeout packet.
-pub async fn send_packet_and_assert_timestamp_timeout<A, B>(
-	chain_a: A,
-	chain_b: B,
-)
+pub async fn send_packet_and_assert_timestamp_timeout<A, B>(chain_a: A, chain_b: B)
 where
 	A: Chain + Clone + 'static,
 	A::FinalityEvent: Send + Sync,
@@ -159,10 +160,7 @@ where
 /// Send a packet over a connection with a connection delay
 /// and assert the sending chain only sees the packet after the
 /// delay has elapsed.
-pub async fn send_packet_with_connection_delay<A, B>(
-	chain_a: A,
-	chain_b: B,
-)
+pub async fn send_packet_with_connection_delay<A, B>(chain_a: A, chain_b: B)
 where
 	A: Chain + Clone + 'static,
 	A::FinalityEvent: Send + Sync,

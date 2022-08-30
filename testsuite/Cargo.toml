@@ -5,12 +5,12 @@ edition = "2021"
 authors = ["Composable Developers"]
 
 [dependencies]
-tokio = { version = "1.19.2", features = ["macros", "sync"] }
+tokio = { version = "1.19.2", features = ["macros", "sync", "time"] }
 log = "0.4.17"
 futures = "0.3.24"
 
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb", features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
 hyperspace = { path = "../" }

@@ -195,6 +195,19 @@ where
 			mmr_size,
 			mmr_update_proof: Some(mmr_update),
 		};
+		let header = beefy_header.wrap_any();
+		Ok((header, client_state, update_type))
+	}
+
+	async fn query_latest_ibc_events(
+		&mut self,
+		header: &AnyHeader,
+		client_state: &AnyClientState,
+	) -> Result<Vec<IbcEvent>, Self::Error> {
+		let beefy_header = match header {
+			AnyHeader::Beefy(header) => header,
+			_ => unreachable!(),
+		};
 
 		for event in events.iter() {
 			if self.sender.send(event.clone()).is_err() {
