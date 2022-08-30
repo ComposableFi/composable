@@ -314,7 +314,6 @@ pub mod pallet {
 		/// The market could not be found
 		MarketDoesNotExist,
 
-		CollateralDepositFailed,
 		MarketCollateralWasNotDepositedByAccount,
 
 		/// The collateral factor for a market must be more than one.
