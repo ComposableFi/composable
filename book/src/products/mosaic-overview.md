@@ -2,9 +2,15 @@
 
 ---
 
-Mosaic is Composable Finance’s cross-chain transfer availability layer that combines a [dynamic fee model](https://medium.com/composable-finance/the-dynamic-fee-model-powering-mosaics-transfer-availability-layer-f91011309592), [liquidity forecasting](https://medium.com/composable-finance/liquidity-forecasting-in-mosaic-part-iv-machine-learning-based-methods-17e8f2e5de14), [active liquidity management](https://composablefi.medium.com/understanding-mosaics-active-management-e1894fc90a00), and passive liquidity rebalancing to create a transfer availability layer. As a proactive bridging infrastructure, Mosaic leverages a network of existing bridges to manage its LP vaults on different layers ensuring the ability to transfer assets cross-chain regardless of volume or size.
+Mosaic is Composable Finance’s cross-chain transfer availability layer that combines a 
+[dynamic fee model](https://medium.com/composable-finance/the-dynamic-fee-model-powering-mosaics-transfer-availability-layer-f91011309592), 
+[liquidity forecasting](https://medium.com/composable-finance/liquidity-forecasting-in-mosaic-part-iv-machine-learning-based-methods-17e8f2e5de14), 
+[active liquidity management](https://composablefi.medium.com/understanding-mosaics-active-management-e1894fc90a00), and passive liquidity rebalancing to create a transfer availability layer. 
+As a proactive bridging infrastructure, Mosaic leverages a network of existing bridges to manage its LP vaults on different layers ensuring the ability to transfer assets cross-chain regardless of volume or size.
 
-Mosaic launch was planned in three phases. Phase 1 has been completed, which is the current version consisting of a Proof of Concept that only connects Ethereum, Arbitrum, and Polygon to gather data on transfer sizes and fees. Phase 2 delivers the core features of Mosaic, including dynamic fees, passive liquidity forecasting and rebalancing, and active liquidity management. Phase 3 adds new functionalities like decentralized executors and on-chain dispute resolution. 
+Mosaic launch was planned in three phases. Phase 1 has been completed, which is the current version consisting of a Proof of Concept that only connects Ethereum, Arbitrum, and Polygon to gather data on transfer sizes and fees. 
+Phase 2 delivers the core features of Mosaic, including dynamic fees, passive liquidity forecasting and rebalancing, and active liquidity management. 
+Phase 3 adds new functionalities like decentralized executors and on-chain dispute resolution. 
 
 Mosaic Phase 2 has already integrated several L1s and L2s, including Polygon, Arbitrum, Optimism, Starknet, Avalanche, Fantom, Moonriver, and more to be announced. Passive liquidity rebalancing is a key new module introduced in Mosaic’s [Phase 2](https://medium.com/composable-finance/introducing-mosaic-phase-2-10d1bfe5f6f8). Meanwhile, the dynamic fee model ensures that transfer fees stay low while LPs earn high yield from single-side staking. High-velocity bots provide an additional layer of transfer support to enable liquidity provision in a just-in-time manner in case passive liquidity rebalancing fails.
 
