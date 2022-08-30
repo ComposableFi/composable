@@ -859,15 +859,15 @@ jobs:
       - run: yarn install && yarn export --filter=picasso
         working-directory: frontend
         env:
-          SUBSTRATE_PROVIDER_URL_KUSAMA_2019: '${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 }}'
-          SUBSTRATE_PROVIDER_URL_KUSAMA: '${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA }}'
-          SUBSTRATE_PROVIDER_URL_KARURA: '${{ secrets.SUBSTRATE_PROVIDER_URL_KARURA }}'
-          SUBSQUID_URL: '${{ secrets.SUBSQUID_URL }}'
+          SUBSTRATE_PROVIDER_URL_KUSAMA_2019: ${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 }}
+          SUBSTRATE_PROVIDER_URL_KUSAMA: ${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA }}
+          SUBSTRATE_PROVIDER_URL_KARURA: ${{ secrets.SUBSTRATE_PROVIDER_URL_KARURA }}
+          SUBSQUID_URL: ${{ secrets.SUBSQUID_URL }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PICASSO_WEB_APP }}'
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PICASSO_WEB_APP }}
           projectId: picasso-test-70bf7
           entrypoint: frontend/apps/picasso
 
@@ -887,16 +887,16 @@ jobs:
       - run: yarn install && yarn export --filter=pablo
         working-directory: frontend
         env:
-          SUBSTRATE_PROVIDER_URL_KUSAMA_2019: '${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 }}'
-          SUBSTRATE_PROVIDER_URL_KUSAMA: '${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA }}'
-          SUBSTRATE_PROVIDER_URL_KARURA: '${{ secrets.SUBSTRATE_PROVIDER_URL_KARURA }}'
-          SUBSQUID_URL: '${{ secrets.SUBSQUID_URL }}'
+          SUBSTRATE_PROVIDER_URL_KUSAMA_2019: ${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 }}
+          SUBSTRATE_PROVIDER_URL_KUSAMA: ${{ secrets.SUBSTRATE_PROVIDER_URL_KUSAMA }}
+          SUBSTRATE_PROVIDER_URL_KARURA: ${{ secrets.SUBSTRATE_PROVIDER_URL_KARURA }}
+          SUBSQUID_URL: ${{ secrets.SUBSQUID_URL }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
-          repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PABLO_WEB_APP }}'
-          projectId: pablo-afa5d
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PABLO_WEB_APP }}
+          projectId: pablo-test-5c5de
           entrypoint: frontend/apps/pablo
 
 
