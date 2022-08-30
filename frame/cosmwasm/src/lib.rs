@@ -259,7 +259,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type CodeStorageByteDeposit: Get<u32>;
 
-		/// Price of writting a byte in the storage.
+		/// Price of writing a byte in the storage.
 		#[pallet::constant]
 		type ContractStorageByteWritePrice: Get<u32>;
 
@@ -1043,7 +1043,7 @@ pub mod pallet {
 		}
 
 		/// Write an entry from the executing contract, charging the according gas prior to actually
-		/// writting the entry.
+		/// writing the entry.
 		pub(crate) fn do_db_write<'a>(
 			vm: &'a mut CosmwasmVM<T>,
 			key: &[u8],

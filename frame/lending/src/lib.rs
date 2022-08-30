@@ -404,7 +404,7 @@ pub mod pallet {
 		},
 		/// Event emitted when collateral is deposited.
 		CollateralDeposited { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
-		/// Event emitted when collateral is withdrawed.
+		/// Event emitted when collateral is withdrawn.
 		CollateralWithdrawn { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when user borrows from given market.
 		Borrowed { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
