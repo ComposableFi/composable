@@ -148,7 +148,6 @@ export function updatedClaimedAmount(
  *  - Update alreadyClaimed amount for each claimed schedule.
  *  - Set fullyClaimed when whole locked value has been claimed.
  * @param ctx
- * @param event
  */
 export async function processVestingClaimedEvent(
   ctx: EventHandlerContext

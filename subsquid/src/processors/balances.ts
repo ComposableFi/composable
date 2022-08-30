@@ -47,7 +47,9 @@ function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
  *   - Create Activity
  * @param ctx
  */
-export async function processTransferEvent(ctx: EventHandlerContext) {
+export async function processTransferEvent(
+  ctx: EventHandlerContext
+): Promise<void> {
   console.log("Process transfer");
   const event = new BalancesTransferEvent(ctx);
   const transferEvent = getTransferEvent(event);
@@ -68,7 +70,9 @@ export async function processTransferEvent(ctx: EventHandlerContext) {
  *   - Create Activity.
  * @param ctx
  */
-export async function processWithdrawEvent(ctx: EventHandlerContext) {
+export async function processWithdrawEvent(
+  ctx: EventHandlerContext
+): Promise<void> {
   console.log("Process withdraw");
   const evt = new BalancesWithdrawEvent(ctx);
   const event = getWithdrawEvent(evt);
@@ -88,7 +92,9 @@ export async function processWithdrawEvent(ctx: EventHandlerContext) {
  *   - Create Activity.
  * @param ctx
  */
-export async function processDepositEvent(ctx: EventHandlerContext) {
+export async function processDepositEvent(
+  ctx: EventHandlerContext
+): Promise<void> {
   console.log("Process deposit");
   const evt = new BalancesDepositEvent(ctx);
   const event = getDepositEvent(evt);

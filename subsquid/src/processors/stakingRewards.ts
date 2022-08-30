@@ -209,7 +209,7 @@ export async function processStakeAmountExtendedEvent(
   const { positionId, amount } = event;
 
   const stakingPosition = await ctx.store.get(PicassoStakingPosition, {
-    where: { positionId },
+    where: { positionId: positionId.toString() },
   });
 
   if (!stakingPosition) {
@@ -265,7 +265,7 @@ export async function processSplitPositionEvent(
 
   const position = await ctx.store.get(PicassoStakingPosition, {
     where: {
-      positionId: oldPositionId,
+      positionId: oldPositionId.toString(),
     },
   });
 
