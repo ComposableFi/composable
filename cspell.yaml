@@ -1,4 +1,8 @@
 ---
+LanguageSettings:
+  "LanguageId": "rust, typescript, nix, javascript, shell, css, markdown"
+  "locale": en-US, en
+
 dictionaries:
 - spellcheck
 dictionaryDefinitions:
