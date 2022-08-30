@@ -8,8 +8,8 @@
 		"memory": "20gb",
 		"cpus": 8
 	},
-	"postCreateCommand": "setfacl --remove-default  /tmp",
-	//"postAttachCommand": "sudo chmod 1777 /tmp/",
+	"postCreateCommand": "sudo setfacl --remove-default  /tmp",
+	//"postCreateCommand": "sudo chmod 1777 /tmp/ && sudo setfacl --remove-default  /tmp",
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"workbench.colorTheme": "GitHub Dark",
@@ -79,9 +79,8 @@
 	],
 	"remoteUser": "vscode",
 	"features": {
-		// NOTE: can replace these features by using official scripts or even later nix 
-		// these are just install/injection after start up
-		// "docker-in-docker": "20.10",
+		// TODO: replace adhoc injection and derivation with manual docker/nix 
+		"docker-in-docker": "20.10",
 		//"node": "16"
 	}
 }
