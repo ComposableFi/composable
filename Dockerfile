@@ -9,14 +9,13 @@ ARG CACHIX_NAME=composable-community
 SHELL [ "/bin/bash", "-o", "pipefail", "-o", "errexit", "-c" ]
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update
-
-RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
     apt-get install --yes --no-install-recommends \
     ca-certificates \
     curl \
     sudo \
-    xz-utils    
+    xz-utils \
+    acl
 
 RUN addgroup --system nixbld
 RUN for i in $(seq 1 30); do useradd -ms /bin/bash nixbld$i &&  adduser nixbld$i nixbld; done

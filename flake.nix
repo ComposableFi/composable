@@ -608,6 +608,25 @@
               '';
             };
 
+            kusama-dali-karura-devnet = let
+              config = (pkgs.callPackage
+                ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
+                  polkadot-bin = polkadot-node;
+                  composable-bin = composable-node;
+                  acala-bin = acala-node;
+                }).result;
+              config-file = writeTextFile {
+                name = "kusama-local-dali-dev-karura-dev.json";
+                text = "${builtins.toJSON config}";
+              };
+            in writeShellApplication {
+              name = "kusama-dali-karura";
+              text = ''
+                cat ${config-file}
+                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+              '';
+            };
+
             junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
             gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
             wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix {
@@ -756,10 +775,16 @@
                 "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
             };
 
-            kusama-picasso-karura-devnet = {
+            devnet.kusama.picasso-karura = {
               type = "app";
               program =
                 "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
+            };
+
+            devnet.kusama.dali-karura = {
+              type = "app";
+              program =
+                "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
             };
 
             price-feed = {

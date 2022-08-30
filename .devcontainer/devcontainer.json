@@ -8,7 +8,8 @@
 		"memory": "20gb",
 		"cpus": 8
 	},
-	"postAttachCommand": "sudo chmod 1777 /tmp/",
+	"postCreateCommand": "setfacl --remove-default  /tmp",
+	//"postAttachCommand": "sudo chmod 1777 /tmp/",
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"workbench.colorTheme": "GitHub Dark",
