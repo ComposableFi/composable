@@ -3,7 +3,6 @@ import { randomUUID } from "crypto";
 import {
   Account,
   Activity,
-  HistoricalLockedValue,
   PabloPool,
   PicassoTransaction,
   PicassoTransactionType,

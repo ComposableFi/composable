@@ -56,10 +56,7 @@ export class TotalValueLockedResolver {
     if (input.dateFrom) {
       from = new Date(input.dateFrom).valueOf();
     } else {
-      const date = new Date();
-      // TODO: define default date
-      date.setDate(date.getDate() - 7);
-      from = date.valueOf();
+      from = 0;
     }
     from = Math.floor(from / intervalMilliseconds) * intervalMilliseconds;
     where.push(`timestamp > $${params.push(from)}`);

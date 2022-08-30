@@ -188,9 +188,17 @@ export async function storeHistoricalLockedValue(
       `
   );
 
+  console.log({ lastLockedValue });
+
   if (lastLockedValue?.[0]) {
     lastAmount = BigInt(lastLockedValue[0].amount);
   }
+
+  console.log({
+    lastAmount,
+    amountLocked,
+    newAmount: lastAmount + amountLocked,
+  });
 
   const historicalLockedValue = new HistoricalLockedValue({
     id: randomUUID(),
