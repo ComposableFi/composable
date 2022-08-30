@@ -864,7 +864,7 @@ jobs:
           SUBSTRATE_PROVIDER_URL_KARURA: ${{ secrets.SUBSTRATE_PROVIDER_URL_KARURA }}
           SUBSQUID_URL: ${{ secrets.SUBSQUID_URL }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PICASSO_WEB_APP }}
@@ -892,7 +892,7 @@ jobs:
           SUBSTRATE_PROVIDER_URL_KARURA: ${{ secrets.SUBSTRATE_PROVIDER_URL_KARURA }}
           SUBSQUID_URL: ${{ secrets.SUBSQUID_URL }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_PABLO_WEB_APP }}
