@@ -64,8 +64,8 @@ in rec {
   # here we can add overrides per spec, example for flags
   mk-parachains = specs: builtins.map mk-parachain specs;
 
-  mk-relaychain =
-    { bin, chain, port, wsPort, count, nodeNames ? default-node-names }:
+  mk-relaychain = { bin, chain, port, wsPort, count
+    , nodeNames ? default-node-names, flags ? [ ] }:
     mk-chain {
       inherit bin;
       inherit chain;
@@ -73,7 +73,11 @@ in rec {
       inherit wsPort;
       inherit count;
       inherit nodeNames;
-      flags = [ "--rpc-cors=all" "--beefy" "--enable-offchain-indexing=true" ];
+      flags = let
+        mandatory-flags =
+          [ "--rpc-cors=all" "--beefy" "--enable-offchain-indexing=true" ];
+      in mandatory-flags
+      ++ builtins.filter (flag: !(builtins.elem flag mandatory-flags)) flags;
     };
 
   mk-shared-security-network = { parachains, relaychain }: {

@@ -15,6 +15,13 @@ in {
       port = 30444;
       wsPort = 9944;
       count = 2;
+      flags = [
+        "--unsafe-ws-external"
+        "--unsafe-rpc-external"
+        "--rpc-external"
+        "--ws-external"
+        "--rpc-methods=Unsafe"
+      ];
     };
     parachains = [{
       id = 2087;
