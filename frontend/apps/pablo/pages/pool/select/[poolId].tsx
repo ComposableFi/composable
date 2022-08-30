@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 
 const PoolDetailsPage: NextPage = () => {
   const [poolId, setPoolId] = useState(-1);
-  const poolDetails = useLiquidityPoolDetails(poolId);
+  const { baseAsset, quoteAsset } = useLiquidityPoolDetails(poolId);
   const router = useRouter();
 
   useEffect(() => {
@@ -40,7 +40,7 @@ const PoolDetailsPage: NextPage = () => {
       <Container maxWidth="lg">
         <Box display="flex" flexDirection="column" alignItems="center" mb={8}>
           <PageTitle
-            title={`${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}` + " Pool"}
+            title={`${baseAsset?.symbol}/${quoteAsset?.symbol}` + " Pool"}
             subtitle="Earn tokens while adding liquidity."
           />
         </Box>

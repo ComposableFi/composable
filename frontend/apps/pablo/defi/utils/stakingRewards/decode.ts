@@ -5,9 +5,8 @@ import {
 import BigNumber from "bignumber.js";
 import { fromPerbill } from "../units";
 
-export function decodeStakingRewardPool(pool: any, rewardPoolId: BigNumber): StakingRewardPool {
+export function decodeStakingRewardPool(pool: any): StakingRewardPool {
   return {
-    rewardPoolId,
     assetId: new BigNumber(pool.assetId),
     claimedShares: new BigNumber(pool.claimedShares),
     endBlock: new BigNumber(pool.endBlock),

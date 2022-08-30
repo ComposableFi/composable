@@ -1,35 +1,44 @@
 import { StakingRewardPool } from "@/defi/types/stakingRewards";
 import { ApiPromise } from "@polkadot/api";
-import BigNumber from "bignumber.js";
 import { decodeStakingRewardPool } from "./decode";
 
 export async function fetchStakingRewardPools(
-  parachainApi: ApiPromise
+  parachainApi: ApiPromise,
+  assetIds: Set<string>
 ): Promise<StakingRewardPool[]> {
   let _stakingRewardPools: StakingRewardPool[] = [];
+  let _assetIds = Array.from(assetIds);
 
   try {
-    const stakingRewardPoolCount =
-      await parachainApi.query.stakingRewards.rewardPoolCount();
     for (
-      let poolIndex = new BigNumber(1);
-      poolIndex.lte(stakingRewardPoolCount.toHex());
-      poolIndex = poolIndex.plus(1)
+      const assetId of _assetIds
     ) {
-      let stakingRewardPoolAtIndex =
-        await parachainApi.query.stakingRewards.rewardPools(
-          poolIndex.toString()
+      try {
+        let stakingRewardPoolAtIndex: any =
+          await parachainApi.query.stakingRewards.rewardPools(
+            assetId
+          );
+
+        stakingRewardPoolAtIndex = stakingRewardPoolAtIndex.toJSON();
+
+        if (stakingRewardPoolAtIndex == null) {
+          throw new Error(`[AssetId: ${assetId}] Staking Reward Pool does not exist`);
+        }
+
+        const _decoded = decodeStakingRewardPool(
+          stakingRewardPoolAtIndex
         );
 
-      const _decoded = decodeStakingRewardPool(
-        stakingRewardPoolAtIndex.toJSON(),
-        poolIndex
-      );
-      _stakingRewardPools.push(_decoded);
+        _stakingRewardPools.push(_decoded);
+      } catch (err: any) {
+        console.error(err.message);
+      }
     }
   } catch (err) {
     console.error(err);
   }
+
+  console.log(_stakingRewardPools)
 
   return _stakingRewardPools;
 }

@@ -24,7 +24,6 @@ export type StakingRewardPoolLockConfig = {
 };
 
 export type StakingRewardPool = {
-  rewardPoolId: BigNumber;
   assetId: BigNumber;
   claimedShares: BigNumber;
   endBlock: BigNumber;

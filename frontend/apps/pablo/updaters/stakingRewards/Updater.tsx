@@ -7,15 +7,17 @@ import { useAsyncEffect } from "@/hooks/useAsyncEffect";
 import {
   putStakingRewardPools,
 } from "@/store/stakingRewards/stakingRewards.slice";
+import { useOnChainAssetIds } from "@/store/hooks/useOnChainAssetsIds";
 
 const Updater = () => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const onChainAssetIds = useOnChainAssetIds();
 
   useAsyncEffect(async () => {
-    if (parachainApi) {
-      fetchStakingRewardPools(parachainApi).then(putStakingRewardPools);
+    if (parachainApi && onChainAssetIds.size > 0) {
+      fetchStakingRewardPools(parachainApi, onChainAssetIds).then(putStakingRewardPools);
     }
-  }, [parachainApi]);
+  }, [parachainApi, onChainAssetIds]);
 
   return null;
 };
