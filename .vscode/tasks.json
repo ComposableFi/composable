@@ -4,7 +4,7 @@
         {
             "label": "Serve Book",
             "type": "shell",
-            "command": "nix develop \".#book\" --command mdbook serve ./book --open",
+            "command": "nix develop \".#technical-writers\" --command mdbook serve ./book --open",
             "group": {
                 "kind": "build",
                 "isDefault": true,

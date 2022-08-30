@@ -195,7 +195,7 @@ benchmarks! {
 	update_route {
 		let (currency_pair, dex_route) = create_pools_route::<T>();
 		// let owner : <T as frame_system::Config>::AccountId= whitelisted_caller();
-	} : _(RawOrigin::Root, currency_pair, Some(dex_route.clone().try_into().unwrap()))
+	} : _(RawOrigin::Root, currency_pair, Some(dex_route.try_into().unwrap()))
 
 	exchange {
 		let unit = 1_000_000_000_000_u128;
@@ -205,7 +205,7 @@ benchmarks! {
 		let origin = RawOrigin::Signed(owner.clone());
 		let pica : <T as pallet_pablo::Config>::AssetId = 100_u128.into();
 		<T as pallet_pablo::Config>::Assets::mint_into(pica, &owner, pica_amount.into()).expect("Mint pica failed");
-		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
+		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.try_into().unwrap())).expect("update route failed");
 		// exchange 1000 PICA via route
 	} : _(origin, currency_pair.swap(), (1000_u128 * unit).into(), 0_u128.into())
 
@@ -217,7 +217,7 @@ benchmarks! {
 		let origin = RawOrigin::Signed(owner.clone());
 		let usdc : <T as pallet_pablo::Config>::AssetId = 104_u128.into();
 		<T as pallet_pablo::Config>::Assets::mint_into(usdc, &owner, usdc_amount.into()).expect("Mint usdc failed");
-		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
+		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.try_into().unwrap())).expect("update route failed");
 		// buy 100 PICA via route
 	} : _(origin, currency_pair, (100_u128 * unit).into(), 0_u128.into())
 
@@ -230,7 +230,7 @@ benchmarks! {
 		let origin = RawOrigin::Signed(owner.clone());
 		let usdc : <T as pallet_pablo::Config>::AssetId = 104_u128.into();
 		<T as pallet_pablo::Config>::Assets::mint_into(usdc, &owner, usdc_amount.into()).expect("Mint usdc failed");
-		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
+		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.try_into().unwrap())).expect("update route failed");
 		// sell 1000 usdc via route
 	} : _(origin, currency_pair, (1000_u128 * unit).into(), 0_u128.into())
 
@@ -241,8 +241,8 @@ benchmarks! {
 		// 1 usdc == 1 usdt
 		let usdc_amount = 1000 * unit;
 		let usdt_amount = 1000 * unit;
-		let origin = RawOrigin::Signed(owner.clone());
-		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
+		let origin = RawOrigin::Signed(owner);
+		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.try_into().unwrap())).expect("update route failed");
 	} : _(origin, currency_pair, usdc_amount.into(), usdt_amount.into(), 0_u128.into(), false)
 
 	remove_liquidity {
@@ -252,23 +252,12 @@ benchmarks! {
 		// 1 usdc == 1 usdt
 		let usdc_amount = 1000 * unit;
 		let usdt_amount = 1000 * unit;
-		let origin = RawOrigin::Signed(owner.clone());
-		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
+		let origin = RawOrigin::Signed(owner);
+		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.try_into().unwrap())).expect("update route failed");
 		pallet_dex_router::Pallet::<T>::add_liquidity(origin.clone().into(), currency_pair, usdc_amount.into(), usdt_amount.into(), 0_u128.into(), false).expect("add_liquidity failed");
 		// remove 1 lp_token
 	} : _(origin, currency_pair, 1_u128.into(), 0_u128.into(), 0_u128.into())
 
-	remove_liquidity_single_asset {
-		let unit = 1_000_000_000_000_u128;
-		let owner : <T as frame_system::Config>::AccountId= whitelisted_caller();
-		let (currency_pair, dex_route) = create_single_node_pool::<T>();
-		// 1 usdc == 1 usdt
-		let usdc_amount = 1000 * unit;
-		let usdt_amount = 1000 * unit;
-		let origin = RawOrigin::Signed(owner.clone());
-		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
-		pallet_dex_router::Pallet::<T>::add_liquidity(origin.clone().into(), currency_pair, usdc_amount.into(), usdt_amount.into(), 0_u128.into(), false).expect("add_liquidity failed");
-		// remove 1 lp_token
-	} : _(origin, currency_pair, 1_u128.into(), 0_u128.into())
+	// TODO(saruman9): here should be benchmarks for stable swap pool with single asset withdrawal
 }
 impl_benchmark_test_suite!(DexRouter, crate::mock::new_test_ext(), crate::mock::Test);

@@ -128,21 +128,21 @@ pub mod pallet {
 		Outgoing,
 	}
 
-	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq)]
+	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq, Eq)]
 	pub struct AmmSwapInfo<N, R, M> {
 		pub destination_token_out_address: EthereumAddress,
 		pub destination_amm: RemoteAmm<N, R>,
 		pub minimum_amount_out: M,
 	}
 
-	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq)]
+	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq, Eq)]
 	pub struct RemoteAmm<N, R> {
 		pub network_id: N,
 		pub amm_id: R,
 	}
 
 	/// The information required for an assets to be transferred between chains.
-	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
+	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Eq)]
 	pub struct AssetInfo<BlockNumber, Balance, Decayer> {
 		pub last_mint_block: BlockNumber,
 		pub budget: Balance,
@@ -151,7 +151,7 @@ pub mod pallet {
 	}
 
 	/// The network informations, used for rate limitting.
-	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
+	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Eq)]
 	pub struct NetworkInfo<Balance> {
 		pub enabled: bool,
 		pub min_transfer_size: Balance,

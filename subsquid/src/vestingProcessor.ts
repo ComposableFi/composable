@@ -1,6 +1,5 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
-import { randomUUID } from "crypto";
-import { VestingSchedule as VestingScheduleType } from "./types/v2400";
+import { VestingSchedule as VestingScheduleType } from "./types/v2401";
 import { Schedule, ScheduleWindow, VestingSchedule } from "./model";
 import { VestingVestingScheduleAddedEvent } from "./types/events";
 import { encodeAccount } from "./utils";
@@ -10,6 +9,7 @@ interface VestingScheduleAddedEvent {
   to: Uint8Array;
   asset: bigint;
   schedule: VestingScheduleType;
+  vestingScheduleId: bigint;
 }
 
 /**
@@ -19,7 +19,7 @@ interface VestingScheduleAddedEvent {
 function getVestingScheduleAddedEvent(
   event: VestingVestingScheduleAddedEvent
 ): VestingScheduleAddedEvent {
-  return event.asV2400 ?? event.asLatest;
+  return event.asV2401 ?? event.asLatest;
 }
 
 /**
@@ -51,13 +51,14 @@ export async function processVestingScheduleAddedEvent(
   ctx: EventHandlerContext,
   event: VestingVestingScheduleAddedEvent
 ) {
-  const { from, to, asset, schedule } = getVestingScheduleAddedEvent(event);
+  const { from, to, asset, schedule, vestingScheduleId } =
+    getVestingScheduleAddedEvent(event);
 
   const toAccount = encodeAccount(to);
   const fromAccount = encodeAccount(from);
 
   const vestingSchedule = new VestingSchedule({
-    id: randomUUID(),
+    id: vestingScheduleId.toString(),
     from: fromAccount,
     eventId: ctx.event.id,
     scheduleId: `${toAccount}-${asset.toString()}`,

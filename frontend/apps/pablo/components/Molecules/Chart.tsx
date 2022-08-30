@@ -147,8 +147,8 @@ export const Chart: React.FC<ChartProps> = ({
           alignItems="center"
           justifyContent="space-between"
         >
-          {timeSlots.map((slot) => (
-            <Typography key={slot} variant="body2">
+          {timeSlots.map((slot, index) => (
+            <Typography key={index} variant="body2">
               {slot}
             </Typography>
           ))}

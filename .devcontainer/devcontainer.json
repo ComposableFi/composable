@@ -1,24 +1,12 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.233.0/containers/rust
 {
-	"name": "Rust",
+	"name": "Composable Devcontainer",
 	"build": {
-		"dockerfile": "Dockerfile",
-		"args": {
-			// Use the VARIANT arg to pick a Debian OS version: buster, bullseye
-			// Use bullseye when on local on arm64/Apple Silicon.
-			"VARIANT": "bullseye"
-		}
+		"dockerfile": "Dockerfile"
 	},
 	"hostRequirements": {
-		"memory": "32gb",
-		"cpus": 16
+		"memory": "20gb",
+		"cpus": 8
 	},
-	"runArgs": [
-		"--cap-add=SYS_PTRACE",
-		"--security-opt",
-		"seccomp=unconfined"
-	],
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"workbench.colorTheme": "GitHub Dark",
@@ -35,7 +23,8 @@
 		],
 		"git.enableCommitSigning": true,
 		"editor.formatOnSave": true,
-		"terminal.integrated.defaultProfile.linux": "zsh",
+		// use same shell as nix default shell
+		"terminal.integrated.defaultProfile.linux": "bash",
 		"rust-analyzer.rustfmt.enableRangeFormatting": true,
 		"[rust]": {
 			"editor.defaultFormatter": "rust-lang.rust-analyzer",
@@ -58,7 +47,6 @@
 		"git.autofetch": true,
 		"git.confirmSync": false
 	},
-	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
 		"fsevenm.run-it-on",
 		"ms-azuretools.vscode-docker",
@@ -79,17 +67,13 @@
 		"streetsidesoftware.code-spell-checker",
 		"zxh404.vscode-proto3",
 		"rangav.vscode-thunder-client",
-		"adam-bender.commit-message-editor"
+		"adam-bender.commit-message-editor",
+
+		"jebbs.plantuml",
+		"bierner.markdown-mermaid",
+		"bpruitt-goddard.mermaid-markdown-syntax-highlighting",
+		// developers-xcvm
+		"humao.rest-client",
 	],
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-	"onCreateCommand": "cd /workspaces/composable/scripts/polkadot-launch && yarn && cd /workspaces/composable/integration-tests/runtime-tests && npm install",
-  	"postCreateCommand": "mkdir -p /workspaces/polkadot/target/release && cp /polkadot-binary/polkadot /workspaces/polkadot/target/release/polkadot && mkdir -p /workspaces/basilisk-node/target/release && cp /basilisk-node/basilisk /workspaces/basilisk-node/target/release/basilisk",
-	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
-	"features": {
-		"docker-in-docker": "latest",
-		"git-lfs": "latest",
-		"node": "16"
-	}
 }

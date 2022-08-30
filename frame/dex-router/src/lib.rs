@@ -3,9 +3,23 @@
 //! Is used to add route to DEX for given asset_id's pair.
 //! It is required to have permissioned approval of routes.
 
-#![cfg_attr(not(test), warn(clippy::disallowed_methods, clippy::indexing_slicing))] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![warn(
+	clippy::disallowed_methods,
+	clippy::disallowed_types,
+	clippy::indexing_slicing,
+	clippy::unseparated_literal_suffix
+)]
+#![cfg_attr(
+	test,
+	allow(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
+		clippy::identity_op,
+		clippy::inconsistent_digit_grouping,
+		clippy::indexing_slicing,
+	)
+)]
 
 pub use pallet::*;
 
@@ -14,6 +28,9 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod mock_fnft;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
@@ -157,7 +174,7 @@ pub mod pallet {
 			route: Option<BoundedVec<T::PoolId, T::MaxHopsInRoute>>,
 		) -> DispatchResult {
 			T::UpdateRouteOrigin::ensure_origin(origin)?;
-			let _ = <Self as DexRouter<
+			<Self as DexRouter<
 				T::AssetId,
 				T::PoolId,
 				T::Balance,
@@ -176,8 +193,7 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ =
-				<Self as Amm>::exchange(&who, asset_pair, asset_pair, amount, min_receive, false)?;
+			<Self as Amm>::exchange(&who, asset_pair, asset_pair, amount, min_receive, false)?;
 			Ok(())
 		}
 
@@ -191,7 +207,7 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::sell(
+			<Self as Amm>::sell(
 				&who,
 				asset_pair,
 				asset_pair.base, /* will be ignored */
@@ -212,7 +228,7 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::buy(
+			<Self as Amm>::buy(
 				&who,
 				asset_pair,
 				asset_pair.base, /* will be ignored */
@@ -235,7 +251,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::add_liquidity(
+			<Self as Amm>::add_liquidity(
 				&who,
 				asset_pair,
 				base_amount,
@@ -258,7 +274,7 @@ pub mod pallet {
 			min_quote_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::remove_liquidity(
+			<Self as Amm>::remove_liquidity(
 				&who,
 				asset_pair,
 				lp_amount,
@@ -280,9 +296,7 @@ pub mod pallet {
 			min_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::remove_liquidity_single_asset(
-				&who, asset_pair, lp_amount, min_amount,
-			)?;
+			<Self as Amm>::remove_liquidity_single_asset(&who, asset_pair, lp_amount, min_amount)?;
 			Ok(())
 		}
 	}
@@ -292,9 +306,6 @@ pub mod pallet {
 			asset_pair: CurrencyPair<T::AssetId>,
 			route: &BoundedVec<T::PoolId, T::MaxHopsInRoute>,
 		) -> Result<(), DispatchError> {
-			sp_std::if_std! {
-				println!("asset_pair.quote {:?} , asset_pair.base {:?}", asset_pair.quote, asset_pair.base);
-			}
 			let mut pair_set = BTreeSet::<CurrencyPair<T::AssetId>>::new();
 			route
 				.iter()
@@ -303,9 +314,6 @@ pub mod pallet {
 				.try_fold(asset_pair.quote, |val, iter| {
 					T::Pablo::currency_pair(*iter).and_then(
 						|pair| -> Result<T::AssetId, DispatchError> {
-							sp_std::if_std! {
-								println!("pool_id {:?} pair.quote {:?} pair.base {:?} val {:?}", *iter, pair.quote, pair.base, val);
-							}
 							if !pair_set.insert(pair) {
 								return Err(Error::<T>::LoopSuspectedInRouteUpdate.into())
 							}

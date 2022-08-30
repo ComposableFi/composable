@@ -17,7 +17,7 @@ use this_runtime::{Balances, Origin, UnitWeightCost, XTokens};
 
 use orml_traits::currency::MultiCurrency;
 
-use frame_support::assert_ok;
+use frame_support::{assert_ok, WeakBoundedVec};
 use primitives::currency::*;
 use sp_runtime::assert_eq_error_rate;
 use xcm_emulator::TestExt;
@@ -71,7 +71,10 @@ fn assets_registry_works_for_identity() {
 		let remote = XcmAssetLocation(
 			MultiLocation::new(
 				1,
-				X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
+				X2(
+					Parachain(SIBLING_PARA_ID),
+					GeneralKey(WeakBoundedVec::force_from(CurrencyId::PICA.encode(), None)),
+				),
 			)
 			.into(),
 		);
@@ -90,7 +93,10 @@ fn assets_registry_works_for_identity() {
 		let remote = XcmAssetLocation(
 			MultiLocation::new(
 				1,
-				X2(Parachain(THIS_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
+				X2(
+					Parachain(THIS_PARA_ID),
+					GeneralKey(WeakBoundedVec::force_from(CurrencyId::PICA.encode(), None)),
+				),
 			)
 			.into(),
 		);

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-       # NOTE: should be released from protected branch as it is used to assemble releases   
+      # NOTE: should be released from protected branch as it is used to assemble releases
       - main
 
 env:
@@ -15,7 +15,7 @@ env:
 
 jobs:
   build-and-publish:
-    if: contains( github.event.pull_request.labels.*.name, 'ci-linux')
+    if: contains(github.event.pull_request.labels.*.name, 'ci-linux')
     runs-on: 
       - self-hosted
       - linux
@@ -43,7 +43,7 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
-
+    # TODO: use nix bases image
     - name: Build Docker image
       run: make containerize-ci-linux
 

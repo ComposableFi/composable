@@ -49,12 +49,6 @@ export default {
     },
     PalletCollatorSelectionCandidateInfo: "Null",
     PalletCrowdloanRewardsReward: "Null",
-    PalletDemocracyVoteThreshold: "Null",
-    PalletDemocracyPreimageStatus: "Null",
-    PalletDemocracyReferendumInfo: "Null",
-    PalletPreimageRequestStatus: "Null",
-    PalletDemocracyReleases: "Null",
-    PalletDemocracyVoteVoting: "Null",
     CumulusPalletDmpQueueConfigData: "Null",
     PalletDutchAuctionSellOrder: "Null",
     ComposableTraitsVestingVestingSchedule: "Null",
@@ -63,7 +57,7 @@ export default {
     ComposableTraitsGovernanceSignedRawOrigin: {
       _enum: {
         Root: "Null",
-        Signed: "AccountId32",
+        Signed: "",
         isSigned: "bool",
         asSigned: "AccountId32"
       }
@@ -196,7 +190,12 @@ export default {
     IbcTransferPalletParams: "Null",
     IbcTransferTransferParams: "Null",
     ComposableTraitsOracleRewardTracker: "Null",
-    ComposableTraitsStakingStake: "Null"
-
+    ComposableTraitsStakingStake: "Null",
+    ComposableTraitsVestingVestingScheduleInfo: "Null",
+    ComposableTraitsVestingVestingScheduleIdSet: "Null",
+    ComposableTraitsStakingRewardUpdate: "Null",
+    ComposableTraitsAccountProxyProxyType: "Null",
+    ComposableTraitsAccountProxyProxyDefinition: "Null",
+    PalletAccountProxyAnnouncement: "Null",
   }
 };
