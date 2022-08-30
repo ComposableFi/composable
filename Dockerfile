@@ -29,14 +29,14 @@ RUN mkdir --parents /etc/nix/
 RUN echo "sandbox = relaxed" >> /etc/nix/nix.conf
 RUN echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf
 RUN echo "narinfo-cache-negative-ttl = 30" >> /etc/nix/nix.conf 
-RUN curl --location ${NIX_INSTALLER} > /install.sh
-RUN chmod +x /install.sh
 RUN passwd --delete root
 
 USER ${USER}
 ENV USER=${USER}
 
-RUN /install.sh
+RUN curl --location ${NIX_INSTALLER} > /install.sh && \
+         chmod +x /install.sh  && \
+         /install.sh
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-channel --add ${CHANNEL_URL} nixpkgs && \
     nix-channel --update 
