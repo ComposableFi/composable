@@ -16,3 +16,6 @@ patterns:
 ignoreRegExpList:
 - rust-code-literal
 - quoted
+
+ignorePaths:
+  - 'node/src/res'
