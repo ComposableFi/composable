@@ -9,6 +9,7 @@ pub trait WeightInfo {
 	fn reward_accumulation_hook_reward_update_calculation() -> Weight;
 	fn unix_time_now() -> Weight;
 	fn update_rewards_pool(r: u32) -> Weight;
+	fn claim(r: u32) -> Weight;
 	fn add_to_rewards_pot() -> Weight;
 }
 
