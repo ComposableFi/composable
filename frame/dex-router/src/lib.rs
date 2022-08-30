@@ -45,7 +45,10 @@ pub mod pallet {
 	use composable_support::math::safe::SafeArithmetic;
 	use composable_traits::{
 		defi::CurrencyPair,
-		dex::{Amm, DexRoute, DexRouter, RedeemableAssets, RemoveLiquiditySimulationResult},
+		dex::{
+			Amm, DexRoute, DexRouter, RedeemableAssets, RemoveLiquiditySimulationResult,
+			SingleAssetAccountsStorageAction,
+		},
 	};
 	use core::fmt::Debug;
 	use frame_support::{pallet_prelude::*, transactional, PalletId};
@@ -448,6 +451,21 @@ pub mod pallet {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
 				[pool_id] => T::Pablo::get_exchange_value(pool_id, asset_id, amount),
+				_ => Err(Error::<T>::UnsupportedOperation.into()),
+			}
+		}
+
+		fn update_accounts_deposited_one_asset_storage(
+			who: Self::AccountId,
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			action: SingleAssetAccountsStorageAction,
+		) -> Result<(), DispatchError> {
+			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
+			match route[..] {
+				[pool_id] => T::Pablo::update_accounts_deposited_one_asset_storage(
+					who, pool_id, lp_amount, action,
+				),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}
