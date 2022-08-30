@@ -530,6 +530,39 @@
                 "cargo test --workspace --release --locked --verbose";
             });
 
+            cargo-llvm-cov = rustPlatform.buildRustPackage rec {
+              pname = "cargo-llvm-cov";
+              version = "0.3.3";
+              src = fetchFromGitHub {
+                  owner = "andor0";
+                  repo = pname;
+                  rev = "v${version}";
+                  sha256 = "sha256-e2MQWOCIj0GKeyOI6OfLnXkxUWbu85eX4Smc/A6eY2w";
+              };
+              cargoSha256 = "sha256-1fxqIQr8hol2QEKz8IZfndIsSTjP2ACdnBpwyjG4UT0=";
+              doCheck = false;
+              meta = with lib; {
+                  description =
+                      "Cargo subcommand to easily use LLVM source-based code coverage";
+                  homepage = "https://github.com/taiki-e/cargo-llvm-cov";
+                  license = "Apache-2.0 OR MIT";
+              };
+            };
+
+            unit-tests-with-coverage = crane-nightly.cargoBuild (common-attrs // {
+              pnameSuffix = "-tests-with-coverage";
+              buildInputs = [ cargo-llvm-cov ];
+              cargoArtifacts = common-deps-nightly;
+              # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
+              # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
+              cargoBuildCommand = "cargo llvm-cov";
+              cargoExtraArgs = "--workspace --release --locked --verbose --lcov --output-path lcov.info";
+              installPhase = ''
+                mkdir -p $out/lcov
+                mv lcov.info $out/lcov
+              '';
+            });
+
             cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
               cargoArtifacts = common-deps-nightly;
               cargoExtraArgs = "--all --check --verbose";
