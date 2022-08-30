@@ -15,7 +15,7 @@ import {
 } from "../../model";
 
 @ObjectType()
-export class OverviewCounter {
+export class OverviewStats {
   @Field(() => BigInt, { nullable: false })
   totalValueLocked!: bigint;
 
@@ -28,15 +28,13 @@ export class OverviewCounter {
   @Field(() => Number, { nullable: false })
   activeUsersCount!: number;
 
-  constructor(props: Partial<OverviewCounter>) {
+  constructor(props: Partial<OverviewStats>) {
     Object.assign(this, props);
   }
 }
 
-@Resolver(() => OverviewCounter)
-export class OverviewCountResolver
-  implements ResolverInterface<OverviewCounter>
-{
+@Resolver(() => OverviewStats)
+export class OverviewStatsResolver implements ResolverInterface<OverviewStats> {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @FieldResolver({ name: "totalValueLocked", defaultValue: 0 })
@@ -123,11 +121,11 @@ export class OverviewCountResolver
     return Promise.resolve(activeUsers?.[0]?.active_users_count || 0);
   }
 
-  @Query(() => OverviewCounter)
-  async overviewCounter(): Promise<OverviewCounter> {
+  @Query(() => OverviewStats)
+  async overviewStats(): Promise<OverviewStats> {
     // Default values
     return Promise.resolve(
-      new OverviewCounter({
+      new OverviewStats({
         totalValueLocked: 0n,
         transactionsCount: 0,
         accountHoldersCount: 0,

@@ -1,5 +1,5 @@
 import { ActiveUsersResolver } from "./activeUsers";
-import { OverviewCountResolver } from "./overviewCounter";
+import { OverviewStatsResolver } from "./overviewStats";
 import { AssetsResolver } from "./assets";
 
-export { ActiveUsersResolver, OverviewCountResolver, AssetsResolver };
+export { ActiveUsersResolver, OverviewStatsResolver, AssetsResolver };
