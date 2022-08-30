@@ -1,12 +1,12 @@
 use crate::{
 	error::ContractError,
 	msg::{ExecuteMsg, GetAssetContractResponse, InstantiateMsg, QueryMsg},
+	state::{XcvmAssetId, ASSETS},
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
 use std::collections::BTreeMap;
-use crate::state::{XcvmAssetId, ASSETS};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
