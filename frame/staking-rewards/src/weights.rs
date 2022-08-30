@@ -45,6 +45,10 @@ impl WeightInfo for () {
 		10_000
 	}
 
+	fn claim(_r: u32) -> Weight {
+		10_000
+	}
+
 	fn add_to_rewards_pot() -> Weight {
 		10_000
 	}
