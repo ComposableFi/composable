@@ -123,10 +123,10 @@ pub struct TransferParams<AccountId> {
 	pub source_channel: u64,
 	/// Timestamp at which this packet should timeout in counterparty in seconds
 	/// relative to the latest time stamp
-	pub timeout_timestamp_offset: u64,
+	pub timeout_timestamp_offset: Option<u64>,
 	/// Block height at which this packet should timeout on counterparty
 	/// relative to the latest height
-	pub timeout_height_offset: u64,
+	pub timeout_height_offset: Option<u64>,
 }
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
@@ -167,21 +167,15 @@ pub mod pallet {
 	use ibc::{
 		applications::transfer::{
 			is_sender_chain_source, msgs::transfer::MsgTransfer, Amount, PrefixedCoin,
-			PrefixedDenom, VERSION,
+			PrefixedDenom,
 		},
 		clients::ics11_beefy::client_state::RelayChain,
-		core::{
-			ics04_channel::{
-				channel::{ChannelEnd, Counterparty, Order, State},
-				Version,
-			},
-			ics24_host::identifier::{ChannelId, PortId},
-		},
+		core::ics24_host::identifier::{ChannelId, PortId},
 	};
 	use ibc_primitives::{
-		connection_id_from_bytes, get_channel_escrow_address, port_id_from_bytes,
+		get_channel_escrow_address,
 		runtime_interface::{self, SS58CodecError},
-		IbcHandler, OpenChannelParams, PacketInfo,
+		IbcHandler, PacketInfo,
 	};
 	use primitives::currency::CurrencyId;
 	use sp_runtime::{traits::IdentifyAccount, AccountId32};
@@ -600,16 +594,25 @@ pub mod pallet {
 			let (latest_height, latest_timestamp) =
 				Pallet::<T>::latest_height_and_timestamp(&source_port, &source_channel)
 					.map_err(|_| Error::<T>::TimestampAndHeightNotFound)?;
+			let timeout_timestamp = params
+				.timeout_timestamp_offset
+				.map(|offset| (latest_timestamp + Duration::from_secs(offset)))
+				.transpose()
+				.map_err(|_| Error::<T>::InvalidTimestamp)?
+				.unwrap_or_default();
+			let timeout_height = params
+				.timeout_height_offset
+				.map(|offset| latest_height.add(offset))
+				.unwrap_or_default();
+
 			let msg = MsgTransfer {
 				source_port,
 				source_channel,
 				token: coin,
 				sender: Signer::from_str(&from).map_err(|_| Error::<T>::Utf8Error)?,
 				receiver: Signer::from_str(&to).map_err(|_| Error::<T>::Utf8Error)?,
-				timeout_height: latest_height.add(params.timeout_height_offset),
-				timeout_timestamp: (latest_timestamp +
-					Duration::from_secs(params.timeout_timestamp_offset))
-				.map_err(|_| Error::<T>::InvalidTimestamp)?,
+				timeout_height,
+				timeout_timestamp,
 			};
 
 			if is_sender_chain_source(msg.source_port.clone(), msg.source_channel, &msg.token.denom)
@@ -641,38 +644,6 @@ pub mod pallet {
 				from: origin,
 				to: to.as_bytes().to_vec(),
 				amount,
-			});
-			Ok(())
-		}
-
-		#[frame_support::transactional]
-		#[pallet::weight(<T as Config>::WeightInfo::open_transfer_channel())]
-		pub fn open_transfer_channel(
-			origin: OriginFor<T>,
-			params: OpenChannelParams,
-		) -> DispatchResult {
-			<T as Config>::AdminOrigin::ensure_origin(origin)?;
-			let order: Order = (&params).try_into().map_err(|_| Error::<T>::InvalidParams)?;
-
-			let connection_id = connection_id_from_bytes(params.connection_id)
-				.map_err(|_| Error::<T>::InvalidParams)?;
-			let counterparty_port_id = port_id_from_bytes(params.counterparty_port_id)
-				.map_err(|_| Error::<T>::InvalidParams)?;
-			let counterparty = Counterparty::new(counterparty_port_id, None);
-			let channel_end = ChannelEnd::new(
-				State::Init,
-				order,
-				counterparty,
-				vec![connection_id],
-				Version::new(VERSION.to_string()),
-			);
-
-			let port_id = PortId::transfer();
-			let channel_id = Pallet::<T>::open_channel(port_id.clone(), channel_end)
-				.map_err(|_| Error::<T>::ChannelInitError)?;
-			Self::deposit_event(Event::<T>::ChannelOpened {
-				channel_id: channel_id.to_string().as_bytes().to_vec(),
-				port_id: port_id.as_bytes().to_vec(),
 			});
 			Ok(())
 		}

@@ -72,7 +72,7 @@ use ibc::{
 	timestamp::Timestamp,
 };
 use ibc_primitives::{
-	get_channel_escrow_address, ibc_denom_to_foreign_asset_id, OpenChannelParams,
+	get_channel_escrow_address, ibc_denom_to_foreign_asset_id,
 };
 use primitives::currency::CurrencyId;
 use scale_info::prelude::string::ToString;
@@ -887,8 +887,8 @@ benchmarks! {
 		let transfer_params = TransferParams {
 			to:  MultiAddress::Raw("bob".to_string().as_bytes().to_vec()),
 			source_channel: channel_id.sequence(),
-			timeout_timestamp_offset: 1690894363,
-			timeout_height_offset: 2000,
+			timeout_timestamp_offset: Some(1690894363),
+			timeout_height_offset: Some(2000),
 		};
 
 		Pallet::<T>::register_asset_id(asset_id.into(), denom.as_bytes().to_vec());
@@ -905,25 +905,6 @@ benchmarks! {
 			asset_id.into(),
 			&caller
 		), (balance - amt).into());
-	}
-
-	open_transfer_channel {
-		let client_id = Pallet::<T>::create_client().unwrap();
-		let connection_id = ConnectionId::new(0);
-		Pallet::<T>::create_connection(client_id, connection_id.clone()).unwrap();
-		let port_id = PortId::transfer();
-		let open_channel_params = OpenChannelParams {
-			connection_id: connection_id.as_bytes().to_vec(),
-			order: 1,
-			counterparty_port_id: port_id.as_bytes().to_vec(),
-			version: vec![]
-		};
-	}:_(RawOrigin::Root, open_channel_params)
-	verify {
-		assert_last_event::<T>(Event::<T>::ChannelOpened {
-			channel_id: ChannelId::new(0).to_string().as_bytes().to_vec(),
-			port_id: port_id.as_bytes().to_vec()
-		}.into())
 	}
 
 	set_params {

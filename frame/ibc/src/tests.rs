@@ -241,8 +241,8 @@ fn send_transfer() {
 			TransferParams {
 				to: MultiAddress::Raw(ss58_address.as_bytes().to_vec()),
 				source_channel: 0,
-				timeout_timestamp_offset: 1000,
-				timeout_height_offset: 5,
+				timeout_timestamp_offset: Some(1000),
+				timeout_height_offset: Some(5),
 			},
 			CurrencyId::PICA.into(),
 			balance.into(),
