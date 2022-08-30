@@ -95,12 +95,12 @@ pub mod pallet {
 		PalletId,
 	};
 	use frame_system::{
-		offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
+		offchain::{AppCrypto, CreateSignedTransaction},
 		pallet_prelude::*,
 	};
 	use sp_core::crypto::KeyTypeId;
 	use sp_runtime::KeyTypeId as CryptoKeyTypeId;
-	use sp_std::{fmt::Debug, vec, vec::Vec};
+	use sp_std::{fmt::Debug, vec::Vec};
 
 	/// Simple type alias around [`MarketConfig`] for this pallet.
 	pub(crate) type MarketConfigOf<T> = MarketConfig<
@@ -251,66 +251,12 @@ pub mod pallet {
 
 		fn offchain_worker(_block_number: T::BlockNumber) {
 			log::info!("Off-chain worker running");
-			let signer = Signer::<T, <T as Config>::AuthorityId>::all_accounts();
-			if !signer.can_sign() {
-				log::warn!("No signer");
-				return
-			}
-			for (market_id, account, _) in DebtIndex::<T>::iter() {
-				//Check that it should liquidate before liquidations
-				let should_be_liquidated =
-					match Self::should_liquidate(&market_id, &account) {
-						Ok(status) => status,
-						Err(error) => {
-							log::error!("Liquidation necessity check failed, market_id: {:?}, account: {:?},
-                                        error: {:?}", market_id, account, error);
-							false
-						},
-					};
-				if !should_be_liquidated {
-					continue
-				}
-				let results = signer.send_signed_transaction(|_account| Call::liquidate {
-					market_id,
-					// Unwrapped since we push only one borrower in the vector
-					borrowers: BoundedVec::<_, T::MaxLiquidationBatchSize>::try_from(vec![
-						account.clone()
-					])
-					.expect("This function never panics"),
-				});
-
-				for (_acc, res) in &results {
-					match res {
-						Ok(()) => log::info!(
-							"Liquidation succeed, market_id: {:?}, account: {:?}",
-							market_id,
-							account
-						),
-						Err(e) => log::error!(
-							"Liquidation failed, market_id: {:?}, account: {:?}, error: {:?}",
-							market_id,
-							account,
-							e
-						),
-					}
-				}
-			}
+			Self::do_offchain_worker(_block_number)
 		}
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		Overflow,
-		Underflow,
-		/// vault provided does not exist
-		VaultNotFound,
-
-		/// Only assets that have a known price are supported.
-		BorrowAssetNotSupportedByOracle,
-		/// Only assets that have a known price are supported.
-		CollateralAssetNotSupportedByOracle,
-
-		AssetPriceNotFound,
 		/// The market could not be found
 		MarketDoesNotExist,
 
@@ -318,11 +264,6 @@ pub mod pallet {
 
 		/// The collateral factor for a market must be more than one.
 		CollateralFactorMustBeMoreThanOne,
-		/// Can't allow amount 0 as collateral.
-		CannotDepositZeroCollateral,
-
-		// REVIEW: Currently unused
-		MarketAndAccountPairNotFound,
 
 		MarketIsClosing,
 		InvalidTimestampOnBorrowRequest,
@@ -339,26 +280,14 @@ pub mod pallet {
 		// ensure!(can_{withdraw/transfer/etc}) checks
 		TransferFailed,
 
-		// REVIEW: Currently unused
-		CannotWithdrawFromProvidedBorrowAccount,
-
 		BorrowRateDoesNotExist,
-
-		// REVIEW: Currently unused
-		BorrowIndexDoesNotExist,
 
 		/// Borrow and repay in the same block (flashloans) are not allowed.
 		BorrowAndRepayInSameBlockIsNotSupported,
-		/// Repaying more than once in the same block is not allowed.
-		CannotRepayMoreThanOnceInSameBlock,
 
 		BorrowDoesNotExist,
 
-		RepayAmountMustBeGreaterThanZero,
-		CannotRepayMoreThanBorrowAmount,
-
 		ExceedLendingCount,
-		LiquidationFailed,
 
 		BorrowerDataCalculationFailed,
 		/// Attempted to update a market owned by someone else.
@@ -373,8 +302,6 @@ pub mod pallet {
 		CannotRepayMoreThanTotalDebt,
 
 		BorrowRentDoesNotExist,
-
-		MaxLiquidationBatchSizeExceeded,
 
 		PriceTooOld,
 

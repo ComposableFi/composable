@@ -352,9 +352,7 @@ impl<T: Config> Lending for Pallet<T> {
 		)?;
 
 		let delta_time = now.checked_sub(LastBlockTimestamp::<T>::get()).ok_or(
-			// REVIEW: INVARIANT: this error should never happen, `now` should always
-			// be `> LastBlockTimestamp`
-			Error::<T>::Underflow,
+			ArithmeticError::Underflow,
 		)?;
 
 		let borrow_index =
