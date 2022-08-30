@@ -19,8 +19,9 @@ pub type Amount = i128;
 pub type PoolId = u128;
 pub type BlockNumber = u64;
 pub type AccountId = u128;
-pub type RewardPoolId = u16;
+pub type RewardPoolId = u128;
 pub type PositionId = u128;
+pub type CurrencyId = u128;
 
 #[allow(dead_code)]
 pub static ALICE: AccountId = 1;
@@ -168,6 +169,8 @@ parameter_types! {
 	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets: u32 = 10;
 	pub const MaxRewardConfigsPerPool: u32 = 10;
+	pub const PicaAssetId : CurrencyId = 1;
+	pub const PbloAssetId : CurrencyId = 2;
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -188,6 +191,8 @@ impl pallet_staking_rewards::Config for Test {
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
 	type FinancialNftInstanceId = u128;
 	type FinancialNft = MockFnft;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
 }
 
 parameter_types! {
@@ -221,6 +226,8 @@ impl pallet_pablo::Config for Test {
 	type ManageStaking = StakingRewards;
 	type ProtocolStaking = StakingRewards;
 	type MsPerBlock = MillisecsPerBlock;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
 }
 
 parameter_types! {
