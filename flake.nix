@@ -488,19 +488,19 @@
               '';
             };
 
-            frontend-static = let bp = pkgs.callPackage npm-buildpackage { }; in
-              bp.buildYarnPackage {
-                nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
-                src = ./frontend;
-                yarnBuildMore = "yarn export";
-                installPhase = ''
-                  mkdir -p $out
-                  mkdir $out/pablo
-                  mkdir $out/picasso
-                  cp -R ./apps/pablo/out/* $out/pablo
-                  cp -R ./apps/picasso/out/* $out/picasso
-                '';
-              };
+            frontend-static = let bp = pkgs.callPackage npm-buildpackage { };
+            in bp.buildYarnPackage {
+              nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
+              src = ./frontend;
+              yarnBuildMore = "yarn export";
+              installPhase = ''
+                mkdir -p $out
+                mkdir $out/pablo
+                mkdir $out/picasso
+                cp -R ./apps/pablo/out/* $out/pablo
+                cp -R ./apps/picasso/out/* $out/picasso
+              '';
+            };
             frontend-pablo-server = pkgs.writeShellApplication {
               name = "frontend-pablo-server";
               runtimeInputs = [ pkgs.miniserve ];

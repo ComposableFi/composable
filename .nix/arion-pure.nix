@@ -21,11 +21,18 @@ pkgs.arion.build {
           name = composable-squid-db-name;
           host = db-container-name;
         };
+
         indexer-db-name = "indexer";
         indexer-db = default-db // {
           name = indexer-db-name;
           host = db-container-name;
         };
+
+        frontend-picasso = import ./services/frontend-picasso.nix {
+          inherit pkgs;
+          inherit packages;
+        };
+
         network-name = "composable_devnet";
         mk-composable-container = container:
           container // {
