@@ -374,8 +374,7 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 
 			let penalty = unlock_penalty.mul_ceil(amount);
 			let claim_with_penalty = (Perbill::one() - unlock_penalty).mul_ceil(claim);
-			let rewards_pool =
-				StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
+			let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 			assert_eq!(balance(staked_asset_id, &staker), amount * 2 - penalty);
 			assert_eq!(
 				balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
@@ -423,8 +422,7 @@ fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 				)
 			});
 
-			let rewards_pool =
-				StakingRewards::pools(StakingRewards::pool_count()).expect("rewards_pool expected");
+			let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 			assert_eq!(balance(staked_asset_id, &staker), amount * 2);
 			assert_eq!(
 				balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
