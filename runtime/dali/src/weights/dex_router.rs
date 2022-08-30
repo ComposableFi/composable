@@ -99,14 +99,4 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
-	// Storage: DexRouter DexRoutes (r:1 w:0)
-	// Storage: Pablo Pools (r:1 w:0)
-	// Storage: Tokens Accounts (r:3 w:1)
-	// Storage: Tokens TotalIssuance (r:1 w:1)
-	// Storage: Pablo PriceCumulativeState (r:1 w:1)
-	fn remove_liquidity_single_asset() -> Weight {
-		(10_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(7 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
-	}
 }

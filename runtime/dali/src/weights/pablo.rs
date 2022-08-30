@@ -92,25 +92,6 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
-	// Storage: Tokens TotalIssuance (r:1 w:1)
-	// Storage: System Account (r:1 w:0)
-	// Storage: Pablo PriceCumulativeState (r:1 w:1)
-	fn remove_liquidity_single_asset() -> Weight {
-		(10_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(9 as Weight))
-			.saturating_add(T::DbWeight::get().writes(7 as Weight))
-	}
-	// Storage: Pablo Pools (r:1 w:1)
-	// Storage: Tokens Accounts (r:2 w:2)
-	// Storage: System Account (r:1 w:1)
-	// Storage: Pablo PriceCumulativeState (r:1 w:1)
-	fn remove_liquidity_lbp() -> Weight {
-		(158_772_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(5 as Weight))
-	}
-	// Storage: Pablo Pools (r:1 w:0)
-	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: System Account (r:3 w:2)
 	// Storage: Pablo StakingRewardPools (r:1 w:0)
 	// Storage: StakingRewards RewardPools (r:1 w:1)
