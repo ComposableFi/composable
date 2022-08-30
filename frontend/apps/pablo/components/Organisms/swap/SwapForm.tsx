@@ -65,6 +65,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     flipAssetSelection,
     isProcessing,
     percentageToSwap,
+    priceImpact
   } = useSwaps();
 
   const initiateSwapTx = usePabloSwap({
@@ -364,6 +365,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
 
       {valid && (
         <SwapSummary
+          priceImpact={priceImpact}
           mt={4}
           spotPrice={spotPrice}
           baseAssetAmount={assetTwoAmount}
@@ -383,6 +385,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             baseAsset={selectedAssetTwo}
           />
           <PreviewModal
+            priceImpact={priceImpact}
             onConfirmSwap={onConfirmSwap}
             minimumReceived={minimumReceived}
             baseAssetAmount={assetTwoAmount}
