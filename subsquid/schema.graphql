@@ -168,3 +168,14 @@ type HistoricalAssetPrice @entity {
   price: BigInt!
   timestamp: BigInt!
 }
+
+type PicassoStakingPosition @entity {
+  id: ID!
+  eventId: String!
+  positionId: String!
+  poolId: String!
+  amount: BigInt!
+  owner: String!
+  startTimestamp: BigInt!
+  endTimestamp: BigInt
+}
