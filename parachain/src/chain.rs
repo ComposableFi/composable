@@ -1,6 +1,7 @@
-use std::pin::Pin;
+use codec::Decode;
+use std::{fmt::Display, pin::Pin};
 
-use futures::Stream;
+use futures::{Stream, StreamExt};
 use ibc_proto::google::protobuf::Any;
 use sp_runtime::{
 	generic::Era,
@@ -13,12 +14,10 @@ use subxt::{
 	Config, PolkadotExtrinsicParams, PolkadotExtrinsicParamsBuilder,
 };
 
-use ibc::core::ics03_connection::msgs::{conn_open_ack, conn_open_init};
-
 use primitives::{Chain, IbcProvider};
 
 use super::{
-	calls::{deliver, Deliver, DeliverPermissioned, RawAny},
+	calls::{deliver, Deliver, RawAny},
 	error::Error,
 	signer::ExtrinsicSigner,
 	ParachainClient,
@@ -33,7 +32,12 @@ where
 	MultiSigner: From<MultiSigner>,
 	<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
+	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero,
 {
+	fn name(&self) -> &str {
+		&*self.name
+	}
+
 	async fn finality_notifications(
 		&self,
 	) -> Pin<Box<dyn Stream<Item = <Self as IbcProvider>::FinalityEvent> + Send + Sync>> {
@@ -48,39 +52,43 @@ where
 			)
 			.await
 			.expect("Expect subscription to open");
-		Box::pin(Box::new(subscription))
+
+		let stream = subscription.filter_map(|commitment| {
+			let commitment = match commitment {
+				Ok(c) => c,
+				Err(err) => {
+					log::error!("Failed to fetch SignedCommitment: {}", err);
+					return futures::future::ready(None)
+				},
+			};
+			let recv_commitment = match hex::decode(&commitment[2..]) {
+				Ok(c) => c,
+				Err(err) => {
+					log::error!("SignedCommitment hex decode error: {}", err);
+					return futures::future::ready(None)
+				},
+			};
+			let signed_commitment = match Decode::decode(&mut &*recv_commitment) {
+				Ok(c) => c,
+				Err(err) => {
+					log::error!("SignedCommitment scale decode error: {}", err);
+					return futures::future::ready(None)
+				},
+			};
+			futures::future::ready(Some(signed_commitment))
+		});
+
+		Box::pin(Box::new(stream))
 	}
 
-	async fn submit_ibc_messages(&self, mut messages: Vec<Any>) -> Result<(), Error> {
+	async fn submit_ibc_messages(&self, messages: Vec<Any>) -> Result<(), Error> {
 		let signer = ExtrinsicSigner::<T, Self>::new(
 			self.key_store.clone(),
 			self.key_type_id.clone(),
 			self.public_key.clone(),
 		);
 
-		let update_client_message = {
-			let update_client_message = messages.remove(0);
-			RawAny {
-				type_url: update_client_message.type_url.as_bytes().to_vec(),
-				value: update_client_message.value,
-			}
-		};
-		let mut permissioned_messages = vec![];
-		let mut non_permissioned_messages = vec![];
-
-		for msg in messages {
-			if matches!(msg.type_url.as_str(), conn_open_init::TYPE_URL | conn_open_ack::TYPE_URL) {
-				permissioned_messages.push(msg)
-			} else {
-				non_permissioned_messages.push(msg)
-			}
-		}
-
-		let permissioned_messages = permissioned_messages
-			.into_iter()
-			.map(|msg| RawAny { type_url: msg.type_url.as_bytes().to_vec(), value: msg.value })
-			.collect::<Vec<_>>();
-		let non_permissioned_messages = non_permissioned_messages
+		let messages = messages
 			.into_iter()
 			.map(|msg| RawAny { type_url: msg.type_url.as_bytes().to_vec(), value: msg.value })
 			.collect::<Vec<_>>();
@@ -94,9 +102,6 @@ where
 		pallet
 			.call_index::<Deliver>()
 			.map_err(|_| Error::CallNotFound(<Deliver as subxt::Call>::FUNCTION))?;
-		pallet
-			.call_index::<DeliverPermissioned>()
-			.map_err(|_| Error::CallNotFound(<Deliver as subxt::Call>::FUNCTION))?;
 		// Update the metadata held by the client
 		let _ = self.para_client.metadata().try_write().and_then(|mut writer| {
 			*writer = metadata;
@@ -107,18 +112,9 @@ where
 			.tip(PlainTip::new(100_000))
 			.era(Era::Immortal, *self.para_client.genesis());
 
-		let mut messages = vec![update_client_message];
-		if !non_permissioned_messages.is_empty() {
-			messages.extend(non_permissioned_messages.into_iter())
-		}
-		let update_client_ext =
-			deliver::<T, PolkadotExtrinsicParams<T>>(&self.para_client, Deliver { messages });
-		let _ = update_client_ext.sign_and_submit(&signer, tx_params).await?;
-
-		if !permissioned_messages.is_empty() {
-			self.submit_sudo_call(DeliverPermissioned { messages: permissioned_messages })
-				.await?;
-		}
+		let _ = deliver::<T, PolkadotExtrinsicParams<T>>(&self.para_client, Deliver { messages })
+			.sign_and_submit(&signer, tx_params)
+			.await?;
 
 		Ok(())
 	}

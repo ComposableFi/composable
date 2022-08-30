@@ -21,11 +21,6 @@ pub struct Deliver {
 	pub messages: Vec<RawAny>,
 }
 
-#[derive(Encode, Decode, Clone)]
-pub struct DeliverPermissioned {
-	pub messages: Vec<RawAny>,
-}
-
 impl<'a, C: codec::Codec + subxt::Call + Clone, T: Config> subxt::Call for Sudo<'a, C, T> {
 	const PALLET: &'static str = "Sudo";
 	const FUNCTION: &'static str = "sudo";
@@ -50,15 +45,13 @@ impl subxt::Call for Deliver {
 	const FUNCTION: &'static str = "deliver";
 }
 
-impl subxt::Call for DeliverPermissioned {
-	const PALLET: &'static str = "Ibc";
-	const FUNCTION: &'static str = "deliver_permissioned";
-}
-
-pub fn deliver<T: Config, X: subxt::extrinsic::ExtrinsicParams<T>>(
+pub fn deliver<T, X>(
 	client: &Client<T>,
 	call: Deliver,
 ) -> SubmittableExtrinsic<T, X, Deliver, polkadot::api::runtime_types::sp_runtime::DispatchError, ()>
+where
+	T: Config,
+	X: subxt::extrinsic::ExtrinsicParams<T>,
 {
 	SubmittableExtrinsic::new(client, call)
 }

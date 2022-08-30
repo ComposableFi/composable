@@ -1,15 +1,16 @@
 use crate::error::Error;
-use ibc::core::ics04_channel::packet::Packet;
-use ibc::core::ics24_host::identifier::ClientId;
+use ibc::core::{ics04_channel::packet::Packet, ics24_host::identifier::ClientId};
 use near_crypto::{ED25519PublicKey, KeyType, Secp256K1PublicKey};
 use near_indexer::{Indexer, InitConfigArgs};
-use near_jsonrpc_client::methods::broadcast_tx_commit::{
-	RpcBroadcastTxCommitRequest, RpcBroadcastTxCommitResponse,
+use near_jsonrpc_client::{
+	methods::broadcast_tx_commit::{RpcBroadcastTxCommitRequest, RpcBroadcastTxCommitResponse},
+	JsonRpcClient,
 };
-use near_jsonrpc_client::JsonRpcClient;
 use near_jsonrpc_primitives::types::query::{QueryResponseKind, RpcQueryRequest};
-use near_primitives::transaction::{SignedTransaction, Transaction};
-use near_primitives::types::{AccountId, Finality};
+use near_primitives::{
+	transaction::{SignedTransaction, Transaction},
+	types::{AccountId, Finality},
+};
 use sp_core::crypto::{CryptoTypeId, CryptoTypePublicPair, KeyTypeId};
 use sp_keystore::SyncCryptoStorePtr;
 

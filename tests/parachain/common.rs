@@ -1,7 +1,6 @@
 use hyperspace::relay;
-use ibc_proto::google::protobuf::Any;
 use parachain::{
-	calls::{DeliverPermissioned, OpenChannelParams, OpenPingChannel, OpenTransferChannel},
+	calls::{OpenChannelParams, OpenPingChannel, OpenTransferChannel},
 	ParachainClient, ParachainClientConfig,
 };
 use primitives::{IbcProvider, KeyProvider};
@@ -24,11 +23,8 @@ use ibc::{
 };
 use tokio::task::JoinHandle;
 
-use std::{
-	str::FromStr,
-	sync::Arc,
-	time::{Duration, Instant},
-};
+use parachain::calls::Deliver;
+use std::{str::FromStr, sync::Arc, time::Duration};
 use tendermint_proto::Protobuf;
 
 pub struct TestParams {
@@ -104,6 +100,7 @@ pub async fn wait_for_client_and_connection(
 
 	// Create client configurations
 	let config_a = ParachainClientConfig {
+		name: format!("Dali ParaId({})", args.para_id_a),
 		para_id: args.para_id_a,
 		parachain_rpc_url: args.chain_a,
 		relay_chain_rpc_url: args.relay_chain.clone(),
@@ -116,6 +113,7 @@ pub async fn wait_for_client_and_connection(
 	};
 
 	let config_b = ParachainClientConfig {
+		name: format!("Dali ParaId({})", args.para_id_b),
 		para_id: args.para_id_b,
 		parachain_rpc_url: args.chain_b,
 		relay_chain_rpc_url: args.relay_chain,
@@ -127,207 +125,143 @@ pub async fn wait_for_client_and_connection(
 		key_type_id,
 	};
 
-	let mut client_a = ParachainClient::<DefaultConfig>::new(config_a).await.unwrap();
-	let mut client_b = ParachainClient::<DefaultConfig>::new(config_b).await.unwrap();
+	let mut chain_a = ParachainClient::<DefaultConfig>::new(config_a).await.unwrap();
+	let mut chain_b = ParachainClient::<DefaultConfig>::new(config_b).await.unwrap();
 
 	// Wait until for parachains to start producing blocks
-	let block_subscription = client_a.para_client.rpc().subscribe_blocks().await.unwrap();
 	println!("Waiting for  block production from parachains");
-	let _ = block_subscription.take(2).collect::<Vec<_>>().await;
+	let _ = chain_a
+		.para_client
+		.rpc()
+		.subscribe_blocks()
+		.await
+		.unwrap()
+		.take(2)
+		.collect::<Vec<_>>()
+		.await;
 	println!("Parachains have started block production");
 
-	let client_id_b_on_a = {
+	{
 		// Get initial beefy state
 		let (client_state, consensus_state) =
-			client_b.construct_beefy_client_state(0).await.unwrap();
+			chain_b.construct_beefy_client_state(0).await.unwrap();
 
 		// Create client message is the same for both chains
 		let msg_create_client = MsgCreateAnyClient {
 			client_state: client_state.clone(),
 			consensus_state,
-			signer: client_a.account_id(),
+			signer: chain_a.account_id(),
 		};
 
-		let msg =
-			Any { type_url: msg_create_client.type_url(), value: msg_create_client.encode_vec() };
-		client_a
+		let msg = pallet_ibc::Any {
+			type_url: msg_create_client.type_url().as_bytes().to_vec(),
+			value: msg_create_client.encode_vec(),
+		};
+		let client_id_b_on_a = chain_a
 			.submit_create_client_msg(msg.clone())
 			.await
-			.expect("Client was not created successfully")
+			.expect("Client was not created successfully");
+		chain_b.set_client_id(client_id_b_on_a.clone());
 	};
-	let client_id_a_on_b = {
+
+	{
 		// Get initial beefy state
 		let (client_state, consensus_state) =
-			client_a.construct_beefy_client_state(0).await.unwrap();
+			chain_a.construct_beefy_client_state(0).await.unwrap();
 
 		// Create client message is the same for both chains
 		let msg_create_client = MsgCreateAnyClient {
 			client_state: client_state.clone(),
 			consensus_state,
-			signer: client_a.account_id(),
+			signer: chain_a.account_id(),
 		};
 
-		let msg =
-			Any { type_url: msg_create_client.type_url(), value: msg_create_client.encode_vec() };
-		client_b
+		let msg = pallet_ibc::Any {
+			type_url: msg_create_client.type_url().as_bytes().to_vec(),
+			value: msg_create_client.encode_vec(),
+		};
+		let client_id_a_on_b = chain_b
 			.submit_create_client_msg(msg)
 			.await
-			.expect("Client was not created successfully")
+			.expect("Client was not created successfully");
+		chain_a.set_client_id(client_id_a_on_b.clone());
 	};
 
-	client_a.set_client_id(client_id_a_on_b.clone());
-
-	client_b.set_client_id(client_id_b_on_a.clone());
-
 	// Start relayer loop
+	let client_a_clone = chain_a.clone();
+	let client_b_clone = chain_b.clone();
 
-	let client_a_clone = client_a.clone();
-
-	let client_b_clone = client_b.clone();
 	let handle =
 		tokio::task::spawn(async move { relay(client_a_clone, client_b_clone).await.unwrap() });
 
-	// Create a hot loop to monitor chain state and send transactions after connection handshake is
-	// done
-	let mut conn_state_a = false;
-	let mut conn_state_b = false;
-	let mut chan_state_a = false;
-	let mut chan_state_b = false;
-	let mut connection_id = ConnectionId::default();
-	let mut channel_id = ChannelId::default();
+	let connection_id = ConnectionId::default();
+	let channel_id = ChannelId::default();
 	let port_id = match channel {
 		ChannelToOpen::Ping => PortId::from_str("ping").unwrap(),
 		ChannelToOpen::Transfer => PortId::transfer(),
 	};
-	let mut initialized_channel = false;
-	let mut initialized_connection = false;
 
-	let (mut chain_a_events, mut chain_b_events) =
-		(client_a.ibc_events().await, client_b.ibc_events().await);
+	// Both clients have been updated, we can now start connection handshake
+	let msg = MsgConnectionOpenInit {
+		client_id: chain_a.client_id(),
+		counterparty: Counterparty::new(chain_b.client_id(), None, chain_b.connection_prefix()),
+		version: Some(ConnVersion::default()),
+		delay_period: Duration::from_nanos(0),
+		signer: chain_a.account_id(),
+	};
 
-	let start = Instant::now();
-	loop {
-		// If channel states are open on both chains we can stop listening for events
-		if chan_state_a && chan_state_b {
-			println!("Channel handshake completed");
+	let msg =
+		pallet_ibc::Any { type_url: msg.type_url().as_bytes().to_vec(), value: msg.encode_vec() };
+
+	chain_a
+		.submit_call(Deliver { messages: vec![msg] })
+		.await
+		.expect("Connection creation failed");
+
+	// wait till both chains have completed connection handshake
+	let mut chain_b_events = chain_b.ibc_events().await;
+	println!("wait till both chains have completed connection handshake");
+
+	while let Some(ev) = chain_b_events.next().await {
+		// connection handshake completed.
+		if matches!(ev, IbcEvent::OpenConfirmConnection(_)) {
 			break
-		}
-
-		let time_elapsed = Instant::now().duration_since(start);
-		if time_elapsed >= Duration::from_secs(1200) {
-			println!("Could not verify connection and channel handshake after waiting 20mins");
-			break
-		}
-
-		// Both clients have been updated, we can now start connection handshake
-		if !initialized_connection {
-			let msg = MsgConnectionOpenInit {
-				client_id: client_a.client_id(),
-				counterparty: Counterparty::new(
-					client_b.client_id(),
-					None,
-					client_b.connection_prefix(),
-				),
-				version: Some(ConnVersion::default()),
-				delay_period: Duration::from_nanos(0),
-				signer: client_a.account_id(),
-			};
-
-			let msg = pallet_ibc::Any {
-				type_url: msg.type_url().as_bytes().to_vec(),
-				value: msg.encode_vec(),
-			};
-
-			client_a
-				.submit_sudo_call(DeliverPermissioned { messages: vec![msg] })
-				.await
-				.expect("Connection creation failed");
-			initialized_connection = true;
-		}
-
-		if conn_state_a && conn_state_b {
-			if !initialized_channel {
-				println!("Connection handshake completed, starting channel handshake");
-				match channel {
-					ChannelToOpen::Ping => {
-						let params = OpenChannelParams {
-							order: 1,
-							connection_id: connection_id.as_bytes().to_vec(),
-							counterparty_port_id: port_id.as_bytes().to_vec(),
-							version: b"ibc-ping".to_vec(),
-						};
-						client_a.submit_sudo_call(OpenPingChannel { params }).await.unwrap();
-					},
-					ChannelToOpen::Transfer => {
-						let params = OpenChannelParams {
-							order: 1,
-							connection_id: connection_id.as_bytes().to_vec(),
-							counterparty_port_id: port_id.as_bytes().to_vec(),
-							version: VERSION.as_bytes().to_vec(),
-						};
-						client_a.submit_sudo_call(OpenTransferChannel { params }).await.unwrap();
-					},
-				}
-
-				initialized_channel = true;
-			}
-		}
-		tokio::select! {
-			result = chain_a_events.next() => {
-				match result {
-					None => {
-						println!("Event Stream from chain A ended");
-						break
-					},
-					Some(Ok(events)) => {
-						for event in events {
-							match event {
-								IbcEvent::OpenAckConnection(open_ack) if !conn_state_a => {
-									connection_id = open_ack.connection_id().unwrap().clone();
-									conn_state_a = true;
-									break
-								},
-								IbcEvent::OpenAckChannel(open_ack) if !chan_state_a => {
-									channel_id = open_ack.channel_id.unwrap();
-									chan_state_a = true;
-									break
-								}
-								_ => continue
-							}
-						}
-					}
-					Some(Err(err)) => {
-						println!("[wait_for_client_and_connection] Received Error from stream A {:?}", err);
-					}
-				}
-			}
-			result = chain_b_events.next() => {
-				match result {
-					None => {
-						println!("Event Stream from chain B ended");
-						break
-					},
-					Some(Ok(events)) => {
-						for event in events {
-							match event {
-								IbcEvent::OpenConfirmConnection(_) if !conn_state_b=> {
-									conn_state_b = true;
-									break
-								},
-								IbcEvent::OpenConfirmChannel(_) if !chan_state_b => {
-									chan_state_b = true;
-									break
-								}
-								_ => continue
-							}
-						}
-					}
-					Some(Err(err)) => {
-						println!("[wait_for_client_and_connection] Error from stream B {:?}", err);
-					}
-				}
-			}
 		}
 	}
-	(handle, connection_id, channel_id, client_a, client_b)
+
+	println!("Connection handshake completed, starting channel handshake");
+
+	match channel {
+		ChannelToOpen::Ping => {
+			let params = OpenChannelParams {
+				order: 1,
+				connection_id: connection_id.as_bytes().to_vec(),
+				counterparty_port_id: port_id.as_bytes().to_vec(),
+				version: b"ibc-ping".to_vec(),
+			};
+			chain_a.submit_sudo_call(OpenPingChannel { params }).await.unwrap();
+		},
+		ChannelToOpen::Transfer => {
+			let params = OpenChannelParams {
+				order: 1,
+				connection_id: connection_id.as_bytes().to_vec(),
+				counterparty_port_id: port_id.as_bytes().to_vec(),
+				version: VERSION.as_bytes().to_vec(),
+			};
+			chain_a.submit_sudo_call(OpenTransferChannel { params }).await.unwrap();
+		},
+	};
+
+	// wait till both chains have completed channel handshake
+	println!("wait till both chains have completed channel handshake");
+	while let Some(ev) = chain_b_events.next().await {
+		// channel handshake completed
+		if matches!(ev, IbcEvent::OpenConfirmChannel(_)) {
+			break
+		}
+	}
+
+	println!("Channel handshake completed");
+
+	(handle, connection_id, channel_id, chain_a, chain_b)
 }

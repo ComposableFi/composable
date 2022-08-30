@@ -18,8 +18,8 @@ sp-keystore = "0.12.0"
 subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
 
 # ibc
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "13de07663749a59a424d67bb259a714182df28eb" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3", features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3" }
 
 
 [features]

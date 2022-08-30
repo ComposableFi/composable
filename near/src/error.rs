@@ -1,10 +1,10 @@
 use ibc::core::ics02_client;
 
 use near_jsonrpc_client::errors::JsonRpcError;
-use near_jsonrpc_primitives::types::blocks::RpcBlockError;
-use near_jsonrpc_primitives::types::query::RpcQueryError;
-use near_jsonrpc_primitives::types::transactions::RpcTransactionError;
-use near_jsonrpc_primitives::types::validator::RpcValidatorError;
+use near_jsonrpc_primitives::types::{
+	blocks::RpcBlockError, query::RpcQueryError, transactions::RpcTransactionError,
+	validator::RpcValidatorError,
+};
 use std::io;
 use thiserror::Error;
 

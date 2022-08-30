@@ -1,6 +1,7 @@
 use ibc::core::ics02_client;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::TrieError;
+use std::num::ParseIntError;
 use thiserror::Error;
 
 /// Error definition for the parachain client
@@ -47,6 +48,12 @@ pub enum Error {
 	/// Errors associated with ics-02 client
 	#[error("Ibc client error: {0}")]
 	IbcClient(#[from] ics02_client::error::Error),
+	/// Errors associated with beefy
+	#[error("Beefy error: {0:?}")]
+	BeefyProver(beefy_prover::error::Error),
+	/// parse error
+	#[error("Failed to parse block numbers: {0}")]
+	ParseIntError(#[from] ParseIntError),
 }
 
 impl From<String> for Error {

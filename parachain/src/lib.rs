@@ -1,5 +1,4 @@
 use std::{
-	collections::HashMap,
 	str::FromStr,
 	sync::{Arc, Mutex},
 };
@@ -16,9 +15,8 @@ pub mod utils;
 use codec::{Codec, Decode};
 use error::Error;
 
-use calls::{ibc_transfer, sudo_call, DeliverPermissioned, RawAny, Sudo, Transfer, TransferParams};
+use calls::{ibc_transfer, sudo_call, Sudo, Transfer, TransferParams};
 use common::AccountId;
-use ibc_rpc::{BlockNumberOrHash, IbcApiClient};
 use signer::ExtrinsicSigner;
 
 use beefy_light_client_primitives::{ClientState, MmrUpdateProof, PartialMmrLeaf};
@@ -41,7 +39,7 @@ use ibc::{
 	},
 	events::IbcEvent,
 };
-use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::IdentifiedClientState};
+use ibc_proto::ibc::core::client::v1::IdentifiedClientState;
 use pallet_mmr_primitives::BatchProof;
 use sp_core::H256;
 use sp_keystore::SyncCryptoStorePtr;
@@ -55,9 +53,11 @@ use subxt::{
 	extrinsic::PlainTip,
 	rpc::{rpc_params, ClientT},
 	sp_runtime::{traits::Header as HeaderT, MultiSigner},
+	PolkadotExtrinsicParams, SubmittableExtrinsic,
 };
 use tokio::sync::broadcast::{self, Sender};
 
+use crate::calls::{deliver, Deliver};
 use primitives::KeyProvider;
 
 #[derive(Clone)]
@@ -67,6 +67,8 @@ use primitives::KeyProvider;
 /// client state  as new finality proofs are observed.
 /// 2. Submiting new IBC messages to this parachain.
 pub struct ParachainClient<T: subxt::Config> {
+	/// Chain name
+	pub name: String,
 	/// Relay chain rpc client
 	pub relay_client: subxt::Client<T>,
 	/// Parachain rpc client
@@ -90,13 +92,15 @@ pub struct ParachainClient<T: subxt::Config> {
 	/// used for encoding relayer address.
 	pub ss58_version: Ss58AddressFormat,
 	/// ibc event stream sender
-	pub sender: Sender<Vec<IbcEvent>>,
+	pub sender: Sender<IbcEvent>,
 	/// Client update status
 	pub client_update_status: Arc<Mutex<bool>>,
 }
 
 /// config options for [`ParachainClient`]
 pub struct ParachainClientConfig {
+	/// Chain name
+	pub name: String,
 	/// Parachain Id
 	pub para_id: u32,
 	/// rpc url for parachain
@@ -140,6 +144,7 @@ where
 		let (sender, _) = broadcast::channel(16);
 
 		Ok(Self {
+			name: config.name,
 			para_client,
 			relay_client,
 			para_id: config.para_id,
@@ -157,11 +162,44 @@ where
 		})
 	}
 
-	pub async fn fetch_finalized_parachain_headers_at(
+	pub async fn query_finalized_parachain_headers_at(
 		&self,
 		commitment_block_number: u32,
 		client_state: &ClientState,
-	) -> Result<(Vec<ParachainHeader>, BatchProof<H256>), Error> {
+	) -> Result<Vec<T::Header>, Error>
+	where
+		u32: From<T::BlockNumber>,
+		T::BlockNumber: From<u32>,
+	{
+		let client_wrapper = ClientWrapper {
+			relay_client: self.relay_client.clone(),
+			para_client: self.para_client.clone(),
+			beefy_activation_block: client_state.beefy_activation_block,
+			para_id: self.para_id,
+		};
+
+		let headers = client_wrapper
+			.query_finalized_parachain_headers_at(
+				commitment_block_number,
+				client_state.latest_beefy_height,
+			)
+			.await
+			.map_err(|e| {
+				Error::from(format!("[fetch_finalized_parachain_headers_at] Failed due to {:?}", e))
+			})?;
+
+		Ok(headers)
+	}
+
+	pub async fn query_finalized_parachain_headers_with_proof(
+		&self,
+		commitment_block_number: u32,
+		client_state: &ClientState,
+		headers: Vec<T::BlockNumber>,
+	) -> Result<(Vec<ParachainHeader>, BatchProof<H256>), Error>
+	where
+		T::BlockNumber: Ord + sp_runtime::traits::Zero,
+	{
 		let client_wrapper = ClientWrapper {
 			relay_client: self.relay_client.clone(),
 			para_client: self.para_client.clone(),
@@ -170,9 +208,10 @@ where
 		};
 
 		let (parachain_headers, batch_proof) = client_wrapper
-			.fetch_finalized_parachain_headers_at(
+			.query_finalized_parachain_headers_with_proof(
 				commitment_block_number,
 				client_state.latest_beefy_height,
+				headers,
 			)
 			.await
 			.map_err(|e| {
@@ -250,6 +289,7 @@ where
 			From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
 		MultiSigner: From<MultiSigner>,
 		<T as subxt::Config>::Address: From<<T as subxt::Config>::AccountId>,
+		u32: From<<T as subxt::Config>::BlockNumber>,
 	{
 		loop {
 			let client_wrapper = ClientWrapper {
@@ -266,26 +306,13 @@ where
 					Error::from(format!("[construct_beefy_client_state] Failed due to {:?}", e))
 				})?;
 
-			let client_state = BeefyClientState {
-				chain_id: ChainId::new("relay-chain".to_string(), 0),
-				relay_chain: Default::default(),
-				mmr_root_hash: beefy_state.mmr_root_hash,
-				latest_beefy_height: beefy_state.latest_beefy_height,
-				frozen_height: None,
-				beefy_activation_block: beefy_state.beefy_activation_block,
-				latest_para_height: 0,
-				para_id: self.para_id,
-				authority: beefy_state.current_authorities,
-				next_authority_set: beefy_state.next_authorities,
-			};
-
 			// TODO: Move this code for consensus state construction to beefy-rs
 			let api = client_wrapper
 				.relay_client
 				.clone()
 				.to_runtime_api::<polkadot::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>(
 				);
-			let subxt_block_number: subxt::BlockNumber = client_state.latest_beefy_height.into();
+			let subxt_block_number: subxt::BlockNumber = beefy_state.latest_beefy_height.into();
 			let block_hash =
 				client_wrapper.relay_client.rpc().block_hash(Some(subxt_block_number)).await?;
 			let head_data = api
@@ -309,6 +336,18 @@ where
 				frame_support::sp_runtime::traits::BlakeTwo256,
 			>::decode(&mut &*head_data.0)?;
 			let block_number = decoded_para_head.number;
+			let client_state = BeefyClientState {
+				chain_id: ChainId::new("relay-chain".to_string(), 0),
+				relay_chain: Default::default(),
+				mmr_root_hash: beefy_state.mmr_root_hash,
+				latest_beefy_height: beefy_state.latest_beefy_height,
+				frozen_height: None,
+				beefy_activation_block: beefy_state.beefy_activation_block,
+				latest_para_height: block_number,
+				para_id: self.para_id,
+				authority: beefy_state.current_authorities,
+				next_authority_set: beefy_state.next_authorities,
+			};
 			// we can't use the genesis block to construct the initial state.
 			if block_number == 0 {
 				continue
@@ -345,7 +384,7 @@ where
 		}
 	}
 
-	pub async fn submit_create_client_msg(&self, msg: Any) -> Result<ClientId, Error> {
+	pub async fn submit_create_client_msg(&self, msg: pallet_ibc::Any) -> Result<ClientId, Error> {
 		let public_key = self.public_key.clone();
 		let signer = ExtrinsicSigner::<T, Self>::new(
 			self.key_store.clone(),
@@ -353,17 +392,9 @@ where
 			public_key,
 		);
 
-		let ext = sudo_call::<T, subxt::PolkadotExtrinsicParams<T>, _>(
+		let ext = deliver::<T, subxt::PolkadotExtrinsicParams<T>>(
 			&self.para_client,
-			Sudo {
-				client: &self.para_client,
-				call: DeliverPermissioned {
-					messages: vec![RawAny {
-						type_url: msg.type_url.as_bytes().to_vec(),
-						value: msg.value,
-					}],
-				},
-			},
+			Deliver { messages: vec![msg] },
 		);
 		// Submit extrinsic to parachain node
 
@@ -424,6 +455,36 @@ where
 		Ok(())
 	}
 
+	pub async fn submit_call<C: Codec + Send + Sync + subxt::Call + Clone>(
+		&self,
+		call: C,
+	) -> Result<(), Error> {
+		use polkadot::api::runtime_types::sp_runtime::DispatchError;
+		let signer = ExtrinsicSigner::<T, Self>::new(
+			self.key_store.clone(),
+			self.key_type_id.clone(),
+			self.public_key.clone(),
+		);
+
+		let ext = SubmittableExtrinsic::<T, PolkadotExtrinsicParams<T>, _, DispatchError, ()>::new(
+			&self.para_client,
+			call,
+		);
+
+		// Submit extrinsic to parachain node
+		let tx_params = subxt::PolkadotExtrinsicParamsBuilder::new()
+			.tip(PlainTip::new(100_000))
+			.era(Era::Immortal, *self.para_client.genesis());
+
+		let _progress = ext
+			.sign_and_submit_then_watch(&signer, tx_params)
+			.await?
+			.wait_for_in_block()
+			.await?;
+
+		Ok(())
+	}
+
 	pub async fn submit_sudo_call<C: Codec + Send + Sync + subxt::Call + Clone>(
 		&self,
 		call: C,
@@ -451,17 +512,5 @@ where
 			.await?;
 
 		Ok(())
-	}
-
-	/// Get all ibc events deposited in finalized blocks
-	pub async fn query_events_at(
-		&self,
-		block_numbers: Vec<BlockNumberOrHash<H256>>,
-	) -> Result<Vec<IbcEvent>, Error> {
-		let events: HashMap<String, Vec<IbcEvent>> =
-			IbcApiClient::<u32, H256>::query_events(&*self.para_client.rpc().client, block_numbers)
-				.await?;
-
-		Ok(events.into_values().flatten().collect())
 	}
 }
