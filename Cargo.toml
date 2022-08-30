@@ -61,19 +61,20 @@ members = [
     "parachain",
     "cosmos",
     "near",
+    "testsuite",
 ]
 
-[[test]]
-name = "parachain_ibc_test"
-harness = false
-path = "tests/parachain/parachain_ibc_test.rs"
-
-[[test]]
-name = "parachain_token_transfer"
-harness = false
-path = "tests/parachain/parachain_token_transfer.rs"
-
-[[test]]
-name = "set_up_transfer_channel"
-harness = false
-path = "tests/parachain/set_up_transfer_channel.rs"
+#[[test]]
+#name = "parachain_ibc_test"
+#harness = false
+#path = "tests/parachain/parachain_ibc_test.rs"
+#
+#[[test]]
+#name = "parachain_token_transfer"
+#harness = false
+#path = "tests/parachain/parachain_token_transfer.rs"
+#
+#[[test]]
+#name = "set_up_transfer_channel"
+#harness = false
+#path = "tests/parachain/set_up_transfer_channel.rs"

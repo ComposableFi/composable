@@ -3346,6 +3346,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyperspace-testsuite"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "hyperspace",
+ "hyperspace-primitives",
+ "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "log",
+ "tendermint-proto",
+ "tokio",
+]
+
+[[package]]
 name = "iana-time-zone"
 version = "0.1.46"
 source = "registry+https://github.com/rust-lang/crates.io-index"
