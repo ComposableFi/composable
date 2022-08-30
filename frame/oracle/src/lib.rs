@@ -1159,7 +1159,7 @@ pub mod pallet {
 						// it happens if few prices associated with same block number.
 						None
 					} else {
-						// otherwise muliply price and weight.
+						// otherwise multiply price and weight.
 						Some(price * weight)
 					}
 				})
@@ -1246,7 +1246,7 @@ pub mod pallet {
 		pub fn fetch_price(price_id: &T::AssetId) -> Result<u64, http::Error> {
 			// We want to keep the offchain worker execution time reasonable, so we set a hard-coded
 			// deadline to 2s to complete the external call.
-			// You can also wait idefinitely for the response, however you may still get a timeout
+			// You can also wait indefinitely for the response, however you may still get a timeout
 			// coming from the host machine.
 			let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
 

@@ -2313,10 +2313,10 @@ pub mod api {
 				pub fn new(client: &'a ::subxt::Client<T>) -> Self {
 					Self { client }
 				}
-				#[doc = " A fee mulitplier for `Operational` extrinsics to compute \"virtual tip\" to boost their"]
+				#[doc = " A fee multiplier for `Operational` extrinsics to compute \"virtual tip\" to boost their"]
 				#[doc = " `priority`"]
 				#[doc = ""]
-				#[doc = " This value is multipled by the `final_fee` to obtain a \"virtual tip\" that is later"]
+				#[doc = " This value is multiplied by the `final_fee` to obtain a \"virtual tip\" that is later"]
 				#[doc = " added to a tip component in regular `priority` calculations."]
 				#[doc = " It means that a `Normal` transaction can front-run a similarly-sized `Operational`"]
 				#[doc = " extrinsic (with no tip), by including a tip value greater than the virtual tip."]
@@ -5316,7 +5316,7 @@ pub mod api {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
 					}
 				}
-				#[doc = " Maxmimum number of registrars allowed in the system. Needed to bound the complexity"]
+				#[doc = " Maximum number of registrars allowed in the system. Needed to bound the complexity"]
 				#[doc = " of, e.g., updating judgements."]
 				pub fn max_registrars(
 					&self,
@@ -23601,7 +23601,7 @@ pub mod api {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
 					}
 				}
-				#[doc = "Creates a new asset, minting `amount` of funds into the `dest` account. Intented to be"]
+				#[doc = "Creates a new asset, minting `amount` of funds into the `dest` account. intended to be"]
 				#[doc = "used for creating wrapped assets, not associated with any project."]
 				pub fn mint_initialize(
 					&self,
@@ -25093,7 +25093,7 @@ pub mod api {
 				#[doc = "parameter."]
 				#[doc = ""]
 				#[doc = "Emits a `NewBond`."]
-				#[doc = "Possibily Emits a `OfferCompleted`."]
+				#[doc = "Possibly Emits a `OfferCompleted`."]
 				pub fn bond(
 					&self,
 					offer_id: ::core::primitive::u128,
@@ -26321,7 +26321,7 @@ pub mod api {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
 					}
 				}
-				#[doc = " ED taken to create position. Part of if returned when position is liqudated."]
+				#[doc = " ED taken to create position. Part of if returned when position is liquidated."]
 				pub fn position_existential_deposit(
 					&self,
 				) -> ::core::result::Result<::core::primitive::u128, ::subxt::BasicError> {
@@ -26750,7 +26750,7 @@ pub mod api {
 				#[doc = "- Amount must be equal or lower than what the user has locked"]
 				#[doc = ""]
 				#[doc = "# Note"]
-				#[doc = "- Reclaim period is not reset if not all the funds are moved; menaing that the clock"]
+				#[doc = "- Reclaim period is not reset if not all the funds are moved; meaning that the clock"]
 				#[doc = "  remains ticking for the relayer to pick up the rest of the transaction."]
 				pub fn accept_transfer(
 					&self,
@@ -28513,7 +28513,7 @@ pub mod api {
 				#[doc = "Create a new lending market."]
 				#[doc = "- `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause"]
 				#[doc = "  borrow operations."]
-				#[doc = "- `input`   : Borrow & deposits of assets, persentages."]
+				#[doc = "- `input`   : Borrow & deposits of assets, percentages."]
 				#[doc = ""]
 				#[doc = "`origin` irreversibly pays `T::OracleMarketCreationStake`."]
 				pub fn create_market(
@@ -29214,7 +29214,7 @@ pub mod api {
 					}
 				}
 				#[doc = " at which lending index account did borrowed."]
-				#[doc = " if first borrow: market index when the borrowed occured"]
+				#[doc = " if first borrow: market index when the borrow occurred"]
 				#[doc = " if additional borrow: market index adjusted wrt the previous index"]
 				pub fn debt_index(
 					&self,
@@ -29254,7 +29254,7 @@ pub mod api {
 					}
 				}
 				#[doc = " at which lending index account did borrowed."]
-				#[doc = " if first borrow: market index when the borrowed occured"]
+				#[doc = " if first borrow: market index when the borrow occurred"]
 				#[doc = " if additional borrow: market index adjusted wrt the previous index"]
 				pub fn debt_index_iter(
 					&self,
@@ -35820,7 +35820,7 @@ pub mod api {
 						keep_alive: ::core::primitive::bool,
 					},
 					#[codec(index = 6)]
-					#[doc = "Creates a new asset, minting `amount` of funds into the `dest` account. Intented to be"]
+					#[doc = "Creates a new asset, minting `amount` of funds into the `dest` account. intended to be"]
 					#[doc = "used for creating wrapped assets, not associated with any project."]
 					mint_initialize {
 						#[codec(compact)]
@@ -36314,7 +36314,7 @@ pub mod api {
 					#[doc = "parameter."]
 					#[doc = ""]
 					#[doc = "Emits a `NewBond`."]
-					#[doc = "Possibily Emits a `OfferCompleted`."]
+					#[doc = "Possibly Emits a `OfferCompleted`."]
 					bond {
 						offer_id: ::core::primitive::u128,
 						nb_of_bonds: ::core::primitive::u128,
@@ -38997,7 +38997,7 @@ pub mod api {
 					#[doc = "Create a new lending market."]
 					#[doc = "- `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause"]
 					#[doc = "  borrow operations."]
-					#[doc = "- `input`   : Borrow & deposits of assets, persentages."]
+					#[doc = "- `input`   : Borrow & deposits of assets, percentages."]
 					#[doc = ""]
 					#[doc = "`origin` irreversibly pays `T::OracleMarketCreationStake`."]
 					create_market {
@@ -39488,7 +39488,7 @@ pub mod api {
 					#[doc = "- Amount must be equal or lower than what the user has locked"]
 					#[doc = ""]
 					#[doc = "# Note"]
-					#[doc = "- Reclaim period is not reset if not all the funds are moved; menaing that the clock"]
+					#[doc = "- Reclaim period is not reset if not all the funds are moved; meaning that the clock"]
 					#[doc = "  remains ticking for the relayer to pick up the rest of the transaction."]
 					accept_transfer {
 						from: ::subxt::sp_core::crypto::AccountId32,

@@ -102,7 +102,7 @@ export class TxMosaicTests {
    * @param {number} networkId ID of the network to be set to.
    * @param {remoteAssetId} ID of the asset on the remote blockchain.
    */
-  public static async testUpdateAssetMaping(
+  public static async testUpdateAssetMapping(
     api: ApiPromise,
     sudoKey: KeyringPair,
     assetId: number,

@@ -14,7 +14,7 @@ For a transaction to be validated, these conditions must be met:
 
 * Transaction contains a reward ID and valid proof
 
-* The pallet has been initailized
+* The pallet has been initialized
 
 * The reward account contained in the call has not been associated
 
@@ -35,7 +35,7 @@ arbitrary period of time split into Vesting Partitions.
   vector of (PublicKey, Amount, VestingPeriod). The PublicKey is either coming 
   from the relay chain (Kusama in this case) or from ETH.
 
-2. An `AdminOrigin` initailizes the pallet with the `initialize` or 
+2. An `AdminOrigin` initializes the pallet with the `initialize` or 
   `initialize_at` extrinsics
 
 3. Since the users don't own any funds, the first claim has to be made using our 

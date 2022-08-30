@@ -50,7 +50,7 @@ pub enum Error {
 	TimeoutError,
 	/// Failed to bind port
 	BindPortError,
-	/// Failed to intialize a new channel
+	/// Failed to initialize a new channel
 	ChannelInitError,
 	/// Failed to decode a value
 	DecodingError,

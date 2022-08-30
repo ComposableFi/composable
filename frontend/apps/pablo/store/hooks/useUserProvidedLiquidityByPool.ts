@@ -83,7 +83,7 @@ export const useUserProvidedLiquidityByPool = (
     }
   }, [pool, selectedAccount, setUserProvidedTokenAmountInLiquidityPool]);
   /**
-   * use amount of liquity tokens
+   * use amount of liquidity tokens
    * from zustand store and pass it
    * down
    */

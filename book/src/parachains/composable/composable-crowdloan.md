@@ -18,4 +18,4 @@ See a breakdown of our early bird incentives for the initial 12% allocated to cr
 * 10% bonus to stakers in the first three days of opening the crowdloan
 * 20% bonus for those who refer a total of 1000 DOT using our referral codes
 
-Additionally,[ we announced an increase](https://composablefi.medium.com/christmas-comes-early-for-crowdloan-contributors-30-increase-in-rewards-ffc11c911af7) in the rewards for Composable crowdloan stakers. These added rewards come on top of the above early bird incentives. We ended up unlocking additional rewards and allocating 16% of LAYR’s token supply for the crowdloan.
+Additionally,[ we announced an increase](https://composablefi.medium.com/christmas-comes-early-for-crowdloan-contributors-30-increase-in-rewards-ffc11c911af7) in the rewards for Composable crowdloan stakers. These added rewards come on top of the above early bird incentives. We ended up unlocking additional rewards and allocating 16% of LAYR's token supply for the crowdloan.

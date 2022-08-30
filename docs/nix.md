@@ -34,7 +34,7 @@ either 3rd party or not in this repo composable or not this revision of repo,
 3rd parties either do not have nix configurations 
 or we need heavily patch them.
 
-Other scrips are located in folders on which they act upon, until scope is multifolder or not scoped.
+Other scrips are located in folders on which they act upon, until scope is multi-folder or not scoped.
 
 This allows for monorepo with codeowners and proper nix caching.
 

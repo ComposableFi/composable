@@ -28,7 +28,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	///
 	/// # NOTE
 	///
-	/// Although this is a [`u8`], there are some (not yet inforced) constraints/ caveats:
+	/// Although this is a [`u8`], there are some (not yet enforced) constraints/ caveats:
 	/// - an exponent of `0` technically works, but is probably not what you want as there will be
 	///   no decimal precision.
 	/// - any value higher than `38` does not make sense (`10^39 > 2^128`) and will automatically

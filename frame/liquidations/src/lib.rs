@@ -165,7 +165,7 @@ pub mod pallet {
 
 		// TODO: Add API to manage callback from liquidation engine and managing it state
 		// TODO: each step from request to have its slots so can tackle
-		// TODO: add incetivised API to allow "progress" finalization if it stalled (or OCW)
+		// TODO: add incentivised API to allow "progress" finalization if it stalled (or OCW)
 	}
 
 	#[pallet::storage]

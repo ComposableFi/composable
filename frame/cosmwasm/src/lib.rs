@@ -378,7 +378,7 @@ pub mod pallet {
 		///
 		/// * Emits an `Instantiated` event on success.
 		/// * Emits an `Executed` event.
-		/// * Possibily emit `Emitted` events.
+		/// * Possibly emit `Emitted` events.
 		///
 		/// Arguments
 		///
@@ -419,7 +419,7 @@ pub mod pallet {
 		/// Execute a previously instantiated contract.
 		///
 		/// * Emits an `Executed` event.
-		/// * Possibily emit `Emitted` events.
+		/// * Possibly emit `Emitted` events.
 		///
 		/// Arguments
 		///
@@ -812,7 +812,7 @@ pub mod pallet {
 		}
 
 		/// Check whether the instrumented code of a contract is up to date.
-		/// If the instrumentation is outdated, re-instrument the pristive code.
+		/// If the instrumentation is outdated, re-instrument the pristine code.
 		pub(crate) fn do_check_for_reinstrumentation(
 			code_id: CosmwasmCodeId,
 		) -> Result<(), Error<T>> {

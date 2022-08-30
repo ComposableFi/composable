@@ -26,7 +26,7 @@ Create identity on Kusama and Picasso.
 
 Root is `5D2cjLGNWibiSsEh4oPXo8MmBTkeptrpuiUdEKRMauUn1TkZ` and make sure it has 20 ROC.
 
-Paracahin is `5Ec4AhNu5P23CC2GdrmsC8HYBKiidqhPnfSfRQPaH9swr2b7` and make sure it has 20 ROC.
+Parachain is `5Ec4AhNu5P23CC2GdrmsC8HYBKiidqhPnfSfRQPaH9swr2b7` and make sure it has 20 ROC.
 
 Transfer to [dali-rococo] accounts some amounts.
 

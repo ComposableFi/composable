@@ -21,7 +21,7 @@ Below you'll find all content referenced in the onboarding basics. Feel free to 
 
 ### Videos
 - [![The Blockchain & Bitcoin - Computerphile](https://img.youtube.com/vi/qcuc3rgwZAE/maxresdefault.jpg)](https://youtu.be/qcuc3rgwZAE)
-- [![Finality in Blockchain Consensus - by Alexis Gauba - Mechnism Labs & She256](https://img.youtube.com/vi/efyiPhZvqOA/maxresdefault.jpg)](https://youtu.be/efyiPhZvqOA)
+- [![Finality in Blockchain Consensus - by Alexis Gauba - Mechanism Labs & She256](https://img.youtube.com/vi/efyiPhZvqOA/maxresdefault.jpg)](https://youtu.be/efyiPhZvqOA)
 - [![Ethereum 2.0: Proof of Stake vs Proof of Work | Vitalik Buterin and Lex Fridman](https://img.youtube.com/vi/3yrqBG-7EVE/maxresdefault.jpg)](https://youtu.be/3yrqBG-7EVE)
 - [![Cardano's Proof of Stake Consensus Algorithm Explained | Charles Hoskinson and Lex Fridman](https://img.youtube.com/vi/Cj4dhHSJqDQ/maxresdefault.jpg)](https://youtu.be/Cj4dhHSJqDQ)
 

@@ -1,7 +1,7 @@
 {
   # see ./docs/nix.md for design guidelines of nix organization
   description = "Composable Finance systems, tools and releases";
-  # when flake runs, ask for interactie answers first time
+  # when flake runs, ask for interactive answers first time
   # nixConfig.sandbox = "relaxed";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -122,7 +122,7 @@
             # NOTE: we copy more then needed, but tht is simpler to setup, we depend pn substrae for sure so
           });
 
-          # for containers which are intented for testing, debug and development (including running isolated runtime)
+          # for containers which are intended for testing, debug and development (including running isolated runtime)
           container-tools = [
             bash
             bottom
@@ -268,7 +268,7 @@
             features = "runtime-benchmarks";
           };
 
-          # NOTE: with docs, non nighly fails but nighly fails too...
+          # NOTE: with docs, non nightly fails but nightly fails too...
           # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
           composable-node = with packages;
             crane-nightly.buildPackage (common-attrs // {

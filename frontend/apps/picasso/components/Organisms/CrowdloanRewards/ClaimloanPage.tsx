@@ -73,7 +73,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
   const { closeKSMClaimModal, openKSMClaimModal } = useStore(({ ui }) => ui);
   const crUiState = useStore(({ crowdloanRewards }) => crowdloanRewards.ui);
   const crUserData = useStore(({ crowdloanRewards }) => crowdloanRewards.user);
-  const initalPayment = useStore(
+  const initialPayment = useStore(
     ({ crowdloanRewards }) => crowdloanRewards.constants.initialPayment
   );
   const userAssociation = useStore(
@@ -205,14 +205,14 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
   );
 
   claimablePICA =
-    Number(initalPayment) > 0 && netPICAVested.gte(0)
+    Number(initialPayment) > 0 && netPICAVested.gte(0)
       ? crUiState.useAssociationMode === "ethereum"
         ? isEvmAlreadyAssociated
           ? claimablePICA
-          : netPICAVested.times(initalPayment)
+          : netPICAVested.times(initialPayment)
         : crUiState.useAssociationMode === "relayChain"
         ? userAssociation === null
-          ? netPICAVested.times(initalPayment)
+          ? netPICAVested.times(initialPayment)
           : claimablePICA
         : claimablePICA
       : claimablePICA;

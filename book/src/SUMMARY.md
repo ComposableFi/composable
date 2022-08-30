@@ -22,7 +22,7 @@
 - [Centauri](./products/centauri-overview.md)
     - [Light Clients](./products/centauri/light-clients.md)
     - [Merkle Mountain Ranges](./products/centauri/merkle-mountain-ranges.md)
-    - [The 11-BEEFY COSMOS-IBC Light Client](./products/centauri/cosmos11-BEEFY-COSMOS-IBC-ligh-client.md)
+    - [The 11-BEEFY COSMOS-IBC Light Client](./products/centauri/cosmos11-BEEFY-COSMOS-IBC-light-client.md)
     - [Expanding the IBC Protocol](./products/centauri/expanding-ibc-protocol.md)
 - [Mosaic](./products/mosaic-overview.md)
     - [The Dynamic Fee Model](./products/mosaic/dynamic-fee-model.md)

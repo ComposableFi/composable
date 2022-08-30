@@ -25,7 +25,7 @@ One question that every merchant asks is: when do I know that a payment will no 
 > *Note*
 > Is Bitcoin's finality probabilistic or deterministic?
 
-[![Finality in Blockchain Consensus - by Alexis Gauba - Mechnism Labs & She256](https://img.youtube.com/vi/efyiPhZvqOA/maxresdefault.jpg)](https://youtu.be/efyiPhZvqOA)
+[![Finality in Blockchain Consensus - by Alexis Gauba - Mechanism Labs & She256](https://img.youtube.com/vi/efyiPhZvqOA/maxresdefault.jpg)](https://youtu.be/efyiPhZvqOA)
 
 ### Takeaways
 

@@ -50,7 +50,7 @@ impl XcmTransactConfiguration {
 pub struct XcmSellRequestTransactConfiguration {
 	/// Used to route XCM message dispatch into right target
 	pub location: XcmTransactConfiguration,
-	/// Taken from storage and put as paramter into call.
+	/// Taken from storage and put as parameter into call.
 	/// Some preconfigured way of sell on other chain.
 	/// Example, some specific slippage or amount limits, or number of blocks it should take before
 	/// cancellation. Must be set by owners of engine and chose by thoose who governs caller side
@@ -86,7 +86,7 @@ pub struct XcmSellRequest {
 	/// Sovereign account of sender parachain on remote parachain.
 	/// It was transfered amount to sell before, and
 	/// Notes:
-	/// This may be parachain id to get account, but than all protocols parchain will share same
+	/// This may be parachain id to get account, but than all protocols parachain will share same
 	/// account and will be harder to debug. May consider using indices pallet or some sub account
 	/// for protocol too.
 	pub from_to: AccountId,

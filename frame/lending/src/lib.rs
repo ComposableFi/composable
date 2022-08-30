@@ -454,7 +454,7 @@ pub mod pallet {
 	>;
 
 	/// at which lending index account did borrowed.
-	/// if first borrow: market index when the borrowed occured
+	/// if first borrow: market index when the borrow occurred
 	/// if additional borrow: market index adjusted wrt the previous index
 	#[pallet::storage]
 	pub type DebtIndex<T: Config> = StorageDoubleMap<
@@ -553,7 +553,7 @@ pub mod pallet {
 		/// Create a new lending market.
 		/// - `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause
 		///   borrow operations.
-		/// - `input`   : Borrow & deposits of assets, persentages.
+		/// - `input`   : Borrow & deposits of assets, percentages.
 		///
 		/// `origin` irreversibly pays `T::OracleMarketCreationStake`.
 		#[pallet::weight(<T as Config>::WeightInfo::create_market())]

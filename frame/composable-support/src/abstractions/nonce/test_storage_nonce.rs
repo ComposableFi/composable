@@ -370,7 +370,7 @@ mod wrapping_increment {
 	#[test]
 	fn one_start() {
 		ExtBuilder::default().build().execute_with(|| {
-			// probbaly an uncommon usecase
+			// probably an uncommon usecase
 
 			let initial_value = pallet::Nonce_OneInit_WrappingIncrement::<Test>::get();
 			assert!(initial_value.is_one(), "initial value should be one");

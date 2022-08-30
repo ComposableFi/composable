@@ -269,7 +269,7 @@ pub const RELAY_LOCATION: MultiLocation = MultiLocation { parents: 1, interior: 
 ///
 /// so:
 /// 1. in some cases origin leads to asset id
-/// 2. in some well know cases remote asset id is statically typed into here (so it is okey to send
+/// 2. in some well know cases remote asset id is statically typed into here (so it is okay to send
 /// their id to us) 3. and in other cases they must map on us, and than send our id to here
 impl<
 		AssetsRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,

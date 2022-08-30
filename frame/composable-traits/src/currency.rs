@@ -52,7 +52,7 @@ pub trait LocalAssets<MayBeAssetId> {
 
 	/// Amount which humans operate as `1` usually.
 	/// Amount is probably priceable by Oracles.
-	/// Amount resonably higher than minimal tradeable amount or minial trading step on DEX.
+	/// Amount resonably higher than minimal tradeable amount or minimal trading step on DEX.
 	fn unit<T: From<u64>>(currency_id: MayBeAssetId) -> Result<T, DispatchError> {
 		let exponent = Self::decimals(currency_id)?;
 		Ok(10_u64.checked_pow(exponent).ok_or(ArithmeticError::Overflow)?.into())

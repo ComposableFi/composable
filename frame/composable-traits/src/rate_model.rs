@@ -260,7 +260,7 @@ impl InterestRate for CurveModel {
 /// Control value is calculated as `ut = pt + it + dt`.
 /// New Interest rate is calculated as `ir = ir_t_1 + ut` here ir_t_1 is previous_interest_rate.
 ///
-/// To know how `kp`, `ki` and `kd` are derived plesae check paper at above URL.
+/// To know how `kp`, `ki` and `kd` are derived please check paper at above URL.
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct DynamicPIDControllerModel {

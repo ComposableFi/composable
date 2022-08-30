@@ -148,7 +148,7 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>;
 
-		/// ED taken to create position. Part of if returned when position is liqudated.
+		/// ED taken to create position. Part of if returned when position is liquidated.
 		#[pallet::constant]
 		type PositionExistentialDeposit: Get<Self::Balance>;
 
@@ -352,7 +352,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			request: XcmSellRequest,
 		) -> DispatchResultWithPostInfo {
-			// TODO: make events/logs from all failed liqudations
+			// TODO: make events/logs from all failed liquidations
 
 			let request = XcmSellRequestValid::validate(request)?;
 

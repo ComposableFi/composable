@@ -95,12 +95,12 @@ const Overview: NextPage = () => {
               onChange={(_e, value) => setTabValue(value)}
             />
 
-            {/* My Assets Tab Pannels */}
+            {/* My Assets Tab Panels */}
             <TabPanel value={tabValue} index={0}>
               <MyAssetsTable assets={assets} />
             </TabPanel>
 
-            {/* My Staking Tab Pannels */}
+            {/* My Staking Tab Panels */}
             <TabPanel value={tabValue} index={1}>
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />

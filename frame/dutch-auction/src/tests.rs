@@ -174,7 +174,7 @@ fn liquidation() {
 			DutchAuction::liquidate(Origin::signed(seller), order_id).unwrap();
 
 			let balance_after = <Balances as fungible::Inspect<_>>::balance(&ALICE);
-			prop_assert!(balance_before < balance_after, "cleaning up is incetivised");
+			prop_assert!(balance_before < balance_after, "cleaning up is incentivised");
 
 			let not_found = crate::SellOrders::<Runtime>::get(order_id);
 			assert!(not_found.is_none());
