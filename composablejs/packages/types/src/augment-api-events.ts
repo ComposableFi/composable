@@ -483,7 +483,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       CollateralDeposited: AugmentedEvent<ApiType, [sender: AccountId32, marketId: u32, amount: u128], { sender: AccountId32, marketId: u32, amount: u128 }>;
       /**
-       * Event emitted when collateral is withdrawed.
+       * Event emitted when collateral is withdrawn.
        **/
       CollateralWithdrawn: AugmentedEvent<ApiType, [sender: AccountId32, marketId: u32, amount: u128], { sender: AccountId32, marketId: u32, amount: u128 }>;
       /**

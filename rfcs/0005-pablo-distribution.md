@@ -36,7 +36,7 @@ Table of Contents
                 existing stakers(<span
                 class="image"><img src="0005-pablo-distribution-assets/images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>)
                 reward would
-                be,](#5311-when-adding-a-new-staker-n1-existing-stakersn-reward-would-be)
+                be,](#5311-when-adding-a-new-staker-n1-existing-stakers-reward-would-be)
             -   [5.3.1.2. When removing a staker(Claim/Unstake) from the pool the above
                 addition step has to be
                 reverted](#5312-when-removing-a-stakerclaimunstake-from-the-pool-the-above-addition-step-has-to-be-reverted)

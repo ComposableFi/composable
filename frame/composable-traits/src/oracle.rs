@@ -30,7 +30,7 @@ pub struct RewardTracker<Balance, Timestamp> {
 /// oracle that only works with single asset to some normalized asset at latest block in local
 /// consensus usually normalized asset is stable coin or native currency
 /// fallback in `Oracle` or `Market`(DEXes) lacks trusted prices
-/// (or initial values before threre is market)
+/// (or initial values before there is market)
 pub trait MinimalOracle {
 	type AssetId: Copy;
 	type Balance: From<u64>;
