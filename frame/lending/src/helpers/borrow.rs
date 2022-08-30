@@ -34,7 +34,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// [task]: <https://sharing.clickup.com/20465559/t/h/27yd3wt/7IB0QYYHXP0TZZT>
 	pub(crate) fn can_borrow(
-		market_id: &MarketIndex,
+		market_id: &MarketId,
 		debt_owner: &T::AccountId,
 		amount_to_borrow: BorrowAmountOf<Self>,
 		market: MarketConfigOf<T>,

@@ -71,7 +71,7 @@ pub mod pallet {
 	pub(crate) use crate::types::{CreateInputOf, MarketAssets};
 	pub use crate::{
 		helpers::swap,
-		types::{MarketId, MarketIndex},
+		types::{MarketIdInner, MarketId},
 	};
 	use codec::Codec;
 	use composable_traits::{
@@ -319,52 +319,52 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Event emitted when new lending market is created.
 		MarketCreated {
-			market_id: MarketIndex,
+			market_id: MarketId,
 			vault_id: T::VaultId,
 			manager: T::AccountId,
 			currency_pair: CurrencyPair<T::MayBeAssetId>,
 		},
 		MarketUpdated {
-			market_id: MarketIndex,
+			market_id: MarketId,
 			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 		},
 		/// Event emitted when collateral is deposited.
-		CollateralDeposited { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
+		CollateralDeposited { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
 		/// Event emitted when collateral is withdrawed.
-		CollateralWithdrawn { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
+		CollateralWithdrawn { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
 		/// Event emitted when user borrows from given market.
-		Borrowed { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
+		Borrowed { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
 		/// Event emitted when user repays borrow of beneficiary in given market.
 		BorrowRepaid {
 			sender: T::AccountId,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			beneficiary: T::AccountId,
 			amount: T::Balance,
 		},
 		/// Event emitted when a liquidation is initiated for a loan.
-		LiquidationInitiated { market_id: MarketIndex, borrowers: Vec<T::AccountId> },
+		LiquidationInitiated { market_id: MarketId, borrowers: Vec<T::AccountId> },
 		/// Event emitted to warn that loan may go under collaterlized soon.
-		MayGoUnderCollateralizedSoon { market_id: MarketIndex, account: T::AccountId },
+		MayGoUnderCollateralizedSoon { market_id: MarketId, account: T::AccountId },
 	}
 
 	/// Lending instances counter
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // MarketIndex implements Default, so ValueQuery is ok here. REVIEW: Should it?
-	pub type LendingCount<T: Config> = StorageValue<_, MarketIndex, ValueQuery>;
+	#[allow(clippy::disallowed_types)] // MarketId implements Default, so ValueQuery is ok here. REVIEW: Should it?
+	pub type LendingCount<T: Config> = StorageValue<_, MarketId, ValueQuery>;
 
 	/// Indexed lending instances. Maps markets to their respective [`MarketConfig`].
 	///
 	/// ```text
-	/// MarketIndex -> MarketConfig
+	/// MarketId -> MarketConfig
 	/// ```
 	#[pallet::storage]
 	pub type Markets<T: Config> =
-		StorageMap<_, Twox64Concat, MarketIndex, MarketConfigOf<T>, OptionQuery>;
+		StorageMap<_, Twox64Concat, MarketId, MarketConfigOf<T>, OptionQuery>;
 
 	/// Maps markets to their corresponding debt token.
 	///
 	/// ```text
-	/// MarketIndex -> debt asset
+	/// MarketId -> debt asset
 	/// ```
 	///
 	/// See [this clickup task](task) for a more in-depth explanation.
@@ -374,7 +374,7 @@ pub mod pallet {
 	pub type DebtTokenForMarket<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
-		MarketIndex,
+		MarketId,
 		<T as DeFiComposableConfig>::MayBeAssetId,
 		OptionQuery,
 	>;
@@ -386,7 +386,7 @@ pub mod pallet {
 	pub type DebtIndex<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		MarketIndex,
+		MarketId,
 		Twox64Concat,
 		T::AccountId,
 		ZeroToOneFixedU128,
@@ -400,7 +400,7 @@ pub mod pallet {
 	pub type BorrowTimestamp<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		MarketIndex,
+		MarketId,
 		Twox64Concat,
 		T::AccountId,
 		Timestamp,
@@ -411,7 +411,7 @@ pub mod pallet {
 	pub type BorrowRent<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		MarketIndex,
+		MarketId,
 		Twox64Concat,
 		T::AccountId,
 		T::Balance,
@@ -422,14 +422,14 @@ pub mod pallet {
 	// REVIEW: ZeroToOneFixedU128?
 	#[pallet::storage]
 	pub type BorrowIndex<T: Config> =
-		StorageMap<_, Twox64Concat, MarketIndex, ZeroToOneFixedU128, OptionQuery>;
+		StorageMap<_, Twox64Concat, MarketId, ZeroToOneFixedU128, OptionQuery>;
 
 	/// (Market, Account) -> Collateral
 	#[pallet::storage]
 	pub type AccountCollateral<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		MarketIndex,
+		MarketId,
 		Blake2_128Concat,
 		T::AccountId,
 		T::Balance,
@@ -508,7 +508,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn update_market(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -523,7 +523,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn deposit_collateral(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			amount: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
@@ -541,7 +541,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn withdraw_collateral(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			amount: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -558,7 +558,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn borrow(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			amount_to_borrow: T::Balance,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
@@ -576,7 +576,7 @@ pub mod pallet {
 		/// # Parameters
 		///
 		/// - `origin` : Sender of this extrinsic. (Also the user who repays beneficiary's borrow.)
-		/// - `market_id` : [`MarketIndex`] of the market being repaid.
+		/// - `market_id` : [`MarketId`] of the market being repaid.
 		/// - `beneficiary` : [`AccountId`] of the account who is in debt to (has borrowed assets
 		///   from) the market. This can be same or different from the `origin`, allowing one
 		///   account to pay off another's debts.
@@ -585,7 +585,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn repay_borrow(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			beneficiary: T::AccountId,
 			amount: RepayStrategy<T::Balance>,
 			keep_alive: bool,
@@ -616,7 +616,7 @@ pub mod pallet {
 		#[transactional]
 		pub fn liquidate(
 			origin: OriginFor<T>,
-			market_id: MarketIndex,
+			market_id: MarketId,
 			borrowers: BoundedVec<T::AccountId, T::MaxLiquidationBatchSize>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;

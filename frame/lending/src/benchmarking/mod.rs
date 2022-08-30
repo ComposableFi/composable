@@ -24,7 +24,7 @@ mod setup;
 
 /// Create a market with the given origin and input.
 ///
-/// NOTE: ***ONLY CALL THIS ONCE PER BENCHMARK!!!*** The [`MarketIndex`] returned is always `1`.
+/// NOTE: ***ONLY CALL THIS ONCE PER BENCHMARK!!!*** The [`MarketId`] returned is always `1`.
 ///
 /// TODO: Get market index from events, to allow for calling twice in one benchmark.
 fn create_market_from_raw_origin<T: Config>(
@@ -34,11 +34,11 @@ fn create_market_from_raw_origin<T: Config>(
 		<T as DeFiComposableConfig>::MayBeAssetId,
 		<T as frame_system::Config>::BlockNumber,
 	>,
-) -> MarketIndex {
+) -> MarketId {
 	Lending::<T>::create_market(origin.clone().into(), input, false).unwrap();
 
 	// FIXME: This ain't ideal
-	MarketIndex::new(1)
+	MarketId::new(1)
 }
 
 fn lending_benchmarking_setup<T: Config + pallet_oracle::Config>() -> LendingBenchmarkingSetup<T> {

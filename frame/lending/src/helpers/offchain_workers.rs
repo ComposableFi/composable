@@ -4,7 +4,7 @@ use crate::*;
 
 pub use crate::{
 	helpers::swap,
-	types::{MarketId, MarketIndex},
+	types::{MarketIdInner, MarketId},
 };
 use frame_support::{
 	pallet_prelude::*,

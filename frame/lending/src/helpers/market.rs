@@ -40,7 +40,7 @@ impl<T: Config> Pallet<T> {
 		keep_alive: bool,
 	) -> Result<(<Self as Lending>::MarketId, T::VaultId), DispatchError> {
 		let config_input = input.value();
-		LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
+		LendingCount::<T>::try_mutate(|MarketId(previous_market_index)| {
 			let market_id = {
 				// TODO: early mutation of `previous_market_index` value before check.
 				*previous_market_index += 1;
@@ -48,7 +48,7 @@ impl<T: Config> Pallet<T> {
 					*previous_market_index <= T::MaxMarketCount::get(),
 					Error::<T>::ExceedLendingCount
 				);
-				MarketIndex(*previous_market_index)
+				MarketId(*previous_market_index)
 			};
 
 			let borrow_asset_vault = T::Vault::create(
@@ -112,7 +112,7 @@ impl<T: Config> Pallet<T> {
 
 	pub(crate) fn do_update_market(
 		manager: T::AccountId,
-		market_id: MarketIndex,
+		market_id: MarketId,
 		input: Validated<
 			UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 			UpdateInputValid,
@@ -142,8 +142,8 @@ impl<T: Config> Pallet<T> {
 	/// Returns pair of market's id and market (as 'MarketConfing') via market's id
 	/// - `market_id` : Market index as a key in 'Markets' storage
 	pub(crate) fn get_market(
-		market_id: &MarketIndex,
-	) -> Result<(&MarketIndex, MarketConfigOf<T>), DispatchError> {
+		market_id: &MarketId,
+	) -> Result<(&MarketId, MarketConfigOf<T>), DispatchError> {
 		Markets::<T>::get(market_id)
 			.map(|market| (market_id, market))
 			.ok_or_else(|| Error::<T>::MarketDoesNotExist.into())
@@ -155,7 +155,7 @@ impl<T: Config> Pallet<T> {
 impl<T: Config> Pallet<T> {
 	/// Returns the borrow and debt assets for the given market, if it exists.
 	pub(crate) fn get_assets_for_market(
-		market_id: &MarketIndex,
+		market_id: &MarketId,
 	) -> Result<MarketAssets<T>, DispatchError> {
 		let (_, market) = Self::get_market(market_id)?;
 		let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;

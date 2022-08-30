@@ -30,7 +30,7 @@ use sp_std::vec::Vec;
 
 impl<T: Config> Lending for Pallet<T> {
 	type VaultId = <T::Vault as Vault>::VaultId;
-	type MarketId = MarketIndex;
+	type MarketId = MarketId;
 	type BlockNumber = T::BlockNumber;
 	type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
 	type Oracle = T::Oracle;

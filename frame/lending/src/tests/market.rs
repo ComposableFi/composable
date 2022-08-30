@@ -1,5 +1,5 @@
 use super::prelude::*;
-use crate::{tests::default_create_input, validation::UpdateInputValid, MarketIndex};
+use crate::{tests::default_create_input, validation::UpdateInputValid, MarketId};
 use composable_traits::{defi::CurrencyPair, oracle, vault};
 use frame_system::{EventRecord, Phase};
 
@@ -107,7 +107,7 @@ fn can_create_valid_market() {
             //  Check if corresponded event was emitted
             let currency_pair = input.currency_pair;
             // Market id and vault id values are defined via previous logic.
-            let market_id = pallet_lending::pallet::MarketIndex::new(1);
+            let market_id = pallet_lending::pallet::MarketId::new(1);
             let vault_id = 1;
             let market_created_event = crate::Event::MarketCreated {market_id, vault_id, manager, currency_pair};
             System::assert_has_event(Event::Lending(market_created_event));
@@ -135,7 +135,7 @@ fn can_create_valid_market() {
                         Event::Lending(crate::Event::MarketCreated {
                             currency_pair:
                                 CurrencyPair { base: COLLATERAL_ASSET_ID, quote: BORROW_ASSET_ID },
-                            market_id: created_market_id @ MarketIndex(1),
+                            market_id: created_market_id @ MarketId(1),
                             vault_id: created_vault_id @ 1,
                             manager: event_manager,
                         }),
@@ -234,7 +234,7 @@ fn can_create_valid_market_with_keep_alive() {
             //  Check if corresponded event was emitted
             let currency_pair = input.currency_pair;
             // Market id and vault id values are defined via previous logic.
-            let market_id = pallet_lending::pallet::MarketIndex::new(1);
+            let market_id = pallet_lending::pallet::MarketId::new(1);
             let vault_id = 1;
             let market_created_event = crate::Event::MarketCreated {market_id, vault_id, manager, currency_pair};
             System::assert_has_event(Event::Lending(market_created_event));
@@ -262,7 +262,7 @@ fn can_create_valid_market_with_keep_alive() {
                         Event::Lending(crate::Event::MarketCreated {
                             currency_pair:
                                 CurrencyPair { base: COLLATERAL_ASSET_ID, quote: BORROW_ASSET_ID },
-                            market_id: created_market_id @ MarketIndex(1),
+                            market_id: created_market_id @ MarketId(1),
                             vault_id: created_vault_id @ 1,
                             manager: event_manager,
                         }),

@@ -1,4 +1,4 @@
-use crate::{currency::*, mocks::general::*, MarketIndex};
+use crate::{currency::*, mocks::general::*, MarketId};
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, MoreThanOneFixedU128, Rate},
@@ -126,7 +126,7 @@ pub fn create_market<T, const NORMALIZED_PRICE: u128>(
 	manager: SystemAccountIdOf<T>,
 	reserved_factor: Perquintill,
 	collateral_factor: MoreThanOneFixedU128,
-) -> (MarketIndex, T::VaultId)
+) -> (MarketId, T::VaultId)
 where
 	T: ConfigBound,
 	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
@@ -189,7 +189,7 @@ fn new_jump_model() -> (Percent, InterestRateModel) {
 pub fn create_simple_vaulted_market(
 	borrow_asset: RuntimeCurrency,
 	manager: AccountId,
-) -> ((MarketIndex, VaultId), CurrencyId) {
+) -> ((MarketId, VaultId), CurrencyId) {
 	let (_, VaultInfo { lp_token_id, .. }) = create_simple_vault(borrow_asset, manager);
 
 	let market = create_market::<Runtime, 50_000>(
@@ -208,7 +208,7 @@ pub fn create_simple_vaulted_market(
 /// `NORMALIZED_PRICE` is set to `50_000`.
 ///
 /// See [`create_market()`] for more information.
-pub fn create_simple_market() -> (MarketIndex, VaultId) {
+pub fn create_simple_market() -> (MarketId, VaultId) {
 	create_market_with_specific_collateral_factor::<Runtime>(DEFAULT_COLLATERAL_FACTOR, *ALICE)
 }
 
@@ -218,7 +218,7 @@ pub fn create_simple_market() -> (MarketIndex, VaultId) {
 /// borrowed amount is higher then one half of collateral amount in terms of USDT.
 pub fn create_market_for_liquidation_test<T>(
 	manager: T::AccountId,
-) -> (crate::MarketIndex, T::VaultId)
+) -> (crate::MarketId, T::VaultId)
 where
 	T: ConfigBound,
 	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
@@ -233,7 +233,7 @@ where
 pub fn create_market_with_specific_collateral_factor<T>(
 	collateral_factor: u128,
 	manager: T::AccountId,
-) -> (crate::MarketIndex, T::VaultId)
+) -> (crate::MarketId, T::VaultId)
 where
 	T: ConfigBound,
 	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
@@ -257,7 +257,7 @@ where
 pub fn mint_and_deposit_collateral<T>(
 	account: SystemAccountIdOf<T>,
 	balance: u128,
-	market_index: MarketIndex,
+	market_index: MarketId,
 	asset_id: u128,
 ) where
 	T: frame_system::Config
@@ -287,7 +287,7 @@ pub fn mint_and_deposit_collateral<T>(
 /// Checks if corresponded event was emitted.
 pub fn borrow<T>(
 	borrower: T::AccountId,
-	market_id: crate::MarketIndex,
+	market_id: crate::MarketId,
 	amount: <T as DeFiComposableConfig>::Balance,
 ) where
 	T: ConfigBound,

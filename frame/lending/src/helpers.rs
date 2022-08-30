@@ -207,9 +207,9 @@ pub(crate) fn accrue_interest_internal<T: Config, I: InterestRate>(
 /// Retrieve the current interest rate for the given `market_id`.
 #[cfg(test)]
 pub fn current_interest_rate<T: Config>(
-	market_id: MarketId,
+	market_id: MarketIdInner,
 ) -> Result<composable_traits::defi::Rate, DispatchError> {
-	let market_id = MarketIndex::new(market_id);
+	let market_id = MarketId::new(market_id);
 	let total_borrowed_from_market_excluding_interest =
 		Pallet::<T>::total_borrowed_from_market_excluding_interest(&market_id)?;
 	let total_available_to_be_borrowed = Pallet::<T>::total_available_to_be_borrowed(&market_id)?;
