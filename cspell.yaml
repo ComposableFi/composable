@@ -1,21 +1,43 @@
 ---
 dictionaries:
-- spellcheck
+  # - spellcheck
+  - en_US
+  - companies
+  - softwareTerms
+  - misc
+
+  - typescript
+  - node
+  - python
+  - html
+  - css
+  - latex
+  - bash
+
+  - fonts
+  - filetypes
+  - npm
+
 dictionaryDefinitions:
-- name: spellcheck
-  path: ".config/spellcheck.dic"
-  addWords: true
+  - name: spellcheck
+    path: ".config/spellcheck.dic"
+    addWords: true
 
 patterns:
-- name: rust-code-literal
-  pattern: '([`])(?:(?=(\\?))\2.)*?\1+'
-- name: quoted
-  pattern: '(["])(?:(?=(\\?))\2.)*?\1+'
-- name: rust-attributes
-  pattern: '#!\[[a-zA-Z()::_]*]'
+  - name: rust-code-literal
+    pattern: '([`])(?:(?=(\\?))\2.)*?\1+'
+  - name: quoted
+    pattern: '(["])(?:(?=(\\?))\2.)*?\1+'
+  - name: rust-attributes
+    pattern: '#!\[[a-zA-Z()::_]*]'
 ignoreRegExpList:
-- rust-code-literal
-- quoted
+  - rust-code-literal
+  - quoted
 
 ignorePaths:
-  - 'node/src/res'
+  - "node/src/res"
+  - "target/"
+  - "**/node_modules/"
+  - "book/book"
+  - "**/*.log"
+  - "composablejs/packages/types/src"
