@@ -23,7 +23,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
 pallet-pablo = { path = "../pablo", default-features = false }
-pallet-staking-rewards = { path = "../staking-rewards", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
@@ -43,6 +42,7 @@ orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-li
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
 pallet-pablo = { path = "../pablo", default-features = false }
+pallet-staking-rewards = { path = "../staking-rewards", default-features = false }
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [features]

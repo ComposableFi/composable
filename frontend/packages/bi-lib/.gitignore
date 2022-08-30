@@ -1,0 +1,12 @@
+.next
+.npmrc
+node_modules
+dist
+.vscode
+.env
+node_modules/
+dist/
+.env.local
+yarn.lock
+yarn-error.log
+lerna-debug.log

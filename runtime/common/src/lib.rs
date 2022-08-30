@@ -102,7 +102,7 @@ mod types {
 
 	pub type NftInstanceId = u128;
 
-	pub type RewardPoolId = u16;
+	pub type RewardPoolId = u128;
 
 	pub type PositionId = u128;
 }

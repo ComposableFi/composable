@@ -31,14 +31,13 @@ const SelectBond: NextPage = () => {
   const offerId = router.query.offerId || "";
   const bondOfferSelected = useBondOffer(offerId as string);
 
-  const claimable = false;
   const message = useAppSelector((state) => state.ui.message);
 
   useEffect(
     () => {
-      if (extensionStatus !== "connected") {
-        router.push("/bond");
-      }
+      // if (extensionStatus !== "connected") {
+      //   router.push("/bond");
+      // }
     },
     [extensionStatus, router]
   );
@@ -84,13 +83,13 @@ const SelectBond: NextPage = () => {
 
         <Box position="relative" mt={8} mb={25}>
           <Grid container columnSpacing={4}>
-            <Grid item {...(claimable ? twoColumnPageSize : standardPageSize)}>
+            <Grid item {...(bondOfferSelected.vestingScheduleIds.size > 0 ? twoColumnPageSize : standardPageSize)}>
                 <DepositForm
                   bond={bondOfferSelected}
                   offerId={offerId as string}
                 />
             </Grid>
-            {claimable && (
+            {bondOfferSelected.vestingScheduleIds.size > 0 && (
               <Grid item {...twoColumnPageSize}>
                 <ClaimForm bond={bondOfferSelected} />
               </Grid>
