@@ -24,7 +24,7 @@ use tokio::task::JoinHandle;
 
 mod utils;
 
-/// this will set up a connection and ics20 channel in-between the two chains.
+/// This will set up a connection and ics20 channel in-between the two chains.
 /// `connection_delay` should be in seconds.
 async fn setup_connection_and_channel<A, B>(
 	chain_a: &A,
@@ -46,9 +46,6 @@ where
 		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
 	});
 
-	let connection_id = ConnectionId::default();
-	let channel_id = ChannelId::default();
-
 	// Both clients have been updated, we can now start connection handshake
 	let msg = MsgConnectionOpenInit {
 		client_id: chain_a.client_id(),
@@ -63,23 +60,30 @@ where
 		.await
 		.expect("Connection creation failed");
 
-	log::info!("Wait till both chains have completed connection handshake");
+	log::info!(target: "hyperspace", "============= Wait till both chains have completed connection handshake =============");
 
 	// wait till both chains have completed connection handshake
 	let future = chain_b
 		.ibc_events()
 		.await
-		.take_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmConnection(_))))
+		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmConnection(_))))
+		.take(1)
 		.collect::<Vec<_>>();
 
-	timeout_future(
+	let mut events = timeout_future(
 		future,
 		10 * 60,
 		format!("Didn't see OpenConfirmConnection on {}", chain_b.name()),
 	)
 	.await;
 
-	log::info!("Connection handshake completed, starting channel handshake");
+	let connection_id = match events.pop() {
+		Some(IbcEvent::OpenConfirmConnection(conn)) => conn.connection_id().unwrap().clone(),
+		got => panic!("Last event should be OpenConfirmConnection: {got:?}"),
+	};
+
+	log::info!(target: "hyperspace", "============ Connection handshake completed: ConnectionId({connection_id}) ============");
+	log::info!(target: "hyperspace", "=========================== Starting channel handshake ===========================");
 
 	let channel = ChannelEnd::new(
 		State::Init,
@@ -99,20 +103,86 @@ where
 		.expect("Connection creation failed");
 
 	// wait till both chains have completed channel handshake
-	log::info!("Wait till both chains have completed channel handshake");
+	log::info!(target: "hyperspace", "============= Wait till both chains have completed channel handshake =============");
 	let future = chain_b
 		.ibc_events()
 		.await
-		.take_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmChannel(_))))
+		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::OpenConfirmChannel(_))))
+		.take(1)
 		.collect::<Vec<_>>();
 
-	timeout_future(future, 10 * 60, format!("Didn't see OpenConfirmChannel on {}", chain_b.name()))
-		.await;
+	let mut events = timeout_future(
+		future,
+		10 * 60,
+		format!("Didn't see OpenConfirmChannel on {}", chain_b.name()),
+	)
+	.await;
+
+	let channel_id = match events.pop() {
+		Some(IbcEvent::OpenConfirmChannel(chan)) => chan.channel_id().unwrap().clone(),
+		got => panic!("Last event should be OpenConfirmConnection: {got:?}"),
+	};
 
 	// channel handshake completed
-	log::info!("Channel handshake completed");
+	log::info!(target: "hyperspace", "============ Channel handshake completed: ChannelId({channel_id}) ============");
 
 	(handle, channel_id, connection_id)
+}
+
+/// Attempts to send 70% of funds of chain_a's signer to chain b's signer.
+async fn send_transfer<A, B>(chain_a: &A, chain_b: &B, channel_id: ChannelId)
+	where
+		A: TestProvider,
+		A::FinalityEvent: Send + Sync,
+		A::Error: From<B::Error>,
+		B: TestProvider,
+		B::FinalityEvent: Send + Sync,
+		B::Error: From<A::Error>,
+{
+	let balance = chain_a
+		.query_ibc_balance()
+		.await
+		.expect("Can't query ibc balance")
+		.pop()
+		.expect("No Ibc balances");
+
+	let amount = parse_amount(balance.amount.to_string());
+	let coin = PrefixedCoin {
+		denom: balance.denom,
+		amount: Amount::from_str(&format!("{}", (amount * 70) / 100)).expect("Infallible"),
+	};
+
+	let msg = MsgTransfer {
+		source_port: PortId::transfer(),
+		source_channel: channel_id,
+		token: coin,
+		sender: chain_a.account_id(),
+		receiver: chain_b.account_id(),
+		// using no timeouts
+		timeout_height: Default::default(),
+		timeout_timestamp: Default::default(),
+	};
+	chain_a.send_transfer(msg).await.expect("Failed to send transfer: ");
+
+	// wait for the acknowledgment
+	let future = chain_a
+		.ibc_events()
+		.await
+		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::AcknowledgePacket(_))))
+		.take(1)
+		.collect::<Vec<_>>();
+	timeout_future(future, 10 * 60, format!("Didn't see AcknowledgePacket on {}", chain_a.name()))
+		.await;
+
+	let balance = chain_a
+		.query_ibc_balance()
+		.await
+		.expect("Can't query ibc balance")
+		.pop()
+		.expect("No Ibc balances");
+
+	let new_amount = parse_amount(balance.amount.to_string());
+	assert!(new_amount <= (amount * 30) / 100);
 }
 
 /// Simply send a packet and check that it was acknowledged.
@@ -128,51 +198,9 @@ where
 	let (_handle, channel_id, _connection_id) =
 		setup_connection_and_channel(chain_a, chain_b, 0).await;
 
-	let balance = chain_a
-		.query_ibc_balance()
-		.await
-		.expect("Can't query ibc balance")
-		.pop()
-		.expect("No Ibc balances");
-
-	let amount = parse_amount(balance.amount.to_string());
-	let coin = PrefixedCoin {
-		denom: balance.denom,
-		amount: Amount::from_str(&format!("{}", amount * (70 / 100))).expect("Infallible"),
-	};
-
-	let msg = MsgTransfer {
-		source_port: PortId::transfer(),
-		source_channel: channel_id,
-		token: coin,
-		sender: chain_a.account_id(),
-		receiver: chain_b.account_id(),
-		// using no timeouts
-		timeout_height: Default::default(),
-		timeout_timestamp: Default::default(),
-	};
-	chain_a.send_transfer(msg).await.expect("Failed to send transfer: ");
-
-	let balance = chain_a
-		.query_ibc_balance()
-		.await
-		.expect("Can't query ibc balance")
-		.pop()
-		.expect("No Ibc balances");
-
-	let new_amount = parse_amount(balance.amount.to_string());
-	// assert the new state of the account.
-	assert!(new_amount <= amount * (30 / 100));
-
-	// wait for the acknowledgment
-	let future = chain_a
-		.ibc_events()
-		.await
-		.take_while(|e| future::ready(!matches!(e, IbcEvent::AcknowledgePacket(_))))
-		.collect::<Vec<_>>();
-
-	timeout_future(future, 10 * 60, format!("Didn't see AcknowledgePacket on {}", chain_a.name()))
-		.await;
+	send_transfer(chain_a, chain_b, channel_id).await;
+	// now send from chain b.
+	send_transfer(chain_b, chain_a, channel_id).await;
 }
 
 /// Send a packet using a height timeout that has already passed

@@ -32,10 +32,11 @@ where
 		let params = TransferParams {
 			to: MultiAddress::Raw(transfer.receiver.as_ref().as_bytes().to_vec()),
 			source_channel: transfer.source_channel.sequence(),
-			timeout_timestamp_offset: 0,
-			timeout_height_offset: 0,
+			timeout_timestamp_offset: 5_000_000,
+			timeout_height_offset: 500,
 		};
 		let amount = str::parse::<u128>(&transfer.token.amount.to_string()).expect("Infallible!");
+		dbg!(&amount);
 		self.transfer_tokens(params, 1, amount).await?;
 
 		Ok(())

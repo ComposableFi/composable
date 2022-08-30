@@ -195,6 +195,13 @@ where
 			mmr_update_proof: Some(mmr_update),
 		};
 
+		for event in events.iter() {
+			if self.sender.send(event.clone()).is_err() {
+				log::trace!("Failed to push {event:?} to stream, no active receiver found");
+				break
+			}
+		}
+
 		Ok((beefy_header.wrap_any(), events, update_type))
 	}
 
@@ -420,6 +427,8 @@ where
 
 		let account = self.public_key.clone().into_account();
 		let balance = api.storage().tokens().accounts(&account, &CurrencyId(1), None).await?;
+
+		dbg!(&balance);
 
 		Ok(vec![PrefixedCoin {
 			denom: PrefixedDenom::from_str("PICA")?,
