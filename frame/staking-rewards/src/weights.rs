@@ -10,6 +10,7 @@ pub trait WeightInfo {
 	fn unix_time_now() -> Weight;
 	fn update_rewards_pool(r: u32) -> Weight;
 	fn claim(r: u32) -> Weight;
+	fn add_to_rewards_pot() -> Weight;
 }
 
 impl WeightInfo for () {
@@ -46,6 +47,8 @@ impl WeightInfo for () {
 	}
 
 	fn claim(_r: u32) -> Weight {
+
+	fn add_to_rewards_pot() -> Weight {
 		10_000
 	}
 }

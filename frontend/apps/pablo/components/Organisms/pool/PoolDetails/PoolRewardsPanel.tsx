@@ -66,10 +66,6 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
   const poolDetails = useLiquidityPoolDetails(poolId);
   const userProvidedLiquidity = useUserProvidedLiquidityByPool(poolId);
 
-  const { rewardValue, rewardsLeft } = useAppSelector(
-    (state) => state.pool.selectedPool
-  );
-
   // WIP
   const lpDeposit = new BigNumber(0);
 
@@ -121,10 +117,10 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
         />
       </Box>
 
-      <Item mt={4} mb={4} value={`$${rewardValue.toFormat()}`}>
+      <Item mt={4} mb={4} value={`$${0}`}>
         <Typography variant="h6">Your rewards</Typography>
       </Item>
-      {rewardsLeft.map(({ tokenId, value }: { tokenId: keyof typeof TOKENS, value: BigNumber}) => (
+      {[].map(({ tokenId, value }: { tokenId: keyof typeof TOKENS, value: BigNumber}) => (
         <Item value={value.toFormat()} mt={2} key={tokenId}>
           <BaseAsset
             icon={TOKENS[tokenId].icon}

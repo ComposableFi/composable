@@ -12,29 +12,29 @@ export function humanBalance(balance: string | number | BigNumber) {
   const VALUES = [
     {
       unit: "K",
-      size: THOUSAND
+      size: THOUSAND,
     },
     {
       unit: "M",
-      size: MILLION
+      size: MILLION,
     },
 
     {
       unit: "G",
-      size: BILLION
+      size: BILLION,
     },
     {
       unit: "T",
-      size: TRILLION
+      size: TRILLION,
     },
     {
       unit: "P",
-      size: QUADRILLION
+      size: QUADRILLION,
     },
     {
       unit: "E",
-      size: QUINTILLION
-    }
+      size: QUINTILLION,
+    },
   ];
 
   type ReducerReturnValue = {
@@ -47,27 +47,26 @@ export function humanBalance(balance: string | number | BigNumber) {
       : balance;
 
   const trailingZeros = /^0*(\d+(?:\.(?:(?!0+$)\d)+)?)/;
-  const out = VALUES.reduce((acc, { unit, size }) => {
-    if (newValue.gte(new BigNumber(size))) {
-      acc = {
-        unit,
-        amount: newValue.div(size).toFixed()
-      };
-    } else {
-      acc = {
-        unit: "",
-        amount: newValue.toFixed()
-      };
-    }
+  const out = VALUES.reduce(
+    (acc, { unit, size }) => {
+      if (newValue.gte(new BigNumber(size))) {
+        acc = {
+          unit,
+          amount: newValue.div(size).toFixed(),
+        };
+      }
 
-    return acc;
-  }, <ReducerReturnValue>{});
+      return acc;
+    },
+    <ReducerReturnValue>{
+      unit: "",
+      amount: newValue.toFixed(),
+    }
+  );
 
   const match = trailingZeros.exec(out.amount);
-  if (match !== null) {
-    return out.unit + match[1];
-  }
-  return out.unit + out.amount;
+
+  return match !== null ? match[1] + out.unit : out.amount + out.unit;
 }
 
 export const SHORT_HUMAN_DATE = 1;
@@ -81,7 +80,7 @@ export function humanDate(date: number, option: number = SHORT_HUMAN_DATE) {
       toDHMS.d === 0 ? "" : toDHMS.d.toString().padStart(2, "0") + "D",
       toDHMS.h === 0 ? "" : toDHMS.h.toString().padStart(2, "0") + "H",
       toDHMS.m === 0 ? "" : toDHMS.m.toString().padStart(2, "0") + "M",
-      toDHMS.s === 0 ? "" : toDHMS.s.toString().padStart(2, "0") + "S"
+      toDHMS.s === 0 ? "" : toDHMS.s.toString().padStart(2, "0") + "S",
     ].join("");
 
     return output.length > 0 ? output : "~";
@@ -91,6 +90,6 @@ export function humanDate(date: number, option: number = SHORT_HUMAN_DATE) {
     toDHMS.d === 0 ? "" : toDHMS.dDisplay,
     toDHMS.h === 0 ? "" : toDHMS.hDisplay,
     toDHMS.m === 0 ? "" : toDHMS.mDisplay,
-    toDHMS.s === 0 ? "" : toDHMS.sDisplay
+    toDHMS.s === 0 ? "" : toDHMS.sDisplay,
   ].join(" ");
 }

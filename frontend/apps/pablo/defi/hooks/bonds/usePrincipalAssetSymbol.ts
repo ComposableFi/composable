@@ -1,7 +1,7 @@
 import { BondPrincipalAsset } from "@/defi/types";
 import { useMemo } from "react";
 
-export function usePrincipalAssetSymbol(
+export default function usePrincipalAssetSymbol(
   principalAsset: BondPrincipalAsset
 ): string {
   const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;

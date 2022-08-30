@@ -134,26 +134,6 @@ pub trait Amm {
 	) -> Result<Self::Balance, DispatchError>;
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug)]
-pub enum RewardPoolType {
-	LP,
-	PBLO,
-}
-
-impl Default for RewardPoolType {
-	fn default() -> Self {
-		RewardPoolType::PBLO
-	}
-}
-
-#[derive(
-	Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, Copy, RuntimeDebug,
-)]
-pub struct StakingRewardPool<RewardPoolId> {
-	pub pool_id: RewardPoolId,
-	pub pool_type: RewardPoolType,
-}
-
 // TODO: Perhaps we need a way to not have a max reward for a pool.
 pub const MAX_REWARDS: u128 = 100_000_000_000_000_000_000_000_u128;
 pub const REWARD_PERCENTAGE: u32 = 10;

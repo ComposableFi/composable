@@ -108,4 +108,8 @@ impl<T: frame_system::Config> pallet_staking_rewards::WeightInfo for WeightInfo<
 	fn claim(_r: u32) -> Weight {
 		10_000
 	}
+
+	fn add_to_rewards_pot() -> Weight {
+		10_000
+	}
 }
