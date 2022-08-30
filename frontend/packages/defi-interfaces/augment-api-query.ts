@@ -1137,15 +1137,19 @@ declare module '@polkadot/api-base/types/storage' {
     };
     vesting: {
       /**
-       * Vesting schedules of an account.
-       * 
-       * VestingSchedules: map AccountId => Vec<VestingSchedule>
+       * Counter used to uniquely identify vesting schedules within this pallet.
        **/
-      vestingSchedules: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: u128 | AnyNumber | Uint8Array) => Observable<Vec<ComposableTraitsVestingVestingSchedule>>, [AccountId32, u128]> & QueryableStorageEntry<ApiType, [AccountId32, u128]>;
-      /**
-       * Generic query
-       **/
-      [key: string]: QueryableStorageEntry<ApiType>;
+       vestingScheduleNonce: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
+       /**
+        * Vesting schedules of an account.
+        * 
+        * VestingSchedules: map AccountId => Vec<VestingSchedule>
+        **/
+       vestingSchedules: AugmentedQuery<ApiType, (arg1: AccountId32 | string | Uint8Array, arg2: u128 | AnyNumber | Uint8Array) => Observable<BTreeMap<u128, ComposableTraitsVestingVestingSchedule>>, [AccountId32, u128]> & QueryableStorageEntry<ApiType, [AccountId32, u128]>;
+       /**
+        * Generic query
+        **/
+       [key: string]: QueryableStorageEntry<ApiType>;
     };
     xcmpQueue: {
       /**
