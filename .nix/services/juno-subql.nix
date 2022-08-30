@@ -1,4 +1,4 @@
-{ pkgs, database }: {
+{ pkgs, juno, database }: {
   service = let
     src = pkgs.fetchFromGitHub {
       owner = "hussein-aitlahcen";
@@ -28,7 +28,6 @@
     name = "cosmos-subql";
     image = "onfinality/subql-node-cosmos:v0.2.0";
     restart = "always";
-    network_mode = "host";
     environment = {
       DB_USER = database.user;
       DB_PASS = database.password;
@@ -39,7 +38,7 @@
     command = [
       "-f=/app"
       "--db-schema=cosmos"
-      "--network-endpoint=http://127.0.0.1:26657"
+      "--network-endpoint=http://${juno}:26657"
     ];
     volumes = [ "${subql}/:/app" ];
   };
