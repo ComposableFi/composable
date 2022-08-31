@@ -1,4 +1,4 @@
-use crate::{helpers::accrue_interest_internal, *};
+use crate::{helpers::general::accrue_interest_internal, *};
 
 use composable_support::{
 	math::safe::{SafeDiv, SafeMul, SafeSub},

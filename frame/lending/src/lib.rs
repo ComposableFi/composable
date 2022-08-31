@@ -73,7 +73,7 @@ pub mod pallet {
     use crate::weights::WeightInfo;
 	pub(crate) use crate::types::MarketAssets;
 	pub use crate::{
-		helpers::swap,
+		helpers::general::swap,
 		types::{MarketIdInner, MarketId},
 	};
 	use composable_traits::{

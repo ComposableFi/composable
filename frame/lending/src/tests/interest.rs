@@ -1,6 +1,6 @@
 use super::prelude::*;
 use crate::{
-	helpers::{accrue_interest_internal, current_interest_rate},
+	helpers::general::{accrue_interest_internal, current_interest_rate},
 	tests::new_jump_model,
 	types::AccruedInterest,
 };
