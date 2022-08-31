@@ -32,9 +32,6 @@ pub trait Amm {
 
 	fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError>;
 
-	/// Returns the xToken given to users when they stake
-	fn x_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError>;
-
 	/// Returns the amount of base & quote asset redeemable for given amount of lp token.
 	fn redeemable_assets_for_lp_tokens(
 		pool_id: Self::PoolId,

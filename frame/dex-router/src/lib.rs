@@ -409,10 +409,6 @@ pub mod pallet {
 			}
 		}
 
-		fn x_token(_pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
-			todo!()
-		}
-
 		fn get_exchange_value(
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,

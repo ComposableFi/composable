@@ -866,32 +866,6 @@ pub mod pallet {
 			}
 		}
 
-		fn x_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
-			let pica: Self::AssetId = primitives::currency::CurrencyId::PICA.0.into();
-			let layr: Self::AssetId = primitives::currency::CurrencyId::LAYR.0.into();
-			let ksm: Self::AssetId = primitives::currency::CurrencyId::KSM.0.into();
-			let pblo: Self::AssetId = primitives::currency::CurrencyId::PBLO.0.into();
-			let pool = Self::get_pool(pool_id)?;
-			let token_id = match pool {
-				PoolConfiguration::StableSwap(info) => info.lp_token,
-				PoolConfiguration::ConstantProduct(info) => info.lp_token,
-				// REVIEW: Is this the correct asset to derive an xToken from for LBP?
-				PoolConfiguration::LiquidityBootstrapping(info) => info.pair.quote,
-			};
-
-			match token_id {
-				pica => Ok(primitives::currency::CurrencyId::xPICA.0.into()),
-				layr => Ok(primitives::currency::CurrencyId::xLAYR.0.into()),
-				ksm => Ok(primitives::currency::CurrencyId::xKSM.0.into()),
-				pblo => Ok(primitives::currency::CurrencyId::xPBLO.0.into()),
-				// TODO: Derive x_token asset id from `token_id` and currency factory
-				_ => Ok(T::CurrencyFactory::create(
-					RangeId::XTOKEN_ASSETS,
-					Self::Balance::default(),
-				)?),
-			}
-		}
-
 		fn simulate_add_liquidity(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
