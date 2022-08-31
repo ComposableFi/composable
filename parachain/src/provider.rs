@@ -1,12 +1,12 @@
 use beefy_light_client_primitives::{ClientState, NodesUtils};
 use codec::{Decode, Encode};
 use itertools::Itertools;
-use std::{ fmt::Display, str::FromStr};
+use std::{fmt::Display, str::FromStr};
+use std::time::Duration;
 
-use ibc::clients::ics11_beefy::header::ParachainHeadersWithProof;
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
-	clients::ics11_beefy::header::BeefyHeader,
+	clients::ics11_beefy::header::{BeefyHeader, ParachainHeadersWithProof},
 	core::{
 		ics02_client::{
 			client_state::AnyClientState,
@@ -42,6 +42,7 @@ use sp_core::H256;
 
 use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
+use ibc::timestamp::Timestamp;
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -72,7 +73,7 @@ where
 		Self::Error: From<C::Error>,
 	{
 		let client_id = self.client_id();
-		let latest_height = counterparty.latest_height().await?;
+		let latest_height = counterparty.latest_height_and_timestamp().await?.0;
 		let response = counterparty.query_client_state(latest_height, client_id).await?;
 		let client_state = response.client_state.ok_or_else(|| {
 			From::from("Received an empty client state from counterparty".to_string())
@@ -110,8 +111,8 @@ where
 		}
 
 		// if validator set has changed this is a mandatory update
-		let update_type = match signed_commitment.commitment.validator_set_id
-			== beefy_client_state.next_authorities.id
+		let update_type = match signed_commitment.commitment.validator_set_id ==
+			beefy_client_state.next_authorities.id
 		{
 			true => UpdateType::Mandatory,
 			false => UpdateType::Optional,
@@ -139,8 +140,8 @@ where
 		let finalized_block_numbers = headers
 			.into_iter()
 			.filter_map(|header| {
-				if (client_state.latest_height().revision_height as u32)
-					< u32::from(*header.number())
+				if (client_state.latest_height().revision_height as u32) <
+					u32::from(*header.number())
 				{
 					Some(header)
 				} else {
@@ -191,7 +192,7 @@ where
 		for event in events.iter() {
 			if self.sender.send(event.clone()).is_err() {
 				log::trace!("Failed to push {event:?} to stream, no active receiver found");
-				break;
+				break
 			}
 		}
 
@@ -369,7 +370,7 @@ where
 		Ok(res)
 	}
 
-	async fn latest_height(&self) -> Result<Height, Self::Error> {
+	async fn latest_height_and_timestamp(&self) -> Result<(Height, Timestamp), Self::Error> {
 		let finalized_header = self
 			.para_client
 			.rpc()
@@ -377,7 +378,16 @@ where
 			.await?
 			.ok_or_else(|| Error::Custom("Latest height query returned None".to_string()))?;
 		let latest_height = *finalized_header.number();
-		Ok(Height::new(self.para_id.into(), latest_height.into()))
+		let height = Height::new(self.para_id.into(), latest_height.into());
+
+		let api = self
+			.para_client
+			.clone()
+			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+		let unix_timestamp_millis = api.storage().timestamp().now(None).await?;
+		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
+
+		Ok((height, Timestamp::from_nanoseconds(timestamp_nanos)?))
 	}
 
 	async fn query_host_consensus_state_proof(

@@ -244,7 +244,7 @@ impl IbcProvider for Client {
 		self.send_query(query).await
 	}
 
-	async fn latest_height(&self) -> Result<Height, Self::Error> {
+	async fn latest_height_and_timestamp(&self) -> Result<Height, Self::Error> {
 		let finalized_block = self
 			.rpc_client
 			.call(RpcBlockRequest { block_reference: BlockReference::Finality(Finality::Final) })

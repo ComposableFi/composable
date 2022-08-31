@@ -26,6 +26,7 @@ use ibc::{
 	},
 	events::IbcEvent,
 	signer::Signer,
+	timestamp::Timestamp,
 	Height,
 };
 
@@ -147,8 +148,8 @@ pub trait IbcProvider {
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse, Self::Error>;
 
-	/// Return latest finalized height
-	async fn latest_height(&self) -> Result<Height, Self::Error>;
+	/// Return latest chain height and timestamp
+	async fn latest_height_and_timestamp(&self) -> Result<(Height, Timestamp), Self::Error>;
 
 	/// Return a proof for the host consensus state at the given height to be included in the
 	/// consensus state proof.

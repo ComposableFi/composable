@@ -152,15 +152,20 @@ where
 		amount: Amount::from_str(&format!("{}", (amount * 70) / 100)).expect("Infallible"),
 	};
 
+	let (mut timeout_height, timestamp) = chain_b.latest_height_and_timestamp().await?;
+
+	// 50 blocks
+	timeout_height.revision_height += 50;
+	let timeout_timestamp = (timestamp + Duration::from_secs(60 * 60))?;
+
 	let msg = MsgTransfer {
 		source_port: PortId::transfer(),
 		source_channel: channel_id,
 		token: coin,
 		sender: chain_a.account_id(),
 		receiver: chain_b.account_id(),
-		// using no timeouts
-		timeout_height: Default::default(),
-		timeout_timestamp: Default::default(),
+		timeout_height,
+		timeout_timestamp,
 	};
 	chain_a.send_transfer(msg).await.expect("Failed to send transfer: ");
 

@@ -2,6 +2,7 @@ use ibc::core::ics02_client;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::TrieError;
 use std::num::ParseIntError;
+use ibc::timestamp::ParseTimestampError;
 use thiserror::Error;
 
 /// Error definition for the parachain client
@@ -11,7 +12,7 @@ pub enum Error {
 	#[error("Rpc client error: {0}")]
 	RpcError(String),
 	/// Scale codec error
-	#[error("Scale decoding error")]
+	#[error("Scale decoding error: {0}")]
 	Codec(#[from] codec::Error),
 	/// Update pallet name in call definition
 	#[error("Pallet '{0}' not found in metadata, update static definition of call")]
@@ -57,6 +58,9 @@ pub enum Error {
 	/// Ics-20 errors
 	#[error("Ics-20 error: {0}")]
 	Ics20Error(#[from] ibc::applications::transfer::error::Error),
+	/// Error occured parsing timestamp
+	#[error("Timestamp error: {0}")]
+	ParseTimestamp(#[from] ParseTimestampError)
 }
 
 impl From<String> for Error {

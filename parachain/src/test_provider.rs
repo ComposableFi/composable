@@ -4,6 +4,7 @@ use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, PrefixedCoin},
 	events::IbcEvent,
 };
+use pallet_ibc::{MultiAddress, Timeout, TransferParams};
 use primitives::{KeyProvider, TestProvider};
 use sp_core_git::crypto::{AccountId32, Ss58Codec};
 use sp_runtime::{
@@ -11,6 +12,7 @@ use sp_runtime::{
 	MultiSignature, MultiSigner,
 };
 use std::{fmt::Display, pin::Pin};
+
 use subxt::Config;
 use tokio_stream::wrappers::BroadcastStream;
 
@@ -27,14 +29,14 @@ where
 	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero,
 {
 	async fn send_transfer(&self, transfer: MsgTransfer<PrefixedCoin>) -> Result<(), Self::Error> {
-		use pallet_ibc::{MultiAddress, TransferParams};
-
 		let account_id = AccountId32::from_ss58check(transfer.receiver.as_ref()).unwrap();
 		let params = TransferParams {
 			to: MultiAddress::Id(account_id),
 			source_channel: transfer.source_channel.sequence(),
-			timeout_timestamp_offset: None,
-			timeout_height_offset: None,
+			timeout: Timeout::Absolute {
+				timestamp: Some(transfer.timeout_timestamp.nanoseconds()),
+				height: Some(transfer.timeout_height.revision_height),
+			},
 		};
 		let amount = str::parse::<u128>(&transfer.token.amount.to_string()).expect("Infallible!");
 		dbg!(&amount);

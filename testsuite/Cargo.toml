@@ -19,7 +19,7 @@ hyperspace-primitives = { path = "../primitives", features = ["testing"] }
 
 [dev-dependencies]
 parachain = { path = "../parachain", package = "hyperspace-parachain", features = ["testing"] }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "66ef4151045939a249c50ac20f13b472e7682e9c" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "b21c6bcaf392eba166701af41807d724c7ad1475" }
 # substrate
 sp-core = "6.0.0"
 sp-runtime = "6.0.0"
