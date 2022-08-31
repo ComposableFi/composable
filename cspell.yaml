@@ -41,16 +41,9 @@ dictionaryDefinitions:
 patterns:
   - name: hash-literal
     pattern: "[a-zA-Z0-9]{47,66}"
-#   - name: rust-code-literal
-#     pattern: '([`])(?:(?=(\\?))\2.)*?\1+'
-#   - name: quoted
-#     pattern: '(["])(?:(?=(\\?))\2.)*?\1+'
-#   - name: rust-attributes
-#     pattern: '#!\[[a-zA-Z()::_]*]'
+
 ignoreRegExpList:
   - hash-literal
-#   - rust-code-literal
-#   - quoted
 
 ignorePaths:
   - "node/src/res"

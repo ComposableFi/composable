@@ -1,6 +1,6 @@
 //! Less general more targeted solution before XCM gets general transactions support and discovery,
-//! so at same time it can be more robust for Substrate based sibling chains. Also is more specialized
-//! form of `xcm::latest::Junction`.
+//! so at same time it can be more robust for Substrate based sibling chains. Also is more
+//! specialized form of `xcm::latest::Junction`.
 //!
 //! API allow for selling (partial exchange via DEX, OB or Auction) via `engines` on other
 //! parachains.
