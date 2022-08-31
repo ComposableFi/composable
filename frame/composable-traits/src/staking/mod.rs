@@ -306,6 +306,13 @@ pub trait Staking {
 		position: &Self::PositionId,
 		ratio: Permill,
 	) -> Result<[Self::PositionId; 2], DispatchError>;
+
+	/// Claim remaining reward earned up to this point in time.
+	///
+	/// Arguments
+	/// * `who` - the account to transfer the final claimed rewards to.
+	/// * `position` - The uniqely identifying NFT from which we will compute the rewards.
+	fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
 }
 
 /// Interface for managing staking through financial NFTs.
