@@ -5,6 +5,7 @@ use primitives::Chain;
 
 pub mod events;
 pub mod logging;
+pub mod timeouts;
 
 use events::parse_events;
 

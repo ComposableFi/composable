@@ -20,7 +20,7 @@ subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894
 # ibc
 ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3", features = ["ics11_beefy"] }
 ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3" }
-
+ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "8238a96325730fec129ccd82bd910de849472288" }
 
 [features]
 testing = []

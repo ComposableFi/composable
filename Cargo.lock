@@ -354,9 +354,9 @@ dependencies = [
 
 [[package]]
 name = "android_system_properties"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7ed72e1635e121ca3e79420540282af22da58be50de153d36f81ddc6b83aa9e"
+checksum = "819e7219dbd41043ac279b19830f2efc897156490d7fd6ea916720117ee66311"
 dependencies = [
  "libc",
 ]
@@ -3367,6 +3367,7 @@ dependencies = [
  "hex",
  "ibc 0.15.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
  "ibc-proto 0.18.0 (git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3)",
+ "ibc-rpc",
  "parity-scale-codec 3.1.5",
  "sp-keystore 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -6270,7 +6271,7 @@ dependencies = [
 [[package]]
 name = "near-sdk"
 version = "4.1.0-pre.2"
-source = "git+https://github.com/near/near-sdk-rs?branch=master#83cb1c40403e4156bd6d1d258237bbdf03326afc"
+source = "git+https://github.com/near/near-sdk-rs?branch=master#a6d876e23e2936c3d684176457c3b6bcd1e435db"
 dependencies = [
  "base64 0.13.0",
  "borsh",
@@ -6301,7 +6302,7 @@ dependencies = [
 [[package]]
 name = "near-sdk-macros"
 version = "4.1.0-pre.2"
-source = "git+https://github.com/near/near-sdk-rs?branch=master#83cb1c40403e4156bd6d1d258237bbdf03326afc"
+source = "git+https://github.com/near/near-sdk-rs?branch=master#a6d876e23e2936c3d684176457c3b6bcd1e435db"
 dependencies = [
  "Inflector",
  "proc-macro2",
@@ -6352,7 +6353,7 @@ source = "git+https://github.com/ComposableFi/near-sdk-rs?branch=master#02cb66f5
 [[package]]
 name = "near-sys"
 version = "0.2.0"
-source = "git+https://github.com/near/near-sdk-rs?branch=master#83cb1c40403e4156bd6d1d258237bbdf03326afc"
+source = "git+https://github.com/near/near-sdk-rs?branch=master#a6d876e23e2936c3d684176457c3b6bcd1e435db"
 
 [[package]]
 name = "near-telemetry"

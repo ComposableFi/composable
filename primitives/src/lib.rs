@@ -17,14 +17,16 @@ use ibc_proto::{
 use ibc::{
 	core::{
 		ics02_client::{client_type::ClientType, header::AnyHeader},
-		ics04_channel::packet::Packet,
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
 	events::IbcEvent,
 	signer::Signer,
+	timestamp::Timestamp,
 	Height,
 };
+use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
+use ibc_rpc::PacketInfo;
 
 pub mod error;
 
@@ -100,15 +102,6 @@ pub trait IbcProvider {
 	/// Query proof for provided key path
 	async fn query_proof(&self, at: Height, keys: Vec<Vec<u8>>) -> Result<Vec<u8>, Self::Error>;
 
-	/// Query packets
-	async fn query_packets(
-		&self,
-		at: Height,
-		port_id: &PortId,
-		channel_id: &ChannelId,
-		seqs: Vec<u64>,
-	) -> Result<Vec<Packet>, Self::Error>;
-
 	/// Query packet commitment with proof
 	async fn query_packet_commitment(
 		&self,
@@ -144,8 +137,15 @@ pub trait IbcProvider {
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse, Self::Error>;
 
-	/// Return latest finalized height
-	async fn latest_height(&self) -> Result<Height, Self::Error>;
+	/// Return latest finalized height and timestamp
+	async fn latest_height_and_timestamp(&self) -> Result<(Height, Timestamp), Self::Error>;
+
+	/// Return undelivered packet sequences
+	async fn query_undelivered_sequences(
+		&self,
+		channel_id: ChannelId,
+		port_id: PortId,
+	) -> Result<Vec<u64>, Self::Error>;
 
 	/// Return a proof for the host consensus state at the given height to be included in the
 	/// consensus state proof.
@@ -162,6 +162,32 @@ pub trait IbcProvider {
 
 	/// Returns the client type of this chain.
 	fn client_type(&self) -> ClientType;
+
+	/// Connection whitelist
+	async fn connection_whitelist(&self) -> Result<Vec<ConnectionId>, Self::Error>;
+
+	/// Query all channels for a connection
+	async fn query_connection_channels(
+		&self,
+		at: Height,
+		connection_id: &ConnectionId,
+	) -> Result<QueryChannelsResponse, Self::Error>;
+
+	/// Query send packets
+	async fn query_send_packets(
+		&self,
+		channel_id: ChannelId,
+		port_id: PortId,
+		seqs: Vec<u64>,
+	) -> Result<Vec<PacketInfo>, Self::Error>;
+
+	/// Query recieved packets
+	async fn query_recv_packets(
+		&self,
+		channel_id: ChannelId,
+		port_id: PortId,
+		seqs: Vec<u64>,
+	) -> Result<Vec<PacketInfo>, Self::Error>;
 
 	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
 	/// Only used in tests.
