@@ -34,8 +34,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs =
-    { self, nixpkgs, crane, flake-utils, rust-overlay, npm-buildpackage, arion-src }:
+  outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, npm-buildpackage
+    , arion-src }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
@@ -501,6 +501,7 @@
                 cp -R ./apps/picasso/out/* $out/picasso
               '';
             };
+
             frontend-pablo-server = pkgs.writeShellApplication {
               name = "frontend-pablo-server";
               runtimeInputs = [ pkgs.miniserve ];
