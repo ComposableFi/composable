@@ -210,10 +210,6 @@ impl<T: frame_system::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
 
-	fn open_transfer_channel() -> Weight {
-        0
-    }
-
 	fn set_params() -> Weight {
         0
     }

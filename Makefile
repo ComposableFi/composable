@@ -33,7 +33,7 @@ release:
 	export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm) && \
 	export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm) && \
 	export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm) && \
-	cargo build --release --package composable --features=builtin-wasm
+	cargo build --release --package composable --features builtin-wasm,runtime-benchmarks
 
 .PHONY: build-release
 build-release:
