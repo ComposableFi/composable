@@ -121,12 +121,30 @@ pub struct TransferParams<AccountId> {
 	pub to: MultiAddress<AccountId>,
 	/// Source channel identifier on host chain
 	pub source_channel: u64,
-	/// Timestamp at which this packet should timeout in counterparty in seconds
-	/// relative to the latest time stamp
-	pub timeout_timestamp_offset: Option<u64>,
-	/// Block height at which this packet should timeout on counterparty
-	/// relative to the latest height
-	pub timeout_height_offset: Option<u64>,
+	/// Timeout for this packet
+	pub timeout: Timeout,
+}
+
+/// Packet timeout, could be an offset, or absolute value.
+#[derive(
+	frame_support::RuntimeDebug, PartialEq, Eq, scale_info::TypeInfo, Encode, Decode, Clone,
+)]
+pub enum Timeout {
+	Offset {
+		/// Timestamp at which this packet should timeout in counterparty in seconds
+		/// relative to the latest time stamp
+		timestamp: Option<u64>,
+		/// Block height at which this packet should timeout on counterparty
+		/// relative to the latest height
+		height: Option<u64>,
+	},
+	/// Absolute value
+	Absolute {
+		/// Timestamp at which this packet should timeout on the counterparty in nanoseconds
+		timestamp: Option<u64>,
+		/// Block height at which this packet should timeout on the counterparty
+		height: Option<u64>,
+	},
 }
 
 #[cfg(any(test, feature = "runtime-benchmarks"))]
@@ -164,7 +182,9 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	pub use ibc::signer::Signer;
 
+	use ibc::timestamp::Timestamp;
 	use ibc::{
+		Height,
 		applications::transfer::{
 			is_sender_chain_source, msgs::transfer::MsgTransfer, Amount, PrefixedCoin,
 			PrefixedDenom,
@@ -594,16 +614,31 @@ pub mod pallet {
 			let (latest_height, latest_timestamp) =
 				Pallet::<T>::latest_height_and_timestamp(&source_port, &source_channel)
 					.map_err(|_| Error::<T>::TimestampAndHeightNotFound)?;
-			let timeout_timestamp = params
-				.timeout_timestamp_offset
-				.map(|offset| (latest_timestamp + Duration::from_secs(offset)))
-				.transpose()
-				.map_err(|_| Error::<T>::InvalidTimestamp)?
-				.unwrap_or_default();
-			let timeout_height = params
-				.timeout_height_offset
-				.map(|offset| latest_height.add(offset))
-				.unwrap_or_default();
+
+			let (timeout_height, timeout_timestamp) = match params.timeout {
+				Timeout::Offset { timestamp, height } => {
+					let timestamp = timestamp
+						.map(|offset| (latest_timestamp + Duration::from_secs(offset)))
+						.transpose()
+						.map_err(|_| Error::<T>::InvalidTimestamp)?
+						.unwrap_or_default();
+					let height = height.map(|offset| latest_height.add(offset)).unwrap_or_default();
+					(height, timestamp)
+				},
+				Timeout::Absolute { timestamp, height } => {
+					let timestamp = timestamp
+						.map(|timestamp| Timestamp::from_nanoseconds(timestamp))
+						.transpose()
+						.map_err(|_| Error::<T>::InvalidTimestamp)?
+						.unwrap_or_default();
+					let height = height
+						.map(|revision_height| {
+							Height::new(latest_height.revision_number, revision_height)
+						})
+						.unwrap_or_default();
+					(height, timestamp)
+				},
+			};
 
 			let msg = MsgTransfer {
 				source_port,

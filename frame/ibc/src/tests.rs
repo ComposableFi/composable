@@ -1,7 +1,4 @@
-use crate::{
-	mock::*, routing::Context, Any, Config, MultiAddress, Pallet, PalletParams, TransferParams,
-	MODULE_ID,
-};
+use crate::{mock::*, routing::Context, Any, Config, MultiAddress, Pallet, PalletParams, TransferParams, MODULE_ID, Timeout};
 use core::time::Duration;
 use frame_support::{assert_ok, traits::fungibles::Mutate};
 use ibc::{
@@ -236,13 +233,14 @@ fn send_transfer() {
 		Ibc::set_params(Origin::root(), PalletParams { send_enabled: true, receive_enabled: true })
 			.unwrap();
 
+		let timeout = Timeout::Offset { timestamp: Some(1000), height: Some(5) };
+
 		Ibc::transfer(
 			Origin::signed(AccountId32::new([0; 32])),
 			TransferParams {
 				to: MultiAddress::Raw(ss58_address.as_bytes().to_vec()),
 				source_channel: 0,
-				timeout_timestamp_offset: Some(1000),
-				timeout_height_offset: Some(5),
+				timeout,
 			},
 			CurrencyId::PICA.into(),
 			balance.into(),

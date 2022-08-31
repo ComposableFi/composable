@@ -852,12 +852,12 @@ benchmarks! {
 			balance.into(),
 		).unwrap();
 
+		let timeout = Timeout::Offset { timestamp: Some(1690894363), height: Some(2000) };
 
 		let transfer_params = TransferParams {
 			to:  MultiAddress::Raw("bob".to_string().as_bytes().to_vec()),
 			source_channel: channel_id.sequence(),
-			timeout_timestamp_offset: Some(1690894363),
-			timeout_height_offset: Some(2000),
+			timeout,
 		};
 
 		Pallet::<T>::register_asset_id(asset_id.into(), denom.as_bytes().to_vec());
