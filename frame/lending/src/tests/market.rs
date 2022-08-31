@@ -1,7 +1,9 @@
 use super::prelude::*;
-use crate::{tests::
-    {default_create_input, process_and_progress_blocks},
-    validation::UpdateInputValid, MarketId};
+use crate::{
+	tests::{default_create_input, process_and_progress_blocks},
+	validation::UpdateInputValid,
+	MarketId,
+};
 use composable_traits::{defi::CurrencyPair, oracle, vault};
 use frame_system::{EventRecord, Phase};
 

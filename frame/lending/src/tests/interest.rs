@@ -1,8 +1,6 @@
 use super::prelude::*;
 use crate::{
-	helpers::interest::current_interest_rate,
-	tests::new_jump_model,
-	types::AccruedInterest,
+	helpers::interest::current_interest_rate, tests::new_jump_model, types::AccruedInterest,
 };
 use composable_traits::{defi::Rate, lending::math::InterestRate, time::SECONDS_PER_YEAR_NAIVE};
 use sp_arithmetic::assert_eq_error_rate;

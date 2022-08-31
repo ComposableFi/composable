@@ -1,26 +1,15 @@
-use crate::{models::borrower_data::BorrowerData, *};
-use crate::validation::BalanceGreaterThenZero;
-use composable_support::math::safe::SafeMul;
+use crate::{models::borrower_data::BorrowerData, validation::BalanceGreaterThenZero, *};
 use composable_support::{
-	math::safe::{SafeAdd, SafeSub},
+	math::safe::{SafeAdd, SafeMul, SafeSub},
 	validation::{TryIntoValidated, Validated},
 };
-use composable_traits::defi::LiftedFixedBalance;
 use composable_traits::{
-	lending::{
-		CollateralLpAmountOf, Lending,
-	},
+	defi::LiftedFixedBalance,
+	lending::{CollateralLpAmountOf, Lending},
 	vault::Vault,
 };
-use frame_support::{
-    pallet_prelude::*,
-    traits::fungibles::Transfer,
-};
-use sp_runtime::FixedPointNumber;
-use sp_runtime::{
-	ArithmeticError,
-	traits::Zero, DispatchError,
-};
+use frame_support::{pallet_prelude::*, traits::fungibles::Transfer};
+use sp_runtime::{traits::Zero, ArithmeticError, DispatchError, FixedPointNumber};
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn do_deposit_collateral(
@@ -90,7 +79,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let market_account = Self::account_id(market_id);
-      		AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+		AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
 			let new_collateral_balance =
 				// REVIEW: Should we default if there's no collateral? Or should an error (something like "NoCollateralToWithdraw") be returned instead?
 				collateral_balance.unwrap_or_default().safe_sub(&amount)?;
@@ -109,8 +98,8 @@ impl<T: Config> Pallet<T> {
 		.expect("impossible; qed;");
 		Ok(())
 	}
-   
-    pub(crate) fn do_collateral_of_account(
+
+	pub(crate) fn do_collateral_of_account(
 		market_id: &MarketId,
 		account: &T::AccountId,
 	) -> Result<CollateralLpAmountOf<Self>, DispatchError> {

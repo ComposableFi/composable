@@ -1,9 +1,6 @@
 use crate::*;
 use composable_traits::{
-	defi::DeFiComposableConfig,
-	lending::BorrowAmountOf,
-	oracle::Oracle,
-	vault::Vault,
+	defi::DeFiComposableConfig, lending::BorrowAmountOf, oracle::Oracle, vault::Vault,
 };
 use frame_support::pallet_prelude::*;
 use sp_runtime::DispatchError;
@@ -42,11 +39,12 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
-	
-    /// Returns the initial pool size for a market with `borrow_asset`. Calculated with
+
+	/// Returns the initial pool size for a market with `borrow_asset`. Calculated with
 	/// [`Config::OracleMarketCreationStake`].
 	pub(crate) fn calculate_initial_market_volume(
 		borrow_asset: <T::Oracle as composable_traits::oracle::Oracle>::AssetId,
 	) -> Result<<T as composable_traits::defi::DeFiComposableConfig>::Balance, DispatchError> {
 		T::Oracle::get_price_inverse(borrow_asset, T::OracleMarketCreationStake::get())
-	}}
+	}
+}

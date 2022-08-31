@@ -1,26 +1,25 @@
-use crate::{models::borrower_data::BorrowerData, weights::WeightInfo, types::MarketId, *};
-use composable_support::{validation::TryIntoValidated, math::safe::{SafeAdd, SafeMul}};
+use crate::{models::borrower_data::BorrowerData, types::MarketId, weights::WeightInfo, *};
+use composable_support::{
+	math::safe::{SafeAdd, SafeMul},
+	validation::TryIntoValidated,
+};
 use composable_traits::{
-	defi::{
-		DeFiEngine, ZeroToOneFixedU128,
-	},
-	lending::{
-		BorrowAmountOf, Lending, CollateralLpAmountOf,
-	},
+	defi::{DeFiEngine, ZeroToOneFixedU128},
+	lending::{BorrowAmountOf, CollateralLpAmountOf, Lending},
 	vault::{FundsAvailability, StrategicVault, Vault},
 };
 use frame_support::{
 	pallet_prelude::*,
-	traits::fungibles::{Inspect as NativeInspect, Mutate, MutateHold, Transfer as NativeTransfer},
-    traits::fungible::Transfer,
+	traits::{
+		fungible::Transfer,
+		fungibles::{Inspect as NativeInspect, Mutate, MutateHold, Transfer as NativeTransfer},
+	},
 	weights::WeightToFee,
 };
-use sp_runtime::{
-	traits::Zero, DispatchError, Percent, ArithmeticError, FixedPointNumber,
-};
+use sp_runtime::{traits::Zero, ArithmeticError, DispatchError, FixedPointNumber, Percent};
 
 impl<T: Config> Pallet<T> {
-		pub(crate) fn do_borrow(
+	pub(crate) fn do_borrow(
 		market_id: &MarketId,
 		borrowing_account: &T::AccountId,
 		amount_to_borrow: BorrowAmountOf<Self>,
@@ -99,7 +98,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-    /// Creates a new [`BorrowerData`] for the given market and account. See [`BorrowerData`]
+	/// Creates a new [`BorrowerData`] for the given market and account. See [`BorrowerData`]
 	/// for more information.
 	pub(crate) fn create_borrower_data(
 		market_id: &<Self as Lending>::MarketId,
@@ -181,21 +180,21 @@ impl<T: Config> Pallet<T> {
 		}?;
 		Ok(())
 	}
-    
+
 	pub(crate) fn do_get_markets_for_borrow(borrow: T::VaultId) -> Vec<MarketId> {
 		Markets::<T>::iter()
 			.filter_map(|(index, market)| market.borrow_asset_vault.eq(&borrow).then_some(index))
 			.collect()
 	}
 
-    pub(crate) fn do_total_available_to_be_borrowed(
+	pub(crate) fn do_total_available_to_be_borrowed(
 		market_id: &MarketId,
 	) -> Result<T::Balance, DispatchError> {
 		let (_, market) = Self::get_market(market_id)?;
 		let borrow_asset_id = T::Vault::asset_id(&market.borrow_asset_vault)?;
 		Ok(<T as Config>::MultiCurrency::balance(borrow_asset_id, &Self::account_id(market_id)))
 	}
-	
+
 	pub(crate) fn do_get_borrow_limit(
 		market_id: &MarketId,
 		account: &T::AccountId,
@@ -218,4 +217,3 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 }
-

@@ -1,9 +1,7 @@
 use super::prelude::*;
 use crate::tests::{
-    borrow, 
-    process_and_progress_blocks, 
-    create_market_for_liquidation_test, 
-    mint_and_deposit_collateral
+	borrow, create_market_for_liquidation_test, mint_and_deposit_collateral,
+	process_and_progress_blocks,
 };
 
 #[test]

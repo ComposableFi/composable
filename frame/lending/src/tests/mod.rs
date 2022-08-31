@@ -1,5 +1,5 @@
 use crate::{currency::*, mocks::general::*, MarketId};
-use composable_support::{validation::TryIntoValidated, math::safe::SafeAdd};
+use composable_support::{math::safe::SafeAdd, validation::TryIntoValidated};
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, MoreThanOneFixedU128, Rate},
 	lending::{math::*, CreateInput, UpdateInput},
@@ -9,7 +9,7 @@ use composable_traits::{
 use frame_support::{
 	assert_ok,
 	dispatch::DispatchResultWithPostInfo,
-	traits::{fungibles::Mutate, OriginTrait, Hooks},
+	traits::{fungibles::Mutate, Hooks, OriginTrait},
 	BoundedVec,
 };
 use pallet_vault::models::VaultInfo;
@@ -221,9 +221,7 @@ pub fn create_simple_market() -> (MarketId, VaultId) {
 /// Initial collateral asset price is `50_000` USDT. Market's collateral factor equals two.
 /// It means that borrow supposed to be undercolateraized when
 /// borrowed amount is higher then one half of collateral amount in terms of USDT.
-pub fn create_market_for_liquidation_test<T>(
-	manager: T::AccountId,
-) -> (crate::MarketId, T::VaultId)
+pub fn create_market_for_liquidation_test<T>(manager: T::AccountId) -> (crate::MarketId, T::VaultId)
 where
 	T: ConfigBound,
 	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
@@ -365,7 +363,7 @@ where
 	<Runtime as frame_system::Config>::Hash: From<[u8; 32]>,
 {
 	let current_block = frame_system::Pallet::<Runtime>::block_number();
-    frame_system::Pallet::<Runtime>::on_finalize(current_block);
+	frame_system::Pallet::<Runtime>::on_finalize(current_block);
 	Pallet::on_finalize(current_block);
 
 	let next_block = current_block

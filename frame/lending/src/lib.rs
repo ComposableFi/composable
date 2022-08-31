@@ -65,32 +65,30 @@ mod repay_borrow;
 
 #[frame_support::pallet]
 pub mod pallet {
-    // ----------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------о
-    
-    use crate::weights::WeightInfo;
+
 	pub(crate) use crate::types::MarketAssets;
-	pub use crate::{
-		types::{MarketIdInner, MarketId},
-	};
+	pub use crate::types::{MarketId, MarketIdInner};
+	use crate::weights::WeightInfo;
 	use composable_traits::{
 		currency::CurrencyFactory,
 		defi::{DeFiComposableConfig, *},
 		lending::{
-            BorrowAmountOf, CollateralLpAmountOf, Lending, 
-            TotalDebtWithInterest, MarketConfig, RepayStrategy,
-            UpdateInput, CreateInput},
+			BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
+			RepayStrategy, TotalDebtWithInterest, UpdateInput,
+		},
 		liquidation::Liquidation,
 		oracle::Oracle,
 		time::Timestamp,
 		vault::StrategicVault,
 	};
-    
-	use composable_support::{
-	    validation::TryIntoValidated,
-    };
-    use frame_support::{
+
+	pub use crate::crypto;
+	use codec::Codec;
+	use composable_support::validation::TryIntoValidated;
+	use frame_support::{
 		pallet_prelude::*,
 		traits::{
 			fungible::{Inspect as NativeInspect, Transfer as NativeTransfer},
@@ -106,29 +104,27 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use sp_core::crypto::KeyTypeId;
-    use sp_runtime::{
-        DispatchError, Percent,
-        traits::{Get, AccountIdConversion}, 
-        KeyTypeId as CryptoKeyTypeId};
+	use sp_runtime::{
+		traits::{AccountIdConversion, Get},
+		DispatchError, KeyTypeId as CryptoKeyTypeId, Percent,
+	};
 	use sp_std::{fmt::Debug, vec::Vec};
-	use codec::Codec;
-	pub use crate::crypto;
-	
-    // ----------------------------------------------------------------------------------------------------
+
+	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
 	// ----------------------------------------------------------------------------------------------------
 
-    #[pallet::pallet]
+	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
-    // ----------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------
 	//                                             Config Trait
 	// ----------------------------------------------------------------------------------------------------
-    
-    // Configure the pallet by specifying the parameters and types on which it depends.   
-    #[pallet::config]
+
+	// Configure the pallet by specifying the parameters and types on which it depends.
+	#[pallet::config]
 	pub trait Config:
 		CreateSignedTransaction<Call<Self>> + frame_system::Config + DeFiComposableConfig
 	{
@@ -237,8 +233,8 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 	//                                             Pallet Types Aliases
 	// ----------------------------------------------------------------------------------------------------
-    
-    /// Simple type alias around [`MarketConfig`] for this pallet.
+
+	/// Simple type alias around [`MarketConfig`] for this pallet.
 	pub(crate) type MarketConfigOf<T> = MarketConfig<
 		<T as Config>::VaultId,
 		<T as DeFiComposableConfig>::MayBeAssetId,
@@ -246,24 +242,24 @@ pub mod pallet {
 		<T as Config>::LiquidationStrategyId,
 		<T as frame_system::Config>::BlockNumber,
 	>;
-    /// A convenience wrapper around [`CreateInput`].
-    pub type CreateInputOf<T> = CreateInput<
-	    <T as Config>::LiquidationStrategyId,
-	    <T as DeFiComposableConfig>::MayBeAssetId,
-	    <T as frame_system::Config>::BlockNumber,
-    >;
-	
-    // ----------------------------------------------------------------------------------------------------
-	//                                             Pallet Constants 
+	/// A convenience wrapper around [`CreateInput`].
+	pub type CreateInputOf<T> = CreateInput<
+		<T as Config>::LiquidationStrategyId,
+		<T as DeFiComposableConfig>::MayBeAssetId,
+		<T as frame_system::Config>::BlockNumber,
+	>;
+
 	// ----------------------------------------------------------------------------------------------------
-    
-    pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
+	//                                             Pallet Constants
+	// ----------------------------------------------------------------------------------------------------
+
+	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
 	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"lend");
 
-    // ----------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
 	// ----------------------------------------------------------------------------------------------------
-        
+
 	/// Lending instances counter
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)] // MarketId implements Default, so ValueQuery is ok here. REVIEW: Should it?
@@ -358,11 +354,11 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)] // LastBlockTimestamp is set on genesis (see below) so it will always be set.
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
-    // ----------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------
 	//                                            Runtime Events
 	// ----------------------------------------------------------------------------------------------------
-	
-    #[pallet::event]
+
+	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Event emitted when new lending market is created.
@@ -395,7 +391,7 @@ pub mod pallet {
 		MayGoUnderCollateralizedSoon { market_id: MarketId, account: T::AccountId },
 	}
 
-    // ----------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Errors
 	// ----------------------------------------------------------------------------------------------------
 
@@ -458,11 +454,11 @@ pub mod pallet {
 		CannotBorrowFromMarketWithUnbalancedVault,
 	}
 
-    // ----------------------------------------------------------------------------------------------------
+	// ----------------------------------------------------------------------------------------------------
 	//                                                Hooks
 	// ----------------------------------------------------------------------------------------------------
-	
-    #[pallet::hooks]
+
+	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
 			let mut weight: Weight = 0;
@@ -489,8 +485,8 @@ pub mod pallet {
 			Self::do_offchain_worker(_block_number)
 		}
 	}
-    
-    // ----------------------------------------------------------------------------------------------------
+
+	// ----------------------------------------------------------------------------------------------------
 	//                                         Genesis Configuration
 	// ----------------------------------------------------------------------------------------------------
 
@@ -527,133 +523,141 @@ pub mod pallet {
 		}
 	}
 
-    // ----------------------------------------------------------------------------------------------------
-	//                                     Lending Trait Implementation 
 	// ----------------------------------------------------------------------------------------------------
-    impl<T: Config> Lending for Pallet<T> {
-	type VaultId = T::VaultId;
-	type MarketId = MarketId;
-	type BlockNumber = T::BlockNumber;
-	type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
-	type Oracle = T::Oracle;
+	//                                     Lending Trait Implementation
+	// ----------------------------------------------------------------------------------------------------
+	impl<T: Config> Lending for Pallet<T> {
+		type VaultId = T::VaultId;
+		type MarketId = MarketId;
+		type BlockNumber = T::BlockNumber;
+		type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
+		type Oracle = T::Oracle;
 
-	fn create_market(
-		manager: Self::AccountId,
-		input: CreateInputOf<T>,
-		keep_alive: bool,
-	) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
-		Self::do_create_market(manager, input.try_into_validated()?, keep_alive)
+		fn create_market(
+			manager: Self::AccountId,
+			input: CreateInputOf<T>,
+			keep_alive: bool,
+		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
+			Self::do_create_market(manager, input.try_into_validated()?, keep_alive)
+		}
+
+		fn update_market(
+			manager: Self::AccountId,
+			market_id: Self::MarketId,
+			input: UpdateInput<Self::LiquidationStrategyId, Self::BlockNumber>,
+		) -> DispatchResultWithPostInfo {
+			Self::do_update_market(manager, market_id, input.try_into_validated()?)
+		}
+
+		fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
+			T::PalletId::get().into_sub_account_truncating(market_id)
+		}
+
+		fn deposit_collateral(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+			amount: CollateralLpAmountOf<Self>,
+			keep_alive: bool,
+		) -> Result<(), DispatchError> {
+			Self::do_deposit_collateral(
+				market_id,
+				account,
+				amount.try_into_validated()?,
+				keep_alive,
+			)
+		}
+
+		fn withdraw_collateral(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+			amount: CollateralLpAmountOf<Self>,
+		) -> Result<(), DispatchError> {
+			Self::do_withdraw_collateral(market_id, account, amount.try_into_validated()?)
+		}
+
+		fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
+			Self::do_get_markets_for_borrow(borrow)
+		}
+
+		fn borrow(
+			market_id: &Self::MarketId,
+			borrowing_account: &Self::AccountId,
+			amount_to_borrow: BorrowAmountOf<Self>,
+		) -> Result<(), DispatchError> {
+			Self::do_borrow(market_id, borrowing_account, amount_to_borrow)
+		}
+
+		/// NOTE: Must be called in transaction!
+		fn repay_borrow(
+			market_id: &Self::MarketId,
+			from: &Self::AccountId,
+			beneficiary: &Self::AccountId,
+			total_repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
+			keep_alive: bool,
+		) -> Result<BorrowAmountOf<Self>, DispatchError> {
+			Self::do_repay_borrow(market_id, from, beneficiary, total_repay_amount, keep_alive)
+		}
+
+		fn total_borrowed_from_market_excluding_interest(
+			market_id: &Self::MarketId,
+		) -> Result<Self::Balance, DispatchError> {
+			Self::do_total_borrowed_from_market_excluding_interest(market_id)
+		}
+
+		fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
+			Self::do_total_interest(market_id)
+		}
+
+		fn accrue_interest(
+			market_id: &Self::MarketId,
+			now: Timestamp,
+		) -> Result<(), DispatchError> {
+			Self::do_accrue_interest(market_id, now)
+		}
+
+		fn total_available_to_be_borrowed(
+			market_id: &Self::MarketId,
+		) -> Result<Self::Balance, DispatchError> {
+			Self::do_total_available_to_be_borrowed(market_id)
+		}
+
+		fn calculate_utilization_ratio(
+			cash: Self::Balance,
+			borrows: Self::Balance,
+		) -> Result<Percent, DispatchError> {
+			Self::do_calculate_utilization_ratio(cash, borrows)
+		}
+
+		fn total_debt_with_interest(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+		) -> Result<TotalDebtWithInterest<BorrowAmountOf<Self>>, DispatchError> {
+			Self::do_total_debt_with_interest(market_id, account)
+		}
+
+		fn collateral_of_account(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+		) -> Result<CollateralLpAmountOf<Self>, DispatchError> {
+			Self::do_collateral_of_account(market_id, account)
+		}
+
+		fn collateral_required(
+			market_id: &Self::MarketId,
+			borrow_amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			Self::do_collateral_required(market_id, borrow_amount)
+		}
+
+		fn get_borrow_limit(
+			market_id: &Self::MarketId,
+			account: &Self::AccountId,
+		) -> Result<Self::Balance, DispatchError> {
+			Self::do_get_borrow_limit(market_id, account)
+		}
 	}
-
-	fn update_market(
-		manager: Self::AccountId,
-		market_id: Self::MarketId,
-		input: UpdateInput<Self::LiquidationStrategyId, Self::BlockNumber>,
-	) -> DispatchResultWithPostInfo {
-		Self::do_update_market(manager, market_id, input.try_into_validated()?)
-	}
-
-	fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
-		T::PalletId::get().into_sub_account_truncating(market_id)
-	}
-
-	fn deposit_collateral(
-		market_id: &Self::MarketId,
-		account: &Self::AccountId,
-		amount: CollateralLpAmountOf<Self>,
-		keep_alive: bool,
-	) -> Result<(), DispatchError> {
-		Self::do_deposit_collateral(market_id, account, amount.try_into_validated()?, keep_alive)
-	}
-
-	fn withdraw_collateral(
-		market_id: &Self::MarketId,
-		account: &Self::AccountId,
-		amount: CollateralLpAmountOf<Self>,
-	) -> Result<(), DispatchError> {
-		Self::do_withdraw_collateral(market_id, account, amount.try_into_validated()?)
-	}
-    
-	fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
-        Self::do_get_markets_for_borrow(borrow)	
-    }
-
-	fn borrow(
-		market_id: &Self::MarketId,
-		borrowing_account: &Self::AccountId,
-		amount_to_borrow: BorrowAmountOf<Self>,
-	) -> Result<(), DispatchError> {
-        Self::do_borrow(market_id, borrowing_account, amount_to_borrow)	
-    }
-
-	/// NOTE: Must be called in transaction!
-	fn repay_borrow(
-		market_id: &Self::MarketId,
-		from: &Self::AccountId,
-		beneficiary: &Self::AccountId,
-		total_repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
-		keep_alive: bool,
-	) -> Result<BorrowAmountOf<Self>, DispatchError> {
-        Self::do_repay_borrow(market_id, from, beneficiary, total_repay_amount, keep_alive)
-    }
-	
-    fn total_borrowed_from_market_excluding_interest(
-		market_id: &Self::MarketId,
-	) -> Result<Self::Balance, DispatchError> {
-         Self::do_total_borrowed_from_market_excluding_interest(market_id)	
-    }
-
-    fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
-        Self::do_total_interest(market_id)	
-    }
-
-    fn accrue_interest(market_id: &Self::MarketId, now: Timestamp) -> Result<(), DispatchError>{
-        Self::do_accrue_interest(market_id, now) 
-    }
-
-	fn total_available_to_be_borrowed(
-		market_id: &Self::MarketId,
-	) -> Result<Self::Balance, DispatchError> {
-        Self::do_total_available_to_be_borrowed(market_id)	
-    }
-	
-    fn calculate_utilization_ratio(
-		cash: Self::Balance,
-		borrows: Self::Balance,
-	) -> Result<Percent, DispatchError> {
-        Self::do_calculate_utilization_ratio(cash, borrows)	
-	}
-
-	fn total_debt_with_interest(
-		market_id: &Self::MarketId,
-		account: &Self::AccountId,
-	) -> Result<TotalDebtWithInterest<BorrowAmountOf<Self>>, DispatchError> {
-        Self::do_total_debt_with_interest(market_id, account) 
-    }
-
-	fn collateral_of_account(
-		market_id: &Self::MarketId,
-		account: &Self::AccountId,
-	) -> Result<CollateralLpAmountOf<Self>, DispatchError> {
-        Self::do_collateral_of_account(market_id, account)	
-    }
-
-	fn collateral_required(
-		market_id: &Self::MarketId,
-		borrow_amount: Self::Balance,
-	) -> Result<Self::Balance, DispatchError> {
-        Self::do_collateral_required(market_id, borrow_amount)	
-    }
-
-	fn get_borrow_limit(
-		market_id: &Self::MarketId,
-		account: &Self::AccountId,
-	) -> Result<Self::Balance, DispatchError> {
-        Self::do_get_borrow_limit(market_id, account)
-    }
-}
-    // ----------------------------------------------------------------------------------------------------
-	//                                     Other Traits Implementations  
+	// ----------------------------------------------------------------------------------------------------
+	//                                     Other Traits Implementations
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
@@ -662,8 +666,8 @@ pub mod pallet {
 		type AccountId = <T as frame_system::Config>::AccountId;
 	}
 
-    // ----------------------------------------------------------------------------------------------------
-	//                                           Callable Functions  
+	// ----------------------------------------------------------------------------------------------------
+	//                                           Callable Functions
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::call]
@@ -823,5 +827,4 @@ pub mod pallet {
 			Ok(().into())
 		}
 	}
-
 }

@@ -1,25 +1,19 @@
 use crate::{
 	validation::{
-		AssetIsSupportedByOracle, CurrencyPairIsNotSame, MarketModelValid,
-		UpdateInputValid,
-	}, *,
+		AssetIsSupportedByOracle, CurrencyPairIsNotSame, MarketModelValid, UpdateInputValid,
+	},
+	*,
 };
 use composable_support::validation::Validated;
 use composable_traits::{
 	currency::CurrencyFactory,
-	lending::{
-		Lending, MarketConfig,
-		UpdateInput,
-	},
+	lending::{Lending, MarketConfig, UpdateInput},
 	vault::{Deposit, Vault, VaultConfig},
 };
-use frame_support::{
-	pallet_prelude::*,
-	traits::fungibles::Transfer,
-};
+use frame_support::{pallet_prelude::*, traits::fungibles::Transfer};
 use sp_runtime::{
-	traits::{One, Saturating, Zero}, 
-    DispatchError, FixedU128, Perquintill,
+	traits::{One, Saturating, Zero},
+	DispatchError, FixedU128, Perquintill,
 };
 
 impl<T: Config> Pallet<T> {
@@ -63,7 +57,8 @@ impl<T: Config> Pallet<T> {
 				},
 			)?;
 
-			let initial_market_volume = Self::calculate_initial_market_volume(config_input.borrow_asset())?;
+			let initial_market_volume =
+				Self::calculate_initial_market_volume(config_input.borrow_asset())?;
 
 			ensure!(
 				initial_market_volume > T::Balance::zero(),

@@ -1,9 +1,7 @@
+pub use crate::types::{MarketId, MarketIdInner};
 use crate::*;
-pub use crate::
-	types::{MarketIdInner, MarketId};
 use frame_support::pallet_prelude::*;
-use frame_system::
-    offchain::{SendSignedTransaction, Signer};
+use frame_system::offchain::{SendSignedTransaction, Signer};
 use sp_std::vec;
 
 impl<T: Config> Pallet<T> {
@@ -15,15 +13,19 @@ impl<T: Config> Pallet<T> {
 		}
 		for (market_id, account, _) in DebtIndex::<T>::iter() {
 			//Check that it should liquidate before liquidations
-			let should_be_liquidated =
-				match Self::should_liquidate(&market_id, &account) {
-					Ok(status) => status,
-					Err(error) => {
-						log::error!("Liquidation necessity check failed, market_id: {:?}, account: {:?},
-									error: {:?}", market_id, account, error);
-						false
-					},
-				};
+			let should_be_liquidated = match Self::should_liquidate(&market_id, &account) {
+				Ok(status) => status,
+				Err(error) => {
+					log::error!(
+						"Liquidation necessity check failed, market_id: {:?}, account: {:?},
+									error: {:?}",
+						market_id,
+						account,
+						error
+					);
+					false
+				},
+			};
 			if !should_be_liquidated {
 				continue
 			}
@@ -54,4 +56,3 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 }
-

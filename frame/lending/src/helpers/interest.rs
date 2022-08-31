@@ -1,20 +1,16 @@
 use crate::{types::AccruedInterest, *};
-use composable_support::
-	math::safe::{SafeDiv, SafeMul, SafeSub, SafeAdd};
+use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
 use composable_traits::{
 	defi::*,
 	lending::{
 		math::{self, *},
 		BorrowAmountOf, Lending, TotalDebtWithInterest,
 	},
-	time::{Timestamp, DurationSeconds, SECONDS_PER_YEAR_NAIVE},
+	time::{DurationSeconds, Timestamp, SECONDS_PER_YEAR_NAIVE},
 };
-use frame_support::
-	traits::
-		fungibles::{Inspect, InspectHold, Mutate};
+use frame_support::traits::fungibles::{Inspect, InspectHold, Mutate};
 use sp_runtime::{
-	ArithmeticError, DispatchError, FixedPointNumber, Percent, FixedU128,
-    traits::Zero,
+	traits::Zero, ArithmeticError, DispatchError, FixedPointNumber, FixedU128, Percent,
 };
 
 impl<T: Config> Pallet<T> {
@@ -45,7 +41,10 @@ impl<T: Config> Pallet<T> {
 		Ok(total_debt_interest)
 	}
 
-    pub(crate) fn do_accrue_interest(market_id: &MarketId, now: Timestamp) -> Result<(), DispatchError> {
+	pub(crate) fn do_accrue_interest(
+		market_id: &MarketId,
+		now: Timestamp,
+	) -> Result<(), DispatchError> {
 		// we maintain original borrow principals intact on hold,
 		// but accrue total borrow balance by adding to market debt balance
 		// when user pays loan back, we reduce marked accrued debt
@@ -59,9 +58,9 @@ impl<T: Config> Pallet<T> {
 			total_borrowed_from_market_excluding_interest,
 		)?;
 
-		let delta_time = now.checked_sub(LastBlockTimestamp::<T>::get()).ok_or(
-			ArithmeticError::Underflow,
-		)?;
+		let delta_time = now
+			.checked_sub(LastBlockTimestamp::<T>::get())
+			.ok_or(ArithmeticError::Underflow)?;
 
 		let borrow_index =
 			BorrowIndex::<T>::get(market_id).ok_or(Error::<T>::MarketDoesNotExist)?;
@@ -119,7 +118,7 @@ impl<T: Config> Pallet<T> {
 
 				if account_principal.is_zero() {
 					Ok(TotalDebtWithInterest::NoDebt)
-				} else { 
+				} else {
 					// REVIEW
 					let account_principal =
 						LiftedFixedBalance::saturating_from_integer(account_principal.into());
@@ -137,43 +136,43 @@ impl<T: Config> Pallet<T> {
 			None => Ok(TotalDebtWithInterest::NoDebt),
 		}
 	}
-    /// ```python
-    /// delta_interest_rate = delta_time / period_interest_rate
-    /// debt_delta = debt_principal * delta_interest_rate
-    /// new_accrued_debt = accrued_debt + debt_delta
-    /// total_debt = debt_principal + new_accrued_debt
-    /// ```
-    pub(crate) fn accrue_interest_internal<I: InterestRate>(
-	utilization_ratio: Percent,
-	interest_rate_model: &mut I,
-	borrow_index: OneOrMoreFixedU128,
-	delta_time: DurationSeconds,
-	total_borrows: T::Balance,
-) -> Result<AccruedInterest<T>, DispatchError> {
-	let total_borrows: FixedU128 =
-		FixedU128::checked_from_integer(Into::<u128>::into(total_borrows))
-			.ok_or(ArithmeticError::Overflow)?;
+	/// ```python
+	/// delta_interest_rate = delta_time / period_interest_rate
+	/// debt_delta = debt_principal * delta_interest_rate
+	/// new_accrued_debt = accrued_debt + debt_delta
+	/// total_debt = debt_principal + new_accrued_debt
+	/// ```
+	pub(crate) fn accrue_interest_internal<I: InterestRate>(
+		utilization_ratio: Percent,
+		interest_rate_model: &mut I,
+		borrow_index: OneOrMoreFixedU128,
+		delta_time: DurationSeconds,
+		total_borrows: T::Balance,
+	) -> Result<AccruedInterest<T>, DispatchError> {
+		let total_borrows: FixedU128 =
+			FixedU128::checked_from_integer(Into::<u128>::into(total_borrows))
+				.ok_or(ArithmeticError::Overflow)?;
 
-	let borrow_rate = interest_rate_model
-		.get_borrow_rate(utilization_ratio)
-		.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
+		let borrow_rate = interest_rate_model
+			.get_borrow_rate(utilization_ratio)
+			.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
 
-	// borrow_rate * index * delta_time / SECONDS_PER_YEAR_NAIVE + index
-	let borrow_rate_delta = borrow_rate
-		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
-		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?;
+		// borrow_rate * index * delta_time / SECONDS_PER_YEAR_NAIVE + index
+		let borrow_rate_delta = borrow_rate
+			.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
+			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?;
 
-	let new_borrow_index = borrow_rate_delta.safe_mul(&borrow_index)?.safe_add(&borrow_index)?;
+		let new_borrow_index =
+			borrow_rate_delta.safe_mul(&borrow_index)?.safe_add(&borrow_index)?;
 
-	let accrued_increment = total_borrows
-		.safe_mul(&borrow_rate_delta)?
-		.checked_mul_int(1_u64)
-		.ok_or(ArithmeticError::Overflow)?
-		.into();
+		let accrued_increment = total_borrows
+			.safe_mul(&borrow_rate_delta)?
+			.checked_mul_int(1_u64)
+			.ok_or(ArithmeticError::Overflow)?
+			.into();
 
-	Ok(AccruedInterest { accrued_increment, new_borrow_index })
-}
-
+		Ok(AccruedInterest { accrued_increment, new_borrow_index })
+	}
 }
 
 /// Retrieve the current interest rate for the given `market_id`.
@@ -181,7 +180,6 @@ impl<T: Config> Pallet<T> {
 pub fn current_interest_rate<T: Config>(
 	market_id: MarketIdInner,
 ) -> Result<composable_traits::defi::Rate, DispatchError> {
-
 	let market_id = MarketId::new(market_id);
 	let total_borrowed_from_market_excluding_interest =
 		Pallet::<T>::total_borrowed_from_market_excluding_interest(&market_id)?;

@@ -1,8 +1,5 @@
 use super::prelude::*;
-use crate::{
-    tests::process_and_progress_blocks, 
-    models::borrower_data::BorrowerData
-};
+use crate::{models::borrower_data::BorrowerData, tests::process_and_progress_blocks};
 use composable_traits::defi::LiftedFixedBalance;
 
 #[test]
@@ -163,9 +160,7 @@ fn old_price() {
 		set_price(USDT::ID, USDT::ONE);
 
 		// skip blocks
-		process_and_progress_blocks::<Lending, Runtime>(
-			DEFAULT_MAX_PRICE_AGE as usize + 1,
-		);
+		process_and_progress_blocks::<Lending, Runtime>(DEFAULT_MAX_PRICE_AGE as usize + 1);
 
 		// Try to borrow by SECOND_PRICE
 		assert_noop!(
@@ -181,9 +176,7 @@ fn old_price() {
 		assert_ok!(Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),);
 
 		// skip blocks
-		process_and_progress_blocks::<Lending, Runtime>(
-			DEFAULT_MAX_PRICE_AGE as usize + 1,
-		);
+		process_and_progress_blocks::<Lending, Runtime>(DEFAULT_MAX_PRICE_AGE as usize + 1);
 
 		// Set BTC price
 		set_price(BTC::ID, BTC::ONE.mul(SECOND_PRICE));
@@ -196,9 +189,7 @@ fn old_price() {
 		);
 
 		// skip blocks
-		process_and_progress_blocks::<Lending, Runtime>(
-			DEFAULT_MAX_PRICE_AGE as usize + 1,
-		);
+		process_and_progress_blocks::<Lending, Runtime>(DEFAULT_MAX_PRICE_AGE as usize + 1);
 
 		// Try to repay by SECOND_PRICE
 		assert_ok!(Lending::repay_borrow(

@@ -1,15 +1,11 @@
-use crate::*;
-use crate::types::InitializeBlockCallCounters;
+use crate::{types::InitializeBlockCallCounters, *};
 use composable_traits::{
-	lending::Lending, 
+	lending::Lending,
 	vault::{FundsAvailability, StrategicVault, Vault},
 };
 use frame_support::{
 	storage::{with_transaction, TransactionOutcome},
-	traits::{
-        fungibles::Inspect,
-		UnixTime,
-	},
+	traits::{fungibles::Inspect, UnixTime},
 };
 use sp_runtime::DispatchError;
 
@@ -130,4 +126,3 @@ impl<T: Config> Pallet<T> {
 		<T::Vault as StrategicVault>::deposit(&config.borrow_asset_vault, market_account, balance)
 	}
 }
-
