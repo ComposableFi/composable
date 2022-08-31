@@ -115,6 +115,8 @@ pub mod pallet {
 			owner: T::AccountId,
 			/// End block
 			end_block: T::BlockNumber,
+			/// Pool asset
+			asset_id: T::AssetId,
 		},
 		Staked {
 			/// Id of newly created stake.
@@ -576,7 +578,7 @@ pub mod pallet {
 				StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
 			>,
 		) -> Result<Self::RewardPoolId, DispatchError> {
-			let (owner, pool_id, end_block) = match pool_config {
+			let pool_id = match pool_config {
 				RewardRateBasedIncentive {
 					owner,
 					asset_id,
@@ -618,12 +620,19 @@ pub mod pallet {
 							lock,
 						},
 					);
+
+					Self::deposit_event(Event::<T>::RewardPoolCreated {
+						pool_id,
+						owner,
+						end_block,
+						asset_id,
+					});
+
 					// TODO (vim): Create the financial NFT collection for the rewards pool
-					Ok((owner, pool_id, end_block))
+					Ok(pool_id)
 				},
 				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
 			}?;
-			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
 			Ok(pool_id)
 		}
 	}
