@@ -115,6 +115,8 @@ pub mod pallet {
 			owner: T::AccountId,
 			/// End block
 			end_block: T::BlockNumber,
+			/// Pool asset
+			asset_id: T::AssetId,
 		},
 		Staked {
 			/// Id of newly created stake.
@@ -147,7 +149,7 @@ pub mod pallet {
 		},
 		/// Split stake position into two positions
 		SplitPosition {
-			positions: Vec<T::PositionId>,
+			positions: Vec<(T::PositionId, BalanceOf<T>)>,
 		},
 		/// Reward transfer event.
 		RewardTransferred {
@@ -593,7 +595,7 @@ pub mod pallet {
 				StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
 			>,
 		) -> Result<Self::RewardPoolId, DispatchError> {
-			let (owner, pool_id, end_block) = match pool_config {
+			let pool_id = match pool_config {
 				RewardRateBasedIncentive {
 					owner,
 					asset_id,
@@ -635,12 +637,19 @@ pub mod pallet {
 							lock,
 						},
 					);
+
+					Self::deposit_event(Event::<T>::RewardPoolCreated {
+						pool_id,
+						owner,
+						end_block,
+						asset_id,
+					});
+
 					// TODO (vim): Create the financial NFT collection for the rewards pool
-					Ok((owner, pool_id, end_block))
+					Ok(pool_id)
 				},
 				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
 			}?;
-			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
 			Ok(pool_id)
 		}
 	}
@@ -850,6 +859,7 @@ pub mod pallet {
 			position: &Self::PositionId,
 			ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
+			let mut old_position_stake = BalanceOf::<T>::zero();
 			let mut old_position =
 				Stakes::<T>::try_mutate(position, |old_stake| match old_stake {
 					Some(stake) => {
@@ -863,6 +873,7 @@ pub mod pallet {
 								*value = ratio.mul_floor(*value);
 							}
 						}
+						old_position_stake = stake.stake;
 						Ok(old_value)
 					},
 					None => Err(Error::<T>::StakeNotFound),
@@ -882,13 +893,13 @@ pub mod pallet {
 				..old_position
 			};
 			let new_position = StakeCount::<T>::increment()?;
-			Stakes::<T>::insert(new_position, new_stake);
+			Stakes::<T>::insert(new_position, &new_stake);
 			// TODO (vim):
 			// 	1. Create the new financial NFT for the new position
 			//	2. transfer the split staked amount to the NFT account and lock it
 			//	3. transfer the split share amount to the NFT account and lock it
 			Self::deposit_event(Event::<T>::SplitPosition {
-				positions: vec![*position, new_position],
+				positions: vec![(*position, old_position_stake), (new_position, new_stake.stake)],
 			});
 			Ok([*position, new_position])
 		}

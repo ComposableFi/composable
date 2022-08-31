@@ -42,7 +42,7 @@ fn test_create_reward_pool() {
 
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
-            Event::StakingRewards(crate::Event::RewardPoolCreated { owner, pool_id, .. })
+            Event::StakingRewards(crate::Event::RewardPoolCreated { owner, pool_id, asset_id: PICA::ID, .. })
             if owner == ALICE && pool_id == 1)
 		});
 
@@ -537,8 +537,8 @@ fn test_split_postion() {
 		);
 		assert_last_event::<Test, _>(|e| {
 			matches!(&e.event,
-            Event::StakingRewards(crate::Event::SplitPosition { positions })
-            if positions == &vec![1_u128.into(), 2_u128.into()])
+			Event::StakingRewards(crate::Event::SplitPosition { positions })
+			if positions == &vec![(1_u128.into(), stake1.stake), (2_u128.into(), stake2.stake)])
 		});
 	});
 }
