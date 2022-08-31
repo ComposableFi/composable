@@ -51,6 +51,7 @@ pkgs.arion.build {
             # ============ COMMON ===============
             "${db-container-name}" = mk-composable-container
               (import ./services/postgres.nix {
+                inherit pkgs;
                 database = default-db;
                 version = "14";
                 init-scripts = pkgs.writeTextFile {
@@ -81,6 +82,7 @@ pkgs.arion.build {
               });
             hasura-aggregated = mk-composable-container
               (import ./services/hasura.nix {
+                inherit pkgs;
                 database = hasura-db;
                 graphql-port = 8080;
                 metadata = let

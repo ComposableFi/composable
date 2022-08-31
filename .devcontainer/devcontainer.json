@@ -1,13 +1,14 @@
 {
 	"name": "Composable Devcontainer",
 	"build": {
-		"dockerfile": "Dockerfile"
+		"dockerfile": "Dockerfile",
+		"context": "./.",
 	},
 	"hostRequirements": {
 		"memory": "20gb",
 		"cpus": 8
 	},
-	// Set *default* container specific settings.json values on container create.
+	"postCreateCommand": "sudo chmod 1777 /tmp/ && sudo setfacl --remove-default  /tmp",
 	"settings": {
 		"workbench.colorTheme": "GitHub Dark",
 		"workbench.iconTheme": "vscode-icons",
@@ -68,7 +69,6 @@
 		"zxh404.vscode-proto3",
 		"rangav.vscode-thunder-client",
 		"adam-bender.commit-message-editor",
-
 		"jebbs.plantuml",
 		"bierner.markdown-mermaid",
 		"bpruitt-goddard.mermaid-markdown-syntax-highlighting",
@@ -76,4 +76,9 @@
 		"humao.rest-client",
 	],
 	"remoteUser": "vscode",
+	"features": {
+		// TODO: replace adhoc injection and derivation with manual docker/nix 
+		"docker-in-docker": "20.10",
+		//"node": "16"
+	}
 }
