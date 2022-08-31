@@ -264,6 +264,7 @@ seqs # sequences?
 orac
 modlpy
 twox
+liquidat
 
 # can't have apostrophies in identifiers
 doesnt

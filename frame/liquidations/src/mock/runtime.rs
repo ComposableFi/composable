@@ -234,7 +234,7 @@ impl pallet_dutch_auction::Config for Runtime {
 }
 
 parameter_types! {
-	pub const LiquidationPalletId : PalletId = PalletId(*b"liquidatn");
+	pub const LiquidationPalletId : PalletId = PalletId(*b"liquidat");
 }
 
 type LiquidationStrategyId = u32;
