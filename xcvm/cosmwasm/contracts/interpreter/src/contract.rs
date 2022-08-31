@@ -1,7 +1,8 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, CosmosMsg, DepsMut, Env, MessageInfo, QueryRequest, Response, StdError, WasmQuery,
+	to_binary, CosmosMsg, DepsMut, Env, Event, MessageInfo, QueryRequest, Response, StdError,
+	WasmQuery,
 };
 use serde::Serialize;
 
@@ -26,7 +27,9 @@ pub fn instantiate(
 	let config = Config { registry_address };
 	CONFIG.save(deps.storage, &config)?;
 
-	Ok(Response::new().set_data(to_binary(&(msg.network_id.0, msg.user_id))?))
+	Ok(Response::new()
+		.add_event(Event::new("xcvm.interpreter").add_attribute("action", "instantiated"))
+		.set_data(to_binary(&(msg.network_id.0, msg.user_id))?))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -58,7 +61,15 @@ pub fn interpret_program(
 				interpret_transfer(&mut deps, to, assets, response),
 		}?;
 	}
-	Ok(response)
+
+	Ok(response.add_event(
+		Event::new("xcvm.interpreter")
+			.add_attribute("action", "executed")
+			.add_attribute(
+				"program",
+				core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
+			),
+	))
 }
 
 pub fn interpret_call(encoded: Vec<u8>, response: Response) -> Result<Response, ContractError> {
@@ -85,9 +96,11 @@ pub fn interpret_spawn(
 
 	let data = SpawnEvent { network, salt, assets, program };
 
-	Ok(response.add_attribute(
-		"spawn",
-		serde_json_wasm::to_string(&data).map_err(|_| ContractError::DataSerializationError)?,
+	Ok(response.add_event(
+		Event::new("xcvm.interpreter").add_attribute("action", "spawn").add_attribute(
+			"program",
+			serde_json_wasm::to_string(&data).map_err(|_| ContractError::DataSerializationError)?,
+		),
 	))
 }
 
@@ -110,21 +123,17 @@ pub fn interpret_transfer(
 		let contract = Cw20Contract(cw20_address.addr.clone());
 
 		if amount.is_zero() {
-			return Err(ContractError::ZeroTransferAmount)
+			continue
 		}
 
 		let transfer_amount = {
-			if amount.slope.0 == 0 {
-				amount.intercept.0
-			} else {
-				let query_msg = Cw20QueryMsg::Balance { address: to.clone() };
-				let response: BalanceResponse =
-					deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
-						contract_addr: cw20_address.addr.clone().into_string(),
-						msg: to_binary(&query_msg)?,
-					}))?;
-				amount.apply(response.balance.into())
-			}
+			let query_msg = Cw20QueryMsg::Balance { address: to.clone() };
+			let response: BalanceResponse =
+				deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
+					contract_addr: cw20_address.addr.clone().into_string(),
+					msg: to_binary(&query_msg)?,
+				}))?;
+			amount.apply(response.balance.into())
 		};
 
 		response = response.add_message(contract.call(Cw20ExecuteMsg::Transfer {

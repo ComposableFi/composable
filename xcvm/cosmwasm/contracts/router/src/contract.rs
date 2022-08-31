@@ -11,7 +11,7 @@ use cosmwasm_std::{
 };
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
-use xcvm_core::{Funds, NetworkId};
+use xcvm_core::{Displayed, Funds, NetworkId};
 use xcvm_interpreter::msg::{
 	ExecuteMsg as InterpreterExecuteMsg, InstantiateMsg as InterpreterInstantiateMsg,
 };
@@ -52,7 +52,7 @@ pub fn handle_run(
 	network_id: NetworkId,
 	user_id: UserId,
 	interpreter_execute_msg: InterpreterExecuteMsg,
-	funds: Funds,
+	funds: Funds<Displayed<u128>>,
 ) -> Result<Response, ContractError> {
 	match INTERPRETERS.load(deps.storage, (network_id.0, user_id.clone())) {
 		Ok(interpreter_address) => {
@@ -92,7 +92,7 @@ pub fn handle_run(
 fn send_funds_to_interpreter(
 	deps: Deps,
 	interpreter_address: Addr,
-	funds: Funds,
+	funds: Funds<Displayed<u128>>,
 ) -> StdResult<Response> {
 	let mut response = Response::new();
 	let registry_address = CONFIG.load(deps.storage)?.registry_address.into_string();
@@ -108,13 +108,13 @@ fn send_funds_to_interpreter(
 		)?;
 		let contract = Cw20Contract(cw20_address.addr.clone());
 
-		if amount.intercept.0 == 0 {
+		if amount.0 == 0 {
 			continue
 		}
 
 		response = response.add_message(contract.call(Cw20ExecuteMsg::Transfer {
 			recipient: interpreter_address.clone(),
-			amount: amount.intercept.0.into(),
+			amount: amount.0.into(),
 		})?);
 	}
 	Ok(response)

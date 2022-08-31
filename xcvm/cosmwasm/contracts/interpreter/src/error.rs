@@ -12,6 +12,6 @@ pub enum ContractError {
     #[error("Data cannot be serialized")]
     DataSerializationError,
 
-    #[error("Transfer amount cannot be 0")]
-    ZeroTransferAmount,
+    #[error("A program tag must be a correct utf8 encoded string")]
+    InvalidProgramTag,
 }
