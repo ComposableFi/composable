@@ -185,7 +185,7 @@
                     || (type == "regular"
                       && builtins.elem (baseNameOf name) file-blacklist)
                     # assumption that nix is final builder, 
-                    # so there would no be sandwitch like  .*.nix <- build.rs <- *.nix
+                    # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
                     # and if *.nix changed, nix itself will detect only relevant cache invalidations 
                     || (type == "regular"
                       && lib.strings.hasSuffix ".nix" name));

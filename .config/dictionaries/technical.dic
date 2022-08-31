@@ -157,6 +157,8 @@ xorriso
 hasura
 stdenv
 libudev
+narinfo
+buildx
 
 # commands, programs, libs, tools, etc
 grep
@@ -194,12 +196,17 @@ sccache
 npmjs
 pkgconf
 libsecp
+containrrr # `containrrr/watchtower` docker image
+adduser
 
 # systemctl
 FSIZE
 MEMLOCK
 NOFILE
 NPROC
+
+# docker
+ipam
 
 # databases
 upsert
@@ -283,6 +290,9 @@ GITREPO
 RUSTC
 OPTARG
 
+# sudo
+NOPASSWD
+
 # misc technical terms
 supertrait
 cosm
@@ -301,6 +311,9 @@ oraclesetup # script of package.json
 toolchains
 bootnodes
 gpgsign
+proptests
+dockefile
+oneliner
 
 # file attributes
 lastmod

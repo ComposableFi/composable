@@ -116,6 +116,7 @@ sidechains
 TGE # Token Generation Events
 TGEs
 tradfi
+BYOG
 
 # just words, consider a separate dictionary
 architecting
@@ -256,6 +257,13 @@ generalised
 proxied
 proxyable
 unproxyable
+analysing
+rebalances
+spatialize
+interecosystem
+frontrunable
+realising
+noninteractive
 
 coeff # coefficient
 recvs # recieves
@@ -265,6 +273,7 @@ orac
 modlpy
 twox
 liquidat
+direnv
 
 # can't have apostrophies in identifiers
 doesnt
