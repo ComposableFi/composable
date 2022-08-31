@@ -404,11 +404,33 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
+			let owner: T::AccountId = T::PalletId::get().into_account_truncating();
+			Self::create_default_pool(
+				&owner,
+									  T::PicaAssetId::get(),
+									  T::XPicaAssetId::get(),
+									  T::PicaStakeFinancialNftCollectionId::get());
+			Self::create_default_pool(
+				&owner,
+				T::PbloAssetId::get(),
+				T::XPbloAssetId::get(),
+				T::PbloStakeFinancialNftCollectionId::get()
+			);
+		}
+	}
+
+	impl<T: Config> GenesisConfig<T> {
+		fn create_default_pool(
+			owner: &T::AccountId,
+			staked_asset_id: T::AssetId,
+			share_asset_id: T::AssetId,
+			financial_nft_asset_id: T::AssetId,
+		) {
 			// TODO (vim): Review these with product
 			// PICA staking pool
 			let pica_staking_pool: RewardPoolOf<T> = RewardPool {
-				owner: T::PalletId::get().into_account_truncating(),
-				asset_id: T::PicaAssetId::get(),
+				owner: owner.clone(),
+				asset_id: staked_asset_id,
 				rewards: Default::default(),
 				total_shares: T::Balance::zero(),
 				claimed_shares: T::Balance::zero(),
@@ -423,38 +445,19 @@ pub mod pallet {
 					.expect("Genesis config must be correct; qed"),
 					unlock_penalty: Default::default(),
 				},
-				share_asset_id: T::XPicaAssetId::get(),
-				financial_nft_asset_id: T::PicaStakeFinancialNftCollectionId::get(),
+				share_asset_id,
+				financial_nft_asset_id,
 			};
 			RewardPools::<T>::insert(
-				T::AssetId::from(T::PicaAssetId::get().into()),
+				staked_asset_id,
 				pica_staking_pool,
 			);
-			// PBLO staking pool
-			let pblo_staking_pool: RewardPoolOf<T> = RewardPool {
-				owner: T::PalletId::get().into_account_truncating(),
-				asset_id: T::PbloAssetId::get(),
-				rewards: Default::default(),
-				total_shares: T::Balance::zero(),
-				claimed_shares: T::Balance::zero(),
-				end_block: T::BlockNumber::zero(),
-				lock: LockConfig {
-					duration_presets: [
-						(ONE_WEEK, Perbill::from_percent(1)),
-						(ONE_MONTH, Perbill::from_percent(10)),
-					]
-					.into_iter()
-					.try_collect()
-					.expect("Genesis config must be correct; qed"),
-					unlock_penalty: Default::default(),
-				},
-				share_asset_id: T::XPbloAssetId::get(),
-				financial_nft_asset_id: T::PbloStakeFinancialNftCollectionId::get(),
-			};
-			RewardPools::<T>::insert(
-				T::AssetId::from(T::PbloAssetId::get().into()),
-				pblo_staking_pool,
-			);
+			T::FinancialNft::create_collection(
+				&financial_nft_asset_id,
+				&owner,
+				&owner,
+			)
+			.expect("Genesis config must be correct; qed");
 		}
 	}
 
@@ -648,6 +651,10 @@ pub mod pallet {
 						},
 					);
 
+					T::FinancialNft::create_collection(
+						&financial_nft_asset_id, &owner, &owner,
+					)?;
+
 					Self::deposit_event(Event::<T>::RewardPoolCreated {
 						pool_id,
 						owner: owner.clone(),
@@ -655,11 +662,6 @@ pub mod pallet {
 						asset_id,
 					});
 
-					// TODO (vim): Create the financial NFT collection for the rewards pool
-					T::FinancialNft::create_collection(
-						/* TODO Replace pool_id with the collection asset ID */
-						&asset_id, &owner, &owner,
-					)?;
 					Ok(pool_id)
 				},
 				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),

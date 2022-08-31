@@ -344,7 +344,7 @@ fn test_accumulate_rewards_hook() {
 				.unwrap(),
 				lock: default_lock_config(),
 				share_asset_id: XC::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
 			});
 
 		mint_assets([ALICE], [D::ID], C_D_INITIAL_AMOUNT);
