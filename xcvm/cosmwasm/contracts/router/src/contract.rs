@@ -72,8 +72,7 @@ pub fn handle_run(
 					user_id: user_id.clone(),
 				})?,
 				funds: vec![],
-				label: format!("xcvm-interpreter-{}", network_id.0), /* TODO(aeryz): juno doesn't
-				                                                      * allow empty label */
+				label: format!("xcvm-interpreter-{}-{}", network_id.0, hex::encode(&user_id)),
 			}
 			.into();
 
