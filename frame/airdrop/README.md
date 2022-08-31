@@ -17,7 +17,7 @@ have claimed all of their funds, or the Airdrop has ended.
 
 ## Signing & Verifying Claims
 
-The Airdrop pallet supports remote accounts from Cosmos, Ethereum, and Pokadot 
+The Airdrop pallet supports remote accounts from Cosmos, Ethereum, and Polkadot
 relay chains. To verify account ownership from all of these chains, Airdrop will 
 preform validation on signatures natively produced by each chain. In general, 
 these signatures are produced by signing messages of the form `{prefix}-{msg}` 
@@ -49,7 +49,7 @@ enabled, and disabled.
 ### Created
 
 During the Created state, the Airdrop can be manipulated with the life cycle 
-transactions (`enable_airdrop`, `disable_airdrip`, `add_recipient`, 
+transactions (`enable_airdrop`, `disable_airdrop`, `add_recipient`,
 `remove_recipient`). During this state, claims can not be made by recipients. 
 
 If the Airdrop was created with a `start_at`, it will automatically transition 

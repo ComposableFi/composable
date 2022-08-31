@@ -12,6 +12,9 @@ polkascan
 subsquid
 subscan
 polkadotjs
+suri # Substrate Uri
+parathread
+parathreads
 
 # crypto stuff
 xcmp
@@ -97,7 +100,22 @@ multisigs
 multideposit
 multicurrencies
 multiplatform
+multichain
 per+
+
+EQLC
+polkastrategies
+chainspec
+stackable
+crowdloans
+restaked
+cryptoeconomically
+collateralization
+AMM
+sidechains
+TGE # Token Generation Events
+TGEs
+tradfi
 
 # just words, consider a separate dictionary
 architecting
@@ -126,6 +144,7 @@ undelegated
 pathfinding
 runtime
 runtimes
+incentivize
 incentivized
 pathfind
 permissioned
@@ -200,11 +219,51 @@ addendums
 cooloff
 priceable
 teleporter
+remediations
+permissionless
+emphasising
+incentivise
+incentivizes
+incentivizing
+actioned
+unobstructedly
+resultantly
+interoperating
+composability
+unvote
+overlocking
+embeddable
+organisations
+synergizes
+modularly
+legos # plural of LEGO?
+rebalancing
+unloyal
+unfavourable
+incentivise
+leverageable
+medianize
+onboarded
+walkthrough
+governances
+unknowledgable
+computerphile
+rarestone
+transformative
+influencers
+decentralised
+generalised
+proxied
+proxyable
+unproxyable
 
 coeff # coefficient
 recvs # recieves
 acks # acknowledgements
-seqs
+seqs # sequences?
+orac
+modlpy
+twox
 
 # can't have apostrophies in identifiers
 doesnt
@@ -219,7 +278,8 @@ pablos
 pblo
 pica
 layr
-
+сomposable
+composablejs
 
 # crypto acronyms
 ausd
@@ -231,3 +291,4 @@ btcusd
 ethbtc
 lksm
 kusd
+ksmusdt

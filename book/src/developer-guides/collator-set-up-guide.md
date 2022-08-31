@@ -111,7 +111,7 @@ sudo systemctl status collator.service
 
 ```sh
 journalctl -f
-collator.sersice content
+collator.service content
 ```
 
 ```ini

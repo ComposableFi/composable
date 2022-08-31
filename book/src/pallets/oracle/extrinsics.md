@@ -71,7 +71,7 @@ Emits `StakeReclaimed` event when successful.
 
 [`submit_price`](https://dali.devnets.composablefinance.ninja/doc/pallet_oracle/pallet/enum.Call.html#variant.submit_price)
 
-Call to submit a price, gas is returned if extrinsic is successfull.
+Call to submit a price, gas is returned if extrinsic is successful.
 Should be called from offchain worker but can be called manually too.
 
 This is an operational transaction.

@@ -85,7 +85,7 @@
               nix-npm-buildpackage.overlays.default
               arion-src.overlay
             ];
-            allowUnsupportedSystem = true; # we do not tirgger this on mac
+            allowUnsupportedSystem = true; # we do not trigger this on mac
             config = {
               permittedInsecurePackages = [
                 "openjdk-headless-16+36"
@@ -119,7 +119,7 @@
             cargoBuildCommand =
               "cargo build --release --package wasm-optimizer";
             version = "0.1.0";
-            # NOTE: we copy more then needed, but tht is simpler to setup, we depend pn substrae for sure so
+            # NOTE: we copy more then needed, but tht is simpler to setup, we depend on substrate for sure so
           });
 
           # for containers which are intended for testing, debug and development (including running isolated runtime)
@@ -475,7 +475,7 @@
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
-              # be very carefull with this, so this must be version compatible with base and what vscode will inject
+              # be very careful with this, so this must be version compatible with base and what vscode will inject
               contents = [
                 rust-nightly
                 cachix

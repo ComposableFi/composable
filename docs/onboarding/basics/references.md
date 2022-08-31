@@ -6,7 +6,7 @@ Below you'll find all content referenced in the onboarding basics. Feel free to 
 ## Consensus and Blockchain
 ---
 ### Reading Materials
-- [headerdata](https://www.oreilly.com/library/view/mastering-bitcoin/9781491902639/ch07.html)
+- [header data](https://www.oreilly.com/library/view/mastering-bitcoin/9781491902639/ch07.html)
 - [linked list](https://www.geeksforgeeks.org/data-structures/linked-list/).
 - [peer-to-peer networks](https://www.geeksforgeeks.org/what-is-p2ppeer-to-peer-process/)
 - [hashing](https://www.educative.io/answers/what-is-hashing)

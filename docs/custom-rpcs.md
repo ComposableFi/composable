@@ -270,7 +270,7 @@ integration-tests/runtime-tests/src/types/interfaces/definitions.ts
 
 Create a folder here: `integration-tests/runtime-tests/src/types/interfaces/pallet-name`
 
-And then within that folder, create a file `defintions.ts` with the following structure:
+And then within that folder, create a file `definitions.ts` with the following structure:
 
 ```typescript
 export default {
@@ -373,7 +373,7 @@ export class RpcPalletNameTests {
 
 Notes:
 
-* If the type being compared against is a `u128`/`i128` on the rust side and has been wrapped in `SafeRpcWrapper`, it will be a bn.js `BN` (big number) here. `chai-bn` is used for asssertions with `BN`s but typescript can't quite figure out that it's being used; using `["bignumber"]` instead of `.bignumber` circumvents the typechecker a bit and allows it to pass without a `@ts-ignore` comment.
+* If the type being compared against is a `u128`/`i128` on the rust side and has been wrapped in `SafeRpcWrapper`, it will be a bn.js `BN` (big number) here. `chai-bn` is used for assertions with `BN`s but typescript can't quite figure out that it's being used; using `["bignumber"]` instead of `.bignumber` circumvents the typechecker a bit and allows it to pass without a `@ts-ignore` comment.
 
   Thanks Dominik for figuring this one out!
 

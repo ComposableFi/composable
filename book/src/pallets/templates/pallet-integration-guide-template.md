@@ -19,7 +19,7 @@ transition requirements if you're feeling fancy*
 
 ## Subsquid Data Retrieval
 
-*Not requried yet since we have no subsquid yet*
+*Not required yet since we have no subsquid yet*
 
 ## Locally Consumed Types
 
