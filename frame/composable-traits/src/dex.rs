@@ -119,6 +119,7 @@ pub trait Amm {
 	) -> Result<Self::Balance, DispatchError>;
 
 	/// Update accounts deposited one asset storage.
+	///
 	/// `lp_amount` - amount of LP token to deposit/withdraw,
 	/// `action` - withdraw or deposit LP token.
 	fn update_accounts_deposited_one_asset_storage(
@@ -504,7 +505,7 @@ where
 	pub assets: BTreeMap<AssetId, Balance>,
 }
 
-/// Enum to check whether deposit in SingleAssetAccountsStorage or withdrawal
+/// Enum to define depositing or withdrawing action.
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum SingleAssetAccountsStorageAction {
 	Depositing,

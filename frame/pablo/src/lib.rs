@@ -255,13 +255,13 @@ pub mod pallet {
 			/// Map of asset_id -> twap
 			twaps: BTreeMap<T::AssetId, Rate>,
 		},
-		/// Balance of assets for withdrawing with single coin updated
-		AccountsDepositedOneAssetUpdated {
+		/// Balance of assets for withdrawing with single coin updated.
+		SingleAssetAccountsStorageUpdated {
 			/// Account of user.
 			who: T::AccountId,
 			/// Pool id on which user deposit/withdraw.
 			pool_id: T::PoolId,
-			/// Avalable amount of LP.
+			/// Available amount of LP.
 			balance: T::Balance,
 		},
 	}
@@ -456,7 +456,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn accounts)]
 	#[pallet::unbounded]
-	pub type AccountsDepositedOneAsset<T: Config> = StorageDoubleMap<
+	pub type SingleAssetAccountsStorage<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		T::AccountId,
@@ -601,7 +601,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
 			ensure!(
-				AccountsDepositedOneAsset::<T>::contains_key(&who, &pool_id),
+				SingleAssetAccountsStorage::<T>::contains_key(&who, &pool_id),
 				Error::<T>::NoAvailableLPtokensForSingleAssetWithdraw
 			);
 			<Self as Amm>::remove_liquidity_single_asset(&who, pool_id, lp_amount, min_amount)?;
@@ -1012,7 +1012,6 @@ pub mod pallet {
 			lp_for_liquidity::<T>(pool, pool_account, base_amount, quote_amount)
 		}
 
-		#[transactional]
 		fn update_accounts_deposited_one_asset_storage(
 			who: Self::AccountId,
 			pool_id: Self::PoolId,
@@ -1021,8 +1020,8 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			match action {
 				SingleAssetAccountsStorageAction::Depositing =>
-					if AccountsDepositedOneAsset::<T>::contains_key(&who, &pool_id) {
-						let lp_amount = AccountsDepositedOneAsset::<T>::try_mutate(
+					if SingleAssetAccountsStorage::<T>::contains_key(&who, &pool_id) {
+						let lp_amount = SingleAssetAccountsStorage::<T>::try_mutate(
 							&who,
 							&pool_id,
 							|exist_amount| -> Result<Self::Balance, DispatchError> {
@@ -1037,30 +1036,30 @@ pub mod pallet {
 								}
 							},
 						)?;
-						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
+						Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
 							who,
 							pool_id,
 							balance: lp_amount,
 						});
 					} else {
-						AccountsDepositedOneAsset::<T>::insert(&who, &pool_id, lp_amount);
-						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
+						SingleAssetAccountsStorage::<T>::insert(&who, &pool_id, lp_amount);
+						Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
 							who,
 							pool_id,
 							balance: lp_amount,
 						});
 					},
 				SingleAssetAccountsStorageAction::Withdrawing => {
-					let exist_amount = AccountsDepositedOneAsset::<T>::get(&who, &pool_id);
+					let exist_amount = SingleAssetAccountsStorage::<T>::get(&who, &pool_id);
 					if exist_amount == Some(lp_amount) {
-						AccountsDepositedOneAsset::<T>::remove(&who, &pool_id);
-						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
+						SingleAssetAccountsStorage::<T>::remove(&who, &pool_id);
+						Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
 							who,
 							pool_id,
 							balance: Self::Balance::zero(),
 						});
 					} else {
-						let new_lp_amount = AccountsDepositedOneAsset::<T>::try_mutate(
+						let new_lp_amount = SingleAssetAccountsStorage::<T>::try_mutate(
 							&who,
 							&pool_id,
 							|exist_amount| -> Result<Self::Balance, DispatchError> {
@@ -1075,7 +1074,7 @@ pub mod pallet {
 								}
 							},
 						)?;
-						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
+						Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
 							who,
 							pool_id,
 							balance: new_lp_amount,
@@ -1535,7 +1534,7 @@ pub mod pallet {
 			min_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			ensure!(
-				AccountsDepositedOneAsset::<T>::get(who, &pool_id) >= Some(lp_amount),
+				SingleAssetAccountsStorage::<T>::get(who, &pool_id) >= Some(lp_amount),
 				Error::<T>::NotEnoughLpTokenForSingleAssetWithdraw
 			);
 			let redeemable_assets =
