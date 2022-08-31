@@ -10,6 +10,7 @@ import {
 import type { EntityManager } from "typeorm";
 import { IsDateString, Min } from "class-validator";
 import { Activity } from "../../model";
+import { getTimelineParams } from "./common";
 
 @ObjectType()
 export class ActiveUsers {
@@ -47,30 +48,16 @@ export class ActiveUsersResolver {
   async activeUsers(
     @Arg("params", { validate: true }) input: ActiveUsersInput
   ): Promise<ActiveUsers[]> {
-    const intervalMilliseconds = input.intervalMinutes * 60 * 1000;
-    const params: any[] = [intervalMilliseconds];
-    const where: string[] = [];
-    let from: number;
-
-    // Set "from" filter
-    if (input.dateFrom) {
-      from = new Date(input.dateFrom).valueOf();
-    } else {
-      from = 0;
-    }
-    from = Math.floor(from / intervalMilliseconds) * intervalMilliseconds;
-    where.push(`timestamp > $${params.push(from)}`);
-
-    // Set "to" filter
-    if (input.dateTo) {
-      let to = new Date(input.dateTo).valueOf();
-      to = Math.ceil(to / intervalMilliseconds) * intervalMilliseconds;
-      where.push(`timestamp < $${params.push(to)}`);
-    }
+    const { intervalMinutes, dateFrom, dateTo } = input;
+    const { where, params } = getTimelineParams(
+      intervalMinutes,
+      dateFrom,
+      dateTo
+    );
 
     const manager = await this.tx();
 
-    let rows: { period: string; count: string }[] = await manager
+    const rows: { period: string; count: string }[] = await manager
       .getRepository(Activity)
       .query(
         `
