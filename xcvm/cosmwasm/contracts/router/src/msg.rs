@@ -20,3 +20,6 @@ pub enum ExecuteMsg {
 		funds: Funds<Displayed<u128>>,
 	},
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum QueryMsg {}
