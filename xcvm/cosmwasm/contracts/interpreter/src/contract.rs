@@ -1,14 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	to_binary, CosmosMsg, DepsMut, Env, Event, MessageInfo, QueryRequest, Response, StdError,
-	WasmQuery,
+	to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, Response,
+	StdError, StdResult, WasmQuery,
 };
 use serde::Serialize;
 
 use crate::{
 	error::ContractError,
-	msg::{ExecuteMsg, InstantiateMsg, XCVMProgram},
+	msg::{ExecuteMsg, InstantiateMsg, QueryMsg, XCVMProgram},
 	state::{Config, CONFIG},
 };
 use cw20::{BalanceResponse, Cw20Contract, Cw20ExecuteMsg, Cw20QueryMsg};
@@ -142,6 +142,11 @@ pub fn interpret_transfer(
 	}
 
 	Ok(response)
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
+	Err(StdError::generic_err("not implemented"))
 }
 
 #[cfg(test)]
