@@ -5,8 +5,7 @@ use frame_support::traits::Get;
 use ibc::{
 	clients::{
 		ics07_tendermint::{
-			client_state::{AllowUpdate, ClientState as TendermintClientState},
-			consensus_state::ConsensusState,
+			client_state::ClientState as TendermintClientState, consensus_state::ConsensusState,
 			header::Header,
 		},
 		ics11_beefy::{
@@ -110,7 +109,6 @@ pub fn create_mock_state() -> (TendermintClientState, ConsensusState) {
 		Height::new(0, 1),
 		proof_specs,
 		vec!["".to_string()],
-		AllowUpdate { after_expiry: true, after_misbehaviour: false },
 	)
 	.unwrap();
 
@@ -243,7 +241,6 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 	(
 		cs_state,
 		MsgConnectionOpenTry {
-			previous_connection_id: Some(ConnectionId::new(0)),
 			client_id,
 			client_state: Some(AnyClientState::Beefy(client_state)),
 			counterparty: chain_a_counterparty,
@@ -508,7 +505,6 @@ pub fn create_chan_open_try() -> (ConsensusState, MsgChannelOpenTry) {
 		cs_state,
 		MsgChannelOpenTry {
 			port_id,
-			previous_channel_id: Some(ChannelId::new(0)),
 			channel: channel_end,
 			counterparty_version: ChannelVersion::default(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))

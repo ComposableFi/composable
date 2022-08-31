@@ -71,9 +71,7 @@ use ibc::{
 	signer::Signer,
 	timestamp::Timestamp,
 };
-use ibc_primitives::{
-	get_channel_escrow_address, ibc_denom_to_foreign_asset_id,
-};
+use ibc_primitives::{get_channel_escrow_address, ibc_denom_to_foreign_asset_id};
 use primitives::currency::CurrencyId;
 use scale_info::prelude::string::ToString;
 use sp_core::crypto::AccountId32;
@@ -157,17 +155,6 @@ benchmarks! {
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
-		// Create a connection end and put in storage
-		// Successful processing of a connection try open message requires a compatible connection end with state INIT
-		// to exist on the local chain
-		let connection_id = ConnectionId::new(0);
-		let commitment_prefix: CommitmentPrefix = <T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap();
-		let delay_period = core::time::Duration::from_nanos(1000);
-		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
-		let connection_end = ConnectionEnd::new(State::Init, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
-
-		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
-		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
 
 		// We update the light client state so it can have the required client and consensus states required to process
 		// the proofs that will be submitted
@@ -345,24 +332,6 @@ benchmarks! {
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
 
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
-		// Create a channel end with a INIT state
-		let channel_end = ChannelEnd::new(
-			ibc::core::ics04_channel::channel::State::Init,
-			ibc::core::ics04_channel::channel::Order::Unordered,
-			counterparty_channel,
-			vec![ConnectionId::new(0)],
-			ibc::core::ics04_channel::Version::default()
-		);
-
-		let value = MsgChannelOpenInit {
-			port_id,
-			channel: channel_end,
-			signer: Signer::from_str(MODULE_ID).unwrap()
-		}.encode_vec();
-
-		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
-
-		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions<T>>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_chan_open_try();
 		// Update consensus root for light client

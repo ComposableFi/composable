@@ -27,7 +27,6 @@ pub trait WeightInfo {
 	fn recv_packet_tendermint(i: u32) -> Weight;
 	fn ack_packet_tendermint(i: u32, j: u32) -> Weight;
 	fn timeout_packet_tendermint(i: u32) -> Weight;
-	fn open_transfer_channel() -> Weight;
 	fn set_params() -> Weight;
 	fn transfer() -> Weight;
 	fn on_chan_open_init() -> Weight;
@@ -99,10 +98,6 @@ impl WeightInfo for () {
 	}
 
 	fn timeout_packet_tendermint(_i: u32) -> Weight {
-		0
-	}
-
-	fn open_transfer_channel() -> Weight {
 		0
 	}
 
