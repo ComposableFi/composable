@@ -75,7 +75,11 @@
           relaychain-nodes = patched-config.relaychain.nodes;
           script = writeShellApplication {
             name = "run-devnet-${chain-spec}";
+            RUST_BACKTRACE = "full";
+            RUST_LOG =
+              "trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace";
             text = ''
+              # ISSUE: for some reason it does not cleans tmp and leads to block not produced
               rm -rf /tmp/polkadot-launch
               ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
             '';
@@ -809,6 +813,12 @@
               type = "app";
               program = "${packages.polkadot-node}/bin/polkadot";
             };
+
+            junod = {
+              type = "app";
+              program = "${packages.junod}/bin/junod";
+            };
+
             # TODO: move list of chains out of here and do fold
             benchmarks-once-composable = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "composable-dev";

@@ -154,6 +154,9 @@ run-local-integration-tests-debug:
 	RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace \
 	cargo +nightly test sibling_trap_assets_works --package local-integration-tests --features=local-integration-tests,picasso --no-default-features -- --nocapture --test-threads=1
 
+prune-devnet:
+	 rm --force --recursive *.log /tmp/polkadot-launch/
+	 
 push-base-ci-linux:
 	@docker push ${REPO}/base-ci-linux:1.62.1
 

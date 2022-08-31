@@ -588,17 +588,11 @@ jobs:
       - run: |
           cachix watch-exec -j 16 -c 0 composable-community nix -- build .#price-feed --no-update-lock-file --show-trace -L
 
-  composable-sandbox:
+  composable-sandbox-publish:
     if: ${{ github.ref == 'refs/heads/main' }}
     name: "Docker composable-sandbox"
     needs:
-      - devnet-integration-tests
-      - package-polkadot-node
-      - package-composable-node
-      - check-benchmarks
-      - check-nix
-      - local-integration-tests
-      - unit-tests
+      - effects-gate
     runs-on:
       - self-hosted
       - linux
@@ -705,13 +699,7 @@ jobs:
   devcontainer-publish:
     name: "Devcontainer publish"
     needs:
-      - devcontainer-build
-      - devnet-integration-tests
-      - package-polkadot-node
-      - package-composable-node
-      - check-benchmarks
-      - local-integration-tests
-      - unit-tests
+      - effects-gate
     runs-on:
       - self-hosted
       - linux
@@ -816,17 +804,28 @@ jobs:
           wait $RUNTIME_TESTS_PID
           exit $?
 
-  deploy-devnet:
-      name: "Devnet(Rococo Local Dali Dev) Deploy"
-      if: github.event_name == 'push' && github.ref_name == 'main'
+  effects-gate:
+      runs-on: 
+        - ubuntu-latest
+      name: effects-gate
       needs:
+        - check-nix
+        - devcontainer-build
         - devnet-integration-tests
         - package-polkadot-node
         - package-composable-node
         - check-benchmarks
-        - check-nix
         - local-integration-tests
         - unit-tests
+        - cargo-udeps-check 
+      steps:
+        - run: echo "Goblins allow your work to see the light"
+
+  deploy-devnet:
+      name: "Devnet(Rococo Local Dali Dev) Deploy"
+      if: github.event_name == 'push' && github.ref_name == 'main'
+      needs:
+        - effects-gate
       runs-on: ubuntu-latest
       # ISSUE: SSH on container image nixos hangs, so we do not use it - need some customization
       concurrency:
