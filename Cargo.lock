@@ -8449,7 +8449,6 @@ dependencies = [
  "pallet-staking-rewards",
  "pallet-timestamp",
  "parity-scale-codec",
- "primitives 0.1.0",
  "proptest",
  "rust_decimal",
  "scale-info",
