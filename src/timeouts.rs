@@ -8,7 +8,7 @@ use ibc::{
 use primitives::{error::Error, Chain};
 use std::str::FromStr;
 
-/// Get timeout messages that are ready to be sent to source after checking for connection delay
+/// Get timeout messages that are ready to be sent back to source
 pub async fn get_timed_out_packets(
 	source: &mut impl Chain,
 	sink: &mut impl Chain,
