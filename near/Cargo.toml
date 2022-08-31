@@ -33,8 +33,8 @@ sp-runtime = "6.0.0"
 sp-keystore = "0.12.0"
 
 # ibc
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "6e5daff0bc37553557751ef3781a1a89c8c781ba", features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "6e5daff0bc37553557751ef3781a1a89c8c781ba" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
 # near

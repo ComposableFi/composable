@@ -97,7 +97,6 @@ pub async fn parse_events(
 
 					// Construct OpenTry
 					let msg = MsgConnectionOpenTry {
-						previous_connection_id: counterparty.connection_id.clone(),
 						client_id: counterparty.client_id().clone(),
 						// client state proof is mandatory in conn_open_try
 						client_state: Some(client_state.clone()),
@@ -294,7 +293,6 @@ pub async fn parse_events(
 
 					let msg = MsgChannelOpenTry {
 						port_id: counterparty.port_id.clone(),
-						previous_channel_id: counterparty.channel_id.clone(),
 						channel,
 						counterparty_version: channel_end.version,
 						proofs: Proofs::new(channel_proof, None, None, None, proof_height)?,

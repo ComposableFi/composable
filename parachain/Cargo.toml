@@ -54,17 +54,17 @@ sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 # composable
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "0438a753ac29c0b9711f00a2e33228d3d45ca5e3" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "6e5daff0bc37553557751ef3781a1a89c8c781ba", features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "6e5daff0bc37553557751ef3781a1a89c8c781ba" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 beefy-prover = { git = "https://github.com/ComposableFi/beefy-rs", rev = "cb8cadc8d45bc444367002c77cbd395eff8a741c" }
 beefy-light-client = { git = "https://github.com/ComposableFi/beefy-rs", rev = "cb8cadc8d45bc444367002c77cbd395eff8a741c" }
 beefy-light-client-primitives = { package = "primitives", git = "https://github.com/ComposableFi/beefy-rs", rev = "cb8cadc8d45bc444367002c77cbd395eff8a741c" }
-ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "d7986318f26444f240718c9fba32c10cef31da35" }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "d7986318f26444f240718c9fba32c10cef31da35" }
-ping = { package = "pallet-ibc-ping",  git = "https://github.com/ComposableFi/composable", rev = "d7986318f26444f240718c9fba32c10cef31da35" }
-ibc-primitives = { git = "https://github.com/ComposableFi/composable", rev = "d7986318f26444f240718c9fba32c10cef31da35" }
-common = { git = "https://github.com/ComposableFi/composable", rev = "d7986318f26444f240718c9fba32c10cef31da35" }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "66ef4151045939a249c50ac20f13b472e7682e9c" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "66ef4151045939a249c50ac20f13b472e7682e9c" }
+ping = { package = "pallet-ibc-ping",  git = "https://github.com/ComposableFi/composable", rev = "66ef4151045939a249c50ac20f13b472e7682e9c" }
+ibc-primitives = { git = "https://github.com/ComposableFi/composable", rev = "66ef4151045939a249c50ac20f13b472e7682e9c" }
+common = { git = "https://github.com/ComposableFi/composable", rev = "66ef4151045939a249c50ac20f13b472e7682e9c" }
 
 [dev-dependencies]
 derive_more = "0.99.17"

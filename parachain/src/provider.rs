@@ -1,8 +1,9 @@
 use beefy_light_client_primitives::{ClientState, NodesUtils};
 use codec::{Decode, Encode};
 use itertools::Itertools;
-use std::{collections::HashMap, default::Default, fmt::Display, str::FromStr};
+use std::{ fmt::Display, str::FromStr};
 
+use ibc::clients::ics11_beefy::header::ParachainHeadersWithProof;
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
 	clients::ics11_beefy::header::BeefyHeader,
@@ -41,7 +42,6 @@ use sp_core::H256;
 
 use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
-use pallet_mmr_primitives::BatchProof;
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -110,8 +110,8 @@ where
 		}
 
 		// if validator set has changed this is a mandatory update
-		let update_type = match signed_commitment.commitment.validator_set_id ==
-			beefy_client_state.next_authorities.id
+		let update_type = match signed_commitment.commitment.validator_set_id
+			== beefy_client_state.next_authorities.id
 		{
 			true => UpdateType::Mandatory,
 			false => UpdateType::Optional,
@@ -139,8 +139,8 @@ where
 		let finalized_block_numbers = headers
 			.into_iter()
 			.filter_map(|header| {
-				if (client_state.latest_height().revision_height as u32) <
-					u32::from(*header.number())
+				if (client_state.latest_height().revision_height as u32)
+					< u32::from(*header.number())
 				{
 					Some(header)
 				} else {
@@ -151,7 +151,7 @@ where
 			.collect();
 
 		// block_number => events
-		let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
+		let events = IbcApiClient::<u32, H256>::query_events(
 			&*self.para_client.rpc().client,
 			finalized_block_numbers,
 		)
@@ -165,40 +165,33 @@ where
 		let events: Vec<IbcEvent> = events.into_values().flatten().collect();
 
 		// only query proofs for headers that actually have events
-		let (parachain_headers, batch_proof) = if !events.is_empty() {
-			let (parachain_headers, batch_proof) = self
+		let headers_with_proof = if !events.is_empty() {
+			let (headers, batch_proof) = self
 				.query_finalized_parachain_headers_with_proof(
 					signed_commitment.commitment.block_number,
 					&beefy_client_state,
 					headers_with_events,
 				)
 				.await?;
-			(parachain_headers, batch_proof)
+			let mmr_size = NodesUtils::new(batch_proof.leaf_count).size();
+
+			Some(ParachainHeadersWithProof {
+				headers,
+				mmr_size,
+				mmr_proofs: batch_proof.items.into_iter().map(|item| item.encode()).collect(),
+			})
 		} else {
-			(
-				Default::default(),
-				BatchProof {
-					leaf_indices: Default::default(),
-					leaf_count: 0,
-					items: Default::default(),
-				},
-			)
+			None
 		};
 
 		let mmr_update =
 			self.fetch_mmr_update_proof_for(signed_commitment, &beefy_client_state).await?;
-		let mmr_size = NodesUtils::new(batch_proof.leaf_count).size();
-		let beefy_header = BeefyHeader {
-			parachain_headers: Some(parachain_headers),
-			mmr_proofs: batch_proof.items.into_iter().map(|item| item.encode()).collect(),
-			mmr_size,
-			mmr_update_proof: Some(mmr_update),
-		};
+		let beefy_header = BeefyHeader { mmr_update_proof: Some(mmr_update), headers_with_proof };
 
 		for event in events.iter() {
 			if self.sender.send(event.clone()).is_err() {
 				log::trace!("Failed to push {event:?} to stream, no active receiver found");
-				break
+				break;
 			}
 		}
 

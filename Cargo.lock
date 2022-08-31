@@ -1464,7 +1464,7 @@ dependencies = [
 [[package]]
 name = "common"
 version = "0.8.30"
-source = "git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35#d7986318f26444f240718c9fba32c10cef31da35"
+source = "git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c#66ef4151045939a249c50ac20f13b472e7682e9c"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -1479,7 +1479,7 @@ dependencies = [
  "pallet-treasury",
  "parity-scale-codec 3.1.5",
  "polkadot-primitives",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35)",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c)",
  "scale-info",
  "sp-consensus-aura",
  "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
@@ -1494,7 +1494,7 @@ dependencies = [
 [[package]]
 name = "composable-support"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35#d7986318f26444f240718c9fba32c10cef31da35"
+source = "git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c#66ef4151045939a249c50ac20f13b472e7682e9c"
 dependencies = [
  "frame-support",
  "hex",
@@ -1514,7 +1514,7 @@ dependencies = [
 [[package]]
 name = "composable-traits"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35#d7986318f26444f240718c9fba32c10cef31da35"
+source = "git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c#66ef4151045939a249c50ac20f13b472e7682e9c"
 dependencies = [
  "bitflags",
  "composable-support",
@@ -3371,7 +3371,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3#0438a753ac29c0b9711f00a2e33228d3d45ca5e3"
+source = "git+https://github.com/composableFi/ibc-rs?rev=6e5daff0bc37553557751ef3781a1a89c8c781ba#6e5daff0bc37553557751ef3781a1a89c8c781ba"
 dependencies = [
  "beefy-light-client",
  "beefy-primitives",
@@ -3411,7 +3411,7 @@ dependencies = [
 [[package]]
 name = "ibc-primitives"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35#d7986318f26444f240718c9fba32c10cef31da35"
+source = "git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c#66ef4151045939a249c50ac20f13b472e7682e9c"
 dependencies = [
  "base58",
  "common",
@@ -3437,7 +3437,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/composableFi/ibc-rs?rev=0438a753ac29c0b9711f00a2e33228d3d45ca5e3#0438a753ac29c0b9711f00a2e33228d3d45ca5e3"
+source = "git+https://github.com/composableFi/ibc-rs?rev=6e5daff0bc37553557751ef3781a1a89c8c781ba#6e5daff0bc37553557751ef3781a1a89c8c781ba"
 dependencies = [
  "base64 0.13.0",
  "bytes",
@@ -3451,7 +3451,7 @@ dependencies = [
 [[package]]
 name = "ibc-rpc"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35#d7986318f26444f240718c9fba32c10cef31da35"
+source = "git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c#66ef4151045939a249c50ac20f13b472e7682e9c"
 dependencies = [
  "frame-system",
  "hex-literal",
@@ -3477,7 +3477,7 @@ dependencies = [
 [[package]]
 name = "ibc-runtime-api"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35#d7986318f26444f240718c9fba32c10cef31da35"
+source = "git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c#66ef4151045939a249c50ac20f13b472e7682e9c"
 dependencies = [
  "ibc-primitives",
  "pallet-ibc",
@@ -7048,7 +7048,7 @@ dependencies = [
 [[package]]
 name = "pallet-assets"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35#d7986318f26444f240718c9fba32c10cef31da35"
+source = "git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c#66ef4151045939a249c50ac20f13b472e7682e9c"
 dependencies = [
  "composable-support",
  "composable-traits",
@@ -7057,7 +7057,7 @@ dependencies = [
  "num-traits",
  "orml-traits",
  "parity-scale-codec 3.1.5",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35)",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c)",
  "scale-info",
  "sp-api",
  "sp-arithmetic 5.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
@@ -7176,7 +7176,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35#d7986318f26444f240718c9fba32c10cef31da35"
+source = "git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c#66ef4151045939a249c50ac20f13b472e7682e9c"
 dependencies = [
  "common",
  "composable-traits",
@@ -7194,7 +7194,7 @@ dependencies = [
  "pallet-ibc-ping",
  "parachain-info",
  "parity-scale-codec 3.1.5",
- "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35)",
+ "primitives 0.1.0 (git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c)",
  "scale-info",
  "serde_json",
  "sha2 0.10.3",
@@ -7211,7 +7211,7 @@ dependencies = [
 [[package]]
 name = "pallet-ibc-ping"
 version = "0.0.1"
-source = "git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35#d7986318f26444f240718c9fba32c10cef31da35"
+source = "git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c#66ef4151045939a249c50ac20f13b472e7682e9c"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -7870,6 +7870,20 @@ dependencies = [
 [[package]]
 name = "primitives"
 version = "0.1.0"
+source = "git+https://github.com/ComposableFi/composable?rev=66ef4151045939a249c50ac20f13b472e7682e9c#66ef4151045939a249c50ac20f13b472e7682e9c"
+dependencies = [
+ "composable-support",
+ "composable-traits",
+ "parity-scale-codec 3.1.5",
+ "scale-info",
+ "serde",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+]
+
+[[package]]
+name = "primitives"
+version = "0.1.0"
 source = "git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c#cb8cadc8d45bc444367002c77cbd395eff8a741c"
 dependencies = [
  "beefy-primitives",
@@ -7879,20 +7893,6 @@ dependencies = [
  "rs_merkle",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-mmr-primitives",
- "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
-]
-
-[[package]]
-name = "primitives"
-version = "0.1.0"
-source = "git+https://github.com/ComposableFi/composable?rev=d7986318f26444f240718c9fba32c10cef31da35#d7986318f26444f240718c9fba32c10cef31da35"
-dependencies = [
- "composable-support",
- "composable-traits",
- "parity-scale-codec 3.1.5",
- "scale-info",
- "serde",
- "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
  "sp-std 4.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
 ]
 
