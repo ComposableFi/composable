@@ -60,11 +60,11 @@ tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev 
 beefy-prover = { git = "https://github.com/ComposableFi/beefy-rs", rev = "cb8cadc8d45bc444367002c77cbd395eff8a741c" }
 beefy-light-client = { git = "https://github.com/ComposableFi/beefy-rs", rev = "cb8cadc8d45bc444367002c77cbd395eff8a741c" }
 beefy-light-client-primitives = { package = "primitives", git = "https://github.com/ComposableFi/beefy-rs", rev = "cb8cadc8d45bc444367002c77cbd395eff8a741c" }
-ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "8238a96325730fec129ccd82bd910de849472288" }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "8238a96325730fec129ccd82bd910de849472288" }
-ping = { package = "pallet-ibc-ping",  git = "https://github.com/ComposableFi/composable", rev = "8238a96325730fec129ccd82bd910de849472288" }
-ibc-primitives = { git = "https://github.com/ComposableFi/composable", rev = "8238a96325730fec129ccd82bd910de849472288" }
-common = { git = "https://github.com/ComposableFi/composable", rev = "8238a96325730fec129ccd82bd910de849472288" }
+ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "d7986318f26444f240718c9fba32c10cef31da35" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "d7986318f26444f240718c9fba32c10cef31da35" }
+ping = { package = "pallet-ibc-ping",  git = "https://github.com/ComposableFi/composable", rev = "d7986318f26444f240718c9fba32c10cef31da35" }
+ibc-primitives = { git = "https://github.com/ComposableFi/composable", rev = "d7986318f26444f240718c9fba32c10cef31da35" }
+common = { git = "https://github.com/ComposableFi/composable", rev = "d7986318f26444f240718c9fba32c10cef31da35" }
 
 [dev-dependencies]
 derive_more = "0.99.17"

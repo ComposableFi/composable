@@ -33,8 +33,8 @@ where
 		let params = TransferParams {
 			to: MultiAddress::Id(account_id),
 			source_channel: transfer.source_channel.sequence(),
-			timeout_timestamp_offset: 5_000_000,
-			timeout_height_offset: 500,
+			timeout_timestamp_offset: None,
+			timeout_height_offset: None,
 		};
 		let amount = str::parse::<u128>(&transfer.token.amount.to_string()).expect("Infallible!");
 		dbg!(&amount);
