@@ -291,6 +291,7 @@ pub mod pallet {
 		StakingPoolConfigError,
 		NoAvailableLPtokensForSingleAssetWithdraw,
 		NotEnoughLpTokenForSingleAssetWithdraw,
+		NoneValueInLpTokenForSingleAssetWithdraw,
 	}
 
 	#[pallet::config]
@@ -462,7 +463,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::PoolId,
 		T::Balance,
-		ValueQuery,
+		OptionQuery,
 	>;
 
 	pub(crate) enum PriceRatio {
@@ -1025,8 +1026,15 @@ pub mod pallet {
 							&who,
 							&pool_id,
 							|exist_amount| -> Result<Self::Balance, DispatchError> {
-								*exist_amount = exist_amount.safe_add(&lp_amount)?;
-								Ok(*exist_amount)
+								match exist_amount {
+									Some(amount) => {
+										*amount = amount.safe_add(&lp_amount)?;
+										Ok(*amount)
+									},
+									None =>
+										Err(Error::<T>::NoneValueInLpTokenForSingleAssetWithdraw
+											.into()),
+								}
 							},
 						)?;
 						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
@@ -1044,7 +1052,7 @@ pub mod pallet {
 					},
 				SingleAssetAccountsStorageAction::Withdrawing => {
 					let exist_amount = AccountsDepositedOneAsset::<T>::get(&who, &pool_id);
-					if exist_amount == lp_amount {
+					if exist_amount == Some(lp_amount) {
 						AccountsDepositedOneAsset::<T>::remove(&who, &pool_id);
 						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
 							who,
@@ -1056,8 +1064,15 @@ pub mod pallet {
 							&who,
 							&pool_id,
 							|exist_amount| -> Result<Self::Balance, DispatchError> {
-								*exist_amount = exist_amount.safe_sub(&lp_amount)?;
-								Ok(*exist_amount)
+								match exist_amount {
+									Some(amount) => {
+										*amount = amount.safe_sub(&lp_amount)?;
+										Ok(*amount)
+									},
+									None =>
+										Err(Error::<T>::NoneValueInLpTokenForSingleAssetWithdraw
+											.into()),
+								}
 							},
 						)?;
 						Self::deposit_event(Event::<T>::AccountsDepositedOneAssetUpdated {
@@ -1520,7 +1535,7 @@ pub mod pallet {
 			min_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			ensure!(
-				AccountsDepositedOneAsset::<T>::get(who, &pool_id) >= lp_amount,
+				AccountsDepositedOneAsset::<T>::get(who, &pool_id) >= Some(lp_amount),
 				Error::<T>::NotEnoughLpTokenForSingleAssetWithdraw
 			);
 			let redeemable_assets =
