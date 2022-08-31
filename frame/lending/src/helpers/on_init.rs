@@ -1,35 +1,18 @@
-use crate::{types::AccruedInterest, *};
-
-use crate::{
-	types::InitializeBlockCallCounters,
-};
-use composable_support::{
-	math::safe::{SafeAdd, SafeDiv, SafeMul},
-};
+use crate::*;
+use crate::types::InitializeBlockCallCounters;
 use composable_traits::{
-	defi::{
-		LiftedFixedBalance, MoreThanOneFixedU128,
-		OneOrMoreFixedU128,
-	},
-	lending::{
-		math::InterestRate, Lending,
-	},
-	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
+	lending::Lending, 
 	vault::{FundsAvailability, StrategicVault, Vault},
 };
 use frame_support::{
 	storage::{with_transaction, TransactionOutcome},
 	traits::{
-		fungibles::Inspect,
+        fungibles::Inspect,
 		UnixTime,
 	},
 };
-use sp_runtime::{
-	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, Percent,
-};
+use sp_runtime::DispatchError;
 
-
-// crate-public helper functions
 impl<T: Config> Pallet<T> {
 	pub(crate) fn initialize_block(block_number: T::BlockNumber) -> InitializeBlockCallCounters {
 		let mut call_counters = InitializeBlockCallCounters::default();
@@ -148,72 +131,3 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-// various helper functions
-
-/// given collateral information, how much of borrow asset can get?
-pub fn swap(
-	collateral_balance: &LiftedFixedBalance,
-	collateral_price: &LiftedFixedBalance,
-	collateral_factor: &MoreThanOneFixedU128,
-) -> Result<LiftedFixedBalance, ArithmeticError> {
-	collateral_balance.safe_mul(collateral_price)?.safe_div(collateral_factor)
-}
-
-/// ```python
-/// delta_interest_rate = delta_time / period_interest_rate
-/// debt_delta = debt_principal * delta_interest_rate
-/// new_accrued_debt = accrued_debt + debt_delta
-/// total_debt = debt_principal + new_accrued_debt
-/// ```
-pub(crate) fn accrue_interest_internal<T: Config, I: InterestRate>(
-	utilization_ratio: Percent,
-	interest_rate_model: &mut I,
-	borrow_index: OneOrMoreFixedU128,
-	delta_time: DurationSeconds,
-	total_borrows: T::Balance,
-) -> Result<AccruedInterest<T>, DispatchError> {
-	let total_borrows: FixedU128 =
-		FixedU128::checked_from_integer(Into::<u128>::into(total_borrows))
-			.ok_or(ArithmeticError::Overflow)?;
-
-	let borrow_rate = interest_rate_model
-		.get_borrow_rate(utilization_ratio)
-		.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
-
-	// borrow_rate * index * delta_time / SECONDS_PER_YEAR_NAIVE + index
-	let borrow_rate_delta = borrow_rate
-		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
-		.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?;
-
-	let new_borrow_index = borrow_rate_delta.safe_mul(&borrow_index)?.safe_add(&borrow_index)?;
-
-	let accrued_increment = total_borrows
-		.safe_mul(&borrow_rate_delta)?
-		.checked_mul_int(1_u64)
-		.ok_or(ArithmeticError::Overflow)?
-		.into();
-
-	Ok(AccruedInterest { accrued_increment, new_borrow_index })
-}
-
-/// Retrieve the current interest rate for the given `market_id`.
-#[cfg(test)]
-pub fn current_interest_rate<T: Config>(
-	market_id: MarketIdInner,
-) -> Result<composable_traits::defi::Rate, DispatchError> {
-	let market_id = MarketId::new(market_id);
-	let total_borrowed_from_market_excluding_interest =
-		Pallet::<T>::total_borrowed_from_market_excluding_interest(&market_id)?;
-	let total_available_to_be_borrowed = Pallet::<T>::total_available_to_be_borrowed(&market_id)?;
-	let utilization_ratio = Pallet::<T>::calculate_utilization_ratio(
-		total_available_to_be_borrowed,
-		total_borrowed_from_market_excluding_interest,
-	)?;
-
-	Markets::<T>::try_get(market_id)
-		.map_err(|_| Error::<T>::MarketDoesNotExist)?
-		.interest_rate_model
-		.get_borrow_rate(utilization_ratio)
-		.ok_or(Error::<T>::BorrowRateDoesNotExist)
-		.map_err(Into::into)
-}

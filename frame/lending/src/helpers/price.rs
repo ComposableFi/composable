@@ -1,27 +1,13 @@
-
-use crate::{*};
-
-
-
+use crate::*;
 use composable_traits::{
-	defi::{
-		DeFiComposableConfig,
-	},
-	lending::{
-		BorrowAmountOf,
-	},
+	defi::DeFiComposableConfig,
+	lending::BorrowAmountOf,
 	oracle::Oracle,
-	vault::{Vault},
+	vault::Vault,
 };
-use frame_support::{
-	pallet_prelude::*,
-};
-use sp_runtime::{
-	DispatchError,
-};
+use frame_support::pallet_prelude::*;
+use sp_runtime::DispatchError;
 
-
-// private helper functions
 impl<T: Config> Pallet<T> {
 	/// Get TWAP from oracle. If history of prices is empty then return latest price.
 	pub(crate) fn get_price(
@@ -31,7 +17,7 @@ impl<T: Config> Pallet<T> {
 		<T::Oracle as Oracle>::get_twap_for_amount(asset_id, amount)
 	}
 
-	/// Check is price actual yet
+	/// Check if price actual yet
 	pub(crate) fn ensure_price_is_recent(market: &MarketConfigOf<T>) -> Result<(), DispatchError> {
 		use sp_runtime::traits::CheckedSub as _;
 
@@ -56,16 +42,11 @@ impl<T: Config> Pallet<T> {
 
 		Ok(())
 	}
-}
-
-// public helper functions
-impl<T: Config> Pallet<T> {
-	/// Returns the initial pool size for a market with `borrow_asset`. Calculated with
+	
+    /// Returns the initial pool size for a market with `borrow_asset`. Calculated with
 	/// [`Config::OracleMarketCreationStake`].
-	pub fn calculate_initial_pool_size(
+	pub(crate) fn calculate_initial_market_volume(
 		borrow_asset: <T::Oracle as composable_traits::oracle::Oracle>::AssetId,
 	) -> Result<<T as composable_traits::defi::DeFiComposableConfig>::Balance, DispatchError> {
 		T::Oracle::get_price_inverse(borrow_asset, T::OracleMarketCreationStake::get())
-	}
-}
-
+	}}

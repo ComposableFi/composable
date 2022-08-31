@@ -8,12 +8,10 @@ use frame_support::{traits::{
     ensure
 };
 use sp_runtime::{traits::Zero, DispatchError, FixedU128, ArithmeticError, FixedPointNumber};
-use composable_traits::{
+use composable_traits::
 	lending::{
 		BorrowAmountOf, RepayStrategy, TotalDebtWithInterest, Lending,
-	},
-};
-
+	};
 use crate::Config;
 
 impl<T: Config> Pallet<T> {
@@ -175,7 +173,7 @@ impl<T: Config> Pallet<T> {
 /// Release given `amount` of `debt_token` from `beneficiary_account`, transfer `amount` from
 /// `payer_account` to `market_account`, and then burn `amount` of `debt_token` from
 /// `beneficiary_account`.
-pub(crate) fn repay_principal<'a>(
+fn repay_principal<'a>(
 	// The borrowed asset being repaid.
 	borrow_asset: <T as DeFiComposableConfig>::MayBeAssetId,
 
@@ -226,12 +224,11 @@ pub(crate) fn repay_principal<'a>(
 	Ok(())
 }
 
-
 /// Pays off the interest accrued in a market.
 ///
 /// Transfers `amount` of `borrow_asset` from `payer_account` to `market_account`,
 /// and then burns the same `amount` of `debt_asset` from `market_account`.
-pub(crate) fn pay_interest<'a>(
+fn pay_interest<'a>(
 	// The borrowed asset.
 	//
 	// This is the asset that was originally borrowed, and is the same asset used to pay the

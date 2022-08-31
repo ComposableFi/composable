@@ -1,15 +1,9 @@
 use crate::*;
-
-pub use crate::{
-	helpers::general::swap,
-	types::{MarketIdInner, MarketId},
-};
-use frame_support::{
-	pallet_prelude::*,
-};
-use frame_system::{
-	offchain::{SendSignedTransaction, Signer},
-};
+pub use crate::
+	types::{MarketIdInner, MarketId};
+use frame_support::pallet_prelude::*;
+use frame_system::
+    offchain::{SendSignedTransaction, Signer};
 use sp_std::vec;
 
 impl<T: Config> Pallet<T> {

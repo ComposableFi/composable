@@ -44,7 +44,6 @@ pub use crate::weights::WeightInfo;
 
 pub mod crypto;
 mod helpers;
-mod impls;
 mod models;
 mod types;
 
@@ -73,19 +72,25 @@ pub mod pallet {
     use crate::weights::WeightInfo;
 	pub(crate) use crate::types::MarketAssets;
 	pub use crate::{
-		helpers::general::swap,
 		types::{MarketIdInner, MarketId},
 	};
 	use composable_traits::{
 		currency::CurrencyFactory,
 		defi::{DeFiComposableConfig, *},
-		lending::{Lending, MarketConfig, RepayStrategy, UpdateInput, CreateInput},
+		lending::{
+            BorrowAmountOf, CollateralLpAmountOf, Lending, 
+            TotalDebtWithInterest, MarketConfig, RepayStrategy,
+            UpdateInput, CreateInput},
 		liquidation::Liquidation,
 		oracle::Oracle,
 		time::Timestamp,
 		vault::StrategicVault,
 	};
-	use frame_support::{
+    
+	use composable_support::{
+	    validation::TryIntoValidated,
+    };
+    use frame_support::{
 		pallet_prelude::*,
 		traits::{
 			fungible::{Inspect as NativeInspect, Transfer as NativeTransfer},
@@ -101,7 +106,10 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 	use sp_core::crypto::KeyTypeId;
-	use sp_runtime::KeyTypeId as CryptoKeyTypeId;
+    use sp_runtime::{
+        DispatchError, Percent,
+        traits::{Get, AccountIdConversion}, 
+        KeyTypeId as CryptoKeyTypeId};
 	use sp_std::{fmt::Debug, vec::Vec};
 	use codec::Codec;
 	pub use crate::crypto;
@@ -522,7 +530,128 @@ pub mod pallet {
     // ----------------------------------------------------------------------------------------------------
 	//                                     Lending Trait Implementation 
 	// ----------------------------------------------------------------------------------------------------
+    impl<T: Config> Lending for Pallet<T> {
+	type VaultId = T::VaultId;
+	type MarketId = MarketId;
+	type BlockNumber = T::BlockNumber;
+	type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
+	type Oracle = T::Oracle;
 
+	fn create_market(
+		manager: Self::AccountId,
+		input: CreateInputOf<T>,
+		keep_alive: bool,
+	) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
+		Self::do_create_market(manager, input.try_into_validated()?, keep_alive)
+	}
+
+	fn update_market(
+		manager: Self::AccountId,
+		market_id: Self::MarketId,
+		input: UpdateInput<Self::LiquidationStrategyId, Self::BlockNumber>,
+	) -> DispatchResultWithPostInfo {
+		Self::do_update_market(manager, market_id, input.try_into_validated()?)
+	}
+
+	fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
+		T::PalletId::get().into_sub_account_truncating(market_id)
+	}
+
+	fn deposit_collateral(
+		market_id: &Self::MarketId,
+		account: &Self::AccountId,
+		amount: CollateralLpAmountOf<Self>,
+		keep_alive: bool,
+	) -> Result<(), DispatchError> {
+		Self::do_deposit_collateral(market_id, account, amount.try_into_validated()?, keep_alive)
+	}
+
+	fn withdraw_collateral(
+		market_id: &Self::MarketId,
+		account: &Self::AccountId,
+		amount: CollateralLpAmountOf<Self>,
+	) -> Result<(), DispatchError> {
+		Self::do_withdraw_collateral(market_id, account, amount.try_into_validated()?)
+	}
+    
+	fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
+        Self::do_get_markets_for_borrow(borrow)	
+    }
+
+	fn borrow(
+		market_id: &Self::MarketId,
+		borrowing_account: &Self::AccountId,
+		amount_to_borrow: BorrowAmountOf<Self>,
+	) -> Result<(), DispatchError> {
+        Self::do_borrow(market_id, borrowing_account, amount_to_borrow)	
+    }
+
+	/// NOTE: Must be called in transaction!
+	fn repay_borrow(
+		market_id: &Self::MarketId,
+		from: &Self::AccountId,
+		beneficiary: &Self::AccountId,
+		total_repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
+		keep_alive: bool,
+	) -> Result<BorrowAmountOf<Self>, DispatchError> {
+        Self::do_repay_borrow(market_id, from, beneficiary, total_repay_amount, keep_alive)
+    }
+	
+    fn total_borrowed_from_market_excluding_interest(
+		market_id: &Self::MarketId,
+	) -> Result<Self::Balance, DispatchError> {
+         Self::do_total_borrowed_from_market_excluding_interest(market_id)	
+    }
+
+    fn total_interest(market_id: &Self::MarketId) -> Result<Self::Balance, DispatchError> {
+        Self::do_total_interest(market_id)	
+    }
+
+    fn accrue_interest(market_id: &Self::MarketId, now: Timestamp) -> Result<(), DispatchError>{
+        Self::do_accrue_interest(market_id, now) 
+    }
+
+	fn total_available_to_be_borrowed(
+		market_id: &Self::MarketId,
+	) -> Result<Self::Balance, DispatchError> {
+        Self::do_total_available_to_be_borrowed(market_id)	
+    }
+	
+    fn calculate_utilization_ratio(
+		cash: Self::Balance,
+		borrows: Self::Balance,
+	) -> Result<Percent, DispatchError> {
+        Self::do_calculate_utilization_ratio(cash, borrows)	
+	}
+
+	fn total_debt_with_interest(
+		market_id: &Self::MarketId,
+		account: &Self::AccountId,
+	) -> Result<TotalDebtWithInterest<BorrowAmountOf<Self>>, DispatchError> {
+        Self::do_total_debt_with_interest(market_id, account) 
+    }
+
+	fn collateral_of_account(
+		market_id: &Self::MarketId,
+		account: &Self::AccountId,
+	) -> Result<CollateralLpAmountOf<Self>, DispatchError> {
+        Self::do_collateral_of_account(market_id, account)	
+    }
+
+	fn collateral_required(
+		market_id: &Self::MarketId,
+		borrow_amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError> {
+        Self::do_collateral_required(market_id, borrow_amount)	
+    }
+
+	fn get_borrow_limit(
+		market_id: &Self::MarketId,
+		account: &Self::AccountId,
+	) -> Result<Self::Balance, DispatchError> {
+        Self::do_get_borrow_limit(market_id, account)
+    }
+}
     // ----------------------------------------------------------------------------------------------------
 	//                                     Other Traits Implementations  
 	// ----------------------------------------------------------------------------------------------------

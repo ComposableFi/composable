@@ -1,11 +1,11 @@
-
 use crate::{models::borrower_data::BorrowerData, *};
-
 use crate::validation::BalanceGreaterThenZero;
+use composable_support::math::safe::SafeMul;
 use composable_support::{
 	math::safe::{SafeAdd, SafeSub},
 	validation::{TryIntoValidated, Validated},
 };
+use composable_traits::defi::LiftedFixedBalance;
 use composable_traits::{
 	lending::{
 		CollateralLpAmountOf, Lending,
@@ -16,12 +16,12 @@ use frame_support::{
     pallet_prelude::*,
     traits::fungibles::Transfer,
 };
+use sp_runtime::FixedPointNumber;
 use sp_runtime::{
 	ArithmeticError,
 	traits::Zero, DispatchError,
 };
 
-// private helper functions
 impl<T: Config> Pallet<T> {
 	pub(crate) fn do_deposit_collateral(
 		market_id: &<Self as Lending>::MarketId,
@@ -109,5 +109,27 @@ impl<T: Config> Pallet<T> {
 		.expect("impossible; qed;");
 		Ok(())
 	}
-}
+   
+    pub(crate) fn do_collateral_of_account(
+		market_id: &MarketId,
+		account: &T::AccountId,
+	) -> Result<CollateralLpAmountOf<Self>, DispatchError> {
+		AccountCollateral::<T>::get(market_id, account)
+			.ok_or_else(|| Error::<T>::MarketCollateralWasNotDepositedByAccount.into())
+	}
 
+	pub(crate) fn do_collateral_required(
+		market_id: &MarketId,
+		borrow_amount: T::Balance,
+	) -> Result<T::Balance, DispatchError> {
+		let (_, market) = Self::get_market(market_id)?;
+		let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
+		let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?;
+
+		Ok(LiftedFixedBalance::saturating_from_integer(borrow_amount_value.into())
+			.safe_mul(&market.collateral_factor)?
+			.checked_mul_int(1_u64)
+			.ok_or(ArithmeticError::Overflow)?
+			.into())
+	}
+}

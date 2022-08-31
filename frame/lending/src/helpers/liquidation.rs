@@ -1,32 +1,22 @@
-
 use crate::*;
-
-
-
 use composable_traits::{
 	defi::{
 		CurrencyPair, DeFiComposableConfig, DeFiEngine, Sell,
 	},
-	lending::{
-		Lending,
-	},
+	lending::Lending,
 	liquidation::Liquidation,
 	oracle::Oracle,
-	vault::{Vault},
+	vault::Vault,
 };
 use frame_support::{
 	pallet_prelude::*,
 	storage::{with_transaction, TransactionOutcome},
-	traits::{
-		fungible::{Transfer as NativeTransfer},
-	},
+	traits::
+		fungible::Transfer as NativeTransfer,
 };
-use sp_runtime::{
-	DispatchError,
-};
+use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
 
-// public helper functions
 impl<T: Config> Pallet<T> {
 	/// Whether or not an account should be liquidated. See [`BorrowerData::should_liquidate()`]
 	/// for more information.

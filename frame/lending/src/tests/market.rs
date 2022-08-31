@@ -114,17 +114,17 @@ fn can_create_valid_market() {
             let market_created_event = crate::Event::MarketCreated {market_id, vault_id, manager, currency_pair};
             System::assert_has_event(Event::Lending(market_created_event));
 
-            let initial_pool_size = Lending::calculate_initial_pool_size(BORROW_ASSET_ID).unwrap();
+            let initial_market_volume = Lending::calculate_initial_market_volume(BORROW_ASSET_ID).unwrap();
             let alice_balance_after_market_creation = Tokens::balance(BORROW_ASSET_ID, &*ALICE);
 
             assert_eq!(
                 alice_balance_after_market_creation,
-                INITIAL_BORROW_ASSET_AMOUNT - initial_pool_size,
+                INITIAL_BORROW_ASSET_AMOUNT - initial_market_volume,
                 "ALICE should have 'paid' the inital_pool_size into the market vault.
                 alice_balance_after_market_creation: {alice_balance_after_market_creation}
-                initial_pool_size: {initial_pool_size}",
+                initial_market_volume: {initial_market_volume}",
                 alice_balance_after_market_creation = alice_balance_after_market_creation,
-                initial_pool_size = initial_pool_size,
+                initial_market_volume = initial_market_volume,
             );
 
             let system_events = System::events();
@@ -144,9 +144,9 @@ fn can_create_valid_market() {
                 }] if event_manager == &*ALICE && event_topics.is_empty() => {
                     assert_eq!(
                         Lending::total_available_to_be_borrowed(&created_market_id).unwrap(),
-                        initial_pool_size,
+                        initial_market_volume,
                         "The market should have {} in it.",
-                        initial_pool_size,
+                        initial_market_volume,
                     );
 
                     assert_eq!(
@@ -241,17 +241,17 @@ fn can_create_valid_market_with_keep_alive() {
             let market_created_event = crate::Event::MarketCreated {market_id, vault_id, manager, currency_pair};
             System::assert_has_event(Event::Lending(market_created_event));
 
-            let initial_pool_size = Lending::calculate_initial_pool_size(BORROW_ASSET_ID).unwrap();
+            let initial_market_volume = Lending::calculate_initial_market_volume(BORROW_ASSET_ID).unwrap();
             let alice_balance_after_market_creation = Tokens::balance(BORROW_ASSET_ID, &*ALICE);
 
             assert_eq!(
                 alice_balance_after_market_creation,
-                INITIAL_BORROW_ASSET_AMOUNT - initial_pool_size,
+                INITIAL_BORROW_ASSET_AMOUNT - initial_market_volume,
                 "ALICE should have 'paid' the inital_pool_size into the market vault.
                 alice_balance_after_market_creation: {alice_balance_after_market_creation}
-                initial_pool_size: {initial_pool_size}",
+                initial_market_volume: {initial_market_volume}",
                 alice_balance_after_market_creation = alice_balance_after_market_creation,
-                initial_pool_size = initial_pool_size,
+                initial_market_volume = initial_market_volume,
             );
 
             let system_events = System::events();
@@ -271,9 +271,9 @@ fn can_create_valid_market_with_keep_alive() {
                 }] if event_manager == &*ALICE && event_topics.is_empty() => {
                     assert_eq!(
                         Lending::total_available_to_be_borrowed(&created_market_id).unwrap(),
-                        initial_pool_size,
+                        initial_market_volume,
                         "The market should have {} in it.",
-                        initial_pool_size,
+                        initial_market_volume,
                     );
 
                     assert_eq!(

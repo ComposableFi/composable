@@ -1,15 +1,10 @@
-
-use crate::*;
-
 use crate::{
 	validation::{
 		AssetIsSupportedByOracle, CurrencyPairIsNotSame, MarketModelValid,
 		UpdateInputValid,
-	},
+	}, *,
 };
-use composable_support::{
-	validation::{Validated},
-};
+use composable_support::validation::Validated;
 use composable_traits::{
 	currency::CurrencyFactory,
 	lending::{
@@ -20,16 +15,13 @@ use composable_traits::{
 };
 use frame_support::{
 	pallet_prelude::*,
-	traits::{
-		fungibles::{Transfer},
-	},
+	traits::fungibles::Transfer,
 };
 use sp_runtime::{
-	traits::{One, Saturating, Zero}, DispatchError, FixedU128, Perquintill,
+	traits::{One, Saturating, Zero}, 
+    DispatchError, FixedU128, Perquintill,
 };
 
-
-// private helper functions
 impl<T: Config> Pallet<T> {
 	pub(crate) fn do_create_market(
 		manager: T::AccountId,
@@ -71,19 +63,19 @@ impl<T: Config> Pallet<T> {
 				},
 			)?;
 
-			let initial_pool_size = Self::calculate_initial_pool_size(config_input.borrow_asset())?;
+			let initial_market_volume = Self::calculate_initial_market_volume(config_input.borrow_asset())?;
 
 			ensure!(
-				initial_pool_size > T::Balance::zero(),
+				initial_market_volume > T::Balance::zero(),
 				Error::<T>::PriceOfInitialBorrowVaultShouldBeGreaterThanZero
 			);
 
-			// transfer `initial_pool_size` worth of borrow asset from the manager to the market
+			// transfer `initial_market_volume` worth of borrow asset from the manager to the market
 			T::MultiCurrency::transfer(
 				config_input.borrow_asset(),
 				&manager,
 				&Self::account_id(&market_id),
-				initial_pool_size,
+				initial_market_volume,
 				keep_alive,
 			)?;
 
@@ -149,10 +141,6 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| Error::<T>::MarketDoesNotExist.into())
 	}
 
-}
-
-// crate-public helper functions
-impl<T: Config> Pallet<T> {
 	/// Returns the borrow and debt assets for the given market, if it exists.
 	pub(crate) fn get_assets_for_market(
 		market_id: &MarketId,
