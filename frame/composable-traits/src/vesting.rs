@@ -105,7 +105,7 @@ pub struct VestingSchedule<VestingScheduleId, BlockNumber, Moment, Balance: HasC
 	/// Amount of tokens to release per vest
 	#[codec(compact)]
 	pub per_period: Balance,
-	/// Amout already claimed
+	/// Amount already claimed
 	pub already_claimed: Balance,
 }
 

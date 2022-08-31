@@ -572,8 +572,8 @@ fn test_split_postion() {
 		);
 		assert_last_event::<Test, _>(|e| {
 			matches!(&e.event,
-            Event::StakingRewards(crate::Event::SplitPosition { positions })
-            if positions == &vec![1_u128.into(), 2_u128.into()])
+			Event::StakingRewards(crate::Event::SplitPosition { positions })
+			if positions == &vec![(1_u128.into(), stake1.stake), (2_u128.into(), stake2.stake)])
 		});
 	});
 }
