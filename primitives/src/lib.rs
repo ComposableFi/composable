@@ -46,6 +46,12 @@ impl UpdateType {
 	}
 }
 
+pub fn apply_prefix(mut commitment_prefix: Vec<u8>, path: String) -> Vec<u8> {
+	let path = path.as_bytes().to_vec();
+	commitment_prefix.extend_from_slice(&path);
+	commitment_prefix
+}
+
 /// Provides an interface for accessing new events and Ibc data on the chain which must be
 /// relayed to the counterparty chain.
 #[async_trait::async_trait]
@@ -188,6 +194,14 @@ pub trait IbcProvider {
 		port_id: PortId,
 		seqs: Vec<u64>,
 	) -> Result<Vec<PacketInfo>, Self::Error>;
+
+	/// Query the time and height at which this client was updated on this chain for the given
+	/// client height
+	async fn query_client_update_time_and_height(
+		&self,
+		client_id: ClientId,
+		client_height: Height,
+	) -> Result<(Height, Timestamp), Self::Error>;
 
 	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
 	/// Only used in tests.

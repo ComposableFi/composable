@@ -443,6 +443,14 @@ where
 		Ok(response)
 	}
 
+	async fn query_client_update_time_and_height(
+		&self,
+		client_id: ClientId,
+		client_height: Height,
+	) -> Result<(Height, Timestamp), Self::Error> {
+		todo!()
+	}
+
 	async fn query_host_consensus_state_proof(
 		&self,
 		height: Height,
