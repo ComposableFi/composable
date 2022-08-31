@@ -38,7 +38,7 @@
     "micro-base": "^0.10.2",
     "millify": "^4.0.0",
     "moment": "^2.29.1",
-    "moment-timezone": "^0.5.34",
+    "moment-timezone": "^0.5.35",
     "next": "^12.2.0",
     "next-pwa": "^5.4.4",
     "next-transpile-modules": "^9.0.0",
