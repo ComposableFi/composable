@@ -25998,7 +25998,7 @@ pub mod api {
 					}
 				}
 				#[doc = " orders are handled locally, but if these came from remote,"]
-				#[doc = " these should be notified approtiately"]
+				#[doc = " these should be notified appropriately"]
 				pub fn local_order_id_to_remote(
 					&self,
 					_0: &'a ::core::primitive::u128,
@@ -26037,7 +26037,7 @@ pub mod api {
 					}
 				}
 				#[doc = " orders are handled locally, but if these came from remote,"]
-				#[doc = " these should be notified approtiately"]
+				#[doc = " these should be notified appropriately"]
 				pub fn local_order_id_to_remote_iter(
 					&self,
 					block_hash: ::core::option::Option<T::Hash>,

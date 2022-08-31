@@ -259,7 +259,7 @@ impl<
 // must be a non-associated const to allow for pattern matching
 pub const RELAY_LOCATION: MultiLocation = MultiLocation { parents: 1, interior: Here };
 
-/// covderts remote asset to local
+/// converts remote asset to local
 /// 1. if remote is origin without key(some identifiers), than it is native token
 /// 2. if origin is parent of this consensus, than this is relay
 /// 2. if origin is this consensus, than it is this native token

@@ -159,7 +159,7 @@ describe("DexRouterPallet Tests", function () {
     const keepAlive = api.createType("bool", false);
     //extrinsic call
     const {
-      data: [, , baseAmountInTransfer, quoteAmountIntransfer, mintedLp]
+      data: [, , baseAmountInTransfer, quoteAmountInTransfer, mintedLp]
     } = await sendAndWaitForSuccess(
       api,
       walletId2,
@@ -168,7 +168,7 @@ describe("DexRouterPallet Tests", function () {
     );
     //Asertions
     expect(baseAmountInTransfer.toString()).to.be.equal(baseAmount.toString());
-    expect(quoteAmountIntransfer.toString()).to.be.equal(quoteAmount.toString());
+    expect(quoteAmountInTransfer.toString()).to.be.equal(quoteAmount.toString());
     expect(new BN(mintedLp).gt(new BN(minimumMint))).to.be.true;
   });
 
@@ -188,7 +188,7 @@ describe("DexRouterPallet Tests", function () {
     const keepAlive = api.createType("bool", false);
     //extrinsic call
     const {
-      data: [, , baseAmountInTransfer, quoteAmountIntransfer, mintedLp]
+      data: [, , baseAmountInTransfer, quoteAmountInTransfer, mintedLp]
     } = await sendAndWaitForSuccess(
       api,
       walletId2,
@@ -197,7 +197,7 @@ describe("DexRouterPallet Tests", function () {
     );
     //Asertions
     expect(baseAmountInTransfer.toString()).to.be.equal(baseAmount.toString());
-    expect(quoteAmountIntransfer.toString()).to.be.equal(quoteAmount.toString());
+    expect(quoteAmountInTransfer.toString()).to.be.equal(quoteAmount.toString());
     expect(new BN(mintedLp).gt(new BN(minimumMint))).to.be.true;
   });
 
@@ -217,7 +217,7 @@ describe("DexRouterPallet Tests", function () {
     const keepAlive = api.createType("bool", false);
     //extrinsic call
     const {
-      data: [, , baseAmountInTransfer, quoteAmountIntransfer, mintedLp]
+      data: [, , baseAmountInTransfer, quoteAmountInTransfer, mintedLp]
     } = await sendAndWaitForSuccess(
       api,
       walletId2,
@@ -226,7 +226,7 @@ describe("DexRouterPallet Tests", function () {
     );
     //Asertions
     expect(baseAmountInTransfer.toString()).to.be.equal(baseAmount.toString());
-    expect(quoteAmountIntransfer.toString()).to.be.equal(quoteAmount.toString());
+    expect(quoteAmountInTransfer.toString()).to.be.equal(quoteAmount.toString());
     expect(new BN(mintedLp).gt(new BN(minimumMint))).to.be.true;
   });
 
@@ -282,7 +282,7 @@ describe("DexRouterPallet Tests", function () {
     const minQuoteAmount = api.createType("u128", minUSDTAmount);
     //extrinsic call
     const {
-      data: [, , baseAmountInTransfer, quoteAmountIntransfer]
+      data: [, , baseAmountInTransfer, quoteAmountInTransfer]
     } = await sendAndWaitForSuccess(
       api,
       walletId2,
@@ -291,7 +291,7 @@ describe("DexRouterPallet Tests", function () {
     );
     //Asertions
     expect(new BN(baseAmountInTransfer.toString()).gt(new BN(minUSDCAmount.toString()))).to.be.true;
-    expect(new BN(quoteAmountIntransfer.toString()).gt(new BN(minUSDCAmount.toString()))).to.be.true;
+    expect(new BN(quoteAmountInTransfer.toString()).gt(new BN(minUSDCAmount.toString()))).to.be.true;
   });
 
   it("Buy ETH via route found in router (1 hop)", async function () {
