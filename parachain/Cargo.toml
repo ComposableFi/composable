@@ -39,6 +39,7 @@ itertools = "0.10.3"
 
 # substrate
 sp-core = { version = "6.0.0", features = ["full_crypto"] }
+sp-core-git = { package = "sp-core", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 ss58-registry = "1.28.0"
 sp-runtime = "6.0.0"
 sp-keystore = "0.12.0"

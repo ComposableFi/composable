@@ -5,6 +5,7 @@ use ibc::{
 	events::IbcEvent,
 };
 use primitives::{KeyProvider, TestProvider};
+use sp_core_git::crypto::{AccountId32, Ss58Codec};
 use sp_runtime::{
 	traits::{Header as HeaderT, IdentifyAccount, Verify},
 	MultiSignature, MultiSigner,
@@ -21,7 +22,6 @@ where
 	u32: From<<T as Config>::BlockNumber>,
 	Self: KeyProvider,
 	<T::Signature as Verify>::Signer: From<MultiSigner> + IdentifyAccount<AccountId = T::AccountId>,
-	MultiSigner: From<MultiSigner>,
 	<T as Config>::Address: From<<T as Config>::AccountId>,
 	T::Signature: From<MultiSignature>,
 	T::BlockNumber: From<u32> + Display + Ord + sp_runtime::traits::Zero,
@@ -29,8 +29,9 @@ where
 	async fn send_transfer(&self, transfer: MsgTransfer<PrefixedCoin>) -> Result<(), Self::Error> {
 		use pallet_ibc::{MultiAddress, TransferParams};
 
+		let account_id = AccountId32::from_ss58check(transfer.receiver.as_ref()).unwrap();
 		let params = TransferParams {
-			to: MultiAddress::Raw(transfer.receiver.as_ref().as_bytes().to_vec()),
+			to: MultiAddress::Id(account_id),
 			source_channel: transfer.source_channel.sequence(),
 			timeout_timestamp_offset: 5_000_000,
 			timeout_height_offset: 500,

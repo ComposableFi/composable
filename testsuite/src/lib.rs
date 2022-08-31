@@ -131,13 +131,13 @@ where
 
 /// Attempts to send 70% of funds of chain_a's signer to chain b's signer.
 async fn send_transfer<A, B>(chain_a: &A, chain_b: &B, channel_id: ChannelId)
-	where
-		A: TestProvider,
-		A::FinalityEvent: Send + Sync,
-		A::Error: From<B::Error>,
-		B: TestProvider,
-		B::FinalityEvent: Send + Sync,
-		B::Error: From<A::Error>,
+where
+	A: TestProvider,
+	A::FinalityEvent: Send + Sync,
+	A::Error: From<B::Error>,
+	B: TestProvider,
+	B::FinalityEvent: Send + Sync,
+	B::Error: From<A::Error>,
 {
 	let balance = chain_a
 		.query_ibc_balance()
