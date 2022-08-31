@@ -42,7 +42,7 @@ fn test_create_reward_pool() {
 
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
-            Event::StakingRewards(crate::Event::RewardPoolCreated { owner, pool_id, .. })
+            Event::StakingRewards(crate::Event::RewardPoolCreated { owner, pool_id, asset_id: PICA::ID, .. })
             if owner == ALICE && pool_id == 1)
 		});
 
