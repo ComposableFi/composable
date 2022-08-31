@@ -40,11 +40,12 @@ where
 		// If `bounds` is greater than or equal to `n`, add pre-set ranges
 		// Where `n` is the number of pre-set ranges
 		#[allow(clippy::disallowed_methods)]
-		if Self::bounds() >= 5 {
+		if Self::bounds() >= 6 {
 			ranges.add(Range::lp_tokens()).expect("capacitiy is sufficient, qed");
 			ranges.add(Range::tokens()).expect("capacitiy is sufficient, qed");
 			ranges.add(Range::foreign_assets()).expect("capacitiy is sufficient, qed");
 			ranges.add(Range::ibc_assets()).expect("capacitiy is sufficient, qed");
+			ranges.add(Range::fnft_range()).expect("capacitiy is sufficient, qed");
 			ranges.add(Range::x_tokens()).expect("capacitiy is sufficient, qed");
 		}
 
@@ -146,12 +147,20 @@ where
 		}
 	}
 
+	/// Range for fNFTs
+	fn fnft_range() -> Self {
+		Self {
+			current: AssetId::from(500_000_000_001_u128),
+			end: AssetId::from(600_000_000_000_u128),
+		}
+	}
+
 	/// Range for xTokens
 	/// xTokens are provided to users by the staking rewards pallet and may be used for governance.
 	fn x_tokens() -> Self {
 		Self {
-			current: AssetId::from(500_000_000_001_u128),
-			end: AssetId::from(600_000_000_000_u128),
+			current: AssetId::from(600_000_000_001_u128),
+			end: AssetId::from(700_000_000_000_u128),
 		}
 	}
 
