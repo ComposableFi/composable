@@ -809,8 +809,13 @@ pub mod pallet {
 				// reference:
 				// https://medium.com/coinmonks/programming-defi-uniswap-part-2-13a6428bf892
 				let outstanding = T::Currency::total_issuance(vault.lp_token_id);
-				let lp = Self::convert_and_multiply_by_rational(amount, outstanding, vault_aum)
-					.map_err(|_| Error::<T>::NoFreeVaultAllocation)?;
+				let lp = Self::convert_and_multiply_by_rational(
+					amount,
+					outstanding,
+					vault_aum,
+					Rounding::Up,
+				)
+				.map_err(|_| Error::<T>::NoFreeVaultAllocation)?;
 
 				ensure!(lp > T::Balance::zero(), Error::<T>::InsufficientCreationDeposit);
 				Ok(lp)
@@ -834,8 +839,12 @@ pub mod pallet {
 			let vault_aum = Self::do_assets_under_management(vault_id, vault)?;
 			let lp_total_issuance = T::Currency::total_issuance(vault.lp_token_id);
 
-			let shares_amount =
-				Self::convert_and_multiply_by_rational(lp_amount, vault_aum, lp_total_issuance)?;
+			let shares_amount = Self::convert_and_multiply_by_rational(
+				lp_amount,
+				vault_aum,
+				lp_total_issuance,
+				Rounding::Down,
+			)?;
 
 			Ok(shares_amount)
 		}
@@ -848,23 +857,34 @@ pub mod pallet {
 			let total_lp_issuance = T::Currency::total_issuance(vault.lp_token_id);
 			let aum = Self::assets_under_management(vault_id)?;
 
-			let shares_amount =
-				Self::convert_and_multiply_by_rational(asset_amount, total_lp_issuance, aum)?;
+			let shares_amount = Self::convert_and_multiply_by_rational(
+				asset_amount,
+				total_lp_issuance,
+				aum,
+				Rounding::Up,
+			)?;
 
 			Ok(shares_amount)
 		}
 
 		fn convert_and_multiply_by_rational(
-			a: T::Balance,
-			b: T::Balance,
-			c: T::Balance,
-		) -> Result<T::Balance, DispatchError> {
-			let a = <T::Convert as Convert<T::Balance, u128>>::convert(a);
-			let b = <T::Convert as Convert<T::Balance, u128>>::convert(b);
-			let c = <T::Convert as Convert<T::Balance, u128>>::convert(c);
+			a: BalanceOf<T>,
+			b: BalanceOf<T>,
+			c: BalanceOf<T>,
+			r: Rounding,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			if c == BalanceOf::<T>::zero() {
+				return Ok(BalanceOf::<T>::zero())
+			};
 
-			let res = multiply_by_rational_with_rounding(a, b, c, Rounding::Down)
-				.ok_or(ArithmeticError::Overflow)?;
+			let a = <T::Convert as Convert<BalanceOf<T>, u128>>::convert(a);
+			let b = <T::Convert as Convert<BalanceOf<T>, u128>>::convert(b);
+			let c = <T::Convert as Convert<BalanceOf<T>, u128>>::convert(c);
+
+			let res = match multiply_by_rational_with_rounding(a, b, c, r) {
+				Some(res) => res,
+				None => return Err(DispatchError::from(ArithmeticError::Overflow)),
+			};
 
 			let res = <T::Convert as Convert<u128, T::Balance>>::convert(res);
 			Ok(res)
