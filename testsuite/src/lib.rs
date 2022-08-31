@@ -152,11 +152,14 @@ where
 		amount: Amount::from_str(&format!("{}", (amount * 70) / 100)).expect("Infallible"),
 	};
 
-	let (mut timeout_height, timestamp) = chain_b.latest_height_and_timestamp().await?;
+	let (mut timeout_height, timestamp) = chain_b
+		.latest_height_and_timestamp()
+		.await
+		.expect("Couldn't fetch latest_height_and_timestamp");
 
 	// 50 blocks
 	timeout_height.revision_height += 50;
-	let timeout_timestamp = (timestamp + Duration::from_secs(60 * 60))?;
+	let timeout_timestamp = (timestamp + Duration::from_secs(60 * 60)).expect("Overflow evaluating timeout");
 
 	let msg = MsgTransfer {
 		source_port: PortId::transfer(),

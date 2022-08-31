@@ -1,8 +1,7 @@
-use ibc::core::ics02_client;
+use ibc::{core::ics02_client, timestamp::ParseTimestampError};
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::TrieError;
 use std::num::ParseIntError;
-use ibc::timestamp::ParseTimestampError;
 use thiserror::Error;
 
 /// Error definition for the parachain client
@@ -60,7 +59,7 @@ pub enum Error {
 	Ics20Error(#[from] ibc::applications::transfer::error::Error),
 	/// Error occured parsing timestamp
 	#[error("Timestamp error: {0}")]
-	ParseTimestamp(#[from] ParseTimestampError)
+	ParseTimestamp(#[from] ParseTimestampError),
 }
 
 impl From<String> for Error {

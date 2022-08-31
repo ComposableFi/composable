@@ -1,8 +1,7 @@
 use beefy_light_client_primitives::{ClientState, NodesUtils};
 use codec::{Decode, Encode};
 use itertools::Itertools;
-use std::{fmt::Display, str::FromStr};
-use std::time::Duration;
+use std::{fmt::Display, str::FromStr, time::Duration};
 
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
