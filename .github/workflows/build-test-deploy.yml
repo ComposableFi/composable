@@ -818,6 +818,12 @@ jobs:
         - local-integration-tests
         - unit-tests
         - cargo-udeps-check 
+        - nixfmt-check
+        - cargo-clippy-check
+        - cargo-deny-check
+        - cargo-fmt-check
+        - taplo-cli-check
+        - prettier-check        
       steps:
         - run: echo "Goblins allow your work to see the light"
 
