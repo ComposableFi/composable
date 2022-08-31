@@ -32,7 +32,8 @@ merkle
 relocking
 ethabi # etherium abi
 UTXOs
-secp256k1
+secp
+secp256r1
 sproofed
 pyth
 pythd
@@ -98,6 +99,7 @@ multisignature
 multiasset
 multisigs
 multideposit
+multicurrency
 multicurrencies
 multiplatform
 multichain
@@ -117,6 +119,18 @@ TGE # Token Generation Events
 TGEs
 tradfi
 BYOG
+
+prehashed
+unhashed
+undelegation
+lockvotes
+multiblock
+flashloans
+blocktime
+preprice
+preprices
+unstaked
+prelocks
 
 # just words, consider a separate dictionary
 architecting
@@ -257,6 +271,18 @@ generalised
 proxied
 proxyable
 unproxyable
+proxying
+stairstep
+untombstone
+preconfigured
+minimalistic
+banlist
+rescined
+expirable
+rebalance
+decrementor
+lendable
+mutables
 analysing
 rebalances
 spatialize
@@ -278,7 +304,6 @@ direnv
 # can't have apostrophies in identifiers
 doesnt
 couldnt
-
 
 # composable
 composablefi

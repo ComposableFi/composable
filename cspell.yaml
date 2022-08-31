@@ -6,6 +6,8 @@ useGitignore: true
 
 dictionaries:
   # - spellcheck
+  - en_US
+
   - companies
   - softwareTerms
   - misc
@@ -69,3 +71,4 @@ ignorePaths:
   - "subsquid/db/migrations"
   - "scripts/polkadot-launch/initialization/src/interfaces/"
   - "scripts/github/picasso/"
+  - "frame/airdrop/index.html"

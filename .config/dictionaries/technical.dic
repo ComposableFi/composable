@@ -75,6 +75,7 @@ oneshot
 bitvec
 bitfield
 powf
+airdropper
 
 # BN method (javascript)
 addn
@@ -196,6 +197,9 @@ sccache
 npmjs
 pkgconf
 libsecp
+keccak256
+libsecp256k1
+keccak
 containrrr # `containrrr/watchtower` docker image
 adduser
 
@@ -255,6 +259,7 @@ sparkline
 codesandbox
 snackbars
 dhms # day hour minute second
+shortkey
 
 # these should probably be replaced with stakes and bonds respectively
 stakings
@@ -312,7 +317,7 @@ toolchains
 bootnodes
 gpgsign
 proptests
-dockefile
+dockerfile
 oneliner
 
 # file attributes
