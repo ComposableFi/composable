@@ -5,7 +5,9 @@ use crate::{
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{
+	to_binary, Binary, Deps, DepsMut, Env, Event, MessageInfo, Response, StdResult,
+};
 use std::collections::BTreeMap;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -15,7 +17,8 @@ pub fn instantiate(
 	_info: MessageInfo,
 	_msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-	Ok(Response::default())
+	Ok(Response::default()
+		.add_event(Event::new("xcvm.registry").add_attribute("action", "instantiated")))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -54,7 +57,7 @@ pub fn handle_set_assets(
 		ASSETS.save(deps.storage, asset_id.parse::<XcvmAssetId>().unwrap(), &addr)?;
 	}
 
-	Ok(Response::new().add_attribute("action", "update_assets"))
+	Ok(Response::new().add_event(Event::new("xcvm.registry").add_attribute("action", "updated")))
 }
 
 pub fn query_asset_contract(
