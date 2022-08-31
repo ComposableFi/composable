@@ -86,7 +86,7 @@ pub mod pallet {
 	use frame_support::{
 		traits::{
 			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
-			tokens::{nonfungibles, WithdrawConsequence},
+			tokens::{nonfungibles, nonfungibles::Create, WithdrawConsequence},
 			TryCollect, UnixTime,
 		},
 		transactional, BoundedBTreeMap, PalletId,
@@ -261,8 +261,15 @@ pub mod pallet {
 			+ One;
 
 		type FinancialNft: nonfungibles::Mutate<AccountIdOf<Self>>
-			+ nonfungibles::Create<AccountIdOf<Self>>
-			+ FinancialNft<AccountIdOf<Self>>;
+			+ Create<
+				AccountIdOf<Self>,
+				ItemId = Self::FinancialNftInstanceId,
+				CollectionId = Self::AssetId,
+			> + FinancialNft<
+				AccountIdOf<Self>,
+				ItemId = Self::FinancialNftInstanceId,
+				CollectionId = Self::AssetId,
+			>;
 
 		/// Is used to create staked asset per reward pool
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
@@ -576,8 +583,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> ManageStaking for Pallet<T> {
-		type AssetId = T::AssetId;
 		type AccountId = T::AccountId;
+		type AssetId = T::AssetId;
 		type BlockNumber = <T as frame_system::Config>::BlockNumber;
 		type Balance = T::Balance;
 		type RewardConfigsLimit = T::MaxRewardConfigsPerPool;
@@ -643,12 +650,16 @@ pub mod pallet {
 
 					Self::deposit_event(Event::<T>::RewardPoolCreated {
 						pool_id,
-						owner,
+						owner: owner.clone(),
 						end_block,
 						asset_id,
 					});
 
 					// TODO (vim): Create the financial NFT collection for the rewards pool
+					T::FinancialNft::create_collection(
+						/* TODO Replace pool_id with the collection asset ID */
+						&asset_id, &owner, &owner,
+					)?;
 					Ok(pool_id)
 				},
 				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
