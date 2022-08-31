@@ -1,5 +1,5 @@
 use crate::pallet::Config;
-use composable_traits::{defi::DeFiComposableConfig, lending::CreateInput};
+use composable_traits::defi::DeFiComposableConfig;
 use frame_support::pallet_prelude::*;
 use sp_runtime::FixedU128;
 use sp_std::fmt::Debug;
@@ -42,13 +42,6 @@ pub(crate) struct MarketAssets<T: DeFiComposableConfig> {
 	/// The debt token/ debt marker for the market.
 	pub(crate) debt_asset: <T as DeFiComposableConfig>::MayBeAssetId,
 }
-
-/// A convenience wrapper around [`CreateInput`] for `T: Config`.
-pub type CreateInputOf<T> = CreateInput<
-	<T as Config>::LiquidationStrategyId,
-	<T as DeFiComposableConfig>::MayBeAssetId,
-	<T as frame_system::Config>::BlockNumber,
->;
 
 #[derive(Debug, PartialEqNoBound)]
 pub(crate) struct AccruedInterest<T: Config> {

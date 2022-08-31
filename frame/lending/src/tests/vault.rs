@@ -30,7 +30,7 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 				market_id.clone(),
 				deposit_btc + initial_total_cash
 			),
-			Error::<Runtime>::NotEnoughBorrowAsset
+			orml_tokens::Error::<Runtime>::BalanceTooLow
 		);
 		assert_no_event::<Runtime>(Event::Lending(pallet_lending::Event::<Runtime>::Borrowed {
 			sender: *ALICE,

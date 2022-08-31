@@ -1,11 +1,7 @@
 
 use crate::{models::borrower_data::BorrowerData, *};
 
-use crate::{
-	validation::{
-		BalanceGreaterThenZero,
-	},
-};
+use crate::validation::BalanceGreaterThenZero;
 use composable_support::{
 	math::safe::{SafeAdd, SafeSub},
 	validation::{TryIntoValidated, Validated},
@@ -14,20 +10,16 @@ use composable_traits::{
 	lending::{
 		CollateralLpAmountOf, Lending,
 	},
-	vault::{Vault},
+	vault::Vault,
 };
 use frame_support::{
-	pallet_prelude::*,
-	traits::{
-		fungibles::{Inspect, Transfer},
-		tokens::DepositConsequence,
-	},
+    pallet_prelude::*,
+    traits::fungibles::Transfer,
 };
 use sp_runtime::{
 	ArithmeticError,
-	traits::{Zero}, DispatchError,
+	traits::Zero, DispatchError,
 };
-
 
 // private helper functions
 impl<T: Config> Pallet<T> {
@@ -98,29 +90,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let market_account = Self::account_id(market_id);
-        // sbrmv
-		ensure!(
-			<T as Config>::MultiCurrency::can_deposit(
-				market.collateral_asset,
-				account,
-				amount,
-				false
-			) == DepositConsequence::Success,
-			Error::<T>::TransferFailed
-		);
-	    //sbrmv	
-        ensure!(
-			<T as Config>::MultiCurrency::can_withdraw(
-				market.collateral_asset,
-				&market_account,
-				amount
-			)
-			.into_result()
-			.is_ok(),
-			Error::<T>::TransferFailed
-		);
-
-		AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+      		AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
 			let new_collateral_balance =
 				// REVIEW: Should we default if there's no collateral? Or should an error (something like "NoCollateralToWithdraw") be returned instead?
 				collateral_balance.unwrap_or_default().safe_sub(&amount)?;
