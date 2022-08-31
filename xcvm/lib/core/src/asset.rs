@@ -187,13 +187,17 @@ impl From<u128> for Amount {
 impl Amount {
 	#[inline]
 	pub fn apply(&self, value: u128) -> u128 {
-		let amount = FixedU128::<U16>::wrapping_from_num(value)
-			.saturating_mul(
-				FixedU128::<U16>::wrapping_from_num(self.slope.0)
-					.saturating_div(FixedU128::<U16>::wrapping_from_num(u128::MAX)),
-			)
-			.wrapping_to_num::<u128>()
-			.saturating_add(self.intercept.0);
+		let amount = if self.slope.0 == 0 {
+			self.intercept.0
+		} else {
+			FixedU128::<U16>::wrapping_from_num(value)
+				.saturating_mul(
+					FixedU128::<U16>::wrapping_from_num(self.slope.0)
+						.saturating_div(FixedU128::<U16>::wrapping_from_num(u128::MAX)),
+				)
+				.wrapping_to_num::<u128>()
+				.saturating_add(self.intercept.0)
+		};
 		u128::min(value, amount)
 	}
 }
