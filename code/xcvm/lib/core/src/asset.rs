@@ -216,10 +216,10 @@ impl Funds {
 	}
 }
 
-impl<U, V> From<BTreeMap<U, V>> for Funds
+impl<T, U, V> From<BTreeMap<U, V>> for Funds<T>
 where
 	U: Into<AssetId>,
-	V: Into<Amount>,
+	V: Into<T>,
 {
 	#[inline]
 	fn from(assets: BTreeMap<U, V>) -> Self {
@@ -232,10 +232,10 @@ where
 	}
 }
 
-impl<U, V, const K: usize> From<[(U, V); K]> for Funds
+impl<T, U, V, const K: usize> From<[(U, V); K]> for Funds<T>
 where
 	U: Into<AssetId>,
-	V: Into<Amount>,
+	V: Into<T>,
 {
 	#[inline]
 	fn from(x: [(U, V); K]) -> Self {
@@ -243,9 +243,9 @@ where
 	}
 }
 
-impl From<Funds> for BTreeMap<u128, Amount> {
+impl<T> From<Funds<T>> for BTreeMap<u128, T> {
 	#[inline]
-	fn from(Funds(assets): Funds) -> Self {
+	fn from(Funds(assets): Funds<T>) -> Self {
 		assets.into_iter().map(|(AssetId(asset), amount)| (asset, amount)).collect()
 	}
 }
