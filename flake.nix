@@ -335,6 +335,12 @@
             '';
           docs-renders = [ mdbook plantuml graphviz pandoc ];
 
+          mk-xcvm-contract = name: crane-nightly.buildPackage (common-attrs // {
+              pnameSuffix = name;
+              cargoBuildCommand = "cargo build --target wasm32-unknown-unknown --profile cosmwasm-contracts -p ${name}";
+              RUSTFLAGS="-C link-arg=-s";
+            });
+
         in rec {
           packages = rec {
             inherit wasm-optimizer;
@@ -349,6 +355,10 @@
             inherit composable-node;
             inherit composable-bench-node;
             inherit rust-nightly;
+
+            xcvm-contract-asset-registry = mk-xcvm-contract "xcvm-asset-registry";
+            xcvm-contract-router = mk-xcvm-contract "xcvm-router";
+            xcvm-contract-interpreter = mk-xcvm-contract "xcvm-interpreter";
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
