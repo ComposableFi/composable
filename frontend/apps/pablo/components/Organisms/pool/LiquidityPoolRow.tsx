@@ -16,13 +16,15 @@ import { calculateRewardPerDayByAssetId } from "@/defi/utils/stakingRewards/math
 
 const LiquidityPoolRow = ({
   liquidityPool,
-  handleRowClick
+  handleRowClick,
 }: {
   liquidityPool: StableSwapPool | ConstantProductPool;
   handleRowClick: (e: any, poolId: string) => void;
 }) => {
   const rewardPool = useStakingRewardPool(liquidityPool.lpToken);
-  const rewardAssets = useAssets(rewardPool ? Object.keys(rewardPool.rewards) : []);
+  const rewardAssets = useAssets(
+    rewardPool ? Object.keys(rewardPool.rewards) : []
+  );
   const baseAsset = useAsset(liquidityPool.pair.base.toString());
   const quoteAsset = useAsset(liquidityPool.pair.quote.toString());
 
@@ -39,7 +41,7 @@ const LiquidityPoolRow = ({
   return (
     <TableRow
       onClick={(e) => {
-        handleRowClick(e, liquidityPool.poolId.toString())
+        handleRowClick(e, liquidityPool.poolId.toString());
       }}
       key={liquidityPool.poolId.toString()}
       sx={{ cursor: "pointer" }}
@@ -89,7 +91,10 @@ const LiquidityPoolRow = ({
                         label: item.symbol,
                       },
                     ]}
-                    label={calculateRewardPerDayByAssetId(item.network[DEFAULT_NETWORK_ID], rewardPool).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
+                    label={calculateRewardPerDayByAssetId(
+                      item.network[DEFAULT_NETWORK_ID],
+                      rewardPool
+                    ).toFixed(DEFAULT_UI_FORMAT_DECIMALS)}
                   />
                 </Box>
               );
