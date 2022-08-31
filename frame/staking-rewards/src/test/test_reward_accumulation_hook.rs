@@ -340,8 +340,7 @@ fn test_accumulate_rewards_hook() {
 				lock: default_lock_config(),
 				share_asset_id: XC::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			},
-		];
+			});
 
 		mint_assets([ALICE], [D::ID], C_D_INITIAL_AMOUNT);
 		add_to_rewards_pot_and_assert(ALICE, bobs_pool_id, D::ID, C_D_INITIAL_AMOUNT);
@@ -594,9 +593,8 @@ fn test_accumulate_rewards_hook() {
 				lock: default_lock_config(),
 				share_asset_id: XF::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			},
-		)
-		.unwrap();
+			})
+			.unwrap();
 
 		{
 			progress_to_block(STARTING_BLOCK + 4167, &mut current_block);

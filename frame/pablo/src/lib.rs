@@ -72,7 +72,7 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
 	use composable_traits::{
-		currency::{CurrencyFactory, LocalAssets},
+		currency::{CurrencyFactory, LocalAssets, RangeId},
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
@@ -559,7 +559,7 @@ pub mod pallet {
 			T::EnableTwapOrigin::ensure_origin(origin)?;
 			if TWAPState::<T>::contains_key(pool_id) {
 				// pool_id is alread enabled for TWAP
-				return Ok(());
+				return Ok(())
 			}
 			let current_timestamp = T::Time::now();
 			let rate_base = Self::do_get_exchange_rate(pool_id, PriceRatio::NotSwapped)?;
@@ -676,9 +676,9 @@ pub mod pallet {
 				end_block,
 				reward_configs,
 				lock,
-				share_asset_id: todo!(),
+				share_asset_id: Self::x_token(*pool_id)?,
 				// TODO: Derive default fNFT collection ID for staking
-				financial_nft_asset_id: todo!(),
+				financial_nft_asset_id: T::AssetId::default(),
 			})
 		}
 
@@ -783,8 +783,8 @@ pub mod pallet {
 						update_price_cumulative_state::<T>(pool_id, prev_price_cumulative)
 					},
 				)?;
-			if base_price_cumulative != T::Balance::zero()
-				&& quote_price_cumulative != T::Balance::zero()
+			if base_price_cumulative != T::Balance::zero() &&
+				quote_price_cumulative != T::Balance::zero()
 			{
 				// update TWAP
 				let updated_twap = TWAPState::<T>::try_mutate(
@@ -808,7 +808,7 @@ pub mod pallet {
 						]),
 					});
 				}
-				return Ok(());
+				return Ok(())
 			}
 			Ok(())
 		}
@@ -861,9 +861,8 @@ pub mod pallet {
 			match pool {
 				PoolConfiguration::StableSwap(info) => Ok(info.lp_token),
 				PoolConfiguration::ConstantProduct(info) => Ok(info.lp_token),
-				PoolConfiguration::LiquidityBootstrapping(_) => {
-					Err(Error::<T>::NoLpTokenForLbp.into())
-				},
+				PoolConfiguration::LiquidityBootstrapping(_) =>
+					Err(Error::<T>::NoLpTokenForLbp.into()),
 			}
 		}
 
@@ -886,7 +885,10 @@ pub mod pallet {
 				ksm => Ok(primitives::currency::CurrencyId::xKSM.0.into()),
 				pblo => Ok(primitives::currency::CurrencyId::xPBLO.0.into()),
 				// TODO: Derive x_token asset id from `token_id` and currency factory
-				_ => Ok(todo!()),
+				_ => Ok(T::CurrencyFactory::create(
+					RangeId::XTOKEN_ASSETS,
+					Self::Balance::default(),
+				)?),
 			}
 		}
 
@@ -930,8 +932,8 @@ pub mod pallet {
 				.get(&currency_pair.quote)
 				.ok_or(Error::<T>::MissingMinExpectedAmount)?;
 			match pool {
-				PoolConfiguration::StableSwap(StableSwapPoolInfo { pair, lp_token, .. })
-				| PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
+				PoolConfiguration::StableSwap(StableSwapPoolInfo { pair, lp_token, .. }) |
+				PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
 					pair,
 					lp_token,
 					..
@@ -989,8 +991,8 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
-				PoolConfiguration::StableSwap(StableSwapPoolInfo { pair, lp_token, .. })
-				| PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
+				PoolConfiguration::StableSwap(StableSwapPoolInfo { pair, lp_token, .. }) |
+				PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
 					pair,
 					lp_token,
 					..
@@ -1011,8 +1013,8 @@ pub mod pallet {
 						Error::<T>::NotEnoughLiquidity
 					);
 					ensure!(
-						T::Assets::reducible_balance(pair.quote, &pool_account, false)
-							> quote_amount,
+						T::Assets::reducible_balance(pair.quote, &pool_account, false) >
+							quote_amount,
 						Error::<T>::NotEnoughLiquidity
 					);
 					ensure!(
@@ -1053,17 +1055,15 @@ pub mod pallet {
 					asset_id,
 					quote_amount,
 				),
-				PoolConfiguration::ConstantProduct(info) => {
-					Uniswap::<T>::get_exchange_value(&info, &pool_account, asset_id, quote_amount)
-				},
-				PoolConfiguration::LiquidityBootstrapping(info) => {
+				PoolConfiguration::ConstantProduct(info) =>
+					Uniswap::<T>::get_exchange_value(&info, &pool_account, asset_id, quote_amount),
+				PoolConfiguration::LiquidityBootstrapping(info) =>
 					LiquidityBootstrapping::<T>::get_exchange_value(
 						info,
 						pool_account,
 						asset_id,
 						quote_amount,
-					)
-				},
+					),
 			}
 		}
 
@@ -1104,7 +1104,7 @@ pub mod pallet {
 					min_mint_amount,
 					keep_alive,
 				)?,
-				PoolConfiguration::LiquidityBootstrapping(info) => {
+				PoolConfiguration::LiquidityBootstrapping(info) =>
 					LiquidityBootstrapping::<T>::add_liquidity(
 						who,
 						info,
@@ -1113,8 +1113,7 @@ pub mod pallet {
 						quote_amount,
 						min_mint_amount,
 						keep_alive,
-					)?
-				},
+					)?,
 			};
 			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::LiquidityAdded {
