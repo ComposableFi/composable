@@ -829,6 +829,10 @@ parameter_types! {
 	pub const MaxRewardConfigsPerPool : u32 = 10;
 	pub const PicaAssetId : CurrencyId = CurrencyId::PICA;
 	pub const PbloAssetId : CurrencyId = CurrencyId::PBLO;
+	pub const XPicaAssetId: CurrencyId = CurrencyId::xPICA;
+	pub const XPbloAssetId: CurrencyId = CurrencyId::xPBLO;
+	pub const PicaStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PICA_STAKE_FNFT_COLLECTION;
+	pub const PbloStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PBLO_STAKE_FNFT_COLLECTION;
 }
 
 impl pallet_staking_rewards::Config for Runtime {
@@ -851,6 +855,10 @@ impl pallet_staking_rewards::Config for Runtime {
 	type FinancialNft = Fnft;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -1038,6 +1046,10 @@ impl pablo::Config for Runtime {
 	type MsPerBlock = MillisecsPerBlock;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 parameter_types! {
