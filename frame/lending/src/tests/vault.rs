@@ -195,7 +195,7 @@ proptest! {
 			set_price(USDT::ID, NORMALIZED::ONE);
 			set_price(BTC::ID, NORMALIZED::units(50_000));
 
-			// Check that we can not borrow from market related to unblanaced vault
+			// Check that we can not borrow from market related to unbalanced vault
 			prop_assert_noop!(Lending::borrow(Origin::signed(*borrowers.get(0).unwrap()), market_id, Assets::balance(USDT::ID, &market_account)),
 				Error::<Runtime>::CannotBorrowFromMarketWithUnbalancedVault);
 			process_and_progress_blocks::<Lending, Runtime>(1);

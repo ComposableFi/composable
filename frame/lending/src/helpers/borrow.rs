@@ -74,7 +74,7 @@ impl<T: Config> Pallet<T> {
 
 // public helper functions
 impl<T: Config> Pallet<T> {
-		fn do_borrow(
+		pub fn do_borrow(
 		market_id: &MarketId,
 		borrowing_account: &T::AccountId,
 		amount_to_borrow: BorrowAmountOf<Self>,

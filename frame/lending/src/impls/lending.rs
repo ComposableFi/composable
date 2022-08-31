@@ -1,7 +1,7 @@
-use crate::{helpers::accrue_interest_internal, weights::WeightInfo, *};
+use crate::{helpers::accrue_interest_internal, *};
 
 use composable_support::{
-	math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
+	math::safe::{SafeDiv, SafeMul, SafeSub},
 	validation::TryIntoValidated,
 };
 use composable_traits::{
@@ -18,9 +18,8 @@ use frame_support::{
 	pallet_prelude::*,
 	traits::{
 		fungible::Transfer as NativeTransfer,
-		fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
+		fungibles::{Inspect, InspectHold, Mutate},
 	},
-	weights::WeightToFee,
 };
 use sp_runtime::{
 	traits::{AccountIdConversion, Zero},
@@ -83,80 +82,8 @@ impl<T: Config> Lending for Pallet<T> {
 		borrowing_account: &Self::AccountId,
 		amount_to_borrow: BorrowAmountOf<Self>,
 	) -> Result<(), DispatchError> {
-		let (_, market) = Self::get_market(market_id)?;
-
-		Self::ensure_price_is_recent(&market)?;
-
-		let MarketAssets { borrow_asset, debt_asset: debt_asset_id } =
-			Self::get_assets_for_market(market_id)?;
-
-		let market_account = Self::account_id(market_id);
-
-		Self::can_borrow(market_id, borrowing_account, amount_to_borrow, market, &market_account)?;
-
-		let new_account_interest_index = {
-			let market_index =
-				BorrowIndex::<T>::get(market_id).ok_or(Error::<T>::MarketDoesNotExist)?;
-
-			// previous account interest index
-			let account_interest_index = DebtIndex::<T>::get(market_id, borrowing_account)
-				.unwrap_or_else(ZeroToOneFixedU128::zero);
-
-			// amount of debt currently
-			let existing_principal_amount =
-				<T as Config>::MultiCurrency::balance(debt_asset_id, borrowing_account);
-
-			// principal_after_new_borrow
-			let principal_after_new_borrow =
-				existing_principal_amount.safe_add(&amount_to_borrow)?;
-
-			// amount of principal the account already has
-			let existing_borrow_share =
-				Percent::from_rational(existing_principal_amount, principal_after_new_borrow);
-			// amount of principal the account is adding
-			let new_borrow_share =
-				Percent::from_rational(amount_to_borrow, principal_after_new_borrow);
-
-			market_index
-				.safe_mul(&new_borrow_share.into())?
-				.safe_add(&account_interest_index.safe_mul(&existing_borrow_share.into())?)?
-		};
-
-		// mint debt token into user and lock it (it's used as a marker of how much the account
-		// has borrowed total)
-		<T as Config>::MultiCurrency::mint_into(
-			debt_asset_id,
-			borrowing_account,
-			amount_to_borrow,
-		)?;
-		<T as Config>::MultiCurrency::hold(debt_asset_id, borrowing_account, amount_to_borrow)?;
-
-		// transfer borrow asset from market to the borrower
-		<T as Config>::MultiCurrency::transfer(
-			borrow_asset,
-			&market_account,
-			borrowing_account,
-			amount_to_borrow,
-			false,
-		)?;
-		DebtIndex::<T>::insert(market_id, borrowing_account, new_account_interest_index);
-		BorrowTimestamp::<T>::insert(market_id, borrowing_account, LastBlockTimestamp::<T>::get());
-
-		if !BorrowRent::<T>::contains_key(market_id, borrowing_account) {
-			let deposit = T::WeightToFee::weight_to_fee(&T::WeightInfo::liquidate(2));
-			<T as Config>::NativeCurrency::transfer(
-				borrowing_account,
-				&market_account,
-				deposit,
-				true,
-			)?;
-			BorrowRent::<T>::insert(market_id, borrowing_account, deposit);
-		} else {
-			// REVIEW
-		}
-
-		Ok(())
-	}
+        Self::do_borrow(market_id, borrowing_account, amount_to_borrow)	
+    }
 
 	/// NOTE: Must be called in transaction!
 	fn repay_borrow(
