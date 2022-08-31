@@ -49,12 +49,12 @@ struct Config {
 	/// The path to the FRAME directory containing all the pallets to gather documentation from.
 	frame_directory_path: PathBuf,
 
-	/// The URL to the root of the rustdocs.
+	/// The URL to the root of the rust docs.
 	///
 	/// Ensure that the URL passed includes the path to the docs, not just the root url of the
 	/// hosting site (i.e. if the docs are hosted at /doc/, supply https://some.site.com/doc/ instead
 	/// of https://some.site.com/). The generated documentation will use this as the base to link to
-	/// the rustdocs with, appending directly to the end of the url. A trailing `/` is optional,
+	/// the rust docs with, appending directly to the end of the url. A trailing `/` is optional,
 	/// and will be appended if not provided.
 	// TODO: Use an actual URL/URI type for this
 	docs_root_url: String,

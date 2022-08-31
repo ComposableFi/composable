@@ -407,7 +407,7 @@ pub mod pallet {
 		///
 		/// This can only be called by the [`ControlOrigin`].
 		///
-		/// [controlorigin]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
+		/// [`ControlOrigin`]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
 		#[pallet::weight(T::WeightInfo::set_relayer())]
 		#[transactional]
 		pub fn set_relayer(

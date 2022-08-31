@@ -7,7 +7,7 @@ import useStore from './store/useStore';
  * executor in a provider to be able to
  * use useStore methods via executor
  *
- * exectuor would expose execute and executeUnsigned
+ * executor would expose execute and executeUnsigned
  * methods to be able to execute extrinsic calls
  */
 const ExecutorContext = React.createContext({

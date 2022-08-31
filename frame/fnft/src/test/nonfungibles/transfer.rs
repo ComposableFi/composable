@@ -56,13 +56,13 @@ fn simple() {
 		assert_eq!(
 			Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, created_nft_id)),
 			Some((BOB, BTreeMap::from([(1_u32.encode(), 1_u32.encode())]))),
-			"owner of transfered NFT should be BOB after transfer"
+			"owner of transferred NFT should be BOB after transfer"
 		);
 
 		assert_eq!(
 			Nft::owner(&TEST_COLLECTION_ID, &created_nft_id),
 			Some(BOB),
-			"owner of transfered NFT should be BOB after transfer"
+			"owner of transferred NFT should be BOB after transfer"
 		);
 	})
 }

@@ -469,6 +469,7 @@ parameter_types! {
 	pub const MaxHistory: u32 = 20;
 	pub const MaxPrePrices: u32 = 40;
 	pub const TwapWindow: u16 = 3;
+	// cspell:disable-next
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
 	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK as u64;
 }
@@ -502,7 +503,7 @@ impl oracle::Config for Runtime {
 // Parachain stuff.
 // See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
 parameter_types! {
-	/// 1/4 of blockweight is reserved for XCMP
+	/// 1/4 of block weight is reserved for XCMP
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 	/// 1/4 of block weight is reserved for handling Downward messages
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
@@ -888,6 +889,7 @@ impl vesting::Config for Runtime {
 }
 
 parameter_types! {
+	// cspell:disable-next
 	pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
 	pub MinReward: Balance = 100 * CurrencyId::unit::<Balance>();
 	pub Stake: Balance = 10 * CurrencyId::unit::<Balance>();
@@ -1464,7 +1466,7 @@ impl_runtime_apis! {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
 			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
 			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
-			let simulte_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
+			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
 				.unwrap_or_else(|_|
 					RemoveLiquiditySimulationResult{
 						assets: BTreeMap::from([
@@ -1475,7 +1477,7 @@ impl_runtime_apis! {
 					}
 				);
 			let mut new_map = BTreeMap::new();
-			for (k,v) in simulte_remove_liquidity_result.assets.iter() {
+			for (k,v) in simulate_remove_liquidity_result.assets.iter() {
 				new_map.insert(SafeRpcWrapper(*k), SafeRpcWrapper(*v));
 			}
 			RemoveLiquiditySimulationResult{

@@ -545,8 +545,8 @@ impl<T: Config> Pallet<T> {
 					// borrow:
 					//  - withdrawable = transfer(vault->market) + transfer(market->user)
 					//  - depositable = error(not enough borrow asset) // vault asking for reserve
-					//    to be fullfilled
-					//  - mustl_iquidate = error(market is closing)
+					//    to be fulfilled
+					//  - must_liquidate = error(market is closing)
 					// repay:
 					// 	- (withdrawable || depositable || must_liquidate) = transfer(user->market) +
 					//    transfer(market->vault)

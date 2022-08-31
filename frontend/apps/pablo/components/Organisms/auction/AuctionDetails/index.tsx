@@ -3,7 +3,7 @@ import {
   BoxProps,
 } from "@mui/material";
 import { ContractDetails } from "./ContractDetails";
-import { LaunchDescription } from "./LauchDescription";
+import { LaunchDescription } from "./LaunchDescription";
 import { LaunchDetails } from "./LaunchDetails";
 import { AuctionSettings } from "./AuctionSettings";
 import { AuctionStatistics } from "./AuctionStatistics";

@@ -164,7 +164,7 @@ pub mod pallet {
 		type MaxAnswerBound: Get<u32>;
 		/// Upper bound for total assets available for the oracle
 		type MaxAssetsCount: Get<u32>;
-		/// Slashed stakes are transfered to treasury.
+		/// Slashed stakes are transferred to treasury.
 		type TreasuryAccount: Get<Self::AccountId>;
 
 		#[pallet::constant]
@@ -258,7 +258,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn declared_withdraws)]
-	/// Tracking withdrawl requests
+	/// Tracking withdrawal requests
 	pub type DeclaredWithdraws<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, Withdraw<BalanceOf<T>, T::BlockNumber>>;
 
@@ -485,7 +485,7 @@ pub mod pallet {
 			//
 			// asset A has 3 decimal places
 			// 1 unit of asset ACOIN costs 4 units of default quote asset (4_000_000_000_000)
-			// the price for 1/1_000th of asset ACOIN (the smallest unit possible, we'll call it
+			// the price for 1/1_000th of asset A_COIN (the smallest unit possible, we'll call it
 			// ACENT) is then: 4_000_000_000_000/1_000 == 4_000_000_000; or 4/1000ths (1/250th) of 1
 			// unit of default quote asset.
 			//

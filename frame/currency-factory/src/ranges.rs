@@ -39,10 +39,10 @@ where
 
 		#[allow(clippy::disallowed_methods)]
 		if Self::bounds() >= 4 {
-			ranges.add(Range::lp_tokens()).expect("capacitiy is sufficient, qed");
-			ranges.add(Range::tokens()).expect("capacitiy is sufficient, qed");
-			ranges.add(Range::foreign_assets()).expect("capacitiy is sufficient, qed");
-			ranges.add(Range::ibc_assets()).expect("capacitiy is sufficient, qed");
+			ranges.add(Range::lp_tokens()).expect("capacity is sufficient, qed");
+			ranges.add(Range::tokens()).expect("capacity is sufficient, qed");
+			ranges.add(Range::foreign_assets()).expect("capacity is sufficient, qed");
+			ranges.add(Range::ibc_assets()).expect("capacity is sufficient, qed");
 		}
 
 		ranges

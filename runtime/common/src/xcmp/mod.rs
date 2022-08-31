@@ -113,7 +113,7 @@ impl<
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
 		// this is for trusted chains origin, see `f` if any
-		// TODO: dicuss if we need payments from Relay chain or common goods chains?
+		// TODO: discuss if we need payments from Relay chain or common goods chains?
 		if weight.is_zero() {
 			return Ok(payment)
 		}
@@ -127,7 +127,7 @@ impl<
 
 		if let AssetId::Concrete(ref multi_location) = xcmp_asset_id.clone() {
 			if let Some(asset_id) = AssetConverter::convert(multi_location.clone()) {
-				// NOTE: we have som many traces cause TooExpensive (as in Acala)
+				// NOTE: we have so many traces cause TooExpensive (as in Acala)
 				// NOTE: no suitable error for now. Could repurpose Trap(u64), but that will violate
 				// documentation
 				let fee = WeightToFeeConverter::weight_to_fee(&weight);
@@ -192,7 +192,7 @@ impl<
 	}
 }
 
-/// is collaed to convert some account id to account id on other network
+/// is called to convert some account id to account id on other network
 /// as of now it is same as in Acala/Hydra
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {

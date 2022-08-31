@@ -7,7 +7,7 @@ import { ApiPromise } from "@polkadot/api";
 
 /**
  *Contains handler methods for the pabloPallet Tests.
- * StableSwap ConstantProduct and LiquidityBootsrapping Pools
+ * StableSwap ConstantProduct and LiquidityBootstrapping Pools
  */
 
 let constantProductK: bigint;
@@ -59,7 +59,7 @@ export async function createConsProdPool(
   return resultPoolId.toNumber();
 }
 
-export async function addFundstoThePool(
+export async function addFundsToThePool(
   api: ApiPromise,
   poolId: number,
   walletId: KeyringPair,
@@ -378,7 +378,7 @@ export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair
  Creates stableSwapPool
  @param sudoKey: User sending tx- KeyringPair
  @param owner: Owner of the pool - KeyringPair
- @param baseAssetId: CurencyId
+ @param baseAssetId: CurrencyId
  @param quoteAssetId: CurrencyId
  @param ampCoefficient: Amplification Coefficient, for details see curve.fi stable swap dex
  @param fee: Total fee to be charged for each transaction in the pool

@@ -768,7 +768,7 @@ where
 			.map_err(|_| IbcHandlerError::TimeoutError)
 	}
 
-	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
+	fn write_acknowledgement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
 		let mut ctx = Context::<T>::default();
 		Self::store_raw_acknowledgement(
 			(packet.source_port.clone(), packet.source_channel, packet.sequence),

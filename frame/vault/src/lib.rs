@@ -294,7 +294,7 @@ pub mod pallet {
 			/// Assets received in exchange for the withdrawal.
 			asset_amount: T::Balance,
 		},
-		/// Emitted after a succesful emergency shutdown.
+		/// Emitted after a successful emergency shutdown.
 		EmergencyShutdown {
 			/// The ID of the vault.
 			vault: T::VaultId,

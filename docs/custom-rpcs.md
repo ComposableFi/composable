@@ -264,7 +264,7 @@ Note that this assumes that the pallet has already been added to the runtime and
 
 ## Integration Tests
 
-/home/ben/codeprojects/composable/integration-tests/runtime-tests/src/types/interfaces/definitions.ts
+integration-tests/runtime-tests/src/types/interfaces/definitions.ts
 
 ### Type Definitions
 

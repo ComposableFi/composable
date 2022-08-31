@@ -24,8 +24,10 @@ Create identity on Kusama and Picasso.
 
 **Rococo**
 
+<!-- cspell:disable-next -->
 Root is `5D2cjLGNWibiSsEh4oPXo8MmBTkeptrpuiUdEKRMauUn1TkZ` and make sure it has 20 ROC.
 
+<!-- cspell:disable-next -->
 Parachain is `5Ec4AhNu5P23CC2GdrmsC8HYBKiidqhPnfSfRQPaH9swr2b7` and make sure it has 20 ROC.
 
 Transfer to [dali-rococo] accounts some amounts.
@@ -87,7 +89,7 @@ Need to ensure token exists and on deposit on Karura, register pay your gas fee 
 **On [karura-kusama]**
 
 - Check `system.account` storage you have native token.
-- Check there is `assestRegistry.assetsMetadata` for `ForeignAssetId(7)` and `tokens.totalIssuance` for it is good.
+- Check there is `assetRegistry.assetsMetadata` for `ForeignAssetId(7)` and `tokens.totalIssuance` for it is good.
 - Use `dex.swapWithExactSupply` to make swap onto target asset (may require doing routing over intermediate currency) .
 
 
@@ -105,19 +107,19 @@ Asset Name: Karura Native Token
 Asset Symbol:  KAR
 Decimals:  12
 existentialDeposit: 0.1
-Multiloaction: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0080} ]}}
+Multilocation: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0080} ]}}
 
 Asset Name: Acala Dollar
 Asset Symbol:  AUSD
 Decimals:  12
 existentialDeposit: 0.01
-Multiloaction: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0081} ]}}
+Multilocation: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0081} ]}}
 
 Asset Name:  Karura Liquid KSM
 Asset Symbol:  LKSM
 Decimals:  12
 existentialDeposit: 0.0005
-Multiloaction: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0083} ]}}
+Multilocation: { parents: 1, interior: { X2: [ {Parachain: 2000}, {GeneralKey: 0x0083} ]}}
 ```
 
 **On Karura again**

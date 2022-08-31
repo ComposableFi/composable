@@ -10,10 +10,10 @@ import { createConsProdPool } from "../pablo/testHandlers/pabloTestHelper";
  * Single Test to check the fix for hallborn audit fix.
  * This test will create two constant product pools with various assets and check if the audit fix is working.
  * The description of the issue:
- * Inside the uniswap and curv-amm pallets, the create function calls
+ * Inside the uniswap and curve-amm pallets, the create function calls
  * do_create_pool without restrictions, allowing anyone to create a pool
  * of arbitrary pairs, which leads to a price manipulation risk.
- * dex-router pallet auditing where theupdate_route allows the caller to
+ * dex-router pallet auditing where the update_route allows the caller to
  * create, update or delete existing routers, the function was found to
  * lack implementing a custom origin to restrict access to this function.
  * The test validates the fix for the audit issue and confirms that now updating route is permissioned.

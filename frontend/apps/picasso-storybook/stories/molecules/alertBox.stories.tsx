@@ -14,8 +14,8 @@ const Template: ComponentStory<typeof AlertBox> = (args) => (
   </AlertBox>  
 );
 
-export const AlertBoxs = Template.bind({});
-AlertBoxs.args = {
+export const AlertBoxes = Template.bind({});
+AlertBoxes.args = {
   underlined: true,
   dismissible: true,
   icon: (

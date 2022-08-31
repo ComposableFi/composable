@@ -885,7 +885,7 @@ where
 			.ok_or_else(|| runtime_error_into_rpc_error("Failed to Client state for channel"))?;
 
 		let client_state = AnyClientState::decode_vec(&result.client_state)
-			.map_err(|_| runtime_error_into_rpc_error("Failed to decode cleint state"))?;
+			.map_err(|_| runtime_error_into_rpc_error("Failed to decode client state"))?;
 		Ok(IdentifiedClientState {
 			client_id: String::from_utf8(result.client_id)
 				.map_err(|_| runtime_error_into_rpc_error("Failed to decode client id"))?,

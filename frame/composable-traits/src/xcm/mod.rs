@@ -1,5 +1,5 @@
 //! Less general more targeted solution before XCM gets general transactions support and discovery,
-//! so at same time it can be more robust for Substate based sibling chains. Also is mor specialised
+//! so at same time it can be more robust for Substrate based sibling chains. Also is more specialized
 //! form of `xcm::latest::Junction`.
 //!
 //! API allow for selling (partial exchange via DEX, OB or Auction) via `engines` on other
@@ -53,7 +53,7 @@ pub struct XcmSellRequestTransactConfiguration {
 	/// Taken from storage and put as parameter into call.
 	/// Some preconfigured way of sell on other chain.
 	/// Example, some specific slippage or amount limits, or number of blocks it should take before
-	/// cancellation. Must be set by owners of engine and chose by thoose who governs caller side
+	/// cancellation. Must be set by owners of engine and chose by those who governs caller side
 	pub configuration_id: u128,
 	/// native token fee to pay on `engine` chain
 	pub fee: Balance,
@@ -84,7 +84,7 @@ pub struct XcmSellRequest {
 	/// Receiver tracks origin and `order_id`.
 	pub order_id: OrderId,
 	/// Sovereign account of sender parachain on remote parachain.
-	/// It was transfered amount to sell before, and
+	/// It was transferred amount to sell before, and
 	/// Notes:
 	/// This may be parachain id to get account, but than all protocols parachain will share same
 	/// account and will be harder to debug. May consider using indices pallet or some sub account
@@ -101,7 +101,7 @@ pub struct XcmSellRequest {
 #[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellInitialResponseTransact {
 	/// Amount of `base` token which was taken by engine to be sold.
-	/// Amount remaining was transfered with `xcm::latest::Instruction::TransferReserveAsset` in
+	/// Amount remaining was transferred with `xcm::latest::Instruction::TransferReserveAsset` in
 	/// same XCM message. Must be more than `Balance::zero()`
 	pub total_amount_taken: Balance,
 	/// Minimal price in `quote` amount  of `amount_taken`

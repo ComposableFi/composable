@@ -90,13 +90,13 @@ sequenceDiagram
 
 `XCVM` is not opinionated about handling fees, leaving that up to the users by adding an output to reward the relayer. Read more on how we defined fees [here](../../SPEC.md#fees). 
 
-A note on this, fees are specified by the program, meaning that the bridge itself cannot charge a fee directly on the `Assets` being transfered. The third-party OTP-adapter will need to take this into account, by possibly using internal APIs of the bridging contract to ensure that no fees are charged based on the `Assets` transferred.
+A note on this, fees are specified by the program, meaning that the bridge itself cannot charge a fee directly on the `Assets` being transferred. The third-party OTP-adapter will need to take this into account, by possibly using internal APIs of the bridging contract to ensure that no fees are charged based on the `Assets` transferred.
 
 ## Reimbursements
 
 When a transports fails to transmit a message (such as an IBC timeout or network congestion) the `Third-party Transport` issues a reimbursement to the `Gateway` which then informs the interpreter instance of the failure.
 
-For `OTP`-registered transports, the reimbursement itself can be disputed as well. After issuing the reimbursement to the Gateway, a short-lived dispute window (hours) allows validators to dispute the reimbursement. This avoids the attack vector where a bridge has identified a contract which will retry a cross-chain operation until success, and extract value from that by issuing malicious reimbursements (a cross-chain re-entrancy attack).
+For `OTP`-registered transports, the reimbursement itself can be disputed as well. After issuing the reimbursement to the Gateway, a short-lived dispute window (hours) allows validators to dispute the reimbursement. This avoids the attack vector where a bridge has identified a contract which will retry a cross-chain operation until success, and extract value from that by issuing malicious reimbursements (a cross-chain reentrancy attack).
 
 ```mermaid
 sequenceDiagram
@@ -152,7 +152,7 @@ sequenceDiagram
     Token Contract->>Adapter: Transfer tokens.
     Multisig Relayer->>Adapter: Submit mint request.
     Multisig Relayer->>Adapter: Forward message.
-    Note over Adapter: Waits for both message and assets to arive.
+    Note over Adapter: Waits for both message and assets to arrive.
     Adapter->>Gateway: Initiate Spawn.
     Note over Adapter,Gateway: Sets the Relayer registry to self.
     Adapter->>Multisig Relayer: Transfer earned fees.

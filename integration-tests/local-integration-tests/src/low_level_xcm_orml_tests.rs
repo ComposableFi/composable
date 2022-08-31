@@ -203,7 +203,7 @@ fn fungibles_creation() {
 	let _: MultiAssets = (MultiLocation::new(1, X1(Parachain(1000))), asset_amount).into();
 }
 
-// TODO: make versioning and noop tests seaprate
+// TODO: make versioning and noop tests separate
 //let noop : Xcm<Call> = Xcm(vec![]);
 // let tests = <PolkadotXcm as xcm::WrapVersion>::wrap_version(&MultiLocation::new(1,
 // X1(Parachain(THIS_PARA_ID))).into(), noop.clone()); assert_ok!(tests);

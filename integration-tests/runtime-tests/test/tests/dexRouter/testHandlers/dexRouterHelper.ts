@@ -7,7 +7,7 @@ import { ApiPromise } from "@polkadot/api";
 
 /**
  *Contains handler methods for the pabloPallet Tests.
- * StableSwap ConstantProduct and LiquidityBootsrapping Pools
+ * StableSwap ConstantProduct and LiquidityBootstrapping Pools
  */
 
 let constantProductK: bigint;
@@ -54,7 +54,7 @@ export async function createConsProdPool(
   return resultPoolId.toNumber();
 }
 
-export async function addFundstoThePool(
+export async function addFundsToThePool(
   api: ApiPromise,
   poolId: number,
   walletId: KeyringPair,

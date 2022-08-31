@@ -376,7 +376,7 @@ pub trait Lending: DeFiEngine {
 	/// The calculation uses `indexes` snapshots when market was created and when borrow happened. .
 	///
 	/// The borrow limit is only affected by the prices of the assets and the amount of collateral
-	/// deopsited by the account, and is *specific to this account*. The state of the vault is not
+	/// deposited by the account, and is *specific to this account*. The state of the vault is not
 	/// relevant for this calculation.
 	///
 	/// The calculation is as follows, broken up for clarity:

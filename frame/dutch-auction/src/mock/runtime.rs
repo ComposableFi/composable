@@ -167,6 +167,7 @@ impl pallet_currency_factory::Config for Runtime {
 }
 
 parameter_types! {
+	// cspell:disable-next
 	pub const DutchAuctionPalletId : PalletId = PalletId(*b"dtch_ctn");
 }
 

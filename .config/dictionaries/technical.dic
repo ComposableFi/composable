@@ -1,0 +1,246 @@
+# crates
+thiserror
+structopt
+cmark
+schemars
+jsonrpsee
+chrono
+iavl
+xtokens
+statemine
+inprocess
+subxt
+codegen
+sproof
+npos
+tendermint
+prost
+smallvec
+multihash
+ripemd
+wasmtime
+offences
+phragmen
+wasmi
+peerset
+sysinfo
+termcolor
+getrandom
+proptest
+
+
+# npm
+typeorm
+typegen
+apexcharts
+0xsequence
+localstorage
+hotjar
+zustand
+nextjs
+svgr
+contentful
+urql
+millify
+reduxjs
+notistack
+composabletests
+bignumber
+bufferutil
+
+
+# substrate types
+perthing
+perthousand
+permill
+perbill
+perquintill
+on_unbalanceds
+unlookup
+
+# binance-rs types
+AggrTrades
+
+# cosmwasm types
+Pointable
+
+# various rust methods and types
+peekable
+oneshot
+bitvec
+bitfield
+powf
+
+# BN method (javascript)
+addn
+
+
+# various keywords
+ifeq
+endwhile
+endef
+nocapture
+plantuml
+startuml
+enduml
+skinparam
+
+# adoc
+imagesoutdir
+imagesdir
+toc
+toclevels
+sectnums
+sectnumlevels
+
+
+# dummy currencies
+ACOIN
+ACENT
+BCOIN
+
+
+# for the memes
+peasy
+squeezy
+rekt
+
+
+# nix
+nixos
+nixpkgs
+patchelf
+libwasmvm
+rpath
+pctest
+numtide
+oxalica # github username
+ipetkov # github username
+buildpackage
+serokell
+arion
+pkgs
+coreutils
+findutils
+gnugrep
+nettools
+procps
+zstd
+LIBCLANG
+PROTOC
+protoc
+ROCKSDB
+graphviz
+pandoc
+nodedir
+acala
+paritytech
+websocat
+aarch
+gnumake
+lcov
+loglevel
+nixfmt
+freetype
+fontconfig
+junod
+wasmswap
+bintools
+rnix
+xorriso
+hasura
+stdenv
+libudev
+
+
+# commands, programs, tools, etc
+grep
+fgrep
+wscat
+whereis
+cachix
+tput
+setaf
+svgbob
+tsdx
+cmake
+pkgconfig
+rocksdb
+devel
+llvm
+libcurl
+rustup
+rustfmt
+taplo
+pacman
+asciidoctor
+mdbook
+udeps
+
+
+# git
+precommit
+precommits
+mergify
+
+
+# css
+searchresults
+hljs
+searchbar
+scrollbox
+iefix
+opentype
+truetype
+tooltiptext
+tooltipped
+
+# fonts
+TentangNanti
+Konnect
+
+
+# not sure where to put these
+drawio
+clickup
+immer
+
+
+# frontend stuff
+msapplication
+browserconfig
+bignr # used frequently throughout the frontend as a shorthand for bignumber
+xaxis
+yaxis
+autorenew
+sparkline
+codesandbox
+snackbars
+dhms # day hour minute second
+
+# these should probably be replaced with stakes and bonds respectively
+stakings
+bondings
+
+uptodate # used throughout our codebase
+
+
+# misc technical terms
+supertrait
+cosm
+wasmvm
+cdylib
+websocket
+websockets
+adoc
+RUSTFLAGS
+binop
+noconfirm
+edgeware
+
+
+# abcdef
+alice
+bob
+charlie
+ferdie

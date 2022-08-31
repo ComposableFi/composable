@@ -632,8 +632,8 @@ fn trap_assets_larger_than_ed_works() {
 				&parent_account,
 				123 * CurrencyId::unit::<Balance>(),
 			);
-		// TODO: if we do not top up account initially, than any depositn_creating do not create
-		// anything may be somethign with zero block or like - fix it better way
+		// TODO: if we do not top up account initially, than any deposit_creating do not create
+		// anything may be something with zero block or like - fix it better way
 		let _ =
 			<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
 				&this_runtime::TreasuryAccount::get(),

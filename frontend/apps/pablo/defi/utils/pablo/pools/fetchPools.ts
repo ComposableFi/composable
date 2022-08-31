@@ -139,7 +139,7 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
       allVerifiedPoolIds.includes(p.poolId)
     );
     // these might be needed in future so not removing
-    // pools.liquidityBootstrapping.unVerified = lbpool.filter(
+    // pools.liquidityBootstrapping.unVerified = lbPool.filter(
     //   (p) => !allVerifiedPoolIds.includes(p.poolId)
     // );
 

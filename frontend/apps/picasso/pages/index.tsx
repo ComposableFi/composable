@@ -66,7 +66,7 @@ const Overview: NextPage = () => {
         </Grid>
         {extensionStatus === "connected" && (
           <Chart
-            title="My portoflio"
+            title="My portfolio"
             totalText="$24,587,298"
             changeText="+34%"
             changeTextColor={theme.palette.featured.lemon}

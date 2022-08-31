@@ -453,7 +453,7 @@ where
 
 	/// Get an appropriate priority for a transaction with the given length and info.
 	///
-	/// This will try and optimise the `fee/weight` `fee/length`, whichever is consuming more of the
+	/// This will try and optimize the `fee/weight` `fee/length`, whichever is consuming more of the
 	/// maximum corresponding limit.
 	///
 	/// For example, if a transaction consumed 1/4th of the block length and half of the weight, its

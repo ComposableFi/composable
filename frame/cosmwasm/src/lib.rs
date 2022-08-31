@@ -904,7 +904,7 @@ pub mod pallet {
 			Coin { denom, amount: amount.into() }
 		}
 
-		/// Try to convert from a CosmWasm denom to a native [`AdsetIdOf<T>`].
+		/// Try to convert from a CosmWasm denom to a native [`AssetIdOf<T>`].
 		pub(crate) fn cosmwasm_asset_to_native_asset(
 			denom: String,
 		) -> Result<AssetIdOf<T>, Error<T>> {

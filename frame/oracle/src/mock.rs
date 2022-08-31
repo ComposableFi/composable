@@ -148,8 +148,10 @@ where
 
 pub type AssetId = u128;
 pub type PriceValue = u128;
+
 parameter_types! {
 	pub const TreasuryAccountId : AccountId= sr25519::Public([10u8; 32]);
+	// cspell:disable-next
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
 	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
 }

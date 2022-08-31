@@ -128,12 +128,12 @@ impl CosmwasmVMShared {
 		self.storage_readonly_depth > 0
 	}
 	/// Increase storage readonly depth.
-	/// Hapenning when a contract call the querier.
+	/// Happening when a contract call the querier.
 	pub fn push_readonly(&mut self) {
 		self.storage_readonly_depth += 1;
 	}
 	/// Decrease storage readonly depth.
-	/// Hapenning when a querier exit.
+	/// Happening when a querier exit.
 	pub fn pop_readonly(&mut self) {
 		self.storage_readonly_depth -= 1;
 	}

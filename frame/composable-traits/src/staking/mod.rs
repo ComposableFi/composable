@@ -195,7 +195,7 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
 	/// Protocol or the user account that owns this stake
 	// TODO (vim): Remove the owner and track the financial NFT ID. In order to prevent a direct
-	// dependancy to NFTs we can also just use nft ID as position ID. 	pub financial_nft_id: ItemId
+	// dependency to NFTs we can also just use nft ID as position ID. 	pub financial_nft_id: ItemId
 	pub owner: AccountId,
 
 	/// Reward Pool ID from which pool to allocate rewards for this

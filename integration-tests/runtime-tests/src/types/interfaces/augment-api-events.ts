@@ -605,7 +605,7 @@ declare module '@polkadot/api-base/types/events' {
        * When we have finality issues occur on the Ethereum chain,
        * we burn the locked `IncomingTransaction` for which we know that it is invalid.
        **/
-      TransferIntoRescined: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
+      TransferIntoRescinded: AugmentedEvent<ApiType, [AccountId32, u128, u128]>;
       /**
        * An outgoing tx is created, and locked in the outgoing tx pool.
        **/

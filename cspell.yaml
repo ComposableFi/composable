@@ -1,7 +1,11 @@
 ---
+language: en_US
+
+caseSensitive: false
+useGitignore: true
+
 dictionaries:
   # - spellcheck
-  - en_US
   - companies
   - softwareTerms
   - misc
@@ -13,26 +17,40 @@ dictionaries:
   - css
   - latex
   - bash
+  - rust
 
   - fonts
   - filetypes
   - npm
 
+  - names
+  - terminology
+  - technical
+
 dictionaryDefinitions:
-  - name: spellcheck
-    path: ".config/spellcheck.dic"
+  - name: names
+    path: ".config/dictionaries/names.dic"
+    addWords: true
+  - name: terminology
+    path: ".config/dictionaries/terminology.dic"
+    addWords: true
+  - name: technical
+    path: ".config/dictionaries/technical.dic"
     addWords: true
 
 patterns:
-  - name: rust-code-literal
-    pattern: '([`])(?:(?=(\\?))\2.)*?\1+'
-  - name: quoted
-    pattern: '(["])(?:(?=(\\?))\2.)*?\1+'
-  - name: rust-attributes
-    pattern: '#!\[[a-zA-Z()::_]*]'
+  - name: hash-literal
+    pattern: "[a-zA-Z0-9]{47,66}"
+#   - name: rust-code-literal
+#     pattern: '([`])(?:(?=(\\?))\2.)*?\1+'
+#   - name: quoted
+#     pattern: '(["])(?:(?=(\\?))\2.)*?\1+'
+#   - name: rust-attributes
+#     pattern: '#!\[[a-zA-Z()::_]*]'
 ignoreRegExpList:
-  - rust-code-literal
-  - quoted
+  - hash-literal
+#   - rust-code-literal
+#   - quoted
 
 ignorePaths:
   - "node/src/res"
@@ -40,4 +58,21 @@ ignorePaths:
   - "**/node_modules/"
   - "book/book"
   - "**/*.log"
+  - "**/*.svg"
   - "composablejs/packages/types/src"
+  - "integration-tests/runtime-tests/src/types/interfaces"
+  - "frontend/packages/defi-interfaces"
+  - "integration-tests/runtime-tests/mochawesome-report"
+  - "**/*.lock"
+  - "frontend/apps/picasso/defi/polkadot/constants/contributions.json"
+  - "frontend/apps/picasso/defi/polkadot/constants/pica-rewards-dev.json"
+  - "frontend/apps/picasso/defi/polkadot/constants/pica-rewards.json"
+  - "integration-tests/runtime-tests/test/tests/crowdloanRewards/contributions.json"
+  - "rococo-dev.json"
+  - "utils/xcmp/src/generated/dali_parachain.rs"
+  - "utils/xcmp/src/generated/rococo_relay_chain.rs"
+  - "utils/price-feed/src/feed/composable_api.rs"
+  - "xcvm/diagrams"
+  - "subsquid/db/migrations"
+  - "scripts/polkadot-launch/initialization/src/interfaces/"
+  - "scripts/github/picasso/"

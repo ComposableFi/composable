@@ -1,7 +1,7 @@
 use super::prelude::*;
 use crate::tests::borrow;
 use codec::Decode;
-use composable_traits::{lending::TotalDebtWithInterest, vault::Vault as VaultTrate};
+use composable_traits::{lending::TotalDebtWithInterest, vault::Vault as VaultTrait};
 use frame_support::traits::{fungible::Mutate as FungibleMutateTrate, fungibles::Mutate};
 use sp_runtime::{traits::TrailingZeroInput, Perquintill};
 
@@ -89,7 +89,7 @@ fn generate_accounts(amount: u128) -> Vec<AccountId> {
 
 prop_compose! {
 	// Generates following inputs:
-	// borrowers_amount: amount of borrowers envolved in the test,
+	// borrowers_amount: amount of borrowers involved in the test,
 	// borrowed_amount_per_borrower: personal borrow size,
 	// reserved_factor: part of assets which should hold on vault's account
 	fn inputs_for_test_vault_balance()
@@ -114,7 +114,7 @@ proptest! {
 			let return_factor = FixedU128::saturating_from_rational(25, 100);
 			let partial_return_amount:u128 =
 				(FixedU128::from_inner(borrowed_amount_per_borrower) * return_factor).into_inner();
-			// Total amount which should be minterd onto lender account
+			// Total amount which should be minted onto lender account
 			let total_amount =
 				(FixedU128::from_inner(borrowers_amount * borrowed_amount_per_borrower) /
 					FixedU128::saturating_from_rational(100 - reserved_factor, 100u128))
@@ -195,7 +195,7 @@ proptest! {
 			set_price(USDT::ID, NORMALIZED::ONE);
 			set_price(BTC::ID, NORMALIZED::units(50_000));
 
-			// Check that we can not borrow from market related to unblanaced vault
+			// Check that we can not borrow from market related to unbalanced vault
 			prop_assert_noop!(Lending::borrow(Origin::signed(*borrowers.get(0).unwrap()), market_id, Assets::balance(USDT::ID, &market_account)),
 				Error::<Runtime>::CannotBorrowFromMarketWithUnbalancedVault);
 			test::block::process_and_progress_blocks::<Lending, Runtime>(1);

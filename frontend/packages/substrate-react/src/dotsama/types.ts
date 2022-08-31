@@ -20,17 +20,17 @@ export type DotSamaExtensionStatus =
   name: string;
 }
 
-export interface SubstratechainApi {
+export interface SubstrateChainApi {
   parachainApi: ApiPromise | undefined;
   apiStatus: SubstrateChainApiStatus;
   prefix: number;
   accounts: ConnectedAccount[];
 }
-export interface ParachainApi extends SubstratechainApi {
+export interface ParachainApi extends SubstrateChainApi {
   chainId: ParachainId;
 }
 
-export interface RelaychainApi extends SubstratechainApi {
+export interface RelaychainApi extends SubstrateChainApi {
   chainId: RelayChainId;
 }
 

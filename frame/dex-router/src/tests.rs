@@ -427,7 +427,7 @@ fn unsupported_operation_test() {
 		let usdt_amount = eth_amount * 3000_u128;
 		assert_ok!(Tokens::mint_into(ETH, &EVE, eth_amount));
 		assert_ok!(Tokens::mint_into(USDT, &EVE, usdt_amount));
-		// base, quote amount shold match currency_pair's base quote asset
+		// base, quote amount should match currency_pair's base quote asset
 		assert_noop!(
 			<DexRouter as AmmTrait>::add_liquidity(
 				&EVE,

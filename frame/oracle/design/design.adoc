@@ -96,45 +96,45 @@ cloud "Oracle Provider Infra" <<oracle-infra>> {
     node "Picasso Parachain Node" <<parachain>> {
         () "Oracle" as o
         package "Pallet Apollo" {
-            Database "PrePrices" as prepricedb
-            Database "AssetsInfo" as assetdb
-            Database "OracleStake" as stakedb
-            Database "Prices" as pricedb
-            Database "PriceHistory" as pricehistorydb
-            Database "RewardTrackerStore" as rewarddb
+            Database "PrePrices" as preprice_db
+            Database "AssetsInfo" as asset_db
+            Database "OracleStake" as stake_db
+            Database "Prices" as price_db
+            Database "PriceHistory" as pricehistory_db
+            Database "RewardTrackerStore" as reward_db
             [Offchain Worker] as ofw
             [on_init hook] as oih
             () "SubmitPrice" as sp
             () "AdjustRewards" as ar
             () "AddStake" as as
             () "AddAssetAndInfo" as adda
-            ar --> rewarddb
+            ar --> reward_db
             ofw --> sp
-            sp --> prepricedb
-            oih <-- prepricedb
-            adda --> assetdb
-            assetdb --> oih
-            oih --> pricedb
-            oih <--> stakedb : read/slash
-            as --> stakedb
-            oih --> pricehistorydb
+            sp --> preprice_db
+            oih <-- preprice_db
+            adda --> asset_db
+            asset_db --> oih
+            oih --> price_db
+            oih <--> stake_db : read/slash
+            as --> stake_db
+            oih --> pricehistory_db
         }
 
         ["Governance"] --> ar
         ["Governance"] --> adda
-        rewarddb --> oih : block reward
-        pricedb --> o
-        pricehistorydb --> o
+        reward_db --> oih : block reward
+        price_db --> o
+        pricehistory_db --> o
     }
 
     package "Price Feed Server" <<price-feed>> {
-        () "Rest API" as papi
+        () "Rest API" as price_api
         database "Price Cache" as pc
         () "Client 1 - Binance Client" as c1
         () "Client 2 - Pyth Client" as c2
         () ".. Client n" as cn
 
-        pc --> papi
+        pc --> price_api
         c1 --> pc: price feed
         c2 --> pc: price feed
         cn --> pc: price feed
@@ -144,7 +144,7 @@ cloud "Oracle Provider Infra" <<oracle-infra>> {
     }
 }
 
-ofw <.left.> papi : get price
+ofw <.left.> price_api : get price
 
 cloud {
     node "Price-Source 1 - Binance" <<price-source>> as binance {

@@ -12,7 +12,7 @@
 
 This document proposes the Pablo distribution(token and pool trading fees) mechanism while considering various options and capturing the discussions about the subject.
 
-`TODO summarise the mechanism`
+`TODO summarize the mechanism`
 
 == Background
 

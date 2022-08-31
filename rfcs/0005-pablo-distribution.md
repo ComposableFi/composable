@@ -73,7 +73,7 @@ This document proposes the Pablo distribution(token and pool trading
 fees) mechanism while considering various options and capturing the
 discussions about the subject.
 
-`TODO summarise the mechanism`
+`TODO summarize the mechanism`
 
 ## 2. Background
 
@@ -325,7 +325,7 @@ Dilution of LPs](#appendix-a-trading-fee-inflation-to-avoid-dilution-of-lps).
 #### 5.2.3. PBLO Staker Pool Creation
 
 When creating new Pablo pool, the creator should have option to create n PBLO staking pool.
-This newly created stking pool will receive rewards from trading fees from Pablo pool as mention in section 5.2.4
+This newly created staking pool will receive rewards from trading fees from Pablo pool as mention in section 5.2.4
 
 #### 5.2.4. PBLO Staker Trading Fee Distribution
 

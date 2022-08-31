@@ -48,11 +48,11 @@ const ERROR_MESSAGES = {
   },
 };
 
-interface Claimloan {
+interface ClaimLoan {
   isStable: boolean;
 }
 
-export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
+export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
   const { isActive } = useConnector(ConnectorType.MetaMask);

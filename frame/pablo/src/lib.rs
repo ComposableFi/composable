@@ -1218,7 +1218,7 @@ pub mod pallet {
 					);
 					T::Assets::transfer(pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 
-					// NOTE(hussein-aitlance): no need to keep alive the pool account
+					// NOTE(hussein-aitlacen): no need to keep alive the pool account
 					T::Assets::transfer(
 						pair.base,
 						&pool_account,

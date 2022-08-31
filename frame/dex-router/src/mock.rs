@@ -166,6 +166,7 @@ impl pallet_timestamp::Config for Test {
 }
 
 parameter_types! {
+	// cspell:disable-next
 	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets: u32 = 10;
 	pub const MaxRewardConfigsPerPool: u32 = 10;
@@ -233,6 +234,7 @@ impl pallet_pablo::Config for Test {
 parameter_types! {
 	#[derive(TypeInfo, codec::MaxEncodedLen, codec::Encode)]
 	pub const MaxHopsCount: u32 = 4;
+	// cspell:disable-next
 	pub TestDexRouterPalletID: PalletId = PalletId(*b"dex_rout");
 }
 

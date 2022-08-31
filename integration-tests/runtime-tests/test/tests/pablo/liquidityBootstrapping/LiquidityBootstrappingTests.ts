@@ -6,7 +6,7 @@ import { getDevWallets } from "@composable/utils/walletHelper";
 import { ApiPromise } from "@polkadot/api";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import {
-  addFundstoThePool,
+  addFundsToThePool,
   buyFromPool,
   createLBPool,
   createMultipleLBPools,
@@ -115,7 +115,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
     });
 
     it("Users can add liquidity to the LB pool before the sale started", async function () {
-      const result = await addFundstoThePool(api, poolId1, walletId1, baseAmount, quoteAmount);
+      const result = await addFundsToThePool(api, poolId1, walletId1, baseAmount, quoteAmount);
       expect(result.baseAdded.toBigInt()).to.be.equal(baseAmount);
       expect(result.quoteAdded.toBigInt()).to.be.equal(quoteAmount);
     });
@@ -198,7 +198,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
   });
 
   describe("LiquidityBootstrapping buy sell and swap tests", async function () {
-    if (!testConfiguration.enabledTests.buySellandSwapTests.enabled) {
+    if (!testConfiguration.enabledTests.buySellAndSwapTests.enabled) {
       console.log("LiquidityBootsrapping buy,sell and swap tests are being skipped...");
       return;
     }

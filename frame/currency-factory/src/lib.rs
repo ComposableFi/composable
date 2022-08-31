@@ -64,6 +64,7 @@ pub mod pallet {
 		DispatchError,
 	};
 
+	// cspell:disable-next
 	pub const PALLET_ID: PalletId = PalletId(*b"pal_curf");
 
 	#[pallet::event]

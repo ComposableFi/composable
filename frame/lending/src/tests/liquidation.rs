@@ -67,7 +67,7 @@ fn test_max_liquidation_batch_size_exceeded() {
 }
 
 #[test]
-fn test_liquidation_storage_transcation_rollback() {
+fn test_liquidation_storage_transaction_rollback() {
 	new_test_ext().execute_with(|| {
 		let manager = *ALICE;
 		let lender = *CHARLIE;

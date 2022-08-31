@@ -47,7 +47,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// ```
 	pub const ONE: u128 = 10_u128.pow(Self::EXPONENT as u32);
 
-	/// Returns the provided amount of the currency, cannonicalized to
+	/// Returns the provided amount of the currency, canonicalized to
 	/// [`Self::ONE`](composable_tests_helpers::test::currency::Currency::ONE), saturating at the
 	/// numeric bounds ([`u128::MAX`](core::u128::MAX)).
 	///
@@ -150,7 +150,7 @@ impl RuntimeCurrency {
 		10_u128.pow(self.exponent as u32)
 	}
 
-	/// Returns the provided amount of the currency, cannonicalized to [`Self::one()`], saturating
+	/// Returns the provided amount of the currency, canonicalized to [`Self::one()`], saturating
 	/// at the numeric bounds ([`u128::MAX`]).
 	///
 	/// # Examples
