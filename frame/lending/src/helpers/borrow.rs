@@ -51,7 +51,7 @@ impl<T: Config> Pallet<T> {
 		let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
 		let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
 		ensure!(borrow_limit >= borrow_amount_value, Error::<T>::NotEnoughCollateralToBorrow);
-
+        // sbrmv
 		ensure!(
 			<T as Config>::MultiCurrency::can_withdraw(
 				borrow_asset,
@@ -66,7 +66,8 @@ impl<T: Config> Pallet<T> {
 		if !BorrowRent::<T>::contains_key(market_id, debt_owner) {
 			let deposit = T::WeightToFee::weight_to_fee(&T::WeightInfo::liquidate(1));
 			// See note 1
-			ensure!(
+		    // sbrmv	
+            ensure!(
 				<T as Config>::NativeCurrency::can_withdraw(debt_owner, deposit)
 					.into_result()
 					.is_ok(),

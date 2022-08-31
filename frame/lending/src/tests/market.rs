@@ -1,5 +1,7 @@
 use super::prelude::*;
-use crate::{tests::default_create_input, validation::UpdateInputValid, MarketId};
+use crate::{tests::
+    {default_create_input, process_and_progress_blocks},
+    validation::UpdateInputValid, MarketId};
 use composable_traits::{defi::CurrencyPair, oracle, vault};
 use frame_system::{EventRecord, Phase};
 
@@ -466,7 +468,7 @@ proptest! {
 			prop_assert_ok!(Tokens::mint_into(USDT::ID, &BOB, 10*amount2));
 			prop_assert_ok!(Vault::deposit(Origin::signed(*BOB), vault_id2, 10*amount2));
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		process_and_progress_blocks::<Lending, Runtime>(1);
 
 			let expected_market1_balance = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(amount1);
 			let expected_market2_balance = DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(10*amount2);

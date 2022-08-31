@@ -1,5 +1,8 @@
 use super::prelude::*;
-use crate::models::borrower_data::BorrowerData;
+use crate::{
+    tests::process_and_progress_blocks, 
+    models::borrower_data::BorrowerData
+};
 use composable_traits::defi::LiftedFixedBalance;
 
 #[test]
@@ -31,11 +34,11 @@ fn test_borrow_repay_in_same_block() {
 		let mut total_cash =
 			DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_asset_deposit) + initial_total_cash;
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		process_and_progress_blocks::<Lending, Runtime>(1);
 
 		let limit_normalized = Lending::get_borrow_limit(&market_id, &ALICE).unwrap();
 		assert_eq!(Lending::total_available_to_be_borrowed(&market_id), Ok(total_cash));
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1); // <- ???
+		process_and_progress_blocks::<Lending, Runtime>(1); // <- ???
 
 		assert_extrinsic_event::<Runtime>(
 			Lending::borrow(Origin::signed(*ALICE), market_id, limit_normalized / 4),
@@ -160,7 +163,7 @@ fn old_price() {
 		set_price(USDT::ID, USDT::ONE);
 
 		// skip blocks
-		test::block::process_and_progress_blocks::<Lending, Runtime>(
+		process_and_progress_blocks::<Lending, Runtime>(
 			DEFAULT_MAX_PRICE_AGE as usize + 1,
 		);
 
@@ -178,7 +181,7 @@ fn old_price() {
 		assert_ok!(Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),);
 
 		// skip blocks
-		test::block::process_and_progress_blocks::<Lending, Runtime>(
+		process_and_progress_blocks::<Lending, Runtime>(
 			DEFAULT_MAX_PRICE_AGE as usize + 1,
 		);
 
@@ -193,7 +196,7 @@ fn old_price() {
 		);
 
 		// skip blocks
-		test::block::process_and_progress_blocks::<Lending, Runtime>(
+		process_and_progress_blocks::<Lending, Runtime>(
 			DEFAULT_MAX_PRICE_AGE as usize + 1,
 		);
 
@@ -243,7 +246,7 @@ fn borrow_flow() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, borrow_amount));
 		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_amount));
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		process_and_progress_blocks::<Lending, Runtime>(1);
 
 		let expected_cash =
 			DEFAULT_MARKET_VAULT_STRATEGY_SHARE.mul(borrow_amount) + initial_total_cash;
@@ -278,7 +281,7 @@ fn borrow_flow() {
 		let borrow = Lending::total_debt_with_interest(&market, &ALICE).unwrap().unwrap_or_zero();
 		assert_eq!(borrow, alice_borrow);
 		let interest_before = Lending::total_interest(&market).unwrap();
-		test::block::process_and_progress_blocks::<Lending, Runtime>(49);
+		process_and_progress_blocks::<Lending, Runtime>(49);
 		let interest_after = Lending::total_interest(&market).unwrap();
 		assert!(interest_before < interest_after);
 
@@ -321,7 +324,7 @@ fn borrow_flow() {
 			market_id: market,
 		}));
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(20);
+		process_and_progress_blocks::<Lending, Runtime>(20);
 
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral_amount));
 

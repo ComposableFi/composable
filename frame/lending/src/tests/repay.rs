@@ -1,4 +1,5 @@
 use super::prelude::*;
+use crate::tests::process_and_progress_blocks;
 use composable_traits::lending::TotalDebtWithInterest;
 
 #[test]
@@ -25,7 +26,7 @@ fn test_repay_partial_amount() {
 			}),
 		);
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1_000);
+		process_and_progress_blocks::<Lending, Runtime>(1_000);
 
 		let get_collateral_borrow_limit_for_account = |account| {
 			// `limit_normalized` is the limit in USDT
@@ -52,7 +53,7 @@ fn test_repay_partial_amount() {
 			}),
 		);
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1_000);
+		process_and_progress_blocks::<Lending, Runtime>(1_000);
 
 		// pay off a small amount
 		assert_extrinsic_event::<Runtime>(
@@ -72,7 +73,7 @@ fn test_repay_partial_amount() {
 		);
 
 		// wait a few blocks
-		test::block::process_and_progress_blocks::<Lending, Runtime>(3);
+		process_and_progress_blocks::<Lending, Runtime>(3);
 
 		// pay off a small amount
 		assert_extrinsic_event::<Runtime>(
@@ -92,7 +93,7 @@ fn test_repay_partial_amount() {
 		);
 
 		// wait a few blocks
-		test::block::process_and_progress_blocks::<Lending, Runtime>(10);
+		process_and_progress_blocks::<Lending, Runtime>(10);
 
 		let alice_total_debt_with_interest =
 			Lending::total_debt_with_interest(&market_index, &ALICE)
@@ -116,7 +117,7 @@ fn test_repay_partial_amount() {
 				post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
 				error: DispatchError::Module(ModuleError {
 					index: 8,
-					error: [34, 0, 0, 0],
+					error: [19, 0, 0, 0],
 					message: Some(Error::<Runtime>::CannotRepayMoreThanTotalDebt.into(),),
 				}),
 			},
@@ -179,7 +180,7 @@ fn test_repay_total_debt() {
 		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault_id, borrow_asset_deposit));
 
 		// processes one block
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		process_and_progress_blocks::<Lending, Runtime>(1);
 
 		let get_btc_borrow_limit_for_account = |account| {
 			// `limit_normalized` is the limit in USDT
@@ -202,7 +203,7 @@ fn test_repay_total_debt() {
 			}),
 		);
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1000);
+		process_and_progress_blocks::<Lending, Runtime>(1000);
 
 		let bob_limit_after_blocks = get_btc_borrow_limit_for_account(*BOB);
 		assert_extrinsic_event::<Runtime>(
@@ -214,7 +215,7 @@ fn test_repay_total_debt() {
 			}),
 		);
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(100);
+		process_and_progress_blocks::<Lending, Runtime>(100);
 
 		let alice_total_debt_with_interest =
 			Lending::total_debt_with_interest(&market_index, &ALICE)

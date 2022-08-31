@@ -98,7 +98,7 @@ impl<T: Config> Pallet<T> {
 		);
 
 		let market_account = Self::account_id(market_id);
-
+        // sbrmv
 		ensure!(
 			<T as Config>::MultiCurrency::can_deposit(
 				market.collateral_asset,
@@ -108,7 +108,8 @@ impl<T: Config> Pallet<T> {
 			) == DepositConsequence::Success,
 			Error::<T>::TransferFailed
 		);
-		ensure!(
+	    //sbrmv	
+        ensure!(
 			<T as Config>::MultiCurrency::can_withdraw(
 				market.collateral_asset,
 				&market_account,

@@ -1,5 +1,10 @@
 use super::prelude::*;
-use crate::tests::{borrow, create_market_for_liquidation_test, mint_and_deposit_collateral};
+use crate::tests::{
+    borrow, 
+    process_and_progress_blocks, 
+    create_market_for_liquidation_test, 
+    mint_and_deposit_collateral
+};
 
 #[test]
 fn test_liquidate_multiple() {
@@ -14,7 +19,7 @@ fn test_liquidate_multiple() {
 		let vault_value = USDT::units(100_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
 		assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, vault_value));
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		process_and_progress_blocks::<Lending, Runtime>(1);
 		// Deposit 1 BTC collateral from borrowers' accounts.
 		mint_and_deposit_collateral::<Runtime>(first_borrower, BTC::units(1), market_id, BTC::ID);
 		mint_and_deposit_collateral::<Runtime>(second_borrower, BTC::units(1), market_id, BTC::ID);
@@ -81,7 +86,7 @@ fn test_liquidation_storage_transcation_rollback() {
 		let vault_value = USDT::units(100_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
 		assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, vault_value));
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		process_and_progress_blocks::<Lending, Runtime>(1);
 		// Deposit 1 BTC collateral from normal borrower account.
 		crate::tests::mint_and_deposit_collateral::<Runtime>(
 			normal_borrower,
@@ -155,7 +160,7 @@ fn liquidation() {
 
 		// Allow the market to initialize it's account by withdrawing
 		// from the vault
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		process_and_progress_blocks::<Lending, Runtime>(1);
 
 		let borrow_limit = Lending::get_borrow_limit(&market_id, &ALICE).expect("impossible");
 		assert!(borrow_limit > 0);
@@ -169,7 +174,7 @@ fn liquidation() {
 			}),
 		);
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(10_000);
+		process_and_progress_blocks::<Lending, Runtime>(10_000);
 
 		assert_extrinsic_event::<Runtime>(
 			Lending::liquidate(
@@ -220,7 +225,7 @@ fn test_warn_soon_under_collateralized() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, usdt_amt));
 		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		process_and_progress_blocks::<Lending, Runtime>(1);
 
 		assert_eq!(Lending::get_borrow_limit(&market, &ALICE), Ok(50_000_000_000_000_000));
 
@@ -235,7 +240,7 @@ fn test_warn_soon_under_collateralized() {
 			}),
 		);
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(10000);
+		process_and_progress_blocks::<Lending, Runtime>(10000);
 
 		assert_eq!(Lending::soon_under_collateralized(&market, &ALICE), Ok(false));
 		set_price(BTC::ID, NORMALIZED::units(85));
@@ -266,10 +271,10 @@ fn market_owner_cannot_retroactively_liquidate() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, borrow_asset_deposit));
 		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, borrow_asset_deposit));
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		process_and_progress_blocks::<Lending, Runtime>(1);
 
 		let limit_normalized = Lending::get_borrow_limit(&market_id, &BOB).unwrap();
-		test::block::process_and_progress_blocks::<Lending, Runtime>(2);
+		process_and_progress_blocks::<Lending, Runtime>(2);
 
 		assert_extrinsic_event::<Runtime>(
 			Lending::borrow(Origin::signed(*BOB), market_id, limit_normalized),

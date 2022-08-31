@@ -28,7 +28,7 @@ use composable_traits::{
 use frame_support::{
 	storage::{with_transaction, TransactionOutcome},
 	traits::{
-		fungibles::{Inspect},
+		fungibles::Inspect,
 		UnixTime,
 	},
 };
