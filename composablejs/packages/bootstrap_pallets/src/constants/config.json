@@ -1,18 +1,18 @@
 {
-  "bootstrapPools": true,
+  "bootstrapPools": false,
   "bootstrapBonds": true,
-  "bootstrapCrowdloanRewards": true,
-  "mintAssetsToWallets": true,
+  "bootstrapCrowdloanRewards": false,
+  "mintAssetsToWallets": false,
   "bondOffers": [
     {
       "asset": "4",
       "bondPrice": "100000000000000",
       "nbOfBonds": "10",
-      "maturity": { "Finite": { "returnIn": "100" } },
+      "maturity": { "Finite": { "returnIn": "1440" } },
       "reward": {
         "asset": "201",
         "amount": "1000000000000000",
-        "maturity": "20"
+        "maturity": "1440"
       }
     }
   ],
@@ -88,7 +88,7 @@
     ]
   },
   "mintAssets": [
-    ["5uxGz8eZmbjvVBMpun9nvQ3G8s5cWD5xHnzgU6SHyAnJf9Vy", "1", "50000000000000"],
-    ["5z3wa9ojQra3HqeJthg9Q6hQnsRDsUgH6DC7ZXkb7YXofh3m", "1", "50000000000000"]
+    ["5vXJFVmaBvxe4kwyioUgoDjMDy2NxfLikwz1Q44dknpF9r21", "1", "5000000000000000"],
+    ["5vXJFVmaBvxe4kwyioUgoDjMDy2NxfLikwz1Q44dknpF9r21", "4", "5000000000000000"]
   ] 
 }

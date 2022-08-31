@@ -55,7 +55,6 @@ fn test_update_reward_pool() {
 
 		check_rewards(&[CheckRewards {
 			owner: ALICE,
-			pool_id,
 			pool_asset_id: PICA::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: USDT::ID,
@@ -96,7 +95,6 @@ fn test_update_reward_pool() {
 
 		check_rewards(&[CheckRewards {
 			owner: ALICE,
-			pool_id,
 			pool_asset_id: PICA::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: USDT::ID,
@@ -114,7 +112,6 @@ fn test_update_reward_pool() {
 
 		check_rewards(&[CheckRewards {
 			owner: ALICE,
-			pool_id,
 			pool_asset_id: PICA::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: USDT::ID,

@@ -15,7 +15,8 @@ import { MockedAsset } from "@/store/assets/assets.types";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useCallback } from "react";
-import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import usePrincipalAssetSymbol from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
 
 const containerBoxProps = (theme: Theme) => ({
   display: "flex",
@@ -61,6 +62,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
 
   const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
   const { baseAsset, quoteAsset } = lpPrincipalAsset;
+  const vestingTime = useBondVestingTime(bond.selectedBondOffer);
 
   const renderIcons = useCallback(() => {
     if (baseAsset && quoteAsset) {
@@ -85,7 +87,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
         <BaseAsset
         label={simplePrincipalAsset.symbol}
         icon={simplePrincipalAsset.icon}
-        LabelProps={{ variant: "h4" }}
+        LabelProps={{ variant: "body1" }}
         iconSize={36}
       />
       );
@@ -117,7 +119,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
             <BaseAsset
               label={(rewardAsset as MockedAsset).symbol}
               icon={(rewardAsset as MockedAsset).icon}
-              LabelProps={{ variant: "h4" }}
+              LabelProps={{ variant: "body1" }}
               iconSize={36}
             />
           )}
@@ -133,7 +135,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       <Box {...itemBoxProps}>
         <Typography {...itemTitleProps}>Vesting period</Typography>
         <TimerOutlinedIcon sx={{ width: 36, height: 36 }} />
-        <Typography variant="body1">{bond.vestingPeriod}</Typography>
+        <Typography variant="body1">{vestingTime}</Typography>
       </Box>
 
       <Box {...itemBoxProps}>

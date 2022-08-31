@@ -78,10 +78,10 @@ pub mod pallet {
 		currency::{BalanceLike, CurrencyFactory},
 		fnft::{FinancialNft, FinancialNftProtocol},
 		staking::{
-			RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
+			lock::LockConfig, RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
 			DEFAULT_MAX_REWARDS,
 		},
-		time::DurationSeconds,
+		time::{DurationSeconds, ONE_MONTH, ONE_WEEK},
 	};
 	use frame_support::{
 		traits::{
@@ -141,7 +141,7 @@ pub mod pallet {
 		},
 		/// Split stake position into two positions
 		SplitPosition {
-			positions: Vec<T::PositionId>,
+			positions: Vec<(T::PositionId, BalanceOf<T>)>,
 		},
 		/// Reward transfer event.
 		RewardTransferred {
@@ -180,6 +180,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Error when creating reward configs.
 		RewardConfigProblem,
+		/// Reward pool already exists
+		RewardsPoolAlreadyExists,
 		/// No duration presets configured.
 		NoDurationPresetsConfigured,
 		/// Too many rewarded asset types per pool violating the storage allowed.
@@ -239,7 +241,8 @@ pub mod pallet {
 			+ Copy
 			+ Zero
 			+ One
-			+ SafeArithmetic;
+			+ SafeArithmetic
+			+ From<u128>;
 
 		/// The position id type.
 		type PositionId: Parameter + Member + Clone + FullCodec + Copy + Zero + One + SafeArithmetic;
@@ -302,6 +305,12 @@ pub mod pallet {
 		/// Required origin for reward pool creation.
 		type RewardPoolUpdateOrigin: EnsureOrigin<Self::Origin>;
 
+		#[pallet::constant]
+		type PicaAssetId: Get<Self::AssetId>;
+
+		#[pallet::constant]
+		type PbloAssetId: Get<Self::AssetId>;
+
 		type WeightInfo: WeightInfo;
 	}
 
@@ -350,12 +359,6 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn pool_count)]
-	#[allow(clippy::disallowed_types)]
-	pub type RewardPoolCount<T: Config> =
-		StorageValue<_, T::RewardPoolId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn pools)]
 	pub type RewardPools<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::RewardPoolId, RewardPoolOf<T>>;
@@ -375,6 +378,71 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)]
 	pub(super) type RewardsPotIsEmpty<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, T::RewardPoolId, Blake2_128Concat, T::AssetId, ()>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		_phantom: sp_std::marker::PhantomData<T>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			GenesisConfig { _phantom: Default::default() }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			// TODO (vim): Review these with product
+			// PICA staking pool
+			let pica_staking_pool: RewardPoolOf<T> = RewardPool {
+				owner: T::PalletId::get().into_account_truncating(),
+				asset_id: T::PicaAssetId::get(),
+				rewards: Default::default(),
+				total_shares: T::Balance::zero(),
+				claimed_shares: T::Balance::zero(),
+				end_block: T::BlockNumber::zero(),
+				lock: LockConfig {
+					duration_presets: [
+						(ONE_WEEK, Perbill::from_percent(1)),
+						(ONE_MONTH, Perbill::from_percent(10)),
+					]
+					.into_iter()
+					.try_collect()
+					.expect("Genesis config must be correct; qed"),
+					unlock_penalty: Default::default(),
+				},
+			};
+			RewardPools::<T>::insert(
+				T::RewardPoolId::from(T::PicaAssetId::get().into()),
+				pica_staking_pool,
+			);
+			// PBLO staking pool
+			let pblo_staking_pool: RewardPoolOf<T> = RewardPool {
+				owner: T::PalletId::get().into_account_truncating(),
+				asset_id: T::PbloAssetId::get(),
+				rewards: Default::default(),
+				total_shares: T::Balance::zero(),
+				claimed_shares: T::Balance::zero(),
+				end_block: T::BlockNumber::zero(),
+				lock: LockConfig {
+					duration_presets: [
+						(ONE_WEEK, Perbill::from_percent(1)),
+						(ONE_MONTH, Perbill::from_percent(10)),
+					]
+					.into_iter()
+					.try_collect()
+					.expect("Genesis config must be correct; qed"),
+					unlock_penalty: Default::default(),
+				},
+			};
+			RewardPools::<T>::insert(
+				T::RewardPoolId::from(T::PbloAssetId::get().into()),
+				pblo_staking_pool,
+			);
+		}
+	}
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -521,7 +589,11 @@ pub mod pallet {
 						Error::<T>::EndBlockMustBeInTheFuture
 					);
 
-					let pool_id = RewardPoolCount::<T>::increment()?;
+					let pool_id = T::RewardPoolId::from(asset_id.into());
+					ensure!(
+						!RewardPools::<T>::contains_key(pool_id),
+						Error::<T>::RewardsPoolAlreadyExists
+					);
 
 					let now_seconds = T::UnixTime::now().as_secs();
 
@@ -786,6 +858,7 @@ pub mod pallet {
 			position: &Self::PositionId,
 			ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
+			let mut old_position_stake = BalanceOf::<T>::zero();
 			let mut old_position =
 				Stakes::<T>::try_mutate(position, |old_stake| match old_stake {
 					Some(stake) => {
@@ -799,6 +872,7 @@ pub mod pallet {
 								*value = ratio.mul_floor(*value);
 							}
 						}
+						old_position_stake = stake.stake;
 						Ok(old_value)
 					},
 					None => Err(Error::<T>::StakeNotFound),
@@ -818,13 +892,13 @@ pub mod pallet {
 				..old_position
 			};
 			let new_position = StakeCount::<T>::increment()?;
-			Stakes::<T>::insert(new_position, new_stake);
+			Stakes::<T>::insert(new_position, &new_stake);
 			// TODO (vim):
 			// 	1. Create the new financial NFT for the new position
 			//	2. transfer the split staked amount to the NFT account and lock it
 			//	3. transfer the split share amount to the NFT account and lock it
 			Self::deposit_event(Event::<T>::SplitPosition {
-				positions: vec![*position, new_position],
+				positions: vec![(*position, old_position_stake), (new_position, new_stake.stake)],
 			});
 			Ok([*position, new_position])
 		}
@@ -1003,10 +1077,11 @@ pub mod pallet {
 							},
 							None => {
 								// new reward asset so only pool owner is allowed to add.
-								ensure!(
-									*from == reward_pool.owner,
-									Error::<T>::OnlyPoolOwnerCanAddNewReward
-								);
+								// TODO (vim): consider enabling this later
+								// ensure!(
+								// 	*from == reward_pool.owner,
+								// 	Error::<T>::OnlyPoolOwnerCanAddNewReward
+								// );
 								let reward = Reward {
 									asset_id: reward_currency,
 									total_rewards: reward_increment,
@@ -1041,7 +1116,7 @@ pub mod pallet {
 						});
 						Ok(())
 					},
-					None => Err(Error::<T>::UnimplementedRewardPoolConfiguration.into()),
+					None => Err(Error::<T>::RewardsPoolNotFound.into()),
 				}
 			})
 		}

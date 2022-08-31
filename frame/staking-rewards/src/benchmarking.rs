@@ -96,7 +96,7 @@ benchmarks! {
 	create_reward_pool {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		let owner: T::AccountId = account("owner", 0, 0);
-		let pool_id = 1_u16.into();
+		let pool_id = 100_u16.into();
 		let end_block = 5_u128.saturated_into();
 	}: _(RawOrigin::Root, get_reward_pool::<T>(owner.clone(), r))
 	verify {
@@ -106,7 +106,7 @@ benchmarks! {
 	stake {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		let asset_id = 100.into();
-		let pool_id = 1_u16.into();
+		let pool_id = 100_u16.into();
 		let amount = 100_500_u128.into();
 		let duration_preset = ONE_HOUR;
 		let position_id = 1_u128.into();
@@ -123,7 +123,7 @@ benchmarks! {
 	extend {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		let asset_id = 100.into();
-		let pool_id = 1_u16.into();
+		let pool_id = 100_u16.into();
 		let amount = 100_500_u128.into();
 		let duration_preset = ONE_HOUR;
 		let position_id = 1_u128.into();
@@ -141,7 +141,7 @@ benchmarks! {
 	unstake {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
 		let asset_id = 100.into();
-		let pool_id = 1_u16.into();
+		let pool_id = 100_u16.into();
 		let amount = 100_500_u128.into();
 		let duration_preset = ONE_HOUR;
 		let position_id = 1_u128.into();
