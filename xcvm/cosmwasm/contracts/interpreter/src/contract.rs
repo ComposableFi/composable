@@ -153,9 +153,12 @@ mod tests {
 	use super::*;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier},
-		wasm_execute, Addr, ContractResult, QuerierResult,
+		wasm_execute, Addr, ContractResult, QuerierResult, SystemResult,
 	};
-	use xcvm_core::Picasso;
+	use xcvm_core::{Amount, AssetId, Picasso, ETH, PICA};
+
+	const CW20_ADDR: &str = "cw20addr";
+	const REGISTRY_ADDR: &str = "registryaddr";
 
 	#[test]
 	fn proper_instantiation() {
@@ -178,55 +181,69 @@ mod tests {
 		);
 	}
 
-	// fn wasm_querier(_: &WasmQuery) -> QuerierResult {
-	// 	Ok(ContractResult::Ok(
-	// 		to_binary(&xcvm_asset_registry::msg::GetAssetContractResponse {
-	// 			addr: Addr::unchecked("mock"),
-	// 		})
-	// 		.unwrap(),
-	// 	))
-	// 	.into()
-	// }
+	fn wasm_querier(query: &WasmQuery) -> QuerierResult {
+		match query {
+			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == CW20_ADDR =>
+				SystemResult::Ok(ContractResult::Ok(
+					to_binary(&cw20::BalanceResponse { balance: 100000_u128.into() }).unwrap(),
+				)),
+			WasmQuery::Smart { contract_addr, .. } if contract_addr.as_str() == REGISTRY_ADDR =>
+				SystemResult::Ok(ContractResult::Ok(
+					to_binary(&xcvm_asset_registry::msg::GetAssetContractResponse {
+						addr: Addr::unchecked(CW20_ADDR),
+					})
+					.unwrap(),
+				))
+				.into(),
+			_ => panic!("Unhandled query"),
+		}
+	}
 
 	#[test]
 	fn execute_transfer() {
-		// ======================
-		// TODO: correctly mock Cw20 balance request to set some funds on transfer
-		//=======================
+		let mut deps = mock_dependencies();
+		let mut querier = MockQuerier::default();
+		querier.update_wasm(wasm_querier);
+		deps.querier = querier;
 
-		// let mut deps = mock_dependencies();
-		// let mut querier = MockQuerier::default();
-		// querier.update_wasm(wasm_querier);
-		// deps.querier = querier;
+		let info = mock_info("sender", &vec![]);
+		let _ = instantiate(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			InstantiateMsg {
+				registry_address: REGISTRY_ADDR.into(),
+				network_id: Picasso.into(),
+				user_id: vec![],
+			},
+		)
+		.unwrap();
 
-		// let info = mock_info("sender", &vec![]);
-		// let _ = instantiate(
-		// 	deps.as_mut(),
-		// 	mock_env(),
-		// 	info.clone(),
-		// 	InstantiateMsg {
-		// 		registry_address: "addr".into(),
-		// 		network_id: Picasso.into(),
-		// 		user_id: vec![],
-		// 	},
-		// )
-		// .unwrap();
+		let program = XCVMProgram {
+			tag: vec![],
+			instructions: vec![XCVMInstruction::Transfer {
+				to: "asset".into(),
+				assets: Funds::from([
+					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
+					(ETH.into(), Amount::absolute(2)),
+				]),
+			}]
+			.into(),
+		};
 
-		// let program = XCVMProgram {
-		// 	tag: vec![],
-		// 	instructions: vec![XCVMInstruction::Transfer {
-		// 		to: "asset".into(),
-		// 		assets: Funds(Default::default())
-		// 	}]
-		// 	.into(),
-		// };
+		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
+			.unwrap();
+		let contract = Cw20Contract(Addr::unchecked(CW20_ADDR));
+		let messages = vec![
+			contract
+				.call(Cw20ExecuteMsg::Transfer { recipient: "asset".into(), amount: 1_u128.into() })
+				.unwrap(),
+			contract
+				.call(Cw20ExecuteMsg::Transfer { recipient: "asset".into(), amount: 2_u128.into() })
+				.unwrap(),
+		];
 
-		// let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program
-		// }) 	.unwrap();
-		// let contract = Cw20Contract(Addr::unchecked("mock"));
-		// let msg = contract
-		// 	.call(Cw20ExecuteMsg::Transfer { recipient: "asset".into(), amount: 1_u128.into() })
-		// 	.unwrap();
+		assert_eq!(res.messages.iter().map(|msg| msg.msg.clone()).collect::<Vec<_>>(), messages);
 	}
 
 	#[test]
