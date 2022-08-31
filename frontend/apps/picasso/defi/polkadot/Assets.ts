@@ -1,4 +1,5 @@
 import { AssetId, SubstrateNetworkId } from "./types";
+import { ParachainId } from "substrate-react/dist/dotsama/types";
 
 export interface AssetMetadata {
   decimals: number;
@@ -24,7 +25,7 @@ export const Assets: {
       karura: null,
       picasso: 1,
       kusama: null,
-    },
+    }
   },
   ksm: {
     decimals: 12,
@@ -36,7 +37,7 @@ export const Assets: {
       karura: null,
       picasso: 4,
       kusama: 1,
-    },
+    }
   },
   kusd: {
     decimals: 12,
@@ -98,4 +99,62 @@ export const Assets: {
       kusama: null,
     },
   },
+  usdc: {
+    decimals: 12,
+    assetId: "usdc",
+    symbol: "USDC",
+    icon: "/tokens/usd-coin-usdc.svg",
+    name: "USDCoin",
+    supportedNetwork: {
+      karura: null,
+      picasso: 100,
+      kusama: null
+    }
+  },
 };
+
+
+export const AssetsValidForNow: AssetId[] = ["pica", "kusd", "ksm"];
+
+export const getAsset = (assetId: AssetId): AssetMetadata => Assets[assetId];
+export const getAssetById = (
+  network: ParachainId,
+  assetId: number
+): AssetMetadata | null => {
+  for (const asset in Assets) {
+    if (
+      Assets[asset as AssetId].supportedNetwork[network as ParachainId] ===
+      assetId
+    ) {
+      return Assets[asset as AssetId];
+    }
+  }
+  return null;
+};
+
+export const getAssetOnChainId = (
+  network: ParachainId,
+  assetId: AssetId
+): number | null => {
+  return Assets[assetId].supportedNetwork[network];
+};
+
+export const getAssetOptions = (noneTokenLabel?: string) => [
+  ...(noneTokenLabel
+    ? [
+      {
+        value: "none",
+        label: noneTokenLabel,
+        icon: undefined,
+        disabled: true,
+        hidden: true
+      }
+    ]
+    : []),
+  ...Object.values(Assets).map(asset => ({
+    value: asset.assetId,
+    label: asset.name,
+    shortLabel: asset.symbol,
+    icon: asset.icon
+  }))
+];
