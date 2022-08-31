@@ -84,6 +84,7 @@ pkgs.arion.build {
               });
             "${redis-container-name}" =
               mk-composable-container (import ./services/redis.nix);
+
             subsquid-processor = mk-composable-container
               (import ./services/subsquid-processor.nix {
                 inherit pkgs;
@@ -94,14 +95,17 @@ pkgs.arion.build {
                 archive = subsquid-indexer-gateway-container-name;
               });
 
-            frontend-picasso = import ./services/frontend-picasso.nix {
-              inherit pkgs;
-              inherit packages;
-            };
-            frontend-pablo = import ./services/frontend-pablo.nix {
-              inherit pkgs;
-              inherit packages;
-            };
+            frontend-picasso = mk-composable-container
+              (import ./services/frontend-picasso.nix {
+                inherit pkgs;
+                inherit packages;
+              });
+
+            frontend-pablo = mk-composable-container
+              (import ./services/frontend-pablo.nix {
+                inherit pkgs;
+                inherit packages;
+              });
           };
         };
       })
