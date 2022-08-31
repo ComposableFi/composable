@@ -30,6 +30,7 @@ xcvm-interpreter = { path = "../interpreter", features = ["library"] }
 xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
 cw20 = { git = "https://github.com/CosmWasm/cw-plus.git" }
 thiserror = { version = "1.0.31" }
+hex = "0.4"
 
 [dev-dependencies]
 cw-multi-test = "0.13.2"
