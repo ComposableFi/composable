@@ -132,5 +132,4 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(12 as Weight))
 			.saturating_add(T::DbWeight::get().writes(9 as Weight))
 	}
-
 }
