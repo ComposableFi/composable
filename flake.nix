@@ -621,6 +621,17 @@
             };
 
             junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
+            
+            junod-runtime = stdenv.mkDerivaion {
+              name = "junod-runtime";
+              buildPhase = ''
+                echo "{}" > genesis.json
+                ${packages.junod}/bin/junod
+              '';
+              installPhase = ''
+              '';
+            };
+            
             gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
             wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix {
               crane = crane-nightly;
