@@ -17157,6 +17157,7 @@ dependencies = [
  "cw-multi-test",
  "cw-storage-plus 0.13.4",
  "cw20",
+ "hex",
  "schemars",
  "serde",
  "serde-json-wasm 0.4.1 (git+https://github.com/hussein-aitlahcen/serde-json-wasm?rev=1608a13d2a2ba90605d9626a51ff6667aca5a2d6)",
