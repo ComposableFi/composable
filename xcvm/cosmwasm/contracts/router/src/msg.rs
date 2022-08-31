@@ -1,7 +1,7 @@
 use crate::state::UserId;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use xcvm_core::{Funds, NetworkId, Displayed};
+use xcvm_core::{Displayed, Funds, NetworkId};
 use xcvm_interpreter::msg::ExecuteMsg as InterpreterExecuteMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
