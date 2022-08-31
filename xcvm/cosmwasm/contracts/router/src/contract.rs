@@ -1,13 +1,13 @@
 use crate::{
 	error::ContractError,
-	msg::{ExecuteMsg, InstantiateMsg},
+	msg::{ExecuteMsg, InstantiateMsg, QueryMsg},
 	state::{Config, UserId, CONFIG, INTERPRETERS},
 };
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-	from_binary, to_binary, wasm_execute, Addr, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Reply,
-	Response, StdError, StdResult, SubMsg, WasmMsg, WasmQuery,
+	from_binary, to_binary, wasm_execute, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo,
+	Reply, Response, StdError, StdResult, SubMsg, WasmMsg, WasmQuery,
 };
 use cw20::{Cw20Contract, Cw20ExecuteMsg};
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
@@ -125,6 +125,11 @@ pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> StdResult<Response> {
 		INSTANTIATE_REPLY_ID => handle_instantiate_reply(deps, msg),
 		id => Err(StdError::generic_err(format!("Unknown reply id: {}", id))),
 	}
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
+	Err(StdError::generic_err("not implemented"))
 }
 
 fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {

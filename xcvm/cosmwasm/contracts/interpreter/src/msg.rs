@@ -20,3 +20,6 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
 	Execute { program: XCVMProgram },
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum QueryMsg {}
