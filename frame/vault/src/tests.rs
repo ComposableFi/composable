@@ -430,7 +430,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let (vault_id, vault) = create_vault(strategy_account_id, asset_id);
 			prop_assert_eq!(Tokens::balance(vault.lp_token_id, &ALICE), 0);
-			assert_noop!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount), ArithmeticError::Overflow);
+			assert_noop!(Vaults::withdraw(Origin::signed(ALICE), vault_id, amount), Error::<Test>::InsufficientLpTokens);
 			Ok(())
 		})?;
 	}
