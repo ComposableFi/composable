@@ -397,7 +397,7 @@
             polkadot-node = rustPlatform.buildRustPackage rec {
               # HACK: break the nix sandbox so we can build the runtimes. This
               # requires Nix to have `sandbox = relaxed` in its config.
-              # We don't realy care because polkadot is only used for local devnet.
+              # We don't really care because polkadot is only used for local devnet.
               __noChroot = true;
               name = "polkadot-v${version}";
               version = "0.9.27";
@@ -471,7 +471,7 @@
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
-              # be very carefull with this, so this must be version compatible with base and what vscode will inject
+              # be very careful with this, so this must be version compatible with base and what vscode will inject
               contents = [
                 rust-nightly
                 cachix
