@@ -170,7 +170,7 @@
               "composablejs"
             ];
             file-blacklist = [
-              # does not makes sence to black list,
+              # does not makes sense to black list,
               # if we changed some version of tooling(seldom), we want to rebuild
               # so if we changed version of tooling, nix itself will detect invalidation and rebuild
               # "flake.lock"
@@ -493,7 +493,7 @@
               fromImage = devcontainer-base-image;
               contents = [ home-manager ];
 
-              # TODO: call here home-manager for this flake.nix (like in ./.devcontainer/Dockefile) 
+              # TODO: call here home-manager for this flake.nix (like in ./.devcontainer/dockerfile)
               # TODO: it will make Dockerfile oneliner and faster to start          
             };
 

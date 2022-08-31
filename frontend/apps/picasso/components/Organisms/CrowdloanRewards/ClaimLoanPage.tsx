@@ -515,7 +515,7 @@ export const ClaimLoanPage = ({ isStable = false }: ClaimLoan) => {
               dismissible
               onClose={() => setShowAlertBox(false)}
             >
-              Transaction successfull
+              Transaction successful
             </AlertBox>
           </Grid>
         )}

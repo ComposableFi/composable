@@ -276,6 +276,17 @@ codesandbox
 snackbars
 dhms # day hour minute second
 shortkey
+serie
+tokenvalue
+xpablos
+xpablo
+stakeform
+unstakeform
+popout
+NFTID
+tsconfigs
+USDCUSDT
+unsubs
 
 # these should probably be replaced with stakes and bonds respectively
 stakings
@@ -336,6 +347,9 @@ proptests
 dockerfile
 oneliner
 oneof
+devcontainers
+styleguide
+
 
 # file attributes
 lastmod
