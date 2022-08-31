@@ -29,7 +29,7 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
+	use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshold};
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_support::{
@@ -523,7 +523,7 @@ pub mod pallet {
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
-			threshold: Validated<Percent, ValidThreshhold>,
+			threshold: Validated<Percent, ValidThreshold>,
 			min_answers: Validated<u32, ValidMinAnswers>,
 			max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
 			block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
@@ -696,7 +696,7 @@ pub mod pallet {
 			Self::deposit_event(Event::StakeReclaimed(signer, withdrawal.stake));
 			Ok(().into())
 		}
-		/// Call to submit a price, gas is returned if extrinsic is successfull.
+		/// Call to submit a price, gas is returned if extrinsic is successful.
 		/// Should be called from offchain worker but can be called manually too.
 		///
 		/// This is an operational transaction.

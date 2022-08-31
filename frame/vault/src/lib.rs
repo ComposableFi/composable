@@ -418,7 +418,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Substracts rent from a vault, rewarding the caller if successful with a small fee and
+		/// Subtracts rent from a vault, rewarding the caller if successful with a small fee and
 		/// possibly tombstoning the vault.
 		///
 		/// A tombstoned vault still allows for withdrawals but blocks deposits, and requests all

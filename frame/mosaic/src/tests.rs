@@ -23,7 +23,7 @@
 ///
 ///  incoming -> waiting til lock_time expires -> claiming
 ///
-///  incoming -> wainting for a block -> relayer cancels transfer (finality issue) -> we should
+///  incoming -> waiting for a block -> relayer cancels transfer (finality issue) -> we should
 /// no longer be able to claim
 ///
 ///

@@ -251,7 +251,7 @@ pub enum JunctionDef {
 	///
 	/// Generally used when the context is a Frame-based chain.
 	PalletInstance(u8),
-	/// A non-descript index within the context location.
+	/// A nondescript index within the context location.
 	///
 	/// Usage will vary widely owing to its generality.
 	///

@@ -2,7 +2,7 @@ use super::prelude::*;
 use crate::tests::borrow;
 use codec::Decode;
 use composable_traits::{lending::TotalDebtWithInterest, vault::Vault as VaultTrait};
-use frame_support::traits::{fungible::Mutate as FungibleMutateTrate, fungibles::Mutate};
+use frame_support::traits::{fungible::Mutate as FungibleMutateTrait, fungibles::Mutate};
 use sp_runtime::{traits::TrailingZeroInput, Perquintill};
 
 #[test]

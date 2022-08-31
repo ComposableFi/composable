@@ -193,7 +193,7 @@ mod tests {
 		let end = range.end();
 		range.add(Range::new(end + 1, None).unwrap()).unwrap();
 
-		range.append(u128::MAX).expect_err("should overlfow");
-		range.append(u128::MAX / 2).expect("should not overlfow");
+		range.append(u128::MAX).expect_err("should overflow");
+		range.append(u128::MAX / 2).expect("should not overflow");
 	}
 }

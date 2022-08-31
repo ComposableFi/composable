@@ -718,7 +718,7 @@ fn check_events(expected_events: impl IntoIterator<Item = crate::Event<Test>>) {
 
 	assert!(
 		expected_events.is_empty(),
-		"not all expected events were emtted, missing {expected_events:#?}",
+		"not all expected events were emitted, missing {expected_events:#?}",
 	);
 }
 

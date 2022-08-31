@@ -20,7 +20,7 @@ For a transaction to be validated, these conditions must be met:
 
 * The remote account (from ETH or relay chain) is retrievable from the proof
 
-* The reward account has a positive reward balance availiable to claim
+* The reward account has a positive reward balance available to claim
 
 ## Rewards Workflow
 

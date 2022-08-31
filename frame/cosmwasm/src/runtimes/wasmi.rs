@@ -162,7 +162,7 @@ pub struct CosmwasmVM<'a, T: Config> {
 	pub cosmwasm_message_info: MessageInfo,
 	/// Executing contract address.
 	pub contract_address: CosmwasmAccount<T>,
-	/// Executing contract metadatas.
+	/// Executing contract metadata.
 	pub contract_info: ContractInfoOf<T>,
 	/// State shared across all contracts within a single transaction.
 	pub shared: &'a mut CosmwasmVMShared,

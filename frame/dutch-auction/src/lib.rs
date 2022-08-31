@@ -175,7 +175,7 @@ pub mod pallet {
 		OrderRemoved {
 			order_id: OrderIdOf<T>,
 		},
-		CofigurationAdded {
+		ConfigurationAdded {
 			configuration_id: ConfigurationId,
 			configuration: TimeReleaseFunction,
 		},
@@ -279,7 +279,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::AdminOrigin::ensure_origin(origin)?;
 			Configurations::<T>::insert(configuration_id, configuration.clone());
-			Self::deposit_event(Event::CofigurationAdded { configuration_id, configuration });
+			Self::deposit_event(Event::ConfigurationAdded { configuration_id, configuration });
 			Ok(().into())
 		}
 

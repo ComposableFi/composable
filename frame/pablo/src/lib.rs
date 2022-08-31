@@ -1218,7 +1218,7 @@ pub mod pallet {
 					);
 					T::Assets::transfer(pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 
-					// NOTE(hussein-aitlacen): no need to keep alive the pool account
+					// NOTE(hussein-aitlahcen): no need to keep alive the pool account
 					T::Assets::transfer(
 						pair.base,
 						&pool_account,
@@ -1248,7 +1248,7 @@ pub mod pallet {
 						quote_amount_excluding_lp_fee,
 						keep_alive,
 					)?;
-					// NOTE(hussein-aitlance): no need to keep alive the pool account
+					// NOTE(hussein-aitlahcen): no need to keep alive the pool account
 					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
 					(base_amount, info.owner, fees)
 				},
@@ -1266,7 +1266,7 @@ pub mod pallet {
 					ensure!(base_amount >= min_receive, Error::<T>::CannotRespectMinimumRequested);
 
 					T::Assets::transfer(pair.quote, who, &pool_account, quote_amount, keep_alive)?;
-					// NOTE(hussein-aitlance): no need to keep alive the pool account
+					// NOTE(hussein-aitlahcen): no need to keep alive the pool account
 					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
 					(base_amount, info.owner, fees)
 				},

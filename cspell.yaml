@@ -1,5 +1,5 @@
 ---
-language: en_US
+language: en_US, en_GB
 
 caseSensitive: false
 useGitignore: true

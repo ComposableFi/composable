@@ -76,6 +76,8 @@ bitvec
 bitfield
 powf
 airdropper
+minvested
+powd
 
 # BN method (javascript)
 addn
@@ -90,6 +92,7 @@ plantuml
 startuml
 enduml
 skinparam
+oneof
 
 # adoc
 imagesoutdir
@@ -103,7 +106,12 @@ sectnumlevels
 # dummy currencies
 ACOIN
 ACENT
+ACOINS
+ACENTS
 BCOIN
+BCOINS
+BCENT
+BCENTS
 
 
 # for the memes
@@ -202,6 +210,7 @@ libsecp256k1
 keccak
 containrrr # `containrrr/watchtower` docker image
 adduser
+libp2p
 
 # systemctl
 FSIZE
@@ -246,6 +255,13 @@ dotgraphs
 drawio
 clickup
 immer
+1ubrf2y
+pricehistory
+adda
+assetinfo
+assetsinfo
+oraclestake
+rewardtrackerstore
 
 
 # frontend stuff
@@ -319,6 +335,7 @@ gpgsign
 proptests
 dockerfile
 oneliner
+oneof
 
 # file attributes
 lastmod
@@ -326,6 +343,7 @@ lastmod
 # parts of hashes
 zlfzypzcr
 lcgfmg
+5C4hrfjw
 
 # abcdef
 alice

@@ -143,7 +143,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			// TODO: make it validated
 			// TODO: User parachains pallet to validate parachain is connected
-			// TODO: use hardocded swap interface to validate native token is supported
+			// TODO: use hardcoded swap interface to validate native token is supported
 			configuration: LiquidationStrategyConfiguration,
 		) -> DispatchResultWithPostInfo {
 			T::CanModifyStrategies::ensure_origin(origin)?;

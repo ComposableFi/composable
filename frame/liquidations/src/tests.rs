@@ -15,7 +15,7 @@ use sp_runtime::{FixedPointNumber, FixedU128};
 
 // ensure that we take extra for sell, at least amount to remove
 #[test]
-fn successfull_liquidate() {
+fn successful_liquidate() {
 	new_test_externalities().execute_with(|| {
 		Tokens::mint_into(PICA, &ALICE, 1_000_000_000_000_000_000_000).unwrap();
 		Balances::mint_into(&ALICE, NativeExistentialDeposit::get() * 3).unwrap();

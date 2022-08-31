@@ -131,6 +131,8 @@ preprice
 preprices
 unstaked
 prelocks
+localchain
+hashset
 
 # just words, consider a separate dictionary
 architecting
@@ -251,7 +253,7 @@ embeddable
 organisations
 synergizes
 modularly
-legos # plural of LEGO?
+legos # plural of LEGO? yes.
 rebalancing
 unloyal
 unfavourable
@@ -290,6 +292,15 @@ interecosystem
 frontrunable
 realising
 noninteractive
+evaluatable
+numerator
+numer
+whos # cspell refuses whose
+unvoted
+overvoting
+thresholding
+supermajority
+updateable
 
 coeff # coefficient
 recvs # recieves
@@ -298,8 +309,16 @@ seqs # sequences?
 orac
 modlpy
 twox
-liquidat
+liquidat # liquidate
 direnv
+democrac # democracy
+dtch_ctn # dutch auction
+dutchauc # dutch auction
+liquidat # liquidate
+plt_msac # pallet mosaic
+stk_rwrd # staking rewards
+mck_curf # mock currency-factory
+compvest # vesting
 
 # can't have apostrophies in identifiers
 doesnt
@@ -327,3 +346,5 @@ ethbtc
 lksm
 kusd
 ksmusdt
+sats # satoshis?
+xbtc

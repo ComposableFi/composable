@@ -379,7 +379,7 @@ mod wrapping_increment {
 				pallet::Nonce_OneInit_WrappingIncrement::<Test>::increment();
 			}
 
-			// wrapping when starting at 1 has somewhat strange behaviour when the type has a
+			// wrapping when starting at 1 has somewhat strange behavior when the type has a
 			// zero value
 			assert!(pallet::Nonce_OneInit_WrappingIncrement::<Test>::increment().is_zero());
 

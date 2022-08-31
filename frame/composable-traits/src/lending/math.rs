@@ -162,7 +162,7 @@ pub struct JumpModel {
 	/// The max interest rate when utilization rate is 100%
 	pub full_rate: Rate,
 	/// The utilization point at which the jump_rate is applied
-	/// For target_utilization, we should have used sp_runtime::Perquintil, but since Balance is
+	/// For target_utilization, we should have used sp_runtime::Perquintill, but since Balance is
 	/// until can't be created from u128.
 	pub target_utilization: Percent,
 }
