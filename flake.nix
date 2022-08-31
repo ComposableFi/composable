@@ -23,13 +23,19 @@
       url = "github:serokell/nix-npm-buildpackage";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     arion-src = {
       url = "github:hercules-ci/arion";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay
-    , nix-npm-buildpackage, arion-src }:
+    , nix-npm-buildpackage, arion-src, home-manager, ... }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
@@ -70,6 +76,8 @@
           script = writeShellApplication {
             name = "run-devnet-${chain-spec}";
             text = ''
+              # ISSUE: for some reason it does not cleans tmp and leads to block not produced
+              export RUST_BACKTRACE="full"
               rm -rf /tmp/polkadot-launch
               ${polkadot-launch}/bin/polkadot-launch ${config} --verbose
             '';
@@ -100,7 +108,6 @@
           # Stable rust for anything except wasm runtime
           rust-stable = rust-bin.stable.latest.default;
 
-          # Nightly rust used for wasm runtime compilation
           rust-nightly = rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
           # Crane lib instantiated with current nixpkgs
@@ -138,7 +145,7 @@
 
           # source relevant to build rust only
           rust-src = let
-            dir-blacklist = [
+            directory-blacklist = [
               ".nix"
               "nix"
               ".config"
@@ -162,16 +169,26 @@
               "runtime-tests"
               "composablejs"
             ];
-            file-blacklist = [ "flake.nix" "flake.lock" ];
+            file-blacklist = [
+              # does not makes sence to black list,
+              # if we changed some version of tooling(seldom), we want to rebuild
+              # so if we changed version of tooling, nix itself will detect invalidation and rebuild
+              # "flake.lock"
+            ];
           in lib.cleanSourceWith {
             filter = lib.cleanSourceFilter;
             src = lib.cleanSourceWith {
               filter = let
                 customFilter = name: type:
-                  (!(type == "directory"
-                    && builtins.elem (baseNameOf name) dir-blacklist))
-                  && (!(type == "regular"
-                    && builtins.elem (baseNameOf name) file-blacklist));
+                  !((type == "directory"
+                    && builtins.elem (baseNameOf name) directory-blacklist)
+                    || (type == "regular"
+                      && builtins.elem (baseNameOf name) file-blacklist)
+                    # assumption that nix is final builder, 
+                    # so there would no be sandwitch like  .*.nix <- build.rs <- *.nix
+                    # and if *.nix changed, nix itself will detect only relevant cache invalidations 
+                    || (type == "regular"
+                      && lib.strings.hasSuffix ".nix" name));
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
               ./.;
               src = ./.;
@@ -241,7 +258,9 @@
             };
 
           devcontainer-base-image =
-            callPackage ./.nix/devcontainer-base-image.nix { inherit system; };
+            callPackage ./.devcontainer/devcontainer-base-image.nix {
+              inherit system;
+            };
 
           dali-runtime = mk-optimized-runtime {
             name = "dali";
@@ -329,6 +348,7 @@
             inherit composable-bench-runtime;
             inherit composable-node;
             inherit composable-bench-node;
+            inherit rust-nightly;
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -468,35 +488,13 @@
               '';
             };
 
-            # TODO: inherit and provide script to run all stuff
-            # devnet-container-xcvm
-            # NOTE: The devcontainer is currently broken for aarch64.
-            # Please use the developers devShell instead
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
-              # be very carefull with this, so this must be version compatible with base and what vscode will inject
-              contents = [
-                rust-nightly
-                cachix
-                rustup # just if it wants to make ad hoc updates
-                nix
-                helix
-                clang
-                nodejs
-                cmake
-                nixpkgs-fmt
-                yarn
-                bottom
-                mdbook
-                taplo
-                go
-                libclang
-                gcc
-                openssl
-                gnumake
-                pkg-config
-              ];
+              contents = [ home-manager ];
+
+              # TODO: call here home-manager for this flake.nix (like in ./.devcontainer/Dockefile) 
+              # TODO: it will make Dockerfile oneliner and faster to start          
             };
 
             check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
@@ -560,18 +558,16 @@
             nixfmt-check = stdenv.mkDerivation {
               name = "nixfmt-check";
               dontUnpack = true;
+
               buildInputs = [ all-directories-and-files nixfmt ];
               installPhase = ''
                 mkdir $out
                 nixfmt --version
-
-                total_exit_code=0
-                for file in $(find ${all-directories-and-files} -type f -and -name "*.nix"); do
-                  echo "=== $file ==="
-                  nixfmt --check $file || total_exit_code=$?
-                  echo "==="
-                done
-                exit $total_exit_code
+                # note, really can just src with filer by .nix, no need all files 
+                SRC=$(find ${all-directories-and-files} -name "*.nix" -type f | tr "\n" " ")
+                echo $SRC
+                nixfmt --check $SRC
+                exit $?
               '';
             };
 
@@ -614,6 +610,25 @@
               };
             in writeShellApplication {
               name = "kusama-picasso-karura";
+              text = ''
+                cat ${config-file}
+                ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
+              '';
+            };
+
+            kusama-dali-karura-devnet = let
+              config = (pkgs.callPackage
+                ./scripts/polkadot-launch/kusama-local-dali-dev-karura-dev.nix {
+                  polkadot-bin = polkadot-node;
+                  composable-bin = composable-node;
+                  acala-bin = acala-node;
+                }).result;
+              config-file = writeTextFile {
+                name = "kusama-local-dali-dev-karura-dev.json";
+                text = "${builtins.toJSON config}";
+              };
+            in writeShellApplication {
+              name = "kusama-dali-karura";
               text = ''
                 cat ${config-file}
                 ${packages.polkadot-launch}/bin/polkadot-launch ${config-file} --verbose
@@ -753,10 +768,16 @@
                 "${packages.devnet-picasso.script}/bin/run-devnet-picasso-dev";
             };
 
-            kusama-picasso-karura-devnet = {
+            devnet-kusama-picasso-karura = {
               type = "app";
               program =
                 "${packages.kusama-picasso-karura-devnet}/bin/kusama-picasso-karura";
+            };
+
+            devnet-kusama-dali-karura = {
+              type = "app";
+              program =
+                "${packages.kusama-dali-karura-devnet}/bin/kusama-dali-karura";
             };
 
             price-feed = {
@@ -775,6 +796,12 @@
               type = "app";
               program = "${packages.polkadot-node}/bin/polkadot";
             };
+
+            junod = {
+              type = "app";
+              program = "${packages.junod}/bin/junod";
+            };
+
             # TODO: move list of chains out of here and do fold
             benchmarks-once-composable = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "composable-dev";
@@ -808,6 +835,65 @@
           };
           book = eachSystemOutputs.packages.x86_64-linux.composable-book;
         };
+      };
+      homeConfigurations = {
+
+        vscode.x86_64-linux = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        in with pkgs;
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          modules = [{
+            home = {
+              username = "vscode";
+              homeDirectory = "/home/vscode";
+              stateVersion = "22.05";
+              packages = [
+                cachix
+                eachSystemOutputs.packages.x86_64-linux.rust-nightly
+                docker
+                docker-buildx
+                docker-compose
+              ];
+            };
+            programs = {
+              home-manager.enable = true;
+              direnv = {
+                enable = true;
+                nix-direnv = { enable = true; };
+              };
+            };
+          }];
+        };
+
+        vscode.aarch64-linux = let pkgs = nixpkgs.legacyPackages.aarch64-linux;
+        in with pkgs;
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+          modules = [{
+            home = {
+              username = "vscode";
+              homeDirectory = "/home/vscode";
+              stateVersion = "22.05";
+              packages = [
+                cachix
+                eachSystemOutputs.packages.aarch64-linux.rust-nightly
+                docker
+                docker-buildx
+                docker-compose
+                acl
+                direnv
+              ];
+            };
+            programs = {
+              home-manager.enable = true;
+              direnv = {
+                enable = true;
+                nix-direnv = { enable = true; };
+              };
+            };
+          }];
+        };
+
       };
     };
 }
