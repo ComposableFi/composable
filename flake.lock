@@ -1,5 +1,25 @@
 {
   "nodes": {
+    "arion-src": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1654878283,
+        "narHash": "sha256-JWdKBMzEibS2neY0nEs9E8kn4zRepEbwSw7HzxbEiAg=",
+        "owner": "hercules-ci",
+        "repo": "arion",
+        "rev": "e5fb978143240f8d293e6e5acc9691acf472928d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "arion",
+        "type": "github"
+      }
+    },
     "crane": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -55,6 +75,27 @@
         "type": "github"
       }
     },
+    "home-manager": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "utils": "utils"
+      },
+      "locked": {
+        "lastModified": 1661573386,
+        "narHash": "sha256-pBEg8iY00Af/SAtU2dlmOAv+2x7kScaGlFRDjNoVJO8=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "d89bdff445eadff03fe414e9c30486bc8166b72b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1660196186,
@@ -71,11 +112,34 @@
         "type": "github"
       }
     },
+    "npm-buildpackage": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1654787802,
+        "narHash": "sha256-53wPtqRsiaR8e3njRHZbO4lPX1W9hHdTarHEx6gE/s0=",
+        "owner": "serokell",
+        "repo": "nix-npm-buildpackage",
+        "rev": "ec9a825ad4a6f1fb2d6bb8371be827c9c8bf5b80",
+        "type": "github"
+      },
+      "original": {
+        "owner": "serokell",
+        "repo": "nix-npm-buildpackage",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
+        "arion-src": "arion-src",
         "crane": "crane",
         "flake-utils": "flake-utils",
+        "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
+        "npm-buildpackage": "npm-buildpackage",
         "rust-overlay": "rust-overlay"
       }
     },
@@ -99,6 +163,21 @@
       "original": {
         "owner": "oxalica",
         "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "utils": {
+      "locked": {
+        "lastModified": 1653893745,
+        "narHash": "sha256-0jntwV3Z8//YwuOjzhV2sgJJPt+HY6KhU7VZUL0fKZQ=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "1ed9fb1935d260de5fe1c2f7ee0ebaae17ed2fa1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
         "type": "github"
       }
     }

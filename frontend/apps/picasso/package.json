@@ -12,7 +12,8 @@
     "post-update": "echo \"codesandbox preview only, need an update\" && yarn upgrade --latest",
     "postinstall": "node ./.scripts/postinstall.js",
     "sync": "node ./.scripts/sync.js",
-    "lint:report": "eslint --output-file eslint_report.json --format json ."
+    "lint:report": "eslint --output-file eslint_report.json --format json .",
+    "export": "./node_modules/.bin/next export"
   },
   "dependencies": {
     "@apollo/client": "^3.6.9",
@@ -20,10 +21,9 @@
     "@emotion/react": "^11.8.2",
     "@emotion/server": "^11.4.0",
     "@emotion/styled": "^11.8.1",
-    "@integrations-lib/core": "1.0.68",
     "@mui/icons-material": "^5.5.1",
     "@mui/material": "^5.5.2",
-    "@polkadot/api": "^7.12.1",
+    "@polkadot/api": "^8.3.2",
     "@polkadot/extension-dapp": "^0.42.7",
     "@polkadot/util": "^9.4.1",
     "@svgr/webpack": "^6.1.2",
@@ -32,12 +32,13 @@
     "@web3-react/network-connector": "^6.1.9",
     "apexcharts": "^3.33.1",
     "bignumber.js": "^9.0.2",
+    "binance": "^2.0.37",
     "bn.js": "^5.2.0",
     "contentful": "^9.1.5",
-    "next": "^12.2.0",
     "graphql": "^16.5.0",
     "imagemin-svgo": "^10.0.1",
     "immer": "^9.0.14",
+    "next": "^12.2.0",
     "next-pwa": "^5.4.4",
     "next-transpile-modules": "^9.0.0",
     "notistack": "3.0.0-alpha.2",
@@ -47,6 +48,7 @@
     "react-hotjar": "^4.0.0",
     "substrate-react": "*",
     "zustand": "^4.0.0-beta.2",
+    "bi-lib": "*",
     "shared": "*",
     "tokens": "*"
   },
@@ -62,6 +64,7 @@
     "babel-jest": "^27.4.5",
     "babel-loader": "^8.2.3",
     "chalk": "^5.0.0",
+    "defi-interfaces": "*",
     "eslint": "^8.12.0",
     "eslint-config-next": "^12.1.1",
     "eslint-config-prettier": "^8.3.0",
@@ -71,7 +74,6 @@
     "ts-jest": "^27.1.3",
     "ts-node": "^10.8.1",
     "tsconfig-paths-webpack-plugin": "^3.5.2",
-    "typescript": "^4.6.3",
-    "defi-interfaces": "*"
+    "typescript": "^4.6.3"
   }
 }

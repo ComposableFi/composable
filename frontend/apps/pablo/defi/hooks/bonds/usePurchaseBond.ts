@@ -29,15 +29,14 @@ export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
                 parachainApi,
                 signer,
                 (txHash: string) => {
-                  console.log('txReady')
-                  enqueueSnackbar("Initiating Transaction on " + txHash);
+                  console.log('txReady ', txHash);
                 },
                 (txHash: string, events) => {
-                  enqueueSnackbar("Transaction Finalized on " + txHash);
+                  enqueueSnackbar("Transaction Finalized: " + txHash, { variant: "success" });
                   res(txHash);
                 },
                 (onTxError) => {
-                  console.log(onTxError)
+                  enqueueSnackbar("Error: " + onTxError, { variant: "error" });
                   rej(onTxError)
                 }
               )

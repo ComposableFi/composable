@@ -1,1 +1,1 @@
-FROM composablefi/composable-devcontainer:latest
+FROM composablefi/composable-devcontainer-minimal:latest

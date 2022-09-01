@@ -1,18 +1,18 @@
-import { ApiPromise, SubmittableResult } from '@polkadot/api';
+import { ApiPromise, SubmittableResult } from "@polkadot/api";
 import {
-  SubmittableExtrinsic,
   AddressOrPair,
   Signer,
-} from '@polkadot/api/types';
-import { EventRecord } from '@polkadot/types/interfaces/system';
+  SubmittableExtrinsic,
+} from "@polkadot/api/types";
+import { EventRecord } from "@polkadot/types/interfaces/system";
 import {
-  ExtrinsicSlice,
   ExtrinsicMetadata,
-} from './store/extrinsics/extrinsics.types';
+  ExtrinsicSlice,
+} from "./store/extrinsics/extrinsics.types";
 
 interface TransactionExecutor {
   execute(
-    call: SubmittableExtrinsic<'promise'>,
+    call: SubmittableExtrinsic<"promise">,
     sender: AddressOrPair,
     api: ApiPromise,
     signer: Signer,
@@ -21,7 +21,7 @@ interface TransactionExecutor {
     onTxError?: (errorMessage: string) => void
   ): Promise<void>;
   executeUnsigned(
-    call: SubmittableExtrinsic<'promise'>,
+    call: SubmittableExtrinsic<"promise">,
     api: ApiPromise,
     onTxReady: (txHash: string) => void | undefined,
     onTxFinalized: (txHash: string) => void | undefined
@@ -29,16 +29,16 @@ interface TransactionExecutor {
 }
 
 class Executor implements TransactionExecutor {
-  private addExtrinsic: ExtrinsicSlice['addExtrinsic'];
-  private addBlockHash: ExtrinsicSlice['addBlockHash'];
-  private updateExstrinsicStatus: ExtrinsicSlice['updateExtrinsicStatus'];
-  private updateExtrinsicError: ExtrinsicSlice['updateExtrinsicError'];
+  private addExtrinsic: ExtrinsicSlice["addExtrinsic"];
+  private addBlockHash: ExtrinsicSlice["addBlockHash"];
+  private updateExstrinsicStatus: ExtrinsicSlice["updateExtrinsicStatus"];
+  private updateExtrinsicError: ExtrinsicSlice["updateExtrinsicError"];
 
   constructor(
-    addExtrinsic: ExtrinsicSlice['addExtrinsic'],
-    addBlockHash: ExtrinsicSlice['addBlockHash'],
-    updateExstrinsicStatus: ExtrinsicSlice['updateExtrinsicStatus'],
-    updateExtrinsicError: ExtrinsicSlice['updateExtrinsicError']
+    addExtrinsic: ExtrinsicSlice["addExtrinsic"],
+    addBlockHash: ExtrinsicSlice["addBlockHash"],
+    updateExstrinsicStatus: ExtrinsicSlice["updateExtrinsicStatus"],
+    updateExtrinsicError: ExtrinsicSlice["updateExtrinsicError"]
   ) {
     this.addExtrinsic = addExtrinsic;
     this.addBlockHash = addBlockHash;
@@ -55,7 +55,7 @@ class Executor implements TransactionExecutor {
    * @param onTxFinalized this should be optional
    */
   async execute(
-    call: SubmittableExtrinsic<'promise'>,
+    call: SubmittableExtrinsic<"promise">,
     sender: AddressOrPair,
     api: ApiPromise,
     signer: Signer,
@@ -63,7 +63,7 @@ class Executor implements TransactionExecutor {
     onTxFinalized: (txHash: string, events: EventRecord[]) => void | undefined,
     onTxError?: (errorMessage: string) => void | undefined
   ): Promise<void> {
-    const unsub = await call.signAndSend(sender, { signer }, txResult => {
+    const unsub = await call.signAndSend(sender, { signer }, (txResult) => {
       const txHash = txResult.txHash.toString().toLowerCase();
 
       if (txResult.status.isReady) {
@@ -91,16 +91,30 @@ class Executor implements TransactionExecutor {
     });
   }
 
+  /**
+   * This should be used to fetch transaction fees based on call
+   * @param call
+   * @param sender
+   * @param signer
+   */
+  async paymentInfo(
+    call: SubmittableExtrinsic<"promise">,
+    sender: AddressOrPair,
+    signer: Signer
+  ) {
+    return call.paymentInfo(sender, { signer });
+  }
+
   async executeUnsigned(
-    call: SubmittableExtrinsic<'promise'>,
+    call: SubmittableExtrinsic<"promise">,
     api: ApiPromise,
     onTxReady: (txHash: string) => void | undefined,
     onTxFinalized: (txHash: string) => void | undefined
   ): Promise<void> {
-    const unsub = await call.send(txResult => {
+    const unsub = await call.send((txResult) => {
       const txHash = txResult.txHash.toString().toLowerCase();
       if (txResult.status.isReady) {
-        this.onReady(call, txResult, '', false);
+        this.onReady(call, txResult, "", false);
         if (onTxReady) onTxReady(txHash);
       }
 
@@ -122,7 +136,7 @@ class Executor implements TransactionExecutor {
   }
 
   private async onReady(
-    call: SubmittableExtrinsic<'promise'>,
+    call: SubmittableExtrinsic<"promise">,
     txResult: SubmittableResult,
     sender: AddressOrPair,
     isSigned: boolean
@@ -136,7 +150,7 @@ class Executor implements TransactionExecutor {
       sender: sender.toString(),
       args: serialized.method.args,
       dispatchError: undefined,
-      status: 'isReady',
+      status: "isReady",
       isSigned,
       timestamp: Date.now(),
     };
@@ -155,7 +169,7 @@ class Executor implements TransactionExecutor {
         );
         const { docs, name, section } = decoded;
 
-        errorMessage = `${section}.${name}: ${docs.join(' ')}`;
+        errorMessage = `${section}.${name}: ${docs.join(" ")}`;
       } else {
         errorMessage = txResult.dispatchError.toString();
       }
@@ -173,7 +187,7 @@ class Executor implements TransactionExecutor {
   }
 
   private async onFinalized(txHash: string) {
-    this.updateExstrinsicStatus(txHash, 'isFinalized');
+    this.updateExstrinsicStatus(txHash, "isFinalized");
   }
 }
 

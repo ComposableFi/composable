@@ -23,6 +23,8 @@ pub const WASM_BINARY_V2: Option<&[u8]> = Some(include_bytes!(env!("DALI_RUNTIME
 #[cfg(not(feature = "builtin-wasm"))]
 pub const WASM_BINARY_V2: Option<&[u8]> = None;
 
+extern crate alloc;
+
 mod governance;
 mod weights;
 mod xcmp;
@@ -39,7 +41,7 @@ use common::{
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
 	BlockNumber, BondOfferId, FinancialNftInstanceId, Hash, MaxStringSize, Moment,
-	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
+	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, PriceConverter, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -55,8 +57,8 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto,
-		Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, Convert,
+		ConvertInto, Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -375,6 +377,22 @@ impl transaction_payment::Config for Runtime {
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
 
+pub struct TransferToTreasuryOrDrop;
+impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
+	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
+		let _ =
+			<Tokens as fungibles::Balanced<AccountId>>::resolve(&TreasuryAccount::get(), credit);
+	}
+}
+
+impl asset_tx_payment::Config for Runtime {
+	type Fungibles = Tokens;
+	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
+		PriceConverter<AssetsRegistry>,
+		TransferToTreasuryOrDrop,
+	>;
+}
+
 impl sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
@@ -428,7 +446,7 @@ where
 			system::CheckEra::<Runtime>::from(era),
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
-			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			asset_tx_payment::ChargeAssetTxPayment::<Runtime>::from(tip, None),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -825,12 +843,17 @@ parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets : u32 = 10;
 	pub const MaxRewardConfigsPerPool : u32 = 10;
+	pub const PicaAssetId : CurrencyId = CurrencyId::PICA;
+	pub const PbloAssetId : CurrencyId = CurrencyId::PBLO;
+	pub const XPicaAssetId: CurrencyId = CurrencyId::xPICA;
+	pub const XPbloAssetId: CurrencyId = CurrencyId::xPBLO;
+	pub const PicaStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PICA_STAKE_FNFT_COLLECTION;
+	pub const PbloStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PBLO_STAKE_FNFT_COLLECTION;
 }
 
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = RewardPoolId;
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
@@ -845,6 +868,12 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type FinancialNft = Fnft;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -865,7 +894,7 @@ impl call_filter::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxVestingSchedule: u32 = 2;
+	pub const MaxVestingSchedule: u32 = 100;
 	pub MinVestedTransfer: u64 = 10 * CurrencyId::unit::<u64>();
 }
 
@@ -1023,13 +1052,18 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
-	type RewardPoolId = RewardPoolId;
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
 	type ManageStaking = StakingRewards;
 	type ProtocolStaking = StakingRewards;
 	type MsPerBlock = MillisecsPerBlock;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 parameter_types! {
@@ -1127,6 +1161,94 @@ impl pallet_ibc_ping::Config for Runtime {
 	type IbcHandler = Ibc;
 }
 
+/// Native <-> Cosmwasm account mapping
+/// TODO(hussein-aitlahcen): Probably nicer to have SS58 representation here.
+pub struct AccountToAddr;
+impl Convert<alloc::string::String, Result<AccountId, ()>> for AccountToAddr {
+	fn convert(a: alloc::string::String) -> Result<AccountId, ()> {
+		match a.strip_prefix("0x") {
+			Some(account_id) => Ok(<[u8; 32]>::try_from(hex::decode(account_id).map_err(|_| ())?)
+				.map_err(|_| ())?
+				.into()),
+			_ => Err(()),
+		}
+	}
+}
+impl Convert<AccountId, alloc::string::String> for AccountToAddr {
+	fn convert(a: AccountId) -> alloc::string::String {
+		alloc::format!("0x{}", hex::encode(a))
+	}
+}
+
+/// Native <-> Cosmwasm asset mapping
+pub struct AssetToDenom;
+impl Convert<alloc::string::String, Result<CurrencyId, ()>> for AssetToDenom {
+	fn convert(currency_id: alloc::string::String) -> Result<CurrencyId, ()> {
+		core::str::FromStr::from_str(&currency_id).map_err(|_| ())
+	}
+}
+impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
+	fn convert(CurrencyId(currency_id): CurrencyId) -> alloc::string::String {
+		alloc::format!("{}", currency_id)
+	}
+}
+
+parameter_types! {
+  pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
+  pub const ChainId: &'static str = "composable-network-dali";
+  pub const MaxFrames: u32 = 64;
+	pub const MaxCodeSize: u32 = 512 * 1024;
+  pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
+  pub const MaxMessageSize: u32 = 256 * 1024;
+  pub const MaxContractLabelSize: u32 = 64;
+  pub const MaxContractTrieIdSize: u32 = Hash::len_bytes() as u32;
+  pub const MaxInstantiateSaltSize: u32 = 128;
+  pub const MaxFundsAssets: u32 = 32;
+  pub const CodeTableSizeLimit: u32 = 4096;
+  pub const CodeGlobalVariableLimit: u32 = 256;
+  pub const CodeParameterLimit: u32 = 128;
+  pub const CodeBranchTableSizeLimit: u32 = 256;
+  // Not really required as it's embedded.
+  pub const CodeStackLimit: u32 = u32::MAX;
+
+  // TODO: benchmark for proper values
+  pub const CodeStorageByteDeposit: u32 = 1;
+  pub const ContractStorageByteReadPrice: u32 = 1;
+  pub const ContractStorageByteWritePrice: u32 = 1;
+}
+
+impl cosmwasm::Config for Runtime {
+	type Event = Event;
+	type AccountId = AccountId;
+	type PalletId = CosmwasmPalletId;
+	type MaxFrames = MaxFrames;
+	type MaxCodeSize = MaxCodeSize;
+	type MaxInstrumentedCodeSize = MaxInstrumentedCodeSize;
+	type MaxMessageSize = MaxMessageSize;
+	type AccountToAddr = AccountToAddr;
+	type AssetToDenom = AssetToDenom;
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type Assets = Assets;
+	type NativeAsset = Balances;
+	type ChainId = ChainId;
+	type MaxContractLabelSize = MaxContractLabelSize;
+	type MaxContractTrieIdSize = MaxContractTrieIdSize;
+	type MaxInstantiateSaltSize = MaxInstantiateSaltSize;
+	type MaxFundsAssets = MaxFundsAssets;
+	type CodeTableSizeLimit = CodeTableSizeLimit;
+	type CodeGlobalVariableLimit = CodeGlobalVariableLimit;
+	type CodeParameterLimit = CodeParameterLimit;
+	type CodeBranchTableSizeLimit = CodeBranchTableSizeLimit;
+	type CodeStackLimit = CodeStackLimit;
+	type CodeStorageByteDeposit = CodeStorageByteDeposit;
+	type ContractStorageByteReadPrice = ContractStorageByteReadPrice;
+	type ContractStorageByteWritePrice = ContractStorageByteWritePrice;
+	type UnixTime = Timestamp;
+	// TODO: proper weights
+	type WeightInfo = ();
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1138,6 +1260,7 @@ construct_runtime!(
 		Sudo: sudo = 2,
 		RandomnessCollectiveFlip: randomness_collective_flip = 3,
 		TransactionPayment: transaction_payment = 4,
+		AssetTxPayment : asset_tx_payment  = 12,
 		Indices: indices = 5,
 		Balances: balances = 6,
 		Identity: identity = 7,
@@ -1201,7 +1324,10 @@ construct_runtime!(
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
 		IbcPing: pallet_ibc_ping = 151,
 		Transfer: ibc_transfer = 152,
-		Ibc: pallet_ibc = 153
+		Ibc: pallet_ibc = 153,
+
+	  // Cosmwasm support
+	  Cosmwasm: cosmwasm = 180
 	}
 );
 
@@ -1209,6 +1335,7 @@ construct_runtime!(
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	system::CheckNonZeroSender<Runtime>,
@@ -1218,7 +1345,7 @@ pub type SignedExtra = (
 	system::CheckEra<Runtime>,
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
-	transaction_payment::ChargeTransactionPayment<Runtime>,
+	asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -1512,7 +1639,7 @@ impl_runtime_apis! {
 				system::CheckEra::<Runtime>::from(Era::Immortal),
 				system::CheckNonce::<Runtime>::from(nonce),
 				system::CheckWeight::<Runtime>::new(),
-				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
+				asset_tx_payment::ChargeAssetTxPayment::<Runtime>::from(0, None),
 			);
 			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
 			let address = AccountIdLookup::unlookup(signer.into());

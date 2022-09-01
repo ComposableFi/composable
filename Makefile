@@ -17,7 +17,7 @@ help:
 	@echo $(print_help_text)
 
 build:
-	@cargo build
+	@cargo +nightly build
 
 clean:
 	@cargo clean
@@ -55,6 +55,7 @@ style-check:
 style:
 	@rustup component add rustfmt 2> /dev/null
 	./scripts/style.sh
+	nixfmt $$(find . -name "*.nix" -type f | tr "\n" " ")
 
 lint:
 	@rustup component add clippy 2> /dev/null
@@ -146,7 +147,16 @@ containerize-base-ci-linux:
 	@docker build -f docker/base-ci-linux.dockerfile \
 		-t ${REPO}/base-ci-linux:1.62.1  \
 		.
+# fastest way to build and debug runtime in simulator
+run-local-integration-tests-debug:
+	RUST_BACKTRACE=full \
+	SKIP_WASM_BUILD=1 \
+	RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace \
+	cargo +nightly test sibling_trap_assets_works --package local-integration-tests --features=local-integration-tests,picasso --no-default-features -- --nocapture --test-threads=1
 
+prune-devnet:
+	 rm --force --recursive *.log /tmp/polkadot-launch/
+	 
 push-base-ci-linux:
 	@docker push ${REPO}/base-ci-linux:1.62.1
 

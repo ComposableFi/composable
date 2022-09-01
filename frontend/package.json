@@ -11,6 +11,7 @@
     "dev": "turbo run dev --parallel",
     "test": "turbo run test",
     "lint": "turbo run lint",
+    "export": "turbo run export",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "lint:report": "turbo run lint:report"
   },

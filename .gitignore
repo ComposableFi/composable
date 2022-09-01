@@ -2,8 +2,10 @@
 # custom
 
 ## no embedded chain specs
-rococo-local.json
+rococo-dev-raw.json
 rococo-local-raw.json
+rococo-local.json
+rococo-dev.json
 kusama-local.json
 kusama-local-raw.json
 kusama-dev.json
@@ -42,8 +44,6 @@ node_modules
 # but include tasks
 !.vscode/tasks.json
 
-rococo-local-raw.json
-rococo-local.json
 scripts/polkadot-launch/bin/polkadot
 .rust-analyzer
 target
@@ -52,7 +52,6 @@ target
 node_modules/
 **/yarn-error.log
 **/.yarn/
-rust-toolchain.toml
 
 .benchmarkRun
 
