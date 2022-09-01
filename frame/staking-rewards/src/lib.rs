@@ -352,8 +352,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
-	pub type RewardPools<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AssetId, RewardPoolOf<T>>;
+	pub type RewardPools<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, RewardPoolOf<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn stake_count)]
