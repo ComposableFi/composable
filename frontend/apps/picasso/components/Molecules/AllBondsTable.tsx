@@ -99,12 +99,12 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                   <TableRow
                     sx={{
                       "&:hover": {
-                        cursor: "pointer"
-                      }
+                        cursor: "pointer",
+                      },
                     }}
                     key={
                       Array.isArray(asset)
-                        ? asset.map(a => a.symbol).join("+")
+                        ? asset.map((a) => a.symbol).join("+")
                         : asset.symbol
                     }
                     onClick={() => onRowClick(String(bondOfferId))}

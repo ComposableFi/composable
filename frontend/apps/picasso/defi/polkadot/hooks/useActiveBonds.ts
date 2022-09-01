@@ -1,111 +1,173 @@
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import { useEffect } from "react";
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks/index";
+import {
+  usePicassoProvider,
+  useSelectedAccount,
+} from "@/defi/polkadot/hooks/index";
 import { ApiPromise } from "@polkadot/api";
-import { unwrapNumberOrHex } from "shared";
 import { useStore } from "@/stores/root";
-import { Codec } from "@polkadot/types-codec/types";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
-import { ComposableTraitsVestingVestingScheduleIdSet } from "defi-interfaces";
-import { u8aEmpty } from "@polkadot/util";
+import { useQuery } from "@apollo/client";
+import { GET_VESTING_SCHEDULE_BY_ADDRESS } from "@/apollo/queries/vestingSchedule";
+import BigNumber from "bignumber.js";
+import { stringToU8a, u8aToHex } from "@polkadot/util";
+import { unwrapNumberOrHex } from "shared";
 
-type VestingAccount = { name: string; address: string };
+const PALLET_TYPE_ID = "modl";
 
-const bondedVestingSchedule = (bond: BondOffer) => (address: string) => (
-  api: ApiPromise
-) => {
-  return async () => {
-    const vestingScheduleResponse: Codec = await api.query.vesting.vestingSchedules(
-      address,
-      bond.reward.assetId
-    );
+export function concatU8a(a: Uint8Array, b: Uint8Array): Uint8Array {
+  const c = new Uint8Array(a.length + b.length);
+  c.set(a);
+  c.set(b, a.length);
+  return c;
+}
 
-    if (vestingScheduleResponse.isEmpty) {
-      return null;
+export function compareU8a(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false;
+
+  let equal = true;
+
+  a.forEach((a, i) => {
+    if (a != b[i]) {
+      equal = false;
     }
-    const fromCodec: ComposableTraitsVestingVestingScheduleIdSet = vestingScheduleResponse.toJSON() as any;
+  });
 
+  return equal;
+}
 
-    return Object.values(fromCodec).flatMap(vs => {
-      if (vs) {
-        const perPeriod = unwrapNumberOrHex((vs as any).perPeriod);
-        const periodCount = unwrapNumberOrHex((vs as any).periodCount);
-        const window = {
-          blockNumberBased: {
-            start: unwrapNumberOrHex((vs as any).window.blockNumberBased.start),
-            period: unwrapNumberOrHex(
-              (vs as any).window.blockNumberBased.period
-            )
-          }
-        };
-        return {
-          bond,
-          perPeriod,
-          periodCount,
-          window,
-          type: window.blockNumberBased ? "block" : "time"
-        };
+export function getBondOfferIdByVestingScheduleAccount(
+  parachainApi: ApiPromise,
+  vestingScheduleSubAccount: Uint8Array
+): BigNumber {
+  let offerId = new BigNumber(-1);
+  // @ts-ignore
+  const bondedFiPalletId = concatU8a(
+    stringToU8a(PALLET_TYPE_ID),
+    parachainApi.consts.bondedFinance.palletId.toU8a()
+  );
+
+  if (
+    compareU8a(
+      vestingScheduleSubAccount.subarray(0, bondedFiPalletId.length),
+      bondedFiPalletId
+    )
+  ) {
+    let paddedId = vestingScheduleSubAccount.subarray(
+      bondedFiPalletId.length,
+      vestingScheduleSubAccount.length
+    );
+    let firstNonZeroIndex = -1;
+
+    for (let byteIndex = paddedId.length; byteIndex > 0; byteIndex--) {
+      if (paddedId[byteIndex - 1] !== 0) {
+        firstNonZeroIndex = byteIndex;
+        byteIndex = 0;
       }
-    });
-  };
-};
+    }
+
+    if (firstNonZeroIndex !== -1) {
+      offerId = new BigNumber(
+        u8aToHex(paddedId.subarray(0, firstNonZeroIndex))
+      );
+    }
+  }
+
+  return offerId;
+}
 
 export function useActiveBonds() {
-  const account = useSelectedAccount();
-  const {
-    bonds,
-    updateOpenPositions,
-    activeBonds,
-  } = useStore<{
+  const { bonds } = useStore<{
     bonds: BondOffer[];
-    updateOpenPositions: (openPositions: any) => void;
-    activeBonds: ActiveBond[];
-  }>(state => ({
+    setActiveBonds: (itesm: ActiveBond[]) => void;
+  }>((state) => ({
     bonds: state.bonds.bonds,
-    updateOpenPositions: state.bonds.updateOpenPositions,
-    activeBonds: state.bonds.openPositions,
+    setActiveBonds: state.bonds.setActiveBonds,
   }));
   const { parachainApi } = usePicassoProvider();
+  const account = useSelectedAccount();
+  const { data, loading, error } = useQuery(GET_VESTING_SCHEDULE_BY_ADDRESS, {
+    variables: {
+      accountId: account?.address,
+    },
+    pollInterval: 30000,
+  });
 
-  async function fetchVestingSchedules(api: ApiPromise, acc: VestingAccount) {
-    const schedules = [];
-    for (const bond of bonds) {
-      const vestingSchedule = await api.query.vesting.vestingSchedules(
-        api.createType("AccountId32", acc.address),
-        api.createType("Option<u128>", )
+  if (!loading && !error && data.vestingSchedules && parachainApi) {
+    const result: Record<string, Set<string>> = data.vestingSchedules
+      .map((vestingSchedule: any) => {
+        const fromAccount = parachainApi
+          ?.createType("AccountId32", vestingSchedule.from)
+          .toU8a();
+        return {
+          ...vestingSchedule,
+          bondOfferId: getBondOfferIdByVestingScheduleAccount(
+            parachainApi,
+            fromAccount
+          ),
+        };
+      })
+      .filter(
+        (schedule: { bondOfferId: { toString: () => string } }) =>
+          schedule.bondOfferId.toString() !== "-1"
+      )
+      .reduce(
+        (
+          acc: { [x: string]: { add: (arg0: any) => void } },
+          curr: { bondOfferId: { toString: () => any }; id: any }
+        ) => {
+          let bondOfferId = curr.bondOfferId.toString();
+
+          if (acc[bondOfferId]) {
+            acc[bondOfferId].add(curr.id);
+          } else {
+            acc[bondOfferId] = new Set();
+            acc[bondOfferId].add(curr.id);
+          }
+
+          return acc;
+        },
+        {} as Record<string, Set<string>>
       );
-      // Skip if empty
-      if (vestingSchedule.isEmpty) continue;
 
-      //bond: BondOffer;
-      //   periodCount: BigNumber;
-      //   perPeriod: BigNumber;
-      //   vestingScheduleId: number;
-      //   window: {
-      //     blockNumberBased: {
-      //       start: BigNumber;
-      //       period: BigNumber;
-      //     };
-      //   };
-      schedules.push(Object.values(vestingSchedule.toJSON()));
+    const output: Array<ActiveBond> = [];
+    for (const [bondOfferId, scheduleids] of Object.entries(result)) {
+      scheduleids.forEach((scheduleId) => {
+        const vestingSchedule = data.vestingSchedules.find(
+          (schedule: any) => schedule.id.toString() === scheduleId.toString()
+        );
+        const bond = bonds.find(
+          (bond) => bond.bondOfferId.toString() === bondOfferId.toString()
+        );
+        if (vestingSchedule && bond) {
+          output.push({
+            bond,
+            periodCount: unwrapNumberOrHex(
+              vestingSchedule.schedule.periodCount
+            ),
+            perPeriod: unwrapNumberOrHex(vestingSchedule.schedule.perPeriod),
+            vestingScheduleId: vestingSchedule.id,
+            window: {
+              blockNumberBased: {
+                start: unwrapNumberOrHex(vestingSchedule.schedule.window.start),
+                period: unwrapNumberOrHex(
+                  vestingSchedule.schedule.window.period
+                ),
+              },
+            },
+          });
+        }
+      });
     }
-
-    return schedules;
+    return {
+      loading,
+      error,
+      activeBonds: output,
+    };
   }
 
-  async function fetchAndStore(factoryFn: () => Promise<unknown>) {
-    const result: any = await factoryFn();
-    updateOpenPositions(result.filter(Boolean).flat());
-  }
-
-  useEffect(() => {
-    let unsub = () => {};
-    if (parachainApi && account) {
-      fetchAndStore(() => fetchVestingSchedules(parachainApi, account));
-    }
-
-    return () => unsub();
-  }, [parachainApi, bonds, account]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return activeBonds;
+  return {
+    loading,
+    error,
+    activeBonds: [],
+  };
 }

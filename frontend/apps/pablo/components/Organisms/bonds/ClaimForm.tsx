@@ -1,25 +1,23 @@
 import { BigNumberInput, Label } from "@/components/Atoms";
 import {
-  Box,
-  Button,
-  BoxProps,
-  Typography,
-  Theme,
-  useTheme,
   alpha,
+  Box,
+  BoxProps,
+  Button,
+  Theme,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
-import {
-  calculateClaimableAt,
-  DEFAULT_NETWORK_ID,
-  DEFAULT_UI_FORMAT_DECIMALS,
-} from "@/defi/utils";
-import useBlockNumber from "@/defi/hooks/useBlockNumber";
+import { DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { useVestingClaim } from "@/defi/hooks";
-import { useBondedOfferVestingState, useBondOfferROI } from "@/store/bond/bond.slice";
+import {
+  useBondedOfferVestingState,
+  useBondOfferROI,
+} from "@/store/bond/bond.slice";
 import moment from "moment";
 
 const containerBoxProps = (theme: Theme) => ({
@@ -54,8 +52,13 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
   const { rewardAsset } = bond;
   const vestingTime = useBondVestingTime(bond.selectedBondOffer);
-  const { claimable, miliSecondsSinceVestingStart, pendingRewards} = useBondedOfferVestingState(bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-")
-  const roi = useBondOfferROI(bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-");
+  const { claimable, miliSecondsSinceVestingStart, pendingRewards } =
+    useBondedOfferVestingState(
+      bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-"
+    );
+  const roi = useBondOfferROI(
+    bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-"
+  );
 
   const handleClaim = useVestingClaim(
     bond.selectedBondOffer ? bond.selectedBondOffer.reward.asset : "",
@@ -116,10 +119,21 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
           mt={2}
         />
         <Label
-          {...defaultLabelProps("Time vested", `${moment.duration(miliSecondsSinceVestingStart.toNumber(), "milliseconds").humanize()}`)}
+          {...defaultLabelProps(
+            "Time vested",
+            `${moment
+              .duration(miliSecondsSinceVestingStart.toNumber(), "milliseconds")
+              .humanize()}`
+          )}
           mt={2}
         />
-        <Label {...defaultLabelProps("Vested", `${claimable.toFixed(2)} ${rewardAsset?.symbol}`)} mt={2} />
+        <Label
+          {...defaultLabelProps(
+            "Vested",
+            `${claimable.toFixed(2)} ${rewardAsset?.symbol}`
+          )}
+          mt={2}
+        />
         <Label
           {...defaultLabelProps(
             "ROI",

@@ -5,7 +5,6 @@ import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
 import PositionDetailsRow from "@/components/Atom/PositionDetailsRow";
 import { claim, getROI } from "@/defi/polkadot/pallets/BondedFinance";
-import BigNumber from "bignumber.js";
 import router from "next/router";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { PairAsset } from "@/components/Atom/PairAsset";
@@ -20,7 +19,7 @@ export const ClaimForm = () => {
   const theme = useTheme();
   const account = useSelectedAccount();
   const { parachainApi } = usePicassoProvider();
-  const activeBonds = useActiveBonds();
+  const { activeBonds } = useActiveBonds();
   const executor = useExecutor();
   const { bond } = router.query;
   const { claimable, vestingTime, vestedTime, pending } = useClaim(
@@ -39,8 +38,9 @@ export const ClaimForm = () => {
         account,
         executor,
         assetId: activeBond.bond.reward.assetId,
+        vestingScheduleId: activeBond.vestingScheduleId.toString(),
       },
-      txHash => {
+      (txHash) => {
         enqueueSnackbar("Claim was successful", {
           variant: "success",
           isClosable: true,
@@ -92,7 +92,7 @@ export const ClaimForm = () => {
         value={claimable}
         isValid={() => {}}
         setter={() => {}}
-        maxValue={new BigNumber(0)}
+        maxValue={claimable}
         disabled={true}
         LabelProps={{
           mainLabelProps: { label: "Amount" },
@@ -115,9 +115,10 @@ export const ClaimForm = () => {
         }}
         variant="contained"
         fullWidth
+        disabled={claimable.eq(0)}
         onClick={handleClaim}
       >
-        Claim
+        Claim {claimable.toString()}
       </Button>
 
       <Stack mt={theme.spacing(4)} width="100%">
