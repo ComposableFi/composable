@@ -37,7 +37,7 @@ pub(crate) const STAKING_FNFT_COLLECTION_ID: CurrencyId = 1;
 
 pub(crate) fn add_to_rewards_pot_and_assert(
 	who: <Test as frame_system::Config>::AccountId,
-	pool_id: <Test as crate::Config>::RewardPoolId,
+	pool_id: <Test as crate::Config>::AssetId,
 	asset_id: <Test as crate::Config>::AssetId,
 	amount: <Test as crate::Config>::Balance,
 ) {
@@ -49,19 +49,26 @@ pub(crate) fn add_to_rewards_pot_and_assert(
 
 pub(crate) fn create_rewards_pool_and_assert(
 	reward_config: RewardPoolConfigurationOf<Test>,
-) -> <Test as crate::Config>::RewardPoolId {
+) -> <Test as crate::Config>::AssetId {
 	assert_ok!(StakingRewards::create_reward_pool(Origin::root(), reward_config.clone()));
 
 	match System::events().last().expect("no events present").event {
 		runtime::Event::StakingRewards(crate::Event::<Test>::RewardPoolCreated {
 			pool_id,
 			owner: event_owner,
+			asset_id: event_asset_id,
 			end_block: event_end_block,
 		}) => {
 			match reward_config {
-				RewardPoolConfiguration::RewardRateBasedIncentive { end_block, owner, .. } => {
+				RewardPoolConfiguration::RewardRateBasedIncentive {
+					end_block,
+					owner,
+					asset_id,
+					..
+				} => {
 					assert_eq!(end_block, event_end_block);
 					assert_eq!(owner, event_owner);
+					assert_eq!(asset_id, event_asset_id);
 				},
 				_ => unimplemented!(),
 			}

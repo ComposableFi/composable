@@ -103,7 +103,6 @@ pub type Balance = u128;
 pub type AssetId = u128;
 pub type Amount = i128;
 pub type PoolId = u128;
-pub type RewardPoolId = u128;
 pub type PositionId = u128;
 
 parameter_type_with_key! {
@@ -165,7 +164,6 @@ parameter_types! {
 impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = RewardPoolId;
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type Assets = Tokens;
@@ -219,7 +217,6 @@ impl pablo::Config for Test {
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
-	type RewardPoolId = RewardPoolId;
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;

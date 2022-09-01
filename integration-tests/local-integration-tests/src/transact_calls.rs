@@ -31,8 +31,6 @@ macro_rules! match_this_event {
 fn dex() {
 	simtest();
 	let any_asset = CurrencyId::kUSD;
-	let sibling_non_native_amount =
-		assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
 	let some_native_amount = 1_000_000_000;
 	let this_liveness_native_amount = enough_weight();
 	let this_native_asset = CurrencyId::PICA;
@@ -59,6 +57,8 @@ fn dex() {
 	assert_eq!(sell.encode(), binary_sell.encode());
 
 	let _this_native_treasury_amount = This::execute_with(|| {
+		let sibling_non_native_amount =
+			assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
 		assert_ok!(this_runtime::Assets::deposit(
 			any_asset,
 			&sibling_account(),

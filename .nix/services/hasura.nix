@@ -1,6 +1,30 @@
-{ metadata, database, graphql-port }: {
+{ pkgs, metadata, database, graphql-port }:
+let
+  context = let
+    files = pkgs.linkFarm "context" [
+      {
+        name = "metadata";
+        path = metadata;
+      }
+      {
+        name = "Dockerfile";
+        path = pkgs.writeText "Dockerfile" ''
+          FROM hasura/graphql-engine:v2.12.0-beta.1.cli-migrations-v3
+          COPY metadata /hasura-metadata
+        '';
+      }
+    ];
+  in pkgs.stdenv.mkDerivation {
+    name = "context";
+    phases = [ "installPhase" ];
+    installPhase = ''
+      mkdir $out
+      cp -rL ${files}/* $out
+    '';
+  };
+in {
   service = {
-    image = "hasura/graphql-engine:v2.12.0-beta.1.cli-migrations-v3";
+    build = { context = "${context}"; };
     restart = "always";
     environment = {
       HASURA_GRAPHQL_ENABLE_CONSOLE = "true";
@@ -12,7 +36,6 @@
           toString database.port
         }/${database.name}";
     };
-    volumes = [ "${metadata}/:/hasura-metadata" ];
     ports = [ "${toString graphql-port}:8080" ];
   };
 }
