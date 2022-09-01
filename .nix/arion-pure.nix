@@ -21,11 +21,18 @@ pkgs.arion.build {
           name = composable-squid-db-name;
           host = db-container-name;
         };
+
         indexer-db-name = "indexer";
         indexer-db = default-db // {
           name = indexer-db-name;
           host = db-container-name;
         };
+
+        frontend-picasso = import ./services/frontend-picasso.nix {
+          inherit pkgs;
+          inherit packages;
+        };
+
         network-name = "composable_devnet";
         mk-composable-container = container:
           container // {
@@ -77,6 +84,7 @@ pkgs.arion.build {
               });
             "${redis-container-name}" =
               mk-composable-container (import ./services/redis.nix);
+
             subsquid-processor = mk-composable-container
               (import ./services/subsquid-processor.nix {
                 inherit pkgs;
@@ -85,6 +93,18 @@ pkgs.arion.build {
                 redis = redis-container-name;
                 relay = dali-container-name;
                 archive = subsquid-indexer-gateway-container-name;
+              });
+
+            frontend-picasso = mk-composable-container
+              (import ./services/frontend-picasso.nix {
+                inherit pkgs;
+                inherit packages;
+              });
+
+            frontend-pablo = mk-composable-container
+              (import ./services/frontend-pablo.nix {
+                inherit pkgs;
+                inherit packages;
               });
           };
         };
