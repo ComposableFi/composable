@@ -21,6 +21,8 @@ use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
 use sp_std::collections::btree_map::BTreeMap;
 
 pub const BASE_ASSET_ID: u128 = 101;
+pub const X_ASSET_ID: u128 = 1001;
+pub const STAKING_FNFT_COLLECTION_ID: u128 = 1;
 
 fn get_reward_pool<T: Config>(
 	owner: T::AccountId,
@@ -38,6 +40,8 @@ fn get_reward_pool<T: Config>(
 		end_block: 5_u128.saturated_into(),
 		reward_configs: reward_config::<T>(reward_count),
 		lock: lock_config::<T>(),
+		share_asset_id: X_ASSET_ID.into(),
+		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID.into(),
 	};
 	pool_init_config
 }
@@ -203,6 +207,8 @@ benchmarks! {
 				.try_collect()
 				.unwrap(),
 			lock: lock_config::<T>(),
+			share_asset_id: 1000.into(),
+			financial_nft_asset_id: 2000.into(),
 		}).unwrap();
 
 		let now = now + seconds_per_block;

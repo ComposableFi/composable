@@ -301,7 +301,19 @@ pub mod pallet {
 		type PicaAssetId: Get<Self::AssetId>;
 
 		#[pallet::constant]
+		type XPicaAssetId: Get<Self::AssetId>;
+
+		#[pallet::constant]
 		type PbloAssetId: Get<Self::AssetId>;
+
+		#[pallet::constant]
+		type XPbloAssetId: Get<Self::AssetId>;
+
+		#[pallet::constant]
+		type PicaStakeFinancialNftCollectionId: Get<Self::AssetId>;
+
+		#[pallet::constant]
+		type PbloStakeFinancialNftCollectionId: Get<Self::AssetId>;
 
 		type WeightInfo: WeightInfo;
 	}
@@ -404,6 +416,8 @@ pub mod pallet {
 					.expect("Genesis config must be correct; qed"),
 					unlock_penalty: Default::default(),
 				},
+				share_asset_id: T::XPicaAssetId::get(),
+				financial_nft_asset_id: T::PicaStakeFinancialNftCollectionId::get(),
 			};
 			RewardPools::<T>::insert(
 				T::AssetId::from(T::PicaAssetId::get().into()),
@@ -427,6 +441,8 @@ pub mod pallet {
 					.expect("Genesis config must be correct; qed"),
 					unlock_penalty: Default::default(),
 				},
+				share_asset_id: T::XPbloAssetId::get(),
+				financial_nft_asset_id: T::PbloStakeFinancialNftCollectionId::get(),
 			};
 			RewardPools::<T>::insert(
 				T::AssetId::from(T::PbloAssetId::get().into()),
@@ -585,6 +601,8 @@ pub mod pallet {
 					reward_configs: initial_reward_config,
 					end_block,
 					lock,
+					share_asset_id,
+					financial_nft_asset_id,
 				} => {
 					ensure!(
 						end_block > frame_system::Pallet::<T>::current_block_number(),
@@ -618,6 +636,8 @@ pub mod pallet {
 							claimed_shares: T::Balance::zero(),
 							end_block,
 							lock,
+							share_asset_id,
+							financial_nft_asset_id,
 						},
 					);
 
