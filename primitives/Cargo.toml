@@ -11,6 +11,7 @@ async-trait = "0.1.53"
 hex = "0.4.3"
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
 thiserror = "1.0.31"
+anyhow = "1.0.58"
 
 # substrate
 sp-runtime = "6.0.0"

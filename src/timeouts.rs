@@ -1,35 +1,48 @@
+use crate::connection_delay::has_delay_elapsed;
 use ibc::{
 	core::{
+		ics03_connection::connection::ConnectionEnd,
 		ics04_channel::{
 			channel::{ChannelEnd, Order, State},
+			context::calculate_block_delay,
 			msgs::{timeout::MsgTimeout, timeout_on_close::MsgTimeoutOnClose},
 			packet::Packet,
 		},
 		ics23_commitment::commitment::CommitmentProofBytes,
 		ics24_host::{
-			identifier::{ChannelId, ConnectionId, PortId},
+			identifier::{ChannelId, PortId},
 			path::{ChannelEndsPath, ReceiptsPath, SeqRecvsPath},
 		},
 	},
 	proofs::Proofs,
 	timestamp::Timestamp,
 	tx_msg::Msg,
+	Height,
 };
 use ibc_proto::google::protobuf::Any;
-use primitives::{apply_prefix, error::Error, Chain};
-use std::{collections::HashMap, str::FromStr};
+use primitives::{apply_prefix, error::Error, query_undelivered_sequences, Chain};
+use std::str::FromStr;
 use tendermint_proto::Protobuf;
 
-/// Get timeout messages that are ready to be sent back to source
-pub async fn get_timed_out_packets(
-	source: &mut impl Chain,
-	sink: &mut impl Chain,
-) -> Result<HashMap<ConnectionId, Vec<Any>>, anyhow::Error> {
-	let mut messages: HashMap<ConnectionId, Vec<Any>> = HashMap::new();
+/// Get timeout messages that are ready to be sent back to source after factoring connection delay
+pub async fn get_timed_out_packets_messages(
+	source: &impl Chain,
+	sink: &impl Chain,
+) -> Result<Vec<Any>, anyhow::Error> {
+	let mut messages = vec![];
 	let (source_height, ..) = source.latest_height_and_timestamp().await?;
 	let (sink_height, sink_timestamp) = sink.latest_height_and_timestamp().await?;
 	let connection_whitelist = source.connection_whitelist().await?;
 	for connection_id in connection_whitelist {
+		let connection_response =
+			source.query_connection_end(source_height, connection_id.clone()).await?;
+		let connection_end =
+			ConnectionEnd::try_from(connection_response.connection.ok_or_else(|| {
+				Error::Custom(format!(
+					"[get_timeout_messages] ConnectionEnd not found for {:?}",
+					connection_id
+				))
+			})?)?;
 		let connection_channels =
 			source.query_connection_channels(source_height, &connection_id).await?;
 		for identified_channel in connection_channels.channels {
@@ -37,7 +50,15 @@ pub async fn get_timed_out_packets(
 				.map_err(|_| Error::Custom("Found an invalid port id".to_string()))?;
 			let channel_id = ChannelId::from_str(&identified_channel.channel_id)
 				.map_err(|_| Error::Custom("Found an invalid channel id".to_string()))?;
-			let seqs = source.query_undelivered_sequences(channel_id, port_id.clone()).await?;
+			let seqs = query_undelivered_sequences(
+				source_height,
+				sink_height,
+				channel_id,
+				port_id.clone(),
+				source,
+				sink,
+			)
+			.await?;
 			let packet_infos = source.query_send_packets(channel_id, port_id, seqs).await?;
 			for packet_info in packet_infos {
 				let packet = Packet {
@@ -58,6 +79,38 @@ pub async fn get_timed_out_packets(
 
 				// Check if packet has timed out
 				if !packet.timed_out(&sink_timestamp, sink_height) {
+					continue
+				}
+
+				// Check if connection delay is satisfied
+				// Packet creation height on the source is the consensus height on sink
+				// where we calculate the client update time
+
+				let consensus_height =
+					Height::new(source_height.revision_number, packet_info.height);
+				// If we can't get the client update time and height, skip processing of this packet
+				let client_update_time_and_height = sink
+					.query_client_update_time_and_height(source.client_id(), consensus_height)
+					.await;
+				if client_update_time_and_height.is_err() {
+					continue
+				}
+
+				let (client_update_height, client_update_time) =
+					client_update_time_and_height.unwrap();
+
+				let connection_delay = connection_end.delay_period();
+				let block_delay =
+					calculate_block_delay(connection_delay, sink.expected_block_time());
+
+				if !has_delay_elapsed(
+					sink_timestamp,
+					sink_height,
+					client_update_time,
+					client_update_height,
+					connection_delay,
+					block_delay,
+				)? {
 					continue
 				}
 
@@ -127,10 +180,7 @@ pub async fn get_timed_out_packets(
 					let value = msg.encode_vec();
 					let msg = Any { value, type_url: msg.type_url() };
 
-					messages
-						.entry(connection_id.clone())
-						.and_modify(|batch| batch.push(msg))
-						.or_insert(vec![]);
+					messages.push(msg)
 				} else {
 					let msg = MsgTimeout {
 						packet: packet.clone(),
@@ -141,10 +191,7 @@ pub async fn get_timed_out_packets(
 					};
 					let value = msg.encode_vec();
 					let msg = Any { value, type_url: msg.type_url() };
-					messages
-						.entry(connection_id.clone())
-						.and_modify(|batch| batch.push(msg))
-						.or_insert(vec![]);
+					messages.push(msg)
 				}
 			}
 		}

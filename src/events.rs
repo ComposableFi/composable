@@ -31,6 +31,7 @@ use ibc::{
 use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::QueryConsensusStateResponse};
 use primitives::{error::Error, Chain};
 use tendermint_proto::Protobuf;
+use crate::timeouts::get_timed_out_packets_messages;
 
 /// This parses events coming from a source chain into messages that should be delivered to a
 /// counterparty chain.
@@ -466,6 +467,10 @@ pub async fn parse_events(
 			_ => continue,
 		}
 	}
+
+	//2. Get timeouts that are ready to be processed
+	let timeout_messages = get_timed_out_packets_messages(source, sink).await?;
+	messages.extend(timeout_messages);
 
 	// 3. insert update client message at first index
 	{

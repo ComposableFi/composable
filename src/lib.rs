@@ -3,6 +3,7 @@
 use futures::StreamExt;
 use primitives::Chain;
 
+pub mod connection_delay;
 pub mod events;
 pub mod logging;
 pub mod timeouts;

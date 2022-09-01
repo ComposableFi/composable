@@ -44,7 +44,7 @@ use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
 use pallet_mmr_primitives::BatchProof;
 #[cfg(feature = "testing")]
 use std::pin::Pin;
-use std::str::FromStr;
+use std::{str::FromStr, time::Duration};
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -351,18 +351,57 @@ where
 		Ok(res)
 	}
 
-	async fn query_undelivered_sequences(
+	async fn query_packet_commitments(
 		&self,
+		at: Height,
 		channel_id: ChannelId,
 		port_id: PortId,
 	) -> Result<Vec<u64>, Self::Error> {
-		let seqs = IbcApiClient::<u32, H256>::query_undelivered_sequences(
+		let res = IbcApiClient::<u32, H256>::query_packet_commitments(
 			&*self.para_client.rpc().client,
+			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
+			seqs,
 		)
 		.await?;
-		Ok(seqs)
+		Ok(res.commitments.into_iter().map(|packet_state| packet_state.sequence).collect())
+	}
+
+	async fn query_unreceived_acknowledgements(
+		&self,
+		at: Height,
+		channel_id: ChannelId,
+		port_id: PortId,
+		seqs: Vec<u64>,
+	) -> Result<Vec<u64>, Self::Error> {
+		let res = IbcApiClient::<u32, H256>::query_unreceived_acknowledgements(
+			&*self.para_client.rpc().client,
+			at.revision_height as u32,
+			channel_id.to_string(),
+			port_id.to_string(),
+			seqs,
+		)
+		.await?;
+		Ok(res)
+	}
+
+	async fn query_unreceived_packets(
+		&self,
+		at: Height,
+		channel_id: ChannelId,
+		port_id: PortId,
+		seqs: Vec<u64>,
+	) -> Result<Vec<u64>, Self::Error> {
+		let res = IbcApiClient::<u32, H256>::query_unreceived_packets(
+			&*self.para_client.rpc().client,
+			at.revision_height as u32,
+			channel_id.to_string(),
+			port_id.to_string(),
+			seqs,
+		)
+		.await?;
+		Ok(res)
 	}
 
 	async fn connection_whitelist(&self) -> Result<Vec<ConnectionId>, Self::Error> {
@@ -441,6 +480,11 @@ where
 		)
 		.await?;
 		Ok(response)
+	}
+
+	fn expected_block_time(&self) -> Duration {
+		// Parachains have an expected block time of 12 seconds
+		Duration::from_secs(12)
 	}
 
 	async fn query_client_update_time_and_height(
