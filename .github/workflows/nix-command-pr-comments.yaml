@@ -1,7 +1,6 @@
 name: Nix Commands PR comment.
 
 on: pull_request
-branches: 
 
 jobs:
   example_comment_pr:
