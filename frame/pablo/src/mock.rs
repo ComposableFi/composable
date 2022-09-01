@@ -156,6 +156,10 @@ parameter_types! {
 	pub const MaxRewardConfigsPerPool: u32 = 10;
 	pub const PicaAssetId : CurrencyId = 1;
 	pub const PbloAssetId : CurrencyId = 2;
+	pub const XPicaAssetId: CurrencyId = 101;
+	pub const XPbloAssetId: CurrencyId = 102;
+	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
+	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1001;
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -178,6 +182,10 @@ impl pallet_staking_rewards::Config for Test {
 	type FinancialNft = pablo::mock_fnft::MockFnft;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 ord_parameter_types! {

@@ -207,6 +207,8 @@ benchmarks! {
 				.try_collect()
 				.unwrap(),
 			lock: lock_config::<T>(),
+			share_asset_id: 1000.into(),
+			financial_nft_asset_id: 2000.into(),
 		}).unwrap();
 
 		let now = now + seconds_per_block;
