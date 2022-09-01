@@ -150,11 +150,23 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		)?
 	};
 
-	let router_reply: (u8, UserId) = from_binary(
-		&response
-			.data
-			.ok_or(StdError::not_found("no data is returned from 'xcvm_interpreter'"))?,
-	)?;
+	let router_reply = {
+		let interpreter_event = response
+			.events
+			.iter()
+			.find(|event| event.ty == "wasm-xcvm.interpreter")
+			.ok_or(StdError::not_found("interpreter event not found"))?;
+
+		from_binary::<(u8, UserId)>(&Binary::from_base64(
+			interpreter_event
+				.attributes
+				.iter()
+				.find(|attr| &attr.key == "data")
+				.ok_or(StdError::not_found("no data is returned from 'xcvm_interpreter'"))?
+				.value
+				.as_str(),
+		)?)?
+	};
 
 	INTERPRETERS.save(deps.storage, (router_reply.0, router_reply.1), &interpreter_address)?;
 
