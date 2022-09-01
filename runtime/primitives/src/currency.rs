@@ -129,7 +129,7 @@ impl CurrencyId {
 		#[allow(non_upper_case_globals)]
 		pub const aUSD: CurrencyId = CurrencyId(134);
 
-		// Staked asset xTokens (1001 - 100_000_000_000)
+		// Staked asset xTokens (1001 - 2000)
 		/// Staked asset xPICA Token
 		#[allow(non_upper_case_globals)]
 		pub const xPICA: CurrencyId = CurrencyId(1001);
