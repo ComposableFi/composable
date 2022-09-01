@@ -44,6 +44,7 @@ type PabloPool @entity {
   "Pool ID"
   poolId: BigInt!
   owner: String!
+  lpIssued: BigInt!
   transactionCount: Int!
   totalLiquidity: String!
   totalVolume: String!

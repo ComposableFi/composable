@@ -39,6 +39,9 @@ export class PabloPool {
   @Column_("text", {nullable: false})
   totalFees!: string
 
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  lpIssued!: bigint
+
   /**
    * Asset used for all quotes in this type
    */
