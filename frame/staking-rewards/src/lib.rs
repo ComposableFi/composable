@@ -405,12 +405,12 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			let owner: T::AccountId = T::PalletId::get().into_account_truncating();
-			Self::create_default_pool(
+			create_default_pool::<T>(
 				&owner,
 									  T::PicaAssetId::get(),
 									  T::XPicaAssetId::get(),
 									  T::PicaStakeFinancialNftCollectionId::get());
-			Self::create_default_pool(
+			create_default_pool::<T>(
 				&owner,
 				T::PbloAssetId::get(),
 				T::XPbloAssetId::get(),
@@ -419,46 +419,39 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> GenesisConfig<T> {
-		fn create_default_pool(
-			owner: &T::AccountId,
-			staked_asset_id: T::AssetId,
+	fn create_default_pool<T: Config>(owner: &T::AccountId, staked_asset_id: T::AssetId,
 			share_asset_id: T::AssetId,
 			financial_nft_asset_id: T::AssetId,
-		) {
-			// TODO (vim): Review these with product
-			// PICA staking pool
-			let pica_staking_pool: RewardPoolOf<T> = RewardPool {
-				owner: owner.clone(),
-				asset_id: staked_asset_id,
-				rewards: Default::default(),
-				total_shares: T::Balance::zero(),
-				claimed_shares: T::Balance::zero(),
-				end_block: T::BlockNumber::zero(),
-				lock: LockConfig {
-					duration_presets: [
-						(ONE_WEEK, Perbill::from_percent(1)),
-						(ONE_MONTH, Perbill::from_percent(10)),
-					]
-					.into_iter()
-					.try_collect()
-					.expect("Genesis config must be correct; qed"),
-					unlock_penalty: Default::default(),
-				},
-				share_asset_id,
-				financial_nft_asset_id,
-			};
-			RewardPools::<T>::insert(
-				staked_asset_id,
-				pica_staking_pool,
-			);
-			T::FinancialNft::create_collection(
-				&financial_nft_asset_id,
-				&owner,
-				&owner,
-			)
-			.expect("Genesis config must be correct; qed");
-		}
+	) {
+		// TODO (vim): Review these with product
+		// PICA staking pool
+		let pica_staking_pool: RewardPoolOf<T> = RewardPool {
+			owner: owner.clone(),
+			asset_id: staked_asset_id,
+			rewards: Default::default(),
+			total_shares: T::Balance::zero(),
+			claimed_shares: T::Balance::zero(),
+			end_block: T::BlockNumber::zero(),
+			lock: LockConfig {
+				duration_presets: [
+					(ONE_WEEK, Perbill::from_percent(1)),
+					(ONE_MONTH, Perbill::from_percent(10)),
+				]
+				.into_iter()
+				.try_collect()
+				.expect("Genesis config must be correct; qed"),
+				unlock_penalty: Default::default(),
+			},
+			share_asset_id,
+			financial_nft_asset_id
+		};
+		RewardPools::<T>::insert(staked_asset_id, pica_staking_pool);
+		T::FinancialNft::create_collection(
+			&financial_nft_asset_id,
+			owner,
+			owner,
+		)
+		.expect("Genesis config must be correct; qed");
 	}
 
 	#[pallet::hooks]

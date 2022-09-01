@@ -60,10 +60,9 @@ pub mod pallet {
 	use sp_arithmetic::traits::One;
 	use sp_runtime::traits::{AccountIdConversion, Zero};
 	use sp_std::{
+		boxed::Box,
 		collections::{btree_map::BTreeMap, btree_set::BTreeSet},
 		vec::Vec,
-		convert,
-		boxed::Box,
 	};
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -285,16 +284,20 @@ pub mod pallet {
 		/// Returns an iterator of the items of `collection` owned by `who`.
 		///
 		/// NOTE: iterating this list invokes a storage read per item.
+		#[allow(clippy::clone_on_copy)]
 		fn owned_in_collection(
 			collection: &Self::CollectionId,
 			who: &T::AccountId,
 		) -> Box<dyn Iterator<Item = Self::ItemId>> {
 			let moved_collection = collection.clone();
 			Box::new(
-				OwnerInstances::<T>::get(who)
-					.into_iter()
-					.flat_map(convert::identity)
-					.filter_map(move |(c, i)| if c == moved_collection { Some(i) } else { None }),
+				OwnerInstances::<T>::get(who).into_iter().flatten().filter_map(move |(c, i)| {
+					if c == moved_collection {
+						Some(i)
+					} else {
+						None
+					}
+				}),
 			)
 		}
 	}
