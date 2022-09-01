@@ -48,7 +48,7 @@ members = [
   "utils/xcmp",
   "utils/wasm-optimizer",
   "xcvm/lib/*",
-  "xcvm/cosmwasm/contracts/*"
+  "xcvm/cosmwasm/contracts/*",
 ]
 
 [profile.release]
@@ -61,15 +61,16 @@ inherits = "release"
 lto = true
 
 [profile.cosmwasm-contracts]
-inherits = "production"
-rpath = false
-overflow-checks = true
-opt-level = "s"
 debug = false
 debug-assertions = false
+inherits = "production"
+opt-level = "s"
+overflow-checks = true
 panic = "abort"
+rpath = false
 
 [patch.crates-io]
+<<<<<<< HEAD
 sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 sp-core = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
@@ -79,6 +80,16 @@ sp-io = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f1
 sp-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b" }
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
+=======
+serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
+sp-application-crypto = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+sp-arithmetic = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+sp-externalities = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+sp-io = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+>>>>>>> 1f717b826 (fmt to pass ci)
 
 [patch."https://github.com/paritytech/subxt"]
 subxt-codegen = { git = "https://github.com/paritytech//subxt", rev = "2fe9a1446d32b93a10804db3304ccaac65f764b8" }

@@ -26,17 +26,16 @@ library = []
 cosmwasm-std = "1.0.0"
 cosmwasm-storage = "1.0.0"
 cw-storage-plus = "0.13.2"
+cw20 = { git = "https://github.com/CosmWasm/cw-plus.git" }
+num = "0.4"
 schemars = "0.8.8"
 serde = { version = "1.0.137", default-features = false, features = ["derive"] }
+serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "4e175eaeffd625041bdecd251c0068a365def453" }
 serde_json = "1"
 thiserror = { version = "1.0.31" }
-cw20 = { git = "https://github.com/CosmWasm/cw-plus.git" }
-serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "4e175eaeffd625041bdecd251c0068a365def453" }
-xcvm-core = { path = "../../../lib/core", features = ["std"] }
 xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
-num = "0.4"
+xcvm-core = { path = "../../../lib/core", features = ["std"] }
 
 [dev-dependencies]
-cw-multi-test = "0.13.2"
 cosmwasm-schema = "1.0.0"
-
+cw-multi-test = "0.13.2"
