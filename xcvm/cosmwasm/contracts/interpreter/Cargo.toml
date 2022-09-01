@@ -17,8 +17,6 @@ exclude = [
 crate-type = ["cdylib", "rlib"]
 
 [features]
-# for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm-std/backtraces"]
 # use library feature to disable all instantiate/execute/query exports
 library = []
 
@@ -37,5 +35,7 @@ xcvm-asset-registry = { path = "../asset-registry", features = ["library"] }
 xcvm-core = { path = "../../../lib/core", features = ["std"] }
 
 [dev-dependencies]
+# more explicit tests
+cosmwasm-std = { version = "1.0.0", features = ["backtraces"] }
 cosmwasm-schema = "1.0.0"
 cw-multi-test = "0.13.2"
