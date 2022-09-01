@@ -63,6 +63,7 @@ pub mod pallet {
 		collections::{btree_map::BTreeMap, btree_set::BTreeSet},
 		vec::Vec,
 	};
+	use std::convert;
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type FinancialNftCollectionIdOf<T> = <T as Config>::FinancialNftCollectionId;
@@ -291,7 +292,7 @@ pub mod pallet {
 			Box::new(
 				OwnerInstances::<T>::get(who)
 					.into_iter()
-					.flat_map(|i| i.into_iter())
+					.flat_map(convert::identity)
 					.filter_map(move |(c, i)| if c == moved_collection { Some(i) } else { None }),
 			)
 		}

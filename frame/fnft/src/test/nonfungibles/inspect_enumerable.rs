@@ -29,9 +29,8 @@ pub(crate) fn test() {
 			<Nft as InspectEnumerable<u128>>::items(&first_collection).collect::<BTreeSet<_>>(),
 			BTreeSet::from_iter(
 				first_collection_items_alice
-					.iter()
-					.map(|i| *i)
-					.chain(first_collection_items_bob.iter().map(|i| *i))
+					.into_iter()
+					.chain(first_collection_items_bob.into_iter())
 			)
 		);
 
@@ -39,9 +38,8 @@ pub(crate) fn test() {
 			<Nft as InspectEnumerable<u128>>::items(&second_collection).collect::<BTreeSet<_>>(),
 			BTreeSet::from_iter(
 				second_collection_items_alice
-					.iter()
-					.map(|i| *i)
-					.chain(second_collection_items_bob.iter().map(|i| *i))
+					.into_iter()
+					.chain(second_collection_items_bob.into_iter())
 			)
 		);
 
