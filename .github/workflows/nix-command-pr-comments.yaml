@@ -15,6 +15,6 @@ jobs:
         with:
           message: |
             **Nix commands for this PR**
-            This is commit is ${{ github.sha }}
+            This is commit is ${{ github.sha }} aka ${{GITHUB_SHA}}
           comment_includes: 'Nix commands for this PR'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
