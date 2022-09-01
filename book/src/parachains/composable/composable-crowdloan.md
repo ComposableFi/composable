@@ -4,7 +4,7 @@
 
 Our crowdloan on Polkadot was critical in allowing us to successfully obtain the 8th Polkadot parachain slot during the 7th round of auctions of these parachains. Over 9 thousand users participated in our crowdloan, depositing a total of 6,075,485 DOT (a value of over $163 million at the time).
 
-This crowdloan was available on our[ app](https://crowdloan.composable.finance/). Users were able to stake stablecoins or DOT, earn an APY on their stakings, and support the ever-growing Composable ecosystem. 
+This crowdloan was available on our[ app](https://crowdloan.composable.finance/). Users were able to stake stablecoins or DOT, earn an APY on their stakes, and support the ever-growing Composable ecosystem. 
 
 
 ## Rewards

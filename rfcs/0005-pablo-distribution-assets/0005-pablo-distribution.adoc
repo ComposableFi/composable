@@ -148,7 +148,7 @@ g -up-> UC12
 
 === System Overview
 
-[plantuml,images/pablo-distribution-verview,png]
+[plantuml,images/pablo-distribution-overview,png]
 ----
 skinparam component {
   backgroundColor<<exists>> LightGreen

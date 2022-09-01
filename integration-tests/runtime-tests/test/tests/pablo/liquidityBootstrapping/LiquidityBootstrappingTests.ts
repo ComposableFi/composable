@@ -23,7 +23,7 @@ import pabloTestConfiguration from "../testHandlers/test_configuration.json";
  * CreatePool - AddLiquidity - Buy - Sell - Swap - RemoveLiquidity with basic calculations
  */
 
-describe("LiquidityBootsrapping Pool Test Suite", function () {
+describe("LiquidityBootstrapping Pool Test Suite", function () {
   if (!pabloTestConfiguration.liquidityBootstrappingTests.enabled) {
     console.log("Liquidity Bootstrapping Tests are being skipped...");
     return;
@@ -72,7 +72,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
 
   describe("LiquidityBootstrapping CreatePool and AddLiquidity Tests", async function () {
     if (!testConfiguration.enabledTests.createPoolAndAddLiquidityTests.enabled) {
-      console.log("LiquidityBootsrapping createPool and addLiquidity tests are being skipped...");
+      console.log("LiquidityBootstrapping createPool and addLiquidity tests are being skipped...");
       return;
     }
     this.timeout(2 * 60 * 1000);
@@ -199,7 +199,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
 
   describe("LiquidityBootstrapping buy sell and swap tests", async function () {
     if (!testConfiguration.enabledTests.buySellAndSwapTests.enabled) {
-      console.log("LiquidityBootsrapping buy,sell and swap tests are being skipped...");
+      console.log("LiquidityBootstrapping buy,sell and swap tests are being skipped...");
       return;
     }
     this.timeout(3 * 60 * 1000);

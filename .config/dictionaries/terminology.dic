@@ -15,6 +15,7 @@ polkadotjs
 suri # Substrate Uri
 parathread
 parathreads
+CurrencyId
 
 # crypto stuff
 xcmp
@@ -133,6 +134,8 @@ unstaked
 prelocks
 localchain
 hashset
+arweave
+pricehistory
 
 
 # just words, consider a separate dictionary
@@ -302,6 +305,9 @@ overvoting
 thresholding
 supermajority
 updateable
+currency
+Currency
+unignore
 
 coeff # coefficient
 recvs # recieves
@@ -312,6 +318,8 @@ modlpy
 twox
 liquidat # liquidate
 direnv
+
+# palletId's
 democrac # democracy
 dtch_ctn # dutch auction
 dutchauc # dutch auction
@@ -320,6 +328,11 @@ plt_msac # pallet mosaic
 stk_rwrd # staking rewards
 mck_curf # mock currency-factory
 compvest # vesting
+Liquided
+picatrsy
+plmosaic
+liqdatns
+liqiudat
 
 # can't have apostrophies in identifiers
 doesnt
@@ -349,3 +362,5 @@ kusd
 ksmusdt
 sats # satoshis?
 xbtc
+pica
+pblo

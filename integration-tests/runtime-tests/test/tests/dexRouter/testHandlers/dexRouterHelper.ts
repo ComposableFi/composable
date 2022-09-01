@@ -377,7 +377,7 @@ export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair
  Creates stableSwapPool
  @param sender: User sending tx- KeyringPair
  @param owner: Owner of the pool - KeyringPair
- @param baseAssetId: CurencyId
+ @param baseAssetId: CurrencyId
  @param quoteAssetId: CurrencyId
  @param ampCoefficient: Amplification Coefficient, for details see curve.fi stable swap dex
  @param fee: Total fee to be charged for each transaction in the pool

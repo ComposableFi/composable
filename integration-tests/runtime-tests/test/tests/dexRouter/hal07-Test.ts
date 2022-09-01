@@ -7,7 +7,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
 import { expect } from "chai";
 import { createConsProdPool } from "../pablo/testHandlers/pabloTestHelper";
 /**
- * Single Test to check the fix for hallborn audit fix.
+ * Single Test to check the fix for halborn audit fix.
  * This test will create two constant product pools with various assets and check if the audit fix is working.
  * The description of the issue:
  * Inside the uniswap and curve-amm pallets, the create function calls
@@ -51,7 +51,7 @@ describe("DexRouter Tests", function () {
   after("Closing the connection", async function () {
     await api.disconnect();
   });
-  it("Hallborn Fix Validation", async function () {
+  it("Halborn Fix Validation", async function () {
     this.timeout(5 * 60 * 1000);
     poolId = await createConsProdPool(api, sudoKey, walletId1, eth, usdc, fee, baseWeight);
     poolId2 = await createConsProdPool(api, sudoKey, walletId1, usdt, eth, fee, baseWeight);

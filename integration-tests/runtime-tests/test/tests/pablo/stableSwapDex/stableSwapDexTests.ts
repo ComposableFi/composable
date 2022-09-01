@@ -133,7 +133,7 @@ describe("StableSwapDex Test Suite", function () {
 
     it(
       "Given that users have sufficient funds, User2 can add liquidity and the amount added not adjusted by " +
-        "Constantproduct Formula if asset amounts are close to eachother",
+        "Constant product Formula if asset amounts are close to each other",
       async function () {
         const result = await addFundsToThePool(api, poolId2, walletId2, Pica(100), Pica(500));
         expect(result.quoteAdded.toBigInt()).to.be.equal(Pica(500));
@@ -142,7 +142,7 @@ describe("StableSwapDex Test Suite", function () {
 
     it(
       "Given that users have sufficient funds, User1 can add liquidity and the amount added not adjusted by " +
-        "Constantproduct Formula",
+        "Constant product Formula",
       async function () {
         const result = await addFundsToThePool(api, poolId1, walletId1, Pica(100), Pica(500));
         expect(result.quoteAdded.toBigInt()).to.be.equal(Pica(500));
@@ -233,7 +233,7 @@ describe("StableSwapDex Test Suite", function () {
     });
   });
 
-  describe("StableSwapDex liquidityremoval and other tests", async function () {
+  describe("StableSwapDex liquidity removal and other tests", async function () {
     if (!testConfiguration.enabledTests.liquidityRemovalAndOtherTests.enabled) {
       console.log("StableSwap liquidity removal and other tests are being skipped...");
       return;

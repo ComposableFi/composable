@@ -237,7 +237,7 @@ for brevity.
 
 ### 5.1. System Overview
 
-<img src="0005-pablo-distribution-assets/images/images/pablo-distribution-verview.png" width="977" height="807" alt="pablo distribution verview" />
+<img src="0005-pablo-distribution-assets/images/images/pablo-distribution-overview.png" width="977" height="807" alt="pablo distribution overview" />
 
 TODO: What to do for part of protocol fees that should be transferred to
 treasury eventually as treasury does not stake it’s PBLO?

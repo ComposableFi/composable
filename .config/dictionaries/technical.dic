@@ -211,6 +211,9 @@ keccak
 containrrr # `containrrr/watchtower` docker image
 adduser
 libp2p
+drawio
+clickup
+immer
 
 # systemctl
 FSIZE
@@ -252,17 +255,16 @@ commonmark # https://commonmark.org/help
 dotgraphs
 
 # not sure where to put these
-drawio
-clickup
-immer
-1ubrf2y
-pricehistory
 adda
 assetinfo
 assetsinfo
 oraclestake
 rewardtrackerstore
-
+rewardaccumulationhook
+messagingxcm
+claimunstake
+stakerclaimunstake
+lppicapbloother
 
 # frontend stuff
 msapplication
@@ -289,8 +291,7 @@ USDCUSDT
 unsubs
 
 # these should probably be replaced with stakes and bonds respectively
-stakings
-bondings
+
 
 uptodate # used throughout our codebase
 
@@ -349,7 +350,7 @@ oneliner
 oneof
 devcontainers
 styleguide
-
+dispatchables
 
 # file attributes
 lastmod
@@ -358,6 +359,7 @@ lastmod
 zlfzypzcr
 lcgfmg
 5C4hrfjw
+1ubrf2y
 
 # abcdef
 alice

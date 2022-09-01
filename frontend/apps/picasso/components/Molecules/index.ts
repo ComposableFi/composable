@@ -15,9 +15,9 @@ export * from "./BigNumberInput";
 
 export { MyAssetsTable } from "./MyAssetsTable";
 
-export { MyStakingsTable } from "./MyStakingsTable";
+export { MyStakesTable } from "./MyStakesTable";
 
-export { MyBondingsTable } from "./MyBondingsTable";
+export { MyBondsTable } from "./MyBondsTable";
 
 export type { DropdownCombinedInputProps } from "./DropdownCombinedInput";
 export { DropdownCombinedInput } from "./DropdownCombinedInput";

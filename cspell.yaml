@@ -72,3 +72,4 @@ ignorePaths:
   - "scripts/polkadot-launch/initialization/src/interfaces/"
   - "scripts/github/picasso/"
   - "frame/airdrop/index.html"
+  - "integration-tests/local-integration-tests/README.md"
