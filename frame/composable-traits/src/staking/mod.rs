@@ -134,7 +134,6 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 	// possible lock config for this pool
 	pub lock: LockConfig<DurationPresets>,
 
-	// TODO (vim): Introduce asset ids for financial NFT as well as the shares of the pool
 	// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
 	pub share_asset_id: AssetId,
 
@@ -180,11 +179,8 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 		reward_configs: RewardConfigs,
 		// possible lock config for this reward
 		lock: LockConfig<DurationPresets>,
-
-		// TODO (vim): Introduce asset ids for financial NFT as well as the shares of the pool
 		// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
 		share_asset_id: AssetId,
-
 		// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
 		financial_nft_asset_id: AssetId,
 	},
