@@ -850,7 +850,6 @@ parameter_types! {
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = RewardPoolId;
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
@@ -1045,7 +1044,6 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
-	type RewardPoolId = RewardPoolId;
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;

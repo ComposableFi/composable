@@ -498,7 +498,7 @@ fn test_split_postion() {
 		let reduction = 10_000_000_000_000_u128;
 		let stake = Stake::<
 			<Test as frame_system::Config>::AccountId,
-			RewardPoolId,
+			<Test as Config>::AssetId,
 			Balance,
 			Reductions<CurrencyId, Balance, MaxRewardConfigsPerPool>,
 		> {
