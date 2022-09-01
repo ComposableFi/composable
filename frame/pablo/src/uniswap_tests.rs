@@ -224,7 +224,7 @@ fn test_redeemable_assets() {
 		assert_ok!(Tokens::mint_into(BTC, &BOB, initial_btc));
 		// Add the liquidity single asset
 		assert_ok!(<Pablo as Amm>::add_liquidity(&BOB, pool_id, initial_btc, 0, 0, false));
-		let lp = Pablo::accounts(&BOB, pool_id);
+		let lp = Pablo::accounts(&BOB, pool_id).unwrap();
 		// For a single asset, this will not work correctly, because we don't have enough liquidity
 		// in the pool
 		let redeemable_assets =
@@ -825,17 +825,17 @@ fn check_function_updating_single_asset_storage() {
 		// Check that was created new item in storage with right amount of LP
 		assert_ok!(Pablo::add_liquidity(Origin::signed(BOB), pool_id, btc_value, 0, 0, false));
 		let lp = Tokens::balance(pool.lp_token, &BOB);
-		assert_eq!(lp, Pablo::accounts(&BOB, &pool_id));
+		assert_eq!(lp, Pablo::accounts(&BOB, &pool_id).unwrap());
 		// Check that after single asset withdraw, storage was updated
 		assert_ok!(Pablo::remove_liquidity_single_asset(Origin::signed(BOB), pool_id, lp / 2, 0));
-		assert_eq!(lp / 2, Pablo::accounts(&BOB, &pool_id));
+		assert_eq!(lp / 2, Pablo::accounts(&BOB, &pool_id).unwrap());
 		// Check that after single asset deposit, storage was updated
 		assert_ok!(Pablo::add_liquidity(Origin::signed(BOB), pool_id, btc_value, 0, 0, false));
 		let lp = Tokens::balance(pool.lp_token, &BOB);
-		assert_eq!(lp, Pablo::accounts(&BOB, &pool_id));
+		assert_eq!(lp, Pablo::accounts(&BOB, &pool_id).unwrap());
 		// Check that after withdraw all assets, item was deleted from storage
 		assert_ok!(Pablo::remove_liquidity_single_asset(Origin::signed(BOB), pool_id, lp, 0));
-		assert_eq!(0, Pablo::accounts(&BOB, &pool_id));
+		assert_eq!(0, Pablo::accounts(&BOB, &pool_id).unwrap());
 	});
 }
 
