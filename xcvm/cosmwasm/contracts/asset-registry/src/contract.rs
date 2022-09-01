@@ -18,7 +18,7 @@ pub fn instantiate(
 	_msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 	Ok(Response::default()
-		.add_event(Event::new("xcvm.registry").add_attribute("action", "instantiated")))
+		.add_event(Event::new("xcvm.registry.instantiated")))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -57,7 +57,7 @@ pub fn handle_set_assets(
 		ASSETS.save(deps.storage, asset_id.parse::<XcvmAssetId>().unwrap(), &addr)?;
 	}
 
-	Ok(Response::new().add_event(Event::new("xcvm.registry").add_attribute("action", "updated")))
+	Ok(Response::new().add_event(Event::new("xcvm.registry.updated")))
 }
 
 pub fn query_asset_contract(

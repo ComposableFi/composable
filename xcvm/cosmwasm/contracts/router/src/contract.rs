@@ -154,7 +154,7 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 		let interpreter_event = response
 			.events
 			.iter()
-			.find(|event| event.ty == "wasm-xcvm.interpreter")
+			.find(|event| event.ty == "wasm-xcvm.interpreter.instantiate")
 			.ok_or(StdError::not_found("interpreter event not found"))?;
 
 		from_binary::<(u8, UserId)>(&Binary::from_base64(
