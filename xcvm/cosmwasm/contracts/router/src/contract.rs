@@ -162,4 +162,91 @@ fn handle_instantiate_reply(deps: DepsMut, msg: Reply) -> StdResult<Response> {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+	use super::*;
+	use cosmwasm_std::{
+		testing::{mock_dependencies, mock_env, mock_info, MockQuerier},
+		wasm_execute, Addr, ContractResult, QuerierResult, SystemResult,
+	};
+	use std::collections::BTreeMap;
+	use xcvm_core::{Amount, AssetId, Picasso, ETH, PICA};
+	use xcvm_interpreter::msg::{
+		ExecuteMsg as InterpreterExecuteMsg, XCVMInstruction, XCVMProgram,
+	};
+
+	const CW20_ADDR: &str = "cw20addr";
+	const REGISTRY_ADDR: &str = "registryaddr";
+
+	#[test]
+	fn proper_instantiation() {
+		let mut deps = mock_dependencies();
+
+		let msg = InstantiateMsg { registry_address: "addr".to_string(), interpreter_code_id: 1 };
+		let info = mock_info("sender", &vec![]);
+
+		let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+		assert_eq!(0, res.messages.len());
+
+		// Make sure that the storage is empty
+		assert_eq!(
+			CONFIG.load(&deps.storage).unwrap(),
+			Config { registry_address: Addr::unchecked("addr"), interpreter_code_id: 1 }
+		);
+	}
+
+	#[test]
+	fn execute_run() {
+		let mut deps = mock_dependencies();
+		let mut querier = MockQuerier::default();
+		//querier.update_wasm(wasm_querier);
+		deps.querier = querier;
+
+		let msg = InstantiateMsg { registry_address: "addr".to_string(), interpreter_code_id: 1 };
+		let info = mock_info("sender", &vec![]);
+		let _ = instantiate(deps.as_mut(), mock_env(), info.clone(), msg).unwrap();
+
+		let program = XCVMProgram {
+			tag: vec![],
+			instructions: vec![XCVMInstruction::Transfer {
+				to: "asset".into(),
+				assets: Funds::from([
+					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
+					(ETH.into(), Amount::absolute(2)),
+				]),
+			}]
+			.into(),
+		};
+		let interpreter_execute_msg = InterpreterExecuteMsg::Execute { program };
+
+		let res = execute(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			ExecuteMsg::Run {
+				network_id: Picasso.into(),
+				user_id: vec![1],
+				interpreter_execute_msg,
+				funds: Funds::<Displayed<u128>>::from([(
+					Into::<AssetId>::into(PICA),
+					Displayed(1000_u128),
+				)]),
+			},
+		)
+		.unwrap();
+
+		panic!("RES: {:?}", res);
+		/*
+		let contract = Cw20Contract(Addr::unchecked(CW20_ADDR));
+		let messages = vec![
+			contract
+				.call(Cw20ExecuteMsg::Transfer { recipient: "asset".into(), amount: 1_u128.into() })
+				.unwrap(),
+			contract
+				.call(Cw20ExecuteMsg::Transfer { recipient: "asset".into(), amount: 2_u128.into() })
+				.unwrap(),
+		];
+
+		assert_eq!(res.messages.iter().map(|msg| msg.msg.clone()).collect::<Vec<_>>(), messages);
+		*/
+	}
+}

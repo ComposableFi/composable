@@ -10,7 +10,7 @@
       "properties": {
         "get_asset_contract": {
           "type": "integer",
-          "format": "uint32",
+          "format": "uint128",
           "minimum": 0.0
         }
       },
