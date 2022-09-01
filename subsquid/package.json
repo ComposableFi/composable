@@ -13,9 +13,13 @@
     "query-node:start": "squid-graphql-server",
     "lint": "npm run lint:prod -- --fix",
     "lint:prod": "eslint . --ext .ts --ignore-path .gitignore --max-warnings 0",
-    "test": "tsc -p tsconfig-test.json && ts-mocha --paths -p tsconfig-test.json"
+    "test": "tsc -p tsconfig-test.json && ts-mocha --paths -p tsconfig-test.json",
+    "typegen": "npm run generate:meta && npm run generate:defs",
+    "generate:defs": "ts-node node_modules/.bin/polkadot-types-from-defs --package ./src/interfaces --input ./src/interfaces --endpoint ws://127.0.0.1:9988",
+    "generate:meta": "ts-node node_modules/.bin/polkadot-types-from-chain --package ./src/interfaces --endpoint ws://127.0.0.1:9988 --output ./src/interfaces"
   },
   "dependencies": {
+    "@polkadot/api": "^9.2.4",
     "@subsquid/archive-registry": "^0.0.6",
     "@subsquid/cli": "^0.3.0",
     "@subsquid/graphql-server": "^0.2.0",
@@ -26,11 +30,12 @@
     "dotenv": "^16.0.0",
     "graphql": "^15.8.0",
     "pg": "^8.7.3",
+    "ts-mockito": "^2.6.1",
     "type-graphql": "^1.2.0-rc.1",
-    "typeorm": "^0.2.41",
-    "ts-mockito": "^2.6.1"
+    "typeorm": "^0.2.41"
   },
   "devDependencies": {
+    "@polkadot/typegen": "^9.2.4",
     "@subsquid/substrate-metadata-explorer": "^0.0.8",
     "@subsquid/substrate-typegen": "^0.4.2",
     "@types/big.js": "^6.1.3",

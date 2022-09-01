@@ -187,4 +187,6 @@ type HistoricalLockedValue @entity {
   transactionId: String!
   amount: BigInt!
   timestamp: BigInt!
+  "Asset price in USD"
+  assetPrice: BigInt!
 }

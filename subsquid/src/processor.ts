@@ -47,8 +47,7 @@ const chain = (): string => {
     default:
       if ("RELAYCHAIN_URI" in process.env) {
         return process.env.RELAYCHAIN_URI!.toString();
-      }
-      else {
+      } else {
         return "ws://127.0.0.1:9988";
       }
   }
@@ -57,12 +56,10 @@ const chain = (): string => {
 const archive = (): string => {
   if ("SUBSQUID_ARCHIVE_URI" in process.env) {
     return process.env.SUBSQUID_ARCHIVE_URI!.toString();
-  }
-  else {
+  } else {
     return "http://127.0.0.1:8080/v1/graphql";
   }
 };
-
 
 const chainConnectionString = chain();
 const archiveConnectionString = archive();

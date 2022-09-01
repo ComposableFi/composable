@@ -1,5 +1,5 @@
-module.exports = class Init1661937269812 {
-  name = 'Init1661937269812'
+module.exports = class Init1661956586397 {
+  name = 'Init1661956586397'
 
   async up(db) {
     await db.query(`CREATE TABLE "account" ("id" character varying NOT NULL, "event_id" text NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`)
@@ -16,7 +16,7 @@ module.exports = class Init1661937269812 {
     await db.query(`CREATE INDEX "IDX_e5b6c7a8a991d63c9670391daa" ON "historical_asset_price" ("asset_id") `)
     await db.query(`CREATE TABLE "asset" ("id" character varying NOT NULL, "event_id" text NOT NULL, "price" numeric NOT NULL, CONSTRAINT "PK_1209d107fe21482beaea51b745e" PRIMARY KEY ("id"))`)
     await db.query(`CREATE TABLE "picasso_staking_position" ("id" character varying NOT NULL, "event_id" text NOT NULL, "position_id" text NOT NULL, "transaction_id" text NOT NULL, "pool_id" text NOT NULL, "amount" numeric NOT NULL, "owner" text NOT NULL, "start_timestamp" numeric NOT NULL, "end_timestamp" numeric, CONSTRAINT "PK_f9550801a20135d04da2e0876d2" PRIMARY KEY ("id"))`)
-    await db.query(`CREATE TABLE "historical_locked_value" ("id" character varying NOT NULL, "event_id" text NOT NULL, "transaction_id" text NOT NULL, "amount" numeric NOT NULL, "timestamp" numeric NOT NULL, CONSTRAINT "PK_39755ccbc61547e8b814bf28188" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE TABLE "historical_locked_value" ("id" character varying NOT NULL, "event_id" text NOT NULL, "transaction_id" text NOT NULL, "amount" numeric NOT NULL, "timestamp" numeric NOT NULL, "asset_price" numeric NOT NULL, CONSTRAINT "PK_39755ccbc61547e8b814bf28188" PRIMARY KEY ("id"))`)
     await db.query(`ALTER TABLE "pablo_pool_asset" ADD CONSTRAINT "FK_7fd4cdb45620476d1de745a2658" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_969a927080f5b6c81b79b40cd86" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "historical_asset_price" ADD CONSTRAINT "FK_e5b6c7a8a991d63c9670391daaf" FOREIGN KEY ("asset_id") REFERENCES "asset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)

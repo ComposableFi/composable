@@ -21,4 +21,10 @@ export class HistoricalLockedValue {
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   timestamp!: bigint
+
+  /**
+   * Asset price in USD
+   */
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  assetPrice!: bigint
 }

@@ -1,5 +1,6 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
+import { ApiPromise, WsProvider } from "@polkadot/api";
 import {
   StakingRewardsRewardPoolCreatedEvent,
   StakingRewardsSplitPositionEvent,
@@ -14,6 +15,8 @@ import {
   PicassoTransactionType,
 } from "../model";
 import { encodeAccount } from "../utils";
+
+const wsProvider = new WsProvider("ws://127.0.0.1:9988");
 
 interface RewardPoolCreatedEvent {
   poolId: number;
@@ -177,7 +180,17 @@ export async function storeHistoricalLockedValue(
   eventId: string,
   transactionId: string
 ): Promise<void> {
+  const api = await ApiPromise.create({ provider: wsProvider });
   let lastAmount = 0n;
+
+  const oraclePrice = await api.query.oracle.prices(1);
+
+  if (!oraclePrice) {
+    // no-op.
+    return;
+  }
+
+  const assetPrice = BigInt(oraclePrice.price.toString());
 
   const lastLockedValue: { amount: bigint }[] = await ctx.store.query(
     `
@@ -188,17 +201,9 @@ export async function storeHistoricalLockedValue(
       `
   );
 
-  console.log({ lastLockedValue });
-
   if (lastLockedValue?.[0]) {
     lastAmount = BigInt(lastLockedValue[0].amount);
   }
-
-  console.log({
-    lastAmount,
-    amountLocked,
-    newAmount: lastAmount + amountLocked,
-  });
 
   const historicalLockedValue = new HistoricalLockedValue({
     id: randomUUID(),
@@ -206,6 +211,7 @@ export async function storeHistoricalLockedValue(
     transactionId,
     amount: lastAmount + amountLocked,
     timestamp: BigInt(new Date().valueOf()),
+    assetPrice,
   });
 
   await ctx.store.save(historicalLockedValue);
