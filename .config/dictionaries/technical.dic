@@ -244,6 +244,9 @@ truetype
 tooltiptext
 tooltipped
 
+# icons
+horiz
+
 # fonts
 TentangNanti
 Konnect
