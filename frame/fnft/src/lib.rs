@@ -62,8 +62,9 @@ pub mod pallet {
 	use sp_std::{
 		collections::{btree_map::BTreeMap, btree_set::BTreeSet},
 		vec::Vec,
+		convert,
+		boxed::Box,
 	};
-	use std::convert;
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type FinancialNftCollectionIdOf<T> = <T as Config>::FinancialNftCollectionId;

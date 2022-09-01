@@ -27,8 +27,7 @@ use frame_system::EventRecord;
 use sp_arithmetic::{Perbill, Permill};
 use sp_core::sr25519::Public;
 use sp_runtime::PerThing;
-use sp_std::collections::btree_map::BTreeMap;
-use std::collections::BTreeSet;
+use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
 use self::prelude::STAKING_FNFT_COLLECTION_ID;
 

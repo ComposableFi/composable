@@ -657,7 +657,7 @@ pub mod pallet {
 
 					Self::deposit_event(Event::<T>::RewardPoolCreated {
 						pool_id,
-						owner: owner.clone(),
+						owner,
 						end_block,
 						asset_id,
 					});
