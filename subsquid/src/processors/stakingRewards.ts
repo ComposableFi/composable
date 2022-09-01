@@ -19,13 +19,13 @@ import { encodeAccount } from "../utils";
 const wsProvider = new WsProvider("ws://127.0.0.1:9988");
 
 interface RewardPoolCreatedEvent {
-  poolId: number;
+  poolId: bigint;
   owner: Uint8Array;
   endBlock: number;
 }
 
 interface StakedEvent {
-  poolId: number;
+  poolId: bigint;
   owner: Uint8Array;
   amount: bigint;
   durationPreset: bigint;
@@ -44,7 +44,7 @@ interface StakeAmountExtendedEvent {
 }
 
 interface SplitPositionEvent {
-  positions: bigint[];
+  positions: [bigint, bigint][];
 }
 
 function getRewardPoolCreatedEvent(
@@ -90,7 +90,7 @@ function getSplitPositionEvent(
  * @param transactionId
  */
 export function createPicassoStakingPosition(
-  poolId: number,
+  poolId: bigint,
   positionId: bigint,
   owner: string,
   amount: bigint,
@@ -152,7 +152,7 @@ export function splitPicassoStakingPosition(
   position.eventId = eventId;
   position.transactionId = transactionId;
 
-  const newPosition = new PicassoStakingPosition({
+  return new PicassoStakingPosition({
     id: randomUUID(),
     eventId,
     transactionId,
@@ -163,8 +163,6 @@ export function splitPicassoStakingPosition(
     startTimestamp: position.startTimestamp,
     endTimestamp: position.endTimestamp,
   });
-
-  return newPosition;
 }
 
 /**
@@ -374,7 +372,10 @@ export async function processSplitPositionEvent(
   const evt = new StakingRewardsSplitPositionEvent(ctx);
   const event = getSplitPositionEvent(evt);
   const { positions } = event;
-  const [oldPositionId, newPositionId] = positions;
+  const [
+    [oldPositionId, oldPositionAmount],
+    [newPositionId, newPositionAmount],
+  ] = positions;
 
   const position = await ctx.store.get(PicassoStakingPosition, {
     where: {
@@ -395,8 +396,8 @@ export async function processSplitPositionEvent(
 
   const newPosition = splitPicassoStakingPosition(
     position,
-    1n,
-    1n,
+    oldPositionAmount,
+    newPositionAmount,
     newPositionId,
     ctx.event.id,
     transactionId
