@@ -35,7 +35,7 @@
     };
   };
   outputs = { self, nixpkgs, crane, flake-utils, rust-overlay, npm-buildpackage
-    , arion-src }:
+    , arion-src, home-manager }:
     let
       # https://cloud.google.com/iam/docs/creating-managing-service-account-keys
       # or just use GOOGLE_APPLICATION_CREDENTIALS env as path to file
