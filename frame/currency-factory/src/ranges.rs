@@ -156,7 +156,8 @@ where
 	}
 
 	/// Range for xTokens
-	/// xTokens are provided to stakers in exchange for staked token by the staking rewards pallet and may be used for governance.
+	/// xTokens are provided to stakers in exchange for staked token by the staking rewards pallet
+	/// and may be used for governance.
 	fn x_tokens() -> Self {
 		Self {
 			current: AssetId::from(600_000_000_001_u128),
