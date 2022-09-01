@@ -15,6 +15,9 @@ type C = Currency<99, 12>;
 type D = Currency<100, 12>;
 type E = Currency<101, 12>;
 type F = Currency<102, 12>;
+type XA = Currency<1097, 12>;
+type XC = Currency<1099, 12>;
+type XF = Currency<1099, 12>;
 
 #[test]
 fn test_reward_update_calculation() {
@@ -41,6 +44,8 @@ fn test_reward_update_calculation() {
 			end_block: ONE_YEAR_OF_BLOCKS * 10,
 			reward_configs: [(PICA::ID, reward_config)].into_iter().try_collect().unwrap(),
 			lock: default_lock_config(),
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});
 
 		add_to_rewards_pot_and_assert(ALICE, pool_id, PICA::ID, PICA::units(10_000));
@@ -173,6 +178,8 @@ fn test_accumulate_rewards_pool_empty_refill() {
 				.try_collect()
 				.unwrap(),
 				lock: default_lock_config(),
+				share_asset_id: XA::ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			});
 
 		progress_to_block(current_block + 1, &mut current_block);
@@ -182,15 +189,11 @@ fn test_accumulate_rewards_pool_empty_refill() {
 				pool_id,
 				asset_id: A::ID,
 				error: RewardAccumulationHookError::RewardsPotEmpty,
-				share_asset_id: XA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			},
 			crate::Event::<Test>::RewardAccumulationHookError {
 				pool_id,
 				asset_id: B::ID,
 				error: RewardAccumulationHookError::RewardsPotEmpty,
-				share_asset_id: XA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			},
 		]);
 
@@ -304,6 +307,8 @@ fn test_accumulate_rewards_hook() {
 				.try_collect()
 				.unwrap(),
 				lock: default_lock_config(),
+				share_asset_id: XA::ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			});
 
 		mint_assets([ALICE], [A::ID], A_A_INITIAL_AMOUNT);
@@ -593,8 +598,7 @@ fn test_accumulate_rewards_hook() {
 				lock: default_lock_config(),
 				share_asset_id: XF::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			})
-			.unwrap();
+			});
 
 		{
 			progress_to_block(STARTING_BLOCK + 4167, &mut current_block);

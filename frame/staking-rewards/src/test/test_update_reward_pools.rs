@@ -50,8 +50,7 @@ fn test_update_reward_pool() {
 				lock: default_lock_config(),
 				share_asset_id: XPICA::ID,
 				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			})
-			.unwrap();
+			});
 
 		mint_assets([ALICE], [USDT::ID], INITIAL_AMOUNT);
 		add_to_rewards_pot_and_assert(ALICE, pool_id, USDT::ID, INITIAL_AMOUNT);
