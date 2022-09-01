@@ -835,7 +835,7 @@ fn check_function_updating_single_asset_storage() {
 		assert_eq!(lp, Pablo::accounts(&BOB, &pool_id).unwrap());
 		// Check that after withdraw all assets, item was deleted from storage
 		assert_ok!(Pablo::remove_liquidity_single_asset(Origin::signed(BOB), pool_id, lp, 0));
-		assert_eq!(0, Pablo::accounts(&BOB, &pool_id).unwrap());
+		assert_eq!(None, Pablo::accounts(&BOB, &pool_id));
 	});
 }
 

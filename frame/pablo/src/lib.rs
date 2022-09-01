@@ -1018,67 +1018,60 @@ pub mod pallet {
 			action: SingleAssetAccountsStorageAction,
 		) -> Result<(), DispatchError> {
 			match action {
-				SingleAssetAccountsStorageAction::Depositing =>
-					if SingleAssetAccountsStorage::<T>::contains_key(&who, &pool_id) {
-						let lp_amount = SingleAssetAccountsStorage::<T>::try_mutate(
-							&who,
-							&pool_id,
-							|exist_amount| -> Result<Self::Balance, DispatchError> {
-								match exist_amount {
-									Some(amount) => {
-										*amount = amount.safe_add(&lp_amount)?;
-										Ok(*amount)
-									},
-									None =>
-										Err(Error::<T>::LpTokenNotFoundForSingleAssetWithdrawal
-											.into()),
-								}
-							},
-						)?;
-						Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
-							who,
-							pool_id,
-							balance: lp_amount,
-						});
-					} else {
-						SingleAssetAccountsStorage::<T>::insert(&who, &pool_id, lp_amount);
-						Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
-							who,
-							pool_id,
-							balance: lp_amount,
-						});
-					},
+				SingleAssetAccountsStorageAction::Depositing => {
+					match SingleAssetAccountsStorage::<T>::try_mutate(
+						&who,
+						&pool_id,
+						|exist_amount| -> Result<Self::Balance, DispatchError> {
+							match exist_amount {
+								Some(amount) => {
+									*amount = amount.safe_add(&lp_amount)?;
+									Ok(*amount)
+								},
+								None =>
+									Err(Error::<T>::LpTokenNotFoundForSingleAssetWithdrawal.into()),
+							}
+						},
+					) {
+						Ok(lp_amount) =>
+							Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
+								who,
+								pool_id,
+								balance: lp_amount,
+							}),
+						Err(_) => {
+							SingleAssetAccountsStorage::<T>::insert(&who, &pool_id, lp_amount);
+							Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
+								who,
+								pool_id,
+								balance: lp_amount,
+							});
+						},
+					};
+				},
 				SingleAssetAccountsStorageAction::Withdrawing => {
-					let exist_amount = SingleAssetAccountsStorage::<T>::get(&who, &pool_id);
-					if exist_amount == Some(lp_amount) {
+					let new_lp_amount = SingleAssetAccountsStorage::<T>::try_mutate(
+						&who,
+						&pool_id,
+						|exist_amount| -> Result<Self::Balance, DispatchError> {
+							match exist_amount {
+								Some(amount) => {
+									*amount = amount.safe_sub(&lp_amount)?;
+									Ok(*amount)
+								},
+								None =>
+									Err(Error::<T>::LpTokenNotFoundForSingleAssetWithdrawal.into()),
+							}
+						},
+					)?;
+					if new_lp_amount == Self::Balance::zero() {
 						SingleAssetAccountsStorage::<T>::remove(&who, &pool_id);
-						Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
-							who,
-							pool_id,
-							balance: Self::Balance::zero(),
-						});
-					} else {
-						let new_lp_amount = SingleAssetAccountsStorage::<T>::try_mutate(
-							&who,
-							&pool_id,
-							|exist_amount| -> Result<Self::Balance, DispatchError> {
-								match exist_amount {
-									Some(amount) => {
-										*amount = amount.safe_sub(&lp_amount)?;
-										Ok(*amount)
-									},
-									None =>
-										Err(Error::<T>::LpTokenNotFoundForSingleAssetWithdrawal
-											.into()),
-								}
-							},
-						)?;
-						Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
-							who,
-							pool_id,
-							balance: new_lp_amount,
-						});
 					}
+					Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
+						who,
+						pool_id,
+						balance: new_lp_amount,
+					});
 				},
 			}
 			Ok(())
