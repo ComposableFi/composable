@@ -1,5 +1,6 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import Big from "big.js";
+import { ApiPromise, WsProvider } from "@polkadot/api";
 import {
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
@@ -7,7 +8,12 @@ import {
   PabloPoolDeletedEvent,
   PabloSwappedEvent,
 } from "../types/events";
-import { get, getLatestPoolByPoolId, getOrCreate } from "../dbHelper";
+import {
+  get,
+  getLatestPoolByPoolId,
+  getOrCreate,
+  storeHistoricalLockedValue,
+} from "../dbHelper";
 import {
   PabloPool,
   PabloPoolAsset,
@@ -16,6 +22,8 @@ import {
 } from "../model";
 import { CurrencyPair, Fee } from "../types/v2401";
 import { encodeAccount } from "../utils";
+
+const wsProvider = new WsProvider("ws://127.0.0.1:9988");
 
 function createTransaction(
   ctx: EventHandlerContext,
@@ -89,6 +97,7 @@ export async function processPoolCreatedEvent(
     pool.eventId = ctx.event.id;
     pool.owner = owner;
     pool.poolId = poolCreatedEvt.poolId;
+    pool.baseAssetId = poolCreatedEvt.assets.base;
     pool.quoteAssetId = poolCreatedEvt.assets.quote;
     pool.transactionCount = 1;
     pool.totalLiquidity = "0.0";
@@ -168,6 +177,7 @@ export async function processLiquidityAddedEvent(
   event: PabloLiquidityAddedEvent
 ) {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
+  const api = await ApiPromise.create({ provider: wsProvider });
   const liquidityAddedEvt = getLiquidityAddedEvent(event);
   const who = encodeAccount(liquidityAddedEvt.who);
   const pool = await getLatestPoolByPoolId(ctx.store, liquidityAddedEvt.poolId);
@@ -235,6 +245,23 @@ export async function processLiquidityAddedEvent(
       liquidityAddedEvt.quoteAmount
     );
 
+    const oracleBasePrice = await api.query.oracle.prices(pool.baseAssetId);
+    const oracleQuotePrice = await api.query.oracle.prices(pool.quoteAssetId);
+
+    if (!oracleBasePrice?.price || !oracleQuotePrice?.price) {
+      // no-op.
+      return;
+    }
+
+    const basePrice = BigInt(oracleBasePrice.price.toString());
+    const quotePrice = BigInt(oracleQuotePrice.price.toString());
+
+    const totalAmountUsd =
+      basePrice * liquidityAddedEvt.baseAmount +
+      quotePrice * liquidityAddedEvt.quoteAmount;
+
+    await storeHistoricalLockedValue(ctx, totalAmountUsd, ctx.event.id);
+
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
@@ -265,6 +292,7 @@ export async function processLiquidityRemovedEvent(
   event: PabloLiquidityRemovedEvent
 ) {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
+  const api = await ApiPromise.create({ provider: wsProvider });
   const liquidityRemovedEvt = getLiquidityRemovedEvent(event);
   const who = encodeAccount(liquidityRemovedEvt.who);
   const pool = await getLatestPoolByPoolId(
@@ -334,6 +362,23 @@ export async function processLiquidityRemovedEvent(
       pool.quoteAssetId,
       liquidityRemovedEvt.quoteAmount
     );
+
+    const oracleBasePrice = await api.query.oracle.prices(pool.baseAssetId);
+    const oracleQuotePrice = await api.query.oracle.prices(pool.quoteAssetId);
+
+    if (!oracleBasePrice?.price || !oracleQuotePrice?.price) {
+      // no-op.
+      return;
+    }
+
+    const basePrice = BigInt(oracleBasePrice.price.toString());
+    const quotePrice = BigInt(oracleQuotePrice.price.toString());
+
+    const totalAmountUsd =
+      basePrice * liquidityRemovedEvt.baseAmount +
+      quotePrice * liquidityRemovedEvt.quoteAmount;
+
+    await storeHistoricalLockedValue(ctx, totalAmountUsd, ctx.event.id);
 
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);

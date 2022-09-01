@@ -60,13 +60,11 @@ export class TotalValueLockedResolver {
     const rows: {
       period: string;
       total_value_locked: string;
-      average_asset_price: string;
     }[] = await manager.getRepository(PicassoStakingPosition).query(
       `
             SELECT
               round(timestamp / $1) * $1 as period,
               sum(amount) as total_value_locked,
-              avg(asset_price) as average_asset_price,
             FROM historical_locked_value
             WHERE ${where.join(" AND ")}
             GROUP BY period
@@ -79,8 +77,7 @@ export class TotalValueLockedResolver {
       (row) =>
         new TotalValueLocked({
           date: new Date(parseInt(row.period, 10)).toISOString(),
-          totalValueLocked:
-            BigInt(row.total_value_locked) * BigInt(row.average_asset_price),
+          totalValueLocked: BigInt(row.total_value_locked),
         })
     );
   }

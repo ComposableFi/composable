@@ -41,6 +41,7 @@ type PabloPool @entity {
   totalLiquidity: String!
   totalVolume: String!
   totalFees: String!
+  baseAssetId: BigInt!
   "Asset used for all quotes in this type"
   quoteAssetId: BigInt!
   blockNumber: BigInt!
@@ -184,9 +185,6 @@ type PicassoStakingPosition @entity {
 type HistoricalLockedValue @entity {
   id: ID!
   eventId: String!
-  transactionId: String!
   amount: BigInt!
   timestamp: BigInt!
-  "Asset price in USD"
-  assetPrice: BigInt!
 }

@@ -13,18 +13,9 @@ export class HistoricalLockedValue {
   @Column_("text", {nullable: false})
   eventId!: string
 
-  @Column_("text", {nullable: false})
-  transactionId!: string
-
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   amount!: bigint
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   timestamp!: bigint
-
-  /**
-   * Asset price in USD
-   */
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  assetPrice!: bigint
 }

@@ -3,11 +3,13 @@ import { randomUUID } from "crypto";
 import {
   Account,
   Activity,
+  HistoricalLockedValue,
   PabloPool,
   PicassoTransaction,
   PicassoTransactionType,
 } from "./model";
 import { BOB } from "./utils";
+import { ApiPromise, WsProvider } from "@polkadot/api";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -184,4 +186,63 @@ export async function saveAccountAndTransaction(
   }
 
   return Promise.resolve({ transactionId });
+}
+
+/**
+ * Stores a new HistoricalLockedValue with current locked amount
+ * @param ctx
+ * @param amountLocked
+ * @param eventId
+ */
+export async function storeHistoricalLockedValue(
+  ctx: EventHandlerContext,
+  amountLocked: bigint,
+  eventId: string
+): Promise<void> {
+  const wsProvider = new WsProvider("ws://127.0.0.1:9988");
+  const api = await ApiPromise.create({ provider: wsProvider });
+
+  const oraclePrice = await api.query.oracle.prices(1);
+
+  if (!oraclePrice?.price) {
+    // no-op.
+    return;
+  }
+
+  const assetPrice = BigInt(oraclePrice.price.toString());
+
+  const lastLockedValue = await getLastLockedValue(ctx);
+
+  const historicalLockedValue = new HistoricalLockedValue({
+    id: randomUUID(),
+    eventId,
+    amount: lastLockedValue + amountLocked * assetPrice,
+    timestamp: BigInt(new Date().valueOf()),
+  });
+
+  await ctx.store.save(historicalLockedValue);
+}
+
+/**
+ * Get latest locked value
+ */
+export async function getLastLockedValue(
+  ctx: EventHandlerContext
+): Promise<bigint> {
+  const lastLockedValue: { amount: bigint }[] = await ctx.store.query(
+    `
+      SELECT amount
+      FROM historical_locked_value
+      ORDER BY timestamp DESC
+      LIMIT 1
+      `
+  );
+
+  let lastAmount = 0n;
+
+  if (lastLockedValue?.[0]) {
+    lastAmount = BigInt(lastLockedValue[0].amount);
+  }
+
+  return Promise.resolve(lastAmount);
 }

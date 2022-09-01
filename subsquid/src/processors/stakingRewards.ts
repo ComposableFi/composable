@@ -1,6 +1,5 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
-import { ApiPromise, WsProvider } from "@polkadot/api";
 import {
   StakingRewardsRewardPoolCreatedEvent,
   StakingRewardsSplitPositionEvent,
@@ -8,15 +7,12 @@ import {
   StakingRewardsStakedEvent,
   StakingRewardsUnstakedEvent,
 } from "../types/events";
-import { saveAccountAndTransaction } from "../dbHelper";
 import {
-  HistoricalLockedValue,
-  PicassoStakingPosition,
-  PicassoTransactionType,
-} from "../model";
+  saveAccountAndTransaction,
+  storeHistoricalLockedValue,
+} from "../dbHelper";
+import { PicassoStakingPosition, PicassoTransactionType } from "../model";
 import { encodeAccount } from "../utils";
-
-const wsProvider = new WsProvider("ws://127.0.0.1:9988");
 
 interface RewardPoolCreatedEvent {
   poolId: bigint;
@@ -166,57 +162,6 @@ export function splitPicassoStakingPosition(
 }
 
 /**
- * Stores a new HistoricalLockedValue with current locked amount
- * @param ctx
- * @param amountLocked
- * @param eventId
- * @param transactionId
- */
-export async function storeHistoricalLockedValue(
-  ctx: EventHandlerContext,
-  amountLocked: bigint,
-  eventId: string,
-  transactionId: string
-): Promise<void> {
-  const api = await ApiPromise.create({ provider: wsProvider });
-
-  const oraclePrice = await api.query.oracle.prices(1);
-
-  if (!oraclePrice?.price) {
-    // no-op.
-    return;
-  }
-
-  const assetPrice = BigInt(oraclePrice.price.toString());
-
-  const lastLockedValue: { amount: bigint }[] = await ctx.store.query(
-    `
-      SELECT amount
-      FROM historical_locked_value
-      ORDER BY timestamp
-      LIMIT 1
-      `
-  );
-
-  let lastAmount = 0n;
-
-  if (lastLockedValue?.[0]) {
-    lastAmount = BigInt(lastLockedValue[0].amount);
-  }
-
-  const historicalLockedValue = new HistoricalLockedValue({
-    id: randomUUID(),
-    eventId,
-    transactionId,
-    amount: lastAmount + amountLocked,
-    timestamp: BigInt(new Date().valueOf()),
-    assetPrice,
-  });
-
-  await ctx.store.save(historicalLockedValue);
-}
-
-/**
  * Process `stakingRewards.RewardPoolCreated` event.
  *  - Update account and store transaction.
  * @param ctx
@@ -267,7 +212,7 @@ export async function processStakedEvent(
     transactionId
   );
 
-  await storeHistoricalLockedValue(ctx, amount, ctx.event.id, transactionId);
+  await storeHistoricalLockedValue(ctx, amount, ctx.event.id);
 
   await ctx.store.save(stakingPosition);
 }
@@ -311,12 +256,7 @@ export async function processStakeAmountExtendedEvent(
     transactionId
   );
 
-  await storeHistoricalLockedValue(
-    ctx,
-    amountChanged,
-    ctx.event.id,
-    transactionId
-  );
+  await storeHistoricalLockedValue(ctx, amountChanged, ctx.event.id);
 }
 
 /**
@@ -344,18 +284,13 @@ export async function processUnstakedEvent(
     return;
   }
 
-  const { transactionId } = await saveAccountAndTransaction(
+  await saveAccountAndTransaction(
     ctx,
     PicassoTransactionType.STAKING_REWARDS_UNSTAKE,
     owner
   );
 
-  await storeHistoricalLockedValue(
-    ctx,
-    -position.amount,
-    ctx.event.id,
-    transactionId
-  );
+  await storeHistoricalLockedValue(ctx, -position.amount, ctx.event.id);
 }
 
 /**
