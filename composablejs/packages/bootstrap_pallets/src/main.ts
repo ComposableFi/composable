@@ -58,7 +58,8 @@ const main = async () => {
   //     "5": {
   //       rewardRate: {
   //         period: "PerSecond",
-  //         amount: api.createType("u128", "")
+  // 1 million in 5 months
+  //         amount: api.createType("u128", "77160494000")
   //       }
   //     }
   //   }
