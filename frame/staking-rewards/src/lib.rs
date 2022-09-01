@@ -247,29 +247,9 @@ pub mod pallet {
 			+ From<u128>
 			+ Into<u128>;
 
-		type FinancialNftInstanceId: FullCodec
-			+ Debug
-			+ SafeAdd
-			+ MaxEncodedLen
-			+ Default
-			+ TypeInfo
-			+ Eq
-			+ PartialEq
-			+ Ord
-			+ Copy
-			+ Zero
-			+ One;
-
 		type FinancialNft: nonfungibles::Mutate<AccountIdOf<Self>>
-			+ Create<
-				AccountIdOf<Self>,
-				ItemId = Self::FinancialNftInstanceId,
-				CollectionId = Self::AssetId,
-			> + FinancialNft<
-				AccountIdOf<Self>,
-				ItemId = Self::FinancialNftInstanceId,
-				CollectionId = Self::AssetId,
-			>;
+			+ Create<AccountIdOf<Self>, CollectionId = Self::AssetId>
+			+ FinancialNft<AccountIdOf<Self>, CollectionId = Self::AssetId>;
 
 		/// Is used to create staked asset per reward pool
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
@@ -424,8 +404,7 @@ pub mod pallet {
 			financial_nft_asset_id: T::AssetId,
 	) {
 		// TODO (vim): Review these with product
-		// PICA staking pool
-		let pica_staking_pool: RewardPoolOf<T> = RewardPool {
+		let staking_pool: RewardPoolOf<T> = RewardPool {
 			owner: owner.clone(),
 			asset_id: staked_asset_id,
 			rewards: Default::default(),
@@ -445,7 +424,7 @@ pub mod pallet {
 			share_asset_id,
 			financial_nft_asset_id
 		};
-		RewardPools::<T>::insert(staked_asset_id, pica_staking_pool);
+		RewardPools::<T>::insert(staked_asset_id, staking_pool);
 		T::FinancialNft::create_collection(
 			&financial_nft_asset_id,
 			owner,
@@ -664,7 +643,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> FinancialNftProtocol for Pallet<T> {
-		type ItemId = T::FinancialNftInstanceId;
+		type ItemId = <<T as Config>::FinancialNft as nonfungibles::Inspect<T::AccountId>>::ItemId;
 		type AssetId = AssetIdOf<T>;
 		type Balance = BalanceOf<T>;
 

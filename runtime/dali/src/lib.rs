@@ -866,7 +866,6 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
-	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type FinancialNft = Fnft;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;

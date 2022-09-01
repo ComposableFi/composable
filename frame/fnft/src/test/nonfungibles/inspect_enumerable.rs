@@ -27,41 +27,37 @@ pub(crate) fn test() {
 
 		assert_eq!(
 			<Nft as InspectEnumerable<u128>>::items(&first_collection).collect::<BTreeSet<_>>(),
-			BTreeSet::from_iter(
-				first_collection_items_alice
-					.into_iter()
-					.chain(first_collection_items_bob.into_iter())
-			)
+			first_collection_items_alice
+				.into_iter()
+				.chain(first_collection_items_bob.into_iter())
+				.collect()
 		);
 
 		assert_eq!(
 			<Nft as InspectEnumerable<u128>>::items(&second_collection).collect::<BTreeSet<_>>(),
-			BTreeSet::from_iter(
-				second_collection_items_alice
-					.into_iter()
-					.chain(second_collection_items_bob.into_iter())
-			)
+			second_collection_items_alice
+				.into_iter()
+				.chain(second_collection_items_bob.into_iter())
+				.collect()
 		);
 
 		assert_eq!(
 			<Nft as InspectEnumerable<u128>>::owned(&ALICE).collect::<BTreeSet<_>>(),
-			BTreeSet::from_iter(
-				first_collection_items_alice
-					.iter()
-					.map(|i| (first_collection, *i))
-					.chain(second_collection_items_alice.iter().map(|i| (second_collection, *i)))
-			),
+			first_collection_items_alice
+				.iter()
+				.map(|i| (first_collection, *i))
+				.chain(second_collection_items_alice.iter().map(|i| (second_collection, *i)))
+				.collect(),
 			"Iteration must work for owned instances"
 		);
 
 		assert_eq!(
 			<Nft as InspectEnumerable<u128>>::owned(&BOB).collect::<BTreeSet<_>>(),
-			BTreeSet::from_iter(
-				first_collection_items_bob
-					.iter()
-					.map(|i| (first_collection, *i))
-					.chain(second_collection_items_bob.iter().map(|i| (second_collection, *i)))
-			),
+			first_collection_items_bob
+				.iter()
+				.map(|i| (first_collection, *i))
+				.chain(second_collection_items_bob.iter().map(|i| (second_collection, *i)))
+				.collect(),
 			"Iteration must work for owned instances"
 		);
 
