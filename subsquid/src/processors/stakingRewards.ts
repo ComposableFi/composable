@@ -181,11 +181,10 @@ export async function storeHistoricalLockedValue(
   transactionId: string
 ): Promise<void> {
   const api = await ApiPromise.create({ provider: wsProvider });
-  let lastAmount = 0n;
 
   const oraclePrice = await api.query.oracle.prices(1);
 
-  if (!oraclePrice) {
+  if (!oraclePrice?.price) {
     // no-op.
     return;
   }
@@ -200,6 +199,8 @@ export async function storeHistoricalLockedValue(
       LIMIT 1
       `
   );
+
+  let lastAmount = 0n;
 
   if (lastLockedValue?.[0]) {
     lastAmount = BigInt(lastLockedValue[0].amount);
