@@ -26,6 +26,9 @@ pub(crate) const fn block_seconds(amount_of_blocks: u64) -> u128 {
 
 pub(crate) const ONE_YEAR_OF_BLOCKS: u64 = 60 * 60 * 24 * 365 / (block_seconds(1) as u64);
 
+/// Mock ID for staking fNFT collection
+pub(crate) const STAKING_FNFT_COLLECTION_ID: CurrencyId = 1;
+
 // helpers
 
 pub(crate) fn add_to_rewards_pot_and_assert(
