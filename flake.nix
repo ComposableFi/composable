@@ -622,13 +622,23 @@
 
             junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
             
-            junod-runtime = stdenv.mkDerivaion {
+            junod-runtime = stdenv.mkDerivation {
+              PASSWORD="${PASSWORD:-1234567890}";
+              STAKE="${STAKE_TOKEN:-ustake}";
+              FEE="${FEE_TOKEN:-ucosm}";
+              CHAIN_ID="${CHAIN_ID:-testing}";
+              MONIKER="${MONIKER:-node001}";
+              KEYRING=""--keyring-backend test"";
+              BLOCK_GAS_LIMIT="${GAS_LIMIT:-100000000} # should mirror mainnet";
+
+              phases = [ "installPhase" ];
               name = "junod-runtime";
-              buildPhase = ''
-                echo "{}" > genesis.json
-                ${packages.junod}/bin/junod
-              '';
+              buildInputs = [packages.junod];
               installPhase = ''
+                mkdir -p $out/bin/
+                echo "{}" > genesis.json  
+                ${packages.junod}/bin/junod start                
+                touch $out/bin/42
               '';
             };
             
