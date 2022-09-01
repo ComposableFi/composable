@@ -28,7 +28,6 @@ import type {
   ComposableTraitsDefiSell,
   ComposableTraitsDefiTake,
   ComposableTraitsDexConstantProductPoolInfo,
-  ComposableTraitsDexConstantProductPoolInfo,
   ComposableTraitsDexDexRoute,
   ComposableTraitsDexStableSwapPoolInfo,
   ComposableTraitsGovernanceSignedRawOrigin,
@@ -1364,7 +1363,6 @@ declare module '@polkadot/types/types/registry' {
     ComposableTraitsDefiSell: ComposableTraitsDefiSell;
     ComposableTraitsDefiSellCurrencyId: ComposableTraitsDefiSellCurrencyId;
     ComposableTraitsDefiTake: ComposableTraitsDefiTake;
-    ComposableTraitsDexConstantProductPoolInfo: ComposableTraitsDexConstantProductPoolInfo;
     ComposableTraitsDexConstantProductPoolInfo: ComposableTraitsDexConstantProductPoolInfo;
     ComposableTraitsDexDexRoute: ComposableTraitsDexDexRoute;
     ComposableTraitsDexFee: ComposableTraitsDexFee;
