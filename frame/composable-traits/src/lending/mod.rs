@@ -193,7 +193,7 @@ pub trait Lending: DeFiEngine {
 	/// id of dispatch used to liquidate collateral in case of undercollateralized asset
 	type LiquidationStrategyId;
 	type Oracle: OracleTrait;
-    type MaxLiquidationBatchSize;
+	type MaxLiquidationBatchSize;
 
 	/// Generates the underlying owned vault that will hold borrowable asset (may be shared with
 	/// specific set of defined collaterals). Creates market for new pair in specified vault. if
@@ -446,5 +446,4 @@ pub trait Lending: DeFiEngine {
 		market_id: &<Self as Lending>::MarketId,
 		borrowers: BoundedVec<<Self as DeFiEngine>::AccountId, Self::MaxLiquidationBatchSize>,
 	) -> Result<Vec<<Self as DeFiEngine>::AccountId>, DispatchError>;
-	
 }
