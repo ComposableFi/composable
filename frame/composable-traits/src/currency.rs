@@ -32,7 +32,7 @@ impl RangeId {
 	pub const FOREIGN_ASSETS: RangeId = RangeId(2);
 	pub const IBC_ASSETS: RangeId = RangeId(3);
 	pub const FNFT_ASSETS: RangeId = RangeId(4);
-	pub const XTOKEN_ASSETS: RangeId = RangeId(6);
+	pub const XTOKEN_ASSETS: RangeId = RangeId(5);
 
 	pub fn inner(&self) -> u32 {
 		self.0
