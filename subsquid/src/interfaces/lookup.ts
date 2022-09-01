@@ -1932,6 +1932,7 @@ export default {
         poolId: 'u128',
         owner: 'AccountId32',
         endBlock: 'u32',
+        assetId: 'u128',
       },
       Staked: {
         poolId: 'u128',
@@ -1940,6 +1941,10 @@ export default {
         durationPreset: 'u64',
         positionId: 'u128',
         keepAlive: 'bool',
+      },
+      Claimed: {
+        owner: 'AccountId32',
+        positionId: 'u128',
       },
       StakeAmountExtended: {
         positionId: 'u128',
@@ -4497,6 +4502,9 @@ export default {
         poolId: 'u128',
         rewardUpdates: 'BTreeMap<u128, ComposableTraitsStakingRewardUpdate>',
       },
+      claim: {
+        positionId: 'u128',
+      },
       add_to_rewards_pot: {
         poolId: 'u128',
         assetId: 'u128',
@@ -5658,11 +5666,14 @@ export default {
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup693: pallet_transaction_payment::ChargeTransactionPayment<T>
+   * Lookup693: pallet_asset_tx_payment::ChargeAssetTxPayment<T>
    **/
-  PalletTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
+  PalletAssetTxPaymentChargeAssetTxPayment: {
+    tip: 'Compact<u128>',
+    assetId: 'Option<u128>'
+  },
   /**
-   * Lookup694: dali_runtime::Runtime
+   * Lookup695: dali_runtime::Runtime
    **/
   DaliRuntimeRuntime: 'Null'
 };

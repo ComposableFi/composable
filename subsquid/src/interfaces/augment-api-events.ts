@@ -924,12 +924,13 @@ declare module '@polkadot/api-base/types/events' {
       [key: string]: AugmentedEvent<ApiType>;
     };
     stakingRewards: {
+      Claimed: AugmentedEvent<ApiType, [owner: AccountId32, positionId: u128], { owner: AccountId32, positionId: u128 }>;
       MaxRewardsAccumulated: AugmentedEvent<ApiType, [poolId: u128, assetId: u128], { poolId: u128, assetId: u128 }>;
       RewardAccumulationHookError: AugmentedEvent<ApiType, [poolId: u128, assetId: u128, error: PalletStakingRewardsRewardAccumulationHookError], { poolId: u128, assetId: u128, error: PalletStakingRewardsRewardAccumulationHookError }>;
       /**
        * Pool with specified id `T::RewardPoolId` was created successfully by `T::AccountId`.
        **/
-      RewardPoolCreated: AugmentedEvent<ApiType, [poolId: u128, owner: AccountId32, endBlock: u32], { poolId: u128, owner: AccountId32, endBlock: u32 }>;
+      RewardPoolCreated: AugmentedEvent<ApiType, [poolId: u128, owner: AccountId32, endBlock: u32, assetId: u128], { poolId: u128, owner: AccountId32, endBlock: u32, assetId: u128 }>;
       RewardPoolUpdated: AugmentedEvent<ApiType, [poolId: u128], { poolId: u128 }>;
       RewardsPotIncreased: AugmentedEvent<ApiType, [poolId: u128, assetId: u128, amount: u128], { poolId: u128, assetId: u128, amount: u128 }>;
       /**

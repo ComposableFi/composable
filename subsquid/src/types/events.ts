@@ -414,13 +414,13 @@ export class StakingRewardsRewardPoolCreatedEvent {
    * Pool with specified id `T::RewardPoolId` was created successfully by `T::AccountId`.
    */
   get isV2401(): boolean {
-    return this.ctx._chain.getEventHash('stakingRewards.RewardPoolCreated') === '65ddfe6bd5114575add99772fc840fc81f1a4956cba667c1387b46b1a72ac5f7'
+    return this.ctx._chain.getEventHash('stakingRewards.RewardPoolCreated') === 'c1a7d8c28ed34c95044288fd755b6243bfb8451b8f7bb43754a90d57fedb3529'
   }
 
   /**
    * Pool with specified id `T::RewardPoolId` was created successfully by `T::AccountId`.
    */
-  get asV2401(): {poolId: number, owner: v2401.AccountId32, endBlock: number} {
+  get asV2401(): {poolId: bigint, owner: v2401.AccountId32, endBlock: number, assetId: v2401.CurrencyId} {
     assert(this.isV2401)
     return this.ctx._chain.decodeEvent(this.ctx.event)
   }
@@ -430,7 +430,7 @@ export class StakingRewardsRewardPoolCreatedEvent {
     return this.isV2401
   }
 
-  get asLatest(): {poolId: number, owner: v2401.AccountId32, endBlock: number} {
+  get asLatest(): {poolId: bigint, owner: v2401.AccountId32, endBlock: number, assetId: v2401.CurrencyId} {
     deprecateLatest()
     return this.asV2401
   }
@@ -445,13 +445,13 @@ export class StakingRewardsSplitPositionEvent {
    * Split stake position into two positions
    */
   get isV2401(): boolean {
-    return this.ctx._chain.getEventHash('stakingRewards.SplitPosition') === 'b44b7ccb72650884a149209cc011dd3a9e5b934fe2585edec6829f7875462c3f'
+    return this.ctx._chain.getEventHash('stakingRewards.SplitPosition') === '5d9eb209c412b137d1ef45620c5151241d00f670ec3e855e9e2d7fec32b88ccc'
   }
 
   /**
    * Split stake position into two positions
    */
-  get asV2401(): {positions: bigint[]} {
+  get asV2401(): {positions: [bigint, bigint][]} {
     assert(this.isV2401)
     return this.ctx._chain.decodeEvent(this.ctx.event)
   }
@@ -461,7 +461,7 @@ export class StakingRewardsSplitPositionEvent {
     return this.isV2401
   }
 
-  get asLatest(): {positions: bigint[]} {
+  get asLatest(): {positions: [bigint, bigint][]} {
     deprecateLatest()
     return this.asV2401
   }
@@ -498,10 +498,10 @@ export class StakingRewardsStakedEvent {
   }
 
   get isV2401(): boolean {
-    return this.ctx._chain.getEventHash('stakingRewards.Staked') === '43d4a37b9b82b265c35ef7f96b6116dbc7e6c1632ef08bf12571a895aaef83aa'
+    return this.ctx._chain.getEventHash('stakingRewards.Staked') === '9bd2bf805153832d25298c66acf49d2bcbbce04060a4d9b68d5e3221557e2c3e'
   }
 
-  get asV2401(): {poolId: number, owner: v2401.AccountId32, amount: bigint, durationPreset: bigint, positionId: bigint, keepAlive: boolean} {
+  get asV2401(): {poolId: bigint, owner: v2401.AccountId32, amount: bigint, durationPreset: bigint, positionId: bigint, keepAlive: boolean} {
     assert(this.isV2401)
     return this.ctx._chain.decodeEvent(this.ctx.event)
   }
@@ -511,7 +511,7 @@ export class StakingRewardsStakedEvent {
     return this.isV2401
   }
 
-  get asLatest(): {poolId: number, owner: v2401.AccountId32, amount: bigint, durationPreset: bigint, positionId: bigint, keepAlive: boolean} {
+  get asLatest(): {poolId: bigint, owner: v2401.AccountId32, amount: bigint, durationPreset: bigint, positionId: bigint, keepAlive: boolean} {
     deprecateLatest()
     return this.asV2401
   }

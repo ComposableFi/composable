@@ -2431,6 +2431,12 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       addToRewardsPot: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
       /**
+       * Claim a current reward for some position.
+       * 
+       * Emits `Claimed` event when successful.
+       **/
+      claim: AugmentedSubmittable<(positionId: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
+      /**
        * Create a new reward pool based on the config.
        * 
        * Emits `RewardPoolCreated` event when successful.

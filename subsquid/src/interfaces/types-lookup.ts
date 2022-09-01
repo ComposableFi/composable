@@ -2119,6 +2119,7 @@ declare module '@polkadot/types/lookup' {
       readonly poolId: u128;
       readonly owner: AccountId32;
       readonly endBlock: u32;
+      readonly assetId: u128;
     } & Struct;
     readonly isStaked: boolean;
     readonly asStaked: {
@@ -2128,6 +2129,11 @@ declare module '@polkadot/types/lookup' {
       readonly durationPreset: u64;
       readonly positionId: u128;
       readonly keepAlive: bool;
+    } & Struct;
+    readonly isClaimed: boolean;
+    readonly asClaimed: {
+      readonly owner: AccountId32;
+      readonly positionId: u128;
     } & Struct;
     readonly isStakeAmountExtended: boolean;
     readonly asStakeAmountExtended: {
@@ -2171,7 +2177,7 @@ declare module '@polkadot/types/lookup' {
       readonly assetId: u128;
       readonly amount: u128;
     } & Struct;
-    readonly type: 'RewardPoolCreated' | 'Staked' | 'StakeAmountExtended' | 'Unstaked' | 'SplitPosition' | 'RewardTransferred' | 'RewardAccumulationHookError' | 'MaxRewardsAccumulated' | 'RewardPoolUpdated' | 'RewardsPotIncreased';
+    readonly type: 'RewardPoolCreated' | 'Staked' | 'Claimed' | 'StakeAmountExtended' | 'Unstaked' | 'SplitPosition' | 'RewardTransferred' | 'RewardAccumulationHookError' | 'MaxRewardsAccumulated' | 'RewardPoolUpdated' | 'RewardsPotIncreased';
   }
 
   /** @name PalletStakingRewardsRewardAccumulationHookError (165) */
@@ -4758,6 +4764,10 @@ declare module '@polkadot/types/lookup' {
       readonly poolId: u128;
       readonly rewardUpdates: BTreeMap<u128, ComposableTraitsStakingRewardUpdate>;
     } & Struct;
+    readonly isClaim: boolean;
+    readonly asClaim: {
+      readonly positionId: u128;
+    } & Struct;
     readonly isAddToRewardsPot: boolean;
     readonly asAddToRewardsPot: {
       readonly poolId: u128;
@@ -4765,7 +4775,7 @@ declare module '@polkadot/types/lookup' {
       readonly amount: u128;
       readonly keepAlive: bool;
     } & Struct;
-    readonly type: 'CreateRewardPool' | 'Stake' | 'Extend' | 'Unstake' | 'Split' | 'UpdateRewardsPool' | 'AddToRewardsPot';
+    readonly type: 'CreateRewardPool' | 'Stake' | 'Extend' | 'Unstake' | 'Split' | 'UpdateRewardsPool' | 'Claim' | 'AddToRewardsPot';
   }
 
   /** @name ComposableTraitsStakingRewardPoolConfiguration (398) */
@@ -6261,10 +6271,13 @@ declare module '@polkadot/types/lookup' {
   /** @name FrameSystemExtensionsCheckWeight (692) */
   type FrameSystemExtensionsCheckWeight = Null;
 
-  /** @name PalletTransactionPaymentChargeTransactionPayment (693) */
-  interface PalletTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
+  /** @name PalletAssetTxPaymentChargeAssetTxPayment (693) */
+  interface PalletAssetTxPaymentChargeAssetTxPayment extends Struct {
+    readonly tip: Compact<u128>;
+    readonly assetId: Option<u128>;
+  }
 
-  /** @name DaliRuntimeRuntime (694) */
+  /** @name DaliRuntimeRuntime (695) */
   type DaliRuntimeRuntime = Null;
 
 } // declare module
