@@ -60,9 +60,13 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
   }
 
   if (loading) {
-    return <Skeleton width={200} height={50} />;
+    return (
+      <>
+        <Typography>...</Typography>
+        <Skeleton width={200} height={50} />
+      </>
+    );
   }
-
   const bondedFinanceBondOffers = data.bondedFinanceBondOffers;
   if (bonds && bonds.length > 0) {
     return (
@@ -81,7 +85,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
               ({ bondPrice, asset, price, rewardPrice, bondOfferId }) => {
                 const roi = getROI(rewardPrice, price);
                 let currentBond = bondedFinanceBondOffers.find(
-                  (offer: any) => offer.id === bondOfferId.toString()
+                  (offer: any) => offer.offerId === bondOfferId.toString()
                 );
                 if (!currentBond) {
                   return null;

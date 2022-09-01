@@ -22,7 +22,6 @@ const Bonds: NextPage = () => {
   const router = useRouter();
   const { extensionStatus } = useContext(ParachainContext);
   const bonds = useStore((state) => state.bonds.bonds);
-
   const handleActiveBondsClick = (offerId: string) => {
     router.push({
       pathname: `/bonds/${offerId}`,

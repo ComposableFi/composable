@@ -30,6 +30,7 @@ export interface ActiveBond {
   bond: BondOffer;
   periodCount: BigNumber;
   perPeriod: BigNumber;
+  vestingScheduleId: number;
   window: {
     blockNumberBased: {
       start: BigNumber;
@@ -60,12 +61,14 @@ export const createBondsSlice: StoreSlice<BondsSlice> = (
           bondOfferCount,
         },
       })),
-    updateOpenPositions: (openPositions: ActiveBond[]) =>
-      set((state) => ({
-        bonds: {
-          ...state.bonds,
-          openPositions,
-        },
-      })),
+    updateOpenPositions: (openPositions: ActiveBond[]) => {
+      // set((state) => ({
+      //   bonds: {
+      //     ...state.bonds,
+      //     openPositions,
+      //   },
+      // }));
+    }
+      ,
   },
 });

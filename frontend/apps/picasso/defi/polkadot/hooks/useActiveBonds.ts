@@ -6,6 +6,8 @@ import { unwrapNumberOrHex } from "shared";
 import { useStore } from "@/stores/root";
 import { Codec } from "@polkadot/types-codec/types";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
+import { ComposableTraitsVestingVestingScheduleIdSet } from "defi-interfaces";
+import { u8aEmpty } from "@polkadot/util";
 
 type VestingAccount = { name: string; address: string };
 
@@ -21,9 +23,10 @@ const bondedVestingSchedule = (bond: BondOffer) => (address: string) => (
     if (vestingScheduleResponse.isEmpty) {
       return null;
     }
-    const fromCodec: Array<any> = vestingScheduleResponse.toJSON() as any;
+    const fromCodec: ComposableTraitsVestingVestingScheduleIdSet = vestingScheduleResponse.toJSON() as any;
 
-    return fromCodec.flatMap(vs => {
+
+    return Object.values(fromCodec).flatMap(vs => {
       if (vs) {
         const perPeriod = unwrapNumberOrHex((vs as any).perPeriod);
         const periodCount = unwrapNumberOrHex((vs as any).periodCount);
@@ -65,12 +68,29 @@ export function useActiveBonds() {
   const { parachainApi } = usePicassoProvider();
 
   async function fetchVestingSchedules(api: ApiPromise, acc: VestingAccount) {
-    const allVesting = bonds
-      .flatMap(
-        async bond => await bondedVestingSchedule(bond)(acc.address)(api)()
-      )
-      .flat();
-    return Promise.all(allVesting);
+    const schedules = [];
+    for (const bond of bonds) {
+      const vestingSchedule = await api.query.vesting.vestingSchedules(
+        api.createType("AccountId32", acc.address),
+        api.createType("Option<u128>", )
+      );
+      // Skip if empty
+      if (vestingSchedule.isEmpty) continue;
+
+      //bond: BondOffer;
+      //   periodCount: BigNumber;
+      //   perPeriod: BigNumber;
+      //   vestingScheduleId: number;
+      //   window: {
+      //     blockNumberBased: {
+      //       start: BigNumber;
+      //       period: BigNumber;
+      //     };
+      //   };
+      schedules.push(Object.values(vestingSchedule.toJSON()));
+    }
+
+    return schedules;
   }
 
   async function fetchAndStore(factoryFn: () => Promise<unknown>) {

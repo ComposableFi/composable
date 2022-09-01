@@ -31,6 +31,13 @@ const Bond: NextPage = () => {
     (state) => state.bonds.bonds[Number(bond) - 1]
   );
 
+  const assets = useStore(
+    ({ substrateBalances }) => substrateBalances.picasso.assets)
+
+
+
+  console.log(assets);
+
   const { isLoading: isLoadingBalances, balances } =
     useBalanceForOffer(bondOffer);
   const activeBonds = useActiveBonds();
@@ -42,8 +49,8 @@ const Bond: NextPage = () => {
   if (!bondOffer || !bond) {
     return (
       <Default>
-        <Updater />
-        <BondDetailSkeleton />
+        <Updater/>
+        <BondDetailSkeleton/>
       </Default>
     );
   }
@@ -54,7 +61,7 @@ const Bond: NextPage = () => {
 
   return (
     <Default>
-      <Updater />
+      <Updater/>
       <Box
         flexGrow={1}
         sx={{ mx: "auto" }}
@@ -69,7 +76,7 @@ const Bond: NextPage = () => {
               textAlign="center"
             />
           </Grid>
-          <HighlightBoxes bondOffer={bondOffer} roi={roi} />
+          <HighlightBoxes bondOffer={bondOffer} roi={roi}/>
         </Grid>
         <Box display="flex" gap={2} mt={4}>
           <BondForm
@@ -83,7 +90,7 @@ const Bond: NextPage = () => {
             tokenSymbol={token}
             isLoadingBalances={isLoadingBalances}
           />
-          <ClaimForm />
+          <ClaimForm/>
         </Box>
       </Box>
     </Default>

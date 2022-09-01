@@ -14,7 +14,8 @@ export const TokenAsset: React.FC<TokenAssetProps> = ({
   label,
   ...rest
 }) => {
-  const token = getToken(tokenId);
+  const token = getToken(tokenId.toLowerCase());
+  if (!token) console.log(tokenId);
   return (
     <BaseAsset
       icon={icon || token.icon}

@@ -182,6 +182,10 @@ export const BondForm: FC<{
     return <PositionDetails>{children}</PositionDetails>;
   };
 
+  console.log({
+    bondOfferAsset: bondOffer.asset,
+    bondOfferAssetId: bondOffer.assetId
+  })
   const WrapperComponent: FC<{ hasClaim: boolean }> = ({
     hasClaim,
     children
