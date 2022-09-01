@@ -27,9 +27,14 @@ pub fn instantiate(
 	let config = Config { registry_address };
 	CONFIG.save(deps.storage, &config)?;
 
-	Ok(Response::new()
-		.add_event(Event::new("xcvm.interpreter").add_attribute("action", "instantiated"))
-		.set_data(to_binary(&(msg.network_id.0, msg.user_id))?))
+	Ok(Response::new().add_event(
+		Event::new("xcvm.interpreter")
+			.add_attribute("action", "instantiated")
+			.add_attribute(
+				"data",
+				to_binary(&(msg.network_id.0, msg.user_id))?.to_base64().as_str(),
+			),
+	))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
