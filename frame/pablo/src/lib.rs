@@ -351,20 +351,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type TWAPInterval: Get<MomentOf<Self>>;
 
-		type RewardPoolId: FullCodec
-			+ MaxEncodedLen
-			+ Default
-			+ Debug
-			+ TypeInfo
-			+ Eq
-			+ PartialEq
-			+ Ord
-			+ Copy
-			+ Zero
-			+ One
-			+ SafeArithmetic
-			+ From<u128>;
-
 		type MaxStakingRewardPools: Get<u32>;
 
 		type MaxRewardConfigsPerPool: Get<u32>;
@@ -378,14 +364,14 @@ pub mod pallet {
 			Balance = Self::Balance,
 			RewardConfigsLimit = Self::MaxRewardConfigsPerPool,
 			StakingDurationPresetsLimit = Self::MaxStakingDurationPresets,
-			RewardPoolId = Self::RewardPoolId,
+			RewardPoolId = Self::AssetId,
 		>;
 
 		type ProtocolStaking: ProtocolStaking<
 			AccountId = AccountIdOf<Self>,
 			AssetId = <Self as Config>::AssetId,
 			Balance = Self::Balance,
-			RewardPoolId = Self::RewardPoolId,
+			RewardPoolId = Self::AssetId,
 		>;
 
 		type WeightInfo: WeightInfo;
@@ -823,7 +809,7 @@ pub mod pallet {
 			if !fees.protocol_fee.is_zero() {
 				T::ProtocolStaking::transfer_reward(
 					who,
-					&T::RewardPoolId::from(T::PbloAssetId::get().into()),
+					&T::PbloAssetId::get(),
 					fees.asset_id,
 					fees.protocol_fee,
 				)?;
