@@ -502,19 +502,23 @@
               '';
             };
 
-            frontend-pablo-server = pkgs.writeShellApplication {
+            frontend-pablo-server = let 
+                PORT = 8002; 
+            in pkgs.writeShellApplication {
               name = "frontend-pablo-server";
               runtimeInputs = [ pkgs.miniserve ];
               text = ''
-                miniserve -p 8002 --spa --index index.html ${frontend-static}/pablo
+                miniserve -p ${builtins.toString PORT} --spa --index index.html ${frontend-static}/pablo
               '';
             };
 
-            frontend-picasso-server = pkgs.writeShellApplication {
+            frontend-picasso-server = let 
+                PORT = 8003; 
+            in pkgs.writeShellApplication {
               name = "frontend-picasso-server";
               runtimeInputs = [ pkgs.miniserve ];
               text = ''
-                miniserve -p 8003 --spa --index index.html ${frontend-static}/picasso
+                miniserve -p ${builtins.toString PORT} --spa --index index.html ${frontend-static}/picasso
               '';
             };
             # TODO: inherit and provide script to run all stuff
