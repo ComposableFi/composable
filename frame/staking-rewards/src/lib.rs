@@ -591,7 +591,7 @@ pub mod pallet {
 						Error::<T>::EndBlockMustBeInTheFuture
 					);
 
-					let pool_id = T::AssetId::from(asset_id.into());
+					let pool_id = asset_id;
 					ensure!(
 						!RewardPools::<T>::contains_key(pool_id),
 						Error::<T>::RewardsPoolAlreadyExists
