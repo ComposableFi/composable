@@ -5,9 +5,9 @@ import {
   VestingScheduleIdSet,
 } from "../types/v2401";
 import {
-  PicassoTransactionType,
   Schedule,
   ScheduleWindow,
+  TransactionType,
   VestingSchedule,
 } from "../model";
 import {
@@ -104,7 +104,7 @@ export async function processVestingScheduleAddedEvent(
 
   await saveAccountAndTransaction(
     ctx,
-    PicassoTransactionType.VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
+    TransactionType.VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
     [vestingSchedule.from, vestingSchedule.to]
   );
 }
@@ -183,7 +183,7 @@ export async function processVestingClaimedEvent(
 
   await saveAccountAndTransaction(
     ctx,
-    PicassoTransactionType.VESTING_SCHEDULES_CLAIMED,
+    TransactionType.VESTING_SCHEDULES_CLAIMED,
     encodeAccount(who)
   );
 }

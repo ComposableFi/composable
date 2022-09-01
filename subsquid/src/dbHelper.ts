@@ -1,15 +1,15 @@
 import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
+import { ApiPromise, WsProvider } from "@polkadot/api";
 import {
   Account,
   Activity,
   HistoricalLockedValue,
   PabloPool,
-  PicassoTransaction,
-  PicassoTransactionType,
+  Transaction,
+  TransactionType,
 } from "./model";
 import { BOB } from "./utils";
-import { ApiPromise, WsProvider } from "@polkadot/api";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -95,7 +95,7 @@ export async function trySaveAccount(
 }
 
 /**
- * Create and store PicassoTransaction on database.
+ * Create and store Transaction on database.
  * If `id` is not defined, a random id will be generated.
  *
  * Returns the stored transaction id.
@@ -107,11 +107,11 @@ export async function trySaveAccount(
 export async function saveTransaction(
   ctx: EventHandlerContext,
   accountId: string,
-  transactionType: PicassoTransactionType,
+  transactionType: TransactionType,
   id: string
 ): Promise<string> {
   // Create transaction
-  const tx = new PicassoTransaction({
+  const tx = new Transaction({
     id,
     eventId: ctx.event.id,
     accountId,
@@ -162,7 +162,7 @@ export async function saveActivity(
  */
 export async function saveAccountAndTransaction(
   ctx: EventHandlerContext,
-  transactionType: PicassoTransactionType,
+  transactionType: TransactionType,
   accountId?: string | string[]
 ): Promise<{ transactionId: string }> {
   const accountIds: (string | undefined)[] =

@@ -5,32 +5,6 @@ type Account @entity {
   eventId: String!
 }
 
-enum PabloTransactionType {
-  ADD_LIQUIDITY,
-  REMOVE_LIQUIDITY,
-  SWAP,
-  CREATE_POOL,
-  DELETE_POOL
-}
-
-type PabloTransaction @entity {
-  "ID of the event that was used to derive this transaction"
-  eventId: ID!
-  pool: PabloPool!
-  who: String!
-  transactionType: PabloTransactionType
-  baseAssetId: BigInt!
-  baseAssetAmount: BigInt!
-  quoteAssetId: BigInt!
-  quoteAssetAmount: BigInt!
-  blockNumber: BigInt!
-  spotPrice: String!
-  "Optional: Only certain transaction types have fees charged by Pablo. Does NOT include the collected extrinsic execution fee."
-  fee: String!
-  "Unix timestamp in ms"
-  receivedTimestamp: BigInt!
-}
-
 type PabloPool @entity {
   "ID of the last event that was used to derive this entity data"
   eventId: ID!
@@ -187,4 +161,54 @@ type HistoricalLockedValue @entity {
   eventId: String!
   amount: BigInt!
   timestamp: BigInt!
+}
+
+type PabloTransaction @entity {
+  id: ID!
+  pool: PabloPool!
+  baseAssetId: BigInt!
+  baseAssetAmount: BigInt!
+  quoteAssetId: BigInt!
+  quoteAssetAmount: BigInt!
+  spotPrice: String!
+  "Optional: Only certain transaction types have fees charged by Pablo. Does NOT include the collected extrinsic execution fee."
+  fee: String!
+}
+
+enum TransactionType {
+  ADD_LIQUIDITY,
+  REMOVE_LIQUIDITY,
+  SWAP,
+  CREATE_POOL,
+  DELETE_POOL,
+  BALANCES_TRANSFER,
+  BALANCES_DEPOSIT,
+  BALANCES_WITHDRAW,
+  STAKING_REWARDS_REWARD_POOL_CREATED,
+  STAKING_REWARDS_STAKED,
+  STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
+  STAKING_REWARDS_UNSTAKE,
+  STAKING_REWARDS_SPLIT_POSITION,
+  BONDED_FINANCE_NEW_OFFER,
+  BONDED_FINANCE_NEW_BOND,
+  BONDED_FINANCE_OFFER_CANCELLED,
+  VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
+  VESTING_SCHEDULES_CLAIMED,
+  VESTING_SCHEDULES_VESTING_SCHEDULES_UPDATED,
+}
+
+type Transaction @entity {
+  id: ID!
+  "ID of the event that was used to derive this transaction"
+  eventId: String!
+  "ID of account that executed transaction"
+  accountId: String!
+  "Type of transaction"
+  transactionType: TransactionType!
+  "Block in which transaction was registered"
+  blockNumber: BigInt!
+  "Timestamp of the block in which this transaction was registered"
+  timestamp: BigInt!
+  "If this transaction came from Pablo, it will have extra information"
+  pabloTransaction: PabloTransaction
 }

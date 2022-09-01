@@ -11,7 +11,7 @@ import {
   saveAccountAndTransaction,
   storeHistoricalLockedValue,
 } from "../dbHelper";
-import { PicassoStakingPosition, PicassoTransactionType } from "../model";
+import { PicassoStakingPosition, TransactionType } from "../model";
 import { encodeAccount } from "../utils";
 
 interface RewardPoolCreatedEvent {
@@ -176,7 +176,7 @@ export async function processRewardPoolCreatedEvent(
 
   await saveAccountAndTransaction(
     ctx,
-    PicassoTransactionType.STAKING_REWARDS_REWARD_POOL_CREATED,
+    TransactionType.STAKING_REWARDS_REWARD_POOL_CREATED,
     owner
   );
 }
@@ -198,7 +198,7 @@ export async function processStakedEvent(
 
   const { transactionId } = await saveAccountAndTransaction(
     ctx,
-    PicassoTransactionType.STAKING_REWARDS_STAKED,
+    TransactionType.STAKING_REWARDS_STAKED,
     owner
   );
 
@@ -245,7 +245,7 @@ export async function processStakeAmountExtendedEvent(
 
   const { transactionId } = await saveAccountAndTransaction(
     ctx,
-    PicassoTransactionType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
+    TransactionType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
     stakingPosition.owner
   );
 
@@ -286,7 +286,7 @@ export async function processUnstakedEvent(
 
   await saveAccountAndTransaction(
     ctx,
-    PicassoTransactionType.STAKING_REWARDS_UNSTAKE,
+    TransactionType.STAKING_REWARDS_UNSTAKE,
     owner
   );
 
@@ -325,7 +325,7 @@ export async function processSplitPositionEvent(
 
   const { transactionId } = await saveAccountAndTransaction(
     ctx,
-    PicassoTransactionType.STAKING_REWARDS_SPLIT_POSITION,
+    TransactionType.STAKING_REWARDS_SPLIT_POSITION,
     position.owner
   );
 

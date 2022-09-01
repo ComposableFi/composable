@@ -1,5 +1,6 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import Big from "big.js";
+import { randomUUID } from "crypto";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import {
   PabloLiquidityAddedEvent,
@@ -18,7 +19,8 @@ import {
   PabloPool,
   PabloPoolAsset,
   PabloTransaction,
-  PabloTransactionType,
+  Transaction,
+  TransactionType,
 } from "../model";
 import { CurrencyPair, Fee } from "../types/v2401";
 import { encodeAccount } from "../utils";
@@ -29,7 +31,7 @@ function createTransaction(
   ctx: EventHandlerContext,
   pool: PabloPool,
   who: string,
-  transactionType: PabloTransactionType,
+  transactionType: TransactionType,
   spotPrice: string,
   baseAssetId: bigint,
   baseAssetAmount: bigint,
@@ -37,21 +39,24 @@ function createTransaction(
   quoteAssetAmount: bigint,
   fee?: string
 ) {
-  const tx = new PabloTransaction();
-  tx.id = ctx.event.id;
-  tx.eventId = ctx.event.id;
-  tx.pool = pool;
-  tx.who = who;
-  tx.blockNumber = BigInt(ctx.block.height);
-  tx.receivedTimestamp = BigInt(new Date().getTime());
-  tx.transactionType = transactionType;
-  tx.spotPrice = spotPrice;
-  tx.baseAssetId = baseAssetId;
-  tx.baseAssetAmount = baseAssetAmount;
-  tx.quoteAssetId = quoteAssetId;
-  tx.quoteAssetAmount = quoteAssetAmount;
-  tx.fee = fee || "0.0";
-  return tx;
+  return new Transaction({
+    id: randomUUID(),
+    eventId: ctx.event.id,
+    accountId: who,
+    blockNumber: BigInt(ctx.block.height),
+    timestamp: BigInt(new Date().valueOf()),
+    transactionType,
+    pabloTransaction: new PabloTransaction({
+      id: randomUUID(),
+      pool,
+      spotPrice,
+      baseAssetId,
+      baseAssetAmount,
+      quoteAssetId,
+      quoteAssetAmount,
+      fee: fee || "0.0",
+    }),
+  });
 }
 
 function createAsset(
@@ -60,15 +65,15 @@ function createAsset(
   ctx: EventHandlerContext,
   timestamp: bigint
 ) {
-  const asset = new PabloPoolAsset();
-  asset.pool = pool;
-  asset.id = createPoolAssetId(ctx.event.id, pool.poolId, assetId);
-  asset.assetId = assetId;
-  asset.blockNumber = BigInt(ctx.block.height);
-  asset.totalLiquidity = BigInt(0);
-  asset.totalVolume = BigInt(0);
-  asset.calculatedTimestamp = timestamp;
-  return asset;
+  return new PabloPoolAsset({
+    id: createPoolAssetId(ctx.event.id, pool.poolId, assetId),
+    assetId,
+    pool,
+    blockNumber: BigInt(ctx.block.height),
+    totalLiquidity: BigInt(0),
+    totalVolume: BigInt(0),
+    calculatedTimestamp: timestamp,
+  });
 }
 
 interface PoolCreatedEvent {
@@ -85,7 +90,7 @@ function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
 export async function processPoolCreatedEvent(
   ctx: EventHandlerContext,
   event: PabloPoolCreatedEvent
-) {
+): Promise<void> {
   console.debug("processing PoolCreatedEvent", ctx.event.id);
   const poolCreatedEvt = getPoolCreatedEvent(event);
   const owner = encodeAccount(poolCreatedEvt.owner);
@@ -106,8 +111,10 @@ export async function processPoolCreatedEvent(
     pool.calculatedTimestamp = timestamp;
     pool.blockNumber = BigInt(ctx.block.height);
 
-    let tx = await get(ctx.store, PabloTransaction, ctx.event.id);
-    if (tx != undefined) {
+    let tx = await ctx.store.get(Transaction, {
+      where: { eventId: ctx.event.id },
+    });
+    if (tx !== undefined) {
       console.error("Unexpected transaction in db", tx);
       throw new Error("Unexpected transaction in db");
     }
@@ -115,7 +122,7 @@ export async function processPoolCreatedEvent(
       ctx,
       pool,
       owner,
-      PabloTransactionType.CREATE_POOL,
+      TransactionType.CREATE_POOL,
       // Following fields are irrelevant for CREATE_POOL
       "0",
       poolCreatedEvt.assets.base,
@@ -134,7 +141,7 @@ export async function processPoolCreatedEvent(
       PabloPoolAsset,
       createPoolAssetId(ctx.event.id, pool.poolId, poolCreatedEvt.assets.base)
     );
-    if (quoteAsset != undefined || baseAsset != undefined) {
+    if (quoteAsset !== undefined || baseAsset !== undefined) {
       console.error("Unexpected assets for pool in db", quoteAsset, baseAsset);
       throw new Error("Unexpected assets found");
     }
@@ -182,7 +189,7 @@ export async function processLiquidityAddedEvent(
   const who = encodeAccount(liquidityAddedEvt.who);
   const pool = await getLatestPoolByPoolId(ctx.store, liquidityAddedEvt.poolId);
   // only set values if the owner was missing, i.e a new pool
-  if (pool != undefined) {
+  if (pool !== undefined) {
     const timestamp = BigInt(new Date().getTime());
     pool.id = ctx.event.id;
     pool.eventId = ctx.event.id;
@@ -196,9 +203,9 @@ export async function processLiquidityAddedEvent(
 
     // find baseAsset: Following is only valid for dual asset pools
     const baseAsset = pool.poolAssets.find(
-      (asset) => asset.assetId != pool.quoteAssetId
+      (asset) => asset.assetId !== pool.quoteAssetId
     );
-    if (baseAsset == undefined) {
+    if (baseAsset === undefined) {
       throw new Error("baseAsset not found");
     }
     baseAsset.id = createPoolAssetId(
@@ -212,9 +219,9 @@ export async function processLiquidityAddedEvent(
     baseAsset.blockNumber = BigInt(ctx.block.height);
     // find quoteAsset
     const quoteAsset = pool.poolAssets.find(
-      (asset) => asset.assetId == pool.quoteAssetId
+      (asset) => asset.assetId === pool.quoteAssetId
     );
-    if (quoteAsset == undefined) {
+    if (quoteAsset === undefined) {
       throw new Error("quoteAsset not found");
     }
     quoteAsset.id = createPoolAssetId(
@@ -227,15 +234,17 @@ export async function processLiquidityAddedEvent(
     quoteAsset.calculatedTimestamp = timestamp;
     quoteAsset.blockNumber = BigInt(ctx.block.height);
 
-    let tx = await get(ctx.store, PabloTransaction, ctx.event.id);
-    if (tx != undefined) {
+    let tx = await ctx.store.get(Transaction, {
+      where: { eventId: ctx.event.id },
+    });
+    if (tx !== undefined) {
       throw new Error("Unexpected transaction in db");
     }
     tx = createTransaction(
       ctx,
       pool,
       who,
-      PabloTransactionType.ADD_LIQUIDITY,
+      TransactionType.ADD_LIQUIDITY,
       Big(liquidityAddedEvt.baseAmount.toString())
         .div(Big(liquidityAddedEvt.quoteAmount.toString()))
         .toString(),
@@ -316,7 +325,7 @@ export async function processLiquidityRemovedEvent(
     const baseAsset = pool.poolAssets.find(
       (asset) => asset.assetId != pool.quoteAssetId
     );
-    if (baseAsset == undefined) {
+    if (baseAsset === undefined) {
       throw new Error("baseAsset not found");
     }
     baseAsset.id = createPoolAssetId(
@@ -330,9 +339,9 @@ export async function processLiquidityRemovedEvent(
     baseAsset.blockNumber = BigInt(ctx.block.height);
     // find quoteAsset
     const quoteAsset = pool.poolAssets.find(
-      (asset) => asset.assetId == pool.quoteAssetId
+      (asset) => asset.assetId === pool.quoteAssetId
     );
-    if (quoteAsset == undefined) {
+    if (quoteAsset === undefined) {
       throw new Error("quoteAsset not found");
     }
     quoteAsset.id = createPoolAssetId(
@@ -345,15 +354,17 @@ export async function processLiquidityRemovedEvent(
     quoteAsset.calculatedTimestamp = timestamp;
     quoteAsset.blockNumber = BigInt(ctx.block.height);
 
-    let tx = await get(ctx.store, PabloTransaction, ctx.event.id);
-    if (tx != undefined) {
+    let tx = await ctx.store.get(Transaction, {
+      where: { eventId: ctx.event.id },
+    });
+    if (tx !== undefined) {
       throw new Error("Unexpected transaction in db");
     }
     tx = createTransaction(
       ctx,
       pool,
       who,
-      PabloTransactionType.REMOVE_LIQUIDITY,
+      TransactionType.REMOVE_LIQUIDITY,
       Big(liquidityRemovedEvt.baseAmount.toString())
         .div(Big(liquidityRemovedEvt.quoteAmount.toString()))
         .toString(),
@@ -426,14 +437,14 @@ export async function processSwappedEvent(
     const baseAsset = pool.poolAssets.find(
       (asset) => asset.assetId != pool.quoteAssetId
     );
-    if (baseAsset == undefined) {
+    if (baseAsset === undefined) {
       throw new Error("baseAsset not found");
     }
     // find quoteAsset
     const quoteAsset = pool.poolAssets.find(
-      (asset) => asset.assetId == pool.quoteAssetId
+      (asset) => asset.assetId === pool.quoteAssetId
     );
-    if (quoteAsset == undefined) {
+    if (quoteAsset === undefined) {
       throw new Error("quoteAsset not found");
     }
     const feesLeavingPool = swappedEvt.fee.fee - swappedEvt.fee.lpFee;
@@ -506,15 +517,17 @@ export async function processSwappedEvent(
     quoteAsset.calculatedTimestamp = timestamp;
     quoteAsset.blockNumber = BigInt(ctx.block.height);
 
-    let tx = await get(ctx.store, PabloTransaction, ctx.event.id);
-    if (tx != undefined) {
+    let tx = await ctx.store.get(Transaction, {
+      where: { eventId: ctx.event.id },
+    });
+    if (tx !== undefined) {
       throw new Error("Unexpected transaction in db");
     }
     tx = createTransaction(
       ctx,
       pool,
       who,
-      PabloTransactionType.SWAP,
+      TransactionType.SWAP,
       spotPrice.toString(),
       swappedEvt.baseAsset,
       swappedEvt.baseAmount,
@@ -565,7 +578,7 @@ export async function processPoolDeletedEvent(
     const baseAsset = pool.poolAssets.find(
       (asset) => asset.assetId != pool.quoteAssetId
     );
-    if (baseAsset == undefined) {
+    if (baseAsset === undefined) {
       throw new Error("baseAsset not found");
     }
     baseAsset.id = createPoolAssetId(
@@ -579,9 +592,9 @@ export async function processPoolDeletedEvent(
     baseAsset.blockNumber = BigInt(ctx.block.height);
     // find quoteAsset
     const quoteAsset = pool.poolAssets.find(
-      (asset) => asset.assetId == pool.quoteAssetId
+      (asset) => asset.assetId === pool.quoteAssetId
     );
-    if (quoteAsset == undefined) {
+    if (quoteAsset === undefined) {
       throw new Error("quoteAsset not found");
     }
     quoteAsset.id = createPoolAssetId(
@@ -594,15 +607,17 @@ export async function processPoolDeletedEvent(
     quoteAsset.calculatedTimestamp = timestamp;
     quoteAsset.blockNumber = BigInt(ctx.block.height);
 
-    let tx = await get(ctx.store, PabloTransaction, ctx.event.id);
-    if (tx != undefined) {
+    let tx = await ctx.store.get(Transaction, {
+      where: { eventId: ctx.event.id },
+    });
+    if (tx !== undefined) {
       throw new Error("Unexpected transaction in db");
     }
     tx = createTransaction(
       ctx,
       pool,
       who,
-      PabloTransactionType.DELETE_POOL,
+      TransactionType.DELETE_POOL,
       Big(poolDeletedEvent.baseAmount.toString())
         .div(Big(poolDeletedEvent.quoteAmount.toString()))
         .toString(),
@@ -628,7 +643,7 @@ function calculateFeeInQuoteAsset(
   fee: bigint
 ): Big {
   // calculate the quote amount based on the exchange rate if the fees are in the base asset
-  return feeAsset == quoteAsset
+  return feeAsset === quoteAsset
     ? Big(fee.toString())
     : spotPrice.mul(fee.toString());
 }

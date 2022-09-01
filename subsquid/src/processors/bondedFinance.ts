@@ -5,7 +5,7 @@ import {
   BondedFinanceNewOfferEvent,
   BondedFinanceOfferCancelledEvent,
 } from "../types/events";
-import { BondedFinanceBondOffer, PicassoTransactionType } from "../model";
+import { BondedFinanceBondOffer, TransactionType } from "../model";
 import { saveAccountAndTransaction } from "../dbHelper";
 import { encodeAccount } from "../utils";
 
@@ -94,7 +94,7 @@ export async function processNewOfferEvent(ctx: EventHandlerContext) {
 
   await saveAccountAndTransaction(
     ctx,
-    PicassoTransactionType.BONDED_FINANCE_NEW_OFFER
+    TransactionType.BONDED_FINANCE_NEW_OFFER
   );
 }
 
@@ -135,10 +135,7 @@ export async function processNewBondEvent(ctx: EventHandlerContext) {
 
   await ctx.store.save(stored);
 
-  await saveAccountAndTransaction(
-    ctx,
-    PicassoTransactionType.BONDED_FINANCE_NEW_BOND
-  );
+  await saveAccountAndTransaction(ctx, TransactionType.BONDED_FINANCE_NEW_BOND);
 }
 
 /**
@@ -176,6 +173,6 @@ export async function processOfferCancelledEvent(ctx: EventHandlerContext) {
 
   await saveAccountAndTransaction(
     ctx,
-    PicassoTransactionType.BONDED_FINANCE_OFFER_CANCELLED
+    TransactionType.BONDED_FINANCE_OFFER_CANCELLED
   );
 }

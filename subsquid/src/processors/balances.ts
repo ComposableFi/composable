@@ -6,7 +6,7 @@ import {
 } from "../types/events";
 import { encodeAccount } from "../utils";
 import { saveAccountAndTransaction } from "../dbHelper";
-import { PicassoTransactionType } from "../model";
+import { TransactionType } from "../model";
 
 interface TransferEvent {
   from: Uint8Array;
@@ -56,11 +56,10 @@ export async function processTransferEvent(
   const from = encodeAccount(transferEvent.from);
   const to = encodeAccount(transferEvent.to);
 
-  await saveAccountAndTransaction(
-    ctx,
-    PicassoTransactionType.BALANCES_TRANSFER,
-    [from, to]
-  );
+  await saveAccountAndTransaction(ctx, TransactionType.BALANCES_TRANSFER, [
+    from,
+    to,
+  ]);
 }
 
 /**
@@ -78,11 +77,7 @@ export async function processWithdrawEvent(
   const event = getWithdrawEvent(evt);
   const who = encodeAccount(event.who);
 
-  await saveAccountAndTransaction(
-    ctx,
-    PicassoTransactionType.BALANCES_WITHDRAW,
-    who
-  );
+  await saveAccountAndTransaction(ctx, TransactionType.BALANCES_WITHDRAW, who);
 }
 
 /**
@@ -100,9 +95,5 @@ export async function processDepositEvent(
   const event = getDepositEvent(evt);
   const who = encodeAccount(event.who);
 
-  await saveAccountAndTransaction(
-    ctx,
-    PicassoTransactionType.BALANCES_DEPOSIT,
-    who
-  );
+  await saveAccountAndTransaction(ctx, TransactionType.BALANCES_DEPOSIT, who);
 }
