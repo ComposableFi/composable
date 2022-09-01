@@ -18,10 +18,28 @@ pub(crate) struct InitializeBlockCallCounters {
 	pub(crate) handle_must_liquidate: u32,
 }
 
+impl InitializeBlockCallCounters {
+	pub(crate) fn calculate_weight<T: Config>(&self) -> Weight {
+		use crate::weights::WeightInfo;
+		let mut weight: Weight = 0;
+		let one_read = T::DbWeight::get().reads(1);
+		weight += u64::from(self.now) * <T as Config>::WeightInfo::now();
+		weight += u64::from(self.read_markets) * one_read;
+		weight += u64::from(self.accrue_interest) * <T as Config>::WeightInfo::accrue_interest(1);
+		weight += u64::from(self.account_id) * <T as Config>::WeightInfo::account_id();
+		weight += u64::from(self.available_funds) * <T as Config>::WeightInfo::available_funds();
+		weight +=
+			u64::from(self.handle_withdrawable) * <T as Config>::WeightInfo::handle_withdrawable();
+		weight +=
+			u64::from(self.handle_depositable) * <T as Config>::WeightInfo::handle_depositable();
+		weight += u64::from(self.handle_must_liquidate) *
+			<T as Config>::WeightInfo::handle_must_liquidate();
+		weight
+	}
+}
+
 pub type MarketIdInner = u32;
 
-// REVIEW: Maybe move this to `models::market_index`?
-// TODO: Rename to `MarketId`.
 #[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 #[repr(transparent)]
 pub struct MarketId(

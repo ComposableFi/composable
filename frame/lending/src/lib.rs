@@ -457,23 +457,8 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(block_number: T::BlockNumber) -> Weight {
-			let mut weight: Weight = 0;
 			let call_counters = Self::initialize_block(block_number);
-			let one_read = T::DbWeight::get().reads(1);
-			weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
-			weight += u64::from(call_counters.read_markets) * one_read;
-			weight += u64::from(call_counters.accrue_interest) *
-				<T as Config>::WeightInfo::accrue_interest(1);
-			weight += u64::from(call_counters.account_id) * <T as Config>::WeightInfo::account_id();
-			weight += u64::from(call_counters.available_funds) *
-				<T as Config>::WeightInfo::available_funds();
-			weight += u64::from(call_counters.handle_withdrawable) *
-				<T as Config>::WeightInfo::handle_withdrawable();
-			weight += u64::from(call_counters.handle_depositable) *
-				<T as Config>::WeightInfo::handle_depositable();
-			weight += u64::from(call_counters.handle_must_liquidate) *
-				<T as Config>::WeightInfo::handle_must_liquidate();
-			weight
+			call_counters.calculate_weight::<T>()
 		}
 
 		fn offchain_worker(_block_number: T::BlockNumber) {
