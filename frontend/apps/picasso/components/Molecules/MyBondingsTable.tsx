@@ -84,6 +84,7 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
   onRowClick = () => {},
   ...rest
 }) => {
+  console.log(activeBonds);
   if (activeBonds.length > 0) {
     return (
       <TableContainer {...rest}>
@@ -97,9 +98,11 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {activeBonds.map(({ bond }: { bond: BondOffer }, index) => (
-              <BondTableRow key={index} bond={bond} onRowClick={onRowClick} />
-            ))}
+            {activeBonds
+              .filter((bond) => bond.alreadyClaimed === 0)
+              .map(({ bond }: { bond: BondOffer }, index) => (
+                <BondTableRow key={index} bond={bond} onRowClick={onRowClick} />
+              ))}
           </TableBody>
         </Table>
       </TableContainer>

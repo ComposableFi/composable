@@ -12,7 +12,7 @@ import { useExecutor } from "substrate-react";
 import { humanBalance } from "shared";
 import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
-import { useSnackbar } from "notistack";
+import { SnackbarKey, useSnackbar } from "notistack";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export const ClaimForm = () => {
@@ -25,13 +25,14 @@ export const ClaimForm = () => {
   const { claimable, vestingTime, vestedTime, pending } = useClaim(
     bond?.toString() ?? ""
   );
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const activeBond = activeBonds.find((b: ActiveBond) =>
     findCurrentBond(b, bond?.toString() ?? "")
   );
   if (activeBond === undefined || !parachainApi) return null;
 
   const handleClaim = () => {
+    let snackbarKey: SnackbarKey | undefined;
     claim(
       {
         parachainApi,
@@ -41,6 +42,7 @@ export const ClaimForm = () => {
         vestingScheduleId: activeBond.vestingScheduleId.toString(),
       },
       (txHash) => {
+        closeSnackbar(snackbarKey);
         enqueueSnackbar("Claim was successful", {
           variant: "success",
           isClosable: true,
@@ -49,15 +51,16 @@ export const ClaimForm = () => {
         });
       },
       (msg) => {
+        closeSnackbar(snackbarKey);
         enqueueSnackbar("An error occurred while processing transaction", {
           variant: "error",
           isClosable: true,
           persist: true,
-          description: "Failed with: " + msg,
+          description: msg,
         });
       },
       (txHash) => {
-        enqueueSnackbar("Processing Claim", {
+        snackbarKey = enqueueSnackbar("Processing Claim", {
           variant: "info",
           isClosable: true,
           persist: true,

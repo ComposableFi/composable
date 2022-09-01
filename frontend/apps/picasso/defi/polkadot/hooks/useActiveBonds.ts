@@ -11,6 +11,7 @@ import { GET_VESTING_SCHEDULE_BY_ADDRESS } from "@/apollo/queries/vestingSchedul
 import BigNumber from "bignumber.js";
 import { stringToU8a, u8aToHex } from "@polkadot/util";
 import { unwrapNumberOrHex } from "shared";
+import { useCallback, useEffect, useState } from "react";
 
 const PALLET_TYPE_ID = "modl";
 
@@ -75,16 +76,65 @@ export function getBondOfferIdByVestingScheduleAccount(
   return offerId;
 }
 
+async function fetchAllVestingSchedules(
+  api: ApiPromise,
+  address: string,
+  bonds: BondOffer[]
+) {
+  const assetIdList = bonds.reduce((acc, curr) => {
+    if (!acc.has(curr.reward.assetId)) {
+      acc.add(curr.reward.assetId);
+    }
+
+    return acc;
+  }, new Set() as Set<string>);
+
+  console.log({
+    assetIdList: assetIdList,
+  });
+
+  type VestingSchedule = {
+    alreadyClaimed: number;
+    perPeriod: number;
+    periodCount: number;
+    vestingScheduleId: number;
+    window: {
+      blockNumberBased: {
+        period: number;
+        start: number;
+      };
+    };
+  };
+
+  type VestingResponse = {
+    [key in number]: VestingSchedule;
+  };
+
+  const vestingSchedulesTransformed: { [key in string]: VestingSchedule } = {};
+
+  for (const assetId of Array.from(assetIdList)) {
+    const schedules = (
+      await api.query.vesting.vestingSchedules(
+        api.createType("AccountId32", address),
+        api.createType("u128", assetId)
+      )
+    ).toJSON() as VestingResponse;
+
+    Object.entries(schedules).forEach(([id, schedule]) => {
+      vestingSchedulesTransformed[id] = schedule;
+    });
+  }
+
+  return vestingSchedulesTransformed;
+}
+
 export function useActiveBonds() {
-  const { bonds } = useStore<{
-    bonds: BondOffer[];
-    setActiveBonds: (itesm: ActiveBond[]) => void;
-  }>((state) => ({
+  const { bonds } = useStore((state) => ({
     bonds: state.bonds.bonds,
-    setActiveBonds: state.bonds.setActiveBonds,
   }));
   const { parachainApi } = usePicassoProvider();
   const account = useSelectedAccount();
+  const [activeBonds, setActiveBonds] = useState<Array<ActiveBond>>([]);
   const { data, loading, error } = useQuery(GET_VESTING_SCHEDULE_BY_ADDRESS, {
     variables: {
       accountId: account?.address,
@@ -92,82 +142,106 @@ export function useActiveBonds() {
     pollInterval: 30000,
   });
 
-  if (!loading && !error && data.vestingSchedules && parachainApi) {
-    const result: Record<string, Set<string>> = data.vestingSchedules
-      .map((vestingSchedule: any) => {
-        const fromAccount = parachainApi
-          ?.createType("AccountId32", vestingSchedule.from)
-          .toU8a();
-        return {
-          ...vestingSchedule,
-          bondOfferId: getBondOfferIdByVestingScheduleAccount(
-            parachainApi,
-            fromAccount
-          ),
-        };
-      })
-      .filter(
-        (schedule: { bondOfferId: { toString: () => string } }) =>
-          schedule.bondOfferId.toString() !== "-1"
-      )
-      .reduce(
-        (
-          acc: { [x: string]: { add: (arg0: any) => void } },
-          curr: { bondOfferId: { toString: () => any }; id: any }
-        ) => {
-          let bondOfferId = curr.bondOfferId.toString();
-
-          if (acc[bondOfferId]) {
-            acc[bondOfferId].add(curr.id);
-          } else {
-            acc[bondOfferId] = new Set();
-            acc[bondOfferId].add(curr.id);
-          }
-
-          return acc;
-        },
-        {} as Record<string, Set<string>>
-      );
-
-    const output: Array<ActiveBond> = [];
-    for (const [bondOfferId, scheduleids] of Object.entries(result)) {
-      scheduleids.forEach((scheduleId) => {
-        const vestingSchedule = data.vestingSchedules.find(
-          (schedule: any) => schedule.id.toString() === scheduleId.toString()
-        );
-        const bond = bonds.find(
-          (bond) => bond.bondOfferId.toString() === bondOfferId.toString()
-        );
-        if (vestingSchedule && bond) {
-          output.push({
-            bond,
-            periodCount: unwrapNumberOrHex(
-              vestingSchedule.schedule.periodCount
+  const fetchVestingSchedulesAndMapToBonds = useCallback(
+    async (api: ApiPromise, address: string) => {
+      const schedules = await fetchAllVestingSchedules(api, address, bonds);
+      const result: Record<string, Set<string>> = data.vestingSchedules
+        .map((vestingSchedule: any) => {
+          const fromAccount = api
+            ?.createType("AccountId32", vestingSchedule.from)
+            .toU8a();
+          return {
+            ...vestingSchedule,
+            bondOfferId: getBondOfferIdByVestingScheduleAccount(
+              api,
+              fromAccount
             ),
-            perPeriod: unwrapNumberOrHex(vestingSchedule.schedule.perPeriod),
-            vestingScheduleId: vestingSchedule.id,
-            window: {
-              blockNumberBased: {
-                start: unwrapNumberOrHex(vestingSchedule.schedule.window.start),
-                period: unwrapNumberOrHex(
-                  vestingSchedule.schedule.window.period
-                ),
+          };
+        })
+        .filter(
+          (schedule: { bondOfferId: { toString: () => string } }) =>
+            schedule.bondOfferId.toString() !== "-1"
+        )
+        .reduce(
+          (
+            acc: { [x: string]: { add: (arg0: any) => void } },
+            curr: { bondOfferId: { toString: () => any }; id: any }
+          ) => {
+            let bondOfferId = curr.bondOfferId.toString();
+
+            if (acc[bondOfferId]) {
+              acc[bondOfferId].add(curr.id);
+            } else {
+              acc[bondOfferId] = new Set();
+              acc[bondOfferId].add(curr.id);
+            }
+
+            return acc;
+          },
+          {} as Record<string, Set<string>>
+        );
+
+      const output: Array<ActiveBond> = [];
+      for (const [bondOfferId, scheduleids] of Object.entries(result)) {
+        scheduleids.forEach((scheduleId) => {
+          const vestingSchedule = data.vestingSchedules.find(
+            (schedule: any) => schedule.id.toString() === scheduleId.toString()
+          );
+          const bond = bonds.find(
+            (bond) => bond.bondOfferId.toString() === bondOfferId.toString()
+          );
+          if (vestingSchedule && bond) {
+            output.push({
+              bond,
+              alreadyClaimed:
+                schedules[vestingSchedule.id]?.alreadyClaimed ?? 1,
+              periodCount: unwrapNumberOrHex(
+                vestingSchedule.schedule.periodCount
+              ),
+              perPeriod: unwrapNumberOrHex(vestingSchedule.schedule.perPeriod),
+              vestingScheduleId: vestingSchedule.id,
+              window: {
+                blockNumberBased: {
+                  start: unwrapNumberOrHex(
+                    vestingSchedule.schedule.window.start
+                  ),
+                  period: unwrapNumberOrHex(
+                    vestingSchedule.schedule.window.period
+                  ),
+                },
               },
-            },
-          });
-        }
-      });
+            });
+          }
+        });
+      }
+
+      setActiveBonds(output);
+    },
+    [bonds, data?.vestingSchedules]
+  );
+
+  useEffect(() => {
+    if (
+      !loading &&
+      !error &&
+      data.vestingSchedules &&
+      parachainApi &&
+      account
+    ) {
+      fetchVestingSchedulesAndMapToBonds(parachainApi, account.address);
     }
-    return {
-      loading,
-      error,
-      activeBonds: output,
-    };
-  }
+  }, [
+    account,
+    data?.vestingSchedules,
+    error,
+    fetchVestingSchedulesAndMapToBonds,
+    loading,
+    parachainApi,
+  ]);
 
   return {
     loading,
     error,
-    activeBonds: [],
+    activeBonds,
   };
 }

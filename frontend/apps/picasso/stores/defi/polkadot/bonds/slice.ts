@@ -28,6 +28,7 @@ export interface VestingSchedule {
 
 export interface ActiveBond {
   bond: BondOffer;
+  alreadyClaimed: number;
   periodCount: BigNumber;
   perPeriod: BigNumber;
   vestingScheduleId: number;
