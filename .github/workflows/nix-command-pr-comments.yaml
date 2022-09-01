@@ -14,6 +14,6 @@ jobs:
         uses: thollander/actions-comment-pull-request@v1
         with:
           message: |
-            This is commit is {{ github.sha }}
+            This is commit is ${{ github.sha }}
           comment_includes: 'Nix Commands for this PR'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
