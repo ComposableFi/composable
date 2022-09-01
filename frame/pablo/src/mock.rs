@@ -225,6 +225,10 @@ impl pablo::Config for Test {
 	type MsPerBlock = MillisecsPerBlock;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 // Build genesis storage according to the mock runtime.
