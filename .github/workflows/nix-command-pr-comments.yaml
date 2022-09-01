@@ -15,6 +15,20 @@ jobs:
         with:
           message: |
             **Nix commands for this PR**
+            Spin up a devnet:
+            ```
+            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-up"
+            ```
+
+            Spin up a XCVM devnet
+            ```
+            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-xcvm-up"
+            ```
+
+            Build our node:
+            ```
+            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#composable-node"
+            ```
             This is commit is ${{ github.event.pull_request.head.sha }}
           comment_includes: 'Nix commands for this PR'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
