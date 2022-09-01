@@ -35,4 +35,5 @@ xcvm-core = { path = "../../../lib/core", features = ["std"] }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"
+cosmwasm-std = { version = "1.0.0", features = ["backtraces"] }
 cw-multi-test = "0.13.2"
