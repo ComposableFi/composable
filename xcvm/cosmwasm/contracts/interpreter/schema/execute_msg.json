@@ -15,7 +15,7 @@
           ],
           "properties": {
             "program": {
-              "$ref": "#/definitions/Program_for_Array_of_Instruction_for_NetworkID_and_Array_of_uint8_and_String_and_Funds_for_Amount"
+              "$ref": "#/definitions/Program_for_Array_of_Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount"
             }
           }
         }
@@ -25,34 +25,20 @@
   ],
   "definitions": {
     "Amount": {
-      "oneOf": [
-        {
-          "type": "object",
-          "required": [
-            "fixed"
-          ],
-          "properties": {
-            "fixed": {
-              "$ref": "#/definitions/Displayed_for_uint128"
-            }
-          },
-          "additionalProperties": false
+      "description": "See https://en.wikipedia.org/wiki/Linear_equation#Slope%E2%80%93intercept_form_or_Gradient-intercept_form",
+      "type": "object",
+      "required": [
+        "intercept",
+        "slope"
+      ],
+      "properties": {
+        "intercept": {
+          "$ref": "#/definitions/Displayed_for_uint128"
         },
-        {
-          "type": "object",
-          "required": [
-            "ratio"
-          ],
-          "properties": {
-            "ratio": {
-              "type": "integer",
-              "format": "uint32",
-              "minimum": 0.0
-            }
-          },
-          "additionalProperties": false
+        "slope": {
+          "$ref": "#/definitions/Displayed_for_uint128"
         }
-      ]
+      }
     },
     "Displayed_for_uint128": {
       "type": "integer",
@@ -65,7 +51,7 @@
         "$ref": "#/definitions/Amount"
       }
     },
-    "Instruction_for_NetworkID_and_Array_of_uint8_and_String_and_Funds_for_Amount": {
+    "Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount": {
       "description": "Base XCVM instructions. This set will remain as small as possible, expressiveness must come on `top` of the base instructions.",
       "oneOf": [
         {
@@ -139,10 +125,10 @@
                   "$ref": "#/definitions/Funds_for_Amount"
                 },
                 "network": {
-                  "$ref": "#/definitions/NetworkID"
+                  "$ref": "#/definitions/NetworkId"
                 },
                 "program": {
-                  "$ref": "#/definitions/Program_for_Array_of_Instruction_for_NetworkID_and_Array_of_uint8_and_String_and_Funds_for_Amount"
+                  "$ref": "#/definitions/Program_for_Array_of_Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount"
                 },
                 "salt": {
                   "type": "array",
@@ -159,29 +145,27 @@
         }
       ]
     },
-    "NetworkID": {
+    "NetworkId": {
       "description": "Newtype for XCVM networks ID. Must be unique for each network and must never change. This ID is an opaque, arbitrary type from the XCVM protocol and no assumption must be made on how it is computed.",
       "type": "integer",
       "format": "uint8",
       "minimum": 0.0
     },
-    "Program_for_Array_of_Instruction_for_NetworkID_and_Array_of_uint8_and_String_and_Funds_for_Amount": {
+    "Program_for_Array_of_Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount": {
       "type": "object",
       "required": [
-        "instructions"
+        "instructions",
+        "tag"
       ],
       "properties": {
         "instructions": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Instruction_for_NetworkID_and_Array_of_uint8_and_String_and_Funds_for_Amount"
+            "$ref": "#/definitions/Instruction_for_NetworkId_and_Array_of_uint8_and_String_and_Funds_for_Amount"
           }
         },
         "tag": {
-          "type": [
-            "array",
-            "null"
-          ],
+          "type": "array",
           "items": {
             "type": "integer",
             "format": "uint8",
