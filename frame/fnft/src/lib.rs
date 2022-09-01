@@ -290,15 +290,15 @@ pub mod pallet {
 			who: &T::AccountId,
 		) -> Box<dyn Iterator<Item = Self::ItemId>> {
 			let moved_collection = collection.clone();
-			Box::new(
-				OwnerInstances::<T>::get(who).into_iter().flatten().filter_map(move |(c, i)| {
+			Box::new(OwnerInstances::<T>::get(who).into_iter().flatten().filter_map(
+				move |(c, i)| {
 					if c == moved_collection {
 						Some(i)
 					} else {
 						None
 					}
-				}),
-			)
+				},
+			))
 		}
 	}
 
