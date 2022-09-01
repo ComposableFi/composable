@@ -125,7 +125,7 @@ impl<T: Config> Pallet<T> {
 				.collateral_factor
 				.try_into_validated()
 				.map_err(|_| Error::<T>::InvalidCollateralFactor)?,
-                market.under_collateralized_warn_percent,
+			market.under_collateralized_warn_percent,
 		);
 
 		Ok(borrower)
