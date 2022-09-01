@@ -17,7 +17,6 @@ use ibc::{
 	proofs::Proofs,
 	timestamp::Timestamp,
 	tx_msg::Msg,
-	Height,
 };
 use ibc_proto::google::protobuf::Any;
 use primitives::{apply_prefix, error::Error, query_undelivered_sequences, Chain};
@@ -30,7 +29,7 @@ pub async fn get_timed_out_packets_messages(
 	sink: &impl Chain,
 ) -> Result<Vec<Any>, anyhow::Error> {
 	let mut messages = vec![];
-	let (source_height, ..) = source.latest_height_and_timestamp().await?;
+	let (source_height, source_timestamp) = source.latest_height_and_timestamp().await?;
 	let (sink_height, sink_timestamp) = sink.latest_height_and_timestamp().await?;
 	let connection_whitelist = source.connection_whitelist().await?;
 	for connection_id in connection_whitelist {
@@ -83,14 +82,10 @@ pub async fn get_timed_out_packets_messages(
 				}
 
 				// Check if connection delay is satisfied
-				// Packet creation height on the source is the consensus height on sink
-				// where we calculate the client update time
 
-				let consensus_height =
-					Height::new(source_height.revision_number, packet_info.height);
 				// If we can't get the client update time and height, skip processing of this packet
-				let client_update_time_and_height = sink
-					.query_client_update_time_and_height(source.client_id(), consensus_height)
+				let client_update_time_and_height = source
+					.query_client_update_time_and_height(sink.client_id(), packet.timeout_height)
 					.await;
 				if client_update_time_and_height.is_err() {
 					continue
@@ -104,8 +99,8 @@ pub async fn get_timed_out_packets_messages(
 					calculate_block_delay(connection_delay, sink.expected_block_time());
 
 				if !has_delay_elapsed(
-					sink_timestamp,
-					sink_height,
+					source_timestamp,
+					source_height,
 					client_update_time,
 					client_update_height,
 					connection_delay,
@@ -116,7 +111,7 @@ pub async fn get_timed_out_packets_messages(
 
 				let sink_channel_response = sink
 					.query_channel_end(
-						sink_height,
+						packet.timeout_height,
 						packet.destination_channel,
 						packet.destination_port.clone(),
 					)
@@ -160,10 +155,10 @@ pub async fn get_timed_out_packets_messages(
 					keys.push(apply_prefix(sink.connection_prefix().into_vec(), path))
 				};
 
-				let proof = sink.query_proof(sink_height, keys).await?;
+				let proof = sink.query_proof(packet.timeout_height, keys).await?;
 				let next_sequence_recv = sink
 					.query_next_sequence_recv(
-						sink_height,
+						packet.timeout_height,
 						&packet.destination_port.clone(),
 						&packet.destination_channel.clone(),
 					)
@@ -173,7 +168,13 @@ pub async fn get_timed_out_packets_messages(
 					let msg = MsgTimeoutOnClose {
 						packet: packet.clone(),
 						next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
-						proofs: Proofs::new(commitment_proof, None, None, None, sink_height)?,
+						proofs: Proofs::new(
+							commitment_proof,
+							None,
+							None,
+							None,
+							packet.timeout_height,
+						)?,
 
 						signer: source.account_id(),
 					};
