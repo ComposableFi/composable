@@ -236,7 +236,6 @@ parameter_types! {
 impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = RewardPoolId;
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
