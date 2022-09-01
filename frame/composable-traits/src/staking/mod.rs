@@ -311,7 +311,7 @@ pub trait Staking {
 	///
 	/// Arguments
 	/// * `who` - the account to transfer the final claimed rewards to.
-	/// * `position` - The uniqely identifying NFT from which we will compute the rewards.
+	/// * `position` - The uniquely identifying NFT from which we will compute the rewards.
 	fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
 }
 
