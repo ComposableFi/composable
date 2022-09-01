@@ -62,7 +62,7 @@ impl<T: Config> Pallet<T> {
 
 			ensure!(
 				initial_market_volume > T::Balance::zero(),
-				Error::<T>::PriceOfInitialBorrowVaultShouldBeGreaterThanZero
+				Error::<T>::IntitialMakretVolumeIncorrect
 			);
 
 			// transfer `initial_market_volume` worth of borrow asset from the manager to the market

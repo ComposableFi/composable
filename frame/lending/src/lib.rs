@@ -398,60 +398,55 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// The market could not be found
+		/// The market could not be found.
 		MarketDoesNotExist,
-
-		MarketCollateralWasNotDepositedByAccount,
-
-		/// The collateral factor for a market must be more than one.
-		CollateralFactorMustBeMoreThanOne,
-
+        /// Account did not deposit any collateral to particular market.
+		AccountCollateralAbsent,
+		/// Invalid collateral factor was provided.
+        /// Collateral factor value must be more than one.
+		InvalidCollateralFactor,
+        // We can not operate since market is going to be closed.
 		MarketIsClosing,
-		InvalidTimestampOnBorrowRequest,
-		NotEnoughBorrowAsset,
-
-		/// Attempted to withdraw more collateral than the account has in the market.
+        // Provided timestamp is not consistent with the latest block timestamp.
+        InvalidTimestampOnBorrowRequest,
+		/// When user try to withdraw money beyond what is available.
 		NotEnoughCollateralToWithdraw,
 		/// The market would go under collateralized if the requested amount of collateral was
 		/// withdrawn.
 		WouldGoUnderCollateralized,
-		NotEnoughCollateralToBorrow,
-
-		// TODO: This can probably be removed, it was only used in
-		// ensure!(can_{withdraw/transfer/etc}) checks
-		TransferFailed,
-
-		BorrowRateDoesNotExist,
-
-		/// Borrow and repay in the same block (flashloans) are not allowed.
-		BorrowAndRepayInSameBlockIsNotSupported,
-
+	    /// User has provided not sufficient amount of collateral.
+        NotEnoughCollateralToBorrow,
+        /// Borrow rate can not be calculated.
+		CannotCalculateBorrowRate,
+		/// Borrow and repay in the same block are not allowed.
+	    /// Fleshloans are not supported by the pallet.
+        BorrowAndRepayInSameBlockIsNotSupported,
+        /// User tried to repay non-existent loan.
 		BorrowDoesNotExist,
-
+        /// Market can not be created since
+        /// allowed number of markets was exceeded.
 		ExceedLendingCount,
-
-		BorrowerDataCalculationFailed,
+        /// Borrow limit for particular borrower was not calculated
+        /// due to arithmetic error. 
+		BorrowLimitCalculationFailed,
 		/// Attempted to update a market owned by someone else.
 		Unauthorized,
-		NotEnoughRent,
-		/// borrow assets should have enough value as per oracle
-		PriceOfInitialBorrowVaultShouldBeGreaterThanZero,
-
+		/// Market manager has to deposit initial amount of borrow asset into the market account.
+        /// Initial amount is denominated in normalized currency and calculated based on data
+        /// from Oracle. The error is emitted if calculated amount is incorrect.
+		IntitialMakretVolumeIncorrect,
 		/// A market with a borrow balance of `0` was attempted to be repaid.
 		CannotRepayZeroBalance,
-		/// Cannot repay the total amount of debt when partially repaying.
+		/// Cannot repay more than total amount of debt when partially repaying.
 		CannotRepayMoreThanTotalDebt,
-
+        /// Account did not pay any rent to particular market.
 		BorrowRentDoesNotExist,
-
+        /// Block number of provided price is out of allowed tolerance.
 		PriceTooOld,
-
-		// Open market collateral factor increase would allow market manager to liquidate all
-		// positions in any time.
+		// Collateral factor of operating market can not be increased.
 		CannotIncreaseCollateralFactorOfOpenMarket,
-
 		// If Vault is unbalanced we can not borrow from it, since
-		// we do not know how many asset it needs to balance.
+		// we do not know how many asset one needs to balance the value.
 		CannotBorrowFromMarketWithUnbalancedVault,
 	}
 

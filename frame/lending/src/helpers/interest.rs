@@ -155,7 +155,7 @@ impl<T: Config> Pallet<T> {
 
 		let borrow_rate = interest_rate_model
 			.get_borrow_rate(utilization_ratio)
-			.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
+			.ok_or(Error::<T>::CannotCalculateBorrowRate)?;
 
 		// borrow_rate * index * delta_time / SECONDS_PER_YEAR_NAIVE + index
 		let borrow_rate_delta = borrow_rate
@@ -193,6 +193,6 @@ pub fn current_interest_rate<T: Config>(
 		.map_err(|_| Error::<T>::MarketDoesNotExist)?
 		.interest_rate_model
 		.get_borrow_rate(utilization_ratio)
-		.ok_or(Error::<T>::BorrowRateDoesNotExist)
+		.ok_or(Error::<T>::CannotCalculateBorrowRate)
 		.map_err(Into::into)
 }

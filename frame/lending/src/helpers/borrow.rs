@@ -124,9 +124,8 @@ impl<T: Config> Pallet<T> {
 			market
 				.collateral_factor
 				.try_into_validated()
-				.map_err(|_| Error::<T>::CollateralFactorMustBeMoreThanOne)?, /* TODO: Use a proper
-			                                                                * error mesage */
-			market.under_collateralized_warn_percent,
+				.map_err(|_| Error::<T>::InvalidCollateralFactor)?,
+                market.under_collateralized_warn_percent,
 		);
 
 		Ok(borrower)
@@ -208,7 +207,7 @@ impl<T: Config> Pallet<T> {
 			let borrower = Self::create_borrower_data(market_id, account)?;
 			let balance = borrower
 				.get_borrow_limit()
-				.map_err(|_| Error::<T>::BorrowerDataCalculationFailed)?
+				.map_err(|_| Error::<T>::BorrowLimitCalculationFailed)?
 				.checked_mul_int(1_u64)
 				.ok_or(ArithmeticError::Overflow)?;
 			Ok(balance.into())

@@ -104,7 +104,7 @@ impl<T: Config> Pallet<T> {
 		account: &T::AccountId,
 	) -> Result<CollateralLpAmountOf<Self>, DispatchError> {
 		AccountCollateral::<T>::get(market_id, account)
-			.ok_or_else(|| Error::<T>::MarketCollateralWasNotDepositedByAccount.into())
+			.ok_or_else(|| Error::<T>::AccountCollateralAbsent.into())
 	}
 
 	pub(crate) fn do_collateral_required(
