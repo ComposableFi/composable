@@ -623,21 +623,27 @@
             junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
             
             junod-runtime = stdenv.mkDerivation {
-              PASSWORD="${PASSWORD:-1234567890}";
-              STAKE="${STAKE_TOKEN:-ustake}";
-              FEE="${FEE_TOKEN:-ucosm}";
-              CHAIN_ID="${CHAIN_ID:-testing}";
-              MONIKER="${MONIKER:-node001}";
-              KEYRING=""--keyring-backend test"";
-              BLOCK_GAS_LIMIT="${GAS_LIMIT:-100000000} # should mirror mainnet";
-
+              
+              PASSWORD="1234567890";
+              STAKE="ustake";
+              FEE="ucosm";
+              CHAIN_ID="testing";
+              MONIKER="alice";
+              KEYRING="test";
+              BLOCK_GAS_LIMIT="100000000";
+              TEST_ADDR="juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y";
+              TEST_MNEMONIC="clip hire initial neck maid actor venue client foam budget lock catalog sweet steak waste crater broccoli pipe steak sister coyote moment obvious choose";
+              
               phases = [ "installPhase" ];
               name = "junod-runtime";
-              buildInputs = [packages.junod];
+              buildInputs = [packages.junod jq];
               installPhase = ''
-                mkdir -p $out/bin/
-                echo "{}" > genesis.json  
-                ${packages.junod}/bin/junod start                
+                mkdir --parents $out/bin/
+                echo 42
+                junod init --chain-id "$CHAIN_ID" "$MONIKER" --home .
+                nix run .#junod -- init --chain-id "$CHAIN_ID" "$MONIKER" --home . --log_level=trace --trace
+                /root/.juno/config/genesis.json
+                ${packages.junod}/bin/junod start --keyring-backend                 
                 touch $out/bin/42
               '';
             };
