@@ -1532,6 +1532,8 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 			min_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
+			// LP provider can withdraw liquidity with one asset only if he deposited liquidity with
+			// one asset.
 			ensure!(
 				SingleAssetAccountsStorage::<T>::get(who, &pool_id) >= Some(lp_amount),
 				Error::<T>::NotEnoughLpTokenForSingleAssetWithdraw
