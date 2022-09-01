@@ -1,3 +1,4 @@
+use crate::timeouts::get_timed_out_packets_messages;
 use codec::Encode;
 use ibc::{
 	core::{
@@ -465,117 +466,10 @@ pub async fn parse_events(
 		}
 	}
 
-	// // 2. fetch timed-out packets
-	// {
-	// 	let latest_height = chain_b.latest_height().await?;
-	// 	let host_latest_height = chain_a.latest_height().await?;
-	// 	let consensus_state = chain_b.host_consensus_state(latest_height).await?;
-	// 	let mut seqs_to_drop = vec![];
-	// 	for packet in chain_a.cached_packets() {
-	// 		if packet.timed_out(&consensus_state.timestamp(), latest_height) {
-	// 			let chain_b_channel_response = chain_b
-	// 				.query_channel_end(
-	// 					host_latest_height,
-	// 					packet.destination_channel,
-	// 					packet.destination_port.clone(),
-	// 				)
-	// 				.await?;
-	// 			let channel_response = chain_a
-	// 				.query_channel_end(
-	// 					host_latest_height,
-	// 					packet.source_channel,
-	// 					packet.source_port.clone(),
-	// 				)
-	// 				.await?;
-	// 			let channel_end =
-	// 				ChannelEnd::try_from(channel_response.channel.ok_or_else(|| {
-	// 					Error::Custom(format!(
-	// 						"[get_timeout_messages] ChannelEnd not found for {:?}/{:?}",
-	// 						packet.source_channel,
-	// 						packet.source_port.clone()
-	// 					))
-	// 				})?)?;
-
-	// 			let chain_b_channel_end = ChannelEnd::try_from(
-	// 				chain_b_channel_response.channel.ok_or_else(|| {
-	// 					Error::Custom(format!(
-	// 						"[get_timeout_messages] ChannelEnd not found for {:?}/{:?}",
-	// 						packet.destination_channel,
-	// 						packet.destination_port.clone()
-	// 					))
-	// 				})?,
-	// 			)?;
-
-	// 			let mut keys = vec![];
-	// 			if chain_b_channel_end.state == State::Closed {
-	// 				let path = format!(
-	// 					"{}",
-	// 					ChannelEndsPath(
-	// 						packet.destination_port.clone(),
-	// 						packet.destination_channel.clone()
-	// 					)
-	// 				);
-	// 				keys.push(chain_b.apply_prefix(path))
-	// 			}
-	// 			if channel_end.ordering == Order::Ordered {
-	// 				let path = format!(
-	// 					"{}",
-	// 					SeqRecvsPath(
-	// 						packet.destination_port.clone(),
-	// 						packet.destination_channel.clone()
-	// 					)
-	// 				);
-	// 				keys.push(chain_b.apply_prefix(path))
-	// 			} else {
-	// 				let path = format!(
-	// 					"{}",
-	// 					ReceiptsPath {
-	// 						port_id: packet.destination_port.clone(),
-	// 						channel_id: packet.destination_channel.clone(),
-	// 						sequence: packet.sequence
-	// 					}
-	// 				);
-	// 				keys.push(chain_b.apply_prefix(path))
-	// 			};
-
-	// 			let proof = chain_b.query_proof(latest_height, keys).await?;
-	// 			let next_sequence_recv = chain_b
-	// 				.query_next_sequence_recv(
-	// 					latest_height,
-	// 					&packet.destination_port.clone(),
-	// 					&packet.destination_channel.clone(),
-	// 				)
-	// 				.await?;
-	// 			let commitment_proof = CommitmentProofBytes::try_from(proof)?;
-	// 			if chain_b_channel_end.state == State::Closed {
-	// 				let msg = MsgTimeoutOnClose {
-	// 					packet: packet.clone(),
-	// 					next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
-	// 					proofs: Proofs::new(commitment_proof, None, None, None, latest_height)?,
-
-	// 					signer: chain_a.account_id(),
-	// 				};
-	// 				let value = msg.encode_vec();
-	// 				let msg = Any { value, type_url: msg.type_url() };
-	// 				messages.push(msg)
-	// 			} else {
-	// 				let msg = MsgTimeout {
-	// 					packet: packet.clone(),
-	// 					next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
-	// 					proofs: Proofs::new(commitment_proof, None, None, None, latest_height)?,
-
-	// 					signer: chain_a.account_id(),
-	// 				};
-	// 				let value = msg.encode_vec();
-	// 				let msg = Any { value, type_url: msg.type_url() };
-	// 				messages.push(msg)
-	// 			}
-
-	// 			seqs_to_drop.push(packet.sequence)
-	// 		}
-	// 	}
-	// 	chain_a.remove_packets(seqs_to_drop);
-	// }
+	// 2. Get timeouts that are ready to be processed
+	// Not tested yet
+	// let timeout_messages = get_timed_out_packets_messages(source, sink).await?;
+	// messages.extend(timeout_messages);
 
 	// 3. insert update client message at first index
 	{

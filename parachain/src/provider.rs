@@ -35,13 +35,19 @@ use sp_runtime::{
 use subxt::Config;
 
 use super::{error::Error, ParachainClient};
-use ibc_rpc::{BlockNumberOrHash, IbcApiClient};
+use ibc_rpc::{BlockNumberOrHash, IbcApiClient, PacketInfo};
 use primitives::{Chain, IbcProvider, KeyProvider, UpdateType};
 use sp_core::H256;
 
 use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
+#[cfg(feature = "testing")]
+use futures::Stream;
 use ibc::timestamp::Timestamp;
+use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
+use pallet_mmr_primitives::BatchProof;
+#[cfg(feature = "testing")]
+use std::pin::Pin;
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -271,34 +277,6 @@ where
 		Ok(proof.proof)
 	}
 
-	async fn query_packets(
-		&self,
-		_at: Height,
-		port_id: &PortId,
-		channel_id: &ChannelId,
-		seqs: Vec<u64>,
-	) -> Result<Vec<Packet>, Self::Error> {
-		let _packets = IbcApiClient::<u32, H256>::query_send_packets(
-			&*self.para_client.rpc().client,
-			channel_id.to_string(),
-			port_id.to_string(),
-			seqs.clone(),
-		)
-		.await
-		.map_err(|e| Error::QueryPackets {
-			channel_id: channel_id.to_string(),
-			port_id: port_id.to_string(),
-			sequences: seqs,
-			err: e.to_string(),
-		})?;
-
-		// let packets = packets
-		// 	.into_iter()
-		// 	.map(|raw_packet| raw_packet.into())
-		// 	.collect();
-		Ok(vec![])
-	}
-
 	async fn query_packet_commitment(
 		&self,
 		at: Height,
@@ -369,6 +347,87 @@ where
 		Ok(res)
 	}
 
+	async fn query_packet_commitments(
+		&self,
+		at: Height,
+		channel_id: ChannelId,
+		port_id: PortId,
+	) -> Result<Vec<u64>, Self::Error> {
+		let res = IbcApiClient::<u32, H256>::query_packet_commitments(
+			&*self.para_client.rpc().client,
+			at.revision_height as u32,
+			channel_id.to_string(),
+			port_id.to_string(),
+			seqs,
+		)
+		.await?;
+		Ok(res.commitments.into_iter().map(|packet_state| packet_state.sequence).collect())
+	}
+
+	async fn query_unreceived_acknowledgements(
+		&self,
+		at: Height,
+		channel_id: ChannelId,
+		port_id: PortId,
+		seqs: Vec<u64>,
+	) -> Result<Vec<u64>, Self::Error> {
+		let res = IbcApiClient::<u32, H256>::query_unreceived_acknowledgements(
+			&*self.para_client.rpc().client,
+			at.revision_height as u32,
+			channel_id.to_string(),
+			port_id.to_string(),
+			seqs,
+		)
+		.await?;
+		Ok(res)
+	}
+
+	async fn query_unreceived_packets(
+		&self,
+		at: Height,
+		channel_id: ChannelId,
+		port_id: PortId,
+		seqs: Vec<u64>,
+	) -> Result<Vec<u64>, Self::Error> {
+		let res = IbcApiClient::<u32, H256>::query_unreceived_packets(
+			&*self.para_client.rpc().client,
+			at.revision_height as u32,
+			channel_id.to_string(),
+			port_id.to_string(),
+			seqs,
+		)
+		.await?;
+		Ok(res)
+	}
+
+	async fn connection_whitelist(&self) -> Result<Vec<ConnectionId>, Self::Error> {
+		// Use all available connection on chain for now, better strategy later
+		let response =
+			IbcApiClient::<u32, H256>::query_connections(&*self.para_client.rpc().client).await?;
+		response
+			.connections
+			.map(|identified_conn| {
+				ConnectionId::from_str(identified_conn.id).map_err(|_| {
+					Error::Custom("Failed to convert string to conection id".to_string())
+				})
+			})
+			.collect::<Result<Vec<_>, _>>()
+	}
+
+	async fn query_connection_channels(
+		&self,
+		at: Height,
+		connection_id: &ConnectionId,
+	) -> Result<QueryChannelsResponse, Self::Error> {
+		let response = IbcApiClient::<u32, H256>::query_connection_channels(
+			&*self.para_client.rpc().client,
+			at.revision_height as u32,
+			connection_id.to_string(),
+		)
+		.await?;
+		Ok(response)
+	}
+
 	async fn latest_height_and_timestamp(&self) -> Result<(Height, Timestamp), Self::Error> {
 		let finalized_header = self
 			.para_client
@@ -387,6 +446,51 @@ where
 		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
 
 		Ok((height, Timestamp::from_nanoseconds(timestamp_nanos)?))
+	}
+
+	async fn query_recv_packets(
+		&self,
+		channel_id: ChannelId,
+		port_id: PortId,
+		seqs: Vec<u64>,
+	) -> Result<Vec<PacketInfo>, Self::Error> {
+		let response = IbcApiClient::<u32, H256>::query_recv_packets(
+			&*self.para_client.rpc().client,
+			channel_id.to_string(),
+			port_id.to_string(),
+			seqs,
+		)
+		.await?;
+		Ok(response)
+	}
+
+	async fn query_send_packets(
+		&self,
+		channel_id: ChannelId,
+		port_id: PortId,
+		seqs: Vec<u64>,
+	) -> Result<Vec<PacketInfo>, Self::Error> {
+		let response = IbcApiClient::<u32, H256>::query_send_packets(
+			&*self.para_client.rpc().client,
+			channel_id.to_string(),
+			port_id.to_string(),
+			seqs,
+		)
+		.await?;
+		Ok(response)
+	}
+
+	fn expected_block_time(&self) -> Duration {
+		// Parachains have an expected block time of 12 seconds
+		Duration::from_secs(12)
+	}
+
+	async fn query_client_update_time_and_height(
+		&self,
+		client_id: ClientId,
+		client_height: Height,
+	) -> Result<(Height, Timestamp), Self::Error> {
+		todo!()
 	}
 
 	async fn query_host_consensus_state_proof(

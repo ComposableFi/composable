@@ -159,7 +159,8 @@ where
 
 	// 50 blocks
 	timeout_height.revision_height += 50;
-	let timeout_timestamp = (timestamp + Duration::from_secs(60 * 60)).expect("Overflow evaluating timeout");
+	let timeout_timestamp =
+		(timestamp + Duration::from_secs(60 * 60)).expect("Overflow evaluating timeout");
 
 	let msg = MsgTransfer {
 		source_port: PortId::transfer(),

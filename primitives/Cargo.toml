@@ -11,6 +11,7 @@ async-trait = "0.1.53"
 hex = "0.4.3"
 codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
 thiserror = "1.0.31"
+anyhow = "1.0.58"
 
 # substrate
 sp-runtime = "6.0.0"
@@ -20,7 +21,7 @@ subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894
 # ibc
 ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "6e5daff0bc37553557751ef3781a1a89c8c781ba", features = ["ics11_beefy"] }
 ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "6e5daff0bc37553557751ef3781a1a89c8c781ba" }
-
+ibc-rpc = { git = "https://github.com/ComposableFi/composable", rev = "b21c6bcaf392eba166701af41807d724c7ad1475" }
 
 [features]
 testing = []
