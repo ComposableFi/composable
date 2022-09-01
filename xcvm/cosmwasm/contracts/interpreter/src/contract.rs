@@ -24,15 +24,15 @@ pub fn instantiate(
 	msg: InstantiateMsg,
 ) -> Result<Response, StdError> {
 	let registry_address = deps.api.addr_validate(&msg.registry_address)?;
-	let config = Config { registry_address };
+	let config =
+		Config { registry_address, network_id: msg.network_id, user_id: msg.user_id.clone() };
 	CONFIG.save(deps.storage, &config)?;
 
 	Ok(Response::new().add_event(
-		Event::new("xcvm.interpreter.instantiated")
-			.add_attribute(
-				"data",
-				to_binary(&(msg.network_id.0, msg.user_id))?.to_base64().as_str(),
-			),
+		Event::new("xcvm.interpreter.instantiated").add_attribute(
+			"data",
+			to_binary(&(msg.network_id.0, msg.user_id))?.to_base64().as_str(),
+		),
 	))
 }
 
@@ -60,19 +60,16 @@ pub fn interpret_program(
 		response = match instruction {
 			Instruction::Call { encoded } => interpret_call(encoded, response),
 			Instruction::Spawn { network, salt, assets, program } =>
-				interpret_spawn(network, salt, assets, program, response),
+				interpret_spawn(&deps, network, salt, assets, program, response),
 			Instruction::Transfer { to, assets } =>
 				interpret_transfer(&mut deps, to, assets, response),
 		}?;
 	}
 
-	Ok(response.add_event(
-		Event::new("xcvm.interpreter.executed")
-			.add_attribute(
-				"program",
-				core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
-			),
-	))
+	Ok(response.add_event(Event::new("xcvm.interpreter.executed").add_attribute(
+		"program",
+		core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
+	)))
 }
 
 pub fn interpret_call(encoded: Vec<u8>, response: Response) -> Result<Response, ContractError> {
@@ -83,6 +80,7 @@ pub fn interpret_call(encoded: Vec<u8>, response: Response) -> Result<Response, 
 }
 
 pub fn interpret_spawn(
+	deps: &DepsMut,
 	network: NetworkId,
 	salt: Vec<u8>,
 	assets: Funds,
@@ -99,11 +97,25 @@ pub fn interpret_spawn(
 
 	let data = SpawnEvent { network, salt, assets, program };
 
+	let config = CONFIG.load(deps.storage)?;
+
 	Ok(response.add_event(
-		Event::new("xcvm.interpreter.spawn").add_attribute(
-			"program",
-			serde_json_wasm::to_string(&data).map_err(|_| ContractError::DataSerializationError)?,
-		),
+		Event::new("xcvm.interpreter.spawn")
+			.add_attribute(
+				"origin_network_id",
+				serde_json_wasm::to_string(&config.network_id.0)
+					.map_err(|_| ContractError::DataSerializationError)?,
+			)
+			.add_attribute(
+				"origin_user_id",
+				serde_json_wasm::to_string(&config.user_id)
+					.map_err(|_| ContractError::DataSerializationError)?,
+			)
+			.add_attribute(
+				"program",
+				serde_json_wasm::to_string(&data)
+					.map_err(|_| ContractError::DataSerializationError)?,
+			),
 	))
 }
 
