@@ -17,7 +17,6 @@ fn can_update_market() {
 		let ((market_id, _), _) = create_simple_vaulted_market(BTC::instance(), manager);
 		// Get the market from the storage via market id
 		let market = crate::Markets::<Runtime>::get(market_id).unwrap();
-		println!("collateral factor: {:?}", market.collateral_factor);
 		let update_input = UpdateInput {
 			collateral_factor: market.collateral_factor,
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,

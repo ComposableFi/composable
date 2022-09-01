@@ -104,7 +104,7 @@ impl<T: Config> Pallet<T> {
 			UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 			UpdateInputValid,
 		>,
-	) -> DispatchResultWithPostInfo {
+	) -> Result<(), DispatchError> {
 		let input = input.value();
 		Markets::<T>::mutate(&market_id, |market| {
 			if let Some(market) = market {
@@ -122,8 +122,7 @@ impl<T: Config> Pallet<T> {
 				Err(Error::<T>::MarketDoesNotExist)
 			}
 		})?;
-		Self::deposit_event(Event::<T>::MarketUpdated { market_id, input });
-		Ok(().into())
+		Ok(())
 	}
 
 	/// Returns pair of market's id and market (as 'MarketConfing') via market's id

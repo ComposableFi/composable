@@ -75,7 +75,7 @@ impl<T: Config> Pallet<T> {
 	/// - `liquidator` : Liquidator's account id.
 	/// - `market_id` : Market index from which `borrowers` has taken borrow.
 	/// - `borrowers` : Vector of borrowers whose debts are going to be liquidated.
-	pub fn liquidate_internal(
+	pub fn do_liquidate(
 		liquidator: &<Self as DeFiEngine>::AccountId,
 		market_id: &<Self as Lending>::MarketId,
 		borrowers: BoundedVec<<Self as DeFiEngine>::AccountId, T::MaxLiquidationBatchSize>,

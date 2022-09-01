@@ -65,9 +65,10 @@ mod repay_borrow;
 
 #[frame_support::pallet]
 pub mod pallet {
+	
+    // ----------------------------------------------------------------------------------------------------
+	//                                      @Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
-	//                                       Imports and Dependencies
-	// ----------------------------------------------------------------------------------------------------о
 
 	pub(crate) use crate::types::MarketAssets;
 	pub use crate::types::{MarketId, MarketIdInner};
@@ -111,7 +112,7 @@ pub mod pallet {
 	use sp_std::{fmt::Debug, vec::Vec};
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                    Declaration Of The Pallet Type
+	//                                   @Declaration Of The Pallet Type
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::pallet]
@@ -120,7 +121,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                             Config Trait
+	//                                          @Config Trait
 	// ----------------------------------------------------------------------------------------------------
 
 	// Configure the pallet by specifying the parameters and types on which it depends.
@@ -231,7 +232,7 @@ pub mod pallet {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                             Pallet Types Aliases
+	//                                        @Pallet Types Aliases
 	// ----------------------------------------------------------------------------------------------------
 
 	/// Simple type alias around [`MarketConfig`] for this pallet.
@@ -250,14 +251,14 @@ pub mod pallet {
 	>;
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                             Pallet Constants
+	//                                      @Pallet Constants
 	// ----------------------------------------------------------------------------------------------------
 
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
 	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"lend");
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                           Runtime  Storage
+	//                                      @Runtime  Storage
 	// ----------------------------------------------------------------------------------------------------
 
 	/// Lending instances counter
@@ -355,7 +356,7 @@ pub mod pallet {
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                            Runtime Events
+	//                                       @Runtime Events
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::event]
@@ -392,7 +393,7 @@ pub mod pallet {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                           Runtime  Errors
+	//                                       @Runtime  Errors
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::error]
@@ -455,7 +456,7 @@ pub mod pallet {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                                Hooks
+	//                                           @Hooks
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::hooks]
@@ -487,7 +488,7 @@ pub mod pallet {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                         Genesis Configuration
+	//                                       @Genesis Configuration
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::genesis_config]
@@ -524,30 +525,41 @@ pub mod pallet {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                     Lending Trait Implementation
+	//                                 @Lending Trait Implementation
 	// ----------------------------------------------------------------------------------------------------
-	impl<T: Config> Lending for Pallet<T> {
+	
+    impl<T: Config> Lending for Pallet<T> {
 		type VaultId = T::VaultId;
 		type MarketId = MarketId;
 		type BlockNumber = T::BlockNumber;
 		type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
-		type Oracle = T::Oracle;
+    	type Oracle = T::Oracle;
+        type MaxLiquidationBatchSize = T::MaxLiquidationBatchSize;
 
 		fn create_market(
 			manager: Self::AccountId,
 			input: CreateInputOf<T>,
 			keep_alive: bool,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
-			Self::do_create_market(manager, input.try_into_validated()?, keep_alive)
+			let (market_id, vault_id) = Self::do_create_market(manager.clone(), input.clone().try_into_validated()?, keep_alive)?;
+    		Self::deposit_event(Event::<T>::MarketCreated {
+				market_id,
+				vault_id:vault_id.clone(),
+				manager: manager.clone(),
+				currency_pair: input.currency_pair,
+			});
+            Ok((market_id, vault_id))
 		}
 
 		fn update_market(
 			manager: Self::AccountId,
 			market_id: Self::MarketId,
 			input: UpdateInput<Self::LiquidationStrategyId, Self::BlockNumber>,
-		) -> DispatchResultWithPostInfo {
-			Self::do_update_market(manager, market_id, input.try_into_validated()?)
-		}
+		) -> Result<(), DispatchError> {
+			Self::do_update_market(manager, market_id, input.clone().try_into_validated()?)?;
+		    Self::deposit_event(Event::<T>::MarketUpdated { market_id, input });
+	        Ok(())	
+        }
 
 		fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
 			T::PalletId::get().into_sub_account_truncating(market_id)
@@ -564,16 +576,20 @@ pub mod pallet {
 				account,
 				amount.try_into_validated()?,
 				keep_alive,
-			)
-		}
+			)?;
+			Self::deposit_event(Event::<T>::CollateralDeposited { sender: account.clone(), market_id: market_id.clone(), amount });
+	        Ok(())	
+        }
 
 		fn withdraw_collateral(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			Self::do_withdraw_collateral(market_id, account, amount.try_into_validated()?)
-		}
+			Self::do_withdraw_collateral(market_id, account, amount.try_into_validated()?)?;
+			Self::deposit_event(Event::<T>::CollateralWithdrawn { sender: account.clone(), market_id: market_id.clone(), amount });
+	        Ok(())	
+        }
 
 		fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {
 			Self::do_get_markets_for_borrow(borrow)
@@ -584,8 +600,14 @@ pub mod pallet {
 			borrowing_account: &Self::AccountId,
 			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			Self::do_borrow(market_id, borrowing_account, amount_to_borrow)
-		}
+			Self::do_borrow(market_id, borrowing_account, amount_to_borrow)?;
+			Self::deposit_event(Event::<T>::Borrowed {
+				sender: borrowing_account.clone(),
+				market_id: market_id.clone(),
+				amount: amount_to_borrow,
+			});
+            Ok(())
+}
 
 		/// NOTE: Must be called in transaction!
 		fn repay_borrow(
@@ -595,8 +617,15 @@ pub mod pallet {
 			total_repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
 			keep_alive: bool,
 		) -> Result<BorrowAmountOf<Self>, DispatchError> {
-			Self::do_repay_borrow(market_id, from, beneficiary, total_repay_amount, keep_alive)
-		}
+			let amount = Self::do_repay_borrow(market_id, from, beneficiary, total_repay_amount, keep_alive)?;
+			Self::deposit_event(Event::<T>::BorrowRepaid {
+				sender: from.clone(),
+				market_id: market_id.clone(),
+				beneficiary: beneficiary.clone(),
+				amount,
+			});
+            Ok(amount)
+}
 
 		fn total_borrowed_from_market_excluding_interest(
 			market_id: &Self::MarketId,
@@ -655,9 +684,26 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			Self::do_get_borrow_limit(market_id, account)
 		}
-	}
+
+    	fn liquidate(
+		liquidator: &<Self as DeFiEngine>::AccountId,
+		market_id: &<Self as Lending>::MarketId,
+		borrowers: BoundedVec<<Self as DeFiEngine>::AccountId, Self::MaxLiquidationBatchSize>,
+	    ) -> Result<Vec<<Self as DeFiEngine>::AccountId>, DispatchError> {
+            let subjected_borrowers = Self::do_liquidate(liquidator, market_id, borrowers)?;
+    		// if at least one borrower was affected then liquidation been initiated
+			if !subjected_borrowers.is_empty() {
+				Self::deposit_event(Event::LiquidationInitiated {
+					market_id: market_id.clone(),
+					borrowers: subjected_borrowers.clone(),
+				});
+			}
+            Ok(subjected_borrowers)
+        }
+    }
+
 	// ----------------------------------------------------------------------------------------------------
-	//                                     Other Traits Implementations
+	//                                   @Other Traits Implementations
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
@@ -667,7 +713,7 @@ pub mod pallet {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                           Callable Functions
+	//                                      @Callable Functions
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::call]
@@ -686,15 +732,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let pair = input.currency_pair;
-			let (market_id, vault_id) =
-				<Self as Lending>::create_market(who.clone(), input, keep_alive)?;
-			Self::deposit_event(Event::<T>::MarketCreated {
-				market_id,
-				vault_id,
-				manager: who,
-				currency_pair: pair,
-			});
+			<Self as Lending>::create_market(who.clone(), input, keep_alive)?;
 			Ok(().into())
 		}
 
@@ -708,8 +746,9 @@ pub mod pallet {
 			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			<Self as Lending>::update_market(who, market_id, input)
-		}
+			<Self as Lending>::update_market(who, market_id, input)?;
+			Ok(().into())
+        }
 
 		/// Deposit collateral to market.
 		/// - `origin` : Sender of this extrinsic.
@@ -725,7 +764,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			<Self as Lending>::deposit_collateral(&market_id, &sender, amount, keep_alive)?;
-			Self::deposit_event(Event::<T>::CollateralDeposited { sender, market_id, amount });
 			Ok(().into())
 		}
 
@@ -742,7 +780,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			<Self as Lending>::withdraw_collateral(&market_id, &sender, amount)?;
-			Self::deposit_event(Event::<T>::CollateralWithdrawn { sender, market_id, amount });
 			Ok(().into())
 		}
 
@@ -759,11 +796,6 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			<Self as Lending>::borrow(&market_id, &sender, amount_to_borrow)?;
-			Self::deposit_event(Event::<T>::Borrowed {
-				sender,
-				market_id,
-				amount: amount_to_borrow,
-			});
 			Ok(().into())
 		}
 
@@ -787,19 +819,13 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let amount_repaid = <Self as Lending>::repay_borrow(
+			<Self as Lending>::repay_borrow(
 				&market_id,
 				&sender,
 				&beneficiary,
 				amount,
 				keep_alive,
 			)?;
-			Self::deposit_event(Event::<T>::BorrowRepaid {
-				sender,
-				market_id,
-				beneficiary,
-				amount: amount_repaid,
-			});
 			Ok(().into())
 		}
 
@@ -816,15 +842,8 @@ pub mod pallet {
 			borrowers: BoundedVec<T::AccountId, T::MaxLiquidationBatchSize>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;
-			let subjected_borrowers = Self::liquidate_internal(&sender, &market_id, borrowers)?;
-			// if at least one borrower was affected then liquidation been initiated
-			if !subjected_borrowers.is_empty() {
-				Self::deposit_event(Event::LiquidationInitiated {
-					market_id,
-					borrowers: subjected_borrowers,
-				});
-			}
-			Ok(().into())
+			<Self as Lending>::liquidate(&sender, &market_id, borrowers)?;
+		    Ok(().into())
 		}
 	}
 }

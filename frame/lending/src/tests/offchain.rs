@@ -44,16 +44,11 @@ fn test_liquidation_offchain_worker() {
 		assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, vault_value));
 
 		//test::block::process_and_progress_blocks::<Lending, Runtime>(1);
-		println!("start process block, vault_id: {:?} \n\n", vault_id);
-		println!("Markets configs: ");
 		crate::Markets::<Runtime>::iter().for_each(|x| println!("{:?}", x));
-		println!("\n\n");
 		crate::tests::process_and_progress_blocks::<Lending, Runtime>(1);
-		println!("block processing is finished \n\n");
 		// Deposit 1 BTC collateral from risky borrower account.
 		mint_and_deposit_collateral::<Runtime>(risky_borrower, BTC::units(1), market_id, BTC::ID);
 		// Risky borrower borrows 20_000 USDT.
-		println!("Borrow, i am here!");
 		borrow::<Runtime>(risky_borrower, market_id, USDT::units(20_000));
 		// Deposit 100 BTC collateral from reliable borrower account.
 		mint_and_deposit_collateral::<Runtime>(
