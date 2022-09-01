@@ -289,9 +289,8 @@ pub mod pallet {
 		WeightsMustBeNonZero,
 		WeightsMustSumToOne,
 		StakingPoolConfigError,
-		NoAvailableLPtokensForSingleAssetWithdraw,
 		NotEnoughLpTokenForSingleAssetWithdraw,
-		NoneValueInLpTokenForSingleAssetWithdraw,
+		LpTokenNotFoundForSingleAssetWithdrawal,
 	}
 
 	#[pallet::config]
@@ -602,7 +601,7 @@ pub mod pallet {
 			let who = ensure_signed(origin)?;
 			ensure!(
 				SingleAssetAccountsStorage::<T>::contains_key(&who, &pool_id),
-				Error::<T>::NoAvailableLPtokensForSingleAssetWithdraw
+				Error::<T>::LpTokenNotFoundForSingleAssetWithdrawal
 			);
 			<Self as Amm>::remove_liquidity_single_asset(&who, pool_id, lp_amount, min_amount)?;
 			Ok(())
@@ -1031,7 +1030,7 @@ pub mod pallet {
 										Ok(*amount)
 									},
 									None =>
-										Err(Error::<T>::NoneValueInLpTokenForSingleAssetWithdraw
+										Err(Error::<T>::LpTokenNotFoundForSingleAssetWithdrawal
 											.into()),
 								}
 							},
@@ -1069,7 +1068,7 @@ pub mod pallet {
 										Ok(*amount)
 									},
 									None =>
-										Err(Error::<T>::NoneValueInLpTokenForSingleAssetWithdraw
+										Err(Error::<T>::LpTokenNotFoundForSingleAssetWithdrawal
 											.into()),
 								}
 							},
