@@ -28,8 +28,7 @@ pub fn instantiate(
 	CONFIG.save(deps.storage, &config)?;
 
 	Ok(Response::new().add_event(
-		Event::new("xcvm.interpreter")
-			.add_attribute("action", "instantiated")
+		Event::new("xcvm.interpreter.instantiated")
 			.add_attribute(
 				"data",
 				to_binary(&(msg.network_id.0, msg.user_id))?.to_base64().as_str(),
@@ -68,8 +67,7 @@ pub fn interpret_program(
 	}
 
 	Ok(response.add_event(
-		Event::new("xcvm.interpreter")
-			.add_attribute("action", "executed")
+		Event::new("xcvm.interpreter.executed")
 			.add_attribute(
 				"program",
 				core::str::from_utf8(&program.tag).map_err(|_| ContractError::InvalidProgramTag)?,
@@ -102,7 +100,7 @@ pub fn interpret_spawn(
 	let data = SpawnEvent { network, salt, assets, program };
 
 	Ok(response.add_event(
-		Event::new("xcvm.interpreter").add_attribute("action", "spawn").add_attribute(
+		Event::new("xcvm.interpreter.spawn").add_attribute(
 			"program",
 			serde_json_wasm::to_string(&data).map_err(|_| ContractError::DataSerializationError)?,
 		),
@@ -320,6 +318,6 @@ mod tests {
 
 		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
 			.unwrap();
-		assert_eq!(res.events[0], Event::new("xcvm.interpreter").add_attribute("action", "spawn").add_attribute("program", r#"{"network":1,"salt":[],"assets":{},"program":{"tag":[],"instructions":[{"call":{"encoded":[]}}]}}"#.to_string()));
+		assert_eq!(res.events[0], Event::new("xcvm.interpreter.spawn").add_attribute("program", r#"{"network":1,"salt":[],"assets":{},"program":{"tag":[],"instructions":[{"call":{"encoded":[]}}]}}"#.to_string()));
 	}
 }
