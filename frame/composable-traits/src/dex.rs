@@ -120,8 +120,8 @@ pub trait Amm {
 
 	/// Update accounts deposited one asset storage.
 	///
-	/// `lp_amount` - amount of LP token to deposit/withdraw,
-	/// `action` - withdraw or deposit LP token.
+	/// - `lp_amount` - amount of LP token to deposit/withdraw,
+	/// - `action` - withdraw or deposit LP token.
 	fn update_accounts_deposited_one_asset_storage(
 		who: Self::AccountId,
 		pool_id: Self::PoolId,
