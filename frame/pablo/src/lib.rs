@@ -72,7 +72,7 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
 	use composable_traits::{
-		currency::{CurrencyFactory, LocalAssets},
+		currency::{CurrencyFactory, LocalAssets, RangeId},
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
@@ -263,6 +263,7 @@ pub mod pallet {
 		MissingMinExpectedAmount,
 		MoreThanTwoAssetsNotYetSupported,
 		NoLpTokenForLbp,
+		NoXTokenForLbp,
 		WeightsMustBeNonZero,
 		WeightsMustSumToOne,
 		StakingPoolConfigError,
@@ -351,20 +352,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type TWAPInterval: Get<MomentOf<Self>>;
 
-		type RewardPoolId: FullCodec
-			+ MaxEncodedLen
-			+ Default
-			+ Debug
-			+ TypeInfo
-			+ Eq
-			+ PartialEq
-			+ Ord
-			+ Copy
-			+ Zero
-			+ One
-			+ SafeArithmetic
-			+ From<u128>;
-
 		type MaxStakingRewardPools: Get<u32>;
 
 		type MaxRewardConfigsPerPool: Get<u32>;
@@ -378,23 +365,39 @@ pub mod pallet {
 			Balance = Self::Balance,
 			RewardConfigsLimit = Self::MaxRewardConfigsPerPool,
 			StakingDurationPresetsLimit = Self::MaxStakingDurationPresets,
-			RewardPoolId = Self::RewardPoolId,
+			RewardPoolId = Self::AssetId,
 		>;
 
 		type ProtocolStaking: ProtocolStaking<
 			AccountId = AccountIdOf<Self>,
 			AssetId = <Self as Config>::AssetId,
 			Balance = Self::Balance,
-			RewardPoolId = Self::RewardPoolId,
+			RewardPoolId = Self::AssetId,
 		>;
 
 		type WeightInfo: WeightInfo;
 
+		/// AssetId of the PICA asset
 		#[pallet::constant]
 		type PicaAssetId: Get<Self::AssetId>;
 
+		/// AssetId of the PBLO asset
 		#[pallet::constant]
 		type PbloAssetId: Get<Self::AssetId>;
+
+		/// AssetId of the xToken varient of PICA asset
+		#[pallet::constant]
+		type XPicaAssetId: Get<Self::AssetId>;
+
+		/// AssetId of the xToken varient of PBLO asset
+		#[pallet::constant]
+		type XPbloAssetId: Get<Self::AssetId>;
+
+		#[pallet::constant]
+		type PicaStakeFinancialNftCollectionId: Get<Self::AssetId>;
+
+		#[pallet::constant]
+		type PbloStakeFinancialNftCollectionId: Get<Self::AssetId>;
 
 		#[pallet::constant]
 		type MsPerBlock: Get<u32>;
@@ -676,6 +679,8 @@ pub mod pallet {
 				end_block,
 				reward_configs,
 				lock,
+				share_asset_id: Self::get_x_token_from_pool(*pool_id)?,
+				financial_nft_asset_id: Self::get_financial_nft_from_pool(*pool_id)?,
 			})
 		}
 
@@ -823,12 +828,50 @@ pub mod pallet {
 			if !fees.protocol_fee.is_zero() {
 				T::ProtocolStaking::transfer_reward(
 					who,
-					&T::RewardPoolId::from(T::PbloAssetId::get().into()),
+					&T::PbloAssetId::get(),
 					fees.asset_id,
 					fees.protocol_fee,
 				)?;
 			}
 			Ok(())
+		}
+
+		fn get_x_token_from_pool(pool_id: T::PoolId) -> Result<T::AssetId, DispatchError> {
+			// Get token asset ID from pool ID
+			let pool = Self::get_pool(pool_id)?;
+			let token_id = match pool {
+				PoolConfiguration::StableSwap(info) => info.lp_token,
+				PoolConfiguration::ConstantProduct(info) => info.lp_token,
+				// REVIEW: Throw error for LBP trying to get xTokens?
+				PoolConfiguration::LiquidityBootstrapping(_) =>
+					return Err(Error::<T>::NoXTokenForLbp.into()),
+			};
+
+			// Match token asset ID with xToken asset ID
+			match token_id {
+				x if x == T::PicaAssetId::get() => Ok(T::XPicaAssetId::get()),
+				x if x == T::PbloAssetId::get() => Ok(T::XPbloAssetId::get()),
+				_ => Ok(T::CurrencyFactory::create(RangeId::XTOKEN_ASSETS, T::Balance::default())?),
+			}
+		}
+
+		fn get_financial_nft_from_pool(pool_id: T::PoolId) -> Result<T::AssetId, DispatchError> {
+			// Get token asset ID from pool ID
+			let pool = Self::get_pool(pool_id)?;
+			let token_id = match pool {
+				PoolConfiguration::StableSwap(info) => info.lp_token,
+				PoolConfiguration::ConstantProduct(info) => info.lp_token,
+				// REVIEW: Throw error for LBP trying to get xTokens?
+				PoolConfiguration::LiquidityBootstrapping(_) =>
+					return Err(Error::<T>::NoXTokenForLbp.into()),
+			};
+
+			// Match token asset ID with fNFT asset ID
+			match token_id {
+				x if x == T::PicaAssetId::get() => Ok(T::PicaStakeFinancialNftCollectionId::get()),
+				x if x == T::PbloAssetId::get() => Ok(T::PbloStakeFinancialNftCollectionId::get()),
+				_ => Ok(T::CurrencyFactory::create(RangeId::FNFT_ASSETS, T::Balance::default())?),
+			}
 		}
 	}
 
