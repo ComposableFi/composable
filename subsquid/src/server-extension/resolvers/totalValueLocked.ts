@@ -9,7 +9,7 @@ import {
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import { IsDateString, Min } from "class-validator";
-import { PicassoStakingPosition } from "../../model";
+import { HistoricalLockedValue } from "../../model";
 import { getTimelineParams } from "./common";
 
 @ObjectType()
@@ -45,7 +45,7 @@ export class TotalValueLockedResolver {
   constructor(private tx: () => Promise<EntityManager>) {}
 
   @Query(() => [TotalValueLocked])
-  async picassoTotalValueLocked(
+  async totalValueLocked(
     @Arg("params", { validate: true }) input: TotalValueLockedInput
   ): Promise<TotalValueLocked[]> {
     const { intervalMinutes, dateFrom, dateTo } = input;
@@ -60,11 +60,11 @@ export class TotalValueLockedResolver {
     const rows: {
       period: string;
       total_value_locked: string;
-    }[] = await manager.getRepository(PicassoStakingPosition).query(
+    }[] = await manager.getRepository(HistoricalLockedValue).query(
       `
             SELECT
               round(timestamp / $1) * $1 as period,
-              sum(amount) as total_value_locked,
+              max(amount) as total_value_locked
             FROM historical_locked_value
             WHERE ${where.join(" AND ")}
             GROUP BY period

@@ -7,12 +7,7 @@ import {
   ResolverInterface,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import {
-  Transaction,
-  Account,
-  Activity,
-  PicassoStakingPosition,
-} from "../../model";
+import { Transaction, Account, Activity, StakingPosition } from "../../model";
 
 @ObjectType()
 export class OverviewStats {
@@ -43,17 +38,18 @@ export class OverviewStatsResolver implements ResolverInterface<OverviewStats> {
 
     const manager = await this.tx();
 
-    let picassoStakingPositions: { id: string; amount: number }[] =
-      await manager.getRepository(PicassoStakingPosition).query(
+    let stakingPositions: { id: string; amount: number }[] = await manager
+      .getRepository(StakingPosition)
+      .query(
         `
         SELECT
           id, amount
-        FROM picasso_staking_position
+        FROM staking_position
         WHERE end_timestamp > ${now}
       `
       );
 
-    const lockedValue = picassoStakingPositions.reduce(
+    const lockedValue = stakingPositions.reduce(
       (acc, { amount }) => acc + BigInt(amount),
       0n
     );

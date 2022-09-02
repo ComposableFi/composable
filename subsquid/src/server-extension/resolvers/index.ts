@@ -1,7 +1,7 @@
 import { ActiveUsersResolver } from "./activeUsers";
 import { OverviewStatsResolver } from "./overviewStats";
 import { AssetsResolver } from "./assets";
-import { TotalValueLockedResolver } from "./picassoTotalValueLocked";
+import { TotalValueLockedResolver } from "./totalValueLocked";
 
 export {
   ActiveUsersResolver,

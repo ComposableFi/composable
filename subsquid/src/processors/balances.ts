@@ -5,7 +5,7 @@ import {
   BalancesWithdrawEvent,
 } from "../types/events";
 import { encodeAccount } from "../utils";
-import { saveAccountAndTransaction } from "../dbHelper";
+import { mockData, saveAccountAndTransaction } from "../dbHelper";
 import { TransactionType } from "../model";
 
 interface TransferEvent {
@@ -55,6 +55,8 @@ export async function processTransferEvent(
   const transferEvent = getTransferEvent(event);
   const from = encodeAccount(transferEvent.from);
   const to = encodeAccount(transferEvent.to);
+
+  await mockData(ctx);
 
   await saveAccountAndTransaction(ctx, TransactionType.BALANCES_TRANSFER, [
     from,

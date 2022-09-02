@@ -11,6 +11,7 @@ import {
   TransactionType,
 } from "./model";
 import { BOB } from "./utils";
+import { createStakingPosition } from "./processors/stakingRewards";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -271,5 +272,47 @@ export async function getLastLockedValue(
 }
 
 export async function mockData(ctx: EventHandlerContext) {
+  // const stakingPosition1 = createStakingPosition(
+  //   "1",
+  //   "1",
+  //   BOB,
+  //   10n,
+  //   10n,
+  //   "event-1",
+  //   "transaction-1"
+  // );
+  // const stakingPosition2 = createStakingPosition(
+  //   "2",
+  //   "1",
+  //   BOB,
+  //   15n,
+  //   10n,
+  //   "event-2",
+  //   "transaction-2"
+  // );
+  // const stakingPosition3 = createStakingPosition(
+  //   "3",
+  //   "2",
+  //   BOB,
+  //   50n,
+  //   100n,
+  //   "event-3",
+  //   "transaction-3"
+  // );
+  //
+  // await ctx.store.save(stakingPosition1);
+  // await ctx.store.save(stakingPosition2);
+  // await ctx.store.save(stakingPosition3);
+
+  for (let i = 0; i < 3; i += 1) {
+    const lastLockedValue = await getLastLockedValue(ctx);
+    const historicalLockedValue = new HistoricalLockedValue({
+      id: randomUUID(),
+      eventId: "1",
+      amount: lastLockedValue + 10n,
+      timestamp: BigInt(new Date().valueOf()),
+    });
+    await ctx.store.save(historicalLockedValue);
+  }
   // await ctx.store.save(StakingPosition);
 }
