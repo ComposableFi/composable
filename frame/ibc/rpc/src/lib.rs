@@ -96,9 +96,9 @@ pub enum BlockNumberOrHash<Hash> {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct HeightAndTimestamp {
 	/// Height
-	height: Height,
+	pub height: Height,
 	/// Timestamp nanso seconds
-	timestamp: u64,
+	pub timestamp: u64,
 }
 
 impl<Hash: std::fmt::Debug> Display for BlockNumberOrHash<Hash> {
