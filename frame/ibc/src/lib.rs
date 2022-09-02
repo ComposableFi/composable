@@ -55,7 +55,7 @@ mod ics23;
 mod port;
 pub mod routing;
 mod state_machine;
-
+pub use client::HostConsensusProof;
 pub const IBC_DIGEST_ID: [u8; 4] = *b"/IBC";
 pub const MODULE_ID: &str = "pallet_ibc";
 
@@ -68,23 +68,6 @@ pub struct Any {
 impl From<ibc_proto::google::protobuf::Any> for Any {
 	fn from(any: ibc_proto::google::protobuf::Any) -> Self {
 		Self { type_url: any.type_url.as_bytes().to_vec(), value: any.value }
-	}
-}
-
-#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
-/// Ibc consensus state values
-pub struct IbcConsensusState {
-	/// Timestamp at which this state root was generated in nanoseconds
-	pub timestamp: u64,
-	/// IBC Commitment root
-	pub commitment_root: Vec<u8>,
-}
-
-impl Default for IbcConsensusState {
-	// Using a default value of 1 for timestamp because using 0 will generate an
-	// error when converting to an ibc::Timestamp in tests and benchmarks
-	fn default() -> Self {
-		Self { timestamp: 1, commitment_root: vec![] }
 	}
 }
 
@@ -182,15 +165,15 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	pub use ibc::signer::Signer;
 
-	use ibc::timestamp::Timestamp;
 	use ibc::{
-		Height,
 		applications::transfer::{
 			is_sender_chain_source, msgs::transfer::MsgTransfer, Amount, PrefixedCoin,
 			PrefixedDenom,
 		},
 		clients::ics11_beefy::client_state::RelayChain,
 		core::ics24_host::identifier::{ChannelId, PortId},
+		timestamp::Timestamp,
+		Height,
 	};
 	use ibc_primitives::{
 		get_channel_escrow_address,
@@ -401,13 +384,6 @@ pub mod pallet {
 	/// Active Escrow addresses
 	pub type EscrowAddresses<T: Config> = StorageValue<_, BTreeSet<T::AccountId>, ValueQuery>;
 
-	// temporary until offchain indexing is fixed
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
-	/// (ChannelId, PortId) => BTreeSet<u64>
-	pub type UndeliveredSequences<T: Config> =
-		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>), BTreeSet<u64>, ValueQuery>;
-
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -508,6 +484,8 @@ pub mod pallet {
 		ChannelEscrowAddress,
 		/// Error writing acknowledgement to storage
 		WriteAckError,
+		/// Client update time and height not found
+		ClientUpdateNotFound,
 	}
 
 	#[pallet::hooks]

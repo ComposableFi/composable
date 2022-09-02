@@ -1,4 +1,7 @@
-use crate::{mock::*, routing::Context, Any, Config, MultiAddress, Pallet, PalletParams, TransferParams, MODULE_ID, Timeout};
+use crate::{
+	mock::*, routing::Context, Any, Config, MultiAddress, Pallet, PalletParams, Timeout,
+	TransferParams, MODULE_ID,
+};
 use core::time::Duration;
 use frame_support::{assert_ok, traits::fungibles::Mutate};
 use ibc::{

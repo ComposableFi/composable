@@ -272,18 +272,6 @@ where
 		commitment: PacketCommitmentType,
 	) -> Result<(), ICS04Error> {
 		log::trace!(target: "pallet_ibc", "in channel : [store_packet_commitment] >> packet_commitment = {:#?}", commitment);
-		UndeliveredSequences::<T>::try_mutate::<_, _, (), _>(
-			(key.1.to_string().as_bytes(), key.0.as_bytes()),
-			|seqs| {
-				seqs.insert(key.2.into());
-				Ok(())
-			},
-		)
-		.map_err(|_| {
-			ICS04Error::implementation_specific(
-				"Errored while storing packet commitment".to_string(),
-			)
-		})?;
 		<PacketCommitment<T>>::insert((key.0.clone(), key.1, key.2), commitment);
 		if let Some(val) = PacketCounter::<T>::get().checked_add(1) {
 			PacketCounter::<T>::put(val);
@@ -341,19 +329,6 @@ where
 		key: (PortId, ChannelId, Sequence),
 	) -> Result<(), ICS04Error> {
 		// delete packet commitment
-		UndeliveredSequences::<T>::try_mutate::<_, _, (), _>(
-			(key.1.to_string().as_bytes(), key.0.as_bytes()),
-			|seqs| {
-				let seq: u64 = key.2.into();
-				seqs.remove(&seq);
-				Ok(())
-			},
-		)
-		.map_err(|_| {
-			ICS04Error::implementation_specific(
-				"Errored while deleting packet commitment".to_string(),
-			)
-		})?;
 		<PacketCommitment<T>>::remove((key.0.clone(), key.1, key.2));
 
 		if let Some(val) = PacketCounter::<T>::get().checked_sub(1) {
