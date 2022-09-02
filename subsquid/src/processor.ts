@@ -53,7 +53,7 @@ const archive = (): string => {
     return process.env.SUBSQUID_ARCHIVE_URI!.toString();
   }
 
-  return "http://127.0.0.1:8080/v1/graphql";
+  return "http://127.0.0.1:8888/graphql";
 };
 
 const chainConnectionString = chain();
@@ -68,32 +68,32 @@ processor.setDataSource({
   chain: chainConnectionString,
 });
 
-processor.addEventHandler("pablo.PoolCreated", async (ctx) => {
+processor.addEventHandler("Pablo.PoolCreated", async (ctx) => {
   const event = new PabloPoolCreatedEvent(ctx);
   await processPoolCreatedEvent(ctx, event);
 });
 
-processor.addEventHandler("pablo.PoolDeleted", async (ctx) => {
+processor.addEventHandler("Pablo.PoolDeleted", async (ctx) => {
   const event = new PabloPoolDeletedEvent(ctx);
   await processPoolDeletedEvent(ctx, event);
 });
 
-processor.addEventHandler("pablo.LiquidityAdded", async (ctx) => {
+processor.addEventHandler("Pablo.LiquidityAdded", async (ctx) => {
   const event = new PabloLiquidityAddedEvent(ctx);
   await processLiquidityAddedEvent(ctx, event);
 });
 
-processor.addEventHandler("pablo.LiquidityRemoved", async (ctx) => {
+processor.addEventHandler("Pablo.LiquidityRemoved", async (ctx) => {
   const event = new PabloLiquidityRemovedEvent(ctx);
   await processLiquidityRemovedEvent(ctx, event);
 });
 
-processor.addEventHandler("pablo.Swapped", async (ctx) => {
+processor.addEventHandler("Pablo.Swapped", async (ctx) => {
   const event = new PabloSwappedEvent(ctx);
   await processSwappedEvent(ctx, event);
 });
 
-processor.addEventHandler("balances.Transfer", async (ctx) => {
+processor.addEventHandler("Balances.Transfer", async (ctx) => {
   const transfer = getTransferEvent(ctx);
   const tip = ctx.event.extrinsic?.tip || 0n;
   const from = ss58.codec("picasso").encode(transfer.from);
@@ -129,19 +129,19 @@ processor.addEventHandler("balances.Transfer", async (ctx) => {
   );
 });
 
-processor.addEventHandler("bondedFinance.NewOffer", async (ctx) => {
+processor.addEventHandler("BondedFinance.NewOffer", async (ctx) => {
   const event = new BondedFinanceNewOfferEvent(ctx);
 
   await processNewOfferEvent(ctx, event);
 });
 
-processor.addEventHandler("bondedFinance.NewBond", async (ctx) => {
+processor.addEventHandler("BondedFinance.NewBond", async (ctx) => {
   const event = new BondedFinanceNewBondEvent(ctx);
 
   await processNewBondEvent(ctx, event);
 });
 
-processor.addEventHandler("vesting.VestingScheduleAdded", async (ctx) => {
+processor.addEventHandler("Vesting.VestingScheduleAdded", async (ctx) => {
   const event = new VestingVestingScheduleAddedEvent(ctx);
 
   await processVestingScheduleAddedEvent(ctx, event);
@@ -157,5 +157,5 @@ interface TransferEvent {
 
 function getTransferEvent(ctx: EventHandlerContext<Store, { event: true }>) {
   const event = new BalancesTransferEvent(ctx);
-  return event.asV2401 ?? event.asLatest;
+  return event.asV2401;
 }

@@ -20,7 +20,7 @@ interface VestingScheduleAddedEvent {
 function getVestingScheduleAddedEvent(
   event: VestingVestingScheduleAddedEvent
 ): VestingScheduleAddedEvent {
-  return event.asV2401 ?? event.asLatest;
+  return event.asV2401;
 }
 
 /**

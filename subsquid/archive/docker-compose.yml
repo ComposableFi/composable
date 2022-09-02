@@ -1,85 +1,56 @@
-version: "3.4"
-
 services:
   db:
-    image: postgres:12
+    image: postgres:14  # CockroachDB cluster might be a better fit for production deployment
     restart: always
     volumes:
       - /var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: squid-archive
 
-  indexer:
-    image: subsquid/hydra-indexer:5
-    restart: unless-stopped
-    environment:
-      - WORKERS_NUMBER=5
-      - DB_NAME=indexer
-      - DB_HOST=db
-      - DB_USER=postgres
-      - DB_PASS=postgres
-      - DB_PORT=5432
-      - REDIS_URI=redis://redis:6379/0
-      - FORCE_HEIGHT=true # starting block height
-      # - WS_PROVIDER_ENDPOINT_URI=wss://kusama-rpc.polkadot.io/
-      # - WS_PROVIDER_ENDPOINT_URI=wss://127.0.0.1:9988
-      # - WS_PROVIDER_ENDPOINT_URI=wss://dali.devnets.composablefinance.ninja/parachain/alice
-      - WS_PROVIDER_ENDPOINT_URI=ws://host.docker.internal:9988
-    # # If your chain uses custom types you need to provide those
-    # # as detailed here - https://polkadot.js.org/docs/api/start/types.extend
-    # #
-    # # Json files below are passed verbatim to ApiPromise.create() from @polkadot/api.
-    # # Use any combination of those (defined in .env) file 
-    #
-    #   - TYPES_JSON=types.json
-    #   - TYPES_ALIAS=typesAlias.json
-    #   - SPEC_TYPES=typesSpec.json
-    #   - CHAIN_TYPES=typesChain.json
-    #   - BUNDLE_TYPES=typesBundle.json
-    #
-    # volumes:
-    #   - ./types.json:/configs/types.json
-    #   - ./typesAlias.json:/configs/typesAlias.json
-    #   - ./typesSpec.json:/configs/typesSpec.json
-    #   - ./typesChain.json:/configs/typesChain.json
-    #   - ./typesBundle.json:/configs/typesBundle.json
-
+  ingest:
     depends_on:
       - db
-      - redis
-    command: >
-      sh -c "yarn db:bootstrap && yarn start:prod"
-  indexer-gateway:
-    image: subsquid/hydra-indexer-gateway:5
-    restart: unless-stopped
+    restart: on-failure
+    image: subsquid/substrate-ingest:firesquid
+    command: [
+      # polkadot endpoints -- replace with your wss
+      "-e", "ws://host.docker.internal:9988",
+      "-c", "10", # allow up to 20 pending requests for the above endpoint (default is 5)
+      #  "--start-block", "1000000", # uncomment to specify a non-zero start block
+      "--prom-port", "9090",
+      "--out", "postgres://postgres:postgres@db:5432/squid-archive"
+    ]
+    ports:
+      - "9090:9090" # prometheus port
+
+  gateway:
     depends_on:
-      - redis
       - db
-      - indexer-status-service
-      - indexer
-    ports:
-      - "4010:8080"
+    image: subsquid/substrate-gateway:firesquid
     environment:
-      - DEV_MODE=true
-      - DB_NAME=indexer
-      - DB_HOST=db
-      - DB_USER=postgres
-      - DB_PASS=postgres
-      - DB_PORT=5432
-      - HYDRA_INDEXER_STATUS_SERVICE=http://indexer-status-service:8081/status
-
-  indexer-status-service:
-    image: subsquid/hydra-indexer-status-service:4
-    restart: unless-stopped
-    depends_on:
-      - redis
-    environment:
-      REDIS_URI: redis://redis:6379/0
-      PORT: 8081
-
-  redis:
-    image: redis:6.0-alpine
-    restart: always
+      RUST_LOG: "substrate_gateway=info,actix_server=info"
+    command: [
+      "--database-url", "postgres://postgres:postgres@db:5432/squid-archive",
+      "--database-max-connections", "3", # max number of concurrent database connections
+      # "--evm-support" # uncomment for chains with Frontier EVM pallet
+      # (e.g. Moonbeam/Moonriver or Astar/Shiden)
+    ]
     ports:
-      - "6379"
+      - "8888:8000"
+
+  # Explorer service is optional.
+  # It provides rich GraphQL API for querying archived data.
+  # Many developers find it very useful for exploration and debugging.
+  explorer:
+    image: subsquid/substrate-explorer:firesquid
+    environment:
+      DB_TYPE: postgres # set to `cockroach` for Cockroach DB
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: "squid-archive"
+      DB_USER: "postgres"
+      DB_PASS: "postgres"
+    ports:
+      - "4010:3000"
