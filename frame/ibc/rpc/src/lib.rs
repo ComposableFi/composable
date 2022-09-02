@@ -308,7 +308,7 @@ where
 	/// chain. This method should then return the list of packet sequences that
 	/// are yet to be received on this chain.
 	/// NOTE: WORKS ONLY FOR UNORDERED CHANNELS
-	/// QUERIER IS RESPONSIBLE FOR PROVIDING A CORRECT LIST OF PACKET COMMITMENT
+	/// CALLER IS RESPONSIBLE FOR PROVIDING A CORRECT LIST OF PACKET COMMITMENT
 	/// SEQUENCES FROM COUNTERPARTY.
 	#[method(name = "ibc_queryUnreceivedPackets")]
 	fn query_unreceived_packets(
@@ -328,7 +328,7 @@ where
 	/// this chain. This method should then return the list of packet acks that
 	/// are yet to be received on this chain.
 	/// NOTE: WORKS ONLY FOR UNORDERED CHANNELS
-	/// QUERIER IS RESPONSIBLE FOR PROVIDING A CORRECT LIST OF PACKET ACKNOWLEDGEMENT
+	/// CALLER IS RESPONSIBLE FOR PROVIDING A CORRECT LIST OF PACKET ACKNOWLEDGEMENT
 	/// SEQUENCES FROM COUNTERPARTY.
 	#[method(name = "ibc_queryUnreceivedAcknowledgement")]
 	fn query_unreceived_acknowledgements(
