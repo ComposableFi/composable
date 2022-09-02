@@ -120,6 +120,8 @@ TGE # Token Generation Events
 TGEs
 tradfi
 BYOG
+XPICA
+XTOKEN
 
 prehashed
 unhashed

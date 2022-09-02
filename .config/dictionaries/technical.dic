@@ -214,6 +214,7 @@ libp2p
 drawio
 clickup
 immer
+miniserve
 
 # systemctl
 FSIZE

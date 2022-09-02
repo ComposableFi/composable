@@ -385,11 +385,11 @@ pub mod pallet {
 		#[pallet::constant]
 		type PbloAssetId: Get<Self::AssetId>;
 
-		/// AssetId of the xToken varient of PICA asset
+		/// AssetId of the xToken variant of PICA asset
 		#[pallet::constant]
 		type XPicaAssetId: Get<Self::AssetId>;
 
-		/// AssetId of the xToken varient of PBLO asset
+		/// AssetId of the xToken variant of PBLO asset
 		#[pallet::constant]
 		type XPbloAssetId: Get<Self::AssetId>;
 
