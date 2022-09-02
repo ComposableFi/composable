@@ -96,7 +96,23 @@
         "type": "github"
       }
     },
-    "nix-npm-buildpackage": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1660196186,
+        "narHash": "sha256-A7GzG9HA7MJs/OQlg5F0jeHCv91PeQVTwjznVgYK2sM=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "aaa1c973c8c189195e1b1a702d3b74dbcde91538",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "npm-buildpackage": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
@@ -116,30 +132,14 @@
         "type": "github"
       }
     },
-    "nixpkgs": {
-      "locked": {
-        "lastModified": 1660196186,
-        "narHash": "sha256-A7GzG9HA7MJs/OQlg5F0jeHCv91PeQVTwjznVgYK2sM=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "aaa1c973c8c189195e1b1a702d3b74dbcde91538",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "arion-src": "arion-src",
         "crane": "crane",
         "flake-utils": "flake-utils",
         "home-manager": "home-manager",
-        "nix-npm-buildpackage": "nix-npm-buildpackage",
         "nixpkgs": "nixpkgs",
+        "npm-buildpackage": "npm-buildpackage",
         "rust-overlay": "rust-overlay"
       }
     },
