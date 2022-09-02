@@ -309,7 +309,7 @@ where
 	/// are yet to be received on this chain.
 	/// NOTE: WORKS ONLY FOR UNORDERED CHANNELS
 	/// QUERIER IS RESPONSIBLE FOR PROVIDING A CORRECT LIST OF PACKET COMMITMENT
-	/// SEQUENCES.
+	/// SEQUENCES FROM COUNTERPARTY.
 	#[method(name = "ibc_queryUnreceivedPackets")]
 	fn query_unreceived_packets(
 		&self,
@@ -329,7 +329,7 @@ where
 	/// are yet to be received on this chain.
 	/// NOTE: WORKS ONLY FOR UNORDERED CHANNELS
 	/// QUERIER IS RESPONSIBLE FOR PROVIDING A CORRECT LIST OF PACKET ACKNOWLEDGEMENT
-	/// SEQUENCES FROM SENDING CHAIN.
+	/// SEQUENCES FROM COUNTERPARTY.
 	#[method(name = "ibc_queryUnreceivedAcknowledgement")]
 	fn query_unreceived_acknowledgements(
 		&self,
