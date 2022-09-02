@@ -92,13 +92,13 @@ nix run ".#devnet-dali"
 ```
 
 ### Nix within Docker
-
-Do you not feel like installing `nix`? You can also use `nix` within `docker` like this:
+Are you on macOS, or do you not have [Nix](https://nixos.org/) installed? No worries, you can also run these commands in Docker like this:
+_(you only need to run the first command once on your machine)_
 
 ```bash
-docker volume create nix # cache builds
+docker volume create nix 
 
-docker run -v nix:/nix -p 9988:9988 -it nixos/nix bash -c "nix run github:ComposableFi/composable#devnet-dali --extra-experimental-features nix-command --extra-experimental-features flakes"
+docker run --privileged --rm -v nix:/nix  -v /var/run/docker.sock:/var/run/docker.sock -it nixos/nix bash -c "nix run github:ComposableFi/composable#devnet-xcvm-up -L --option cores 8 --extra-experimental-features nix-command --extra-experimental-features flakes"
 ```
 
 
