@@ -99,6 +99,7 @@ export function createRewardPool(
  * @param duration
  * @param eventId
  * @param transactionId
+ * @param startTimestamp
  */
 export function createStakingPosition(
   positionId: string,
@@ -107,9 +108,9 @@ export function createStakingPosition(
   amount: bigint,
   duration: bigint,
   eventId: string,
-  transactionId: string
+  transactionId: string,
+  startTimestamp: bigint
 ): StakingPosition {
-  const startTimestamp = BigInt(new Date().valueOf());
   return new StakingPosition({
     id: randomUUID(),
     eventId,
@@ -233,7 +234,8 @@ export async function processStakedEvent(
     amount,
     durationPreset,
     ctx.event.id,
-    transactionId
+    transactionId,
+    BigInt(ctx.block.timestamp)
   );
 
   await storeHistoricalLockedValue(ctx, amount, ctx.event.id, assetId);

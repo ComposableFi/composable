@@ -221,7 +221,7 @@ export async function storeHistoricalLockedValue(
     id: randomUUID(),
     eventId,
     amount: lastLockedValue + amountLocked * assetPrice,
-    timestamp: BigInt(new Date().valueOf()),
+    timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
   });
 
   await ctx.store.save(historicalLockedValue);
@@ -272,37 +272,40 @@ export async function getLastLockedValue(
 }
 
 export async function mockData(ctx: EventHandlerContext) {
-  // const stakingPosition1 = createStakingPosition(
-  //   "1",
-  //   "1",
-  //   BOB,
-  //   10n,
-  //   10n,
-  //   "event-1",
-  //   "transaction-1"
-  // );
-  // const stakingPosition2 = createStakingPosition(
-  //   "2",
-  //   "1",
-  //   BOB,
-  //   15n,
-  //   10n,
-  //   "event-2",
-  //   "transaction-2"
-  // );
-  // const stakingPosition3 = createStakingPosition(
-  //   "3",
-  //   "2",
-  //   BOB,
-  //   50n,
-  //   100n,
-  //   "event-3",
-  //   "transaction-3"
-  // );
-  //
-  // await ctx.store.save(stakingPosition1);
-  // await ctx.store.save(stakingPosition2);
-  // await ctx.store.save(stakingPosition3);
+  const stakingPosition1 = createStakingPosition(
+    "1",
+    "1",
+    BOB,
+    10n,
+    10n,
+    "event-1",
+    "transaction-1",
+    BigInt(new Date().valueOf())
+  );
+  const stakingPosition2 = createStakingPosition(
+    "2",
+    "1",
+    BOB,
+    15n,
+    10n,
+    "event-2",
+    "transaction-2",
+    BigInt(new Date().valueOf())
+  );
+  const stakingPosition3 = createStakingPosition(
+    "3",
+    "2",
+    BOB,
+    50n,
+    100n,
+    "event-3",
+    "transaction-3",
+    BigInt(new Date().valueOf())
+  );
+
+  await ctx.store.save(stakingPosition1);
+  await ctx.store.save(stakingPosition2);
+  await ctx.store.save(stakingPosition3);
 
   for (let i = 0; i < 3; i += 1) {
     const lastLockedValue = await getLastLockedValue(ctx);
@@ -310,7 +313,7 @@ export async function mockData(ctx: EventHandlerContext) {
       id: randomUUID(),
       eventId: "1",
       amount: lastLockedValue + 10n,
-      timestamp: BigInt(new Date().valueOf()),
+      timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
     });
     await ctx.store.save(historicalLockedValue);
   }

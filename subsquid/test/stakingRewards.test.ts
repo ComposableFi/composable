@@ -68,7 +68,8 @@ describe("Staking rewards", () => {
       123n,
       10n,
       "event-id",
-      "transaction-id"
+      "transaction-id",
+      1662133770000n
     );
 
     assertStakingPosition(
@@ -91,7 +92,8 @@ describe("Staking rewards", () => {
       123n,
       10n,
       "event-id",
-      "transaction-id"
+      "transaction-id",
+      1662133770000n
     );
     const newPosition = splitStakingPosition(
       position,
@@ -132,7 +134,8 @@ describe("Staking rewards", () => {
       123n,
       10n,
       "event-id",
-      "transaction-id"
+      "transaction-id",
+      1662133770000n
     );
     extendStakingPosition(position, 150n, "new-event-id", "new-transaction-id");
 
