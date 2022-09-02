@@ -158,6 +158,13 @@ pub trait IbcProvider {
 		port_id: PortId,
 	) -> Result<Vec<u64>, Self::Error>;
 
+	async fn query_packet_acknowledgements(
+		&self,
+		at: Height,
+		channel_id: ChannelId,
+		port_id: PortId,
+	) -> Result<Vec<u64>, Self::Error>;
+
 	/// Given a list of counterparty packet commitments, the querier checks if the packet
 	/// has already been received by checking if a receipt exists on this
 	/// chain for the packet sequence. All packets that haven't been received yet
@@ -187,7 +194,7 @@ pub trait IbcProvider {
 	) -> Result<Vec<u64>, Self::Error>;
 
 	/// Connection whitelist
-	async fn connection_whitelist(&self) -> Result<Vec<ConnectionId>, Self::Error>;
+	async fn channel_whitelist(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error>;
 
 	/// Query all channels for a connection
 	async fn query_connection_channels(

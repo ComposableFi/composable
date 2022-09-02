@@ -467,9 +467,8 @@ pub async fn parse_events(
 	}
 
 	// 2. Get timeouts that are ready to be processed
-	// Not tested yet
-	// let timeout_messages = get_timed_out_packets_messages(source, sink).await?;
-	// messages.extend(timeout_messages);
+	let timeout_messages = get_timed_out_packets_messages(source, sink).await?;
+	messages.extend(timeout_messages);
 
 	// 3. insert update client message at first index
 	{

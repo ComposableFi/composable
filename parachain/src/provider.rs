@@ -358,10 +358,29 @@ where
 			at.revision_height as u32,
 			channel_id.to_string(),
 			port_id.to_string(),
-			seqs,
 		)
 		.await?;
 		Ok(res.commitments.into_iter().map(|packet_state| packet_state.sequence).collect())
+	}
+
+	async fn query_packet_acknowledgements(
+		&self,
+		at: Height,
+		channel_id: ChannelId,
+		port_id: PortId,
+	) -> Result<Vec<u64>, Self::Error> {
+		let res = IbcApiClient::<u32, H256>::query_packet_acknowledgements(
+			&*self.para_client.rpc().client,
+			at.revision_height as u32,
+			channel_id.to_string(),
+			port_id.to_string(),
+		)
+		.await?;
+		Ok(res
+			.acknowledgements
+			.into_iter()
+			.map(|packet_state| packet_state.sequence)
+			.collect())
 	}
 
 	async fn query_unreceived_acknowledgements(
@@ -400,16 +419,21 @@ where
 		Ok(res)
 	}
 
-	async fn connection_whitelist(&self) -> Result<Vec<ConnectionId>, Self::Error> {
-		// Use all available connection on chain for now, better strategy later
+	async fn channel_whitelist(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error> {
+		// Use all available channel on chain for now, better strategy later
 		let response =
-			IbcApiClient::<u32, H256>::query_connections(&*self.para_client.rpc().client).await?;
+			IbcApiClient::<u32, H256>::query_channels(&*self.para_client.rpc().client).await?;
 		response
-			.connections
-			.map(|identified_conn| {
-				ConnectionId::from_str(identified_conn.id).map_err(|_| {
-					Error::Custom("Failed to convert string to conection id".to_string())
-				})
+			.channels
+			.map(|identified_chan| {
+				(
+					ChannelId::from_str(&identified_chan.channel_id).map_err(|_| {
+						Error::Custom("Failed to convert invalid string to channel id".to_string())
+					}),
+					PortId::from_str(&identified_chan.port_id).map_err(|_| {
+						Error::Custom("Failed to convert invalid string to port id".to_string())
+					}),
+				)
 			})
 			.collect::<Result<Vec<_>, _>>()
 	}
@@ -442,7 +466,8 @@ where
 			.para_client
 			.clone()
 			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let unix_timestamp_millis = api.storage().timestamp().now(None).await?;
+		let unix_timestamp_millis =
+			api.storage().timestamp().now(Some(latest_height.into())).await?;
 		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
 
 		Ok((height, Timestamp::from_nanoseconds(timestamp_nanos)?))
@@ -490,7 +515,18 @@ where
 		client_id: ClientId,
 		client_height: Height,
 	) -> Result<(Height, Timestamp), Self::Error> {
-		todo!()
+		let response = IbcApiClient::<u32, H256>::query_client_update_time_and_height(
+			&*self.para_client.rpc().client,
+			client_id.to_string(),
+			client_height.revision_number,
+			client_height.revision_height,
+		)
+		.await?;
+		Ok((
+			response.height.into(),
+			Timestamp::from_nanoseconds(response.timestamp)
+				.map_err(|_| Error::Custom("Received invalid timestamp".to_string()))?,
+		))
 	}
 
 	async fn query_host_consensus_state_proof(
