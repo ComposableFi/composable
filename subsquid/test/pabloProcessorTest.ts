@@ -234,7 +234,7 @@ function addLiquidity(
   pool.poolAssets[1].totalLiquidity += quoteAssetAmount;
 }
 
-describe("PoolCreated Tests", function () {
+describe.skip("PoolCreated Tests", function () {
   it("Should create the Pool, Assets and Transaction correctly", async function () {
     // given
     let pabloPool = new PabloPool();
@@ -300,7 +300,7 @@ describe("PoolCreated Tests", function () {
   });
 });
 
-describe("Liquidity Added & Removed Tests", function () {
+describe.skip("Liquidity Added & Removed Tests", function () {
   it("Should add liquidity to the Pool and record Assets and Transaction correctly", async function () {
     // given
     let pabloPool = createZeroPool();
@@ -439,7 +439,7 @@ describe("Liquidity Added & Removed Tests", function () {
   });
 });
 
-describe("PoolDeleted Tests", function () {
+describe.skip("PoolDeleted Tests", function () {
   it("Should updated the Pool, Assets and Transaction correctly", async function () {
     // given
     let pabloPool = createZeroPool();
@@ -506,7 +506,7 @@ describe("PoolDeleted Tests", function () {
   });
 });
 
-describe("Swapped Tests", function () {
+describe.skip("Swapped Tests", function () {
   it("Should record Pool, Assets and Transaction correctly for normal swap", async function () {
     // given
     let pabloPool = createZeroPool();

@@ -66,8 +66,6 @@ describe("Staking rewards", () => {
       "transaction-id"
     );
 
-    console.log({ position });
-
     assertStakingPosition(
       position,
       "2",
