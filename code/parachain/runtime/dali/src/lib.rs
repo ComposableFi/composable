@@ -855,7 +855,6 @@ parameter_types! {
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
 	type CurrencyFactory = CurrencyFactory;
@@ -868,6 +867,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
 	type FinancialNft = Fnft;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
 	type XPicaAssetId = XPicaAssetId;
