@@ -97,7 +97,7 @@ pub enum BlockNumberOrHash<Hash> {
 pub struct HeightAndTimestamp {
 	/// Height
 	pub height: Height,
-	/// Timestamp nanso seconds
+	/// Timestamp nano seconds
 	pub timestamp: u64,
 }
 
