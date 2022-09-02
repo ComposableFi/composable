@@ -10,9 +10,9 @@ const CHARLIE: u128 = 2;
 
 /// Tests the pallet's [`frame_support::traits::tokens::nonfungibles`] traits implementations.
 mod nonfungibles {
-	use std::collections::BTreeMap;
-
+	use crate::test::mock::System;
 	use frame_support::traits::tokens::nonfungibles::*;
+	use std::collections::BTreeMap;
 
 	use crate::{
 		pallet::*,
@@ -31,14 +31,26 @@ mod nonfungibles {
 	/// Tests the pallet's [`Inspect`] implementation.
 	mod inspect;
 
+	/// Tests the pallet's [`InspectEnumerable`] implementation.
+	mod inspect_enumerable;
+
 	/// Tests the pallet's [`Create`] implementation.
 	#[test]
-	fn create() {
+	fn create_inspect() {
 		new_test_ext().execute_with(|| {
 			assert_eq!(
 				Nft::create_collection(&255_u16, &ALICE, &BOB),
 				Ok(()),
 				"class creation should be successful"
+			);
+
+			System::assert_last_event(
+				crate::Event::FinancialNftCollectionCreated {
+					collection_id: 255,
+					who: ALICE.clone(),
+					admin: BOB.clone(),
+				}
+				.into(),
 			);
 
 			assert_eq!(
@@ -52,6 +64,8 @@ mod nonfungibles {
 				Err(Error::<MockRuntime>::CollectionAlreadyExists.into()),
 				"should not be able to create class that already exists"
 			);
+
+			// Testing InspectEnumerable impl
 		})
 	}
 }
