@@ -597,7 +597,7 @@ fn test_accumulate_rewards_hook() {
 				.unwrap(),
 				lock: default_lock_config(),
 				share_asset_id: XF::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
 			});
 
 		{
