@@ -1,7 +1,4 @@
-use std::{
-	str::FromStr,
-	sync::{Arc, Mutex},
-};
+use std::str::FromStr;
 
 pub mod calls;
 pub mod chain;
@@ -97,8 +94,6 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub ss58_version: Ss58AddressFormat,
 	/// ibc event stream sender
 	pub sender: Sender<IbcEvent>,
-	/// Client update status
-	pub client_update_status: Arc<Mutex<bool>>,
 }
 
 /// config options for [`ParachainClient`]
@@ -162,7 +157,6 @@ where
 			key_type_id: config.key_type_id,
 			sender,
 			ss58_version: Ss58AddressFormat::from(config.ss58_version),
-			client_update_status: Arc::new(Mutex::new(false)),
 		})
 	}
 

@@ -2,6 +2,7 @@
 
 use futures::StreamExt;
 use primitives::Chain;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub mod connection_delay;
 pub mod events;
@@ -92,4 +93,16 @@ where
 	}
 
 	Ok(())
+}
+
+const RELAY_PACKETS: AtomicBool = AtomicBool::new(true);
+
+/// Returns is packet relay has been paused
+pub fn packet_relay_status() -> bool {
+	RELAY_PACKETS.load(Ordering::Relaxed)
+}
+
+/// Sets packet relay status
+pub fn set_relay_status(status: bool) {
+	RELAY_PACKETS.store(status, Ordering::Relaxed)
 }

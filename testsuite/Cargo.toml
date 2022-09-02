@@ -16,10 +16,11 @@ tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev 
 
 hyperspace = { path = "../" }
 hyperspace-primitives = { path = "../primitives", features = ["testing"] }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "440dd4f0fb3c3539dbf75d8155e57c0740617438" }
 
 [dev-dependencies]
 parachain = { path = "../parachain", package = "hyperspace-parachain", features = ["testing"] }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "b21c6bcaf392eba166701af41807d724c7ad1475" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "440dd4f0fb3c3539dbf75d8155e57c0740617438" }
 # substrate
 sp-core = "6.0.0"
 sp-runtime = "6.0.0"

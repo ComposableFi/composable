@@ -1,4 +1,4 @@
-use crate::timeouts::get_timed_out_packets_messages;
+use crate::{packet_relay_status, timeouts::get_timed_out_packets_messages};
 use codec::Encode;
 use ibc::{
 	core::{
@@ -41,6 +41,7 @@ pub async fn parse_events(
 	events: Vec<IbcEvent>,
 	header: AnyHeader,
 ) -> Result<Vec<Any>, anyhow::Error> {
+	let parse_send_packets = packet_relay_status();
 	let mut messages = vec![];
 
 	// 1. translate events to messages
@@ -406,7 +407,7 @@ pub async fn parse_events(
 				let msg = Any { value, type_url: msg.type_url() };
 				messages.push(msg)
 			},
-			IbcEvent::SendPacket(send_packet) => {
+			IbcEvent::SendPacket(send_packet) if parse_send_packets => {
 				let port_id = send_packet.packet.source_port.clone();
 				let channel_id = send_packet.packet.source_channel.clone();
 				let seq = u64::from(send_packet.packet.sequence);

@@ -1,4 +1,4 @@
-use crate::ParachainClient;
+use crate::{parachain, ParachainClient};
 use futures::{Stream, StreamExt};
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, PrefixedCoin},
@@ -11,7 +11,7 @@ use sp_runtime::{
 	traits::{Header as HeaderT, IdentifyAccount, Verify},
 	MultiSignature, MultiSigner,
 };
-use std::{fmt::Display, pin::Pin};
+use std::{fmt::Display, pin::Pin, time::Duration};
 
 use subxt::Config;
 use tokio_stream::wrappers::BroadcastStream;
@@ -48,6 +48,25 @@ where
 	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>> {
 		let stream =
 			BroadcastStream::new(self.sender.subscribe()).map(|result| result.unwrap_or_default());
+		Box::pin(Box::new(stream))
+	}
+
+	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = (u64, u64)> + Send + Sync>> {
+		let api = self
+			.para_client
+			.clone()
+			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+		let stream = self.para_client.rpc().subscribe_blocks().await.unwrap().map(move |header| {
+			let header = header.unwrap();
+			let block_hash = header.hash();
+			let unix_timestamp_millis =
+				futures::executor::block_on(api.storage().timestamp().now(Some(block_hash)))
+					.expect("Should find timestamp");
+			let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
+			let block_number: u64 = (*header.number()).into();
+			(block_number, timestamp_nanos)
+		});
+
 		Box::pin(Box::new(stream))
 	}
 }

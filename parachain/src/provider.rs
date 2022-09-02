@@ -12,7 +12,6 @@ use ibc::{
 			client_type::ClientType,
 			header::{AnyHeader, Header as IbcHeaderT},
 		},
-		ics04_channel::packet::Packet,
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
@@ -41,13 +40,8 @@ use sp_core::H256;
 
 use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
-#[cfg(feature = "testing")]
-use futures::Stream;
 use ibc::timestamp::Timestamp;
 use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
-use pallet_mmr_primitives::BatchProof;
-#[cfg(feature = "testing")]
-use std::pin::Pin;
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -116,12 +110,14 @@ where
 		}
 
 		// if validator set has changed this is a mandatory update
-		let update_type = match signed_commitment.commitment.validator_set_id ==
-			beefy_client_state.next_authorities.id
-		{
-			true => UpdateType::Mandatory,
-			false => UpdateType::Optional,
-		};
+		// let update_type = match signed_commitment.commitment.validator_set_id ==
+		// 	beefy_client_state.next_authorities.id
+		// {
+		// 	true => UpdateType::Mandatory,
+		// 	false => UpdateType::Optional,
+		// };
+
+		let update_type = UpdateType::Mandatory;
 
 		// fetch the new parachain headers that have been finalized
 		let headers = self
@@ -425,15 +421,14 @@ where
 			IbcApiClient::<u32, H256>::query_channels(&*self.para_client.rpc().client).await?;
 		response
 			.channels
+			.into_iter()
 			.map(|identified_chan| {
-				(
-					ChannelId::from_str(&identified_chan.channel_id).map_err(|_| {
-						Error::Custom("Failed to convert invalid string to channel id".to_string())
-					}),
-					PortId::from_str(&identified_chan.port_id).map_err(|_| {
-						Error::Custom("Failed to convert invalid string to port id".to_string())
-					}),
-				)
+				Ok((
+					ChannelId::from_str(&identified_chan.channel_id)
+						.expect("Failed to convert invalid string to channel id"),
+					PortId::from_str(&identified_chan.port_id)
+						.expect("Failed to convert invalid string to port id"),
+				))
 			})
 			.collect::<Result<Vec<_>, _>>()
 	}
@@ -466,8 +461,8 @@ where
 			.para_client
 			.clone()
 			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let unix_timestamp_millis =
-			api.storage().timestamp().now(Some(latest_height.into())).await?;
+		let block_hash = finalized_header.hash();
+		let unix_timestamp_millis = api.storage().timestamp().now(Some(block_hash)).await?;
 		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
 
 		Ok((height, Timestamp::from_nanoseconds(timestamp_nanos)?))

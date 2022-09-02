@@ -260,6 +260,9 @@ pub trait TestProvider: Chain + Clone + 'static {
 
 	/// Return a stream that yields when new [`IbcEvents`] are parsed from a finality notification
 	async fn ibc_events(&self) -> Pin<Box<dyn Stream<Item = IbcEvent> + Send + Sync>>;
+
+	/// Returns a stream that yields chain (Block number, timestamp)
+	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = (u64, u64)> + Send + Sync>>;
 }
 
 /// Provides an interface for managing key management for signing.

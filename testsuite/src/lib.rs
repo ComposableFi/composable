@@ -1,5 +1,6 @@
 use crate::utils::{parse_amount, timeout_future};
 use futures::{future, StreamExt};
+use hyperspace::set_relay_status;
 use hyperspace_primitives::TestProvider;
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, Amount, PrefixedCoin, VERSION},
@@ -18,6 +19,7 @@ use ibc::{
 	tx_msg::Msg,
 };
 use ibc_proto::google::protobuf::Any;
+use pallet_ibc::Timeout;
 use std::{str::FromStr, time::Duration};
 use tendermint_proto::Protobuf;
 use tokio::task::JoinHandle;
@@ -130,7 +132,12 @@ where
 }
 
 /// Attempts to send 70% of funds of chain_a's signer to chain b's signer.
-async fn send_transfer<A, B>(chain_a: &A, chain_b: &B, channel_id: ChannelId)
+async fn send_transfer<A, B>(
+	chain_a: &A,
+	chain_b: &B,
+	channel_id: ChannelId,
+	timeout: Option<Timeout>,
+) -> (u128, MsgTransfer<PrefixedCoin>)
 where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
@@ -152,15 +159,24 @@ where
 		amount: Amount::from_str(&format!("{}", (amount * 70) / 100)).expect("Infallible"),
 	};
 
+	let (height_offset, time_offset) = if let Some(timeout) = timeout {
+		match timeout {
+			Timeout::Offset { timestamp, height } => (height.unwrap(), timestamp.unwrap()),
+			_ => panic!("Only offset timeouts allowed"),
+		}
+	} else {
+		// Default to 50 blocks and 1 hour offset respectively
+		(50, 60 * 60)
+	};
+
 	let (mut timeout_height, timestamp) = chain_b
 		.latest_height_and_timestamp()
 		.await
 		.expect("Couldn't fetch latest_height_and_timestamp");
 
-	// 50 blocks
-	timeout_height.revision_height += 50;
+	timeout_height.revision_height += height_offset;
 	let timeout_timestamp =
-		(timestamp + Duration::from_secs(60 * 60)).expect("Overflow evaluating timeout");
+		(timestamp + Duration::from_secs(time_offset)).expect("Overflow evaluating timeout");
 
 	let msg = MsgTransfer {
 		source_port: PortId::transfer(),
@@ -171,19 +187,26 @@ where
 		timeout_height,
 		timeout_timestamp,
 	};
-	chain_a.send_transfer(msg).await.expect("Failed to send transfer: ");
+	chain_a.send_transfer(msg.clone()).await.expect("Failed to send transfer: ");
+	(amount, msg)
+}
 
+async fn assert_send_transfer<A>(chain: &A, previous_balance: u128)
+where
+	A: TestProvider,
+	A::FinalityEvent: Send + Sync,
+{
 	// wait for the acknowledgment
-	let future = chain_a
+	let future = chain
 		.ibc_events()
 		.await
 		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::AcknowledgePacket(_))))
 		.take(1)
 		.collect::<Vec<_>>();
-	timeout_future(future, 10 * 60, format!("Didn't see AcknowledgePacket on {}", chain_a.name()))
+	timeout_future(future, 10 * 60, format!("Didn't see AcknowledgePacket on {}", chain.name()))
 		.await;
 
-	let balance = chain_a
+	let balance = chain
 		.query_ibc_balance()
 		.await
 		.expect("Can't query ibc balance")
@@ -191,7 +214,22 @@ where
 		.expect("No Ibc balances");
 
 	let new_amount = parse_amount(balance.amount.to_string());
-	assert!(new_amount <= (amount * 30) / 100);
+	assert!(new_amount <= (previous_balance * 30) / 100);
+}
+
+async fn assert_timeout_packet<A>(chain: &A)
+where
+	A: TestProvider,
+	A::FinalityEvent: Send + Sync,
+{
+	// wait for the acknowledgment
+	let future = chain
+		.ibc_events()
+		.await
+		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::TimeoutPacket(_))))
+		.take(1)
+		.collect::<Vec<_>>();
+	timeout_future(future, 10 * 60, format!("Didn't see Timeout packet on {}", chain.name())).await;
 }
 
 /// Simply send a packet and check that it was acknowledged.
@@ -207,9 +245,11 @@ where
 	let (_handle, channel_id, _connection_id) =
 		setup_connection_and_channel(chain_a, chain_b, 0).await;
 
-	send_transfer(chain_a, chain_b, channel_id).await;
+	let (previosus_balance, ..) = send_transfer(chain_a, chain_b, channel_id, None).await;
+	assert_send_transfer(chain_a, previosus_balance).await;
 	// now send from chain b.
-	send_transfer(chain_b, chain_a, channel_id).await;
+	let (previosus_balance, ..) = send_transfer(chain_b, chain_a, channel_id, None).await;
+	assert_send_transfer(chain_b, previosus_balance).await;
 }
 
 /// Send a packet using a height timeout that has already passed
@@ -223,8 +263,38 @@ where
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
-	let (_handle, _channel_id, _connection_id) =
+	let (_handle, channel_id, _connection_id) =
 		setup_connection_and_channel(chain_a, chain_b, 0).await;
+
+	// Pause send packet relay
+	set_relay_status(false);
+
+	let (.., msg) = send_transfer(
+		chain_a,
+		chain_b,
+		channel_id,
+		Some(Timeout::Offset { timestamp: Some(60 * 60), height: Some(20) }),
+	)
+	.await;
+
+	// Wait for timeout height to elapse then resume packet relay
+	// wait for the acknowledgment
+	let future = chain_b
+		.subscribe_blocks()
+		.await
+		.skip_while(|(block_number, ..)| {
+			future::ready(*block_number <= msg.timeout_height.revision_number)
+		})
+		.take(1)
+		.collect::<Vec<_>>();
+
+	timeout_future(future, 10 * 60, format!("Didn't see AcknowledgePacket on {}", chain_a.name()))
+		.await;
+
+	// Resume send packet relay
+	set_relay_status(true);
+
+	assert_timeout_packet(chain_a).await;
 }
 
 /// Send a packet using a timestamp timeout that has already passed
@@ -238,8 +308,38 @@ where
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
-	let (_handle, _channel_id, _connection_id) =
+	let (_handle, channel_id, _connection_id) =
 		setup_connection_and_channel(chain_a, chain_b, 0).await;
+
+	// Pause send packet relay
+	set_relay_status(false);
+
+	let (.., msg) = send_transfer(
+		chain_a,
+		chain_b,
+		channel_id,
+		Some(Timeout::Offset { timestamp: Some(60 * 3), height: Some(400) }),
+	)
+	.await;
+
+	// Wait for timeout height to elapse then resume packet relay
+	// wait for the acknowledgment
+	let future = chain_b
+		.subscribe_blocks()
+		.await
+		.skip_while(|(.., timestamp)| {
+			future::ready(*timestamp <= msg.timeout_timestamp.nanoseconds())
+		})
+		.take(1)
+		.collect::<Vec<_>>();
+
+	timeout_future(future, 10 * 60, format!("Didn't see Timeout packet on {}", chain_a.name()))
+		.await;
+
+	// Resume send packet relay
+	set_relay_status(true);
+
+	assert_timeout_packet(chain_a).await;
 }
 
 /// Send a packet over a connection with a connection delay
