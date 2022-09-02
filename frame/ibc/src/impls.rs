@@ -113,13 +113,6 @@ where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 	<T as DeFiComposableConfig>::MayBeAssetId: From<primitives::currency::CurrencyId>,
 {
-	pub fn timestamp() -> u64 {
-		use frame_support::traits::UnixTime;
-		use sp_runtime::traits::SaturatedConversion;
-		let time = T::TimeProvider::now();
-		time.as_nanos().saturated_into::<u64>()
-	}
-
 	// IBC Runtime Api helper methods
 	/// Get a channel state
 	pub fn channel(
@@ -172,8 +165,9 @@ where
 
 	/// Get a consensus state for client
 	pub fn consensus_state(
-		height: Vec<u8>,
 		client_id: Vec<u8>,
+		revision_number: u64,
+		revision_height: u64,
 		latest_cs: bool,
 	) -> Result<QueryConsensusStateResponse, Error<T>> {
 		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
@@ -184,7 +178,7 @@ where
 				AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
 			client_state.latest_height()
 		} else {
-			Height::decode_vec(&height).map_err(|_| Error::<T>::DecodingError)?
+			Height::new(revision_number, revision_height)
 		};
 		let consensus_state = ConsensusStates::<T>::get(client_id.clone(), height)
 			.ok_or(Error::<T>::ConsensusStateNotFound)?;
@@ -608,8 +602,22 @@ where
 		Ok(packets)
 	}
 
-	pub fn get_undelivered_sequences(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u64> {
-		UndeliveredSequences::<T>::get((channel_id, port_id)).into_iter().collect()
+	pub fn client_update_time_and_height(
+		client_id: Vec<u8>,
+		revision_number: u64,
+		revision_height: u64,
+	) -> Result<(u64, u64), Error<T>> {
+		let ctx = Context::<T>::default();
+		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
+		let height = Height::new(revision_number, revision_height);
+		let update_height = ctx
+			.client_update_height(&client_id, height)
+			.map_err(|_| Error::<T>::ClientUpdateNotFound)?;
+		let update_time = ctx
+			.client_update_time(&client_id, height)
+			.map_err(|_| Error::<T>::ClientUpdateNotFound)?
+			.nanoseconds();
+		Ok((update_height.revision_height, update_time))
 	}
 }
 

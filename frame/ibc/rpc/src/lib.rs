@@ -79,7 +79,7 @@ pub struct ConnHandshakeProof {
 	/// Trie proof for connection state, client state and consensus state
 	pub proof: Vec<u8>,
 	/// Proof height
-	pub height: ibc_proto::ibc::core::client::v1::Height,
+	pub height: Height,
 }
 
 /// A type that could be a block number or a block hash
@@ -90,6 +90,15 @@ pub enum BlockNumberOrHash<Hash> {
 	Hash(Hash),
 	/// Block number
 	Number(u32),
+}
+
+/// A type that could be a block number or a block hash
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct HeightAndTimestamp {
+	/// Height
+	height: Height,
+	/// Timestamp nanso seconds
+	timestamp: u64,
 }
 
 impl<Hash: std::fmt::Debug> Display for BlockNumberOrHash<Hash> {
@@ -160,9 +169,14 @@ where
 		seqs: Vec<u64>,
 	) -> Result<Vec<PacketInfo>>;
 
-	/// Get all packet sequences that have not been acknowledged
-	#[method(name = "ibc_undeliveredSequences")]
-	fn query_undelivered_sequences(&self, channel_id: String, port_id: String) -> Result<Vec<u64>>;
+	/// Query local time and height that a client was updated
+	#[method(name = "ibc_clientUpdateTimeAndHeight")]
+	fn query_client_update_time_and_height(
+		&self,
+		client_id: String,
+		revision_number: u64,
+		revision_height: u64,
+	) -> Result<HeightAndTimestamp>;
 
 	/// Generate proof for given key
 	#[method(name = "ibc_queryProof")]
@@ -184,10 +198,6 @@ where
 		height: u32,
 		src_client_id: String,
 	) -> Result<QueryClientStateResponse>;
-
-	/// Query localchain's timestamp in nanoseconds
-	#[method(name = "ibc_queryTimestamp")]
-	fn query_timestamp(&self, height: u32) -> Result<u64>;
 
 	/// Query client consensus state
 	#[method(name = "ibc_queryClientConsensusState")]
@@ -289,7 +299,17 @@ where
 		port_id: String,
 	) -> Result<QueryPacketAcknowledgementsResponse>;
 
-	/// Query unreceived packet commitments
+	/// Given a list of counterparty packet commitments, the querier checks if the packet
+	/// has already been received by checking if a receipt exists on this
+	/// chain for the packet sequence. All packets that haven't been received yet
+	/// are returned in the response
+	/// Usage: To use this method correctly, first query all packet commitments on
+	/// the sending chain then send the request to this query_unreceived_packets on this
+	/// chain. This method should then return the list of packet sequences that
+	/// are yet to be received on this chain.
+	/// NOTE: WORKS ONLY FOR UNORDERED CHANNELS
+	/// QUERIER IS RESPONSIBLE FOR PROVIDING A CORRECT LIST OF PACKET COMMITMENT
+	/// SEQUENCES.
 	#[method(name = "ibc_queryUnreceivedPackets")]
 	fn query_unreceived_packets(
 		&self,
@@ -299,7 +319,17 @@ where
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>>;
 
-	/// Query the unreceived acknowledgements
+	/// Given a list of counterparty packet acknowledgemrnts, the querier checks if the ack
+	/// has already been received by checking if a packet commitment exists on this
+	/// chain for the packet sequence. All acks that haven't been received yet
+	/// are returned in the response
+	/// Usage: To use this method correctly, first query all packet acks on
+	/// the counterparty chain then send the request to this query_unreceived_acknowledgements on
+	/// this chain. This method should then return the list of packet acks that
+	/// are yet to be received on this chain.
+	/// NOTE: WORKS ONLY FOR UNORDERED CHANNELS
+	/// QUERIER IS RESPONSIBLE FOR PROVIDING A CORRECT LIST OF PACKET ACKNOWLEDGEMENT
+	/// SEQUENCES FROM SENDING CHAIN.
 	#[method(name = "ibc_queryUnreceivedAcknowledgement")]
 	fn query_unreceived_acknowledgements(
 		&self,
@@ -544,11 +574,33 @@ where
 			.collect()
 	}
 
-	fn query_undelivered_sequences(&self, channel_id: String, port_id: String) -> Result<Vec<u64>> {
+	fn query_client_update_time_and_height(
+		&self,
+		client_id: String,
+		revision_number: u64,
+		revision_height: u64,
+	) -> Result<HeightAndTimestamp> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
-		api.undelivered_sequences(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
-			.map_err(|_| runtime_error_into_rpc_error("Error getting undelivered sequences"))
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
+		let (update_height, update_time) = api
+			.client_update_time_and_height(
+				&at,
+				client_id.as_bytes().to_vec(),
+				revision_number,
+				revision_height,
+			)
+			.ok()
+			.flatten()
+			.ok_or_else(|| {
+				runtime_error_into_rpc_error("Failed to get client update time and height")
+			})?;
+		Ok(HeightAndTimestamp {
+			height: Height { revision_number: para_id.into(), revision_height: update_height },
+			timestamp: update_time,
+		})
 	}
 
 	fn query_proof(&self, height: u32, mut keys: Vec<Vec<u8>>) -> Result<Proof> {
@@ -583,12 +635,6 @@ where
 		} else {
 			Err(runtime_error_into_rpc_error("Could not get latest height"))
 		}
-	}
-
-	fn query_timestamp(&self, height: u32) -> Result<u64> {
-		let api = self.client.runtime_api();
-		let at = BlockId::Number(height.into());
-		api.timestamp(&at).map_err(runtime_error_into_rpc_error)
 	}
 
 	fn query_balance_with_address(&self, addr: String) -> Result<Coin> {
@@ -659,13 +705,17 @@ where
 		} else {
 			BlockId::Hash(self.client.info().best_hash)
 		};
-		let client_height = ibc::Height::new(revision_number, revision_height);
-		let height = client_height.encode_vec();
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryConsensusStateResponse = api
-			.client_consensus_state(&at, client_id.as_bytes().to_vec(), height, latest_cs)
+			.client_consensus_state(
+				&at,
+				client_id.as_bytes().to_vec(),
+				revision_number,
+				revision_height,
+				latest_cs,
+			)
 			.ok()
 			.flatten()
 			.ok_or_else(|| runtime_error_into_rpc_error("Error querying client consensus state"))?;

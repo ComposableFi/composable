@@ -13,9 +13,6 @@ sp_api::decl_runtime_apis! {
 		/// Get parachain id
 		fn para_id() -> u32;
 
-		/// Get timestamp
-		fn timestamp() -> u64;
-
 		/// Returns the balance of this address
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128>;
 
@@ -25,14 +22,14 @@ sp_api::decl_runtime_apis! {
 		/// Query receive packet info
 		fn query_recv_packet_info(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<PacketInfo>>;
 
-		/// Query receive packet info
-		fn undelivered_sequences(channel_id: Vec<u8>, port_id: Vec<u8>) -> Vec<u64>;
+		/// Get the host time and height at which a client was updated for given consensus height
+		fn client_update_time_and_height(client_id: Vec<u8>, revision_number: u64, revision_height: u64) -> Option<(u64, u64)>;
 
 		/// Returns client state at height
 		fn client_state(client_id: Vec<u8>) -> Option<QueryClientStateResponse>;
 
 		/// Return the consensus state for the given client at a height
-		fn client_consensus_state(client_id: Vec<u8>, client_height: Vec<u8>, latest_cs: bool) -> Option<QueryConsensusStateResponse>;
+		fn client_consensus_state(client_id: Vec<u8>, revision_number: u64, revision_height: u64, latest_cs: bool) -> Option<QueryConsensusStateResponse>;
 
 		/// Returns client states for all clients on chain
 		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>>;
