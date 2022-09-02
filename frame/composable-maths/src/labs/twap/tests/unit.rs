@@ -1,4 +1,4 @@
-use std::{any::Any, ops::Sub};
+use std::{any::Any, fs::File, ops::Sub};
 
 use crate::labs::twap::Twap;
 use frame_support::assert_ok;
@@ -246,24 +246,19 @@ fn test_polars() {
 		.has_header(true)
 		.finish()
 		.unwrap()
-		.filter(col("market_index").eq(lit(4)))
+		.filter(col("market_index").eq(lit(3)))
 		.select(&[col("ts"), col("mark_price_before")])
 		.with_column(
 			col("ts")
-				.map(
-					|s| {
-						Ok(s.utf8()
-							.unwrap()
-							.as_datetime(Some("%Y-%m-%d %T%z"), TimeUnit::Milliseconds)
-							.unwrap()
-							.into_series()
-							.timestamp(TimeUnit::Milliseconds)
-							.map(|x| x / 1000)
-							.unwrap()
-							.into_series())
-					},
-					GetOutput::from_type(DataType::Int64),
-				)
+				.str()
+				.strptime(StrpTimeOptions {
+					date_dtype: DataType::Datetime(TimeUnit::Milliseconds, None),
+					fmt: Some("%Y-%m-%d %T%z".to_string()),
+					strict: true,
+					exact: true,
+				})
+				.dt()
+				.timestamp(TimeUnit::Milliseconds)
 				.alias("timestamp"),
 		)
 		.sort("timestamp", SortOptions { descending: false, nulls_last: true })
@@ -332,13 +327,37 @@ fn test_polars() {
 				)
 				.alias("price"),
 		)
+		.with_column(
+			as_struct(&[cols(vec!["twap", "price"])])
+				.map(
+					|data| {
+						Ok(Series::from_vec(
+							"parsed_diff",
+							data.iter()
+								.map(|i| match i {
+									AnyValue::Struct(s, _) => match s[..] {
+										[AnyValue::Float64(twap), AnyValue::Float64(price)] =>
+											twap.max(price) - twap.min(price),
+										_ => panic!("failed to get `twap` and `price` values"),
+									},
+									_ => panic!("failed to parse tuple data"),
+								})
+								.collect::<Vec<f64>>(),
+						))
+					},
+					GetOutput::from_type(DataType::Float64),
+				)
+				.alias("diff"),
+		)
 		.collect()
 		.unwrap();
 
+	dbg!(&df);
+	dbg!(&df.select(["diff"]).unwrap().describe(None));
 	let x_lim_0 = df["timestamp"].min::<i64>().unwrap();
 	let x_lim_1 = df["timestamp"].max::<i64>().unwrap();
-	let y_lim_0 = df["price"].min::<f64>().unwrap();
-	let y_lim_1 = df["price"].max::<f64>().unwrap();
+	let y_lim_0 = df["price"].min::<f64>().unwrap().min(df["twap"].min::<f64>().unwrap());
+	let y_lim_1 = df["price"].max::<f64>().unwrap().max(df["twap"].max::<f64>().unwrap());
 
 	let root = BitMapBackend::new("test.png", (3840, 2160)).into_drawing_area();
 	root.fill(&WHITE).unwrap();
@@ -386,4 +405,7 @@ fn test_polars() {
 	chart.draw_series(LineSeries::new(price_plot, &BLUE)).unwrap();
 	chart.draw_series(LineSeries::new(twap_plot, &RED)).unwrap();
 	root.present().unwrap();
+
+	let out_file = std::fs::File::create(std::path::Path::new("twap.csv")).unwrap();
+	CsvWriter::new(out_file).has_header(true).finish(&mut df.clone());
 }
