@@ -56,7 +56,8 @@ export async function processTransferEvent(
   const from = encodeAccount(transferEvent.from);
   const to = encodeAccount(transferEvent.to);
 
-  await mockData(ctx);
+  // TODO: remove once finished using
+  // await mockData(ctx);
 
   await saveAccountAndTransaction(ctx, TransactionType.BALANCES_TRANSFER, [
     from,
