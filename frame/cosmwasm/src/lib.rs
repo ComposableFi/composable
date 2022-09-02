@@ -852,6 +852,7 @@ pub mod pallet {
 			let module = Self::do_load_module(&code)?;
 			let instrumented_code = Self::do_instrument_code(module)?;
 			let code_id = CurrentCodeId::<T>::increment()?;
+			CodeHashToId::<T>::insert(code_hash, code_id);
 			PristineCode::<T>::insert(code_id, code);
 			InstrumentedCode::<T>::insert(code_id, instrumented_code);
 			CodeIdToInfo::<T>::insert(
