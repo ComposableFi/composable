@@ -21,6 +21,7 @@ use ibc::{
 use ibc_proto::google::protobuf::Any;
 use primitives::{apply_prefix, error::Error, query_undelivered_sequences, Chain};
 use std::str::FromStr;
+use ibc::core::ics04_channel::channel::State::Open;
 use tendermint_proto::Protobuf;
 
 /// Get timeout messages that are ready to be sent back to source after factoring connection delay
@@ -43,6 +44,9 @@ pub async fn get_timed_out_packets_messages(
 					port_id.clone()
 				))
 			})?)?;
+		if source_channel_end.state != Open {
+			continue
+		}
 		let connection_id = source_channel_end
 			.connection_hops
 			.get(0)
