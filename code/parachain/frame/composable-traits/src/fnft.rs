@@ -6,7 +6,7 @@ use crate::account_proxy::ProxyType;
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::collections::vec::bounded::BiBoundedVec;
 use core::fmt::Debug;
-use frame_support::traits::tokens::nonfungibles::Inspect;
+use frame_support::{pallet_prelude::Member, traits::tokens::nonfungibles::Inspect};
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;

@@ -93,7 +93,6 @@ benchmarks! {
 			T::BlockNumber: From<u32>,
 			T::Balance: From<u128>,
 			T::AssetId: From<u128>,
-			T::PositionId: From<u128>,
 	}
 
 	create_reward_pool {

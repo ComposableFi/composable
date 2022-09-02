@@ -75,7 +75,7 @@ pub mod pallet {
 		validation::Validated,
 	};
 	use composable_traits::{
-		currency::{BalanceLike, CurrencyFactory},
+		currency::{BalanceLike, CurrencyFactory, RangeId},
 		fnft::{FinancialNft, FinancialNftProtocol},
 		staking::{
 			lock::LockConfig, RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
@@ -85,8 +85,19 @@ pub mod pallet {
 	};
 	use frame_support::{
 		traits::{
-			fungibles::{Inspect, InspectHold, Mutate, MutateHold, Transfer},
-			tokens::{nonfungibles, nonfungibles::Create, WithdrawConsequence},
+			fungibles::{
+				Inspect as FungiblesInspect, InspectHold as FungiblesInspectHold,
+				Mutate as FungiblesMutate, MutateHold as FungiblesMutateHold,
+				Transfer as FungiblesTransfer,
+			},
+			tokens::{
+				nonfungibles,
+				nonfungibles::{
+					Create as NonFungiblesCreate, Inspect as NonFungiblesInspect,
+					Mutate as NonFungiblesMutate,
+				},
+				WithdrawConsequence,
+			},
 			TryCollect, UnixTime,
 		},
 		transactional, BoundedBTreeMap, PalletId,
@@ -126,30 +137,41 @@ pub mod pallet {
 			amount: T::Balance,
 			/// Duration of stake.
 			duration_preset: DurationSeconds,
-			/// Position Id of newly created stake.
-			position_id: T::PositionId,
+			/// FNFT Collection Id
+			fnft_collection_id: T::AssetId,
+			/// FNFT Instance Id
+			fnft_instance_id: T::FinancialNftInstanceId,
 			keep_alive: bool,
 		},
 		Claimed {
 			/// Owner of the stake.
 			owner: T::AccountId,
-			/// Position Id.
-			position_id: T::PositionId,
+			/// FNFT Collection Id
+			fnft_collection_id: T::AssetId,
+			/// FNFT Instance Id
+			fnft_instance_id: T::FinancialNftInstanceId,
 		},
 		StakeAmountExtended {
-			position_id: T::PositionId,
+			/// FNFT Collection Id
+			fnft_collection_id: T::AssetId,
+			/// FNFT Instance Id
+			fnft_instance_id: T::FinancialNftInstanceId,
 			/// Extended amount
 			amount: T::Balance,
 		},
 		Unstaked {
 			/// Owner of the stake.
 			owner: T::AccountId,
-			/// Position Id of newly created stake.
-			position_id: T::PositionId,
+			/// FNFT Collection Id
+			fnft_collection_id: T::AssetId,
+			/// FNFT Instance Id
+			fnft_instance_id: T::FinancialNftInstanceId,
 		},
 		/// Split stake position into two positions
 		SplitPosition {
-			positions: Vec<(T::PositionId, BalanceOf<T>)>,
+			// REVIEW(benluelo,poisonphang): Should this be [_; 2] ? or perhaps two separate fields
+			// {old, new} ?
+			positions: Vec<(T::AssetId, T::FinancialNftInstanceId, BalanceOf<T>)>,
 		},
 		/// Reward transfer event.
 		RewardTransferred {
@@ -217,6 +239,7 @@ pub mod pallet {
 		BackToTheFuture,
 		/// The rewards pot (cold wallet) for this pool is empty.
 		RewardsPotEmpty,
+		FnftNotFound,
 	}
 
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -236,29 +259,48 @@ pub mod pallet {
 			+ Into<u128>
 			+ Zero;
 
-		/// The position id type.
-		type PositionId: Parameter + Member + Clone + FullCodec + Copy + Zero + One + SafeArithmetic;
-
 		type AssetId: Parameter
 			+ Member
 			+ AssetIdLike
 			+ MaybeSerializeDeserialize
 			+ Ord
 			+ From<u128>
-			+ Into<u128>;
+			+ Into<u128>
+			+ Copy;
 
-		type FinancialNft: nonfungibles::Mutate<AccountIdOf<Self>>
-			+ Create<AccountIdOf<Self>, CollectionId = Self::AssetId>
-			+ FinancialNft<AccountIdOf<Self>, CollectionId = Self::AssetId>;
+		// REVIEW(benluelo): Mutate::CollectionId type?
+		type FinancialNft: NonFungiblesMutate<AccountIdOf<Self>>
+			+ NonFungiblesCreate<
+				AccountIdOf<Self>,
+				CollectionId = Self::AssetId,
+				ItemId = Self::FinancialNftInstanceId,
+			> + FinancialNft<
+				AccountIdOf<Self>,
+				CollectionId = Self::AssetId,
+				ItemId = Self::FinancialNftInstanceId,
+			>;
+
+		// https://github.com/rust-lang/rust/issues/52662
+		type FinancialNftInstanceId: Parameter + Member + Copy;
 
 		/// Is used to create staked asset per reward pool
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.
-		type Assets: Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
-			+ Mutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
-			+ MutateHold<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
-			+ InspectHold<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>;
+		type Assets: FungiblesTransfer<
+				AccountIdOf<Self>,
+				Balance = BalanceOf<Self>,
+				AssetId = AssetIdOf<Self>,
+			> + FungiblesMutate<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
+			+ FungiblesMutateHold<
+				AccountIdOf<Self>,
+				Balance = BalanceOf<Self>,
+				AssetId = AssetIdOf<Self>,
+			> + FungiblesInspectHold<
+				AccountIdOf<Self>,
+				Balance = BalanceOf<Self>,
+				AssetId = AssetIdOf<Self>,
+			>;
 
 		/// is used for rate based rewarding and position lock timing
 		type UnixTime: UnixTime;
@@ -334,7 +376,7 @@ pub mod pallet {
 
 	/// Abstraction over Stake type
 	pub(crate) type StakeOf<T> = Stake<
-		<T as frame_system::Config>::AccountId,
+		<T as Config>::FinancialNftInstanceId,
 		<T as Config>::AssetId,
 		<T as Config>::Balance,
 		Reductions<
@@ -343,6 +385,10 @@ pub mod pallet {
 			<T as Config>::MaxRewardConfigsPerPool,
 		>,
 	>;
+
+	type FinancialNftInstanceIdOf<T> = <<T as Config>::FinancialNft as nonfungibles::Inspect<
+		<T as frame_system::Config>::AccountId,
+	>>::ItemId;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub (super) trait Store)]
@@ -354,15 +400,16 @@ pub mod pallet {
 	pub type RewardPools<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, RewardPoolOf<T>>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn stake_count)]
-	#[allow(clippy::disallowed_types)]
-	pub type StakeCount<T: Config> =
-		StorageValue<_, T::PositionId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn stakes)]
-	pub type Stakes<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>, OptionQuery>;
+	// REVIEW(benluelo): Twox128 for the hasher?
+	pub type Stakes<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AssetId,
+		Blake2_128Concat,
+		FinancialNftInstanceIdOf<T>,
+		StakeOf<T>,
+	>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -480,12 +527,18 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::extend(T::MaxRewardConfigsPerPool::get()))]
 		pub fn extend(
 			origin: OriginFor<T>,
-			position: T::PositionId,
+			fnft_collection_id: T::AssetId,
+			fnft_instance_id: T::FinancialNftInstanceId,
 			amount: T::Balance,
 		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
 			let keep_alive = true;
-			let _position_id = <Self as Staking>::extend(&owner, position, amount, keep_alive)?;
+			let _position_id = <Self as Staking>::extend(
+				&owner,
+				(fnft_collection_id, fnft_instance_id),
+				amount,
+				keep_alive,
+			)?;
 
 			Ok(())
 		}
@@ -494,9 +547,13 @@ pub mod pallet {
 		///
 		/// Emits `Unstaked` event when successful.
 		#[pallet::weight(T::WeightInfo::unstake(T::MaxRewardConfigsPerPool::get()))]
-		pub fn unstake(origin: OriginFor<T>, position_id: T::PositionId) -> DispatchResult {
+		pub fn unstake(
+			origin: OriginFor<T>,
+			fnft_collection_id: T::AssetId,
+			fnft_instance_id: T::FinancialNftInstanceId,
+		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
-			<Self as Staking>::unstake(&owner, &position_id)?;
+			<Self as Staking>::unstake(&owner, &(fnft_collection_id, fnft_instance_id))?;
 
 			Ok(())
 		}
@@ -504,11 +561,12 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::split(T::MaxRewardConfigsPerPool::get()))]
 		pub fn split(
 			origin: OriginFor<T>,
-			position: T::PositionId,
+			fnft_collection_id: T::AssetId,
+			fnft_instance_id: T::FinancialNftInstanceId,
 			ratio: Validated<Permill, ValidSplitRatio>,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			<Self as Staking>::split(&who, &position, ratio.value())?;
+			<Self as Staking>::split(&who, &(fnft_collection_id, fnft_instance_id), ratio.value())?;
 			Ok(())
 		}
 
@@ -533,9 +591,13 @@ pub mod pallet {
 		///
 		/// Emits `Claimed` event when successful.
 		#[pallet::weight(T::WeightInfo::claim(T::MaxRewardConfigsPerPool::get()))]
-		pub fn claim(origin: OriginFor<T>, position_id: T::PositionId) -> DispatchResult {
+		pub fn claim(
+			origin: OriginFor<T>,
+			fnft_collection_id: T::AssetId,
+			fnft_instance_id: T::FinancialNftInstanceId,
+		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
-			<Self as Staking>::claim(&owner, &position_id)?;
+			<Self as Staking>::claim(&owner, &(fnft_collection_id, fnft_instance_id))?;
 
 			Ok(())
 		}
@@ -640,7 +702,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> FinancialNftProtocol for Pallet<T> {
-		type ItemId = <<T as Config>::FinancialNft as nonfungibles::Inspect<T::AccountId>>::ItemId;
+		type ItemId = FinancialNftInstanceIdOf<T>;
 		type AssetId = AssetIdOf<T>;
 		type Balance = BalanceOf<T>;
 
@@ -662,7 +724,7 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type RewardPoolId = T::AssetId;
 		type Balance = T::Balance;
-		type PositionId = T::PositionId;
+		type PositionId = (T::AssetId, T::FinancialNftInstanceId);
 
 		#[transactional]
 		fn stake(
@@ -689,9 +751,14 @@ pub mod pallet {
 			let boosted_amount = Self::boosted_amount(reward_multiplier, amount);
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(boosted_amount, &rewards_pool)?;
+			// REVIEW(benluelo): What should the ED be?
+			let fnft_collection_id =
+				T::CurrencyFactory::create(RangeId::FNFT_ASSETS, Zero::zero())?;
+			// REVIEW(benluelo): Who should the admin be?
+			T::FinancialNft::create_collection(&fnft_collection_id, &who, &who)?;
+			let fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
 
-			let new_position = Stake {
-				owner: who.clone(),
+			let new_position = StakeOf::<T> {
 				reward_pool_id: *pool_id,
 				stake: amount,
 				share: boosted_amount,
@@ -701,6 +768,7 @@ pub mod pallet {
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
+				financial_nft_id: fnft_instance_id,
 			};
 			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and
 			// lock it. T::Assets::mint_into(rewards_pool.share_asset_id fnft_account, amount)?;
@@ -708,7 +776,8 @@ pub mod pallet {
 			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
 			rewards_pool.rewards = rewards;
 
-			let position_id = StakeCount::<T>::increment()?;
+			let new_fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
+
 			// TODO (vim):
 			// 	1. Mint the NFT into the relevant NFT collection mapped to the reward pool
 			//  2. Map and store the nft_id -> position_id
@@ -726,28 +795,30 @@ pub mod pallet {
 				keep_alive,
 			)?;
 			RewardPools::<T>::insert(pool_id, rewards_pool);
-			Stakes::<T>::insert(position_id, new_position);
+			Stakes::<T>::insert(fnft_collection_id, new_fnft_instance_id, new_position);
 
 			Self::deposit_event(Event::<T>::Staked {
 				pool_id: *pool_id,
 				owner: who.clone(),
 				amount,
 				duration_preset,
-				position_id,
+				fnft_instance_id,
+				fnft_collection_id,
 				keep_alive,
 			});
 
-			Ok(position_id)
+			Ok((fnft_collection_id, fnft_instance_id))
 		}
 
 		#[transactional]
 		fn extend(
 			who: &Self::AccountId,
-			position: Self::PositionId,
+			(fnft_collection_id, fnft_instance_id): Self::PositionId,
 			amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
-			let mut stake = Stakes::<T>::get(position).ok_or(Error::<T>::StakeNotFound)?;
+			let mut stake = Stakes::<T>::get(fnft_collection_id, fnft_instance_id)
+				.ok_or(Error::<T>::StakeNotFound)?;
 			let mut rewards_pool = RewardPools::<T>::try_get(stake.reward_pool_id)
 				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 			let reward_multiplier = Perbill::one();
@@ -785,32 +856,50 @@ pub mod pallet {
 				keep_alive,
 			)?;
 			RewardPools::<T>::insert(stake.reward_pool_id, rewards_pool);
-			Stakes::<T>::insert(position, stake);
-			Self::deposit_event(Event::<T>::StakeAmountExtended { position_id: position, amount });
-			Ok(position)
+			Stakes::<T>::insert(fnft_collection_id, fnft_instance_id, stake);
+			Self::deposit_event(Event::<T>::StakeAmountExtended {
+				amount,
+				fnft_collection_id,
+				fnft_instance_id,
+			});
+			Ok((fnft_collection_id, fnft_instance_id))
 		}
 
 		#[transactional]
-		fn unstake(who: &Self::AccountId, position_id: &Self::PositionId) -> DispatchResult {
+		fn unstake(
+			who: &Self::AccountId,
+			(fnft_collection_id, fnft_instance_id): &Self::PositionId,
+		) -> DispatchResult {
 			let keep_alive = false;
-			let mut stake =
-				Stakes::<T>::try_get(position_id).map_err(|_| Error::<T>::StakeNotFound)?;
-			ensure!(who == &stake.owner, Error::<T>::OnlyStakeOwnerCanUnstake);
+
+			let mut stake = Stakes::<T>::try_get(fnft_collection_id, fnft_instance_id)
+				.map_err(|_| Error::<T>::StakeNotFound)?;
+
+			let owner = T::FinancialNft::owner(fnft_collection_id, fnft_instance_id)
+				.ok_or(Error::<T>::FnftNotFound)?;
+
+			ensure!(who == &owner, Error::<T>::OnlyStakeOwnerCanUnstake);
+
 			let is_early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
 				T::UnixTime::now().as_secs();
-			let pool_id = stake.reward_pool_id;
 
-			let asset_id = RewardPools::<T>::try_mutate(pool_id, |rewards_pool| {
+			let asset_id = RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
 				let rewards_pool = rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-				(*rewards_pool, _) =
-					Self::collect_rewards(rewards_pool, &mut stake, is_early_unlock, keep_alive)?;
+				(*rewards_pool, _) = Self::collect_rewards(
+					rewards_pool,
+					&mut stake,
+					&owner,
+					is_early_unlock,
+					keep_alive,
+				)?;
 
 				rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
 
 				Ok::<_, DispatchError>(rewards_pool.asset_id)
 			})?;
 
+			// REVIEW(benluelo): Make this logic a method on Stake
 			let stake_with_penalty = if is_early_unlock {
 				(Perbill::one() - stake.lock.unlock_penalty).mul_ceil(stake.stake)
 			} else {
@@ -821,18 +910,19 @@ pub mod pallet {
 			// account to the owner of the NFT
 			T::Assets::transfer(
 				asset_id,
-				&Self::pool_account_id(&pool_id),
-				&stake.owner,
+				&Self::pool_account_id(&stake.reward_pool_id),
+				&owner,
 				stake_with_penalty,
 				keep_alive,
 			)?;
 
-			Stakes::<T>::remove(position_id);
+			Stakes::<T>::remove(fnft_collection_id, fnft_instance_id);
 			// TODO (vim): burn the financial NFT and the shares it holds
 
 			Self::deposit_event(Event::<T>::Unstaked {
 				owner: who.clone(),
-				position_id: *position_id,
+				fnft_collection_id: *fnft_collection_id,
+				fnft_instance_id: *fnft_instance_id,
 			});
 
 			Ok(())
@@ -841,35 +931,31 @@ pub mod pallet {
 		#[transactional]
 		fn split(
 			_who: &Self::AccountId,
-			position: &Self::PositionId,
+			(fnft_collection_id, fnft_instance_id): &Self::PositionId,
 			ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
+			// TODO(benluelo): Refactor
 			let mut old_position_stake = BalanceOf::<T>::zero();
 			let mut old_position =
-				Stakes::<T>::try_mutate(position, |old_stake| match old_stake {
-					Some(stake) => {
-						let old_value = stake.clone();
-						stake.stake = ratio.mul_floor(stake.stake);
-						stake.share = ratio.mul_floor(stake.share);
-						let assets: Vec<T::AssetId> = stake.reductions.keys().cloned().collect();
-						for asset in assets {
-							let reduction = stake.reductions.get_mut(&asset);
-							if let Some(value) = reduction {
-								*value = ratio.mul_floor(*value);
-							}
-						}
-						old_position_stake = stake.stake;
-						Ok(old_value)
-					},
-					None => Err(Error::<T>::StakeNotFound),
+				Stakes::<T>::try_mutate(fnft_collection_id, fnft_instance_id, |maybe_stake| {
+					let stake = maybe_stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
+
+					let old_value = stake.clone();
+					stake.stake = ratio.mul_floor(stake.stake);
+					stake.share = ratio.mul_floor(stake.share);
+
+					for (_, reduction) in &mut stake.reductions {
+						*reduction = ratio.mul_floor(*reduction);
+					}
+
+					old_position_stake = stake.stake;
+					Ok::<_, DispatchError>(old_value)
 				})?;
+
 			let left_from_one_ratio = ratio.left_from_one();
-			let assets: Vec<T::AssetId> = old_position.reductions.keys().cloned().collect();
-			for asset in assets {
-				let reduction = old_position.reductions.get_mut(&asset);
-				if let Some(value) = reduction {
-					*value = left_from_one_ratio.mul_floor(*value);
-				}
+
+			for (_, reduction) in &mut old_position.reductions {
+				*reduction = left_from_one_ratio.mul_floor(*reduction);
 			}
 
 			let new_stake = StakeOf::<T> {
@@ -877,36 +963,51 @@ pub mod pallet {
 				share: left_from_one_ratio.mul_floor(old_position.share),
 				..old_position
 			};
-			let new_position = StakeCount::<T>::increment()?;
-			Stakes::<T>::insert(new_position, &new_stake);
+
+			let new_fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
+			Stakes::<T>::insert(&fnft_collection_id, &new_fnft_instance_id, &new_stake);
 			// TODO (vim):
 			// 	1. Create the new financial NFT for the new position
 			//	2. transfer the split staked amount to the NFT account and lock it
 			//	3. transfer the split share amount to the NFT account and lock it
 			Self::deposit_event(Event::<T>::SplitPosition {
-				positions: vec![(*position, old_position_stake), (new_position, new_stake.stake)],
+				positions: vec![
+					(*fnft_collection_id, *fnft_instance_id, old_position_stake),
+					(*fnft_collection_id, *fnft_instance_id, new_stake.stake),
+				],
 			});
-			Ok([*position, new_position])
+
+			Ok([(*fnft_collection_id, *fnft_instance_id), (*fnft_collection_id, *fnft_instance_id)])
 		}
 
 		#[transactional]
-		fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult {
+		fn claim(
+			who: &Self::AccountId,
+			(fnft_collection_id, fnft_instance_id): &Self::PositionId,
+		) -> DispatchResult {
 			let keep_alive = false;
 
-			Stakes::<T>::try_mutate(position, |stake| {
+			Stakes::<T>::try_mutate(fnft_collection_id, fnft_instance_id, |stake| {
 				let stake = stake.as_mut().ok_or(Error::<T>::StakeNotFound)?;
 				RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
 					let rewards_pool =
 						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
+					let owner = T::FinancialNft::owner(fnft_collection_id, fnft_instance_id)
+						.ok_or(Error::<T>::FnftNotFound)?;
+
 					(*rewards_pool, *stake) =
-						Self::collect_rewards(rewards_pool, stake, false, keep_alive)?;
+						Self::collect_rewards(rewards_pool, stake, &owner, false, keep_alive)?;
 
 					Ok::<_, DispatchError>(())
 				})
 			})?;
 
-			Self::deposit_event(Event::<T>::Claimed { owner: who.clone(), position_id: *position });
+			Self::deposit_event(Event::<T>::Claimed {
+				owner: who.clone(),
+				fnft_collection_id: *fnft_collection_id,
+				fnft_instance_id: *fnft_instance_id,
+			});
 
 			Ok(())
 		}
@@ -924,10 +1025,10 @@ pub mod pallet {
 		pub(crate) fn collect_rewards(
 			rewards_pool: &mut RewardPoolOf<T>,
 			stake: &mut StakeOf<T>,
+			owner: &T::AccountId,
 			penalize_for_early_unlock: bool,
 			keep_alive: bool,
 		) -> Result<(RewardPoolOf<T>, StakeOf<T>), DispatchError> {
-			let pool_id = &stake.reward_pool_id;
 			for (asset_id, reward) in &mut rewards_pool.rewards {
 				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
 				let claim = if rewards_pool.total_shares.is_zero() {
@@ -957,8 +1058,8 @@ pub mod pallet {
 
 				T::Assets::transfer(
 					reward.asset_id,
-					&Self::pool_account_id(pool_id),
-					&stake.owner,
+					&Self::pool_account_id(&stake.reward_pool_id),
+					&owner,
 					claim,
 					keep_alive,
 				)?;
