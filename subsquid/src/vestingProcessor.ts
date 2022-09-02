@@ -1,4 +1,5 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
+import { Store } from "@subsquid/typeorm-store";
 import { VestingSchedule as VestingScheduleType } from "./types/v2401";
 import { Schedule, ScheduleWindow, VestingSchedule } from "./model";
 import { VestingVestingScheduleAddedEvent } from "./types/events";
@@ -48,7 +49,7 @@ export function createVestingSchedule(
  * @param event
  */
 export async function processVestingScheduleAddedEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   event: VestingVestingScheduleAddedEvent
 ) {
   const { from, to, asset, schedule, vestingScheduleId } =

@@ -1,6 +1,7 @@
 import assert from 'assert'
-import {EventContext, Result, deprecateLatest} from './support'
+import { Result, deprecateLatest} from './support'
 import * as v2401 from './v2401'
+import { EventContext } from "@subsquid/substrate-typegen/lib/support";
 
 export class BalancesTransferEvent {
   constructor(private ctx: EventContext) {

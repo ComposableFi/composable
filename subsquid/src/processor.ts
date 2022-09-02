@@ -3,16 +3,17 @@ import {
   EventHandlerContext,
   SubstrateProcessor,
 } from "@subsquid/substrate-processor";
+import { Store, TypeormDatabase } from "@subsquid/typeorm-store";
 import { Account, HistoricalBalance } from "./model";
 import {
   BalancesTransferEvent,
+  BondedFinanceNewBondEvent,
+  BondedFinanceNewOfferEvent,
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
   PabloPoolCreatedEvent,
   PabloPoolDeletedEvent,
   PabloSwappedEvent,
-  BondedFinanceNewBondEvent,
-  BondedFinanceNewOfferEvent,
   VestingVestingScheduleAddedEvent,
 } from "./types/events";
 import { getOrCreate } from "./dbHelper";
@@ -29,7 +30,8 @@ import {
 } from "./bondedFinanceProcessor";
 import { processVestingScheduleAddedEvent } from "./vestingProcessor";
 
-const processor = new SubstrateProcessor("composable_dali_dev");
+const dbName = "composable_dali_dev";
+const processor = new SubstrateProcessor(new TypeormDatabase());
 
 const chain = (): string => {
   switch (process.env.ENV) {
@@ -41,9 +43,8 @@ const chain = (): string => {
       if ("RELAYCHAIN_URI" in process.env) {
         return process.env.RELAYCHAIN_URI!.toString();
       }
-      else {
-        return "ws://127.0.0.1:9988";
-      }
+
+      return "ws://127.0.0.1:9988";
   }
 };
 
@@ -51,11 +52,9 @@ const archive = (): string => {
   if ("SUBSQUID_ARCHIVE_URI" in process.env) {
     return process.env.SUBSQUID_ARCHIVE_URI!.toString();
   }
-  else {
-    return "http://127.0.0.1:8080/v1/graphql";
-  }
-};
 
+  return "http://127.0.0.1:8080/v1/graphql";
+};
 
 const chainConnectionString = chain();
 const archiveConnectionString = archive();
@@ -96,7 +95,7 @@ processor.addEventHandler("pablo.Swapped", async (ctx) => {
 
 processor.addEventHandler("balances.Transfer", async (ctx) => {
   const transfer = getTransferEvent(ctx);
-  const tip = ctx.extrinsic?.tip || 0n;
+  const tip = ctx.event.extrinsic?.tip || 0n;
   const from = ss58.codec("picasso").encode(transfer.from);
   const to = ss58.codec("picasso").encode(transfer.to);
 
@@ -156,7 +155,7 @@ interface TransferEvent {
   amount: bigint;
 }
 
-function getTransferEvent(ctx: EventHandlerContext): TransferEvent {
+function getTransferEvent(ctx: EventHandlerContext<Store, { event: true }>) {
   const event = new BalancesTransferEvent(ctx);
   return event.asV2401 ?? event.asLatest;
 }
