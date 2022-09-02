@@ -19,7 +19,6 @@ library = []
 
 [dependencies]
 cosmwasm-std = { version = "1.0.0", features = ["abort"] }
-cosmwasm-storage = "1.0.0"
 cw-storage-plus = "0.13.2"
 cw20 = { git = "https://github.com/CosmWasm/cw-plus.git" }
 hex = "0.4"
@@ -31,8 +30,6 @@ xcvm-core = { path = "../../../lib/core", features = ["std"] }
 xcvm-interpreter = { path = "../interpreter", features = ["library"] }
 
 [dev-dependencies]
-# more explicit tests
-cosmwasm-std = { version = "1.0.0", features = ["backtraces", "abort"] }
 cosmwasm-schema = "1.0.0"
 cw-multi-test = "0.13.2"
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
