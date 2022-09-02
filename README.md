@@ -101,4 +101,6 @@ docker volume create nix
 docker run --privileged --rm -v nix:/nix  -v /var/run/docker.sock:/var/run/docker.sock -it nixos/nix bash -c "nix run github:ComposableFi/composable#devnet-xcvm-up -L --option cores 8 --extra-experimental-features nix-command --extra-experimental-features flakes"
 ```
 
+Note that since running a devnet is quite resource intensive, it is best to assign a lot of cores and RAM to the Docker VM if you are using macOS. Go to `Docker -> Preferences -> Resources` and assign lots of CPU cores and RAM.
+
 
