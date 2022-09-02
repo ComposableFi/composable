@@ -7,7 +7,6 @@ import {
   HistoricalLockedValue,
   PabloPool,
   PicassoPool,
-  StakingPosition,
   Transaction,
   TransactionType,
 } from "./model";

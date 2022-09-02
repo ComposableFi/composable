@@ -325,7 +325,7 @@ export async function processUnstakedEvent(
 /**
  * Process `stakingRewards.SplitPosition` event.
  *  - Update amount for existing StakingPosition.
- *  - Create new StakingPosition. TODO: add amounts to the pallet event
+ *  - Create new StakingPosition.
  *  - Update account and store transaction.
  * @param ctx
  */

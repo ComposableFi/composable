@@ -198,7 +198,7 @@ function getLiquidityAddedEvent(
 export async function processLiquidityAddedEvent(
   ctx: EventHandlerContext,
   event: PabloLiquidityAddedEvent
-) {
+): Promise<void> {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
   const liquidityAddedEvt = getLiquidityAddedEvent(event);
   const who = encodeAccount(liquidityAddedEvt.who);
@@ -310,7 +310,7 @@ function getLiquidityRemovedEvent(
 export async function processLiquidityRemovedEvent(
   ctx: EventHandlerContext,
   event: PabloLiquidityRemovedEvent
-) {
+): Promise<void> {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
   const liquidityRemovedEvt = getLiquidityRemovedEvent(event);
   const who = encodeAccount(liquidityRemovedEvt.who);
@@ -433,7 +433,7 @@ function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
 export async function processSwappedEvent(
   ctx: EventHandlerContext,
   event: PabloSwappedEvent
-) {
+): Promise<void> {
   console.debug("processing SwappedEvent", ctx.event.id);
   const swappedEvt = getSwappedEvent(event);
   const who = encodeAccount(swappedEvt.who);
@@ -573,7 +573,7 @@ function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
 export async function processPoolDeletedEvent(
   ctx: EventHandlerContext,
   event: PabloPoolDeletedEvent
-) {
+): Promise<void> {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
   const poolDeletedEvent = getPoolDeletedEvent(event);
   const pool = await getLatestPoolByPoolId(ctx.store, poolDeletedEvent.poolId);
