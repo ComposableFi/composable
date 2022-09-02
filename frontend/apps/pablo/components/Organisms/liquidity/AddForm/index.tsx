@@ -114,7 +114,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           noBorder
           value={assetOneAmount}
           setValue={
-            manualUpdateMode == 1 ?
+            manualUpdateMode === 1 ?
             setAmount("assetOneAmount") : undefined
           }
           InputProps={{
@@ -182,7 +182,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           noBorder
           value={assetTwoAmount}
           setValue={
-            manualUpdateMode == 2 ?
+            manualUpdateMode === 2 ?
             setAmount("assetTwoAmount") : undefined
           }
           InputProps={{
