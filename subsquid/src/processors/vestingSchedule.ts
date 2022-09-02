@@ -79,7 +79,7 @@ export function getNewVestingSchedule(
     from: fromAccount,
     eventId: ctx.event.id,
     to: toAccount,
-    asset,
+    assetId: asset.toString(),
     schedule: createVestingSchedule(schedule),
     totalAmount: scheduleAmount,
     fullyClaimed: false,

@@ -73,7 +73,7 @@ type VestingSchedule @entity {
   "'To' account for the vesting schedule"
   to: String!
   "Asset ID"
-  asset: BigInt!
+  assetId: String!
   "Vesting schedule"
   schedule: Schedule!
   "Initial locked amount"

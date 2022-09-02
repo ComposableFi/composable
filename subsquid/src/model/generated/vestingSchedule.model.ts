@@ -38,8 +38,8 @@ export class VestingSchedule {
   /**
    * Asset ID
    */
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  asset!: bigint
+  @Column_("text", {nullable: false})
+  assetId!: string
 
   /**
    * Vesting schedule

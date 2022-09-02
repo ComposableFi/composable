@@ -4,22 +4,22 @@ import { mock } from "ts-mockito";
 import { BOB, createCtx } from "../src/utils";
 import { expect } from "chai";
 import {
+  createRewardPool,
   createStakingPosition,
   extendStakingPosition,
   splitStakingPosition,
 } from "../src/processors/stakingRewards";
 
 /**
- * Check if PicassoStakingPosition has expected values.
+ * Check if StakingPosition has expected values.
  * @param position
  * @param positionId
  * @param assetId
  * @param owner
  * @param amount
- * @param startTimestamp
- * @param endTimestamp
  * @param eventId
  * @param transactionId
+ * @param duration
  */
 function assertStakingPosition(
   position: StakingPosition,
@@ -27,35 +27,40 @@ function assertStakingPosition(
   assetId: string,
   owner: string,
   amount: bigint,
-  startTimestamp: bigint,
-  endTimestamp: bigint,
   eventId: string,
-  transactionId: string
+  transactionId: string,
+  duration: bigint
 ) {
   expect(position.positionId).to.equal(positionId);
   expect(position.assetId).to.equal(assetId);
   expect(position.owner).to.equal(owner);
   expect(position.amount).to.equal(amount);
-  expect(position.startTimestamp).to.equal(startTimestamp);
-  expect(position.endTimestamp).to.equal(endTimestamp);
   expect(position.eventId).to.equal(eventId);
   expect(position.transactionId).to.equal(transactionId);
+  if (position.endTimestamp)
+    expect(position.endTimestamp).to.equal(
+      position.startTimestamp + 1_000n * duration
+    );
 }
 
 describe("Staking rewards", () => {
   let storeMock: Store;
   let ctx: EventHandlerContext;
-  let now = BigInt(new Date().valueOf());
-  let end = now + 10_000n;
 
   beforeEach(() => {
     storeMock = mock<Store>();
     ctx = createCtx(storeMock, 1);
-    now = BigInt(new Date().valueOf());
-    end = now + 10_000n;
   });
 
-  it("Should create PicassoStakingPosition", async () => {
+  it("Should create RewardPool", async () => {
+    const rewardPool = createRewardPool("event-id", 1n, 2n);
+
+    expect(rewardPool.eventId).to.equal("event-id");
+    expect(rewardPool.poolId).to.equal("1");
+    expect(rewardPool.assetId).to.equal("2");
+  });
+
+  it("Should create StakingPosition", async () => {
     const position = createStakingPosition(
       "2",
       "3",
@@ -72,14 +77,13 @@ describe("Staking rewards", () => {
       "3",
       BOB,
       123n,
-      now,
-      end,
       "event-id",
-      "transaction-id"
+      "transaction-id",
+      10n
     );
   });
 
-  it("Should split PicassoStakingPosition", async () => {
+  it("Should split StakingPosition", async () => {
     const position = createStakingPosition(
       "2",
       "3",
@@ -104,10 +108,9 @@ describe("Staking rewards", () => {
       "3",
       BOB,
       100n,
-      now,
-      end,
       "new-event-id",
-      "new-transaction-id"
+      "new-transaction-id",
+      10n
     );
     assertStakingPosition(
       newPosition,
@@ -115,14 +118,13 @@ describe("Staking rewards", () => {
       "3",
       BOB,
       50n,
-      now,
-      end,
       "new-event-id",
-      "new-transaction-id"
+      "new-transaction-id",
+      10n
     );
   });
 
-  it("Should extend PicassoStakingPosition", async () => {
+  it("Should extend StakingPosition", async () => {
     const position = createStakingPosition(
       "2",
       "3",
@@ -140,10 +142,9 @@ describe("Staking rewards", () => {
       "3",
       BOB,
       150n,
-      now,
-      end,
       "new-event-id",
-      "new-transaction-id"
+      "new-transaction-id",
+      10n
     );
   });
 });

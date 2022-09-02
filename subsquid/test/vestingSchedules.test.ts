@@ -9,6 +9,7 @@ import {
   encodeAccount,
 } from "../src/utils";
 import {
+  createVestingSchedule,
   getNewVestingSchedule,
   updatedClaimedAmount,
 } from "../src/processors/vestingSchedule";
@@ -51,7 +52,7 @@ const MOCK_VESTING_SCHEDULE_MOMENT_BASED: VestingScheduleType = {
 
 const createMockVestingSchedule = (
   scheduleId: bigint,
-  assetId: bigint
+  assetId: string
 ): VestingSchedule =>
   new VestingSchedule({
     id: "123",
@@ -59,7 +60,7 @@ const createMockVestingSchedule = (
     from: BOB,
     eventId: "456",
     to: CHARLIE,
-    asset: assetId,
+    assetId,
     schedule: new Schedule({
       vestingScheduleId: scheduleId,
 
@@ -81,7 +82,7 @@ const createMockVestingSchedule = (
  * @param vestingSchedule
  * @param from
  * @param to
- * @param asset
+ * @param assetId
  * @param vestingScheduleId
  * @param alreadyClaimed
  * @param fullyClaimed
@@ -93,7 +94,7 @@ function assertVestingSchedule(
   vestingSchedule: VestingSchedule,
   from: string,
   to: string,
-  asset: bigint,
+  assetId: string,
   vestingScheduleId: bigint,
   alreadyClaimed: bigint,
   fullyClaimed: boolean,
@@ -104,7 +105,7 @@ function assertVestingSchedule(
   expect(vestingSchedule.from).to.equal(from);
   expect(vestingSchedule.to).to.equal(to);
 
-  expect(vestingSchedule.asset).to.equal(asset);
+  expect(vestingSchedule.assetId).to.equal(assetId);
   expect(vestingSchedule.scheduleId).to.equal(vestingScheduleId);
   expect(vestingSchedule.schedule.alreadyClaimed).to.equal(alreadyClaimed);
   expect(vestingSchedule.fullyClaimed).to.equal(fullyClaimed);
@@ -137,7 +138,7 @@ function assertVestingSchedule(
 function createVestingScheduleAddedEvent(
   from: Uint8Array,
   to: Uint8Array,
-  asset: bigint,
+  assetId: string,
   schedule: VestingScheduleType,
   scheduleAmount: bigint
 ) {
@@ -145,7 +146,7 @@ function createVestingScheduleAddedEvent(
   let evt = {
     from,
     to,
-    asset,
+    asset: BigInt(assetId),
     schedule,
     vestingScheduleId: schedule.vestingScheduleId,
     alreadyClaimed: schedule.vestingScheduleId,
@@ -213,7 +214,7 @@ describe("Vesting schedule added", () => {
     const { event } = createVestingScheduleAddedEvent(
       MOCK_ADDRESS_FROM,
       MOCK_ADDRESS_TO,
-      2n,
+      "2",
       MOCK_VESTING_SCHEDULE_BLOCK_NUMBER_BASED,
       100n
     );
@@ -224,7 +225,7 @@ describe("Vesting schedule added", () => {
       vestingSchedule,
       encodeAccount(MOCK_ADDRESS_FROM),
       encodeAccount(MOCK_ADDRESS_TO),
-      2n,
+      "2",
       3n,
       10n,
       false,
@@ -238,7 +239,7 @@ describe("Vesting schedule added", () => {
     const { event } = createVestingScheduleAddedEvent(
       MOCK_ADDRESS_FROM,
       MOCK_ADDRESS_TO,
-      5n,
+      "5",
       MOCK_VESTING_SCHEDULE_MOMENT_BASED,
       100n
     );
@@ -249,7 +250,7 @@ describe("Vesting schedule added", () => {
       vestingSchedule,
       encodeAccount(MOCK_ADDRESS_FROM),
       encodeAccount(MOCK_ADDRESS_TO),
-      5n,
+      "5",
       4n,
       20n,
       false,
@@ -276,13 +277,13 @@ describe("Vesting schedule added", () => {
     for (let i = 0; i < claimedAmountPerSchedule.length; i += 1) {
       const [id, amount] = claimedAmountPerSchedule[i];
 
-      const vestingSchedule = createMockVestingSchedule(id, 1n);
+      const vestingSchedule = createMockVestingSchedule(id, "1");
 
       assertVestingSchedule(
         vestingSchedule,
         BOB,
         CHARLIE,
-        1n,
+        "1",
         BigInt(id),
         BigInt(0),
         false,
@@ -297,7 +298,7 @@ describe("Vesting schedule added", () => {
         vestingSchedule,
         BOB,
         CHARLIE,
-        1n,
+        "1",
         BigInt(id),
         BigInt(amount),
         false,
@@ -320,13 +321,13 @@ describe("Vesting schedule added", () => {
     const { claimedAmountPerSchedule } = event.asLatest;
     const [id, amount] = claimedAmountPerSchedule[0];
 
-    const vestingSchedule = createMockVestingSchedule(id, 1n);
+    const vestingSchedule = createMockVestingSchedule(id, "1");
 
     assertVestingSchedule(
       vestingSchedule,
       BOB,
       CHARLIE,
-      1n,
+      "1",
       BigInt(id),
       BigInt(0),
       false,
@@ -341,7 +342,7 @@ describe("Vesting schedule added", () => {
       vestingSchedule,
       BOB,
       CHARLIE,
-      1n,
+      "1",
       BigInt(id),
       BigInt(amount),
       true,
