@@ -1,7 +1,6 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import Big from "big.js";
 import { randomUUID } from "crypto";
-import { ApiPromise, WsProvider } from "@polkadot/api";
 import {
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
@@ -25,17 +24,15 @@ import {
 import { CurrencyPair, Fee } from "../types/v2401";
 import { encodeAccount } from "../utils";
 
-const wsProvider = new WsProvider("ws://127.0.0.1:9988");
-
 function createTransaction(
   ctx: EventHandlerContext,
   pool: PabloPool,
   who: string,
   transactionType: TransactionType,
   spotPrice: string,
-  baseAssetId: bigint,
+  baseAssetId: string,
   baseAssetAmount: bigint,
-  quoteAssetId: bigint,
+  quoteAssetId: string,
   quoteAssetAmount: bigint,
   fee?: string
 ) {
@@ -61,7 +58,7 @@ function createTransaction(
 
 function createAsset(
   pool: PabloPool,
-  assetId: bigint,
+  assetId: string,
   ctx: EventHandlerContext,
   timestamp: bigint
 ) {
@@ -102,8 +99,8 @@ export async function processPoolCreatedEvent(
     pool.eventId = ctx.event.id;
     pool.owner = owner;
     pool.poolId = poolCreatedEvt.poolId;
-    pool.baseAssetId = poolCreatedEvt.assets.base;
-    pool.quoteAssetId = poolCreatedEvt.assets.quote;
+    pool.baseAssetId = poolCreatedEvt.assets.base.toString();
+    pool.quoteAssetId = poolCreatedEvt.assets.quote.toString();
     pool.transactionCount = 1;
     pool.totalLiquidity = "0.0";
     pool.totalVolume = "0.0";
@@ -114,7 +111,8 @@ export async function processPoolCreatedEvent(
     let tx = await ctx.store.get(Transaction, {
       where: { eventId: ctx.event.id },
     });
-    if (tx !== undefined) {
+    if (tx != undefined) {
+      console.log("qwe");
       console.error("Unexpected transaction in db", tx);
       throw new Error("Unexpected transaction in db");
     }
@@ -125,28 +123,46 @@ export async function processPoolCreatedEvent(
       TransactionType.CREATE_POOL,
       // Following fields are irrelevant for CREATE_POOL
       "0",
-      poolCreatedEvt.assets.base,
+      poolCreatedEvt.assets.base.toString(),
       BigInt(0),
-      poolCreatedEvt.assets.quote,
+      poolCreatedEvt.assets.quote.toString(),
       BigInt(0)
     );
 
     let quoteAsset = await get(
       ctx.store,
       PabloPoolAsset,
-      createPoolAssetId(ctx.event.id, pool.poolId, poolCreatedEvt.assets.quote)
+      createPoolAssetId(
+        ctx.event.id,
+        pool.poolId,
+        poolCreatedEvt.assets.quote.toString()
+      )
     );
     let baseAsset = await get(
       ctx.store,
       PabloPoolAsset,
-      createPoolAssetId(ctx.event.id, pool.poolId, poolCreatedEvt.assets.base)
+      createPoolAssetId(
+        ctx.event.id,
+        pool.poolId,
+        poolCreatedEvt.assets.base.toString()
+      )
     );
-    if (quoteAsset !== undefined || baseAsset !== undefined) {
+    if (quoteAsset != undefined || baseAsset != undefined) {
       console.error("Unexpected assets for pool in db", quoteAsset, baseAsset);
       throw new Error("Unexpected assets found");
     }
-    quoteAsset = createAsset(pool, poolCreatedEvt.assets.quote, ctx, timestamp);
-    baseAsset = createAsset(pool, poolCreatedEvt.assets.base, ctx, timestamp);
+    quoteAsset = createAsset(
+      pool,
+      poolCreatedEvt.assets.quote.toString(),
+      ctx,
+      timestamp
+    );
+    baseAsset = createAsset(
+      pool,
+      poolCreatedEvt.assets.base.toString(),
+      ctx,
+      timestamp
+    );
 
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
@@ -158,7 +174,7 @@ export async function processPoolCreatedEvent(
 export function createPoolAssetId(
   eventId: string,
   poolId: bigint,
-  assetId: bigint
+  assetId: string
 ): string {
   return `${eventId}-${poolId}-${assetId}`;
 }
@@ -184,7 +200,6 @@ export async function processLiquidityAddedEvent(
   event: PabloLiquidityAddedEvent
 ) {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
-  const api = await ApiPromise.create({ provider: wsProvider });
   const liquidityAddedEvt = getLiquidityAddedEvent(event);
   const who = encodeAccount(liquidityAddedEvt.who);
   const pool = await getLatestPoolByPoolId(ctx.store, liquidityAddedEvt.poolId);
@@ -237,7 +252,7 @@ export async function processLiquidityAddedEvent(
     let tx = await ctx.store.get(Transaction, {
       where: { eventId: ctx.event.id },
     });
-    if (tx !== undefined) {
+    if (tx != undefined) {
       throw new Error("Unexpected transaction in db");
     }
     tx = createTransaction(
@@ -248,28 +263,24 @@ export async function processLiquidityAddedEvent(
       Big(liquidityAddedEvt.baseAmount.toString())
         .div(Big(liquidityAddedEvt.quoteAmount.toString()))
         .toString(),
-      BigInt(baseAsset.assetId),
+      baseAsset.assetId,
       liquidityAddedEvt.baseAmount,
       pool.quoteAssetId,
       liquidityAddedEvt.quoteAmount
     );
 
-    const oracleBasePrice = await api.query.oracle.prices(pool.baseAssetId);
-    const oracleQuotePrice = await api.query.oracle.prices(pool.quoteAssetId);
-
-    if (!oracleBasePrice?.price || !oracleQuotePrice?.price) {
-      // no-op.
-      return;
-    }
-
-    const basePrice = BigInt(oracleBasePrice.price.toString());
-    const quotePrice = BigInt(oracleQuotePrice.price.toString());
-
-    const totalAmountUsd =
-      basePrice * liquidityAddedEvt.baseAmount +
-      quotePrice * liquidityAddedEvt.quoteAmount;
-
-    await storeHistoricalLockedValue(ctx, totalAmountUsd, ctx.event.id);
+    await storeHistoricalLockedValue(
+      ctx,
+      liquidityAddedEvt.baseAmount,
+      ctx.event.id,
+      baseAsset.assetId
+    );
+    await storeHistoricalLockedValue(
+      ctx,
+      liquidityAddedEvt.quoteAmount,
+      ctx.event.id,
+      quoteAsset.assetId
+    );
 
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
@@ -301,7 +312,6 @@ export async function processLiquidityRemovedEvent(
   event: PabloLiquidityRemovedEvent
 ) {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
-  const api = await ApiPromise.create({ provider: wsProvider });
   const liquidityRemovedEvt = getLiquidityRemovedEvent(event);
   const who = encodeAccount(liquidityRemovedEvt.who);
   const pool = await getLatestPoolByPoolId(
@@ -309,7 +319,7 @@ export async function processLiquidityRemovedEvent(
     liquidityRemovedEvt.poolId
   );
   // only set values if the owner was missing, i.e a new pool
-  if (pool != undefined) {
+  if (pool !== undefined) {
     const timestamp = BigInt(new Date().getTime());
     pool.id = ctx.event.id;
     pool.eventId = ctx.event.id;
@@ -323,7 +333,7 @@ export async function processLiquidityRemovedEvent(
 
     // find baseAsset: Following is only valid for dual asset pools
     const baseAsset = pool.poolAssets.find(
-      (asset) => asset.assetId != pool.quoteAssetId
+      (asset) => asset.assetId !== pool.quoteAssetId
     );
     if (baseAsset === undefined) {
       throw new Error("baseAsset not found");
@@ -357,7 +367,7 @@ export async function processLiquidityRemovedEvent(
     let tx = await ctx.store.get(Transaction, {
       where: { eventId: ctx.event.id },
     });
-    if (tx !== undefined) {
+    if (tx != undefined) {
       throw new Error("Unexpected transaction in db");
     }
     tx = createTransaction(
@@ -368,28 +378,24 @@ export async function processLiquidityRemovedEvent(
       Big(liquidityRemovedEvt.baseAmount.toString())
         .div(Big(liquidityRemovedEvt.quoteAmount.toString()))
         .toString(),
-      BigInt(baseAsset.assetId),
+      baseAsset.assetId,
       liquidityRemovedEvt.baseAmount,
       pool.quoteAssetId,
       liquidityRemovedEvt.quoteAmount
     );
 
-    const oracleBasePrice = await api.query.oracle.prices(pool.baseAssetId);
-    const oracleQuotePrice = await api.query.oracle.prices(pool.quoteAssetId);
-
-    if (!oracleBasePrice?.price || !oracleQuotePrice?.price) {
-      // no-op.
-      return;
-    }
-
-    const basePrice = BigInt(oracleBasePrice.price.toString());
-    const quotePrice = BigInt(oracleQuotePrice.price.toString());
-
-    const totalAmountUsd =
-      basePrice * liquidityRemovedEvt.baseAmount +
-      quotePrice * liquidityRemovedEvt.quoteAmount;
-
-    await storeHistoricalLockedValue(ctx, totalAmountUsd, ctx.event.id);
+    await storeHistoricalLockedValue(
+      ctx,
+      liquidityRemovedEvt.baseAmount,
+      ctx.event.id,
+      baseAsset.assetId
+    );
+    await storeHistoricalLockedValue(
+      ctx,
+      liquidityRemovedEvt.quoteAmount,
+      ctx.event.id,
+      quoteAsset.assetId.toString()
+    );
 
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
@@ -403,8 +409,8 @@ export async function processLiquidityRemovedEvent(
 interface SwappedEvent {
   poolId: bigint;
   who: Uint8Array;
-  baseAsset: bigint;
-  quoteAsset: bigint;
+  baseAsset: string;
+  quoteAsset: string;
   baseAmount: bigint;
   quoteAmount: bigint;
   fee: Fee;
@@ -413,7 +419,15 @@ interface SwappedEvent {
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
   const { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee } =
     event.asV2401 ?? event.asLatest;
-  return { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee };
+  return {
+    poolId,
+    who,
+    baseAsset: baseAsset.toString(),
+    quoteAsset: quoteAsset.toString(),
+    baseAmount,
+    quoteAmount,
+    fee,
+  };
 }
 
 export async function processSwappedEvent(
@@ -425,8 +439,8 @@ export async function processSwappedEvent(
   const who = encodeAccount(swappedEvt.who);
   const pool = await getLatestPoolByPoolId(ctx.store, swappedEvt.poolId);
   // only set values if the owner was missing, i.e a new pool
-  if (pool != undefined) {
-    const isReverse: boolean = pool.quoteAssetId != swappedEvt.quoteAsset;
+  if (pool !== undefined) {
+    const isReverse: boolean = pool.quoteAssetId !== swappedEvt.quoteAsset;
     const timestamp = BigInt(new Date().getTime());
     pool.id = ctx.event.id;
     pool.eventId = ctx.event.id;
@@ -435,7 +449,7 @@ export async function processSwappedEvent(
     pool.blockNumber = BigInt(ctx.block.height);
     // find baseAsset: Following is only valid for dual asset pools
     const baseAsset = pool.poolAssets.find(
-      (asset) => asset.assetId != pool.quoteAssetId
+      (asset) => asset.assetId !== pool.quoteAssetId
     );
     if (baseAsset === undefined) {
       throw new Error("baseAsset not found");
@@ -488,7 +502,7 @@ export async function processSwappedEvent(
         calculateFeeInQuoteAsset(
           spotPrice,
           quoteAsset.assetId,
-          swappedEvt.fee.assetId,
+          swappedEvt.fee.assetId.toString(),
           feesLeavingPool
         )
       )
@@ -496,7 +510,7 @@ export async function processSwappedEvent(
     const fee = calculateFeeInQuoteAsset(
       spotPrice,
       quoteAsset.assetId,
-      swappedEvt.fee.assetId,
+      swappedEvt.fee.assetId.toString(),
       swappedEvt.fee.fee
     );
     pool.totalFees = Big(pool.totalFees).add(fee).toString();
@@ -520,7 +534,7 @@ export async function processSwappedEvent(
     let tx = await ctx.store.get(Transaction, {
       where: { eventId: ctx.event.id },
     });
-    if (tx !== undefined) {
+    if (tx != undefined) {
       throw new Error("Unexpected transaction in db");
     }
     tx = createTransaction(
@@ -564,7 +578,7 @@ export async function processPoolDeletedEvent(
   const poolDeletedEvent = getPoolDeletedEvent(event);
   const pool = await getLatestPoolByPoolId(ctx.store, poolDeletedEvent.poolId);
   // only set values if the owner was missing, i.e a new pool
-  if (pool != undefined) {
+  if (pool !== undefined) {
     const who = pool.owner;
     const timestamp = BigInt(new Date().getTime());
     pool.id = ctx.event.id;
@@ -576,7 +590,7 @@ export async function processPoolDeletedEvent(
 
     // find baseAsset: Following is only valid for dual asset pools
     const baseAsset = pool.poolAssets.find(
-      (asset) => asset.assetId != pool.quoteAssetId
+      (asset) => asset.assetId !== pool.quoteAssetId
     );
     if (baseAsset === undefined) {
       throw new Error("baseAsset not found");
@@ -610,7 +624,7 @@ export async function processPoolDeletedEvent(
     let tx = await ctx.store.get(Transaction, {
       where: { eventId: ctx.event.id },
     });
-    if (tx !== undefined) {
+    if (tx != undefined) {
       throw new Error("Unexpected transaction in db");
     }
     tx = createTransaction(
@@ -621,7 +635,7 @@ export async function processPoolDeletedEvent(
       Big(poolDeletedEvent.baseAmount.toString())
         .div(Big(poolDeletedEvent.quoteAmount.toString()))
         .toString(),
-      BigInt(baseAsset.assetId),
+      baseAsset.assetId,
       poolDeletedEvent.baseAmount,
       pool.quoteAssetId,
       poolDeletedEvent.quoteAmount
@@ -638,8 +652,8 @@ export async function processPoolDeletedEvent(
 
 function calculateFeeInQuoteAsset(
   spotPrice: Big,
-  quoteAsset: bigint,
-  feeAsset: bigint,
+  quoteAsset: string,
+  feeAsset: string,
   fee: bigint
 ): Big {
   // calculate the quote amount based on the exchange rate if the fees are in the base asset

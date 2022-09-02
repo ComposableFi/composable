@@ -15,9 +15,9 @@ type PabloPool @entity {
   totalLiquidity: String!
   totalVolume: String!
   totalFees: String!
-  baseAssetId: BigInt!
+  baseAssetId: String!
   "Asset used for all quotes in this type"
-  quoteAssetId: BigInt!
+  quoteAssetId: String!
   blockNumber: BigInt!
   "Unix timestamp in ms"
   calculatedTimestamp: BigInt!
@@ -27,7 +27,7 @@ type PabloPool @entity {
 
 type PabloPoolAsset @entity {
   id: ID!
-  assetId: BigInt!
+  assetId: String!
   pool: PabloPool!
   totalLiquidity: BigInt!
   totalVolume: BigInt!
@@ -82,37 +82,6 @@ type VestingSchedule @entity {
   fullyClaimed: Boolean!
 }
 
-enum PicassoTransactionType {
-  BALANCES_TRANSFER,
-  BALANCES_DEPOSIT,
-  BALANCES_WITHDRAW,
-  STAKING_REWARDS_REWARD_POOL_CREATED,
-  STAKING_REWARDS_STAKED,
-  STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
-  STAKING_REWARDS_UNSTAKE,
-  STAKING_REWARDS_SPLIT_POSITION,
-  BONDED_FINANCE_NEW_OFFER,
-  BONDED_FINANCE_NEW_BOND,
-  BONDED_FINANCE_OFFER_CANCELLED,
-  VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
-  VESTING_SCHEDULES_CLAIMED,
-  VESTING_SCHEDULES_VESTING_SCHEDULES_UPDATED,
-}
-
-type PicassoTransaction @entity {
-  id: ID!
-  "ID of the event that was used to derive this transaction"
-  eventId: String!
-  "ID of account that executed transaction"
-  accountId: String!
-  "Type of transaction"
-  transactionType: PicassoTransactionType!
-  "Block in which transaction was registered"
-  blockNumber: BigInt!
-  "Timestamp of the block in which this transaction was registered"
-  timestamp: BigInt!
-}
-
 type Activity @entity {
   id: ID!
   "ID of the event associated with this activity"
@@ -156,6 +125,26 @@ type PicassoStakingPosition @entity {
   endTimestamp: BigInt
 }
 
+type PicassoPool @entity {
+  id: ID!
+  eventId: String!
+  poolId: String!
+  assetId: String!
+}
+
+type StakingPosition @entity {
+  id: ID!
+  eventId: String!
+  transactionId: String!
+  "Unique identifier for the position on chain"
+  positionId: String!
+  owner: String!
+  assetId: String!
+  amount: BigInt!
+  startTimestamp: BigInt!
+  endTimestamp: BigInt
+}
+
 type HistoricalLockedValue @entity {
   id: ID!
   eventId: String!
@@ -166,9 +155,9 @@ type HistoricalLockedValue @entity {
 type PabloTransaction @entity {
   id: ID!
   pool: PabloPool!
-  baseAssetId: BigInt!
+  baseAssetId: String!
   baseAssetAmount: BigInt!
-  quoteAssetId: BigInt!
+  quoteAssetId: String!
   quoteAssetAmount: BigInt!
   spotPrice: String!
   "Optional: Only certain transaction types have fees charged by Pablo. Does NOT include the collected extrinsic execution fee."

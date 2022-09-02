@@ -11,8 +11,8 @@ export class PabloPoolAsset {
   @PrimaryColumn_()
   id!: string
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  assetId!: bigint
+  @Column_("text", {nullable: false})
+  assetId!: string
 
   @Index_()
   @ManyToOne_(() => PabloPool, {nullable: false})

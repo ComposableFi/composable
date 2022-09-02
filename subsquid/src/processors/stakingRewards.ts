@@ -8,16 +8,18 @@ import {
   StakingRewardsUnstakedEvent,
 } from "../types/events";
 import {
+  getAssetIdFromPicassoPoolId,
   saveAccountAndTransaction,
   storeHistoricalLockedValue,
 } from "../dbHelper";
-import { PicassoStakingPosition, TransactionType } from "../model";
+import { PicassoPool, StakingPosition, TransactionType } from "../model";
 import { encodeAccount } from "../utils";
 
 interface RewardPoolCreatedEvent {
   poolId: bigint;
   owner: Uint8Array;
   endBlock: number;
+  assetId: bigint;
 }
 
 interface StakedEvent {
@@ -46,8 +48,8 @@ interface SplitPositionEvent {
 function getRewardPoolCreatedEvent(
   event: StakingRewardsRewardPoolCreatedEvent
 ): RewardPoolCreatedEvent {
-  const { poolId, owner, endBlock } = event.asV2401 ?? event.asLatest;
-  return { poolId, owner, endBlock };
+  const { poolId, owner, endBlock, assetId } = event.asV2401 ?? event.asLatest;
+  return { poolId, owner, endBlock, assetId };
 }
 
 function getStakedEvent(event: StakingRewardsStakedEvent): StakedEvent {
@@ -75,36 +77,49 @@ function getSplitPositionEvent(
   return { positions };
 }
 
+export function createRewardPool(
+  eventId: string,
+  poolId: bigint,
+  assetId: bigint
+): PicassoPool {
+  return new PicassoPool({
+    id: randomUUID(),
+    eventId: eventId,
+    poolId: poolId.toString(),
+    assetId: assetId.toString(),
+  });
+}
+
 /**
  * Create new PicassoStakingPosition.
- * @param poolId
  * @param positionId
+ * @param assetId
  * @param owner
  * @param amount
  * @param duration
  * @param eventId
  * @param transactionId
  */
-export function createPicassoStakingPosition(
-  poolId: bigint,
-  positionId: bigint,
+export function createStakingPosition(
+  positionId: string,
+  assetId: string,
   owner: string,
   amount: bigint,
   duration: bigint,
   eventId: string,
   transactionId: string
-): PicassoStakingPosition {
+): StakingPosition {
   const startTimestamp = BigInt(new Date().valueOf());
-  return new PicassoStakingPosition({
+  return new StakingPosition({
     id: randomUUID(),
     eventId,
     transactionId,
-    poolId: poolId.toString(),
     positionId: positionId.toString(),
     owner,
     amount,
     startTimestamp,
     endTimestamp: BigInt(startTimestamp + BigInt(duration * 1_000n)),
+    assetId,
   });
 }
 
@@ -115,8 +130,8 @@ export function createPicassoStakingPosition(
  * @param eventId
  * @param transactionId
  */
-export function extendPicassoStakingPosition(
-  position: PicassoStakingPosition,
+export function extendStakingPosition(
+  position: StakingPosition,
   newAmount: bigint,
   eventId: string,
   transactionId: string
@@ -127,7 +142,7 @@ export function extendPicassoStakingPosition(
 }
 
 /**
- * Split PicassoStakingPosition in 2.
+ * Split StakingPosition in 2.
  * Updates existing position in place, and returns new additional position.
  * @param position
  * @param oldAmount
@@ -136,33 +151,34 @@ export function extendPicassoStakingPosition(
  * @param eventId
  * @param transactionId
  */
-export function splitPicassoStakingPosition(
-  position: PicassoStakingPosition,
+export function splitStakingPosition(
+  position: StakingPosition,
   oldAmount: bigint,
   newAmount: bigint,
   newPositionId: bigint,
   eventId: string,
   transactionId: string
-): PicassoStakingPosition {
+): StakingPosition {
   position.amount = oldAmount;
   position.eventId = eventId;
   position.transactionId = transactionId;
 
-  return new PicassoStakingPosition({
+  return new StakingPosition({
     id: randomUUID(),
     eventId,
     transactionId,
-    poolId: position.poolId,
     positionId: newPositionId.toString(),
     owner: position.owner,
     amount: newAmount,
     startTimestamp: position.startTimestamp,
     endTimestamp: position.endTimestamp,
+    assetId: position.assetId,
   });
 }
 
 /**
  * Process `stakingRewards.RewardPoolCreated` event.
+ *  - Create reward pool.
  *  - Update account and store transaction.
  * @param ctx
  */
@@ -174,6 +190,12 @@ export async function processRewardPoolCreatedEvent(
   const event = getRewardPoolCreatedEvent(evt);
   const owner = encodeAccount(event.owner);
 
+  const { assetId, poolId } = event;
+
+  const stakingPool = createRewardPool(ctx.event.id, poolId, assetId);
+
+  await ctx.store.save(stakingPool);
+
   await saveAccountAndTransaction(
     ctx,
     TransactionType.STAKING_REWARDS_REWARD_POOL_CREATED,
@@ -183,7 +205,7 @@ export async function processRewardPoolCreatedEvent(
 
 /**
  * Process `stakingRewards.Staked` event.
- *  - Create PicassoStakingPosition.
+ *  - Create StakingPosition.
  *  - Update account and store transaction.
  * @param ctx
  */
@@ -202,9 +224,11 @@ export async function processStakedEvent(
     owner
   );
 
-  const stakingPosition = createPicassoStakingPosition(
-    poolId,
-    positionId,
+  const assetId = await getAssetIdFromPicassoPoolId(ctx, poolId);
+
+  const stakingPosition = createStakingPosition(
+    positionId.toString(),
+    assetId,
     owner,
     amount,
     durationPreset,
@@ -212,14 +236,14 @@ export async function processStakedEvent(
     transactionId
   );
 
-  await storeHistoricalLockedValue(ctx, amount, ctx.event.id);
+  await storeHistoricalLockedValue(ctx, amount, ctx.event.id, assetId);
 
   await ctx.store.save(stakingPosition);
 }
 
 /**
  * Process `stakingRewards.StakeAmountExtended` event.
- *  - Update amount for PicassoStakingPosition.
+ *  - Update amount for StakingPosition.
  *  - Update account and store transaction.
  * @param ctx
  */
@@ -231,7 +255,7 @@ export async function processStakeAmountExtendedEvent(
   const event = getStakeAmountExtendedEvent(evt);
   const { positionId, amount } = event;
 
-  const stakingPosition = await ctx.store.get(PicassoStakingPosition, {
+  const stakingPosition = await ctx.store.get(StakingPosition, {
     where: { positionId: positionId.toString() },
   });
 
@@ -249,19 +273,19 @@ export async function processStakeAmountExtendedEvent(
     stakingPosition.owner
   );
 
-  extendPicassoStakingPosition(
-    stakingPosition,
-    amount,
-    ctx.event.id,
-    transactionId
-  );
+  extendStakingPosition(stakingPosition, amount, ctx.event.id, transactionId);
 
-  await storeHistoricalLockedValue(ctx, amountChanged, ctx.event.id);
+  await storeHistoricalLockedValue(
+    ctx,
+    amountChanged,
+    ctx.event.id,
+    stakingPosition.assetId
+  );
 }
 
 /**
  * Process `stakingRewards.Unstaked` event.
- *  - Set amount for PicassoStakingPosition to 0.
+ *  - Set amount for StakingPosition to 0.
  *  - Update account and store transaction.
  * @param ctx
  */
@@ -275,7 +299,7 @@ export async function processUnstakedEvent(
   const owner = encodeAccount(event.owner);
   const { positionId } = event;
 
-  const position = await ctx.store.get(PicassoStakingPosition, {
+  const position = await ctx.store.get(StakingPosition, {
     where: { positionId: positionId.toString() },
   });
 
@@ -290,13 +314,18 @@ export async function processUnstakedEvent(
     owner
   );
 
-  await storeHistoricalLockedValue(ctx, -position.amount, ctx.event.id);
+  await storeHistoricalLockedValue(
+    ctx,
+    -position.amount,
+    ctx.event.id,
+    position.assetId
+  );
 }
 
 /**
  * Process `stakingRewards.SplitPosition` event.
- *  - Update amount for existing PicassoStakingPosition.
- *  - Create new PicassoStakingPosition. TODO: add amounts to the pallet event
+ *  - Update amount for existing StakingPosition.
+ *  - Create new StakingPosition. TODO: add amounts to the pallet event
  *  - Update account and store transaction.
  * @param ctx
  */
@@ -312,7 +341,7 @@ export async function processSplitPositionEvent(
     [newPositionId, newPositionAmount],
   ] = positions;
 
-  const position = await ctx.store.get(PicassoStakingPosition, {
+  const position = await ctx.store.get(StakingPosition, {
     where: {
       positionId: oldPositionId.toString(),
     },
@@ -329,7 +358,7 @@ export async function processSplitPositionEvent(
     position.owner
   );
 
-  const newPosition = splitPicassoStakingPosition(
+  const newPosition = splitStakingPosition(
     position,
     oldPositionAmount,
     newPositionAmount,

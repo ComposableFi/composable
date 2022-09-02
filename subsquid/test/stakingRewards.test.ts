@@ -1,19 +1,19 @@
 import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
-import { PicassoStakingPosition } from "../src/model";
+import { StakingPosition } from "../src/model";
 import { mock } from "ts-mockito";
 import { BOB, createCtx } from "../src/utils";
 import { expect } from "chai";
 import {
-  createPicassoStakingPosition,
-  extendPicassoStakingPosition,
-  splitPicassoStakingPosition,
+  createStakingPosition,
+  extendStakingPosition,
+  splitStakingPosition,
 } from "../src/processors/stakingRewards";
 
 /**
  * Check if PicassoStakingPosition has expected values.
  * @param position
- * @param poolId
  * @param positionId
+ * @param assetId
  * @param owner
  * @param amount
  * @param startTimestamp
@@ -21,10 +21,10 @@ import {
  * @param eventId
  * @param transactionId
  */
-function assertPicassoStakingPosition(
-  position: PicassoStakingPosition,
-  poolId: string,
+function assertStakingPosition(
+  position: StakingPosition,
   positionId: string,
+  assetId: string,
   owner: string,
   amount: bigint,
   startTimestamp: bigint,
@@ -32,8 +32,8 @@ function assertPicassoStakingPosition(
   eventId: string,
   transactionId: string
 ) {
-  expect(position.poolId).to.equal(poolId);
   expect(position.positionId).to.equal(positionId);
+  expect(position.assetId).to.equal(assetId);
   expect(position.owner).to.equal(owner);
   expect(position.amount).to.equal(amount);
   expect(position.startTimestamp).to.equal(startTimestamp);
@@ -56,9 +56,9 @@ describe("Staking rewards", () => {
   });
 
   it("Should create PicassoStakingPosition", async () => {
-    const position = createPicassoStakingPosition(
-      2,
-      3n,
+    const position = createStakingPosition(
+      "2",
+      "3",
       BOB,
       123n,
       10n,
@@ -66,7 +66,9 @@ describe("Staking rewards", () => {
       "transaction-id"
     );
 
-    assertPicassoStakingPosition(
+    console.log({ position });
+
+    assertStakingPosition(
       position,
       "2",
       "3",
@@ -80,16 +82,16 @@ describe("Staking rewards", () => {
   });
 
   it("Should split PicassoStakingPosition", async () => {
-    const position = createPicassoStakingPosition(
-      2,
-      3n,
+    const position = createStakingPosition(
+      "2",
+      "3",
       BOB,
       123n,
       10n,
       "event-id",
       "transaction-id"
     );
-    const newPosition = splitPicassoStakingPosition(
+    const newPosition = splitStakingPosition(
       position,
       100n,
       50n,
@@ -98,7 +100,7 @@ describe("Staking rewards", () => {
       "new-transaction-id"
     );
 
-    assertPicassoStakingPosition(
+    assertStakingPosition(
       position,
       "2",
       "3",
@@ -109,10 +111,10 @@ describe("Staking rewards", () => {
       "new-event-id",
       "new-transaction-id"
     );
-    assertPicassoStakingPosition(
+    assertStakingPosition(
       newPosition,
-      "2",
       "4",
+      "3",
       BOB,
       50n,
       now,
@@ -123,23 +125,18 @@ describe("Staking rewards", () => {
   });
 
   it("Should extend PicassoStakingPosition", async () => {
-    const position = createPicassoStakingPosition(
-      2,
-      3n,
+    const position = createStakingPosition(
+      "2",
+      "3",
       BOB,
       123n,
       10n,
       "event-id",
       "transaction-id"
     );
-    extendPicassoStakingPosition(
-      position,
-      150n,
-      "new-event-id",
-      "new-transaction-id"
-    );
+    extendStakingPosition(position, 150n, "new-event-id", "new-transaction-id");
 
-    assertPicassoStakingPosition(
+    assertStakingPosition(
       position,
       "2",
       "3",

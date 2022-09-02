@@ -39,14 +39,14 @@ export class PabloPool {
   @Column_("text", {nullable: false})
   totalFees!: string
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  baseAssetId!: bigint
+  @Column_("text", {nullable: false})
+  baseAssetId!: string
 
   /**
    * Asset used for all quotes in this type
    */
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  quoteAssetId!: bigint
+  @Column_("text", {nullable: false})
+  quoteAssetId!: string
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint

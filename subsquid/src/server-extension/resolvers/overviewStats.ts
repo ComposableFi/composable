@@ -8,7 +8,7 @@ import {
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
 import {
-  PicassoTransaction,
+  Transaction,
   Account,
   Activity,
   PicassoStakingPosition,
@@ -68,12 +68,12 @@ export class OverviewStatsResolver implements ResolverInterface<OverviewStats> {
     const manager = await this.tx();
 
     let transactions: { transactions_count: number }[] = await manager
-      .getRepository(PicassoTransaction)
+      .getRepository(Transaction)
       .query(
         `
         SELECT
           count(*) as transactions_count
-        FROM picasso_transaction
+        FROM transaction
         LIMIT 1
       `
       );

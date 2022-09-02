@@ -6,6 +6,8 @@ import {
   Activity,
   HistoricalLockedValue,
   PabloPool,
+  PicassoPool,
+  StakingPosition,
   Transaction,
   TransactionType,
 } from "./model";
@@ -193,16 +195,18 @@ export async function saveAccountAndTransaction(
  * @param ctx
  * @param amountLocked
  * @param eventId
+ * @param assetId
  */
 export async function storeHistoricalLockedValue(
   ctx: EventHandlerContext,
   amountLocked: bigint,
-  eventId: string
+  eventId: string,
+  assetId: string
 ): Promise<void> {
   const wsProvider = new WsProvider("ws://127.0.0.1:9988");
   const api = await ApiPromise.create({ provider: wsProvider });
 
-  const oraclePrice = await api.query.oracle.prices(1);
+  const oraclePrice = await api.query.oracle.prices(assetId);
 
   if (!oraclePrice?.price) {
     // no-op.
@@ -221,6 +225,26 @@ export async function storeHistoricalLockedValue(
   });
 
   await ctx.store.save(historicalLockedValue);
+}
+
+/**
+ * Get asset id and price id from Picasso pool id
+ * @param ctx
+ * @param poolId
+ */
+export async function getAssetIdFromPicassoPoolId(
+  ctx: EventHandlerContext,
+  poolId: bigint
+): Promise<string> {
+  const picassoPool = await ctx.store.get(PicassoPool, {
+    where: { poolId: poolId.toString() },
+  });
+
+  if (!picassoPool) {
+    return Promise.reject(new Error(`Pool ${poolId} does not exist.`));
+  }
+
+  return Promise.resolve(picassoPool.assetId);
 }
 
 /**
@@ -245,4 +269,8 @@ export async function getLastLockedValue(
   }
 
   return Promise.resolve(lastAmount);
+}
+
+export async function mockData(ctx: EventHandlerContext) {
+  // await ctx.store.save(StakingPosition);
 }

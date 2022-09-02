@@ -15,14 +15,14 @@ export class PabloTransaction {
   @ManyToOne_(() => PabloPool, {nullable: false})
   pool!: PabloPool
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  baseAssetId!: bigint
+  @Column_("text", {nullable: false})
+  baseAssetId!: string
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   baseAssetAmount!: bigint
 
-  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  quoteAssetId!: bigint
+  @Column_("text", {nullable: false})
+  quoteAssetId!: string
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   quoteAssetAmount!: bigint
