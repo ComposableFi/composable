@@ -18,7 +18,8 @@ export function createCtx(
   blockMock.height = blockHeight;
   const event: SubstrateEvent = mock<SubstrateEvent>();
   event.id = randomUUID();
-  const ctxMock: EventHandlerContext<Store, { event: true }> = mock<EventHandlerContext<Store, { event: true }>>();
+  const ctxMock: EventHandlerContext<Store, { event: true }> =
+    mock<EventHandlerContext<Store, { event: true }>>();
   const ctx: EventHandlerContext<Store, { event: true }> = instance(ctxMock);
   ctx.store = instance(storeMock);
   ctx.block = blockMock;

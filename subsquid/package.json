@@ -13,7 +13,7 @@
     "query-node:start": "squid-graphql-server",
     "lint": "npm run lint:prod -- --fix",
     "lint:prod": "eslint . --ext .ts --ignore-path .gitignore --max-warnings 0",
-    "test": "tsc -p tsconfig-test.json && ts-mocha --paths -p tsconfig-test.json"
+    "test": "ts-mocha -p tsconfig-test.json test/**/*.test.ts"
   },
   "dependencies": {
     "@subsquid/archive-registry": "^0.0.6",
