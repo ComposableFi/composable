@@ -24,6 +24,13 @@ use ibc::{
 use sp_runtime::SaturatedConversion;
 use tendermint_proto::Protobuf;
 
+#[derive(Encode, Decode)]
+pub struct HostConsensusProof {
+	pub header: Vec<u8>,
+	pub extrinsic: Vec<u8>,
+	pub extrinsic_proof: Vec<Vec<u8>>,
+}
+
 impl<T: Config + Send + Sync> ClientReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
@@ -192,12 +199,7 @@ where
 		let proof = proof.ok_or_else(|| {
 			ICS02Error::implementation_specific(format!("No host proof supplied"))
 		})?;
-		#[derive(Encode, Decode)]
-		struct HostConsensusProof {
-			header: Vec<u8>,
-			extrinsic: Vec<u8>,
-			extrinsic_proof: Vec<Vec<u8>>,
-		}
+
 		// unfortunately we can't access headers on-chain, but we can verify them using
 		// frame_system's cache of header hashes
 		let height = u32::try_from(height.revision_height).map_err(|_| {
