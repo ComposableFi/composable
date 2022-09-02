@@ -125,7 +125,7 @@ pub mod pallet {
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
 	pub(crate) type ContractInfoOf<T> =
 		ContractInfo<AccountIdOf<T>, ContractLabelOf<T>, ContractTrieIdOf<T>>;
-	pub(crate) type CodeInfoOf<T> = CodeInfo<AccountIdOf<T>>;
+	pub(crate) type CodeInfoOf<T> = CodeInfo<AccountIdOf<T>, CodeHashOf<T>>;
 
 	#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, Debug)]
 	pub enum EntryPoint {
@@ -327,7 +327,7 @@ pub mod pallet {
 	/// A mapping between an original code hash and its metadata.
 	#[pallet::storage]
 	pub(crate) type CodeIdToInfo<T: Config> =
-		StorageMap<_, Twox64Concat, CosmwasmCodeId, CodeInfo<AccountIdOf<T>>>;
+		StorageMap<_, Twox64Concat, CosmwasmCodeId, CodeInfoOf<T>>;
 
 	/// A mapping between a code hash and it's unique ID.
 	#[pallet::storage]
@@ -446,17 +446,17 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// Deterministic contract address computation, equivalent to solidity CREATE2.
+		/// Deterministic contract address computation, similar to https://eips.ethereum.org/EIPS/eip-1014.
 		pub(crate) fn derive_contract_address(
 			instantiator: &AccountIdOf<T>,
-			code_id: CosmwasmCodeId,
 			salt: &[u8],
+			code_hash: CodeHashOf<T>,
 		) -> AccountIdOf<T> {
 			let data: Vec<_> = instantiator
 				.as_ref()
 				.iter()
-				.chain(&code_id.to_le_bytes())
 				.chain(salt)
+				.chain(code_hash.as_ref())
 				.cloned()
 				.collect();
 			UncheckedFrom::unchecked_from(T::Hashing::hash(&data))
@@ -483,7 +483,10 @@ pub mod pallet {
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
 		) -> Result<(AccountIdOf<T>, ContractInfoOf<T>), Error<T>> {
-			let contract = Self::derive_contract_address(&instantiator, code_id, salt);
+			let code_hash = CodeIdToInfo::<T>::get(code_id)
+				.ok_or(Error::<T>::CodeNotFound)?
+				.pristine_code_hash;
+			let contract = Self::derive_contract_address(&instantiator, salt, code_hash);
 			ensure!(
 				!ContractToInfo::<T>::contains_key(&contract),
 				Error::<T>::ContractAlreadyExists
@@ -859,6 +862,7 @@ pub mod pallet {
 				code_id,
 				CodeInfoOf::<T> {
 					creator: who.clone(),
+					pristine_code_hash: code_hash,
 					instrumentation_version: Self::INSTRUMENTATION_VERSION,
 					refcount: 0,
 				},
