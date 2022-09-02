@@ -193,7 +193,6 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 /// TODO refer to the relevant section in the design doc.
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct Stake<ItemId, RewardPoolId, Balance, Reductions> {
-	//lksjdlkjf
 	/// The NFT account that owns this stake. Used with the `AssetId` associated with the stake to
 	/// uniquely identify related nft.
 	pub financial_nft_id: ItemId,

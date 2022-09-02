@@ -64,14 +64,7 @@ pub use pallet::*;
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use composable_support::{
-		abstractions::{
-			nonce::Nonce,
-			utils::{
-				increment::{Increment, SafeIncrement},
-				start_at::ZeroInit,
-			},
-		},
-		math::safe::{SafeAdd, SafeArithmetic, SafeDiv, SafeMul, SafeSub},
+		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
 		validation::Validated,
 	};
 	use composable_traits::{
@@ -103,7 +96,7 @@ pub mod pallet {
 		transactional, BoundedBTreeMap, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_arithmetic::{traits::One, Permill};
+	use sp_arithmetic::Permill;
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider},
 		PerThing, Perbill,
@@ -245,6 +238,10 @@ pub mod pallet {
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+	pub(crate) type FinancialNftInstanceIdOf<T> =
+		<<T as Config>::FinancialNft as nonfungibles::Inspect<
+			<T as frame_system::Config>::AccountId,
+		>>::ItemId;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -281,7 +278,7 @@ pub mod pallet {
 			>;
 
 		// https://github.com/rust-lang/rust/issues/52662
-		type FinancialNftInstanceId: Parameter + Member + Copy;
+		type FinancialNftInstanceId: Parameter + Member + Copy + From<u64> + Into<u64>;
 
 		/// Is used to create staked asset per reward pool
 		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
@@ -385,10 +382,6 @@ pub mod pallet {
 			<T as Config>::MaxRewardConfigsPerPool,
 		>,
 	>;
-
-	type FinancialNftInstanceIdOf<T> = <<T as Config>::FinancialNft as nonfungibles::Inspect<
-		<T as frame_system::Config>::AccountId,
-	>>::ItemId;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub (super) trait Store)]
