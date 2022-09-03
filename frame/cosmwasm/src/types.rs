@@ -4,9 +4,11 @@ use scale_info::TypeInfo;
 
 /// Tracked code metadata.
 #[derive(Clone, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
-pub struct CodeInfo<AccountId> {
+pub struct CodeInfo<AccountId, Hash> {
 	/// Original owner of the code.
 	pub creator: AccountId,
+	/// The hash of the pristine code.
+	pub pristine_code_hash: Hash,
 	/// Version of the instrumentation applied to the code.
 	pub instrumentation_version: u16,
 	/// Number of contract referencing this code.
