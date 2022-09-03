@@ -241,7 +241,6 @@ impl pallet_staking_rewards::Config for Test {
 	type Balance = Balance;
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
-	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type FinancialNft = FinancialNft;
 	type CurrencyFactory = CurrencyFactory;
 	type Assets = Assets;
@@ -251,7 +250,6 @@ impl pallet_staking_rewards::Config for Test {
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
-	type WeightInfo = ();
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
@@ -259,6 +257,7 @@ impl pallet_staking_rewards::Config for Test {
 	type XPbloAssetId = XPbloAssetId;
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
+	type WeightInfo = ();
 }
 
 impl InstanceFilter<Call> for ProxyType {

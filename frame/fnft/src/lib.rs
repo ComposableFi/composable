@@ -52,7 +52,7 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
-			tokens::nonfungibles::{Create, Inspect, Mutate, Transfer},
+			tokens::nonfungibles::{Create, Inspect, InspectEnumerable, Mutate, Transfer},
 			IsType,
 		},
 		PalletId,
@@ -60,6 +60,7 @@ pub mod pallet {
 	use sp_arithmetic::traits::One;
 	use sp_runtime::traits::{AccountIdConversion, Zero};
 	use sp_std::{
+		boxed::Box,
 		collections::{btree_map::BTreeMap, btree_set::BTreeSet},
 		vec::Vec,
 	};
@@ -71,6 +72,11 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
+		FinancialNftCollectionCreated {
+			collection_id: FinancialNftCollectionIdOf<T>,
+			who: AccountIdOf<T>,
+			admin: AccountIdOf<T>,
+		},
 		FinancialNftCreated {
 			collection_id: FinancialNftCollectionIdOf<T>,
 			instance_id: FinancialNftInstanceIdOf<T>,
@@ -138,7 +144,7 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::generate_store(pub (super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
@@ -238,7 +244,61 @@ pub mod pallet {
 				Error::<T>::CollectionAlreadyExists
 			);
 			Collection::<T>::insert(collection, (who, admin, BTreeMap::<Vec<u8>, Vec<u8>>::new()));
+			Self::deposit_event(Event::FinancialNftCollectionCreated {
+				collection_id: *collection,
+				who: who.clone(),
+				admin: admin.clone(),
+			});
 			Ok(())
+		}
+	}
+
+	impl<T: Config> InspectEnumerable<T::AccountId> for Pallet<T> {
+		/// Returns an iterator of the collections in existence.
+		///
+		/// NOTE: iterating this list invokes a storage read per item.
+		fn collections() -> Box<dyn Iterator<Item = Self::CollectionId>> {
+			Box::new(Collection::<T>::iter_keys())
+		}
+
+		/// Returns an iterator of the items of a `collection` in existence.
+		///
+		/// NOTE: iterating this list invokes a storage read per item.
+		fn items(collection: &Self::CollectionId) -> Box<dyn Iterator<Item = Self::ItemId>> {
+			Box::new(
+				CollectionInstances::<T>::get(collection)
+					.into_iter()
+					.flat_map(|i| i.into_iter()),
+			)
+		}
+
+		/// Returns an iterator of the items of all collections owned by `who`.
+		///
+		/// NOTE: iterating this list invokes a storage read per item.
+		fn owned(
+			who: &T::AccountId,
+		) -> Box<dyn Iterator<Item = (Self::CollectionId, Self::ItemId)>> {
+			Box::new(OwnerInstances::<T>::get(who).into_iter().flat_map(|i| i.into_iter()))
+		}
+
+		/// Returns an iterator of the items of `collection` owned by `who`.
+		///
+		/// NOTE: iterating this list invokes a storage read per item.
+		#[allow(clippy::clone_on_copy)]
+		fn owned_in_collection(
+			collection: &Self::CollectionId,
+			who: &T::AccountId,
+		) -> Box<dyn Iterator<Item = Self::ItemId>> {
+			let moved_collection = collection.clone();
+			Box::new(OwnerInstances::<T>::get(who).into_iter().flatten().filter_map(
+				move |(c, i)| {
+					if c == moved_collection {
+						Some(i)
+					} else {
+						None
+					}
+				},
+			))
 		}
 	}
 
@@ -295,6 +355,7 @@ pub mod pallet {
 				Self::instance((collection, instance)).is_none(),
 				Error::<T>::InstanceAlreadyExists
 			);
+			ensure!(Collection::<T>::contains_key(collection), Error::<T>::CollectionNotFound);
 			Instance::<T>::insert(
 				(collection, instance),
 				(who, BTreeMap::<Vec<u8>, Vec<u8>>::new()),

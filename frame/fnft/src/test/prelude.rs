@@ -3,7 +3,7 @@ use composable_tests_helpers::test::helper::assert_last_event;
 use composable_traits::fnft::FinancialNft;
 use frame_support::{
 	assert_ok,
-	traits::tokens::nonfungibles::{Inspect, Mutate},
+	traits::tokens::nonfungibles::{Create, Inspect, Mutate},
 };
 use std::{
 	collections::{BTreeMap, BTreeSet},
@@ -13,8 +13,8 @@ use std::{
 use crate::{
 	pallet::{CollectionInstances, Event as NftEvent, Instance, OwnerInstances},
 	test::{
-		mock::{Event, MockRuntime},
-		ALICE,
+		mock::{Event, MockRuntime, Nft},
+		ALICE, BOB,
 	},
 	AccountIdOf, FinancialNftInstanceIdOf, Pallet,
 };
@@ -26,6 +26,7 @@ pub const TEST_COLLECTION_ID: u16 = 1;
 ///
 /// NOTE: Only call once per test!
 pub(crate) fn mint_nft_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
+	Nft::create_collection(&TEST_COLLECTION_ID, &ALICE, &BOB).unwrap();
 	let created_nft_id = 1_u64;
 	assert_ok!(Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &created_nft_id, &ALICE));
 
@@ -69,6 +70,7 @@ const NEW_NFT_ID: FinancialNftInstanceIdOf<MockRuntime> = 1;
 ///
 /// NOTE: Only call once per test!
 pub(crate) fn mint_into_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
+	Nft::create_collection(&TEST_COLLECTION_ID, &ALICE, &BOB).unwrap();
 	Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &NEW_NFT_ID, &ALICE).unwrap();
 
 	assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftCreated {
@@ -101,13 +103,14 @@ pub(crate) fn mint_into_and_assert() -> FinancialNftInstanceIdOf<MockRuntime> {
 /// returning the ids of the newly created NFTs.
 pub(crate) fn mint_many_nfts_and_assert<const AMOUNT: usize>(
 	who: AccountIdOf<MockRuntime>,
+	collection: u16,
 ) -> [FinancialNftInstanceIdOf<MockRuntime>; AMOUNT] {
 	let new_nfts_ids = [0; AMOUNT].map(|_| {
-		let new_nft_id = Pallet::<MockRuntime>::get_next_nft_id(&TEST_COLLECTION_ID).unwrap();
-		Pallet::<MockRuntime>::mint_into(&TEST_COLLECTION_ID, &new_nft_id, &who).unwrap();
+		let new_nft_id = Pallet::<MockRuntime>::get_next_nft_id(&collection).unwrap();
+		Pallet::<MockRuntime>::mint_into(&collection, &new_nft_id, &who).unwrap();
 
 		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::FinancialNftCreated {
-			collection_id: TEST_COLLECTION_ID,
+			collection_id: collection,
 			instance_id: new_nft_id,
 		}));
 
@@ -115,8 +118,10 @@ pub(crate) fn mint_many_nfts_and_assert<const AMOUNT: usize>(
 	});
 
 	assert_eq!(
-		OwnerInstances::<MockRuntime>::get(&who).unwrap(),
-		to_btree(&new_nfts_ids),
+		OwnerInstances::<MockRuntime>::get(&who)
+			.unwrap()
+			.is_superset(&to_btree(collection, &new_nfts_ids)),
+		true,
 		"the specified owner ({}) should own the specified NFTs",
 		who
 	);
@@ -126,9 +131,10 @@ pub(crate) fn mint_many_nfts_and_assert<const AMOUNT: usize>(
 
 /// Creates a BTreeSet from the provided [`NftInstanceId`]s.
 pub(crate) fn to_btree(
+	collection: u16,
 	nfts: &[FinancialNftInstanceIdOf<MockRuntime>],
 ) -> BTreeSet<(u16, FinancialNftInstanceIdOf<MockRuntime>)> {
-	nfts.into_iter().copied().map(|id| (TEST_COLLECTION_ID, id)).collect()
+	nfts.into_iter().copied().map(|id| (collection, id)).collect()
 }
 
 /// Adds the provided attributes to the specified NFT, asserting that the attributes are added

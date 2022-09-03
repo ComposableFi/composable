@@ -18,6 +18,7 @@ use frame_support::{
 	assert_err, assert_noop, assert_ok,
 	traits::{
 		fungibles::{Inspect, Mutate},
+		tokens::nonfungibles::InspectEnumerable,
 		TryCollect,
 	},
 	BoundedBTreeMap,
@@ -26,7 +27,7 @@ use frame_system::EventRecord;
 use sp_arithmetic::{Perbill, Permill};
 use sp_core::sr25519::Public;
 use sp_runtime::PerThing;
-use sp_std::collections::btree_map::BTreeMap;
+use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
 use self::prelude::STAKING_FNFT_COLLECTION_ID;
 
@@ -47,6 +48,11 @@ fn test_create_reward_pool() {
             Event::StakingRewards(crate::Event::RewardPoolCreated { owner, pool_id, asset_id: PICA::ID, .. })
             if owner == ALICE && pool_id == 1)
 		});
+
+		assert_eq!(
+			FinancialNft::collections().collect::<BTreeSet<_>>(),
+			BTreeSet::from([PICA::ID])
+		);
 
 		// invalid end block
 		assert_err!(

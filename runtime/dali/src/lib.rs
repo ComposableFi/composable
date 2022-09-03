@@ -866,7 +866,6 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
-	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type FinancialNft = Fnft;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
@@ -1316,8 +1315,10 @@ construct_runtime!(
 		Lending: lending = 64,
 		Pablo: pablo = 65,
 		DexRouter: dex_router = 66,
-		StakingRewards: pallet_staking_rewards = 67,
-		Fnft: pallet_fnft = 68,
+		// Note the ordering below is important as staking rewards genesis
+		// depends on fNFT being initialized before it.
+		Fnft: pallet_fnft = 67,
+		StakingRewards: pallet_staking_rewards = 68,
 
 		CallFilter: call_filter = 140,
 
