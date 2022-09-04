@@ -898,15 +898,20 @@
           book = eachSystemOutputs.packages.x86_64-linux.composable-book;
         };
       };
-      homeConfigurations = {
+      homeConfigurations = let
+        mk-docker-in-docker = pkgs: [
+          pkgs.docker
+          pkgs.docker-buildx
+          pkgs.docker-compose
+        ];
+        mk-containers-tools-minimal = pkgs: [
+          pkgs.acl
+          pkgs.direnv
+          pkgs.cachix
+        ];
+      in {
 
-        vscode.x86_64-linux = let
-          pkgs = nixpkgs.legacyPackages.x86_64-linux;
-          # TODO: make function which accepts pkgs and produced attributes lists
-          docker-in-docker =
-            [ pkgs.docker pkgs.docker-buildx pkgs.docker-compose ];
-          containers-tools-minimal =
-            [ pkgs.acl pkgs.direnv pkgs.home-manager pkgs.cachix ];
+        vscode.x86_64-linux = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
         in with pkgs;
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
@@ -917,7 +922,8 @@
               stateVersion = "22.05";
               packages =
                 [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
-                ++ containers-tools-minimal ++ docker-in-docker;
+                ++ (mk-containers-tools-minimal pkgs)
+                ++ (mk-docker-in-docker pkgs);
             };
             programs = {
               home-manager.enable = true;
@@ -940,7 +946,8 @@
               stateVersion = "22.05";
               packages =
                 [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
-                ++ containers-tools-minimal ++ docker-in-docker;
+                ++ (mk-containers-tools-minimal pkgs)
+                ++ (mk-docker-in-docker pkgs);
             };
             programs = {
               home-manager.enable = true;
