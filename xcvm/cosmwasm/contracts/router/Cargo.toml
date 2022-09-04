@@ -33,5 +33,6 @@ xcvm-interpreter = { path = "../interpreter", features = ["library"] }
 
 [dev-dependencies]
 cosmwasm-schema = "1.0.0"
+cosmwasm-std = { version = "1.0.0", features = ["backtraces", "abort"] }
 cw-multi-test = "0.13.2"
 serde-json-wasm = { git = "https://github.com/hussein-aitlahcen/serde-json-wasm", rev = "1608a13d2a2ba90605d9626a51ff6667aca5a2d6" }
