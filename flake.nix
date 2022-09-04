@@ -267,6 +267,14 @@
               inherit system;
             };
 
+          # we reached limit of 125 for layers and build image cannot do non root ops, so split it 
+          devcontainer-root-image = pkgs.dockerTools.buildImage {
+            name = "devcontainer-root-image";
+            fromImage = devcontainer-base-image;
+            contents = [ rust-nightly ] ++ containers-tools-minimal
+              ++ docker-in-docker;
+          };
+
           dali-runtime = mk-optimized-runtime {
             name = "dali";
             features = "";
@@ -533,18 +541,21 @@
             # devnet-container-xcvm
             # NOTE: The devcontainer is currently broken for aarch64.
             # Please use the developers devShell instead
+
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
-              fromImage = devcontainer-base-image;
-              contents = [ rust-nightly ] ++ containers-tools-minimal
-                ++ docker-in-docker;
-
+              fromImage = devcontainer-root-image;
+              # substituters, same as next script, but without internet access
+              # ${pkgs.cachix}/bin/cachix use composable-community 
               extraCommands = ''
                 mkdir --parents ~/.config/nix
-                echo "sandbox = relaxed" >> ~/.config/nix/nix.conf:
-                echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf:
-                echo "narinfo-cache-negative-ttl = 30" >> ~/.config/nix/nix.conf:  
-                ${pkgs.cachix}/bin/cachix use composable-community 
+                cat <<EOF >> ~/.config/nix/nix.conf
+                sandbox = relaxed
+                experimental-features = nix-command flakes
+                narinfo-cache-negative-ttl = 30
+                substituters = https://cache.nixos.org https://composable-community.cachix.org 
+                trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8= 
+                EOF
               '';
             };
 
