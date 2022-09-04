@@ -269,7 +269,7 @@
 
           # we reached limit of 125 for layers and build image cannot do non root ops, so split it 
           devcontainer-root-image = pkgs.dockerTools.buildImage {
-            name = "devcontainer-root-image";
+            name = "composable-devcontainer-root-image";
             fromImage = devcontainer-base-image;
             contents = [ rust-nightly ] ++ containers-tools-minimal
               ++ docker-in-docker;
