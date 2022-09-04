@@ -543,8 +543,8 @@
               # substituters, same as next script, but without internet access
               # ${pkgs.cachix}/bin/cachix use composable-community 
               extraCommands = ''
-                mkdir --parents ~/.config/nix
-                cat <<EOF >> ~/.config/nix/nix.conf
+                mkdir --parents /etc/nix
+                cat <<EOF >> /etc/nix/nix.conf
                 sandbox = relaxed
                 experimental-features = nix-command flakes
                 narinfo-cache-negative-ttl = 30
