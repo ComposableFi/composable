@@ -631,8 +631,9 @@ jobs:
 
   devcontainer-build:
     name: "Devcontainer build"
-    needs:
-      - devcontainer-minimal-build
+    # TODO: turn on when real inheritance happens
+    # needs:
+    #   - devcontainer-minimal-build
     runs-on:
       - self-hosted
       - linux

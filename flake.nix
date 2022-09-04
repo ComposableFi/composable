@@ -542,7 +542,7 @@
                 ++ docker-in-docker;
               # substituters, same as next script, but without internet access
               # ${pkgs.cachix}/bin/cachix use composable-community 
-              extraCommands = ''
+              runAsRoot = ''
                 mkdir --parents /etc/nix
                 cat <<EOF >> /etc/nix/nix.conf
                 sandbox = relaxed
