@@ -900,7 +900,13 @@
       };
       homeConfigurations = {
 
-        vscode.x86_64-linux = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        vscode.x86_64-linux = let
+          pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          # TODO: make function which accepts pkgs and produced attributes lists
+          docker-in-docker =
+            [ pkgs.docker pkgs.docker-buildx pkgs.docker-compose ];
+          containers-tools-minimal =
+            [ pkgs.acl pkgs.direnv pkgs.home-manager pkgs.cachix ];
         in with pkgs;
         home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
