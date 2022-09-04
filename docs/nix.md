@@ -38,6 +38,16 @@ Other scrips are located in folders on which they act upon, until scope is multi
 
 This allows for monorepo with codeowners and proper nix caching.
 
+### Should I use `develop` or `run` or `build` or `home-manager` or `devcontainer`?
+
+It should be possible to run things via `nix build/run` and also exec into devcontainer/shell/home and run native tooling build and run commands.
+
+So for each `nix build/run` attribute there should be equivalent "`shell`" to exec into and run native tooling commands.
+
+Examples, you can build `dali node` via `nix build`, so you can `nix shell .#developers` and run `cargo build`.
+
+It means that `home-manager`, `devcontaner`, `apps`, `shells` should share and combine dependencies.
+
 ### Naming
 
 Variables which are input from external non `nix` files (examples, json/yaml/toml) to be suffixed with `-input`. Inputs prevent early validation of packages without instantiation.  

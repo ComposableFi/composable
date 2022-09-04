@@ -129,7 +129,12 @@
             # NOTE: we copy more then needed, but tht is simpler to setup, we depend pn substrae for sure so
           });
 
-          # for containers which are intented for testing, debug and development (including running isolated runtime)
+          # for containers which are intented for:
+          # testing, debug and development 
+          # (including running isolated runtime)
+          # in nixied way
+          docker-in-docker = [ docker docker-buildx docker-compose ];
+          containers-tools-minimal = [ acl direnv home-manager cachix ];
           container-tools = [
             bash
             bottom
@@ -141,7 +146,7 @@
             nettools
             nix
             procps
-          ];
+          ] ++ containers-tools-minimal;
 
           # source relevant to build rust only
           rust-src = let
@@ -531,10 +536,16 @@
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-base-image;
-              contents = [ home-manager ];
+              contents = [ rust-nightly ] ++ containers-tools-minimal
+                ++ docker-in-docker;
 
-              # TODO: call here home-manager for this flake.nix (like in ./.devcontainer/Dockefile) 
-              # TODO: it will make Dockerfile oneliner and faster to start          
+              extraCommands = ''
+                mkdir --parents ~/.config/nix
+                echo "sandbox = relaxed" >> ~/.config/nix/nix.conf:
+                echo "experimental-features = nix-command flakes" >> ~/.config/nix/nix.conf:
+                echo "narinfo-cache-negative-ttl = 30" >> ~/.config/nix/nix.conf:  
+                ${pkgs.cachix}/bin/cachix use composable-community 
+              '';
             };
 
             check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
@@ -887,13 +898,9 @@
               username = "vscode";
               homeDirectory = "/home/vscode";
               stateVersion = "22.05";
-              packages = [
-                cachix
-                eachSystemOutputs.packages.x86_64-linux.rust-nightly
-                docker
-                docker-buildx
-                docker-compose
-              ];
+              packages =
+                [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
+                ++ containers-tools-minimal ++ docker-in-docker;
             };
             programs = {
               home-manager.enable = true;
@@ -914,15 +921,9 @@
               username = "vscode";
               homeDirectory = "/home/vscode";
               stateVersion = "22.05";
-              packages = [
-                cachix
-                eachSystemOutputs.packages.aarch64-linux.rust-nightly
-                docker
-                docker-buildx
-                docker-compose
-                acl
-                direnv
-              ];
+              packages =
+                [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
+                ++ containers-tools-minimal ++ docker-in-docker;
             };
             programs = {
               home-manager.enable = true;
