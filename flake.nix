@@ -756,9 +756,6 @@
 
             junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
             gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
-            wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix {
-              crane = crane-nightly;
-            };
             default = packages.composable-node;
           };
 
