@@ -860,8 +860,17 @@
               buildInputs = [ cargo-udeps expat freetype fontconfig openssl ];
               cargoArtifacts = common-deps-nightly;
               cargoBuildCommand = "cargo udeps";
-              cargoExtraArgs =
-                "--workspace --exclude local-integration-tests --all-features";
+              # NOTE: 
+              # we are bad here, rust does not allows features per tests/targets/devs 
+              # https://github.com/rust-lang/cargo/issues/2911
+              # neither cosmos provides fake implementation for feature when it is enabled
+              # so there are 2 solutions:
+              # 1. ignore (like here)
+              # 2. move tests into separate crate (and ignore it)
+              cargoExtraArgs = ''
+                --workspace --all-features \
+                --exclude local-integration-tests xcvm-*
+              '';
             });
 
             benchmarks-check = crane-nightly.cargoBuild (common-attrs // {
