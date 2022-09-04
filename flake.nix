@@ -943,12 +943,8 @@
               '';
             };
 
-            junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
-            gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
-            wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
-              crane = crane-nightly;
-            };
-
+            junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
+            gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
             default = packages.composable-node;
           };
 
