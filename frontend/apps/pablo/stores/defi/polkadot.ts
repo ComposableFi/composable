@@ -75,7 +75,6 @@ interface PolkadotState {
   overview: Overview;
   stakingOverview: StakingOverview,
   allBondPools: BondPoolRow[];
-  yourBondPools: YourBondPoolRow[];
   userStakeInfo: UserStakeInfo;
   yourXPablos: XPablo[];
   claimableRewards: ClaimableRewards,
@@ -104,57 +103,10 @@ const initialState: PolkadotState = {
     pablo: new BigNumber(48551),
   },
   allBondPools: [],
-  yourBondPools: [
-    {
-      token1: TOKENS["pica"],
-      token2: TOKENS["ksm"],
-      tvl: new BigNumber(1500000),
-      apr: new BigNumber(5.75),
-      bond: [
-        {
-          token: TOKENS["pica"],
-          value: new BigNumber(5000),
-        },
-        {
-          token: TOKENS["ksm"],
-          value: new BigNumber(5200),
-        },
-      ],
-      volume: new BigNumber(132500000),
-      vesting_term: 5,
-      claimable: new BigNumber(500),
-      discount: new BigNumber(0.1),
-      price: new BigNumber(350.34),
-      pending: new BigNumber(20),
-    },
-    {
-      token1: TOKENS["pablo"],
-      token2: TOKENS["ksm"],
-      tvl: new BigNumber(1500000),
-      apr: new BigNumber(5.75),
-      bond: [
-        {
-          token: TOKENS["pica"],
-          value: new BigNumber(3340),
-        },
-      ],
-      volume: new BigNumber(132500000),
-      vesting_term: 5,
-      claimable: new BigNumber(500),
-      discount: new BigNumber(0.1),
-      price: new BigNumber(350.34),
-      pending: new BigNumber(20),
-    },
-  ],
   bondPortfolioChartData: {
     total: new BigNumber(24546395.04),
     change: 2,
-    series: [
-      [1644550600000, 20],
-      [1644560620928, 45],
-      [1644570600000, 40],
-      [1644590600000, 100],
-    ],
+    series: [],
   },
   userStakeInfo: {
     balance: new BigNumber(200),

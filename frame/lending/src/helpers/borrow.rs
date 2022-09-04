@@ -176,6 +176,7 @@ impl<T: Config> Pallet<T> {
 				.ok_or(Error::<T>::CannotBorrowFromMarketWithUnbalancedVault),
 			FundsAvailability::MustLiquidate => Err(Error::<T>::MarketIsClosing),
 			FundsAvailability::Withdrawable(_) => Ok(()),
+			FundsAvailability::None => Ok(()),
 		}?;
 		Ok(())
 	}

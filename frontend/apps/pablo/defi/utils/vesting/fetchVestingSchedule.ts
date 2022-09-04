@@ -1,16 +1,26 @@
+import { VestingSchedule } from "@/defi/types";
 import { ApiPromise } from "@polkadot/api";
+import { decodeVestingSchedule } from "./decode";
 
 export async function fetchVestingSchedule(
   parachainApi: ApiPromise,
   address: string,
-  principalCurrencyId: string
-) {
-  const [vestingSchedule] = await parachainApi.query.vesting.vestingSchedules(
-    address,
-    principalCurrencyId
-  ) as any;
+  currencyId: string
+): Promise<VestingSchedule[]> {
+  let schedules: VestingSchedule[] = [];
 
-  console.log("Vesting schedule", vestingSchedule);
+  try {
+    const vestingSchedule = await parachainApi.query.vesting.vestingSchedules(
+      address,
+      currencyId
+    );
 
-  return vestingSchedule ? vestingSchedule : null;
+    const _schedules = vestingSchedule.toJSON();
+    schedules = Object.values(_schedules as any)
+        .map((i) => decodeVestingSchedule(i))
+  } catch (err: any) {
+    console.error(err);
+  }
+
+  return schedules;
 }

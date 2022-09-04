@@ -54,6 +54,7 @@ impl<T: Config> Pallet<T> {
 							Self::handle_must_liquidate(&config, &market_account)?;
 							call_counters.handle_must_liquidate += 1;
 						},
+						FundsAvailability::None => {},
 					}
 
 					call_counters.available_funds += 1;

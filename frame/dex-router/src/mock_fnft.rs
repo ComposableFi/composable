@@ -9,8 +9,8 @@ use sp_runtime::DispatchError;
 pub struct MockFnft;
 
 impl Inspect<u128> for MockFnft {
-	type ItemId = ();
-	type CollectionId = ();
+	type ItemId = u128;
+	type CollectionId = u128;
 
 	fn owner(collection: &Self::CollectionId, item: &Self::ItemId) -> Option<u128> {
 		todo!()
@@ -33,7 +33,7 @@ impl Create<u128> for MockFnft {
 		who: &u128,
 		admin: &u128,
 	) -> DispatchResult {
-		todo!()
+		Ok(())
 	}
 }
 

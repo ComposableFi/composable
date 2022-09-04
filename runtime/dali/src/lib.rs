@@ -41,7 +41,7 @@ use common::{
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
 	BlockNumber, BondOfferId, FinancialNftInstanceId, Hash, MaxStringSize, Moment,
-	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, RewardPoolId, Signature,
+	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, PriceConverter, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -377,6 +377,22 @@ impl transaction_payment::Config for Runtime {
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
 
+pub struct TransferToTreasuryOrDrop;
+impl asset_tx_payment::HandleCredit<AccountId, Tokens> for TransferToTreasuryOrDrop {
+	fn handle_credit(credit: fungibles::CreditOf<AccountId, Tokens>) {
+		let _ =
+			<Tokens as fungibles::Balanced<AccountId>>::resolve(&TreasuryAccount::get(), credit);
+	}
+}
+
+impl asset_tx_payment::Config for Runtime {
+	type Fungibles = Tokens;
+	type OnChargeAssetTransaction = asset_tx_payment::FungiblesAdapter<
+		PriceConverter<AssetsRegistry>,
+		TransferToTreasuryOrDrop,
+	>;
+}
+
 impl sudo::Config for Runtime {
 	type Event = Event;
 	type Call = Call;
@@ -430,7 +446,7 @@ where
 			system::CheckEra::<Runtime>::from(era),
 			system::CheckNonce::<Runtime>::from(nonce),
 			system::CheckWeight::<Runtime>::new(),
-			transaction_payment::ChargeTransactionPayment::<Runtime>::from(tip),
+			asset_tx_payment::ChargeAssetTxPayment::<Runtime>::from(tip, None),
 		);
 		let raw_payload = SignedPayload::new(call, extra)
 			.map_err(|_e| {
@@ -827,12 +843,17 @@ parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets : u32 = 10;
 	pub const MaxRewardConfigsPerPool : u32 = 10;
+	pub const PicaAssetId : CurrencyId = CurrencyId::PICA;
+	pub const PbloAssetId : CurrencyId = CurrencyId::PBLO;
+	pub const XPicaAssetId: CurrencyId = CurrencyId::xPICA;
+	pub const XPbloAssetId: CurrencyId = CurrencyId::xPBLO;
+	pub const PicaStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PICA_STAKE_FNFT_COLLECTION;
+	pub const PbloStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PBLO_STAKE_FNFT_COLLECTION;
 }
 
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = RewardPoolId;
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
@@ -845,8 +866,13 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
-	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type FinancialNft = Fnft;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -1025,13 +1051,18 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
-	type RewardPoolId = RewardPoolId;
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
 	type ManageStaking = StakingRewards;
 	type ProtocolStaking = StakingRewards;
 	type MsPerBlock = MillisecsPerBlock;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 parameter_types! {
@@ -1228,6 +1259,7 @@ construct_runtime!(
 		Sudo: sudo = 2,
 		RandomnessCollectiveFlip: randomness_collective_flip = 3,
 		TransactionPayment: transaction_payment = 4,
+		AssetTxPayment : asset_tx_payment  = 12,
 		Indices: indices = 5,
 		Balances: balances = 6,
 		Identity: identity = 7,
@@ -1283,8 +1315,10 @@ construct_runtime!(
 		Lending: lending = 64,
 		Pablo: pablo = 65,
 		DexRouter: dex_router = 66,
-		StakingRewards: pallet_staking_rewards = 67,
-		Fnft: pallet_fnft = 68,
+		// Note the ordering below is important as staking rewards genesis
+		// depends on fNFT being initialized before it.
+		Fnft: pallet_fnft = 67,
+		StakingRewards: pallet_staking_rewards = 68,
 
 		CallFilter: call_filter = 140,
 
@@ -1302,6 +1336,7 @@ construct_runtime!(
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type as expected by this runtime.
 pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
 /// The SignedExtension to the basic transaction logic.
 pub type SignedExtra = (
 	system::CheckNonZeroSender<Runtime>,
@@ -1311,7 +1346,7 @@ pub type SignedExtra = (
 	system::CheckEra<Runtime>,
 	system::CheckNonce<Runtime>,
 	system::CheckWeight<Runtime>,
-	transaction_payment::ChargeTransactionPayment<Runtime>,
+	asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 );
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic = generic::UncheckedExtrinsic<Address, Call, Signature, SignedExtra>;
@@ -1605,7 +1640,7 @@ impl_runtime_apis! {
 				system::CheckEra::<Runtime>::from(Era::Immortal),
 				system::CheckNonce::<Runtime>::from(nonce),
 				system::CheckWeight::<Runtime>::new(),
-				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
+				asset_tx_payment::ChargeAssetTxPayment::<Runtime>::from(0, None),
 			);
 			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
 			let address = AccountIdLookup::unlookup(signer.into());
