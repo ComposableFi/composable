@@ -17,8 +17,7 @@ pub fn instantiate(
 	_info: MessageInfo,
 	_msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-	Ok(Response::default()
-		.add_event(Event::new("xcvm.registry.instantiated")))
+	Ok(Response::default().add_event(Event::new("xcvm.registry.instantiated")))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
