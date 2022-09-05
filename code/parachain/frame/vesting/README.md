@@ -24,4 +24,4 @@ All `VestingSchedules` under an account can be queried from the chain state.
 Initially, we create a `vested_transfer` to add a vesting schedule to an account. 
 Once created, a vesting schedule can be updated with `update_vesting_schedules`.
 
-We can `claim` any vested funds of an account directly to the call's origin account or `claim_for` to target a given account. 
+Funds can be claimed in two ways; either directly with `claim` to claim for the caller, or indirectly through `claim_for` to claim for a given account.
