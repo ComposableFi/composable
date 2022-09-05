@@ -787,6 +787,19 @@
               '';
             };
 
+            arion-firesquid = import ./.nix/arion-firesquid.nix {
+              inherit pkgs;
+              inherit packages;
+            };
+            arion-firesquid-program = pkgs.writeShellApplication {
+              name = "devnet-firesquid-up";
+              runtimeInputs =
+                [ pkgs.arion pkgs.docker pkgs.coreutils pkgs.bash ];
+              text = ''
+                arion --prebuilt-file ${arion-firesquid} up --build --force-recreate -V --always-recreate-deps --remove-orphans
+              '';
+            };
+
           in rec {
             devnet-up = {
               type = "app";
@@ -796,6 +809,11 @@
             devnet-xcvm-up = {
               type = "app";
               program = "${devnet-xcvm-up-program}/bin/devnet-xcvm-up";
+            };
+
+            devnet-firesquid-up = {
+              type = "app";
+              program = "${arion-firesquid-program}/bin/devnet-firesquid-up";
             };
 
             devnet-dali = {
