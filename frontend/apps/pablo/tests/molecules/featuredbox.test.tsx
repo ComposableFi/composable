@@ -1,6 +1,6 @@
 import { render, screen } from "@/tests/utils/base";
 import { composeStories } from "@storybook/testing-react";
-import * as stories from "pablo-storybook/stories/molecules/featuredbox.stories"; // import all stories from the stories file
+import * as stories from "pablo-storybook/stories/molecules/featuredBox.stories"; // import all stories from the stories file
 
 const {
   CTAFeaturedBox,

@@ -280,7 +280,7 @@ mod tests {
 		assert_eq!(vesting_schedule.total_amount().unwrap(), 100)
 	}
 
-	/// TODO proptest for exhastive tests
+	/// TODO proptest for exhaustive tests
 	#[test]
 	fn test_locked_amount() {
 		let vesting_schedule_time_based = VestingSchedule::<u128, u32, u64, u64> {

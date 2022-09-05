@@ -148,7 +148,7 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>;
 
-		/// ED taken to create position. Part of if returned when position is liqudated.
+		/// ED taken to create position. Part of if returned when position is liquidated.
 		#[pallet::constant]
 		type PositionExistentialDeposit: Get<Self::Balance>;
 
@@ -175,7 +175,7 @@ pub mod pallet {
 		OrderRemoved {
 			order_id: OrderIdOf<T>,
 		},
-		CofigurationAdded {
+		ConfigurationAdded {
 			configuration_id: ConfigurationId,
 			configuration: TimeReleaseFunction,
 		},
@@ -225,7 +225,7 @@ pub mod pallet {
 	>;
 
 	/// orders are handled locally, but if these came from remote,
-	/// these should be notified approtiately
+	/// these should be notified appropriately
 	#[pallet::storage]
 	#[pallet::getter(fn get_local_order_id_to_remote)]
 	pub type LocalOrderIdToRemote<T: Config> = StorageMap<
@@ -249,7 +249,7 @@ pub mod pallet {
 
 	/// set of reusable auction configurations
 	#[pallet::storage]
-	#[pallet::getter(fn configuraitons)]
+	#[pallet::getter(fn configurations)]
 	pub type Configurations<T: Config> =
 		StorageMap<_, Twox64Concat, ConfigurationId, TimeReleaseFunction, OptionQuery>;
 
@@ -279,7 +279,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = T::AdminOrigin::ensure_origin(origin)?;
 			Configurations::<T>::insert(configuration_id, configuration.clone());
-			Self::deposit_event(Event::CofigurationAdded { configuration_id, configuration });
+			Self::deposit_event(Event::ConfigurationAdded { configuration_id, configuration });
 			Ok(().into())
 		}
 
@@ -352,7 +352,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			request: XcmSellRequest,
 		) -> DispatchResultWithPostInfo {
-			// TODO: make events/logs from all failed liqudations
+			// TODO: make events/logs from all failed liquidations
 
 			let request = XcmSellRequestValid::validate(request)?;
 

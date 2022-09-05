@@ -29,7 +29,7 @@ transition requirements if you're feeling fancy*
 that need to be fetched from the chain/backend/subsquid or any other data
 source"*
 
-## Extrinsic Paramater Sources
+## Extrinsic Parameter Sources
 
 *Document sources of extrinsic parameters, hard coded, calculated on the front
 end, user provided*

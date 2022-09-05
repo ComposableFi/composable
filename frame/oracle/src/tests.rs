@@ -877,7 +877,7 @@ fn submit_price_fails_stake_less_than_asset_slash() {
 	});
 }
 
-fn halborm_test_price_manipulation() {
+fn halborn_test_price_manipulation() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u128 = 0;
 		const MIN_ANSWERS: u32 = 3;
@@ -1659,7 +1659,7 @@ fn get_twap_for_amount() {
 }
 
 #[test]
-fn on_init_prune_scenerios() {
+fn on_init_prune_scenarios() {
 	new_test_ext().execute_with(|| {
 		// add and request oracle id
 		let account_2 = get_root_account();
@@ -1980,23 +1980,23 @@ mod test {
 	use super::*;
 	use composable_support::validation::Validate;
 	use frame_support::assert_ok;
-	use validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
+	use validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshold};
 
 	#[test]
 	fn test_threshold_valid_case() {
-		assert_ok!(<ValidThreshhold as Validate<Percent, ValidThreshhold>>::validate(
+		assert_ok!(<ValidThreshold as Validate<Percent, ValidThreshold>>::validate(
 			Percent::from_percent(99)
 		));
 	}
 
 	#[test]
 	fn test_threshold_invalid_case() {
-		assert!(<ValidThreshhold as Validate<Percent, ValidThreshhold>>::validate(
+		assert!(<ValidThreshold as Validate<Percent, ValidThreshold>>::validate(
 			Percent::from_percent(100)
 		)
 		.is_err());
 
-		assert!(<ValidThreshhold as Validate<Percent, ValidThreshhold>>::validate(
+		assert!(<ValidThreshold as Validate<Percent, ValidThreshold>>::validate(
 			Percent::from_percent(110)
 		)
 		.is_err());
@@ -2004,12 +2004,12 @@ mod test {
 
 	#[test]
 	fn test_threshold() {
-		assert!(<ValidThreshhold as Validate<Percent, ValidThreshhold>>::validate(
+		assert!(<ValidThreshold as Validate<Percent, ValidThreshold>>::validate(
 			Percent::from_percent(100)
 		)
 		.is_err());
 
-		assert!(<ValidThreshhold as Validate<Percent, ValidThreshhold>>::validate(
+		assert!(<ValidThreshold as Validate<Percent, ValidThreshold>>::validate(
 			Percent::from_percent(110)
 		)
 		.is_err());

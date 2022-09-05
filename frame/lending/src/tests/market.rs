@@ -118,7 +118,7 @@ fn can_create_valid_market() {
             assert_eq!(
                 alice_balance_after_market_creation,
                 INITIAL_BORROW_ASSET_AMOUNT - initial_pool_size,
-                "ALICE should have 'paid' the inital_pool_size into the market vault.
+                "ALICE should have 'paid' the initial_pool_size into the market vault.
                 alice_balance_after_market_creation: {alice_balance_after_market_creation}
                 initial_pool_size: {initial_pool_size}",
                 alice_balance_after_market_creation = alice_balance_after_market_creation,
@@ -245,7 +245,7 @@ fn can_create_valid_market_with_keep_alive() {
             assert_eq!(
                 alice_balance_after_market_creation,
                 INITIAL_BORROW_ASSET_AMOUNT - initial_pool_size,
-                "ALICE should have 'paid' the inital_pool_size into the market vault.
+                "ALICE should have 'paid' the initial_pool_size into the market vault.
                 alice_balance_after_market_creation: {alice_balance_after_market_creation}
                 initial_pool_size: {initial_pool_size}",
                 alice_balance_after_market_creation = alice_balance_after_market_creation,

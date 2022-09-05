@@ -121,7 +121,7 @@ export function calculatePoolTotalValueLocked(
   return baseAmount.times(basePrice).plus(quoteAmount.times(quotePrice));
 }
 
-export function calcaulateConstantProductSpotPrice(
+export function calculateConstantProductSpotPrice(
   baseBalance: BigNumber,
   quoteBalance: BigNumber,
   baseWeight: BigNumber

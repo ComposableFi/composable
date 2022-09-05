@@ -1,3 +1,5 @@
+// cspell:disable
+
 #[allow(dead_code, unused_imports, non_camel_case_types)]
 pub mod api {
 	use super::api as root_mod;
@@ -2313,10 +2315,10 @@ pub mod api {
 				pub fn new(client: &'a ::subxt::Client<T>) -> Self {
 					Self { client }
 				}
-				#[doc = " A fee mulitplier for `Operational` extrinsics to compute \"virtual tip\" to boost their"]
+				#[doc = " A fee multiplier for `Operational` extrinsics to compute \"virtual tip\" to boost their"]
 				#[doc = " `priority`"]
 				#[doc = ""]
-				#[doc = " This value is multipled by the `final_fee` to obtain a \"virtual tip\" that is later"]
+				#[doc = " This value is multiplied by the `final_fee` to obtain a \"virtual tip\" that is later"]
 				#[doc = " added to a tip component in regular `priority` calculations."]
 				#[doc = " It means that a `Normal` transaction can front-run a similarly-sized `Operational`"]
 				#[doc = " extrinsic (with no tip), by including a tip value greater than the virtual tip."]
@@ -5316,7 +5318,7 @@ pub mod api {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
 					}
 				}
-				#[doc = " Maxmimum number of registrars allowed in the system. Needed to bound the complexity"]
+				#[doc = " Maximum number of registrars allowed in the system. Needed to bound the complexity"]
 				#[doc = " of, e.g., updating judgements."]
 				pub fn max_registrars(
 					&self,
@@ -23601,7 +23603,7 @@ pub mod api {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
 					}
 				}
-				#[doc = "Creates a new asset, minting `amount` of funds into the `dest` account. Intented to be"]
+				#[doc = "Creates a new asset, minting `amount` of funds into the `dest` account. intended to be"]
 				#[doc = "used for creating wrapped assets, not associated with any project."]
 				pub fn mint_initialize(
 					&self,
@@ -25093,7 +25095,7 @@ pub mod api {
 				#[doc = "parameter."]
 				#[doc = ""]
 				#[doc = "Emits a `NewBond`."]
-				#[doc = "Possibily Emits a `OfferCompleted`."]
+				#[doc = "Possibly Emits a `OfferCompleted`."]
 				pub fn bond(
 					&self,
 					offer_id: ::core::primitive::u128,
@@ -25998,7 +26000,7 @@ pub mod api {
 					}
 				}
 				#[doc = " orders are handled locally, but if these came from remote,"]
-				#[doc = " these should be notified approtiately"]
+				#[doc = " these should be notified appropriately"]
 				pub fn local_order_id_to_remote(
 					&self,
 					_0: &'a ::core::primitive::u128,
@@ -26037,7 +26039,7 @@ pub mod api {
 					}
 				}
 				#[doc = " orders are handled locally, but if these came from remote,"]
-				#[doc = " these should be notified approtiately"]
+				#[doc = " these should be notified appropriately"]
 				pub fn local_order_id_to_remote_iter(
 					&self,
 					block_hash: ::core::option::Option<T::Hash>,
@@ -26321,7 +26323,7 @@ pub mod api {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
 					}
 				}
-				#[doc = " ED taken to create position. Part of if returned when position is liqudated."]
+				#[doc = " ED taken to create position. Part of if returned when position is liquidated."]
 				pub fn position_existential_deposit(
 					&self,
 				) -> ::core::result::Result<::core::primitive::u128, ::subxt::BasicError> {
@@ -26750,7 +26752,7 @@ pub mod api {
 				#[doc = "- Amount must be equal or lower than what the user has locked"]
 				#[doc = ""]
 				#[doc = "# Note"]
-				#[doc = "- Reclaim period is not reset if not all the funds are moved; menaing that the clock"]
+				#[doc = "- Reclaim period is not reset if not all the funds are moved; meaning that the clock"]
 				#[doc = "  remains ticking for the relayer to pick up the rest of the transaction."]
 				pub fn accept_transfer(
 					&self,
@@ -28119,7 +28121,7 @@ pub mod api {
 			type DispatchError = runtime_types::sp_runtime::DispatchError;
 			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 			pub struct AddLiquidationStrategy {
-				pub configuraiton:
+				pub configuration:
 					runtime_types::pallet_liquidations::pallet::LiquidationStrategyConfiguration,
 			}
 			impl ::subxt::Call for AddLiquidationStrategy {
@@ -28152,7 +28154,7 @@ pub mod api {
 				}
 				pub fn add_liquidation_strategy(
 					&self,
-					configuraiton : runtime_types :: pallet_liquidations :: pallet :: LiquidationStrategyConfiguration,
+					configuration : runtime_types :: pallet_liquidations :: pallet :: LiquidationStrategyConfiguration,
 				) -> Result<
 					::subxt::SubmittableExtrinsic<
 						'a,
@@ -28175,7 +28177,7 @@ pub mod api {
 							111u8, 241u8, 22u8, 236u8, 90u8, 29u8, 29u8, 208u8, 101u8, 13u8, 206u8,
 							164u8, 31u8, 111u8, 23u8, 239u8, 7u8, 225u8, 117u8, 109u8, 30u8, 135u8,
 						] {
-						let call = AddLiquidationStrategy { configuraiton };
+						let call = AddLiquidationStrategy { configuration };
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
 					} else {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
@@ -28513,7 +28515,7 @@ pub mod api {
 				#[doc = "Create a new lending market."]
 				#[doc = "- `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause"]
 				#[doc = "  borrow operations."]
-				#[doc = "- `input`   : Borrow & deposits of assets, persentages."]
+				#[doc = "- `input`   : Borrow & deposits of assets, percentages."]
 				#[doc = ""]
 				#[doc = "`origin` irreversibly pays `T::OracleMarketCreationStake`."]
 				pub fn create_market(
@@ -28864,7 +28866,7 @@ pub mod api {
 				const EVENT: &'static str = "LiquidationInitiated";
 			}
 			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
-			#[doc = "Event emitted to warn that loan may go under collaterlized soon."]
+			#[doc = "Event emitted to warn that loan may go under collateralized soon."]
 			pub struct MayGoUnderCollateralizedSoon {
 				pub market_id: runtime_types::pallet_lending::types::MarketIndex,
 				pub account: ::subxt::sp_core::crypto::AccountId32,
@@ -29214,7 +29216,7 @@ pub mod api {
 					}
 				}
 				#[doc = " at which lending index account did borrowed."]
-				#[doc = " if first borrow: market index when the borrowed occured"]
+				#[doc = " if first borrow: market index when the borrow occurred"]
 				#[doc = " if additional borrow: market index adjusted wrt the previous index"]
 				pub fn debt_index(
 					&self,
@@ -29254,7 +29256,7 @@ pub mod api {
 					}
 				}
 				#[doc = " at which lending index account did borrowed."]
-				#[doc = " if first borrow: market index when the borrowed occured"]
+				#[doc = " if first borrow: market index when the borrow occurred"]
 				#[doc = " if additional borrow: market index adjusted wrt the previous index"]
 				pub fn debt_index_iter(
 					&self,
@@ -35820,7 +35822,7 @@ pub mod api {
 						keep_alive: ::core::primitive::bool,
 					},
 					#[codec(index = 6)]
-					#[doc = "Creates a new asset, minting `amount` of funds into the `dest` account. Intented to be"]
+					#[doc = "Creates a new asset, minting `amount` of funds into the `dest` account. intended to be"]
 					#[doc = "used for creating wrapped assets, not associated with any project."]
 					mint_initialize {
 						#[codec(compact)]
@@ -36314,7 +36316,7 @@ pub mod api {
 					#[doc = "parameter."]
 					#[doc = ""]
 					#[doc = "Emits a `NewBond`."]
-					#[doc = "Possibily Emits a `OfferCompleted`."]
+					#[doc = "Possibly Emits a `OfferCompleted`."]
 					bond {
 						offer_id: ::core::primitive::u128,
 						nb_of_bonds: ::core::primitive::u128,
@@ -38139,7 +38141,7 @@ pub mod api {
 					#[doc = "Invalid route"]
 					InvalidRoute,
 					#[codec(index = 9)]
-					#[doc = "Invalid message for extirnsic"]
+					#[doc = "Invalid message for extrinsic"]
 					InvalidMessageType,
 				}
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
@@ -38997,7 +38999,7 @@ pub mod api {
 					#[doc = "Create a new lending market."]
 					#[doc = "- `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause"]
 					#[doc = "  borrow operations."]
-					#[doc = "- `input`   : Borrow & deposits of assets, persentages."]
+					#[doc = "- `input`   : Borrow & deposits of assets, percentages."]
 					#[doc = ""]
 					#[doc = "`origin` irreversibly pays `T::OracleMarketCreationStake`."]
 					create_market {
@@ -39233,7 +39235,7 @@ pub mod api {
 						borrowers: ::std::vec::Vec<::subxt::sp_core::crypto::AccountId32>,
 					},
 					#[codec(index = 7)]
-					#[doc = "Event emitted to warn that loan may go under collaterlized soon."]
+					#[doc = "Event emitted to warn that loan may go under collateralized soon."]
 					MayGoUnderCollateralizedSoon {
 						market_id: runtime_types::pallet_lending::types::MarketIndex,
 						account: ::subxt::sp_core::crypto::AccountId32,
@@ -39258,7 +39260,7 @@ pub mod api {
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 				#[doc = "Contains one variant per dispatchable that can be called by an extrinsic."]
 				pub enum Call {
-					# [codec (index = 0)] add_liquidation_strategy { configuraiton : runtime_types :: pallet_liquidations :: pallet :: LiquidationStrategyConfiguration , } , # [codec (index = 1)] sell { order : runtime_types :: composable_traits :: defi :: Sell < runtime_types :: primitives :: currency :: CurrencyId , :: core :: primitive :: u128 > , configuration : :: std :: vec :: Vec < :: core :: primitive :: u32 > , } , }
+					# [codec (index = 0)] add_liquidation_strategy { configuration : runtime_types :: pallet_liquidations :: pallet :: LiquidationStrategyConfiguration , } , # [codec (index = 1)] sell { order : runtime_types :: composable_traits :: defi :: Sell < runtime_types :: primitives :: currency :: CurrencyId , :: core :: primitive :: u128 > , configuration : :: std :: vec :: Vec < :: core :: primitive :: u32 > , } , }
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 				#[doc = "\n\t\t\tCustom [dispatch errors](https://docs.substrate.io/v3/runtime/events-and-errors)\n\t\t\tof this pallet.\n\t\t\t"]
 				pub enum Error {
@@ -39488,7 +39490,7 @@ pub mod api {
 					#[doc = "- Amount must be equal or lower than what the user has locked"]
 					#[doc = ""]
 					#[doc = "# Note"]
-					#[doc = "- Reclaim period is not reset if not all the funds are moved; menaing that the clock"]
+					#[doc = "- Reclaim period is not reset if not all the funds are moved; meaning that the clock"]
 					#[doc = "  remains ticking for the relayer to pick up the rest of the transaction."]
 					accept_transfer {
 						from: ::subxt::sp_core::crypto::AccountId32,

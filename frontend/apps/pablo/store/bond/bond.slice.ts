@@ -7,7 +7,7 @@ export interface BondedOfferVestingState {
   claimable: BigNumber;
   pendingRewards: BigNumber;
   alreadyClaimed: BigNumber;
-  miliSecondsSinceVestingStart: BigNumber;
+  milliSecondsSinceVestingStart: BigNumber;
 }
 
 export interface BondSlice {
@@ -124,5 +124,5 @@ export const useBondedOfferVestingState = (offerId: string) =>
     netRewards: new BigNumber(0),
     claimable: new BigNumber(0),
     pendingRewards: new BigNumber(0),
-    miliSecondsSinceVestingStart: new BigNumber(0),
+    milliSecondsSinceVestingStart: new BigNumber(0),
   };

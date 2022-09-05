@@ -87,9 +87,9 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
       />
 
       <Label
-        label="Minimum recieved"
+        label="Minimum received"
         TooltipProps={{
-          title: "Minimum recieved",
+          title: "Minimum received",
         }}
         BalanceProps={{
           balance: `${minimumReceived.toFixed()} ${baseAsset?.symbol}`,

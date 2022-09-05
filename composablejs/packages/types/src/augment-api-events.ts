@@ -483,7 +483,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       CollateralDeposited: AugmentedEvent<ApiType, [sender: AccountId32, marketId: u32, amount: u128], { sender: AccountId32, marketId: u32, amount: u128 }>;
       /**
-       * Event emitted when collateral is withdrawed.
+       * Event emitted when collateral is withdrawn.
        **/
       CollateralWithdrawn: AugmentedEvent<ApiType, [sender: AccountId32, marketId: u32, amount: u128], { sender: AccountId32, marketId: u32, amount: u128 }>;
       /**
@@ -496,7 +496,7 @@ declare module '@polkadot/api-base/types/events' {
       MarketCreated: AugmentedEvent<ApiType, [marketId: u32, vaultId: u64, manager: AccountId32, currencyPair: ComposableTraitsDefiCurrencyPairCurrencyId], { marketId: u32, vaultId: u64, manager: AccountId32, currencyPair: ComposableTraitsDefiCurrencyPairCurrencyId }>;
       MarketUpdated: AugmentedEvent<ApiType, [marketId: u32, input: ComposableTraitsLendingUpdateInput], { marketId: u32, input: ComposableTraitsLendingUpdateInput }>;
       /**
-       * Event emitted to warn that loan may go under collaterlized soon.
+       * Event emitted to warn that loan may go under collateralized soon.
        **/
       MayGoUnderCollateralizedSoon: AugmentedEvent<ApiType, [marketId: u32, account: AccountId32], { marketId: u32, account: AccountId32 }>;
       /**
@@ -746,13 +746,13 @@ declare module '@polkadot/api-base/types/events' {
     relayerXcm: {
       /**
        * Some assets have been placed in an asset trap.
-       * 
+       *
        * \[ hash, origin, assets \]
        **/
       AssetsTrapped: AugmentedEvent<ApiType, [H256, XcmV1MultiLocation, XcmVersionedMultiAssets]>;
       /**
        * Execution of an XCM message was attempted.
-       * 
+       *
        * \[ outcome \]
        **/
       Attempted: AugmentedEvent<ApiType, [XcmV2TraitsOutcome]>;
@@ -760,26 +760,26 @@ declare module '@polkadot/api-base/types/events' {
        * Expected query response has been received but the origin location of the response does
        * not match that expected. The query remains registered for a later, valid, response to
        * be received and acted upon.
-       * 
+       *
        * \[ origin location, id, expected location \]
        **/
       InvalidResponder: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64, Option<XcmV1MultiLocation>]>;
       /**
        * Expected query response has been received but the expected origin location placed in
        * storage by this runtime previously cannot be decoded. The query remains registered.
-       * 
+       *
        * This is unexpected (since a location placed in storage in a previously executing
        * runtime should be readable prior to query timeout) and dangerous since the possibly
        * valid response will be dropped. Manual governance intervention is probably going to be
        * needed.
-       * 
+       *
        * \[ origin location, id \]
        **/
       InvalidResponderVersion: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64]>;
       /**
        * Query response has been received and query is removed. The registered notification has
        * been dispatched and executed successfully.
-       * 
+       *
        * \[ id, pallet index, call index \]
        **/
       Notified: AugmentedEvent<ApiType, [u64, u8, u8]>;
@@ -787,14 +787,14 @@ declare module '@polkadot/api-base/types/events' {
        * Query response has been received and query is removed. The dispatch was unable to be
        * decoded into a `Call`; this might be due to dispatch function having a signature which
        * is not `(origin, QueryId, Response)`.
-       * 
+       *
        * \[ id, pallet index, call index \]
        **/
       NotifyDecodeFailed: AugmentedEvent<ApiType, [u64, u8, u8]>;
       /**
        * Query response has been received and query is removed. There was a general error with
        * dispatching the notification call.
-       * 
+       *
        * \[ id, pallet index, call index \]
        **/
       NotifyDispatchError: AugmentedEvent<ApiType, [u64, u8, u8]>;
@@ -802,47 +802,47 @@ declare module '@polkadot/api-base/types/events' {
        * Query response has been received and query is removed. The registered notification could
        * not be dispatched because the dispatch weight is greater than the maximum weight
        * originally budgeted by this runtime for the query result.
-       * 
+       *
        * \[ id, pallet index, call index, actual weight, max budgeted weight \]
        **/
       NotifyOverweight: AugmentedEvent<ApiType, [u64, u8, u8, u64, u64]>;
       /**
        * A given location which had a version change subscription was dropped owing to an error
        * migrating the location to our new XCM format.
-       * 
+       *
        * \[ location, query ID \]
        **/
       NotifyTargetMigrationFail: AugmentedEvent<ApiType, [XcmVersionedMultiLocation, u64]>;
       /**
        * A given location which had a version change subscription was dropped owing to an error
        * sending the notification to it.
-       * 
+       *
        * \[ location, query ID, error \]
        **/
       NotifyTargetSendFail: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64, XcmV2TraitsError]>;
       /**
        * Query response has been received and is ready for taking with `take_response`. There is
        * no registered notification call.
-       * 
+       *
        * \[ id, response \]
        **/
       ResponseReady: AugmentedEvent<ApiType, [u64, XcmV2Response]>;
       /**
        * Received query response has been read and removed.
-       * 
+       *
        * \[ id \]
        **/
       ResponseTaken: AugmentedEvent<ApiType, [u64]>;
       /**
        * A XCM message was sent.
-       * 
+       *
        * \[ origin, destination, message \]
        **/
       Sent: AugmentedEvent<ApiType, [XcmV1MultiLocation, XcmV1MultiLocation, XcmV2Xcm]>;
       /**
        * The supported version of a location has been changed. This might be through an
        * automatic notification or a manual intervention.
-       * 
+       *
        * \[ location, XCM version \]
        **/
       SupportedVersionChanged: AugmentedEvent<ApiType, [XcmV1MultiLocation, u32]>;
@@ -850,13 +850,13 @@ declare module '@polkadot/api-base/types/events' {
        * Query response received which does not match a registered query. This may be because a
        * matching query was never registered, it may be because it is a duplicate response, or
        * because the query timed out.
-       * 
+       *
        * \[ origin location, id \]
        **/
       UnexpectedResponse: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64]>;
       /**
        * An XCM version change notification message has been attempted to be sent.
-       * 
+       *
        * \[ destination, result \]
        **/
       VersionChangeNotified: AugmentedEvent<ApiType, [XcmV1MultiLocation, u32]>;

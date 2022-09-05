@@ -7,10 +7,10 @@ import { ApiPromise } from "@polkadot/api";
 
 /**
  *Contains handler methods for the pabloPallet Tests.
- * StableSwap ConstantProduct and LiquidityBootsrapping Pools
+ * StableSwap ConstantProduct and LiquidityBootstrapping Pools
  */
 
-let constantProductk: bigint;
+let constantProductK: bigint;
 let baseAmountTotal: bigint;
 let quoteAmountTotal: bigint;
 let mintedLPTokens: bigint;
@@ -54,7 +54,7 @@ export async function createConsProdPool(
   return resultPoolId.toNumber();
 }
 
-export async function addFundstoThePool(
+export async function addFundsToThePool(
   api: ApiPromise,
   poolId: number,
   walletId: KeyringPair,
@@ -103,8 +103,8 @@ export async function buyFromPool(
   const amountParam = api.createType("u128", amountToBuy);
   const keepAlive = api.createType("bool", true);
   const minMintAmount = api.createType("u128", 0);
-  constantProductk = baseAmountTotal * quoteAmountTotal;
-  const expectedConversion = constantProductk / (baseAmountTotal - amountToBuy) - quoteAmountTotal;
+  constantProductK = baseAmountTotal * quoteAmountTotal;
+  const expectedConversion = constantProductK / (baseAmountTotal - amountToBuy) - quoteAmountTotal;
   const {
     data: [retPoolId, accountId, baseArg, quoteArg, baseAmount, quoteAmount, ownerFee]
   } = await sendAndWaitForSuccess(
@@ -377,7 +377,7 @@ export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair
  Creates stableSwapPool
  @param sender: User sending tx- KeyringPair
  @param owner: Owner of the pool - KeyringPair
- @param baseAssetId: CurencyId
+ @param baseAssetId: CurrencyId
  @param quoteAssetId: CurrencyId
  @param ampCoefficient: Amplification Coefficient, for details see curve.fi stable swap dex
  @param fee: Total fee to be charged for each transaction in the pool

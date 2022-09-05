@@ -108,8 +108,8 @@ pub mod pallet {
 		AirdropAlreadyStarted,
 		AirdropDoesNotExist,
 		AirdropIsNotEnabled,
-		ArithmiticError,
-		AssociatedWithAnohterAccount,
+		ArithmeticError,
+		AssociatedWithAnotherAccount,
 		BackToTheFuture,
 		NotAirdropCreator,
 		NothingToClaim,
@@ -178,7 +178,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type Prefix: Get<&'static [u8]>;
 
-		/// The stake required to craete an Airdrop
+		/// The stake required to create an Airdrop
 		#[pallet::constant]
 		type Stake: Get<BalanceOf<Self>>;
 
@@ -387,8 +387,8 @@ pub mod pallet {
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
-		/// * `AssociatedWithAnohterAccount` - Associated with a different account
-		/// * `ArithmiticError` - Overflow while totaling claimed funds
+		/// * `AssociatedWithAnotherAccount` - Associated with a different account
+		/// * `ArithmeticError` - Overflow while totaling claimed funds
 		/// * `InvalidProof`
 		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		#[pallet::weight(<T as Config>::WeightInfo::claim(TotalAirdropRecipients::<T>::get(airdrop_id)))]
@@ -407,7 +407,7 @@ pub mod pallet {
 				Some(associated_account) => {
 					ensure!(
 						associated_account == identity,
-						Error::<T>::AssociatedWithAnohterAccount
+						Error::<T>::AssociatedWithAnotherAccount
 					);
 				},
 				// If no association exists, create a new one
@@ -900,7 +900,7 @@ pub mod pallet {
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
-		/// * `ArithmiticError` - Overflow while totaling claimed funds
+		/// * `ArithmeticError` - Overflow while totaling claimed funds
 		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		fn claim(
 			airdrop_id: Self::AirdropId,
@@ -941,7 +941,7 @@ pub mod pallet {
 					airdrop.claimed_funds = airdrop
 						.claimed_funds
 						.safe_add(&available_to_claim)
-						.map_err(|_| Error::<T>::ArithmiticError)?;
+						.map_err(|_| Error::<T>::ArithmeticError)?;
 					Ok(())
 				},
 				None => Err(Error::<T>::AirdropDoesNotExist),

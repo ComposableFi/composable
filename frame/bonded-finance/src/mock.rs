@@ -163,10 +163,11 @@ impl pallet_vesting::Config for Runtime {
 }
 
 parameter_types! {
-	  pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
-	  pub const Stake: Balance = 10_000;
-	  pub const NativeCurrencyId: MockCurrencyId = NATIVE_CURRENCY_ID;
-	  pub const MinReward: Balance = MIN_REWARD;
+	// cspell:disable-next
+	pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
+	pub const Stake: Balance = 10_000;
+	pub const NativeCurrencyId: MockCurrencyId = NATIVE_CURRENCY_ID;
+	pub const MinReward: Balance = MIN_REWARD;
 }
 
 impl Config for Runtime {

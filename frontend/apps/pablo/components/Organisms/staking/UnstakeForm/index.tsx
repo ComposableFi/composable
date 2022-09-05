@@ -23,7 +23,7 @@ export const UnstakeForm: React.FC<BoxProps> = ({
   const [isUnstakeModalOpen, setIsUnstakeModalOpen] = useState<boolean>(false);
   const [isRenewModalOpen, setIsRenewModalOpen] = useState<boolean>(false);
 
-  const handleUntake = () => {
+  const handleUnstake = () => {
     setIsUnstakeModalOpen(true);
   };
 
@@ -69,7 +69,7 @@ export const UnstakeForm: React.FC<BoxProps> = ({
           </Grid>
           <Grid item xs={12} md={6}>
             <Button
-              onClick={handleUntake}
+              onClick={handleUnstake}
               fullWidth
               variant="contained"
               disabled={!selectedXPablo}

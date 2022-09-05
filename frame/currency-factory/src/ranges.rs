@@ -41,12 +41,12 @@ where
 		// Where `n` is the number of pre-set ranges
 		#[allow(clippy::disallowed_methods)]
 		if Self::bounds() >= 6 {
-			ranges.add(Range::lp_tokens()).expect("capacitiy is sufficient, qed");
-			ranges.add(Range::tokens()).expect("capacitiy is sufficient, qed");
-			ranges.add(Range::foreign_assets()).expect("capacitiy is sufficient, qed");
-			ranges.add(Range::ibc_assets()).expect("capacitiy is sufficient, qed");
-			ranges.add(Range::fnft_range()).expect("capacitiy is sufficient, qed");
-			ranges.add(Range::x_tokens()).expect("capacitiy is sufficient, qed");
+			ranges.add(Range::lp_tokens()).expect("capacity is sufficient, qed");
+			ranges.add(Range::tokens()).expect("capacity is sufficient, qed");
+			ranges.add(Range::foreign_assets()).expect("capacity is sufficient, qed");
+			ranges.add(Range::ibc_assets()).expect("capacity is sufficient, qed");
+			ranges.add(Range::fnft_range()).expect("capacity is sufficient, qed");
+			ranges.add(Range::x_tokens()).expect("capacity is sufficient, qed");
 		}
 
 		ranges
@@ -215,7 +215,7 @@ mod tests {
 		let end = range.end();
 		range.add(Range::new(end + 1, None).unwrap()).unwrap();
 
-		range.append(u128::MAX).expect_err("should overlfow");
-		range.append(u128::MAX / 2).expect("should not overlfow");
+		range.append(u128::MAX).expect_err("should overflow");
+		range.append(u128::MAX / 2).expect("should not overflow");
 	}
 }

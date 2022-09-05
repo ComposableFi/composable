@@ -30,8 +30,8 @@ USER ${USER}
 ENV USER=${USER}
 
 RUN curl --location ${NIX_INSTALLER} > ~/install.sh && \
-         chmod +x ~/install.sh  && \
-         ~/install.sh
+    chmod +x ~/install.sh  && \
+    ~/install.sh
 
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-channel --add ${CHANNEL_URL} nixpkgs && \

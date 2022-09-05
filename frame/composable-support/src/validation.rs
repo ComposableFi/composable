@@ -72,7 +72,7 @@ use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 use sp_std::ops::Deref;
 
-/// Black box that embbed the validated value.
+/// Black box that embeds the validated value.
 /// Validated during construction or serde.
 #[derive(Default, Copy, Clone)]
 pub struct Validated<T, U> {
@@ -176,7 +176,7 @@ where
 	}
 }
 
-// as per substrate pattern and existing macroses for similar purposes, they tend to make things
+// as per substrate pattern and existing macros for similar purposes, they tend to make things
 // flat like `#[impl_trait_for_tuples::impl_for_tuples(30)]`
 // so if we will need more than 3, can consider it
 impl<T, U, V, W> Validate<T, (U, V, W)> for (U, V, W)
