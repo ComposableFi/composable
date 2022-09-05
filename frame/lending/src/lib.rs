@@ -383,7 +383,7 @@ pub mod pallet {
 		},
 		/// Event emitted when a liquidation is initiated for a loan.
 		LiquidationInitiated { market_id: MarketId, borrowers: Vec<T::AccountId> },
-		/// Event emitted to warn that loan may go under collaterlized soon.
+		/// Event emitted to warn that loan may go under collaterlize soon.
 		MayGoUnderCollateralizedSoon { market_id: MarketId, account: T::AccountId },
 	}
 
@@ -414,7 +414,7 @@ pub mod pallet {
 		/// Borrow rate can not be calculated.
 		CannotCalculateBorrowRate,
 		/// Borrow and repay in the same block are not allowed.
-		/// Fleshloans are not supported by the pallet.
+		/// Flashloans are not supported by the pallet.
 		BorrowAndRepayInSameBlockIsNotSupported,
 		/// User tried to repay non-existent loan.
 		BorrowDoesNotExist,
@@ -429,7 +429,7 @@ pub mod pallet {
 		/// Market manager has to deposit initial amount of borrow asset into the market account.
 		/// Initial amount is denominated in normalized currency and calculated based on data
 		/// from Oracle. The error is emitted if calculated amount is incorrect.
-		IntitialMarketVolumeIncorrect,
+		InitialMarketVolumeIncorrect,
 		/// A market with a borrow balance of `0` was attempted to be repaid.
 		CannotRepayZeroBalance,
 		/// Cannot repay more than total amount of debt when partially repaying.

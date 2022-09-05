@@ -30,12 +30,12 @@ impl<T: Config> Pallet<T> {
 					// I don't know whether we would face any issue by doing that.
 					//
 					// borrow:
-					//  - withdrawable = transfer(vault->market) + transfer(market->user)
-					//  - depositable = error(not enough borrow asset) // vault asking for reserve
+					//  - `withdrawable` = transfer(vault->market) + transfer(market->user)
+					//  - `depositable` = error(not enough borrow asset) // vault asking for reserve
 					//    to be fulfilled
-					//  - mustliquidate = error(market is closing)
+					//  - `mustliquidate` = error(market is closing)
 					// repay:
-					// 	- (withdrawable || depositable || mustliquidate) = transfer(user->market) +
+					// 	- (`withdrawable` || `depositable` || `mustliquidate`) = transfer(user->market) +
 					//    transfer(market->vault)
 					//
 					// The intermediate transfer(vault->market) while borrowing would
