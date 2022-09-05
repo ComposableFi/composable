@@ -43,6 +43,7 @@ pub type LiquidationStrategyId = u32;
 pub type OrderId = u32;
 
 parameter_types! {
+	// cspell:disable-next
 	pub const LiquidationsPalletId : PalletId = PalletId(*b"liqd_tns");
 }
 
@@ -251,6 +252,7 @@ parameter_types! {
 	pub const MinU32: u32 = 0;
 	pub const MinU64: u64 = 0;
 	pub const TwapWindow: u16 = 3;
+	// cspell:disable-next
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
 	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
 }
@@ -294,6 +296,7 @@ impl DeFiComposableConfig for Runtime {
 }
 
 parameter_types! {
+	// cspell:disable-next
 	pub DutchAuctionPalletId: PalletId = PalletId(*b"dutchauc");
 }
 
@@ -393,6 +396,7 @@ where
 
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
+	// cspell:disable-next
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
 	pub OracleMarketCreationStake: Balance = NORMALIZED::ONE;
 	pub const MaxLiquidationBatchSize: u32 = 5;

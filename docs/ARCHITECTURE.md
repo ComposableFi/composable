@@ -35,7 +35,7 @@ The `oracle` off-chain worker is fetching prices from a server. We provide a ref
 
 ### Rust clients
 
-You may run `subxt` agains our runtimes to get Rust clients.
+You may run `subxt` against our runtimes to get Rust clients.
 
 ## Scripts
 

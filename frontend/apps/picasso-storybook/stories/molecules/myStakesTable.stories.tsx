@@ -1,18 +1,18 @@
-import { MyStakingsTable } from "picasso/components";
+import { MyStakesTable } from "picasso/components";
 import { ComponentStory, Story } from "@storybook/react";
 import { TOKENS } from "tokens";
 
 export default {
-  title: "molecules/MyStakingsTable",
-  component: MyStakingsTable
+  title: "molecules/MyStakesTable",
+  component: MyStakesTable
 };
 
-const Template: ComponentStory<typeof MyStakingsTable> = args => (
-  <MyStakingsTable {...args} />
+const Template: ComponentStory<typeof MyStakesTable> = args => (
+  <MyStakesTable {...args} />
 );
 
-export const MyStakingsTableStory = Template.bind({});
-MyStakingsTableStory.args = {
+export const MyStakesTableStory = Template.bind({});
+MyStakesTableStory.args = {
   assets: [
     {
       token: TOKENS["pica"],

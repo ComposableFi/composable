@@ -31,7 +31,7 @@ export const useUserProvidedLiquidityByPool = (
   const {
     apollo,
     /**
-     * acutal provided liquidity from zustand
+     * actual provided liquidity from zustand
      */
     userProvidedLiquidity,
     /**
@@ -83,7 +83,7 @@ export const useUserProvidedLiquidityByPool = (
     }
   }, [pool, selectedAccount, setUserProvidedTokenAmountInLiquidityPool]);
   /**
-   * use amount of liquity tokens
+   * use amount of liquidity tokens
    * from zustand store and pass it
    * down
    */

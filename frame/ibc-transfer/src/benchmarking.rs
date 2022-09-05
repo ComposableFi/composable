@@ -73,6 +73,7 @@ benchmarks! {
 
 		let balance = 100000 * CurrencyId::milli::<u128>();
 		let channel_id = <T as Config>::IbcHandler::open_channel(port_id.clone(), channel_end).unwrap();
+		// cspell:disable-next
 		let denom = "transfer/channel-15/uatom";
 		let foreign_asset_id = ibc_denom_to_foreign_asset_id(denom);
 		let asset_id = <T as Config>::CurrencyFactory::create(
@@ -100,7 +101,7 @@ benchmarks! {
 			revision_number: None
 		};
 
-		Pallet::<T>::resgister_asset_id(asset_id.into(), denom.as_bytes().to_vec());
+		Pallet::<T>::register_asset_id(asset_id.into(), denom.as_bytes().to_vec());
 		<Params<T>>::put(PalletParams {
 			send_enabled: true,
 			receive_enabled: true

@@ -16,11 +16,11 @@ import { NoAssetsCover } from "./NoAssetsCover";
 import { TokenPairAsset } from "../Atom/TokenPairAsset";
 import { StakingAsset } from "@/stores/defi/polkadot";
 
-export type MyBondingsTableProps = TableContainerProps & {
+export type MyBondsTableProps = TableContainerProps & {
   assets?: StakingAsset[];
 };
 
-export const MyStakingsTable: React.FC<MyBondingsTableProps> = ({ assets }) => {
+export const MyStakesTable: React.FC<MyBondsTableProps> = ({ assets }) => {
   if (assets && assets.length > 0) {
     return (
       <TableContainer>

@@ -70,13 +70,13 @@ export class TxCrowdloanRewardsTests {
     let contributors: Array<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]> = [];
     // Before we go through all the contributors, we inject our test wallet at the very beginning.
     const testContributorReward = api.createType("u128", 1_000_000_000_000);
-    const testContriborRelayChainObject = api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
+    const testContributorRelayChainObject = api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
       RelayChain: testContributorWallet.publicKey
     });
     const testContributorEthChainObject = api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
       Ethereum: ethAccount(1).address
     });
-    contributors.push([testContriborRelayChainObject, testContributorReward, vesting48weeks]);
+    contributors.push([testContributorRelayChainObject, testContributorReward, vesting48weeks]);
     contributors.push([testContributorEthChainObject, testContributorReward, vesting48weeks]);
     // Iterating through our list of contributors
     let i = 0;
@@ -117,7 +117,7 @@ export class TxCrowdloanRewardsTests {
       }
       i++;
     }
-    return testContriborRelayChainObject;
+    return testContributorRelayChainObject;
   }
 
   /**

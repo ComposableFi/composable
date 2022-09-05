@@ -50,7 +50,7 @@ pub enum Error {
 	TimeoutError,
 	/// Failed to bind port
 	BindPortError,
-	/// Failed to intialize a new channel
+	/// Failed to initialize a new channel
 	ChannelInitError,
 	/// Failed to decode a value
 	DecodingError,
@@ -87,7 +87,7 @@ impl TryFrom<&OpenChannelParams> for Order {
 }
 
 /// Captures the functions modules can use to interact with the ibc pallet
-/// Currently allows modules to register packets and crreate channels
+/// Currently allows modules to register packets and create channels
 pub trait IbcTrait {
 	fn client_revision_number(port_id: Vec<u8>, channel_id: Vec<u8>) -> Result<u64, Error>;
 	/// Register a packet to be sent
@@ -96,7 +96,7 @@ pub trait IbcTrait {
 	fn open_channel(port_id: PortId, channel_end: ChannelEnd) -> Result<ChannelId, Error>;
 	/// Modules use this to write acknowledgements into the ibc store
 	/// To be used in a successful execution of OnRecvPacket callback
-	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), Error>;
+	fn write_acknowledgement(packet: &Packet, ack: Vec<u8>) -> Result<(), Error>;
 	// These methods are majorly for the ibc token transfer application
 	// We need these here because the implementation of the ics20 requires access to the context
 	// which is defined in pallet-ibc, we cannot import the context in ibc-transfer pallet because
@@ -132,7 +132,7 @@ pub trait CallbackWeight {
 	/// Returns the callback weight for the channel open acknowledgement ibc message
 	fn on_chan_open_ack(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight;
 
-	/// Returns the callback weight for the channel open comfirm ibc message
+	/// Returns the callback weight for the channel open confirm ibc message
 	fn on_chan_open_confirm(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight;
 
 	/// Returns the callback weight for the channel close init ibc message

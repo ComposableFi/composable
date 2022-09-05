@@ -101,7 +101,7 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           </Typography>
           <Box display="flex" justifyContent="center" mt={2} mb={8}>
             <Link target="_blank" href="/frontend/apps/pablo/pages">
-              View on Polacdot {"{.js}"}
+              View on Polkadot {"{.js}"}
             </Link>
           </Box>
           
@@ -118,4 +118,3 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
     </Modal>  
   );
 };
-

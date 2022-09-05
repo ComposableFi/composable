@@ -136,7 +136,7 @@ describe("tx.mosaic Tests", function () {
       if (!testConfiguration.enabledTests.updateAssetMapping) this.skip();
       const {
         data: [result]
-      } = await TxMosaicTests.testUpdateAssetMaping(api, sudoKey, assetId, pNetworkId, remoteAssetId);
+      } = await TxMosaicTests.testUpdateAssetMapping(api, sudoKey, assetId, pNetworkId, remoteAssetId);
       expect(result.isOk).to.be.true;
     });
 

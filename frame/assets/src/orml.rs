@@ -73,14 +73,14 @@ where
 		amount: Self::Balance,
 	) -> DispatchResult {
 		if currency_id == T::NativeAssetId::get() {
-			let new_balace = <<T as Config>::NativeCurrency>::free_balance(who)
+			let new_balance = <<T as Config>::NativeCurrency>::free_balance(who)
 				.checked_sub(&amount)
 				.ok_or(DispatchError::Arithmetic(ArithmeticError::Underflow))?;
 			return <<T as Config>::NativeCurrency>::ensure_can_withdraw(
 				who,
 				amount,
 				WithdrawReasons::all(),
-				new_balace,
+				new_balance,
 			)
 		}
 		let currency_id = valid_asset_id::<T>(currency_id).ok_or(Error::<T>::InvalidCurrency)?;

@@ -10,7 +10,7 @@
     "buySellAndSwapTests": {
       "enabled": true
     },
-    "liquidityRemovalandOtherTests": {
+    "liquidityRemovalAndOtherTests": {
       "enabled": true
     }
   }

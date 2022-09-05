@@ -128,7 +128,7 @@ A transfer of rewards obeys the same split.
 ## Positions
 
 A position is what a user (or other protocol) gets when stakes amount. So that one can get a `share` of rewards and other benefits.
-Positions capture their configuration upon creation based on what the pool makes possible. 
+Positions capture their configuration upon creation based on what the pool makes possible.
 Positions may be updated only on behalf of users. In that case, they will capture a new pool configuration if that was changed.
 
 ### Staking
@@ -145,7 +145,7 @@ Penalties and lock periods are optional depending on pool configuration.
 
 A stake is transferred into the protocol treasury.
 
-Initially, on a nonzero time lock nonzero penalties no time decay but expireable positions are supported.
+Initially, on a nonzero time lock nonzero penalties no time decay but expirable positions are supported.
 
 ### Staked asset
 
@@ -168,7 +168,7 @@ A user may leave a position before maturity (if it was defined in `lock duration
 An early unstake penalty applied on the staked asset when the user unstake early (before the end of the selected staking duration).
 
 This case is called `early unstake` and will result in a penalty applied to the
-staked asset. A user will be returned only with part of the share. 
+staked asset. A user will be returned only with part of the share.
 The remaining will go to the treasury.
 
 **Examples**

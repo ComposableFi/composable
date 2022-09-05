@@ -3,7 +3,7 @@ import { ComponentStory, Story } from "@storybook/react";
 import { TOKENS } from "tokens";
 
 export default {
-  title: "molecules/MyBondingsTable",
+  title: "molecules/MyBondsTable",
   component: MyBondingsTable
 };
 

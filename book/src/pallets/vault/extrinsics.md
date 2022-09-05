@@ -26,7 +26,7 @@ keep the vault alive.
 
 [`claim_surcharge`](https://dali.devnets.composablefinance.ninja/doc/pallet_vault/pallet/enum.Call.html#variant.claim_surcharge)
 
-Substracts rent from a vault, rewarding the caller if successful with a small fee and
+Subtracts rent from a vault, rewarding the caller if successful with a small fee and
 possibly tombstoning the vault.
 
 A tombstoned vault still allows for withdrawals but blocks deposits, and requests all

@@ -82,6 +82,7 @@ impl UintAuthorityIdWrapper {
 
 impl sp_application_crypto::RuntimeAppPublic for UintAuthorityIdWrapper {
 	const ID: KeyTypeId = key_types::DUMMY;
+	// cspell:disable-next
 	const CRYPTO_ID: CryptoTypeId = CryptoTypeId(*b"dumm");
 
 	type Signature = TestSignature;

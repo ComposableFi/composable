@@ -11,7 +11,7 @@ export function useAuctionsChart(
   predictedPriceSeries: [number, number][];
 } {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  let [auctionChartSerie, setAuctionChartSerie] = useState<{
+  let [auctionChartSeries, setAuctionChartSeries] = useState<{
     currentPriceSeries: [number, number][];
     predictedPriceSeries: [number, number][];
   }>({
@@ -22,20 +22,20 @@ export function useAuctionsChart(
   useEffect(() => {
     if (pool && parachainApi) {
       fetchAuctionChartSeries(parachainApi, pool).then((response) => {
-        setAuctionChartSerie({
+        setAuctionChartSeries({
           currentPriceSeries: response.chartSeries,
           predictedPriceSeries: response.predictedSeries,
         });
       });
     } else {
-      setAuctionChartSerie({
+      setAuctionChartSeries({
         currentPriceSeries: [],
         predictedPriceSeries: [],
       });
     }
   }, [pool, parachainApi]);
 
-  const { currentPriceSeries, predictedPriceSeries } = auctionChartSerie;
+  const { currentPriceSeries, predictedPriceSeries } = auctionChartSeries;
 
   return {
     currentPriceSeries,
