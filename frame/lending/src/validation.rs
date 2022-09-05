@@ -1,7 +1,7 @@
 use composable_support::validation::{TryIntoValidated, Validate};
 use composable_traits::{
 	defi::MoreThanOneFixedU128,
-	lending::{math::InteresteRateModelIsValid, CreateInput, UpdateInput},
+	lending::{math::InterestRateModelIsValid, CreateInput, UpdateInput},
 	oracle::Oracle as OracleTrait,
 };
 use frame_support::pallet_prelude::*;
@@ -40,7 +40,7 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 		let updatable = create_input.updatable.try_into_validated::<UpdateInputValid>()?.value();
 		let interest_rate_model = create_input
 			.interest_rate_model
-			.try_into_validated::<InteresteRateModelIsValid>()?
+			.try_into_validated::<InterestRateModelIsValid>()?
 			.value();
 
 		Ok(CreateInput { updatable, interest_rate_model, ..create_input })

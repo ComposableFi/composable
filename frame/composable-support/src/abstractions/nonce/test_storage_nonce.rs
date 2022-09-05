@@ -370,7 +370,7 @@ mod wrapping_increment {
 	#[test]
 	fn one_start() {
 		ExtBuilder::default().build().execute_with(|| {
-			// probbaly an uncommon usecase
+			// probably an uncommon usecase
 
 			let initial_value = pallet::Nonce_OneInit_WrappingIncrement::<Test>::get();
 			assert!(initial_value.is_one(), "initial value should be one");
@@ -379,7 +379,7 @@ mod wrapping_increment {
 				pallet::Nonce_OneInit_WrappingIncrement::<Test>::increment();
 			}
 
-			// wrapping when starting at 1 has somewhat strange behaviour when the type has a
+			// wrapping when starting at 1 has somewhat strange behavior when the type has a
 			// zero value
 			assert!(pallet::Nonce_OneInit_WrappingIncrement::<Test>::increment().is_zero());
 

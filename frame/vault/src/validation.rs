@@ -17,7 +17,7 @@ pub struct ValidateMaxStrategies<T> {
 impl<T: Config> Validate<BalanceOf<T>, ValidateCreationDeposit<T>> for ValidateCreationDeposit<T> {
 	fn validate(input: BalanceOf<T>) -> Result<BalanceOf<T>, &'static str> {
 		if input < T::CreationDeposit::get() {
-			return Err("Insufficent Creation Deposit")
+			return Err("Insufficient Creation Deposit")
 		}
 
 		Ok(input)

@@ -157,7 +157,7 @@ pub mod pallet {
 		/// The minimum reward for an offer.
 		///
 		/// Must be > T::Vesting::MinVestedTransfer.
-		// NOTE: can be zero for low amount tokens. either define normalzied (e.g. to stable or
+		// NOTE: can be zero for low amount tokens. either define normalized (e.g. to stable or
 		// native token), or better have min per bond setup (if min == total will make Sell type
 		// setup)
 		#[pallet::constant]
@@ -231,7 +231,7 @@ pub mod pallet {
 		/// parameter.
 		///
 		/// Emits a `NewBond`.
-		/// Possibily Emits a `OfferCompleted`.
+		/// Possibly Emits a `OfferCompleted`.
 		#[pallet::weight(T::WeightInfo::bond())]
 		pub fn bond(
 			origin: OriginFor<T>,

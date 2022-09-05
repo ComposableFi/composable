@@ -423,7 +423,7 @@ fn fees() {
 //
 // - test high slippage scenario
 // trying to exchange a large value, will result in high_slippage scenario
-// there should be substential difference between expected exchange value and received amount.
+// there should be substantial difference between expected exchange value and received amount.
 #[test]
 fn high_slippage() {
 	new_test_ext().execute_with(|| {

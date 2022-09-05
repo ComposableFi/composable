@@ -46,7 +46,7 @@ where
 	}
 }
 
-// I'm not sure if this decrementor makes sense, or how it would be used in practice. Leaving it
+// I'm not sure if this decrementer makes sense, or how it would be used in practice. Leaving it
 // here in case we need/ want it. /// An [`Decrementor`] that decrements down to a minimum value.
 // pub struct DecrementToMin<Min: 'static, MinError: 'static, PalletError: 'static> {
 // 	#[doc(hidden)]

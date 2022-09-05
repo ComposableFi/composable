@@ -142,7 +142,7 @@ where
 			.map_err(|_| {
 				Ics20Error::unknown_msg_type("Error registering local asset id".to_string())
 			})?;
-			transfer::Pallet::<T>::resgister_asset_id(local_asset_id, denom.as_bytes().to_vec());
+			transfer::Pallet::<T>::register_asset_id(local_asset_id, denom.as_bytes().to_vec());
 			local_asset_id.into()
 		};
 

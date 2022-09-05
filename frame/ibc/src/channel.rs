@@ -8,7 +8,7 @@ use crate::{
 	ics23::{
 		acknowledgements::Acknowledgements, channels::Channels, next_seq_ack::NextSequenceAck,
 		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
-		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+		packet_commitments::PacketCommitment, receipts::PacketReceipt,
 	},
 	routing::Context,
 };

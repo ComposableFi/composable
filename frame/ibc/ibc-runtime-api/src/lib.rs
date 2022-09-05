@@ -16,10 +16,10 @@ sp_api::decl_runtime_apis! {
 		/// Returns the balance of this address
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128>;
 
-		/// Quuery offchain packets
+		/// Query offchain packets
 		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<OffchainPacketType>>;
 
-		/// Quuery offchain acks
+		/// Query offchain acks
 		fn query_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<Vec<u8>>>;
 
 		/// Returns client state at height

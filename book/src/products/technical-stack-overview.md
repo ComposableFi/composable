@@ -70,7 +70,7 @@ ensuring the ability to transfer assets cross-chain regardless of volume or size
 
 To connect the Cosmos ecosystem to Kusama, Composable is developing [Centauri](./centauri-overview.md) — a [trustless bridging](https://medium.com/composable-finance/trustless-bridging-438a6e5c917a) 
 infrastructure that can communicate with the IBC (Inter-Blockchain Communication) protocol and enabling the interecosystem transfer of assets between Cosmos and Substrate-native protocols. 
-Centauri creates the underpinning link between existing and soon to be deployed pallets on Dostama and Cosmos, 
+Centauri creates the underpinning link between existing and soon to be deployed pallets on Dotsama and Cosmos, 
 a first of its kind Kusama — Cosmos bridge that will further help boost utility for assets within both ecosystems. 
 In addition, Composable is actively working to bridge in a trustless manner to ecosystems beyond Cosmos utilizing the IBC.
 

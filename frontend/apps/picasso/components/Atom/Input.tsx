@@ -10,12 +10,12 @@ import {
   Box
 } from "@mui/material";
 import { TokenAsset } from "./TokenAsset";
-import { Label, LabelProps as MuiLabelprops } from "./Label";
+import { Label, LabelProps as MuiLabelProps } from "./Label";
 import { TokenId } from "tokens";
 import { BaseAsset } from "./BaseAsset";
 
 export type InputProps = {
-  LabelProps?: MuiLabelprops;
+  LabelProps?: MuiLabelProps;
   alert?: boolean;
   tokenId?: TokenId;
   icon?: string;

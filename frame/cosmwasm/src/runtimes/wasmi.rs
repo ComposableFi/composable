@@ -128,12 +128,12 @@ impl CosmwasmVMShared {
 		self.storage_readonly_depth > 0
 	}
 	/// Increase storage readonly depth.
-	/// Hapenning when a contract call the querier.
+	/// Happening when a contract call the querier.
 	pub fn push_readonly(&mut self) {
 		self.storage_readonly_depth += 1;
 	}
 	/// Decrease storage readonly depth.
-	/// Hapenning when a querier exit.
+	/// Happening when a querier exit.
 	pub fn pop_readonly(&mut self) {
 		self.storage_readonly_depth -= 1;
 	}
@@ -162,9 +162,9 @@ pub struct CosmwasmVM<'a, T: Config> {
 	pub cosmwasm_message_info: MessageInfo,
 	/// Executing contract address.
 	pub contract_address: CosmwasmAccount<T>,
-	/// Executing contract metadatas.
+	/// Executing contract metadata.
 	pub contract_info: ContractInfoOf<T>,
-	/// State shared accross all contracts within a single transaction.
+	/// State shared across all contracts within a single transaction.
 	pub shared: &'a mut CosmwasmVMShared,
 	/// Iterator id's to corresponding keys. Keys are used to get the next key.
 	pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,

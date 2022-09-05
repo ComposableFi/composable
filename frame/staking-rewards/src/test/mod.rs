@@ -496,7 +496,7 @@ fn test_transfer_reward() {
 }
 
 #[test]
-fn test_split_postion() {
+fn test_split_position() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		let pool_init_config = get_default_reward_pool();

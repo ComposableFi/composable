@@ -5,11 +5,11 @@ import {
   Typography, 
 } from "@mui/material";
 
-export type LaunchDescritionProps = {
+export type LaunchDescriptionProps = {
   auction: LiquidityBootstrappingPool,
 } & BoxProps;
 
-export const LaunchDescrition: React.FC<LaunchDescritionProps> = ({
+export const LaunchDescription: React.FC<LaunchDescriptionProps> = ({
   auction,
   ...rest
 }) => {

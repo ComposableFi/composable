@@ -44,7 +44,7 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
   const { auctions: { activeLBPHistory } } = useStore();
 
   const expandable = activeLBPHistory.length > count;
-  const collapsable = !expandable && activeLBPHistory.length > limit;
+  const collapsible = !expandable && activeLBPHistory.length > limit;
 
   const handleSeeMoreOrLess = () => {
     expandable
@@ -152,7 +152,7 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
         </TableBody>
       </Table>
 
-      {(expandable || collapsable) && (
+      {(expandable || collapsible) && (
         <Box
           onClick={handleSeeMoreOrLess}
           mt={2}

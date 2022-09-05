@@ -27,10 +27,10 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const handleUntake = () => {
+  const handleUnstake = () => {
     dispatch(setMessage(
       {
-        title: "Transaction successfull",
+        title: "Transaction successful",
         text: "Burn and unstake confirmed",
         link: "/",
         severity: "success",
@@ -88,7 +88,7 @@ export const UnstakeModal: React.FC<UnstakeModalProps> = ({
             variant="contained"
             fullWidth
             size="large"
-            onClick={handleUntake}
+            onClick={handleUnstake}
           >
             Burn and unstake
           </Button>
