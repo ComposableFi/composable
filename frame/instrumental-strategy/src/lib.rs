@@ -43,7 +43,7 @@ pub mod pallet {
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 		},
-		Permill,
+		Percent,
 	};
 	use sp_std::fmt::Debug;
 
@@ -284,7 +284,7 @@ pub mod pallet {
 			_vault_id: &Self::VaultId,
 			_asset_id: Self::AssetId,
 			_new_pool_id: Self::PoolId,
-			_percentage_of_funds: Permill,
+			_percentage_of_funds: Percent,
 		) -> DispatchResult {
 			// TODO: (belousm)
 			// implement transferring funds

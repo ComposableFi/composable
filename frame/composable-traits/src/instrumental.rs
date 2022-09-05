@@ -1,6 +1,6 @@
 use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, RuntimeDebug};
-use sp_runtime::{Permill, Perquintill};
+use sp_runtime::{Percent, Perquintill};
 
 /// An indication of pool state. Shows whether the transfer of assets is currently taking place with
 /// the current pool.
@@ -75,6 +75,6 @@ pub trait InstrumentalProtocolStrategy {
 		vault_id: &Self::VaultId,
 		asset_id: Self::AssetId,
 		new_pool_id: Self::PoolId,
-		percentage_of_funds: Permill,
+		percentage_of_funds: Percent,
 	) -> DispatchResult;
 }
