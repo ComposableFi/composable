@@ -4,7 +4,7 @@ use composable_traits::{
 	governance::{GovernanceRegistry, SignedRawOrigin},
 };
 
-use composable_traits::fnft::{FnftAccountProxyType, FnftAccountProxyTypeSelector};
+use composable_traits::fnft::FnftAccountProxyType;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, InstanceFilter},
@@ -26,7 +26,6 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
 pub type FinancialNftInstanceId = u64;
-pub type RewardPoolId = u16;
 pub type PositionId = u128;
 
 pub static ALICE: Public =
@@ -229,15 +228,19 @@ parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets : u32 = 10;
 	pub const MaxRewardConfigsPerPool : u32 = 10;
+	pub const PicaAssetId : CurrencyId = 1;
+	pub const PbloAssetId : CurrencyId = 2;
+	pub const XPicaAssetId: CurrencyId = 101;
+	pub const XPbloAssetId: CurrencyId = 102;
+	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
+	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1002;
 }
 
 impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = RewardPoolId;
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
-	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type FinancialNft = FinancialNft;
 	type CurrencyFactory = CurrencyFactory;
 	type Assets = Assets;
@@ -247,8 +250,14 @@ impl pallet_staking_rewards::Config for Test {
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
-	type WeightInfo = ();
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
+	type WeightInfo = ();
 }
 
 impl InstanceFilter<Call> for ProxyType {

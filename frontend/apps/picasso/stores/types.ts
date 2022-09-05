@@ -10,9 +10,8 @@ import {
   StatsApolloSlice,
   StatsOverviewSlice,
   StatsTelemetrySlice,
-  StatsTreasurySlice,
   SubstrateBalancesSlice,
-  TransfersSlice,
+  TransfersSlice
 } from "./defi";
 import { UISlice } from "./ui/ui";
 import { BondsSlice } from "@/stores/defi/polkadot/bonds/slice";
@@ -37,7 +36,6 @@ export type AllSlices = PolkadotSlice &
   StatsApolloSlice &
   StatsOverviewSlice &
   StatsTelemetrySlice &
-  StatsTreasurySlice &
   SubstrateBalancesSlice &
   CrowdloanRewardsSlice &
   BondsSlice &

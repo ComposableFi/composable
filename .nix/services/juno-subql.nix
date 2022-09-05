@@ -1,4 +1,4 @@
-{ pkgs, database }: {
+{ pkgs, juno, database }: {
   service = let
     src = pkgs.fetchFromGitHub {
       owner = "hussein-aitlahcen";
@@ -24,11 +24,31 @@
       '';
       distPhase = ":";
     };
+    context = let
+      files = pkgs.linkFarm "context" [
+        {
+          name = "subql";
+          path = subql;
+        }
+        {
+          name = "Dockerfile";
+          path = pkgs.writeText "Dockerfile" ''
+            FROM onfinality/subql-node-cosmos:v0.2.0
+            COPY subql /app
+          '';
+        }
+      ];
+    in pkgs.stdenv.mkDerivation {
+      name = "context";
+      phases = [ "installPhase" ];
+      installPhase = ''
+        mkdir $out
+        cp -rL ${files}/* $out
+      '';
+    };
   in {
-    name = "cosmos-subql";
-    image = "onfinality/subql-node-cosmos:v0.2.0";
+    build = { context = "${context}"; };
     restart = "always";
-    network_mode = "host";
     environment = {
       DB_USER = database.user;
       DB_PASS = database.password;
@@ -39,8 +59,7 @@
     command = [
       "-f=/app"
       "--db-schema=cosmos"
-      "--network-endpoint=http://127.0.0.1:26657"
+      "--network-endpoint=http://${juno}:26657"
     ];
-    volumes = [ "${subql}/:/app" ];
   };
 }
