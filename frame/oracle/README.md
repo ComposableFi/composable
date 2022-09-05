@@ -33,5 +33,5 @@ The Oracle pallet provides basic functionalities to manage the stake needed to r
 
 ## References
 
-- [Apollo](https://docs.composable.finance/products/apollo-overview.html)
+- [About Apollo](https://docs.composable.finance/products/apollo-overview.html)
 - [Design Documentation](https://github.com/ComposableFi/composable/blob/main/frame/oracle/design/design.md)

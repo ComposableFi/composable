@@ -20,8 +20,15 @@ Importantly, Apollo is MEV-resistant. MEV, or Miner Extracted Value,
 is a form of front-running transactions that occurs at the block creation level. 
 Apollo is able to overcome this challenge through its design, which also provides other security benefits. Normally, 
 one common type of MEV allows actors to reorganize transactions in a block. For example in a proof stake blockchain, 
-a validator could see a new price update before it’s executed through the oracle which could allow them to include a transaction to buy or sell an asset based on the expected price (frontrunning). 
+a validator could see a new price update before it’s executed through the oracle 
+which could allow them to include a transaction to buy or sell an asset based on the expected price (frontrunning). 
 With the use of substrate blockchain on_initialize hook in Apollo, the order of the Oracle price updates is guaranteed, 
 i.e when a block initializes, the price of an asset is guaranteed a slot into the block. 
 Apollo also implements and algorithm that instead of trusting one oracle for the price, 
 it takes the median price from different oracles which significantly limits the ability of oracle manipulation.
+
+---
+
+[Pallet Documentation](../pallets/oracle.md)
+
+[Design Documentation](https://github.com/ComposableFi/composable/blob/main/frame/oracle/design/design.md)
