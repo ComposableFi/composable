@@ -47,7 +47,7 @@ So for each `nix build/run` attribute there should be equivalent "`shell`" to ex
 
 Examples, you can build `dali node` via `nix build`, so you can `nix shell .#developers` and run `cargo build`.
 
-It means that `home-manager`, `devcontaner`, `apps`, `shells` should share and combine dependencies.
+It means that `home-manager`, `devcontainer`, `apps`, `shells` should share and combine dependencies.
 
 ### Naming
 
