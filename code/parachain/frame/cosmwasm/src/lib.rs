@@ -177,6 +177,7 @@ pub mod pallet {
 		SignatureVerificationError,
 		IteratorIdOverflow,
 		IteratorNotFound,
+		InvalidJsonMessage,
 	}
 
 	#[pallet::config]
@@ -452,12 +453,14 @@ pub mod pallet {
 			instantiator: &AccountIdOf<T>,
 			salt: &[u8],
 			code_hash: CodeHashOf<T>,
+			pretty_message: &[u8],
 		) -> AccountIdOf<T> {
 			let data: Vec<_> = instantiator
 				.as_ref()
 				.iter()
 				.chain(salt)
 				.chain(code_hash.as_ref())
+				.chain(T::Hashing::hash(&pretty_message).as_ref())
 				.cloned()
 				.collect();
 			UncheckedFrom::unchecked_from(T::Hashing::hash(&data))
@@ -483,11 +486,18 @@ pub mod pallet {
 			salt: &[u8],
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
+			message: &[u8],
 		) -> Result<(AccountIdOf<T>, ContractInfoOf<T>), Error<T>> {
+			let pretty_message = {
+				let value: serde_json::Value =
+					serde_json::from_slice(message).map_err(|_| Error::<T>::InvalidJsonMessage)?;
+				serde_json::to_vec_pretty(&value).map_err(|_| Error::<T>::InvalidJsonMessage)?
+			};
 			let code_hash = CodeIdToInfo::<T>::get(code_id)
 				.ok_or(Error::<T>::CodeNotFound)?
 				.pristine_code_hash;
-			let contract = Self::derive_contract_address(&instantiator, salt, code_hash);
+			let contract =
+				Self::derive_contract_address(&instantiator, salt, code_hash, &pretty_message);
 			ensure!(
 				!ContractToInfo::<T>::contains_key(&contract),
 				Error::<T>::ContractAlreadyExists
@@ -541,8 +551,14 @@ pub mod pallet {
 			funds: FundsOf<T>,
 			message: ContractMessageOf<T>,
 		) -> Result<(), CosmwasmVMError<T>> {
-			let (contract, info) =
-				Self::do_instantiate_phase1(instantiator.clone(), code_id, salt, admin, label)?;
+			let (contract, info) = Self::do_instantiate_phase1(
+				instantiator.clone(),
+				code_id,
+				salt,
+				admin,
+				label,
+				&message,
+			)?;
 			Self::do_extrinsic_dispatch(
 				shared,
 				EntryPoint::Instantiate,

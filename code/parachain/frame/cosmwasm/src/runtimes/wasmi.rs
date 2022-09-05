@@ -407,6 +407,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 				.to_vec()
 				.try_into()
 				.map_err(|_| crate::Error::<T>::LabelTooBig)?,
+			&message,
 		)?;
 		Pallet::<T>::cosmwasm_call(
 			self.shared,
