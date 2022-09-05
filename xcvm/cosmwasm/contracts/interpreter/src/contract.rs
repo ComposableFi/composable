@@ -289,11 +289,11 @@ mod tests {
 
 		let cosmos_msg: CosmosMsg =
 			wasm_execute("1234", &"hello world".to_string(), vec![]).unwrap().into();
-		let msg = serde_json_wasm::to_string(&cosmos_msg).unwrap();
+		
 
 		let program = XCVMProgram {
 			tag: vec![],
-			instructions: vec![XCVMInstruction::Call { encoded: msg.as_bytes().into() }].into(),
+			instructions: vec![XCVMInstruction::Call { encoded: serde_json_wasm::to_vec(&cosmos_msg).unwrap().into() }].into(),
 		};
 
 		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
