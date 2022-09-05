@@ -200,7 +200,7 @@ mod tests {
 			Config {
 				registry_address: Addr::unchecked("addr"),
 				network_id: Picasso.into(),
-				user_id: <_>::default(),
+				user_id: vec![]
 			}
 		);
 	}
@@ -302,7 +302,6 @@ mod tests {
 	}
 
 	#[test]
-	#[ignore = "please fix it by stuctural comparison"]
 	fn execute_spawn() {
 		let mut deps = mock_dependencies();
 
@@ -335,6 +334,6 @@ mod tests {
 
 		let res = execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::Execute { program })
 			.unwrap();
-		assert_eq!(res.events[0], Event::new("xcvm.interpreter.spawn").add_attribute("program", r#"{"network":1,"salt":[],"assets":{},"program":{"tag":[],"instructions":[{"call":{"encoded":[]}}]}}"#.to_string()));
+		assert_eq!(res.events[0], Event::new("xcvm.interpreter.spawn").add_attribute("origin_network_id", "1").add_attribute("origin_user_id", "[]").add_attribute("program", r#"{"network":1,"salt":[],"assets":{},"program":{"tag":[],"instructions":[{"call":{"encoded":[]}}]}}"#.to_string()));
 	}
 }

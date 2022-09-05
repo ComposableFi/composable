@@ -73,7 +73,7 @@ mod tests {
 	use cosmwasm_std::{
 		from_binary,
 		testing::{mock_dependencies, mock_env, mock_info},
-		Addr, Attribute, Order, Storage,
+		Addr, Order, Storage,
 	};
 
 	#[test]
@@ -106,11 +106,7 @@ mod tests {
 		let res =
 			execute(deps.as_mut(), mock_env(), info.clone(), ExecuteMsg::SetAssets(assets.clone()))
 				.unwrap();
-		assert!(res
-			.attributes
-			.iter()
-			.find(|&attr| attr == Attribute::new("action", "update_assets"))
-			.is_some());
+		assert_eq!(res.attributes.len(), 0);
 
 		assert_eq!(ASSETS.load(&deps.storage, 1).unwrap(), Addr::unchecked("addr1"));
 		assert_eq!(ASSETS.load(&deps.storage, 2).unwrap(), Addr::unchecked("addr2"));
