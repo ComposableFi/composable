@@ -556,7 +556,9 @@
                 experimental-features = nix-command flakes
                 narinfo-cache-negative-ttl = 30
                 substituters = https://cache.nixos.org https://composable-community.cachix.org 
-                trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8= 
+                # TODO: move it separate file with flow of `cachix -> get keys -> output -> fail derivation if hash != key changed
+                # // cspell: disable-next-line
+                trusted-public-keys = cache.nixos.org-1:6nchdd59x431o0gwypbmraurkbj16zpmqfgspcdshjy= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8= 
                 EOF
               '';
               config = {
