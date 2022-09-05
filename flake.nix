@@ -131,7 +131,7 @@
 
           # for containers which are intended for testing, debug and development (including running isolated runtime)
           docker-in-docker = [ docker docker-buildx docker-compose ];
-          containers-tools-minimal = [ acl direnv home-manager cachix ];          
+          containers-tools-minimal = [ acl direnv home-manager cachix ];
           container-tools = [
             bash
             bottom
@@ -542,7 +542,7 @@
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
               fromImage = devcontainer-root-image;
-              # substitutes, same as next script, but without internet access
+              # substituters, same as next script, but without internet access
               # ${pkgs.cachix}/bin/cachix use composable-community
               # to run root in buildImage needs qemu/kvm shell
               # non root extraCommands (in both methods) do not have permissions

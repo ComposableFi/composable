@@ -8,7 +8,8 @@ Overview of nix usage and design.
 
 Generally you should check what nix can do for you. There is some list of tools which you may not ned with nix.
 
-`nix` ecosystem replaces fully or partially `cargo install`, `rustup`, `cargo make`, `make`, `docker build`, `sh`, `rust-cache`, `sccache`, `github actions`, `github workflow runs`, `github artifacts`, `crates.io`, `npmjs.com`, `npx`, etc.
+`nix` ecosystem replaces fully or partially `cargo install`, `rustup`, `cargo make`, `make`, `docker build`, `sh`, `rust-cache`, `sccache`, `github actions`, `github workflow runs`, `github artifacts`, `crates.io`, `npmjs.com`, `npx`, 
+`nvm`, `brew`, `apt`, `devcontainers`, etc.
 
 If to target `nixos` in the cloud, then `ansible`, partially `ssh`, partially `terraform`.
 
