@@ -178,7 +178,7 @@ mod tests {
 	use super::*;
 	use cosmwasm_std::{
 		testing::{mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR},
-		Addr, ContractResult, QuerierResult, SystemResult,
+		wasm_execute, Addr, ContractResult, QuerierResult, SystemResult,
 	};
 	use xcvm_core::{Amount, AssetId, Picasso, ETH, PICA};
 	use xcvm_interpreter::msg::{XCVMInstruction, XCVMProgram};
@@ -283,5 +283,86 @@ mod tests {
 
 		assert_eq!(res.messages[0].msg, instantiate_msg.into());
 		assert_eq!(res.messages[1].msg, execute_msg.into());
+	}
+
+	#[test]
+	fn execute_run_phase2() {
+		let mut deps = mock_dependencies();
+		let mut querier = MockQuerier::default();
+		querier.update_wasm(wasm_querier);
+		deps.querier = querier;
+
+		let info = mock_info("sender", &vec![]);
+		let _ = instantiate(
+			deps.as_mut(),
+			mock_env(),
+			info.clone(),
+			InstantiateMsg { registry_address: REGISTRY_ADDR.into(), interpreter_code_id: 1 },
+		)
+		.unwrap();
+
+		INTERPRETERS
+			.save(
+				&mut deps.storage,
+				(Into::<NetworkId>::into(Picasso).0, vec![]),
+				&Addr::unchecked("interpreter"),
+			)
+			.unwrap();
+
+		let program = XCVMProgram {
+			tag: vec![],
+			instructions: vec![XCVMInstruction::Transfer {
+				to: "asset".into(),
+				assets: Funds::from([
+					(Into::<AssetId>::into(PICA), Amount::absolute(1)),
+					(ETH.into(), Amount::absolute(2)),
+				]),
+			}]
+			.into(),
+		};
+		let interpreter_execute_msg = InterpreterExecuteMsg::Execute { program };
+
+		let funds = Funds::<Displayed<u128>>::from([
+			(Into::<AssetId>::into(PICA), Displayed(1000_u128)),
+			(Into::<AssetId>::into(ETH), Displayed(2000_u128)),
+		]);
+
+		let run_msg = ExecuteMsg::Run {
+			network_id: Picasso.into(),
+			user_id: vec![],
+			interpreter_execute_msg: interpreter_execute_msg.clone(),
+			funds: funds.clone(),
+		};
+
+		let res = execute(deps.as_mut(), mock_env(), info.clone(), run_msg.clone()).unwrap();
+
+		let cw20_contract = Cw20Contract(Addr::unchecked(CW20_ADDR));
+		let messages = vec![
+			cw20_contract
+				.call(Cw20ExecuteMsg::Transfer {
+					recipient: "interpreter".into(),
+					amount: 1000_u128.into(),
+				})
+				.unwrap(),
+			cw20_contract
+				.call(Cw20ExecuteMsg::Transfer {
+					recipient: "interpreter".into(),
+					amount: 2000_u128.into(),
+				})
+				.unwrap(),
+			wasm_execute("interpreter", &interpreter_execute_msg, vec![]).unwrap().into(),
+		];
+
+		messages.into_iter().enumerate().for_each(|(i, msg)| {
+			assert_eq!(res.messages[i].msg, msg);
+		})
+
+		/*
+		let execute_msg = WasmMsg::Execute {
+			contract_addr: MOCK_CONTRACT_ADDR.to_string(),
+			msg: to_binary(&run_msg).unwrap(),
+			funds: vec![],
+		};
+		*/
 	}
 }
