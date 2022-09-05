@@ -1,6 +1,8 @@
 use crate::pallet::Config;
 use composable_traits::defi::DeFiComposableConfig;
 use frame_support::pallet_prelude::*;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 use sp_runtime::FixedU128;
 use sp_std::{
 	fmt::{Debug, Display},
@@ -44,6 +46,7 @@ impl InitializeBlockCallCounters {
 pub type MarketIdInner = u32;
 
 #[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
 pub struct MarketId(
 	// to allow pattern matching in tests outside of this crate
