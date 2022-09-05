@@ -68,8 +68,10 @@ pub type AuthorityId = UintAuthorityIdWrapper;
 pub type AccountId = <AuthorityId as IdentifyAccount>::AccountId;
 pub type Public = AuthorityId;
 pub type Header = HeaderType;
+
 parameter_types! {
-	pub const LiquidationsPalletId : PalletId = PalletId(*b"liqd_tns");
+	// cspell:disable-next
+	pub const LiquidationsPalletId: PalletId = PalletId(*b"liqd_tns");
 }
 
 pub static ALICE: Lazy<AccountId> = Lazy::new(|| 0);
@@ -263,6 +265,7 @@ parameter_types! {
 	pub const MinU64: u64 = 0;
 
 	pub const TwapWindow: u16 = 3;
+	// cspell:disable-next
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
 	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK;
 }
@@ -404,7 +407,7 @@ where
 
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
-	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
+	pub LendingPalletId: PalletId = PalletId(*b"liquidat");
 	pub OracleMarketCreationStake: Balance = NORMALIZED::ONE;
 	pub const MaxLiquidationBatchSize: u32 = 5;
 }

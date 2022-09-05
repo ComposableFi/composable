@@ -385,11 +385,11 @@ pub mod pallet {
 		#[pallet::constant]
 		type PbloAssetId: Get<Self::AssetId>;
 
-		/// AssetId of the xToken varient of PICA asset
+		/// AssetId of the xToken variant of PICA asset
 		#[pallet::constant]
 		type XPicaAssetId: Get<Self::AssetId>;
 
-		/// AssetId of the xToken varient of PBLO asset
+		/// AssetId of the xToken variant of PBLO asset
 		#[pallet::constant]
 		type XPbloAssetId: Get<Self::AssetId>;
 
@@ -561,7 +561,7 @@ pub mod pallet {
 		pub fn enable_twap(origin: OriginFor<T>, pool_id: T::PoolId) -> DispatchResult {
 			T::EnableTwapOrigin::ensure_origin(origin)?;
 			if TWAPState::<T>::contains_key(pool_id) {
-				// pool_id is alread enabled for TWAP
+				// pool_id is already enabled for TWAP
 				return Ok(())
 			}
 			let current_timestamp = T::Time::now();
@@ -1261,7 +1261,7 @@ pub mod pallet {
 					);
 					T::Assets::transfer(pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 
-					// NOTE(hussein-aitlance): no need to keep alive the pool account
+					// NOTE(hussein-aitlahcen): no need to keep alive the pool account
 					T::Assets::transfer(
 						pair.base,
 						&pool_account,
@@ -1291,7 +1291,7 @@ pub mod pallet {
 						quote_amount_excluding_lp_fee,
 						keep_alive,
 					)?;
-					// NOTE(hussein-aitlance): no need to keep alive the pool account
+					// NOTE(hussein-aitlahcen): no need to keep alive the pool account
 					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
 					(base_amount, info.owner, fees)
 				},
@@ -1309,7 +1309,7 @@ pub mod pallet {
 					ensure!(base_amount >= min_receive, Error::<T>::CannotRespectMinimumRequested);
 
 					T::Assets::transfer(pair.quote, who, &pool_account, quote_amount, keep_alive)?;
-					// NOTE(hussein-aitlance): no need to keep alive the pool account
+					// NOTE(hussein-aitlahcen): no need to keep alive the pool account
 					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
 					(base_amount, info.owner, fees)
 				},

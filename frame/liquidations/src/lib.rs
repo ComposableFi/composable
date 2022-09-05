@@ -143,12 +143,12 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			// TODO: make it validated
 			// TODO: User parachains pallet to validate parachain is connected
-			// TODO: use hardocded swap interface to validate native token is supported
-			configuraiton: LiquidationStrategyConfiguration,
+			// TODO: use hardcoded swap interface to validate native token is supported
+			configuration: LiquidationStrategyConfiguration,
 		) -> DispatchResultWithPostInfo {
 			T::CanModifyStrategies::ensure_origin(origin)?;
 			let index = StrategyIndex::<T>::increment();
-			Strategies::<T>::insert(index, configuraiton);
+			Strategies::<T>::insert(index, configuration);
 			Ok(().into())
 		}
 
@@ -165,7 +165,7 @@ pub mod pallet {
 
 		// TODO: Add API to manage callback from liquidation engine and managing it state
 		// TODO: each step from request to have its slots so can tackle
-		// TODO: add incetivised API to allow "progress" finalization if it stalled (or OCW)
+		// TODO: add incentivised API to allow "progress" finalization if it stalled (or OCW)
 	}
 
 	#[pallet::storage]

@@ -80,7 +80,7 @@ impl pallet_balances::Config for Test {
 }
 
 parameter_types! {
-  pub const CrowdloanRewardsPalletId: PalletId = PalletId(*b"pal_crow");
+	pub const CrowdloanRewardsPalletId: PalletId = PalletId(*b"pal_crow");
 	pub const InitialPayment: Perbill = INITIAL_PAYMENT;
 	pub const VestingStep: Moment = VESTING_STEP;
 	pub const Prefix: &'static [u8] = PROOF_PREFIX;

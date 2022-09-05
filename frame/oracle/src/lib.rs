@@ -29,7 +29,7 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
+	use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshold};
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_support::{
@@ -164,7 +164,7 @@ pub mod pallet {
 		type MaxAnswerBound: Get<u32>;
 		/// Upper bound for total assets available for the oracle
 		type MaxAssetsCount: Get<u32>;
-		/// Slashed stakes are transfered to treasury.
+		/// Slashed stakes are transferred to treasury.
 		type TreasuryAccount: Get<Self::AccountId>;
 
 		#[pallet::constant]
@@ -258,7 +258,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn declared_withdraws)]
-	/// Tracking withdrawl requests
+	/// Tracking withdrawal requests
 	pub type DeclaredWithdraws<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, Withdraw<BalanceOf<T>, T::BlockNumber>>;
 
@@ -485,7 +485,7 @@ pub mod pallet {
 			//
 			// asset A has 3 decimal places
 			// 1 unit of asset ACOIN costs 4 units of default quote asset (4_000_000_000_000)
-			// the price for 1/1_000th of asset ACOIN (the smallest unit possible, we'll call it
+			// the price for 1/1_000th of asset A_COIN (the smallest unit possible, we'll call it
 			// ACENT) is then: 4_000_000_000_000/1_000 == 4_000_000_000; or 4/1000ths (1/250th) of 1
 			// unit of default quote asset.
 			//
@@ -523,7 +523,7 @@ pub mod pallet {
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
-			threshold: Validated<Percent, ValidThreshhold>,
+			threshold: Validated<Percent, ValidThreshold>,
 			min_answers: Validated<u32, ValidMinAnswers>,
 			max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
 			block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,
@@ -696,7 +696,7 @@ pub mod pallet {
 			Self::deposit_event(Event::StakeReclaimed(signer, withdrawal.stake));
 			Ok(().into())
 		}
-		/// Call to submit a price, gas is returned if extrinsic is successfull.
+		/// Call to submit a price, gas is returned if extrinsic is successful.
 		/// Should be called from offchain worker but can be called manually too.
 		///
 		/// This is an operational transaction.
@@ -816,9 +816,9 @@ pub mod pallet {
 						BalanceStatus::Free,
 					);
 					match result {
-						Ok(remaning_val) =>
-							if remaning_val > BalanceOf::<T>::zero() {
-								log::warn!("Only slashed {:?}", slash_amount - remaning_val);
+						Ok(remaining_val) =>
+							if remaining_val > BalanceOf::<T>::zero() {
+								log::warn!("Only slashed {:?}", slash_amount - remaining_val);
 							},
 						Err(e) => {
 							log::warn!("Failed to slash {:?} due to {:?}", answer.who, e);
@@ -1159,7 +1159,7 @@ pub mod pallet {
 						// it happens if few prices associated with same block number.
 						None
 					} else {
-						// otherwise muliply price and weight.
+						// otherwise multiply price and weight.
 						Some(price * weight)
 					}
 				})
@@ -1246,7 +1246,7 @@ pub mod pallet {
 		pub fn fetch_price(price_id: &T::AssetId) -> Result<u64, http::Error> {
 			// We want to keep the offchain worker execution time reasonable, so we set a hard-coded
 			// deadline to 2s to complete the external call.
-			// You can also wait idefinitely for the response, however you may still get a timeout
+			// You can also wait indefinitely for the response, however you may still get a timeout
 			// coming from the host machine.
 			let deadline = sp_io::offchain::timestamp().add(Duration::from_millis(2_000));
 

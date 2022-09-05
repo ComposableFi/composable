@@ -66,41 +66,6 @@ jobs:
         run: |
           SKIP_WASM_BUILD=1 cargo +nightly check --benches --all --features runtime-benchmarks # checks all rust crates with default-features, tests, benchmarks
 
-  substrate-test-coverage:
-    name: Unit Tests (With Coverage)
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: testcov-${{ github.ref }}
-      cancel-in-progress: true
-    container:
-      image: composablefi/ci-linux:2022-08-06
-    steps:
-      - name: Clean up
-        continue-on-error: true
-        run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-          docker system prune --force --all --volumes
-      - uses: actions/checkout@v2
-      - name: Rustup show
-        run: |
-          rustup show
-
-      - name: Run Test (with coverage)
-        env:
-          SKIP_WASM_BUILD: 1
-        run: |
-          cargo +nightly llvm-cov --workspace --locked --release --verbose --lcov --output-path lcov.info
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: lcov.info
-          fail_ci_if_error: false
-
   linters:
     name: Linters
     runs-on:

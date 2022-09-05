@@ -3,7 +3,7 @@
 Runs transfers from some Composable based parachain to Composable parachain. And other parachains integrations.
 
 We do not use direct XCM messages as these are alfa quality.
-So all messages go via Realay. Using Direct XCM messaging open channels amid chains with no hops.
+So all messages go via Relay. Using Direct XCM messaging open channels amid chains with no hops.
 
 We do not use `Teleport` messages as it is considered unsafe.
 

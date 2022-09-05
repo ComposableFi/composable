@@ -199,7 +199,7 @@ pub enum IbcEvent {
 		channel_id: Vec<u8>,
 		sequence: u64,
 	},
-	/// Timeoutonclose packet
+	/// TimeoutOnClose packet
 	TimeoutOnClosePacket {
 		revision_height: u64,
 		revision_number: u64,

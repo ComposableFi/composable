@@ -1,5 +1,5 @@
-import { ClaimloanPage } from "@/components/Organisms/CrowdloanRewards";
+import { ClaimLoanPage } from "@/components/Organisms/CrowdloanRewards";
 
-const Claimloan = () => <ClaimloanPage isStable={true} />;
+const ClaimLoan = () => <ClaimLoanPage isStable={true} />;
 
-export default Claimloan;
+export default ClaimLoan;

@@ -78,8 +78,8 @@ const Updater = () => {
     fetchTotalPurchasedBondsByOfferIds().then(putBondOffersTotalPurchasedCount);
   }, []);
   /**
-   * Get bondoffers ids and
-   * vesting schdule
+   * Get bond offers ids and
+   * vesting schedule
    * id map from subsquid e.g { "1": ["1","2"] }
    */
   useEffect(() => {

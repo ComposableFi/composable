@@ -39,10 +39,10 @@ where
 	let bo = Decimal::from_u128(bo).ok_or(ArithmeticError::Overflow)?;
 	let full_perthing =
 		Decimal::from_u32(T::one().deconstruct().into()).ok_or(ArithmeticError::Overflow)?;
-	let wi_numer = Decimal::from_u32(wi).ok_or(ArithmeticError::Overflow)?;
-	let wi = wi_numer.safe_div(&full_perthing)?;
-	let wo_numer = Decimal::from_u32(wo).ok_or(ArithmeticError::Overflow)?;
-	let wo = wo_numer.safe_div(&full_perthing)?;
+	let wi_numerator = Decimal::from_u32(wi).ok_or(ArithmeticError::Overflow)?;
+	let wi = wi_numerator.safe_div(&full_perthing)?;
+	let wo_numerator = Decimal::from_u32(wo).ok_or(ArithmeticError::Overflow)?;
+	let wo = wo_numerator.safe_div(&full_perthing)?;
 	let bi_div_wi = bi.safe_div(&wi)?;
 	let bo_div_wo = bo.safe_div(&wo)?;
 	let spot_price = bi_div_wi.safe_div(&bo_div_wo)?;
@@ -75,9 +75,9 @@ where
 	let ai = Decimal::from_u128(ai).ok_or(ArithmeticError::Overflow)?;
 	let bi = Decimal::from_u128(bi).ok_or(ArithmeticError::Overflow)?;
 	let bo = Decimal::from_u128(bo).ok_or(ArithmeticError::Overflow)?;
-	let weight_numer = Decimal::from_u32(wi).ok_or(ArithmeticError::Overflow)?;
-	let weight_denom = Decimal::from_u32(wo).ok_or(ArithmeticError::Overflow)?;
-	let weight_power = weight_numer.safe_div(&weight_denom)?;
+	let weight_numerator = Decimal::from_u32(wi).ok_or(ArithmeticError::Overflow)?;
+	let weight_denominator = Decimal::from_u32(wo).ok_or(ArithmeticError::Overflow)?;
+	let weight_power = weight_numerator.safe_div(&weight_denominator)?;
 	let bi_div_bi_plus_ai = bi.safe_div(&bi.safe_add(&ai)?)?;
 	let term_to_weight_power =
 		bi_div_bi_plus_ai.checked_powd(weight_power).ok_or(ArithmeticError::Overflow)?;
