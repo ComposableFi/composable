@@ -294,7 +294,7 @@ pub mod pallet {
 			/// Assets received in exchange for the withdrawal.
 			asset_amount: T::Balance,
 		},
-		/// Emitted after a succesful emergency shutdown.
+		/// Emitted after a successful emergency shutdown.
 		EmergencyShutdown {
 			/// The ID of the vault.
 			vault: T::VaultId,
@@ -418,7 +418,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Substracts rent from a vault, rewarding the caller if successful with a small fee and
+		/// Subtracts rent from a vault, rewarding the caller if successful with a small fee and
 		/// possibly tombstoning the vault.
 		///
 		/// A tombstoned vault still allows for withdrawals but blocks deposits, and requests all

@@ -8,7 +8,7 @@ Overview of nix usage and design.
 
 Generally you should check what nix can do for you. There is some list of tools which you may not ned with nix.
 
-`nix` ecosystem replaces fully or partially `cargo install`, `rustup`, `cargo make`, `make`, `docker build`, `sh`, `rust-cache`, `sccache`, `github actions`, `github workflow runs`, `github artifats`, `crates.io`, `npmjs.com`, `npx`, etc.
+`nix` ecosystem replaces fully or partially `cargo install`, `rustup`, `cargo make`, `make`, `docker build`, `sh`, `rust-cache`, `sccache`, `github actions`, `github workflow runs`, `github artifacts`, `crates.io`, `npmjs.com`, `npx`, etc.
 
 If to target `nixos` in the cloud, then `ansible`, partially `ssh`, partially `terraform`.
 
@@ -34,7 +34,7 @@ either 3rd party or not in this repo composable or not this revision of repo,
 3rd parties either do not have nix configurations 
 or we need heavily patch them.
 
-Other scrips are located in folders on which they act upon, until scope is multifolder or not scoped.
+Other scrips are located in folders on which they act upon, until scope is multi-folder or not scoped.
 
 This allows for monorepo with codeowners and proper nix caching.
 

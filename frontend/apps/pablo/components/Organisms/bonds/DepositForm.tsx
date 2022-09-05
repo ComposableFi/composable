@@ -77,7 +77,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   const [valid, setValid] = useState<boolean>(false);
 
   const { rewardAsset } = bond;
-  const soldout = bond.selectedBondOffer
+  const soldOut = bond.selectedBondOffer
     ? bond.selectedBondOffer.nbOfBonds.eq(0)
     : true;
   const isWrongAmount = bond.roi.lt(0);
@@ -96,8 +96,8 @@ export const DepositForm: React.FC<DepositFormProps> = ({
     DEFAULT_NETWORK_ID,
     bond.selectedBondOffer ? bond.selectedBondOffer.asset : "0"
   );
-  const buttonText = soldout ? "Sold out" : "Deposit";
-  const disabled = !valid || soldout;
+  const buttonText = soldOut ? "Sold out" : "Deposit";
+  const disabled = !valid || soldOut;
 
   const principalSymbol = usePrincipalAssetSymbol(bond.principalAsset);
 
@@ -172,7 +172,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
               } ${principalSymbol} Bonds`,
             },
           }}
-          disabled={soldout}
+          disabled={soldOut}
         />
       </Box>
       <Box mt={3}>
@@ -186,7 +186,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
           {buttonText}
         </Button>
       </Box>
-      <Box mt={6} sx={{ opacity: soldout ? "50%" : "100%" }}>
+      <Box mt={6} sx={{ opacity: soldOut ? "50%" : "100%" }}>
         <Label
           {...defaultLabelProps(
             "Your balance",

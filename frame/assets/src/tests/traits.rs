@@ -259,7 +259,7 @@ mod reservable_currency {
 		}
 
 		#[test]
-		fn test_repariate_reserve_implementation(
+		fn test_repatriate_reserve_implementation(
 			(account_1, account_2) in accounts_2(),
 			(first, second, third) in valid_amounts_without_overflow_3()
 		) {
@@ -600,7 +600,7 @@ mod reservable_multicurrency {
 		}
 
 		#[test]
-		fn test_repariate_reserve_implementation(
+		fn test_repatriate_reserve_implementation(
 			(account_1, account_2) in accounts_2(),
 			   asset_id in asset(),
 			(first, second, _) in valid_amounts_without_overflow_3()

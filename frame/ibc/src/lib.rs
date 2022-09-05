@@ -68,7 +68,7 @@ pub(crate) type RawVersion = (Vec<u8>, Vec<Vec<u8>>);
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ConnectionParams {
-	/// A vector of (identifer, features) all encoded as Utf8 string bytes
+	/// A vector of (identifier, features) all encoded as Utf8 string bytes
 	pub version: RawVersion,
 	/// Utf8 client_id bytes
 	pub client_id: Vec<u8>,
@@ -228,7 +228,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
-	/// counter for packet reciepts
+	/// counter for packet receipts
 	pub type PacketReceiptCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
@@ -283,7 +283,7 @@ pub mod pallet {
 		Other,
 		/// Invalid route
 		InvalidRoute,
-		/// Invalid message for extirnsic
+		/// Invalid message for extrinsic
 		InvalidMessageType,
 	}
 

@@ -193,7 +193,7 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
 	/// Protocol or the user account that owns this stake
 	// TODO (vim): Remove the owner and track the financial NFT ID. In order to prevent a direct
-	// dependancy to NFTs we can also just use nft ID as position ID. 	pub financial_nft_id: ItemId
+	// dependency to NFTs we can also just use nft ID as position ID. 	pub financial_nft_id: ItemId
 	pub owner: AccountId,
 
 	/// Reward Pool ID from which pool to allocate rewards for this
@@ -309,7 +309,7 @@ pub trait Staking {
 	///
 	/// Arguments
 	/// * `who` - the account to transfer the final claimed rewards to.
-	/// * `position` - The uniqely identifying NFT from which we will compute the rewards.
+	/// * `position` - The uniquely identifying NFT from which we will compute the rewards.
 	fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
 }
 

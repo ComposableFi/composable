@@ -31,7 +31,7 @@ export type InputProps = {
   handleOnFocus?: React.Dispatch<React.SetStateAction<any>>;
   noBorder?: boolean;
   clearable?: boolean;
-  customEndAdorment?: ReactElement;
+  customEndAdornment?: ReactElement;
 } & Omit<TextFieldProps, "label">;
 
 export const Input: React.FC<InputProps> = ({
@@ -50,7 +50,7 @@ export const Input: React.FC<InputProps> = ({
   noBorder = true,
   clearable,
   InputProps,
-  customEndAdorment,
+  customEndAdornment,
   ...rest
 }) => {
   const theme = useTheme();
@@ -79,7 +79,7 @@ export const Input: React.FC<InputProps> = ({
             referenceText ||
             clearable ||
             EndAdornmentAssetProps ||
-            customEndAdorment) && (
+            customEndAdornment) && (
             <InputAdornment position="end">
               <Box display="flex" gap={1} pr={4}>
                 <>
@@ -124,7 +124,7 @@ export const Input: React.FC<InputProps> = ({
                   )}
                 </>
               </Box>
-              {customEndAdorment && customEndAdorment}
+              {customEndAdornment && customEndAdornment}
             </InputAdornment>
           ),
         }}

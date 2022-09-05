@@ -54,7 +54,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
   const { rewardAsset } = bond;
   const vestingTime = useBondVestingTime(bond.selectedBondOffer);
-  const { claimable, miliSecondsSinceVestingStart, pendingRewards} = useBondedOfferVestingState(bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-")
+  const { claimable, milliSecondsSinceVestingStart, pendingRewards} = useBondedOfferVestingState(bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-")
   const roi = useBondOfferROI(bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-");
 
   const handleClaim = useVestingClaim(
@@ -116,7 +116,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
           mt={2}
         />
         <Label
-          {...defaultLabelProps("Time vested", `${moment.duration(miliSecondsSinceVestingStart.toNumber(), "milliseconds").humanize()}`)}
+          {...defaultLabelProps("Time vested", `${moment.duration(milliSecondsSinceVestingStart.toNumber(), "milliseconds").humanize()}`)}
           mt={2}
         />
         <Label {...defaultLabelProps("Vested", `${claimable.toFixed(2)} ${rewardAsset?.symbol}`)} mt={2} />

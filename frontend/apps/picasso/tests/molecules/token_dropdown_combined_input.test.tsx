@@ -13,7 +13,7 @@ test("renders Input/Token Dropdown Combined", () => {
   expect(screen.getByDisplayValue("Error text")).toBeInTheDocument();
 });
 
-test("renders Input/Koken Dropdown Combined with Button", () => {
+test("renders Input/Token Dropdown Combined with Button", () => {
   render(<TokenDropdownCombinedInputsWithButton />);
   expect(screen.getByDisplayValue("Input text")).toBeInTheDocument();
   expect(screen.getByPlaceholderText("Placeholder text")).toBeInTheDocument();

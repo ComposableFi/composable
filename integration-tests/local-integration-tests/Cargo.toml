@@ -1,5 +1,5 @@
 [package]
-description = "Local in memory(no OS handles opened) integrations tests via simulator. It may take time as it builds several runtimes as has direct dependnency on runtime configuration"
+description = "Local in memory(no OS handles opened) integrations tests via simulator. It may take time as it builds several runtimes as has direct dependency on runtime configuration"
 edition = "2021"
 name = "local-integration-tests"
 version = "0.1.0"

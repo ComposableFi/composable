@@ -315,7 +315,7 @@ export function useSwaps(): {
   });
 
   /**
-   * Effect to update minimum recieved when
+   * Effect to update minimum received when
    * there is a change in slippage
    */
   useEffect(() => {

@@ -13,8 +13,8 @@ export const AMMs: { [key in AMM_ID]: AMM } = {
     icon: "/tokens/weth-mainnet.svg",
     label: "Sushiswap",
   },
-  quickiswap: {
-    id: "quickiswap",
+  quickswap: {
+    id: "quickswap",
     icon: "/tokens/avalanche.svg",
     label: "Quickswap",
   },

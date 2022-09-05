@@ -144,12 +144,12 @@ export class CurrencyFactoryTests {
   /**
    * Converts hex to ascii.
    * Source: https://stackoverflow.com/questions/3745666/how-to-convert-from-hex-to-ascii-in-javascript/3745677#3745677
-   * @param hexx
+   * @param hex
    */
-  public static hex2a(hexx) {
-    const hex = hexx.toString().replace("0x", ""); //force conversion
+  public static hex2a(hex) {
+    const hex_string = hex.toString().replace("0x", ""); //force conversion
     let str = "";
-    for (let i = 0; i < hex.length; i += 2) str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    for (let i = 0; i < hex_string.length; i += 2) str += String.fromCharCode(parseInt(hex_string.substr(i, 2), 16));
     return str;
   }
 }

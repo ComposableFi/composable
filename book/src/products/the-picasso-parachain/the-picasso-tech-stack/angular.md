@@ -15,7 +15,7 @@ serving as a lending protocol for leveraged trading, options, and derivatives.
 
 ![graphic](./angular-graphic.png)
 
-## The Benifits of Isolated Lending Pools
+## The Benefits of Isolated Lending Pools
 
 The benefits of lending protocols like Compound and Aave are apparent, but how 
 they are used for the broader DeFi ecosystem makes them core infrastructure. 

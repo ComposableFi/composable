@@ -85,7 +85,7 @@ pub fn ethereum_recover(
 	Ok(address)
 }
 
-/// Genrates a message that is compatitible with the Ethereum signing process.
+/// Generates a message that is compatible with the Ethereum signing process.
 ///
 /// Requires the original message.
 pub fn ethereum_signable_message(prefix: &[u8], msg: &[u8]) -> Vec<u8> {

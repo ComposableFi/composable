@@ -1,4 +1,4 @@
-import { secondsToDHMS } from "shared";
+import { secondsToDhms } from "shared";
 import BigNumber from "bignumber.js";
 
 export function humanBalance(balance: string | number | BigNumber) {
@@ -73,7 +73,7 @@ export const SHORT_HUMAN_DATE = 1;
 export const LONG_HUMAN_DATE = 2;
 
 export function humanDate(date: number, option: number = SHORT_HUMAN_DATE) {
-  const toDHMS = secondsToDHMS(date);
+  const toDHMS = secondsToDhms(date);
 
   if (option === SHORT_HUMAN_DATE) {
     const output = [
