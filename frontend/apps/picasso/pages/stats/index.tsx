@@ -1,13 +1,11 @@
 import type { NextPage } from "next";
 import React from "react";
 import Default from "@/components/Templates/Default";
-import { useTheme, Grid } from "@mui/material";
-import { PageTitle } from "@/components";
-import { TabItem, Tabs } from "@/components";
+import { Grid, useTheme } from "@mui/material";
+import { PageTitle, TabItem, Tabs } from "@/components";
 import { StatsOverviewTab } from "@/components/Organisms/StatsOverviewTab";
 import { StatsTelemetryTab } from "@/components/Organisms/StatsTelemetryTab";
 import { StatsApolloTab } from "@/components/Organisms/StatsApolloTab";
-import { StatsTreasuryTab } from "@/components/Organisms/StatsTreasuryTab";
 
 const tabItems: TabItem[] = [
   {
@@ -15,9 +13,6 @@ const tabItems: TabItem[] = [
   },
   {
     label: "Telemetry",
-  },
-  {
-    label: "Treasury",
   },
   {
     label: "Apollo",
@@ -61,8 +56,7 @@ const Stats: NextPage = () => {
         <Grid item {...standardPageSize}>
           {tabIndex === 0 && <StatsOverviewTab />}
           {tabIndex === 1 && <StatsTelemetryTab />}
-          {tabIndex === 2 && <StatsTreasuryTab />}
-          {tabIndex === 3 && <StatsApolloTab />}
+          {tabIndex === 2 && <StatsApolloTab />}
         </Grid>
       </Grid>
     </Default>

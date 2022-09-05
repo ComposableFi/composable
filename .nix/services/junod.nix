@@ -8,7 +8,6 @@
       USER = "juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y";
       GAS_LIMIT = 100000000;
     };
-    network_mode = "host";
     command = [
       "sh"
       "-c"
@@ -18,6 +17,7 @@
         junod start --rpc.laddr tcp://0.0.0.0:26657 --grpc.address 0.0.0.0:9099 --trace
       ''
     ];
+    ports = [ "9090:9099" "26657:26657" ];
   };
 }
 

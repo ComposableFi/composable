@@ -475,9 +475,9 @@ note right: as per section 5.3.1.5
 stop
 ----
 
-==== Claim/Unstake
+==== Unstake
 
-[plantuml,images/claim,png]
+[plantuml,images/unstake,png]
 ----
 start
 ->assetId\npositionId;
@@ -571,6 +571,27 @@ stop
 ----
 
 NOTE: Check if the transactions correctly work for hooks.
+
+==== Claim
+
+[plantuml,images/claim,png]
+----
+start
+->assetId\npositionId;
+:position = readStorage(positionId);
+:rewards_pool = readStorage(assetId);
+while (reward = rewards_pool.rewards.has_next) is (yes)
+    :claim = reward.total_rewards * position.shares /\nrewards_pool.total_shares - position.reductions[reward.asset_id];
+    note right: as per section 5.3.1.2
+    :claim = min(claim, reward.total_rewards - reward.claimed_rewards);
+    :transfer(claim);
+    :reward.claimed_rewards += claim;
+    :position.reductions[reward.asset_id] += claim;
+    note right: as per section 5.3.1.1
+endwhile (no)
+:save(rewards_pool);
+stop
+----
 
 == Implementation
 

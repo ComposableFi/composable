@@ -15,6 +15,9 @@ type C = Currency<99, 12>;
 type D = Currency<100, 12>;
 type E = Currency<101, 12>;
 type F = Currency<102, 12>;
+type XA = Currency<1097, 12>;
+type XC = Currency<1099, 12>;
+type XF = Currency<1099, 12>;
 
 #[test]
 fn test_reward_update_calculation() {
@@ -41,6 +44,8 @@ fn test_reward_update_calculation() {
 			end_block: ONE_YEAR_OF_BLOCKS * 10,
 			reward_configs: [(PICA::ID, reward_config)].into_iter().try_collect().unwrap(),
 			lock: default_lock_config(),
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 		});
 
 		add_to_rewards_pot_and_assert(ALICE, pool_id, PICA::ID, PICA::units(10_000));
@@ -77,7 +82,7 @@ fn test_reward_update_calculation() {
 			] {
 				assert_no_event::<Test>(Event::StakingRewards(
 					crate::Event::<Test>::RewardAccumulationHookError {
-						pool_id,
+						pool_id: PICA::ID,
 						asset_id: PICA::ID,
 						error,
 					},
@@ -110,7 +115,7 @@ fn test_reward_update_calculation() {
 
 		// should report an error since the max was hit
 		assert_last_event::<Test>(Event::StakingRewards(
-			crate::Event::<Test>::MaxRewardsAccumulated { pool_id, asset_id: PICA::ID },
+			crate::Event::<Test>::MaxRewardsAccumulated { pool_id: PICA::ID, asset_id: PICA::ID },
 		));
 	})
 }
@@ -119,6 +124,15 @@ fn test_reward_update_calculation() {
 fn test_accumulate_rewards_pool_empty_refill() {
 	new_test_ext().execute_with(|| {
 		const STARTING_BLOCK: u64 = 10;
+		type A = Currency<97, 12>;
+		type XA = Currency<1097, 12>;
+		type B = Currency<98, 12>;
+		type C = Currency<99, 12>;
+		type XC = Currency<1099, 12>;
+		type D = Currency<100, 12>;
+		type E = Currency<101, 12>;
+		type F = Currency<102, 12>;
+		type XF = Currency<1102, 12>;
 
 		let mut current_block = System::block_number();
 
@@ -164,6 +178,8 @@ fn test_accumulate_rewards_pool_empty_refill() {
 				.try_collect()
 				.unwrap(),
 				lock: default_lock_config(),
+				share_asset_id: XA::ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			});
 
 		progress_to_block(current_block + 1, &mut current_block);
@@ -198,7 +214,6 @@ fn test_accumulate_rewards_pool_empty_refill() {
 
 		check_rewards(&[CheckRewards {
 			owner: ALICE,
-			pool_id,
 			pool_asset_id: A::ID,
 			pool_rewards: &[
 				PoolRewards {
@@ -292,6 +307,8 @@ fn test_accumulate_rewards_hook() {
 				.try_collect()
 				.unwrap(),
 				lock: default_lock_config(),
+				share_asset_id: XA::ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			});
 
 		mint_assets([ALICE], [A::ID], A_A_INITIAL_AMOUNT);
@@ -326,6 +343,8 @@ fn test_accumulate_rewards_hook() {
 				.try_collect()
 				.unwrap(),
 				lock: default_lock_config(),
+				share_asset_id: XC::ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
 			});
 
 		mint_assets([ALICE], [D::ID], C_D_INITIAL_AMOUNT);
@@ -339,7 +358,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -364,7 +382,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -398,7 +415,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -423,7 +439,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -457,7 +472,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -482,7 +496,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -505,7 +518,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: bobs_pool_id,
+				pool_id: C::ID,
 				asset_id: E::ID,
 			}]);
 		}
@@ -516,7 +529,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -541,7 +553,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -561,7 +572,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: bobs_pool_id,
+				pool_id: C::ID,
 				asset_id: D::ID,
 			}]);
 		}
@@ -585,6 +596,8 @@ fn test_accumulate_rewards_hook() {
 				.try_collect()
 				.unwrap(),
 				lock: default_lock_config(),
+				share_asset_id: XF::ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
 			});
 
 		{
@@ -593,7 +606,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -615,7 +627,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -634,7 +645,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: CHARLIE,
-					pool_id: charlies_pool_id,
 					pool_asset_id: F::ID,
 					pool_rewards: &[PoolRewards {
 						reward_asset_id: F::ID,
@@ -646,7 +656,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: alices_pool_id,
+				pool_id: A::ID,
 				asset_id: B::ID,
 			}]);
 		}
@@ -657,7 +667,6 @@ fn test_accumulate_rewards_hook() {
 			check_rewards(&[
 				CheckRewards {
 					owner: ALICE,
-					pool_id: alices_pool_id,
 					pool_asset_id: A::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -676,7 +685,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: BOB,
-					pool_id: bobs_pool_id,
 					pool_asset_id: C::ID,
 					pool_rewards: &[
 						PoolRewards {
@@ -695,7 +703,6 @@ fn test_accumulate_rewards_hook() {
 				},
 				CheckRewards {
 					owner: CHARLIE,
-					pool_id: charlies_pool_id,
 					pool_asset_id: F::ID,
 					pool_rewards: &[PoolRewards {
 						reward_asset_id: F::ID,
@@ -707,7 +714,7 @@ fn test_accumulate_rewards_hook() {
 			]);
 
 			check_events([crate::Event::<Test>::MaxRewardsAccumulated {
-				pool_id: alices_pool_id,
+				pool_id: A::ID,
 				asset_id: A::ID,
 			}]);
 		}
@@ -762,15 +769,15 @@ block:   {block}"#
 pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 	let mut all_rewards = RewardPools::<Test>::iter().collect::<BTreeMap<_, _>>();
 
-	for CheckRewards { owner, pool_asset_id, pool_rewards, pool_id } in expected.into_iter() {
+	for CheckRewards { owner, pool_asset_id, pool_rewards } in expected.into_iter() {
 		let mut pool = all_rewards
-			.remove(&pool_id)
-			.expect(&format!("pool {pool_id} not present in RewardPools"));
+			.remove(&pool_asset_id)
+			.expect(&format!("pool {pool_asset_id} not present in RewardPools"));
 
-		assert_eq!(pool.owner, *owner, "error at pool {pool_id}");
-		assert_eq!(pool.asset_id, *pool_asset_id, "error at pool {pool_id}");
+		assert_eq!(pool.owner, *owner, "error at pool {pool_asset_id}");
+		assert_eq!(pool.asset_id, *pool_asset_id, "error at pool {pool_asset_id}");
 
-		let pool_account = StakingRewards::pool_account_id(pool_id);
+		let pool_account = StakingRewards::pool_account_id(pool_asset_id);
 
 		for PoolRewards {
 			reward_asset_id,
@@ -786,19 +793,18 @@ pub(crate) fn check_rewards(expected: &[CheckRewards<'_>]) {
 			let actual_unlocked_balance =
 				balance(*reward_asset_id, &pool_account) - actual_locked_balance;
 
-			let reward = pool
-				.rewards
-				.remove(&reward_asset_id)
-				.expect(&format!("reward asset {reward_asset_id} not present in pool {pool_id}"));
+			let reward = pool.rewards.remove(&reward_asset_id).expect(&format!(
+				"reward asset {reward_asset_id} not present in pool {pool_asset_id}"
+			));
 
 			assert_eq!(
 				reward.asset_id, *reward_asset_id,
-				r#"error at pool {pool_id}, asset {reward_asset_id}"#,
+				r#"error at pool {pool_asset_id}, asset {reward_asset_id}"#,
 			);
 			assert!(
 				&reward.total_rewards == expected_total_rewards,
 				r#"
-error at pool {pool_id}, asset {reward_asset_id}: unexpected total_rewards:
+error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected total_rewards:
 	expected: {expected_total_rewards}
 	found:    {found_total_rewards}"#,
 				found_total_rewards = reward.total_rewards
@@ -807,7 +813,7 @@ error at pool {pool_id}, asset {reward_asset_id}: unexpected total_rewards:
 			assert!(
 				&actual_locked_balance == expected_locked_balance,
 				r#"
-error at pool {pool_id}, asset {reward_asset_id}: unexpected locked balance:
+error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected locked balance:
 	expected: {expected_locked_balance}
 	found:    {actual_locked_balance}"#
 			);
@@ -815,7 +821,7 @@ error at pool {pool_id}, asset {reward_asset_id}: unexpected locked balance:
 			assert!(
 				&actual_unlocked_balance == expected_unlocked_balance,
 				r#"
-error at pool {pool_id}, asset {reward_asset_id}: unexpected unlocked balance:
+error at pool {pool_asset_id}, asset {reward_asset_id}: unexpected unlocked balance:
 	expected: {expected_unlocked_balance}
 	found:    {actual_unlocked_balance}"#
 			);
@@ -823,7 +829,7 @@ error at pool {pool_id}, asset {reward_asset_id}: unexpected unlocked balance:
 
 		assert!(
 			pool.rewards.is_empty(),
-			"not all pool rewards were tested for pool {pool_id}, missing {:#?}",
+			"not all pool rewards were tested for pool {pool_asset_id}, missing {:#?}",
 			pool.rewards
 		);
 	}
@@ -833,7 +839,6 @@ error at pool {pool_id}, asset {reward_asset_id}: unexpected unlocked balance:
 
 pub(crate) struct CheckRewards<'a> {
 	pub(crate) owner: Public,
-	pub(crate) pool_id: u16,
 	pub(crate) pool_asset_id: u128,
 	pub(crate) pool_rewards: &'a [PoolRewards],
 }

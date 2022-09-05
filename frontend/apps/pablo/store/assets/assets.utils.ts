@@ -6,8 +6,8 @@ export const setApolloPrice = (
   assetId: string,
   price: string
 ) => {
-  return produce(assets, (draft) => {
-      draft[assetId] = price
+  return produce(assets, draft => {
+    draft[assetId] = price;
   });
 };
 
@@ -15,10 +15,10 @@ export const putSupportedAssets = (
   assets: AssetsSlice["supportedAssets"],
   assetsList: MockedAsset[]
 ) => {
-  return produce(assets, (draft) => {
-    draft = [...assetsList]
+  return produce(assets, draft => {
+    draft = [...assetsList];
   });
-}
+};
 
 export const putAssetBalance = (
   assets: AssetsSlice["assetBalances"],
@@ -26,11 +26,11 @@ export const putAssetBalance = (
   assetId: string,
   balance: string
 ) => {
-  return produce(assets, (draft) => {
+  return produce(assets, draft => {
     if (!assets[network]) {
       draft[network] = {};
     }
 
     draft[network][assetId] = balance;
   });
-}
+};

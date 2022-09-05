@@ -19,8 +19,8 @@ pub type Amount = i128;
 pub type PoolId = u128;
 pub type BlockNumber = u64;
 pub type AccountId = u128;
-pub type RewardPoolId = u16;
 pub type PositionId = u128;
+pub type CurrencyId = u128;
 
 #[allow(dead_code)]
 pub static ALICE: AccountId = 1;
@@ -168,12 +168,17 @@ parameter_types! {
 	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets: u32 = 10;
 	pub const MaxRewardConfigsPerPool: u32 = 10;
+	pub const PicaAssetId : CurrencyId = 1;
+	pub const PbloAssetId : CurrencyId = 2;
+	pub const XPicaAssetId: CurrencyId = 101;
+	pub const XPbloAssetId: CurrencyId = 102;
+	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
+	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1002;
 }
 
 impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = RewardPoolId;
 	type PositionId = PositionId;
 	type AssetId = AssetId;
 	type Assets = Tokens;
@@ -186,8 +191,13 @@ impl pallet_staking_rewards::Config for Test {
 	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
-	type FinancialNftInstanceId = u128;
 	type FinancialNft = MockFnft;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 parameter_types! {
@@ -214,13 +224,18 @@ impl pallet_pablo::Config for Test {
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
-	type RewardPoolId = RewardPoolId;
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
 	type ManageStaking = StakingRewards;
 	type ProtocolStaking = StakingRewards;
 	type MsPerBlock = MillisecsPerBlock;
+	type PicaAssetId = PicaAssetId;
+	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 parameter_types! {

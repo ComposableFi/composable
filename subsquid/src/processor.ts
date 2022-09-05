@@ -38,12 +38,27 @@ const chain = (): string => {
     case "dali-stage":
       return "wss://dali-cluster-fe.composablefinance.ninja";
     default:
-      return "ws://127.0.0.1:9988";
+      if ("RELAYCHAIN_URI" in process.env) {
+        return process.env.RELAYCHAIN_URI!.toString();
+      }
+      else {
+        return "ws://127.0.0.1:9988";
+      }
   }
 };
 
+const archive = (): string => {
+  if ("SUBSQUID_ARCHIVE_URI" in process.env) {
+    return process.env.SUBSQUID_ARCHIVE_URI!.toString();
+  }
+  else {
+    return "http://127.0.0.1:8080/v1/graphql";
+  }
+};
+
+
 const chainConnectionString = chain();
-const archiveConnectionString = "http://127.0.0.1:8080/v1/graphql";
+const archiveConnectionString = archive();
 
 console.log(`Chain ${chainConnectionString}`);
 console.log(`Archive ${archiveConnectionString}`);

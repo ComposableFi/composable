@@ -33,6 +33,7 @@
     "apexcharts": "^3.33.1",
     "bi-lib": "*",
     "bignumber.js": "^9.0.2",
+    "binance": "^2.0.37",
     "bn.js": "^5.2.0",
     "contentful": "^9.1.5",
     "graphql": "^16.5.0",
