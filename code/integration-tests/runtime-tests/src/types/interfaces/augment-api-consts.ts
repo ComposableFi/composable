@@ -1,21 +1,20 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from "@polkadot/api-base/types";
-import type { bool, Bytes, Option, u128, u16, u32, u64, u8, U8aFixed } from "@polkadot/types-codec";
-import type { Codec } from "@polkadot/types-codec/types";
-import type { AccountId32, Perbill, Permill } from "@polkadot/types/interfaces/runtime";
-import type {
-  FrameSupportPalletId,
-  FrameSupportWeightsRuntimeDbWeight,
-  FrameSystemLimitsBlockLength,
-  FrameSystemLimitsBlockWeights,
-  SpVersionRuntimeVersion,
-  XcmV1MultiLocation
-} from "@polkadot/types/lookup";
+// import type lookup before we augment - in some environments
+// this is required to allow for ambient/previous definitions
+import '@polkadot/api-base/types/consts';
+
+import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
+import type { Bytes, Option, Text, U8aFixed, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Codec } from '@polkadot/types-codec/types';
+import type { AccountId32, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
+
+export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
 declare module '@polkadot/api-base/types/consts' {
-  export interface AugmentedConsts<ApiType extends ApiTypes> {
+  interface AugmentedConsts<ApiType extends ApiTypes> {
     assets: {
       nativeAssetId: u128 & AugmentedConst<ApiType>;
       /**
@@ -76,6 +75,86 @@ declare module '@polkadot/api-base/types/consts' {
     };
     callFilter: {
       maxStringSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    cosmwasm: {
+      /**
+       * Current chain ID. Provided to the contract via the [`Env`].
+       **/
+      chainId: Text & AugmentedConst<ApiType>;
+      /**
+       * Max wasm branch table size limit.
+       **/
+      codeBranchTableSizeLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max wasm globals limit.
+       **/
+      codeGlobalVariableLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max wasm functions parameters limit.
+       **/
+      codeParameterLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max wasm stack size limit.
+       **/
+      codeStackLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Price of a byte when uploading new code.
+       * The price is expressed in [`Self::NativeAsset`].
+       * This amount is reserved from the owner and released when the code is destroyed.
+       **/
+      codeStorageByteDeposit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max wasm table size.
+       **/
+      codeTableSizeLimit: u32 & AugmentedConst<ApiType>;
+      /**
+       * Price of extracting a byte from the storage.
+       **/
+      contractStorageByteReadPrice: u32 & AugmentedConst<ApiType>;
+      /**
+       * Price of writting a byte in the storage.
+       **/
+      contractStorageByteWritePrice: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max accepted code size.
+       **/
+      maxCodeSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max contract label size.
+       **/
+      maxContractLabelSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max contract trie id size.
+       **/
+      maxContractTrieIdSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max number of frames a contract is able to push, a.k.a recursive calls.
+       **/
+      maxFrames: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max assets in a [`FundsOf`] batch.
+       **/
+      maxFundsAssets: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max instantiate salt.
+       **/
+      maxInstantiateSaltSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max code size after gas instrumentation.
+       **/
+      maxInstrumentedCodeSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Max message size.
+       **/
+      maxMessageSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Pallet unique ID.
+       **/
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -370,9 +449,27 @@ declare module '@polkadot/api-base/types/consts' {
       msPerBlock: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
+       * AssetId of the PBLO asset
+       **/
+      pbloAssetId: u128 & AugmentedConst<ApiType>;
+      pbloStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
+      /**
+       * AssetId of the PICA asset
+       **/
+      picaAssetId: u128 & AugmentedConst<ApiType>;
+      picaStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
+      /**
        * The interval between TWAP computations.
        **/
       twapInterval: u64 & AugmentedConst<ApiType>;
+      /**
+       * AssetId of the xToken varient of PBLO asset
+       **/
+      xPbloAssetId: u128 & AugmentedConst<ApiType>;
+      /**
+       * AssetId of the xToken varient of PICA asset
+       **/
+      xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -447,10 +544,16 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       maxStakingDurationPresets: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      pbloAssetId: u128 & AugmentedConst<ApiType>;
+      pbloStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
+      picaAssetId: u128 & AugmentedConst<ApiType>;
+      picaStakeFinancialNftCollectionId: u128 & AugmentedConst<ApiType>;
       /**
        * the size of batch to take each time trying to release rewards
        **/
       releaseRewardsPoolsBatchSize: u8 & AugmentedConst<ApiType>;
+      xPbloAssetId: u128 & AugmentedConst<ApiType>;
+      xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
