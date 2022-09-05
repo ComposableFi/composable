@@ -61,7 +61,7 @@ pub trait RemoteAssetRegistryInspect {
 	/// for local asset id  as (1 level up to runtime, relayer id, down to ETH consensus, down to
 	/// UNI contract, Native Asset of UNI). So final interpreting consensus will work with asset ids
 	/// as it is local for itself. So from any local asset of runtime, can find any known asset on
-	/// any connected network. Other schemas like XCM with only one parent or libp2p multiadress OR
+	/// any connected network. Other schemas like XCM with only one parent or libp2p multiaddress OR
 	/// IBC like address each pallet working with foreign remote assets should specific proper impl
 	/// for this
 	type AssetNativeLocation;
@@ -251,7 +251,7 @@ pub enum JunctionDef {
 	///
 	/// Generally used when the context is a Frame-based chain.
 	PalletInstance(u8),
-	/// A non-descript index within the context location.
+	/// A nondescript index within the context location.
 	///
 	/// Usage will vary widely owing to its generality.
 	///

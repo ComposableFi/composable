@@ -404,7 +404,7 @@ pub mod pallet {
 		},
 		/// Event emitted when collateral is deposited.
 		CollateralDeposited { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
-		/// Event emitted when collateral is withdrawed.
+		/// Event emitted when collateral is withdrawn.
 		CollateralWithdrawn { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when user borrows from given market.
 		Borrowed { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
@@ -417,7 +417,7 @@ pub mod pallet {
 		},
 		/// Event emitted when a liquidation is initiated for a loan.
 		LiquidationInitiated { market_id: MarketIndex, borrowers: Vec<T::AccountId> },
-		/// Event emitted to warn that loan may go under collaterlized soon.
+		/// Event emitted to warn that loan may go under collateralized soon.
 		MayGoUnderCollateralizedSoon { market_id: MarketIndex, account: T::AccountId },
 	}
 
@@ -454,7 +454,7 @@ pub mod pallet {
 	>;
 
 	/// at which lending index account did borrowed.
-	/// if first borrow: market index when the borrowed occured
+	/// if first borrow: market index when the borrow occurred
 	/// if additional borrow: market index adjusted wrt the previous index
 	#[pallet::storage]
 	pub type DebtIndex<T: Config> = StorageDoubleMap<
@@ -553,7 +553,7 @@ pub mod pallet {
 		/// Create a new lending market.
 		/// - `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause
 		///   borrow operations.
-		/// - `input`   : Borrow & deposits of assets, persentages.
+		/// - `input`   : Borrow & deposits of assets, percentages.
 		///
 		/// `origin` irreversibly pays `T::OracleMarketCreationStake`.
 		#[pallet::weight(<T as Config>::WeightInfo::create_market())]

@@ -27,7 +27,6 @@ import type {
   ComposableTraitsCallFilterCallFilterEntry,
   ComposableTraitsDefiSell,
   ComposableTraitsDefiTake,
-  ComposableTraitsDexConsantProductPoolInfo,
   ComposableTraitsDexConstantProductPoolInfo,
   ComposableTraitsDexDexRoute,
   ComposableTraitsDexStableSwapPoolInfo,
@@ -1364,7 +1363,6 @@ declare module '@polkadot/types/types/registry' {
     ComposableTraitsDefiSell: ComposableTraitsDefiSell;
     ComposableTraitsDefiSellCurrencyId: ComposableTraitsDefiSellCurrencyId;
     ComposableTraitsDefiTake: ComposableTraitsDefiTake;
-    ComposableTraitsDexConsantProductPoolInfo: ComposableTraitsDexConsantProductPoolInfo;
     ComposableTraitsDexConstantProductPoolInfo: ComposableTraitsDexConstantProductPoolInfo;
     ComposableTraitsDexDexRoute: ComposableTraitsDexDexRoute;
     ComposableTraitsDexFee: ComposableTraitsDexFee;

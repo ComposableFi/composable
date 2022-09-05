@@ -71,9 +71,6 @@ export interface ComposableTraitsDefiSell extends Null {}
 /** @name ComposableTraitsDefiTake */
 export interface ComposableTraitsDefiTake extends Null {}
 
-/** @name ComposableTraitsDexConsantProductPoolInfo */
-export interface ComposableTraitsDexConsantProductPoolInfo extends Null {}
-
 /** @name ComposableTraitsDexConstantProductPoolInfo */
 export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {
   readonly owner: AccountId32;

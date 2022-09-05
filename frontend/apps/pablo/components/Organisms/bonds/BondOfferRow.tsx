@@ -19,7 +19,7 @@ const BondOfferRow = ({
   handleBondClick: (bondOfferId: string) => void;
 }) => {
   const roi = useBondOfferROI(offerId);
-  const totalPuchasedBonds = useBondOfferTotalPurchased(offerId);
+  const totalPurchasedBonds = useBondOfferTotalPurchased(offerId);
   const principalAsset = useBondOfferPrincipalAsset(bondOffer);
   const principalAmountOfTokensRequiredToBuy =
     useBondOfferPriceInAmountOfPrincipalTokens(offerId);
@@ -50,7 +50,7 @@ const BondOfferRow = ({
       <TableCell align="left">
         <Typography variant="body2">
           $
-          {totalPuchasedBonds
+          {totalPurchasedBonds
             .times(principalAmountOfTokensRequiredToBuy)
             .times(principalAssetPriceInUSD)
             .toFormat(2)}
