@@ -16,6 +16,9 @@ pkgs.arion.build {
           password = "postgres";
           port = 5432;
         };
+        
+        relaychainPort = 9944;
+        parachainPort = 9988;
         # composable-squid-db-name = "composable_squid";
         # composable-squid-db = default-db // {
         #   name = composable-squid-db-name;
@@ -58,9 +61,17 @@ pkgs.arion.build {
                 };
               });
 
+             dali-devnet = mkComposableContainer
+              (import ./services/devnet-dali.nix {
+                inherit pkgs;
+                inherit packages;
+                inherit parachainPort;
+                inherit relaychainPort;
+              });
+
             ingest = mkComposableContainer (import ./services/subsquid-substrate-ingest.nix {
                 database = squid-archive-db;
-                polkadotEndpoint = "ws://127.0.0.1:9988";
+                polkadotEndpoint = "ws://127.0.0.1:${toString parachainPort}";
                 prometheusPort = 9090;
             }); 
             
