@@ -61,8 +61,45 @@ services:
   squid-db:
     image: postgres:14
     restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     environment:
       POSTGRES_DB: squid
       POSTGRES_PASSWORD: squid
     ports:
       - "${DB_PORT}:5432"
+
+  graphql-server:
+    image: node:lts
+    depends_on:
+      squid-db:
+        condition: service_healthy
+    environment:
+      DB_NAME: squid
+      DB_HOST: squid-db
+      DB_PASS: squid
+      DB_PORT_PG: 5432
+    volumes:
+      - ./:/app
+      - ./scripts/init.sh:/init.sh
+    entrypoint: sh /init.sh
+
+  substrate-processor:
+    image: node:lts
+    depends_on:
+      - graphql-server
+    environment:
+      DB_HOST: squid-db
+      DB_NAME: squid
+      DB_PASS: squid
+      DB_PORT: 5432
+      GQL_PORT: 4350
+    ports:
+      - 4350:4350
+    volumes:
+      - ./:/app
+      - ./scripts/init-processor.sh:/init.sh
+    entrypoint: sh /init.sh
