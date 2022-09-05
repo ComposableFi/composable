@@ -1,13 +1,13 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { ComposableTraitsDefiCurrencyPairCurrencyId, CurrencyId } from "@composable/types/interfaces/common";
-import type { bool, Enum, Null, Struct, u128, u32 } from "@polkadot/types-codec";
-import type { ITuple } from "@polkadot/types-codec/types";
-import type { EthereumAccountId } from "@polkadot/types/interfaces/eth";
-import type { EcdsaSignature, MultiSignature } from "@polkadot/types/interfaces/extrinsics";
-import type { ParachainInherentData, PersistedValidationData } from "@polkadot/types/interfaces/parachains";
-import type { AccountId32, Balance, Permill } from "@polkadot/types/interfaces/runtime";
+import type { ComposableTraitsDefiCurrencyPairCurrencyId, CurrencyId } from '@composable/types/interfaces/common';
+import type { Enum, Null, Struct, bool, u128, u32 } from '@polkadot/types-codec';
+import type { ITuple } from '@polkadot/types-codec/types';
+import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
+import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
+import type { ParachainInherentData, PersistedValidationData } from '@polkadot/types/interfaces/parachains';
+import type { AccountId32, Balance, Permill } from '@polkadot/types/interfaces/runtime';
 
 /** @name CommonMosaicRemoteAssetId */
 export interface CommonMosaicRemoteAssetId extends Null {}
@@ -235,6 +235,15 @@ export interface PalletAssetsRegistryForeignMetadata extends Null {}
 /** @name PalletCollatorSelectionCandidateInfo */
 export interface PalletCollatorSelectionCandidateInfo extends Null {}
 
+/** @name PalletCosmwasmCodeInfo */
+export interface PalletCosmwasmCodeInfo extends Null {}
+
+/** @name PalletCosmwasmContractInfo */
+export interface PalletCosmwasmContractInfo extends Null {}
+
+/** @name PalletCosmwasmEntryPoint */
+export interface PalletCosmwasmEntryPoint extends Null {}
+
 /** @name PalletCrowdloanRewardsModelsEcdsaSignature */
 export interface PalletCrowdloanRewardsModelsEcdsaSignature extends EcdsaSignature {}
 
@@ -362,6 +371,9 @@ export interface PalletSchedulerScheduledV2 extends Null {}
 
 /** @name PalletSchedulerScheduledV3 */
 export interface PalletSchedulerScheduledV3 extends Null {}
+
+/** @name PalletStakingRewardsRewardAccumulationHookError */
+export interface PalletStakingRewardsRewardAccumulationHookError extends Null {}
 
 /** @name PalletTreasuryProposal */
 export interface PalletTreasuryProposal extends Null {}

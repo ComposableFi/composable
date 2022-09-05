@@ -196,5 +196,9 @@ export default {
     ComposableTraitsAccountProxyProxyType: "Null",
     ComposableTraitsAccountProxyProxyDefinition: "Null",
     PalletAccountProxyAnnouncement: "Null",
+    PalletCosmwasmContractInfo: "Null",
+    PalletCosmwasmCodeInfo: "Null",
+    PalletCosmwasmEntryPoint: "Null",
+    PalletStakingRewardsRewardAccumulationHookError: "Null"
   }
 };

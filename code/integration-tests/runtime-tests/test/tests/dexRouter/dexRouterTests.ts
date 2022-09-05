@@ -18,7 +18,7 @@ import BN from "bn.js";
 //  - exchange
 //  - sell
 
-describe("DexRouterPallet Tests", function () {
+describe.only("DexRouterPallet Tests", function () {
   let api: ApiPromise;
   let eth: number, usdt: number, usdc: number, dai: number;
   let walletId1: KeyringPair, walletId2: KeyringPair, sudoKey: KeyringPair;
