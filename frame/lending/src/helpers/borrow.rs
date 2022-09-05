@@ -17,6 +17,7 @@ use frame_support::{
 	weights::WeightToFee,
 };
 use sp_runtime::{traits::Zero, ArithmeticError, DispatchError, FixedPointNumber, Percent};
+use sp_std::vec::Vec;
 
 impl<T: Config> Pallet<T> {
 	pub(crate) fn do_borrow(
