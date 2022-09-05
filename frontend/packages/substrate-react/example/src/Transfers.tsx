@@ -1,6 +1,7 @@
 import 'react-app-polyfill/ie11';
 import { useEffect, useState } from 'react';
 import {
+  SupportedWalletId,
   useDotSamaContext,
   useExecutor,
   useParachainApi,
@@ -18,7 +19,7 @@ export const Transfers = () => {
 
   useEffect(() => {
     if (activate) {
-      activate("polkadot-js");
+      activate(SupportedWalletId.Polkadotjs);
     }
   }, [activate]);
 
@@ -31,7 +32,7 @@ export const Transfers = () => {
   const onTransfer = async () => {
     if (parachainApi && _from && _to && executor && signer) {
       const decimals = new BigNumber(10).pow(12); // Substrate default decimals
-      const transferAmnt = new BigNumber(0.0001).times(decimals);
+      const transferAmount = new BigNumber(0.0001).times(decimals);
 
       executor.execute(
         //@ts-ignore
@@ -43,7 +44,7 @@ export const Transfers = () => {
           console.log('Ready: ', txHash);
         },
         txHash => {
-          console.log('Finalised: ', txHash);
+          console.log('Finalized: ', txHash);
         }
       );
     }

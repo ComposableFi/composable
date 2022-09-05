@@ -176,7 +176,7 @@ impl<T: Config> StableSwap<T> {
 		let lp_issued = T::Assets::total_issuance(pool.lp_token);
 		let total_issuance = lp_issued.safe_sub(&lp_amount)?;
 
-		// NOTE(hussein-aitlance): no need to keep alive the pool account
+		// NOTE(hussein-aitlahcen): no need to keep alive the pool account
 		T::Assets::transfer(pool.pair.base, &pool_account, who, base_amount, false)?;
 		T::Assets::transfer(pool.pair.quote, &pool_account, who, quote_amount, false)?;
 		T::Assets::burn_from(pool.lp_token, who, lp_amount)?;
@@ -236,7 +236,7 @@ impl<T: Config> StableSwap<T> {
 			let quote_fee =
 				updated_fee_config.calculate_fees(pool_info.pair.quote, quote_difference);
 
-			// Substract fees from calculated base/quote amounts to allow for fees
+			// Subtract fees from calculated base/quote amounts to allow for fees
 			let new_base_balance = new_base_amount.safe_sub(&base_fee.fee)?;
 			let new_quote_balance = new_quote_amount.safe_sub(&quote_fee.fee)?;
 
@@ -245,7 +245,7 @@ impl<T: Config> StableSwap<T> {
 				new_quote_balance,
 				amplification_coefficient,
 			)?;
-			// minted LP is propotional to the delta of the pool invariant caused by imbalanced
+			// minted LP is proportional to the delta of the pool invariant caused by imbalanced
 			// liquidity
 			let mint_amount = T::Convert::convert(safe_multiply_by_rational(
 				T::Convert::convert(total_lp_issued),

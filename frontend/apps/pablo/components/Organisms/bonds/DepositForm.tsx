@@ -22,10 +22,11 @@ import { useDispatch } from "react-redux";
 import { WrongAmountEnteredModal } from "./WrongAmountEnteredModal";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { useAssetBalance } from "@/store/assets/hooks";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
-import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import usePrincipalAssetSymbol from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
 import { usePurchaseBond } from "@/defi/hooks/bonds";
+import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
 
 const containerBoxProps = (theme: Theme) =>
   ({
@@ -76,7 +77,9 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   const [valid, setValid] = useState<boolean>(false);
 
   const { rewardAsset } = bond;
-  const soldout = bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds.eq(0) : true;
+  const soldOut = bond.selectedBondOffer
+    ? bond.selectedBondOffer.nbOfBonds.eq(0)
+    : true;
   const isWrongAmount = bond.roi.lt(0);
 
   const handleDeposit = () => {
@@ -89,28 +92,38 @@ export const DepositForm: React.FC<DepositFormProps> = ({
     handleDeposit();
   };
 
-  const principalBalance = useAssetBalance(DEFAULT_NETWORK_ID, bond.selectedBondOffer ? bond.selectedBondOffer.asset : "0")
-  const buttonText = soldout ? "Sold out" : "Deposit";
-  const disabled = !valid || soldout;
+  const principalBalance = useAssetBalance(
+    DEFAULT_NETWORK_ID,
+    bond.selectedBondOffer ? bond.selectedBondOffer.asset : "0"
+  );
+  const buttonText = soldOut ? "Sold out" : "Deposit";
+  const disabled = !valid || soldOut;
 
   const principalSymbol = usePrincipalAssetSymbol(bond.principalAsset);
 
+  const vestingTime = useBondVestingTime(bond.selectedBondOffer);
+
   const youWillGet = useMemo(() => {
     if (bond.selectedBondOffer) {
-      return bond.rewardAssetPerBond.times(amount.dp(0))
+      return bond.rewardAssetPerBond.times(amount.dp(0));
     }
     return new BigNumber(0);
   }, [amount, bond]);
 
   const maxYouCanBuy = useMemo(() => {
     if (bond.selectedBondOffer) {
-      let amountOfBondsBuyable = principalBalance.div(bond.principalAssetPerBond).decimalPlaces(0, BigNumber.ROUND_FLOOR)
-      return amountOfBondsBuyable;
+      let amountOfBondsBuyable = principalBalance
+        .div(bond.principalAssetPerBond)
+        .decimalPlaces(0, BigNumber.ROUND_FLOOR);
+      return amountOfBondsBuyable.lt(bond.selectedBondOffer.nbOfBonds) ? amountOfBondsBuyable : bond.selectedBondOffer.nbOfBonds;
     }
     return new BigNumber(0);
   }, [principalBalance, bond]);
 
-  const purchaseBond = usePurchaseBond(bond.selectedBondOffer ? bond.selectedBondOffer.offerId : new BigNumber(-1), amount);
+  const purchaseBond = usePurchaseBond(
+    bond.selectedBondOffer ? bond.selectedBondOffer.offerId : new BigNumber(-1),
+    amount
+  );
 
   const [isTxProcessing, setIsTxProcessing] = useState(false);
 
@@ -120,12 +133,12 @@ export const DepositForm: React.FC<DepositFormProps> = ({
     try {
       await purchaseBond();
       bond.updateBondInfo();
-    } catch(e: any) {
-      console.error(e)
+    } catch (e: any) {
+      console.error(e);
     } finally {
       setIsTxProcessing(false);
     }
-  }
+  };
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -138,7 +151,12 @@ export const DepositForm: React.FC<DepositFormProps> = ({
           setValid={setValid}
           buttonLabel="Max"
           ButtonProps={{
-            onClick: () => setAmount(new BigNumber(bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : 0)),
+            onClick: () =>
+              setAmount(
+                new BigNumber(
+                  bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : 0
+                )
+              ),
             sx: {
               padding: theme.spacing(1),
             },
@@ -147,10 +165,14 @@ export const DepositForm: React.FC<DepositFormProps> = ({
             label: "Amount",
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : new BigNumber(0)} ${principalSymbol} Bonds`,
+              balance: `${
+                bond.selectedBondOffer
+                  ? bond.selectedBondOffer.nbOfBonds
+                  : new BigNumber(0)
+              } ${principalSymbol} Bonds`,
             },
           }}
-          disabled={soldout}
+          disabled={soldOut}
         />
       </Box>
       <Box mt={3}>
@@ -164,37 +186,46 @@ export const DepositForm: React.FC<DepositFormProps> = ({
           {buttonText}
         </Button>
       </Box>
-      <Box mt={6} sx={{ opacity: soldout ? "50%" : "100%" }}>
-        <Label {...defaultLabelProps("Your balance", `${principalBalance.toFixed(2)} ${principalSymbol}`)} />
+      <Box mt={6} sx={{ opacity: soldOut ? "50%" : "100%" }}>
+        <Label
+          {...defaultLabelProps(
+            "Your balance",
+            `${principalBalance.toFixed(2)} ${principalSymbol}`
+          )}
+        />
         <Label
           {...defaultLabelProps(
             "You will get",
-            `${youWillGet.toFixed(2)} ${
-              rewardAsset?.symbol
-            }`
+            `${youWillGet.toFixed(2)} ${rewardAsset?.symbol}`
           )}
+          mt={2}
+        />
+        <Label
+          {...defaultLabelProps("Max you can buy", `${maxYouCanBuy}`)}
           mt={2}
         />
         <Label
           {...defaultLabelProps(
-            "Max you can buy",
-            `${maxYouCanBuy}`
+            "Vesting period",
+            vestingTime
           )}
           mt={2}
         />
         <Label
-          {...defaultLabelProps("Vesting period", bond.vestingPeriod ? bond.vestingPeriod : "0")}
-          mt={2}
-        />
-        <Label
-          {...defaultLabelProps("ROI", `${bond.roi.toNumber()}%`)}
+          {...defaultLabelProps("ROI", `${bond.roi.toFixed(DEFAULT_UI_FORMAT_DECIMALS)}%`)}
           mt={2}
         />
       </Box>
       <PreviewPurchaseModal
         onPurchaseBond={onPurchaseBond}
         bond={bond}
-        rewardableTokens={bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds.toString() : "0"}
+        rewardableTokens={
+          bond.selectedBondOffer
+            ? bond.selectedBondOffer.reward.amount.div(
+                bond.selectedBondOffer.nbOfBonds
+              )
+            : new BigNumber(0)
+        }
         amount={amount}
         setAmount={setAmount}
         open={isOpenPreviewPurchaseModal}

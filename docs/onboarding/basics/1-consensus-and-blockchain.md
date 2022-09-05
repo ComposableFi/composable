@@ -2,7 +2,7 @@
 
 The term is quite overloaded and can refer to several different things, such as:
 
-- The data structure represents blocks of data connected by hashes through [headerdata](https://www.oreilly.com/library/view/mastering-bitcoin/9781491902639/ch07.html). We consider this the most naive definition, as the data structure is not novel, and does not encapsulate any of the core concepts. Unknowledgable developers might misconstrue it with a fancy, persistent [linked list](https://www.geeksforgeeks.org/data-structures/linked-list/).
+- The data structure represents blocks of data connected by hashes through [header data](https://www.oreilly.com/library/view/mastering-bitcoin/9781491902639/ch07.html). We consider this the most naive definition, as the data structure is not novel, and does not encapsulate any of the core concepts. Unknowledgable developers might misconstrue it with a fancy, persistent [linked list](https://www.geeksforgeeks.org/data-structures/linked-list/).
 - A decentralized network of nodes, using a blockchain data structure to maintain a shared database. This is the more sophisticated definition, and better expresses the amount of technological innovation. Other examples of decentralized networks not based on a blockchain data structure include torrent networks, which still use [peer-to-peer networks](https://www.geeksforgeeks.org/what-is-p2ppeer-to-peer-process/). When we talk about blockchain within Composable, we usually refer to this definition.
 - A collection of different decentralized technologies, such as wallets, zero-knowledge proofs, and smart contracts. Often when we speak about **'the blockchain revolution"**, this is what we mean.
 
@@ -25,7 +25,7 @@ One question that every merchant asks is: when do I know that a payment will no 
 > *Note*
 > Is Bitcoin's finality probabilistic or deterministic?
 
-[![Finality in Blockchain Consensus - by Alexis Gauba - Mechnism Labs & She256](https://img.youtube.com/vi/efyiPhZvqOA/maxresdefault.jpg)](https://youtu.be/efyiPhZvqOA)
+[![Finality in Blockchain Consensus - by Alexis Gauba - Mechanism Labs & She256](https://img.youtube.com/vi/efyiPhZvqOA/maxresdefault.jpg)](https://youtu.be/efyiPhZvqOA)
 
 ### Takeaways
 

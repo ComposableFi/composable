@@ -31,6 +31,7 @@ export type PreviewModalProps = {
   feeCharged: BigNumber;
   minimumReceived: BigNumber;
   spotPrice: BigNumber;
+  priceImpact: BigNumber;
   onConfirmSwap: () => void;
 } & ModalProps;
 
@@ -43,6 +44,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   minimumReceived,
   feeCharged,
   spotPrice,
+  priceImpact,
   onConfirmSwap,
   ...modalProps
 }) => {
@@ -146,6 +148,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
 
         <SwapSummary
           mt={4}
+          priceImpact={priceImpact}
           quoteAssetAmount={quoteAmount}
           baseAsset={baseAsset}
           quoteAsset={quoteAsset}

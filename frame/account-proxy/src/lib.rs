@@ -195,7 +195,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Dispatch the given `call` from an account that the sender is authorised for through
+		/// Dispatch the given `call` from an account that the sender is authorized for through
 		/// `add_proxy`.
 		///
 		/// Removes any corresponding announcement(s).

@@ -183,7 +183,7 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		_counterparty: &Counterparty,
 		_version: &Version,
 	) -> Result<(), Ics04Error> {
-		log::info!("Channel initialised");
+		log::info!("Channel initialized");
 		Ok(())
 	}
 
@@ -198,7 +198,7 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		_version: &Version,
 		counterparty_version: &Version,
 	) -> Result<Version, Ics04Error> {
-		log::info!("Channel initialised {:?}, {:?}, {:?}", channel_id, port_id, counterparty);
+		log::info!("Channel initialized {:?}, {:?}, {:?}", channel_id, port_id, counterparty);
 		Ok(counterparty_version.clone())
 	}
 
@@ -276,7 +276,7 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		packet: &Packet,
 		_relayer: &Signer,
 	) -> Result<(), Ics04Error> {
-		log::info!("Timout Packet {:?}", packet);
+		log::info!("Timeout Packet {:?}", packet);
 		Ok(())
 	}
 }

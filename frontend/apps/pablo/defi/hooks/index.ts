@@ -4,3 +4,4 @@ export * from "./bonds";
 export * from "./swaps";
 export * from "./createNamedHook";
 export * from "./useBlockInterval";
+export * from "./vesting";

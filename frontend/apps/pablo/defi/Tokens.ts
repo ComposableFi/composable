@@ -37,7 +37,7 @@ export const TOKENS: { [key in TokenId]: Token } = {
     id: "dot",
     icon: "/tokens/polkadot.svg",
     symbol: "DOT",
-    name: "Pokadot",
+    name: "Polkadot",
   },
   uni: {
     id: "uni",

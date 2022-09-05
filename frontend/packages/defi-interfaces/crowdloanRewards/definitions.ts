@@ -143,7 +143,6 @@ export default {
     FrameSupportScheduleLookupError: "Null",
     PalletLiquidationsLiquidationStrategyConfiguration: "Null",
     CommonMosaicRemoteAssetId: "Null",
-    ComposableTraitsDexConsantProductPoolInfo: "Null",
     ComposableTraitsLendingMarketConfig: "Null",
     ComposableTraitsLendingCreateInput: "Null",
     ComposableTraitsLendingUpdateInput: "Null",
@@ -197,6 +196,5 @@ export default {
     IbcTransferTransferParams: "Null",
     ComposableTraitsOracleRewardTracker: "Null",
     ComposableTraitsStakingStake: "Null"
-
   }
 };

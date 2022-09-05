@@ -65,8 +65,8 @@ export interface ComposableTraitsDefiSell extends Null {}
 /** @name ComposableTraitsDefiTake */
 export interface ComposableTraitsDefiTake extends Null {}
 
-/** @name ComposableTraitsDexConsantProductPoolInfo */
-export interface ComposableTraitsDexConsantProductPoolInfo extends Null {}
+/** @name ComposableTraitsDexConstantProductPoolInfo */
+export interface ComposableTraitsDexConstantProductPoolInfo {}
 
 /** @name ComposableTraitsDexConstantProductPoolInfo */
 export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {
@@ -402,5 +402,14 @@ export interface SpTrieStorageProof extends Null {}
 
 /** @name XcmVersionedMultiAsset */
 export interface XcmVersionedMultiAsset extends Null {}
+
+/** @name ComposableTraitsVestingVestingSchedule */
+export interface ComposableTraitsVestingVestingSchedule extends Null {}
+
+/** @name ComposableTraitsVestingVestingScheduleIdSet */
+export interface ComposableTraitsVestingVestingScheduleIdSet extends Null {}
+
+/** @name ComposableTraitsVestingVestingScheduleInfo */
+export interface ComposableTraitsVestingVestingScheduleInfo extends Null {}
 
 export type PHANTOM_CROWDLOANREWARDS = 'crowdloanRewards';

@@ -8,13 +8,13 @@ use sp_runtime::traits::AccountIdConversion;
 
 use crate::{env_logger_init, kusama_test_net::SIBLING_PARA_ID, prelude::*};
 
-// TODO: make marco of it
+// TODO: make macro of it
 pub fn simtest() {
 	crate::kusama_test_net::KusamaNetwork::reset();
 	env_logger_init();
 }
 
-/// create account ids from test paraid
+/// create account ids from test para id
 pub fn para_account_id(id: u32) -> AccountId {
 	ParaId::from(id).into_account_truncating()
 }

@@ -15,6 +15,7 @@ import {
 import { TokenAsset } from "@/components";
 import { dateFromNumber, formatDate } from "shared";
 import { useStore } from "@/stores/root";
+import { OpenPosition } from "@/stores/defi/staking";
 
 export const StakingPortfolio: FC = () => {
   const theme = useTheme();
@@ -39,7 +40,7 @@ export const StakingPortfolio: FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {openPositions.map((item, key) => (
+              {openPositions.map((item: OpenPosition, key: number) => (
                 <TableRow key={key}>
                   <TableCell>
                     <TokenAsset tokenId={"pica"} label={item.id} />

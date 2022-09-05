@@ -234,7 +234,7 @@ impl pallet_dutch_auction::Config for Runtime {
 }
 
 parameter_types! {
-	pub const LiquidationPalletId : PalletId = PalletId(*b"liqudatn");
+	pub const LiquidationPalletId : PalletId = PalletId(*b"liquidat");
 }
 
 type LiquidationStrategyId = u32;
@@ -267,10 +267,10 @@ pub fn new_test_externalities() -> sp_io::TestExternalities {
 	)
 	.unwrap();
 
-	let mut externatlities = sp_io::TestExternalities::new(storage);
-	externatlities.execute_with(|| {
+	let mut externalities = sp_io::TestExternalities::new(storage);
+	externalities.execute_with(|| {
 		System::set_block_number(42);
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 	});
-	externatlities
+	externalities
 }

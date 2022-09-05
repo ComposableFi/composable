@@ -125,7 +125,7 @@ pub mod pallet {
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
 	pub(crate) type ContractInfoOf<T> =
 		ContractInfo<AccountIdOf<T>, ContractLabelOf<T>, ContractTrieIdOf<T>>;
-	pub(crate) type CodeInfoOf<T> = CodeInfo<AccountIdOf<T>>;
+	pub(crate) type CodeInfoOf<T> = CodeInfo<AccountIdOf<T>, CodeHashOf<T>>;
 
 	#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, Debug)]
 	pub enum EntryPoint {
@@ -259,7 +259,7 @@ pub mod pallet {
 		#[pallet::constant]
 		type CodeStorageByteDeposit: Get<u32>;
 
-		/// Price of writting a byte in the storage.
+		/// Price of writing a byte in the storage.
 		#[pallet::constant]
 		type ContractStorageByteWritePrice: Get<u32>;
 
@@ -327,7 +327,7 @@ pub mod pallet {
 	/// A mapping between an original code hash and its metadata.
 	#[pallet::storage]
 	pub(crate) type CodeIdToInfo<T: Config> =
-		StorageMap<_, Twox64Concat, CosmwasmCodeId, CodeInfo<AccountIdOf<T>>>;
+		StorageMap<_, Twox64Concat, CosmwasmCodeId, CodeInfoOf<T>>;
 
 	/// A mapping between a code hash and it's unique ID.
 	#[pallet::storage]
@@ -378,7 +378,7 @@ pub mod pallet {
 		///
 		/// * Emits an `Instantiated` event on success.
 		/// * Emits an `Executed` event.
-		/// * Possibily emit `Emitted` events.
+		/// * Possibly emit `Emitted` events.
 		///
 		/// Arguments
 		///
@@ -419,7 +419,7 @@ pub mod pallet {
 		/// Execute a previously instantiated contract.
 		///
 		/// * Emits an `Executed` event.
-		/// * Possibily emit `Emitted` events.
+		/// * Possibly emit `Emitted` events.
 		///
 		/// Arguments
 		///
@@ -446,17 +446,17 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		/// Deterministic contract address computation, equivalent to solidity CREATE2.
+		/// Deterministic contract address computation, similar to https://eips.ethereum.org/EIPS/eip-1014.
 		pub(crate) fn derive_contract_address(
 			instantiator: &AccountIdOf<T>,
-			code_id: CosmwasmCodeId,
 			salt: &[u8],
+			code_hash: CodeHashOf<T>,
 		) -> AccountIdOf<T> {
 			let data: Vec<_> = instantiator
 				.as_ref()
 				.iter()
-				.chain(&code_id.to_le_bytes())
 				.chain(salt)
+				.chain(code_hash.as_ref())
 				.cloned()
 				.collect();
 			UncheckedFrom::unchecked_from(T::Hashing::hash(&data))
@@ -483,7 +483,10 @@ pub mod pallet {
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
 		) -> Result<(AccountIdOf<T>, ContractInfoOf<T>), Error<T>> {
-			let contract = Self::derive_contract_address(&instantiator, code_id, salt);
+			let code_hash = CodeIdToInfo::<T>::get(code_id)
+				.ok_or(Error::<T>::CodeNotFound)?
+				.pristine_code_hash;
+			let contract = Self::derive_contract_address(&instantiator, salt, code_hash);
 			ensure!(
 				!ContractToInfo::<T>::contains_key(&contract),
 				Error::<T>::ContractAlreadyExists
@@ -509,7 +512,7 @@ pub mod pallet {
 		/// Create the shared VM state. Including readonly stack, VM depth, gas metering limits and
 		/// code cache.
 		///
-		/// This state is shared accross all VMs (all contracts loaded within a single call) and is
+		/// This state is shared across all VMs (all contracts loaded within a single call) and is
 		/// used to optimize some operations as well as track shared state (readonly storage while
 		/// doing a `query` etc...)
 		pub(crate) fn do_create_vm_shared(
@@ -812,7 +815,7 @@ pub mod pallet {
 		}
 
 		/// Check whether the instrumented code of a contract is up to date.
-		/// If the instrumentation is outdated, re-instrument the pristive code.
+		/// If the instrumentation is outdated, re-instrument the pristine code.
 		pub(crate) fn do_check_for_reinstrumentation(
 			code_id: CosmwasmCodeId,
 		) -> Result<(), Error<T>> {
@@ -852,12 +855,14 @@ pub mod pallet {
 			let module = Self::do_load_module(&code)?;
 			let instrumented_code = Self::do_instrument_code(module)?;
 			let code_id = CurrentCodeId::<T>::increment()?;
+			CodeHashToId::<T>::insert(code_hash, code_id);
 			PristineCode::<T>::insert(code_id, code);
 			InstrumentedCode::<T>::insert(code_id, instrumented_code);
 			CodeIdToInfo::<T>::insert(
 				code_id,
 				CodeInfoOf::<T> {
 					creator: who.clone(),
+					pristine_code_hash: code_hash,
 					instrumentation_version: Self::INSTRUMENTATION_VERSION,
 					refcount: 0,
 				},
@@ -904,7 +909,7 @@ pub mod pallet {
 			Coin { denom, amount: amount.into() }
 		}
 
-		/// Try to convert from a CosmWasm denom to a native [`AdsetIdOf<T>`].
+		/// Try to convert from a CosmWasm denom to a native [`AssetIdOf<T>`].
 		pub(crate) fn cosmwasm_asset_to_native_asset(
 			denom: String,
 		) -> Result<AssetIdOf<T>, Error<T>> {
@@ -1043,7 +1048,7 @@ pub mod pallet {
 		}
 
 		/// Write an entry from the executing contract, charging the according gas prior to actually
-		/// writting the entry.
+		/// writing the entry.
 		pub(crate) fn do_db_write<'a>(
 			vm: &'a mut CosmwasmVM<T>,
 			key: &[u8],

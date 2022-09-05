@@ -18,7 +18,7 @@ pub mod picasso;
 
 const DEFAULT_PARA_ID: u32 = 2087;
 
-// Parachin ID.
+// Parachain ID.
 static PARA_ID: Lazy<ParaId> = Lazy::new(|| {
 	ParaId::new(
 		std::env::var("COMPOSABLE_PARA_ID")

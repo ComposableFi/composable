@@ -113,7 +113,7 @@ impl<
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
 		// this is for trusted chains origin, see `f` if any
-		// TODO: dicuss if we need payments from Relay chain or common goods chains?
+		// TODO: discuss if we need payments from Relay chain or common goods chains?
 		if weight.is_zero() {
 			return Ok(payment)
 		}
@@ -127,7 +127,7 @@ impl<
 
 		if let AssetId::Concrete(ref multi_location) = xcmp_asset_id.clone() {
 			if let Some(asset_id) = AssetConverter::convert(multi_location.clone()) {
-				// NOTE: we have som many traces cause TooExpensive (as in Acala)
+				// NOTE: we have so many traces cause TooExpensive (as in Acala)
 				// NOTE: no suitable error for now. Could repurpose Trap(u64), but that will violate
 				// documentation
 				let fee = WeightToFeeConverter::weight_to_fee(&weight);
@@ -192,7 +192,7 @@ impl<
 	}
 }
 
-/// is collaed to convert some account id to account id on other network
+/// is called to convert some account id to account id on other network
 /// as of now it is same as in Acala/Hydra
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
@@ -256,10 +256,10 @@ impl<
 	}
 }
 
-// must be non assositated consta to allow for pattern match
+// must be a non-associated const to allow for pattern matching
 pub const RELAY_LOCATION: MultiLocation = MultiLocation { parents: 1, interior: Here };
 
-/// covderts remote asset to local
+/// converts remote asset to local
 /// 1. if remote is origin without key(some identifiers), than it is native token
 /// 2. if origin is parent of this consensus, than this is relay
 /// 2. if origin is this consensus, than it is this native token
@@ -269,7 +269,7 @@ pub const RELAY_LOCATION: MultiLocation = MultiLocation { parents: 1, interior: 
 ///
 /// so:
 /// 1. in some cases origin leads to asset id
-/// 2. in some well know cases remote asset id is statically typed into here (so it is okey to send
+/// 2. in some well know cases remote asset id is statically typed into here (so it is okay to send
 /// their id to us) 3. and in other cases they must map on us, and than send our id to here
 impl<
 		AssetsRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,

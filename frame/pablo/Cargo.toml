@@ -23,7 +23,6 @@ frame-benchmarking = { default-features = false, optional = true, git = "https:/
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 log = { version = "0.4.14", default-features = false }
-primitives = { path = "../../runtime/primitives", default-features = false }
 rust_decimal = { version = "1", default-features = false, features = ["maths"] }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",

@@ -16,7 +16,7 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
   {
     decimals: 12,
     symbol: "KSM",
-    icon: "/networks/ksm.svg",
+    icon: "/tokens/ksm.svg",
     name: "Kusama",
     network: {
       karura: "none",
@@ -40,7 +40,7 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
     name: "Pablo",
     network: {
       karura: "none",
-      picasso: "201",
+      picasso: "5",
     },
   },
   {

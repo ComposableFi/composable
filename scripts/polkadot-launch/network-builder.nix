@@ -2,17 +2,22 @@
 # 
 # package operates in next assumptions:
 # 1. we good to have all nodes to be equal regarding logging/storage/networking per chain
-# 2. alloacte node names equal to owners sudo keys according well know keyring
-# 3. it is possible to allocate range of prots to each node starting from some base
+# 2. allocate node names equal to owners sudo keys according well know keyring
+# 3. it is possible to allocate range of ports to each node starting from some base
 { pkgs }:
 with pkgs;
 let
   default-flags = [
+    "--unsafe-ws-external"
+    "--unsafe-rpc-external"
+    "--rpc-external"
+    "--ws-external"
     "--rpc-cors=all"
-    "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
-    "--"
+    "--rpc-methods=Unsafe"
     "--execution=wasm"
+    "--wasmtime-instantiation-strategy=recreate-instance-copy-on-write"
   ];
+
   default-node-names = [ "alice" "bob" "charlie" "dave" "eve" "ferdie" ];
 in rec {
   mk-node = { port, wsPort, nodeKey, flags, basePath }: {
@@ -64,8 +69,8 @@ in rec {
   # here we can add overrides per spec, example for flags
   mk-parachains = specs: builtins.map mk-parachain specs;
 
-  mk-relaychain =
-    { bin, chain, port, wsPort, count, nodeNames ? default-node-names }:
+  mk-relaychain = { bin, chain, port, wsPort, count
+    , nodeNames ? default-node-names, flags ? [ ] }:
     mk-chain {
       inherit bin;
       inherit chain;
@@ -73,7 +78,11 @@ in rec {
       inherit wsPort;
       inherit count;
       inherit nodeNames;
-      flags = [ "--rpc-cors=all" "--beefy" "--enable-offchain-indexing=true" ];
+      flags = let
+        mandatory-flags =
+          [ "--rpc-cors=all" "--beefy" "--enable-offchain-indexing=true" ];
+      in mandatory-flags
+      ++ builtins.filter (flag: !(builtins.elem flag mandatory-flags)) flags;
     };
 
   mk-shared-security-network = { parachains, relaychain }: {

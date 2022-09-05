@@ -122,9 +122,9 @@ export const DotSamaContextProvider = ({
       let extension = window.injectedWeb3[walletId];
       if (!extension) throw new Error("Extension not installed.");
 
-      injectedExtension = (await extension.enable(
+      injectedExtension = await extension.enable(
         appName
-      )) as InjectedExtension;
+      );
     } catch (e) {
       console.error(e);
       extensionError = e;
@@ -137,7 +137,7 @@ export const DotSamaContextProvider = ({
 
     setExtensionStatus("connected");
     localStorage.setItem("wallet-id", walletId);
-    setInjectedExtension(injectedExtension);
+    setInjectedExtension(injectedExtension as InjectedExtension);
 
     for (let i = 0; i < supportedParachains.length; i++) {
       const { chainId } = supportedParachains[i];
