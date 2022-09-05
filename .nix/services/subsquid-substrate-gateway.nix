@@ -1,4 +1,4 @@
-{
+{database, port}: {
   service = {
     name = "subsquid-substrate-gateway";
     image = "subsquid/substrate-gateway:firesquid";
@@ -14,11 +14,11 @@
       # HYDRA_INDEXER_STATUS_SERVICE = "http://${status}:8081/status";
     };
     command = [
-        "--database-url" "postgres://postgres:postgres@db:5432/squid-archive"
+        "--database-url" (import ../util/db-url.nix database)
         "--database-max-connections" "3" # max number of concurrent database connections
-        "--evm-support" # uncomment for chains with Frontier EVM pallet
+        # "--evm-support" # uncomment for chains with Frontier EVM pallet
         # (e.g. Moonbeam/Moonriver or Astar/Shiden) 
     ];
-    ports = [ "8888:8888" ];
+    ports = [ "${toString port}:8000" ];
   };
 }
