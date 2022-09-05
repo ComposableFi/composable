@@ -12251,7 +12251,7 @@ dependencies = [
 [[package]]
 name = "sc-consensus-manual-seal"
 version = "0.10.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27#8eff668a42325aeb4433eace1604f4d286a6ec05"
+source = "git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.27#9b9e2a225fc4c3ac99c7c34f957078033eec3cc0"
 dependencies = [
  "assert_matches",
  "async-trait",
