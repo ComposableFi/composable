@@ -2,7 +2,10 @@ use crate::pallet::Config;
 use composable_traits::defi::DeFiComposableConfig;
 use frame_support::pallet_prelude::*;
 use sp_runtime::FixedU128;
-use sp_std::fmt::Debug;
+use sp_std::{
+	fmt::{Debug, Display},
+	str::FromStr,
+};
 
 /// Used to count the calls in [`Pallet::initialize_block`]. Each field corresponds to a
 /// function call to count.
@@ -51,6 +54,23 @@ pub struct MarketId(
 impl MarketId {
 	pub fn new(i: u32) -> Self {
 		Self(i)
+	}
+}
+
+impl FromStr for MarketId {
+	type Err = &'static str;
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		const ERROR: &str = "Parse MarketId error";
+		u128::from_str(s)
+			.map_err(|_| ERROR)
+			.and_then(|id| id.try_into().map(MarketId).map_err(|_| ERROR))
+	}
+}
+
+impl Display for MarketId {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		let MarketId(id) = self;
+		write!(f, "{}", id)
 	}
 }
 
