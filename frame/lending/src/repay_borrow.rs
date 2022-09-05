@@ -9,6 +9,7 @@ use crate::Config;
 /// Release given `amount` of `debt_token` from `beneficiary_account`, transfer `amount` from
 /// `payer_account` to `market_account`, and then burn `amount` of `debt_token` from
 /// `beneficiary_account`.
+#[allow(dead_code)]
 pub(crate) fn repay_principal<'a, T: Config>(
 	// The borrowed asset being repaid.
 	borrow_asset: <T as DeFiComposableConfig>::MayBeAssetId,
@@ -64,6 +65,7 @@ pub(crate) fn repay_principal<'a, T: Config>(
 ///
 /// Transfers `amount` of `borrow_asset` from `payer_account` to `market_account`,
 /// and then burns the same `amount` of `debt_asset` from `market_account`.
+#[allow(dead_code)]
 pub(crate) fn pay_interest<'a, T: Config>(
 	// The borrowed asset.
 	//
