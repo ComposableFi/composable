@@ -58,11 +58,6 @@ mod benchmarking;
 #[cfg(any(feature = "runtime-benchmarks", test))]
 pub mod currency;
 
-/// Various helpers used in the implementation of [`Lending::repay_borrow`].
-///
-/// [`Lending::repay_borrow`]: composable_traits::lending::Lending::repay_borrow
-mod repay_borrow;
-
 #[frame_support::pallet]
 pub mod pallet {
 
