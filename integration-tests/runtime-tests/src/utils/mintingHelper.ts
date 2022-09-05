@@ -38,7 +38,7 @@ export async function mintAssetsToWallet(
 }
 
 /***
- * Returns the passed amount as 12 decimal tokens for better readibility
+ * Returns the passed amount as 12 decimal tokens for better readability
  * @param Accepts either string or number
  * @returns valid tokens with 12 decimals omitted
  */

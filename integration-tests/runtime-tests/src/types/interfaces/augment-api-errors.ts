@@ -489,7 +489,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       EncodingError: AugmentedError<ApiType>;
       /**
-       * Invalid message for extirnsic
+       * Invalid message for extrinsic
        **/
       InvalidMessageType: AugmentedError<ApiType>;
       /**

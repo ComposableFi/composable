@@ -219,7 +219,7 @@ pub fn create_simple_market() -> (MarketId, VaultId) {
 
 /// Create a market with BTC as collateral asset and USDT as borrow asset.
 /// Initial collateral asset price is `50_000` USDT. Market's collateral factor equals two.
-/// It means that borrow supposed to be undercolateraized when
+/// It means that borrow supposed to be undercollateralized when
 /// borrowed amount is higher then one half of collateral amount in terms of USDT.
 pub fn create_market_for_liquidation_test<T>(manager: T::AccountId) -> (crate::MarketId, T::VaultId)
 where

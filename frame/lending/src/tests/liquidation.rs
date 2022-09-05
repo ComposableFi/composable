@@ -70,7 +70,7 @@ fn test_max_liquidation_batch_size_exceeded() {
 }
 
 #[test]
-fn test_liquidation_storage_transcation_rollback() {
+fn test_liquidation_storage_transaction_rollback() {
 	new_test_ext().execute_with(|| {
 		let manager = *ALICE;
 		let lender = *CHARLIE;
@@ -293,7 +293,7 @@ fn market_owner_cannot_retroactively_liquidate() {
 			liquidators: vec![],
 			max_price_age: DEFAULT_MAX_PRICE_AGE,
 		};
-		// ALICE is the creater of the market.
+		// ALICE is the creator of the market.
 		assert_noop!(
 			Lending::update_market(Origin::signed(*ALICE), market_id, updatable),
 			Error::<Runtime>::CannotIncreaseCollateralFactorOfOpenMarket

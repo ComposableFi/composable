@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-export function secondsToDHMS(seconds: number) {
+export function secondsToDhms(seconds: number) {
   seconds = Number(seconds);
   const d = Math.floor(seconds / (3600 * 24));
   const h = Math.floor((seconds % (3600 * 24)) / 3600);

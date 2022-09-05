@@ -25,7 +25,7 @@ impl ComposableFeed {
 		assets: &HashSet<(Asset, Asset)>,
 	) -> FeedResult<Feed<FeedIdentifier, Asset, TimeStampedPrice>> {
 		let (sink, source) = mpsc::channel(CHANNEL_BUFFER_SIZE);
-		// Notifiy feed started
+		// Notify feed started
 		sink.send(FeedNotification::Started { feed: FeedIdentifier::Composable })
 			.await
 			.map_err(|_| FeedError::ChannelIsBroken)?;

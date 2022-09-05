@@ -32,7 +32,7 @@ export const StakeForm: React.FC<BoxProps> = ({
     //TODO: handling stake action
     dispatch(setMessage(
       {
-        title: "Transaction successfull",
+        title: "Transaction successful",
         text: "Stake and mint confirmed",
         link: "/",
         severity: "success",

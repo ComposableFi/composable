@@ -19,7 +19,7 @@ export function decodeBondOffer(offer: any, index: number): BondOffer {
       : "Infinite",
     reward: {
       amount: fromChainUnits(bondOffer.reward.amount),
-      asset: new BigNumber(bondOffer.reward.asset).toString(), // assetid
+      asset: new BigNumber(bondOffer.reward.asset).toString(), // asset id
       maturity: new BigNumber(bondOffer.reward.maturity),
     },
   };

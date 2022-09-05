@@ -22,7 +22,7 @@
 - [Centauri](./products/centauri-overview.md)
     - [Light Clients](./products/centauri/light-clients.md)
     - [Merkle Mountain Ranges](./products/centauri/merkle-mountain-ranges.md)
-    - [The 11-BEEFY COSMOS-IBC Light Client](./products/centauri/cosmos11-BEEFY-COSMOS-IBC-ligh-client.md)
+    - [The 11-BEEFY COSMOS-IBC Light Client](./products/centauri/cosmos11-BEEFY-COSMOS-IBC-light-client.md)
     - [Expanding the IBC Protocol](./products/centauri/expanding-ibc-protocol.md)
 - [Mosaic](./products/mosaic-overview.md)
     - [The Dynamic Fee Model](./products/mosaic/dynamic-fee-model.md)
@@ -41,7 +41,7 @@
     - [How it Works](./products/apollo/apollo-how-it-works.md)
     - [Apollo Deployment](./products/apollo/apollo-deployment.md)
 - [Cubic](./products/cubic/cubic.md)
-    - [Additional Details](./products/cubic/addtional-details.md)
+    - [Additional Details](./products/cubic/additional-details.md)
 - [Pablo](./products/pablo-overview.md)
     - [Swaps/Trading](./products/pablo/swaps-trading.md)
     - [Liquidity provision](./products/pablo/liquidity-provision.md)
@@ -74,7 +74,7 @@
     - [assets](./pallets/assets.md)
         - [Extrinsics](./pallets/assets/extrinsics.md)
     - [bonded-finance](./pallets/bonded-finance.md)
-        - [Extrinsiscs](./pallets/bonded-finance/extrinsics.md)
+        - [Extrinsics](./pallets/bonded-finance/extrinsics.md)
     - [crowdloan-rewards](./pallets/crowdloan-rewards.md)
         - [Extrinsics](./pallets/crowdloan-rewards/extrinsics.md)
     - [currency-factory](./pallets/currency-factory.md)
@@ -112,4 +112,3 @@
 # ❓ FAQS
 - [FAQs](./faqs/faqs.md)
 - [Risks & Disclosures](./faqs/risks-disclosures.md)
-

@@ -23,7 +23,7 @@
 ///
 ///  incoming -> waiting til lock_time expires -> claiming
 ///
-///  incoming -> wainting for a block -> relayer cancels transfer (finality issue) -> we should
+///  incoming -> waiting for a block -> relayer cancels transfer (finality issue) -> we should
 /// no longer be able to claim
 ///
 ///
@@ -651,7 +651,7 @@ mod timelocked_mint {
 				// When mint the first part of the budget, it should be fine.
 				prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), network_id, remote_asset_id, account_a, first_part, 0, Default::default()));
 				// The new penalised_budget should be budget - first_part.
-				// Whenwe mint the second part of the budget, it should be fine because it matches the penalised_budget.
+				// When we mint the second part of the budget, it should be fine because it matches the penalised_budget.
 				prop_assert_ok!(Mosaic::timelocked_mint(Origin::relayer(), network_id, remote_asset_id, account_a, second_part, 0, Default::default()));
 
 				Ok(())

@@ -11,7 +11,7 @@ Create a new lending market.
 
 * `origin` : Sender of this extrinsic. Manager for new market to be created. Can pause
   borrow operations.
-* `input`   : Borrow & deposits of assets, persentages.
+* `input`   : Borrow & deposits of assets, percentages.
 
 `origin` irreversibly pays `T::OracleMarketCreationStake`.
 

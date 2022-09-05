@@ -17,6 +17,7 @@ fn can_update_market() {
 		let ((market_id, _), _) = create_simple_vaulted_market(BTC::instance(), manager);
 		// Get the market from the storage via market id
 		let market = crate::Markets::<Runtime>::get(market_id).unwrap();
+		println!("collateral factor: {:?}", market.collateral_factor);
 		let update_input = UpdateInput {
 			collateral_factor: market.collateral_factor,
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
@@ -121,7 +122,7 @@ fn can_create_valid_market() {
             assert_eq!(
                 alice_balance_after_market_creation,
                 INITIAL_BORROW_ASSET_AMOUNT - initial_market_volume,
-                "ALICE should have 'paid' the inital_pool_size into the market vault.
+                "ALICE should have 'paid' the initial_pool_size into the market vault.
                 alice_balance_after_market_creation: {alice_balance_after_market_creation}
                 initial_market_volume: {initial_market_volume}",
                 alice_balance_after_market_creation = alice_balance_after_market_creation,
@@ -248,7 +249,7 @@ fn can_create_valid_market_with_keep_alive() {
             assert_eq!(
                 alice_balance_after_market_creation,
                 INITIAL_BORROW_ASSET_AMOUNT - initial_market_volume,
-                "ALICE should have 'paid' the inital_pool_size into the market vault.
+                "ALICE should have 'paid' the initial_pool_size into the market vault.
                 alice_balance_after_market_creation: {alice_balance_after_market_creation}
                 initial_market_volume: {initial_market_volume}",
                 alice_balance_after_market_creation = alice_balance_after_market_creation,

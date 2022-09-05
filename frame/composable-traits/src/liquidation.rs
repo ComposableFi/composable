@@ -22,7 +22,7 @@ pub trait Liquidation: DeFiEngine {
 
 /// generic transaction which can target any pallet and any method in any parachain (local or
 /// remote)
-/// so it must be encoded in format with widest possible values to incoroporate some chains we do
+/// so it must be encoded in format with widest possible values to incorporate some chains we do
 /// now (similar on how XCM is modelled)
 #[derive(Encode)]
 pub struct XcmLiquidation<AssetId> {

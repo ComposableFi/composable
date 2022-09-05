@@ -139,10 +139,10 @@ export function calculateVestingState(
         claimable
       } = calculateClaimableAt(bondedOfferSchedules[c][0], blockNumber);
 
-      let miliSecondsSinceVestingStart = new BigNumber(0);
+      let milliSecondsSinceVestingStart = new BigNumber(0);
       if (bondedOfferSchedules[c].length > 0) {
         if(bondedOfferSchedules[c][0].window.start.lt(blockNumber)) {
-          miliSecondsSinceVestingStart = blockInterval.times(
+          milliSecondsSinceVestingStart = blockInterval.times(
             blockNumber.minus(bondedOfferSchedules[c][0].window.start)
           )
         }
@@ -155,7 +155,7 @@ export function calculateVestingState(
           netRewards: totalVested,
           claimable,
           pendingRewards,
-          miliSecondsSinceVestingStart,
+          milliSecondsSinceVestingStart: milliSecondsSinceVestingStart,
         } as BondedOfferVestingState
       };
     },
