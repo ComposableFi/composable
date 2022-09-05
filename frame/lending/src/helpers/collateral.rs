@@ -69,7 +69,7 @@ impl<T: Config> Pallet<T> {
 			market
 				.collateral_factor
 				.try_into_validated()
-				.map_err(|_| ArithmeticError::Overflow)?, // TODO: Use a proper error mesage?
+				.map_err(|_| ArithmeticError::Overflow)?, // TODO: Use a proper error message?
 			market.under_collateralized_warn_percent,
 		);
 

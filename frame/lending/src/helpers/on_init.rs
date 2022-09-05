@@ -24,7 +24,7 @@ impl<T: Config> Pallet<T> {
 					let market_account = Self::account_id(&market_id);
 					call_counters.account_id += 1;
 					// NOTE(hussein-aitlahcen):
-					// It would probably be more perfomant to handle theses
+					// It would probably be more performant to handle theses
 					// case while borrowing/repaying.
 					//
 					// I don't know whether we would face any issue by doing that.
@@ -32,7 +32,7 @@ impl<T: Config> Pallet<T> {
 					// borrow:
 					//  - withdrawable = transfer(vault->market) + transfer(market->user)
 					//  - depositable = error(not enough borrow asset) // vault asking for reserve
-					//    to be fullfilled
+					//    to be fulfilled
 					//  - mustliquidate = error(market is closing)
 					// repay:
 					// 	- (withdrawable || depositable || mustliquidate) = transfer(user->market) +

@@ -62,7 +62,7 @@ impl<T: Config> Pallet<T> {
 
 			ensure!(
 				initial_market_volume > T::Balance::zero(),
-				Error::<T>::IntitialMakretVolumeIncorrect
+				Error::<T>::IntitialMarketVolumeIncorrect
 			);
 
 			// transfer `initial_market_volume` worth of borrow asset from the manager to the market
@@ -125,7 +125,7 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Returns pair of market's id and market (as 'MarketConfing') via market's id
+	/// Returns pair of market's id and market (as 'MarketConfig') via market's id
 	/// - `market_id` : Market index as a key in 'Markets' storage
 	pub(crate) fn get_market(
 		market_id: &MarketId,

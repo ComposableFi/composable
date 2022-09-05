@@ -375,7 +375,7 @@ pub mod pallet {
 		},
 		/// Event emitted when collateral is deposited.
 		CollateralDeposited { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
-		/// Event emitted when collateral is withdrawed.
+		/// Event emitted when collateral is withdrawn.
 		CollateralWithdrawn { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
 		/// Event emitted when user borrows from given market.
 		Borrowed { sender: T::AccountId, market_id: MarketId, amount: T::Balance },
@@ -434,7 +434,7 @@ pub mod pallet {
 		/// Market manager has to deposit initial amount of borrow asset into the market account.
 		/// Initial amount is denominated in normalized currency and calculated based on data
 		/// from Oracle. The error is emitted if calculated amount is incorrect.
-		IntitialMakretVolumeIncorrect,
+		IntitialMarketVolumeIncorrect,
 		/// A market with a borrow balance of `0` was attempted to be repaid.
 		CannotRepayZeroBalance,
 		/// Cannot repay more than total amount of debt when partially repaying.
