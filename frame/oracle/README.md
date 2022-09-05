@@ -1,6 +1,8 @@
 # Apollo
 
-The Oracle pallet provides functionality for setting up and maintaining an Apollo oracle and submitting prices.
+The Oracle pallet provides functionality for setting up and maintaining an Apollo Oracle and submitting prices.
+
+---
 
 ## Overview
 
@@ -20,7 +22,7 @@ Setting up an Oracle for operation requires three steps:
 3. `adjust_rewards` to configure rewards for Oracles
 
 After successfully setting up the Oracle, you can submit prices using the `submit_price` extrinsic.
-For more information refer to the [Oracle Set Up Guide](../../book/src/developer-guides/oracle-set-up-guide/oracle-set-up-guide.md)
+For more information refer to the [Oracle Set-Up Guide](https://docs.composable.finance/developer-guides/oracle-set-up-guide/oracle-set-up-guide.html)
 
 ### Stake Management
 
@@ -28,3 +30,8 @@ The Oracle pallet provides basic functionalities to manage the stake needed to r
 - `add_stake` to add more stake
 - `remove_stake` claim to remove stake immediately
 - `reclaim_stake` reclaim stake after proper time has passed
+
+## References
+
+- [Apollo](https://docs.composable.finance/products/apollo-overview.html)
+- [Design Documentation](https://github.com/ComposableFi/composable/blob/main/frame/oracle/design/design.md)
