@@ -26,11 +26,14 @@ pub(crate) const fn block_seconds(amount_of_blocks: u64) -> u128 {
 
 pub(crate) const ONE_YEAR_OF_BLOCKS: u64 = 60 * 60 * 24 * 365 / (block_seconds(1) as u64);
 
+/// Mock ID for staking fNFT collection
+pub(crate) const STAKING_FNFT_COLLECTION_ID: CurrencyId = 1;
+
 // helpers
 
 pub(crate) fn add_to_rewards_pot_and_assert(
 	who: <Test as frame_system::Config>::AccountId,
-	pool_id: <Test as crate::Config>::RewardPoolId,
+	pool_id: <Test as crate::Config>::AssetId,
 	asset_id: <Test as crate::Config>::AssetId,
 	amount: <Test as crate::Config>::Balance,
 ) {
@@ -42,7 +45,7 @@ pub(crate) fn add_to_rewards_pot_and_assert(
 
 pub(crate) fn create_rewards_pool_and_assert(
 	reward_config: RewardPoolConfigurationOf<Test>,
-) -> <Test as crate::Config>::RewardPoolId {
+) -> <Test as crate::Config>::AssetId {
 	assert_ok!(StakingRewards::create_reward_pool(Origin::root(), reward_config.clone()));
 
 	match System::events().last().expect("no events present").event {

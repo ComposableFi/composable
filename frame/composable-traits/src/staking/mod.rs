@@ -133,12 +133,12 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 
 	// possible lock config for this pool
 	pub lock: LockConfig<DurationPresets>,
-	// TODO (vim): Introduce asset ids for financial NFT as well as the shares of the pool
+
 	// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
-	// pub share_asset_id: AssetId;
+	pub share_asset_id: AssetId,
 
 	// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
-	// pub financial_nft_asset_id: AssetId;
+	pub financial_nft_asset_id: AssetId,
 }
 
 /// Default transfer limit on new asset added as rewards.
@@ -179,12 +179,10 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 		reward_configs: RewardConfigs,
 		// possible lock config for this reward
 		lock: LockConfig<DurationPresets>,
-		// TODO (vim): Introduce asset ids for financial NFT as well as the shares of the pool
 		// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
-		// share_asset_id: AssetId,
-
+		share_asset_id: AssetId,
 		// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
-		// financial_nft_asset_id: AssetId
+		financial_nft_asset_id: AssetId,
 	},
 }
 
@@ -195,7 +193,7 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
 	/// Protocol or the user account that owns this stake
 	// TODO (vim): Remove the owner and track the financial NFT ID. In order to prevent a direct
-	// dependancy to NFTs we can also just use nft ID as position ID. 	pub financial_nft_id: ItemId
+	// dependency to NFTs we can also just use nft ID as position ID. 	pub financial_nft_id: ItemId
 	pub owner: AccountId,
 
 	/// Reward Pool ID from which pool to allocate rewards for this
@@ -311,7 +309,7 @@ pub trait Staking {
 	///
 	/// Arguments
 	/// * `who` - the account to transfer the final claimed rewards to.
-	/// * `position` - The uniqely identifying NFT from which we will compute the rewards.
+	/// * `position` - The uniquely identifying NFT from which we will compute the rewards.
 	fn claim(who: &Self::AccountId, position: &Self::PositionId) -> DispatchResult;
 }
 

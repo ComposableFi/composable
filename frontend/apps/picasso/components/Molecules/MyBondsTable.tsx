@@ -18,7 +18,7 @@ import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 
-export type MyBondingsTableProps = TableContainerProps & {
+export type MyBondsTableProps = TableContainerProps & {
   onRowClick?: (offerId: string) => void;
   activeBonds: ActiveBond[];
 };
@@ -79,7 +79,7 @@ export const BondTableRow: FC<{
   );
 };
 
-export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
+export const MyBondsTable: React.FC<MyBondsTableProps> = ({
   activeBonds,
   onRowClick = () => {},
   ...rest

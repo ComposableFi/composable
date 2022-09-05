@@ -2,7 +2,7 @@
 #[allow(clippy::large_enum_variant)]
 #[derive(derive_more::From)]
 pub enum AllRuntimeEvents {
-	/// Picassoo runtime events
+	/// Picasso runtime events
 	Picasso(picasso_runtime::Event),
 	/// Dali runtime events
 	Dali(dali_runtime::Event),

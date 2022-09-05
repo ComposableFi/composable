@@ -1,10 +1,10 @@
 import React from "react";
 import { DotsamaContext } from "../DotSamaContext";
-import { ParachainId, ConntectedAccount } from "../types";
+import { ParachainId, ConnectedAccount } from "../types";
 
 export const useSelectedAccount = (
   parachainId: ParachainId
-): ConntectedAccount | undefined => {
+): ConnectedAccount | undefined => {
   const { selectedAccount, parachainProviders } =
     React.useContext(DotsamaContext);
   const { accounts } = parachainProviders[parachainId];

@@ -52,7 +52,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
   const { rewardAsset } = bond;
   const vestingTime = useBondVestingTime(bond.selectedBondOffer);
-  const { claimable, miliSecondsSinceVestingStart, pendingRewards } =
+  const { claimable, milliSecondsSinceVestingStart, pendingRewards } =
     useBondedOfferVestingState(
       bond.selectedBondOffer ? bond.selectedBondOffer.offerId.toString() : "-"
     );
@@ -122,7 +122,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
           {...defaultLabelProps(
             "Time vested",
             `${moment
-              .duration(miliSecondsSinceVestingStart.toNumber(), "milliseconds")
+              .duration(milliSecondsSinceVestingStart.toNumber(), "milliseconds")
               .humanize()}`
           )}
           mt={2}

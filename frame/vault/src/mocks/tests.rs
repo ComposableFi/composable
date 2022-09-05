@@ -83,6 +83,7 @@ parameter_types! {
 	pub const ExistentialDeposit: Balance = 1000;
 	pub const RentPerBlock: Balance = 1;
 	pub const TestPalletID: PalletId = PalletId(*b"test_pid");
+	// cspell:disable-next
 	pub const StrategyTestPalletID: PalletId = PalletId(*b"sest_pid");
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;

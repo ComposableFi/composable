@@ -41,9 +41,9 @@ use common::{
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
 	BlockNumber, BondOfferId, FinancialNftInstanceId, Hash, MaxStringSize, Moment,
-	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, PriceConverter,
-	RewardPoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT,
-	MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, PriceConverter, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
@@ -485,6 +485,7 @@ parameter_types! {
 	pub const MaxHistory: u32 = 20;
 	pub const MaxPrePrices: u32 = 40;
 	pub const TwapWindow: u16 = 3;
+	// cspell:disable-next
 	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
 	pub const MsPerBlock: u64 = MILLISECS_PER_BLOCK as u64;
 }
@@ -518,7 +519,7 @@ impl oracle::Config for Runtime {
 // Parachain stuff.
 // See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
 parameter_types! {
-	/// 1/4 of blockweight is reserved for XCMP
+	/// 1/4 of block weight is reserved for XCMP
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
 	/// 1/4 of block weight is reserved for handling Downward messages
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT / 4;
@@ -845,12 +846,15 @@ parameter_types! {
 	pub const MaxRewardConfigsPerPool : u32 = 10;
 	pub const PicaAssetId : CurrencyId = CurrencyId::PICA;
 	pub const PbloAssetId : CurrencyId = CurrencyId::PBLO;
+	pub const XPicaAssetId: CurrencyId = CurrencyId::xPICA;
+	pub const XPbloAssetId: CurrencyId = CurrencyId::xPBLO;
+	pub const PicaStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PICA_STAKE_FNFT_COLLECTION;
+	pub const PbloStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PBLO_STAKE_FNFT_COLLECTION;
 }
 
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type RewardPoolId = RewardPoolId;
 	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
@@ -863,10 +867,13 @@ impl pallet_staking_rewards::Config for Runtime {
 	type RewardPoolCreationOrigin = EnsureRootOrHalfNativeCouncil;
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
-	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type FinancialNft = Fnft;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -904,6 +911,7 @@ impl vesting::Config for Runtime {
 }
 
 parameter_types! {
+	// cspell:disable-next
 	pub const BondedFinanceId: PalletId = PalletId(*b"bondedfi");
 	pub MinReward: Balance = 100 * CurrencyId::unit::<Balance>();
 	pub Stake: Balance = 10 * CurrencyId::unit::<Balance>();
@@ -1045,7 +1053,6 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
-	type RewardPoolId = RewardPoolId;
 	type MaxStakingRewardPools = MaxStakingRewardPools;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
@@ -1054,6 +1061,10 @@ impl pablo::Config for Runtime {
 	type MsPerBlock = MillisecsPerBlock;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
+	type XPicaAssetId = XPicaAssetId;
+	type XPbloAssetId = XPbloAssetId;
+	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
+	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 }
 
 parameter_types! {
@@ -1306,8 +1317,10 @@ construct_runtime!(
 		Lending: lending = 64,
 		Pablo: pablo = 65,
 		DexRouter: dex_router = 66,
-		StakingRewards: pallet_staking_rewards = 67,
-		Fnft: pallet_fnft = 68,
+		// Note the ordering below is important as staking rewards genesis
+		// depends on fNFT being initialized before it.
+		Fnft: pallet_fnft = 67,
+		StakingRewards: pallet_staking_rewards = 68,
 
 		CallFilter: call_filter = 140,
 
@@ -1482,7 +1495,7 @@ impl_runtime_apis! {
 			let min_expected_amounts: BTreeMap<_, _> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
 			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
 			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
-			let simulte_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
+			let simulate_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
 				.unwrap_or_else(|_|
 					RemoveLiquiditySimulationResult{
 						assets: BTreeMap::from([
@@ -1493,7 +1506,7 @@ impl_runtime_apis! {
 					}
 				);
 			let mut new_map = BTreeMap::new();
-			for (k,v) in simulte_remove_liquidity_result.assets.iter() {
+			for (k,v) in simulate_remove_liquidity_result.assets.iter() {
 				new_map.insert(SafeRpcWrapper(*k), SafeRpcWrapper(*v));
 			}
 			RemoveLiquiditySimulationResult{

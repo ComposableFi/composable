@@ -31,10 +31,10 @@ export const RenewModal: React.FC<RenewModalProps> = ({
 
   const validMultiplier = isNumber(multiplier.value);
 
-  const handleUntake = () => {
+  const handleUnstake = () => {
     dispatch(setMessage(
       {
-        title: "Transaction successfull",
+        title: "Transaction successful",
         text: "Renew staking period confirmed",
         link: "/",
         severity: "success",
@@ -80,7 +80,7 @@ export const RenewModal: React.FC<RenewModalProps> = ({
             variant="contained"
             fullWidth
             size="large"
-            onClick={handleUntake}
+            onClick={handleUnstake}
             disabled={validMultiplier}
           >
             Renew period

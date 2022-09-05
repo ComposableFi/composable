@@ -80,6 +80,7 @@ parameter_types! {
 	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
+	// cspell:disable-next
 	pub const DemocracyId: LockIdentifier = *b"democrac";
 	pub RootOrigin: Origin = frame_system::RawOrigin::Root.into();
 }
@@ -128,6 +129,7 @@ impl democracy::Config<NativeDemocracy> for Runtime {
 }
 
 parameter_types! {
+	// cspell:disable-next
 	pub const TreasuryPalletId: PalletId = PalletId(*b"picatrsy");
 	/// Percentage of proposal that most be bonded by the proposer.
 	pub const ProposalBond: Permill = Permill::from_percent(5);

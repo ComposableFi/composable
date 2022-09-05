@@ -34,7 +34,7 @@ Allows the issuer to ask for their account to be kept alive using the `keep_aliv
 parameter.
 
 Emits a `NewBond`.
-Possibily Emits a `OfferCompleted`.
+Possibly Emits a `OfferCompleted`.
 
 ## Cancel
 

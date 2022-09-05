@@ -34,7 +34,7 @@ mod kusama {
 	use prelude::*;
 
 	use super::{BalancesCall, UtilityCall};
-	/// The encoded index correspondes to Kusama's Runtime module configuration.
+	/// The encoded index corresponds to Kusama's Runtime module configuration.
 	/// https://github.com/paritytech/polkadot/blob/main/runtime/kusama/src/lib.rs#L1379
 	#[derive(Encode, Decode, RuntimeDebug)]
 	pub enum RelayChainCall<T: Config> {

@@ -5,9 +5,9 @@ box Composable #LightYellow
   actor "Bob" as bob
   participant "Composable" as composable
   participant "Composable Democracy" as composable_democracy
-  participant "Assets Registy" as assets_registry_pallet
+  participant "Assets Registry" as assets_registry_pallet
   participant "Assets" as assets_pallet
-  participant "OCW Assets Registy" as assets_registry_ocw
+  participant "OCW Assets Registry" as assets_registry_ocw
 end box
 
 participant XCM as xcm
@@ -29,7 +29,7 @@ charlie --> hydra_dx_collective : Add some composable authority to add voting pr
 
 bob --> composable_democracy : Decide to create mapping for `Composable SOL` and `Composable USDT` on HydraDX
 note right
- - can use shared ids like Akala, so that can have more stable coin liquidity
+ - can use shared ids like Acala, so that can have more stable coin liquidity
 end note
 
 composable_authority -> composable_democracy : Vote for proposal
@@ -65,7 +65,7 @@ xcm --> dex : Sell asset
 ...
 
 
-dex --> xcm: Transfer sold amount back with Compisable asset id
+dex --> xcm: Transfer sold amount back with Composable asset id
 note right
   - assume that our message will be weight free for both network
 end note

@@ -5,7 +5,7 @@ use crate::{
 		acknowledgements::Acknowledgements, channels::Channels, client_states::ClientStates,
 		connections::Connections, consensus_states::ConsensusStates,
 		next_seq_recv::NextSequenceRecv, next_seq_send::NextSequenceSend,
-		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+		packet_commitments::PacketCommitment, receipts::PacketReceipt,
 	},
 	routing::Context,
 };
@@ -768,7 +768,7 @@ where
 			.map_err(|_| IbcHandlerError::TimeoutError)
 	}
 
-	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
+	fn write_acknowledgement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
 		let mut ctx = Context::<T>::default();
 		Self::store_raw_acknowledgement(
 			(packet.source_port.clone(), packet.source_channel, packet.sequence),

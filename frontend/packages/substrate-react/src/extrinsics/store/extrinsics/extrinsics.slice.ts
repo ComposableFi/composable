@@ -7,7 +7,7 @@ import {
 import {
   putTransactionData,
   putBlockHash,
-  putTrasactionStatus,
+  putTransactionStatus,
   putTransactionError,
 } from './extrinsics.utils';
 
@@ -33,7 +33,7 @@ const createExtrinsicsSlice: StoreSlice<ExtrinsicSlice> = set => ({
     extrinsicStatus: ExtrinsicStatus
   ) =>
     set((prev: ExtrinsicSlice) => ({
-      extrinsics: putTrasactionStatus(
+      extrinsics: putTransactionStatus(
         prev.extrinsics,
         transactionHash,
         extrinsicStatus

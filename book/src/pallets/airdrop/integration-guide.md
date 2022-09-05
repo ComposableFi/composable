@@ -27,7 +27,7 @@ deleted from storage.
 
 For more details on the Airdrop life cycle, see the [Workflow section](../airdrop.md#workflow) 
 of the Pallet Overview & Workflow file. This information is retrieved directly 
-from the pallet's `READMD.md`.
+from the pallet's `README.md`.
 
 ## RPC & Data Retrieval
 <!-- RPCs w/ links to cargo docs? -->

@@ -15,7 +15,7 @@ import { getDevWallets } from "@composable/utils/walletHelper";
  *  1. Provide funds to crowdloan pallet
  *  2. Populate the list of contributors
  *  3. Initialize the crowdloan
- *  4. Associate a picassso account (which also claims)
+ *  4. Associate a Picasso account (which also claims)
  *  5. Claiming more rewards.
  */
 describe("CrowdloanRewards Tests", function () {

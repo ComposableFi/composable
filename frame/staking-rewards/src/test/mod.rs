@@ -4,7 +4,7 @@ use crate::{
 	Config, RewardPools, StakeCount, Stakes,
 };
 use composable_support::abstractions::utils::increment::Increment;
-use composable_tests_helpers::test::currency::{CurrencyId, BTC, PICA, USDT};
+use composable_tests_helpers::test::currency::{CurrencyId, BTC, PICA, USDT, XPICA};
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
@@ -18,6 +18,7 @@ use frame_support::{
 	assert_err, assert_noop, assert_ok,
 	traits::{
 		fungibles::{Inspect, Mutate},
+		tokens::nonfungibles::InspectEnumerable,
 		TryCollect,
 	},
 	BoundedBTreeMap,
@@ -26,7 +27,9 @@ use frame_system::EventRecord;
 use sp_arithmetic::{Perbill, Permill};
 use sp_core::sr25519::Public;
 use sp_runtime::PerThing;
-use sp_std::collections::btree_map::BTreeMap;
+use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
+
+use self::prelude::STAKING_FNFT_COLLECTION_ID;
 
 mod prelude;
 mod runtime;
@@ -45,6 +48,11 @@ fn test_create_reward_pool() {
             Event::StakingRewards(crate::Event::RewardPoolCreated { owner, pool_id, asset_id: PICA::ID, .. })
             if owner == ALICE && pool_id == 1)
 		});
+
+		assert_eq!(
+			FinancialNft::collections().collect::<BTreeSet<_>>(),
+			BTreeSet::from([PICA::ID])
+		);
 
 		// invalid end block
 		assert_err!(
@@ -488,7 +496,7 @@ fn test_transfer_reward() {
 }
 
 #[test]
-fn test_split_postion() {
+fn test_split_position() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 		let pool_init_config = get_default_reward_pool();
@@ -498,7 +506,7 @@ fn test_split_postion() {
 		let reduction = 10_000_000_000_000_u128;
 		let stake = Stake::<
 			<Test as frame_system::Config>::AccountId,
-			RewardPoolId,
+			<Test as Config>::AssetId,
 			Balance,
 			Reductions<CurrencyId, Balance, MaxRewardConfigsPerPool>,
 		> {
@@ -787,6 +795,8 @@ fn get_default_reward_pool() -> RewardPoolConfiguration<
 		end_block: 5,
 		reward_configs: default_reward_config(),
 		lock: default_lock_config(),
+		share_asset_id: XPICA::ID,
+		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 	};
 	pool_init_config
 }
@@ -804,6 +814,8 @@ fn get_reward_pool_config_invalid_end_block() -> RewardPoolConfiguration<
 		end_block: 0,
 		reward_configs: default_reward_config(),
 		lock: default_lock_config(),
+		share_asset_id: XPICA::ID,
+		financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 	};
 	pool_init_config
 }

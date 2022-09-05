@@ -139,7 +139,7 @@ impl<T: Config> Uniswap<T> {
 		quote_amount: T::Balance,
 	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
 		let lp_issued = T::Assets::total_issuance(pool.lp_token);
-		// NOTE(hussein-aitlance): no need to keep alive the pool account
+		// NOTE(hussein-aitlahcen): no need to keep alive the pool account
 		T::Assets::transfer(pool.pair.base, &pool_account, who, base_amount, false)?;
 		T::Assets::transfer(pool.pair.quote, &pool_account, who, quote_amount, false)?;
 		T::Assets::burn_from(pool.lp_token, who, lp_amount)?;

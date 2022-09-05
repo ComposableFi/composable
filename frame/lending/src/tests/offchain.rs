@@ -36,7 +36,7 @@ fn test_liquidation_offchain_worker() {
 		let reliable_borrower = *BOB;
 		// Create a market with BTC as collateral asset and USDT as borrow asset.
 		// Initial collateral asset price is 50_000 USDT. Market's collateral factor equals two.
-		// It means that borrow supposed to be undercolateraized when
+		// It means that borrow supposed to be undercollateralized when
 		// borrowed amount is higher then one half of collateral amount in terms of USDT.
 		let (market_id, vault_id) = create_market_for_liquidation_test::<Runtime>(manager);
 		// Deposit USDT in the vault.
@@ -60,7 +60,7 @@ fn test_liquidation_offchain_worker() {
 		borrow::<Runtime>(reliable_borrower, market_id, USDT::units(20_000));
 		// Emulate situation when collateral price has fallen down
 		// from 50_000 USDT to 38_000 USDT.
-		// Now the risky borrow is undercolateraized since market's collateral factor equals two.
+		// Now the risky borrow is undercollateralized since market's collateral factor equals two.
 		// Therefore, one BTC can cover only 19_000 of 20_0000 borrowed USDT.
 		set_price(BTC::ID, NORMALIZED::units(38_000));
 		// Header for the fake block to execute off-chain worker

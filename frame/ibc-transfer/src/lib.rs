@@ -368,7 +368,7 @@ pub mod pallet {
 			Params::<T>::get().receive_enabled
 		}
 
-		pub fn resgister_asset_id(
+		pub fn register_asset_id(
 			asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
 			denom: Vec<u8>,
 		) {
@@ -545,7 +545,7 @@ impl<T: Config + Send + Sync> Module for IbcCallbackHandler<T> {
 		OnRecvPacketAck::Successful(
 			Box::new(Ics20Acknowledgement::success()),
 			Box::new(move |_ctx| {
-				T::IbcHandler::write_acknowlegdement(&packet, ack).map_err(|e| format!("{:?}", e))
+				T::IbcHandler::write_acknowledgement(&packet, ack).map_err(|e| format!("{:?}", e))
 			}),
 		)
 	}
