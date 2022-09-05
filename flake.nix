@@ -267,6 +267,14 @@
               inherit system;
             };
 
+          # we reached limit of 125 for layers and build image cannot do non root ops, so split it 
+          devcontainer-root-image = pkgs.dockerTools.buildImage {
+            name = "devcontainer-root-image";
+            fromImage = devcontainer-base-image;
+            contents = [ rust-nightly ] ++ containers-tools-minimal
+              ++ docker-in-docker;
+          };
+
           dali-runtime = mk-optimized-runtime {
             name = "dali";
             features = "";
@@ -534,15 +542,17 @@
             # NOTE: The devcontainer is currently broken for aarch64.
             # Please use the developers devShell instead
 
-            # we reached limit of 125 for layers and build image cannot do non root ops, so split it 
-            devcontainer = pkgs.dockerTools.buildImage {
+            devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
-              fromImage = devcontainer-base-image;
-              contents = [ rust-nightly ] ++ containers-tools-minimal
-                ++ docker-in-docker;
+              fromImage = devcontainer-root-image;
               # substituters, same as next script, but without internet access
-              # ${pkgs.cachix}/bin/cachix use composable-community 
-              runAsRoot = ''
+              # ${pkgs.cachix}/bin/cachix use composable-community
+              # to run root in buildImage needs qemu/kvm shell
+              # non root extraCommands (in both methods) do not have permissions
+              # not clear if using ENV or replace ENTRYPOINT will allow to setup
+              # from nixos docker.nix - they build derivation which outputs into $out/etc/nix.conf 
+              # (and any other stuff like /etc/group)
+              fakeRootCommands = ''
                 mkdir --parents /etc/nix
                 cat <<EOF >> /etc/nix/nix.conf
                 sandbox = relaxed
@@ -552,6 +562,10 @@
                 trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8= 
                 EOF
               '';
+              config = {
+                User = "vscode";
+                # TODO: expose ports and other stuff done in base here too
+              };
             };
 
             check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
