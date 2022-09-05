@@ -92,11 +92,19 @@ pub async fn get_timed_out_packets_messages(
 				continue
 			}
 
+			// We need to get a height higher or equal to the timeout height where the sink chain's timestamp is greater than the packet timestamp and fetch our timeout proofs at that height
+			let proof_height = if let Some(height) = sink.find_suitable_timeout_height(packet.timeout_timestamp, packet.timeout_height, sink_height).await? {
+				height
+			} else {
+				continue
+			};
+
+
 			// Check if connection delay is satisfied
 
 			// If we can't get the client update time and height, skip processing of this packet
 			let client_update_time_and_height = source
-				.query_client_update_time_and_height(sink.client_id(), packet.timeout_height)
+				.query_client_update_time_and_height(sink.client_id(), proof_height)
 				.await;
 			if client_update_time_and_height.is_err() {
 				continue
@@ -120,7 +128,7 @@ pub async fn get_timed_out_packets_messages(
 
 			let sink_channel_response = sink
 				.query_channel_end(
-					packet.timeout_height,
+					proof_height,
 					packet.destination_channel,
 					packet.destination_port.clone(),
 				)
@@ -161,10 +169,10 @@ pub async fn get_timed_out_packets_messages(
 				keys.push(apply_prefix(sink.connection_prefix().into_vec(), path))
 			};
 
-			let proof = sink.query_proof(packet.timeout_height, keys).await?;
+			let proof = sink.query_proof(proof_height, keys).await?;
 			let next_sequence_recv = sink
 				.query_next_sequence_recv(
-					packet.timeout_height,
+					proof_height,
 					&packet.destination_port.clone(),
 					&packet.destination_channel.clone(),
 				)
@@ -174,7 +182,7 @@ pub async fn get_timed_out_packets_messages(
 				let msg = MsgTimeoutOnClose {
 					packet: packet.clone(),
 					next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
-					proofs: Proofs::new(commitment_proof, None, None, None, packet.timeout_height)?,
+					proofs: Proofs::new(commitment_proof, None, None, None, proof_height)?,
 
 					signer: source.account_id(),
 				};
@@ -186,7 +194,7 @@ pub async fn get_timed_out_packets_messages(
 				let msg = MsgTimeout {
 					packet: packet.clone(),
 					next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
-					proofs: Proofs::new(commitment_proof, None, None, None, sink_height)?,
+					proofs: Proofs::new(commitment_proof, None, None, None, proof_height)?,
 
 					signer: source.account_id(),
 				};

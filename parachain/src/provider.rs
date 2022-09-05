@@ -524,6 +524,28 @@ where
 		))
 	}
 
+	async fn find_suitable_timeout_height(&self, timestamp: Timestamp, start: Height, stop: Height) -> Result<Option<Height>, Self::Error> {
+		let api = self
+			.para_client
+			.clone()
+			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+		for  block_number in start.revision_height..stop.revision_height {
+			let block_hash = self
+				.para_client
+				.rpc()
+				.block_hash(Some(block_number.into()))
+				.await?;
+			let unix_timestamp_millis =
+				api.storage().timestamp().now(block_hash).await?;
+			let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
+			println!("Packet timestamp {:?}, Chain timestamp {:?}, Comp {}", timestamp.nanoseconds(), timestamp_nanos, timestamp_nanos > timestamp.nanoseconds());
+			if timestamp_nanos > timestamp.nanoseconds() {
+				return Ok(Some(Height::new(self.para_id.into(), block_number)))
+			}
+		}
+		Ok(None)
+	}
+
 	async fn query_host_consensus_state_proof(
 		&self,
 		height: Height,

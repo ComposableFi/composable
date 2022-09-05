@@ -230,6 +230,11 @@ pub trait IbcProvider {
 		client_height: Height,
 	) -> Result<(Height, Timestamp), Self::Error>;
 
+	/// Find suitable timeout proof height
+	/// Should return the first block height greater than or equal to the start height where the chain timestamp is greater than or equal to the provided timestamp
+	/// The return value should be less than `stop` height
+	async fn find_suitable_timeout_height(&self, timestamp: Timestamp, start: Height, stop: Height) -> Result<Option<Height>, Self::Error>;
+
 	/// Return a proof for the host consensus state at the given height to be included in the
 	/// consensus state proof.
 	async fn query_host_consensus_state_proof(

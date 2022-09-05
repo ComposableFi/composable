@@ -52,7 +52,7 @@ where
 							log::info!("Received finalized events from: {} {event_types:#?}", chain_a.name());
 						}
 						let type_urls = messages.iter().map(|msg| msg.type_url.as_str()).collect::<Vec<_>>();
-						log::info!("Submitting messages to {}: {type_urls:#?}", chain_a.name());
+						log::info!("Submitting messages to {}: {type_urls:#?}", chain_b.name());
 						chain_b.submit_ibc_messages(messages).await?;
 					}
 				}
@@ -79,12 +79,12 @@ where
 							// skip sending ibc messages if no new events
 							continue
 						} else if messages.len() == 1 {
-							log::info!("Sending mandatory client update message to {}", chain_b.name());
+							log::info!("Sending mandatory client update message to {}", chain_a.name());
 						} else {
 							log::info!("Received finalized events from {}: {event_types:#?}", chain_b.name());
 						}
 						let type_urls = messages.iter().map(|msg| msg.type_url.as_str()).collect::<Vec<_>>();
-						log::info!("Submitting messages to {}: {type_urls:#?}", chain_b.name());
+						log::info!("Submitting messages to {}: {type_urls:#?}", chain_a.name());
 						chain_a.submit_ibc_messages(messages).await?;
 					}
 				}
@@ -95,14 +95,14 @@ where
 	Ok(())
 }
 
-const RELAY_PACKETS: AtomicBool = AtomicBool::new(true);
+static RELAY_PACKETS: AtomicBool = AtomicBool::new(true);
 
 /// Returns is packet relay has been paused
 pub fn packet_relay_status() -> bool {
-	RELAY_PACKETS.load(Ordering::Relaxed)
+	RELAY_PACKETS.load(Ordering::SeqCst)
 }
 
 /// Sets packet relay status
 pub fn set_relay_status(status: bool) {
-	RELAY_PACKETS.store(status, Ordering::Relaxed)
+	RELAY_PACKETS.store(status, Ordering::SeqCst);
 }
