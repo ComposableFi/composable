@@ -85,7 +85,9 @@ export function getNewBondOffer(
  *   - Create Activity.
  * @param ctx
  */
-export async function processNewOfferEvent(ctx: EventHandlerContext) {
+export async function processNewOfferEvent(
+  ctx: EventHandlerContext
+): Promise<void> {
   const event = new BondedFinanceNewOfferEvent(ctx);
 
   const newOffer = getNewOfferEvent(event);
@@ -117,7 +119,9 @@ export function updateBondOffer(
  * - Update database with new bond information.
  * @param ctx
  */
-export async function processNewBondEvent(ctx: EventHandlerContext) {
+export async function processNewBondEvent(
+  ctx: EventHandlerContext
+): Promise<void> {
   const event = new BondedFinanceNewBondEvent(ctx);
   const { offerId } = getNewBondEvent(event);
 
@@ -152,7 +156,9 @@ export function cancelBondOffer(stored: BondedFinanceBondOffer): void {
  *  - Set bond offer as `cancelled`
  * @param ctx
  */
-export async function processOfferCancelledEvent(ctx: EventHandlerContext) {
+export async function processOfferCancelledEvent(
+  ctx: EventHandlerContext
+): Promise<void> {
   const event = new BondedFinanceOfferCancelledEvent(ctx);
   const { offerId } = getOfferCancelledEvent(event);
 
