@@ -7,7 +7,12 @@ import {
   ResolverInterface,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { Transaction, Account, Activity, StakingPosition } from "../../model";
+import {
+  Transaction,
+  Account,
+  Activity,
+  HistoricalLockedValue,
+} from "../../model";
 
 @ObjectType()
 export class OverviewStats {
@@ -34,29 +39,25 @@ export class OverviewStatsResolver implements ResolverInterface<OverviewStats> {
 
   @FieldResolver({ name: "totalValueLocked", defaultValue: 0 })
   async totalValueLocked(): Promise<bigint> {
-    const now = new Date().valueOf();
-
     const manager = await this.tx();
 
-    let stakingPositions: { id: string; amount: number }[] = await manager
-      .getRepository(StakingPosition)
+    let lockedValue: { amount: bigint }[] = await manager
+      .getRepository(HistoricalLockedValue)
       .query(
         `
         SELECT
-          id, amount
-        FROM staking_position
-        WHERE end_timestamp > ${now}
+          amount
+        FROM historical_locked_value
+        ORDER BY timestamp DESC
+        LIMIT 1
       `
       );
 
-    const lockedValue = stakingPositions.reduce(
-      (acc, { amount }) => acc + BigInt(amount),
-      0n
-    );
+    if (!lockedValue?.[0]) {
+      return Promise.resolve(0n);
+    }
 
-    // TODO: add TVL from other sources
-
-    return Promise.resolve(lockedValue);
+    return Promise.resolve(lockedValue[0].amount);
   }
 
   @FieldResolver({ name: "transactionsCount", defaultValue: 0 })

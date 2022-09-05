@@ -386,13 +386,13 @@ export async function processLiquidityRemovedEvent(
 
     await storeHistoricalLockedValue(
       ctx,
-      liquidityRemovedEvt.baseAmount,
+      -liquidityRemovedEvt.baseAmount,
       ctx.event.id,
       baseAsset.assetId
     );
     await storeHistoricalLockedValue(
       ctx,
-      liquidityRemovedEvt.quoteAmount,
+      -liquidityRemovedEvt.quoteAmount,
       ctx.event.id,
       quoteAsset.assetId.toString()
     );
