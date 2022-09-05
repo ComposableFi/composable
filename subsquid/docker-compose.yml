@@ -69,37 +69,39 @@ services:
     environment:
       POSTGRES_DB: squid
       POSTGRES_PASSWORD: squid
-    ports:
-      - "${DB_PORT}:5432"
 
   graphql-server:
-    image: node:lts
+    build:
+      context: ./
+      dockerfile: graphql.Dockerfile
     depends_on:
       squid-db:
         condition: service_healthy
+    ports:
+      - 4350:4000
     environment:
       DB_NAME: squid
       DB_HOST: squid-db
       DB_PASS: squid
       DB_PORT_PG: 5432
     volumes:
-      - ./:/app
       - ./scripts/init.sh:/init.sh
     entrypoint: sh /init.sh
 
-  substrate-processor:
-    image: node:lts
+
+  processor:
+    build:
+      context: ./
+      dockerfile: Dockerfile
     depends_on:
-      - graphql-server
+      squid-db:
+        condition: service_healthy
+      graphql-server:
+        condition: service_started
     environment:
       DB_HOST: squid-db
       DB_NAME: squid
       DB_PASS: squid
       DB_PORT: 5432
       GQL_PORT: 4350
-    ports:
-      - 4350:4350
-    volumes:
-      - ./:/app
-      - ./scripts/init-processor.sh:/init.sh
-    entrypoint: sh /init.sh
+      SUBSQUID_ARCHIVE_URI: "http://gateway:8000/graphql"
