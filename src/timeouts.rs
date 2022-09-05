@@ -3,7 +3,7 @@ use ibc::{
 	core::{
 		ics03_connection::connection::ConnectionEnd,
 		ics04_channel::{
-			channel::{ChannelEnd, Order, State},
+			channel::{ChannelEnd, Order, State, State::Open},
 			context::calculate_block_delay,
 			msgs::{timeout::MsgTimeout, timeout_on_close::MsgTimeoutOnClose},
 			packet::Packet,
@@ -21,7 +21,6 @@ use ibc::{
 use ibc_proto::google::protobuf::Any;
 use primitives::{apply_prefix, error::Error, query_undelivered_sequences, Chain};
 use std::str::FromStr;
-use ibc::core::ics04_channel::channel::State::Open;
 use tendermint_proto::Protobuf;
 
 /// Get timeout messages that are ready to be sent back to source after factoring connection delay

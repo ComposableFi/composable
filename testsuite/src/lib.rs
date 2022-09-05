@@ -282,7 +282,7 @@ where
 	let future = chain_b
 		.subscribe_blocks()
 		.await
-		.skip_while(|(block_number, ..)| {
+		.skip_while(|block_number| {
 			future::ready(*block_number <= msg.timeout_height.revision_number)
 		})
 		.take(1)
@@ -322,13 +322,21 @@ where
 	)
 	.await;
 
+	let timeout_timestamp = msg.timeout_timestamp.nanoseconds();
+
 	// Wait for timeout height to elapse then resume packet relay
 	// wait for the acknowledgment
+	// let chain_clone = chain_b.clone();
 	let future = chain_b
 		.subscribe_blocks()
 		.await
-		.skip_while(|(.., timestamp)| {
-			future::ready(*timestamp <= msg.timeout_timestamp.nanoseconds())
+		.skip_while(|block_number| {
+			let block_number = *block_number;
+			let chain_clone = chain_b.clone();
+			async move {
+				let timestamp = chain_clone.timestamp_at(block_number).await;
+				timestamp <= timeout_timestamp
+			}
 		})
 		.take(1)
 		.collect::<Vec<_>>();

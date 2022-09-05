@@ -51,22 +51,30 @@ where
 		Box::pin(Box::new(stream))
 	}
 
-	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = (u64, u64)> + Send + Sync>> {
+	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>> {
+		let stream = self.para_client.rpc().subscribe_blocks().await.unwrap().map(|header| {
+			let header = header.unwrap();
+			let block_number: u64 = (*header.number()).into();
+			block_number
+		});
+
+		Box::pin(Box::new(stream))
+	}
+
+	async fn timestamp_at(&self, block_number: u64) -> u64 {
 		let api = self
 			.para_client
 			.clone()
 			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let stream = self.para_client.rpc().subscribe_blocks().await.unwrap().map(move |header| {
-			let header = header.unwrap();
-			let block_hash = header.hash();
-			let unix_timestamp_millis =
-				futures::executor::block_on(api.storage().timestamp().now(Some(block_hash)))
-					.expect("Should find timestamp");
-			let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
-			let block_number: u64 = (*header.number()).into();
-			(block_number, timestamp_nanos)
-		});
-
-		Box::pin(Box::new(stream))
+		let block_hash = self
+			.para_client
+			.rpc()
+			.block_hash(Some(block_number.into()))
+			.await
+			.expect("Should find block hash");
+		let unix_timestamp_millis =
+			api.storage().timestamp().now(block_hash).await.expect("Should find timestamp");
+		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
+		timestamp_nanos
 	}
 }
