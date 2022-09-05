@@ -1,0 +1,10 @@
+# EVM
+
+## Installation
+
+1. Install [foundry](https://github.com/foundry-rs/foundry
+
+
+## Run tests
+1. `cd xcvm/evm`
+2. `forge test`
