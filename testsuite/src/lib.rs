@@ -222,7 +222,7 @@ where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
 {
-	// wait for the acknowledgment
+	// wait for the timeout packet
 	let future = chain
 		.ibc_events()
 		.await
@@ -266,32 +266,36 @@ where
 	let (_handle, channel_id, _connection_id) =
 		setup_connection_and_channel(chain_a, chain_b, 0).await;
 
-	// Pause send packet relay
+	log::info!(target: "hyperspace", "Suspending send packet relay");
 	set_relay_status(false);
 
 	let (.., msg) = send_transfer(
 		chain_a,
 		chain_b,
 		channel_id,
-		Some(Timeout::Offset { timestamp: Some(60 * 60), height: Some(20) }),
+		Some(Timeout::Offset { timestamp: Some(60 * 3), height: Some(20) }),
 	)
 	.await;
 
 	// Wait for timeout height to elapse then resume packet relay
-	// wait for the acknowledgment
 	let future = chain_b
 		.subscribe_blocks()
 		.await
 		.skip_while(|block_number| {
-			future::ready(*block_number <= msg.timeout_height.revision_number)
+			future::ready(*block_number <= msg.timeout_height.revision_height)
 		})
 		.take(1)
 		.collect::<Vec<_>>();
 
-	timeout_future(future, 10 * 60, format!("Didn't see AcknowledgePacket on {}", chain_a.name()))
-		.await;
+	log::info!(target: "hyperspace", "Waiting for packet timeout to elapse on counterparty");
+	timeout_future(
+		future,
+		10 * 60,
+		format!("Timeout height was not reached on {}", chain_b.name()),
+	)
+	.await;
 
-	// Resume send packet relay
+	log::info!(target: "hyperspace", "Resuming send packet relay");
 	set_relay_status(true);
 
 	assert_timeout_packet(chain_a).await;
@@ -311,7 +315,7 @@ where
 	let (_handle, channel_id, _connection_id) =
 		setup_connection_and_channel(chain_a, chain_b, 0).await;
 
-	// Pause send packet relay
+	log::info!(target: "hyperspace", "Suspending send packet relay");
 	set_relay_status(false);
 
 	let (.., msg) = send_transfer(
@@ -322,11 +326,8 @@ where
 	)
 	.await;
 
-	let timeout_timestamp = msg.timeout_timestamp.nanoseconds();
-
 	// Wait for timeout height to elapse then resume packet relay
 	// wait for the acknowledgment
-	// let chain_clone = chain_b.clone();
 	let future = chain_b
 		.subscribe_blocks()
 		.await
@@ -335,16 +336,21 @@ where
 			let chain_clone = chain_b.clone();
 			async move {
 				let timestamp = chain_clone.timestamp_at(block_number).await;
-				timestamp <= timeout_timestamp
+				timestamp <= msg.timeout_timestamp.nanoseconds()
 			}
 		})
 		.take(1)
 		.collect::<Vec<_>>();
 
-	timeout_future(future, 10 * 60, format!("Didn't see Timeout packet on {}", chain_a.name()))
-		.await;
+	log::info!(target: "hyperspace", "Waiting for packet timeout to elapse on counterparty");
+	timeout_future(
+		future,
+		10 * 60,
+		format!("Timeout timestamp was not reached on {}", chain_b.name()),
+	)
+	.await;
 
-	// Resume send packet relay
+	log::info!(target: "hyperspace", "Resuming send packet relay");
 	set_relay_status(true);
 
 	assert_timeout_packet(chain_a).await;
