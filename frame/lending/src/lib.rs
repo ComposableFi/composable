@@ -563,7 +563,7 @@ pub mod pallet {
 			)?;
 			Self::deposit_event(Event::<T>::CollateralDeposited {
 				sender: account.clone(),
-				market_id,
+				market_id: *market_id,
 				amount,
 			});
 			Ok(())
@@ -577,7 +577,7 @@ pub mod pallet {
 			Self::do_withdraw_collateral(market_id, account, amount.try_into_validated()?)?;
 			Self::deposit_event(Event::<T>::CollateralWithdrawn {
 				sender: account.clone(),
-				market_id,
+				market_id: *market_id,
 				amount,
 			});
 			Ok(())
@@ -595,7 +595,7 @@ pub mod pallet {
 			Self::do_borrow(market_id, borrowing_account, amount_to_borrow)?;
 			Self::deposit_event(Event::<T>::Borrowed {
 				sender: borrowing_account.clone(),
-				market_id,
+				market_id: *market_id,
 				amount: amount_to_borrow,
 			});
 			Ok(())
@@ -618,7 +618,7 @@ pub mod pallet {
 			)?;
 			Self::deposit_event(Event::<T>::BorrowRepaid {
 				sender: from.clone(),
-				market_id,
+				market_id: *market_id,
 				beneficiary: beneficiary.clone(),
 				amount,
 			});
@@ -692,7 +692,7 @@ pub mod pallet {
 			// if at least one borrower was affected then liquidation been initiated
 			if !subjected_borrowers.is_empty() {
 				Self::deposit_event(Event::LiquidationInitiated {
-					market_id,
+					market_id: *market_id,
 					borrowers: subjected_borrowers.clone(),
 				});
 			}
