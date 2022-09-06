@@ -7,7 +7,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { AllAuctionsTable, PageTitle } from "@/components";
+import { AllAuctionsTable } from "@/components";
 import { useEffect, useState } from "react";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
 import useStore from "@/store/useStore";
@@ -87,7 +87,7 @@ export const AuctionTable = () => {
               <Typography variant="h6">All liquidity</Typography>
               <Box>
                 <Tooltip
-                  title={extensionStatus !== "connected" ? "Comming soon" : ""}
+                  title={extensionStatus !== "connected" ? "Coming soon" : ""}
                   arrow
                 >
                   {enabledCreate ? (
