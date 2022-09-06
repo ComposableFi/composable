@@ -4,6 +4,7 @@ pub trait WeightInfo {
 	fn upload(code_len: usize) -> Weight;
 	fn instantiate(nb_of_assets: usize) -> Weight;
 	fn execute(nb_of_assets: usize) -> Weight;
+	fn migrate(nb_of_assets: usize) -> Weight;
 }
 
 impl WeightInfo for () {
@@ -16,6 +17,10 @@ impl WeightInfo for () {
 	}
 
 	fn execute(_nb_of_assets: usize) -> Weight {
+		10_000
+	}
+
+	fn migrate(_code_len: usize) -> Weight {
 		10_000
 	}
 }
