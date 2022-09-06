@@ -11,4 +11,4 @@ parserOptions:
 plugins:
   - "@typescript-eslint"
 rules: {}
-ignorePatterns: ["src/**/*.d.ts", "src/**/*.js", "test/**/*.d.ts", "test/**/*.js"]
+ignorePatterns: ["src/types/**/*", "src/**/*.d.ts", "src/**/*.js", "test/**/*.d.ts", "test/**/*.js"]
