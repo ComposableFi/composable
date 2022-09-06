@@ -10,17 +10,17 @@ log = "0.4.17"
 futures = "0.3.24"
 json = { version = "1.0.85", package = "serde_json" }
 
-ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "6e5daff0bc37553557751ef3781a1a89c8c781ba", features = ["ics11_beefy"] }
-ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "6e5daff0bc37553557751ef3781a1a89c8c781ba" }
+ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128", features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
 hyperspace = { path = "../" }
 hyperspace-primitives = { path = "../primitives", features = ["testing"] }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "440dd4f0fb3c3539dbf75d8155e57c0740617438" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "19a408a7d696bb7e238be38ce4f89ec046a2b383" }
 
 [dev-dependencies]
 parachain = { path = "../parachain", package = "hyperspace-parachain", features = ["testing"] }
-pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "440dd4f0fb3c3539dbf75d8155e57c0740617438" }
+pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "19a408a7d696bb7e238be38ce4f89ec046a2b383" }
 # substrate
 sp-core = "6.0.0"
 sp-runtime = "6.0.0"

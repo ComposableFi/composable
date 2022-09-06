@@ -32,6 +32,7 @@ async fn setup_connection_and_channel<A, B>(
 	chain_a: &A,
 	chain_b: &B,
 	connection_delay: u64,
+	relay_task: Option<JoinHandle<()>>,
 ) -> (JoinHandle<()>, ChannelId, ConnectionId)
 where
 	A: TestProvider,
@@ -44,9 +45,26 @@ where
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	// Start relayer loop
-	let handle = tokio::task::spawn(async move {
-		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
-	});
+	let handle = if let Some(handle) = relay_task {
+		handle
+	} else {
+		tokio::task::spawn(async move {
+			hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+		})
+	};
+	// check if an open transfer channel exists
+	let channels = chain_a.channel_whitelist().await.ok().unwrap_or_default();
+	let (latest_height, ..) = chain_a.latest_height_and_timestamp().await.unwrap();
+	for (channel_id, port_id) in channels {
+		let channel_response = chain_a
+			.query_channel_end(latest_height, channel_id, port_id.clone())
+			.await
+			.unwrap();
+		let channel_end = ChannelEnd::try_from(channel_response.channel.unwrap()).unwrap();
+		if channel_end.state == State::Open && port_id == PortId::transfer() {
+			return (handle, channel_id, channel_end.connection_hops[0].clone())
+		}
+	}
 
 	// Both clients have been updated, we can now start connection handshake
 	let msg = MsgConnectionOpenInit {
@@ -233,7 +251,11 @@ where
 }
 
 /// Simply send a packet and check that it was acknowledged.
-pub async fn send_packet_and_assert_acknowledgment<A, B>(chain_a: &A, chain_b: &B)
+pub async fn send_packet_and_assert_acknowledgment<A, B>(
+	chain_a: &A,
+	chain_b: &B,
+	handle: Option<JoinHandle<()>>,
+) -> JoinHandle<()>
 where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
@@ -242,19 +264,25 @@ where
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
-	let (_handle, channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, 0).await;
+	let (handle, channel_id, _connection_id) =
+		setup_connection_and_channel(chain_a, chain_b, 0, handle).await;
 
-	let (previosus_balance, ..) = send_transfer(chain_a, chain_b, channel_id, None).await;
-	assert_send_transfer(chain_a, previosus_balance).await;
+	let (previous_balance, ..) = send_transfer(chain_a, chain_b, channel_id, None).await;
+	assert_send_transfer(chain_a, previous_balance).await;
 	// now send from chain b.
-	let (previosus_balance, ..) = send_transfer(chain_b, chain_a, channel_id, None).await;
-	assert_send_transfer(chain_b, previosus_balance).await;
+	let (previous_balance, ..) = send_transfer(chain_b, chain_a, channel_id, None).await;
+	assert_send_transfer(chain_b, previous_balance).await;
+	log::info!(target: "hyperspace", "🚀🚀 Token Transfer successful");
+	handle
 }
 
 /// Send a packet using a height timeout that has already passed
 /// and assert the sending chain sees the timeout packet.
-pub async fn send_packet_and_assert_height_timeout<A, B>(chain_a: &A, chain_b: &B)
+pub async fn send_packet_and_assert_height_timeout<A, B>(
+	chain_a: &A,
+	chain_b: &B,
+	handle: Option<JoinHandle<()>>,
+) -> JoinHandle<()>
 where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
@@ -263,8 +291,8 @@ where
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
-	let (_handle, channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, 0).await;
+	let (handle, channel_id, _connection_id) =
+		setup_connection_and_channel(chain_a, chain_b, 0, handle).await;
 
 	log::info!(target: "hyperspace", "Suspending send packet relay");
 	set_relay_status(false);
@@ -273,7 +301,7 @@ where
 		chain_a,
 		chain_b,
 		channel_id,
-		Some(Timeout::Offset { timestamp: Some(60 * 3), height: Some(20) }),
+		Some(Timeout::Offset { timestamp: Some(60 * 60), height: Some(20) }),
 	)
 	.await;
 
@@ -282,7 +310,7 @@ where
 		.subscribe_blocks()
 		.await
 		.skip_while(|block_number| {
-			future::ready(*block_number <= msg.timeout_height.revision_height)
+			future::ready(*block_number < msg.timeout_height.revision_height)
 		})
 		.take(1)
 		.collect::<Vec<_>>();
@@ -299,11 +327,17 @@ where
 	set_relay_status(true);
 
 	assert_timeout_packet(chain_a).await;
+	log::info!(target: "hyperspace", "🚀🚀 Timeout packet successfully processed for height timeout");
+	handle
 }
 
 /// Send a packet using a timestamp timeout that has already passed
 /// and assert the sending chain sees the timeout packet.
-pub async fn send_packet_and_assert_timestamp_timeout<A, B>(chain_a: &A, chain_b: &B)
+pub async fn send_packet_and_assert_timestamp_timeout<A, B>(
+	chain_a: &A,
+	chain_b: &B,
+	handle: Option<JoinHandle<()>>,
+) -> JoinHandle<()>
 where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
@@ -312,8 +346,8 @@ where
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
-	let (_handle, channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, 0).await;
+	let (handle, channel_id, _connection_id) =
+		setup_connection_and_channel(chain_a, chain_b, 0, handle).await;
 
 	log::info!(target: "hyperspace", "Suspending send packet relay");
 	set_relay_status(false);
@@ -322,7 +356,7 @@ where
 		chain_a,
 		chain_b,
 		channel_id,
-		Some(Timeout::Offset { timestamp: Some(60 * 3), height: Some(400) }),
+		Some(Timeout::Offset { timestamp: Some(60), height: Some(400) }),
 	)
 	.await;
 
@@ -336,7 +370,7 @@ where
 			let chain_clone = chain_b.clone();
 			async move {
 				let timestamp = chain_clone.timestamp_at(block_number).await;
-				timestamp <= msg.timeout_timestamp.nanoseconds()
+				timestamp < msg.timeout_timestamp.nanoseconds()
 			}
 		})
 		.take(1)
@@ -354,12 +388,18 @@ where
 	set_relay_status(true);
 
 	assert_timeout_packet(chain_a).await;
+	log::info!(target: "hyperspace", "🚀🚀 Timeout packet successfully processed for timeout timestamp");
+	handle
 }
 
 /// Send a packet over a connection with a connection delay
 /// and assert the sending chain only sees the packet after the
 /// delay has elapsed.
-pub async fn send_packet_with_connection_delay<A, B>(chain_a: &A, chain_b: &B)
+pub async fn send_packet_with_connection_delay<A, B>(
+	chain_a: &A,
+	chain_b: &B,
+	handle: Option<JoinHandle<()>>,
+) -> JoinHandle<()>
 where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
@@ -369,6 +409,7 @@ where
 	B::Error: From<A::Error>,
 {
 	let connection_delay = 5 * 60; // 5 mins
-	let (_handle, _channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, connection_delay).await;
+	let (handle, _channel_id, _connection_id) =
+		setup_connection_and_channel(chain_a, chain_b, connection_delay, handle).await;
+	handle
 }
