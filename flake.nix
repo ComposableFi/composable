@@ -145,31 +145,10 @@
 
           # source relevant to build rust only
           rust-src = let
-            directory-blacklist = [
-              ".nix"
-              "nix"
-              ".config"
-              ".devcontainer"
-              ".github"
-              ".log"
-              ".maintain"
-              ".tools"
-              ".vscode"
-              "audits"
-              "book"
-              "devnet-stage"
-              "devnet"
-              "docker"
-              "docs"
-              "frontend"
-              "rfcs"
-              "scripts"
-              "setup"
-              "subsquid"
+            directoryBlacklist = [
               "runtime-tests"
-              "composablejs"
             ];
-            file-blacklist = [
+            fileBlacklist = [
               # does not makes sense to black list,
               # if we changed some version of tooling(seldom), we want to rebuild
               # so if we changed version of tooling, nix itself will detect invalidation and rebuild
@@ -179,16 +158,35 @@
             filter = lib.cleanSourceFilter;
             src = lib.cleanSourceWith {
               filter = let
+                isBlacklisted = name: type:
+                  let
+                    blacklist =
+                      if type == "directory"
+                      then directoryBlacklist
+                      else
+                        if type == "regular"
+                        then fileBlacklist
+                        else []; # symlink, unknown
+                  in builtins.elem (baseNameOf name) blacklist;
+                isMarkdownFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".md" name;
+                isImageFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".png" name;
+                isPlantUmlFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".plantuml" name;
+                isNixFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".nix" name;
                 customFilter = name: type:
-                  !((type == "directory"
-                    && builtins.elem (baseNameOf name) directory-blacklist)
-                    || (type == "regular"
-                      && builtins.elem (baseNameOf name) file-blacklist)
+                  !(
+                    (isBlacklisted name type)
+                    || (isMarkdownFile name type)
+                    || (isImageFile name type)
+                    || (isPlantUmlFile name type)
                     # assumption that nix is final builder, 
                     # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
                     # and if *.nix changed, nix itself will detect only relevant cache invalidations 
-                    || (type == "regular"
-                      && lib.strings.hasSuffix ".nix" name));
+                    || (isNixFile name type)
+                  );
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
               ./code;
               src = ./code;
