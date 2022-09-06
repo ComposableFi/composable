@@ -31,7 +31,7 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils";
         await executor.execute(
           // @ts-ignore
           parachainApi.tx.stakingRewards.claim(
-            parachainApi.createType("u128", ),
+            parachainApi.createType("u128", positionId),
           ),
           selectedAccount.address,
           parachainApi,
