@@ -96,6 +96,7 @@ pub mod pallet {
 		transactional, BoundedBTreeMap, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
+	use orml_traits::{LockIdentifier, MultiLockableCurrency};
 	use sp_arithmetic::Permill;
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider},
@@ -297,6 +298,10 @@ pub mod pallet {
 				AccountIdOf<Self>,
 				Balance = BalanceOf<Self>,
 				AssetId = AssetIdOf<Self>,
+			> + MultiLockableCurrency<
+				AccountIdOf<Self>,
+				Balance = BalanceOf<Self>,
+				CurrencyId = AssetIdOf<Self>,
 			>;
 
 		/// is used for rate based rewarding and position lock timing
@@ -342,6 +347,9 @@ pub mod pallet {
 		type PbloStakeFinancialNftCollectionId: Get<Self::AssetId>;
 
 		type WeightInfo: WeightInfo;
+
+		#[pallet::constant]
+		type LockId: Get<LockIdentifier>;
 	}
 
 	/// Abstraction over RewardPoolConfiguration type
@@ -744,12 +752,11 @@ pub mod pallet {
 			let boosted_amount = Self::boosted_amount(reward_multiplier, amount);
 			let (rewards, reductions) =
 				Self::compute_rewards_and_reductions(boosted_amount, &rewards_pool)?;
-			// REVIEW(benluelo): What should the ED be?
-			let fnft_collection_id =
-				T::CurrencyFactory::create(RangeId::FNFT_ASSETS, Zero::zero())?;
-			// REVIEW(benluelo): Who should the admin be?
-			T::FinancialNft::create_collection(&fnft_collection_id, &who, &who)?;
+
+			let fnft_collection_id = rewards_pool.financial_nft_asset_id;
 			let fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
+			let fnft_account =
+				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
 
 			let new_position = StakeOf::<T> {
 				reward_pool_id: *pool_id,
@@ -763,32 +770,28 @@ pub mod pallet {
 				},
 				financial_nft_id: fnft_instance_id,
 			};
-			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and
-			// lock it. T::Assets::mint_into(rewards_pool.share_asset_id fnft_account, amount)?;
 
 			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
 			rewards_pool.rewards = rewards;
 
-			let new_fnft_instance_id = T::FinancialNft::get_next_nft_id(&fnft_collection_id)?;
+			// Move staked funds into fNFT asset account & lock the assets
+			T::Assets::transfer(rewards_pool.asset_id, who, &fnft_account, amount, keep_alive)?;
+			T::Assets::set_lock(T::LockId::get(), rewards_pool.asset_id, &fnft_account, amount)?;
 
-			// TODO (vim):
-			// 	1. Mint the NFT into the relevant NFT collection mapped to the reward pool
-			//  2. Map and store the nft_id -> position_id
-			// let next_nft_id = T::FinancialNFT::get_next_nft_id(reward_pool.fnft_collection_id)?;
-			// T::FinancialNFT::mint_into(reward_pool.fnft_collection_id, next_nft_id)?;
-			// FnftToPositionId<T>::insert(next_nft_id, position_id);
-			// let fnft_account = T::FinancialNFT::asset_account(reward_pool.fnft_collection_id,
-			// next_nft_id); TODO (vim): transfer the staked amount to the NFT account and lock it
-			// T::Assets::transfer(rewards_pool.asset_id, who, fnft_account, amount)?;
-			T::Assets::transfer(
-				rewards_pool.asset_id,
-				who,
-				&Self::pool_account_id(pool_id),
+			// Mint share tokens into fNFT asst account & lock the assets
+			T::Assets::mint_into(rewards_pool.share_asset_id, &fnft_account, amount)?;
+			T::Assets::set_lock(
+				T::LockId::get(),
+				rewards_pool.share_asset_id,
+				&fnft_account,
 				amount,
-				keep_alive,
 			)?;
+
+			// Mint the fNFT
+			T::FinancialNft::mint_into(&fnft_collection_id, &fnft_instance_id, &who)?;
+
 			RewardPools::<T>::insert(pool_id, rewards_pool);
-			Stakes::<T>::insert(fnft_collection_id, new_fnft_instance_id, new_position);
+			Stakes::<T>::insert(fnft_collection_id, fnft_instance_id, new_position);
 
 			Self::deposit_event(Event::<T>::Staked {
 				pool_id: *pool_id,

@@ -30,7 +30,7 @@ mod weights;
 mod xcmp;
 
 use lending::MarketId;
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
@@ -850,6 +850,7 @@ parameter_types! {
 	pub const XPbloAssetId: CurrencyId = CurrencyId::xPBLO;
 	pub const PicaStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PICA_STAKE_FNFT_COLLECTION;
 	pub const PbloStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PBLO_STAKE_FNFT_COLLECTION;
+	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 }
 
 impl pallet_staking_rewards::Config for Runtime {
@@ -874,6 +875,7 @@ impl pallet_staking_rewards::Config for Runtime {
 	type XPbloAssetId = XPbloAssetId;
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
+	type LockId = StakingRewardsLockId;
 }
 
 /// The calls we permit to be executed by extrinsics

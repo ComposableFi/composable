@@ -26,6 +26,7 @@ sp-core = { default-features = false, git = "https://github.com/paritytech/subst
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
