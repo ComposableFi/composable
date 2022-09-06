@@ -12,7 +12,7 @@ use frame_support::{
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
-use orml_traits::{parameter_type_with_key, GetByKey};
+use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
 use sp_arithmetic::traits::Zero;
 use sp_runtime::{
 	testing::Header,
@@ -234,6 +234,7 @@ parameter_types! {
 	pub const XPbloAssetId: CurrencyId = 102;
 	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
 	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1002;
+	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 }
 
 impl pallet_staking_rewards::Config for Test {
@@ -258,6 +259,8 @@ impl pallet_staking_rewards::Config for Test {
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type WeightInfo = ();
+
+	type LockId = StakingRewardsLockId;
 }
 
 impl InstanceFilter<Call> for ProxyType {

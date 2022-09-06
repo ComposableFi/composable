@@ -406,7 +406,7 @@ pub mod pallet {
 	pub type Stakes<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
-		T::AssetId,
+		T::AssetId, // collection id
 		Blake2_128Concat,
 		FinancialNftInstanceIdOf<T>,
 		StakeOf<T>,
