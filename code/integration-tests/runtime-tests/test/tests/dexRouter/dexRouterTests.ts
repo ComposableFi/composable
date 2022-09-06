@@ -18,7 +18,7 @@ import BN from "bn.js";
 //  - exchange
 //  - sell
 
-describe.only("DexRouterPallet Tests", function () {
+describe("DexRouterPallet Tests", function () {
   let api: ApiPromise;
   let eth: number, usdt: number, usdc: number, dai: number;
   let walletId1: KeyringPair, walletId2: KeyringPair, sudoKey: KeyringPair;
@@ -49,17 +49,19 @@ describe.only("DexRouterPallet Tests", function () {
 
   before("Creating pools", async function () {
     poolId1 = await createConsProdPool(api, sudoKey, walletId1, usdt, eth, fee, baseWeight);
+    expect(poolId1).to.not.be.an("Error");
     poolId2 = await createConsProdPool(api, sudoKey, walletId1, usdc, usdt, fee, baseWeight);
+    expect(poolId2).to.not.be.an("Error");
     poolId3 = await createConsProdPool(api, sudoKey, walletId1, dai, usdc, fee, baseWeight);
+    expect(poolId3).to.not.be.an("Error");
   });
 
   after("Closing the connection", async function () {
     await api.disconnect();
   });
 
-  it("[SHORT] Create route for pablo pools", async function () {
-    this.timeout(5 * 60 * 1000);
-
+  it("Create route #1 for pablo pools", async function () {
+    this.timeout(2 * 60 * 1000);
     // create route for pool 1 (USDT-ETH)
     const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
       base: usdt,
@@ -75,7 +77,10 @@ describe.only("DexRouterPallet Tests", function () {
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair, route))
     );
     expect(result.isOk).to.be.true;
+  });
 
+  it("Create route #2 for pablo pools", async function () {
+    this.timeout(2 * 60 * 1000);
     // create route for pool 2 (USDC-USDT)
     const assetPair2 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
       base: usdc,
@@ -91,7 +96,10 @@ describe.only("DexRouterPallet Tests", function () {
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair2, route2))
     );
     expect(result2.isOk).to.be.true;
+  });
 
+  it("Create route #3 for pablo pools", async function () {
+    this.timeout(2 * 60 * 1000);
     // create route for pool 3 (DAI-USDC)
     const assetPair3 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
       base: dai,
@@ -107,7 +115,10 @@ describe.only("DexRouterPallet Tests", function () {
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair3, route3))
     );
     expect(result3.isOk).to.be.true;
+  });
 
+  it("Create route #4 for pablo pools", async function () {
+    this.timeout(2 * 60 * 1000);
     // create route for USDC-ETH pair (pool 1 <--> pool 2)
     const assetPair4 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
       base: usdc,
@@ -123,7 +134,10 @@ describe.only("DexRouterPallet Tests", function () {
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair4, route4))
     );
     expect(result4.isOk).to.be.true;
+  });
 
+  it("Create route #5 for pablo pools", async function () {
+    this.timeout(2 * 60 * 1000);
     // create route for DAI-USDT pair (pool 2 <--> pool3)
     const assetPair5 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
       base: dai,
@@ -139,7 +153,10 @@ describe.only("DexRouterPallet Tests", function () {
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair5, route5))
     );
     expect(result5.isOk).to.be.true;
+  });
 
+  it("Create route #6 for pablo pools", async function () {
+    this.timeout(2 * 60 * 1000);
     // create route for DAI-ETH pair (pool 1 <--> pool 2 <--> pool3)
     const assetPair6 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
       base: dai,
@@ -366,8 +383,8 @@ describe.only("DexRouterPallet Tests", function () {
     const finalETHbalance = new BN((await api.rpc.assets.balanceOf(eth.toString(), walletId2.publicKey)).toString());
     const finalDAIbalance = new BN((await api.rpc.assets.balanceOf(dai.toString(), walletId2.publicKey)).toString());
     //Assertions
-    expect(initialETHbalance.lt(finalETHbalance)).to.be.true;
-    expect(initialDAIbalance.gt(finalDAIbalance)).to.be.true;
+    expect(initialETHbalance).to.be.bignumber.lessThan(finalETHbalance);
+    expect(initialDAIbalance).to.be.bignumber.lessThan(finalDAIbalance);
   });
 
   it("Exchange ETH for USDC via route found in router (1 hop)", async function () {

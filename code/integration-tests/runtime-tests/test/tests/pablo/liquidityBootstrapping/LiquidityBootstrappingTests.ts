@@ -23,7 +23,7 @@ import pabloTestConfiguration from "../testHandlers/test_configuration.json";
  * CreatePool - AddLiquidity - Buy - Sell - Swap - RemoveLiquidity with basic calculations
  */
 
-describe.only("LiquidityBootstrapping Pool Test Suite", function () {
+describe("LiquidityBootstrapping Pool Test Suite", function () {
   if (!pabloTestConfiguration.liquidityBootstrappingTests.enabled) {
     console.log("Liquidity Bootstrapping Tests are being skipped...");
     return;
