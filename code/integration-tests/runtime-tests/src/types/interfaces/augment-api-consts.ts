@@ -116,7 +116,7 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       contractStorageByteReadPrice: u32 & AugmentedConst<ApiType>;
       /**
-       * Price of writting a byte in the storage.
+       * Price of writing a byte in the storage.
        **/
       contractStorageByteWritePrice: u32 & AugmentedConst<ApiType>;
       /**
@@ -307,7 +307,7 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       maxAdditionalFields: u32 & AugmentedConst<ApiType>;
       /**
-       * Maximum number of registrars allowed in the system. Needed to bound the complexity
+       * Maxmimum number of registrars allowed in the system. Needed to bound the complexity
        * of, e.g., updating judgements.
        **/
       maxRegistrars: u32 & AugmentedConst<ApiType>;
@@ -463,11 +463,11 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       twapInterval: u64 & AugmentedConst<ApiType>;
       /**
-       * AssetId of the xToken varient of PBLO asset
+       * AssetId of the xToken variant of PBLO asset
        **/
       xPbloAssetId: u128 & AugmentedConst<ApiType>;
       /**
-       * AssetId of the xToken varient of PICA asset
+       * AssetId of the xToken variant of PICA asset
        **/
       xPicaAssetId: u128 & AugmentedConst<ApiType>;
       /**
@@ -619,10 +619,10 @@ declare module '@polkadot/api-base/types/consts' {
     };
     transactionPayment: {
       /**
-       * A fee multiplier for `Operational` extrinsics to compute "virtual tip" to boost their
+       * A fee mulitplier for `Operational` extrinsics to compute "virtual tip" to boost their
        * `priority`
        * 
-       * This value is multiplied by the `final_fee` to obtain a "virtual tip" that is later
+       * This value is multipled by the `final_fee` to obtain a "virtual tip" that is later
        * added to a tip component in regular `priority` calculations.
        * It means that a `Normal` transaction can front-run a similarly-sized `Operational`
        * extrinsic (with no tip), by including a tip value greater than the virtual tip.
