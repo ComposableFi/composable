@@ -679,7 +679,7 @@
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo deny";
               cargoExtraArgs =
-                "--manifest-path ./frame/composable-support/Cargo.toml check ban";
+                "--manifest-path ./parachain/frame/composable-support/Cargo.toml check ban";
             });
 
             cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
