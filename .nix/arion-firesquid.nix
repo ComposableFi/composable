@@ -8,7 +8,9 @@ pkgs.arion.build {
         # subsquid-indexer-gateway-container-name = "subsquid-indexer-gateway";
 
         dali-container-name = "dali-devnet";
-
+        subsquidGraphqlContainerName = "subsquid-graphql";
+        gatewayContainerName = "subsquild-gateway";
+        gatewayPort = 8888;
 
         squid-archive-db = rec {
           name = "squid-archive-db";
@@ -28,6 +30,7 @@ pkgs.arion.build {
         
         relaychainPort = 9944;
         parachainPort = 9988;
+        squidGraphqlPort = 4350;
 
         # frontend-picasso = import ./services/frontend-picasso.nix {
         #   inherit pkgs;
@@ -84,9 +87,9 @@ pkgs.arion.build {
                 prometheusPort = 9090;
             }); 
             
-            gateway = mkComposableContainer (import ./services/subsquid-substrate-gateway.nix {
+            "${gatewayContainerName}" = mkComposableContainer (import ./services/subsquid-substrate-gateway.nix {
                 database = squid-archive-db;
-                port = 8888;
+                port = gatewayPort;
             });
 
             # note, this one currently seems broken.
@@ -95,10 +98,16 @@ pkgs.arion.build {
             #     graphqlPort = 4010;
             # });
             
-            graphql-server = mkComposableContainer (import ./services/subsquid-graphql.nix {
+            "${subsquidGraphqlContainerName}" = mkComposableContainer (import ./services/subsquid-graphql.nix {
               inherit pkgs;
               database = squid-db;
-              graphqlPort = 4350;
+              graphqlPort = squidGraphqlPort;
+            });
+            
+            subsquid-processor = mkComposableContainer ( import ./services/subsquid-processor-dockerfile.nix {
+              inherit subsquidGraphqlContainerName gatewayContainerName gatewayPort ;
+              database = squid-db;
+              graphqlPort = squidGraphqlPort;
             });
           };
         };
