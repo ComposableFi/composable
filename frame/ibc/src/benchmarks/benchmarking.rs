@@ -7,7 +7,7 @@ use crate::{
 	host_functions::HostFunctions,
 	ics23::{
 		acknowledgements::Acknowledgements, client_states::ClientStates,
-		packet_commitments::PacketCommitment, reciepts::PacketReceipt,
+		packet_commitments::PacketCommitment, receipts::PacketReceipt,
 	},
 	pallet::Pallet as PalletIbc,
 	Any, Config, HostConsensusStates,

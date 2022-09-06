@@ -130,7 +130,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
             justifyContent="space-between"
           >
             <Typography variant="body1">
-              You will recieve
+              You will receive
             </Typography>
             <IconButton
               onClick={onCloseHandler}
@@ -251,4 +251,3 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
     </Modal>
   );
 };
-

@@ -94,7 +94,7 @@ const Auctions: NextPage = () => {
                   <Box>
                     <Tooltip
                       title={
-                        extensionStatus !== "connected" ? "Comming soon" : ""
+                        extensionStatus !== "connected" ? "Coming soon" : ""
                       }
                       arrow
                     >

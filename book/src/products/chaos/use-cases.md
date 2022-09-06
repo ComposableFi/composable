@@ -35,5 +35,5 @@ In the future, Picasso liquidity gauges will be established that direct liquidit
 * Users holding CHAOS will earn yield in the form of PICA, incubated tokens, and from various other streams such as collator staking, protocol revenue, and treasury revenue.
 * Users will be able to claim token rewards as they are vested, being able to compound these back onto their original fNFT by relocking.
 * Once the time-lock has finished, users will simply redeem their initial PICA or choose to renew their lock.
-* Minting the CHAOS position as an fNFT opens up significant opportunities for further utility of financial NFTs whilst ensuring the underlying tokens are locked, namely through collateralisation and secondary market trading.
+* Minting the CHAOS position as an fNFT opens up significant opportunities for further utility of financial NFTs whilst ensuring the underlying tokens are locked, namely through collateralization and secondary market trading.
 * Holding the CHAOS fNFTs will initially entitle users to rewards, but most importantly will play a key role in the management and direction of treasury assets.

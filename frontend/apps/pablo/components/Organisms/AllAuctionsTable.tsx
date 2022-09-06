@@ -45,7 +45,7 @@ export const AllAuctionsTable: React.FC<TableContainerProps> = ({
 
   return (
     <TableContainer {...rest}>
-      <Table sx={{ minWidth: 420 }} aria-label="autions table">
+      <Table sx={{ minWidth: 420 }} aria-label="auctions table">
         <TableHead>
           <TableRow>
             <TableCell align="left" sx={{ paddingLeft: theme.spacing(4) }}>

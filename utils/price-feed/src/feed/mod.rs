@@ -65,7 +65,7 @@ pub enum FeedIdentifier {
 	Composable,
 }
 
-/// The possible errors hapenning while feeds are running.
+/// The possible errors happening while feeds are running.
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum FeedError {
 	NetworkFailure,
@@ -73,7 +73,7 @@ pub enum FeedError {
 }
 
 /// Wrapper type used to notify the possible FeedError
-/// hapenning during a computation.
+/// happening during a computation.
 pub type FeedResult<T> = Result<T, FeedError>;
 
 /// A feed stream that fire various notifications.

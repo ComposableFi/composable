@@ -156,7 +156,7 @@ pub struct JumpModel {
 	/// The max interest rate when utilization rate is 100%
 	pub full_rate: Rate,
 	/// The utilization point at which the jump_rate is applied
-	/// For target_utilization, we should have used sp_runtime::Perquintil, but since Balance is
+	/// For target_utilization, we should have used sp_runtime::Perquintill, but since Balance is
 	/// until can't be created from u128.
 	pub target_utilization: Percent,
 }
@@ -254,13 +254,13 @@ impl InterestRate for CurveModel {
 /// https://www.delphidigital.io/reports/dynamic-interest-rate-model-based-on-control-theory/
 /// PID Controller (proportional-integral-derivative controller)
 /// Error term is calculated as `et = uo - ut`.
-/// Propertional term is calculated as `pt = kp * et`.
+/// Proportional term is calculated as `pt = kp * et`.
 /// Integral term is calculated as `it = it_1 + ki * et`, here `it_1` is previous_integral_term.
 /// Derivative term is calculated as `dt = kd * (et - et_1)`. here `et_1` is previous_error_value.
 /// Control value is calculated as `ut = pt + it + dt`.
 /// New Interest rate is calculated as `ir = ir_t_1 + ut` here ir_t_1 is previous_interest_rate.
 ///
-/// To know how `kp`, `ki` and `kd` are derived plesae check paper at above URL.
+/// To know how `kp`, `ki` and `kd` are derived please check paper at above URL.
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct DynamicPIDControllerModel {

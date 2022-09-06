@@ -20,7 +20,7 @@ const ButtonGuide: React.FC = () => {
 
   return (
     <>
-      <Typography variant="h3">Styleguide</Typography>
+      <Typography variant="h3">Style guide</Typography>
       <Typography variant="h4">Buttons (Active)</Typography>
       <Box
         sx={{

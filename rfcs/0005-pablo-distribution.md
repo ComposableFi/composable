@@ -36,7 +36,7 @@ Table of Contents
                 existing stakers(<span
                 class="image"><img src="0005-pablo-distribution-assets/images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>)
                 reward would
-                be,](#5311-when-adding-a-new-staker-n1-existing-stakersn-reward-would-be)
+                be,](#5311-when-adding-a-new-staker-n1-existing-stakers-reward-would-be)
             -   [5.3.1.2. When removing a staker(Claim/Unstake) from the pool the above
                 addition step has to be
                 reverted](#5312-when-removing-a-stakerclaimunstake-from-the-pool-the-above-addition-step-has-to-be-reverted)
@@ -74,7 +74,7 @@ This document proposes the Pablo distribution(token and pool trading
 fees) mechanism while considering various options and capturing the
 discussions about the subject.
 
-`TODO summarise the mechanism`
+`TODO summarize the mechanism`
 
 ## 2. Background
 
@@ -238,7 +238,7 @@ for brevity.
 
 ### 5.1. System Overview
 
-<img src="0005-pablo-distribution-assets/images/images/pablo-distribution-verview.png" width="977" height="807" alt="pablo distribution verview" />
+<img src="0005-pablo-distribution-assets/images/images/pablo-distribution-overview.png" width="977" height="807" alt="pablo distribution overview" />
 
 TODO: What to do for part of protocol fees that should be transferred to
 treasury eventually as treasury does not stake it’s PBLO?
@@ -326,7 +326,7 @@ Dilution of LPs](#appendix-a-trading-fee-inflation-to-avoid-dilution-of-lps).
 #### 5.2.3. PBLO Staker Pool Creation
 
 When creating new Pablo pool, the creator should have option to create n PBLO staking pool.
-This newly created stking pool will receive rewards from trading fees from Pablo pool as mention in section 5.2.4
+This newly created staking pool will receive rewards from trading fees from Pablo pool as mention in section 5.2.4
 
 #### 5.2.4. PBLO Staker Trading Fee Distribution
 
@@ -389,7 +389,7 @@ Reward per calculation epoch <img src="0005-pablo-distribution-assets/images/ste
 Previous total reward pool before the current epoch <img src="0005-pablo-distribution-assets/images/stem-53fadade13e71b863963af9a23b28b71.png" width="25" height="8" alt="stem 53fadade13e71b863963af9a23b28b71" /></span>
 
 Assuming there is a per epoch calculation which adds to the pool, the
-total reward pool for the current epoc,
+total reward pool for the current epoch,
 
 <img src="0005-pablo-distribution-assets/images/stem-667bfb2c3da043fcfff3288c44c1cc6e.png" width="103" height="10" alt="stem 667bfb2c3da043fcfff3288c44c1cc6e" /></span>
 
@@ -516,7 +516,7 @@ representing a staking position,
         pub lock: Lock,
     }
 
-Which is referred to in the algorithms in the followin sections.
+Which is referred to in the algorithms in the following sections.
 
 Now in order to allow redeeming the above staking position, following
 data structures is to be tracked in the staking rewards pallet,

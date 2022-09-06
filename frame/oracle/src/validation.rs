@@ -7,7 +7,7 @@ use sp_runtime::{traits::Zero, Percent};
 pub struct ValidMinAnswers;
 
 #[derive(Debug, Copy, Clone, Decode, PartialEq, Eq, TypeInfo)]
-pub struct ValidThreshhold;
+pub struct ValidThreshold;
 
 #[derive(Debug, Decode)]
 pub struct ValidMaxAnswer<U> {
@@ -63,7 +63,7 @@ impl<MinAnswer: Zero + PartialEq + Eq + Ord + PartialOrd> Validate<MinAnswer, Va
 	}
 }
 
-impl Validate<Percent, ValidThreshhold> for ValidThreshhold {
+impl Validate<Percent, ValidThreshold> for ValidThreshold {
 	fn validate(input: Percent) -> Result<Percent, &'static str> {
 		if input >= Percent::from_percent(100) {
 			return Err("INVALID_THRESHOLD")

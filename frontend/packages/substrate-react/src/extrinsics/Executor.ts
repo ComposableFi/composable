@@ -31,18 +31,18 @@ interface TransactionExecutor {
 class Executor implements TransactionExecutor {
   private addExtrinsic: ExtrinsicSlice["addExtrinsic"];
   private addBlockHash: ExtrinsicSlice["addBlockHash"];
-  private updateExstrinsicStatus: ExtrinsicSlice["updateExtrinsicStatus"];
+  private updateExtrinsicStatus: ExtrinsicSlice["updateExtrinsicStatus"];
   private updateExtrinsicError: ExtrinsicSlice["updateExtrinsicError"];
 
   constructor(
     addExtrinsic: ExtrinsicSlice["addExtrinsic"],
     addBlockHash: ExtrinsicSlice["addBlockHash"],
-    updateExstrinsicStatus: ExtrinsicSlice["updateExtrinsicStatus"],
+    updateExtrinsicStatus: ExtrinsicSlice["updateExtrinsicStatus"],
     updateExtrinsicError: ExtrinsicSlice["updateExtrinsicError"]
   ) {
     this.addExtrinsic = addExtrinsic;
     this.addBlockHash = addBlockHash;
-    this.updateExstrinsicStatus = updateExstrinsicStatus;
+    this.updateExtrinsicStatus = updateExtrinsicStatus;
     this.updateExtrinsicError = updateExtrinsicError;
   }
 
@@ -187,7 +187,7 @@ class Executor implements TransactionExecutor {
   }
 
   private async onFinalized(txHash: string) {
-    this.updateExstrinsicStatus(txHash, "isFinalized");
+    this.updateExtrinsicStatus(txHash, "isFinalized");
   }
 }
 

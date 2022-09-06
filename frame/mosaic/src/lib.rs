@@ -150,7 +150,7 @@ pub mod pallet {
 		pub penalty_decayer: Decayer,
 	}
 
-	/// The network informations, used for rate limitting.
+	/// The network information, used for rate limiting.
 	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Eq)]
 	pub struct NetworkInfo<Balance> {
 		pub enabled: bool,
@@ -407,7 +407,7 @@ pub mod pallet {
 		///
 		/// This can only be called by the [`ControlOrigin`].
 		///
-		/// [controlorigin]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
+		/// [`ControlOrigin`]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
 		#[pallet::weight(T::WeightInfo::set_relayer())]
 		#[transactional]
 		pub fn set_relayer(
@@ -578,7 +578,7 @@ pub mod pallet {
 		/// - Amount must be equal or lower than what the user has locked
 		///
 		/// # Note
-		/// - Reclaim period is not reset if not all the funds are moved; menaing that the clock
+		/// - Reclaim period is not reset if not all the funds are moved; meaning that the clock
 		///   remains ticking for the relayer to pick up the rest of the transaction.
 		#[pallet::weight(T::WeightInfo::accept_transfer())]
 		#[transactional]
@@ -922,8 +922,8 @@ pub mod pallet {
 							amount,
 						)?;
 
-						// No remaing funds need to be transferred for this asset, so we can delete
-						// the storage item.
+						// No remaining funds need to be transferred for this asset, so we can
+						// delete the storage item.
 						if amount == balance {
 							*maybe_tx = None;
 							Self::deposit_event(Event::<T>::TransferAccepted {

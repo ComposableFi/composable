@@ -82,7 +82,7 @@ Transfer all free balance of the native asset from `origin` to `dest`.
 
 [`mint_initialize`](https://dali.devnets.composablefinance.ninja/doc/pallet_assets/pallet/enum.Call.html#variant.mint_initialize)
 
-Creates a new asset, minting `amount` of funds into the `dest` account. Intented to be
+Creates a new asset, minting `amount` of funds into the `dest` account. intended to be
 used for creating wrapped assets, not associated with any project.
 
 ## Mint Initialize With Governance
