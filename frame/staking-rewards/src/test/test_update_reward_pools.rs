@@ -1,6 +1,6 @@
 use composable_tests_helpers::test::{
 	block::process_and_progress_blocks,
-	currency::{PICA, USDT},
+	currency::{PICA, USDT, XPICA},
 	helper::assert_extrinsic_event,
 };
 use composable_traits::staking::{
@@ -18,6 +18,8 @@ use crate::test::{
 	test_reward_accumulation_hook::{check_rewards, CheckRewards, PoolRewards},
 	Test,
 };
+
+use super::{prelude::STAKING_FNFT_COLLECTION_ID, runtime};
 
 #[test]
 fn test_update_reward_pool() {
@@ -46,6 +48,8 @@ fn test_update_reward_pool() {
 				.try_collect()
 				.unwrap(),
 				lock: default_lock_config(),
+				share_asset_id: XPICA::ID,
+				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
 			});
 
 		mint_assets([ALICE], [USDT::ID], INITIAL_AMOUNT);
@@ -55,7 +59,6 @@ fn test_update_reward_pool() {
 
 		check_rewards(&[CheckRewards {
 			owner: ALICE,
-			pool_id,
 			pool_asset_id: PICA::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: USDT::ID,
@@ -96,7 +99,6 @@ fn test_update_reward_pool() {
 
 		check_rewards(&[CheckRewards {
 			owner: ALICE,
-			pool_id,
 			pool_asset_id: PICA::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: USDT::ID,
@@ -114,7 +116,6 @@ fn test_update_reward_pool() {
 
 		check_rewards(&[CheckRewards {
 			owner: ALICE,
-			pool_id,
 			pool_asset_id: PICA::ID,
 			pool_rewards: &[PoolRewards {
 				reward_asset_id: USDT::ID,

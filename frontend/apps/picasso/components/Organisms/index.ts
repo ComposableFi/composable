@@ -5,4 +5,3 @@ export { StatsGovernanceTab } from "./StatsGovernanceTab";
 export { StatsTelemetryTab } from "./StatsTelemetryTab";
 export { StatsOverviewTab } from "./StatsOverviewTab";
 export { StatsApolloTab } from "./StatsApolloTab";
-export { StatsTreasuryTab } from "./StatsTreasuryTab";

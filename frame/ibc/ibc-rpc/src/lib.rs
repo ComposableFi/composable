@@ -179,7 +179,7 @@ where
 	/// Query client consensus state
 	/// If the light client is a beefy light client, the revision height and revision number must be
 	/// specified And the `latest_consensus_state` field should be set to false, if not an error
-	/// will be returned because the consenssus state will not be found
+	/// will be returned because the consensus state will not be found
 	/// For a beefy light client revision number should be the para id and the revision height the
 	/// block height.
 	#[method(name = "ibc_queryClientConsensusState")]
@@ -885,7 +885,7 @@ where
 			.ok_or_else(|| runtime_error_into_rpc_error("Failed to Client state for channel"))?;
 
 		let client_state = AnyClientState::decode_vec(&result.client_state)
-			.map_err(|_| runtime_error_into_rpc_error("Failed to decode cleint state"))?;
+			.map_err(|_| runtime_error_into_rpc_error("Failed to decode client state"))?;
 		Ok(IdentifiedClientState {
 			client_id: String::from_utf8(result.client_id)
 				.map_err(|_| runtime_error_into_rpc_error("Failed to decode client id"))?,

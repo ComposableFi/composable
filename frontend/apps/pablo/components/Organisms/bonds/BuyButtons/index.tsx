@@ -46,38 +46,31 @@ export const BuyButtons: React.FC<BuyButtonsProps> = ({
       router.push("/swap");
     }
   };
-  
-  const {baseAsset, quoteAsset} = bond.principalAsset.lpPrincipalAsset 
-  const isLpBond =
-    baseAsset &&
-    quoteAsset;
-  if (!isLpBond) return null;
 
+  const { baseAsset, quoteAsset } = bond.principalAsset.lpPrincipalAsset;
+  const isLpBond = baseAsset && quoteAsset;
+  if (!isLpBond) return null;
 
   return (
     <Grid container columnSpacing={3} {...gridProps}>
       <Grid item {...threeColumnPageSize}>
         <Button {...buttonProps(onBuyHandler("token1"))}>
-          {baseAsset &&
+          {baseAsset && (
             <BaseAsset
               icon={baseAsset.icon}
-              {...restAssetProps(
-                baseAsset.symbol,
-                iconSize
-              )}
+              {...restAssetProps(baseAsset.symbol, iconSize)}
             />
-          }
+          )}
         </Button>
       </Grid>
       <Grid item {...threeColumnPageSize}>
         <Button {...buttonProps(onBuyHandler("token2"))}>
-          {quoteAsset &&           <BaseAsset
-            icon={quoteAsset.icon}
-            {...restAssetProps(
-              quoteAsset.symbol,
-              iconSize
-            )}
-          />}
+          {quoteAsset && (
+            <BaseAsset
+              icon={quoteAsset.icon}
+              {...restAssetProps(quoteAsset.symbol, iconSize)}
+            />
+          )}
         </Button>
       </Grid>
       <Grid item {...threeColumnPageSize}>

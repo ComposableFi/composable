@@ -24,6 +24,8 @@ use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::CanResume;
 use wasmi_validation::{validate_module, PlainValidator};
 
+const SUBSTRATE_ECDSA_SIGNATURE_LEN: usize = 65;
+
 #[derive(Debug)]
 pub enum CosmwasmVMError<T: Config> {
 	Interpreter(wasmi::Error),
@@ -126,12 +128,12 @@ impl CosmwasmVMShared {
 		self.storage_readonly_depth > 0
 	}
 	/// Increase storage readonly depth.
-	/// Hapenning when a contract call the querier.
+	/// Happening when a contract call the querier.
 	pub fn push_readonly(&mut self) {
 		self.storage_readonly_depth += 1;
 	}
 	/// Decrease storage readonly depth.
-	/// Hapenning when a querier exit.
+	/// Happening when a querier exit.
 	pub fn pop_readonly(&mut self) {
 		self.storage_readonly_depth -= 1;
 	}
@@ -160,9 +162,9 @@ pub struct CosmwasmVM<'a, T: Config> {
 	pub cosmwasm_message_info: MessageInfo,
 	/// Executing contract address.
 	pub contract_address: CosmwasmAccount<T>,
-	/// Executing contract metadatas.
+	/// Executing contract metadata.
 	pub contract_info: ContractInfoOf<T>,
-	/// State shared accross all contracts within a single transaction.
+	/// State shared across all contracts within a single transaction.
 	pub shared: &'a mut CosmwasmVMShared,
 	/// Iterator id's to corresponding keys. Keys are used to get the next key.
 	pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,
@@ -312,16 +314,29 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		message_hash: &[u8],
 		signature: &[u8],
-		_recovery_param: u8,
+		recovery_param: u8,
 	) -> Result<Result<Vec<u8>, ()>, Self::Error> {
-		let signature: [u8; 65] = match signature.try_into() {
-			Ok(signature) => signature,
+		// `recovery_param` must be 0 or 1. Other values are not supported from CosmWasm.
+		if recovery_param > 2 {
+			return Ok(Err(()))
+		}
+
+		if signature.len() != SUBSTRATE_ECDSA_SIGNATURE_LEN - 1 {
+			return Ok(Err(()))
+		}
+
+		// Try into a [u8; 32]
+		let message_hash = match message_hash.try_into() {
+			Ok(message_hash) => message_hash,
 			Err(_) => return Ok(Err(())),
 		};
 
-		let message_hash: [u8; 32] = match message_hash.try_into() {
-			Ok(message_hash) => message_hash,
-			Err(_) => return Ok(Err(())),
+		let signature = {
+			// Since we fill `signature_inner` with `recovery_param`, when 64 bytes are written
+			// the final byte will be the `recovery_param`.
+			let mut signature_inner = [recovery_param; SUBSTRATE_ECDSA_SIGNATURE_LEN];
+			signature_inner[..SUBSTRATE_ECDSA_SIGNATURE_LEN - 1].copy_from_slice(signature);
+			signature_inner
 		};
 
 		// We used `compressed` function here because the api states that this function
@@ -338,18 +353,26 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		signature: &[u8],
 		public_key: &[u8],
 	) -> Result<bool, Self::Error> {
-		let signature: ecdsa::Signature = match signature.try_into() {
-			Ok(signature) => signature,
-			Err(_) => return Ok(false),
-		};
+		if signature.len() != SUBSTRATE_ECDSA_SIGNATURE_LEN {
+			return Ok(false)
+		}
 
-		let public_key: ecdsa::Public = match public_key.try_into() {
-			Ok(public_key) => public_key,
-			Err(_) => return Ok(false),
-		};
-
-		let message_hash: [u8; 32] = match message_hash.try_into() {
+		// Try into a [u8; 32]
+		let message_hash = match message_hash.try_into() {
 			Ok(message_hash) => message_hash,
+			Err(_) => return Ok(false),
+		};
+
+		// We are expecting 64 bytes long public keys but the substrate function use an
+		// additional byte for recovery id. So we insert a dummy byte.
+		let signature = {
+			let mut signature_inner = [0_u8; SUBSTRATE_ECDSA_SIGNATURE_LEN];
+			signature_inner[..SUBSTRATE_ECDSA_SIGNATURE_LEN - 1].copy_from_slice(signature);
+			ecdsa::Signature(signature_inner)
+		};
+
+		let public_key = match ecdsa::Public::try_from(public_key) {
+			Ok(public_key) => public_key,
 			Err(_) => return Ok(false),
 		};
 

@@ -370,7 +370,7 @@ const StatsDummyData = {
       },
       {
         data: {
-          name: "Treasury holding porportions",
+          name: "Treasury holding proportions",
           value: 54653784,
           change: 34,
           data: <Array<[number, number][]>>[

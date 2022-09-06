@@ -15,7 +15,7 @@ use sp_runtime::{FixedPointNumber, FixedU128};
 
 // ensure that we take extra for sell, at least amount to remove
 #[test]
-fn successfull_liquidate() {
+fn successful_liquidate() {
 	new_test_externalities().execute_with(|| {
 		Tokens::mint_into(PICA, &ALICE, 1_000_000_000_000_000_000_000).unwrap();
 		Balances::mint_into(&ALICE, NativeExistentialDeposit::get() * 3).unwrap();
@@ -29,7 +29,7 @@ fn successfull_liquidate() {
 			Sell::new(KUSD, PICA, 100, Ratio::saturating_from_integer(1)),
 			vec![],
 		)
-		.expect("can creater order for existign currencies if enough of amounts");
+		.expect("can creator order for existing currencies if enough of amounts");
 		let order =
 			pallet_dutch_auction::SellOrders::<Runtime>::get(order).expect("order was placed");
 		assert_eq!(order.from_to, who);

@@ -75,7 +75,7 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
   }
 
   const onApproveHandler = () => {
-    // TODO: approve hander
+    // TODO: approve handler
   }
 
   return (
@@ -168,4 +168,3 @@ export const BuyLPTokenModal: React.FC<BuyLPTokenModalProps> = ({
     </Modal>
   );
 };
-

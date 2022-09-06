@@ -49,6 +49,10 @@
 //! - `mint_initialize_with_governance`
 //! - `mint_into`
 //! - `burn_from`
+//
+// we start lag behind useful traits:
+// TODO: implement fungibles::Balanced like orml Tokens do
+// TODO: implement tokens::NamedReservableCurrency like orml Tokens do
 
 #![cfg_attr(
 	not(test),

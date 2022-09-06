@@ -104,7 +104,6 @@ const ParachainContextProvider = ({
         setSelectedAccount(accounts.length ? 0 : -1);
       } catch (e) {
         console.error(e);
-        continue;
       }
     }
 
@@ -160,7 +159,7 @@ const ParachainContextProvider = ({
 
       const wsProvider = new WsProvider(wsUrl);
       let parachainApi;
-      if (chainId === "kusama-2019") {
+      if (chainId === "picasso") {
         const rpc = Object.keys(definitions)
           .filter((k) => {
             if (!(definitions as any)[k].rpc) {

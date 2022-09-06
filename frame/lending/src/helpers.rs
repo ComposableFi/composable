@@ -180,7 +180,7 @@ impl<T: Config> Pallet<T> {
 			market
 				.collateral_factor
 				.try_into_validated()
-				.map_err(|_| Error::<T>::Overflow)?, // TODO: Use a proper error mesage?
+				.map_err(|_| Error::<T>::Overflow)?, // TODO: Use a proper error message?
 			market.under_collateralized_warn_percent,
 		);
 
@@ -260,7 +260,7 @@ impl<T: Config> Pallet<T> {
 		Ok(().into())
 	}
 
-	/// Returns pair of market's id and market (as 'MarketConfing') via market's id
+	/// Returns pair of market's id and market (as 'MarketConfig') via market's id
 	/// - `market_id` : Market index as a key in 'Markets' storage
 	pub(crate) fn get_market(
 		market_id: &MarketIndex,
@@ -334,7 +334,7 @@ impl<T: Config> Pallet<T> {
 	// In the case of FundsAvailability::MustLiquidate we obviously can not borrow, since the market
 	// is going to be closed. If FundsAvailability::Withdrawable is return, we can borrow, since
 	// vault has extra money that will be used for balancing in the next block. So, if we even
-	// borrow all assets from the market, vault has posibity for rebalancing.
+	// borrow all assets from the market, vault has possibility for rebalancing.
 	pub(crate) fn ensure_can_borrow_from_vault(
 		vault_id: &T::VaultId,
 		account_id: &T::AccountId,
@@ -346,6 +346,7 @@ impl<T: Config> Pallet<T> {
 				.ok_or(Error::<T>::CannotBorrowFromMarketWithUnbalancedVault),
 			FundsAvailability::MustLiquidate => Err(Error::<T>::MarketIsClosing),
 			FundsAvailability::Withdrawable(_) => Ok(()),
+			FundsAvailability::None => Ok(()),
 		}?;
 		Ok(())
 	}
@@ -414,7 +415,7 @@ impl<T: Config> Pallet<T> {
 				.collateral_factor
 				.try_into_validated()
 				.map_err(|_| Error::<T>::CollateralFactorMustBeMoreThanOne)?, /* TODO: Use a proper
-			                                                                * error mesage */
+			                                                                * error message */
 			market.under_collateralized_warn_percent,
 		);
 
@@ -536,7 +537,7 @@ impl<T: Config> Pallet<T> {
 					let market_account = Self::account_id(&market_id);
 					call_counters.account_id += 1;
 					// NOTE(hussein-aitlahcen):
-					// It would probably be more perfomant to handle theses
+					// It would probably be more performant to handle theses
 					// case while borrowing/repaying.
 					//
 					// I don't know whether we would face any issue by doing that.
@@ -544,10 +545,10 @@ impl<T: Config> Pallet<T> {
 					// borrow:
 					//  - withdrawable = transfer(vault->market) + transfer(market->user)
 					//  - depositable = error(not enough borrow asset) // vault asking for reserve
-					//    to be fullfilled
-					//  - mustliquidate = error(market is closing)
+					//    to be fulfilled
+					//  - must_liquidate = error(market is closing)
 					// repay:
-					// 	- (withdrawable || depositable || mustliquidate) = transfer(user->market) +
+					// 	- (withdrawable || depositable || must_liquidate) = transfer(user->market) +
 					//    transfer(market->vault)
 					//
 					// The intermediate transfer(vault->market) while borrowing would
@@ -566,6 +567,7 @@ impl<T: Config> Pallet<T> {
 							Self::handle_must_liquidate(&config, &market_account)?;
 							call_counters.handle_must_liquidate += 1;
 						},
+						FundsAvailability::None => {},
 					}
 
 					call_counters.available_funds += 1;

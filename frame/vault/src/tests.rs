@@ -232,7 +232,7 @@ proptest! {
 		∀v ∈ V, ∀s ∈ S, ∀u ∈ U, ∀a ∈ ℕ, alloc x = 0.8 * funds x, reserve x = 0.2 * funds x
 
 		let v₁ = user_deposit u a v
-			v₂ = stategy_withdraw s (alloc v₁) v₁
+			v₂ = strategy_withdraw s (alloc v₁) v₁
 			v₃ = user_withdraw u (reserve v₂) v₂
 			v₄ = strategy_deposit (reserve v₃) v₃
 		in unbalanced v₃ and balanced v₄
@@ -458,7 +458,7 @@ proptest! {
 		Create an empty vault.
 		Two distinct users A and B and a single strategy are interacting.
 		The user A deposit an arbitrary amount X.
-		The strategy deposit an arbitrary profit, this profit should belong to previous shareholdres.
+		The strategy deposit an arbitrary profit, this profit should belong to previous shareholders.
 		The user B deposit an arbitrary amount Y.
 		The user A withdraw everything it can, which should be X + profit.
 		The user B withdraw everything it can, which should be Y.
@@ -768,7 +768,7 @@ fn test_vault_claim_surcharge_existential() {
 }
 
 #[test]
-fn test_vault_claim_surcharge_rent_excempt() {
+fn test_vault_claim_surcharge_rent_exempt() {
 	ExtBuilder::default().build().execute_with(|| {
 		Balances::mint_into(&ALICE, ExistentialDeposit::get() * 3).unwrap();
 		assert_eq!(Balances::balance(&CHARLIE), 0);

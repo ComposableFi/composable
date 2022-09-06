@@ -42,7 +42,7 @@ pub trait Amm {
 		Self::AssetId: sp_std::cmp::Ord;
 
 	/// Simulate add_liquidity computations, on success returns the amount of LP tokens
-	/// that would be recieved by adding the given amounts of base and quote.
+	/// that would be received by adding the given amounts of base and quote.
 	fn simulate_add_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
@@ -52,7 +52,7 @@ pub trait Amm {
 		Self::AssetId: sp_std::cmp::Ord;
 
 	/// Simulate remove_liquidity computations, on success returns the amount of base/quote assets
-	/// that would be recieved by removing the given amounts of lp tokens.
+	/// that would be received by removing the given amounts of lp tokens.
 	fn simulate_remove_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
@@ -98,7 +98,7 @@ pub trait Amm {
 
 	/// Deposit coins into the pool
 	/// `amounts` - list of amounts of coins to deposit,
-	/// `min_mint_amount` - minimum amout of LP tokens to mint from the deposit.
+	/// `min_mint_amount` - minimum amount of LP tokens to mint from the deposit.
 	fn add_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
@@ -132,26 +132,6 @@ pub trait Amm {
 		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
-}
-
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, Copy, RuntimeDebug)]
-pub enum RewardPoolType {
-	LP,
-	PBLO,
-}
-
-impl Default for RewardPoolType {
-	fn default() -> Self {
-		RewardPoolType::PBLO
-	}
-}
-
-#[derive(
-	Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, Copy, RuntimeDebug,
-)]
-pub struct StakingRewardPool<RewardPoolId> {
-	pub pool_id: RewardPoolId,
-	pub pool_type: RewardPoolType,
 }
 
 // TODO: Perhaps we need a way to not have a max reward for a pool.

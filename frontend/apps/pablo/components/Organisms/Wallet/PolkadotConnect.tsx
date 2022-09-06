@@ -14,24 +14,25 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import useStore from "@/store/useStore";
-import { useDotSamaContext, useParachainApi } from "substrate-react";
+import { useDotSamaContext, useParachainApi, useEagerConnect } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useAssetsWithBalance } from "@/defi/hooks";
 
 const Status = () => {
+  const { extensionStatus, selectedAccount } = useDotSamaContext();
   const theme = useTheme();
   const assetsWithBalance = useAssetsWithBalance(DEFAULT_NETWORK_ID)
-
+  
   const { openPolkadotModal } = useStore();
-  const { extensionStatus, selectedAccount } = useDotSamaContext();
-  const { accounts } = useParachainApi("picasso");
+  useEagerConnect(DEFAULT_NETWORK_ID);
+  const { accounts } = useParachainApi(DEFAULT_NETWORK_ID);
   const [selectedAsset, setSelectedAsset] = useState<string>("");
 
   useEffect(() => {
     if (assetsWithBalance.length > 0) {
       setSelectedAsset(assetsWithBalance[0].symbol)
     }
-  }, [assetsWithBalance])
+  }, [assetsWithBalance]);
 
   if (extensionStatus === 'connected') {
     return (
@@ -47,7 +48,6 @@ const Status = () => {
           value={selectedAsset}
           setValue={setSelectedAsset}
           options={assetsWithBalance.map((asset) => {
-
             return {
               value: asset.symbol,
               label:
@@ -69,7 +69,7 @@ const Status = () => {
             openPolkadotModal();
           }}
           network="polkadot"
-          label={selectedAccount !== -1 && accounts.length ? accounts[selectedAccount].name : "Connect Wallet"}
+          label={selectedAccount !== -1 && accounts.length ? accounts[selectedAccount].name : "Select account"}
         />
       </Box>
     );
@@ -89,12 +89,11 @@ const Status = () => {
 
 export const PolkadotConnect: React.FC<{}> = () => {
   const theme = useTheme();
-
   const { ui: { isPolkadotModalOpen }, closePolkadotModal } = useStore();
   const { extensionStatus, activate } = useDotSamaContext();
 
   const handleConnectPolkadot = async () => {
-    if (activate) await activate();
+    if (activate) await activate(false);
   };
 
   return (

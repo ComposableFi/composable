@@ -12,6 +12,7 @@ import { useAsyncEffect } from "@/hooks/useAsyncEffect";
 import { usePrevious } from "@/hooks/usePrevious";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { useLiquidityByPool } from "@/store/hooks/useLiquidityByPool";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { useSnackbar } from "notistack";
@@ -19,6 +20,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParachainApi } from "substrate-react";
 import { useAsset } from "../assets/useAsset";
 import { useFilteredAssetListDropdownOptions } from "../assets/useFilteredAssetListDropdownOptions";
+import { usePriceImpact } from "./usePriceImpact";
 
 export function useSwaps(): {
   balance1: BigNumber;
@@ -53,6 +55,7 @@ export function useSwaps(): {
   assetOneInputValid: boolean;
   assetTwoInputValid: boolean;
   isProcessing: boolean;
+  priceImpact: BigNumber;
 } {
   const slippage = useAppSelector(
     (state) => state.settings.transactionSettings.tolerance
@@ -285,8 +288,34 @@ export function useSwaps(): {
     }
   };
 
+  const {
+    tokenAmounts: { baseAmount, quoteAmount },
+  } = useLiquidityByPool(selectedPool);
+  let poolQuoteBalance = selectedPool
+    ? selectedPool.pair.quote.toString() === selectedAssetOneId
+      ? quoteAmount
+      : baseAmount
+    : new BigNumber(0);
+  let poolBaseBalance = selectedPool
+    ? selectedPool.pair.quote.toString() === selectedAssetOneId
+      ? baseAmount
+      : quoteAmount
+    : new BigNumber(0);
+  const priceImpact = usePriceImpact({
+    tokenInAmount: assetOneAmount,
+    tokenOutAmount: assetTwoAmount,
+    isConstantProductPool: selectedPool ? "baseWeight" in selectedPool : false,
+    baseWeight:
+      selectedPool && "baseWeight" in selectedPool
+        ? new BigNumber(selectedPool.baseWeight)
+        : new BigNumber(0),
+    quoteBalance: poolQuoteBalance,
+    baseBalance: poolBaseBalance,
+    amplificationCoefficient: selectedPool && "amplificationCoefficient" in selectedPool ? new BigNumber(selectedPool.amplificationCoefficient) : new BigNumber(0)
+  });
+
   /**
-   * Effect to update minimum recieved when
+   * Effect to update minimum received when
    * there is a change in slippage
    */
   useEffect(() => {
@@ -296,9 +325,7 @@ export function useSwaps(): {
           const { feeRate } = selectedPool.feeConfig;
           let feePercentage = new BigNumber(feeRate).toNumber();
 
-          const {
-            minReceive,
-          } =
+          const { minReceive } =
             "baseWeight" in selectedPool
               ? calculator(
                   "quote",
@@ -314,7 +341,7 @@ export function useSwaps(): {
                   slippage,
                   feePercentage
                 );
-            setMinimumReceived(minReceive)
+          setMinimumReceived(minReceive);
         }
       }
     }
@@ -389,5 +416,6 @@ export function useSwaps(): {
     flipAssetSelection: flipAssets,
     percentageToSwap,
     isProcessing,
+    priceImpact
   };
 }

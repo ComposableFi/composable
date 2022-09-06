@@ -10,14 +10,14 @@ use composable_traits::{
 };
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::tokens::nonfungibles::{Inspect, Transfer},
+	traits::tokens::nonfungibles::{Create, Inspect, Transfer},
 };
 use sp_runtime::DispatchError;
 
 use crate::{
 	test::{
 		mock::{new_test_ext, Event, MockRuntime, Nft, Proxy},
-		prelude::*,
+		prelude::{TEST_COLLECTION_ID, *},
 		ALICE, BOB, CHARLIE,
 	},
 	FinancialNftInstanceIdOf, Instance, OwnerInstances, Pallet,
@@ -56,13 +56,13 @@ fn simple() {
 		assert_eq!(
 			Instance::<MockRuntime>::get(&(TEST_COLLECTION_ID, created_nft_id)),
 			Some((BOB, BTreeMap::from([(1_u32.encode(), 1_u32.encode())]))),
-			"owner of transfered NFT should be BOB after transfer"
+			"owner of transferred NFT should be BOB after transfer"
 		);
 
 		assert_eq!(
 			Nft::owner(&TEST_COLLECTION_ID, &created_nft_id),
 			Some(BOB),
-			"owner of transfered NFT should be BOB after transfer"
+			"owner of transferred NFT should be BOB after transfer"
 		);
 	})
 }
@@ -72,8 +72,9 @@ fn simple() {
 #[test]
 fn roundtrip() {
 	new_test_ext().execute_with(|| {
-		let [nft_to_trade, ..] = mint_many_nfts_and_assert::<50>(ALICE);
-		let _bobs_nfts = mint_many_nfts_and_assert::<50>(BOB);
+		Nft::create_collection(&TEST_COLLECTION_ID, &ALICE, &BOB).unwrap();
+		let [nft_to_trade, ..] = mint_many_nfts_and_assert::<50>(ALICE, TEST_COLLECTION_ID);
+		let _bobs_nfts = mint_many_nfts_and_assert::<50>(BOB, TEST_COLLECTION_ID);
 
 		let alice_storage_before_transfer = OwnerInstances::<MockRuntime>::get(&ALICE).unwrap();
 		let bob_storage_before_transfer = OwnerInstances::<MockRuntime>::get(&BOB).unwrap();
@@ -117,12 +118,13 @@ fn many() {
 
 	// in a separate function because rustfmt dies if the content of the test is in a closure
 	fn transfer_many_test() {
+		Nft::create_collection(&TEST_COLLECTION_ID, &ALICE, &BOB).unwrap();
 		// mint 10 NFTs into ALICE
-		let alices_nfts = mint_many_nfts_and_assert::<10>(ALICE);
+		let alices_nfts = mint_many_nfts_and_assert::<10>(ALICE, TEST_COLLECTION_ID);
 		// mint 10 NFTs into BOB
-		let bobs_nfts = mint_many_nfts_and_assert::<10>(BOB);
+		let bobs_nfts = mint_many_nfts_and_assert::<10>(BOB, TEST_COLLECTION_ID);
 		// mint 10 NFTs into CHARLIE
-		let charlies_nfts = mint_many_nfts_and_assert::<10>(CHARLIE);
+		let charlies_nfts = mint_many_nfts_and_assert::<10>(CHARLIE, TEST_COLLECTION_ID);
 
 		let [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9] = alices_nfts;
 		let [b0, b1, b2, b3, b4, b5, b6, b7, b8, b9] = bobs_nfts;
@@ -134,7 +136,7 @@ fn many() {
 			for (who, nfts, msg) in checks {
 				assert_eq!(
 					OwnerInstances::<MockRuntime>::get(&who).unwrap(),
-					to_btree(nfts),
+					to_btree(TEST_COLLECTION_ID, nfts),
 					"{msg}"
 				);
 

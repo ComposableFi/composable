@@ -4,14 +4,14 @@ import { Box, Grid, useTheme } from "@mui/material";
 import { StakingDisconnected } from "@/components/Organisms/Staking/StakingDisconnected";
 import { useContext } from "react";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
-import { useConnector } from "@integrations-lib/core";
+import { ConnectorType, useConnector } from "bi-lib";
 import { PageTitle } from "@/components";
 import { StakingConnected } from "@/components/Organisms/Staking/StakingConnected";
 
 const Staking: NextPage = () => {
   const theme = useTheme();
   const { extensionStatus } = useContext(ParachainContext);
-  const { isActive } = useConnector("metamask");
+  const { isActive } = useConnector(ConnectorType.MetaMask);
   const isDisconnected = !isActive || extensionStatus !== "connected";
   const standardPageSize = {
     xs: 12,

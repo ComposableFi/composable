@@ -1977,8 +1977,8 @@ impl<T: Config> Pallet<T> {
 		}
 
 		// Notes:
-		// * We don't consider the lowest unbaked to be the last maturing in case some refendum have
-		//   longer voting period than others.
+		// * We don't consider the lowest unbaked to be the last maturing in case some referendum
+		//   have longer voting period than others.
 		// * The iteration here shouldn't trigger any storage read that are not in cache, due to
 		//   `maturing_referenda_at_inner` having already read them.
 		// * We shouldn't iterate more than `LaunchPeriod/VotingPeriod + 1` times because the number

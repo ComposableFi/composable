@@ -3,7 +3,7 @@
  */
 import { ApiPromise, Keyring } from "@polkadot/api";
 import { getNewConnection, sendAndWaitForSuccess } from "@composable/utils";
-import { Bytes, Text, u128, u32 } from "@polkadot/types-codec";
+import { Bool, Bytes, Text, u128, u32 } from "@polkadot/types-codec";
 import { AnyNumber, AnyString } from "@polkadot/types-codec/types";
 import { AccountId32, Percent } from "@polkadot/types/interfaces";
 import { AddressOrPair } from "@polkadot/api/types";
@@ -38,13 +38,14 @@ export async function createOracleForAsset(
   api: ApiPromise,
   wallet: AddressOrPair,
   oracleParameters: {
-    assetID: number;
-    threshold: Percent | AnyNumber;
-    minAnswers: u32 | AnyNumber;
-    maXAnswers: u32 | AnyNumber;
-    blockInterval: u32 | AnyNumber;
-    reward: u128 | AnyNumber;
-    slash: u128 | AnyNumber;
+    assetId: number | u128 | AnyNumber | Uint8Array;
+    threshold: Percent | AnyNumber | Uint8Array;
+    minAnswers: number | u32 | AnyNumber | Uint8Array;
+    maxAnswers: number | u32 | AnyNumber | Uint8Array;
+    blockInterval: number | u32 | AnyNumber | Uint8Array;
+    reward: number | u128 | AnyNumber | Uint8Array;
+    slash: number | u128 | AnyNumber | Uint8Array;
+    emitPriceChanges: boolean | Bool;
   }
 ) {
   return await sendAndWaitForSuccess(
@@ -53,13 +54,14 @@ export async function createOracleForAsset(
     api.events.sudo.Sudid.is,
     api.tx.sudo.sudo(
       api.tx.oracle.addAssetAndInfo(
-        oracleParameters.assetID,
+        oracleParameters.assetId,
         oracleParameters.threshold,
         oracleParameters.minAnswers,
-        oracleParameters.maXAnswers,
+        oracleParameters.maxAnswers,
         oracleParameters.blockInterval,
         oracleParameters.reward,
-        oracleParameters.slash
+        oracleParameters.slash,
+        oracleParameters.emitPriceChanges
       )
     )
   );
@@ -69,7 +71,6 @@ export async function createOracleForAsset(
  * Sets url for the locally running oracle price feed.
  *
  * @param {ApiPromise} api Connected API client.
- * @param {number | Uint8Array | StorageKind | "PERSISTENT" | "LOCAL"} kind Type of storage, we only here "PERSISTENT" here.
  * @param {string|Uint8Array|Bytes} key The key to store the value under.
  * @param {string | Uint8Array | Bytes} value URL to price feed server.
  */

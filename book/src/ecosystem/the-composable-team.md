@@ -52,7 +52,7 @@ Pepe has been around the crypto sphere since 2016 and assists Picasso with Solid
 
 Boba has a passion for understanding incentive structures, game theory, and bot networks for DeFi applications. Boba has experience in capturing cross-chain arbitrage and building arbitrage bots on multiple blockchains. He is currently creating and supporting the development of Mosaic Phase 2. Before Composable, Boba worked as a senior software engineer on high-level security GPS software. Follow him on [Twitter](https://mobile.twitter.com/Bobafetador/with_replies)
 
-## Hussein Ait Lachen | XCVM Lead 
+## Hussein Ait Lahcen | XCVM Lead 
 
 Hussein, also known as 0xcodejug, has a passion for functional programming and started his career as a self taught haskeller working in a logistic startup. He got involved in blockchain technology in 2020, and with his background as a Haskeller, Hussein started looking into Cardano and its domain. Hussein joined Mlabs in 2021 and now works as the XCVM lead for Composable. Hussein also loves game hacking and bypassing anti cheats and still does this in his spare time. Follow him on [Twitter](https://twitter.com/0xc0dejug).
 
@@ -67,4 +67,3 @@ Vim is a seasoned software engineer and a technical lead. He has been building f
 ## Ahmad Wehbi | Head of Growth
 
 Ahmad spent most of his career advising institutions on strategy, operations and organizational topics. At McKinsey & Company, he helped organizations design and orchestrate ecosystems at scale. At Composable, Ahmad leads efforts to grow the community of builders, founders and partners that live on Composable or utilize the Composable tech stack. He is present on [Twitter](https://twitter.com/wehbix) and [LinkedIn](https://www.linkedin.com/in/ahmad-wehbi-184813134/). 
-

@@ -225,7 +225,7 @@ pub fn common_remove_lp_failure(
 	);
 	let min_expected_base_amount = base_amount + 1;
 	let min_expected_quote_amount = quote_amount + 1;
-	// error as expected values are more than actaul redeemed values.
+	// error as expected values are more than actual redeemed values.
 	assert_noop!(
 		Pablo::remove_liquidity(
 			Origin::signed(BOB),

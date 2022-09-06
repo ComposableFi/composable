@@ -160,7 +160,7 @@ pub mod pallet {
 		/// The origin that is allowed to `initialize` the pallet.
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
 
-		/// A conversion function frop `Self::Moment` to `Self::Balance`
+		/// A conversion function from `Self::Moment` to `Self::Balance`
 		type Convert: Convert<Self::Moment, Self::Balance>;
 
 		/// The relay chain account id.

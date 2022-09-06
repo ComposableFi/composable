@@ -66,11 +66,13 @@
 //! ```
 
 use core::{fmt, marker::PhantomData};
+
+use frame_support::log;
 use scale_info::TypeInfo;
 use sp_runtime::DispatchError;
 use sp_std::ops::Deref;
 
-/// Black box that embbed the validated value.
+/// Black box that embeds the validated value.
 /// Validated during construction or serde.
 #[derive(Default, Copy, Clone)]
 pub struct Validated<T, U> {
@@ -174,7 +176,7 @@ where
 	}
 }
 
-// as per substrate pattern and existing macroses for similar purposes, they tend to make things
+// as per substrate pattern and existing macros for similar purposes, they tend to make things
 // flat like `#[impl_trait_for_tuples::impl_for_tuples(30)]`
 // so if we will need more than 3, can consider it
 impl<T, U, V, W> Validate<T, (U, V, W)> for (U, V, W)
@@ -217,7 +219,11 @@ impl<T, U: Validate<T, U>> Validated<T, U> {
 
 impl<T: codec::Decode, U: Validate<T, U>> codec::Decode for Validated<T, U> {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
-		let value = <U as Validate<T, U>>::validate(T::decode(input)?)?;
+		// If validation has failed we'll log the error, and continue as usual.
+		let value = <U as Validate<T, U>>::validate(T::decode(input)?).map_err(|err| {
+			log::warn!("validation error: {:?}", err);
+			err
+		})?;
 		Ok(Validated { value, _marker: PhantomData })
 	}
 	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
@@ -248,9 +254,10 @@ impl<T, U: Validate<T, U>> Validate<T, U> for Validated<T, U> {
 
 #[cfg(test)]
 mod test {
-	use super::*;
 	use codec::{Decode, Encode};
 	use frame_support::assert_ok;
+
+	use super::*;
 
 	#[derive(Debug, Eq, PartialEq, Default)]
 	struct ValidARange;

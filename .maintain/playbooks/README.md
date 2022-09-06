@@ -27,7 +27,6 @@ This playbook does next:
 |:-------------------------|:------------------------:|
 | Relay Chain #1           | wss://domain_of_vps:9901 |
 | Composable's collator #1 | wss://domain_of_vps:9902 |
-| Basilisk's collator #1   | wss://domain_of_vps:9903 |
 
 
 # dali-subsquid.yml

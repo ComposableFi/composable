@@ -101,11 +101,11 @@ const Auction: NextPage = () => {
 
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/auctions">
-      <Typography key="addliquidity" variant="body1">
+      <Typography key="add-liquidity" variant="body1">
         Auctions
       </Typography>
     </Link>,
-    <Typography key="addliquidity" variant="body1" color="text.primary">
+    <Typography key="add-liquidity" variant="body1" color="text.primary">
       Select Auction
     </Typography>,
   ];

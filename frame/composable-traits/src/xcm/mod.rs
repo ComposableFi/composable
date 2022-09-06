@@ -1,6 +1,6 @@
 //! Less general more targeted solution before XCM gets general transactions support and discovery,
-//! so at same time it can be more robust for Substate based sibling chains. Also is mor specialised
-//! form of `xcm::latest::Junction`.
+//! so at same time it can be more robust for Substrate based sibling chains. Also is more
+//! specialized form of `xcm::latest::Junction`.
 //!
 //! API allow for selling (partial exchange via DEX, OB or Auction) via `engines` on other
 //! parachains.
@@ -50,10 +50,10 @@ impl XcmTransactConfiguration {
 pub struct XcmSellRequestTransactConfiguration {
 	/// Used to route XCM message dispatch into right target
 	pub location: XcmTransactConfiguration,
-	/// Taken from storage and put as paramter into call.
+	/// Taken from storage and put as parameter into call.
 	/// Some preconfigured way of sell on other chain.
 	/// Example, some specific slippage or amount limits, or number of blocks it should take before
-	/// cancelation. Must be set by owners of engine and chose by thoose who governs caller side
+	/// cancellation. Must be set by owners of engine and chose by those who governs caller side
 	pub configuration_id: u128,
 	/// native token fee to pay on `engine` chain
 	pub fee: Balance,
@@ -75,7 +75,7 @@ impl<Parameters: Encode> XcmCumulusDispatch<Parameters> {
 	}
 }
 
-/// The actualy binary data dispatched into `Call`.
+/// The actual binary data dispatched into `Call`.
 /// Assets to be liquidated was moved with `xcm::latest::Instruction::TransferReserveAsset` before
 /// in same XCM message.
 #[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -84,9 +84,9 @@ pub struct XcmSellRequest {
 	/// Receiver tracks origin and `order_id`.
 	pub order_id: OrderId,
 	/// Sovereign account of sender parachain on remote parachain.
-	/// It was transfered amount to sell before, and
+	/// It was transferred amount to sell before, and
 	/// Notes:
-	/// This may be parachain id to get account, but than all protocols parchain will share same
+	/// This may be parachain id to get account, but than all protocols parachain will share same
 	/// account and will be harder to debug. May consider using indices pallet or some sub account
 	/// for protocol too.
 	pub from_to: AccountId,
@@ -101,7 +101,7 @@ pub struct XcmSellRequest {
 #[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellInitialResponseTransact {
 	/// Amount of `base` token which was taken by engine to be sold.
-	/// Amount remaining was transfered with `xcm::latest::Instruction::TransferReserveAsset` in
+	/// Amount remaining was transferred with `xcm::latest::Instruction::TransferReserveAsset` in
 	/// same XCM message. Must be more than `Balance::zero()`
 	pub total_amount_taken: Balance,
 	/// Minimal price in `quote` amount  of `amount_taken`
@@ -109,21 +109,21 @@ pub struct XcmSellInitialResponseTransact {
 	pub order_id: OrderId,
 }
 
-/// Response from enigne, either be first and final, or can be after
+/// Response from engine, either be first and final, or can be after
 /// `XcmSellInitialResponseTransact`
 #[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellFinalResponseTransact {
 	/// may be less than `XcmSellInitialResponseTransact::total_amount_taken`.
 	/// Would be `Balance::zero()` if cannot sell anything. So sender can switch to other engine.
 	pub total_amount_taken: Balance,
-	/// Price `total_amount_taken` in `quote`. Must be larger or eququal than
+	/// Price `total_amount_taken` in `quote`. Must be larger than or equal to
 	/// `XcmSellInitialResponseTransact::minimal_price`
 	pub price: Balance,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct SellOrderResponse {
-	/// sender order_id, way to corellate XCM message (like
+	/// sender order_id, way to correlate XCM message (like
 	/// `xcm::latest::Instruction::QueryResponse`)
 	pub order_id: OrderId,
 	pub body: SellResponse,

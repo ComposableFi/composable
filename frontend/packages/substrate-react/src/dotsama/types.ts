@@ -14,22 +14,23 @@ export type DotSamaExtensionStatus =
   | 'connected'
   | 'no_extension'
   | 'error';
-export interface ConntectedAccount {
+
+  export interface ConnectedAccount {
   address: string;
   name: string;
 }
 
-export interface SubstratechainApi {
+export interface SubstrateChainApi {
   parachainApi: ApiPromise | undefined;
   apiStatus: SubstrateChainApiStatus;
   prefix: number;
-  accounts: ConntectedAccount[];
+  accounts: ConnectedAccount[];
 }
-export interface ParachainApi extends SubstratechainApi {
+export interface ParachainApi extends SubstrateChainApi {
   chainId: ParachainId;
 }
 
-export interface RelaychainApi extends SubstratechainApi {
+export interface RelaychainApi extends SubstrateChainApi {
   chainId: RelayChainId;
 }
 
@@ -37,7 +38,7 @@ export interface DotSamaContext {
   parachainProviders: { [chainId in ParachainId]: ParachainApi };
   relaychainProviders: { [chainId in RelayChainId]: RelaychainApi };
   extensionStatus: DotSamaExtensionStatus;
-  activate?: () => Promise<any[] | undefined>;
+  activate?: (setDefaultAccount?: boolean) => Promise<any[] | undefined>;
   deactivate?: () => Promise<void>;
   selectedAccount: number;
   setSelectedAccount?: (account: number) => void;

@@ -267,7 +267,7 @@ TODO: Algo
     pub fn add_asset_and_info(
                 origin: OriginFor<T>,
                 asset_id: T::AssetId,
-                threshold: Validated<Percent, ValidThreshhold>,
+                threshold: Validated<Percent, ValidThreshold>,
                 min_answers: Validated<u32, ValidMinAnswers>,
                 max_answers: Validated<u32, ValidMaxAnswer<T::MaxAnswerBound>>,
                 block_interval: Validated<T::BlockNumber, ValidBlockInterval<T::StalePrice>>,

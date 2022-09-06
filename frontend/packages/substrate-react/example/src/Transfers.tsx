@@ -36,11 +36,11 @@ export const Transfers = () => {
       await web3Enable(APP_NAME);
       const injector = await web3FromAddress(_from);
       const decimals = new BigNumber(10).pow(12); // Substrate default decimals
-      const transferAmnt = new BigNumber(0.0001).times(decimals);
+      const transferAmount = new BigNumber(0.0001).times(decimals);
 
       executor.execute(
         //@ts-ignore
-        _api.tx.transfer(_to, transferAmnt.toString()),
+        _api.tx.transfer(_to, transferAmount.toString()),
         _from,
         parachainApi,
         injector.signer,
@@ -48,7 +48,7 @@ export const Transfers = () => {
           console.log('Ready: ', txHash);
         },
         txHash => {
-          console.log('Finalised: ', txHash);
+          console.log('Finalized: ', txHash);
         }
       );
     }
