@@ -15,7 +15,10 @@ import {
   VestingVestingScheduleAddedEvent,
 } from "../types/events";
 import { encodeAccount } from "../utils";
-import { saveAccountAndTransaction } from "../dbHelper";
+import {
+  saveAccountAndTransaction,
+  storeHistoricalLockedValue,
+} from "../dbHelper";
 
 interface VestingScheduleAddedEvent {
   from: Uint8Array;
@@ -102,6 +105,15 @@ export async function processVestingScheduleAddedEvent(
 
   await ctx.store.save(vestingSchedule);
 
+  const { scheduleAmount, asset } = getVestingScheduleAddedEvent(event);
+
+  await storeHistoricalLockedValue(
+    ctx,
+    scheduleAmount,
+    ctx.event.id,
+    asset.toString()
+  );
+
   await saveAccountAndTransaction(
     ctx,
     TransactionType.VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
@@ -179,6 +191,13 @@ export async function processVestingClaimedEvent(
     updatedClaimedAmount(schedule, amount);
 
     await ctx.store.save(schedule);
+
+    await storeHistoricalLockedValue(
+      ctx,
+      -amount,
+      ctx.event.id,
+      schedule.assetId
+    );
   }
 
   await saveAccountAndTransaction(
