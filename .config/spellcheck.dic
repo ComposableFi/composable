@@ -2,10 +2,12 @@ aarch
 Acala
 Acala's
 AccountId
+actix
 amids
 APIs
 Arweave
 AssetId
+Astar
 asssertions
 authtoken
 autofetch
@@ -70,6 +72,7 @@ fetchgit
 fetchurl
 fgrep
 Filecoin
+firesquid
 FixedU128
 FixedU256
 foldl
@@ -82,6 +85,7 @@ GITUSER
 gnutar
 gpgsign
 hadolint
+healthcheck
 hmac
 HRMP
 Hydra
@@ -92,6 +96,7 @@ iff
 inherents
 init
 inprocess
+isready
 ipam
 jsonrpsee
 karura
@@ -176,10 +181,12 @@ Runtimes
 RUSTC
 rustfmt
 rustup
+scheduleids
 seccomp
 serayuzgur
 serde
 shellcheck
+Shiden
 SignedExtension
 Simnode
 simtest
@@ -225,6 +232,7 @@ walkthrough
 Wasm
 Websockets
 whereis
+WORKDIR
 Xcm
 XCM
 XCMP
