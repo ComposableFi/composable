@@ -73,7 +73,7 @@ where
 	}
 
 	#[inline]
-	pub fn call_raw_protocol<T>(self, protocol: T) -> Result<Self, T::Error>
+	pub fn call<T>(self, protocol: T) -> Result<Self, T::Error>
 	where
 		T: Protocol<CurrentNetwork>,
 	{
@@ -143,15 +143,15 @@ mod tests {
 	fn can_build() {
 		let program = || -> Result<_, ProgramBuildError> {
 			Ok(ProgramBuilder::<Picasso, (), Funds>::new("Main program".as_bytes().to_vec())
-				.call_raw_protocol(DummyProtocol1)?
+				.call(DummyProtocol1)?
 				.spawn::<Ethereum, _, ProgramBuildError, _>(
 					Default::default(),
 					Default::default(),
 					Funds::empty(),
 					|child| {
 						Ok(child
-							.call_raw_protocol(DummyProtocol2)?
-							.call_raw_protocol(DummyProtocol1)?
+							.call(DummyProtocol2)?
+							.call(DummyProtocol1)?
 							.transfer((), Funds::from([(PICA::ID, u128::MAX)])))
 					},
 				)?
