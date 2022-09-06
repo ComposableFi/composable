@@ -13,6 +13,9 @@ import {
 } from "@/defi/utils";
 import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
 import { calculateRewardPerDayByAssetId } from "@/defi/utils/stakingRewards/math";
+import { useStakingRewardsPoolApy } from "@/defi/hooks/stakingRewards/useStakingRewardsPoolApy";
+import { useMemo } from "react";
+import BigNumber from "bignumber.js";
 
 const LiquidityPoolRow = ({
   liquidityPool,
@@ -37,6 +40,14 @@ const LiquidityPoolRow = ({
   const baseAssetPriceUSD = useUSDPriceByAssetId(
     liquidityPool.pair.base.toString()
   );
+
+  const apy = useStakingRewardsPoolApy(liquidityPool?.lpToken ?? "-");
+
+  const rewardAPYs = useMemo(() => {
+    return Object.keys(apy).reduce((v, i) => {
+      return v.plus(apy[i])
+    }, new BigNumber(0))
+  }, [apy, rewardAssets]);
 
   return (
     <TableRow
@@ -77,7 +88,9 @@ const LiquidityPoolRow = ({
         </Typography>
       </TableCell>
       <TableCell align="left">
-        <Typography variant="body2">{0}%</Typography>
+        <Typography variant="body2">{
+          rewardAPYs.toFixed(DEFAULT_UI_FORMAT_DECIMALS)
+        }%</Typography>
       </TableCell>
       <TableCell align="left">
         {rewardAssets

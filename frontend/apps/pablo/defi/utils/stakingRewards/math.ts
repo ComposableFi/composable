@@ -18,7 +18,7 @@ export function calculateRewardPerDayByAssetId(assetId: string, stakingRewardPoo
         let rewardConfig = stakingRewardPool.rewards[assetId];
 
         if (rewardConfig) {
-            rewardPerDay = fromChainUnits(rewardConfig.rewardRate.amount).times(
+            rewardPerDay = rewardConfig.rewardRate.amount.times(
                 convertRewardRatePeriod(rewardConfig.rewardRate.period)
             )
         }
@@ -27,7 +27,7 @@ export function calculateRewardPerDayByAssetId(assetId: string, stakingRewardPoo
     return rewardPerDay;
 }
 
-export function calculatePoolApy(
+export function calculateStakingRewardsPoolApy(
   rewardTokenValueInUSD: BigNumber,
   dailyRewardAmount: BigNumber,
   lpTokenValueUSD: BigNumber,

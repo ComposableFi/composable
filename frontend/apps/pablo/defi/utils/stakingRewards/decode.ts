@@ -3,7 +3,7 @@ import {
   StakingRewardPoolLockConfig,
 } from "@/defi/types/stakingRewards";
 import BigNumber from "bignumber.js";
-import { fromPerbill } from "../units";
+import { fromChainUnits, fromPerbill } from "../units";
 
 export function decodeStakingRewardPool(pool: any): StakingRewardPool {
   return {
@@ -35,7 +35,7 @@ export function decodeStakingRewardPool(pool: any): StakingRewardPool {
           maxRewards: new BigNumber(pool.rewards[assetId].maxRewards),
           rewardRate: {
             period: pool.rewards[assetId].rewardRate.period,
-            amount: new BigNumber(pool.rewards[assetId].rewardRate.amount),
+            amount: fromChainUnits(pool.rewards[assetId].rewardRate.amount),
           },
           totalDilutionAdjustment: new BigNumber(
             pool.rewards[assetId].totalDilutionAdjustment
@@ -44,6 +44,6 @@ export function decodeStakingRewardPool(pool: any): StakingRewardPool {
         },
       };
     }, {} as StakingRewardPool["rewards"]),
-    totalShares: new BigNumber(pool.totalShares),
+    totalShares: fromChainUnits(pool.totalShares),
   };
 }
