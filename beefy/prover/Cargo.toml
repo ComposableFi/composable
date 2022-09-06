@@ -1,0 +1,42 @@
+[package]
+name = "beefy-prover"
+version = "0.1.0"
+edition = "2021"
+authors = ["Seun Lanlege <seunlanlege@gmail.com>", "David Salami <david.salami@gmail.com>"]
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[build-dependencies]
+subxt-codegen = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
+jsonrpsee = { version = "0.15.0", features = ["async-client", "client-ws-transport", "http-client"] }
+frame-metadata = { version = "15.0.0", features = ["v14", "std"] }
+syn = "1.0.98"
+codec = { package = "parity-scale-codec", version = "3.0.0" }
+color-eyre = "0.6.2"
+hex = "0.4.3"
+tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
+
+[dependencies]
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = "6.0.0" 
+sp-core =  "6.0.0" 
+sp-io = "6.0.0"
+sp-core-hashing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27"}
+beefy-mmr = { package = "pallet-beefy-mmr", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-mmr-primitives = { package = "sp-mmr-primitives", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+beefy-primitives = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+codec = { package = "parity-scale-codec", version = "3.0.0", features = ["derive"] }
+rs_merkle = "1.2.0"
+derive_more = { version = "0.99.17", features = ["from"]  }
+# Optional deps
+subxt = { git = "https://github.com/paritytech/subxt", rev = "c55b7ba3e34118f61dc51499a0b38262c513aec4" }
+hex-literal = { version = "0.3.4" }
+serde_json = { version = "1.0.74" }
+pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+hex = { version = "0.4.3" }
+beefy-client-primitives = { package = "primitives", path = "../primitives" }
+
