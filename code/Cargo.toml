@@ -7,14 +7,14 @@ version = "1.0.0"
 
 [[bin]]
 name = "composable"
-path = "src/main.rs"
+path = "parachain/src/main.rs"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 color-eyre = { version = "0.5.11", default-features = false }
-composable-node = { path = "node", features = ["composable", "dali"] }
+composable-node = { path = "parachain/node", features = ["composable", "dali"] }
 
 [features]
 builtin-wasm = ["composable-node/builtin-wasm"]
@@ -28,17 +28,17 @@ std = ["composable-node/std"]
 [workspace]
 exclude = ["utils/extrinsics-docs-scraper", "integration-tests"]
 members = [
-  "frame/*",
+  "parachain/frame/*",
   "integration-tests/local-integration-tests",
-  "node",
-  "runtime/common",
-  "runtime/primitives",
-  "runtime/picasso",
-  "runtime/picasso-wasm",
-  "runtime/dali",
-  "runtime/dali-wasm",
-  "runtime/composable",
-  "runtime/composable-wasm",
+  "parachain/node",
+  "parachain/runtime/common",
+  "parachain/runtime/primitives",
+  "parachain/runtime/picasso",
+  "parachain/runtime/picasso-wasm",
+  "parachain/runtime/dali",
+  "parachain/runtime/dali-wasm",
+  "parachain/runtime/composable",
+  "parachain/runtime/composable-wasm",
   "utils/common",
   "utils/price-feed",
   "utils/collator-sidecar",

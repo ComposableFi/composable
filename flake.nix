@@ -190,8 +190,8 @@
                     || (type == "regular"
                       && lib.strings.hasSuffix ".nix" name));
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-              ./.;
-              src = ./.;
+              ./code;
+              src = ./code;
             };
           };
 
@@ -382,7 +382,7 @@
               name = "runtime-tests";
               src = builtins.filterSource
                 (path: type: baseNameOf path != "node_modules")
-                ./integration-tests/runtime-tests;
+                ./code/integration-tests/runtime-tests;
               dontUnpack = true;
               installPhase = ''
                 mkdir $out/
