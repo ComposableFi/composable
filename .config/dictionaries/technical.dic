@@ -68,8 +68,6 @@ AggrTrades
 
 # cosmwasm types
 Pointable
-submessage
-rlib 
 
 # various rust methods and types
 peekable
