@@ -801,11 +801,7 @@ fn with_stake<R>(
 
 		mint_assets(
 			[staker, StakingRewards::pool_account_id(&pool_id)],
-			rewards_pool
-				.rewards
-				.iter()
-				.map(|(asset_id, _)| *asset_id)
-				.chain([staked_asset_id]),
+			rewards_pool.rewards.keys().chain([staked_asset_id]),
 			amount.saturating_mul(2),
 		);
 
