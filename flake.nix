@@ -167,8 +167,6 @@
                     else
                       [ ]; # symlink, unknown
                   in builtins.elem (baseNameOf name) blacklist;
-                isMarkdownFile = name: type:
-                  type == "regular" && lib.strings.hasSuffix ".md" name;
                 isImageFile = name: type:
                   type == "regular" && lib.strings.hasSuffix ".png" name;
                 isPlantUmlFile = name: type:
@@ -176,8 +174,8 @@
                 isNixFile = name: type:
                   type == "regular" && lib.strings.hasSuffix ".nix" name;
                 customFilter = name: type:
-                  !((isBlacklisted name type) || (isMarkdownFile name type)
-                    || (isImageFile name type) || (isPlantUmlFile name type)
+                  !((isBlacklisted name type) || (isImageFile name type)
+                    || (isPlantUmlFile name type)
                     # assumption that nix is final builder, 
                     # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
                     # and if *.nix changed, nix itself will detect only relevant cache invalidations 
