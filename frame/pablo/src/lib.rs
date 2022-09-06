@@ -440,7 +440,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Create a new pool.
+		/// Create a new pool. Note that this extrinsic does NOT validate if a pool with the same
+		/// assets already exists in the runtime.
 		///
 		/// Emits `PoolCreated` event when successful.
 		#[pallet::weight(T::WeightInfo::create())]
@@ -691,6 +692,9 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Note this function does not validate,
+		/// 1. if the pool is created by a valid origin.
+		/// 2. if a pool exists with the same pair already.
 		#[transactional]
 		pub fn do_create_pool(
 			init_config: PoolInitConfigurationOf<T>,

@@ -1,13 +1,6 @@
 import React from "react";
 import { Close, OpenInNew } from "@mui/icons-material";
-import {
-  AlertColor,
-  Box,
-  IconButton,
-  Link as MuiLink,
-  useTheme,
-} from "@mui/material";
-import Link from "next/link";
+import { AlertColor, Box, IconButton, useTheme } from "@mui/material";
 
 type Props = {
   variant: AlertColor;
@@ -25,22 +18,15 @@ export const MessageAction = ({ url, onClose, isClosable, variant }: Props) => {
       }}
     >
       {url && (
-        <Link href={url} passHref>
-          <MuiLink
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: theme.spacing(1),
-            }}
-            color={`text.${variant}`}
-            underline="none"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <OpenInNew color={variant} />
-          </MuiLink>
-        </Link>
+        <IconButton
+          disableRipple
+          color={variant}
+          onClick={() => {
+            window.open(url, "_blank", "noopener");
+          }}
+        >
+          <OpenInNew color={variant} />
+        </IconButton>
       )}
       {isClosable && (
         <IconButton disableRipple color={variant} onClick={onClose}>

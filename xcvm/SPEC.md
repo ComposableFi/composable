@@ -153,6 +153,7 @@ CallError ::= bytes
 
 - `IP Register`: Contains the instruction pointer. Querying for the `IP` and `Result` can be used to compute the state of the interpreter on another chain.
 - `Relayer Register`: Contains the `Account` of the account triggering the initial execution. 
+- `Self Register`: Contains the `Account` of the interpreter
 
 As we add conditionals, such as the `If` instructions, the coercion of the `Result` registry will be defined. Note that the `Result` of the `Call` instruction can never be coerced into a `boolean`, and thus the execution of the following program is always undefined:
 
@@ -190,9 +191,7 @@ Instruction ::=
     | Call
     | Spawn
     | Query
-    | Commit
-    | Abort bytes
-
+   
 Balance ::= Ratio | Absolute | Unit
 Absolute ::= u128
 Unit ::= u128 Ratio
@@ -200,7 +199,10 @@ Ratio ::= u128 u128
 Account ::= bytes
 Assets ::= { AssetId : Balance }
 Transfer ::= Account Assets | Relayer Assets
-Call ::= bytes
+Call ::= Payload Bindings
+Payload ::= bytes
+Bindings ::= [(u16, BindingValue)]
+BindingValue ::= Self | Relayer | Result | Balance | AssetId
 Spawn ::= Network BridgeSecurity Salt Program Assets
 Query ::= Network Salt
 Account ::= bytes
@@ -209,13 +211,7 @@ Account ::= bytes
 - `Transfer`: Transfers funds within a chain between accounts.
 - `Call`: Executes a payload within the execution context of the chain, such as an extrinsic or smart contract invocation.
 - `Spawn`: Sends a `Program` to another chain to be executed asynchronously. The calling program is not informed of the execution state, but must `Query` explicitly.
-
-
-##### TBD
-
 - `Query`: Queries register values of an `XCVM` contract across chains. The provided Salt is used to look up the interpreter instance. It sets the current `Result Register` `QueryResult`.
-- `Commit`: When the next error is encountered, all executed operations before `Commit` will not be reverted.
-- `Abort`: Ends the current execution with the provided message.
 
 For each instruction, this diagram approximately displays what happens: 
 
@@ -228,6 +224,27 @@ sequenceDiagram
     XCVM Interpreter->>XCVM Interpreter: Commit
     XCVM Interpreter->>XCVM Interpreter: Abort
 ```
+
+##### Call Instruction and Late Bindings
+
+The call instruction supports bindings values on the executing side of the program by specifying the `Bindings`. This allows us to construct a program that uses data only available on the executing side. For example, the swap call of the following smart contract snippet expects a `to` address to receive the funds after a trade. 
+
+```
+fn swap(amount: u256, pair: (u128, u128), to: AccountId) { ... } 
+```
+
+If we want to swap funds from the interpreter account and receive the funds into the interpreter account, we need to specify the BindingValue `Self`, using the index of the `to` field for the serialized data being passed to the smart contract. For the `Call` instruction of `swap(10, (1, 2), ${UNKNOWN})`, we then serialize it into the following struct: 
+
+```
+Call {
+    payload: encode(swap(10,(1,2))),
+    bindings: [(13, BindingValue::Self)],
+}
+```
+
+On the executing interpreter, `BindingValue::Self` will be interpolated at index 13 of the payload before being executed, the final payload then becomes `swap(10,(1,2), BindingValue::Self)`, where `BindingValue::Self` is the canonical address of the interpreter on the destination side. 
+
+Besides accessing the `Self` register, `BindingValue` allows for lazy lookups of AssetId conversions, by using `BindingValue::AssetId(GlobalId)`, or lazily converting decimal points depending on the chain using the `Balance` type.
 
 #### Handling Balances
 
@@ -256,6 +273,7 @@ Query Ethereum 1                    // Pauses execution, which will be resumed o
 Call 0xmy_contract_on_this_chain    // my_contract_on_this_chain can inspect the Result Register of his                             
                                     // instance and do something with the actual result
 ```
+
 
 ### Fees
 

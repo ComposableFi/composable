@@ -5,7 +5,6 @@ import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useActiveBonds } from "@/defi/polkadot/hooks/useActiveBonds";
 import PositionDetailsRow from "@/components/Atom/PositionDetailsRow";
 import { claim, getROI } from "@/defi/polkadot/pallets/BondedFinance";
-import BigNumber from "bignumber.js";
 import router from "next/router";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { PairAsset } from "@/components/Atom/PairAsset";
@@ -13,34 +12,37 @@ import { useExecutor } from "substrate-react";
 import { humanBalance } from "shared";
 import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
-import { useSnackbar } from "notistack";
+import { SnackbarKey, useSnackbar } from "notistack";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export const ClaimForm = () => {
   const theme = useTheme();
   const account = useSelectedAccount();
   const { parachainApi } = usePicassoProvider();
-  const activeBonds = useActiveBonds();
+  const { activeBonds } = useActiveBonds();
   const executor = useExecutor();
   const { bond } = router.query;
   const { claimable, vestingTime, vestedTime, pending } = useClaim(
     bond?.toString() ?? ""
   );
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
   const activeBond = activeBonds.find((b: ActiveBond) =>
     findCurrentBond(b, bond?.toString() ?? "")
   );
   if (activeBond === undefined || !parachainApi) return null;
 
   const handleClaim = () => {
+    let snackbarKey: SnackbarKey | undefined;
     claim(
       {
         parachainApi,
         account,
         executor,
         assetId: activeBond.bond.reward.assetId,
+        vestingScheduleId: activeBond.vestingScheduleId.toString(),
       },
-      txHash => {
+      (txHash) => {
+        closeSnackbar(snackbarKey);
         enqueueSnackbar("Claim was successful", {
           variant: "success",
           isClosable: true,
@@ -49,15 +51,16 @@ export const ClaimForm = () => {
         });
       },
       (msg) => {
+        closeSnackbar(snackbarKey);
         enqueueSnackbar("An error occurred while processing transaction", {
           variant: "error",
           isClosable: true,
           persist: true,
-          description: "Failed with: " + msg,
+          description: msg,
         });
       },
       (txHash) => {
-        enqueueSnackbar("Processing Claim", {
+        snackbarKey = enqueueSnackbar("Processing Claim", {
           variant: "info",
           isClosable: true,
           persist: true,
@@ -92,7 +95,7 @@ export const ClaimForm = () => {
         value={claimable}
         isValid={() => {}}
         setter={() => {}}
-        maxValue={new BigNumber(0)}
+        maxValue={claimable}
         disabled={true}
         LabelProps={{
           mainLabelProps: { label: "Amount" },
@@ -115,9 +118,10 @@ export const ClaimForm = () => {
         }}
         variant="contained"
         fullWidth
+        disabled={claimable.eq(0)}
         onClick={handleClaim}
       >
-        Claim
+        Claim {claimable.toString()}
       </Button>
 
       <Stack mt={theme.spacing(4)} width="100%">

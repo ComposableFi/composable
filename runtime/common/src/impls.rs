@@ -16,10 +16,13 @@ where
 	<R as balances::Config>::Balance: From<u128>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
+		/// TODO (vim): This configuration must be a part of each runtime configuration instead
+		/// being a  common configuration. We could build a small custom pallet to capture this
+		/// configuration while  also making part of on-chain governance through extrinisics.
 		// Collator's get half the fees
-		let (to_collators, half) = amount.ration(50, 50);
+		let (to_collators, to_treasury) = amount.ration(25, 75);
 		// 30% gets burned 20% to treasury
-		let (_pre_burn, to_treasury) = half.ration(30, 20);
+		// let (_pre_burn, to_treasury) = half.ration(30, 20);
 
 		let staking_pot = <collator_selection::Pallet<R>>::account_id();
 		<balances::Pallet<R>>::resolve_creating(&staking_pot, to_collators);
@@ -263,15 +266,15 @@ mod tests {
 	#[test]
 	fn test_fees_and_tip_split() {
 		new_test_ext().execute_with(|| {
-			let fee = Balances::issue(10);
-			let tip = Balances::issue(20);
+			let fee = Balances::issue(30);
+			let tip = Balances::issue(70);
 
 			DealWithFees::on_unbalanceds(vec![fee, tip].into_iter());
 
-			// Author gets 50% of tip and 50% of fee = 15
-			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 15);
+			// Author gets 25% of tip and 25% of fee = 25
+			assert_eq!(Balances::free_balance(CollatorSelection::account_id()), 25);
 			// Treasury gets 20%
-			assert_eq!(Balances::free_balance(Treasury::account_id()), 6);
+			assert_eq!(Balances::free_balance(Treasury::account_id()), 75);
 		});
 	}
 
