@@ -10,28 +10,24 @@ pkgs.arion.build {
         dali-container-name = "dali-devnet";
 
 
-        squid-archive-db-name = "squid-archive-db";
-        squid-archive-db = {
-          name = "squid-archive";
-          host = squid-archive-db-name;
-          user = "squid";
-          password = "super-secret-squid-pass";
+        squid-archive-db = rec {
+          name = "squid-archive-db";
+          host = name;
+          user = "squid-archive-user";
+          password = "super-secret-squid-archive-pass";
           port = 5432;
+        };
+
+        squid-db = rec {
+          name = "squid-db";
+          host = name;
+          user = "squid-user";
+          password = "super-secret-squid-pass";
+          port = 5433;
         };
         
         relaychainPort = 9944;
         parachainPort = 9988;
-        # composable-squid-db-name = "composable_squid";
-        # composable-squid-db = default-db // {
-        #   name = composable-squid-db-name;
-        #   host = db-container-name;
-        # };
-
-        # indexer-db-name = "indexer";
-        # indexer-db = default-db // {
-        #   name = indexer-db-name;
-        #   host = db-container-name;
-        # };
 
         # frontend-picasso = import ./services/frontend-picasso.nix {
         #   inherit pkgs;
@@ -49,10 +45,24 @@ pkgs.arion.build {
           project.name = "composable_firesquid";
           networks."${network-name}" = { };
           services = {
-            "${squid-archive-db-name}" = mkComposableContainer
+            "${squid-archive-db.name}" = mkComposableContainer
               (import ./services/postgres.nix {
                 inherit pkgs;
                 database = squid-archive-db;
+                version = "14";
+                init-scripts = pkgs.writeTextFile {
+                  name = "init";
+                  text = ''
+                  '';
+                  executable = false;
+                  destination = "/init.sql";
+                };
+              });
+
+            "${squid-db.name}" = mkComposableContainer
+              (import ./services/postgres.nix {
+                inherit pkgs;
+                database = squid-db;
                 version = "14";
                 init-scripts = pkgs.writeTextFile {
                   name = "init";
@@ -77,16 +87,16 @@ pkgs.arion.build {
                 prometheusPort = 9090;
             }); 
             
-            # note, this one currently seems broken.
             gateway = mkComposableContainer (import ./services/subsquid-substrate-gateway.nix {
                 database = squid-archive-db;
                 port = 8888;
             });
 
-            explorer = mkComposableContainer (import ./services/subsquid-substrate-explorer.nix {
-                database = squid-archive-db;
-                graphqlPort = 4010;
-           });
+            # note, this one currently seems broken.
+            # explorer = mkComposableContainer (import ./services/subsquid-substrate-explorer.nix {
+            #     database = squid-archive-db;
+            #     graphqlPort = 4010;
+            # });
           };
         };
       })
