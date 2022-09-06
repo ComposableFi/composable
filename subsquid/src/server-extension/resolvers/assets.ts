@@ -1,6 +1,6 @@
 import { Field, ObjectType, Query, Resolver } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import { Asset, HistoricalAssetPrice } from "../../model";
+import { Asset, Currency, HistoricalAssetPrice } from "../../model";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1_000;
 
@@ -17,6 +17,9 @@ export class Assets {
 
   @Field(() => BigInt, { nullable: false })
   prevPrice!: bigint;
+
+  @Field(() => String, { nullable: false })
+  currency!: string;
 
   @Field(() => Number, { nullable: true })
   change?: number | undefined | null;
@@ -37,6 +40,7 @@ type HistoricalPrice = {
   asset_id: string;
   price: string;
   timestamp: string;
+  currency: Currency;
 };
 
 type AssetData = {
@@ -46,6 +50,7 @@ type AssetData = {
   prevPrice: bigint;
   timestamp: string;
   change?: number | null;
+  currency: string;
 };
 
 @Resolver()
@@ -124,6 +129,7 @@ export class AssetsResolver {
             prevPrice > 0
               ? Number((100n * (price - prevPrice)) / prevPrice)
               : null, // avoid error if dividing by zero
+          currency: curr.currency.toString(),
         };
       }
 

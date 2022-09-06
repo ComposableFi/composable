@@ -1,5 +1,5 @@
 import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
-import { Asset, HistoricalAssetPrice } from "../src/model";
+import { Asset, Currency, HistoricalAssetPrice } from "../src/model";
 import { mock } from "ts-mockito";
 import { createCtx } from "../src/utils";
 import { expect } from "chai";
@@ -21,14 +21,17 @@ function assertAsset(asset: Asset, assetId: string, price: bigint) {
  * @param historicalAssetPrice
  * @param assetId
  * @param price
+ * @param currency
  */
 function assertHistoricalAssetPrice(
   historicalAssetPrice: HistoricalAssetPrice,
   assetId: string,
-  price: bigint
+  price: bigint,
+  currency: Currency,
 ) {
   expect(historicalAssetPrice.asset.id).to.equal(assetId);
   expect(historicalAssetPrice.price).to.equal(price);
+  expect(historicalAssetPrice.currency).to.equal(currency);
 }
 
 describe("Oracle price changed", () => {
@@ -63,6 +66,6 @@ describe("Oracle price changed", () => {
 
     const historicalAssetPrice = getHistoricalAssetPrice(ctx, asset, 20n);
 
-    assertHistoricalAssetPrice(historicalAssetPrice, "1", 20n);
+    assertHistoricalAssetPrice(historicalAssetPrice, "1", 20n, Currency.USD);
   });
 });

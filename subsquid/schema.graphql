@@ -103,6 +103,10 @@ type Asset @entity {
   historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
 }
 
+enum Currency {
+  USD
+}
+
 type HistoricalAssetPrice @entity {
   id: ID!
   "ID of the event associated with this activity"
@@ -111,18 +115,7 @@ type HistoricalAssetPrice @entity {
   asset: Asset!
   price: BigInt!
   timestamp: BigInt!
-}
-
-type PicassoStakingPosition @entity {
-  id: ID!
-  eventId: String!
-  positionId: String!
-  transactionId: String!
-  poolId: String!
-  amount: BigInt!
-  owner: String!
-  startTimestamp: BigInt!
-  endTimestamp: BigInt
+  currency: Currency!
 }
 
 type PicassoPool @entity {

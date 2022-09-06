@@ -1,6 +1,7 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
 import * as marshal from "./marshal"
 import {Asset} from "./asset.model"
+import {Currency} from "./_currency"
 
 @Entity_()
 export class HistoricalAssetPrice {
@@ -29,4 +30,7 @@ export class HistoricalAssetPrice {
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   timestamp!: bigint
+
+  @Column_("varchar", {length: 3, nullable: false})
+  currency!: Currency
 }

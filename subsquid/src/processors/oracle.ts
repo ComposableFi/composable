@@ -1,7 +1,7 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
 import { OraclePriceChangedEvent } from "../types/events";
-import { Asset, HistoricalAssetPrice } from "../model";
+import { Asset, Currency, HistoricalAssetPrice } from "../model";
 
 interface PriceChangedEvent {
   assetId: bigint;
@@ -47,6 +47,7 @@ export function getHistoricalAssetPrice(
     asset,
     price,
     timestamp: BigInt(ctx.block.timestamp),
+    currency: Currency.USD,
   });
 }
 

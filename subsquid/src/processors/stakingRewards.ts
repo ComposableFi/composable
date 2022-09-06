@@ -84,14 +84,14 @@ export function createRewardPool(
 ): PicassoPool {
   return new PicassoPool({
     id: randomUUID(),
-    eventId: eventId,
+    eventId,
     poolId: poolId.toString(),
     assetId: assetId.toString(),
   });
 }
 
 /**
- * Create new PicassoStakingPosition.
+ * Create new StakingPosition.
  * @param positionId
  * @param assetId
  * @param owner
