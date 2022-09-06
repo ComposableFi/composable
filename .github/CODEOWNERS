@@ -15,21 +15,21 @@ Makefile @ComposableFi/sre
 
 ## Parachain related files
 
-runtime/ @ComposableFi/parachain-leads
+code/parachain/runtime/ @ComposableFi/parachain-leads
 
-node/ @ComposableFi/parachain-leads
-frame/ @ComposableFi/parachain
-integration-tests/ @ComposableFi/parachain @ComposableFi/testers
+code/parachain/node/ @ComposableFi/parachain-leads
+code/parachain/frame/ @ComposableFi/parachain
+code/integration-tests/ @ComposableFi/parachain @ComposableFi/testers
 
-frame/composable-traits/ @ComposableFi/parachain-finance
-frame/pablo/ @ComposableFi/parachain-finance
-frame/dex-router/ @ComposableFi/parachain-finance
-frame/nft/ @ComposableFi/parachain-finance
-frame/staking-rewards/ @ComposableFi/parachain-finance
-frame/oracle/ @ComposableFi/parachain-finance
+code/parachain/frame/composable-traits/ @ComposableFi/parachain-finance
+code/parachain/frame/pablo/ @ComposableFi/parachain-finance
+code/parachain/frame/dex-router/ @ComposableFi/parachain-finance
+code/parachain/frame/nft/ @ComposableFi/parachain-finance
+code/parachain/frame/staking-rewards/ @ComposableFi/parachain-finance
+code/parachain/frame/oracle/ @ComposableFi/parachain-finance
 subsquid/ @ComposableFi/parachain-finance @ComposableFi/blockchain-integrations
-frame/*/rpc/ @ComposableFi/parachain-rpc
-frame/*/runtime-api @ComposableFi/parachain-rpc
+code/parachain/frame/*/rpc/ @ComposableFi/parachain-rpc
+code/parachain/frame/*/runtime-api @ComposableFi/parachain-rpc
 
 ## Public Gitbook
 
@@ -45,7 +45,7 @@ frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
 
 ## Runtime Integration Tests
 
-integration-tests/runtime-tests/ @ComposableFi/testers
+code/integration-tests/runtime-tests/ @ComposableFi/testers
 
 ## Codespaces
 
@@ -64,7 +64,7 @@ composablejs/ @ComposableFi/parachain
 rfcs/ @ComposableFi/developers
 docs/ @ComposableFi/developers @ComposableFi/technical-writers
 scripts/ @ComposableFi/developers @ComposableFi/sre
-utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
+code/utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
 .config/spellcheck.dic @ComposableFi/developers @ComposableFi/technical-writers
 # Oracle Setup Script
 scripts/oracle-setup @ComposableFi/parachain
