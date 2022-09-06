@@ -31,15 +31,19 @@ const Bond: NextPage = () => {
     (state) => state.bonds.bonds[Number(bond) - 1]
   );
 
+  const assets = useStore(
+    ({ substrateBalances }) => substrateBalances.picasso.assets
+  );
+
   const { isLoading: isLoadingBalances, balances } =
     useBalanceForOffer(bondOffer);
-  const activeBonds = useActiveBonds();
+  const { activeBonds, loading } = useActiveBonds();
   const maxPurchasableBond = getMaxPurchasableBonds(
     bondOffer,
     balances[bondOffer?.assetId]
   );
 
-  if (!bondOffer || !bond) {
+  if (!bondOffer || !bond || loading) {
     return (
       <Default>
         <Updater />
