@@ -2,12 +2,13 @@
 pragma solidity ^0.8.14;
 
 import "@lazyledger/protobuf3-solidity-lib/contracts/ProtobufLib.sol";
+import "./interfaces/IInterpreter.sol";
 
 /**
  * @title Interpreter
  * @notice Custom interpreter
  */
-contract Interpreter {
+contract Interpreter is IInterpreter{
     enum OPERATION {
         NONE,
         TRANSFER,
@@ -39,7 +40,7 @@ contract Interpreter {
      * @notice encode and decode program using protobuf
      * @param program program encoded in bytes
      */
-    function interpretWithProtoBuff(bytes calldata program)
+    function interpret(bytes calldata program)
         public
         onlyOwnerOrCreator
     {

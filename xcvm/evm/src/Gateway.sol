@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./Interpreter.sol";
-import "./interfaces/IRouter.sol";
+import "./interfaces/IGateway.sol";
 
-contract Router is Ownable, IRouter {
+contract Gateway is Ownable, IGateway {
     enum BridgeSecurity {
         Disabiled,
         Deterministic,
@@ -24,8 +24,8 @@ contract Router is Ownable, IRouter {
     mapping(uint256 => mapping(bytes => address))
         public userInterpreter;
 
-    mapping(address => Bridge) bridges;
-    mapping(uint256 => address) assets;
+    mapping(address => Bridge) public bridges;
+    mapping(uint256 => address) public assets;
 
     event InstanceCreated(
         uint256 networkId,
@@ -62,6 +62,7 @@ contract Router is Ownable, IRouter {
         BridgeSecurity security,
         uint256 chainId
     ) external onlyOwner {
+        require(bridgeAddress != address(0), "Gateway: invalid address");
         require(
             bridges[bridgeAddress].security == BridgeSecurity(0),
             "Gateway: bridge already enabled"
@@ -112,16 +113,16 @@ contract Router is Ownable, IRouter {
     function runProgram(
         Origin memory origin,
         bytes calldata program,
-        address[] memory assets,
-        uint256[] memory amounts
+        address[] memory _assets,
+        uint256[] memory _amounts
     ) external payable onlyBridge {
         // a program is a result of spawm function, pull the assets from the bridge to the interpreter
         address payable interpreterAddress = _getOrCreateInterpreter(
             origin
         );
-        _provisionAssets(interpreterAddress, assets, amounts);
+        _provisionAssets(interpreterAddress, _assets, _amounts);
 
-        Interpreter(interpreterAddress).interpretWithProtoBuff(
+        IInterpreter(interpreterAddress).interpret(
             program
         );
     }
