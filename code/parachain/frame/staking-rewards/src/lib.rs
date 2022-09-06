@@ -879,21 +879,24 @@ pub mod pallet {
 			let is_early_unlock = stake.lock.started_at.safe_add(&stake.lock.duration)? >=
 				T::UnixTime::now().as_secs();
 
-			let asset_id = RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
-				let rewards_pool = rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
+			let (asset_id, share_asset_id) =
+				RewardPools::<T>::try_mutate(stake.reward_pool_id, |rewards_pool| {
+					let rewards_pool =
+						rewards_pool.as_mut().ok_or(Error::<T>::RewardsPoolNotFound)?;
 
-				(*rewards_pool, _) = Self::collect_rewards(
-					rewards_pool,
-					&mut stake,
-					&owner,
-					is_early_unlock,
-					keep_alive,
-				)?;
+					(*rewards_pool, _) = Self::collect_rewards(
+						rewards_pool,
+						&mut stake,
+						&owner,
+						is_early_unlock,
+						keep_alive,
+					)?;
 
-				rewards_pool.claimed_shares = rewards_pool.claimed_shares.safe_add(&stake.share)?;
+					rewards_pool.claimed_shares =
+						rewards_pool.claimed_shares.safe_add(&stake.share)?;
 
-				Ok::<_, DispatchError>(rewards_pool.asset_id)
-			})?;
+					Ok::<_, DispatchError>((rewards_pool.asset_id, rewards_pool.share_asset_id))
+				})?;
 
 			// REVIEW(benluelo): Make this logic a method on Stake
 			let stake_with_penalty = if is_early_unlock {
@@ -902,18 +905,24 @@ pub mod pallet {
 				stake.stake
 			};
 
-			// TODO (vim): Unlock staked amount on financial NFT account and transfer from that
-			// account to the owner of the NFT
+			let fnft_asset_account =
+				T::FinancialNft::asset_account(fnft_collection_id, fnft_instance_id);
+
+			T::Assets::remove_lock(T::LockId::get(), asset_id, &fnft_asset_account)?;
 			T::Assets::transfer(
 				asset_id,
-				&Self::pool_account_id(&stake.reward_pool_id),
+				&fnft_asset_account,
 				&owner,
 				stake_with_penalty,
 				keep_alive,
 			)?;
 
 			Stakes::<T>::remove(fnft_collection_id, fnft_instance_id);
-			// TODO (vim): burn the financial NFT and the shares it holds
+
+			// Burn the financial NFT and the shares it holds
+			T::Assets::burn_from(asset_id, &fnft_asset_account, stake.stake - stake_with_penalty)?;
+			T::Assets::burn_from(share_asset_id, &fnft_asset_account, stake.stake)?;
+			T::FinancialNft::burn(fnft_collection_id, fnft_instance_id, Some(who))?;
 
 			Self::deposit_event(Event::<T>::Unstaked {
 				owner: who.clone(),
