@@ -36,7 +36,7 @@ export function useValidation({
 
     if (eventValue.match(FLOAT_NUMBER)) {
       const bignr = new BigNumber(eventValue);
-      if (bignr.decimalPlaces() > maxDec) {
+      if ((bignr.decimalPlaces() || 0) > maxDec) {
         setValid(false);
         return;
       }
