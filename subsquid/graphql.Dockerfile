@@ -1,7 +1,5 @@
 FROM node:16-alpine AS node
-
-
-CMD ["echo", "'initializing graphql-server build'"]
+CMD ["echo", "'initializing graphql-server build graphql.Dockerfile'"]
 FROM node AS node-with-gyp
 RUN apk add g++ make python3
 
@@ -31,3 +29,6 @@ ADD schema.graphql .
 FROM squid AS query-node
 
 EXPOSE 4350
+
+ADD ./scripts/init.sh /init.sh
+ENTRYPOINT ["sh", "/init.sh"]

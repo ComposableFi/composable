@@ -75,10 +75,7 @@ pkgs.arion.build {
 
              "${dali-container-name}" = mkComposableContainer
               (import ./services/devnet-dali.nix {
-                inherit pkgs;
-                inherit packages;
-                inherit parachainPort;
-                inherit relaychainPort;
+                inherit pkgs packages parachainPort relaychainPort;
               });
 
             ingest = mkComposableContainer (import ./services/subsquid-substrate-ingest.nix {
@@ -97,6 +94,12 @@ pkgs.arion.build {
             #     database = squid-archive-db;
             #     graphqlPort = 4010;
             # });
+            
+            graphql-server = mkComposableContainer (import ./services/subsquid-graphql.nix {
+              inherit pkgs;
+              database = squid-db;
+              graphqlPort = 4350;
+            });
           };
         };
       })
