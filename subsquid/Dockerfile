@@ -1,5 +1,5 @@
 FROM node:16-alpine AS node
-CMD ["echo", "'initializing graphql-server build'"]
+CMD ["echo", "'initializing graphql-server build main Dockerfile'"]
 FROM node AS node-with-gyp
 RUN apk add g++ make python3
 
