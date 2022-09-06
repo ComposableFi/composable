@@ -25,6 +25,7 @@ contract Router is Ownable, IRouter {
         public userInterpreter;
 
     mapping(address => Bridge) bridges;
+    mapping(uint256 => address) assets;
 
     event InstanceCreated(
         uint256 networkId,
@@ -39,6 +40,21 @@ contract Router is Ownable, IRouter {
 
     constructor() {
         // enable trustless bridge;
+    }
+
+    function registerAsset(address assetAddress, uint128 assetId)
+        external
+        onlyOwner
+    {
+        require(
+            assetAddress != address(0),
+            "Gateway: invalid address"
+        );
+        assets[assetId] = assetAddress;
+    }
+
+    function unregisterAsset(uint128 assetId) external onlyOwner {
+        delete assets[assetId];
     }
 
     function registerBridge(
@@ -70,23 +86,19 @@ contract Router is Ownable, IRouter {
         bridges[bridgeAddress].chainId = 0;
     }
 
-    // TODO ? is the bridge who's gonna to provide internetwork assets transfer?
-    function provisionAssets(
-        Origin memory origin,
-        address[] calldata erc20AssetList,
-        uint256[] calldata amounts
-    ) external payable onlyBridge {
+    //// TODO ? is the bridge who's gonna to provide internetwork assets transfer?
+    function _provisionAssets(
+        address payable interpreterAddress,
+        address[] memory erc20AssetList,
+        uint256[] memory amounts
+    ) internal {
         require(
             erc20AssetList.length == amounts.length,
             "Gateway: asset list size shuold be equal to amount list size"
         );
-        address payable interpreterAddress = _getOrCreateInterpreter(origin);
         if (msg.value > 0) {
             bool sent = interpreterAddress.send(msg.value);
-            require(
-                sent,
-                "Failed to send Ether"
-            );
+            require(sent, "Failed to send Ether");
         }
         for (uint256 i = 0; i < erc20AssetList.length; i++) {
             IERC20(erc20AssetList[i]).transferFrom(
@@ -97,12 +109,21 @@ contract Router is Ownable, IRouter {
         }
     }
 
-    function runProgram(Origin memory origin, bytes calldata program)
-        external
-        onlyBridge
-    {
-        Interpreter(_getOrCreateInterpreter(origin))
-            .interpretWithProtoBuff(program);
+    function runProgram(
+        Origin memory origin,
+        bytes calldata program,
+        address[] memory assets,
+        uint256[] memory amounts
+    ) external payable onlyBridge {
+        // a program is a result of spawm function, pull the assets from the bridge to the interpreter
+        address payable interpreterAddress = _getOrCreateInterpreter(
+            origin
+        );
+        _provisionAssets(interpreterAddress, assets, amounts);
+
+        Interpreter(interpreterAddress).interpretWithProtoBuff(
+            program
+        );
     }
 
     function _getOrCreateInterpreter(Origin memory origin)
@@ -119,7 +140,9 @@ contract Router is Ownable, IRouter {
                     BridgeSecurity.Deterministic,
                 "For creating a new interpreter, the sender should be a deterministic bridge"
             );
-            interpreterAddress = address(1);
+            interpreterAddress = address(
+                new Interpreter(origin.account, address(this))
+            );
             userInterpreter[origin.networkId][
                 origin.account
             ] = interpreterAddress;
