@@ -9,9 +9,10 @@ pkgs.arion.build {
         subsquid-indexer-gateway-container-name = "subsquid-indexer-gateway";
         dali-container-name = "dali-devnet";
 
+
         squid-archive-db = {
           name = "squid-archive";
-          host = "127.0.0.1";
+          host = db-container-name;
           user = "postgres";
           password = "postgres";
           port = 5432;
@@ -61,7 +62,7 @@ pkgs.arion.build {
                 };
               });
 
-             dali-devnet = mkComposableContainer
+             "${dali-container-name}" = mkComposableContainer
               (import ./services/devnet-dali.nix {
                 inherit pkgs;
                 inherit packages;
@@ -71,7 +72,7 @@ pkgs.arion.build {
 
             ingest = mkComposableContainer (import ./services/subsquid-substrate-ingest.nix {
                 database = squid-archive-db;
-                polkadotEndpoint = "ws://127.0.0.1:${toString parachainPort}";
+                polkadotEndpoint = "ws://${dali-container-name}:${toString parachainPort}";
                 prometheusPort = 9090;
             }); 
             
@@ -83,11 +84,6 @@ pkgs.arion.build {
                 database = squid-archive-db;
                 graphqlPort = 4010;
            });
-            
-            
-            
-            
-
           };
         };
       })
