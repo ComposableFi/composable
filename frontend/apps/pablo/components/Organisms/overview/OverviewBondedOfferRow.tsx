@@ -6,9 +6,8 @@ import {
 import { BondOffer } from "@/defi/types";
 import useBondOfferPrincipalAsset from "@/defi/hooks/bonds/useBondOfferPrincipalAsset";
 import BondPrincipalAssetIcon from "../bonds/BondPrincipalAssetIcon";
-import { useBondedOfferVestingSchedules, useBondedOfferVestingState, useBondOfferROI } from "@/store/bond/bond.slice";
+import { useBondedOfferVestingState, useBondOfferROI } from "@/store/bond/bond.slice";
 import useBondVestingTime from "@/defi/hooks/bonds/useBondVestingTime";
-import BigNumber from "bignumber.js";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 
 export const OverviewBondedOfferRow = ({

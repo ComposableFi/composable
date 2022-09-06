@@ -78,7 +78,7 @@ export const useAddLiquidity = ({
               dispatch(openConfirmingSupplyModal());
               console.log("txReady", txReady);
             },
-            (txHash: string, events) => {
+            (txHash: string, _events) => {
               enqueueSnackbar("Transaction successful. Transaction hash: " + txHash, { variant: "success" });
               resetAddLiquiditySlice();
               router.push("/pool/select/" + pool?.poolId);

@@ -26,3 +26,16 @@ export function calculateRewardPerDayByAssetId(assetId: string, stakingRewardPoo
 
     return rewardPerDay;
 }
+
+export function calculatePoolApy(
+  rewardTokenValueInUSD: BigNumber,
+  dailyRewardAmount: BigNumber,
+  lpTokenValueUSD: BigNumber,
+  amountOfTokensStaked: BigNumber
+): BigNumber {
+  if (lpTokenValueUSD.eq(0) || amountOfTokensStaked.eq(0)) { return new BigNumber(0) }
+
+  let num = rewardTokenValueInUSD.times(dailyRewardAmount).times(365);
+  let den = lpTokenValueUSD.times(amountOfTokensStaked)
+  return num.div(den);
+}

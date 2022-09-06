@@ -143,7 +143,6 @@ export default {
     FrameSupportScheduleLookupError: "Null",
     PalletLiquidationsLiquidationStrategyConfiguration: "Null",
     CommonMosaicRemoteAssetId: "Null",
-    ComposableTraitsDexConstantProductPoolInfo: "Null",
     ComposableTraitsLendingMarketConfig: "Null",
     ComposableTraitsLendingCreateInput: "Null",
     ComposableTraitsLendingUpdateInput: "Null",

@@ -19,6 +19,10 @@ import { BoxWrapper } from "../../BoxWrapper";
 import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
 import { useAssets } from "@/defi/hooks";
 import { MockedAsset } from "@/store/assets/assets.types";
+import { useClaimStakingRewards } from "@/defi/hooks/stakingRewards/useClaimStakingRewards";
+import { ConfirmingModal } from "../../swap/ConfirmingModal";
+import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -66,6 +70,7 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
 }) => {
   const theme = useTheme();
 
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const poolDetails = useLiquidityPoolDetails(poolId);
   const userProvidedLiquidity = useUserProvidedLiquidityByPool(poolId);
 
@@ -73,12 +78,17 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
   const stakingRewardsPool = useStakingRewardPool(pool ? pool.lpToken : "-");
   const rewardAssets = useAssets(stakingRewardsPool ? Object.keys(stakingRewardsPool.rewards) : []);
 
-  // WIP
+  // WIP - awaiting Andres' subsquid changes
   const lpDeposit = new BigNumber(0);
+  const handleClaimRewards = useClaimStakingRewards({
+    positionId: undefined
+  })
 
-  const handleClaimRewards = () => {
-    // TODO: handle claim rewards
-  };
+  const isPendingClaimStakingRewards = usePendingExtrinsic(
+    "claim",
+    "stakingRewards",
+    selectedAccount ? selectedAccount.address : "-"
+  )
 
   return (
     <BoxWrapper {...boxProps}>
@@ -155,6 +165,8 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
           Claim rewards
         </Button>
       </Box>
+
+      <ConfirmingModal open={isPendingClaimStakingRewards} />
     </BoxWrapper>
   );
 };

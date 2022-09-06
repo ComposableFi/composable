@@ -66,7 +66,7 @@ export interface ComposableTraitsDefiSell extends Null {}
 export interface ComposableTraitsDefiTake extends Null {}
 
 /** @name ComposableTraitsDexConstantProductPoolInfo */
-export interface ComposableTraitsDexConstantProductPoolInfo extends Null {}
+export interface ComposableTraitsDexConstantProductPoolInfo {}
 
 /** @name ComposableTraitsDexConstantProductPoolInfo */
 export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {

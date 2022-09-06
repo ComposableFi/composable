@@ -7,6 +7,9 @@ import { PoolDetailsProps } from "./index";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { useStake } from "@/defi/hooks/stakingRewards";
 import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
+import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { ConfirmingModal } from "../../swap/ConfirmingModal";
 
 export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
   poolId,
@@ -20,6 +23,7 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
 
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const durationPresets = useMemo(() => {
     if (stakingRewardPool) {
       return Object.keys(stakingRewardPool.lock.durationPresets);
@@ -36,8 +40,15 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
         : undefined,
   });
 
+  const isStaking = usePendingExtrinsic(
+    "stake",
+    "stakingRewards",
+    selectedAccount ? selectedAccount.address : "-"
+  )
+
   return (
     <Box {...boxProps}>
+      <ConfirmingModal open={isStaking} />
       <Box>
         <BigNumberInput
           maxValue={poolDetails.lpBalance}
