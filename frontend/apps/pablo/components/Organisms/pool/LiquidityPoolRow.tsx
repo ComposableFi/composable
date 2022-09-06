@@ -28,6 +28,7 @@ const LiquidityPoolRow = ({
   const rewardAssets = useAssets(
     rewardPool ? Object.keys(rewardPool.rewards) : []
   );
+
   const baseAsset = useAsset(liquidityPool.pair.base.toString());
   const quoteAsset = useAsset(liquidityPool.pair.quote.toString());
 
@@ -47,7 +48,7 @@ const LiquidityPoolRow = ({
     return Object.keys(apy).reduce((v, i) => {
       return v.plus(apy[i])
     }, new BigNumber(0))
-  }, [apy, rewardAssets]);
+  }, [apy]);
 
   return (
     <TableRow
