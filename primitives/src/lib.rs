@@ -193,7 +193,7 @@ pub trait IbcProvider {
 		seqs: Vec<u64>,
 	) -> Result<Vec<u64>, Self::Error>;
 
-	/// Connection whitelist
+	/// Channel whitelist
 	async fn channel_whitelist(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error>;
 
 	/// Query all channels for a connection
@@ -231,9 +231,15 @@ pub trait IbcProvider {
 	) -> Result<(Height, Timestamp), Self::Error>;
 
 	/// Find suitable timeout proof height
-	/// Should return the first block height greater than or equal to the start height where the chain timestamp is greater than or equal to the provided timestamp
-	/// The return value should be less than `stop` height
-	async fn find_suitable_timeout_height(&self, timestamp: Timestamp, start: Height, stop: Height) -> Result<Option<Height>, Self::Error>;
+	/// Should return the first block height greater than or equal to the start height where the
+	/// chain timestamp is greater than or equal to the provided timestamp, the return value should
+	/// be less than `stop` height
+	async fn find_suitable_timeout_height(
+		&self,
+		timestamp: Timestamp,
+		start: Height,
+		stop: Height,
+	) -> Result<Option<Height>, Self::Error>;
 
 	/// Return a proof for the host consensus state at the given height to be included in the
 	/// consensus state proof.

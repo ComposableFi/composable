@@ -15,8 +15,9 @@ use ibc::{
 		},
 	},
 	proofs::Proofs,
-	timestamp::Timestamp,
+	timestamp::{Expiry::Expired, Timestamp},
 	tx_msg::Msg,
+	Height,
 };
 use ibc_proto::google::protobuf::Any;
 use primitives::{apply_prefix, error::Error, query_undelivered_sequences, Chain};
@@ -92,20 +93,35 @@ pub async fn get_timed_out_packets_messages(
 				continue
 			}
 
-			// We need to get a height higher or equal to the timeout height where the sink chain's timestamp is greater than the packet timestamp and fetch our timeout proofs at that height
-			let proof_height = if let Some(height) = sink.find_suitable_timeout_height(packet.timeout_timestamp, packet.timeout_height, sink_height).await? {
-				height
-			} else {
-				continue
+			let timeout_variant = timeout_variant(&packet, &sink_timestamp, sink_height).unwrap();
+
+			let proof_height = match timeout_variant {
+				TimeoutVariant::Height => packet.timeout_height,
+				TimeoutVariant::Timestamp | TimeoutVariant::Both => {
+					if let Some(height) = sink
+						.find_suitable_timeout_height(
+							packet.timeout_timestamp,
+							packet.timeout_height,
+							sink_height,
+						)
+						.await?
+					{
+						height
+					} else {
+						continue
+					}
+				},
 			};
 
+			// We need to get a height higher or equal to the timeout height where the sink chain's
+			// timestamp is greater than the packet timestamp and fetch our timeout proofs at that
+			// height
 
 			// Check if connection delay is satisfied
 
 			// If we can't get the client update time and height, skip processing of this packet
-			let client_update_time_and_height = source
-				.query_client_update_time_and_height(sink.client_id(), proof_height)
-				.await;
+			let client_update_time_and_height =
+				source.query_client_update_time_and_height(sink.client_id(), proof_height).await;
 			if client_update_time_and_height.is_err() {
 				continue
 			}
@@ -182,7 +198,13 @@ pub async fn get_timed_out_packets_messages(
 				let msg = MsgTimeoutOnClose {
 					packet: packet.clone(),
 					next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
-					proofs: Proofs::new(commitment_proof, None, None, None, proof_height)?,
+					proofs: Proofs::new(
+						commitment_proof.clone(),
+						None,
+						None,
+						Some(commitment_proof),
+						proof_height,
+					)?,
 
 					signer: source.account_id(),
 				};
@@ -194,7 +216,13 @@ pub async fn get_timed_out_packets_messages(
 				let msg = MsgTimeout {
 					packet: packet.clone(),
 					next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
-					proofs: Proofs::new(commitment_proof, None, None, None, proof_height)?,
+					proofs: Proofs::new(
+						commitment_proof.clone(),
+						None,
+						None,
+						Some(commitment_proof),
+						proof_height,
+					)?,
 
 					signer: source.account_id(),
 				};
@@ -206,4 +234,31 @@ pub async fn get_timed_out_packets_messages(
 	}
 
 	Ok(messages)
+}
+
+// todo: fix bug in this function in ibc-rs and remove from here
+pub enum TimeoutVariant {
+	Height,
+	Timestamp,
+	Both,
+}
+
+pub fn timeout_variant(
+	packet: &Packet,
+	dst_chain_ts: &Timestamp,
+	dst_chain_height: Height,
+) -> Option<TimeoutVariant> {
+	let height_timeout =
+		packet.timeout_height != Height::zero() && packet.timeout_height <= dst_chain_height;
+	let timestamp_timeout = packet.timeout_timestamp != Timestamp::none() &&
+		(dst_chain_ts.check_expiry(&packet.timeout_timestamp) == Expired);
+	if height_timeout && !timestamp_timeout {
+		Some(TimeoutVariant::Height)
+	} else if timestamp_timeout && !height_timeout {
+		Some(TimeoutVariant::Timestamp)
+	} else if timestamp_timeout && height_timeout {
+		Some(TimeoutVariant::Both)
+	} else {
+		None
+	}
 }
