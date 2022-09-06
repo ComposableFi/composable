@@ -84,9 +84,9 @@ services:
       DB_HOST: squid-db
       DB_PASS: squid
       DB_PORT_PG: 5432
-    volumes:
-      - ./scripts/init.sh:/init.sh
-    entrypoint: sh /init.sh
+    # volumes:
+    #   - ./scripts/init.sh:/init.sh
+    # entrypoint: sh /init.sh
 
 
   processor:
