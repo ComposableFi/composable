@@ -7,6 +7,7 @@ import {
   TableRow,
   Typography,
   BoxProps,
+  Button,
 } from "@mui/material";
 import { BaseAsset } from "@/components/Atoms";
 import { useAppSelector } from "@/hooks/store";
@@ -15,6 +16,7 @@ import { TableHeader, XPablo } from "@/defi/types";
 import { BoxWrapper } from "./BoxWrapper";
 import { getToken } from "@/defi/Tokens";
 import moment from "moment-timezone";
+import { Add } from "@mui/icons-material";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -32,11 +34,14 @@ const tableHeaders: TableHeader[] = [
   {
     header: "xPBLO",
   },
+  {
+    header: "", // kept empty for action column with no header
+  },
 ];
 
 export type XPablosBoxProps = {
-  title?: string,
-  header?: TableHeader[],
+  title?: string;
+  header?: TableHeader[];
 } & BoxProps;
 
 export const XPablosBox: React.FC<XPablosBoxProps> = ({
@@ -48,19 +53,16 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
   const expired = (expiry: number) => expiry < new Date().getTime();
 
   return (
-    <BoxWrapper
-      title={title || "Your xPBLO"}
-      {...boxProps}
-    >
+    <BoxWrapper title={title || "Your xPBLO"} {...boxProps}>
       <TableContainer>
         <Table>
           <TableHead>
             <TableRow>
-              {
-                (header || tableHeaders).map((th) => (
-                  <TableCell key={th.header} align="left">{th.header}</TableCell>
-                ))
-              }
+              {(header || tableHeaders).map((th) => (
+                <TableCell key={th.header} align="left">
+                  {th.header}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
           <TableBody>

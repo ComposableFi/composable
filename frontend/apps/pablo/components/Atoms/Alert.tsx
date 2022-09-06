@@ -1,24 +1,24 @@
-import { FC } from 'react';
+import { FC } from "react";
 import {
   Alert as MuiAlert,
   AlertProps as MuiAlertProps,
   TypographyProps,
 } from "@mui/material";
-import Typography from '@mui/material/Typography';
+import Typography from "@mui/material/Typography";
 import { useTheme } from "@mui/material/styles";
-import { AlertTitle, Box } from '@mui/material';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import { AlertTitle, Box } from "@mui/material";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 
 export type AlertProps = {
   alertTitle?: string;
   alertText: string;
-  AlertTextProps?: TypographyProps,
+  AlertTextProps?: TypographyProps;
   underlined?: boolean;
   centered?: boolean;
 } & MuiAlertProps;
 
 export const Alert: FC<AlertProps> = ({
-  severity = 'info',
+  severity = "info",
   alertTitle,
   alertText,
   AlertTextProps,
@@ -30,10 +30,7 @@ export const Alert: FC<AlertProps> = ({
   const theme = useTheme();
 
   return (
-    <Box
-      width="100%"
-      position="relative"
-    >
+    <Box width="100%" position="relative">
       <MuiAlert
         variant="filled"
         severity={severity}
@@ -56,7 +53,9 @@ export const Alert: FC<AlertProps> = ({
           pr={3}
         >
           <Box width="100%" textAlign={centered ? "center" : undefined}>
-            {alertTitle && <AlertTitle>{alertTitle}</AlertTitle>}
+            {alertTitle && (
+              <AlertTitle sx={{ margin: 0 }}>{alertTitle}</AlertTitle>
+            )}
             <Typography variant="body2" {...AlertTextProps}>
               {alertText}
             </Typography>
@@ -68,7 +67,8 @@ export const Alert: FC<AlertProps> = ({
         <Box
           borderBottom={`2px solid ${theme.palette[severity].main}`}
           marginX={theme.spacing(4)}
-        ></Box>)}
+        ></Box>
+      )}
     </Box>
   );
 };

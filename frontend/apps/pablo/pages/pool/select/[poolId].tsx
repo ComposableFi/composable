@@ -1,9 +1,5 @@
 import type { NextPage } from "next";
-import {
-  Container,
-  Box,
-  Typography,
-} from "@mui/material";
+import { Container, Box, Typography } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { ConnectWalletFeaturedBox, Link, PageTitle } from "@/components";
 import { PoolDetails } from "@/components/Organisms/pool/PoolDetails";
@@ -18,9 +14,11 @@ const PoolDetailsPage: NextPage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    let poolId = Number(router.query.poolId);
-    if (isNaN(poolId)) router.push('/pool')
-    setPoolId(Number(poolId));
+    if (router.isReady) {
+      let poolId = Number(router.query.poolId);
+      if (isNaN(poolId)) router.push("/pool");
+      setPoolId(Number(poolId));
+    }
   }, [router]);
 
   const { extensionStatus } = useDotSamaContext();

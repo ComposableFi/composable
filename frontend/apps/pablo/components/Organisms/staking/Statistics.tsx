@@ -33,20 +33,16 @@ const defaultFlexBoxProps = {
 
 const defaultTokenValueProps = {
   gap: 6,
-  LabelProps: {color: "primary.dark"},
-  ValueProps: {color: "primary.dark"},
+  LabelProps: { color: "primary.dark" },
+  ValueProps: { color: "primary.dark" },
 };
 
 type ItemProps = {
   label: string;
   value: string;
   TooltipProps?: Omit<MuiTooltipProps, "children">;
-}
-const Item: React.FC<ItemProps> = ({
-  label,
-  TooltipProps,
-  value,
-}) => {
+};
+const Item: React.FC<ItemProps> = ({ label, TooltipProps, value }) => {
   return (
     <BoxWrapper textAlign="center">
       <Label
@@ -63,12 +59,10 @@ const Item: React.FC<ItemProps> = ({
         {value}
       </Typography>
     </BoxWrapper>
-  )
+  );
 };
 
-export const StakingStatistics: React.FC<GridProps> = ({
-  ...gridProps
-}) => {
+export const StakingStatistics: React.FC<GridProps> = ({ ...gridProps }) => {
   const theme = useTheme();
 
   const {
@@ -105,7 +99,7 @@ export const StakingStatistics: React.FC<GridProps> = ({
         {...defaultTokenValueProps}
       />
     </Box>
-  )
+  );
 
   return (
     <Grid container spacing={8} {...gridProps}>
@@ -113,7 +107,7 @@ export const StakingStatistics: React.FC<GridProps> = ({
         <Item
           label="Total PBLO locked"
           value={totalPBLOLocked.toFormat()}
-          TooltipProps={{title: "Total value locked"}}
+          TooltipProps={{ title: "Total value locked" }}
         />
       </Grid>
       <Grid item {...threeColumnPageSize}>
@@ -136,16 +130,16 @@ export const StakingStatistics: React.FC<GridProps> = ({
         <Item
           label="Average lock multiplier"
           value={averageLockMultiplier.toString()}
-          TooltipProps={{title: "Average lock multiplier"}}
+          TooltipProps={{ title: "Average lock multiplier" }}
         />
       </Grid>
       <Grid item {...twoColumnPageSize}>
         <Item
           label="Average lock time"
           value={`${averageLockTime} days`}
-          TooltipProps={{title: "Average lock time"}}
+          TooltipProps={{ title: "Average lock time" }}
         />
       </Grid>
     </Grid>
-  )
+  );
 };

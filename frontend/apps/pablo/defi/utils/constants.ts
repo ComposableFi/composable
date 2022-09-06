@@ -39,6 +39,5 @@ export const DUMMY_LAUNCH_DESCRIPTION = (
       making the LBP investors the only ones able to participate in ${symbol} or LP staking.`,
 ];
 
-
 export const DEFAULT_SWAP_BASE = "1";
 export const DEFAULT_SWAP_QUOTE = "4";

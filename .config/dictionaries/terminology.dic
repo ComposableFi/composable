@@ -310,6 +310,7 @@ updateable
 currency
 Currency
 unignore
+modularly
 
 coeff # coefficient
 recvs # recieves
