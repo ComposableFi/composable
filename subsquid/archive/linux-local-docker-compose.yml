@@ -1,75 +1,104 @@
-version: "3.4"
-
 services:
   db:
-    image: postgres:12
-    network_mode: host
+    image: postgres:14  # CockroachDB cluster might be a better fit for production deployment
     restart: always
+    network_mode: host
     volumes:
       - /var/lib/postgresql/data
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: squid-archive
 
-  indexer:
-    image: subsquid/hydra-indexer:5
-    restart: unless-stopped
+  ingest:
+    restart: on-failure
+    network_mode: host
+    image: subsquid/substrate-ingest:firesquid
+    command: [
+      # polkadot endpoints -- replace with your wss
+      "-e", "ws://localhost:9988",
+      "-c", "10", # allow up to 20 pending requests for the above endpoint (default is 5)
+      #  "--start-block", "1000000", # uncomment to specify a non-zero start block
+      "--prom-port", "9090",
+      "--out", "postgres://postgres:postgres@localhost:5432/squid-archive"
+    ]
+
+  gateway:
+    image: subsquid/substrate-gateway:firesquid
     network_mode: host
     environment:
-      - WORKERS_NUMBER=5
-      - DB_NAME=indexer
-      - DB_HOST=localhost
-      - DB_USER=postgres
-      - DB_PASS=postgres
-      - DB_PORT=5432
-      - REDIS_URI=redis://localhost:6379/0
-      - FORCE_HEIGHT=true # starting block height
-      # - WS_PROVIDER_ENDPOINT_URI=wss://kusama-rpc.polkadot.io/
-      - WS_PROVIDER_ENDPOINT_URI=ws://127.0.0.1:9988
-      #- WS_PROVIDER_ENDPOINT_URI=wss://dali.devnets.composablefinance.ninja/parachain/alice
+      RUST_LOG: "substrate_gateway=info,actix_server=info"
+    command: [
+      "--database-url", "postgres://postgres:postgres@localhost:5432/squid-archive",
+      "--database-max-connections", "3", # max number of concurrent database connections
+      # "--evm-support" # uncomment for chains with Frontier EVM pallet
+      # (e.g. Moonbeam/Moonriver or Astar/Shiden)
+    ]
 
-    # # If your chain uses custom types you need to provide those
-    # # as detailed here - https://polkadot.js.org/docs/api/start/types.extend
-    # #
-    # # Json files below are passed verbatim to ApiPromise.create() from @polkadot/api.
-    # # Use any combination of those (defined in .env) file 
-    #
-    #   - TYPES_JSON=types.json
-    #   - TYPES_ALIAS=typesAlias.json
-    #   - SPEC_TYPES=typesSpec.json
-    #   - CHAIN_TYPES=typesChain.json
-    #   - BUNDLE_TYPES=typesBundle.json
-    #
-    # volumes:
-    #   - ./types.json:/configs/types.json
-    #   - ./typesAlias.json:/configs/typesAlias.json
-    #   - ./typesSpec.json:/configs/typesSpec.json
-    #   - ./typesChain.json:/configs/typesChain.json
-    #   - ./typesBundle.json:/configs/typesBundle.json
-    command: >
-      sh -c "yarn db:bootstrap && yarn start:prod"
-  indexer-gateway:
-    image: subsquid/hydra-indexer-gateway:5
-    restart: unless-stopped
+  # Explorer service is optional.
+  # It provides rich GraphQL API for querying archived data.
+  # Many developers find it very useful for exploration and debugging.
+  explorer:
+    image: subsquid/substrate-explorer:firesquid
     network_mode: host
     environment:
-      - DEV_MODE=true
-      - DB_NAME=indexer
-      - DB_HOST=localhost
-      - DB_USER=postgres
-      - DB_PASS=postgres
-      - DB_PORT=5432
-      - HYDRA_INDEXER_STATUS_SERVICE=http://localhost:8081/status
-
-  indexer-status-service:
-    network_mode: host
-    image: subsquid/hydra-indexer-status-service:4
-    restart: unless-stopped
-    environment:
-      REDIS_URI: redis://localhost:6379/0
-      PORT: 8081
-
-  redis:
-    network_mode: host
-    image: redis:6.0-alpine
+      DB_TYPE: postgres # set to `cockroach` for Cockroach DB
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: "squid-archive"
+      DB_USER: "postgres"
+      DB_PASS: "postgres"
+    ports:
+      - "4010:3000"
+services:
+  db:
+    image: postgres:14  # CockroachDB cluster might be a better fit for production deployment
     restart: always
+    network_mode: host
+    volumes:
+      - /var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: squid-archive
+
+  ingest:
+    restart: on-failure
+    network_mode: host
+    image: subsquid/substrate-ingest:firesquid
+    command: [
+      # polkadot endpoints -- replace with your wss
+      "-e", "ws://localhost:9988",
+      "-c", "10", # allow up to 20 pending requests for the above endpoint (default is 5)
+      #  "--start-block", "1000000", # uncomment to specify a non-zero start block
+      "--prom-port", "9090",
+      "--out", "postgres://postgres:postgres@localhost:5432/squid-archive"
+    ]
+
+  gateway:
+    image: subsquid/substrate-gateway:firesquid
+    network_mode: host
+    environment:
+      RUST_LOG: "substrate_gateway=info,actix_server=info"
+    command: [
+      "--database-url", "postgres://postgres:postgres@localhost:5432/squid-archive",
+      "--database-max-connections", "3", # max number of concurrent database connections
+      # "--evm-support" # uncomment for chains with Frontier EVM pallet
+      # (e.g. Moonbeam/Moonriver or Astar/Shiden)
+    ]
+
+  # Explorer service is optional.
+  # It provides rich GraphQL API for querying archived data.
+  # Many developers find it very useful for exploration and debugging.
+  explorer:
+    image: subsquid/substrate-explorer:firesquid
+    network_mode: host
+    environment:
+      DB_TYPE: postgres # set to `cockroach` for Cockroach DB
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: "squid-archive"
+      DB_USER: "postgres"
+      DB_PASS: "postgres"
+    ports:
+      - "4010:3000"
