@@ -3,108 +3,118 @@ pkgs.arion.build {
   modules = [
     ({ pkgs, ... }:
       let
-        db-container-name = "db";
-        redis-container-name = "subsquid-redis";
-        subsquid-status-container-name = "subsquid-status-service";
-        subsquid-indexer-gateway-container-name = "subsquid-indexer-gateway";
         dali-container-name = "dali-devnet";
+        subsquidGraphqlContainerName = "subsquid-graphql";
+        gatewayContainerName = "subsquid-gateway";
+        
+        # NOTE: Do not change this. It is hardcoded in the gateway source file.
+        # cfr: services/subsquid-substrate-gateway
+        gatewayPort = 8000;
 
-        default-db = {
-          name = "postgres";
-          host = "127.0.0.1";
-          user = "squid";
-          password = "squid";
-          port = 1337;
-        };
-        composable-squid-db-name = "composable_squid";
-        composable-squid-db = default-db // {
-          name = composable-squid-db-name;
-          host = db-container-name;
-        };
-
-        indexer-db-name = "indexer";
-        indexer-db = default-db // {
-          name = indexer-db-name;
-          host = db-container-name;
+        squid-archive-db = rec {
+          name = "squid-archive-db";
+          host = name;
+          user = "squid-archive-user";
+          password = "super-secret-squid-archive-pass";
+          port = 5432;
         };
 
-        frontend-picasso = import ./services/frontend-picasso.nix {
-          inherit pkgs;
-          inherit packages;
+        squid-db = rec {
+          name = "squid-db";
+          host = name;
+          user = "squid-user";
+          password = "super-secret-squid-pass";
+          port = 5433;
         };
+        
+        relaychainPort = 9944;
+        parachainPort = 9988;
+        squidGraphqlPort = 4350;
+        
+        parachainEndpoint = "ws://${dali-container-name}:${toString parachainPort}";
 
         network-name = "composable_devnet";
-        mk-composable-container = container:
+        mkComposableContainer = container:
           container // {
             service = container.service // { networks = [ network-name ]; };
           };
-      in {
+      in
+      {
         config = {
-          project.name = "composable_devnet";
+          project.name = "composable";
           networks."${network-name}" = { };
           services = {
-            "${db-container-name}" = mk-composable-container
+            "${squid-archive-db.name}" = mkComposableContainer
               (import ./services/postgres.nix {
                 inherit pkgs;
-                database = default-db;
+                database = squid-archive-db;
                 version = "14";
                 init-scripts = pkgs.writeTextFile {
                   name = "init";
                   text = ''
-                    CREATE DATABASE ${composable-squid-db-name} WITH OWNER ${default-db.user};
-                    CREATE DATABASE ${indexer-db-name} WITH OWNER ${default-db.user};
                   '';
                   executable = false;
                   destination = "/init.sql";
                 };
               });
-            "${dali-container-name}" = mk-composable-container
+
+            "${squid-db.name}" = mkComposableContainer
+              (import ./services/postgres.nix {
+                inherit pkgs;
+                database = squid-db;
+                version = "14";
+                init-scripts = pkgs.writeTextFile {
+                  name = "init";
+                  text = ''
+                  '';
+                  executable = false;
+                  destination = "/init.sql";
+                };
+              });
+
+             "${dali-container-name}" = mkComposableContainer
               (import ./services/devnet-dali.nix {
-                inherit pkgs;
-                inherit packages;
-                relaychain-port = 9944;
-                parachain-port = 9988;
-              });
-            subsquid-indexer = mk-composable-container
-              (import ./services/subsquid-indexer.nix {
-                database = indexer-db;
-                redis = redis-container-name;
-                parachain = dali-container-name;
-              });
-            "${subsquid-indexer-gateway-container-name}" =
-              mk-composable-container
-              (import ./services/subsquid-indexer-gateway.nix {
-                database = indexer-db;
-                status = subsquid-status-container-name;
-                graphql-port = 8080;
-              });
-            "${subsquid-status-container-name}" = mk-composable-container
-              (import ./services/subsquid-indexer-status-service.nix {
-                redis = redis-container-name;
-              });
-            "${redis-container-name}" =
-              mk-composable-container (import ./services/redis.nix);
-
-            subsquid-processor = mk-composable-container
-              (import ./services/subsquid-processor.nix {
-                inherit pkgs;
-                inherit packages;
-                database = composable-squid-db;
-                redis = redis-container-name;
-                relay = dali-container-name;
-                archive = subsquid-indexer-gateway-container-name;
+                inherit pkgs packages parachainPort relaychainPort;
               });
 
-            frontend-picasso = mk-composable-container
+            ingest = mkComposableContainer (import ./services/subsquid-substrate-ingest.nix {
+                database = squid-archive-db;
+                polkadotEndpoint = parachainEndpoint;
+                prometheusPort = 9090;
+            }); 
+            
+            "${gatewayContainerName}" = mkComposableContainer (import ./services/subsquid-substrate-gateway.nix {
+                database = squid-archive-db;
+                port = gatewayPort;
+            });
+
+            # NOTE, this one currently seems broken. but it is an optional service anyways.
+            # explorer = mkComposableContainer (import ./services/subsquid-substrate-explorer.nix {
+            #     database = squid-archive-db;
+            #     graphqlPort = 4010;
+            # });
+            
+            "${subsquidGraphqlContainerName}" = mkComposableContainer (import ./services/subsquid-graphql.nix {
+              inherit pkgs;
+              database = squid-db;
+              graphqlPort = squidGraphqlPort;
+            });
+            
+            subsquid-processor = mkComposableContainer ( import ./services/subsquid-processor-dockerfile.nix {
+              inherit subsquidGraphqlContainerName gatewayContainerName gatewayPort parachainEndpoint;
+              database = squid-db;
+              graphqlPort = squidGraphqlPort;
+            });
+
+            # NOTE: Ports are currently not configurable for frontend services
+            frontend-picasso = mkComposableContainer
               (import ./services/frontend-picasso.nix {
-                inherit pkgs;
-                inherit packages;
+                inherit pkgs packages;
               });
 
-            frontend-pablo = mk-composable-container
+            frontend-pablo = mkComposableContainer
               (import ./services/frontend-pablo.nix {
-                inherit pkgs;
-                inherit packages;
+                inherit pkgs packages;
               });
           };
         };

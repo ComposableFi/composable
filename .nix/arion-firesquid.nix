@@ -32,10 +32,6 @@ pkgs.arion.build {
         squidGraphqlPort = 4350;
         
         parachainEndpoint = "ws://${dali-container-name}:${toString parachainPort}";
-        # frontend-picasso = import ./services/frontend-picasso.nix {
-        #   inherit pkgs;
-        #   inherit packages;
-        # };
 
         network-name = "composable_devnet";
         mkComposableContainer = container:
@@ -92,7 +88,7 @@ pkgs.arion.build {
                 port = gatewayPort;
             });
 
-            # note, this one currently seems broken.
+            # NOTE, this one currently seems broken. but it is an optional service anyways.
             # explorer = mkComposableContainer (import ./services/subsquid-substrate-explorer.nix {
             #     database = squid-archive-db;
             #     graphqlPort = 4010;
@@ -110,16 +106,15 @@ pkgs.arion.build {
               graphqlPort = squidGraphqlPort;
             });
 
+            # NOTE: Ports are currently not configurable for frontend services
             frontend-picasso = mkComposableContainer
               (import ./services/frontend-picasso.nix {
-                inherit pkgs;
-                inherit packages;
+                inherit pkgs packages;
               });
 
             frontend-pablo = mkComposableContainer
               (import ./services/frontend-pablo.nix {
-                inherit pkgs;
-                inherit packages;
+                inherit pkgs packages;
               });
           };
         };
