@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.470113Z -->
+<!-- Generated at 2022-09-05T18:35:35.096109Z -->
 
 # Mosaic Pallet Extrinsics
 
@@ -12,7 +12,9 @@ Sets the current Relayer configuration.
 This is enacted immediately and invalidates inflight/ incoming transactions from the
 previous Relayer. However, existing budgets remain in place.
 
-This can only be called by the \[`ControlOrigin`\].
+This can only be called by the [`ControlOrigin`].
+
+[`ControlOrigin`]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
 
 ## Rotate Relayer
 
