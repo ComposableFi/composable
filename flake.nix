@@ -944,7 +944,7 @@
       };
       homeConfigurations = let
         mk-docker-in-docker = pkgs: [
-          # TODO: this home works well in VS Devontainer launcher as it inhect low level Dockerd
+          # TODO: this home works well in VS Devcontainer launcher as it inject low level Dockerd
           # For manual runs need tuning to setup it (need mount docker links to root and +x)
           # INFO[2022-09-06T13:14:43.437764897Z] Starting up                                            
           # dockerd needs to be started with root privileges. To run dockerd in rootless mode as an unprivileged user, see https://docs.docker.com/go/rootless/ dockerd-rootless-setuptool.sh install
