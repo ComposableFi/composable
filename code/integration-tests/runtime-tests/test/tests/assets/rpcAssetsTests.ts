@@ -65,7 +65,7 @@ describe("[SHORT] rpc.assets Tests", function () {
   });
 });
 
-export class RpcAssetsTests {
+class RpcAssetsTests {
   public static async rpcAssetsTest(apiClient: ApiPromise, assetId: SafeRpcWrapper, publicKey: string | Uint8Array) {
     return await apiClient.rpc.assets.balanceOf(assetId, publicKey);
   }

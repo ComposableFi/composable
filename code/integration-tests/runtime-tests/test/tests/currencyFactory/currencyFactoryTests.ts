@@ -108,7 +108,7 @@ describe("[SHORT] Currency Factory Tests", function () {
   });
 });
 
-export class CurrencyFactoryTests {
+class CurrencyFactoryTests {
   public static async setMetadata(api: ApiPromise, sudoKey: KeyringPair, assetId, metadata) {
     return await sendAndWaitForSuccess(
       api,
