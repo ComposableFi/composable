@@ -114,20 +114,19 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Pool with specified id `T::AssetId` was created successfully by `T::AccountId`.
 		RewardPoolCreated {
-			/// Id of newly created pool.
+			/// The staked asset of the pool, also used as the pool's id.
 			pool_id: T::AssetId,
 			/// Owner of the pool.
 			owner: T::AccountId,
 			/// End block
 			end_block: T::BlockNumber,
-			/// Pool asset
-			asset_id: T::AssetId,
 		},
 		Staked {
-			/// Id of newly created stake.
+			/// Id of the pool that was staked in.
 			pool_id: T::AssetId,
 			/// Owner of the stake.
 			owner: T::AccountId,
+			/// The amount that was staked.
 			amount: T::Balance,
 			/// Duration of stake.
 			duration_preset: DurationSeconds,
@@ -135,6 +134,7 @@ pub mod pallet {
 			fnft_collection_id: T::AssetId,
 			/// FNFT Instance Id
 			fnft_instance_id: T::FinancialNftInstanceId,
+			// REVIEW(benluelo) is this required to be in the event?
 			keep_alive: bool,
 		},
 		Claimed {
@@ -638,10 +638,10 @@ pub mod pallet {
 				StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
 			>,
 		) -> Result<Self::RewardPoolId, DispatchError> {
-			let pool_id = match pool_config {
+			match pool_config {
 				RewardRateBasedIncentive {
 					owner,
-					asset_id,
+					asset_id: pool_asset,
 					reward_configs: initial_reward_config,
 					end_block,
 					lock,
@@ -653,9 +653,8 @@ pub mod pallet {
 						Error::<T>::EndBlockMustBeInTheFuture
 					);
 
-					let pool_id = asset_id;
 					ensure!(
-						!RewardPools::<T>::contains_key(pool_id),
+						!RewardPools::<T>::contains_key(pool_asset),
 						Error::<T>::RewardsPoolAlreadyExists
 					);
 
@@ -671,10 +670,10 @@ pub mod pallet {
 						.expect("No items were added; qed;");
 
 					RewardPools::<T>::insert(
-						pool_id,
+						pool_asset,
 						RewardPool {
 							owner: owner.clone(),
-							asset_id,
+							asset_id: pool_asset,
 							rewards,
 							total_shares: T::Balance::zero(),
 							claimed_shares: T::Balance::zero(),
@@ -688,17 +687,15 @@ pub mod pallet {
 					T::FinancialNft::create_collection(&financial_nft_asset_id, &owner, &owner)?;
 
 					Self::deposit_event(Event::<T>::RewardPoolCreated {
-						pool_id,
+						pool_id: pool_asset,
 						owner,
 						end_block,
-						asset_id,
 					});
 
-					Ok(pool_id)
+					Ok(pool_asset)
 				},
-				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration),
-			}?;
-			Ok(pool_id)
+				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration.into()),
+			}
 		}
 	}
 
