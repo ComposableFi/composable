@@ -9,7 +9,7 @@ use composable_traits::{
 pub struct SellOrder<AssetId, Balance, AccountId, Context, Configuration> {
 	pub from_to: AccountId,
 	pub order: Sell<AssetId, Balance>,
-	/// is take from input parameters, example continoty of orderlifetime or price decay function
+	/// is take from input parameters, example continuity of order lifetime or price decay function
 	pub configuration: Configuration,
 	/// context captured when sell started, example current timestamp or ED captured
 	pub context: Context,

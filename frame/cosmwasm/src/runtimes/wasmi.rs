@@ -19,12 +19,9 @@ use cosmwasm_vm_wasmi::{
 };
 use frame_support::storage::ChildTriePrefixIterator;
 use parity_wasm::elements::{self, External, Internal, Module, Type, ValueType};
-use sp_core::{ecdsa, ed25519};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use wasmi::CanResume;
 use wasmi_validation::{validate_module, PlainValidator};
-
-const SUBSTRATE_ECDSA_SIGNATURE_LEN: usize = 65;
 
 #[derive(Debug)]
 pub enum CosmwasmVMError<T: Config> {
@@ -128,12 +125,12 @@ impl CosmwasmVMShared {
 		self.storage_readonly_depth > 0
 	}
 	/// Increase storage readonly depth.
-	/// Hapenning when a contract call the querier.
+	/// Happening when a contract call the querier.
 	pub fn push_readonly(&mut self) {
 		self.storage_readonly_depth += 1;
 	}
 	/// Decrease storage readonly depth.
-	/// Hapenning when a querier exit.
+	/// Happening when a querier exit.
 	pub fn pop_readonly(&mut self) {
 		self.storage_readonly_depth -= 1;
 	}
@@ -162,9 +159,9 @@ pub struct CosmwasmVM<'a, T: Config> {
 	pub cosmwasm_message_info: MessageInfo,
 	/// Executing contract address.
 	pub contract_address: CosmwasmAccount<T>,
-	/// Executing contract metadatas.
+	/// Executing contract metadata.
 	pub contract_info: ContractInfoOf<T>,
-	/// State shared accross all contracts within a single transaction.
+	/// State shared across all contracts within a single transaction.
 	pub shared: &'a mut CosmwasmVMShared,
 	/// Iterator id's to corresponding keys. Keys are used to get the next key.
 	pub iterators: BTreeMap<u32, ChildTriePrefixIterator<(Vec<u8>, Vec<u8>)>>,
@@ -285,6 +282,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 	}
 
 	fn addr_validate(&mut self, input: &str) -> Result<Result<(), Self::Error>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "addr_validate");
 		match Pallet::<T>::cosmwasm_addr_to_account(input.into()) {
 			Ok(_) => Ok(Ok(())),
 			Err(e) => Ok(Err(e)),
@@ -295,6 +293,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		input: &str,
 	) -> Result<Result<Self::CanonicalAddress, Self::Error>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "addr_canonicalize");
 		let account = match Pallet::<T>::cosmwasm_addr_to_account(input.into()) {
 			Ok(account) => account,
 			Err(e) => return Ok(Err(e)),
@@ -307,6 +306,7 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		&mut self,
 		addr: &Self::CanonicalAddress,
 	) -> Result<Result<Self::Address, Self::Error>, Self::Error> {
+		log::debug!(target: "runtime::contracts", "addr_humanize");
 		Ok(Ok(addr.0.clone()))
 	}
 
@@ -316,35 +316,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		signature: &[u8],
 		recovery_param: u8,
 	) -> Result<Result<Vec<u8>, ()>, Self::Error> {
-		// `recovery_param` must be 0 or 1. Other values are not supported from CosmWasm.
-		if recovery_param > 2 {
-			return Ok(Err(()))
-		}
-
-		if signature.len() != SUBSTRATE_ECDSA_SIGNATURE_LEN - 1 {
-			return Ok(Err(()))
-		}
-
-		// Try into a [u8; 32]
-		let message_hash = match message_hash.try_into() {
-			Ok(message_hash) => message_hash,
-			Err(_) => return Ok(Err(())),
-		};
-
-		let signature = {
-			// Since we fill `signature_inner` with `recovery_param`, when 64 bytes are written
-			// the final byte will be the `recovery_param`.
-			let mut signature_inner = [recovery_param; SUBSTRATE_ECDSA_SIGNATURE_LEN];
-			signature_inner[..SUBSTRATE_ECDSA_SIGNATURE_LEN - 1].copy_from_slice(signature);
-			signature_inner
-		};
-
-		// We used `compressed` function here because the api states that this function
-		// needs to return a public key that can be used in `secp256k1_verify` which
-		// takes a compressed public key.
-		Ok(sp_io::crypto::secp256k1_ecdsa_recover_compressed(&signature, &message_hash)
-			.map(|val| val.into())
-			.map_err(|_| ()))
+		log::debug!(target: "runtime::contracts", "secp256k1_recover_pubkey");
+		Ok(Pallet::<T>::do_secp256k1_recover_pubkey(message_hash, signature, recovery_param))
 	}
 
 	fn secp256k1_verify(
@@ -353,30 +326,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		signature: &[u8],
 		public_key: &[u8],
 	) -> Result<bool, Self::Error> {
-		if signature.len() != SUBSTRATE_ECDSA_SIGNATURE_LEN {
-			return Ok(false)
-		}
-
-		// Try into a [u8; 32]
-		let message_hash = match message_hash.try_into() {
-			Ok(message_hash) => message_hash,
-			Err(_) => return Ok(false),
-		};
-
-		// We are expecting 64 bytes long public keys but the substrate function use an
-		// additional byte for recovery id. So we insert a dummy byte.
-		let signature = {
-			let mut signature_inner = [0_u8; SUBSTRATE_ECDSA_SIGNATURE_LEN];
-			signature_inner[..SUBSTRATE_ECDSA_SIGNATURE_LEN - 1].copy_from_slice(signature);
-			ecdsa::Signature(signature_inner)
-		};
-
-		let public_key = match ecdsa::Public::try_from(public_key) {
-			Ok(public_key) => public_key,
-			Err(_) => return Ok(false),
-		};
-
-		Ok(sp_io::crypto::ecdsa_verify_prehashed(&signature, &message_hash, &public_key))
+		log::debug!(target: "runtime::contracts", "secp256k1_verify");
+		Ok(Pallet::<T>::do_secp256k1_verify(message_hash, signature, public_key))
 	}
 
 	fn ed25519_batch_verify(
@@ -385,19 +336,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		signatures: &[&[u8]],
 		public_keys: &[&[u8]],
 	) -> Result<bool, Self::Error> {
-		if messages.len() != signatures.len() || signatures.len() != public_keys.len() {
-			return Ok(false)
-		}
-
-		for ((message, signature), public_key) in
-			messages.iter().zip(signatures.iter()).zip(public_keys.iter())
-		{
-			if !(self.ed25519_verify(message, signature, public_key)?) {
-				return Ok(false)
-			}
-		}
-
-		Ok(true)
+		log::debug!(target: "runtime::contracts", "ed25519_batch_verify");
+		Ok(Pallet::<T>::do_ed25519_batch_verify(messages, signatures, public_keys))
 	}
 
 	fn ed25519_verify(
@@ -406,17 +346,8 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		signature: &[u8],
 		public_key: &[u8],
 	) -> Result<bool, Self::Error> {
-		let signature: ed25519::Signature = match signature.try_into() {
-			Ok(signature) => signature,
-			Err(_) => return Ok(false),
-		};
-
-		let public_key: ed25519::Public = match public_key.try_into() {
-			Ok(public_key) => public_key,
-			Err(_) => return Ok(false),
-		};
-
-		Ok(sp_io::crypto::ed25519_verify(&signature, message, &public_key))
+		log::debug!(target: "runtime::contracts", "ed25519_verify");
+		Ok(Pallet::<T>::do_ed25519_verify(message, signature, public_key))
 	}
 
 	fn query_continuation(

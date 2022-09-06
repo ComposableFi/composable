@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.470113Z -->
+<!-- Generated at 2022-09-05T18:35:35.096109Z -->
 
 # Mosaic Pallet Extrinsics
 
@@ -12,7 +12,9 @@ Sets the current Relayer configuration.
 This is enacted immediately and invalidates inflight/ incoming transactions from the
 previous Relayer. However, existing budgets remain in place.
 
-This can only be called by the \[`ControlOrigin`\].
+This can only be called by the [`ControlOrigin`].
+
+[`ControlOrigin`]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
 
 ## Rotate Relayer
 
@@ -80,7 +82,7 @@ remainder of the transaction.
 
 ### Note
 
-* Reclaim period is not reset if not all the funds are moved; menaing that the clock
+* Reclaim period is not reset if not all the funds are moved; meaning that the clock
   remains ticking for the relayer to pick up the rest of the transaction.
 
 ## Claim Stale To

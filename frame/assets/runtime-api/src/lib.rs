@@ -10,7 +10,7 @@ use sp_std::vec::Vec;
 // Here we declare the runtime API. It is implemented it the `impl` block in
 // runtime amalgamator file (the `runtime/src/lib.rs`)
 sp_api::decl_runtime_apis! {
-	// REVIEW(benluelo): Should the AssetId type parameter be removed and then just use CurencyId directly?
+	// REVIEW(benluelo): Should the AssetId type parameter be removed and then just use CurrencyId directly?
 	pub trait AssetsRuntimeApi<AssetId, AccountId, Balance>
 	where
 		AccountId: Codec,

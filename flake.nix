@@ -1,7 +1,7 @@
 {
   # see ./docs/nix.md for design guidelines of nix organization
   description = "Composable Finance systems, tools and releases";
-  # when flake runs, ask for interactie answers first time
+  # when flake runs, ask for interactive answers first time
   # nixConfig.sandbox = "relaxed";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -93,7 +93,7 @@
               arion-src.overlay
               npm-buildpackage.overlays.default
             ];
-            allowUnsupportedSystem = true; # we do not tirgger this on mac
+            allowUnsupportedSystem = true; # we do not trigger this on mac
             config = {
               permittedInsecurePackages = [
                 "openjdk-headless-16+36"
@@ -126,10 +126,12 @@
             cargoBuildCommand =
               "cargo build --release --package wasm-optimizer";
             version = "0.1.0";
-            # NOTE: we copy more then needed, but tht is simpler to setup, we depend pn substrae for sure so
+            # NOTE: we copy more then needed, but tht is simpler to setup, we depend on substrate for sure so
           });
 
-          # for containers which are intented for testing, debug and development (including running isolated runtime)
+          # for containers which are intended for testing, debug and development (including running isolated runtime)
+          docker-in-docker = [ docker docker-buildx docker-compose ];
+          containers-tools-minimal = [ acl direnv home-manager cachix ];
           container-tools = [
             bash
             bottom
@@ -141,7 +143,7 @@
             nettools
             nix
             procps
-          ];
+          ] ++ containers-tools-minimal;
 
           # source relevant to build rust only
           rust-src = let
@@ -170,7 +172,7 @@
               "composablejs"
             ];
             file-blacklist = [
-              # does not makes sence to black list,
+              # does not makes sense to black list,
               # if we changed some version of tooling(seldom), we want to rebuild
               # so if we changed version of tooling, nix itself will detect invalidation and rebuild
               # "flake.lock"
@@ -185,7 +187,7 @@
                     || (type == "regular"
                       && builtins.elem (baseNameOf name) file-blacklist)
                     # assumption that nix is final builder, 
-                    # so there would no be sandwitch like  .*.nix <- build.rs <- *.nix
+                    # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
                     # and if *.nix changed, nix itself will detect only relevant cache invalidations 
                     || (type == "regular"
                       && lib.strings.hasSuffix ".nix" name));
@@ -262,6 +264,14 @@
               inherit system;
             };
 
+          # we reached limit of 125 for layers and build image cannot do non root ops, so split it 
+          devcontainer-root-image = pkgs.dockerTools.buildImage {
+            name = "devcontainer-root-image";
+            fromImage = devcontainer-base-image;
+            contents = [ rust-nightly ] ++ containers-tools-minimal
+              ++ docker-in-docker;
+          };
+
           dali-runtime = mk-optimized-runtime {
             name = "dali";
             features = "";
@@ -287,7 +297,7 @@
             features = "runtime-benchmarks";
           };
 
-          # NOTE: with docs, non nighly fails but nighly fails too...
+          # NOTE: with docs, non nightly fails but nightly fails too...
           # /nix/store/523zlfzypzcr969p058i6lcgfmg889d5-stdenv-linux/setup: line 1393: --message-format: command not found
           composable-node = with packages;
             crane-nightly.buildPackage (common-attrs // {
@@ -421,7 +431,7 @@
             polkadot-node = rustPlatform.buildRustPackage rec {
               # HACK: break the nix sandbox so we can build the runtimes. This
               # requires Nix to have `sandbox = relaxed` in its config.
-              # We don't realy care because polkadot is only used for local devnet.
+              # We don't really care because polkadot is only used for local devnet.
               __noChroot = true;
               name = "polkadot-v${version}";
               version = "0.9.27";
@@ -541,13 +551,33 @@
             # devnet-container-xcvm
             # NOTE: The devcontainer is currently broken for aarch64.
             # Please use the developers devShell instead
+
             devcontainer = dockerTools.buildLayeredImage {
               name = "composable-devcontainer";
-              fromImage = devcontainer-base-image;
-              contents = [ home-manager ];
-
-              # TODO: call here home-manager for this flake.nix (like in ./.devcontainer/Dockefile) 
-              # TODO: it will make Dockerfile oneliner and faster to start          
+              fromImage = devcontainer-root-image;
+              # substituters, same as next script, but without internet access
+              # ${pkgs.cachix}/bin/cachix use composable-community
+              # to run root in buildImage needs qemu/kvm shell
+              # non root extraCommands (in both methods) do not have permissions
+              # not clear if using ENV or replace ENTRYPOINT will allow to setup
+              # from nixos docker.nix - they build derivation which outputs into $out/etc/nix.conf 
+              # (and any other stuff like /etc/group)
+              fakeRootCommands = ''
+                mkdir --parents /etc/nix
+                cat <<EOF >> /etc/nix/nix.conf
+                sandbox = relaxed
+                experimental-features = nix-command flakes
+                narinfo-cache-negative-ttl = 30
+                substituters = https://cache.nixos.org https://composable-community.cachix.org 
+                # TODO: move it separate file with flow of `cachix -> get keys -> output -> fail derivation if hash != key changed
+                # // cspell: disable-next-line
+                trusted-public-keys = cache.nixos.org-1:6nchdd59x431o0gwypbmraurkbj16zpmqfgspcdshjy= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8= 
+                EOF
+              '';
+              config = {
+                User = "vscode";
+                # TODO: expose ports and other stuff done in base here too
+              };
             };
 
             check-dali-dev-benchmarks = run-with-benchmarks "dali-dev";
@@ -580,6 +610,42 @@
               cargoBuildCommand =
                 "cargo test --workspace --release --locked --verbose";
             });
+
+            cargo-llvm-cov = rustPlatform.buildRustPackage rec {
+              pname = "cargo-llvm-cov";
+              version = "0.3.3";
+              src = fetchFromGitHub {
+                owner = "andor0";
+                repo = pname;
+                rev = "v${version}";
+                sha256 = "sha256-e2MQWOCIj0GKeyOI6OfLnXkxUWbu85eX4Smc/A6eY2w";
+              };
+              cargoSha256 =
+                "sha256-1fxqIQr8hol2QEKz8IZfndIsSTjP2ACdnBpwyjG4UT0=";
+              doCheck = false;
+              meta = with lib; {
+                description =
+                  "Cargo subcommand to easily use LLVM source-based code coverage";
+                homepage = "https://github.com/taiki-e/cargo-llvm-cov";
+                license = "Apache-2.0 OR MIT";
+              };
+            };
+
+            unit-tests-with-coverage = crane-nightly.cargoBuild (common-attrs
+              // {
+                pnameSuffix = "-tests-with-coverage";
+                buildInputs = [ cargo-llvm-cov ];
+                cargoArtifacts = common-deps-nightly;
+                # NOTE: do not add --features=runtime-benchmarks because it force multi ED to be 0 because of dependencies
+                # NOTE: in order to run benchmarks as tests, just make `any(test, feature = "runtime-benchmarks")
+                cargoBuildCommand = "cargo llvm-cov";
+                cargoExtraArgs =
+                  "--workspace --release --locked --verbose --lcov --output-path lcov.info";
+                installPhase = ''
+                  mkdir -p $out/lcov
+                  mv lcov.info $out/lcov
+                '';
+              });
 
             cargo-fmt-check = crane-nightly.cargoFmt (common-attrs // {
               cargoArtifacts = common-deps-nightly;
@@ -889,7 +955,18 @@
           book = eachSystemOutputs.packages.x86_64-linux.composable-book;
         };
       };
-      homeConfigurations = {
+      homeConfigurations = let
+        mk-docker-in-docker = pkgs: [
+          pkgs.docker
+          pkgs.docker-buildx
+          pkgs.docker-compose
+        ];
+        mk-containers-tools-minimal = pkgs: [
+          pkgs.acl
+          pkgs.direnv
+          pkgs.cachix
+        ];
+      in {
 
         vscode.x86_64-linux = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
         in with pkgs;
@@ -900,13 +977,10 @@
               username = "vscode";
               homeDirectory = "/home/vscode";
               stateVersion = "22.05";
-              packages = [
-                cachix
-                eachSystemOutputs.packages.x86_64-linux.rust-nightly
-                docker
-                docker-buildx
-                docker-compose
-              ];
+              packages =
+                [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
+                ++ (mk-containers-tools-minimal pkgs)
+                ++ (mk-docker-in-docker pkgs);
             };
             programs = {
               home-manager.enable = true;
@@ -927,15 +1001,10 @@
               username = "vscode";
               homeDirectory = "/home/vscode";
               stateVersion = "22.05";
-              packages = [
-                cachix
-                eachSystemOutputs.packages.aarch64-linux.rust-nightly
-                docker
-                docker-buildx
-                docker-compose
-                acl
-                direnv
-              ];
+              packages =
+                [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
+                ++ (mk-containers-tools-minimal pkgs)
+                ++ (mk-docker-in-docker pkgs);
             };
             programs = {
               home-manager.enable = true;

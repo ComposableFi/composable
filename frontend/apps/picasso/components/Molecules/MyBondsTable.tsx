@@ -8,7 +8,7 @@ import {
   TableContainerProps,
   TableHead,
   TableRow,
-  Typography
+  Typography,
 } from "@mui/material";
 import { BaseAsset, TokenAsset, TokenPairAsset } from "../Atom";
 import { NoAssetsCover } from "./NoAssetsCover";
@@ -18,7 +18,7 @@ import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 
-export type MyBondingsTableProps = TableContainerProps & {
+export type MyBondsTableProps = TableContainerProps & {
   onRowClick?: (offerId: string) => void;
   activeBonds: ActiveBond[];
 };
@@ -32,8 +32,8 @@ export const BondTableRow: FC<{
     <TableRow
       sx={{
         "&:hover": {
-          cursor: "pointer"
-        }
+          cursor: "pointer",
+        },
       }}
       key={getTokenString(bond.reward.asset)}
       onClick={() => onRowClick(bond.bondOfferId)}
@@ -46,21 +46,29 @@ export const BondTableRow: FC<{
       </TableCell>
       <TableCell align="left">
         <BaseAsset
-          icon="/tokens/chaos.svg"
+          icon={
+            Array.isArray(bond.reward.asset)
+              ? bond.reward.asset[0].icon
+              : bond.reward.asset.icon
+          }
           label={`${humanBalance(claimable)} ${
             Array.isArray(bond.reward.asset)
-              ? bond.reward.asset[0].id
-              : bond.reward.asset.id
+              ? bond.reward.asset[0].symbol
+              : bond.reward.asset.symbol
           }`}
         />
       </TableCell>
       <TableCell align="left">
         <BaseAsset
-          icon="/tokens/chaos.svg"
+          icon={
+            Array.isArray(bond.reward.asset)
+              ? bond.reward.asset[0].icon
+              : bond.reward.asset.icon
+          }
           label={`${humanBalance(pending)} ${
             Array.isArray(bond.reward.asset)
-              ? bond.reward.asset[0].id
-              : bond.reward.asset.id
+              ? bond.reward.asset[0].symbol
+              : bond.reward.asset.symbol
           }`}
         />
       </TableCell>
@@ -71,11 +79,12 @@ export const BondTableRow: FC<{
   );
 };
 
-export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
+export const MyBondsTable: React.FC<MyBondsTableProps> = ({
   activeBonds,
   onRowClick = () => {},
   ...rest
 }) => {
+  console.log(activeBonds);
   if (activeBonds.length > 0) {
     return (
       <TableContainer {...rest}>
@@ -89,9 +98,11 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {activeBonds.map(({ bond }: { bond: BondOffer }, index) => (
-              <BondTableRow key={index} bond={bond} onRowClick={onRowClick} />
-            ))}
+            {activeBonds
+              .filter((bond) => bond.alreadyClaimed === 0)
+              .map(({ bond }: { bond: BondOffer }, index) => (
+                <BondTableRow key={index} bond={bond} onRowClick={onRowClick} />
+              ))}
           </TableBody>
         </Table>
       </TableContainer>

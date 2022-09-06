@@ -5,13 +5,13 @@ import { StoreSlice } from "@/stores/types";
 
 export interface BondsSlice {
   bonds: {
-    openPositions: Array<ActiveBond>;
+    activeBonds: Array<ActiveBond>;
     bonds: Array<BondOffer>;
     bondOfferCount: number | BigNumber;
     total: number;
     setBonds: (bonds: BondOffer[]) => void;
     setBondOfferCount: (bondOfferCount: number | BigNumber) => void;
-    updateOpenPositions: (openPositions: ActiveBond[]) => void;
+    setActiveBonds: (activeBonds: ActiveBond[]) => void;
   };
 }
 
@@ -28,8 +28,10 @@ export interface VestingSchedule {
 
 export interface ActiveBond {
   bond: BondOffer;
+  alreadyClaimed: number;
   periodCount: BigNumber;
   perPeriod: BigNumber;
+  vestingScheduleId: number;
   window: {
     blockNumberBased: {
       start: BigNumber;
@@ -44,7 +46,7 @@ export const createBondsSlice: StoreSlice<BondsSlice> = (
   bonds: {
     bonds: [],
     bondOfferCount: 0,
-    openPositions: [],
+    activeBonds: [],
     total: 0,
     setBonds: (bonds: BondOffer[]) =>
       set((state) => ({
@@ -60,12 +62,13 @@ export const createBondsSlice: StoreSlice<BondsSlice> = (
           bondOfferCount,
         },
       })),
-    updateOpenPositions: (openPositions: ActiveBond[]) =>
+    setActiveBonds: (activeBonds: ActiveBond[]) => {
       set((state) => ({
         bonds: {
           ...state.bonds,
-          openPositions,
+          activeBonds,
         },
-      })),
+      }));
+    },
   },
 });

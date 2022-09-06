@@ -7,31 +7,31 @@ import { Multiplier } from "./index";
 const periodItems = [
   {
     label: "2 weeks (0x)",
-    period: {weeks: 2},
+    period: { weeks: 2 },
     multiplier: 0,
   },
   {
     label: "2 months (0.25x)",
-    period: {months: 2},
+    period: { months: 2 },
     multiplier: 0.25,
   },
   {
     label: "1 year (0.5x)",
-    period: {years: 1},
+    period: { years: 1 },
     multiplier: 0.5,
   },
   {
     label: "2 years (1x)",
-    period: {years: 2},
+    period: { years: 2 },
     multiplier: 1,
   },
 ];
 
-type Period = {years?: number, months?: number, weeks?: number};
+type Period = { years?: number; months?: number; weeks?: number };
 
 export type SelectLockPeriodProps = {
-  multiplier: Multiplier,
-  setMultiplier?: (multiplier: Multiplier) => void,
+  multiplier: Multiplier;
+  setMultiplier?: (multiplier: Multiplier) => void;
 } & BoxProps;
 
 export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
@@ -54,45 +54,49 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
     <Box {...boxProps}>
       <Label
         label="Select lock period (multiplier)"
-        TypographyProps={{color: "text.secondary"}}
+        TypographyProps={{ color: "text.secondary" }}
         TooltipProps={{
           title: "Select lock period (multiplier)",
         }}
       />
       <Grid container spacing={3}>
-        {
-          periodItems.map((item) => (
-            <Grid item sm={12} md={6} lg={3} key={item.multiplier}>
-              <Button
-                variant="outlined"
-                size="large"
-                fullWidth
-                sx={{
-                  borderWidth: selected(item.multiplier) ? 1 : 0,
-                  background: (
-                    selected(item.multiplier)
-                      ? alpha(theme.palette.primary.main, theme.custom.opacity.light)
-                      : alpha(theme.palette.common.white, theme.custom.opacity.lighter)
-                  ),
-                }}
-                onClick={() => handleSelectPeriod(item.period, item.multiplier)}
+        {periodItems.map((item) => (
+          <Grid item sm={12} md={6} lg={3} key={item.multiplier}>
+            <Button
+              variant="outlined"
+              size="large"
+              fullWidth
+              sx={{
+                borderWidth: selected(item.multiplier) ? 1 : 0,
+                background: selected(item.multiplier)
+                  ? alpha(
+                      theme.palette.primary.main,
+                      theme.custom.opacity.light
+                    )
+                  : alpha(
+                      theme.palette.common.white,
+                      theme.custom.opacity.lighter
+                    ),
+              }}
+              onClick={() => handleSelectPeriod(item.period, item.multiplier)}
+            >
+              <Typography
+                variant="body1"
+                color={
+                  selected(item.multiplier) ? "text.primary" : "text.secondary"
+                }
               >
-                <Typography
-                  variant="body1"
-                  color={selected(item.multiplier) ? "text.primary" : "text.secondary"}
-                >
-                  {item.label}
-                </Typography>
-              </Button>
-            </Grid>
-          ))
-        }
+                {item.label}
+              </Typography>
+            </Button>
+          </Grid>
+        ))}
       </Grid>
 
       <Label
         mt={3}
         label="Unlock date"
-        TypographyProps={{color: "text.secondary"}}
+        TypographyProps={{ color: "text.secondary" }}
         TooltipProps={{
           title: "Unlock date",
         }}
@@ -110,11 +114,9 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
           variant="body1"
           color={multiplier.expiry ? "text.primary" : "text.secondary"}
         >
-          {
-            multiplier.expiry
-              ? moment(multiplier.expiry).utc().format("DD.MM.YYYY")
-              : "Select lock time"
-          }
+          {multiplier.expiry
+            ? moment(multiplier.expiry).utc().format("DD.MM.YYYY")
+            : "Select lock time"}
         </Typography>
       </Box>
 
@@ -124,7 +126,7 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
             severity="warning"
             alertTitle="Warning"
             alertText="Your PICA will be locked until the expiry date."
-            AlertTextProps={{color: "text.secondary"}}
+            AlertTextProps={{ color: "text.secondary" }}
           />
         </Box>
       )}

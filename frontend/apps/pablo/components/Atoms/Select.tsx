@@ -64,7 +64,7 @@ export const Select: React.FC<SelectProps> = ({
   const [keyword, setKeyword] = React.useState<string>("");
   const [open, setOpen] = React.useState<boolean>(false);
 
-  const handleKewordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleKeywordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setKeyword(event.target.value);
   };
 
@@ -215,7 +215,7 @@ export const Select: React.FC<SelectProps> = ({
               fullWidth
               value={keyword}
               setValue={setKeyword}
-              onChange={handleKewordChange}
+              onChange={handleKeywordChange}
               onKeyDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
             />

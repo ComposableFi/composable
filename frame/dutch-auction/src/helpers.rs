@@ -119,7 +119,7 @@ impl<T: Config> Pallet<T> {
 					composable_traits::xcm::SellResponse::Final(XcmSellInitialResponseTransact {
 						total_amount_taken: received_amount.into(),
 						minimal_price: composable_traits::xcm::Balance::one(), /* auction goes to
-						                                                        * mimimal price,
+						                                                        * minimal price,
 						                                                        * can
 						                                                        * thin about
 						                                                        * better

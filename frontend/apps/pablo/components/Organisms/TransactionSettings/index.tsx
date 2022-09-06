@@ -124,7 +124,7 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
             onChange={onToleranceChange}
             handleOnFocus={() => setIsToleranceFocussed(true)}
             handleOnBlur={() => setIsToleranceFocussed(false)}
-            customEndAdorment={
+            customEndAdornment={
               <FormControl>
                 <RadioGroup
                   row

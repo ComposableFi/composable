@@ -427,7 +427,7 @@ fn unsupported_operation_test() {
 		let usdt_amount = eth_amount * 3000_u128;
 		assert_ok!(Tokens::mint_into(ETH, &EVE, eth_amount));
 		assert_ok!(Tokens::mint_into(USDT, &EVE, usdt_amount));
-		// base, quote amount shold match currency_pair's base quote asset
+		// base, quote amount should match currency_pair's base quote asset
 		assert_noop!(
 			<DexRouter as AmmTrait>::add_liquidity(
 				&EVE,
@@ -499,7 +499,7 @@ fn single_pool_route_test() {
 		let usdc_amount = eth_amount * 3000_u128;
 		assert_ok!(Tokens::mint_into(ETH, &EVE, eth_amount));
 		assert_ok!(Tokens::mint_into(USDC, &EVE, usdc_amount));
-		// base, quote amount shold match currency_pair's base quote asset
+		// base, quote amount should match currency_pair's base quote asset
 		assert_ok!(DexRouter::add_liquidity(
 			Origin::signed(EVE),
 			currency_pair.swap(),
@@ -509,7 +509,7 @@ fn single_pool_route_test() {
 			false
 		));
 		let lp_amount = Tokens::balance(lp_token, &EVE);
-		// min_base_amount, min_quote_amount shold match currency_pair's base quote asset
+		// min_base_amount, min_quote_amount should match currency_pair's base quote asset
 		assert_ok!(DexRouter::remove_liquidity(
 			Origin::signed(EVE),
 			currency_pair,

@@ -182,19 +182,16 @@ export async function claim(
   onStart: (txHash: string) => void
 ) {
   if (parachainApi && account && executor && vestingScheduleId) {
-    try {
-      const signer = await getSigner(APP_NAME, account.address);
-      await executor.execute(
-        parachainApi.tx.vesting.claim(assetId, { One: vestingScheduleId }),
-        account.address,
-        parachainApi,
-        signer,
-        onStart,
-        onSuccess
-      );
-    } catch (e) {
-      onError(e as any);
-    }
+    const signer = await getSigner(APP_NAME, account.address);
+    await executor.execute(
+      parachainApi.tx.vesting.claim(assetId, { One: vestingScheduleId }),
+      account.address,
+      parachainApi,
+      signer,
+      (txHash) => onStart(txHash),
+      (txHash) => onSuccess(txHash),
+      (errorMessage) => onError(errorMessage)
+    );
   }
 }
 

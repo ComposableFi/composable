@@ -1318,7 +1318,7 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 					newly_accumulated_rewards.into(),
 					false, // not best effort, entire amount must be released
 				)
-				.expect("funds should be avaliable to release based on previous check; qed;");
+				.expect("funds should be available to release based on previous check; qed;");
 
 				reward.total_rewards = new_total_rewards.into();
 				reward.last_updated_timestamp = last_updated_timestamp;
@@ -1351,7 +1351,7 @@ pub(crate) fn do_reward_accumulation<T: Config>(
 					rewards_to_release.into(),
 					false, // not best effort, entire amount must be released
 				)
-				.expect("funds should be avaliable to release based on previous check; qed;");
+				.expect("funds should be available to release based on previous check; qed;");
 
 				// return an error, but update the reward first
 				reward.total_rewards = reward.max_rewards;

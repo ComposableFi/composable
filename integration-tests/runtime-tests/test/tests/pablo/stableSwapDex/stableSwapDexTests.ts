@@ -6,7 +6,7 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { ApiPromise } from "@polkadot/api";
 import {
-  addFundstoThePool,
+  addFundsToThePool,
   buyFromPool,
   createStableSwapPool,
   getPoolInfo,
@@ -121,30 +121,30 @@ describe("StableSwapDex Test Suite", function () {
     this.timeout(3 * 60 * 1000);
 
     it("Given that users have sufficient funds, User1 can addLiquidity to StableSwapPool", async function () {
-      const result = await addFundstoThePool(api, poolId1, walletId1, baseAssetAmount, quoteAssetAmount);
+      const result = await addFundsToThePool(api, poolId1, walletId1, baseAssetAmount, quoteAssetAmount);
       lpTokens = result.returnedLPTokens.toBigInt();
       expect(result.quoteAdded.toBigInt()).to.be.equal(quoteAssetAmount);
     });
 
     it("Given that users have sufficient funds, User2 can addLiquidity to StableSwapPool", async function () {
-      const result = await addFundstoThePool(api, poolId2, walletId2, baseAssetAmount, quoteAssetAmount);
+      const result = await addFundsToThePool(api, poolId2, walletId2, baseAssetAmount, quoteAssetAmount);
       expect(result.quoteAdded.toBigInt()).to.be.equal(quoteAssetAmount);
     });
 
     it(
       "Given that users have sufficient funds, User2 can add liquidity and the amount added not adjusted by " +
-        "Constantproduct Formula if asset amounts are close to eachother",
+        "Constant product Formula if asset amounts are close to each other",
       async function () {
-        const result = await addFundstoThePool(api, poolId2, walletId2, Pica(100), Pica(500));
+        const result = await addFundsToThePool(api, poolId2, walletId2, Pica(100), Pica(500));
         expect(result.quoteAdded.toBigInt()).to.be.equal(Pica(500));
       }
     );
 
     it(
       "Given that users have sufficient funds, User1 can add liquidity and the amount added not adjusted by " +
-        "Constantproduct Formula",
+        "Constant product Formula",
       async function () {
-        const result = await addFundstoThePool(api, poolId1, walletId1, Pica(100), Pica(500));
+        const result = await addFundsToThePool(api, poolId1, walletId1, Pica(100), Pica(500));
         expect(result.quoteAdded.toBigInt()).to.be.equal(Pica(500));
       }
     );
@@ -233,8 +233,8 @@ describe("StableSwapDex Test Suite", function () {
     });
   });
 
-  describe("StableSwapDex liquidityremoval and other tests", async function () {
-    if (!testConfiguration.enabledTests.liquidityRemovalandOtherTests.enabled) {
+  describe("StableSwapDex liquidity removal and other tests", async function () {
+    if (!testConfiguration.enabledTests.liquidityRemovalAndOtherTests.enabled) {
       console.log("StableSwap liquidity removal and other tests are being skipped...");
       return;
     }

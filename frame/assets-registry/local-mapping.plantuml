@@ -4,7 +4,7 @@ box Composable #LightYellow
   actor "Root or Collective" as composable_authority
   actor "Alice" as alice
   actor "Bob" as bob
-  participant "Assets Registy" as assets_registry_pallet
+  participant "Assets Registry" as assets_registry_pallet
 end box
 
 note across: Alice and Bob cannot approve an asset mapping candidate
