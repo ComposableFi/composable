@@ -4563,7 +4563,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.15.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=6e5daff0bc37553557751ef3781a1a89c8c781ba#6e5daff0bc37553557751ef3781a1a89c8c781ba"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=9925f24c5061832ec5d5a0f4b16a1802dbb75128#9925f24c5061832ec5d5a0f4b16a1802dbb75128"
 dependencies = [
  "beefy-light-client",
  "beefy-primitives",
@@ -4631,7 +4631,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.18.0"
-source = "git+https://github.com/ComposableFi/ibc-rs?rev=6e5daff0bc37553557751ef3781a1a89c8c781ba#6e5daff0bc37553557751ef3781a1a89c8c781ba"
+source = "git+https://github.com/ComposableFi/ibc-rs?rev=9925f24c5061832ec5d5a0f4b16a1802dbb75128#9925f24c5061832ec5d5a0f4b16a1802dbb75128"
 dependencies = [
  "base64 0.13.0",
  "bytes 1.2.1",

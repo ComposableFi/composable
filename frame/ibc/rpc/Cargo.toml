@@ -21,7 +21,7 @@ serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.45"
 
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "6e5daff0bc37553557751ef3781a1a89c8c781ba", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128", default-features = false }
 ibc-runtime-api = { path = "../runtime-api" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
@@ -34,6 +34,6 @@ tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev 
 
 [dependencies.ibc]
 git = "https://github.com/ComposableFi/ibc-rs"
-rev = "6e5daff0bc37553557751ef3781a1a89c8c781ba"
+rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128"
 default-features = false
 features = ["ics11_beefy"]
