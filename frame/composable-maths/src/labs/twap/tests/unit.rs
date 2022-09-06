@@ -592,28 +592,6 @@ fn test_polars(#[case] period: u64, #[case] dataset: i32) {
 				)
 				.alias("price"),
 		)
-		.with_column(
-			as_struct(&[cols(vec!["twap", "price"])])
-				.map(
-					|data| {
-						Ok(Series::from_vec(
-							"parsed_diff",
-							data.iter()
-								.map(|i| match i {
-									AnyValue::Struct(s, _) => match s[..] {
-										[AnyValue::Float64(twap), AnyValue::Float64(price)] =>
-											twap.max(price) - twap.min(price),
-										_ => panic!("failed to get `twap` and `price` values"),
-									},
-									_ => panic!("failed to parse tuple data"),
-								})
-								.collect::<Vec<f64>>(),
-						))
-					},
-					GetOutput::from_type(DataType::Float64),
-				)
-				.alias("diff"),
-		)
 		.collect()
 		.unwrap();
 
@@ -676,7 +654,4 @@ fn test_polars(#[case] period: u64, #[case] dataset: i32) {
 	chart.draw_series(LineSeries::new(price_plot, &BLUE)).unwrap();
 	chart.draw_series(LineSeries::new(twap_plot, &RED)).unwrap();
 	root.present().unwrap();
-
-	let out_file = std::fs::File::create(std::path::Path::new("twap.csv")).unwrap();
-	CsvWriter::new(out_file).has_header(true).finish(&mut df.clone());
 }
