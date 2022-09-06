@@ -3,18 +3,19 @@ pkgs.arion.build {
   modules = [
     ({ pkgs, ... }:
       let
-        db-container-name = "db";
-        redis-container-name = "subsquid-redis";
-        subsquid-status-container-name = "subsquid-status-service";
-        subsquid-indexer-gateway-container-name = "subsquid-indexer-gateway";
+
+        # subsquid-status-container-name = "subsquid-status-service";
+        # subsquid-indexer-gateway-container-name = "subsquid-indexer-gateway";
+
         dali-container-name = "dali-devnet";
 
 
+        squid-archive-db-name = "squid-archive-db";
         squid-archive-db = {
           name = "squid-archive";
-          host = db-container-name;
-          user = "postgres";
-          password = "postgres";
+          host = squid-archive-db-name;
+          user = "squid";
+          password = "super-secret-squid-pass";
           port = 5432;
         };
         
@@ -48,7 +49,7 @@ pkgs.arion.build {
           project.name = "composable_firesquid";
           networks."${network-name}" = { };
           services = {
-            "${db-container-name}" = mkComposableContainer
+            "${squid-archive-db-name}" = mkComposableContainer
               (import ./services/postgres.nix {
                 inherit pkgs;
                 database = squid-archive-db;
