@@ -1,4 +1,4 @@
-{ pkgs, packages, relaychain-port, parachain-port }: {
+{ pkgs, packages, relaychainPort, parachainPort }: {
   image = {
     contents = [ pkgs.coreutils packages.devnet-dali ];
     enableRecommendedContents = true;
@@ -12,8 +12,12 @@
         ${packages.devnet-dali}/bin/run-devnet-dali-dev
       ''
     ];
-    ports =
-      [ "${toString relaychain-port}:9944" "${toString parachain-port}:9988" ];
+    ports = [
+      "${toString relaychainPort}:9944"
+      "${toString parachainPort}:9988"
+    ];
     stop_signal = "SIGINT";
   };
 }
+
+

@@ -4,6 +4,7 @@ import {
   SubstrateProcessor,
 } from "@subsquid/substrate-processor";
 import { Store, TypeormDatabase } from "@subsquid/typeorm-store";
+import * as dotenv from "dotenv"; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 import { Account, HistoricalBalance } from "./model";
 import {
   BalancesTransferEvent,
@@ -29,6 +30,8 @@ import {
   processNewOfferEvent,
 } from "./bondedFinanceProcessor";
 import { processVestingScheduleAddedEvent } from "./vestingProcessor";
+
+dotenv.config();
 
 const dbName = "composable_dali_dev";
 const processor = new SubstrateProcessor(new TypeormDatabase());
