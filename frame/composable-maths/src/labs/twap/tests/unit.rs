@@ -20,7 +20,7 @@ const MINUTE: u64 = 60 * SECOND;
 const HOUR: u64 = 60 * MINUTE;
 const DAY: u64 = 24 * HOUR;
 
-const PERIOD: u64 = 1 * HOUR; // Default period for twap
+const PERIOD: u64 = 1 * DAY; // Default period for twap
 
 // -------------------------------------------------------------------------------------------------
 //                                         Helper Functions
@@ -285,17 +285,36 @@ fn test_polars() {
 											),
 										};
 										match twap {
-											Some(mut t) => t
-												.accumulate(&price, &now)
-												.expect(
-													format!(
+											Some(ref mut t) => {
+												// dbg!("==================================================");
+												// dbg!(&t);
+												//
+												// dbg!(&t, &price, &now);
+												// dbg!(dbg!(t.accumulate(&price, &now))
+												// 	.expect(
+												// 		format!(
+												// 		"Failed to accumulate twap, {now} {price}"
+												// 	)
+												// 		.as_str(),
+												// 	)
+												// 	.to_float())
+												let x = t
+													.accumulate(&price, &now)
+													.expect(
+														format!(
 														"Failed to accumulate twap, {now} {price}"
 													)
-													.as_str(),
-												)
-												.to_float(),
+														.as_str(),
+													)
+													.to_float();
+
+												// dbg!(&t);
+												// dbg!("--------------------------------------------------");
+												x
+											},
 											None => {
 												twap = Some(Twap::new(price, now, PERIOD));
+												dbg!(&twap);
 												twap.unwrap().get_twap().to_float()
 											},
 										}
@@ -356,8 +375,8 @@ fn test_polars() {
 	dbg!(&df.select(["diff"]).unwrap().describe(None));
 	let x_lim_0 = df["timestamp"].min::<i64>().unwrap();
 	let x_lim_1 = df["timestamp"].max::<i64>().unwrap();
-	let y_lim_0 = df["price"].min::<f64>().unwrap().min(df["twap"].min::<f64>().unwrap());
-	let y_lim_1 = df["price"].max::<f64>().unwrap().max(df["twap"].max::<f64>().unwrap());
+	let y_lim_0 = df["twap"].min::<f64>().unwrap().min(df["twap"].min::<f64>().unwrap());
+	let y_lim_1 = df["twap"].max::<f64>().unwrap().max(df["twap"].max::<f64>().unwrap());
 
 	let root = BitMapBackend::new("test.png", (3840, 2160)).into_drawing_area();
 	root.fill(&WHITE).unwrap();
