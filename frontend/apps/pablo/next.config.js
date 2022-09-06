@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
-const withPWA = require("next-pwa");
+const withPWA = require("next-pwa")({
+  dest: "public",
+  skipWaiting: true, // Turn this to false once you're ready to deploy a banner to develop update prompt.
+  mode: process.env.NODE_ENV === "production" ? "production" : "development", // This will create worker-box production build.
+});
 
 function getVersion() {
   const date = new Date();
@@ -18,7 +22,7 @@ const withTM = require("next-transpile-modules")([
   "substrate-react",
   "shared",
   "tokens",
-  "defi-interfaces"
+  "defi-interfaces",
 ]);
 
 const nextConfig = {
@@ -34,11 +38,6 @@ const nextConfig = {
     SUBSTRATE_PROVIDER_URL_KUSAMA: process.env.SUBSTRATE_PROVIDER_URL_KUSAMA,
     SUBSQUID_URL: process.env.SUBSQUID_URL,
     WEBSITE_VERSION: getVersion(),
-  },
-  pwa: {
-    dest: "public",
-    skipWaiting: true, // Turn this to false once you're ready to deploy a banner to develop update prompt.
-    mode: process.env.NODE_ENV === "production" ? "production" : "development", // This will create worker-box production build.
   },
   webpack(config) {
     config.module.rules.push({
