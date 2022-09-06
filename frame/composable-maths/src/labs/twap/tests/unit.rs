@@ -519,14 +519,12 @@ fn test_polars(#[case] period: u64, #[case] dataset: i32) {
 								.map(move |i| match i {
 									AnyValue::Struct(v, t) => {
 										let (now, price) = match v[..] {
-											[AnyValue::Int64(now), AnyValue::Int64(price)] => (
-												now as u64,
-												FixedU128::from_inner(
-													(((price as u64).saturating_mul(10.pow(7)))
-														as u128)
-														.saturating_mul(10.pow(5)),
-												),
-											),
+											[AnyValue::Int64(now), AnyValue::Int64(price)] =>
+												(now as u64, {
+													FixedU128::from_inner(
+														(price as u128).saturating_mul(10.pow(12)),
+													)
+												}),
 											_ => panic!(
 												"Could not extranct `now` and `price` values"
 											),
@@ -560,6 +558,7 @@ fn test_polars(#[case] period: u64, #[case] dataset: i32) {
 												x
 											},
 											None => {
+												// dbg!(&price, &now, &period);
 												twap = Some(Twap::new(price, now, period));
 												// dbg!(&twap);
 												twap.unwrap().get_twap().to_float()
@@ -619,7 +618,11 @@ fn test_polars(#[case] period: u64, #[case] dataset: i32) {
 		.unwrap();
 
 	// dbg!(&df);
-	// dbg!(&df.select(["diff"]).unwrap().describe(None));
+	// dbg!(&df["timestamp"]);
+	// dbg!(&df["timestamp"].iter().for_each(|r| {
+	// 	dbg!(r);
+	// }));
+	// dbg!(&df.select(["timestamp"]).unwrap().describe(None));
 	let x_lim_0 = df["timestamp"].min::<i64>().unwrap();
 	let x_lim_1 = df["timestamp"].max::<i64>().unwrap();
 	let y_lim_0 = df["price"].min::<f64>().unwrap().min(df["twap"].min::<f64>().unwrap());
