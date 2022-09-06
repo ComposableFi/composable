@@ -8,32 +8,27 @@ import { UnstakeModal } from "./UnstakeModal";
 import { RenewModal } from "./RenewModal";
 import { XPablo } from "@/defi/types";
 
-export const UnstakeForm: React.FC<BoxProps> = ({
-  ...boxProps
-}) => {
-
+export const UnstakeForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const xPablos = useAppSelector((state) => state.polkadot.yourXPablos);
-  const [selectedXPabloId, setSelectedXPabloId] = useState<number | undefined>();
+  const [selectedXPabloId, setSelectedXPabloId] = useState<
+    number | undefined
+  >();
 
-  const selectedXPablo = selectedXPabloId
-                          && xPablos.find((item: { id: number; }) => item.id == selectedXPabloId);
+  const selectedXPablo =
+    selectedXPabloId &&
+    xPablos.find((item: { id: number }) => item.id == selectedXPabloId);
 
-  const expired = selectedXPablo && selectedXPablo.expiry < new Date().getTime();
+  const expired =
+    selectedXPablo && selectedXPablo.expiry < new Date().getTime();
 
   const [isUnstakeModalOpen, setIsUnstakeModalOpen] = useState<boolean>(false);
-  const [isRenewModalOpen, setIsRenewModalOpen] = useState<boolean>(false);
 
   const handleUnstake = () => {
     setIsUnstakeModalOpen(true);
   };
 
-  const handleRenew = () => {
-    setIsRenewModalOpen(true);
-  };
-
   return (
     <Box {...boxProps}>
-
       <Box display="flex" flexDirection="column" gap={3}>
         {xPablos.map((xPablo: XPablo) => (
           <CheckableXPabloItemBox
@@ -50,24 +45,14 @@ export const UnstakeForm: React.FC<BoxProps> = ({
             severity="warning"
             alertTitle="Slash warning"
             alertText="If you withdraw now you will get rekt with less PICA."
-            AlertTextProps={{color: "text.secondary"}}
+            AlertTextProps={{ color: "text.secondary" }}
           />
         </Box>
       )}
 
       <Box mt={3}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Button
-              onClick={handleRenew}
-              fullWidth
-              variant="contained"
-              disabled={!selectedXPablo}
-            >
-              Renew
-            </Button>
-          </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12}>
             <Button
               onClick={handleUnstake}
               fullWidth
@@ -81,21 +66,12 @@ export const UnstakeForm: React.FC<BoxProps> = ({
       </Box>
 
       {selectedXPablo && (
-        <>
-          <RenewModal
-            dismissible
-            xPablo={selectedXPablo}
-            open={isRenewModalOpen}
-            onClose={() => setIsRenewModalOpen(false)}
-          />
-
-          <UnstakeModal
-            dismissible
-            xPablo={selectedXPablo}
-            open={isUnstakeModalOpen}
-            onClose={() => setIsUnstakeModalOpen(false)}
-          />
-        </>
+        <UnstakeModal
+          dismissible
+          xPablo={selectedXPablo}
+          open={isUnstakeModalOpen}
+          onClose={() => setIsUnstakeModalOpen(false)}
+        />
       )}
     </Box>
   );

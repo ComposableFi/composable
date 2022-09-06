@@ -10,6 +10,6 @@ export const toHexString = (bytes: any) =>
     .call(bytes, (x) => ("0" + (x & 0xff).toString(16)).slice(-2))
     .join("");
 
-export function unwrapNumberOrHex(v: string | number) {
+export function unwrapNumberOrHex(v: string | number): BigNumber {
   return new BigNumber(v, v.toString().startsWith("0x") ? 16 : 10);
 }
