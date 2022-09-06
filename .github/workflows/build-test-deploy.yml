@@ -699,7 +699,7 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
 
-  devcontainer-minimal-build-publish:
+  devcontainer-minimal-build-and-publish:
     needs:
       - nixfmt-check  
       - check-nix
