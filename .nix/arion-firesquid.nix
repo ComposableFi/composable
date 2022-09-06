@@ -9,8 +9,11 @@ pkgs.arion.build {
 
         dali-container-name = "dali-devnet";
         subsquidGraphqlContainerName = "subsquid-graphql";
-        gatewayContainerName = "subsquild-gateway";
-        gatewayPort = 8888;
+        gatewayContainerName = "subsquid-gateway";
+        
+        # NOTE: Do not change this. It is hardcoded in the gateway source file.
+        # cfr: services/subsquid-substrate-gateway
+        gatewayPort = 8000;
 
         squid-archive-db = rec {
           name = "squid-archive-db";
@@ -31,7 +34,8 @@ pkgs.arion.build {
         relaychainPort = 9944;
         parachainPort = 9988;
         squidGraphqlPort = 4350;
-
+        
+        parachainEndpoint = "ws://${dali-container-name}:${toString parachainPort}";
         # frontend-picasso = import ./services/frontend-picasso.nix {
         #   inherit pkgs;
         #   inherit packages;
@@ -83,7 +87,7 @@ pkgs.arion.build {
 
             ingest = mkComposableContainer (import ./services/subsquid-substrate-ingest.nix {
                 database = squid-archive-db;
-                polkadotEndpoint = "ws://${dali-container-name}:${toString parachainPort}";
+                polkadotEndpoint = parachainEndpoint;
                 prometheusPort = 9090;
             }); 
             
@@ -105,7 +109,7 @@ pkgs.arion.build {
             });
             
             subsquid-processor = mkComposableContainer ( import ./services/subsquid-processor-dockerfile.nix {
-              inherit subsquidGraphqlContainerName gatewayContainerName gatewayPort ;
+              inherit subsquidGraphqlContainerName gatewayContainerName gatewayPort parachainEndpoint;
               database = squid-db;
               graphqlPort = squidGraphqlPort;
             });

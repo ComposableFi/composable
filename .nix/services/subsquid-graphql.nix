@@ -9,13 +9,16 @@
     
     };
     ports = [
-      "${toString graphqlPort}:4000"
+      "${toString graphqlPort}:${toString graphqlPort}"
     ];
     environment = {
       DB_NAME = database.name; 
+      DB_USER = database.user;
       DB_HOST = database.host;
       DB_PASS = database.password;
+      DB_PORT = database.port;
       DB_PORT_PG = database.port;
+      GQL_PORT = graphqlPort;
     };
   };
 

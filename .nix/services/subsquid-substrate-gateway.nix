@@ -19,6 +19,8 @@
         # "--evm-support" # uncomment for chains with Frontier EVM pallet
         # (e.g. Moonbeam/Moonriver or Astar/Shiden) 
     ];
-    ports = [ "${toString port}:8000" ];
+    # this port is hardcoded here:
+    # https://github.com/subsquid/substrate-gateway/blob/7131bffc08210031b006a7111a08daea814fa86c/src/server/mod.rs#L79 
+    ports = [ "8000:8000" ];
   };
 }
