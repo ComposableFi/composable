@@ -370,11 +370,11 @@ impl transaction_payment::Config for Runtime {
 	type Event = Event;
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime, NativeTreasury>>;
+	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = WeightToFee;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
-	type OperationalFeeMultiplier = OperationalFeeMultiplier;
-	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
 
 pub struct TransferToTreasuryOrDrop;
