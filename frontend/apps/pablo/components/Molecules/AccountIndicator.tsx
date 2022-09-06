@@ -1,10 +1,10 @@
 import { Circle } from "@mui/icons-material";
-import { 
-  Box, 
-  Paper, 
-  Typography, 
-  useMediaQuery, 
-  useTheme, 
+import {
+  Box,
+  Paper,
+  Typography,
+  useMediaQuery,
+  useTheme,
   alpha,
 } from "@mui/material";
 import Image from "next/image";
@@ -12,7 +12,7 @@ import Image from "next/image";
 type AccountIndicatorProps = {
   network: "polkadot" | "metamask";
   label: string;
-  onClick: () => void,
+  onClick: () => void;
 };
 
 export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
@@ -37,12 +37,17 @@ export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
         gridTemplateColumns: "24px auto 24px",
         gap: theme.spacing(2),
         flexShrink: 0,
-        minWidth: theme.spacing(31.25),
-        background: alpha(theme.palette.primary.main, theme.custom.opacity.light),
-        cursor: 'pointer',
+        background: alpha(
+          theme.palette.primary.main,
+          theme.custom.opacity.light
+        ),
+        cursor: "pointer",
         "&:hover": {
-          background: alpha(theme.palette.primary.main, theme.custom.opacity.main),
-        }
+          background: alpha(
+            theme.palette.primary.main,
+            theme.custom.opacity.main
+          ),
+        },
       }}
     >
       <Box sx={{ width: theme.spacing(3), height: theme.spacing(3) }}>
