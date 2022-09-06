@@ -157,18 +157,18 @@ describe("DexRouterPallet Tests", function () {
     const quoteAmount = api.createType("u128", ETHAmount);
     const minMintAmount = api.createType("u128", minimumMint);
     const keepAlive = api.createType("bool", false);
-    //extrinsic call
+    // extrinsic call
     const {
-      data: [, , baseAmountInTransfer, quoteAmountIntransfer, mintedLp]
+      data: [, , baseAmountInTransfer, quoteAmountInTransfer, mintedLp]
     } = await sendAndWaitForSuccess(
       api,
       walletId2,
       api.events.pablo.LiquidityAdded.is,
       api.tx.dexRouter.addLiquidity(assetPair, baseAmount, quoteAmount, minMintAmount, keepAlive)
     );
-    //Asertions
+    // Assertions
     expect(baseAmountInTransfer.toString()).to.be.equal(baseAmount.toString());
-    expect(quoteAmountIntransfer.toString()).to.be.equal(quoteAmount.toString());
+    expect(quoteAmountInTransfer.toString()).to.be.equal(quoteAmount.toString());
     expect(new BN(mintedLp).gt(new BN(minimumMint))).to.be.true;
   });
 
@@ -188,16 +188,16 @@ describe("DexRouterPallet Tests", function () {
     const keepAlive = api.createType("bool", false);
     //extrinsic call
     const {
-      data: [, , baseAmountInTransfer, quoteAmountIntransfer, mintedLp]
+      data: [, , baseAmountInTransfer, quoteAmountInTransfer, mintedLp]
     } = await sendAndWaitForSuccess(
       api,
       walletId2,
       api.events.pablo.LiquidityAdded.is,
       api.tx.dexRouter.addLiquidity(assetPair, baseAmount, quoteAmount, minMintAmount, keepAlive)
     );
-    //Asertions
+    //Assertions
     expect(baseAmountInTransfer.toString()).to.be.equal(baseAmount.toString());
-    expect(quoteAmountIntransfer.toString()).to.be.equal(quoteAmount.toString());
+    expect(quoteAmountInTransfer.toString()).to.be.equal(quoteAmount.toString());
     expect(new BN(mintedLp).gt(new BN(minimumMint))).to.be.true;
   });
 
@@ -217,16 +217,16 @@ describe("DexRouterPallet Tests", function () {
     const keepAlive = api.createType("bool", false);
     //extrinsic call
     const {
-      data: [, , baseAmountInTransfer, quoteAmountIntransfer, mintedLp]
+      data: [, , baseAmountInTransfer, quoteAmountInTransfer, mintedLp]
     } = await sendAndWaitForSuccess(
       api,
       walletId2,
       api.events.pablo.LiquidityAdded.is,
       api.tx.dexRouter.addLiquidity(assetPair, baseAmount, quoteAmount, minMintAmount, keepAlive)
     );
-    //Asertions
+    //Assertions
     expect(baseAmountInTransfer.toString()).to.be.equal(baseAmount.toString());
-    expect(quoteAmountIntransfer.toString()).to.be.equal(quoteAmount.toString());
+    expect(quoteAmountInTransfer.toString()).to.be.equal(quoteAmount.toString());
     expect(new BN(mintedLp).gt(new BN(minimumMint))).to.be.true;
   });
 
@@ -261,7 +261,7 @@ describe("DexRouterPallet Tests", function () {
       api.events.pablo.LiquidityAdded.is,
       api.tx.dexRouter.addLiquidity(assetPair, baseAmount, quoteAmount, minMintAmount, keepAlive)
     );
-    // Asertions
+    // Assertions
     expect(baseTokenId.toString()).eq(usdc.toString());
     expect(quoteTokenId.toString()).eq(usdt.toString());
     expect(newRoute[0].toString()).eq(newPoolId.toString());
@@ -282,16 +282,16 @@ describe("DexRouterPallet Tests", function () {
     const minQuoteAmount = api.createType("u128", minUSDTAmount);
     //extrinsic call
     const {
-      data: [, , baseAmountInTransfer, quoteAmountIntransfer]
+      data: [, , baseAmountInTransfer, quoteAmountInTransfer]
     } = await sendAndWaitForSuccess(
       api,
       walletId2,
       api.events.pablo.LiquidityRemoved.is,
       api.tx.dexRouter.removeLiquidity(assetPair, lpAmount, minBaseAmount, minQuoteAmount)
     );
-    //Asertions
+    //Assertions
     expect(new BN(baseAmountInTransfer.toString()).gt(new BN(minUSDCAmount.toString()))).to.be.true;
-    expect(new BN(quoteAmountIntransfer.toString()).gt(new BN(minUSDCAmount.toString()))).to.be.true;
+    expect(new BN(quoteAmountInTransfer.toString()).gt(new BN(minUSDCAmount.toString()))).to.be.true;
   });
 
   it("Buy ETH via route found in router (1 hop)", async function () {

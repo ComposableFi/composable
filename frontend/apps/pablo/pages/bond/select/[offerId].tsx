@@ -55,11 +55,11 @@ const SelectBond: NextPage = () => {
 
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/bond">
-      <Typography key="addliquidity" variant="body1">
+      <Typography key="add-liquidity" variant="body1">
         Bonds
       </Typography>
     </Link>,
-    <Typography key="addliquidity" variant="body1" color="text.primary">
+    <Typography key="add-liquidity" variant="body1" color="text.primary">
       Bond select
     </Typography>,
   ];

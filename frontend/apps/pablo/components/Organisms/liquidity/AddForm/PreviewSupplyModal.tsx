@@ -72,7 +72,7 @@ export const PreviewSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
         }}
       >
         <Box display="flex" alignItems="center" justifyContent="space-between">
-          <Typography variant="body1">You will recieve</Typography>
+          <Typography variant="body1">You will receive</Typography>
           <IconButton onClick={() => dispatch(closePreviewSupplyModal())}>
             <CloseIcon />
           </IconButton>

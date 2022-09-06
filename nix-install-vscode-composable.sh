@@ -49,4 +49,4 @@ nix-env --install --attr nixpkgs.cachix
 chmod +x ~/.nix-profile/bin/cachix
 
 echo "Cachix"
-cachix use $cachix       
+cachix use $cachix

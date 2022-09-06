@@ -18,7 +18,7 @@ const RemoveLiquidity: NextPage = () => {
     <Link key="pool" underline="none" color="primary" href="/pool">
       Pool
     </Link>,
-    <Typography key="addliquidity" color="text.primary">
+    <Typography key="add-liquidity" color="text.primary">
       Remove liquidity
     </Typography>,
   ];

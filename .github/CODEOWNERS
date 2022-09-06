@@ -33,8 +33,8 @@ frame/*/runtime-api @ComposableFi/parachain-rpc
 
 ## Public Gitbook
 
-book/ @ComposableFi/technical-writing-reviewers
-README.md @ComposableFi/technical-writing-reviewers @ComposableFi/core @ComposableFi/parachain-leads
+book/ @ComposableFi/technical-writers
+README.md @ComposableFi/technical-writers @ComposableFi/core @ComposableFi/parachain-leads
 
 ## Frontend and Blockchain Integration
 frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
@@ -53,8 +53,8 @@ integration-tests/runtime-tests/ @ComposableFi/testers
 
 ## Nix
 
-.nix/ @dzmitry-lahoda @hussein-aitlahcen @cor
-flake.nix @dzmitry-lahoda @hussein-aitlahcen @cor
+.nix/ @ComposableFi/nix
+flake.nix @ComposableFi/nix
 
 # ComposableJS
 composablejs/ @ComposableFi/parachain
@@ -70,8 +70,8 @@ utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
 scripts/oracle-setup @ComposableFi/parachain
 
 # Repository 
-README.md @ComposableFi/technical-writing-reviewers @ComposableFi/core
+README.md @ComposableFi/technical-writers @ComposableFi/core
 SECURITY.md @ComposableFi/security
 REVIEWERS.md @ComposableFi/core
 ARCHITECTURE.md @ComposableFi/core
-LICENSE @ComposableFi/technical-writing-reviewers @ComposableFi/core
+LICENSE @ComposableFi/technical-writers @ComposableFi/core

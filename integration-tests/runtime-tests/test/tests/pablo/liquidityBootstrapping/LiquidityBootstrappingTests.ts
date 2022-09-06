@@ -6,7 +6,7 @@ import { getDevWallets } from "@composable/utils/walletHelper";
 import { ApiPromise } from "@polkadot/api";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import {
-  addFundstoThePool,
+  addFundsToThePool,
   buyFromPool,
   createLBPool,
   createMultipleLBPools,
@@ -23,7 +23,7 @@ import pabloTestConfiguration from "../testHandlers/test_configuration.json";
  * CreatePool - AddLiquidity - Buy - Sell - Swap - RemoveLiquidity with basic calculations
  */
 
-describe("LiquidityBootsrapping Pool Test Suite", function () {
+describe("LiquidityBootstrapping Pool Test Suite", function () {
   if (!pabloTestConfiguration.liquidityBootstrappingTests.enabled) {
     console.log("Liquidity Bootstrapping Tests are being skipped...");
     return;
@@ -72,7 +72,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
 
   describe("LiquidityBootstrapping CreatePool and AddLiquidity Tests", async function () {
     if (!testConfiguration.enabledTests.createPoolAndAddLiquidityTests.enabled) {
-      console.log("LiquidityBootsrapping createPool and addLiquidity tests are being skipped...");
+      console.log("LiquidityBootstrapping createPool and addLiquidity tests are being skipped...");
       return;
     }
     this.timeout(2 * 60 * 1000);
@@ -115,7 +115,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
     });
 
     it("Users can add liquidity to the LB pool before the sale started", async function () {
-      const result = await addFundstoThePool(api, poolId1, walletId1, baseAmount, quoteAmount);
+      const result = await addFundsToThePool(api, poolId1, walletId1, baseAmount, quoteAmount);
       expect(result.baseAdded.toBigInt()).to.be.equal(baseAmount);
       expect(result.quoteAdded.toBigInt()).to.be.equal(quoteAmount);
     });
@@ -198,8 +198,8 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
   });
 
   describe("LiquidityBootstrapping buy sell and swap tests", async function () {
-    if (!testConfiguration.enabledTests.buySellandSwapTests.enabled) {
-      console.log("LiquidityBootsrapping buy,sell and swap tests are being skipped...");
+    if (!testConfiguration.enabledTests.buySellAndSwapTests.enabled) {
+      console.log("LiquidityBootstrapping buy,sell and swap tests are being skipped...");
       return;
     }
     this.timeout(3 * 60 * 1000);

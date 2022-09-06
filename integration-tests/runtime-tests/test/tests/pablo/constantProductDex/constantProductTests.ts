@@ -8,7 +8,7 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { ApiPromise } from "@polkadot/api";
 import {
-  addFundstoThePool,
+  addFundsToThePool,
   buyFromPool,
   createConsProdPool,
   createMultipleCPPools,
@@ -121,7 +121,7 @@ describe("tx.constantProductDex Tests", function () {
     this.timeout(2 * 60 * 1000);
 
     it("Given that users has sufficient balance, User1 can send funds to pool", async function () {
-      const result = await addFundstoThePool(api, poolId, walletId1, baseAmount, quoteAmount);
+      const result = await addFundsToThePool(api, poolId, walletId1, baseAmount, quoteAmount);
       expect(BigInt(result.baseAdded.toString(10))).to.be.equal(baseAmount);
       expect(BigInt(result.quoteAdded.toString(10))).to.be.equal(quoteAmount);
       expect(result.walletIdResult.toString()).to.be.equal(walletId1Account);
@@ -135,7 +135,7 @@ describe("tx.constantProductDex Tests", function () {
     });
 
     it("Given that users has sufficient balance, users can send funds to pool2", async function () {
-      const result = await addFundstoThePool(api, poolId2, walletId2, baseAmount, quoteAmount);
+      const result = await addFundsToThePool(api, poolId2, walletId2, baseAmount, quoteAmount);
       //Once funds added to the pool, User is deposited with LP Tokens.
       expect(BigInt(result.baseAdded.toString(10))).to.be.equal(baseAmount);
       expect(BigInt(result.quoteAdded.toString(10))).to.be.equal(quoteAmount);
@@ -148,7 +148,7 @@ describe("tx.constantProductDex Tests", function () {
       async function () {
         const assetAmount = Pica(30);
         const quoteAmount = Pica(100);
-        const result = await addFundstoThePool(api, poolId, walletId2, assetAmount, quoteAmount);
+        const result = await addFundsToThePool(api, poolId, walletId2, assetAmount, quoteAmount);
         //The deposited amount should be maintained by the dex router hence should maintain 1:1
         expect(result.quoteAdded.toBigInt()).to.be.equal(assetAmount);
         expect(result.walletIdResult.toString()).to.be.equal(walletId2Account);
@@ -160,7 +160,7 @@ describe("tx.constantProductDex Tests", function () {
       async function () {
         const baseAmount = Pica(0);
         const quoteAmount = Pica(10000);
-        await addFundstoThePool(api, poolId2, walletId1, baseAmount, quoteAmount).catch(error =>
+        await addFundsToThePool(api, poolId2, walletId1, baseAmount, quoteAmount).catch(error =>
           expect(error.message).to.contain("InvalidAmount")
         );
       }
@@ -172,7 +172,7 @@ describe("tx.constantProductDex Tests", function () {
       async function () {
         const baseAmount = Pica(250);
         const quoteAmount = Pica(0);
-        const result = await addFundstoThePool(api, poolId2, walletId1, baseAmount, quoteAmount);
+        const result = await addFundsToThePool(api, poolId2, walletId1, baseAmount, quoteAmount);
         expect(result.quoteAdded.toBn()).to.be.bignumber.greaterThan("0");
       }
     );

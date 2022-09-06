@@ -8,7 +8,7 @@ On each blockchain, we deploy 3 components, which can be modular smart contracts
 
 - [Gateway](./gateway.md): Entrypoint and exit for Programs. Also handles interactions with [OTP](transports/otp.md).
 - [Router](./router.md): Main bookkeeper for per-chain state. Holds the address mappings for cross-chain accounts and instantiates new interpreters.
-- [Interpeter](./interpreter.md): The XCVM interpreter swarm consists of many instances of the XCVM interpreter contract. On some chains, we can use probabilistically generated sub_accounts, but for most, we instantiate a contract instance.
+- [Interpreter](./interpreter.md): The XCVM interpreter swarm consists of many instances of the XCVM interpreter contract. On some chains, we can use probabilistically generated sub_accounts, but for most, we instantiate a contract instance.
 
 Off-chain, we run services to provide insights and ease integration. Note that none of these services are crucial to the functioning of the system.
 

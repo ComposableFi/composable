@@ -85,11 +85,11 @@ export const DotSamaContextProvider = ({
     setExtensionStatus("connecting");
 
     let extensionExists = true;
-    let inectedExtesions;
+    let injectedExtensions;
     try {
       const extensionPkg = await import("@polkadot/extension-dapp");
-      inectedExtesions = await extensionPkg.web3Enable(appName);
-      extensionExists = inectedExtesions.length !== 0;
+      injectedExtensions = await extensionPkg.web3Enable(appName);
+      extensionExists = injectedExtensions.length !== 0;
     } catch (e) {
       console.error(e);
       extensionExists = false;
@@ -97,7 +97,7 @@ export const DotSamaContextProvider = ({
 
     if (!extensionExists) {
       setExtensionStatus('no_extension');
-      return inectedExtesions;
+      return injectedExtensions;
     }
 
     setExtensionStatus('connected');
@@ -129,7 +129,7 @@ export const DotSamaContextProvider = ({
       }
     }
 
-    return inectedExtesions;
+    return injectedExtensions;
   };
 
   const deactivate = async (): Promise<void> => {

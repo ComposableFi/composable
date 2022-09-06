@@ -1,7 +1,7 @@
 import { StoreSlice } from "../types";
 import { LiquiditySlice } from "./liquidity.types";
 import {
-  putLiqudityRecord,
+  putLiquidityRecord,
   putUserLpBalance,
   putUserProvidedLiquidityTokenAmount,
   updateUserProvidedLiquidityTokenAmount,
@@ -14,7 +14,7 @@ const createLiquiditySlice: StoreSlice<LiquiditySlice> = (set) => ({
   userLpBalances: {},
   putLiquidityInPoolRecord: (record) =>
     set((prev: LiquiditySlice) => ({
-      liquidityInPool: putLiqudityRecord(prev.liquidityInPool, record),
+      liquidityInPool: putLiquidityRecord(prev.liquidityInPool, record),
     })),
   updatePoolLiquidity: (id, amounts) =>
     set((prev: LiquiditySlice) => ({

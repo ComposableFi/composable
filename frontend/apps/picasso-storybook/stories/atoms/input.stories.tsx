@@ -71,8 +71,8 @@ TokenInsideButton.args = {
   }
 };
 
-export const TextAndRefernece = Template.bind({});
-TextAndRefernece.args = {
+export const TextAndReference = Template.bind({});
+TextAndReference.args = {
   referenceText: "Reference Text",
   LabelProps: {
     mainLabelProps: mainLabelProps

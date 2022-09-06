@@ -79,6 +79,7 @@ impl pallet_balances::Config for MockRuntime {
 }
 
 parameter_types! {
+	// cspell:disable-next
 	pub const AirdropPalletId: PalletId = PalletId(*b"pal_aird");
 	pub const Prefix: &'static [u8] = PROOF_PREFIX;
 	pub const Stake: Balance = STAKE;
