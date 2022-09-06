@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-# TODO: remove version as must run under just +nightly after nix env applied
 NIGHTLY_VERSION="2022-04-18"
 
 usage() {
