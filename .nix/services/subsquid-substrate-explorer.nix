@@ -5,6 +5,7 @@
     restart = "always";
     environment = {
       DEV_MODE = "true";
+      DB_TYPE = "postgres";
       DB_NAME = database.name;
       DB_HOST = database.host;
       DB_USER = database.user;

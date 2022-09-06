@@ -76,10 +76,12 @@ pkgs.arion.build {
                 prometheusPort = 9090;
             }); 
             
+            # note, this one currently seems broken.
             gateway = mkComposableContainer (import ./services/subsquid-substrate-gateway.nix {
                 database = squid-archive-db;
                 port = 8888;
             });
+
             explorer = mkComposableContainer (import ./services/subsquid-substrate-explorer.nix {
                 database = squid-archive-db;
                 graphqlPort = 4010;
