@@ -944,6 +944,10 @@
       };
       homeConfigurations = let
         mk-docker-in-docker = pkgs: [
+          # TODO: this home works well in VS Devontainer launcher as it inhect low level Dockerd
+          # For manual runs need tuning to setup it (need mount docker links to root and +x)
+          # INFO[2022-09-06T13:14:43.437764897Z] Starting up                                            
+          # dockerd needs to be started with root privileges. To run dockerd in rootless mode as an unprivileged user, see https://docs.docker.com/go/rootless/ dockerd-rootless-setuptool.sh install
           pkgs.docker
           pkgs.docker-buildx
           pkgs.docker-compose
@@ -955,53 +959,56 @@
         ];
       in {
 
-        vscode.x86_64-linux = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        in with pkgs;
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [{
-            home = {
-              username = "vscode";
-              homeDirectory = "/home/vscode";
-              stateVersion = "22.05";
-              packages =
-                [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
-                ++ (mk-containers-tools-minimal pkgs)
-                ++ (mk-docker-in-docker pkgs);
-            };
-            programs = {
-              home-manager.enable = true;
-              direnv = {
-                enable = true;
-                nix-direnv = { enable = true; };
+        # minimal means we do not build in composable devnets and tooling, but allow to build or nix these 
+        vscode-minimal.x86_64-linux =
+          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          in with pkgs;
+          home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            modules = [{
+              home = {
+                username = "vscode";
+                homeDirectory = "/home/vscode";
+                stateVersion = "22.05";
+                packages =
+                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
+                  ++ (mk-containers-tools-minimal pkgs)
+                  ++ (mk-docker-in-docker pkgs);
               };
-            };
-          }];
-        };
+              programs = {
+                home-manager.enable = true;
+                direnv = {
+                  enable = true;
+                  nix-direnv = { enable = true; };
+                };
+              };
+            }];
+          };
 
-        vscode.aarch64-linux = let pkgs = nixpkgs.legacyPackages.aarch64-linux;
-        in with pkgs;
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [{
-            home = {
-              username = "vscode";
-              homeDirectory = "/home/vscode";
-              stateVersion = "22.05";
-              packages =
-                [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
-                ++ (mk-containers-tools-minimal pkgs)
-                ++ (mk-docker-in-docker pkgs);
-            };
-            programs = {
-              home-manager.enable = true;
-              direnv = {
-                enable = true;
-                nix-direnv = { enable = true; };
+        vscode-minimal.aarch64-linux =
+          let pkgs = nixpkgs.legacyPackages.aarch64-linux;
+          in with pkgs;
+          home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            modules = [{
+              home = {
+                username = "vscode";
+                homeDirectory = "/home/vscode";
+                stateVersion = "22.05";
+                packages =
+                  [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
+                  ++ (mk-containers-tools-minimal pkgs)
+                  ++ (mk-docker-in-docker pkgs);
               };
-            };
-          }];
-        };
+              programs = {
+                home-manager.enable = true;
+                direnv = {
+                  enable = true;
+                  nix-direnv = { enable = true; };
+                };
+              };
+            }];
+          };
 
       };
     };

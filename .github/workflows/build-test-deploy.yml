@@ -699,9 +699,11 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#packages.x86_64-linux.devcontainer --no-update-lock-file --show-trace -L
 
-  devcontainer-minimal-build:
+  devcontainer-minimal-build-publish:
     needs:
       - nixfmt-check  
+      - check-nix
+    if: github.event_name == 'push' && github.ref_name == 'main'
     runs-on: 
       - self-hosted
       - linux
@@ -1017,7 +1019,7 @@ jobs:
 
             Spin up a devnet:
             ```bash
-            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-up" -L
+            nix run "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }}#devnet-up" -L --option sandbox relaxed --show-trace
             ```
 
             Spin up a XCVM devnet
@@ -1042,6 +1044,11 @@ jobs:
             ```
             nix flake show "github:ComposableFi/composable/${{ github.event.pull_request.head.sha }} --allow-import-from-derivation
             ```
+
+            Run devcontainer:
+            ```
+            docker run --interactive --tty --volume nix-store:/nix/store composablefi/composable-devcontainer-minimal:${{ github.event.pull_request.head.sha }}  bash 
+            ````
 
             Note that the initial build may take about one hour if it has not been cached by our CI yet. Once it is cached, builds should take about one minute. We currently do not provide build caches for ARM machines such as M1 Macs, but building on ARM is supported.
           comment_includes: 'Nix commands for this PR'
