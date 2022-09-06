@@ -68,7 +68,7 @@ pub mod pallet {
 		validation::Validated,
 	};
 	use composable_traits::{
-		currency::{BalanceLike, CurrencyFactory, RangeId},
+		currency::{BalanceLike, CurrencyFactory},
 		fnft::{FinancialNft, FinancialNftProtocol},
 		staking::{
 			lock::LockConfig, RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
@@ -841,16 +841,20 @@ pub mod pallet {
 				*inflation = inflation.safe_add(additional_inflation)?;
 			}
 
+			let fnft_asset_account =
+				T::FinancialNft::asset_account(&fnft_collection_id, &fnft_instance_id);
+
 			// TODO (vim): transfer the staked amount to the NFT account and lock it
 			// TODO (vim): Transfer the shares with share asset ID to the Financial NFT account and
 			// lock it.
 			T::Assets::transfer(
 				rewards_pool.asset_id,
 				who,
-				&Self::pool_account_id(&stake.reward_pool_id),
+				&fnft_asset_account,
 				amount,
 				keep_alive,
 			)?;
+			T::Assets::mint_into(rewards_pool.share_asset_id, &fnft_asset_account, amount)?;
 			RewardPools::<T>::insert(stake.reward_pool_id, rewards_pool);
 			Stakes::<T>::insert(fnft_collection_id, fnft_instance_id, stake);
 			Self::deposit_event(Event::<T>::StakeAmountExtended {
@@ -1127,7 +1131,7 @@ pub mod pallet {
 				T::Assets::transfer(
 					reward.asset_id,
 					&Self::pool_account_id(&stake.reward_pool_id),
-					&owner,
+					owner,
 					claim,
 					keep_alive,
 				)?;
