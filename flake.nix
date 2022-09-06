@@ -145,9 +145,7 @@
 
           # source relevant to build rust only
           rust-src = let
-            directoryBlacklist = [
-              "runtime-tests"
-            ];
+            directoryBlacklist = [ "runtime-tests" ];
             fileBlacklist = [
               # does not makes sense to black list,
               # if we changed some version of tooling(seldom), we want to rebuild
@@ -160,13 +158,12 @@
               filter = let
                 isBlacklisted = name: type:
                   let
-                    blacklist =
-                      if type == "directory"
-                      then directoryBlacklist
-                      else
-                        if type == "regular"
-                        then fileBlacklist
-                        else []; # symlink, unknown
+                    blacklist = if type == "directory" then
+                      directoryBlacklist
+                    else if type == "regular" then
+                      fileBlacklist
+                    else
+                      [ ]; # symlink, unknown
                   in builtins.elem (baseNameOf name) blacklist;
                 isMarkdownFile = name: type:
                   type == "regular" && lib.strings.hasSuffix ".md" name;
@@ -177,16 +174,12 @@
                 isNixFile = name: type:
                   type == "regular" && lib.strings.hasSuffix ".nix" name;
                 customFilter = name: type:
-                  !(
-                    (isBlacklisted name type)
-                    || (isMarkdownFile name type)
-                    || (isImageFile name type)
-                    || (isPlantUmlFile name type)
+                  !((isBlacklisted name type) || (isMarkdownFile name type)
+                    || (isImageFile name type) || (isPlantUmlFile name type)
                     # assumption that nix is final builder, 
                     # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
                     # and if *.nix changed, nix itself will detect only relevant cache invalidations 
-                    || (isNixFile name type)
-                  );
+                    || (isNixFile name type));
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
               ./code;
               src = ./code;
