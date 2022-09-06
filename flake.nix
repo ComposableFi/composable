@@ -492,15 +492,18 @@
             in bp.buildYarnPackage {
               nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
               src = ./frontend;
-              yarnBuildMore = "yarn export";
+              
+              # The filters exclude the storybooks for faster builds
+              yarnBuildMore = "yarn export --filter=pablo --filter=picasso --filter=\!picasso-storybook --filter=\!pablo-storybook";
 
-               # TODO: make these configurable              
-              preBuildHook = ''               
-                export SUBSQUID_URL = "http://localhost:4350/graphql";
+              # TODO: make these configurable              
+              preBuild = ''               
+                export SUBSQUID_URL="http://localhost:4350/graphql";
 
                 # Polkadot
-                export SUBSTRATE_PROVIDER_URL_KUSAMA_2019 = "ws://localhost:9988";
-                export SUBSTRATE_PROVIDER_URL_KUSAMA = "ws://localhost:9944";
+                export SUBSTRATE_PROVIDER_URL_KUSAMA_2019="ws://localhost:9988";
+                export SUBSTRATE_PROVIDER_URL_KUSAMA="ws://localhost:9944";
+                export SUBSTRATE_PROVIDER_URL_KARURA="ws://localhost:9998";
               '';
               installPhase = ''
                 mkdir -p $out

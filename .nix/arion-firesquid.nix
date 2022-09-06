@@ -3,10 +3,6 @@ pkgs.arion.build {
   modules = [
     ({ pkgs, ... }:
       let
-
-        # subsquid-status-container-name = "subsquid-status-service";
-        # subsquid-indexer-gateway-container-name = "subsquid-indexer-gateway";
-
         dali-container-name = "dali-devnet";
         subsquidGraphqlContainerName = "subsquid-graphql";
         gatewayContainerName = "subsquid-gateway";
