@@ -69,7 +69,7 @@ where
 		let root = H256::from_slice(root);
 		let proof = StorageProof::new(proof.iter().cloned());
 		let items = vec![(key.to_vec(), None)];
-		let child_info = ChildInfo::new_default(b"/ibc");
+		let child_info = ChildInfo::new_default(T::CHILD_TRIE_KEY);
 
 		state_machine::read_child_proof_check::<BlakeTwo256, _>(root, proof, child_info, items)
 			.map_err(|e| Ics02ClientError::beefy(Ics11Error::verification_error(e.to_string())))?;
