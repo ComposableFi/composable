@@ -66,12 +66,15 @@ describe.only("DexRouterPallet Tests", function () {
       quote: eth
     });
     const route = api.createType("Vec<u128>", [api.createType("u128", poolId1)]);
-    await sendAndWaitForSuccess(
+    const {
+      data: [result]
+    } = await sendAndWaitForSuccess(
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair, route))
     );
+    expect(result.isOk).to.be.true;
 
     // create route for pool 2 (USDC-USDT)
     const assetPair2 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
@@ -79,12 +82,15 @@ describe.only("DexRouterPallet Tests", function () {
       quote: usdt
     });
     const route2 = api.createType("Vec<u128>", [api.createType("u128", poolId2)]);
-    await sendAndWaitForSuccess(
+    const {
+      data: [result2]
+    } = await sendAndWaitForSuccess(
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair2, route2))
     );
+    expect(result2.isOk).to.be.true;
 
     // create route for pool 3 (DAI-USDC)
     const assetPair3 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
@@ -92,12 +98,15 @@ describe.only("DexRouterPallet Tests", function () {
       quote: usdc
     });
     const route3 = api.createType("Vec<u128>", [api.createType("u128", poolId3)]);
-    await sendAndWaitForSuccess(
+    const {
+      data: [result3]
+    } = await sendAndWaitForSuccess(
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair3, route3))
     );
+    expect(result3.isOk).to.be.true;
 
     // create route for USDC-ETH pair (pool 1 <--> pool 2)
     const assetPair4 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
@@ -105,12 +114,15 @@ describe.only("DexRouterPallet Tests", function () {
       quote: eth
     });
     const route4 = api.createType("Vec<u128>", [api.createType("u128", poolId1), api.createType("u128", poolId2)]);
-    await sendAndWaitForSuccess(
+    const {
+      data: [result4]
+    } = await sendAndWaitForSuccess(
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair4, route4))
     );
+    expect(result4.isOk).to.be.true;
 
     // create route for DAI-USDT pair (pool 2 <--> pool3)
     const assetPair5 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
@@ -118,12 +130,15 @@ describe.only("DexRouterPallet Tests", function () {
       quote: usdt
     });
     const route5 = api.createType("Vec<u128>", [api.createType("u128", poolId2), api.createType("u128", poolId3)]);
-    await sendAndWaitForSuccess(
+    const {
+      data: [result5]
+    } = await sendAndWaitForSuccess(
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair5, route5))
     );
+    expect(result5.isOk).to.be.true;
 
     // create route for DAI-ETH pair (pool 1 <--> pool 2 <--> pool3)
     const assetPair6 = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
@@ -135,12 +150,15 @@ describe.only("DexRouterPallet Tests", function () {
       api.createType("u128", poolId2),
       api.createType("u128", poolId3)
     ]);
-    await sendAndWaitForSuccess(
+    const {
+      data: [result6]
+    } = await sendAndWaitForSuccess(
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.dexRouter.updateRoute(assetPair6, route6))
     );
+    expect(result6.isOk).to.be.true;
   });
 
   it("Add liquidity to pablo pool (USDT-ETH)", async function () {
@@ -232,7 +250,7 @@ describe.only("DexRouterPallet Tests", function () {
 
   it("update route (USDC-USDT)", async function () {
     // Create new pool for USDC-USDT
-    const newPoolId = await createConsProdPool(api, walletId1, walletId1, usdc, usdt, fee, baseWeight);
+    const newPoolId = await createConsProdPool(api, sudoKey, walletId1, usdc, usdt, fee, baseWeight);
     // update route for pool 2 USDC-USDT
     const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
       base: usdc,
