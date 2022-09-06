@@ -113,6 +113,18 @@ pkgs.arion.build {
               database = squid-db;
               graphqlPort = squidGraphqlPort;
             });
+
+            frontend-picasso = mkComposableContainer
+              (import ./services/frontend-picasso.nix {
+                inherit pkgs;
+                inherit packages;
+              });
+
+            frontend-pablo = mkComposableContainer
+              (import ./services/frontend-pablo.nix {
+                inherit pkgs;
+                inherit packages;
+              });
           };
         };
       })

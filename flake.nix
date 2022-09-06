@@ -493,6 +493,15 @@
               nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
               src = ./frontend;
               yarnBuildMore = "yarn export";
+
+               # TODO: make these configurable              
+              preBuildHook = ''               
+                export SUBSQUID_URL = "http://localhost:4350/graphql";
+
+                # Polkadot
+                export SUBSTRATE_PROVIDER_URL_KUSAMA_2019 = "ws://localhost:9988";
+                export SUBSTRATE_PROVIDER_URL_KUSAMA = "ws://localhost:9944";
+              '';
               installPhase = ''
                 mkdir -p $out
                 mkdir $out/pablo
