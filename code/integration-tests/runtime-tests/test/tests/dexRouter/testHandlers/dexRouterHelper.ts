@@ -50,7 +50,12 @@ export async function createConsProdPool(
   });
   const {
     data: [resultPoolId]
-  } = await sendAndWaitForSuccess(api, walletId, api.events.sudo.Sudid.is, api.tx.sudo.sudo(api.tx.pablo.create(pool)));
+  } = await sendAndWaitForSuccess(
+    api,
+    walletId,
+    api.events.pablo.PoolCreated.is,
+    api.tx.sudo.sudo(api.tx.pablo.create(pool))
+  );
   return resultPoolId.toNumber();
 }
 

@@ -27,7 +27,7 @@ import {
  *    and OwnerFee.
  * Mainly consists of happy path testing.
  */
-describe.only("tx.constantProductDex Tests", function () {
+describe("tx.constantProductDex Tests", function () {
   if (!pabloTestConfiguration.constantProductTests.enabled) {
     console.log("Constant Product Tests are being skipped...");
     return;
