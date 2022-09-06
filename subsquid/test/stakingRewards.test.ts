@@ -1,5 +1,5 @@
 import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
-import { StakingPosition } from "../src/model";
+import { StakingPosition, StakingSource } from "../src/model";
 import { mock } from "ts-mockito";
 import { BOB, createCtx } from "../src/utils";
 import { expect } from "chai";
@@ -41,6 +41,7 @@ function assertStakingPosition(
     expect(position.endTimestamp).to.equal(
       position.startTimestamp + 1_000n * duration
     );
+  expect(position.source).to.equal(StakingSource.StakingRewards);
 }
 
 describe("Staking rewards", () => {

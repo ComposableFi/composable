@@ -20,6 +20,9 @@ export class Asset {
   @Column_("text", {nullable: false})
   eventId!: string
 
+  /**
+   * Latest price in USD
+   */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   price!: bigint
 

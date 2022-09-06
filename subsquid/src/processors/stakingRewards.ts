@@ -8,11 +8,16 @@ import {
   StakingRewardsUnstakedEvent,
 } from "../types/events";
 import {
-  getAssetIdFromPicassoPoolId,
+  getAssetIdFromRewardPoolId,
   saveAccountAndTransaction,
   storeHistoricalLockedValue,
 } from "../dbHelper";
-import { PicassoPool, StakingPosition, TransactionType } from "../model";
+import {
+  RewardPool,
+  StakingPosition,
+  StakingSource,
+  TransactionType,
+} from "../model";
 import { encodeAccount } from "../utils";
 
 interface RewardPoolCreatedEvent {
@@ -81,8 +86,8 @@ export function createRewardPool(
   eventId: string,
   poolId: bigint,
   assetId: bigint
-): PicassoPool {
-  return new PicassoPool({
+): RewardPool {
+  return new RewardPool({
     id: randomUUID(),
     eventId,
     poolId: poolId.toString(),
@@ -121,6 +126,7 @@ export function createStakingPosition(
     startTimestamp,
     endTimestamp: BigInt(startTimestamp + BigInt(duration * 1_000n)),
     assetId,
+    source: StakingSource.StakingRewards,
   });
 }
 
@@ -174,6 +180,7 @@ export function splitStakingPosition(
     startTimestamp: position.startTimestamp,
     endTimestamp: position.endTimestamp,
     assetId: position.assetId,
+    source: StakingSource.StakingRewards,
   });
 }
 
@@ -225,7 +232,7 @@ export async function processStakedEvent(
     owner
   );
 
-  const assetId = await getAssetIdFromPicassoPoolId(ctx, poolId);
+  const assetId = await getAssetIdFromRewardPoolId(ctx, poolId);
 
   const stakingPosition = createStakingPosition(
     positionId.toString(),

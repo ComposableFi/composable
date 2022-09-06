@@ -4,9 +4,10 @@ import { ApiPromise, WsProvider } from "@polkadot/api";
 import {
   Account,
   Activity,
+  Currency,
   HistoricalLockedValue,
   PabloPool,
-  PicassoPool,
+  RewardPool,
   Transaction,
   TransactionType,
 } from "./model";
@@ -221,6 +222,7 @@ export async function storeHistoricalLockedValue(
     id: randomUUID(),
     eventId,
     amount: lastLockedValue + amountLocked * assetPrice,
+    currency: Currency.USD,
     timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
   });
 
@@ -228,23 +230,23 @@ export async function storeHistoricalLockedValue(
 }
 
 /**
- * Get asset id and price id from Picasso pool id
+ * Get asset id and price id from reward pool id
  * @param ctx
  * @param poolId
  */
-export async function getAssetIdFromPicassoPoolId(
+export async function getAssetIdFromRewardPoolId(
   ctx: EventHandlerContext,
   poolId: bigint
 ): Promise<string> {
-  const picassoPool = await ctx.store.get(PicassoPool, {
+  const rewardPool = await ctx.store.get(RewardPool, {
     where: { poolId: poolId.toString() },
   });
 
-  if (!picassoPool) {
+  if (!rewardPool) {
     return Promise.reject(new Error(`Pool ${poolId} does not exist.`));
   }
 
-  return Promise.resolve(picassoPool.assetId);
+  return Promise.resolve(rewardPool.assetId);
 }
 
 /**
@@ -313,9 +315,9 @@ export async function mockData(ctx: EventHandlerContext) {
       id: randomUUID(),
       eventId: "1",
       amount: lastLockedValue + 10n,
+      currency: Currency.USD,
       timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
     });
     await ctx.store.save(historicalLockedValue);
   }
-  // await ctx.store.save(StakingPosition);
 }

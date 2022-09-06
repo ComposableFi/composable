@@ -1,5 +1,6 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} from "typeorm"
 import * as marshal from "./marshal"
+import {StakingSource} from "./_stakingSource"
 
 @Entity_()
 export class StakingPosition {
@@ -36,4 +37,7 @@ export class StakingPosition {
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: true})
   endTimestamp!: bigint | undefined | null
+
+  @Column_("varchar", {length: 14, nullable: false})
+  source!: StakingSource
 }

@@ -1,8 +1,8 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} from "typeorm"
 
 @Entity_()
-export class PicassoPool {
-  constructor(props?: Partial<PicassoPool>) {
+export class RewardPool {
+  constructor(props?: Partial<RewardPool>) {
     Object.assign(this, props)
   }
 

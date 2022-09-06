@@ -99,6 +99,7 @@ type Asset @entity {
   id: ID!
   "ID of the event that added the last price"
   eventId: String!
+  "Latest price in USD"
   price: BigInt!
   historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
 }
@@ -118,11 +119,15 @@ type HistoricalAssetPrice @entity {
   currency: Currency!
 }
 
-type PicassoPool @entity {
+type RewardPool @entity {
   id: ID!
   eventId: String!
   poolId: String!
   assetId: String!
+}
+
+enum StakingSource {
+  StakingRewards
 }
 
 type StakingPosition @entity {
@@ -136,12 +141,14 @@ type StakingPosition @entity {
   amount: BigInt!
   startTimestamp: BigInt!
   endTimestamp: BigInt
+  source: StakingSource!
 }
 
 type HistoricalLockedValue @entity {
   id: ID!
   eventId: String!
   amount: BigInt!
+  currency: Currency!
   timestamp: BigInt!
 }
 
