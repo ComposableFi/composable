@@ -17,7 +17,6 @@ use serde::Serialize;
 use xcvm_asset_registry::msg::{GetAssetContractResponse, QueryMsg as AssetRegistryQueryMsg};
 use xcvm_core::{Funds, Instruction, NetworkId};
 
-// version info for migration info
 const CONTRACT_NAME: &str = "composable:xcvm-interpreter";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
