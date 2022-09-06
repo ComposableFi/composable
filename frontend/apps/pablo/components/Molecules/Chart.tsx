@@ -148,7 +148,11 @@ export const Chart: React.FC<ChartProps> = ({
           justifyContent="space-between"
         >
           {timeSlots.map((slot, index) => (
-            <Typography key={index} variant="body2">
+            <Typography
+              key={index}
+              variant="caption"
+              sx={{ whiteSpace: "nowrap" }}
+            >
               {slot}
             </Typography>
           ))}

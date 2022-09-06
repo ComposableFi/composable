@@ -47,6 +47,7 @@ pub mod weights;
 #[allow(clippy::too_many_arguments)]
 #[frame_support::pallet]
 pub mod pallet {
+	const SUBSTRATE_ECDSA_SIGNATURE_LEN: usize = 65;
 	use crate::{
 		instrument::gas_and_stack_instrumentation,
 		runtimes::{
@@ -98,7 +99,7 @@ pub mod pallet {
 		transactional, BoundedBTreeMap, PalletId, StorageHasher, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-	use sp_core::crypto::UncheckedFrom;
+	use sp_core::{crypto::UncheckedFrom, ecdsa, ed25519};
 	use sp_runtime::traits::{Convert, Hash, MaybeDisplay, SaturatedConversion};
 	use sp_std::vec::Vec;
 	use wasm_instrument::gas_metering::ConstantCostRules;
@@ -1126,6 +1127,108 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::TransferFailed)?;
 			}
 			Ok(())
+		}
+
+		pub(crate) fn do_secp256k1_recover_pubkey(
+			message_hash: &[u8],
+			signature: &[u8],
+			recovery_param: u8,
+		) -> Result<Vec<u8>, ()> {
+			// `recovery_param` must be 0 or 1. Other values are not supported from CosmWasm.
+			if recovery_param > 2 {
+				return Err(())
+			}
+
+			if signature.len() != SUBSTRATE_ECDSA_SIGNATURE_LEN - 1 {
+				return Err(())
+			}
+
+			// Try into a [u8; 32]
+			let message_hash = message_hash.try_into().map_err(|_| ())?;
+
+			let signature = {
+				// Since we fill `signature_inner` with `recovery_param`, when 64 bytes are written
+				// the final byte will be the `recovery_param`.
+				let mut signature_inner = [recovery_param; SUBSTRATE_ECDSA_SIGNATURE_LEN];
+				signature_inner[..SUBSTRATE_ECDSA_SIGNATURE_LEN - 1].copy_from_slice(signature);
+				signature_inner
+			};
+
+			// We used `compressed` function here because the api states that this function
+			// needs to return a public key that can be used in `secp256k1_verify` which
+			// takes a compressed public key.
+			sp_io::crypto::secp256k1_ecdsa_recover_compressed(&signature, &message_hash)
+				.map(|val| val.into())
+				.map_err(|_| ())
+		}
+
+		pub(crate) fn do_secp256k1_verify(
+			message_hash: &[u8],
+			signature: &[u8],
+			public_key: &[u8],
+		) -> bool {
+			if signature.len() != SUBSTRATE_ECDSA_SIGNATURE_LEN {
+				return false
+			}
+
+			// Try into a [u8; 32]
+			let message_hash = match message_hash.try_into() {
+				Ok(message_hash) => message_hash,
+				Err(_) => return false,
+			};
+
+			// We are expecting 64 bytes long public keys but the substrate function use an
+			// additional byte for recovery id. So we insert a dummy byte.
+			let signature = {
+				let mut signature_inner = [0_u8; SUBSTRATE_ECDSA_SIGNATURE_LEN];
+				signature_inner[..SUBSTRATE_ECDSA_SIGNATURE_LEN - 1].copy_from_slice(signature);
+				ecdsa::Signature(signature_inner)
+			};
+
+			let public_key = match ecdsa::Public::try_from(public_key) {
+				Ok(public_key) => public_key,
+				Err(_) => return false,
+			};
+
+			sp_io::crypto::ecdsa_verify_prehashed(&signature, &message_hash, &public_key)
+		}
+
+		pub(crate) fn do_ed25519_batch_verify(
+			messages: &[&[u8]],
+			signatures: &[&[u8]],
+			public_keys: &[&[u8]],
+		) -> bool {
+			if messages.len() != signatures.len() || signatures.len() != public_keys.len() {
+				return false
+			}
+
+			for ((message, signature), public_key) in
+				messages.iter().zip(signatures.iter()).zip(public_keys.iter())
+			{
+				if !(Pallet::<T>::do_ed25519_verify(message, signature, public_key)) {
+					return false
+				}
+			}
+
+			true
+		}
+
+		pub(crate) fn do_ed25519_verify(
+			message: &[u8],
+			signature: &[u8],
+			public_key: &[u8],
+		) -> bool {
+			let signature: ed25519::Signature = match signature.try_into() {
+				Ok(signature) => signature,
+				Err(_) => return false,
+			};
+
+			let public_key: ed25519::Public = match public_key.try_into() {
+				Ok(public_key) => public_key,
+				Err(_) => return false,
+			};
+
+			sp_io::crypto::ed25519_verify(&signature, message, &public_key)
 		}
 	}
 

@@ -90,7 +90,7 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
           height="96"
           alt="lemonade"
         />
-        <Typography variant="body2" paddingTop={4} color="text.secondary">
+        <Typography variant="body2" paddingTop={2} color="text.secondary">
           You currently do not have any active liquidity pool.
         </Typography>
       </Box>
@@ -117,7 +117,11 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
           </TableHead>
           <TableBody>
             {pools.map((row, index) => (
-              <LiquidityPoolRow liquidityPool={row} key={index} handleRowClick={handleRowClick} />
+              <LiquidityPoolRow
+                liquidityPool={row}
+                key={index}
+                handleRowClick={handleRowClick}
+              />
             ))}
           </TableBody>
         </Table>

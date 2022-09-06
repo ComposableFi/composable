@@ -24,7 +24,7 @@ const BondedOfferRow = ({ bondOffer, handleBondedOfferRowClick }: { bondOffer: B
       </TableCell>
       <TableCell align="left">
         <Typography variant="body2">
-          {pendingRewards.toFixed(2)} {rewardAsset?.symbol}
+          {pendingRewards.toFixed(2)} {rewardAsset?.symbol.toUpperCase()}
         </Typography>
       </TableCell>
       <TableCell align="left">
