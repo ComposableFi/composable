@@ -492,12 +492,13 @@
             in bp.buildYarnPackage {
               nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
               src = ./frontend;
-              
+
               # The filters exclude the storybooks for faster builds
-              yarnBuildMore = "yarn export --filter=pablo --filter=picasso --filter=\!picasso-storybook --filter=\!pablo-storybook";
+              yarnBuildMore =
+                "yarn export --filter=pablo --filter=picasso --filter=!picasso-storybook --filter=!pablo-storybook";
 
               # TODO: make these configurable              
-              preBuild = ''               
+              preBuild = ''
                 export SUBSQUID_URL="http://localhost:4350/graphql";
 
                 # Polkadot

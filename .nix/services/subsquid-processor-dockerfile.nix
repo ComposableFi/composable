@@ -1,17 +1,13 @@
-{ database, subsquidGraphqlContainerName, parachainEndpoint, graphqlPort, gatewayContainerName, gatewayPort, ...}:
-{
+{ database, subsquidGraphqlContainerName, parachainEndpoint, graphqlPort
+, gatewayContainerName, gatewayPort, ... }: {
   service = {
     build.context = "${../../subsquid}";
     depends_on = {
-      "${database.name}" = {
-        condition = "service_healthy";
-      };
-      "${subsquidGraphqlContainerName}" = {
-        condition = "service_started";
-      };
+      "${database.name}" = { condition = "service_healthy"; };
+      "${subsquidGraphqlContainerName}" = { condition = "service_started"; };
     };
     environment = {
-      DB_NAME = database.name; 
+      DB_NAME = database.name;
       DB_HOST = database.host;
       DB_USER = database.user;
       DB_PASS = database.password;
@@ -19,7 +15,8 @@
       GQL_PORT = graphqlPort;
       # is actually the parachain URI, bug in ts source
       RELAYCHAIN_URI = parachainEndpoint;
-      SUBSQUID_ARCHIVE_URI = "http://${gatewayContainerName}:${toString gatewayPort}/graphql";
+      SUBSQUID_ARCHIVE_URI =
+        "http://${gatewayContainerName}:${toString gatewayPort}/graphql";
     };
   };
 

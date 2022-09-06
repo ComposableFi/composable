@@ -1,18 +1,13 @@
-{ database, pkgs, graphqlPort, ...}:
-{
+{ database, pkgs, graphqlPort, ... }: {
   service = {
     build.context = "${../../subsquid}";
     depends_on = {
-      "${database.name}" = {
-        condition = "service_healthy";
-      };
-    
+      "${database.name}" = { condition = "service_healthy"; };
+
     };
-    ports = [
-      "${toString graphqlPort}:${toString graphqlPort}"
-    ];
+    ports = [ "${toString graphqlPort}:${toString graphqlPort}" ];
     environment = {
-      DB_NAME = database.name; 
+      DB_NAME = database.name;
       DB_USER = database.user;
       DB_HOST = database.host;
       DB_PASS = database.password;

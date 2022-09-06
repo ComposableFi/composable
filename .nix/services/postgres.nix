@@ -32,7 +32,8 @@ in {
     };
     restart = "always";
     healthcheck = {
-      test = [ "CMD-SHELL" "pg_isready -d ${import ../util/db-url.nix database}" ];
+      test =
+        [ "CMD-SHELL" "pg_isready -d ${import ../util/db-url.nix database}" ];
       interval = "5s";
       timeout = "5s";
       retries = 5;

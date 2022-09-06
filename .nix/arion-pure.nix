@@ -6,7 +6,7 @@ pkgs.arion.build {
         dali-container-name = "dali-devnet";
         subsquidGraphqlContainerName = "subsquid-graphql";
         gatewayContainerName = "subsquid-gateway";
-        
+
         # NOTE: Do not change this. It is hardcoded in the gateway source file.
         # cfr: services/subsquid-substrate-gateway
         gatewayPort = 8000;
@@ -26,20 +26,20 @@ pkgs.arion.build {
           password = "super-secret-squid-pass";
           port = 5433;
         };
-        
+
         relaychainPort = 9944;
         parachainPort = 9988;
         squidGraphqlPort = 4350;
-        
-        parachainEndpoint = "ws://${dali-container-name}:${toString parachainPort}";
+
+        parachainEndpoint =
+          "ws://${dali-container-name}:${toString parachainPort}";
 
         network-name = "composable_devnet";
         mkComposableContainer = container:
           container // {
             service = container.service // { networks = [ network-name ]; };
           };
-      in
-      {
+      in {
         config = {
           project.name = "composable";
           networks."${network-name}" = { };
@@ -51,8 +51,7 @@ pkgs.arion.build {
                 version = "14";
                 init-scripts = pkgs.writeTextFile {
                   name = "init";
-                  text = ''
-                  '';
+                  text = "";
                   executable = false;
                   destination = "/init.sql";
                 };
@@ -65,46 +64,50 @@ pkgs.arion.build {
                 version = "14";
                 init-scripts = pkgs.writeTextFile {
                   name = "init";
-                  text = ''
-                  '';
+                  text = "";
                   executable = false;
                   destination = "/init.sql";
                 };
               });
 
-             "${dali-container-name}" = mkComposableContainer
+            "${dali-container-name}" = mkComposableContainer
               (import ./services/devnet-dali.nix {
                 inherit pkgs packages parachainPort relaychainPort;
               });
 
-            ingest = mkComposableContainer (import ./services/subsquid-substrate-ingest.nix {
+            ingest = mkComposableContainer
+              (import ./services/subsquid-substrate-ingest.nix {
                 database = squid-archive-db;
                 polkadotEndpoint = parachainEndpoint;
                 prometheusPort = 9090;
-            }); 
-            
-            "${gatewayContainerName}" = mkComposableContainer (import ./services/subsquid-substrate-gateway.nix {
+              });
+
+            "${gatewayContainerName}" = mkComposableContainer
+              (import ./services/subsquid-substrate-gateway.nix {
                 database = squid-archive-db;
                 port = gatewayPort;
-            });
+              });
 
             # NOTE, this one currently seems broken. but it is an optional service anyways.
             # explorer = mkComposableContainer (import ./services/subsquid-substrate-explorer.nix {
             #     database = squid-archive-db;
             #     graphqlPort = 4010;
             # });
-            
-            "${subsquidGraphqlContainerName}" = mkComposableContainer (import ./services/subsquid-graphql.nix {
-              inherit pkgs;
-              database = squid-db;
-              graphqlPort = squidGraphqlPort;
-            });
-            
-            subsquid-processor = mkComposableContainer ( import ./services/subsquid-processor-dockerfile.nix {
-              inherit subsquidGraphqlContainerName gatewayContainerName gatewayPort parachainEndpoint;
-              database = squid-db;
-              graphqlPort = squidGraphqlPort;
-            });
+
+            "${subsquidGraphqlContainerName}" = mkComposableContainer
+              (import ./services/subsquid-graphql.nix {
+                inherit pkgs;
+                database = squid-db;
+                graphqlPort = squidGraphqlPort;
+              });
+
+            subsquid-processor = mkComposableContainer
+              (import ./services/subsquid-processor-dockerfile.nix {
+                inherit subsquidGraphqlContainerName gatewayContainerName
+                  gatewayPort parachainEndpoint;
+                database = squid-db;
+                graphqlPort = squidGraphqlPort;
+              });
 
             # NOTE: Ports are currently not configurable for frontend services
             frontend-picasso = mkComposableContainer
@@ -113,9 +116,7 @@ pkgs.arion.build {
               });
 
             frontend-pablo = mkComposableContainer
-              (import ./services/frontend-pablo.nix {
-                inherit pkgs packages;
-              });
+              (import ./services/frontend-pablo.nix { inherit pkgs packages; });
           };
         };
       })
