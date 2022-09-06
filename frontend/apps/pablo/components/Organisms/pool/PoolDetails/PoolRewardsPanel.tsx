@@ -81,7 +81,7 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
   // WIP - awaiting Andres' subsquid changes
   const lpDeposit = new BigNumber(0);
   const handleClaimRewards = useClaimStakingRewards({
-    positionId: undefined
+    positionId: new BigNumber(1)
   })
 
   const isPendingClaimStakingRewards = usePendingExtrinsic(
