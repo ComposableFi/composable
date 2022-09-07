@@ -3,6 +3,7 @@ import { LiquidityBootstrappingPool } from "@/defi/types";
 import { calculator, DEFAULT_NETWORK_ID, fetchSpotPrice } from "@/defi/utils";
 import { fetchAuctions } from "@/defi/utils/pablo/auctions";
 import { useAppSelector } from "@/hooks/store";
+import { usePrevious } from "@/hooks/usePrevious";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { useAssetBalance } from "@/store/assets/hooks";
 import useStore from "@/store/useStore";
@@ -17,7 +18,7 @@ import {
 } from "substrate-react";
 import { useAsset } from "../assets/useAsset";
 
-export const useBuyForm = (): {
+export const useAuctionBuyForm = (): {
   balanceBase: BigNumber;
   balanceQuote: BigNumber;
   isValidBaseInput: boolean;
@@ -53,7 +54,9 @@ export const useBuyForm = (): {
   const slippage = useAppSelector(
     (state) => state.settings.transactionSettings.tolerance
   );
+  const previousSlippage = usePrevious(slippage);
 
+  const [spotPrice, setSpotPrice] = useState(new BigNumber(0));
   const baseAsset = useAsset(activeLBP.pair.base.toString());
   const quoteAsset = useAsset(activeLBP.pair.quote.toString());
 
@@ -108,13 +111,13 @@ export const useBuyForm = (): {
         let feePercentage = new BigNumber(feeRate).toNumber();
 
         let pair = { base: base.toString(), quote: quote.toString() };
-        const spotPrice = await fetchSpotPrice(
+        const _spotPrice = await fetchSpotPrice(
           parachainApi,
           pair,
           activeLBP.poolId
         );
         const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
-          calculator(changedSide, amount, spotPrice, slippage, feePercentage);
+          calculator(changedSide, amount, _spotPrice, slippage, feePercentage);
 
         if (changedSide === "base" && tokenOutAmount.gt(balanceQuote)) {
           throw new Error("Insufficient Balance");
@@ -127,6 +130,7 @@ export const useBuyForm = (): {
         setMinimumReceived(minReceive);
         setFeeCharged(feeChargedAmount);
         setSlippageAmount(slippageAmount);
+        setSpotPrice(_spotPrice);
       } else {
         throw new Error("Invalid LBP");
       }
@@ -167,6 +171,43 @@ export const useBuyForm = (): {
       isPendingBuy
     );
   }, [isValidBaseInput, isValidQuoteInput, extensionStatus, isPendingBuy]);
+
+  /**
+   * Effect to update minimum received when
+   * there is a change in slippage
+   */
+   useEffect(() => {
+    if (parachainApi && activeLBP) {
+      if (previousSlippage != slippage) {
+        if (minimumReceived.gt(0)) {
+          const { feeRate } = activeLBP.feeConfig;
+          let feePercentage = new BigNumber(feeRate).toNumber();
+
+          const { minReceive } = calculator(
+                  "quote",
+                  quoteAmount,
+                  spotPrice,
+                  slippage,
+                  feePercentage
+                )
+          setMinimumReceived(minReceive);
+        }
+      }
+    }
+    return;
+  }, [
+    spotPrice,
+    activeLBP,
+    balanceQuote,
+    previousSlippage,
+    minimumReceived,
+    feeCharged,
+    slippageAmount,
+    slippage,
+    parachainApi,
+    quoteAmount,
+    baseAmount,
+  ]);
 
   return {
     balanceBase,

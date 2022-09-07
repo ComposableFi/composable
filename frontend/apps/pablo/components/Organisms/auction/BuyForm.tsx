@@ -25,11 +25,11 @@ import { getFullHumanizedDateDiff } from "shared";
 import { LiquidityBootstrappingPool } from "@/defi/types";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { useBuyForm } from "@/defi/hooks/auctions/useBuyForm";
-import _ from "lodash";
+import { useAuctionBuyForm } from "@/defi/hooks/auctions/useAuctionBuyForm";
 import { useDotSamaContext } from "substrate-react";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import _ from "lodash";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
@@ -58,7 +58,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     selectedAuction,
     minimumReceived,
     isProcessing,
-  } = useBuyForm();
+  } = useAuctionBuyForm();
 
   const priceUSDBase = useUSDPriceByAssetId(
     baseAsset ? baseAsset.network[DEFAULT_NETWORK_ID] : "none"
