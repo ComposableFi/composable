@@ -830,7 +830,7 @@ jobs:
           ( tail --follow --lines=0  devnet-dali.log & ) | grep --max-count=1 "POLKADOT LAUNCH COMPLETE"
           
           echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
-          cd integration-tests/runtime-tests          
+          cd code/integration-tests/runtime-tests
           npm install -q
           ( export ENDPOINT=127.0.0.1:9988 && export ENDPOINT_RELAYCHAIN=127.0.0.1:9944 && npm run test_short 2>&1 &) | tee runtime-tests.log & RUNTIME_TESTS_PID=$!
           until test -f runtime-tests.log; do sleep 1 && echo "waiting tests start"; done;
