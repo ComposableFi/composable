@@ -6,10 +6,10 @@ version = "0.1.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-composable-runtime = { path = "../../runtime/composable" }
-dali-runtime = { path = "../../runtime/dali" }
+composable-runtime = { path = "../../parachain/runtime/composable" }
+dali-runtime = { path = "../../parachain/runtime/dali" }
 derive_more = "0.99.17"
-picasso-runtime = { path = "../../runtime/picasso" }
+picasso-runtime = { path = "../../parachain/runtime/picasso" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }

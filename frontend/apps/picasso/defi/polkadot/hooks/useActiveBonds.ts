@@ -182,8 +182,8 @@ export function useActiveBonds() {
         );
 
       const output: Array<ActiveBond> = [];
-      for (const [bondOfferId, scheduleids] of Object.entries(result)) {
-        scheduleids.forEach((scheduleId) => {
+      for (const [bondOfferId, scheduleIds] of Object.entries(result)) {
+        scheduleIds.forEach((scheduleId) => {
           const vestingSchedule = data.vestingSchedules.find(
             (schedule: any) => schedule.id.toString() === scheduleId.toString()
           );

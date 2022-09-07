@@ -117,6 +117,7 @@ for arg in "$@"; do
     esac
 done
 
+cd code
 cargo_fmt
 taplo_fmt
 prettier_fmt

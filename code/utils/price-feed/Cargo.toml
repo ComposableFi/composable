@@ -16,7 +16,7 @@ jsonrpc-client-transports = "18.0.0"
 jsonrpc-core = "18.0.0"
 lazy_static = "1.4.0"
 log = "0.4.16"
-primitives = { path = "../../runtime/primitives" }
+primitives = { path = "../../parachain/runtime/primitives" }
 scale-codec = { package = "parity-scale-codec", version = "3.0.0", features = [
   "derive",
 ] }

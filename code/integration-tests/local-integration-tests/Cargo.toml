@@ -59,17 +59,17 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
 
 # local modules
-assets = { package = "pallet-assets", path = "../../frame/assets", default-features = false, optional = true }
-assets-registry = { package = "pallet-assets-registry", path = "../../frame/assets-registry", default-features = false, optional = true }
-call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter", default-features = false }
-common = { path = "../../runtime/common", default-features = false }
-composable-traits = { path = "../../frame/composable-traits", default-features = false }
-currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
-governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false, optional = true }
-liquidations = { package = "pallet-liquidations", path = "../../frame/liquidations", default-features = false }
-oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
-primitives = { path = "../../runtime/primitives", default-features = false }
-vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
+assets = { package = "pallet-assets", path = "../../parachain/frame/assets", default-features = false, optional = true }
+assets-registry = { package = "pallet-assets-registry", path = "../../parachain/frame/assets-registry", default-features = false, optional = true }
+call-filter = { package = "pallet-call-filter", path = "../../parachain/frame/call-filter", default-features = false }
+common = { path = "../../parachain/runtime/common", default-features = false }
+composable-traits = { path = "../../parachain/frame/composable-traits", default-features = false }
+currency-factory = { package = "pallet-currency-factory", path = "../../parachain/frame/currency-factory", default-features = false }
+governance-registry = { package = "pallet-governance-registry", path = "../../parachain/frame/governance-registry", default-features = false, optional = true }
+liquidations = { package = "pallet-liquidations", path = "../../parachain/frame/liquidations", default-features = false }
+oracle = { package = "pallet-oracle", path = "../../parachain/frame/oracle", default-features = false }
+primitives = { path = "../../parachain/runtime/primitives", default-features = false }
+vault = { package = "pallet-vault", path = "../../parachain/frame/vault", default-features = false }
 
 
 # Used for the node template's RPCs
@@ -117,8 +117,8 @@ polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", 
 statemine-runtime = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
 xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "ab5cd6c5fabe6ddda52ed6803ee1bf54c258fefe", default-features = false }
 
-dali-runtime = { package = "dali-runtime", path = "../../runtime/dali", default-features = false, optional = true }
-picasso-runtime = { package = "picasso-runtime", path = "../../runtime/picasso", default-features = false, optional = true }
+dali-runtime = { package = "dali-runtime", path = "../../parachain/runtime/dali", default-features = false, optional = true }
+picasso-runtime = { package = "picasso-runtime", path = "../../parachain/runtime/picasso", default-features = false, optional = true }
 
 [dev-dependencies]
 base58 = "0.2"
