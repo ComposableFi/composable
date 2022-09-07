@@ -91,7 +91,8 @@
     ]
   },
   "mintAssets": [
-    ["5vXJFVmaBvxe4kwyioUgoDjMDy2NxfLikwz1Q44dknpF9r21", "4", "10000000000000000000"],
-    ["5vXJFVmaBvxe4kwyioUgoDjMDy2NxfLikwz1Q44dknpF9r21", "1", "10000000000000000000"]
+    ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "1", "5000000000000000"],
+    ["5y4xiEmy4Kp3GPH7hUHDnNwwqeoEHgRbMp6HGW2iRKRu5DG2", "4", "5000000000000000"],
+    ["5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL", "5", "10000000000000000000"]
   ]
 }
