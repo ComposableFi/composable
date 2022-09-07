@@ -138,7 +138,7 @@ export async function saveActivity(
 ): Promise<string> {
   const activity = new Activity({
     id: randomUUID(),
-    eventId: event,
+    event,
     accountId,
     timestamp: BigInt(ctx.block.timestamp),
   });
@@ -227,7 +227,7 @@ export async function storeHistoricalLockedValue(
 
   const historicalLockedValue = new HistoricalLockedValue({
     id: randomUUID(),
-    eventId: event,
+    event,
     amount: lastLockedValue + amountLocked * assetPrice,
     currency: Currency.USD,
     timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
@@ -317,7 +317,7 @@ export async function mockData(ctx: EventHandlerContext) {
     const lastLockedValue = await getLastLockedValue(ctx);
     const historicalLockedValue = new HistoricalLockedValue({
       id: randomUUID(),
-      eventId: new Event({ id: "1" }),
+      event: new Event({ id: "1" }),
       amount: lastLockedValue + 10n,
       currency: Currency.USD,
       timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),

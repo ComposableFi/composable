@@ -15,7 +15,7 @@ export class HistoricalLockedValue {
   @Index_({unique: true})
   @OneToOne_(() => Event, {nullable: false})
   @JoinColumn_()
-  eventId!: Event
+  event!: Event
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   amount!: bigint

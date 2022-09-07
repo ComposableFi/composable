@@ -16,7 +16,7 @@ export class Activity {
    */
   @Index_()
   @ManyToOne_(() => Event, {nullable: false})
-  eventId!: Event
+  event!: Event
 
   /**
    * ID of the active account

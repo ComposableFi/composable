@@ -15,7 +15,7 @@ export class StakingPosition {
   @Index_({unique: true})
   @OneToOne_(() => Event, {nullable: false})
   @JoinColumn_()
-  eventId!: Event
+  event!: Event
 
   /**
    * Unique identifier for the position on chain

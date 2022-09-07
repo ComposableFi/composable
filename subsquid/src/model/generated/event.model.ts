@@ -45,6 +45,6 @@ export class Event {
   @OneToOne_(() => PabloTransaction)
   pabloTransaction!: PabloTransaction | undefined | null
 
-  @OneToMany_(() => Activity, e => e.eventId)
+  @OneToMany_(() => Activity, e => e.event)
   activities!: Activity[]
 }

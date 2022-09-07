@@ -117,7 +117,7 @@ export function createStakingPosition(
 ): StakingPosition {
   return new StakingPosition({
     id: randomUUID(),
-    eventId: event,
+    event,
     positionId: positionId.toString(),
     owner,
     amount,
@@ -140,7 +140,7 @@ export function extendStakingPosition(
   event: Event
 ): void {
   position.amount = newAmount;
-  position.eventId = event;
+  position.event = event;
 }
 
 /**
@@ -160,11 +160,11 @@ export function splitStakingPosition(
   event: Event
 ): StakingPosition {
   position.amount = oldAmount;
-  position.eventId = event;
+  position.event = event;
 
   return new StakingPosition({
     id: randomUUID(),
-    eventId: event,
+    event,
     positionId: newPositionId.toString(),
     owner: position.owner,
     amount: newAmount,

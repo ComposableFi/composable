@@ -86,7 +86,7 @@ type VestingSchedule @entity {
 type Activity @entity {
   id: ID!
   "ID of the event associated with this activity"
-  eventId: Event! @index
+  event: Event! @index
   "ID of the active account"
   accountId: String! @index
   "Timestamp of the block in which this activity occurred"
@@ -131,7 +131,7 @@ enum StakingSource {
 
 type StakingPosition @entity {
   id: ID!
-  eventId: Event! @unique @index
+  event: Event! @unique @index
   "Unique identifier for the position on chain"
   positionId: String! @index
   owner: String! @index
@@ -144,7 +144,7 @@ type StakingPosition @entity {
 
 type HistoricalLockedValue @entity {
   id: ID!
-  eventId: Event! @unique @index
+  event: Event! @unique @index
   amount: BigInt!
   currency: Currency!
   timestamp: BigInt!
@@ -152,7 +152,7 @@ type HistoricalLockedValue @entity {
 
 type PabloTransaction @entity {
   id: ID!
-  eventId: Event! @unique @index
+  event: Event! @unique @index
   pool: PabloPool!
   baseAssetId: String!
   baseAssetAmount: BigInt!
@@ -196,6 +196,6 @@ type Event @entity {
   "Timestamp of the block in which this transaction was registered"
   timestamp: BigInt!
   "If this transaction came from Pablo, it will have extra information"
-  pabloTransaction: PabloTransaction @derivedFrom(field: "eventId")
-  activities: [Activity!] @derivedFrom(field: "eventId")
+  pabloTransaction: PabloTransaction @derivedFrom(field: "event")
+  activities: [Activity!] @derivedFrom(field: "event")
 }
