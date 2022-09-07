@@ -195,7 +195,7 @@ export async function swapTokenPairs(
 
 export async function createMultipleCPPools(api: ApiPromise, wallet: KeyringPair) {
   const tx = [];
-  for (let i = 0; i < 35; i++) {
+  for (let i = 0; i < 300; i++) {
     const owner = wallet.derive("/test/ConstantProduct/deriveWallet");
     const pool = api.createType("PalletPabloPoolInitConfiguration", {
       ConstantProduct: {
@@ -353,7 +353,7 @@ export async function createLBPool(
 
 export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair): Promise<void> {
   const tx = [];
-  for (let i = 0; i < 350; i++) {
+  for (let i = 0; i < 300; i++) {
     const owner = wallet.derive("/test/ConstantProduct/deriveWallet");
     const pool = api.createType("PalletPabloPoolInitConfiguration", {
       LiquidityBootstrapping: {

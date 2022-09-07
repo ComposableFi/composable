@@ -279,7 +279,7 @@ export class TxMosaicTests {
     return await sendAndWaitForSuccess(
       api,
       wallet,
-      api.events.mosaic.TransferIntoRescinded.is,
+      api.events.mosaic.TransferIntoRescined.is,
       api.tx.mosaic.rescindTimelockedMint(networkId, remoteAssetId, returnWallet.address, amount)
     );
   }
