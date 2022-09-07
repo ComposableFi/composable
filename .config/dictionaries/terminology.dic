@@ -16,8 +16,6 @@ suri # Substrate Uri
 parathread
 parathreads
 CurrencyId
-extrinisic
-extrinisics
 
 # crypto stuff
 xcmp
