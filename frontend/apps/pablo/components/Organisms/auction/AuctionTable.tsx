@@ -87,7 +87,7 @@ export const AuctionTable = () => {
               <Typography variant="h6">All liquidity</Typography>
               <Box>
                 <Tooltip
-                  title={extensionStatus !== "connected" ? "Comming soon" : ""}
+                  title={extensionStatus !== "connected" ? "Coming soon" : ""}
                   arrow
                 >
                   {enabledCreate ? (
