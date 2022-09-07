@@ -307,7 +307,7 @@ describe("DexRouterPallet Tests", function () {
     const assetAmount = 10000000000000;
     const minUSDCAmount = 1000000000000;
     const minUSDTAmount = 1000000000000;
-    //set tx parameters
+    //set tx parameters\
     const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
       base: usdc,
       quote: usdt
@@ -419,14 +419,13 @@ describe("DexRouterPallet Tests", function () {
 
   it("Sell ETH via route found in router (1 hop)", async function () {
     this.timeout(5 * 60 * 1000);
-    this.timeout(5 * 60 * 1000);
     //get initial data
     const initialETHbalance = new BN((await api.rpc.assets.balanceOf(eth.toString(), walletId2.publicKey)).toString());
     const initialUSDCbalance = new BN(
       (await api.rpc.assets.balanceOf(usdc.toString(), walletId2.publicKey)).toString()
     );
     //set tx parameters
-    const ETHAmount = 1000;
+    const ETHAmount = 100_000_000_000;
     const assetPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", {
       base: usdc,
       quote: eth

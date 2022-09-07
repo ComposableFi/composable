@@ -27,7 +27,7 @@ import {
  *    and OwnerFee.
  * Mainly consists of happy path testing.
  */
-describe("tx.constantProductDex Tests", function () {
+describe.only("tx.constantProductDex Tests", function () {
   if (!pabloTestConfiguration.constantProductTests.enabled) {
     console.log("Constant Product Tests are being skipped...");
     return;
@@ -105,7 +105,7 @@ describe("tx.constantProductDex Tests", function () {
 
     it(
       "Given that the chain is up, users can create pools-" +
-        " test creates up to 420 Constant Product pools with valid random fees, random owner fees and random assetIds",
+        " test creates up to N Constant Product pools with valid random fees, random owner fees and random assetIds",
       async function () {
         await createMultipleCPPools(api, walletId1);
         expect((await api.query.pablo.poolCount()).toNumber()).to.be.greaterThan(500);
