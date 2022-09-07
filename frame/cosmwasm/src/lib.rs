@@ -551,36 +551,44 @@ pub mod pallet {
 			contract: &AccountIdOf<T>,
 			new_code_id: CosmwasmCodeId,
 		) -> Result<ContractInfoOf<T>, Error<T>> {
-			let info = ContractToInfo::<T>::try_mutate(
+			CodeIdToInfo::<T>::try_mutate_exists(new_code_id, |entry| -> Result<(), Error<T>> {
+				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
+				code_info.refcount =
+					code_info.refcount.checked_add(1).ok_or(Error::<T>::RefcountOverflow)?;
+				Ok(())
+			})?;
+
+			let (contract_info, code_id) = ContractToInfo::<T>::try_mutate(
 				contract,
-				|entry| -> Result<ContractInfoOf<T>, Error<T>> {
+				|entry| -> Result<(ContractInfoOf<T>, u64), Error<T>> {
 					let info = entry.as_mut().ok_or(Error::<T>::ContractNotFound)?;
 					ensure!(info.admin.as_ref() == Some(migrator), Error::<T>::NotAuthorized);
+					let old_code_id = info.code_id;
 					info.code_id = new_code_id;
-					Ok(info.clone())
+					Ok((info.clone(), old_code_id))
 				},
 			)?;
 
-			CodeIdToInfo::<T>::try_mutate_exists(info.code_id, |entry| -> Result<(), Error<T>> {
+			CodeIdToInfo::<T>::try_mutate_exists(code_id, |entry| -> Result<(), Error<T>> {
 				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
+				code_info.refcount =
+					code_info.refcount.checked_sub(1).ok_or(Error::<T>::RefcountOverflow)?;
 				if code_info.refcount == 0 {
 					// Code is unused after this point, so it can be removed
 					*entry = None;
-					let code = PristineCode::<T>::try_get(info.code_id)
+					let code = PristineCode::<T>::try_get(code_id)
 						.map_err(|_| Error::<T>::CodeNotFound)?;
 					let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
 					let _ = T::NativeAsset::unreserve(migrator, deposit.saturated_into());
 					let code_hash = T::Hashing::hash(&code);
-					PristineCode::<T>::remove(info.code_id);
-					InstrumentedCode::<T>::remove(info.code_id);
+					PristineCode::<T>::remove(code_id);
+					InstrumentedCode::<T>::remove(code_id);
 					CodeHashToId::<T>::remove(code_hash);
-				} else {
-					code_info.refcount =
-						code_info.refcount.checked_sub(1).ok_or(Error::<T>::RefcountOverflow)?;
 				}
 				Ok(())
 			})?;
-			Ok(info)
+
+			Ok(contract_info)
 		}
 
 		/// Create the shared VM state. Including readonly stack, VM depth, gas metering limits and
