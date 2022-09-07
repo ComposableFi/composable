@@ -67,19 +67,20 @@ sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", branch = 
 sp-externalities = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-io = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b" }
 
-#[patch."https://github.com/paritytech/subxt"]
-#subxt-codegen = { git = "https://github.com/paritytech/subxt", rev = "2fe9a1446d32b93a10804db3304ccaac65f764b8" }
+[patch."https://github.com/paritytech/subxt"]
+subxt-codegen = { git = "https://github.com/paritytech//subxt", rev = "2fe9a1446d32b93a10804db3304ccaac65f764b8" }
 
-#[patch."https://github.com/paritytech/cumulus"]
-#cumulus-pallet-dmp-queue = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
-#cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
-#cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
-#cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
-#cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
-#cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
-#cumulus-test-relay-sproof-builder = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
-#parachain-info = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.27" }
+[patch."https://github.com/paritytech/cumulus"]
+cumulus-pallet-dmp-queue = { git = "https://github.com/paritytech//cumulus", branch = "polkadot-v0.9.27" }
+cumulus-pallet-parachain-system = { git = "https://github.com/paritytech//cumulus", branch = "polkadot-v0.9.27" }
+cumulus-pallet-xcmp-queue = { git = "https://github.com/paritytech//cumulus", branch = "polkadot-v0.9.27" }
+cumulus-primitives-core = { git = "https://github.com/paritytech//cumulus", branch = "polkadot-v0.9.27" }
+cumulus-primitives-parachain-inherent = { git = "https://github.com/paritytech//cumulus", branch = "polkadot-v0.9.27" }
+cumulus-relay-chain-interface = { git = "https://github.com/paritytech//cumulus", branch = "polkadot-v0.9.27" }
+cumulus-test-relay-sproof-builder = { git = "https://github.com/paritytech//cumulus", branch = "polkadot-v0.9.27" }
+parachain-info = { git = "https://github.com/paritytech//cumulus", branch = "polkadot-v0.9.27" }
 
 [patch.'https://github.com/paritytech/polkadot']
 kusama-runtime = { git = "https://github.com/ComposableFi/polkadot", branch = "release-v0.9.27" }
