@@ -579,7 +579,7 @@ fn test_accumulate_rewards_hook() {
 
 		// add a new, zero-reward pool
 		// nothing needs to be added to the rewards pot as there are no rewards
-		let charlies_pool_id =
+		let _charlies_pool_id =
 			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
 				owner: CHARLIE,
 				asset_id: F::ID,

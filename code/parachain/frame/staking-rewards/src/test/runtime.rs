@@ -24,9 +24,7 @@ type Block = frame_system::mocking::MockBlock<Test>;
 
 pub type Balance = u128;
 pub type Amount = i128;
-pub type BlockNumber = u64;
 pub type FinancialNftInstanceId = u64;
-pub type PositionId = u128;
 
 pub static ALICE: Public =
 	Public(hex!("0000000000000000000000000000000000000000000000000000000000000000"));

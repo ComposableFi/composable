@@ -58,7 +58,7 @@ pub(crate) fn create_rewards_pool_and_assert(
 				RewardPoolConfiguration::RewardRateBasedIncentive {
 					end_block,
 					owner,
-					asset_id,
+					asset_id: _,
 					..
 				} => {
 					assert_eq!(end_block, event_end_block);
