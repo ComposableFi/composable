@@ -543,34 +543,6 @@
               karuraEndpoint = "wss://karura.api.onfinality.io/public-ws";
             };
 
-            frontend-static-firebase =
-              let bp = pkgs.callPackage npm-buildpackage { };
-              in bp.buildYarnPackage {
-                nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
-                src = ./frontend;
-
-                # The filters exclude the storybooks for faster builds
-                yarnBuildMore =
-                  "yarn export --filter=pablo --filter=picasso --filter=!picasso-storybook --filter=!pablo-storybook";
-
-                # TODO: make these configurable              
-                preBuild = ''
-                  export SUBSQUID_URL="http://localhost:4350/graphql";
-
-                  # Polkadot
-                  export SUBSTRATE_PROVIDER_URL_KUSAMA_2019="ws://localhost:9988";
-                  export SUBSTRATE_PROVIDER_URL_KUSAMA="ws://localhost:9944";
-                  export SUBSTRATE_PROVIDER_URL_KARURA="ws://localhost:9998";
-                '';
-                installPhase = ''
-                  mkdir -p $out
-                  mkdir $out/pablo
-                  mkdir $out/picasso
-                  cp -R ./apps/pablo/out/* $out/pablo
-                  cp -R ./apps/picasso/out/* $out/picasso
-                '';
-              };
-
             frontend-pablo-server = let PORT = 8002;
             in pkgs.writeShellApplication {
               name = "frontend-pablo-server";
