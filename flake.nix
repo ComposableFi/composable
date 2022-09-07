@@ -940,8 +940,8 @@
               flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
             simnode-tests-picasso =
               flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
-            simnode-tests-dali =
-              flake-utils.lib.mkApp { drv = run-simnode-tests "dali"; };
+            simnode-tests-dali-rococo =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
             default = devnet-dali;
           };
         });
