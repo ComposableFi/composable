@@ -9,7 +9,7 @@ use sp_runtime::DispatchError;
 pub struct MockFnft;
 
 impl Inspect<u128> for MockFnft {
-	type ItemId = u128;
+	type ItemId = u64;
 	type CollectionId = u128;
 
 	fn owner(collection: &Self::CollectionId, item: &Self::ItemId) -> Option<u128> {
