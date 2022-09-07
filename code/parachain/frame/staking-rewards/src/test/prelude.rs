@@ -52,7 +52,6 @@ pub(crate) fn create_rewards_pool_and_assert(
 		runtime::Event::StakingRewards(crate::Event::<Test>::RewardPoolCreated {
 			pool_id,
 			owner: event_owner,
-			asset_id: event_asset_id,
 			end_block: event_end_block,
 		}) => {
 			match reward_config {
@@ -64,7 +63,6 @@ pub(crate) fn create_rewards_pool_and_assert(
 				} => {
 					assert_eq!(end_block, event_end_block);
 					assert_eq!(owner, event_owner);
-					assert_eq!(asset_id, event_asset_id);
 				},
 				_ => unimplemented!(),
 			}

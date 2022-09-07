@@ -102,10 +102,9 @@ benchmarks! {
 		let owner: T::AccountId = account("owner", 0, 0);
 		let pool_id = 100_u128.into();
 		let end_block = 5_u128.saturated_into();
-		let asset_id = 100.into();
 	}: _(RawOrigin::Root, get_reward_pool::<T>(owner.clone(), r))
 	verify {
-		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner, end_block, asset_id }.into());
+		assert_last_event::<T>(Event::RewardPoolCreated { pool_id, owner, end_block }.into());
 	}
 
 	stake {
