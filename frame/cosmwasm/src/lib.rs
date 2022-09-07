@@ -178,6 +178,7 @@ pub mod pallet {
 		IteratorIdOverflow,
 		IteratorNotFound,
 		NotAuthorized,
+		CodeIdOverflow,
 	}
 
 	#[pallet::config]
@@ -447,12 +448,11 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		#[pallet::weight(T::WeightInfo::migrate(funds.len()).saturating_add(*gas))]
+		#[pallet::weight(T::WeightInfo::migrate().saturating_add(*gas))]
 		pub fn migrate(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
 			new_code_id: CosmwasmCodeId,
-			funds: FundsOf<T>,
 			gas: u64,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
@@ -461,6 +461,24 @@ pub mod pallet {
 			let outcome =
 				Self::do_extrinsic_migrate(&mut shared, who, contract, new_code_id, message);
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
+		}
+
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::upload_and_instantiate(code.len(), funds.len()).saturating_add(*gas))]
+		pub fn upload_and_instantiate(
+			origin: OriginFor<T>,
+			code: ContractCodeOf<T>,
+			salt: ContractSaltOf<T>,
+			admin: Option<AccountIdOf<T>>,
+			label: ContractLabelOf<T>,
+			funds: FundsOf<T>,
+			gas: u64,
+			message: ContractMessageOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let next_code_id =
+				CurrentCodeId::<T>::get().checked_add(1).ok_or(Error::<T>::CodeIdOverflow)?;
+			let _ = Self::upload(origin.clone(), code)?;
+			Self::instantiate(origin, next_code_id, salt, admin, label, funds, gas, message)
 		}
 	}
 
@@ -542,10 +560,24 @@ pub mod pallet {
 					Ok(info.clone())
 				},
 			)?;
-			CodeIdToInfo::<T>::try_mutate(info.code_id, |entry| -> Result<(), Error<T>> {
+
+			CodeIdToInfo::<T>::try_mutate_exists(info.code_id, |entry| -> Result<(), Error<T>> {
 				let code_info = entry.as_mut().ok_or(Error::<T>::CodeNotFound)?;
-				code_info.refcount =
-					code_info.refcount.checked_sub(1).ok_or(Error::<T>::RefcountOverflow)?;
+				if code_info.refcount == 0 {
+					// Code is unused after this point, so it can be removed
+					*entry = None;
+					let code = PristineCode::<T>::try_get(info.code_id)
+						.map_err(|_| Error::<T>::CodeNotFound)?;
+					let deposit = code.len().saturating_mul(T::CodeStorageByteDeposit::get() as _);
+					let _ = T::NativeAsset::unreserve(migrator, deposit.saturated_into());
+					let code_hash = T::Hashing::hash(&code);
+					PristineCode::<T>::remove(info.code_id);
+					InstrumentedCode::<T>::remove(info.code_id);
+					CodeHashToId::<T>::remove(code_hash);
+				} else {
+					code_info.refcount =
+						code_info.refcount.checked_sub(1).ok_or(Error::<T>::RefcountOverflow)?;
+				}
 				Ok(())
 			})?;
 			Ok(info)
