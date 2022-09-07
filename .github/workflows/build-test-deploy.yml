@@ -416,7 +416,7 @@ jobs:
       cancel-in-progress: true
     strategy:
       matrix:
-        runtime: [dali-rococo, picasso, composable]
+        runtime: [picasso, composable]
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
