@@ -1055,9 +1055,6 @@ jobs:
           cp frontend/apps/picasso/.firebaserc firebase/picasso/
           cp frontend/apps/picasso/firebase.json firebase/picasso/
           nix-env -iA nixpkgs.nodejs
-          nix-env -iA nixpkgs.tree
-          tree firebase/
-
       - name: Deploy Picasso on preview channel
         if: steps.branch-name.outputs.current_branch != 'main'
         uses: FirebaseExtended/action-hosting-deploy@0f248036885ae672f78587669fa2923f0ef6cac2
