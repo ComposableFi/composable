@@ -6,6 +6,7 @@ type Account @entity {
 }
 
 type PabloPool @entity {
+  id: ID!
   "ID of the last event that was used to derive this entity data"
   eventId: ID!
   "Pool ID"
@@ -18,7 +19,7 @@ type PabloPool @entity {
   baseAssetId: String!
   "Asset used for all quotes in this type"
   quoteAssetId: String!
-  blockNumber: BigInt!
+  blockNumber: BigInt! @index
   "Unix timestamp in ms"
   calculatedTimestamp: BigInt!
   poolAssets: [PabloPoolAsset!] @derivedFrom(field: "pool")
@@ -31,15 +32,15 @@ type PabloPoolAsset @entity {
   pool: PabloPool!
   totalLiquidity: BigInt!
   totalVolume: BigInt!
-  blockNumber: BigInt!
+  blockNumber: BigInt! @index
   "Unix timestamp in ms"
   calculatedTimestamp: BigInt!
 }
 
 type BondedFinanceBondOffer @entity {
   id: ID!
-  eventId: String!
-  offerId: String!
+  eventId: String! @index
+  offerId: String! @index
   "Total amount of purchased bonds"
   totalPurchased: BigInt!
   "Beneficiary account for the bond offer"
@@ -65,11 +66,11 @@ type Schedule {
 type VestingSchedule @entity {
   id: ID!
   "account that initiates the schedule"
-  from: String!
+  from: String! @index
   "chain event ID"
-  eventId: String!
+  eventId: String! @index
   "Vesting schedule ID from chain"
-  scheduleId: BigInt!
+  scheduleId: BigInt! @index
   "'To' account for the vesting schedule"
   to: String!
   "Asset ID"
@@ -85,9 +86,9 @@ type VestingSchedule @entity {
 type Activity @entity {
   id: ID!
   "ID of the event associated with this activity"
-  eventId: String!
+  eventId: Event! @index
   "ID of the active account"
-  accountId: String!
+  accountId: String! @index
   "Timestamp of the block in which this activity occurred"
   timestamp: BigInt!
 }
@@ -96,7 +97,7 @@ type Asset @entity {
   "ID of the asset in Picasso"
   id: ID!
   "ID of the event that added the last price"
-  eventId: String!
+  eventId: String! @index
   "Latest price in USD"
   price: BigInt!
   historicalPrices: [HistoricalAssetPrice!] @derivedFrom(field: "asset")
@@ -109,7 +110,7 @@ enum Currency {
 type HistoricalAssetPrice @entity {
   id: ID!
   "ID of the event associated with this activity"
-  eventId: String!
+  eventId: String! @index
   "ID of the asset"
   asset: Asset!
   price: BigInt!
@@ -119,9 +120,9 @@ type HistoricalAssetPrice @entity {
 
 type RewardPool @entity {
   id: ID!
-  eventId: String!
-  poolId: String!
-  assetId: String!
+  eventId: String! @index
+  poolId: String! @index
+  assetId: String! @index
 }
 
 enum StakingSource {
@@ -130,10 +131,10 @@ enum StakingSource {
 
 type StakingPosition @entity {
   id: ID!
-  eventId: String!
+  eventId: Event! @unique @index
   "Unique identifier for the position on chain"
-  positionId: String!
-  owner: String!
+  positionId: String! @index
+  owner: String! @index
   assetId: String!
   amount: BigInt!
   startTimestamp: BigInt!
@@ -143,7 +144,7 @@ type StakingPosition @entity {
 
 type HistoricalLockedValue @entity {
   id: ID!
-  eventId: String!
+  eventId: Event! @unique @index
   amount: BigInt!
   currency: Currency!
   timestamp: BigInt!
@@ -151,6 +152,7 @@ type HistoricalLockedValue @entity {
 
 type PabloTransaction @entity {
   id: ID!
+  eventId: Event! @unique @index
   pool: PabloPool!
   baseAssetId: String!
   baseAssetAmount: BigInt!
@@ -185,14 +187,15 @@ enum EventType {
 
 type Event @entity {
   id: ID!
-  "ID of account that executed transaction"
-  accountId: String!
+  "ID of account that executed the extrinsic"
+  accountId: String! @index
   "Type of transaction"
   eventType: EventType!
   "Block in which transaction was registered"
-  blockNumber: BigInt!
+  blockNumber: BigInt! @index
   "Timestamp of the block in which this transaction was registered"
   timestamp: BigInt!
   "If this transaction came from Pablo, it will have extra information"
-  pabloTransaction: PabloTransaction
+  pabloTransaction: PabloTransaction @derivedFrom(field: "eventId")
+  activities: [Activity!] @derivedFrom(field: "eventId")
 }

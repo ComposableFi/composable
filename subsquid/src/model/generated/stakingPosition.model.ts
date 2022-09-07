@@ -1,5 +1,6 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, OneToOne as OneToOne_, Index as Index_, JoinColumn as JoinColumn_} from "typeorm"
 import * as marshal from "./marshal"
+import {Event} from "./event.model"
 import {StakingSource} from "./_stakingSource"
 
 @Entity_()
@@ -11,15 +12,19 @@ export class StakingPosition {
   @PrimaryColumn_()
   id!: string
 
-  @Column_("text", {nullable: false})
-  eventId!: string
+  @Index_({unique: true})
+  @OneToOne_(() => Event, {nullable: false})
+  @JoinColumn_()
+  eventId!: Event
 
   /**
    * Unique identifier for the position on chain
    */
+  @Index_()
   @Column_("text", {nullable: false})
   positionId!: string
 
+  @Index_()
   @Column_("text", {nullable: false})
   owner!: string
 

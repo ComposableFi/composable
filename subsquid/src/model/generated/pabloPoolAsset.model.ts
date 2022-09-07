@@ -24,6 +24,7 @@ export class PabloPoolAsset {
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   totalVolume!: bigint
 
+  @Index_()
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint
 

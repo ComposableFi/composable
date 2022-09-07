@@ -1,5 +1,6 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, OneToOne as OneToOne_, Index as Index_, JoinColumn as JoinColumn_, ManyToOne as ManyToOne_} from "typeorm"
 import * as marshal from "./marshal"
+import {Event} from "./event.model"
 import {PabloPool} from "./pabloPool.model"
 
 @Entity_()
@@ -10,6 +11,11 @@ export class PabloTransaction {
 
   @PrimaryColumn_()
   id!: string
+
+  @Index_({unique: true})
+  @OneToOne_(() => Event, {nullable: false})
+  @JoinColumn_()
+  eventId!: Event
 
   @Index_()
   @ManyToOne_(() => PabloPool, {nullable: false})

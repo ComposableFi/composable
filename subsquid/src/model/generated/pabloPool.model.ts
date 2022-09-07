@@ -1,4 +1,4 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, OneToMany as OneToMany_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_, OneToMany as OneToMany_} from "typeorm"
 import * as marshal from "./marshal"
 import {PabloPoolAsset} from "./pabloPoolAsset.model"
 import {PabloTransaction} from "./pabloTransaction.model"
@@ -48,6 +48,7 @@ export class PabloPool {
   @Column_("text", {nullable: false})
   quoteAssetId!: string
 
+  @Index_()
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint
 

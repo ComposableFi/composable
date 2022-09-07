@@ -69,7 +69,7 @@ export type EntityConstructor<T> = {
 export async function trySaveAccount(
   ctx: EventHandlerContext,
   accountId?: string
-): Promise<string | undefined> {
+): Promise<Account | undefined> {
   let accId = accountId || ctx.extrinsic?.signer;
 
   if (process.env.npm_lifecycle_event === "test") {
@@ -94,7 +94,7 @@ export async function trySaveAccount(
 
   await ctx.store.save(account);
 
-  return accId;
+  return account;
 }
 
 /**
@@ -109,7 +109,7 @@ export async function saveEvent(
   ctx: EventHandlerContext,
   accountId: string,
   eventType: EventType
-): Promise<string> {
+): Promise<Event> {
   // Create event
   const event = new Event({
     id: ctx.event.id,
@@ -122,23 +122,23 @@ export async function saveEvent(
   // Store event
   await ctx.store.save(event);
 
-  return event.id;
+  return event;
 }
 
 /**
  * Store Activity on the database.
  * @param ctx
- * @param eventId
+ * @param event
  * @param accountId
  */
 export async function saveActivity(
   ctx: EventHandlerContext,
-  eventId: string,
+  event: Event,
   accountId: string
 ): Promise<string> {
   const activity = new Activity({
     id: randomUUID(),
-    eventId: ctx.event.id,
+    eventId: event,
     accountId,
     timestamp: BigInt(ctx.block.timestamp),
   });
@@ -149,7 +149,7 @@ export async function saveActivity(
 }
 
 /**
- * Saves the given Accounts, a Event for the first account, and
+ * Saves the given Accounts, an Event for the first account, and
  * Activities for every account.
  * If no account id is provided, it will try to create an account using the
  * signer of the underlying extrinsic.
@@ -162,41 +162,47 @@ export async function saveAccountAndEvent(
   ctx: EventHandlerContext,
   eventType: EventType,
   accountId?: string | string[]
-): Promise<{ eventId: string }> {
+): Promise<{ accounts: Account[]; event: Event }> {
   const accountIds: (string | undefined)[] =
-    typeof accountId === "string" ? [accountId] : accountId || [undefined];
+    typeof accountId === "string" ? [accountId] : accountId || [];
 
-  const eventId = ctx.event.id;
+  if (!accountIds?.[0]) {
+    return Promise.reject("Missing account id");
+  }
+
+  const event = await saveEvent(ctx, accountIds[0], eventType);
+
+  const accounts: Account[] = [];
 
   for (let index = 0; index < accountIds.length; index += 1) {
     const id = accountIds[index];
     if (!id) {
       // no-op
-      return Promise.reject();
+      return Promise.reject("Missing account id");
     }
-    const isSaved = await trySaveAccount(ctx, id);
-    if (isSaved) {
-      if (index === 0) {
-        await saveEvent(ctx, id, eventType);
-      }
-      await saveActivity(ctx, eventId, id);
+    const account = await trySaveAccount(ctx, id);
+    if (account) {
+      accounts.push(account);
+      await saveActivity(ctx, event, id);
     }
   }
 
-  return Promise.resolve({ eventId });
+  if (!accounts.length) {
+    return Promise.reject("No accounts were saved");
+  }
+
+  return Promise.resolve({ accounts, event });
 }
 
 /**
  * Stores a new HistoricalLockedValue with current locked amount
  * @param ctx
  * @param amountLocked
- * @param eventId
  * @param assetId
  */
 export async function storeHistoricalLockedValue(
   ctx: EventHandlerContext,
   amountLocked: bigint,
-  eventId: string,
   assetId: string
 ): Promise<void> {
   const wsProvider = new WsProvider("ws://127.0.0.1:9988");
@@ -213,9 +219,15 @@ export async function storeHistoricalLockedValue(
 
   const lastLockedValue = await getLastLockedValue(ctx);
 
+  let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
+
+  if (!event) {
+    return Promise.reject("Event not found");
+  }
+
   const historicalLockedValue = new HistoricalLockedValue({
     id: randomUUID(),
-    eventId,
+    eventId: event,
     amount: lastLockedValue + amountLocked * assetPrice,
     currency: Currency.USD,
     timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
@@ -275,7 +287,7 @@ export async function mockData(ctx: EventHandlerContext) {
     BOB,
     10n,
     10n,
-    "event-1",
+    new Event({ id: "event-2" }),
     BigInt(new Date().valueOf())
   );
   const stakingPosition2 = createStakingPosition(
@@ -284,7 +296,7 @@ export async function mockData(ctx: EventHandlerContext) {
     BOB,
     15n,
     10n,
-    "event-2",
+    new Event({ id: "event-2" }),
     BigInt(new Date().valueOf())
   );
   const stakingPosition3 = createStakingPosition(
@@ -293,7 +305,7 @@ export async function mockData(ctx: EventHandlerContext) {
     BOB,
     50n,
     100n,
-    "event-3",
+    new Event({ id: "event-2" }),
     BigInt(new Date().valueOf())
   );
 
@@ -305,7 +317,7 @@ export async function mockData(ctx: EventHandlerContext) {
     const lastLockedValue = await getLastLockedValue(ctx);
     const historicalLockedValue = new HistoricalLockedValue({
       id: randomUUID(),
-      eventId: "1",
+      eventId: new Event({ id: "1" }),
       amount: lastLockedValue + 10n,
       currency: Currency.USD,
       timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),

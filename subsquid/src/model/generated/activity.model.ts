@@ -1,5 +1,6 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
 import * as marshal from "./marshal"
+import {Event} from "./event.model"
 
 @Entity_()
 export class Activity {
@@ -13,12 +14,14 @@ export class Activity {
   /**
    * ID of the event associated with this activity
    */
-  @Column_("text", {nullable: false})
-  eventId!: string
+  @Index_()
+  @ManyToOne_(() => Event, {nullable: false})
+  eventId!: Event
 
   /**
    * ID of the active account
    */
+  @Index_()
   @Column_("text", {nullable: false})
   accountId!: string
 

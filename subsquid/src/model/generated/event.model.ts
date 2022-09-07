@@ -1,7 +1,8 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_, OneToOne as OneToOne_, OneToMany as OneToMany_} from "typeorm"
 import * as marshal from "./marshal"
 import {EventType} from "./_eventType"
 import {PabloTransaction} from "./pabloTransaction.model"
+import {Activity} from "./activity.model"
 
 @Entity_()
 export class Event {
@@ -13,8 +14,9 @@ export class Event {
   id!: string
 
   /**
-   * ID of account that executed transaction
+   * ID of account that executed the extrinsic
    */
+  @Index_()
   @Column_("text", {nullable: false})
   accountId!: string
 
@@ -27,6 +29,7 @@ export class Event {
   /**
    * Block in which transaction was registered
    */
+  @Index_()
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint
 
@@ -39,7 +42,9 @@ export class Event {
   /**
    * If this transaction came from Pablo, it will have extra information
    */
-  @Index_()
-  @ManyToOne_(() => PabloTransaction, {nullable: true})
+  @OneToOne_(() => PabloTransaction)
   pabloTransaction!: PabloTransaction | undefined | null
+
+  @OneToMany_(() => Activity, e => e.eventId)
+  activities!: Activity[]
 }

@@ -1,4 +1,4 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_} from "typeorm"
 
 @Entity_()
 export class RewardPool {
@@ -9,12 +9,15 @@ export class RewardPool {
   @PrimaryColumn_()
   id!: string
 
+  @Index_()
   @Column_("text", {nullable: false})
   eventId!: string
 
+  @Index_()
   @Column_("text", {nullable: false})
   poolId!: string
 
+  @Index_()
   @Column_("text", {nullable: false})
   assetId!: string
 }

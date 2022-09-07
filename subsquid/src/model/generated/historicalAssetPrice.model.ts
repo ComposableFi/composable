@@ -1,4 +1,4 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_, ManyToOne as ManyToOne_} from "typeorm"
 import * as marshal from "./marshal"
 import {Asset} from "./asset.model"
 import {Currency} from "./_currency"
@@ -15,6 +15,7 @@ export class HistoricalAssetPrice {
   /**
    * ID of the event associated with this activity
    */
+  @Index_()
   @Column_("text", {nullable: false})
   eventId!: string
 

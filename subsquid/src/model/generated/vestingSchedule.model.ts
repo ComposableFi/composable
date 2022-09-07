@@ -1,4 +1,4 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_} from "typeorm"
 import * as marshal from "./marshal"
 import {Schedule} from "./_schedule"
 
@@ -14,18 +14,21 @@ export class VestingSchedule {
   /**
    * account that initiates the schedule
    */
+  @Index_()
   @Column_("text", {nullable: false})
   from!: string
 
   /**
    * chain event ID
    */
+  @Index_()
   @Column_("text", {nullable: false})
   eventId!: string
 
   /**
    * Vesting schedule ID from chain
    */
+  @Index_()
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   scheduleId!: bigint
 
