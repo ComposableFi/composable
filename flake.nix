@@ -334,6 +334,29 @@
             '';
           docs-renders = [ mdbook plantuml graphviz pandoc ];
 
+          simnode-tests = crane-nightly.cargoBuild (common-attrs // {
+            pnameSuffix = "-simnode";
+            cargoArtifacts = common-deps;
+            cargoBuildCommand =
+              "cargo build --release --package simnode-tests --features=builtin-wasm";
+            DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+            PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+            COMPOSABLE_RUNTIME =
+              "${composable-runtime}/lib/runtime.optimized.wasm";
+            installPhase = ''
+              mkdir -p $out/bin
+              cp target/release/simnode-tests $out/bin/simnode-tests
+            '';
+          });
+
+          run-simnode-tests = chain:
+            writeShellScriptBin "run-simnode-tests-${chain}" ''
+              ${simnode-tests}/bin/simnode-tests --chain=${chain} \
+                --base-path=/tmp/db/var/lib/composable-data/ \
+                --pruning=archive \
+                --execution=wasm
+            '';
+
         in rec {
           packages = rec {
             inherit wasm-optimizer;
@@ -348,6 +371,7 @@
             inherit composable-node;
             inherit composable-bench-node;
             inherit rust-nightly;
+            inherit simnode-tests;
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -735,6 +759,7 @@
             wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
               crane = crane-nightly;
             };
+
             default = packages.composable-node;
           };
 
@@ -907,6 +932,16 @@
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "picasso-dev";
             };
+            simnode-tests = {
+              type = "app";
+              program = "${packages.simnode-tests}/bin/simnode-tests";
+            };
+            simnode-tests-composable =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
+            simnode-tests-picasso =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
+            simnode-tests-dali-rococo =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
             default = devnet-dali;
           };
         });

@@ -61,7 +61,7 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 			system::CheckEra::<Self::Runtime>::from(Era::Immortal),
 			system::CheckNonce::<Self::Runtime>::from(nonce),
 			system::CheckWeight::<Self::Runtime>::new(),
-			transaction_payment::ChargeTransactionPayment::<Self::Runtime>::from(0),
+			asset_tx_payment::ChargeAssetTxPayment::<Self::Runtime>::from(0, None),
 		)
 	}
 }
