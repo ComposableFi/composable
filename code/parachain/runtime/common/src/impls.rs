@@ -16,9 +16,9 @@ where
 	<R as balances::Config>::Balance: From<u128>,
 {
 	fn on_nonzero_unbalanced(amount: NegativeImbalance<R>) {
-		/// TODO (vim): This configuration must be a part of each runtime configuration instead
-		/// being a  common configuration. We could build a small custom pallet to capture this
-		/// configuration while  also making part of on-chain governance through extrinisics.
+		// TODO (vim): This configuration must be a part of each runtime configuration instead
+		// being a  common configuration. We could build a small custom pallet to capture this
+		// configuration while  also making part of on-chain governance through extrinisics.
 		// Collator's get half the fees
 		let (to_collators, to_treasury) = amount.ration(25, 75);
 		// 30% gets burned 20% to treasury
