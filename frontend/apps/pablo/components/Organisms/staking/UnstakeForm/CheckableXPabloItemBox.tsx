@@ -1,13 +1,12 @@
 import {
   alpha,
   Box,
-  Checkbox,
+  BoxProps,
   Theme,
   Typography,
   useTheme,
-  BoxProps,
 } from "@mui/material";
-import { BaseAsset } from "@/components/Atoms";
+import { BaseAsset, Checkbox } from "@/components/Atoms";
 import { TOKENS } from "@/defi/Tokens";
 import { XPablo } from "@/defi/types";
 
@@ -18,27 +17,26 @@ const defaultFlexBoxProps = {
   gap: 1,
 };
 
-const containerProps = (theme: Theme, selected?: boolean) => ({
-  py: 1.75,
-  pl: 2,
-  pr: 3,
-  borderRadius: 9999,
-  height: 56,
-  sx: {
-    background: (
-      selected
+const containerProps = (theme: Theme, selected?: boolean) =>
+  ({
+    py: 1.75,
+    pl: 2,
+    pr: 3,
+    borderRadius: 9999,
+    height: 56,
+    sx: {
+      background: selected
         ? alpha(theme.palette.primary.main, theme.custom.opacity.light)
-        : undefined
-    ),
-    border: `1px solid ${theme.palette.primary.main}`,
-  },
-  ...defaultFlexBoxProps
-} as const);
+        : undefined,
+      border: `1px solid ${theme.palette.primary.main}`,
+    },
+    ...defaultFlexBoxProps,
+  } as const);
 
 export type CheckableXPabloItemBoxProps = {
- xPablo: XPablo,
- selectedXPabloId?: number,
- setSelectedXPabloId?: (id?: number) => void,
+  xPablo: XPablo;
+  selectedXPabloId?: number;
+  setSelectedXPabloId?: (id?: number) => void;
 } & BoxProps;
 
 export const CheckableXPabloItemBox: React.FC<CheckableXPabloItemBoxProps> = ({
@@ -62,7 +60,7 @@ export const CheckableXPabloItemBox: React.FC<CheckableXPabloItemBoxProps> = ({
           value={xPablo.id}
           checked={selected}
           onChange={handleChange}
-          inputProps={{ 'aria-label': 'controlled' }}
+          inputProps={{ "aria-label": "controlled" }}
         />
         <BaseAsset icon={TOKENS.pablo.icon} label={`fNFT ${xPablo.id}`} />
       </Box>

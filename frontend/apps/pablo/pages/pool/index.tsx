@@ -18,10 +18,9 @@ import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFe
 import { AllLiquidityTable } from "@/components/Organisms/AllLiquidityTable";
 
 import { Link } from "@/components";
-import {useDotSamaContext} from "substrate-react";
+import { useDotSamaContext } from "substrate-react";
 import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import useStore from "@/store/useStore";
-
 
 const standardPageSize = {
   xs: 12,
@@ -33,9 +32,9 @@ const twoColumnPageSize = {
 };
 
 const Pool: NextPage = () => {
-  const {extensionStatus} = useDotSamaContext();
+  const { extensionStatus } = useDotSamaContext();
 
-  const {createPool} = useStore();
+  const { createPool } = useStore();
   const theme = useTheme();
   const router = useRouter();
   const [messageBoxOpen, setMessageBoxOpen] = useState(true);
@@ -66,12 +65,12 @@ const Pool: NextPage = () => {
             />
           )}
         </Box>
-        {extensionStatus!=="connected" && (
+        {extensionStatus !== "connected" && (
           <Grid item {...standardPageSize}>
             <ConnectWalletFeaturedBox />
           </Grid>
         )}
-        {extensionStatus==="connected" && (
+        {extensionStatus === "connected" && (
           <Grid>
             <Grid item {...standardPageSize}>
               <Card variant="outlined">
@@ -84,7 +83,7 @@ const Pool: NextPage = () => {
                   <Typography variant="h6">Your Liquidity</Typography>
                   <Box>
                     <Button
-                      disabled={true}
+                      disabled
                       sx={{ marginRight: 2 }}
                       onClick={handleCreatePair}
                       variant="outlined"
@@ -109,7 +108,7 @@ const Pool: NextPage = () => {
                 >
                   {`Don't see a pool you joined?`}
                 </Typography>
-                <Link href="@/pages/pool/import" key="import">
+                <Link href="/pool/import" key="import">
                   <Typography
                     textAlign="center"
                     variant="body2"

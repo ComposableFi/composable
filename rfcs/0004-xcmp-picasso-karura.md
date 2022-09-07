@@ -7,6 +7,7 @@ This proposal does not covers `paper work` around tech stuff as it is described 
 - [Overview](#overview)
   - [Prerequisites](#prerequisites)
   - [Picasso to Karura](#picasso-to-karura)
+    - [Test Dali to Rococo](#test-dali-to-rococo)
   - [Accept Picasso to Karura](#accept-picasso-to-karura)
   - [Karura to Picasso](#karura-to-picasso)
   - [Accept Karura on Picasso](#accept-karura-on-picasso)
@@ -36,7 +37,13 @@ Transfer to [dali-rococo] accounts some amounts.
 
 That to be executed https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode/0x3c00d0070000e803000000900100 on behalf of  parachain via next
 
-run https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x2900010100020c0004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00d0070000e803000000900100
+run https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode/0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a01383c00d0070000e8030000009001000d0100040001009d20
+
+### Test Dali to Rococo
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frococo-rpc.polkadot.io#/extrinsics/decode/0x170000080000e803000000900100
+
+https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Frpc.composablefinance.ninja#/extrinsics/decode/0x290001010002100004000000000b0060defb740513000000000b0060defb74050006000700f2052a0138170000080000e8030000009001000d0100040001009d20
 
 ## Accept Picasso to Karura
 
