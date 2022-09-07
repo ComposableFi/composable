@@ -14,7 +14,7 @@ Vaults aggregate user funds into a single managed pool. These funds are then use
 In the Composable ecosystem, developers can leverage Cubic which enables users to deposit liquidity provisioning (LP) tokens into vaults. Funds can then be routed to various strategies like those in other pallets, those in other smart contracts, or even those in centralized finance. This means that funds can be transferred to and from several ecosystems, including Polkadot, its canary network Kusama, Ethereum, and Cosmos. This relationship is depicted below:
 
 
-![how_our_vaults_pallet_powers_our_infrastructure](./how-cubic-powers-our-infrastructure.jpg)
+![how_our_vaults_pallet_powers_our_infrastructure](./cubic/how-cubic-powers-our-infrastructure.jpg)
 
 
 ## Use Cases
@@ -28,4 +28,8 @@ Cubic will become core infrastructure for projects that utilize vaults, such as 
 Vaults provided through a pallet become the core infrastructure of the Picasso and the Composable Parachain. Usage of the vaults incurs lower fees as result of optimized pallet design. Strategies on our chain may still be implemented as smart contracts or pallets. The latter is capable of far more complex operations, such as cross-chain investing, which delivers advanced functionality to our ecosystem.
 
 
-Through this novel infrastructure, Cubic offers unique functionality for the DotSama ecosystem (cross-chain vaults). Cubic is positioned to be both a critical component of Composable and a plethora of other dApps emerging in the cross-chain DeFi space. Check out the standard implementation and extrinsics of Cubic [here](https://dali.devnets.composablefinance.ninja/pallets/vault.html).
+Through this novel infrastructure, Cubic offers unique functionality for the DotSama ecosystem (cross-chain vaults). Cubic is positioned to be both a critical component of Composable and a plethora of other dApps emerging in the cross-chain DeFi space. Check out the standard implementation and extrinsics of Cubic [here](https://docs.composable.finance/pallets/vault.html).
+
+---
+
+[Pallet Documentation](../pallets/vault.md)

@@ -22,3 +22,7 @@ These limitations are understated today but will only grow more significant and 
 These bridges are hindered by a lack of smart liquidity movement and an inability to support cross-chain-and-layer transfers and LP token swaps. The inefficiencies of current bridges hinder end-users from harnessing the full potential of DeFi. For instance, arbitrage opportunities and other time-sensitive transfers may often fail as a result of the reactive method of liquidity movement utilized by the current generation of bridges. Liquidity should be automatically rebalanced to ensure that it is available on the right layer at the right time to guarantee transfers.
 
 At the core of their value proposition, existing bridges need to be able to guarantee transfers. However, insufficient liquidity on a necessary layer at the time of a transfer often hinders this guarantee. A major contributing factor to these limitations and failure of guarantee is the slow, manual process of liquidity movement.
+
+---
+
+[Pallet Documentation](../pallets/mosaic.md)

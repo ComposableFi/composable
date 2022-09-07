@@ -57,3 +57,7 @@ destination is elsewhere. These transactions must first be requested by the
 user, then accepted by the Relayer. Once accepted by the Relayer the funds of 
 this transaction will no longer be claimable on the origin network. Before 
 acceptance by the Relayer, funds may be reclaimed by the user.
+
+## References
+
+* [About Mosaic](https://docs.composable.finance/products/mosaic-overview.html)

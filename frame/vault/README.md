@@ -66,3 +66,7 @@ it is no longer required.
 Root is capable of completely shutting down a vault, disallowing deposits and 
 withdrawals. This is intended as a mitigation for hacks. After an emergency 
 shutdown, a vault can be restarted by root.
+
+## References
+
+* [About Cubic](https://docs.composable.finance/products/cubic/cubic.html)

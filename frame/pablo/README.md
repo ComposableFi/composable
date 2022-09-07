@@ -5,7 +5,7 @@ Pallet Pablo provides extensive functionality to set up an exchange, enabling us
 Pablo builds on four pillars:
 1. [Curve Finance](https://curve.fi/files/stableswap-paper.pdf): basic functionality and mechanisms for cross-market transactions involving stablecoins.
 2. [Balancer AMM](https://balancer.fi/whitepaper.pdf): built on the constant product formula, balancer functions similar to Uniswap but applies adjustable weights to set a price difference at pool initialization.
-3. [Liquidity Bootstrapping](../../book/src/pallets/liquidity-bootstrapping.md): based on Balancer AMM and brings the ability to launch a new token. After liquidity has been provided, a specified start and ending period is set. The idea is to launch a new token, and after it's initial liquidity has been provided by its creator other users can add liquidity for the token.
+3. [Liquidity Bootstrapping](https://github.com/ComposableFi/composable/blob/main/frame/pablo/src/liquidity_bootstrapping.rs): based on Balancer AMM and brings the ability to launch a new token. After liquidity has been provided, a specified start and ending period is set. The idea is to launch a new token, and after it's initial liquidity has been provided by its creator other users can add liquidity for the token.
 4. [Dex-Router](../../book/src/pallets/dex-router.md): provides trading infrastructure for currency pairs with no direct pool in Pablo by combining and routing between different pools. Another function of the DEX-Router is wrapping a single pablo pool to mark it as verified, therefore distinguishing it from user created pools.
 
 ## Workflow
@@ -26,3 +26,7 @@ and basic liquidity pool management functions:
 - `remove_liquidity`
 
 Users can also conduct specified swap operations by composing instructions with at least one currency pair.
+
+## References
+
+* [About Pablo](https://docs.composable.finance/products/pablo-overview.html)
