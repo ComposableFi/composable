@@ -912,9 +912,9 @@ jobs:
           exit $?
 
   effects-gate:
+      name: "Effect gate, automatically merged if passed"
       runs-on: 
         - ubuntu-latest
-      name: effects-gate
       needs:
         - check-nix
         - devcontainer-build
@@ -931,6 +931,7 @@ jobs:
         - cargo-fmt-check
         - taplo-cli-check
         - prettier-check        
+        - check-simnode
       steps:
         - run: echo "Goblins allow your work to see the light"
 
