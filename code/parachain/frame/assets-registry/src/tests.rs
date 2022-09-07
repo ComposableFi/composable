@@ -142,9 +142,9 @@ fn update_asset() {
 #[test]
 fn set_min_fee() {
 	new_test_ext().execute_with(|| {
-		let target_parachain_id = 100u32.into();
+		let target_parachain_id = 100_u32.into();
 		let foreign_asset_id: XcmAssetLocation = Default::default();
-		let balance = 100_500u32.into();
+		let balance = 100_500_u32.into();
 
 		assert_eq!(
 			AssetsRegistry::minimal_amount(target_parachain_id, foreign_asset_id.clone()),

@@ -150,7 +150,7 @@ mod tests {
 		where
 			I: 'a,
 		{
-			Some(AccountId::from([0u8; 32]))
+			Some(AccountId::from([0_u8; 32]))
 		}
 	}
 

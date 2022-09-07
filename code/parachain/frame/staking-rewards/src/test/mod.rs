@@ -263,8 +263,8 @@ fn test_extend_stake_amount() {
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let staker = ALICE;
 		let pool_id = PICA::ID;
-		let amount = 100_500u32.into();
-		let extend_amount = 100_500u32.into();
+		let amount = 100_500_u32.into();
+		let extend_amount = 100_500_u32.into();
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
 		let total_shares = 200;
@@ -345,7 +345,7 @@ fn not_owner_of_stake_can_not_unstake() {
 		let owner = ALICE;
 		let not_owner = BOB;
 		let pool_id = PICA::ID;
-		let amount = 100_500u32.into();
+		let amount = 100_500_u32.into();
 		let duration_preset = ONE_HOUR;
 		assert_ne!(owner, not_owner);
 
@@ -369,7 +369,7 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		assert_ok!(StakingRewards::create_reward_pool(Origin::root(), get_default_reward_pool()));
 		let staker = ALICE;
 		let pool_id = PICA::ID;
-		let amount = 100_500u32.into();
+		let amount = 100_500_u32.into();
 		let duration_preset = ONE_HOUR;
 		let fnft_asset_account = FinancialNft::asset_account(&1, &0);
 
@@ -451,7 +451,7 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 #[test]
 fn unstake_in_case_of_not_zero_claims_and_not_early_unlock_should_work() {
 	let staker = ALICE;
-	let amount = 100_500u32.into();
+	let amount = 100_500_u32.into();
 	let duration_preset = ONE_HOUR;
 	let total_rewards = 100;
 	let total_shares = 200;
