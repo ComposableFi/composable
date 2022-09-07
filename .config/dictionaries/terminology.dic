@@ -57,6 +57,7 @@ twap
 twaps
 cumulatives # ?
 offchain
+onfinality
 denom  # used in ibc
 denoms # used in ibc
 interchain
