@@ -42,6 +42,7 @@ pub async fn query_ready_and_timed_out_packets(
 	// what is the sink's latest height/timestamp ?
 	let (sink_height, sink_timestamp) = sink.latest_height_and_timestamp().await?;
 	let channel_whitelist = source.channel_whitelist().await?;
+
 	for (channel_id, port_id) in channel_whitelist {
 		let source_channel_response =
 			source.query_channel_end(source_height, channel_id, port_id.clone()).await?;
@@ -54,7 +55,7 @@ pub async fn query_ready_and_timed_out_packets(
 				))
 			})?)?;
 
-		if source_channel_end.state != State::Open || source_channel_end.state != State::Closed {
+		if !matches!(source_channel_end.state, State::Open | State::Closed) {
 			continue
 		}
 		let connection_id = source_channel_end

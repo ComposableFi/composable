@@ -1,4 +1,4 @@
-use crate::{packet_relay_status, packet_messages::query_ready_and_timed_out_packets};
+use crate::{packet_messages::query_ready_and_timed_out_packets, packet_relay_status};
 use codec::Encode;
 use ibc::{
 	core::{

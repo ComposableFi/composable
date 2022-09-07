@@ -302,7 +302,8 @@ pub async fn query_undelivered_sequences(
 	source: &impl Chain,
 	sink: &impl Chain,
 ) -> Result<Vec<u64>, anyhow::Error> {
-	let channel_response = source.query_channel_end(source_height, channel_id, port_id.clone()).await?;
+	let channel_response =
+		source.query_channel_end(source_height, channel_id, port_id.clone()).await?;
 	let channel_end = ChannelEnd::try_from(
 		channel_response
 			.channel
@@ -310,7 +311,9 @@ pub async fn query_undelivered_sequences(
 	)
 	.map_err(|e| Error::Custom(e.to_string()))?;
 	// First we fetch all packet commitments from source
-	let seqs = source.query_packet_commitments(source_height, channel_id, port_id.clone()).await?;
+	let seqs = source
+		.query_packet_commitments(source_height, channel_id, port_id.clone())
+		.await?;
 	let counterparty_channel_id = channel_end
 		.counterparty()
 		.channel_id
@@ -327,11 +330,7 @@ pub async fn query_undelivered_sequences(
 		.await?
 	} else {
 		let next_seq_recv = sink
-			.query_next_sequence_recv(
-				sink_height,
-				&counterparty_port_id,
-				&counterparty_channel_id,
-			)
+			.query_next_sequence_recv(sink_height, &counterparty_port_id, &counterparty_channel_id)
 			.await?
 			.next_sequence_receive;
 		seqs.into_iter().filter(|seq| *seq > next_seq_recv).collect()
@@ -349,7 +348,8 @@ pub async fn query_undelivered_acks(
 	source: &impl Chain,
 	sink: &impl Chain,
 ) -> Result<Vec<u64>, anyhow::Error> {
-	let channel_response = source.query_channel_end(source_height, channel_id, port_id.clone()).await?;
+	let channel_response =
+		source.query_channel_end(source_height, channel_id, port_id.clone()).await?;
 	let channel_end = ChannelEnd::try_from(
 		channel_response
 			.channel
@@ -357,7 +357,9 @@ pub async fn query_undelivered_acks(
 	)
 	.map_err(|e| Error::Custom(e.to_string()))?;
 	// First we fetch all packet acknowledgements from source
-	let seqs = source.query_packet_acknowledgements(source_height, channel_id, port_id.clone()).await?;
+	let seqs = source
+		.query_packet_acknowledgements(source_height, channel_id, port_id.clone())
+		.await?;
 	let counterparty_channel_id = channel_end
 		.counterparty()
 		.channel_id
