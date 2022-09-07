@@ -36,7 +36,7 @@ node = { package = "composable-node", path = "../../parachain/node", features = 
   "composable",
 ] }
 picasso-runtime = { path = "../../parachain/runtime/picasso" }
-simnode-common = { path = "../parachain/common" }
+simnode-common = { path = "../common" }
 
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 hex = "0.4.3"
