@@ -1,4 +1,4 @@
-use crate::{packet_relay_status, timeouts::get_timed_out_packets_messages};
+use crate::{packet_relay_status, packet_messages::query_ready_and_timed_out_packets};
 use codec::Encode;
 use ibc::{
 	core::{
@@ -33,14 +33,15 @@ use ibc_proto::{google::protobuf::Any, ibc::core::client::v1::QueryConsensusStat
 use primitives::{error::Error, Chain};
 use tendermint_proto::Protobuf;
 
-/// This parses events coming from a source chain into messages that should be delivered to a
-/// counterparty chain.
+/// This parses events coming from a source chain
+/// Returns a tuple of messages, with the first item being packets that are ready to be sent to the
+/// sink chain. And the second item being packet timeouts that should be sent to the source.
 pub async fn parse_events(
 	source: &mut impl Chain,
 	sink: &mut impl Chain,
 	events: Vec<IbcEvent>,
 	header: AnyHeader,
-) -> Result<Vec<Any>, anyhow::Error> {
+) -> Result<(Vec<Any>, Vec<Any>), anyhow::Error> {
 	let parse_send_packets = packet_relay_status();
 	let mut messages = vec![];
 
@@ -408,8 +409,35 @@ pub async fn parse_events(
 				messages.push(msg)
 			},
 			IbcEvent::SendPacket(send_packet) if parse_send_packets => {
+				// can we send this packet?
+				// 1. query the connection and get the connection delay.
+				// 2. if none, send message immediately
+				// 3. otherwise skip.
 				let port_id = send_packet.packet.source_port.clone();
 				let channel_id = send_packet.packet.source_channel.clone();
+				let channel_response = source
+					.query_channel_end(send_packet.height, channel_id, port_id.clone())
+					.await?;
+				let channel_end =
+					ChannelEnd::try_from(channel_response.channel.ok_or_else(|| {
+						Error::Custom(format!(
+							"Failed to convert to concrete channel end from raw channel end",
+						))
+					})?)?;
+				let connection_id = channel_end
+					.connection_hops
+					.get(0)
+					.ok_or_else(|| Error::Custom("Channel end missing connection id".to_string()))?
+					.clone();
+				let connection_response =
+					source.query_connection_end(send_packet.height, connection_id.clone()).await?;
+				let connection_end =
+					ConnectionEnd::try_from(connection_response.connection.ok_or_else(|| {
+						Error::Custom(format!("ConnectionEnd not found for {:?}", connection_id))
+					})?)?;
+				if !connection_end.delay_period().is_zero() {
+					continue
+				}
 				let seq = u64::from(send_packet.packet.sequence);
 				let packet = send_packet.packet;
 				let packet_commitment_response = source
@@ -426,7 +454,6 @@ pub async fn parse_events(
 				let msg = MsgRecvPacket {
 					packet: packet.clone(),
 					proofs: Proofs::new(commitment_proof, None, None, None, proof_height)?,
-
 					signer: sink.account_id(),
 				};
 
@@ -437,6 +464,29 @@ pub async fn parse_events(
 			IbcEvent::WriteAcknowledgement(write_ack) => {
 				let port_id = &write_ack.packet.source_port.clone();
 				let channel_id = &write_ack.packet.source_channel.clone();
+				let channel_response = source
+					.query_channel_end(write_ack.height, channel_id.clone(), port_id.clone())
+					.await?;
+				let channel_end =
+					ChannelEnd::try_from(channel_response.channel.ok_or_else(|| {
+						Error::Custom(format!(
+							"Failed to convert to concrete channel end from raw channel end",
+						))
+					})?)?;
+				let connection_id = channel_end
+					.connection_hops
+					.get(0)
+					.ok_or_else(|| Error::Custom("Channel end missing connection id".to_string()))?
+					.clone();
+				let connection_response =
+					source.query_connection_end(write_ack.height, connection_id.clone()).await?;
+				let connection_end =
+					ConnectionEnd::try_from(connection_response.connection.ok_or_else(|| {
+						Error::Custom(format!("ConnectionEnd not found for {:?}", connection_id))
+					})?)?;
+				if !connection_end.delay_period().is_zero() {
+					continue
+				}
 				let seq = u64::from(write_ack.packet.sequence);
 				let packet = write_ack.packet;
 				let packet_acknowledgement_response = source
@@ -467,9 +517,10 @@ pub async fn parse_events(
 		}
 	}
 
-	// 2. Get timeouts that are ready to be processed from the sink
-	let timeout_messages = get_timed_out_packets_messages(sink, source).await?;
-	messages.extend(timeout_messages);
+	// 2. query packets that can now be sent, at this sink height because of connection delay.
+	let (ready_packets, timed_out_packets) =
+		query_ready_and_timed_out_packets(source, sink).await?;
+	messages.extend(ready_packets);
 
 	// 3. insert update client message at first index
 	{
@@ -481,7 +532,7 @@ pub async fn parse_events(
 		messages.insert(0, update_client);
 	}
 
-	Ok(messages)
+	Ok((messages, timed_out_packets))
 }
 
 /// Fetch the connection proof for the sink chain.

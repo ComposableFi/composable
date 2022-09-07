@@ -360,6 +360,8 @@ where
 	)
 	.await;
 
+	println!("⌛️ Packet Timeout Timestamp{:#?}", msg.timeout_timestamp.nanoseconds());
+
 	// Wait for timeout height to elapse then resume packet relay
 	// wait for the acknowledgment
 	let future = chain_b

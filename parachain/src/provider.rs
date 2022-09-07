@@ -40,7 +40,7 @@ use sp_core::H256;
 
 use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
-use ibc::timestamp::Timestamp;
+use ibc::{core::ics02_client::client_consensus::AnyConsensusState, timestamp::Timestamp};
 use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
 
 /// Finality event for parachains
@@ -522,27 +522,6 @@ where
 			Timestamp::from_nanoseconds(response.timestamp)
 				.map_err(|_| Error::Custom("Received invalid timestamp".to_string()))?,
 		))
-	}
-
-	async fn find_suitable_timeout_height(
-		&self,
-		timestamp: Timestamp,
-		start: Height,
-		stop: Height,
-	) -> Result<Option<Height>, Self::Error> {
-		let api = self
-			.para_client
-			.clone()
-			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		for block_number in start.revision_height..stop.revision_height {
-			let block_hash = self.para_client.rpc().block_hash(Some(block_number.into())).await?;
-			let unix_timestamp_millis = api.storage().timestamp().now(block_hash).await?;
-			let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
-			if timestamp_nanos >= timestamp.nanoseconds() {
-				return Ok(Some(Height::new(self.para_id.into(), block_number)))
-			}
-		}
-		Ok(None)
 	}
 
 	async fn query_host_consensus_state_proof(

@@ -230,17 +230,6 @@ pub trait IbcProvider {
 		client_height: Height,
 	) -> Result<(Height, Timestamp), Self::Error>;
 
-	/// Find suitable timeout proof height
-	/// Should return the first block height greater than or equal to the start height where the
-	/// chain timestamp is greater than or equal to the provided timestamp, the return value should
-	/// be less than `stop` height
-	async fn find_suitable_timeout_height(
-		&self,
-		timestamp: Timestamp,
-		start: Height,
-		stop: Height,
-	) -> Result<Option<Height>, Self::Error>;
-
 	/// Return a proof for the host consensus state at the given height to be included in the
 	/// consensus state proof.
 	async fn query_host_consensus_state_proof(
@@ -306,22 +295,22 @@ pub trait Chain: IbcProvider + KeyProvider + Send + Sync {
 /// Return undelivered packet sequences
 /// Implementation should work both for ordered and unordered channels
 pub async fn query_undelivered_sequences(
-	at: Height,
-	counterparty_height: Height,
+	source_height: Height,
+	sink_height: Height,
 	channel_id: ChannelId,
 	port_id: PortId,
 	source: &impl Chain,
 	sink: &impl Chain,
 ) -> Result<Vec<u64>, anyhow::Error> {
-	let channel_response = source.query_channel_end(at, channel_id, port_id.clone()).await?;
+	let channel_response = source.query_channel_end(source_height, channel_id, port_id.clone()).await?;
 	let channel_end = ChannelEnd::try_from(
 		channel_response
 			.channel
 			.ok_or_else(|| Error::Custom("ChannelEnd not could not be decoded".to_string()))?,
 	)
 	.map_err(|e| Error::Custom(e.to_string()))?;
-	// First we fetch all packet commitments from host chain
-	let seqs = source.query_packet_commitments(at, channel_id, port_id.clone()).await?;
+	// First we fetch all packet commitments from source
+	let seqs = source.query_packet_commitments(source_height, channel_id, port_id.clone()).await?;
 	let counterparty_channel_id = channel_end
 		.counterparty()
 		.channel_id
@@ -330,7 +319,7 @@ pub async fn query_undelivered_sequences(
 
 	let undelivered_sequences = if channel_end.ordering == Unordered {
 		sink.query_unreceived_packets(
-			counterparty_height,
+			sink_height,
 			counterparty_channel_id,
 			counterparty_port_id.clone(),
 			seqs,
@@ -339,7 +328,7 @@ pub async fn query_undelivered_sequences(
 	} else {
 		let next_seq_recv = sink
 			.query_next_sequence_recv(
-				counterparty_height,
+				sink_height,
 				&counterparty_port_id,
 				&counterparty_channel_id,
 			)
@@ -349,4 +338,40 @@ pub async fn query_undelivered_sequences(
 	};
 
 	Ok(undelivered_sequences)
+}
+
+/// Return undelivered packet acknowledgements
+pub async fn query_undelivered_acks(
+	source_height: Height,
+	sink_height: Height,
+	channel_id: ChannelId,
+	port_id: PortId,
+	source: &impl Chain,
+	sink: &impl Chain,
+) -> Result<Vec<u64>, anyhow::Error> {
+	let channel_response = source.query_channel_end(source_height, channel_id, port_id.clone()).await?;
+	let channel_end = ChannelEnd::try_from(
+		channel_response
+			.channel
+			.ok_or_else(|| Error::Custom("ChannelEnd not could not be decoded".to_string()))?,
+	)
+	.map_err(|e| Error::Custom(e.to_string()))?;
+	// First we fetch all packet acknowledgements from source
+	let seqs = source.query_packet_acknowledgements(source_height, channel_id, port_id.clone()).await?;
+	let counterparty_channel_id = channel_end
+		.counterparty()
+		.channel_id
+		.ok_or_else(|| Error::Custom("Expected counterparty channel id".to_string()))?;
+	let counterparty_port_id = channel_end.counterparty().port_id.clone();
+
+	let undelivered_acks = sink
+		.query_unreceived_acknowledgements(
+			sink_height,
+			counterparty_channel_id,
+			counterparty_port_id.clone(),
+			seqs,
+		)
+		.await?;
+
+	Ok(undelivered_acks)
 }
