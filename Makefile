@@ -17,12 +17,15 @@ help:
 	@echo $(print_help_text)
 
 build:
+	cd code
 	@cargo +nightly build
 
 clean:
+	cd code
 	@cargo clean
 
 release:
+	cd code
 	cargo +nightly build --release -p wasm-optimizer
 	cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown
 	cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown
@@ -37,15 +40,18 @@ release:
 
 .PHONY: build-release
 build-release:
+	cd code
 	cargo build --locked --features with-all-runtime --profile production --workspace --exclude runtime-integration-tests --exclude e2e-tests --exclude test-service
 
 bench:
 	./scripts/benchmark.sh
 
 test:
+	cd code
 	@cargo test $(TESTS) --offline --lib -- --color=always --nocapture
 
 docs: build
+	cd code
 	@cargo doc --no-deps
 
 style-check:
@@ -59,20 +65,23 @@ style:
 
 lint:
 	@rustup component add clippy 2> /dev/null
+	cd code
 	cargo clippy --all-targets --all-features -- -D warnings
 
 udeps:
+	cd code
 	SKIP_WASM_BUILD=1 cargo +nightly udeps -q --all-targets
 
 dev:
+	cd code
 	cargo run
 
 # run as `make open=y run-book` to open as well
 run-book:
-	bash -c "(trap 'kill 0' SIGINT; cargo run --manifest-path utils/extrinsics-docs-scraper/Cargo.toml --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve --hostname 0.0.0.0 book/ $(if $(filter y,${open}),'--open'))"
+	bash -c "(trap 'kill 0' SIGINT; cargo run --manifest-path code/utils/extrinsics-docs-scraper/Cargo.toml --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve --hostname 0.0.0.0 book/ $(if $(filter y,${open}),'--open'))"
 
 build-book:
-	cargo run --manifest-path utils/extrinsics-docs-scraper/Cargo.toml --release -- --config-file-path=scraper.toml
+	cargo run --manifest-path code/utils/extrinsics-docs-scraper/Cargo.toml --release -- --config-file-path=scraper.toml
 	mdbook build book/
 
 .PHONY: version
@@ -149,6 +158,7 @@ containerize-base-ci-linux:
 		.
 # fastest way to build and debug runtime in simulator
 run-local-integration-tests-debug:
+	cd code
 	RUST_BACKTRACE=full \
 	SKIP_WASM_BUILD=1 \
 	RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace \
