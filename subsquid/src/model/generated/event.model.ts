@@ -1,22 +1,16 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, ManyToOne as ManyToOne_, Index as Index_} from "typeorm"
 import * as marshal from "./marshal"
-import {TransactionType} from "./_transactionType"
+import {EventType} from "./_eventType"
 import {PabloTransaction} from "./pabloTransaction.model"
 
 @Entity_()
-export class Transaction {
-  constructor(props?: Partial<Transaction>) {
+export class Event {
+  constructor(props?: Partial<Event>) {
     Object.assign(this, props)
   }
 
   @PrimaryColumn_()
   id!: string
-
-  /**
-   * ID of the event that was used to derive this transaction
-   */
-  @Column_("text", {nullable: false})
-  eventId!: string
 
   /**
    * ID of account that executed transaction
@@ -28,7 +22,7 @@ export class Transaction {
    * Type of transaction
    */
   @Column_("varchar", {length: 43, nullable: false})
-  transactionType!: TransactionType
+  eventType!: EventType
 
   /**
    * Block in which transaction was registered

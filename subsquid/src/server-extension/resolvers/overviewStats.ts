@@ -7,12 +7,7 @@ import {
   ResolverInterface,
 } from "type-graphql";
 import type { EntityManager } from "typeorm";
-import {
-  Transaction,
-  Account,
-  Activity,
-  HistoricalLockedValue,
-} from "../../model";
+import { Event, Account, Activity, HistoricalLockedValue } from "../../model";
 
 @ObjectType()
 export class OverviewStats {
@@ -65,12 +60,12 @@ export class OverviewStatsResolver implements ResolverInterface<OverviewStats> {
     const manager = await this.tx();
 
     let transactions: { transactions_count: number }[] = await manager
-      .getRepository(Transaction)
+      .getRepository(Event)
       .query(
         `
         SELECT
           count(*) as transactions_count
-        FROM transaction
+        FROM event
         LIMIT 1
       `
       );

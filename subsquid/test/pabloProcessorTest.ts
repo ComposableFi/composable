@@ -9,12 +9,7 @@ import {
   verify,
   when,
 } from "ts-mockito";
-import {
-  PabloPool,
-  PabloPoolAsset,
-  Transaction,
-  TransactionType,
-} from "../src/model";
+import { PabloPool, PabloPoolAsset, Event, EventType } from "../src/model";
 import {
   processLiquidityAddedEvent,
   processLiquidityRemovedEvent,
@@ -61,11 +56,11 @@ function assertPool(
   expect(poolArg.totalFees).eq(totalFees);
 }
 
-function assertTransaction(
-  transaction: Transaction,
+function assertEvent(
+  event: Event,
   eventId: string,
   accountId: string,
-  transactionType: TransactionType,
+  eventType: EventType,
   spotPrice: string,
   baseAssetId: string,
   baseAssetAmount: bigint,
@@ -73,10 +68,10 @@ function assertTransaction(
   quoteAssetAmount: bigint,
   fee: string
 ) {
-  expect(transaction.eventId).eq(eventId);
-  expect(transaction.transactionType).eq(transactionType);
-  expect(transaction.accountId).eq(accountId);
-  const pabloTransaction = transaction.pabloTransaction!;
+  expect(event.id).eq(eventId);
+  expect(event.eventType).eq(eventType);
+  expect(event.accountId).eq(accountId);
+  const pabloTransaction = event.pabloTransaction!;
   expect(pabloTransaction.spotPrice).eq(spotPrice);
   expect(pabloTransaction.baseAssetId).eq(baseAssetId);
   expect(pabloTransaction.baseAssetAmount).eq(baseAssetAmount);
@@ -235,7 +230,7 @@ function addLiquidity(
 }
 
 describe.skip("PoolCreated Tests", function () {
-  it("Should create the Pool, Assets and Transaction correctly", async function () {
+  it("Should create the Pool, Assets and Event correctly", async function () {
     // given
     let pabloPool = new PabloPool();
     let storeMock: Store = mock<Store>();
@@ -283,13 +278,13 @@ describe.skip("PoolCreated Tests", function () {
       BigInt(0),
       BigInt(0)
     );
-    verify(storeMock.save(anyOfClass(Transaction))).once();
+    verify(storeMock.save(anyOfClass(Event))).once();
     const [txArg] = capture(storeMock.save).last();
-    assertTransaction(
-      txArg as unknown as Transaction,
+    assertEvent(
+      txArg as unknown as Event,
       ctx.event.id,
       encodeAccount(owner),
-      TransactionType.CREATE_POOL,
+      EventType.CREATE_POOL,
       "0",
       "1",
       BigInt(0),
@@ -301,7 +296,7 @@ describe.skip("PoolCreated Tests", function () {
 });
 
 describe.skip("Liquidity Added & Removed Tests", function () {
-  it("Should add liquidity to the Pool and record Assets and Transaction correctly", async function () {
+  it("Should add liquidity to the Pool and record Assets and Event correctly", async function () {
     // given
     let pabloPool = createZeroPool();
     let storeMock: Store = mock<Store>();
@@ -353,13 +348,13 @@ describe.skip("Liquidity Added & Removed Tests", function () {
       BigInt(10_000 * UNIT),
       BigInt(0)
     );
-    verify(storeMock.save(anyOfClass(Transaction))).once();
+    verify(storeMock.save(anyOfClass(Event))).once();
     const [txArg] = capture(storeMock.save).last();
-    assertTransaction(
-      txArg as unknown as Transaction,
+    assertEvent(
+      txArg as unknown as Event,
       ctx.event.id,
       encodeAccount(who),
-      TransactionType.ADD_LIQUIDITY,
+      EventType.ADD_LIQUIDITY,
       "1",
       "1",
       BigInt(10_000 * UNIT),
@@ -369,7 +364,7 @@ describe.skip("Liquidity Added & Removed Tests", function () {
     );
   });
 
-  it("Should remove liquidity from the Pool and record Assets and Transaction correctly", async function () {
+  it("Should remove liquidity from the Pool and record Assets and Event correctly", async function () {
     // given
     let pabloPool = createZeroPool();
     addLiquidity(
@@ -422,13 +417,13 @@ describe.skip("Liquidity Added & Removed Tests", function () {
       BigInt(9_990_000 * UNIT),
       BigInt(0)
     );
-    verify(storeMock.save(anyOfClass(Transaction))).once();
+    verify(storeMock.save(anyOfClass(Event))).once();
     const [txArg] = capture(storeMock.save).last();
-    assertTransaction(
-      txArg as unknown as Transaction,
+    assertEvent(
+      txArg as unknown as Event,
       ctx.event.id,
       encodeAccount(who),
-      TransactionType.REMOVE_LIQUIDITY,
+      EventType.REMOVE_LIQUIDITY,
       "1",
       "1",
       BigInt(10_000 * UNIT),
@@ -440,7 +435,7 @@ describe.skip("Liquidity Added & Removed Tests", function () {
 });
 
 describe.skip("PoolDeleted Tests", function () {
-  it("Should updated the Pool, Assets and Transaction correctly", async function () {
+  it("Should updated the Pool, Assets and Event correctly", async function () {
     // given
     let pabloPool = createZeroPool();
     addLiquidity(pabloPool, BigInt(10_000 * UNIT), BigInt(10_000 * UNIT));
@@ -489,13 +484,13 @@ describe.skip("PoolDeleted Tests", function () {
       BigInt(0),
       BigInt(0)
     );
-    verify(storeMock.save(anyOfClass(Transaction))).once();
+    verify(storeMock.save(anyOfClass(Event))).once();
     const [txArg] = capture(storeMock.save).last();
-    assertTransaction(
-      txArg as unknown as Transaction,
+    assertEvent(
+      txArg as unknown as Event,
       ctx.event.id,
       pabloPool.owner,
-      TransactionType.DELETE_POOL,
+      EventType.DELETE_POOL,
       "1",
       "1",
       BigInt(10_000 * UNIT),
@@ -507,7 +502,7 @@ describe.skip("PoolDeleted Tests", function () {
 });
 
 describe.skip("Swapped Tests", function () {
-  it("Should record Pool, Assets and Transaction correctly for normal swap", async function () {
+  it("Should record Pool, Assets and Event correctly for normal swap", async function () {
     // given
     let pabloPool = createZeroPool();
     addLiquidity(pabloPool, BigInt(10_000 * UNIT), BigInt(10_000 * UNIT));
@@ -556,13 +551,13 @@ describe.skip("Swapped Tests", function () {
       BigInt(10_025 * UNIT),
       BigInt(25 * UNIT)
     );
-    verify(storeMock.save(anyOfClass(Transaction))).once();
+    verify(storeMock.save(anyOfClass(Event))).once();
     const [txArg] = capture(storeMock.save).last();
-    assertTransaction(
-      txArg as unknown as Transaction,
+    assertEvent(
+      txArg as unknown as Event,
       ctx.event.id,
       encodeAccount(who),
-      TransactionType.SWAP,
+      EventType.SWAP,
       "0.25",
       "1",
       BigInt(100 * UNIT),
@@ -572,7 +567,7 @@ describe.skip("Swapped Tests", function () {
     );
   });
 
-  it("Should record Pool, Assets and Transaction correctly for reverse swap", async function () {
+  it("Should record Pool, Assets and Event correctly for reverse swap", async function () {
     // given
     let pabloPool = createZeroPool();
     addLiquidity(pabloPool, BigInt(10_000 * UNIT), BigInt(10_000 * UNIT));
@@ -633,13 +628,13 @@ describe.skip("Swapped Tests", function () {
       BigInt(9988 * UNIT),
       BigInt(12 * UNIT)
     );
-    verify(storeMock.save(anyOfClass(Transaction))).once();
+    verify(storeMock.save(anyOfClass(Event))).once();
     const [txArg] = capture(storeMock.save).last();
-    assertTransaction(
-      txArg as unknown as Transaction,
+    assertEvent(
+      txArg as unknown as Event,
       ctx.event.id,
       encodeAccount(who),
-      TransactionType.SWAP,
+      EventType.SWAP,
       "0.48",
       "4",
       BigInt(12 * UNIT),

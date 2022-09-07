@@ -15,20 +15,20 @@ import {
   storeHistoricalLockedValue,
 } from "../dbHelper";
 import {
+  Event,
+  EventType,
   PabloPool,
   PabloPoolAsset,
   PabloTransaction,
-  Transaction,
-  TransactionType,
 } from "../model";
 import { CurrencyPair, Fee } from "../types/v2401";
 import { encodeAccount } from "../utils";
 
-function createTransaction(
+function createEvent(
   ctx: EventHandlerContext,
   pool: PabloPool,
   who: string,
-  transactionType: TransactionType,
+  eventType: EventType,
   spotPrice: string,
   baseAssetId: string,
   baseAssetAmount: bigint,
@@ -36,13 +36,12 @@ function createTransaction(
   quoteAssetAmount: bigint,
   fee?: string
 ) {
-  return new Transaction({
-    id: randomUUID(),
-    eventId: ctx.event.id,
+  return new Event({
+    id: ctx.event.id,
     accountId: who,
     blockNumber: BigInt(ctx.block.height),
     timestamp: BigInt(new Date().valueOf()),
-    transactionType,
+    eventType,
     pabloTransaction: new PabloTransaction({
       id: randomUUID(),
       pool,
@@ -108,19 +107,19 @@ export async function processPoolCreatedEvent(
     pool.calculatedTimestamp = timestamp;
     pool.blockNumber = BigInt(ctx.block.height);
 
-    let tx = await ctx.store.get(Transaction, {
+    let tx = await ctx.store.get(Event, {
       where: { eventId: ctx.event.id },
     });
     if (tx != undefined) {
       console.log("qwe");
-      console.error("Unexpected transaction in db", tx);
-      throw new Error("Unexpected transaction in db");
+      console.error("Unexpected event in db", tx);
+      throw new Error("Unexpected event in db");
     }
-    tx = createTransaction(
+    tx = createEvent(
       ctx,
       pool,
       owner,
-      TransactionType.CREATE_POOL,
+      EventType.CREATE_POOL,
       // Following fields are irrelevant for CREATE_POOL
       "0",
       poolCreatedEvt.assets.base.toString(),
@@ -249,17 +248,17 @@ export async function processLiquidityAddedEvent(
     quoteAsset.calculatedTimestamp = timestamp;
     quoteAsset.blockNumber = BigInt(ctx.block.height);
 
-    let tx = await ctx.store.get(Transaction, {
+    let tx = await ctx.store.get(Event, {
       where: { eventId: ctx.event.id },
     });
     if (tx != undefined) {
-      throw new Error("Unexpected transaction in db");
+      throw new Error("Unexpected event in db");
     }
-    tx = createTransaction(
+    tx = createEvent(
       ctx,
       pool,
       who,
-      TransactionType.ADD_LIQUIDITY,
+      EventType.ADD_LIQUIDITY,
       Big(liquidityAddedEvt.baseAmount.toString())
         .div(Big(liquidityAddedEvt.quoteAmount.toString()))
         .toString(),
@@ -364,17 +363,17 @@ export async function processLiquidityRemovedEvent(
     quoteAsset.calculatedTimestamp = timestamp;
     quoteAsset.blockNumber = BigInt(ctx.block.height);
 
-    let tx = await ctx.store.get(Transaction, {
+    let tx = await ctx.store.get(Event, {
       where: { eventId: ctx.event.id },
     });
     if (tx != undefined) {
-      throw new Error("Unexpected transaction in db");
+      throw new Error("Unexpected event in db");
     }
-    tx = createTransaction(
+    tx = createEvent(
       ctx,
       pool,
       who,
-      TransactionType.REMOVE_LIQUIDITY,
+      EventType.REMOVE_LIQUIDITY,
       Big(liquidityRemovedEvt.baseAmount.toString())
         .div(Big(liquidityRemovedEvt.quoteAmount.toString()))
         .toString(),
@@ -531,17 +530,17 @@ export async function processSwappedEvent(
     quoteAsset.calculatedTimestamp = timestamp;
     quoteAsset.blockNumber = BigInt(ctx.block.height);
 
-    let tx = await ctx.store.get(Transaction, {
+    let tx = await ctx.store.get(Event, {
       where: { eventId: ctx.event.id },
     });
     if (tx != undefined) {
-      throw new Error("Unexpected transaction in db");
+      throw new Error("Unexpected event in db");
     }
-    tx = createTransaction(
+    tx = createEvent(
       ctx,
       pool,
       who,
-      TransactionType.SWAP,
+      EventType.SWAP,
       spotPrice.toString(),
       swappedEvt.baseAsset,
       swappedEvt.baseAmount,
@@ -621,17 +620,17 @@ export async function processPoolDeletedEvent(
     quoteAsset.calculatedTimestamp = timestamp;
     quoteAsset.blockNumber = BigInt(ctx.block.height);
 
-    let tx = await ctx.store.get(Transaction, {
+    let tx = await ctx.store.get(Event, {
       where: { eventId: ctx.event.id },
     });
     if (tx != undefined) {
-      throw new Error("Unexpected transaction in db");
+      throw new Error("Unexpected event in db");
     }
-    tx = createTransaction(
+    tx = createEvent(
       ctx,
       pool,
       who,
-      TransactionType.DELETE_POOL,
+      EventType.DELETE_POOL,
       Big(poolDeletedEvent.baseAmount.toString())
         .div(Big(poolDeletedEvent.quoteAmount.toString()))
         .toString(),

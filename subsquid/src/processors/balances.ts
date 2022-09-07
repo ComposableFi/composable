@@ -5,8 +5,8 @@ import {
   BalancesWithdrawEvent,
 } from "../types/events";
 import { encodeAccount } from "../utils";
-import { mockData, saveAccountAndTransaction } from "../dbHelper";
-import { TransactionType } from "../model";
+import { mockData, saveAccountAndEvent } from "../dbHelper";
+import { EventType } from "../model";
 
 interface TransferEvent {
   from: Uint8Array;
@@ -43,7 +43,7 @@ function getDepositEvent(event: BalancesDepositEvent): WithdrawEvent {
  * Handle `balance.Transfer` event.
  *   - Create/update Account who transfers funds.
  *   - Create/update Account who receives funds.
- *   - Create Transaction.
+ *   - Create Event.
  *   - Create Activity
  * @param ctx
  */
@@ -59,16 +59,13 @@ export async function processTransferEvent(
   // TODO: remove once finished using
   await mockData(ctx);
 
-  await saveAccountAndTransaction(ctx, TransactionType.BALANCES_TRANSFER, [
-    from,
-    to,
-  ]);
+  await saveAccountAndEvent(ctx, EventType.BALANCES_TRANSFER, [from, to]);
 }
 
 /**
  * Handle `balance.Withdraw` event.
  *   - Create/update Account who withdraws funds.
- *   - Create Transaction.
+ *   - Create Event.
  *   - Create Activity.
  * @param ctx
  */
@@ -80,13 +77,13 @@ export async function processWithdrawEvent(
   const event = getWithdrawEvent(evt);
   const who = encodeAccount(event.who);
 
-  await saveAccountAndTransaction(ctx, TransactionType.BALANCES_WITHDRAW, who);
+  await saveAccountAndEvent(ctx, EventType.BALANCES_WITHDRAW, who);
 }
 
 /**
  * Handle `balance.Deposit` event.
  *   - Create/update Account who deposits funds.
- *   - Create Transaction.
+ *   - Create Event.
  *   - Create Activity.
  * @param ctx
  */
@@ -98,5 +95,5 @@ export async function processDepositEvent(
   const event = getDepositEvent(evt);
   const who = encodeAccount(event.who);
 
-  await saveAccountAndTransaction(ctx, TransactionType.BALANCES_DEPOSIT, who);
+  await saveAccountAndEvent(ctx, EventType.BALANCES_DEPOSIT, who);
 }

@@ -5,11 +5,11 @@ import {
   Account,
   Activity,
   Currency,
+  Event,
   HistoricalLockedValue,
   PabloPool,
   RewardPool,
-  Transaction,
-  TransactionType,
+  EventType,
 } from "./model";
 import { BOB } from "./utils";
 import { createStakingPosition } from "./processors/stakingRewards";
@@ -57,7 +57,7 @@ export type EntityConstructor<T> = {
 };
 
 /**
- * Create or update account and store transaction in database.
+ * Create or update account and store event in database.
  * When `accountId` is not defined, signer of extrinsic will be used.
  * When the extrinsic is not signed, it will be a noop.
  * Returns the `accountId` stored, or undefined if nothing is stored.
@@ -78,7 +78,7 @@ export async function trySaveAccount(
 
   if (!accId) {
     // no-op
-    return;
+    return undefined;
   }
 
   let account: Account | undefined = await ctx.store.get(Account, {
@@ -98,52 +98,47 @@ export async function trySaveAccount(
 }
 
 /**
- * Create and store Transaction on database.
- * If `id` is not defined, a random id will be generated.
+ * Create and store Event on database.
  *
- * Returns the stored transaction id.
+ * Returns the stored event id.
  * @param ctx
  * @param accountId
- * @param transactionType
- * @param id
+ * @param eventType
  */
-export async function saveTransaction(
+export async function saveEvent(
   ctx: EventHandlerContext,
   accountId: string,
-  transactionType: TransactionType,
-  id: string
+  eventType: EventType
 ): Promise<string> {
-  // Create transaction
-  const tx = new Transaction({
-    id,
-    eventId: ctx.event.id,
+  // Create event
+  const event = new Event({
+    id: ctx.event.id,
     accountId,
-    transactionType,
+    eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: BigInt(ctx.block.timestamp),
   });
 
-  // Store transaction
-  await ctx.store.save(tx);
+  // Store event
+  await ctx.store.save(event);
 
-  return tx.id;
+  return event.id;
 }
 
 /**
  * Store Activity on the database.
  * @param ctx
- * @param transactionId
+ * @param eventId
  * @param accountId
  */
 export async function saveActivity(
   ctx: EventHandlerContext,
-  transactionId: string,
+  eventId: string,
   accountId: string
 ): Promise<string> {
   const activity = new Activity({
     id: randomUUID(),
     eventId: ctx.event.id,
-    transactionId,
     accountId,
     timestamp: BigInt(ctx.block.timestamp),
   });
@@ -154,24 +149,24 @@ export async function saveActivity(
 }
 
 /**
- * Saves the given Accounts, a Transaction for the first account, and
+ * Saves the given Accounts, a Event for the first account, and
  * Activities for every account.
  * If no account id is provided, it will try to create an account using the
  * signer of the underlying extrinsic.
- * If no account is created, it will NOT create any Transaction or Activity
+ * If no account is created, it will NOT create any Event or Activity
  * @param ctx
- * @param transactionType
+ * @param eventType
  * @param accountId
  */
-export async function saveAccountAndTransaction(
+export async function saveAccountAndEvent(
   ctx: EventHandlerContext,
-  transactionType: TransactionType,
+  eventType: EventType,
   accountId?: string | string[]
-): Promise<{ transactionId: string }> {
+): Promise<{ eventId: string }> {
   const accountIds: (string | undefined)[] =
     typeof accountId === "string" ? [accountId] : accountId || [undefined];
 
-  const transactionId = randomUUID();
+  const eventId = ctx.event.id;
 
   for (let index = 0; index < accountIds.length; index += 1) {
     const id = accountIds[index];
@@ -182,13 +177,13 @@ export async function saveAccountAndTransaction(
     const isSaved = await trySaveAccount(ctx, id);
     if (isSaved) {
       if (index === 0) {
-        await saveTransaction(ctx, id, transactionType, transactionId);
+        await saveEvent(ctx, id, eventType);
       }
-      await saveActivity(ctx, transactionId, id);
+      await saveActivity(ctx, eventId, id);
     }
   }
 
-  return Promise.resolve({ transactionId });
+  return Promise.resolve({ eventId });
 }
 
 /**
@@ -281,7 +276,6 @@ export async function mockData(ctx: EventHandlerContext) {
     10n,
     10n,
     "event-1",
-    "transaction-1",
     BigInt(new Date().valueOf())
   );
   const stakingPosition2 = createStakingPosition(
@@ -291,7 +285,6 @@ export async function mockData(ctx: EventHandlerContext) {
     15n,
     10n,
     "event-2",
-    "transaction-2",
     BigInt(new Date().valueOf())
   );
   const stakingPosition3 = createStakingPosition(
@@ -301,7 +294,6 @@ export async function mockData(ctx: EventHandlerContext) {
     50n,
     100n,
     "event-3",
-    "transaction-3",
     BigInt(new Date().valueOf())
   );
 

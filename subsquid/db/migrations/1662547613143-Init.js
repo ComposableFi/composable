@@ -1,5 +1,5 @@
-module.exports = class Init1662475887107 {
-  name = 'Init1662475887107'
+module.exports = class Init1662547613143 {
+  name = 'Init1662547613143'
 
   async up(db) {
     await db.query(`CREATE TABLE "account" ("id" character varying NOT NULL, "event_id" text NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`)
@@ -10,19 +10,19 @@ module.exports = class Init1662475887107 {
     await db.query(`CREATE TABLE "pablo_pool" ("id" character varying NOT NULL, "event_id" text NOT NULL, "pool_id" numeric NOT NULL, "owner" text NOT NULL, "transaction_count" integer NOT NULL, "total_liquidity" text NOT NULL, "total_volume" text NOT NULL, "total_fees" text NOT NULL, "base_asset_id" text NOT NULL, "quote_asset_id" text NOT NULL, "block_number" numeric NOT NULL, "calculated_timestamp" numeric NOT NULL, CONSTRAINT "PK_28d674c3fdadf69d19745e5343a" PRIMARY KEY ("id"))`)
     await db.query(`CREATE TABLE "bonded_finance_bond_offer" ("id" character varying NOT NULL, "event_id" text NOT NULL, "offer_id" text NOT NULL, "total_purchased" numeric NOT NULL, "beneficiary" text NOT NULL, "cancelled" boolean NOT NULL, CONSTRAINT "PK_1a7a97e3d57a4ac842dc2ef48ba" PRIMARY KEY ("id"))`)
     await db.query(`CREATE TABLE "vesting_schedule" ("id" character varying NOT NULL, "from" text NOT NULL, "event_id" text NOT NULL, "schedule_id" numeric NOT NULL, "to" text NOT NULL, "asset_id" text NOT NULL, "schedule" jsonb NOT NULL, "total_amount" numeric NOT NULL, "fully_claimed" boolean NOT NULL, CONSTRAINT "PK_4818b05532ed9058110ed5b5b13" PRIMARY KEY ("id"))`)
-    await db.query(`CREATE TABLE "activity" ("id" character varying NOT NULL, "event_id" text NOT NULL, "transaction_id" text NOT NULL, "account_id" text NOT NULL, "timestamp" numeric NOT NULL, CONSTRAINT "PK_24625a1d6b1b089c8ae206fe467" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE TABLE "activity" ("id" character varying NOT NULL, "event_id" text NOT NULL, "account_id" text NOT NULL, "timestamp" numeric NOT NULL, CONSTRAINT "PK_24625a1d6b1b089c8ae206fe467" PRIMARY KEY ("id"))`)
     await db.query(`CREATE TABLE "historical_asset_price" ("id" character varying NOT NULL, "event_id" text NOT NULL, "price" numeric NOT NULL, "timestamp" numeric NOT NULL, "currency" character varying(3) NOT NULL, "asset_id" character varying NOT NULL, CONSTRAINT "PK_01a6bc75d8046fb5aa80df3b9fe" PRIMARY KEY ("id"))`)
     await db.query(`CREATE INDEX "IDX_e5b6c7a8a991d63c9670391daa" ON "historical_asset_price" ("asset_id") `)
     await db.query(`CREATE TABLE "asset" ("id" character varying NOT NULL, "event_id" text NOT NULL, "price" numeric NOT NULL, CONSTRAINT "PK_1209d107fe21482beaea51b745e" PRIMARY KEY ("id"))`)
     await db.query(`CREATE TABLE "reward_pool" ("id" character varying NOT NULL, "event_id" text NOT NULL, "pool_id" text NOT NULL, "asset_id" text NOT NULL, CONSTRAINT "PK_c88dfa6b514dcbadb05c6956afb" PRIMARY KEY ("id"))`)
-    await db.query(`CREATE TABLE "staking_position" ("id" character varying NOT NULL, "event_id" text NOT NULL, "transaction_id" text NOT NULL, "position_id" text NOT NULL, "owner" text NOT NULL, "asset_id" text NOT NULL, "amount" numeric NOT NULL, "start_timestamp" numeric NOT NULL, "end_timestamp" numeric, "source" character varying(14) NOT NULL, CONSTRAINT "PK_899113a8f0b5ec707171ff4db6b" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE TABLE "staking_position" ("id" character varying NOT NULL, "event_id" text NOT NULL, "position_id" text NOT NULL, "owner" text NOT NULL, "asset_id" text NOT NULL, "amount" numeric NOT NULL, "start_timestamp" numeric NOT NULL, "end_timestamp" numeric, "source" character varying(14) NOT NULL, CONSTRAINT "PK_899113a8f0b5ec707171ff4db6b" PRIMARY KEY ("id"))`)
     await db.query(`CREATE TABLE "historical_locked_value" ("id" character varying NOT NULL, "event_id" text NOT NULL, "amount" numeric NOT NULL, "currency" character varying(3) NOT NULL, "timestamp" numeric NOT NULL, CONSTRAINT "PK_39755ccbc61547e8b814bf28188" PRIMARY KEY ("id"))`)
-    await db.query(`CREATE TABLE "transaction" ("id" character varying NOT NULL, "event_id" text NOT NULL, "account_id" text NOT NULL, "transaction_type" character varying(43) NOT NULL, "block_number" numeric NOT NULL, "timestamp" numeric NOT NULL, "pablo_transaction_id" character varying, CONSTRAINT "PK_89eadb93a89810556e1cbcd6ab9" PRIMARY KEY ("id"))`)
-    await db.query(`CREATE INDEX "IDX_9b5e57206d054abff1916ec791" ON "transaction" ("pablo_transaction_id") `)
+    await db.query(`CREATE TABLE "event" ("id" character varying NOT NULL, "account_id" text NOT NULL, "event_type" character varying(43) NOT NULL, "block_number" numeric NOT NULL, "timestamp" numeric NOT NULL, "pablo_transaction_id" character varying, CONSTRAINT "PK_30c2f3bbaf6d34a55f8ae6e4614" PRIMARY KEY ("id"))`)
+    await db.query(`CREATE INDEX "IDX_1e5f1e42385f85324d04cf8e39" ON "event" ("pablo_transaction_id") `)
     await db.query(`ALTER TABLE "pablo_pool_asset" ADD CONSTRAINT "FK_7fd4cdb45620476d1de745a2658" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_969a927080f5b6c81b79b40cd86" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "historical_asset_price" ADD CONSTRAINT "FK_e5b6c7a8a991d63c9670391daaf" FOREIGN KEY ("asset_id") REFERENCES "asset"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
-    await db.query(`ALTER TABLE "transaction" ADD CONSTRAINT "FK_9b5e57206d054abff1916ec791e" FOREIGN KEY ("pablo_transaction_id") REFERENCES "pablo_transaction"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
+    await db.query(`ALTER TABLE "event" ADD CONSTRAINT "FK_1e5f1e42385f85324d04cf8e39f" FOREIGN KEY ("pablo_transaction_id") REFERENCES "pablo_transaction"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
   }
 
   async down(db) {
@@ -41,11 +41,11 @@ module.exports = class Init1662475887107 {
     await db.query(`DROP TABLE "reward_pool"`)
     await db.query(`DROP TABLE "staking_position"`)
     await db.query(`DROP TABLE "historical_locked_value"`)
-    await db.query(`DROP TABLE "transaction"`)
-    await db.query(`DROP INDEX "public"."IDX_9b5e57206d054abff1916ec791"`)
+    await db.query(`DROP TABLE "event"`)
+    await db.query(`DROP INDEX "public"."IDX_1e5f1e42385f85324d04cf8e39"`)
     await db.query(`ALTER TABLE "pablo_pool_asset" DROP CONSTRAINT "FK_7fd4cdb45620476d1de745a2658"`)
     await db.query(`ALTER TABLE "pablo_transaction" DROP CONSTRAINT "FK_969a927080f5b6c81b79b40cd86"`)
     await db.query(`ALTER TABLE "historical_asset_price" DROP CONSTRAINT "FK_e5b6c7a8a991d63c9670391daaf"`)
-    await db.query(`ALTER TABLE "transaction" DROP CONSTRAINT "FK_9b5e57206d054abff1916ec791e"`)
+    await db.query(`ALTER TABLE "event" DROP CONSTRAINT "FK_1e5f1e42385f85324d04cf8e39f"`)
   }
 }

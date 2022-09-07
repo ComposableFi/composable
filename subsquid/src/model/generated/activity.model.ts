@@ -17,12 +17,6 @@ export class Activity {
   eventId!: string
 
   /**
-   * ID of the transaction associated with this activity
-   */
-  @Column_("text", {nullable: false})
-  transactionId!: string
-
-  /**
    * ID of the active account
    */
   @Column_("text", {nullable: false})

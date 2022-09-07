@@ -9,14 +9,14 @@ import {
 } from "../types/events";
 import {
   getAssetIdFromRewardPoolId,
-  saveAccountAndTransaction,
+  saveAccountAndEvent,
   storeHistoricalLockedValue,
 } from "../dbHelper";
 import {
   RewardPool,
   StakingPosition,
   StakingSource,
-  TransactionType,
+  EventType,
 } from "../model";
 import { encodeAccount } from "../utils";
 
@@ -103,7 +103,6 @@ export function createRewardPool(
  * @param amount
  * @param duration
  * @param eventId
- * @param transactionId
  * @param startTimestamp
  */
 export function createStakingPosition(
@@ -113,13 +112,11 @@ export function createStakingPosition(
   amount: bigint,
   duration: bigint,
   eventId: string,
-  transactionId: string,
   startTimestamp: bigint
 ): StakingPosition {
   return new StakingPosition({
     id: randomUUID(),
     eventId,
-    transactionId,
     positionId: positionId.toString(),
     owner,
     amount,
@@ -135,17 +132,14 @@ export function createStakingPosition(
  * @param position
  * @param newAmount
  * @param eventId
- * @param transactionId
  */
 export function extendStakingPosition(
   position: StakingPosition,
   newAmount: bigint,
-  eventId: string,
-  transactionId: string
+  eventId: string
 ): void {
   position.amount = newAmount;
   position.eventId = eventId;
-  position.transactionId = transactionId;
 }
 
 /**
@@ -156,24 +150,20 @@ export function extendStakingPosition(
  * @param newAmount
  * @param newPositionId
  * @param eventId
- * @param transactionId
  */
 export function splitStakingPosition(
   position: StakingPosition,
   oldAmount: bigint,
   newAmount: bigint,
   newPositionId: bigint,
-  eventId: string,
-  transactionId: string
+  eventId: string
 ): StakingPosition {
   position.amount = oldAmount;
   position.eventId = eventId;
-  position.transactionId = transactionId;
 
   return new StakingPosition({
     id: randomUUID(),
     eventId,
-    transactionId,
     positionId: newPositionId.toString(),
     owner: position.owner,
     amount: newAmount,
@@ -187,7 +177,7 @@ export function splitStakingPosition(
 /**
  * Process `stakingRewards.RewardPoolCreated` event.
  *  - Create reward pool.
- *  - Update account and store transaction.
+ *  - Update account and store event.
  * @param ctx
  */
 export async function processRewardPoolCreatedEvent(
@@ -204,9 +194,9 @@ export async function processRewardPoolCreatedEvent(
 
   await ctx.store.save(stakingPool);
 
-  await saveAccountAndTransaction(
+  await saveAccountAndEvent(
     ctx,
-    TransactionType.STAKING_REWARDS_REWARD_POOL_CREATED,
+    EventType.STAKING_REWARDS_REWARD_POOL_CREATED,
     owner
   );
 }
@@ -214,7 +204,7 @@ export async function processRewardPoolCreatedEvent(
 /**
  * Process `stakingRewards.Staked` event.
  *  - Create StakingPosition.
- *  - Update account and store transaction.
+ *  - Update account and store event.
  * @param ctx
  */
 export async function processStakedEvent(
@@ -226,9 +216,9 @@ export async function processStakedEvent(
   const owner = encodeAccount(event.owner);
   const { poolId, positionId, amount, durationPreset } = event;
 
-  const { transactionId } = await saveAccountAndTransaction(
+  const { eventId } = await saveAccountAndEvent(
     ctx,
-    TransactionType.STAKING_REWARDS_STAKED,
+    EventType.STAKING_REWARDS_STAKED,
     owner
   );
 
@@ -241,7 +231,6 @@ export async function processStakedEvent(
     amount,
     durationPreset,
     ctx.event.id,
-    transactionId,
     BigInt(ctx.block.timestamp)
   );
 
@@ -253,7 +242,7 @@ export async function processStakedEvent(
 /**
  * Process `stakingRewards.StakeAmountExtended` event.
  *  - Update amount for StakingPosition.
- *  - Update account and store transaction.
+ *  - Update account and store event.
  * @param ctx
  */
 export async function processStakeAmountExtendedEvent(
@@ -276,13 +265,13 @@ export async function processStakeAmountExtendedEvent(
   const oldAmount = stakingPosition.amount;
   const amountChanged = amount - oldAmount;
 
-  const { transactionId } = await saveAccountAndTransaction(
+  const { eventId } = await saveAccountAndEvent(
     ctx,
-    TransactionType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
+    EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
     stakingPosition.owner
   );
 
-  extendStakingPosition(stakingPosition, amount, ctx.event.id, transactionId);
+  extendStakingPosition(stakingPosition, amount, ctx.event.id);
 
   await storeHistoricalLockedValue(
     ctx,
@@ -295,7 +284,7 @@ export async function processStakeAmountExtendedEvent(
 /**
  * Process `stakingRewards.Unstaked` event.
  *  - Set amount for StakingPosition to 0.
- *  - Update account and store transaction.
+ *  - Update account and store event.
  * @param ctx
  */
 export async function processUnstakedEvent(
@@ -317,11 +306,7 @@ export async function processUnstakedEvent(
     return;
   }
 
-  await saveAccountAndTransaction(
-    ctx,
-    TransactionType.STAKING_REWARDS_UNSTAKE,
-    owner
-  );
+  await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_UNSTAKE, owner);
 
   await storeHistoricalLockedValue(
     ctx,
@@ -335,7 +320,7 @@ export async function processUnstakedEvent(
  * Process `stakingRewards.SplitPosition` event.
  *  - Update amount for existing StakingPosition.
  *  - Create new StakingPosition.
- *  - Update account and store transaction.
+ *  - Update account and store event.
  * @param ctx
  */
 export async function processSplitPositionEvent(
@@ -361,9 +346,9 @@ export async function processSplitPositionEvent(
     return;
   }
 
-  const { transactionId } = await saveAccountAndTransaction(
+  const { eventId } = await saveAccountAndEvent(
     ctx,
-    TransactionType.STAKING_REWARDS_SPLIT_POSITION,
+    EventType.STAKING_REWARDS_SPLIT_POSITION,
     position.owner
   );
 
@@ -372,8 +357,7 @@ export async function processSplitPositionEvent(
     oldPositionAmount,
     newPositionAmount,
     newPositionId,
-    ctx.event.id,
-    transactionId
+    ctx.event.id
   );
 
   if (!newPosition) {

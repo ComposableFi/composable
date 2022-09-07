@@ -5,8 +5,8 @@ import {
   BondedFinanceNewOfferEvent,
   BondedFinanceOfferCancelledEvent,
 } from "../types/events";
-import { BondedFinanceBondOffer, TransactionType } from "../model";
-import { saveAccountAndTransaction } from "../dbHelper";
+import { BondedFinanceBondOffer, EventType } from "../model";
+import { saveAccountAndEvent } from "../dbHelper";
 import { encodeAccount } from "../utils";
 
 interface NewOfferEvent {
@@ -81,7 +81,7 @@ export function getNewBondOffer(
  * Handle `bondedFinances.NewOffer` event.
  *   - Create BondedFinanceBondOffer.
  *   - Create/update Account who deposits funds.
- *   - Create Transaction.
+ *   - Create Event.
  *   - Create Activity.
  * @param ctx
  */
@@ -94,10 +94,7 @@ export async function processNewOfferEvent(
 
   await ctx.store.save(newOffer);
 
-  await saveAccountAndTransaction(
-    ctx,
-    TransactionType.BONDED_FINANCE_NEW_OFFER
-  );
+  await saveAccountAndEvent(ctx, EventType.BONDED_FINANCE_NEW_OFFER);
 }
 
 /**
@@ -139,7 +136,7 @@ export async function processNewBondEvent(
 
   await ctx.store.save(stored);
 
-  await saveAccountAndTransaction(ctx, TransactionType.BONDED_FINANCE_NEW_BOND);
+  await saveAccountAndEvent(ctx, EventType.BONDED_FINANCE_NEW_BOND);
 }
 
 /**
@@ -177,8 +174,5 @@ export async function processOfferCancelledEvent(
   // Save bond offer.
   await ctx.store.save(stored);
 
-  await saveAccountAndTransaction(
-    ctx,
-    TransactionType.BONDED_FINANCE_OFFER_CANCELLED
-  );
+  await saveAccountAndEvent(ctx, EventType.BONDED_FINANCE_OFFER_CANCELLED);
 }

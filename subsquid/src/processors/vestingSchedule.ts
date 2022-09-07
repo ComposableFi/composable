@@ -4,21 +4,13 @@ import {
   VestingSchedule as VestingScheduleType,
   VestingScheduleIdSet,
 } from "../types/v2401";
-import {
-  Schedule,
-  ScheduleWindow,
-  TransactionType,
-  VestingSchedule,
-} from "../model";
+import { Schedule, ScheduleWindow, EventType, VestingSchedule } from "../model";
 import {
   VestingClaimedEvent,
   VestingVestingScheduleAddedEvent,
 } from "../types/events";
 import { encodeAccount } from "../utils";
-import {
-  saveAccountAndTransaction,
-  storeHistoricalLockedValue,
-} from "../dbHelper";
+import { saveAccountAndEvent, storeHistoricalLockedValue } from "../dbHelper";
 
 interface VestingScheduleAddedEvent {
   from: Uint8Array;
@@ -93,7 +85,7 @@ export function getNewVestingSchedule(
  * Handle `vesting.VestingScheduleAdded` event.
  *  - Create and store VestingSchedule.
  *  - Create/update account.
- *  - Create transaction.
+ *  - Create event.
  * @param ctx
  */
 export async function processVestingScheduleAddedEvent(
@@ -114,9 +106,9 @@ export async function processVestingScheduleAddedEvent(
     asset.toString()
   );
 
-  await saveAccountAndTransaction(
+  await saveAccountAndEvent(
     ctx,
-    TransactionType.VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
+    EventType.VESTING_SCHEDULES_VESTING_SCHEDULE_ADDED,
     [vestingSchedule.from, vestingSchedule.to]
   );
 }
@@ -200,9 +192,9 @@ export async function processVestingClaimedEvent(
     );
   }
 
-  await saveAccountAndTransaction(
+  await saveAccountAndEvent(
     ctx,
-    TransactionType.VESTING_SCHEDULES_CLAIMED,
+    EventType.VESTING_SCHEDULES_CLAIMED,
     encodeAccount(who)
   );
 }

@@ -18,7 +18,6 @@ import {
  * @param owner
  * @param amount
  * @param eventId
- * @param transactionId
  * @param duration
  */
 function assertStakingPosition(
@@ -28,7 +27,6 @@ function assertStakingPosition(
   owner: string,
   amount: bigint,
   eventId: string,
-  transactionId: string,
   duration: bigint
 ) {
   expect(position.positionId).to.equal(positionId);
@@ -36,7 +34,6 @@ function assertStakingPosition(
   expect(position.owner).to.equal(owner);
   expect(position.amount).to.equal(amount);
   expect(position.eventId).to.equal(eventId);
-  expect(position.transactionId).to.equal(transactionId);
   if (position.endTimestamp)
     expect(position.endTimestamp).to.equal(
       position.startTimestamp + 1_000n * duration
@@ -69,20 +66,10 @@ describe("Staking rewards", () => {
       123n,
       10n,
       "event-id",
-      "transaction-id",
       1662133770000n
     );
 
-    assertStakingPosition(
-      position,
-      "2",
-      "3",
-      BOB,
-      123n,
-      "event-id",
-      "transaction-id",
-      10n
-    );
+    assertStakingPosition(position, "2", "3", BOB, 123n, "event-id", 10n);
   });
 
   it("Should split StakingPosition", async () => {
@@ -93,7 +80,6 @@ describe("Staking rewards", () => {
       123n,
       10n,
       "event-id",
-      "transaction-id",
       1662133770000n
     );
     const newPosition = splitStakingPosition(
@@ -101,30 +87,11 @@ describe("Staking rewards", () => {
       100n,
       50n,
       4n,
-      "new-event-id",
-      "new-transaction-id"
+      "new-event-id"
     );
 
-    assertStakingPosition(
-      position,
-      "2",
-      "3",
-      BOB,
-      100n,
-      "new-event-id",
-      "new-transaction-id",
-      10n
-    );
-    assertStakingPosition(
-      newPosition,
-      "4",
-      "3",
-      BOB,
-      50n,
-      "new-event-id",
-      "new-transaction-id",
-      10n
-    );
+    assertStakingPosition(position, "2", "3", BOB, 100n, "new-event-id", 10n);
+    assertStakingPosition(newPosition, "4", "3", BOB, 50n, "new-event-id", 10n);
   });
 
   it("Should extend StakingPosition", async () => {
@@ -135,20 +102,10 @@ describe("Staking rewards", () => {
       123n,
       10n,
       "event-id",
-      "transaction-id",
       1662133770000n
     );
-    extendStakingPosition(position, 150n, "new-event-id", "new-transaction-id");
+    extendStakingPosition(position, 150n, "new-event-id");
 
-    assertStakingPosition(
-      position,
-      "2",
-      "3",
-      BOB,
-      150n,
-      "new-event-id",
-      "new-transaction-id",
-      10n
-    );
+    assertStakingPosition(position, "2", "3", BOB, 150n, "new-event-id", 10n);
   });
 });

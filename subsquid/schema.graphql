@@ -86,8 +86,6 @@ type Activity @entity {
   id: ID!
   "ID of the event associated with this activity"
   eventId: String!
-  "ID of the transaction associated with this activity"
-  transactionId: String!
   "ID of the active account"
   accountId: String!
   "Timestamp of the block in which this activity occurred"
@@ -133,7 +131,6 @@ enum StakingSource {
 type StakingPosition @entity {
   id: ID!
   eventId: String!
-  transactionId: String!
   "Unique identifier for the position on chain"
   positionId: String!
   owner: String!
@@ -164,7 +161,7 @@ type PabloTransaction @entity {
   fee: String!
 }
 
-enum TransactionType {
+enum EventType {
   ADD_LIQUIDITY,
   REMOVE_LIQUIDITY,
   SWAP,
@@ -186,14 +183,12 @@ enum TransactionType {
   VESTING_SCHEDULES_VESTING_SCHEDULES_UPDATED,
 }
 
-type Transaction @entity {
+type Event @entity {
   id: ID!
-  "ID of the event that was used to derive this transaction"
-  eventId: String!
   "ID of account that executed transaction"
   accountId: String!
   "Type of transaction"
-  transactionType: TransactionType!
+  eventType: EventType!
   "Block in which transaction was registered"
   blockNumber: BigInt!
   "Timestamp of the block in which this transaction was registered"

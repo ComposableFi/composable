@@ -14,9 +14,6 @@ export class StakingPosition {
   @Column_("text", {nullable: false})
   eventId!: string
 
-  @Column_("text", {nullable: false})
-  transactionId!: string
-
   /**
    * Unique identifier for the position on chain
    */
