@@ -1,5 +1,5 @@
 import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
-import { StakingPosition, StakingSource } from "../src/model";
+import { Event, EventType, StakingPosition, StakingSource } from "../src/model";
 import { mock } from "ts-mockito";
 import { BOB, createCtx } from "../src/utils";
 import { expect } from "chai";
@@ -18,6 +18,7 @@ import {
  * @param owner
  * @param amount
  * @param eventId
+ * @param eventType
  * @param duration
  */
 function assertStakingPosition(
@@ -27,19 +28,30 @@ function assertStakingPosition(
   owner: string,
   amount: bigint,
   eventId: string,
+  eventType: EventType,
   duration: bigint
 ) {
   expect(position.positionId).to.equal(positionId);
   expect(position.assetId).to.equal(assetId);
   expect(position.owner).to.equal(owner);
   expect(position.amount).to.equal(amount);
-  expect(position.eventId).to.equal(eventId);
+  expect(position.event.id).to.equal(eventId);
+  expect(position.event.eventType).to.equal(eventType);
   if (position.endTimestamp)
     expect(position.endTimestamp).to.equal(
       position.startTimestamp + 1_000n * duration
     );
   expect(position.source).to.equal(StakingSource.StakingRewards);
 }
+
+const createMockEvent = (eventId: string, eventType: EventType) =>
+  new Event({
+    id: eventId,
+    accountId: BOB,
+    eventType,
+    blockNumber: 1n,
+    timestamp: 123n,
+  });
 
 describe("Staking rewards", () => {
   let storeMock: Store;
@@ -65,11 +77,20 @@ describe("Staking rewards", () => {
       BOB,
       123n,
       10n,
-      "event-id",
+      createMockEvent("event-id", EventType.STAKING_REWARDS_STAKED),
       1662133770000n
     );
 
-    assertStakingPosition(position, "2", "3", BOB, 123n, "event-id", 10n);
+    assertStakingPosition(
+      position,
+      "2",
+      "3",
+      BOB,
+      123n,
+      "event-id",
+      EventType.STAKING_REWARDS_STAKED,
+      10n
+    );
   });
 
   it("Should split StakingPosition", async () => {
@@ -79,7 +100,7 @@ describe("Staking rewards", () => {
       BOB,
       123n,
       10n,
-      "event-id",
+      createMockEvent("event-id", EventType.STAKING_REWARDS_SPLIT_POSITION),
       1662133770000n
     );
     const newPosition = splitStakingPosition(
@@ -87,11 +108,29 @@ describe("Staking rewards", () => {
       100n,
       50n,
       4n,
-      "new-event-id"
+      createMockEvent("new-event-id", EventType.STAKING_REWARDS_SPLIT_POSITION)
     );
 
-    assertStakingPosition(position, "2", "3", BOB, 100n, "new-event-id", 10n);
-    assertStakingPosition(newPosition, "4", "3", BOB, 50n, "new-event-id", 10n);
+    assertStakingPosition(
+      position,
+      "2",
+      "3",
+      BOB,
+      100n,
+      "new-event-id",
+      EventType.STAKING_REWARDS_SPLIT_POSITION,
+      10n
+    );
+    assertStakingPosition(
+      newPosition,
+      "4",
+      "3",
+      BOB,
+      50n,
+      "new-event-id",
+      EventType.STAKING_REWARDS_SPLIT_POSITION,
+      10n
+    );
   });
 
   it("Should extend StakingPosition", async () => {
@@ -101,11 +140,30 @@ describe("Staking rewards", () => {
       BOB,
       123n,
       10n,
-      "event-id",
+      createMockEvent(
+        "event-id",
+        EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED
+      ),
       1662133770000n
     );
-    extendStakingPosition(position, 150n, "new-event-id");
+    extendStakingPosition(
+      position,
+      150n,
+      createMockEvent(
+        "new-event-id",
+        EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED
+      )
+    );
 
-    assertStakingPosition(position, "2", "3", BOB, 150n, "new-event-id", 10n);
+    assertStakingPosition(
+      position,
+      "2",
+      "3",
+      BOB,
+      150n,
+      "new-event-id",
+      EventType.STAKING_REWARDS_STAKE_AMOUNT_EXTENDED,
+      10n
+    );
   });
 });
