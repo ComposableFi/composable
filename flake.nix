@@ -344,9 +344,9 @@
                 --repeat=1
             '';
           docs-renders = [ mdbook plantuml graphviz pandoc ];
-          
-          
-          mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint, subsquidEndpoint }:  
+
+          mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
+            , subsquidEndpoint }:
             let bp = pkgs.callPackage npm-buildpackage { };
             in bp.buildYarnPackage {
               nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
@@ -526,47 +526,50 @@
                 chmod 777 /tmp
               '';
             };
-            
+
             frontend-static = mkFrontendStatic {
-              subsquidEndpoint = "http://localhost:4350/graphql";            
+              subsquidEndpoint = "http://localhost:4350/graphql";
               picassoEndpoint = "ws://localhost:9988";
               kusamaEndpoint = "ws://localhost:9944";
-              karuraEndpoint = "ws://localhost:9998"; 
+              karuraEndpoint = "ws://localhost:9998";
             };
-            
+
             frontend-static-firebase = mkFrontendStatic {
-              subsquidEndpoint = "https://dali-subsquid.composable.finance/graphql";            
-              picassoEndpoint = "wss://dali-cluster-fe.composablefinance.ninja/";
+              subsquidEndpoint =
+                "https://dali-subsquid.composable.finance/graphql";
+              picassoEndpoint =
+                "wss://dali-cluster-fe.composablefinance.ninja/";
               kusamaEndpoint = "wss://kusama-rpc.polkadot.io";
-              karuraEndpoint = "wss://karura.api.onfinality.io/public-ws"; 
+              karuraEndpoint = "wss://karura.api.onfinality.io/public-ws";
             };
 
-            frontend-static-firebase = let bp = pkgs.callPackage npm-buildpackage { };
-            in bp.buildYarnPackage {
-              nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
-              src = ./frontend;
+            frontend-static-firebase =
+              let bp = pkgs.callPackage npm-buildpackage { };
+              in bp.buildYarnPackage {
+                nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
+                src = ./frontend;
 
-              # The filters exclude the storybooks for faster builds
-              yarnBuildMore =
-                "yarn export --filter=pablo --filter=picasso --filter=!picasso-storybook --filter=!pablo-storybook";
+                # The filters exclude the storybooks for faster builds
+                yarnBuildMore =
+                  "yarn export --filter=pablo --filter=picasso --filter=!picasso-storybook --filter=!pablo-storybook";
 
-              # TODO: make these configurable              
-              preBuild = ''
-                export SUBSQUID_URL="http://localhost:4350/graphql";
+                # TODO: make these configurable              
+                preBuild = ''
+                  export SUBSQUID_URL="http://localhost:4350/graphql";
 
-                # Polkadot
-                export SUBSTRATE_PROVIDER_URL_KUSAMA_2019="ws://localhost:9988";
-                export SUBSTRATE_PROVIDER_URL_KUSAMA="ws://localhost:9944";
-                export SUBSTRATE_PROVIDER_URL_KARURA="ws://localhost:9998";
-              '';
-              installPhase = ''
-                mkdir -p $out
-                mkdir $out/pablo
-                mkdir $out/picasso
-                cp -R ./apps/pablo/out/* $out/pablo
-                cp -R ./apps/picasso/out/* $out/picasso
-              '';
-            };
+                  # Polkadot
+                  export SUBSTRATE_PROVIDER_URL_KUSAMA_2019="ws://localhost:9988";
+                  export SUBSTRATE_PROVIDER_URL_KUSAMA="ws://localhost:9944";
+                  export SUBSTRATE_PROVIDER_URL_KARURA="ws://localhost:9998";
+                '';
+                installPhase = ''
+                  mkdir -p $out
+                  mkdir $out/pablo
+                  mkdir $out/picasso
+                  cp -R ./apps/pablo/out/* $out/pablo
+                  cp -R ./apps/picasso/out/* $out/picasso
+                '';
+              };
 
             frontend-pablo-server = let PORT = 8002;
             in pkgs.writeShellApplication {
