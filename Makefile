@@ -113,29 +113,6 @@ push:
 push-release:
 	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 
-containerize-composable-sandbox:
-	@docker build -f docker/composable-sandbox.dockerfile \
-		-t ${REPO}/composable-sandbox:${COMMIT_SHA} \
-		-t ${REPO}/composable-sandbox:latest  \
-		.
-
-push-composable-sandbox:
-	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
-	@docker push ${REPO}/composable-sandbox:latest
-
-push-composable-sandbox-without-latest-tag:
-	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
-
-containerize-composable-sandbox-plus:
-	@docker build -f docker/composable-sandbox-plus.dockerfile \
-		-t ${REPO}/composable-sandbox-plus:${COMMIT_SHA} \
-		-t ${REPO}/composable-sandbox-plus:latest  \
-		.
-
-push-composable-sandbox-plus:
-	@docker push ${REPO}/composable-sandbox-plus:${COMMIT_SHA}
-	@docker push ${REPO}/composable-sandbox-plus:latest
-
 containerize-mmr-polkadot:
 	@docker build -f docker/mmr-polkadot.dockerfile \
 		-t ${REPO}/mmr-polkadot:latest  \
@@ -144,18 +121,6 @@ containerize-mmr-polkadot:
 push-mmr-polkadot:
 	@docker push ${REPO}/mmr-polkadot:latest
 
-containerize-ci-linux:
-	@docker build -f docker/ci-linux.dockerfile \
-		-t ${REPO}/ci-linux:2022-08-06  \
-		.
-
-push-ci-linux:
-	@docker push ${REPO}/ci-linux:2022-08-06
-
-containerize-base-ci-linux:
-	@docker build -f docker/base-ci-linux.dockerfile \
-		-t ${REPO}/base-ci-linux:1.62.1  \
-		.
 # fastest way to build and debug runtime in simulator
 run-local-integration-tests-debug:
 	cd code
@@ -167,9 +132,6 @@ run-local-integration-tests-debug:
 prune-devnet:
 	 rm --force --recursive *.log /tmp/polkadot-launch/
 	 
-push-base-ci-linux:
-	@docker push ${REPO}/base-ci-linux:1.62.1
-
 containerize-lease-period-prolongator:
 	@docker build -f scripts/lease-period-prolongator/Dockerfile \
 		-t ${REPO}/lease-period-prolongator:0.1.0  \
@@ -191,11 +153,7 @@ endif
 
 
 .PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
-.PHONY: containerize-composable-sandbox push-composable-sandbox push-composable-sandbox-without-latest-tag
-.PHONY: containerize-composable-sandbox-plus push-composable-sandbox-plus
 .PHONY: containerize-mmr-polkadot push-mmr-polkadot
-.PHONY: containerize-base-ci-linux push-base-ci-linux
-.PHONY: containerize-ci-linux push-ci-linux
 .PHONY: containerize-lease-period-prolongator push-lease-period-prolongator
 
 #----------------------------------------------------------------------
