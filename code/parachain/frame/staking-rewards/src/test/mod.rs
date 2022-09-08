@@ -180,7 +180,6 @@ fn stake_in_case_of_zero_inflation_should_work() {
 // this is almost the exact same as the above function
 // spot the difference!
 // maybe do a proptest with different inflation rates?
-// anything but this lol
 #[test]
 fn stake_in_case_of_not_zero_inflation_should_work() {
 	new_test_ext().execute_with(|| {
