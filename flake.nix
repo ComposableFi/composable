@@ -300,7 +300,7 @@
                 "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
+                cp target/release/composable $out/bin/composable-node
               '';
             });
 
@@ -937,7 +937,7 @@
             };
             composable = {
               type = "app";
-              program = "${packages.composable-node}/bin/composable";
+              program = "${packages.composable-node}/bin/composable-node";
             };
             acala = {
               type = "app";
