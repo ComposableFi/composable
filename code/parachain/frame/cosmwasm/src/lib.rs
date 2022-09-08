@@ -176,7 +176,6 @@ pub mod pallet {
 		SignatureVerificationError,
 		IteratorIdOverflow,
 		IteratorNotFound,
-		InvalidJsonMessage,
 	}
 
 	#[pallet::config]
