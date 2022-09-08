@@ -5,7 +5,6 @@ pragma abicoder v2;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 
-// Date of creation: 2022-07-05T10:15:23.400Z
 
 contract ERC20Mock is ERC20, ERC20Permit {
 

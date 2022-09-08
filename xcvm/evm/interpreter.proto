@@ -87,7 +87,7 @@ message Bindings {
 
 message Transfer {
   oneof account_type{
-    bytes account = 1;
+    Account account = 1;
     BindingValue relayer = 2;
   }
   repeated Asset assets = 3;

@@ -112,7 +112,7 @@ contract Gateway is Ownable, IGateway {
 
     function runProgram(
         Origin memory origin,
-        bytes calldata program,
+        bytes memory program,
         address[] memory _assets,
         uint256[] memory _amounts
     ) external payable onlyBridge {
