@@ -13,6 +13,7 @@ import {
   PabloSwappedEvent,
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
+  VestingVestingScheduleAddedEvent,
 } from "./types/events";
 import { getOrCreate } from "./dbHelper";
 import {
@@ -26,6 +27,7 @@ import {
   processNewBondEvent,
   processNewOfferEvent,
 } from "./bondedFinanceProcessor";
+import { processVestingScheduleAddedEvent } from "./vestingProcessor";
 
 const processor = new SubstrateProcessor("composable_dali_dev");
 
@@ -36,20 +38,35 @@ const chain = (): string => {
     case "dali-stage":
       return "wss://dali-cluster-fe.composablefinance.ninja";
     default:
-      return "ws://localhost:9988";
+      if ("RELAYCHAIN_URI" in process.env) {
+        return process.env.RELAYCHAIN_URI!.toString();
+      }
+      else {
+        return "ws://127.0.0.1:9988";
+      }
   }
 };
 
-const chain_connection_string = chain();
-const archive_connection_string = "http://localhost:8080/v1/graphql";
+const archive = (): string => {
+  if ("SUBSQUID_ARCHIVE_URI" in process.env) {
+    return process.env.SUBSQUID_ARCHIVE_URI!.toString();
+  }
+  else {
+    return "http://127.0.0.1:8080/v1/graphql";
+  }
+};
 
-console.log(`Chain ${chain_connection_string}`);
-console.log(`Archive ${archive_connection_string}`);
+
+const chainConnectionString = chain();
+const archiveConnectionString = archive();
+
+console.log(`Chain ${chainConnectionString}`);
+console.log(`Archive ${archiveConnectionString}`);
 
 processor.setBatchSize(500);
 processor.setDataSource({
-  archive: archive_connection_string,
-  chain: chain_connection_string,
+  archive: archiveConnectionString,
+  chain: chainConnectionString,
 });
 
 processor.addEventHandler("pablo.PoolCreated", async (ctx) => {
@@ -125,6 +142,12 @@ processor.addEventHandler("bondedFinance.NewBond", async (ctx) => {
   await processNewBondEvent(ctx, event);
 });
 
+processor.addEventHandler("vesting.VestingScheduleAdded", async (ctx) => {
+  const event = new VestingVestingScheduleAddedEvent(ctx);
+
+  await processVestingScheduleAddedEvent(ctx, event);
+});
+
 processor.run();
 
 interface TransferEvent {
@@ -135,11 +158,5 @@ interface TransferEvent {
 
 function getTransferEvent(ctx: EventHandlerContext): TransferEvent {
   const event = new BalancesTransferEvent(ctx);
-  if (event.isV2300) {
-    const { from, to, amount } = event.asV2300;
-    return { from, to, amount };
-  } else {
-    const { from, to, amount } = event.asLatest;
-    return { from, to, amount };
-  }
+  return event.asV2401 ?? event.asLatest;
 }

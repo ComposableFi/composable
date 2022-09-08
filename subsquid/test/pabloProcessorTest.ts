@@ -1,5 +1,4 @@
 import { assert, expect } from "chai";
-import * as ss58 from "@subsquid/ss58";
 import { Store } from "@subsquid/substrate-processor";
 import {
   anyOfClass,
@@ -32,7 +31,7 @@ import {
 } from "../src/types/events";
 import { randomUUID } from "crypto";
 import Big from "big.js";
-import { Fee } from "../src/types/v2300";
+import { Fee } from "../src/types/v2401";
 import { createAccount, createCtx, encodeAccount } from "../src/utils";
 
 const UNIT = 1_000_000_000_000;
@@ -106,7 +105,7 @@ function createPoolCreatedEvent() {
     owner: owner,
     poolId: BigInt(1),
   };
-  when(eventMock.asV2300).thenReturn(evt);
+  when(eventMock.asV2401).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
   let event = instance(eventMock);
   return { owner, event };
@@ -122,7 +121,7 @@ function createLiquidityAddedEvent() {
     quoteAmount: BigInt(10_000 * UNIT),
     mintedLp: BigInt(200),
   };
-  when(eventMock.asV2300).thenReturn(evt);
+  when(eventMock.asV2401).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
   let event = instance(eventMock);
   return { who, event };
@@ -138,7 +137,7 @@ function createLiquidityRemovedEvent() {
     quoteAmount: BigInt(10_000 * UNIT),
     totalIssuance: BigInt(10_000),
   };
-  when(eventMock.asV2300).thenReturn(evt);
+  when(eventMock.asV2401).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
   let event = instance(eventMock);
   return { who, event };
@@ -152,7 +151,7 @@ function createPoolDeletedEvent() {
     baseAmount: BigInt(10_000 * UNIT),
     quoteAmount: BigInt(10_000 * UNIT),
   };
-  when(eventMock.asV2300).thenReturn(evt);
+  when(eventMock.asV2401).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
   let event = instance(eventMock);
   return { who, event };
@@ -182,7 +181,7 @@ function createSwappedEvent(
       assetId: BigInt(4),
     },
   };
-  when(eventMock.asV2300).thenReturn(evt);
+  when(eventMock.asV2401).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
   let event = instance(eventMock);
   return { who, event };

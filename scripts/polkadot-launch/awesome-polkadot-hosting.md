@@ -6,7 +6,7 @@ To run, any chain needs:
 - runtime to execute (logic of)
 - bootstrap networking information (which nodes to connect)
 - and, either relay setup or what relay to use
-- and other utilitary setup like logging, metrics
+- and other useful setup like logging, metrics
 - private keys in keystore 
 - logical network connectivity allowance (bridges)
 

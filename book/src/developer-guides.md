@@ -3,6 +3,7 @@
 ---
 
 Here are the articles in this section:
-- [Pallets & Integration](./pallets-integration-guides.md)
+- [Pallets & Integration](./developer-guides/pallets-overview.md)
 - [Composable SDK](./developer-guides/composable-sdk.md)
-- [Pallet Overviews](./developer-guides/pallet-overviews.md)
+- [Oracle Set-Up Guide](./developer-guides/oracle-set-up-guide/oracle-set-up-guide.md)
+- [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)

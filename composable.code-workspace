@@ -17,6 +17,9 @@
         },
         {
             "path": "book/"
+        },
+        {
+            "path": "composablejs"
         }
     ],
     "settings": {

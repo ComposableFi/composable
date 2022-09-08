@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-06-25T22:31:58.301488241Z -->
+<!-- Generated at 2022-09-05T18:35:35.096109Z -->
 
 # Mosaic Pallet Extrinsics
 
@@ -12,7 +12,9 @@ Sets the current Relayer configuration.
 This is enacted immediately and invalidates inflight/ incoming transactions from the
 previous Relayer. However, existing budgets remain in place.
 
-This can only be called by the \[`ControlOrigin`\].
+This can only be called by the [`ControlOrigin`].
+
+[`ControlOrigin`]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
 
 ## Rotate Relayer
 
@@ -80,7 +82,7 @@ remainder of the transaction.
 
 ### Note
 
-* Reclaim period is not reset if not all the funds are moved; menaing that the clock
+* Reclaim period is not reset if not all the funds are moved; meaning that the clock
   remains ticking for the relayer to pick up the rest of the transaction.
 
 ## Claim Stale To
@@ -134,3 +136,15 @@ Possibly emits one of:
 * `AssetMappingCreated`
 * `AssetMappingDeleted`
 * `AssetMappingUpdated`
+
+## Add Remote Amm Id
+
+[`add_remote_amm_id`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.add_remote_amm_id)
+
+Adds a remote AMM for a specific Network
+
+## Remove Remote Amm Id
+
+[`remove_remote_amm_id`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.remove_remote_amm_id)
+
+Removes a remote AMM for a specific Network

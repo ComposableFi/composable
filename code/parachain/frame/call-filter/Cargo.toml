@@ -1,0 +1,40 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
+name = "pallet-call-filter"
+version = "0.1.0"
+
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+composable-traits = { path = "../../frame/composable-traits", default-features = false }
+scale-info = { version = "2.1.1", features = [
+  "derive",
+], default-features = false }
+serde = { version = "1.0.136", optional = true }
+sp-io = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+sp-std = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+support = { package = "frame-support", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+system = { package = "frame-system", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.27" }
+
+[dev-dependencies]
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+smallvec = "1.4.1"
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+[features]
+default = ["std"]
+std = [
+  "serde",
+  "codec/std",
+  "sp-runtime/std",
+  "support/std",
+  "system/std",
+  "sp-io/std",
+  "sp-std/std",
+  "support/std",
+  "scale-info/std",
+]

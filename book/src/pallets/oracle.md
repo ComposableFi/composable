@@ -1,1 +1,1 @@
-# oracle
+{{#include ../../../code/parachain/frame/oracle/README.md}}

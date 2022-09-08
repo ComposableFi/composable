@@ -1,7 +1,10 @@
 ![picasso_banner](./picasso-banner.png)
 
+---
 
-# COLLATOR SET UP GUIDE
+# Collator Set-up Guide
+
+---
 
 In this document we will cover how to set up a collator with Composable 
 Finance. There are several ways to do that.
@@ -108,7 +111,7 @@ sudo systemctl status collator.service
 
 ```sh
 journalctl -f
-collator.sersice content
+collator.service content
 ```
 
 ```ini
@@ -163,7 +166,7 @@ sudo apt install docker-ce docker-ce-cli containerd.io
 ### Optional Steps
 
 ```sh
-sudo apt-mark hold docker-ce # prevent the Docker package from being updated, so no sudden updates and process interuption
+sudo apt-mark hold docker-ce # prevent the Docker package from being updated, so no sudden updates and process interruption
 sudo usermod -aG docker $USER # adds docker to sudo group so there's no need to run it from root
 ```
 
@@ -216,4 +219,3 @@ services:
       --execution=wasm 
       --listen-addr=/ip4/0.0.0.0/tcp/30333
 ```
-

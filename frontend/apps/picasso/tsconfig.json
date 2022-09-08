@@ -1,0 +1,46 @@
+{
+  "extends": "tsconfig/nextjs.json",
+  "compilerOptions": {
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "jsxImportSource": "@emotion/react",
+    "incremental": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "*"
+      ],
+      "@polkadot/api/augment": [
+        "defi-interfaces/augment-api.ts"
+      ],
+      "@polkadot/types/augment": [
+        "defi-interfaces/augment-types.ts"
+      ]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".storybook/mui-decorator.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "defi-interfaces"
+  ]
+}

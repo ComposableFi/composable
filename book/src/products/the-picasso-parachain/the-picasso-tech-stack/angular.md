@@ -1,6 +1,10 @@
 # Angular Finance: The Isolated Lending Pair Pallet
 
+---
+
+
 ![banner](./angular-banner.png)
+
 
 Another project building on Picasso that is being developed by a team that is 
 working in collaboration with [Composable Labs](https://0xbrainjar.medium.com/introducing-composable-labs-an-incubator-and-testing-ground-for-projects-using-composables-tech-b467d438142c) 
@@ -11,7 +15,7 @@ serving as a lending protocol for leveraged trading, options, and derivatives.
 
 ![graphic](./angular-graphic.png)
 
-## The Benifits of Isolated Lending Pools
+## The Benefits of Isolated Lending Pools
 
 The benefits of lending protocols like Compound and Aave are apparent, but how 
 they are used for the broader DeFi ecosystem makes them core infrastructure. 

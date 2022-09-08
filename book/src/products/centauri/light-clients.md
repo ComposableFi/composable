@@ -1,4 +1,7 @@
 # Light Clients
+
+---
+
 Light clients are programs that connect to full nodes to interact with a blockchain. Highly efficient light client protocols are crucial in enabling the decentralization and mainstream adoption of blockchain protocols. Light clients are also what make bridges on the IBC possible; the IBC Protocol bridges to other chains by having light clients on either side of the connection. These light clients facilitate the passing of IBC opaque packets of information (i.e. transactions and associated information). Centauri leverages these light clients to facilitate connections, even further expanding upon the bridging opportunities of the IBC itself.
 
 Light clients provide environments with computation and memory resource constraints (e.g. mobile, on-chain contracts) with the ability to verify the latest blockchain state without the need to execute and store the full block data and state. Light clients instead track block headers as opposed to tracking the full blocks and executing transactions to arrive at the latest state. It is important to note that blocks are simply composed of the header and transactions:

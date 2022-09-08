@@ -1,54 +1,66 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-04-22T18:59:06.829836435Z -->
+<!-- Generated at 2022-09-05T18:35:35.09154Z -->
 
 # Staking Rewards Pallet Extrinsics
 
-## Configure
+## Create Reward Pool
 
-[`configure`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.configure)
+[`create_reward_pool`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.create_reward_pool)
 
-Enable a protocol staking configuration.
+Create a new reward pool based on the config.
 
-Arguments
-
-* `origin` the origin that signed this extrinsic, must be `T::GovernanceOrigin`.
-* `staking_configuration` the staking configuration for the given protocol `asset`.
+Emits `RewardPoolCreated` event when successful.
 
 ## Stake
 
 [`stake`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.stake)
 
-Stake an amount of protocol asset tokens. Generating an NFT for the staked position.
+Create a new stake.
 
-Arguments
+Emits `Staked` event when successful.
 
-* `origin` the origin that signed this extrinsic. Must be the owner of the NFT targeted
-  by `instance_id`.
-* `amount` the amount of tokens to stake.
-* `duration` the duration for which the tokens will be staked.
-* `keep_alive` whether to keep the caller account alive or not.
+## Extend
+
+[`extend`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.extend)
+
+Extend an existing stake.
+
+Emits `StakeExtended` event when successful.
 
 ## Unstake
 
 [`unstake`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.unstake)
 
-Unstake an amount of protocol asset tokens.
+Remove a stake.
 
-Arguments
+Emits `Unstaked` event when successful.
 
-* `origin` the origin that signed this extrinsic. Must be the owner of the NFT targeted
-  by `instance_id`.
-* `instance_id` the ID of the NFT that represent our staked position.
-* `to` the account in which the rewards will be transferred before unstaking.
+## Split
+
+[`split`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.split)
+
+No documentation available at this time.
+
+## Update Rewards Pool
+
+[`update_rewards_pool`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.update_rewards_pool)
+
+Updates the reward pool configuration.
+
+Emits `RewardPoolUpdated` when successful.
 
 ## Claim
 
 [`claim`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.claim)
 
-Claim the current available rewards.
+Claim a current reward for some position.
 
-Arguments
+Emits `Claimed` event when successful.
 
-* `origin` the origin that signed this extrinsic. Can be anyone. by `instance_id`.
-* `instance_id` the ID of the NFT that represent our staked position.
-* `to` the account in which the rewards will be transferred.
+## Add To Rewards Pot
+
+[`add_to_rewards_pot`](https://dali.devnets.composablefinance.ninja/doc/pallet_staking_rewards/pallet/enum.Call.html#variant.add_to_rewards_pot)
+
+Add funds to the reward pool's rewards pot for the specified asset.
+
+Emits `RewardsPotIncreased` when successful.

@@ -1,0 +1,36 @@
+@startuml
+
+box Composable #LightYellow
+  participant "AssetsRegistry" as pallet_assets_registry
+  participant "Lending" as pallet_lending
+  participant "Liquidations" as pallet_liquidations
+  participant "Dutch Auction" as pallet_dutch_action
+  control "OCW Liquidation" as ocw_lending
+end box
+
+box Acala #LightGreen
+  participant "Acala" as pallet_engine_acala
+end box
+
+box HydraDx #SkyBlue
+  participant "HydraDx" as pallet_engine_hydra
+end box
+
+ocw_lending -> pallet_lending : check positions for liquidation
+ocw_lending -> pallet_lending : liquidate
+pallet_lending -> pallet_liquidations: sell
+pallet_liquidations -> pallet_liquidations: read configuration
+pallet_liquidations -> pallet_assets_registry: get assets mapping
+return
+pallet_liquidations --> pallet_engine_acala: XCM  ReserveTransfer + Transact Sell
+pallet_engine_acala -> pallet_engine_acala: Get liquidations strategy and assets mapping
+...
+pallet_engine_acala --> pallet_liquidations: XCM ReserveTransfer + Transact Sell results
+note right
+  may not fully sell
+  so allow sell using next parachain
+end note
+pallet_liquidations --> pallet_engine_hydra: XCM  ReserveTransfer + Transact Sell
+pallet_engine_hydra --> pallet_liquidations : XCM ReserveTransfer + Transact Sell results
+pallet_liquidations -> pallet_dutch_action: Final attempt
+@enduml

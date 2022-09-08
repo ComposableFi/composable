@@ -25,8 +25,8 @@ In return, we ask you to not publicly disclose your findings until either 2 week
 
 
 ## Scope:   
-What is currently in scope is finding bugs in a our code base running in a local enviroment.
-*Exploiting production systems are stricly prohibited*    
+What is currently in scope is finding bugs in a our code base running in a local environment.
+*Exploiting production systems is strictly prohibited*    
 
 
 ## Rewards   

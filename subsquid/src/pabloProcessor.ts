@@ -1,3 +1,5 @@
+import { EventHandlerContext } from "@subsquid/substrate-processor";
+import Big from "big.js";
 import {
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
@@ -5,18 +7,15 @@ import {
   PabloPoolDeletedEvent,
   PabloSwappedEvent,
 } from "./types/events";
-import { EventHandlerContext } from "@subsquid/substrate-processor";
-import * as ss58 from "@subsquid/ss58";
 import { get, getLatestPoolByPoolId, getOrCreate } from "./dbHelper";
 import {
-  Account,
   PabloPool,
   PabloPoolAsset,
   PabloTransaction,
   PabloTransactionType,
 } from "./model";
-import Big from "big.js";
-import { CurrencyPair, Fee } from "./types/v2300";
+import { CurrencyPair, Fee } from "./types/v2401";
+import { encodeAccount } from "./utils";
 
 function createTransaction(
   ctx: EventHandlerContext,
@@ -30,7 +29,7 @@ function createTransaction(
   quoteAssetAmount: bigint,
   fee?: string
 ) {
-  let tx = new PabloTransaction();
+  const tx = new PabloTransaction();
   tx.id = ctx.event.id;
   tx.eventId = ctx.event.id;
   tx.pool = pool;
@@ -71,17 +70,8 @@ interface PoolCreatedEvent {
 }
 
 function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
-  if (event.isV2300) {
-    const { owner, poolId, assets } = event.asV2300;
-    return { owner, poolId, assets };
-  } else {
-    const { owner, poolId, assets } = event.asLatest;
-    return { owner, poolId, assets };
-  }
-}
-
-function encodeAccount(account: Uint8Array) {
-  return ss58.codec("picasso").encode(account);
+  const { owner, poolId, assets } = event.asV2401 ?? event.asLatest;
+  return { owner, poolId, assets };
 }
 
 export async function processPoolCreatedEvent(
@@ -94,7 +84,7 @@ export async function processPoolCreatedEvent(
   const pool = await getOrCreate(ctx.store, PabloPool, ctx.event.id);
   // only set values if the owner was missing, i.e a new pool
   if (pool.owner == null) {
-    let timestamp = BigInt(new Date().getTime());
+    const timestamp = BigInt(new Date().getTime());
     pool.id = ctx.event.id;
     pool.eventId = ctx.event.id;
     pool.owner = owner;
@@ -154,7 +144,7 @@ export function createPoolAssetId(
   poolId: bigint,
   assetId: bigint
 ): string {
-  return eventId + "-" + poolId + "-" + assetId;
+  return `${eventId}-${poolId}-${assetId}`;
 }
 
 interface LiquidityAddedEvent {
@@ -168,13 +158,9 @@ interface LiquidityAddedEvent {
 function getLiquidityAddedEvent(
   event: PabloLiquidityAddedEvent
 ): LiquidityAddedEvent {
-  if (event.isV2300) {
-    const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV2300;
-    return { who, poolId, baseAmount, quoteAmount, mintedLp };
-  } else {
-    const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asLatest;
-    return { who, poolId, baseAmount, quoteAmount, mintedLp };
-  }
+  const { who, poolId, baseAmount, quoteAmount, mintedLp } =
+    event.asV2401 ?? event.asLatest;
+  return { who, poolId, baseAmount, quoteAmount, mintedLp };
 }
 
 export async function processLiquidityAddedEvent(
@@ -269,15 +255,9 @@ interface LiquidityRemovedEvent {
 function getLiquidityRemovedEvent(
   event: PabloLiquidityRemovedEvent
 ): LiquidityRemovedEvent {
-  if (event.isV2300) {
-    const { who, poolId, baseAmount, quoteAmount, totalIssuance } =
-      event.asV2300;
-    return { who, poolId, baseAmount, quoteAmount, totalIssuance };
-  } else {
-    const { who, poolId, baseAmount, quoteAmount, totalIssuance } =
-      event.asLatest;
-    return { who, poolId, baseAmount, quoteAmount, totalIssuance };
-  }
+  const { who, poolId, baseAmount, quoteAmount, totalIssuance } =
+    event.asV2401 ?? event.asLatest;
+  return { who, poolId, baseAmount, quoteAmount, totalIssuance };
 }
 
 export async function processLiquidityRemovedEvent(
@@ -375,15 +355,9 @@ interface SwappedEvent {
 }
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
-  if (event.isV2300) {
-    const { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee } =
-      event.asV2300;
-    return { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee };
-  } else {
-    const { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee } =
-      event.asLatest;
-    return { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee };
-  }
+  const { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee } =
+    event.asV2401 ?? event.asLatest;
+  return { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee };
 }
 
 export async function processSwappedEvent(
@@ -417,8 +391,8 @@ export async function processSwappedEvent(
     if (quoteAsset == undefined) {
       throw new Error("quoteAsset not found");
     }
-    let feesLeavingPool = swappedEvt.fee.fee - swappedEvt.fee.lpFee;
-    let spotPrice = isReverse
+    const feesLeavingPool = swappedEvt.fee.fee - swappedEvt.fee.lpFee;
+    const spotPrice = isReverse
       ? Big(swappedEvt.baseAmount.toString()).div(
           Big(swappedEvt.quoteAmount.toString())
         )
@@ -520,13 +494,8 @@ interface PoolDeletedEvent {
 }
 
 function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
-  if (event.isV2300) {
-    const { poolId, baseAmount, quoteAmount } = event.asV2300;
-    return { poolId, baseAmount, quoteAmount };
-  } else {
-    const { poolId, baseAmount, quoteAmount } = event.asLatest;
-    return { poolId, baseAmount, quoteAmount };
-  }
+  const { poolId, baseAmount, quoteAmount } = event.asV2401 ?? event.asLatest;
+  return { poolId, baseAmount, quoteAmount };
 }
 
 export async function processPoolDeletedEvent(

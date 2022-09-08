@@ -1,0 +1,10 @@
+[toolchain]
+channel = "nightly-2022-08-09"
+components = [
+  "clippy",
+  "llvm-tools-preview",
+  "rust-analyzer",
+  "rustfmt",
+  "rust-src",
+]
+targets = ["wasm32-unknown-unknown"]

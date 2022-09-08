@@ -1,42 +1,77 @@
-# Note, this file is sorted by precedence. Later patterns take precedence over earlier ones.
+# Note, this file is sorted by precedence. Later patterns take precedence over earlier ones
 
-# Default reviewers. For anything not owned by a specific team, a core member needs to review or delegate.
-* @ComposableFi/core
+## Default reviewers.
 
-# CI and deployment related files
+* @ComposableFi/core  # For anything not owned by a specific team, a core member needs to review or delegate
+
+*.nix @ComposableFi/developers # until under specific folder, *.nix stuff is developers' stuff
+
+## CI and deployment related files
+
 .github/ @ComposableFi/sre
 .github/CODEOWNERS @ComposableFi/core
 docker/ @ComposableFi/sre
 Makefile @ComposableFi/sre
 
-# Parachain related files
-runtime/ @ComposableFi/parachain-leads
-node/ @ComposableFi/parachain-leads
-frame/ @ComposableFi/parachain
-integration-tests/ @ComposableFi/parachain
+## Parachain related files
 
-frame/composable-traits/ @ComposableFi/parachain-finance
-frame/pablo/ @ComposableFi/parachain-finance
-frame/dex-router/ @ComposableFi/parachain-finance
-frame/nft/ @ComposableFi/parachain-finance
-frame/staking-rewards/ @ComposableFi/parachain-finance
-frame/oracle/ @ComposableFi/parachain-finance
-subsquid/ @ComposableFi/parachain-finance
-frame/*/rpc/ @ComposableFi/parachain-rpc
-frame/*/runtime-api @ComposableFi/parachain-rpc
+code/parachain/runtime/ @ComposableFi/parachain-leads
 
-# Gitbook
-book/ @ComposableFi/technical-writing-reviewers
-README.md @ComposableFi/technical-writing-reviewers
+code/parachain/node/ @ComposableFi/parachain-leads
+code/parachain/frame/ @ComposableFi/parachain
+code/integration-tests/ @ComposableFi/parachain @ComposableFi/testers
 
-# Frontend and Blockchain Integration 
+code/parachain/frame/composable-traits/ @ComposableFi/parachain-finance
+code/parachain/frame/pablo/ @ComposableFi/parachain-finance
+code/parachain/frame/dex-router/ @ComposableFi/parachain-finance
+code/parachain/frame/nft/ @ComposableFi/parachain-finance
+code/parachain/frame/staking-rewards/ @ComposableFi/parachain-finance
+code/parachain/frame/oracle/ @ComposableFi/parachain-finance
+subsquid/ @ComposableFi/parachain-finance @ComposableFi/blockchain-integrations
+code/parachain/frame/*/rpc/ @ComposableFi/parachain-rpc
+code/parachain/frame/*/runtime-api @ComposableFi/parachain-rpc
+
+## Public Gitbook
+
+book/ @ComposableFi/technical-writers
+README.md @ComposableFi/technical-writers @ComposableFi/core @ComposableFi/parachain-leads
+
+## Frontend and Blockchain Integration
 frontend/ @ComposableFi/blockchain-integrations @ComposableFi/parachain-finance
+.github/workflows/frontend-pablo-eslint.yml @ComposableFi/sre @ComposableFi/blockchain-integrations
+.github/workflows/frontend-pablo-tests.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations
+.github/workflows/frontend-picasso-eslint.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations
+.github/workflows/frontend-picasso-tests.yml  @ComposableFi/sre  @ComposableFi/blockchain-integrations
 
-# Runtime Integration Tests
-integration-tests/runtime-tests/ @ComposableFi/testers
+## Runtime Integration Tests
 
-# Codespaces
-.devcontainer/ @ComposableFi/codespacers
+code/integration-tests/runtime-tests/ @ComposableFi/testers
 
+## Codespaces
+
+.devcontainer/ @ComposableFi/codespacers @ComposableFi/parachain-leads
+
+## Nix
+
+.nix/ @ComposableFi/nix
+flake.nix @ComposableFi/nix
+
+# ComposableJS
+composablejs/ @ComposableFi/parachain
+
+## Dev stuff
+
+rfcs/ @ComposableFi/developers
+docs/ @ComposableFi/developers @ComposableFi/technical-writers
+scripts/ @ComposableFi/developers @ComposableFi/sre
+code/utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
+.config/spellcheck.dic @ComposableFi/developers @ComposableFi/technical-writers
 # Oracle Setup Script
 scripts/oracle-setup @ComposableFi/parachain
+
+# Repository 
+README.md @ComposableFi/technical-writers @ComposableFi/core
+SECURITY.md @ComposableFi/security
+REVIEWERS.md @ComposableFi/core
+ARCHITECTURE.md @ComposableFi/core
+LICENSE @ComposableFi/technical-writers @ComposableFi/core

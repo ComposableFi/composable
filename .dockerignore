@@ -1,1 +1,10 @@
-target
+**/.git
+**/result
+**/*.log
+**/target/
+**/node_modules/
+
+#  please use nix to build docker
+**/Dockerfile
+**/*.dockerfile
+**/.dockerignore

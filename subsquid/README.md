@@ -7,17 +7,24 @@ It accumulates [kusama](https://kusama.network) account balances and serves them
 
 ## Summary
 
-- [Quickstart](#quickly-running-the-sample)
-- [Setup for Parachains](#setup-for-parachains)
-- [Setup for Localnets, Devnets and Testnets](#setup-for-devnets-and-testnets)
-- [Development flow](#dev-flow)
-  - [Database Schema](#1-define-database-schema)
-  - [Entity classes](#2-generate-typeorm-classes)
-  - [DB migrations](#3-generate-database-migration)
-  - [Typegen for Events, Extrinsics and Storage Calls](#4-generate-typescript-definitions-for-substrate-events-and-calls)
-- [Deploy the Squid](#deploy-the-squid)
-- [Conventions](#project-conventions)
-- [Type Bundles](#types-bundle)
+- [Squid template project](#squid-template-project)
+  - [Summary](#summary)
+  - [Prerequisites](#prerequisites)
+  - [Quickly running the sample](#quickly-running-the-sample)
+  - [Setup for parachains](#setup-for-parachains)
+  - [Setup for devnets and testnets](#setup-for-devnets-and-testnets)
+  - [Dev flow](#dev-flow)
+    - [1. Define database schema](#1-define-database-schema)
+      - [Entity Requirements](#entity-requirements)
+    - [2. Generate TypeORM classes](#2-generate-typeorm-classes)
+    - [3. Generate database migration](#3-generate-database-migration)
+    - [4. Generate TypeScript definitions for substrate events and calls](#4-generate-typescript-definitions-for-substrate-events-and-calls)
+  - [Deploy the Squid](#deploy-the-squid)
+  - [Project conventions](#project-conventions)
+  - [Types bundle](#types-bundle)
+  - [Differences from polkadot.js](#differences-from-polkadotjs)
+  - [Graphql server extensions](#graphql-server-extensions)
+  - [Disclaimer](#disclaimer)
 
 ## Prerequisites
 
@@ -108,6 +115,13 @@ docker compose -f archive/docker-compose.yml down -v
 Start development by defining the schema of the target database via `schema.graphql`.
 Schema definition consists of regular graphql type declarations annotated with custom directives.
 Full description of `schema.graphql` dialect is available [here](https://docs.subsquid.io/schema-spec).
+
+#### Entity Requirements
+
+Entities *must* include the following fields:
+- id: Random UUID for the database
+- eventId: ID associated with the chain (can be obtained from `ctx.event.id`)
+- [unique id associated with the entity]: Any id that can be associated with the on-chain entity. When possible, this must come directly from the chain events (like `offerId` for bond offers). Otherwise, it can be created as a unique concatenation of available data separated by a dash (`-`), like `${accountId}-${assetId}` for vesting schedules.
 
 ### 2. Generate TypeORM classes
 

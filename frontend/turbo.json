@@ -1,0 +1,26 @@
+{
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "storybook-static/**", "coverage/**", "eslint_report.json"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "export": {
+      "dependsOn": ["build"],
+      "outputs": ["out/**"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "cache": false
+    },
+    "dev": {
+      "cache": false
+    },
+    "lint:report": {
+
+    }
+  }
+}

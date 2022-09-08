@@ -9,6 +9,7 @@ import {
   verify,
   when,
 } from "ts-mockito";
+import { randomUUID } from "crypto";
 import { BondedFinanceBondOffer } from "../src/model";
 import {
   BondedFinanceNewBondEvent,
@@ -62,7 +63,7 @@ function createNewOfferEvent(offerId: string) {
     offerId: BigInt(OFFER_ID_1),
     beneficiary: MOCK_ADDRESS,
   };
-  when(eventMock.asV2300).thenReturn(evt);
+  when(eventMock.asV2401).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
 
   let event = instance(eventMock);
@@ -77,7 +78,7 @@ function createNewBondEvent(offerId: string, nbOfBonds: bigint) {
     who: WHO,
     nbOfBonds,
   };
-  when(eventMock.asV2300).thenReturn(evt);
+  when(eventMock.asV2401).thenReturn(evt);
   when(eventMock.asLatest).thenReturn(evt);
 
   let event = instance(eventMock);
@@ -88,17 +89,20 @@ function createNewBondEvent(offerId: string, nbOfBonds: bigint) {
 /**
  * Check if bond offer has expected values
  * @param bondArg
- * @param id - Offer id
+ * @param eventId - Event id
+ * @param offerId - Offer id
  * @param purchased - Amount of purchased bonds
  * @param beneficiary - Bond beneficiary
  */
 function assertBondedFinanceBondOffer(
   bondArg: BondedFinanceBondOffer,
-  id: string,
+  eventId: string,
+  offerId: string,
   purchased: bigint,
   beneficiary: string
 ) {
-  expect(bondArg.id).to.equal(id);
+  expect(bondArg.eventId).to.equal(eventId);
+  expect(bondArg.offerId).to.equal(offerId);
   expect(bondArg.totalPurchased).to.equal(purchased);
   expect(bondArg.beneficiary).to.equal(beneficiary);
 }
@@ -121,6 +125,7 @@ async function assertNewOfferEvent(
   const [arg] = capture(storeMock.save).last();
   assertBondedFinanceBondOffer(
     arg as unknown as BondedFinanceBondOffer,
+    ctx.event.id,
     offerId,
     BigInt(0),
     encodeAccount(MOCK_ADDRESS)
@@ -137,6 +142,7 @@ async function assertNewBondEvent(
   const [arg] = capture(storeMock.save).last();
   assertBondedFinanceBondOffer(
     arg as unknown as BondedFinanceBondOffer,
+    ctx.event.id,
     offerId,
     purchased,
     encodeAccount(MOCK_ADDRESS)
@@ -163,15 +169,17 @@ describe("Bonded finance events", () => {
     // Stub store.get() to return the total purchased bonds in the database
     when(
       storeMock.get<BondedFinanceBondOffer>(BondedFinanceBondOffer, anything())
-    ).thenCall((_, { where: { id } }) => {
-      return Promise.resolve(totalPurchasedStored[id]);
+    ).thenCall((_, { where: { offerId } }) => {
+      return Promise.resolve(totalPurchasedStored[offerId]);  
     });
 
     // Stub store.save() to update the total purchased bonds in the database
     when(storeMock.save<BondedFinanceBondOffer>(anything())).thenCall(
-      ({ id, totalPurchased, beneficiary }) => {
+      ({ id, totalPurchased, beneficiary, eventId, offerId }) => {
         totalPurchasedStored[id] = new BondedFinanceBondOffer({
           id,
+          eventId,
+          offerId,
           totalPurchased,
           beneficiary,
         });
@@ -191,12 +199,16 @@ describe("Bonded finance events", () => {
     // Total bonds purchased for each offer, as stored in the database
     totalPurchasedStored = {
       [OFFER_ID_1]: new BondedFinanceBondOffer({
-        id: OFFER_ID_1,
+        id: randomUUID(),
+        eventId: ctx.event.id,
+        offerId: OFFER_ID_1,
         totalPurchased: BigInt(0),
         beneficiary: encodeAccount(MOCK_ADDRESS),
       }),
       [OFFER_ID_2]: new BondedFinanceBondOffer({
-        id: OFFER_ID_2,
+        id: randomUUID(),
+        eventId: ctx.event.id,
+        offerId: OFFER_ID_2,
         totalPurchased: BigInt(0),
         beneficiary: encodeAccount(MOCK_ADDRESS),
       }),

@@ -1,0 +1,62 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
+name = "pallet-currency-factory"
+version = "0.0.1"
+
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies.codec]
+default-features = false
+features = ["derive", "max-encoded-len"]
+package = "parity-scale-codec"
+version = "3.0.0"
+
+[dependencies]
+# FRAME
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+# substrate primitives
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+
+# local
+composable-traits = { path = "../composable-traits", default-features = false }
+
+[dev-dependencies]
+composable-tests-helpers = { version = "0.0.1", path = "../composable-tests-helpers" }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
+proptest = "1.0.0"
+
+[features]
+default = ["std"]
+std = [
+  "codec/std",
+  "frame-support/std",
+  "frame-system/std",
+  "sp-runtime/std",
+  "sp-io/std",
+  "sp-core/std",
+  "sp-std/std",
+  "sp-arithmetic/std",
+  "composable-traits/std",
+  "scale-info/std",
+]
+
+runtime-benchmarks = [
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+]

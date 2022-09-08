@@ -1,0 +1,56 @@
+{
+  "version": "0.1.88",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test --passWithNoTests",
+    "lint": "eslint '**/*.{ts,tsx}'",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
+  },
+  "peerDependencies": {
+    "react": ">=16"
+  },
+  "name": "substrate-react",
+  "author": "Saad Ahmed Siddiqui",
+  "module": "dist/substrate-react.esm.js",
+  "size-limit": [
+    {
+      "path": "dist/substrate-react.cjs.production.min.js",
+      "limit": "500 KB"
+    },
+    {
+      "path": "dist/substrate-react.esm.js",
+      "limit": "500 KB"
+    }
+  ],
+  "devDependencies": {
+    "@polkadot/api": "^8.3.2",
+    "@size-limit/preset-small-lib": "^7.0.8",
+    "@types/react": "^17.0.39",
+    "@types/react-dom": "^17.0.13",
+    "husky": "^7.0.4",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "size-limit": "^7.0.8",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.3.1",
+    "typescript": "^4.6.2"
+  },
+  "dependencies": {
+    "immer": "^9.0.12",
+    "zustand": "^3.7.1",
+    "@polkadot/extension-dapp": "^0.42.9"
+  }
+}

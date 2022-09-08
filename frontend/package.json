@@ -1,0 +1,35 @@
+{
+  "name": "fe",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "export": "turbo run export",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "lint:report": "turbo run lint:report"
+  },
+  "devDependencies": {
+    "eslint-config-custom": "*",
+    "prettier": "latest",
+    "turbo": "latest"
+  },
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=14.0.0"
+  },
+  "dependencies": {},
+  "packageManager": "yarn@1.22.15",
+  "resolutions":  {
+    "@types/react": "17.0.2",
+    "@types/react-dom": "17.0.2",
+    "react": "17.0.2",
+    "react-dom": "17.0.2"
+  }
+}
