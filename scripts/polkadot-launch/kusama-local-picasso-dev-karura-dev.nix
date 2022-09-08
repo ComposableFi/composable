@@ -32,7 +32,7 @@ in {
         wsPort = 9988;
         count = 2;
         chain = "picasso-dev";
-        bin = "${composable-bin}/bin/composable";
+        bin = "${composable-bin}/bin/composable-node";
       }
       {
         id = 2000;
