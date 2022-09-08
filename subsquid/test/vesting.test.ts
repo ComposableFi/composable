@@ -1,4 +1,4 @@
-import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
+import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { Schedule, VestingSchedule } from "../src/model";
 import {
   anyOfClass,
@@ -17,6 +17,7 @@ import {
 import { VestingSchedule as VestingScheduleType } from "../src/types/v2401";
 import { VestingVestingScheduleAddedEvent } from "../src/types/events";
 import { expect } from "chai";
+import { Store } from "@subsquid/typeorm-store";
 
 const MOCK_ADDRESS_FROM = createAccount();
 const MOCK_ADDRESS_TO = createAccount();
@@ -58,7 +59,7 @@ function assertVestingSchedule(
 }
 
 async function assertVestingScheduleAddedEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   storeMock: Store,
   from: Uint8Array,
   to: Uint8Array,
@@ -90,7 +91,7 @@ function createVestingScheduleAddedEvent(
     to,
     asset,
     schedule,
-    vestingScheduleId
+    vestingScheduleId,
   };
 
   when(eventMock.asV2401).thenReturn(evt);
@@ -103,7 +104,7 @@ function createVestingScheduleAddedEvent(
 
 describe("Vesting schedule added", () => {
   let storeMock: Store;
-  let ctx: EventHandlerContext;
+  let ctx: EventHandlerContext<Store, { event: true }>;
   let vestingSchedulesStored: VestingSchedule[];
 
   beforeEach(() => {

@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { EventHandlerContext, Store } from "@subsquid/substrate-processor";
+import { EventHandlerContext } from "@subsquid/substrate-processor";
 import {
   anyOfClass,
   anything,
@@ -15,12 +15,12 @@ import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
 } from "../src/types/events";
-import { createAccount, createCtx } from "../src/utils";
+import { createAccount, createCtx, encodeAccount } from "../src/utils";
 import {
   processNewBondEvent,
   processNewOfferEvent,
 } from "../src/bondedFinanceProcessor";
-import { encodeAccount } from "../src/utils";
+import { Store } from "@subsquid/typeorm-store";
 
 const OFFER_ID_1 = "1";
 const OFFER_ID_2 = "2";
@@ -55,6 +55,19 @@ const MOCK_NEW_OFFER_EXTRINSIC = {
   hash: "0x807a508abeda083d9cb6f7751329881f2d45981a82deb261f6aa19e37d3d3e63",
   tip: BigInt(0),
   indexInBlock: 2,
+  version: 0,
+  call: {
+    id: "",
+    name: "QualifiedName",
+    /**
+     * JSON encoded call arguments
+     */
+    args: false,
+    success: true,
+    pos: 0,
+  },
+  success: true,
+  pos: 0,
 };
 
 function createNewOfferEvent(offerId: string) {
@@ -113,7 +126,7 @@ function assertBondedFinanceBondOffer(
  * @param offerId
  */
 async function assertNewOfferEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   storeMock: Store,
   offerId: string
 ) {
@@ -133,7 +146,7 @@ async function assertNewOfferEvent(
 }
 
 async function assertNewBondEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   storeMock: Store,
   offerId: string,
   purchased: bigint
@@ -151,7 +164,7 @@ async function assertNewBondEvent(
 
 describe("Bonded finance events", () => {
   let storeMock: Store;
-  let ctx: EventHandlerContext;
+  let ctx: EventHandlerContext<Store, { event: true }>;
 
   // Actual total bonds purchased for each offer
   let totalPurchased: Record<string, BondedFinanceBondOffer>;
@@ -170,7 +183,7 @@ describe("Bonded finance events", () => {
     when(
       storeMock.get<BondedFinanceBondOffer>(BondedFinanceBondOffer, anything())
     ).thenCall((_, { where: { offerId } }) => {
-      return Promise.resolve(totalPurchasedStored[offerId]);  
+      return Promise.resolve(totalPurchasedStored[offerId]);
     });
 
     // Stub store.save() to update the total purchased bonds in the database
