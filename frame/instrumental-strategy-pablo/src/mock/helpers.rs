@@ -64,14 +64,14 @@ where
 	let pool_id = Pablo::do_create_pool(config);
 	assert_ok!(pool_id);
 	let pool_id = pool_id.unwrap();
-	// assert_ok!(<Pablo as Amm>::add_liquidity(
-	// 	&ALICE,
-	// 	pool_id,
-	// 	base_amount,
-	// 	quote_amount,
-	// 	0_u128,
-	// 	true
-	// ));
+	assert_ok!(<Pablo as Amm>::add_liquidity(
+		&ALICE,
+		pool_id,
+		base_amount,
+		quote_amount,
+		0_u128,
+		true
+	));
 	assert_ok!(<Pablo as Amm>::add_liquidity(
 		&BOB,
 		pool_id,
@@ -166,6 +166,12 @@ pub fn set_pool_id_for_asset(asset_id: CurrencyId, pool_id: PoolId) {
 	let set_pool_id_for_asset_proposal =
 		Call::PabloStrategy(crate::Call::set_pool_id_for_asset { asset_id, pool_id });
 	make_proposal(set_pool_id_for_asset_proposal, ALICE, 1, 0, None);
+}
+
+pub fn liquidity_rebalance() {
+	let liquidity_rebalance_proposal =
+	Call::PabloStrategy(crate::Call::liquidity_rebalance {});
+	make_proposal(liquidity_rebalance_proposal, ALICE, 1, 0, None);
 }
 
 pub fn assert_has_event<T, F>(matcher: F)

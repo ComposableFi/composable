@@ -19,11 +19,11 @@ use crate::{
 		account_id::{ADMIN, ALICE, BOB},
 		helpers::{
 			assert_has_event, associate_vault_and_deposit_in_it, create_pool, create_vault,
-			make_proposal, set_admin_members, set_pool_id_for_asset,
+			liquidity_rebalance, make_proposal, set_admin_members, set_pool_id_for_asset,
 		},
 		runtime::{
 			Balance, Call, Event, ExtBuilder, MockRuntime, PabloStrategy, System, Tokens, Vault,
-			VaultId, MAX_ASSOCIATED_VAULTS,
+			VaultId, Pablo, Origin, MAX_ASSOCIATED_VAULTS,
 		},
 	},
 	pallet,
@@ -112,6 +112,8 @@ mod associate_vault {
 
 #[cfg(test)]
 mod rebalance {
+	use crate::mock::runtime::Assets;
+
 	use super::*;
 
 	#[test]
@@ -150,6 +152,57 @@ mod rebalance {
 	fn funds_availability_withdrawable() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
+			let base_asset = CurrencyId::LAYR;
+			let quote_asset = CurrencyId::CROWD_LOAN;
+			let amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
+			// Create Vault (LAYR)
+			let vault_id = create_vault(base_asset, Perquintill::from_percent(50));
+			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
+			set_admin_members(vec![ALICE], 5);
+			associate_vault_and_deposit_in_it(vault_id, base_asset, amount);
+			// set pool_id for asset
+			set_pool_id_for_asset(base_asset, pool_id);
+			// liquidity rebalance
+			liquidity_rebalance();
+			System::assert_has_event(Event::PabloStrategy(
+				pallet::Event::WithdrawFunctionalityOccuredDuringRebalance { vault_id },
+			));
+		});
+	}
+
+	#[test]
+	fn funds_availability_depositable() {
+		ExtBuilder::default().build().execute_with(|| {
+			System::set_block_number(1);
+			let base_asset = CurrencyId::LAYR;
+			let quote_asset = CurrencyId::CROWD_LOAN;
+			let amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
+			// Create Vault (LAYR)
+			let vault_id = create_vault(base_asset, Perquintill::from_percent(50));
+			let vault_account = Vault::account_id(&vault_id);
+			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
+			set_admin_members(vec![ALICE], 5);
+			associate_vault_and_deposit_in_it(vault_id, base_asset, amount);
+			// set pool_id for asset
+			set_pool_id_for_asset(base_asset, pool_id);
+			// liquidity rebalance
+			liquidity_rebalance();
+			// Pablo::add_liquidity(
+			// 	Origin::signed(vault_account),
+			// 	pool_id,
+			// 	amount / 2 - 1_000_000,
+			// 	0_u128,
+			// 	0_u128,
+			// 	true,
+			// );
+			liquidity_rebalance();
+			let events = System::events();
+			for event in events {
+				println!("{:?}", event);
+			}
+			System::assert_has_event(Event::PabloStrategy(
+				pallet::Event::DepositFunctionalityOccuredDuringRebalance { vault_id },
+			));
 		});
 	}
 }
@@ -227,9 +280,7 @@ mod transferring_funds {
 			// set pool_id for asset
 			set_pool_id_for_asset(base_asset, pool_id);
 			// liquidity rebalance
-			let liquidity_rebalance_proposal =
-				Call::PabloStrategy(crate::Call::liquidity_rebalance {});
-			make_proposal(liquidity_rebalance_proposal, ALICE, 1, 0, None);
+			liquidity_rebalance();
 			// tranferring funds
 			let new_quote_asset = CurrencyId::USDT;
 			let new_pool_id = create_pool(base_asset, amount, new_quote_asset, amount, None, None);
