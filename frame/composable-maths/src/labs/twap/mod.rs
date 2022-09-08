@@ -205,7 +205,8 @@ where
 		self.period
 	}
 
-	/// Updates the Twap's value using the default EMA function.
+	/// Updates the Twap's value using the default exponential moving average
+	/// function.
 	///
 	/// # Examples
 	/// ```
@@ -229,7 +230,8 @@ where
 	/// ```
 	///
 	/// # Errors
-	/// TODO(Cardosaum)
+	///
+	/// * [`ArithmeticError`]
 	pub fn accumulate(
 		&mut self,
 		price: &FixedPoint,
@@ -269,8 +271,8 @@ where
 	/// modifying the current value.
 	///
 	/// # Errors
-
-	/// * [`ArithmeticError::Overflow`]
+	///
+	/// * [`ArithmeticError`]
 	fn update(
 		&self,
 		price: &FixedPoint,
@@ -313,7 +315,7 @@ where
 	///
 	/// # Errors
 	///
-	/// * [`ArithmeticError::Overflow`]
+	/// * [`ArithmeticError`]
 	fn update_mut(
 		&mut self,
 		price: &FixedPoint,
