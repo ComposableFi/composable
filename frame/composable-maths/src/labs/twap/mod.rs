@@ -2,6 +2,10 @@
 //! generic over the underlying `twap` and `timestamp` types used to operate on
 //! time weighted average price values.
 //!
+//! TODO(Cardosaum): Create beautifull gif showing mark price and twap.
+//!
+//! TODO(Cardosaum): Add list of available methods and link them here. (same as in Vamm Pallet)
+//!
 //! # Examples
 //!
 //! ```
@@ -28,6 +32,7 @@
 // Ensure we're `no_std` when compiling for Wasm.
 #![cfg_attr(not(feature = "std"), no_std)]
 // Specify linters to EMA module.
+// TODO(Cardosaum): Enable all these linters
 // #![cfg_attr(
 // 	not(test),
 // 	deny(
@@ -36,14 +41,14 @@
 // 		clippy::complexity,
 // 		clippy::correctness,
 // 		clippy::nursery,
-// 		clippy::pedantic,
+// 		// clippy::pedantic,
 // 		clippy::perf,
 // 		// clippy::restriction,
 // 		clippy::style,
 // 		clippy::suspicious,
 // 		missing_docs,
-// 		// rustdoc::missing_crate_level_docs,
-// 		// rustdoc::missing_doc_code_examples,
+// 		rustdoc::missing_crate_level_docs,
+// 		rustdoc::missing_doc_code_examples,
 // 		warnings,
 // 	)
 // )]
@@ -55,11 +60,10 @@ mod tests;
 use crate::labs::numbers::{FixedPointMath, UnsignedMath};
 use num_traits::CheckedMul;
 use sp_runtime::{
-	traits::One,
 	ArithmeticError::{self, Overflow},
-	FixedPointNumber, FixedU128,
+	FixedPointNumber,
 };
-use std::cmp::Ordering::Greater;
+use sp_std::cmp::Ord;
 
 /// The [`Twap`] value itself, storing both the underlying time weighted average
 /// price and its most recent timestamp.
@@ -113,26 +117,108 @@ pub struct Twap {
 impl Twap {
 	// TODO(Cardosaum): Update function documentation.
 	/// Creates a new instance of [`Twap`], returning it.
+	/// Creates a new [`Twap`] instance, returning it.
 	///
 	/// # Examples
-	/// TODO(Cardosaum)
-	pub const fn new(twap: FixedU128, ts: u64, period: u64) -> Self {
+	/// ```
+	/// # use sp_runtime::FixedU128;
+	/// # use composable_maths::labs::twap::Twap;
+	/// // Set the initial twap value to `42.0`, with an initial timestamp
+	/// // representing the date `Sun Sep 13 12:26:40 AM 2020`, and a period of
+	/// // one hour.
+	/// let price = FixedU128::from_float(42.0);
+	/// let timestamp: u64 = 1600000000;
+	/// let period: u64 = 3600;
+	///
+	/// let twap = Twap::new(price, timestamp, period);
+	/// dbg!(twap);
+	/// // Twap {
+	/// // 	twap: FixedU128(42.000000000000000000),
+	/// // 	ts: 1600000000,
+	/// // 	period: 3600,
+	/// // };
+	/// ```
 		//  TODO(Cardosaum): Maybe remove this default value?
 		let default_time = 1000; // 1 second
 		Self { twap, ts, period, since_last_min: default_time, from_start_min: default_time }
 	}
 
-	// TODO(Cardosaum): Update function documentation.
-	pub const fn get_twap(&self) -> FixedU128 {
+	/// Returns the Twap's value.
+	///
+	/// # Examples
+	/// ```
+	/// # use sp_runtime::FixedU128;
+	/// # use composable_maths::labs::twap::Twap;
+	/// let price = FixedU128::from_float(42.0);
+	/// # let timestamp: u64 = 1600000000;
+	/// # let period: u64 = 3600;
+	///
+	/// let twap = Twap::new(price, timestamp, period);
+	///
+	/// assert_eq!(twap.get_twap(), price);
+	/// ```
 		self.twap
 	}
 
-	// TODO(Cardosaum): Update function documentation.
-	/// This function updates the [`twap`](Twap::twap) value using the default
-	/// EMA function.
+	/// Returns the Twap's timestamp.
 	///
 	/// # Examples
-	/// TODO(Cardosaum)
+	/// ```
+	/// # use sp_runtime::FixedU128;
+	/// # use composable_maths::labs::twap::Twap;
+	/// # let price = FixedU128::from_float(42.0);
+	/// let timestamp: u64 = 1600000000;
+	/// # let period: u64 = 3600;
+	///
+	/// let twap = Twap::new(price, timestamp, period);
+	///
+	/// assert_eq!(twap.get_timestamp(), timestamp);
+	/// ```
+	pub const fn get_timestamp(&self) -> Moment {
+		self.ts
+	}
+
+	// TODO(Cardosaum): Update function documentation.
+	/// Returns the Twap's period.
+	///
+	/// # Examples
+	/// ```
+	/// # use sp_runtime::FixedU128;
+	/// # use composable_maths::labs::twap::Twap;
+	/// # let price = FixedU128::from_float(42.0);
+	/// # let timestamp: u64 = 1600000000;
+	/// let period: u64 = 3600;
+	///
+	/// let twap = Twap::new(price, timestamp, period);
+	///
+	/// assert_eq!(twap.get_period(), period);
+	/// ```
+	pub const fn get_period(&self) -> Moment {
+		self.period
+	}
+
+	/// Updates the Twap's value using the default EMA function.
+	///
+	/// # Examples
+	/// ```
+	/// # use sp_runtime::FixedU128;
+	/// # use composable_maths::labs::twap::Twap;
+	/// # use frame_support::assert_ok;
+	/// let mut price = FixedU128::from_float(42.0);
+	/// let mut timestamp: u64 = 1600000000;
+	/// let period: u64 = 3600;
+	/// let mut twap = Twap::new(price, timestamp, period);
+	///
+	/// // Assumes one hour has passed.
+	/// timestamp += period;
+	///
+	/// // Cut price by half.
+	/// price = price / FixedU128::from_float(2.0);
+	///
+	/// // Update twap value with a new price.
+	/// let result = twap.accumulate(&price, timestamp);
+	/// assert_ok!(result, price);
+	/// ```
 	///
 	/// # Errors
 	/// TODO(Cardosaum)
