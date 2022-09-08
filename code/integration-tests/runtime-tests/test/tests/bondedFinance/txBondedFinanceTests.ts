@@ -16,11 +16,15 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { KeyringPair } from "@polkadot/keyring/types";
 
+import { GET_BONDED_FINANCE } from "../../../src/utils/subsquid/apollo/queries/bondedFinance";
+import { client } from "../../../src/utils/subsquid/apollo/apolloGraphql";
+import { waitForBlocks } from "@composable/utils/polkadotjs";
+
 /**
  * Contains all TX tests for the pallet:
  * bondedFinance
  */
-describe("tx.bondedFinance Tests", function () {
+describe.only("tx.bondedFinance Tests", function () {
   if (!testConfiguration.enabledTests.enabled) return;
   let api: ApiPromise;
   let walletAlice: KeyringPair, walletBob: KeyringPair;
@@ -54,8 +58,11 @@ describe("tx.bondedFinance Tests", function () {
     this.timeout(2 * 60 * 1000);
 
     // #1 Create offer using Alice's wallet.
-    it("[SHORT] Can create a new offer", async function () {
+    it.only("[SHORT] Can create a new offer", async function () {
       if (!testConfiguration.enabledTests.offer_bond__success.create1) this.skip();
+
+      const { data: bondOffersSubsquidBefore } = await client.query({ query: GET_BONDED_FINANCE });
+
       const requestParameters = {
         beneficiary: walletAlice.publicKey,
         asset: api.createType("u128", 4),
@@ -73,6 +80,12 @@ describe("tx.bondedFinance Tests", function () {
       } = await txBondedFinanceOfferSuccessTest(api, walletAlice, requestParameters);
       expect(result.toNumber()).to.be.a("number");
       bondOfferId1 = result.toNumber();
+
+      await waitForBlocks(api, 2);
+      const { data: bondOffersSubsquidAfter } = await client.query({ query: GET_BONDED_FINANCE });
+      expect(bondOffersSubsquidBefore.bondedFinanceBondOffers.length).to.be.equal(
+        bondOffersSubsquidAfter.bondedFinanceBondOffers.length - 1
+      );
     });
 
     // #2 Create offer using Bob's wallet.
