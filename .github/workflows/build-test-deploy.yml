@@ -302,6 +302,37 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#cargo-udeps-check --no-update-lock-file --show-trace -L
 
+  benchmarks-check:
+    name: "Benchmarks check"
+    needs: common-deps
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    concurrency:
+      group: ${{ github.workflow }}-benchmarks-check-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
+          echo "sandbox = relaxed" >> /etc/nix/nix.conf
+          echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
+        with:
+          skipPush: true
+          installCommand: |
+            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --update
+            nix-env -iA nixpkgs.cachix
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+          name: composable-community
+      - run: |
+          cachix watch-exec --jobs 16 --compression-level 0 composable-community nix -- build .#benchmarks-check --no-update-lock-file --show-trace -L
+
   unit-tests:
     name: "Unit Tests"
     needs: common-deps
@@ -370,8 +401,8 @@ jobs:
           files: result/lcov/lcov.info
           fail_ci_if_error: false
 
-  check-benchmarks:
-    name: "Benchmark"
+  test-running-of-pallet-benchmarks:
+    name: "Test running of pallet benchmarks"
     needs: package-composable-bench-node
     runs-on:
       - self-hosted
@@ -379,7 +410,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: checkbenchmarks-${{ matrix.runtime }}-${{ github.ref }}
+      group: ${{ github.workflow }}-test-running-of-pallet-benchmarks-${{ matrix.runtime }}-${{ github.ref }}
       cancel-in-progress: true
     strategy:
       matrix:
@@ -748,7 +779,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow}}-devcontainer-build-${{ github.ref }}
+      group: ${{ github.workflow }}-devcontainer-build-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -779,7 +810,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow}}-devcontainer-minimal-build-${{ github.ref }}
+      group: ${{ github.workflow }}-devcontainer-minimal-build-${{ github.ref }}
       cancel-in-progress: true  
     steps:
     - name: Clean up
@@ -812,7 +843,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow}}-devcontainer-publish-${{ github.ref }}
+      group: ${{ github.workflow }}-devcontainer-publish-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -920,7 +951,7 @@ jobs:
         - devnet-integration-tests
         - package-polkadot-node
         - package-composable-node
-        - check-benchmarks
+        - test-running-of-pallet-benchmarks
         - local-integration-tests
         - unit-tests
         - cargo-udeps-check 
@@ -931,6 +962,7 @@ jobs:
         - taplo-cli-check
         - prettier-check        
         - check-simnode
+        - benchmarks-check
       steps:
         - run: echo "Goblins allow your work to see the light"
 
