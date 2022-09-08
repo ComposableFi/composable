@@ -1,5 +1,6 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import { randomUUID } from "crypto";
+import { Store } from "@subsquid/typeorm-store";
 import {
   BondedFinanceNewBondEvent,
   BondedFinanceNewOfferEvent,
@@ -22,18 +23,18 @@ interface NewBondEvent {
  * @param event
  */
 function getNewBondEvent(event: BondedFinanceNewBondEvent): NewBondEvent {
-  const { offerId, nbOfBonds } = event.asV2401 ?? event.asLatest;
+  const { offerId, nbOfBonds } = event.asV2401;
   return { offerId, nbOfBonds };
 }
 
 function getNewOfferEvent(event: BondedFinanceNewOfferEvent): NewOfferEvent {
-  const { offerId, beneficiary } = event.asV2401 ?? event.asLatest;
+  const { offerId, beneficiary } = event.asV2401;
 
   return { offerId, beneficiary };
 }
 
 export async function processNewOfferEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   event: BondedFinanceNewOfferEvent
 ) {
   const { offerId, beneficiary } = getNewOfferEvent(event);
@@ -55,7 +56,7 @@ export async function processNewOfferEvent(
  * @param event
  */
 export async function processNewBondEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   event: BondedFinanceNewBondEvent
 ) {
   const { offerId, nbOfBonds } = getNewBondEvent(event);

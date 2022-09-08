@@ -7,7 +7,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { AllAuctionsTable, PageTitle } from "@/components";
+import { AllAuctionsTable } from "@/components";
 import { useEffect, useState } from "react";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
 import useStore from "@/store/useStore";

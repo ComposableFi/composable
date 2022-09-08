@@ -222,6 +222,7 @@ FSIZE
 MEMLOCK
 NOFILE
 NPROC
+WORKDIR
 
 # docker
 ipam

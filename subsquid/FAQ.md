@@ -63,7 +63,8 @@ During the development process, recreating the schema is often more convenient. 
 Run
 
 ```sh
-bash scripts/reset-db.sh
+bash rm db/migrations/*
+npx squid-typeorm-migration generate
 ```
 
 ### Option 2: Make an incremental update to the schema
@@ -71,8 +72,8 @@ bash scripts/reset-db.sh
 Generate a migration for the incremental changes and apply it
 
 ```sh
-npx sqd db create-migration AddMyAwesomeNewField
-npx sqd db migrate
+npx squid-typeorm-migration create AddMyAwesomeNewField
+npx squid-typeorm-migration migrate
 ```
 
 You can find the newly generated and applied migration in `db/migrations`.
@@ -83,7 +84,7 @@ You can find the newly generated and applied migration in `db/migrations`.
 Once the migrations are applied, simply run
 
 ```
-npx squid-graphql-server
+npx @subsquid/graphql-server
 ```
 
 Observe the port (4350 by default) and navigate to `localhost:4350/graphql` to explore your API. However, you need to run the processor to start populating the database.
@@ -130,6 +131,15 @@ npx squid-substrate-metadata-explorer \
 Once the exploration is done, you should define all events and calls of interest in `typegen.json`, then adjust the bundle and metadata history references and run:
 
 ```sh
+npx squid-substrate-typegen typegen.json
+```
+
+Example: for local dali run the following
+```sh 
+npx squid-substrate-metadata-explorer \
+  --chain ws://127.0.0.1:9988 \
+  --out daliDevVersions.jsonl
+
 npx squid-substrate-typegen typegen.json
 ```
 
