@@ -1928,7 +1928,8 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       buy: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, u128, bool]>;
       /**
-       * Create a new pool.
+       * Create a new pool. Note that this extrinsic does NOT validate if a pool with the same
+       * assets already exists in the runtime.
        * 
        * Emits `PoolCreated` event when successful.
        **/

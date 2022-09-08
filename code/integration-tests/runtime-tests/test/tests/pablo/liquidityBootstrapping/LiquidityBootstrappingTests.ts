@@ -148,10 +148,10 @@ describe.only("LiquidityBootstrapping Pool Test Suite", function () {
       );
     });
 
-    it("Users can create multiple LB Pools with random valid parameters", async function () {
+    it.only("Users can create multiple LB Pools with random valid parameters", async function () {
       const prePoolCount = (await api.query.pablo.poolCount()).toNumber();
-      await createMultipleLBPools(api, walletId1);
-      expect((await api.query.pablo.poolCount()).toNumber()).to.be.equal(500 + prePoolCount);
+      await createMultipleLBPools(api, sudoKey);
+      expect((await api.query.pablo.poolCount()).toNumber()).to.be.equal(300 + prePoolCount);
     });
 
     it(

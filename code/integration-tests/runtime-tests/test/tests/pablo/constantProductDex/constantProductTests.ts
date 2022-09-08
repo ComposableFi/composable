@@ -103,12 +103,12 @@ describe.only("tx.constantProductDex Tests", function () {
       expect(result).to.be.a("number");
     });
 
-    it(
+    it.only(
       "Given that the chain is up, users can create pools-" +
-        " test creates up to N Constant Product pools with valid random fees, random owner fees and random assetIds",
+        " test creates up to 300 Constant Product pools with valid random fees, random owner fees and random assetIds",
       async function () {
-        await createMultipleCPPools(api, walletId1);
-        expect((await api.query.pablo.poolCount()).toNumber()).to.be.greaterThan(500);
+        await createMultipleCPPools(api, sudoKey);
+        expect((await api.query.pablo.poolCount()).toNumber()).to.be.greaterThan(300);
       }
     );
   });
