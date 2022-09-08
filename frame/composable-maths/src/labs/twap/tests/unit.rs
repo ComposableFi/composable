@@ -1,15 +1,11 @@
-use std::{any::Any, fs::File, ops::Sub};
-
+#![allow(clippy::identity_op)]
 use crate::labs::twap::Twap;
 use frame_support::assert_ok;
-use num_traits::{PrimInt, SaturatingMul};
+use num_traits::PrimInt;
 use plotters::prelude::*;
 use polars::prelude::*;
-use proptest::prelude::*;
-use rand::SeedableRng;
-use rand_pcg::Pcg64;
 use rstest::rstest;
-use sp_runtime::{offchain::Timestamp, FixedPointNumber, FixedU128};
+use sp_runtime::FixedU128;
 
 // -------------------------------------------------------------------------------------------------
 //                                             Constants
@@ -58,9 +54,10 @@ fn should_update_twap_to_correct_value() {
 	// Set timestamp to "Mon Aug  8 11:06:40 PM UTC 2022"
 	let ts = 1660000000;
 	let mut t = Twap::new(from_float(100.0), ts, PERIOD);
+	dbg!(t);
 
 	// After half PERDIOD passes, we update the twap.
-	t.accumulate(&from_float(200.0), &(PERIOD / 2));
+	t.accumulate(&from_float(200.0), PERIOD / 2);
 
 	// The value should be half the previous price and half the new one.
 	assert_eq!(t.twap, from_float(150.0));
@@ -69,7 +66,7 @@ fn should_update_twap_to_correct_value() {
 #[test]
 fn should_update_twap_on_accumulate_call() {
 	let mut t = Twap::new(from_float(25.0), 0, PERIOD);
-	assert_ok!(t.accumulate(&from_float(50.0), &(PERIOD / 2)));
+	assert_ok!(t.accumulate(&from_float(50.0), PERIOD / 2));
 }
 
 // #[rstest]
@@ -488,7 +485,7 @@ fn should_update_twap_on_accumulate_call() {
 #[case(6 * DAY, 12)]
 #[case(7 * DAY, 12)]
 fn test_polars(#[case] period: u64, #[case] dataset: i32) {
-	let mut twap: Option<Twap> = None;
+	let mut twap: Option<Twap<FixedU128, u64>> = None;
 	let df = LazyCsvReader::new("eda/raw_data/final.csv".into())
 		.has_header(true)
 		.finish()
@@ -517,7 +514,7 @@ fn test_polars(#[case] period: u64, #[case] dataset: i32) {
 							"parsed_twap",
 							data.iter()
 								.map(move |i| match i {
-									AnyValue::Struct(v, t) => {
+									AnyValue::Struct(v, _) => {
 										let (now, price) = match v[..] {
 											[AnyValue::Int64(now), AnyValue::Int64(price)] =>
 												(now as u64, {
@@ -530,37 +527,16 @@ fn test_polars(#[case] period: u64, #[case] dataset: i32) {
 											),
 										};
 										match twap {
-											Some(ref mut t) => {
-												// dbg!("==================================================");
-												// dbg!(&t);
-												//
-												// dbg!(&t, &price, &now);
-												// dbg!(dbg!(t.accumulate(&price, &now))
-												// 	.expect(
-												// 		format!(
-												// 		"Failed to accumulate twap, {now} {price}"
-												// 	)
-												// 		.as_str(),
-												// 	)
-												// 	.to_float())
-												let x = t
-													.accumulate(&price, &now)
-													.expect(
-														format!(
+											Some(ref mut t) => t
+												.accumulate(&price, now)
+												.unwrap_or_else(|_| {
+													panic!(
 														"Failed to accumulate twap, {now} {price}"
 													)
-														.as_str(),
-													)
-													.to_float();
-
-												// dbg!(&t);
-												// dbg!("--------------------------------------------------");
-												x
-											},
+												})
+												.to_float(),
 											None => {
-												// dbg!(&price, &now, &period);
 												twap = Some(Twap::new(price, now, period));
-												// dbg!(&twap);
 												twap.unwrap().get_twap().to_float()
 											},
 										}
