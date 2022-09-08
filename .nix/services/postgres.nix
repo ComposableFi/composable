@@ -30,6 +30,15 @@ in {
       POSTGRES_DB = database.name;
       POSTGRES_PASSWORD = database.password;
     };
+    restart = "always";
+    healthcheck = {
+      test =
+        [ "CMD-SHELL" "pg_isready -d ${import ../util/db-url.nix database}" ];
+      interval = "5s";
+      timeout = "5s";
+      retries = 5;
+    };
+
     command = [ "-p" "${toString database.port}" ];
     ports = [ "${toString database.port}:${toString database.port}" ];
   };
