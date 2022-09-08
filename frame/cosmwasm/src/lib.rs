@@ -138,11 +138,19 @@ pub mod pallet {
 		Query,
 	}
 
+	#[derive(Copy, Clone, PartialEq, Eq, Encode, Decode, TypeInfo, Debug)]
+	#[scale_info(skip_type_params(T))]
+	pub enum CodeIdentifier<T: Config> {
+		CodeId(CosmwasmCodeId),
+		CodeHash(CodeHashOf<T>),
+	}
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		Uploaded { code_hash: CodeHashOf<T>, code_id: CosmwasmCodeId },
 		Instantiated { contract: AccountIdOf<T>, info: ContractInfoOf<T> },
+		Migrated { contract: AccountIdOf<T>, to: CosmwasmCodeId },
 		Executed { contract: AccountIdOf<T>, entrypoint: EntryPoint, data: Option<Vec<u8>> },
 		ExecutionFailed { contract: AccountIdOf<T>, entrypoint: EntryPoint, error: Vec<u8> },
 		Emitted { contract: AccountIdOf<T>, ty: Vec<u8>, attributes: Vec<(Vec<u8>, Vec<u8>)> },
@@ -395,7 +403,7 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::instantiate(funds.len()).saturating_add(*gas))]
 		pub fn instantiate(
 			origin: OriginFor<T>,
-			code_id: CosmwasmCodeId,
+			code_identifier: CodeIdentifier<T>,
 			salt: ContractSaltOf<T>,
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
@@ -405,6 +413,11 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let code_id = match code_identifier {
+				CodeIdentifier::CodeId(code_id) => code_id,
+				CodeIdentifier::CodeHash(code_hash) =>
+					CodeHashToId::<T>::try_get(code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
+			};
 			let outcome = Self::do_extrinsic_instantiate(
 				&mut shared,
 				who,
@@ -447,38 +460,38 @@ pub mod pallet {
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
 		}
 
+		/// Migrate a previously instantiated contract.
+		///
+		/// * Emits an `Migrated` event on success.
+		/// * Emits an `Executed` event.
+		/// * Possibily emit `Emitted` events.
+		///
+		/// Arguments
+		///
+		/// * `origin` the origin dispatching the extrinsic.
+		/// * `contract` the address of the contract that we want to migrate
+		/// * `new_code_identifier` the code identifier that we want to switch to.
+		/// * `gas` the maximum gas to use, the remaining is refunded at the end of the transaction.
+		/// * `message` MigrateMsg, that will be passed to the contract.
 		#[transactional]
 		#[pallet::weight(T::WeightInfo::migrate().saturating_add(*gas))]
 		pub fn migrate(
 			origin: OriginFor<T>,
 			contract: AccountIdOf<T>,
-			new_code_id: CosmwasmCodeId,
+			new_code_identifier: CodeIdentifier<T>,
 			gas: u64,
 			message: ContractMessageOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let mut shared = Self::do_create_vm_shared(gas, InitialStorageMutability::ReadWrite);
+			let new_code_id = match new_code_identifier {
+				CodeIdentifier::CodeId(code_id) => code_id,
+				CodeIdentifier::CodeHash(code_hash) =>
+					CodeHashToId::<T>::try_get(&code_hash).map_err(|_| Error::<T>::CodeNotFound)?,
+			};
 			let outcome =
 				Self::do_extrinsic_migrate(&mut shared, who, contract, new_code_id, message);
 			Self::refund_gas(outcome, gas, shared.gas.remaining())
-		}
-
-		#[transactional]
-		#[pallet::weight(T::WeightInfo::upload_and_instantiate(code.len(), funds.len()).saturating_add(*gas))]
-		pub fn upload_and_instantiate(
-			origin: OriginFor<T>,
-			code: ContractCodeOf<T>,
-			salt: ContractSaltOf<T>,
-			admin: Option<AccountIdOf<T>>,
-			label: ContractLabelOf<T>,
-			funds: FundsOf<T>,
-			gas: u64,
-			message: ContractMessageOf<T>,
-		) -> DispatchResultWithPostInfo {
-			let next_code_id =
-				CurrentCodeId::<T>::get().checked_add(1).ok_or(Error::<T>::CodeIdOverflow)?;
-			let _ = Self::upload(origin.clone(), code)?;
-			Self::instantiate(origin, next_code_id, salt, admin, label, funds, gas, message)
 		}
 	}
 
@@ -587,6 +600,11 @@ pub mod pallet {
 				}
 				Ok(())
 			})?;
+
+			Self::deposit_event(Event::<T>::Migrated {
+				contract: contract.clone(),
+				to: new_code_id,
+			});
 
 			Ok(contract_info)
 		}
