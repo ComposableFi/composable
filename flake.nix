@@ -747,6 +747,12 @@
                 "--workspace --exclude local-integration-tests --all-features";
             });
 
+            benchmarks-check = crane-nightly.cargoBuild (common-attrs // {
+              cargoArtifacts = common-deps-nightly;
+              cargoBuildCommand = "cargo check";
+              cargoExtraArgs = "--benches --all --features runtime-benchmarks";
+            });
+
             kusama-picasso-karura-devnet = let
               config = (pkgs.callPackage
                 ./scripts/polkadot-launch/kusama-local-picasso-dev-karura-dev.nix {
