@@ -237,17 +237,7 @@ where
 		price: &FixedPoint,
 		now: Moment,
 	) -> Result<FixedPoint, ArithmeticError> {
-		// dbg!("ANTES", &self, now, now - self.ts > self.period, format!("{self:p}"));
 		// TODO(Cardosaum): Ensure time has passed before updating?
-		// TODO(Cardosaum): If time passes more than period the call will always fail,
-		// how to fix it?
-		// let since_last_tmp = now.try_sub(&self.ts)?.max(self.since_last_min);
-		// let (since_last, from_start) = match self.period.try_sub(&since_last_tmp) {
-		// 	Ok(from_start) => (since_last_tmp, from_start),
-		// 	_ => (self.period.try_sub(&self.from_start_min)?, self.from_start_min),
-		// };
-
-		// self.update_mut(price, from_start, since_last, now)?;
 
 		let since_last_tmp = now.try_sub(&self.ts)?.max(1.into());
 		let (since_last, from_start) = match self.period.try_sub(&since_last_tmp) {
@@ -256,11 +246,6 @@ where
 		};
 
 		self.update_mut(price, from_start, since_last, now)?;
-		// let since_last = now.try_sub(&self.ts)?.max(1);
-		// let from_start = self.period.try_sub(&since_last)?.max(1);
-		// self.update_mut(price, from_start, since_last, now)?;
-
-		// dbg!("DEPOIS", &self);
 		Ok(self.twap)
 	}
 
@@ -279,20 +264,6 @@ where
 		from_start: Moment,
 		since_last: Moment,
 	) -> Result<FixedPoint, ArithmeticError> {
-		// TODO(Cardosaum): Create function that convert u64 to FixedU128
-		// let unit = FixedU128::DIV;
-		// let denominator = FixedU128::from_inner(
-		// 	unit.checked_mul(since_last.try_add(&from_start)?.into()).ok_or(Overflow)?,
-		// );
-		// let twap_t0 = self.twap.try_mul(&FixedU128::from_inner(
-		// 	unit.checked_mul(from_start.into()).ok_or(Overflow)?,
-		// ))?;
-		// let twap_t1 = price.try_mul(&FixedU128::from_inner(
-		// 	unit.checked_mul(since_last.into()).ok_or(Overflow)?,
-		// ))?;
-
-		// twap_t0.try_add(&twap_t1)?.try_div(&denominator)
-
 		let unit = FixedPoint::DIV;
 		let denominator = FixedPoint::from_inner(
 			unit.checked_mul(&since_last.try_add(&from_start)?.into()).ok_or(Overflow)?,
@@ -327,8 +298,4 @@ where
 		self.ts = ts;
 		Ok(())
 	}
-
-	// TODO(Cardosaum): Add internal function trying to update twap using U256
-	// value to prevent overflows. Maybe doing the `U256` try we could recover
-	// from an overflow? (check if that approach actually helps in something)
 }
