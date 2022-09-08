@@ -17,26 +17,16 @@ help:
 	@echo $(print_help_text)
 
 build:
-	cd code
-	@cargo +nightly build
+	echo "This command is deprecated. Please use \`nix build \".#composable-node\"\` instead."
+	return 1
 
 clean:
 	cd code
 	@cargo clean
 
 release:
-	cd code
-	cargo +nightly build --release -p wasm-optimizer
-	cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown
-	cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown
-	cargo +nightly build --release -p dali-runtime-wasm --target wasm32-unknown-unknown
-	./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/dali_runtime.wasm --output ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm
-	./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm --output ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm
-	./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/composable_runtime.wasm --output ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm
-	export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm) && \
-	export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm) && \
-	export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm) && \
-	cargo build --release --package composable --features=builtin-wasm
+	echo "This command is deprecated. Please use \`nix build \".#composable-node\"\` instead."
+	return 1
 
 .PHONY: build-release
 build-release:
@@ -47,8 +37,8 @@ bench:
 	./scripts/benchmark.sh
 
 test:
-	cd code
-	@cargo test $(TESTS) --offline --lib -- --color=always --nocapture
+	echo "This command is deprecated. Please use \`nix run \".#unit-tests\"\` instead."
+	return 1
 
 docs: build
 	cd code
@@ -70,10 +60,6 @@ lint:
 udeps:
 	cd code
 	SKIP_WASM_BUILD=1 cargo +nightly udeps -q --all-targets
-
-dev:
-	cd code
-	cargo run
 
 # run as `make open=y run-book` to open as well
 run-book:
@@ -128,8 +114,6 @@ run-local-integration-tests-debug:
 	RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace \
 	cargo +nightly test sibling_trap_assets_works --package local-integration-tests --features=local-integration-tests,picasso --no-default-features -- --nocapture --test-threads=1
 
-prune-devnet:
-	 rm --force --recursive *.log /tmp/polkadot-launch/
 	 
 containerize-lease-period-prolongator:
 	@docker build -f scripts/lease-period-prolongator/Dockerfile \
@@ -138,9 +122,6 @@ containerize-lease-period-prolongator:
 
 push-lease-period-prolongator:
 	@docker push ${REPO}/lease-period-prolongator:0.1.0
-
-stop:
-	@docker-compose down
 
 install:
 		$(info Run if auto-update is enabled)
