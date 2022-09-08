@@ -257,7 +257,7 @@ where
 
 	fn max_expected_time_per_block(&self) -> Duration {
 		let expected = T::ExpectedBlockTime::get();
-		Duration::from_nanos(expected)
+		Duration::from_millis(expected)
 	}
 }
 
