@@ -265,7 +265,7 @@ where
 	B::Error: From<A::Error>,
 {
 	let (handle, channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, 0, handle).await;
+		setup_connection_and_channel(chain_a, chain_b, 60 * 2, handle).await;
 
 	let (previous_balance, ..) = send_transfer(chain_a, chain_b, channel_id, None).await;
 	assert_send_transfer(chain_a, previous_balance).await;

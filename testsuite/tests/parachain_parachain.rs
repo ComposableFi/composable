@@ -165,14 +165,13 @@ async fn parachain_to_parachain_ibc_messaging_full_integration_test() {
 		chain_a.set_client_id(client_id_a_on_b.clone());
 	};
 
-	let handle =
-		hyperspace_testsuite::send_packet_and_assert_height_timeout(&chain_a, &chain_b, None).await;
-	let handle = hyperspace_testsuite::send_packet_and_assert_timestamp_timeout(
-		&chain_a,
-		&chain_b,
-		Some(handle),
-	)
-	.await;
-	hyperspace_testsuite::send_packet_and_assert_acknowledgment(&chain_a, &chain_b, Some(handle))
-		.await;
+	// let handle =
+	// 	hyperspace_testsuite::send_packet_and_assert_height_timeout(&chain_a, &chain_b, None).await;
+	// let handle = hyperspace_testsuite::send_packet_and_assert_timestamp_timeout(
+	// 	&chain_a,
+	// 	&chain_b,
+	// 	Some(handle),
+	// )
+	// .await;
+	hyperspace_testsuite::send_packet_and_assert_acknowledgment(&chain_a, &chain_b, None).await;
 }

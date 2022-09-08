@@ -151,10 +151,6 @@ pub async fn query_ready_and_timed_out_packets(
 		.expect("Client state conversion should not fail");
 		let latest_source_height_on_sink = source_client_state_on_sink.latest_height();
 
-		let (source_client_update_height, source_client_update_time) = sink
-			.query_client_update_time_and_height(source.client_id(), latest_source_height_on_sink)
-			.await?;
-
 		let packet_infos = source.query_send_packets(channel_id, port_id.clone(), seqs).await?;
 		for packet_info in packet_infos {
 			let packet = Packet {
@@ -321,6 +317,13 @@ pub async fn query_ready_and_timed_out_packets(
 				continue
 			}
 
+			let (source_client_update_height, source_client_update_time) = sink
+				.query_client_update_time_and_height(
+					source.client_id(),
+					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
+				)
+				.await?;
+
 			// Verify delay has passed
 			let connection_delay = source_connection_end.delay_period();
 			let block_delay = calculate_block_delay(connection_delay, sink.expected_block_time());
@@ -345,7 +348,12 @@ pub async fn query_ready_and_timed_out_packets(
 			);
 
 			let key = apply_prefix(source.connection_prefix().into_vec(), path);
-			let proof = source.query_proof(latest_source_height_on_sink, vec![key]).await?;
+			let proof = source
+				.query_proof(
+					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
+					vec![key],
+				)
+				.await?;
 			let commitment_proof = CommitmentProofBytes::try_from(proof)?;
 			let msg = MsgRecvPacket {
 				packet: packet.clone(),
@@ -354,7 +362,7 @@ pub async fn query_ready_and_timed_out_packets(
 					None,
 					None,
 					None,
-					latest_source_height_on_sink,
+					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
 				)?,
 				signer: sink.account_id(),
 			};
@@ -398,6 +406,13 @@ pub async fn query_ready_and_timed_out_packets(
 				continue
 			}
 
+			let (source_client_update_height, source_client_update_time) = sink
+				.query_client_update_time_and_height(
+					source.client_id(),
+					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
+				)
+				.await?;
+
 			// Verify delay has passed
 			let connection_delay = source_connection_end.delay_period();
 			let block_delay = calculate_block_delay(connection_delay, sink.expected_block_time());
@@ -422,7 +437,12 @@ pub async fn query_ready_and_timed_out_packets(
 			);
 
 			let key = apply_prefix(source.connection_prefix().into_vec(), path);
-			let proof = source.query_proof(latest_source_height_on_sink, vec![key]).await?;
+			let proof = source
+				.query_proof(
+					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
+					vec![key],
+				)
+				.await?;
 			let commitment_proof = CommitmentProofBytes::try_from(proof)?;
 			let msg = MsgAcknowledgement {
 				packet: packet.clone(),
@@ -431,7 +451,7 @@ pub async fn query_ready_and_timed_out_packets(
 					None,
 					None,
 					None,
-					latest_source_height_on_sink,
+					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
 				)?,
 				acknowledgement: ack.into(),
 				signer: sink.account_id(),
