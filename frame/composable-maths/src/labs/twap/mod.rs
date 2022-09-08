@@ -98,25 +98,30 @@ use sp_std::cmp::Ord;
 /// base_twap_mut.update_mut(25.0, new_ts);
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Twap {
+pub struct Twap<FixedPoint, Moment>
+where
+	FixedPoint: FixedPointMath + FixedPointNumber,
+	Moment: Copy + From<u64> + Into<FixedPoint::Inner> + Ord + UnsignedMath,
+{
 	/// The "time weighted average price", represented by a decimal number.
-	twap: FixedU128,
+	twap: FixedPoint,
 	/// The last time when the [`twap`](Self::twap) value was updated.
-	ts: u64,
-	period: u64,
-
+	ts: Moment,
+	period: Moment,
 	// TODO(Cardosaum): Assess if it's better to have this values hard coded or
 	// dinamic
 	//
 	// TODO(Cardosaum): Make tests with different values for these variables and
 	// assess which would be the best value for them.
-	since_last_min: u64,
-	from_start_min: u64,
+	// since_last_min: M,
+	// from_start_min: M,
 }
 
-impl Twap {
-	// TODO(Cardosaum): Update function documentation.
-	/// Creates a new instance of [`Twap`], returning it.
+impl<FixedPoint, Moment> Twap<FixedPoint, Moment>
+where
+	FixedPoint: FixedPointMath,
+	Moment: Copy + From<u64> + Into<FixedPoint::Inner> + Ord + UnsignedMath,
+{
 	/// Creates a new [`Twap`] instance, returning it.
 	///
 	/// # Examples
@@ -138,9 +143,11 @@ impl Twap {
 	/// // 	period: 3600,
 	/// // };
 	/// ```
+	pub const fn new(twap: FixedPoint, ts: Moment, period: Moment) -> Self {
 		//  TODO(Cardosaum): Maybe remove this default value?
-		let default_time = 1000; // 1 second
-		Self { twap, ts, period, since_last_min: default_time, from_start_min: default_time }
+		// let default_time = 1000; // 1 second
+		// Self { twap, ts, period, since_last_min: default_time, from_start_min: default_time }
+		Self { twap, ts, period }
 	}
 
 	/// Returns the Twap's value.
@@ -157,6 +164,7 @@ impl Twap {
 	///
 	/// assert_eq!(twap.get_twap(), price);
 	/// ```
+	pub const fn get_twap(&self) -> FixedPoint {
 		self.twap
 	}
 
@@ -224,17 +232,25 @@ impl Twap {
 	/// TODO(Cardosaum)
 	pub fn accumulate(
 		&mut self,
-		price: &FixedU128,
-		now: &u64,
-	) -> Result<FixedU128, ArithmeticError> {
+		price: &FixedPoint,
+		now: Moment,
+	) -> Result<FixedPoint, ArithmeticError> {
 		// dbg!("ANTES", &self, now, now - self.ts > self.period, format!("{self:p}"));
 		// TODO(Cardosaum): Ensure time has passed before updating?
 		// TODO(Cardosaum): If time passes more than period the call will always fail,
 		// how to fix it?
-		let since_last_tmp = now.try_sub(&self.ts)?.max(self.since_last_min);
+		// let since_last_tmp = now.try_sub(&self.ts)?.max(self.since_last_min);
+		// let (since_last, from_start) = match self.period.try_sub(&since_last_tmp) {
+		// 	Ok(from_start) => (since_last_tmp, from_start),
+		// 	_ => (self.period.try_sub(&self.from_start_min)?, self.from_start_min),
+		// };
+
+		// self.update_mut(price, from_start, since_last, now)?;
+
+		let since_last_tmp = now.try_sub(&self.ts)?.max(1.into());
 		let (since_last, from_start) = match self.period.try_sub(&since_last_tmp) {
 			Ok(from_start) => (since_last_tmp, from_start),
-			_ => (self.period.try_sub(&self.from_start_min)?, self.from_start_min),
+			_ => (self.period.try_sub(&1.into())?, 1.into()),
 		};
 
 		self.update_mut(price, from_start, since_last, now)?;
@@ -253,24 +269,37 @@ impl Twap {
 	/// modifying the current value.
 	///
 	/// # Errors
-	///
+
 	/// * [`ArithmeticError::Overflow`]
 	fn update(
 		&self,
-		price: &FixedU128,
-		from_start: u64,
-		since_last: u64,
-	) -> Result<FixedU128, ArithmeticError> {
+		price: &FixedPoint,
+		from_start: Moment,
+		since_last: Moment,
+	) -> Result<FixedPoint, ArithmeticError> {
 		// TODO(Cardosaum): Create function that convert u64 to FixedU128
-		let unit = FixedU128::DIV;
-		let denominator = FixedU128::from_inner(
-			unit.checked_mul(since_last.try_add(&from_start)?.into()).ok_or(Overflow)?,
+		// let unit = FixedU128::DIV;
+		// let denominator = FixedU128::from_inner(
+		// 	unit.checked_mul(since_last.try_add(&from_start)?.into()).ok_or(Overflow)?,
+		// );
+		// let twap_t0 = self.twap.try_mul(&FixedU128::from_inner(
+		// 	unit.checked_mul(from_start.into()).ok_or(Overflow)?,
+		// ))?;
+		// let twap_t1 = price.try_mul(&FixedU128::from_inner(
+		// 	unit.checked_mul(since_last.into()).ok_or(Overflow)?,
+		// ))?;
+
+		// twap_t0.try_add(&twap_t1)?.try_div(&denominator)
+
+		let unit = FixedPoint::DIV;
+		let denominator = FixedPoint::from_inner(
+			unit.checked_mul(&since_last.try_add(&from_start)?.into()).ok_or(Overflow)?,
 		);
-		let twap_t0 = self.twap.try_mul(&FixedU128::from_inner(
-			unit.checked_mul(from_start.into()).ok_or(Overflow)?,
+		let twap_t0 = self.twap.try_mul(&FixedPoint::from_inner(
+			unit.checked_mul(&from_start.into()).ok_or(Overflow)?,
 		))?;
-		let twap_t1 = price.try_mul(&FixedU128::from_inner(
-			unit.checked_mul(since_last.into()).ok_or(Overflow)?,
+		let twap_t1 = price.try_mul(&FixedPoint::from_inner(
+			unit.checked_mul(&since_last.into()).ok_or(Overflow)?,
 		))?;
 
 		twap_t0.try_add(&twap_t1)?.try_div(&denominator)
@@ -287,13 +316,13 @@ impl Twap {
 	/// * [`ArithmeticError::Overflow`]
 	fn update_mut(
 		&mut self,
-		price: &FixedU128,
-		from_start: u64,
-		since_last: u64,
-		ts: &u64,
+		price: &FixedPoint,
+		from_start: Moment,
+		since_last: Moment,
+		ts: Moment,
 	) -> Result<(), ArithmeticError> {
 		self.twap = self.update(price, from_start, since_last)?;
-		self.ts = *ts;
+		self.ts = ts;
 		Ok(())
 	}
 
