@@ -310,18 +310,18 @@ pub async fn query_ready_and_timed_out_packets(
 
 			// Check if packet is ready to be sent to sink
 			// If sink does not have a client height that is equal to or greater than the packet
-			// creation height, we can't send it yet packet_info.height should represent the packet
+			// creation height, we can't send it yet, packet_info.height should represent the packet
 			// creation height on source chain
 			if packet_info.height > latest_source_height_on_sink.revision_height {
 				// Sink does not have client update required to prove recv packet message
 				continue
 			}
 
+			let proof_height =
+				Height::new(latest_source_height_on_sink.revision_number, packet_info.height);
+
 			let (source_client_update_height, source_client_update_time) = sink
-				.query_client_update_time_and_height(
-					source.client_id(),
-					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
-				)
+				.query_client_update_time_and_height(source.client_id(), proof_height)
 				.await?;
 
 			// Verify delay has passed
@@ -348,22 +348,11 @@ pub async fn query_ready_and_timed_out_packets(
 			);
 
 			let key = apply_prefix(source.connection_prefix().into_vec(), path);
-			let proof = source
-				.query_proof(
-					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
-					vec![key],
-				)
-				.await?;
+			let proof = source.query_proof(proof_height, vec![key]).await?;
 			let commitment_proof = CommitmentProofBytes::try_from(proof)?;
 			let msg = MsgRecvPacket {
 				packet: packet.clone(),
-				proofs: Proofs::new(
-					commitment_proof,
-					None,
-					None,
-					None,
-					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
-				)?,
+				proofs: Proofs::new(commitment_proof, None, None, None, proof_height)?,
 				signer: sink.account_id(),
 			};
 			let value = msg.encode_vec();
@@ -399,18 +388,18 @@ pub async fn query_ready_and_timed_out_packets(
 			};
 			// Check if ack is ready to be sent to sink
 			// If sink does not have a client height that is equal to or greater than the packet
-			// creation height, we can't send it yet packet_info.height should represent the packet
-			// creation height on source chain
+			// creation height, we can't send it yet packet_info.height should represent the
+			// acknowledgement creation height on source chain
 			if packet_info.height > latest_source_height_on_sink.revision_height {
-				// Sink does not have client update required to prove recv packet message
+				// Sink does not have client update required to prove acknowledgement packet message
 				continue
 			}
 
+			let proof_height =
+				Height::new(latest_source_height_on_sink.revision_number, packet_info.height);
+
 			let (source_client_update_height, source_client_update_time) = sink
-				.query_client_update_time_and_height(
-					source.client_id(),
-					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
-				)
+				.query_client_update_time_and_height(source.client_id(), proof_height)
 				.await?;
 
 			// Verify delay has passed
@@ -437,22 +426,11 @@ pub async fn query_ready_and_timed_out_packets(
 			);
 
 			let key = apply_prefix(source.connection_prefix().into_vec(), path);
-			let proof = source
-				.query_proof(
-					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
-					vec![key],
-				)
-				.await?;
+			let proof = source.query_proof(proof_height, vec![key]).await?;
 			let commitment_proof = CommitmentProofBytes::try_from(proof)?;
 			let msg = MsgAcknowledgement {
 				packet: packet.clone(),
-				proofs: Proofs::new(
-					commitment_proof,
-					None,
-					None,
-					None,
-					Height::new(latest_source_height_on_sink.revision_number, packet_info.height),
-				)?,
+				proofs: Proofs::new(commitment_proof, None, None, None, proof_height)?,
 				acknowledgement: ack.into(),
 				signer: sink.account_id(),
 			};
