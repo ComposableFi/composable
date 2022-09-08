@@ -12,7 +12,7 @@ contract Interpreter is IInterpreter{
     enum OPERATION {
         NONE,
         TRANSFER,
-        SPAWM,
+        SPAWN,
         QUERY
     }
     bytes public owner;
@@ -96,7 +96,7 @@ contract Interpreter is IInterpreter{
                     program
                 );
                 require(success, "decode key failed");
-            } else if (instruction == uint64(OPERATION.SPAWM)) {
+            } else if (instruction == uint64(OPERATION.SPAWN)) {
                 (success, pos, field, _type) = ProtobufLib.decode_key(
                     pos,
                     program
@@ -109,5 +109,9 @@ contract Interpreter is IInterpreter{
                 for (uint8 j = 0; j < val; j++) {}
             } else if (instruction == uint8(OPERATION.QUERY)) {}
         }
+    }
+
+    function createProgram() public returns (bytes memory program){
+
     }
 }

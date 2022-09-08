@@ -116,7 +116,7 @@ contract Gateway is Ownable, IGateway {
         address[] memory _assets,
         uint256[] memory _amounts
     ) external payable onlyBridge {
-        // a program is a result of spawm function, pull the assets from the bridge to the interpreter
+        // a program is a result of spawn function, pull the assets from the bridge to the interpreter
         address payable interpreterAddress = _getOrCreateInterpreter(
             origin
         );
