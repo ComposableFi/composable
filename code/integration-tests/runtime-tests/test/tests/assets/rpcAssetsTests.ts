@@ -46,7 +46,7 @@ describe("[SHORT] rpc.assets Tests", function () {
     expect(parseInt(kUSD_amount.toString())).to.be.equals(0);
   });
 
-  it.only("rpc.assets.listAssets Tests", async function () {
+  it("rpc.assets.listAssets Tests", async function () {
     if (!testConfiguration.enabledTests.rpc.listAssets__success) this.skip();
     const result = await RpcAssetsTests.rpcListAssetsTest(api);
     expect(result).to.have.lengthOf(17);
