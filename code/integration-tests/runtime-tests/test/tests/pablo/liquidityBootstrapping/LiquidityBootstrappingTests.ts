@@ -23,7 +23,7 @@ import pabloTestConfiguration from "../testHandlers/test_configuration.json";
  * CreatePool - AddLiquidity - Buy - Sell - Swap - RemoveLiquidity with basic calculations
  */
 
-describe.only("LiquidityBootstrapping Pool Test Suite", function () {
+describe("LiquidityBootstrapping Pool Test Suite", function () {
   if (!pabloTestConfiguration.liquidityBootstrappingTests.enabled) {
     console.log("Liquidity Bootstrapping Tests are being skipped...");
     return;
@@ -70,7 +70,7 @@ describe.only("LiquidityBootstrapping Pool Test Suite", function () {
     await api.disconnect();
   });
 
-  describe("LiquidityBootstrapping CreatePool and AddLiquidity Tests", async function () {
+  describe("LiquidityBootstrapping CreatePool and AddLiquidity Tests", function () {
     if (!testConfiguration.enabledTests.createPoolAndAddLiquidityTests.enabled) {
       console.log("LiquidityBootstrapping createPool and addLiquidity tests are being skipped...");
       return;
@@ -148,7 +148,7 @@ describe.only("LiquidityBootstrapping Pool Test Suite", function () {
       );
     });
 
-    it.only("Users can create multiple LB Pools with random valid parameters", async function () {
+    it("Users can create multiple LB Pools with random valid parameters", async function () {
       const prePoolCount = (await api.query.pablo.poolCount()).toNumber();
       await createMultipleLBPools(api, sudoKey);
       expect((await api.query.pablo.poolCount()).toNumber()).to.be.equal(300 + prePoolCount);
@@ -166,6 +166,7 @@ describe.only("LiquidityBootstrapping Pool Test Suite", function () {
         const weights = [950001, 49999];
         const durations = [7100, 216001];
         for (const weight of weights) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore // ToDo: Remove! See above.
           await createLBPool(
             api,
@@ -182,8 +183,10 @@ describe.only("LiquidityBootstrapping Pool Test Suite", function () {
             protocolFeeRate
           ).catch(e => expect(e.message).to.contain("Other"));
         }
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore // ToDo: Remove! See above.
         for (const duration of durations) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore // ToDo: Remove! See above.
           await createLBPool(
             api,
@@ -204,7 +207,7 @@ describe.only("LiquidityBootstrapping Pool Test Suite", function () {
     );
   });
 
-  describe("LiquidityBootstrapping buy sell and swap tests", async function () {
+  describe("LiquidityBootstrapping buy sell and swap tests", function () {
     if (!testConfiguration.enabledTests.buySellAndSwapTests.enabled) {
       console.log("LiquidityBootstrapping buy,sell and swap tests are being skipped...");
       return;

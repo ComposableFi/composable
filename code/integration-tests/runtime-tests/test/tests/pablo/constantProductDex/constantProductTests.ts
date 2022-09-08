@@ -27,7 +27,7 @@ import {
  *    and OwnerFee.
  * Mainly consists of happy path testing.
  */
-describe.only("tx.constantProductDex Tests", function () {
+describe("tx.constantProductDex Tests", function () {
   if (!pabloTestConfiguration.constantProductTests.enabled) {
     console.log("Constant Product Tests are being skipped...");
     return;
@@ -103,7 +103,7 @@ describe.only("tx.constantProductDex Tests", function () {
       expect(result).to.be.a("number");
     });
 
-    it.only(
+    it(
       "Given that the chain is up, users can create pools-" +
         " test creates up to 300 Constant Product pools with valid random fees, random owner fees and random assetIds",
       async function () {
@@ -113,7 +113,7 @@ describe.only("tx.constantProductDex Tests", function () {
     );
   });
 
-  describe("ConstantProductDex Add Liquidity Tests", async function () {
+  describe("ConstantProductDex Add Liquidity Tests", function () {
     if (!testConfiguration.enabledTests.addLiquidityTests.enabled) {
       console.log("ConstantProductDex add liquidity tests are being skipped...");
       return;
@@ -178,7 +178,7 @@ describe.only("tx.constantProductDex Tests", function () {
     );
   });
 
-  describe("ConstantProductDex buy and sell tests", async function () {
+  describe("ConstantProductDex buy and sell tests", function () {
     if (!testConfiguration.enabledTests.buyAndSellTests.enabled) {
       console.log("ConstantProductDex buy and sell tests are being skipped...");
       return;
@@ -227,7 +227,7 @@ describe.only("tx.constantProductDex Tests", function () {
     });
   });
 
-  describe("ConstantProductDex Fee and Other Tests", async function () {
+  describe("ConstantProductDex Fee and Other Tests", function () {
     if (!testConfiguration.enabledTests.feeAndOtherTests.enabled) {
       console.log("ConstantProductDex fee and other tests are being skipped...");
       return;
