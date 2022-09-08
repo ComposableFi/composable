@@ -396,17 +396,17 @@ impl<'a, T: Config> VMBase for CosmwasmVM<'a, T> {
 		event_handler: &mut dyn FnMut(cosmwasm_minimal_std::Event),
 	) -> Result<(Self::Address, Option<cosmwasm_minimal_std::Binary>), Self::Error> {
 		log::debug!(target: "runtime::contracts", "continue_instantiate");
+		let nonce = Pallet::<T>::next_contract_nonce(self.contract_address.as_ref())?;
 		let (contract, info) = Pallet::<T>::do_instantiate_phase1(
 			self.contract_address.clone().into_inner(),
 			code_id,
-			&vec![],
+			&nonce.to_le_bytes(),
 			admin.map(|admin| admin.into_inner()),
 			label
 				.as_bytes()
 				.to_vec()
 				.try_into()
 				.map_err(|_| crate::Error::<T>::LabelTooBig)?,
-			&message,
 		)?;
 		Pallet::<T>::cosmwasm_call(
 			self.shared,
