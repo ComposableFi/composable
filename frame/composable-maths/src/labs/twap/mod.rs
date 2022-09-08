@@ -238,14 +238,13 @@ where
 		now: Moment,
 	) -> Result<FixedPoint, ArithmeticError> {
 		// TODO(Cardosaum): Ensure time has passed before updating?
-
-		let since_last_tmp = now.try_sub(&self.ts)?.max(1.into());
-		let (since_last, from_start) = match self.period.try_sub(&since_last_tmp) {
-			Ok(from_start) => (since_last_tmp, from_start),
-			_ => (self.period.try_sub(&1.into())?, 1.into()),
+		// maybe creating a new enum of erros would be good in this situation?
+		let since_last = now.try_sub(&self.ts)?.max(1.into());
+		match self.period.try_sub(&since_last) {
+			Ok(from_start) => self.update_mut(price, from_start, since_last, now)?,
+			_ => self.update_mut(price, 1.into(), self.period.try_sub(&1.into())?, now)?,
 		};
 
-		self.update_mut(price, from_start, since_last, now)?;
 		Ok(self.twap)
 	}
 
