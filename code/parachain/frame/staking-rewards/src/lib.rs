@@ -982,16 +982,11 @@ pub mod pallet {
 			let rewards_pool = RewardPools::<T>::try_get(new_stake.reward_pool_id)
 				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
-			// NOTE(connor): You can lock more than the value of some asset in an account, so
-			// locking first is safe
-
-			// Lock & Transfer staked asset
-			Self::split_lock(
+			// Unlock, Transfer, Lock staked asset
+			T::Assets::remove_lock(
+				T::LockId::get(),
 				rewards_pool.asset_id,
-				old_position.stake,
-				new_stake.stake,
 				&old_fnft_asset_account,
-				&new_fnft_asset_account,
 			)?;
 			T::Assets::transfer(
 				rewards_pool.asset_id,
@@ -1000,14 +995,19 @@ pub mod pallet {
 				new_stake.stake,
 				keep_alive,
 			)?;
-
-			// Lock & Transfer share asset
 			Self::split_lock(
-				rewards_pool.share_asset_id,
+				rewards_pool.asset_id,
 				old_position.stake,
 				new_stake.stake,
 				&old_fnft_asset_account,
 				&new_fnft_asset_account,
+			)?;
+
+			// Unlock, Transfer, Lock  share asset
+			T::Assets::remove_lock(
+				T::LockId::get(),
+				rewards_pool.share_asset_id,
+				&old_fnft_asset_account,
 			)?;
 			T::Assets::transfer(
 				rewards_pool.share_asset_id,
@@ -1015,6 +1015,13 @@ pub mod pallet {
 				&new_fnft_asset_account,
 				new_stake.stake,
 				keep_alive,
+			)?;
+			Self::split_lock(
+				rewards_pool.share_asset_id,
+				old_position.stake,
+				new_stake.stake,
+				&old_fnft_asset_account,
+				&new_fnft_asset_account,
 			)?;
 
 			T::FinancialNft::mint_into(
