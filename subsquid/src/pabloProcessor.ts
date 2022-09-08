@@ -1,5 +1,6 @@
 import { EventHandlerContext } from "@subsquid/substrate-processor";
 import Big from "big.js";
+import { Store } from "@subsquid/typeorm-store";
 import {
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
@@ -18,7 +19,7 @@ import { CurrencyPair, Fee } from "./types/v2401";
 import { encodeAccount } from "./utils";
 
 function createTransaction(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   pool: PabloPool,
   who: string,
   transactionType: PabloTransactionType,
@@ -49,7 +50,7 @@ function createTransaction(
 function createAsset(
   pool: PabloPool,
   assetId: bigint,
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   timestamp: bigint
 ) {
   const asset = new PabloPoolAsset();
@@ -70,12 +71,12 @@ interface PoolCreatedEvent {
 }
 
 function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
-  const { owner, poolId, assets } = event.asV2401 ?? event.asLatest;
+  const { owner, poolId, assets } = event.asV2401;
   return { owner, poolId, assets };
 }
 
 export async function processPoolCreatedEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   event: PabloPoolCreatedEvent
 ) {
   console.debug("processing PoolCreatedEvent", ctx.event.id);
@@ -158,13 +159,12 @@ interface LiquidityAddedEvent {
 function getLiquidityAddedEvent(
   event: PabloLiquidityAddedEvent
 ): LiquidityAddedEvent {
-  const { who, poolId, baseAmount, quoteAmount, mintedLp } =
-    event.asV2401 ?? event.asLatest;
+  const { who, poolId, baseAmount, quoteAmount, mintedLp } = event.asV2401;
   return { who, poolId, baseAmount, quoteAmount, mintedLp };
 }
 
 export async function processLiquidityAddedEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   event: PabloLiquidityAddedEvent
 ) {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
@@ -255,13 +255,12 @@ interface LiquidityRemovedEvent {
 function getLiquidityRemovedEvent(
   event: PabloLiquidityRemovedEvent
 ): LiquidityRemovedEvent {
-  const { who, poolId, baseAmount, quoteAmount, totalIssuance } =
-    event.asV2401 ?? event.asLatest;
+  const { who, poolId, baseAmount, quoteAmount, totalIssuance } = event.asV2401;
   return { who, poolId, baseAmount, quoteAmount, totalIssuance };
 }
 
 export async function processLiquidityRemovedEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   event: PabloLiquidityRemovedEvent
 ) {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
@@ -356,12 +355,12 @@ interface SwappedEvent {
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
   const { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee } =
-    event.asV2401 ?? event.asLatest;
+    event.asV2401;
   return { poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee };
 }
 
 export async function processSwappedEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   event: PabloSwappedEvent
 ) {
   console.debug("processing SwappedEvent", ctx.event.id);
@@ -494,12 +493,12 @@ interface PoolDeletedEvent {
 }
 
 function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
-  const { poolId, baseAmount, quoteAmount } = event.asV2401 ?? event.asLatest;
+  const { poolId, baseAmount, quoteAmount } = event.asV2401;
   return { poolId, baseAmount, quoteAmount };
 }
 
 export async function processPoolDeletedEvent(
-  ctx: EventHandlerContext,
+  ctx: EventHandlerContext<Store, { event: true }>,
   event: PabloPoolDeletedEvent
 ) {
   console.debug("processing LiquidityAddedEvent", ctx.event.id);
