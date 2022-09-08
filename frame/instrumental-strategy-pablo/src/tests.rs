@@ -1,4 +1,7 @@
-use composable_traits::{instrumental::InstrumentalProtocolStrategy, vault::{Vault as VaultTrait, CapabilityVault}};
+use composable_traits::{
+	instrumental::InstrumentalProtocolStrategy,
+	vault::{CapabilityVault, Vault as VaultTrait},
+};
 use frame_support::{
 	assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -140,6 +143,13 @@ mod rebalance {
 			System::assert_last_event(Event::PabloStrategy(pallet::Event::RebalancedVault {
 				vault_id,
 			}));
+		});
+	}
+
+	#[test]
+	fn funds_availability_withdrawable() {
+		ExtBuilder::default().build().execute_with(|| {
+			System::set_block_number(1);
 		});
 	}
 }

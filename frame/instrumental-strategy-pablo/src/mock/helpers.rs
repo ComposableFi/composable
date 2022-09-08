@@ -16,7 +16,7 @@ use sp_runtime::{
 };
 
 use super::runtime::{
-	Call, CollectiveInstrumental, Event, Instrumental, MockRuntime, Origin, System, VaultId, Vault,
+	Call, CollectiveInstrumental, Event, Instrumental, MockRuntime, Origin, System, Vault, VaultId,
 };
 use crate::{
 	mock::{
@@ -96,11 +96,7 @@ where
 	vault_id.unwrap()
 }
 
-pub fn associate_vault_and_deposit_in_it<AMT>(
-	vault_id: VaultId,
-	asset_id: CurrencyId,
-	amount: AMT,
-) 
+pub fn associate_vault_and_deposit_in_it<AMT>(vault_id: VaultId, asset_id: CurrencyId, amount: AMT)
 where
 	AMT: Into<Option<Balance>>,
 {
@@ -168,10 +164,7 @@ pub fn make_proposal(
 
 pub fn set_pool_id_for_asset(asset_id: CurrencyId, pool_id: PoolId) {
 	let set_pool_id_for_asset_proposal =
-	Call::PabloStrategy(crate::Call::set_pool_id_for_asset {
-		asset_id,
-		pool_id,
-	});
+		Call::PabloStrategy(crate::Call::set_pool_id_for_asset { asset_id, pool_id });
 	make_proposal(set_pool_id_for_asset_proposal, ALICE, 1, 0, None);
 }
 

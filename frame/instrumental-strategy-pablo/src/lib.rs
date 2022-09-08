@@ -206,6 +206,14 @@ pub mod pallet {
 
 		RebalancedVault { vault_id: T::VaultId },
 
+		WithdrawFunctionalityOccuredDuringRebalance { vault_id: T::VaultId },
+
+		DepositFunctionalityOccuredDuringRebalance { vault_id: T::VaultId },
+
+		LiquidateFunctionalityOccuredDuringRebalance { vault_id: T::VaultId },
+
+		NoneFunctionalityOccuredDuringRebalance { vault_id: T::VaultId },
+
 		UnableToRebalanceVault { vault_id: T::VaultId },
 
 		AssociatedPoolWithAsset { asset_id: T::AssetId, pool_id: T::PoolId },
@@ -416,14 +424,27 @@ pub mod pallet {
 			match T::Vault::available_funds(vault_id, &Self::account_id())? {
 				FundsAvailability::Withdrawable(balance) => {
 					Self::withdraw(&vault_account, pool_id, balance)?;
+					Self::deposit_event(Event::WithdrawFunctionalityOccuredDuringRebalance {
+						vault_id: *vault_id,
+					});
 				},
 				FundsAvailability::Depositable(balance) => {
 					Self::deposit(&vault_account, pool_id, balance)?;
+					Self::deposit_event(Event::DepositFunctionalityOccuredDuringRebalance {
+						vault_id: *vault_id,
+					});
 				},
 				FundsAvailability::MustLiquidate => {
 					Self::liquidate(&vault_account, pool_id)?;
+					Self::deposit_event(Event::LiquidateFunctionalityOccuredDuringRebalance {
+						vault_id: *vault_id,
+					});
 				},
-				FundsAvailability::None => {},
+				FundsAvailability::None => {
+					Self::deposit_event(Event::NoneFunctionalityOccuredDuringRebalance {
+						vault_id: *vault_id,
+					});
+				},
 			};
 			Ok(())
 		}
