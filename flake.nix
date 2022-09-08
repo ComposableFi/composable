@@ -176,9 +176,9 @@
                 customFilter = name: type:
                   !((isBlacklisted name type) || (isImageFile name type)
                     || (isPlantUmlFile name type)
-                    # assumption that nix is final builder, 
+                    # assumption that nix is final builder,
                     # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
-                    # and if *.nix changed, nix itself will detect only relevant cache invalidations 
+                    # and if *.nix changed, nix itself will detect only relevant cache invalidations
                     || (isNixFile name type));
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
               ./code;
@@ -253,7 +253,7 @@
               inherit system;
             };
 
-          # we reached limit of 125 for layers and build image cannot do non root ops, so split it 
+          # we reached limit of 125 for layers and build image cannot do non root ops, so split it
           devcontainer-root-image = pkgs.dockerTools.buildImage {
             name = "devcontainer-root-image";
             fromImage = devcontainer-base-image;
@@ -304,6 +304,18 @@
               '';
             });
 
+          composable-node-release =
+            crane-nightly.buildPackage (common-attrs // {
+              pnameSuffix = "-node-release";
+              cargoArtifacts = common-deps;
+              cargoBuildCommand =
+                "cargo build --release --package composable";
+              installPhase = ''
+                mkdir -p $out/bin
+                cp target/release/composable $out/bin/composable
+              '';
+            });
+
           composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
             // {
               pnameSuffix = "-node";
@@ -345,7 +357,7 @@
               yarnBuildMore =
                 "yarn export --filter=pablo --filter=picasso --filter=!picasso-storybook --filter=!pablo-storybook";
 
-              # TODO: make these configurable              
+              # TODO: make these configurable
               preBuild = ''
                 export SUBSQUID_URL="${subsquidEndpoint}";
 
@@ -398,6 +410,7 @@
             inherit picasso-bench-runtime;
             inherit composable-bench-runtime;
             inherit composable-node;
+            inherit composable-node-release;
             inherit composable-bench-node;
             inherit rust-nightly;
             inherit simnode-tests;
@@ -630,7 +643,7 @@
               # to run root in buildImage needs qemu/kvm shell
               # non root extraCommands (in both methods) do not have permissions
               # not clear if using ENV or replace ENTRYPOINT will allow to setup
-              # from nixos docker.nix - they build derivation which outputs into $out/etc/nix.conf 
+              # from nixos docker.nix - they build derivation which outputs into $out/etc/nix.conf
               # (and any other stuff like /etc/group)
               fakeRootCommands = ''
                 mkdir --parents /etc/nix
@@ -638,10 +651,10 @@
                 sandbox = relaxed
                 experimental-features = nix-command flakes
                 narinfo-cache-negative-ttl = 30
-                substituters = https://cache.nixos.org https://composable-community.cachix.org 
+                substituters = https://cache.nixos.org https://composable-community.cachix.org
                 # TODO: move it separate file with flow of `cachix -> get keys -> output -> fail derivation if hash != key changed
                 # // cspell: disable-next-line
-                trusted-public-keys = cache.nixos.org-1:6nchdd59x431o0gwypbmraurkbj16zpmqfgspcdshjy= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8= 
+                trusted-public-keys = cache.nixos.org-1:6nchdd59x431o0gwypbmraurkbj16zpmqfgspcdshjy= composable-community.cachix.org-1:GG4xJNpXJ+J97I8EyJ4qI5tRTAJ4i7h+NK2Z32I8sK8=
                 EOF
               '';
               config = {
@@ -752,7 +765,7 @@
               installPhase = ''
                 mkdir $out
                 nixfmt --version
-                # note, really can just src with filer by .nix, no need all files 
+                # note, really can just src with filer by .nix, no need all files
                 SRC=$(find ${all-directories-and-files} -name "*.nix" -type f | tr "\n" " ")
                 echo $SRC
                 nixfmt --check $SRC
