@@ -60,21 +60,4 @@ where
 
 		Box::pin(Box::new(stream))
 	}
-
-	async fn timestamp_at(&self, block_number: u64) -> u64 {
-		let api = self
-			.para_client
-			.clone()
-			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
-		let block_hash = self
-			.para_client
-			.rpc()
-			.block_hash(Some(block_number.into()))
-			.await
-			.expect("Should find block hash");
-		let unix_timestamp_millis =
-			api.storage().timestamp().now(block_hash).await.expect("Should find timestamp");
-		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
-		timestamp_nanos
-	}
 }

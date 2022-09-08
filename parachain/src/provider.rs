@@ -40,7 +40,13 @@ use sp_core::H256;
 
 use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
-use ibc::{core::ics02_client::client_consensus::AnyConsensusState, timestamp::Timestamp};
+use ibc::{
+	core::{
+		ics02_client::client_consensus::AnyConsensusState,
+		ics04_channel::context::calculate_block_delay,
+	},
+	timestamp::Timestamp,
+};
 use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
 
 /// Finality event for parachains
@@ -583,5 +589,16 @@ where
 
 	fn client_type(&self) -> ClientType {
 		ClientType::Beefy
+	}
+
+	async fn timestamp_at(&self, block_number: u64) -> Result<u64, Self::Error> {
+		let api = self
+			.para_client
+			.clone()
+			.to_runtime_api::<parachain::api::RuntimeApi<T, subxt::PolkadotExtrinsicParams<_>>>();
+		let block_hash = self.para_client.rpc().block_hash(Some(block_number.into())).await?;
+		let unix_timestamp_millis = api.storage().timestamp().now(block_hash).await?;
+		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
+		Ok(timestamp_nanos)
 	}
 }

@@ -1,4 +1,4 @@
-use std::{pin::Pin, time::Duration};
+use std::{pin::Pin, str::FromStr, time::Duration};
 
 use futures::Stream;
 use ibc_proto::{
@@ -21,7 +21,11 @@ use ibc::{
 	applications::transfer::PrefixedCoin,
 	core::{
 		ics02_client::{client_type::ClientType, header::AnyHeader},
-		ics04_channel::channel::{ChannelEnd, Order::Unordered},
+		ics04_channel::{
+			channel::{ChannelEnd, Order::Unordered},
+			context::calculate_block_delay,
+			packet::Packet,
+		},
 		ics23_commitment::commitment::CommitmentPrefix,
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
@@ -248,6 +252,9 @@ pub trait IbcProvider {
 
 	/// Returns the client type of this chain.
 	fn client_type(&self) -> ClientType;
+
+	/// Should return timestamp of chain at a given block height
+	async fn timestamp_at(&self, block_number: u64) -> Result<u64, Self::Error>;
 }
 
 /// Provides an interface that allows us run the hyperspace-testsuite
@@ -263,9 +270,6 @@ pub trait TestProvider: Chain + Clone + 'static {
 
 	/// Returns a stream that yields chain Block number and hash
 	async fn subscribe_blocks(&self) -> Pin<Box<dyn Stream<Item = u64> + Send + Sync>>;
-
-	/// Should return timestamp of chain at a given block height
-	async fn timestamp_at(&self, block_number: u64) -> u64;
 }
 
 /// Provides an interface for managing key management for signing.
@@ -376,4 +380,53 @@ pub async fn query_undelivered_acks(
 		.await?;
 
 	Ok(undelivered_acks)
+}
+
+pub fn packet_info_to_packet(packet_info: &PacketInfo) -> Packet {
+	Packet {
+		sequence: packet_info.sequence.into(),
+		source_port: PortId::from_str(&packet_info.source_port).expect("Port is should be valid"),
+		source_channel: ChannelId::from_str(&packet_info.source_channel)
+			.expect("Channel is should be valid"),
+		destination_port: PortId::from_str(&packet_info.destination_port)
+			.expect("Port is should be valid"),
+		destination_channel: ChannelId::from_str(&packet_info.destination_channel)
+			.expect("Channel is should be valid"),
+		data: packet_info.data.clone(),
+		timeout_height: packet_info.timeout_height.clone().into(),
+		timeout_timestamp: Timestamp::from_nanoseconds(packet_info.timeout_timestamp)
+			.expect("Timestamp should be valid"),
+	}
+}
+
+/// Should return the first block height with a timestamp that is equal to or greater than the
+/// given timestamp
+/// `timestamp` must always be less than the chain's latest timestamp
+pub async fn find_block_height_by_timestamp(
+	chain: &impl Chain,
+	timestamp: Timestamp,
+	latest_timestamp: Timestamp,
+	latest_height: Height,
+) -> Option<Height> {
+	let timestamp_diff =
+		Duration::from_nanos(latest_timestamp.nanoseconds() - timestamp.nanoseconds());
+	// Let's convert this duration into approximate number of blocks
+	let num_blocks = calculate_block_delay(timestamp_diff, chain.expected_block_time());
+	// subtract this duration from the latest block height
+	let maybe_block = latest_height.revision_height - num_blocks;
+	// Get timestamo of this block
+	let maybe_timestamp = chain.timestamp_at(maybe_block).await.ok()?;
+	if maybe_timestamp >= timestamp.nanoseconds() {
+		Some(Height::new(latest_height.revision_number, maybe_block))
+	} else {
+		let start = maybe_block + 1;
+		let end = latest_height.revision_height - 1;
+		for block_number in start..end {
+			let temp_timestamp = chain.timestamp_at(block_number).await.ok()?;
+			if temp_timestamp >= timestamp.nanoseconds() {
+				return Some(Height::new(latest_height.revision_number, block_number))
+			}
+		}
+		None
+	}
 }

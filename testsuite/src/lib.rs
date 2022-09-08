@@ -292,7 +292,7 @@ where
 	B::Error: From<A::Error>,
 {
 	let (handle, channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, 0, handle).await;
+		setup_connection_and_channel(chain_a, chain_b, 60 * 2, handle).await;
 
 	log::info!(target: "hyperspace", "Suspending send packet relay");
 	set_relay_status(false);
@@ -347,7 +347,7 @@ where
 	B::Error: From<A::Error>,
 {
 	let (handle, channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, 0, handle).await;
+		setup_connection_and_channel(chain_a, chain_b, 60 * 3, handle).await;
 
 	log::info!(target: "hyperspace", "Suspending send packet relay");
 	set_relay_status(false);
@@ -371,7 +371,7 @@ where
 			let block_number = *block_number;
 			let chain_clone = chain_b.clone();
 			async move {
-				let timestamp = chain_clone.timestamp_at(block_number).await;
+				let timestamp = chain_clone.timestamp_at(block_number).await.unwrap();
 				timestamp < msg.timeout_timestamp.nanoseconds()
 			}
 		})

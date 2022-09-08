@@ -1,7 +1,7 @@
-use crate::connection_delay::has_delay_elapsed;
+use crate::{connection_delay::has_delay_elapsed, packet_relay_status};
 use ibc::{
 	core::{
-		ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
+		ics02_client::client_state::AnyClientState,
 		ics03_connection::connection::ConnectionEnd,
 		ics04_channel::{
 			channel::{ChannelEnd, Order, State},
@@ -13,9 +13,8 @@ use ibc::{
 			packet::Packet,
 		},
 		ics23_commitment::commitment::CommitmentProofBytes,
-		ics24_host::{
-			identifier::{ChannelId, PortId},
-			path::{AcksPath, CommitmentsPath, ReceiptsPath, SeqRecvsPath},
+		ics24_host::path::{
+			AcksPath, ChannelEndsPath, CommitmentsPath, ReceiptsPath, SeqRecvsPath,
 		},
 	},
 	proofs::Proofs,
@@ -25,9 +24,10 @@ use ibc::{
 };
 use ibc_proto::google::protobuf::Any;
 use primitives::{
-	apply_prefix, error::Error, query_undelivered_acks, query_undelivered_sequences, Chain,
+	apply_prefix, error::Error, find_block_height_by_timestamp, packet_info_to_packet,
+	query_undelivered_acks, query_undelivered_sequences, Chain,
 };
-use std::str::FromStr;
+
 use tendermint_proto::Protobuf;
 
 /// Returns a tuple of messages, with the first item being packets that are ready to be sent to the
@@ -39,7 +39,6 @@ pub async fn query_ready_and_timed_out_packets(
 	let mut messages = vec![];
 	let mut timeout_messages = vec![];
 	let (source_height, source_timestamp) = source.latest_height_and_timestamp().await?;
-	// what is the sink's latest height/timestamp ?
 	let (sink_height, sink_timestamp) = sink.latest_height_and_timestamp().await?;
 	let channel_whitelist = source.channel_whitelist().await?;
 
@@ -115,31 +114,6 @@ pub async fn query_ready_and_timed_out_packets(
 		)
 		.await?;
 
-		let sink_client_state_on_source =
-			source.query_client_state(source_height, sink.client_id()).await?;
-		let sink_client_state_on_source = AnyClientState::try_from(
-			sink_client_state_on_source.client_state.expect(
-				format!("Client state for {} should exist on {}", sink.name(), source.name())
-					.as_str(),
-			),
-		)
-		.expect("Client state conversion should not fail");
-
-		let latest_sink_height_on_source = sink_client_state_on_source.latest_height();
-		let sink_consensus_state_on_source = source
-			.query_client_consensus(source_height, sink.client_id(), latest_sink_height_on_source)
-			.await?;
-		let sink_consensus_state_on_source = AnyConsensusState::try_from(
-			sink_consensus_state_on_source
-				.consensus_state
-				.expect("Consensus state should exist if client state exists for that height"),
-		)
-		.expect("Consensus state conversion should,not fail");
-
-		let (sink_client_update_height, sink_client_update_time) = source
-			.query_client_update_time_and_height(sink.client_id(), latest_sink_height_on_source)
-			.await?;
-
 		let source_client_state_on_sink =
 			sink.query_client_state(sink_height, source.client_id()).await?;
 		let source_client_state_on_sink = AnyClientState::try_from(
@@ -153,26 +127,61 @@ pub async fn query_ready_and_timed_out_packets(
 
 		let packet_infos = source.query_send_packets(channel_id, port_id.clone(), seqs).await?;
 		for packet_info in packet_infos {
-			let packet = Packet {
-				sequence: packet_info.sequence.into(),
-				source_port: PortId::from_str(&packet_info.source_port)
-					.expect("Port is should be valid"),
-				source_channel: ChannelId::from_str(&packet_info.source_channel)
-					.expect("Channel is should be valid"),
-				destination_port: PortId::from_str(&packet_info.destination_port)
-					.expect("Port is should be valid"),
-				destination_channel: ChannelId::from_str(&packet_info.destination_channel)
-					.expect("Channel is should be valid"),
-				data: packet_info.data,
-				timeout_height: packet_info.timeout_height.into(),
-				timeout_timestamp: Timestamp::from_nanoseconds(packet_info.timeout_timestamp)
-					.expect("Timestamp should be valid"),
-			};
+			let packet = packet_info_to_packet(&packet_info);
 
-			// If sink channel end is closed all packets should be sent to source as
-			// MsgTimeoutOnClose
-			if sink_channel_end.state == State::Closed {
-				// Delay period is the same for both connection ends on both chains
+			// Check if packet has timed out
+			if packet.timed_out(&sink_timestamp, sink_height) {
+				let timeout_variant =
+					timeout_variant(&packet, &sink_timestamp, sink_height).unwrap();
+
+				let proof_height = match timeout_variant {
+					TimeoutVariant::Height => packet.timeout_height.add(1),
+					TimeoutVariant::Timestamp =>
+						if let Some(height) = find_block_height_by_timestamp(
+							sink,
+							packet.timeout_timestamp,
+							sink_timestamp,
+							sink_height,
+						)
+						.await
+						{
+							height
+						} else {
+							continue
+						},
+					TimeoutVariant::Both => {
+						let timeout_height = if let Some(height) = find_block_height_by_timestamp(
+							sink,
+							packet.timeout_timestamp,
+							sink_timestamp,
+							sink_height,
+						)
+						.await
+						{
+							height
+						} else {
+							continue
+						};
+						if timeout_height < packet.timeout_height {
+							packet.timeout_height.add(1)
+						} else {
+							timeout_height
+						}
+					},
+				};
+
+				let (sink_client_update_height, sink_client_update_time) =
+					if let Ok(client_update) = source
+						.query_client_update_time_and_height(sink.client_id(), proof_height)
+						.await
+					{
+						client_update
+					} else {
+						// If the source does not have a client update for the proof height yet, we
+						// skip
+						continue
+					};
+
 				let connection_delay = source_connection_end.delay_period();
 				let block_delay =
 					calculate_block_delay(connection_delay, source.expected_block_time());
@@ -180,131 +189,66 @@ pub async fn query_ready_and_timed_out_packets(
 					source_timestamp,
 					source_height,
 					sink_client_update_time,
-					sink_client_update_height,
+					sink_client_update_height, // shouldn't be the latest.
 					connection_delay,
 					block_delay,
 				)? {
 					continue
 				}
-				let proof_closed =
-					CommitmentProofBytes::try_from(sink_channel_response.proof.clone())?;
+
 				let key = if sink_channel_end.ordering == Order::Ordered {
-					let path = format!(
-						"{}",
-						SeqRecvsPath(packet.destination_port.clone(), packet.destination_channel)
-					);
+					let path = get_key_path(KeyPathType::SeqRecv, &packet);
 					apply_prefix(sink.connection_prefix().into_vec(), path)
 				} else {
-					let path = format!(
-						"{}",
-						ReceiptsPath {
-							port_id: packet.destination_port.clone(),
-							channel_id: packet.destination_channel,
-							sequence: packet.sequence
-						}
-					);
+					let path = get_key_path(KeyPathType::ReceiptPath, &packet);
 					apply_prefix(sink.connection_prefix().into_vec(), path)
 				};
 
-				let proof_unreceived =
-					sink.query_proof(latest_sink_height_on_source, vec![key]).await?;
+				let proof_unreceived = sink.query_proof(proof_height, vec![key]).await?;
 				let proof_unreceived = CommitmentProofBytes::try_from(proof_unreceived)?;
-				let msg = MsgTimeoutOnClose {
-					packet: packet.clone(),
-					next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
-					proofs: Proofs::new(
-						proof_unreceived,
-						None,
-						None,
-						Some(proof_closed),
-						latest_sink_height_on_source,
-					)?,
+				let msg = if sink_channel_end.state == State::Closed {
+					let path = get_key_path(KeyPathType::ChannelPath, &packet);
+					let channel_key = apply_prefix(sink.connection_prefix().into_vec(), path);
+					let proof_closed = sink.query_proof(proof_height, vec![channel_key]).await?;
+					let proof_closed = CommitmentProofBytes::try_from(proof_closed)?;
+					let msg = MsgTimeoutOnClose {
+						packet: packet.clone(),
+						next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
+						proofs: Proofs::new(
+							proof_unreceived,
+							None,
+							None,
+							Some(proof_closed),
+							proof_height,
+						)?,
+						signer: source.account_id(),
+					};
+					let value = msg.encode_vec();
+					Any { value, type_url: msg.type_url() }
+				} else {
+					let msg = MsgTimeout {
+						packet: packet.clone(),
+						next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
+						proofs: Proofs::new(proof_unreceived, None, None, None, proof_height)?,
 
-					signer: source.account_id(),
+						signer: source.account_id(),
+					};
+					let value = msg.encode_vec();
+					Any { value, type_url: msg.type_url() }
 				};
-				let value = msg.encode_vec();
-				let msg = Any { value, type_url: msg.type_url() };
 				timeout_messages.push(msg);
 				continue
 			}
 
-			// Check if packet has timed out
-			if packet.timed_out(&sink_timestamp, sink_height) {
-				let connection_delay = source_connection_end.delay_period();
-				let block_delay =
-					calculate_block_delay(connection_delay, source.expected_block_time());
-				if !has_delay_elapsed(
-					source_timestamp,
-					source_height,
-					sink_client_update_time,
-					sink_client_update_height,
-					connection_delay,
-					block_delay,
-				)? {
-					continue
-				}
-				let timeout_variant =
-					timeout_variant(&packet, &sink_timestamp, sink_height).unwrap();
+			// If packet has not timed out but channel is closed on sink we skip
+			// Since we have no reference point for when this channel was closed so we can't
+			// calculate connection delays yet
+			if sink_channel_end.state == State::Closed {
+				continue
+			}
 
-				match timeout_variant {
-					TimeoutVariant::Height => {
-						if latest_sink_height_on_source < packet.timeout_height {
-							continue
-						}
-					},
-					TimeoutVariant::Timestamp => {
-						if sink_consensus_state_on_source.timestamp().nanoseconds() <
-							packet.timeout_timestamp.nanoseconds()
-						{
-							continue
-						}
-					},
-					TimeoutVariant::Both => {
-						if latest_sink_height_on_source < packet.timeout_height ||
-							sink_consensus_state_on_source.timestamp().nanoseconds() <
-								packet.timeout_timestamp.nanoseconds()
-						{
-							continue
-						}
-					},
-				}
-
-				let key = if sink_channel_end.ordering == Order::Ordered {
-					let path = format!(
-						"{}",
-						SeqRecvsPath(packet.destination_port.clone(), packet.destination_channel)
-					);
-					apply_prefix(sink.connection_prefix().into_vec(), path)
-				} else {
-					let path = format!(
-						"{}",
-						ReceiptsPath {
-							port_id: packet.destination_port.clone(),
-							channel_id: packet.destination_channel,
-							sequence: packet.sequence
-						}
-					);
-					apply_prefix(sink.connection_prefix().into_vec(), path)
-				};
-				let proof_unreceived =
-					sink.query_proof(latest_sink_height_on_source, vec![key]).await?;
-				let proof_unreceived = CommitmentProofBytes::try_from(proof_unreceived)?;
-				let msg = MsgTimeout {
-					packet: packet.clone(),
-					next_sequence_recv: next_sequence_recv.next_sequence_receive.into(),
-					proofs: Proofs::new(
-						proof_unreceived,
-						None,
-						None,
-						None,
-						latest_sink_height_on_source,
-					)?,
-
-					signer: source.account_id(),
-				};
-				let value = msg.encode_vec();
-				let msg = Any { value, type_url: msg.type_url() };
-				timeout_messages.push(msg);
+			// If packet relay status is paused skip
+			if !packet_relay_status() {
 				continue
 			}
 
@@ -338,14 +282,7 @@ pub async fn query_ready_and_timed_out_packets(
 				continue
 			}
 
-			let path = format!(
-				"{}",
-				CommitmentsPath {
-					port_id: packet.source_port.clone(),
-					channel_id: packet.source_channel,
-					sequence: packet.sequence
-				}
-			);
+			let path = get_key_path(KeyPathType::CommitmentPath, &packet);
 
 			let key = apply_prefix(source.connection_prefix().into_vec(), path);
 			let proof = source.query_proof(proof_height, vec![key]).await?;
@@ -364,6 +301,7 @@ pub async fn query_ready_and_timed_out_packets(
 		let packet_infos = source.query_recv_packets(channel_id, port_id, acks).await?;
 
 		for packet_info in packet_infos {
+			let packet = packet_info_to_packet(&packet_info);
 			let ack = if let Some(ack) = packet_info.ack {
 				ack
 			} else {
@@ -371,21 +309,6 @@ pub async fn query_ready_and_timed_out_packets(
 				continue
 			};
 
-			let packet = Packet {
-				sequence: packet_info.sequence.into(),
-				source_port: PortId::from_str(&packet_info.source_port)
-					.expect("Port is should be valid"),
-				source_channel: ChannelId::from_str(&packet_info.source_channel)
-					.expect("Channel is should be valid"),
-				destination_port: PortId::from_str(&packet_info.destination_port)
-					.expect("Port is should be valid"),
-				destination_channel: ChannelId::from_str(&packet_info.destination_channel)
-					.expect("Channel is should be valid"),
-				data: packet_info.data,
-				timeout_height: packet_info.timeout_height.into(),
-				timeout_timestamp: Timestamp::from_nanoseconds(packet_info.timeout_timestamp)
-					.expect("Timestamp should be valid"),
-			};
 			// Check if ack is ready to be sent to sink
 			// If sink does not have a client height that is equal to or greater than the packet
 			// creation height, we can't send it yet packet_info.height should represent the
@@ -416,14 +339,7 @@ pub async fn query_ready_and_timed_out_packets(
 				continue
 			}
 
-			let path = format!(
-				"{}",
-				AcksPath {
-					port_id: packet.source_port.clone(),
-					channel_id: packet.source_channel,
-					sequence: packet.sequence
-				}
-			);
+			let path = get_key_path(KeyPathType::AcksPath, &packet);
 
 			let key = apply_prefix(source.connection_prefix().into_vec(), path);
 			let proof = source.query_proof(proof_height, vec![key]).await?;
@@ -441,6 +357,64 @@ pub async fn query_ready_and_timed_out_packets(
 	}
 
 	Ok((messages, timeout_messages))
+}
+
+enum KeyPathType {
+	SeqRecv,
+	ReceiptPath,
+	CommitmentPath,
+	AcksPath,
+	ChannelPath,
+}
+
+fn get_key_path(key_path_type: KeyPathType, packet: &Packet) -> String {
+	match key_path_type {
+		KeyPathType::SeqRecv => {
+			format!(
+				"{}",
+				SeqRecvsPath(packet.destination_port.clone(), packet.destination_channel.clone())
+			)
+		},
+		KeyPathType::ReceiptPath => {
+			format!(
+				"{}",
+				ReceiptsPath {
+					port_id: packet.destination_port.clone(),
+					channel_id: packet.destination_channel.clone(),
+					sequence: packet.sequence.clone()
+				}
+			)
+		},
+		KeyPathType::CommitmentPath => {
+			format!(
+				"{}",
+				CommitmentsPath {
+					port_id: packet.source_port.clone(),
+					channel_id: packet.source_channel.clone(),
+					sequence: packet.sequence.clone()
+				}
+			)
+		},
+		KeyPathType::AcksPath => {
+			format!(
+				"{}",
+				AcksPath {
+					port_id: packet.source_port.clone(),
+					channel_id: packet.source_channel.clone(),
+					sequence: packet.sequence.clone()
+				}
+			)
+		},
+		KeyPathType::ChannelPath => {
+			format!(
+				"{}",
+				ChannelEndsPath(
+					packet.destination_port.clone(),
+					packet.destination_channel.clone()
+				)
+			)
+		},
+	}
 }
 
 // todo: fix bug in this function in ibc-rs and remove from here
