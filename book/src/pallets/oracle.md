@@ -1,1 +1,1 @@
-{{#include ../../../frame/oracle/README.md}}
+{{#include ../../../code/parachain/frame/oracle/README.md}}

@@ -344,6 +344,7 @@ picatrsy
 plmosaic
 liqdatns
 liqiudat
+modl # pallet type id
 
 # can't have apostrophies in identifiers
 doesnt
