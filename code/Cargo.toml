@@ -43,8 +43,8 @@ members = [
   "utils/price-feed",
   "utils/collator-sidecar",
   # "simnode/simnode-node",
-  # "simnode/simnode-tests",
-  # "simnode/common",
+  "simnode/simnode-tests",
+  "simnode/common",
   "utils/xcmp",
   "utils/wasm-optimizer",
   "xcvm/lib/*",
@@ -67,6 +67,7 @@ sp-debug-derive = { git = "https://github.com/ComposableFi/substrate", branch = 
 sp-externalities = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-io = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-runtime = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+wasmi-validation = { git = "https://github.com/ComposableFi/wasmi", rev = "cd8c0c775a1d197a35ff3d5c7d6cded3d476411b" }
 
 [patch."https://github.com/paritytech/subxt"]
 subxt-codegen = { git = "https://github.com/paritytech//subxt", rev = "2fe9a1446d32b93a10804db3304ccaac65f764b8" }
@@ -219,6 +220,7 @@ sp-consensus-aura = { git = "https://github.com/ComposableFi/substrate", branch 
 sp-consensus-babe = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-consensus-slots = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-consensus-vrf = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
+sc-consensus-manual-seal = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-core = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-core-hashing = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 sp-core-hashing-proc-macro = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
