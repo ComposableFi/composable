@@ -1019,7 +1019,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			match action {
 				SingleAssetAccountsStorageAction::Depositing => {
-					match SingleAssetAccountsStorage::<T>::try_mutate(
+					let available_lp = SingleAssetAccountsStorage::<T>::try_mutate_exists(
 						&who,
 						&pool_id,
 						|exist_amount| -> Result<Self::Balance, DispatchError> {
@@ -1028,26 +1028,18 @@ pub mod pallet {
 									*amount = amount.safe_add(&lp_amount)?;
 									Ok(*amount)
 								},
-								None =>
-									Err(Error::<T>::LpTokenNotFoundForSingleAssetWithdrawal.into()),
+								None => {
+									*exist_amount = Some(lp_amount);
+									Ok(lp_amount)
+								},
 							}
 						},
-					) {
-						Ok(lp_amount) =>
-							Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
-								who,
-								pool_id,
-								balance: lp_amount,
-							}),
-						Err(_) => {
-							SingleAssetAccountsStorage::<T>::insert(&who, &pool_id, lp_amount);
-							Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
-								who,
-								pool_id,
-								balance: lp_amount,
-							});
-						},
-					};
+					)?;
+					Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
+						who,
+						pool_id,
+						balance: available_lp,
+					});
 				},
 				SingleAssetAccountsStorageAction::Withdrawing => {
 					let new_lp_amount = SingleAssetAccountsStorage::<T>::try_mutate(
