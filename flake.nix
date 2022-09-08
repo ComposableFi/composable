@@ -460,6 +460,18 @@
               cargoBuildCommand = "cargo build --release -p price-feed";
             });
 
+            fmt = pkgs.writeShellApplication {
+              name = "format-composable";
+
+              runtimeInputs = with pkgs; [ nixfmt coreutils ];
+
+              text = ''
+                  # nixfmt nix files
+                	find . -name "*.nix" -type f -exec nixfmt {} \;
+              '';
+
+            };
+
             composable-book = import ./book/default.nix {
               crane = crane-stable;
               inherit cargo stdenv;
@@ -799,6 +811,8 @@
 
             default = packages.composable-node;
           };
+
+          formatter = pkgs.nixpkgs-fmt;
 
           devShells = rec {
             developers = developers-minimal.overrideAttrs (base: {
