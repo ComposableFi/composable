@@ -461,15 +461,32 @@
             });
 
             fmt = pkgs.writeShellApplication {
-              name = "format-composable";
+              name = "fmt-composable";
 
-              runtimeInputs = with pkgs; [ nixfmt coreutils ];
+              runtimeInputs = with pkgs; [
+                nixfmt
+                coreutils
+                rust-nightly
+                taplo
+                nodePackages.prettier
+              ];
 
               text = ''
-                  # nixfmt nix files
+                  # .nix 
                 	find . -name "*.nix" -type f -exec nixfmt {} \;
-              '';
 
+                  # .toml
+                  taplo fmt
+                  
+                  # .rs
+                	find . -name "*.rs" -type f -exec rustfmt --edition 2021 {} \;
+                  
+                  # .js .ts .tsx 
+                  prettier \
+                    --config="./code/integration-tests/runtime-tests/.prettierrc" \
+                    --ignore-path="./code/integration-tests/runtime-tests/.prettierignore" \
+                    ./code/integration-tests/runtime-tests/                  
+              '';
             };
 
             composable-book = import ./book/default.nix {
@@ -811,8 +828,6 @@
 
             default = packages.composable-node;
           };
-
-          formatter = pkgs.nixpkgs-fmt;
 
           devShells = rec {
             developers = developers-minimal.overrideAttrs (base: {
