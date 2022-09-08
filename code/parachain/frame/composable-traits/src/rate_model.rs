@@ -23,12 +23,10 @@ use sp_runtime::{
 	ArithmeticError, FixedI128, FixedPointNumber, FixedU128, RuntimeDebug,
 };
 
-use sp_arithmetic::per_things::Percent;
 use composable_support::math::safe::{LiftedFixedBalance, SafeArithmetic};
+use sp_arithmetic::per_things::Percent;
 
-use crate::{
-	loans::{DurationSeconds, ONE_HOUR},
-};
+use crate::loans::{DurationSeconds, ONE_HOUR};
 
 /// The fixed point number from 0..to max.
 /// Unlike `Ratio` it can be more than 1.
@@ -135,12 +133,10 @@ impl InterestRate for InterestRateModel {
 		match self {
 			Self::Jump(jump) => jump.get_borrow_rate(utilization),
 			Self::Curve(curve) => curve.get_borrow_rate(utilization),
-			Self::DynamicPIDController(dynamic_pid_model) => {
-				dynamic_pid_model.get_borrow_rate(utilization)
-			},
-			Self::DoubleExponent(double_exponents_model) => {
-				double_exponents_model.get_borrow_rate(utilization)
-			},
+			Self::DynamicPIDController(dynamic_pid_model) =>
+				dynamic_pid_model.get_borrow_rate(utilization),
+			Self::DoubleExponent(double_exponents_model) =>
+				double_exponents_model.get_borrow_rate(utilization),
 		}
 	}
 }
@@ -175,11 +171,11 @@ impl JumpModel {
 	) -> Option<JumpModel> {
 		let model = Self { base_rate, jump_rate, full_rate, target_utilization };
 
-		if model.base_rate <= Self::MAX_BASE_RATE
-			&& model.jump_rate <= Self::MAX_JUMP_RATE
-			&& model.full_rate <= Self::MAX_FULL_RATE
-			&& model.base_rate <= model.jump_rate
-			&& model.jump_rate <= model.full_rate
+		if model.base_rate <= Self::MAX_BASE_RATE &&
+			model.jump_rate <= Self::MAX_JUMP_RATE &&
+			model.full_rate <= Self::MAX_FULL_RATE &&
+			model.base_rate <= model.jump_rate &&
+			model.jump_rate <= model.full_rate
 		{
 			Some(model)
 		} else {
@@ -286,8 +282,8 @@ impl DynamicPIDControllerModel {
 		utilization_ratio: FixedU128,
 	) -> Result<Rate, ArithmeticError> {
 		// compute error term `et = uo - ut`
-		let et: i128 = self.uo.into_inner().try_into().unwrap_or(0_i128)
-			- utilization_ratio.into_inner().try_into().unwrap_or(0_i128);
+		let et: i128 = self.uo.into_inner().try_into().unwrap_or(0_i128) -
+			utilization_ratio.into_inner().try_into().unwrap_or(0_i128);
 		let et: FixedI128 = FixedI128::from_inner(et);
 		// compute proportional term `pt = kp * et`
 		let pt = self.kp.checked_mul(&et).ok_or(ArithmeticError::Overflow)?;
@@ -343,7 +339,7 @@ impl InterestRate for DynamicPIDControllerModel {
 		// const NINE: usize = 9;
 		let utilization: Rate = utilization.into();
 		if let Ok(interest_rate) = Self::get_output_utilization_ratio(self, utilization) {
-			return Some(interest_rate);
+			return Some(interest_rate)
 		}
 		None
 	}
@@ -369,7 +365,7 @@ impl DoubleExponentModel {
 	pub fn new_model(coefficients: [u8; 16]) -> Option<Self> {
 		let sum_of_coefficients = coefficients.iter().fold(0_u16, |acc, &c| acc + c as u16);
 		if sum_of_coefficients == EXPECTED_COEFFICIENTS_SUM {
-			return Some(DoubleExponentModel { coefficients });
+			return Some(DoubleExponentModel { coefficients })
 		}
 		None
 	}
@@ -476,9 +472,9 @@ mod tests {
 		let excess_util = utilization.saturating_sub(target_utilization);
 		assert_eq!(
 			borrow_rate,
-			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into())
-				/ FixedU128::saturating_from_rational(20, 100)
-				+ normal_rate,
+			(jump_model.full_rate - jump_model.jump_rate).saturating_mul(excess_util.into()) /
+				FixedU128::saturating_from_rational(20, 100) +
+				normal_rate,
 		);
 	}
 
@@ -528,10 +524,10 @@ mod tests {
 				// collection alternative to define arbitrary and proptest attributes with filtering
 				// overall cardinality is small, so should work well
 				// here we have one liner, not sure why in code we have many lines....
-				base <= jump
-					&& jump <= full && base <= &JumpModel::MAX_BASE_RATE
-					&& jump <= &JumpModel::MAX_JUMP_RATE
-					&& full <= &JumpModel::MAX_FULL_RATE
+				base <= jump &&
+					jump <= full && base <= &JumpModel::MAX_BASE_RATE &&
+					jump <= &JumpModel::MAX_JUMP_RATE &&
+					full <= &JumpModel::MAX_FULL_RATE
 			})
 			.prop_map(|(base_rate, jump_percentage, full_percentage, target_utilization)| {
 				JumpModelStrategy {
@@ -573,15 +569,15 @@ mod tests {
 		let x2 = 75;
 		let y1 = jump_model.get_borrow_rate(Percent::from_percent(x1)).unwrap();
 		let y2 = jump_model.get_borrow_rate(Percent::from_percent(x2)).unwrap();
-		let s1 = (y2 - y1)
-			/ (FixedU128::saturating_from_integer(x2) - FixedU128::saturating_from_integer(x1));
+		let s1 = (y2 - y1) /
+			(FixedU128::saturating_from_integer(x2) - FixedU128::saturating_from_integer(x1));
 
 		let x1 = 81;
 		let x2 = 86;
 		let y1 = jump_model.get_borrow_rate(Percent::from_percent(x1)).unwrap();
 		let y2 = jump_model.get_borrow_rate(Percent::from_percent(x2)).unwrap();
-		let s2 = (y2 - y1)
-			/ (FixedU128::saturating_from_integer(x2) - FixedU128::saturating_from_integer(x1));
+		let s2 = (y2 - y1) /
+			(FixedU128::saturating_from_integer(x2) - FixedU128::saturating_from_integer(x1));
 
 		assert!(s1 < s2, "slope after target is growing faster")
 	}
