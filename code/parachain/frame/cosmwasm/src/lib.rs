@@ -170,7 +170,6 @@ pub mod pallet {
 		UnknownDenom,
 		StackOverflow,
 		NotEnoughFundsForUpload,
-		ContractNonceOverflow,
 		NonceOverflow,
 		RefcountOverflow,
 		VMDepthOverflow,
@@ -342,13 +341,6 @@ pub mod pallet {
 	pub(crate) type CurrentNonce<T: Config> =
 		StorageValue<_, u64, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
-	/// A mapping between a contract and it's nonce.
-	/// The nonce is a monotonic counter incremented when the contract instantiate another contract.
-	#[allow(clippy::disallowed_types)]
-	#[pallet::storage]
-	pub(crate) type ContractNonce<T: Config> =
-		StorageMap<_, Identity, AccountIdOf<T>, u64, ValueQuery>;
-
 	/// A mapping between a contract and it's metadata.
 	#[pallet::storage]
 	pub(crate) type ContractToInfo<T: Config> =
@@ -452,12 +444,14 @@ pub mod pallet {
 			instantiator: &AccountIdOf<T>,
 			salt: &[u8],
 			code_hash: CodeHashOf<T>,
+			message: &[u8],
 		) -> AccountIdOf<T> {
 			let data: Vec<_> = instantiator
 				.as_ref()
 				.iter()
 				.chain(salt)
 				.chain(code_hash.as_ref())
+				.chain(T::Hashing::hash(&message).as_ref())
 				.cloned()
 				.collect();
 			UncheckedFrom::unchecked_from(T::Hashing::hash(&data))
@@ -483,11 +477,12 @@ pub mod pallet {
 			salt: &[u8],
 			admin: Option<AccountIdOf<T>>,
 			label: ContractLabelOf<T>,
+			message: &[u8],
 		) -> Result<(AccountIdOf<T>, ContractInfoOf<T>), Error<T>> {
 			let code_hash = CodeIdToInfo::<T>::get(code_id)
 				.ok_or(Error::<T>::CodeNotFound)?
 				.pristine_code_hash;
-			let contract = Self::derive_contract_address(&instantiator, salt, code_hash);
+			let contract = Self::derive_contract_address(&instantiator, salt, code_hash, &message);
 			ensure!(
 				!ContractToInfo::<T>::contains_key(&contract),
 				Error::<T>::ContractAlreadyExists
@@ -541,8 +536,14 @@ pub mod pallet {
 			funds: FundsOf<T>,
 			message: ContractMessageOf<T>,
 		) -> Result<(), CosmwasmVMError<T>> {
-			let (contract, info) =
-				Self::do_instantiate_phase1(instantiator.clone(), code_id, salt, admin, label)?;
+			let (contract, info) = Self::do_instantiate_phase1(
+				instantiator.clone(),
+				code_id,
+				salt,
+				admin,
+				label,
+				&message,
+			)?;
 			Self::do_extrinsic_dispatch(
 				shared,
 				EntryPoint::Instantiate,
@@ -668,16 +669,6 @@ pub mod pallet {
 		/// Handy wrapper to update contract info.
 		pub(crate) fn set_contract_info(contract: &AccountIdOf<T>, info: ContractInfoOf<T>) {
 			ContractToInfo::<T>::insert(contract, info)
-		}
-
-		/// Compute the next contract nonce and return it.
-		/// This nonce is used in contract instantiation (contract -> contract).
-		/// Consequently, we track a nonce for each instantiated contracts.
-		pub(crate) fn next_contract_nonce(contract: &AccountIdOf<T>) -> Result<u64, Error<T>> {
-			ContractNonce::<T>::try_mutate(contract, |nonce| -> Result<u64, Error<T>> {
-				*nonce = nonce.checked_add(1).ok_or(Error::<T>::ContractNonceOverflow)?;
-				Ok(*nonce)
-			})
 		}
 
 		/// Current instrumentation version
