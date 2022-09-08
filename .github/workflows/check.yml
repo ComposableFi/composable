@@ -39,6 +39,7 @@ jobs:
           incremental_files_only: false
           config: "cspell.yaml"
 
+  # TODO: migrate this check to nix
   substrate-check:
     name: Check Benchmarks
     runs-on:
@@ -64,6 +65,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: cargo check --all --benches
         run: |
+          cd code
           SKIP_WASM_BUILD=1 cargo +nightly check --benches --all --features runtime-benchmarks # checks all rust crates with default-features, tests, benchmarks
 
   linters:

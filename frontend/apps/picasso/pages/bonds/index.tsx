@@ -16,12 +16,11 @@ const standardPageSize = {
 };
 
 const Bonds: NextPage = () => {
-  const activeBonds = useActiveBonds();
+  const { activeBonds } = useActiveBonds();
   const theme = useTheme();
   const router = useRouter();
   const { extensionStatus } = useContext(ParachainContext);
   const bonds = useStore((state) => state.bonds.bonds);
-
   const handleActiveBondsClick = (offerId: string) => {
     router.push({
       pathname: `/bonds/${offerId}`,

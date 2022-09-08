@@ -147,31 +147,8 @@
 
           # source relevant to build rust only
           rust-src = let
-            directory-blacklist = [
-              ".nix"
-              "nix"
-              ".config"
-              ".devcontainer"
-              ".github"
-              ".log"
-              ".maintain"
-              ".tools"
-              ".vscode"
-              "audits"
-              "book"
-              "devnet-stage"
-              "devnet"
-              "docker"
-              "docs"
-              "frontend"
-              "rfcs"
-              "scripts"
-              "setup"
-              "subsquid"
-              "runtime-tests"
-              "composablejs"
-            ];
-            file-blacklist = [
+            directoryBlacklist = [ "runtime-tests" ];
+            fileBlacklist = [
               # does not makes sense to black list,
               # if we changed some version of tooling(seldom), we want to rebuild
               # so if we changed version of tooling, nix itself will detect invalidation and rebuild
@@ -181,19 +158,31 @@
             filter = lib.cleanSourceFilter;
             src = lib.cleanSourceWith {
               filter = let
+                isBlacklisted = name: type:
+                  let
+                    blacklist = if type == "directory" then
+                      directoryBlacklist
+                    else if type == "regular" then
+                      fileBlacklist
+                    else
+                      [ ]; # symlink, unknown
+                  in builtins.elem (baseNameOf name) blacklist;
+                isImageFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".png" name;
+                isPlantUmlFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".plantuml" name;
+                isNixFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".nix" name;
                 customFilter = name: type:
-                  !((type == "directory"
-                    && builtins.elem (baseNameOf name) directory-blacklist)
-                    || (type == "regular"
-                      && builtins.elem (baseNameOf name) file-blacklist)
+                  !((isBlacklisted name type) || (isImageFile name type)
+                    || (isPlantUmlFile name type)
                     # assumption that nix is final builder, 
                     # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
                     # and if *.nix changed, nix itself will detect only relevant cache invalidations 
-                    || (type == "regular"
-                      && lib.strings.hasSuffix ".nix" name));
+                    || (isNixFile name type));
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-              ./.;
-              src = ./.;
+              ./code;
+              src = ./code;
             };
           };
 
@@ -345,6 +334,29 @@
             '';
           docs-renders = [ mdbook plantuml graphviz pandoc ];
 
+          simnode-tests = crane-nightly.cargoBuild (common-attrs // {
+            pnameSuffix = "-simnode";
+            cargoArtifacts = common-deps;
+            cargoBuildCommand =
+              "cargo build --release --package simnode-tests --features=builtin-wasm";
+            DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+            PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+            COMPOSABLE_RUNTIME =
+              "${composable-runtime}/lib/runtime.optimized.wasm";
+            installPhase = ''
+              mkdir -p $out/bin
+              cp target/release/simnode-tests $out/bin/simnode-tests
+            '';
+          });
+
+          run-simnode-tests = chain:
+            writeShellScriptBin "run-simnode-tests-${chain}" ''
+              ${simnode-tests}/bin/simnode-tests --chain=${chain} \
+                --base-path=/tmp/db/var/lib/composable-data/ \
+                --pruning=archive \
+                --execution=wasm
+            '';
+
         in rec {
           packages = rec {
             inherit wasm-optimizer;
@@ -359,6 +371,7 @@
             inherit composable-node;
             inherit composable-bench-node;
             inherit rust-nightly;
+            inherit simnode-tests;
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -392,7 +405,7 @@
               name = "runtime-tests";
               src = builtins.filterSource
                 (path: type: baseNameOf path != "node_modules")
-                ./integration-tests/runtime-tests;
+                ./code/integration-tests/runtime-tests;
               dontUnpack = true;
               installPhase = ''
                 mkdir $out/
@@ -688,7 +701,7 @@
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo deny";
               cargoExtraArgs =
-                "--manifest-path ./frame/composable-support/Cargo.toml check ban";
+                "--manifest-path ./parachain/frame/composable-support/Cargo.toml check ban";
             });
 
             cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
@@ -741,11 +754,12 @@
               '';
             };
 
-            junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
-            gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
-            wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix {
+            junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
+            gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
+            wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
               crane = crane-nightly;
             };
+
             default = packages.composable-node;
           };
 
@@ -918,6 +932,16 @@
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "picasso-dev";
             };
+            simnode-tests = {
+              type = "app";
+              program = "${packages.simnode-tests}/bin/simnode-tests";
+            };
+            simnode-tests-composable =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
+            simnode-tests-picasso =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
+            simnode-tests-dali-rococo =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
             default = devnet-dali;
           };
         });
