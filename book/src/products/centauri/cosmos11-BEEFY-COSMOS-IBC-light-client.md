@@ -50,7 +50,7 @@ pub struct BEEFYLightClient{
 ```
 
 
-Composable is performing a total [of 8 PRs to core BEEFY subsystems](https://github.com/paritytech/substrate/pulls/wizdave97) in both the runtime and Substrate client, pending further review by the Substrate bridges team. Some are listed below:
+Composable is performing a total of 8 PRs to core BEEFY subsystems in both the runtime and Substrate client, pending further review by the Substrate bridges team. Some are listed below:
 
 
 

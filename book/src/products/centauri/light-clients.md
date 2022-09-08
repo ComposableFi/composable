@@ -56,7 +56,7 @@ As seen above, finding a value that satisfies this equation would require a sign
 Meanwhile, the consensus proof for a proof-of-stake (PoS) protocol is usually the output of a verifiable random function where:
 
 
-![consensus_proofs_2](./consensus-proofs-1.png)
+![consensus_proofs_2](./consensus-proofs-2.png)
 
 
 Most blockchain protocols’ consensus mechanisms usually only guarantee liveness, hence verifying these consensus proofs only tells if this block is valid. It does not, however, tell if this block should be considered as final. In the case of PoS, blocks that are not signed by a public key in the known authority set are not considered to be valid. Consensus proofs provide trust guarantees about a block to the nodes on the network pending finalization, as competing blocks for the same block height may arise in a byzantine system. It is entirely up to the finalization protocol to provide safety guarantees.

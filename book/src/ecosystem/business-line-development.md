@@ -8,7 +8,7 @@ Composable offers the following services for other businesses, projects, and com
 
 ### Data provider onboarding:
 
-Onboarding individuals/entities that can provide data for our oracle pallet, [Apollo](../products/the-picasso-parachain/the-picasso-tech-stack/apollo.html), like Teller and API3. 
+Onboarding individuals/entities that can provide data for our oracle pallet, [Apollo](../products/apollo-overview.md), like Teller and API3. 
 
 ### IBC-enabled chains onboarding:
 
@@ -20,7 +20,7 @@ Onboarding other parachains into the Composable interoperable ecosystem.
 
 ### Pallet onboarding:
 
-Onboarding other pallets onto our Kusama parachain, [Picasso](../products/the-picasso-parachain.html). 
+Onboarding other pallets onto our Kusama parachain, [Picasso](../parachains/picasso-parachain-overview.md). 
 
 ### Infrastructure onboarding:
 
@@ -28,8 +28,8 @@ Onboarding new layers, chains, and their associated validators into our ecosyste
 
 ### Cross-layer application tooling (Composable SDK):
 
-Allowing other projects to integrate our tools and technology via the [Composable software development kit (SDK)](../products/mosaic/the-composable-sdk.html) and [XCVM](../products/cross-chain-virtual-machine.html). 
+Allowing other projects to integrate our tools and technology via the [Composable software development kit (SDK)](../developer-guides/composable-sdk.md) and [XCVM](../products/cross-chain-virtual-machine.md). 
 
 ### Building with the Composable XCVM:
 
-Onboarding developers to use the [Composable Cross-Chain VM (XCVM)](../products/cross-chain-virtual-machine.html).
+Onboarding developers to use the [Composable Cross-Chain VM (XCVM)](../products/cross-chain-virtual-machine.md).

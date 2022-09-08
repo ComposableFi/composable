@@ -1,6 +1,6 @@
 # How the XCVM works
 
-*For more details, head to the XCVM technical specification on [GitHub](https://github.com/ComposableFi/composable/blob/main/xcvm/SPEC.md).*
+*For more details, head to the XCVM technical specification on [GitHub](https://github.com/ComposableFi/composable/blob/main/code/xcvm/SPEC.md).*
 
 ---
 

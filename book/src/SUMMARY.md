@@ -65,7 +65,7 @@
         - [Frontend](./codespaces/frontend.md)
         - [Runtime Tests](./codespaces/runtime-tests.md)
 - [Composable SDK](./developer-guides/composable-sdk.md)
-- [Oracle Set-Up Guide](./developer-guides/oracle-set-up-guide/oracle-set-up-guide.md)
+- [Oracle Set-Up Guide](./developer-guides/oracle-set-up-guide.md)
 - [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)
 - [Pallets & Integration](./developer-guides/pallets-overview.md)
     - [airdrop](./pallets/airdrop.md)

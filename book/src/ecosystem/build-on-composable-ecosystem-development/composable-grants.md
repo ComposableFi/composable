@@ -23,8 +23,7 @@ Apply now to be on the cutting-edge of DeFi’s interoperable future. This is ju
 
 ### The Pallets Program
 
-
-This program invites developers to build [Substrate](https://substrate.io/) pallets onto [Picasso](https://dali.devnets.composablefinance.ninja/products/the-picasso-parachain.html), helping build out a complete offering of all DeFi functionalities (from basic to advanced) as building blocks for future developers to quickly architect powerful dApps on Picasso.
+This program invites developers to build [Substrate](https://substrate.io/) pallets onto [Picasso](../../parachains/picasso-parachain-overview.md), helping build out a complete offering of all DeFi functionalities (from basic to advanced) as building blocks for future developers to quickly architect powerful dApps on Picasso.
 
 
 Composable’s Substrate pallets provide LEGO-like building blocks for developers to build interoperable applications on Picasso. As noted, our team is currently working on several pallets. To reach our goal of providing a complete list of offerings to make building on our ecosystem as simple as possible, we are providing grants for pallet developers and those leveraging our pallets to create applications.
@@ -40,9 +39,9 @@ There are three separate pallet tracks for our grants: primitive, core and appli
 
 ### The Cross-Chain Applications Program:
 
-This program invites developers to leverage our [Composable software development kit (SDK)](https://dali.devnets.composablefinance.ninja/products/mosaic/the-composable-sdk.html) to use our technology and build interoperable applications native to the Composable ecosystem. Currently, the Composable SDK comprises a set of tools such as Mosaic, which is stacked in a layer on top of the XCVM and functions as an early iteration of the XCVM.
+This program invites developers to leverage our [Composable software development kit (SDK)](../../developer-guides/composable-sdk.md) to use our technology and build interoperable applications native to the Composable ecosystem. Currently, the Composable SDK comprises a set of tools such as Mosaic, which is stacked in a layer on top of the XCVM and functions as an early iteration of the XCVM.
 
-Composable Finance has built this [SDK](https://dali.devnets.composablefinance.ninja/developer-guides/composable-sdk.html) to facilitate development across various layers and chains. Given this broad scope of possibilities, our cross-layer grant recipients can have a diverse set of interests, for example:
+Composable Finance has built this [SDK](../../developer-guides/composable-sdk.md) to facilitate development across various layers and chains. Given this broad scope of possibilities, our cross-layer grant recipients can have a diverse set of interests, for example:
 
 _ Use Composable’s SDK to build a cross-layer yield aggregator, allowing maximal yield generation.
 
