@@ -208,11 +208,7 @@ export async function createMultipleCPPools(api: ApiPromise, wallet: KeyringPair
         baseWeight: api.createType("Permill", Math.floor(Math.random() * 100000))
       }
     });
-    tx.push(
-      api.tx.sudo.sudo(
-        api.tx.pablo.create(pool)
-      )
-    );
+    tx.push(api.tx.sudo.sudo(api.tx.pablo.create(pool)));
   }
   await sendWithBatchAndWaitForSuccess(api, wallet, api.events.pablo.PoolCreated.is, tx, false);
 }
@@ -379,11 +375,7 @@ export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair
         })
       }
     });
-    tx.push(
-      api.tx.sudo.sudo(
-        api.tx.pablo.create(pool)
-      )
-    );
+    tx.push(api.tx.sudo.sudo(api.tx.pablo.create(pool)));
   }
   await sendWithBatchAndWaitForSuccess(api, wallet, api.events.pablo.PoolCreated.is, tx, false);
 }
