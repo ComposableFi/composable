@@ -3,16 +3,18 @@ import {
   EventHandlerContext,
   SubstrateProcessor,
 } from "@subsquid/substrate-processor";
+import { Store, TypeormDatabase } from "@subsquid/typeorm-store";
+import * as dotenv from "dotenv"; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 import { Account, HistoricalBalance } from "./model";
 import {
   BalancesTransferEvent,
+  BondedFinanceNewBondEvent,
+  BondedFinanceNewOfferEvent,
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
   PabloPoolCreatedEvent,
   PabloPoolDeletedEvent,
   PabloSwappedEvent,
-  BondedFinanceNewBondEvent,
-  BondedFinanceNewOfferEvent,
   VestingVestingScheduleAddedEvent,
 } from "./types/events";
 import { getOrCreate } from "./dbHelper";
@@ -29,7 +31,10 @@ import {
 } from "./bondedFinanceProcessor";
 import { processVestingScheduleAddedEvent } from "./vestingProcessor";
 
-const processor = new SubstrateProcessor("composable_dali_dev");
+dotenv.config();
+
+const dbName = "composable_dali_dev";
+const processor = new SubstrateProcessor(new TypeormDatabase());
 
 const chain = (): string => {
   switch (process.env.ENV) {
@@ -41,9 +46,8 @@ const chain = (): string => {
       if ("RELAYCHAIN_URI" in process.env) {
         return process.env.RELAYCHAIN_URI!.toString();
       }
-      else {
-        return "ws://127.0.0.1:9988";
-      }
+
+      return "ws://127.0.0.1:9988";
   }
 };
 
@@ -51,11 +55,9 @@ const archive = (): string => {
   if ("SUBSQUID_ARCHIVE_URI" in process.env) {
     return process.env.SUBSQUID_ARCHIVE_URI!.toString();
   }
-  else {
-    return "http://127.0.0.1:8080/v1/graphql";
-  }
-};
 
+  return "http://127.0.0.1:8888/graphql";
+};
 
 const chainConnectionString = chain();
 const archiveConnectionString = archive();
@@ -69,34 +71,34 @@ processor.setDataSource({
   chain: chainConnectionString,
 });
 
-processor.addEventHandler("pablo.PoolCreated", async (ctx) => {
+processor.addEventHandler("Pablo.PoolCreated", async (ctx) => {
   const event = new PabloPoolCreatedEvent(ctx);
   await processPoolCreatedEvent(ctx, event);
 });
 
-processor.addEventHandler("pablo.PoolDeleted", async (ctx) => {
+processor.addEventHandler("Pablo.PoolDeleted", async (ctx) => {
   const event = new PabloPoolDeletedEvent(ctx);
   await processPoolDeletedEvent(ctx, event);
 });
 
-processor.addEventHandler("pablo.LiquidityAdded", async (ctx) => {
+processor.addEventHandler("Pablo.LiquidityAdded", async (ctx) => {
   const event = new PabloLiquidityAddedEvent(ctx);
   await processLiquidityAddedEvent(ctx, event);
 });
 
-processor.addEventHandler("pablo.LiquidityRemoved", async (ctx) => {
+processor.addEventHandler("Pablo.LiquidityRemoved", async (ctx) => {
   const event = new PabloLiquidityRemovedEvent(ctx);
   await processLiquidityRemovedEvent(ctx, event);
 });
 
-processor.addEventHandler("pablo.Swapped", async (ctx) => {
+processor.addEventHandler("Pablo.Swapped", async (ctx) => {
   const event = new PabloSwappedEvent(ctx);
   await processSwappedEvent(ctx, event);
 });
 
-processor.addEventHandler("balances.Transfer", async (ctx) => {
+processor.addEventHandler("Balances.Transfer", async (ctx) => {
   const transfer = getTransferEvent(ctx);
-  const tip = ctx.extrinsic?.tip || 0n;
+  const tip = ctx.event.extrinsic?.tip || 0n;
   const from = ss58.codec("picasso").encode(transfer.from);
   const to = ss58.codec("picasso").encode(transfer.to);
 
@@ -130,19 +132,19 @@ processor.addEventHandler("balances.Transfer", async (ctx) => {
   );
 });
 
-processor.addEventHandler("bondedFinance.NewOffer", async (ctx) => {
+processor.addEventHandler("BondedFinance.NewOffer", async (ctx) => {
   const event = new BondedFinanceNewOfferEvent(ctx);
 
   await processNewOfferEvent(ctx, event);
 });
 
-processor.addEventHandler("bondedFinance.NewBond", async (ctx) => {
+processor.addEventHandler("BondedFinance.NewBond", async (ctx) => {
   const event = new BondedFinanceNewBondEvent(ctx);
 
   await processNewBondEvent(ctx, event);
 });
 
-processor.addEventHandler("vesting.VestingScheduleAdded", async (ctx) => {
+processor.addEventHandler("Vesting.VestingScheduleAdded", async (ctx) => {
   const event = new VestingVestingScheduleAddedEvent(ctx);
 
   await processVestingScheduleAddedEvent(ctx, event);
@@ -156,7 +158,7 @@ interface TransferEvent {
   amount: bigint;
 }
 
-function getTransferEvent(ctx: EventHandlerContext): TransferEvent {
+function getTransferEvent(ctx: EventHandlerContext<Store, { event: true }>) {
   const event = new BalancesTransferEvent(ctx);
-  return event.asV2401 ?? event.asLatest;
+  return event.asV2401;
 }

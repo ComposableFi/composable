@@ -1,7 +1,7 @@
-import { alpha, Box, BoxProps, Typography, useTheme } from "@mui/material"
+import { alpha, Box, BoxProps, Typography, useTheme } from "@mui/material";
 
-export type BoxWrapperProps= {
-  title?: string,
+export type BoxWrapperProps = {
+  title?: string;
 } & BoxProps;
 
 export const BoxWrapper: React.FC<BoxWrapperProps> = ({
@@ -17,12 +17,14 @@ export const BoxWrapper: React.FC<BoxWrapperProps> = ({
         theme.custom.opacity.light
       )}`}
       p={4}
-      borderRadius={0.6666}
-      sx={{background: theme.palette.gradient.secondary}}
+      borderRadius={theme.spacing(4)}
+      sx={{ background: theme.palette.gradient.secondary }}
       {...boxProps}
     >
       {title && (
-        <Typography variant="h6" mb={4}>{title}</Typography>
+        <Typography variant="h6" mb={4}>
+          {title}
+        </Typography>
       )}
       {children}
     </Box>

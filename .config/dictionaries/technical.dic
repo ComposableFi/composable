@@ -168,6 +168,7 @@ stdenv
 libudev
 narinfo
 buildx
+substituters
 
 # commands, programs, libs, tools, etc
 grep
@@ -221,6 +222,7 @@ FSIZE
 MEMLOCK
 NOFILE
 NPROC
+WORKDIR
 
 # docker
 ipam
