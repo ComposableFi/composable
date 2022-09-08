@@ -52,7 +52,7 @@ pub fn assert_last_event<Runtime: Config>(generic_event: <Runtime as Config>::Ev
 ///
 /// Useful if not all of the information in the event needs to be checked:
 ///
-/// ```rust,nocompile
+/// ```rust,ignore
 /// assert_last_event_with::<Runtime, _>(
 ///     Pallet::extrinsic(),
 ///     |event| matches!(
@@ -68,7 +68,7 @@ pub fn assert_last_event<Runtime: Config>(generic_event: <Runtime as Config>::Ev
 /// It is also possible to return a value from the provided function, for example to retrieve a
 /// generated id for later use:
 ///
-/// ```rust,nocompile
+/// ```rust,ignore
 /// assert_last_event_with::<Runtime, _>(
 ///     Pallet::extrinsic(),
 ///     |event| if let pallet::Event::<Runtime>::SomethingHappened {
