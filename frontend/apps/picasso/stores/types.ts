@@ -6,12 +6,13 @@ import {
   MetamaskSlice,
   OracleSlice,
   PolkadotSlice,
+  StakingRewardsSlice,
   StakingSlice,
   StatsApolloSlice,
   StatsOverviewSlice,
   StatsTelemetrySlice,
   SubstrateBalancesSlice,
-  TransfersSlice
+  TransfersSlice,
 } from "./defi";
 import { UISlice } from "./ui/ui";
 import { BondsSlice } from "@/stores/defi/polkadot/bonds/slice";
@@ -39,4 +40,5 @@ export type AllSlices = PolkadotSlice &
   SubstrateBalancesSlice &
   CrowdloanRewardsSlice &
   BondsSlice &
-  OracleSlice;
+  OracleSlice &
+  StakingRewardsSlice;

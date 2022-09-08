@@ -30,3 +30,6 @@ export type { BondsSlice } from "./polkadot/bonds/slice";
 
 export { createOracleSlice } from "./polkadot/oracle/slice";
 export type { OracleSlice } from "./polkadot/oracle/slice";
+
+export { createStakingRewardsSlice } from "./polkadot/stakingRewards/slice";
+export type { StakingRewardsSlice } from "./polkadot/stakingRewards/slice";

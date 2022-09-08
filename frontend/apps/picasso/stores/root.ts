@@ -7,12 +7,13 @@ import {
   createMetamaskSlice,
   createOracleSlice,
   createPolkadotSlice,
+  createStakingRewardsSlice,
   createStakingSlice,
   createStatsApolloSlice,
   createStatsOverviewSlice,
   createStatsTelemetrySlice,
   createSubstrateBalancesSlice,
-  createTransfersSlice
+  createTransfersSlice,
 } from "./defi";
 
 import immer from "./middlewares/immer";
@@ -32,7 +33,8 @@ export const useStore = create<AllSlices>()(
       ...createSubstrateBalancesSlice(set, get),
       ...createCrowdloanRewardsSlice(set, get),
       ...createBondsSlice(set, get),
-      ...createOracleSlice(set, get)
+      ...createOracleSlice(set, get),
+      ...createStakingRewardsSlice(set, get),
     }))
   )
 );
