@@ -1,7 +1,8 @@
 //! Benchmarks
 use crate::{validation::ValidSplitRatio, *};
 
-use composable_support::validation::Validated;
+use composable_support::validation::TryIntoValidated;
+use composable_tests_helpers::test::currency::PICA;
 use composable_traits::{
 	staking::{
 		lock::{Lock, LockConfig},
@@ -21,9 +22,9 @@ use sp_arithmetic::{traits::SaturatedConversion, Perbill, Permill};
 use sp_std::collections::btree_map::BTreeMap;
 
 // PICA as configured in the Test runtime (./frame/staking-rewards/src/test/runtime.rs)
-pub const BASE_ASSET_ID: u128 = 1;
-pub const X_ASSET_ID: u128 = 101;
-pub const STAKING_FNFT_COLLECTION_ID: u128 = 1001;
+pub const BASE_ASSET_ID: u128 = 42;
+pub const X_ASSET_ID: u128 = 142;
+pub const STAKING_FNFT_COLLECTION_ID: u128 = 1042;
 pub const FNFT_INSTANCE_ID_BASE: u64 = 0;
 
 fn get_reward_pool<T: Config>(
@@ -156,26 +157,32 @@ benchmarks! {
 
 	split {
 		let r in 1 .. T::MaxRewardConfigsPerPool::get();
-		frame_system::Pallet::<T>::set_block_number(1.into());
-		let user: T::AccountId = account("user", 0, 0);
-		let _res = Pallet::<T>::create_reward_pool(RawOrigin::Root.into(), get_reward_pool::<T>(user.clone(), r));
-		let new_stake = Stake::<T::FinancialNftInstanceId, T::AssetId, T::Balance, Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>> {
-			financial_nft_id: FNFT_INSTANCE_ID_BASE.into(),
-			reward_pool_id: 1_u128.into(),
-			stake: 1_000_000_000_000_000_u128.into(),
-			share: 1_000_000_000_000_000_u128.into(),
-			reductions: Reductions::<_,_,_>::new(),
-			lock: Lock {
-				started_at: 10000_u64,
-				duration: 10000000_u64,
-				unlock_penalty: Perbill::from_percent(2)
-			},
-		};
-		Stakes::<T>::insert(T::AssetId::from(STAKING_FNFT_COLLECTION_ID), T::FinancialNftInstanceId::from(FNFT_INSTANCE_ID_BASE), new_stake);
-		let ratio =  Permill::from_rational(1_u32,7_u32);
-		let validated_ratio = Validated::<Permill, ValidSplitRatio>::new(ratio).unwrap();
 
-	}: _(RawOrigin::Signed(user), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), validated_ratio)
+		frame_system::Pallet::<T>::set_block_number(1.into());
+
+		let user: T::AccountId = account("user", 0, 0);
+
+		Pallet::<T>::create_reward_pool(
+			RawOrigin::Root.into(),
+			get_reward_pool::<T>(user.clone(), r)
+		).unwrap();
+
+		<T::Assets as Mutate<T::AccountId>>::mint_into(
+			BASE_ASSET_ID.into(),
+			&user,
+			PICA::units(1_000).into()
+		).unwrap();
+
+		Pallet::<T>::stake(
+			RawOrigin::Signed(user.clone()).into(),
+			BASE_ASSET_ID.into(),
+			PICA::units(1_000).into(),
+			ONE_HOUR,
+		).unwrap();
+
+		let ratio =  Permill::from_rational(1_u32,7_u32).try_into_validated().unwrap();
+
+	}: _(RawOrigin::Signed(user), STAKING_FNFT_COLLECTION_ID.into(), FNFT_INSTANCE_ID_BASE.into(), ratio)
 
 	reward_accumulation_hook_reward_update_calculation {
 		let now = T::UnixTime::now().as_secs();
