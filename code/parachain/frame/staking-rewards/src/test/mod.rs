@@ -393,7 +393,7 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 
 		let penalty = unlock_penalty.mul_ceil(amount);
 		assert_eq!(balance(staked_asset_id, &staker), amount + (amount - penalty));
-		// NOTE(connor): Used to keep penalty in the pool account, fNFT desing has assets being
+		// NOTE(connor): Used to keep penalty in the pool account, fNFT design has assets being
 		// burned instead
 		assert_eq!(balance(staked_asset_id, &fnft_asset_account), 0);
 		// assert_eq!(balance(staked_asset_id, &fnft_asset_account), penalty);
@@ -433,7 +433,7 @@ fn unstake_in_case_of_not_zero_claims_and_early_unlock_should_work() {
 			let claim_with_penalty = (Perbill::one() - unlock_penalty).mul_ceil(claim);
 			let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 			assert_eq!(balance(staked_asset_id, &staker), amount * 2 - penalty);
-			// NOTE(connor): Used to keep penalty in the pool account, fNFT desing has assets being
+			// NOTE(connor): Used to keep penalty in the pool account, fNFT design has assets being
 			// burned instead
 			assert_eq!(balance(staked_asset_id, &fnft_asset_account), 0);
 			// assert_eq!(balance(staked_asset_id, &fnft_asset_account), amount * 2 + penalty);
