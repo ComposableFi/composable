@@ -36,7 +36,7 @@ export async function bootstrapPools(api: ApiPromise, wallets: KeyringPair[], wa
           new BigNumber(start.toString()),
           25
         );
-        const lbpCreated = await createLiquidityBootstrappingPool(api, wallets[walletIndex], lbpConfig);
+        const lbpCreated = await createLiquidityBootstrappingPool(api, walletSudo, lbpConfig);
         logger.log('info', `LBP Created: ${lbpCreated.data[0].toString()}`);
         poolId = new BigNumber(lbpCreated.data[0].toString());
       } else if (pool.baseWeight) {

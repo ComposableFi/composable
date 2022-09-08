@@ -7,12 +7,12 @@ import { sendAndWaitForSuccess, sendAndWaitFor } from "@composable/bootstrap_pal
 
 export async function createLiquidityBootstrappingPool(
   api: ApiPromise,
-  ownerKey: KeyringPair,
+  sudoKey: KeyringPair,
   config: PalletPabloPoolInitConfiguration
 ) {
   return await sendAndWaitForSuccess(
     api,
-    ownerKey,
+    sudoKey,
     api.events.pablo.PoolCreated.is,
     api.tx.sudo.sudo(api.tx.pablo.create(config))
   );
