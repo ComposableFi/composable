@@ -963,6 +963,7 @@ jobs:
         - taplo-cli-check
         - prettier-check        
         - check-simnode
+        - benchmarks-check
       steps:
         - run: echo "Goblins allow your work to see the light"
 
