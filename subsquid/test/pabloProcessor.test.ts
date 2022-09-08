@@ -1,5 +1,4 @@
 import { assert, expect } from "chai";
-import { Store } from "@subsquid/substrate-processor";
 import {
   anyOfClass,
   anything,
@@ -33,6 +32,7 @@ import { randomUUID } from "crypto";
 import Big from "big.js";
 import { Fee } from "../src/types/v2401";
 import { createAccount, createCtx, encodeAccount } from "../src/utils";
+import { Store } from "@subsquid/typeorm-store";
 
 const UNIT = 1_000_000_000_000;
 
