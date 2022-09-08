@@ -55,13 +55,12 @@ docs: build
 	@cargo doc --no-deps
 
 style-check:
-	@rustup component add rustfmt 2> /dev/null
-	./scripts/style.sh --check --verbose
+	echo "This command is deprecated. Please use checks defined in flake.nix instead."
+	return 1
 
 style:
-	@rustup component add rustfmt 2> /dev/null
-	./scripts/style.sh
-	nixfmt $$(find . -name "*.nix" -type f | tr "\n" " ")
+	echo "This command is deprecated. Please use \`nix run \".#fmt\"\` instead."
+	return 1
 
 lint:
 	@rustup component add clippy 2> /dev/null
