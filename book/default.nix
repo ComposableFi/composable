@@ -3,7 +3,7 @@ let
   scraper = crane.buildPackage rec {
     pname = "extrinsics-docs-scraper";
     version = "1.0.0";
-    src = ../utils/extrinsics-docs-scraper;
+    src = ../code/utils/extrinsics-docs-scraper;
     # TODO: remove sha as will rebuild
     cargoSha256 = "q9D41wUeVOQ/pet950Omk09+Act7tM9wdXSZynvujuc=";
   };
