@@ -1,14 +1,11 @@
 //! Benchmarks
-use crate::{validation::ValidSplitRatio, *};
+use crate::*;
 
 use composable_support::validation::TryIntoValidated;
-use composable_tests_helpers::test::currency::PICA;
 use composable_traits::{
 	staking::{
-		lock::{Lock, LockConfig},
-		Reductions, RewardConfig, RewardPoolConfiguration,
-		RewardPoolConfiguration::RewardRateBasedIncentive,
-		RewardRate, RewardUpdate, Stake,
+		lock::LockConfig, RewardConfig, RewardPoolConfiguration,
+		RewardPoolConfiguration::RewardRateBasedIncentive, RewardRate, RewardUpdate,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -170,13 +167,15 @@ benchmarks! {
 		<T::Assets as Mutate<T::AccountId>>::mint_into(
 			BASE_ASSET_ID.into(),
 			&user,
-			PICA::units(1_000).into()
+			// PICA::units(1_000).into()
+			100_000_000.into(),
 		).unwrap();
 
 		Pallet::<T>::stake(
 			RawOrigin::Signed(user.clone()).into(),
 			BASE_ASSET_ID.into(),
-			PICA::units(1_000).into(),
+			// PICA::units(1_000).into(),
+			100_000_000.into(),
 			ONE_HOUR,
 		).unwrap();
 
