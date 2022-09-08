@@ -13,9 +13,6 @@ plugins:
   - "@typescript-eslint"
   - "mocha"
   - "mocha-no-only"
-rules: {
-  "mocha/no-setup-in-describe": "warn",
-  "mocha/no-sibling-hooks": "warn",
-  "mocha-no-only/mocha-no-only": "error"
-}
+rules:
+  { "mocha/no-setup-in-describe": "warn", "mocha/no-sibling-hooks": "warn", "mocha-no-only/mocha-no-only": "error" }
 ignorePatterns: ["src/types/**/*", "src/**/*.d.ts", "src/**/*.js", "test/**/*.d.ts", "test/**/*.js"]
