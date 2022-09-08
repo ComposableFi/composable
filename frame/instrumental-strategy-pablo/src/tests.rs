@@ -1,4 +1,4 @@
-use composable_traits::{instrumental::InstrumentalProtocolStrategy, vault::Vault as VaultTrait};
+use composable_traits::{instrumental::InstrumentalProtocolStrategy, vault::{Vault as VaultTrait, CapabilityVault}};
 use frame_support::{
 	assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -14,7 +14,10 @@ use sp_std::collections::btree_set::BTreeSet;
 use crate::{
 	mock::{
 		account_id::{ADMIN, ALICE, BOB},
-		helpers::{assert_has_event, create_pool, create_vault, make_proposal, set_admin_members},
+		helpers::{
+			assert_has_event, associate_vault_and_deposit_in_it, create_pool, create_vault,
+			make_proposal, set_admin_members, set_pool_id_for_asset,
+		},
 		runtime::{
 			Balance, Call, Event, ExtBuilder, MockRuntime, PabloStrategy, System, Tokens, Vault,
 			VaultId, MAX_ASSOCIATED_VAULTS,
@@ -206,23 +209,13 @@ mod transferring_funds {
 			let base_asset = CurrencyId::LAYR;
 			let quote_asset = CurrencyId::CROWD_LOAN;
 			let amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
-
 			// Create Vault (LAYR)
 			let vault_id = create_vault(base_asset, Perquintill::from_percent(50));
 			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
 			set_admin_members(vec![ALICE], 5);
-			let associate_vault_proposal =
-				Call::PabloStrategy(crate::Call::associate_vault { vault_id });
-			make_proposal(associate_vault_proposal, ALICE, 1, 0, None);
-			let vault_account = Vault::account_id(&vault_id);
-			assert_ok!(Tokens::mint_into(base_asset, &vault_account, 1_000_000));
+			associate_vault_and_deposit_in_it(vault_id, base_asset, amount);
 			// set pool_id for asset
-			let set_pool_id_for_asset_proposal =
-				Call::PabloStrategy(crate::Call::set_pool_id_for_asset {
-					asset_id: base_asset,
-					pool_id,
-				});
-			make_proposal(set_pool_id_for_asset_proposal, ALICE, 1, 0, None);
+			set_pool_id_for_asset(base_asset, pool_id);
 			// liquidity rebalance
 			let liquidity_rebalance_proposal =
 				Call::PabloStrategy(crate::Call::liquidity_rebalance {});

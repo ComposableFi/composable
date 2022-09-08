@@ -2,6 +2,7 @@ use composable_traits::{
 	defi::CurrencyPair,
 	dex::Amm,
 	instrumental::{Instrumental as InstrumentalTrait, InstrumentalVaultConfig},
+	vault::Vault as VaultTrait,
 };
 use frame_support::{assert_noop, assert_ok, traits::fungibles::Mutate, weights::GetDispatchInfo};
 use frame_system::EventRecord;
@@ -15,7 +16,7 @@ use sp_runtime::{
 };
 
 use super::runtime::{
-	Call, CollectiveInstrumental, Event, Instrumental, MockRuntime, Origin, System, VaultId,
+	Call, CollectiveInstrumental, Event, Instrumental, MockRuntime, Origin, System, VaultId, Vault,
 };
 use crate::{
 	mock::{
@@ -95,6 +96,22 @@ where
 	vault_id.unwrap()
 }
 
+pub fn associate_vault_and_deposit_in_it<AMT>(
+	vault_id: VaultId,
+	asset_id: CurrencyId,
+	amount: AMT,
+) 
+where
+	AMT: Into<Option<Balance>>,
+{
+	let default_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
+	let amount_to_mint = amount.into().unwrap_or(default_amount);
+	let associate_vault_proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
+	make_proposal(associate_vault_proposal, ALICE, 1, 0, None);
+	let vault_account = Vault::account_id(&vault_id);
+	assert_ok!(Tokens::mint_into(asset_id, &vault_account, amount_to_mint));
+}
+
 pub fn set_admin_members(members: Vec<AccountId>, members_count: MemberCount) {
 	assert_ok!(CollectiveInstrumental::set_members(Origin::root(), members, None, members_count,));
 }
@@ -147,6 +164,15 @@ pub fn make_proposal(
 			}
 		};
 	}
+}
+
+pub fn set_pool_id_for_asset(asset_id: CurrencyId, pool_id: PoolId) {
+	let set_pool_id_for_asset_proposal =
+	Call::PabloStrategy(crate::Call::set_pool_id_for_asset {
+		asset_id,
+		pool_id,
+	});
+	make_proposal(set_pool_id_for_asset_proposal, ALICE, 1, 0, None);
 }
 
 pub fn assert_has_event<T, F>(matcher: F)
