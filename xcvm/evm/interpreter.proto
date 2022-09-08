@@ -1,0 +1,125 @@
+ syntax = "proto3";
+
+ package interpreter;
+
+ message Program {
+   Instructions instructions = 1;
+ }
+
+ message Instructions {
+   repeated Instruction instructions = 1;
+ }
+
+ message Instruction {
+   oneof instruction {
+     Transfer transfer = 1;
+     Spawn spawn = 2;
+     Query query = 3;
+   }
+ }
+
+
+message Ratio {
+  uint64 nominator = 1;
+  uint64 denominator = 2; 
+}
+
+message Unit {
+  uint64 value = 1;
+  Ratio ratio = 2;
+}
+
+message Absolute {
+  uint64 value = 1;
+}
+
+message Balance {
+  oneof balance_type {
+    Ratio ratio = 1;
+    Unit absolute = 2;
+    Absolute uint = 3;
+  } 
+}
+
+message Account {
+  bytes account = 1;
+}
+
+message AssetId {
+  uint64 assetId = 1; 
+}
+
+message Asset {
+  AssetId assetId = 1; 
+  Balance balance = 2;
+}
+
+message Self {
+  uint32 self = 1;
+} 
+
+message Relayer {
+  uint32 self = 1;
+} 
+
+message Result {
+  uint32 result = 1;
+} 
+
+message BindingValue {
+  oneof type {
+    Self self = 1;
+    Relayer relayer = 2;
+    uint32 Result = 3;
+    Balance balance = 4; 
+    AssetId assetId = 5;
+  }
+}
+
+message Binding {
+  uint32 position = 1; 
+  BindingValue bindingValue = 2; 
+}
+
+message Bindings {
+  repeated Binding bindings = 1;
+}
+
+message Transfer {
+  oneof account_type{
+    bytes account = 1;
+    BindingValue relayer = 2;
+  }
+  repeated Asset assets = 3;
+}
+
+message Salt {
+  uint64 salt = 1;
+}
+
+message Network {
+  uint32 networkId=1;
+}
+
+message BridgeSecurity {
+  oneof security {
+    uint32 deterministic = 1;
+    uint32 probabilistic = 2;
+    uint32 optimistic = 3;
+  }
+} 
+
+message Spawn {
+  Network network = 1;
+  BridgeSecurity bridge_security = 2;
+  Salt salt = 3;
+  Program program = 4;
+  repeated Asset assets = 5;
+}
+
+message Query {
+  Network network = 1;
+  Salt salt = 3;
+}
+
+
