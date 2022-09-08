@@ -138,9 +138,9 @@ where
 	/// let twap = Twap::new(price, timestamp, period);
 	/// dbg!(twap);
 	/// // Twap {
-	/// // 	twap: FixedU128(42.000000000000000000),
-	/// // 	ts: 1600000000,
-	/// // 	period: 3600,
+	/// //    twap: FixedU128(42.000000000000000000),
+	/// //    ts: 1600000000,
+	/// //    period: 3600,
 	/// // };
 	/// ```
 	pub const fn new(twap: FixedPoint, ts: Moment, period: Moment) -> Self {
