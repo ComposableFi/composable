@@ -230,7 +230,7 @@ pub mod pallet {
 				Balance = <Self as DeFiComposableConfig>::Balance,
 				AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
 			>;
-		/// Expected blocktime
+		/// Expected blocktime in milliseconds
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
 		/// ParaId of the runtime
