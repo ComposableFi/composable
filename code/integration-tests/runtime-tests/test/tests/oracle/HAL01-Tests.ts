@@ -36,7 +36,7 @@ const getOracleStake = async (api: ApiPromise, wallet: KeyringPair): Promise<BN>
  * then such a situation would result in legitimate Oracles getting slashed.
  *
  */
-describe.only("HAL01 [Oracle] Tests", function () {
+describe("HAL01 [Oracle] Tests", function () {
   if (!testConfiguration.enabledTests.HAL01) return;
   let api: ApiPromise;
   let assetID: number;

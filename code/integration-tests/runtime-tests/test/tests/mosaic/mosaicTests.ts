@@ -30,7 +30,7 @@ import { waitForBlocks } from "@composable/utils/polkadotjs";
  * This suite consists of happy path tests. Additionally, we started implementing suites for later references such as regression, smoke etc.
  *
  */
-describe.only("tx.mosaic Tests", function () {
+describe("tx.mosaic Tests", function () {
   // Check if group of tests are enabled.
   if (!testConfiguration.enabledTests.query.enabled) return;
 
