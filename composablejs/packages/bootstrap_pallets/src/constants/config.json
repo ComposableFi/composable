@@ -28,7 +28,32 @@
       },
       "pair": {
         "base": "1",
-        "quote": "4"
+        "quote": "131"
+      },
+      "sale": {
+        "start": "0",
+        "end": "7200",
+        "initialWeight": "750000",
+        "finalWeight": "250000"
+      },
+      "feeConfig": {
+        "feeRate": "10000",
+        "ownerFeeRate": "10000",
+        "protocolFeeRate": "10000"
+      },
+      "startDelay": "25"
+    },
+    {
+      "addDexRoute": true,
+      "addLiquidity": true,
+      "enableTwap": true,
+      "liquidityAmount": {
+        "base": "100000000000000000",
+        "quote": "100000000000000000"
+      },
+      "pair": {
+        "base": "4",
+        "quote": "131"
       },
       "fee": "10000",
       "baseWeight": "500000"
