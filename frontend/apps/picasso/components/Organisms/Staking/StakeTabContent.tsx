@@ -5,6 +5,7 @@ import {
   formatNumber,
   fromPerbill,
   humanDateDiff,
+  toChainIdUnit,
   unwrapNumberOrHex,
 } from "shared";
 import { AlertBox, BigNumberInput } from "@/components";
@@ -176,7 +177,10 @@ export const StakeTabContent: FC = () => {
             await executor.execute(
               parachainApi.tx.stakingRewards.stake(
                 assetId.toString(),
-                parachainApi.createType("u128", lockablePICA.toString()),
+                parachainApi.createType(
+                  "u128",
+                  toChainIdUnit(lockablePICA).toString()
+                ),
                 parachainApi.createType("u64", lockPeriod.toString())
               ),
               account.address,
