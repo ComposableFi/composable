@@ -19,7 +19,7 @@ use crate::test::{
 	Test,
 };
 
-use super::{prelude::STAKING_FNFT_COLLECTION_ID, runtime};
+use super::prelude::STAKING_FNFT_COLLECTION_ID;
 
 #[test]
 fn test_update_reward_pool() {
