@@ -1077,15 +1077,20 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn split_lock(
 			asset_id: T::AssetId,
-			old_amount: T::Balance,
-			new_amount: T::Balance,
-			old_asset_account: &T::AccountId,
+			existing_account_amount: T::Balance,
+			new_account_amount: T::Balance,
+			existing_asset_account: &T::AccountId,
 			new_asset_account: &T::AccountId,
 		) -> DispatchResult {
 			// Update asset lock on old account
-			T::Assets::set_lock(T::LockId::get(), asset_id, old_asset_account, old_amount)?;
+			T::Assets::set_lock(
+				T::LockId::get(),
+				asset_id,
+				existing_asset_account,
+				existing_account_amount,
+			)?;
 			// Set asset lock on new account
-			T::Assets::set_lock(T::LockId::get(), asset_id, new_asset_account, new_amount)?;
+			T::Assets::set_lock(T::LockId::get(), asset_id, new_asset_account, new_account_amount)?;
 
 			Ok(())
 		}
