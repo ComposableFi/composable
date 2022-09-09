@@ -199,7 +199,8 @@ pub struct Stake<ItemId, RewardPoolId, Balance, Reductions> {
 	/// Reward Pool ID from which pool to allocate rewards for this
 	pub reward_pool_id: RewardPoolId,
 
-	/// The original stake this NFT was minted for or updated NFT with increased stake amount.
+	/// The original stake this position was created for or updated position with any extended
+	/// stake amount.
 	pub stake: Balance,
 
 	/// Pool share received for this position

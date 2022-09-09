@@ -257,6 +257,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 	});
 }
 
+#[test]
 fn test_extend_stake_amount() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -266,14 +267,14 @@ fn test_extend_stake_amount() {
 		let pool_id = PICA::ID;
 		let amount = 100_500_u32.into();
 		let extend_amount = 100_500_u32.into();
+		let existential_deposit = 1_000_u128;
 		let duration_preset = ONE_HOUR;
 		let total_rewards = 100;
 		let total_shares = 200;
 
 		let staked_asset_id = StakingRewards::pools(PICA::ID).expect("asset_id expected").asset_id;
-		mint_assets([staker], [staked_asset_id], amount * 2);
+		mint_assets([staker], [staked_asset_id], amount * 2 + existential_deposit);
 		update_total_rewards_and_total_shares_in_rewards_pool(pool_id, total_rewards, total_shares);
-
 		assert_ok!(StakingRewards::stake(Origin::signed(staker), pool_id, amount, duration_preset));
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
 		let reward_multiplier = StakingRewards::reward_multiplier(&rewards_pool, duration_preset)
@@ -298,9 +299,9 @@ fn test_extend_stake_amount() {
 				.collect::<BTreeMap<_, _>>(),
 		)
 		.expect("reductions expected");
-
+		let stake = StakingRewards::stakes(StakingRewards::stakes(1, 0));
 		assert_eq!(
-			StakingRewards::stakes(1, 0),
+			stake,
 			Some(Stake {
 				fnft_instance_id: 1,
 				reward_pool_id: pool_id,
@@ -314,7 +315,7 @@ fn test_extend_stake_amount() {
 				},
 			})
 		);
-		assert_eq!(balance(staked_asset_id, &staker), amount);
+		assert_eq!(balance(staked_asset_id, &staker), existential_deposit);
 		assert_eq!(
 			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
 			amount + extend_amount
