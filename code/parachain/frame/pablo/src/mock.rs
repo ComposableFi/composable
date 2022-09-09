@@ -9,7 +9,7 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::{self as system, EnsureRoot, EnsureSignedBy};
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
@@ -151,6 +151,7 @@ impl pallet_timestamp::Config for Test {
 
 parameter_types! {
 	pub const StakingRewardsPalletId: PalletId = PalletId(*b"stk_rwrd");
+	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 	pub const MaxStakingDurationPresets: u32 = 10;
 	pub const MaxRewardConfigsPerPool: u32 = 10;
 	pub const PicaAssetId : CurrencyId = 1;
@@ -164,7 +165,6 @@ parameter_types! {
 impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
-	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type Assets = Tokens;
 	type CurrencyFactory = LpTokenFactory;
@@ -177,12 +177,14 @@ impl pallet_staking_rewards::Config for Test {
 	type WeightInfo = ();
 	type RewardPoolUpdateOrigin = EnsureRoot<Self::AccountId>;
 	type FinancialNft = pablo::mock_fnft::MockFnft;
+	type FinancialNftInstanceId = u64;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
 	type XPicaAssetId = XPicaAssetId;
 	type XPbloAssetId = XPbloAssetId;
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
+	type LockId = StakingRewardsLockId;
 }
 
 ord_parameter_types! {

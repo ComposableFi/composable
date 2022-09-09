@@ -55,7 +55,7 @@ where
 {
 	let treasury = &T::PalletId::get().into_account_truncating();
 	let native_token_amount = <T as pallet::Config>::NativeCurrency::minimum_balance()
-		.saturating_mul(1_000_000_000u32.into());
+		.saturating_mul(1_000_000_000_u32.into());
 	<T as pallet::Config>::NativeCurrency::make_free_balance_be(&treasury, native_token_amount);
 	<T as pallet::Config>::NativeCurrency::make_free_balance_be(account_id, native_token_amount);
 }
@@ -120,12 +120,12 @@ benchmarks! {
 		)
 	xcm_sell {
 		let pair = CurrencyPair::new(crate::mock::currency::USDT, crate::mock::currency::BTC);
-		let sell = Sell::new(pair.base, pair.quote, 1, Ratio::saturating_from_integer(1u64));
+		let sell = Sell::new(pair.base, pair.quote, 1, Ratio::saturating_from_integer(1_u64));
 		let account_id: [u8;32] = whitelisted_caller();
 		// H256 is used since AccountId32 does not implement From<[u8;32]>
 		let account_id_ref = &T::AccountId::unchecked_from(H256::from(account_id));
 		mint_native_tokens::<T>(account_id_ref);
-		orml_tokens::Pallet::<T>::mint_into(pair.base.into(), account_id_ref, 1_000_000u32.into()).unwrap();
+		orml_tokens::Pallet::<T>::mint_into(pair.base.into(), account_id_ref, 1_000_000_u32.into()).unwrap();
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		let configuration_id = 100;
 		crate::Configurations::<T>::insert(configuration_id, configuration.clone());
@@ -135,7 +135,7 @@ benchmarks! {
 			from_to:account_id ,
 			configuration: configuration_id,
 		};
-		let origin = cumulus_pallet_xcm::Origin::SiblingParachain(42u32.into());
+		let origin = cumulus_pallet_xcm::Origin::SiblingParachain(42_u32.into());
 	}: _(origin, request)
 	known_overhead_for_on_finalize {
 		let sell = sell_identity::<T>();
