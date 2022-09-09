@@ -1,5 +1,3 @@
-import { getSigner } from "substrate-react";
-import { APP_NAME } from "@/defi/polkadot/constants";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import { toChainUnits } from "@/defi/utils";
 import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
