@@ -1,4 +1,3 @@
-import { CustomRpcBalance } from "defi-interfaces";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { fromChainIdUnit } from "shared";
@@ -28,14 +27,11 @@ export const subscribePicassoBalanceByAssetId = async (
 ) => {
   const uAccount = api.createType("AccountId32", accountId);
   try {
-    await api.rpc.assets.balanceOf(
-      assetId,
-      uAccount,
-      "",
-      (result: CustomRpcBalance) => {
-        callback(fromChainIdUnit(new BigNumber(result.toString())));
-      }
-    );
+    await api.rpc.chain.subscribeNewHeads(async () => {
+      const result = await api.rpc.assets.balanceOf(assetId, uAccount);
+
+      callback(fromChainIdUnit(new BigNumber(result.toString())));
+    });
   } catch (err: any) {
     console.log(err);
     callback(new BigNumber(0));

@@ -41,10 +41,6 @@ export const renewPeriod = async (extendPeriod: string) => {
   return extendPeriod;
 };
 
-export const burnUnstake = async () => {
-  return "";
-};
-
 export const initialState = {
   highlights: {
     totalPicaLocked: formatNumber(20325651),

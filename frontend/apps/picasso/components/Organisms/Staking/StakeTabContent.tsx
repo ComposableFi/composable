@@ -173,7 +173,6 @@ export const StakeTabContent: FC = () => {
           let snackbarKey: SnackbarKey | undefined;
           if (executor && parachainApi && account) {
             const signer = await getSigner(APP_NAME, account.address);
-            console.log("initiating staking protocol");
             await executor.execute(
               parachainApi.tx.stakingRewards.stake(
                 assetId.toString(),
