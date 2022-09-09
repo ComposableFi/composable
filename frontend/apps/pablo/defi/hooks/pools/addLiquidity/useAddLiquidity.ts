@@ -1,20 +1,33 @@
-import { ConstantProductPool, StableSwapPool } from "@/defi/types";
-import { toChainUnits } from "@/defi/utils";
-import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import {
   closeConfirmingSupplyModal,
   closeConfirmSupplyModal,
   openConfirmingSupplyModal,
 } from "@/stores/ui/uiSlice";
-import { ApiPromise } from "@polkadot/api";
+import Executor from "substrate-react/dist/extrinsics/Executor";
 import BigNumber from "bignumber.js";
 import router from "next/router";
-import { useSnackbar } from "notistack";
+import { ApiPromise } from "@polkadot/api";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
+import { toChainUnits } from "@/defi/utils";
+import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
+import { useSnackbar, VariantType } from "notistack";
 import { useDispatch } from "react-redux";
 import { ConnectedAccount } from "substrate-react/dist/dotsama/types";
-import Executor from "substrate-react/dist/extrinsics/Executor";
 import { Signer } from "@polkadot/api/types";
 import { useCallback, useMemo } from "react";
+
+function transactionStatusSnackbarMessage(
+  transactionHashOrErrorMessage: string,
+  status: "Initiated" | "Finalized" | "Error"
+): string {
+  return `Add liquidity Transaction ${status}: ${transactionHashOrErrorMessage}`;
+}
+
+const SNACKBAR_TYPES: Record<string, { variant: VariantType }> = {
+  ERROR: { variant: "error" },
+  SUCCESS: { variant: "success" },
+  INFO: { variant: "info" },
+};
 
 export const useAddLiquidity = ({
   selectedAccount,
@@ -67,8 +80,8 @@ export const useAddLiquidity = ({
   const onTxReady = useCallback(
     (transactionHash: string) => {
       enqueueSnackbar(
-        `Add liquidity Transaction Initiated: ${transactionHash}`,
-        { variant: "success" }
+        transactionStatusSnackbarMessage(transactionHash, "Initiated"),
+        SNACKBAR_TYPES.INFO
       );
       dispatch(openConfirmingSupplyModal());
     },
@@ -78,8 +91,8 @@ export const useAddLiquidity = ({
   const onTxFinalized = useCallback(
     (transactionHash: string, _eventRecords: any[]) => {
       enqueueSnackbar(
-        `Add liquidity Transaction Finalized: ${transactionHash}`,
-        { variant: "success" }
+        transactionStatusSnackbarMessage(transactionHash, "Finalized"),
+        SNACKBAR_TYPES.SUCCESS
       );
       resetAddLiquiditySlice();
       router.push("/pool/select/" + pool?.poolId);
@@ -91,8 +104,8 @@ export const useAddLiquidity = ({
   const onTxError = useCallback(
     (transactionError: string) => {
       enqueueSnackbar(
-        `Add liquidity Transaction Failed: ERROR: ${transactionError}`,
-        { variant: "error" }
+        transactionStatusSnackbarMessage(transactionError, "Error"),
+        SNACKBAR_TYPES.ERROR
       );
       dispatch(closeConfirmingSupplyModal());
     },
@@ -134,8 +147,8 @@ export const useAddLiquidity = ({
       );
     } catch (err: any) {
       enqueueSnackbar(
-        `Add liquidity Transaction Failed: ERROR: ${err.message}`,
-        { variant: "error" }
+        transactionStatusSnackbarMessage(err.message, "Error"),
+        SNACKBAR_TYPES.ERROR
       );
       dispatch(closeConfirmingSupplyModal());
     }
