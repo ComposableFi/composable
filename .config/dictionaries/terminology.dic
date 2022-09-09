@@ -57,6 +57,7 @@ twap
 twaps
 cumulatives # ?
 offchain
+onfinality
 denom  # used in ibc
 denoms # used in ibc
 interchain
@@ -92,6 +93,13 @@ cypherpunk
 simnode
 simtest
 turborepo
+firesquid
+actix
+Astar
+Shiden
+healthcheck
+isready
+modl
 
 multiaddress
 multihash
@@ -336,6 +344,7 @@ picatrsy
 plmosaic
 liqdatns
 liqiudat
+modl # pallet type id
 
 # can't have apostrophies in identifiers
 doesnt

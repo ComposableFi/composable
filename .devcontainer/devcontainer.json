@@ -1,8 +1,12 @@
 {
 	"name": "Composable Devcontainer",
+	// ISSUE: 
+	// VS Code local can easy run only one devcontainer as of now
+	// Local and remote containers have different mount specs, so this is only for remote only (vendor lock in)
+	"workspaceMount": "source=remote-nix-store,target=/nix/store,type=volume",		
 	"build": {
 		"dockerfile": "Dockerfile",
-		"context": "./.",
+		"context": "./."
 	},
 	"hostRequirements": {
 		"memory": "20gb",

@@ -147,31 +147,8 @@
 
           # source relevant to build rust only
           rust-src = let
-            directory-blacklist = [
-              ".nix"
-              "nix"
-              ".config"
-              ".devcontainer"
-              ".github"
-              ".log"
-              ".maintain"
-              ".tools"
-              ".vscode"
-              "audits"
-              "book"
-              "devnet-stage"
-              "devnet"
-              "docker"
-              "docs"
-              "frontend"
-              "rfcs"
-              "scripts"
-              "setup"
-              "subsquid"
-              "runtime-tests"
-              "composablejs"
-            ];
-            file-blacklist = [
+            directoryBlacklist = [ "runtime-tests" ];
+            fileBlacklist = [
               # does not makes sense to black list,
               # if we changed some version of tooling(seldom), we want to rebuild
               # so if we changed version of tooling, nix itself will detect invalidation and rebuild
@@ -181,19 +158,31 @@
             filter = lib.cleanSourceFilter;
             src = lib.cleanSourceWith {
               filter = let
+                isBlacklisted = name: type:
+                  let
+                    blacklist = if type == "directory" then
+                      directoryBlacklist
+                    else if type == "regular" then
+                      fileBlacklist
+                    else
+                      [ ]; # symlink, unknown
+                  in builtins.elem (baseNameOf name) blacklist;
+                isImageFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".png" name;
+                isPlantUmlFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".plantuml" name;
+                isNixFile = name: type:
+                  type == "regular" && lib.strings.hasSuffix ".nix" name;
                 customFilter = name: type:
-                  !((type == "directory"
-                    && builtins.elem (baseNameOf name) directory-blacklist)
-                    || (type == "regular"
-                      && builtins.elem (baseNameOf name) file-blacklist)
+                  !((isBlacklisted name type) || (isImageFile name type)
+                    || (isPlantUmlFile name type)
                     # assumption that nix is final builder, 
                     # so there would no be sandwich like  .*.nix <- build.rs <- *.nix
                     # and if *.nix changed, nix itself will detect only relevant cache invalidations 
-                    || (type == "regular"
-                      && lib.strings.hasSuffix ".nix" name));
+                    || (isNixFile name type));
               in nix-gitignore.gitignoreFilterPure customFilter [ ./.gitignore ]
-              ./.;
-              src = ./.;
+              ./code;
+              src = ./code;
             };
           };
 
@@ -311,7 +300,7 @@
                 "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
+                cp target/release/composable $out/bin/composable-node
               '';
             });
 
@@ -327,13 +316,13 @@
                 "${composable-bench-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
+                cp target/release/composable $out/bin/composable-node
               '';
             });
 
           run-with-benchmarks = chain:
             writeShellScriptBin "run-benchmarks-once" ''
-              ${composable-bench-node}/bin/composable benchmark pallet \
+              ${composable-bench-node}/bin/composable-node benchmark pallet \
                 --chain="${chain}" \
                 --execution=wasm \
                 --wasm-execution=compiled \
@@ -344,6 +333,58 @@
                 --repeat=1
             '';
           docs-renders = [ mdbook plantuml graphviz pandoc ];
+
+          mkFrontendStatic = { kusamaEndpoint, picassoEndpoint, karuraEndpoint
+            , subsquidEndpoint }:
+            let bp = pkgs.callPackage npm-buildpackage { };
+            in bp.buildYarnPackage {
+              nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
+              src = ./frontend;
+
+              # The filters exclude the storybooks for faster builds
+              yarnBuildMore =
+                "yarn export --filter=pablo --filter=picasso --filter=!picasso-storybook --filter=!pablo-storybook";
+
+              # TODO: make these configurable              
+              preBuild = ''
+                export SUBSQUID_URL="${subsquidEndpoint}";
+
+                # Polkadot
+                export SUBSTRATE_PROVIDER_URL_KUSAMA_2019="${picassoEndpoint}";
+                export SUBSTRATE_PROVIDER_URL_KUSAMA="${kusamaEndpoint}";
+                export SUBSTRATE_PROVIDER_URL_KARURA="${karuraEndpoint}";
+              '';
+              installPhase = ''
+                mkdir -p $out
+                mkdir $out/pablo
+                mkdir $out/picasso
+                cp -R ./apps/pablo/out/* $out/pablo
+                cp -R ./apps/picasso/out/* $out/picasso
+              '';
+            };
+
+          simnode-tests = crane-nightly.cargoBuild (common-attrs // {
+            pnameSuffix = "-simnode";
+            cargoArtifacts = common-deps;
+            cargoBuildCommand =
+              "cargo build --release --package simnode-tests --features=builtin-wasm";
+            DALI_RUNTIME = "${dali-runtime}/lib/runtime.optimized.wasm";
+            PICASSO_RUNTIME = "${picasso-runtime}/lib/runtime.optimized.wasm";
+            COMPOSABLE_RUNTIME =
+              "${composable-runtime}/lib/runtime.optimized.wasm";
+            installPhase = ''
+              mkdir -p $out/bin
+              cp target/release/simnode-tests $out/bin/simnode-tests
+            '';
+          });
+
+          run-simnode-tests = chain:
+            writeShellScriptBin "run-simnode-tests-${chain}" ''
+              ${simnode-tests}/bin/simnode-tests --chain=${chain} \
+                --base-path=/tmp/db/var/lib/composable-data/ \
+                --pruning=archive \
+                --execution=wasm
+            '';
 
         in rec {
           packages = rec {
@@ -359,6 +400,7 @@
             inherit composable-node;
             inherit composable-bench-node;
             inherit rust-nightly;
+            inherit simnode-tests;
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -392,7 +434,7 @@
               name = "runtime-tests";
               src = builtins.filterSource
                 (path: type: baseNameOf path != "node_modules")
-                ./integration-tests/runtime-tests;
+                ./code/integration-tests/runtime-tests;
               dontUnpack = true;
               installPhase = ''
                 mkdir $out/
@@ -498,18 +540,20 @@
               '';
             };
 
-            frontend-static = let bp = pkgs.callPackage npm-buildpackage { };
-            in bp.buildYarnPackage {
-              nativeBuildInputs = [ pkgs.pkg-config pkgs.vips pkgs.python3 ];
-              src = ./frontend;
-              yarnBuildMore = "yarn export";
-              installPhase = ''
-                mkdir -p $out
-                mkdir $out/pablo
-                mkdir $out/picasso
-                cp -R ./apps/pablo/out/* $out/pablo
-                cp -R ./apps/picasso/out/* $out/picasso
-              '';
+            frontend-static = mkFrontendStatic {
+              subsquidEndpoint = "http://localhost:4350/graphql";
+              picassoEndpoint = "ws://localhost:9988";
+              kusamaEndpoint = "ws://localhost:9944";
+              karuraEndpoint = "ws://localhost:9998";
+            };
+
+            frontend-static-firebase = mkFrontendStatic {
+              subsquidEndpoint =
+                "https://dali-subsquid.composable.finance/graphql";
+              picassoEndpoint =
+                "wss://dali-cluster-fe.composablefinance.ninja/";
+              kusamaEndpoint = "wss://kusama-rpc.polkadot.io";
+              karuraEndpoint = "wss://karura.api.onfinality.io/public-ws";
             };
 
             frontend-pablo-server = let PORT = 8002;
@@ -688,7 +732,7 @@
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo deny";
               cargoExtraArgs =
-                "--manifest-path ./frame/composable-support/Cargo.toml check ban";
+                "--manifest-path ./parachain/frame/composable-support/Cargo.toml check ban";
             });
 
             cargo-udeps-check = crane-nightly.cargoBuild (common-attrs // {
@@ -701,6 +745,12 @@
               cargoBuildCommand = "cargo udeps";
               cargoExtraArgs =
                 "--workspace --exclude local-integration-tests --all-features";
+            });
+
+            benchmarks-check = crane-nightly.cargoBuild (common-attrs // {
+              cargoArtifacts = common-deps-nightly;
+              cargoBuildCommand = "cargo check";
+              cargoExtraArgs = "--benches --all --features runtime-benchmarks";
             });
 
             kusama-picasso-karura-devnet = let
@@ -741,11 +791,12 @@
               '';
             };
 
-            junod = pkgs.callPackage ./xcvm/cosmos/junod.nix { };
-            gex = pkgs.callPackage ./xcvm/cosmos/gex.nix { };
-            wasmswap = pkgs.callPackage ./xcvm/cosmos/wasmswap.nix {
+            junod = pkgs.callPackage ./code/xcvm/cosmos/junod.nix { };
+            gex = pkgs.callPackage ./code/xcvm/cosmos/gex.nix { };
+            wasmswap = pkgs.callPackage ./code/xcvm/cosmos/wasmswap.nix {
               crane = crane-nightly;
             };
+
             default = packages.composable-node;
           };
 
@@ -892,7 +943,7 @@
             };
             composable = {
               type = "app";
-              program = "${packages.composable-node}/bin/composable";
+              program = "${packages.composable-node}/bin/composable-node";
             };
             acala = {
               type = "app";
@@ -918,6 +969,16 @@
             benchmarks-once-picasso = flake-utils.lib.mkApp {
               drv = run-with-benchmarks "picasso-dev";
             };
+            simnode-tests = {
+              type = "app";
+              program = "${packages.simnode-tests}/bin/simnode-tests";
+            };
+            simnode-tests-composable =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "composable"; };
+            simnode-tests-picasso =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "picasso"; };
+            simnode-tests-dali-rococo =
+              flake-utils.lib.mkApp { drv = run-simnode-tests "dali-rococo"; };
             default = devnet-dali;
           };
         });
@@ -944,6 +1005,10 @@
       };
       homeConfigurations = let
         mk-docker-in-docker = pkgs: [
+          # TODO: this home works well in VS Devcontainer launcher as it injects low-level Dockerd
+          # For manual runs need tuning to setup it (need to mount docker links to root and do they executable)
+          # INFO[2022-09-06T13:14:43.437764897Z] Starting up                                            
+          # dockerd needs to be started with root privileges. To run dockerd in rootless mode as an unprivileged user, see https://docs.docker.com/go/rootless/ dockerd-rootless-setuptool.sh install
           pkgs.docker
           pkgs.docker-buildx
           pkgs.docker-compose
@@ -955,53 +1020,56 @@
         ];
       in {
 
-        vscode.x86_64-linux = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        in with pkgs;
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [{
-            home = {
-              username = "vscode";
-              homeDirectory = "/home/vscode";
-              stateVersion = "22.05";
-              packages =
-                [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
-                ++ (mk-containers-tools-minimal pkgs)
-                ++ (mk-docker-in-docker pkgs);
-            };
-            programs = {
-              home-manager.enable = true;
-              direnv = {
-                enable = true;
-                nix-direnv = { enable = true; };
+        # minimal means we do not build in composable devnets and tooling, but allow to build or nix these 
+        vscode-minimal.x86_64-linux =
+          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          in with pkgs;
+          home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            modules = [{
+              home = {
+                username = "vscode";
+                homeDirectory = "/home/vscode";
+                stateVersion = "22.05";
+                packages =
+                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
+                  ++ (mk-containers-tools-minimal pkgs)
+                  ++ (mk-docker-in-docker pkgs);
               };
-            };
-          }];
-        };
+              programs = {
+                home-manager.enable = true;
+                direnv = {
+                  enable = true;
+                  nix-direnv = { enable = true; };
+                };
+              };
+            }];
+          };
 
-        vscode.aarch64-linux = let pkgs = nixpkgs.legacyPackages.aarch64-linux;
-        in with pkgs;
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [{
-            home = {
-              username = "vscode";
-              homeDirectory = "/home/vscode";
-              stateVersion = "22.05";
-              packages =
-                [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
-                ++ (mk-containers-tools-minimal pkgs)
-                ++ (mk-docker-in-docker pkgs);
-            };
-            programs = {
-              home-manager.enable = true;
-              direnv = {
-                enable = true;
-                nix-direnv = { enable = true; };
+        vscode-minimal.aarch64-linux =
+          let pkgs = nixpkgs.legacyPackages.aarch64-linux;
+          in with pkgs;
+          home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            modules = [{
+              home = {
+                username = "vscode";
+                homeDirectory = "/home/vscode";
+                stateVersion = "22.05";
+                packages =
+                  [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
+                  ++ (mk-containers-tools-minimal pkgs)
+                  ++ (mk-docker-in-docker pkgs);
               };
-            };
-          }];
-        };
+              programs = {
+                home-manager.enable = true;
+                direnv = {
+                  enable = true;
+                  nix-direnv = { enable = true; };
+                };
+              };
+            }];
+          };
 
       };
     };
