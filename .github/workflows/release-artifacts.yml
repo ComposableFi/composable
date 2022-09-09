@@ -152,11 +152,11 @@ jobs:
       - name: Setup release drafter
         uses: release-drafter/release-drafter@v5
 
-      - name: Release docker image
-        run: |
-          docker load --input ./composable-docker-image
-          docker tag composable:$(nix eval --raw .#composable-node-release.version) "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:$(nix eval --raw .#composable-node-release.version)"
-          docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:$(nix eval --raw .#composable-node-release.version)"
+      # - name: Release docker image
+      #   run: |
+      #     docker load --input ./composable-docker-image
+      #     docker tag composable:$(nix eval --raw .#composable-node-release.version) "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:$(nix eval --raw .#composable-node-release.version)"
+      #     docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:$(nix eval --raw .#composable-node-release.version)"
 
       - name: Release artifacts
         uses: softprops/action-gh-release@v1
