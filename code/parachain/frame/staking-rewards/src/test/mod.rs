@@ -234,6 +234,8 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 		assert_eq!(balance(staked_asset_id, &ALICE), AMOUNT);
 		assert_eq!(balance(staked_asset_id, &fnft_asset_account), AMOUNT);
 
+		assert!(FinancialNft::instance((1, 0)).is_some());
+
 		assert_last_event_with::<Test, _>(|event| match event {
 			Event::StakingRewards(crate::Event::Staked {
 				pool_id,
@@ -396,6 +398,9 @@ fn unstake_in_case_of_zero_claims_and_early_unlock_should_work() {
 		// burned instead
 		assert_eq!(balance(staked_asset_id, &fnft_asset_account), 0);
 		// assert_eq!(balance(staked_asset_id, &fnft_asset_account), penalty);
+
+		// Assert fNFT is removed from storage
+		assert!(FinancialNft::instance((1, 0)).is_none());
 	});
 }
 
