@@ -71,14 +71,16 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic, SafeSub};
+	use composable_support::math::safe::{
+		safe_multiply_by_rational, SafeAdd, SafeArithmetic, SafeSub,
+	};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
-			RedeemableAssets, RemoveLiquiditySimulationResult, RewardPoolType, StableSwapPoolInfo,
-			StakingRewardPool, MAX_REWARDS,
+			RedeemableAssets, RemoveLiquiditySimulationResult, RewardPoolType,
+			SingleAssetAccountsStorageAction, StableSwapPoolInfo, StakingRewardPool, MAX_REWARDS,
 		},
 		staking::{
 			lock::LockConfig, ManageStaking, ProtocolStaking, RewardConfig,
@@ -253,6 +255,15 @@ pub mod pallet {
 			/// Map of asset_id -> twap
 			twaps: BTreeMap<T::AssetId, Rate>,
 		},
+		/// Balance of assets for withdrawing with single coin updated.
+		SingleAssetAccountsStorageUpdated {
+			/// Account of user.
+			who: T::AccountId,
+			/// Pool id on which user deposit/withdraw.
+			pool_id: T::PoolId,
+			/// Available amount of LP.
+			balance: T::Balance,
+		},
 	}
 
 	#[pallet::error]
@@ -278,6 +289,8 @@ pub mod pallet {
 		WeightsMustBeNonZero,
 		WeightsMustSumToOne,
 		StakingPoolConfigError,
+		NotEnoughLpTokenForSingleAssetWithdraw,
+		LpTokenNotFoundForSingleAssetWithdrawal,
 	}
 
 	#[pallet::config]
@@ -439,6 +452,19 @@ pub mod pallet {
 	pub type StakingRewardPools<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::PoolId, StakingRewardPoolsOf<T>, OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn accounts)]
+	#[pallet::unbounded]
+	pub type SingleAssetAccountsStorage<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Blake2_128Concat,
+		T::PoolId,
+		T::Balance,
+		OptionQuery,
+	>;
+
 	pub(crate) enum PriceRatio {
 		Swapped,
 		NotSwapped,
@@ -573,6 +599,10 @@ pub mod pallet {
 			min_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
+			ensure!(
+				SingleAssetAccountsStorage::<T>::contains_key(&who, &pool_id),
+				Error::<T>::LpTokenNotFoundForSingleAssetWithdrawal
+			);
 			<Self as Amm>::remove_liquidity_single_asset(&who, pool_id, lp_amount, min_amount)?;
 			Ok(())
 		}
@@ -981,6 +1011,64 @@ pub mod pallet {
 			lp_for_liquidity::<T>(pool, pool_account, base_amount, quote_amount)
 		}
 
+		fn update_accounts_deposited_one_asset_storage(
+			who: Self::AccountId,
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			action: SingleAssetAccountsStorageAction,
+		) -> Result<(), DispatchError> {
+			match action {
+				SingleAssetAccountsStorageAction::Depositing => {
+					let available_lp = SingleAssetAccountsStorage::<T>::try_mutate_exists(
+						&who,
+						&pool_id,
+						|exist_amount| -> Result<Self::Balance, DispatchError> {
+							match exist_amount {
+								Some(amount) => {
+									*amount = amount.safe_add(&lp_amount)?;
+									Ok(*amount)
+								},
+								None => {
+									*exist_amount = Some(lp_amount);
+									Ok(lp_amount)
+								},
+							}
+						},
+					)?;
+					Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
+						who,
+						pool_id,
+						balance: available_lp,
+					});
+				},
+				SingleAssetAccountsStorageAction::Withdrawing => {
+					let new_lp_amount = SingleAssetAccountsStorage::<T>::try_mutate(
+						&who,
+						&pool_id,
+						|exist_amount| -> Result<Self::Balance, DispatchError> {
+							match exist_amount {
+								Some(amount) => {
+									*amount = amount.safe_sub(&lp_amount)?;
+									Ok(*amount)
+								},
+								None =>
+									Err(Error::<T>::LpTokenNotFoundForSingleAssetWithdrawal.into()),
+							}
+						},
+					)?;
+					if new_lp_amount == Self::Balance::zero() {
+						SingleAssetAccountsStorage::<T>::remove(&who, &pool_id);
+					}
+					Self::deposit_event(Event::<T>::SingleAssetAccountsStorageUpdated {
+						who,
+						pool_id,
+						balance: new_lp_amount,
+					});
+				},
+			}
+			Ok(())
+		}
+
 		fn redeemable_assets_for_lp_tokens(
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
@@ -1092,7 +1180,6 @@ pub mod pallet {
 					let pool_base_aum =
 						T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 					let lp_issued = T::Convert::convert(T::Assets::total_issuance(lp_token));
-
 					let base_amount = compute_asset_for_redeemable_lp_tokens(
 						pool_base_aum,
 						base_weight,
@@ -1100,7 +1187,6 @@ pub mod pallet {
 						lp_issued,
 					)?;
 					let base_amount = T::Convert::convert(base_amount);
-
 					ensure!(
 						base_amount >= min_expected_amount,
 						Error::<T>::CannotRespectMinimumRequested
@@ -1313,6 +1399,14 @@ pub mod pallet {
 						keep_alive,
 					)?,
 			};
+			if added_base_amount.is_zero() || added_quote_amount.is_zero() {
+				Self::update_accounts_deposited_one_asset_storage(
+					who.clone(),
+					pool_id,
+					minted_lp,
+					SingleAssetAccountsStorageAction::Depositing,
+				)?;
+			}
 			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
@@ -1423,6 +1517,12 @@ pub mod pallet {
 			lp_amount: Self::Balance,
 			min_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
+			// LP provider can withdraw liquidity with one asset only if he deposited liquidity with
+			// one asset.
+			ensure!(
+				SingleAssetAccountsStorage::<T>::get(who, &pool_id) >= Some(lp_amount),
+				Error::<T>::NotEnoughLpTokenForSingleAssetWithdraw
+			);
 			let redeemable_assets =
 				Self::redeemable_single_asset_for_lp_tokens(pool_id, lp_amount, min_amount)?;
 			let pool = Self::get_pool(pool_id)?;
@@ -1442,6 +1542,12 @@ pub mod pallet {
 						lp_amount,
 						base_amount,
 						Self::Balance::zero(),
+					)?;
+					Self::update_accounts_deposited_one_asset_storage(
+						who.clone(),
+						pool_id,
+						lp_amount,
+						SingleAssetAccountsStorageAction::Withdrawing,
 					)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {

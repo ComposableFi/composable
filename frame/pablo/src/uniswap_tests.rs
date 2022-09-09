@@ -220,13 +220,20 @@ fn test_redeemable_assets() {
 		assert_ok!(default_acceptable_computation_error(base_amount, initial_btc));
 		assert_ok!(default_acceptable_computation_error(quote_amount, initial_usdt));
 
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(BTC, &BOB, initial_btc));
+		// Add the liquidity single asset
+		assert_ok!(<Pablo as Amm>::add_liquidity(&BOB, pool_id, initial_btc, 0, 0, false));
+		let lp = Pablo::accounts(&BOB, pool_id).unwrap();
 		// For a single asset, this will not work correctly, because we don't have enough liquidity
 		// in the pool
 		let redeemable_assets =
-			<Pablo as Amm>::redeemable_single_asset_for_lp_tokens(pool_id, lp, initial_btc)
+			<Pablo as Amm>::redeemable_single_asset_for_lp_tokens(pool_id, lp, 0)
 				.expect("redeemable_assets_for_lp_tokens failed");
 		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
-		assert_ok!(default_acceptable_computation_error(base_amount, initial_btc));
+		// TODO(belousm): ask Alex, is it okey assumption that we compare `base_amount` with
+		// hardcore number
+		assert_ok!(default_acceptable_computation_error(base_amount, 99999999240821));
 	});
 }
 
@@ -792,6 +799,43 @@ fn weights_zero() {
 			base_weight: Permill::zero(),
 		};
 		assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustBeNonZero);
+	});
+}
+
+#[test]
+fn check_function_updating_single_asset_storage() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_btc = 1_000_000_000_000_u128 * unit;
+		let btc_price = 20_000_u128;
+		let initial_usdt = 1_000_000_000_000_u128 * btc_price;
+		let btc_value = 1_000_000_000_000_u128 * unit;
+		let pool_id = create_pool(
+			BTC,
+			USDT,
+			initial_btc,
+			initial_usdt,
+			Permill::zero(),
+			Permill::zero(),
+			Permill::from_percent(50),
+		);
+		let pool = get_pool(pool_id);
+
+		assert_ok!(Tokens::mint_into(BTC, &BOB, 2 * btc_value));
+		// Check that was created new item in storage with right amount of LP
+		assert_ok!(Pablo::add_liquidity(Origin::signed(BOB), pool_id, btc_value, 0, 0, false));
+		let lp = Tokens::balance(pool.lp_token, &BOB);
+		assert_eq!(lp, Pablo::accounts(&BOB, &pool_id).unwrap());
+		// Check that after single asset withdraw, storage was updated
+		assert_ok!(Pablo::remove_liquidity_single_asset(Origin::signed(BOB), pool_id, lp / 2, 0));
+		assert_eq!(lp / 2, Pablo::accounts(&BOB, &pool_id).unwrap());
+		// Check that after single asset deposit, storage was updated
+		assert_ok!(Pablo::add_liquidity(Origin::signed(BOB), pool_id, btc_value, 0, 0, false));
+		let lp = Tokens::balance(pool.lp_token, &BOB);
+		assert_eq!(lp, Pablo::accounts(&BOB, &pool_id).unwrap());
+		// Check that after withdraw all assets, item was deleted from storage
+		assert_ok!(Pablo::remove_liquidity_single_asset(Origin::signed(BOB), pool_id, lp, 0));
+		assert_eq!(None, Pablo::accounts(&BOB, &pool_id));
 	});
 }
 

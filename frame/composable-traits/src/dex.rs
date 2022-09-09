@@ -118,6 +118,17 @@ pub trait Amm {
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
+	/// Update accounts deposited one asset storage.
+	///
+	/// - `lp_amount` - amount of LP token to deposit/withdraw,
+	/// - `action` - withdraw or deposit LP token.
+	fn update_accounts_deposited_one_asset_storage(
+		who: Self::AccountId,
+		pool_id: Self::PoolId,
+		lp_amount: Self::Balance,
+		action: SingleAssetAccountsStorageAction,
+	) -> Result<(), DispatchError>;
+
 	/// Deposit coins into the pool
 	/// `amounts` - list of amounts of coins to deposit,
 	/// `min_mint_amount` - minimum amount of LP tokens to mint from the deposit.
@@ -492,6 +503,13 @@ where
 	AssetId: Ord,
 {
 	pub assets: BTreeMap<AssetId, Balance>,
+}
+
+/// Enum to define depositing or withdrawing action.
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
+pub enum SingleAssetAccountsStorageAction {
+	Depositing,
+	Withdrawing,
 }
 
 #[cfg(test)]

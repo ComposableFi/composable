@@ -220,54 +220,65 @@ pub fn common_remove_lp_failure(
 		LiquidityBootstrapping(_) => panic!("Not implemented"),
 	};
 	// Mint the tokens
-	assert_ok!(Tokens::mint_into(pair.base, &BOB, base_amount));
+	assert_ok!(Tokens::mint_into(pair.base, &BOB, base_amount + quote_amount));
 	assert_ok!(Tokens::mint_into(pair.quote, &BOB, quote_amount));
 
 	let lp = Tokens::balance(lp_token, &BOB);
 	assert_eq!(lp, 0_u128);
 	// Add the liquidity
-	assert_ok!(Pablo::add_liquidity(
-		Origin::signed(BOB),
-		pool_id,
-		base_amount,
-		quote_amount,
-		0,
-		false
-	));
+	if is_constant_product {
+		assert_ok!(Pablo::add_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			base_amount + quote_amount,
+			0,
+			0,
+			false
+		));
+	} else {
+		assert_ok!(Pablo::add_liquidity(
+			Origin::signed(BOB),
+			pool_id,
+			base_amount,
+			quote_amount,
+			0,
+			false
+		));
+	}
 	let lp = Tokens::balance(lp_token, &BOB);
 	// error as trying to redeem more tokens than lp
-	assert_noop!(
-		Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp + 1, 0, 0),
-		TokenError::NoFunds
-	);
 	if is_constant_product {
 		assert_noop!(
 			Pablo::remove_liquidity_single_asset(Origin::signed(BOB), pool_id, lp + 1, 0),
+			crate::Error::<Test>::NotEnoughLpTokenForSingleAssetWithdraw
+		);
+	} else {
+		assert_noop!(
+			Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp + 1, 0, 0),
 			TokenError::NoFunds
 		);
 	}
 	let min_expected_base_amount = base_amount + 1;
 	let min_expected_quote_amount = quote_amount + 1;
 	// error as expected values are more than actual redeemed values.
-	assert_noop!(
-		Pablo::remove_liquidity(
-			Origin::signed(BOB),
-			pool_id,
-			lp,
-			min_expected_base_amount,
-			min_expected_quote_amount,
-		),
-		crate::Error::<Test>::CannotRespectMinimumRequested
-	);
-	// 91% (manually calculated)
-	let min_expected_amount = base_amount + (base_amount as f64 * 0.91).trunc().to_u128().unwrap();
 	if is_constant_product {
 		assert_noop!(
 			Pablo::remove_liquidity_single_asset(
 				Origin::signed(BOB),
 				pool_id,
 				lp,
-				min_expected_amount,
+				min_expected_base_amount + min_expected_quote_amount,
+			),
+			crate::Error::<Test>::CannotRespectMinimumRequested
+		);
+	} else {
+		assert_noop!(
+			Pablo::remove_liquidity(
+				Origin::signed(BOB),
+				pool_id,
+				lp,
+				min_expected_base_amount,
+				min_expected_quote_amount,
 			),
 			crate::Error::<Test>::CannotRespectMinimumRequested
 		);
