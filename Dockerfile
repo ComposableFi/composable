@@ -49,9 +49,9 @@ COPY --chown=${USER}:${USER} . .
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     nix-env --set-flag priority 10 nix-2.10.3 && \
     export ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]') && \
-    nix build --no-link .#homeConfigurations.vscode.${ARCH_OS}.activationPackage -L --show-trace
+    nix build --no-link .#homeConfigurations.vscode-minimal.${ARCH_OS}.activationPackage -L --show-trace
 
 RUN source ~/.nix-profile/etc/profile.d/nix.sh && \
     export ARCH_OS=$(uname -m)-$(uname -s | tr '[:upper:]' '[:lower:]') && \
-    "$(nix path-info .#homeConfigurations.vscode.${ARCH_OS}.activationPackage)"/activate && \
+    "$(nix path-info .#homeConfigurations.vscode-minimal.${ARCH_OS}.activationPackage)"/activate && \
     cachix use ${CACHIX_NAME}
