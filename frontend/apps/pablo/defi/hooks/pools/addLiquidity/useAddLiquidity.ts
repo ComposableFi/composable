@@ -64,6 +64,41 @@ export const useAddLiquidity = ({
     return toChainUnits(lpReceiveAmount).toString();
   }, [lpReceiveAmount]);
 
+  const onTxReady = useCallback(
+    (transactionHash: string) => {
+      enqueueSnackbar(
+        `Add liquidity Transaction Initiated: ${transactionHash}`,
+        { variant: "success" }
+      );
+      dispatch(openConfirmingSupplyModal());
+    },
+    [enqueueSnackbar, dispatch]
+  );
+
+  const onTxFinalized = useCallback(
+    (transactionHash: string, _eventRecords: any[]) => {
+      enqueueSnackbar(
+        `Add liquidity Transaction Finalized: ${transactionHash}`,
+        { variant: "success" }
+      );
+      resetAddLiquiditySlice();
+      router.push("/pool/select/" + pool?.poolId);
+      dispatch(closeConfirmingSupplyModal());
+    },
+    [pool, enqueueSnackbar, dispatch]
+  );
+
+  const onTxError = useCallback(
+    (transactionError: string) => {
+      enqueueSnackbar(
+        `Add liquidity Transaction Failed: ERROR: ${transactionError}`,
+        { variant: "error" }
+      );
+      dispatch(closeConfirmingSupplyModal());
+    },
+    [enqueueSnackbar, dispatch]
+  );
+
   const onAddLiquidity = useCallback(async () => {
     try {
       if (
@@ -93,29 +128,16 @@ export const useAddLiquidity = ({
         selectedAccount.address,
         parachainApi,
         signer,
-        (txReady: string) => {
-          dispatch(openConfirmingSupplyModal());
-          console.log("txReady", txReady);
-        },
-        (txHash: string, _events) => {
-          enqueueSnackbar(
-            "Transaction successful. Transaction hash: " + txHash,
-            { variant: "success" }
-          );
-          resetAddLiquiditySlice();
-          router.push("/pool/select/" + pool?.poolId);
-          dispatch(closeConfirmingSupplyModal());
-        },
-        (errorMessage: string) => {
-          console.log("Tx Error:", errorMessage);
-          enqueueSnackbar("Tx Error: " + errorMessage);
-          dispatch(closeConfirmingSupplyModal());
-        }
+        onTxReady,
+        onTxFinalized,
+        onTxError
       );
     } catch (err: any) {
-      enqueueSnackbar(err.message, { variant: "error" });
+      enqueueSnackbar(
+        `Add liquidity Transaction Failed: ERROR: ${err.message}`,
+        { variant: "error" }
+      );
       dispatch(closeConfirmingSupplyModal());
-      console.log("Tx Error:", err);
     }
   }, [
     parachainApi,
@@ -130,6 +152,9 @@ export const useAddLiquidity = ({
     dispatch,
     pool,
     selectedAccount,
+    onTxError,
+    onTxFinalized,
+    onTxReady,
   ]);
 
   return onAddLiquidity;
