@@ -351,9 +351,9 @@ export async function createLBPool(
   return { resultPoolId };
 }
 
-export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair): Promise<void> {
+export async function createMultipleLBPools(api: ApiPromise, wallet: KeyringPair, amount: number = 300): Promise<void> {
   const tx = [];
-  for (let i = 0; i < 300; i++) {
+  for (let i = 0; i < amount; i++) {
     const owner = wallet.derive("/test/ConstantProduct/deriveWallet");
     const pool = api.createType("PalletPabloPoolInitConfiguration", {
       LiquidityBootstrapping: {
