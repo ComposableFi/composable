@@ -243,8 +243,8 @@
               installPhase = ''
                 mkdir -p $out/lib
                 ${wasm-optimizer}/bin/wasm-optimizer \
-                  --input ${runtime}/lib/${name}_runtime.wasm \
-                  --output $out/lib/runtime.optimized.wasm
+                --input ${runtime}/lib/${name}_runtime.wasm \
+                --output $out/lib/runtime.optimized.wasm
               '';
             };
 
@@ -304,12 +304,11 @@
               '';
             });
 
-          composable-node-release =
-            crane-nightly.buildPackage (common-attrs // {
+          composable-node-release = crane-nightly.buildPackage (common-attrs
+            // {
               pnameSuffix = "-node-release";
               cargoArtifacts = common-deps;
-              cargoBuildCommand =
-                "cargo build --release --package composable";
+              cargoBuildCommand = "cargo build --release --package composable";
               installPhase = ''
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable
@@ -334,15 +333,15 @@
 
           run-with-benchmarks = chain:
             writeShellScriptBin "run-benchmarks-once" ''
-              ${composable-bench-node}/bin/composable-node benchmark pallet \
-                --chain="${chain}" \
-                --execution=wasm \
-                --wasm-execution=compiled \
-                --wasm-instantiation-strategy=legacy-instance-reuse \
-                --pallet="*" \
-                --extrinsic="*" \
-                --steps=1 \
-                --repeat=1
+              ${composable-bench-node}/bin/composable benchmark pallet \
+              --chain="${chain}" \
+              --execution=wasm \
+              --wasm-execution=compiled \
+              --wasm-instantiation-strategy=legacy-instance-reuse \
+              --pallet="*" \
+              --extrinsic="*" \
+              --steps=1 \
+              --repeat=1
             '';
           docs-renders = [ mdbook plantuml graphviz pandoc ];
 
@@ -393,9 +392,9 @@
           run-simnode-tests = chain:
             writeShellScriptBin "run-simnode-tests-${chain}" ''
               ${simnode-tests}/bin/simnode-tests --chain=${chain} \
-                --base-path=/tmp/db/var/lib/composable-data/ \
-                --pruning=archive \
-                --execution=wasm
+              --base-path=/tmp/db/var/lib/composable-data/ \
+              --pruning=archive \
+              --execution=wasm
             '';
 
         in rec {
@@ -749,11 +748,11 @@
               installPhase = ''
                 mkdir $out
                 prettier \
-                  --config="${runtime-tests}/.prettierrc" \
-                  --ignore-path="${runtime-tests}/.prettierignore" \
-                  --check \
-                  --loglevel=debug \
-                  ${runtime-tests}
+                --config="${runtime-tests}/.prettierrc" \
+                --ignore-path="${runtime-tests}/.prettierignore" \
+                --check \
+                --loglevel=debug \
+                ${runtime-tests}
               '';
             };
 
