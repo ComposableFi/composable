@@ -11,10 +11,11 @@ They are critical to the function of any smart contract that needs to interact w
 and form a core part of any DeFi ecosystem.
 
 As a primary pallet, Apollo is composable and modularly functional. As such, 
-it can be leveraged by other pallets to form secondary and tertiary DeFi primitives that build on top of its oracle functionality. 
-For example, a secondary pallet like [Angular Finance](https://www.angular.finance/), 
+it can be leveraged by other pallets to form secondary and tertiary DeFi primitives that build on top of its oracle 
+functionality. For example, a secondary pallet like [Angular Finance](https://www.angular.finance/), 
 which functions as a cross-chain money market and lending platform, would make use of the Apollo primary pallet. 
-Apollo is part of a wider array of primary pallet primitives that can be ‘stacked’ and combined to easily form new primitives.
+Apollo is part of a wider array of primary pallet primitives that can be ‘stacked’ and combined to easily form new 
+primitives.
 
 Importantly, Apollo is MEV-resistant. MEV, or Miner Extracted Value, 
 is a form of front-running transactions that occurs at the block creation level. 

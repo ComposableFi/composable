@@ -2,13 +2,16 @@
 
 ---
 
-Composable makes it easy for other innovative projects to join our ecosystem and build with our technology. This allows other developers in the space to make their own applications interoperable and more intuitive, vastly improving the cross- ecosystem user experience.
+Composable makes it easy for other innovative projects to join our ecosystem and build with our technology. 
+This allows other developers in the space to make their own applications interoperable and more intuitive, 
+vastly improving the cross- ecosystem user experience.
 
 Composable offers the following services for other businesses, projects, and community developers:
 
 ### Data provider onboarding:
 
-Onboarding individuals/entities that can provide data for our oracle pallet, [Apollo](../products/apollo-overview.md), like Teller and API3. 
+Onboarding individuals/entities that can provide data for our oracle pallet, [Apollo](../products/apollo-overview.md), 
+like Teller and API3. 
 
 ### IBC-enabled chains onboarding:
 
@@ -28,7 +31,9 @@ Onboarding new layers, chains, and their associated validators into our ecosyste
 
 ### Cross-layer application tooling (Composable SDK):
 
-Allowing other projects to integrate our tools and technology via the [Composable software development kit (SDK)](../developer-guides/composable-sdk.md) and [XCVM](../products/cross-chain-virtual-machine.md). 
+Allowing other projects to integrate our tools and technology via the 
+[Composable software development kit (SDK)](../developer-guides/composable-sdk.md) 
+and [XCVM](../products/cross-chain-virtual-machine.md). 
 
 ### Building with the Composable XCVM:
 

@@ -100,7 +100,7 @@
 
 # 🌎 ECOSYSTEM
 - [Build on Composable: Ecosystem Development](./ecosystem/build-on-composable-ecosystem-development.md)
-  - [Composable Grants](./ecosystem/build-on-composable-ecosystem-development/composable-grants.md)
+  - [Composable Grants](./ecosystem/composable-grants.md)
 - [Business Line Development](./ecosystem/business-line-development.md)
 - [Press Kit](./ecosystem/press-kit.md)
 - [The Composable Team](./ecosystem/the-composable-team.md)
