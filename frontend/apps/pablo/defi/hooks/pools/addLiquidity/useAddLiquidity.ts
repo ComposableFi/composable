@@ -23,6 +23,9 @@ function transactionStatusSnackbarMessage(
   return `Add liquidity Transaction ${status}: ${transactionHashOrErrorMessage}`;
 }
 
+/**
+ * Later: move to snakbar utils
+ */
 const SNACKBAR_TYPES: Record<string, { variant: VariantType }> = {
   ERROR: { variant: "error" },
   SUCCESS: { variant: "success" },
