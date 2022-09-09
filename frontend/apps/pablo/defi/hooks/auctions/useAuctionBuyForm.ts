@@ -72,22 +72,15 @@ export const useAuctionBuyForm = (): {
   const [isValidBaseInput, setIsValidBaseInput] = useState(false);
   const [isValidQuoteInput, setIsValidQuoteInput] = useState(false);
 
-  const [tokenAmounts, setTokenAmounts] = useState({
+  const initialTokenAmounts = {
     baseAmount: new BigNumber(0),
     quoteAmount: new BigNumber(0),
     minimumReceived: new BigNumber(0),
     slippageAmount: new BigNumber(0),
     feeCharged: new BigNumber(0),
-  });
-
-  const resetTokenAmounts = () =>
-    setTokenAmounts({
-      baseAmount: new BigNumber(0),
-      quoteAmount: new BigNumber(0),
-      minimumReceived: new BigNumber(0),
-      slippageAmount: new BigNumber(0),
-      feeCharged: new BigNumber(0),
-    });
+  };
+  const [tokenAmounts, setTokenAmounts] = useState(initialTokenAmounts);
+  const resetTokenAmounts = () => setTokenAmounts(initialTokenAmounts);
 
   const isUpdatingField = useRef(false);
 
@@ -101,7 +94,9 @@ export const useAuctionBuyForm = (): {
     if (!activeLBP || !parachainApi) return;
     const { base, quote } = activeLBP.pair;
     let pair = { base: base.toString(), quote: quote.toString() };
-    fetchSpotPrice(parachainApi, pair, activeLBP.poolId).then(setSpotPrice);
+    fetchSpotPrice(parachainApi, pair, activeLBP.poolId)
+      .then(setSpotPrice)
+      .catch(console.error);
   }, [activeLBP, parachainApi]);
 
   const onChangeTokenAmount = useCallback(
@@ -121,7 +116,9 @@ export const useAuctionBuyForm = (): {
         calculator(changedSide, amount, spotPrice, slippage, feePercentage);
 
       if (changedSide === "base" && tokenOutAmount.gt(balanceQuote)) {
-        enqueueSnackbar("Insufficient Quote Asset balance.", { variant: "error" });
+        enqueueSnackbar("Insufficient Quote Asset balance.", {
+          variant: "error",
+        });
         resetTokenAmounts();
       } else {
         setTokenAmounts({
@@ -190,8 +187,8 @@ export const useAuctionBuyForm = (): {
           setTokenAmounts((amounts) => {
             return {
               ...amounts,
-              minimumReceived: minReceive
-            }
+              minimumReceived: minReceive,
+            };
           });
         }
       }
