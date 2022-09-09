@@ -302,6 +302,7 @@
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable
               '';
+              meta = { mainProgram = "composable"; };
             });
 
           composable-node-release = crane-nightly.buildPackage (common-attrs
@@ -313,6 +314,7 @@
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable
               '';
+              meta = { mainProgram = "composable"; };
             });
 
           composable-bench-node = crane-nightly.cargoBuild (common-bench-attrs
@@ -329,6 +331,7 @@
                 mkdir -p $out/bin
                 cp target/release/composable $out/bin/composable
               '';
+              meta = { mainProgram = "composable"; };
             });
 
           run-with-benchmarks = chain:
@@ -387,6 +390,7 @@
               mkdir -p $out/bin
               cp target/release/simnode-tests $out/bin/simnode-tests
             '';
+            meta = { mainProgram = "simnode-tests"; };
           });
 
           run-simnode-tests = chain:
@@ -470,6 +474,7 @@
               pnameSuffix = "-price-feed";
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo build --release -p price-feed";
+              meta = { mainProgram = "price-feed"; };
             });
 
             composable-book = import ./book/default.nix {
@@ -512,6 +517,7 @@
               LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib";
               PROTOC = "${protobuf}/bin/protoc";
               ROCKSDB_LIB_DIR = "${rocksdb}/lib";
+              meta = { mainProgram = "polkadot"; };
             };
 
             polkadot-launch =
