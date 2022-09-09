@@ -193,11 +193,8 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 /// TODO refer to the relevant section in the design doc.
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct Stake<ItemId, RewardPoolId, Balance, Reductions> {
-	// REVIEW(benluelo): Are the following two fields necessary? They are redundant now with the
-	// new Stakes storage and fnft ids.
-	/// The NFT account that owns this stake. Used with the `AssetId` associated with the stake to
-	/// uniquely identify related nft.
-	pub financial_nft_id: ItemId,
+	/// Instance ID of the fNFT. Used with the fNFT collection ID to identify the stake.
+	pub fnft_instance_id: ItemId,
 
 	/// Reward Pool ID from which pool to allocate rewards for this
 	pub reward_pool_id: RewardPoolId,

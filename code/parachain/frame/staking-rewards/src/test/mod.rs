@@ -152,7 +152,7 @@ fn stake_in_case_of_zero_inflation_should_work() {
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
-				financial_nft_id: fnft_instance_id
+				fnft_instance_id,
 			})
 		);
 
@@ -227,7 +227,7 @@ fn stake_in_case_of_not_zero_inflation_should_work() {
 					duration: DURATION_PRESET,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
-				financial_nft_id: 0,
+				fnft_instance_id: 0,
 			})
 		);
 
@@ -302,7 +302,7 @@ fn test_extend_stake_amount() {
 		assert_eq!(
 			StakingRewards::stakes(1, 0),
 			Some(Stake {
-				financial_nft_id: 1,
+				fnft_instance_id: 1,
 				reward_pool_id: pool_id,
 				stake: amount + extend_amount,
 				share: boosted_amount + extend_amount,
@@ -588,7 +588,7 @@ fn test_split_position() {
 				duration: 10000000_u64,
 				unlock_penalty: Perbill::from_percent(2),
 			},
-			financial_nft_id: 1,
+			fnft_instance_id: 1,
 		};
 
 		assert_extrinsic_event::<Test, _, _, _>(

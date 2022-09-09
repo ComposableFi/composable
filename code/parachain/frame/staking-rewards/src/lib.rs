@@ -764,7 +764,7 @@ pub mod pallet {
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
 				},
-				financial_nft_id: fnft_instance_id,
+				fnft_instance_id,
 			};
 
 			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
@@ -967,14 +967,14 @@ pub mod pallet {
 
 			let new_fnft_instance_id = T::FinancialNft::get_next_nft_id(fnft_collection_id)?;
 			let old_fnft_asset_account =
-				T::FinancialNft::asset_account(fnft_collection_id, &old_position.financial_nft_id);
+				T::FinancialNft::asset_account(fnft_collection_id, &old_position.fnft_instance_id);
 			let new_fnft_asset_account =
 				T::FinancialNft::asset_account(fnft_collection_id, &new_fnft_instance_id);
 
 			let new_stake = StakeOf::<T> {
 				stake: left_from_one_ratio.mul_floor(old_position.stake),
 				share: left_from_one_ratio.mul_floor(old_position.share),
-				financial_nft_id: new_fnft_instance_id,
+				fnft_instance_id: new_fnft_instance_id,
 				..old_position
 			};
 
