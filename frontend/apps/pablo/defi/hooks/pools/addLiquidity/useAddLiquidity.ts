@@ -14,6 +14,7 @@ import { useDispatch } from "react-redux";
 import { ConnectedAccount } from "substrate-react/dist/dotsama/types";
 import Executor from "substrate-react/dist/extrinsics/Executor";
 import { Signer } from "@polkadot/api/types";
+import { useCallback, useMemo } from "react";
 
 export const useAddLiquidity = ({
   selectedAccount,
@@ -25,7 +26,7 @@ export const useAddLiquidity = ({
   assetTwoAmount,
   lpReceiveAmount,
   pool,
-  signer
+  signer,
 }: {
   selectedAccount: ConnectedAccount | undefined;
   executor: Executor | undefined;
@@ -36,38 +37,57 @@ export const useAddLiquidity = ({
   assetOneAmount: BigNumber;
   assetTwoAmount: BigNumber;
   lpReceiveAmount: BigNumber;
-  signer: Signer | undefined
+  signer: Signer | undefined;
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
 
-  const onConfirmSupply = async () => {
-    if (
-      !selectedAccount ||
-      !parachainApi ||
-      !executor ||
-      !assetOne ||
-      !assetTwo ||
-      !signer ||
-      !pool
-    ) {
-      return;
-    }
+  const { baseAmount, quoteAmount } = useMemo(() => {
+    if (!pool || !assetOne)
+      return {
+        baseAmount: undefined,
+        quoteAmount: undefined,
+      };
 
+    let isReversed = pool.pair.base.toString() !== assetOne;
+    return {
+      baseAmount: toChainUnits(
+        isReversed ? assetTwoAmount : assetOneAmount
+      ).toString(),
+      quoteAmount: toChainUnits(
+        isReversed ? assetOneAmount : assetTwoAmount
+      ).toString(),
+    };
+  }, [pool, assetOne, assetOneAmount, assetTwoAmount]);
+
+  const _lpReceiveAmount = useMemo(() => {
+    return toChainUnits(lpReceiveAmount).toString();
+  }, [lpReceiveAmount]);
+
+  const onAddLiquidity = useCallback(async () => {
     try {
-      dispatch(closeConfirmSupplyModal());
+      if (
+        !selectedAccount ||
+        !parachainApi ||
+        !executor ||
+        !assetOne ||
+        !baseAmount ||
+        !quoteAmount ||
+        !assetTwo ||
+        !signer ||
+        !pool
+      ) {
+        throw new Error("Missing dependancies.");
+      }
 
-      let isReverse = pool.pair.base.toString() !== assetOne;
-      const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount);
-      const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
-      lpReceiveAmount = toChainUnits(lpReceiveAmount);
+      dispatch(closeConfirmSupplyModal());
 
       await executor.execute(
         parachainApi.tx.pablo.addLiquidity(
           pool.poolId,
-          bnBase.toString(),
-          bnQuote.toString(),
-          lpReceiveAmount.toString(),
+          baseAmount,
+          quoteAmount,
+          _lpReceiveAmount,
           true
         ),
         selectedAccount.address,
@@ -77,7 +97,7 @@ export const useAddLiquidity = ({
           dispatch(openConfirmingSupplyModal());
           console.log("txReady", txReady);
         },
-        (txHash: string, events) => {
+        (txHash: string, _events) => {
           enqueueSnackbar(
             "Transaction successful. Transaction hash: " + txHash,
             { variant: "success" }
@@ -97,7 +117,20 @@ export const useAddLiquidity = ({
       dispatch(closeConfirmingSupplyModal());
       console.log("Tx Error:", err);
     }
-  };
+  }, [
+    parachainApi,
+    executor,
+    signer,
+    baseAmount,
+    quoteAmount,
+    _lpReceiveAmount,
+    enqueueSnackbar,
+    assetOne,
+    assetTwo,
+    dispatch,
+    pool,
+    selectedAccount,
+  ]);
 
-  return onConfirmSupply;
+  return onAddLiquidity;
 };
