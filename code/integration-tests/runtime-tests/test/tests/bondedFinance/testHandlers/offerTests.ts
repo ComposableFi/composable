@@ -1,7 +1,7 @@
 import { IKeyringPair } from "@polkadot/types/types";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { ApiPromise } from "@polkadot/api";
-import { u32, u128 } from "@polkadot/types-codec";
+import { u128, u32 } from "@polkadot/types-codec";
 
 /**
  * Tests tx.bondedFinance.offer with provided parameters that should succeed.
@@ -41,7 +41,7 @@ export async function txBondedFinanceOfferSuccessTest(
  * @param requestParameters wallet public key
  * @return Transaction event.
  */
-export async function txBondedFinanceOfferFailureTest(api: ApiPromise, wallet: IKeyringPair, requestParameters) {
+export async function txBondedFinanceOfferFailureTest(api: ApiPromise, wallet: IKeyringPair, requestParameters: any) {
   return await sendAndWaitForSuccess(
     api,
     wallet,

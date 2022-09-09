@@ -181,7 +181,7 @@ describe("LiquidityBootstrapping Pool Test Suite", function () {
             feeRate,
             ownerFeeRate,
             protocolFeeRate
-          ).catch(e => expect(e.message).to.contain("Other"));
+          ).catch((e: Error) => expect(e.message).to.contain("Other"));
         }
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore // ToDo: Remove! See above.
@@ -201,7 +201,7 @@ describe("LiquidityBootstrapping Pool Test Suite", function () {
             feeRate,
             ownerFeeRate,
             protocolFeeRate
-          ).catch(e => expect(e.message).to.contain("Other"));
+          ).catch((e: Error) => expect(e.message).to.contain("Other"));
         }
       }
     );

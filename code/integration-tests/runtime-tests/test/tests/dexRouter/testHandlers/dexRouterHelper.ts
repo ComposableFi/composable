@@ -218,7 +218,7 @@ export async function getUserTokens(api: ApiPromise, walletId: KeyringPair, asse
   return free;
 }
 
-export async function getPoolInfo(api: ApiPromise, poolType: string, poolId: number): Promise<{ weights }> {
+export async function getPoolInfo(api: ApiPromise, poolType: string, poolId: number): Promise<{ weights: any }> {
   const result = await api.query.pablo.pools(api.createType("u128", poolId));
   const pool = result.unwrap();
   const poolS = "as" + poolType;
