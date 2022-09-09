@@ -193,7 +193,7 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 /// TODO refer to the relevant section in the design doc.
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct Stake<ItemId, RewardPoolId, Balance, Reductions> {
-	/// Instance ID of the fNFT. Used with the fNFT collection ID to identify the stake.
+	/// The ItemID is used in conjunction with the fNFT collection ID to identify the stake.
 	pub fnft_instance_id: ItemId,
 
 	/// Reward Pool ID from which pool to allocate rewards for this
