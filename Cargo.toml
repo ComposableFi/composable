@@ -33,6 +33,7 @@ tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev 
 parachain = ["dep:parachain"]
 near = ["dep:near"]
 cosmos = ["dep:cosmos"]
+testing = []
 
 [workspace]
 members = [

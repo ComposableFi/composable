@@ -1,7 +1,11 @@
 use futures::StreamExt;
 use hyperspace::logging;
-use hyperspace_primitives::KeyProvider;
-use ibc::{core::ics02_client::msgs::create_client::MsgCreateAnyClient, tx_msg::Msg};
+use hyperspace_primitives::{IbcProvider, KeyProvider};
+use hyperspace_testsuite::setup_connection_and_channel;
+use ibc::{
+	core::{ics02_client::msgs::create_client::MsgCreateAnyClient, ics24_host::identifier::PortId},
+	tx_msg::Msg,
+};
 use pallet_ibc::PalletParams;
 use parachain::{calls::SetPalletParams, ParachainClient, ParachainClientConfig};
 use sp_core::crypto::KeyTypeId;
@@ -50,9 +54,7 @@ impl subxt::Config for DefaultConfig {
 	type Extrinsic = sp_runtime::OpaqueExtrinsic;
 }
 
-#[tokio::test]
-async fn parachain_to_parachain_ibc_messaging_full_integration_test() {
-	logging::setup_logging();
+async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<DefaultConfig>) {
 	log::info!(target: "hyperspace", "=========================== Starting Test ===========================");
 	let args = Args::default();
 	let alice = sp_keyring::AccountKeyring::Alice;
@@ -75,6 +77,7 @@ async fn parachain_to_parachain_ibc_messaging_full_integration_test() {
 		public_key: alice_pub_key.clone(),
 		key_store: key_store.clone(),
 		ss58_version: 49,
+		channel_whitelist: vec![],
 		key_type_id,
 	};
 	let config_b = ParachainClientConfig {
@@ -87,6 +90,7 @@ async fn parachain_to_parachain_ibc_messaging_full_integration_test() {
 		public_key: alice_pub_key,
 		key_store,
 		ss58_version: 49,
+		channel_whitelist: vec![],
 		key_type_id,
 	};
 
@@ -105,6 +109,15 @@ async fn parachain_to_parachain_ibc_messaging_full_integration_test() {
 		.collect::<Vec<_>>()
 		.await;
 	log::info!(target: "hyperspace", "Parachains have started block production");
+
+	let clients_on_a = chain_a.query_clients().await.unwrap();
+	let clients_on_b = chain_b.query_clients().await.unwrap();
+
+	if !clients_on_a.is_empty() && !clients_on_b.is_empty() {
+		chain_a.set_client_id(clients_on_b[0].clone());
+		chain_b.set_client_id(clients_on_b[0].clone());
+		return (chain_a, chain_b)
+	}
 
 	chain_a
 		.submit_sudo_call(SetPalletParams {
@@ -165,10 +178,65 @@ async fn parachain_to_parachain_ibc_messaging_full_integration_test() {
 		chain_a.set_client_id(client_id_a_on_b.clone());
 	};
 
-	let handle =
-		hyperspace_testsuite::send_packet_and_assert_height_timeout(&chain_a, &chain_b, None).await;
-	let handle =
-		hyperspace_testsuite::send_packet_and_assert_timestamp_timeout(&chain_a, &chain_b, Some(handle))
-			.await;
-	hyperspace_testsuite::send_packet_and_assert_acknowledgment(&chain_a, &chain_b, Some(handle)).await;
+	(chain_a, chain_b)
+}
+
+#[tokio::main]
+async fn main() {
+	logging::setup_logging();
+	// Run tests sequentially
+	parachain_to_parachain_ibc_messaging_packet_height_timeout().await;
+	parachain_to_parachain_ibc_messaging_packet_timeout_timestamp().await;
+	parachain_to_parachain_ibc_messaging_token_transfer().await;
+}
+
+async fn parachain_to_parachain_ibc_messaging_token_transfer() {
+	let (mut chain_a, mut chain_b) = setup_clients().await;
+	let (handle, channel_id, channel_b, _connection_id) =
+		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
+	handle.abort();
+	// Set channel whitelist and restart relayer loop
+	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
+	chain_b.set_channel_whitelist(vec![(channel_b, PortId::transfer())]);
+	let client_a_clone = chain_a.clone();
+	let client_b_clone = chain_b.clone();
+	let _ = tokio::task::spawn(async move {
+		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+	});
+	hyperspace_testsuite::send_packet_and_assert_acknowledgment(&chain_a, &chain_b, channel_id)
+		.await;
+}
+
+async fn parachain_to_parachain_ibc_messaging_packet_height_timeout() {
+	let (mut chain_a, mut chain_b) = setup_clients().await;
+	let (handle, channel_id, channel_b, _connection_id) =
+		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
+	handle.abort();
+	// Set channel whitelist and restart relayer loop
+	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
+	chain_b.set_channel_whitelist(vec![(channel_b, PortId::transfer())]);
+	let client_a_clone = chain_a.clone();
+	let client_b_clone = chain_b.clone();
+	let _ = tokio::task::spawn(async move {
+		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+	});
+	hyperspace_testsuite::send_packet_and_assert_height_timeout(&chain_a, &chain_b, channel_id)
+		.await;
+}
+
+async fn parachain_to_parachain_ibc_messaging_packet_timeout_timestamp() {
+	let (mut chain_a, mut chain_b) = setup_clients().await;
+	let (handle, channel_id, channel_b, _connection_id) =
+		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
+	// Set channel whitelist and restart relayer loop
+	handle.abort();
+	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);
+	chain_b.set_channel_whitelist(vec![(channel_b, PortId::transfer())]);
+	let client_a_clone = chain_a.clone();
+	let client_b_clone = chain_b.clone();
+	let _ = tokio::task::spawn(async move {
+		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+	});
+	hyperspace_testsuite::send_packet_and_assert_timestamp_timeout(&chain_a, &chain_b, channel_id)
+		.await;
 }

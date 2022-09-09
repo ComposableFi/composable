@@ -198,7 +198,7 @@ pub trait IbcProvider {
 	) -> Result<Vec<u64>, Self::Error>;
 
 	/// Channel whitelist
-	async fn channel_whitelist(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error>;
+	fn channel_whitelist(&self) -> Vec<(ChannelId, PortId)>;
 
 	/// Query all channels for a connection
 	async fn query_connection_channels(
@@ -253,8 +253,14 @@ pub trait IbcProvider {
 	/// Returns the client type of this chain.
 	fn client_type(&self) -> ClientType;
 
-	/// Should return timestamp of chain at a given block height
-	async fn timestamp_at(&self, block_number: u64) -> Result<u64, Self::Error>;
+	/// Should return timestamp in nanoseconds of chain at a given block height
+	async fn query_timestamp_at(&self, block_number: u64) -> Result<u64, Self::Error>;
+
+	/// Should return a list of all clients on the chain
+	async fn query_clients(&self) -> Result<Vec<ClientId>, Self::Error>;
+
+	/// Should return a list of all clients on the chain
+	async fn query_channels(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error>;
 }
 
 /// Provides an interface that allows us run the hyperspace-testsuite
@@ -296,8 +302,9 @@ pub trait Chain: IbcProvider + KeyProvider + Send + Sync {
 	async fn submit_ibc_messages(&self, messages: Vec<Any>) -> Result<(), Self::Error>;
 }
 
-/// Return undelivered packet sequences
-/// Implementation should work both for ordered and unordered channels
+/// Returns undelivered packet sequences that have been sent out from
+/// the `source` chain to the `sink` chain
+/// works for both ordered and unordered channels
 pub async fn query_undelivered_sequences(
 	source_height: Height,
 	sink_height: Height,
@@ -343,7 +350,8 @@ pub async fn query_undelivered_sequences(
 	Ok(undelivered_sequences)
 }
 
-/// Return undelivered packet acknowledgements
+/// Queries the `source` chain for packet acknowledgements that have not been seen by the `sink`
+/// chain.
 pub async fn query_undelivered_acks(
 	source_height: Height,
 	sink_height: Height,
@@ -385,13 +393,13 @@ pub async fn query_undelivered_acks(
 pub fn packet_info_to_packet(packet_info: &PacketInfo) -> Packet {
 	Packet {
 		sequence: packet_info.sequence.into(),
-		source_port: PortId::from_str(&packet_info.source_port).expect("Port is should be valid"),
+		source_port: PortId::from_str(&packet_info.source_port).expect("Port should be valid"),
 		source_channel: ChannelId::from_str(&packet_info.source_channel)
-			.expect("Channel is should be valid"),
+			.expect("Channel should be valid"),
 		destination_port: PortId::from_str(&packet_info.destination_port)
-			.expect("Port is should be valid"),
+			.expect("Port should be valid"),
 		destination_channel: ChannelId::from_str(&packet_info.destination_channel)
-			.expect("Channel is should be valid"),
+			.expect("Channel should be valid"),
 		data: packet_info.data.clone(),
 		timeout_height: packet_info.timeout_height.clone().into(),
 		timeout_timestamp: Timestamp::from_nanoseconds(packet_info.timeout_timestamp)
@@ -415,14 +423,14 @@ pub async fn find_block_height_by_timestamp(
 	// subtract this duration from the latest block height
 	let maybe_block = latest_height.revision_height - num_blocks;
 	// Get timestamo of this block
-	let maybe_timestamp = chain.timestamp_at(maybe_block).await.ok()?;
+	let maybe_timestamp = chain.query_timestamp_at(maybe_block).await.ok()?;
 	if maybe_timestamp >= timestamp.nanoseconds() {
 		Some(Height::new(latest_height.revision_number, maybe_block))
 	} else {
 		let start = maybe_block + 1;
 		let end = latest_height.revision_height - 1;
 		for block_number in start..end {
-			let temp_timestamp = chain.timestamp_at(block_number).await.ok()?;
+			let temp_timestamp = chain.query_timestamp_at(block_number).await.ok()?;
 			if temp_timestamp >= timestamp.nanoseconds() {
 				return Some(Height::new(latest_height.revision_number, block_number))
 			}

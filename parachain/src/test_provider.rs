@@ -1,4 +1,4 @@
-use crate::{parachain, ParachainClient};
+use crate::ParachainClient;
 use futures::{Stream, StreamExt};
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, PrefixedCoin},
@@ -11,7 +11,7 @@ use sp_runtime::{
 	traits::{Header as HeaderT, IdentifyAccount, Verify},
 	MultiSignature, MultiSigner,
 };
-use std::{fmt::Display, pin::Pin, time::Duration};
+use std::{fmt::Display, pin::Pin};
 
 use subxt::Config;
 use tokio_stream::wrappers::BroadcastStream;

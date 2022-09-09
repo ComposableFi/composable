@@ -35,8 +35,7 @@ use ibc::{
 			client_consensus::{AnyConsensusState, ConsensusState as ConsensusStateT},
 			client_state::{AnyClientState, ClientState as ClientStateT},
 		},
-		ics04_channel::packet::Packet,
-		ics24_host::identifier::{ChainId, ClientId},
+		ics24_host::identifier::{ChainId, ChannelId, ClientId, PortId},
 	},
 	events::IbcEvent,
 };
@@ -78,12 +77,8 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub para_id: u32,
 	/// Light client id on counterparty chain
 	pub client_id: Option<ClientId>,
-	/// Parachain's latest finalized height
-	pub latest_para_height: Option<u32>,
 	/// Commitment prefix
 	pub commitment_prefix: Vec<u8>,
-	/// Sent packet sequence cache
-	pub packet_cache: Vec<Packet>,
 	/// Public key for relayer on chain
 	pub public_key: MultiSigner,
 	/// Reference to keystore
@@ -94,6 +89,8 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub ss58_version: Ss58AddressFormat,
 	/// ibc event stream sender
 	pub sender: Sender<IbcEvent>,
+	/// Channels cleared for packet relay
+	pub channel_whitelist: Vec<(ChannelId, PortId)>,
 }
 
 /// config options for [`ParachainClient`]
@@ -118,6 +115,8 @@ pub struct ParachainClientConfig {
 	pub ss58_version: u8,
 	/// 4 byte Key type id
 	pub key_type_id: KeyTypeId,
+	/// Channels cleared for packet relay
+	pub channel_whitelist: Vec<(ChannelId, PortId)>,
 }
 
 impl<T: subxt::Config + Send + Sync> ParachainClient<T>
@@ -148,15 +147,13 @@ where
 			relay_client,
 			para_id: config.para_id,
 			client_id: config.client_id,
-			// The following should be initialized before main relayer loop starts.
-			latest_para_height: None,
 			commitment_prefix: config.commitment_prefix,
-			packet_cache: vec![],
 			public_key: config.public_key,
 			key_store: config.key_store,
 			key_type_id: config.key_type_id,
 			sender,
 			ss58_version: Ss58AddressFormat::from(config.ss58_version),
+			channel_whitelist: config.channel_whitelist,
 		})
 	}
 
@@ -261,19 +258,12 @@ where
 		self.client_id.as_ref().expect("Client Id should be defined").clone()
 	}
 
-	pub fn latest_para_height(&self) -> u32 {
-		*(self
-			.latest_para_height
-			.as_ref()
-			.expect("Latest parachain height should be defined"))
-	}
-
-	pub fn set_latest_para_height(&mut self, height: u32) {
-		self.latest_para_height = Some(height)
-	}
-
 	pub fn set_client_id(&mut self, client_id: ClientId) {
 		self.client_id = Some(client_id)
+	}
+
+	pub fn set_channel_whitelist(&mut self, channel_whitelist: Vec<(ChannelId, PortId)>) {
+		self.channel_whitelist = channel_whitelist;
 	}
 
 	/// Construct a beefy client state to be submitted to the counterparty chain

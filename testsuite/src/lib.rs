@@ -28,12 +28,11 @@ mod utils;
 
 /// This will set up a connection and ics20 channel in-between the two chains.
 /// `connection_delay` should be in seconds.
-async fn setup_connection_and_channel<A, B>(
+pub async fn setup_connection_and_channel<A, B>(
 	chain_a: &A,
 	chain_b: &B,
 	connection_delay: u64,
-	relay_task: Option<JoinHandle<()>>,
-) -> (JoinHandle<()>, ChannelId, ConnectionId)
+) -> (JoinHandle<()>, ChannelId, ChannelId, ConnectionId)
 where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
@@ -45,24 +44,26 @@ where
 	let client_a_clone = chain_a.clone();
 	let client_b_clone = chain_b.clone();
 	// Start relayer loop
-	let handle = if let Some(handle) = relay_task {
-		handle
-	} else {
-		tokio::task::spawn(async move {
-			hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
-		})
-	};
+	let handle = tokio::task::spawn(async move {
+		hyperspace::relay(client_a_clone, client_b_clone).await.unwrap()
+	});
 	// check if an open transfer channel exists
-	let channels = chain_a.channel_whitelist().await.ok().unwrap_or_default();
-	let (latest_height, ..) = chain_a.latest_height_and_timestamp().await.unwrap();
-	for (channel_id, port_id) in channels {
-		let channel_response = chain_a
-			.query_channel_end(latest_height, channel_id, port_id.clone())
-			.await
-			.unwrap();
-		let channel_end = ChannelEnd::try_from(channel_response.channel.unwrap()).unwrap();
-		if channel_end.state == State::Open && port_id == PortId::transfer() {
-			return (handle, channel_id, channel_end.connection_hops[0].clone())
+	let channels = chain_a.query_channels().await.unwrap();
+	if !channels.is_empty() {
+		let (channel_id, port_id) = channels[0].clone();
+		let (latest_height, ..) = chain_a.latest_height_and_timestamp().await.unwrap();
+		if let Ok(channel_response) =
+			chain_a.query_channel_end(latest_height, channel_id, port_id.clone()).await
+		{
+			let channel_end = ChannelEnd::try_from(channel_response.channel.unwrap()).unwrap();
+			if channel_end.state == State::Open && port_id == PortId::transfer() {
+				return (
+					handle,
+					channel_id,
+					channel_end.counterparty().channel_id.unwrap().clone(),
+					channel_end.connection_hops[0].clone(),
+				)
+			}
 		}
 	}
 
@@ -138,15 +139,16 @@ where
 	)
 	.await;
 
-	let channel_id = match events.pop() {
-		Some(IbcEvent::OpenConfirmChannel(chan)) => chan.channel_id().unwrap().clone(),
+	let (channel_id, chain_b_channel_id) = match events.pop() {
+		Some(IbcEvent::OpenConfirmChannel(chan)) =>
+			(chan.counterparty_channel_id.unwrap(), chan.channel_id().unwrap().clone()),
 		got => panic!("Last event should be OpenConfirmConnection: {got:?}"),
 	};
 
 	// channel handshake completed
 	log::info!(target: "hyperspace", "============ Channel handshake completed: ChannelId({channel_id}) ============");
 
-	(handle, channel_id, connection_id)
+	(handle, channel_id, chain_b_channel_id, connection_id)
 }
 
 /// Attempts to send 70% of funds of chain_a's signer to chain b's signer.
@@ -254,9 +256,8 @@ where
 pub async fn send_packet_and_assert_acknowledgment<A, B>(
 	chain_a: &A,
 	chain_b: &B,
-	handle: Option<JoinHandle<()>>,
-) -> JoinHandle<()>
-where
+	channel_id: ChannelId,
+) where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
 	A::Error: From<B::Error>,
@@ -264,16 +265,12 @@ where
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
-	let (handle, channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, 60 * 2, handle).await;
-
 	let (previous_balance, ..) = send_transfer(chain_a, chain_b, channel_id, None).await;
 	assert_send_transfer(chain_a, previous_balance).await;
 	// now send from chain b.
 	let (previous_balance, ..) = send_transfer(chain_b, chain_a, channel_id, None).await;
 	assert_send_transfer(chain_b, previous_balance).await;
 	log::info!(target: "hyperspace", "🚀🚀 Token Transfer successful");
-	handle
 }
 
 /// Send a packet using a height timeout that has already passed
@@ -281,9 +278,8 @@ where
 pub async fn send_packet_and_assert_height_timeout<A, B>(
 	chain_a: &A,
 	chain_b: &B,
-	handle: Option<JoinHandle<()>>,
-) -> JoinHandle<()>
-where
+	channel_id: ChannelId,
+) where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
 	A::Error: From<B::Error>,
@@ -291,9 +287,6 @@ where
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
-	let (handle, channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, 60 * 2, handle).await;
-
 	log::info!(target: "hyperspace", "Suspending send packet relay");
 	set_relay_status(false);
 
@@ -328,7 +321,6 @@ where
 
 	assert_timeout_packet(chain_a).await;
 	log::info!(target: "hyperspace", "🚀🚀 Timeout packet successfully processed for height timeout");
-	handle
 }
 
 /// Send a packet using a timestamp timeout that has already passed
@@ -336,9 +328,8 @@ where
 pub async fn send_packet_and_assert_timestamp_timeout<A, B>(
 	chain_a: &A,
 	chain_b: &B,
-	handle: Option<JoinHandle<()>>,
-) -> JoinHandle<()>
-where
+	channel_id: ChannelId,
+) where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
 	A::Error: From<B::Error>,
@@ -346,9 +337,6 @@ where
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
-	let (handle, channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, 60 * 3, handle).await;
-
 	log::info!(target: "hyperspace", "Suspending send packet relay");
 	set_relay_status(false);
 
@@ -360,8 +348,6 @@ where
 	)
 	.await;
 
-	println!("⌛️ Packet Timeout Timestamp{:#?}", msg.timeout_timestamp.nanoseconds());
-
 	// Wait for timeout height to elapse then resume packet relay
 	// wait for the acknowledgment
 	let future = chain_b
@@ -371,7 +357,7 @@ where
 			let block_number = *block_number;
 			let chain_clone = chain_b.clone();
 			async move {
-				let timestamp = chain_clone.timestamp_at(block_number).await.unwrap();
+				let timestamp = chain_clone.query_timestamp_at(block_number).await.unwrap();
 				timestamp < msg.timeout_timestamp.nanoseconds()
 			}
 		})
@@ -391,18 +377,16 @@ where
 
 	assert_timeout_packet(chain_a).await;
 	log::info!(target: "hyperspace", "🚀🚀 Timeout packet successfully processed for timeout timestamp");
-	handle
 }
 
 /// Send a packet over a connection with a connection delay
 /// and assert the sending chain only sees the packet after the
 /// delay has elapsed.
 pub async fn send_packet_with_connection_delay<A, B>(
-	chain_a: &A,
-	chain_b: &B,
-	handle: Option<JoinHandle<()>>,
-) -> JoinHandle<()>
-where
+	_chain_a: &A,
+	_chain_b: &B,
+	_channel_id: ChannelId,
+) where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
 	A::Error: From<B::Error>,
@@ -411,7 +395,4 @@ where
 	B::Error: From<A::Error>,
 {
 	let connection_delay = 5 * 60; // 5 mins
-	let (handle, _channel_id, _connection_id) =
-		setup_connection_and_channel(chain_a, chain_b, connection_delay, handle).await;
-	handle
 }

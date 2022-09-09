@@ -14,7 +14,7 @@ ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec
 ibc-proto = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
 
-hyperspace = { path = "../" }
+hyperspace = { path = "../", features = ["testing"] }
 hyperspace-primitives = { path = "../primitives", features = ["testing"] }
 pallet-ibc = { git = "https://github.com/ComposableFi/composable", rev = "19a408a7d696bb7e238be38ce4f89ec046a2b383" }
 
@@ -27,3 +27,8 @@ sp-runtime = "6.0.0"
 sp-keystore = "0.12.0"
 sp-keyring = "6.0.0"
 subxt = { git = "https://github.com/paritytech/subxt", rev = "ec23283d75e4b3b894294e351fd7ffa2b4431201" }
+
+# We need this so the tests run sequentially
+[[test]]
+name = "parachain_parachain"
+harness = false

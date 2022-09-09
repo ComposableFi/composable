@@ -1,4 +1,6 @@
-use crate::{packet_messages::query_ready_and_timed_out_packets, packet_relay_status};
+use crate::packet_messages::query_ready_and_timed_out_packets;
+#[cfg(feature = "testing")]
+use crate::packet_relay_status;
 use codec::Encode;
 use ibc::{
 	core::{
@@ -42,9 +44,7 @@ pub async fn parse_events(
 	events: Vec<IbcEvent>,
 	header: AnyHeader,
 ) -> Result<(Vec<Any>, Vec<Any>), anyhow::Error> {
-	let parse_send_packets = packet_relay_status();
 	let mut messages = vec![];
-
 	// 1. translate events to messages
 	for event in events {
 		match event {
@@ -408,7 +408,11 @@ pub async fn parse_events(
 				let msg = Any { value, type_url: msg.type_url() };
 				messages.push(msg)
 			},
-			IbcEvent::SendPacket(send_packet) if parse_send_packets => {
+			IbcEvent::SendPacket(send_packet) => {
+				#[cfg(feature = "testing")]
+				if packet_relay_status() {
+					continue
+				}
 				// can we send this packet?
 				// 1. query the connection and get the connection delay.
 				// 2. if none, send message immediately
@@ -436,6 +440,7 @@ pub async fn parse_events(
 						Error::Custom(format!("ConnectionEnd not found for {:?}", connection_id))
 					})?)?;
 				if !connection_end.delay_period().is_zero() {
+					// We can't send this packet immediately because of connection delays
 					continue
 				}
 				let seq = u64::from(send_packet.packet.sequence);
@@ -485,6 +490,7 @@ pub async fn parse_events(
 						Error::Custom(format!("ConnectionEnd not found for {:?}", connection_id))
 					})?)?;
 				if !connection_end.delay_period().is_zero() {
+					// We can't send this packet immediately because of connection delays
 					continue
 				}
 				let seq = u64::from(write_ack.packet.sequence);

@@ -40,14 +40,8 @@ use sp_core::H256;
 
 use crate::{parachain, parachain::api::runtime_types::primitives::currency::CurrencyId};
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
-use ibc::{
-	core::{
-		ics02_client::client_consensus::AnyConsensusState,
-		ics04_channel::context::calculate_block_delay,
-	},
-	timestamp::Timestamp,
-};
-use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
+use ibc::timestamp::Timestamp;
+use ibc_proto::ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState};
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -421,22 +415,8 @@ where
 		Ok(res)
 	}
 
-	async fn channel_whitelist(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error> {
-		// Use all available channel on chain for now, better strategy later
-		let response =
-			IbcApiClient::<u32, H256>::query_channels(&*self.para_client.rpc().client).await?;
-		response
-			.channels
-			.into_iter()
-			.map(|identified_chan| {
-				Ok((
-					ChannelId::from_str(&identified_chan.channel_id)
-						.expect("Failed to convert invalid string to channel id"),
-					PortId::from_str(&identified_chan.port_id)
-						.expect("Failed to convert invalid string to port id"),
-				))
-			})
-			.collect::<Result<Vec<_>, _>>()
+	fn channel_whitelist(&self) -> Vec<(ChannelId, PortId)> {
+		self.channel_whitelist.clone()
 	}
 
 	async fn query_connection_channels(
@@ -571,8 +551,6 @@ where
 		let account = self.public_key.clone().into_account();
 		let balance = api.storage().tokens().accounts(&account, &CurrencyId(1), None).await?;
 
-		dbg!(&balance);
-
 		Ok(vec![PrefixedCoin {
 			denom: PrefixedDenom::from_str("PICA")?,
 			amount: Amount::from_str(&format!("{}", balance.free))?,
@@ -591,7 +569,7 @@ where
 		ClientType::Beefy
 	}
 
-	async fn timestamp_at(&self, block_number: u64) -> Result<u64, Self::Error> {
+	async fn query_timestamp_at(&self, block_number: u64) -> Result<u64, Self::Error> {
 		let api = self
 			.para_client
 			.clone()
@@ -600,5 +578,34 @@ where
 		let unix_timestamp_millis = api.storage().timestamp().now(block_hash).await?;
 		let timestamp_nanos = Duration::from_millis(unix_timestamp_millis).as_nanos() as u64;
 		Ok(timestamp_nanos)
+	}
+
+	async fn query_clients(&self) -> Result<Vec<ClientId>, Self::Error> {
+		let response: Vec<IdentifiedClientState> =
+			IbcApiClient::<u32, H256>::query_clients(&*self.para_client.rpc().client).await?;
+		response
+			.into_iter()
+			.map(|client| {
+				ClientId::from_str(&client.client_id)
+					.map_err(|_| Error::Custom("Invalid client id ".to_string()))
+			})
+			.collect()
+	}
+
+	async fn query_channels(&self) -> Result<Vec<(ChannelId, PortId)>, Self::Error> {
+		let response =
+			IbcApiClient::<u32, H256>::query_channels(&*self.para_client.rpc().client).await?;
+		response
+			.channels
+			.into_iter()
+			.map(|identified_chan| {
+				Ok((
+					ChannelId::from_str(&identified_chan.channel_id)
+						.expect("Failed to convert invalid string to channel id"),
+					PortId::from_str(&identified_chan.port_id)
+						.expect("Failed to convert invalid string to port id"),
+				))
+			})
+			.collect::<Result<Vec<_>, _>>()
 	}
 }
