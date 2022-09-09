@@ -50,7 +50,7 @@ jobs:
         with:
           skipPush: true
           installCommand: |
-            nix-channel --add ${{env.NIX_NIXPKGS_CHANNEL }} nixpkgs
+            nix-channel --add ${{ env.NIX_NIXPKGS_CHANNEL }} nixpkgs
             nix-channel --update
             nix-env -iA nixpkgs.cachix
           name: ${{  env.CACHIX_COMPOSABLE }}
