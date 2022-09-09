@@ -29,8 +29,10 @@ env:
 jobs:
   common-deps:
     name: "Common dependencies"
+    needs:
+      - check-nix
     concurrency:
-      group: commondeps-${{ github.ref }}
+      group: ${{ github.workflow }}-common-deps-${{ github.ref }}
       cancel-in-progress: true
     runs-on:
       - self-hosted
@@ -60,14 +62,14 @@ jobs:
 
   check-nix:
     name: "Check nix"
-    continue-on-error: true
+    continue-on-error: false
     runs-on:
       - self-hosted
       - linux
       - x64
       - sre
     concurrency:
-      group: checknix-${{ github.ref }}
+      group: ${{ github.workflow }}-check-nix-${{ github.ref }}
       cancel-in-progress: true
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
@@ -631,8 +633,8 @@ jobs:
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#polkadot-node --no-update-lock-file --show-trace -L
 
-  package-kusama-picasso-karura-devnet:
-    name: "Package kusama picasso karura devnet"
+  package-kusama-parachains-devnet:
+    name: "Package kusama parachains devnet"
     needs:
       - package-polkadot-node
     runs-on:
@@ -641,7 +643,7 @@ jobs:
       - x64
       - sre
     concurrency:
-      group: ${{ github.workflow }}-package-kusama-picasso-karura-devnet-${{ github.ref }}
+      group: ${{ github.workflow }}-package-kusama-parachains-devnet-${{ github.ref }}
       cancel-in-progress: true
     continue-on-error: true
     container:
@@ -663,6 +665,7 @@ jobs:
           name: composable-community
       - run: |
           cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-picasso-karura-devnet --no-update-lock-file --show-trace -L
+          cachix watch-exec --jobs 16 --compression-level $CACHIX_COMPRESSION_LEVEL composable-community nix -- build .#kusama-dali-karura-devnet --no-update-lock-file --show-trace -L
 
   package-xcvm-minimal:
     name: "Package XCVM minimal"
@@ -670,7 +673,8 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-package-xcvm-${{ github.ref }}
       cancel-in-progress: true
-    continue-on-error: true
+    continue-on-error: false
+
     container:
       image: niteo/nixpkgs-nixos-22.05:316b762afdb9e142a803f29c49a88b4a47db80ee
     steps:
@@ -816,7 +820,7 @@ jobs:
       cancel-in-progress: true  
     steps:
     - name: Clean up
-      continue-on-error: true
+      continue-on-error: false
       run: |
         sudo chown -R $USER:$USER $GITHUB_WORKSPACE
         docker system prune --force --all --volumes
