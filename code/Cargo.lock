@@ -8457,22 +8457,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-ping"
-version = "0.1.0"
-dependencies = [
- "cumulus-pallet-xcm",
- "cumulus-primitives-core",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-runtime",
- "sp-std",
- "xcm",
-]
-
-[[package]]
 name = "pallet-preimage"
 version = "4.0.0-dev"
 source = "git+https://github.com/ComposableFi/substrate?branch=polkadot-v0.9.27#f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5"
