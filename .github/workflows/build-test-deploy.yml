@@ -1109,6 +1109,8 @@ jobs:
     needs:
       - check-nix
     name: "Nix command PR comments"
+    
+    if: github.event_name == 'pull_request'
     steps:
       - name: Checkout
         uses: actions/checkout@v3
