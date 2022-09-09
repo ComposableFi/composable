@@ -163,8 +163,7 @@ pub mod pallet {
 		},
 		/// Split stake position into two positions
 		SplitPosition {
-			// REVIEW(benluelo,poisonphang): Should this be [_; 2] ? or perhaps two separate fields
-			// {old, new} ?
+			// TODO(benluelo): Only emit the newly created position
 			positions: Vec<(T::AssetId, T::FinancialNftInstanceId, BalanceOf<T>)>,
 		},
 		/// Reward transfer event.
