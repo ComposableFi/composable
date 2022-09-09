@@ -2,71 +2,11 @@ import { secondsToDhms } from "shared";
 import BigNumber from "bignumber.js";
 
 export function humanBalance(balance: string | number | BigNumber) {
-  const THOUSAND = 1000;
-  const MILLION = 1000_000;
-  const BILLION = 1000_000_000;
-  const TRILLION = 1000_000_000_000;
-  const QUADRILLION = 1000_000_000_000_000;
-  const QUINTILLION = 1000_000_000_000_000_000;
+  const formatter = new Intl.NumberFormat("en", {
+    notation: "compact",
+  });
 
-  const VALUES = [
-    {
-      unit: "K",
-      size: THOUSAND,
-    },
-    {
-      unit: "M",
-      size: MILLION,
-    },
-
-    {
-      unit: "G",
-      size: BILLION,
-    },
-    {
-      unit: "T",
-      size: TRILLION,
-    },
-    {
-      unit: "P",
-      size: QUADRILLION,
-    },
-    {
-      unit: "E",
-      size: QUINTILLION,
-    },
-  ];
-
-  type ReducerReturnValue = {
-    unit: string;
-    amount: string;
-  };
-  const newValue =
-    typeof balance === "number" || typeof balance === "string"
-      ? new BigNumber(balance)
-      : balance;
-
-  const trailingZeros = /^0*(\d+(?:\.(?:(?!0+$)\d)+)?)/;
-  const out = VALUES.reduce(
-    (acc, { unit, size }) => {
-      if (newValue.gte(new BigNumber(size))) {
-        acc = {
-          unit,
-          amount: newValue.div(size).toFixed(),
-        };
-      }
-
-      return acc;
-    },
-    <ReducerReturnValue>{
-      unit: "",
-      amount: newValue.toFixed(),
-    }
-  );
-
-  const match = trailingZeros.exec(out.amount);
-
-  return match !== null ? match[1] + out.unit : out.amount + out.unit;
+  return formatter.format(Number(balance.toString()));
 }
 
 export const SHORT_HUMAN_DATE = 1;

@@ -5,9 +5,7 @@ import {
   useSelectedAccount,
 } from "substrate-react";
 import useStore from "@/store/useStore";
-import { fetchBalanceByAssetId } from "@/defi/utils";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import _ from "lodash";
+import { DEFAULT_NETWORK_ID, fetchBalanceByAssetId } from "@/defi/utils";
 
 const processedTransactions: string[] = [];
 const Updater = () => {
@@ -20,16 +18,20 @@ const Updater = () => {
     if (parachainApi && selectedAccount) {
       let assets = [];
       for (let index = 0; index < supportedAssets.length; index++) {
-        assets.push(supportedAssets[index].network[DEFAULT_NETWORK_ID])
+        assets.push(supportedAssets[index].network[DEFAULT_NETWORK_ID]);
         const balance = await fetchBalanceByAssetId(
           parachainApi,
           selectedAccount.address,
           supportedAssets[index].network[DEFAULT_NETWORK_ID]
-        )
-        putAssetBalance(DEFAULT_NETWORK_ID, supportedAssets[index].network[DEFAULT_NETWORK_ID], balance);
+        );
+        putAssetBalance(
+          DEFAULT_NETWORK_ID,
+          supportedAssets[index].network[DEFAULT_NETWORK_ID],
+          balance
+        );
       }
     }
-  }, [parachainApi, selectedAccount, supportedAssets, putAssetBalance])
+  }, [parachainApi, selectedAccount, supportedAssets, putAssetBalance]);
 
   useEffect(() => {
     if (updateAllBalances && typeof updateAllBalances === "function") {

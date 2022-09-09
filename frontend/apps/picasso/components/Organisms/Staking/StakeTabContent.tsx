@@ -75,8 +75,11 @@ export const StakeTabContent: FC = () => {
   const theme = useTheme();
   const [lockablePICA, setLockablePICA] = useState<BigNumber>(new BigNumber(0));
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
-  const { balance, meta } = useStore(
+  const { meta } = useStore(
     (state) => state.substrateBalances.picasso.assets.pica
+  );
+  const balance = useStore(
+    (state) => state.substrateBalances.picasso.native.balance
   );
   const setRewardPool = useStore((state) => state.setRewardPool);
   const assetId = meta.supportedNetwork.picasso || 1;
@@ -128,7 +131,8 @@ export const StakeTabContent: FC = () => {
               Balance:
             </Typography>
             <Typography variant="inputLabel">
-              {formatNumber(balance)} PICA
+              {formatNumber(balance)}&nbsp;
+              {meta.symbol}
             </Typography>
           </Box>
         </Box>
@@ -171,7 +175,7 @@ export const StakeTabContent: FC = () => {
             console.log("initiating staking protocol");
             await executor.execute(
               parachainApi.tx.stakingRewards.stake(
-                "1",
+                assetId.toString(),
                 parachainApi.createType("u128", lockablePICA.toString()),
                 parachainApi.createType("u64", lockPeriod.toString())
               ),
