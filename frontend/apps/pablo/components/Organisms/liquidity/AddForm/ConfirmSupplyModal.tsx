@@ -13,18 +13,14 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
 import {
-  closeConfirmingSupplyModal,
-  closeConfirmSupplyModal, openConfirmingSupplyModal,
+  closeConfirmSupplyModal
 } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
 import { useSigner, useExecutor, useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils/constants";
-import { enqueueSnackbar } from "notistack";
-import { resetAddLiquiditySlice, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
-import { toChainUnits } from "@/defi/utils";
-import { useRouter } from "next/router";
+import { useAddLiquidity } from "@/defi/hooks/pools/addLiquidity/useAddLiquidity";
 export interface SupplyModalProps {
   assetOne: MockedAsset | undefined;
   assetTwo: MockedAsset | undefined;
@@ -51,57 +47,24 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
 }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
-  const router = useRouter();
 
   const signer = useSigner();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const executor = useExecutor();
 
-  const addLiquiditySlice = useAddLiquiditySlice();
-
-  const onConfirmSupply = async () => {
-    if (
-      selectedAccount &&
-      executor && parachainApi && selectedAccount &&
-      assetOne !== null &&
-      assetTwo !== null &&
-      signer !== undefined &&
-      addLiquiditySlice.pool) {
-        dispatch(closeConfirmSupplyModal());
-  
-      let isReverse =
-        addLiquiditySlice.pool.pair.base.toString() !== assetOne?.network.picasso;
-      const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount);
-      const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
-
-      executor.execute(
-        parachainApi.tx.pablo.addLiquidity(addLiquiditySlice.pool.poolId, bnBase.toString(), bnQuote.toString(), 0, true),
-        selectedAccount.address,
-        parachainApi,
-        signer,
-        (txReady: string) => {
-          dispatch(openConfirmingSupplyModal());
-          console.log('txReady', txReady)
-        },
-        (txHash: string, _events: any) => {
-          console.log('Finalized TX: ', txHash)
-          enqueueSnackbar('Added Liquidity: ' + txHash)
-          dispatch(closeConfirmingSupplyModal());
-          router.push('/pool/select/' + addLiquiditySlice.pool?.poolId)
-          resetAddLiquiditySlice();
-        },
-        (errorMessage: string) => {
-          console.log('Tx Error:', errorMessage)
-          enqueueSnackbar('Tx Error: ' + errorMessage)
-          dispatch(closeConfirmingSupplyModal());
-        }
-      ).catch((err: any) => {
-        dispatch(closeConfirmingSupplyModal());
-        console.log('Tx Error:', err)
-      })
-    }
-  }
+  const onConfirmSupply = useAddLiquidity({
+    selectedAccount,
+    executor,
+    parachainApi,
+    assetOne: assetOne?.network[DEFAULT_NETWORK_ID] ?? undefined,
+    assetTwo: assetTwo?.network[DEFAULT_NETWORK_ID] ?? undefined,
+    assetOneAmount,
+    assetTwoAmount,
+    lpReceiveAmount,
+    pool,
+    signer
+  });
 
   return (
     <Modal onClose={() => dispatch(closeConfirmSupplyModal())} {...rest}>
