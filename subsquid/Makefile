@@ -26,7 +26,7 @@ typegen: kusamaVersions.json
 	@npx squid-substrate-typegen typegen.json
 
 
-kusamaVersions.json:
+daliDevVersions.json:
 	@make explore
 
 
@@ -43,6 +43,16 @@ up:
 
 down:
 	@docker-compose down
+
+rebuild:
+	rm -f -r lib
+	rm -f -r db/migrations
+	npx sqd db drop
+	npx sqd db create
+	npx npx squid-typeorm-codegen
+	npm run build
+	npx sqd db create-migration Init
+	npx sqd db migrate
 
 
 .PHONY: process serve start codegen migration migrate up down

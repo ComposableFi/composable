@@ -1,5 +1,6 @@
 set -e
-npx npx squid-typeorm-codegen
+npm run typegen
+npx squid-typeorm-codegen
 npm run build
 #rm -rf db/migrations/*.js
 npx squid-typeorm-migration

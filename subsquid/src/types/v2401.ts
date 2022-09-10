@@ -13,6 +13,22 @@ export interface Fee {
   assetId: bigint
 }
 
+export type VestingScheduleIdSet = VestingScheduleIdSet_All | VestingScheduleIdSet_One | VestingScheduleIdSet_Many
+
+export interface VestingScheduleIdSet_All {
+  __kind: 'All'
+}
+
+export interface VestingScheduleIdSet_One {
+  __kind: 'One'
+  value: bigint
+}
+
+export interface VestingScheduleIdSet_Many {
+  __kind: 'Many'
+  value: bigint[]
+}
+
 export interface VestingSchedule {
   vestingScheduleId: bigint
   window: VestingWindow

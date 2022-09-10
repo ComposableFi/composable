@@ -1,39 +1,45 @@
-import * as ss58 from "@subsquid/ss58";
-import {
-  EventHandlerContext,
-  SubstrateProcessor,
-} from "@subsquid/substrate-processor";
-import { Store, TypeormDatabase } from "@subsquid/typeorm-store";
+import { SubstrateProcessor } from "@subsquid/substrate-processor";
+import { TypeormDatabase } from "@subsquid/typeorm-store";
 import * as dotenv from "dotenv"; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
-import { Account, HistoricalBalance } from "./model";
 import {
-  BalancesTransferEvent,
-  BondedFinanceNewBondEvent,
-  BondedFinanceNewOfferEvent,
   PabloLiquidityAddedEvent,
   PabloLiquidityRemovedEvent,
   PabloPoolCreatedEvent,
   PabloPoolDeletedEvent,
   PabloSwappedEvent,
-  VestingVestingScheduleAddedEvent,
 } from "./types/events";
-import { getOrCreate } from "./dbHelper";
 import {
   processLiquidityAddedEvent,
   processLiquidityRemovedEvent,
   processPoolCreatedEvent,
   processPoolDeletedEvent,
   processSwappedEvent,
-} from "./pabloProcessor";
+} from "./processors/pablo";
+import {
+  processRewardPoolCreatedEvent,
+  processSplitPositionEvent,
+  processStakeAmountExtendedEvent,
+  processStakedEvent,
+  processUnstakedEvent,
+} from "./processors/stakingRewards";
+import {
+  processTransferEvent,
+  processDepositEvent,
+  processWithdrawEvent,
+} from "./processors/balances";
 import {
   processNewBondEvent,
   processNewOfferEvent,
-} from "./bondedFinanceProcessor";
-import { processVestingScheduleAddedEvent } from "./vestingProcessor";
+  processOfferCancelledEvent,
+} from "./processors/bondedFinance";
+import {
+  processVestingClaimedEvent,
+  processVestingScheduleAddedEvent,
+} from "./processors/vestingSchedule";
+import { processOraclePriceChanged } from "./processors/oracle";
 
 dotenv.config();
 
-const dbName = "composable_dali_dev";
 const processor = new SubstrateProcessor(new TypeormDatabase());
 
 const chain = (): string => {
@@ -96,69 +102,47 @@ processor.addEventHandler("Pablo.Swapped", async (ctx) => {
   await processSwappedEvent(ctx, event);
 });
 
-processor.addEventHandler("Balances.Transfer", async (ctx) => {
-  const transfer = getTransferEvent(ctx);
-  const tip = ctx.event.extrinsic?.tip || 0n;
-  const from = ss58.codec("picasso").encode(transfer.from);
-  const to = ss58.codec("picasso").encode(transfer.to);
+processor.addEventHandler("Balances.Transfer", processTransferEvent);
 
-  const fromAcc = await getOrCreate(ctx.store, Account, from);
-  fromAcc.balance = fromAcc.balance || 0n;
-  fromAcc.balance -= transfer.amount;
-  fromAcc.balance -= tip;
-  await ctx.store.save(fromAcc);
+processor.addEventHandler("Balances.Withdraw", processWithdrawEvent);
 
-  const toAcc = await getOrCreate(ctx.store, Account, to);
-  toAcc.balance = toAcc.balance || 0n;
-  toAcc.balance += transfer.amount;
-  await ctx.store.save(toAcc);
+processor.addEventHandler("Balances.Deposit", processDepositEvent);
 
-  await ctx.store.save(
-    new HistoricalBalance({
-      id: `${ctx.event.id}-to`,
-      account: fromAcc,
-      balance: fromAcc.balance,
-      date: new Date(ctx.block.timestamp),
-    })
-  );
+processor.addEventHandler("BondedFinance.NewOffer", processNewOfferEvent);
 
-  await ctx.store.save(
-    new HistoricalBalance({
-      id: `${ctx.event.id}-from`,
-      account: toAcc,
-      balance: toAcc.balance,
-      date: new Date(ctx.block.timestamp),
-    })
-  );
-});
+processor.addEventHandler("BondedFinance.NewBond", processNewBondEvent);
 
-processor.addEventHandler("BondedFinance.NewOffer", async (ctx) => {
-  const event = new BondedFinanceNewOfferEvent(ctx);
+processor.addEventHandler(
+  "BondedFinance.OfferCancelled",
+  processOfferCancelledEvent
+);
 
-  await processNewOfferEvent(ctx, event);
-});
+processor.addEventHandler(
+  "Vesting.VestingScheduleAdded",
+  processVestingScheduleAddedEvent
+);
 
-processor.addEventHandler("BondedFinance.NewBond", async (ctx) => {
-  const event = new BondedFinanceNewBondEvent(ctx);
+processor.addEventHandler("Vesting.Claimed", processVestingClaimedEvent);
 
-  await processNewBondEvent(ctx, event);
-});
+processor.addEventHandler(
+  "StakingRewards.RewardPoolCreated",
+  processRewardPoolCreatedEvent
+);
 
-processor.addEventHandler("Vesting.VestingScheduleAdded", async (ctx) => {
-  const event = new VestingVestingScheduleAddedEvent(ctx);
+processor.addEventHandler("StakingRewards.Staked", processStakedEvent);
 
-  await processVestingScheduleAddedEvent(ctx, event);
-});
+processor.addEventHandler(
+  "StakingRewards.StakeAmountExtended",
+  processStakeAmountExtendedEvent
+);
+
+processor.addEventHandler("StakingRewards.Unstaked", processUnstakedEvent);
+
+processor.addEventHandler(
+  "StakingRewards.SplitPosition",
+  processSplitPositionEvent
+);
+
+processor.addEventHandler("Oracle.PriceChanged", processOraclePriceChanged);
 
 processor.run();
-
-interface TransferEvent {
-  from: Uint8Array;
-  to: Uint8Array;
-  amount: bigint;
-}
-
-function getTransferEvent(ctx: EventHandlerContext<Store, { event: true }>) {
-  const event = new BalancesTransferEvent(ctx);
-  return event.asV2401;
-}
