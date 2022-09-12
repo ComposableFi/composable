@@ -2,42 +2,15 @@ import { Modal, TokenAsset } from "@/components";
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FC, useEffect, useState } from "react";
-import {
-  callIf,
-  formatNumber,
-  fromChainIdUnit,
-  unwrapNumberOrHex,
-} from "shared";
+import { callIf, formatNumber } from "shared";
 import BigNumber from "bignumber.js";
-import { ApiPromise } from "@polkadot/api";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { ComposableTraitsStakingStake } from "defi-interfaces";
-import { Option } from "@polkadot/types-codec";
 import { getSigner, useExecutor } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-
-async function fetchStakingRewardPosition(
-  api: ApiPromise,
-  positionId: BigNumber,
-  setter: (position: any) => void
-) {
-  const result: Option<ComposableTraitsStakingStake> =
-    await api.query.stakingRewards.stakes(
-      api.createType("u128", positionId.toString())
-    );
-
-  if (result.isSome) {
-    const data: any = result.toJSON();
-    setter({
-      unlockPenalty: unwrapNumberOrHex(data.lock.unlockPenalty),
-      share: fromChainIdUnit(unwrapNumberOrHex(data.share)),
-      stake: fromChainIdUnit(unwrapNumberOrHex(data.stake)),
-    });
-  }
-}
+import { fetchStakingRewardPosition } from "@/defi/polkadot/pallets/StakingRewards";
 
 // TODO: positionId should be fetched from subsquid or other sources
 const positionId = new BigNumber(4);
@@ -52,6 +25,9 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
     share: new BigNumber(0),
     stake: new BigNumber(0),
   });
+  const withdrawablePica = position.stake.minus(
+    position.stake.multipliedBy(position.unlockPenalty)
+  );
   const account = useSelectedAccount();
   const executor = useExecutor();
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
@@ -109,10 +85,6 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
       fetchStakingRewardPosition(api, positionId, setPosition)
     );
   }, [parachainApi]);
-
-  const withdrawablePica = position.stake.minus(
-    position.stake.multipliedBy(position.unlockPenalty)
-  );
 
   return (
     <Modal open={open} dismissible onClose={onClose} maxWidth="md">

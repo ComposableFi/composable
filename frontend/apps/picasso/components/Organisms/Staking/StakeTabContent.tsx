@@ -1,13 +1,6 @@
 import BigNumber from "bignumber.js";
 import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
-import {
-  callIf,
-  formatNumber,
-  fromPerbill,
-  humanDateDiff,
-  toChainIdUnit,
-  unwrapNumberOrHex,
-} from "shared";
+import { callIf, formatNumber, toChainIdUnit } from "shared";
 import { AlertBox, BigNumberInput } from "@/components";
 import { RadioButtonGroup } from "@/components/Molecules/RadioButtonGroup";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
@@ -15,62 +8,17 @@ import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
 import { WarningAmberRounded } from "@mui/icons-material";
 import { FC, useEffect, useState } from "react";
 import { useStore } from "@/stores/root";
-import { ApiPromise } from "@polkadot/api";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { RewardPool } from "@/stores/defi/polkadot/stakingRewards/slice";
 import { getSigner, useExecutor } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system";
 import { SnackbarKey, useSnackbar } from "notistack";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
-
-function transformRewardPool(rewardPoolsWrapped: any): RewardPool {
-  return {
-    owner: rewardPoolsWrapped,
-    assetId: rewardPoolsWrapped.assetId.toString(),
-    rewards: rewardPoolsWrapped.rewards,
-    totalShares: unwrapNumberOrHex(rewardPoolsWrapped.totalShares.toString()),
-    claimedShares: unwrapNumberOrHex(
-      rewardPoolsWrapped.claimedShares.toString()
-    ),
-    endBlock: unwrapNumberOrHex(rewardPoolsWrapped.endBlock.toString()),
-    lock: {
-      ...rewardPoolsWrapped.lock,
-      durationPresets: Object.fromEntries(
-        Object.entries(rewardPoolsWrapped.lock.durationPresets).map(
-          ([duration, multiplier]) => [
-            duration,
-            fromPerbill(multiplier as string),
-          ]
-        )
-      ),
-    },
-    shareAssetId: rewardPoolsWrapped.shareAssetId.toString(),
-    financialNftAssetId: rewardPoolsWrapped.financialNftAssetId.toString(),
-  } as unknown as RewardPool;
-}
-
-async function fetchRewardPools(api: ApiPromise, assetId: number) {
-  const rewardPoolsWrapped: any = (
-    await api.query.stakingRewards.rewardPools(api.createType("u128", assetId))
-  ).toJSON();
-
-  if (!rewardPoolsWrapped) return null;
-
-  return transformRewardPool(rewardPoolsWrapped);
-}
-
-function formatDurationOption(duration: string, multiplier: BigNumber) {
-  const future = new Date();
-  future.setSeconds(future.getSeconds() + parseInt(duration));
-  const [diff, label] = humanDateDiff(new Date(), future);
-
-  return `${diff} ${label} (${multiplier.toFixed(2).toString()}%)`;
-}
-
-type DurationOption = {
-  [key in number]: string;
-};
+import {
+  DurationOption,
+  fetchRewardPools,
+  formatDurationOption,
+} from "@/defi/polkadot/pallets/StakingRewards";
 
 export const StakeTabContent: FC = () => {
   const theme = useTheme();
@@ -96,7 +44,7 @@ export const StakeTabContent: FC = () => {
         callIf(pool, (poolToStore) => setRewardPool(assetId, poolToStore))
       )
     );
-  }, [parachainApi, setRewardPool]);
+  }, [assetId, parachainApi, setRewardPool]);
 
   const options: Array<{
     label: string;
@@ -193,7 +141,7 @@ export const StakeTabContent: FC = () => {
                   url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
                 });
               },
-              (txHash: string, events: EventRecord[]) => {
+              (txHash: string, _events: EventRecord[]) => {
                 closeSnackbar(snackbarKey);
                 enqueueSnackbar(
                   `Successfully staked ${lockablePICA

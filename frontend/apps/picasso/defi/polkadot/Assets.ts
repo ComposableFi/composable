@@ -25,7 +25,7 @@ export const Assets: {
       karura: null,
       picasso: 1,
       kusama: null,
-    }
+    },
   },
   ksm: {
     decimals: 12,
@@ -37,7 +37,7 @@ export const Assets: {
       karura: null,
       picasso: 4,
       kusama: 1,
-    }
+    },
   },
   kusd: {
     decimals: 12,
@@ -108,11 +108,10 @@ export const Assets: {
     supportedNetwork: {
       karura: null,
       picasso: 100,
-      kusama: null
-    }
+      kusama: null,
+    },
   },
 };
-
 
 export const AssetsValidForNow: AssetId[] = ["pica", "kusd", "ksm"];
 
@@ -142,19 +141,19 @@ export const getAssetOnChainId = (
 export const getAssetOptions = (noneTokenLabel?: string) => [
   ...(noneTokenLabel
     ? [
-      {
-        value: "none",
-        label: noneTokenLabel,
-        icon: undefined,
-        disabled: true,
-        hidden: true
-      }
-    ]
+        {
+          value: "none",
+          label: noneTokenLabel,
+          icon: undefined,
+          disabled: true,
+          hidden: true,
+        },
+      ]
     : []),
-  ...Object.values(Assets).map(asset => ({
+  ...Object.values(Assets).map((asset) => ({
     value: asset.assetId,
     label: asset.name,
     shortLabel: asset.symbol,
-    icon: asset.icon
-  }))
+    icon: asset.icon,
+  })),
 ];
