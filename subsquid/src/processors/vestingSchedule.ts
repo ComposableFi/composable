@@ -5,7 +5,13 @@ import {
   VestingSchedule as VestingScheduleType,
   VestingScheduleIdSet,
 } from "../types/v2401";
-import { Schedule, ScheduleWindow, EventType, VestingSchedule } from "../model";
+import {
+  EventType,
+  LockedSource,
+  Schedule,
+  ScheduleWindow,
+  VestingSchedule,
+} from "../model";
 import {
   VestingClaimedEvent,
   VestingVestingScheduleAddedEvent,
@@ -105,7 +111,12 @@ export async function processVestingScheduleAddedEvent(
 
   const { scheduleAmount, asset } = getVestingScheduleAddedEvent(event);
 
-  await storeHistoricalLockedValue(ctx, scheduleAmount, asset.toString());
+  await storeHistoricalLockedValue(
+    ctx,
+    scheduleAmount,
+    asset.toString(),
+    LockedSource.VestingSchedules
+  );
 }
 
 interface VestingScheduleClaimedEvent {
@@ -182,6 +193,11 @@ export async function processVestingClaimedEvent(
 
     await ctx.store.save(schedule);
 
-    await storeHistoricalLockedValue(ctx, -amount, schedule.assetId);
+    await storeHistoricalLockedValue(
+      ctx,
+      -amount,
+      schedule.assetId,
+      LockedSource.VestingSchedules
+    );
   }
 }

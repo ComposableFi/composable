@@ -18,6 +18,7 @@ import {
 import {
   Event,
   EventType,
+  LockedSource,
   PabloPool,
   PabloPoolAsset,
   PabloTransaction,
@@ -267,12 +268,14 @@ export async function processLiquidityAddedEvent(
     await storeHistoricalLockedValue(
       ctx,
       liquidityAddedEvt.baseAmount,
-      baseAsset.assetId
+      baseAsset.assetId,
+      LockedSource.Pablo
     );
     await storeHistoricalLockedValue(
       ctx,
       liquidityAddedEvt.quoteAmount,
-      quoteAsset.assetId
+      quoteAsset.assetId,
+      LockedSource.Pablo
     );
 
     await ctx.store.save(pool);
@@ -377,12 +380,14 @@ export async function processLiquidityRemovedEvent(
     await storeHistoricalLockedValue(
       ctx,
       -liquidityRemovedEvt.baseAmount,
-      baseAsset.assetId
+      baseAsset.assetId,
+      LockedSource.Pablo
     );
     await storeHistoricalLockedValue(
       ctx,
       -liquidityRemovedEvt.quoteAmount,
-      quoteAsset.assetId.toString()
+      quoteAsset.assetId.toString(),
+      LockedSource.Pablo
     );
 
     await ctx.store.save(pool);

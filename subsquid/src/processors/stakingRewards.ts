@@ -10,11 +10,11 @@ import {
 } from "../types/events";
 import { saveAccountAndEvent, storeHistoricalLockedValue } from "../dbHelper";
 import {
+  Event,
+  EventType,
+  LockedSource,
   RewardPool,
   StakingPosition,
-  StakingSource,
-  EventType,
-  Event,
 } from "../model";
 import { encodeAccount } from "../utils";
 
@@ -136,7 +136,7 @@ export function createStakingPosition(
     startTimestamp,
     endTimestamp: BigInt(startTimestamp + BigInt(duration * 1_000n)),
     assetId,
-    source: StakingSource.StakingRewards,
+    source: LockedSource.StakingRewards,
   });
 }
 
@@ -185,7 +185,7 @@ export function splitStakingPosition(
     startTimestamp: position.startTimestamp,
     endTimestamp: position.endTimestamp,
     assetId: position.assetId,
-    source: StakingSource.StakingRewards,
+    source: LockedSource.StakingRewards,
   });
 }
 
@@ -249,7 +249,12 @@ export async function processStakedEvent(
     BigInt(ctx.block.timestamp)
   );
 
-  await storeHistoricalLockedValue(ctx, amount, poolId.toString());
+  await storeHistoricalLockedValue(
+    ctx,
+    amount,
+    poolId.toString(),
+    LockedSource.StakingRewards
+  );
 
   await ctx.store.save(stakingPosition);
 }
@@ -288,7 +293,12 @@ export async function processStakeAmountExtendedEvent(
 
   extendStakingPosition(stakingPosition, amount, event);
 
-  await storeHistoricalLockedValue(ctx, amountChanged, stakingPosition.assetId);
+  await storeHistoricalLockedValue(
+    ctx,
+    amountChanged,
+    stakingPosition.assetId,
+    LockedSource.StakingRewards
+  );
 }
 
 /**
@@ -318,7 +328,12 @@ export async function processUnstakedEvent(
 
   await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_UNSTAKE, owner);
 
-  await storeHistoricalLockedValue(ctx, -position.amount, position.assetId);
+  await storeHistoricalLockedValue(
+    ctx,
+    -position.amount,
+    position.assetId,
+    LockedSource.StakingRewards
+  );
 }
 
 /**

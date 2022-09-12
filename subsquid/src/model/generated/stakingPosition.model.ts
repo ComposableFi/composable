@@ -1,7 +1,7 @@
 import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, OneToOne as OneToOne_, Index as Index_, JoinColumn as JoinColumn_} from "typeorm"
 import * as marshal from "./marshal"
 import {Event} from "./event.model"
-import {StakingSource} from "./_stakingSource"
+import {LockedSource} from "./_lockedSource"
 
 @Index_(["fnftCollectionId", "fnftInstanceId"], {unique: true})
 @Entity_()
@@ -44,6 +44,6 @@ export class StakingPosition {
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: true})
   endTimestamp!: bigint | undefined | null
 
-  @Column_("varchar", {length: 14, nullable: false})
-  source!: StakingSource
+  @Column_("varchar", {length: 16, nullable: false})
+  source!: LockedSource
 }

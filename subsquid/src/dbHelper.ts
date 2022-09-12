@@ -7,10 +7,10 @@ import {
   Activity,
   Currency,
   Event,
-  HistoricalLockedValue,
-  PabloPool,
-  RewardPool,
   EventType,
+  HistoricalLockedValue,
+  LockedSource,
+  PabloPool,
 } from "./model";
 
 export async function get<T extends { id: string }>(
@@ -179,14 +179,17 @@ export async function saveAccountAndEvent(
 
 /**
  * Stores a new HistoricalLockedValue with current locked amount
+ * for the specified source, and for the overall locked value
  * @param ctx
  * @param amountLocked
  * @param assetId
+ * @param source
  */
 export async function storeHistoricalLockedValue(
   ctx: EventHandlerContext<Store>,
   amountLocked: bigint,
-  assetId: string
+  assetId: string,
+  source: LockedSource
 ): Promise<void> {
   const wsProvider = new WsProvider("ws://127.0.0.1:9988");
   const api = await ApiPromise.create({ provider: wsProvider });
@@ -202,7 +205,8 @@ export async function storeHistoricalLockedValue(
   // @ts-ignore
   const assetPrice = BigInt(oraclePrice.price.toString());
 
-  const lastLockedValue = await getLastLockedValue(ctx);
+  const lastLockedValueAll = await getLastLockedValue(ctx, LockedSource.All);
+  const lastLockedValueSource = await getLastLockedValue(ctx, source);
 
   let event = await ctx.store.get(Event, { where: { id: ctx.event.id } });
 
@@ -210,24 +214,37 @@ export async function storeHistoricalLockedValue(
     return Promise.reject("Event not found");
   }
 
-  const historicalLockedValue = new HistoricalLockedValue({
+  const historicalLockedValueAll = new HistoricalLockedValue({
     id: randomUUID(),
     event,
-    amount: lastLockedValue + amountLocked * assetPrice,
+    amount: lastLockedValueAll + amountLocked * assetPrice,
     currency: Currency.USD,
     timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
+    source: LockedSource.All,
   });
 
-  await ctx.store.save(historicalLockedValue);
+  const historicalLockedValueSource = new HistoricalLockedValue({
+    id: randomUUID(),
+    event,
+    amount: lastLockedValueSource + amountLocked * assetPrice,
+    currency: Currency.USD,
+    timestamp: BigInt(new Date(ctx.block.timestamp).valueOf()),
+    source,
+  });
+
+  await ctx.store.save(historicalLockedValueAll);
+  await ctx.store.save(historicalLockedValueSource);
 }
 
 /**
  * Get latest locked value
  */
 export async function getLastLockedValue(
-  ctx: EventHandlerContext<Store>
+  ctx: EventHandlerContext<Store>,
+  source: LockedSource
 ): Promise<bigint> {
   const lastLockedValue = await ctx.store.get(HistoricalLockedValue, {
+    where: { source },
     order: { timestamp: "DESC" },
   });
 

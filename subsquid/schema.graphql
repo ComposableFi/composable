@@ -124,8 +124,11 @@ type RewardPool @entity {
   poolId: String! @index
 }
 
-enum StakingSource {
+enum LockedSource {
+  All
+  Pablo
   StakingRewards
+  VestingSchedules
 }
 
 type StakingPosition @entity @index(fields: ["fnftCollectionId", "fnftInstanceId"], unique: true) {
@@ -139,15 +142,16 @@ type StakingPosition @entity @index(fields: ["fnftCollectionId", "fnftInstanceId
   amount: BigInt!
   startTimestamp: BigInt!
   endTimestamp: BigInt
-  source: StakingSource!
+  source: LockedSource!
 }
 
 type HistoricalLockedValue @entity {
   id: ID!
-  event: Event! @unique @index
+  event: Event! @index
   amount: BigInt!
   currency: Currency!
   timestamp: BigInt!
+  source: LockedSource!
 }
 
 type PabloTransaction @entity {
