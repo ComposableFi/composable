@@ -3,12 +3,14 @@ import { LiquidityBootstrappingPool } from "@/defi/types";
 import { calculator, DEFAULT_NETWORK_ID, fetchSpotPrice } from "@/defi/utils";
 import { fetchAuctions } from "@/defi/utils/pablo/auctions";
 import { useAppSelector } from "@/hooks/store";
+import { usePrevious } from "@/hooks/usePrevious";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { useAssetBalance } from "@/store/assets/hooks";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
+import _ from "lodash";
 import { useSnackbar } from "notistack";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   useDotSamaContext,
   useParachainApi,
@@ -17,7 +19,7 @@ import {
 } from "substrate-react";
 import { useAsset } from "../assets/useAsset";
 
-export const useBuyForm = (): {
+export const useAuctionBuyForm = (): {
   balanceBase: BigNumber;
   balanceQuote: BigNumber;
   isValidBaseInput: boolean;
@@ -33,13 +35,12 @@ export const useBuyForm = (): {
   slippageAmount: BigNumber;
   selectedAuction: LiquidityBootstrappingPool;
   isBuyButtonDisabled: boolean;
-  isProcessing: boolean;
   refreshAuctionData: () => void;
   isPendingBuy: boolean;
   onChangeTokenAmount: (
     changedSide: "quote" | "base",
     amount: BigNumber
-  ) => Promise<void>;
+  ) => void;
 } => {
   const { enqueueSnackbar } = useSnackbar();
   const { extensionStatus } = useDotSamaContext();
@@ -53,7 +54,9 @@ export const useBuyForm = (): {
   const slippage = useAppSelector(
     (state) => state.settings.transactionSettings.tolerance
   );
+  const previousSlippage = usePrevious(slippage);
 
+  const [spotPrice, setSpotPrice] = useState(new BigNumber(0));
   const baseAsset = useAsset(activeLBP.pair.base.toString());
   const quoteAsset = useAsset(activeLBP.pair.quote.toString());
 
@@ -69,77 +72,71 @@ export const useBuyForm = (): {
   const [isValidBaseInput, setIsValidBaseInput] = useState(false);
   const [isValidQuoteInput, setIsValidQuoteInput] = useState(false);
 
-  const [minimumReceived, setMinimumReceived] = useState(new BigNumber(0));
-  const [slippageAmount, setSlippageAmount] = useState(new BigNumber(0));
-  const [feeCharged, setFeeCharged] = useState(new BigNumber(0));
-
-  const [tokenAmounts, setTokenAmounts] = useState({
+  const initialTokenAmounts = {
     baseAmount: new BigNumber(0),
     quoteAmount: new BigNumber(0),
-  });
+    minimumReceived: new BigNumber(0),
+    slippageAmount: new BigNumber(0),
+    feeCharged: new BigNumber(0),
+  };
+  const [tokenAmounts, setTokenAmounts] = useState(initialTokenAmounts);
+  const resetTokenAmounts = () => setTokenAmounts(initialTokenAmounts);
 
-  const resetTokenAmounts = () =>
-    setTokenAmounts({
-      baseAmount: new BigNumber(0),
-      quoteAmount: new BigNumber(0),
-    });
-
-  const [isProcessing, setIsProcessing] = useState(false);
+  const isUpdatingField = useRef(false);
 
   useEffect(() => {
     if (selectedAccount) {
-      setIsProcessing(true);
       resetTokenAmounts();
-      setTimeout(() => {
-        setIsProcessing(false);
-      }, 500);
     }
   }, [selectedAccount]);
 
-  const onChangeTokenAmount = async (
-    changedSide: "base" | "quote",
-    amount: BigNumber
-  ) => {
-    try {
-      setIsProcessing(true);
-      if (parachainApi && activeLBP) {
-        const { base, quote } = activeLBP.pair;
-        const { feeRate } = activeLBP.feeConfig;
-        let feePercentage = new BigNumber(feeRate).toNumber();
+  const updateSpotPrice = useCallback(() => {
+    if (!activeLBP || !parachainApi) return;
+    const { base, quote } = activeLBP.pair;
+    let pair = { base: base.toString(), quote: quote.toString() };
+    fetchSpotPrice(parachainApi, pair, activeLBP.poolId)
+      .then(setSpotPrice)
+      .catch(console.error);
+  }, [activeLBP, parachainApi]);
 
-        let pair = { base: base.toString(), quote: quote.toString() };
-        const spotPrice = await fetchSpotPrice(
-          parachainApi,
-          pair,
-          activeLBP.poolId
-        );
-        const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
-          calculator(changedSide, amount, spotPrice, slippage, feePercentage);
+  const onChangeTokenAmount = useCallback(
+    (changedSide: "quote" | "base", amount: BigNumber) => {
+      if (!parachainApi || !activeLBP || isUpdatingField.current) return;
+      if (spotPrice.eq(0)) {
+        updateSpotPrice();
+        return;
+      }
+      isUpdatingField.current = true;
+      updateSpotPrice();
+      const {
+        feeConfig: { feeRate },
+      } = activeLBP;
+      let feePercentage = new BigNumber(feeRate).toNumber();
+      const { minReceive, tokenOutAmount, feeChargedAmount, slippageAmount } =
+        calculator(changedSide, amount, spotPrice, slippage, feePercentage);
 
-        if (changedSide === "base" && tokenOutAmount.gt(balanceQuote)) {
-          throw new Error("Insufficient Balance");
-        }
-
+      if (changedSide === "base" && tokenOutAmount.gt(balanceQuote)) {
+        enqueueSnackbar("Insufficient Quote Asset balance.", {
+          variant: "error",
+        });
+        resetTokenAmounts();
+      } else {
         setTokenAmounts({
           quoteAmount: changedSide === "base" ? tokenOutAmount : amount,
           baseAmount: changedSide === "quote" ? tokenOutAmount : amount,
+          minimumReceived: minReceive,
+          feeCharged: feeChargedAmount,
+          slippageAmount: slippageAmount,
         });
-        setMinimumReceived(minReceive);
-        setFeeCharged(feeChargedAmount);
-        setSlippageAmount(slippageAmount);
-      } else {
-        throw new Error("Invalid LBP");
       }
-    } catch (err: any) {
-      console.error(err.message);
-      enqueueSnackbar(err.message);
-      resetTokenAmounts();
-    } finally {
-      setTimeout(() => {
-        setIsProcessing(false);
-      }, 500);
-    }
-  };
+      isUpdatingField.current = false;
+    },
+    [parachainApi, balanceQuote, activeLBP, spotPrice, updateSpotPrice]
+  );
+
+  const debouncedUpdater = useCallback(_.debounce(onChangeTokenAmount, 500), [
+    onChangeTokenAmount,
+  ]);
 
   const refreshAuctionData = useCallback(async () => {
     const { poolId } = activeLBP;
@@ -152,7 +149,6 @@ export const useBuyForm = (): {
   }, [activeLBP, putHistoryActiveLBP, putStatsActiveLBP, parachainApi]);
 
   const { baseAmount, quoteAmount } = tokenAmounts;
-
   const isPendingBuy = usePendingExtrinsic(
     "exchange",
     "dexRouter",
@@ -168,6 +164,48 @@ export const useBuyForm = (): {
     );
   }, [isValidBaseInput, isValidQuoteInput, extensionStatus, isPendingBuy]);
 
+  /**
+   * Effect to update minimum received when
+   * there is a change in slippage
+   */
+  useEffect(() => {
+    if (parachainApi && activeLBP) {
+      if (previousSlippage != slippage) {
+        const { minimumReceived } = tokenAmounts;
+        if (minimumReceived.gt(0)) {
+          const { feeRate } = activeLBP.feeConfig;
+          let feePercentage = new BigNumber(feeRate).toNumber();
+
+          const { minReceive } = calculator(
+            "quote",
+            quoteAmount,
+            spotPrice,
+            slippage,
+            feePercentage
+          );
+
+          setTokenAmounts((amounts) => {
+            return {
+              ...amounts,
+              minimumReceived: minReceive,
+            };
+          });
+        }
+      }
+    }
+    return;
+  }, [
+    spotPrice,
+    activeLBP,
+    balanceQuote,
+    previousSlippage,
+    tokenAmounts,
+    slippage,
+    parachainApi,
+    quoteAmount,
+    baseAmount,
+  ]);
+
   return {
     balanceBase,
     balanceQuote,
@@ -177,16 +215,15 @@ export const useBuyForm = (): {
     setIsValidQuoteInput,
     quoteAsset,
     baseAsset,
-    minimumReceived,
+    minimumReceived: tokenAmounts.minimumReceived,
     baseAmount,
     quoteAmount,
-    slippageAmount,
-    feeCharged,
+    slippageAmount: tokenAmounts.slippageAmount,
+    feeCharged: tokenAmounts.feeCharged,
     isBuyButtonDisabled,
     selectedAuction: activeLBP,
     refreshAuctionData,
-    onChangeTokenAmount,
+    onChangeTokenAmount: debouncedUpdater,
     isPendingBuy,
-    isProcessing,
   };
 };
