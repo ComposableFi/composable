@@ -5,11 +5,9 @@ use primitives::Chain;
 #[cfg(feature = "testing")]
 use std::sync::atomic::{AtomicBool, Ordering};
 
-pub mod connection_delay;
 pub mod events;
 pub mod logging;
-pub mod packet_messages;
-pub mod packet_messages_utils;
+pub mod packets;
 
 use events::parse_events;
 

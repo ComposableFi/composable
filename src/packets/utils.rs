@@ -1,4 +1,4 @@
-use crate::connection_delay::has_delay_elapsed;
+use crate::packets::connection_delay::has_delay_elapsed;
 use ibc::{
 	core::{
 		ics04_channel::{

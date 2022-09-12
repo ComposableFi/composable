@@ -1,4 +1,4 @@
-use crate::packet_messages::query_ready_and_timed_out_packets;
+use crate::packets::query_ready_and_timed_out_packets;
 #[cfg(feature = "testing")]
 use crate::packet_relay_status;
 use codec::Encode;
