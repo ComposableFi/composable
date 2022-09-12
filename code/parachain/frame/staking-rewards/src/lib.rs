@@ -829,7 +829,7 @@ pub mod pallet {
 				Self::compute_rewards_and_reductions(boosted_amount, &rewards_pool)?;
 			rewards_pool.total_shares = rewards_pool.total_shares.safe_add(&boosted_amount)?;
 			rewards_pool.rewards = rewards;
-			stake.stake = stake.stake.safe_add(&boosted_amount)?;
+			stake.stake = stake.stake.safe_add(&amount)?;
 			stake.share = stake.share.safe_add(&boosted_amount)?;
 			for (asset, additional_inflation) in reductions.iter() {
 				let inflation =
