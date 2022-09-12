@@ -299,11 +299,11 @@ fn test_extend_stake_amount() {
 				.collect::<BTreeMap<_, _>>(),
 		)
 		.expect("reductions expected");
-		let stake = StakingRewards::stakes(StakingRewards::stakes(1, 0));
+		let stake = StakingRewards::stakes(1, 0);
 		assert_eq!(
 			stake,
 			Some(Stake {
-				fnft_instance_id: 1,
+				fnft_instance_id: 0,
 				reward_pool_id: pool_id,
 				stake: amount + extend_amount,
 				share: boosted_amount + extend_amount,
@@ -317,13 +317,13 @@ fn test_extend_stake_amount() {
 		);
 		assert_eq!(balance(staked_asset_id, &staker), existential_deposit);
 		assert_eq!(
-			balance(staked_asset_id, &StakingRewards::pool_account_id(&pool_id)),
+			balance(staked_asset_id, &FinancialNft::asset_account(&1, &0)),
 			amount + extend_amount
 		);
 		assert_last_event::<Test, _>(|e| {
 			matches!(e.event,
             Event::StakingRewards(crate::Event::StakeAmountExtended { fnft_collection_id, fnft_instance_id, amount})
-            if fnft_collection_id == 1_u128 && fnft_instance_id == 1_u64 && amount == extend_amount)
+            if fnft_collection_id == 1_u128 && fnft_instance_id == 0_u64 && amount == extend_amount)
 		});
 	});
 }
