@@ -27,3 +27,9 @@ pub enum Error {
 	#[error("Hex decode error")]
 	HexDecode(#[from] hex::FromHexError),
 }
+
+impl From<String> for Error {
+	fn from(error: String) -> Self {
+		Self::Custom(error)
+	}
+}

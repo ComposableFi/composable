@@ -3332,6 +3332,7 @@ dependencies = [
  "sp-runtime 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "subxt",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]

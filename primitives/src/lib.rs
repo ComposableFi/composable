@@ -37,7 +37,10 @@ use ibc::{
 use ibc_proto::ibc::core::channel::v1::QueryChannelsResponse;
 use ibc_rpc::PacketInfo;
 
+pub mod client_update_type;
 pub mod error;
+#[cfg(test)]
+mod mocks;
 
 pub enum UpdateType {
 	// contains an authority set change.
@@ -457,7 +460,7 @@ async fn search_for_matching_block_height(
 			start = mid + 1;
 		} else {
 			// We don't want to exit immediately because we are looking for the first block with a
-			// timestamp greater than or equal to the given height since we want to maintain a
+			// timestamp greater than or equal to the given timestamp since we want to maintain a
 			// consistency in calculating block delays later on, to ensure this we perform a check
 			// on the block just before this mid, if it's timestamp is less than the required
 			// timestamp, then we can safely exit.
