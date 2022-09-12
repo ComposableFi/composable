@@ -189,8 +189,7 @@ where
 			current: AssetId::from(
 				(u32::MAX as u128)
 					.checked_mul(2)
-					.expect("Range must be within u128 bounds; QED")
-					.checked_add(1)
+					.and_then(|value| value.checked_add(1))
 					.expect("Range must be within u128 bounds; QED"),
 			),
 			end: AssetId::from(
@@ -207,8 +206,7 @@ where
 			current: AssetId::from(
 				(u32::MAX as u128)
 					.checked_mul(3)
-					.expect("Range must be within u128 bounds; QED")
-					.checked_add(1)
+					.and_then(|value| value.checked_add(1))
 					.expect("Range must be within u128 bounds; QED"),
 			),
 			end: AssetId::from(
@@ -225,8 +223,7 @@ where
 			current: AssetId::from(
 				(u32::MAX as u128)
 					.checked_mul(4)
-					.expect("Range must be within u128 bounds; QED")
-					.checked_add(1)
+					.and_then(|value| value.checked_add(1))
 					.expect("Range must be within u128 bounds; QED"),
 			),
 			end: AssetId::from(
@@ -243,8 +240,7 @@ where
 			current: AssetId::from(
 				(u32::MAX as u128)
 					.checked_mul(5)
-					.expect("Range must be within u128 bounds; QED")
-					.checked_add(1)
+					.and_then(|value| value.checked_add(1))
 					.expect("Range must be within u128 bounds; QED"),
 			),
 			end: AssetId::from(
@@ -263,8 +259,7 @@ where
 			current: AssetId::from(
 				(u32::MAX as u128)
 					.checked_mul(6)
-					.expect("Range must be within u128 bounds; QED")
-					.checked_add(1)
+					.and_then(|value| value.checked_add(1))
 					.expect("Range must be within u128 bounds; QED"),
 			),
 			end: AssetId::from(
