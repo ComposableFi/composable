@@ -12,7 +12,19 @@
     "Pablo.Swapped",
     "BondedFinance.NewOffer",
     "BondedFinance.NewBond",
-    "Vesting.VestingScheduleAdded"
+    "Vesting.VestingScheduleAdded",
+    "Vesting.Claimed",
+    "Vesting.VestingSchedulesUpdated",
+    "Balances.Slashed",
+    "Balances.Deposit",
+    "Balances.Withdraw",
+    "StakingRewards.RewardPoolCreated",
+    "StakingRewards.Staked",
+    "StakingRewards.StakeAmountExtended",
+    "StakingRewards.Unstaked",
+    "StakingRewards.SplitPosition",
+    "BondedFinance.OfferCancelled",
+    "Oracle.PriceChanged"
   ],
   "calls": []
 }
