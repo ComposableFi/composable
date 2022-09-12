@@ -265,8 +265,8 @@ export async function processStakeAmountExtendedEvent(
 ): Promise<void> {
   console.log("Start processing `StakeAmountExtended`");
   const evt = new StakingRewardsStakeAmountExtendedEvent(ctx);
-  const stakeAmountExtendedevent = getStakeAmountExtendedEvent(evt);
-  const { fnftCollectionId, amount } = stakeAmountExtendedevent;
+  const stakeAmountExtendedEvent = getStakeAmountExtendedEvent(evt);
+  const { fnftCollectionId, amount } = stakeAmountExtendedEvent;
 
   const stakingPosition = await ctx.store.get(StakingPosition, {
     where: { fnftCollectionId: fnftCollectionId.toString() },
@@ -333,8 +333,8 @@ export async function processSplitPositionEvent(
 ): Promise<void> {
   console.log("Start processing `SplitPosition`");
   const evt = new StakingRewardsSplitPositionEvent(ctx);
-  const splitPositionevent = getSplitPositionEvent(evt);
-  const { positions } = splitPositionevent;
+  const splitPositionEvent = getSplitPositionEvent(evt);
+  const { positions } = splitPositionEvent;
   const [
     [fnftCollectionId, oldFnftInstanceId, oldPositionAmount],
     [_, newFnftInstanceId, newPositionAmount],
