@@ -123,8 +123,8 @@ describe("Vesting Pallet Tests", function () {
       api.tx.vesting.claim(asset, vestingScheduleId)
     );
 
-    const rawfinalBalance2 = await api.query.tokens.accounts(wallet2.address, usdt);
-    const finalBalance2 = rawfinalBalance2.toJSON();
+    const rawFinalBalance2 = await api.query.tokens.accounts(wallet2.address, usdt);
+    const finalBalance2 = rawFinalBalance2.toJSON();
 
     expect(Number(initialBalance2["frozen"])).to.be.gt(Number(finalBalance2["frozen"]));
     expect(Number(assetId)).to.be.eq(usdt);
@@ -151,8 +151,8 @@ describe("Vesting Pallet Tests", function () {
       api.tx.vesting.claimFor(target, asset, vestingScheduleIds)
     );
 
-    const rawfinalBalance2 = await api.query.tokens.accounts(wallet2.address, usdt);
-    const finalBalance2 = rawfinalBalance2.toJSON();
+    const rawFinalBalance2 = await api.query.tokens.accounts(wallet2.address, usdt);
+    const finalBalance2 = rawFinalBalance2.toJSON();
 
     await waitForBlocks(api, 4);
     expect(Number(initialBalance2["frozen"])).to.be.gt(Number(finalBalance2["frozen"]));
@@ -194,8 +194,8 @@ describe("Vesting Pallet Tests", function () {
       api.tx.sudo.sudo(api.tx.vesting.updateVestingSchedules(who, asset, vestingSchedules))
     );
 
-    const rawfinalAnswer = await api.query.vesting.vestingSchedules(wallet1.address, usdt);
-    const finalAnswer = rawfinalAnswer.toJSON();
+    const rawFinalAnswer = await api.query.vesting.vestingSchedules(wallet1.address, usdt);
+    const finalAnswer = rawFinalAnswer.toJSON();
 
     // @ts-ignore
     expect(finalAnswer["2"]["window"]["blockNumberBased"]["start"]).to.be.eq(startBlock);
@@ -247,11 +247,11 @@ describe("Vesting Pallet Tests", function () {
       api.tx.sudo.sudo(api.tx.vesting.vestedTransfer(from, beneficiary, asset, scheduleInfo))
     );
 
-    const rawfinalBalance1 = await api.query.tokens.accounts(wallet1.address, usdt);
-    const finalBalance1 = rawfinalBalance1.toJSON();
+    const rawFinalBalance1 = await api.query.tokens.accounts(wallet1.address, usdt);
+    const finalBalance1 = rawFinalBalance1.toJSON();
 
-    const rawfinalBalance2 = await api.query.tokens.accounts(wallet2.address, usdt);
-    const finalBalance2 = rawfinalBalance2.toJSON();
+    const rawFinalBalance2 = await api.query.tokens.accounts(wallet2.address, usdt);
+    const finalBalance2 = rawFinalBalance2.toJSON();
 
     const rawAnswer = await api.query.vesting.vestingSchedules(wallet2.address, usdt);
     const answer = rawAnswer.toJSON();
