@@ -7,7 +7,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { Settings } from "@mui/icons-material";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
   DropdownCombinedBigNumberInput,
   BigNumberInput,
@@ -25,11 +25,11 @@ import { getFullHumanizedDateDiff } from "shared";
 import { LiquidityBootstrappingPool } from "@/defi/types";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { useBuyForm } from "@/defi/hooks/auctions/useBuyForm";
-import _ from "lodash";
+import { useAuctionBuyForm } from "@/defi/hooks/auctions/useAuctionBuyForm";
 import { useDotSamaContext } from "substrate-react";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import _ from "lodash";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
@@ -41,6 +41,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   const isMobile = useMobile();
   const currentTimestamp = Date.now();
 
+  const [manualUpdateMode, setManualUpdateMode] = useState<1 | 2>(1);
   const {
     balanceBase,
     balanceQuote,
@@ -56,9 +57,8 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     setIsValidQuoteInput,
     isBuyButtonDisabled,
     selectedAuction,
-    minimumReceived,
-    isProcessing,
-  } = useBuyForm();
+    minimumReceived
+  } = useAuctionBuyForm();
 
   const priceUSDBase = useUSDPriceByAssetId(
     baseAsset ? baseAsset.network[DEFAULT_NETWORK_ID] : "none"
@@ -73,8 +73,6 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   const isEnded: boolean = auction.sale.end < currentTimestamp;
 
   const dispatch = useAppDispatch();
-
-  const debouncedTokenAmountUpdate = _.debounce(onChangeTokenAmount, 1000);
 
   const initiateBuyTx = usePabloSwap({
     baseAssetId: selectedAuction.pair.base.toString(),
@@ -125,16 +123,18 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
           maxValue={balanceQuote}
           setValid={setIsValidQuoteInput}
           noBorder
-          disabled={isProcessing}
+          onMouseDown={_evt => {
+            if (manualUpdateMode !== 1) setManualUpdateMode(1)
+          }}
           value={quoteAmount}
           setValue={(value) => {
-            if (isProcessing) return;
-            debouncedTokenAmountUpdate("quote", value);
+            manualUpdateMode === 1 ?
+            onChangeTokenAmount("quote", value) : undefined
           }}
           buttonLabel={"Max"}
           ButtonProps={{
             onClick: () => {
-              debouncedTokenAmountUpdate("quote", balanceQuote);
+              onChangeTokenAmount("quote", balanceQuote);
             },
             sx: {
               padding: theme.spacing(1),
@@ -205,11 +205,13 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
       </Box>
       <Box mt={4} visibility={isActive ? undefined : "hidden"}>
         <BigNumberInput
-          disabled={isProcessing}
+          onMouseDown={_evt => {
+            if (manualUpdateMode !== 2) setManualUpdateMode(2)
+          }}
           value={baseAmount}
           setValue={(value) => {
-            if (isProcessing) return;
-            debouncedTokenAmountUpdate("base", value);
+            manualUpdateMode === 2 ?
+            onChangeTokenAmount("base", value) : undefined
           }}
           maxValue={balanceBase}
           setValid={setIsValidBaseInput}
@@ -243,7 +245,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
           <Button
             variant="contained"
             fullWidth
-            disabled={isPendingBuy || isBuyButtonDisabled || isProcessing}
+            disabled={isPendingBuy || isBuyButtonDisabled}
             onClick={() => handleBuy()}
           >
             Buy {baseAsset ? baseAsset.symbol : ""}

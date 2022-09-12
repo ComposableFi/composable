@@ -6,6 +6,9 @@ import {
   PalletMosaicNetworkInfo
 } from "@composable/types/interfaces";
 import { ApiPromise } from "@polkadot/api";
+import { u128 } from "@polkadot/types-codec";
+import { AccountId32 } from "@polkadot/types/interfaces/runtime";
+import { IEvent } from "@polkadot/types/types";
 
 export class TxMosaicTests {
   /**
@@ -56,7 +59,7 @@ export class TxMosaicTests {
   public static async testSetNetwork(
     api: ApiPromise,
     walletId: KeyringPair,
-    networkId: number,
+    networkId: u128,
     networkInfo: PalletMosaicNetworkInfo
   ) {
     return await sendAndWaitForSuccess(
@@ -106,7 +109,7 @@ export class TxMosaicTests {
     api: ApiPromise,
     sudoKey: KeyringPair,
     assetId: number,
-    networkId: number,
+    networkId: u128,
     remoteAssetId: CommonMosaicRemoteAssetId
   ) {
     const pAssetId = api.createType("u128", assetId);
@@ -131,7 +134,7 @@ export class TxMosaicTests {
   public static async testTransferTo(
     api: ApiPromise,
     relayerWallet: KeyringPair,
-    networkId: number,
+    networkId: u128,
     assetId: number,
     ethAddress: string,
     transferAmount: number
@@ -175,7 +178,7 @@ export class TxMosaicTests {
   public static async lockFunds(
     api: ApiPromise,
     wallet: KeyringPair,
-    networkId: number,
+    networkId: u128,
     remoteAsset: CommonMosaicRemoteAssetId,
     sentWalletAddress: string,
     transferAmount: number
@@ -205,7 +208,7 @@ export class TxMosaicTests {
     api: ApiPromise,
     wallet: KeyringPair,
     senderWallet: KeyringPair,
-    networkId: number,
+    networkId: u128,
     remoteAssetId: CommonMosaicRemoteAssetId,
     transferAmount: number
   ) {
@@ -248,7 +251,11 @@ export class TxMosaicTests {
    * @param {KeyringPair} wallet Wallet trying to claim.
    * @param {number} assetId ID of the asset.
    */
-  public static async testClaimStaleFunds(api: ApiPromise, wallet: KeyringPair, assetId: number) {
+  public static async testClaimStaleFunds(
+    api: ApiPromise,
+    wallet: KeyringPair,
+    assetId: number
+  ): Promise<IEvent<[to: AccountId32, by: AccountId32, assetId: u128, amount: u128]>> {
     const pAssetId = api.createType("u128", assetId);
     return await sendAndWaitForSuccess(
       api,
@@ -279,7 +286,7 @@ export class TxMosaicTests {
     return await sendAndWaitForSuccess(
       api,
       wallet,
-      api.events.mosaic.TransferIntoRescinded.is,
+      api.events.mosaic.TransferIntoRescined.is,
       api.tx.mosaic.rescindTimelockedMint(networkId, remoteAssetId, returnWallet.address, amount)
     );
   }

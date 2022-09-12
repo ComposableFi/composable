@@ -48,6 +48,50 @@ pub fn assert_last_event<Runtime: Config>(generic_event: <Runtime as Config>::Ev
 	assert_eq!(event, &system_event);
 }
 
+/// Asserts that the last event in the runtime is the expected event.
+///
+/// Useful if not all of the information in the event needs to be checked:
+///
+/// ```rust,ignore
+/// assert_last_event_with::<Runtime, _>(
+///     Pallet::extrinsic(),
+///     |event| matches!(
+///         event,
+///         pallet::Event::<Runtime>::SomethingHappened {
+///             field,
+///             ..
+///         } if field == expected_field
+///     ).then_some(())
+/// )
+/// ```
+///
+/// It is also possible to return a value from the provided function, for example to retrieve a
+/// generated id for later use:
+///
+/// ```rust,ignore
+/// assert_last_event_with::<Runtime, _>(
+///     Pallet::extrinsic(),
+///     |event| if let pallet::Event::<Runtime>::SomethingHappened {
+///         field,
+///         generated_id,
+///     } = event {
+///         assert!(field);
+///         Some(generated_id)
+///     } else {
+///     	None
+///     },
+/// )
+/// ```
+pub fn assert_last_event_with<Runtime: Config, R>(
+	f: impl FnOnce(<Runtime as frame_system::Config>::Event) -> Option<R>,
+) -> R {
+	// compare to the last event record
+	let EventRecord { event, .. } =
+		frame_system::Pallet::<Runtime>::events().pop().expect("No events present!");
+
+	f(event).unwrap()
+}
+
 /// Asserts the event wasn't dispatched.
 pub fn assert_no_event<Runtime: Config>(event: <Runtime as Config>::Event) {
 	assert!(
@@ -65,7 +109,7 @@ pub fn assert_no_event<Runtime: Config>(event: <Runtime as Config>::Event) {
 ///
 /// ```rust,ignore
 /// assert_extrinsic_event::<Runtime>(
-///     Pallet::extrinsic(..),
+///     Pallet::extrinsic(),
 ///     pallet::Event::<Runtime>::SomethingHappened {
 ///         ..
 ///     },
@@ -81,4 +125,24 @@ pub fn assert_extrinsic_event<
 ) {
 	assert_ok!(result);
 	assert_last_event::<Runtime>(event.into());
+}
+
+/// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
+/// event.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// assert_extrinsic_event::<Runtime>(
+///     Pallet::extrinsic(),
+///     pallet::Event::<Runtime>::SomethingHappened {
+///         ..
+///     },
+/// );
+pub fn assert_extrinsic_event_with<Runtime: Config, T: Debug, E: Into<DispatchError> + Debug, R>(
+	result: sp_std::result::Result<T, E>,
+	f: impl FnOnce(<Runtime as frame_system::Config>::Event) -> Option<R>,
+) -> R {
+	assert_ok!(result);
+	assert_last_event_with::<Runtime, R>(f)
 }

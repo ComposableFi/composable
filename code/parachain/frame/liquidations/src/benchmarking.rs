@@ -42,7 +42,7 @@ benchmarks! {
    sell {
 		let x in 1..<T as Config>::MaxLiquidationStrategiesAmount::get() - 1;
 		let pair = assets::<T>();
-		let one: <T as DeFiComposableConfig>::Balance = 1u32.into();
+		let one: <T as DeFiComposableConfig>::Balance = 1_u32.into();
 		let order = Sell::new(pair.base, pair.quote, one, Ratio::saturating_from_integer(one));
 		let caller: T::AccountId = whitelisted_caller();
 		let origin = RawOrigin::Signed(caller.clone());
@@ -51,9 +51,9 @@ benchmarks! {
 				TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 10 * 60 }),
 		);
 		Liquidations::<T>::add_liquidation_strategy(root_origin.clone().into(), config.clone()).unwrap();
-		let native_token_amount = <<T as pallet_dutch_auction::Config>::NativeCurrency as Currency<T::AccountId>>::minimum_balance().saturating_mul(1_000_000_000u32.into());
+		let native_token_amount = <<T as pallet_dutch_auction::Config>::NativeCurrency as Currency<T::AccountId>>::minimum_balance().saturating_mul(1_000_000_000_u32.into());
 		<<T as pallet_dutch_auction::Config>::NativeCurrency as Currency<T::AccountId>>::make_free_balance_be(&caller, native_token_amount);
-		orml_tokens::Pallet::<T>::mint_into(order.pair.base.into(), &caller, 1_000_000u32.into()).unwrap();
+		orml_tokens::Pallet::<T>::mint_into(order.pair.base.into(), &caller, 1_000_000_u32.into()).unwrap();
 		let begin = 1000;
 		let end = begin + x;
 		let mut configurations:Vec<T::LiquidationStrategyId> = (begin..end).map(|x| x.into()).collect();

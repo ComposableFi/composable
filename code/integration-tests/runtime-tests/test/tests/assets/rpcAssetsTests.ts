@@ -49,9 +49,11 @@ describe("[SHORT] rpc.assets Tests", function () {
   it("rpc.assets.listAssets Tests", async function () {
     if (!testConfiguration.enabledTests.rpc.listAssets__success) this.skip();
     const result = await RpcAssetsTests.rpcListAssetsTest(api);
-    expect(result).to.have.lengthOf(8);
+    expect(result).to.have.lengthOf(17);
     result.every(i => expect(i).to.have.all.keys("id", "name"));
-    expect(result.map(e => e.id.toNumber())).to.include.members([1, 2, 3, 4, 5, 129, 130, 131]);
+    expect(result.map(e => e.id.toNumber())).to.include.members([
+      1, 2, 3, 4, 5, 129, 130, 131, 132, 133, 134, 1001, 1002, 1004, 1005, 2001, 2005
+    ]);
     expect(result.map(e => hex_to_ascii(e.name.toString()))).to.include.members([
       "PICA",
       "LAYR",
@@ -60,12 +62,21 @@ describe("[SHORT] rpc.assets Tests", function () {
       "PBLO",
       "kUSD",
       "USDT",
-      "USDC"
+      "USDC",
+      "wBTC",
+      "wETH",
+      "aUSD",
+      "xPICA",
+      "xLAYR",
+      "xKSM",
+      "xPBLO",
+      "PICA_STAKE_FNFT_COLLECTION",
+      "PBLO_STAKE_FNFT_COLLECTION"
     ]);
   });
 });
 
-export class RpcAssetsTests {
+class RpcAssetsTests {
   public static async rpcAssetsTest(apiClient: ApiPromise, assetId: SafeRpcWrapper, publicKey: string | Uint8Array) {
     return await apiClient.rpc.assets.balanceOf(assetId, publicKey);
   }

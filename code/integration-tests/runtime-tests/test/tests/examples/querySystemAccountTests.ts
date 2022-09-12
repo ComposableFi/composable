@@ -65,7 +65,7 @@ describe("query.system Tests", function () {
  * Though for big files, like `txOracleTests.ts`, we outsource the tests handlers into an extra subdirectory
  * called `testHandlers`.
  */
-export class QuerySystemAccountTests {
+class QuerySystemAccountTests {
   /**
    * Sends a requests for `query.system.account` using the provided `walletAddress`
    *
