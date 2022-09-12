@@ -49,6 +49,8 @@ Examples, you can build `dali node` via `nix build`, so you can `nix shell .#dev
 
 It means that `home-manager`, `devcontainer`, `apps`, `shells` should share and combine dependencies.
 
+Any `app` or `packages` must be tested by CI by building it or starting it.
+
 ### Naming
 
 Variables which are input from external non `nix` files (examples, json/yaml/toml) to be suffixed with `-input`. Inputs prevent early validation of packages without instantiation.  
