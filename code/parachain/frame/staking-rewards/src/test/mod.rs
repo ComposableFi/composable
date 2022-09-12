@@ -11,7 +11,7 @@ use composable_traits::{
 	fnft::FinancialNft as FinancialNftT,
 	staking::{
 		lock::{Lock, LockConfig},
-		ProtocolStaking, Reductions, RewardConfig,
+		ProtocolStaking, RewardConfig,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
 		RewardRate, Stake, Staking,
 	},
@@ -290,15 +290,15 @@ fn test_extend_stake_amount() {
 		let inflation_extended = extend_amount * total_rewards / rewards_pool.total_shares;
 		let inflation = inflation + inflation_extended;
 		assert_eq!(inflation, 50710);
-		let reductions = Reductions::try_from(
+		let reductions = 
 			rewards_pool
 				.rewards
-				.into_inner()
 				.iter()
 				.map(|(asset_id, _reward)| (*asset_id, inflation))
-				.collect::<BTreeMap<_, _>>(),
-		)
+				.try_collect()
+		
 		.expect("reductions expected");
+
 		let stake = StakingRewards::stakes(1, 0);
 		assert_eq!(
 			stake,
@@ -967,7 +967,7 @@ fn update_total_rewards_and_total_shares_in_rewards_pool(
 }
 
 fn update_reductions(
-	reductions: &mut Reductions<u128, u128, MaxRewardConfigsPerPool>,
+	reductions: &mut BoundedBTreeMap<u128, u128, MaxRewardConfigsPerPool>,
 	claim: u128,
 ) {
 	for (_asset_id, inflation) in reductions {

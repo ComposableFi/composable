@@ -14,10 +14,6 @@ use sp_runtime::{DispatchError, Perbill, Permill};
 pub mod lock;
 pub mod math;
 
-/// Abstraction over the map of possible lock durations and corresponding reward multipliers.
-pub type StakingDurationToRewardsMultiplierConfig<Limit> =
-	BoundedBTreeMap<DurationSeconds, Perbill, Limit>;
-
 /// Defines staking duration, rewards and early unstake penalty for a given asset type.
 /// TODO refer to the relevant section in the design doc.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
@@ -81,9 +77,6 @@ pub struct RewardUpdate<Balance> {
 	/// at a given time.
 	pub reward_rate: RewardRate<Balance>,
 }
-
-/// Abstraction over the asset to reduction map stored for staking.
-pub type Reductions<AssetId, Balance, Limit> = BoundedBTreeMap<AssetId, Balance, Limit>;
 
 impl<Balance: Zero> Reward<Balance> {
 	pub fn from_config(reward_config: RewardConfig<Balance>, now_seconds: u64) -> Reward<Balance> {

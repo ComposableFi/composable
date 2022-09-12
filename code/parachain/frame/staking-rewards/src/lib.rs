@@ -1153,11 +1153,11 @@ pub mod pallet {
 		) -> Result<
 			(
 				BoundedBTreeMap<T::AssetId, Reward<T::Balance>, T::MaxRewardConfigsPerPool>,
-				Reductions<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>,
+				BoundedBTreeMap<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>,
 			),
 			DispatchError,
 		> {
-			let mut reductions = Reductions::new();
+			let mut reductions = BoundedBTreeMap::new();
 			let mut rewards_btree_map = BoundedBTreeMap::new();
 
 			for (asset_id, reward) in rewards_pool.rewards.iter() {
