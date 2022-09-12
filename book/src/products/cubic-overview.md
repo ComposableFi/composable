@@ -15,7 +15,7 @@ crucial driver in this endeavor.
 
 Vaults aggregate user funds into a single managed pool. These funds are then used to execute different financial 
 strategies, such as yield farming. As a consequence of pooling funds, and then executing them in aggregate through an 
-ndividual managing agent (either a human, or through some form of automation), users face less gas fees, and burdens on 
+individual managing agent (either a human, or through some form of automation), users face less gas fees, and burdens on 
 their time and labor.
 
 In the Composable ecosystem, developers can leverage Cubic which enables users to deposit liquidity provisioning (LP) 
@@ -24,7 +24,7 @@ smart contracts, or even those in centralized finance. This means that funds can
 ecosystems, including Polkadot, its canary network Kusama, Ethereum, and Cosmos. This relationship is depicted below:
 
 
-![how_our_vaults_pallet_powers_our_infrastructure](./how-cubic-powers-our-infrastructure.jpg)
+![how_our_vaults_pallet_powers_our_infrastructure](./cubic/how-cubic-powers-our-infrastructure.jpg)
 
 
 ## Use Cases
