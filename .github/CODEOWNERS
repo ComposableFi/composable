@@ -65,7 +65,7 @@ rfcs/ @ComposableFi/developers
 docs/ @ComposableFi/developers @ComposableFi/technical-writers
 scripts/ @ComposableFi/developers @ComposableFi/sre
 code/utils/ @ComposableFi/developers @ComposableFi/sre @ComposableFi/testers
-.config/spellcheck.dic @ComposableFi/developers @ComposableFi/technical-writers
+.config/dictionaries/ @ComposableFi/developers @ComposableFi/technical-writers
 # Oracle Setup Script
 scripts/oracle-setup @ComposableFi/parachain
 
