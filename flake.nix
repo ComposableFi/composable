@@ -473,7 +473,7 @@
 
               text = ''
                   # .nix 
-                	find . -name "*.nix" -type f -exec nixfmt {} \;
+                	find . -name "*.nix" -type f -print0 | xargs -0 nixfmt;
 
                   # .toml
                   taplo fmt
