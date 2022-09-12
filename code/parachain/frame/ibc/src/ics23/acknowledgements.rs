@@ -1,6 +1,5 @@
 use crate::{format, Config};
-use ::alloc::string::String;
-use alloc::string::ToString;
+use alloc::string::{String, ToString};
 use frame_support::storage::{child, child::ChildInfo, ChildTriePrefixIterator};
 use ibc::core::{
 	ics04_channel::{commitment::AcknowledgementCommitment, packet::Sequence},
