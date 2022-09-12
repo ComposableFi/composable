@@ -76,10 +76,7 @@ where
 		signer: chain_a.account_id(),
 	};
 	let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };
-	chain_a
-		.submit_ibc_messages(vec![msg])
-		.await
-		.expect("Connection creation failed");
+	chain_a.submit(vec![msg]).await.expect("Connection creation failed");
 
 	log::info!(target: "hyperspace", "============= Wait till both chains have completed connection handshake =============");
 
@@ -118,10 +115,7 @@ where
 	let msg = MsgChannelOpenInit::new(PortId::transfer(), channel, chain_a.account_id());
 	let msg = Any { type_url: msg.type_url(), value: msg.encode_vec() };
 
-	chain_a
-		.submit_ibc_messages(vec![msg])
-		.await
-		.expect("Connection creation failed");
+	chain_a.submit(vec![msg]).await.expect("Connection creation failed");
 
 	// wait till both chains have completed channel handshake
 	log::info!(target: "hyperspace", "============= Wait till both chains have completed channel handshake =============");

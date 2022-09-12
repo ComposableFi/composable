@@ -38,6 +38,14 @@ where
 		&*self.name
 	}
 
+	async fn block_max_weight(&self) -> u64 {
+		todo!()
+	}
+
+	async fn estimate_weight(&self, msg: Vec<Any>) -> u64 {
+		todo!()
+	}
+
 	async fn finality_notifications(
 		&self,
 	) -> Pin<Box<dyn Stream<Item = <Self as IbcProvider>::FinalityEvent> + Send + Sync>> {
@@ -81,7 +89,7 @@ where
 		Box::pin(Box::new(stream))
 	}
 
-	async fn submit_ibc_messages(&self, messages: Vec<Any>) -> Result<(), Error> {
+	async fn submit(&self, messages: Vec<Any>) -> Result<(), Error> {
 		let signer = ExtrinsicSigner::<T, Self>::new(
 			self.key_store.clone(),
 			self.key_type_id.clone(),
