@@ -145,7 +145,7 @@ jobs:
 
       - name: Download artifacts
         run: |
-          nix bundle .#composable-node-release -L --out-link composable-selfcontained
+          
           nix bundle --bundler github:NixOS/bundlers#toDockerImage .#composable-node-release -L --out-link composable-docker-image
           nix bundle --bundler github:NixOS/bundlers#toRPM .#composable-node-release -L --out-link rpm
           nix bundle --bundler github:NixOS/bundlers#toDEB .#composable-node-release -L --out-link deb
@@ -154,8 +154,12 @@ jobs:
           nix build .#picasso-runtime --out-link picasso-runtime
           nix build .#composable-runtime --out-link composable-runtime
 
-          mkdir release-artifacts
-          cp composable-selfcontained release-artifacts/composable-node-${{ env.COMPOSABLE_VERSION }}.x86_64.selfcontained
+          mkdir -p release-artifacts
+          
+          # disabled selfcontained because it does not run on fresh debian
+          # nix bundle .#composable-node-release -L --out-link composable-selfcontained
+          # cp composable-selfcontained release-artifacts/composable-node-${{ env.COMPOSABLE_VERSION }}.x86_64.selfcontained
+          
           cp dali-runtime/lib/runtime.optimized.wasm release-artifacts/dali-runtime.optimized.wasm
           cp picasso-runtime/lib/runtime.optimized.wasm release-artifacts/picasso-runtime.optimized.wasm
           cp composable-runtime/lib/runtime.optimized.wasm release-artifacts/composable-runtime.optimized.wasm
