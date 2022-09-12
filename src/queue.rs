@@ -9,7 +9,7 @@ pub async fn flush_message_batch(msgs: Vec<Any>, sink: &impl Chain) -> Result<()
 	let ratio = (batch_weight / block_max_weight) as usize;
 	if ratio == 0 {
 		sink.submit(msgs).await?;
-        return Ok(())
+		return Ok(())
 	}
 
 	// whelp our batch exceeds the block max weight.

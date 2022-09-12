@@ -1,7 +1,6 @@
-use futures::future::BoxFuture;
 use std::{pin::Pin, str::FromStr, time::Duration};
 
-use futures::{FutureExt, Stream};
+use futures::Stream;
 use ibc_proto::{
 	google::protobuf::Any,
 	ibc::core::{
