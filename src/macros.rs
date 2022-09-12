@@ -1,18 +1,18 @@
 #[macro_export]
 macro_rules! process_finality_event {
-	($chain_a:ident, $chain_b:ident, $result:ident) => {
+	($source:ident, $sink:ident, $result:ident) => {
 		match $result {
 			// stream closed
 			None => break,
 			Some(finality_event) => {
-				log::info!("Received finality notification from {}", $chain_a.name());
+				log::info!("Received finality notification from {}", $source.name());
 				let (update_client_header, events, update_type) =
-					match $chain_a.query_latest_ibc_events(finality_event, &$chain_b).await {
+					match $source.query_latest_ibc_events(finality_event, &$sink).await {
 						Ok(resp) => resp,
 						Err(err) => {
 							log::error!(
 								"Failed to fetch IBC events for finality event for {} {:?}",
-								$chain_a.name(),
+								$source.name(),
 								err
 							);
 							continue
@@ -20,26 +20,25 @@ macro_rules! process_finality_event {
 					};
 				let event_types = events.iter().map(|ev| ev.event_type()).collect::<Vec<_>>();
 				let (messages, timeouts) =
-					parse_events(&mut $chain_a, &mut $chain_b, events, update_client_header)
-						.await?;
-				queue::flush_message_batch(timeouts, &$chain_a).await?;
+					parse_events(&mut $source, &mut $sink, events, update_client_header).await?;
+				queue::flush_message_batch(timeouts, &$source).await?;
 				// there'd at least be the `MsgUpdateClient` packet.
 				if messages.len() == 1 && update_type.is_optional() {
 					// skip sending ibc messages if no new events
-					log::info!("Skipping finality notification for {}", $chain_a.name());
+					log::info!("Skipping finality notification for {}", $source.name());
 					continue
 				} else if messages.len() == 1 {
-					log::info!("Sending mandatory client update message to {}", $chain_a.name());
+					log::info!("Sending mandatory client update message to {}", $source.name());
 				} else {
 					log::info!(
 						"Received finalized events from: {} {event_types:#?}",
-						$chain_a.name()
+						$source.name()
 					);
 				}
 				let type_urls =
 					messages.iter().map(|msg| msg.type_url.as_str()).collect::<Vec<_>>();
-				log::info!("Submitting messages to {}: {type_urls:#?}", $chain_b.name());
-				queue::flush_message_batch(messages, &$chain_b).await?;
+				log::info!("Submitting messages to {}: {type_urls:#?}", $sink.name());
+				queue::flush_message_batch(messages, &$sink).await?;
 			},
 		}
 	};
