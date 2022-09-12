@@ -96,5 +96,12 @@ pub mod pallet {
 			});
 			Ok(MockCurrencyId::LpToken(lp_token_id))
 		}
+
+		fn local_to_global_asset_id(
+			_: MockCurrencyId,
+			_: RangeId,
+		) -> Result<MockCurrencyId, DispatchError> {
+			Ok(MockCurrencyId::from(1))
+		}
 	}
 }
