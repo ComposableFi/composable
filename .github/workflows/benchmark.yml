@@ -26,6 +26,7 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
+          echo "boster says do not merge this"
 
       - uses: actions/checkout@v2
         with:

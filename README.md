@@ -100,3 +100,4 @@ docker volume create nix # cache builds
 
 docker run -v nix:/nix -p 9988:9988 -it nixos/nix bash -c "nix run github:ComposableFi/composable#devnet-dali --extra-experimental-features nix-command --extra-experimental-features flakes"
 ```
+
