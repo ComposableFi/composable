@@ -1,6 +1,6 @@
 require('dotenv/config')
 
-const ormconfig = {
+const ormConfig = {
   type: 'postgres',
   // entities: [require.resolve('../lib/model')],
   entities: [],
@@ -16,7 +16,7 @@ const ormconfig = {
   password: process.env.DB_PASS || 'postgres'
 }
 
-require('typeorm').createConnection(ormconfig).then(async con => {
+require('typeorm').createConnection(ormConfig).then(async con => {
   try {
     await con.runMigrations({transaction: 'all'})
   } finally {

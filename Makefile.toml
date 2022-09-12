@@ -4,12 +4,16 @@ NIGHTLY_VERSION = "2022-04-18"
 
 [tasks.fmt]
 script = '''
+cd code
 cargo +nightly fmt
 '''
 workspace = false
 
 [tasks.build]
-args = ["build", "--release"]
+script = '''
+cd code
+cargo build --release
+'''
 workspace = false
 
 [tasks.polkadot]
@@ -24,6 +28,7 @@ workspace = false
 [tasks.start-devnet]
 dependencies = ["build", "git-polkadot"]
 script = '''
+cd code
 cargo run --release -- --version
 cd ../polkadot && cargo run --release -- --version && pwd && cd ../composable
 cd scripts/polkadot-launch && yarn && yarn composable
@@ -47,6 +52,7 @@ workspace = false
 [tasks.run-unit-tests]
 env = { SKIP_WASM_BUILD = 1 }
 script = '''
+cd code
 cargo test --workspace --locked --release --verbose
 '''
 workspace = false
@@ -57,17 +63,10 @@ make style
 '''
 workspace = false
 
-[tasks.run-local-integration-tests-debug]
-description = "fastest way to build and debug runtime in simulator"
-env = { RUST_BACKTRACE = "full", RUST_LOG = "trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace", SKIP_WASM_BUILD = 1 }
-script = '''
-cargo +stable test --package local-integration-tests --features local-integration-tests --features picasso --no-default-features -- --nocapture --test-threads=1
-'''
-workspace = false
-
 [tasks.check-ci]
 env = { SKIP_WASM_BUILD = 1 }
 script = '''
+cd code
 cargo +nightly-$NIGHTLY_VERSION check --benches --all --features runtime-benchmarks # checks all rust crates with default-features, tests, benchmarks
 env -u RUSTFLAGS cargo +nightly-$NIGHTLY_VERSION clippy --all-targets --tests -- -D warnings
 '''
@@ -75,6 +74,7 @@ workspace = false
 
 [tasks.build-benchmarks]
 script = '''
+cd code
 cargo build --release --features runtime-benchmarks
 '''
 workspace = false

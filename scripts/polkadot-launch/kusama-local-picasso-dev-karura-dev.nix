@@ -1,8 +1,8 @@
 # definition of parachain
 # TODO: replace with zombienet
 # because it allows to specify more things and tests
-# more structured and portable and officially endrosed by parity
-# so with nix it is easier to build own (nix+curl+websockat)
+# more structured and portable and officially endorsed by parity
+# so with nix it is easier to build own (nix+curl+websocket)
 
 { pkgs, polkadot-bin, composable-bin, acala-bin }:
 with pkgs;
@@ -11,11 +11,19 @@ in {
   result = builder.mk-shared-security-network {
     relaychain = {
       bin = "${polkadot-bin}/bin/polkadot";
-      # NOTE: kusama-dev and kusama-local failed to conect in 10 mintues, seems need to change spec to work faster
+      # NOTE: kusama-dev and kusama-local failed to connect in 10 minutes, seems need to change spec to work faster
       chain = "rococo-dev";
       port = 30444;
       wsPort = 9944;
       count = 5;
+      flags = [
+        "--unsafe-ws-external"
+        "--unsafe-rpc-external"
+        "--rpc-external"
+        "--ws-external"
+        "--rpc-methods=Unsafe"
+        "--log=xcm=trace,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace"
+      ];
     };
     parachains = [
       {
@@ -24,7 +32,7 @@ in {
         wsPort = 9988;
         count = 2;
         chain = "picasso-dev";
-        bin = "${composable-bin}/bin/composable";
+        bin = "${composable-bin}/bin/composable-node";
       }
       {
         id = 2000;

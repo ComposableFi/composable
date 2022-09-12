@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-08-15T14:18:26.444116Z -->
+<!-- Generated at 2022-09-05T18:35:35.110223Z -->
 
 # Airdrop Pallet Extrinsics
 
@@ -148,7 +148,7 @@ Callable by any unsigned origin.
 
 * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 * `AirdropIsNotEnabled` - The Airdrop has not been enabled
-* `AssociatedWithAnohterAccount` - Associated with a different account
-* `ArithmiticError` - Overflow while totaling claimed funds
+* `AssociatedWithAnotherAccount` - Associated with a different account
+* `ArithmeticError` - Overflow while totaling claimed funds
 * `InvalidProof`
 * `RecipientNotFound` - No recipient associated with the `identity` could be found.

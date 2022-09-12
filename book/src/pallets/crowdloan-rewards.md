@@ -4,4 +4,4 @@
 
 ---
 
-{{#include ../../../frame/crowdloan-rewards/README.md:5:}}
+{{#include ../../../code/parachain/frame/crowdloan-rewards/README.md:5:}}

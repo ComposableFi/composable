@@ -11,9 +11,8 @@ import {
   createStatsApolloSlice,
   createStatsOverviewSlice,
   createStatsTelemetrySlice,
-  createStatsTreasurySlice,
   createSubstrateBalancesSlice,
-  createTransfersSlice,
+  createTransfersSlice
 } from "./defi";
 
 import immer from "./middlewares/immer";
@@ -30,11 +29,10 @@ export const useStore = create<AllSlices>()(
       ...createStatsApolloSlice(set, get),
       ...createStatsOverviewSlice(set, get),
       ...createStatsTelemetrySlice(set, get),
-      ...createStatsTreasurySlice(set, get),
       ...createSubstrateBalancesSlice(set, get),
       ...createCrowdloanRewardsSlice(set, get),
       ...createBondsSlice(set, get),
-      ...createOracleSlice(set, get),
+      ...createOracleSlice(set, get)
     }))
   )
 );

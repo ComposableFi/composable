@@ -470,7 +470,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       CollateralDeposited: AugmentedEvent<ApiType, [AccountId32, u32, u128]>;
       /**
-       * Event emitted when collateral is withdrawed.
+       * Event emitted when collateral is withdrawn.
        **/
       CollateralWithdrawn: AugmentedEvent<ApiType, [AccountId32, u32, u128]>;
       /**
@@ -483,7 +483,7 @@ declare module '@polkadot/api-base/types/events' {
       MarketCreated: AugmentedEvent<ApiType, [u32, u64, AccountId32, ComposableTraitsDefiCurrencyPairCurrencyId]>;
       MarketUpdated: AugmentedEvent<ApiType, [u32, ComposableTraitsLendingUpdateInput]>;
       /**
-       * Event emitted to warn that loan may go under collaterlized soon.
+       * Event emitted to warn that loan may go under collateralized soon.
        **/
       MayGoUnderCollateralizedSoon: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**

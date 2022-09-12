@@ -1,5 +1,5 @@
 import {
-  calcaulateConstantProductSpotPrice,
+  calculateConstantProductSpotPrice,
   calculateChangePercent,
   compute_spot_price_stable_swap,
 } from "@/defi/utils";
@@ -52,12 +52,12 @@ export function usePriceImpact({
           baseBalance.gt(0) &&
           quoteBalance.gt(0)
         ) {
-          let currentSpotPrice = calcaulateConstantProductSpotPrice(
+          let currentSpotPrice = calculateConstantProductSpotPrice(
             baseBalance,
             quoteBalance,
             baseWeight
           );
-          let spotPriceAfterTrade = calcaulateConstantProductSpotPrice(
+          let spotPriceAfterTrade = calculateConstantProductSpotPrice(
             baseBalance.minus(tokenOutAmount),
             quoteBalance.plus(tokenInAmount),
             baseWeight

@@ -53,7 +53,7 @@ export type BondDetails = {
   roi: number;
   vesting_term: number;
   tvl: BigNumber;
-  volumne: BigNumber;
+  volume: BigNumber;
   discount_price: BigNumber;
   market_price: BigNumber;
   balance: BigNumber;

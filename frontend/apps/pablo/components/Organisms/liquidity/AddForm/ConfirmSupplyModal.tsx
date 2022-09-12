@@ -13,23 +13,14 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
 import {
-  closeConfirmSupplyModal,
+  closeConfirmSupplyModal
 } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
-import {
-  useExecutor,
-  useParachainApi,
-  useSelectedAccount,
-} from "substrate-react";
-import {
-  DEFAULT_NETWORK_ID,
-  DEFAULT_UI_FORMAT_DECIMALS,
-} from "@/defi/utils/constants";
-import { useRouter } from "next/router";
+import { useSigner, useExecutor, useParachainApi, useSelectedAccount } from "substrate-react";
+import { DEFAULT_NETWORK_ID, DEFAULT_UI_FORMAT_DECIMALS } from "@/defi/utils/constants";
 import { MockedAsset } from "@/store/assets/assets.types";
-import { useAddLiquidity } from "@/defi/hooks/pools/addLiquidity/useAddLiquidity";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
-
+import { useAddLiquidity } from "@/defi/hooks/pools/addLiquidity/useAddLiquidity";
 export interface SupplyModalProps {
   assetOne: MockedAsset | undefined;
   assetTwo: MockedAsset | undefined;
@@ -56,8 +47,8 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
 }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
-  const router = useRouter();
 
+  const signer = useSigner();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const executor = useExecutor();
@@ -66,13 +57,14 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
     selectedAccount,
     executor,
     parachainApi,
-    assetOne: assetOne ? assetOne.network[DEFAULT_NETWORK_ID] : undefined,
-    assetTwo: assetTwo ? assetTwo.network[DEFAULT_NETWORK_ID] : undefined,
+    assetOne: assetOne?.network?.[DEFAULT_NETWORK_ID],
+    assetTwo: assetTwo?.network?.[DEFAULT_NETWORK_ID],
     assetOneAmount,
     assetTwoAmount,
-    lpAmountExpected: lpReceiveAmount,
-    pool
-  })
+    lpReceiveAmount,
+    pool,
+    signer
+  });
 
   return (
     <Modal onClose={() => dispatch(closeConfirmSupplyModal())} {...rest}>

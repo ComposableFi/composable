@@ -19,9 +19,6 @@ export type { StatsOverviewSlice } from "./stats/overview";
 export { createStatsTelemetrySlice } from "./stats/telemetry";
 export type { StatsTelemetrySlice } from "./stats/telemetry";
 
-export { createStatsTreasurySlice } from "./stats/treasury";
-export type { StatsTreasurySlice } from "./stats/treasury";
-
 export { createSubstrateBalancesSlice } from "./polkadot/balances/slice";
 export type { SubstrateBalancesSlice } from "./polkadot/balances/slice";
 
