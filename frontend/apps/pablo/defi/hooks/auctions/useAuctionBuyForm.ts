@@ -19,6 +19,14 @@ import {
 } from "substrate-react";
 import { useAsset } from "../assets/useAsset";
 
+const initialTokenAmounts = {
+  baseAmount: new BigNumber(0),
+  quoteAmount: new BigNumber(0),
+  minimumReceived: new BigNumber(0),
+  slippageAmount: new BigNumber(0),
+  feeCharged: new BigNumber(0),
+};
+
 export const useAuctionBuyForm = (): {
   balanceBase: BigNumber;
   balanceQuote: BigNumber;
@@ -72,15 +80,8 @@ export const useAuctionBuyForm = (): {
   const [isValidBaseInput, setIsValidBaseInput] = useState(false);
   const [isValidQuoteInput, setIsValidQuoteInput] = useState(false);
 
-  const initialTokenAmounts = {
-    baseAmount: new BigNumber(0),
-    quoteAmount: new BigNumber(0),
-    minimumReceived: new BigNumber(0),
-    slippageAmount: new BigNumber(0),
-    feeCharged: new BigNumber(0),
-  };
   const [tokenAmounts, setTokenAmounts] = useState(initialTokenAmounts);
-  const resetTokenAmounts = () => setTokenAmounts(initialTokenAmounts);
+  const resetTokenAmounts = useCallback(() => setTokenAmounts(initialTokenAmounts), []);
 
   const isUpdatingField = useRef(false);
 
@@ -88,7 +89,7 @@ export const useAuctionBuyForm = (): {
     if (selectedAccount) {
       resetTokenAmounts();
     }
-  }, [selectedAccount]);
+  }, [selectedAccount, resetTokenAmounts]);
 
   const updateSpotPrice = useCallback(() => {
     if (!activeLBP || !parachainApi) return;
@@ -131,9 +132,21 @@ export const useAuctionBuyForm = (): {
       }
       isUpdatingField.current = false;
     },
-    [parachainApi, balanceQuote, activeLBP, spotPrice, updateSpotPrice]
+    [
+      parachainApi,
+      balanceQuote,
+      activeLBP,
+      spotPrice,
+      updateSpotPrice,
+      enqueueSnackbar,
+      resetTokenAmounts,
+      slippage
+    ]
   );
 
+  // useCallback will always receive
+  // up to date dependancies
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedUpdater = useCallback(_.debounce(onChangeTokenAmount, 500), [
     onChangeTokenAmount,
   ]);
