@@ -826,6 +826,8 @@
                   xorriso
                   zlib.out
                   nix-tree
+                  nixfmt
+                  rnix-lsp
                 ] ++ docs-renders;
             });
 
