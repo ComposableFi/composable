@@ -197,6 +197,6 @@ export default {
     IbcTransferPalletParams: "Null",
     IbcTransferTransferParams: "Null",
     ComposableTraitsOracleRewardTracker: "Null",
-    ComposableTraitsStakingStake: "Null",
-  },
+    ComposableTraitsStakingStake: "Null"
+  }
 };

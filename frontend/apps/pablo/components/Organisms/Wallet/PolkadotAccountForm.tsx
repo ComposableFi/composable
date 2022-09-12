@@ -38,7 +38,7 @@ export const PolkadotAccountForm: React.FC<{}> = () => {
     >
       {accounts.map((account, index) => (
         <Button
-          key={index}
+          key={account.name + index}
           variant="outlined"
           color="primary"
           size="large"
