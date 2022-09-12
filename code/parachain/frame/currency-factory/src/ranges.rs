@@ -34,14 +34,14 @@ where
 		MaxRanges::get()
 	}
 
-	/// Creats a new set of ranges with preconfigured ranges.
+	/// Creates a new set of ranges with preconfigured ranges.
 	///
 	/// Preconfigured `RangeId`s can be found in `composable_traits::currency::RangeId`.
 	///
 	/// # Preconfigured Ranges by ID
 	/// 0. LP Tokens
 	/// 1. Tokens
-	/// 2. Foregin Assets
+	/// 2. Foreign Assets
 	/// 3. IBC Assets
 	/// 4. fNFTs
 	/// 5. xTokens
@@ -97,7 +97,7 @@ where
 		}
 		self.ranges
 			.try_push(range)
-			.map_err(|_| DispatchError::from("Exceededs max number of ranges!"))?;
+			.map_err(|_| DispatchError::from("Exceeds max number of ranges!"))?;
 
 		Ok(())
 	}
@@ -152,7 +152,7 @@ impl<AssetId> Range<AssetId>
 where
 	AssetId: From<u128> + Saturating + Ord + Clone,
 {
-	/// Retruns the end `AssetId` of this `Range`.
+	/// Returns the end `AssetId` of this `Range`.
 	pub fn end(&self) -> AssetId {
 		self.end.clone()
 	}
@@ -188,7 +188,7 @@ where
 		}
 	}
 
-	/// Range for foregin assets.
+	/// Range for foreign assets.
 	fn foreign_assets() -> Self {
 		Range {
 			current: AssetId::from((u32::MAX as u128).saturating_mul(3).saturating_add(1)),

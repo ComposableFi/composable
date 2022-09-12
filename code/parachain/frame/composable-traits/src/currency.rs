@@ -21,7 +21,7 @@ pub trait CurrencyFactory<AssetId, Balance> {
 	fn reserve_lp_token_id(ed: Balance) -> Result<AssetId, DispatchError> {
 		Self::create(RangeId::LP_TOKENS, ed)
 	}
-	/// Given a local `AssetId` (withen the range of `0` to `u32::MAX`) returns a global (within the
+	/// Given a local `AssetId` (within https://github.com/ComposableFi/composable/pull/1651n the range of `0` to `u32::MAX`) returns a global (within the
 	/// scope of Currency Factory) `AssetId`.
 	fn local_to_global_asset_id(
 		asset_id: AssetId,
