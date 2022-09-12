@@ -25,7 +25,7 @@ contract Gateway is Ownable, IGateway {
         public userInterpreter;
 
     mapping(address => Bridge) public bridges;
-    mapping(uint256 => address) public assets;
+    mapping(uint256 => address) override public assets;
 
     event InstanceCreated(
         uint256 networkId,

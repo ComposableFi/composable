@@ -8,4 +8,5 @@ interface IGateway {
         uint32 networkId;
         bytes account;
     }
+    function assets(uint256 assetId) external returns (address);
 }
