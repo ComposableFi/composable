@@ -89,7 +89,11 @@ jobs:
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
           name: composable-community
       - run: |          
-          nix flake show --allow-import-from-derivation  --show-trace --fallback -L        
+          nix flake show --allow-import-from-derivation  --show-trace --fallback -L  
+          # TODO: --override-input with flake-utils with only linux system to allow next to run
+          # TODO: are we always will be in broken nix state as arion cannot be built (only run)    
+          # https://github.com/numtide/flake-utils/issues/80  
+          # nix flake check --keep-going --allow-import-from-derivation  --show-trace --no-update-lock-file --fallback -L        
 
   cargo-fmt-check:
     name: "Cargo fmt check"
