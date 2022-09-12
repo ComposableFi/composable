@@ -5,7 +5,6 @@ caseSensitive: false
 useGitignore: true
 
 dictionaries:
-  # - spellcheck
   - en_US
 
   - companies
