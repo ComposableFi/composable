@@ -80,11 +80,11 @@ describe("Vesting Pallet Tests", function () {
       api.tx.sudo.sudo(api.tx.vesting.vestedTransfer(from, beneficiary, asset, scheduleInfo))
     );
 
-    const rawfinalBalance1 = await api.query.tokens.accounts(wallet1.address, usdt);
-    const finalBalance1 = rawfinalBalance1.toJSON();
+    const rawFinalBalance1 = await api.query.tokens.accounts(wallet1.address, usdt);
+    const finalBalance1 = rawFinalBalance1.toJSON();
 
-    const rawfinalBalance2 = await api.query.tokens.accounts(wallet2.address, usdt);
-    const finalBalance2 = rawfinalBalance2.toJSON();
+    const rawFinalBalance2 = await api.query.tokens.accounts(wallet2.address, usdt);
+    const finalBalance2 = rawFinalBalance2.toJSON();
 
     const rawAnswer = await api.query.vesting.vestingSchedules(wallet2.address, usdt);
     const answer = rawAnswer.toJSON();
