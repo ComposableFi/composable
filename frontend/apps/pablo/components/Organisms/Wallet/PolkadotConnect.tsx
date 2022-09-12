@@ -14,9 +14,23 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import useStore from "@/store/useStore";
-import { useDotSamaContext, useParachainApi, useEagerConnect } from "substrate-react";
+import { useDotSamaContext, useParachainApi, SupportedWalletId, useEagerConnect } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useAssetsWithBalance } from "@/defi/hooks";
+import { useSnackbar } from "notistack";
+
+const WALLETS_SUPPORTED: Array<{ walletId: SupportedWalletId, icon: string, name: string }> = [
+  {
+    walletId: SupportedWalletId.Polkadotjs,
+    icon: "/networks/polkadot_js.svg",
+    name: "Polkadot.js"
+  },
+  {
+    walletId: SupportedWalletId.Talisman,
+    icon: "/logos/talisman.svg",
+    name: "Talisman"
+  },
+];
 
 const Status = () => {
   const { extensionStatus, selectedAccount } = useDotSamaContext();
@@ -97,9 +111,15 @@ export const PolkadotConnect: React.FC<{}> = () => {
     closePolkadotModal,
   } = useStore();
   const { extensionStatus, activate } = useDotSamaContext();
+  const { enqueueSnackbar } = useSnackbar();
 
-  const handleConnectPolkadot = async () => {
-    if (activate) await activate(false);
+  const handleConnectPolkadot = async (walletId: SupportedWalletId) => {
+    try {
+      if (activate) await activate(walletId);
+    } catch (err: any) {
+      console.log('Logged ', err)
+      enqueueSnackbar(err.message, { variant: "error", persist: true } )
+    }
   };
 
   return (
@@ -142,26 +162,33 @@ export const PolkadotConnect: React.FC<{}> = () => {
               >
                 Select a wallet to connect with.
               </Typography>
-              <Button
-                sx={{
-                  mt: "4rem",
-                }}
-                variant="outlined"
-                color="primary"
-                size="large"
-                fullWidth
-                onClick={() => handleConnectPolkadot()}
-              >
-                <Box sx={{ marginRight: theme.spacing(2) }}>
-                  <Image
-                    src="/networks/polkadot_js.svg"
-                    width="24"
-                    height="24"
-                    alt="Polkadot.js"
-                  />
-                </Box>
-                <Typography variant="button">Polkadot.js</Typography>
-              </Button>
+              {
+                WALLETS_SUPPORTED.map(({ name, walletId, icon }) => {
+                  return (
+                    <Button
+                    sx={{
+                      mt: "4rem",
+                    }}
+                    variant="outlined"
+                    color="primary"
+                    size="large"
+                    key={walletId}
+                    fullWidth
+                    onClick={() => handleConnectPolkadot(walletId)}
+                  >
+                    <Box sx={{ marginRight: theme.spacing(2) }}>
+                      <Image
+                        src={icon}
+                        width="24"
+                        height="24"
+                        alt={walletId}
+                      />
+                    </Box>
+                    <Typography variant="button">{name}</Typography>
+                  </Button>
+                  )
+                })
+              }
             </>
           )}
 
