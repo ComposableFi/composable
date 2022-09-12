@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
-import { callIf, formatNumber, toChainIdUnit } from "shared";
+import { callbackGate, formatNumber, toChainIdUnit } from "shared";
 import { AlertBox, BigNumberInput } from "@/components";
 import { RadioButtonGroup } from "@/components/Molecules/RadioButtonGroup";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
@@ -39,10 +39,15 @@ export const StakeTabContent: FC = () => {
   const executor = useExecutor();
 
   useEffect(() => {
-    callIf(parachainApi, (api) =>
-      fetchRewardPools(api, assetId).then((pool) =>
-        callIf(pool, (poolToStore) => setRewardPool(assetId, poolToStore))
-      )
+    callbackGate(
+      (api) =>
+        fetchRewardPools(api, assetId).then((pool) =>
+          callbackGate(
+            (poolToStore) => setRewardPool(assetId, poolToStore),
+            pool
+          )
+        ),
+      parachainApi
     );
   }, [assetId, parachainApi, setRewardPool]);
 

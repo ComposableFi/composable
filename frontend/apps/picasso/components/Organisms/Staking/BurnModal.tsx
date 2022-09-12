@@ -2,7 +2,7 @@ import { Modal, TokenAsset } from "@/components";
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FC, useEffect, useState } from "react";
-import { callIf, formatNumber } from "shared";
+import { callbackGate, formatNumber } from "shared";
 import BigNumber from "bignumber.js";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { getSigner, useExecutor } from "substrate-react";
@@ -34,55 +34,54 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
 
   const handleBurnUnstake = () => {
     let snackbarKey: SnackbarKey | undefined;
-    callIf(parachainApi, (api) =>
-      callIf(account, (acc) =>
-        callIf(executor, async (exec) => {
-          const signer = await getSigner(APP_NAME, acc.address);
-          await exec.execute(
-            api.tx.stakingRewards.unstake(positionId.toString()),
-            acc.address,
-            api,
-            signer,
-            (txHash: string) => {
-              snackbarKey = enqueueSnackbar("Processing transaction", {
-                variant: "info",
-                isClosable: true,
-                persist: true,
-                url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
-              });
-            },
-            (txHash: string, events: EventRecord[]) => {
-              closeSnackbar(snackbarKey);
-              enqueueSnackbar(`Successfully claimed`, {
-                variant: "success",
-                isClosable: true,
-                persist: true,
-                url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
-              });
-              onClose();
-            },
-            (errorMessage: string) => {
-              closeSnackbar(snackbarKey);
-              enqueueSnackbar(
-                "An error occurred while processing transaction",
-                {
-                  variant: "error",
-                  isClosable: true,
-                  persist: true,
-                  description: errorMessage,
-                }
-              );
-              onClose();
-            }
-          );
-        })
-      )
+    callbackGate(
+      async (api, acc, exec) => {
+        const signer = await getSigner(APP_NAME, acc.address);
+        await exec.execute(
+          api.tx.stakingRewards.unstake(positionId.toString()),
+          acc.address,
+          api,
+          signer,
+          (txHash: string) => {
+            snackbarKey = enqueueSnackbar("Processing transaction", {
+              variant: "info",
+              isClosable: true,
+              persist: true,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+            });
+          },
+          (txHash: string, events: EventRecord[]) => {
+            closeSnackbar(snackbarKey);
+            enqueueSnackbar(`Successfully claimed`, {
+              variant: "success",
+              isClosable: true,
+              persist: true,
+              url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
+            });
+            onClose();
+          },
+          (errorMessage: string) => {
+            closeSnackbar(snackbarKey);
+            enqueueSnackbar("An error occurred while processing transaction", {
+              variant: "error",
+              isClosable: true,
+              persist: true,
+              description: errorMessage,
+            });
+            onClose();
+          }
+        );
+      },
+      parachainApi,
+      account,
+      executor
     );
   };
 
   useEffect(() => {
-    callIf(parachainApi, (api) =>
-      fetchStakingRewardPosition(api, positionId, setPosition)
+    callbackGate(
+      (api) => fetchStakingRewardPosition(api, positionId, setPosition),
+      parachainApi
     );
   }, [parachainApi]);
 
