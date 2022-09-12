@@ -124,7 +124,7 @@ where
 
 	/// Returns the last `Range` in the current ranges.
 	///
-	/// Returns `None` if a `Range` with the given `id` cannot be found.
+	/// Returns `None` if no `Range` can be found.
 	pub fn last(&self) -> Option<&Range<AssetId>> {
 		self.ranges.last()
 	}
