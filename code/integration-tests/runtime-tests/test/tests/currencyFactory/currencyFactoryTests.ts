@@ -108,8 +108,13 @@ describe("[SHORT] Currency Factory Tests", function () {
   });
 });
 
-export class CurrencyFactoryTests {
-  public static async setMetadata(api: ApiPromise, sudoKey: KeyringPair, assetId, metadata) {
+class CurrencyFactoryTests {
+  public static async setMetadata(
+    api: ApiPromise,
+    sudoKey: KeyringPair,
+    assetId: u128 | AnyNumber | AssetId,
+    metadata: string | Uint8Array | ComposableTraitsAssetsBasicAssetMetadata | { symbol?: any; name?: any }
+  ) {
     return await sendAndWaitForSuccess(
       api,
       sudoKey,
@@ -146,7 +151,7 @@ export class CurrencyFactoryTests {
    * Source: https://stackoverflow.com/questions/3745666/how-to-convert-from-hex-to-ascii-in-javascript/3745677#3745677
    * @param hex
    */
-  public static hex2a(hex) {
+  public static hex2a(hex: any) {
     const hex_string = hex.toString().replace("0x", ""); //force conversion
     let str = "";
     for (let i = 0; i < hex_string.length; i += 2) str += String.fromCharCode(parseInt(hex_string.substr(i, 2), 16));
