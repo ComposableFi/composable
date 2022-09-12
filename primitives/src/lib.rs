@@ -293,6 +293,12 @@ pub trait Chain: IbcProvider + KeyProvider + Send + Sync {
 	/// Name of this chain, used in logs.
 	fn name(&self) -> &str;
 
+	/// Should return a nuerical value for the max weight of transactions allowed in a block.
+	async fn block_max_weight(&self) -> u64;
+
+	/// Should return an estimate of the weight of a batch of messages.
+	async fn estimate_weight(&self, msg: Vec<Any>) -> u64;
+
 	/// Return a stream that yields when new [`IbcEvents`] are ready to be queried.
 	async fn finality_notifications(
 		&self,
@@ -300,7 +306,7 @@ pub trait Chain: IbcProvider + KeyProvider + Send + Sync {
 
 	/// This should be used to submit new messages [`Vec<Any>`] from a counterparty chain to this
 	/// chain.
-	async fn submit_ibc_messages(&self, messages: Vec<Any>) -> Result<(), Self::Error>;
+	async fn submit(&self, messages: Vec<Any>) -> Result<(), Self::Error>;
 }
 
 /// Returns undelivered packet sequences that have been sent out from

@@ -3,11 +3,10 @@
 use futures::StreamExt;
 use primitives::Chain;
 
-pub mod connection_delay;
 pub mod events;
 pub mod logging;
-pub mod packet_messages;
-pub mod packet_messages_utils;
+pub mod packets;
+pub mod queue;
 
 use events::parse_events;
 
@@ -41,7 +40,7 @@ where
 						};
 						let event_types = events.iter().map(|ev| ev.event_type()).collect::<Vec<_>>();
 						let (messages, timeouts) = parse_events(&mut chain_a, &mut chain_b,  events, update_client_header).await?;
-						chain_a.submit_ibc_messages(timeouts).await?;
+						queue::flush_message_batch(timeouts, &chain_a).await?;
 						// there'd at least be the `MsgUpdateClient` packet.
 						if messages.len() == 1 && update_type.is_optional() {
 							// skip sending ibc messages if no new events
@@ -54,7 +53,7 @@ where
 						}
 						let type_urls = messages.iter().map(|msg| msg.type_url.as_str()).collect::<Vec<_>>();
 						log::info!("Submitting messages to {}: {type_urls:#?}", chain_b.name());
-						chain_b.submit_ibc_messages(messages).await?;
+						queue::flush_message_batch(messages, &chain_b).await?;
 					}
 				}
 			},
@@ -74,7 +73,7 @@ where
 						};
 						let event_types = events.iter().map(|ev| ev.event_type()).collect::<Vec<_>>();
 						let (messages, timeouts) = parse_events(&mut chain_b, &mut chain_a, events, update_client_header).await?;
-						chain_b.submit_ibc_messages(timeouts).await?;
+						queue::flush_message_batch(timeouts, &chain_b).await?;
 						// there'd at least be the `MsgUpdateClient` packet.
 						if messages.len() == 1 && update_type.is_optional() {
 							log::info!("Skipping finality notification for {}", chain_b.name());
@@ -87,7 +86,7 @@ where
 						}
 						let type_urls = messages.iter().map(|msg| msg.type_url.as_str()).collect::<Vec<_>>();
 						log::info!("Submitting messages to {}: {type_urls:#?}", chain_a.name());
-						chain_a.submit_ibc_messages(messages).await?;
+						queue::flush_message_batch(messages, &chain_a).await?;
 					}
 				}
 			}
