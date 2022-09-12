@@ -195,8 +195,8 @@ pkgs.arion.build {
               (import ./services/devnet-dali.nix {
                 inherit pkgs;
                 inherit packages;
-                relaychain-port = 9944;
-                parachain-port = 9988;
+                relaychainPort = 9944;
+                parachainPort = 9988;
               });
             subsquid-indexer = mk-composable-container
               (import ./services/subsquid-indexer.nix {

@@ -145,7 +145,7 @@ export const useAuctionBuyForm = (): {
   );
 
   // useCallback will always receive
-  // up to date dependancies
+  // up to date deps
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedUpdater = useCallback(_.debounce(onChangeTokenAmount, 500), [
     onChangeTokenAmount,
