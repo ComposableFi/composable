@@ -170,40 +170,88 @@ where
 	/// Range for LP Tokens.
 	fn lp_tokens() -> Self {
 		Range {
-			current: AssetId::from((u32::MAX as u128).saturating_add(1)),
-			end: AssetId::from((u32::MAX as u128).saturating_mul(2)),
+			current: AssetId::from(
+				(u32::MAX as u128)
+					.checked_add(1)
+					.expect("Range must be within u128 bounds; QED"),
+			),
+			end: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(2)
+					.expect("Range must be within u128 bounds; QED"),
+			),
 		}
 	}
 
 	/// Range for Tokens.
 	fn tokens() -> Self {
 		Range {
-			current: AssetId::from((u32::MAX as u128).saturating_mul(2).saturating_add(1)),
-			end: AssetId::from((u32::MAX as u128).saturating_mul(3)),
+			current: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(2)
+					.expect("Range must be within u128 bounds; QED")
+					.checked_add(1)
+					.expect("Range must be within u128 bounds; QED"),
+			),
+			end: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(3)
+					.expect("Range must be within u128 bounds; QED"),
+			),
 		}
 	}
 
 	/// Range for foreign assets.
 	fn foreign_assets() -> Self {
 		Range {
-			current: AssetId::from((u32::MAX as u128).saturating_mul(3).saturating_add(1)),
-			end: AssetId::from((u32::MAX as u128).saturating_mul(4)),
+			current: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(3)
+					.expect("Range must be within u128 bounds; QED")
+					.checked_add(1)
+					.expect("Range must be within u128 bounds; QED"),
+			),
+			end: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(4)
+					.expect("Range must be within u128 bounds; QED"),
+			),
 		}
 	}
 
 	/// Range for IBC assets.
 	fn ibc_assets() -> Self {
 		Range {
-			current: AssetId::from((u32::MAX as u128).saturating_mul(4).saturating_add(1)),
-			end: AssetId::from((u32::MAX as u128).saturating_mul(5)),
+			current: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(4)
+					.expect("Range must be within u128 bounds; QED")
+					.checked_add(1)
+					.expect("Range must be within u128 bounds; QED"),
+			),
+			end: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(5)
+					.expect("Range must be within u128 bounds; QED"),
+			),
 		}
 	}
 
 	/// Range for fNFTs.
 	fn fnfts() -> Self {
 		Self {
-			current: AssetId::from((u32::MAX as u128).saturating_mul(5).saturating_add(1)),
-			end: AssetId::from((u32::MAX as u128).saturating_mul(6)),
+			current: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(5)
+					.expect("Range must be within u128 bounds; QED")
+					.checked_add(1)
+					.expect("Range must be within u128 bounds; QED"),
+			),
+			end: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(6)
+					.expect("Range must be within u128 bounds; QED"),
+			),
 		}
 	}
 
@@ -212,8 +260,18 @@ where
 	/// and may be used for governance.
 	fn x_tokens() -> Self {
 		Self {
-			current: AssetId::from((u32::MAX as u128).saturating_mul(6).saturating_add(1)),
-			end: AssetId::from((u32::MAX as u128).saturating_mul(7)),
+			current: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(6)
+					.expect("Range must be within u128 bounds; QED")
+					.checked_add(1)
+					.expect("Range must be within u128 bounds; QED"),
+			),
+			end: AssetId::from(
+				(u32::MAX as u128)
+					.checked_mul(7)
+					.expect("Range must be within u128 bounds; QED"),
+			),
 		}
 	}
 
