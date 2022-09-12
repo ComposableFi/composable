@@ -1,6 +1,7 @@
+use futures::future::BoxFuture;
 use std::{pin::Pin, str::FromStr, time::Duration};
 
-use futures::Stream;
+use futures::{FutureExt, Stream};
 use ibc_proto::{
 	google::protobuf::Any,
 	ibc::core::{
@@ -422,19 +423,54 @@ pub async fn find_block_height_by_timestamp(
 	let num_blocks = calculate_block_delay(timestamp_diff, chain.expected_block_time());
 	// subtract this duration from the latest block height
 	let maybe_block = latest_height.revision_height - num_blocks;
-	// Get timestamo of this block
+	// Get timestamp of this block
 	let maybe_timestamp = chain.query_timestamp_at(maybe_block).await.ok()?;
 	if maybe_timestamp >= timestamp.nanoseconds() {
 		Some(Height::new(latest_height.revision_number, maybe_block))
 	} else {
-		let start = maybe_block + 1;
-		let end = latest_height.revision_height - 1;
-		for block_number in start..end {
-			let temp_timestamp = chain.query_timestamp_at(block_number).await.ok()?;
-			if temp_timestamp >= timestamp.nanoseconds() {
-				return Some(Height::new(latest_height.revision_number, block_number))
+		let block = search_for_matching_block_height(
+			chain,
+			timestamp,
+			maybe_block + 1,
+			latest_height.revision_height - 1,
+		)
+		.await?;
+		Some(Height::new(latest_height.revision_number, block))
+	}
+}
+
+async fn search_for_matching_block_height(
+	chain: &impl Chain,
+	timestamp: Timestamp,
+	mut start: u64,
+	mut end: u64,
+) -> Option<u64> {
+	while end - start > 1 {
+		let mid = (end + start) / 2;
+		let temp_timestamp = chain.query_timestamp_at(mid).await.ok()?;
+		if temp_timestamp < timestamp.nanoseconds() {
+			start = mid + 1;
+		} else {
+			// We don't want to exit immediately because we are looking for the first block with a
+			// timestamp greater than or equal to the given height since we want to maintain a
+			// consistency in calculating block delays later on, to ensure this we perform a check
+			// on the block just before this mid, if it's timestamp is less than the required
+			// timestamp, then we can safely exit.
+			let temp = chain.query_timestamp_at(mid - 1).await.ok()?;
+			if temp < timestamp.nanoseconds() {
+				return Some(mid)
 			}
+			end = mid;
 		}
+	}
+	let start_timestamp = chain.query_timestamp_at(start).await.ok()?;
+	let high_timestamp = chain.query_timestamp_at(end).await.ok()?;
+	// Check if the smaller block number meets our requirement and return if it does
+	if start_timestamp >= timestamp.nanoseconds() {
+		Some(start)
+	} else if high_timestamp >= timestamp.nanoseconds() {
+		Some(end)
+	} else {
 		None
 	}
 }

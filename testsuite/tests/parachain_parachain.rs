@@ -193,7 +193,7 @@ async fn main() {
 async fn parachain_to_parachain_ibc_messaging_token_transfer() {
 	let (mut chain_a, mut chain_b) = setup_clients().await;
 	let (handle, channel_id, channel_b, _connection_id) =
-		setup_connection_and_channel(&chain_a, &chain_b, 60 * 2).await;
+		setup_connection_and_channel(&chain_a, &chain_b, 0).await;
 	handle.abort();
 	// Set channel whitelist and restart relayer loop
 	chain_a.set_channel_whitelist(vec![(channel_id, PortId::transfer())]);

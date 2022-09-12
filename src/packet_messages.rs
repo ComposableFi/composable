@@ -1,5 +1,5 @@
 #[cfg(feature = "testing")]
-use crate::packet_relay_status;
+use crate::send_packet_relay::packet_relay_status;
 
 use crate::packet_messages_utils::{
 	construct_ack_message, construct_recv_message, construct_timeout_message,

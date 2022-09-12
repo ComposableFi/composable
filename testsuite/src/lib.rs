@@ -1,6 +1,6 @@
 use crate::utils::{parse_amount, timeout_future};
 use futures::{future, StreamExt};
-use hyperspace::set_relay_status;
+use hyperspace::send_packet_relay::set_relay_status;
 use hyperspace_primitives::TestProvider;
 use ibc::{
 	applications::transfer::{msgs::transfer::MsgTransfer, Amount, PrefixedCoin, VERSION},
@@ -344,7 +344,7 @@ pub async fn send_packet_and_assert_timestamp_timeout<A, B>(
 		chain_a,
 		chain_b,
 		channel_id,
-		Some(Timeout::Offset { timestamp: Some(60), height: Some(400) }),
+		Some(Timeout::Offset { timestamp: Some(60 * 2), height: Some(400) }),
 	)
 	.await;
 

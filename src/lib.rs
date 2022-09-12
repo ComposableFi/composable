@@ -2,8 +2,6 @@
 
 use futures::StreamExt;
 use primitives::Chain;
-#[cfg(feature = "testing")]
-use std::sync::atomic::{AtomicBool, Ordering};
 
 pub mod connection_delay;
 pub mod events;
@@ -100,16 +98,17 @@ where
 }
 
 #[cfg(feature = "testing")]
-static RELAY_PACKETS: AtomicBool = AtomicBool::new(true);
+pub mod send_packet_relay {
+	use std::sync::atomic::{AtomicBool, Ordering};
+	static RELAY_PACKETS: AtomicBool = AtomicBool::new(true);
 
-#[cfg(feature = "testing")]
-/// Returns is packet relay has been paused
-pub fn packet_relay_status() -> bool {
-	RELAY_PACKETS.load(Ordering::SeqCst)
-}
+	/// Returns status of send packet relay
+	pub fn packet_relay_status() -> bool {
+		RELAY_PACKETS.load(Ordering::SeqCst)
+	}
 
-#[cfg(feature = "testing")]
-/// Sets packet relay status
-pub fn set_relay_status(status: bool) {
-	RELAY_PACKETS.store(status, Ordering::SeqCst);
+	/// Sets packet relay status
+	pub fn set_relay_status(status: bool) {
+		RELAY_PACKETS.store(status, Ordering::SeqCst);
+	}
 }
