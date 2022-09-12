@@ -42,7 +42,7 @@ describe("query.crowdloanRewards.account Tests", function () {
  * Contains all Query tests for the pallet:
  * crowdloanRewards
  */
-export class QueryCrowdloanRewardsTests {
+class QueryCrowdloanRewardsTests {
   /**
    * Checks for a successful return of
    * query.crowdloanRewards.claimedRewards()

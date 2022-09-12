@@ -94,7 +94,7 @@ describe("tx.governanceRegistry Tests", function () {
   });
 });
 
-export class TxGovernanceRegistryTests {
+class TxGovernanceRegistryTests {
   /**
    * Sets the value of an `asset_id` to the signed account id. Only callable by root.
    *

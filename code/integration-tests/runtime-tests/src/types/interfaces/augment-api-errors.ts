@@ -1,10 +1,16 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from "@polkadot/api-base/types";
+// import type lookup before we augment - in some environments
+// this is required to allow for ambient/previous definitions
+import '@polkadot/api-base/types/errors';
+
+import type { ApiTypes, AugmentedError } from '@polkadot/api-base/types';
+
+export type __AugmentedError<ApiType extends ApiTypes> = AugmentedError<ApiType>;
 
 declare module '@polkadot/api-base/types/errors' {
-  export interface AugmentedErrors<ApiType extends ApiTypes> {
+  interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
       InvalidCurrency: AugmentedError<ApiType>;
@@ -159,6 +165,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TooManyCandidates: AugmentedError<ApiType>;
       /**
+       * Too many invulnerables
+       **/
+      TooManyInvulnerables: AugmentedError<ApiType>;
+      /**
        * Unknown error
        **/
       Unknown: AugmentedError<ApiType>;
@@ -166,6 +176,39 @@ declare module '@polkadot/api-base/types/errors' {
        * Validator ID is not yet registered
        **/
       ValidatorNotRegistered: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    cosmwasm: {
+      ChargeGas: AugmentedError<ApiType>;
+      CodeAlreadyExists: AugmentedError<ApiType>;
+      CodeDecoding: AugmentedError<ApiType>;
+      CodeEncoding: AugmentedError<ApiType>;
+      CodeInstrumentation: AugmentedError<ApiType>;
+      CodeNotFound: AugmentedError<ApiType>;
+      CodeValidation: AugmentedError<ApiType>;
+      ContractAlreadyExists: AugmentedError<ApiType>;
+      ContractHasNoInfo: AugmentedError<ApiType>;
+      ContractNonceOverflow: AugmentedError<ApiType>;
+      ContractNotFound: AugmentedError<ApiType>;
+      ContractTrapped: AugmentedError<ApiType>;
+      Instrumentation: AugmentedError<ApiType>;
+      InstrumentedCodeIsTooBig: AugmentedError<ApiType>;
+      IteratorIdOverflow: AugmentedError<ApiType>;
+      IteratorNotFound: AugmentedError<ApiType>;
+      LabelTooBig: AugmentedError<ApiType>;
+      NonceOverflow: AugmentedError<ApiType>;
+      NotEnoughFundsForUpload: AugmentedError<ApiType>;
+      RefcountOverflow: AugmentedError<ApiType>;
+      RefundGas: AugmentedError<ApiType>;
+      SignatureVerificationError: AugmentedError<ApiType>;
+      StackOverflow: AugmentedError<ApiType>;
+      TransferFailed: AugmentedError<ApiType>;
+      UnknownDenom: AugmentedError<ApiType>;
+      VmCreation: AugmentedError<ApiType>;
+      VMDepthOverflow: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -226,6 +269,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Not a member.
        **/
       NotMember: AugmentedError<ApiType>;
+      /**
+       * Too many members.
+       **/
+      TooManyMembers: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -370,6 +417,10 @@ declare module '@polkadot/api-base/types/errors' {
        * these are removed, either through `unvote` or `reap_vote`.
        **/
       VotesExist: AugmentedError<ApiType>;
+      /**
+       * Voting period too low
+       **/
+      VotingPeriodLow: AugmentedError<ApiType>;
       /**
        * Invalid upper bound.
        **/
@@ -966,6 +1017,7 @@ declare module '@polkadot/api-base/types/errors' {
       NoLpTokenForLbp: AugmentedError<ApiType>;
       NotEnoughLiquidity: AugmentedError<ApiType>;
       NotEnoughLpToken: AugmentedError<ApiType>;
+      NoXTokenForLbp: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
       StakingPoolConfigError: AugmentedError<ApiType>;
@@ -1231,9 +1283,17 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       RewardConfigProblem: AugmentedError<ApiType>;
       /**
+       * Reward pool already exists
+       **/
+      RewardsPoolAlreadyExists: AugmentedError<ApiType>;
+      /**
        * Rewards pool not found.
        **/
       RewardsPoolNotFound: AugmentedError<ApiType>;
+      /**
+       * The rewards pot (cold wallet) for this pool is empty.
+       **/
+      RewardsPotEmpty: AugmentedError<ApiType>;
       /**
        * No stake found for given id.
        **/
@@ -1351,6 +1411,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotMember: AugmentedError<ApiType>;
       /**
+       * Too many members.
+       **/
+      TooManyMembers: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -1433,6 +1497,11 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     treasury: {
+      /**
+       * The spend origin is valid but the amount it is allowed to spend is lower than the
+       * amount to be spent.
+       **/
+      InsufficientPermission: AugmentedError<ApiType>;
       /**
        * Proposer's balance is too low.
        **/

@@ -2,13 +2,14 @@ import { expect } from "chai";
 import { KeyringPair } from "@polkadot/keyring/types";
 import testConfiguration from "./test_configuration.json";
 import {
-  TxCrowdloanRewardsTests,
-  ethAccount
+  ethAccount,
+  TxCrowdloanRewardsTests
 } from "@composabletests/tests/crowdloanRewards/testHandlers/crowdloanHandler";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import { ApiPromise } from "@polkadot/api";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
+import { Account } from "web3-core";
 
 /**
  * Task order list:
@@ -27,7 +28,7 @@ describe("CrowdloanRewards Tests", function () {
     sudoKey: KeyringPair,
     contributor: KeyringPair,
     contributorRewardAccount: KeyringPair,
-    contributorEth,
+    contributorEth: Account,
     contributorEthRewardAccount: KeyringPair;
 
   let onExistingChain = false;
