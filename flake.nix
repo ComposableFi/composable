@@ -479,7 +479,7 @@
                   taplo fmt
                   
                   # .rs
-                	find . -name "*.rs" -type f -exec rustfmt --edition 2021 {} \;
+                	find . -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
                   
                   # .js .ts .tsx 
                   prettier \
