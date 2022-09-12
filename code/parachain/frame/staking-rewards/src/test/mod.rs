@@ -283,21 +283,24 @@ fn test_extend_stake_amount() {
 		let inflation = boosted_amount * total_rewards / total_shares;
 		assert_ok!(StakingRewards::extend(Origin::signed(staker), 1, 0, extend_amount));
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
-		let mut total_rewards = 0;
-		for (_asset_id, reward) in rewards_pool.rewards.iter() {
-			total_rewards += reward.total_rewards;
-		}
+
+		let total_rewards =	rewards_pool
+			.rewards
+			.iter()
+			.fold(0, |total_rewards, (_asset_id, reward)| {
+				total_rewards + reward.total_rewards
+			});
+
 		let inflation_extended = extend_amount * total_rewards / rewards_pool.total_shares;
 		let inflation = inflation + inflation_extended;
 		assert_eq!(inflation, 50710);
-		let reductions = 
-			rewards_pool
-				.rewards
-				.iter()
-				.map(|(asset_id, _reward)| (*asset_id, inflation))
-				.try_collect()
-		
-		.expect("reductions expected");
+
+		let reductions = rewards_pool
+			.rewards
+			.iter()
+			.map(|(asset_id, _reward)| (*asset_id, inflation))
+			.try_collect()
+			.expect("reductions expected");
 
 		let stake = StakingRewards::stakes(1, 0);
 		assert_eq!(
