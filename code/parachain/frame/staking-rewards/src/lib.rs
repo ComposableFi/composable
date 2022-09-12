@@ -1034,7 +1034,7 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::SplitPosition {
 				positions: vec![
 					(*fnft_collection_id, *fnft_instance_id, old_position_stake),
-					(*fnft_collection_id, *fnft_instance_id, new_stake.stake),
+					(*fnft_collection_id, new_fnft_instance_id, new_stake.stake),
 				],
 			});
 
