@@ -1,5 +1,5 @@
 use crate::{format, Config};
-use ::alloc::string::String;
+use alloc::string::String;
 use frame_support::storage::{child, child::ChildInfo, ChildTriePrefixIterator};
 use ibc::{
 	core::ics24_host::{identifier::ClientId, path::ClientConsensusStatePath},
