@@ -890,8 +890,7 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 	}
 }
 
-fn default_lock_config(
-) -> LockConfig<BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingDurationPresets>> {
+fn default_lock_config() -> LockConfig<MaxStakingDurationPresets> {
 	LockConfig {
 		duration_presets: [
 			(ONE_HOUR, Perbill::from_percent(1)),                // 1%
@@ -904,15 +903,10 @@ fn default_lock_config(
 	}
 }
 
-fn default_reward_config(
-) -> BoundedBTreeMap<u128, RewardConfig<u128, u128>, MaxRewardConfigsPerPool> {
+fn default_reward_config() -> BoundedBTreeMap<u128, RewardConfig<u128>, MaxRewardConfigsPerPool> {
 	[(
 		USDT::ID,
-		RewardConfig {
-			asset_id: USDT::ID,
-			max_rewards: 100_u128,
-			reward_rate: RewardRate::per_second(10_u128),
-		},
+		RewardConfig { max_rewards: 100_u128, reward_rate: RewardRate::per_second(10_u128) },
 	)]
 	.into_iter()
 	.try_collect()

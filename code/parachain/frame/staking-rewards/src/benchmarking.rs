@@ -27,13 +27,7 @@ pub const FNFT_INSTANCE_ID_BASE: u64 = 0;
 fn get_reward_pool<T: Config>(
 	owner: T::AccountId,
 	reward_count: u32,
-) -> RewardPoolConfiguration<
-	T::AccountId,
-	T::AssetId,
-	T::BlockNumber,
-	BoundedBTreeMap<T::AssetId, RewardConfig<T::AssetId, T::Balance>, T::MaxRewardConfigsPerPool>,
-	BoundedBTreeMap<DurationSeconds, Perbill, T::MaxStakingDurationPresets>,
-> {
+) -> RewardPoolConfigurationOf<T> {
 	let pool_init_config = RewardRateBasedIncentive {
 		owner,
 		asset_id: BASE_ASSET_ID.into(),
@@ -46,8 +40,7 @@ fn get_reward_pool<T: Config>(
 	pool_init_config
 }
 
-fn lock_config<T: Config>(
-) -> LockConfig<BoundedBTreeMap<DurationSeconds, Perbill, T::MaxStakingDurationPresets>> {
+fn lock_config<T: Config>() -> LockConfig<T::MaxStakingDurationPresets> {
 	LockConfig {
 		duration_presets: [
 			(ONE_HOUR, Perbill::from_percent(1)),                // 1%
@@ -62,14 +55,13 @@ fn lock_config<T: Config>(
 
 fn reward_config<T: Config>(
 	reward_count: u32,
-) -> BoundedBTreeMap<T::AssetId, RewardConfig<T::AssetId, T::Balance>, T::MaxRewardConfigsPerPool> {
+) -> BoundedBTreeMap<T::AssetId, RewardConfig<T::Balance>, T::MaxRewardConfigsPerPool> {
 	(0..reward_count)
 		.map(|asset_id| {
 			let asset_id = (asset_id as u128) + BASE_ASSET_ID;
 			(
 				asset_id.into(),
 				RewardConfig {
-					asset_id: asset_id.into(),
 					max_rewards: 100_u128.into(),
 					reward_rate: RewardRate::per_second(1_u128),
 				},
@@ -191,7 +183,6 @@ benchmarks! {
 		let reward_asset_id = 1_u128.into();
 
 		let reward_config = RewardConfig {
-			asset_id: 1_u128.into(),
 			max_rewards: 1_000_000.into(),
 			reward_rate: RewardRate::per_second(10_000),
 		};
@@ -213,7 +204,7 @@ benchmarks! {
 
 		let mut reward = RewardPools::<T>::get(&pool_id).unwrap().rewards.get(&reward_asset_id).unwrap().clone();
 	}: {
-		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, &mut reward, now);
+		let reward = Pallet::<T>::reward_accumulation_hook_reward_update_calculation(pool_id, reward_asset_id,&mut reward, now);
 	}
 
 	unix_time_now {}: {

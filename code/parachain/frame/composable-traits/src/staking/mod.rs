@@ -1,4 +1,4 @@
-use core::num::NonZeroU64;
+use core::{fmt::Debug, num::NonZeroU64};
 
 use crate::{
 	staking::lock::{Lock, LockConfig},
@@ -21,10 +21,7 @@ pub type StakingDurationToRewardsMultiplierConfig<Limit> =
 /// Defines staking duration, rewards and early unstake penalty for a given asset type.
 /// TODO refer to the relevant section in the design doc.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct Reward<AssetId, Balance> {
-	/// asset id of the reward
-	pub asset_id: AssetId,
-
+pub struct Reward<Balance> {
 	/// Total rewards including inflation for adjusting for new stakers joining the pool. All
 	/// stakers in a pool are eligible to receive a part of this value based on their share of the
 	/// pool.
@@ -88,17 +85,9 @@ pub struct RewardUpdate<Balance> {
 /// Abstraction over the asset to reduction map stored for staking.
 pub type Reductions<AssetId, Balance, Limit> = BoundedBTreeMap<AssetId, Balance, Limit>;
 
-/// Abstraction over the asset to rewards map stored for staking.
-pub type Rewards<AssetId, Balance, Limit> =
-	BoundedBTreeMap<AssetId, Reward<AssetId, Balance>, Limit>;
-
-impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
-	pub fn from_config(
-		reward_config: RewardConfig<AssetId, Balance>,
-		now_seconds: u64,
-	) -> Reward<AssetId, Balance> {
+impl<Balance: Zero> Reward<Balance> {
+	pub fn from_config(reward_config: RewardConfig<Balance>, now_seconds: u64) -> Reward<Balance> {
 		Reward {
-			asset_id: reward_config.asset_id,
 			total_rewards: Zero::zero(),
 			claimed_rewards: Zero::zero(),
 			total_dilution_adjustment: Zero::zero(),
@@ -112,15 +101,25 @@ impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
 /// A reward pool is a collection of rewards that are allocated to stakers to incentivize a
 /// particular purpose. Eg: a pool of rewards for incentivizing adding liquidity to a pablo swap
 /// pool. TODO refer to the relevant section in the design doc.
-#[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets, Rewards> {
+#[derive(
+	RuntimeDebugNoBound, PartialEqNoBound, EqNoBound, CloneNoBound, Encode, Decode, TypeInfo,
+)]
+#[scale_info(skip_type_params(MaxDurationPresets, MaxRewards))]
+pub struct RewardPool<
+	AccountId: Debug + PartialEq + Eq + Clone,
+	AssetId: Debug + PartialEq + Eq + Clone,
+	Balance: Debug + PartialEq + Eq + Clone,
+	BlockNumber: Debug + PartialEq + Eq + Clone,
+	MaxDurationPresets: Get<u32>,
+	MaxRewards: Get<u32>,
+> {
 	pub owner: AccountId,
 
 	/// The staked asset id of the reward pool.
 	pub asset_id: AssetId,
 
 	/// rewards accumulated
-	pub rewards: Rewards,
+	pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
 
 	/// Total shares distributed among stakers
 	pub total_shares: Balance,
@@ -132,7 +131,7 @@ pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets,
 	pub end_block: BlockNumber,
 
 	// possible lock config for this pool
-	pub lock: LockConfig<DurationPresets>,
+	pub lock: LockConfig<MaxDurationPresets>,
 
 	// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
 	pub share_asset_id: AssetId,
@@ -146,10 +145,7 @@ pub const DEFAULT_MAX_REWARDS: u128 = 1_000_000_000_000_000_000_u128;
 
 /// Reward configurations for a given asset type.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
-pub struct RewardConfig<AssetId, Balance> {
-	/// asset id of the reward
-	pub asset_id: AssetId,
-
+pub struct RewardConfig<Balance> {
 	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
 	pub max_rewards: Balance,
 
@@ -158,15 +154,29 @@ pub struct RewardConfig<AssetId, Balance> {
 	pub reward_rate: RewardRate<Balance>,
 }
 
-pub type RewardConfigs<AssetId, Balance, Limit> =
-	BoundedBTreeMap<AssetId, RewardConfig<AssetId, Balance>, Limit>;
-
 /// Categorize the reward pool by it's incentive characteristics and expose
 /// initial configuration parameters.
 /// TODO refer to the relevant section in the design doc.
-#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
+#[derive(
+	RuntimeDebugNoBound,
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	CloneNoBound,
+	PartialEqNoBound,
+	EqNoBound,
+	TypeInfo,
+)]
 #[non_exhaustive]
-pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs, DurationPresets> {
+#[scale_info(skip_type_params(MaxRewardConfigs, MaxDurationPresets))]
+pub enum RewardPoolConfiguration<
+	AccountId: Eq + PartialEq + Clone + Debug,
+	AssetId: Eq + PartialEq + Clone + Debug,
+	Balance: Eq + PartialEq + Clone + Debug,
+	BlockNumber: Eq + PartialEq + Clone + Debug,
+	MaxRewardConfigs: Get<u32>,
+	MaxDurationPresets: Get<u32>,
+> {
 	/// A pool with an adjustable reward rate to be used as incentive.
 	RewardRateBasedIncentive {
 		/// Protocol or the user account that owns this pool
@@ -176,9 +186,9 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 		/// Pool would stop adding rewards to pool at this block number.
 		end_block: BlockNumber,
 		/// initial reward configuration for this pool
-		reward_configs: RewardConfigs,
+		reward_configs: BoundedBTreeMap<AssetId, RewardConfig<Balance>, MaxRewardConfigs>,
 		// possible lock config for this reward
-		lock: LockConfig<DurationPresets>,
+		lock: LockConfig<MaxDurationPresets>,
 
 		// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
 		share_asset_id: AssetId,
@@ -191,8 +201,15 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 /// Staking typed fNFT, usually can be mapped to raw fNFT storage type. A position identifier
 /// should exist for each position when stored in the runtime storage.
 /// TODO refer to the relevant section in the design doc.
-#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct Stake<ItemId, RewardPoolId, Balance, Reductions> {
+#[derive(DebugNoBound, PartialEqNoBound, EqNoBound, CloneNoBound, Encode, Decode, TypeInfo)]
+#[scale_info(skip_type_params(MaxReductions))]
+pub struct Stake<
+	AssetId: Debug + PartialEq + Eq + Clone,
+	ItemId: Debug + PartialEq + Eq + Clone,
+	RewardPoolId: Debug + PartialEq + Eq + Clone,
+	Balance: Debug + PartialEq + Eq + Clone,
+	MaxReductions: Get<u32>,
+> {
 	/// The ItemID is used in conjunction with the fNFT collection ID to identify the stake.
 	pub fnft_instance_id: ItemId,
 
@@ -207,7 +224,7 @@ pub struct Stake<ItemId, RewardPoolId, Balance, Reductions> {
 	pub share: Balance,
 
 	/// Reduced rewards by asset for the position (d_n)
-	pub reductions: Reductions,
+	pub reductions: BoundedBTreeMap<AssetId, Balance, MaxReductions>,
 
 	/// The lock period for the stake.
 	pub lock: Lock,
@@ -215,22 +232,24 @@ pub struct Stake<ItemId, RewardPoolId, Balance, Reductions> {
 
 /// Trait to provide interface to manage staking reward pool.
 pub trait ManageStaking {
-	type AccountId;
-	type AssetId;
-	type BlockNumber;
-	type Balance;
-	type RewardConfigsLimit;
-	type StakingDurationPresetsLimit;
-	type RewardPoolId;
+	type AccountId: Eq + Clone + PartialEq + Debug;
+	type AssetId: Eq + Clone + PartialEq + Debug;
+	type BlockNumber: Eq + Clone + PartialEq + Debug;
+	type Balance: Eq + Clone + PartialEq + Debug;
+	type RewardPoolId: Eq + Clone + PartialEq + Debug;
+
+	type RewardConfigsLimit: Get<u32>;
+	type StakingDurationPresetsLimit: Get<u32>;
 
 	/// Create a staking reward pool from configurations passed as inputs.
 	fn create_staking_pool(
 		pool_config: RewardPoolConfiguration<
 			Self::AccountId,
 			Self::AssetId,
+			Self::Balance,
 			Self::BlockNumber,
-			RewardConfigs<Self::AssetId, Self::Balance, Self::RewardConfigsLimit>,
-			StakingDurationToRewardsMultiplierConfig<Self::StakingDurationPresetsLimit>,
+			Self::RewardConfigsLimit,
+			Self::StakingDurationPresetsLimit,
 		>,
 	) -> Result<Self::RewardPoolId, DispatchError>;
 }
