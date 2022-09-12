@@ -70,13 +70,8 @@ where
 	/// * If appending `Range` would cause Overflow
 	/// * If adding a `Range` would exceed the max number of ranges
 	pub fn append(&mut self, length: u128) -> Result<(), DispatchError> {
-		let start = self
-			.end()
-			.checked_add(&AssetId::from(1))
-			.ok_or_else(|| DispatchError::from(ArithmeticError::Overflow))?;
-		let end = start
-			.checked_add(&AssetId::from(length))
-			.ok_or_else(|| DispatchError::from(ArithmeticError::Overflow))?;
+		let start = self.end().checked_add(&AssetId::from(1)).ok_or(ArithmeticError::Overflow)?;
+		let end = start.checked_add(&AssetId::from(length)).ok_or(ArithmeticError::Overflow)?;
 		let range = Range::new(start, Some(end))?;
 
 		self.add(range)?;
