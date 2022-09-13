@@ -96,5 +96,12 @@ pub mod pallet {
 			});
 			Ok(MockCurrencyId::LpToken(lp_token_id))
 		}
+
+		fn protocol_asset_id_to_unique_asset_id(
+			_: u32,
+			_: RangeId,
+		) -> Result<MockCurrencyId, DispatchError> {
+			Ok(MockCurrencyId::from(1))
+		}
 	}
 }

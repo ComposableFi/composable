@@ -5,6 +5,7 @@ use composable_traits::{
 	xcm::Balance,
 };
 use proptest::prelude::*;
+use sp_runtime::DispatchError;
 
 prop_compose! {
 	fn valid_ranges()
@@ -70,5 +71,35 @@ proptest! {
 			}
 			Ok(())
 		})?;
+	}
+}
+
+mod protocol_asset_id_to_unique_asset_id {
+	use super::*;
+
+	#[test]
+	fn should_error_when_non_preconfigured_range() {
+		new_test_ext().execute_with(|| {
+			assert_eq!(
+				<CurrencyRanges as CurrencyFactory<AssetId, Balance>>::protocol_asset_id_to_unique_asset_id(
+					0,
+					RangeId::from(6)
+				),
+				Err(DispatchError::Other("RangeId outside of preconfigured ranges!"))
+			)
+		});
+	}
+
+	#[test]
+	fn should_provide_correct_global_asset_id() {
+		new_test_ext().execute_with(|| {
+			assert_eq!(
+				<CurrencyRanges as CurrencyFactory<AssetId, Balance>>::protocol_asset_id_to_unique_asset_id(
+					1,
+					RangeId::from(1)
+				),
+				Ok(u32::MAX as u128 * 2 + 1)
+			)
+		})
 	}
 }

@@ -108,6 +108,8 @@ endwhile
 ferdie
 fgrep
 findutils
+fnft
+fnfts
 fontconfig
 freetype
 fsevenm
