@@ -29,6 +29,7 @@ impl<T: Config> StableSwap<T> {
 		ensure!(pair.base != pair.quote, Error::<T>::InvalidPair);
 		ensure!(fee.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 
+		println!("BALANCE DEFAULT PABLO: {:?}", T::Balance::default()); //TODO(belousm): delete
 		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::default())?;
 		// Add new pool
 		let pool_id =

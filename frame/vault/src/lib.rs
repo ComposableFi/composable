@@ -1019,11 +1019,6 @@ pub mod pallet {
 						allocation
 							.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
 					);
-					println!(
-						"AUM: {:?}, MAX ALLOWED: {:?}, BALANCE: {:?}",
-						aum, max_allowed, balance
-					); // TODO(belousm): to delete
-					println!("ACTION: {:?}", balance.cmp(&max_allowed));
 					match balance.cmp(&max_allowed) {
 						Ordering::Greater =>
 							Ok(FundsAvailability::Depositable(balance - max_allowed)),

@@ -96,16 +96,9 @@ where
 	vault_id.unwrap()
 }
 
-pub fn associate_vault_and_deposit_in_it<AMT>(vault_id: VaultId, asset_id: CurrencyId, amount: AMT)
-where
-	AMT: Into<Option<Balance>>,
-{
-	let default_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
-	let amount_to_mint = amount.into().unwrap_or(default_amount);
+pub fn associate_vault(vault_id: VaultId) {
 	let associate_vault_proposal = Call::PabloStrategy(crate::Call::associate_vault { vault_id });
 	make_proposal(associate_vault_proposal, ALICE, 1, 0, None);
-	let vault_account = Vault::account_id(&vault_id);
-	assert_ok!(Tokens::mint_into(asset_id, &vault_account, amount_to_mint));
 }
 
 pub fn set_admin_members(members: Vec<AccountId>, members_count: MemberCount) {
@@ -169,8 +162,7 @@ pub fn set_pool_id_for_asset(asset_id: CurrencyId, pool_id: PoolId) {
 }
 
 pub fn liquidity_rebalance() {
-	let liquidity_rebalance_proposal =
-	Call::PabloStrategy(crate::Call::liquidity_rebalance {});
+	let liquidity_rebalance_proposal = Call::PabloStrategy(crate::Call::liquidity_rebalance {});
 	make_proposal(liquidity_rebalance_proposal, ALICE, 1, 0, None);
 }
 

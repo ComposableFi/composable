@@ -235,6 +235,8 @@ pub mod pallet {
 		PoolNotFound,
 		// Occurs when we try to set a new pool_id, during a transferring from or to an old one
 		TransferringInProgress,
+		// No strategy is associated with the Vault.
+		NoStrategies,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -353,9 +355,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
 			let pool_id_deduce = pool_id_and_state.pool_id;
-			let vault_account = T::Vault::account_id(vault_id);
+			let strategy_vaults = T::Vault::get_strategies(vault_id)?;
+			let strategy_vault_account = strategy_vaults.last().ok_or(Error::<T>::NoStrategies)?.0;
 			let lp_token_id = T::Pablo::lp_token(pool_id_deduce)?;
-			let mut balance_of_lp_token = T::Currency::balance(lp_token_id, &vault_account);
+			let mut balance_of_lp_token =
+				T::Currency::balance(lp_token_id, &strategy_vault_account);
 			Pools::<T>::mutate(asset_id, |pool| {
 				*pool = Some(PoolState { pool_id: pool_id_deduce, state: State::Transferring });
 			});
@@ -369,7 +373,8 @@ pub mod pallet {
 				)?);
 			while balance_of_lp_token > balance_to_withdraw_per_transaction {
 				Self::do_tranferring_funds(
-					&vault_account,
+					vault_id,
+					&strategy_vault_account,
 					new_pool_id,
 					pool_id_deduce,
 					balance_to_withdraw_per_transaction,
@@ -379,7 +384,8 @@ pub mod pallet {
 			}
 			if balance_of_lp_token > T::Balance::zero() {
 				Self::do_tranferring_funds(
-					&vault_account,
+					vault_id,
+					&strategy_vault_account,
 					new_pool_id,
 					pool_id_deduce,
 					balance_to_withdraw_per_transaction,
@@ -418,24 +424,25 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
 			let asset_id = T::Vault::asset_id(vault_id)?;
-			let vault_account = T::Vault::account_id(vault_id);
+			let strategy_vaults = T::Vault::get_strategies(vault_id)?;
+			let strategy_vault_account = strategy_vaults.last().ok_or(Error::<T>::NoStrategies)?.0;
 			let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
 			let pool_id = pool_id_and_state.pool_id;
 			match T::Vault::available_funds(vault_id, &Self::account_id())? {
 				FundsAvailability::Withdrawable(balance) => {
-					Self::withdraw(&vault_account, pool_id, balance)?;
+					Self::withdraw(vault_id, &strategy_vault_account, pool_id, balance)?;
 					Self::deposit_event(Event::WithdrawFunctionalityOccuredDuringRebalance {
 						vault_id: *vault_id,
 					});
 				},
 				FundsAvailability::Depositable(balance) => {
-					Self::deposit(&vault_account, pool_id, balance)?;
+					Self::deposit(vault_id, &strategy_vault_account, pool_id, balance)?;
 					Self::deposit_event(Event::DepositFunctionalityOccuredDuringRebalance {
 						vault_id: *vault_id,
 					});
 				},
 				FundsAvailability::MustLiquidate => {
-					Self::liquidate(&vault_account, pool_id)?;
+					Self::liquidate(vault_id, &strategy_vault_account, pool_id)?;
 					Self::deposit_event(Event::LiquidateFunctionalityOccuredDuringRebalance {
 						vault_id: *vault_id,
 					});
@@ -450,12 +457,14 @@ pub mod pallet {
 		}
 
 		fn withdraw(
-			vault_account: &T::AccountId,
+			vault_id: &T::VaultId,
+			vault_strategy_account: &T::AccountId,
 			pool_id: T::PoolId,
 			balance: T::Balance,
 		) -> DispatchResult {
+			<T::Vault as StrategicVault>::withdraw(vault_id, vault_strategy_account, balance)?;
 			T::Pablo::add_liquidity(
-				vault_account,
+				vault_strategy_account,
 				pool_id,
 				balance,
 				T::Balance::zero(),
@@ -465,40 +474,50 @@ pub mod pallet {
 		}
 
 		fn deposit(
-			vault_account: &T::AccountId,
+			vault_id: &T::VaultId,
+			vault_strategy_account: &T::AccountId,
 			pool_id: T::PoolId,
 			balance: T::Balance,
 		) -> DispatchResult {
 			let lp_price = T::Pablo::get_price_of_lp_token(pool_id)?;
 			let lp_redeem = balance.safe_div(&lp_price)?;
 			T::Pablo::remove_liquidity_single_asset(
-				vault_account,
+				vault_strategy_account,
 				pool_id,
 				lp_redeem,
 				T::Balance::zero(),
-			)
+			)?;
+			<T::Vault as StrategicVault>::deposit(vault_id, vault_strategy_account, balance)
 		}
 
-		fn liquidate(vault_account: &T::AccountId, pool_id: T::PoolId) -> DispatchResult {
+		fn liquidate(
+			vault_id: &T::VaultId,
+			vault_strategy_account: &T::AccountId,
+			pool_id: T::PoolId,
+		) -> DispatchResult {
 			let lp_token_id = T::Pablo::lp_token(pool_id)?;
-			let balance_of_lp_token = T::Currency::balance(lp_token_id, vault_account);
+			let balance_of_lp_token = T::Currency::balance(lp_token_id, vault_strategy_account);
 			T::Pablo::remove_liquidity_single_asset(
-				vault_account,
+				vault_strategy_account,
 				pool_id,
 				balance_of_lp_token,
 				T::Balance::zero(),
-			)
+			)?;
+			let balance =
+				T::Currency::balance(T::Vault::asset_id(vault_id)?, vault_strategy_account);
+			<T::Vault as StrategicVault>::deposit(vault_id, vault_strategy_account, balance)
 		}
 
 		#[transactional]
 		fn do_tranferring_funds(
+			vault_id: &T::VaultId,
 			vault_account: &T::AccountId,
 			new_pool_id: T::PoolId,
 			pool_id_deduce: T::PoolId,
 			balance: T::Balance,
 		) -> DispatchResult {
-			Self::deposit(vault_account, pool_id_deduce, balance)?;
-			Self::withdraw(vault_account, new_pool_id, balance)?;
+			Self::deposit(vault_id, vault_account, pool_id_deduce, balance)?;
+			Self::withdraw(vault_id, vault_account, new_pool_id, balance)?;
 			Ok(())
 		}
 	}

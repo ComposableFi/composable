@@ -55,7 +55,6 @@ impl<T: Config> Uniswap<T> {
 				*pool_count = pool_id.safe_add(&T::PoolId::one())?;
 				Ok(pool_id)
 			})?;
-
 		Ok(pool_id)
 	}
 
