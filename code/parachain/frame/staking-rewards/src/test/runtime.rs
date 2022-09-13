@@ -12,7 +12,7 @@ use frame_support::{
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
-use orml_traits::{parameter_type_with_key, GetByKey};
+use orml_traits::{parameter_type_with_key, GetByKey, LockIdentifier};
 use sp_arithmetic::traits::Zero;
 use sp_runtime::{
 	testing::Header,
@@ -24,9 +24,7 @@ type Block = frame_system::mocking::MockBlock<Test>;
 
 pub type Balance = u128;
 pub type Amount = i128;
-pub type BlockNumber = u64;
 pub type FinancialNftInstanceId = u64;
-pub type PositionId = u128;
 
 pub static ALICE: Public =
 	Public(hex!("0000000000000000000000000000000000000000000000000000000000000000"));
@@ -234,14 +232,15 @@ parameter_types! {
 	pub const XPbloAssetId: CurrencyId = 102;
 	pub const PicaStakeFinancialNftCollectionId: CurrencyId = 1001;
 	pub const PbloStakeFinancialNftCollectionId: CurrencyId = 1002;
+	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 }
 
 impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
-	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type FinancialNft = FinancialNft;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type CurrencyFactory = CurrencyFactory;
 	type Assets = Assets;
 	type UnixTime = Timestamp;
@@ -258,6 +257,8 @@ impl pallet_staking_rewards::Config for Test {
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
 	type WeightInfo = ();
+
+	type LockId = StakingRewardsLockId;
 }
 
 impl InstanceFilter<Call> for ProxyType {

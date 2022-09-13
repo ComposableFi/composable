@@ -30,7 +30,7 @@ mod weights;
 mod xcmp;
 
 use lending::MarketId;
-use orml_traits::parameter_type_with_key;
+use orml_traits::{parameter_type_with_key, LockIdentifier};
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
@@ -41,7 +41,7 @@ use common::{
 	impls::DealWithFees,
 	multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance,
 	BlockNumber, BondOfferId, FinancialNftInstanceId, Hash, MaxStringSize, Moment,
-	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PositionId, PriceConverter, Signature,
+	MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, PriceConverter, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -850,12 +850,12 @@ parameter_types! {
 	pub const XPbloAssetId: CurrencyId = CurrencyId::xPBLO;
 	pub const PicaStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PICA_STAKE_FNFT_COLLECTION;
 	pub const PbloStakeFinancialNftCollectionId: CurrencyId = CurrencyId::PBLO_STAKE_FNFT_COLLECTION;
+	pub const StakingRewardsLockId: LockIdentifier = *b"stk_lock";
 }
 
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
-	type PositionId = PositionId;
 	type AssetId = CurrencyId;
 	type Assets = Assets;
 	type CurrencyFactory = CurrencyFactory;
@@ -868,12 +868,14 @@ impl pallet_staking_rewards::Config for Runtime {
 	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 	type RewardPoolUpdateOrigin = EnsureRootOrHalfNativeCouncil;
 	type FinancialNft = Fnft;
+	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type PicaAssetId = PicaAssetId;
 	type PbloAssetId = PbloAssetId;
 	type XPicaAssetId = XPicaAssetId;
 	type XPbloAssetId = XPbloAssetId;
 	type PicaStakeFinancialNftCollectionId = PicaStakeFinancialNftCollectionId;
 	type PbloStakeFinancialNftCollectionId = PbloStakeFinancialNftCollectionId;
+	type LockId = StakingRewardsLockId;
 }
 
 /// The calls we permit to be executed by extrinsics

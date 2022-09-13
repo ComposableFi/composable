@@ -1,373 +1,334 @@
-# crates
-thiserror
-structopt
-cmark
-schemars
-jsonrpsee
-chrono
-iavl
-xtokens
-statemine
-inprocess
-subxt
-codegen
-sproof
-npos
-tendermint
-prost
-smallvec
-multihash
-ripemd
-wasmtime
-offences
-phragmen
-wasmi
-peerset
-sysinfo
-termcolor
-getrandom
-proptest
-tungstenite
-crev # cargo-crev
-RUSTSEC # RUSTSEC-XXXX-XXXX is id of RustSec Advisory Database
-xorshift # rand_xorshift
-
-# npm
-typeorm
-typegen
-apexcharts
-0xsequence
-localstorage
-hotjar
-zustand
-nextjs
-svgr
-contentful
-urql
-millify
-reduxjs
-notistack
-composabletests
-bignumber
-bufferutil
-mochawesome
-
-
-# substrate types
-perthing
-perthousand
-permill
-perbill
-perquintill
-on_unbalanceds
-unlookup
-hasher
-
-# binance-rs types
-AggrTrades
-
-# cosmwasm types
-Pointable
-
-# various rust methods and types
-peekable
-oneshot
-bitvec
-bitfield
-powf
-airdropper
-minvested
-powd
-
-# BN method (javascript)
-addn
-
-
-# various keywords
-ifeq
-endwhile
-endef
-nocapture
-plantuml
-startuml
-enduml
-skinparam
-oneof
-
+# abcdef
 # adoc
-imagesoutdir
-imagesdir
-toc
-toclevels
-sectnums
-sectnumlevels
-
-
-# dummy currencies
-ACOIN
-ACENT
-ACOINS
-ACENTS
-BCOIN
-BCOINS
-BCENT
-BCENTS
-
-
-# for the memes
-peasy
-squeezy
-rekt
-
-
-# nix
-nixos
-nixpkgs
-nixops
-patchelf
-libwasmvm
-rpath
-pctest
-numtide
-oxalica # github username
-ipetkov # github username
-buildpackage
-serokell
-arion
-pkgs
-coreutils
-findutils
-gnugrep
-nettools
-procps
-zstd
-LIBCLANG
-PROTOC
-protoc
-ROCKSDB
-graphviz
-pandoc
-nodedir
-acala
-paritytech
-websocat
-aarch
-gnumake
-lcov
-loglevel
-nixfmt
-freetype
-fontconfig
-junod
-wasmswap
-bintools
-rnix
-xorriso
-hasura
-stdenv
-libudev
-narinfo
-buildx
-substituters
-
+# binance-rs types
+# BN method (javascript)
+# bors
+# code-workspace
 # commands, programs, libs, tools, etc
-grep
-fgrep
-wscat
-whereis
-cachix
-tput
-setaf
-svgbob
-tsdx
-cmake
-pkgconfig
-rocksdb
-devel
-llvm
-libcurl
-rustup
-rustfmt
-taplo
-pacman
-asciidoctor
-mdbook
-udeps
-rustc
-journalctl
-containerd
-usermod
-polkalaunch
-hadolint
-libfreetype
-libexpat
-bignumbers
-sccache
-npmjs
-pkgconf
-libsecp
-keccak256
-libsecp256k1
-keccak
-containrrr # `containrrr/watchtower` docker image
-adduser
-libp2p
-drawio
-clickup
-immer
-miniserve
-
-# systemctl
-FSIZE
-MEMLOCK
-NOFILE
-NPROC
-
-# docker
-ipam
-
-# databases
-upsert
-
-# git
-precommit
-precommits
-mergify
-revhash
-
+# cosmwasm types
+# crates
 # css
-searchresults
-hljs
-searchbar
-scrollbox
-iefix
-opentype
-truetype
-tooltiptext
-tooltipped
-
-# icons
-horiz
-
+# databases
+# docker
+# dummy currencies
+# environment variables
+# file attributes
 # fonts
-TentangNanti
-Konnect
-
-# markdown
-commonmark # https://commonmark.org/help
-
+# for the memes
+# frontend stuff
+# GCP
+# git
 # graphviz
-dotgraphs
-
+# icons
+# markdown
+# misc technical terms
+# nix
 # not sure where to put these
+# npm
+# parts of hashes
+# substrate types
+# sudo
+# systemctl
+# these should probably be replaced with stakes and bonds respectively
+# various keywords
+# various rust methods and types
+0xsequence
+1ubrf2y
+5C4hrfjw
+aarch
+acala
+ACENT
+ACENTS
+ACOIN
+ACOINS
 adda
+addn
+adduser
+adoc
+AggrTrades
+airdropper
+alice
+apexcharts
+arion
+asciidoctor
 assetinfo
 assetsinfo
-oraclestake
-rewardtrackerstore
-rewardaccumulationhook
-messagingxcm
-claimunstake
-stakerclaimunstake
-lppicapbloother
-
-# frontend stuff
-msapplication
-browserconfig
-bignr # used frequently throughout the frontend as a shorthand for bignumber
-xaxis
-yaxis
-autorenew
-sparkline
-codesandbox
-snackbars
-dhms # day hour minute second
-shortkey
-serie
-tokenvalue
-xpablos
-xpablo
-stakeform
-unstakeform
-popout
-NFTID
-tsconfigs
-USDCUSDT
-unsubs
-
-# these should probably be replaced with stakes and bonds respectively
-
-
-uptodate # used throughout our codebase
-
-# bors
-codeowners
-
-# code-workspace
 autofetch
+autorenew
 azuretools
-eamodio
-fsevenm
-mutantdino
-PTRACE
-resourcemonitor
-seccomp
-serayuzgur
-tamasfe
-tomoki
-vadimcn
-vsicons
-yzhang
-
-# GCP
-gsutil
-
-# environment variables
-GITUSER
-GITREPO
-RUSTC
-OPTARG
-
-# sudo
-NOPASSWD
-
-# misc technical terms
-supertrait
-cosm
-wasmvm
-cdylib
-websocket
-websockets
-adoc
-RUSTFLAGS
+BCENT
+BCENTS
+BCOIN
+BCOINS
+bignr # used frequently throughout the frontend as a shorthand for bignumber
+bignumber
+bignumbers
 binop
-noconfirm
-edgeware
-toolset
-codepaths
-oraclesetup # script of package.json
-toolchains
+bintools
+bitfield
+bitvec
+bob
 bootnodes
-gpgsign
-proptests
+browserconfig
+bufferutil
+buildpackage
+buildx
+cachix
+cdylib
+charlie
+chrono
+claimunstake
+clickup
+cmake
+cmark
+codegen
+codeowners
+codepaths
+codesandbox
+commonmark # https://commonmark.org/help
+composabletests
+containerd
+containrrr # `containrrr/watchtower` docker image
+contentful
+coreutils
+cosm
+crev # cargo-crev
+devcontainers
+devel
+dhms # day hour minute second
+dispatchables
 dockerfile
+dotgraphs
+drawio
+eamodio
+edgeware
+endef
+enduml
+endwhile
+ferdie
+fgrep
+findutils
+fontconfig
+freetype
+fsevenm
+FSIZE
+getrandom
+GITREPO
+GITUSER
+gnugrep
+gnumake
+gpgsign
+graphviz
+grep
+gsutil
+hadolint
+hasher
+hasura
+hljs
+horiz
+hotjar
+iavl
+iefix
+ifeq
+imagesdir
+imagesoutdir
+immer
+inprocess
+ipam
+ipetkov # github username
+journalctl
+jsonrpsee
+junod
+keccak
+keccak256
+Konnect
+lastmod
+lcgfmg
+lcov
+LIBCLANG
+libcurl
+libexpat
+libfreetype
+libp2p
+libsecp
+libsecp256k1
+libudev
+libwasmvm
+llvm
+localstorage
+loglevel
+lppicapbloother
+mdbook
+MEMLOCK
+mergify
+messagingxcm
+millify
+miniserve
+minvested
+mochawesome
+msapplication
+multihash
+mutantdino
+narinfo
+nettools
+nextjs
+NFTID
+nixfmt
+nixops
+nixos
+nixpkgs
+nocapture
+noconfirm
+nodedir
+NOFILE
+NOPASSWD
+notistack
+npmjs
+npos
+NPROC
+numtide
+offences
+on_unbalanceds
 oneliner
 oneof
-devcontainers
+oneshot
+opentype
+OPTARG
+oraclesetup # script of package.json
+oraclestake
+oxalica # github username
+pacman
+pandoc
+paritytech
+patchelf
+pctest
+peasy
+peekable
+peerset
+perbill
+permill
+perquintill
+perthing
+perthousand
+phragmen
+pkgconf
+pkgconfig
+pkgs
+plantuml
+Pointable
+polkalaunch
+popout
+powd
+powf
+prebaked
+precommit
+precommits
+procps
+proptest
+proptests
+prost
+protoc
+PROTOC
+PTRACE
+reduxjs
+rekt
+resourcemonitor
+revhash
+rewardaccumulationhook
+rewardtrackerstore
+ripemd
+rnix
+rocksdb
+ROCKSDB
+rpath
+rustc
+RUSTC
+RUSTFLAGS
+rustfmt
+RUSTSEC # RUSTSEC-XXXX-XXXX is id of RustSec Advisory Database
+rustup
+sccache
+schemars
+scrollbox
+searchbar
+searchresults
+seccomp
+sectnumlevels
+sectnums
+serayuzgur
+serie
+serokell
+setaf
+shortkey
+skinparam
+smallvec
+snackbars
+sparkline
+sproof
+squeezy
+stakeform
+stakerclaimunstake
+startuml
+statemine
+stdenv
+structopt
 styleguide
-dispatchables
-
-# file attributes
-lastmod
-
-# parts of hashes
+substituters
+subxt
+supertrait
+svgbob
+svgr
+sysinfo
+tamasfe
+taplo
+tendermint
+TentangNanti
+termcolor
+thiserror
+toc
+toclevels
+tokenvalue
+tomoki
+toolchains
+toolset
+tooltipped
+tooltiptext
+tput
+truetype
+tsconfigs
+tsdx
+tungstenite
+typegen
+typeorm
+udeps
+unlookup
+unstakeform
+unsubs
+upsert
+uptodate # used throughout our codebase
+urql
+USDCUSDT
+usermod
+vadimcn
+vsicons
+wasmi
+wasmswap
+wasmtime
+wasmvm
+websocat
+websocket
+websockets
+whereis
+WORKDIR
+wscat
+xaxis
+xorriso
+xorshift # rand_xorshift
+xpablo
+xpablos
+xtokens
+yaxis
+yzhang
 zlfzypzcr
-lcgfmg
-5C4hrfjw
-1ubrf2y
-
-# abcdef
-alice
-bob
-charlie
-ferdie
+zstd
+zustand

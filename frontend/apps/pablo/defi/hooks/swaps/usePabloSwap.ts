@@ -8,7 +8,7 @@ import BigNumber from "bignumber.js";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import {
-  getSigner,
+  useSigner,
   useExecutor,
   useParachainApi,
   useSelectedAccount,
@@ -27,6 +27,7 @@ export function usePabloSwap({
   quoteAmount,
   minimumReceived,
 }: PabloSwapProps) {
+  const signer = useSigner();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { enqueueSnackbar } = useSnackbar();
@@ -36,12 +37,12 @@ export function usePabloSwap({
     return new Promise(async (res, rej) => {
       if (
         parachainApi &&
-        executor &&
+       signer !== undefined && executor &&
         isValidAssetPair(baseAssetId, quoteAssetId) &&
         selectedAccount
-      ) {
-        try {
-          const signer = await getSigner(APP_NAME, selectedAccount.address);
+
+        ) {
+          try {
 
           let pair = {
             base: baseAssetId,
@@ -88,7 +89,7 @@ export function usePabloSwap({
   }, [
     baseAssetId,
     quoteAssetId,
-    quoteAmount,
+    quoteAmount,signer,
     minimumReceived,
     enqueueSnackbar,
     selectedAccount,

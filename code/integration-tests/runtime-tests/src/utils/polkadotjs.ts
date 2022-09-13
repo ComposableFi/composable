@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 import { AnyTuple, IEvent } from "@polkadot/types/types";
-import { SubmittableExtrinsic, AddressOrPair } from "@polkadot/api/types";
+import { AddressOrPair, SubmittableExtrinsic } from "@polkadot/api/types";
 
 /**
  * Sends an unsigned extrinsic and waits for success.
@@ -73,7 +73,7 @@ export async function waitForBlocks(api: ApiPromise, n = 1) {
  * @param {number} n Block wait duration.
  * @return The current block number after waiting.
  */
-export async function waitForBlockHandler(api: ApiPromise, n) {
+export async function waitForBlockHandler(api: ApiPromise, n: number) {
   const originBlock = await api.query.system.number();
   let currentBlock = await api.query.system.number();
   while (currentBlock.toNumber() < originBlock.toNumber() + n) {
@@ -83,7 +83,7 @@ export async function waitForBlockHandler(api: ApiPromise, n) {
   return currentBlock;
 }
 
-function sleep(ms) {
+function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -116,6 +116,7 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
         }
         if (status.isInBlock || status.isFinalized) {
           if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
+          // @ts-ignore
           const event = res.events.find(e => filter(e.event)).event;
           if (filter(event)) {
             resolve(event);
@@ -156,12 +157,14 @@ export function sendAndWaitFor<T extends AnyTuple>(
             const decoded = api.registry.findMetaError(dispatchError.asModule);
             const { docs, name, section } = decoded;
             if (intendedToFail) {
+              // @ts-ignore
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event)) resolve(event);
             }
             reject(Error(`${section}.${name}: ${docs.join(" ")}`));
           } else {
             if (intendedToFail) {
+              // @ts-ignore
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event)) resolve(event);
             }
@@ -170,15 +173,18 @@ export function sendAndWaitFor<T extends AnyTuple>(
         }
         if (status.isInBlock || status.isFinalized) {
           if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
+          // @ts-ignore
           const event = res.events.find(e => filter(e.event)).event;
           if (filter(event)) {
             if (intendedToFail) {
+              // @ts-ignore
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event)) reject(event);
             }
             resolve(event);
           } else {
             if (intendedToFail) {
+              // @ts-ignore
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event)) resolve(event);
             }
@@ -219,12 +225,14 @@ export function sendAndWaitForWithBatch<T extends AnyTuple>(
             const decoded = api.registry.findMetaError(dispatchError.asModule);
             const { docs, name, section } = decoded;
             if (intendedToFail) {
+              // @ts-ignore
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event)) resolve(event);
             }
             reject(Error(`${section}.${name}: ${docs.join(" ")}`));
           } else {
             if (intendedToFail) {
+              // @ts-ignore
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event)) resolve(event);
             }
@@ -233,15 +241,18 @@ export function sendAndWaitForWithBatch<T extends AnyTuple>(
         }
         if (status.isInBlock || status.isFinalized) {
           if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
+          // @ts-ignore
           const event = res.events.find(e => filter(e.event)).event;
           if (filter(event)) {
             if (intendedToFail) {
+              // @ts-ignore
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event)) reject(event);
             }
             resolve(event);
           } else {
             if (intendedToFail) {
+              // @ts-ignore
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event)) resolve(event);
             }

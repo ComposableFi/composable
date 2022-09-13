@@ -1,5 +1,6 @@
 queue_rules:
  - name: default
+   allow_inplace_checks: false
    conditions: []
 
 pull_request_rules:

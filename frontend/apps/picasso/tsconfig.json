@@ -31,7 +31,11 @@
       "@polkadot/types/augment": [
         "defi-interfaces/augment-types.ts"
       ]
-    }
+    },
+    "typeRoots": [
+      "node_modules/@types",
+      "@types"
+    ]
   },
   "include": [
     "next-env.d.ts",

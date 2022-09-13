@@ -179,8 +179,10 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 		reward_configs: RewardConfigs,
 		// possible lock config for this reward
 		lock: LockConfig<DurationPresets>,
+
 		// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
 		share_asset_id: AssetId,
+
 		// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
 		financial_nft_asset_id: AssetId,
 	},
@@ -190,16 +192,15 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs,
 /// should exist for each position when stored in the runtime storage.
 /// TODO refer to the relevant section in the design doc.
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct Stake<AccountId, RewardPoolId, Balance, Reductions> {
-	/// Protocol or the user account that owns this stake
-	// TODO (vim): Remove the owner and track the financial NFT ID. In order to prevent a direct
-	// dependency to NFTs we can also just use nft ID as position ID. 	pub financial_nft_id: ItemId
-	pub owner: AccountId,
+pub struct Stake<ItemId, RewardPoolId, Balance, Reductions> {
+	/// The ItemID is used in conjunction with the fNFT collection ID to identify the stake.
+	pub fnft_instance_id: ItemId,
 
 	/// Reward Pool ID from which pool to allocate rewards for this
 	pub reward_pool_id: RewardPoolId,
 
-	/// The original stake this NFT was minted for or updated NFT with increased stake amount.
+	/// The original stake this position was created for or updated position with any extended
+	/// stake amount.
 	pub stake: Balance,
 
 	/// Pool share received for this position

@@ -1,18 +1,35 @@
-import { ConnectedAccount, Executor, getSigner } from "substrate-react";
-import { APP_NAME } from "@/defi/polkadot/constants";
-import { ConstantProductPool, StableSwapPool } from "@/defi/types";
-import { toChainUnits } from "@/defi/utils";
-import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import {
   closeConfirmingSupplyModal,
   closeConfirmSupplyModal,
   openConfirmingSupplyModal,
 } from "@/stores/ui/uiSlice";
-import { ApiPromise } from "@polkadot/api";
+import { Executor, ConnectedAccount } from "substrate-react";
 import BigNumber from "bignumber.js";
 import router from "next/router";
-import { useSnackbar } from "notistack";
+import { ApiPromise } from "@polkadot/api";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
+import { toChainUnits } from "@/defi/utils";
+import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
+import { useSnackbar, VariantType } from "notistack";
 import { useDispatch } from "react-redux";
+import { Signer } from "@polkadot/api/types";
+import { useCallback, useMemo } from "react";
+
+function transactionStatusSnackbarMessage(
+  transactionHashOrErrorMessage: string,
+  status: "Initiated" | "Finalized" | "Error"
+): string {
+  return `Add liquidity Transaction ${status}: ${transactionHashOrErrorMessage}`;
+}
+
+/**
+ * Later: move to snakbar utils
+ */
+const SNACKBAR_TYPES: Record<string, { variant: VariantType }> = {
+  ERROR: { variant: "error" },
+  SUCCESS: { variant: "success" },
+  INFO: { variant: "info" },
+};
 
 export const useAddLiquidity = ({
   selectedAccount,
@@ -22,8 +39,9 @@ export const useAddLiquidity = ({
   assetTwo,
   assetOneAmount,
   assetTwoAmount,
-  lpAmountExpected,
+  lpReceiveAmount,
   pool,
+  signer,
 }: {
   selectedAccount: ConnectedAccount | undefined;
   executor: Executor | undefined;
@@ -33,76 +51,126 @@ export const useAddLiquidity = ({
   pool: ConstantProductPool | StableSwapPool | undefined;
   assetOneAmount: BigNumber;
   assetTwoAmount: BigNumber;
-  lpAmountExpected: BigNumber;
+  lpReceiveAmount: BigNumber;
+  signer: Signer | undefined;
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
 
-  const onConfirmSupply = async () => {
-    if (
-      selectedAccount &&
-      executor &&
-      parachainApi &&
-      assetOne !== undefined &&
-      assetTwo !== undefined &&
-      pool
-    ) {
-      try {
-        dispatch(closeConfirmSupplyModal());
+  const { baseAmount, quoteAmount } = useMemo(() => {
+    if (!pool || !assetOne)
+      return {
+        baseAmount: undefined,
+        quoteAmount: undefined,
+      };
 
-        let isReverse = pool.pair.base.toString() !== assetOne;
-        const bnBase = toChainUnits(
-          isReverse ? assetTwoAmount : assetOneAmount
-        );
-        const bnQuote = toChainUnits(
-          isReverse ? assetOneAmount : assetTwoAmount
-        );
+    let isReversed = pool.pair.base.toString() !== assetOne;
+    return {
+      baseAmount: toChainUnits(
+        isReversed ? assetTwoAmount : assetOneAmount
+      ).toString(),
+      quoteAmount: toChainUnits(
+        isReversed ? assetOneAmount : assetTwoAmount
+      ).toString(),
+    };
+  }, [pool, assetOne, assetOneAmount, assetTwoAmount]);
 
-        const signer = await getSigner(APP_NAME, selectedAccount.address);
+  const _lpReceiveAmount = useMemo(() => {
+    return toChainUnits(lpReceiveAmount).toString();
+  }, [lpReceiveAmount]);
 
-        executor
-          .execute(
-            parachainApi.tx.pablo.addLiquidity(
-              pool.poolId,
-              bnBase.toString(),
-              bnQuote.toString(),
-              0,
-              true
-            ),
-            selectedAccount.address,
-            parachainApi,
-            signer,
-            (txReady: string) => {
-              dispatch(openConfirmingSupplyModal());
-              console.log("txReady", txReady);
-            },
-            (txHash: string, events) => {
-              enqueueSnackbar(
-                "Transaction successful. Transaction hash: " + txHash,
-                { variant: "success" }
-              );
-              resetAddLiquiditySlice();
-              router.push("/pool/select/" + pool?.poolId);
-              dispatch(closeConfirmingSupplyModal());
-            },
-            (errorMessage: string) => {
-              console.log("Tx Error:", errorMessage);
-              enqueueSnackbar("Tx Error: " + errorMessage);
-              dispatch(closeConfirmingSupplyModal());
-            }
-          )
-          .catch((err) => {
-            enqueueSnackbar(err.message, { variant: "error" });
-            dispatch(closeConfirmingSupplyModal());
-            console.log("Tx Error:", err);
-          });
-      } catch (err: any) {
-        enqueueSnackbar(err.message, { variant: "error" });
-        dispatch(closeConfirmingSupplyModal());
-        console.log("Tx Error:", err);
+  const onTxReady = useCallback(
+    (transactionHash: string) => {
+      enqueueSnackbar(
+        transactionStatusSnackbarMessage(transactionHash, "Initiated"),
+        SNACKBAR_TYPES.INFO
+      );
+      dispatch(openConfirmingSupplyModal());
+    },
+    [enqueueSnackbar, dispatch]
+  );
+
+  const onTxFinalized = useCallback(
+    (transactionHash: string, _eventRecords: any[]) => {
+      enqueueSnackbar(
+        transactionStatusSnackbarMessage(transactionHash, "Finalized"),
+        SNACKBAR_TYPES.SUCCESS
+      );
+      resetAddLiquiditySlice();
+      router.push("/pool/select/" + pool?.poolId);
+      dispatch(closeConfirmingSupplyModal());
+    },
+    [pool, enqueueSnackbar, dispatch]
+  );
+
+  const onTxError = useCallback(
+    (transactionError: string) => {
+      enqueueSnackbar(
+        transactionStatusSnackbarMessage(transactionError, "Error"),
+        SNACKBAR_TYPES.ERROR
+      );
+      dispatch(closeConfirmingSupplyModal());
+    },
+    [enqueueSnackbar, dispatch]
+  );
+
+  const onAddLiquidity = useCallback(async () => {
+    try {
+      if (
+        !selectedAccount ||
+        !parachainApi ||
+        !executor ||
+        !assetOne ||
+        !baseAmount ||
+        !quoteAmount ||
+        !assetTwo ||
+        !signer ||
+        !pool
+      ) {
+        throw new Error("Missing dependancies.");
       }
-    }
-  };
 
-  return onConfirmSupply;
+      dispatch(closeConfirmSupplyModal());
+
+      await executor.execute(
+        parachainApi.tx.pablo.addLiquidity(
+          pool.poolId,
+          baseAmount,
+          quoteAmount,
+          _lpReceiveAmount,
+          true
+        ),
+        selectedAccount.address,
+        parachainApi,
+        signer,
+        onTxReady,
+        onTxFinalized,
+        onTxError
+      );
+    } catch (err: any) {
+      enqueueSnackbar(
+        transactionStatusSnackbarMessage(err.message, "Error"),
+        SNACKBAR_TYPES.ERROR
+      );
+      dispatch(closeConfirmingSupplyModal());
+    }
+  }, [
+    parachainApi,
+    executor,
+    signer,
+    baseAmount,
+    quoteAmount,
+    _lpReceiveAmount,
+    enqueueSnackbar,
+    assetOne,
+    assetTwo,
+    dispatch,
+    pool,
+    selectedAccount,
+    onTxError,
+    onTxFinalized,
+    onTxReady,
+  ]);
+
+  return onAddLiquidity;
 };

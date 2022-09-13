@@ -17,26 +17,16 @@ help:
 	@echo $(print_help_text)
 
 build:
-	cd code
-	@cargo +nightly build
+	echo "This command is deprecated. Please use \`nix build \".#composable-node\"\` instead."
+	return 1
 
 clean:
 	cd code
 	@cargo clean
 
 release:
-	cd code
-	cargo +nightly build --release -p wasm-optimizer
-	cargo +nightly build --release -p composable-runtime-wasm --target wasm32-unknown-unknown
-	cargo +nightly build --release -p picasso-runtime-wasm --target wasm32-unknown-unknown
-	cargo +nightly build --release -p dali-runtime-wasm --target wasm32-unknown-unknown
-	./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/dali_runtime.wasm --output ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm
-	./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/picasso_runtime.wasm --output ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm
-	./target/release/wasm-optimizer --input ./target/wasm32-unknown-unknown/release/composable_runtime.wasm --output ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm
-	export DALI_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/dali_runtime.optimized.wasm) && \
-	export PICASSO_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/picasso_runtime.optimized.wasm) && \
-	export COMPOSABLE_RUNTIME=$(realpath ./target/wasm32-unknown-unknown/release/composable_runtime.optimized.wasm) && \
-	cargo build --release --package composable --features=builtin-wasm
+	echo "This command is deprecated. Please use \`nix build \".#composable-node\"\` instead."
+	return 1
 
 .PHONY: build-release
 build-release:
@@ -47,21 +37,20 @@ bench:
 	./scripts/benchmark.sh
 
 test:
-	cd code
-	@cargo test $(TESTS) --offline --lib -- --color=always --nocapture
+	echo "This command is deprecated. Please use \`nix run \".#unit-tests\"\` instead."
+	return 1
 
 docs: build
 	cd code
 	@cargo doc --no-deps
 
 style-check:
-	@rustup component add rustfmt 2> /dev/null
-	./scripts/style.sh --check --verbose
+	echo "This command is deprecated. Please use checks defined in flake.nix instead."
+	return 1
 
 style:
-	@rustup component add rustfmt 2> /dev/null
-	./scripts/style.sh
-	nixfmt $$(find . -name "*.nix" -type f | tr "\n" " ")
+	echo "This command is deprecated. Please use \`nix run \".#fmt\"\` instead."
+	return 1
 
 lint:
 	@rustup component add clippy 2> /dev/null
@@ -71,10 +60,6 @@ lint:
 udeps:
 	cd code
 	SKIP_WASM_BUILD=1 cargo +nightly udeps -q --all-targets
-
-dev:
-	cd code
-	cargo run
 
 # run as `make open=y run-book` to open as well
 run-book:
@@ -113,29 +98,6 @@ push:
 push-release:
 	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 
-containerize-composable-sandbox:
-	@docker build -f docker/composable-sandbox.dockerfile \
-		-t ${REPO}/composable-sandbox:${COMMIT_SHA} \
-		-t ${REPO}/composable-sandbox:latest  \
-		.
-
-push-composable-sandbox:
-	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
-	@docker push ${REPO}/composable-sandbox:latest
-
-push-composable-sandbox-without-latest-tag:
-	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
-
-containerize-composable-sandbox-plus:
-	@docker build -f docker/composable-sandbox-plus.dockerfile \
-		-t ${REPO}/composable-sandbox-plus:${COMMIT_SHA} \
-		-t ${REPO}/composable-sandbox-plus:latest  \
-		.
-
-push-composable-sandbox-plus:
-	@docker push ${REPO}/composable-sandbox-plus:${COMMIT_SHA}
-	@docker push ${REPO}/composable-sandbox-plus:latest
-
 containerize-mmr-polkadot:
 	@docker build -f docker/mmr-polkadot.dockerfile \
 		-t ${REPO}/mmr-polkadot:latest  \
@@ -144,18 +106,6 @@ containerize-mmr-polkadot:
 push-mmr-polkadot:
 	@docker push ${REPO}/mmr-polkadot:latest
 
-containerize-ci-linux:
-	@docker build -f docker/ci-linux.dockerfile \
-		-t ${REPO}/ci-linux:2022-08-06  \
-		.
-
-push-ci-linux:
-	@docker push ${REPO}/ci-linux:2022-08-06
-
-containerize-base-ci-linux:
-	@docker build -f docker/base-ci-linux.dockerfile \
-		-t ${REPO}/base-ci-linux:1.62.1  \
-		.
 # fastest way to build and debug runtime in simulator
 run-local-integration-tests-debug:
 	cd code
@@ -164,12 +114,7 @@ run-local-integration-tests-debug:
 	RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace \
 	cargo +nightly test sibling_trap_assets_works --package local-integration-tests --features=local-integration-tests,picasso --no-default-features -- --nocapture --test-threads=1
 
-prune-devnet:
-	 rm --force --recursive *.log /tmp/polkadot-launch/
 	 
-push-base-ci-linux:
-	@docker push ${REPO}/base-ci-linux:1.62.1
-
 containerize-lease-period-prolongator:
 	@docker build -f scripts/lease-period-prolongator/Dockerfile \
 		-t ${REPO}/lease-period-prolongator:0.1.0  \
@@ -177,9 +122,6 @@ containerize-lease-period-prolongator:
 
 push-lease-period-prolongator:
 	@docker push ${REPO}/lease-period-prolongator:0.1.0
-
-stop:
-	@docker-compose down
 
 install:
 		$(info Run if auto-update is enabled)
@@ -191,11 +133,7 @@ endif
 
 
 .PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
-.PHONY: containerize-composable-sandbox push-composable-sandbox push-composable-sandbox-without-latest-tag
-.PHONY: containerize-composable-sandbox-plus push-composable-sandbox-plus
 .PHONY: containerize-mmr-polkadot push-mmr-polkadot
-.PHONY: containerize-base-ci-linux push-base-ci-linux
-.PHONY: containerize-ci-linux push-ci-linux
 .PHONY: containerize-lease-period-prolongator push-lease-period-prolongator
 
 #----------------------------------------------------------------------

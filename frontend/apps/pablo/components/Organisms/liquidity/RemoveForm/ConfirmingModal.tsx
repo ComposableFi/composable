@@ -17,12 +17,7 @@ import { closeConfirmingModal } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
-import {
-  getSigner,
-  useExecutor,
-  useParachainApi,
-  useSelectedAccount,
-} from "substrate-react";
+import { useParachainApi, useSelectedAccount, useExecutor, getSigner, useSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { useRouter } from "next/router";
 import { MockedAsset } from "@/store/assets/assets.types";
@@ -54,6 +49,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
 }) => {
   // WIP
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const signer = useSigner();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const router = useRouter();
   const executor = useExecutor();
@@ -72,14 +68,13 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
     // WIP
     if (
       parachainApi &&
-      executor &&
+     signer !== undefined && executor &&
       baseAsset &&
       quoteAsset &&
       selectedAccount
     ) {
       try {
         const lpRemoveAmount = toChainUnits(lpBalance).times(percentage);
-        const signer = await getSigner(APP_NAME, selectedAccount.address);
         executor.execute(
           parachainApi.tx.pablo.removeLiquidity(
             parachainApi.createType("u128", poolId), // Pool ID

@@ -10,6 +10,7 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { AccountId32 } from "@polkadot/types/interfaces";
 import { waitForBlocks } from "@composable/utils/polkadotjs";
+import { u128 } from "@polkadot/types-codec";
 
 /**
  * Mosaic Pallet Tests
@@ -44,8 +45,8 @@ describe("tx.mosaic Tests", function () {
 
   let transferAmount: number, assetId: number, networkId: number;
 
-  let pNetworkId;
-  let ethAddress;
+  let pNetworkId: u128;
+  let ethAddress: string;
 
   describe("tx.mosaic Tests", function () {
     this.timeout(4 * 60 * 1000);
@@ -295,6 +296,7 @@ describe("tx.mosaic Tests", function () {
       while (retry) {
         await waitForBlocks(api, 2);
         const {
+          // @ts-ignore
           data: [result]
         } = await TxMosaicTests.testClaimStaleFunds(api, startRelayerWallet, assetId).catch(error => {
           if (error.message.includes("TxStillLocked")) return { data: ["Retrying..."] };
@@ -304,6 +306,7 @@ describe("tx.mosaic Tests", function () {
           finalResult = result;
         }
       }
+      // @ts-ignore
       expect(finalResult).to.not.be.an("Error");
       const afterTokens = await api.query.tokens.accounts(wallet.address, assetId);
       //verify that the reclaimed tokens are transferred into user balance.

@@ -5,7 +5,6 @@ caseSensitive: false
 useGitignore: true
 
 dictionaries:
-  # - spellcheck
   - en_US
 
   - companies
@@ -73,3 +72,4 @@ ignorePaths:
   - "scripts/github/picasso/"
   - "frame/airdrop/index.html"
   - "code/integration-tests/local-integration-tests/README.md"
+  - "subsquid/src/interfaces"

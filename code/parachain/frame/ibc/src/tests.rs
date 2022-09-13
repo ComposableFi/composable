@@ -113,7 +113,7 @@ fn should_open_a_channel() {
 fn should_send_ping_packet() {
 	let mut ext = new_test_ext();
 	ext.execute_with(|| {
-		frame_system::Pallet::<Test>::set_block_number(1u32.into());
+		frame_system::Pallet::<Test>::set_block_number(1_u32);
 
 		let mock_client_state = MockClientState::new(MockHeader::new(Height::new(0, 1)));
 		let mock_cs_state = MockConsensusState::new(MockHeader::new(Height::new(0, 1)));
@@ -173,7 +173,7 @@ fn should_send_ping_packet() {
 
 		let msg = Any { type_url: conn_open_ack::TYPE_URL.as_bytes().to_vec(), value };
 
-		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])).into(), vec![msg]));
+		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
 
 		let params = OpenChannelParams {
 			order: 1,
@@ -210,7 +210,7 @@ fn should_send_ping_packet() {
 
 		let msg = Any { type_url: chan_open_ack::TYPE_URL.as_bytes().to_vec(), value };
 
-		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])).into(), vec![msg]));
+		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])), vec![msg]));
 
 		let params = SendPingParams {
 			data: "ping".as_bytes().to_vec(),
