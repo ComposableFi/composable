@@ -1440,6 +1440,7 @@ mod benches {
 		[pallet_staking_rewards, StakingRewards]
 		[pallet_account_proxy, Proxy]
 		[dex_router, DexRouter]
+		[cosmwasm, Cosmwasm]
 	// TODO: Broken
 		// [pallet_ibc, Ibc]
 		// [ibc_transfer, Transfer]

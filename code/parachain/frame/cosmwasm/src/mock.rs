@@ -1,18 +1,18 @@
-use crate::{self as pallet_cosmwasm};
+use crate::self as pallet_cosmwasm;
 use frame_support::{pallet_prelude::ConstU32, parameter_types, traits::ConstU64, PalletId};
 use primitives::currency::CurrencyId;
 use sp_core::H256;
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, Convert, IdentifyAccount, IdentityLookup, Verify},
-	MultiSignature,
+	AccountId32, MultiSignature,
 };
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Header = generic::Header<u32, BlakeTwo256>;
 type Balance = u64;
-type AccountId = <<MultiSignature as Verify>::Signer as IdentifyAccount>::AccountId;
+type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -20,7 +20,7 @@ frame_support::construct_runtime!(
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		System: frame_system,
 		Cosmwasm: pallet_cosmwasm,
 		Balances: pallet_balances,
 		Assets: pallet_assets,
@@ -130,27 +130,27 @@ impl Convert<CurrencyId, alloc::string::String> for AssetToDenom {
 }
 
 parameter_types! {
-  pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
-  pub const ChainId: &'static str = "composable-network-dali";
-  pub const MaxFrames: u32 = 64;
+	pub const CosmwasmPalletId: PalletId = PalletId(*b"cosmwasm");
+	pub const ChainId: &'static str = "composable-network-dali";
+	pub const MaxFrames: u32 = 64;
 	pub const MaxCodeSize: u32 = 512 * 1024;
-  pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
-  pub const MaxMessageSize: u32 = 256 * 1024;
-  pub const MaxContractLabelSize: u32 = 64;
-  pub const MaxContractTrieIdSize: u32 = H256::len_bytes() as u32;
-  pub const MaxInstantiateSaltSize: u32 = 128;
-  pub const MaxFundsAssets: u32 = 32;
-  pub const CodeTableSizeLimit: u32 = 4096;
-  pub const CodeGlobalVariableLimit: u32 = 256;
-  pub const CodeParameterLimit: u32 = 128;
-  pub const CodeBranchTableSizeLimit: u32 = 256;
-  // Not really required as it's embedded.
-  pub const CodeStackLimit: u32 = u32::MAX;
+	pub const MaxInstrumentedCodeSize: u32 = 1024 * 1024;
+	pub const MaxMessageSize: u32 = 256 * 1024;
+	pub const MaxContractLabelSize: u32 = 64;
+	pub const MaxContractTrieIdSize: u32 = H256::len_bytes() as u32;
+	pub const MaxInstantiateSaltSize: u32 = 128;
+	pub const MaxFundsAssets: u32 = 32;
+	pub const CodeTableSizeLimit: u32 = 4096;
+	pub const CodeGlobalVariableLimit: u32 = 256;
+	pub const CodeParameterLimit: u32 = 128;
+	pub const CodeBranchTableSizeLimit: u32 = 256;
+	// Not really required as it's embedded.
+	pub const CodeStackLimit: u32 = u32::MAX;
 
-  // TODO: benchmark for proper values
-  pub const CodeStorageByteDeposit: u32 = 1;
-  pub const ContractStorageByteReadPrice: u32 = 1;
-  pub const ContractStorageByteWritePrice: u32 = 1;
+	// TODO: benchmark for proper values
+	pub const CodeStorageByteDeposit: u32 = 1;
+	pub const ContractStorageByteReadPrice: u32 = 1;
+	pub const ContractStorageByteWritePrice: u32 = 1;
 }
 
 impl pallet_cosmwasm::Config for Test {
