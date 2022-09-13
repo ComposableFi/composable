@@ -74,7 +74,7 @@ proptest! {
 	}
 }
 
-mod local_to_global_asset_id {
+mod protocol_asset_id_to_unique_asset_id {
 	use super::*;
 
 	#[test]

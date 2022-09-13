@@ -177,14 +177,14 @@ pub mod pallet {
 		}
 
 		fn protocol_asset_id_to_unique_asset_id(
-			asset_id: u32,
+			protocol_asset_id: u32,
 			range_id: RangeId,
 		) -> Result<T::AssetId, DispatchError> {
 			if range_id.inner() > 5 {
 				Err(DispatchError::from("RangeId outside of preconfigured ranges!"))
 			} else {
 				Ok(((u32::MAX as u128).saturating_mul(range_id.inner() as u128 + 1) +
-					asset_id as u128)
+					protocol_asset_id as u128)
 					.into())
 			}
 		}
