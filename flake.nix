@@ -401,6 +401,48 @@
               --execution=wasm
             '';
 
+          subwasm = let
+            src = fetchFromGitHub {
+              owner = "chevdor";
+              repo = "subwasm";
+              rev = "4d4d789326d65fc23820f70916bd6bd6f499bd0a";
+              hash = "sha256-+/yqA6lP/5qyMxZupmaYBCRtbw2MFMBSgkmnxg261P8=";
+            };
+          in crane-stable.buildPackage {
+            cargoArtifacts = crane-stable.buildDepsOnly {
+              inherit src;
+              doCheck = false;
+              cargoTestCommand = "";
+            };
+            inherit src;
+            doCheck = false;
+            cargoTestCommand = "";
+            meta = { mainProgram = "subwasm"; };
+          };
+
+          subwasm-release-body = let
+            subwasm-call = runtime:
+              builtins.readFile (pkgs.runCommand "subwasm-info" { }
+                "${subwasm}/bin/subwasm info ${runtime}/lib/runtime.optimized.wasm | tail -n+2 > $out");
+          in pkgs.writeTextFile {
+            name = "release.txt";
+            text = ''
+              ## Runtimes
+              ### Dali
+              ```
+              ${subwasm-call dali-runtime}
+              ```
+              ### Picasso
+              ```
+              ${subwasm-call picasso-runtime}
+              ```
+              ### Composable
+              ```
+              ${subwasm-call composable-runtime}
+              ```
+            '';
+          };
+
         in rec {
           packages = rec {
             inherit wasm-optimizer;
@@ -417,6 +459,8 @@
             inherit composable-bench-node;
             inherit rust-nightly;
             inherit simnode-tests;
+            inherit subwasm;
+            inherit subwasm-release-body;
 
             subsquid-processor = let
               processor = pkgs.buildNpmPackage {
@@ -902,7 +946,7 @@
             });
 
             developers-minimal = mkShell (common-attrs // {
-              buildInputs = with packages; [ rust-nightly ];
+              buildInputs = with packages; [ rust-nightly subwasm ];
               NIX_PATH = "nixpkgs=${pkgs.path}";
             });
 

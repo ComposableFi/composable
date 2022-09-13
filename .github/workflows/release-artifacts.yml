@@ -145,7 +145,6 @@ jobs:
 
       - name: Download artifacts
         run: |
-          
           nix bundle --bundler github:NixOS/bundlers#toDockerImage .#composable-node-release -L --out-link composable-docker-image
           nix bundle --bundler github:NixOS/bundlers#toRPM .#composable-node-release -L --out-link rpm
           nix bundle --bundler github:NixOS/bundlers#toDEB .#composable-node-release -L --out-link deb
@@ -154,12 +153,12 @@ jobs:
           nix build .#picasso-runtime --out-link picasso-runtime
           nix build .#composable-runtime --out-link composable-runtime
 
+          nix build .#subwasm-release-body --out-link subwasm-release
+
+          cp subwasm-release release.txt
+
           mkdir -p release-artifacts
-          
-          # disabled selfcontained because it does not run on fresh debian
-          # nix bundle .#composable-node-release -L --out-link composable-selfcontained
-          # cp composable-selfcontained release-artifacts/composable-node-${{ env.COMPOSABLE_VERSION }}.x86_64.selfcontained
-          
+
           cp dali-runtime/lib/runtime.optimized.wasm release-artifacts/dali-runtime.optimized.wasm
           cp picasso-runtime/lib/runtime.optimized.wasm release-artifacts/picasso-runtime.optimized.wasm
           cp composable-runtime/lib/runtime.optimized.wasm release-artifacts/composable-runtime.optimized.wasm
@@ -169,17 +168,12 @@ jobs:
           cp deb/*.deb release-artifacts/composable-node_${{ env.COMPOSABLE_VERSION }}-1_amd64.deb
           cd release-artifacts
           sha256sum * > checksums.txt
-          cd ..
-          echo "## Hashes" > release.txt
-          echo "\`\`\`text" >> release.txt
-          cat release-artifacts/checksums.txt >> release.txt
-          echo "\`\`\`" >> release.txt
 
       # - name: Release docker image
       #   run: |
       #     docker load --input ./composable-docker-image
-      #     docker tag composable:$(nix eval --raw .#composable-node-release.version) "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:$(nix eval --raw .#composable-node-release.version)"
-      #     docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable-sandbox:$(nix eval --raw .#composable-node-release.version)"
+      #     docker tag composable:$(nix eval --raw .#composable-node-release.version) "${{ env.DOCKER_REGISTRY_NAME }}/composable:$(nix eval --raw .#composable-node-release.version)"
+      #     docker push "${{ env.DOCKER_REGISTRY_NAME }}/composable:$(nix eval --raw .#composable-node-release.version)"
 
       - name: Get commit
         id: fetch_commit_sha
