@@ -1254,7 +1254,7 @@ parameter_types! {
 
 impl cosmwasm::Config for Runtime {
 	type Event = Event;
-	type AccountId = AccountId;
+	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
 	type MaxFrames = MaxFrames;
 	type MaxCodeSize = MaxCodeSize;

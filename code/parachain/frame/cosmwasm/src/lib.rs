@@ -124,7 +124,7 @@ pub mod pallet {
 	pub(crate) type ContractTrieIdOf<T> = BoundedVec<u8, MaxContractTrieIdSizeOf<T>>;
 	pub(crate) type ContractLabelOf<T> = BoundedVec<u8, MaxContractLabelSizeOf<T>>;
 	pub(crate) type CodeHashOf<T> = <T as frame_system::Config>::Hash;
-	pub(crate) type AccountIdOf<T> = <T as Config>::AccountId;
+	pub(crate) type AccountIdOf<T> = <T as Config>::AccountIdExtended;
 	pub(crate) type MaxCodeSizeOf<T> = <T as Config>::MaxCodeSize;
 	pub(crate) type MaxInstrumentedCodeSizeOf<T> = <T as Config>::MaxInstrumentedCodeSize;
 	pub(crate) type MaxMessageSizeOf<T> = <T as Config>::MaxMessageSize;
@@ -193,7 +193,7 @@ pub mod pallet {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		type AccountId: Parameter
+		type AccountIdExtended: Parameter
 			+ Member
 			+ MaybeSerializeDeserialize
 			+ Debug

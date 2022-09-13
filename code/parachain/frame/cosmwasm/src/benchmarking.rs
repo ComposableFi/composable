@@ -5,7 +5,7 @@ use frame_system::{Pallet as System, RawOrigin};
 
 benchmarks! {
 	upload {
-		let origin = account::<<T as Config>::AccountId>("signer", 0, 0xCAFEBABE);
+		let origin = account::<<T as Config>::AccountIdExtended>("signer", 0, 0xCAFEBABE);
 		let code = include_bytes!("../../../../../target/wasm32-unknown-unknown/cosmwasm-contracts/xcvm_router.wasm").to_vec().try_into().unwrap();
 	}: _(RawOrigin::Signed(origin), code)
 }

@@ -1,4 +1,5 @@
-use crate::self as pallet_cosmwasm;
+use crate::*;
+
 use frame_support::{pallet_prelude::ConstU32, parameter_types, traits::ConstU64, PalletId};
 use primitives::currency::CurrencyId;
 use sp_core::H256;
@@ -12,7 +13,7 @@ type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
 type Header = generic::Header<u32, BlakeTwo256>;
 type Balance = u64;
-type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+type AccountId = AccountId32;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -21,7 +22,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
-		Cosmwasm: pallet_cosmwasm,
+		Cosmwasm: crate,
 		Balances: pallet_balances,
 		Assets: pallet_assets,
 		Timestamp: pallet_timestamp,
@@ -153,9 +154,9 @@ parameter_types! {
 	pub const ContractStorageByteWritePrice: u32 = 1;
 }
 
-impl pallet_cosmwasm::Config for Test {
+impl Config for Test {
 	type Event = Event;
-	type AccountId = AccountId;
+	type AccountIdExtended = AccountId;
 	type PalletId = CosmwasmPalletId;
 	type MaxFrames = MaxFrames;
 	type MaxCodeSize = MaxCodeSize;
