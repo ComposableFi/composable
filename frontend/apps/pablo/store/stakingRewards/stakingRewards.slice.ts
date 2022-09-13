@@ -7,7 +7,7 @@ export interface StakingRewardsSlice {
   rewardPoolStakedPositionIds: Record<string, Array<string>>;
   pabloStaking: {
     totalPBLOLocked: BigNumber;
-    totalfNftMinted: BigNumber;
+    totalFnftMinted: BigNumber;
     averageLockMultiplier: BigNumber;
     averageLockTime: BigNumber;
   }
@@ -18,7 +18,7 @@ export const useStakingRewardsSlice = create<StakingRewardsSlice>(() => ({
   rewardPoolStakedPositionIds: {},
   pabloStaking: {
     totalPBLOLocked: new BigNumber(0),
-    totalfNftMinted: new BigNumber(0),
+    totalFnftMinted: new BigNumber(0),
     averageLockMultiplier: new BigNumber(0),
     averageLockTime: new BigNumber(0),
   }
