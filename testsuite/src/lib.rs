@@ -374,9 +374,9 @@ pub async fn send_packet_and_assert_timestamp_timeout<A, B>(
 }
 
 pub async fn send_packet_with_connection_delay<A, B>(
-	_chain_a: &A,
-	_chain_b: &B,
-	_channel_id: ChannelId,
+	chain_a: &A,
+	chain_b: &B,
+	channel_id: ChannelId,
 ) where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,

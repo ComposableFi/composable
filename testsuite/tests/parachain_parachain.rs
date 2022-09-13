@@ -185,10 +185,10 @@ async fn setup_clients() -> (ParachainClient<DefaultConfig>, ParachainClient<Def
 async fn main() {
 	logging::setup_logging();
 	// Run tests sequentially
-	// parachain_to_parachain_ibc_messaging_packet_height_timeout().await;
-	// parachain_to_parachain_ibc_messaging_packet_timeout_timestamp().await;
-	// parachain_to_parachain_ibc_messaging_token_transfer().await;
+	parachain_to_parachain_ibc_messaging_packet_height_timeout().await;
+	parachain_to_parachain_ibc_messaging_packet_timeout_timestamp().await;
 	parachain_to_parachain_ibc_messaging_token_transfer_with_delay().await;
+	parachain_to_parachain_ibc_messaging_token_transfer().await;
 }
 
 async fn parachain_to_parachain_ibc_messaging_token_transfer() {
