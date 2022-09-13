@@ -79,8 +79,8 @@ pub mod pallet {
 			RedeemableAssets, RemoveLiquiditySimulationResult, StableSwapPoolInfo, MAX_REWARDS,
 		},
 		staking::{
-			lock::LockConfig, ManageStaking, ProtocolStaking, RewardConfig,
-			RewardPoolConfiguration, RewardRate,
+			lock::LockConfig, ManageStaking, ProtocolStaking, RateBasedConfig, RewardConfigType,
+			RewardPoolConfig, RewardRate, RewardType,
 		},
 		time::{ONE_MONTH, ONE_WEEK},
 	};
@@ -157,7 +157,7 @@ pub mod pallet {
 	>;
 	type RewardConfigsOf<T> = BoundedBTreeMap<
 		<T as Config>::AssetId,
-		RewardConfig<<T as Config>::Balance>,
+		RateBasedConfig<<T as Config>::Balance>,
 		<T as Config>::MaxRewardConfigsPerPool,
 	>;
 	pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
@@ -644,7 +644,7 @@ pub mod pallet {
 		fn default_lp_staking_pool_config(
 			pool_id: &T::PoolId,
 		) -> Result<
-			RewardPoolConfiguration<
+			RewardPoolConfig<
 				AccountIdOf<T>,
 				AssetIdOf<T>,
 				BalanceOf<T>,
@@ -659,10 +659,13 @@ pub mod pallet {
 			// translates to the new model
 			let reward_rate = RewardRate::per_second(T::Convert::convert(0));
 			let pblo_asset_id: T::AssetId = T::PbloAssetId::get();
-			let reward_configs = [(pblo_asset_id, RewardConfig { max_rewards, reward_rate })]
-				.into_iter()
-				.try_collect()
-				.map_err(|_| Error::<T>::StakingPoolConfigError)?;
+			let reward_configs = [(
+				pblo_asset_id,
+				RewardConfigType::RateBased(RateBasedConfig { max_rewards, reward_rate }),
+			)]
+			.into_iter()
+			.try_collect()
+			.map_err(|_| Error::<T>::StakingPoolConfigError)?;
 			let duration_presets =
 				[(ONE_WEEK, Perbill::from_percent(1)), (ONE_MONTH, Perbill::from_percent(10))]
 					.into_iter()
@@ -672,7 +675,7 @@ pub mod pallet {
 			let five_years_block = 5 * 365 * 24 * 60 * 60 / T::MsPerBlock::get();
 			let end_block =
 				frame_system::Pallet::<T>::current_block_number() + five_years_block.into();
-			Ok(RewardPoolConfiguration::RewardRateBasedIncentive {
+			Ok(RewardPoolConfig {
 				owner: Self::account_id(pool_id),
 				asset_id: Self::lp_token(*pool_id)?,
 				end_block,

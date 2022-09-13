@@ -29,7 +29,7 @@ fn test_reward_update_calculation() {
 
 		let now = <<Test as crate::Config>::UnixTime as UnixTime>::now().as_secs();
 
-		let reward_config = RewardConfig {
+		let reward_config = RateBasedConfig {
 			max_rewards: MAX_REWARDS,
 			reward_rate: RewardRate::per_second(PICA::units(2)),
 		};
@@ -37,7 +37,7 @@ fn test_reward_update_calculation() {
 		// just mint a whole bunch of pica
 		mint_assets([ALICE], [PICA::ID], PICA::units(10_000));
 
-		let pool_id = create_rewards_pool_and_assert(RewardRateBasedIncentive {
+		let pool_id = create_rewards_pool_and_assert(RewardPoolConfig {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			end_block: ONE_YEAR_OF_BLOCKS * 10,
@@ -152,34 +152,33 @@ fn test_accumulate_rewards_pool_empty_refill() {
 		mint_assets([ALICE], [A::ID], A::units(10_000));
 		mint_assets([ALICE], [B::ID], B::units(10_000));
 
-		let pool_id =
-			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
-				owner: ALICE,
-				asset_id: A::ID,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS,
-				reward_configs: [
-					(
-						A::ID,
-						RewardConfig {
-							max_rewards: A_A_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
-						},
-					),
-					(
-						B::ID,
-						RewardConfig {
-							max_rewards: A_B_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
-						},
-					),
-				]
-				.into_iter()
-				.try_collect()
-				.unwrap(),
-				lock: default_lock_config(),
-				share_asset_id: XA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			});
+		let pool_id = create_rewards_pool_and_assert(RewardPoolConfig {
+			owner: ALICE,
+			asset_id: A::ID,
+			end_block: current_block + ONE_YEAR_OF_BLOCKS,
+			reward_configs: [
+				(
+					A::ID,
+					RateBasedConfig {
+						max_rewards: A_A_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
+					},
+				),
+				(
+					B::ID,
+					RateBasedConfig {
+						max_rewards: A_B_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
+					},
+				),
+			]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+			lock: default_lock_config(),
+			share_asset_id: XA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+		});
 
 		progress_to_block(current_block + 1, &mut current_block);
 
@@ -279,68 +278,66 @@ fn test_accumulate_rewards_hook() {
 		const C_E_MAX_REWARDS: u128 = E::units(10);
 		const C_E_INITIAL_AMOUNT: u128 = A::units(1_000_000);
 
-		let alices_pool_id =
-			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
-				owner: ALICE,
-				asset_id: A::ID,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS,
-				reward_configs: [
-					(
-						A::ID,
-						RewardConfig {
-							max_rewards: A_A_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
-						},
-					),
-					(
-						B::ID,
-						RewardConfig {
-							max_rewards: A_B_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
-						},
-					),
-				]
-				.into_iter()
-				.try_collect()
-				.unwrap(),
-				lock: default_lock_config(),
-				share_asset_id: XA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			});
+		let alices_pool_id = create_rewards_pool_and_assert(RewardPoolConfig {
+			owner: ALICE,
+			asset_id: A::ID,
+			end_block: current_block + ONE_YEAR_OF_BLOCKS,
+			reward_configs: [
+				(
+					A::ID,
+					RateBasedConfig {
+						max_rewards: A_A_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(A_A_REWARD_RATE),
+					},
+				),
+				(
+					B::ID,
+					RateBasedConfig {
+						max_rewards: A_B_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(A_B_REWARD_RATE),
+					},
+				),
+			]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+			lock: default_lock_config(),
+			share_asset_id: XA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+		});
 
 		mint_assets([ALICE], [A::ID], A_A_INITIAL_AMOUNT);
 		add_to_rewards_pot_and_assert(ALICE, alices_pool_id, A::ID, A_A_INITIAL_AMOUNT);
 		mint_assets([ALICE], [B::ID], A_B_INITIAL_AMOUNT);
 		add_to_rewards_pot_and_assert(ALICE, alices_pool_id, B::ID, A_B_INITIAL_AMOUNT);
 
-		let bobs_pool_id =
-			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
-				owner: BOB,
-				asset_id: C::ID,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS,
-				reward_configs: [
-					(
-						D::ID,
-						RewardConfig {
-							max_rewards: C_D_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(C_D_REWARD_RATE),
-						},
-					),
-					(
-						E::ID,
-						RewardConfig {
-							max_rewards: C_E_MAX_REWARDS,
-							reward_rate: RewardRate::per_second(C_E_REWARD_RATE),
-						},
-					),
-				]
-				.into_iter()
-				.try_collect()
-				.unwrap(),
-				lock: default_lock_config(),
-				share_asset_id: XC::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
-			});
+		let bobs_pool_id = create_rewards_pool_and_assert(RewardPoolConfig {
+			owner: BOB,
+			asset_id: C::ID,
+			end_block: current_block + ONE_YEAR_OF_BLOCKS,
+			reward_configs: [
+				(
+					D::ID,
+					RateBasedConfig {
+						max_rewards: C_D_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(C_D_REWARD_RATE),
+					},
+				),
+				(
+					E::ID,
+					RateBasedConfig {
+						max_rewards: C_E_MAX_REWARDS,
+						reward_rate: RewardRate::per_second(C_E_REWARD_RATE),
+					},
+				),
+			]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+			lock: default_lock_config(),
+			share_asset_id: XC::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 1,
+		});
 
 		mint_assets([ALICE], [D::ID], C_D_INITIAL_AMOUNT);
 		add_to_rewards_pot_and_assert(ALICE, bobs_pool_id, D::ID, C_D_INITIAL_AMOUNT);
@@ -574,25 +571,24 @@ fn test_accumulate_rewards_hook() {
 
 		// add a new, zero-reward pool
 		// nothing needs to be added to the rewards pot as there are no rewards
-		let _charlies_pool_id =
-			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
-				owner: CHARLIE,
-				asset_id: F::ID,
-				end_block: current_block + ONE_YEAR_OF_BLOCKS,
-				reward_configs: [(
-					F::ID,
-					RewardConfig {
-						max_rewards: F::units(0xDEADC0DE),
-						reward_rate: RewardRate::per_second(0_u128),
-					},
-				)]
-				.into_iter()
-				.try_collect()
-				.unwrap(),
-				lock: default_lock_config(),
-				share_asset_id: XF::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
-			});
+		let _charlies_pool_id = create_rewards_pool_and_assert(RewardPoolConfig {
+			owner: CHARLIE,
+			asset_id: F::ID,
+			end_block: current_block + ONE_YEAR_OF_BLOCKS,
+			reward_configs: [(
+				F::ID,
+				RateBasedConfig {
+					max_rewards: F::units(0xDEADC0DE),
+					reward_rate: RewardRate::per_second(0_u128),
+				},
+			)]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+			lock: default_lock_config(),
+			share_asset_id: XF::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID + 2,
+		});
 
 		{
 			progress_to_block(STARTING_BLOCK + 4167, &mut current_block);

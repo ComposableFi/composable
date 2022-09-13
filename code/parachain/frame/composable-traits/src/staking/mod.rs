@@ -17,7 +17,8 @@ pub mod math;
 /// Defines staking duration, rewards and early unstake penalty for a given asset type.
 /// TODO refer to the relevant section in the design doc.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct Reward<Balance> {
+// TODO: Rename to RateBasedReward
+pub struct RateBasedReward<Balance> {
 	/// Total rewards including inflation for adjusting for new stakers joining the pool. All
 	/// stakers in a pool are eligible to receive a part of this value based on their share of the
 	/// pool.
@@ -39,6 +40,37 @@ pub struct Reward<Balance> {
 
 	/// The last time the reward was updated, in seconds.
 	pub last_updated_timestamp: u64,
+}
+
+#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
+pub enum RewardType<Balance> {
+	Earnings(),
+	RateBased(RateBasedReward<Balance>),
+}
+
+impl<Balance> RewardType<Balance> {
+	pub fn as_ref_mut_rate_based(&mut self) -> Option<&mut RateBasedReward<Balance>> {
+		match self {
+			RewardType::Earnings() => None,
+			RewardType::RateBased(ref mut rate_based_reward) => Some(rate_based_reward),
+		}
+	}
+}
+
+impl<Balance: Zero> RewardType<Balance> {
+	pub fn from_config(reward_config: RewardConfigType<Balance>, now_seconds: u64) -> Self {
+		match reward_config {
+			RewardConfigType::Earnings() => RewardType::Earnings(),
+			RewardConfigType::RateBased(rate_based_config) =>
+				RewardType::RateBased(RateBasedReward::from_config(rate_based_config, now_seconds)),
+		}
+	}
+}
+
+#[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
+pub enum RewardConfigType<Balance> {
+	Earnings(),
+	RateBased(RateBasedConfig<Balance>),
 }
 
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
@@ -78,9 +110,12 @@ pub struct RewardUpdate<Balance> {
 	pub reward_rate: RewardRate<Balance>,
 }
 
-impl<Balance: Zero> Reward<Balance> {
-	pub fn from_config(reward_config: RewardConfig<Balance>, now_seconds: u64) -> Reward<Balance> {
-		Reward {
+impl<Balance: Zero> RateBasedReward<Balance> {
+	pub fn from_config(
+		reward_config: RateBasedConfig<Balance>,
+		now_seconds: u64,
+	) -> RateBasedReward<Balance> {
+		RateBasedReward {
 			total_rewards: Zero::zero(),
 			claimed_rewards: Zero::zero(),
 			total_dilution_adjustment: Zero::zero(),
@@ -112,7 +147,7 @@ pub struct RewardPool<
 	pub asset_id: AssetId,
 
 	/// rewards accumulated
-	pub rewards: BoundedBTreeMap<AssetId, Reward<Balance>, MaxRewards>,
+	pub rewards: BoundedBTreeMap<AssetId, RewardType<Balance>, MaxRewards>,
 
 	/// Total shares distributed among stakers
 	pub total_shares: Balance,
@@ -138,7 +173,7 @@ pub const DEFAULT_MAX_REWARDS: u128 = 1_000_000_000_000_000_000_u128;
 
 /// Reward configurations for a given asset type.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
-pub struct RewardConfig<Balance> {
+pub struct RateBasedConfig<Balance> {
 	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
 	pub max_rewards: Balance,
 
@@ -160,9 +195,8 @@ pub struct RewardConfig<Balance> {
 	EqNoBound,
 	TypeInfo,
 )]
-#[non_exhaustive]
 #[scale_info(skip_type_params(MaxRewardConfigs, MaxDurationPresets))]
-pub enum RewardPoolConfiguration<
+pub struct RewardPoolConfig<
 	AccountId: Eq + PartialEq + Clone + Debug,
 	AssetId: Eq + PartialEq + Clone + Debug,
 	Balance: Eq + PartialEq + Clone + Debug,
@@ -170,25 +204,26 @@ pub enum RewardPoolConfiguration<
 	MaxRewardConfigs: Get<u32>,
 	MaxDurationPresets: Get<u32>,
 > {
-	/// A pool with an adjustable reward rate to be used as incentive.
-	RewardRateBasedIncentive {
-		/// Protocol or the user account that owns this pool
-		owner: AccountId,
-		/// The staked asset id of the reward pool.
-		asset_id: AssetId,
-		/// Pool would stop adding rewards to pool at this block number.
-		end_block: BlockNumber,
-		/// initial reward configuration for this pool
-		reward_configs: BoundedBTreeMap<AssetId, RewardConfig<Balance>, MaxRewardConfigs>,
-		// possible lock config for this reward
-		lock: LockConfig<MaxDurationPresets>,
+	/// Protocol or the user account that owns this pool
+	pub owner: AccountId,
 
-		// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
-		share_asset_id: AssetId,
+	/// The staked asset id of the reward pool.
+	pub asset_id: AssetId,
 
-		// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
-		financial_nft_asset_id: AssetId,
-	},
+	/// Pool would stop adding rewards to pool at this block number.
+	pub end_block: BlockNumber,
+
+	/// initial reward configuration for this pool
+	pub reward_configs: BoundedBTreeMap<AssetId, RewardConfigType<Balance>, MaxRewardConfigs>,
+
+	/// possible lock config for this reward
+	pub lock: LockConfig<MaxDurationPresets>,
+
+	/// Asset ID issued as shares for staking in the pool. Eg: for PBLO -> xPBLO
+	pub share_asset_id: AssetId,
+
+	/// Asset ID (collection ID) of the financial NFTs issued for staking positions of this pool
+	pub financial_nft_asset_id: AssetId,
 }
 
 /// Staking typed fNFT, usually can be mapped to raw fNFT storage type. A position identifier
@@ -236,7 +271,7 @@ pub trait ManageStaking {
 
 	/// Create a staking reward pool from configurations passed as inputs.
 	fn create_staking_pool(
-		pool_config: RewardPoolConfiguration<
+		pool_config: RewardPoolConfig<
 			Self::AccountId,
 			Self::AssetId,
 			Self::Balance,

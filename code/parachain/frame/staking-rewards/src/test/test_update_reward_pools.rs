@@ -4,7 +4,7 @@ use composable_tests_helpers::test::{
 	helper::assert_extrinsic_event,
 };
 use composable_traits::staking::{
-	Reward, RewardConfig, RewardPoolConfiguration, RewardRate, RewardRatePeriod, RewardUpdate,
+	RateBasedConfig, Reward, RewardPoolConfig, RewardRate, RewardRatePeriod, RewardUpdate,
 };
 use frame_support::{traits::TryCollect, BoundedBTreeMap};
 
@@ -31,25 +31,24 @@ fn test_update_reward_pool() {
 		const INITIAL_REWARD_RATE_AMOUNT: u128 = 10;
 		const UPDATED_REWARD_RATE_AMOUNT: u128 = 5;
 
-		let pool_id =
-			create_rewards_pool_and_assert(RewardPoolConfiguration::RewardRateBasedIncentive {
-				owner: ALICE,
-				asset_id: PICA::ID,
-				end_block: ONE_YEAR_OF_BLOCKS,
-				reward_configs: [(
-					USDT::ID,
-					RewardConfig {
-						max_rewards: 1_000_u128,
-						reward_rate: RewardRate::per_second(INITIAL_REWARD_RATE_AMOUNT),
-					},
-				)]
-				.into_iter()
-				.try_collect()
-				.unwrap(),
-				lock: default_lock_config(),
-				share_asset_id: XPICA::ID,
-				financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
-			});
+		let pool_id = create_rewards_pool_and_assert(RewardPoolConfig {
+			owner: ALICE,
+			asset_id: PICA::ID,
+			end_block: ONE_YEAR_OF_BLOCKS,
+			reward_configs: [(
+				USDT::ID,
+				RateBasedConfig {
+					max_rewards: 1_000_u128,
+					reward_rate: RewardRate::per_second(INITIAL_REWARD_RATE_AMOUNT),
+				},
+			)]
+			.into_iter()
+			.try_collect()
+			.unwrap(),
+			lock: default_lock_config(),
+			share_asset_id: XPICA::ID,
+			financial_nft_asset_id: STAKING_FNFT_COLLECTION_ID,
+		});
 
 		mint_assets([ALICE], [USDT::ID], INITIAL_AMOUNT);
 		add_to_rewards_pot_and_assert(ALICE, pool_id, USDT::ID, INITIAL_AMOUNT);

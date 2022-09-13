@@ -50,7 +50,7 @@ use sp_std::{
 
 use crate::prelude::*;
 use composable_support::math::safe::SafeSub;
-use composable_traits::staking::{Reward, RewardUpdate};
+use composable_traits::staking::{RateBasedReward, RewardUpdate};
 use frame_support::{
 	traits::{
 		fungibles::{InspectHold, MutateHold, Transfer},
@@ -70,10 +70,7 @@ pub mod pallet {
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
 		fnft::{FinancialNft, FinancialNftProtocol},
-		staking::{
-			lock::LockConfig, RewardPoolConfiguration::RewardRateBasedIncentive, RewardRatePeriod,
-			DEFAULT_MAX_REWARDS,
-		},
+		staking::{lock::LockConfig, RewardPoolConfig, RewardRatePeriod, DEFAULT_MAX_REWARDS},
 		time::{DurationSeconds, ONE_MONTH, ONE_WEEK},
 	};
 	use frame_support::{
@@ -352,7 +349,7 @@ pub mod pallet {
 	}
 
 	/// Abstraction over RewardPoolConfiguration type
-	pub(crate) type RewardPoolConfigurationOf<T> = RewardPoolConfiguration<
+	pub(crate) type RewardPoolConfigurationOf<T> = RewardPoolConfig<
 		AccountIdOf<T>,
 		AssetIdOf<T>,
 		BalanceOf<T>,
@@ -621,64 +618,61 @@ pub mod pallet {
 		fn create_staking_pool(
 			pool_config: RewardPoolConfigurationOf<T>,
 		) -> Result<Self::RewardPoolId, DispatchError> {
-			match pool_config {
-				RewardRateBasedIncentive {
-					owner,
+			let RewardPoolConfig {
+				owner,
+				asset_id: pool_asset,
+				reward_configs: initial_reward_config,
+				end_block,
+				lock,
+				share_asset_id,
+				financial_nft_asset_id,
+			} = pool_config;
+
+			ensure!(
+				end_block > frame_system::Pallet::<T>::current_block_number(),
+				Error::<T>::EndBlockMustBeInTheFuture
+			);
+
+			ensure!(
+				!RewardPools::<T>::contains_key(pool_asset),
+				Error::<T>::RewardsPoolAlreadyExists
+			);
+
+			let now_seconds = T::UnixTime::now().as_secs();
+
+			// TODO: Replace into_iter with iter_mut once it's available
+			let rewards = initial_reward_config
+				.into_iter()
+				.map(|(asset_id, reward_config)| {
+					(asset_id, RewardType::from_config(reward_config, now_seconds))
+				})
+				.try_collect()
+				.expect("No items were added; qed;");
+
+			RewardPools::<T>::insert(
+				pool_asset,
+				RewardPool {
+					owner: owner.clone(),
 					asset_id: pool_asset,
-					reward_configs: initial_reward_config,
+					rewards,
+					total_shares: T::Balance::zero(),
+					claimed_shares: T::Balance::zero(),
 					end_block,
 					lock,
 					share_asset_id,
 					financial_nft_asset_id,
-				} => {
-					ensure!(
-						end_block > frame_system::Pallet::<T>::current_block_number(),
-						Error::<T>::EndBlockMustBeInTheFuture
-					);
-
-					ensure!(
-						!RewardPools::<T>::contains_key(pool_asset),
-						Error::<T>::RewardsPoolAlreadyExists
-					);
-
-					let now_seconds = T::UnixTime::now().as_secs();
-
-					// TODO: Replace into_iter with iter_mut once it's available
-					let rewards = initial_reward_config
-						.into_iter()
-						.map(|(asset_id, reward_config)| {
-							(asset_id, Reward::from_config(reward_config, now_seconds))
-						})
-						.try_collect()
-						.expect("No items were added; qed;");
-
-					RewardPools::<T>::insert(
-						pool_asset,
-						RewardPool {
-							owner: owner.clone(),
-							asset_id: pool_asset,
-							rewards,
-							total_shares: T::Balance::zero(),
-							claimed_shares: T::Balance::zero(),
-							end_block,
-							lock,
-							share_asset_id,
-							financial_nft_asset_id,
-						},
-					);
-
-					T::FinancialNft::create_collection(&financial_nft_asset_id, &owner, &owner)?;
-
-					Self::deposit_event(Event::<T>::RewardPoolCreated {
-						pool_id: pool_asset,
-						owner,
-						end_block,
-					});
-
-					Ok(pool_asset)
 				},
-				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration.into()),
-			}
+			);
+
+			T::FinancialNft::create_collection(&financial_nft_asset_id, &owner, &owner)?;
+
+			Self::deposit_event(Event::<T>::RewardPoolCreated {
+				pool_id: pool_asset,
+				owner,
+				end_block,
+			});
+
+			Ok(pool_asset)
 		}
 	}
 
@@ -1093,7 +1087,10 @@ pub mod pallet {
 			penalize_for_early_unlock: bool,
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
-			for (asset_id, reward) in &mut rewards_pool.rewards {
+			for (asset_id, reward) in
+				(&mut rewards_pool.rewards).into_iter().filter_map(|(asset_id, reward)| {
+					reward.as_ref_mut_rate_based().map(|reward| (asset_id, reward))
+				}) {
 				let inflation = stake.reductions.get(asset_id).cloned().unwrap_or_else(Zero::zero);
 				let claim = if rewards_pool.total_shares.is_zero() {
 					Zero::zero()
@@ -1152,7 +1149,11 @@ pub mod pallet {
 			rewards_pool: &RewardPoolOf<T>,
 		) -> Result<
 			(
-				BoundedBTreeMap<T::AssetId, Reward<T::Balance>, T::MaxRewardConfigsPerPool>,
+				BoundedBTreeMap<
+					T::AssetId,
+					RateBasedReward<T::Balance>,
+					T::MaxRewardConfigsPerPool,
+				>,
 				BoundedBTreeMap<T::AssetId, T::Balance, T::MaxRewardConfigsPerPool>,
 			),
 			DispatchError,
@@ -1174,7 +1175,8 @@ pub mod pallet {
 				let total_rewards = reward.total_rewards.safe_add(&inflation)?;
 				let total_dilution_adjustment =
 					reward.total_dilution_adjustment.safe_add(&inflation)?;
-				let updated_reward = Reward { total_rewards, total_dilution_adjustment, ..reward };
+				let updated_reward =
+					RateBasedReward { total_rewards, total_dilution_adjustment, ..reward };
 				rewards_btree_map
 					.try_insert(*asset_id, updated_reward)
 					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
@@ -1190,7 +1192,7 @@ pub mod pallet {
 		pub(crate) fn reward_accumulation_hook_reward_update_calculation(
 			pool_id: T::AssetId,
 			reward_asset_id: T::AssetId,
-			reward: &mut Reward<T::Balance>,
+			reward: &mut RateBasedReward<T::Balance>,
 			now_seconds: u64,
 		) {
 			use RewardAccumulationCalculationError::*;
@@ -1311,7 +1313,7 @@ pub mod pallet {
 								// 	*from == reward_pool.owner,
 								// 	Error::<T>::OnlyPoolOwnerCanAddNewReward
 								// );
-								let reward = Reward {
+								let reward = RateBasedReward {
 									total_rewards: reward_increment,
 									claimed_rewards: Zero::zero(),
 									total_dilution_adjustment: T::Balance::zero(),
@@ -1424,7 +1426,7 @@ fn update_rewards_pool<T: Config>(
 /// Calculates the update to the reward and unlocks the accumulated rewards from the pool account.
 pub(crate) fn do_reward_accumulation<T: Config>(
 	asset_id: T::AssetId,
-	reward: &mut Reward<T::Balance>,
+	reward: &mut RateBasedReward<T::Balance>,
 	pool_account: &T::AccountId,
 	now_seconds: u64,
 ) -> Result<(), RewardAccumulationCalculationError> {

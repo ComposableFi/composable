@@ -54,18 +54,10 @@ pub(crate) fn create_rewards_pool_and_assert(
 			owner: event_owner,
 			end_block: event_end_block,
 		}) => {
-			match reward_config {
-				RewardPoolConfiguration::RewardRateBasedIncentive {
-					end_block,
-					owner,
-					asset_id: _,
-					..
-				} => {
-					assert_eq!(end_block, event_end_block);
-					assert_eq!(owner, event_owner);
-				},
-				_ => unimplemented!(),
-			}
+			let RewardPoolConfig { end_block, owner, asset_id: _, .. } = reward_config;
+
+			assert_eq!(end_block, event_end_block);
+			assert_eq!(owner, event_owner);
 
 			pool_id
 		},

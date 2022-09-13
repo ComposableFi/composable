@@ -11,9 +11,7 @@ use composable_traits::{
 	fnft::FinancialNft as FinancialNftT,
 	staking::{
 		lock::{Lock, LockConfig},
-		ProtocolStaking, RewardConfig,
-		RewardPoolConfiguration::RewardRateBasedIncentive,
-		RewardRate, Stake, Staking,
+		ProtocolStaking, RateBasedConfig, RewardPoolConfig, RewardRate, Stake, Staking,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -62,7 +60,7 @@ fn test_create_reward_pool_invalid_end_block() {
 		assert_err!(
 			StakingRewards::create_reward_pool(
 				Origin::root(),
-				RewardRateBasedIncentive {
+				RewardPoolConfig {
 					owner: ALICE,
 					asset_id: PICA::ID,
 					// end block can't be before the current block
@@ -559,7 +557,7 @@ fn test_split_position() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
 
-		let pool_init_config = RewardRateBasedIncentive {
+		let pool_init_config = RewardPoolConfig {
 			owner: ALICE,
 			asset_id: PICA::ID,
 			end_block: 5,
@@ -866,7 +864,7 @@ fn create_default_reward_pool() {
 	assert_extrinsic_event::<Test, _, _, _>(
 		StakingRewards::create_reward_pool(
 			Origin::root(),
-			RewardRateBasedIncentive {
+			RewardPoolConfig {
 				owner: ALICE,
 				asset_id: PICA::ID,
 				end_block: 5,
@@ -882,7 +880,7 @@ fn create_default_reward_pool() {
 
 /// Creates a PICA staking reward pool. Calls [`default_reward_pool`] and [`default_lock_config`].
 fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
-	RewardRateBasedIncentive {
+	RewardPoolConfig {
 		owner: ALICE,
 		asset_id: PICA::ID,
 		end_block: 5,
@@ -906,10 +904,11 @@ fn default_lock_config() -> LockConfig<MaxStakingDurationPresets> {
 	}
 }
 
-fn default_reward_config() -> BoundedBTreeMap<u128, RewardConfig<u128>, MaxRewardConfigsPerPool> {
+fn default_reward_config() -> BoundedBTreeMap<u128, RateBasedConfig<u128>, MaxRewardConfigsPerPool>
+{
 	[(
 		USDT::ID,
-		RewardConfig { max_rewards: 100_u128, reward_rate: RewardRate::per_second(10_u128) },
+		RateBasedConfig { max_rewards: 100_u128, reward_rate: RewardRate::per_second(10_u128) },
 	)]
 	.into_iter()
 	.try_collect()

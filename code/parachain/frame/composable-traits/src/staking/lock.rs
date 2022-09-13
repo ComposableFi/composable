@@ -14,6 +14,7 @@ use sp_runtime::Perbill;
 #[scale_info(skip_type_params(MaxDurationPresets))]
 pub struct LockConfig<MaxDurationPresets: Get<u32>> {
 	/// The possible locking duration.
+	// TODO: Make this BiBounded somehow
 	pub duration_presets: BoundedBTreeMap<DurationSeconds, Perbill, MaxDurationPresets>,
 	/// The penalty applied if a staker unstake before the end date.
 	/// In case of zero penalty, you cannot unlock before it duration ends.

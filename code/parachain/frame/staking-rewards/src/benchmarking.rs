@@ -3,10 +3,7 @@ use crate::*;
 
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
-	staking::{
-		lock::LockConfig, RewardConfig, RewardPoolConfiguration,
-		RewardPoolConfiguration::RewardRateBasedIncentive, RewardRate, RewardUpdate,
-	},
+	staking::{lock::LockConfig, RateBasedConfig, RewardPoolConfig, RewardRate, RewardUpdate},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
@@ -28,7 +25,7 @@ fn get_reward_pool<T: Config>(
 	owner: T::AccountId,
 	reward_count: u32,
 ) -> RewardPoolConfigurationOf<T> {
-	let pool_init_config = RewardRateBasedIncentive {
+	let pool_init_config = RewardPoolConfig {
 		owner,
 		asset_id: BASE_ASSET_ID.into(),
 		end_block: 5_u128.saturated_into(),
@@ -55,13 +52,13 @@ fn lock_config<T: Config>() -> LockConfig<T::MaxStakingDurationPresets> {
 
 fn reward_config<T: Config>(
 	reward_count: u32,
-) -> BoundedBTreeMap<T::AssetId, RewardConfig<T::Balance>, T::MaxRewardConfigsPerPool> {
+) -> BoundedBTreeMap<T::AssetId, RateBasedConfig<T::Balance>, T::MaxRewardConfigsPerPool> {
 	(0..reward_count)
 		.map(|asset_id| {
 			let asset_id = (asset_id as u128) + BASE_ASSET_ID;
 			(
 				asset_id.into(),
-				RewardConfig {
+				RateBasedConfig {
 					max_rewards: 100_u128.into(),
 					reward_rate: RewardRate::per_second(1_u128),
 				},
@@ -182,12 +179,12 @@ benchmarks! {
 		let pool_asset_id = 100.into();
 		let reward_asset_id = 1_u128.into();
 
-		let reward_config = RewardConfig {
+		let reward_config = RateBasedConfig {
 			max_rewards: 1_000_000.into(),
 			reward_rate: RewardRate::per_second(10_000),
 		};
 
-		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(RewardRateBasedIncentive {
+		let pool_id = <Pallet<T> as ManageStaking>::create_staking_pool(RewardPoolConfig {
 			owner: user,
 			asset_id: pool_asset_id,
 			end_block: 5_u128.saturated_into(),

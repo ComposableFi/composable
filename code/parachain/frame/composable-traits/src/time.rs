@@ -4,6 +4,7 @@ use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
 use sp_runtime::Permill;
 
+// REVIEW(benluelo): Consider removing these type aliases as they cause unnecessary inderection
 /// `std::time::Duration` is not used because it is to precise with 128 bits and microseconds.
 pub type DurationSeconds = u64;
 
