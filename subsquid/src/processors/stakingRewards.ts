@@ -249,7 +249,7 @@ export async function processStakedEvent(
     BigInt(ctx.block.timestamp)
   );
 
-  await storeHistoricalLockedValue(ctx, amount, poolId.toString());
+  // await storeHistoricalLockedValue(ctx, amount, poolId.toString());
 
   await ctx.store.save(stakingPosition);
 }
@@ -288,7 +288,7 @@ export async function processStakeAmountExtendedEvent(
 
   extendStakingPosition(stakingPosition, amount, event);
 
-  await storeHistoricalLockedValue(ctx, amountChanged, stakingPosition.assetId);
+  // await storeHistoricalLockedValue(ctx, amountChanged, stakingPosition.assetId);
 }
 
 /**
@@ -318,7 +318,7 @@ export async function processUnstakedEvent(
 
   await saveAccountAndEvent(ctx, EventType.STAKING_REWARDS_UNSTAKE, owner);
 
-  await storeHistoricalLockedValue(ctx, -position.amount, position.assetId);
+  // await storeHistoricalLockedValue(ctx, -position.amount, position.assetId);
 }
 
 /**

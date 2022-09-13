@@ -105,7 +105,7 @@ export async function processVestingScheduleAddedEvent(
 
   const { scheduleAmount, asset } = getVestingScheduleAddedEvent(event);
 
-  await storeHistoricalLockedValue(ctx, scheduleAmount, asset.toString());
+  // await storeHistoricalLockedValue(ctx, scheduleAmount, asset.toString());
 }
 
 interface VestingScheduleClaimedEvent {
@@ -182,6 +182,6 @@ export async function processVestingClaimedEvent(
 
     await ctx.store.save(schedule);
 
-    await storeHistoricalLockedValue(ctx, -amount, schedule.assetId);
+    // await storeHistoricalLockedValue(ctx, -amount, schedule.assetId);
   }
 }

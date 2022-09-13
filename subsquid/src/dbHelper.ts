@@ -230,9 +230,9 @@ export async function storeHistoricalLockedValue(
 export async function getLastLockedValue(
   ctx: EventHandlerContext<Store>
 ): Promise<bigint> {
-  const lastLockedValue = await ctx.store.get(HistoricalLockedValue, {
+  const lastLockedValue = await ctx.store.find(HistoricalLockedValue, {
     order: { timestamp: "DESC" },
   });
 
-  return BigInt(lastLockedValue?.amount || 0);
+  return BigInt(lastLockedValue.length > 0 ? lastLockedValue[0].amount : 0);
 }

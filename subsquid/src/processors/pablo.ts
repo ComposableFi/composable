@@ -27,15 +27,8 @@ import { encodeAccount } from "../utils";
 
 function createEvent(
   ctx: EventHandlerContext<Store, { event: true }>,
-  pool: PabloPool,
   who: string,
-  eventType: EventType,
-  spotPrice: string,
-  baseAssetId: string,
-  baseAssetAmount: bigint,
-  quoteAssetId: string,
-  quoteAssetAmount: bigint,
-  fee?: string
+  eventType: EventType
 ) {
   return new Event({
     id: ctx.event.id,
@@ -43,16 +36,29 @@ function createEvent(
     blockNumber: BigInt(ctx.block.height),
     timestamp: BigInt(new Date().valueOf()),
     eventType,
-    pabloTransaction: new PabloTransaction({
-      id: randomUUID(),
-      pool,
-      spotPrice,
-      baseAssetId,
-      baseAssetAmount,
-      quoteAssetId,
-      quoteAssetAmount,
-      fee: fee || "0.0",
-    }),
+  });
+}
+
+function createPabloTransaction(
+  event: Event,
+  pool: PabloPool,
+  spotPrice: string,
+  baseAssetId: string,
+  baseAssetAmount: bigint,
+  quoteAssetId: string,
+  quoteAssetAmount: bigint,
+  fee?: string
+) {
+  return new PabloTransaction({
+    id: randomUUID(),
+    pool,
+    spotPrice,
+    baseAssetId,
+    baseAssetAmount,
+    quoteAssetId,
+    quoteAssetAmount,
+    fee: fee || "0.0",
+    event,
   });
 }
 
@@ -114,17 +120,18 @@ export async function processPoolCreatedEvent(
       console.error("Unexpected event in db", tx);
       throw new Error("Unexpected event in db");
     }
-    tx = createEvent(
-      ctx,
+
+    const eventEntity = createEvent(ctx, owner, EventType.CREATE_POOL);
+    const pablotx = createPabloTransaction(
+      eventEntity,
       pool,
       owner,
-      EventType.CREATE_POOL,
       // Following fields are irrelevant for CREATE_POOL
       "0",
-      poolCreatedEvt.assets.base.toString(),
-      BigInt(0),
-      poolCreatedEvt.assets.quote.toString(),
-      BigInt(0)
+      BigInt(poolCreatedEvt.assets.base.toString()),
+      "0",
+      BigInt(poolCreatedEvt.assets.quote.toString()),
+      "0"
     );
 
     let quoteAsset = await get(
@@ -165,7 +172,8 @@ export async function processPoolCreatedEvent(
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
-    await ctx.store.save(tx);
+    await ctx.store.save(eventEntity);
+    await ctx.store.save(pablotx);
   }
 }
 
@@ -250,35 +258,37 @@ export async function processLiquidityAddedEvent(
     if (tx != undefined) {
       throw new Error("Unexpected event in db");
     }
-    tx = createEvent(
-      ctx,
+
+    const eventEntity = createEvent(ctx, who, EventType.ADD_LIQUIDITY);
+
+    const pabloTx = createPabloTransaction(
+      eventEntity,
       pool,
-      who,
-      EventType.ADD_LIQUIDITY,
       Big(liquidityAddedEvt.baseAmount.toString())
         .div(Big(liquidityAddedEvt.quoteAmount.toString()))
         .toString(),
       baseAsset.assetId,
       liquidityAddedEvt.baseAmount,
-      pool.quoteAssetId,
+      quoteAsset.assetId,
       liquidityAddedEvt.quoteAmount
     );
 
-    await storeHistoricalLockedValue(
-      ctx,
-      liquidityAddedEvt.baseAmount,
-      baseAsset.assetId
-    );
-    await storeHistoricalLockedValue(
-      ctx,
-      liquidityAddedEvt.quoteAmount,
-      quoteAsset.assetId
-    );
+    // await storeHistoricalLockedValue(
+    //   ctx,
+    //   liquidityAddedEvt.baseAmount,
+    //   baseAsset.assetId
+    // );
+    // await storeHistoricalLockedValue(
+    //   ctx,
+    //   liquidityAddedEvt.quoteAmount,
+    //   quoteAsset.assetId
+    // );
 
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
-    await ctx.store.save(tx);
+    await ctx.store.save(eventEntity);
+    await ctx.store.save(pabloTx);
   } else {
     throw new Error("Pool not found");
   }
@@ -360,11 +370,11 @@ export async function processLiquidityRemovedEvent(
     if (tx != undefined) {
       throw new Error("Unexpected event in db");
     }
-    tx = createEvent(
-      ctx,
+
+    const eventEntity = createEvent(ctx, who, EventType.REMOVE_LIQUIDITY);
+    const pabloTx = createPabloTransaction(
+      eventEntity,
       pool,
-      who,
-      EventType.REMOVE_LIQUIDITY,
       Big(liquidityRemovedEvt.baseAmount.toString())
         .div(Big(liquidityRemovedEvt.quoteAmount.toString()))
         .toString(),
@@ -374,21 +384,22 @@ export async function processLiquidityRemovedEvent(
       liquidityRemovedEvt.quoteAmount
     );
 
-    await storeHistoricalLockedValue(
-      ctx,
-      -liquidityRemovedEvt.baseAmount,
-      baseAsset.assetId
-    );
-    await storeHistoricalLockedValue(
-      ctx,
-      -liquidityRemovedEvt.quoteAmount,
-      quoteAsset.assetId.toString()
-    );
+    // await storeHistoricalLockedValue(
+    //   ctx,
+    //   -liquidityRemovedEvt.baseAmount,
+    //   baseAsset.assetId
+    // );
+    // await storeHistoricalLockedValue(
+    //   ctx,
+    //   -liquidityRemovedEvt.quoteAmount,
+    //   quoteAsset.assetId.toString()
+    // );
 
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
-    await ctx.store.save(tx);
+    await ctx.store.save(eventEntity);
+    await ctx.store.save(pabloTx);
   } else {
     throw new Error("Pool not found");
   }
@@ -523,11 +534,11 @@ export async function processSwappedEvent(
     if (tx != undefined) {
       throw new Error("Unexpected event in db");
     }
-    tx = createEvent(
-      ctx,
+
+    const eventEntity = createEvent(ctx, who, EventType.SWAP);
+    const pabloTx = createPabloTransaction(
+      eventEntity,
       pool,
-      who,
-      EventType.SWAP,
       spotPrice.toString(),
       swappedEvt.baseAsset,
       swappedEvt.baseAmount,
@@ -539,7 +550,8 @@ export async function processSwappedEvent(
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
-    await ctx.store.save(tx);
+    await ctx.store.save(eventEntity);
+    await ctx.store.save(pabloTx);
   } else {
     throw new Error("Pool not found");
   }
@@ -611,11 +623,11 @@ export async function processPoolDeletedEvent(
     if (tx != undefined) {
       throw new Error("Unexpected event in db");
     }
-    tx = createEvent(
-      ctx,
+
+    const eventEntity = createEvent(ctx, who, EventType.DELETE_POOL);
+    const pablotx = createPabloTransaction(
+      eventEntity,
       pool,
-      who,
-      EventType.DELETE_POOL,
       Big(poolDeletedEvent.baseAmount.toString())
         .div(Big(poolDeletedEvent.quoteAmount.toString()))
         .toString(),
@@ -628,7 +640,8 @@ export async function processPoolDeletedEvent(
     await ctx.store.save(pool);
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
-    await ctx.store.save(tx);
+    await ctx.store.save(eventEntity);
+    await ctx.store.save(pablotx);
   } else {
     throw new Error("Pool not found");
   }
