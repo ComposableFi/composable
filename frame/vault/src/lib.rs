@@ -61,7 +61,6 @@ pub mod pallet {
 	use core::ops::AddAssign;
 
 	use crate::{
-		models::StrategyOverview,
 		rent::{self, Verdict},
 		traits::{CurrencyFactory, StrategicVault},
 		validation::{ValidateCreationDeposit, ValidateMaxStrategies},
@@ -73,8 +72,8 @@ pub mod pallet {
 		currency::RangeId,
 		defi::Rate,
 		vault::{
-			CapabilityVault, Deposit, FundsAvailability, ReportableStrategicVault, Vault,
-			VaultConfig,
+			CapabilityVault, Deposit, FundsAvailability, ReportableStrategicVault,
+			StrategyOverview, Vault, VaultConfig,
 		},
 	};
 	use frame_support::{
@@ -886,13 +885,6 @@ pub mod pallet {
 		fn vault_info(vault_idx: &T::VaultId) -> Result<VaultInfo<T>, DispatchError> {
 			Ok(Vaults::<T>::try_get(vault_idx).map_err(|_err| Error::<T>::VaultDoesNotExist)?)
 		}
-
-		/// Return all strategies and their balances related to Vault.
-		pub fn get_strategies(
-			vault_id: &T::VaultId,
-		) -> Result<PrefixIterator<(T::AccountId, StrategyOverview<T::Balance>)>, DispatchResult> {
-			Ok(CapitalStructure::<T>::iter_prefix(vault_id))
-		}
 	}
 
 	impl<T: Config> Vault for Pallet<T> {
@@ -1002,6 +994,12 @@ pub mod pallet {
 				Self::do_amount_of_lp_token_for_added_liquidity(vault_id, &vault, asset_amount)?;
 			Ok(lp)
 		}
+
+		fn get_strategies(
+			vault_id: &T::VaultId,
+		) -> Result<PrefixIterator<(T::AccountId, StrategyOverview<T::Balance>)>, DispatchResult> {
+			Ok(CapitalStructure::<T>::iter_prefix(vault_id))
+		}
 	}
 
 	impl<T: Config> StrategicVault for Pallet<T> {
@@ -1021,11 +1019,11 @@ pub mod pallet {
 						allocation
 							.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
 					);
-					println!("account: {:?}", account); // TODO(belousm): to delete
 					println!(
 						"AUM: {:?}, MAX ALLOWED: {:?}, BALANCE: {:?}",
 						aum, max_allowed, balance
 					); // TODO(belousm): to delete
+					println!("ACTION: {:?}", balance.cmp(&max_allowed));
 					match balance.cmp(&max_allowed) {
 						Ordering::Greater =>
 							Ok(FundsAvailability::Depositable(balance - max_allowed)),
@@ -1076,16 +1074,9 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let vault = Self::vault_info(vault_id)?;
 			CapitalStructure::<T>::try_mutate(vault_id, from, |state| {
-				println!(
-					"STATE BALANCE: {:?}, AMOUNT: {:?}, RESULT: {:?}",
-					state.balance,
-					amount,
-					state.balance.saturating_sub(&amount)
-				); // TODO(belousm): delete
-   // A strategy can return more than it has withdrawn through profits.
+				// A strategy can return more than it has withdrawn through profits.
 				state.balance = state.balance.saturating_sub(&amount);
-				println!("STATE BALANCE: {:?}", state.balance); // TODO(belousm): delete
-												// This can definitely overflow. Perhaps it should be a BigUint?
+				// This can definitely overflow. Perhaps it should be a BigUint?
 				state.lifetime_deposited = state
 					.lifetime_deposited
 					.checked_add(&amount)
