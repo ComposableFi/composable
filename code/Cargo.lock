@@ -7384,8 +7384,9 @@ dependencies = [
 [[package]]
 name = "pallet-asset-tx-payment"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.27#8eff668a42325aeb4433eace1604f4d286a6ec05"
+source = "git+https://github.com/ComposableFi/substrate?rev=f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5#f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5"
 dependencies = [
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-transaction-payment",
@@ -9327,6 +9328,7 @@ dependencies = [
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
+ "pallet-asset-tx-payment",
  "pallet-assets 0.0.1",
  "pallet-assets-registry",
  "pallet-aura",
