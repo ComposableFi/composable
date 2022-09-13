@@ -1035,6 +1035,15 @@ jobs:
           echo "experimental-features = nix-command flakes" > /etc/nix/nix.conf
           echo "sandbox = relaxed" >> /etc/nix/nix.conf
           echo "narinfo-cache-negative-ttl = 0" >> /etc/nix/nix.conf
+      - name: Check if hash changes
+        if: always()
+        id: feStaticHashChanges
+        run: |
+          if [ `nix build --dry-run "github:ComposableFi/composable#frontend-static" --json` == `nix build --dry-run ".#frontend-static" --json` ]; then
+            echo "::set-output name=hashChange::false"; 
+          else echo "::set-output name=hashChange::true"; 
+          fi
+
       - uses: cachix/cachix-action@f5f67badd061acb62b5c6e25e763572ca8317004
         with:
           skipPush: true
@@ -1055,14 +1064,6 @@ jobs:
           cp frontend/apps/picasso/.firebaserc firebase/picasso/
           cp frontend/apps/picasso/firebase.json firebase/picasso/
           nix-env -iA nixpkgs.nodejs
-      - name: Check if hash changes
-        if: always()
-        id: feStaticHashChanges
-        run: |
-          if [ `nix build --dry-run "github:ComposableFi/composable#frontend-static" --json` == `nix build --dry-run ".#frontend-static" --json` ]; then
-            echo "::set-output name=hashChange::false"; 
-          else echo "::set-output name=hashChange::true"; 
-          fi
 
       - name: Deploy Picasso on preview channel
         if: steps.branch-name.outputs.current_branch != 'main' && steps.feStaticHashChanges.outputs.hashChange == 'true'
