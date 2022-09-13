@@ -127,6 +127,17 @@ contract Gateway is Ownable, IGateway {
         );
     }
 
+    function createInterpreter(Origin memory origin)
+        public
+    {
+        address interpreterAddress = userInterpreter[
+            origin.networkId
+        ][origin.account];
+        require(interpreterAddress == address(0), "Interpreter already exists");
+        _getOrCreateInterpreter(origin);
+    }
+
+
     function _getOrCreateInterpreter(Origin memory origin)
         private
         returns (address payable)
