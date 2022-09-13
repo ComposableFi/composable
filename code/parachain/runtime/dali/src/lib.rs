@@ -84,7 +84,9 @@ pub use frame_support::{
 use codec::{Codec, Encode, EncodeLike};
 use composable_traits::{account_proxy::ProxyType, fnft::FnftAccountProxyType};
 use frame_support::{
-	traits::{fungibles, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade},
+	traits::{
+		fungibles, ConstBool, ConstU32, EqualPrivilegeOnly, InstanceFilter, OnRuntimeUpgrade,
+	},
 	weights::ConstantMultiplier,
 };
 use frame_system as system;
@@ -391,6 +393,20 @@ impl asset_tx_payment::Config for Runtime {
 		PriceConverter<AssetsRegistry>,
 		TransferToTreasuryOrDrop,
 	>;
+
+	type UseUserConfiguration = ConstBool<true>;
+
+	type WeightInfo = weights::asset_tx_payment::WeightInfo<Runtime>;
+
+	type ConfigurationOrigin = EnsureRootOrHalfNativeCouncil;
+
+	type ConfigurationExistentialDeposit = common::NativeExistentialDeposit;
+
+	type PayableCall = Call;
+
+	type Lock = Assets;
+
+	type BalanceConverter = PriceConverter<AssetsRegistry>;
 }
 
 impl sudo::Config for Runtime {
