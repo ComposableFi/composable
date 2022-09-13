@@ -176,7 +176,7 @@ pub mod pallet {
 			Ok(asset_id)
 		}
 
-		fn base_u32_to_asset_id(
+		fn protocol_asset_id_to_unique_asset_id(
 			asset_id: u32,
 			range_id: RangeId,
 		) -> Result<T::AssetId, DispatchError> {

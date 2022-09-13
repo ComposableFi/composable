@@ -71,7 +71,7 @@ impl CurrencyFactory<AssetId, Balance> for CurrencyIdGenerator {
 		Ok(1_u64)
 	}
 
-	fn base_u32_to_asset_id(_: u32, _: RangeId) -> Result<AssetId, DispatchError> {
+	fn protocol_asset_id_to_unique_asset_id(_: u32, _: RangeId) -> Result<AssetId, DispatchError> {
 		Ok(1_u64)
 	}
 }
