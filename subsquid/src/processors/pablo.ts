@@ -125,13 +125,12 @@ export async function processPoolCreatedEvent(
     const pablotx = createPabloTransaction(
       eventEntity,
       pool,
-      owner,
       // Following fields are irrelevant for CREATE_POOL
       "0",
-      BigInt(poolCreatedEvt.assets.base.toString()),
-      "0",
-      BigInt(poolCreatedEvt.assets.quote.toString()),
-      "0"
+      poolCreatedEvt.assets.base.toString(),
+      BigInt(0),
+      poolCreatedEvt.assets.quote.toString(),
+      BigInt(0)
     );
 
     let quoteAsset = await get(
@@ -631,7 +630,7 @@ export async function processPoolDeletedEvent(
       Big(poolDeletedEvent.baseAmount.toString())
         .div(Big(poolDeletedEvent.quoteAmount.toString()))
         .toString(),
-      baseAsset.assetId,
+      pool.baseAssetId,
       poolDeletedEvent.baseAmount,
       pool.quoteAssetId,
       poolDeletedEvent.quoteAmount
