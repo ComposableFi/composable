@@ -3,6 +3,7 @@ use frame_support::{
 	pallet_prelude::*,
 	sp_runtime::Perquintill,
 	sp_std::{collections::btree_map::BTreeMap, fmt::Debug},
+	storage::PrefixIterator,
 };
 use scale_info::TypeInfo;
 
@@ -25,6 +26,18 @@ pub enum FundsAvailability<Balance> {
 	MustLiquidate,
 	/// When there are no balance that can be withdrawn or deposit and don't need to be liquidated.
 	None,
+}
+
+#[derive(Copy, Clone, Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo)]
+pub struct StrategyOverview<Balance> {
+	// The allocation of this strategy
+	pub allocation: Perquintill,
+	/// The reported balance of the strategy
+	pub balance: Balance,
+	/// Sum of all withdrawn funds.
+	pub lifetime_withdrawn: Balance,
+	/// Sum of all deposited funds.
+	pub lifetime_deposited: Balance,
 }
 
 #[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
@@ -119,6 +132,11 @@ pub trait Vault {
 		vault_id: &Self::VaultId,
 		asset_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
+
+	/// Return all strategies and their balances related to Vault.
+	fn get_strategies(
+		vault_id: &Self::VaultId,
+	) -> Result<PrefixIterator<(Self::AccountId, StrategyOverview<Self::Balance>)>, DispatchResult>;
 }
 
 /// CapabilityVault exposes functionalities for stopping and limiting vault functionality.
