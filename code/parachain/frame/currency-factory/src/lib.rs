@@ -176,16 +176,16 @@ pub mod pallet {
 			Ok(asset_id)
 		}
 
-		fn local_to_global_asset_id(
-			asset_id: T::AssetId,
+		fn base_u32_to_asset_id(
+			asset_id: u32,
 			range_id: RangeId,
 		) -> Result<T::AssetId, DispatchError> {
 			if range_id.inner() > 5 {
 				Err(DispatchError::from("RangeId outside of preconfigured ranges!"))
 			} else {
 				Ok(((u32::MAX as u128).saturating_mul(range_id.inner() as u128 + 1) +
-					asset_id.into())
-				.into())
+					asset_id as u128)
+					.into())
 			}
 		}
 	}

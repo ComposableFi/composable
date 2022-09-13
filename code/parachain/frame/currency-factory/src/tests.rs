@@ -81,7 +81,7 @@ mod local_to_global_asset_id {
 	fn should_error_when_non_preconfigured_range() {
 		new_test_ext().execute_with(|| {
 			assert_eq!(
-				<CurrencyRanges as CurrencyFactory<AssetId, Balance>>::local_to_global_asset_id(
+				<CurrencyRanges as CurrencyFactory<AssetId, Balance>>::base_u32_to_asset_id(
 					0,
 					RangeId::from(6)
 				),
@@ -94,7 +94,7 @@ mod local_to_global_asset_id {
 	fn should_provide_correct_global_asset_id() {
 		new_test_ext().execute_with(|| {
 			assert_eq!(
-				<CurrencyRanges as CurrencyFactory<AssetId, Balance>>::local_to_global_asset_id(
+				<CurrencyRanges as CurrencyFactory<AssetId, Balance>>::base_u32_to_asset_id(
 					1,
 					RangeId::from(1)
 				),

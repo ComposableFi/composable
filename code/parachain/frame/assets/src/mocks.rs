@@ -71,7 +71,7 @@ impl CurrencyFactory<AssetId, Balance> for CurrencyIdGenerator {
 		Ok(1_u64)
 	}
 
-	fn local_to_global_asset_id(_: AssetId, _: RangeId) -> Result<AssetId, DispatchError> {
+	fn base_u32_to_asset_id(_: u32, _: RangeId) -> Result<AssetId, DispatchError> {
 		Ok(1_u64)
 	}
 }

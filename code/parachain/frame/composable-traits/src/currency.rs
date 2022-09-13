@@ -21,10 +21,10 @@ pub trait CurrencyFactory<AssetId, Balance> {
 	fn reserve_lp_token_id(ed: Balance) -> Result<AssetId, DispatchError> {
 		Self::create(RangeId::LP_TOKENS, ed)
 	}
-	/// Given a local `AssetId` (within the range of `0` to `u32::MAX`) returns a global (within the
-	/// scope of Currency Factory) `AssetId`.
-	fn local_to_global_asset_id(
-		asset_id: AssetId,
+	/// Given a `u32` ID (within the range of `0` to `u32::MAX`) returns an `AssetId` reserved by
+	/// Currency Factory.
+	fn base_u32_to_asset_id(
+		local_asset_id: u32,
 		range_id: RangeId,
 	) -> Result<AssetId, DispatchError>;
 }
