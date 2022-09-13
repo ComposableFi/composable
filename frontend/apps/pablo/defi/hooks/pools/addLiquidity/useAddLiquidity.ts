@@ -24,7 +24,7 @@ function transactionStatusSnackbarMessage(
 }
 
 /**
- * Later: move to snakbar utils
+ * Later: move to snackbar utils
  */
 const SNACKBAR_TYPES: Record<string, { variant: VariantType }> = {
   ERROR: { variant: "error" },
