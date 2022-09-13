@@ -1,5 +1,5 @@
 import { fetchLbpStats, fetchInitialBalance } from "@/defi/subsquid/auctions/helpers";
-import { queryPoolTransactionsByType } from "@/defi/subsquid/pools/queries";
+import { PabloTransactions, queryPabloTransactions, queryPoolTransactionsByType } from "@/defi/subsquid/pools/queries";
 import {
   LiquidityBootstrappingPool,
   LiquidityPoolTransactionType,
@@ -13,40 +13,26 @@ import { fromChainUnits } from "../../units";
 import { createPabloPoolAccountId } from "../misc";
 import { lbpCalculatePriceAtBlock } from "./weightCalculator";
 
-export function transformAuctionsTransaction(
-  transaction: {
-    transactionType: LiquidityPoolTransactionType;
-    receivedTimestamp: string;
-    quoteAssetAmount: string;
-    baseAssetAmount: string;
-    quoteAssetId: string;
-    blockNumber: string;
-    baseAssetId: string;
-    spotPrice: string;
-    who: string;
-    id: string;
-  },
-  onChainPoolQuoteAssetId: number
-): LiquidityBootstrappingPoolTrade {
-  const baseAssetId = Number(transaction.baseAssetId);
-  const quoteAssetId = Number(transaction.quoteAssetId);
+export function transformPabloTransaction(tx: PabloTransactions, poolQuoteAssetId: number): LiquidityBootstrappingPoolTrade {
+  const baseAssetId = Number(tx.baseAssetId);
+  const quoteAssetId = Number(tx.quoteAssetId);
 
-  let spotPrice: string = new BigNumber(transaction.spotPrice).toString();
+  let spotPrice: string = new BigNumber(tx.spotPrice).toString();
   let baseAssetAmount: BigNumber | string = new BigNumber(0);
   let quoteAssetAmount: BigNumber | string = new BigNumber(0);
-  let receivedTimestamp = Number(transaction.receivedTimestamp);
-  let blockNumber = new BigNumber(transaction.blockNumber);
-  let id = transaction.id;
-  let walletAddress = transaction.who;
+  let receivedTimestamp = Number(tx.pool.calculatedTimestamp);
+  let blockNumber = new BigNumber(tx.event.blockNumber);
+  let id = tx.id;
+  let walletAddress = tx.event.accountId;
   let side: any = "SELL";
 
-  if (quoteAssetId === onChainPoolQuoteAssetId) {
+  if (quoteAssetId === poolQuoteAssetId) {
     side = "BUY";
-    baseAssetAmount = fromChainUnits(transaction.baseAssetAmount).toString();
-    quoteAssetAmount = fromChainUnits(transaction.quoteAssetAmount).toString();
+    baseAssetAmount = fromChainUnits(tx.baseAssetAmount).toString();
+    quoteAssetAmount = fromChainUnits(tx.quoteAssetAmount).toString();
   } else {
-    baseAssetAmount = fromChainUnits(transaction.baseAssetAmount).toString();
-    quoteAssetAmount = fromChainUnits(transaction.quoteAssetAmount).toString();
+    baseAssetAmount = fromChainUnits(tx.baseAssetAmount).toString();
+    quoteAssetAmount = fromChainUnits(tx.quoteAssetAmount).toString();
     spotPrice = new BigNumber(1).div(new BigNumber(spotPrice)).toString();
   }
 
@@ -143,11 +129,11 @@ export async function fetchAuctionChartSeries(
   let chartSeries: [number, number][] = [];
   let predictedSeries: [number, number][] = [];
   try {
-    const subsquidResponse = await queryPoolTransactionsByType(
+    const subsquidResponse = await queryPabloTransactions(
       auction.poolId,
       "SWAP",
-      100,
-      "ASC"
+      "ASC",
+      100
     );
 
     const { error, data } = subsquidResponse;
@@ -159,7 +145,7 @@ export async function fetchAuctionChartSeries(
     const { pabloTransactions } = data;
 
     chartSeries = pabloTransactions
-      .map((t: any) => transformAuctionsTransaction(t, auction.pair.quote))
+      .map((t: any) => transformPabloTransaction(t, auction.pair.quote))
       .map((i: LiquidityBootstrappingPoolTrade) => {
         return [i.receivedTimestamp, Number(i.spotPrice)];
       }) as [number, number][];
