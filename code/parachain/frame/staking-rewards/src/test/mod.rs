@@ -11,7 +11,7 @@ use composable_traits::{
 	fnft::FinancialNft as FinancialNftT,
 	staking::{
 		lock::{Lock, LockConfig},
-		ProtocolStaking, Reductions, RewardConfig,
+		ProtocolStaking, RewardConfig,
 		RewardPoolConfiguration::RewardRateBasedIncentive,
 		RewardRate, Stake, Staking,
 	},
@@ -283,22 +283,25 @@ fn test_extend_stake_amount() {
 		let inflation = boosted_amount * total_rewards / total_shares;
 		assert_ok!(StakingRewards::extend(Origin::signed(staker), 1, 0, extend_amount));
 		let rewards_pool = StakingRewards::pools(pool_id).expect("rewards_pool expected");
-		let mut total_rewards = 0;
-		for (_asset_id, reward) in rewards_pool.rewards.iter() {
-			total_rewards += reward.total_rewards;
-		}
+
+		let total_rewards =	rewards_pool
+			.rewards
+			.iter()
+			.fold(0, |total_rewards, (_asset_id, reward)| {
+				total_rewards + reward.total_rewards
+			});
+
 		let inflation_extended = extend_amount * total_rewards / rewards_pool.total_shares;
 		let inflation = inflation + inflation_extended;
 		assert_eq!(inflation, 50710);
-		let reductions = Reductions::try_from(
-			rewards_pool
-				.rewards
-				.into_inner()
-				.iter()
-				.map(|(asset_id, _reward)| (*asset_id, inflation))
-				.collect::<BTreeMap<_, _>>(),
-		)
-		.expect("reductions expected");
+
+		let reductions = rewards_pool
+			.rewards
+			.iter()
+			.map(|(asset_id, _reward)| (*asset_id, inflation))
+			.try_collect()
+			.expect("reductions expected");
+
 		let stake = StakingRewards::stakes(1, 0);
 		assert_eq!(
 			stake,
@@ -890,8 +893,7 @@ fn get_default_reward_pool() -> RewardPoolConfigurationOf<Test> {
 	}
 }
 
-fn default_lock_config(
-) -> LockConfig<BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingDurationPresets>> {
+fn default_lock_config() -> LockConfig<MaxStakingDurationPresets> {
 	LockConfig {
 		duration_presets: [
 			(ONE_HOUR, Perbill::from_percent(1)),                // 1%
@@ -904,15 +906,10 @@ fn default_lock_config(
 	}
 }
 
-fn default_reward_config(
-) -> BoundedBTreeMap<u128, RewardConfig<u128, u128>, MaxRewardConfigsPerPool> {
+fn default_reward_config() -> BoundedBTreeMap<u128, RewardConfig<u128>, MaxRewardConfigsPerPool> {
 	[(
 		USDT::ID,
-		RewardConfig {
-			asset_id: USDT::ID,
-			max_rewards: 100_u128,
-			reward_rate: RewardRate::per_second(10_u128),
-		},
+		RewardConfig { max_rewards: 100_u128, reward_rate: RewardRate::per_second(10_u128) },
 	)]
 	.into_iter()
 	.try_collect()
@@ -973,7 +970,7 @@ fn update_total_rewards_and_total_shares_in_rewards_pool(
 }
 
 fn update_reductions(
-	reductions: &mut Reductions<u128, u128, MaxRewardConfigsPerPool>,
+	reductions: &mut BoundedBTreeMap<u128, u128, MaxRewardConfigsPerPool>,
 	claim: u128,
 ) {
 	for (_asset_id, inflation) in reductions {
