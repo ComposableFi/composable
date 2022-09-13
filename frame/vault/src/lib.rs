@@ -80,7 +80,8 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		ensure,
-		pallet_prelude::*,
+		pallet_prelude::{DispatchResult, *},
+		storage::PrefixIterator,
 		traits::{
 			fungible::{
 				Inspect as InspectNative, Mutate as MutateNative, MutateHold as MutateHoldNative,
@@ -885,6 +886,13 @@ pub mod pallet {
 		fn vault_info(vault_idx: &T::VaultId) -> Result<VaultInfo<T>, DispatchError> {
 			Ok(Vaults::<T>::try_get(vault_idx).map_err(|_err| Error::<T>::VaultDoesNotExist)?)
 		}
+
+		/// Return all strategies and their balances related to Vault.
+		pub fn get_strategies(
+			vault_id: &T::VaultId,
+		) -> Result<PrefixIterator<(T::AccountId, StrategyOverview<T::Balance>)>, DispatchResult> {
+			Ok(CapitalStructure::<T>::iter_prefix(vault_id))
+		}
 	}
 
 	impl<T: Config> Vault for Pallet<T> {
@@ -1013,6 +1021,11 @@ pub mod pallet {
 						allocation
 							.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
 					);
+					println!("account: {:?}", account); // TODO(belousm): to delete
+					println!(
+						"AUM: {:?}, MAX ALLOWED: {:?}, BALANCE: {:?}",
+						aum, max_allowed, balance
+					); // TODO(belousm): to delete
 					match balance.cmp(&max_allowed) {
 						Ordering::Greater =>
 							Ok(FundsAvailability::Depositable(balance - max_allowed)),
@@ -1063,9 +1076,16 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let vault = Self::vault_info(vault_id)?;
 			CapitalStructure::<T>::try_mutate(vault_id, from, |state| {
-				// A strategy can return more than it has withdrawn through profits.
+				println!(
+					"STATE BALANCE: {:?}, AMOUNT: {:?}, RESULT: {:?}",
+					state.balance,
+					amount,
+					state.balance.saturating_sub(&amount)
+				); // TODO(belousm): delete
+   // A strategy can return more than it has withdrawn through profits.
 				state.balance = state.balance.saturating_sub(&amount);
-				// This can definitely overflow. Perhaps it should be a BigUint?
+				println!("STATE BALANCE: {:?}", state.balance); // TODO(belousm): delete
+												// This can definitely overflow. Perhaps it should be a BigUint?
 				state.lifetime_deposited = state
 					.lifetime_deposited
 					.checked_add(&amount)
