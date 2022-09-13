@@ -39,7 +39,6 @@ fn test_update_reward_pool() {
 				reward_configs: [(
 					USDT::ID,
 					RewardConfig {
-						asset_id: USDT::ID,
 						max_rewards: 1_000_u128,
 						reward_rate: RewardRate::per_second(INITIAL_REWARD_RATE_AMOUNT),
 					},
