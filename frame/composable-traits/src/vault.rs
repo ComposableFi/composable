@@ -136,7 +136,7 @@ pub trait Vault {
 	/// Return all strategies and their balances related to Vault.
 	fn get_strategies(
 		vault_id: &Self::VaultId,
-	) -> Result<PrefixIterator<(Self::AccountId, StrategyOverview<Self::Balance>)>, DispatchResult>;
+	) -> Result<PrefixIterator<(Self::AccountId, StrategyOverview<Self::Balance>)>, DispatchError>;
 }
 
 /// CapabilityVault exposes functionalities for stopping and limiting vault functionality.
