@@ -122,7 +122,7 @@ export async function processPoolCreatedEvent(
     }
 
     const eventEntity = createEvent(ctx, owner, EventType.CREATE_POOL);
-    const pablotx = createPabloTransaction(
+    const pabloTransaction = createPabloTransaction(
       eventEntity,
       pool,
       // Following fields are irrelevant for CREATE_POOL
@@ -172,7 +172,7 @@ export async function processPoolCreatedEvent(
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
     await ctx.store.save(eventEntity);
-    await ctx.store.save(pablotx);
+    await ctx.store.save(pabloTransaction);
   }
 }
 
@@ -260,7 +260,7 @@ export async function processLiquidityAddedEvent(
 
     const eventEntity = createEvent(ctx, who, EventType.ADD_LIQUIDITY);
 
-    const pabloTx = createPabloTransaction(
+    const pabloTransaction = createPabloTransaction(
       eventEntity,
       pool,
       Big(liquidityAddedEvt.baseAmount.toString())
@@ -287,7 +287,7 @@ export async function processLiquidityAddedEvent(
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
     await ctx.store.save(eventEntity);
-    await ctx.store.save(pabloTx);
+    await ctx.store.save(pabloTransaction);
   } else {
     throw new Error("Pool not found");
   }
@@ -371,7 +371,7 @@ export async function processLiquidityRemovedEvent(
     }
 
     const eventEntity = createEvent(ctx, who, EventType.REMOVE_LIQUIDITY);
-    const pabloTx = createPabloTransaction(
+    const pabloTransaction = createPabloTransaction(
       eventEntity,
       pool,
       Big(liquidityRemovedEvt.baseAmount.toString())
@@ -398,7 +398,7 @@ export async function processLiquidityRemovedEvent(
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
     await ctx.store.save(eventEntity);
-    await ctx.store.save(pabloTx);
+    await ctx.store.save(pabloTransaction);
   } else {
     throw new Error("Pool not found");
   }
@@ -535,7 +535,7 @@ export async function processSwappedEvent(
     }
 
     const eventEntity = createEvent(ctx, who, EventType.SWAP);
-    const pabloTx = createPabloTransaction(
+    const pabloTransaction = createPabloTransaction(
       eventEntity,
       pool,
       spotPrice.toString(),
@@ -550,7 +550,7 @@ export async function processSwappedEvent(
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
     await ctx.store.save(eventEntity);
-    await ctx.store.save(pabloTx);
+    await ctx.store.save(pabloTransaction);
   } else {
     throw new Error("Pool not found");
   }
@@ -624,7 +624,7 @@ export async function processPoolDeletedEvent(
     }
 
     const eventEntity = createEvent(ctx, who, EventType.DELETE_POOL);
-    const pablotx = createPabloTransaction(
+    const pabloTransaction = createPabloTransaction(
       eventEntity,
       pool,
       Big(poolDeletedEvent.baseAmount.toString())
@@ -640,7 +640,7 @@ export async function processPoolDeletedEvent(
     await ctx.store.save(baseAsset);
     await ctx.store.save(quoteAsset);
     await ctx.store.save(eventEntity);
-    await ctx.store.save(pablotx);
+    await ctx.store.save(pabloTransaction);
   } else {
     throw new Error("Pool not found");
   }
