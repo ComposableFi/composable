@@ -21,6 +21,7 @@ import { Link } from "@/components";
 import { useDotSamaContext } from "substrate-react";
 import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import useStore from "@/store/useStore";
+import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
 
 const standardPageSize = {
   xs: 12,

@@ -5,6 +5,7 @@ import { useFilteredAssetListDropdownOptions } from "../hooks/assets/useFiltered
 export * from "./bonds";
 export * from "./pablo";
 export * from "./vesting";
+export * from "./stakingRewards";
 
 export type AssetDropdownOptions = ReturnType <typeof useFilteredAssetListDropdownOptions>;
 

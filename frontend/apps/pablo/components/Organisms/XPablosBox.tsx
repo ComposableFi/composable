@@ -66,59 +66,36 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {xPablos.map(
-              (
-                { tokenId, locked, expiry, multiplier, amount }: XPablo,
-                index: number
-              ) => (
-                <TableRow key={tokenId + index}>
-                  <TableCell align="left">
-                    <BaseAsset
-                      icon={getToken(tokenId).icon}
-                      label={getToken(tokenId).symbol}
-                    />
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography variant="body1">
-                      {locked.toFormat(2)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography
-                      variant="body1"
-                      color={expired(expiry) ? "error" : undefined}
-                    >
-                      {expired(expiry)
-                        ? "Expired"
-                        : moment(expiry).utc().format("DD MMM YYYY")}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography variant="body1">
-                      {multiplier.toFixed(2)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography variant="body1">
-                      {amount.toFormat(2)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      sx={{
-                        width: "45px",
-                        height: "45px",
-                        padding: 0,
-                      }}
-                      onClick={() => console.log("Portfolio row clicked")} // TODO [Integration]: Take this to the proper screen
-                    >
-                      <Add />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )
-            )}
+            {xPablos.map(({tokenId, locked, expiry, multiplier, amount}: XPablo, index: number) => (
+              <TableRow key={tokenId + index}>
+                <TableCell align="left">
+                  <BaseAsset
+                    icon={getToken(tokenId).icon}
+                    label={getToken(tokenId).symbol}
+                  />
+                </TableCell>
+                <TableCell align="left">
+                  <Typography variant="body1">{locked.toFormat(2)}</Typography>
+                </TableCell>
+                <TableCell align="left">
+                  <Typography
+                    variant="body1"
+                    color={expired(expiry) ? "error" : undefined}
+                  >
+                    {expired(expiry)
+                      ? "Expired"
+                      : moment(expiry).utc().format("DD MMM YYYY")
+                    }
+                  </Typography>
+                </TableCell>
+                <TableCell align="left">
+                  <Typography variant="body1">{multiplier.toFixed(2)}</Typography>
+                </TableCell>
+                <TableCell align="left">
+                  <Typography variant="body1">{amount.toFormat(2)}</Typography>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>

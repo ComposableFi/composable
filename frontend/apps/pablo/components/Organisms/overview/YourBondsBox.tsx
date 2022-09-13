@@ -7,7 +7,7 @@ import {
   TableRow,
   BoxProps,
 } from "@mui/material";
-import React from "react";
+import React, { useMemo } from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "../BoxWrapper";
 import { useBondOffersSlice } from "@/store/bond/bond.slice";
@@ -37,7 +37,14 @@ const tableHeaders: TableHeader[] = [
 export const YourBondsBox: React.FC<BoxProps> = ({
   ...boxProps
 }) => {
-  const { bondOffers } = useBondOffersSlice();
+  const { bondOffers, bondedOfferVestingSchedules } = useBondOffersSlice();
+
+  const bondedOffers = useMemo(() => {
+    return bondOffers.filter(offer => {
+      const offerId = offer.offerId.toString();
+      return offerId in bondedOfferVestingSchedules && bondedOfferVestingSchedules[offerId].length > 0;
+    })
+  }, [bondOffers, bondedOfferVestingSchedules])
 
   return (
     <BoxWrapper
@@ -56,7 +63,7 @@ export const YourBondsBox: React.FC<BoxProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {bondOffers.map((offer) => (
+            {bondedOffers.map((offer) => (
               <OverviewBondedOfferRow offerId={offer.offerId.toString()} bondOffer={offer} />
             ))}
           </TableBody>

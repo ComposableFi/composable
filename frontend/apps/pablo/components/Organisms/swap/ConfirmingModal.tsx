@@ -38,7 +38,7 @@ export const ConfirmingModal: React.FC<ModalProps> = ({
           mt={2}
           color="text.secondary"
         >
-          Confirm this transaction in your wallet.
+          Confirming this transaction in your wallet.
         </Typography>
       </Box>
     </Modal>
