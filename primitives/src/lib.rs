@@ -436,14 +436,18 @@ pub async fn find_block_height_by_timestamp(
 	if maybe_timestamp >= timestamp.nanoseconds() {
 		Some(Height::new(latest_height.revision_number, maybe_block))
 	} else {
-		let block = search_for_matching_block_height(
-			chain,
-			timestamp,
-			maybe_block + 1,
-			latest_height.revision_height - 1,
-		)
-		.await?;
-		Some(Height::new(latest_height.revision_number, block))
+		if maybe_block + 1 > latest_height.revision_height - 1 {
+			None
+		} else {
+			let block = search_for_matching_block_height(
+				chain,
+				timestamp,
+				maybe_block + 1,
+				latest_height.revision_height - 1,
+			)
+			.await?;
+			Some(Height::new(latest_height.revision_number, block))
+		}
 	}
 }
 

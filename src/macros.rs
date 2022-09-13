@@ -21,7 +21,12 @@ macro_rules! process_finality_event {
 				let event_types = events.iter().map(|ev| ev.event_type()).collect::<Vec<_>>();
 				let (messages, timeouts) =
 					parse_events(&mut $source, &mut $sink, events, update_client_header).await?;
-				queue::flush_message_batch(timeouts, &$source).await?;
+				if !timeouts.is_empty() {
+					let type_urls =
+						timeouts.iter().map(|msg| msg.type_url.as_str()).collect::<Vec<_>>();
+					log::info!("Submitting timeout messages to {}: {type_urls:#?}", $source.name());
+					queue::flush_message_batch(timeouts, &$source).await?;
+				}
 				// there'd at least be the `MsgUpdateClient` packet.
 				if messages.len() == 1 && update_type.is_optional() {
 					// skip sending ibc messages if no new events

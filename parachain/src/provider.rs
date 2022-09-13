@@ -1,7 +1,11 @@
 use beefy_light_client_primitives::{ClientState, NodesUtils};
 use codec::{Decode, Encode};
-use itertools::Itertools;
-use std::{fmt::Display, str::FromStr, time::Duration};
+use std::{
+	collections::{BTreeSet, HashMap},
+	fmt::Display,
+	str::FromStr,
+	time::Duration,
+};
 
 use ibc::{
 	applications::transfer::{Amount, PrefixedCoin, PrefixedDenom},
@@ -42,6 +46,7 @@ use crate::{parachain, parachain::api::runtime_types::primitives::currency::Curr
 use beefy_prover::helpers::fetch_timestamp_extrinsic_with_proof;
 use ibc::timestamp::Timestamp;
 use ibc_proto::ibc::core::{channel::v1::QueryChannelsResponse, client::v1::IdentifiedClientState};
+use primitives::client_update_type::is_mandatory_update;
 
 /// Finality event for parachains
 pub type FinalityEvent =
@@ -109,16 +114,6 @@ where
 			Err(Error::HeaderConstruction("Received an outdated beefy commitment".to_string()))?
 		}
 
-		// if validator set has changed this is a mandatory update
-		// let update_type = match signed_commitment.commitment.validator_set_id ==
-		// 	beefy_client_state.next_authorities.id
-		// {
-		// 	true => UpdateType::Mandatory,
-		// 	false => UpdateType::Optional,
-		// };
-
-		let update_type = UpdateType::Mandatory;
-
 		// fetch the new parachain headers that have been finalized
 		let headers = self
 			.query_finalized_parachain_headers_at(
@@ -150,29 +145,57 @@ where
 				}
 			})
 			.map(|h| BlockNumberOrHash::Number(From::from(*h.number())))
-			.collect();
+			.collect::<Vec<_>>();
+
+		let mut mandatory_parachain_headers = BTreeSet::new();
+		for header_number in &finalized_block_numbers {
+			let block_number = match header_number {
+				BlockNumberOrHash::Number(block_number) => *block_number,
+				_ => unreachable!(),
+			};
+			let timestamp = self.query_timestamp_at(block_number.into()).await?;
+			if is_mandatory_update(self, counterparty, block_number.into(), timestamp)
+				.await
+				.map_err(|_| Error::Custom("Failed to check if header is mandatory".to_string()))?
+			{
+				mandatory_parachain_headers.insert(T::BlockNumber::from(block_number));
+			}
+		}
+
+		// if validator set has changed this is a mandatory update
+		let update_type = match signed_commitment.commitment.validator_set_id ==
+			beefy_client_state.next_authorities.id ||
+			!mandatory_parachain_headers.is_empty()
+		{
+			true => UpdateType::Mandatory,
+			false => UpdateType::Optional,
+		};
 
 		// block_number => events
-		let events = IbcApiClient::<u32, H256>::query_events(
+		let events: HashMap<String, Vec<IbcEvent>> = IbcApiClient::<u32, H256>::query_events(
 			&*self.para_client.rpc().client,
 			finalized_block_numbers,
 		)
 		.await?;
+
 		// header number is serialized to string
-		let headers_with_events = events
-			.keys()
-			.map(|num| str::parse::<u32>(&*num))
-			.map_ok(T::BlockNumber::from)
-			.collect::<Result<Vec<_>, _>>()?;
+		let headers_with_events = events.iter().filter_map(|(num, events)| {
+			if events.is_empty() {
+				None
+			} else {
+				str::parse::<u32>(&*num).ok().map(T::BlockNumber::from)
+			}
+		});
+		mandatory_parachain_headers.extend(headers_with_events);
 		let events: Vec<IbcEvent> = events.into_values().flatten().collect();
 
-		// only query proofs for headers that actually have events
-		let headers_with_proof = if !events.is_empty() {
+		// only query proofs for headers that actually have events or are mandatory
+		let headers_with_proof = if !mandatory_parachain_headers.is_empty() {
 			let (headers, batch_proof) = self
 				.query_finalized_parachain_headers_with_proof(
 					signed_commitment.commitment.block_number,
 					&beefy_client_state,
-					headers_with_events,
+					mandatory_parachain_headers.into_iter().collect(),
 				)
 				.await?;
 			let mmr_size = NodesUtils::new(batch_proof.leaf_count).size();

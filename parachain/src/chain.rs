@@ -39,11 +39,11 @@ where
 	}
 
 	async fn block_max_weight(&self) -> u64 {
-		todo!()
+		1
 	}
 
-	async fn estimate_weight(&self, msg: Vec<Any>) -> u64 {
-		todo!()
+	async fn estimate_weight(&self, _msg: Vec<Any>) -> u64 {
+		0
 	}
 
 	async fn finality_notifications(

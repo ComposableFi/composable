@@ -205,7 +205,7 @@ where
 	(amount, msg)
 }
 
-async fn assert_send_transfer<A>(chain: &A, previous_balance: u128)
+async fn assert_send_transfer<A>(chain: &A, previous_balance: u128, wait_time: u64)
 where
 	A: TestProvider,
 	A::FinalityEvent: Send + Sync,
@@ -217,7 +217,7 @@ where
 		.skip_while(|ev| future::ready(!matches!(ev, IbcEvent::AcknowledgePacket(_))))
 		.take(1)
 		.collect::<Vec<_>>();
-	timeout_future(future, 10 * 60, format!("Didn't see AcknowledgePacket on {}", chain.name()))
+	timeout_future(future, wait_time, format!("Didn't see AcknowledgePacket on {}", chain.name()))
 		.await;
 
 	let balance = chain
@@ -260,10 +260,10 @@ pub async fn send_packet_and_assert_acknowledgment<A, B>(
 	B::Error: From<A::Error>,
 {
 	let (previous_balance, ..) = send_transfer(chain_a, chain_b, channel_id, None).await;
-	assert_send_transfer(chain_a, previous_balance).await;
+	assert_send_transfer(chain_a, previous_balance, 10 * 60).await;
 	// now send from chain b.
 	let (previous_balance, ..) = send_transfer(chain_b, chain_a, channel_id, None).await;
-	assert_send_transfer(chain_b, previous_balance).await;
+	assert_send_transfer(chain_b, previous_balance, 10 * 60).await;
 	log::info!(target: "hyperspace", "🚀🚀 Token Transfer successful");
 }
 
@@ -373,9 +373,6 @@ pub async fn send_packet_and_assert_timestamp_timeout<A, B>(
 	log::info!(target: "hyperspace", "🚀🚀 Timeout packet successfully processed for timeout timestamp");
 }
 
-/// Send a packet over a connection with a connection delay
-/// and assert the sending chain only sees the packet after the
-/// delay has elapsed.
 pub async fn send_packet_with_connection_delay<A, B>(
 	_chain_a: &A,
 	_chain_b: &B,
@@ -388,5 +385,10 @@ pub async fn send_packet_with_connection_delay<A, B>(
 	B::FinalityEvent: Send + Sync,
 	B::Error: From<A::Error>,
 {
-	let connection_delay = 5 * 60; // 5 mins
+	let (previous_balance, ..) = send_transfer(chain_a, chain_b, channel_id, None).await;
+	assert_send_transfer(chain_a, previous_balance, 20 * 60).await;
+	// now send from chain b.
+	let (previous_balance, ..) = send_transfer(chain_b, chain_a, channel_id, None).await;
+	assert_send_transfer(chain_b, previous_balance, 20 * 60).await;
+	log::info!(target: "hyperspace", "🚀🚀 Token Transfer successful");
 }
