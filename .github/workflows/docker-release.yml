@@ -66,43 +66,5 @@ jobs:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 
       if: always() 
 
-  dali-client-release:
-    needs: [build-and-publish]
-    runs-on: 
-        - self-hosted
-        - linux
-        - X64
-        - ansible-runner
-    concurrency:
-      group: client-${{ github.ref }}
-      cancel-in-progress: true
-
-    steps:
-    - name: Clean up
-      continue-on-error: true
-      run: |
-        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-        docker system prune --force --all --volumes
-    - uses: actions/checkout@v2
-      with: 
-        fetch-depth: 0
-
-    - name: Set env
-      run: |
-        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
-
-    - name: Run ansible playbook
-      working-directory: "./.maintain/playbooks"
-      run: |
-        ansible-playbook -l _environment_testnet client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
-
-    - uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        fields: repo,message,commit,author,action,eventName,ref,workflow,job,took,pullRequest
-        channel: '#github-action-bot'
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} 
-      if: always()
 
       
