@@ -997,7 +997,7 @@ pub mod pallet {
 
 		fn get_strategies(
 			vault_id: &T::VaultId,
-		) -> Result<PrefixIterator<(T::AccountId, StrategyOverview<T::Balance>)>, DispatchResult> {
+		) -> Result<PrefixIterator<(T::AccountId, StrategyOverview<T::Balance>)>, DispatchError> {
 			Ok(CapitalStructure::<T>::iter_prefix(vault_id))
 		}
 	}
