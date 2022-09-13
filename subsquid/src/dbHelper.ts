@@ -12,6 +12,8 @@ import {
   RewardPool,
   EventType,
 } from "./model";
+import { encodeAccount } from "./utils";
+import { hexToU8a } from "@polkadot/util";
 
 export async function get<T extends { id: string }>(
   store: Store,
@@ -101,10 +103,11 @@ export async function saveEvent(
   ctx: EventHandlerContext<Store>,
   eventType: EventType
 ): Promise<Event> {
+  console.log('Saving Event: ', ctx.event.name, encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value)))
   // Create event
   const event = new Event({
     id: ctx.event.id,
-    accountId: ctx.event.extrinsic?.signature?.address,
+    accountId: encodeAccount(hexToU8a(ctx.event.extrinsic?.signature?.address.value)),
     eventType,
     blockNumber: BigInt(ctx.block.height),
     timestamp: BigInt(ctx.block.timestamp),
