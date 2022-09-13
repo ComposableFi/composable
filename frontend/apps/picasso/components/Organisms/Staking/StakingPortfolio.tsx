@@ -10,16 +10,14 @@ import {
   TableHead,
   TableRow,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import { TokenAsset } from "@/components";
 import { dateFromNumber, formatDate } from "shared";
-import { useStore } from "@/stores/root";
-import { OpenPosition } from "@/stores/defi/staking";
 
 export const StakingPortfolio: FC = () => {
   const theme = useTheme();
-  const openPositions = useStore(({ staking }) => staking.openPositions);
+  const openPositions: any[] = [];
   if (!openPositions) {
     return <h1>Portfolio empty</h1>;
   }
@@ -40,7 +38,7 @@ export const StakingPortfolio: FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {openPositions.map((item: OpenPosition, key: number) => (
+              {openPositions.map((item, key: number) => (
                 <TableRow key={key}>
                   <TableCell>
                     <TokenAsset tokenId={"pica"} label={item.id} />

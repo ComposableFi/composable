@@ -1,6 +1,4 @@
-import { NamedSet } from "zustand/middleware";
-
-import { StoreSlice } from "../types";
+import { StoreSlice } from "@/stores/types";
 
 interface UIState {
   isMetamaskModalOpen: boolean;
@@ -42,7 +40,7 @@ export interface UISlice {
   };
 }
 
-export const createUISlice: StoreSlice<UISlice> = (set: NamedSet<UISlice>) => ({
+export const createUISlice: StoreSlice<UISlice> = (set) => ({
   ui: {
     ...initialState,
 

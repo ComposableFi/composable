@@ -1,6 +1,5 @@
-import { NamedSet } from "zustand/middleware";
-import { StoreSlice } from "@/stores/types";
 import BigNumber from "bignumber.js";
+import { StoreSlice } from "@/stores/types";
 
 export type RewardPool = {
   owner: string;
@@ -43,7 +42,7 @@ const initialState = {
 };
 
 export const createStakingRewardsSlice: StoreSlice<StakingRewardsSlice> = (
-  set: NamedSet<StakingRewardsSlice>
+  set
 ) => ({
   ...initialState,
   setRewardPool: (assetId: number, pool: RewardPool) =>

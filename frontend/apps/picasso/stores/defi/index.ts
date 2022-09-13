@@ -4,9 +4,6 @@ export type { MetamaskSlice } from "./metamask";
 export { createTransfersSlice } from "./transfers";
 export type { TransfersSlice } from "./transfers";
 
-export { createStakingSlice } from "./staking";
-export type { StakingSlice } from "./staking";
-
 export { createPolkadotSlice } from "./polkadot";
 export type { PolkadotSlice } from "./polkadot";
 

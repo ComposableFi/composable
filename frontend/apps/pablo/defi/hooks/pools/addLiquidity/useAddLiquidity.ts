@@ -1,4 +1,4 @@
-import { getSigner } from "substrate-react";
+import { ConnectedAccount, Executor, getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import { toChainUnits } from "@/defi/utils";
@@ -13,8 +13,6 @@ import BigNumber from "bignumber.js";
 import router from "next/router";
 import { useSnackbar } from "notistack";
 import { useDispatch } from "react-redux";
-import { ConnectedAccount } from "substrate-react/dist/dotsama/types";
-import Executor from "substrate-react/dist/extrinsics/Executor";
 
 export const useAddLiquidity = ({
   selectedAccount,
@@ -79,7 +77,10 @@ export const useAddLiquidity = ({
               console.log("txReady", txReady);
             },
             (txHash: string, events) => {
-              enqueueSnackbar("Transaction successful. Transaction hash: " + txHash, { variant: "success" });
+              enqueueSnackbar(
+                "Transaction successful. Transaction hash: " + txHash,
+                { variant: "success" }
+              );
               resetAddLiquiditySlice();
               router.push("/pool/select/" + pool?.poolId);
               dispatch(closeConfirmingSupplyModal());

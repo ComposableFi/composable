@@ -23,7 +23,7 @@ export function callbackGate<
   Y extends NonNullableArrItems<T>
 >(fn: (...args: [...deps: Y]) => any, ...requiredDeps: T): any {
   if (!filterExist(requiredDeps) || requiredDeps.length === 0) {
-    return Promise.resolve({});
+    return Promise.resolve(() => {});
   }
 
   return fn(...(requiredDeps as unknown as Y));

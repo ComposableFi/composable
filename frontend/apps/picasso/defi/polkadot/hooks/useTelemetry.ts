@@ -45,7 +45,7 @@ export const useTelemetry = () => {
     );
 
     return () => {
-      unsubPromise.then((unsubscribe: () => void) => unsubscribe());
+      unsubPromise.then((unsubscribe: () => void) => unsubscribe?.());
     };
   }, [parachainApi]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -59,7 +59,7 @@ export const useTelemetry = () => {
     );
 
     return () => {
-      unsubPromise.then((unsubscribe: () => void) => unsubscribe());
+      unsubPromise.then((unsubscribe: () => void) => unsubscribe?.());
     };
   }, [parachainApi]); // eslint-disable-line react-hooks/exhaustive-deps
 

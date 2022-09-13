@@ -1,4 +1,3 @@
-import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "../../types";
 import BigNumber from "bignumber.js";
 
@@ -18,8 +17,8 @@ const initialState: TelemetryState = {
   telemetryData: {
     finalizedBlock: new BigNumber(0),
     lastBlock: new BigNumber(0),
-    averageTime: []
-  }
+    averageTime: [],
+  },
 };
 
 export interface StatsTelemetrySlice {
@@ -32,20 +31,20 @@ export interface StatsTelemetrySlice {
 }
 
 export const createStatsTelemetrySlice: StoreSlice<StatsTelemetrySlice> = (
-  set: NamedSet<StatsTelemetrySlice>,
-  get: () => StatsTelemetrySlice
+  set,
+  get
 ) => ({
   statsTelemetry: {
     ...initialState,
     setFinalizedBlock: (data: BigNumber) => {
-      set(state => {
+      set((state) => {
         state.statsTelemetry.telemetryData.finalizedBlock = data;
 
         return state;
       });
     },
     pushAverageTime: (data: BigNumber) => {
-      set(state => {
+      set((state) => {
         state.statsTelemetry.telemetryData.averageTime.push(data);
         if (
           state.statsTelemetry.telemetryData.averageTime.length >
@@ -58,7 +57,7 @@ export const createStatsTelemetrySlice: StoreSlice<StatsTelemetrySlice> = (
       });
     },
     setLastBlock: (data: BigNumber) => {
-      set(state => {
+      set((state) => {
         state.statsTelemetry.telemetryData.lastBlock = data;
 
         return state;
@@ -72,6 +71,6 @@ export const createStatsTelemetrySlice: StoreSlice<StatsTelemetrySlice> = (
       return averageTime
         .reduce((a, b) => a.plus(b), new BigNumber(0))
         .div(averageTime.length);
-    }
-  }
+    },
+  },
 });

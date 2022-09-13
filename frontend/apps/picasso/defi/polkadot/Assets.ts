@@ -1,5 +1,5 @@
 import { AssetId, SubstrateNetworkId } from "./types";
-import { ParachainId } from "substrate-react/dist/dotsama/types";
+import { ParachainId } from "substrate-react";
 
 export interface AssetMetadata {
   decimals: number;

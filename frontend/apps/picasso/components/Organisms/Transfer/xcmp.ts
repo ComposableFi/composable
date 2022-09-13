@@ -1,9 +1,8 @@
 import { ApiPromise } from "@polkadot/api";
-import Executor from "substrate-react/dist/extrinsics/Executor";
+import { Executor, getSigner } from "substrate-react";
 import { u128 } from "@polkadot/types-codec";
 import { AnyComponentMap, EnqueueSnackbar } from "notistack";
 import { Assets } from "@/defi/polkadot/Assets";
-import { getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { toChainIdUnit } from "shared";
 import { CurrencyId } from "defi-interfaces";
@@ -20,6 +19,7 @@ export type TransferHandlerArgs = {
   hasFeeItem: boolean;
   feeItemId: number | null;
 };
+
 export function availableTargetNetwork(
   network: string,
   selectedNetwork: string
@@ -212,26 +212,32 @@ export async function getTransferCallKaruraPicasso(
   amount: u128
 ) {
   // Set destination. Should have 2 Junctions, first to parent and then to wallet
-  const destination:XcmVersionedMultiLocation = api.createType("XcmVersionedMultiLocation", {
-    V0: api.createType("XcmV0MultiLocation", {
-      X3: [
-        api.createType("XcmV0Junction", "Parent"),
-        api.createType("XcmV0Junction", {
-          Parachain: api.createType("Compact<u32>", targetChain),
-        }),
-        api.createType("XcmV0Junction", {
-          AccountId32: {
-            network: api.createType("XcmV0JunctionNetworkId", "Any"),
-            id: api.createType("AccountId32", targetAccount),
-          },
-        }),
-      ],
-    }),
-  });
+  const destination: XcmVersionedMultiLocation = api.createType(
+    "XcmVersionedMultiLocation",
+    {
+      V0: api.createType("XcmV0MultiLocation", {
+        X3: [
+          api.createType("XcmV0Junction", "Parent"),
+          api.createType("XcmV0Junction", {
+            Parachain: api.createType("Compact<u32>", targetChain),
+          }),
+          api.createType("XcmV0Junction", {
+            AccountId32: {
+              network: api.createType("XcmV0JunctionNetworkId", "Any"),
+              id: api.createType("AccountId32", targetAccount),
+            },
+          }),
+        ],
+      }),
+    }
+  );
 
-  const currencyId: CurrencyId = api.createType("AcalaPrimitivesCurrencyCurrencyId", {
-    Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", "KUSD"),
-  });
+  const currencyId: CurrencyId = api.createType(
+    "AcalaPrimitivesCurrencyCurrencyId",
+    {
+      Token: api.createType("AcalaPrimitivesCurrencyTokenSymbol", "KUSD"),
+    }
+  );
 
   const destWeight = api.createType("u64", 900000000000); // > 9000000000
 

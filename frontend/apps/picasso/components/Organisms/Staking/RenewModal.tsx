@@ -2,29 +2,25 @@ import { Modal, TokenAsset } from "@/components";
 import { FC, useState } from "react";
 import { Box, Button, Paper, Stack, Typography, useTheme } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
-import { DURATION_OPTION_ITEMS } from "@/components/Organisms/Staking/constants";
 import { RadioButtonGroup } from "@/components/Molecules/RadioButtonGroup";
 import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
-import { useStore } from "@/stores/root";
 import { formatNumber } from "shared";
-import { DurationOption, renewPeriod } from "@/stores/defi/staking";
+import BigNumber from "bignumber.js";
+import { DurationOption } from "@/defi/polkadot/pallets/StakingRewards";
 
 export const RenewModal: FC<{ open: boolean; onClose: () => void }> = ({
   open,
-  onClose
+  onClose,
 }) => {
   const [extendPeriod, setExtendPeriod] = useState<DurationOption | undefined>(
     undefined
   );
   const match = (someValue?: DurationOption) => someValue === extendPeriod;
   const theme = useTheme();
-  const initialPicaDeposit = useStore(
-    ({ staking }) => staking.initialPicaDeposit
-  );
+  const initialPicaDeposit = new BigNumber(0);
 
   const handleRenew = () => {
     onClose();
-    renewPeriod(extendPeriod!);
   };
 
   return (
@@ -36,7 +32,7 @@ export const RenewModal: FC<{ open: boolean; onClose: () => void }> = ({
         <Stack gap={1.5}>
           <TextWithTooltip
             TypographyProps={{
-              variant: "inputLabel"
+              variant: "inputLabel",
             }}
             tooltip="Initial PICA deposit "
           >
@@ -44,7 +40,7 @@ export const RenewModal: FC<{ open: boolean; onClose: () => void }> = ({
           </TextWithTooltip>
           <Paper
             sx={{
-              position: "relative"
+              position: "relative",
             }}
           >
             <Box
@@ -52,7 +48,7 @@ export const RenewModal: FC<{ open: boolean; onClose: () => void }> = ({
                 position: "absolute",
                 left: "1rem",
                 top: "50%",
-                transform: "translateY(-50%)"
+                transform: "translateY(-50%)",
               }}
             >
               <TokenAsset tokenId={"pica"} iconOnly />
@@ -69,17 +65,17 @@ export const RenewModal: FC<{ open: boolean; onClose: () => void }> = ({
         <RadioButtonGroup<DurationOption>
           label="Lock period (multiplier)"
           tooltip="Lock period (multiplier)"
-          options={DURATION_OPTION_ITEMS}
+          options={[]}
           value={extendPeriod}
           isMatch={match}
-          onChange={value => setExtendPeriod(value)}
+          onChange={(value) => setExtendPeriod(value)}
           sx={{
-            marginTop: theme.spacing(4)
+            marginTop: theme.spacing(4),
           }}
         />
         <Stack gap={1.5} marginTop={4}>
           <TextWithTooltip tooltip="Unlock date">Unlock date</TextWithTooltip>
-          <FutureDatePaper duration={extendPeriod} />
+          <FutureDatePaper duration={""} />
         </Stack>
         <Button
           disabled={!extendPeriod}

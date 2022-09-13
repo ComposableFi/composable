@@ -1,5 +1,4 @@
-import { GetState, State, StoreApi } from "zustand";
-import { NamedSet } from "zustand/middleware";
+import { StateCreator } from "zustand";
 
 import {
   CrowdloanRewardsSlice,
@@ -7,7 +6,6 @@ import {
   OracleSlice,
   PolkadotSlice,
   StakingRewardsSlice,
-  StakingSlice,
   StatsApolloSlice,
   StatsOverviewSlice,
   StatsTelemetrySlice,
@@ -17,22 +15,15 @@ import {
 import { UISlice } from "./ui/ui";
 import { BondsSlice } from "@/stores/defi/polkadot/bonds/slice";
 
-export type StoreSlice<T extends object> = (
-  set: NamedSet<T>,
-  get: GetState<T>
-) => T;
-
-export type CustomStateCreator<
-  T extends State,
-  CustomSetState = NamedSet<T>,
-  CustomGetState = GetState<T>,
-  CustomStoreApi extends StoreApi<T> = StoreApi<T>
-> = (set: CustomSetState, get: CustomGetState, api: CustomStoreApi) => T;
-
+export type StoreSlice<T> = StateCreator<
+  AllSlices,
+  [["zustand/immer", never], ["zustand/devtools", never]],
+  [],
+  T
+>;
 export type AllSlices = PolkadotSlice &
   UISlice &
   MetamaskSlice &
-  StakingSlice &
   TransfersSlice &
   StatsApolloSlice &
   StatsOverviewSlice &

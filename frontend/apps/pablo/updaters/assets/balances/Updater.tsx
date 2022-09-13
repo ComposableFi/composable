@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "react";
 import {
-  useExtrinsics,
+  useExtrinsicStore,
   useParachainApi,
   useSelectedAccount,
 } from "substrate-react";
@@ -12,7 +12,7 @@ const Updater = () => {
   const { putAssetBalance, supportedAssets } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const extrinsicCalls = useExtrinsics();
+  const extrinsicCalls = useExtrinsicStore();
 
   const updateAllBalances = useCallback(async () => {
     if (parachainApi && selectedAccount) {

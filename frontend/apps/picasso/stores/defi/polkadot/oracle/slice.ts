@@ -1,6 +1,5 @@
 import BigNumber from "bignumber.js";
 import { currencyIdToAssetMap } from "@/stores/defi/polkadot/bonds/constants";
-import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "@/stores/types";
 
 type OraclePrice = {
@@ -35,9 +34,7 @@ function getInitialPrices(): Record<string, OraclePrice> {
   );
 }
 
-export const createOracleSlice: StoreSlice<OracleSlice> = (
-  set: NamedSet<OracleSlice>
-) => ({
+export const createOracleSlice: StoreSlice<OracleSlice> = (set) => ({
   ...initialState,
   updatePrice: (prices: Price) =>
     set((state) => ({
