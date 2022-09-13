@@ -86,6 +86,7 @@ pub mod pallet {
 		/// The currency which can be created from thin air.
 		type AssetId: AssetIdLike
 			+ From<u128>
+			+ Into<u128>
 			+ Saturating
 			+ Ord
 			+ CheckedAdd
@@ -173,6 +174,19 @@ pub mod pallet {
 			let asset_id = AssetIdRanges::<T>::mutate(|range| range.increment(id))?;
 			AssetEd::<T>::insert(asset_id, ed);
 			Ok(asset_id)
+		}
+
+		fn protocol_asset_id_to_unique_asset_id(
+			protocol_asset_id: u32,
+			range_id: RangeId,
+		) -> Result<T::AssetId, DispatchError> {
+			if range_id.inner() > 5 {
+				Err(DispatchError::from("RangeId outside of preconfigured ranges!"))
+			} else {
+				Ok(((u32::MAX as u128).saturating_mul(range_id.inner() as u128 + 1) +
+					protocol_asset_id as u128)
+					.into())
+			}
 		}
 	}
 
