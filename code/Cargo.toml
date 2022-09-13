@@ -80,6 +80,7 @@ cumulus-primitives-core = { git = "https://github.com/ComposableFi/cumulus", rev
 cumulus-primitives-parachain-inherent = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
 cumulus-relay-chain-interface = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
 cumulus-test-relay-sproof-builder = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
+statemine-runtime = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
 parachain-info = { git = "https://github.com/ComposableFi/cumulus", rev = "f730e6747be173e2d4609381edc7929c8671f4d8" }
 
 [patch.'https://github.com/paritytech/polkadot']
