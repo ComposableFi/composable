@@ -128,7 +128,7 @@ export const useAddLiquidity = ({
         !signer ||
         !pool
       ) {
-        throw new Error("Missing dependancies.");
+        throw new Error("Missing dependencies.");
       }
 
       dispatch(closeConfirmSupplyModal());
