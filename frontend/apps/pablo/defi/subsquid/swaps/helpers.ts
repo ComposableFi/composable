@@ -6,14 +6,16 @@ import {
 } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import moment from "moment";
-import { queryPoolTransactionsByType } from "../pools/queries";
+import {
+  queryPabloTransactions,
+  queryPoolTransactionsByType,
+} from "../pools/queries";
 import { query24hOldTransactionByPoolQuoteAsset } from "./queries";
 
 export function getChartLabels(
   chartSeries: [number, number][],
   chartRange: ChartRange
 ): string[] {
-
   if (chartSeries.length < MAX_CHART_LABELS) {
     return chartSeries.map((i) =>
       moment(i[0]).format(toMomentChartLabel(chartRange))
@@ -40,28 +42,28 @@ export async function fetchSwapsChart(
   let chartSeries: [number, number][] = [];
 
   try {
-    const { data, error } = await queryPoolTransactionsByType(
+    const { data, error } = await queryPabloTransactions(
       poolId,
       "SWAP",
+      "DESC",
       250
     );
     if (error) throw new Error(error.message);
+    if (!data)
+      throw new Error("[fetchSwapsChart] unable to fetch subsquid data.");
     let { pabloTransactions } = data;
 
     let swapTransactions = pabloTransactions.map(
-      (tx: {
-        baseAssetId: string;
-        quoteAssetId: string;
-        receivedTimestamp: string;
-        spotPrice: string;
-      }) => {
-        const { quoteAssetId, spotPrice, receivedTimestamp } = tx;
+      ({ quoteAssetId, spotPrice, pool: { calculatedTimestamp } }) => {
         let _spotPrice = new BigNumber(spotPrice);
         if (quoteAssetId !== selectedQuoteAsset) {
           _spotPrice = new BigNumber(1).div(_spotPrice);
         }
 
-        return [+receivedTimestamp, _spotPrice.toNumber()];
+        return [+calculatedTimestamp, _spotPrice.toNumber()] as [
+          number,
+          number
+        ];
       }
     );
 
