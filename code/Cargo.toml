@@ -116,6 +116,7 @@ frame-system = { git = "https://github.com/ComposableFi/substrate", rev = "f709a
 frame-system-benchmarking = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 frame-system-rpc-runtime-api = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 frame-try-runtime = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
+pallet-asset-tx-payment = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 pallet-aura = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 pallet-authority-discovery = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
 pallet-authorship = { git = "https://github.com/ComposableFi/substrate", rev = "f709a3d3b8f116f8b7e92ec56bc1ca5a0409eaa5" }
