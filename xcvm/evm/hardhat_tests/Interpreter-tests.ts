@@ -126,6 +126,55 @@ describe("Interpreter", function () {
       expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal((oldBalance/2).toString());
     });
 
+  it("test user protobuf transfer with unit", async function () {
+      let root = await protobuf.load("./interpreter.proto")
+      let ProgramMessage = root.lookupType("interpreter.Program");
+      let InstructionMessage = root.lookupType("interpreter.Instruction");
+      let InstructionsMessage = root.lookupType("interpreter.Instructions");
+      let TransferMessage = root.lookupType("interpreter.Transfer");
+      let AssetIdMessage = root.lookupType("interpreter.AssetId");
+      let AccountMessage = root.lookupType("interpreter.Account");
+      let AssetMessage = root.lookupType("interpreter.Asset");
+      let BalanceMessage = root.lookupType("interpreter.Balance");
+      let RatioMessage = root.lookupType("interpreter.Ratio");
+      let UnitMessage = root.lookupType("interpreter.Unit");
+      
+      let accountMessage = AccountMessage.create({account: ethers.utils.arrayify(owner.address)});
+      let assetIdMessage = AssetIdMessage.create({assetId: 1});
+      // half of the interpreter balance
+      let ratioMessage = RatioMessage.create({
+        nominator: 1,
+        denominator: 2, 
+      })
+      // 1.5 unit of tokens
+      console.log("ratio", RatioMessage.encode(ratioMessage).finish().toString("hex"));
+      let unitMessage = UnitMessage.create({integer: 1, ratio: ratioMessage});
+      console.log("unit", UnitMessage.encode(unitMessage).finish().toString("hex"));
+      let balanceMessage = BalanceMessage.create({unit: unitMessage}, {oneofs: true}); 
+      console.log("balance", BalanceMessage.encode(balanceMessage).finish().toString("hex"));
+      console.log('owner', owner.address.toString("hex"));
+      let asset = AssetMessage.create({assetId: assetIdMessage, balance: balanceMessage});
+      console.log("assets", AssetMessage.encode(asset).finish().toString("hex"));
+      let transferMessage = TransferMessage.create({account: accountMessage, assets: [asset]});
+      console.log("account", AccountMessage.encode(accountMessage).finish().toString("hex"));
+      console.log("transfer", TransferMessage.encode(transferMessage).finish().toString("hex"));
+      let instructionMessage = InstructionMessage.create({transfer: transferMessage}, {oneofs: true})
+      console.log("instruction", InstructionMessage.encode(instructionMessage).finish().toString("hex"));
+      let instructionsMessage = InstructionsMessage.create({instructions: [instructionMessage]})
+      console.log("instructions", InstructionsMessage.encode(instructionsMessage).finish().toString("hex"));
+      console.log(owner.address);
+      console.log(InstructionMessage.fromObject(instructionMessage));
+      let programMessage = ProgramMessage.create({instructions: instructionsMessage});
+      console.log(ProgramMessage.fromObject(programMessage));
+      let encodedProgram = "0x" + ProgramMessage.encode(programMessage).finish().toString("hex");
+      encodedProgram = ProgramMessage.encode(programMessage).finish()
+      console.log(encodedProgram);
+
+      await gateway.runProgram( {networkId: 1, account: owner.address}, encodedProgram, [], []);
+      // 1.5 token with 18 decimals
+      expect((await erc20.balanceOf(owner.address)).toString()).to.be.equal("1500000000000000000");
+    });
+
 
   it("test user protobuf call", async function () {
       let root = await protobuf.load("./interpreter.proto")

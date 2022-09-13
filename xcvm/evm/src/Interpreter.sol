@@ -147,12 +147,30 @@ contract Interpreter is IInterpreter {
             pos,
             program
         );
+        console.log(111, unit);
+        // reading balance type
+        (success, pos, field, _type) = ProtobufLib.decode_key(
+            pos,
+            program
+        );
+        console.logBytes(program[0:pos]);
+        require(field == 2, "decode key failed");
+        require(success, "decode key failed");
+        require(
+            _type == ProtobufLib.WireType.LengthDelimited,
+            "decode type is not embedded messages"
+        );
+
+
 
         uint256 nominator;
         uint256 denominator;
         (nominator, denominator, newPos) = _handleRatio(program, pos);
         uint256 decimals = IERC20Metadata(tokenAddress).decimals();
         amount = uint256(unit) * (10 ** decimals) + nominator * (10 ** decimals) / denominator;
+        console.log(uint256(unit) * (10 ** decimals));
+        console.log(nominator * (10 ** decimals) / denominator);
+        console.log(amount);
     }
 
     function _handleRatio(bytes calldata program, uint64 pos)
@@ -169,7 +187,6 @@ contract Interpreter is IInterpreter {
         uint64 field;
         ProtobufLib.WireType _type;
 
-console.log('res');
         console.logBytes(program[0:pos]);
         // read ratio message body
         (success, pos, size) = ProtobufLib.decode_embedded_message(
@@ -314,10 +331,7 @@ console.log('res');
                 program,
                 pos
             );
-            amount =
-                (IERC20(assetAddress).balanceOf(address(this)) *
-                    nominator) /
-                denominator;
+
         } else if (field == 2) {
             // absolute
             (amount, newPos) = _handleAbsolute(program, pos);
@@ -327,6 +341,7 @@ console.log('res');
         } else {
             require(false, "unknown balance type");
         }
+
     }
 
     function _handleAsset(bytes calldata program, uint64 pos)
