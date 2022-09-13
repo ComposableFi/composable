@@ -479,11 +479,12 @@
                   taplo fmt
                   
                   # .rs
-                	find . -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
+                	find . -path ./code/target -prune -o -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
                   
                   # .js .ts .tsx 
                   prettier \
                     --config="./code/integration-tests/runtime-tests/.prettierrc" \
+                    --write \
                     --ignore-path="./code/integration-tests/runtime-tests/.prettierignore" \
                     ./code/integration-tests/runtime-tests/                  
               '';

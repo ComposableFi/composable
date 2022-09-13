@@ -13,7 +13,7 @@ use sp_core::{
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentityLookup},
-	MultiSignature,
+	DispatchError, MultiSignature,
 };
 use std::time::{Duration, Instant};
 use system::EnsureRoot;
@@ -116,6 +116,10 @@ pub struct CurrencyIdGenerator;
 
 impl CurrencyFactoryTrait<AssetId, Balance> for CurrencyIdGenerator {
 	fn create(_: RangeId, _: Balance) -> Result<AssetId, sp_runtime::DispatchError> {
+		Ok(1_u128)
+	}
+
+	fn protocol_asset_id_to_unique_asset_id(_: u32, _: RangeId) -> Result<AssetId, DispatchError> {
 		Ok(1_u128)
 	}
 }
