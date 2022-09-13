@@ -1,5 +1,5 @@
 import { fetchLbpStats, fetchInitialBalance } from "@/defi/subsquid/auctions/helpers";
-import { PabloTransactions, queryPabloTransactions, queryPoolTransactionsByType } from "@/defi/subsquid/pools/queries";
+import { PabloTransactions, queryPabloTransactions } from "@/defi/subsquid/pools/queries";
 import {
   LiquidityBootstrappingPool,
   LiquidityPoolTransactionType,

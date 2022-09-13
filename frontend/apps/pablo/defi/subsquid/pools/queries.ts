@@ -60,28 +60,6 @@ export function queryPabloTransactions(
   `).toPromise();
 }
 
-export const queryPoolTransactionsByType = (
-  poolId: number,
-  transactionType: "SWAP" | "ADD_LIQUIDITY" | "CREATE_POOL" | "REMOVE_LIQUIDITY",
-  limit: number = 50,
-  orderBy: "ASC" | "DESC" = "DESC"
-) => makeClient().query(`query queryPoolTransactionsByType {
-  pabloTransactions(limit: ${limit}, orderBy: receivedTimestamp_${orderBy}, where: {
-    transactionType_eq: ${transactionType},
-    pool: {poolId_eq: ${poolId.toString()}}
-  }) {
-    id
-    spotPrice
-    baseAssetId
-    baseAssetAmount
-    quoteAssetAmount
-    quoteAssetId
-    receivedTimestamp
-    who
-    blockNumber
-  }
-}`).toPromise();
-
 export function queryUserProvidedLiquidity(
   poolId: number,
   orderBy: "ASC" | "DESC" = "DESC",

@@ -8,9 +8,8 @@ import BigNumber from "bignumber.js";
 import moment from "moment";
 import {
   queryPabloTransactions,
-  queryPoolTransactionsByType,
 } from "../pools/queries";
-import { query24hOldTransactionByPoolQuoteAsset } from "./queries";
+import { querySpotPriceBeforeTimestamp } from "./queries";
 
 export function getChartLabels(
   chartSeries: [number, number][],
@@ -82,13 +81,12 @@ export async function fetch24HourOldPrice(
   let _24HourOldPrice = new BigNumber(0);
 
   try {
-    const { data, error } = await query24hOldTransactionByPoolQuoteAsset(
+    const { data, error } = await querySpotPriceBeforeTimestamp(
       poolId,
-      Number(selectedQuoteAsset),
-      "SWAP",
-      1
+      Number(selectedQuoteAsset)
     );
     if (error) throw new Error(error.message);
+    if (!data) throw new Error("[fetch24HourOldPrice] unable to fetch subsquid data.");
     let { pabloTransactions } = data;
 
     if (pabloTransactions.length > 0) {
