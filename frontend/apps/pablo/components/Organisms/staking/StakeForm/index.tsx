@@ -4,17 +4,16 @@ import { useMemo, useState } from "react";
 import { BoxProps } from "@mui/material";
 import { SelectLockPeriod } from "./SelectLockPeriod";
 import { isNumber } from "lodash";
-import { useAppDispatch } from "@/hooks/store";
-import { setMessage } from "@/stores/ui/uiSlice";
 import { StakingRewardPool } from "@/defi/types";
 import { useAssetBalance } from "@/store/assets/hooks";
 import { DEFAULT_NETWORK_ID, PBLO_ASSET_ID } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import BigNumber from "bignumber.js";
-import moment from "moment";
 import { extractDurationPresets } from "@/defi/utils/stakingRewards/durationPresets";
 import { useStake } from "@/defi/hooks/stakingRewards";
+import { usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import BigNumber from "bignumber.js";
+import { ConfirmingModal } from "../../swap/ConfirmingModal";
 
 export type Multiplier = {
   value?: number;
@@ -25,7 +24,7 @@ export const StakeForm: React.FC<
   BoxProps & { stakingRewardPool: StakingRewardPool | null }
 > = ({ stakingRewardPool, ...boxProps }) => {
   const theme = useTheme();
-  const dispatch = useAppDispatch();
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
   const [durationPreset, setDurationPreset] = useState<string>("0");
@@ -44,6 +43,12 @@ export const StakeForm: React.FC<
     amount,
     durationPreset: new BigNumber(durationPreset)
   })
+
+  const isStaking = usePendingExtrinsic(
+    "stake",
+    "stakingRewards",
+    selectedAccount ? selectedAccount.address : "-"
+  )
 
   return (
     <Box {...boxProps}>
@@ -93,6 +98,8 @@ export const StakeForm: React.FC<
           Stake and mint
         </Button>
       </Box>
+
+      <ConfirmingModal open={isStaking} />
     </Box>
   );
 };
