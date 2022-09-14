@@ -9,6 +9,7 @@ import { getDevWallets } from "@composable/utils/walletHelper";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import { expect } from "chai";
 import BN from "bn.js";
+import { u128 } from "@polkadot/types-codec";
 
 /**
  * Contains tests for the XCMP system.
@@ -25,7 +26,7 @@ describe("[SHORT] tx.xcmp Tests", function () {
 
   let relayChainApiClient: ApiPromise;
   let assetId: number;
-  let ksmAssetID;
+  let ksmAssetID: SafeRpcWrapper;
 
   before(async function () {
     this.timeout(60 * 1000);
@@ -200,7 +201,7 @@ describe("[SHORT] tx.xcmp Tests", function () {
         api,
         walletAlice,
         api.events.xTokens.TransferredMultiAssets.is,
-        api.tx.xTokens.transfer(ksmAssetID, amountToTransfer, destination, destWeight)
+        api.tx.xTokens.transfer(<u128>new BN(ksmAssetID.toString()), amountToTransfer, destination, destWeight)
       );
       await waitForBlocks(api, 3);
 

@@ -28,6 +28,7 @@ import {
   useExecutor,
   useParachainApi,
   useSelectedAccount,
+  useSigner,
 } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { APP_NAME } from "@/defi/polkadot/constants";
@@ -62,6 +63,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const dispatch = useDispatch();
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const signer = useSigner();
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
   const {
@@ -75,8 +77,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
       weights,
       setSelectable,
       resetSlice,
-    },
-    supportedAssets
+    }
   } = useStore();
 
   const _baseAsset = useAsset(baseAsset);
@@ -126,9 +127,8 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const addLiquidity = async (poolId: number) => {
-    if (parachainApi && selectedAccount && executor && selectedAccount) {
+    if (parachainApi && signer !== undefined && selectedAccount && executor && selectedAccount) {
       const { address } = selectedAccount;
-      const signer = await getSigner(APP_NAME, address);
 
       const call = addLiquidityToPoolViaPablo(
         parachainApi,
@@ -181,9 +181,8 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const onButtonClickHandler = async () => {
-    if (executor && parachainApi && selectedAccount) {
+    if (executor && signer !== undefined && parachainApi && selectedAccount) {
       const { address } = selectedAccount;
-      const signer = await getSigner(APP_NAME, address);
 
       let pair = { base: +baseAsset, quote: +quoteAsset }
       let permillDecimals = new BigNumber(10).pow(4);

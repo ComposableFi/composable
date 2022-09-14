@@ -451,7 +451,7 @@ pub mod pallet {
 				.iter()
 				.chain(salt)
 				.chain(code_hash.as_ref())
-				.chain(T::Hashing::hash(&message).as_ref())
+				.chain(T::Hashing::hash(message).as_ref())
 				.cloned()
 				.collect();
 			UncheckedFrom::unchecked_from(T::Hashing::hash(&data))
@@ -482,7 +482,7 @@ pub mod pallet {
 			let code_hash = CodeIdToInfo::<T>::get(code_id)
 				.ok_or(Error::<T>::CodeNotFound)?
 				.pristine_code_hash;
-			let contract = Self::derive_contract_address(&instantiator, salt, code_hash, &message);
+			let contract = Self::derive_contract_address(&instantiator, salt, code_hash, message);
 			ensure!(
 				!ContractToInfo::<T>::contains_key(&contract),
 				Error::<T>::ContractAlreadyExists

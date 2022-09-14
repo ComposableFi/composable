@@ -1,4 +1,4 @@
-import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} from "typeorm"
+import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_, Index as Index_} from "typeorm"
 import * as marshal from "./marshal"
 
 @Entity_()
@@ -10,9 +10,11 @@ export class BondedFinanceBondOffer {
   @PrimaryColumn_()
   id!: string
 
+  @Index_()
   @Column_("text", {nullable: false})
   eventId!: string
 
+  @Index_()
   @Column_("text", {nullable: false})
   offerId!: string
 
@@ -27,4 +29,10 @@ export class BondedFinanceBondOffer {
    */
   @Column_("text", {nullable: false})
   beneficiary!: string
+
+  /**
+   * True if the offer has been cancelled
+   */
+  @Column_("bool", {nullable: false})
+  cancelled!: boolean
 }

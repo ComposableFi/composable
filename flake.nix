@@ -300,7 +300,7 @@
                 "${composable-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
+                cp target/release/composable $out/bin/composable-node
               '';
             });
 
@@ -316,13 +316,13 @@
                 "${composable-bench-runtime}/lib/runtime.optimized.wasm";
               installPhase = ''
                 mkdir -p $out/bin
-                cp target/release/composable $out/bin/composable
+                cp target/release/composable $out/bin/composable-node
               '';
             });
 
           run-with-benchmarks = chain:
             writeShellScriptBin "run-benchmarks-once" ''
-              ${composable-bench-node}/bin/composable benchmark pallet \
+              ${composable-bench-node}/bin/composable-node benchmark pallet \
                 --chain="${chain}" \
                 --execution=wasm \
                 --wasm-execution=compiled \
@@ -459,6 +459,45 @@
               cargoArtifacts = common-deps;
               cargoBuildCommand = "cargo build --release -p price-feed";
             });
+
+            fmt = pkgs.writeShellApplication {
+              name = "fmt-composable";
+
+              runtimeInputs = with pkgs; [
+                nixfmt
+                coreutils
+                rust-nightly
+                taplo
+                nodePackages.prettier
+              ];
+
+              text = ''
+                  # .nix 
+                	find . -name "*.nix" -type f -print0 | xargs -0 nixfmt;
+
+                  # .toml
+                  taplo fmt
+                  
+                  # .rs
+                	find . -path ./code/target -prune -o -name "*.rs" -type f -print0 | xargs -0 rustfmt --edition 2021;
+                  
+                  # .js .ts .tsx 
+                  prettier \
+                    --config="./code/integration-tests/runtime-tests/.prettierrc" \
+                    --write \
+                    --ignore-path="./code/integration-tests/runtime-tests/.prettierignore" \
+                    ./code/integration-tests/runtime-tests/                  
+              '';
+            };
+
+            docker-wipe-system =
+              pkgs.writeShellScriptBin "docker-wipe-system" ''
+                echo "Wiping all docker containers, images, and volumes";
+                docker stop $(docker ps -q)
+                docker system prune -f
+                docker rmi -f $(docker images -a -q)    
+                docker volume prune -f
+              '';
 
             composable-book = import ./book/default.nix {
               crane = crane-stable;
@@ -826,6 +865,8 @@
                   xorriso
                   zlib.out
                   nix-tree
+                  nixfmt
+                  rnix-lsp
                 ] ++ docs-renders;
             });
 
@@ -943,7 +984,7 @@
             };
             composable = {
               type = "app";
-              program = "${packages.composable-node}/bin/composable";
+              program = "${packages.composable-node}/bin/composable-node";
             };
             acala = {
               type = "app";
@@ -1005,6 +1046,10 @@
       };
       homeConfigurations = let
         mk-docker-in-docker = pkgs: [
+          # TODO: this home works well in VS Devcontainer launcher as it injects low-level Dockerd
+          # For manual runs need tuning to setup it (need to mount docker links to root and do they executable)
+          # INFO[2022-09-06T13:14:43.437764897Z] Starting up                                            
+          # dockerd needs to be started with root privileges. To run dockerd in rootless mode as an unprivileged user, see https://docs.docker.com/go/rootless/ dockerd-rootless-setuptool.sh install
           pkgs.docker
           pkgs.docker-buildx
           pkgs.docker-compose
@@ -1016,53 +1061,56 @@
         ];
       in {
 
-        vscode.x86_64-linux = let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        in with pkgs;
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [{
-            home = {
-              username = "vscode";
-              homeDirectory = "/home/vscode";
-              stateVersion = "22.05";
-              packages =
-                [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
-                ++ (mk-containers-tools-minimal pkgs)
-                ++ (mk-docker-in-docker pkgs);
-            };
-            programs = {
-              home-manager.enable = true;
-              direnv = {
-                enable = true;
-                nix-direnv = { enable = true; };
+        # minimal means we do not build in composable devnets and tooling, but allow to build or nix these 
+        vscode-minimal.x86_64-linux =
+          let pkgs = nixpkgs.legacyPackages.x86_64-linux;
+          in with pkgs;
+          home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            modules = [{
+              home = {
+                username = "vscode";
+                homeDirectory = "/home/vscode";
+                stateVersion = "22.05";
+                packages =
+                  [ eachSystemOutputs.packages.x86_64-linux.rust-nightly ]
+                  ++ (mk-containers-tools-minimal pkgs)
+                  ++ (mk-docker-in-docker pkgs);
               };
-            };
-          }];
-        };
+              programs = {
+                home-manager.enable = true;
+                direnv = {
+                  enable = true;
+                  nix-direnv = { enable = true; };
+                };
+              };
+            }];
+          };
 
-        vscode.aarch64-linux = let pkgs = nixpkgs.legacyPackages.aarch64-linux;
-        in with pkgs;
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [{
-            home = {
-              username = "vscode";
-              homeDirectory = "/home/vscode";
-              stateVersion = "22.05";
-              packages =
-                [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
-                ++ (mk-containers-tools-minimal pkgs)
-                ++ (mk-docker-in-docker pkgs);
-            };
-            programs = {
-              home-manager.enable = true;
-              direnv = {
-                enable = true;
-                nix-direnv = { enable = true; };
+        vscode-minimal.aarch64-linux =
+          let pkgs = nixpkgs.legacyPackages.aarch64-linux;
+          in with pkgs;
+          home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            modules = [{
+              home = {
+                username = "vscode";
+                homeDirectory = "/home/vscode";
+                stateVersion = "22.05";
+                packages =
+                  [ eachSystemOutputs.packages.aarch64-linux.rust-nightly ]
+                  ++ (mk-containers-tools-minimal pkgs)
+                  ++ (mk-docker-in-docker pkgs);
               };
-            };
-          }];
-        };
+              programs = {
+                home-manager.enable = true;
+                direnv = {
+                  enable = true;
+                  nix-direnv = { enable = true; };
+                };
+              };
+            }];
+          };
 
       };
     };

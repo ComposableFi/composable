@@ -1,14 +1,15 @@
 import { KeyringPair } from "@polkadot/keyring/types";
 import { sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess } from "@composable/utils/polkadotjs";
-import { IKeyringPair } from "@polkadot/types/types";
+import { AnyNumber, IKeyringPair, ITuple } from "@polkadot/types/types";
 import { PalletCrowdloanRewardsModelsRemoteAccount } from "@composable/types/interfaces";
-import { u128, u32 } from "@polkadot/types-codec";
+import { Compact, u128, u32, u64, Vec } from "@polkadot/types-codec";
 import { shares } from "@composabletests/tests/crowdloanRewards/contributions.json";
 import { expect } from "chai";
 import Web3 from "web3";
 import { ApiPromise } from "@polkadot/api";
 
-const toHexString = bytes => Array.prototype.map.call(bytes, x => ("0" + (x & 0xff).toString(16)).slice(-2)).join("");
+const toHexString = (bytes: any) =>
+  Array.prototype.map.call(bytes, x => ("0" + (x & 0xff).toString(16)).slice(-2)).join("");
 
 // The prefix is defined as pallet config
 const proofMessage = (account: IKeyringPair, isEth = false) =>
@@ -28,7 +29,11 @@ export class TxCrowdloanRewardsTests {
    * @param {KeyringPair} sudoKey Wallet with sudo rights.
    * @param amount
    */
-  public static async beforeCrowdloanTestsProvideFunds(api: ApiPromise, sudoKey: KeyringPair, amount) {
+  public static async beforeCrowdloanTestsProvideFunds(
+    api: ApiPromise,
+    sudoKey: KeyringPair,
+    amount: u128 | Compact<u128> | AnyNumber
+  ) {
     const palletPublicKey = api.consts.crowdloanRewards.accountId;
     return await sendAndWaitForSuccess(
       api,
@@ -126,7 +131,18 @@ export class TxCrowdloanRewardsTests {
    * @param {KeyringPair} sudoKey Wallet with sudo rights.
    * @param {KeyringPair} contributors List of contributors to be transacted.
    */
-  public static async txCrowdloanRewardsPopulateTestHandler(api: ApiPromise, sudoKey: KeyringPair, contributors) {
+  public static async txCrowdloanRewardsPopulateTestHandler(
+    api: ApiPromise,
+    sudoKey: KeyringPair,
+    contributors:
+      | [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32][]
+      | Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>>
+      | [
+          string | Uint8Array | PalletCrowdloanRewardsModelsRemoteAccount | { RelayChain: any } | { Ethereum: any },
+          u128 | AnyNumber,
+          AnyNumber | u64
+        ][]
+  ) {
     return await sendAndWaitForSuccess(
       api,
       sudoKey,
@@ -144,7 +160,7 @@ export class TxCrowdloanRewardsTests {
   public static async txCrowdloanRewardsRelayAssociateTests(
     api: ApiPromise,
     contributor: KeyringPair,
-    contributorRewardAccount
+    contributorRewardAccount: IKeyringPair
   ) {
     // arbitrary, user defined reward account
     const proof = contributor.sign(proofMessage(contributorRewardAccount));
@@ -164,7 +180,11 @@ export class TxCrowdloanRewardsTests {
    * @param {KeyringPair} contributor The contributor ETH chain wallet public key.
    * @param {KeyringPair} contributorRewardAccount The wallet the contributor wants to receive their PICA to.
    */
-  public static async txCrowdloanRewardsEthAssociateTest(api: ApiPromise, contributor, contributorRewardAccount) {
+  public static async txCrowdloanRewardsEthAssociateTest(
+    api: ApiPromise,
+    contributor: { sign: (arg0: string) => any },
+    contributorRewardAccount: IKeyringPair
+  ) {
     const proof = contributor.sign(proofMessage(contributorRewardAccount, true));
     return await sendUnsignedAndWaitForSuccess(
       api,

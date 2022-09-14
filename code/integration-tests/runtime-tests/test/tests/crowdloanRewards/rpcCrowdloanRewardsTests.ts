@@ -32,7 +32,7 @@ describe("rpc.crowdloanRewards Tests", function () {
   });
 });
 
-export class RpcCrowdloanRewardsTests {
+class RpcCrowdloanRewardsTests {
   public static async rpcCrowdloanRewardsTest(api: ApiPromise, accountId: string | Uint8Array) {
     return await api.rpc.crowdloanRewards.amountAvailableToClaimFor(accountId);
   }

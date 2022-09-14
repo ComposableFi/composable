@@ -19,7 +19,7 @@ use crate::test::{
 	Test,
 };
 
-use super::{prelude::STAKING_FNFT_COLLECTION_ID, runtime};
+use super::prelude::STAKING_FNFT_COLLECTION_ID;
 
 #[test]
 fn test_update_reward_pool() {
@@ -39,7 +39,6 @@ fn test_update_reward_pool() {
 				reward_configs: [(
 					USDT::ID,
 					RewardConfig {
-						asset_id: USDT::ID,
 						max_rewards: 1_000_u128,
 						reward_rate: RewardRate::per_second(INITIAL_REWARD_RATE_AMOUNT),
 					},

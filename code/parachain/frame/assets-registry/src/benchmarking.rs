@@ -41,7 +41,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, local_asset_id, location, Some(Ratio::from_inner(123)), Some(3))
 
 	set_min_fee {
-		let target_parachain_id = 100u32.into();
+		let target_parachain_id = 100_u32.into();
 		let foreign_asset_id = Default::default();
 		let balance = 100_500.into();
 
