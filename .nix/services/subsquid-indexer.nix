@@ -1,4 +1,4 @@
-{ redis, database, parachain }: {
+{ redis, database, parachain, parachainPort, subsquidParacinIndexerPort }: {
   service = {
     name = "hydra-indexer";
     image = "subsquid/hydra-indexer:5";
@@ -12,7 +12,7 @@
       DB_PORT = database.port;
       REDIS_URI = "redis://${redis}:6379/0";
       FORCE_HEIGHT = "true";
-      WS_PROVIDER_ENDPOINT_URI = "ws://${parachain}:9988";
+      WS_PROVIDER_ENDPOINT_URI = "ws://${parachain}:${parachainPort}";
     };
     command = [ "sh" "-c" "yarn db:bootstrap && yarn start:prod" ];
   };

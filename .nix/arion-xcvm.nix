@@ -12,6 +12,12 @@ pkgs.arion.build {
         juno-indexer-container-name = "juno-indexer";
         subql-query-container-name = "subql-query";
 
+        relaychainPort = 9944;
+        parachainPort = 9988;
+        subsquidParacinIndexerPort = 42;
+        subsquidIndexerGateway = 8081;
+        subsquidIndexerStatusService = 60291;
+
         default-db = {
           name = "xcvm";
           host = "127.0.0.1";
@@ -195,25 +201,28 @@ pkgs.arion.build {
               (import ./services/devnet-dali.nix {
                 inherit pkgs;
                 inherit packages;
-                relaychainPort = 9944;
-                parachainPort = 9988;
+                inherit relaychainPort;
+                inherit parachainPort;
               });
             subsquid-indexer = mk-composable-container
               (import ./services/subsquid-indexer.nix {
                 database = composable-indexer-db;
                 redis = redis-container-name;
                 parachain = dali-container-name;
+                inherit parachainPort;
+                inherit subsquidParacinIndexerPort;
               });
             "${subsquid-indexer-gateway-container-name}" =
               mk-composable-container
               (import ./services/subsquid-indexer-gateway.nix {
                 database = composable-indexer-db;
                 status = subsquid-status-container-name;
-                graphql-port = 8081;
+                graphql-port = subsquidIndexerGateway;
               });
             "${subsquid-status-container-name}" = mk-composable-container
               (import ./services/subsquid-indexer-status-service.nix {
                 redis = redis-container-name;
+                port = subsquidIndexerStatusService;
               });
             "${redis-container-name}" =
               mk-composable-container (import ./services/redis.nix);
