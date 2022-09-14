@@ -98,10 +98,14 @@ pub mod pallet {
 		}
 
 		fn protocol_asset_id_to_unique_asset_id(
-			_: u32,
-			_: RangeId,
+			_protocol_asset_id: u32,
+			_range_id: RangeId,
 		) -> Result<MockCurrencyId, DispatchError> {
 			Ok(MockCurrencyId::from(1))
+		}
+
+		fn unique_asset_id_to_protocol_asset_id(_unique_asset_id: MockCurrencyId) -> u32 {
+			1
 		}
 	}
 }

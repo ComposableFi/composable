@@ -188,6 +188,11 @@ pub mod pallet {
 					.into())
 			}
 		}
+
+		fn unique_asset_id_to_protocol_asset_id(unique_asset_id: T::AssetId) -> u32 {
+			u32::try_from(unique_asset_id.into() % u32::MAX as u128)
+				.expect("u128 is made of u32 chunks")
+		}
 	}
 
 	impl<T: Config> LocalAssets<T::AssetId> for Pallet<T> {

@@ -116,11 +116,18 @@ pub struct CurrencyIdGenerator;
 
 impl CurrencyFactoryTrait<AssetId, Balance> for CurrencyIdGenerator {
 	fn create(_: RangeId, _: Balance) -> Result<AssetId, sp_runtime::DispatchError> {
-		Ok(1_u128)
+		Ok(1)
 	}
 
-	fn protocol_asset_id_to_unique_asset_id(_: u32, _: RangeId) -> Result<AssetId, DispatchError> {
-		Ok(1_u128)
+	fn protocol_asset_id_to_unique_asset_id(
+		_protocol_asset_id: u32,
+		_range_id: RangeId,
+	) -> Result<AssetId, DispatchError> {
+		Ok(1)
+	}
+
+	fn unique_asset_id_to_protocol_asset_id(_unique_asset_id: AssetId) -> u32 {
+		1
 	}
 }
 

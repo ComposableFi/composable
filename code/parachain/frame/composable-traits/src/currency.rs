@@ -27,6 +27,8 @@ pub trait CurrencyFactory<AssetId, Balance> {
 		protocol_asset_id: u32,
 		range_id: RangeId,
 	) -> Result<AssetId, DispatchError>;
+
+	fn unique_asset_id_to_protocol_asset_id(unique_asset_id: AssetId) -> u32;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Encode, Decode, TypeInfo)]
