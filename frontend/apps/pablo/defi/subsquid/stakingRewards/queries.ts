@@ -1,5 +1,4 @@
-import { OperationResult } from "urql";
-import { makeClient } from "../makeClient";
+import { fetchSubsquid } from "./helpers";
 
 export interface StakingPosition {
     startTimestamp: string;
@@ -13,19 +12,17 @@ export interface StakingPosition {
     id: string;
 }
 
-export function queryStakingPositions(
+export async function fetchStakingPositions(
     owner: string,
-    principalAssetId: string,
     orderBy: "ASC" | "DESC" = "DESC"
-): Promise<OperationResult<{
-  stakingPositions: StakingPosition[]
-}, {}>> {
-  return makeClient().query(`
-    query stakingPositions {
+): Promise<Record<string, StakingPosition[]>> {
+  let _stakingPositions : Record<string, StakingPosition[]> = {};
+  try {
+    const data = await fetchSubsquid<{  stakingPositions: StakingPosition[] }>
+    (`query stakingPositions {
       stakingPositions (
         limit: 1,
         where: {
-            assetId_eq: "${principalAssetId}",
             owner_eq: "${owner}"
         },
         orderBy: startTimestamp_${orderBy}
@@ -40,6 +37,24 @@ export function queryStakingPositions(
         assetId
         amount
       }
+    }`);
+  
+    const { stakingPositions } = data;
+    if (stakingPositions.length > 0) {
+      _stakingPositions = stakingPositions.reduce((agg, curr) => {
+        let currAssetId = curr.assetId;
+        if (agg[currAssetId]) {
+          agg[currAssetId].push(curr);
+        } else {
+          agg[currAssetId] = [curr]
+        }
+        return agg;
+      }, {} as Record<string, StakingPosition[]>);
     }
-  `).toPromise();
+
+  } catch (error) {
+    console.error(error);
+  }
+
+  return _stakingPositions;
 }

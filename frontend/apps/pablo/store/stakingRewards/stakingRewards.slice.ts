@@ -1,27 +1,28 @@
+import { StakingPosition } from "@/defi/subsquid/stakingRewards/queries";
 import { StakingRewardPool } from "@/defi/types/stakingRewards";
 import BigNumber from "bignumber.js";
 import create from "zustand";
 
 export interface StakingRewardsSlice {
   rewardPools: Record<string, StakingRewardPool>;
-  rewardPoolStakedPositionIds: Record<string, Array<string>>;
+  rewardPoolStakedPositions: Record<string, Array<StakingPosition>>;
   pabloStaking: {
     totalPBLOLocked: BigNumber;
     totalFnftMinted: BigNumber;
     averageLockMultiplier: BigNumber;
     averageLockTime: BigNumber;
-  }
+  };
 }
 
 export const useStakingRewardsSlice = create<StakingRewardsSlice>(() => ({
   rewardPools: {},
-  rewardPoolStakedPositionIds: {},
+  rewardPoolStakedPositions: {},
   pabloStaking: {
     totalPBLOLocked: new BigNumber(0),
     totalFnftMinted: new BigNumber(0),
     averageLockMultiplier: new BigNumber(0),
     averageLockTime: new BigNumber(0),
-  }
+  },
 }));
 
 export const putStakingRewardPool = (stakingRewardPool: StakingRewardPool) =>
@@ -48,19 +49,21 @@ export const putStakingRewardPools = (
     }, {} as Record<string, StakingRewardPool>),
   }));
 
-export const putStakingRewardPoolStakedPositionIds = (
-    stakingRewardPoolId: string,
-    stakedPositionIds: Array<string>
-  ) =>
-    useStakingRewardsSlice.setState((state) => ({
-      ...state,
-      rewardPoolStakedPositionIds: {
-        ...state.rewardPoolStakedPositionIds,
-        [stakingRewardPoolId]: stakedPositionIds
-      },
-    }));
+export const putStakingRewardPoolStakedPositions = (
+  stakingRewardPositions: Record<string, Array<StakingPosition>>
+) =>
+  useStakingRewardsSlice.setState((state) => ({
+    ...state,
+    rewardPoolStakedPositions: stakingRewardPositions
+  }));
 
 export const useStakingRewardPool = (
   principalAssetId: string
 ): StakingRewardPool | null =>
   useStakingRewardsSlice().rewardPools[principalAssetId] ?? null;
+
+
+export const useStakedPositions = (
+    principalAssetId: string
+): StakingPosition[] =>
+    useStakingRewardsSlice().rewardPoolStakedPositions[principalAssetId] ?? [] as StakingPosition[];

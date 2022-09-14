@@ -25,9 +25,9 @@ const tableHeaders: TableHeader[] = [
   {
     header: "PBLO locked",
   },
-  {
-    header: "Expiry",
-  },
+  // {
+  //   header: "Expiry",
+  // },
   {
     header: "Multiplier",
   },
@@ -77,7 +77,7 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
                 <TableCell align="left">
                   <Typography variant="body1">{locked.toFormat(2)}</Typography>
                 </TableCell>
-                <TableCell align="left">
+                {/* <TableCell align="left">
                   <Typography
                     variant="body1"
                     color={expired(expiry) ? "error" : undefined}
@@ -87,7 +87,7 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
                       : moment(expiry).utc().format("DD MMM YYYY")
                     }
                   </Typography>
-                </TableCell>
+                </TableCell> */}
                 <TableCell align="left">
                   <Typography variant="body1">{multiplier.toFixed(2)}</Typography>
                 </TableCell>

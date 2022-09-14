@@ -1,54 +1,46 @@
 import { alpha, Box, Button, Grid, Typography, useTheme } from "@mui/material";
 import { Alert, Label } from "@/components/Atoms";
 import { BoxProps } from "@mui/material";
-import moment from "moment-timezone";
-import { Multiplier } from "./index";
+import BigNumber from "bignumber.js";
+import moment from "moment";
+import { useMemo } from "react";
 
-const periodItems = [
-  {
-    label: "2 weeks (0x)",
-    period: { weeks: 2 },
-    multiplier: 0,
-  },
-  {
-    label: "2 months (0.25x)",
-    period: { months: 2 },
-    multiplier: 0.25,
-  },
-  {
-    label: "1 year (0.5x)",
-    period: { years: 1 },
-    multiplier: 0.5,
-  },
-  {
-    label: "2 years (1x)",
-    period: { years: 2 },
-    multiplier: 1,
-  },
-];
-
-type Period = { years?: number; months?: number; weeks?: number };
+type Period = {
+  days?: number;
+  years?: number;
+  months?: number;
+  weeks?: number;
+};
 
 export type SelectLockPeriodProps = {
-  multiplier: Multiplier;
-  setMultiplier?: (multiplier: Multiplier) => void;
+  periodItems: {
+    label: string;
+    period: Period;
+    multiplier: BigNumber;
+    value: string;
+  }[];
+  durationPreset: string;
+  setDurationPreset?: (multiplier: string) => void;
 } & BoxProps;
 
 export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
-  multiplier,
-  setMultiplier,
+  periodItems,
+  durationPreset,
+  setDurationPreset,
   ...boxProps
 }) => {
   const theme = useTheme();
 
-  const handleSelectPeriod = (period: Period, vMultiplier: number) => {
-    setMultiplier?.({
-      value: vMultiplier,
-      expiry: moment().add(period).utc().valueOf(),
-    });
+  const selected = (duration: string) => {
+    return duration === durationPreset;
   };
 
-  const selected = (vMultiplier: number) => vMultiplier === multiplier.value;
+  const expiry = useMemo(() => {
+    if (durationPreset === "0") return null;
+    const right_now = moment();
+    right_now.add(durationPreset, "seconds");
+    return right_now.format("DD.MM.YYYY");
+  }, [durationPreset]);
 
   return (
     <Box {...boxProps}>
@@ -61,14 +53,14 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
       />
       <Grid container spacing={3}>
         {periodItems.map((item) => (
-          <Grid item sm={12} md={6} lg={3} key={item.multiplier}>
+          <Grid item sm={12} md={6} lg={3} key={item.multiplier.toString()}>
             <Button
               variant="outlined"
               size="large"
               fullWidth
               sx={{
-                borderWidth: selected(item.multiplier) ? 1 : 0,
-                background: selected(item.multiplier)
+                borderWidth: selected(item.value) ? 1 : 0,
+                background: selected(item.value)
                   ? alpha(
                       theme.palette.primary.main,
                       theme.custom.opacity.light
@@ -78,13 +70,11 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
                       theme.custom.opacity.lighter
                     ),
               }}
-              onClick={() => handleSelectPeriod(item.period, item.multiplier)}
+              onClick={() => setDurationPreset?.(item.value)}
             >
               <Typography
                 variant="body1"
-                color={
-                  selected(item.multiplier) ? "text.primary" : "text.secondary"
-                }
+                color={selected(item.value) ? "text.primary" : "text.secondary"}
               >
                 {item.label}
               </Typography>
@@ -112,15 +102,13 @@ export const SelectLockPeriod: React.FC<SelectLockPeriodProps> = ({
       >
         <Typography
           variant="body1"
-          color={multiplier.expiry ? "text.primary" : "text.secondary"}
+          color={expiry ? "text.primary" : "text.secondary"}
         >
-          {multiplier.expiry
-            ? moment(multiplier.expiry).utc().format("DD.MM.YYYY")
-            : "Select lock time"}
+          {expiry !== null ? expiry : "Select lock time"}
         </Typography>
       </Box>
 
-      {multiplier.expiry && (
+      {expiry && (
         <Box mt={1.5}>
           <Alert
             severity="warning"

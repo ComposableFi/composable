@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 import moment from "moment";
 
+export const PBLO_ASSET_ID = "5";
 export const DEFAULT_DECIMALS = new BigNumber(10).pow(12);
 export const AVERAGE_BLOCK_TIME = 20 * 1000;
 export const DEFAULT_NETWORK_ID = "picasso";

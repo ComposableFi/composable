@@ -12,6 +12,8 @@ import { Alert } from "@/components/Atoms";
 import { Link } from "@/components/Molecules";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import { UnstakeForm } from "./UnstakeForm";
+import { useStakingRewardPool } from "@/store/stakingRewards/stakingRewards.slice";
+import { PBLO_ASSET_ID } from "@/defi/utils";
 const tabItems: TabItem[] = [
   {
     label: "Stake and mint",
@@ -28,9 +30,9 @@ const tableHeaders = [
   {
     header: "Locked PBLO",
   },
-  {
-    header: "Expiry",
-  },
+  // {
+  //   header: "Expiry",
+  // },
   {
     header: "Multiplier",
   },
@@ -48,6 +50,8 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
   const message = useAppSelector((state) => state.ui.message);
   const shouldShowPortfolio = true; // TODO: Use dynamic values to check if user has open positions for this check
 
+  const stakingRewardPool = useStakingRewardPool(PBLO_ASSET_ID);
+
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTab(newValue);
   };
@@ -61,7 +65,7 @@ export const Staking: React.FC<BoxProps> = ({ ...boxProps }) => {
       <BoxWrapper mt={8}>
         <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
         <TabPanel index={0} value={tab}>
-          <StakeForm />
+          <StakeForm stakingRewardPool={stakingRewardPool} />
         </TabPanel>
         <TabPanel index={1} value={tab}>
           <UnstakeForm />
