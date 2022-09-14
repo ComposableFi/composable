@@ -1,0 +1,76 @@
+[package]
+name = "pallet-instrumental"
+version = "0.1.0"
+authors = ["Kevin@composable.finance", "Composable Developers"]
+homepage = "https://instrumental.finance"
+edition = "2021"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+frame-benchmarking = { default-features = false, optional = true, git = 'https://github.com/paritytech/substrate.git', branch = 'polkadot-v0.9.24' }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+
+composable-support = { path = "../composable-support", default-features = false }
+composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
+
+codec = { default-features = false, package = "parity-scale-codec", version = "3.0.0", features = ["derive",] }
+log = { version = "0.4.14", default-features = false }
+scale-info = { version = "2.1.2", default-features = false, features = ["derive",] }
+serde = { version = '1', optional = true }
+
+[dev-dependencies]
+hex-literal = "0.3.3"
+instrumental-strategy = { path = "../instrumental-strategy", default-features = false }
+instrumental-strategy-pablo = {path = "../instrumental-strategy-pablo", default-features = false }
+itertools = "0.10.3"
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "b57f88b39cd547e2fb51727d8bb9bcc64fddf8b5", default-features = false }
+pallet-assets = {path = "../assets", default-features = false }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+pallet-currency-factory = { path = "../currency-factory", default-features = false }
+pallet-governance-registry = { path = "../governance-registry", default-features = false }
+pallet-pablo = { path = "../pablo", default-features = false }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+pallet-vault = { path = "../vault", default-features = false }
+pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24", default-features = false }
+primitives = { path = "../../runtime/primitives", default-features = false }
+proptest = "1.0"
+sp-state-machine = "0.12.0"
+
+[features]
+default = ["std"]
+std = [
+    "codec/std",
+    "frame-benchmarking/std",
+    "frame-support/std",
+    "frame-system/std",
+    "log/std",
+    "orml-tokens/std",
+    "orml-traits/std",
+    "pallet-balances/std",
+    "pallet-vault/std",
+    "pallet-collective/std",
+    "primitives/std",
+    "scale-info/std",
+    "serde/std",
+    "sp-arithmetic/std",
+    "sp-core/std",
+    "sp-io/std",
+    "sp-runtime/std",
+    "sp-std/std",
+]
+
+runtime-benchmarks = [
+  "frame-benchmarking",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+  "pallet-collective/runtime-benchmarks"
+]
