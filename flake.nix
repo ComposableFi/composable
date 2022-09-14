@@ -490,6 +490,15 @@
               '';
             };
 
+            docker-wipe-system =
+              pkgs.writeShellScriptBin "docker-wipe-system" ''
+                echo "Wiping all docker containers, images, and volumes";
+                docker stop $(docker ps -q)
+                docker system prune -f
+                docker rmi -f $(docker images -a -q)    
+                docker volume prune -f
+              '';
+
             composable-book = import ./book/default.nix {
               crane = crane-stable;
               inherit cargo stdenv;
