@@ -7,6 +7,7 @@
       UNSAFE_CORS = "true";
       USER = "juno16g2rahf5846rxzp3fwlswy08fz8ccuwk03k57y";
       GAS_LIMIT = 100000000;
+      UNSAFE_CORS = true;
     };
     command = [
       "sh"
@@ -20,4 +21,3 @@
     ports = [ "9090:9099" "26657:26657" ];
   };
 }
-

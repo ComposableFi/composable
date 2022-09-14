@@ -56,6 +56,7 @@
       DB_HOST = database.host;
       DB_PORT = database.port;
     };
+    # NOTE: not found yet cors or how to set cors on express/nextjs
     command = [
       "-f=/app"
       "--db-schema=cosmos"
