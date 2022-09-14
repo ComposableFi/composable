@@ -8,10 +8,7 @@ import { useCallback, useContext, useEffect } from "react";
 
 import { useStore } from "@/stores/root";
 import { ApiPromise } from "@polkadot/api";
-import {
-  fetchKaruraBalanceByAssetId,
-  subscribePicassoBalanceByAssetId,
-} from "@/defi/polkadot/pallets/Balance";
+import { fetchKaruraBalanceByAssetId, subscribePicassoBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
 import BigNumber from "bignumber.js";
 
 export async function subscribeNativeBalance(
@@ -32,7 +29,7 @@ export async function subscribeNativeBalance(
     const blObject: any = result.toJSON();
 
     const {
-      data: { free },
+      data: { free }
     } = blObject;
 
     const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
@@ -43,7 +40,7 @@ export async function subscribeNativeBalance(
     updateBalance({
       substrateNetworkId: chainId as SubstrateNetworkId,
       balance: bnBalance.toString(),
-      existentialDeposit,
+      existentialDeposit
     });
   });
 }
@@ -66,7 +63,7 @@ export async function updateBalances(
   const blObject: any = queryResult.toJSON();
 
   const {
-    data: { free },
+    data: { free }
   } = blObject;
 
   const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
@@ -77,12 +74,12 @@ export async function updateBalances(
   updateBalance({
     substrateNetworkId: chainId as SubstrateNetworkId,
     balance: bnBalance.toString(),
-    existentialDeposit,
+    existentialDeposit
   });
 }
 
 const PolkadotBalancesUpdater = ({
-  substrateNetworks,
+  substrateNetworks
 }: {
   substrateNetworks: SubstrateNetwork[];
 }) => {
@@ -115,23 +112,25 @@ const PolkadotBalancesUpdater = ({
     picassoProvider.accounts,
     parachainProviders,
     updateBalance,
-    clearBalance,
+    clearBalance
   ]);
 
   const picassoBalanceSubscriber = useCallback(
     async (chain, asset, chainId) => {
-      await subscribePicassoBalanceByAssetId(
-        chain.parachainApi!,
-        chain.accounts[selectedAccount].address,
-        String(asset.meta.supportedNetwork[chainId as SubstrateNetworkId]),
-        (balance) => {
-          updateAssetBalance({
-            substrateNetworkId: chainId as SubstrateNetworkId,
-            assetId: asset.meta.assetId,
-            balance,
-          });
-        }
-      );
+      if (chain.accounts[selectedAccount]) {
+        await subscribePicassoBalanceByAssetId(
+          chain.parachainApi!,
+          chain.accounts[selectedAccount].address,
+          String(asset.meta.supportedNetwork[chainId as SubstrateNetworkId]),
+          (balance) => {
+            updateAssetBalance({
+              substrateNetworkId: chainId as SubstrateNetworkId,
+              assetId: asset.meta.assetId,
+              balance
+            });
+          }
+        );
+      }
     },
     []
   );
@@ -158,7 +157,7 @@ const PolkadotBalancesUpdater = ({
                     updateAssetBalance({
                       substrateNetworkId: chainId as SubstrateNetworkId,
                       assetId: asset.meta.assetId,
-                      balance,
+                      balance
                     });
                   });
                 default:

@@ -1,24 +1,22 @@
 import BigNumber from "bignumber.js";
-import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
-import { callbackGate, formatNumber, toChainIdUnit } from "shared";
+import { alpha, Box, Button, Slider, Stack, Typography, useTheme } from "@mui/material";
+import { callbackGate, formatNumber } from "shared";
 import { AlertBox, BigNumberInput } from "@/components";
-import { RadioButtonGroup } from "@/components/Molecules/RadioButtonGroup";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
 import { WarningAmberRounded } from "@mui/icons-material";
 import { FC, useEffect, useState } from "react";
 import { useStore } from "@/stores/root";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import { getSigner, useExecutor } from "substrate-react";
-import { APP_NAME } from "@/defi/polkadot/constants";
-import { EventRecord } from "@polkadot/types/interfaces/system";
-import { SnackbarKey, useSnackbar } from "notistack";
-import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { useExecutor } from "substrate-react";
+import { useSnackbar } from "notistack";
 import {
-  DurationOption,
+  calculateStakingPeriodAPR,
   fetchRewardPools,
   formatDurationOption,
+  stake
 } from "@/defi/polkadot/pallets/StakingRewards";
+
 
 export const StakeTabContent: FC = () => {
   const theme = useTheme();
@@ -51,25 +49,31 @@ export const StakeTabContent: FC = () => {
     );
   }, [assetId, parachainApi, setRewardPool]);
 
-  const options: Array<{
-    label: string;
-    value: string;
-  }> = Object.entries(picaRewardPool.lock.durationPresets).reduce(
-    (acc, [duration, multiplier]) => [
+  const options = Object.entries(picaRewardPool.lock.durationPresets).reduce(
+    (acc, [duration, _]) => [
       ...acc,
       {
-        label: formatDurationOption(duration, multiplier),
-        value: duration,
-      },
+        label: "",
+        value: Number(duration)
+      }
     ],
     [] as any
   );
 
+  const minDuration = Object.entries(picaRewardPool.lock.durationPresets).reduce(
+    (a, [b, _]) => a !== 0 && a < Number(b) ? a : Number(b),
+    0
+  );
+  const maxDuration = Object.entries(picaRewardPool.lock.durationPresets).reduce(
+    (a, [b, _]) => a > Number(b) ? a : Number(b),
+    0
+  );
+
   const [lockPeriod, setLockPeriod] = useState<string>("");
-  const match = (option?: DurationOption) => lockPeriod === option;
   const account = useSelectedAccount();
 
-  const setValidation = () => {};
+  const setValidation = () => {
+  };
   return (
     <Stack sx={{ marginTop: theme.spacing(9) }} gap={4}>
       <Stack gap={1.5}>
@@ -100,18 +104,36 @@ export const StakeTabContent: FC = () => {
         />
       </Stack>
       {/*  Radiobutton groups*/}
-      <RadioButtonGroup<DurationOption>
-        label="Lock period (multiplier)"
-        tooltip="Lock period (multiplier)"
-        options={options}
-        value={lockPeriod}
-        isMatch={match}
-        onChange={(v: any) => setLockPeriod(v)}
-        sx={{
-          marginTop: theme.spacing(4),
-        }}
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <TextWithTooltip tooltip={"Select lock period"}>
+          Select lock period (multiplier)
+        </TextWithTooltip>
+        <Box display="flex" justifyContent="flex-end" alignItems="center">
+          <Typography variant="body2" color={alpha(theme.palette.common.white, 0.6)}>
+            APR
+          </Typography>
+        </Box>
+      </Box>
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Typography variant="h6">
+          {lockPeriod && picaRewardPool.lock.durationPresets && formatDurationOption(
+            lockPeriod,
+            picaRewardPool.lock.durationPresets[lockPeriod]
+          )}
+        </Typography>
+        <Typography variant="subtitle1" color={theme.palette.featured.lemon}>
+          ≈%{calculateStakingPeriodAPR(lockPeriod, picaRewardPool.lock.durationPresets)}
+        </Typography>
+      </Box>
+      <Slider
+        marks={options}
+        name="duration-presets"
+        aria-labelledby="lock-period-slider"
+        step={null}
+        min={minDuration}
+        max={maxDuration}
+        onChange={(_, value) => setLockPeriod(value.toString())}
       />
-      {/* Unlock date */}
       <TextWithTooltip tooltip="Unlock date">Unlock date</TextWithTooltip>
       <FutureDatePaper duration={lockPeriod} />
       <AlertBox status="warning" icon={<WarningAmberRounded color="warning" />}>
@@ -122,59 +144,18 @@ export const StakeTabContent: FC = () => {
       </AlertBox>
       <Button
         fullWidth
-        onClick={async () => {
-          let snackbarKey: SnackbarKey | undefined;
-          if (executor && parachainApi && account) {
-            const signer = await getSigner(APP_NAME, account.address);
-            await executor.execute(
-              parachainApi.tx.stakingRewards.stake(
-                assetId.toString(),
-                parachainApi.createType(
-                  "u128",
-                  toChainIdUnit(lockablePICA).toString()
-                ),
-                parachainApi.createType("u64", lockPeriod.toString())
-              ),
-              account.address,
-              parachainApi,
-              signer,
-              (txHash: string) => {
-                snackbarKey = enqueueSnackbar("Processing stake on the chain", {
-                  variant: "info",
-                  isClosable: true,
-                  persist: true,
-                  url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
-                });
-              },
-              (txHash: string, _events: EventRecord[]) => {
-                closeSnackbar(snackbarKey);
-                enqueueSnackbar(
-                  `Successfully staked ${lockablePICA
-                    .toFixed()
-                    .toString()} PICA`,
-                  {
-                    variant: "success",
-                    isClosable: true,
-                    persist: true,
-                    url: SUBSTRATE_NETWORKS.picasso.subscanUrl + txHash,
-                  }
-                );
-              },
-              (errorMessage: string) => {
-                closeSnackbar(snackbarKey);
-                enqueueSnackbar(
-                  "An error occurred while processing transaction",
-                  {
-                    variant: "error",
-                    isClosable: true,
-                    persist: true,
-                    description: errorMessage,
-                  }
-                );
-              }
-            );
+        onClick={() => stake(
+          {
+            executor,
+            parachainApi,
+            account,
+            assetId,
+            lockablePICA,
+            lockPeriod,
+            enqueueSnackbar,
+            closeSnackbar
           }
-        }}
+        )}
         variant="contained"
         color="primary"
         disabled={!lockablePICA.isGreaterThan(0) || !lockPeriod}
