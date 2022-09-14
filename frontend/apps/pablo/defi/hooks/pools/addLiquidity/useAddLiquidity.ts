@@ -16,17 +16,18 @@ import { ConnectedAccount } from "substrate-react/dist/dotsama/types";
 import { Signer } from "@polkadot/api/types";
 import { useCallback, useMemo } from "react";
 
-function transactionStatusSnackbarMessage(
+export function transactionStatusSnackbarMessage(
+  moduleName: string,
   transactionHashOrErrorMessage: string,
   status: "Initiated" | "Finalized" | "Error"
 ): string {
-  return `Add liquidity Transaction ${status}: ${transactionHashOrErrorMessage}`;
+  return `${moduleName} Transaction ${status}: ${transactionHashOrErrorMessage}`;
 }
 
 /**
  * Later: move to snackbar utils
  */
-const SNACKBAR_TYPES: Record<string, { variant: VariantType }> = {
+export const SNACKBAR_TYPES: Record<string, { variant: VariantType }> = {
   ERROR: { variant: "error" },
   SUCCESS: { variant: "success" },
   INFO: { variant: "info" },
@@ -83,7 +84,7 @@ export const useAddLiquidity = ({
   const onTxReady = useCallback(
     (transactionHash: string) => {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage(transactionHash, "Initiated"),
+        transactionStatusSnackbarMessage('Add Liquidity', transactionHash, "Initiated"),
         SNACKBAR_TYPES.INFO
       );
       dispatch(openConfirmingSupplyModal());
@@ -94,7 +95,7 @@ export const useAddLiquidity = ({
   const onTxFinalized = useCallback(
     (transactionHash: string, _eventRecords: any[]) => {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage(transactionHash, "Finalized"),
+        transactionStatusSnackbarMessage('Add Liquidity', transactionHash, "Finalized"),
         SNACKBAR_TYPES.SUCCESS
       );
       resetAddLiquiditySlice();
@@ -107,7 +108,7 @@ export const useAddLiquidity = ({
   const onTxError = useCallback(
     (transactionError: string) => {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage(transactionError, "Error"),
+        transactionStatusSnackbarMessage('Add Liquidity', transactionError, "Error"),
         SNACKBAR_TYPES.ERROR
       );
       dispatch(closeConfirmingSupplyModal());
@@ -150,7 +151,7 @@ export const useAddLiquidity = ({
       );
     } catch (err: any) {
       enqueueSnackbar(
-        transactionStatusSnackbarMessage(err.message, "Error"),
+        transactionStatusSnackbarMessage('Add Liquidity', err.message, "Error"),
         SNACKBAR_TYPES.ERROR
       );
       dispatch(closeConfirmingSupplyModal());

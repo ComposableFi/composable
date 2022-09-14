@@ -20,7 +20,7 @@ export function getBondOfferIdByVestingScheduleAccount(
   vestingScheduleSubAccount: Uint8Array
 ): BigNumber {
   let offerId = new BigNumber(-1);
-  // @ts-ignore
+
   const bondedFiPalletId = concatU8a(
     stringToU8a(PALLET_TYPE_ID),
     parachainApi.consts.bondedFinance.palletId.toU8a()

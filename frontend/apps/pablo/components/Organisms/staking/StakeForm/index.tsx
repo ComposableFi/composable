@@ -13,6 +13,8 @@ import { useAsset } from "@/defi/hooks";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import BigNumber from "bignumber.js";
 import moment from "moment";
+import { extractDurationPresets } from "@/defi/utils/stakingRewards/durationPresets";
+import { useStake } from "@/defi/hooks/stakingRewards";
 
 export type Multiplier = {
   value?: number;
@@ -32,49 +34,16 @@ export const StakeForm: React.FC<
   const balance = useAssetBalance(DEFAULT_NETWORK_ID, PBLO_ASSET_ID);
 
   const multipliers = useMemo(() => {
-    if (!stakingRewardPool) return [];
-
-    return Object.keys(stakingRewardPool.lock.durationPresets).map((i) => {
-      const seconds = Number(i);
-      const period =
-        seconds < 7 * 86400
-          ? { days: moment.duration(seconds, "seconds").asDays() }
-          : seconds < 30 * 86400
-          ? { weeks: moment.duration(seconds, "seconds").asWeeks() }
-          : seconds < 365 * 86400
-          ? { months: moment.duration(seconds, "seconds").asMonths() }
-          : { years: moment.duration(seconds, "seconds").asYears() };
-
-      const label = period.days
-        ? period.days + " Days"
-        : period.weeks
-        ? period.weeks + " Weeks"
-        : period.months
-        ? period.months + " Months"
-        : period.years + " Years";
-
-      return {
-        label,
-        period,
-        multiplier: stakingRewardPool.lock.durationPresets[i],
-        value: i
-      };
-    });
+    return extractDurationPresets(stakingRewardPool)
   }, [stakingRewardPool]);
 
 
   const validMultiplier = isNumber(durationPreset);
-  const handleStake = () => {
-    //TODO: handling stake action
-    dispatch(
-      setMessage({
-        title: "Transaction successful",
-        text: "Stake and mint confirmed",
-        link: "/",
-        severity: "success",
-      })
-    );
-  };
+  const handleStake = useStake({
+    poolId: new BigNumber(PBLO_ASSET_ID),
+    amount,
+    durationPreset: new BigNumber(durationPreset)
+  })
 
   return (
     <Box {...boxProps}>
