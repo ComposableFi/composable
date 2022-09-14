@@ -38,6 +38,9 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-currency-factory = { path = "../currency-factory", default-features = false }
 pallet-governance-registry = { path = "../governance-registry", default-features = false }
 pallet-pablo = { path = "../pablo", default-features = false }
+pallet-staking-rewards = { path = "../staking-rewards" }
+pallet-fnft = { path = "../fnft" }
+pallet-account-proxy = { path = "../../frame/account-proxy", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 pallet-vault = { path = "../vault", default-features = false }
 pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
