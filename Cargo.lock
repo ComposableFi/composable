@@ -3274,6 +3274,7 @@ dependencies = [
  "env_logger",
  "frame-metadata",
  "frame-support",
+ "frame-system",
  "futures",
  "hex",
  "hex-literal",
@@ -3291,6 +3292,8 @@ dependencies = [
  "pallet-ibc-ping",
  "pallet-mmr",
  "pallet-mmr-rpc",
+ "pallet-transaction-payment-rpc",
+ "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec 3.1.5",
  "primitives 0.1.0 (git+https://github.com/ComposableFi/beefy-rs?rev=cb8cadc8d45bc444367002c77cbd395eff8a741c)",
  "prost 0.10.4",
@@ -4695,6 +4698,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4da24a77a3d8a6d4862d95f72e6fdb9c09a643ecdb402d754004a557f2bec75"
 dependencies = [
  "scopeguard",
+ "serde",
 ]
 
 [[package]]
@@ -4705,7 +4709,6 @@ checksum = "9f80bf5aacaf25cbfc8210d1cfb718f2bf3b11c4c54e5afe36c236853a8ec390"
 dependencies = [
  "autocfg 1.1.0",
  "scopeguard",
- "serde",
 ]
 
 [[package]]
@@ -7317,6 +7320,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-transaction-payment-rpc"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
+dependencies = [
+ "jsonrpsee 0.13.1",
+ "pallet-transaction-payment-rpc-runtime-api",
+ "parity-scale-codec 3.1.5",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+ "sp-rpc",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+]
+
+[[package]]
+name = "pallet-transaction-payment-rpc-runtime-api"
+version = "4.0.0-dev"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
+dependencies = [
+ "pallet-transaction-payment",
+ "parity-scale-codec 3.1.5",
+ "sp-api",
+ "sp-runtime 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+]
+
+[[package]]
 name = "pallet-treasury"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
@@ -7344,7 +7373,7 @@ dependencies = [
  "paperclip-actix",
  "paperclip-core",
  "paperclip-macros",
- "parking_lot 0.12.1",
+ "parking_lot 0.10.2",
  "semver 1.0.13",
  "serde",
  "serde_derive",
@@ -7366,7 +7395,7 @@ dependencies = [
  "once_cell",
  "paperclip-core",
  "paperclip-macros",
- "parking_lot 0.12.1",
+ "parking_lot 0.10.2",
  "serde_json",
 ]
 
@@ -7380,7 +7409,7 @@ dependencies = [
  "mime",
  "once_cell",
  "paperclip-macros",
- "parking_lot 0.12.1",
+ "parking_lot 0.10.2",
  "pin-project 1.0.12",
  "regex",
  "serde",
@@ -10647,6 +10676,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "sp-rpc"
+version = "6.0.0"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24#814752f60ab8cce7e2ece3ce0c1b10799b4eab28"
+dependencies = [
+ "rustc-hash",
+ "serde",
+ "sp-core 6.0.0 (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.24)",
+]
+
+[[package]]
 name = "sp-runtime"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12275,7 +12314,7 @@ checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if 1.0.0",
  "digest 0.10.3",
- "rand 0.8.5",
+ "rand 0.6.5",
  "static_assertions",
 ]
 

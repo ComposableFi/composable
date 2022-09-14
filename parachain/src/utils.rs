@@ -1,5 +1,9 @@
+use crate::Error;
 use beefy_light_client_primitives::{ClientState, MmrUpdateProof};
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
+use codec::Decode;
+use frame_support::weights::DispatchClass;
+use frame_system::limits::BlockWeights;
 use sp_core::H256;
 
 pub fn get_updated_client_state(
@@ -21,4 +25,19 @@ pub fn get_updated_client_state(
 	}
 
 	client_state
+}
+
+/// Fetch the maximum allowed extrinsic weight from a substrate node with the given client.
+pub async fn fetch_max_extrinsic_weight<T: subxt::Config>(
+	client: &subxt::Client<T>,
+) -> Result<u64, Error> {
+	let metadata = client.rpc().metadata().await?;
+	let block_weights = metadata.pallet("System")?.constant("BlockWeights")?;
+	let weights = BlockWeights::decode(&mut &block_weights.value[..])?;
+	let extrinsic_weights = weights.per_class.get(DispatchClass::Normal);
+	let max_extrinsic_weight = extrinsic_weights
+		.max_extrinsic
+		.or(extrinsic_weights.max_total)
+		.unwrap_or(u64::MAX);
+	Ok(max_extrinsic_weight)
 }

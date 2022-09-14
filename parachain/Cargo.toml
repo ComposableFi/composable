@@ -50,8 +50,11 @@ pallet-mmr = { git = "https://github.com/paritytech/substrate", branch = "polkad
 pallet-mmr-primitives = { package = "sp-mmr-primitives", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 pallet-mmr-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+transaction-payment-rpc = { package = "pallet-transaction-payment-rpc", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
+transaction-payment-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.24" }
 
 # composable
 ibc = { git = "https://github.com/composableFi/ibc-rs", rev = "9925f24c5061832ec5d5a0f4b16a1802dbb75128", features = ["ics11_beefy"] }

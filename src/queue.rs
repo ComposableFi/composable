@@ -3,7 +3,7 @@ use primitives::Chain;
 
 /// This sends messages to the sink chain in a gas-aware manner.
 pub async fn flush_message_batch(msgs: Vec<Any>, sink: &impl Chain) -> Result<(), anyhow::Error> {
-	let block_max_weight = sink.block_max_weight().await;
+	let block_max_weight = sink.block_max_weight();
 	let batch_weight = sink.estimate_weight(msgs.clone()).await;
 
 	let ratio = (batch_weight / block_max_weight) as usize;

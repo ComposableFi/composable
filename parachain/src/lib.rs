@@ -57,7 +57,10 @@ use subxt::{
 };
 use tokio::sync::broadcast::{self, Sender};
 
-use crate::calls::{deliver, Deliver};
+use crate::{
+	calls::{deliver, Deliver},
+	utils::fetch_max_extrinsic_weight,
+};
 use primitives::KeyProvider;
 
 #[derive(Clone)]
@@ -89,6 +92,8 @@ pub struct ParachainClient<T: subxt::Config> {
 	pub ss58_version: Ss58AddressFormat,
 	/// ibc event stream sender
 	pub sender: Sender<IbcEvent>,
+	/// the maximum extrinsic weight allowed by this client
+	pub max_extrinsic_weight: u64,
 	/// Channels cleared for packet relay
 	pub channel_whitelist: Vec<(ChannelId, PortId)>,
 }
@@ -140,7 +145,7 @@ where
 			.await?;
 
 		let (sender, _) = broadcast::channel(16);
-
+		let max_extrinsic_weight = fetch_max_extrinsic_weight(&para_client).await?;
 		Ok(Self {
 			name: config.name,
 			para_client,
@@ -152,6 +157,7 @@ where
 			key_store: config.key_store,
 			key_type_id: config.key_type_id,
 			sender,
+			max_extrinsic_weight,
 			ss58_version: Ss58AddressFormat::from(config.ss58_version),
 			channel_whitelist: config.channel_whitelist,
 		})

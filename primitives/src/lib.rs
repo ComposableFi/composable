@@ -296,10 +296,10 @@ pub trait Chain: IbcProvider + KeyProvider + Send + Sync {
 	fn name(&self) -> &str;
 
 	/// Should return a nuerical value for the max weight of transactions allowed in a block.
-	async fn block_max_weight(&self) -> u64;
+	fn block_max_weight(&self) -> u64;
 
 	/// Should return an estimate of the weight of a batch of messages.
-	async fn estimate_weight(&self, msg: Vec<Any>) -> u64;
+	async fn estimate_weight(&self, msg: Vec<Any>) -> Result<u64, Self::Error>;
 
 	/// Return a stream that yields when new [`IbcEvents`] are ready to be queried.
 	async fn finality_notifications(

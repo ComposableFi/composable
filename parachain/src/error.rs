@@ -2,6 +2,7 @@ use ibc::{core::ics02_client, timestamp::ParseTimestampError};
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::TrieError;
 use std::num::ParseIntError;
+use subxt::MetadataError;
 use thiserror::Error;
 
 /// Error definition for the parachain client
@@ -60,6 +61,9 @@ pub enum Error {
 	/// Error occured parsing timestamp
 	#[error("Timestamp error: {0}")]
 	ParseTimestamp(#[from] ParseTimestampError),
+	/// Some error in relation to handling metadata
+	#[error("Metadat error: {0}")]
+	MetadataError(#[from] MetadataError),
 }
 
 impl From<String> for Error {
