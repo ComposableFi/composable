@@ -35,6 +35,7 @@ composable-traits = { path = "../composable-traits", default-features = false }
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 composable-traits = { path = "../composable-traits", features = ["test-utils"] }
 pallet-account-proxy = { path = "../../frame/account-proxy", default-features = false }
+pallet-currency-factory = { path = "../../frame/currency-factory", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 
 [features]
@@ -53,6 +54,7 @@ std = [
   "composable-support/std",
   "composable-tests-helpers/std",
   "pallet-account-proxy/std",
+  "pallet-currency-factory/std",
 ]
 
 runtime-benchmarks = [

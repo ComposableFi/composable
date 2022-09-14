@@ -45,7 +45,7 @@ pub mod pallet {
 	use composable_support::math::safe::SafeAdd;
 	use composable_traits::{
 		account_proxy::AccountProxy,
-		currency::AssetIdLike,
+		currency::{AssetIdLike, CurrencyFactory},
 		fnft::{FinancialNft, FnftAccountProxyTypeSelector},
 	};
 	use core::fmt::Debug;
@@ -108,12 +108,22 @@ pub mod pallet {
 
 		type MaxProperties: Get<u32>;
 
+		type CurrencyFactory: CurrencyFactory<AssetId = Self::FinancialNftCollectionId>;
+
 		type FinancialNftCollectionId: Parameter
 			+ Member
 			+ AssetIdLike
 			+ MaybeSerializeDeserialize
 			+ Ord
 			+ Into<u128>;
+
+		type FinancialNftProtocolCollectionId: Parameter
+			+ Member
+			+ AssetIdLike
+			+ MaybeSerializeDeserialize
+			+ Ord
+			+ Into<u32>
+			+ From<u32>;
 
 		type FinancialNftInstanceId: FullCodec
 			+ Debug
@@ -471,14 +481,12 @@ pub mod pallet {
 	}
 
 	impl<T: Config> FinancialNft<AccountIdOf<T>> for Pallet<T> {
-		/// TODO (vim): Assess the probability of collision in generating accounts
-		///   with collection id type u128 and instance id type u128 this definitely collides
-		///   because the seed is longer than the account ID
 		fn asset_account(
 			collection: &Self::CollectionId,
 			instance: &Self::ItemId,
 		) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account_truncating((collection, instance))
+			T::PalletId::get()
+				.into_sub_account_truncating((Self::protocol_colletion_id(collection), instance))
 		}
 
 		fn get_next_nft_id(
@@ -492,6 +500,15 @@ pub mod pallet {
 					Ok(id)
 				},
 			)
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		/// Returns the smaller locally unique AssetId of the fNFT collection.
+		fn protocol_colletion_id(
+			collection: &T::FinancialNftCollectionId,
+		) -> T::FinancialNftProtocolCollectionId {
+			T::CurrencyFactory::unique_asset_id_to_protocol_asset_id(collection.to_owned()).into()
 		}
 	}
 

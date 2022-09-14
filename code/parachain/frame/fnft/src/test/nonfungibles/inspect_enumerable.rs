@@ -10,8 +10,8 @@ use crate::test::{
 #[test]
 pub(crate) fn test() {
 	new_test_ext().execute_with(|| {
-		let first_collection = 1_u16;
-		let second_collection = 2_u16;
+		let first_collection = 1;
+		let second_collection = 2;
 		Nft::create_collection(&first_collection, &ALICE, &BOB).unwrap();
 		Nft::create_collection(&second_collection, &BOB, &ALICE).unwrap();
 		let first_collection_items_alice = mint_many_nfts_and_assert::<3>(ALICE, first_collection);

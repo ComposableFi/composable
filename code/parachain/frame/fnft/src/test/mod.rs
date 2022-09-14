@@ -39,7 +39,7 @@ mod nonfungibles {
 	fn create_inspect() {
 		new_test_ext().execute_with(|| {
 			assert_eq!(
-				Nft::create_collection(&255_u16, &ALICE, &BOB),
+				Nft::create_collection(&255, &ALICE, &BOB),
 				Ok(()),
 				"class creation should be successful"
 			);
@@ -60,7 +60,7 @@ mod nonfungibles {
 			);
 
 			assert_eq!(
-				Nft::create_collection(&255_u16, &ALICE, &BOB),
+				Nft::create_collection(&255, &ALICE, &BOB),
 				Err(Error::<MockRuntime>::CollectionAlreadyExists.into()),
 				"should not be able to create class that already exists"
 			);

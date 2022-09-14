@@ -730,6 +730,8 @@ parameter_types! {
 impl pallet_fnft::Config for Runtime {
 	type Event = Event;
 	type MaxProperties = ConstU32<16>;
+	type CurrencyFactory = CurrencyFactory;
+	type FinancialNftProtocolCollectionId = u32;
 	type FinancialNftCollectionId = CurrencyId;
 	type FinancialNftInstanceId = FinancialNftInstanceId;
 	type ProxyType = ProxyType;

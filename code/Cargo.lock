@@ -7959,6 +7959,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-account-proxy",
+ "pallet-currency-factory",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
