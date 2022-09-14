@@ -43,7 +43,7 @@ pallet-vault = { path = "../vault", default-features = false }
 pallet-collective = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
 proptest = "1.0"
-sp-state-machine = "0.12.0"
+sp-state-machine = { git = "https://github.com/ComposableFi/substrate", branch = "polkadot-v0.9.27" }
 
 [features]
 default = ["std"]
