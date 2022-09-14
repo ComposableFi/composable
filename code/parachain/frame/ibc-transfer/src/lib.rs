@@ -145,8 +145,8 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// A type for creating local asset Ids
 		type CurrencyFactory: CurrencyFactory<
-			<Self as DeFiComposableConfig>::MayBeAssetId,
-			<Self as DeFiComposableConfig>::Balance,
+			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
+			Balance = <Self as DeFiComposableConfig>::Balance,
 		>;
 
 		/// Account Id Conversion from SS58 string or hex string

@@ -144,7 +144,7 @@ pub mod pallet {
 		/// The pallet creates new LP tokens for every created vault. It uses `CurrencyFactory`, as
 		/// `orml`'s currency traits do not provide an interface to obtain asset ids (to avoid id
 		/// collisions).
-		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
+		type CurrencyFactory: CurrencyFactory<AssetId = Self::AssetId, Balance = Self::Balance>;
 
 		/// The `AssetId` used by the pallet. Corresponds the the Ids used by the Currency pallet.
 		type AssetId: FullCodec

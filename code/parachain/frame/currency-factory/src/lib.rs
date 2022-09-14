@@ -168,9 +168,12 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> CurrencyFactory<T::AssetId, T::Balance> for Pallet<T> {
+	impl<T: Config> CurrencyFactory for Pallet<T> {
+		type AssetId = T::AssetId;
+		type Balance = T::Balance;
+
 		#[transactional]
-		fn create(id: RangeId, ed: T::Balance) -> Result<T::AssetId, DispatchError> {
+		fn create(id: RangeId, ed: Self::Balance) -> Result<Self::AssetId, DispatchError> {
 			let asset_id = AssetIdRanges::<T>::mutate(|range| range.increment(id))?;
 			AssetEd::<T>::insert(asset_id, ed);
 			Ok(asset_id)
@@ -179,7 +182,7 @@ pub mod pallet {
 		fn protocol_asset_id_to_unique_asset_id(
 			protocol_asset_id: u32,
 			range_id: RangeId,
-		) -> Result<T::AssetId, DispatchError> {
+		) -> Result<Self::AssetId, DispatchError> {
 			if range_id.inner() > 5 {
 				Err(DispatchError::from("RangeId outside of preconfigured ranges!"))
 			} else {
@@ -189,7 +192,7 @@ pub mod pallet {
 			}
 		}
 
-		fn unique_asset_id_to_protocol_asset_id(unique_asset_id: T::AssetId) -> u32 {
+		fn unique_asset_id_to_protocol_asset_id(unique_asset_id: Self::AssetId) -> u32 {
 			u32::try_from(unique_asset_id.into() % u32::MAX as u128)
 				.expect("u128 is made of u32 chunks")
 		}

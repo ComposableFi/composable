@@ -1,9 +1,6 @@
 use crate::mocks::*;
 use composable_tests_helpers::prop_assert_ok;
-use composable_traits::{
-	currency::{CurrencyFactory, RangeId},
-	xcm::Balance,
-};
+use composable_traits::currency::{CurrencyFactory, RangeId};
 use proptest::prelude::*;
 use sp_runtime::DispatchError;
 
@@ -47,7 +44,7 @@ proptest! {
 	) {
 		new_test_ext().execute_with(|| {
 			for _ in 0..30 {
-				let res = <CurrencyRanges as CurrencyFactory<AssetId, Balance>>::create(RangeId::from(range), 42);
+				let res = <CurrencyRanges as CurrencyFactory>::create(RangeId::from(range), 42);
 				prop_assert_ok!(res);
 
 			}
@@ -62,7 +59,7 @@ proptest! {
 		new_test_ext().execute_with(|| {
 			let mut prev = None;
 			for _ in 0..i {
-				let res = <CurrencyRanges as CurrencyFactory<AssetId, Balance>>::create(RangeId::TOKENS, 42);
+				let res = <CurrencyRanges as CurrencyFactory>::create(RangeId::TOKENS, 42);
 				prop_assert_ok!(res);
 				if let Some(prev) = prev {
 					prop_assert_eq!(prev + 1, res.unwrap())
@@ -81,7 +78,7 @@ mod protocol_asset_id_to_unique_asset_id {
 	fn should_error_when_non_preconfigured_range() {
 		new_test_ext().execute_with(|| {
 			assert_eq!(
-				<CurrencyRanges as CurrencyFactory<AssetId, Balance>>::protocol_asset_id_to_unique_asset_id(
+				<CurrencyRanges as CurrencyFactory>::protocol_asset_id_to_unique_asset_id(
 					0,
 					RangeId::from(6)
 				),
@@ -94,7 +91,7 @@ mod protocol_asset_id_to_unique_asset_id {
 	fn should_provide_correct_global_asset_id() {
 		new_test_ext().execute_with(|| {
 			assert_eq!(
-				<CurrencyRanges as CurrencyFactory<AssetId, Balance>>::protocol_asset_id_to_unique_asset_id(
+				<CurrencyRanges as CurrencyFactory>::protocol_asset_id_to_unique_asset_id(
 					1,
 					RangeId::from(1)
 				),

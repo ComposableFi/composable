@@ -66,7 +66,10 @@ parameter_types! {
 
 pub struct CurrencyIdGenerator;
 
-impl CurrencyFactory<AssetId, Balance> for CurrencyIdGenerator {
+impl CurrencyFactory for CurrencyIdGenerator {
+	type AssetId = AssetId;
+	type Balance = Balance;
+
 	fn create(_: RangeId, _: Balance) -> Result<AssetId, sp_runtime::DispatchError> {
 		Ok(1)
 	}
